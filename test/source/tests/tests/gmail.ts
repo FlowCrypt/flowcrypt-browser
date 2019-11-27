@@ -4,8 +4,8 @@ import { BrowserHandle, ControllablePage } from '../../browser';
 import * as ava from 'ava';
 import { expect } from 'chai';
 import { BrowserRecipe } from '../browser_recipe';
-import { GmailPageRecipe } from '../page_recipe';
-import { TestVariant } from '../../util';
+import { GmailPageRecipe, OauthPageRecipe } from '../page_recipe';
+import { TestVariant, Util } from '../../util';
 import { AvaContext } from '..';
 
 /**
@@ -96,6 +96,19 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
       expect(content).to.contain('STONE NEED REMAIN SLIDE DEPOSIT BRICK');
     }));
 
+    ava.default('mail.google.com[global:no.pgp] - process to flowcrypt website and decypt the message', testWithNewBrowser(async (t, browser) => {
+      const gmailPage = await browser.newPage(t, 'https://accounts.google.com/AccountChooser?service=mail&continue=https://mail.google.com/mail/');
+      await OauthPageRecipe.google(t, gmailPage, 'flowcrypt.no.pgp@gmail.com', 'approve', false);
+      await Util.sleep(3);
+      const url = TestUrls.gmail(0, '/FMfcgxwGBwSfwNsptzlkctBbrpZCfKlg');
+      await gmailPage.goto(url);
+      const flowcryptPage = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('[data-saferedirecturl]'));
+      await flowcryptPage.waitAndType('.decrypt_answer', 'test super hard passphrase');
+      await flowcryptPage.waitAndClick('.action_decrypt');
+      expect(await flowcryptPage.read('.pgp_block')).to.include('Test Message');
+      expect(await flowcryptPage.read('.attachment')).to.include('test-img.jpg.pgp');
+    }));
+
     // const compose_frame = await gmail_page.get_frame(['compose.htm']);
     // Task.compose_fill_message(compose_frame, 'human@flowcrypt.com', 'message from gmail');
     // await compose_frame.wait_and_click('@action-send', {delay: 0.5});
@@ -113,5 +126,4 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
     // log('gmail:tests:secure compose button (inbox.google.com)');
 
   }
-
 };

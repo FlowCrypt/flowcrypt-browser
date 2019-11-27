@@ -473,7 +473,7 @@ export class OauthPageRecipe extends PageRecipe {
   private static oauthPwdDelay = 2;
   private static longTimeout = 40;
 
-  public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve" | 'login'): Promise<void> => {
+  public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve" | 'login', approveAppLogin = true): Promise<void> => {
     const isMock = oauthPage.target.url().includes('localhost');
     const auth = Config.secrets.auth.google.find(a => a.email === acctEmail)!;
     const selectors = {
@@ -536,9 +536,11 @@ export class OauthPageRecipe extends PageRecipe {
         }
         const token = produce2faToken({ secret: auth.secret_2fa, encoding: 'base32' });
         await oauthPage.waitAndType(selectors.secret_2fa, token);
-        await oauthPage.waitAndClick('#totpNext', { delay: 2 });
+        await oauthPage.waitAndClick('#totpNext', { delay: 2, confirmGone: true });
       }
-      await oauthPage.waitAll('#submit_approve_access'); // if succeeds, we are logged in and presented with approve/deny choice
+      if (approveAppLogin) {
+        await oauthPage.waitAll('#submit_approve_access'); // if succeeds, we are logged in and presented with approve/deny choice
+      }
       // since we are successfully logged in, we may save cookies to keep them fresh
       // no need to await the API call because it's not crucial to always save it, can mostly skip errors
       FlowCryptApi.hookCiCookiesSet(auth.email, await oauthPage.page.cookies()).catch(e => console.error(String(e)));
@@ -546,7 +548,7 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.close();
       } else if (action === 'deny') {
         throw new Error('tests.handle_gmail_oauth options.deny.true not implemented');
-      } else {
+      } else if (approveAppLogin) {
         await oauthPage.waitAndClick('#submit_approve_access', { delay: 1 });
       }
     } catch (e) {
