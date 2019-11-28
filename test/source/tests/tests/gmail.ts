@@ -4,8 +4,8 @@ import { BrowserHandle, ControllablePage } from '../../browser';
 import * as ava from 'ava';
 import { expect } from 'chai';
 import { BrowserRecipe } from '../browser_recipe';
-import { GmailPageRecipe, OauthPageRecipe } from '../page_recipe';
-import { TestVariant, Util } from '../../util';
+import { GmailPageRecipe } from '../page_recipe';
+import { TestVariant } from '../../util';
 import { AvaContext } from '..';
 
 /**
