@@ -461,6 +461,27 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
+    ava.default('compose[global:compatibility] - standalone - send pwd encrypted msg & check on flowcrypt site', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+      const pwd = 'super hard password for the message';
+      const subject = 'PWD encrtypted message';
+      await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
+      const fileInput = await composePage.target.$('input[type=file]');
+      await fileInput!.uploadFile('test/samples/small.png');
+      await composePage.waitAndType('@input-password', pwd);
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      await composePage.waitForSelTestState('closed', 60);
+      const [elemWithFlowcryptURL] = await composePage.page.$x('.//body/@data-test-flowcrypt-msg-url');
+      const url = await PageRecipe.getElementPropertyJson(elemWithFlowcryptURL!, 'value');
+      await composePage.close();
+      const flowcryptPage = await browser.newPage(t, url);
+      await flowcryptPage.waitAndType('.decrypt_answer', pwd);
+      await flowcryptPage.waitAndClick('.action_decrypt');
+      expect(await flowcryptPage.read('.pgp_block')).to.include(subject);
+      expect(await flowcryptPage.read('.pgp_block')).to.include('The best footer ever!'); // test if footer is present
+      expect(await flowcryptPage.read('.attachment')).to.include('small.png.pgp');
+    }));
+
     ava.todo('compose[global:compose] - reply - new gmail threadId fmt');
 
     ava.todo('compose[global:compose] - reply - skip click prompt');
