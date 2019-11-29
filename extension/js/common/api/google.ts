@@ -39,7 +39,7 @@ export namespace GmailRes { // responses
   export type GmailMsg$payload = { parts?: GmailMsg$payload$part[], headers?: GmailMsg$header[], mimeType?: string, body?: GmailMsg$payload$body };
   export type GmailMsg$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES' | 'TRASH';
   export type GmailMsg = {
-    id: string; historyId: string; threadId?: string | null; payload: GmailMsg$payload; internalDate?: number | string;
+    id: string; historyId: string; threadId?: string | null; payload?: GmailMsg$payload; internalDate?: number | string;
     labelIds?: GmailMsg$labelId[]; snippet?: string; raw?: string;
   };
   export type GmailMsgList$message = { id: string, threadId: string };
@@ -319,7 +319,7 @@ export class Google extends EmailProviderApi {
       }).catch(reject);
     }),
     findHeader: (apiGmailMsgObj: GmailRes.GmailMsg | GmailRes.GmailMsg$payload, headerName: string) => {
-      const node: GmailRes.GmailMsg$payload = apiGmailMsgObj.hasOwnProperty('payload') ? (apiGmailMsgObj as GmailRes.GmailMsg).payload : apiGmailMsgObj as GmailRes.GmailMsg$payload;
+      const node: GmailRes.GmailMsg$payload = apiGmailMsgObj.hasOwnProperty('payload') ? (apiGmailMsgObj as GmailRes.GmailMsg).payload! : apiGmailMsgObj as GmailRes.GmailMsg$payload;
       if (typeof node.headers !== 'undefined') {
         for (const header of node.headers) {
           if (header.name.toLowerCase() === headerName.toLowerCase()) {
@@ -332,7 +332,7 @@ export class Google extends EmailProviderApi {
     findAtts: (msgOrPayloadOrPart: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part, internalResults: Att[] = [], internalMsgId?: string) => {
       if (msgOrPayloadOrPart.hasOwnProperty('payload')) {
         internalMsgId = (msgOrPayloadOrPart as GmailRes.GmailMsg).id;
-        Google.gmail.findAtts((msgOrPayloadOrPart as GmailRes.GmailMsg).payload, internalResults, internalMsgId);
+        Google.gmail.findAtts((msgOrPayloadOrPart as GmailRes.GmailMsg).payload!, internalResults, internalMsgId);
       }
       if (msgOrPayloadOrPart.hasOwnProperty('parts')) {
         for (const part of (msgOrPayloadOrPart as GmailRes.GmailMsg$payload).parts!) {
@@ -352,11 +352,11 @@ export class Google extends EmailProviderApi {
       return internalResults;
     },
     findBodies: (gmailMsg: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part, internalResults: SendableMsgBody = {}): SendableMsgBody => {
-      const isGmailMsg = (v: any): v is GmailRes.GmailMsg => v && typeof (v as GmailRes.GmailMsg).payload !== 'undefined';
+      const isGmailMsgWithPayload = (v: any): v is GmailRes.GmailMsg => v && typeof (v as GmailRes.GmailMsg).payload !== 'undefined';
       const isGmailMsgPayload = (v: any): v is GmailRes.GmailMsg$payload => v && typeof (v as GmailRes.GmailMsg$payload).parts !== 'undefined';
       const isGmailMsgPayloadPart = (v: any): v is GmailRes.GmailMsg$payload$part => v && typeof (v as GmailRes.GmailMsg$payload$part).body !== 'undefined';
-      if (isGmailMsg(gmailMsg)) {
-        Google.gmail.findBodies(gmailMsg.payload, internalResults);
+      if (isGmailMsgWithPayload(gmailMsg)) {
+        Google.gmail.findBodies(gmailMsg.payload!, internalResults);
       }
       if (isGmailMsgPayload(gmailMsg) && gmailMsg.parts) {
         for (const part of gmailMsg.parts) {
@@ -428,7 +428,7 @@ export class Google extends EmailProviderApi {
      */
     extractArmoredBlock: async (acctEmail: string, msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<{ armored: string, subject?: string }> => {
       const gmailMsg = await Google.gmail.msgGet(acctEmail, msgId, format);
-      const subject = Google.gmail.findHeader(gmailMsg.payload, 'subject');
+      const subject = gmailMsg.payload ? Google.gmail.findHeader(gmailMsg.payload, 'subject') : undefined;
       if (format === 'full') {
         const bodies = Google.gmail.findBodies(gmailMsg);
         const atts = Google.gmail.findAtts(gmailMsg);
