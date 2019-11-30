@@ -41,6 +41,18 @@ export class Data {
     return DATA[this.acct].messages.find(m => m.id === id);
   }
 
+  public getMessageBySubject = (subject: string): GmailMsg | undefined => {
+    return DATA[this.acct].messages.find(m => {
+      if (m.payload.headers) {
+        const subjectHeader = m.payload.headers.find(x => x.name === 'Subject');
+        if (subjectHeader) {
+          return subjectHeader.value.includes(subject);
+        }
+      }
+      return false;
+    });
+  }
+
   public getMessagesByThread = (threadId: string) => {
     return DATA[this.acct].messages.filter(m => m.threadId === threadId);
   }

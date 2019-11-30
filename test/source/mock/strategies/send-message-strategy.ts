@@ -4,6 +4,26 @@ import { HttpClientErr } from '../api.js';
 import { PgpMsg, Pgp } from "../../core/pgp.js";
 import { Buf } from '../../core/buf.js';
 import { Config } from '../../util/index.js';
+import { GmailMsg, Data } from '../data.js';
+
+class AddMessageToStorageTestStrategy implements ITestMsgStrategy {
+  async test(mimeMsg: ParsedMail) {
+    const gmailMsg = this.createGmailMsg(mimeMsg);
+    console.log(mimeMsg.from.value[0].address);
+    new Data(mimeMsg.from.value[0].address).storeMessage(gmailMsg);
+  }
+
+  createGmailMsg = (parsedMail: ParsedMail): GmailMsg => {
+    return {
+      id: '',
+      historyId: '',
+      payload: {
+        headers: [{ name: 'Subject', value: parsedMail.subject }],
+        body: { data: parsedMail.text, attachmentId: '', size: 0 }
+      }
+    };
+  }
+}
 
 class MessageWithFooterTestStrategy implements ITestMsgStrategy {
   private readonly footer = 'The best footer ever!';
@@ -105,6 +125,8 @@ export class TestBySubjectStrategyContext {
       this.strategy = new SignedMessageTestStrategy();
     } else if (subject.includes('Test Footer (Mock Test)')) {
       this.strategy = new MessageWithFooterTestStrategy();
+    } else if (subject.includes('PWD encrtypted message')) {
+      this.strategy = new AddMessageToStorageTestStrategy();
     } else {
       throw new UnsuportableStrategyError(`There isn't any strategy for this subject: ${subject}`);
     }

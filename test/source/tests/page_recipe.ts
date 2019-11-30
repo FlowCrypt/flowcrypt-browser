@@ -456,7 +456,7 @@ export class ComposePageRecipe extends PageRecipe {
 
   public static sendAndClose = async (composePage: ControllablePage, password?: string | undefined, timeout = 60) => {
     if (password) {
-      await composePage.waitAndType('@input-password', 'test-pass');
+      await composePage.waitAndType('@input-password', password);
     }
     await composePage.waitAndClick('@action-send', { delay: 1 });
     await Promise.race([

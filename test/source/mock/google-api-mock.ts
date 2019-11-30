@@ -5,7 +5,7 @@
 import { Api, HttpClientErr, Status } from './api';
 import { IncomingMessage } from 'http';
 import { OauthMock } from './oauth';
-import { Data } from './data';
+import { Data, GmailMsg } from './data';
 import { ParsedMail } from "mailparser";
 import * as http from 'http';
 import Parse, { ParseMsgResult } from '../util/parse';
@@ -271,3 +271,4 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
     throw new HttpClientErr('You can\'t send a message from unexisting email address(es)');
   }
 };
+
