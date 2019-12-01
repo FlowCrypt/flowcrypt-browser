@@ -28,9 +28,6 @@ View.run(class KeyserverView extends View {
     const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-    if (!this.acctEmail) {
-      throw new Error('acctEmail is required');
-    }
   }
 
   async render() {
