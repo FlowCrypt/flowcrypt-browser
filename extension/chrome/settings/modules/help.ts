@@ -11,25 +11,40 @@ import { Api } from '../../../js/common/api/api.js';
 import { Backend } from '../../../js/common/api/backend.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { View } from '../../../js/common/view.js';
 
-Catch.try(async () => {
+View.run(class HelpView extends View {
 
-  const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'bugReport']);
-  const acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const bugReport = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'bugReport');
+  private acctEmail: string | undefined;
+  private parentTabId: string;
+  private bugReport: string | undefined;
 
-  if (acctEmail) {
-    $('#input_email').val(acctEmail).attr('disabled', 'disabled');
+  constructor() {
+    super();
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'bugReport']);
+    this.acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
+    this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+    this.bugReport = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'bugReport');
   }
 
-  if (bugReport) {
-    $('h2').text('Submit Bug Report to FlowCrypt');
-    $('.line.info').text('Please describe in detail what were you doing. Does this happen repeatedly?');
-    $('#input_text').val(`\n\n\n--------- BUG REPORT ----------\n${bugReport}`);
+  async render() {
+    if (this.acctEmail) {
+      $('#input_email').val(this.acctEmail).attr('disabled', 'disabled');
+    }
+    if (this.bugReport) {
+      $('h2').text('Submit Bug Report to FlowCrypt');
+      $('.line.info').text('Please describe in detail what were you doing. Does this happen repeatedly?');
+      $('#input_text').val(`\n\n\n--------- BUG REPORT ----------\n${this.bugReport}`);
+    }
   }
 
-  $('.action_send_feedback').click(Ui.event.handle(async target => {
+  setHandlers() {
+    $('.action_send_feedback').click(this.setHandler(this.sendFeedbackHandler));
+  }
+
+  // --- PRIVATE
+
+  private async sendFeedbackHandler(target: HTMLElement) {
     const textVal = $('#input_text').val();
     const emailVal = String($('#input_email').val());
     if (!Str.isEmailValid(emailVal)) {
@@ -50,7 +65,7 @@ Catch.try(async () => {
       if (sent) {
         $(target).text('sent!');
         await Ui.modal.info(`Message sent! You will find your response in ${emailVal}, check your email later.`);
-        BrowserMsg.send.closePage(parentTabId);
+        BrowserMsg.send.closePage(this.parentTabId);
       } else {
         $(target).text(origBtnText);
         await Ui.modal.error('There was an error sending message. Our direct email is human@flowcrypt.com');
@@ -62,6 +77,6 @@ Catch.try(async () => {
       $(target).text(origBtnText);
       await Ui.modal.error(`There was an error sending message. Our direct email is human@flowcrypt.com\n\n${Api.err.eli5(e)}`);
     }
-  }));
+  }
 
-})();
+});

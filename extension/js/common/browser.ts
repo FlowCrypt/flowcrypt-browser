@@ -266,13 +266,13 @@ export class Ui {
         e.stopPropagation();
       });
     },
-    handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) => {
-      return function (this: HTMLElement, event: JQuery.Event<HTMLElement, null>) {
+    handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler, originalThis?: unknown) => {
+      return function uiEventHandle(this: HTMLElement, event: JQuery.Event<HTMLElement, null>) {
         let r;
         try {
-          r = cb(this, event);
+          r = cb.bind(originalThis)(this, event);
           if (typeof r === 'object' && typeof r.catch === 'function') {
-            r.catch(e => Ui.event._dispatchErr(e, errHandlers));
+            r.catch((e: unknown) => Ui.event._dispatchErr(e, errHandlers));
           }
         } catch (e) {
           Ui.event._dispatchErr(e, errHandlers);
