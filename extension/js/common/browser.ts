@@ -11,9 +11,9 @@ import { Att } from './core/att.js';
 import Swal from 'sweetalert2';
 import { Xss } from './platform/xss.js';
 
-type PreventableEventName = 'double' | 'parallel' | 'spree' | 'slowspree' | 'veryslowspree';
 type NamedSels = Dict<JQuery<HTMLElement>>;
-
+type ProvidedEventHandler = (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>;
+export type PreventableEventName = 'double' | 'parallel' | 'spree' | 'slowspree' | 'veryslowspree';
 export type WebMailName = 'gmail' | 'outlook' | 'settings';
 export type BrowserEventErrHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: any) => Promise<void> };
 export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
@@ -266,13 +266,12 @@ export class Ui {
         e.stopPropagation();
       });
     },
-    handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler, originalThis?: unknown) => {
+    handle: (cb: ProvidedEventHandler, errHandlers?: BrowserEventErrHandler, originalThis?: unknown) => {
       return function uiEventHandle(this: HTMLElement, event: JQuery.Event<HTMLElement, null>) {
-        let r;
         try {
-          r = cb.bind(originalThis)(this, event);
+          const r = cb.bind(originalThis)(this, event) as void | Promise<void>; // tslint:disable-line:no-unsafe-any
           if (typeof r === 'object' && typeof r.catch === 'function') {
-            r.catch((e: unknown) => Ui.event._dispatchErr(e, errHandlers));
+            r.catch(e => Ui.event._dispatchErr(e, errHandlers));
           }
         } catch (e) {
           Ui.event._dispatchErr(e, errHandlers);
@@ -292,7 +291,9 @@ export class Ui {
         Catch.reportErr(e);
       }
     },
-    prevent: <THIS extends HTMLElement | void>(evName: PreventableEventName, cb: (el: HTMLElement, resetTimer: () => void) => void | Promise<void>, errHandler?: BrowserEventErrHandler) => {
+    prevent: <THIS extends HTMLElement | void>(
+      evName: PreventableEventName, cb: (el: HTMLElement, resetTimer: () => void) => void | Promise<void>, errHandler?: BrowserEventErrHandler, originalThis?: unknown
+    ) => {
       let eventTimer: number | undefined;
       let eventFiredOn: number | undefined;
       const cbResetTimer = () => {
@@ -300,9 +301,8 @@ export class Ui {
         eventFiredOn = undefined;
       };
       const cbWithErrsHandled = (el: HTMLElement) => {
-        let r;
         try {
-          r = cb(el, cbResetTimer);
+          const r = cb.bind(originalThis)(el, cbResetTimer) as void | Promise<void>; // tslint:disable-line:no-unsafe-any
           if (typeof r === 'object' && typeof r.catch === 'function') {
             r.catch(e => Ui.event._dispatchErr(e, errHandler));
           }

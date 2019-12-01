@@ -5,7 +5,7 @@
 
 import { Api } from './api/api.js';
 import { Xss } from './platform/xss.js';
-import { Ui, BrowserEventErrHandler } from './browser.js';
+import { Ui, BrowserEventErrHandler, PreventableEventName } from './browser.js';
 
 export abstract class View {
 
@@ -32,6 +32,12 @@ export abstract class View {
 
   protected setHandler(cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) {
     return Ui.event.handle(cb, errHandlers, this);
+  }
+
+  protected setHandlerPrevent<THIS extends HTMLElement | void>(
+    evName: PreventableEventName, cb: (el: HTMLElement, resetTimer: () => void) => void | Promise<void>, errHandlers?: BrowserEventErrHandler
+  ) {
+    return Ui.event.prevent(evName, cb, errHandlers, this);
   }
 
 }
