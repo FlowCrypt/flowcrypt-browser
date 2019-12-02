@@ -71,6 +71,14 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
       const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
     }));
 
+    ava.default.only('mail.google.com[global:compatibility] - toggle minimized state by clicking header', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
+      await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
+      const composeFrame = await gmailPage.getFrame(['compose.htm']);
+      await composeFrame.waitAndClick('@header-title');
+      // TODO veryfy that composeFrame's height is correct
+    }));
+
     ava.default('mail.google.com[global:compatibility] - msg.asc message content renders', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/WhctKJTrdTXcmgcCRgXDpVnfjJNnjjLzSvcMDczxWPMsBTTfPxRDMrKCJClzDHtbXlhnwtV');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
