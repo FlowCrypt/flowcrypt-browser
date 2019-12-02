@@ -157,9 +157,7 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
               throw e;
             }
           }
-          // added msg survives this particular `data` object
-          const id = new Data(acct).storeSentMessage(parseResult.mimeMsg, parseResult.threadId);
-          return { id, labelIds: ['SENT'], threadId: parseResult.threadId };
+          return { id: 'fakesendid', labelIds: ['SENT'], threadId: parseResult.threadId };
         }
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);

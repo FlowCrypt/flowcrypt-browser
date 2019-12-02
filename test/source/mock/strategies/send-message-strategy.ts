@@ -1,3 +1,4 @@
+import { Data } from './../data';
 import { UnsuportableStrategyError, ITestMsgStrategy } from './strategy-base.js';
 import { ParsedMail, AddressObject } from 'mailparser';
 import { HttpClientErr } from '../api.js';
@@ -13,6 +14,7 @@ class PwdEncryptedMessageTestStrategy implements ITestMsgStrategy {
     if (!mimeMsg.text.includes('Follow this link to open it')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
     }
+    new Data(mimeMsg.from.value[0].address).storeSentMessage(mimeMsg);
   }
 }
 

@@ -32,10 +32,10 @@ export class Data {
     }
   }
 
-  public storeSentMessage = (parsedMail: ParsedMail, threadId: string | undefined): string => {
+  public storeSentMessage = (parsedMail: ParsedMail): string => {
     const barebonesGmailMsg: GmailMsg = { // todo - could be improved - very barebones
       id: `msg_id_${Util.lousyRandom()}`,
-      threadId: threadId || null, // tslint:disable-line:no-null-keyword
+      threadId: null, // tslint:disable-line:no-null-keyword
       historyId: '',
       labelIds: ['SENT' as GmailMsg$labelId],
       payload: {

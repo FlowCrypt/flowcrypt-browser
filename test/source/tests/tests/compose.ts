@@ -13,7 +13,6 @@ import { Dict } from '../../core/common';
 import { Data } from '../../mock/data';
 import * as request from 'fc-node-requests';
 import { PgpMsg } from '../../core/pgp';
-import { Buf } from '../../core/buf';
 // tslint:disable:no-blank-lines-func
 
 export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser: TestWithNewBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
