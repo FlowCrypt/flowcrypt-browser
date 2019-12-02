@@ -14,50 +14,33 @@ import { Pgp } from '../../../js/common/core/pgp.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Lang } from '../../../js/common/lang.js';
+import { View } from '../../../js/common/view.js';
 
-type AttKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: string, match: boolean }> };
+type AttesterKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: string, match: boolean }> };
 
-Catch.try(async () => {
+View.run(class KeyserverView extends View {
 
-  const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
-  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  private acctEmail: string;
+  private parentTabId: string;
 
-  $('.email-address').text(acctEmail);
+  constructor() {
+    super();
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
+    this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+    this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  }
 
-  Xss.sanitizeRender('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
-
-  const diagnoseKeyserverPubkeys = async (acctEmail: string): Promise<AttKeyserverDiagnosis> => {
-    const diagnosis: AttKeyserverDiagnosis = { hasPubkeyMissing: false, hasPubkeyMismatch: false, results: {} };
-    const { sendAs } = await Store.getAcct(acctEmail, ['sendAs']);
-    const storedKeys = await Store.keysGet(acctEmail);
-    const storedKeysLongids = storedKeys.map(ki => ki.longid);
-    const results = await Attester.lookupEmails(sendAs ? Object.keys(sendAs) : [acctEmail]);
-    for (const email of Object.keys(results)) {
-      const pubkeySearchResult = results[email];
-      if (!pubkeySearchResult.pubkey) {
-        diagnosis.hasPubkeyMissing = true;
-        diagnosis.results[email] = { pubkey: undefined, match: false };
-      } else {
-        let match = true;
-        if (!storedKeysLongids.includes(String(await Pgp.key.longid(pubkeySearchResult.pubkey)))) {
-          diagnosis.hasPubkeyMismatch = true;
-          match = false;
-        }
-        diagnosis.results[email] = { pubkey: pubkeySearchResult.pubkey, match };
+  async render() {
+    $('.email-address').text(this.acctEmail);
+    Xss.sanitizeRender('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
+    (async () => {
+      const isRefreshed = await Settings.refreshAcctAliases(this.acctEmail);
+      if (isRefreshed && await Ui.modal.confirm(Lang.general.emailAliasChangedAskForReload)) {
+        window.location.reload();
       }
-    }
-    return diagnosis;
-  };
-
-  (async () => {
-    const isRefreshed = await Settings.refreshAcctAliases(acctEmail);
-    if (isRefreshed && await Ui.modal.confirm(Lang.general.emailAliasChangedAskForReload)) {
-      window.location.reload();
-    }
-  })().catch(Catch.reportErr);
-
-  const renderDiagnosis = (diagnosis: AttKeyserverDiagnosis) => {
+    })().catch(Api.err.reportIfSignificant);
+    const diagnosis = await this.diagnoseKeyserverPubkeys();
+    $('.summary').text('');
     for (const email of Object.keys(diagnosis.results)) {
       const result = diagnosis.results[email];
       let note, action, color;
@@ -77,52 +60,69 @@ Catch.try(async () => {
       }
       Xss.sanitizeAppend('#content', `<div class="line left">${Xss.escape(email)}: <span class="${color}">${note}</span> ${action}</div>`);
     }
+  }
 
-    $('.action_submit_key').click(Ui.event.prevent('double', async self => {
-      Xss.sanitizeRender(self, Ui.spinner('white'));
-      const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-      try {
-        await Attester.initialLegacySubmit(String($(self).attr('email')), primaryKi.public);
-      } catch (e) {
-        if (Api.err.isSignificant(e)) {
-          Catch.reportErr(e);
-        }
-        await Ui.modal.error(Api.err.eli5(e));
-      } finally {
-        window.location.reload();
+  setHandlers() {
+    $('.action_submit_key').click(this.setHandlerPrevent('double', this.submitPublicKeyHandler));
+    $('.action_replace_pubkey').click(this.setHandlerPrevent('double', this.replacePublicKeyHandler));
+  }
+
+  // -- PRIVATE
+
+  private async submitPublicKeyHandler(target: HTMLElement) {
+    Xss.sanitizeRender(target, Ui.spinner('white'));
+    const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    try {
+      await Attester.initialLegacySubmit(String($(target).attr('email')), primaryKi.public);
+    } catch (e) {
+      if (Api.err.isSignificant(e)) {
+        Catch.reportErr(e);
       }
-    }));
-
-    $('.action_replace_pubkey').click(Ui.event.prevent('double', async self => {
-      Xss.sanitizeRender(self, Ui.spinner('white'));
-      const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-      try {
-        const responseText = await Attester.replacePubkey(String($(self).attr('email')), primaryKi.public);
-        await Ui.modal.info(responseText);
-        BrowserMsg.send.closePage(parentTabId);
-      } catch (e) {
-        if (Api.err.isSignificant(e)) {
-          Catch.reportErr(e);
-        }
-        await Ui.modal.error(Api.err.eli5(e));
-        window.location.reload();
-      }
-    }));
-  };
-
-  try {
-    const diagnosis = await diagnoseKeyserverPubkeys(acctEmail);
-    $('.summary').text('');
-    renderDiagnosis(diagnosis);
-  } catch (e) {
-    if (!Api.err.isSignificant(e)) {
-      Xss.sanitizeRender('.summary', `Failed to load due to internet connection. ${Ui.retryLink()}`);
-    } else {
-      Xss.sanitizeRender('.summary', `Failed to load. ${Ui.retryLink()}`);
-      Catch.reportErr(e);
+      await Ui.modal.error(Api.err.eli5(e));
+    } finally {
+      window.location.reload();
     }
   }
 
-})();
+  private async replacePublicKeyHandler(target: HTMLElement) {
+    Xss.sanitizeRender(target, Ui.spinner('white'));
+    const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    try {
+      const responseText = await Attester.replacePubkey(String($(target).attr('email')), primaryKi.public);
+      await Ui.modal.info(responseText);
+      BrowserMsg.send.closePage(this.parentTabId);
+    } catch (e) {
+      if (Api.err.isSignificant(e)) {
+        Catch.reportErr(e);
+      }
+      await Ui.modal.error(Api.err.eli5(e));
+      window.location.reload();
+    }
+  }
+
+  private async diagnoseKeyserverPubkeys(): Promise<AttesterKeyserverDiagnosis> {
+    const diagnosis: AttesterKeyserverDiagnosis = { hasPubkeyMissing: false, hasPubkeyMismatch: false, results: {} };
+    const { sendAs } = await Store.getAcct(this.acctEmail, ['sendAs']);
+    const storedKeys = await Store.keysGet(this.acctEmail);
+    const storedKeysLongids = storedKeys.map(ki => ki.longid);
+    const results = await Attester.lookupEmails(sendAs ? Object.keys(sendAs) : [this.acctEmail]);
+    for (const email of Object.keys(results)) {
+      const pubkeySearchResult = results[email];
+      if (!pubkeySearchResult.pubkey) {
+        diagnosis.hasPubkeyMissing = true;
+        diagnosis.results[email] = { pubkey: undefined, match: false };
+      } else {
+        let match = true;
+        if (!storedKeysLongids.includes(String(await Pgp.key.longid(pubkeySearchResult.pubkey)))) {
+          diagnosis.hasPubkeyMismatch = true;
+          match = false;
+        }
+        diagnosis.results[email] = { pubkey: pubkeySearchResult.pubkey, match };
+      }
+    }
+    return diagnosis;
+  }
+
+});
