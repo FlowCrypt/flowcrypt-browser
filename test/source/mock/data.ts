@@ -1,7 +1,6 @@
-
-import { readFileSync, existsSync } from 'fs';
-import { KeyInfo } from '../core/pgp';
-import { Config } from '../util';
+import { Util } from './../util/index';
+import { ParsedMail } from 'mailparser';
+import { readFileSync } from 'fs';
 
 type GmailMsg$header = { name: string, value: string };
 type GmailMsg$payload$body = { attachmentId: string, size: number, data?: string };
@@ -33,8 +32,19 @@ export class Data {
     }
   }
 
-  public storeMessage = (msg: GmailMsg) => {
-    DATA[this.acct].messages.push(msg);
+  public storeSentMessage = (parsedMail: ParsedMail, threadId: string | undefined): string => {
+    const barebonesGmailMsg: GmailMsg = { // todo - could be improved - very barebones
+      id: `msg_id_${Util.lousyRandom()}`,
+      threadId: threadId || null, // tslint:disable-line:no-null-keyword
+      historyId: '',
+      labelIds: ['SENT' as GmailMsg$labelId],
+      payload: {
+        headers: [{ name: 'Subject', value: parsedMail.subject }],
+        body: { data: parsedMail.text, attachmentId: '', size: parsedMail.text.length }
+      },
+    };
+    DATA[this.acct].messages.push(barebonesGmailMsg);
+    return barebonesGmailMsg.id;
   }
 
   public getMessage = (id: string): GmailMsg | undefined => {

@@ -1,3 +1,4 @@
+import { Pgp } from './../../core/pgp';
 import { TestUrls } from './../../browser/test_urls';
 import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
 import { ComposePageRecipe, SettingsPageRecipe, PageRecipe, OauthPageRecipe } from '../page_recipe';
@@ -464,30 +465,27 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default.only('compose[global:compatibility] - standalone - send pwd encrypted msg & check on flowcrypt site', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
-      const res = await request.get({ url: 'https://s3.eu-central-1.amazonaws.com/flowcrypt/attachment/ac96108791bd9f6c59c33b963b7d947ce43a2595.pgp' });
-      const keyInfo = Config.secrets.keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
-      const decrypted = await PgpMsg.decrypt({ encryptedData: Buf.fromUtfStr(res.body as string), kisWithPp: keyInfo });
-      console.log(decrypted);
+    ava.default('compose[global:compatibility] - standalone - send pwd encrypted msg & check on flowcrypt site', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const msgPwd = 'super hard password for the message';
+      const subject = 'PWD encrypted message with attachment';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      const pwd = 'super hard password for the message';
-      const subject = 'PWD encrtypted message';
       await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt');
-      await ComposePageRecipe.sendAndClose(composePage, pwd);
-      const data = new Data('flowcrypt.compatibility@gmail.com');
-      const msg = data.getMessageBySubject(subject)!;
-      const flowcryptUrl = msg.payload.body!.data!.match(/https:\/\/flowcrypt.com\/[a-z0-9]+/gi)![0];
-      const flowcryptPage = await browser.newPage(t, flowcryptUrl);
-      await flowcryptPage.waitAndType('.decrypt_answer', pwd);
-      await flowcryptPage.waitAndClick('.action_decrypt');
-      expect(await flowcryptPage.read('.pgp_block')).to.include(subject);
-      expect(await flowcryptPage.read('.pgp_block')).to.include('The best footer ever!'); // test if footer is present
-      expect(await flowcryptPage.read('.attachment')).to.include('small.txt.pgp');
-      // const [attElem] = await flowcryptPage.page.$x('.//@data-test-donwload-url');
-      // const attUrl = await PageRecipe.getElementPropertyJson(attElem, 'value');
-
+      await ComposePageRecipe.sendAndClose(composePage, msgPwd);
+      const msg = new Data('flowcrypt.compatibility@gmail.com').getMessageBySubject(subject)!;
+      const webDecryptUrl = msg.payload.body!.data!.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]+/g)![0];
+      const webDecryptPage = await browser.newPage(t, webDecryptUrl);
+      await webDecryptPage.waitAndType('.decrypt_answer', msgPwd);
+      await webDecryptPage.waitAndClick('.action_decrypt');
+      expect(await webDecryptPage.read('.pgp_block')).to.include(subject);
+      expect(await webDecryptPage.read('.pgp_block')).to.include('The best footer ever!'); // test if footer is present
+      expect(await webDecryptPage.read('.attachment')).to.include('small.txt.pgp');
+      const [attElem] = await webDecryptPage.page.$x('.//@data-test-donwload-url');
+      const attUrl = await PageRecipe.getElementPropertyJson(attElem, 'value');
+      const res = await request.get({ url: attUrl, encoding: null }); // tslint:disable-line:no-null-keyword
+      const decryptedFile = await PgpMsg.decrypt({ encryptedData: res.body as Buffer, kisWithPp: [], msgPwd: await Pgp.hash.challengeAnswer(msgPwd) });
+      expect(decryptedFile.content!.toUtfStr()).to.equal(`small text file\nnot much here\nthis worked\n`);
     }));
 
     ava.todo('compose[global:compose] - reply - new gmail threadId fmt');

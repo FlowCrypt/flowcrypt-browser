@@ -187,7 +187,6 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     const storage = await Store.getAcct(this.composer.urlParams.acctEmail, ['outgoing_language']);
     const lang = storage.outgoing_language || 'EN';
     const msgUrl = `${this.FC_WEB_URL}/${short}`;
-    $('#new_message').attr('data-test-flowcrypt-msg-url', msgUrl);
     const a = `<a href="${Xss.escape(msgUrl)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">
                     ${Lang.compose.openMsg[lang]}
                    </a>`;

@@ -5,7 +5,7 @@
 import { Api, HttpClientErr, Status } from './api';
 import { IncomingMessage } from 'http';
 import { OauthMock } from './oauth';
-import { Data, GmailMsg } from './data';
+import { Data } from './data';
 import { ParsedMail } from "mailparser";
 import * as http from 'http';
 import Parse, { ParseMsgResult } from '../util/parse';
@@ -69,7 +69,7 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
               { gd$email: [{ address: 'contact.test@flowcrypt.com', primary: "true" }] }
             ]
           }
-        }
+        };
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
@@ -157,7 +157,9 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
               throw e;
             }
           }
-          return { id: 'mockfakesend', labelIds: ['SENT'], threadId: parseResult.threadId };
+          // added msg survives this particular `data` object
+          const id = new Data(acct).storeSentMessage(parseResult.mimeMsg, parseResult.threadId);
+          return { id, labelIds: ['SENT'], threadId: parseResult.threadId };
         }
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
@@ -271,4 +273,3 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
     throw new HttpClientErr('You can\'t send a message from unexisting email address(es)');
   }
 };
-
