@@ -19,6 +19,22 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
+    ava.default('compose[global:compatibility] - toggle minimized state by clicking compose window header', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com`));
+      await inboxPage.waitAndClick('@secure-compose');
+      await inboxPage.waitAll('iframe');
+      const composeFrame = await inboxPage.getFrame(['compose.htm']);
+      const initialComposeFrameHeight = await inboxPage.getOuterHeight('iframe');
+      await composeFrame.waitAll('#section_header');
+      const composeFrameHeaderHeight = await composeFrame.getOuterHeight('#section_header');
+      // mimimize compose frame
+      await composeFrame.waitAndClick('@header-title');
+      expect(await inboxPage.getOuterHeight('iframe')).to.eq(composeFrameHeaderHeight)
+      // restore compose frame
+      await composeFrame.waitAndClick('@header-title');
+      expect(await inboxPage.getOuterHeight('iframe')).to.eq(initialComposeFrameHeight)
+    }));
+
     ava.default('[standalone] compose - signed with entered pass phrase + will remember pass phrase in session', testWithNewBrowser(async (t, browser) => {
       const k = Config.key('test.ci.compose');
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');

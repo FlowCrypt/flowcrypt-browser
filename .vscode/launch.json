@@ -4,6 +4,20 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Debug chrome_consumer_mock",
+      "preLaunchTask": "npm: pretest",
+      "program": "${workspaceFolder}/node_modules/ava/profile.js",
+      "args": [
+        "build/test/test/source/test.js",
+        "CONSUMER-MOCK"
+      ],
+      "skipFiles": [
+        "<node_internals>/**/*.js"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Debug chrome_consumer_live_gmail",
       "preLaunchTask": "npm: pretest",
       "program": "${workspaceFolder}/node_modules/ava/profile.js",
