@@ -36,18 +36,23 @@ class MessageWithFooterTestStrategy implements ITestMsgStrategy {
 
 class SignedMessageTestStrategy implements ITestMsgStrategy {
   private readonly expectedText = 'New Signed Message (Mock Test)';
+  private readonly signedBy = 'B6BE3C4293DDCF66'; // could potentially grab this from test-secrets.json file
 
   async test(mimeMsg: ParsedMail) {
     const keyInfo = Config.secrets.keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
     const decrypted = await PgpMsg.decrypt({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
-    // maybe would be better to move the longid in the secrets file, I didn't move it because it's the only one use
-    if (decrypted.success && decrypted.signature && decrypted.signature.signer === 'B6BE3C4293DDCF66') {
-      const content = decrypted.content.toUtfStr();
-      if (!content.includes(this.expectedText)) {
-        throw new HttpClientErr(`Error: Contents don't match. Expected: '${this.expectedText}' but got: '${content}'.`);
-      }
-    } else {
+    if (!decrypted.success) {
+      throw new HttpClientErr(`Error: Could not successfully verify signed message`);
+    }
+    if (!decrypted.signature) {
       throw new HttpClientErr(`Error: The message isn't signed.`);
+    }
+    if (decrypted.signature.signer !== this.signedBy) {
+      throw new HttpClientErr(`Error: expected message signed by ${this.signedBy} but was actually signed by ${decrypted.signature.signer}`);
+    }
+    const content = decrypted.content.toUtfStr();
+    if (!content.includes(this.expectedText)) {
+      throw new HttpClientErr(`Error: Contents don't match. Expected: '${this.expectedText}' but got: '${content}'.`);
     }
   }
 }

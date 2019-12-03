@@ -307,7 +307,7 @@ export class ComposerContacts extends ComposerComponent {
         ulHtml += '</li>';
       }
       if (this.contactSearchInProgress) {
-        ulHtml += '<li class="loading">loading...</li>';
+        ulHtml += '<li class="loading" data-test="container-contacts-loading">loading...</li>';
       }
       Xss.sanitizeRender(this.composer.S.cached('contacts').find('ul'), ulHtml);
       if (!this.canSearchContacts) {

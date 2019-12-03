@@ -1,5 +1,4 @@
 import { TestUrls } from './../browser/test_urls';
-
 import { BrowserHandle, ControllablePage, ControllableFrame, Controllable } from '../browser';
 import { Util, Config } from '../util';
 import { expect } from 'chai';
@@ -9,14 +8,14 @@ import { FlowCryptApi } from './api';
 import { EvaluateFn, ElementHandle } from 'puppeteer';
 import { totp as produce2faToken } from 'speakeasy';
 
-type ModalOpts = { contentToCheck?: string, clickOn?: 'confirm' | 'cancel', getTriggeredPage?: boolean };
+type ModalOpts = { contentToCheck?: string, clickOn?: 'confirm' | 'cancel', getTriggeredPage?: boolean, timeout?: number };
 type ModalType = 'confirm' | 'error' | 'info' | 'warning';
 
 export class PageRecipe {
   public static getElementPropertyJson = async (elem: ElementHandle<Element>, property: string) => await (await elem.getProperty(property)).jsonValue() as string;
 
-  public static waitForModalAndRespond = async (controllable: Controllable, type: ModalType, { contentToCheck, clickOn }: ModalOpts) => {
-    const modalContainer = await controllable.waitAny(`.ui-modal-${type}`);
+  public static waitForModalAndRespond = async (controllable: Controllable, type: ModalType, { contentToCheck, clickOn, timeout }: ModalOpts) => {
+    const modalContainer = await controllable.waitAny(`.ui-modal-${type}`, { timeout });
     if (typeof contentToCheck !== 'undefined') {
       const contentElement = await modalContainer.$('#swal2-content');
       expect(await PageRecipe.getElementPropertyJson(contentElement!, 'textContent')).to.include(contentToCheck);
@@ -77,7 +76,7 @@ export class SetupPageRecipe extends PageRecipe {
     await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
     await settingsPage.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your pass phrase');
     if (backup === 'none') {
-      await settingsPage.waitAll('@input-backup-step3manual-no-backup', { timeout: 60 });
+      await settingsPage.waitAll('@input-backup-step3manual-no-backup', { timeout: 90 });
       await settingsPage.waitAndClick('@input-backup-step3manual-no-backup');
     } else if (backup === 'email') {
       throw new Error('tests.setup_manual_create options.backup=email not implemented');
@@ -296,6 +295,7 @@ export class InboxPageRecipe extends PageRecipe {
     await inboxPage.waitAll('iframe');
     if (finishCurrentSession) {
       await inboxPage.waitAndClick('@finish-session');
+      await Util.sleep(3); // give frames time to reload, else we will be manipulating them while reloading -> Error: waitForFunction failed: frame got detached.
     }
     const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
     await pgpBlockFrame.waitAll('@pgp-block-content');
@@ -322,6 +322,8 @@ export class InboxPageRecipe extends PageRecipe {
     const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
     await inboxPage.waitAll('iframe');
     await inboxPage.waitAndClick('@finish-session');
+    await inboxPage.waitTillGone('@finish-session');
+    await Util.sleep(3); // give frames time to reload, else we will be manipulating them while reloading -> Error: waitForFunction failed: frame got detached.
     const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
     await pgpBlockFrame.waitAll('@pgp-block-content');
     await pgpBlockFrame.waitForSelTestState('ready');
