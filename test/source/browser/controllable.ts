@@ -188,7 +188,7 @@ abstract class ControllableBase {
     return await this.target.evaluate((s) => document.querySelector(s).checked, this.selector(selector));
   }
 
-  // Get the current computed outer height (including padding, border, and optionally margin)
+  // Get the current computed outer height (including padding, border)
   public getOuterHeight = async (selector: string): Promise<string> => {
     return await this.target.evaluate((s) => {
       const computedStyle = getComputedStyle(document.querySelector(s));
