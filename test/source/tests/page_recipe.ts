@@ -9,14 +9,14 @@ import { FlowCryptApi } from './api';
 import { EvaluateFn, ElementHandle } from 'puppeteer';
 import { totp as produce2faToken } from 'speakeasy';
 
-type ModalOpts = { contentToCheck?: string, clickOn?: 'confirm' | 'cancel', getTriggeredPage?: boolean };
+type ModalOpts = { contentToCheck?: string, clickOn?: 'confirm' | 'cancel', getTriggeredPage?: boolean, timeout?: number };
 type ModalType = 'confirm' | 'error' | 'info' | 'warning';
 
 export class PageRecipe {
   public static getElementPropertyJson = async (elem: ElementHandle<Element>, property: string) => await (await elem.getProperty(property)).jsonValue() as string;
 
-  public static waitForModalAndRespond = async (controllable: Controllable, type: ModalType, { contentToCheck, clickOn }: ModalOpts) => {
-    const modalContainer = await controllable.waitAny(`.ui-modal-${type}`);
+  public static waitForModalAndRespond = async (controllable: Controllable, type: ModalType, { contentToCheck, clickOn, timeout }: ModalOpts) => {
+    const modalContainer = await controllable.waitAny(`.ui-modal-${type}`, { timeout });
     if (typeof contentToCheck !== 'undefined') {
       const contentElement = await modalContainer.$('#swal2-content');
       expect(await PageRecipe.getElementPropertyJson(contentElement!, 'textContent')).to.include(contentToCheck);

@@ -371,7 +371,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'flowcrypt.test.key.new.manual@gmail.com');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Own Key Expired');
       await composePage.waitAndClick('@action-send');
-      await ComposePageRecipe.waitForModalAndRespond(composePage, 'error', { contentToCheck: 'your own Private Key is expired' });
+      await ComposePageRecipe.waitForModalAndRespond(composePage, 'error', { contentToCheck: 'your own Private Key is expired', timeout: 40 });
       const settingsWithUpdatePrvForm = await browser.newPageTriggeredBy(t, () => composePage.waitAndClick('#action_update_prv'));
       const urls = await settingsWithUpdatePrvForm.getFramesUrls(['my_key_update.htm']);
       await composePage.close();
