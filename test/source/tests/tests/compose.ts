@@ -418,20 +418,17 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
       // first search, did not yet receive contacts scope
       await composePage.type('@input-to', 'contact');
-      let contacts = await composePage.waitAny('@container-contacts');
-      expect(await PageRecipe.getElementPropertyJson((await contacts.$('ul li:first-child'))!, 'textContent')).to.eq('No Contacts Found');
+      await expectFirstContactResultEqual(composePage, 'No Contacts Found');
       // allow contacts scope, and expect that it will find a contact
       const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.waitAndClick('@action-auth-with-contacts-scope'), 'test.ci.compose@org.flowcrypt.com');
       await OauthPageRecipe.google(t, oauthPopup, 'test.ci.compose@org.flowcrypt.com', 'approve');
-      contacts = await composePage.waitAny('@container-contacts');
-      expect(await PageRecipe.getElementPropertyJson((await contacts.$('ul li:first-child'))!, 'textContent')).to.eq('contact.test@flowcrypt.com');
+      await expectFirstContactResultEqual(composePage, 'contact.test@flowcrypt.com');
       // re-load the compose window, expect that it remembers scope was connected, and remembers the contact
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
       await composePage.type('@input-to', 'contact');
-      contacts = await composePage.waitAny('@container-contacts');
+      await expectFirstContactResultEqual(composePage, 'contact.test@flowcrypt.com');
       await composePage.notPresent('@action-auth-with-contacts-scope');
-      expect(await PageRecipe.getElementPropertyJson((await contacts.$('ul li:first-child'))!, 'textContent')).to.eq('contact.test@flowcrypt.com');
     }));
 
     ava.default('[compose[global:compatibility] - standalone - different send from, new signed message, verification in mock', testWithNewBrowser(async (t, browser) => {
@@ -530,4 +527,13 @@ const expectRecipientElements = async (controllable: ControllablePage, expected:
       }
     }
   }
+};
+
+const expectFirstContactResultEqual = async (composePage: ControllablePage, string: string) => {
+  await composePage.waitAny('@container-contacts');
+  await Util.sleep(0.5);
+  await composePage.waitTillGone('@container-contacts-loading');
+  await Util.sleep(0.5);
+  const contacts = await composePage.waitAny('@container-contacts');
+  expect(await PageRecipe.getElementPropertyJson((await contacts.$('ul li:first-child'))!, 'textContent')).to.eq(string);
 };
