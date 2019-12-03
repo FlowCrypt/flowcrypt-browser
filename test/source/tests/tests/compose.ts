@@ -310,7 +310,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const recipient = await expandContainer.$('.email_preview span');
       expect(await PageRecipe.getElementPropertyJson(recipient!, 'className')).to.include('expired');
       await composePage.waitAndClick('@action-send');
-      await PageRecipe.waitForModalAndRespond(composePage, 'confirm', { contentToCheck: 'The public key of one of your recipients is expired.', clickOn: 'confirm' });
+      await PageRecipe.waitForModalAndRespond(composePage, 'confirm', { contentToCheck: 'The public key of one of your recipients is expired.', clickOn: 'confirm', timeout: 40 });
       await composePage.waitForSelTestState('closed', 20); // succesfully sent
       await composePage.close();
     }));
