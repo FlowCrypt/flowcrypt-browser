@@ -47,7 +47,7 @@ export class ComposerQuote extends ComposerComponent {
       this.composer.S.cached('icon_show_prev_msg').removeClass('progress');
     }
     if (!this.messageToReplyOrForward && msgId) {
-      this.composer.S.cached('icon_show_prev_msg').click(Ui.event.handle(async el => {
+      this.composer.S.cached('icon_show_prev_msg').click(Ui.event.handle(async () => {
         this.composer.S.cached('icon_show_prev_msg').unbind('click');
         await this.addTripleDotQuoteExpandBtn(msgId, method);
         if (this.messageToReplyOrForward) {
@@ -57,7 +57,7 @@ export class ComposerQuote extends ComposerComponent {
       return;
     }
     let safePreviousMsg = '';
-    if (footer) {
+    if (footer && !this.urlParams.draftId) {
       this.footerHTML = this.createFooterHTML(footer);
       safePreviousMsg += this.footerHTML;
     }
@@ -83,14 +83,6 @@ export class ComposerQuote extends ComposerComponent {
     } else {
       this.msgExpandingHTMLPart = safePreviousMsg;
       this.setExpandingTextAfterClick();
-    }
-  }
-
-  public setFooter = (footer: string) => {
-    const footerHTML = this.createFooterHTML(footer);
-    if ((this.msgExpandingHTMLPart && this.msgExpandingHTMLPart.includes(footerHTML)) ||
-      this.composer.S.cached('input_text').html().includes(footerHTML)) {
-      this.footerHTML = footerHTML;
     }
   }
 
