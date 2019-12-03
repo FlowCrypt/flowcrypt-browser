@@ -19,7 +19,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
-    ava.default.only('compose[global:compatibility] - toggle minimized state by clicking compose window header', testWithNewBrowser(async (t, browser) => {
+    ava.default('compose[global:compatibility] - toggle minimized state by clicking compose window header', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com`));
       await inboxPage.waitAndClick('@secure-compose');
