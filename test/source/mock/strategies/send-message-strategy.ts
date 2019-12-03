@@ -1,9 +1,22 @@
+import { Data } from './../data';
 import { UnsuportableStrategyError, ITestMsgStrategy } from './strategy-base.js';
 import { ParsedMail, AddressObject } from 'mailparser';
 import { HttpClientErr } from '../api.js';
-import { PgpMsg, Pgp } from "../../core/pgp.js";
+import { PgpMsg } from "../../core/pgp.js";
 import { Buf } from '../../core/buf.js';
 import { Config } from '../../util/index.js';
+
+class PwdEncryptedMessageTestStrategy implements ITestMsgStrategy {
+  async test(mimeMsg: ParsedMail) {
+    if (!mimeMsg.text.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]{10}/)) {
+      throw new HttpClientErr(`Error: cannot find pwd encrypted link`);
+    }
+    if (!mimeMsg.text.includes('Follow this link to open it')) {
+      throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
+    }
+    new Data(mimeMsg.from.value[0].address).storeSentMessage(mimeMsg);
+  }
+}
 
 class MessageWithFooterTestStrategy implements ITestMsgStrategy {
   private readonly footer = 'The best footer ever!';
@@ -105,6 +118,8 @@ export class TestBySubjectStrategyContext {
       this.strategy = new SignedMessageTestStrategy();
     } else if (subject.includes('Test Footer (Mock Test)')) {
       this.strategy = new MessageWithFooterTestStrategy();
+    } else if (subject.includes('PWD encrypted message')) {
+      this.strategy = new PwdEncryptedMessageTestStrategy();
     } else {
       throw new UnsuportableStrategyError(`There isn't any strategy for this subject: ${subject}`);
     }

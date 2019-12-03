@@ -456,7 +456,7 @@ export class ComposePageRecipe extends PageRecipe {
 
   public static sendAndClose = async (composePage: ControllablePage, password?: string | undefined, timeout = 60) => {
     if (password) {
-      await composePage.waitAndType('@input-password', 'test-pass');
+      await composePage.waitAndType('@input-password', password);
     }
     await composePage.waitAndClick('@action-send', { delay: 1 });
     await Promise.race([
@@ -536,7 +536,7 @@ export class OauthPageRecipe extends PageRecipe {
         }
         const token = produce2faToken({ secret: auth.secret_2fa, encoding: 'base32' });
         await oauthPage.waitAndType(selectors.secret_2fa, token);
-        await oauthPage.waitAndClick('#totpNext', { delay: 2 });
+        await oauthPage.waitAndClick('#totpNext', { delay: 2, confirmGone: true });
       }
       await oauthPage.waitAll('#submit_approve_access'); // if succeeds, we are logged in and presented with approve/deny choice
       // since we are successfully logged in, we may save cookies to keep them fresh

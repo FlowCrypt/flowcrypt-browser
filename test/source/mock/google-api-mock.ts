@@ -69,7 +69,7 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
               { gd$email: [{ address: 'contact.test@flowcrypt.com', primary: "true" }] }
             ]
           }
-        }
+        };
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
@@ -157,7 +157,7 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
               throw e;
             }
           }
-          return { id: 'mockfakesend', labelIds: ['SENT'], threadId: parseResult.threadId };
+          return { id: 'fakesendid', labelIds: ['SENT'], threadId: parseResult.threadId };
         }
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);

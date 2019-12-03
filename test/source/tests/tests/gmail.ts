@@ -113,5 +113,4 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
     // log('gmail:tests:secure compose button (inbox.google.com)');
 
   }
-
 };
