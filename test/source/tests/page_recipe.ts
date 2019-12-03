@@ -1,5 +1,4 @@
 import { TestUrls } from './../browser/test_urls';
-
 import { BrowserHandle, ControllablePage, ControllableFrame, Controllable } from '../browser';
 import { Util, Config } from '../util';
 import { expect } from 'chai';
@@ -322,6 +321,8 @@ export class InboxPageRecipe extends PageRecipe {
     const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
     await inboxPage.waitAll('iframe');
     await inboxPage.waitAndClick('@finish-session');
+    await inboxPage.waitTillGone('@finish-session');
+    await Util.sleep(3); // give frames time to reload, else we will be manipulating them while reloading -> Error: waitForFunction failed: frame got detached.
     const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
     await pgpBlockFrame.waitAll('@pgp-block-content');
     await pgpBlockFrame.waitForSelTestState('ready');
