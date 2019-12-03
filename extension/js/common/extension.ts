@@ -36,7 +36,6 @@ export namespace Bm {
   export type CloseReplyMessage = { frameId: string, threadId: string };
   export type ReinsertReplyBox = { replyMsgId: string };
   export type AddPubkeyDialog = { emails: string[] };
-  export type SetFooter = { email: string, footer: string | undefined };
   export type Reload = { advanced?: boolean };
   export type Redirect = { location: string };
   export type OpenGoogleAuthDialog = { acctEmail?: string, scopes?: string[] };
@@ -89,7 +88,7 @@ export namespace Bm {
 
   export type AnyRequest = PassphraseEntry | StripeResult | OpenPage | OpenGoogleAuthDialog | Redirect | Reload |
     AddPubkeyDialog | ReinsertReplyBox | CloseReplyMessage | ScrollToElement | SubscribeDialog | RenderPublicKeys | NotificationShowAuthPopupNeeded |
-    NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass | SetFooter | ReconnectAcctAuthPopup |
+    NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass | ReconnectAcctAuthPopup |
     PgpKeyDetails | Db | StoreSessionSet | StoreSessionGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
     PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | Ajax | FocusFrame;
 

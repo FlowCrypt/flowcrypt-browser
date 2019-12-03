@@ -46,12 +46,7 @@ export class ComposerRender extends ComposerComponent {
     }
     if (this.urlParams.draftId) {
       await this.composer.draft.initialDraftLoad(this.urlParams.draftId);
-      const footer = this.composer.sender.getFooter();
-      if (footer) {
-        this.composer.quote.setFooter(footer);
-      } else {
-        this.composer.S.cached('icon_show_prev_msg').remove();
-      }
+      this.composer.S.cached('icon_show_prev_msg').remove(); // if it's draft a footer should already be there
     } else {
       if (this.urlParams.isReplyBox) {
         const recipients: Recipients = { to: this.urlParams.to, cc: this.urlParams.cc, bcc: this.urlParams.bcc };
