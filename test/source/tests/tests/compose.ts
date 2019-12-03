@@ -25,7 +25,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await inboxPage.waitAll('iframe');
       const composeFrame = await inboxPage.getFrame(['compose.htm']);
       const initialComposeFrameHeight = await inboxPage.getOuterHeight('iframe');
-      composeFrame.waitAll('#section_header');
+      await composeFrame.waitAll('#section_header');
       const composeFrameHeaderHeight = await composeFrame.getOuterHeight('#section_header');
       // mimimize compose frame
       await composeFrame.waitAndClick('@header-title');
