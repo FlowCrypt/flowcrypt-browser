@@ -77,7 +77,7 @@ export class SetupPageRecipe extends PageRecipe {
     await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
     await settingsPage.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your pass phrase');
     if (backup === 'none') {
-      await settingsPage.waitAll('@input-backup-step3manual-no-backup', { timeout: 60 });
+      await settingsPage.waitAll('@input-backup-step3manual-no-backup', { timeout: 90 });
       await settingsPage.waitAndClick('@input-backup-step3manual-no-backup');
     } else if (backup === 'email') {
       throw new Error('tests.setup_manual_create options.backup=email not implemented');
