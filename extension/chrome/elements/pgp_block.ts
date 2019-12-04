@@ -21,7 +21,7 @@ import { Keyserver } from '../../js/common/api/keyserver.js';
 import { Settings } from '../../js/common/settings.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
-import { PgpBlockViewAttachmentsModule } from './pgp_block_attachmens_module';
+import { PgpBlockViewAttachmentsModule } from './pgp_block_attachmens_module.js';
 
 export class PgpBlockView extends View { // tslint:disable-line:variable-name
 
