@@ -2,18 +2,18 @@
 
 'use strict';
 
-import { PgpBlockView } from './pgp_block.js';
-import { Store } from '../../js/common/platform/store.js';
-import { BrowserMsg } from '../../js/common/extension.js';
-import { Ui } from '../../js/common/browser.js';
-import { Api } from '../../js/common/api/api.js';
-import { Xss } from '../../js/common/platform/xss.js';
-import { Backend } from '../../js/common/api/backend.js';
-import { Lang } from '../../js/common/lang.js';
-import { Google, GmailResponseFormat } from '../../js/common/api/google.js';
-import { Buf } from '../../js/common/core/buf.js';
-import { Mime } from '../../js/common/core/mime.js';
-import { DecryptErrTypes } from '../../js/common/core/pgp.js';
+import { PgpBlockView } from '../pgp_block.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { BrowserMsg } from '../../../js/common/extension.js';
+import { Ui } from '../../../js/common/browser.js';
+import { Api } from '../../../js/common/api/api.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { Backend } from '../../../js/common/api/backend.js';
+import { Lang } from '../../../js/common/lang.js';
+import { Google, GmailResponseFormat } from '../../../js/common/api/google.js';
+import { Buf } from '../../../js/common/core/buf.js';
+import { Mime } from '../../../js/common/core/mime.js';
+import { DecryptErrTypes } from '../../../js/common/core/pgp.js';
 
 export class PgpBlockViewDecryptModule {
 

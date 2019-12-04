@@ -3,22 +3,21 @@
 'use strict';
 
 import { Store } from '../../js/common/platform/store.js';
-import { Str } from '../../js/common/core/common.js';
+import { Str, Url } from '../../js/common/core/common.js';
 import { Ui } from '../../js/common/browser.js';
 import { Lang } from '../../js/common/lang.js';
 import { Buf } from '../../js/common/core/buf.js';
 import { Assert } from '../../js/common/assert.js';
-import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
-import { PgpBlockViewAttachmentsModule } from './pgp_block_attachmens_module.js';
-import { PgpBlockViewSignatureModule } from './pgp_block_signature_module.js';
-import { PgpBlockViewPwdEncryptedMsgModule } from './pgp_block_pwd_encrypted_msg_module.js';
-import { PgpBlockViewQuoteModule } from './pgp_block_quote_module.js';
-import { PgpBlockViewErrorModule } from './pgp_block_error_module.js';
-import { PgpBlockViewRenderModule } from './pgp_block_render_module.js';
-import { PgpBlockViewDecryptModule } from './pgp_block_decrypt_module.js';
+import { PgpBlockViewAttachmentsModule } from './pgp_block_modules/pgp_block_attachmens_module.js';
+import { PgpBlockViewSignatureModule } from './pgp_block_modules/pgp_block_signature_module.js';
+import { PgpBlockViewPwdEncryptedMsgModule } from './pgp_block_modules/pgp_block_pwd_encrypted_msg_module.js';
+import { PgpBlockViewQuoteModule } from './pgp_block_modules/pgp_block_quote_module.js';
+import { PgpBlockViewErrorModule } from './pgp_block_modules/pgp_block_error_module.js';
+import { PgpBlockViewRenderModule } from './pgp_block_modules/pgp_block_render_module.js';
+import { PgpBlockViewDecryptModule } from './pgp_block_modules/pgp_block_decrypt_module.js';
 
-export class PgpBlockView extends View { // tslint:disable-line:variable-name
+export class PgpBlockView extends View {
 
   public readonly acctEmail: string;
   public readonly parentTabId: string;

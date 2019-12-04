@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { PgpBlockView } from './pgp_block.js';
-import { Xss } from '../../js/common/platform/xss.js';
+import { PgpBlockView } from '../pgp_block.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 export class PgpBlockViewQuoteModule {
 

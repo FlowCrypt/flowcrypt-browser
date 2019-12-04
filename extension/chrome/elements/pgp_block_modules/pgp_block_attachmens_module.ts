@@ -2,14 +2,14 @@
 
 'use strict';
 
-import { Att } from '../../js/common/core/att.js';
-import { PgpBlockView } from './pgp_block';
-import { Store } from '../../js/common/platform/store.js';
-import { BrowserMsg } from '../../js/common/extension.js';
-import { Browser, Ui } from '../../js/common/browser.js';
-import { Xss } from '../../js/common/platform/xss.js';
-import { Str } from '../../js/common/core/common.js';
-import { Api } from '../../js/common/api/api.js';
+import { Att } from '../../../js/common/core/att.js';
+import { PgpBlockView } from '../pgp_block';
+import { Store } from '../../../js/common/platform/store.js';
+import { BrowserMsg } from '../../../js/common/extension.js';
+import { Browser, Ui } from '../../../js/common/browser.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { Str } from '../../../js/common/core/common.js';
+import { Api } from '../../../js/common/api/api.js';
 
 export class PgpBlockViewAttachmentsModule {
 
