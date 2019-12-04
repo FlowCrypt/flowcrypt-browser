@@ -29,10 +29,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const composeFrameHeaderHeight = await composeFrame.getOuterHeight('#section_header');
       // mimimize compose frame
       await composeFrame.waitAndClick('@header-title');
-      expect(await inboxPage.getOuterHeight('iframe')).to.eq(composeFrameHeaderHeight)
+      expect(await inboxPage.getOuterHeight('iframe')).to.eq(composeFrameHeaderHeight);
       // restore compose frame
       await composeFrame.waitAndClick('@header-title');
-      expect(await inboxPage.getOuterHeight('iframe')).to.eq(initialComposeFrameHeight)
+      expect(await inboxPage.getOuterHeight('iframe')).to.eq(initialComposeFrameHeight);
     }));
 
     ava.default('[standalone] compose - signed with entered pass phrase + will remember pass phrase in session', testWithNewBrowser(async (t, browser) => {
