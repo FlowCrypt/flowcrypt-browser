@@ -28,8 +28,7 @@ export class PgpBlockView extends View {
   public readonly senderEmail: string | undefined;
   public readonly msgId: string | undefined;
   public readonly encryptedMsgUrlParam: Buf | undefined;
-
-  public signature: string | boolean | undefined;
+  public signature: string | boolean | undefined; // when supplied with "true", decryptModule will replace this with actual signature data
 
   public readonly attachmentsModule: PgpBlockViewAttachmentsModule;
   public readonly signatureModule: PgpBlockViewSignatureModule;
