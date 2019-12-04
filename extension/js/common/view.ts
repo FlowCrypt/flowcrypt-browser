@@ -30,7 +30,7 @@ export abstract class View {
     Xss.sanitizeRender($('body'), `${Api.err.eli5(e)} ${Ui.retryLink()}`);
   }
 
-  protected setHandler(cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) {
+  public setHandler(cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) {
     return Ui.event.handle(cb, errHandlers, this);
   }
 
