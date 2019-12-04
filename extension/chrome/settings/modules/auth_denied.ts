@@ -2,50 +2,55 @@
 
 'use strict';
 
-import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Ui } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { GoogleAuth } from '../../../js/common/api/google.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Url } from '../../../js/common/core/common.js';
+import { View } from '../../../js/common/view.js';
 
-Catch.try(async () => {
+View.run(class AuthDeniedView extends View {
+  private readonly acctEmail: string | undefined;
+  private readonly parentTabId: string;
+  private readonly emailProvider: string;
 
-  const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'emailProvider']);
-  const acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const emailProvider = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'emailProvider') || 'gmail';
+  constructor() {
+    super();
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'emailProvider']);
+    this.acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
+    this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+    this.emailProvider = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'emailProvider') || 'gmail';
+  }
 
-  const renderSetupDone = (setupDone: boolean) => {
+  async render() {
+    if (!this.acctEmail) {
+      this.renderSetupDone(false);
+    } else {
+      const { setup_done } = await Store.getAcct(this.acctEmail!, ['setup_done']);
+      this.renderSetupDone(!!setup_done);
+    }
+    $('.hidable').not(`.${this.emailProvider}`).css('display', 'none');
+    if (this.emailProvider === 'outlook') {
+      $('.permission_send').text('Manage drafts and send emails');
+      $('.permission_read').text('Read messages');
+    } else { // gmail
+      $('.permission_send').text('Manage drafts and send emails');
+      $('.permission_read').text('Read messages');
+    }
+  }
+
+  setHandlers() {
+    $('.action_auth_proceed').click(this.setHandler(() => BrowserMsg.send.openGoogleAuthDialog(this.parentTabId, { acctEmail: this.acctEmail })));
+    $('.auth_action_limited').click(this.setHandler(() => BrowserMsg.send.openGoogleAuthDialog(this.parentTabId,
+      { acctEmail: this.acctEmail, scopes: GoogleAuth.defaultScopes('compose_only') })));
+    $('.close_page').click(this.setHandler(() => BrowserMsg.send.closePage(this.parentTabId)));
+  }
+
+  private renderSetupDone(setupDone: boolean) {
     if (setupDone) {
       $('.show_if_setup_done').css('display', 'block');
     } else {
       $('.show_if_setup_not_done').css('display', 'block');
     }
-  };
-
-  if (!acctEmail) {
-    renderSetupDone(false);
-  } else {
-    const { setup_done } = await Store.getAcct(acctEmail!, ['setup_done']);
-    renderSetupDone(setup_done || false);
   }
-
-  $('.hidable').not(`.${emailProvider}`).css('display', 'none');
-
-  if (emailProvider === 'outlook') {
-    $('.permission_send').text('Manage drafts and send emails');
-    $('.permission_read').text('Read messages');
-  } else { // gmail
-    $('.permission_send').text('Manage drafts and send emails');
-    $('.permission_read').text('Read messages');
-  }
-
-  $('.action_auth_proceed').click(Ui.event.handle(() => BrowserMsg.send.openGoogleAuthDialog(parentTabId, { acctEmail })));
-
-  $('.auth_action_limited').click(Ui.event.handle(() => BrowserMsg.send.openGoogleAuthDialog(parentTabId, { acctEmail, scopes: GoogleAuth.defaultScopes('compose_only') })));
-
-  $('.close_page').click(Ui.event.handle(() => BrowserMsg.send.closePage(parentTabId)));
-
-})();
+});
