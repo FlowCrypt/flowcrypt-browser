@@ -9,7 +9,7 @@ import { Att } from '../../js/common/core/att.js';
 import { Ui } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from '../../js/common/lang.js';
-import { Api, AuthError } from '../../js/common/api/api.js';
+import { Api } from '../../js/common/api/api.js';
 import { VerifyRes, DecryptErrTypes, FormatError, PgpMsg } from '../../js/common/core/pgp.js';
 import { Mime, MsgBlock } from '../../js/common/core/mime.js';
 import { Google, GmailResponseFormat } from '../../js/common/api/google.js';
@@ -17,20 +17,20 @@ import { Buf } from '../../js/common/core/buf.js';
 import { BackendRes, Backend } from '../../js/common/api/backend.js';
 import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';
-import { Settings } from '../../js/common/settings.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { PgpBlockViewAttachmentsModule } from './pgp_block_attachmens_module.js';
 import { PgpBlockViewSignatureModule } from './pgp_block_signature_module.js';
+import { PgpBlockViewExpirationModule } from './pgp_block_expiration_module.js';
 
 export class PgpBlockView extends View { // tslint:disable-line:variable-name
 
   public readonly acctEmail: string;
-  private readonly parentTabId: string;
+  public readonly parentTabId: string;
   private readonly frameId: string;
   private readonly hasChallengePassword: boolean;
-  private readonly isOutgoing: boolean;
-  private readonly short: string | undefined;
+  public readonly isOutgoing: boolean;
+  public readonly short: string | undefined;
   public readonly senderEmail: string | undefined;
   private readonly msgId: string | undefined;
   private readonly encryptedMsgUrlParam: Buf | undefined;
@@ -42,12 +42,12 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
   private includedAtts: Att[] = [];
   private canReadEmails: undefined | boolean;
   private passwordMsgLinkRes: BackendRes.FcLinkMsg | undefined;
-  private adminCodes: string[] | undefined;
   private userEnteredMsgPassword: string | undefined;
   public doNotSetStateAsReadyYet = false;
 
   public readonly attachmentsModule: PgpBlockViewAttachmentsModule;
   public readonly signatureModule: PgpBlockViewSignatureModule;
+  public readonly expirationModule: PgpBlockViewExpirationModule;
 
   constructor() {
     super();
@@ -67,6 +67,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
     // modules
     this.attachmentsModule = new PgpBlockViewAttachmentsModule(this);
     this.signatureModule = new PgpBlockViewSignatureModule(this);
+    this.expirationModule = new PgpBlockViewExpirationModule(this);
   }
 
   async render() {
@@ -203,70 +204,6 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
     return pwd;
   }
 
-  private renderFutureExpiration(date: string) {
-    let btns = '';
-    if (this.adminCodes && this.adminCodes.length) {
-      btns += ' <a href="#" class="extend_expiration">extend</a>';
-    }
-    if (this.isOutgoing) {
-      btns += ' <a href="#" class="expire_settings">settings</a>';
-    }
-    Xss.sanitizeAppend('#pgp_block', Ui.e('div', { class: 'future_expiration', html: `This message will expire on ${Str.datetimeToDate(date)}. ${btns}` }));
-    $('.expire_settings').click(this.setHandler(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/security.htm' })));
-    $('.extend_expiration').click(this.setHandler(target => this.renderMsgExpirationRenewOptions(target)));
-  }
-
-  private async recoverStoredAdminCodes() {
-    const storage = await Store.getGlobal(['admin_codes']);
-    if (this.short && storage.admin_codes && storage.admin_codes[this.short] && storage.admin_codes[this.short].codes) {
-      this.adminCodes = storage.admin_codes[this.short].codes;
-    }
-  }
-
-  private async renderMsgExpirationRenewOptions(target: HTMLElement) {
-    const parent = $(target).parent();
-    const subscription = await Store.subscription(this.acctEmail);
-    if (subscription.level && subscription.active) {
-      const btns = `<a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a>`;
-      Xss.sanitizeRender(parent, `<div style="font-family: monospace;">Extend message expiration: ${btns}</div>`);
-      const element = await Ui.event.clicked('.do_extend');
-      await this.handleExtendMsgExpirationClicked(element);
-    } else {
-      if (subscription.level && !subscription.active && subscription.method === 'trial') {
-        await Ui.modal.warning('Your trial has ended. Please renew your subscription to proceed.');
-      } else {
-        await Ui.modal.info('FlowCrypt Advanced users can choose expiration of password encrypted messages. Try it free.');
-      }
-      BrowserMsg.send.subscribeDialog(this.parentTabId, {});
-    }
-  }
-
-  private async handleExtendMsgExpirationClicked(self: HTMLElement) {
-    const nDays = Number($(self).attr('href')!.replace('#', ''));
-    Xss.sanitizeRender($(self).parent(), `Updating..${Ui.spinner('green')}`);
-    try {
-      const fcAuth = await Store.authInfo(this.acctEmail);
-      if (!fcAuth) {
-        throw new AuthError();
-      }
-      const r = await Backend.messageExpiration(fcAuth, this.adminCodes || [], nDays);
-      if (r.updated) { // todo - make backend return http error code when not updated, and skip this if/else
-        window.location.reload();
-      } else {
-        throw r;
-      }
-    } catch (e) {
-      if (Api.err.isAuthErr(e)) {
-        Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail);
-      } else {
-        Catch.report('error when extending message expiration', e);
-      }
-      Xss.sanitizeRender($(self).parent(), 'Error updating expiration. <a href="#" class="retry_expiration_change">Click here to try again</a>').addClass('bad');
-      const el = await Ui.event.clicked('.retry_expiration_change');
-      await this.handleExtendMsgExpirationClicked(el);
-    }
-  }
-
   private async decideDecryptedContentFormattingAndRender(decryptedBytes: Buf, isEncrypted: boolean, sigResult: VerifyRes | undefined, plainSubject?: string) {
     this.setFrameColor(isEncrypted ? 'green' : 'gray');
     this.signatureModule.renderPgpSignatureCheckResult(sigResult);
@@ -314,7 +251,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
       this.attachmentsModule.renderInnerAtts(renderableAtts);
     }
     if (this.passwordMsgLinkRes && this.passwordMsgLinkRes.expire) {
-      this.renderFutureExpiration(this.passwordMsgLinkRes.expire);
+      this.expirationModule.renderFutureExpiration(this.passwordMsgLinkRes.expire);
     }
     this.resizePgpBlockFrame();
     if (!this.doNotSetStateAsReadyYet) { // in case async tasks are still being worked at
@@ -404,7 +341,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
       let expirationMsg = Lang.pgpBlock.msgExpiredOn + Str.datetimeToDate(linkRes.expire) + '. ' + Lang.pgpBlock.msgsDontExpire + '\n\n';
       if (linkRes.deleted) {
         expirationMsg += Lang.pgpBlock.msgDestroyed;
-      } else if (this.isOutgoing && this.adminCodes) {
+      } else if (this.isOutgoing && this.expirationModule.adminCodes) {
         expirationMsg += '<div class="button gray2 extend_expiration">renew message</div>';
       } else if (!this.isOutgoing) {
         expirationMsg += Lang.pgpBlock.askSenderRenew;
@@ -413,7 +350,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
       await this.renderErr(expirationMsg, undefined);
       this.setFrameColor('gray');
       $('.action_security').click(this.setHandler(() => BrowserMsg.send.bg.settings({ page: '/chrome/settings/modules/security.htm', acctEmail: this.acctEmail })));
-      $('.extend_expiration').click(this.setHandler(this.renderMsgExpirationRenewOptions));
+      $('.extend_expiration').click(this.setHandler(this.expirationModule.renderMsgExpirationRenewOptions));
     } else if (!linkRes.url) {
       await this.renderErr(Lang.pgpBlock.cannotLocate + Lang.pgpBlock.brokenLink, undefined);
     } else {
@@ -515,7 +452,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
         await this.decryptAndRender(this.encryptedMsgUrlParam);
       } else if (!this.encryptedMsgUrlParam && this.hasChallengePassword && this.short) { // need to fetch the message from FlowCrypt API
         this.renderText('Loading message...');
-        await this.recoverStoredAdminCodes();
+        await this.expirationModule.recoverStoredAdminCodes();
         const msgLinkRes = await Backend.linkMessage(this.short);
         this.passwordMsgLinkRes = msgLinkRes;
         if (msgLinkRes.url) {
