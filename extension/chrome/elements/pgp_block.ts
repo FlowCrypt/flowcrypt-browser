@@ -55,8 +55,8 @@ View.run(class PgpBlockView extends View {
     this.hasChallengePassword = uncheckedUrlParams.hasPassword === true;
     this.isOutgoing = uncheckedUrlParams.isOutgoing === true;
     this.short = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'short');
-    let senderEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'senderEmail');
-    senderEmail = senderEmail ? Str.parseEmail(senderEmail).email : undefined;
+    this.senderEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'senderEmail');
+    this.senderEmail = this.senderEmail ? Str.parseEmail(this.senderEmail).email : undefined;
     this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
     this.encryptedMsgUrlParam = uncheckedUrlParams.message ? Buf.fromUtfStr(Assert.urlParamRequire.string(uncheckedUrlParams, 'message')) : undefined;
     this.signature = uncheckedUrlParams.signature === true ? true : (uncheckedUrlParams.signature ? String(uncheckedUrlParams.signature) : undefined);
@@ -305,7 +305,7 @@ View.run(class PgpBlockView extends View {
   private renderPgpSignatureCheckResult(signature: VerifyRes | undefined) {
     if (signature) {
       const signerEmail = signature.contact ? signature.contact.name || this.senderEmail : this.senderEmail;
-      $('#pgp_signature > .cursive > span').text(String(signerEmail) || 'Unknown Signer');
+      $('#pgp_signature > .cursive > span').text(signerEmail || 'Unknown Signer');
       if (signature.signer && !signature.contact) {
         this.doNotSetStateAsReadyYet = true; // so that body state is not marked as ready too soon - automated tests need to know when to check results
         this.renderPgpSignatureCheckMissingPubkeyOptions(signature.signer, this.senderEmail).then(() => { // async so that it doesn't block rendering
