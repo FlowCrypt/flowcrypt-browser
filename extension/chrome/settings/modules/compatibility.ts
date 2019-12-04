@@ -161,10 +161,7 @@ View.run(class CompatibilityView extends View {
       });
       output.push(`Encryption with key was successful`);
       if (key.isPrivate() && key.isFullyDecrypted()) {
-        const decryptedMsg = await openpgp.decrypt({
-          message: await openpgp.message.readArmored(encryptedMsg.data),
-          privateKeys: key,
-        });
+        const decryptedMsg = await openpgp.decrypt({ message: await openpgp.message.readArmored(encryptedMsg.data), privateKeys: key });
         output.push(`Decryption with key ${decryptedMsg.data === this.encryptionText ? 'succeeded' : 'failed!'}`);
       } else {
         output.push(`Skipping decryption because isPrivate:${key.isPrivate()} isFullyDecrypted:${key.isFullyDecrypted()}`);
