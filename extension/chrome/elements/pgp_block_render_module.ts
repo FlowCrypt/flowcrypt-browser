@@ -10,9 +10,6 @@ import { Buf } from '../../js/common/core/buf.js';
 import { VerifyRes, PgpMsg } from '../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Ui } from '../../js/common/browser.js';
-import { Lang } from '../../js/common/lang.js';
-import { Str } from '../../js/common/core/common.js';
-import { BackendRes } from '../../js/common/api/backend.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Catch } from '../../js/common/platform/catch.js';
 
@@ -150,47 +147,12 @@ export class PgpBlockViewRenderModule {
     if (renderableAtts.length) {
       this.view.attachmentsModule.renderInnerAtts(renderableAtts);
     }
-    if (this.view.passwordMsgLinkRes && this.view.passwordMsgLinkRes.expire) {
-      this.view.expirationModule.renderFutureExpiration(this.view.passwordMsgLinkRes.expire);
+    if (this.view.pwdEncryptedMsgModule.passwordMsgLinkRes && this.view.pwdEncryptedMsgModule.passwordMsgLinkRes.expire) {
+      this.view.pwdEncryptedMsgModule.renderFutureExpiration(this.view.pwdEncryptedMsgModule.passwordMsgLinkRes.expire);
     }
     this.resizePgpBlockFrame();
     if (!this.doNotSetStateAsReadyYet) { // in case async tasks are still being worked at
       Ui.setTestState('ready');
-    }
-  }
-
-  public async renderPasswordPromptAndAwaitEntry(attempt: 'first' | 'retry'): Promise<string> {
-    let prompt = `<p>${attempt === 'first' ? '' : `<span style="color: red; font-weight: bold;">${Lang.pgpBlock.wrongPassword}</span>`}${Lang.pgpBlock.decryptPasswordPrompt}</p>`;
-    const btn = `<div class="button green long decrypt" data-test="action-decrypt-with-password">decrypt message</div>`;
-    prompt += `<p><input id="answer" placeholder="Password" data-test="input-message-password"></p><p>${btn}</p>`;
-    await this.renderContent(prompt, true);
-    Ui.setTestState('ready');
-    await Ui.event.clicked('.button.decrypt');
-    Ui.setTestState('working'); // so that test suite can wait until ready again
-    $(self).text('Opening');
-    await Ui.delay(50); // give browser time to render
-    return String($('#answer').val());
-  }
-
-  public async renderPasswordEncryptedMsgLoadFail(linkRes: BackendRes.FcLinkMsg) {
-    if (linkRes.expired) {
-      let expirationMsg = Lang.pgpBlock.msgExpiredOn + Str.datetimeToDate(linkRes.expire) + '. ' + Lang.pgpBlock.msgsDontExpire + '\n\n';
-      if (linkRes.deleted) {
-        expirationMsg += Lang.pgpBlock.msgDestroyed;
-      } else if (this.view.isOutgoing && this.view.expirationModule.adminCodes) {
-        expirationMsg += '<div class="button gray2 extend_expiration">renew message</div>';
-      } else if (!this.view.isOutgoing) {
-        expirationMsg += Lang.pgpBlock.askSenderRenew;
-      }
-      expirationMsg += '\n\n<div class="button gray2 action_security">security settings</div>';
-      await this.view.errorModule.renderErr(expirationMsg, undefined);
-      this.setFrameColor('gray');
-      $('.action_security').click(this.view.setHandler(() => BrowserMsg.send.bg.settings({ page: '/chrome/settings/modules/security.htm', acctEmail: this.view.acctEmail })));
-      $('.extend_expiration').click(this.view.setHandler(this.view.expirationModule.renderMsgExpirationRenewOptions));
-    } else if (!linkRes.url) {
-      await this.view.errorModule.renderErr(Lang.pgpBlock.cannotLocate + Lang.pgpBlock.brokenLink, undefined);
-    } else {
-      await this.view.errorModule.renderErr(Lang.pgpBlock.cannotLocate + Lang.general.writeMeToFixIt + ' Details:\n\n' + Xss.escape(JSON.stringify(linkRes)), undefined);
     }
   }
 

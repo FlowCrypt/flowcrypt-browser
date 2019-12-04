@@ -12,14 +12,14 @@ import { DecryptErrTypes } from '../../js/common/core/pgp.js';
 import { Mime } from '../../js/common/core/mime.js';
 import { Google, GmailResponseFormat } from '../../js/common/api/google.js';
 import { Buf } from '../../js/common/core/buf.js';
-import { BackendRes, Backend } from '../../js/common/api/backend.js';
+import { Backend } from '../../js/common/api/backend.js';
 import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { PgpBlockViewAttachmentsModule } from './pgp_block_attachmens_module.js';
 import { PgpBlockViewSignatureModule } from './pgp_block_signature_module.js';
-import { PgpBlockViewExpirationModule } from './pgp_block_expiration_module.js';
+import { PgpBlockViewPwdEncryptedMsgModule } from './pgp_block_pwd_encrypted_msg_module.js';
 import { PgpBlockViewQuoteModule } from './pgp_block_quote_module.js';
 import { PgpBlockViewErrorModule } from './pgp_block_error_module.js';
 import { PgpBlockViewRenderModule } from './pgp_block_render_module.js';
@@ -40,12 +40,10 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
 
   public msgFetchedFromApi: false | GmailResponseFormat = false;
   public canReadEmails: undefined | boolean;
-  public passwordMsgLinkRes: BackendRes.FcLinkMsg | undefined;
-  public userEnteredMsgPassword: string | undefined;
 
   public readonly attachmentsModule: PgpBlockViewAttachmentsModule;
   public readonly signatureModule: PgpBlockViewSignatureModule;
-  public readonly expirationModule: PgpBlockViewExpirationModule;
+  public readonly pwdEncryptedMsgModule: PgpBlockViewPwdEncryptedMsgModule;
   public readonly quoteModule: PgpBlockViewQuoteModule;
   public readonly errorModule: PgpBlockViewErrorModule;
   public readonly renderModule: PgpBlockViewRenderModule;
@@ -68,7 +66,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
     // modules
     this.attachmentsModule = new PgpBlockViewAttachmentsModule(this);
     this.signatureModule = new PgpBlockViewSignatureModule(this);
-    this.expirationModule = new PgpBlockViewExpirationModule(this);
+    this.pwdEncryptedMsgModule = new PgpBlockViewPwdEncryptedMsgModule(this);
     this.quoteModule = new PgpBlockViewQuoteModule(this);
     this.errorModule = new PgpBlockViewErrorModule(this);
     this.renderModule = new PgpBlockViewRenderModule(this);
@@ -108,14 +106,14 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
         await this.decryptAndRender(this.encryptedMsgUrlParam);
       } else if (!this.encryptedMsgUrlParam && this.hasChallengePassword && this.short) { // need to fetch the message from FlowCrypt API
         this.renderModule.renderText('Loading message...');
-        await this.expirationModule.recoverStoredAdminCodes();
+        await this.pwdEncryptedMsgModule.recoverStoredAdminCodes();
         const msgLinkRes = await Backend.linkMessage(this.short);
-        this.passwordMsgLinkRes = msgLinkRes;
+        this.pwdEncryptedMsgModule.passwordMsgLinkRes = msgLinkRes;
         if (msgLinkRes.url) {
           const downloaded = await Api.download(msgLinkRes.url);
           await this.decryptAndRender(downloaded);
         } else {
-          await this.renderModule.renderPasswordEncryptedMsgLoadFail(this.passwordMsgLinkRes);
+          await this.pwdEncryptedMsgModule.renderPasswordEncryptedMsgLoadFail(this.pwdEncryptedMsgModule.passwordMsgLinkRes);
         }
       } else {  // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
         if (!this.msgId) {
@@ -146,12 +144,12 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
   private async decryptAndRender(encryptedData: Buf, optionalPwd?: string, plainSubject?: string) {
     if (typeof this.signature !== 'string') {
       const kisWithPp = await Store.keysGetAllWithPp(this.acctEmail);
-      const result = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, msgPwd: await this.getDecryptPwd(optionalPwd) });
+      const result = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, msgPwd: await this.pwdEncryptedMsgModule.getDecryptPwd(optionalPwd) });
       if (typeof result === 'undefined') {
         await this.errorModule.renderErr(Lang.general.restartBrowserAndTryAgain, undefined);
       } else if (result.success) {
         if (this.hasChallengePassword && optionalPwd) {
-          this.userEnteredMsgPassword = optionalPwd;
+          this.pwdEncryptedMsgModule.userEnteredMsgPassword = optionalPwd;
         }
         if (result.success && result.signature && result.signature.contact && !result.signature.match && this.canReadEmails && this.msgFetchedFromApi !== 'raw') {
           console.info(`re-fetching message ${this.msgId} from api because failed signature check: ${!this.msgFetchedFromApi ? 'full' : 'raw'}`);
@@ -182,16 +180,16 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
           await this.errorModule.renderErr(Lang.pgpBlock.notProperlySetUp + this.errorModule.btnHtml('FlowCrypt settings', 'green settings'), undefined);
         } else if (result.error.type === DecryptErrTypes.keyMismatch) {
           if (this.hasChallengePassword && !optionalPwd) {
-            const pwd = await this.renderModule.renderPasswordPromptAndAwaitEntry('first');
+            const pwd = await this.pwdEncryptedMsgModule.renderPasswordPromptAndAwaitEntry('first');
             await this.decryptAndRender(encryptedData, pwd);
           } else {
             await this.errorModule.handlePrivateKeyMismatch(encryptedData);
           }
         } else if (result.error.type === DecryptErrTypes.wrongPwd) {
-          const pwd = await this.renderModule.renderPasswordPromptAndAwaitEntry('retry');
+          const pwd = await this.pwdEncryptedMsgModule.renderPasswordPromptAndAwaitEntry('retry');
           await this.decryptAndRender(encryptedData, pwd);
         } else if (result.error.type === DecryptErrTypes.usePassword) {
-          const pwd = await this.renderModule.renderPasswordPromptAndAwaitEntry('first');
+          const pwd = await this.pwdEncryptedMsgModule.renderPasswordPromptAndAwaitEntry('first');
           await this.decryptAndRender(encryptedData, pwd);
         } else if (result.error.type === DecryptErrTypes.noMdc) {
           await this.errorModule.renderErr(result.error.message, result.content!.toUtfStr()); // missing mdc - only render the result after user confirmation
@@ -206,15 +204,6 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
       const signatureResult = await BrowserMsg.send.bg.await.pgpMsgVerifyDetached({ plaintext: encryptedData, sigText: Buf.fromUtfStr(this.signature) });
       await this.renderModule.decideDecryptedContentFormattingAndRender(encryptedData, false, signatureResult);
     }
-  }
-
-  public async getDecryptPwd(suppliedPwd?: string | undefined): Promise<string | undefined> {
-    const pwd = suppliedPwd || this.userEnteredMsgPassword;
-    if (pwd && this.hasChallengePassword) {
-      const { hashed } = await BrowserMsg.send.bg.await.pgpHashChallengeAnswer({ answer: pwd });
-      return hashed;
-    }
-    return pwd;
   }
 
 }

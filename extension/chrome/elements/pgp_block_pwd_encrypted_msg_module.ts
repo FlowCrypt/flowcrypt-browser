@@ -10,12 +10,15 @@ import { Str } from '../../js/common/core/common.js';
 import { Api, AuthError } from '../../js/common/api/api.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Xss } from '../../js/common/platform/xss.js';
-import { Backend } from '../../js/common/api/backend.js';
+import { Backend, BackendRes } from '../../js/common/api/backend.js';
 import { Settings } from '../../js/common/settings.js';
+import { Lang } from '../../js/common/lang.js';
 
-export class PgpBlockViewExpirationModule {
+export class PgpBlockViewPwdEncryptedMsgModule {
 
   public adminCodes: string[] | undefined;
+  public passwordMsgLinkRes: BackendRes.FcLinkMsg | undefined;
+  public userEnteredMsgPassword: string | undefined;
 
   constructor(private view: PgpBlockView) {
   }
@@ -81,6 +84,50 @@ export class PgpBlockViewExpirationModule {
       Xss.sanitizeRender($(self).parent(), 'Error updating expiration. <a href="#" class="retry_expiration_change">Click here to try again</a>').addClass('bad');
       const el = await Ui.event.clicked('.retry_expiration_change');
       await this.handleExtendMsgExpirationClicked(el);
+    }
+  }
+
+  public async getDecryptPwd(suppliedPwd?: string | undefined): Promise<string | undefined> {
+    const pwd = suppliedPwd || this.userEnteredMsgPassword;
+    if (pwd && this.view.hasChallengePassword) {
+      const { hashed } = await BrowserMsg.send.bg.await.pgpHashChallengeAnswer({ answer: pwd });
+      return hashed;
+    }
+    return pwd;
+  }
+
+  public async renderPasswordPromptAndAwaitEntry(attempt: 'first' | 'retry'): Promise<string> {
+    let prompt = `<p>${attempt === 'first' ? '' : `<span style="color: red; font-weight: bold;">${Lang.pgpBlock.wrongPassword}</span>`}${Lang.pgpBlock.decryptPasswordPrompt}</p>`;
+    const btn = `<div class="button green long decrypt" data-test="action-decrypt-with-password">decrypt message</div>`;
+    prompt += `<p><input id="answer" placeholder="Password" data-test="input-message-password"></p><p>${btn}</p>`;
+    await this.view.renderModule.renderContent(prompt, true);
+    Ui.setTestState('ready');
+    await Ui.event.clicked('.button.decrypt');
+    Ui.setTestState('working'); // so that test suite can wait until ready again
+    $(self).text('Opening');
+    await Ui.delay(50); // give browser time to render
+    return String($('#answer').val());
+  }
+
+  public async renderPasswordEncryptedMsgLoadFail(linkRes: BackendRes.FcLinkMsg) {
+    if (linkRes.expired) {
+      let expirationMsg = Lang.pgpBlock.msgExpiredOn + Str.datetimeToDate(linkRes.expire) + '. ' + Lang.pgpBlock.msgsDontExpire + '\n\n';
+      if (linkRes.deleted) {
+        expirationMsg += Lang.pgpBlock.msgDestroyed;
+      } else if (this.view.isOutgoing && this.view.pwdEncryptedMsgModule.adminCodes) {
+        expirationMsg += '<div class="button gray2 extend_expiration">renew message</div>';
+      } else if (!this.view.isOutgoing) {
+        expirationMsg += Lang.pgpBlock.askSenderRenew;
+      }
+      expirationMsg += '\n\n<div class="button gray2 action_security">security settings</div>';
+      await this.view.errorModule.renderErr(expirationMsg, undefined);
+      this.view.renderModule.setFrameColor('gray');
+      $('.action_security').click(this.view.setHandler(() => BrowserMsg.send.bg.settings({ page: '/chrome/settings/modules/security.htm', acctEmail: this.view.acctEmail })));
+      $('.extend_expiration').click(this.view.setHandler(this.view.pwdEncryptedMsgModule.renderMsgExpirationRenewOptions));
+    } else if (!linkRes.url) {
+      await this.view.errorModule.renderErr(Lang.pgpBlock.cannotLocate + Lang.pgpBlock.brokenLink, undefined);
+    } else {
+      await this.view.errorModule.renderErr(Lang.pgpBlock.cannotLocate + Lang.general.writeMeToFixIt + ' Details:\n\n' + Xss.escape(JSON.stringify(linkRes)), undefined);
     }
   }
 
