@@ -9,9 +9,9 @@ import { Ui } from '../../js/common/browser.js';
 import { Str } from '../../js/common/core/common.js';
 import { Api, AuthError } from '../../js/common/api/api.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Xss } from '../../js/common/platform/xss';
-import { Backend } from '../../js/common/api/backend';
-import { Settings } from '../../js/common/settings';
+import { Xss } from '../../js/common/platform/xss.js';
+import { Backend } from '../../js/common/api/backend.js';
+import { Settings } from '../../js/common/settings.js';
 
 export class PgpBlockViewExpirationModule {
 

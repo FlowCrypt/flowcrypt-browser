@@ -22,6 +22,7 @@ import { View } from '../../js/common/view.js';
 import { PgpBlockViewAttachmentsModule } from './pgp_block_attachmens_module.js';
 import { PgpBlockViewSignatureModule } from './pgp_block_signature_module.js';
 import { PgpBlockViewExpirationModule } from './pgp_block_expiration_module.js';
+import { PgpBlockViewQuoteModule } from './pgp_block_quote_module.js';
 
 export class PgpBlockView extends View { // tslint:disable-line:variable-name
 
@@ -48,6 +49,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
   public readonly attachmentsModule: PgpBlockViewAttachmentsModule;
   public readonly signatureModule: PgpBlockViewSignatureModule;
   public readonly expirationModule: PgpBlockViewExpirationModule;
+  public readonly quoteModule: PgpBlockViewQuoteModule;
 
   constructor() {
     super();
@@ -68,6 +70,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
     this.attachmentsModule = new PgpBlockViewAttachmentsModule(this);
     this.signatureModule = new PgpBlockViewSignatureModule(this);
     this.expirationModule = new PgpBlockViewExpirationModule(this);
+    this.quoteModule = new PgpBlockViewQuoteModule(this);
   }
 
   async render() {
@@ -134,7 +137,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
     event.stopImmediatePropagation();
   }
 
-  private async renderContent(htmlContent: string, isErr: boolean) {
+  public async renderContent(htmlContent: string, isErr: boolean) {
     if (!isErr && !this.isOutgoing) { // successfully opened incoming message
       await Store.setAcct(this.acctEmail, { successfully_received_at_leat_one_message: true });
     }
@@ -243,7 +246,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
         }
       }
     }
-    await this.separateQuotedContentAndRenderText(decryptedContent, isHtml);
+    await this.quoteModule.separateQuotedContentAndRenderText(decryptedContent, isHtml);
     if (publicKeys.length) {
       BrowserMsg.send.renderPublicKeys(this.parentTabId, { afterFrameId: this.frameId, publicKeys });
     }
@@ -358,60 +361,6 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
     }
   }
 
-  private async separateQuotedContentAndRenderText(decryptedContent: string, isHtml: boolean) {
-    if (isHtml) {
-      const message = $('<div>').html(Xss.htmlSanitize(decryptedContent)); // xss-sanitized
-      let htmlBlockQuoteExists: boolean = false;
-      const shouldBeQuoted: Array<Element> = [];
-      for (let i = message[0].children.length - 1; i >= 0; i--) {
-        if (['BLOCKQUOTE', 'BR', 'PRE'].includes(message[0].children[i].nodeName)) {
-          shouldBeQuoted.push(message[0].children[i]);
-          if (message[0].children[i].nodeName === 'BLOCKQUOTE') {
-            htmlBlockQuoteExists = true;
-            break;
-          }
-          continue;
-        } else {
-          break;
-        }
-      }
-      if (htmlBlockQuoteExists) {
-        let quotedHtml = '';
-        for (let i = shouldBeQuoted.length - 1; i >= 0; i--) {
-          message[0].removeChild(shouldBeQuoted[i]);
-          quotedHtml += shouldBeQuoted[i].outerHTML;
-        }
-        await this.renderContent(message.html(), false);
-        this.appendCollapsedQuotedContentButton(quotedHtml, true);
-      } else {
-        await this.renderContent(decryptedContent, false);
-      }
-    } else {
-      const lines = decryptedContent.trim().split(/\r?\n/);
-      const linesQuotedPart: string[] = [];
-      while (lines.length) {
-        const lastLine = lines.pop()!; // lines.length above ensures there is a line
-        if (lastLine[0] === '>' || !lastLine.length) { // look for lines starting with '>' or empty lines, from last line up (sometimes quoted content may have empty lines in it)
-          linesQuotedPart.unshift(lastLine);
-        } else { // found first non-quoted part from the bottom
-          if (lastLine.startsWith('On ') && lastLine.endsWith(' wrote:')) { // on the very top of quoted content, looks like qote header
-            linesQuotedPart.unshift(lastLine);
-          } else { // no quote header, just regular content from here onwards
-            lines.push(lastLine);
-          }
-          break;
-        }
-      }
-      if (linesQuotedPart.length && !lines.length) { // only got quoted part, no real text -> show everything as real text, without quoting
-        lines.push(...linesQuotedPart.splice(0, linesQuotedPart.length));
-      }
-      await this.renderContent(Xss.escapeTextAsRenderableHtml(lines.join('\n')), false);
-      if (linesQuotedPart.length) {
-        this.appendCollapsedQuotedContentButton(linesQuotedPart.join('\n'));
-      }
-    }
-  }
-
   private getEncryptedSubjectText(subject: string, isHtml: boolean) {
     if (isHtml) {
       return `<div style="font-size: 14px; border-bottom: 1px #cacaca"> Encrypted Subject:
@@ -421,16 +370,6 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
     } else {
       return `Encrypted Subject: ${subject}\n----------------------------------------------------------------------------------------------------\n`;
     }
-  }
-
-  private appendCollapsedQuotedContentButton(message: string, isHtml: boolean = false) {
-    const pgpBlk = $("#pgp_block");
-    pgpBlk.append('<div id="action_show_quoted_content" data-test="action-show-quoted-content" class="three_dots"><img src="/img/svgs/three-dots.svg" /></div>'); // xss-direct
-    pgpBlk.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(isHtml ? message : Xss.escapeTextAsRenderableHtml(message))}</div>`); // xss-sanitized
-    pgpBlk.find('#action_show_quoted_content').click(this.setHandler(async target => {
-      $(".quoted_content").css('display', $(".quoted_content").css('display') === 'none' ? 'block' : 'none');
-      this.resizePgpBlockFrame();
-    }));
   }
 
   private async initialize(forcePullMsgFromApi = false) {
