@@ -6,7 +6,7 @@ import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Str } from '../../js/common/core/common.js';
 import { Att } from '../../js/common/core/att.js';
-import { Ui, Browser } from '../../js/common/browser.js';
+import { Ui } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from '../../js/common/lang.js';
 import { Api, AuthError } from '../../js/common/api/api.js';
@@ -21,10 +21,11 @@ import { Keyserver } from '../../js/common/api/keyserver.js';
 import { Settings } from '../../js/common/settings.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
+import { PgpBlockViewAttachmentsModule } from './pgp_block_attachmens_module';
 
-View.run(class PgpBlockView extends View {
+export class PgpBlockView extends View { // tslint:disable-line:variable-name
 
-  private readonly acctEmail: string;
+  public readonly acctEmail: string;
   private readonly parentTabId: string;
   private readonly frameId: string;
   private readonly hasChallengePassword: boolean;
@@ -45,6 +46,8 @@ View.run(class PgpBlockView extends View {
   private userEnteredMsgPassword: string | undefined;
   private doNotSetStateAsReadyYet = false;
 
+  public readonly attachmentsModule: PgpBlockViewAttachmentsModule;
+
   constructor() {
     super();
     Ui.event.protect();
@@ -60,6 +63,7 @@ View.run(class PgpBlockView extends View {
     this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
     this.encryptedMsgUrlParam = uncheckedUrlParams.message ? Buf.fromUtfStr(Assert.urlParamRequire.string(uncheckedUrlParams, 'message')) : undefined;
     this.signature = uncheckedUrlParams.signature === true ? true : (uncheckedUrlParams.signature ? String(uncheckedUrlParams.signature) : undefined);
+    this.attachmentsModule = new PgpBlockViewAttachmentsModule(this);
   }
 
   async render() {
@@ -81,7 +85,7 @@ View.run(class PgpBlockView extends View {
     document.getElementById('pgp_block')!.innerText = text;
   }
 
-  private resizePgpBlockFrame() {
+  public resizePgpBlockFrame() {
     let height = Math.max($('#pgp_block').height()!, 20) + 40;
     const isInfiniteResizeLoop = () => {
       this.heightHist.push(height);
@@ -187,62 +191,13 @@ View.run(class PgpBlockView extends View {
     }
   }
 
-  private async getDecryptPwd(suppliedPwd?: string | undefined): Promise<string | undefined> {
+  public async getDecryptPwd(suppliedPwd?: string | undefined): Promise<string | undefined> {
     const pwd = suppliedPwd || this.userEnteredMsgPassword;
     if (pwd && this.hasChallengePassword) {
       const { hashed } = await BrowserMsg.send.bg.await.pgpHashChallengeAnswer({ answer: pwd });
       return hashed;
     }
     return pwd;
-  }
-
-  private async decryptAndSaveAttToDownloads(encrypted: Att, renderIn: JQuery<HTMLElement>) {
-    const kisWithPp = await Store.keysGetAllWithPp(this.acctEmail);
-    const decrypted = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData: encrypted.getData(), msgPwd: await this.getDecryptPwd() });
-    if (decrypted.success) {
-      const att = new Att({ name: encrypted.name.replace(/\.(pgp|gpg)$/, ''), type: encrypted.type, data: decrypted.content });
-      Browser.saveToDownloads(att, renderIn);
-      this.resizePgpBlockFrame();
-    } else {
-      delete decrypted.message;
-      console.info(decrypted);
-      await Ui.modal.error(`There was a problem decrypting this file (${decrypted.error.type}: ${decrypted.error.message}). Downloading encrypted original.`);
-      Browser.saveToDownloads(encrypted, renderIn);
-      this.resizePgpBlockFrame();
-    }
-  }
-
-  private renderProgress(element: JQuery<HTMLElement>, percent: number | undefined, received: number | undefined, size: number) {
-    if (percent) {
-      element.text(percent + '%');
-    } else if (size && received) {
-      element.text(Math.floor(((received * 0.75) / size) * 100) + '%');
-    }
-  }
-
-  private renderInnerAtts(atts: Att[]) {
-    Xss.sanitizeAppend('#pgp_block', '<div id="attachments"></div>');
-    this.includedAtts = atts;
-    for (const i of atts.keys()) {
-      const name = (atts[i].name ? Xss.escape(atts[i].name) : 'noname').replace(/\.(pgp|gpg)$/, '');
-      const size = Str.numberFormat(Math.ceil(atts[i].length / 1024)) + 'KB';
-      const htmlContent = `<b>${Xss.escape(name)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
-      Xss.sanitizeAppend('#attachments', `<div class="attachment" index="${Number(i)}">${htmlContent}</div>`);
-    }
-    this.resizePgpBlockFrame();
-    $('div.attachment').click(this.setHandlerPrevent('double', async target => {
-      const att = this.includedAtts[Number($(target).attr('index'))];
-      if (att.hasData()) {
-        Browser.saveToDownloads(att, $(target));
-        this.resizePgpBlockFrame();
-      } else {
-        Xss.sanitizePrepend($(target).find('.progress'), Ui.spinner('green'));
-        att.setData(await Api.download(att.url!, (perc, load, total) => this.renderProgress($(target).find('.progress .percent'), perc, load, total || att.length)));
-        await Ui.delay(100); // give browser time to render
-        $(target).find('.progress').text('');
-        await this.decryptAndSaveAttToDownloads(att, $(target));
-      }
-    }));
   }
 
   private async renderPgpSignatureCheckMissingPubkeyOptions(signerLongid: string, senderEmail: string | undefined): Promise<void> { // don't have appropriate pubkey by longid in contacts
@@ -434,7 +389,7 @@ View.run(class PgpBlockView extends View {
       BrowserMsg.send.renderPublicKeys(this.parentTabId, { afterFrameId: this.frameId, publicKeys });
     }
     if (renderableAtts.length) {
-      this.renderInnerAtts(renderableAtts);
+      this.attachmentsModule.renderInnerAtts(renderableAtts);
     }
     if (this.passwordMsgLinkRes && this.passwordMsgLinkRes.expire) {
       this.renderFutureExpiration(this.passwordMsgLinkRes.expire);
@@ -685,4 +640,6 @@ View.run(class PgpBlockView extends View {
     }
   }
 
-});
+}
+
+View.run(PgpBlockView);

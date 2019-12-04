@@ -34,7 +34,7 @@ export abstract class View {
     return Ui.event.handle(cb, errHandlers, this);
   }
 
-  protected setHandlerPrevent<THIS extends HTMLElement | void>(
+  public setHandlerPrevent<THIS extends HTMLElement | void>(
     evName: PreventableEventName, cb: (el: HTMLElement, resetTimer: () => void) => void | Promise<void>, errHandlers?: BrowserEventErrHandler
   ) {
     return Ui.event.prevent(evName, cb, errHandlers, this);
