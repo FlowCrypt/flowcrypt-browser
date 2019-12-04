@@ -154,11 +154,7 @@ View.run(class CompatibilityView extends View {
   private async testEncryptDecrypt(key: OpenPGP.key.Key): Promise<string[]> {
     const output: string[] = [];
     try {
-      const encryptedMsg = await openpgp.encrypt({
-        message: openpgp.message.fromText(this.encryptionText),
-        publicKeys: key.toPublic(),
-        armor: true,
-      });
+      const encryptedMsg = await openpgp.encrypt({ message: openpgp.message.fromText(this.encryptionText), publicKeys: key.toPublic(), armor: true });
       output.push(`Encryption with key was successful`);
       if (key.isPrivate() && key.isFullyDecrypted()) {
         const decryptedMsg = await openpgp.decrypt({ message: await openpgp.message.readArmored(encryptedMsg.data), privateKeys: key });
