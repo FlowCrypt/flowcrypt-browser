@@ -16,7 +16,7 @@ export class PgpBlockViewQuoteModule {
     pgpBlk.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(isHtml ? message : Xss.escapeTextAsRenderableHtml(message))}</div>`); // xss-sanitized
     pgpBlk.find('#action_show_quoted_content').click(this.view.setHandler(() => {
       $(".quoted_content").css('display', $(".quoted_content").css('display') === 'none' ? 'block' : 'none');
-      this.view.resizePgpBlockFrame();
+      this.view.renderModule.resizePgpBlockFrame();
     }));
   }
 
@@ -43,10 +43,10 @@ export class PgpBlockViewQuoteModule {
           message[0].removeChild(shouldBeQuoted[i]);
           quotedHtml += shouldBeQuoted[i].outerHTML;
         }
-        await this.view.renderContent(message.html(), false);
+        await this.view.renderModule.renderContent(message.html(), false);
         this.appendCollapsedQuotedContentButton(quotedHtml, true);
       } else {
-        await this.view.renderContent(decryptedContent, false);
+        await this.view.renderModule.renderContent(decryptedContent, false);
       }
     } else {
       const lines = decryptedContent.trim().split(/\r?\n/);
@@ -67,7 +67,7 @@ export class PgpBlockViewQuoteModule {
       if (linesQuotedPart.length && !lines.length) { // only got quoted part, no real text -> show everything as real text, without quoting
         lines.push(...linesQuotedPart.splice(0, linesQuotedPart.length));
       }
-      await this.view.renderContent(Xss.escapeTextAsRenderableHtml(lines.join('\n')), false);
+      await this.view.renderModule.renderContent(Xss.escapeTextAsRenderableHtml(lines.join('\n')), false);
       if (linesQuotedPart.length) {
         this.appendCollapsedQuotedContentButton(linesQuotedPart.join('\n'));
       }

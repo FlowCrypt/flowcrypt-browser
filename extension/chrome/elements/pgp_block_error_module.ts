@@ -18,9 +18,9 @@ export class PgpBlockViewErrorModule {
   }
 
   public async renderErr(errBoxContent: string, renderRawMsg: string | undefined) {
-    this.view.setFrameColor('red');
+    this.view.renderModule.setFrameColor('red');
     const showRawMsgPrompt = renderRawMsg ? '<a href="#" class="action_show_raw_pgp_block">show original message</a>' : '';
-    await this.view.renderContent(`<div class="error">${errBoxContent.replace(/\n/g, '<br>')}</div>${showRawMsgPrompt}`, true);
+    await this.view.renderModule.renderContent(`<div class="error">${errBoxContent.replace(/\n/g, '<br>')}</div>${showRawMsgPrompt}`, true);
     $('.action_show_raw_pgp_block').click(this.view.setHandler(async () => { // this may contain content missing MDC
       Xss.sanitizeAppend('#pgp_block', `<div class="raw_pgp_block">${Xss.escape(renderRawMsg!)}</div>`); // therefore the .escape is crucial
     }));

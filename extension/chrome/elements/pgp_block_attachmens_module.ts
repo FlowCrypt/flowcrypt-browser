@@ -13,7 +13,7 @@ import { Api } from '../../js/common/api/api.js';
 
 export class PgpBlockViewAttachmentsModule {
 
-  private includedAtts: Att[] = [];
+  public includedAtts: Att[] = [];
 
   constructor(private view: PgpBlockView) {
   }
@@ -24,13 +24,13 @@ export class PgpBlockViewAttachmentsModule {
     if (decrypted.success) {
       const att = new Att({ name: encrypted.name.replace(/\.(pgp|gpg)$/, ''), type: encrypted.type, data: decrypted.content });
       Browser.saveToDownloads(att, renderIn);
-      this.view.resizePgpBlockFrame();
+      this.view.renderModule.resizePgpBlockFrame();
     } else {
       delete decrypted.message;
       console.info(decrypted);
       await Ui.modal.error(`There was a problem decrypting this file (${decrypted.error.type}: ${decrypted.error.message}). Downloading encrypted original.`);
       Browser.saveToDownloads(encrypted, renderIn);
-      this.view.resizePgpBlockFrame();
+      this.view.renderModule.resizePgpBlockFrame();
     }
   }
 
@@ -51,12 +51,12 @@ export class PgpBlockViewAttachmentsModule {
       const htmlContent = `<b>${Xss.escape(name)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
       Xss.sanitizeAppend('#attachments', `<div class="attachment" index="${Number(i)}">${htmlContent}</div>`);
     }
-    this.view.resizePgpBlockFrame();
+    this.view.renderModule.resizePgpBlockFrame();
     $('div.attachment').click(this.view.setHandlerPrevent('double', async target => {
       const att = this.includedAtts[Number($(target).attr('index'))];
       if (att.hasData()) {
         Browser.saveToDownloads(att, $(target));
-        this.view.resizePgpBlockFrame();
+        this.view.renderModule.resizePgpBlockFrame();
       } else {
         Xss.sanitizePrepend($(target).find('.progress'), Ui.spinner('green'));
         att.setData(await Api.download(att.url!, (perc, load, total) => this.renderProgress($(target).find('.progress .percent'), perc, load, total || att.length)));

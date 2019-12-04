@@ -2,16 +2,14 @@
 
 'use strict';
 
-import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Str } from '../../js/common/core/common.js';
-import { Att } from '../../js/common/core/att.js';
 import { Ui } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from '../../js/common/lang.js';
 import { Api } from '../../js/common/api/api.js';
-import { VerifyRes, DecryptErrTypes, PgpMsg } from '../../js/common/core/pgp.js';
-import { Mime, MsgBlock } from '../../js/common/core/mime.js';
+import { DecryptErrTypes } from '../../js/common/core/pgp.js';
+import { Mime } from '../../js/common/core/mime.js';
 import { Google, GmailResponseFormat } from '../../js/common/api/google.js';
 import { Buf } from '../../js/common/core/buf.js';
 import { BackendRes, Backend } from '../../js/common/api/backend.js';
@@ -24,34 +22,33 @@ import { PgpBlockViewSignatureModule } from './pgp_block_signature_module.js';
 import { PgpBlockViewExpirationModule } from './pgp_block_expiration_module.js';
 import { PgpBlockViewQuoteModule } from './pgp_block_quote_module.js';
 import { PgpBlockViewErrorModule } from './pgp_block_error_module.js';
+import { PgpBlockViewRenderModule } from './pgp_block_render_module.js';
 
 export class PgpBlockView extends View { // tslint:disable-line:variable-name
 
   public readonly acctEmail: string;
   public readonly parentTabId: string;
-  private readonly frameId: string;
-  private readonly hasChallengePassword: boolean;
+  public readonly frameId: string;
+  public readonly hasChallengePassword: boolean;
   public readonly isOutgoing: boolean;
   public readonly short: string | undefined;
   public readonly senderEmail: string | undefined;
-  private readonly msgId: string | undefined;
+  public readonly msgId: string | undefined;
   public readonly encryptedMsgUrlParam: Buf | undefined;
 
-  private signature: string | boolean | undefined;
+  public signature: string | boolean | undefined;
 
-  private heightHist: number[] = [];
-  private msgFetchedFromApi: false | GmailResponseFormat = false;
-  private includedAtts: Att[] = [];
-  private canReadEmails: undefined | boolean;
-  private passwordMsgLinkRes: BackendRes.FcLinkMsg | undefined;
-  private userEnteredMsgPassword: string | undefined;
-  public doNotSetStateAsReadyYet = false;
+  public msgFetchedFromApi: false | GmailResponseFormat = false;
+  public canReadEmails: undefined | boolean;
+  public passwordMsgLinkRes: BackendRes.FcLinkMsg | undefined;
+  public userEnteredMsgPassword: string | undefined;
 
   public readonly attachmentsModule: PgpBlockViewAttachmentsModule;
   public readonly signatureModule: PgpBlockViewSignatureModule;
   public readonly expirationModule: PgpBlockViewExpirationModule;
   public readonly quoteModule: PgpBlockViewQuoteModule;
   public readonly errorModule: PgpBlockViewErrorModule;
+  public readonly renderModule: PgpBlockViewRenderModule;
 
   constructor() {
     super();
@@ -74,6 +71,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
     this.expirationModule = new PgpBlockViewExpirationModule(this);
     this.quoteModule = new PgpBlockViewQuoteModule(this);
     this.errorModule = new PgpBlockViewErrorModule(this);
+    this.renderModule = new PgpBlockViewRenderModule(this);
   }
 
   async render() {
@@ -91,147 +89,57 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
     // defined as needed, depending on what rendered
   }
 
-  private renderText(text: string) {
-    document.getElementById('pgp_block')!.innerText = text;
-  }
-
-  public resizePgpBlockFrame() {
-    let height = Math.max($('#pgp_block').height()!, 20) + 40;
-    const isInfiniteResizeLoop = () => {
-      this.heightHist.push(height);
-      const len = this.heightHist.length;
-      if (len < 4) {
-        return false;
-      }
-      if (this.heightHist[len - 1] === this.heightHist[len - 3] && this.heightHist[len - 2] === this.heightHist[len - 4] && this.heightHist[len - 1] !== this.heightHist[len - 2]) {
-        console.info('pgp_block.js: repetitive resize loop prevented'); // got repetitive, eg [70, 80, 200, 250, 200, 250]
-        height = Math.max(this.heightHist[len - 1], this.heightHist[len - 2]);
-      }
-      return;
-    };
-    if (!isInfiniteResizeLoop()) {
-      BrowserMsg.send.setCss(this.parentTabId, { selector: `iframe#${this.frameId}`, css: { height: `${height}px` } });
-    }
-  }
-
-  private displayImageSrcLinkAsImg(a: HTMLAnchorElement, event: JQuery.Event<HTMLAnchorElement, null>) {
-    const img = document.createElement('img');
-    img.setAttribute('style', a.getAttribute('style') || '');
-    img.style.background = 'none';
-    img.style.border = 'none';
-    img.addEventListener('load', () => this.resizePgpBlockFrame());
-    if (a.href.indexOf('cid:') === 0) { // image included in the email
-      const contentId = a.href.replace(/^cid:/g, '');
-      const content = this.includedAtts.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${contentId}>`)[0];
-      if (content) {
-        img.src = `data:${a.type};base64,${content.getData().toBase64Str()}`;
-        a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
-      } else {
-        a.outerHTML = Xss.escape(`[broken link: ${a.href}]`); // xss-escaped
-      }
-    } else if (a.href.indexOf('https://') === 0 || a.href.indexOf('http://') === 0) { // image referenced as url
-      img.src = a.href;
-      a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
-    } else {
-      a.outerHTML = Xss.escape(`[broken link: ${a.href}]`); // xss-escaped
-    }
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-  }
-
-  public async renderContent(htmlContent: string, isErr: boolean) {
-    if (!isErr && !this.isOutgoing) { // successfully opened incoming message
-      await Store.setAcct(this.acctEmail, { successfully_received_at_leat_one_message: true });
-    }
-    if (!isErr) { // rendering message content
-      const pgpBlock = $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(htmlContent)); // xss-sanitized
-      pgpBlock.find('a.image_src_link').one('click', this.setHandler(this.displayImageSrcLinkAsImg));
-    } else { // rendering our own ui
-      Xss.sanitizeRender('#pgp_block', htmlContent);
-    }
-    if (isErr) {
-      $('.action_show_raw_pgp_block').click(this.setHandler(target => {
-        $('.raw_pgp_block').css('display', 'block');
-        $(target).css('display', 'none');
-        this.resizePgpBlockFrame();
-      }));
-    }
-    this.resizePgpBlockFrame(); // resize window now
-    Catch.setHandledTimeout(() => $(window).resize(this.setHandlerPrevent('spree', this.resizePgpBlockFrame)), 1000); // start auto-resizing the window after 1s
-  }
-
-  public setFrameColor(color: 'red' | 'green' | 'gray') {
-    if (color === 'red') {
-      $('#pgp_background').removeClass('pgp_secure').removeClass('pgp_neutral').addClass('pgp_insecure');
-    } else if (color === 'green') {
-      $('#pgp_background').removeClass('pgp_neutral').removeClass('pgp_insecure').addClass('pgp_secure');
-    } else {
-      $('#pgp_background').removeClass('pgp_secure').removeClass('pgp_insecure').addClass('pgp_neutral');
-    }
-  }
-
-  public async getDecryptPwd(suppliedPwd?: string | undefined): Promise<string | undefined> {
-    const pwd = suppliedPwd || this.userEnteredMsgPassword;
-    if (pwd && this.hasChallengePassword) {
-      const { hashed } = await BrowserMsg.send.bg.await.pgpHashChallengeAnswer({ answer: pwd });
-      return hashed;
-    }
-    return pwd;
-  }
-
-  private async decideDecryptedContentFormattingAndRender(decryptedBytes: Buf, isEncrypted: boolean, sigResult: VerifyRes | undefined, plainSubject?: string) {
-    this.setFrameColor(isEncrypted ? 'green' : 'gray');
-    this.signatureModule.renderPgpSignatureCheckResult(sigResult);
-    const publicKeys: string[] = [];
-    let renderableAtts: Att[] = [];
-    let decryptedContent = decryptedBytes.toUtfStr();
-    let isHtml: boolean = false;
-    // todo - replace with PgpMsg.fmtDecrypted
-    if (!Mime.resemblesMsg(decryptedBytes)) {
-      const fcAttBlocks: MsgBlock[] = [];
-      decryptedContent = PgpMsg.extractFcAtts(decryptedContent, fcAttBlocks);
-      decryptedContent = PgpMsg.stripFcTeplyToken(decryptedContent);
-      decryptedContent = PgpMsg.stripPublicKeys(decryptedContent, publicKeys);
-      if (fcAttBlocks.length) {
-        renderableAtts = fcAttBlocks.map(attBlock => new Att(attBlock.attMeta!));
-      }
-    } else {
-      this.renderText('Formatting...');
-      const decoded = await Mime.decode(decryptedBytes);
-      if (typeof decoded.html !== 'undefined') {
-        decryptedContent = decoded.html;
-        isHtml = true;
-      } else if (typeof decoded.text !== 'undefined') {
-        decryptedContent = decoded.text;
-      } else {
-        decryptedContent = '';
-      }
-      if (decoded.subject && isEncrypted && (!plainSubject || !Mime.subjectWithoutPrefixes(plainSubject).includes(Mime.subjectWithoutPrefixes(decoded.subject)))) {
-        // there is an encrypted subject + (either there is no plain subject or the plain subject does not contain what's in the encrypted subject)
-        decryptedContent = this.getEncryptedSubjectText(decoded.subject, isHtml) + decryptedContent; // render encrypted subject in message
-      }
-      for (const att of decoded.atts) {
-        if (att.treatAs() !== 'publicKey') {
-          renderableAtts.push(att);
+  private async initialize(forcePullMsgFromApi = false) {
+    try {
+      if (this.canReadEmails && this.signature === true && this.msgId) {
+        this.renderModule.renderText('Loading signed message...');
+        const { raw } = await Google.gmail.msgGet(this.acctEmail, this.msgId, 'raw');
+        this.msgFetchedFromApi = 'raw';
+        const mimeMsg = Buf.fromBase64UrlStr(raw!); // used 'raw' above
+        const parsed = await Mime.decode(mimeMsg);
+        if (parsed && typeof parsed.rawSignedContent === 'string' && parsed.signature) {
+          this.signature = parsed.signature;
+          await this.decryptAndRender(Buf.fromUtfStr(parsed.rawSignedContent));
         } else {
-          publicKeys.push(att.getData().toUtfStr());
+          await this.errorModule.renderErr('Error: could not properly parse signed message', parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr());
+        }
+      } else if (this.encryptedMsgUrlParam && !forcePullMsgFromApi) { // ascii armored message supplied
+        this.renderModule.renderText(this.signature ? 'Verifying..' : 'Decrypting...');
+        await this.decryptAndRender(this.encryptedMsgUrlParam);
+      } else if (!this.encryptedMsgUrlParam && this.hasChallengePassword && this.short) { // need to fetch the message from FlowCrypt API
+        this.renderModule.renderText('Loading message...');
+        await this.expirationModule.recoverStoredAdminCodes();
+        const msgLinkRes = await Backend.linkMessage(this.short);
+        this.passwordMsgLinkRes = msgLinkRes;
+        if (msgLinkRes.url) {
+          const downloaded = await Api.download(msgLinkRes.url);
+          await this.decryptAndRender(downloaded);
+        } else {
+          await this.renderModule.renderPasswordEncryptedMsgLoadFail(this.passwordMsgLinkRes);
+        }
+      } else {  // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
+        if (!this.msgId) {
+          Xss.sanitizeRender('#pgp_block', `Missing msgId to fetch message in pgp_block. If this happens repeatedly, please report the issue to human@flowcrypt.com`);
+          this.renderModule.resizePgpBlockFrame();
+        } else if (this.canReadEmails) {
+          this.renderModule.renderText('Retrieving message...');
+          const format: GmailResponseFormat = (!this.msgFetchedFromApi) ? 'full' : 'raw';
+          const { armored, subject } = await Google.gmail.extractArmoredBlock(this.acctEmail, this.msgId, format, (progress) => {
+            this.renderModule.renderText(`Retrieving message... ${progress}%`);
+          });
+          this.renderModule.renderText('Decrypting...');
+          this.msgFetchedFromApi = format;
+          await this.decryptAndRender(Buf.fromUtfStr(armored), undefined, subject);
+        } else { // gmail message read auth not allowed
+          // tslint:disable-next-line:max-line-length
+          const readAccess = `Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><div class="button green auth_settings">Add missing permission</div>`;
+          Xss.sanitizeRender('#pgp_block', `This encrypted message is very large (possibly containing an attachment). ${readAccess}`);
+          this.renderModule.resizePgpBlockFrame();
+          $('.auth_settings').click(this.setHandler(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' })));
         }
       }
-    }
-    await this.quoteModule.separateQuotedContentAndRenderText(decryptedContent, isHtml);
-    if (publicKeys.length) {
-      BrowserMsg.send.renderPublicKeys(this.parentTabId, { afterFrameId: this.frameId, publicKeys });
-    }
-    if (renderableAtts.length) {
-      this.attachmentsModule.renderInnerAtts(renderableAtts);
-    }
-    if (this.passwordMsgLinkRes && this.passwordMsgLinkRes.expire) {
-      this.expirationModule.renderFutureExpiration(this.passwordMsgLinkRes.expire);
-    }
-    this.resizePgpBlockFrame();
-    if (!this.doNotSetStateAsReadyYet) { // in case async tasks are still being worked at
-      Ui.setTestState('ready');
+    } catch (e) {
+      await this.errorModule.handleInitializeErr(e);
     }
   }
 
@@ -249,7 +157,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
           console.info(`re-fetching message ${this.msgId} from api because failed signature check: ${!this.msgFetchedFromApi ? 'full' : 'raw'}`);
           await this.initialize(true);
         } else {
-          await this.decideDecryptedContentFormattingAndRender(result.content, Boolean(result.isEncrypted), result.signature, plainSubject); // text!: did not request uint8
+          await this.renderModule.decideDecryptedContentFormattingAndRender(result.content, Boolean(result.isEncrypted), result.signature, plainSubject); // text!: did not request uint8
         }
       } else if (result.error.type === DecryptErrTypes.format) {
         if (this.canReadEmails && this.msgFetchedFromApi !== 'raw') {
@@ -266,7 +174,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
           BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'message', longids: result.longids.needPassphrase });
         }));
         await Store.waitUntilPassphraseChanged(this.acctEmail, result.longids.needPassphrase);
-        this.renderText('Decrypting...');
+        this.renderModule.renderText('Decrypting...');
         await this.decryptAndRender(encryptedData, optionalPwd);
       } else {
         const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
@@ -274,16 +182,16 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
           await this.errorModule.renderErr(Lang.pgpBlock.notProperlySetUp + this.errorModule.btnHtml('FlowCrypt settings', 'green settings'), undefined);
         } else if (result.error.type === DecryptErrTypes.keyMismatch) {
           if (this.hasChallengePassword && !optionalPwd) {
-            const pwd = await this.renderPasswordPromptAndAwaitEntry('first');
+            const pwd = await this.renderModule.renderPasswordPromptAndAwaitEntry('first');
             await this.decryptAndRender(encryptedData, pwd);
           } else {
             await this.errorModule.handlePrivateKeyMismatch(encryptedData);
           }
         } else if (result.error.type === DecryptErrTypes.wrongPwd) {
-          const pwd = await this.renderPasswordPromptAndAwaitEntry('retry');
+          const pwd = await this.renderModule.renderPasswordPromptAndAwaitEntry('retry');
           await this.decryptAndRender(encryptedData, pwd);
         } else if (result.error.type === DecryptErrTypes.usePassword) {
-          const pwd = await this.renderPasswordPromptAndAwaitEntry('first');
+          const pwd = await this.renderModule.renderPasswordPromptAndAwaitEntry('first');
           await this.decryptAndRender(encryptedData, pwd);
         } else if (result.error.type === DecryptErrTypes.noMdc) {
           await this.errorModule.renderErr(result.error.message, result.content!.toUtfStr()); // missing mdc - only render the result after user confirmation
@@ -296,108 +204,17 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
       }
     } else {
       const signatureResult = await BrowserMsg.send.bg.await.pgpMsgVerifyDetached({ plaintext: encryptedData, sigText: Buf.fromUtfStr(this.signature) });
-      await this.decideDecryptedContentFormattingAndRender(encryptedData, false, signatureResult);
+      await this.renderModule.decideDecryptedContentFormattingAndRender(encryptedData, false, signatureResult);
     }
   }
 
-  private async renderPasswordPromptAndAwaitEntry(attempt: 'first' | 'retry'): Promise<string> {
-    let prompt = `<p>${attempt === 'first' ? '' : `<span style="color: red; font-weight: bold;">${Lang.pgpBlock.wrongPassword}</span>`}${Lang.pgpBlock.decryptPasswordPrompt}</p>`;
-    const btn = `<div class="button green long decrypt" data-test="action-decrypt-with-password">decrypt message</div>`;
-    prompt += `<p><input id="answer" placeholder="Password" data-test="input-message-password"></p><p>${btn}</p>`;
-    await this.renderContent(prompt, true);
-    Ui.setTestState('ready');
-    await Ui.event.clicked('.button.decrypt');
-    Ui.setTestState('working'); // so that test suite can wait until ready again
-    $(self).text('Opening');
-    await Ui.delay(50); // give browser time to render
-    return String($('#answer').val());
-  }
-
-  private async renderPasswordEncryptedMsgLoadFail(linkRes: BackendRes.FcLinkMsg) {
-    if (linkRes.expired) {
-      let expirationMsg = Lang.pgpBlock.msgExpiredOn + Str.datetimeToDate(linkRes.expire) + '. ' + Lang.pgpBlock.msgsDontExpire + '\n\n';
-      if (linkRes.deleted) {
-        expirationMsg += Lang.pgpBlock.msgDestroyed;
-      } else if (this.isOutgoing && this.expirationModule.adminCodes) {
-        expirationMsg += '<div class="button gray2 extend_expiration">renew message</div>';
-      } else if (!this.isOutgoing) {
-        expirationMsg += Lang.pgpBlock.askSenderRenew;
-      }
-      expirationMsg += '\n\n<div class="button gray2 action_security">security settings</div>';
-      await this.errorModule.renderErr(expirationMsg, undefined);
-      this.setFrameColor('gray');
-      $('.action_security').click(this.setHandler(() => BrowserMsg.send.bg.settings({ page: '/chrome/settings/modules/security.htm', acctEmail: this.acctEmail })));
-      $('.extend_expiration').click(this.setHandler(this.expirationModule.renderMsgExpirationRenewOptions));
-    } else if (!linkRes.url) {
-      await this.errorModule.renderErr(Lang.pgpBlock.cannotLocate + Lang.pgpBlock.brokenLink, undefined);
-    } else {
-      await this.errorModule.renderErr(Lang.pgpBlock.cannotLocate + Lang.general.writeMeToFixIt + ' Details:\n\n' + Xss.escape(JSON.stringify(linkRes)), undefined);
+  public async getDecryptPwd(suppliedPwd?: string | undefined): Promise<string | undefined> {
+    const pwd = suppliedPwd || this.userEnteredMsgPassword;
+    if (pwd && this.hasChallengePassword) {
+      const { hashed } = await BrowserMsg.send.bg.await.pgpHashChallengeAnswer({ answer: pwd });
+      return hashed;
     }
-  }
-
-  private getEncryptedSubjectText(subject: string, isHtml: boolean) {
-    if (isHtml) {
-      return `<div style="font-size: 14px; border-bottom: 1px #cacaca"> Encrypted Subject:
-                <b> ${subject}</b>
-              </div>
-              <hr/>`;
-    } else {
-      return `Encrypted Subject: ${subject}\n----------------------------------------------------------------------------------------------------\n`;
-    }
-  }
-
-  private async initialize(forcePullMsgFromApi = false) {
-    try {
-      if (this.canReadEmails && this.signature === true && this.msgId) {
-        this.renderText('Loading signed message...');
-        const { raw } = await Google.gmail.msgGet(this.acctEmail, this.msgId, 'raw');
-        this.msgFetchedFromApi = 'raw';
-        const mimeMsg = Buf.fromBase64UrlStr(raw!); // used 'raw' above
-        const parsed = await Mime.decode(mimeMsg);
-        if (parsed && typeof parsed.rawSignedContent === 'string' && parsed.signature) {
-          this.signature = parsed.signature;
-          await this.decryptAndRender(Buf.fromUtfStr(parsed.rawSignedContent));
-        } else {
-          await this.errorModule.renderErr('Error: could not properly parse signed message', parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr());
-        }
-      } else if (this.encryptedMsgUrlParam && !forcePullMsgFromApi) { // ascii armored message supplied
-        this.renderText(this.signature ? 'Verifying..' : 'Decrypting...');
-        await this.decryptAndRender(this.encryptedMsgUrlParam);
-      } else if (!this.encryptedMsgUrlParam && this.hasChallengePassword && this.short) { // need to fetch the message from FlowCrypt API
-        this.renderText('Loading message...');
-        await this.expirationModule.recoverStoredAdminCodes();
-        const msgLinkRes = await Backend.linkMessage(this.short);
-        this.passwordMsgLinkRes = msgLinkRes;
-        if (msgLinkRes.url) {
-          const downloaded = await Api.download(msgLinkRes.url);
-          await this.decryptAndRender(downloaded);
-        } else {
-          await this.renderPasswordEncryptedMsgLoadFail(this.passwordMsgLinkRes);
-        }
-      } else {  // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
-        if (!this.msgId) {
-          Xss.sanitizeRender('#pgp_block', `Missing msgId to fetch message in pgp_block. If this happens repeatedly, please report the issue to human@flowcrypt.com`);
-          this.resizePgpBlockFrame();
-        } else if (this.canReadEmails) {
-          this.renderText('Retrieving message...');
-          const format: GmailResponseFormat = (!this.msgFetchedFromApi) ? 'full' : 'raw';
-          const { armored, subject } = await Google.gmail.extractArmoredBlock(this.acctEmail, this.msgId, format, (progress) => {
-            this.renderText(`Retrieving message... ${progress}%`);
-          });
-          this.renderText('Decrypting...');
-          this.msgFetchedFromApi = format;
-          await this.decryptAndRender(Buf.fromUtfStr(armored), undefined, subject);
-        } else { // gmail message read auth not allowed
-          // tslint:disable-next-line:max-line-length
-          const readAccess = `Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><div class="button green auth_settings">Add missing permission</div>`;
-          Xss.sanitizeRender('#pgp_block', `This encrypted message is very large (possibly containing an attachment). ${readAccess}`);
-          this.resizePgpBlockFrame();
-          $('.auth_settings').click(this.setHandler(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' })));
-        }
-      }
-    } catch (e) {
-      await this.errorModule.handleInitializeErr(e);
-    }
+    return pwd;
   }
 
 }

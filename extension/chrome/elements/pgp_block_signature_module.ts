@@ -22,12 +22,12 @@ export class PgpBlockViewSignatureModule {
       const signerEmail = signature.contact ? signature.contact.name || this.view.senderEmail : this.view.senderEmail;
       $('#pgp_signature > .cursive > span').text(signerEmail || 'Unknown Signer');
       if (signature.signer && !signature.contact) {
-        this.view.doNotSetStateAsReadyYet = true; // so that body state is not marked as ready too soon - automated tests need to know when to check results
+        this.view.renderModule.doNotSetStateAsReadyYet = true; // so that body state is not marked as ready too soon - automated tests need to know when to check results
         this.renderPgpSignatureCheckMissingPubkeyOptions(signature.signer, this.view.senderEmail).then(() => { // async so that it doesn't block rendering
-          this.view.doNotSetStateAsReadyYet = false;
+          this.view.renderModule.doNotSetStateAsReadyYet = false;
           Ui.setTestState('ready');
           $('#pgp_block').css('min-height', '100px'); // signature fail can have a lot of text in it to render
-          this.view.resizePgpBlockFrame();
+          this.view.renderModule.resizePgpBlockFrame();
         }).catch(Catch.reportErr);
       } else if (signature.match && signature.signer && signature.contact) {
         $('#pgp_signature').addClass('good');
@@ -35,7 +35,7 @@ export class PgpBlockViewSignatureModule {
       } else {
         $('#pgp_signature').addClass('bad');
         $('#pgp_signature > .result').text('signature does not match');
-        this.view.setFrameColor('red');
+        this.view.renderModule.setFrameColor('red');
       }
       $('#pgp_signature').css('block');
     }
