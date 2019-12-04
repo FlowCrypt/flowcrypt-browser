@@ -11,7 +11,6 @@ declare const openpgp: typeof OpenPGP;
 View.run(class CompatibilityView extends View {
 
   private readonly encryptionText = 'This is the text we are encrypting!';
-  private readonly encryptionPassphrase = 'anEncryptionPassphrase';
   private testIndex = 0;
 
   constructor() {
@@ -159,14 +158,12 @@ View.run(class CompatibilityView extends View {
         message: openpgp.message.fromText(this.encryptionText),
         publicKeys: key.toPublic(),
         armor: true,
-        passwords: [this.encryptionPassphrase]
       });
       output.push(`Encryption with key was successful`);
       if (key.isPrivate() && key.isFullyDecrypted()) {
         const decryptedMsg = await openpgp.decrypt({
           message: await openpgp.message.readArmored(encryptedMsg.data),
           privateKeys: key,
-          passwords: [this.encryptionPassphrase]
         });
         output.push(`Decryption with key ${decryptedMsg.data === this.encryptionText ? 'succeeded' : 'failed!'}`);
       } else {
