@@ -15,5 +15,8 @@ module.exports = {
   extends: [
     'plugin:@typescript-eslint/base'
     // 'plugin:@typescript-eslint/recommended'
-  ]
+  ],
+  rules: {
+    'semi': 'error'
+  }
 }

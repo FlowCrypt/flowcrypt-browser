@@ -192,10 +192,10 @@ abstract class ControllableBase {
   public getOuterHeight = async (selector: string): Promise<string> => {
     return await this.target.evaluate((s) => {
       const computedStyle = getComputedStyle(document.querySelector(s));
-      const paddings = parseInt(computedStyle.getPropertyValue('padding-top')) + parseInt(computedStyle.getPropertyValue('padding-bottom'))
-      const border = parseInt(computedStyle.getPropertyValue('border-top-width')) + parseInt(computedStyle.getPropertyValue('border-bottom-width'))
-      let outerHeight = parseInt(computedStyle.getPropertyValue('height')) + paddings + border
-      return outerHeight
+      const paddings = parseInt(computedStyle.getPropertyValue('padding-top')) + parseInt(computedStyle.getPropertyValue('padding-bottom'));
+      const border = parseInt(computedStyle.getPropertyValue('border-top-width')) + parseInt(computedStyle.getPropertyValue('border-bottom-width'));
+      let outerHeight = parseInt(computedStyle.getPropertyValue('height')) + paddings + border;
+      return outerHeight;
     }, this.selector(selector));
   }
 
@@ -223,7 +223,7 @@ abstract class ControllableBase {
     await Util.sleep(0.5);
     expect(await this.read(`@ui-modal-${type}:message`)).to.contain(message, `ui-modal-${type}:message does not contain expected text`);
     if (type === 'confirm-checkbox') {
-      await this.waitAndClick(`@ui-modal-${type}-input`)
+      await this.waitAndClick(`@ui-modal-${type}-input`);
     }
     await this.waitAndClick(`@ui-modal-${type}-${clickBtn}`);
   }
