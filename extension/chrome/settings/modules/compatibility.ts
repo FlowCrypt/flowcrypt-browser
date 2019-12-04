@@ -23,7 +23,7 @@ View.run(class CompatibilityView extends View {
   }
 
   setHandlers() {
-    $('.action_test_key').click(Ui.event.prevent('double', el => this.actionTestKeyHandler(el)));
+    $('.action_test_key').click(this.setHandlerPrevent('double', el => this.actionTestKeyHandler(el)));
     $('#input_passphrase').keydown(this.setHandler((el, ev) => {
       if (ev.which === 13) {
         $('.action_test_key').click();
