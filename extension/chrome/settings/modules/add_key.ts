@@ -39,10 +39,10 @@ View.run(class AddKeyView extends View {
   }
 
   setHandlers() {
-    $('.action_add_private_key').click(this.setHandlerPrevent('double', el => this.addPrivateKeyHandler(el)));
+    $('.action_add_private_key').click(this.setHandlerPrevent('double', this.addPrivateKeyHandler));
     $('#input_passphrase').keydown(this.setHandler((el, ev) => {
       if (ev.which === 13) {
-        this.addPrivateKeyHandler(el).catch(Catch.reportErr);
+        $('.action_add_private_key').click();
       }
     }));
   }
