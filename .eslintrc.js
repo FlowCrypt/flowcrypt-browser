@@ -1,11 +1,5 @@
 module.exports = {
   parser: '@typescript-eslint/parser',
-  parserOptions: {
-    project: [
-      'tsconfig.json',
-      'conf/tsconfig.test.json'
-    ]
-  },
   env: {
     browser: true,
     node: true,
@@ -21,8 +15,6 @@ module.exports = {
   ],
   rules: {
     'semi': 'error',
-    'no-only-tests/no-only-tests': ['error', {
-      block: ['ava.default']
-    }]
+    'no-only-tests/no-only-tests': ['error', { block: ['ava.default'] }]
   }
 }
