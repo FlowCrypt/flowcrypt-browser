@@ -10,7 +10,7 @@ import { Ui } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from '../../js/common/lang.js';
 import { Api } from '../../js/common/api/api.js';
-import { VerifyRes, DecryptErrTypes, FormatError, PgpMsg } from '../../js/common/core/pgp.js';
+import { VerifyRes, DecryptErrTypes, PgpMsg } from '../../js/common/core/pgp.js';
 import { Mime, MsgBlock } from '../../js/common/core/mime.js';
 import { Google, GmailResponseFormat } from '../../js/common/api/google.js';
 import { Buf } from '../../js/common/core/buf.js';
@@ -23,6 +23,7 @@ import { PgpBlockViewAttachmentsModule } from './pgp_block_attachmens_module.js'
 import { PgpBlockViewSignatureModule } from './pgp_block_signature_module.js';
 import { PgpBlockViewExpirationModule } from './pgp_block_expiration_module.js';
 import { PgpBlockViewQuoteModule } from './pgp_block_quote_module.js';
+import { PgpBlockViewErrorModule } from './pgp_block_error_module.js';
 
 export class PgpBlockView extends View { // tslint:disable-line:variable-name
 
@@ -34,7 +35,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
   public readonly short: string | undefined;
   public readonly senderEmail: string | undefined;
   private readonly msgId: string | undefined;
-  private readonly encryptedMsgUrlParam: Buf | undefined;
+  public readonly encryptedMsgUrlParam: Buf | undefined;
 
   private signature: string | boolean | undefined;
 
@@ -50,6 +51,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
   public readonly signatureModule: PgpBlockViewSignatureModule;
   public readonly expirationModule: PgpBlockViewExpirationModule;
   public readonly quoteModule: PgpBlockViewQuoteModule;
+  public readonly errorModule: PgpBlockViewErrorModule;
 
   constructor() {
     super();
@@ -71,6 +73,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
     this.signatureModule = new PgpBlockViewSignatureModule(this);
     this.expirationModule = new PgpBlockViewExpirationModule(this);
     this.quoteModule = new PgpBlockViewQuoteModule(this);
+    this.errorModule = new PgpBlockViewErrorModule(this);
   }
 
   async render() {
@@ -80,7 +83,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
     if (storage.setup_done) {
       await this.initialize();
     } else {
-      await this.renderErr(Lang.pgpBlock.refreshWindow, this.encryptedMsgUrlParam ? this.encryptedMsgUrlParam.toUtfStr() : undefined);
+      await this.errorModule.renderErr(Lang.pgpBlock.refreshWindow, this.encryptedMsgUrlParam ? this.encryptedMsgUrlParam.toUtfStr() : undefined);
     }
   }
 
@@ -158,10 +161,6 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
     Catch.setHandledTimeout(() => $(window).resize(this.setHandlerPrevent('spree', this.resizePgpBlockFrame)), 1000); // start auto-resizing the window after 1s
   }
 
-  private btnHtml(text: string, addClasses: string) {
-    return `<div class="button long ${addClasses}" style="margin:30px 0;" target="cryptup">${text}</div>`;
-  }
-
   public setFrameColor(color: 'red' | 'green' | 'gray') {
     if (color === 'red') {
       $('#pgp_background').removeClass('pgp_secure').removeClass('pgp_neutral').addClass('pgp_insecure');
@@ -169,32 +168,6 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
       $('#pgp_background').removeClass('pgp_neutral').removeClass('pgp_insecure').addClass('pgp_secure');
     } else {
       $('#pgp_background').removeClass('pgp_secure').removeClass('pgp_insecure').addClass('pgp_neutral');
-    }
-  }
-
-  private async renderErr(errBoxContent: string, renderRawMsg: string | undefined) {
-    this.setFrameColor('red');
-    const showRawMsgPrompt = renderRawMsg ? '<a href="#" class="action_show_raw_pgp_block">show original message</a>' : '';
-    await this.renderContent(`<div class="error">${errBoxContent.replace(/\n/g, '<br>')}</div>${showRawMsgPrompt}`, true);
-    $('.action_show_raw_pgp_block').click(this.setHandler(async () => { // this may contain content missing MDC
-      Xss.sanitizeAppend('#pgp_block', `<div class="raw_pgp_block">${Xss.escape(renderRawMsg!)}</div>`); // therefore the .escape is crucial
-    }));
-    $('.button.settings_keyserver').click(this.setHandler(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/keyserver.htm' })));
-    $('.button.settings').click(this.setHandler(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail })));
-    $('.button.settings_add_key').click(this.setHandler(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/add_key.htm' })));
-    $('.button.reply_pubkey_mismatch').click(this.setHandler(() => BrowserMsg.send.replyPubkeyMismatch(this.parentTabId)));
-    Ui.setTestState('ready');
-  }
-
-  private async handlePrivateKeyMismatch(message: Uint8Array) { // todo - make it work for multiple stored keys
-    const msgDiagnosis = await BrowserMsg.send.bg.await.pgpMsgDiagnosePubkeys({ privateKis: await Store.keysGet(this.acctEmail), message });
-    if (msgDiagnosis.found_match) {
-      await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.encryptedCorrectlyFileBug, undefined);
-    } else {
-      const startText = msgDiagnosis.receivers === 1 ?
-        Lang.pgpBlock.cantOpen + Lang.pgpBlock.singleSender + Lang.pgpBlock.askResend : Lang.pgpBlock.yourKeyCantOpenImportIfHave;
-      await this.renderErr(startText + this.btnHtml('import missing key', 'gray2 settings_add_key') + '&nbsp; &nbsp;'
-        + this.btnHtml('ask sender to update', 'gray2 short reply_pubkey_mismatch') + '&nbsp; &nbsp;' + this.btnHtml('settings', 'gray2 settings_keyserver'), undefined);
     }
   }
 
@@ -267,7 +240,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
       const kisWithPp = await Store.keysGetAllWithPp(this.acctEmail);
       const result = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, msgPwd: await this.getDecryptPwd(optionalPwd) });
       if (typeof result === 'undefined') {
-        await this.renderErr(Lang.general.restartBrowserAndTryAgain, undefined);
+        await this.errorModule.renderErr(Lang.general.restartBrowserAndTryAgain, undefined);
       } else if (result.success) {
         if (this.hasChallengePassword && optionalPwd) {
           this.userEnteredMsgPassword = optionalPwd;
@@ -283,10 +256,11 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
           console.info(`re-fetching message ${this.msgId} from api because looks like bad formatting: ${!this.msgFetchedFromApi ? 'full' : 'raw'}`);
           await this.initialize(true);
         } else {
-          await this.renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, encryptedData.toUtfStr());
+          await this.errorModule.renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, encryptedData.toUtfStr());
         }
       } else if (result.longids.needPassphrase.length) {
-        await this.renderErr(`<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`, undefined);
+        await this.errorModule.renderErr(`<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`,
+          undefined);
         $('.enter_passphrase').click(this.setHandler(() => {
           Ui.setTestState('waiting');
           BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'message', longids: result.longids.needPassphrase });
@@ -297,13 +271,13 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
       } else {
         const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
         if (!result.longids.chosen && !primaryKi) {
-          await this.renderErr(Lang.pgpBlock.notProperlySetUp + this.btnHtml('FlowCrypt settings', 'green settings'), undefined);
+          await this.errorModule.renderErr(Lang.pgpBlock.notProperlySetUp + this.errorModule.btnHtml('FlowCrypt settings', 'green settings'), undefined);
         } else if (result.error.type === DecryptErrTypes.keyMismatch) {
           if (this.hasChallengePassword && !optionalPwd) {
             const pwd = await this.renderPasswordPromptAndAwaitEntry('first');
             await this.decryptAndRender(encryptedData, pwd);
           } else {
-            await this.handlePrivateKeyMismatch(encryptedData);
+            await this.errorModule.handlePrivateKeyMismatch(encryptedData);
           }
         } else if (result.error.type === DecryptErrTypes.wrongPwd) {
           const pwd = await this.renderPasswordPromptAndAwaitEntry('retry');
@@ -312,12 +286,12 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
           const pwd = await this.renderPasswordPromptAndAwaitEntry('first');
           await this.decryptAndRender(encryptedData, pwd);
         } else if (result.error.type === DecryptErrTypes.noMdc) {
-          await this.renderErr(result.error.message, result.content!.toUtfStr()); // missing mdc - only render the result after user confirmation
+          await this.errorModule.renderErr(result.error.message, result.content!.toUtfStr()); // missing mdc - only render the result after user confirmation
         } else if (result.error) {
-          await this.renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.message}</em>`, encryptedData.toUtfStr());
+          await this.errorModule.renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.message}</em>`, encryptedData.toUtfStr());
         } else { // should generally not happen
           delete result.message;
-          await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.writeMe + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"', encryptedData.toUtfStr());
+          await this.errorModule.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.writeMe + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"', encryptedData.toUtfStr());
         }
       }
     } else {
@@ -350,14 +324,14 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
         expirationMsg += Lang.pgpBlock.askSenderRenew;
       }
       expirationMsg += '\n\n<div class="button gray2 action_security">security settings</div>';
-      await this.renderErr(expirationMsg, undefined);
+      await this.errorModule.renderErr(expirationMsg, undefined);
       this.setFrameColor('gray');
       $('.action_security').click(this.setHandler(() => BrowserMsg.send.bg.settings({ page: '/chrome/settings/modules/security.htm', acctEmail: this.acctEmail })));
       $('.extend_expiration').click(this.setHandler(this.expirationModule.renderMsgExpirationRenewOptions));
     } else if (!linkRes.url) {
-      await this.renderErr(Lang.pgpBlock.cannotLocate + Lang.pgpBlock.brokenLink, undefined);
+      await this.errorModule.renderErr(Lang.pgpBlock.cannotLocate + Lang.pgpBlock.brokenLink, undefined);
     } else {
-      await this.renderErr(Lang.pgpBlock.cannotLocate + Lang.general.writeMeToFixIt + ' Details:\n\n' + Xss.escape(JSON.stringify(linkRes)), undefined);
+      await this.errorModule.renderErr(Lang.pgpBlock.cannotLocate + Lang.general.writeMeToFixIt + ' Details:\n\n' + Xss.escape(JSON.stringify(linkRes)), undefined);
     }
   }
 
@@ -384,7 +358,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
           this.signature = parsed.signature;
           await this.decryptAndRender(Buf.fromUtfStr(parsed.rawSignedContent));
         } else {
-          await this.renderErr('Error: could not properly parse signed message', parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr());
+          await this.errorModule.renderErr('Error: could not properly parse signed message', parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr());
         }
       } else if (this.encryptedMsgUrlParam && !forcePullMsgFromApi) { // ascii armored message supplied
         this.renderText(this.signature ? 'Verifying..' : 'Decrypting...');
@@ -422,19 +396,7 @@ export class PgpBlockView extends View { // tslint:disable-line:variable-name
         }
       }
     } catch (e) {
-      if (Api.err.isNetErr(e)) {
-        await this.renderErr(`Could not load message due to network error. ${Ui.retryLink()}`, undefined);
-      } else if (Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
-        await this.renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`, undefined);
-      } else if (e instanceof FormatError) {
-        await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.dontKnowHowOpen, e.data);
-      } else if (Api.err.isInPrivateMode(e)) {
-        await this.renderErr(`FlowCrypt does not work in a Firefox Private Window (or when Firefox Containers are used). Please try in a standard window.`, undefined);
-      } else {
-        Catch.reportErr(e);
-        await this.renderErr(String(e), this.encryptedMsgUrlParam ? this.encryptedMsgUrlParam.toUtfStr() : undefined);
-      }
+      await this.errorModule.handleInitializeErr(e);
     }
   }
 
