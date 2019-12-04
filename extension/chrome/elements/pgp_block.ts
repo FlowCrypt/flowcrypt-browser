@@ -74,7 +74,7 @@ View.run(class PgpBlockView extends View {
   }
 
   setHandlers() {
-    // defined as needed, depending on what rendered
+    // defined as needed - depending on what rendered
   }
 
   private renderText(text: string) {
