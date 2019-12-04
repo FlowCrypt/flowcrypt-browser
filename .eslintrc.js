@@ -16,7 +16,13 @@ module.exports = {
     'plugin:@typescript-eslint/base'
     // 'plugin:@typescript-eslint/recommended'
   ],
+  plugins: [
+    'no-only-tests'
+  ],
   rules: {
-    'semi': 'error'
+    'semi': 'error',
+    'no-only-tests/no-only-tests': ['error', {
+      block: ['ava.default']
+    }]
   }
 }
