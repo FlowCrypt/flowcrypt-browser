@@ -91,25 +91,7 @@ View.run(class ContactPageView extends View {
     } else {
       this.S.cached('management_account').text(result.email).parent().removeClass('display_none');
       Xss.sanitizeRender(this.S.cached('status'), 'Your contact page is currently <b class="bad">disabled</b>. <a href="#" class="action_enable">Enable contact page</a>');
-      this.S.now('action_enable').click(this.setHandlerPrevent('double', async () => {
-        Xss.sanitizeRender(this.S.cached('status'), 'Enabling..' + Ui.spinner('green'));
-        const storage = await Store.getAcct(this.acctEmail, ['full_name']);
-        try {
-          const alias = await this.findAvailableAlias(this.acctEmail);
-          const initial = { alias, name: storage.full_name || Str.capitalize(this.acctEmail!.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.' };
-          const response = await Backend.accountUpdate(await this.authInfoPromise, initial);
-          if (!response.updated) {
-            await Ui.modal.error('Failed to enable your Contact Page. Please try again');
-          }
-          await Ui.time.sleep(100);
-          window.location.reload();
-        } catch (e) {
-          Catch.reportErr(e);
-          await Ui.modal.error(`Failed to create account, possibly a network issue. Please try again.\n\n${String(e)}`);
-          await Ui.time.sleep(100);
-          window.location.reload();
-        }
-      }));
+      this.S.now('action_enable').click(this.setHandlerPrevent('double', () => this.enableContactPage()));
     }
   }
 
@@ -155,6 +137,26 @@ View.run(class ContactPageView extends View {
           await Ui.modal.error('Error happened, please try again');
         }
       }
+      await Ui.time.sleep(100);
+      window.location.reload();
+    }
+  }
+
+  private async enableContactPage() {
+    Xss.sanitizeRender(this.S.cached('status'), 'Enabling..' + Ui.spinner('green'));
+    const storage = await Store.getAcct(this.acctEmail, ['full_name']);
+    try {
+      const alias = await this.findAvailableAlias(this.acctEmail);
+      const initial = { alias, name: storage.full_name || Str.capitalize(this.acctEmail!.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.' };
+      const response = await Backend.accountUpdate(await this.authInfoPromise, initial);
+      if (!response.updated) {
+        await Ui.modal.error('Failed to enable your Contact Page. Please try again');
+      }
+      await Ui.time.sleep(100);
+      window.location.reload();
+    } catch (e) {
+      Catch.reportErr(e);
+      await Ui.modal.error(`Failed to create account, possibly a network issue. Please try again.\n\n${String(e)}`);
       await Ui.time.sleep(100);
       window.location.reload();
     }
