@@ -39,7 +39,7 @@ View.run(class AddKeyView extends View {
   }
 
   setHandlers() {
-    $('.action_add_private_key').click(Ui.event.prevent('double', this.addPrivateKeyHandler));
+    $('.action_add_private_key').click(this.setHandlerPrevent('double', el => this.addPrivateKeyHandler(el)));
     $('#input_passphrase').keydown(this.setHandler((el, ev) => {
       if (ev.which === 13) {
         this.addPrivateKeyHandler(el).catch(Catch.reportErr);
@@ -79,7 +79,7 @@ View.run(class AddKeyView extends View {
     }
   }
 
-  private addPrivateKeyHandler = async (submitBtn: HTMLElement) => {
+  private async addPrivateKeyHandler(submitBtn: HTMLElement) {
     if (submitBtn.className.includes('gray')) {
       await Ui.modal.warning('Please double check the pass phrase input field for any issues.');
       return;
