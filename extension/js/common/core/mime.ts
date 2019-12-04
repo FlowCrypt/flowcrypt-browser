@@ -177,7 +177,7 @@ export class Mime {
   }
 
   public static decode = (mimeMsg: Uint8Array): Promise<MimeContent> => {
-    return new Promise(async resolve => {
+    return new Promise(resolve => {
       let mimeContent: MimeContent = { atts: [], headers: {}, subject: undefined, text: undefined, html: undefined, signature: undefined, from: undefined, to: [], cc: [], bcc: [] };
       try {
         const parser = new MimeParser();

@@ -7,6 +7,7 @@ module.exports = {
     es6: true
   },
   extends: [
+    'eslint:recommended',
     'plugin:@typescript-eslint/base'
     // 'plugin:@typescript-eslint/recommended'
   ],
@@ -15,6 +16,7 @@ module.exports = {
   ],
   rules: {
     'semi': 'error',
+    'no-useless-escape': 0,
     'no-only-tests/no-only-tests': ['error', { block: ['ava.default'] }]
   }
 }

@@ -267,7 +267,7 @@ export class Pgp {
       const blocks: MsgBlock[] = [];
       const normalized = Str.normalize(origText);
       let startAt = 0;
-      while (true) {
+      while (true) { // eslint-disable-line no-constant-condition
         const r = Pgp.internal.detectBlockNext(normalized, startAt);
         if (r.found) {
           blocks.push(...r.found);

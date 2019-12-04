@@ -33,12 +33,16 @@ abstract class ControllableBase {
     let m;
     if (this.isXpath(customSelLanguageQuery)) {
       return customSelLanguageQuery;
+    // eslint-disable-next-line no-cond-assign
     } else if (m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)\:message/)) { // tslint:disable-line:no-conditional-assignment
       return `.${m[1]} #swal2-content`; // message inside the modal
+    // eslint-disable-next-line no-cond-assign
     } else if (m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)/)) { // tslint:disable-line:no-conditional-assignment
       return `.${m[1]}`; // represented as a class
+    // eslint-disable-next-line no-cond-assign
     } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-]+)$/)) { // tslint:disable-line:no-conditional-assignment
       return `[data-test="${m[1]}"]`;
+    // eslint-disable-next-line no-cond-assign
     } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-]+)\(([^()]*)\)$/)) { // tslint:disable-line:no-conditional-assignment
       return `//*[@data-test='${m[1]}' and contains(text(),'${m[2]}')]`;
     } else {
