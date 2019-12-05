@@ -90,7 +90,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
       await pageHasReplyContainer(t, browser, gmailPage);
     }));
 
-    ava.default.only('mail.google.com[global:compatibility] - secure reply btn accepts reply prompt', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.default('mail.google.com[global:compatibility] - secure reply btn accepts reply prompt', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/WhctKJTrdTXcmgcCRgXDpVnfjJNnjjLzSvcMDczxWPMsBTTfPxRDMrKCJClzDHtbXlhnwtV'); // encrypted convo
       await Util.sleep(5);
       await pageHasReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
