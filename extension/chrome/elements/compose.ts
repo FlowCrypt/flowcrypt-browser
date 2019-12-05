@@ -50,7 +50,7 @@ Catch.try(async () => {
   const isReplyBox = !!replyMsgId;
   let passphraseInterval: number;
 
-  const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'sendAs', 'addresses_keyserver', 'email_provider',
+  const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'sendAs', 'email_provider',
     'hide_message_password', 'drafts_reply']);
   const tabId = await BrowserMsg.requiredTabId();
   const factory = new XssSafeFactory(acctEmail, tabId);
@@ -258,7 +258,6 @@ Catch.try(async () => {
         return undefined;
       }
     },
-    storageGetAddressesKeyserver: () => storage.addresses_keyserver || [],
     storageGetAddresses,
     storageGetHideMsgPassword: () => !!storage.hide_message_password,
     storageGetSubscription: () => Store.subscription(acctEmail),

@@ -15,7 +15,6 @@ export interface ComposerAppFunctionsInterface {
   getScopes: () => { [key in GoogleAuthScopesNames]: boolean };
   doesRecipientHaveMyPubkey: (email: string) => Promise<boolean | undefined>;
   storageGetAddresses: () => Dict<SendAsAlias> | undefined;
-  storageGetAddressesKeyserver: () => string[];
   storageGetHideMsgPassword: () => boolean;
   storageGetSubscription: () => Promise<Subscription>;
   storageGetKey: (acctEmail: string, senderEmail: string) => Promise<KeyInfo>;

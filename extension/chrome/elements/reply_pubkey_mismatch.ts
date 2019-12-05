@@ -39,7 +39,6 @@ Catch.try(async () => {
     }),
     doesRecipientHaveMyPubkey: (): Promise<boolean | undefined> => Promise.resolve(false),
     storageGetAddresses: () => undefined,
-    storageGetAddressesKeyserver: () => [],
     storageGetHideMsgPassword: () => false,
     storageGetSubscription: () => Promise.resolve(new Subscription(undefined)),
     storageSetDraftMeta: () => Promise.resolve(),

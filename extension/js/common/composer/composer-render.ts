@@ -21,7 +21,6 @@ export class ComposerRender extends ComposerComponent {
 
   async initActions() {
     await this.initComposeBox();
-    this.composer.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
     this.composer.S.cached('icon_help').click(Ui.event.handle(() => this.composer.app.renderHelpDialog(), this.composer.errs.handlers(`render help dialog`)));
     this.composer.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
     this.composer.draft.initActions().catch(Catch.reportErr);
