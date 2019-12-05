@@ -72,14 +72,17 @@ export class Injector {
   }
 
   insertEndSessionBtn = async (acctEmail: string) => {
-    const prependToElem = $(this.container.finishSesionBtnSel[this.webmailName]).first().children().last();
+    let prependToElem = $(this.container.finishSesionBtnSel[this.webmailName]).first();
+    if (this.webmailName === 'gmail') {
+      prependToElem = prependToElem.children().last(); // todo: ideally we would not have to have special logic here for Gmail
+    }
     if (!prependToElem.length) {
       if (!this.missingElSelectorReported[this.container.finishSesionBtnSel[this.webmailName]]) {
-        Catch.report(`Selector for locking session not found on Gmail webpage: '${this.container.finishSesionBtnSel[this.webmailName]}'`);
+        Catch.report(`Selector for locking session container not found: '${this.container.finishSesionBtnSel[this.webmailName]}' (add .children().last() if Gmail)`);
         this.missingElSelectorReported[this.container.finishSesionBtnSel[this.webmailName]] = true;
       }
     }
-    prependToElem.prepend(this.factory.btnEndPPSession(this.webmailName)) // xss-safe-factory
+    prependToElem.append(this.factory.btnEndPPSession(this.webmailName)) // xss-safe-factory
       .find('.action_finish_session').click(Ui.event.prevent('double', async el => {
         const keysInSession = await Store.getKeysCurrentlyInSession(acctEmail);
         if (keysInSession.length) {
