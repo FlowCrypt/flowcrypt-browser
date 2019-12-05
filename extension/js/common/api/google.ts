@@ -706,7 +706,6 @@ export class GoogleAuth {
     const parts = title.split(' ', 2);
     const result = parts[0] as GoogleAuthWindowResult$result;
     const params = Url.parse(['code', 'state', 'error'], parts[1]);
-    console.log(`state: ${params.state}`);
     let authReq: AuthReq;
     try {
       authReq = GoogleAuth.apiGoogleAuthStateUnpack(String(params.state));
