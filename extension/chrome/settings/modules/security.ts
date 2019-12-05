@@ -129,5 +129,6 @@ View.run(class SecurityView extends View {
         return true;
       }
     }
+    return false;
   }
 });
