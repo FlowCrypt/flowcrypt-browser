@@ -46,10 +46,10 @@ View.run(class ExperimentalView extends View {
     $('.action_throw_err').click(this.setHandler(async () => Catch.test('error')));
     $('.action_throw_obj').click(this.setHandler(async () => Catch.test('object')));
     $('.action_reset_account').click(this.setHandlerPrevent('double', this.acctResetHandler));
-    $('.action_reset_managing_auth').click(this.setHandler(this.resetManagingAuthHandler));
-    $('.action_make_google_auth_token_unusable').click(this.setHandler(this.makeGoogleAuthTokenUnusableHandler));
-    $('.action_make_google_refresh_token_unusable').click(this.setHandler(this.makeGoogleRefreshTokenUnusableHandler));
-    $('.action_account_email_changed').click(this.setHandler(this.acctEmailChangedHandler));
+    $('.action_reset_managing_auth').click(this.setHandler(el => this.resetManagingAuthHandler()));
+    $('.action_make_google_auth_token_unusable').click(this.setHandler(el => this.makeGoogleAuthTokenUnusableHandler()));
+    $('.action_make_google_refresh_token_unusable').click(this.setHandler(el => this.makeGoogleRefreshTokenUnusableHandler()));
+    $('.action_account_email_changed').click(this.setHandler(el => this.acctEmailChangedHandler()));
   }
 
   // -- PRIVATE

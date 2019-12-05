@@ -123,7 +123,7 @@ View.run(class ContactsView extends View {
     $('#view_contact .key_fingerprint').text(contact!.fingerprint!); // should exist - from list of contacts && should have pgp - filtered
     $('#view_contact .key_words').text(contact!.keywords!); // should exist - from list of contacts && should have pgp - filtered
     $('#view_contact').css('display', 'block');
-    $('#page_back_button').click(this.setHandler(this.loadAndRenderContactList));
+    $('#page_back_button').click(this.setHandler(el => this.loadAndRenderContactList()));
   }
 
   private actionRenderChangePublicKeyHandler(changePubkeyButton: HTMLElement) {
@@ -132,7 +132,7 @@ View.run(class ContactsView extends View {
     Xss.sanitizeRender('h1', `${this.backBtn}${this.space}${Xss.escape(email)}${this.space}(edit)`);
     $('#edit_contact').css('display', 'block');
     $('#edit_contact .input_pubkey').val('').attr('email', email);
-    $('#page_back_button').click(this.setHandler(this.loadAndRenderContactList));
+    $('#page_back_button').click(this.setHandler(el => this.loadAndRenderContactList()));
   }
 
   private async actionSaveEditedPublicKeyHandler() {
@@ -165,7 +165,7 @@ View.run(class ContactsView extends View {
     $('#bulk_import #processed').text('').css('display', 'none');
     $('#file_import').show();
     $('#file_import #fineuploader_button').css('display', 'inline-block');
-    $('#page_back_button').click(this.setHandler(this.loadAndRenderContactList));
+    $('#page_back_button').click(this.setHandler(el => this.loadAndRenderContactList()));
   }
 
   private async actionProcessBulkImportTextInput() {
