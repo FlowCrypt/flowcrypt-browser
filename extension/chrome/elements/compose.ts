@@ -236,8 +236,8 @@ Catch.try(async () => {
       if (storage.pubkey_sent_to && storage.pubkey_sent_to.includes(theirEmail)) {
         return true;
       }
-      if (scopes.read || scopes.modify) {
-        return undefined;
+      if (!scopes.read && !scopes.modify) {
+        return undefined; // cannot read email
       }
       const qSentPubkey = `is:sent to:${theirEmail} "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"`;
       const qReceivedMsg = `from:${theirEmail} "BEGIN PGP MESSAGE" "END PGP MESSAGE"`;

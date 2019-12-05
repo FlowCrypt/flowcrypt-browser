@@ -31,7 +31,7 @@ export class ComposerMyPubkey extends ComposerComponent {
       for (const contact of contacts) {
         if (typeof contact === 'object' && contact.has_pgp && contact.client !== 'cryptup') {
           // new message, and my key is not uploaded where the recipient would look for it
-          if (await this.composer.app.doesRecipientHaveMyPubkey(contact.email) !== true) {
+          if (! await this.composer.app.doesRecipientHaveMyPubkey(contact.email)) {
             // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
             this.setAttachPreference(true);
             return;
