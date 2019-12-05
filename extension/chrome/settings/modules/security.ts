@@ -48,15 +48,8 @@ View.run(class SecurityView extends View {
   }
 
   private async renderPPOptionsIfStoredInSession() {
-    let storedInSession = false;
     const keys = await Store.keysGet(this.acctEmail);
-    for (const key of keys) {
-      if (await Store.passphraseGet(this.acctEmail, key.longid, true)) {
-        storedInSession = true;
-        break;
-      }
-    }
-    if (storedInSession) {
+    if (await this.isAnyPassPhraseStoredPermanently(keys)) {
       $('.forget_passphrase').css('display', '');
       $('.action_forget_pp').click(this.setHandler(() => {
         $('.forget_passphrase').css('display', 'none');
@@ -128,5 +121,13 @@ View.run(class SecurityView extends View {
   private async hideMsgPasswordHandler(checkbox: HTMLElement) {
     await Store.setAcct(this.acctEmail, { hide_message_password: $(checkbox).is(':checked') });
     window.location.reload();
+  }
+
+  private async isAnyPassPhraseStoredPermanently(keys: KeyInfo[]) {
+    for (const key of keys) {
+      if (await Store.passphraseGet(this.acctEmail, key.longid, true)) {
+        return true;
+      }
+    }
   }
 });
