@@ -27,7 +27,7 @@ export class ComposerMyPubkey extends ComposerComponent {
       return;
     }
     (async () => {
-      const contacts = await this.composer.app.storageContactGet(this.composer.contacts.getRecipients().map(r => r.email));
+      const contacts = await this.composer.app.storageContactGet(this.composer.recipients.getRecipients().map(r => r.email));
       for (const contact of contacts) {
         if (typeof contact === 'object' && contact.has_pgp && contact.client !== 'cryptup') {
           // new message, and my key is not uploaded where the recipient would look for it

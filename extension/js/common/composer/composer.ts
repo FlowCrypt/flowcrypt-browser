@@ -7,7 +7,7 @@ import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functio
 import { ComposerUrlParams } from './interfaces/composer-types.js';
 import { ComposerDraft } from './composer-draft.js';
 import { ComposerQuote } from './composer-quote.js';
-import { ComposerContacts } from './composer-contacts.js';
+import { ComposerRecipients } from './composer-recipients.js';
 import { ComposerSendBtn } from './composer-send-btn.js';
 import { ComposerPwdOrPubkeyContainer } from './composer-pwd-or-pubkey-container.js';
 import { ComposerSize } from './composer-size.js';
@@ -69,7 +69,7 @@ export class Composer {
   public quote: ComposerQuote;
   public sendBtn: ComposerSendBtn;
   public draft: ComposerDraft;
-  public contacts: ComposerContacts;
+  public recipients: ComposerRecipients;
   public pwdOrPubkeyContainer: ComposerPwdOrPubkeyContainer;
   public size: ComposerSize;
   public sender: ComposerSender;
@@ -90,7 +90,7 @@ export class Composer {
     this.urlParams.subject = Mime.subjectWithoutPrefixes(this.urlParams.subject);
     this.draft = new ComposerDraft(this);
     this.quote = new ComposerQuote(this);
-    this.contacts = new ComposerContacts(this);
+    this.recipients = new ComposerRecipients(this);
     this.sendBtn = new ComposerSendBtn(this);
     this.pwdOrPubkeyContainer = new ComposerPwdOrPubkeyContainer(this);
     this.size = new ComposerSize(this);

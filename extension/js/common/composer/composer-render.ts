@@ -49,7 +49,7 @@ export class ComposerRender extends ComposerComponent {
     } else {
       if (this.urlParams.isReplyBox) {
         const recipients: Recipients = { to: this.urlParams.to, cc: this.urlParams.cc, bcc: this.urlParams.bcc };
-        this.composer.contacts.addRecipients(recipients, false).catch(Catch.reportErr);
+        this.composer.recipients.addRecipients(recipients, false).catch(Catch.reportErr);
         // await this.composer.composerContacts.addRecipientsAndShowPreview(recipients);
         if (this.urlParams.skipClickPrompt) { // TODO: fix issue when loading recipients
           await this.renderReplyMsgComposeTable();
@@ -67,7 +67,7 @@ export class ComposerRender extends ComposerComponent {
                 typesToDelete.push('bcc');
                 break;
             }
-            this.composer.contacts.deleteRecipientsBySendingType(typesToDelete);
+            this.composer.recipients.deleteRecipientsBySendingType(typesToDelete);
             await this.renderReplyMsgComposeTable(method);
           }, this.composer.errs.handlers(`activate repply box`)));
         }
@@ -78,7 +78,7 @@ export class ComposerRender extends ComposerComponent {
     } else {
       this.composer.S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
       await this.renderComposeTable();
-      await this.composer.contacts.setEmailsPreview(this.composer.contacts.getRecipients());
+      await this.composer.recipients.setEmailsPreview(this.composer.recipients.getRecipients());
     }
     this.composer.sendBtn.resetSendBtn();
     await this.composer.sendBtn.popover.render();
@@ -87,8 +87,8 @@ export class ComposerRender extends ComposerComponent {
 
   public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
     this.composer.S.cached('prompt').css({ display: 'none' });
-    this.composer.contacts.showHideCcAndBccInputsIfNeeded();
-    await this.composer.contacts.setEmailsPreview(this.composer.contacts.getRecipients());
+    this.composer.recipients.showHideCcAndBccInputsIfNeeded();
+    await this.composer.recipients.setEmailsPreview(this.composer.recipients.getRecipients());
     await this.renderComposeTable();
     if (this.composer.canReadEmails) {
       this.urlParams.subject = `${(method === 'reply' ? 'Re' : 'Fwd')}: ${this.urlParams.subject}`;
@@ -156,7 +156,7 @@ export class ComposerRender extends ComposerComponent {
         })(e);
       }
     }));
-    this.composer.contacts.initActions();
+    this.composer.recipients.initActions();
     this.composer.sendBtn.initActions();
     this.composer.S.cached('input_to').bind('paste', Ui.event.handle(async (elem, event) => {
       if (event.originalEvent instanceof ClipboardEvent && event.originalEvent.clipboardData) {
@@ -181,7 +181,7 @@ export class ComposerRender extends ComposerComponent {
             }));
           }
           this.composer.S.cached('input_to').val(keyUser.email);
-          await this.composer.contacts.parseRenderRecipients(this.composer.S.cached('input_to'));
+          await this.composer.recipients.parseRenderRecipients(this.composer.S.cached('input_to'));
         } else {
           await Ui.modal.warning(`The email listed in this public key does not seem valid: ${keyUser}`);
         }
@@ -199,7 +199,7 @@ export class ComposerRender extends ComposerComponent {
       if (this.urlParams.to.length) {
         // Firefox will not always respond to initial automatic $input_text.blur()
         // Recipients may be left unrendered, as standard text, with a trailing comma
-        await this.composer.contacts.parseRenderRecipients(this.composer.S.cached('input_to')); // this will force firefox to render them on load
+        await this.composer.recipients.parseRenderRecipients(this.composer.S.cached('input_to')); // this will force firefox to render them on load
       }
       this.composer.sender.renderSenderAliasesOptionsToggle();
     } else {
@@ -227,7 +227,7 @@ export class ComposerRender extends ComposerComponent {
   }
 
   private loadRecipientsThenSetTestStateReady = async () => {
-    await Promise.all(this.composer.contacts.getRecipients().filter(r => r.evaluating).map(r => r.evaluating));
+    await Promise.all(this.composer.recipients.getRecipients().filter(r => r.evaluating).map(r => r.evaluating));
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
 

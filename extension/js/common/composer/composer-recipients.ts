@@ -19,7 +19,7 @@ import { RecipientType } from '../api/api.js';
 import { Store } from '../platform/store.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './composer-errs.js';
 
-export class ComposerContacts extends ComposerComponent {
+export class ComposerRecipients extends ComposerComponent {
   private addedRecipients: RecipientElement[] = [];
   private BTN_LOADING = 'Loading..';
 
@@ -583,9 +583,9 @@ export class ComposerContacts extends ComposerComponent {
   }
 
   public addRecipientsAndShowPreview = async (recipients: Recipients) => {
-    this.composer.contacts.addRecipients(recipients).catch(Catch.reportErr);
-    this.composer.contacts.showHideCcAndBccInputsIfNeeded();
-    await this.composer.contacts.setEmailsPreview(this.getRecipients());
+    this.composer.recipients.addRecipients(recipients).catch(Catch.reportErr);
+    this.composer.recipients.showHideCcAndBccInputsIfNeeded();
+    await this.composer.recipients.setEmailsPreview(this.getRecipients());
   }
 
   private refreshRecipients = async () => {

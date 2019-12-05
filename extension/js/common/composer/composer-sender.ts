@@ -54,8 +54,8 @@ export class ComposerSender extends ComposerComponent {
       });
       Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), emailAliases.map(fmtOpt).join('')).change(() => this.composer.myPubkey.reevaluateShouldAttachOrNot());
       this.composer.S.now('input_from').change(async () => {
-        await this.composer.contacts.reEvaluateRecipients(this.composer.contacts.getRecipients());
-        await this.composer.contacts.setEmailsPreview(this.composer.contacts.getRecipients());
+        await this.composer.recipients.reEvaluateRecipients(this.composer.recipients.getRecipients());
+        await this.composer.recipients.setEmailsPreview(this.composer.recipients.getRecipients());
         this.composer.quote.replaceFooter(this.getFooter());
       });
       if (this.urlParams.isReplyBox) {
