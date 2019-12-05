@@ -19,17 +19,15 @@ import { RecipientType } from '../api/api.js';
 import { Store } from '../platform/store.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './composer-errs.js';
 
-export class ComposerContacts extends ComposerComponent {
+export class ComposerRecipients extends ComposerComponent {
   private addedRecipients: RecipientElement[] = [];
   private BTN_LOADING = 'Loading..';
 
   private readonly MAX_CONTACTS_LENGTH = 8;
 
   private contactSearchInProgress = false;
-  private includePubkeyToggledManually = false;
   private addedPubkeyDbLookupInterval?: number;
 
-  private myAddrsOnKeyserver: string[] = [];
   private recipientsMissingMyKey: string[] = [];
 
   private onRecipientAddedCallbacks: ((rec: RecipientElement[]) => void)[] = [];
@@ -40,7 +38,6 @@ export class ComposerContacts extends ComposerComponent {
 
   constructor(composer: Composer) {
     super(composer);
-    this.myAddrsOnKeyserver = this.composer.app.storageGetAddressesKeyserver() || [];
     this.canSearchContacts = this.composer.app.getScopes().readContacts;
   }
 
@@ -152,12 +149,6 @@ export class ComposerContacts extends ComposerComponent {
         await this.setEmailsPreview(this.getRecipients());
       }, 1000);
     }, this.composer.errs.handlers('add recipient public key')));
-    this.composer.S.cached('icon_pubkey').click(Ui.event.handle(target => {
-      this.includePubkeyToggledManually = true;
-      const includePub = !$(target).is('.active'); // evaluating what the state of the icon was BEFORE clicking
-      Ui.toast(`${includePub ? 'Attaching' : 'Removing'} your Public Key`).catch(Catch.reportErr);
-      this.updatePubkeyIcon(includePub);
-    }, this.composer.errs.handlers(`set/unset pubkey attachment`)));
     BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
     BrowserMsg.listen(this.urlParams.parentTabId);
   }
@@ -484,20 +475,6 @@ export class ComposerContacts extends ComposerComponent {
     this.composer.S.cached('contacts').children().not('ul').remove();
   }
 
-  public updatePubkeyIcon = (include?: boolean) => {
-    if (typeof include === 'undefined') { // decide if pubkey should be included
-      if (!this.includePubkeyToggledManually) { // leave it as is if toggled manually before
-        this.updatePubkeyIcon(Boolean(this.recipientsMissingMyKey.length));
-      }
-    } else { // set icon to specific state
-      if (include) {
-        this.composer.S.cached('icon_pubkey').addClass('active').attr('title', Lang.compose.includePubkeyIconTitleActive);
-      } else {
-        this.composer.S.cached('icon_pubkey').removeClass('active').attr('title', Lang.compose.includePubkeyIconTitle);
-      }
-    }
-  }
-
   private renderAndAddToDBAPILoadedContacts = async (input: JQuery<HTMLElement>, contacts: Contact[]) => {
     if (contacts.length) {
       for (const contact of contacts) {
@@ -553,18 +530,6 @@ export class ComposerContacts extends ComposerComponent {
     this.composer.errs.debug(`renderPubkeyResult.emailEl(${String(recipient.email)})`);
     this.composer.errs.debug(`renderPubkeyResult.email(${recipient.email})`);
     this.composer.errs.debug(`renderPubkeyResult.contact(${JSON.stringify(contact)})`);
-    if ($('body#new_message').length) {
-      if (typeof contact === 'object' && contact.has_pgp) {
-        const sendingAddrOnKeyserver = this.myAddrsOnKeyserver.includes(this.composer.sender.getSender());
-        if ((contact.client === 'cryptup' && !sendingAddrOnKeyserver) || (contact.client !== 'cryptup')) {
-          // new message, and my key is not uploaded where the recipient would look for it
-          if (await this.composer.app.doesRecipientHaveMyPubkey(recipient.email) !== true) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
-            this.recipientsMissingMyKey.push(recipient.email);
-          }
-        }
-      }
-      this.updatePubkeyIcon();
-    }
     $(el).children('img, i').remove();
     // tslint:disable-next-line:max-line-length
     const contentHtml = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
@@ -602,6 +567,7 @@ export class ComposerContacts extends ComposerComponent {
       $(el).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
     this.composer.pwdOrPubkeyContainer.showHideContainerAndColorSendBtn();
+    this.composer.myPubkey.reevaluateShouldAttachOrNot();
   }
 
   private removeRecipient = (element: HTMLElement) => {
@@ -613,13 +579,13 @@ export class ComposerContacts extends ComposerComponent {
     this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${this.addedRecipients[index].sendingType} input`).focus();
     this.addedRecipients.splice(index, 1);
     this.composer.pwdOrPubkeyContainer.showHideContainerAndColorSendBtn();
-    this.updatePubkeyIcon();
+    this.composer.myPubkey.reevaluateShouldAttachOrNot();
   }
 
   public addRecipientsAndShowPreview = async (recipients: Recipients) => {
-    this.composer.contacts.addRecipients(recipients).catch(Catch.reportErr);
-    this.composer.contacts.showHideCcAndBccInputsIfNeeded();
-    await this.composer.contacts.setEmailsPreview(this.getRecipients());
+    this.composer.recipients.addRecipients(recipients).catch(Catch.reportErr);
+    this.composer.recipients.showHideCcAndBccInputsIfNeeded();
+    await this.composer.recipients.setEmailsPreview(this.getRecipients());
   }
 
   private refreshRecipients = async () => {

@@ -46,7 +46,7 @@ export class ComposerSize extends ComposerComponent {
     this.resizeComposeBox();
     this.setInputTextHeightManuallyIfNeeded(true);
     if (this.composer.S.cached('recipients_placeholder').is(':visible')) {
-      await this.composer.contacts.setEmailsPreview(this.composer.contacts.getRecipients());
+      await this.composer.recipients.setEmailsPreview(this.composer.recipients.getRecipients());
     }
   }
 
@@ -96,7 +96,7 @@ export class ComposerSize extends ComposerComponent {
       this.composer.S.cached('icon_popout').attr('src', '/img/svgs/maximize.svg');
     }
     if (this.composer.S.cached('recipients_placeholder').is(':visible')) {
-      await this.composer.contacts.setEmailsPreview(this.composer.contacts.getRecipients());
+      await this.composer.recipients.setEmailsPreview(this.composer.recipients.getRecipients());
     }
     this.composeWindowIsMaximized = !this.composeWindowIsMaximized;
   }

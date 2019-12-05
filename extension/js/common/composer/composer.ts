@@ -7,7 +7,7 @@ import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functio
 import { ComposerUrlParams } from './interfaces/composer-types.js';
 import { ComposerDraft } from './composer-draft.js';
 import { ComposerQuote } from './composer-quote.js';
-import { ComposerContacts } from './composer-contacts.js';
+import { ComposerRecipients } from './composer-recipients.js';
 import { ComposerSendBtn } from './composer-send-btn.js';
 import { ComposerPwdOrPubkeyContainer } from './composer-pwd-or-pubkey-container.js';
 import { ComposerSize } from './composer-size.js';
@@ -18,6 +18,7 @@ import { ComposerInput } from './composer-input.js';
 import { ComposerRender } from './composer-render.js';
 import { Catch } from '../platform/catch.js';
 import { Mime } from '../core/mime.js';
+import { ComposerMyPubkey } from './composer-my-pubkey.js';
 
 export class Composer {
 
@@ -68,7 +69,7 @@ export class Composer {
   public quote: ComposerQuote;
   public sendBtn: ComposerSendBtn;
   public draft: ComposerDraft;
-  public contacts: ComposerContacts;
+  public recipients: ComposerRecipients;
   public pwdOrPubkeyContainer: ComposerPwdOrPubkeyContainer;
   public size: ComposerSize;
   public sender: ComposerSender;
@@ -76,6 +77,7 @@ export class Composer {
   public errs: ComposerErrs;
   public input: ComposerInput;
   public render: ComposerRender;
+  public myPubkey: ComposerMyPubkey;
 
   public app: ComposerAppFunctionsInterface;
   public urlParams: ComposerUrlParams;
@@ -88,7 +90,7 @@ export class Composer {
     this.urlParams.subject = Mime.subjectWithoutPrefixes(this.urlParams.subject);
     this.draft = new ComposerDraft(this);
     this.quote = new ComposerQuote(this);
-    this.contacts = new ComposerContacts(this);
+    this.recipients = new ComposerRecipients(this);
     this.sendBtn = new ComposerSendBtn(this);
     this.pwdOrPubkeyContainer = new ComposerPwdOrPubkeyContainer(this);
     this.size = new ComposerSize(this);
@@ -97,6 +99,7 @@ export class Composer {
     this.errs = new ComposerErrs(this);
     this.input = new ComposerInput(this);
     this.render = new ComposerRender(this);
+    this.myPubkey = new ComposerMyPubkey(this);
     const scopes = this.app.getScopes();
     this.canReadEmails = scopes.read || scopes.modify;
     this.initPromise = this.render.initActions().catch(Catch.reportErr);

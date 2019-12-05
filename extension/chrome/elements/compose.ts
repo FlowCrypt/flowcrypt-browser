@@ -50,7 +50,7 @@ Catch.try(async () => {
   const isReplyBox = !!replyMsgId;
   let passphraseInterval: number;
 
-  const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'sendAs', 'addresses_keyserver', 'email_provider',
+  const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'sendAs', 'email_provider',
     'hide_message_password', 'drafts_reply']);
   const tabId = await BrowserMsg.requiredTabId();
   const factory = new XssSafeFactory(acctEmail, tabId);
@@ -236,8 +236,8 @@ Catch.try(async () => {
       if (storage.pubkey_sent_to && storage.pubkey_sent_to.includes(theirEmail)) {
         return true;
       }
-      if (scopes.read || scopes.modify) {
-        return undefined;
+      if (!scopes.read && !scopes.modify) {
+        return undefined; // cannot read email
       }
       const qSentPubkey = `is:sent to:${theirEmail} "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"`;
       const qReceivedMsg = `from:${theirEmail} "BEGIN PGP MESSAGE" "END PGP MESSAGE"`;
@@ -258,7 +258,6 @@ Catch.try(async () => {
         return undefined;
       }
     },
-    storageGetAddressesKeyserver: () => storage.addresses_keyserver || [],
     storageGetAddresses,
     storageGetHideMsgPassword: () => !!storage.hide_message_password,
     storageGetSubscription: () => Store.subscription(acctEmail),

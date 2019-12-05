@@ -108,7 +108,7 @@ export class ComposerErrs extends ComposerComponent {
       SendBtnTexts.BTN_ENCRYPT_SIGN_AND_SEND,
       SendBtnTexts.BTN_PLAIN_SEND
     ];
-    const recipients = this.composer.contacts.getRecipients();
+    const recipients = this.composer.recipients.getRecipients();
     if (btnReadyTexts.includes(this.composer.S.now('send_btn_text').text().trim()) && recipients.length) {
       return; // all good
     }

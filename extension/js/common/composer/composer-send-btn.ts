@@ -114,7 +114,7 @@ export class ComposerSendBtn extends ComposerComponent {
         a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
       }
     }
-    if (this.composer.S.cached('icon_pubkey').is('.active')) {
+    if (this.composer.myPubkey.shouldAttach()) {
       msg.atts.push(Att.keyinfoAsPubkeyAtt(senderKi));
     }
     await this.addNamesToMsg(msg);

@@ -43,7 +43,7 @@ export class ComposerDraft extends ComposerComponent {
       }
     }, this.composer.errs.handlers('delete draft')));
     await this.composer.initPromise;
-    this.composer.contacts.onRecipientAdded(async () => {
+    this.composer.recipients.onRecipientAdded(async () => {
       await this.draftSave(true);
     });
   }
@@ -103,9 +103,9 @@ export class ComposerDraft extends ComposerComponent {
           body = encrypted.data;
         }
         const subject = String(this.composer.S.cached('input_subject').val() || this.urlParams.subject || 'FlowCrypt draft');
-        const to = this.composer.contacts.getRecipients().map(r => r.email); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
+        const to = this.composer.recipients.getRecipients().map(r => r.email); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
         const recipients: Recipients = { to: [], cc: [], bcc: [] };
-        for (const recipient of this.composer.contacts.getRecipients()) {
+        for (const recipient of this.composer.recipients.getRecipients()) {
           recipients[recipient.sendingType]!.push(recipient.email);
         }
         const mimeMsg = await Mime.encode(body, {
@@ -184,7 +184,7 @@ export class ComposerDraft extends ComposerComponent {
         }
         this.composer.S.cached('prompt').css({ display: 'none' });
         Xss.sanitizeRender(this.composer.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(result.content.toUtfStr().replace(/\n/g, '<br>')));
-        await this.composer.contacts.addRecipientsAndShowPreview({ to: headers.to, cc: headers.cc, bcc: headers.bcc });
+        await this.composer.recipients.addRecipientsAndShowPreview({ to: headers.to, cc: headers.cc, bcc: headers.bcc });
         if (this.urlParams.isReplyBox) {
           await this.composer.render.renderReplyMsgComposeTable();
         }
