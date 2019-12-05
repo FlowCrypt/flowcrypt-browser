@@ -115,7 +115,7 @@ body.cryptup_gmail.cryptup_gmail_new div.ade.appended span.cryptup_convo_button 
 }
 
 /* buttons top navbar Gmail */
-body.cryptup_gmail div.finish_session img { padding: 0; }
+body.cryptup_gmail div.action_finish_session img { padding: 0; }
 
 /* buttons body.cryptup_outlook */
 body.cryptup_outlook .cryptup_compose_button_container {

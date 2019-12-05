@@ -294,21 +294,21 @@ export class InboxPageRecipe extends PageRecipe {
     const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
     await inboxPage.waitAll('iframe');
     if (finishCurrentSession) {
-      await inboxPage.waitAndClick('@finish-session');
+      await inboxPage.waitAndClick('@action-finish-session');
       await Util.sleep(3); // give frames time to reload, else we will be manipulating them while reloading -> Error: waitForFunction failed: frame got detached.
     }
     const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
     await pgpBlockFrame.waitAll('@pgp-block-content');
     await pgpBlockFrame.waitForSelTestState('ready');
     if (enterPp) {
-      await inboxPage.notPresent("@finish-session");
+      await inboxPage.notPresent("@action-finish-session");
       await pgpBlockFrame.waitAndClick('@action-show-passphrase-dialog', { delay: 1 });
       await inboxPage.waitAll('@dialog-passphrase');
       const ppFrame = await inboxPage.getFrame(['passphrase.htm']);
       await ppFrame.waitAndType('@input-pass-phrase', enterPp);
       await ppFrame.waitAndClick('@action-confirm-pass-phrase-entry', { delay: 1 });
       await pgpBlockFrame.waitForSelTestState('ready');
-      await inboxPage.waitAll('@finish-session');
+      await inboxPage.waitAll('@action-finish-session');
       await Util.sleep(1);
     }
     const content = await pgpBlockFrame.read('@pgp-block-content');
@@ -321,8 +321,8 @@ export class InboxPageRecipe extends PageRecipe {
   public static checkFinishingSession = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, threadId: string) => {
     const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
     await inboxPage.waitAll('iframe');
-    await inboxPage.waitAndClick('@finish-session');
-    await inboxPage.waitTillGone('@finish-session');
+    await inboxPage.waitAndClick('@action-finish-session');
+    await inboxPage.waitTillGone('@action-finish-session');
     await Util.sleep(3); // give frames time to reload, else we will be manipulating them while reloading -> Error: waitForFunction failed: frame got detached.
     const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
     await pgpBlockFrame.waitAll('@pgp-block-content');

@@ -7,6 +7,7 @@ import { Ui, SelCache, WebMailName } from './browser.js';
 import { XssSafeFactory, WebmailVariantString } from './xss_safe_factory.js';
 import { Catch } from './platform/catch.js';
 import { Store } from './platform/store.js';
+import { Dict } from './core/common.js';
 
 type Host = {
   gmail: string,
@@ -15,6 +16,7 @@ type Host = {
 };
 
 export class Injector {
+
   private factory: XssSafeFactory;
   private webmailName: WebMailName;
   private webmailVariant: WebmailVariantString;
@@ -26,11 +28,14 @@ export class Injector {
       'settings': '#does_not_have',
     },
     finishSesionBtnSel: {
-      gmail: 'div.gb_1d,div.gb_ue',
+      gmail: 'div.gb_Xd',
       outlook: '#does_not_have',
       settings: '#settings > div.header'
     }
   };
+
+  private missingElSelectorReported: Dict<boolean> = {};
+
   constructor(webmailName: WebMailName, webmailVariant: WebmailVariantString, factory: XssSafeFactory) {
     this.webmailName = webmailName;
     this.webmailVariant = webmailVariant;
@@ -67,12 +72,18 @@ export class Injector {
   }
 
   insertEndSessionBtn = async (acctEmail: string) => {
-    const insertBeforeElem = $(this.container.finishSesionBtnSel[this.webmailName]).first().children().last();
-    if (!insertBeforeElem.length) {
-      Catch.report(`Selector for locking session not found on Gmail webpage: '${this.container.finishSesionBtnSel[this.webmailName]}'`);
+    let prependToElem = $(this.container.finishSesionBtnSel[this.webmailName]).first();
+    if (this.webmailName === 'gmail') {
+      prependToElem = prependToElem.children().last(); // todo: ideally we would not have to have special logic here for Gmail
     }
-    $(this.factory.btnEndPPSession(this.webmailName)).insertBefore(insertBeforeElem) // xss-direct
-      .click(Ui.event.prevent('double', async el => {
+    if (!prependToElem.length) {
+      if (!this.missingElSelectorReported[this.container.finishSesionBtnSel[this.webmailName]]) {
+        Catch.report(`Selector for locking session container not found: '${this.container.finishSesionBtnSel[this.webmailName]}' (add .children().last() if Gmail)`);
+        this.missingElSelectorReported[this.container.finishSesionBtnSel[this.webmailName]] = true;
+      }
+    }
+    prependToElem.append(this.factory.btnEndPPSession(this.webmailName)) // xss-safe-factory
+      .find('.action_finish_session').click(Ui.event.prevent('double', async el => {
         const keysInSession = await Store.getKeysCurrentlyInSession(acctEmail);
         if (keysInSession.length) {
           await Promise.all(keysInSession.map(async k => await Store.passphraseSave('session', acctEmail, k.longid, undefined)));
