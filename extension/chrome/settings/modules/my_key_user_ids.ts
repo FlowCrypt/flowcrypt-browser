@@ -2,32 +2,40 @@
 
 'use strict';
 
-import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Url } from '../../../js/common/core/common.js';
+import { View } from '../../../js/common/view.js';
+import { KeyInfo } from '../../../js/common/core/pgp.js';
 
 declare const openpgp: typeof OpenPGP;
 
-Catch.try(async () => {
+View.run(class MyKeyUserIdsView extends View {
+  private readonly acctEmail: string;
+  private readonly longid: string;
+  private readonly myKeyUrl: string;
+  private primaryKi: KeyInfo | undefined;
+  constructor() {
+    super();
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'longid', 'parentTabId']);
+    this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+    this.longid = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
+    this.myKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
+  }
 
-  const uncheckedUrlParams = Url.parse(['acctEmail', 'longid', 'parentTabId']);
-  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const longid = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
-  const myKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
+  async render() {
+    [this.primaryKi] = await Store.keysGet(this.acctEmail, [this.longid]);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
+    $('.action_show_public_key').attr('href', this.myKeyUrl);
+    const { keys: [prv] } = await openpgp.key.readArmored(this.primaryKi.private);
+    const userIds = prv.users.map(u => u.userId).filter(Boolean).map(uid => uid!.userid); // todo - create a common function in settings.js for here and setup.js user_ids
+    Xss.sanitizeRender('.user_ids', userIds.map((uid: string) => `<div>${Xss.escape(uid)}</div>`).join(''));
+    $('.email').text(this.acctEmail);
+    $('.key_words').text(this.primaryKi.keywords);
+  }
 
-  $('.action_show_public_key').attr('href', myKeyUrl);
-
-  const [primaryKi] = await Store.keysGet(acctEmail, [longid]);
-  Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-
-  const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
-
-  const userIds = prv.users.map(u => u.userId).filter(Boolean).map(uid => uid!.userid); // todo - create a common function in settings.js for here and setup.js user_ids
-  Xss.sanitizeRender('.user_ids', userIds.map((uid: string) => `<div>${Xss.escape(uid)}</div>`).join(''));
-
-  $('.email').text(acctEmail);
-  $('.key_words').text(primaryKi.keywords);
-
-})();
+  setHandlers() {
+    // No need
+  }
+});
