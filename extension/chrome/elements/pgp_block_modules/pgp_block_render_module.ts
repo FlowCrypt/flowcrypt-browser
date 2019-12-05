@@ -27,21 +27,13 @@ export class PgpBlockViewRenderModule {
 
   public resizePgpBlockFrame() {
     let height = Math.max($('#pgp_block').height()!, 20) + 40;
-    const isInfiniteResizeLoop = () => {
-      this.heightHist.push(height);
-      const len = this.heightHist.length;
-      if (len < 4) {
-        return false;
-      }
-      if (this.heightHist[len - 1] === this.heightHist[len - 3] && this.heightHist[len - 2] === this.heightHist[len - 4] && this.heightHist[len - 1] !== this.heightHist[len - 2]) {
-        console.info('pgp_block.js: repetitive resize loop prevented'); // got repetitive, eg [70, 80, 200, 250, 200, 250]
-        height = Math.max(this.heightHist[len - 1], this.heightHist[len - 2]);
-      }
-      return;
-    };
-    if (!isInfiniteResizeLoop()) {
-      BrowserMsg.send.setCss(this.view.parentTabId, { selector: `iframe#${this.view.frameId}`, css: { height: `${height}px` } });
+    this.heightHist.push(height);
+    const len = this.heightHist.length;
+    if (len >= 4 && this.heightHist[len - 1] === this.heightHist[len - 3] && this.heightHist[len - 2] === this.heightHist[len - 4] && this.heightHist[len - 1] !== this.heightHist[len - 2]) {
+      console.info('pgp_block.js: repetitive resize loop prevented'); // got repetitive, eg [70, 80, 200, 250, 200, 250]
+      height = Math.max(this.heightHist[len - 1], this.heightHist[len - 2]); // pick the larger number to stop if from oscillating
     }
+    BrowserMsg.send.setCss(this.view.parentTabId, { selector: `iframe#${this.view.frameId}`, css: { height: `${height}px` } });
   }
 
   private displayImageSrcLinkAsImg(a: HTMLAnchorElement, event: JQuery.Event<HTMLAnchorElement, null>) {
@@ -88,7 +80,7 @@ export class PgpBlockViewRenderModule {
       }));
     }
     this.resizePgpBlockFrame(); // resize window now
-    Catch.setHandledTimeout(() => $(window).resize(this.view.setHandlerPrevent('spree', this.resizePgpBlockFrame)), 1000); // start auto-resizing the window after 1s
+    Catch.setHandledTimeout(() => $(window).resize(this.view.setHandlerPrevent('spree', () => this.resizePgpBlockFrame())), 1000); // start auto-resizing the window after 1s
   }
 
   public setFrameColor(color: 'red' | 'green' | 'gray') {
