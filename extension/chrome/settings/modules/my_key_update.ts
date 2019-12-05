@@ -18,28 +18,27 @@ declare const openpgp: typeof OpenPGP;
 
 View.run(class MyKeyUpdateView extends View {
   private readonly acctEmail: string;
+  private readonly longid: string;
   private readonly showKeyUrl: string;
-  private readonly primariKiPromise: Promise<KeyInfo>;
   private readonly inputPrivateKey = $('.input_private_key');
   private readonly prvHeaders = Pgp.armor.headers('privateKey');
+  private primaryKi: KeyInfo | undefined;
 
   constructor() {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'longid', 'parentTabId']);
-    const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    const longid = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
-    this.acctEmail = acctEmail;
+    this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+    this.longid = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
     this.showKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
-    this.primariKiPromise = (async () => (await Store.keysGet(acctEmail, [longid]))[0])();
   }
 
   async render() {
-    const primaryKi = await this.primariKiPromise;
+    [this.primaryKi] = await Store.keysGet(this.acctEmail, [this.longid]);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     $('.action_show_public_key').attr('href', this.showKeyUrl);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     $('.email').text(this.acctEmail);
-    $('.key_words').text(primaryKi.keywords).attr('title', primaryKi.longid);
-    this.inputPrivateKey.attr('placeholder', this.inputPrivateKey.attr('placeholder') + ' (' + primaryKi.longid + ')');
+    $('.key_words').text(this.primaryKi.keywords).attr('title', this.primaryKi.longid);
+    this.inputPrivateKey.attr('placeholder', this.inputPrivateKey.attr('placeholder') + ' (' + this.primaryKi.longid + ')');
   }
 
   setHandlers() {
@@ -51,14 +50,14 @@ View.run(class MyKeyUpdateView extends View {
     }));
   }
 
-  private async storeUpdatedKeyAndPassphrase(primaryKi: KeyInfo, updatedPrv: OpenPGP.key.Key, updatedPrvPassphrase: string) {
-    const storedPassphrase = await Store.passphraseGet(this.acctEmail, primaryKi.longid, true);
+  private async storeUpdatedKeyAndPassphrase(updatedPrv: OpenPGP.key.Key, updatedPrvPassphrase: string) {
+    const storedPassphrase = await Store.passphraseGet(this.acctEmail, this.primaryKi!.longid, true);
     await Store.keysAdd(this.acctEmail, updatedPrv.armor());
-    await Store.passphraseSave('local', this.acctEmail, primaryKi.longid, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
-    await Store.passphraseSave('session', this.acctEmail, primaryKi.longid, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
+    await Store.passphraseSave('local', this.acctEmail, this.primaryKi!.longid, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
+    await Store.passphraseSave('session', this.acctEmail, this.primaryKi!.longid, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
     if (await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
       try {
-        await Ui.modal.info(await Attester.updatePubkey(primaryKi.longid, updatedPrv.toPublic().armor()));
+        await Ui.modal.info(await Attester.updatePubkey(this.primaryKi!.longid, updatedPrv.toPublic().armor()));
       } catch (e) {
         if (Api.err.isSignificant(e)) {
           Catch.reportErr(e);
@@ -69,8 +68,7 @@ View.run(class MyKeyUpdateView extends View {
     window.location.href = this.showKeyUrl;
   }
 
-  private updatePrivateKeyHandler = async () => {
-    const primaryKi = await this.primariKiPromise;
+  private async updatePrivateKeyHandler() {
     const { keys: [uddatedKey] } = await openpgp.key.readArmored(String(this.inputPrivateKey.val()));
     const { keys: [uddatedKeyEncrypted] } = await openpgp.key.readArmored(String(this.inputPrivateKey.val()));
     const uddatedKeyPassphrase = String($('.input_passphrase').val());
@@ -78,19 +76,19 @@ View.run(class MyKeyUpdateView extends View {
       await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)));
     } else if (uddatedKey.isPublic()) {
       await Ui.modal.warning('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"');
-    } else if (await Pgp.key.fingerprint(uddatedKey) !== await Pgp.key.fingerprint(primaryKi.public)) {
-      await Ui.modal.warning(`This key ${await Pgp.key.longid(uddatedKey)} does not match your current key ${primaryKi.longid}`);
+    } else if (await Pgp.key.fingerprint(uddatedKey) !== await Pgp.key.fingerprint(this.primaryKi!.public)) {
+      await Ui.modal.warning(`This key ${await Pgp.key.longid(uddatedKey)} does not match your current key ${this.primaryKi!.longid}`);
     } else if (await Pgp.key.decrypt(uddatedKey, uddatedKeyPassphrase) !== true) {
       await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
     } else {
       if (await uddatedKey.getEncryptionKey()) {
-        await this.storeUpdatedKeyAndPassphrase(primaryKi, uddatedKeyEncrypted, uddatedKeyPassphrase);
+        await this.storeUpdatedKeyAndPassphrase(uddatedKeyEncrypted, uddatedKeyPassphrase);
       } else { // cannot get a valid encryption key packet
         if ((await uddatedKey.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert) || await Pgp.key.usableButExpired(uddatedKey)) { // known issues - key can be fixed
           const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
             this.acctEmail, '.compatibility_fix_container', uddatedKeyEncrypted, uddatedKeyPassphrase, this.showKeyUrl
           );
-          await this.storeUpdatedKeyAndPassphrase(primaryKi, fixedEncryptedPrv, uddatedKeyPassphrase);
+          await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, uddatedKeyPassphrase);
         } else {
           await Ui.modal.warning('Key update: This looks like a valid key but it cannot be used for encryption. Email human@flowcrypt.com to see why is that. We\'re prompt to respond.');
           window.location.href = this.showKeyUrl;
