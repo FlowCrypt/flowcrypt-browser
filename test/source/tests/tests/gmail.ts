@@ -79,6 +79,13 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
       await pageHasReplyContainer(gmailPage);
     }));
 
+    ava.default('mail.google.com[global:compatibility] - secure reply button opens the reply container', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/WhctKJTrdTXcmgcCRgXDpVnfjJNnjjLzSvcMDczxWPMsBTTfPxRDMrKCJClzDHtbXlhnwtV');
+      await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
+      await gmailPage.waitAndClick('@secure-reply-button');
+      await pageHasReplyContainer(gmailPage);
+    }));
+
     ava.default('mail.google.com[global:compatibility] - pubkey file gets rendered', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/WhctKJTrSJzzjsZVrGcLhhcDLKCJKVrrHNMDLqTMbSjRZZftfDQWbjDWWDsmrpJVHWDblwg');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });

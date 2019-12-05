@@ -124,10 +124,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     Xss.sanitizeAppend(containerSel, iconHtml).children(iconSel).off().click(Ui.event.prevent('double', Catch.try(onClick)));
   }
 
+  private isEncrypted = (): boolean => !!$('iframe.pgp_block').filter(':visible').length
+
   private replaceConvoBtns = (force: boolean = false) => {
     const convoUpperIcons = $('div.ade:visible');
-    const isEncrypted = $('iframe.pgp_block').filter(':visible').length;
-    const useEncryptionInThisConvo = isEncrypted || force;
+    const useEncryptionInThisConvo = this.isEncrypted() || force;
     // reply buttons
     const visibleReplyBtns = $('td.acX:visible');
     if (visibleReplyBtns.not('.replaced, .inserted').length) { // last reply button in convo gets replaced
@@ -140,7 +141,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         element.click(Ui.event.prevent('double', Catch.try(async () => {
           const messageContainer = $(elem.closest('.h7') as HTMLElement);
           if (messageContainer.is(':last-child')) {
-            if (isEncrypted) {
+            if (this.isEncrypted()) {
               await this.setReplyBoxEditable();
             } else {
               await this.replaceStandardReplyBox(undefined, true, true);
