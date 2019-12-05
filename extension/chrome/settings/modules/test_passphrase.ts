@@ -14,8 +14,6 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 
-declare const openpgp: typeof OpenPGP;
-
 View.run(class TestPassphrase extends View {
   private readonly acctEmail: string;
   private readonly parentTabId: string;
