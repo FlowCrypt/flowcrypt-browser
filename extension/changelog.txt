@@ -1,5 +1,7 @@
 <div>
 
+version 7.3.0 on Dec 5, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/368?closed=1" target="_blank">Code maintenance</a>
+
 version 7.2.3 on Nov 29, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/367?closed=1" target="_blank">Decrypt bugfix</a>
 
 version 7.2.2 on Nov 25, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/366?closed=1" target="_blank">Password attachment fix</a>
