@@ -18,7 +18,6 @@ import { KeyInfo } from '../../../js/common/core/pgp.js';
 View.run(class SecurityView extends View {
   private readonly acctEmail: string;
   private readonly parentTabId: string;
-  private readonly embedded: boolean;
   private primaryKi: KeyInfo | undefined;
   private authInfo: FcUuidAuth | undefined;
 
@@ -27,26 +26,18 @@ View.run(class SecurityView extends View {
     const uncheckedUrlParams = Url.parse(['acctEmail', 'embedded', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-    this.embedded = uncheckedUrlParams.embedded === true;
   }
 
   async render() {
     await initPassphraseToggle(['passphrase_entry']);
     [this.primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi, false);
-    if (!this.primaryKi) {
-      return; // added do_throw=false above + manually exiting here because security.htm can indeed be commonly rendered on setup page before setting acct up
-    }
-    if (this.embedded) {
-      $('.change_passhrase_container, .title_container').css('display', 'none');
-      $('.line').css('padding', '7px 0');
-    }
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     this.authInfo = await Store.authInfo(this.acctEmail);
     const storage = await Store.getAcct(this.acctEmail, ['hide_message_password', 'outgoing_language']);
     $('#hide_message_password').prop('checked', storage.hide_message_password === true);
     $('.password_message_language').val(storage.outgoing_language || 'EN');
     await this.renderPPOptionsIfStoredInSession();
-    await this.renderSubscriptionDetails();
+    await this.loadAndRenderPwdEncryptedMsgSettings();
   }
 
   setHandlers() {
@@ -93,7 +84,7 @@ View.run(class SecurityView extends View {
     }
   }
 
-  private async renderSubscriptionDetails() {
+  private async loadAndRenderPwdEncryptedMsgSettings() {
     const subscription = await Store.subscription(this.acctEmail);
     if (subscription.active) {
       Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
