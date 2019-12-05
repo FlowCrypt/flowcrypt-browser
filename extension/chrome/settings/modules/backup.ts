@@ -71,16 +71,16 @@ View.run(class BackupView extends View {
   }
 
   setHandlers() {
-    $('.action_password').click(this.setHandler(this.actionEnterPassPhraseHandler));
-    $('.action_reset_password').click(this.setHandler(this.actionResetPassPhraseEntryHandler));
-    $('.action_backup').click(this.setHandlerPrevent('double', this.actionBackupHandler));
-    $('.action_manual_backup').click(this.setHandlerPrevent('double', this.actionManualBackupHandler));
-    $('.action_skip_backup').click(this.setHandler(this.actionSkipBackupHandler));
-    $('#step_3_manual input[name=input_backup_choice]').click(this.setHandler(this.actionSelectBackupMethodHandler));
-    $('.action_go_manual').click(this.setHandler(this.actionShowManualBackupHandler));
-    $('.action_proceed_default_backup_choice').click(this.setHandler(this.actionProceedDefaultBackupChoice));
+    $('.action_password').click(this.setHandler(el => this.actionEnterPassPhraseHandler(el)));
+    $('.action_reset_password').click(this.setHandler(el => this.actionResetPassPhraseEntryHandler()));
+    $('.action_backup').click(this.setHandlerPrevent('double', el => this.actionBackupHandler(el)));
+    $('.action_manual_backup').click(this.setHandlerPrevent('double', el => this.actionManualBackupHandler()));
+    $('.action_skip_backup').click(this.setHandler(el => this.actionSkipBackupHandler()));
+    $('#step_3_manual input[name=input_backup_choice]').click(this.setHandler(el => this.actionSelectBackupMethodHandler(el)));
+    $('.action_go_manual').click(this.setHandler(el => this.actionShowManualBackupHandler()));
+    $('.action_proceed_default_backup_choice').click(this.setHandler(el => this.actionProceedDefaultBackupChoice()));
     $('.action_go_auth_denied').click(this.setHandler(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' })));
-    $('.auth_reconnect').click(this.setHandler(this.actionAuthReconnectHandler));
+    $('.auth_reconnect').click(this.setHandler(el => this.actionAuthReconnectHandler()));
     $('.reload').click(() => window.location.reload());
     $("#password2").keydown(event => {
       if (event.which === 13) {

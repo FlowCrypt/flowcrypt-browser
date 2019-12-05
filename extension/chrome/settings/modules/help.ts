@@ -39,7 +39,7 @@ View.run(class HelpView extends View {
   }
 
   setHandlers() {
-    $('.action_send_feedback').click(this.setHandler(this.sendFeedbackHandler));
+    $('.action_send_feedback').click(this.setHandler(el => this.sendFeedbackHandler(el)));
   }
 
   // --- PRIVATE
