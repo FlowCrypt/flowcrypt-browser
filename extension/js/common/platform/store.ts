@@ -652,40 +652,40 @@ export class Store {
   })
 
   static dbContactUpdate = (db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       if (!db) { // relay op through background process
         // todo - currently will silently swallow errors
         BrowserMsg.send.bg.await.db({ f: 'dbContactUpdate', args: [email, update] }).then(resolve).catch(Catch.reportErr);
       } else {
         if (Array.isArray(email)) {
-          for (const singleEmail of email) {
-            await Store.dbContactUpdate(db, singleEmail, update);
-          }
+          Promise.all(email.map(oneEmail => Store.dbContactUpdate(db, oneEmail, update))).then(() => resolve(), reject);
           resolve();
         } else {
-          let [contact] = await Store.dbContactGet(db, [email]);
-          if (!contact) { // updating a non-existing contact, insert it first
-            await Store.dbContactSave(db, await Store.dbContactObj({ email }));
-            [contact] = await Store.dbContactGet(db, [email]);
-            if (!contact) {
-              reject(new Error('contact not found right after inserting it'));
-              return;
+          (async () => {
+            let [contact] = await Store.dbContactGet(db, [email]);
+            if (!contact) { // updating a non-existing contact, insert it first
+              await Store.dbContactSave(db, await Store.dbContactObj({ email }));
+              [contact] = await Store.dbContactGet(db, [email]);
+              if (!contact) {
+                reject(new Error('contact not found right after inserting it'));
+                return;
+              }
             }
-          }
-          if (update.pubkey && update.pubkey.includes(Pgp.armor.headers('privateKey').begin)) { // wrongly saving prv instead of pub
-            Catch.report('Wrongly saving prv as contact - converting to pubkey');
-            const key = await Pgp.key.read(update.pubkey);
-            update.pubkey = key.toPublic().armor();
-          }
-          for (const k of Object.keys(update)) {
-            // @ts-ignore - may be saving any of the provided values - could do this one by one while ensuring proper types
-            contact[k] = update[k];
-          }
-          const tx = db.transaction('contacts', 'readwrite');
-          const contactsTable = tx.objectStore('contacts');
-          contactsTable.put(contact);
-          tx.oncomplete = Catch.try(resolve);
-          tx.onabort = () => reject(Store.errCategorize(tx.error));
+            if (update.pubkey && update.pubkey.includes(Pgp.armor.headers('privateKey').begin)) { // wrongly saving prv instead of pub
+              Catch.report('Wrongly saving prv as contact - converting to pubkey');
+              const key = await Pgp.key.read(update.pubkey);
+              update.pubkey = key.toPublic().armor();
+            }
+            for (const k of Object.keys(update)) {
+              // @ts-ignore - may be saving any of the provided values - could do this one by one while ensuring proper types
+              contact[k] = update[k];
+            }
+            const tx = db.transaction('contacts', 'readwrite');
+            const contactsTable = tx.objectStore('contacts');
+            contactsTable.put(contact);
+            tx.oncomplete = Catch.try(resolve);
+            tx.onabort = () => reject(Store.errCategorize(tx.error));
+          })().catch(reject);
         }
       }
     });
