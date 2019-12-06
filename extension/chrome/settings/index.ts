@@ -117,7 +117,6 @@ Catch.try(async () => {
       await Settings.newGoogleAcctAuthPromptThenAlertOrForward(tabId);
     } else if (acctEmail) {
       $('.email-address').text(acctEmail);
-      $('#security_module').attr('src', Url.create('modules/security.htm', { acctEmail, parentTabId: tabId, embedded: true }));
       const storage = await Store.getAcct(acctEmail, ['setup_done', 'email_provider', 'picture']);
       const scopes = await Store.getScopes(acctEmail);
       if (storage.setup_done) {

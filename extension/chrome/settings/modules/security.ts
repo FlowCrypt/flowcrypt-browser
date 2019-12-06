@@ -16,6 +16,7 @@ import { View } from '../../../js/common/view.js';
 import { KeyInfo } from '../../../js/common/core/pgp.js';
 
 View.run(class SecurityView extends View {
+
   private readonly acctEmail: string;
   private readonly parentTabId: string;
   private primaryKi: KeyInfo | undefined;
@@ -36,7 +37,7 @@ View.run(class SecurityView extends View {
     const storage = await Store.getAcct(this.acctEmail, ['hide_message_password', 'outgoing_language']);
     $('#hide_message_password').prop('checked', storage.hide_message_password === true);
     $('.password_message_language').val(storage.outgoing_language || 'EN');
-    await this.renderPPOptionsIfStoredInSession();
+    await this.renderPassPhraseOptionsIfStoredPermanently();
     await this.loadAndRenderPwdEncryptedMsgSettings();
   }
 
@@ -47,7 +48,7 @@ View.run(class SecurityView extends View {
     $('.password_message_language').change(this.setHandler(() => this.onMsgLanguageUserChange()));
   }
 
-  private async renderPPOptionsIfStoredInSession() {
+  private async renderPassPhraseOptionsIfStoredPermanently() {
     const keys = await Store.keysGet(this.acctEmail);
     if (await this.isAnyPassPhraseStoredPermanently(keys)) {
       $('.forget_passphrase').css('display', '');
