@@ -55,6 +55,10 @@ export const storageLocalGet = (keys: string[]): Promise<Object> => new Promise(
   }
 });
 
+export const storageLocalGetAll = (): Promise<{ [key: string]: any }> => new Promise((resolve, reject) => {
+  chrome.storage.local.get(resolve);
+});
+
 export const storageLocalSet = (values: Object): Promise<void> => new Promise((resolve) => { // tslint:disable-line:ban-types
   if (typeof chrome.storage === 'undefined') {
     handleFatalErr('storage_undefined', new Error('storage is undefined'));

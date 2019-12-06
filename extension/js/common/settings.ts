@@ -15,6 +15,7 @@ import { Google, GoogleAuth } from './api/google.js';
 import { Attester } from './api/attester.js';
 import { Xss } from './platform/xss.js';
 import { Backend } from './api/backend.js';
+import { storageLocalGetAll } from './api/chrome.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
@@ -148,7 +149,7 @@ export class Settings {
     }, reject);
   })
 
-  static acctStorageChangeEmail = (oldAcctEmail: string, newAcctEmail: string) => new Promise(async (resolve, reject) => {
+  static acctStorageChangeEmail = async (oldAcctEmail: string, newAcctEmail: string) => {
     if (!oldAcctEmail || !newAcctEmail || !Str.isEmailValid(newAcctEmail)) {
       throw new Error('Missing or wrong account_email to reset');
     }
@@ -172,36 +173,30 @@ export class Settings {
       throw new Error(`Filter is empty for account_email "${oldAcctEmail}"`);
     }
     await Store.acctEmailsAdd(newAcctEmail);
-    chrome.storage.local.get(async storage => {
-      try {
-        for (const key of Object.keys(storage)) {
-          if (key.indexOf(oldAcctEmailIndexPrefix) === 0) {
-            storageIndexesToChange.push(key.replace(oldAcctEmailIndexPrefix, ''));
-          }
-        }
-        const oldAcctStorage = await Store.getAcct(oldAcctEmail, storageIndexesToChange as any);
-        await Store.setAcct(newAcctEmail, oldAcctStorage);
-        for (const sessionStorageIndex of Object.keys(sessionStorage)) {
-          if (sessionStorageIndex.indexOf(oldAcctEmailIndexPrefix) === 0) {
-            const v = sessionStorage.getItem(sessionStorageIndex);
-            sessionStorage.setItem(sessionStorageIndex.replace(oldAcctEmailIndexPrefix, newAcctEmailIndexPrefix), v!);
-            sessionStorage.removeItem(sessionStorageIndex);
-          }
-        }
-        for (const ki of destAccountPrivateKeys) {
-          await Store.keysAdd(newAcctEmail, ki.private);
-        }
-        for (const longid of Object.keys(destAcctPassPhrases)) {
-          await Store.passphraseSave('local', newAcctEmail, longid, destAcctPassPhrases[longid]);
-        }
-        await Settings.acctStorageReset(oldAcctEmail);
-        await Store.acctEmailsRemove(oldAcctEmail);
-        resolve();
-      } catch (e) {
-        reject(e);
+    const storage = await storageLocalGetAll();
+    for (const key of Object.keys(storage)) {
+      if (key.indexOf(oldAcctEmailIndexPrefix) === 0) {
+        storageIndexesToChange.push(key.replace(oldAcctEmailIndexPrefix, ''));
       }
-    });
-  })
+    }
+    const oldAcctStorage = await Store.getAcct(oldAcctEmail, storageIndexesToChange as any);
+    await Store.setAcct(newAcctEmail, oldAcctStorage);
+    for (const sessionStorageIndex of Object.keys(sessionStorage)) {
+      if (sessionStorageIndex.indexOf(oldAcctEmailIndexPrefix) === 0) {
+        const v = sessionStorage.getItem(sessionStorageIndex);
+        sessionStorage.setItem(sessionStorageIndex.replace(oldAcctEmailIndexPrefix, newAcctEmailIndexPrefix), v!);
+        sessionStorage.removeItem(sessionStorageIndex);
+      }
+    }
+    for (const ki of destAccountPrivateKeys) {
+      await Store.keysAdd(newAcctEmail, ki.private);
+    }
+    for (const longid of Object.keys(destAcctPassPhrases)) {
+      await Store.passphraseSave('local', newAcctEmail, longid, destAcctPassPhrases[longid]);
+    }
+    await Settings.acctStorageReset(oldAcctEmail);
+    await Store.acctEmailsRemove(oldAcctEmail);
+  }
 
   static renderPrvCompatFixUiAndWaitTilSubmittedByUser = (
     acctEmail: string, container: string | JQuery<HTMLElement>, origPrv: OpenPGP.key.Key, passphrase: string, backUrl: string
