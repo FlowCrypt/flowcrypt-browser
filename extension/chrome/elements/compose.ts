@@ -313,6 +313,8 @@ Catch.try(async () => {
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         } else if (Api.err.isNetErr(e)) {
           Ui.toast(`Network erroc - cannot search contacts`).catch(Catch.reportErr);
+        } else if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
+          Ui.toast(`Cannot search contacts - account disabled or forbidden by admin policy`).catch(Catch.reportErr);
         } else {
           Catch.reportErr(e);
           Ui.toast(`Error searching contacts: ${Api.err.eli5(e)}`).catch(Catch.reportErr);
