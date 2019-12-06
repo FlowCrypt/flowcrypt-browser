@@ -691,36 +691,34 @@ export class Store {
     });
   }
 
-  static dbContactGet = (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
-    return new Promise(async (resolve, reject) => {
-      if (!db) { // relay op through background process
-        BrowserMsg.send.bg.await.db({ f: 'dbContactGet', args: [emailOrLongid] }).then(resolve).catch(reject);
-      } else {
-        if (emailOrLongid.length === 1) {
-          // contacts imported before August 2019 may have only primary longid recorded, in index_longid (string)
-          // contacts imported after August 2019 have both index_longid (string) and index_longids (string[] containing all subkeys)
-          // below we search contact by first trying to only search by primary longid
-          // (or by email - such searches are not affected by longid indexing)
-          const contact = await Store.dbContactInternalGetOne(db, emailOrLongid[0], false);
-          if (contact || !/^[A-F0-9]{16}$/.test(emailOrLongid[0])) {
-            // if we found something, return it
-            // or if we were searching by email, return found contact or nothing
-            resolve([contact]);
-          } else {
-            // not found any key by primary longid, and searching by longid -> search by any subkey longid
-            // it may not find pubkeys imported before August 2019, re-importing such pubkeys will make them findable
-            resolve([await Store.dbContactInternalGetOne(db, emailOrLongid[0], true)]);
-          }
+  static dbContactGet = async (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
+    if (!db) { // relay op through background process
+      return await BrowserMsg.send.bg.await.db({ f: 'dbContactGet', args: [emailOrLongid] }) as (Contact | undefined)[];
+    } else {
+      if (emailOrLongid.length === 1) {
+        // contacts imported before August 2019 may have only primary longid recorded, in index_longid (string)
+        // contacts imported after August 2019 have both index_longid (string) and index_longids (string[] containing all subkeys)
+        // below we search contact by first trying to only search by primary longid
+        // (or by email - such searches are not affected by longid indexing)
+        const contact = await Store.dbContactInternalGetOne(db, emailOrLongid[0], false);
+        if (contact || !/^[A-F0-9]{16}$/.test(emailOrLongid[0])) {
+          // if we found something, return it
+          // or if we were searching by email, return found contact or nothing
+          return [contact];
         } else {
-          const results: (Contact | undefined)[] = [];
-          for (const singleEmailOrLongid of emailOrLongid) {
-            const [contact] = await Store.dbContactGet(db, [singleEmailOrLongid]);
-            results.push(contact);
-          }
-          resolve(results);
+          // not found any key by primary longid, and searching by longid -> search by any subkey longid
+          // it may not find pubkeys imported before August 2019, re-importing such pubkeys will make them findable
+          return [await Store.dbContactInternalGetOne(db, emailOrLongid[0], true)];
         }
+      } else {
+        const results: (Contact | undefined)[] = [];
+        for (const singleEmailOrLongid of emailOrLongid) {
+          const [contact] = await Store.dbContactGet(db, [singleEmailOrLongid]);
+          results.push(contact);
+        }
+        return results;
       }
-    });
+    }
   }
 
   private static dbContactInternalGetOne = (db: IDBDatabase, emailOrLongid: string, searchSubkeyLongids: boolean): Promise<Contact | undefined> => {
