@@ -132,8 +132,6 @@ a.gray_link {
 }
 #public-profile-indicator .status-indicator:hover .status-indicator-text { visibility: visible; }
 
-#security_module { min-height: 216px; }
-
 #alt-accounts.accounts-row {
   display: none;
   background: #fff;
