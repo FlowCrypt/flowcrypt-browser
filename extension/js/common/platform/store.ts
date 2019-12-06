@@ -737,7 +737,7 @@ export class Store {
   }
 
   static dbContactSearch = (db: IDBDatabase | undefined, query: DbContactFilter): Promise<Contact[]> => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       if (!db) { // relay op through background process
         // todo - currently will silently swallow errors
         BrowserMsg.send.bg.await.db({ f: 'dbContactSearch', args: [query] }).then(resolve).catch(Catch.reportErr);
@@ -752,13 +752,16 @@ export class Store {
         if (typeof query.has_pgp === 'undefined') { // any query.has_pgp value
           query.substring = Store.normalizeString(query.substring || '');
           if (query.substring) {
-            const resultsWithPgp = await Store.dbContactSearch(db, { substring: query.substring, limit: query.limit, has_pgp: true });
-            if (query.limit && resultsWithPgp.length === query.limit) {
-              resolve(resultsWithPgp);
-            } else {
-              const resultsWithoutPgp = await Store.dbContactSearch(db, { substring: query.substring, limit: query.limit ? query.limit - resultsWithPgp.length : undefined, has_pgp: false });
-              resolve(resultsWithPgp.concat(resultsWithoutPgp));
-            }
+            (async () => {
+              const resultsWithPgp = await Store.dbContactSearch(db, { substring: query.substring, limit: query.limit, has_pgp: true });
+              if (query.limit && resultsWithPgp.length === query.limit) {
+                resolve(resultsWithPgp);
+              } else {
+                const limit = query.limit ? query.limit - resultsWithPgp.length : undefined;
+                const resultsWithoutPgp = await Store.dbContactSearch(db, { substring: query.substring, limit, has_pgp: false });
+                resolve(resultsWithPgp.concat(resultsWithoutPgp));
+              }
+            })().catch(reject);
           } else {
             search = contacts.openCursor();
           }
