@@ -634,16 +634,13 @@ export class Store {
     }
   }
 
-  static dbContactSave = (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => new Promise(async (resolve, reject) => {
+  static dbContactSave = (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => new Promise((resolve, reject) => {
     if (!db) { // relay op through background process
       // todo - currently will silently swallow errors
       BrowserMsg.send.bg.await.db({ f: 'dbContactSave', args: [contact] }).then(resolve).catch(Catch.reportErr);
     } else {
       if (Array.isArray(contact)) {
-        for (const singleContact of contact) {
-          await Store.dbContactSave(db, singleContact);
-        }
-        resolve();
+        Promise.all(contact.map(oneContact => Store.dbContactSave(db, oneContact))).then(() => resolve(), reject);
       } else {
         const tx = db.transaction('contacts', 'readwrite');
         const contactsTable = tx.objectStore('contacts');

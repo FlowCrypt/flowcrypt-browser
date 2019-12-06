@@ -26,6 +26,9 @@ module.exports = {
     'no-unused-vars': 0,
     'no-useless-escape': 0,
     'no-only-tests/no-only-tests': ['error', { block: ['ava.default'] }],
-    'require-atomic-updates': 0
+    'require-atomic-updates': 0,
+    'no-empty-pattern': 0,
+    'no-fallthrough': 0,
+    'no-undef': 0
   }
 }
