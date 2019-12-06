@@ -722,7 +722,7 @@ export class Store {
   }
 
   private static dbContactInternalGetOne = (db: IDBDatabase, emailOrLongid: string, searchSubkeyLongids: boolean): Promise<Contact | undefined> => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       let tx: IDBRequest;
       if (!/^[A-F0-9]{16}$/.test(emailOrLongid)) { // email
         tx = db.transaction('contacts', 'readonly').objectStore('contacts').get(emailOrLongid);
