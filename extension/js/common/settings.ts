@@ -83,7 +83,7 @@ export class Settings {
 
   static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
     const newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, parentTabId, page, addUrlTextOrParams);
-    if (Boolean(Url.parse(['embedded']).embedded)) { // embedded on the main page
+    if (Url.parse(['embedded']).embedded) { // embedded on the main page
       BrowserMsg.send.openPage(parentTabId, { page, addUrlText: addUrlTextOrParams });
     } else { // on a sub page/module page, inside a lightbox. Just change location.
       window.location.href = newLocation;
@@ -114,37 +114,38 @@ export class Settings {
     return result.isAliasesChanged || result.isDefaultEmailChanged || result.isFooterChanged ? { ...result } : undefined;
   }
 
-  static acctStorageReset = (acctEmail: string) => new Promise(async (resolve, reject) => {
+  static acctStorageReset = (acctEmail: string) => new Promise((resolve, reject) => {
     if (!acctEmail) {
       throw new Error('Missing account_email to reset');
     }
-    const acctEmails = await Store.acctEmailsGet();
-    if (!acctEmails.includes(acctEmail)) {
-      throw new Error(`"${acctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
-    }
-    const storageIndexesToRemove: string[] = [];
-    const filter = Store.singleScopeRawIndex(acctEmail, '');
-    if (!filter) {
-      throw new Error('Filter is empty for account_email"' + acctEmail + '"');
-    }
-    chrome.storage.local.get(async storage => {
-      try {
-        for (const storageIndex of Object.keys(storage)) {
-          if (storageIndex.indexOf(filter) === 0) {
-            storageIndexesToRemove.push(storageIndex.replace(filter, ''));
-          }
-        }
-        await Store.remove(acctEmail, storageIndexesToRemove);
-        for (const sessionStorageIndex of Object.keys(sessionStorage)) {
-          if (sessionStorageIndex.indexOf(filter) === 0) {
-            sessionStorage.removeItem(sessionStorageIndex);
-          }
-        }
-        resolve();
-      } catch (e) {
-        reject(e);
+    Store.acctEmailsGet().then(acctEmails => {
+      if (!acctEmails.includes(acctEmail)) {
+        throw new Error(`"${acctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
       }
-    });
+      const storageIndexesToRemove: string[] = [];
+      const filter = Store.singleScopeRawIndex(acctEmail, '');
+      if (!filter) {
+        throw new Error('Filter is empty for account_email"' + acctEmail + '"');
+      }
+      chrome.storage.local.get(async storage => {
+        try {
+          for (const storageIndex of Object.keys(storage)) {
+            if (storageIndex.indexOf(filter) === 0) {
+              storageIndexesToRemove.push(storageIndex.replace(filter, ''));
+            }
+          }
+          await Store.remove(acctEmail, storageIndexesToRemove);
+          for (const sessionStorageIndex of Object.keys(sessionStorage)) {
+            if (sessionStorageIndex.indexOf(filter) === 0) {
+              sessionStorage.removeItem(sessionStorageIndex);
+            }
+          }
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      });
+    }, reject);
   })
 
   static acctStorageChangeEmail = (oldAcctEmail: string, newAcctEmail: string) => new Promise(async (resolve, reject) => {
