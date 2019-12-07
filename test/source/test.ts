@@ -1,3 +1,4 @@
+import { defineFlakyTests } from './tests/tests/flaky';
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
 import * as ava from 'ava';
@@ -16,7 +17,7 @@ import { FlowCryptApi } from './tests/api';
 import { getDebugHtmlAtts, AvaContext, standaloneTestTimeout, minutes, GlobalBrowser, newWithTimeoutsFunc } from './tests';
 import { mock } from './mock';
 
-const { testVariant, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
+const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 
 process.setMaxListeners(30);
 
@@ -132,11 +133,15 @@ ava.after.always('send debug info if any', async t => {
   t.pass();
 });
 
-defineSetupTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineUnitTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineComposeTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineDecryptTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineGmailTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineSettingsTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineElementTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineAcctTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+if (testGroup === 'FLAKY-GROUP') {
+  defineFlakyTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+} else {
+  defineSetupTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+  defineUnitTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+  defineComposeTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+  defineDecryptTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+  defineGmailTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+  defineSettingsTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+  defineElementTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+  defineAcctTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+}

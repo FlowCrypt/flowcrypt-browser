@@ -6,20 +6,21 @@ export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-G
 
 export const getParsedCliParams = () => {
   let testVariant: TestVariant;
-  if (process.argv.indexOf('CONSUMER-MOCK') !== -1) {
+  if (process.argv.includes('CONSUMER-MOCK')) {
     testVariant = 'CONSUMER-MOCK';
-  } else if (process.argv.indexOf('ENTERPRISE-MOCK') !== -1) {
+  } else if (process.argv.includes('ENTERPRISE-MOCK')) {
     testVariant = 'ENTERPRISE-MOCK';
-  } else if (process.argv.indexOf('CONSUMER-LIVE-GMAIL') !== -1) {
+  } else if (process.argv.includes('CONSUMER-LIVE-GMAIL')) {
     testVariant = 'CONSUMER-LIVE-GMAIL';
   } else {
     throw new Error('Unknown test type: specify CONSUMER-MOCK or ENTERPRISE-MOCK CONSUMER-LIVE-GMAIL');
   }
+  const testGroup = process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP';
   const buildDir = `build/chrome-${(testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : testVariant).toLowerCase()}`;
-  const poolSizeOne = process.argv.indexOf('--pool-size=1') !== -1;
+  const poolSizeOne = process.argv.includes('--pool-size=1') || testGroup === 'FLAKY-GROUP';
   const oneIfNotPooled = (suggestedPoolSize: number) => poolSizeOne ? Math.min(1, suggestedPoolSize) : suggestedPoolSize;
-  console.info(`TEST_VARIANT: ${testVariant} (build dir: ${buildDir}, poolSizeOne: ${poolSizeOne})`);
-  return { testVariant, oneIfNotPooled, buildDir, isMock: testVariant.includes('-MOCK') };
+  console.info(`TEST_VARIANT: ${testVariant}:${testGroup}, (build dir: ${buildDir}, poolSizeOne: ${poolSizeOne})`);
+  return { testVariant, testGroup, oneIfNotPooled, buildDir, isMock: testVariant.includes('-MOCK') };
 };
 
 interface TestConfigInterface {
