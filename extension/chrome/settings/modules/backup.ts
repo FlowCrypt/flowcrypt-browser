@@ -82,11 +82,7 @@ View.run(class BackupView extends View {
     $('.action_go_auth_denied').click(this.setHandler(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' })));
     $('.auth_reconnect').click(this.setHandler(el => this.actionAuthReconnectHandler()));
     $('.reload').click(() => window.location.reload());
-    $("#password2").keydown(event => {
-      if (event.which === 13) {
-        $('.action_backup').click();
-      }
-    });
+    $("#password2").keydown(this.setEnterHandlerThatClicks('.action_backup'));
   }
 
   // --- PRIVATE

@@ -43,11 +43,7 @@ View.run(class MyKeyUpdateView extends View {
 
   setHandlers() {
     $('.action_update_private_key').click(this.setHandlerPrevent('double', () => this.updatePrivateKeyHandler()));
-    $('.input_passphrase').keydown(this.setHandler((el, ev) => {
-      if (ev.which === 13) {
-        $('.action_update_private_key').click();
-      }
-    }));
+    $('.input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_update_private_key'));
   }
 
   private async storeUpdatedKeyAndPassphrase(updatedPrv: OpenPGP.key.Key, updatedPrvPassphrase: string) {

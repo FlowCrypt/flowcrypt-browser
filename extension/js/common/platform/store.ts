@@ -36,6 +36,16 @@ export type DbContactObjArg = {
 export type EmailProvider = 'gmail';
 export type GoogleAuthScopesNames = [keyof typeof GoogleAuth.OAUTH.scopes, keyof typeof GoogleAuth.OAUTH.legacy_scopes][number];
 
+export type Scopes = {
+  openid: boolean;
+  email: boolean;
+  profile: boolean;
+  compose: boolean;
+  modify: boolean;
+  readContacts: boolean;
+  read: boolean;
+  gmail: boolean;
+};
 export type KeyBackupMethod = 'file' | 'inbox' | 'none' | 'print';
 export type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number };
 export type StorageType = 'session' | 'local';
@@ -189,7 +199,7 @@ export class Store {
     return accountStore;
   }
 
-  static getScopes = async (acctEmail: string) => {
+  static getScopes = async (acctEmail: string): Promise<Scopes> => {
     const { google_token_scopes } = await Store.getAcct(acctEmail, ['google_token_scopes']);
     const result: { [key in GoogleAuthScopesNames]: boolean } = {
       email: false, openid: false, profile: false, compose: false,

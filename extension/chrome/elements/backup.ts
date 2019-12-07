@@ -59,11 +59,7 @@ View.run(class BackupView extends View {
       $("#action_import_key").click(this.setHandler(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/add_key.htm' })));
     }
     $('.action_test_pass').click(this.setHandler(async () => this.testPassphraseHandler()));
-    $('#pass_phrase').keydown(this.setHandler((el, ev) => {
-      if (ev.which === 13) {
-        $('.action_test_pass').click();
-      }
-    }));
+    $('#pass_phrase').keydown(this.setEnterHandlerThatClicks('.action_test_pass'));
   }
 
   private sendResizeMsg() {
