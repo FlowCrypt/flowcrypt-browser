@@ -20,7 +20,7 @@ export class ComposerDraft extends ComposerComponent {
 
   private currentlySavingDraft = false;
   private saveDraftInterval?: number;
-  private lastDraftBody = '';
+  private lastDraftBody?: string;
   private lastDraftSubject = '';
 
   private SAVE_DRAFT_FREQUENCY = 3000;
@@ -202,6 +202,10 @@ export class ComposerDraft extends ComposerComponent {
   }
 
   private hasBodyChanged = (msgBody: string) => {
+    if (this.lastDraftBody === undefined) { // first check
+      this.lastDraftBody = msgBody;
+      return false;
+    }
     if (msgBody && msgBody !== this.lastDraftBody) {
       this.lastDraftBody = msgBody;
       return true;
