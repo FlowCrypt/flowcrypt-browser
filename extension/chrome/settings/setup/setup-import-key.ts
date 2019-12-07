@@ -35,7 +35,7 @@ export class SetupImportKeyModule {
       await this.view.saveKeys([checked.encrypted], options);
       await this.view.preFinalizeSetup(options);
       await this.view.finalizeSetup(options);
-      await this.view.renderSetupDone();
+      await this.view.setupRender.renderSetupDone();
     } catch (e) {
       if (e instanceof UserAlert) {
         return await Ui.modal.warning(e.message);
@@ -49,7 +49,7 @@ export class SetupImportKeyModule {
   }
 
   async renderCompatibilityFixBlockAndFinalizeSetup(origPrv: OpenPGP.key.Key, options: SetupOptions) {
-    this.view.displayBlock('step_3_compatibility_fix');
+    this.view.setupRender.displayBlock('step_3_compatibility_fix');
     let fixedPrv;
     try {
       fixedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
@@ -57,12 +57,12 @@ export class SetupImportKeyModule {
     } catch (e) {
       Catch.reportErr(e);
       await Ui.modal.error(`Failed to fix key (${String(e)}). Please write us at human@flowcrypt.com, we are very prompt to fix similar issues.`);
-      this.view.displayBlock('step_2b_manual_enter');
+      this.view.setupRender.displayBlock('step_2b_manual_enter');
       return;
     }
     await this.view.saveKeys([fixedPrv], options);
     await this.view.preFinalizeSetup(options);
     await this.view.finalizeSetup(options);
-    await this.view.renderSetupDone();
+    await this.view.setupRender.renderSetupDone();
   }
 }

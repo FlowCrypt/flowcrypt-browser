@@ -105,48 +105,25 @@ export class SetupView extends View {
   }
 
   setHandlers() {
-    BrowserMsg.addListener('close_page', async () => {
-      $('.featherlight-close').click();
-    });
-    BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => {
-      await Ui.modal.info(notification);
-    });
+    BrowserMsg.addListener('close_page', async () => { $('.featherlight-close').click(); });
+    BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => { await Ui.modal.info(notification); });
     BrowserMsg.listen(this.tabId!);
     $('.action_send').attr('href', Google.webmailUrl(this.acctEmail));
-    $('.action_show_help').click(Ui.event.handle(() => Settings.renderSubPage(this.acctEmail, this.tabId!, '/chrome/settings/modules/help.htm')));
-    $('.back').off().click(Ui.event.handle(() => {
-      $('h1').text('Set Up');
-      this.setupRender.displayBlock('step_1_easy_or_manual');
-    }));
+    $('.action_show_help').click(this.setHandler(() => Settings.renderSubPage(this.acctEmail, this.tabId!, '/chrome/settings/modules/help.htm')));
+    $('.back').off().click(this.setHandler(() => this.actionBackHandler()));
     $('#step_2_recovery .action_recover_account').click(this.setHandlerPrevent('double', () => this.setupRecoverKey.actionRecoverAccountHandler()));
     $('#step_4_more_to_recover .action_recover_remaining').click(this.setHandler(() => this.setupRecoverKey.actionRecoverRemainingKeysHandler()));
     $('.action_skip_recovery').click(this.setHandler(() => this.setupRecoverKey.actionSkipRecoveryHandler()));
     $('.action_account_settings').click(this.setHandler(() => { window.location.href = Url.create('index.htm', { acctEmail: this.acctEmail }); }));
     const authDeniedPage = '/chrome/settings/modules/auth_denied.htm';
     $('.action_go_auth_denied').click(this.setHandler(() => { window.location.href = Url.create('index.htm', { acctEmail: this.acctEmail, page: authDeniedPage }); }));
-    $('.input_submit_key').click(Ui.event.handle(target => {
-      // will be hidden / ignored / forced true when rules.mustSubmitToAttester() === true (for certain orgs)
-      const inputSubmitAll = $(target).closest('.manual').find('.input_submit_all').first();
-      if ($(target).prop('checked')) {
-        if (inputSubmitAll.closest('div.line').css('visibility') === 'visible') {
-          inputSubmitAll.prop({ checked: true, disabled: false });
-        }
-      } else {
-        inputSubmitAll.prop({ checked: false, disabled: true });
-      }
-    }));
-    $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(Ui.event.handle(() => this.setupRender.displayBlock('step_2a_manual_create')));
-    $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(Ui.event.handle(() => this.setupRender.displayBlock('step_2b_manual_enter')));
+    $('.input_submit_key').click(this.setHandler(el => this.actionSubmitPublicKeyToggleHandler(el)));
+    $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(this.setHandler(() => this.setupRender.displayBlock('step_2a_manual_create')));
+    $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(this.setHandler(() => this.setupRender.displayBlock('step_2b_manual_enter')));
     $('#step_2b_manual_enter .action_add_private_key').click(this.setHandler(el => this.setupImportKey.actionImportPrivateKeyHandle(el)));
     $('#step_2a_manual_create .action_create_private').click(this.setHandlerPrevent('double', () => this.setupCreateKey.actionCreateKeyHandler()));
     $('#step_2a_manual_create .action_show_advanced_create_settings').click(this.setHandler(el => this.setupCreateKey.actionShowAdvancedSettingsHandle(el)));
-    $('#step_4_close .action_close').click(Ui.event.handle(() => { // only rendered if action=add_key which means parentTabId was used
-      if (this.parentTabId) {
-        BrowserMsg.send.redirect(this.parentTabId, { location: Url.create('index.htm', { acctEmail: this.acctEmail, advanced: true }) });
-      } else {
-        Catch.report('setup.ts missing parentTabId');
-      }
-    }));
+    $('#step_4_close .action_close').click(this.setHandler(() => this.actionCloseHandler())); // only rendered if action=add_key which means parentTabId was used
     $('.input_password').on('keydown', event => {
       if (event.which === 13) {
         $('#step_2a_manual_create .action_create_private').click();
@@ -162,6 +139,31 @@ export class SetupView extends View {
         $('#step_2_recovery .action_recover_account').click();
       }
     });
+  }
+
+  actionBackHandler() {
+    $('h1').text('Set Up');
+    this.setupRender.displayBlock('step_1_easy_or_manual');
+  }
+
+  actionSubmitPublicKeyToggleHandler(target: HTMLElement) {
+    // will be hidden / ignored / forced true when rules.mustSubmitToAttester() === true (for certain orgs)
+    const inputSubmitAll = $(target).closest('.manual').find('.input_submit_all').first();
+    if ($(target).prop('checked')) {
+      if (inputSubmitAll.closest('div.line').css('visibility') === 'visible') {
+        inputSubmitAll.prop({ checked: true, disabled: false });
+      }
+    } else {
+      inputSubmitAll.prop({ checked: false, disabled: true });
+    }
+  }
+
+  actionCloseHandler() {
+    if (this.parentTabId) {
+      BrowserMsg.send.redirect(this.parentTabId, { location: Url.create('index.htm', { acctEmail: this.acctEmail, advanced: true }) });
+    } else {
+      Catch.report('setup.ts missing parentTabId');
+    }
   }
 
   async preFinalizeSetup(options: SetupOptions): Promise<void> {
@@ -216,10 +218,6 @@ export class SetupView extends View {
     }
   }
 
-  async getUniqueLongids(keys: OpenPGP.key.Key[]): Promise<string[]> {
-    return Value.arr.unique(await Promise.all(keys.map(Pgp.key.longid))).filter(Boolean) as string[];
-  }
-
   async submitPublicKeyIfNeeded(armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) {
     if (!options.submit_main) {
       return;
@@ -246,6 +244,10 @@ export class SetupView extends View {
   filterAddressesForSubmittingKeys(addresses: string[]): string[] {
     const filterAddrRegEx = new RegExp(`@(${this.emailDomainsToSkip.join('|')})`);
     return addresses.filter(e => !filterAddrRegEx.test(e));
+  }
+
+  async getUniqueLongids(keys: OpenPGP.key.Key[]): Promise<string[]> {
+    return Value.arr.unique(await Promise.all(keys.map(Pgp.key.longid))).filter(Boolean) as string[];
   }
 
 }

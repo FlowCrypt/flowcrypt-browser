@@ -75,9 +75,9 @@ export class SetupRecoverKeyModule {
       if (!setup_done) { // normal situation - fresh setup
         await this.view.preFinalizeSetup(options);
         await this.view.finalizeSetup(options);
-        await this.view.renderSetupDone();
+        await this.view.setupRender.renderSetupDone();
       } else { // setup was finished before, just added more keys now
-        await this.view.renderSetupDone();
+        await this.view.setupRender.renderSetupDone();
       }
     } catch (e) {
       if (Api.err.isSignificant(e)) {
@@ -88,7 +88,7 @@ export class SetupRecoverKeyModule {
   }
 
   async actionRecoverRemainingKeysHandler() {
-    this.view.displayBlock('step_2_recovery');
+    this.view.setupRender.displayBlock('step_2_recovery');
     $('#recovery_pasword').val('');
     const nImported = (await Store.keysGet(this.view.acctEmail)).length;
     const nFetched = this.view.fetchedKeyBackupsUniqueLongids.length;
@@ -96,9 +96,7 @@ export class SetupRecoverKeyModule {
     if (this.view.action !== 'add_key') {
       Xss.sanitizeRender('#step_2_recovery .recovery_status', Lang.setup.nBackupsAlreadyRecoveredOrLeft(nImported, nFetched, txtKeysTeft));
       Xss.sanitizeReplace('#step_2_recovery .line_skip_recovery', Ui.e('div', { class: 'line', html: Ui.e('a', { href: '#', class: 'skip_recover_remaining', html: 'Skip this step' }) }));
-      $('#step_2_recovery .skip_recover_remaining').click(Ui.event.handle(() => {
-        window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
-      }));
+      $('#step_2_recovery .skip_recover_remaining').click(this.view.setHandler(() => { window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail }); }));
     } else {
       Xss.sanitizeRender('#step_2_recovery .recovery_status', `There ${txtKeysTeft} left to recover.<br><br>Try different pass phrases to unlock all backups.`);
       $('#step_2_recovery .line_skip_recovery').css('display', 'none');
@@ -111,7 +109,7 @@ export class SetupRecoverKeyModule {
       this.view.fetchedKeyBackupsUniqueLongids = [];
       this.view.mathingPassphrases = [];
       this.view.importedKeysUniqueLongids = [];
-      this.view.displayBlock('step_1_easy_or_manual');
+      this.view.setupRender.displayBlock('step_1_easy_or_manual');
     }
   }
 
@@ -129,7 +127,7 @@ export class SetupRecoverKeyModule {
     if (this.view.fetchedKeyBackupsUniqueLongids.length) {
       const storedKeys = await Store.keysGet(this.view.acctEmail);
       this.view.importedKeysUniqueLongids = storedKeys.map(ki => ki.longid);
-      await this.view.renderSetupDone();
+      await this.view.setupRender.renderSetupDone();
       $('#step_4_more_to_recover .action_recover_remaining').click();
     } else {
       window.location.href = Url.create('modules/add_key.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
