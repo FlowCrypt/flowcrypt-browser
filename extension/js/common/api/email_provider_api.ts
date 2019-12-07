@@ -4,13 +4,13 @@
 
 'use strict';
 
-import { Api, RecipientType } from './api.js';
 import { Dict, Str, Value } from '../core/common.js';
 import { Store } from '../platform/store.js';
 import { Att } from '../core/att.js';
 import { SendableMsgBody } from '../core/mime.js';
 import { Recipients } from '../composer/interfaces/composer-types.js';
 import { GmailRes, Google } from './google.js';
+import { Api, RecipientType } from './api.js';
 
 export type ProviderContactsQuery = { substring: string };
 export type SendableMsg = {

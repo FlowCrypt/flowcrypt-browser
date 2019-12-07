@@ -13,7 +13,7 @@ import { Api } from '../../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../../js/common/extension.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { Lang } from '../../../js/common/lang.js';
-import { Google, GoogleAuth, GoogleAcctNotConnected, GmailRes } from '../../../js/common/api/google.js';
+import { Google, GoogleAuth, GmailRes } from '../../../js/common/api/google.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Assert } from '../../../js/common/assert.js';
 import { XssSafeFactory, FactoryReplyParams } from '../../../js/common/xss_safe_factory.js';
@@ -325,12 +325,10 @@ Catch.try(async () => {
         showNotification(Lang.account.googleAcctDisabledOrPolicy);
       } else if (Api.err.isInsufficientPermission(e)) {
         renderAndHandleAuthPopupNotification(true);
-      } else if (e instanceof GoogleAcctNotConnected) {
-        await Ui.modal.error('Error: Google account not connected to Browser Extension');
-        BrowserMsg.send.bg.settings({ acctEmail });
       } else {
         Catch.reportErr(e);
-        showNotification(`Error trying to get list of folders ${Ui.retryLink()}`);
+        await Ui.modal.error(`Error trying to get list of folders: ${Api.err.eli5(e)}\n\n${String(e)}`);
+        window.location.reload();
       }
     }
   };
@@ -356,7 +354,8 @@ Catch.try(async () => {
         renderAndHandleAuthPopupNotification(true);
       } else {
         Catch.reportErr(e);
-        showNotification(`Error trying to get list of messages ${Ui.retryLink()}`);
+        await Ui.modal.error(`Error trying to get list of folders: ${Api.err.eli5(e)}\n\n${String(e)}`);
+        window.location.reload();
       }
     }
   };
@@ -474,19 +473,23 @@ Catch.try(async () => {
     }));
   };
 
-  if (emailProvider !== 'gmail') {
-    $('body').text('Not supported for ' + emailProvider);
-  } else {
-    await renderMenu();
-    if (threadId) {
-      await renderThread(threadId);
+  try {
+    if (emailProvider !== 'gmail') {
+      $('body').text('Not supported for ' + emailProvider);
     } else {
-      await renderInbox(labelId);
+      await renderMenu();
+      if (threadId) {
+        await renderThread(threadId);
+      } else {
+        await renderInbox(labelId);
+      }
     }
+    await Settings.populateAccountsMenu('inbox.htm');
+    await every30Sec();
+    Catch.setHandledInterval(every30Sec, 30000);
+  } catch (e) {
+    Api.err.reportIfSignificant(e);
+    await Ui.modal.error(`${Api.err.eli5(e)}\n\n${String(e)}`);
   }
 
-  await Settings.populateAccountsMenu('inbox.htm');
-
-  await every30Sec();
-  Catch.setHandledInterval(every30Sec, 30000);
 })();

@@ -8,7 +8,7 @@ const BUILD = 'consumer'; // todo
 
 import { Catch } from '../platform/catch.js';
 import { Store, AccountStore, Serializable } from '../platform/store.js';
-import { Api, AuthError, ReqMethod, ProgressCbs, ProgressCb, AjaxError, RecipientType, ChunkedCb, ProviderContactsResults } from './api.js';
+import { Api, ReqMethod, ProgressCbs, ProgressCb, AjaxErr, RecipientType, ChunkedCb, ProviderContactsResults, GoogleAuthErr } from './api.js';
 import { Env, Ui } from '../browser.js';
 import { Dict, Value, Str, Url } from '../core/common.js';
 import { GoogleAuthWindowResult$result, BrowserMsg, AddrParserResult, BrowserWidnow } from '../extension.js';
@@ -28,8 +28,6 @@ export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 type AuthResultSuccess = { result: 'Success', acctEmail: string, id_token: string, error?: undefined };
 type AuthResultError = { result: GoogleAuthWindowResult$result, acctEmail?: string, error?: string, id_token: undefined };
 export type AuthRes = AuthResultSuccess | AuthResultError;
-
-export class GoogleAcctNotConnected extends Error { }
 
 export namespace GmailRes { // responses
 
@@ -298,7 +296,7 @@ export class Google extends EmailProviderApi {
           if (r.readyState === 2 || r.readyState === 3) { // headers, loading
             status = r.status;
             if (status >= 300) {
-              reject(AjaxError.fromXhr({ status, readyState: r.readyState }, { method, url }, stack));
+              reject(AjaxErr.fromXhr({ status, readyState: r.readyState }, { method, url }, stack));
               window.clearInterval(responsePollInterval);
               r.abort();
             }
@@ -311,7 +309,7 @@ export class Google extends EmailProviderApi {
                 r.abort();
               }
             } else { // done as a fail - reject
-              reject(AjaxError.fromXhr({ status, readyState: r.readyState }, { method, url }, stack));
+              reject(AjaxErr.fromXhr({ status, readyState: r.readyState }, { method, url }, stack));
               window.clearInterval(responsePollInterval);
             }
           }
@@ -630,7 +628,7 @@ export class GoogleAuth {
     }
     const storage = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires', 'google_token_scopes', 'google_token_refresh']);
     if (!storage.google_token_access || !storage.google_token_refresh) {
-      throw new GoogleAcctNotConnected(`Account ${acctEmail} not connected to FlowCrypt Browser Extension`);
+      throw new GoogleAuthErr(`Account ${acctEmail} not connected to FlowCrypt Browser Extension`);
     } else if (GoogleAuth.googleApiIsAuthTokenValid(storage) && !forceRefresh) {
       return `Bearer ${storage.google_token_access}`;
     } else { // refresh token
@@ -641,7 +639,7 @@ export class GoogleAuth {
       if (GoogleAuth.googleApiIsAuthTokenValid(auth)) { // have a valid gmail_api oauth token
         return `Bearer ${auth.google_token_access}`;
       } else {
-        throw new AuthError(`Could not refresh google auth token - did not become valid (access:${!!auth.google_token_access},expires:${auth.google_token_expires},now:${Date.now()})`);
+        throw new GoogleAuthErr(`Could not refresh google auth token - did not become valid (access:${!!auth.google_token_access},expires:${auth.google_token_expires},now:${Date.now()})`);
       }
     }
   }

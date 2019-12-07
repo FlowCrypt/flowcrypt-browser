@@ -9,7 +9,7 @@ import { Ui, Env, Browser } from './browser.js';
 import { Catch } from './platform/catch.js';
 import { AuthRes } from './api/google.js';
 import { Buf } from './core/buf.js';
-import { AjaxError } from './api/api.js';
+import { AjaxErr } from './api/api.js';
 import { PassphraseDialogType } from './xss_safe_factory.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
@@ -100,7 +100,7 @@ export namespace Bm {
 
   export type ErrAsJson =
     { stack?: string; message: string, errorConstructor: 'Error' } |
-    { stack?: string; message: string, errorConstructor: 'AjaxError', ajaxErrorDetails: { status: number, url: string, responseText: string, statusText: string } };
+    { stack?: string; message: string, errorConstructor: 'AjaxErr', ajaxErrorDetails: { status: number, url: string, responseText: string, statusText: string } };
 }
 
 type Handler = Bm.AsyncRespondingHandler | Bm.AsyncResponselessHandler;
@@ -365,9 +365,9 @@ export class BrowserMsg {
   }
 
   private static errToJson = (e: any): Bm.ErrAsJson => {
-    if (e instanceof AjaxError) {
+    if (e instanceof AjaxErr) {
       const { message, stack, status, url, responseText, statusText } = e;
-      return { stack, message, errorConstructor: 'AjaxError', ajaxErrorDetails: { status, url, responseText, statusText } };
+      return { stack, message, errorConstructor: 'AjaxErr', ajaxErrorDetails: { status, url, responseText, statusText } };
     }
     const { stack, message } = Catch.rewrapErr(e, 'sendRawResponse');
     return { stack, message, errorConstructor: 'Error' };
@@ -375,9 +375,9 @@ export class BrowserMsg {
 
   private static jsonToErr = (errAsJson: Bm.ErrAsJson, msg: Bm.Raw) => {
     const stackInfo = `\n\n[callerStack]\n${msg.stack}\n[/callerStack]\n\n[responderStack]\n${errAsJson.stack}\n[/responderStack]\n`;
-    if (errAsJson.errorConstructor === 'AjaxError') {
+    if (errAsJson.errorConstructor === 'AjaxErr') {
       const { status, url, responseText, statusText } = errAsJson.ajaxErrorDetails;
-      return new AjaxError(`BrowserMsg(${name}) ${errAsJson.message}`, stackInfo, status, url, responseText, statusText);
+      return new AjaxErr(`BrowserMsg(${name}) ${errAsJson.message}`, stackInfo, status, url, responseText, statusText);
     }
     const e = new Error(`BrowserMsg(${name}) ${errAsJson.message}`);
     e.stack += stackInfo;

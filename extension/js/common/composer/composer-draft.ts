@@ -7,7 +7,7 @@ import { Xss } from '../platform/xss.js';
 import { Mime } from '../core/mime.js';
 import { Buf } from '../core/buf.js';
 import { Pgp, PgpMsg } from '../core/pgp.js';
-import { Api, AjaxError } from '../api/api.js';
+import { Api, AjaxErr } from '../api/api.js';
 import { BrowserMsg } from '../extension.js';
 import { Catch } from '../platform/catch.js';
 import { Store } from '../platform/store.js';
@@ -136,7 +136,7 @@ export class ComposerDraft extends ComposerComponent {
           this.composer.S.cached('send_btn_note').text('Not saved (reconnect)');
         } else if (e instanceof Error && e.message.indexOf('Could not find valid key packet for encryption in key') !== -1) {
           this.composer.S.cached('send_btn_note').text('Not saved (bad key)');
-        } else if (this.urlParams.draftId && (Api.err.isNotFound(e) || (e instanceof AjaxError && e.status === 400 && e.responseText.indexOf('Message not a draft') !== -1))) {
+        } else if (this.urlParams.draftId && (Api.err.isNotFound(e) || (e instanceof AjaxErr && e.status === 400 && e.responseText.indexOf('Message not a draft') !== -1))) {
           // not found - updating draft that was since deleted
           // not a draft - updating draft that was since sent as a message (in another window), and is not a draft anymore
           this.urlParams.draftId = ''; // forget there was a draftId - next step will create a new draftId

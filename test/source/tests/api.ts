@@ -5,7 +5,7 @@ import { Cookie } from 'puppeteer';
 
 const ci_admin_token = Config.secrets.ci_admin_token;
 
-class ApiErrorResponse extends Error {
+class ApiErrResponse extends Error {
   public response: Response;
   constructor(message: string, response: Response) {
     super(message);
@@ -20,7 +20,7 @@ export class FlowCryptApi {
   private static call = async (url: string, values: { [k: string]: any }) => {
     const r = await request.post({ url, json: values, headers: { 'api-version': 3 } });
     if (r.body.error) {
-      throw new ApiErrorResponse(`FlowCryptApi ${url} returned an error: ${r.body.error.message}`, r);
+      throw new ApiErrResponse(`FlowCryptApi ${url} returned an error: ${r.body.error.message}`, r);
     }
     return r;
   }
@@ -29,7 +29,7 @@ export class FlowCryptApi {
     try {
       await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_account_delete', { ci_admin_token, email });
     } catch (e) {
-      if (e.message instanceof ApiErrorResponse && e.response.body.error.message === 'Unknown account email') {
+      if (e.message instanceof ApiErrResponse && e.response.body.error.message === 'Unknown account email') {
         throw e;
       }
     }

@@ -15,7 +15,7 @@ import { ComposerComponent } from './interfaces/composer-component.js';
 import { BrowserMsg } from '../extension.js';
 import { Catch } from '../platform/catch.js';
 import { moveElementInArray } from '../platform/util.js';
-import { RecipientType } from '../api/api.js';
+import { RecipientType, Api } from '../api/api.js';
 import { Store } from '../platform/store.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './composer-errs.js';
 
@@ -232,41 +232,46 @@ export class ComposerRecipients extends ComposerComponent {
   public getRecipients = () => this.addedRecipients;
 
   private searchContacts = async (input: JQuery<HTMLElement>, dbOnly = false) => {
-    this.composer.errs.debug(`searchContacts`);
-    const substring = Str.parseEmail(String(input.val()), 'DO-NOT-VALIDATE').email;
-    this.composer.errs.debug(`searchContacts.query.substring(${JSON.stringify(substring)})`);
-    if (substring) {
-      const query = { substring };
-      const contacts = await this.composer.app.storageContactSearch(query);
-      const canLoadContactsFromAPI = this.composer.canReadEmails || this.canSearchContacts;
-      if (dbOnly || contacts.length >= this.MAX_CONTACTS_LENGTH || !canLoadContactsFromAPI) {
-        this.composer.errs.debug(`searchContacts 1`);
-        this.renderSearchRes(input, contacts, query);
-      } else {
-        this.composer.errs.debug(`searchContacts 2`);
-        this.contactSearchInProgress = true;
-        this.renderSearchRes(input, contacts, query);
-        this.composer.errs.debug(`searchContacts 3`);
-        if (this.canSearchContacts) {
-          this.composer.errs.debug(`searchContacts (Gmail API) 3`);
-          const contactsGmail = await Google.contactsGet(this.urlParams.acctEmail, substring, undefined, this.MAX_CONTACTS_LENGTH);
-          if (contactsGmail) {
-            const newContacts = contactsGmail.filter(cGmail => !contacts.find(c => c.email === cGmail.email));
-            const mappedContactsFromGmail = await Promise.all(newContacts.map(({ email, name }) => Store.dbContactObj({ email, name })));
-            await this.renderAndAddToDBAPILoadedContacts(input, mappedContactsFromGmail);
+    try {
+      this.composer.errs.debug(`searchContacts`);
+      const substring = Str.parseEmail(String(input.val()), 'DO-NOT-VALIDATE').email;
+      this.composer.errs.debug(`searchContacts.query.substring(${JSON.stringify(substring)})`);
+      if (substring) {
+        const query = { substring };
+        const contacts = await this.composer.app.storageContactSearch(query);
+        const canLoadContactsFromAPI = this.composer.canReadEmails || this.canSearchContacts;
+        if (dbOnly || contacts.length >= this.MAX_CONTACTS_LENGTH || !canLoadContactsFromAPI) {
+          this.composer.errs.debug(`searchContacts 1`);
+          this.renderSearchRes(input, contacts, query);
+        } else {
+          this.composer.errs.debug(`searchContacts 2`);
+          this.contactSearchInProgress = true;
+          this.renderSearchRes(input, contacts, query);
+          this.composer.errs.debug(`searchContacts 3`);
+          if (this.canSearchContacts) {
+            this.composer.errs.debug(`searchContacts (Gmail API) 3`);
+            const contactsGmail = await Google.contactsGet(this.urlParams.acctEmail, substring, undefined, this.MAX_CONTACTS_LENGTH);
+            if (contactsGmail) {
+              const newContacts = contactsGmail.filter(cGmail => !contacts.find(c => c.email === cGmail.email));
+              const mappedContactsFromGmail = await Promise.all(newContacts.map(({ email, name }) => Store.dbContactObj({ email, name })));
+              await this.renderAndAddToDBAPILoadedContacts(input, mappedContactsFromGmail);
+            }
+          } else if (this.composer.canReadEmails) {
+            this.composer.errs.debug(`searchContacts (Gmail Sent Messages) 3`);
+            this.composer.app.emailProviderGuessContactsFromSentEmails(query.substring, contacts, contacts => this.renderAndAddToDBAPILoadedContacts(input, contacts.new));
           }
-        } else if (this.composer.canReadEmails) {
-          this.composer.errs.debug(`searchContacts (Gmail Sent Messages) 3`);
-          this.composer.app.emailProviderGuessContactsFromSentEmails(query.substring, contacts, contacts => this.renderAndAddToDBAPILoadedContacts(input, contacts.new));
+          this.composer.errs.debug(`searchContacts 4`);
+          this.renderSearchResultsLoadingDone();
+          this.contactSearchInProgress = false;
+          this.composer.errs.debug(`searchContacts 5`);
         }
-        this.composer.errs.debug(`searchContacts 4`);
-        this.renderSearchResultsLoadingDone();
-        this.contactSearchInProgress = false;
-        this.composer.errs.debug(`searchContacts 5`);
+      } else {
+        this.hideContacts(); // todo - show suggestions of most contacted ppl etc
+        this.composer.errs.debug(`searchContacts 6`);
       }
-    } else {
-      this.hideContacts(); // todo - show suggestions of most contacted ppl etc
-      this.composer.errs.debug(`searchContacts 6`);
+    } catch (e) {
+      Ui.toast(`Error searching contacts: ${Api.err.eli5(e)}`, 5).catch(Catch.reportErr);
+      throw e;
     }
   }
 
