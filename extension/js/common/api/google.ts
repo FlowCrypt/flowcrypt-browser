@@ -641,7 +641,7 @@ export class GoogleAuth {
       if (GoogleAuth.googleApiIsAuthTokenValid(auth)) { // have a valid gmail_api oauth token
         return `Bearer ${auth.google_token_access}`;
       } else {
-        throw new AuthError('Could not refresh google auth token - did not become valid');
+        throw new AuthError(`Could not refresh google auth token - did not become valid (access:${!!auth.google_token_access},expires:${auth.google_token_expires},now:${Date.now()})`);
       }
     }
   }
@@ -812,7 +812,7 @@ export class GoogleAuth {
   /**
    * oauth token will be valid for another 2 min
    */
-  private static googleApiIsAuthTokenValid = (s: AccountStore) => s.google_token_access && (!s.google_token_expires || s.google_token_expires > new Date().getTime() + (120 * 1000));
+  private static googleApiIsAuthTokenValid = (s: AccountStore) => s.google_token_access && (!s.google_token_expires || s.google_token_expires > Date.now() + (120 * 1000));
 
   // todo - would be better to use a TS type guard instead of the type cast when checking OpenId
   // check for things we actually use: photo/name/locale
