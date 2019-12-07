@@ -633,16 +633,13 @@ export class Store {
     }
   }
 
-  static dbContactSave = (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => new Promise(async (resolve, reject) => {
+  static dbContactSave = (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => new Promise((resolve, reject) => {
     if (!db) { // relay op through background process
       // todo - currently will silently swallow errors
       BrowserMsg.send.bg.await.db({ f: 'dbContactSave', args: [contact] }).then(resolve).catch(Catch.reportErr);
     } else {
       if (Array.isArray(contact)) {
-        for (const singleContact of contact) {
-          await Store.dbContactSave(db, singleContact);
-        }
-        resolve();
+        Promise.all(contact.map(oneContact => Store.dbContactSave(db, oneContact))).then(() => resolve(), reject);
       } else {
         const tx = db.transaction('contacts', 'readwrite');
         const contactsTable = tx.objectStore('contacts');
@@ -654,79 +651,77 @@ export class Store {
   })
 
   static dbContactUpdate = (db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       if (!db) { // relay op through background process
         // todo - currently will silently swallow errors
         BrowserMsg.send.bg.await.db({ f: 'dbContactUpdate', args: [email, update] }).then(resolve).catch(Catch.reportErr);
       } else {
         if (Array.isArray(email)) {
-          for (const singleEmail of email) {
-            await Store.dbContactUpdate(db, singleEmail, update);
-          }
+          Promise.all(email.map(oneEmail => Store.dbContactUpdate(db, oneEmail, update))).then(() => resolve(), reject);
           resolve();
         } else {
-          let [contact] = await Store.dbContactGet(db, [email]);
-          if (!contact) { // updating a non-existing contact, insert it first
-            await Store.dbContactSave(db, await Store.dbContactObj({ email }));
-            [contact] = await Store.dbContactGet(db, [email]);
-            if (!contact) {
-              reject(new Error('contact not found right after inserting it'));
-              return;
+          (async () => {
+            let [contact] = await Store.dbContactGet(db, [email]);
+            if (!contact) { // updating a non-existing contact, insert it first
+              await Store.dbContactSave(db, await Store.dbContactObj({ email }));
+              [contact] = await Store.dbContactGet(db, [email]);
+              if (!contact) {
+                reject(new Error('contact not found right after inserting it'));
+                return;
+              }
             }
-          }
-          if (update.pubkey && update.pubkey.includes(Pgp.armor.headers('privateKey').begin)) { // wrongly saving prv instead of pub
-            Catch.report('Wrongly saving prv as contact - converting to pubkey');
-            const key = await Pgp.key.read(update.pubkey);
-            update.pubkey = key.toPublic().armor();
-          }
-          for (const k of Object.keys(update)) {
-            // @ts-ignore - may be saving any of the provided values - could do this one by one while ensuring proper types
-            contact[k] = update[k];
-          }
-          const tx = db.transaction('contacts', 'readwrite');
-          const contactsTable = tx.objectStore('contacts');
-          contactsTable.put(contact);
-          tx.oncomplete = Catch.try(resolve);
-          tx.onabort = () => reject(Store.errCategorize(tx.error));
+            if (update.pubkey && update.pubkey.includes(Pgp.armor.headers('privateKey').begin)) { // wrongly saving prv instead of pub
+              Catch.report('Wrongly saving prv as contact - converting to pubkey');
+              const key = await Pgp.key.read(update.pubkey);
+              update.pubkey = key.toPublic().armor();
+            }
+            for (const k of Object.keys(update)) {
+              // @ts-ignore - may be saving any of the provided values - could do this one by one while ensuring proper types
+              contact[k] = update[k];
+            }
+            const tx = db.transaction('contacts', 'readwrite');
+            const contactsTable = tx.objectStore('contacts');
+            contactsTable.put(contact);
+            tx.oncomplete = Catch.try(resolve);
+            tx.onabort = () => reject(Store.errCategorize(tx.error));
+          })().catch(reject);
         }
       }
     });
   }
 
-  static dbContactGet = (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
-    return new Promise(async (resolve, reject) => {
-      if (!db) { // relay op through background process
-        BrowserMsg.send.bg.await.db({ f: 'dbContactGet', args: [emailOrLongid] }).then(resolve).catch(reject);
-      } else {
-        if (emailOrLongid.length === 1) {
-          // contacts imported before August 2019 may have only primary longid recorded, in index_longid (string)
-          // contacts imported after August 2019 have both index_longid (string) and index_longids (string[] containing all subkeys)
-          // below we search contact by first trying to only search by primary longid
-          // (or by email - such searches are not affected by longid indexing)
-          const contact = await Store.dbContactInternalGetOne(db, emailOrLongid[0], false);
-          if (contact || !/^[A-F0-9]{16}$/.test(emailOrLongid[0])) {
-            // if we found something, return it
-            // or if we were searching by email, return found contact or nothing
-            resolve([contact]);
-          } else {
-            // not found any key by primary longid, and searching by longid -> search by any subkey longid
-            // it may not find pubkeys imported before August 2019, re-importing such pubkeys will make them findable
-            resolve([await Store.dbContactInternalGetOne(db, emailOrLongid[0], true)]);
-          }
+  static dbContactGet = async (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
+    if (!db) { // relay op through background process
+      return await BrowserMsg.send.bg.await.db({ f: 'dbContactGet', args: [emailOrLongid] }) as (Contact | undefined)[];
+    } else {
+      if (emailOrLongid.length === 1) {
+        // contacts imported before August 2019 may have only primary longid recorded, in index_longid (string)
+        // contacts imported after August 2019 have both index_longid (string) and index_longids (string[] containing all subkeys)
+        // below we search contact by first trying to only search by primary longid
+        // (or by email - such searches are not affected by longid indexing)
+        const contact = await Store.dbContactInternalGetOne(db, emailOrLongid[0], false);
+        if (contact || !/^[A-F0-9]{16}$/.test(emailOrLongid[0])) {
+          // if we found something, return it
+          // or if we were searching by email, return found contact or nothing
+          return [contact];
         } else {
-          const results: (Contact | undefined)[] = [];
-          for (const singleEmailOrLongid of emailOrLongid) {
-            const [contact] = await Store.dbContactGet(db, [singleEmailOrLongid]);
-            results.push(contact);
-          }
-          resolve(results);
+          // not found any key by primary longid, and searching by longid -> search by any subkey longid
+          // it may not find pubkeys imported before August 2019, re-importing such pubkeys will make them findable
+          return [await Store.dbContactInternalGetOne(db, emailOrLongid[0], true)];
         }
+      } else {
+        const results: (Contact | undefined)[] = [];
+        for (const singleEmailOrLongid of emailOrLongid) {
+          const [contact] = await Store.dbContactGet(db, [singleEmailOrLongid]);
+          results.push(contact);
+        }
+        return results;
       }
-    });
+    }
   }
 
   private static dbContactInternalGetOne = (db: IDBDatabase, emailOrLongid: string, searchSubkeyLongids: boolean): Promise<Contact | undefined> => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       let tx: IDBRequest;
       if (!/^[A-F0-9]{16}$/.test(emailOrLongid)) { // email
         tx = db.transaction('contacts', 'readonly').objectStore('contacts').get(emailOrLongid);
@@ -741,7 +736,7 @@ export class Store {
   }
 
   static dbContactSearch = (db: IDBDatabase | undefined, query: DbContactFilter): Promise<Contact[]> => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       if (!db) { // relay op through background process
         // todo - currently will silently swallow errors
         BrowserMsg.send.bg.await.db({ f: 'dbContactSearch', args: [query] }).then(resolve).catch(Catch.reportErr);
@@ -756,13 +751,16 @@ export class Store {
         if (typeof query.has_pgp === 'undefined') { // any query.has_pgp value
           query.substring = Store.normalizeString(query.substring || '');
           if (query.substring) {
-            const resultsWithPgp = await Store.dbContactSearch(db, { substring: query.substring, limit: query.limit, has_pgp: true });
-            if (query.limit && resultsWithPgp.length === query.limit) {
-              resolve(resultsWithPgp);
-            } else {
-              const resultsWithoutPgp = await Store.dbContactSearch(db, { substring: query.substring, limit: query.limit ? query.limit - resultsWithPgp.length : undefined, has_pgp: false });
-              resolve(resultsWithPgp.concat(resultsWithoutPgp));
-            }
+            (async () => {
+              const resultsWithPgp = await Store.dbContactSearch(db, { substring: query.substring, limit: query.limit, has_pgp: true });
+              if (query.limit && resultsWithPgp.length === query.limit) {
+                resolve(resultsWithPgp);
+              } else {
+                const limit = query.limit ? query.limit - resultsWithPgp.length : undefined;
+                const resultsWithoutPgp = await Store.dbContactSearch(db, { substring: query.substring, limit, has_pgp: false });
+                resolve(resultsWithPgp.concat(resultsWithoutPgp));
+              }
+            })().catch(reject);
           } else {
             search = contacts.openCursor();
           }
