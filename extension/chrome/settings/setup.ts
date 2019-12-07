@@ -25,8 +25,6 @@ import { AccountStore } from './../../js/common/platform/store.js';
 import { SetupRecoverKeyModule } from './setup/setup-recovery.js';
 import { SetupCreateKeyModule } from './setup/setup-create-key.js';
 
-declare const openpgp: typeof OpenPGP;
-
 export interface SetupOptions {
   passphrase: string;
   passphrase_save: boolean;
@@ -212,7 +210,7 @@ export class SetupView extends View {
       if (this.action !== 'add_key') {
         await this.renderSetupDone();
       } else {
-        await this.renderAddKeyFromBackup();
+        await this.setupRecoverKey.renderAddKeyFromBackup();
       }
     } else if (this.action === 'finalize') {
       const { tmp_submit_all, tmp_submit_main, key_backup_method } = await Store.getAcct(this.acctEmail, ['tmp_submit_all', 'tmp_submit_main', 'key_backup_method']);
@@ -288,20 +286,6 @@ export class SetupView extends View {
       }));
     }
     await Store.dbContactSave(undefined, myOwnEmailAddrsAsContacts);
-  }
-
-  async createSaveKeyPair(options: SetupOptions) {
-    await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.rules!);
-    const { full_name } = await Store.getAcct(this.acctEmail, ['full_name']);
-    try {
-      const key = await Pgp.key.create([{ name: full_name || '', email: this.acctEmail }], 'rsa4096', options.passphrase); // todo - add all addresses?
-      options.is_newly_created_key = true;
-      const { keys: [prv] } = await openpgp.key.readArmored(key.private);
-      await this.saveKeys([prv], options);
-    } catch (e) {
-      Catch.reportErr(e);
-      Xss.sanitizeRender('#step_2_easy_generating, #step_2a_manual_create', Lang.setup.fcDidntSetUpProperly);
-    }
   }
 
   async saveAndFillSubmitOption(sendAsAliases: Dict<SendAsAlias>) {
@@ -385,27 +369,6 @@ export class SetupView extends View {
       } else {
         this.displayBlock('step_2b_manual_enter');
       }
-    }
-  }
-
-  async renderAddKeyFromBackup() { // at this point, account is already set up, and this page is showing in a lightbox after selecting "from backup" in add_key.htm
-    $('.profile-row, .skip_recover_remaining, .action_send, .action_account_settings, .action_skip_recovery').css({ display: 'none', visibility: 'hidden', opacity: 0 });
-    Xss.sanitizeRender($('h1').parent(), '<h1>Recover key from backup</h1>');
-    $('.action_recover_account').text('load key from backup');
-    try {
-      this.fetchedKeyBackups = await Google.gmail.fetchKeyBackups(this.acctEmail);
-      this.fetchedKeyBackupsUniqueLongids = await this.getUniqueLongids(this.fetchedKeyBackups);
-    } catch (e) {
-      window.location.href = Url.create('modules/add_key.htm', { acctEmail: this.acctEmail, parentTabId: this.parentTabId });
-      return;
-    }
-    if (this.fetchedKeyBackupsUniqueLongids.length) {
-      const storedKeys = await Store.keysGet(this.acctEmail);
-      this.importedKeysUniqueLongids = storedKeys.map(ki => ki.longid);
-      await this.renderSetupDone();
-      $('#step_4_more_to_recover .action_recover_remaining').click();
-    } else {
-      window.location.href = Url.create('modules/add_key.htm', { acctEmail: this.acctEmail, parentTabId: this.parentTabId });
     }
   }
 

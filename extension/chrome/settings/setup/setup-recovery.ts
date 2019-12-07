@@ -11,6 +11,7 @@ import { Api } from '../../../js/common/api/api.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { Google } from '../../../js/common/api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -111,6 +112,27 @@ export class SetupRecoverKeyModule {
       this.view.mathingPassphrases = [];
       this.view.importedKeysUniqueLongids = [];
       this.view.displayBlock('step_1_easy_or_manual');
+    }
+  }
+
+  async renderAddKeyFromBackup() { // at this point, account is already set up, and this page is showing in a lightbox after selecting "from backup" in add_key.htm
+    $('.profile-row, .skip_recover_remaining, .action_send, .action_account_settings, .action_skip_recovery').css({ display: 'none', visibility: 'hidden', opacity: 0 });
+    Xss.sanitizeRender($('h1').parent(), '<h1>Recover key from backup</h1>');
+    $('.action_recover_account').text('load key from backup');
+    try {
+      this.view.fetchedKeyBackups = await Google.gmail.fetchKeyBackups(this.view.acctEmail);
+      this.view.fetchedKeyBackupsUniqueLongids = await this.view.getUniqueLongids(this.view.fetchedKeyBackups);
+    } catch (e) {
+      window.location.href = Url.create('modules/add_key.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
+      return;
+    }
+    if (this.view.fetchedKeyBackupsUniqueLongids.length) {
+      const storedKeys = await Store.keysGet(this.view.acctEmail);
+      this.view.importedKeysUniqueLongids = storedKeys.map(ki => ki.longid);
+      await this.view.renderSetupDone();
+      $('#step_4_more_to_recover .action_recover_remaining').click();
+    } else {
+      window.location.href = Url.create('modules/add_key.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
     }
   }
 

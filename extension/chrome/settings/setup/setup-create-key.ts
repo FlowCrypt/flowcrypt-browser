@@ -9,6 +9,11 @@ import { Settings } from '../../../js/common/settings.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { shouldPassPhraseBeHidden } from '../../../js/common/ui/passphrase_ui.js';
 import { Url } from '../../../js/common/core/common.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { Pgp } from '../../../js/common/core/pgp.js';
+import { Lang } from '../../../js/common/lang.js';
+
+declare const openpgp: typeof OpenPGP;
 
 export class SetupCreateKeyModule {
 
@@ -33,7 +38,7 @@ export class SetupCreateKeyModule {
         setup_simple: Boolean($('#step_2a_manual_create .input_backup_inbox').prop('checked')),
         is_newly_created_key: true,
       };
-      await this.view.createSaveKeyPair(options);
+      await this.createSaveKeyPair(options);
       await this.view.preFinalizeSetup(options);
       // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
       window.location.href = Url.create('modules/backup.htm', { action: 'setup', acctEmail: this.view.acctEmail });
@@ -88,6 +93,20 @@ export class SetupCreateKeyModule {
       <div class="passphrase-sticky-note">${notePp}</div>
     `;
     return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassPhraseStickyNote);
+  }
+
+  async createSaveKeyPair(options: SetupOptions) {
+    await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.rules!);
+    const { full_name } = await Store.getAcct(this.view.acctEmail, ['full_name']);
+    try {
+      const key = await Pgp.key.create([{ name: full_name || '', email: this.view.acctEmail }], 'rsa4096', options.passphrase); // todo - add all addresses?
+      options.is_newly_created_key = true;
+      const { keys: [prv] } = await openpgp.key.readArmored(key.private);
+      await this.view.saveKeys([prv], options);
+    } catch (e) {
+      Catch.reportErr(e);
+      Xss.sanitizeRender('#step_2_easy_generating, #step_2a_manual_create', Lang.setup.fcDidntSetUpProperly);
+    }
   }
 
 }
