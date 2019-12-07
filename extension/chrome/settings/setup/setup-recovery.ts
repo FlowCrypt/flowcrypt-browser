@@ -9,10 +9,12 @@ import { Pgp } from '../../../js/common/core/pgp.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Catch } from '../../../js/common/platform/catch.js';
+import { Url } from '../../../js/common/core/common.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 declare const openpgp: typeof OpenPGP;
 
-export class SetupRecoveryModule {
+export class SetupRecoverKeyModule {
 
   constructor(private view: SetupView) {
   }
@@ -81,6 +83,34 @@ export class SetupRecoveryModule {
         Catch.reportErr(e);
       }
       await Ui.modal.error(`Error setting up FlowCrypt:\n\n${Api.err.eli5(e)} (${String(e)})\n\nPlease write human@flowcrypt.com if this happens repeatedly.`);
+    }
+  }
+
+  async actionRecoverRemainingKeysHandler() {
+    this.view.displayBlock('step_2_recovery');
+    $('#recovery_pasword').val('');
+    const nImported = (await Store.keysGet(this.view.acctEmail)).length;
+    const nFetched = this.view.fetchedKeyBackupsUniqueLongids.length;
+    const txtKeysTeft = (nFetched - nImported > 1) ? `are ${nFetched - nImported} backups` : 'is one backup';
+    if (this.view.action !== 'add_key') {
+      Xss.sanitizeRender('#step_2_recovery .recovery_status', Lang.setup.nBackupsAlreadyRecoveredOrLeft(nImported, nFetched, txtKeysTeft));
+      Xss.sanitizeReplace('#step_2_recovery .line_skip_recovery', Ui.e('div', { class: 'line', html: Ui.e('a', { href: '#', class: 'skip_recover_remaining', html: 'Skip this step' }) }));
+      $('#step_2_recovery .skip_recover_remaining').click(Ui.event.handle(() => {
+        window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
+      }));
+    } else {
+      Xss.sanitizeRender('#step_2_recovery .recovery_status', `There ${txtKeysTeft} left to recover.<br><br>Try different pass phrases to unlock all backups.`);
+      $('#step_2_recovery .line_skip_recovery').css('display', 'none');
+    }
+  }
+
+  async actionSkipRecoveryHandler() {
+    if (await Ui.modal.confirm(Lang.setup.confirmSkipRecovery)) {
+      this.view.fetchedKeyBackups = [];
+      this.view.fetchedKeyBackupsUniqueLongids = [];
+      this.view.mathingPassphrases = [];
+      this.view.importedKeysUniqueLongids = [];
+      this.view.displayBlock('step_1_easy_or_manual');
     }
   }
 

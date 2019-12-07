@@ -16,13 +16,14 @@ import { Google } from '../../js/common/api/google.js';
 import { Attester } from '../../js/common/api/attester.js';
 import { Assert } from '../../js/common/assert.js';
 import { KeyImportUi, UserAlert, KeyCanBeFixed } from '../../js/common/ui/key_import_ui.js';
-import { initPassphraseToggle, shouldPassPhraseBeHidden } from '../../js/common/ui/passphrase_ui.js';
+import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Keyserver } from '../../js/common/api/keyserver.js';
 import { View } from '../../js/common/view.js';
 import { Scopes } from './../../js/common/platform/store';
 import { AccountStore } from './../../js/common/platform/store.js';
-import { SetupRecoveryModule } from './setup/setup-recovery.js';
+import { SetupRecoverKeyModule } from './setup/setup-recovery.js';
+import { SetupCreateKeyModule } from './setup/setup-create-key.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -46,7 +47,8 @@ export class SetupView extends View {
   readonly emailDomainsToSkip = ['yahoo', 'live', 'outlook'];
   readonly keyImportUi = new KeyImportUi({ checkEncryption: true });
 
-  readonly setupRecovery: SetupRecoveryModule;
+  readonly setupRecoverKey: SetupRecoverKeyModule;
+  readonly setupCreateKey: SetupCreateKeyModule;
 
   tabId: string | undefined;
   scopes: Scopes | undefined;
@@ -77,7 +79,9 @@ export class SetupView extends View {
     this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId); // for step_2b_manual_enter, if user chooses so
     this.keyImportUi.onBadPassphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').focus();
     this.keyImportUi.renderPassPhraseStrengthValidationInput($('.input_password'), $('.action_create_private'));
-    this.setupRecovery = new SetupRecoveryModule(this);
+    // modules
+    this.setupRecoverKey = new SetupRecoverKeyModule(this);
+    this.setupCreateKey = new SetupCreateKeyModule(this);
   }
 
   async render() {
@@ -113,44 +117,12 @@ export class SetupView extends View {
       $('h1').text('Set Up');
       this.displayBlock('step_1_easy_or_manual');
     }));
-    $("#recovery_pasword").on('keydown', event => {
-      if (event.which === 13) {
-        $('#step_2_recovery .action_recover_account').click();
-      }
-    });
-    $('#step_2_recovery .action_recover_account').click(this.setHandlerPrevent('double', () => this.setupRecovery.actionRecoverAccountHandler()));
-    $('#step_4_more_to_recover .action_recover_remaining').click(Ui.event.handle(async () => {
-      this.displayBlock('step_2_recovery');
-      $('#recovery_pasword').val('');
-      const nImported = (await Store.keysGet(this.acctEmail)).length;
-      const nFetched = this.fetchedKeyBackupsUniqueLongids.length;
-      const txtKeysTeft = (nFetched - nImported > 1) ? `are ${nFetched - nImported} backups` : 'is one backup';
-      if (this.action !== 'add_key') {
-        Xss.sanitizeRender('#step_2_recovery .recovery_status', Lang.setup.nBackupsAlreadyRecoveredOrLeft(nImported, nFetched, txtKeysTeft));
-        Xss.sanitizeReplace('#step_2_recovery .line_skip_recovery', Ui.e('div', { class: 'line', html: Ui.e('a', { href: '#', class: 'skip_recover_remaining', html: 'Skip this step' }) }));
-        $('#step_2_recovery .skip_recover_remaining').click(Ui.event.handle(() => {
-          window.location.href = Url.create('index.htm', { acctEmail: this.acctEmail });
-        }));
-      } else {
-        Xss.sanitizeRender('#step_2_recovery .recovery_status', `There ${txtKeysTeft} left to recover.<br><br>Try different pass phrases to unlock all backups.`);
-        $('#step_2_recovery .line_skip_recovery').css('display', 'none');
-      }
-    }));
-    $('.action_skip_recovery').click(Ui.event.handle(async target => {
-      if (await Ui.modal.confirm(Lang.setup.confirmSkipRecovery)) {
-        this.fetchedKeyBackups = [];
-        this.fetchedKeyBackupsUniqueLongids = [];
-        this.mathingPassphrases = [];
-        this.importedKeysUniqueLongids = [];
-        this.displayBlock('step_1_easy_or_manual');
-      }
-    }));
-    $('.action_account_settings').click(Ui.event.handle(() => {
-      window.location.href = Url.create('index.htm', { acctEmail: this.acctEmail });
-    }));
-    $('.action_go_auth_denied').click(Ui.event.handle(() => {
-      window.location.href = Url.create('index.htm', { acctEmail: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' });
-    }));
+    $('#step_2_recovery .action_recover_account').click(this.setHandlerPrevent('double', () => this.setupRecoverKey.actionRecoverAccountHandler()));
+    $('#step_4_more_to_recover .action_recover_remaining').click(this.setHandler(() => this.setupRecoverKey.actionRecoverRemainingKeysHandler()));
+    $('.action_skip_recovery').click(this.setHandler(() => this.setupRecoverKey.actionSkipRecoveryHandler()));
+    $('.action_account_settings').click(this.setHandler(() => { window.location.href = Url.create('index.htm', { acctEmail: this.acctEmail }); }));
+    const authDeniedPage = '/chrome/settings/modules/auth_denied.htm';
+    $('.action_go_auth_denied').click(this.setHandler(() => { window.location.href = Url.create('index.htm', { acctEmail: this.acctEmail, page: authDeniedPage }); }));
     $('.input_submit_key').click(Ui.event.handle(target => {
       // will be hidden / ignored / forced true when rules.mustSubmitToAttester() === true (for certain orgs)
       const inputSubmitAll = $(target).closest('.manual').find('.input_submit_all').first();
@@ -197,47 +169,8 @@ export class SetupView extends View {
         }
       }
     }));
-    $('#step_2a_manual_create .action_create_private').click(Ui.event.prevent('double', async () => {
-      await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.rules!);
-      if (! await this.isCreatePrivateFormInputCorrect()) {
-        return;
-      }
-      try {
-        $('#step_2a_manual_create input').prop('disabled', true);
-        Xss.sanitizeRender('#step_2a_manual_create .action_create_private', Ui.spinner('white') + 'just a minute');
-        const options: SetupOptions = {
-          passphrase: String($('#step_2a_manual_create .input_password').val()),
-          passphrase_save: Boolean($('#step_2a_manual_create .input_passphrase_save').prop('checked')),
-          submit_main: Boolean($('#step_2a_manual_create .input_submit_key').prop('checked') || this.rules!.mustSubmitToAttester()),
-          submit_all: Boolean($('#step_2a_manual_create .input_submit_all').prop('checked') || this.rules!.mustSubmitToAttester()),
-          key_backup_prompt: this.rules!.canBackupKeys() ? Date.now() : false,
-          recovered: false,
-          setup_simple: Boolean($('#step_2a_manual_create .input_backup_inbox').prop('checked')),
-          is_newly_created_key: true,
-        };
-        await this.createSaveKeyPair(options);
-        await this.preFinalizeSetup(options);
-        // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
-        window.location.href = Url.create('modules/backup.htm', { action: 'setup', acctEmail: this.acctEmail });
-      } catch (e) {
-        Catch.reportErr(e);
-        await Ui.modal.error(`There was an error, please try again.\n\n(${String(e)})`);
-        $('#step_2a_manual_create .action_create_private').text('CREATE AND SAVE');
-      }
-    }));
-    $('#step_2a_manual_create .action_show_advanced_create_settings').click(Ui.event.handle(target => {
-      const advancedCreateSettings = $('#step_2a_manual_create .advanced_create_settings');
-      const container = $('#step_2a_manual_create .advanced_create_settings_container');
-      if (advancedCreateSettings.is(':visible')) {
-        advancedCreateSettings.hide('fast');
-        $(target).find('span').text('Show Advanced Settings');
-        container.css('width', '360px');
-      } else {
-        advancedCreateSettings.show('fast');
-        $(target).find('span').text('Hide Advanced Settings');
-        container.css('width', 'auto');
-      }
-    }));
+    $('#step_2a_manual_create .action_create_private').click(this.setHandlerPrevent('double', () => this.setupCreateKey.actionCreateKeyHandler()));
+    $('#step_2a_manual_create .action_show_advanced_create_settings').click(this.setHandler(el => this.setupCreateKey.actionShowAdvancedSettingsHandle(el)));
     $('#step_4_close .action_close').click(Ui.event.handle(() => { // only rendered if action=add_key which means parentTabId was used
       if (this.parentTabId) {
         BrowserMsg.send.redirect(this.parentTabId, { location: Url.create('index.htm', { acctEmail: this.acctEmail, advanced: true }) });
@@ -253,6 +186,11 @@ export class SetupView extends View {
     $('.input_password2').on('keydown', event => {
       if (event.which === 13) {
         $('#step_2a_manual_create .action_create_private').click();
+      }
+    });
+    $("#recovery_pasword").on('keydown', event => {
+      if (event.which === 13) {
+        $('#step_2_recovery .action_recover_account').click();
       }
     });
   }
@@ -511,38 +449,6 @@ export class SetupView extends View {
     await this.preFinalizeSetup(options);
     await this.finalizeSetup(options);
     await this.renderSetupDone();
-  }
-
-  async isCreatePrivateFormInputCorrect() {
-    const password1 = $('#step_2a_manual_create .input_password');
-    const password2 = $('#step_2a_manual_create .input_password2');
-    if (!password1.val()) {
-      await Ui.modal.warning('Pass phrase is needed to protect your private email. Please enter a pass phrase.');
-      password1.focus();
-      return false;
-    }
-    if ($('#step_2a_manual_create .action_create_private').hasClass('gray')) {
-      await Ui.modal.warning('Pass phrase is not strong enough. Please make it stronger, by adding a few words.');
-      password1.focus();
-      return false;
-    }
-    if (password1.val() !== password2.val()) {
-      await Ui.modal.warning('The pass phrases do not match. Please try again.');
-      password2.val('').focus();
-      return false;
-    }
-    let notePp = String(password1.val());
-    if (await shouldPassPhraseBeHidden()) {
-      notePp = notePp.substring(0, 2) + notePp.substring(2, notePp.length - 2).replace(/[^ ]/g, '*') + notePp.substring(notePp.length - 2, notePp.length);
-    }
-    const paperPassPhraseStickyNote = `
-      <div style="font-size: 1.2em">
-        Please write down your pass phrase and store it in safe place or even two.
-        It is needed in order to access your FlowCrypt account.
-      </div>
-      <div class="passphrase-sticky-note">${notePp}</div>
-    `;
-    return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassPhraseStickyNote);
   }
 
   filterAddressesForSubmittingKeys(addresses: string[]): string[] {
