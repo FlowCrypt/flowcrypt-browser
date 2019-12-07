@@ -195,19 +195,18 @@ export class SetupView extends View {
     });
   }
 
-  private async renderInitial() {
+  private async renderInitial(): Promise<void> {
     $('h1').text('Set Up FlowCrypt');
     $('.email-address').text(this.acctEmail);
     $('.back').css('visibility', 'hidden');
     if (this.storage!.email_provider === 'gmail') { // show alternative account addresses in setup form + save them for later
-      if (!(this.scopes!.read || this.scopes!.modify)) {
-        $('.auth_denied_warning').css('display', 'block');
+      try {
+        const sendAs = this.scopes!.read || this.scopes!.modify ? await Settings.fetchAcctAliasesFromGmail(this.acctEmail) : {};
+        await this.saveAndFillSubmitOption(sendAs);
+      } catch (e) {
+        return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToLoadEmailAliases, () => this.renderInitial());
       }
-      if (this.scopes!.read || this.scopes!.modify) {
-        Settings.fetchAcctAliasesFromGmail(this.acctEmail).then(this.saveAndFillSubmitOption).catch(Catch.reportErr);
-      } else { // cannot read emails, don't fetch alternative addresses
-        this.saveAndFillSubmitOption({}).catch(Catch.reportErr);
-      }
+      $('.auth_denied_warning').css('display', this.scopes!.read || this.scopes!.modify ? 'none' : 'block');
     }
     if (this.storage!.setup_done) {
       if (this.action !== 'add_key') {
