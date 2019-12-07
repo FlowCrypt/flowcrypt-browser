@@ -72,6 +72,9 @@ export class Injector {
   }
 
   insertEndSessionBtn = async (acctEmail: string) => {
+    if ($('.action_finish_session').length) {
+      return;
+    }
     let prependToElem = $(this.container.finishSesionBtnSel[this.webmailName]).first();
     if (this.webmailName === 'gmail') {
       prependToElem = prependToElem.children().last(); // todo: ideally we would not have to have special logic here for Gmail
