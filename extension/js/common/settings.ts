@@ -9,7 +9,7 @@ import { Ui, Env, JQS } from './browser.js';
 import { BrowserMsg } from './extension.js';
 import { Lang } from './lang.js';
 import { Rules } from './rules.js';
-import { Api, ApiErrorResponse } from './api/api.js';
+import { Api, ApiErrResponse } from './api/api.js';
 import { Pgp } from './core/pgp.js';
 import { Google, GoogleAuth } from './api/google.js';
 import { Attester } from './api/attester.js';
@@ -269,7 +269,7 @@ export class Settings {
 
   static promptToRetry = async (type: 'REQUIRED', lastErr: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
     let userErrMsg = `${userMsg} ${Api.err.eli5(lastErr)}`;
-    if (lastErr instanceof ApiErrorResponse && lastErr.res.error.code === 400) {
+    if (lastErr instanceof ApiErrResponse && lastErr.res.error.code === 400) {
       userErrMsg = `${userMsg}, ${lastErr.res.error.message}`; // this will make reason for err 400 obvious to user, very important for our main customer
     }
     while (await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, userErrMsg, Api.err.detailsAsHtmlWithNewlines(lastErr)) === 'retry') {

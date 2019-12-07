@@ -4,7 +4,7 @@
 
 'use strict';
 
-import { Api, ReqFmt, ProgressCb, AuthError } from './api.js';
+import { Api, ReqFmt, ProgressCb, BackendAuthErr } from './api.js';
 import { Dict, Value } from '../core/common.js';
 import { Store } from '../platform/store.js';
 import { Catch } from '../platform/catch.js';
@@ -219,7 +219,7 @@ export class Backend extends Api {
 
   private static throwIfMissingUuid(fcAuth: FcUuidAuth) {
     if (!fcAuth.uuid) {
-      throw new AuthError('Please log into FlowCrypt account first');
+      throw new BackendAuthErr('Please log into FlowCrypt account first');
     }
   }
 

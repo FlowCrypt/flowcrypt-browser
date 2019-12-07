@@ -15,13 +15,13 @@ import { Contact } from '../core/pgp.js';
 import { secureRandomBytes } from '../platform/util.js';
 
 type StandardError = { code: number | null; message: string; internal: string | null; data?: string; stack?: string; };
-type StandardErrorRes = { error: StandardError };
+type StandardErrRes = { error: StandardError };
 export type ReqFmt = 'JSON' | 'FORM' | 'TEXT';
 export type RecipientType = 'to' | 'cc' | 'bcc';
 type ResFmt = 'json' | 'xhr';
 export type ReqMethod = 'POST' | 'GET' | 'DELETE' | 'PUT';
 export type ProviderContactsResults = { new: Contact[], all: Contact[] };
-type RawAjaxError = {
+type RawAjaxErr = {
   // getAllResponseHeaders?: () => any,
   // getResponseHeader?: (e: string) => any,
   readyState: number,
@@ -34,7 +34,7 @@ export type ChunkedCb = (r: ProviderContactsResults) => void;
 export type ProgressCb = (percent?: number, loaded?: number, total?: number) => void;
 export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | null };
 
-abstract class ApiCallError extends Error {
+abstract class ApiCallErr extends Error {
 
   private static getPayloadStructure = (req: JQueryAjaxSettings): string => {
     if (typeof req.data === 'string') {
@@ -67,12 +67,12 @@ abstract class ApiCallError extends Error {
 
   protected static describeApiAction = (req: JQueryAjaxSettings) => {
     const describeBody = typeof req.data === 'undefined' ? '(no body)' : typeof req.data;
-    return `${req.method || 'GET'}-ing ${ApiCallError.censoredUrl(req.url)} ${describeBody}: ${ApiCallError.getPayloadStructure(req)}`;
+    return `${req.method || 'GET'}-ing ${ApiCallErr.censoredUrl(req.url)} ${describeBody}: ${ApiCallErr.getPayloadStructure(req)}`;
   }
 
 }
 
-export class AjaxError extends ApiCallError {
+export class AjaxErr extends ApiCallErr {
 
   // todo - move these out of the class, they get weirdly serialized in err reports
   public STD_ERR_MSGS = { // tslint:disable-line:oneliner-object-literal
@@ -80,16 +80,16 @@ export class AjaxError extends ApiCallError {
     GOOGLE_RECIPIENT_ADDRESS_REQUIRED: 'Recipient address required',
   };
 
-  public static fromXhr = (xhr: RawAjaxError, req: JQueryAjaxSettings, stack: string) => {
+  public static fromXhr = (xhr: RawAjaxErr, req: JQueryAjaxSettings, stack: string) => {
     const responseText = xhr.responseText || '';
     const status = typeof xhr.status === 'number' ? xhr.status : -1;
     stack += `\n\nprovided ajax call stack:\n${stack}`;
     if (status === 400 || status === 403 || (status === 200 && responseText && responseText[0] !== '{')) {
-      // RawAjaxError with status 200 can happen when it fails to parse response - eg non-json result
+      // RawAjaxErr with status 200 can happen when it fails to parse response - eg non-json result
       stack += `\n\nresponseText(0, 1000):\n${responseText.substr(0, 1000)}\n\npayload(0, 1000):\n${Catch.stringify(req.data).substr(0, 1000)}`;
     }
-    const message = `${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallError.describeApiAction(req)}`;
-    return new AjaxError(message, stack, status, AjaxError.censoredUrl(req.url), responseText, xhr.statusText || '(no status text)');
+    const message = `${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallErr.describeApiAction(req)}`;
+    return new AjaxErr(message, stack, status, AjaxErr.censoredUrl(req.url), responseText, xhr.statusText || '(no status text)');
   }
 
   constructor(message: string, public stack: string, public status: number, public url: string, public responseText: string, public statusText: string) {
@@ -112,13 +112,13 @@ export class AjaxError extends ApiCallError {
 
 }
 
-export class ApiErrorResponse extends ApiCallError {
+export class ApiErrResponse extends ApiCallErr {
 
-  public res: StandardErrorRes;
+  public res: StandardErrRes;
   public url: string;
 
-  constructor(res: StandardErrorRes, req: JQueryAjaxSettings) {
-    super(`Api error response when ${ApiCallError.describeApiAction(req)}`);
+  constructor(res: StandardErrRes, req: JQueryAjaxSettings) {
+    super(`Api error response when ${ApiCallErr.describeApiAction(req)}`);
     this.res = res;
     this.url = req.url || '(unknown url)';
     this.stack += `\n\nresponse:\n${Catch.stringify(res)}`;
@@ -126,7 +126,9 @@ export class ApiErrorResponse extends ApiCallError {
 
 }
 
-export class AuthError extends Error { }
+export abstract class AuthErr extends Error { }
+export class GoogleAuthErr extends AuthErr { }
+export class BackendAuthErr extends AuthErr { }
 
 export class Api {
 
@@ -152,8 +154,8 @@ export class Api {
         return 'Network connection issue.';
       } else if (Api.err.isServerErr(e)) {
         return 'Server responded with an unexpected error.';
-      } else if (e instanceof AjaxError) {
-        return 'AjaxError with unknown cause.';
+      } else if (e instanceof AjaxErr) {
+        return 'AjaxErr with unknown cause.';
       } else {
         return 'FlowCrypt encountered an error with unknown cause.';
       }
@@ -162,7 +164,7 @@ export class Api {
       let details = 'Below are technical details about the error. This may be useful for debugging.\n\n';
       details += `<b>Error string</b>: ${Xss.escape(String(e))}\n\n`;
       details += `<b>Error stack</b>: ${e instanceof Error ? Xss.escape((e.stack || '(empty)')) : '(no error stack)'}\n\n`;
-      if (e instanceof AjaxError) {
+      if (e instanceof AjaxErr) {
         details += `<b>Ajax response</b>:\n${Xss.escape(e.responseText)}\n<b>End of Ajax response</b>\n`;
       }
       return details;
@@ -171,42 +173,45 @@ export class Api {
       if (e instanceof TypeError && (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')) {
         return true; // openpgp.js uses fetch()... which produces these errors
       }
-      if (e instanceof AjaxError && (e.status === 0 && e.statusText === 'error' || e.statusText === 'timeout' || e.status === -1)) {
+      if (e instanceof AjaxErr && (e.status === 0 && e.statusText === 'error' || e.statusText === 'timeout' || e.status === -1)) {
         return true;
       }
-      if (e instanceof AjaxError && e.status === 400 && typeof e.responseText === 'string' && e.responseText.indexOf('RequestTimeout') !== -1) {
+      if (e instanceof AjaxErr && e.status === 400 && typeof e.responseText === 'string' && e.responseText.indexOf('RequestTimeout') !== -1) {
         return true; // AWS: Your socket connection to the server was not read from or written to within the timeout period. Idle connections will be closed.
       }
       return false;
     },
     isAuthErr: (e: any) => {
-      if (e instanceof AuthError) {
+      if (e instanceof AuthErr) {
         return true;
       }
       if (e && typeof e === 'object') {
         if (Api.err.isStandardErr(e, 'auth')) {
           return true; // API auth error response
         }
-        if (e instanceof AjaxError && e.status === 401) {
+        if (e instanceof AjaxErr && e.status === 401) {
           return true;
         }
       }
       return false;
     },
     isStandardErr: (e: any, internalType: string) => {
-      if (e instanceof ApiErrorResponse && typeof e.res === 'object' && typeof e.res.error === 'object' && e.res.error.internal === 'auth') {
+      if (e instanceof ApiErrResponse && typeof e.res === 'object' && typeof e.res.error === 'object' && e.res.error.internal === 'auth') {
         return true;
       }
       if (Api.isStandardError(e) && e.internal === internalType) {
         return true;
       }
-      if ((e as StandardErrorRes).error && typeof (e as StandardErrorRes).error === 'object' && (e as StandardErrorRes).error.internal === internalType) {
+      if ((e as StandardErrRes).error && typeof (e as StandardErrRes).error === 'object' && (e as StandardErrRes).error.internal === internalType) {
         return true;
       }
       return false;
     },
     isAuthPopupNeeded: (e: any) => {
-      if (e instanceof AjaxError && e.status === 400 && typeof e.responseText === 'string') {
+      if (e instanceof GoogleAuthErr) {
+        return true;
+      }
+      if (e instanceof AjaxErr && e.status === 400 && typeof e.responseText === 'string') {
         try {
           const json = JSON.parse(e.responseText);
           if (json && (json as any).error === 'invalid_grant') {
@@ -230,13 +235,13 @@ export class Api {
       }
       return false;
     },
-    isInsufficientPermission: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 403 && e.responseText.indexOf('insufficientPermissions') !== -1,
-    isNotFound: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 404,
-    isBadReq: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 400,
-    isReqTooLarge: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 413,
-    isServerErr: (e: any): e is AjaxError => e instanceof AjaxError && e.status >= 500,
-    isBlockedByProxy: (e: any): e is AjaxError => {
-      if (!(e instanceof AjaxError)) {
+    isInsufficientPermission: (e: any): e is AjaxErr => e instanceof AjaxErr && e.status === 403 && e.responseText.indexOf('insufficientPermissions') !== -1,
+    isNotFound: (e: any): e is AjaxErr => e instanceof AjaxErr && e.status === 404,
+    isBadReq: (e: any): e is AjaxErr => e instanceof AjaxErr && e.status === 400,
+    isReqTooLarge: (e: any): e is AjaxErr => e instanceof AjaxErr && e.status === 413,
+    isServerErr: (e: any): e is AjaxErr => e instanceof AjaxErr && e.status >= 500,
+    isBlockedByProxy: (e: any): e is AjaxErr => {
+      if (!(e instanceof AjaxErr)) {
         return false;
       }
       if (e.status === 200 || e.status === 403) {
@@ -275,7 +280,7 @@ export class Api {
         reject(new Error(`Api.download(${url}) failed with a null progressEvent.target`));
       } else {
         const { readyState, status, statusText } = progressEvent.target as XMLHttpRequest;
-        reject(AjaxError.fromXhr({ readyState, status, statusText }, { url, method: 'GET' }, Catch.stackTrace()));
+        reject(AjaxErr.fromXhr({ readyState, status, statusText }, { url, method: 'GET' }, Catch.stackTrace()));
       }
     };
     request.onload = e => resolve(new Buf(request.response as ArrayBuffer));
@@ -304,8 +309,8 @@ export class Api {
       if (e instanceof Error) {
         throw e;
       }
-      if (Api.isRawAjaxError(e)) {
-        throw AjaxError.fromXhr(e, req, stack);
+      if (Api.isRawAjaxErr(e)) {
+        throw AjaxErr.fromXhr(e, req, stack);
       }
       throw new Error(`Unknown Ajax error (${String(e)}) type when calling ${req.url}`);
     }
@@ -346,8 +351,8 @@ export class Api {
     };
   }
 
-  private static isRawAjaxError = (e: any): e is RawAjaxError => {
-    return e && typeof e === 'object' && typeof (e as RawAjaxError).readyState === 'number';
+  private static isRawAjaxErr = (e: any): e is RawAjaxErr => {
+    return e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number';
   }
 
   private static isStandardError = (e: any): e is StandardError => {
@@ -397,8 +402,8 @@ export class Api {
       timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000, // substituted with {} above
     };
     const res = await Api.ajax(req, Catch.stackTrace());
-    if (res && typeof res === 'object' && typeof (res as StandardErrorRes).error === 'object' && (res as StandardErrorRes).error.message) {
-      throw new ApiErrorResponse(res as StandardErrorRes, req);
+    if (res && typeof res === 'object' && typeof (res as StandardErrRes).error === 'object' && (res as StandardErrRes).error.message) {
+      throw new ApiErrResponse(res as StandardErrRes, req);
     }
     return res;
   }

@@ -5,7 +5,7 @@
 import { Str, Dict } from '../../common/core/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
-import { Api, AjaxError } from '../../common/api/api.js';
+import { Api, AjaxErr } from '../../common/api/api.js';
 import { Pgp } from '../../common/core/pgp.js';
 import { BrowserMsg } from '../../common/extension.js';
 import { Ui, Browser } from '../../common/browser.js';
@@ -285,7 +285,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           attSel.addClass('attachment_processed').children('.attachment_loader').remove();
         }
       } catch (e) {
-        if (!Api.err.isSignificant(e) || (e instanceof AjaxError && e.status === 200)) {
+        if (!Api.err.isSignificant(e) || (e instanceof AjaxErr && e.status === 200)) {
           attSel.show().children('.attachment_loader').text('Categorize: net err');
           nRenderedAtts++;
         } else {
