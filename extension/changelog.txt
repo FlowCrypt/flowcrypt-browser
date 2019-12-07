@@ -1,6 +1,6 @@
 <div>
 
-version 7.3.2 on Dec 7, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/370?closed=1" target="_blank">Fix doubled end session btn</a>
+version 7.3.3 on Dec 7, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/370?closed=1" target="_blank">Fix doubled end session btn</a>
 
 version 7.3.1 on Dec 5, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/369?closed=1" target="_blank">Fix pubkey auto-attach</a>
 
