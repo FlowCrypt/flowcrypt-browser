@@ -70,11 +70,7 @@ View.run(class SecurityView extends View {
         }
       }));
       $('.cancel_passphrase_requirement_change').click(() => window.location.reload());
-      $('#passphrase_entry').keydown(this.setHandler((el, ev) => {
-        if (ev.which === 13) {
-          $('.confirm_passphrase_requirement_change').click();
-        }
-      }));
+      $('#passphrase_entry').keydown(this.setEnterHandlerThatClicks('.confirm_passphrase_requirement_change'));
     }
   }
 

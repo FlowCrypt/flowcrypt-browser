@@ -40,4 +40,12 @@ export abstract class View {
     return Ui.event.prevent(evName, cb, errHandlers, this);
   }
 
+  public setEnterHandlerThatClicks(selector: string) {
+    return (event: JQuery.Event<HTMLElement, null>) => {
+      if (event.which === 13) {
+        $(selector).click();
+      }
+    };
+  }
+
 }

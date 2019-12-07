@@ -124,21 +124,9 @@ export class SetupView extends View {
     $('#step_2a_manual_create .action_create_private').click(this.setHandlerPrevent('double', () => this.setupCreateKey.actionCreateKeyHandler()));
     $('#step_2a_manual_create .action_show_advanced_create_settings').click(this.setHandler(el => this.setupCreateKey.actionShowAdvancedSettingsHandle(el)));
     $('#step_4_close .action_close').click(this.setHandler(() => this.actionCloseHandler())); // only rendered if action=add_key which means parentTabId was used
-    $('.input_password').on('keydown', event => {
-      if (event.which === 13) {
-        $('#step_2a_manual_create .action_create_private').click();
-      }
-    });
-    $('.input_password2').on('keydown', event => {
-      if (event.which === 13) {
-        $('#step_2a_manual_create .action_create_private').click();
-      }
-    });
-    $("#recovery_pasword").on('keydown', event => {
-      if (event.which === 13) {
-        $('#step_2_recovery .action_recover_account').click();
-      }
-    });
+    $('.input_password').on('keydown', this.setEnterHandlerThatClicks('#step_2a_manual_create .action_create_private'));
+    $('.input_password2').on('keydown', this.setEnterHandlerThatClicks('#step_2a_manual_create .action_create_private'));
+    $("#recovery_pasword").on('keydown', this.setEnterHandlerThatClicks('#step_2_recovery .action_recover_account'));
   }
 
   actionBackHandler() {

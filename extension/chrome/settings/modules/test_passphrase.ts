@@ -40,11 +40,7 @@ View.run(class TestPassphrase extends View {
 
   setHandlers() {
     $('.action_verify').click(this.setHandler(() => this.verifyHandler()));
-    $('#password').keydown(this.setHandler((el, ev) => {
-      if (ev.which === 13) {
-        $('.action_verify').click();
-      }
-    }));
+    $('#password').keydown(this.setEnterHandlerThatClicks('.action_verify'));
     $('.action_change_passphrase').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm')));
   }
 

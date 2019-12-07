@@ -40,11 +40,7 @@ View.run(class AddKeyView extends View {
 
   setHandlers() {
     $('.action_add_private_key').click(this.setHandlerPrevent('double', this.addPrivateKeyHandler));
-    $('#input_passphrase').keydown(this.setHandler((el, ev) => {
-      if (ev.which === 13) {
-        $('.action_add_private_key').click();
-      }
-    }));
+    $('#input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_add_private_key'));
   }
 
   private async loadAndRenderKeyBackupsOrRenderError() {
