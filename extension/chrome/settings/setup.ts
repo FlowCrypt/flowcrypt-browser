@@ -18,11 +18,11 @@ import { Assert } from '../../js/common/assert.js';
 import { KeyImportUi } from '../../js/common/ui/key_import_ui.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
 import { Xss } from '../../js/common/platform/xss.js';
-import { Keyserver } from '../../js/common/api/keyserver.js';
 import { View } from '../../js/common/view.js';
 import { SetupRecoverKeyModule } from './setup/setup-recover-key.js';
 import { SetupCreateKeyModule } from './setup/setup-create-key.js';
 import { SetupImportKeyModule } from './setup/setup-import-key.js';
+import { SetupRenderModule } from './setup/setup-render.js';
 
 export interface SetupOptions {
   passphrase: string;
@@ -47,6 +47,7 @@ export class SetupView extends View {
   readonly setupRecoverKey: SetupRecoverKeyModule;
   readonly setupCreateKey: SetupCreateKeyModule;
   readonly setupImportKey: SetupImportKeyModule;
+  readonly setupRender: SetupRenderModule;
 
   tabId: string | undefined;
   scopes: Scopes | undefined;
@@ -81,6 +82,7 @@ export class SetupView extends View {
     this.setupRecoverKey = new SetupRecoverKeyModule(this);
     this.setupCreateKey = new SetupCreateKeyModule(this);
     this.setupImportKey = new SetupImportKeyModule(this);
+    this.setupRender = new SetupRenderModule(this);
   }
 
   async render() {
@@ -99,7 +101,7 @@ export class SetupView extends View {
       $('.remove_if_enforce_submit_to_attester').remove();
     }
     this.tabId = await BrowserMsg.requiredTabId();
-    await this.renderInitial();
+    await this.setupRender.renderInitial();
   }
 
   setHandlers() {
@@ -114,7 +116,7 @@ export class SetupView extends View {
     $('.action_show_help').click(Ui.event.handle(() => Settings.renderSubPage(this.acctEmail, this.tabId!, '/chrome/settings/modules/help.htm')));
     $('.back').off().click(Ui.event.handle(() => {
       $('h1').text('Set Up');
-      this.displayBlock('step_1_easy_or_manual');
+      this.setupRender.displayBlock('step_1_easy_or_manual');
     }));
     $('#step_2_recovery .action_recover_account').click(this.setHandlerPrevent('double', () => this.setupRecoverKey.actionRecoverAccountHandler()));
     $('#step_4_more_to_recover .action_recover_remaining').click(this.setHandler(() => this.setupRecoverKey.actionRecoverRemainingKeysHandler()));
@@ -133,8 +135,8 @@ export class SetupView extends View {
         inputSubmitAll.prop({ checked: false, disabled: true });
       }
     }));
-    $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(Ui.event.handle(() => this.displayBlock('step_2a_manual_create')));
-    $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(Ui.event.handle(() => this.displayBlock('step_2b_manual_enter')));
+    $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(Ui.event.handle(() => this.setupRender.displayBlock('step_2a_manual_create')));
+    $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(Ui.event.handle(() => this.setupRender.displayBlock('step_2b_manual_enter')));
     $('#step_2b_manual_enter .action_add_private_key').click(this.setHandler(el => this.setupImportKey.actionImportPrivateKeyHandle(el)));
     $('#step_2a_manual_create .action_create_private').click(this.setHandlerPrevent('double', () => this.setupCreateKey.actionCreateKeyHandler()));
     $('#step_2a_manual_create .action_show_advanced_create_settings').click(this.setHandler(el => this.setupCreateKey.actionShowAdvancedSettingsHandle(el)));
@@ -160,58 +162,6 @@ export class SetupView extends View {
         $('#step_2_recovery .action_recover_account').click();
       }
     });
-  }
-
-  private async renderInitial(): Promise<void> {
-    $('h1').text('Set Up FlowCrypt');
-    $('.email-address').text(this.acctEmail);
-    $('.back').css('visibility', 'hidden');
-    if (this.storage!.email_provider === 'gmail') { // show alternative account addresses in setup form + save them for later
-      try {
-        const sendAs = this.scopes!.read || this.scopes!.modify ? await Settings.fetchAcctAliasesFromGmail(this.acctEmail) : {};
-        await this.saveAndFillSubmitOption(sendAs);
-      } catch (e) {
-        return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToLoadEmailAliases, () => this.renderInitial());
-      }
-      $('.auth_denied_warning').css('display', this.scopes!.read || this.scopes!.modify ? 'none' : 'block');
-    }
-    if (this.storage!.setup_done) {
-      if (this.action !== 'add_key') {
-        await this.renderSetupDone();
-      } else {
-        await this.setupRecoverKey.renderAddKeyFromBackup();
-      }
-    } else if (this.action === 'finalize') {
-      const { tmp_submit_all, tmp_submit_main, key_backup_method } = await Store.getAcct(this.acctEmail, ['tmp_submit_all', 'tmp_submit_main', 'key_backup_method']);
-      if (typeof tmp_submit_all === 'undefined' || typeof tmp_submit_main === 'undefined') {
-        $('#content').text(`Setup session expired. To set up FlowCrypt, please click the FlowCrypt icon on top right.`);
-        return;
-      }
-      if (typeof key_backup_method !== 'string') {
-        await Ui.modal.error('Backup has not successfully finished, will retry');
-        window.location.href = Url.create('modules/backup.htm', { action: 'setup', acctEmail: this.acctEmail });
-        return;
-      }
-      await this.finalizeSetup({ submit_all: tmp_submit_all, submit_main: tmp_submit_main });
-      await this.renderSetupDone();
-    } else {
-      await this.renderSetupDialog();
-    }
-  }
-
-  async renderSetupDone() {
-    const storedKeys = await Store.keysGet(this.acctEmail);
-    if (this.fetchedKeyBackupsUniqueLongids.length > storedKeys.length) { // recovery where not all keys were processed: some may have other pass phrase
-      this.displayBlock('step_4_more_to_recover');
-      $('h1').text('More keys to recover');
-      $('.email').text(this.acctEmail);
-      $('.private_key_count').text(storedKeys.length);
-      $('.backups_count').text(this.fetchedKeyBackupsUniqueLongids.length);
-    } else { // successful and complete setup
-      this.displayBlock(this.action !== 'add_key' ? 'step_4_done' : 'step_4_close');
-      $('h1').text(this.action !== 'add_key' ? 'You\'re all set!' : 'Recovered all keys!');
-      $('.email').text(this.acctEmail);
-    }
   }
 
   async preFinalizeSetup(options: SetupOptions): Promise<void> {
@@ -260,85 +210,14 @@ export class SetupView extends View {
   async saveAndFillSubmitOption(sendAsAliases: Dict<SendAsAlias>) {
     this.submitKeyForAddrs = this.filterAddressesForSubmittingKeys(Object.keys(sendAsAliases));
     await Store.setAcct(this.acctEmail, { sendAs: sendAsAliases });
-    this.showSubmitAddrsOption(this.submitKeyForAddrs);
-  }
-
-  displayBlock(name: string) {
-    const blocks = [
-      'loading',
-      'step_0_found_key',
-      'step_1_easy_or_manual',
-      'step_2a_manual_create', 'step_2b_manual_enter', 'step_2_easy_generating', 'step_2_recovery',
-      'step_3_compatibility_fix',
-      'step_4_more_to_recover',
-      'step_4_done',
-      'step_4_close',
-    ];
-    if (name) {
-      $('#' + blocks.join(', #')).css('display', 'none');
-      $('#' + name).css('display', 'block');
-      $('.back').css('visibility', ['step_2b_manual_enter', 'step_2a_manual_create'].includes(name) ? 'visible' : 'hidden');
-      if (name === 'step_2_recovery') {
-        $('.backups_count_words').text(this.fetchedKeyBackupsUniqueLongids.length > 1 ? `${this.fetchedKeyBackupsUniqueLongids.length} backups` : 'a backup');
-      }
+    if (this.submitKeyForAddrs.length > 1) {
+      $('.addresses').text(Value.arr.withoutVal(this.submitKeyForAddrs, this.acctEmail).join(', '));
+      $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
     }
   }
 
   async getUniqueLongids(keys: OpenPGP.key.Key[]): Promise<string[]> {
     return Value.arr.unique(await Promise.all(keys.map(Pgp.key.longid))).filter(Boolean) as string[];
-  }
-
-  showSubmitAddrsOption(addrs: string[]) {
-    if (addrs && addrs.length > 1) {
-      $('.addresses').text(Value.arr.withoutVal(addrs, this.acctEmail).join(', '));
-      $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
-    }
-  }
-
-  async renderSetupDialog(): Promise<void> {
-    let keyserverRes;
-    try {
-      keyserverRes = await Keyserver.lookupEmail(this.acctEmail, this.acctEmail);
-    } catch (e) {
-      return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => this.renderSetupDialog());
-    }
-    if (keyserverRes.pubkey) {
-      this.acctEmailAttesterFingerprint = await Pgp.key.fingerprint(keyserverRes.pubkey);
-      if (!this.rules!.canBackupKeys()) {
-        // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
-        this.displayBlock('step_2b_manual_enter');
-      } else if (this.storage!.email_provider === 'gmail' && (this.scopes!.read || this.scopes!.modify)) {
-        try {
-          this.fetchedKeyBackups = await Google.gmail.fetchKeyBackups(this.acctEmail);
-          this.fetchedKeyBackupsUniqueLongids = await this.getUniqueLongids(this.fetchedKeyBackups);
-        } catch (e) {
-          return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToCheckAccountBackups, () => this.renderSetupDialog());
-        }
-        if (this.fetchedKeyBackupsUniqueLongids.length) {
-          this.displayBlock('step_2_recovery');
-        } else {
-          this.displayBlock('step_0_found_key');
-        }
-      } else { // cannot read gmail to find a backup, or this is outlook
-        if (keyserverRes.pgpClient === 'flowcrypt') {
-          // a key has been created, and the user has used cryptup in the past - this suggest they likely have a backup available, but we cannot fetch it. Enter it manually
-          this.displayBlock('step_2b_manual_enter');
-          Xss.sanitizePrepend('#step_2b_manual_enter', `<div class="line red">${Lang.setup.cannotLocateBackupPasteManually}<br/><br/></div>`);
-        } else if (this.rules!.canCreateKeys()) {
-          // has a key registered, key creating allowed on the domain. This may be old key from PKS, let them choose
-          this.displayBlock('step_1_easy_or_manual');
-        } else {
-          // has a key registered, no key creating allowed on the domain
-          this.displayBlock('step_2b_manual_enter');
-        }
-      }
-    } else { // no indication that the person used pgp before
-      if (this.rules!.canCreateKeys()) {
-        this.displayBlock('step_1_easy_or_manual');
-      } else {
-        this.displayBlock('step_2b_manual_enter');
-      }
-    }
   }
 
   async submitPublicKeyIfNeeded(armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) {
