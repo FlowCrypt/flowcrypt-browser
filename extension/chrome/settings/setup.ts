@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, SendAsAlias } from '../../js/common/platform/store.js';
+import { Store, SendAsAlias, AccountStore, Scopes } from '../../js/common/platform/store.js';
 import { Value, Dict, Url } from '../../js/common/core/common.js';
 import { Ui } from '../../js/common/browser.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
@@ -15,15 +15,14 @@ import { Catch } from '../../js/common/platform/catch.js';
 import { Google } from '../../js/common/api/google.js';
 import { Attester } from '../../js/common/api/attester.js';
 import { Assert } from '../../js/common/assert.js';
-import { KeyImportUi, UserAlert, KeyCanBeFixed } from '../../js/common/ui/key_import_ui.js';
+import { KeyImportUi } from '../../js/common/ui/key_import_ui.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Keyserver } from '../../js/common/api/keyserver.js';
 import { View } from '../../js/common/view.js';
-import { Scopes } from './../../js/common/platform/store';
-import { AccountStore } from './../../js/common/platform/store.js';
-import { SetupRecoverKeyModule } from './setup/setup-recovery.js';
+import { SetupRecoverKeyModule } from './setup/setup-recover-key.js';
 import { SetupCreateKeyModule } from './setup/setup-create-key.js';
+import { SetupImportKeyModule } from './setup/setup-import-key.js';
 
 export interface SetupOptions {
   passphrase: string;
@@ -47,6 +46,7 @@ export class SetupView extends View {
 
   readonly setupRecoverKey: SetupRecoverKeyModule;
   readonly setupCreateKey: SetupCreateKeyModule;
+  readonly setupImportKey: SetupImportKeyModule;
 
   tabId: string | undefined;
   scopes: Scopes | undefined;
@@ -80,6 +80,7 @@ export class SetupView extends View {
     // modules
     this.setupRecoverKey = new SetupRecoverKeyModule(this);
     this.setupCreateKey = new SetupCreateKeyModule(this);
+    this.setupImportKey = new SetupImportKeyModule(this);
   }
 
   async render() {
@@ -134,39 +135,7 @@ export class SetupView extends View {
     }));
     $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(Ui.event.handle(() => this.displayBlock('step_2a_manual_create')));
     $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(Ui.event.handle(() => this.displayBlock('step_2b_manual_enter')));
-    $('#step_2b_manual_enter .action_add_private_key').click(Ui.event.handle(async (e) => {
-      if (e.className.includes('gray')) {
-        await Ui.modal.warning('Please double check the pass phrase input field for any issues.');
-        return;
-      }
-      const options: SetupOptions = {
-        passphrase: String($('#step_2b_manual_enter .input_passphrase').val()),
-        key_backup_prompt: false,
-        submit_main: Boolean($('#step_2b_manual_enter .input_submit_key').prop('checked') || this.rules!.mustSubmitToAttester()),
-        submit_all: Boolean($('#step_2b_manual_enter .input_submit_all').prop('checked') || this.rules!.mustSubmitToAttester()),
-        passphrase_save: Boolean($('#step_2b_manual_enter .input_passphrase_save').prop('checked')),
-        is_newly_created_key: false,
-        recovered: false,
-        setup_simple: false,
-      };
-      try {
-        const checked = await this.keyImportUi.checkPrv(this.acctEmail, String($('#step_2b_manual_enter .input_private_key').val()), options.passphrase);
-        Xss.sanitizeRender('#step_2b_manual_enter .action_add_private_key', Ui.spinner('white'));
-        await this.saveKeys([checked.encrypted], options);
-        await this.preFinalizeSetup(options);
-        await this.finalizeSetup(options);
-        await this.renderSetupDone();
-      } catch (e) {
-        if (e instanceof UserAlert) {
-          return await Ui.modal.warning(e.message);
-        } else if (e instanceof KeyCanBeFixed) {
-          return await this.renderCompatibilityFixBlockAndFinalizeSetup(e.encrypted, options);
-        } else {
-          Catch.reportErr(e);
-          return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
-        }
-      }
-    }));
+    $('#step_2b_manual_enter .action_add_private_key').click(this.setHandler(el => this.setupImportKey.actionImportPrivateKeyHandle(el)));
     $('#step_2a_manual_create .action_create_private').click(this.setHandlerPrevent('double', () => this.setupCreateKey.actionCreateKeyHandler()));
     $('#step_2a_manual_create .action_show_advanced_create_settings').click(this.setHandler(el => this.setupCreateKey.actionShowAdvancedSettingsHandle(el)));
     $('#step_4_close .action_close').click(Ui.event.handle(() => { // only rendered if action=add_key which means parentTabId was used
@@ -393,24 +362,6 @@ export class SetupView extends View {
       return;
     }
     await Settings.submitPubkeys(this.acctEmail, addresses, armoredPubkey);
-  }
-
-  async renderCompatibilityFixBlockAndFinalizeSetup(origPrv: OpenPGP.key.Key, options: SetupOptions) {
-    this.displayBlock('step_3_compatibility_fix');
-    let fixedPrv;
-    try {
-      fixedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
-        this.acctEmail, '#step_3_compatibility_fix', origPrv, options.passphrase, window.location.href.replace(/#$/, ''));
-    } catch (e) {
-      Catch.reportErr(e);
-      await Ui.modal.error(`Failed to fix key (${String(e)}). Please write us at human@flowcrypt.com, we are very prompt to fix similar issues.`);
-      this.displayBlock('step_2b_manual_enter');
-      return;
-    }
-    await this.saveKeys([fixedPrv], options);
-    await this.preFinalizeSetup(options);
-    await this.finalizeSetup(options);
-    await this.renderSetupDone();
   }
 
   filterAddressesForSubmittingKeys(addresses: string[]): string[] {
