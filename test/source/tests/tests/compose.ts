@@ -453,6 +453,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const webDecryptPage = await browser.newPage(t, webDecryptUrl);
       await webDecryptPage.waitAndType('.decrypt_answer', msgPwd);
       await webDecryptPage.waitAndClick('.action_decrypt');
+      await webDecryptPage.waitAll('.pgp_block');
+      await Util.sleep(0.5); // todo - would be better to find a way to wait until ready
       expect(await webDecryptPage.read('.pgp_block')).to.include(subject);
       expect(await webDecryptPage.read('.pgp_block')).to.include('The best footer ever!'); // test if footer is present
       expect(await webDecryptPage.read('.attachment')).to.include('small.txt.pgp');
