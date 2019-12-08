@@ -19,6 +19,7 @@ import { Catch } from '../platform/catch.js';
 import { ComposerMyPubkey } from './composer-my-pubkey.js';
 import { ComposerStorage } from './composer-storage.js';
 import { ComposeView } from '../../../chrome/elements/compose.js';
+import { BrowserMsg } from '../extension.js';
 
 export class Composer {
 
@@ -102,6 +103,7 @@ export class Composer {
     this.storage = new ComposerStorage(this);
     this.canReadEmails = this.view.scopes!.read || this.view.scopes!.modify;
     this.initPromise = this.render.initActions().catch(Catch.reportErr);
+    BrowserMsg.listen(this.view.tabId!);
   }
 
 }

@@ -21,6 +21,7 @@ export class ComposerRender extends ComposerComponent {
 
   async initActions() {
     await this.initComposeBox();
+    BrowserMsg.addListener('close_dialog', async () => { $('.featherlight.featherlight-iframe').remove(); });
     this.composer.S.cached('icon_help').click(Ui.event.handle(() => this.renderHelpDialog(), this.composer.errs.handlers(`render help dialog`)));
     this.composer.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
     this.composer.atts.initActions();
