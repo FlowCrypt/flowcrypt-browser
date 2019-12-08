@@ -142,54 +142,14 @@ View.run(class ComposeView extends View {
       emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Google.gmail.draftUpdate(this.acctEmail, draftId, mimeMsg),
       emailProviderDraftDelete: (draftId: string) => Google.gmail.draftDelete(this.acctEmail, draftId),
       emailProviderMsgSend: (message: SendableMsg, renderUploadProgress: ProgressCb) => Google.gmail.msgSend(this.acctEmail, message, renderUploadProgress),
-      emailProviderGuessContactsFromSentEmails: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => {
-        Google.gmail.searchContacts(this.acctEmail, query, knownContacts, multiCb).catch(e => {
-          if (Api.err.isAuthPopupNeeded(e)) {
-            BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
-          } else if (Api.err.isNetErr(e)) {
-            Ui.toast(`Network erroc - cannot search contacts`).catch(Catch.reportErr);
-          } else if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
-            Ui.toast(`Cannot search contacts - account disabled or forbidden by admin policy`).catch(Catch.reportErr);
-          } else {
-            Catch.reportErr(e);
-            Ui.toast(`Error searching contacts: ${Api.err.eli5(e)}`).catch(Catch.reportErr);
-          }
-        });
-      },
+      emailProviderGuessContactsFromSentEmails: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => this.emailProviderGuessContactsFromSentEmails(query, knownContacts, multiCb),
       emailProviderExtractArmoredBlock: (msgId: string) => Google.gmail.extractArmoredBlock(this.acctEmail, msgId, 'full'),
-      // sendMsgToMainWin: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parentTabId, channel, data),
-      // sendMsgToBgScript: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
-      renderReinsertReplyBox: (msgId: string) => {
-        BrowserMsg.send.reinsertReplyBox(this.parentTabId, {
-          replyMsgId: msgId
-        });
-      },
-      renderAddPubkeyDialog: (emails: string[]) => {
-        if (this.placement !== 'settings') {
-          BrowserMsg.send.addPubkeyDialog(this.parentTabId, { emails });
-        } else {
-          ($ as JQS).featherlight({ iframe: this.factory!.srcAddPubkeyDialog(emails, 'settings'), iframeWidth: 515, iframeHeight: $('body').height()! - 50 }); // body element is present
-        }
-      },
+      renderReinsertReplyBox: (msgId: string) => this.renderReinsertReplyBox(msgId),
+      renderAddPubkeyDialog: (emails: string[]) => this.renderAddPubkeyDialog(emails),
       renderHelpDialog: () => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/help.htm' }),
       closeMsg: () => this.closeMsg(),
       factoryAtt: (att: Att, isEncrypted: boolean) => this.factory!.embeddedAtta(att, isEncrypted),
-      whenMasterPassphraseEntered: (secondsTimeout?: number): Promise<string | undefined> => {
-        return new Promise(resolve => {
-          clearInterval(this.passphraseInterval);
-          const timeoutAt = secondsTimeout ? Date.now() + secondsTimeout * 1000 : undefined;
-          this.passphraseInterval = Catch.setHandledInterval(async () => {
-            const passphrase = await this.storagePassphraseGet();
-            if (typeof passphrase !== 'undefined') {
-              clearInterval(this.passphraseInterval);
-              resolve(passphrase);
-            } else if (timeoutAt && Date.now() > timeoutAt) {
-              clearInterval(this.passphraseInterval);
-              resolve(undefined);
-            }
-          }, 1000);
-        });
-      },
+      whenMasterPassphraseEntered: (secondsTimeout?: number) => this.whenMasterPassphraseEntered(secondsTimeout),
       lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded: (email) => this.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(email),
       collectAllAvailablePublicKeys: (senderEmail: string, senderKi: KeyInfo, recipients: string[]) => this.collectAllAvailablePublicKeys(senderEmail, senderKi, recipients),
       updateSendAs: (sendAs: Dict<SendAsAlias>) => { this.storage!.sendAs = sendAs; }
@@ -204,6 +164,35 @@ View.run(class ComposeView extends View {
       }
     });
     BrowserMsg.listen(this.tabId!);
+  }
+
+  private whenMasterPassphraseEntered(secondsTimeout?: number): Promise<string | undefined> {
+    return new Promise(resolve => {
+      clearInterval(this.passphraseInterval);
+      const timeoutAt = secondsTimeout ? Date.now() + secondsTimeout * 1000 : undefined;
+      this.passphraseInterval = Catch.setHandledInterval(async () => {
+        const passphrase = await this.storagePassphraseGet();
+        if (typeof passphrase !== 'undefined') {
+          clearInterval(this.passphraseInterval);
+          resolve(passphrase);
+        } else if (timeoutAt && Date.now() > timeoutAt) {
+          clearInterval(this.passphraseInterval);
+          resolve(undefined);
+        }
+      }, 1000);
+    });
+  }
+
+  private renderReinsertReplyBox(msgId: string) {
+    BrowserMsg.send.reinsertReplyBox(this.parentTabId, { replyMsgId: msgId });
+  }
+
+  private renderAddPubkeyDialog(emails: string[]) {
+    if (this.placement !== 'settings') {
+      BrowserMsg.send.addPubkeyDialog(this.parentTabId, { emails });
+    } else {
+      ($ as JQS).featherlight({ iframe: this.factory!.srcAddPubkeyDialog(emails, 'settings'), iframeWidth: 515, iframeHeight: $('body').height()! - 50 }); // body element is present
+    }
   }
 
   private async storageGetKey(acctEmail: string, senderEmail: string): Promise<KeyInfo> {
@@ -381,6 +370,21 @@ View.run(class ComposeView extends View {
         return PUBKEY_LOOKUP_RESULT_FAIL;
       }
     }
+  }
+
+  private emailProviderGuessContactsFromSentEmails(query: string, knownContacts: Contact[], multiCb: ChunkedCb) {
+    Google.gmail.searchContacts(this.acctEmail, query, knownContacts, multiCb).catch(e => {
+      if (Api.err.isAuthPopupNeeded(e)) {
+        BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
+      } else if (Api.err.isNetErr(e)) {
+        Ui.toast(`Network erroc - cannot search contacts`).catch(Catch.reportErr);
+      } else if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
+        Ui.toast(`Cannot search contacts - account disabled or forbidden by admin policy`).catch(Catch.reportErr);
+      } else {
+        Catch.reportErr(e);
+        Ui.toast(`Error searching contacts: ${Api.err.eli5(e)}`).catch(Catch.reportErr);
+      }
+    });
   }
 
   private async checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(contact: Contact) {
