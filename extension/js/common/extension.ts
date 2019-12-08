@@ -33,7 +33,7 @@ export namespace Bm {
   export type RenderPublicKeys = { afterFrameId: string, publicKeys: string[], traverseUp?: number };
   export type SubscribeDialog = { isAuthErr?: boolean };
   export type FocusFrame = { frameId: string };
-  export type CloseReplyMessage = { frameId: string, threadId: string };
+  export type CloseReplyMessage = { frameId: string };
   export type ReinsertReplyBox = { replyMsgId: string };
   export type AddPubkeyDialog = { emails: string[] };
   export type Reload = { advanced?: boolean };
