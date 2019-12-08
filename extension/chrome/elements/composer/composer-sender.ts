@@ -2,15 +2,15 @@
 
 'use strict';
 
-import { ComposerComponent } from './interfaces/composer-component.js';
-import { Settings } from '../settings.js';
-import { Xss } from '../platform/xss.js';
-import { Dict } from '../core/common.js';
-import { SendAsAlias } from '../platform/store.js';
-import { Ui } from '../browser.js';
-import { BrowserMsg } from '../extension.js';
-import { Api } from '../api/api.js';
-import { Catch } from '../platform/catch.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { Settings } from '../../../js/common/settings.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { Dict } from '../../../js/common/core/common.js';
+import { SendAsAlias } from '../../../js/common/platform/store.js';
+import { Ui } from '../../../js/common/browser.js';
+import { BrowserMsg } from '../../../js/common/extension.js';
+import { Api } from '../../../js/common/api/api.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 
 export class ComposerSender extends ComposerComponent {
 
@@ -22,14 +22,14 @@ export class ComposerSender extends ComposerComponent {
     if (this.composer.S.now('input_from').length) {
       return String(this.composer.S.now('input_from').val());
     }
-    if (this.urlParams.from) {
-      return this.urlParams.from;
+    if (this.view.replyParams && this.view.replyParams.from) {
+      return this.view.replyParams.from;
     }
-    return this.urlParams.acctEmail;
+    return this.view.acctEmail;
   }
 
-  public renderSenderAliasesOptionsToggle() {
-    const sendAs = this.composer.app.storageGetAddresses();
+  public async renderSenderAliasesOptionsToggle() {
+    const sendAs = await this.composer.storage.getAddresses();
     if (sendAs && Object.keys(sendAs).length > 1) {
       const showAliasChevronHtml = '<img tabindex="22" id="show_sender_aliases_options" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
       const inputAddrContainer = this.composer.S.cached('email_copy_actions');
@@ -56,9 +56,9 @@ export class ComposerSender extends ComposerComponent {
       this.composer.S.now('input_from').change(async () => {
         await this.composer.recipients.reEvaluateRecipients(this.composer.recipients.getRecipients());
         await this.composer.recipients.setEmailsPreview(this.composer.recipients.getRecipients());
-        this.composer.quote.replaceFooter(this.getFooter());
+        this.composer.quote.replaceFooter(await this.getFooter());
       });
-      if (this.urlParams.isReplyBox) {
+      if (this.view.isReplyBox) {
         this.composer.size.resizeComposeBox();
       }
     }
@@ -66,13 +66,12 @@ export class ComposerSender extends ComposerComponent {
 
   public async checkEmailAliases() {
     try {
-      const refreshResult = await Settings.refreshAcctAliases(this.urlParams.acctEmail);
+      const refreshResult = await Settings.refreshAcctAliases(this.view.acctEmail);
       if (refreshResult) {
-        this.composer.app.updateSendAs(refreshResult.sendAs);
         if (refreshResult.isAliasesChanged || refreshResult.isDefaultEmailChanged) {
           this.renderSenderAliasesOptions(refreshResult.sendAs);
         }
-        if (refreshResult.isFooterChanged && !this.urlParams.draftId) {
+        if (refreshResult.isFooterChanged && !this.view.draftId) {
           const alias = refreshResult.sendAs[this.getSender()];
           if (alias) {
             this.composer.quote.replaceFooter(alias.footer || undefined);
@@ -81,15 +80,15 @@ export class ComposerSender extends ComposerComponent {
       }
     } catch (e) {
       if (Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
+        BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       } else if (Api.err.isSignificant(e)) {
         Catch.reportErr(e);
       }
     }
   }
 
-  public getFooter = () => {
-    const addresses = this.composer.app.storageGetAddresses();
+  public async getFooter() {
+    const addresses = await this.composer.storage.getAddresses();
     const sender = this.getSender();
     return addresses && addresses[sender] && addresses[sender].footer || undefined;
   }

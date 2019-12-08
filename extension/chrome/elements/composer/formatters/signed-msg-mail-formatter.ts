@@ -2,14 +2,14 @@
 
 'use strict';
 
-import { NewMsgData } from '../interfaces/composer-types.js';
-import { SendableMsg } from '../../api/email_provider_api.js';
-import { PgpMsg } from '../../core/pgp.js';
-import { BrowserWidnow } from '../../extension.js';
-import { Google } from '../../api/google.js';
-import { Catch } from '../../platform/catch.js';
+import { NewMsgData } from '../composer-types.js';
+import { SendableMsg } from '../../../../js/common/api/email_provider/email_provider_api.js';
+import { PgpMsg } from '../../../../js/common/core/pgp.js';
+import { BrowserWidnow } from '../../../../js/common/extension.js';
+import { Catch } from '../../../../js/common/platform/catch.js';
 import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
-import { SendableMsgBody } from '../../core/mime.js';
+import { SendableMsgBody } from '../../../../js/common/core/mime.js';
+import { Store } from '../../../../js/common/platform/store.js';
 
 export class SignedMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
 
@@ -30,15 +30,15 @@ export class SignedMsgMailFormatter extends BaseMailFormatter implements MailFor
       newMsg.plaintext = newMsg.plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
       const signedData = await PgpMsg.sign(signingPrv, newMsg.plaintext);
       const allContacts = [...newMsg.recipients.to || [], ...newMsg.recipients.cc || [], ...newMsg.recipients.bcc || []];
-      this.composer.app.storageContactUpdate(allContacts, { last_use: Date.now() }).catch(Catch.reportErr);
+      Store.dbContactUpdate(undefined, allContacts, { last_use: Date.now() }).catch(Catch.reportErr);
       const body = { 'text/plain': signedData };
-      return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, body, atts, this.composer.urlParams.threadId);
+      return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, body, atts, this.composer.view.threadId);
     }
     // pgp/mime detached signature - it must be signed later, while being mime-encoded
     // prepare a sign function first, which will be used by Mime.encode later
     const sign = (signable: string) => PgpMsg.sign(signingPrv, signable, true);
     const body: SendableMsgBody = { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml };
-    return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, body, atts, this.composer.urlParams.threadId, undefined, sign);
+    return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, body, atts, this.composer.view.threadId, undefined, sign);
   }
 
 }

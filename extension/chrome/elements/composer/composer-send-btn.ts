@@ -2,21 +2,21 @@
 
 'use strict';
 
-import { ComposerComponent } from './interfaces/composer-component.js';
-import { SendBtnTexts } from './interfaces/composer-types.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { SendBtnTexts } from './composer-types.js';
 import { Composer } from './composer.js';
-import { Xss } from '../platform/xss.js';
-import { Ui } from '../browser.js';
-import { Catch } from '../platform/catch.js';
-import { Api } from '../api/api.js';
-import { BrowserMsg } from '../extension.js';
-import { Pgp, KeyInfo } from '../core/pgp.js';
-import { Store } from '../platform/store.js';
-import { GmailRes } from '../api/google.js';
-import { SendableMsg } from '../api/email_provider_api.js';
-import { Att } from '../core/att.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { Ui } from '../../../js/common/browser.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { Api } from '../../../js/common/api/api.js';
+import { BrowserMsg } from '../../../js/common/extension.js';
+import { Pgp, KeyInfo } from '../../../js/common/core/pgp.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { SendableMsg } from '../../../js/common/api/email_provider/email_provider_api.js';
+import { Att } from '../../../js/common/core/att.js';
 import { GeneralMailFormatter } from './formatters/composer-mail-formatter.js';
 import { ComposerSendBtnPopover } from './composer-send-btn-popover.js';
+import { GmailRes } from '../../../js/common/api/email_provider/gmail/gmail-parser.js';
 
 export class ComposerSendBtn extends ComposerComponent {
 
@@ -86,7 +86,7 @@ export class ComposerSendBtn extends ComposerComponent {
       this.composer.S.cached('send_btn_note').text('');
       const newMsgData = this.composer.input.extractAll();
       await this.composer.errs.throwIfFormValsInvalid(newMsgData);
-      const senderKi = await this.composer.app.storageGetKey(this.urlParams.acctEmail, this.composer.sender.getSender());
+      const senderKi = await this.composer.storage.getKey(this.composer.sender.getSender());
       let signingPrv: OpenPGP.key.Key | undefined;
       if (this.popover.choices.sign) {
         signingPrv = await this.decryptSenderKey(senderKi);
@@ -124,33 +124,33 @@ export class ComposerSendBtn extends ComposerComponent {
     let msgSentRes: GmailRes.GmailMsgSend;
     try {
       this.isSendMessageInProgress = true;
-      msgSentRes = await this.composer.app.emailProviderMsgSend(msg, this.renderUploadProgress);
+      msgSentRes = await this.composer.emailProvider.msgSend(msg, this.renderUploadProgress);
     } catch (e) {
-      if (msg.thread && Api.err.isNotFound(e) && this.urlParams.threadId) { // cannot send msg because threadId not found - eg user since deleted it
+      if (msg.thread && Api.err.isNotFound(e) && this.view.threadId) { // cannot send msg because threadId not found - eg user since deleted it
         msg.thread = undefined;
-        msgSentRes = await this.composer.app.emailProviderMsgSend(msg, this.renderUploadProgress);
+        msgSentRes = await this.composer.emailProvider.msgSend(msg, this.renderUploadProgress);
       } else {
         this.isSendMessageInProgress = false;
         throw e;
       }
     }
-    BrowserMsg.send.notificationShow(this.urlParams.parentTabId, { notification: `Your ${this.urlParams.isReplyBox ? 'reply' : 'message'} has been sent.` });
-    BrowserMsg.send.focusBody(this.urlParams.parentTabId); // Bring focus back to body so Gmails shortcuts will work
+    BrowserMsg.send.notificationShow(this.view.parentTabId, { notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.` });
+    BrowserMsg.send.focusBody(this.view.parentTabId); // Bring focus back to body so Gmails shortcuts will work
     await this.composer.draft.draftDelete();
     this.isSendMessageInProgress = false;
-    if (this.urlParams.isReplyBox) {
+    if (this.view.isReplyBox) {
       this.composer.render.renderReplySuccess(msg, msgSentRes.id);
     } else {
-      this.composer.app.closeMsg();
+      this.composer.render.closeMsg();
     }
   }
 
   private decryptSenderKey = async (senderKi: KeyInfo): Promise<OpenPGP.key.Key | undefined> => {
     const prv = await Pgp.key.read(senderKi.private);
-    const passphrase = await this.composer.app.storagePassphraseGet(senderKi);
+    const passphrase = await this.composer.storage.passphraseGet(senderKi);
     if (typeof passphrase === 'undefined' && !prv.isFullyDecrypted()) {
-      BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'sign', longids: [senderKi.longid] });
-      if ((typeof await this.composer.app.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
+      BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'sign', longids: [senderKi.longid] });
+      if ((typeof await this.composer.storage.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
         return await this.decryptSenderKey(senderKi);
       } else { // timeout - reset - no passphrase entered
         this.resetSendBtn();
@@ -172,14 +172,14 @@ export class ComposerSendBtn extends ComposerComponent {
   }
 
   private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
-    const { sendAs } = await Store.getAcct(this.urlParams.acctEmail, ['sendAs']);
+    const { sendAs } = await Store.getAcct(this.view.acctEmail, ['sendAs']);
     const addNameToEmail = async (emails: string[]): Promise<string[]> => {
       return await Promise.all(emails.map(async email => {
         let name: string | undefined;
         if (sendAs && sendAs[email] && sendAs[email].name) {
           name = sendAs[email].name!;
         } else {
-          const [contact] = await this.composer.app.storageContactGet([email]);
+          const [contact] = await Store.dbContactGet(undefined, [email]);
           if (contact && contact.name) {
             name = contact.name;
           }

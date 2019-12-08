@@ -2,25 +2,24 @@
 
 'use strict';
 
-import { NewMsgData, PubkeyResult, SendBtnTexts } from '../interfaces/composer-types.js';
-import { SendableMsg } from '../../api/email_provider_api.js';
+import { NewMsgData, PubkeyResult, SendBtnTexts } from '../composer-types.js';
+import { SendableMsg } from '../../../../js/common/api/email_provider/email_provider_api.js';
 import { Composer } from '../composer.js';
-import { PgpMsg, Pgp, Pwd } from '../../core/pgp.js';
-import { Google } from '../../api/google.js';
-import { Catch } from '../../platform/catch.js';
-import { SendableMsgBody, Mime } from '../../core/mime.js';
-import { Buf } from '../../core/buf.js';
-import { Backend, BackendRes, AwsS3UploadItem, FcUuidAuth } from '../../api/backend.js';
-import { Store, Subscription } from '../../platform/store.js';
-import { Value, Str } from '../../core/common.js';
-import { Ui } from '../../browser.js';
-import { Api } from '../../api/api.js';
-import { Att } from '../../core/att.js';
-import { Xss } from '../../platform/xss.js';
-import { Lang } from '../../lang.js';
+import { PgpMsg, Pgp, Pwd } from '../../../../js/common/core/pgp.js';
+import { Catch } from '../../../../js/common/platform/catch.js';
+import { SendableMsgBody, Mime } from '../../../../js/common/core/mime.js';
+import { Buf } from '../../../../js/common/core/buf.js';
+import { Backend, BackendRes, AwsS3UploadItem, FcUuidAuth } from '../../../../js/common/api/backend.js';
+import { Store, Subscription } from '../../../../js/common/platform/store.js';
+import { Value, Str } from '../../../../js/common/core/common.js';
+import { Ui } from '../../../../js/common/browser.js';
+import { Api } from '../../../../js/common/api/api.js';
+import { Att } from '../../../../js/common/core/att.js';
+import { Xss } from '../../../../js/common/platform/xss.js';
+import { Lang } from '../../../../js/common/lang.js';
 import { ComposerResetBtnTrigger, ComposerUserError } from '../composer-errs.js';
 import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
-import { Settings } from '../../settings.js';
+import { Settings } from '../../../../js/common/settings.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -37,7 +36,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
   }
 
   async sendableMsg(newMsg: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> {
-    const subscription = await this.composer.app.storageGetSubscription();
+    const subscription = await Store.subscription(this.acctEmail);
     const pubkeys = this.armoredPubkeys.map(p => p.pubkey);
     if (!this.richText) { // simple text: PGP/Inline
       const authInfo = subscription.active ? await Store.authInfo(this.acctEmail) : undefined;
@@ -50,14 +49,14 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
       }
       const encrypted = await this.encryptData(Buf.fromUtfStr(newMsg.plaintext), newMsg.pwd, pubkeys, signingPrv);
       const encryptedBody = { 'text/plain': encrypted.data };
-      await this.composer.app.storageContactUpdate(Array.prototype.concat.apply([], Object.values(newMsg.recipients)), { last_use: Date.now() });
+      await Store.dbContactUpdate(undefined, Array.prototype.concat.apply([], Object.values(newMsg.recipients)), { last_use: Date.now() });
       if (newMsg.pwd) {
         await this.uploadAndFormatPwdProtectedEmail(authInfo, encryptedBody);
         // attachmetns already included inside message as links, setting email real email attachmetns to empty array
         // however if there is more than one recipient with pubkeys, still append the encrypted message as attachment
         atts = pubkeys.length === 1 ? [] : [new Att({ data: Buf.fromUtfStr(encrypted.data), name: 'encrypted.asc' })];
       }
-      return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, encryptedBody, atts, this.composer.urlParams.threadId);
+      return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, encryptedBody, atts, this.composer.view.threadId);
     } else { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
       if (newMsg.pwd) {
         this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-richText-sending-option'), 'richText', false); // do not use rich text
@@ -70,7 +69,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         new Att({ data: Buf.fromUtfStr('Version: 1'), type: 'application/pgp-encrypted', contentDescription: 'PGP/MIME version identification' }),
         new Att({ data: Buf.fromUtfStr(encrypted.data), type: 'application/octet-stream', contentDescription: 'OpenPGP encrypted message', name: 'encrypted.asc' }),
       ];
-      return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, {}, atts, this.composer.urlParams.threadId, this.pgpMimeRootType);
+      return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, {}, atts, this.composer.view.threadId, this.pgpMimeRootType);
     }
   }
 
@@ -91,7 +90,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         'class': 'cryptup_reply',
         'cryptup-data': Str.htmlAttrEncode({
           sender: newMsgData.sender,
-          recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.sender), this.composer.urlParams.acctEmail),
+          recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.sender), this.acctEmail),
           subject: newMsgData,
           token: response.token,
         })
@@ -184,7 +183,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
     // admin_code stays locally and helps the sender extend life of the message or delete it
     const { short, admin_code } = await Backend.messageUpload(authInfo, encryptedBody['text/plain']!);
-    const storage = await Store.getAcct(this.composer.urlParams.acctEmail, ['outgoing_language']);
+    const storage = await Store.getAcct(this.acctEmail, ['outgoing_language']);
     const lang = storage.outgoing_language || 'EN';
     const msgUrl = `${this.FC_WEB_URL}/${short}`;
     const a = `<a href="${Xss.escape(msgUrl)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">
@@ -204,7 +203,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
                     ${Lang.compose.msgEncryptedHtml[lang] + a}<br/><br/>
                     ${Lang.compose.alternativelyCopyPaste[lang] + Xss.escape(msgUrl)}<br/><br/><br/>
                 </div>`);
-    await this.composer.app.storageAddAdminCodes(short, [admin_code].concat(this.fcAdminCodes));
+    await this.composer.storage.addAdminCodes(short, [admin_code].concat(this.fcAdminCodes));
     encryptedBody['text/plain'] = text.join('\n');
     encryptedBody['text/html'] = html.join('\n');
   }

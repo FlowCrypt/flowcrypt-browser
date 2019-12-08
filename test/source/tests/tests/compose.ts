@@ -151,19 +151,17 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     ava.default('compose[global:compatibility] - reply - old gmail threadId fmt', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadId=16841ce0ce5cb74d&replyMsgId=16841ce0ce5cb74d';
       const replyFrame = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, skipValidation: true });
-      await Util.sleep(1);
-      // tslint:disable-next-line: no-unused-expression
-      expect(await replyFrame.isElementPresent('.action_retry')).to.be.true;
-      expect(await PageRecipe.getElementPropertyJson(await replyFrame.waitAny('#new_message'), 'textContent')).to.include('Cannot get reply data for the message you are replying to.');
+      await replyFrame.waitAll(['#new_message', '@action-retry-by-reloading']);
+      expect(await replyFrame.read('#new_message')).to.include('Cannot get reply data for the message you are replying to');
+      await replyFrame.notPresent('@action-accept-reply-prompt');
     }));
 
     ava.default('compose[global:compatibility] - reply - thread id does not exist', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadId=16804894591b3a4b&replyMsgId=16804894591b3a4b';
       const replyFrame = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, skipValidation: true, });
-      await Util.sleep(1);
-      // tslint:disable-next-line: no-unused-expression
-      expect(await replyFrame.isElementPresent('.action_retry')).to.be.true;
-      expect(await PageRecipe.getElementPropertyJson(await replyFrame.waitAny('#new_message'), 'textContent')).to.include('Cannot get reply data for the message you are replying to.');
+      await replyFrame.waitAll(['#new_message', '@action-retry-by-reloading']);
+      expect(await replyFrame.read('#new_message')).to.include('Cannot get reply data for the message you are replying to');
+      await replyFrame.notPresent('@action-accept-reply-prompt');
     }));
 
     ava.default('compose[global:compose] - standalone - quote - can load quote from encrypted/text email', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
@@ -360,17 +358,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     }));
 
     ava.default('key-mismatch[global:compatibility] - standalone - key mismatch loading', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
-      const appendUrl = 'threadId=15f7f5630573be2d&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=15f7f5630573be2d';
-      const replyMismatchPage = await ComposePageRecipe.openReplyKeyMismatch(t, browser, 'compatibility', appendUrl);
+      const params = 'threadId=15f7f5630573be2d&skipClickPrompt=___cu_true___&ignoreDraft=___cu_true___&replyMsgId=15f7f5630573be2d&disableDraftSaving=___cu_true___&replyPubkeyMismatch=___cu_true___'; // tslint:disable-line:max-line-length
+      const replyMismatchPage = await browser.newPage(t, 'chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com&parent_tab_id=0&debug=___cu_true___&frameId=none&' + params); // tslint:disable-line:max-line-length
+      await replyMismatchPage.waitForSelTestState('ready');
       await Util.sleep(3);
-      const emailsPreview = await replyMismatchPage.waitAny('@email-preview');
-      const recipients = await emailsPreview.$$('span');
-      expect(recipients.length).to.equal(1);
-      const recipientEmail = await (await recipients[0].getProperty('textContent')).jsonValue() as string;
-      expect(recipientEmail).to.equal('censored@email.com');
-      const text = await replyMismatchPage.read('@input-body');
-      expect(text).to.include('I was not able to read your encrypted message because it was encrypted for a wrong key.');
-      expect(await replyMismatchPage.isElementPresent('@attachment')).to.be.true;
+      await expectRecipientElements(replyMismatchPage, { to: ['censored@email.com'], cc: [], bcc: [] });
+      expect(await replyMismatchPage.read('@input-body')).to.include('I was not able to read your encrypted message because it was encrypted for a wrong key.');
+      await replyMismatchPage.waitAll('.qq-upload-file');
       await ComposePageRecipe.sendAndClose(replyMismatchPage);
     }));
 

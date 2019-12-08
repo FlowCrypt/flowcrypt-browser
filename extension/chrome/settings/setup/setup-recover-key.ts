@@ -11,7 +11,6 @@ import { Api } from '../../../js/common/api/api.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { Google } from '../../../js/common/api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -118,7 +117,7 @@ export class SetupRecoverKeyModule {
     Xss.sanitizeRender($('h1').parent(), '<h1>Recover key from backup</h1>');
     $('.action_recover_account').text('load key from backup');
     try {
-      this.view.fetchedKeyBackups = await Google.gmail.fetchKeyBackups(this.view.acctEmail);
+      this.view.fetchedKeyBackups = await this.view.gmail.fetchKeyBackups();
       this.view.fetchedKeyBackupsUniqueLongids = await this.view.getUniqueLongids(this.view.fetchedKeyBackups);
     } catch (e) {
       window.location.href = Url.create('modules/add_key.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });

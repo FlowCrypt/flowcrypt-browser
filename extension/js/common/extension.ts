@@ -7,10 +7,10 @@ import { DiagnoseMsgPubkeysResult, DecryptResult, VerifyRes, PgpMsgTypeResult, P
 import { FlatTypes, GlobalIndex, GlobalStore, AccountIndex, AccountStore } from './platform/store.js';
 import { Ui, Env, Browser } from './browser.js';
 import { Catch } from './platform/catch.js';
-import { AuthRes } from './api/google.js';
 import { Buf } from './core/buf.js';
 import { AjaxErr } from './api/api.js';
 import { PassphraseDialogType } from './xss_safe_factory.js';
+import { AuthRes } from './api/google-auth.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -33,7 +33,7 @@ export namespace Bm {
   export type RenderPublicKeys = { afterFrameId: string, publicKeys: string[], traverseUp?: number };
   export type SubscribeDialog = { isAuthErr?: boolean };
   export type FocusFrame = { frameId: string };
-  export type CloseReplyMessage = { frameId: string, threadId: string };
+  export type CloseReplyMessage = { frameId: string };
   export type ReinsertReplyBox = { replyMsgId: string };
   export type AddPubkeyDialog = { emails: string[] };
   export type Reload = { advanced?: boolean };

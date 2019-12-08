@@ -2,20 +2,22 @@
 
 'use strict';
 
-import { ComposerComponent } from './interfaces/composer-component.js';
-import { Ui } from '../browser.js';
-import { RecipientStatuses, SendBtnTexts } from './interfaces/composer-types.js';
-import { KeyImportUi } from '../ui/key_import_ui.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { Ui } from '../../../js/common/browser.js';
+import { RecipientStatuses, SendBtnTexts } from './composer-types.js';
+import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
+import { Store } from '../../../js/common/platform/store.js';
 
 export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
 
   private keyImportUI = new KeyImportUi({});
 
-  public initActions() {
+  public async initActions() {
     this.composer.S.cached('input_password').keyup(Ui.event.prevent('spree', () => this.showHideContainerAndColorSendBtn()));
     this.composer.S.cached('input_password').focus(() => this.showHideContainerAndColorSendBtn());
     this.composer.S.cached('input_password').blur(() => this.showHideContainerAndColorSendBtn());
-    if (this.composer.app.storageGetHideMsgPassword()) {
+    const store = await Store.getAcct(this.view.acctEmail, ['hide_message_password']);
+    if (store.hide_message_password) {
       this.composer.S.cached('input_password').attr('type', 'password');
     }
   }
@@ -40,7 +42,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
       this.hideMsgPwdUi();
       this.composer.sendBtn.setBtnColor('green');
     }
-    if (this.urlParams.isReplyBox) {
+    if (this.view.isReplyBox) {
       if (!wasPreviouslyVisible && this.composer.S.cached('password_or_pubkey').css('display') === 'table-row') {
         this.composer.size.resizeComposeBox((this.composer.S.cached('password_or_pubkey').first().height() || 66) + 20);
       } else {

@@ -10,8 +10,9 @@ import { BrowserMsg, BgNotReadyError } from '../extension.js';
 import { Env, Ui } from '../browser.js';
 import { Catch, UnreportableError } from './catch.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chrome.js';
-import { GmailRes, GoogleAuth } from '../api/google.js';
 import { PgpClient } from '../api/keyserver.js';
+import { GmailRes } from '../api/email_provider/gmail/gmail-parser.js';
+import { GoogleAuth } from '../api/google-auth.js';
 
 // tslint:disable:no-null-keyword
 

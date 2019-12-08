@@ -10,10 +10,10 @@ import { Api } from '../../../js/common/api/api.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Backend } from '../../../js/common/api/backend.js';
 import { Lang } from '../../../js/common/lang.js';
-import { Google, GmailResponseFormat } from '../../../js/common/api/google.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { DecryptErrTypes } from '../../../js/common/core/pgp.js';
+import { GmailResponseFormat } from '../../../js/common/api/email_provider/gmail/gmail.js';
 
 export class PgpBlockViewDecryptModule {
 
@@ -28,7 +28,7 @@ export class PgpBlockViewDecryptModule {
     try {
       if (this.canReadEmails && this.view.signature === true && this.view.msgId) {
         this.view.renderModule.renderText('Loading signed message...');
-        const { raw } = await Google.gmail.msgGet(this.view.acctEmail, this.view.msgId, 'raw');
+        const { raw } = await this.view.gmail.msgGet(this.view.msgId, 'raw');
         this.msgFetchedFromApi = 'raw';
         const mimeMsg = Buf.fromBase64UrlStr(raw!); // used 'raw' above
         const parsed = await Mime.decode(mimeMsg);
@@ -59,7 +59,7 @@ export class PgpBlockViewDecryptModule {
         } else if (this.canReadEmails) {
           this.view.renderModule.renderText('Retrieving message...');
           const format: GmailResponseFormat = (!this.msgFetchedFromApi) ? 'full' : 'raw';
-          const { armored, subject } = await Google.gmail.extractArmoredBlock(this.view.acctEmail, this.view.msgId, format, (progress) => {
+          const { armored, subject } = await this.view.gmail.extractArmoredBlock(this.view.msgId, format, (progress) => {
             this.view.renderModule.renderText(`Retrieving message... ${progress}%`);
           });
           this.view.renderModule.renderText('Decrypting...');

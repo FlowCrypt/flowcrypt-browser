@@ -2,9 +2,7 @@
 
 'use strict';
 
-import { Ui } from '../browser.js';
-import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
-import { ComposerUrlParams } from './interfaces/composer-types.js';
+import { Ui } from '../../../js/common/browser.js';
 import { ComposerDraft } from './composer-draft.js';
 import { ComposerQuote } from './composer-quote.js';
 import { ComposerRecipients } from './composer-recipients.js';
@@ -16,9 +14,12 @@ import { ComposerAtts } from './composer-atts.js';
 import { ComposerErrs } from './composer-errs.js';
 import { ComposerInput } from './composer-input.js';
 import { ComposerRender } from './composer-render.js';
-import { Catch } from '../platform/catch.js';
-import { Mime } from '../core/mime.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposerMyPubkey } from './composer-my-pubkey.js';
+import { ComposerStorage } from './composer-storage.js';
+import { ComposeView } from '../../../js/common/../../chrome/elements/compose.js';
+import { BrowserMsg } from '../../../js/common/extension.js';
+import { EmailProviderInterface } from '../../../js/common/api/email_provider/email_provider_api.js';
 
 export class Composer {
 
@@ -78,16 +79,14 @@ export class Composer {
   public input: ComposerInput;
   public render: ComposerRender;
   public myPubkey: ComposerMyPubkey;
+  public storage: ComposerStorage;
 
-  public app: ComposerAppFunctionsInterface;
-  public urlParams: ComposerUrlParams;
   public canReadEmails: boolean;
   public initPromise: Promise<void>;
+  public emailProvider: EmailProviderInterface;
 
-  constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams) {
-    this.app = appFunctions;
-    this.urlParams = urlParams;
-    this.urlParams.subject = Mime.subjectWithoutPrefixes(this.urlParams.subject);
+  constructor(public view: ComposeView) {
+    this.emailProvider = view.emailProvider!;
     this.draft = new ComposerDraft(this);
     this.quote = new ComposerQuote(this);
     this.recipients = new ComposerRecipients(this);
@@ -100,9 +99,10 @@ export class Composer {
     this.input = new ComposerInput(this);
     this.render = new ComposerRender(this);
     this.myPubkey = new ComposerMyPubkey(this);
-    const scopes = this.app.getScopes();
-    this.canReadEmails = scopes.read || scopes.modify;
+    this.storage = new ComposerStorage(this);
+    this.canReadEmails = this.view.scopes!.read || this.view.scopes!.modify;
     this.initPromise = this.render.initActions().catch(Catch.reportErr);
+    BrowserMsg.listen(this.view.tabId!);
   }
 
 }

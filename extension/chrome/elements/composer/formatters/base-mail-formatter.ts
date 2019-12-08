@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { NewMsgData } from '../interfaces/composer-types.js';
-import { SendableMsg } from '../../api/email_provider_api.js';
+import { NewMsgData } from '../composer-types.js';
+import { SendableMsg } from '../../../../js/common/api/email_provider/email_provider_api.js';
 import { Composer } from '../composer.js';
 
 export interface MailFormatterInterface {
@@ -19,6 +19,6 @@ export class BaseMailFormatter {
   constructor(composer: Composer) {
     this.composer = composer;
     this.richText = composer.sendBtn.popover.choices.richText;
-    this.acctEmail = this.composer.urlParams.acctEmail;
+    this.acctEmail = this.composer.view.acctEmail;
   }
 }

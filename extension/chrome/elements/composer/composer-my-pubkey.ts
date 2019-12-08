@@ -2,11 +2,13 @@
 
 'use strict';
 
-import { ComposerComponent } from './interfaces/composer-component.js';
-import { Ui } from '../browser.js';
-import { Catch } from '../platform/catch.js';
-import { Lang } from '../lang.js';
-import { Api } from '../api/api.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { Ui } from '../../../js/common/browser.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { Lang } from '../../../js/common/lang.js';
+import { Api } from '../../../js/common/api/api.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { KeyInfo, Pgp } from '../../../js/common/core/pgp.js';
 
 export class ComposerMyPubkey extends ComposerComponent {
 
@@ -27,11 +29,11 @@ export class ComposerMyPubkey extends ComposerComponent {
       return;
     }
     (async () => {
-      const contacts = await this.composer.app.storageContactGet(this.composer.recipients.getRecipients().map(r => r.email));
+      const contacts = await Store.dbContactGet(undefined, this.composer.recipients.getRecipients().map(r => r.email));
       for (const contact of contacts) {
         if (typeof contact === 'object' && contact.has_pgp && contact.client !== 'cryptup') {
           // new message, and my key is not uploaded where the recipient would look for it
-          if (! await this.composer.app.doesRecipientHaveMyPubkey(contact.email)) {
+          if (! await this.composer.recipients.doesRecipientHaveMyPubkey(contact.email)) {
             // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
             this.setAttachPreference(true);
             return;
@@ -52,6 +54,16 @@ export class ComposerMyPubkey extends ComposerComponent {
 
   public shouldAttach() {
     return this.composer.S.cached('icon_pubkey').is('.active');
+  }
+
+  async chooseMyPublicKeyBySenderEmail(keys: KeyInfo[], email: string) {
+    for (const key of keys) {
+      const parsedkey = await Pgp.key.read(key.public);
+      if (parsedkey.users.find(u => !!u.userId && u.userId.userid.toLowerCase().includes(email.toLowerCase()))) {
+        return key;
+      }
+    }
+    return undefined;
   }
 
 }
