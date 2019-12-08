@@ -11,6 +11,7 @@ import { Catch } from '../platform/catch.js';
 import { Att } from '../core/att.js';
 import { Ui } from '../browser.js';
 import { Buf } from '../core/buf.js';
+import { DomainRules } from '../rules.js';
 
 type SubscriptionLevel = 'pro' | null;
 type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
@@ -29,9 +30,7 @@ export namespace BackendRes {
   export type FcHelpFeedback = { sent: boolean };
   export type FcAccountLogin = { registered: boolean, verified: boolean, subscription: SubscriptionInfo };
   export type FcAccount$info = { alias: string, email: string, intro: string, name: string, photo: string, default_message_expire: number };
-  export type FcAccount$domain_org_rules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'ENFORCE_ATTESTER_SUBMIT' | 'ALLOW_CUSTOM_KEYSERVER';
-  export type FcAccount$domain_org_rules = { flags: FcAccount$domain_org_rules$flag[], custom_keyserver_url?: string };
-  export type FcAccountGet = { account: FcAccount$info, subscription: SubscriptionInfo, domain_org_rules: FcAccount$domain_org_rules };
+  export type FcAccountGet = { account: FcAccount$info, subscription: SubscriptionInfo, domain_org_rules: DomainRules };
   export type FcAccountUpdate = { result: FcAccount$info, updated: boolean };
   export type FcAccountSubscribe = { subscription: SubscriptionInfo };
   export type FcAccountCheck = { email: string | null, subscription: SubscriptionInfo | null };

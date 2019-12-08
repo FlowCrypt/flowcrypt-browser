@@ -5,7 +5,7 @@
 import { Value, Str, Dict } from '../core/common.js';
 import { mnemonic } from '../core/mnemonic.js';
 import { Pgp, KeyInfo, Contact } from '../core/pgp.js';
-import { SubscriptionInfo, PaymentMethod, ProductLevel, FcUuidAuth, BackendRes } from '../api/backend.js';
+import { SubscriptionInfo, PaymentMethod, ProductLevel, FcUuidAuth } from '../api/backend.js';
 import { BrowserMsg, BgNotReadyError } from '../extension.js';
 import { Env, Ui } from '../browser.js';
 import { Catch, UnreportableError } from './catch.js';
@@ -13,13 +13,14 @@ import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chr
 import { PgpClient } from '../api/keyserver.js';
 import { GmailRes } from '../api/email_provider/gmail/gmail-parser.js';
 import { GoogleAuth } from '../api/google-auth.js';
+import { DomainRules } from '../rules.js';
 
 // tslint:disable:no-null-keyword
 
 let KEY_CACHE: { [longidOrArmoredKey: string]: OpenPGP.key.Key } = {};
 let KEY_CACHE_WIPE_TIMEOUT: number;
 
-type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo | BackendRes.FcAccount$domain_org_rules;
+type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo | DomainRules;
 type StoredReplyDraftMeta = string; // draftId
 type StoredComposeDraftMeta = { recipients: string[], subject: string, date: number };
 type StoredAdminCode = { date: number, codes: string[] };
@@ -67,7 +68,7 @@ export type ContactUpdate = {
   pubkey_last_check?: number | null;
 };
 export type Storable = FlatTypes | string[] | KeyInfo[] | Dict<StoredReplyDraftMeta> | Dict<StoredComposeDraftMeta> | Dict<StoredAdminCode>
-  | SubscriptionInfo | GmailRes.OpenId | BackendRes.FcAccount$domain_org_rules;
+  | SubscriptionInfo | GmailRes.OpenId | DomainRules;
 export type Serializable = SerializableTypes | SerializableTypes[] | Dict<SerializableTypes> | Dict<SerializableTypes>[];
 
 export interface RawStore {
@@ -128,7 +129,7 @@ export type AccountStore = {
   openid?: GmailRes.OpenId;
   subscription?: SubscriptionInfo;
   uuid?: string;
-  rules?: BackendRes.FcAccount$domain_org_rules;
+  rules?: DomainRules;
   // temporary
   tmp_submit_main?: boolean;
   tmp_submit_all?: boolean;
