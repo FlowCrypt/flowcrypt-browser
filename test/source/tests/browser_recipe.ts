@@ -1,8 +1,10 @@
 import { TestUrls } from './../browser/test_urls';
 import { BrowserHandle } from '../browser';
-import { OauthPageRecipe, SettingsPageRecipe, SetupPageRecipe } from './page_recipe';
 import { Util, Config } from '../util';
 import { AvaContext } from '.';
+import { SettingsPageRecipe } from './page_recipe/settings-page-recipe';
+import { OauthPageRecipe } from './page_recipe/oauth-page-recipe';
+import { SetupPageRecipe } from './page_recipe/setup-page-recipe';
 
 export class BrowserRecipe {
 

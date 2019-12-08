@@ -33,16 +33,16 @@ abstract class ControllableBase {
     let m;
     if (this.isXpath(customSelLanguageQuery)) {
       return customSelLanguageQuery;
-    // eslint-disable-next-line no-cond-assign
+      // eslint-disable-next-line no-cond-assign
     } else if (m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)\:message/)) { // tslint:disable-line:no-conditional-assignment
       return `.${m[1]} #swal2-content`; // message inside the modal
-    // eslint-disable-next-line no-cond-assign
+      // eslint-disable-next-line no-cond-assign
     } else if (m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)/)) { // tslint:disable-line:no-conditional-assignment
       return `.${m[1]}`; // represented as a class
-    // eslint-disable-next-line no-cond-assign
+      // eslint-disable-next-line no-cond-assign
     } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-]+)$/)) { // tslint:disable-line:no-conditional-assignment
       return `[data-test="${m[1]}"]`;
-    // eslint-disable-next-line no-cond-assign
+      // eslint-disable-next-line no-cond-assign
     } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-]+)\(([^()]*)\)$/)) { // tslint:disable-line:no-conditional-assignment
       return `//*[@data-test='${m[1]}' and contains(text(),'${m[2]}')]`;
     } else {
@@ -153,7 +153,7 @@ abstract class ControllableBase {
     if (!e) {
       throw Error(`Element not found: ${selector}`);
     }
-    if (letterByLetter || text.length < 20) {
+    if (letterByLetter || text.length < 10) {
       await e.type(text);
     } else {
       const typeLastTenChars = await this.target.evaluate((s, t) => {
@@ -164,7 +164,7 @@ abstract class ControllableBase {
           el.selectionStart = el.innerText.length;
           return false;
         }
-        el.value = t.substring(0, t.length - 10);
+        el.value = t.substring(0, t.length - 5);
         if (el.type !== 'email' && typeof el.value !== 'undefined') {
           el.selectionEnd = el.value.length;
           el.selectionStart = el.value.length;
@@ -172,7 +172,7 @@ abstract class ControllableBase {
         return true;
       }, this.selector(selector), text);
       if (typeLastTenChars) { // used to simulate typing events
-        await e.type(text.substring(text.length - 10, text.length));
+        await e.type(text.substring(text.length - 5, text.length));
       }
     }
   }
