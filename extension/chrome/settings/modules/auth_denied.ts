@@ -4,7 +4,7 @@
 
 import { Store } from '../../../js/common/platform/store.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
-import { GoogleAuth } from '../../../js/common/api/google.js';
+import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';

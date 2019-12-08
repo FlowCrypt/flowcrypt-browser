@@ -4,7 +4,7 @@
 
 import { GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
 import { EmailProviderApi, EmailProviderInterface, SendableMsg } from '../email_provider_api.js';
-import { Google, GoogleAuth } from '../../google.js';
+import { Google } from '../../google.js';
 import { ProgressCb, RecipientType, AjaxErr, ChunkedCb, ProviderContactsResults } from '../../api.js';
 import { Buf } from '../../../core/buf.js';
 import { Mime } from '../../../core/mime.js';
@@ -17,6 +17,7 @@ import { Contact, Pgp, FormatError } from '../../../core/pgp.js';
 import { Xss } from '../../../platform/xss.js';
 import { Store } from '../../../platform/store.js';
 import { GmailRes, GmailParser } from './gmail-parser.js';
+import { GoogleAuth } from '../../google-auth.js';
 
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 

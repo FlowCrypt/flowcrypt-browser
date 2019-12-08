@@ -11,7 +11,7 @@ import { Lang } from './lang.js';
 import { Rules } from './rules.js';
 import { Api, ApiErrResponse } from './api/api.js';
 import { Pgp } from './core/pgp.js';
-import { GoogleAuth } from './api/google.js';
+import { GoogleAuth } from './api/google-auth.js';
 import { Attester } from './api/attester.js';
 import { Xss } from './platform/xss.js';
 import { Backend } from './api/backend.js';

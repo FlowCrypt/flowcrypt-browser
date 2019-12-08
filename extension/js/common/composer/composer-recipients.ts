@@ -8,7 +8,8 @@ import { ProviderContactsQuery } from '../api/email_provider/email_provider_api.
 import { Contact, Pgp } from '../core/pgp.js';
 import { Xss } from '../platform/xss.js';
 import { Ui } from '../browser.js';
-import { GoogleAuth, Google } from '../api/google.js';
+import { Google } from '../api/google.js';
+import { GoogleAuth } from '../api/google-auth.js';
 import { Lang } from '../lang.js';
 import { RecipientElement, RecipientStatus, RecipientStatuses, Recipients } from './interfaces/composer-types.js';
 import { ComposerComponent } from './interfaces/composer-component.js';
