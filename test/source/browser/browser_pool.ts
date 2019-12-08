@@ -47,12 +47,9 @@ export class BrowserPool {
         await initialPage.close();
       } catch (e) {
         if (String(e).includes('Action did not trigger a new page within timeout period')) { // could have opened before we had a chance to add a handler above
-          console.log(`+++ ${String(e)}`);
           const pages = await handle.browser.pages();
-          console.log(`+++ initial-urls:${pages.map(p => p.url()).join(',')}`);
           const initialPage = pages.find(p => p.url().includes('chrome/settings/initial.htm'));
           if (!initialPage) {
-            console.log(`+++ nothing found, re-throwing`);
             throw e;
           }
           await initialPage.close();
