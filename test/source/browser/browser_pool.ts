@@ -42,7 +42,7 @@ export class BrowserPool {
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {
       try {
-        const initialPage = await handle.newPageTriggeredBy(t, () => undefined); // the page triggered on its own
+        const initialPage = await handle.newPageTriggeredBy(t, () => Promise.resolve()); // the page triggered on its own
         await initialPage.waitAll('@initial-page'); // first page opened by flowcrypt
         await initialPage.close();
       } catch (e) {
