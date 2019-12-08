@@ -21,7 +21,7 @@ export class OauthPageRecipe extends PageRecipe {
       secret_2fa: '#totpPin',
     };
     const enterPwdAndConfirm = async () => {
-      await Util.sleep(OauthPageRecipe.oauthPwdDelay);
+      await Util.sleep(isMock ? 0 : OauthPageRecipe.oauthPwdDelay);
       await oauthPage.waitAndType(selectors.pwd_input, auth.password, { delay: OauthPageRecipe.oauthPwdDelay });
       await oauthPage.waitAndClick(selectors.pwd_confirm_btn, { delay: 1 });  // confirm password
       await oauthPage.waitForNavigationIfAny();
@@ -33,7 +33,7 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitAndType('#Email', auth.email);
         await oauthPage.waitAndClick('#next');
         await oauthPage.waitForNavigationIfAny();
-        await Util.sleep(OauthPageRecipe.oauthPwdDelay);
+        await Util.sleep(isMock ? 0 : OauthPageRecipe.oauthPwdDelay);
         await oauthPage.waitAndType('#Passwd', auth.password, { delay: OauthPageRecipe.oauthPwdDelay });
         await oauthPage.waitForNavigationIfAny();
         await oauthPage.waitAndClick('#signIn', { delay: 1 });
