@@ -11,11 +11,12 @@ import { Lang } from './lang.js';
 import { Rules } from './rules.js';
 import { Api, ApiErrResponse } from './api/api.js';
 import { Pgp } from './core/pgp.js';
-import { Google, GoogleAuth } from './api/google.js';
+import { GoogleAuth } from './api/google.js';
 import { Attester } from './api/attester.js';
 import { Xss } from './platform/xss.js';
 import { Backend } from './api/backend.js';
 import { storageLocalGetAll } from './api/chrome.js';
+import { Gmail } from './api/email_provider/gmail/gmail.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
@@ -23,7 +24,7 @@ declare const zxcvbn: Function; // tslint:disable-line:ban-types
 export class Settings {
 
   static fetchAcctAliasesFromGmail = async (acctEmail: string): Promise<Dict<SendAsAlias>> => {
-    const response = await Google.gmail.fetchAcctAliases(acctEmail);
+    const response = await new Gmail(acctEmail).fetchAcctAliases();
     const validAliases = response.sendAs.filter(alias => alias.isPrimary || alias.verificationStatus === 'accepted');
     const result: Dict<SendAsAlias> = {};
     for (const alias of validAliases) {

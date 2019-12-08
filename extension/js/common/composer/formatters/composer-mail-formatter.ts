@@ -8,7 +8,7 @@ import { Composer } from "../composer.js";
 import { PlainMsgMailFormatter } from './plain-mail-msg-formatter.js';
 import { SignedMsgMailFormatter } from './signed-msg-mail-formatter.js';
 import { EncryptedMsgMailFormatter } from './encrypted-mail-msg-formatter.js';
-import { SendableMsg } from '../../api/email_provider_api.js';
+import { SendableMsg } from '../../api/email_provider/email_provider_api.js';
 
 export class GeneralMailFormatter {
 

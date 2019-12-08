@@ -10,7 +10,6 @@ import { Url } from '../../../js/common/core/common.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Lang } from '../../../js/common/lang.js';
-import { Google } from '../../../js/common/api/google.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
 
 export class SetupRenderModule {
@@ -105,7 +104,7 @@ export class SetupRenderModule {
         this.displayBlock('step_2b_manual_enter');
       } else if (this.view.storage!.email_provider === 'gmail' && (this.view.scopes!.read || this.view.scopes!.modify)) {
         try {
-          this.view.fetchedKeyBackups = await Google.gmail.fetchKeyBackups(this.view.acctEmail);
+          this.view.fetchedKeyBackups = await this.view.gmail.fetchKeyBackups();
           this.view.fetchedKeyBackupsUniqueLongids = await this.view.getUniqueLongids(this.view.fetchedKeyBackups);
         } catch (e) {
           return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToCheckAccountBackups, () => this.renderSetupDialog());

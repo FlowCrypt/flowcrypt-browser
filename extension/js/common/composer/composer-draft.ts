@@ -53,7 +53,7 @@ export class ComposerDraft extends ComposerComponent {
       Xss.sanitizeRender(this.composer.S.cached('prompt'), `Loading draft.. ${Ui.spinner('green')}`);
     }
     try {
-      const draftGetRes = await this.composer.app.emailProviderDraftGet(draftId);
+      const draftGetRes = await this.composer.emailProvider.draftGet(draftId, 'raw');
       if (!draftGetRes) {
         await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!draftGetRes');
         return false;
@@ -116,7 +116,7 @@ export class ComposerDraft extends ComposerComponent {
           Subject: subject
         }, []);
         if (!this.view.draftId) {
-          const { id } = await this.composer.app.emailProviderDraftCreate(this.view.acctEmail, mimeMsg, this.view.threadId);
+          const { id } = await this.composer.emailProvider.draftCreate(mimeMsg, this.view.threadId);
           this.composer.S.cached('send_btn_note').text('Saved');
           this.view.draftId = id;
           await this.composer.storage.storageDraftMetaSet(id, this.view.threadId, to, String(this.composer.S.cached('input_subject').val()));
@@ -125,7 +125,7 @@ export class ComposerDraft extends ComposerComponent {
           // currentlySavingDraft will remain true for now
           await this.draftSave(true); // forceSave = true
         } else {
-          await this.composer.app.emailProviderDraftUpdate(this.view.draftId, mimeMsg);
+          await this.composer.emailProvider.draftUpdate(this.view.draftId, mimeMsg);
           this.composer.S.cached('send_btn_note').text('Saved');
         }
       } catch (e) {
@@ -160,7 +160,7 @@ export class ComposerDraft extends ComposerComponent {
     if (this.view.draftId) {
       await this.composer.storage.storageDraftMetaDelete(this.view.draftId, this.view.threadId);
       try {
-        await this.composer.app.emailProviderDraftDelete(this.view.draftId);
+        await this.composer.emailProvider.draftDelete(this.view.draftId);
         this.view.draftId = '';
       } catch (e) {
         if (Api.err.isAuthPopupNeeded(e)) {
@@ -240,7 +240,7 @@ export class ComposerDraft extends ComposerComponent {
   }
 
   private async abortAndRenderReplyMsgComposeTableIfIsReplyBox(reason: string) {
-    console.info(`Google.gmail.initialDraftLoad: ${reason}`);
+    console.info(`gmail.initialDraftLoad: ${reason}`);
     if (this.view.isReplyBox) {
       await this.composer.render.renderReplyMsgComposeTable();
     }

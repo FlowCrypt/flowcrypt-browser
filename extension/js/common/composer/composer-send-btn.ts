@@ -12,11 +12,11 @@ import { Api } from '../api/api.js';
 import { BrowserMsg } from '../extension.js';
 import { Pgp, KeyInfo } from '../core/pgp.js';
 import { Store } from '../platform/store.js';
-import { GmailRes } from '../api/google.js';
-import { SendableMsg } from '../api/email_provider_api.js';
+import { SendableMsg } from '../api/email_provider/email_provider_api.js';
 import { Att } from '../core/att.js';
 import { GeneralMailFormatter } from './formatters/composer-mail-formatter.js';
 import { ComposerSendBtnPopover } from './composer-send-btn-popover.js';
+import { GmailRes } from '../api/email_provider/gmail/gmail-parser.js';
 
 export class ComposerSendBtn extends ComposerComponent {
 
@@ -124,11 +124,11 @@ export class ComposerSendBtn extends ComposerComponent {
     let msgSentRes: GmailRes.GmailMsgSend;
     try {
       this.isSendMessageInProgress = true;
-      msgSentRes = await this.composer.app.emailProviderMsgSend(msg, this.renderUploadProgress);
+      msgSentRes = await this.composer.emailProvider.msgSend(msg, this.renderUploadProgress);
     } catch (e) {
       if (msg.thread && Api.err.isNotFound(e) && this.view.threadId) { // cannot send msg because threadId not found - eg user since deleted it
         msg.thread = undefined;
-        msgSentRes = await this.composer.app.emailProviderMsgSend(msg, this.renderUploadProgress);
+        msgSentRes = await this.composer.emailProvider.msgSend(msg, this.renderUploadProgress);
       } else {
         this.isSendMessageInProgress = false;
         throw e;

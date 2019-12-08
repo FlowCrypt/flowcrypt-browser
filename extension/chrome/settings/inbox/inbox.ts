@@ -13,12 +13,14 @@ import { Api } from '../../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../../js/common/extension.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { Lang } from '../../../js/common/lang.js';
-import { Google, GoogleAuth, GmailRes } from '../../../js/common/api/google.js';
+import { Google, GoogleAuth } from '../../../js/common/api/google.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Assert } from '../../../js/common/assert.js';
 import { XssSafeFactory, FactoryReplyParams } from '../../../js/common/xss_safe_factory.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { WebmailCommon } from "../../../js/common/webmail.js";
+import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
+import { GmailRes, GmailParser } from '../../../js/common/api/email_provider/gmail/gmail-parser.js';
 
 Catch.try(async () => {
 
@@ -47,6 +49,7 @@ Catch.try(async () => {
   };
   const FOLDERS = ['INBOX', 'STARRED', 'SENT', 'DRAFT', 'TRASH']; // 'UNREAD', 'SPAM'
 
+  const gmail = new Gmail(acctEmail);
   const tabId = await BrowserMsg.requiredTabId();
   notifications = new Notifications(tabId);
   factory = new XssSafeFactory(acctEmail, tabId);
@@ -229,12 +232,12 @@ Catch.try(async () => {
     inboxThreadItemAdd(threadId);
     const threadItem = $('.threads #' + threadListItemId(threadId));
     try {
-      const thread = await Google.gmail.threadGet(acctEmail, threadId, 'metadata');
+      const thread = await gmail.threadGet(threadId, 'metadata');
       const firstMsg = thread.messages[0];
       const lastMsg = thread.messages[thread.messages.length - 1];
-      threadItem.find('.subject').text(Google.gmail.findHeader(firstMsg, 'subject') || '(no subject)');
+      threadItem.find('.subject').text(GmailParser.findHeader(firstMsg, 'subject') || '(no subject)');
       Xss.sanitizeAppend(threadItem.find('.subject'), renderableLabels(firstMsg.labelIds || [], 'messages'));
-      const fromHeaderVal = Google.gmail.findHeader(firstMsg, 'from');
+      const fromHeaderVal = GmailParser.findHeader(firstMsg, 'from');
       if (fromHeaderVal) {
         const from = Str.parseEmail(fromHeaderVal);
         threadItem.find('.from').text(from.name || from.email || from.full);
@@ -315,7 +318,7 @@ Catch.try(async () => {
 
   const renderMenu = async () => {
     try {
-      const { labels } = await Google.gmail.labelsGet(acctEmail);
+      const { labels } = await gmail.labelsGet();
       renderMenuAndLabelStyles(labels);
     } catch (e) {
       if (Api.err.isNetErr(e)) {
@@ -338,7 +341,7 @@ Catch.try(async () => {
     $('.action_open_secure_compose_window').click(Ui.event.handle(() => injector.openComposeWin()));
     displayBlock('inbox', `Messages in ${getLabelName(labelId)}`);
     try {
-      const { threads } = await Google.gmail.threadList(acctEmail, labelId);
+      const { threads } = await gmail.threadList(labelId);
       if ((threads || []).length) {
         await Promise.all(threads.map(t => renderInboxItem(t.id)));
       } else {
@@ -364,8 +367,8 @@ Catch.try(async () => {
   const renderThread = async (threadId: string, thread?: GmailRes.GmailThread) => {
     displayBlock('thread', 'Loading..');
     try {
-      thread = thread || await Google.gmail.threadGet(acctEmail, threadId, 'metadata');
-      const subject = Google.gmail.findHeader(thread.messages[0], 'subject') || '(no subject)';
+      thread = thread || await gmail.threadGet(threadId, 'metadata');
+      const subject = GmailParser.findHeader(thread.messages[0], 'subject') || '(no subject)';
       updateUrlWithoutRedirecting(`${subject} - FlowCrypt Inbox`, { acctEmail, threadId });
       displayBlock('thread', subject);
       for (const m of thread.messages) {
@@ -382,7 +385,7 @@ Catch.try(async () => {
       if (lastMsg) {
         renderReplyBox(lastMsg.id);
       }
-      // await Google.gmail.threadModify(acctEmail, threadId, [LABEL.UNREAD], []); // missing permission https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
+      // await gmail.threadModify(acctEmail, threadId, [LABEL.UNREAD], []); // missing permission https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
     } catch (e) {
       if (Api.err.isNetErr(e)) {
         Xss.sanitizeRender('.thread', `<br>Failed to load thread - network error. ${Ui.retryLink()}`);
@@ -404,9 +407,9 @@ Catch.try(async () => {
 
   const renderMsg = async (message: GmailRes.GmailMsg) => {
     const htmlId = replyMsgId(message.id);
-    const from = Google.gmail.findHeader(message, 'from') || 'unknown';
+    const from = GmailParser.findHeader(message, 'from') || 'unknown';
     try {
-      const { raw } = await Google.gmail.msgGet(acctEmail, message.id, 'raw');
+      const { raw } = await gmail.msgGet(message.id, 'raw');
       const mimeMsg = Buf.fromBase64UrlStr(raw!);
       const { blocks, headers } = await Mime.process(mimeMsg);
       let r = '';

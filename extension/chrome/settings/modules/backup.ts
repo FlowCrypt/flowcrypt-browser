@@ -13,7 +13,7 @@ import { Lang } from '../../../js/common/lang.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Pgp, KeyInfo } from '../../../js/common/core/pgp.js';
-import { Google, GoogleAuth } from '../../../js/common/api/google.js';
+import { GoogleAuth } from '../../../js/common/api/google.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
 import { Assert } from '../../../js/common/assert.js';
@@ -21,6 +21,7 @@ import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { View } from '../../../js/common/view.js';
 import { KeyImportUi } from './../../../js/common/ui/key_import_ui.js';
+import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -29,9 +30,9 @@ View.run(class BackupView extends View {
   private acctEmail: string;
   private parentTabId: string | undefined;
   private action: string | undefined;
-
   private keyImportUi = new KeyImportUi({});
   private emailProvider: EmailProvider = 'gmail';
+  private readonly gmail: Gmail;
 
   private blocks = ['loading', 'step_0_status', 'step_1_password', 'step_2_confirm', 'step_3_automatic_backup_retry', 'step_3_manual'];
 
@@ -43,6 +44,7 @@ View.run(class BackupView extends View {
     if (this.action !== 'setup') {
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     }
+    this.gmail = new Gmail(this.acctEmail);
   }
 
   async render() {
@@ -251,7 +253,7 @@ View.run(class BackupView extends View {
     if (this.emailProvider === 'gmail' && (scopes.read || scopes.modify)) {
       let keys;
       try {
-        keys = await Google.gmail.fetchKeyBackups(this.acctEmail);
+        keys = await this.gmail.fetchKeyBackups();
       } catch (e) {
         if (Api.err.isNetErr(e)) {
           Xss.sanitizeRender('#content', `Could not check for backups: no internet. ${Ui.retryLink()}`);
@@ -316,9 +318,9 @@ View.run(class BackupView extends View {
   private async doBackupOnEmailProvider(armoredKey: string) {
     const emailMsg = String(await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' }));
     const emailAtts = [this.asBackupFile(armoredKey)];
-    const msg = await Google.createMsgObj(this.acctEmail, this.acctEmail, { to: [this.acctEmail] }, GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
+    const msg = await this.gmail.createMsgObj(this.acctEmail, { to: [this.acctEmail] }, GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
     if (this.emailProvider === 'gmail') {
-      return await Google.gmail.msgSend(this.acctEmail, msg);
+      return await this.gmail.msgSend(msg);
     } else {
       throw Error(`Backup method not implemented for ${this.emailProvider}`);
     }

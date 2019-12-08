@@ -13,13 +13,13 @@ import { Settings } from '../../js/common/settings.js';
 import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Lang } from '../../js/common/lang.js';
-import { Google } from '../../js/common/api/google.js';
 import { KeyInfo } from '../../js/common/core/pgp.js';
 import { Backend } from '../../js/common/api/backend.js';
 import { Assert } from '../../js/common/assert.js';
 import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { View } from '../../js/common/view.js';
+import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -30,6 +30,8 @@ View.run(class SettingsView extends View {
   private readonly pageUrlParams: UrlParams | undefined;
   private readonly addNewAcct: boolean;
   private readonly advanced: boolean;
+
+  private readonly gmail: Gmail | undefined;
 
   private tabId: string | undefined;
   private notifications: Notifications | undefined;
@@ -43,6 +45,9 @@ View.run(class SettingsView extends View {
     this.pageUrlParams = (typeof uncheckedUrlParams.pageUrlParams === 'string') ? JSON.parse(uncheckedUrlParams.pageUrlParams) as UrlParams : undefined;
     this.addNewAcct = uncheckedUrlParams.addNewAcct === true;
     this.advanced = uncheckedUrlParams.advanced === true;
+    if (this.acctEmail) {
+      this.gmail = new Gmail(this.acctEmail);
+    }
   }
 
   async render() {
@@ -273,7 +278,7 @@ View.run(class SettingsView extends View {
 
   private async checkGoogleAcct() {
     try {
-      const { sendAs } = await Google.gmail.fetchAcctAliases(this.acctEmail!);
+      const { sendAs } = await this.gmail!.fetchAcctAliases();
       const primary = sendAs.find(addr => addr.isPrimary === true);
       if (!primary) {
         await Ui.modal.warning(`Your account sendAs does not have any primary sendAsEmail`);

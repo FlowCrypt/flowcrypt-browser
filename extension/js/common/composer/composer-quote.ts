@@ -9,7 +9,6 @@ import { Ui } from '../browser.js';
 import { Api, ProgressCb } from '../api/api.js';
 import { Catch } from '../platform/catch.js';
 import { ComposerComponent } from './interfaces/composer-component.js';
-import { Google } from '../api/google.js';
 import { Mime, MsgBlock } from '../core/mime.js';
 import { Buf } from '../core/buf.js';
 import { FormatError, PgpMsg } from '../core/pgp.js';
@@ -127,7 +126,7 @@ export class ComposerQuote extends ComposerComponent {
 
   public getAndDecryptMessage = async (msgId: string, method: 'reply' | 'forward', progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> => {
     try {
-      const { raw } = await Google.gmail.msgGet(this.view.acctEmail, msgId, 'raw', progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
+      const { raw } = await this.composer.emailProvider.msgGet(msgId, 'raw', progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
       const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw!));
       const headers = {
         date: String(decoded.headers.date), from: decoded.from,

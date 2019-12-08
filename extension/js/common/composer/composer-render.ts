@@ -14,7 +14,7 @@ import { KeyImportUi } from '../ui/key_import_ui.js';
 import { Pgp } from '../core/pgp.js';
 import { Str } from '../core/common.js';
 import { Store } from '../platform/store.js';
-import { SendableMsg } from '../api/email_provider_api.js';
+import { SendableMsg } from '../api/email_provider/email_provider_api.js';
 import { Att } from '../core/att.js';
 
 export class ComposerRender extends ComposerComponent {

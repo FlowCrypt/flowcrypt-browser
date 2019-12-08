@@ -3,7 +3,6 @@
 'use strict';
 
 import { Ui } from '../browser.js';
-import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
 import { ComposerDraft } from './composer-draft.js';
 import { ComposerQuote } from './composer-quote.js';
 import { ComposerRecipients } from './composer-recipients.js';
@@ -20,6 +19,7 @@ import { ComposerMyPubkey } from './composer-my-pubkey.js';
 import { ComposerStorage } from './composer-storage.js';
 import { ComposeView } from '../../../chrome/elements/compose.js';
 import { BrowserMsg } from '../extension.js';
+import { EmailProviderInterface } from '../api/email_provider/email_provider_api.js';
 
 export class Composer {
 
@@ -83,11 +83,10 @@ export class Composer {
 
   public canReadEmails: boolean;
   public initPromise: Promise<void>;
+  public emailProvider: EmailProviderInterface;
 
-  constructor(
-    public view: ComposeView,
-    public app: ComposerAppFunctionsInterface,
-  ) {
+  constructor(public view: ComposeView) {
+    this.emailProvider = view.emailProvider!;
     this.draft = new ComposerDraft(this);
     this.quote = new ComposerQuote(this);
     this.recipients = new ComposerRecipients(this);

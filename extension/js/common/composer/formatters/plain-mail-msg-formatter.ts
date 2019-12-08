@@ -2,8 +2,7 @@
 
 'use strict';
 
-import { SendableMsg } from '../../api/email_provider_api.js';
-import { Google } from '../../api/google.js';
+import { SendableMsg } from '../../api/email_provider/email_provider_api.js';
 import { SendBtnTexts, NewMsgData } from '../interfaces/composer-types.js';
 import { SendableMsgBody } from '../../core/mime.js';
 import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
@@ -17,7 +16,7 @@ export class PlainMsgMailFormatter extends BaseMailFormatter implements MailForm
     if (this.richText) {
       body['text/html'] = newMsgData.plainhtml;
     }
-    return await Google.createMsgObj(this.acctEmail, newMsgData.sender, newMsgData.recipients, newMsgData.subject, body, atts, this.composer.view.threadId);
+    return await this.composer.emailProvider.createMsgObj(newMsgData.sender, newMsgData.recipients, newMsgData.subject, body, atts, this.composer.view.threadId);
   }
 
 }

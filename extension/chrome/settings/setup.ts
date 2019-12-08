@@ -23,6 +23,7 @@ import { SetupRecoverKeyModule } from './setup/setup-recover-key.js';
 import { SetupCreateKeyModule } from './setup/setup-create-key.js';
 import { SetupImportKeyModule } from './setup/setup-import-key.js';
 import { SetupRenderModule } from './setup/setup-render.js';
+import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
 
 export interface SetupOptions {
   passphrase: string;
@@ -43,7 +44,7 @@ export class SetupView extends View {
 
   readonly emailDomainsToSkip = ['yahoo', 'live', 'outlook'];
   readonly keyImportUi = new KeyImportUi({ checkEncryption: true });
-
+  readonly gmail: Gmail;
   readonly setupRecoverKey: SetupRecoverKeyModule;
   readonly setupCreateKey: SetupCreateKeyModule;
   readonly setupImportKey: SetupImportKeyModule;
@@ -78,6 +79,7 @@ export class SetupView extends View {
     this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId); // for step_2b_manual_enter, if user chooses so
     this.keyImportUi.onBadPassphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').focus();
     this.keyImportUi.renderPassPhraseStrengthValidationInput($('.input_password'), $('.action_create_private'));
+    this.gmail = new Gmail(this.acctEmail);
     // modules
     this.setupRecoverKey = new SetupRecoverKeyModule(this);
     this.setupCreateKey = new SetupCreateKeyModule(this);

@@ -6,9 +6,9 @@ import { Store } from '../common/platform/store.js';
 import { Bm } from '../common/extension.js';
 import { BgUtils } from './bgutils.js';
 import { Api } from '../common/api/api.js';
-import { Google } from '../common/api/google.js';
 import { Pgp } from '../common/core/pgp.js';
 import { Url } from '../common/core/common.js';
+import { Gmail } from '../common/api/email_provider/gmail/gmail.js';
 
 export class BgHandlers {
 
@@ -37,7 +37,7 @@ export class BgHandlers {
   }
 
   public static ajaxGmailAttGetChunkHandler = async (r: Bm.AjaxGmailAttGetChunk): Promise<Bm.Res.AjaxGmailAttGetChunk> => {
-    return { chunk: await Google.gmail.attGetChunk(r.acctEmail, r.msgId, r.attId) };
+    return { chunk: await new Gmail(r.acctEmail).attGetChunk(r.msgId, r.attId) };
   }
 
   public static pgpKeyDetails = async ({ pubkey }: Bm.PgpKeyDetails): Promise<Bm.Res.PgpKeyDetails> => {

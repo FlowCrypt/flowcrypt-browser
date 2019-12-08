@@ -2,21 +2,21 @@
 
 'use strict';
 
-import { Catch } from '../../js/common/platform/catch.js';
 import { Store, AccountStoreExtension, Scopes, AccountStore } from '../../js/common/platform/store.js';
 import { Ui } from '../../js/common/browser.js';
 import { Composer } from '../../js/common/composer/composer.js';
-import { Api, ProgressCb, ChunkedCb } from '../../js/common/api/api.js';
+import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg } from '../../js/common/extension.js';
-import { Google } from '../../js/common/api/google.js';
-import { Contact, openpgp } from '../../js/common/core/pgp.js';
-import { SendableMsg, ReplyParams } from '../../js/common/api/email_provider_api.js';
+import { openpgp } from '../../js/common/core/pgp.js';
+import { ReplyParams, EmailProviderInterface } from '../../js/common/api/email_provider/email_provider_api.js';
 import { Assert } from '../../js/common/assert.js';
 import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Backend } from '../../js/common/api/backend.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
+import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
+import { GmailParser } from '../../js/common/api/email_provider/gmail/gmail-parser.js';
 
 export type DeterminedMsgHeaders = {
   lastMsgId: string,
@@ -46,6 +46,7 @@ export class ComposeView extends View {
   public factory: XssSafeFactory | undefined;
   public replyParams: ReplyParams | undefined;
   public composer: Composer | undefined;
+  public emailProvider: EmailProviderInterface;
 
   constructor() {
     super();
@@ -65,6 +66,7 @@ export class ComposeView extends View {
     this.draftId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
     this.replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
     this.isReplyBox = !!this.replyMsgId;
+    this.emailProvider = new Gmail(this.acctEmail);
     Backend.getSubscriptionWithoutLogin(this.acctEmail).catch(Api.err.reportIfSignificant); // updates storage
     openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
   }
@@ -84,15 +86,7 @@ export class ComposeView extends View {
     if (this.isReplyBox && this.threadId && !this.ignoreDraft && this.storage.drafts_reply && this.storage.drafts_reply[this.threadId]) {
       this.draftId = this.storage.drafts_reply[this.threadId]; // there may be a draft we want to load
     }
-    this.composer = new Composer(this, {
-      emailProviderDraftGet: (draftId: string) => Google.gmail.draftGet(this.acctEmail, draftId, 'raw'),
-      emailProviderDraftCreate: Google.gmail.draftCreate,
-      emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Google.gmail.draftUpdate(this.acctEmail, draftId, mimeMsg),
-      emailProviderDraftDelete: (draftId: string) => Google.gmail.draftDelete(this.acctEmail, draftId),
-      emailProviderMsgSend: (message: SendableMsg, renderUploadProgress: ProgressCb) => Google.gmail.msgSend(this.acctEmail, message, renderUploadProgress),
-      emailProviderGuessContactsFromSentEmails: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => this.emailProviderGuessContactsFromSentEmails(query, knownContacts, multiCb),
-      emailProviderExtractArmoredBlock: (msgId: string) => Google.gmail.extractArmoredBlock(this.acctEmail, msgId, 'full'),
-    });
+    this.composer = new Composer(this);
   }
 
   setHandlers() {
@@ -111,9 +105,9 @@ export class ComposeView extends View {
   private async fetchReplyMeta(): Promise<void> {
     Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: `Loading secure reply box..${Ui.spinner('green')}` }));
     try {
-      const gmailMsg = await Google.gmail.msgGet(this.acctEmail, this.replyMsgId!, 'metadata');
+      const gmailMsg = await this.emailProvider.msgGet(this.replyMsgId!, 'metadata');
       const aliases = AccountStoreExtension.getEmailAliasesIncludingPrimary(this.acctEmail, this.storage!.sendAs);
-      this.replyParams = Google.determineReplyMeta(this.acctEmail, aliases, gmailMsg);
+      this.replyParams = GmailParser.determineReplyMeta(this.acctEmail, aliases, gmailMsg);
       this.threadId = gmailMsg.threadId || '';
     } catch (e) {
       if (Api.err.isAuthPopupNeeded(e)) {
@@ -126,21 +120,6 @@ export class ComposeView extends View {
     } finally {
       $('#loader').remove();
     }
-  }
-
-  private emailProviderGuessContactsFromSentEmails(query: string, knownContacts: Contact[], multiCb: ChunkedCb) {
-    Google.gmail.searchContacts(this.acctEmail, query, knownContacts, multiCb).catch(e => {
-      if (Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
-      } else if (Api.err.isNetErr(e)) {
-        Ui.toast(`Network erroc - cannot search contacts`).catch(Catch.reportErr);
-      } else if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
-        Ui.toast(`Cannot search contacts - account disabled or forbidden by admin policy`).catch(Catch.reportErr);
-      } else {
-        Catch.reportErr(e);
-        Ui.toast(`Error searching contacts: ${Api.err.eli5(e)}`).catch(Catch.reportErr);
-      }
-    });
   }
 
 }

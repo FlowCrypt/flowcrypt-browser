@@ -4,7 +4,7 @@
 
 import { Composer } from './composer.js';
 import { Str, Value } from '../core/common.js';
-import { ProviderContactsQuery } from '../api/email_provider_api.js';
+import { ProviderContactsQuery } from '../api/email_provider/email_provider_api.js';
 import { Contact, Pgp } from '../core/pgp.js';
 import { Xss } from '../platform/xss.js';
 import { Ui } from '../browser.js';
@@ -15,7 +15,7 @@ import { ComposerComponent } from './interfaces/composer-component.js';
 import { BrowserMsg } from '../extension.js';
 import { Catch } from '../platform/catch.js';
 import { moveElementInArray } from '../platform/util.js';
-import { RecipientType, Api } from '../api/api.js';
+import { RecipientType, Api, ChunkedCb } from '../api/api.js';
 import { Store } from '../platform/store.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './composer-errs.js';
 
@@ -258,7 +258,7 @@ export class ComposerRecipients extends ComposerComponent {
             }
           } else if (this.composer.canReadEmails) {
             this.composer.errs.debug(`searchContacts (Gmail Sent Messages) 3`);
-            this.composer.app.emailProviderGuessContactsFromSentEmails(query.substring, contacts, contacts => this.renderAndAddToDBAPILoadedContacts(input, contacts.new));
+            this.guessContactsFromSentEmails(query.substring, contacts, contacts => this.renderAndAddToDBAPILoadedContacts(input, contacts.new));
           }
           this.composer.errs.debug(`searchContacts 4`);
           this.renderSearchResultsLoadingDone();
@@ -273,6 +273,21 @@ export class ComposerRecipients extends ComposerComponent {
       Ui.toast(`Error searching contacts: ${Api.err.eli5(e)}`, 5).catch(Catch.reportErr);
       throw e;
     }
+  }
+
+  private guessContactsFromSentEmails(query: string, knownContacts: Contact[], multiCb: ChunkedCb) {
+    this.composer.emailProvider.guessContactsFromSentEmails(query, knownContacts, multiCb).catch(e => {
+      if (Api.err.isAuthPopupNeeded(e)) {
+        BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
+      } else if (Api.err.isNetErr(e)) {
+        Ui.toast(`Network erroc - cannot search contacts`).catch(Catch.reportErr);
+      } else if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
+        Ui.toast(`Cannot search contacts - account disabled or forbidden by admin policy`).catch(Catch.reportErr);
+      } else {
+        Catch.reportErr(e);
+        Ui.toast(`Error searching contacts: ${Api.err.eli5(e)}`).catch(Catch.reportErr);
+      }
+    });
   }
 
   private renderSearchRes = (input: JQuery<HTMLElement>, contacts: Contact[], query: ProviderContactsQuery) => {
@@ -814,7 +829,7 @@ export class ComposerRecipients extends ComposerComponent {
     const qSentPubkey = `is:sent to:${theirEmail} "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"`;
     const qReceivedMsg = `from:${theirEmail} "BEGIN PGP MESSAGE" "END PGP MESSAGE"`;
     try {
-      const response = await Google.gmail.msgList(this.view.acctEmail, `(${qSentPubkey}) OR (${qReceivedMsg})`, true);
+      const response = await this.composer.emailProvider.msgList(`(${qSentPubkey}) OR (${qReceivedMsg})`, true);
       if (response.messages) {
         await Store.setAcct(this.view.acctEmail, { pubkey_sent_to: (storage.pubkey_sent_to || []).concat(theirEmail) });
         return true;

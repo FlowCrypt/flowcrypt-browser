@@ -3,10 +3,9 @@
 'use strict';
 
 import { NewMsgData, PubkeyResult, SendBtnTexts } from '../interfaces/composer-types.js';
-import { SendableMsg } from '../../api/email_provider_api.js';
+import { SendableMsg } from '../../api/email_provider/email_provider_api.js';
 import { Composer } from '../composer.js';
 import { PgpMsg, Pgp, Pwd } from '../../core/pgp.js';
-import { Google } from '../../api/google.js';
 import { Catch } from '../../platform/catch.js';
 import { SendableMsgBody, Mime } from '../../core/mime.js';
 import { Buf } from '../../core/buf.js';
@@ -57,7 +56,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         // however if there is more than one recipient with pubkeys, still append the encrypted message as attachment
         atts = pubkeys.length === 1 ? [] : [new Att({ data: Buf.fromUtfStr(encrypted.data), name: 'encrypted.asc' })];
       }
-      return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, encryptedBody, atts, this.composer.view.threadId);
+      return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, encryptedBody, atts, this.composer.view.threadId);
     } else { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
       if (newMsg.pwd) {
         this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-richText-sending-option'), 'richText', false); // do not use rich text
@@ -70,7 +69,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         new Att({ data: Buf.fromUtfStr('Version: 1'), type: 'application/pgp-encrypted', contentDescription: 'PGP/MIME version identification' }),
         new Att({ data: Buf.fromUtfStr(encrypted.data), type: 'application/octet-stream', contentDescription: 'OpenPGP encrypted message', name: 'encrypted.asc' }),
       ];
-      return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, {}, atts, this.composer.view.threadId, this.pgpMimeRootType);
+      return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, {}, atts, this.composer.view.threadId, this.pgpMimeRootType);
     }
   }
 
