@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { NewMsgData, PubkeyResult, SendBtnTexts } from '../interfaces/composer-types.js';
+import { NewMsgData, PubkeyResult, SendBtnTexts } from '../composer-types.js';
 import { SendableMsg } from '../../api/email_provider/email_provider_api.js';
 import { Composer } from '../composer.js';
 import { PgpMsg, Pgp, Pwd } from '../../core/pgp.js';

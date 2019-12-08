@@ -2,13 +2,13 @@
 
 'use strict';
 
-import { ComposerComponent } from './interfaces/composer-component.js';
+import { ComposerComponent } from './composer-abstract-component.js';
 import { Ui, BrowserEventErrHandler } from '../browser.js';
 import { BrowserMsg, Extension } from '../extension.js';
 import { Catch, UnreportableError } from '../platform/catch.js';
 import { Str } from '../core/common.js';
 import { Api } from '../api/api.js';
-import { SendBtnTexts } from './interfaces/composer-types.js';
+import { SendBtnTexts } from './composer-types.js';
 import { KeyInfo, Pwd } from '../core/pgp.js';
 import { Settings } from '../settings.js';
 

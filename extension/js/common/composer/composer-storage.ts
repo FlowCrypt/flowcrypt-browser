@@ -2,13 +2,13 @@
 
 'use strict';
 
-import { ComposerComponent } from './interfaces/composer-component.js';
+import { ComposerComponent } from './composer-abstract-component.js';
 import { Store, SendAsAlias } from '../platform/store.js';
 import { Assert } from '../assert.js';
 import { KeyInfo, Pgp, Contact, openpgp } from '../core/pgp.js';
 import { Dict } from '../core/common.js';
 import { Catch } from '../platform/catch.js';
-import { CollectPubkeysResult } from './interfaces/composer-types.js';
+import { CollectPubkeysResult } from './composer-types.js';
 import { PubkeySearchResult, Keyserver } from '../api/keyserver.js';
 import { Api } from '../api/api.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from './composer-errs.js';

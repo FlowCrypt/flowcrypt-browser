@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { NewMsgData } from "../interfaces/composer-types.js";
+import { NewMsgData } from "../composer-types.js";
 import { KeyInfo } from "../../core/pgp.js";
 import { Composer } from "../composer.js";
 import { PlainMsgMailFormatter } from './plain-mail-msg-formatter.js';

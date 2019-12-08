@@ -2,10 +2,10 @@
 
 'use strict';
 
-import { ComposerComponent } from './interfaces/composer-component.js';
+import { ComposerComponent } from './composer-abstract-component.js';
 import { Xss } from '../platform/xss.js';
 import { Ui } from '../browser.js';
-import { NewMsgData, RecipientElement, Recipients } from './interfaces/composer-types.js';
+import { NewMsgData, RecipientElement, Recipients } from './composer-types.js';
 
 export class ComposerInput extends ComposerComponent {
 

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { ComposerComponent } from './interfaces/composer-component.js';
+import { ComposerComponent } from './composer-abstract-component.js';
 import { Settings } from '../settings.js';
 import { Xss } from '../platform/xss.js';
 import { Dict } from '../core/common.js';

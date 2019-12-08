@@ -2,9 +2,9 @@
 
 'use strict';
 
-import { ComposerComponent } from './interfaces/composer-component.js';
+import { ComposerComponent } from './composer-abstract-component.js';
 import { Ui } from '../browser.js';
-import { RecipientStatuses, SendBtnTexts } from './interfaces/composer-types.js';
+import { RecipientStatuses, SendBtnTexts } from './composer-types.js';
 import { KeyImportUi } from '../ui/key_import_ui.js';
 import { Store } from '../platform/store.js';
 

@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { ComposerComponent } from './interfaces/composer-component.js';
-import { SendBtnTexts } from './interfaces/composer-types.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { SendBtnTexts } from './composer-types.js';
 import { Composer } from './composer.js';
 import { Xss } from '../platform/xss.js';
 import { Ui } from '../browser.js';

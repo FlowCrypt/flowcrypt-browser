@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { ComposerComponent } from './interfaces/composer-component.js';
-import { Recipients } from './interfaces/composer-types.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { Recipients } from './composer-types.js';
 import { Ui, JQS } from '../browser.js';
 import { RecipientType } from '../api/api.js';
 import { Xss } from '../platform/xss.js';

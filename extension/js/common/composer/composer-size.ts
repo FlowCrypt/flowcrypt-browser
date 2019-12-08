@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { ComposerComponent } from './interfaces/composer-component.js';
+import { ComposerComponent } from './composer-abstract-component.js';
 import { BrowserMsg } from '../extension.js';
 import { Catch } from '../platform/catch.js';
 import { Ui } from '../browser.js';

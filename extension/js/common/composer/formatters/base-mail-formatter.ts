@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { NewMsgData } from '../interfaces/composer-types.js';
+import { NewMsgData } from '../composer-types.js';
 import { SendableMsg } from '../../api/email_provider/email_provider_api.js';
 import { Composer } from '../composer.js';
 

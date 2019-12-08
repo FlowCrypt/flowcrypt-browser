@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { ComposerComponent } from './interfaces/composer-component.js';
-import { PopoverOpt, PopoverChoices } from './interfaces/composer-types.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { PopoverOpt, PopoverChoices } from './composer-types.js';
 import { Xss } from '../platform/xss.js';
 import { Lang } from '../lang.js';
 import { Ui } from '../browser.js';

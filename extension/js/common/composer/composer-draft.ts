@@ -12,8 +12,8 @@ import { BrowserMsg } from '../extension.js';
 import { Catch } from '../platform/catch.js';
 import { Store } from '../platform/store.js';
 import { Composer } from './composer.js';
-import { Recipients } from './interfaces/composer-types.js';
-import { ComposerComponent } from './interfaces/composer-component.js';
+import { Recipients } from './composer-types.js';
+import { ComposerComponent } from './composer-abstract-component.js';
 import { Url } from '../core/common.js';
 
 export class ComposerDraft extends ComposerComponent {
