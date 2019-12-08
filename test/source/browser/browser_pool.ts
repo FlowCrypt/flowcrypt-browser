@@ -51,7 +51,6 @@ export class BrowserPool {
           const pages = await handle.browser.pages();
           console.log(`+++ initial-urls:${pages.map(p => p.url()).join(',')}`);
           const initialPage = pages.find(p => p.url().includes('chrome/settings/initial.htm'));
-          console.log(`+++ found-initial-extension-page:${initialPage.url()}`);
           if (!initialPage) {
             console.log(`+++ nothing found, re-throwing`);
             throw e;
