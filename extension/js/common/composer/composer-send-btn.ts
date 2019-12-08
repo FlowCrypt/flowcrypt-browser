@@ -86,7 +86,7 @@ export class ComposerSendBtn extends ComposerComponent {
       this.composer.S.cached('send_btn_note').text('');
       const newMsgData = this.composer.input.extractAll();
       await this.composer.errs.throwIfFormValsInvalid(newMsgData);
-      const senderKi = await this.composer.storage.getKey(this.view.acctEmail, this.composer.sender.getSender());
+      const senderKi = await this.composer.storage.getKey(this.composer.sender.getSender());
       let signingPrv: OpenPGP.key.Key | undefined;
       if (this.popover.choices.sign) {
         signingPrv = await this.decryptSenderKey(senderKi);

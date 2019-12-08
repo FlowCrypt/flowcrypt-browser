@@ -28,8 +28,8 @@ export class ComposerStorage extends ComposerComponent {
     });
   }
 
-  async getKey(acctEmail: string, senderEmail: string): Promise<KeyInfo> {
-    const keys = await Store.keysGet(acctEmail);
+  async getKey(senderEmail: string): Promise<KeyInfo> {
+    const keys = await Store.keysGet(this.view.acctEmail);
     let result = await this.composer.myPubkey.chooseMyPublicKeyBySenderEmail(keys, senderEmail);
     if (!result) {
       result = keys.find(ki => ki.primary);

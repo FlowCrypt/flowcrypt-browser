@@ -91,7 +91,7 @@ export class ComposerDraft extends ComposerComponent {
       this.currentlySavingDraft = true;
       try {
         this.composer.S.cached('send_btn_note').text('Saving');
-        const primaryKi = await this.composer.storage.getKey(this.view.acctEmail, this.composer.sender.getSender());
+        const primaryKi = await this.composer.storage.getKey(this.composer.sender.getSender());
         const plaintext = this.composer.input.extract('text', 'input_text');
         const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(plaintext), armor: true }) as OpenPGP.EncryptArmorResult;
         let body: string;
