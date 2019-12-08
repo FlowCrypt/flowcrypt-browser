@@ -1,8 +1,8 @@
 import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
-import { SetupPageRecipe } from '../page_recipe';
 import { BrowserRecipe } from '../browser_recipe';
 import * as ava from 'ava';
 import { TestVariant } from '../../util';
+import { SetupPageRecipe } from '../page_recipe/setup-page-recipe';
 
 // tslint:disable:no-blank-lines-func
 
