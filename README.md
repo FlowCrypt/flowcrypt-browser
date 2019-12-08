@@ -1,7 +1,6 @@
 # FlowCrypt: Encrypt Gmail with PGP
 
 
-
 ## Users
 
 Get [FlowCrypt](https://flowcrypt.com/) browser extension at: https://flowcrypt.com/download
