@@ -20,6 +20,7 @@ import { Catch } from '../platform/catch.js';
 import { Mime } from '../core/mime.js';
 import { ComposerMyPubkey } from './composer-my-pubkey.js';
 import { Scopes } from '../platform/store.js';
+import { ComposerStorage } from './composer-storage.js';
 
 export class Composer {
 
@@ -79,6 +80,7 @@ export class Composer {
   public input: ComposerInput;
   public render: ComposerRender;
   public myPubkey: ComposerMyPubkey;
+  public storage: ComposerStorage;
 
   public canReadEmails: boolean;
   public initPromise: Promise<void>;
@@ -97,6 +99,7 @@ export class Composer {
     this.input = new ComposerInput(this);
     this.render = new ComposerRender(this);
     this.myPubkey = new ComposerMyPubkey(this);
+    this.storage = new ComposerStorage(this);
     this.canReadEmails = this.scopes.read || this.scopes.modify;
     this.initPromise = this.render.initActions().catch(Catch.reportErr);
   }

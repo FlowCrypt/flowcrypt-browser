@@ -23,7 +23,7 @@ export class GeneralMailFormatter {
       return await new SignedMsgMailFormatter(composer).sendableMsg(newMsgData, signingPrv!);
     }
     // encrypt (optionally sign)
-    const { armoredPubkeys, emailsWithoutPubkeys } = await composer.app.collectAllAvailablePublicKeys(newMsgData.sender, senderKi, recipientsEmails);
+    const { armoredPubkeys, emailsWithoutPubkeys } = await composer.storage.collectAllAvailablePublicKeys(newMsgData.sender, senderKi, recipientsEmails);
     if (emailsWithoutPubkeys.length) {
       await composer.errs.throwIfEncryptionPasswordInvalid(senderKi, newMsgData);
     }

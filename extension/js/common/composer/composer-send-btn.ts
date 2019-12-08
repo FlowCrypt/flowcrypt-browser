@@ -86,7 +86,7 @@ export class ComposerSendBtn extends ComposerComponent {
       this.composer.S.cached('send_btn_note').text('');
       const newMsgData = this.composer.input.extractAll();
       await this.composer.errs.throwIfFormValsInvalid(newMsgData);
-      const senderKi = await this.composer.app.storageGetKey(this.urlParams.acctEmail, this.composer.sender.getSender());
+      const senderKi = await this.composer.storage.storageGetKey(this.urlParams.acctEmail, this.composer.sender.getSender());
       let signingPrv: OpenPGP.key.Key | undefined;
       if (this.popover.choices.sign) {
         signingPrv = await this.decryptSenderKey(senderKi);
@@ -147,10 +147,10 @@ export class ComposerSendBtn extends ComposerComponent {
 
   private decryptSenderKey = async (senderKi: KeyInfo): Promise<OpenPGP.key.Key | undefined> => {
     const prv = await Pgp.key.read(senderKi.private);
-    const passphrase = await this.composer.app.storagePassphraseGet(senderKi);
+    const passphrase = await this.composer.storage.storagePassphraseGet(senderKi);
     if (typeof passphrase === 'undefined' && !prv.isFullyDecrypted()) {
       BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'sign', longids: [senderKi.longid] });
-      if ((typeof await this.composer.app.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
+      if ((typeof await this.composer.storage.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
         return await this.decryptSenderKey(senderKi);
       } else { // timeout - reset - no passphrase entered
         this.resetSendBtn();
@@ -179,7 +179,7 @@ export class ComposerSendBtn extends ComposerComponent {
         if (sendAs && sendAs[email] && sendAs[email].name) {
           name = sendAs[email].name!;
         } else {
-          const [contact] = await this.composer.app.storageContactGet([email]);
+          const [contact] = await Store.dbContactGet(undefined, [email]);
           if (contact && contact.name) {
             name = contact.name;
           }

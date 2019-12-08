@@ -9,6 +9,7 @@ import { AttUI, AttLimits } from '../ui/att_ui.js';
 import { Composer } from './composer.js';
 import { Rules } from '../rules.js';
 import { Pgp } from '../core/pgp.js';
+import { Store } from '../platform/store.js';
 
 export class ComposerAtts extends ComposerComponent {
 
@@ -33,7 +34,7 @@ export class ComposerAtts extends ComposerComponent {
   }
 
   private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
-    const subscription = await this.composer.app.storageGetSubscription();
+    const subscription = await Store.subscription(this.urlParams.acctEmail);
     if (!Rules.relaxSubscriptionRequirements(this.composer.sender.getSender()) && !subscription.active) {
       return {
         sizeMb: 5,

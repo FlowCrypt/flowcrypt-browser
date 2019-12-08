@@ -10,6 +10,7 @@ import { Google } from '../../api/google.js';
 import { Catch } from '../../platform/catch.js';
 import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
 import { SendableMsgBody } from '../../core/mime.js';
+import { Store } from '../../platform/store.js';
 
 export class SignedMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
 
@@ -30,7 +31,7 @@ export class SignedMsgMailFormatter extends BaseMailFormatter implements MailFor
       newMsg.plaintext = newMsg.plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
       const signedData = await PgpMsg.sign(signingPrv, newMsg.plaintext);
       const allContacts = [...newMsg.recipients.to || [], ...newMsg.recipients.cc || [], ...newMsg.recipients.bcc || []];
-      this.composer.app.storageContactUpdate(allContacts, { last_use: Date.now() }).catch(Catch.reportErr);
+      Store.dbContactUpdate(undefined, allContacts, { last_use: Date.now() }).catch(Catch.reportErr);
       const body = { 'text/plain': signedData };
       return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, body, atts, this.composer.urlParams.threadId);
     }

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, Subscription } from '../../js/common/platform/store.js';
+import { Store } from '../../js/common/platform/store.js';
 import { Att } from '../../js/common/core/att.js';
 import { Ui } from '../../js/common/browser.js';
 import { Composer } from '../../js/common/composer/composer.js';
@@ -34,18 +34,6 @@ Catch.try(async () => {
   const att = Att.keyinfoAsPubkeyAtt(primaryKi);
   const appFunctions: ComposerAppFunctionsInterface = {
     doesRecipientHaveMyPubkey: (): Promise<boolean | undefined> => Promise.resolve(false),
-    storageGetAddresses: () => undefined,
-    storageGetHideMsgPassword: () => false,
-    storageGetSubscription: () => Promise.resolve(new Subscription(undefined)),
-    storageSetDraftMeta: () => Promise.resolve(),
-    storageGetKey: () => { throw new Error('storage_get_key not implemented'); },
-    storagePassphraseGet: () => Promise.resolve(undefined),
-    storageAddAdminCodes: () => Promise.resolve(),
-    storageContactGet: () => Promise.resolve([]),
-    storageContactUpdate: () => Promise.resolve(),
-    storageContactSave: () => Promise.resolve(),
-    storageContactSearch: () => Promise.resolve([]),
-    storageContactObj: Store.dbContactObj,
     emailProviderDraftGet: () => Promise.resolve(undefined),
     emailProviderDraftCreate: () => Promise.reject(undefined),
     emailProviderDraftUpdate: () => Promise.resolve({}),
@@ -58,9 +46,6 @@ Catch.try(async () => {
     renderHelpDialog: () => undefined,
     closeMsg: () => undefined,
     factoryAtt: (att) => `<div>${Xss.escape(att.name)}</div>`,
-    whenMasterPassphraseEntered: () => Promise.resolve(undefined),
-    collectAllAvailablePublicKeys: () => Promise.reject(undefined),
-    lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded: () => Promise.reject(undefined),
     updateSendAs: () => undefined
   };
   await (async () => {

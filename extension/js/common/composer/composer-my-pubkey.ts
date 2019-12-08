@@ -7,6 +7,7 @@ import { Ui } from '../browser.js';
 import { Catch } from '../platform/catch.js';
 import { Lang } from '../lang.js';
 import { Api } from '../api/api.js';
+import { Store } from '../platform/store.js';
 
 export class ComposerMyPubkey extends ComposerComponent {
 
@@ -27,7 +28,7 @@ export class ComposerMyPubkey extends ComposerComponent {
       return;
     }
     (async () => {
-      const contacts = await this.composer.app.storageContactGet(this.composer.recipients.getRecipients().map(r => r.email));
+      const contacts = await Store.dbContactGet(undefined, this.composer.recipients.getRecipients().map(r => r.email));
       for (const contact of contacts) {
         if (typeof contact === 'object' && contact.has_pgp && contact.client !== 'cryptup') {
           // new message, and my key is not uploaded where the recipient would look for it

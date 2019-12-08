@@ -23,9 +23,17 @@ export class ComposerRender extends ComposerComponent {
     await this.initComposeBox();
     this.composer.S.cached('icon_help').click(Ui.event.handle(() => this.composer.app.renderHelpDialog(), this.composer.errs.handlers(`render help dialog`)));
     this.composer.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
+    this.composer.atts.initActions();
     this.composer.draft.initActions().catch(Catch.reportErr);
-    this.composer.size.initActions();
+    this.composer.errs.initActions();
     this.composer.input.initActions();
+    this.composer.myPubkey.initActions();
+    await this.composer.pwdOrPubkeyContainer.initActions();
+    this.composer.quote.initActions();
+    this.composer.size.initActions();
+    this.composer.storage.initActions();
+    // this.composer.recipients.initActions - initiated below
+    // this.composer.sendBtn.initActions - initiated below
     await this.composer.sender.checkEmailAliases();
   }
 
@@ -94,7 +102,7 @@ export class ComposerRender extends ComposerComponent {
       this.urlParams.subject = `${(method === 'reply' ? 'Re' : 'Fwd')}: ${this.urlParams.subject}`;
       if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
         (async () => { // not awaited because can take a long time & blocks rendering
-          const footer = this.composer.sender.getFooter();
+          const footer = await this.composer.sender.getFooter();
           await this.composer.quote.addTripleDotQuoteExpandBtn(this.urlParams.replyMsgId, method, footer);
           if (this.composer.quote.messageToReplyOrForward) {
             const msgId = this.composer.quote.messageToReplyOrForward.headers['message-id'];
@@ -201,7 +209,7 @@ export class ComposerRender extends ComposerComponent {
         // Recipients may be left unrendered, as standard text, with a trailing comma
         await this.composer.recipients.parseRenderRecipients(this.composer.S.cached('input_to')); // this will force firefox to render them on load
       }
-      this.composer.sender.renderSenderAliasesOptionsToggle();
+      await this.composer.sender.renderSenderAliasesOptionsToggle();
     } else {
       $('.close_new_message').click(Ui.event.handle(async () => {
         if (!this.composer.sendBtn.isSendMessageInProgres() ||
@@ -210,10 +218,8 @@ export class ComposerRender extends ComposerComponent {
         }
       }, this.composer.errs.handlers(`close message`)));
       this.composer.S.cached('header').find('#header_title').click(() => $('.minimize_new_message').click());
-      if (this.composer.app.storageGetAddresses()) {
-        this.composer.sender.renderSenderAliasesOptions(this.composer.app.storageGetAddresses()!);
-      }
-      const footer = this.composer.sender.getFooter();
+      this.composer.sender.renderSenderAliasesOptions(await this.composer.storage.storageGetAddresses());
+      const footer = await this.composer.sender.getFooter();
       await this.composer.quote.addTripleDotQuoteExpandBtn(undefined, undefined, footer);
       this.composer.size.setInputTextHeightManuallyIfNeeded();
     }

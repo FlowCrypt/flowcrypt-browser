@@ -74,7 +74,7 @@ export class ComposerDraft extends ComposerComponent {
       } else if (this.urlParams.isReplyBox && Api.err.isNotFound(e)) {
         Catch.log('about to reload reply_message automatically: get draft 404', this.urlParams.acctEmail);
         await Ui.time.sleep(500);
-        await this.composer.app.storageSetDraftMeta(false, this.urlParams.draftId, this.urlParams.threadId);
+        await this.composer.storage.storageDraftMetaDelete(this.urlParams.draftId, this.urlParams.threadId);
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
         this.urlParams.draftId = '';
         window.location.href = Url.create(Env.getUrlNoParams(), this.urlParams);
@@ -91,7 +91,7 @@ export class ComposerDraft extends ComposerComponent {
       this.currentlySavingDraft = true;
       try {
         this.composer.S.cached('send_btn_note').text('Saving');
-        const primaryKi = await this.composer.app.storageGetKey(this.urlParams.acctEmail, this.composer.sender.getSender());
+        const primaryKi = await this.composer.storage.storageGetKey(this.urlParams.acctEmail, this.composer.sender.getSender());
         const plaintext = this.composer.input.extract('text', 'input_text');
         const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(plaintext), armor: true }) as OpenPGP.EncryptArmorResult;
         let body: string;
@@ -119,7 +119,7 @@ export class ComposerDraft extends ComposerComponent {
           const { id } = await this.composer.app.emailProviderDraftCreate(this.urlParams.acctEmail, mimeMsg, this.urlParams.threadId);
           this.composer.S.cached('send_btn_note').text('Saved');
           this.urlParams.draftId = id;
-          await this.composer.app.storageSetDraftMeta(true, id, this.urlParams.threadId, to, String(this.composer.S.cached('input_subject').val()));
+          await this.composer.storage.storageDraftMetaSet(id, this.urlParams.threadId, to, String(this.composer.S.cached('input_subject').val()));
           // recursing one more time, because we need the draftId we get from this reply in the message itself
           // essentially everytime we save draft for the first time, we have to save it twice
           // currentlySavingDraft will remain true for now
@@ -158,7 +158,7 @@ export class ComposerDraft extends ComposerComponent {
     clearInterval(this.saveDraftInterval);
     await Ui.time.wait(() => !this.currentlySavingDraft ? true : undefined);
     if (this.urlParams.draftId) {
-      await this.composer.app.storageSetDraftMeta(false, this.urlParams.draftId, this.urlParams.threadId);
+      await this.composer.storage.storageDraftMetaDelete(this.urlParams.draftId, this.urlParams.threadId);
       try {
         await this.composer.app.emailProviderDraftDelete(this.urlParams.draftId);
         this.urlParams.draftId = '';
@@ -175,7 +175,7 @@ export class ComposerDraft extends ComposerComponent {
   }
 
   private async decryptAndRenderDraft(encryptedArmoredDraft: string, headers: { subject?: string, from?: string; to: string[], cc: string[], bcc: string[] }): Promise<boolean> {
-    const passphrase = await this.composer.app.storagePassphraseGet();
+    const passphrase = await this.composer.storage.storagePassphraseGet();
     if (typeof passphrase !== 'undefined') {
       const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.urlParams.acctEmail), encryptedData: Buf.fromUtfStr(encryptedArmoredDraft) });
       if (result.success) {
@@ -236,7 +236,7 @@ export class ComposerDraft extends ComposerComponent {
       BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'draft', longids: ['primary'] });
     }));
     this.composer.S.cached('prompt').find('a.action_close').click(Ui.event.handle(() => this.composer.app.closeMsg()));
-    await this.composer.app.whenMasterPassphraseEntered();
+    await this.composer.storage.whenMasterPassphraseEntered();
   }
 
   private async abortAndRenderReplyMsgComposeTableIfIsReplyBox(reason: string) {

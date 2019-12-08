@@ -138,7 +138,7 @@ export class ComposerRecipients extends ComposerComponent {
       this.addedPubkeyDbLookupInterval = Catch.setHandledInterval(async () => {
         const recipientsHasPgp: RecipientElement[] = [];
         for (const recipient of noPgpRecipients) {
-          const [contact] = await this.composer.app.storageContactGet([recipient.email]);
+          const [contact] = await Store.dbContactGet(undefined, [recipient.email]);
           if (contact && contact.has_pgp) {
             $(recipient.element).removeClass('no_pgp').find('i').remove();
             clearInterval(this.addedPubkeyDbLookupInterval);
@@ -238,7 +238,7 @@ export class ComposerRecipients extends ComposerComponent {
       this.composer.errs.debug(`searchContacts.query.substring(${JSON.stringify(substring)})`);
       if (substring) {
         const query = { substring };
-        const contacts = await this.composer.app.storageContactSearch(query);
+        const contacts = await Store.dbContactSearch(undefined, query);
         const canLoadContactsFromAPI = this.composer.canReadEmails || this.canSearchContacts;
         if (dbOnly || contacts.length >= this.MAX_CONTACTS_LENGTH || !canLoadContactsFromAPI) {
           this.composer.errs.debug(`searchContacts 1`);
@@ -483,14 +483,14 @@ export class ComposerRecipients extends ComposerComponent {
   private renderAndAddToDBAPILoadedContacts = async (input: JQuery<HTMLElement>, contacts: Contact[]) => {
     if (contacts.length) {
       for (const contact of contacts) {
-        const [inDb] = await this.composer.app.storageContactGet([contact.email]);
+        const [inDb] = await Store.dbContactGet(undefined, [contact.email]);
         if (!inDb) {
-          await this.composer.app.storageContactSave(await this.composer.app.storageContactObj({
+          await Store.dbContactSave(undefined, await Store.dbContactObj({
             email: contact.email, name: contact.name, pendingLookup: true, lastUse: contact.last_use
           }));
         } else if (!inDb.name && contact.name) {
           const toUpdate = { name: contact.name };
-          await this.composer.app.storageContactUpdate(contact.email, toUpdate);
+          await Store.dbContactUpdate(undefined, contact.email, toUpdate);
         }
       }
       await this.searchContacts(input, true);
@@ -522,7 +522,7 @@ export class ComposerRecipients extends ComposerComponent {
   private checkReciepientsKeys = async () => {
     for (const recipientEl of this.addedRecipients.filter(r => r.element.className.includes('no_pgp'))) {
       const email = $(recipientEl).text().trim();
-      const [dbContact] = await this.composer.app.storageContactGet([email]);
+      const [dbContact] = await Store.dbContactGet(undefined, [email]);
       if (dbContact) {
         recipientEl.element.classList.remove('no_pgp');
         await this.renderPubkeyResult(recipientEl, dbContact);
@@ -616,7 +616,7 @@ export class ComposerRecipients extends ComposerComponent {
       recipient.evaluating = (async () => {
         let pubkeyLookupRes: Contact | 'fail' | 'wrong';
         if (recipient.status !== RecipientStatuses.WRONG) {
-          pubkeyLookupRes = await this.composer.app.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(recipient.email);
+          pubkeyLookupRes = await this.composer.storage.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(recipient.email);
         } else {
           pubkeyLookupRes = 'wrong';
         }

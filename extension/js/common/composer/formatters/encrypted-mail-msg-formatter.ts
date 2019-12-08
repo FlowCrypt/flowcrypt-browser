@@ -37,7 +37,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
   }
 
   async sendableMsg(newMsg: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> {
-    const subscription = await this.composer.app.storageGetSubscription();
+    const subscription = await Store.subscription(this.acctEmail);
     const pubkeys = this.armoredPubkeys.map(p => p.pubkey);
     if (!this.richText) { // simple text: PGP/Inline
       const authInfo = subscription.active ? await Store.authInfo(this.acctEmail) : undefined;
@@ -50,7 +50,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
       }
       const encrypted = await this.encryptData(Buf.fromUtfStr(newMsg.plaintext), newMsg.pwd, pubkeys, signingPrv);
       const encryptedBody = { 'text/plain': encrypted.data };
-      await this.composer.app.storageContactUpdate(Array.prototype.concat.apply([], Object.values(newMsg.recipients)), { last_use: Date.now() });
+      await Store.dbContactUpdate(undefined, Array.prototype.concat.apply([], Object.values(newMsg.recipients)), { last_use: Date.now() });
       if (newMsg.pwd) {
         await this.uploadAndFormatPwdProtectedEmail(authInfo, encryptedBody);
         // attachmetns already included inside message as links, setting email real email attachmetns to empty array
@@ -204,7 +204,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
                     ${Lang.compose.msgEncryptedHtml[lang] + a}<br/><br/>
                     ${Lang.compose.alternativelyCopyPaste[lang] + Xss.escape(msgUrl)}<br/><br/><br/>
                 </div>`);
-    await this.composer.app.storageAddAdminCodes(short, [admin_code].concat(this.fcAdminCodes));
+    await this.composer.storage.storageAddAdminCodes(short, [admin_code].concat(this.fcAdminCodes));
     encryptedBody['text/plain'] = text.join('\n');
     encryptedBody['text/html'] = html.join('\n');
   }
