@@ -57,7 +57,7 @@ export class ComposerQuote extends ComposerComponent {
       return;
     }
     let safePreviousMsg = '';
-    if (footer && !this.urlParams.draftId) {
+    if (footer && !this.view.draftId) {
       this.footerHTML = this.createFooterHTML(footer);
       safePreviousMsg += this.footerHTML;
     }
@@ -127,7 +127,7 @@ export class ComposerQuote extends ComposerComponent {
 
   public getAndDecryptMessage = async (msgId: string, method: 'reply' | 'forward', progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> => {
     try {
-      const { raw } = await Google.gmail.msgGet(this.urlParams.acctEmail, msgId, 'raw', progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
+      const { raw } = await Google.gmail.msgGet(this.view.acctEmail, msgId, 'raw', progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
       const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw!));
       const headers = {
         date: String(decoded.headers.date), from: decoded.from,
@@ -168,7 +168,7 @@ export class ComposerQuote extends ComposerComponent {
           if (block.attMeta && block.attMeta.data) {
             let attMeta: { content: Buf, filename?: string } | undefined;
             if (block.type === 'encryptedAtt') {
-              const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.urlParams.acctEmail), encryptedData: block.attMeta.data });
+              const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.view.acctEmail), encryptedData: block.attMeta.data });
               if (result.success) {
                 attMeta = { content: result.content, filename: result.filename };
               }
@@ -199,7 +199,7 @@ export class ComposerQuote extends ComposerComponent {
       } else if (Api.err.isNetErr(e)) {
         // todo: retry
       } else if (Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
+        BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       } else {
         Catch.reportErr(e);
       }
@@ -208,14 +208,14 @@ export class ComposerQuote extends ComposerComponent {
   }
 
   private decryptMessage = async (encryptedData: Buf): Promise<string> => {
-    const decryptRes = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.urlParams.acctEmail), encryptedData });
+    const decryptRes = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.view.acctEmail), encryptedData });
     if (decryptRes.success) {
       return decryptRes.content.toUtfStr();
     } else if (decryptRes.error && decryptRes.error.type === 'need_passphrase') {
-      BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'quote', longids: decryptRes.longids.needPassphrase });
+      BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'quote', longids: decryptRes.longids.needPassphrase });
       const wasPpEntered: boolean = await new Promise(resolve => {
         BrowserMsg.addListener('passphrase_entry', async (response: Bm.PassphraseEntry) => resolve(response.entered));
-        BrowserMsg.listen(this.urlParams.parentTabId);
+        BrowserMsg.listen(this.view.parentTabId);
       });
       if (wasPpEntered) {
         return await this.decryptMessage(encryptedData); // retry with pp

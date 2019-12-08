@@ -4,7 +4,6 @@
 
 import { Ui } from '../browser.js';
 import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
-import { ComposerUrlParams } from './interfaces/composer-types.js';
 import { ComposerDraft } from './composer-draft.js';
 import { ComposerQuote } from './composer-quote.js';
 import { ComposerRecipients } from './composer-recipients.js';
@@ -17,11 +16,9 @@ import { ComposerErrs } from './composer-errs.js';
 import { ComposerInput } from './composer-input.js';
 import { ComposerRender } from './composer-render.js';
 import { Catch } from '../platform/catch.js';
-import { Mime } from '../core/mime.js';
 import { ComposerMyPubkey } from './composer-my-pubkey.js';
-import { Scopes } from '../platform/store.js';
 import { ComposerStorage } from './composer-storage.js';
-import { XssSafeFactory } from '../xss_safe_factory.js';
+import { ComposeView } from '../../../chrome/elements/compose.js';
 
 export class Composer {
 
@@ -87,12 +84,9 @@ export class Composer {
   public initPromise: Promise<void>;
 
   constructor(
+    public view: ComposeView,
     public app: ComposerAppFunctionsInterface,
-    public urlParams: ComposerUrlParams,
-    public scopes: Scopes,
-    public factory: XssSafeFactory,
   ) {
-    this.urlParams.subject = Mime.subjectWithoutPrefixes(this.urlParams.subject);
     this.draft = new ComposerDraft(this);
     this.quote = new ComposerQuote(this);
     this.recipients = new ComposerRecipients(this);
@@ -106,7 +100,7 @@ export class Composer {
     this.render = new ComposerRender(this);
     this.myPubkey = new ComposerMyPubkey(this);
     this.storage = new ComposerStorage(this);
-    this.canReadEmails = this.scopes.read || this.scopes.modify;
+    this.canReadEmails = this.view.scopes!.read || this.view.scopes!.modify;
     this.initPromise = this.render.initActions().catch(Catch.reportErr);
   }
 

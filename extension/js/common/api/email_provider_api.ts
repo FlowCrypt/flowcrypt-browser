@@ -7,7 +7,7 @@
 import { Dict, Str, Value } from '../core/common.js';
 import { Store } from '../platform/store.js';
 import { Att } from '../core/att.js';
-import { SendableMsgBody } from '../core/mime.js';
+import { SendableMsgBody, Mime } from '../core/mime.js';
 import { Recipients } from '../composer/interfaces/composer-types.js';
 import { GmailRes, Google } from './google.js';
 import { Api, RecipientType } from './api.js';
@@ -23,6 +23,13 @@ export type SendableMsg = {
   thread?: string;
   mimeRootType: string,
   sign?: (signable: string) => Promise<string>,
+};
+export type ReplyParams = {
+  to: string[];
+  cc: string[];
+  bcc: string[];
+  from: string;
+  subject: string;
 };
 
 export class EmailProviderApi extends Api {
@@ -53,7 +60,7 @@ export class EmailProviderApi extends Api {
     };
   }
 
-  public static determineReplyCorrespondents = (acctEmail: string, addresses: string[], lastGmailMsg: GmailRes.GmailMsg) => {
+  public static determineReplyMeta = (acctEmail: string, addresses: string[], lastGmailMsg: GmailRes.GmailMsg): ReplyParams => {
     const headers = {
       from: Str.parseEmail(Google.gmail.findHeader(lastGmailMsg, 'from') || '').email,
       to: EmailProviderApi.getAddressesHeader(lastGmailMsg, 'to'),
@@ -61,7 +68,8 @@ export class EmailProviderApi extends Api {
       // maybe would be better to return from this method all emails addresses and then filter them in another place
       cc: EmailProviderApi.getAddressesHeader(lastGmailMsg, 'cc').filter(e => !addresses.includes(e)),
       bcc: EmailProviderApi.getAddressesHeader(lastGmailMsg, 'bcc').filter(e => !addresses.includes(e)),
-      replyTo: Google.gmail.findHeader(lastGmailMsg, 'reply-to')
+      replyTo: Google.gmail.findHeader(lastGmailMsg, 'reply-to'),
+      subject: Mime.subjectWithoutPrefixes(Google.gmail.findHeader(lastGmailMsg, 'subject') || ''),
     };
     if (headers.from && !headers.to.includes(headers.from)) {
       headers.to.unshift(headers.from);
@@ -72,13 +80,13 @@ export class EmailProviderApi extends Api {
       myEmail = acctEmailAliasesInMsg[0];
     }
     if (headers.replyTo) {
-      return { to: [headers.replyTo], cc: [], bcc: [], from: myEmail };
+      return { to: [headers.replyTo], cc: [], bcc: [], from: myEmail, subject: headers.subject };
     }
-    const replyTowWithoutMyEmail = headers.to.filter(e => myEmail !== e); // thinking about moving it in another place
-    if (replyTowWithoutMyEmail.length) { // when user sends emails it itself here will be 0 elements
-      headers.to = replyTowWithoutMyEmail;
+    const replyToWithoutMyEmail = headers.to.filter(e => myEmail !== e); // thinking about moving it in another place
+    if (replyToWithoutMyEmail.length) { // when user sends emails it itself here will be 0 elements
+      headers.to = replyToWithoutMyEmail;
     }
-    return { to: headers.to, cc: headers.cc, bcc: headers.bcc, from: myEmail };
+    return { to: headers.to, cc: headers.cc, bcc: headers.bcc, from: myEmail, subject: headers.subject };
   }
 
   private static getAddressesHeader = (gmailMsg: GmailRes.GmailMsg, headerName: RecipientType) => {

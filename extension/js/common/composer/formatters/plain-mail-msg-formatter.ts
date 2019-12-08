@@ -17,7 +17,7 @@ export class PlainMsgMailFormatter extends BaseMailFormatter implements MailForm
     if (this.richText) {
       body['text/html'] = newMsgData.plainhtml;
     }
-    return await Google.createMsgObj(this.composer.urlParams.acctEmail, newMsgData.sender, newMsgData.recipients, newMsgData.subject, body, atts, this.composer.urlParams.threadId);
+    return await Google.createMsgObj(this.acctEmail, newMsgData.sender, newMsgData.recipients, newMsgData.subject, body, atts, this.composer.view.threadId);
   }
 
 }

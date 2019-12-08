@@ -38,7 +38,7 @@ export class ComposerRecipients extends ComposerComponent {
 
   constructor(composer: Composer) {
     super(composer);
-    this.canSearchContacts = this.composer.scopes.readContacts;
+    this.canSearchContacts = this.composer.view.scopes!.readContacts;
   }
 
   initActions(): void {
@@ -122,7 +122,7 @@ export class ComposerRecipients extends ComposerComponent {
       this.composer.S.cached('recipients_placeholder').hide();
       this.composer.S.cached('input_addresses_container_outer').removeClass('invisible');
       this.composer.size.resizeComposeBox();
-      if (this.urlParams.isReplyBox) {
+      if (this.view.isReplyBox) {
         this.composer.size.resizeInput();
       }
       this.composer.size.setInputTextHeightManuallyIfNeeded();
@@ -150,7 +150,7 @@ export class ComposerRecipients extends ComposerComponent {
       }, 1000);
     }, this.composer.errs.handlers('add recipient public key')));
     BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
-    BrowserMsg.listen(this.urlParams.parentTabId);
+    BrowserMsg.listen(this.view.parentTabId);
   }
 
   /**
@@ -250,7 +250,7 @@ export class ComposerRecipients extends ComposerComponent {
           this.composer.errs.debug(`searchContacts 3`);
           if (this.canSearchContacts) {
             this.composer.errs.debug(`searchContacts (Gmail API) 3`);
-            const contactsGmail = await Google.contactsGet(this.urlParams.acctEmail, substring, undefined, this.MAX_CONTACTS_LENGTH);
+            const contactsGmail = await Google.contactsGet(this.view.acctEmail, substring, undefined, this.MAX_CONTACTS_LENGTH);
             if (contactsGmail) {
               const newContacts = contactsGmail.filter(cGmail => !contacts.find(c => c.email === cGmail.email));
               const mappedContactsFromGmail = await Promise.all(newContacts.map(({ email, name }) => Store.dbContactObj({ email, name })));
@@ -325,7 +325,7 @@ export class ComposerRecipients extends ComposerComponent {
         $(this).addClass('active');
       });
       this.composer.S.cached('contacts').find('ul li.auth_contacts').click(Ui.event.handle(() =>
-        this.authContacts(this.urlParams.acctEmail), this.composer.errs.handlers(`authorize contact search`)));
+        this.authContacts(this.view.acctEmail), this.composer.errs.handlers(`authorize contact search`)));
       const offset = input.offset()!;
       const inputToPadding = parseInt(input.css('padding-left'));
       let leftOffset: number;
@@ -353,7 +353,7 @@ export class ComposerRecipients extends ComposerComponent {
       .append('<div class="allow-google-contact-search" data-test="action-auth-with-contacts-scope"><img src="/img/svgs/gmail.svg" />Enable Google Contact Search</div>') // xss-direct
       .find('.allow-google-contact-search')
       .on('click', Ui.event.handle(async () => {
-        const authResult = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail: this.urlParams.acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
+        const authResult = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail: this.view.acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
         if (authResult.result === 'Success') {
           this.canSearchContacts = true;
           this.hideContacts();
@@ -804,26 +804,26 @@ export class ComposerRecipients extends ComposerComponent {
     if (!theirEmail) {
       return false;
     }
-    const storage = await Store.getAcct(this.urlParams.acctEmail, ['pubkey_sent_to']);
+    const storage = await Store.getAcct(this.view.acctEmail, ['pubkey_sent_to']);
     if (storage.pubkey_sent_to && storage.pubkey_sent_to.includes(theirEmail)) {
       return true;
     }
-    if (!this.composer.scopes!.read && !this.composer.scopes!.modify) {
+    if (!this.composer.view.scopes!.read && !this.composer.view.scopes!.modify) {
       return undefined; // cannot read email
     }
     const qSentPubkey = `is:sent to:${theirEmail} "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"`;
     const qReceivedMsg = `from:${theirEmail} "BEGIN PGP MESSAGE" "END PGP MESSAGE"`;
     try {
-      const response = await Google.gmail.msgList(this.urlParams.acctEmail, `(${qSentPubkey}) OR (${qReceivedMsg})`, true);
+      const response = await Google.gmail.msgList(this.view.acctEmail, `(${qSentPubkey}) OR (${qReceivedMsg})`, true);
       if (response.messages) {
-        await Store.setAcct(this.urlParams.acctEmail, { pubkey_sent_to: (storage.pubkey_sent_to || []).concat(theirEmail) });
+        await Store.setAcct(this.view.acctEmail, { pubkey_sent_to: (storage.pubkey_sent_to || []).concat(theirEmail) });
         return true;
       } else {
         return false;
       }
     } catch (e) {
       if (Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
+        BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       } else if (!Api.err.isNetErr(e)) {
         Catch.reportErr(e);
       }

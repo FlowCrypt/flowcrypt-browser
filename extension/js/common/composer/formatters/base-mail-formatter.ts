@@ -19,6 +19,6 @@ export class BaseMailFormatter {
   constructor(composer: Composer) {
     this.composer = composer;
     this.richText = composer.sendBtn.popover.choices.richText;
-    this.acctEmail = this.composer.urlParams.acctEmail;
+    this.acctEmail = this.composer.view.acctEmail;
   }
 }

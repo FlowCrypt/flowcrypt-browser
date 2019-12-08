@@ -3,15 +3,15 @@
 'use strict';
 
 import { Composer } from '../composer';
-import { ComposerUrlParams } from './composer-types';
+import { ComposeView } from '../../../../chrome/elements/compose';
 
 export abstract class ComposerComponent {
   protected composer: Composer;
-  protected urlParams: ComposerUrlParams;
+  protected view: ComposeView;
 
   constructor(composer: Composer) {
     this.composer = composer;
-    this.urlParams = composer.urlParams;
+    this.view = composer.view;
   }
 
   abstract initActions(): void;

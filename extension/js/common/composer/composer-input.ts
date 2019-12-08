@@ -56,7 +56,7 @@ export class ComposerInput extends ComposerComponent {
   public extractAll = (): NewMsgData => {
     const recipientElements = this.composer.recipients.getRecipients();
     const recipients = this.mapRecipients(recipientElements);
-    const subject = this.urlParams.subject || ($('#input_subject').val() === undefined ? '' : String($('#input_subject').val())); // replies have subject in url params
+    const subject = this.view.isReplyBox && this.view.replyParams ? this.view.replyParams.subject : String($('#input_subject').val() || '');
     const plaintext = this.composer.input.extract('text', 'input_text');
     const plainhtml = this.composer.input.extract('html', 'input_text');
     const password = this.composer.S.cached('input_password').val();

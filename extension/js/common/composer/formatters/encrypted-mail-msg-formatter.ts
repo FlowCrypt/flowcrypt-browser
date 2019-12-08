@@ -57,7 +57,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         // however if there is more than one recipient with pubkeys, still append the encrypted message as attachment
         atts = pubkeys.length === 1 ? [] : [new Att({ data: Buf.fromUtfStr(encrypted.data), name: 'encrypted.asc' })];
       }
-      return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, encryptedBody, atts, this.composer.urlParams.threadId);
+      return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, encryptedBody, atts, this.composer.view.threadId);
     } else { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
       if (newMsg.pwd) {
         this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-richText-sending-option'), 'richText', false); // do not use rich text
@@ -70,7 +70,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         new Att({ data: Buf.fromUtfStr('Version: 1'), type: 'application/pgp-encrypted', contentDescription: 'PGP/MIME version identification' }),
         new Att({ data: Buf.fromUtfStr(encrypted.data), type: 'application/octet-stream', contentDescription: 'OpenPGP encrypted message', name: 'encrypted.asc' }),
       ];
-      return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, {}, atts, this.composer.urlParams.threadId, this.pgpMimeRootType);
+      return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, {}, atts, this.composer.view.threadId, this.pgpMimeRootType);
     }
   }
 
@@ -91,7 +91,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         'class': 'cryptup_reply',
         'cryptup-data': Str.htmlAttrEncode({
           sender: newMsgData.sender,
-          recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.sender), this.composer.urlParams.acctEmail),
+          recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.sender), this.acctEmail),
           subject: newMsgData,
           token: response.token,
         })
@@ -184,7 +184,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
     // admin_code stays locally and helps the sender extend life of the message or delete it
     const { short, admin_code } = await Backend.messageUpload(authInfo, encryptedBody['text/plain']!);
-    const storage = await Store.getAcct(this.composer.urlParams.acctEmail, ['outgoing_language']);
+    const storage = await Store.getAcct(this.acctEmail, ['outgoing_language']);
     const lang = storage.outgoing_language || 'EN';
     const msgUrl = `${this.FC_WEB_URL}/${short}`;
     const a = `<a href="${Xss.escape(msgUrl)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">

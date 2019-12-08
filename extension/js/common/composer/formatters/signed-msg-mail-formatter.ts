@@ -33,13 +33,13 @@ export class SignedMsgMailFormatter extends BaseMailFormatter implements MailFor
       const allContacts = [...newMsg.recipients.to || [], ...newMsg.recipients.cc || [], ...newMsg.recipients.bcc || []];
       Store.dbContactUpdate(undefined, allContacts, { last_use: Date.now() }).catch(Catch.reportErr);
       const body = { 'text/plain': signedData };
-      return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, body, atts, this.composer.urlParams.threadId);
+      return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, body, atts, this.composer.view.threadId);
     }
     // pgp/mime detached signature - it must be signed later, while being mime-encoded
     // prepare a sign function first, which will be used by Mime.encode later
     const sign = (signable: string) => PgpMsg.sign(signingPrv, signable, true);
     const body: SendableMsgBody = { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml };
-    return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, body, atts, this.composer.urlParams.threadId, undefined, sign);
+    return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, body, atts, this.composer.view.threadId, undefined, sign);
   }
 
 }

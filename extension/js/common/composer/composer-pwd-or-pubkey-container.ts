@@ -16,7 +16,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
     this.composer.S.cached('input_password').keyup(Ui.event.prevent('spree', () => this.showHideContainerAndColorSendBtn()));
     this.composer.S.cached('input_password').focus(() => this.showHideContainerAndColorSendBtn());
     this.composer.S.cached('input_password').blur(() => this.showHideContainerAndColorSendBtn());
-    const store = await Store.getAcct(this.urlParams.acctEmail, ['hide_message_password']);
+    const store = await Store.getAcct(this.view.acctEmail, ['hide_message_password']);
     if (store.hide_message_password) {
       this.composer.S.cached('input_password').attr('type', 'password');
     }
@@ -42,7 +42,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
       this.hideMsgPwdUi();
       this.composer.sendBtn.setBtnColor('green');
     }
-    if (this.urlParams.isReplyBox) {
+    if (this.view.isReplyBox) {
       if (!wasPreviouslyVisible && this.composer.S.cached('password_or_pubkey').css('display') === 'table-row') {
         this.composer.size.resizeComposeBox((this.composer.S.cached('password_or_pubkey').first().height() || 66) + 20);
       } else {

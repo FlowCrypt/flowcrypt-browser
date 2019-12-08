@@ -38,28 +38,28 @@ export class ComposerRender extends ComposerComponent {
   }
 
   private initComposeBox = async () => {
-    if (this.urlParams.isReplyBox) {
+    if (this.view.isReplyBox) {
       this.composer.S.cached('body').addClass('reply_box');
       this.composer.S.cached('header').remove();
       this.composer.S.cached('subject').remove();
       this.composer.S.cached('contacts').css('top', '39px');
       this.composer.S.cached('compose_table').css({ 'border-bottom': '1px solid #cfcfcf', 'border-top': '1px solid #cfcfcf' });
       this.composer.S.cached('input_text').css('overflow-y', 'hidden');
-      if (!this.urlParams.skipClickPrompt && !this.urlParams.draftId) {
+      if (!this.view.skipClickPrompt && !this.view.draftId) {
         this.composer.S.cached('prompt').css('display', 'block');
       }
     } else {
       this.composer.S.cached('compose_table').css({ 'height': '100%' });
     }
-    if (this.urlParams.draftId) {
-      await this.composer.draft.initialDraftLoad(this.urlParams.draftId);
+    if (this.view.draftId) {
+      await this.composer.draft.initialDraftLoad(this.view.draftId);
       this.composer.S.cached('icon_show_prev_msg').remove(); // if it's draft a footer should already be there
     } else {
-      if (this.urlParams.isReplyBox) {
-        const recipients: Recipients = { to: this.urlParams.to, cc: this.urlParams.cc, bcc: this.urlParams.bcc };
+      if (this.view.isReplyBox && this.view.replyParams) {
+        const recipients: Recipients = { to: this.view.replyParams.to, cc: this.view.replyParams.cc, bcc: this.view.replyParams.bcc };
         this.composer.recipients.addRecipients(recipients, false).catch(Catch.reportErr);
         // await this.composer.composerContacts.addRecipientsAndShowPreview(recipients);
-        if (this.urlParams.skipClickPrompt) { // TODO: fix issue when loading recipients
+        if (this.view.skipClickPrompt) { // TODO: fix issue when loading recipients
           await this.renderReplyMsgComposeTable();
         } else {
           $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(Ui.event.handle(async target => {
@@ -81,7 +81,7 @@ export class ComposerRender extends ComposerComponent {
         }
       }
     }
-    if (this.urlParams.isReplyBox) {
+    if (this.view.isReplyBox) {
       $(document).ready(() => this.composer.size.resizeComposeBox());
     } else {
       this.composer.S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
@@ -94,7 +94,7 @@ export class ComposerRender extends ComposerComponent {
   }
 
   private renderHelpDialog() {
-    BrowserMsg.send.bg.settings({ acctEmail: this.urlParams.acctEmail, page: '/chrome/settings/modules/help.htm' });
+    BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page: '/chrome/settings/modules/help.htm' });
   }
 
   public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
@@ -103,16 +103,18 @@ export class ComposerRender extends ComposerComponent {
     await this.composer.recipients.setEmailsPreview(this.composer.recipients.getRecipients());
     await this.renderComposeTable();
     if (this.composer.canReadEmails) {
-      this.urlParams.subject = `${(method === 'reply' ? 'Re' : 'Fwd')}: ${this.urlParams.subject}`;
-      if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
+      if (this.view.replyParams) {
+        this.view.replyParams.subject = `${(method === 'reply' ? 'Re' : 'Fwd')}: ${this.view.replyParams.subject}`;
+      }
+      if (!this.view.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
         (async () => { // not awaited because can take a long time & blocks rendering
           const footer = await this.composer.sender.getFooter();
-          await this.composer.quote.addTripleDotQuoteExpandBtn(this.urlParams.replyMsgId, method, footer);
+          await this.composer.quote.addTripleDotQuoteExpandBtn(this.view.replyMsgId, method, footer);
           if (this.composer.quote.messageToReplyOrForward) {
             const msgId = this.composer.quote.messageToReplyOrForward.headers['message-id'];
             this.composer.sendBtn.additionalMsgHeaders['In-Reply-To'] = msgId;
             this.composer.sendBtn.additionalMsgHeaders.References = this.composer.quote.messageToReplyOrForward.headers.references + ' ' + msgId;
-            if (this.urlParams.replyPubkeyMismatch) {
+            if (this.view.replyPubkeyMismatch) {
               await this.renderReplyMsgAsReplyPubkeyMismatch();
             } else if (this.composer.quote.messageToReplyOrForward.isOnlySigned) {
               this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
@@ -128,14 +130,14 @@ export class ComposerRender extends ComposerComponent {
         Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>
       `);
       this.composer.S.cached('prompt').attr('style', 'border:none !important');
-      $('.auth_settings').click(() => BrowserMsg.send.bg.settings({ acctEmail: this.urlParams.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' }));
-      $('.new_message_button').click(() => BrowserMsg.send.openNewMessage(this.urlParams.parentTabId));
+      $('.auth_settings').click(() => BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' }));
+      $('.new_message_button').click(() => BrowserMsg.send.openNewMessage(this.view.parentTabId));
     }
     this.composer.size.resizeComposeBox();
     if (method === 'forward') {
       this.composer.S.cached('recipients_placeholder').click();
     }
-    Catch.setHandledTimeout(() => BrowserMsg.send.scrollToElement(this.urlParams.parentTabId, { selector: `#${this.urlParams.frameId}` }), 300);
+    Catch.setHandledTimeout(() => BrowserMsg.send.scrollToElement(this.view.parentTabId, { selector: `#${this.view.frameId}` }), 300);
   }
 
   private async renderReplyMsgAsReplyPubkeyMismatch() {
@@ -143,7 +145,7 @@ export class ComposerRender extends ComposerComponent {
       <br><br>I was not able to read your encrypted message because it was encrypted for a wrong key.
       <br><br>My current public key is attached below. Please update your records and send me a new encrypted message.
       <br><br>Thank you</div>`);
-    const [primaryKi] = await Store.keysGet(this.urlParams.acctEmail, ['primary']);
+    const [primaryKi] = await Store.keysGet(this.view.acctEmail, ['primary']);
     const att = Att.keyinfoAsPubkeyAtt(primaryKi);
     await this.composer.atts.attach.addFile(new File([att.getData()], att.name));
     this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
@@ -168,7 +170,7 @@ export class ComposerRender extends ComposerComponent {
       if (this.composer.size.composeWindowIsMinimized) {
         return e.preventDefault();
       }
-      Ui.escape(() => !this.urlParams.isReplyBox && $('.close_new_message').click())(e);
+      Ui.escape(() => !this.view.isReplyBox && $('.close_new_message').click())(e);
       const focusableEls = this.getFocusableEls();
       const focusIndex = focusableEls.indexOf(e.target);
       if (focusIndex !== -1) { // Focus trap (Tab, Shift+Tab)
@@ -221,8 +223,8 @@ export class ComposerRender extends ComposerComponent {
       }
     }, this.composer.errs.handlers(`focus on recipient field`))).children().click(() => false);
     this.composer.atts.onComposeTableRender();
-    if (this.urlParams.isReplyBox) {
-      if (this.urlParams.to.length) {
+    if (this.view.isReplyBox) {
+      if (this.view.replyParams && this.view.replyParams.to.length) {
         // Firefox will not always respond to initial automatic $input_text.blur()
         // Recipients may be left unrendered, as standard text, with a trailing comma
         await this.composer.recipients.parseRenderRecipients(this.composer.S.cached('input_to')); // this will force firefox to render them on load
@@ -242,9 +244,9 @@ export class ComposerRender extends ComposerComponent {
       this.composer.size.setInputTextHeightManuallyIfNeeded();
     }
     // Firefox needs an iframe to be focused before focusing its content
-    BrowserMsg.send.focusFrame(this.urlParams.parentTabId, { frameId: this.urlParams.frameId });
+    BrowserMsg.send.focusFrame(this.view.parentTabId, { frameId: this.view.frameId });
     Catch.setHandledTimeout(() => { // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
-      this.composer.S.cached(this.urlParams.isReplyBox && this.urlParams.to.length ? 'input_text' : 'input_to').focus();
+      this.composer.S.cached(this.view.isReplyBox && this.view.replyParams && this.view.replyParams.to.length ? 'input_text' : 'input_to').focus();
       // document.getElementById('input_text')!.focus(); // #input_text is in the template
     }, 100);
     this.composer.size.onComposeTableRender();
@@ -280,31 +282,35 @@ export class ComposerRender extends ComposerComponent {
     if (renderableAtts.length) {
       this.composer.S.cached('replied_attachments').html(renderableAtts.map(att => { // xss-safe-factory
         att.msgId = msgId;
-        return this.composer.factory!.embeddedAtta(att, true);
+        return this.composer.view.factory!.embeddedAtta(att, true);
       }).join('')).css('display', 'block');
     }
   }
 
   renderReinsertReplyBox(msgId: string) {
-    BrowserMsg.send.reinsertReplyBox(this.urlParams.parentTabId, { replyMsgId: msgId });
+    BrowserMsg.send.reinsertReplyBox(this.view.parentTabId, { replyMsgId: msgId });
   }
 
   renderAddPubkeyDialog(emails: string[]) {
-    if (this.urlParams.placement !== 'settings') {
-      BrowserMsg.send.addPubkeyDialog(this.urlParams.parentTabId, { emails });
+    if (this.view.placement !== 'settings') {
+      BrowserMsg.send.addPubkeyDialog(this.view.parentTabId, { emails });
     } else {
-      ($ as JQS).featherlight({ iframe: this.composer.factory!.srcAddPubkeyDialog(emails, 'settings'), iframeWidth: 515, iframeHeight: $('body').height()! - 50 }); // body element is present
+      ($ as JQS).featherlight({
+        iframe: this.composer.view.factory!.srcAddPubkeyDialog(emails, 'settings'),
+        iframeWidth: 515,
+        iframeHeight: $('body').height()! - 50, // body element is always present
+      });
     }
   }
 
   closeMsg() {
     $('body').attr('data-test-state', 'closed'); // used by automated tests
-    if (this.urlParams.isReplyBox) {
-      BrowserMsg.send.closeReplyMessage(this.urlParams.parentTabId, { frameId: this.urlParams.frameId });
-    } else if (this.urlParams.placement === 'settings') {
-      BrowserMsg.send.closePage(this.urlParams.parentTabId);
+    if (this.view.isReplyBox) {
+      BrowserMsg.send.closeReplyMessage(this.view.parentTabId, { frameId: this.view.frameId });
+    } else if (this.view.placement === 'settings') {
+      BrowserMsg.send.closePage(this.view.parentTabId);
     } else {
-      BrowserMsg.send.closeNewMessage(this.urlParams.parentTabId);
+      BrowserMsg.send.closeNewMessage(this.view.parentTabId);
     }
   }
 

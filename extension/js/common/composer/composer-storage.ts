@@ -39,28 +39,28 @@ export class ComposerStorage extends ComposerComponent {
   }
 
   async storageDraftMetaSet(draftId: string, threadId: string, recipients: string[], subject: string) {
-    const draftStorage = await Store.getAcct(this.urlParams.acctEmail, ['drafts_reply', 'drafts_compose']);
+    const draftStorage = await Store.getAcct(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
     if (threadId) { // it's a reply
       const drafts = draftStorage.drafts_reply || {};
       drafts[threadId] = draftId;
-      await Store.setAcct(this.urlParams.acctEmail, { drafts_reply: drafts });
+      await Store.setAcct(this.view.acctEmail, { drafts_reply: drafts });
     } else { // it's a new message
       const drafts = draftStorage.drafts_compose || {};
       drafts[draftId] = { recipients, subject, date: new Date().getTime() };
-      await Store.setAcct(this.urlParams.acctEmail, { drafts_compose: drafts });
+      await Store.setAcct(this.view.acctEmail, { drafts_compose: drafts });
     }
   }
 
   async storageDraftMetaDelete(draftId: string, threadId: string) {
-    const draftStorage = await Store.getAcct(this.urlParams.acctEmail, ['drafts_reply', 'drafts_compose']);
+    const draftStorage = await Store.getAcct(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
     if (threadId) { // it's a reply
       const drafts = draftStorage.drafts_reply || {};
       delete drafts[threadId];
-      await Store.setAcct(this.urlParams.acctEmail, { drafts_reply: drafts });
+      await Store.setAcct(this.view.acctEmail, { drafts_reply: drafts });
     } else { // it's a new message
       const drafts = draftStorage.drafts_compose || {};
       delete drafts[draftId];
-      await Store.setAcct(this.urlParams.acctEmail, { drafts_compose: drafts });
+      await Store.setAcct(this.view.acctEmail, { drafts_compose: drafts });
     }
   }
 
@@ -90,26 +90,26 @@ export class ComposerStorage extends ComposerComponent {
 
   async storagePassphraseGet(senderKi?: KeyInfo) {
     if (!senderKi) {
-      [senderKi] = await Store.keysGet(this.urlParams.acctEmail, ['primary']);
+      [senderKi] = await Store.keysGet(this.view.acctEmail, ['primary']);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(senderKi);
     }
-    return await Store.passphraseGet(this.urlParams.acctEmail, senderKi.longid);
+    return await Store.passphraseGet(this.view.acctEmail, senderKi.longid);
   }
 
   async storageGetAddresses(): Promise<Dict<SendAsAlias>> {
     const arrayToSendAs = (arr: string[]): Dict<SendAsAlias> => {
       const result: Dict<SendAsAlias> = {}; // Temporary Solution
       for (let i = 0; i < arr.length; i++) {
-        const alias: SendAsAlias = { isDefault: i === 0, isPrimary: arr[i] === this.urlParams.acctEmail }; // before first element was default
+        const alias: SendAsAlias = { isDefault: i === 0, isPrimary: arr[i] === this.view.acctEmail }; // before first element was default
         result[arr[i]] = alias;
       }
       if (arr.length) {
-        Store.setAcct(this.urlParams.acctEmail, { sendAs: result }).catch(Catch.reportErr);
+        Store.setAcct(this.view.acctEmail, { sendAs: result }).catch(Catch.reportErr);
       }
       return result;
     };
-    const storage = await Store.getAcct(this.urlParams.acctEmail, ['sendAs', 'addresses']);
-    return storage.sendAs || arrayToSendAs(storage.addresses || [this.urlParams.acctEmail]);
+    const storage = await Store.getAcct(this.view.acctEmail, ['sendAs', 'addresses']);
+    return storage.sendAs || arrayToSendAs(storage.addresses || [this.view.acctEmail]);
   }
 
   async lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(email: string): Promise<Contact | "fail"> {
@@ -122,7 +122,7 @@ export class ComposerStorage extends ComposerComponent {
       return dbContact;
     } else {
       try {
-        const lookupResult = await Keyserver.lookupEmail(this.urlParams.acctEmail, email);
+        const lookupResult = await Keyserver.lookupEmail(this.view.acctEmail, email);
         if (lookupResult && email) {
           if (lookupResult.pubkey) {
             const parsed = await openpgp.key.readArmored(lookupResult.pubkey);
@@ -169,7 +169,7 @@ export class ComposerStorage extends ComposerComponent {
         await Store.dbContactUpdate(undefined, contact.email, { pubkey_last_sig: lastSig });
       }
       if (!contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7)) { // last update > 7 days ago, or never
-        const { pubkey: fetchedPubkey } = await Keyserver.lookupLongid(this.urlParams.acctEmail, contact.longid);
+        const { pubkey: fetchedPubkey } = await Keyserver.lookupLongid(this.view.acctEmail, contact.longid);
         if (fetchedPubkey) {
           const fetchedLastSig = await Pgp.key.lastSig(await Pgp.key.read(fetchedPubkey));
           if (fetchedLastSig > contact.pubkey_last_sig) { // fetched pubkey has newer signature, update

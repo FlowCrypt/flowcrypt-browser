@@ -22,10 +22,10 @@ export class ComposerSender extends ComposerComponent {
     if (this.composer.S.now('input_from').length) {
       return String(this.composer.S.now('input_from').val());
     }
-    if (this.urlParams.from) {
-      return this.urlParams.from;
+    if (this.view.replyParams && this.view.replyParams.from) {
+      return this.view.replyParams.from;
     }
-    return this.urlParams.acctEmail;
+    return this.view.acctEmail;
   }
 
   public async renderSenderAliasesOptionsToggle() {
@@ -58,7 +58,7 @@ export class ComposerSender extends ComposerComponent {
         await this.composer.recipients.setEmailsPreview(this.composer.recipients.getRecipients());
         this.composer.quote.replaceFooter(await this.getFooter());
       });
-      if (this.urlParams.isReplyBox) {
+      if (this.view.isReplyBox) {
         this.composer.size.resizeComposeBox();
       }
     }
@@ -66,12 +66,12 @@ export class ComposerSender extends ComposerComponent {
 
   public async checkEmailAliases() {
     try {
-      const refreshResult = await Settings.refreshAcctAliases(this.urlParams.acctEmail);
+      const refreshResult = await Settings.refreshAcctAliases(this.view.acctEmail);
       if (refreshResult) {
         if (refreshResult.isAliasesChanged || refreshResult.isDefaultEmailChanged) {
           this.renderSenderAliasesOptions(refreshResult.sendAs);
         }
-        if (refreshResult.isFooterChanged && !this.urlParams.draftId) {
+        if (refreshResult.isFooterChanged && !this.view.draftId) {
           const alias = refreshResult.sendAs[this.getSender()];
           if (alias) {
             this.composer.quote.replaceFooter(alias.footer || undefined);
@@ -80,7 +80,7 @@ export class ComposerSender extends ComposerComponent {
       }
     } catch (e) {
       if (Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
+        BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       } else if (Api.err.isSignificant(e)) {
         Catch.reportErr(e);
       }
