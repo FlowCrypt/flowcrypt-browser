@@ -382,15 +382,6 @@ export class ComposePageRecipe extends PageRecipe {
     return composePage;
   }
 
-  public static openReplyKeyMismatch = async (
-    t: AvaContext, browser: BrowserHandle, group: CommonBrowserGroup, appendUrl?: string
-  ): Promise<ControllablePage> => {
-    const email = (group === 'compose') ? 'test.ci.compose%40org.flowcrypt.com' : 'flowcrypt.compatibility%40gmail.com';
-    const composePage = await browser.newPage(t, `chrome/elements/reply_pubkey_mismatch.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${appendUrl || ''}`);
-    await composePage.waitForSelTestState('ready');
-    return composePage;
-  }
-
   public static openInSettings = async (settingsPage: ControllablePage): Promise<ControllableFrame> => {
     await settingsPage.waitAndClick('@action-show-compose-page');
     await settingsPage.waitAll('@dialog');

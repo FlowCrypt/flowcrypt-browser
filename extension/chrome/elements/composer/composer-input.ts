@@ -2,10 +2,11 @@
 
 'use strict';
 
-import { ComposerComponent } from './interfaces/composer-component.js';
-import { Xss } from '../platform/xss.js';
-import { Ui } from '../browser.js';
-import { NewMsgData, RecipientElement, Recipients } from './interfaces/composer-types.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { Ui } from '../../../js/common/browser.js';
+import { NewMsgData, RecipientElement } from './composer-types.js';
+import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
 
 export class ComposerInput extends ComposerComponent {
 
@@ -17,6 +18,10 @@ export class ComposerInput extends ComposerComponent {
       this.composer.size.setInputTextHeightManuallyIfNeeded();
     }, this.composer.errs.handlers(`add intro`)));
     this.composer.S.cached('input_text').get(0).onpaste = this.composer.input.inputTextPasteHtmlAsText;
+  }
+
+  public async inputTextHtmlSetSafely(html: string) {
+    Xss.sanitizeRender(this.composer.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(html));
   }
 
   public inputTextPasteHtmlAsText = (clipboardEvent: ClipboardEvent) => {
@@ -52,7 +57,7 @@ export class ComposerInput extends ComposerComponent {
   public extractAll = (): NewMsgData => {
     const recipientElements = this.composer.recipients.getRecipients();
     const recipients = this.mapRecipients(recipientElements);
-    const subject = this.urlParams.subject || ($('#input_subject').val() === undefined ? '' : String($('#input_subject').val())); // replies have subject in url params
+    const subject = this.view.isReplyBox && this.view.replyParams ? this.view.replyParams.subject : String($('#input_subject').val() || '');
     const plaintext = this.composer.input.extract('text', 'input_text');
     const plainhtml = this.composer.input.extract('html', 'input_text');
     const password = this.composer.S.cached('input_password').val();

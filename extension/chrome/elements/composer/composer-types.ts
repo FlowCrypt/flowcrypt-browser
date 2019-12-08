@@ -2,8 +2,9 @@
 
 'use strict';
 
-import { RecipientType } from '../../api/api';
-import { Pwd } from '../../core/pgp';
+import { RecipientType } from '../../../js/common/api/api.js';
+import { Pwd } from '../../../js/common/core/pgp.js';
+import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
 
 export type RecipientStatus = 0 | 1 | 2 | 3 | 4 | 5;
 
@@ -15,12 +16,6 @@ export class RecipientStatuses {
   static WRONG: RecipientStatus = 4;
   static FAILED: RecipientStatus = 5;
 }
-
-export type Recipients = {
-  to?: string[],
-  cc?: string[],
-  bcc?: string[]
-};
 
 export interface BaseRecipient {
   email: string;
@@ -44,26 +39,6 @@ export type MessageToReplyOrForward = {
   isOnlySigned?: boolean,
   text?: string,
   decryptedFiles: File[]
-};
-
-export type ComposerUrlParams = {
-  disableDraftSaving: boolean;
-  isReplyBox: boolean;
-  tabId: string;
-  acctEmail: string;
-  threadId: string;
-  replyMsgId: string;
-  draftId: string;
-  subject: string;
-  from: string | undefined;
-  to: string[];
-  cc: string[];
-  bcc: string[];
-  frameId: string;
-  parentTabId: string;
-  skipClickPrompt: boolean;
-  debug: boolean;
-  removeAfterClose: boolean;
 };
 
 export type PubkeyResult = { pubkey: string, email: string, isMine: boolean };

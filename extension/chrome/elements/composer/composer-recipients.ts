@@ -3,20 +3,21 @@
 'use strict';
 
 import { Composer } from './composer.js';
-import { Str, Value } from '../core/common.js';
-import { ProviderContactsQuery } from '../api/email_provider_api.js';
-import { Contact, Pgp } from '../core/pgp.js';
-import { Xss } from '../platform/xss.js';
-import { Ui } from '../browser.js';
-import { GoogleAuth, Google } from '../api/google.js';
-import { Lang } from '../lang.js';
-import { RecipientElement, RecipientStatus, RecipientStatuses, Recipients } from './interfaces/composer-types.js';
-import { ComposerComponent } from './interfaces/composer-component.js';
-import { BrowserMsg } from '../extension.js';
-import { Catch } from '../platform/catch.js';
-import { moveElementInArray } from '../platform/util.js';
-import { RecipientType, Api } from '../api/api.js';
-import { Store } from '../platform/store.js';
+import { Str, Value } from '../../../js/common/core/common.js';
+import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
+import { Contact, Pgp } from '../../../js/common/core/pgp.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { Ui } from '../../../js/common/browser.js';
+import { Google } from '../../../js/common/api/google.js';
+import { GoogleAuth } from '../../../js/common/api/google-auth.js';
+import { Lang } from '../../../js/common/lang.js';
+import { RecipientElement, RecipientStatus, RecipientStatuses } from './composer-types.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { BrowserMsg } from '../../../js/common/extension.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { moveElementInArray } from '../../../js/common/platform/util.js';
+import { RecipientType, Api, ChunkedCb } from '../../../js/common/api/api.js';
+import { Store } from '../../../js/common/platform/store.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './composer-errs.js';
 
 export class ComposerRecipients extends ComposerComponent {
@@ -38,7 +39,7 @@ export class ComposerRecipients extends ComposerComponent {
 
   constructor(composer: Composer) {
     super(composer);
-    this.canSearchContacts = this.composer.app.getScopes().readContacts;
+    this.canSearchContacts = this.composer.view.scopes!.readContacts;
   }
 
   initActions(): void {
@@ -122,7 +123,7 @@ export class ComposerRecipients extends ComposerComponent {
       this.composer.S.cached('recipients_placeholder').hide();
       this.composer.S.cached('input_addresses_container_outer').removeClass('invisible');
       this.composer.size.resizeComposeBox();
-      if (this.urlParams.isReplyBox) {
+      if (this.view.isReplyBox) {
         this.composer.size.resizeInput();
       }
       this.composer.size.setInputTextHeightManuallyIfNeeded();
@@ -133,12 +134,12 @@ export class ComposerRecipients extends ComposerComponent {
     this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.errs.handlers(`hide contact box`)));
     this.composer.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
       const noPgpRecipients = this.addedRecipients.filter(r => r.element.className.includes('no_pgp'));
-      this.composer.app.renderAddPubkeyDialog(noPgpRecipients.map(r => r.email));
+      this.composer.render.renderAddPubkeyDialog(noPgpRecipients.map(r => r.email));
       clearInterval(this.addedPubkeyDbLookupInterval); // todo - get rid of Catch.set_interval. just supply tabId and wait for direct callback
       this.addedPubkeyDbLookupInterval = Catch.setHandledInterval(async () => {
         const recipientsHasPgp: RecipientElement[] = [];
         for (const recipient of noPgpRecipients) {
-          const [contact] = await this.composer.app.storageContactGet([recipient.email]);
+          const [contact] = await Store.dbContactGet(undefined, [recipient.email]);
           if (contact && contact.has_pgp) {
             $(recipient.element).removeClass('no_pgp').find('i').remove();
             clearInterval(this.addedPubkeyDbLookupInterval);
@@ -150,7 +151,7 @@ export class ComposerRecipients extends ComposerComponent {
       }, 1000);
     }, this.composer.errs.handlers('add recipient public key')));
     BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
-    BrowserMsg.listen(this.urlParams.parentTabId);
+    BrowserMsg.listen(this.view.parentTabId);
   }
 
   /**
@@ -238,7 +239,7 @@ export class ComposerRecipients extends ComposerComponent {
       this.composer.errs.debug(`searchContacts.query.substring(${JSON.stringify(substring)})`);
       if (substring) {
         const query = { substring };
-        const contacts = await this.composer.app.storageContactSearch(query);
+        const contacts = await Store.dbContactSearch(undefined, query);
         const canLoadContactsFromAPI = this.composer.canReadEmails || this.canSearchContacts;
         if (dbOnly || contacts.length >= this.MAX_CONTACTS_LENGTH || !canLoadContactsFromAPI) {
           this.composer.errs.debug(`searchContacts 1`);
@@ -250,7 +251,7 @@ export class ComposerRecipients extends ComposerComponent {
           this.composer.errs.debug(`searchContacts 3`);
           if (this.canSearchContacts) {
             this.composer.errs.debug(`searchContacts (Gmail API) 3`);
-            const contactsGmail = await Google.contactsGet(this.urlParams.acctEmail, substring, undefined, this.MAX_CONTACTS_LENGTH);
+            const contactsGmail = await Google.contactsGet(this.view.acctEmail, substring, undefined, this.MAX_CONTACTS_LENGTH);
             if (contactsGmail) {
               const newContacts = contactsGmail.filter(cGmail => !contacts.find(c => c.email === cGmail.email));
               const mappedContactsFromGmail = await Promise.all(newContacts.map(({ email, name }) => Store.dbContactObj({ email, name })));
@@ -258,7 +259,7 @@ export class ComposerRecipients extends ComposerComponent {
             }
           } else if (this.composer.canReadEmails) {
             this.composer.errs.debug(`searchContacts (Gmail Sent Messages) 3`);
-            this.composer.app.emailProviderGuessContactsFromSentEmails(query.substring, contacts, contacts => this.renderAndAddToDBAPILoadedContacts(input, contacts.new));
+            this.guessContactsFromSentEmails(query.substring, contacts, contacts => this.renderAndAddToDBAPILoadedContacts(input, contacts.new));
           }
           this.composer.errs.debug(`searchContacts 4`);
           this.renderSearchResultsLoadingDone();
@@ -273,6 +274,21 @@ export class ComposerRecipients extends ComposerComponent {
       Ui.toast(`Error searching contacts: ${Api.err.eli5(e)}`, 5).catch(Catch.reportErr);
       throw e;
     }
+  }
+
+  private guessContactsFromSentEmails(query: string, knownContacts: Contact[], multiCb: ChunkedCb) {
+    this.composer.emailProvider.guessContactsFromSentEmails(query, knownContacts, multiCb).catch(e => {
+      if (Api.err.isAuthPopupNeeded(e)) {
+        BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
+      } else if (Api.err.isNetErr(e)) {
+        Ui.toast(`Network erroc - cannot search contacts`).catch(Catch.reportErr);
+      } else if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
+        Ui.toast(`Cannot search contacts - account disabled or forbidden by admin policy`).catch(Catch.reportErr);
+      } else {
+        Catch.reportErr(e);
+        Ui.toast(`Error searching contacts: ${Api.err.eli5(e)}`).catch(Catch.reportErr);
+      }
+    });
   }
 
   private renderSearchRes = (input: JQuery<HTMLElement>, contacts: Contact[], query: ProviderContactsQuery) => {
@@ -325,7 +341,7 @@ export class ComposerRecipients extends ComposerComponent {
         $(this).addClass('active');
       });
       this.composer.S.cached('contacts').find('ul li.auth_contacts').click(Ui.event.handle(() =>
-        this.authContacts(this.urlParams.acctEmail), this.composer.errs.handlers(`authorize contact search`)));
+        this.authContacts(this.view.acctEmail), this.composer.errs.handlers(`authorize contact search`)));
       const offset = input.offset()!;
       const inputToPadding = parseInt(input.css('padding-left'));
       let leftOffset: number;
@@ -353,7 +369,7 @@ export class ComposerRecipients extends ComposerComponent {
       .append('<div class="allow-google-contact-search" data-test="action-auth-with-contacts-scope"><img src="/img/svgs/gmail.svg" />Enable Google Contact Search</div>') // xss-direct
       .find('.allow-google-contact-search')
       .on('click', Ui.event.handle(async () => {
-        const authResult = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail: this.urlParams.acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
+        const authResult = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail: this.view.acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
         if (authResult.result === 'Success') {
           this.canSearchContacts = true;
           this.hideContacts();
@@ -483,14 +499,14 @@ export class ComposerRecipients extends ComposerComponent {
   private renderAndAddToDBAPILoadedContacts = async (input: JQuery<HTMLElement>, contacts: Contact[]) => {
     if (contacts.length) {
       for (const contact of contacts) {
-        const [inDb] = await this.composer.app.storageContactGet([contact.email]);
+        const [inDb] = await Store.dbContactGet(undefined, [contact.email]);
         if (!inDb) {
-          await this.composer.app.storageContactSave(await this.composer.app.storageContactObj({
+          await Store.dbContactSave(undefined, await Store.dbContactObj({
             email: contact.email, name: contact.name, pendingLookup: true, lastUse: contact.last_use
           }));
         } else if (!inDb.name && contact.name) {
           const toUpdate = { name: contact.name };
-          await this.composer.app.storageContactUpdate(contact.email, toUpdate);
+          await Store.dbContactUpdate(undefined, contact.email, toUpdate);
         }
       }
       await this.searchContacts(input, true);
@@ -522,7 +538,7 @@ export class ComposerRecipients extends ComposerComponent {
   private checkReciepientsKeys = async () => {
     for (const recipientEl of this.addedRecipients.filter(r => r.element.className.includes('no_pgp'))) {
       const email = $(recipientEl).text().trim();
-      const [dbContact] = await this.composer.app.storageContactGet([email]);
+      const [dbContact] = await Store.dbContactGet(undefined, [email]);
       if (dbContact) {
         recipientEl.element.classList.remove('no_pgp');
         await this.renderPubkeyResult(recipientEl, dbContact);
@@ -616,7 +632,7 @@ export class ComposerRecipients extends ComposerComponent {
       recipient.evaluating = (async () => {
         let pubkeyLookupRes: Contact | 'fail' | 'wrong';
         if (recipient.status !== RecipientStatuses.WRONG) {
-          pubkeyLookupRes = await this.composer.app.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(recipient.email);
+          pubkeyLookupRes = await this.composer.storage.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(recipient.email);
         } else {
           pubkeyLookupRes = 'wrong';
         }
@@ -797,5 +813,37 @@ export class ComposerRecipients extends ComposerComponent {
 
   public onRecipientAdded = (callback: (rec: RecipientElement[]) => void) => {
     this.onRecipientAddedCallbacks.push(callback);
+  }
+
+  async doesRecipientHaveMyPubkey(theirEmailUnchecked: string): Promise<boolean | undefined> {
+    const theirEmail = Str.parseEmail(theirEmailUnchecked).email;
+    if (!theirEmail) {
+      return false;
+    }
+    const storage = await Store.getAcct(this.view.acctEmail, ['pubkey_sent_to']);
+    if (storage.pubkey_sent_to && storage.pubkey_sent_to.includes(theirEmail)) {
+      return true;
+    }
+    if (!this.composer.view.scopes!.read && !this.composer.view.scopes!.modify) {
+      return undefined; // cannot read email
+    }
+    const qSentPubkey = `is:sent to:${theirEmail} "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"`;
+    const qReceivedMsg = `from:${theirEmail} "BEGIN PGP MESSAGE" "END PGP MESSAGE"`;
+    try {
+      const response = await this.composer.emailProvider.msgList(`(${qSentPubkey}) OR (${qReceivedMsg})`, true);
+      if (response.messages) {
+        await Store.setAcct(this.view.acctEmail, { pubkey_sent_to: (storage.pubkey_sent_to || []).concat(theirEmail) });
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      if (Api.err.isAuthPopupNeeded(e)) {
+        BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
+      } else if (!Api.err.isNetErr(e)) {
+        Catch.reportErr(e);
+      }
+      return undefined;
+    }
   }
 }

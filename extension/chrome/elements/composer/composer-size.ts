@@ -2,10 +2,10 @@
 
 'use strict';
 
-import { ComposerComponent } from './interfaces/composer-component.js';
-import { BrowserMsg } from '../extension.js';
-import { Catch } from '../platform/catch.js';
-import { Ui } from '../browser.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { BrowserMsg } from '../../../js/common/extension.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { Ui } from '../../../js/common/browser.js';
 
 export class ComposerSize extends ComposerComponent {
 
@@ -23,7 +23,7 @@ export class ComposerSize extends ComposerComponent {
         this.minimizeComposerWindow();
       }
     });
-    if (!this.urlParams.isReplyBox) {
+    if (!this.view.isReplyBox) {
       $('.minimize_new_message').click(Ui.event.handle(this.minimizeComposerWindow));
       $('.popout').click(Ui.event.handle(async () => {
         this.composer.S.cached('body').hide(); // Need to hide because it seems laggy on some devices
@@ -37,7 +37,7 @@ export class ComposerSize extends ComposerComponent {
     Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
       // we use veryslowspree for reply box because hand-resizing the main window will cause too many events
       // we use spree (faster) for new messages because rendering of window buttons on top right depend on it, else visible lag shows
-      $(window).resize(Ui.event.prevent(this.urlParams.isReplyBox ? 'veryslowspree' : 'spree', () => this.windowResized().catch(Catch.reportErr)));
+      $(window).resize(Ui.event.prevent(this.view.isReplyBox ? 'veryslowspree' : 'spree', () => this.windowResized().catch(Catch.reportErr)));
       this.composer.S.cached('input_text').keyup(Ui.event.prevent('slowspree', () => this.windowResized().catch(Catch.reportErr)));
     }, 1000);
   }
@@ -51,7 +51,7 @@ export class ComposerSize extends ComposerComponent {
   }
 
   resizeComposeBox = (addExtra: number = 0) => {
-    if (this.urlParams.isReplyBox) {
+    if (this.view.isReplyBox) {
       this.composer.S.cached('input_text').css('max-width', (this.composer.S.cached('body').width()! - 20) + 'px'); // body should always be present
       let minHeight = 0;
       let currentHeight = 0;
@@ -65,7 +65,7 @@ export class ComposerSize extends ComposerComponent {
       }
       if (currentHeight !== this.lastReplyBoxTableHeight && Math.abs(currentHeight - this.lastReplyBoxTableHeight) > 2) { // more then two pixel difference compared to last time
         this.lastReplyBoxTableHeight = currentHeight;
-        BrowserMsg.send.setCss(this.urlParams.parentTabId, { selector: `iframe#${this.urlParams.frameId}`, css: { height: `${(Math.max(minHeight, currentHeight) + addExtra)}px` } });
+        BrowserMsg.send.setCss(this.view.parentTabId, { selector: `iframe#${this.view.frameId}`, css: { height: `${(Math.max(minHeight, currentHeight) + addExtra)}px` } });
       }
     } else {
       this.composer.S.cached('input_text').css('max-width', '');
@@ -78,8 +78,8 @@ export class ComposerSize extends ComposerComponent {
     if (this.composeWindowIsMaximized) {
       this.addOrRemoveFullScreenStyles(this.composeWindowIsMinimized);
     }
-    BrowserMsg.send.setCss(this.urlParams.parentTabId, {
-      selector: `iframe#${this.urlParams.frameId}, div#new_message`,
+    BrowserMsg.send.setCss(this.view.parentTabId, {
+      selector: `iframe#${this.view.frameId}, div#new_message`,
       css: { height: this.composeWindowIsMinimized ? '' : this.composer.S.cached('header').css('height') },
     });
     this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
@@ -104,10 +104,10 @@ export class ComposerSize extends ComposerComponent {
   private addOrRemoveFullScreenStyles = (add: boolean) => {
     if (add) {
       this.composer.S.cached('body').addClass(this.FULL_WINDOW_CLASS);
-      BrowserMsg.send.addClass(this.urlParams.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
+      BrowserMsg.send.addClass(this.view.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
     } else {
       this.composer.S.cached('body').removeClass(this.FULL_WINDOW_CLASS);
-      BrowserMsg.send.removeClass(this.urlParams.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
+      BrowserMsg.send.removeClass(this.view.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
     }
   }
 
@@ -121,7 +121,7 @@ export class ComposerSize extends ComposerComponent {
 * @param updateRefBodyHeight - set to true to take a new snapshot of intended html body height
 */
   public setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight: boolean = false) => {
-    if (!this.urlParams.isReplyBox && Catch.browser().name === 'firefox') {
+    if (!this.view.isReplyBox && Catch.browser().name === 'firefox') {
       this.composer.S.cached('input_text').css('height', '0');
       let cellHeightExceptText = 0;
       for (const cell of this.composer.S.cached('all_cells_except_text')) {

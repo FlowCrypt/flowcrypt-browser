@@ -8,7 +8,7 @@ import { Store, GlobalStore } from '../common/platform/store.js';
 import { BrowserMsg, Bm } from '../common/extension.js';
 import { injectFcIntoWebmail } from './inject.js';
 import { migrateGlobal } from './migrations.js';
-import { GoogleAuth } from '../common/api/google.js';
+import { GoogleAuth } from '../common/api/google-auth.js';
 import { BgUtils } from './bgutils.js';
 import { BgHandlers } from './bg_handlers.js';
 import { PgpMsg, Pgp } from '../common/core/pgp.js';

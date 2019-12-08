@@ -2,13 +2,14 @@
 
 'use strict';
 
-import { ComposerComponent } from './interfaces/composer-component.js';
-import { Ui } from '../browser.js';
-import { BrowserMsg } from '../extension.js';
-import { AttUI, AttLimits } from '../ui/att_ui.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { Ui } from '../../../js/common/browser.js';
+import { BrowserMsg } from '../../../js/common/extension.js';
+import { AttUI, AttLimits } from '../../../js/common/ui/att_ui.js';
 import { Composer } from './composer.js';
-import { Rules } from '../rules.js';
-import { Pgp } from '../core/pgp.js';
+import { Rules } from '../../../js/common/rules.js';
+import { Pgp } from '../../../js/common/core/pgp.js';
+import { Store } from '../../../js/common/platform/store.js';
 
 export class ComposerAtts extends ComposerComponent {
 
@@ -33,7 +34,7 @@ export class ComposerAtts extends ComposerComponent {
   }
 
   private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
-    const subscription = await this.composer.app.storageGetSubscription();
+    const subscription = await Store.subscription(this.view.acctEmail);
     if (!Rules.relaxSubscriptionRequirements(this.composer.sender.getSender()) && !subscription.active) {
       return {
         sizeMb: 5,
@@ -56,7 +57,7 @@ export class ComposerAtts extends ComposerComponent {
             await Ui.modal.info(getAdvanced);
           } else {
             if (await Ui.modal.confirm(getAdvanced)) {
-              BrowserMsg.send.subscribeDialog(this.urlParams.parentTabId, {});
+              BrowserMsg.send.subscribeDialog(this.view.parentTabId, {});
             }
           }
           return;
@@ -64,7 +65,7 @@ export class ComposerAtts extends ComposerComponent {
       };
     } else {
       const allowHugeAtts = ['94658c9c332a11f20b1e45c092e6e98a1e34c953', 'b092dcecf277c9b3502e20c93b9386ec7759443a', '9fbbe6720a6e6c8fc30243dc8ff0a06cbfa4630e'];
-      const sizeMb = (subscription.method !== 'trial' && allowHugeAtts.includes(await Pgp.hash.sha1UtfStr(this.urlParams.acctEmail))) ? 200 : 25;
+      const sizeMb = (subscription.method !== 'trial' && allowHugeAtts.includes(await Pgp.hash.sha1UtfStr(this.view.acctEmail))) ? 200 : 25;
       return {
         sizeMb,
         size: sizeMb * 1024 * 1024,

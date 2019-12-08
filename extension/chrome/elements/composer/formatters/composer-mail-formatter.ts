@@ -2,13 +2,13 @@
 
 'use strict';
 
-import { NewMsgData } from "../interfaces/composer-types.js";
-import { KeyInfo } from "../../core/pgp.js";
+import { NewMsgData } from "../composer-types.js";
+import { KeyInfo } from "../../../../js/common/core/pgp.js";
 import { Composer } from "../composer.js";
 import { PlainMsgMailFormatter } from './plain-mail-msg-formatter.js';
 import { SignedMsgMailFormatter } from './signed-msg-mail-formatter.js';
 import { EncryptedMsgMailFormatter } from './encrypted-mail-msg-formatter.js';
-import { SendableMsg } from '../../api/email_provider_api.js';
+import { SendableMsg } from '../../../../js/common/api/email_provider/email_provider_api.js';
 
 export class GeneralMailFormatter {
 
@@ -23,7 +23,7 @@ export class GeneralMailFormatter {
       return await new SignedMsgMailFormatter(composer).sendableMsg(newMsgData, signingPrv!);
     }
     // encrypt (optionally sign)
-    const { armoredPubkeys, emailsWithoutPubkeys } = await composer.app.collectAllAvailablePublicKeys(newMsgData.sender, senderKi, recipientsEmails);
+    const { armoredPubkeys, emailsWithoutPubkeys } = await composer.storage.collectAllAvailablePublicKeys(newMsgData.sender, senderKi, recipientsEmails);
     if (emailsWithoutPubkeys.length) {
       await composer.errs.throwIfEncryptionPasswordInvalid(senderKi, newMsgData);
     }

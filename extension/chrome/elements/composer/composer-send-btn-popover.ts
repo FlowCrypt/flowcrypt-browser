@@ -2,13 +2,13 @@
 
 'use strict';
 
-import { ComposerComponent } from './interfaces/composer-component.js';
-import { PopoverOpt, PopoverChoices } from './interfaces/composer-types.js';
-import { Xss } from '../platform/xss.js';
-import { Lang } from '../lang.js';
-import { Ui } from '../browser.js';
-import { Catch } from '../platform/catch.js';
-import { Store } from '../platform/store.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { PopoverOpt, PopoverChoices } from './composer-types.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { Lang } from '../../../js/common/lang.js';
+import { Ui } from '../../../js/common/browser.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { Store } from '../../../js/common/platform/store.js';
 
 export class ComposerSendBtnPopover extends ComposerComponent {
 
@@ -27,7 +27,7 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     this.choices.richText = await this.richTextUserChoiceRetrieve();
     for (const key of Object.keys(popoverItems)) {
       const popoverOpt = key as PopoverOpt;
-      if (popoverOpt === 'richText' && !['flowcrypt.compatibility@gmail.com', 'tom@flowcrypt.com', 'flowcrypt.oauth.demo@gmail.com'].includes(this.urlParams.acctEmail)) {
+      if (popoverOpt === 'richText' && !['flowcrypt.compatibility@gmail.com', 'tom@flowcrypt.com', 'flowcrypt.oauth.demo@gmail.com'].includes(this.view.acctEmail)) {
         continue; // richText not supported yet. Only used for testing
       }
       const item = popoverItems[popoverOpt];
@@ -130,11 +130,11 @@ export class ComposerSendBtnPopover extends ComposerComponent {
   }
 
   private async richTextUserChoiceStore(isTicked: boolean) {
-    await Store.setAcct(this.composer.urlParams.acctEmail, { use_rich_text: isTicked });
+    await Store.setAcct(this.view.acctEmail, { use_rich_text: isTicked });
   }
 
   private async richTextUserChoiceRetrieve(): Promise<boolean> {
-    const store = await Store.getAcct(this.composer.urlParams.acctEmail, ['use_rich_text']);
+    const store = await Store.getAcct(this.view.acctEmail, ['use_rich_text']);
     return store.use_rich_text || false;
   }
 

@@ -2,15 +2,15 @@
 
 'use strict';
 
-import { ComposerComponent } from './interfaces/composer-component.js';
-import { Ui, BrowserEventErrHandler } from '../browser.js';
-import { BrowserMsg, Extension } from '../extension.js';
-import { Catch, UnreportableError } from '../platform/catch.js';
-import { Str } from '../core/common.js';
-import { Api } from '../api/api.js';
-import { SendBtnTexts } from './interfaces/composer-types.js';
-import { KeyInfo, Pwd } from '../core/pgp.js';
-import { Settings } from '../settings.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { Ui, BrowserEventErrHandler } from '../../../js/common/browser.js';
+import { BrowserMsg, Extension } from '../../../js/common/extension.js';
+import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
+import { Str } from '../../../js/common/core/common.js';
+import { Api } from '../../../js/common/api/api.js';
+import { SendBtnTexts } from './composer-types.js';
+import { KeyInfo, Pwd } from '../../../js/common/core/pgp.js';
+import { Settings } from '../../../js/common/settings.js';
 
 export class ComposerUserError extends Error { }
 export class ComposerNotReadyError extends ComposerUserError { }
@@ -30,9 +30,9 @@ export class ComposerErrs extends ComposerComponent {
   public handlers = (couldNotDoWhat: string): BrowserEventErrHandler => {
     return {
       network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
-      authPopup: async () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail }),
+      authPopup: async () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail }),
       auth: async () => {
-        Settings.offerToLoginWithPopupShowModalOnErr(this.urlParams.acctEmail, undefined, `Could not ${couldNotDoWhat}.\n`);
+        Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail, undefined, `Could not ${couldNotDoWhat}.\n`);
       },
       other: async (e: any) => {
         if (e instanceof Error) {
@@ -59,7 +59,7 @@ export class ComposerErrs extends ComposerComponent {
   }
 
   public debug = (msg: string) => {
-    if (this.urlParams.debug) {
+    if (this.view.debug) {
       console.log(`[${this.debugId}] ${msg}`);
     }
   }
@@ -68,10 +68,10 @@ export class ComposerErrs extends ComposerComponent {
     if (Api.err.isNetErr(e)) {
       await Ui.modal.error('Could not send message due to network error. Please check your internet connection and try again.');
     } else if (Api.err.isAuthPopupNeeded(e)) {
-      BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
+      BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       await Ui.modal.error('Could not send message because FlowCrypt needs to be re-connected to google account.');
     } else if (Api.err.isAuthErr(e)) {
-      Settings.offerToLoginWithPopupShowModalOnErr(this.urlParams.acctEmail);
+      Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail);
     } else if (Api.err.isReqTooLarge(e)) {
       await Ui.modal.error(`Could not send: message or attachments too large.`);
     } else if (Api.err.isBadReq(e)) {
@@ -82,7 +82,7 @@ export class ComposerErrs extends ComposerComponent {
         if (await Ui.modal.confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
           const page = '/chrome/settings/modules/help.htm';
           const pageUrlParams = { bugReport: Extension.prepareBugReport(`composer: send: bad request (errMsg: ${errMsg})`, {}, e) };
-          BrowserMsg.send.bg.settings({ acctEmail: this.urlParams.acctEmail, page, pageUrlParams });
+          BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page, pageUrlParams });
         }
       }
     } else if (e instanceof ComposerUserError) {
@@ -129,7 +129,7 @@ export class ComposerErrs extends ComposerComponent {
 
   public throwIfEncryptionPasswordInvalid = async (senderKi: KeyInfo, { subject, pwd }: { subject: string, pwd?: Pwd }) => {
     if (pwd && pwd.answer) {
-      const pp = await this.composer.app.storagePassphraseGet(senderKi);
+      const pp = await this.composer.storage.passphraseGet(senderKi);
       if (pp && pwd.answer.toLowerCase() === pp.toLowerCase()) {
         throw new ComposerUserError('Please do not use your private key pass phrase as a password for this message.\n\n' +
           'You should come up with some other unique password that you can share with recipient.');
