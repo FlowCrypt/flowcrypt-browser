@@ -203,7 +203,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
                     ${Lang.compose.msgEncryptedHtml[lang] + a}<br/><br/>
                     ${Lang.compose.alternativelyCopyPaste[lang] + Xss.escape(msgUrl)}<br/><br/><br/>
                 </div>`);
-    await this.composer.storage.storageAddAdminCodes(short, [admin_code].concat(this.fcAdminCodes));
+    await this.composer.storage.addAdminCodes(short, [admin_code].concat(this.fcAdminCodes));
     encryptedBody['text/plain'] = text.join('\n');
     encryptedBody['text/html'] = html.join('\n');
   }

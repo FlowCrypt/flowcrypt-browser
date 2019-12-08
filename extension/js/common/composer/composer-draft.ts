@@ -74,7 +74,7 @@ export class ComposerDraft extends ComposerComponent {
       } else if (this.view.isReplyBox && Api.err.isNotFound(e)) {
         Catch.log('about to reload reply_message automatically: get draft 404', this.view.acctEmail);
         await Ui.time.sleep(500);
-        await this.composer.storage.storageDraftMetaDelete(this.view.draftId, this.view.threadId);
+        await this.composer.storage.draftMetaDelete(this.view.draftId, this.view.threadId);
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
         this.view.draftId = '';
         window.location.href = Url.create(Env.getUrlNoParams(), this.view.urlParams());
@@ -91,7 +91,7 @@ export class ComposerDraft extends ComposerComponent {
       this.currentlySavingDraft = true;
       try {
         this.composer.S.cached('send_btn_note').text('Saving');
-        const primaryKi = await this.composer.storage.storageGetKey(this.view.acctEmail, this.composer.sender.getSender());
+        const primaryKi = await this.composer.storage.getKey(this.view.acctEmail, this.composer.sender.getSender());
         const plaintext = this.composer.input.extract('text', 'input_text');
         const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(plaintext), armor: true }) as OpenPGP.EncryptArmorResult;
         let body: string;
@@ -119,7 +119,7 @@ export class ComposerDraft extends ComposerComponent {
           const { id } = await this.composer.emailProvider.draftCreate(mimeMsg, this.view.threadId);
           this.composer.S.cached('send_btn_note').text('Saved');
           this.view.draftId = id;
-          await this.composer.storage.storageDraftMetaSet(id, this.view.threadId, to, String(this.composer.S.cached('input_subject').val()));
+          await this.composer.storage.draftMetaSet(id, this.view.threadId, to, String(this.composer.S.cached('input_subject').val()));
           // recursing one more time, because we need the draftId we get from this reply in the message itself
           // essentially everytime we save draft for the first time, we have to save it twice
           // currentlySavingDraft will remain true for now
@@ -158,7 +158,7 @@ export class ComposerDraft extends ComposerComponent {
     clearInterval(this.saveDraftInterval);
     await Ui.time.wait(() => !this.currentlySavingDraft ? true : undefined);
     if (this.view.draftId) {
-      await this.composer.storage.storageDraftMetaDelete(this.view.draftId, this.view.threadId);
+      await this.composer.storage.draftMetaDelete(this.view.draftId, this.view.threadId);
       try {
         await this.composer.emailProvider.draftDelete(this.view.draftId);
         this.view.draftId = '';
@@ -175,7 +175,7 @@ export class ComposerDraft extends ComposerComponent {
   }
 
   private async decryptAndRenderDraft(encryptedArmoredDraft: string, headers: { subject?: string, from?: string; to: string[], cc: string[], bcc: string[] }): Promise<boolean> {
-    const passphrase = await this.composer.storage.storagePassphraseGet();
+    const passphrase = await this.composer.storage.passphraseGet();
     if (typeof passphrase !== 'undefined') {
       const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.view.acctEmail), encryptedData: Buf.fromUtfStr(encryptedArmoredDraft) });
       if (result.success) {

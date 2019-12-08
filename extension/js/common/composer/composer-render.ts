@@ -239,7 +239,7 @@ export class ComposerRender extends ComposerComponent {
         }
       }, this.composer.errs.handlers(`close message`)));
       this.composer.S.cached('header').find('#header_title').click(() => $('.minimize_new_message').click());
-      this.composer.sender.renderSenderAliasesOptions(await this.composer.storage.storageGetAddresses());
+      this.composer.sender.renderSenderAliasesOptions(await this.composer.storage.getAddresses());
       const footer = await this.composer.sender.getFooter();
       await this.composer.quote.addTripleDotQuoteExpandBtn(undefined, undefined, footer);
       this.composer.size.setInputTextHeightManuallyIfNeeded();

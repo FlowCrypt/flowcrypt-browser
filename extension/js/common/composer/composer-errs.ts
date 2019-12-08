@@ -129,7 +129,7 @@ export class ComposerErrs extends ComposerComponent {
 
   public throwIfEncryptionPasswordInvalid = async (senderKi: KeyInfo, { subject, pwd }: { subject: string, pwd?: Pwd }) => {
     if (pwd && pwd.answer) {
-      const pp = await this.composer.storage.storagePassphraseGet(senderKi);
+      const pp = await this.composer.storage.passphraseGet(senderKi);
       if (pp && pwd.answer.toLowerCase() === pp.toLowerCase()) {
         throw new ComposerUserError('Please do not use your private key pass phrase as a password for this message.\n\n' +
           'You should come up with some other unique password that you can share with recipient.');

@@ -28,7 +28,7 @@ export class ComposerStorage extends ComposerComponent {
     });
   }
 
-  async storageGetKey(acctEmail: string, senderEmail: string): Promise<KeyInfo> {
+  async getKey(acctEmail: string, senderEmail: string): Promise<KeyInfo> {
     const keys = await Store.keysGet(acctEmail);
     let result = await this.composer.myPubkey.chooseMyPublicKeyBySenderEmail(keys, senderEmail);
     if (!result) {
@@ -38,7 +38,7 @@ export class ComposerStorage extends ComposerComponent {
     return result!;
   }
 
-  async storageDraftMetaSet(draftId: string, threadId: string, recipients: string[], subject: string) {
+  async draftMetaSet(draftId: string, threadId: string, recipients: string[], subject: string) {
     const draftStorage = await Store.getAcct(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
     if (threadId) { // it's a reply
       const drafts = draftStorage.drafts_reply || {};
@@ -51,7 +51,7 @@ export class ComposerStorage extends ComposerComponent {
     }
   }
 
-  async storageDraftMetaDelete(draftId: string, threadId: string) {
+  async draftMetaDelete(draftId: string, threadId: string) {
     const draftStorage = await Store.getAcct(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
     if (threadId) { // it's a reply
       const drafts = draftStorage.drafts_reply || {};
@@ -64,7 +64,7 @@ export class ComposerStorage extends ComposerComponent {
     }
   }
 
-  async storageAddAdminCodes(shortId: string, codes: string[]) {
+  async addAdminCodes(shortId: string, codes: string[]) {
     const adminCodeStorage = await Store.getGlobal(['admin_codes']);
     adminCodeStorage.admin_codes = adminCodeStorage.admin_codes || {};
     adminCodeStorage.admin_codes[shortId] = { date: Date.now(), codes };
@@ -88,7 +88,7 @@ export class ComposerStorage extends ComposerComponent {
     return { armoredPubkeys, emailsWithoutPubkeys };
   }
 
-  async storagePassphraseGet(senderKi?: KeyInfo) {
+  async passphraseGet(senderKi?: KeyInfo) {
     if (!senderKi) {
       [senderKi] = await Store.keysGet(this.view.acctEmail, ['primary']);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(senderKi);
@@ -96,7 +96,7 @@ export class ComposerStorage extends ComposerComponent {
     return await Store.passphraseGet(this.view.acctEmail, senderKi.longid);
   }
 
-  async storageGetAddresses(): Promise<Dict<SendAsAlias>> {
+  async getAddresses(): Promise<Dict<SendAsAlias>> {
     const arrayToSendAs = (arr: string[]): Dict<SendAsAlias> => {
       const result: Dict<SendAsAlias> = {}; // Temporary Solution
       for (let i = 0; i < arr.length; i++) {
@@ -193,7 +193,7 @@ export class ComposerStorage extends ComposerComponent {
       clearInterval(this.passphraseInterval);
       const timeoutAt = secondsTimeout ? Date.now() + secondsTimeout * 1000 : undefined;
       this.passphraseInterval = Catch.setHandledInterval(async () => {
-        const passphrase = await this.storagePassphraseGet();
+        const passphrase = await this.passphraseGet();
         if (typeof passphrase !== 'undefined') {
           clearInterval(this.passphraseInterval);
           resolve(passphrase);

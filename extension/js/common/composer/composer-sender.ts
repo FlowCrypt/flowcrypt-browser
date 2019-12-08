@@ -29,7 +29,7 @@ export class ComposerSender extends ComposerComponent {
   }
 
   public async renderSenderAliasesOptionsToggle() {
-    const sendAs = await this.composer.storage.storageGetAddresses();
+    const sendAs = await this.composer.storage.getAddresses();
     if (sendAs && Object.keys(sendAs).length > 1) {
       const showAliasChevronHtml = '<img tabindex="22" id="show_sender_aliases_options" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
       const inputAddrContainer = this.composer.S.cached('email_copy_actions');
@@ -88,7 +88,7 @@ export class ComposerSender extends ComposerComponent {
   }
 
   public async getFooter() {
-    const addresses = await this.composer.storage.storageGetAddresses();
+    const addresses = await this.composer.storage.getAddresses();
     const sender = this.getSender();
     return addresses && addresses[sender] && addresses[sender].footer || undefined;
   }
