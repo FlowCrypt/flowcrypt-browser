@@ -38,7 +38,7 @@ export class BrowserPool {
     if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
       args.push(`--proxy-server=${Config.secrets.proxy.server}`);
     }
-    const browser = await launch({ args, headless: false, slowMo: isMock ? 30 : 60, devtools: false });
+    const browser = await launch({ args, headless: false, slowMo: isMock ? 20 : 60, devtools: false });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {
       await this.closeInitialExtensionPage(t, handle);
