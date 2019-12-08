@@ -18,6 +18,7 @@ import { getDebugHtmlAtts, AvaContext, standaloneTestTimeout, minutes, GlobalBro
 import { mock } from './mock';
 
 const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
+const startedAt = Date.now();
 
 process.setMaxListeners(30);
 
@@ -74,6 +75,7 @@ ava.before('set up global browsers and config', async t => {
       await browserGlobal[group].browsers.doneUsingBrowser(b);
     }
   }
+  console.info(`global browsers set up in: ${Math.round((Date.now() - startedAt) / 1000)}s`);
   t.pass();
 });
 
