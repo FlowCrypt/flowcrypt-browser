@@ -21,6 +21,7 @@ import { Mime } from '../core/mime.js';
 import { ComposerMyPubkey } from './composer-my-pubkey.js';
 import { Scopes } from '../platform/store.js';
 import { ComposerStorage } from './composer-storage.js';
+import { XssSafeFactory } from '../xss_safe_factory.js';
 
 export class Composer {
 
@@ -85,7 +86,12 @@ export class Composer {
   public canReadEmails: boolean;
   public initPromise: Promise<void>;
 
-  constructor(public app: ComposerAppFunctionsInterface, public urlParams: ComposerUrlParams, public scopes: Scopes) {
+  constructor(
+    public app: ComposerAppFunctionsInterface,
+    public urlParams: ComposerUrlParams,
+    public scopes: Scopes,
+    public factory: XssSafeFactory,
+  ) {
     this.urlParams.subject = Mime.subjectWithoutPrefixes(this.urlParams.subject);
     this.draft = new ComposerDraft(this);
     this.quote = new ComposerQuote(this);

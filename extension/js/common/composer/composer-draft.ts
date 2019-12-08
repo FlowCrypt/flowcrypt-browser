@@ -39,7 +39,7 @@ export class ComposerDraft extends ComposerComponent {
         this.urlParams.skipClickPrompt = false;
         window.location.href = Url.create(Env.getUrlNoParams(), this.urlParams);
       } else { // close new msg
-        this.composer.app.closeMsg();
+        this.composer.render.closeMsg();
       }
     }, this.composer.errs.handlers('delete draft')));
     await this.composer.initPromise;
@@ -235,7 +235,7 @@ export class ComposerDraft extends ComposerComponent {
     this.composer.S.cached('prompt').find('a.action_open_passphrase_dialog').click(Ui.event.handle(() => {
       BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'draft', longids: ['primary'] });
     }));
-    this.composer.S.cached('prompt').find('a.action_close').click(Ui.event.handle(() => this.composer.app.closeMsg()));
+    this.composer.S.cached('prompt').find('a.action_close').click(Ui.event.handle(() => this.composer.render.closeMsg()));
     await this.composer.storage.whenMasterPassphraseEntered();
   }
 

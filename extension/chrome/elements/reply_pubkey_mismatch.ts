@@ -14,6 +14,7 @@ import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { ComposerAppFunctionsInterface } from '../../js/common/composer/interfaces/composer-app-functions.js';
 import { Url } from '../../js/common/core/common.js';
+import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
 
 Catch.try(async () => {
 
@@ -33,7 +34,6 @@ Catch.try(async () => {
 
   const att = Att.keyinfoAsPubkeyAtt(primaryKi);
   const appFunctions: ComposerAppFunctionsInterface = {
-    doesRecipientHaveMyPubkey: (): Promise<boolean | undefined> => Promise.resolve(false),
     emailProviderDraftGet: () => Promise.resolve(undefined),
     emailProviderDraftCreate: () => Promise.reject(undefined),
     emailProviderDraftUpdate: () => Promise.resolve({}),
@@ -41,12 +41,6 @@ Catch.try(async () => {
     emailProviderMsgSend: () => Promise.reject({ message: 'not implemented' }),
     emailProviderGuessContactsFromSentEmails: (query, knownContacts, multiCb) => multiCb({ new: [], all: [] }),
     emailProviderExtractArmoredBlock: () => Promise.resolve({ armored: '' }),
-    renderReinsertReplyBox: () => Promise.resolve(),
-    renderAddPubkeyDialog: () => undefined,
-    renderHelpDialog: () => undefined,
-    closeMsg: () => undefined,
-    factoryAtt: (att) => `<div>${Xss.escape(att.name)}</div>`,
-    updateSendAs: () => undefined
   };
   await (async () => {
     if (!replyMsgId) {
@@ -78,9 +72,9 @@ Catch.try(async () => {
   const processedUrlParams = {
     acctEmail, draftId: '', threadId, replyMsgId, subject, from, to, cc: [], bcc: [], frameId, tabId, debug,
     isReplyBox: true, skipClickPrompt: false, // do not skip, would cause errors. This page is using custom template w/o a prompt
-    parentTabId, disableDraftSaving: true, removeAfterClose: false
+    parentTabId, disableDraftSaving: true, removeAfterClose: false, placement: 'gmail' as 'gmail'
   };
-  const composer = new Composer(appFunctions, processedUrlParams, await Store.getScopes(acctEmail));
+  const composer = new Composer(appFunctions, processedUrlParams, await Store.getScopes(acctEmail), new XssSafeFactory(acctEmail, tabId));
 
   const sendBtnText = 'Send Response';
 

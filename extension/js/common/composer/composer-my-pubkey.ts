@@ -8,6 +8,7 @@ import { Catch } from '../platform/catch.js';
 import { Lang } from '../lang.js';
 import { Api } from '../api/api.js';
 import { Store } from '../platform/store.js';
+import { KeyInfo, Pgp } from '../core/pgp.js';
 
 export class ComposerMyPubkey extends ComposerComponent {
 
@@ -32,7 +33,7 @@ export class ComposerMyPubkey extends ComposerComponent {
       for (const contact of contacts) {
         if (typeof contact === 'object' && contact.has_pgp && contact.client !== 'cryptup') {
           // new message, and my key is not uploaded where the recipient would look for it
-          if (! await this.composer.app.doesRecipientHaveMyPubkey(contact.email)) {
+          if (! await this.composer.recipients.doesRecipientHaveMyPubkey(contact.email)) {
             // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
             this.setAttachPreference(true);
             return;
@@ -53,6 +54,16 @@ export class ComposerMyPubkey extends ComposerComponent {
 
   public shouldAttach() {
     return this.composer.S.cached('icon_pubkey').is('.active');
+  }
+
+  async chooseMyPublicKeyBySenderEmail(keys: KeyInfo[], email: string) {
+    for (const key of keys) {
+      const parsedkey = await Pgp.key.read(key.public);
+      if (parsedkey.users.find(u => !!u.userId && u.userId.userid.toLowerCase().includes(email.toLowerCase()))) {
+        return key;
+      }
+    }
+    return undefined;
   }
 
 }

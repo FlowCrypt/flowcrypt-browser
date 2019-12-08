@@ -4,7 +4,7 @@
 
 import { ComposerComponent } from './interfaces/composer-component.js';
 import { Recipients } from './interfaces/composer-types.js';
-import { Ui } from '../browser.js';
+import { Ui, JQS } from '../browser.js';
 import { RecipientType } from '../api/api.js';
 import { Xss } from '../platform/xss.js';
 import { Catch } from '../platform/catch.js';
@@ -21,7 +21,7 @@ export class ComposerRender extends ComposerComponent {
 
   async initActions() {
     await this.initComposeBox();
-    this.composer.S.cached('icon_help').click(Ui.event.handle(() => this.composer.app.renderHelpDialog(), this.composer.errs.handlers(`render help dialog`)));
+    this.composer.S.cached('icon_help').click(Ui.event.handle(() => this.renderHelpDialog(), this.composer.errs.handlers(`render help dialog`)));
     this.composer.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
     this.composer.atts.initActions();
     this.composer.draft.initActions().catch(Catch.reportErr);
@@ -91,6 +91,10 @@ export class ComposerRender extends ComposerComponent {
     this.composer.sendBtn.resetSendBtn();
     await this.composer.sendBtn.popover.render();
     this.loadRecipientsThenSetTestStateReady().catch(Catch.reportErr);
+  }
+
+  private renderHelpDialog() {
+    BrowserMsg.send.bg.settings({ acctEmail: this.urlParams.acctEmail, page: '/chrome/settings/modules/help.htm' });
   }
 
   public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
@@ -214,7 +218,7 @@ export class ComposerRender extends ComposerComponent {
       $('.close_new_message').click(Ui.event.handle(async () => {
         if (!this.composer.sendBtn.isSendMessageInProgres() ||
           await Ui.modal.confirm('A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?')) {
-          this.composer.app.closeMsg();
+          this.composer.render.closeMsg();
         }
       }, this.composer.errs.handlers(`close message`)));
       this.composer.S.cached('header').find('#header_title').click(() => $('.minimize_new_message').click());
@@ -238,7 +242,7 @@ export class ComposerRender extends ComposerComponent {
   }
 
   public renderReplySuccess(msg: SendableMsg, msgId: string) {
-    this.composer.app.renderReinsertReplyBox(msgId);
+    this.composer.render.renderReinsertReplyBox(msgId);
     if (!this.composer.sendBtn.popover.choices.encrypt) {
       this.composer.S.cached('replied_body').addClass('pgp_neutral').removeClass('pgp_secure');
     }
@@ -260,10 +264,33 @@ export class ComposerRender extends ComposerComponent {
     const hideAttTypes = this.composer.sendBtn.popover.choices.richText ? ['hidden', 'encryptedMsg', 'signature', 'publicKey'] : ['publicKey'];
     const renderableAtts = atts.filter(att => !hideAttTypes.includes(att.treatAs()));
     if (renderableAtts.length) {
-      this.composer.S.cached('replied_attachments').html(renderableAtts.map(a => { // xss-safe-factory
-        a.msgId = msgId;
-        return this.composer.app.factoryAtt(a, true);
+      this.composer.S.cached('replied_attachments').html(renderableAtts.map(att => { // xss-safe-factory
+        att.msgId = msgId;
+        return this.composer.factory!.embeddedAtta(att, true);
       }).join('')).css('display', 'block');
+    }
+  }
+
+  renderReinsertReplyBox(msgId: string) {
+    BrowserMsg.send.reinsertReplyBox(this.urlParams.parentTabId, { replyMsgId: msgId });
+  }
+
+  renderAddPubkeyDialog(emails: string[]) {
+    if (this.urlParams.placement !== 'settings') {
+      BrowserMsg.send.addPubkeyDialog(this.urlParams.parentTabId, { emails });
+    } else {
+      ($ as JQS).featherlight({ iframe: this.composer.factory!.srcAddPubkeyDialog(emails, 'settings'), iframeWidth: 515, iframeHeight: $('body').height()! - 50 }); // body element is present
+    }
+  }
+
+  closeMsg() {
+    $('body').attr('data-test-state', 'closed'); // used by automated tests
+    if (this.urlParams.isReplyBox) {
+      BrowserMsg.send.closeReplyMessage(this.urlParams.parentTabId, { frameId: this.urlParams.frameId });
+    } else if (this.urlParams.placement === 'settings') {
+      BrowserMsg.send.closePage(this.urlParams.parentTabId);
+    } else {
+      BrowserMsg.send.closeNewMessage(this.urlParams.parentTabId);
     }
   }
 

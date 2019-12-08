@@ -3,10 +3,8 @@
 'use strict';
 
 import { Catch } from '../../js/common/platform/catch.js';
-import { Store, AccountStoreExtension, SendAsAlias, Scopes, AccountStore } from '../../js/common/platform/store.js';
-import { Str, Dict } from '../../js/common/core/common.js';
-import { Att } from '../../js/common/core/att.js';
-import { Ui, JQS } from '../../js/common/browser.js';
+import { Store, AccountStoreExtension, Scopes, AccountStore } from '../../js/common/platform/store.js';
+import { Ui } from '../../js/common/browser.js';
 import { Composer } from '../../js/common/composer/composer.js';
 import { Api, ProgressCb, ChunkedCb } from '../../js/common/api/api.js';
 import { BrowserMsg } from '../../js/common/extension.js';
@@ -42,10 +40,10 @@ View.run(class ComposeView extends View {
   private threadId: string = '';
 
   private scopes: Scopes | undefined;
-  private factory: XssSafeFactory | undefined;
   private tabId: string | undefined;
   private storage: AccountStore | undefined;
   private replyParams: { from: string, subject: string, to: string[], cc: string[], bcc: string[] } = { from: '', subject: '', to: [], cc: [], bcc: [] };
+  public factory: XssSafeFactory | undefined;
 
   constructor() {
     super();
@@ -89,10 +87,9 @@ View.run(class ComposeView extends View {
     const processedUrlParams = {
       acctEmail: this.acctEmail, draftId: this.draftId, threadId: this.threadId, replyMsgId: this.replyMsgId, ...this.replyParams, frameId: this.frameId,
       tabId: this.tabId!, isReplyBox: this.isReplyBox, skipClickPrompt: this.skipClickPrompt, parentTabId: this.parentTabId,
-      disableDraftSaving: this.disableDraftSaving, debug: this.debug, removeAfterClose: this.removeAfterClose
+      disableDraftSaving: this.disableDraftSaving, debug: this.debug, removeAfterClose: this.removeAfterClose, placement: this.placement
     };
     new Composer({ // tslint:disable-line:no-unused-expression
-      doesRecipientHaveMyPubkey: (email: string) => this.doesRecipientHaveMyPubkey(email),
       emailProviderDraftGet: (draftId: string) => Google.gmail.draftGet(this.acctEmail, draftId, 'raw'),
       emailProviderDraftCreate: Google.gmail.draftCreate,
       emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Google.gmail.draftUpdate(this.acctEmail, draftId, mimeMsg),
@@ -100,16 +97,8 @@ View.run(class ComposeView extends View {
       emailProviderMsgSend: (message: SendableMsg, renderUploadProgress: ProgressCb) => Google.gmail.msgSend(this.acctEmail, message, renderUploadProgress),
       emailProviderGuessContactsFromSentEmails: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => this.emailProviderGuessContactsFromSentEmails(query, knownContacts, multiCb),
       emailProviderExtractArmoredBlock: (msgId: string) => Google.gmail.extractArmoredBlock(this.acctEmail, msgId, 'full'),
-      renderReinsertReplyBox: (msgId: string) => this.renderReinsertReplyBox(msgId),
-      renderAddPubkeyDialog: (emails: string[]) => this.renderAddPubkeyDialog(emails),
-      renderHelpDialog: () => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/help.htm' }),
-      closeMsg: () => this.closeMsg(),
-      factoryAtt: (att: Att, isEncrypted: boolean) => this.factory!.embeddedAtta(att, isEncrypted),
-      updateSendAs: (sendAs: Dict<SendAsAlias>) => { this.storage!.sendAs = sendAs; }
-    }, processedUrlParams, this.scopes!);
-    BrowserMsg.addListener('close_dialog', async () => {
-      $('.featherlight.featherlight-iframe').remove();
-    });
+    }, processedUrlParams, this.scopes!, this.factory!);
+    BrowserMsg.addListener('close_dialog', async () => { $('.featherlight.featherlight-iframe').remove(); });
     BrowserMsg.listen(this.tabId!);
   }
 
@@ -131,61 +120,6 @@ View.run(class ComposeView extends View {
       throw e;
     } finally {
       $('#loader').remove();
-    }
-  }
-
-  private renderReinsertReplyBox(msgId: string) {
-    BrowserMsg.send.reinsertReplyBox(this.parentTabId, { replyMsgId: msgId });
-  }
-
-  private renderAddPubkeyDialog(emails: string[]) {
-    if (this.placement !== 'settings') {
-      BrowserMsg.send.addPubkeyDialog(this.parentTabId, { emails });
-    } else {
-      ($ as JQS).featherlight({ iframe: this.factory!.srcAddPubkeyDialog(emails, 'settings'), iframeWidth: 515, iframeHeight: $('body').height()! - 50 }); // body element is present
-    }
-  }
-
-  private async doesRecipientHaveMyPubkey(theirEmailUnchecked: string): Promise<boolean | undefined> {
-    const theirEmail = Str.parseEmail(theirEmailUnchecked).email;
-    if (!theirEmail) {
-      return false;
-    }
-    const storage = await Store.getAcct(this.acctEmail, ['pubkey_sent_to']);
-    if (storage.pubkey_sent_to && storage.pubkey_sent_to.includes(theirEmail)) {
-      return true;
-    }
-    if (!this.scopes!.read && !this.scopes!.modify) {
-      return undefined; // cannot read email
-    }
-    const qSentPubkey = `is:sent to:${theirEmail} "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"`;
-    const qReceivedMsg = `from:${theirEmail} "BEGIN PGP MESSAGE" "END PGP MESSAGE"`;
-    try {
-      const response = await Google.gmail.msgList(this.acctEmail, `(${qSentPubkey}) OR (${qReceivedMsg})`, true);
-      if (response.messages) {
-        await Store.setAcct(this.acctEmail, { pubkey_sent_to: (storage.pubkey_sent_to || []).concat(theirEmail) });
-        return true;
-      } else {
-        return false;
-      }
-    } catch (e) {
-      if (Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
-      } else if (!Api.err.isNetErr(e)) {
-        Catch.reportErr(e);
-      }
-      return undefined;
-    }
-  }
-
-  private closeMsg() {
-    $('body').attr('data-test-state', 'closed'); // used by automated tests
-    if (this.isReplyBox) {
-      BrowserMsg.send.closeReplyMessage(this.parentTabId, { frameId: this.frameId });
-    } else if (this.placement === 'settings') {
-      BrowserMsg.send.closePage(this.parentTabId);
-    } else {
-      BrowserMsg.send.closeNewMessage(this.parentTabId);
     }
   }
 

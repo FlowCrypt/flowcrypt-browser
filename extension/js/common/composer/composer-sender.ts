@@ -68,7 +68,6 @@ export class ComposerSender extends ComposerComponent {
     try {
       const refreshResult = await Settings.refreshAcctAliases(this.urlParams.acctEmail);
       if (refreshResult) {
-        this.composer.app.updateSendAs(refreshResult.sendAs);
         if (refreshResult.isAliasesChanged || refreshResult.isDefaultEmailChanged) {
           this.renderSenderAliasesOptions(refreshResult.sendAs);
         }

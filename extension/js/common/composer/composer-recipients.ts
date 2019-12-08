@@ -133,7 +133,7 @@ export class ComposerRecipients extends ComposerComponent {
     this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.errs.handlers(`hide contact box`)));
     this.composer.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
       const noPgpRecipients = this.addedRecipients.filter(r => r.element.className.includes('no_pgp'));
-      this.composer.app.renderAddPubkeyDialog(noPgpRecipients.map(r => r.email));
+      this.composer.render.renderAddPubkeyDialog(noPgpRecipients.map(r => r.email));
       clearInterval(this.addedPubkeyDbLookupInterval); // todo - get rid of Catch.set_interval. just supply tabId and wait for direct callback
       this.addedPubkeyDbLookupInterval = Catch.setHandledInterval(async () => {
         const recipientsHasPgp: RecipientElement[] = [];
@@ -797,5 +797,37 @@ export class ComposerRecipients extends ComposerComponent {
 
   public onRecipientAdded = (callback: (rec: RecipientElement[]) => void) => {
     this.onRecipientAddedCallbacks.push(callback);
+  }
+
+  async doesRecipientHaveMyPubkey(theirEmailUnchecked: string): Promise<boolean | undefined> {
+    const theirEmail = Str.parseEmail(theirEmailUnchecked).email;
+    if (!theirEmail) {
+      return false;
+    }
+    const storage = await Store.getAcct(this.urlParams.acctEmail, ['pubkey_sent_to']);
+    if (storage.pubkey_sent_to && storage.pubkey_sent_to.includes(theirEmail)) {
+      return true;
+    }
+    if (!this.composer.scopes!.read && !this.composer.scopes!.modify) {
+      return undefined; // cannot read email
+    }
+    const qSentPubkey = `is:sent to:${theirEmail} "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"`;
+    const qReceivedMsg = `from:${theirEmail} "BEGIN PGP MESSAGE" "END PGP MESSAGE"`;
+    try {
+      const response = await Google.gmail.msgList(this.urlParams.acctEmail, `(${qSentPubkey}) OR (${qReceivedMsg})`, true);
+      if (response.messages) {
+        await Store.setAcct(this.urlParams.acctEmail, { pubkey_sent_to: (storage.pubkey_sent_to || []).concat(theirEmail) });
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      if (Api.err.isAuthPopupNeeded(e)) {
+        BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
+      } else if (!Api.err.isNetErr(e)) {
+        Catch.reportErr(e);
+      }
+      return undefined;
+    }
   }
 }

@@ -141,7 +141,7 @@ export class ComposerSendBtn extends ComposerComponent {
     if (this.urlParams.isReplyBox) {
       this.composer.render.renderReplySuccess(msg, msgSentRes.id);
     } else {
-      this.composer.app.closeMsg();
+      this.composer.render.closeMsg();
     }
   }
 

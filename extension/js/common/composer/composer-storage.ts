@@ -30,22 +30,12 @@ export class ComposerStorage extends ComposerComponent {
 
   async storageGetKey(acctEmail: string, senderEmail: string): Promise<KeyInfo> {
     const keys = await Store.keysGet(acctEmail);
-    let result = await this.chooseMyPublicKeyBySenderEmail(keys, senderEmail);
+    let result = await this.composer.myPubkey.chooseMyPublicKeyBySenderEmail(keys, senderEmail);
     if (!result) {
       result = keys.find(ki => ki.primary);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(result);
     }
     return result!;
-  }
-
-  private async chooseMyPublicKeyBySenderEmail(keys: KeyInfo[], email: string) {
-    for (const key of keys) {
-      const parsedkey = await Pgp.key.read(key.public);
-      if (parsedkey.users.find(u => !!u.userId && u.userId.userid.toLowerCase().includes(email.toLowerCase()))) {
-        return key;
-      }
-    }
-    return undefined;
   }
 
   async storageDraftMetaSet(draftId: string, threadId: string, recipients: string[], subject: string) {

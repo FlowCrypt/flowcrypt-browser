@@ -64,6 +64,7 @@ export type ComposerUrlParams = {
   skipClickPrompt: boolean;
   debug: boolean;
   removeAfterClose: boolean;
+  placement: 'settings' | 'gmail' | undefined;
 };
 
 export type PubkeyResult = { pubkey: string, email: string, isMine: boolean };
