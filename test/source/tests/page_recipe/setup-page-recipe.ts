@@ -69,6 +69,7 @@ export class SetupPageRecipe extends PageRecipe {
       await Util.sleep(1);
       await settingsPage.notPresent('@action-step2bmanualenter-new-random-passphrase');
       await settingsPage.waitAndType('@input-step2bmanualenter-passphrase', k.passphrase);
+      await Util.sleep(0.2);
     } else {
       await settingsPage.waitAndClick('@input-step2bmanualenter-passphrase');
       await settingsPage.waitAll('@action-step2bmanualenter-new-random-passphrase', { visible: true });
