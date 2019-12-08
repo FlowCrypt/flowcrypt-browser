@@ -27,7 +27,7 @@ export abstract class View {
 
   private static reportAndRenderErr(e: any) {
     Api.err.reportIfSignificant(e);
-    Xss.sanitizeRender($('body'), `${Api.err.eli5(e)} ${Ui.retryLink()}`);
+    Xss.sanitizeRender('body', `${Api.err.eli5(e)}<br>${String(e)}<br><br>${Ui.retryLink()}`);
   }
 
   public setHandler(cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) {

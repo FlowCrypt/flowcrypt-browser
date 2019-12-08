@@ -69,6 +69,7 @@ View.run(class ComposeView extends View {
     this.draftId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
     this.replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
     this.isReplyBox = !!this.replyMsgId;
+    Backend.getSubscriptionWithoutLogin(this.acctEmail).catch(Api.err.reportIfSignificant); // updates storage
     openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
   }
 
@@ -77,43 +78,16 @@ View.run(class ComposeView extends View {
       'hide_message_password', 'drafts_reply']);
     this.tabId = await BrowserMsg.requiredTabId();
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
+    this.scopes = await Store.getScopes(this.acctEmail);
+    if (!this.isReplyBox) { // don't want to deal with resizing the frame
+      await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail);
+    }
     if (this.replyMsgId) {
-      const fetchSuccess = await (async () => {
-        Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green') }));
-        try {
-          const gmailMsg = await Google.gmail.msgGet(this.acctEmail, this.replyMsgId!, 'metadata');
-          const aliases = AccountStoreExtension.getEmailAliasesIncludingPrimary(this.acctEmail, this.storageGetAddresses());
-          Object.assign(this.replyParams, Google.determineReplyCorrespondents(this.acctEmail, aliases, gmailMsg));
-          this.replyParams.subject = Google.gmail.findHeader(gmailMsg, 'subject') || '';
-          this.threadId = gmailMsg.threadId || '';
-        } catch (e) {
-          if (Api.err.isAuthPopupNeeded(e)) {
-            BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
-          } else if (Api.err.isSignificant(e)) {
-            Catch.reportErr(e);
-          }
-          Xss.sanitizePrepend('#new_message', `<div>Cannot get reply data for the message you are replying to. <a class="action_retry" href="#">Retry</a></div>`);
-          $('.action_retry').on('click', Ui.event.handle(async (elem) => {
-            location.reload();
-          }));
-          return false;
-        } finally {
-          $('#loader').remove();
-        }
-        return true;
-      })();
-      if (!fetchSuccess) {
-        return;
-      }
+      await this.fetchReplyMsgInfo();
     }
     if (this.isReplyBox && this.threadId && !this.ignoreDraft && this.storage.drafts_reply && this.storage.drafts_reply[this.threadId]) {
       this.draftId = this.storage.drafts_reply[this.threadId]; // there may be a draft we want to load
     }
-    Backend.getSubscriptionWithoutLogin(this.acctEmail).catch(Api.err.reportIfSignificant); // updates storage
-    if (!this.isReplyBox) { // don't want to deal with resizing the frame
-      await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail);
-    }
-    this.scopes = await Store.getScopes(this.acctEmail);
   }
 
   setHandlers() {
@@ -163,6 +137,27 @@ View.run(class ComposeView extends View {
       }
     });
     BrowserMsg.listen(this.tabId!);
+  }
+
+  private async fetchReplyMsgInfo(): Promise<void> {
+    Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green') }));
+    try {
+      const gmailMsg = await Google.gmail.msgGet(this.acctEmail, this.replyMsgId!, 'metadata');
+      const aliases = AccountStoreExtension.getEmailAliasesIncludingPrimary(this.acctEmail, this.storageGetAddresses());
+      Object.assign(this.replyParams, Google.determineReplyCorrespondents(this.acctEmail, aliases, gmailMsg));
+      this.replyParams.subject = Google.gmail.findHeader(gmailMsg, 'subject') || '';
+      this.threadId = gmailMsg.threadId || '';
+    } catch (e) {
+      if (Api.err.isAuthPopupNeeded(e)) {
+        BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
+      }
+      if (e instanceof Error) {
+        e.message = `Cannot get reply data for the message you are replying to.`;
+      }
+      throw e;
+    } finally {
+      $('#loader').remove();
+    }
   }
 
   private whenMasterPassphraseEntered(secondsTimeout?: number): Promise<string | undefined> {

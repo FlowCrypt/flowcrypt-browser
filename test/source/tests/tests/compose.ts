@@ -148,19 +148,17 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     ava.default('compose[global:compatibility] - reply - old gmail threadId fmt', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadId=16841ce0ce5cb74d&replyMsgId=16841ce0ce5cb74d';
       const replyFrame = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, skipValidation: true });
-      await Util.sleep(1);
-      // tslint:disable-next-line: no-unused-expression
-      expect(await replyFrame.isElementPresent('.action_retry')).to.be.true;
-      expect(await PageRecipe.getElementPropertyJson(await replyFrame.waitAny('#new_message'), 'textContent')).to.include('Cannot get reply data for the message you are replying to.');
+      await replyFrame.waitAll(['#new_message', '@action-retry-by-reloading']);
+      expect(await replyFrame.read('#new_message')).to.include('Cannot get reply data for the message you are replying to');
+      await replyFrame.notPresent('@action-accept-reply-prompt');
     }));
 
     ava.default('compose[global:compatibility] - reply - thread id does not exist', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadId=16804894591b3a4b&replyMsgId=16804894591b3a4b';
       const replyFrame = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, skipValidation: true, });
-      await Util.sleep(1);
-      // tslint:disable-next-line: no-unused-expression
-      expect(await replyFrame.isElementPresent('.action_retry')).to.be.true;
-      expect(await PageRecipe.getElementPropertyJson(await replyFrame.waitAny('#new_message'), 'textContent')).to.include('Cannot get reply data for the message you are replying to.');
+      await replyFrame.waitAll(['#new_message', '@action-retry-by-reloading']);
+      expect(await replyFrame.read('#new_message')).to.include('Cannot get reply data for the message you are replying to');
+      await replyFrame.notPresent('@action-accept-reply-prompt');
     }));
 
     ava.default('compose[global:compose] - standalone - quote - can load quote from encrypted/text email', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {

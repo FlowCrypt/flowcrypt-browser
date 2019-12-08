@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Subscription, ContactUpdate, DbContactObjArg, SendAsAlias, GoogleAuthScopesNames } from '../../platform/store.js';
+import { Subscription, ContactUpdate, DbContactObjArg, SendAsAlias } from '../../platform/store.js';
 import { KeyInfo, Contact } from '../../core/pgp.js';
 import { ProviderContactsQuery, SendableMsg } from '../../api/email_provider_api.js';
 import { GmailRes } from '../../api/google.js';
