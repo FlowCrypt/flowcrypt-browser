@@ -192,10 +192,17 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
+  /**
+   * The tricky part here is that we are checking attachments in intervals (1s)
+   * In the exact moment we check, only some of the attachments of a message may be loaded into the DOM, while others won't
+   * This is not fully handled (I don't yet know how to tell if attachment container already contains all attachments)
+   * It may create unexpected behavior, such as removing the attachment but not rendering any message (sometimes noticeable for attached public keys)
+   * Best would be, instead of checking every 1 second, to be able to listen to a certain element being inserted into the dom, and only respond then
+   */
   private replaceAtts = async () => {
-    for (const attsContainerEl of $(this.sel.attsContainerInner)) {
+    for (const attsContainerEl of $(this.sel.attsContainerInner).not('.evaluated').addClass('evaluated')) {
       const attsContainer = $(attsContainerEl);
-      const newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.attachmentsPattern).addClass('evaluated');
+      const newPgpAtts = this.filterAtts(attsContainer.children(), Att.attachmentsPattern);
       const newPgpAttsNames = Browser.arrFromDomNodeList(newPgpAtts.find('.aV3')).map(x => $.trim($(x).text()));
       if (newPgpAtts.length) {
         const msgId = this.determineMsgId(attsContainer);
