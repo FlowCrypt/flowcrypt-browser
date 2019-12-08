@@ -267,7 +267,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const appendUrl = 'threadId=15f7f5face7101db&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=15f7f5face7101db';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
-      expect(await PageRecipe.getElementPropertyJson((await composePage.waitAny('@action-send'))!, 'textContent')).to.eq('Sign and Send');
+      await composePage.waitAll('@action-send');
+      await Util.sleep(0.5);
+      expect(await composePage.read('@action-send')).to.eq('Sign and Send');
       await composePage.waitAndClick('@action-show-options-popover');
       await composePage.waitAll(['@action-toggle-sign', '@action-toggle-encrypt', '@icon-toggle-sign-tick']);
       await composePage.notPresent(['@icon-toggle-encrypt-tick']); // response to signed message should not be auto-encrypted
