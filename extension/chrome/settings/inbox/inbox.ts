@@ -135,7 +135,8 @@ Catch.try(async () => {
   BrowserMsg.addListener('reply_pubkey_mismatch', async () => {
     const replyIframe = $('iframe.reply_message').get(0) as HTMLIFrameElement | undefined;
     if (replyIframe) {
-      replyIframe.src = replyIframe.src.replace('/compose.htm?', '/reply_pubkey_mismatch.htm?');
+      const bareSrc = Url.removeParamsFromUrl(replyIframe.src, ['ignoreDraft', 'disableDraftSaving', 'draftId', 'replyPubkeyMismatch', 'skipClickPrompt']);
+      replyIframe.src = Url.create(bareSrc, { replyPubkeyMismatch: true, ignoreDraft: true, disableDraftSaving: true, draftId: '', skipClickPrompt: true });
     }
   });
   BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {

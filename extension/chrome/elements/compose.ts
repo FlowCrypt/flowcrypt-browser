@@ -23,9 +23,9 @@ export type DeterminedMsgHeaders = {
   headers: { 'In-Reply-To': string, 'References': string }
 };
 
-View.run(class ComposeView extends View {
+export class ComposeView extends View { // temporarily extended by ReplyPubkeyMismatchView
 
-  private readonly acctEmail: string;
+  protected readonly acctEmail: string;
   private readonly parentTabId: string;
   private readonly frameId: string;
   private readonly skipClickPrompt: boolean;
@@ -36,6 +36,7 @@ View.run(class ComposeView extends View {
   private readonly debug: boolean;
   private readonly isReplyBox: boolean;
   private readonly replyMsgId: string;
+  private readonly replyPubkeyMismatch: boolean;
   private draftId: string;
   private threadId: string = '';
 
@@ -49,7 +50,7 @@ View.run(class ComposeView extends View {
     super();
     Ui.event.protect();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId',
-      'replyMsgId', 'skipClickPrompt', 'ignoreDraft', 'debug', 'removeAfterClose']);
+      'replyMsgId', 'skipClickPrompt', 'ignoreDraft', 'debug', 'removeAfterClose', 'replyPubkeyMismatch']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
@@ -59,6 +60,7 @@ View.run(class ComposeView extends View {
     this.placement = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'placement', ['settings', 'gmail', undefined]);
     this.disableDraftSaving = false;
     this.debug = uncheckedUrlParams.debug === true;
+    this.replyPubkeyMismatch = uncheckedUrlParams.replyPubkeyMismatch === true;
     this.draftId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
     this.replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
     this.isReplyBox = !!this.replyMsgId;
@@ -87,7 +89,8 @@ View.run(class ComposeView extends View {
     const processedUrlParams = {
       acctEmail: this.acctEmail, draftId: this.draftId, threadId: this.threadId, replyMsgId: this.replyMsgId, ...this.replyParams, frameId: this.frameId,
       tabId: this.tabId!, isReplyBox: this.isReplyBox, skipClickPrompt: this.skipClickPrompt, parentTabId: this.parentTabId,
-      disableDraftSaving: this.disableDraftSaving, debug: this.debug, removeAfterClose: this.removeAfterClose, placement: this.placement
+      disableDraftSaving: this.disableDraftSaving, debug: this.debug, removeAfterClose: this.removeAfterClose, placement: this.placement,
+      replyPubkeyMismatch: this.replyPubkeyMismatch,
     };
     new Composer({ // tslint:disable-line:no-unused-expression
       emailProviderDraftGet: (draftId: string) => Google.gmail.draftGet(this.acctEmail, draftId, 'raw'),
@@ -138,4 +141,6 @@ View.run(class ComposeView extends View {
     });
   }
 
-});
+}
+
+View.run(ComposeView);

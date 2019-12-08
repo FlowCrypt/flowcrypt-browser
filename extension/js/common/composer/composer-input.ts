@@ -19,6 +19,10 @@ export class ComposerInput extends ComposerComponent {
     this.composer.S.cached('input_text').get(0).onpaste = this.composer.input.inputTextPasteHtmlAsText;
   }
 
+  public async inputTextHtmlSetSafely(html: string) {
+    Xss.sanitizeRender(this.composer.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(html));
+  }
+
   public inputTextPasteHtmlAsText = (clipboardEvent: ClipboardEvent) => {
     if (!clipboardEvent.clipboardData) {
       return;

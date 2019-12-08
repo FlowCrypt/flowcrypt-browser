@@ -112,7 +112,9 @@ export class ComposerRender extends ComposerComponent {
             const msgId = this.composer.quote.messageToReplyOrForward.headers['message-id'];
             this.composer.sendBtn.additionalMsgHeaders['In-Reply-To'] = msgId;
             this.composer.sendBtn.additionalMsgHeaders.References = this.composer.quote.messageToReplyOrForward.headers.references + ' ' + msgId;
-            if (this.composer.quote.messageToReplyOrForward.isOnlySigned) {
+            if (this.urlParams.replyPubkeyMismatch) {
+              await this.renderReplyMsgAsReplyPubkeyMismatch();
+            } else if (this.composer.quote.messageToReplyOrForward.isOnlySigned) {
               this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
               this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-sign-sending-option'), 'sign', true); // do sign
             }
@@ -134,6 +136,18 @@ export class ComposerRender extends ComposerComponent {
       this.composer.S.cached('recipients_placeholder').click();
     }
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToElement(this.urlParams.parentTabId, { selector: `#${this.urlParams.frameId}` }), 300);
+  }
+
+  private async renderReplyMsgAsReplyPubkeyMismatch() {
+    await this.composer.input.inputTextHtmlSetSafely(`Hello,
+      <br><br>I was not able to read your encrypted message because it was encrypted for a wrong key.
+      <br><br>My current public key is attached below. Please update your records and send me a new encrypted message.
+      <br><br>Thank you</div>`);
+    const [primaryKi] = await Store.keysGet(this.urlParams.acctEmail, ['primary']);
+    const att = Att.keyinfoAsPubkeyAtt(primaryKi);
+    await this.composer.atts.attach.addFile(new File([att.getData()], att.name));
+    this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
+    this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-sign-sending-option'), 'sign', false); // don't sign
   }
 
   private getFocusableEls = () => this.composer.S.cached('compose_table').find('[tabindex]:not([tabindex="-1"]):visible').toArray().sort((a, b) => {
