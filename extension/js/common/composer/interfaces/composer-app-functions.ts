@@ -12,7 +12,6 @@ import { PubkeyResult } from './composer-types.js';
 import { Dict } from '../../core/common.js';
 
 export interface ComposerAppFunctionsInterface {
-  getScopes: () => { [key in GoogleAuthScopesNames]: boolean };
   doesRecipientHaveMyPubkey: (email: string) => Promise<boolean | undefined>;
   storageGetAddresses: () => Dict<SendAsAlias> | undefined;
   storageGetHideMsgPassword: () => boolean;

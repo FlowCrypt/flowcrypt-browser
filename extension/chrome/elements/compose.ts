@@ -123,15 +123,14 @@ View.run(class ComposeView extends View {
       disableDraftSaving: this.disableDraftSaving, debug: this.debug, removeAfterClose: this.removeAfterClose
     };
     const composer = new Composer({
-      getScopes: () => this.scopes!,
-      doesRecipientHaveMyPubkey: (email) => this.doesRecipientHaveMyPubkey(email),
+      doesRecipientHaveMyPubkey: (email: string) => this.doesRecipientHaveMyPubkey(email),
       storageGetAddresses: () => this.storageGetAddresses(),
       storageGetHideMsgPassword: () => !!this.storage!.hide_message_password,
       storageGetSubscription: () => Store.subscription(this.acctEmail),
       storageGetKey: (acctEmail: string, senderEmail: string) => this.storageGetKey(acctEmail, senderEmail),
       storageSetDraftMeta: (store: boolean, draftId: string, threadId: string, recipients: string[], subj: string) => this.storageSetDraftMeta(store, draftId, threadId, recipients, subj),
       storagePassphraseGet: (senderKi: KeyInfo | undefined) => this.storagePassphraseGet(senderKi),
-      storageAddAdminCodes: (shortId, codes) => this.storageAddAdminCodes(shortId, codes),
+      storageAddAdminCodes: (shortId: string, codes: string[]) => this.storageAddAdminCodes(shortId, codes),
       storageContactGet: (emails: string[]) => Store.dbContactGet(undefined, emails),
       storageContactUpdate: (email: string[] | string, update: ContactUpdate) => Store.dbContactUpdate(undefined, email, update),
       storageContactSave: (contact: Contact) => Store.dbContactSave(undefined, contact),
@@ -150,10 +149,10 @@ View.run(class ComposeView extends View {
       closeMsg: () => this.closeMsg(),
       factoryAtt: (att: Att, isEncrypted: boolean) => this.factory!.embeddedAtta(att, isEncrypted),
       whenMasterPassphraseEntered: (secondsTimeout?: number) => this.whenMasterPassphraseEntered(secondsTimeout),
-      lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded: (email) => this.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(email),
+      lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded: (email: string) => this.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(email),
       collectAllAvailablePublicKeys: (senderEmail: string, senderKi: KeyInfo, recipients: string[]) => this.collectAllAvailablePublicKeys(senderEmail, senderKi, recipients),
       updateSendAs: (sendAs: Dict<SendAsAlias>) => { this.storage!.sendAs = sendAs; }
-    }, processedUrlParams);
+    }, processedUrlParams, this.scopes!);
     BrowserMsg.addListener('close_dialog', async () => {
       $('.featherlight.featherlight-iframe').remove();
     });

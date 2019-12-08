@@ -19,6 +19,7 @@ import { ComposerRender } from './composer-render.js';
 import { Catch } from '../platform/catch.js';
 import { Mime } from '../core/mime.js';
 import { ComposerMyPubkey } from './composer-my-pubkey.js';
+import { Scopes } from '../platform/store.js';
 
 export class Composer {
 
@@ -79,14 +80,10 @@ export class Composer {
   public render: ComposerRender;
   public myPubkey: ComposerMyPubkey;
 
-  public app: ComposerAppFunctionsInterface;
-  public urlParams: ComposerUrlParams;
   public canReadEmails: boolean;
   public initPromise: Promise<void>;
 
-  constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams) {
-    this.app = appFunctions;
-    this.urlParams = urlParams;
+  constructor(public app: ComposerAppFunctionsInterface, public urlParams: ComposerUrlParams, public scopes: Scopes) {
     this.urlParams.subject = Mime.subjectWithoutPrefixes(this.urlParams.subject);
     this.draft = new ComposerDraft(this);
     this.quote = new ComposerQuote(this);
@@ -100,8 +97,7 @@ export class Composer {
     this.input = new ComposerInput(this);
     this.render = new ComposerRender(this);
     this.myPubkey = new ComposerMyPubkey(this);
-    const scopes = this.app.getScopes();
-    this.canReadEmails = scopes.read || scopes.modify;
+    this.canReadEmails = this.scopes.read || this.scopes.modify;
     this.initPromise = this.render.initActions().catch(Catch.reportErr);
   }
 

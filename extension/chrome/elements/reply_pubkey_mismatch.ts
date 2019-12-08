@@ -33,10 +33,6 @@ Catch.try(async () => {
 
   const att = Att.keyinfoAsPubkeyAtt(primaryKi);
   const appFunctions: ComposerAppFunctionsInterface = {
-    getScopes: () => ({
-      email: false, openid: false, profile: false, compose: false,
-      modify: false, readContacts: false, gmail: false, read: false
-    }),
     doesRecipientHaveMyPubkey: (): Promise<boolean | undefined> => Promise.resolve(false),
     storageGetAddresses: () => undefined,
     storageGetHideMsgPassword: () => false,
@@ -99,7 +95,7 @@ Catch.try(async () => {
     isReplyBox: true, skipClickPrompt: false, // do not skip, would cause errors. This page is using custom template w/o a prompt
     parentTabId, disableDraftSaving: true, removeAfterClose: false
   };
-  const composer = new Composer(appFunctions, processedUrlParams);
+  const composer = new Composer(appFunctions, processedUrlParams, await Store.getScopes(acctEmail));
 
   const sendBtnText = 'Send Response';
 

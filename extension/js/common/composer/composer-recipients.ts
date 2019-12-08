@@ -38,7 +38,7 @@ export class ComposerRecipients extends ComposerComponent {
 
   constructor(composer: Composer) {
     super(composer);
-    this.canSearchContacts = this.composer.app.getScopes().readContacts;
+    this.canSearchContacts = this.composer.scopes.readContacts;
   }
 
   initActions(): void {
