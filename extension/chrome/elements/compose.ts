@@ -45,6 +45,7 @@ export class ComposeView extends View {
   public storage: AccountStore | undefined;
   public factory: XssSafeFactory | undefined;
   public replyParams: ReplyParams | undefined;
+  public composer: Composer | undefined;
 
   constructor() {
     super();
@@ -86,7 +87,7 @@ export class ComposeView extends View {
   }
 
   setHandlers() {
-    new Composer(this, { // tslint:disable-line:no-unused-expression
+    this.composer = new Composer(this, {
       emailProviderDraftGet: (draftId: string) => Google.gmail.draftGet(this.acctEmail, draftId, 'raw'),
       emailProviderDraftCreate: Google.gmail.draftCreate,
       emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Google.gmail.draftUpdate(this.acctEmail, draftId, mimeMsg),
