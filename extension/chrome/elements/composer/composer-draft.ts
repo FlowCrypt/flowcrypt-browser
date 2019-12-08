@@ -2,19 +2,19 @@
 
 'use strict';
 
-import { Ui, Env } from '../browser.js';
-import { Xss } from '../platform/xss.js';
-import { Mime } from '../core/mime.js';
-import { Buf } from '../core/buf.js';
-import { Pgp, PgpMsg } from '../core/pgp.js';
-import { Api, AjaxErr } from '../api/api.js';
-import { BrowserMsg } from '../extension.js';
-import { Catch } from '../platform/catch.js';
-import { Store } from '../platform/store.js';
+import { Ui, Env } from '../../../js/common/browser.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { Mime } from '../../../js/common/core/mime.js';
+import { Buf } from '../../../js/common/core/buf.js';
+import { Pgp, PgpMsg } from '../../../js/common/core/pgp.js';
+import { Api, AjaxErr } from '../../../js/common/api/api.js';
+import { BrowserMsg } from '../../../js/common/extension.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { Store } from '../../../js/common/platform/store.js';
 import { Composer } from './composer.js';
-import { Recipients } from './composer-types.js';
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Url } from '../core/common.js';
+import { Url } from '../../../js/common/core/common.js';
+import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
 
 export class ComposerDraft extends ComposerComponent {
 

@@ -3,23 +3,23 @@
 'use strict';
 
 import { NewMsgData, PubkeyResult, SendBtnTexts } from '../composer-types.js';
-import { SendableMsg } from '../../api/email_provider/email_provider_api.js';
+import { SendableMsg } from '../../../../js/common/api/email_provider/email_provider_api.js';
 import { Composer } from '../composer.js';
-import { PgpMsg, Pgp, Pwd } from '../../core/pgp.js';
-import { Catch } from '../../platform/catch.js';
-import { SendableMsgBody, Mime } from '../../core/mime.js';
-import { Buf } from '../../core/buf.js';
-import { Backend, BackendRes, AwsS3UploadItem, FcUuidAuth } from '../../api/backend.js';
-import { Store, Subscription } from '../../platform/store.js';
-import { Value, Str } from '../../core/common.js';
-import { Ui } from '../../browser.js';
-import { Api } from '../../api/api.js';
-import { Att } from '../../core/att.js';
-import { Xss } from '../../platform/xss.js';
-import { Lang } from '../../lang.js';
+import { PgpMsg, Pgp, Pwd } from '../../../../js/common/core/pgp.js';
+import { Catch } from '../../../../js/common/platform/catch.js';
+import { SendableMsgBody, Mime } from '../../../../js/common/core/mime.js';
+import { Buf } from '../../../../js/common/core/buf.js';
+import { Backend, BackendRes, AwsS3UploadItem, FcUuidAuth } from '../../../../js/common/api/backend.js';
+import { Store, Subscription } from '../../../../js/common/platform/store.js';
+import { Value, Str } from '../../../../js/common/core/common.js';
+import { Ui } from '../../../../js/common/browser.js';
+import { Api } from '../../../../js/common/api/api.js';
+import { Att } from '../../../../js/common/core/att.js';
+import { Xss } from '../../../../js/common/platform/xss.js';
+import { Lang } from '../../../../js/common/lang.js';
 import { ComposerResetBtnTrigger, ComposerUserError } from '../composer-errs.js';
 import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
-import { Settings } from '../../settings.js';
+import { Settings } from '../../../../js/common/settings.js';
 
 declare const openpgp: typeof OpenPGP;
 

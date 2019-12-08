@@ -3,14 +3,14 @@
 'use strict';
 
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Settings } from '../settings.js';
-import { Xss } from '../platform/xss.js';
-import { Dict } from '../core/common.js';
-import { SendAsAlias } from '../platform/store.js';
-import { Ui } from '../browser.js';
-import { BrowserMsg } from '../extension.js';
-import { Api } from '../api/api.js';
-import { Catch } from '../platform/catch.js';
+import { Settings } from '../../../js/common/settings.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { Dict } from '../../../js/common/core/common.js';
+import { SendAsAlias } from '../../../js/common/platform/store.js';
+import { Ui } from '../../../js/common/browser.js';
+import { BrowserMsg } from '../../../js/common/extension.js';
+import { Api } from '../../../js/common/api/api.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 
 export class ComposerSender extends ComposerComponent {
 

@@ -3,10 +3,10 @@
 'use strict';
 
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Ui } from '../browser.js';
+import { Ui } from '../../../js/common/browser.js';
 import { RecipientStatuses, SendBtnTexts } from './composer-types.js';
-import { KeyImportUi } from '../ui/key_import_ui.js';
-import { Store } from '../platform/store.js';
+import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
+import { Store } from '../../../js/common/platform/store.js';
 
 export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
 

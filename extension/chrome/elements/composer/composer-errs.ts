@@ -3,14 +3,14 @@
 'use strict';
 
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Ui, BrowserEventErrHandler } from '../browser.js';
-import { BrowserMsg, Extension } from '../extension.js';
-import { Catch, UnreportableError } from '../platform/catch.js';
-import { Str } from '../core/common.js';
-import { Api } from '../api/api.js';
+import { Ui, BrowserEventErrHandler } from '../../../js/common/browser.js';
+import { BrowserMsg, Extension } from '../../../js/common/extension.js';
+import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
+import { Str } from '../../../js/common/core/common.js';
+import { Api } from '../../../js/common/api/api.js';
 import { SendBtnTexts } from './composer-types.js';
-import { KeyInfo, Pwd } from '../core/pgp.js';
-import { Settings } from '../settings.js';
+import { KeyInfo, Pwd } from '../../../js/common/core/pgp.js';
+import { Settings } from '../../../js/common/settings.js';
 
 export class ComposerUserError extends Error { }
 export class ComposerNotReadyError extends ComposerUserError { }

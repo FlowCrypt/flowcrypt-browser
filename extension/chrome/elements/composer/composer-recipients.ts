@@ -3,21 +3,21 @@
 'use strict';
 
 import { Composer } from './composer.js';
-import { Str, Value } from '../core/common.js';
-import { ProviderContactsQuery } from '../api/email_provider/email_provider_api.js';
-import { Contact, Pgp } from '../core/pgp.js';
-import { Xss } from '../platform/xss.js';
-import { Ui } from '../browser.js';
-import { Google } from '../api/google.js';
-import { GoogleAuth } from '../api/google-auth.js';
-import { Lang } from '../lang.js';
-import { RecipientElement, RecipientStatus, RecipientStatuses, Recipients } from './composer-types.js';
+import { Str, Value } from '../../../js/common/core/common.js';
+import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
+import { Contact, Pgp } from '../../../js/common/core/pgp.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { Ui } from '../../../js/common/browser.js';
+import { Google } from '../../../js/common/api/google.js';
+import { GoogleAuth } from '../../../js/common/api/google-auth.js';
+import { Lang } from '../../../js/common/lang.js';
+import { RecipientElement, RecipientStatus, RecipientStatuses } from './composer-types.js';
 import { ComposerComponent } from './composer-abstract-component.js';
-import { BrowserMsg } from '../extension.js';
-import { Catch } from '../platform/catch.js';
-import { moveElementInArray } from '../platform/util.js';
-import { RecipientType, Api, ChunkedCb } from '../api/api.js';
-import { Store } from '../platform/store.js';
+import { BrowserMsg } from '../../../js/common/extension.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { moveElementInArray } from '../../../js/common/platform/util.js';
+import { RecipientType, Api, ChunkedCb } from '../../../js/common/api/api.js';
+import { Store } from '../../../js/common/platform/store.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './composer-errs.js';
 
 export class ComposerRecipients extends ComposerComponent {

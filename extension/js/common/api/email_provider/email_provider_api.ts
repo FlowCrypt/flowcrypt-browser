@@ -8,12 +8,12 @@ import { Dict, Str } from '../../core/common.js';
 import { Store } from '../../platform/store.js';
 import { Att } from '../../core/att.js';
 import { SendableMsgBody } from '../../core/mime.js';
-import { Recipients } from '../../composer/composer-types.js';
 import { Api, ProgressCb, ChunkedCb } from '../api.js';
 import { GmailResponseFormat } from './gmail/gmail.js';
 import { GmailRes } from './gmail/gmail-parser.js';
 import { Contact } from '../../core/pgp.js';
 
+export type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
 export type ProviderContactsQuery = { substring: string };
 export type SendableMsg = {
   headers: Dict<string>;

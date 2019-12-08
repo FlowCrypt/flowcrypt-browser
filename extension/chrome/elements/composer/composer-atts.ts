@@ -3,13 +3,13 @@
 'use strict';
 
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Ui } from '../browser.js';
-import { BrowserMsg } from '../extension.js';
-import { AttUI, AttLimits } from '../ui/att_ui.js';
+import { Ui } from '../../../js/common/browser.js';
+import { BrowserMsg } from '../../../js/common/extension.js';
+import { AttUI, AttLimits } from '../../../js/common/ui/att_ui.js';
 import { Composer } from './composer.js';
-import { Rules } from '../rules.js';
-import { Pgp } from '../core/pgp.js';
-import { Store } from '../platform/store.js';
+import { Rules } from '../../../js/common/rules.js';
+import { Pgp } from '../../../js/common/core/pgp.js';
+import { Store } from '../../../js/common/platform/store.js';
 
 export class ComposerAtts extends ComposerComponent {
 

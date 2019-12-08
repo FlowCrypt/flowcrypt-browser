@@ -3,9 +3,9 @@
 'use strict';
 
 import { ComposerComponent } from './composer-abstract-component.js';
-import { BrowserMsg } from '../extension.js';
-import { Catch } from '../platform/catch.js';
-import { Ui } from '../browser.js';
+import { BrowserMsg } from '../../../js/common/extension.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { Ui } from '../../../js/common/browser.js';
 
 export class ComposerSize extends ComposerComponent {
 

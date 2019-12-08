@@ -3,9 +3,10 @@
 'use strict';
 
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Xss } from '../platform/xss.js';
-import { Ui } from '../browser.js';
-import { NewMsgData, RecipientElement, Recipients } from './composer-types.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { Ui } from '../../../js/common/browser.js';
+import { NewMsgData, RecipientElement } from './composer-types.js';
+import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
 
 export class ComposerInput extends ComposerComponent {
 

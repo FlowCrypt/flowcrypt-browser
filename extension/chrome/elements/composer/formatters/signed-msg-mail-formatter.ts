@@ -3,13 +3,13 @@
 'use strict';
 
 import { NewMsgData } from '../composer-types.js';
-import { SendableMsg } from '../../api/email_provider/email_provider_api.js';
-import { PgpMsg } from '../../core/pgp.js';
-import { BrowserWidnow } from '../../extension.js';
-import { Catch } from '../../platform/catch.js';
+import { SendableMsg } from '../../../../js/common/api/email_provider/email_provider_api.js';
+import { PgpMsg } from '../../../../js/common/core/pgp.js';
+import { BrowserWidnow } from '../../../../js/common/extension.js';
+import { Catch } from '../../../../js/common/platform/catch.js';
 import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
-import { SendableMsgBody } from '../../core/mime.js';
-import { Store } from '../../platform/store.js';
+import { SendableMsgBody } from '../../../../js/common/core/mime.js';
+import { Store } from '../../../../js/common/platform/store.js';
 
 export class SignedMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
 

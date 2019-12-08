@@ -3,17 +3,17 @@
 'use strict';
 
 import { MessageToReplyOrForward } from './composer-types.js';
-import { Xss } from '../platform/xss.js';
-import { Str } from '../core/common.js';
-import { Ui } from '../browser.js';
-import { Api, ProgressCb } from '../api/api.js';
-import { Catch } from '../platform/catch.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { Str } from '../../../js/common/core/common.js';
+import { Ui } from '../../../js/common/browser.js';
+import { Api, ProgressCb } from '../../../js/common/api/api.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Mime, MsgBlock } from '../core/mime.js';
-import { Buf } from '../core/buf.js';
-import { FormatError, PgpMsg } from '../core/pgp.js';
-import { BrowserMsg, Bm } from '../extension.js';
-import { Store } from '../platform/store.js';
+import { Mime, MsgBlock } from '../../../js/common/core/mime.js';
+import { Buf } from '../../../js/common/core/buf.js';
+import { FormatError, PgpMsg } from '../../../js/common/core/pgp.js';
+import { BrowserMsg, Bm } from '../../../js/common/extension.js';
+import { Store } from '../../../js/common/platform/store.js';
 
 export class ComposerQuote extends ComposerComponent {
   public messageToReplyOrForward: MessageToReplyOrForward | undefined;

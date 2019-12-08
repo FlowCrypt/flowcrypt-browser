@@ -3,16 +3,16 @@
 'use strict';
 
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Store, SendAsAlias } from '../platform/store.js';
-import { Assert } from '../assert.js';
-import { KeyInfo, Pgp, Contact, openpgp } from '../core/pgp.js';
-import { Dict } from '../core/common.js';
-import { Catch } from '../platform/catch.js';
+import { Store, SendAsAlias } from '../../../js/common/platform/store.js';
+import { Assert } from '../../../js/common/assert.js';
+import { KeyInfo, Pgp, Contact, openpgp } from '../../../js/common/core/pgp.js';
+import { Dict } from '../../../js/common/core/common.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 import { CollectPubkeysResult } from './composer-types.js';
-import { PubkeySearchResult, Keyserver } from '../api/keyserver.js';
-import { Api } from '../api/api.js';
+import { PubkeySearchResult, Keyserver } from '../../../js/common/api/keyserver.js';
+import { Api } from '../../../js/common/api/api.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from './composer-errs.js';
-import { BrowserMsg, Bm } from '../extension.js';
+import { BrowserMsg, Bm } from '../../../js/common/extension.js';
 
 export class ComposerStorage extends ComposerComponent {
 

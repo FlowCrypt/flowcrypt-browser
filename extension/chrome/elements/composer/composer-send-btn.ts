@@ -5,18 +5,18 @@
 import { ComposerComponent } from './composer-abstract-component.js';
 import { SendBtnTexts } from './composer-types.js';
 import { Composer } from './composer.js';
-import { Xss } from '../platform/xss.js';
-import { Ui } from '../browser.js';
-import { Catch } from '../platform/catch.js';
-import { Api } from '../api/api.js';
-import { BrowserMsg } from '../extension.js';
-import { Pgp, KeyInfo } from '../core/pgp.js';
-import { Store } from '../platform/store.js';
-import { SendableMsg } from '../api/email_provider/email_provider_api.js';
-import { Att } from '../core/att.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { Ui } from '../../../js/common/browser.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { Api } from '../../../js/common/api/api.js';
+import { BrowserMsg } from '../../../js/common/extension.js';
+import { Pgp, KeyInfo } from '../../../js/common/core/pgp.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { SendableMsg } from '../../../js/common/api/email_provider/email_provider_api.js';
+import { Att } from '../../../js/common/core/att.js';
 import { GeneralMailFormatter } from './formatters/composer-mail-formatter.js';
 import { ComposerSendBtnPopover } from './composer-send-btn-popover.js';
-import { GmailRes } from '../api/email_provider/gmail/gmail-parser.js';
+import { GmailRes } from '../../../js/common/api/email_provider/gmail/gmail-parser.js';
 
 export class ComposerSendBtn extends ComposerComponent {
 

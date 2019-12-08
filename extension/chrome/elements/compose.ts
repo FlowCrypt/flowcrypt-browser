@@ -4,7 +4,7 @@
 
 import { Store, AccountStoreExtension, Scopes, AccountStore } from '../../js/common/platform/store.js';
 import { Ui } from '../../js/common/browser.js';
-import { Composer } from '../../js/common/composer/composer.js';
+import { Composer } from './composer/composer.js';
 import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { openpgp } from '../../js/common/core/pgp.js';

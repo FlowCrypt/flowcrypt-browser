@@ -2,9 +2,9 @@
 
 'use strict';
 
-import { SendableMsg } from '../../api/email_provider/email_provider_api.js';
+import { SendableMsg } from '../../../../js/common/api/email_provider/email_provider_api.js';
 import { SendBtnTexts, NewMsgData } from '../composer-types.js';
-import { SendableMsgBody } from '../../core/mime.js';
+import { SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
 
 export class PlainMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
