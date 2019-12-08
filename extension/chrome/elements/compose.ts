@@ -84,9 +84,6 @@ export class ComposeView extends View {
     if (this.isReplyBox && this.threadId && !this.ignoreDraft && this.storage.drafts_reply && this.storage.drafts_reply[this.threadId]) {
       this.draftId = this.storage.drafts_reply[this.threadId]; // there may be a draft we want to load
     }
-  }
-
-  setHandlers() {
     this.composer = new Composer(this, {
       emailProviderDraftGet: (draftId: string) => Google.gmail.draftGet(this.acctEmail, draftId, 'raw'),
       emailProviderDraftCreate: Google.gmail.draftCreate,
@@ -98,17 +95,21 @@ export class ComposeView extends View {
     });
   }
 
+  setHandlers() {
+    // all handled in Composer
+  }
+
   public urlParams() { // used to reload the frame with updated params
     return {
-      acctEmail: this.acctEmail, draftId: this.draftId, threadId: this.threadId, replyMsgId: this.replyMsgId, ...this.replyParams, frameId: this.frameId,
-      tabId: this.tabId!, isReplyBox: this.isReplyBox, skipClickPrompt: this.skipClickPrompt, parentTabId: this.parentTabId,
+      acctEmail: this.acctEmail, draftId: this.draftId, threadId: this.threadId, replyMsgId: this.replyMsgId, ...this.replyParams,
+      frameId: this.frameId, tabId: this.tabId!, isReplyBox: this.isReplyBox, skipClickPrompt: this.skipClickPrompt, parentTabId: this.parentTabId,
       disableDraftSaving: this.disableDraftSaving, debug: this.debug, removeAfterClose: this.removeAfterClose, placement: this.placement,
       replyPubkeyMismatch: this.replyPubkeyMismatch,
     };
   }
 
   private async fetchReplyMeta(): Promise<void> {
-    Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green') }));
+    Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: `Loading secure reply box..${Ui.spinner('green')}` }));
     try {
       const gmailMsg = await Google.gmail.msgGet(this.acctEmail, this.replyMsgId!, 'metadata');
       const aliases = AccountStoreExtension.getEmailAliasesIncludingPrimary(this.acctEmail, this.storage!.sendAs);
