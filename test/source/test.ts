@@ -55,7 +55,6 @@ ava.before('set up global browsers and config', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY, t.title);
   Config.extensionId = await browserPool.getExtensionId(t);
   console.info(`Extension url: chrome-extension://${Config.extensionId}`);
-  await Util.sleep(1);
   if (isMock) {
     const mockApi = await mock(line => mockApiLogs.push(line));
     closeMockApi = mockApi.close;
@@ -64,7 +63,7 @@ ava.before('set up global browsers and config', async t => {
   const globalBrowsers: { [group: string]: BrowserHandle[] } = { compatibility: [], compose: [] };
   for (const group of Object.keys(browserGlobal)) {
     for (let i = 0; i < browserGlobal[group].browsers.poolSize; i++) {
-      const b = await browserGlobal[group].browsers.newBrowserHandle(t);
+      const b = await browserGlobal[group].browsers.newBrowserHandle(t, true, isMock);
       setupPromises.push(browserPool.withGlobalBrowserTimeoutAndRetry(b, (t, b) => BrowserRecipe.setUpCommonAcct(t, b, group as CommonBrowserGroup), t, consts));
       globalBrowsers[group].push(b);
     }
