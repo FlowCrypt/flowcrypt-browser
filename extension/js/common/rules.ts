@@ -36,15 +36,13 @@ export class Rules {
     }
   }
 
-  public static relaxSubscriptionRequirements = (emailAddr: string) => {
+  public static isPublicEmailProviderDomain = (emailAddr: string) => {
     return ['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(emailAddr.split('@')[1] || 'NONE');
   }
 
   canCreateKeys = () => !this.rules[this.domainHash].flags.includes('NO_PRV_CREATE');
 
   canBackupKeys = () => !this.rules[this.domainHash].flags.includes('NO_PRV_BACKUP');
-
-  hasStrictGdpr = () => this.rules[this.domainHash].flags.includes('STRICT_GDPR');
 
   mustSubmitToAttester = () => this.rules[this.domainHash].flags.includes('ENFORCE_ATTESTER_SUBMIT');
 

@@ -16,6 +16,8 @@ import { tabsQuery, windowsCreate } from './chrome.js';
 import { Buf } from '../core/buf.js';
 import { GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST } from '../core/const.js';
 import { GmailRes } from './email_provider/gmail/gmail-parser.js';
+import { Backend } from './backend.js';
+import { Rules } from '../rules.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
@@ -132,6 +134,23 @@ export class GoogleAuth {
     } catch (e) {
       if (String(e).indexOf('No window with id') === -1) {
         Catch.reportErr(e);
+      }
+    }
+    if (authRes.result === 'Success') {
+      if (!authRes.id_token) {
+        return { result: 'Error', error: 'Grant was successful but missing id_token', acctEmail: authRes.acctEmail, id_token: undefined };
+      }
+      if (!authRes.acctEmail) {
+        return { result: 'Error', error: 'Grant was successful but missing acctEmail', acctEmail: authRes.acctEmail, id_token: undefined };
+      }
+      if (!Rules.isPublicEmailProviderDomain(authRes.acctEmail)) {
+        try { // users on @custom-domain.com must check with backend to look for org rules, if any
+          const uuid = Api.randomFortyHexChars();
+          await Backend.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
+          await Backend.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // will store org rules and subscription
+        } catch (e) {
+          return { result: 'Error', error: `Grant successful but error loging into fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
+        }
       }
     }
     return authRes;

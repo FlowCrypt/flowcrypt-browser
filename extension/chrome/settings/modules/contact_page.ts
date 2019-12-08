@@ -67,7 +67,7 @@ View.run(class ContactPageView extends View {
     this.S.cached('action_close').click(this.setHandler(() => this.onCloseHandler()));
   }
 
-  private renderFields(result: BackendRes.FcAccountUpdate$result) {
+  private renderFields(result: BackendRes.FcAccount$info) {
     if (result.alias) {
       const me = Backend.url('me', result.alias);
       const meEscaped = Xss.escape(me);

@@ -74,8 +74,7 @@ Catch.try(async () => {
   };
 
   try {
-    await Backend.accountGet(authInfo);
-    await Backend.getSubscriptionWithoutLogin(acctEmail);
+    await Backend.accountGetAndUpdateLocalStore(authInfo);
   } catch (e) {
     if (Api.err.isAuthErr(e)) {
       Xss.sanitizeRender('#content', `Not logged in. ${Ui.retryLink()}`);
@@ -88,7 +87,7 @@ Catch.try(async () => {
     }
   }
 
-  const subscription = await Store.subscription(acctEmail); // updated in getSubscriptionWithoutLogin
+  const subscription = await Store.subscription(acctEmail); // updated in accountGetAndUpdateLocalStore
 
   if (placement === 'settings') {
     $('#content').removeClass('dialog').css({ 'margin-top': 0, 'margin-bottom': 30 });

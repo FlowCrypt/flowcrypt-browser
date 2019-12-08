@@ -28,8 +28,11 @@ export type AwsS3UploadItem = { baseUrl: string, fields: { key: string; file?: A
 export namespace BackendRes {
   export type FcHelpFeedback = { sent: boolean };
   export type FcAccountLogin = { registered: boolean, verified: boolean, subscription: SubscriptionInfo };
-  export type FcAccountUpdate$result = { alias: string, email: string, intro: string, name: string, photo: string, default_message_expire: number };
-  export type FcAccountUpdate = { result: FcAccountUpdate$result, updated: boolean };
+  export type FcAccount$info = { alias: string, email: string, intro: string, name: string, photo: string, default_message_expire: number };
+  export type FcAccount$domain_org_rules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'ENFORCE_ATTESTER_SUBMIT' | 'ALLOW_CUSTOM_KEYSERVER';
+  export type FcAccount$domain_org_rules = { flags: FcAccount$domain_org_rules$flag[], custom_keyserver_url?: string };
+  export type FcAccountGet = { account: FcAccount$info, subscription: SubscriptionInfo, domain_org_rules: FcAccount$domain_org_rules };
+  export type FcAccountUpdate = { result: FcAccount$info, updated: boolean };
   export type FcAccountSubscribe = { subscription: SubscriptionInfo };
   export type FcAccountCheck = { email: string | null, subscription: SubscriptionInfo | null };
   export type FcBlogPost = { title: string, date: string, url: string };
@@ -112,14 +115,18 @@ export class Backend extends Api {
 
   public static accountUpdate = async (fcAuth: FcUuidAuth, profileUpdate: ProfileUpdate = {}): Promise<BackendRes.FcAccountUpdate> => {
     Backend.throwIfMissingUuid(fcAuth);
-    const r = await Backend.request('account/update', {
+    return await Backend.request('account/update', {
       ...fcAuth,
       ...profileUpdate
     }) as BackendRes.FcAccountUpdate;
-    return r;
   }
 
-  public static accountGet = (fcAuth: FcUuidAuth) => Backend.accountUpdate(fcAuth, {});
+  public static accountGetAndUpdateLocalStore = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcAccountGet> => {
+    Backend.throwIfMissingUuid(fcAuth);
+    const r = await Backend.request('account/get', fcAuth) as BackendRes.FcAccountGet;
+    await Store.setAcct(fcAuth.account, { rules: r.domain_org_rules, subscription: r.subscription });
+    return r;
+  }
 
   public static accountSubscribe = async (fcAuth: FcUuidAuth, product: string, method: string, paymentSourceToken?: string): Promise<BackendRes.FcAccountSubscribe> => {
     Backend.throwIfMissingUuid(fcAuth);

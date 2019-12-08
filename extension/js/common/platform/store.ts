@@ -5,7 +5,7 @@
 import { Value, Str, Dict } from '../core/common.js';
 import { mnemonic } from '../core/mnemonic.js';
 import { Pgp, KeyInfo, Contact } from '../core/pgp.js';
-import { SubscriptionInfo, PaymentMethod, ProductLevel, FcUuidAuth } from '../api/backend.js';
+import { SubscriptionInfo, PaymentMethod, ProductLevel, FcUuidAuth, BackendRes } from '../api/backend.js';
 import { BrowserMsg, BgNotReadyError } from '../extension.js';
 import { Env, Ui } from '../browser.js';
 import { Catch, UnreportableError } from './catch.js';
@@ -19,7 +19,7 @@ import { GoogleAuth } from '../api/google-auth.js';
 let KEY_CACHE: { [longidOrArmoredKey: string]: OpenPGP.key.Key } = {};
 let KEY_CACHE_WIPE_TIMEOUT: number;
 
-type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo;
+type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo | BackendRes.FcAccount$domain_org_rules;
 type StoredReplyDraftMeta = string; // draftId
 type StoredComposeDraftMeta = { recipients: string[], subject: string, date: number };
 type StoredAdminCode = { date: number, codes: string[] };
@@ -67,7 +67,7 @@ export type ContactUpdate = {
   pubkey_last_check?: number | null;
 };
 export type Storable = FlatTypes | string[] | KeyInfo[] | Dict<StoredReplyDraftMeta> | Dict<StoredComposeDraftMeta> | Dict<StoredAdminCode>
-  | SubscriptionInfo | GmailRes.OpenId;
+  | SubscriptionInfo | GmailRes.OpenId | BackendRes.FcAccount$domain_org_rules;
 export type Serializable = SerializableTypes | SerializableTypes[] | Dict<SerializableTypes> | Dict<SerializableTypes>[];
 
 export interface RawStore {
@@ -128,6 +128,7 @@ export type AccountStore = {
   openid?: GmailRes.OpenId;
   subscription?: SubscriptionInfo;
   uuid?: string;
+  rules?: BackendRes.FcAccount$domain_org_rules;
   // temporary
   tmp_submit_main?: boolean;
   tmp_submit_all?: boolean;
@@ -143,7 +144,7 @@ export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'ema
   'google_token_refresh' | 'hide_message_password' | 'addresses' | 'sendAs' | 'drafts_reply' | 'drafts_compose' |
   'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' | 'setup_simple' | 'is_newly_created_key' | 'key_backup_method' |
   'key_backup_prompt' | 'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
-  'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all' | 'subscription' | 'uuid' | 'use_rich_text';
+  'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all' | 'subscription' | 'uuid' | 'use_rich_text' | 'rules';
 
 export class Subscription implements SubscriptionInfo {
   active?: boolean;
