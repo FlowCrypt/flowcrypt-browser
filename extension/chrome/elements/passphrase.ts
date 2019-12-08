@@ -61,7 +61,7 @@ Catch.try(async () => {
       } else {
         html = 'Pass phrase needed for any of the following keys:';
         for (const i of selectedPrivateKeys.keys()) {
-          html += `KeyWords ${String(i + 1)}: <div class="good">${Xss.escape(mnemonic(selectedPrivateKeys[i].longid) || '')}</div>`;
+          html += `<div>KeyWords ${String(i + 1)}: <span class="good">${Xss.escape(mnemonic(selectedPrivateKeys[i].longid) || '')}</span></div>`;
         }
       }
       Xss.sanitizeRender('.which_key', html);
