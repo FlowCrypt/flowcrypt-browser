@@ -69,7 +69,7 @@ export class SetupPageRecipe extends PageRecipe {
       await Util.sleep(1);
       await settingsPage.notPresent('@action-step2bmanualenter-new-random-passphrase');
       await settingsPage.waitAndType('@input-step2bmanualenter-passphrase', k.passphrase);
-      await Util.sleep(0.2);
+      await Util.sleep(1);
     } else {
       await settingsPage.waitAndClick('@input-step2bmanualenter-passphrase');
       await settingsPage.waitAll('@action-step2bmanualenter-new-random-passphrase', { visible: true });
@@ -128,6 +128,7 @@ export class SetupPageRecipe extends PageRecipe {
     const k = Config.key(keyTitle);
     await settingsPage.waitAll('@input-recovery-pass-phrase', { timeout: 40 }); // can sometimes be slow
     await settingsPage.waitAndType('@input-recovery-pass-phrase', k.passphrase);
+    await Util.sleep(1); // wait for button to color
     await settingsPage.waitAndClick('@action-recover-account');
     if (wrongPp) {
       await settingsPage.waitAndRespondToModal('warning', 'confirm', 'not match');
