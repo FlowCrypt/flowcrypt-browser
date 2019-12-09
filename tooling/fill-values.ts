@@ -15,7 +15,7 @@ const replaceables: { needle: RegExp, val: string }[] = [
   { needle: /\[BUILD_REPLACEABLE_VERSION\]/g, val: version },
   { needle: /\[BUILD_REPLACEABLE_GOOGLE_API_HOST\]/g, val: 'https://www.googleapis.com' },
   { needle: /\[BUILD_REPLACEABLE_GOOGLE_OAUTH_SCREEN_HOST\]/g, val: 'https://accounts.google.com' },
-  { needle: /\[BACKEND_API_HOST\]/g, val: 'https://flowcrypt.com/api/' },
+  { needle: /\[BUILD_REPLACEABLE_BACKEND_API_HOST\]/g, val: 'https://flowcrypt.com/api/' },
 ];
 
 const paths = [
