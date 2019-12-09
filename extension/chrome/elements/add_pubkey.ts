@@ -4,8 +4,8 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
-import { Ui } from '../../js/common/browser.js';
-import { BrowserMsg } from '../../js/common/extension.js';
+import { Ui } from '../../js/common/browser/ui.js';
+import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Assert } from '../../js/common/assert.js';
 import { KeyImportUi, UserAlert, } from '../../js/common/ui/key_import_ui.js';
 import { AttUI } from '../../js/common/ui/att_ui.js';

@@ -5,7 +5,7 @@
 import { VERSION } from '../common/core/const.js';
 import { Catch } from '../common/platform/catch.js';
 import { Store, GlobalStore } from '../common/platform/store.js';
-import { BrowserMsg, Bm } from '../common/extension.js';
+import { BrowserMsg, Bm } from '../common/browser/browser-msg.js';
 import { injectFcIntoWebmail } from './inject.js';
 import { migrateGlobal } from './migrations.js';
 import { GoogleAuth } from '../common/api/google-auth.js';

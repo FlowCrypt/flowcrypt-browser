@@ -4,8 +4,8 @@
 
 import { Store, SendAsAlias, AccountStore, Scopes } from '../../js/common/platform/store.js';
 import { Value, Dict, Url } from '../../js/common/core/common.js';
-import { Ui } from '../../js/common/browser.js';
-import { BrowserMsg, Bm } from '../../js/common/extension.js';
+import { Ui } from '../../js/common/browser/ui.js';
+import { BrowserMsg, Bm } from '../../js/common/browser/browser-msg.js';
 import { Rules } from '../../js/common/rules.js';
 import { Lang } from '../../js/common/lang.js';
 import { Settings } from '../../js/common/settings.js';

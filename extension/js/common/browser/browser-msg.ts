@@ -2,19 +2,20 @@
 
 'use strict';
 
-import { Str, Dict, UrlParams } from './core/common.js';
-import { DiagnoseMsgPubkeysResult, DecryptResult, VerifyRes, PgpMsgTypeResult, PgpMsgMethod, KeyDetails } from './core/pgp.js';
-import { FlatTypes, GlobalIndex, GlobalStore, AccountIndex, AccountStore } from './platform/store.js';
-import { Ui, Env, Browser } from './browser.js';
-import { Catch } from './platform/catch.js';
-import { Buf } from './core/buf.js';
-import { AjaxErr } from './api/api.js';
-import { PassphraseDialogType } from './xss_safe_factory.js';
-import { AuthRes } from './api/google-auth.js';
+import { Str, Dict, UrlParams } from '../core/common.js';
+import { DiagnoseMsgPubkeysResult, DecryptResult, VerifyRes, PgpMsgTypeResult, PgpMsgMethod, KeyDetails } from '../core/pgp.js';
+import { GlobalIndex, GlobalStore, AccountIndex, AccountStore } from '../platform/store.js';
+import { Browser } from './browser.js';
+import { Catch } from '../platform/catch.js';
+import { Buf } from '../core/buf.js';
+import { AjaxErr } from '../api/api.js';
+import { PassphraseDialogType } from '../xss_safe_factory.js';
+import { AuthRes } from '../api/google-auth.js';
+import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
+import { Env } from './env.js';
+import { Ui } from './ui.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
-
-export type AnyThirdPartyLibrary = any;
 
 export namespace Bm {
   export type Dest = string;
@@ -105,78 +106,18 @@ export namespace Bm {
 
 type Handler = Bm.AsyncRespondingHandler | Bm.AsyncResponselessHandler;
 export type Handlers = Dict<Handler>;
-export type AddrParserResult = { name?: string, address?: string };
-export interface BrowserWidnow extends Window {
-  onunhandledrejection: (e: any) => void;
-  'emailjs-mime-codec': AnyThirdPartyLibrary;
-  'emailjs-mime-parser': AnyThirdPartyLibrary;
-  'emailjs-mime-builder': AnyThirdPartyLibrary;
-  'emailjs-addressparser': {
-    parse: (raw: string) => AddrParserResult[];
-  };
-}
-export interface ContentScriptWindow extends BrowserWidnow {
-  TrySetDestroyableTimeout: (code: () => void, ms: number) => number;
-  TrySetDestroyableInterval: (code: () => void, ms: number) => number;
-  injected: true; // background script will use this to test if scripts were already injected, and inject if not
-  account_email_global: undefined | string; // used by background script
-  same_world_global: true; // used by background_script
-  destruction_event: string;
-  destroyable_class: string;
-  reloadable_class: string;
-  destroyable_intervals: number[];
-  destroyable_timeouts: number[];
-  destroy: () => void;
-  vacant: () => boolean;
-}
 
 export class BgNotReadyError extends Error { }
 export class TabIdRequiredError extends Error { }
-
-export class Extension { // todo - move extension-specific common.js code here
-
-  public static prepareBugReport = (name: string, details?: Dict<FlatTypes>, error?: Error | any): string => {
-    const bugReport: Dict<string> = { name, stack: Catch.stackTrace() };
-    try {
-      bugReport.error = JSON.stringify(error, undefined, 2);
-    } catch (e) {
-      bugReport.error_as_string = String(error);
-      bugReport.error_serialization_error = String(e);
-    }
-    try {
-      bugReport.details = JSON.stringify(details, undefined, 2);
-    } catch (e) {
-      bugReport.details_as_string = String(details);
-      bugReport.details_serialization_error = String(e);
-    }
-    let result = '';
-    for (const k of Object.keys(bugReport)) {
-      result += `\n[${k}]\n${bugReport[k]}\n`;
-    }
-    return result;
-  }
-
-}
 
 export class BrowserMsg {
 
   public static MAX_SIZE = 1024 * 1024; // 1MB
   private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};
   private static HANDLERS_REGISTERED_FRAME: Handlers = {
-    set_css: async (data: Bm.SetCss) => {
-      let el = $(data.selector);
-      const traverseUpLevels = data.traverseUp as number || 0;
-      for (let i = 0; i < traverseUpLevels; i++) {
-        el = el.parent();
-      }
-      el.css(data.css);
-    },
-    add_class: async (data: Bm.AddOrRemoveClass) => {
-      $(data.selector).addClass(data.class);
-    },
-    remove_class: async (data: Bm.AddOrRemoveClass) => {
-      $(data.selector).removeClass(data.class);
-    }
+    set_css: BrowserMsgCommonHandlers.setCss,
+    add_class: BrowserMsgCommonHandlers.addClass,
+    remove_class: BrowserMsgCommonHandlers.removeClass,
   };
 
   public static send = { // todo - may want to organise this differently, seems to always confuse me when sending a message

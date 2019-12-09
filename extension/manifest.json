@@ -71,7 +71,6 @@
     "/img/svgs/unlock.svg",
     "/img/logo/flowcrypt-logo-19-19.png",
     "/chrome/elements/compose.htm",
-    "/chrome/elements/reply_pubkey_mismatch.htm",
     "/chrome/elements/pgp_block.htm",
     "/chrome/elements/setup_dialog.htm",
     "/chrome/elements/attachment.htm",

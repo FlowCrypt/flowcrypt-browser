@@ -3,7 +3,7 @@
 'use strict';
 
 import { Store } from '../platform/store.js';
-import { Ui } from '../browser.js';
+import { Ui } from '../browser/ui.js';
 import { Pgp } from '../core/pgp.js';
 import { KeyBlockType } from '../core/mime.js';
 import { mnemonic } from '../core/mnemonic.js';

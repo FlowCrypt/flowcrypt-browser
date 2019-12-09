@@ -3,7 +3,7 @@
 'use strict';
 
 import { SetupView, SetupOptions } from '../setup.js';
-import { Ui } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Store } from '../../../js/common/platform/store.js';

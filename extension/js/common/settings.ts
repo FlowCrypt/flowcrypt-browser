@@ -5,8 +5,7 @@
 import { Catch } from './platform/catch.js';
 import { Store, SendAsAlias } from './platform/store.js';
 import { Str, Dict, UrlParams, Url } from './core/common.js';
-import { Ui, Env, JQS } from './browser.js';
-import { BrowserMsg } from './extension.js';
+import { BrowserMsg } from './browser/browser-msg.js';
 import { Lang } from './lang.js';
 import { Rules } from './rules.js';
 import { Api, ApiErrResponse } from './api/api.js';
@@ -17,6 +16,8 @@ import { Xss } from './platform/xss.js';
 import { Backend } from './api/backend.js';
 import { storageLocalGetAll } from './api/chrome.js';
 import { Gmail } from './api/email_provider/gmail/gmail.js';
+import { Ui, JQS } from './browser/ui.js';
+import { Env } from './browser/env.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const zxcvbn: Function; // tslint:disable-line:ban-types

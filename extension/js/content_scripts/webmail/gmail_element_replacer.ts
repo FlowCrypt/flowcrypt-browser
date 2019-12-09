@@ -7,8 +7,6 @@ import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
 import { Api, AjaxErr } from '../../common/api/api.js';
 import { Pgp } from '../../common/core/pgp.js';
-import { BrowserMsg } from '../../common/extension.js';
-import { Ui, Browser } from '../../common/browser.js';
 import { XssSafeFactory, WebmailVariantString, FactoryReplyParams } from '../../common/xss_safe_factory.js';
 import { Att } from '../../common/core/att.js';
 import { WebmailElementReplacer, IntervalFunction } from './setup_webmail_content_script.js';
@@ -19,6 +17,9 @@ import { WebmailCommon } from "../../common/webmail.js";
 import { Store, SendAsAlias } from '../../common/platform/store.js';
 import { GmailRes, GmailParser } from '../../common/api/email_provider/gmail/gmail-parser.js';
 import { Gmail } from '../../common/api/email_provider/gmail/gmail.js';
+import { Ui } from '../../common/browser/ui.js';
+import { Browser } from '../../common/browser/browser.js';
+import { BrowserMsg } from '../../common/browser/browser-msg.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 

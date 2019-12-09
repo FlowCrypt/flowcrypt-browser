@@ -3,10 +3,10 @@
 'use strict';
 
 import { Store, AccountStoreExtension, Scopes, AccountStore } from '../../js/common/platform/store.js';
-import { Ui } from '../../js/common/browser.js';
+import { Ui } from '../../js/common/browser/ui.js';
 import { Composer } from './composer/composer.js';
 import { Api } from '../../js/common/api/api.js';
-import { BrowserMsg } from '../../js/common/extension.js';
+import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { openpgp } from '../../js/common/core/pgp.js';
 import { ReplyParams, EmailProviderInterface } from '../../js/common/api/email_provider/email_provider_api.js';
 import { Assert } from '../../js/common/assert.js';

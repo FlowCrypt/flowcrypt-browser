@@ -5,8 +5,9 @@
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Ui, Browser } from '../../../js/common/browser.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
+import { Browser } from '../../../js/common/browser/browser.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { AttUI } from '../../../js/common/ui/att_ui.js';

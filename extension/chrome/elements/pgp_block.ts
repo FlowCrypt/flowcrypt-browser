@@ -4,7 +4,7 @@
 
 import { Store } from '../../js/common/platform/store.js';
 import { Str, Url } from '../../js/common/core/common.js';
-import { Ui } from '../../js/common/browser.js';
+import { Ui } from '../../js/common/browser/ui.js';
 import { Lang } from '../../js/common/lang.js';
 import { Buf } from '../../js/common/core/buf.js';
 import { Assert } from '../../js/common/assert.js';

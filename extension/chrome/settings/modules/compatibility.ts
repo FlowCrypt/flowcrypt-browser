@@ -1,6 +1,6 @@
 'use strict';
 
-import { Ui } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Pgp, PgpMsg } from '../../../js/common/core/pgp.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Buf } from '../../../js/common/core/buf.js';

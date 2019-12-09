@@ -2,11 +2,11 @@
 
 'use strict';
 
-import { Ui } from './browser.js';
+import { Ui } from './browser/ui.js';
 import { Dict, UrlParams, UrlParam } from './core/common.js';
 import { Catch, UnreportableError } from './platform/catch.js';
 import { KeyInfo, Pgp } from './core/pgp.js';
-import { BrowserMsg } from './extension.js';
+import { BrowserMsg } from './browser/browser-msg.js';
 import { Store } from './platform/store.js';
 import { Settings } from './settings.js';
 import { Xss } from './platform/xss.js';

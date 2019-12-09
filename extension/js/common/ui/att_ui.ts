@@ -6,7 +6,7 @@ import { PgpMsg, Pwd } from '../core/pgp.js';
 import { Dict } from '../core/common.js';
 import { Att } from '../core/att.js';
 import { Catch } from '../platform/catch.js';
-import { Ui } from '../browser.js';
+import { Ui } from '../browser/ui.js';
 
 declare const qq: any;
 

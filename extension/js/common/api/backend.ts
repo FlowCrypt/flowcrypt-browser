@@ -9,7 +9,7 @@ import { Dict, Value } from '../core/common.js';
 import { Store } from '../platform/store.js';
 import { Catch } from '../platform/catch.js';
 import { Att } from '../core/att.js';
-import { Ui } from '../browser.js';
+import { Ui } from '../browser/ui.js';
 import { Buf } from '../core/buf.js';
 
 type SubscriptionLevel = 'pro' | null;
