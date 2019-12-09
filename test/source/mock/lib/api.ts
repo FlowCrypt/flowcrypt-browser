@@ -22,7 +22,7 @@ export enum Status {
 }
 
 export type RequestHandler<REQ, RES> = (parsedReqBody: REQ, req: IncomingMessage) => Promise<RES>;
-type Handlers<REQ, RES> = { [request: string]: RequestHandler<REQ, RES> };
+export type Handlers<REQ, RES> = { [request: string]: RequestHandler<REQ, RES> };
 
 export class Api<REQ, RES> {
 

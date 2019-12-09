@@ -1,4 +1,4 @@
-import { Util } from './../util/index';
+import { Util } from '../../util/index';
 import { ParsedMail } from 'mailparser';
 import { readFileSync } from 'fs';
 
