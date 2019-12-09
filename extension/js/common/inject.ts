@@ -63,7 +63,7 @@ export class Injector {
 
   btns() {
     if (this.S.now('compose_button_container').length === 0) { // don't inject too early
-      (window as unknown as ContentScriptWindow).TrySetDestroyableTimeout(this.btns, 300);
+      (window as unknown as ContentScriptWindow).TrySetDestroyableTimeout(() => this.btns(), 300);
     } else {
       if (this.S.now('compose_button').length === 0) {
         const container = this.S.now('compose_button_container').prepend(this.factory.btnCompose(this.webmailName)); // xss-safe-factory
