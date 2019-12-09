@@ -25,6 +25,7 @@ View.run(class PgpPubkeyView extends View {
   private readonly compact: boolean; // means the details take up very little space.
   private readonly minimized: boolean; // means I have to click to see details.
   private publicKeys: OpenPGP.key.Key[] | undefined;
+  private primaryPubKey: OpenPGP.key.Key | undefined;
   private isExpired: boolean | undefined;
 
   constructor() {
@@ -41,7 +42,8 @@ View.run(class PgpPubkeyView extends View {
   async render() {
     Ui.event.protect();
     this.publicKeys = (await openpgp.key.readArmored(this.armoredPubkey)).keys;
-    this.isExpired = await Pgp.key.expired(this.publicKeys[0]);
+    this.primaryPubKey = this.publicKeys[0];
+    this.isExpired = await Pgp.key.expired(this.primaryPubKey);
     $('.pubkey').text(this.armoredPubkey);
     if (this.compact) {
       $('.hide_if_compact').remove();
@@ -50,14 +52,14 @@ View.run(class PgpPubkeyView extends View {
     }
     $('.line.fingerprints, .line.add_contact').css('display', this.minimized ? 'none' : 'block');
     if (this.publicKeys.length === 1) {
-      $('.line.fingerprints .fingerprint').text(await Pgp.key.fingerprint(this.publicKeys[0], 'spaced') || '(fingerprint error)');
-      $('.line.fingerprints .keywords').text(mnemonic(await Pgp.key.longid(this.publicKeys[0]) || '') || '(mnemonic error)');
+      $('.line.fingerprints .fingerprint').text(await Pgp.key.fingerprint(this.primaryPubKey, 'spaced') || '(fingerprint error)');
+      $('.line.fingerprints .keywords').text(mnemonic(await Pgp.key.longid(this.primaryPubKey) || '') || '(mnemonic error)');
     } else {
       $('.line.fingerprints').css({ display: 'none' });
     }
-    if (this.publicKeys[0]) {
-      const isUsableButExpired = await Pgp.key.usableButExpired(this.publicKeys[0]);
-      if (!isUsableButExpired && ! await this.publicKeys[0].getEncryptionKey() && ! await this.publicKeys[0].getSigningKey()) {
+    if (this.primaryPubKey) {
+      const isUsableButExpired = await Pgp.key.usableButExpired(this.primaryPubKey);
+      if (!isUsableButExpired && ! await this.primaryPubKey.getEncryptionKey() && ! await this.primaryPubKey.getSigningKey()) {
         this.showKeyNotUsableError();
       } else {
         if (this.compact) {
@@ -65,7 +67,7 @@ View.run(class PgpPubkeyView extends View {
         }
         let emailText = '';
         if (this.publicKeys.length === 1) {
-          const email = Str.parseEmail(this.publicKeys[0].users[0].userId?.userid || '').email;
+          const email = Str.parseEmail(this.primaryPubKey.users[0].userId?.userid || '').email;
           if (email) {
             emailText = email;
             $('.input_email').val(email); // checked above
