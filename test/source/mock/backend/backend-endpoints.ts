@@ -13,11 +13,12 @@ const fwdToRealBackend = async (parsed: any, req: IncomingMessage): Promise<stri
   delete req.headers.host;
   delete req.headers['content-length'];
   const forwarding: any = { headers: req.headers, url: `https://flowcrypt.com${req.url}` };
-  if (!req.url!.includes('message/upload')) {
-    forwarding.json = parsed.body; // JSON
-  } else {
+  if (req.url!.includes('message/upload')) {
     forwarding.body = parsed.body; // FORM-DATA
+    const r = await request.post(forwarding);
+    return r.body; // already json-stringified for this call, maybe because backend doesn't return proper content-type
   }
+  forwarding.json = parsed.body; // JSON
   const r = await request.post(forwarding);
   return JSON.stringify(r.body);
 };
@@ -58,8 +59,8 @@ export const mockBackendEndpoints: HandlersDefinition = {
     throw new Error(`${req.url} mock not implemented`); // will have to give fake token
   },
   '/help/error': async ({ body }, req) => {
-    console.error(`/help/error`, body);
-    throw new Error(`${req.url} mock not implemented`); // todo - fail tests if received any error
+    console.error(`/help/error`, body); // todo - fail tests if received any error
+    throw new Error(`${req.url} mock not implemented`);
   },
   '/help/feedback': fwdToRealBackend,
   '/api/message/presign_files': fwdToRealBackend,

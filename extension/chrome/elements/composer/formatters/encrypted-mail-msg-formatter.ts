@@ -26,7 +26,6 @@ declare const openpgp: typeof OpenPGP;
 export class EncryptedMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
 
   private armoredPubkeys: PubkeyResult[];
-  private FC_WEB_URL = 'https://flowcrypt.com'; // todo Send plain (not encrypted)uld use Api.url()
   private pgpMimeRootType = `multipart/encrypted; protocol="application/pgp-encrypted";`;
   private fcAdminCodes: string[] = [];
 
@@ -185,7 +184,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     const { short, admin_code } = await Backend.messageUpload(authInfo, encryptedBody['text/plain']!);
     const storage = await Store.getAcct(this.acctEmail, ['outgoing_language']);
     const lang = storage.outgoing_language || 'EN';
-    const msgUrl = `${this.FC_WEB_URL}/${short}`;
+    const msgUrl = Backend.url('decrypt', short);
     const a = `<a href="${Xss.escape(msgUrl)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">
                     ${Lang.compose.openMsg[lang]}
                    </a>`;

@@ -9,7 +9,7 @@ import { Buf } from '../../../core/buf';
 class PwdEncryptedMessageTestStrategy implements ITestMsgStrategy {
   async test(mimeMsg: ParsedMail) {
     if (!mimeMsg.text.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]{10}/)) {
-      throw new HttpClientErr(`Error: cannot find pwd encrypted link`);
+      throw new HttpClientErr(`Error: cannot find pwd encrypted link in:\n\n${mimeMsg.text}`);
     }
     if (!mimeMsg.text.includes('Follow this link to open it')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);

@@ -55,7 +55,7 @@ export class Backend extends Api {
     return Backend.apiCall(Backend.url('api'), path, vals, fmt, undefined, { 'api-version': '3', ...addHeaders });
   }
 
-  public static url(type: string, resource = '') {
+  public static url(type: 'api' | 'me' | 'pubkey' | 'decrypt' | 'web', resource = '') {
     return ({
       api: BACKEND_API_HOST,
       me: `https://flowcrypt.com/me/${resource}`,
