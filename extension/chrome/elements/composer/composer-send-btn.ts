@@ -58,11 +58,14 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  setBtnColor(color: 'green' | 'gray') {
-    const classToAdd = color;
-    const classToRemove = ['green', 'gray'].find(c => c !== color);
-    this.composer.S.cached('send_btn').removeClass(classToRemove).addClass(classToAdd);
-    this.composer.S.cached('toggle_send_options').removeClass(classToRemove).addClass(classToAdd);
+  disableBtn() {
+    this.composer.S.cached('send_btn').removeClass('green').addClass('gray').prop('disabled', true);
+    this.composer.S.cached('toggle_send_options').removeClass('green').addClass('gray');
+  }
+
+  enableBtn() {
+    this.composer.S.cached('send_btn').removeClass('gray').addClass('green').prop('disabled', false);
+    this.composer.S.cached('toggle_send_options').removeClass('gray').addClass('green');
   }
 
   private btnText(): string {
@@ -78,10 +81,11 @@ export class ComposerSendBtn extends ComposerComponent {
   }
 
   private async extractProcessSendMsg() {
+    this.composer.sendBtn.disableBtn();
     this.composer.S.cached('toggle_send_options').hide();
     try {
       this.composer.errs.throwIfFormNotReady();
-      this.composer.S.now('send_btn_text').text('Loading');
+      this.composer.S.now('send_btn_text').text('Loading...');
       Xss.sanitizeRender(this.composer.S.now('send_btn_i'), Ui.spinner('white'));
       this.composer.S.cached('send_btn_note').text('');
       const newMsgData = this.composer.input.extractAll();
@@ -100,6 +104,7 @@ export class ComposerSendBtn extends ComposerComponent {
     } catch (e) {
       await this.composer.errs.handleSendErr(e);
     } finally {
+      this.composer.sendBtn.enableBtn();
       this.composer.S.cached('toggle_send_options').show();
     }
   }

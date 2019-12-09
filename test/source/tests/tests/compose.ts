@@ -393,6 +393,15 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
+    ava.default('compose[global:compose] - standalone - send btn should be disabled while encrypting/sending', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, '');
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      expect(await composePage.isDisabled('#send_btn')).to.be.true;
+      await composePage.waitAndRespondToModal('confirm', 'cancel', 'Send without a subject?');
+      expect(await composePage.isDisabled('#send_btn')).to.be.false;
+    }));
+
     ava.default('compose[global:compose] - standalone - load contacts through API', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
