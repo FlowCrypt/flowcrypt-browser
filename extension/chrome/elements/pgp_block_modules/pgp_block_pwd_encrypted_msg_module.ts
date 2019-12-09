@@ -123,7 +123,7 @@ export class PgpBlockViewPwdEncryptedMsgModule {
       await this.view.errorModule.renderErr(expirationMsg, undefined);
       this.view.renderModule.setFrameColor('gray');
       $('.action_security').click(this.view.setHandler(() => BrowserMsg.send.bg.settings({ page: '/chrome/settings/modules/security.htm', acctEmail: this.view.acctEmail })));
-      $('.extend_expiration').click(this.view.setHandler(this.view.pwdEncryptedMsgModule.renderMsgExpirationRenewOptions));
+      $('.extend_expiration').click(this.view.setHandler((el) => this.view.pwdEncryptedMsgModule.renderMsgExpirationRenewOptions(el)));
     } else if (!linkRes.url) {
       await this.view.errorModule.renderErr(Lang.pgpBlock.cannotLocate + Lang.pgpBlock.brokenLink, undefined);
     } else {
