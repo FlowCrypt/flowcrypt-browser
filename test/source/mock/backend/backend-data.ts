@@ -36,7 +36,7 @@ export class BackendData {
       'intro': null,
       'default_message_expire': 3,
       'token': '1234-mock-acct-token',
-    }
+    };
   }
 
   getSubscription(acct: string) {
