@@ -1,6 +1,7 @@
-import { HttpClientErr, Status } from './api';
+import { HttpClientErr, Status, HttpAuthErr } from './api';
 import { Config } from '../../util';
 import { Buf } from '../../core/buf';
+import { Str } from '../../core/common';
 
 // tslint:disable:variable-name
 
@@ -10,6 +11,7 @@ export class OauthMock {
   private refreshTokenByAuthCode: { [authCode: string]: string } = {};
   private accessTokenByRefreshToken: { [refreshToken: string]: string } = {};
   private acctByAccessToken: { [acct: string]: string } = {};
+  private issuedIdTokensByAcct: { [acct: string]: string[] } = {};
 
   public clientId = '717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com';
   public expiresIn = 2 * 60 * 60; // 2hrs in seconds
@@ -47,7 +49,7 @@ export class OauthMock {
     const access_token = this.getAccessToken(refresh_token);
     const acct = this.acctByAccessToken[access_token];
     this.checkKnownAcct(acct);
-    const id_token = this.getIdToken(acct);
+    const id_token = this.generateIdToken(acct);
     return { access_token, refresh_token, expires_in: this.expiresIn, id_token, token_type: 'refresh_token' }; // guessed the token_type
   }
 
@@ -56,7 +58,7 @@ export class OauthMock {
       const access_token = this.getAccessToken(refreshToken);
       const acct = this.acctByAccessToken[access_token];
       this.checkKnownAcct(acct);
-      const id_token = this.getIdToken(acct);
+      const id_token = this.generateIdToken(acct);
       return { access_token, expires_in: this.expiresIn, id_token, token_type: 'Bearer' };
     } catch (e) {
       throw new HttpClientErr('invalid_grant', Status.BAD_REQUEST);
@@ -76,6 +78,14 @@ export class OauthMock {
     return acct;
   }
 
+  public isIdTokenValid(idToken: string) { // we verify mock idToken by checking if we ever issued it
+    const [header, data, sig] = idToken.split('.');
+    const claims = JSON.parse(Buf.fromBase64UrlStr(data).toUtfStr());
+    return (this.issuedIdTokensByAcct[claims.email] || []).includes(idToken);
+  }
+
+  // -- private
+
   private getAccessToken(refreshToken: string): string {
     if (this.accessTokenByRefreshToken[refreshToken]) {
       return this.accessTokenByRefreshToken[refreshToken];
@@ -93,7 +103,7 @@ export class OauthMock {
     }
   }
 
-  private getIdToken(email: string) {
+  private generateIdToken(email: string): string {
     const data = {
       at_hash: 'at_hash',
       exp: this.expiresIn,
@@ -108,6 +118,13 @@ export class OauthMock {
       email,
       email_verified: true,
     };
-    return `fakeheader.${Buf.fromUtfStr(JSON.stringify(data)).toBase64UrlStr()}.fakesignature`;
+    const newIdToken = `fakeheader.${Buf.fromUtfStr(JSON.stringify(data)).toBase64UrlStr()}.${Str.sloppyRandom(30)}`;
+    if (!this.issuedIdTokensByAcct[email]) {
+      this.issuedIdTokensByAcct[email] = [];
+    }
+    this.issuedIdTokensByAcct[email].push(newIdToken);
+    return newIdToken;
   }
 }
+
+export const oauth = new OauthMock();

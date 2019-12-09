@@ -2,19 +2,17 @@ import { TestBySubjectStrategyContext } from './strategies/send-message-strategy
 import { UnsuportableStrategyError } from './strategies/strategy-base';
 import { isGet, isPost, parseResourceId, isPut, isDelete } from '../lib/mock-util';
 import { HttpClientErr, Status } from '../lib/api';
-import { OauthMock } from '../lib/oauth';
-import { Data } from './data';
+import { GoogleData } from './google-data';
 import { ParsedMail } from 'mailparser';
 import Parse, { ParseMsgResult } from '../../util/parse';
 import { HandlersDefinition } from '../all-apis-mock';
+import { oauth } from '../lib/oauth';
 
 type DraftSaveModel = { message: { raw: string, threadId: string } };
 
 const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', 'human+manualcopypgp@flowcrypt.com',
   'censored@email.com', 'test@email.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com', 'expired.on.attester@domain.com',
   'test.ci.compose@org.flowcrypt.com'];
-
-const oauth = new OauthMock();
 
 export const mockGoogleEndpoints: HandlersDefinition = {
   '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, redirect_uri, scope, login_hint, result } }, req) => {
@@ -75,7 +73,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
   '/gmail/v1/users/me/messages': async ({ query: { q } }, req) => { // search messages
     const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
     if (isGet(req) && q) {
-      const msgs = new Data(acct).searchMessages(q);
+      const msgs = new GoogleData(acct).searchMessages(q);
       return { messages: msgs.map(({ id, threadId }) => ({ id, threadId })), resultSizeEstimate: msgs.length };
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
@@ -84,7 +82,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
     if (isGet(req)) {
       const id = parseResourceId(req.url!);
-      const data = new Data(acct);
+      const data = new GoogleData(acct);
       if (req.url!.includes('/attachments/')) {
         const att = data.getAttachment(id);
         if (att) {
@@ -94,7 +92,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       }
       const msg = data.getMessage(id);
       if (msg) {
-        return Data.fmtMsg(msg, format);
+        return GoogleData.fmtMsg(msg, format);
       }
       throw new HttpClientErr(`MOCK Message not found for ${acct}: ${id}`, Status.NOT_FOUND);
     }
@@ -103,14 +101,14 @@ export const mockGoogleEndpoints: HandlersDefinition = {
   '/gmail/v1/users/me/labels': async (parsedReq, req) => {
     const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
     if (isGet(req)) {
-      return { labels: new Data(acct).getLabels() };
+      return { labels: new GoogleData(acct).getLabels() };
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
   '/gmail/v1/users/me/threads': async ({ query: { labelIds, includeSpamTrash } }, req) => {
     const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
     if (isGet(req)) {
-      const threads = new Data(acct).getThreads();
+      const threads = new GoogleData(acct).getThreads();
       return { threads, resultSizeEstimate: threads.length };
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
@@ -119,12 +117,12 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
     if (isGet(req) && (format === 'metadata' || format === 'full')) {
       const id = parseResourceId(req.url!);
-      const msgs = new Data(acct).getMessagesByThread(id);
+      const msgs = new GoogleData(acct).getMessagesByThread(id);
       if (!msgs.length) {
         const statusCode = id === '16841ce0ce5cb74d' ? 404 : 400; // intentionally testing missing thread
         throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`, statusCode);
       }
-      return { id, historyId: msgs[0].historyId, messages: msgs.map(m => Data.fmtMsg(m, format)) };
+      return { id, historyId: msgs[0].historyId, messages: msgs.map(m => GoogleData.fmtMsg(m, format)) };
     }
   },
   '/upload/gmail/v1/users/me/messages/send?uploadType=multipart': async (parsedReq, req) => {
@@ -152,7 +150,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       const body = parsedReq.body as DraftSaveModel;
       if (body && body.message && body.message.raw
         && typeof body.message.raw === 'string') {
-        if (body.message.threadId && !new Data(acct).getThreads().find(t => t.id === body.message.threadId)) {
+        if (body.message.threadId && !new GoogleData(acct).getThreads().find(t => t.id === body.message.threadId)) {
           throw new HttpClientErr('The thread you are replying to not found', 404);
         }
         return {
@@ -170,7 +168,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
     if (isGet(req)) {
       const id = parseResourceId(req.url!);
-      const data = new Data(acct);
+      const data = new GoogleData(acct);
       const draft = data.getDraft(id);
       if (draft) {
         return draft;
@@ -201,7 +199,7 @@ const parseMultipartDataAsMimeMsg = async (multipartData: string): Promise<Parse
 const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: string) => {
   const inReplyToMessageId = mimeMsg.headers.get('in-reply-to') ? mimeMsg.headers.get('in-reply-to')!.toString() : '';
   if (threadId) {
-    const messages = new Data(acct).getMessagesByThread(threadId);
+    const messages = new GoogleData(acct).getMessagesByThread(threadId);
     if (!messages || !messages.length) {
       throw new HttpClientErr(`Error: The thread you are replying (${threadId}) to not found`, 404);
     }

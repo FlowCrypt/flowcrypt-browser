@@ -20,7 +20,8 @@ type Label = { id: string, name: "CATEGORY_SOCIAL", messageListVisibility: "hide
 type AcctDataFile = { messages: GmailMsg[]; drafts: GmailDraft[], attachments: { [id: string]: { data: string, size: number } }, labels: Label[] };
 
 const DATA: { [acct: string]: AcctDataFile } = {};
-export class Data {
+
+export class GoogleData {
 
   private exludePplSearchQuery = /(?:-from|-to):"?([a-zA-Z0-9@.\-_]+)"?/g;
   private includePplSearchQuery = /(?:from|to):"?([a-zA-Z0-9@.\-_]+)"?/g;
@@ -90,14 +91,14 @@ export class Data {
 
   private searchMessagesBySubject(subject: string) {
     subject = subject.trim().toLowerCase();
-    return DATA[this.acct].messages.filter(m => Data.msgSubject(m).toLowerCase().includes(subject));
+    return DATA[this.acct].messages.filter(m => GoogleData.msgSubject(m).toLowerCase().includes(subject));
   }
 
   private searchMessagesByPeople(includePeople: string[], excludePeople: string[]) {
     includePeople = includePeople.map(person => person.trim().toLowerCase());
     excludePeople = excludePeople.map(person => person.trim().toLowerCase());
     return DATA[this.acct].messages.filter(m => {
-      const msgPeople = Data.msgPeople(m).toLowerCase();
+      const msgPeople = GoogleData.msgPeople(m).toLowerCase();
       let shouldInclude = false;
       let shouldExclude = false;
       if (includePeople.length) { // filter who to include
@@ -138,7 +139,7 @@ export class Data {
 
   public getThreads() {
     const threads: GmailThread[] = [];
-    for (const thread of DATA[this.acct].messages.map(m => ({ historyId: m.historyId, id: m.threadId!, snippet: `MOCK SNIPPET: ${Data.msgSubject(m)}` }))) {
+    for (const thread of DATA[this.acct].messages.map(m => ({ historyId: m.historyId, id: m.threadId!, snippet: `MOCK SNIPPET: ${GoogleData.msgSubject(m)}` }))) {
       if (!threads.map(t => t.id).includes(thread.id)) {
         threads.push(thread);
       }
