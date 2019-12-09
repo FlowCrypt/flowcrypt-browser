@@ -188,6 +188,10 @@ abstract class ControllableBase {
     }, this.selector(selector));
   }
 
+  public isDisabled = async (selector: string): Promise<boolean> => {
+    return await this.target.evaluate((s) => document.querySelector(s).disabled, this.selector(selector));
+  }
+
   public isChecked = async (selector: string): Promise<boolean> => {
     return await this.target.evaluate((s) => document.querySelector(s).checked, this.selector(selector));
   }

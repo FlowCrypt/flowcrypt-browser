@@ -19,7 +19,7 @@ export class GeneralMailFormatter {
       return await new PlainMsgMailFormatter(composer).sendableMsg(newMsgData);
     }
     if (!choices.encrypt && choices.sign) { // sign only
-      composer.S.now('send_btn_text').text('Signing');
+      composer.S.now('send_btn_text').text('Signing...');
       return await new SignedMsgMailFormatter(composer).sendableMsg(newMsgData, signingPrv!);
     }
     // encrypt (optionally sign)
@@ -27,7 +27,7 @@ export class GeneralMailFormatter {
     if (emailsWithoutPubkeys.length) {
       await composer.errs.throwIfEncryptionPasswordInvalid(senderKi, newMsgData);
     }
-    composer.S.now('send_btn_text').text('Encrypting');
+    composer.S.now('send_btn_text').text('Encrypting...');
     return await new EncryptedMsgMailFormatter(composer, armoredPubkeys).sendableMsg(newMsgData, signingPrv);
   }
 
