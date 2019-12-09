@@ -8,8 +8,8 @@ import { MsgBlock, Mime } from '../../../js/common/core/mime.js';
 import { Att } from '../../../js/common/core/att.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { VerifyRes, PgpMsg } from '../../../js/common/core/pgp.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
-import { Ui } from '../../../js/common/browser.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 

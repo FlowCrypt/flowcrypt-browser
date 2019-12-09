@@ -9,9 +9,9 @@ const BUILD = 'consumer'; // todo
 import { Catch } from '../platform/catch.js';
 import { Store, AccountStore } from '../platform/store.js';
 import { Api, GoogleAuthErr } from './api.js';
-import { Ui } from '../browser.js';
+import { Ui } from '../browser/ui.js';
 import { Value, Url } from '../core/common.js';
-import { GoogleAuthWindowResult$result } from '../extension.js';
+import { GoogleAuthWindowResult$result } from '../browser/browser-msg.js';
 import { tabsQuery, windowsCreate } from './chrome.js';
 import { Buf } from '../core/buf.js';
 import { GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST } from '../core/const.js';

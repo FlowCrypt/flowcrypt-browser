@@ -4,8 +4,8 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
-import { Ui } from '../../js/common/browser.js';
-import { BrowserMsg, BgNotReadyError } from '../../js/common/extension.js';
+import { Ui } from '../../js/common/browser/ui.js';
+import { BrowserMsg, BgNotReadyError } from '../../js/common/browser/browser-msg.js';
 
 Catch.try(async () => {
 

@@ -2,10 +2,10 @@
 
 'use strict';
 
-import { Ui } from '../../js/common/browser.js';
+import { Ui } from '../../js/common/browser/ui.js';
 import { mnemonic } from '../../js/common/core/mnemonic.js';
 import { Pgp, KeyInfo } from '../../js/common/core/pgp.js';
-import { BrowserMsg } from '../../js/common/extension.js';
+import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Assert } from '../../js/common/assert.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';

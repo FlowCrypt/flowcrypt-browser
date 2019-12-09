@@ -4,10 +4,10 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store, StorageType } from '../../js/common/platform/store.js';
-import { Ui } from '../../js/common/browser.js';
+import { Ui } from '../../js/common/browser/ui.js';
 import { mnemonic } from '../../js/common/core/mnemonic.js';
 import { Pgp } from '../../js/common/core/pgp.js';
-import { BrowserMsg } from '../../js/common/extension.js';
+import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Assert } from '../../js/common/assert.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
 import { Xss } from '../../js/common/platform/xss.js';

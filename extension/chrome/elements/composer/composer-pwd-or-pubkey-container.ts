@@ -3,7 +3,7 @@
 'use strict';
 
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Ui } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { RecipientStatuses, SendBtnTexts } from './composer-types.js';
 import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
 import { Store } from '../../../js/common/platform/store.js';

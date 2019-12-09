@@ -3,8 +3,8 @@
 'use strict';
 
 import { Store } from '../../../js/common/platform/store.js';
-import { Ui } from '../../../js/common/browser.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Lang } from '../../../js/common/lang.js';

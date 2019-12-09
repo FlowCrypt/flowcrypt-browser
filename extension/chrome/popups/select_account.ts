@@ -3,8 +3,8 @@
 'use strict';
 
 import { Store } from '../../js/common/platform/store.js';
-import { Ui } from '../../js/common/browser.js';
-import { BrowserMsg } from '../../js/common/extension.js';
+import { Ui } from '../../js/common/browser/ui.js';
+import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';

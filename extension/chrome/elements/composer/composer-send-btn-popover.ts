@@ -6,7 +6,7 @@ import { ComposerComponent } from './composer-abstract-component.js';
 import { PopoverOpt, PopoverChoices } from './composer-types.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Lang } from '../../../js/common/lang.js';
-import { Ui } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 

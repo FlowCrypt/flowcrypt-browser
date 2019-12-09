@@ -2,19 +2,20 @@
 
 'use strict';
 
-import { Str, Dict, UrlParams, Url } from './core/common.js';
-import { DiagnoseMsgPubkeysResult, DecryptResult, VerifyRes, PgpMsgTypeResult, PgpMsgMethod, KeyDetails } from './core/pgp.js';
-import { FlatTypes, GlobalIndex, GlobalStore, AccountIndex, AccountStore } from './platform/store.js';
-import { Ui, Env, Browser } from './browser.js';
-import { Catch } from './platform/catch.js';
-import { Buf } from './core/buf.js';
-import { AjaxErr } from './api/api.js';
-import { PassphraseDialogType } from './xss_safe_factory.js';
-import { AuthRes } from './api/google-auth.js';
+import { Str, Dict, UrlParams } from '../core/common.js';
+import { DiagnoseMsgPubkeysResult, DecryptResult, VerifyRes, PgpMsgTypeResult, PgpMsgMethod, KeyDetails } from '../core/pgp.js';
+import { GlobalIndex, GlobalStore, AccountIndex, AccountStore } from '../platform/store.js';
+import { Browser } from './browser.js';
+import { Catch } from '../platform/catch.js';
+import { Buf } from '../core/buf.js';
+import { AjaxErr } from '../api/api.js';
+import { PassphraseDialogType } from '../xss_safe_factory.js';
+import { AuthRes } from '../api/google-auth.js';
+import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
+import { Env } from './env.js';
+import { Ui } from './ui.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
-
-export type AnyThirdPartyLibrary = any;
 
 export namespace Bm {
   export type Dest = string;
@@ -105,91 +106,9 @@ export namespace Bm {
 
 type Handler = Bm.AsyncRespondingHandler | Bm.AsyncResponselessHandler;
 export type Handlers = Dict<Handler>;
-export type AddrParserResult = { name?: string, address?: string };
-export interface BrowserWidnow extends Window {
-  onunhandledrejection: (e: any) => void;
-  'emailjs-mime-codec': AnyThirdPartyLibrary;
-  'emailjs-mime-parser': AnyThirdPartyLibrary;
-  'emailjs-mime-builder': AnyThirdPartyLibrary;
-  'emailjs-addressparser': {
-    parse: (raw: string) => AddrParserResult[];
-  };
-}
-export interface ContentScriptWindow extends BrowserWidnow {
-  TrySetDestroyableTimeout: (code: () => void, ms: number) => number;
-  TrySetDestroyableInterval: (code: () => void, ms: number) => number;
-  injected: true; // background script will use this to test if scripts were already injected, and inject if not
-  account_email_global: undefined | string; // used by background script
-  same_world_global: true; // used by background_script
-  destruction_event: string;
-  destroyable_class: string;
-  reloadable_class: string;
-  destroyable_intervals: number[];
-  destroyable_timeouts: number[];
-  destroy: () => void;
-  vacant: () => boolean;
-}
 
 export class BgNotReadyError extends Error { }
 export class TabIdRequiredError extends Error { }
-
-export class Extension { // todo - move extension-specific common.js code here
-
-  public static prepareBugReport = (name: string, details?: Dict<FlatTypes>, error?: Error | any): string => {
-    const bugReport: Dict<string> = { name, stack: Catch.stackTrace() };
-    try {
-      bugReport.error = JSON.stringify(error, undefined, 2);
-    } catch (e) {
-      bugReport.error_as_string = String(error);
-      bugReport.error_serialization_error = String(e);
-    }
-    try {
-      bugReport.details = JSON.stringify(details, undefined, 2);
-    } catch (e) {
-      bugReport.details_as_string = String(details);
-      bugReport.details_serialization_error = String(e);
-    }
-    let result = '';
-    for (const k of Object.keys(bugReport)) {
-      result += `\n[${k}]\n${bugReport[k]}\n`;
-    }
-    return result;
-  }
-
-}
-
-export class BrowserMsgCommonHandlers {
-
-  // -- these few are set on every listener automatically
-
-  static async setCss(data: Bm.SetCss) {
-    let el = $(data.selector);
-    const traverseUpLevels = data.traverseUp as number || 0;
-    for (let i = 0; i < traverseUpLevels; i++) {
-      el = el.parent();
-    }
-    el.css(data.css);
-  }
-
-  static async addClass(data: Bm.AddOrRemoveClass) {
-    $(data.selector).addClass(data.class);
-  }
-
-  static async removeClass(data: Bm.AddOrRemoveClass) {
-    $(data.selector).removeClass(data.class);
-  }
-
-  // -- these below have to be set manually when appropriate
-
-  static async replyPubkeyMismatch() {
-    const replyIframe = $('iframe.reply_message').get(0) as HTMLIFrameElement | undefined;
-    if (replyIframe) {
-      const bareSrc = Url.removeParamsFromUrl(replyIframe.src, ['ignoreDraft', 'disableDraftSaving', 'draftId', 'replyPubkeyMismatch', 'skipClickPrompt']);
-      replyIframe.src = Url.create(bareSrc, { replyPubkeyMismatch: true, ignoreDraft: true, disableDraftSaving: true, draftId: '', skipClickPrompt: true });
-    }
-  }
-
-}
 
 export class BrowserMsg {
 

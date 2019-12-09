@@ -12,7 +12,7 @@ import { CollectPubkeysResult } from './composer-types.js';
 import { PubkeySearchResult, Keyserver } from '../../../js/common/api/keyserver.js';
 import { Api } from '../../../js/common/api/api.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from './composer-errs.js';
-import { BrowserMsg, Bm } from '../../../js/common/extension.js';
+import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
 
 export class ComposerStorage extends ComposerComponent {
 

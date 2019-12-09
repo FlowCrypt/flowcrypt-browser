@@ -5,14 +5,14 @@
 import { MessageToReplyOrForward } from './composer-types.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Str } from '../../../js/common/core/common.js';
-import { Ui } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Api, ProgressCb } from '../../../js/common/api/api.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposerComponent } from './composer-abstract-component.js';
 import { Mime, MsgBlock } from '../../../js/common/core/mime.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { FormatError, PgpMsg } from '../../../js/common/core/pgp.js';
-import { BrowserMsg, Bm } from '../../../js/common/extension.js';
+import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
 import { Store } from '../../../js/common/platform/store.js';
 
 export class ComposerQuote extends ComposerComponent {

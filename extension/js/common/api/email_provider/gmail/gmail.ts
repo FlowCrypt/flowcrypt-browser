@@ -9,8 +9,8 @@ import { ProgressCb, RecipientType, AjaxErr, ChunkedCb, ProviderContactsResults 
 import { Buf } from '../../../core/buf.js';
 import { Mime } from '../../../core/mime.js';
 import { Value, Str, Dict } from '../../../core/common.js';
-import { Env } from '../../../browser.js';
-import { BrowserMsg, AddrParserResult, BrowserWidnow } from '../../../extension.js';
+import { Env } from '../../../browser/env.js';
+import { BrowserMsg } from '../../../browser/browser-msg.js';
 import { Catch } from '../../../platform/catch.js';
 import { Att } from '../../../core/att.js';
 import { Contact, Pgp, FormatError } from '../../../core/pgp.js';
@@ -18,6 +18,7 @@ import { Xss } from '../../../platform/xss.js';
 import { Store } from '../../../platform/store.js';
 import { GmailRes, GmailParser } from './gmail-parser.js';
 import { GoogleAuth } from '../../google-auth.js';
+import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window.js';
 
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 
@@ -356,7 +357,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     const rawParsedResults: AddrParserResult[] = [];
     toHeaders = Value.arr.unique(toHeaders);
     for (const to of toHeaders) {
-      rawParsedResults.push(...(window as unknown as BrowserWidnow)['emailjs-addressparser'].parse(to));
+      rawParsedResults.push(...(window as unknown as BrowserWindow)['emailjs-addressparser'].parse(to));
     }
     for (const rawParsedRes of rawParsedResults) {
       if (rawParsedRes.address && allRawEmails.indexOf(rawParsedRes.address) === -1) {

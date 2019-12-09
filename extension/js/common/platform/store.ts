@@ -6,13 +6,14 @@ import { Value, Str, Dict } from '../core/common.js';
 import { mnemonic } from '../core/mnemonic.js';
 import { Pgp, KeyInfo, Contact } from '../core/pgp.js';
 import { SubscriptionInfo, PaymentMethod, ProductLevel, FcUuidAuth } from '../api/backend.js';
-import { BrowserMsg, BgNotReadyError } from '../extension.js';
-import { Env, Ui } from '../browser.js';
+import { BrowserMsg, BgNotReadyError } from '../browser/browser-msg.js';
 import { Catch, UnreportableError } from './catch.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chrome.js';
 import { PgpClient } from '../api/keyserver.js';
 import { GmailRes } from '../api/email_provider/gmail/gmail-parser.js';
 import { GoogleAuth } from '../api/google-auth.js';
+import { Env } from '../browser/env.js';
+import { Ui } from '../browser/ui.js';
 
 // tslint:disable:no-null-keyword
 

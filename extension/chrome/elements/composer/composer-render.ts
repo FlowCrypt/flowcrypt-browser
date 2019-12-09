@@ -3,11 +3,11 @@
 'use strict';
 
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Ui, JQS } from '../../../js/common/browser.js';
+import { Ui, JQS } from '../../../js/common/browser/ui.js';
 import { RecipientType } from '../../../js/common/api/api.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Lang } from '../../../js/common/lang.js';
 import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
 import { Pgp } from '../../../js/common/core/pgp.js';

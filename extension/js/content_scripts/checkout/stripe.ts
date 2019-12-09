@@ -2,10 +2,10 @@
 
 'use strict';
 
-import { BrowserMsg } from '../../common/extension.js';
 import { Catch } from '../../common/platform/catch.js';
 import { Assert } from '../../common/assert.js';
 import { Url } from '../../common/core/common.js';
+import { BrowserMsg } from '../../common/browser/browser-msg.js';
 
 Catch.try(async () => {
 

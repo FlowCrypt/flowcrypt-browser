@@ -5,12 +5,12 @@
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Str, Dict, Url, UrlParams } from '../../../js/common/core/common.js';
-import { Ui } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Notifications } from '../../../js/common/notifications.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
-import { BrowserMsg, Bm, BrowserMsgCommonHandlers } from '../../../js/common/extension.js';
+import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Google } from '../../../js/common/api/google.js';
@@ -22,6 +22,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { WebmailCommon } from "../../../js/common/webmail.js";
 import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
 import { GmailRes, GmailParser } from '../../../js/common/api/email_provider/gmail/gmail-parser.js';
+import { BrowserMsgCommonHandlers } from '../../../js/common/browser/browser-msg-common-handlers.js';
 
 Catch.try(async () => {
 

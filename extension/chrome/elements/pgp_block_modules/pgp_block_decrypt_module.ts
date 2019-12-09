@@ -4,8 +4,8 @@
 
 import { PgpBlockView } from '../pgp_block.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
-import { Ui } from '../../../js/common/browser.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Backend } from '../../../js/common/api/backend.js';

@@ -7,8 +7,8 @@ import { Settings } from '../../../js/common/settings.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Dict } from '../../../js/common/core/common.js';
 import { SendAsAlias } from '../../../js/common/platform/store.js';
-import { Ui } from '../../../js/common/browser.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 

@@ -3,7 +3,7 @@
 'use strict';
 
 import { Store } from '../common/platform/store.js';
-import { Bm } from '../common/extension.js';
+import { Bm } from '../common/browser/browser-msg.js';
 import { BgUtils } from './bgutils.js';
 import { Api } from '../common/api/api.js';
 import { Pgp } from '../common/core/pgp.js';

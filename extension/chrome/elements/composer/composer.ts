@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Ui } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { ComposerDraft } from './composer-draft.js';
 import { ComposerQuote } from './composer-quote.js';
 import { ComposerRecipients } from './composer-recipients.js';
@@ -18,7 +18,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposerMyPubkey } from './composer-my-pubkey.js';
 import { ComposerStorage } from './composer-storage.js';
 import { ComposeView } from '../../../js/common/../../chrome/elements/compose.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { EmailProviderInterface } from '../../../js/common/api/email_provider/email_provider_api.js';
 
 export class Composer {

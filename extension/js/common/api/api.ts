@@ -5,11 +5,11 @@
 // tslint:disable:no-direct-ajax
 
 import { Dict } from '../core/common.js';
-import { Env } from '../browser.js';
+import { Env } from '../browser/env.js';
 import { Att } from '../core/att.js';
 import { Catch } from '../platform/catch.js';
 import { Buf } from '../core/buf.js';
-import { BrowserMsg } from '../extension.js';
+import { BrowserMsg } from '../browser/browser-msg.js';
 import { Xss } from '../platform/xss.js';
 import { Contact } from '../core/pgp.js';
 import { secureRandomBytes } from '../platform/util.js';

@@ -3,7 +3,7 @@
 'use strict';
 
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Ui } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Api } from '../../../js/common/api/api.js';

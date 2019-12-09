@@ -3,14 +3,15 @@
 'use strict';
 
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Ui, BrowserEventErrHandler } from '../../../js/common/browser.js';
-import { BrowserMsg, Extension } from '../../../js/common/extension.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Api } from '../../../js/common/api/api.js';
 import { SendBtnTexts } from './composer-types.js';
 import { KeyInfo, Pwd } from '../../../js/common/core/pgp.js';
 import { Settings } from '../../../js/common/settings.js';
+import { BrowserEventErrHandler, Ui } from '../../../js/common/browser/ui.js';
+import { BrowserExtension } from '../../../js/common/browser/browser-extension.js';
 
 export class ComposerUserError extends Error { }
 export class ComposerNotReadyError extends ComposerUserError { }
@@ -81,7 +82,7 @@ export class ComposerErrs extends ComposerComponent {
       } else {
         if (await Ui.modal.confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
           const page = '/chrome/settings/modules/help.htm';
-          const pageUrlParams = { bugReport: Extension.prepareBugReport(`composer: send: bad request (errMsg: ${errMsg})`, {}, e) };
+          const pageUrlParams = { bugReport: BrowserExtension.prepareBugReport(`composer: send: bad request (errMsg: ${errMsg})`, {}, e) };
           BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page, pageUrlParams });
         }
       }
