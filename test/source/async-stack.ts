@@ -36,7 +36,7 @@
   }
 
   class Class {
-    static staticConstAttr(type: Type) {
+    static staticConstAttr = (type: Type) => {
       func(type);
     }
     static staticFunc(type: Type) {
@@ -63,7 +63,7 @@
   };
 
   class ClassAsync {
-    static async staticConstAttrAsync(type: Type) {
+    static staticConstAttrAsync = async (type: Type) => {
       await wait();
       await obj.paramFunc(type);
       await wait();
