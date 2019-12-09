@@ -476,6 +476,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       expect(decryptedFile.content!.toUtfStr()).to.equal(`small text file\nnot much here\nthis worked\n`);
     }));
 
+    ava.default('compose[global:compatibility] - loading drafts - test tags in draft', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'draftId=r304765387393056602';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
+      expect(await composePage.read('@input-body')).to.include('hello<draft>here');
+    }));
+
     ava.todo('compose[global:compose] - reply - new gmail threadId fmt');
 
     ava.todo('compose[global:compose] - reply - skip click prompt');
