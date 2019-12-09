@@ -58,11 +58,11 @@ export const mockBackendEndpoints: HandlersDefinition = {
     const parsed = throwIfNotPostWithAuth(body, req);
     throw new Error(`${req.url} mock not implemented`); // will have to give fake token
   },
-  '/help/error': async ({ body }, req) => {
+  '/api/help/error': async ({ body }, req) => {
     console.error(`/help/error`, body); // todo - fail tests if received any error
     throw new Error(`${req.url} mock not implemented`);
   },
-  '/help/feedback': fwdToRealBackend,
+  '/api/help/feedback': fwdToRealBackend,
   '/api/message/presign_files': fwdToRealBackend,
   '/api/message/confirm_files': fwdToRealBackend,
   '/api/message/upload': fwdToRealBackend,
