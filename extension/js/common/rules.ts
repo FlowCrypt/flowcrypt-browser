@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Dict } from './core/common.js';
+import { Dict, Str } from './core/common.js';
 import { Buf } from './core/buf.js';
 import { Store } from './platform/store.js';
 
@@ -15,6 +15,9 @@ export type DomainRules = {
 export class Rules {
 
   public static async newInstance(acctEmail: string): Promise<Rules> {
+    if (!Str.parseEmail(acctEmail).email) {
+      throw new Error(`Not a valid email:${acctEmail}`);
+    }
     const storage = await Store.getAcct(acctEmail, ['rules']);
     if (storage.rules) {
       return new Rules(storage.rules);
@@ -26,7 +29,6 @@ export class Rules {
   }
 
   protected constructor(private domainRules: DomainRules) { }
-
 
   public static isPublicEmailProviderDomain(emailAddr: string) {
     return ['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(emailAddr.split('@')[1] || 'NONE');
