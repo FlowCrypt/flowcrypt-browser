@@ -9,7 +9,7 @@ export type WebMailName = 'gmail' | 'outlook' | 'settings';
 export class Env {
 
   public static runtimeId = (orig = false) => {
-    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
+    if (chrome?.runtime?.id) {
       if (orig === true) {
         return chrome.runtime.id;
       } else {

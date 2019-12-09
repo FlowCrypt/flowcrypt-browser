@@ -60,7 +60,7 @@ export class ComposerQuote extends ComposerComponent {
       this.footerHTML = this.createFooterHTML(footer);
       safePreviousMsg += this.footerHTML;
     }
-    if (this.messageToReplyOrForward && this.messageToReplyOrForward.text) {
+    if (this.messageToReplyOrForward?.text) {
       const sentDate = new Date(String(this.messageToReplyOrForward.headers.date));
       if (this.messageToReplyOrForward.headers.from && this.messageToReplyOrForward.headers.date) {
         safePreviousMsg += `<br><br>${this.generateHtmlPreviousMsgQuote(this.messageToReplyOrForward.text, sentDate, this.messageToReplyOrForward.headers.from)}`;
@@ -164,7 +164,7 @@ export class ComposerQuote extends ComposerComponent {
         } else if (block.type === 'plainHtml') {
           decryptedAndFormatedContent.push(Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n')));
         } else if (['encryptedAtt', 'decryptedAtt', 'plainAtt'].includes(block.type)) {
-          if (block.attMeta && block.attMeta.data) {
+          if (block.attMeta?.data) {
             let attMeta: { content: Buf, filename?: string } | undefined;
             if (block.type === 'encryptedAtt') {
               const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.view.acctEmail), encryptedData: block.attMeta.data });

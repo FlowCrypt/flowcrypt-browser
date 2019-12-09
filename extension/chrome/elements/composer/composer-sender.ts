@@ -22,7 +22,7 @@ export class ComposerSender extends ComposerComponent {
     if (this.composer.S.now('input_from').length) {
       return String(this.composer.S.now('input_from').val());
     }
-    if (this.view.replyParams && this.view.replyParams.from) {
+    if (this.view.replyParams?.from) {
       return this.view.replyParams.from;
     }
     return this.view.acctEmail;
@@ -87,10 +87,10 @@ export class ComposerSender extends ComposerComponent {
     }
   }
 
-  public async getFooter() {
+  public async getFooter(): Promise<string | undefined> {
     const addresses = await this.composer.storage.getAddresses();
     const sender = this.getSender();
-    return addresses && addresses[sender] && addresses[sender].footer || undefined;
+    return addresses[sender]?.footer || undefined;
   }
 
 }

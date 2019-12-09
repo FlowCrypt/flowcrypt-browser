@@ -76,7 +76,7 @@ openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
   await BgHandlers.updateUninstallUrl({}, {});
   injectFcIntoWebmail();
 
-  if (storage.errors && storage.errors.length && storage.errors.length > 100) { // todo - ideally we should be trimming it to show the last 100
+  if (storage.errors?.length && storage.errors.length > 100) { // todo - ideally we should be trimming it to show the last 100
     await Store.removeGlobal(['errors']);
   }
 

@@ -46,7 +46,7 @@ export class Google {
     const headers = { 'Authorization': await GoogleAuth.googleApiAuthHeader(acctEmail) };
     const contacts = await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail,
       { xhr, url, method, data, headers, contentType, crossDomain: true, async: true }) as GmailRes.GoogleContacts;
-    return contacts.feed.entry && contacts.feed.entry
+    return contacts.feed.entry && contacts.feed.entry // todo - causes weird function signature, could be improved to return empty arr
       .filter(entry => !!(entry.gd$email || []).find(email => email.primary === "true")) // find all entries that have primary email
       .map(e => ({
         email: (e.gd$email || []).find(e => e.primary === "true")!.address,
