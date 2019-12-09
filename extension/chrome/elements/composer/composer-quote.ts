@@ -67,7 +67,7 @@ export class ComposerQuote extends ComposerComponent {
       }
       if (method === 'forward' && this.messageToReplyOrForward.decryptedFiles.length) {
         for (const file of this.messageToReplyOrForward.decryptedFiles) {
-          await this.composer.atts.attach.addFile(file);
+          this.composer.atts.attach.addFile(file);
         }
       }
     }

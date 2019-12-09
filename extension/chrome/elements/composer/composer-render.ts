@@ -147,7 +147,7 @@ export class ComposerRender extends ComposerComponent {
       <br><br>Thank you</div>`);
     const [primaryKi] = await Store.keysGet(this.view.acctEmail, ['primary']);
     const att = Att.keyinfoAsPubkeyAtt(primaryKi);
-    await this.composer.atts.attach.addFile(new File([att.getData()], att.name));
+    this.composer.atts.attach.addFile(new File([att.getData()], att.name));
     this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
     this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-sign-sending-option'), 'sign', false); // don't sign
   }

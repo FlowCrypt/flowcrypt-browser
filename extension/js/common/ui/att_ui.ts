@@ -40,8 +40,8 @@ export class AttUI {
           extraDropzones: $('#input_text'),
         },
         callbacks: {
-          onSubmit: this.processNewAtt,
-          onCancel: (uploadFileId: string) => Catch.try(() => this.cancelAtt(uploadFileId))(),
+          onSubmit: (uploadFileId: string) => this.processNewAtt(uploadFileId).catch(Catch.reportErr),
+          onCancel: (uploadFileId: string) => this.cancelAtt(uploadFileId),
         },
       };
       this.uploader = new qq.FineUploader(config); // tslint:disable-line:no-unsafe-any
@@ -101,7 +101,7 @@ export class AttUI {
     }
   }
 
-  private async processNewAtt(uploadFileId: string, name: string) {
+  private async processNewAtt(uploadFileId: string) {
     const limits = await this.getLimits();
     if (limits.count && Object.keys(this.attachedFiles).length >= limits.count) {
       await Ui.modal.warning('Amount of attached files is limited to ' + limits.count);
@@ -132,7 +132,8 @@ export class AttUI {
     }
   }
 
-  public async addFile(file: File) {
+  public addFile(file: File) {
+    console.log('addFile uploading file:', file);
     this.uploader.addFiles([file]); // tslint:disable-line: no-unsafe-any
   }
 
