@@ -1,11 +1,12 @@
 import { TestUrls } from './../../browser/test_urls';
 import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
-import { SettingsPageRecipe, InboxPageRecipe } from '../page_recipe';
 import * as ava from 'ava';
 import { Util, Config } from '../../util';
 import { expect } from 'chai';
 import { BrowserRecipe } from '../browser_recipe';
 import { TestVariant } from '../../util';
+import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
+import { InboxPageRecipe } from '../page_recipe/inbox-page-recipe';
 
 // tslint:disable:no-blank-lines-func
 

@@ -3,7 +3,6 @@
 'use strict';
 
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Ui } from '../../../js/common/browser.js';
 import { RecipientStatuses, SendBtnTexts } from './composer-types.js';
 import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
 import { Store } from '../../../js/common/platform/store.js';
@@ -13,7 +12,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
   private keyImportUI = new KeyImportUi({});
 
   public async initActions() {
-    this.composer.S.cached('input_password').keyup(Ui.event.prevent('spree', () => this.showHideContainerAndColorSendBtn()));
+    this.composer.S.cached('input_password').keyup(this.view.setHandlerPrevent('spree', () => this.showHideContainerAndColorSendBtn()));
     this.composer.S.cached('input_password').focus(() => this.showHideContainerAndColorSendBtn());
     this.composer.S.cached('input_password').blur(() => this.showHideContainerAndColorSendBtn());
     const store = await Store.getAcct(this.view.acctEmail, ['hide_message_password']);
@@ -24,23 +23,23 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
 
   private rmPwdStrengthValidationElements: (() => void) | undefined;
 
-  public showHideContainerAndColorSendBtn = () => {
+  public showHideContainerAndColorSendBtn() {
     this.composer.sendBtn.resetSendBtn();
     this.composer.S.cached('send_btn_note').text('');
     this.composer.S.cached('send_btn').removeAttr('title');
     const wasPreviouslyVisible = this.composer.S.cached('password_or_pubkey').css('display') === 'table-row';
     if (!this.composer.recipients.getRecipients().length || !this.composer.sendBtn.popover.choices.encrypt) {
       this.hideMsgPwdUi(); // Hide 'Add Pasword' prompt if there are no recipients or message is not encrypted
-      this.composer.sendBtn.setBtnColor('green');
+      this.composer.sendBtn.enableBtn();
     } else if (this.composer.recipients.getRecipients().find(r => r.status === RecipientStatuses.NO_PGP)) {
       this.showMsgPwdUiAndColorBtn();
     } else if (this.composer.recipients.getRecipients().find(r => [RecipientStatuses.FAILED, RecipientStatuses.WRONG].includes(r.status))) {
       this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_WRONG_ENTRY);
       this.composer.S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
-      this.composer.sendBtn.setBtnColor('gray');
+      this.composer.sendBtn.disableBtn();
     } else {
       this.hideMsgPwdUi();
-      this.composer.sendBtn.setBtnColor('green');
+      this.composer.sendBtn.enableBtn();
     }
     if (this.view.isReplyBox) {
       if (!wasPreviouslyVisible && this.composer.S.cached('password_or_pubkey').css('display') === 'table-row') {
@@ -52,7 +51,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
     this.composer.size.setInputTextHeightManuallyIfNeeded();
   }
 
-  private showMsgPwdUiAndColorBtn = () => {
+  private showMsgPwdUiAndColorBtn() {
     this.composer.S.cached('password_or_pubkey').css('display', 'table-row');
     this.composer.S.cached('password_or_pubkey').css('display', 'table-row');
     if (this.composer.S.cached('input_password').val() || this.composer.S.cached('input_password').is(':focus')) {
@@ -74,7 +73,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
     }
   }
 
-  private hideMsgPwdUi = () => {
+  private hideMsgPwdUi() {
     this.composer.S.cached('password_or_pubkey').css('display', 'none');
     this.composer.S.cached('input_password').val('');
     this.composer.S.cached('add_intro').css('display', 'none');

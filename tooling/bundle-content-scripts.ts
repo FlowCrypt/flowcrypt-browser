@@ -36,15 +36,20 @@ buildContentScript(([] as string[]).concat(
   getFilesInDir(`${sourceDir}/common/api`, /\.js$/, false),
   getFilesInDir(`${sourceDir}/common/api/email_provider`, /\.js$/, false),
   getFilesInDir(`${sourceDir}/common/api/email_provider/gmail`, /\.js$/, false),
+  getFilesInDir(`${sourceDir}/common/browser`, /\.js$/, false),
   getFilesInDir(`${sourceDir}/common`, /\.js$/, false),
   getFilesInDir(`${sourceDir}/content_scripts/webmail`, /\.js$/),
 ), 'webmail_bundle.js');
 
 // checkout
-buildContentScript(getFilesInDir(`${sourceDir}/common/platform`, /\.js$/, false).concat([
-  `${sourceDir}/common/assert.js`,
-  `${sourceDir}/common/core/common.js`,
-  `${sourceDir}/common/browser.js`,
-  `${sourceDir}/common/extension.js`,
-  `${sourceDir}/content_scripts/checkout/stripe.js`,
-]), 'stripe_bundle.js');
+buildContentScript(([] as string[]).concat(
+  getFilesInDir(`${sourceDir}/common/platform`, /\.js$/, false),
+  [
+    `${sourceDir}/common/assert.js`,
+    `${sourceDir}/common/core/common.js`,
+  ],
+  getFilesInDir(`${sourceDir}/common/browser`, /\.js$/, false),
+  [
+    `${sourceDir}/content_scripts/checkout/stripe.js`,
+  ],
+), 'stripe_bundle.js');

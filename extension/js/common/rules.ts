@@ -27,6 +27,7 @@ export class Rules {
 
   protected constructor(private domainRules: DomainRules) { }
 
+
   public static isPublicEmailProviderDomain(emailAddr: string) {
     return ['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(emailAddr.split('@')[1] || 'NONE');
   }

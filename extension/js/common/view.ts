@@ -5,7 +5,7 @@
 
 import { Api } from './api/api.js';
 import { Xss } from './platform/xss.js';
-import { Ui, BrowserEventErrHandler, PreventableEventName } from './browser.js';
+import { Ui, BrowserEventErrHandler, PreventableEventName } from './browser/ui.js';
 
 export abstract class View {
 

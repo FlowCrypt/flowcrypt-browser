@@ -3,9 +3,8 @@
 'use strict';
 
 import { ComposerComponent } from './composer-abstract-component.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { Ui } from '../../../js/common/browser.js';
 
 export class ComposerSize extends ComposerComponent {
 
@@ -24,8 +23,8 @@ export class ComposerSize extends ComposerComponent {
       }
     });
     if (!this.view.isReplyBox) {
-      $('.minimize_new_message').click(Ui.event.handle(this.minimizeComposerWindow));
-      $('.popout').click(Ui.event.handle(async () => {
+      $('.minimize_new_message').click(this.view.setHandler(() => this.minimizeComposerWindow()));
+      $('.popout').click(this.view.setHandler(async () => {
         this.composer.S.cached('body').hide(); // Need to hide because it seems laggy on some devices
         await this.toggleFullScreen();
         this.composer.S.cached('body').show();
@@ -37,12 +36,12 @@ export class ComposerSize extends ComposerComponent {
     Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
       // we use veryslowspree for reply box because hand-resizing the main window will cause too many events
       // we use spree (faster) for new messages because rendering of window buttons on top right depend on it, else visible lag shows
-      $(window).resize(Ui.event.prevent(this.view.isReplyBox ? 'veryslowspree' : 'spree', () => this.windowResized().catch(Catch.reportErr)));
-      this.composer.S.cached('input_text').keyup(Ui.event.prevent('slowspree', () => this.windowResized().catch(Catch.reportErr)));
+      $(window).resize(this.view.setHandlerPrevent(this.view.isReplyBox ? 'veryslowspree' : 'spree', () => this.windowResized().catch(Catch.reportErr)));
+      this.composer.S.cached('input_text').keyup(this.view.setHandlerPrevent('slowspree', () => this.windowResized().catch(Catch.reportErr)));
     }, 1000);
   }
 
-  private windowResized = async () => {
+  private async windowResized() {
     this.resizeComposeBox();
     this.setInputTextHeightManuallyIfNeeded(true);
     if (this.composer.S.cached('recipients_placeholder').is(':visible')) {
@@ -50,7 +49,7 @@ export class ComposerSize extends ComposerComponent {
     }
   }
 
-  resizeComposeBox = (addExtra: number = 0) => {
+  resizeComposeBox(addExtra: number = 0) {
     if (this.view.isReplyBox) {
       this.composer.S.cached('input_text').css('max-width', (this.composer.S.cached('body').width()! - 20) + 'px'); // body should always be present
       let minHeight = 0;
@@ -74,7 +73,7 @@ export class ComposerSize extends ComposerComponent {
     }
   }
 
-  private minimizeComposerWindow = () => {
+  private minimizeComposerWindow() {
     if (this.composeWindowIsMaximized) {
       this.addOrRemoveFullScreenStyles(this.composeWindowIsMinimized);
     }
@@ -85,7 +84,7 @@ export class ComposerSize extends ComposerComponent {
     this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
   }
 
-  private toggleFullScreen = async () => {
+  private async toggleFullScreen() {
     if (this.composeWindowIsMinimized) {
       this.minimizeComposerWindow();
     }
@@ -101,7 +100,7 @@ export class ComposerSize extends ComposerComponent {
     this.composeWindowIsMaximized = !this.composeWindowIsMaximized;
   }
 
-  private addOrRemoveFullScreenStyles = (add: boolean) => {
+  private addOrRemoveFullScreenStyles(add: boolean) {
     if (add) {
       this.composer.S.cached('body').addClass(this.FULL_WINDOW_CLASS);
       BrowserMsg.send.addClass(this.view.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
@@ -120,7 +119,7 @@ export class ComposerSize extends ComposerComponent {
 *
 * @param updateRefBodyHeight - set to true to take a new snapshot of intended html body height
 */
-  public setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight: boolean = false) => {
+  public setInputTextHeightManuallyIfNeeded(updateRefBodyHeight: boolean = false) {
     if (!this.view.isReplyBox && Catch.browser().name === 'firefox') {
       this.composer.S.cached('input_text').css('height', '0');
       let cellHeightExceptText = 0;
@@ -137,7 +136,7 @@ export class ComposerSize extends ComposerComponent {
     }
   }
 
-  public resizeInput = (inputs?: JQuery<HTMLElement>) => {
+  public resizeInput(inputs?: JQuery<HTMLElement>) {
     if (!inputs) {
       inputs = this.composer.S.cached('recipients_inputs'); // Resize All Inputs
     }

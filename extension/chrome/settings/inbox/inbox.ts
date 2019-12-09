@@ -5,12 +5,12 @@
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Str, Dict, Url, UrlParams } from '../../../js/common/core/common.js';
-import { Ui } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Notifications } from '../../../js/common/notifications.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
-import { BrowserMsg, Bm } from '../../../js/common/extension.js';
+import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Google } from '../../../js/common/api/google.js';
@@ -22,6 +22,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { WebmailCommon } from "../../../js/common/webmail.js";
 import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
 import { GmailRes, GmailParser } from '../../../js/common/api/email_provider/gmail/gmail-parser.js';
+import { BrowserMsgCommonHandlers } from '../../../js/common/browser/browser-msg-common-handlers.js';
 
 Catch.try(async () => {
 
@@ -136,13 +137,7 @@ Catch.try(async () => {
       appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
     }
   });
-  BrowserMsg.addListener('reply_pubkey_mismatch', async () => {
-    const replyIframe = $('iframe.reply_message').get(0) as HTMLIFrameElement | undefined;
-    if (replyIframe) {
-      const bareSrc = Url.removeParamsFromUrl(replyIframe.src, ['ignoreDraft', 'disableDraftSaving', 'draftId', 'replyPubkeyMismatch', 'skipClickPrompt']);
-      replyIframe.src = Url.create(bareSrc, { replyPubkeyMismatch: true, ignoreDraft: true, disableDraftSaving: true, draftId: '', skipClickPrompt: true });
-    }
-  });
+  BrowserMsg.addListener('reply_pubkey_mismatch', BrowserMsgCommonHandlers.replyPubkeyMismatch);
   BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
     notifications.showAuthPopupNeeded(acctEmail);
   });
@@ -246,7 +241,7 @@ Catch.try(async () => {
       threadItem.find('.loading').text('');
       threadItem.find('.date').text(formatDate(lastMsg.internalDate));
       threadItem.addClass('loaded').click(Ui.event.handle(() => renderThread(thread.id, thread)));
-      if (lastMsg.labelIds && lastMsg.labelIds.includes(LABEL.UNREAD)) {
+      if (lastMsg.labelIds?.includes(LABEL.UNREAD)) {
         threadItem.css({ 'font-weight': 'bold', 'background': 'white' });
       }
       if (thread.messages.length > 1) {

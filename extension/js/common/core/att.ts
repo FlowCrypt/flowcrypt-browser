@@ -54,14 +54,14 @@ export class Att {
 
   public hasData = () => this.bytes instanceof Uint8Array;
 
-  public setData = (bytes: Uint8Array) => {
+  public setData(bytes: Uint8Array) {
     if (this.hasData()) {
       throw new Error('Att bytes already set');
     }
     this.bytes = bytes;
   }
 
-  public getData = (): Buf => {
+  public getData(): Buf {
     if (this.bytes instanceof Buf) {
       return this.bytes;
     }
@@ -71,7 +71,7 @@ export class Att {
     throw new Error('Att has no data set');
   }
 
-  public treatAs = (): Att$treatAs => {
+  public treatAs(): Att$treatAs {
     if (this.treatAsValue) { // pre-set
       return this.treatAsValue;
     } else if (['PGPexch.htm.pgp', 'PGPMIME version identification', 'Version.txt', 'PGPMIME Versions Identification'].includes(this.name)) {

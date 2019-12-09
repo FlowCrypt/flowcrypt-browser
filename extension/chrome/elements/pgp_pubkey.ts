@@ -5,10 +5,10 @@
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Str } from '../../js/common/core/common.js';
-import { Ui } from '../../js/common/browser.js';
+import { Ui } from '../../js/common/browser/ui.js';
 import { mnemonic } from '../../js/common/core/mnemonic.js';
 import { Pgp, Contact } from '../../js/common/core/pgp.js';
-import { BrowserMsg } from '../../js/common/extension.js';
+import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Url } from '../../js/common/core/common.js';
@@ -45,7 +45,7 @@ Catch.try(async () => {
     } else {
       const [contact] = await Store.dbContactGet(undefined, [String($('.input_email').val())]);
       $('.action_add_contact')
-        .text(contact && contact.has_pgp ? 'update key' : `import ${isExpired ? 'expired ' : ''}key`)
+        .text(contact?.has_pgp ? 'update key' : `import ${isExpired ? 'expired ' : ''}key`)
         .css('background-color', isExpired ? '#989898' : '');
     }
   };

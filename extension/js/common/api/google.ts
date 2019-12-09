@@ -15,7 +15,7 @@ export class Google {
 
   public static webmailUrl = (acctEmail: string) => `https://mail.google.com/mail/u/${acctEmail}`;
 
-  public static gmailCall = async (acctEmail: string, method: ReqMethod, path: string, params: Dict<Serializable> | string | undefined, progress?: ProgressCbs, contentType?: string) => {
+  public static async gmailCall(acctEmail: string, method: ReqMethod, path: string, params: Dict<Serializable> | string | undefined, progress?: ProgressCbs, contentType?: string) {
     progress = progress || {};
     let data, url;
     if (typeof progress.upload === 'function') {
@@ -36,7 +36,7 @@ export class Google {
     return await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request);
   }
 
-  public static contactsGet = async (acctEmail: string, query?: string, progress?: ProgressCbs, max: number = 10, start: number = 0) => {
+  public static async contactsGet(acctEmail: string, query?: string, progress?: ProgressCbs, max: number = 10, start: number = 0) {
     progress = progress || {};
     const method = 'GET';
     const contentType = 'application/json; charset=UTF-8';
@@ -46,7 +46,7 @@ export class Google {
     const headers = { 'Authorization': await GoogleAuth.googleApiAuthHeader(acctEmail) };
     const contacts = await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail,
       { xhr, url, method, data, headers, contentType, crossDomain: true, async: true }) as GmailRes.GoogleContacts;
-    return contacts.feed.entry && contacts.feed.entry
+    return contacts.feed.entry && contacts.feed.entry // todo - causes weird function signature, could be improved to return empty arr
       .filter(entry => !!(entry.gd$email || []).find(email => email.primary === "true")) // find all entries that have primary email
       .map(e => ({
         email: (e.gd$email || []).find(e => e.primary === "true")!.address,

@@ -17,7 +17,7 @@ export class FlowCryptApi {
 
   private static COOKIE_CACHE: { [acct: string]: Cookie[] } = {};
 
-  private static call = async (url: string, values: { [k: string]: any }) => {
+  private static async call(url: string, values: { [k: string]: any }) {
     const r = await request.post({ url, json: values, headers: { 'api-version': 3 } });
     if (r.body.error) {
       throw new ApiErrResponse(`FlowCryptApi ${url} returned an error: ${r.body.error.message}`, r);
@@ -25,7 +25,7 @@ export class FlowCryptApi {
     return r;
   }
 
-  public static hookCiAcctDelete = async (email: string) => {
+  public static async hookCiAcctDelete(email: string) {
     try {
       await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_account_delete', { ci_admin_token, email });
     } catch (e) {
@@ -35,21 +35,21 @@ export class FlowCryptApi {
     }
   }
 
-  public static hookCiSubscriptionExpire = async (email: string) => {
+  public static async hookCiSubscriptionExpire(email: string) {
     await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_subscription_expire', { ci_admin_token, email });
   }
 
-  public static hookCiSubscriptionReset = async (email: string) => {
+  public static async hookCiSubscriptionReset(email: string) {
     await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_subscription_reset', { ci_admin_token, email });
   }
 
-  public static hookCiDebugEmail = async (debug_title: string, debug_html_content: string) => { // tslint:disable-line:variable-name
+  public static async hookCiDebugEmail(debug_title: string, debug_html_content: string) { // tslint:disable-line:variable-name
     console.info(`hookCiDebugEmail - calling with length: ${debug_html_content.length}`);
     const r = await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_debug_email', { ci_admin_token, debug_title, debug_html_content });
     console.info('hookCiDebugEmail-response', r.body, r.statusCode);
   }
 
-  public static hookCiCookiesGet = async (acct: string): Promise<Cookie[] | undefined> => {
+  public static async hookCiCookiesGet(acct: string): Promise<Cookie[] | undefined> {
     if (!FlowCryptApi.COOKIE_CACHE[acct]) {
       const { body: { cookies } } = await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_cookies_get', { ci_admin_token, acct });
       FlowCryptApi.COOKIE_CACHE[acct] = cookies ? JSON.parse(cookies) : undefined;
@@ -57,12 +57,12 @@ export class FlowCryptApi {
     return FlowCryptApi.COOKIE_CACHE[acct];
   }
 
-  public static hookCiCookiesSet = async (acct: string, cookies: Cookie[]) => {
+  public static async hookCiCookiesSet(acct: string, cookies: Cookie[]) {
     FlowCryptApi.COOKIE_CACHE[acct] = cookies;
     await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_cookies_set', { ci_admin_token, acct, cookies: JSON.stringify(cookies) });
   }
 
-  public static ciInitialize = async (acct: string, pwd: string, backup: string) => {
+  public static async ciInitialize(acct: string, pwd: string, backup: string) {
     const r = await FlowCryptApi.call('https://cron.flowcrypt.com/ci_initialize', { ci_admin_token, acct, pwd, backup });
     if (!r.body.success) {
       if (r.body.errHtml) {

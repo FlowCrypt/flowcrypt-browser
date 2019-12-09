@@ -2,12 +2,13 @@
 
 'use strict';
 
-import { ContentScriptWindow } from './extension.js';
-import { Ui, SelCache, WebMailName } from './browser.js';
 import { XssSafeFactory, WebmailVariantString } from './xss_safe_factory.js';
 import { Catch } from './platform/catch.js';
 import { Store } from './platform/store.js';
 import { Dict } from './core/common.js';
+import { WebMailName } from './browser/env.js';
+import { SelCache, Ui } from './browser/ui.js';
+import { ContentScriptWindow } from './browser/browser-window.js';
 
 type Host = {
   gmail: string,
@@ -49,20 +50,20 @@ export class Injector {
     });
   }
 
-  meta = () => {
+  meta() {
     this.S.cached('body').addClass(`cryptup_${this.webmailName} cryptup_${this.webmailName}_${this.webmailVariant} ${Catch.browser().name}`)
       .append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer());  // xss-safe-factory
   }
 
-  openComposeWin = () => {
+  openComposeWin() {
     if (this.S.now('compose_window').length === 0) {
       this.S.cached('body').append(this.factory.embeddedCompose()); // xss-safe-factory
     }
   }
 
-  btns = () => {
+  btns() {
     if (this.S.now('compose_button_container').length === 0) { // don't inject too early
-      (window as unknown as ContentScriptWindow).TrySetDestroyableTimeout(this.btns, 300);
+      (window as unknown as ContentScriptWindow).TrySetDestroyableTimeout(() => this.btns(), 300);
     } else {
       if (this.S.now('compose_button').length === 0) {
         const container = this.S.now('compose_button_container').prepend(this.factory.btnCompose(this.webmailName)); // xss-safe-factory
@@ -71,7 +72,7 @@ export class Injector {
     }
   }
 
-  insertEndSessionBtn = async (acctEmail: string) => {
+  async insertEndSessionBtn(acctEmail: string) {
     if ($('.action_finish_session').length) {
       return;
     }

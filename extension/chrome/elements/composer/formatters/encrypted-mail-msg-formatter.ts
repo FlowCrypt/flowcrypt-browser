@@ -12,7 +12,7 @@ import { Buf } from '../../../../js/common/core/buf.js';
 import { Backend, BackendRes, AwsS3UploadItem, FcUuidAuth } from '../../../../js/common/api/backend.js';
 import { Store, Subscription } from '../../../../js/common/platform/store.js';
 import { Value, Str } from '../../../../js/common/core/common.js';
-import { Ui } from '../../../../js/common/browser.js';
+import { Ui } from '../../../../js/common/browser/ui.js';
 import { Api } from '../../../../js/common/api/api.js';
 import { Att } from '../../../../js/common/core/att.js';
 import { Xss } from '../../../../js/common/platform/xss.js';

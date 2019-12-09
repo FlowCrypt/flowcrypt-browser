@@ -1,7 +1,9 @@
 import { Pgp } from './../../core/pgp';
 import { TestUrls } from './../../browser/test_urls';
 import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
-import { ComposePageRecipe, SettingsPageRecipe, PageRecipe, OauthPageRecipe } from '../page_recipe';
+import { OauthPageRecipe } from '../page_recipe/oauth-page-recipe';
+import { ComposePageRecipe } from '../page_recipe/compose-page-recipe';
+import { PageRecipe } from '../page_recipe/abstract-page-recipe';
 import { BrowserRecipe } from '../browser_recipe';
 import { Controllable, BrowserHandle, ControllablePage } from '../../browser';
 import * as ava from 'ava';
@@ -13,6 +15,7 @@ import { Dict } from '../../core/common';
 import { Data } from '../../mock/data';
 import * as request from 'fc-node-requests';
 import { PgpMsg } from '../../core/pgp';
+import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
 // tslint:disable:no-blank-lines-func
 
 export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser: TestWithNewBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
@@ -388,6 +391,15 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Plain Message', { encrypt: false, sign: false });
       await ComposePageRecipe.sendAndClose(composePage);
+    }));
+
+    ava.default('compose[global:compose] - standalone - send btn should be disabled while encrypting/sending', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, '');
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      expect(await composePage.isDisabled('#send_btn')).to.be.true;
+      await composePage.waitAndRespondToModal('confirm', 'cancel', 'Send without a subject?');
+      expect(await composePage.isDisabled('#send_btn')).to.be.false;
     }));
 
     ava.default('compose[global:compose] - standalone - load contacts through API', testWithNewBrowser(async (t, browser) => {

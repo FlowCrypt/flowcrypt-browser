@@ -6,8 +6,8 @@ import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
 import { Store, KeyBackupMethod, EmailProvider } from '../../../js/common/platform/store.js';
 import { Value, Url } from '../../../js/common/core/common.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Ui, Browser } from '../../../js/common/browser.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
+import { Browser } from '../../../js/common/browser/browser.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Settings } from '../../../js/common/settings.js';
@@ -22,6 +22,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { View } from '../../../js/common/view.js';
 import { KeyImportUi } from './../../../js/common/ui/key_import_ui.js';
 import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -271,7 +272,7 @@ View.run(class BackupView extends View {
         return;
       }
       this.displayBlock('step_0_status');
-      if (keys && keys.length) {
+      if (keys?.length) {
         $('.status_summary').text('Backups found: ' + keys.length + '. Your account is backed up correctly in your email inbox.');
         Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_manual">SEE MORE BACKUP OPTIONS</div>');
       } else if (storage.key_backup_method) {

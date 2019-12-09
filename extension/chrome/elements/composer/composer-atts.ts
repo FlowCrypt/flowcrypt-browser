@@ -3,8 +3,8 @@
 'use strict';
 
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Ui } from '../../../js/common/browser.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { AttUI, AttLimits } from '../../../js/common/ui/att_ui.js';
 import { Composer } from './composer.js';
 import { Rules } from '../../../js/common/rules.js';
@@ -33,7 +33,7 @@ export class ComposerAtts extends ComposerComponent {
     });
   }
 
-  private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
+  private async getMaxAttSizeAndOversizeNotice(): Promise<AttLimits> {
     const subscription = await Store.subscription(this.view.acctEmail);
     if (!Rules.isPublicEmailProviderDomain(this.composer.sender.getSender()) && !subscription.active) {
       return {

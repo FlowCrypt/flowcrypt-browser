@@ -3,14 +3,15 @@
 'use strict';
 
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Ui, BrowserEventErrHandler } from '../../../js/common/browser.js';
-import { BrowserMsg, Extension } from '../../../js/common/extension.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Api } from '../../../js/common/api/api.js';
 import { SendBtnTexts } from './composer-types.js';
 import { KeyInfo, Pwd } from '../../../js/common/core/pgp.js';
 import { Settings } from '../../../js/common/settings.js';
+import { BrowserEventErrHandler, Ui } from '../../../js/common/browser/ui.js';
+import { BrowserExtension } from '../../../js/common/browser/browser-extension.js';
 
 export class ComposerUserError extends Error { }
 export class ComposerNotReadyError extends ComposerUserError { }
@@ -27,7 +28,7 @@ export class ComposerErrs extends ComposerComponent {
     // none
   }
 
-  public handlers = (couldNotDoWhat: string): BrowserEventErrHandler => {
+  public handlers(couldNotDoWhat: string): BrowserEventErrHandler {
     return {
       network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
       authPopup: async () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail }),
@@ -50,7 +51,7 @@ export class ComposerErrs extends ComposerComponent {
     };
   }
 
-  public debugFocusEvents = (...selNames: string[]) => {
+  public debugFocusEvents(...selNames: string[]) {
     for (const selName of selNames) {
       this.composer.S.cached(selName)
         .focusin(e => this.debug(`** ${selName} receiving focus from(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`))
@@ -58,13 +59,13 @@ export class ComposerErrs extends ComposerComponent {
     }
   }
 
-  public debug = (msg: string) => {
+  public debug(msg: string) {
     if (this.view.debug) {
       console.log(`[${this.debugId}] ${msg}`);
     }
   }
 
-  public handleSendErr = async (e: any) => {
+  public async handleSendErr(e: any) {
     if (Api.err.isNetErr(e)) {
       await Ui.modal.error('Could not send message due to network error. Please check your internet connection and try again.');
     } else if (Api.err.isAuthPopupNeeded(e)) {
@@ -81,7 +82,7 @@ export class ComposerErrs extends ComposerComponent {
       } else {
         if (await Ui.modal.confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
           const page = '/chrome/settings/modules/help.htm';
-          const pageUrlParams = { bugReport: Extension.prepareBugReport(`composer: send: bad request (errMsg: ${errMsg})`, {}, e) };
+          const pageUrlParams = { bugReport: BrowserExtension.prepareBugReport(`composer: send: bad request (errMsg: ${errMsg})`, {}, e) };
           BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page, pageUrlParams });
         }
       }
@@ -98,7 +99,7 @@ export class ComposerErrs extends ComposerComponent {
     }
   }
 
-  public throwIfFormNotReady = (): void => {
+  public throwIfFormNotReady(): void {
     if (this.composer.S.cached('icon_show_prev_msg').hasClass('progress')) {
       throw new ComposerNotReadyError('Retrieving previous message, please wait.');
     }
@@ -121,14 +122,14 @@ export class ComposerErrs extends ComposerComponent {
     throw new ComposerNotReadyError('Still working, please wait.');
   }
 
-  public throwIfFormValsInvalid = async ({ subject, plaintext }: { subject: string, plaintext: string }) => {
+  public async throwIfFormValsInvalid({ subject, plaintext }: { subject: string, plaintext: string }) {
     if (!((plaintext !== '' || await Ui.modal.confirm('Send empty message?')) && (subject !== '' || await Ui.modal.confirm('Send without a subject?')))) {
       throw new ComposerResetBtnTrigger();
     }
   }
 
-  public throwIfEncryptionPasswordInvalid = async (senderKi: KeyInfo, { subject, pwd }: { subject: string, pwd?: Pwd }) => {
-    if (pwd && pwd.answer) {
+  public async throwIfEncryptionPasswordInvalid(senderKi: KeyInfo, { subject, pwd }: { subject: string, pwd?: Pwd }) {
+    if (pwd?.answer) {
       const pp = await this.composer.storage.passphraseGet(senderKi);
       if (pp && pwd.answer.toLowerCase() === pp.toLowerCase()) {
         throw new ComposerUserError('Please do not use your private key pass phrase as a password for this message.\n\n' +

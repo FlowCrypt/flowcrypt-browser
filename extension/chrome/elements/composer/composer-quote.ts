@@ -5,14 +5,14 @@
 import { MessageToReplyOrForward } from './composer-types.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Str } from '../../../js/common/core/common.js';
-import { Ui } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Api, ProgressCb } from '../../../js/common/api/api.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposerComponent } from './composer-abstract-component.js';
 import { Mime, MsgBlock } from '../../../js/common/core/mime.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { FormatError, PgpMsg } from '../../../js/common/core/pgp.js';
-import { BrowserMsg, Bm } from '../../../js/common/extension.js';
+import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
 import { Store } from '../../../js/common/platform/store.js';
 
 export class ComposerQuote extends ComposerComponent {
@@ -29,7 +29,7 @@ export class ComposerQuote extends ComposerComponent {
     // No need
   }
 
-  public addTripleDotQuoteExpandBtn = async (msgId: string | undefined, method?: ('reply' | 'forward'), footer?: string) => {
+  public async addTripleDotQuoteExpandBtn(msgId: string | undefined, method?: ('reply' | 'forward'), footer?: string) {
     if (!this.messageToReplyOrForward && msgId && method) {
       this.composer.S.cached('icon_show_prev_msg').addClass('progress');
       Xss.sanitizeAppend(this.composer.S.cached('icon_show_prev_msg'), '<div id="loader">0%</div>');
@@ -46,7 +46,7 @@ export class ComposerQuote extends ComposerComponent {
       this.composer.S.cached('icon_show_prev_msg').removeClass('progress');
     }
     if (!this.messageToReplyOrForward && msgId) {
-      this.composer.S.cached('icon_show_prev_msg').click(Ui.event.handle(async () => {
+      this.composer.S.cached('icon_show_prev_msg').click(this.view.setHandler(async () => {
         this.composer.S.cached('icon_show_prev_msg').unbind('click');
         await this.addTripleDotQuoteExpandBtn(msgId, method);
         if (this.messageToReplyOrForward) {
@@ -60,14 +60,14 @@ export class ComposerQuote extends ComposerComponent {
       this.footerHTML = this.createFooterHTML(footer);
       safePreviousMsg += this.footerHTML;
     }
-    if (this.messageToReplyOrForward && this.messageToReplyOrForward.text) {
+    if (this.messageToReplyOrForward?.text) {
       const sentDate = new Date(String(this.messageToReplyOrForward.headers.date));
       if (this.messageToReplyOrForward.headers.from && this.messageToReplyOrForward.headers.date) {
         safePreviousMsg += `<br><br>${this.generateHtmlPreviousMsgQuote(this.messageToReplyOrForward.text, sentDate, this.messageToReplyOrForward.headers.from)}`;
       }
       if (method === 'forward' && this.messageToReplyOrForward.decryptedFiles.length) {
         for (const file of this.messageToReplyOrForward.decryptedFiles) {
-          await this.composer.atts.attach.addFile(file);
+          this.composer.atts.attach.addFile(file);
         }
       }
     }
@@ -85,7 +85,7 @@ export class ComposerQuote extends ComposerComponent {
     }
   }
 
-  private createFooterHTML = (footer: string) => {
+  private createFooterHTML(footer: string) {
     const sanitizedPlainFooter = Xss.htmlSanitizeAndStripAllTags(footer, '\n', true); // true: strip away images because not supported yet
     const sanitizedHtmlFooter = sanitizedPlainFooter.replace(/\n/g, '<br>');
     const footerFirstLine = sanitizedPlainFooter.split('\n')[0];
@@ -98,7 +98,7 @@ export class ComposerQuote extends ComposerComponent {
     return `<br><br>--<br>${sanitizedHtmlFooter}`; // create a custom footer separator
   }
 
-  public replaceFooter = (newFooter: string | undefined) => {
+  public replaceFooter(newFooter: string | undefined) {
     newFooter = newFooter ? this.createFooterHTML(newFooter) : '';
     if (this.footerHTML) {
       let textHTML = this.msgExpandingHTMLPart || this.composer.S.cached('input_text').html();
@@ -124,7 +124,7 @@ export class ComposerQuote extends ComposerComponent {
     this.footerHTML = newFooter || undefined;
   }
 
-  public getAndDecryptMessage = async (msgId: string, method: 'reply' | 'forward', progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> => {
+  public async getAndDecryptMessage(msgId: string, method: 'reply' | 'forward', progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> {
     try {
       const { raw } = await this.composer.emailProvider.msgGet(msgId, 'raw', progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
       const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw!));
@@ -164,7 +164,7 @@ export class ComposerQuote extends ComposerComponent {
         } else if (block.type === 'plainHtml') {
           decryptedAndFormatedContent.push(Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n')));
         } else if (['encryptedAtt', 'decryptedAtt', 'plainAtt'].includes(block.type)) {
-          if (block.attMeta && block.attMeta.data) {
+          if (block.attMeta?.data) {
             let attMeta: { content: Buf, filename?: string } | undefined;
             if (block.type === 'encryptedAtt') {
               const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.view.acctEmail), encryptedData: block.attMeta.data });
@@ -206,7 +206,7 @@ export class ComposerQuote extends ComposerComponent {
     }
   }
 
-  private decryptMessage = async (encryptedData: Buf): Promise<string> => {
+  private async decryptMessage(encryptedData: Buf): Promise<string> {
     const decryptRes = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.view.acctEmail), encryptedData });
     if (decryptRes.success) {
       return decryptRes.content.toUtfStr();
@@ -229,14 +229,14 @@ export class ComposerQuote extends ComposerComponent {
     return text.split('\n').map(l => '<br>&gt; ' + l).join('\n');
   }
 
-  private generateHtmlPreviousMsgQuote = (text: string, date: Date, from: string) => {
+  private generateHtmlPreviousMsgQuote(text: string, date: Date, from: string) {
     const sanitizedQuote = Xss.htmlSanitize(`On ${Str.fromDate(date).replace(' ', ' at ')}, ${from} wrote:${this.quoteText(Xss.escape(text))}`);
     return `<blockquote>${sanitizedQuote}</blockquote>`;
   }
 
-  private setExpandingTextAfterClick = () => {
+  private setExpandingTextAfterClick() {
     this.composer.S.cached('icon_show_prev_msg')
-      .click(Ui.event.handle(el => {
+      .click(this.view.setHandler(el => {
         el.style.display = 'none';
         Xss.sanitizeAppend(this.composer.S.cached('input_text'), this.msgExpandingHTMLPart || '');
         this.msgExpandingHTMLPart = undefined;

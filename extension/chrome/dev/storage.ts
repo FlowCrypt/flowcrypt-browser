@@ -5,7 +5,7 @@
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store, Storable, AccountStore, GlobalStore, GlobalIndex, AccountIndex, RawStore } from '../../js/common/platform/store.js';
 import { Str, Dict, Url } from '../../js/common/core/common.js';
-import { Ui } from '../../js/common/browser.js';
+import { Ui } from '../../js/common/browser/ui.js';
 import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';
 

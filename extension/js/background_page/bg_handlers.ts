@@ -3,7 +3,7 @@
 'use strict';
 
 import { Store } from '../common/platform/store.js';
-import { Bm } from '../common/extension.js';
+import { Bm } from '../common/browser/browser-msg.js';
 import { BgUtils } from './bgutils.js';
 import { Api } from '../common/api/api.js';
 import { Pgp } from '../common/core/pgp.js';
@@ -20,7 +20,7 @@ export class BgHandlers {
     await BgUtils.openExtensionTab(Url.create(chrome.runtime.getURL(`chrome/settings/inbox/inbox.htm`), message));
   }
 
-  public static dbOperationHandler = async (db: IDBDatabase, request: Bm.Db): Promise<Bm.Res.Db> => {
+  public static async dbOperationHandler(db: IDBDatabase, request: Bm.Db): Promise<Bm.Res.Db> {
     if (!db) {
       console.info(`db corrupted, skipping: ${request.f}`);
       return await new Promise(resolve => undefined); // never resolve, error was already shown
@@ -32,22 +32,22 @@ export class BgHandlers {
     return await dbFunc(db, ...request.args);
   }
 
-  public static ajaxHandler = async (r: Bm.Ajax): Promise<Bm.Res.Ajax> => {
+  public static async ajaxHandler(r: Bm.Ajax): Promise<Bm.Res.Ajax> {
     return await Api.ajax(r.req, r.stack); // tslint:disable-line:no-direct-ajax
   }
 
-  public static ajaxGmailAttGetChunkHandler = async (r: Bm.AjaxGmailAttGetChunk): Promise<Bm.Res.AjaxGmailAttGetChunk> => {
+  public static async ajaxGmailAttGetChunkHandler(r: Bm.AjaxGmailAttGetChunk): Promise<Bm.Res.AjaxGmailAttGetChunk> {
     return { chunk: await new Gmail(r.acctEmail).attGetChunk(r.msgId, r.attId) };
   }
 
-  public static pgpKeyDetails = async ({ pubkey }: Bm.PgpKeyDetails): Promise<Bm.Res.PgpKeyDetails> => {
+  public static async pgpKeyDetails({ pubkey }: Bm.PgpKeyDetails): Promise<Bm.Res.PgpKeyDetails> {
     return await Pgp.key.parse(pubkey);
   }
 
   public static updateUninstallUrl: Bm.AsyncResponselessHandler = async () => {
     const acctEmails = await Store.acctEmailsGet();
     if (typeof chrome.runtime.setUninstallURL !== 'undefined') {
-      const email = (acctEmails && acctEmails.length) ? acctEmails[0] : undefined;
+      const email = acctEmails?.length ? acctEmails[0] : undefined;
       chrome.runtime.setUninstallURL(`https://flowcrypt.com/leaving.htm#${JSON.stringify({ email, metrics: null })}`); // tslint:disable-line:no-null-keyword
     }
   }
@@ -69,7 +69,7 @@ export class BgHandlers {
     });
   })
 
-  public static respondWithSenderTabId = async (r: unknown, sender: Bm.Sender): Promise<Bm.Res._tab_> => {
+  public static async respondWithSenderTabId(r: unknown, sender: Bm.Sender): Promise<Bm.Res._tab_> {
     if (sender === 'background') {
       return { tabId: null };  // tslint:disable-line:no-null-keyword
     } else if (sender.tab) {

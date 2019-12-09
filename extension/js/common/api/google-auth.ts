@@ -9,9 +9,9 @@ const BUILD = 'consumer'; // todo
 import { Catch } from '../platform/catch.js';
 import { Store, AccountStore } from '../platform/store.js';
 import { Api, GoogleAuthErr } from './api.js';
-import { Ui } from '../browser.js';
+import { Ui } from '../browser/ui.js';
 import { Value, Url } from '../core/common.js';
-import { GoogleAuthWindowResult$result } from '../extension.js';
+import { GoogleAuthWindowResult$result } from '../browser/browser-msg.js';
 import { tabsQuery, windowsCreate } from './chrome.js';
 import { Buf } from '../core/buf.js';
 import { GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST } from '../core/const.js';
@@ -49,7 +49,7 @@ export class GoogleAuth {
     }
   };
 
-  public static defaultScopes = (group: 'default' | 'contacts' | 'compose_only' | 'openid' = 'default') => {
+  public static defaultScopes(group: 'default' | 'contacts' | 'compose_only' | 'openid' = 'default') {
     const { readContacts, compose, modify, openid, email, profile } = GoogleAuth.OAUTH.scopes;
     console.info(`Not using scope ${modify} because not approved on oauth screen yet`);
     const read = GoogleAuth.OAUTH.legacy_scopes.read; // todo - remove as soon as "modify" is approved by google
@@ -75,7 +75,7 @@ export class GoogleAuth {
     }
   }
 
-  public static googleApiAuthHeader = async (acctEmail: string, forceRefresh = false): Promise<string> => {
+  public static async googleApiAuthHeader(acctEmail: string, forceRefresh = false): Promise<string> {
     if (!acctEmail) {
       throw new Error('missing account_email in api_gmail_call');
     }
@@ -97,7 +97,7 @@ export class GoogleAuth {
     }
   }
 
-  public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings): Promise<any> => {
+  public static async apiGoogleCallRetryAuthErrorOneTime(acctEmail: string, request: JQuery.AjaxSettings): Promise<any> {
     try {
       return await Api.ajax(request, Catch.stackTrace());
     } catch (firstAttemptErr) {
@@ -109,7 +109,7 @@ export class GoogleAuth {
     }
   }
 
-  public static newAuthPopup = async ({ acctEmail, scopes, save }: { acctEmail?: string, scopes?: string[], save?: boolean }): Promise<AuthRes> => {
+  public static async newAuthPopup({ acctEmail, scopes, save }: { acctEmail?: string, scopes?: string[], save?: boolean }): Promise<AuthRes> {
     if (acctEmail) {
       acctEmail = acctEmail.toLowerCase();
     }
@@ -156,21 +156,23 @@ export class GoogleAuth {
     return authRes;
   }
 
-  public static newOpenidAuthPopup = async ({ acctEmail }: { acctEmail?: string }): Promise<AuthRes> => {
+  public static async newOpenidAuthPopup({ acctEmail }: { acctEmail?: string }): Promise<AuthRes> {
     return await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('openid'), save: false });
   }
 
-  private static waitForOauthWindowClosed = (oauthWinId: number, acctEmail: string | undefined): Promise<AuthRes> => new Promise(resolve => {
-    const onOauthWinClosed = (closedWinId: number) => {
-      if (closedWinId === oauthWinId) {
-        chrome.windows.onRemoved.removeListener(onOauthWinClosed);
-        resolve({ result: 'Closed', acctEmail, id_token: undefined });
-      }
-    };
-    chrome.windows.onRemoved.addListener(onOauthWinClosed);
-  })
+  private static waitForOauthWindowClosed(oauthWinId: number, acctEmail: string | undefined): Promise<AuthRes> {
+    return new Promise(resolve => {
+      const onOauthWinClosed = (closedWinId: number) => {
+        if (closedWinId === oauthWinId) {
+          chrome.windows.onRemoved.removeListener(onOauthWinClosed);
+          resolve({ result: 'Closed', acctEmail, id_token: undefined });
+        }
+      };
+      chrome.windows.onRemoved.addListener(onOauthWinClosed);
+    });
+  }
 
-  private static processOauthResTitle = (title: string): { result: GoogleAuthWindowResult$result, code?: string, error?: string, csrf?: string } => {
+  private static processOauthResTitle(title: string): { result: GoogleAuthWindowResult$result, code?: string, error?: string, csrf?: string } {
     const parts = title.split(' ', 2);
     const result = parts[0] as GoogleAuthWindowResult$result;
     const params = Url.parse(['code', 'state', 'error'], parts[1]);
@@ -193,10 +195,10 @@ export class GoogleAuth {
 
   private static isForwarding = (title: string) => title.match(/^Forwarding /) !== null;
 
-  private static waitForAndProcessOauthWindowResult = async (windowId: number, acctEmail: string | undefined, scopes: string[], csrfToken: string, save: boolean): Promise<AuthRes> => {
+  private static async waitForAndProcessOauthWindowResult(windowId: number, acctEmail: string | undefined, scopes: string[], csrfToken: string, save: boolean): Promise<AuthRes> {
     while (true) {
       const [oauth] = await tabsQuery({ windowId });
-      if (oauth && oauth.title && oauth.title.includes(GoogleAuth.OAUTH.state_header) && !GoogleAuth.isAuthUrl(oauth.title) && !GoogleAuth.isForwarding(oauth.title)) {
+      if (oauth?.title && oauth.title.includes(GoogleAuth.OAUTH.state_header) && !GoogleAuth.isAuthUrl(oauth.title) && !GoogleAuth.isForwarding(oauth.title)) {
         const { result, error, code, csrf } = GoogleAuth.processOauthResTitle(oauth.title);
         if (error === 'access_denied') {
           return { acctEmail, result: 'Denied', error, id_token: undefined }; // sometimes it was coming in as {"result":"Error","error":"access_denied"}
@@ -233,14 +235,14 @@ export class GoogleAuth {
 
   private static apiGoogleAuthStatePack = (authReq: AuthReq) => GoogleAuth.OAUTH.state_header + JSON.stringify(authReq);
 
-  private static apiGoogleAuthStateUnpack = (state: string): AuthReq => {
+  private static apiGoogleAuthStateUnpack(state: string): AuthReq {
     if (!state.startsWith(GoogleAuth.OAUTH.state_header)) {
       throw new Error('Missing oauth state header');
     }
     return JSON.parse(state.replace(GoogleAuth.OAUTH.state_header, '')) as AuthReq;
   }
 
-  private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
+  private static async googleAuthSaveTokens(acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) {
     const openid = GoogleAuth.parseIdToken(tokensObj.id_token);
     const { full_name, picture } = await Store.getAcct(acctEmail, ['full_name', 'picture']);
     const toSave: AccountStore = {
@@ -284,7 +286,7 @@ export class GoogleAuth {
 
   // todo - would be better to use a TS type guard instead of the type cast when checking OpenId
   // check for things we actually use: photo/name/locale
-  private static parseIdToken = (idToken: string): GmailRes.OpenId => {
+  private static parseIdToken(idToken: string): GmailRes.OpenId {
     const claims = JSON.parse(Buf.fromBase64UrlStr(idToken.split(/\./g)[1]).toUtfStr()) as GmailRes.OpenId;
     if (claims.email) {
       claims.email = claims.email.toLowerCase();
@@ -295,7 +297,7 @@ export class GoogleAuth {
     return claims;
   }
 
-  private static retrieveAndSaveAuthToken = async (authCode: string, scopes: string[]): Promise<{ id_token: string }> => {
+  private static async retrieveAndSaveAuthToken(authCode: string, scopes: string[]): Promise<{ id_token: string }> {
     const tokensObj = await GoogleAuth.googleAuthGetTokens(authCode);
     await GoogleAuth.googleAuthCheckAccessToken(tokensObj.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
     const claims = GoogleAuth.parseIdToken(tokensObj.id_token);
@@ -306,7 +308,7 @@ export class GoogleAuth {
     return { id_token: tokensObj.id_token };
   }
 
-  private static apiGoogleAuthPopupPrepareAuthReqScopes = async (acctEmail: string | undefined, addScopes: string[]): Promise<string[]> => {
+  private static async apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail: string | undefined, addScopes: string[]): Promise<string[]> {
     if (acctEmail) {
       const { google_token_scopes } = await Store.getAcct(acctEmail, ['google_token_scopes']);
       addScopes.push(...(google_token_scopes || []));

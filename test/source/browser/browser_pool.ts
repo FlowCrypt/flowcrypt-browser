@@ -24,7 +24,7 @@ export class BrowserPool {
     this.semaphore = new Semaphore(poolSize, name);
   }
 
-  public newBrowserHandle = async (t: AvaContext, closeInitialPage = true) => {
+  public async newBrowserHandle(t: AvaContext, closeInitialPage = true, isMock = false) {
     await this.semaphore.acquire();
     // ext frames in gmail: https://github.com/GoogleChrome/puppeteer/issues/2506 https://github.com/GoogleChrome/puppeteer/issues/2548
     const args = [
@@ -38,15 +38,30 @@ export class BrowserPool {
     if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
       args.push(`--proxy-server=${Config.secrets.proxy.server}`);
     }
-    const browser = await launch({ args, headless: false, slowMo: 60, devtools: false });
+    const browser = await launch({ args, headless: false, slowMo: isMock ? undefined : 60, devtools: false });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {
-      await this.closeInitialExtensionPage(t, handle);
+      try {
+        const initialPage = await handle.newPageTriggeredBy(t, () => Promise.resolve()); // the page triggered on its own
+        await initialPage.waitAll('@initial-page'); // first page opened by flowcrypt
+        await initialPage.close();
+      } catch (e) {
+        if (String(e).includes('Action did not trigger a new page within timeout period')) { // could have opened before we had a chance to add a handler above
+          const pages = await handle.browser.pages();
+          const initialPage = pages.find(p => p.url().includes('chrome/settings/initial.htm'));
+          if (!initialPage) {
+            throw e;
+          }
+          await initialPage.close();
+        } else {
+          throw e;
+        }
+      }
     }
     return handle;
   }
 
-  public getExtensionId = async (t: AvaContext): Promise<string> => {
+  public async getExtensionId(t: AvaContext): Promise<string> {
     const browser = await this.newBrowserHandle(t, false);
     for (const i of [1, 2, 3, 4, 5]) {
       await Util.sleep(2);
@@ -69,13 +84,13 @@ export class BrowserPool {
     throw new Error(`Cannot determine extension id from urls.`);
   }
 
-  public close = async () => {
+  public async close() {
     while (this.browsersForReuse.length) {
       await this.browsersForReuse.pop()!.close();
     }
   }
 
-  public openOrReuseBrowser = async (t: AvaContext): Promise<BrowserHandle> => {
+  public async openOrReuseBrowser(t: AvaContext): Promise<BrowserHandle> {
     if (!this.reuse) {
       return await this.newBrowserHandle(t);
     }
@@ -83,7 +98,7 @@ export class BrowserPool {
     return this.browsersForReuse.pop()!;
   }
 
-  public doneUsingBrowser = async (browser: BrowserHandle) => {
+  public async doneUsingBrowser(browser: BrowserHandle) {
     if (this.reuse) {
       await browser.closeAllPages();
       this.browsersForReuse.push(browser);
@@ -93,7 +108,7 @@ export class BrowserPool {
     }
   }
 
-  public getPooledBrowser = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext) => {
+  public async getPooledBrowser(cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext) {
     const browser = await this.openOrReuseBrowser(t);
     try {
       await cb(t, browser);
@@ -103,12 +118,14 @@ export class BrowserPool {
     }
   }
 
-  public cbWithTimeout = (cb: () => Promise<void>, timeout: number): Promise<void> => new Promise((resolve, reject) => {
-    setTimeout(() => reject(new TimeoutError(`Test timed out after ${timeout}ms`)), timeout); // reject in
-    cb().then(resolve, reject);
-  })
+  public cbWithTimeout(cb: () => Promise<void>, timeout: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => reject(new TimeoutError(`Test timed out after ${timeout}ms`)), timeout); // reject in
+      cb().then(resolve, reject);
+    });
+  }
 
-  private processTestError = (err: any, t: AvaContext, attemptHtmls: string[]) => {
+  private processTestError(err: any, t: AvaContext, attemptHtmls: string[]) {
     t.retry = undefined;
     if (t.attemptNumber! < t.totalAttempts!) {
       t.log(`${t.attemptText} Retrying: ${String(err)}`);
@@ -129,7 +146,7 @@ export class BrowserPool {
     </div>
     `
 
-  private throwOnRetryFlagAndReset = async (t: AvaContext) => {
+  private async throwOnRetryFlagAndReset(t: AvaContext) {
     await Util.sleep(TIMEOUT_DESTROY_UNEXPECTED_ALERT + 1); // in case there was an unexpected alert, don't let that affect next round
     if (t.retry) {
       t.retry = undefined;
@@ -139,7 +156,7 @@ export class BrowserPool {
     }
   }
 
-  public withNewBrowserTimeoutAndRetry = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext, consts: Consts) => {
+  public async withNewBrowserTimeoutAndRetry(cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext, consts: Consts) {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const attemptDebugHtmls: string[] = [];
     t.totalAttempts = consts.ATTEMPTS;
@@ -168,7 +185,7 @@ export class BrowserPool {
     }
   }
 
-  public withGlobalBrowserTimeoutAndRetry = async (browser: BrowserHandle, cb: (t: AvaContext, b: BrowserHandle) => void, t: AvaContext, consts: Consts) => {
+  public async withGlobalBrowserTimeoutAndRetry(browser: BrowserHandle, cb: (t: AvaContext, b: BrowserHandle) => void, t: AvaContext, consts: Consts) {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const attemptDebugHtmls: string[] = [];
     t.totalAttempts = consts.ATTEMPTS;
@@ -197,11 +214,6 @@ export class BrowserPool {
     }
   }
 
-  private closeInitialExtensionPage = async (t: AvaContext, browser: BrowserHandle) => {
-    const initialPage = await browser.newPageTriggeredBy(t, () => Promise.resolve()); // the page triggered on its own
-    await initialPage.waitAll('@initial-page'); // first page opened by flowcrypt
-    await initialPage.close();
-  }
 }
 
 export class Semaphore {
@@ -217,7 +229,7 @@ export class Semaphore {
 
   private wait = () => new Promise(resolve => setTimeout(resolve, 1000 + Math.round(Math.random() * 2000))); // wait 1-3s
 
-  acquire = async () => {
+  async acquire() {
     let i = 0;
     while (this.availableLocks < 1) {
       if (this.debug) {
@@ -234,7 +246,7 @@ export class Semaphore {
     }
   }
 
-  release = () => {
+  release() {
     if (this.debug) {
       console.info(`[${this.name}] releasing semaphore, previously available: ${this.availableLocks}`);
     }

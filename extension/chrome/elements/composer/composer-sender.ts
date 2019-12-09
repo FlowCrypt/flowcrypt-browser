@@ -7,8 +7,7 @@ import { Settings } from '../../../js/common/settings.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Dict } from '../../../js/common/core/common.js';
 import { SendAsAlias } from '../../../js/common/platform/store.js';
-import { Ui } from '../../../js/common/browser.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 
@@ -18,11 +17,11 @@ export class ComposerSender extends ComposerComponent {
     // none
   }
 
-  public getSender = (): string => {
+  public getSender(): string {
     if (this.composer.S.now('input_from').length) {
       return String(this.composer.S.now('input_from').val());
     }
-    if (this.view.replyParams && this.view.replyParams.from) {
+    if (this.view.replyParams?.from) {
       return this.view.replyParams.from;
     }
     return this.view.acctEmail;
@@ -34,7 +33,7 @@ export class ComposerSender extends ComposerComponent {
       const showAliasChevronHtml = '<img tabindex="22" id="show_sender_aliases_options" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
       const inputAddrContainer = this.composer.S.cached('email_copy_actions');
       Xss.sanitizeAppend(inputAddrContainer, showAliasChevronHtml);
-      inputAddrContainer.find('#show_sender_aliases_options').click(Ui.event.handle((el) => {
+      inputAddrContainer.find('#show_sender_aliases_options').click(this.view.setHandler((el) => {
         this.renderSenderAliasesOptions(sendAs);
         el.remove();
       }, this.composer.errs.handlers(`show sending address options`)));
@@ -87,10 +86,10 @@ export class ComposerSender extends ComposerComponent {
     }
   }
 
-  public async getFooter() {
+  public async getFooter(): Promise<string | undefined> {
     const addresses = await this.composer.storage.getAddresses();
     const sender = this.getSender();
-    return addresses && addresses[sender] && addresses[sender].footer || undefined;
+    return addresses[sender]?.footer || undefined;
   }
 
 }

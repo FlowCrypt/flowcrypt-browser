@@ -7,9 +7,12 @@ import { Catch } from '../../common/platform/catch.js';
 import { Store } from '../../common/platform/store.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
-import { ContentScriptWindow, BrowserMsg, TabIdRequiredError, Bm } from '../../common/extension.js';
-import { Ui, WebMailName, Env } from '../../common/browser.js';
+import { BrowserMsg, TabIdRequiredError, Bm } from '../../common/browser/browser-msg.js';
 import { XssSafeFactory, WebmailVariantString } from '../../common/xss_safe_factory.js';
+import { WebMailName, Env } from '../../common/browser/env.js';
+import { Ui } from '../../common/browser/ui.js';
+import { ContentScriptWindow } from '../../common/browser/browser-window.js';
+import { BrowserMsgCommonHandlers } from '../../common/browser/browser-msg-common-handlers.js';
 
 export type WebmailVariantObject = { newDataLayer: undefined | boolean, newUi: undefined | boolean, email: undefined | string, gmailVariant: WebmailVariantString };
 export type IntervalFunction = { interval: number, handler: () => void };
@@ -162,12 +165,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
       notifications.showAuthPopupNeeded(acctEmail);
     });
-    BrowserMsg.addListener('reply_pubkey_mismatch', async () => {
-      const replyIframe = $('iframe.reply_message').get(0) as HTMLIFrameElement | undefined;
-      if (replyIframe) {
-        replyIframe.src = replyIframe.src.replace('/compose.htm?', '/reply_pubkey_mismatch.htm?');
-      }
-    });
+    BrowserMsg.addListener('reply_pubkey_mismatch', BrowserMsgCommonHandlers.replyPubkeyMismatch);
     BrowserMsg.addListener('add_end_session_btn', () => inject.insertEndSessionBtn(acctEmail));
     BrowserMsg.listen(tabId);
   };

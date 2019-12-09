@@ -3,7 +3,7 @@
 'use strict';
 
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Ui } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Api } from '../../../js/common/api/api.js';
@@ -16,7 +16,7 @@ export class ComposerMyPubkey extends ComposerComponent {
 
   initActions() {
     this.composer.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
-    this.composer.S.cached('icon_pubkey').click(Ui.event.handle(target => {
+    this.composer.S.cached('icon_pubkey').click(this.view.setHandler(target => {
       this.toggledManually = true;
       const includePub = !$(target).is('.active'); // evaluating what the state of the icon was BEFORE clicking
       Ui.toast(`${includePub ? 'Attaching' : 'Removing'} your Public Key`).catch(Catch.reportErr);

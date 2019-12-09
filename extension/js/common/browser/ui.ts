@@ -1,126 +1,20 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-/// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
-
 'use strict';
 
-import { Catch } from './platform/catch.js';
-import { Dict } from './core/common.js';
-import { Api } from './api/api.js';
-import { Att } from './core/att.js';
 import Swal from 'sweetalert2';
-import { Xss } from './platform/xss.js';
+import { Dict } from '../core/common.js';
+import { Catch } from '../platform/catch.js';
+import { Xss } from '../platform/xss.js';
+import { Api } from '../api/api.js';
 
 type NamedSels = Dict<JQuery<HTMLElement>>;
 type ProvidedEventHandler = (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>;
-export type PreventableEventName = 'double' | 'parallel' | 'spree' | 'slowspree' | 'veryslowspree';
-export type WebMailName = 'gmail' | 'outlook' | 'settings';
-export type BrowserEventErrHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: any) => Promise<void> };
+
 export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
-
 export interface JQS extends JQueryStatic { featherlight: (contentOrSettings: string | Object) => void; } // tslint:disable-line:ban-types
-
-export class Browser {
-
-  public static objUrlCreate = (content: Uint8Array | string) => {
-    return window.URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
-  }
-
-  public static objUrlConsume = async (url: string) => {
-    const buf = await Api.download(url);
-    window.URL.revokeObjectURL(url);
-    return buf;
-  }
-
-  public static saveToDownloads = (att: Att, renderIn?: JQuery<HTMLElement>) => {
-    const blob = new Blob([att.getData()], { type: att.type });
-    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-      window.navigator.msSaveBlob(blob, att.name);
-    } else {
-      const a = window.document.createElement('a');
-      a.href = window.URL.createObjectURL(blob);
-      a.download = Xss.escape(att.name);
-      if (renderIn) {
-        a.innerHTML = '<div>Right-click here and choose \'Save Link As\' to save encrypted file</div>'; // xss-direct
-        a.className = 'file-download-right-click-link';
-        renderIn.html(a.outerHTML); // xss-escaped attachment name above
-        renderIn.css('height', 'auto');
-        renderIn.find('a').click(e => {
-          Ui.modal.warning('Please use right-click and select Save Link As').catch(Catch.reportErr);
-          e.preventDefault();
-          e.stopPropagation();
-          return false;
-        });
-      } else {
-        if (typeof a.click === 'function') {
-          a.click();
-        } else { // safari
-          const ev = document.createEvent('MouseEvents');
-          // @ts-ignore - safari only. expected 15 arguments, but works well with 4
-          ev.initMouseEvent('click', true, true, window);
-          a.dispatchEvent(ev);
-        }
-        if (Catch.browser().name === 'firefox') {
-          try {
-            document.body.removeChild(a);
-          } catch (err) {
-            if (!(err instanceof Error && err.message === 'Node was not found')) {
-              throw err;
-            }
-          }
-        }
-        Catch.setHandledTimeout(() => window.URL.revokeObjectURL(a.href), 0);
-      }
-    }
-  }
-
-  public static arrFromDomNodeList = (obj: NodeList | JQuery<HTMLElement>): Node[] => {
-    // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
-    const array = [];
-    for (let i = obj.length >>> 0; i--;) { // iterate backwards ensuring that length is an UInt32
-      array[i] = obj[i];
-    }
-    return array;
-  }
-
-}
-
-export class Env {
-
-  public static runtimeId = (orig = false) => {
-    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
-      if (orig === true) {
-        return chrome.runtime.id;
-      } else {
-        return chrome.runtime.id.replace(/[^a-z0-9]/gi, '');
-      }
-    }
-    return undefined;
-  }
-
-  public static isContentScript = () => Env.isExtension() && window.location.href.indexOf(chrome.runtime.getURL('')) === -1; // extension but not on its own url
-
-  public static isBackgroundPage = () => Boolean(window.location && window.location.href.includes('background_page.htm'));
-
-  public static isExtension = () => typeof Env.runtimeId() !== 'undefined';
-
-  public static keyCodes = () => { // todo - use e.key (string) instead? Keycodes not reliable. https://bugs.chromium.org/p/chromium/issues/detail?id=79407
-    return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, };
-  }
-
-  public static webmails = async (): Promise<WebMailName[]> => {
-    return ['gmail']; // async because storage may be involved in the future
-  }
-
-  public static getBaseUrl = () => {
-    return window.location.protocol + '//' + window.location.hostname;
-  }
-
-  public static getUrlNoParams = () => {
-    return window.location.protocol + '//' + window.location.hostname + window.location.pathname;
-  }
-
-}
+export type PreventableEventName = 'double' | 'parallel' | 'spree' | 'slowspree' | 'veryslowspree';
+export type BrowserEventErrHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: any) => Promise<void> };
 
 export class Ui {
 
@@ -133,13 +27,13 @@ export class Ui {
 
   public static delay = (ms: number) => new Promise(resolve => Catch.setHandledTimeout(resolve, ms));
 
-  public static spinner = (color: string, placeholderCls: "small_spinner" | "large_spinner" = 'small_spinner') => {
+  public static spinner(color: string, placeholderCls: "small_spinner" | "large_spinner" = 'small_spinner') {
     const path = `/img/svgs/spinner-${color}-small.svg`;
     const url = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL ? chrome.runtime.getURL(path) : path;
     return `<i class="${placeholderCls}" data-test="spinner"><img src="${url}" /></i>`;
   }
 
-  public static renderOverlayPromptAwaitUserChoice = (btns: Dict<{ title?: string, color?: string }>, prompt: string, details?: string): Promise<string> => {
+  public static renderOverlayPromptAwaitUserChoice(btns: Dict<{ title?: string, color?: string }>, prompt: string, details?: string): Promise<string> {
     return new Promise(resolve => {
       const getEscapedColor = (id: string) => Xss.escape(btns[id].color || 'green');
       const getEscapedTitle = (id: string) => Xss.escape(btns[id].title || id.replace(/_/g, ' '));
@@ -176,41 +70,51 @@ export class Ui {
     });
   }
 
-  public static escape = (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
-    if (!e.metaKey && !e.ctrlKey && e.key === 'Escape') {
-      callback();
-    }
+  public static escape(callback: () => void) {
+    return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+      if (!e.metaKey && !e.ctrlKey && e.key === 'Escape') {
+        callback();
+      }
+    };
   }
 
-  public static tab = (callback: (e: JQuery.Event<HTMLElement>) => void) => (e: JQuery.Event<HTMLElement>) => { // returns a function
-    if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.key === 'Tab') {
-      callback(e);
-    }
+  public static tab(callback: (e: JQuery.Event<HTMLElement>) => void) {
+    return (e: JQuery.Event<HTMLElement>) => { // returns a function
+      if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.key === 'Tab') {
+        callback(e);
+      }
+    };
   }
 
-  public static shiftTab = (callback: (e: JQuery.Event<HTMLElement>) => void) => (e: JQuery.Event<HTMLElement>) => { // returns a function
-    if (!e.metaKey && !e.ctrlKey && e.shiftKey && e.key === 'Tab') {
-      callback(e);
-    }
+  public static shiftTab(callback: (e: JQuery.Event<HTMLElement>) => void) {
+    return (e: JQuery.Event<HTMLElement>) => { // returns a function
+      if (!e.metaKey && !e.ctrlKey && e.shiftKey && e.key === 'Tab') {
+        callback(e);
+      }
+    };
   }
 
-  public static enter = (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
-    if (!e.metaKey && !e.ctrlKey && e.key === 'Enter') {
-      callback();
-    }
+  public static enter(callback: () => void) {
+    return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+      if (!e.metaKey && !e.ctrlKey && e.key === 'Enter') {
+        callback();
+      }
+    };
   }
 
-  public static ctrlEnter = (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-      callback();
-    }
+  public static ctrlEnter(callback: () => void) {
+    return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        callback();
+      }
+    };
   }
 
-  public static setTestState = (state: 'ready' | 'working' | 'waiting') => {
+  public static setTestState(state: 'ready' | 'working' | 'waiting') {
     $('body').attr('data-test-state', state); // for automated tests
   }
 
-  public static buildJquerySels = (sels: Dict<string>): SelCache => {
+  public static buildJquerySels(sels: Dict<string>): SelCache {
     const cache: NamedSels = {};
     return {
       cached: (name: string) => {
@@ -237,7 +141,7 @@ export class Ui {
     };
   }
 
-  public static scroll = (sel: string | JQuery<HTMLElement>, repeat: number[] = []) => {
+  public static scroll(sel: string | JQuery<HTMLElement>, repeat: number[] = []) {
     const el = $(sel as string).first()[0]; // as string due to JQuery TS quirk. Do not convert to String() as this may actually be JQuery<HTMLElement>
     if (el) {
       el.scrollIntoView();
@@ -436,7 +340,7 @@ export class Ui {
     },
   };
 
-  public static toast = async (msg: string, seconds = 2): Promise<void> => {
+  public static async toast(msg: string, seconds = 2): Promise<void> {
     await Swal.fire({
       toast: true,
       title: msg,

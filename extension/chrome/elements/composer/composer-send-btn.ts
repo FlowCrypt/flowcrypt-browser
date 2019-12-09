@@ -6,10 +6,10 @@ import { ComposerComponent } from './composer-abstract-component.js';
 import { SendBtnTexts } from './composer-types.js';
 import { Composer } from './composer.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { Ui } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Api } from '../../../js/common/api/api.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Pgp, KeyInfo } from '../../../js/common/core/pgp.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { SendableMsg } from '../../../js/common/api/email_provider/email_provider_api.js';
@@ -35,7 +35,7 @@ export class ComposerSendBtn extends ComposerComponent {
 
   initActions(): void {
     this.composer.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composer.size.isMinimized() && this.extractProcessSendMsg()));
-    this.composer.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
+    this.composer.S.cached('send_btn').click(this.view.setHandlerPrevent('double', () => this.extractProcessSendMsg()));
     this.popover.initActions();
   }
 
@@ -58,11 +58,14 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  setBtnColor(color: 'green' | 'gray') {
-    const classToAdd = color;
-    const classToRemove = ['green', 'gray'].find(c => c !== color);
-    this.composer.S.cached('send_btn').removeClass(classToRemove).addClass(classToAdd);
-    this.composer.S.cached('toggle_send_options').removeClass(classToRemove).addClass(classToAdd);
+  disableBtn() {
+    this.composer.S.cached('send_btn').removeClass('green').addClass('gray').prop('disabled', true);
+    this.composer.S.cached('toggle_send_options').removeClass('green').addClass('gray');
+  }
+
+  enableBtn() {
+    this.composer.S.cached('send_btn').removeClass('gray').addClass('green').prop('disabled', false);
+    this.composer.S.cached('toggle_send_options').removeClass('gray').addClass('green');
   }
 
   private btnText(): string {
@@ -77,11 +80,12 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  private extractProcessSendMsg = async () => {
+  private async extractProcessSendMsg() {
+    this.composer.sendBtn.disableBtn();
     this.composer.S.cached('toggle_send_options').hide();
     try {
       this.composer.errs.throwIfFormNotReady();
-      this.composer.S.now('send_btn_text').text('Loading');
+      this.composer.S.now('send_btn_text').text('Loading...');
       Xss.sanitizeRender(this.composer.S.now('send_btn_i'), Ui.spinner('white'));
       this.composer.S.cached('send_btn_note').text('');
       const newMsgData = this.composer.input.extractAll();
@@ -100,6 +104,7 @@ export class ComposerSendBtn extends ComposerComponent {
     } catch (e) {
       await this.composer.errs.handleSendErr(e);
     } finally {
+      this.composer.sendBtn.enableBtn();
       this.composer.S.cached('toggle_send_options').show();
     }
   }
@@ -120,7 +125,7 @@ export class ComposerSendBtn extends ComposerComponent {
     await this.addNamesToMsg(msg);
   }
 
-  private doSendMsg = async (msg: SendableMsg) => {
+  private async doSendMsg(msg: SendableMsg) {
     let msgSentRes: GmailRes.GmailMsgSend;
     try {
       this.isSendMessageInProgress = true;
@@ -145,7 +150,7 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  private decryptSenderKey = async (senderKi: KeyInfo): Promise<OpenPGP.key.Key | undefined> => {
+  private async decryptSenderKey(senderKi: KeyInfo): Promise<OpenPGP.key.Key | undefined> {
     const prv = await Pgp.key.read(senderKi.private);
     const passphrase = await this.composer.storage.passphraseGet(senderKi);
     if (typeof passphrase === 'undefined' && !prv.isFullyDecrypted()) {
@@ -164,14 +169,14 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  public renderUploadProgress = (progress: number) => {
+  public renderUploadProgress(progress: number) {
     if (this.composer.atts.attach.hasAtt()) {
       progress = Math.floor(progress);
       this.composer.S.now('send_btn_text').text(`${SendBtnTexts.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
     }
   }
 
-  private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
+  private async addNamesToMsg(msg: SendableMsg): Promise<void> {
     const { sendAs } = await Store.getAcct(this.view.acctEmail, ['sendAs']);
     const addNameToEmail = async (emails: string[]): Promise<string[]> => {
       return await Promise.all(emails.map(async email => {
@@ -180,7 +185,7 @@ export class ComposerSendBtn extends ComposerComponent {
           name = sendAs[email].name!;
         } else {
           const [contact] = await Store.dbContactGet(undefined, [email]);
-          if (contact && contact.name) {
+          if (contact?.name) {
             name = contact.name;
           }
         }

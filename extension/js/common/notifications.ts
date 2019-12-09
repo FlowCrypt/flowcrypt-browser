@@ -5,8 +5,8 @@
 import { Catch } from './platform/catch.js';
 import { Store } from './platform/store.js';
 import { Dict } from './core/common.js';
-import { BrowserMsg } from './extension.js';
-import { Ui } from './browser.js';
+import { BrowserMsg } from './browser/browser-msg.js';
+import { Ui } from './browser/ui.js';
 import { Lang } from './lang.js';
 import { Xss } from './platform/xss.js';
 
@@ -20,7 +20,7 @@ export class Notifications {
     this.tabId = tabId;
   }
 
-  showInitial = async (acctEmail: string) => {
+  async showInitial(acctEmail: string) {
     const acctStorage = await Store.getAcct(acctEmail, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple']);
     if (!acctStorage.notification_setup_done_seen) {
       await Store.setAcct(acctEmail, { notification_setup_done_seen: true });
@@ -32,7 +32,7 @@ export class Notifications {
     }
   }
 
-  showAuthPopupNeeded = (acctEmail: string) => {
+  showAuthPopupNeeded(acctEmail: string) {
     this.show(`${Lang.compose.pleaseReconnectAccount} <a href="#" class="auth_popup">Re-connect Account</a>`, {
       auth_popup: async () => {
         const authRes = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail });
@@ -45,11 +45,11 @@ export class Notifications {
     });
   }
 
-  clear = () => {
+  clear() {
     $('.webmail_notifications').text('');
   }
 
-  show = (text: string, callbacks: Dict<() => void> = {}) => {
+  show(text: string, callbacks: Dict<() => void> = {}) {
     Xss.sanitizeRender('.webmail_notifications', `<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
     if (typeof callbacks.close !== 'undefined') {
       const origCloseCb = callbacks.close;

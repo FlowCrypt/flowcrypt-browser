@@ -9,8 +9,8 @@ import { ProgressCb, RecipientType, AjaxErr, ChunkedCb, ProviderContactsResults 
 import { Buf } from '../../../core/buf.js';
 import { Mime } from '../../../core/mime.js';
 import { Value, Str, Dict } from '../../../core/common.js';
-import { Env } from '../../../browser.js';
-import { BrowserMsg, AddrParserResult, BrowserWidnow } from '../../../extension.js';
+import { Env } from '../../../browser/env.js';
+import { BrowserMsg } from '../../../browser/browser-msg.js';
 import { Catch } from '../../../platform/catch.js';
 import { Att } from '../../../core/att.js';
 import { Contact, Pgp, FormatError } from '../../../core/pgp.js';
@@ -18,6 +18,7 @@ import { Xss } from '../../../platform/xss.js';
 import { Store } from '../../../platform/store.js';
 import { GmailRes, GmailParser } from './gmail-parser.js';
 import { GoogleAuth } from '../../google-auth.js';
+import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window.js';
 
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 
@@ -338,7 +339,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return keys;
   }
 
-  private apiGmailBuildFilteredQuery = (query: string, allRawEmails: string[]) => {
+  private apiGmailBuildFilteredQuery(query: string, allRawEmails: string[]) {
     let filteredQuery = query;
     for (const rawEmail of allRawEmails) {
       filteredQuery += ` -to:"${rawEmail}"`;
@@ -349,14 +350,14 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return filteredQuery;
   }
 
-  private apiGmailGetNewUniqueRecipientsFromHeaders = async (toHeaders: string[], allResults: Contact[], allRawEmails: string[]): Promise<Contact[]> => {
+  private async apiGmailGetNewUniqueRecipientsFromHeaders(toHeaders: string[], allResults: Contact[], allRawEmails: string[]): Promise<Contact[]> {
     if (!toHeaders.length) {
       return [];
     }
     const rawParsedResults: AddrParserResult[] = [];
     toHeaders = Value.arr.unique(toHeaders);
     for (const to of toHeaders) {
-      rawParsedResults.push(...(window as unknown as BrowserWidnow)['emailjs-addressparser'].parse(to));
+      rawParsedResults.push(...(window as unknown as BrowserWindow)['emailjs-addressparser'].parse(to));
     }
     for (const rawParsedRes of rawParsedResults) {
       if (rawParsedRes.address && allRawEmails.indexOf(rawParsedRes.address) === -1) {
@@ -380,7 +381,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return uniqueNewValidResults;
   }
 
-  private apiGmailLoopThroughEmailsToCompileContacts = async (query: string, chunkedCb: (r: ProviderContactsResults) => void) => {
+  private async apiGmailLoopThroughEmailsToCompileContacts(query: string, chunkedCb: (r: ProviderContactsResults) => void) {
     const allResults: Contact[] = [];
     const allRawEmails: string[] = [];
     let lastFilteredQuery = '';
@@ -405,7 +406,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     chunkedCb({ new: [], all: allResults });
   }
 
-  private extractHeadersFromMsgs = async (msgsIds: GmailRes.GmailMsgList$message[], headerNames: string[], msgLimit: number): Promise<Dict<string[]>> => {
+  private async extractHeadersFromMsgs(msgsIds: GmailRes.GmailMsgList$message[], headerNames: string[], msgLimit: number): Promise<Dict<string[]>> {
     const headerVals: Dict<string[]> = {};
     for (const headerName of headerNames) {
       headerVals[headerName] = [];

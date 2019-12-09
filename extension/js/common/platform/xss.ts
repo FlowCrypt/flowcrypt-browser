@@ -23,7 +23,7 @@ export class Xss {
   public static sanitizePrepend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).prepend(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
   public static sanitizeReplace = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).replaceWith(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
 
-  public static htmlSanitize = (dirtyHtml: string): string => {
+  public static htmlSanitize(dirtyHtml: string): string {
     return DOMPurify.sanitize(dirtyHtml, { // tslint:disable-line:oneliner-object-literal
       SAFE_FOR_JQUERY: true,
       ADD_ATTR: Xss.ADD_ATTR,
@@ -31,7 +31,7 @@ export class Xss {
     });
   }
 
-  public static htmlSanitizeKeepBasicTags = (dirtyHtml: string, removeImgs: boolean = false): string => {
+  public static htmlSanitizeKeepBasicTags(dirtyHtml: string, removeImgs: boolean = false): string {
     // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
     DOMPurify.removeAllHooks();
     DOMPurify.addHook('afterSanitizeAttributes', node => {
@@ -68,7 +68,7 @@ export class Xss {
     return cleanHtml;
   }
 
-  public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string, removeImgs: boolean = false): string => {
+  public static htmlSanitizeAndStripAllTags(dirtyHtml: string, outputNl: string, removeImgs: boolean = false): string {
     let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, removeImgs);
     const random = Str.sloppyRandom(5);
     const br = `CU_BR_${random}`;
@@ -91,11 +91,11 @@ export class Xss {
     return text;
   }
 
-  public static escape = (str: string) => {
+  public static escape(str: string) {
     return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
   }
 
-  public static escapeTextAsRenderableHtml = (text: string) => {
+  public static escapeTextAsRenderableHtml(text: string) {
     return Xss.escape(text)
       .replace(/\n/g, '<br>\n') // leave newline so that following replaces work
       .replace(/^ +/gm, spaces => spaces.replace(/ /g, '&nbsp;'))
@@ -103,14 +103,14 @@ export class Xss {
       .replace(/\n/g, ''); // strip newlines, already have <br>
   }
 
-  public static htmlUnescape = (str: string) => {
+  public static htmlUnescape(str: string) {
     // the &nbsp; at the end is replaced with an actual NBSP character, not a space character. IDE won't show you the difference. Do not change.
     return str.replace(/&nbsp;/g, ' ').replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
   }
 
-  private static sanitizeHrefRegexp = () => { // allow href links that have same origin as our extension + cid
+  private static sanitizeHrefRegexp() { // allow href links that have same origin as our extension + cid
     if (typeof Xss.HREF_REGEX_CACHE === 'undefined') {
-      if (window && window.location && window.location.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
+      if (window?.location?.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
         Xss.HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|${Str.regexEscape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
       } else {
         Xss.HREF_REGEX_CACHE = /^(?:(http|https):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;

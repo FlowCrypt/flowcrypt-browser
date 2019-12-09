@@ -331,7 +331,7 @@ export class Pgp {
     },
   };
 
-  public static friendlyMsgBlockTypeName = (type: MsgBlockType) => { // todo - remove this, just use the block type string
+  public static friendlyMsgBlockTypeName(type: MsgBlockType) { // todo - remove this, just use the block type string
     return Pgp.FRIENDLY_BLOCK_TYPE_NAMES[type];
   }
 
@@ -886,7 +886,7 @@ export class PgpMsg {
    * Returns signed data if detached=false, armored
    * Returns signature if detached=true, armored
    */
-  static sign = async (signingPrv: OpenPGP.key.Key, data: string, detached = false): Promise<string> => {
+  static async sign(signingPrv: OpenPGP.key.Key, data: string, detached = false): Promise<string> {
     const message = openpgp.cleartext.fromText(data);
     const signRes = await openpgp.sign({ message, armor: true, privateKeys: [signingPrv], detached });
     if (detached) {
@@ -898,7 +898,7 @@ export class PgpMsg {
     return await openpgp.stream.readToEnd((signRes as OpenPGP.SignArmorResult).data);
   }
 
-  static verify = async (msgOrVerResults: OpenpgpMsgOrCleartext | OpenPGP.message.Verification[], pubs: OpenPGP.key.Key[], contact?: Contact): Promise<VerifyRes> => {
+  static async verify(msgOrVerResults: OpenpgpMsgOrCleartext | OpenPGP.message.Verification[], pubs: OpenPGP.key.Key[], contact?: Contact): Promise<VerifyRes> {
     const sig: VerifyRes = { contact, match: null }; // tslint:disable-line:no-null-keyword
     try {
       // While this looks like bad method API design, it's here to ensure execution order when 1) reading data, 2) verifying, 3) processing signatures
@@ -991,7 +991,7 @@ export class PgpMsg {
         options.publicKeys.push(...publicKeys);
       }
     }
-    if (pwd && pwd.answer) {
+    if (pwd?.answer) {
       options.passwords = [await Pgp.hash.challengeAnswer(pwd.answer)];
       usedChallenge = true;
     }
@@ -1026,7 +1026,7 @@ export class PgpMsg {
   /**
    * textBlockType - choose if textual block should be returned as escaped html (for direct browser rendering) or text (other platforms)
    */
-  static fmtDecryptedAsSanitizedHtmlBlocks = async (decryptedContent: Uint8Array): Promise<{ blocks: MsgBlock[], subject: string | undefined }> => {
+  static async fmtDecryptedAsSanitizedHtmlBlocks(decryptedContent: Uint8Array): Promise<{ blocks: MsgBlock[], subject: string | undefined }> {
     const blocks: MsgBlock[] = [];
     if (!Mime.resemblesMsg(decryptedContent)) {
       let utf = Buf.fromUint8(decryptedContent).toUtfStr();
@@ -1056,7 +1056,7 @@ export class PgpMsg {
     return { blocks, subject: decoded.subject };
   }
 
-  public static extractFcAtts = (decryptedContent: string, blocks: MsgBlock[]) => {
+  public static extractFcAtts(decryptedContent: string, blocks: MsgBlock[]) {
     // these tags were created by FlowCrypt exclusively, so the structure is fairly rigid
     // `<a href="${att.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`
     // thus we use RegEx so that it works on both browser and node
@@ -1072,7 +1072,7 @@ export class PgpMsg {
     return decryptedContent;
   }
 
-  public static stripPublicKeys = (decryptedContent: string, foundPublicKeys: string[]) => {
+  public static stripPublicKeys(decryptedContent: string, foundPublicKeys: string[]) {
     let { blocks, normalized } = Pgp.armor.detectBlocks(decryptedContent); // tslint:disable-line:prefer-const
     for (const block of blocks) {
       if (block.type === 'publicKey') {
@@ -1096,12 +1096,12 @@ export class PgpMsg {
 
   public static stripFcTeplyToken = (decryptedContent: string) => decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
 
-  private static isFcAttLinkData = (o: any): o is FcAttLinkData => {
+  private static isFcAttLinkData(o: any): o is FcAttLinkData {
     return o && typeof o === 'object' && typeof (o as FcAttLinkData).name !== 'undefined'
       && typeof (o as FcAttLinkData).size !== 'undefined' && typeof (o as FcAttLinkData).type !== 'undefined';
   }
 
-  private static pushArmoredPubkeysToBlocks = async (armoredPubkeys: string[], blocks: MsgBlock[]): Promise<void> => {
+  private static async pushArmoredPubkeysToBlocks(armoredPubkeys: string[], blocks: MsgBlock[]): Promise<void> {
     for (const armoredPubkey of armoredPubkeys) {
       const { keys } = await Pgp.key.parse(armoredPubkey);
       for (const keyDetails of keys) {

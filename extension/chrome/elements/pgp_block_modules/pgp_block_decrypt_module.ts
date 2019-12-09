@@ -4,8 +4,8 @@
 
 import { PgpBlockView } from '../pgp_block.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
-import { Ui } from '../../../js/common/browser.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Backend } from '../../../js/common/api/backend.js';
@@ -88,7 +88,7 @@ export class PgpBlockViewDecryptModule {
         if (this.view.hasChallengePassword && optionalPwd) {
           this.view.pwdEncryptedMsgModule.userEnteredMsgPassword = optionalPwd;
         }
-        if (result.success && result.signature && result.signature.contact && !result.signature.match && this.canReadEmails && this.msgFetchedFromApi !== 'raw') {
+        if (result.success && result.signature?.contact && !result.signature.match && this.canReadEmails && this.msgFetchedFromApi !== 'raw') {
           console.info(`re-fetching message ${this.view.msgId} from api because failed signature check: ${!this.msgFetchedFromApi ? 'full' : 'raw'}`);
           await this.initialize(true);
         } else {

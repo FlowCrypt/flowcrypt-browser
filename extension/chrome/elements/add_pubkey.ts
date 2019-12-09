@@ -4,8 +4,8 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
-import { Ui } from '../../js/common/browser.js';
-import { BrowserMsg } from '../../js/common/extension.js';
+import { Ui } from '../../js/common/browser/ui.js';
+import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Assert } from '../../js/common/assert.js';
 import { KeyImportUi, UserAlert, } from '../../js/common/ui/key_import_ui.js';
 import { AttUI } from '../../js/common/ui/att_ui.js';
@@ -76,7 +76,7 @@ View.run(class AddPubkeyView extends View {
   private async copyFromEmailHandler(fromSelect: HTMLElement) {
     if ($(fromSelect).val()) {
       const [contact] = await Store.dbContactGet(undefined, [String($(fromSelect).val())]);
-      if (contact && contact.pubkey) {
+      if (contact?.pubkey) {
         $('.pubkey').val(contact.pubkey).prop('disabled', true);
       } else {
         Catch.report('Contact unexpectedly not found when copying pubkey by email in add_pubkey.htm');
