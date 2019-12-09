@@ -746,7 +746,7 @@ export class Store {
       } else { // search primary longid
         tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(emailOrLongid);
       }
-      tx.onsuccess = Catch.try(() => resolve(tx.result)); // tslint:disable-line:no-unsafe-any
+      tx.onsuccess = Catch.try(() => resolve(tx.result || undefined)); // tslint:disable-line:no-unsafe-any
       tx.onerror = () => reject(Store.errCategorize(tx.error || new Error('Unknown db error')));
     });
   }
