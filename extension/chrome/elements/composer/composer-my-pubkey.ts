@@ -31,7 +31,7 @@ export class ComposerMyPubkey extends ComposerComponent {
     (async () => {
       const contacts = await Store.dbContactGet(undefined, this.composer.recipients.getRecipients().map(r => r.email));
       for (const contact of contacts) {
-        if (typeof contact === 'object' && contact.has_pgp && contact.client !== 'cryptup') {
+        if (contact?.has_pgp && contact.client !== 'cryptup') {
           // new message, and my key is not uploaded where the recipient would look for it
           if (! await this.composer.recipients.doesRecipientHaveMyPubkey(contact.email)) {
             // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
