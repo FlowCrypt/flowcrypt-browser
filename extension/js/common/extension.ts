@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Str, Dict, UrlParams } from './core/common.js';
+import { Str, Dict, UrlParams, Url } from './core/common.js';
 import { DiagnoseMsgPubkeysResult, DecryptResult, VerifyRes, PgpMsgTypeResult, PgpMsgMethod, KeyDetails } from './core/pgp.js';
 import { FlatTypes, GlobalIndex, GlobalStore, AccountIndex, AccountStore } from './platform/store.js';
 import { Ui, Env, Browser } from './browser.js';
@@ -158,25 +158,47 @@ export class Extension { // todo - move extension-specific common.js code here
 
 }
 
+export class BrowserMsgCommonHandlers {
+
+  // -- these few are set on every listener automatically
+
+  static async setCss(data: Bm.SetCss) {
+    let el = $(data.selector);
+    const traverseUpLevels = data.traverseUp as number || 0;
+    for (let i = 0; i < traverseUpLevels; i++) {
+      el = el.parent();
+    }
+    el.css(data.css);
+  }
+
+  static async addClass(data: Bm.AddOrRemoveClass) {
+    $(data.selector).addClass(data.class);
+  }
+
+  static async removeClass(data: Bm.AddOrRemoveClass) {
+    $(data.selector).removeClass(data.class);
+  }
+
+  // -- these below have to be set manually when appropriate
+
+  static async replyPubkeyMismatch() {
+    const replyIframe = $('iframe.reply_message').get(0) as HTMLIFrameElement | undefined;
+    if (replyIframe) {
+      const bareSrc = Url.removeParamsFromUrl(replyIframe.src, ['ignoreDraft', 'disableDraftSaving', 'draftId', 'replyPubkeyMismatch', 'skipClickPrompt']);
+      replyIframe.src = Url.create(bareSrc, { replyPubkeyMismatch: true, ignoreDraft: true, disableDraftSaving: true, draftId: '', skipClickPrompt: true });
+    }
+  }
+
+}
+
 export class BrowserMsg {
 
   public static MAX_SIZE = 1024 * 1024; // 1MB
   private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};
   private static HANDLERS_REGISTERED_FRAME: Handlers = {
-    set_css: async (data: Bm.SetCss) => {
-      let el = $(data.selector);
-      const traverseUpLevels = data.traverseUp as number || 0;
-      for (let i = 0; i < traverseUpLevels; i++) {
-        el = el.parent();
-      }
-      el.css(data.css);
-    },
-    add_class: async (data: Bm.AddOrRemoveClass) => {
-      $(data.selector).addClass(data.class);
-    },
-    remove_class: async (data: Bm.AddOrRemoveClass) => {
-      $(data.selector).removeClass(data.class);
-    }
+    set_css: BrowserMsgCommonHandlers.setCss,
+    add_class: BrowserMsgCommonHandlers.addClass,
+    remove_class: BrowserMsgCommonHandlers.removeClass,
   };
 
   public static send = { // todo - may want to organise this differently, seems to always confuse me when sending a message

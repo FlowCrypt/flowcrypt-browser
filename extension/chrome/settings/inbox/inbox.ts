@@ -10,7 +10,7 @@ import { Injector } from '../../../js/common/inject.js';
 import { Notifications } from '../../../js/common/notifications.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
-import { BrowserMsg, Bm } from '../../../js/common/extension.js';
+import { BrowserMsg, Bm, BrowserMsgCommonHandlers } from '../../../js/common/extension.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Google } from '../../../js/common/api/google.js';
@@ -136,13 +136,7 @@ Catch.try(async () => {
       appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
     }
   });
-  BrowserMsg.addListener('reply_pubkey_mismatch', async () => {
-    const replyIframe = $('iframe.reply_message').get(0) as HTMLIFrameElement | undefined;
-    if (replyIframe) {
-      const bareSrc = Url.removeParamsFromUrl(replyIframe.src, ['ignoreDraft', 'disableDraftSaving', 'draftId', 'replyPubkeyMismatch', 'skipClickPrompt']);
-      replyIframe.src = Url.create(bareSrc, { replyPubkeyMismatch: true, ignoreDraft: true, disableDraftSaving: true, draftId: '', skipClickPrompt: true });
-    }
-  });
+  BrowserMsg.addListener('reply_pubkey_mismatch', BrowserMsgCommonHandlers.replyPubkeyMismatch);
   BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
     notifications.showAuthPopupNeeded(acctEmail);
   });
