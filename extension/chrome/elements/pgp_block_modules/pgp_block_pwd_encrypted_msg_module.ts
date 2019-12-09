@@ -38,7 +38,7 @@ export class PgpBlockViewPwdEncryptedMsgModule {
 
   public async recoverStoredAdminCodes() {
     const storage = await Store.getGlobal(['admin_codes']);
-    if (this.view.short && storage.admin_codes && storage.admin_codes[this.view.short] && storage.admin_codes[this.view.short].codes) {
+    if (this.view.short && storage.admin_codes && storage.admin_codes[this.view.short]?.codes) {
       this.adminCodes = storage.admin_codes[this.view.short].codes;
     }
   }

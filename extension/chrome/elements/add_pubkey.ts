@@ -76,7 +76,7 @@ View.run(class AddPubkeyView extends View {
   private async copyFromEmailHandler(fromSelect: HTMLElement) {
     if ($(fromSelect).val()) {
       const [contact] = await Store.dbContactGet(undefined, [String($(fromSelect).val())]);
-      if (contact && contact.pubkey) {
+      if (contact?.pubkey) {
         $('.pubkey').val(contact.pubkey).prop('disabled', true);
       } else {
         Catch.report('Contact unexpectedly not found when copying pubkey by email in add_pubkey.htm');
