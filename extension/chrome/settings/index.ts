@@ -227,9 +227,9 @@ View.run(class SettingsView extends View {
     const authInfo = await Store.authInfo(this.acctEmail!);
     if (authInfo.uuid) { // have auth email set
       try {
-        const response = await Backend.accountUpdate(authInfo);
+        const response = await Backend.accountGetAndUpdateLocalStore(authInfo);
         $('#status-row #status_flowcrypt').text(`fc:ok`);
-        if (response?.result?.alias) {
+        if (response?.account?.alias) {
           statusContainer.find('.status-indicator-text').css('display', 'none');
           statusContainer.find('.status-indicator').addClass('active');
         } else {

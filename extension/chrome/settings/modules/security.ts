@@ -79,9 +79,9 @@ View.run(class SecurityView extends View {
     if (subscription.active) {
       Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
       try {
-        const response = await Backend.accountUpdate(this.authInfo!);
+        const response = await Backend.accountGetAndUpdateLocalStore(this.authInfo!);
         $('.select_loader_container').text('');
-        $('.default_message_expire').val(Number(response.result.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
+        $('.default_message_expire').val(Number(response.account.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
         $('.default_message_expire').change(this.setHandler(() => this.onDefaultExpireUserChange()));
       } catch (e) {
         if (Api.err.isAuthErr(e)) {

@@ -11,8 +11,13 @@ const backendData = new BackendData(oauth);
 
 const fwdToRealBackend = async (parsed: any, req: IncomingMessage): Promise<string> => {
   delete req.headers.host;
-  delete req.headers['content-length']
-  const forwarding = { json: parsed.body, headers: req.headers, url: `https://flowcrypt.com${req.url}` };
+  delete req.headers['content-length'];
+  const forwarding: any = { headers: req.headers, url: `https://flowcrypt.com${req.url}` };
+  if (!req.url!.includes('message/upload')) {
+    forwarding.json = parsed.body; // JSON
+  } else {
+    forwarding.body = parsed.body; // FORM-DATA
+  }
   const r = await request.post(forwarding);
   return JSON.stringify(r.body);
 };

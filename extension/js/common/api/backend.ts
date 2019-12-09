@@ -12,6 +12,7 @@ import { Att } from '../core/att.js';
 import { Ui } from '../browser/ui.js';
 import { Buf } from '../core/buf.js';
 import { DomainRules } from '../rules.js';
+import { BACKEND_API_HOST } from '../core/const.js';
 
 type SubscriptionLevel = 'pro' | null;
 type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
@@ -54,13 +55,13 @@ export class Backend extends Api {
     return Backend.apiCall(Backend.url('api'), path, vals, fmt, undefined, { 'api-version': '3', ...addHeaders });
   }
 
-  public static url(type: string, variable = '') {
+  public static url(type: string, resource = '') {
     return ({
-      'api': 'https://flowcrypt.com/api/',
-      'me': 'https://flowcrypt.com/me/' + variable,
-      'pubkey': 'https://flowcrypt.com/pub/' + variable,
-      'decrypt': 'https://flowcrypt.com/' + variable,
-      'web': 'https://flowcrypt.com/',
+      api: BACKEND_API_HOST,
+      me: `https://flowcrypt.com/me/${resource}`,
+      pubkey: `https://flowcrypt.com/pub/${resource}`,
+      decrypt: `https://flowcrypt.com/${resource}`,
+      web: 'https://flowcrypt.com/',
     } as Dict<string>)[type];
   }
 
@@ -112,7 +113,7 @@ export class Backend extends Api {
     return r;
   }
 
-  public static async accountUpdate(fcAuth: FcUuidAuth, profileUpdate: ProfileUpdate = {}): Promise<BackendRes.FcAccountUpdate> {
+  public static async accountUpdate(fcAuth: FcUuidAuth, profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> {
     Backend.throwIfMissingUuid(fcAuth);
     return await Backend.request('account/update', {
       ...fcAuth,

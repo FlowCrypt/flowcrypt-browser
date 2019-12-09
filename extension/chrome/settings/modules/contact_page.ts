@@ -51,8 +51,8 @@ View.run(class ContactPageView extends View {
   async render() {
     Xss.sanitizeRender(this.S.cached('status'), 'Loading..' + Ui.spinner('green'));
     try {
-      const response = await Backend.accountUpdate(await this.authInfoPromise);
-      this.renderFields(response.result);
+      const response = await Backend.accountGetAndUpdateLocalStore(await this.authInfoPromise);
+      this.renderFields(response.account);
     } catch (e) {
       if (Api.err.isAuthErr(e)) {
         Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => window.location.reload());
