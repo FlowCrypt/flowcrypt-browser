@@ -12,10 +12,10 @@ type Recipients = {
 
 export class ComposePageRecipe extends PageRecipe {
 
-  public static openStandalone = async (
+  public static async openStandalone(
     t: AvaContext, browser: BrowserHandle, group: CommonBrowserGroup | string, options:
       { appendUrl?: string, hasReplyPrompt?: boolean, skipClickPropt?: boolean, skipValidation?: boolean, initialScript?: EvaluateFn } = {}
-  ): Promise<ControllablePage> => {
+  ): Promise<ControllablePage> {
     if (group === 'compatibility') { // More common accounts
       group = 'flowcrypt.compatibility@gmail.com';
     } else if (group === 'compose') {
@@ -50,13 +50,13 @@ export class ComposePageRecipe extends PageRecipe {
     return composeFrame;
   }
 
-  public static fillMsg = async (
+  public static async fillMsg(
     composePageOrFrame: Controllable,
     recipients: Recipients,
     subject?: string | undefined,
     sendingOpt: { encrypt?: boolean, sign?: boolean } = {}, // undefined means leave default
     windowType: 'new' | 'reply' = 'new'
-  ) => {
+  ) {
     await Util.sleep(0.5);
     await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients, windowType);
     if (subject) {

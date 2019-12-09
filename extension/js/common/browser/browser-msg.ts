@@ -178,59 +178,61 @@ export class BrowserMsg {
     BrowserMsg.sendAwait(dest, name, bm).catch(Catch.reportErr);
   }
 
-  private static sendAwait = (destString: string | undefined, name: string, bm?: Dict<unknown>, awaitRes = false): Promise<Bm.Response> => new Promise((resolve, reject) => {
-    bm = bm || {};
-    const isBackgroundPage = Env.isBackgroundPage();
-    if (isBackgroundPage && BrowserMsg.HANDLERS_REGISTERED_BACKGROUND && typeof destString === 'undefined') { // calling from bg script to bg script: skip messaging
-      const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name];
-      handler(bm, 'background').then(resolve).catch(reject);
-    } else { // here browser messaging is used - msg has to be serializable - Buf instances need to be converted to object urls, and back upon receipt
-      const objUrls = BrowserMsg.replaceBufWithObjUrlInplace(bm);
-      const msg: Bm.Raw = { name, data: { bm, objUrls }, to: destString || null, uid: Str.sloppyRandom(10), stack: Catch.stackTrace() }; // tslint:disable-line:no-null-keyword
-      const processRawMsgResponse = (r: Bm.RawResponse) => {
-        if (!awaitRes) {
-          resolve();
-        } else if (!r || typeof r !== 'object') { // r can be null if we sent a message to a non-existent window id
-          const lastError = chrome.runtime.lastError ? chrome.runtime.lastError.message || '(empty lastError)' : '(no lastError)';
-          let e: Error;
-          if (typeof destString === 'undefined' && typeof r === 'undefined') {
-            if (lastError === 'The object could not be cloned.') {
-              e = new Error(`BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
-            } else if (lastError === 'Could not establish connection. Receiving end does not exist.' || lastError === 'The message port closed before a response was received.') {
-              // "The message port closed before a response was received." could also happen for otherwise working extension, if bg script
-              //    did not return `true` (indicating async response). That would be our own coding error in BrowserMsg.
-              e = new BgNotReadyError(`BgNotReadyError: BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
+  private static sendAwait(destString: string | undefined, name: string, bm?: Dict<unknown>, awaitRes = false): Promise<Bm.Response> {
+    return new Promise((resolve, reject) => {
+      bm = bm || {};
+      const isBackgroundPage = Env.isBackgroundPage();
+      if (isBackgroundPage && BrowserMsg.HANDLERS_REGISTERED_BACKGROUND && typeof destString === 'undefined') { // calling from bg script to bg script: skip messaging
+        const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name];
+        handler(bm, 'background').then(resolve).catch(reject);
+      } else { // here browser messaging is used - msg has to be serializable - Buf instances need to be converted to object urls, and back upon receipt
+        const objUrls = BrowserMsg.replaceBufWithObjUrlInplace(bm);
+        const msg: Bm.Raw = { name, data: { bm, objUrls }, to: destString || null, uid: Str.sloppyRandom(10), stack: Catch.stackTrace() }; // tslint:disable-line:no-null-keyword
+        const processRawMsgResponse = (r: Bm.RawResponse) => {
+          if (!awaitRes) {
+            resolve();
+          } else if (!r || typeof r !== 'object') { // r can be null if we sent a message to a non-existent window id
+            const lastError = chrome.runtime.lastError ? chrome.runtime.lastError.message || '(empty lastError)' : '(no lastError)';
+            let e: Error;
+            if (typeof destString === 'undefined' && typeof r === 'undefined') {
+              if (lastError === 'The object could not be cloned.') {
+                e = new Error(`BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
+              } else if (lastError === 'Could not establish connection. Receiving end does not exist.' || lastError === 'The message port closed before a response was received.') {
+                // "The message port closed before a response was received." could also happen for otherwise working extension, if bg script
+                //    did not return `true` (indicating async response). That would be our own coding error in BrowserMsg.
+                e = new BgNotReadyError(`BgNotReadyError: BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
+              } else {
+                e = new Error(`BrowserMsg.sendAwait(${name}) failed with unknown lastError: ${lastError}`);
+              }
             } else {
-              e = new Error(`BrowserMsg.sendAwait(${name}) failed with unknown lastError: ${lastError}`);
+              e = new Error(`BrowserMsg.sendAwait(${name}) returned(${String(r)}) with lastError: ${lastError}`);
             }
+            e.stack = `${msg.stack}\n\n${e.stack}`;
+            reject(e);
+          } else if (typeof r === 'object' && r.exception) {
+            reject(BrowserMsg.jsonToErr(r.exception, msg));
+          } else if (!r.result || typeof r.result !== 'object') {
+            resolve(r.result);
           } else {
-            e = new Error(`BrowserMsg.sendAwait(${name}) returned(${String(r)}) with lastError: ${lastError}`);
+            BrowserMsg.replaceObjUrlWithBuf(r.result, r.objUrls).then(resolve).catch(reject);
           }
-          e.stack = `${msg.stack}\n\n${e.stack}`;
-          reject(e);
-        } else if (typeof r === 'object' && r.exception) {
-          reject(BrowserMsg.jsonToErr(r.exception, msg));
-        } else if (!r.result || typeof r.result !== 'object') {
-          resolve(r.result);
-        } else {
-          BrowserMsg.replaceObjUrlWithBuf(r.result, r.objUrls).then(resolve).catch(reject);
-        }
-      };
-      try {
-        if (isBackgroundPage) {
-          chrome.tabs.sendMessage(BrowserMsg.browserMsgDestParse(msg.to).tab!, msg, {}, processRawMsgResponse);
-        } else {
-          chrome.runtime.sendMessage(msg, processRawMsgResponse);
-        }
-      } catch (e) {
-        if (e instanceof Error && e.message === 'Extension context invalidated.') {
-          BrowserMsg.showFatalUserNotification('Restart browser to re-enable FlowCrypt');
-        } else {
-          throw e;
+        };
+        try {
+          if (isBackgroundPage) {
+            chrome.tabs.sendMessage(BrowserMsg.browserMsgDestParse(msg.to).tab!, msg, {}, processRawMsgResponse);
+          } else {
+            chrome.runtime.sendMessage(msg, processRawMsgResponse);
+          }
+        } catch (e) {
+          if (e instanceof Error && e.message === 'Extension context invalidated.') {
+            BrowserMsg.showFatalUserNotification('Restart browser to re-enable FlowCrypt');
+          } else {
+            throw e;
+          }
         }
       }
-    }
-  })
+    });
+  }
 
   public static showFatalUserNotification(message: string) {
     const div = document.createElement('div');
@@ -325,7 +327,7 @@ export class BrowserMsg {
     return e;
   }
 
-  private static sendRawResponse = (handlerPromise: Promise<Bm.Res.Any>, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
+  private static sendRawResponse(handlerPromise: Promise<Bm.Res.Any>, rawRespond: (rawResponse: Bm.RawResponse) => void) {
     handlerPromise.then(result => {
       const objUrls = BrowserMsg.replaceBufWithObjUrlInplace(result); // this actually changes the result object
       rawRespond({ result, exception: undefined, objUrls });

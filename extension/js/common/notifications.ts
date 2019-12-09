@@ -49,7 +49,7 @@ export class Notifications {
     $('.webmail_notifications').text('');
   }
 
-  show = (text: string, callbacks: Dict<() => void> = {}) => {
+  show(text: string, callbacks: Dict<() => void> = {}) {
     Xss.sanitizeRender('.webmail_notifications', `<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
     if (typeof callbacks.close !== 'undefined') {
       const origCloseCb = callbacks.close;

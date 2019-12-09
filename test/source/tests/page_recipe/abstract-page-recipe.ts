@@ -24,9 +24,9 @@ export abstract class PageRecipe {
   /**
    * responding to modal triggers a new page to be open, eg oauth login page
    */
-  public static waitForModalGetTriggeredPageAfterResponding = async (
+  public static async waitForModalGetTriggeredPageAfterResponding(
     cookieAcct: string, t: AvaContext, browser: BrowserHandle, controllable: ControllablePage, type: ModalType, modalOpts: ModalOpts
-  ): Promise<ControllablePage> => {
+  ): Promise<ControllablePage> {
     return await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(controllable, type, modalOpts), cookieAcct);
   }
 

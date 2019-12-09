@@ -30,18 +30,20 @@ export class BgUtils {
     }
   }
 
-  public static getFcSettingsTabIdIfOpen = (): Promise<number | undefined> => new Promise(resolve => {
-    chrome.tabs.query({ currentWindow: true }, tabs => {
-      const extensionUrl = chrome.runtime.getURL('/');
-      for (const tab of tabs) {
-        if (tab.url && tab.url.includes(extensionUrl)) {
-          resolve(tab.id);
-          return;
+  public static getFcSettingsTabIdIfOpen(): Promise<number | undefined> {
+    return new Promise(resolve => {
+      chrome.tabs.query({ currentWindow: true }, tabs => {
+        const extensionUrl = chrome.runtime.getURL('/');
+        for (const tab of tabs) {
+          if (tab.url && tab.url.includes(extensionUrl)) {
+            resolve(tab.id);
+            return;
+          }
         }
-      }
-      resolve(undefined);
+        resolve(undefined);
+      });
     });
-  })
+  }
 
   public static async handleStoreErr(e: any, reason?: 'storage_undefined' | 'db_corrupted' | 'db_denied' | 'db_failed') {
     if (!reason) {

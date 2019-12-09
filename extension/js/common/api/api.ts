@@ -268,24 +268,26 @@ export class Api {
     },
   };
 
-  public static download = (url: string, progress?: ProgressCb): Promise<Buf> => new Promise((resolve, reject) => {
-    const request = new XMLHttpRequest();
-    request.open('GET', url, true);
-    request.responseType = 'arraybuffer';
-    if (typeof progress === 'function') {
-      request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total);
-    }
-    request.onerror = progressEvent => {
-      if (!progressEvent.target) {
-        reject(new Error(`Api.download(${url}) failed with a null progressEvent.target`));
-      } else {
-        const { readyState, status, statusText } = progressEvent.target as XMLHttpRequest;
-        reject(AjaxErr.fromXhr({ readyState, status, statusText }, { url, method: 'GET' }, Catch.stackTrace()));
+  public static download(url: string, progress?: ProgressCb): Promise<Buf> {
+    return new Promise((resolve, reject) => {
+      const request = new XMLHttpRequest();
+      request.open('GET', url, true);
+      request.responseType = 'arraybuffer';
+      if (typeof progress === 'function') {
+        request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total);
       }
-    };
-    request.onload = e => resolve(new Buf(request.response as ArrayBuffer));
-    request.send();
-  })
+      request.onerror = progressEvent => {
+        if (!progressEvent.target) {
+          reject(new Error(`Api.download(${url}) failed with a null progressEvent.target`));
+        } else {
+          const { readyState, status, statusText } = progressEvent.target as XMLHttpRequest;
+          reject(AjaxErr.fromXhr({ readyState, status, statusText }, { url, method: 'GET' }, Catch.stackTrace()));
+        }
+      };
+      request.onload = e => resolve(new Buf(request.response as ArrayBuffer));
+      request.send();
+    });
+  }
 
   public static async ajax(req: JQueryAjaxSettings, stack: string): Promise<any | JQuery.jqXHR<any>> {
     if (Env.isContentScript()) {
@@ -316,7 +318,7 @@ export class Api {
     }
   }
 
-  public static getAjaxProgressXhrFactory = (progressCbs?: ProgressCbs): (() => XMLHttpRequest) | undefined => {
+  public static getAjaxProgressXhrFactory(progressCbs?: ProgressCbs): (() => XMLHttpRequest) | undefined {
     if (Env.isContentScript() || Env.isBackgroundPage() || !progressCbs || !Object.keys(progressCbs).length) {
       // xhr object would cause 'The object could not be cloned.' lastError during BrowserMsg passing
       // thus no progress callbacks in bg or content scripts

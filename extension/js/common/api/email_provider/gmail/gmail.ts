@@ -381,7 +381,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return uniqueNewValidResults;
   }
 
-  private apiGmailLoopThroughEmailsToCompileContacts = async (query: string, chunkedCb: (r: ProviderContactsResults) => void) => {
+  private async apiGmailLoopThroughEmailsToCompileContacts(query: string, chunkedCb: (r: ProviderContactsResults) => void) {
     const allResults: Contact[] = [];
     const allRawEmails: string[] = [];
     let lastFilteredQuery = '';

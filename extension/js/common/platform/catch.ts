@@ -176,15 +176,17 @@ export class Catch {
     return v && typeof v === 'object' && typeof (v as Promise<any>).then === 'function' && typeof (v as Promise<any>).catch === 'function';
   }
 
-  public static try = (code: Function) => () => { // tslint:disable-line:ban-types // returns a function
-    try {
-      const r = code();
-      if (Catch.isPromise(r)) {
-        r.catch(Catch.reportErr);
+  public static try(code: Function) { // tslint:disable-line:ban-types
+    return () => { // returns a function
+      try {
+        const r = code();
+        if (Catch.isPromise(r)) {
+          r.catch(Catch.reportErr);
+        }
+      } catch (codeErr) {
+        Catch.reportErr(codeErr);
       }
-    } catch (codeErr) {
-      Catch.reportErr(codeErr);
-    }
+    };
   }
 
   public static browser() {  // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
@@ -270,11 +272,11 @@ export class Catch {
     }
   }
 
-  public static setHandledInterval = (cb: () => void, ms: number): number => {
+  public static setHandledInterval(cb: () => void, ms: number): number {
     return window.setInterval(Catch.try(cb), ms); // error-handled: else setInterval will silently swallow errors
   }
 
-  public static setHandledTimeout = (cb: () => void, ms: number): number => {
+  public static setHandledTimeout(cb: () => void, ms: number): number {
     return window.setTimeout(Catch.try(cb), ms); // error-handled: else setTimeout will silently swallow errors
   }
 

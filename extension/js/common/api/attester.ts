@@ -12,7 +12,7 @@ export class Attester extends Api {
     return Api.apiCall('https://flowcrypt.com/attester/', path, values, 'JSON', undefined, { 'api-version': '3' }, 'json', method);
   }
 
-  private static pubCall = (resource: string, method: ReqMethod = 'GET', data?: string | undefined): Promise<{ responseText: string, getResponseHeader: (n: string) => string | null }> => {
+  private static pubCall(resource: string, method: ReqMethod = 'GET', data?: string | undefined): Promise<{ responseText: string, getResponseHeader: (n: string) => string | null }> {
     return Api.apiCall('https://flowcrypt.com/attester/', resource, data, typeof data === 'string' ? 'TEXT' : undefined, undefined, undefined, 'xhr', method);
   }
 

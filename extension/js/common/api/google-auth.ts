@@ -141,15 +141,17 @@ export class GoogleAuth {
     return await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('openid'), save: false });
   }
 
-  private static waitForOauthWindowClosed = (oauthWinId: number, acctEmail: string | undefined): Promise<AuthRes> => new Promise(resolve => {
-    const onOauthWinClosed = (closedWinId: number) => {
-      if (closedWinId === oauthWinId) {
-        chrome.windows.onRemoved.removeListener(onOauthWinClosed);
-        resolve({ result: 'Closed', acctEmail, id_token: undefined });
-      }
-    };
-    chrome.windows.onRemoved.addListener(onOauthWinClosed);
-  })
+  private static waitForOauthWindowClosed(oauthWinId: number, acctEmail: string | undefined): Promise<AuthRes> {
+    return new Promise(resolve => {
+      const onOauthWinClosed = (closedWinId: number) => {
+        if (closedWinId === oauthWinId) {
+          chrome.windows.onRemoved.removeListener(onOauthWinClosed);
+          resolve({ result: 'Closed', acctEmail, id_token: undefined });
+        }
+      };
+      chrome.windows.onRemoved.addListener(onOauthWinClosed);
+    });
+  }
 
   private static processOauthResTitle(title: string): { result: GoogleAuthWindowResult$result, code?: string, error?: string, csrf?: string } {
     const parts = title.split(' ', 2);

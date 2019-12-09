@@ -117,39 +117,41 @@ export class Settings {
     return result.isAliasesChanged || result.isDefaultEmailChanged || result.isFooterChanged ? { ...result } : undefined;
   }
 
-  static acctStorageReset = (acctEmail: string) => new Promise((resolve, reject) => {
-    if (!acctEmail) {
-      throw new Error('Missing account_email to reset');
-    }
-    Store.acctEmailsGet().then(acctEmails => {
-      if (!acctEmails.includes(acctEmail)) {
-        throw new Error(`"${acctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
+  static acctStorageReset(acctEmail: string) {
+    return new Promise((resolve, reject) => {
+      if (!acctEmail) {
+        throw new Error('Missing account_email to reset');
       }
-      const storageIndexesToRemove: string[] = [];
-      const filter = Store.singleScopeRawIndex(acctEmail, '');
-      if (!filter) {
-        throw new Error('Filter is empty for account_email"' + acctEmail + '"');
-      }
-      chrome.storage.local.get(async storage => {
-        try {
-          for (const storageIndex of Object.keys(storage)) {
-            if (storageIndex.indexOf(filter) === 0) {
-              storageIndexesToRemove.push(storageIndex.replace(filter, ''));
-            }
-          }
-          await Store.remove(acctEmail, storageIndexesToRemove);
-          for (const sessionStorageIndex of Object.keys(sessionStorage)) {
-            if (sessionStorageIndex.indexOf(filter) === 0) {
-              sessionStorage.removeItem(sessionStorageIndex);
-            }
-          }
-          resolve();
-        } catch (e) {
-          reject(e);
+      Store.acctEmailsGet().then(acctEmails => {
+        if (!acctEmails.includes(acctEmail)) {
+          throw new Error(`"${acctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
         }
-      });
-    }, reject);
-  })
+        const storageIndexesToRemove: string[] = [];
+        const filter = Store.singleScopeRawIndex(acctEmail, '');
+        if (!filter) {
+          throw new Error('Filter is empty for account_email"' + acctEmail + '"');
+        }
+        chrome.storage.local.get(async storage => {
+          try {
+            for (const storageIndex of Object.keys(storage)) {
+              if (storageIndex.indexOf(filter) === 0) {
+                storageIndexesToRemove.push(storageIndex.replace(filter, ''));
+              }
+            }
+            await Store.remove(acctEmail, storageIndexesToRemove);
+            for (const sessionStorageIndex of Object.keys(sessionStorage)) {
+              if (sessionStorageIndex.indexOf(filter) === 0) {
+                sessionStorage.removeItem(sessionStorageIndex);
+              }
+            }
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
+        });
+      }, reject);
+    });
+  }
 
   static async acctStorageChangeEmail(oldAcctEmail: string, newAcctEmail: string) {
     if (!oldAcctEmail || !newAcctEmail || !Str.isEmailValid(newAcctEmail)) {
@@ -269,7 +271,7 @@ export class Settings {
     });
   }
 
-  static promptToRetry = async (type: 'REQUIRED', lastErr: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
+  static async promptToRetry(type: 'REQUIRED', lastErr: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> {
     let userErrMsg = `${userMsg} ${Api.err.eli5(lastErr)}`;
     if (lastErr instanceof ApiErrResponse && lastErr.res.error.code === 400) {
       userErrMsg = `${userMsg}, ${lastErr.res.error.message}`; // this will make reason for err 400 obvious to user, very important for our main customer

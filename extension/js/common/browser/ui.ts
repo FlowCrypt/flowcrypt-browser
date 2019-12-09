@@ -70,34 +70,44 @@ export class Ui {
     });
   }
 
-  public static escape = (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
-    if (!e.metaKey && !e.ctrlKey && e.key === 'Escape') {
-      callback();
-    }
+  public static escape(callback: () => void) {
+    return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+      if (!e.metaKey && !e.ctrlKey && e.key === 'Escape') {
+        callback();
+      }
+    };
   }
 
-  public static tab = (callback: (e: JQuery.Event<HTMLElement>) => void) => (e: JQuery.Event<HTMLElement>) => { // returns a function
-    if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.key === 'Tab') {
-      callback(e);
-    }
+  public static tab(callback: (e: JQuery.Event<HTMLElement>) => void) {
+    return (e: JQuery.Event<HTMLElement>) => { // returns a function
+      if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.key === 'Tab') {
+        callback(e);
+      }
+    };
   }
 
-  public static shiftTab = (callback: (e: JQuery.Event<HTMLElement>) => void) => (e: JQuery.Event<HTMLElement>) => { // returns a function
-    if (!e.metaKey && !e.ctrlKey && e.shiftKey && e.key === 'Tab') {
-      callback(e);
-    }
+  public static shiftTab(callback: (e: JQuery.Event<HTMLElement>) => void) {
+    return (e: JQuery.Event<HTMLElement>) => { // returns a function
+      if (!e.metaKey && !e.ctrlKey && e.shiftKey && e.key === 'Tab') {
+        callback(e);
+      }
+    };
   }
 
-  public static enter = (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
-    if (!e.metaKey && !e.ctrlKey && e.key === 'Enter') {
-      callback();
-    }
+  public static enter(callback: () => void) {
+    return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+      if (!e.metaKey && !e.ctrlKey && e.key === 'Enter') {
+        callback();
+      }
+    };
   }
 
-  public static ctrlEnter = (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-      callback();
-    }
+  public static ctrlEnter(callback: () => void) {
+    return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        callback();
+      }
+    };
   }
 
   public static setTestState(state: 'ready' | 'working' | 'waiting') {

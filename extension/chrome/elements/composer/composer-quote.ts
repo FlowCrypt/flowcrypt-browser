@@ -29,7 +29,7 @@ export class ComposerQuote extends ComposerComponent {
     // No need
   }
 
-  public addTripleDotQuoteExpandBtn = async (msgId: string | undefined, method?: ('reply' | 'forward'), footer?: string) => {
+  public async addTripleDotQuoteExpandBtn(msgId: string | undefined, method?: ('reply' | 'forward'), footer?: string) {
     if (!this.messageToReplyOrForward && msgId && method) {
       this.composer.S.cached('icon_show_prev_msg').addClass('progress');
       Xss.sanitizeAppend(this.composer.S.cached('icon_show_prev_msg'), '<div id="loader">0%</div>');

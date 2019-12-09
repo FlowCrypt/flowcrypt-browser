@@ -645,22 +645,24 @@ export class Store {
     }
   }
 
-  static dbContactSave = (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => new Promise((resolve, reject) => {
-    if (!db) { // relay op through background process
-      // todo - currently will silently swallow errors
-      BrowserMsg.send.bg.await.db({ f: 'dbContactSave', args: [contact] }).then(resolve).catch(Catch.reportErr);
-    } else {
-      if (Array.isArray(contact)) {
-        Promise.all(contact.map(oneContact => Store.dbContactSave(db, oneContact))).then(() => resolve(), reject);
+  static dbContactSave(db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!db) { // relay op through background process
+        // todo - currently will silently swallow errors
+        BrowserMsg.send.bg.await.db({ f: 'dbContactSave', args: [contact] }).then(resolve).catch(Catch.reportErr);
       } else {
-        const tx = db.transaction('contacts', 'readwrite');
-        const contactsTable = tx.objectStore('contacts');
-        contactsTable.put(contact);
-        tx.oncomplete = () => resolve();
-        tx.onabort = () => reject(Store.errCategorize(tx.error));
+        if (Array.isArray(contact)) {
+          Promise.all(contact.map(oneContact => Store.dbContactSave(db, oneContact))).then(() => resolve(), reject);
+        } else {
+          const tx = db.transaction('contacts', 'readwrite');
+          const contactsTable = tx.objectStore('contacts');
+          contactsTable.put(contact);
+          tx.oncomplete = () => resolve();
+          tx.onabort = () => reject(Store.errCategorize(tx.error));
+        }
       }
-    }
-  })
+    });
+  }
 
   static dbContactUpdate(db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> {
     return new Promise((resolve, reject) => {

@@ -108,7 +108,7 @@ export class BrowserPool {
     }
   }
 
-  public getPooledBrowser = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext) => {
+  public async getPooledBrowser(cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext) {
     const browser = await this.openOrReuseBrowser(t);
     try {
       await cb(t, browser);
@@ -118,10 +118,12 @@ export class BrowserPool {
     }
   }
 
-  public cbWithTimeout = (cb: () => Promise<void>, timeout: number): Promise<void> => new Promise((resolve, reject) => {
-    setTimeout(() => reject(new TimeoutError(`Test timed out after ${timeout}ms`)), timeout); // reject in
-    cb().then(resolve, reject);
-  })
+  public cbWithTimeout(cb: () => Promise<void>, timeout: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => reject(new TimeoutError(`Test timed out after ${timeout}ms`)), timeout); // reject in
+      cb().then(resolve, reject);
+    });
+  }
 
   private processTestError(err: any, t: AvaContext, attemptHtmls: string[]) {
     t.retry = undefined;
@@ -154,7 +156,7 @@ export class BrowserPool {
     }
   }
 
-  public withNewBrowserTimeoutAndRetry = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext, consts: Consts) => {
+  public async withNewBrowserTimeoutAndRetry(cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext, consts: Consts) {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const attemptDebugHtmls: string[] = [];
     t.totalAttempts = consts.ATTEMPTS;
@@ -183,7 +185,7 @@ export class BrowserPool {
     }
   }
 
-  public withGlobalBrowserTimeoutAndRetry = async (browser: BrowserHandle, cb: (t: AvaContext, b: BrowserHandle) => void, t: AvaContext, consts: Consts) => {
+  public async withGlobalBrowserTimeoutAndRetry(browser: BrowserHandle, cb: (t: AvaContext, b: BrowserHandle) => void, t: AvaContext, consts: Consts) {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const attemptDebugHtmls: string[] = [];
     t.totalAttempts = consts.ATTEMPTS;

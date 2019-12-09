@@ -51,11 +51,11 @@ export class SetupPageRecipe extends PageRecipe {
   }
 
   // tslint:disable-next-line:max-line-length
-  public static manualEnter = async (
+  public static async manualEnter(
     settingsPage: ControllablePage,
     keyTitle: string,
     { usedPgpBefore = false, submitPubkey = false, fixKey = false, naked = false, genPp = false, simulateRetryOffline = false }: ManualEnterOpts = {}
-  ) => {
+  ) {
     const k = Config.key(keyTitle);
     if (usedPgpBefore) {
       await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-enter', { retryErrs: true });

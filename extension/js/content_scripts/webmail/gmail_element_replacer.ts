@@ -124,7 +124,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private addfcConvoIcon = (containerSel: JQueryEl, iconHtml: string, iconSel: string, onClick: () => void) => {
+  private addfcConvoIcon(containerSel: JQueryEl, iconHtml: string, iconSel: string, onClick: () => void) {
     containerSel.addClass('appended').children('.use_secure_reply, .show_original_conversation').remove(); // remove previous FlowCrypt buttons, if any
     Xss.sanitizeAppend(containerSel, iconHtml).children(iconSel).off().click(Ui.event.prevent('double', Catch.try(onClick)));
   }

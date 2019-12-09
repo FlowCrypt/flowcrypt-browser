@@ -485,7 +485,7 @@ export class ComposerRecipients extends ComposerComponent {
     await this.evaluateRecipients(newRecipients, triggerCallback);
   }
 
-  public deleteRecipientsBySendingType = (types: ('to' | 'cc' | 'bcc')[]) => {
+  public deleteRecipientsBySendingType(types: ('to' | 'cc' | 'bcc')[]) {
     for (const recipient of this.addedRecipients.filter(r => types.includes(r.sendingType))) {
       this.removeRecipient(recipient.element);
     }
@@ -811,7 +811,7 @@ export class ComposerRecipients extends ComposerComponent {
     }
   }
 
-  public onRecipientAdded = (callback: (rec: RecipientElement[]) => void) => {
+  public onRecipientAdded(callback: (rec: RecipientElement[]) => void) {
     this.onRecipientAddedCallbacks.push(callback);
   }
 

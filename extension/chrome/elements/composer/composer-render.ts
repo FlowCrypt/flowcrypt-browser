@@ -152,16 +152,18 @@ export class ComposerRender extends ComposerComponent {
     this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-sign-sending-option'), 'sign', false); // don't sign
   }
 
-  private getFocusableEls = () => this.composer.S.cached('compose_table').find('[tabindex]:not([tabindex="-1"]):visible').toArray().sort((a, b) => {
-    const tabindexA = parseInt(a.getAttribute('tabindex') || '');
-    const tabindexB = parseInt(b.getAttribute('tabindex') || '');
-    if (tabindexA > tabindexB) { // sort according to tabindex
-      return 1;
-    } else if (tabindexA < tabindexB) {
-      return -1;
-    }
-    return 0;
-  })
+  private getFocusableEls() {
+    return this.composer.S.cached('compose_table').find('[tabindex]:not([tabindex="-1"]):visible').toArray().sort((a, b) => {
+      const tabindexA = parseInt(a.getAttribute('tabindex') || '');
+      const tabindexB = parseInt(b.getAttribute('tabindex') || '');
+      if (tabindexA > tabindexB) { // sort according to tabindex
+        return 1;
+      } else if (tabindexA < tabindexB) {
+        return -1;
+      }
+      return 0;
+    });
+  }
 
   private async renderComposeTable() {
     this.composer.errs.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
