@@ -1,5 +1,7 @@
 <div>
 
+version 7.3.6 on Dec 9, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/373?closed=1" target="_blank">Fix reply pubkey mismatch</a>
+
 version 7.3.5 on Dec 8, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/372?closed=1" target="_blank">Refactor setup and compose</a>
 
 version 7.3.4 on Dec 7, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/371?closed=1" target="_blank">Fix unwanted drafts</a>
