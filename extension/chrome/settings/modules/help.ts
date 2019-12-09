@@ -5,8 +5,8 @@
 import { VERSION } from '../../../js/common/core/const.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Str, Url } from '../../../js/common/core/common.js';
-import { Ui } from '../../../js/common/browser.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Backend } from '../../../js/common/api/backend.js';
 import { Assert } from '../../../js/common/assert.js';

@@ -3,8 +3,8 @@
 'use strict';
 
 import { Store } from '../../../js/common/platform/store.js';
-import { Ui } from '../../../js/common/browser.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Lang } from '../../../js/common/lang.js';
@@ -40,11 +40,7 @@ View.run(class TestPassphrase extends View {
 
   setHandlers() {
     $('.action_verify').click(this.setHandler(() => this.verifyHandler()));
-    $('#password').keydown(this.setHandler((el, ev) => {
-      if (ev.which === 13) {
-        $('.action_verify').click();
-      }
-    }));
+    $('#password').keydown(this.setEnterHandlerThatClicks('.action_verify'));
     $('.action_change_passphrase').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm')));
   }
 

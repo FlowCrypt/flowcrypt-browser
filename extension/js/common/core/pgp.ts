@@ -991,7 +991,7 @@ export class PgpMsg {
         options.publicKeys.push(...publicKeys);
       }
     }
-    if (pwd && pwd.answer) {
+    if (pwd?.answer) {
       options.passwords = [await Pgp.hash.challengeAnswer(pwd.answer)];
       usedChallenge = true;
     }

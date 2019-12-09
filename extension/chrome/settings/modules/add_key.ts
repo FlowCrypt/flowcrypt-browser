@@ -5,11 +5,11 @@
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Value, Url } from '../../../js/common/core/common.js';
-import { Ui } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Api } from '../../../js/common/api/api.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
-import { Google } from '../../../js/common/api/google.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Gmail } from './../../../js/common/api/email_provider/gmail/gmail.js';
 import { Assert } from '../../../js/common/assert.js';
 import { KeyImportUi, UserAlert, KeyCanBeFixed } from '../../../js/common/ui/key_import_ui.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
@@ -21,12 +21,14 @@ View.run(class AddKeyView extends View {
   private readonly acctEmail: string;
   private readonly parentTabId: string;
   private readonly keyImportUi = new KeyImportUi({ rejectKnown: true });
+  private readonly gmail: Gmail;
 
   constructor() {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+    this.gmail = new Gmail(this.acctEmail);
   }
 
   async render() {
@@ -40,11 +42,7 @@ View.run(class AddKeyView extends View {
 
   setHandlers() {
     $('.action_add_private_key').click(this.setHandlerPrevent('double', this.addPrivateKeyHandler));
-    $('#input_passphrase').keydown(this.setHandler((el, ev) => {
-      if (ev.which === 13) {
-        $('.action_add_private_key').click();
-      }
-    }));
+    $('#input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_add_private_key'));
   }
 
   private async loadAndRenderKeyBackupsOrRenderError() {
@@ -52,7 +50,7 @@ View.run(class AddKeyView extends View {
     const privateKeysLongIds = keyInfos.map(ki => ki.longid);
     let keyBackups: OpenPGP.key.Key[] | undefined;
     try {
-      keyBackups = await Google.gmail.fetchKeyBackups(this.acctEmail);
+      keyBackups = await this.gmail.fetchKeyBackups();
       if (keyBackups.length) {
         const notImportedBackupLongids: string[] = [];
         for (const longid of Value.arr.unique(await Promise.all(keyBackups.map(Pgp.key.longid)))) {

@@ -3,10 +3,11 @@
 'use strict';
 
 import { Store } from '../platform/store.js';
-import { Env, Ui } from '../browser.js';
 import { Catch } from '../platform/catch.js';
-import { ContentScriptWindow } from '../extension.js';
 import { Url } from '../core/common.js';
+import { Env } from '../browser/env.js';
+import { ContentScriptWindow } from '../browser/browser-window.js';
+import { Ui } from '../browser/ui.js';
 
 export const handleFatalErr = (reason: 'storage_undefined', error: Error) => {
   try {
@@ -52,6 +53,14 @@ export const storageLocalGet = (keys: string[]): Promise<Object> => new Promise(
         reject(new Error(`storageLocalGet(${keys.join(',')}) produced undefined result without an error`));
       }
     });
+  }
+});
+
+export const storageLocalGetAll = (): Promise<{ [key: string]: any }> => new Promise((resolve) => {
+  if (typeof chrome.storage === 'undefined') {
+    handleFatalErr('storage_undefined', new Error('storage is undefined'));
+  } else {
+    chrome.storage.local.get(resolve);
   }
 });
 

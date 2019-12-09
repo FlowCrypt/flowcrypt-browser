@@ -17,6 +17,7 @@ export const Lang = { // tslint:disable-line:variable-name
     failedToCheckAccountBackups: 'Failed to check for account backups. ',
     failedToSubmitToAttester: 'Failed to submit to Attester. ',
     failedToBackUpKey: 'Failed to back up your key. ',
+    failedToLoadEmailAliases: 'Failed to load your email aliases. ',
     cannotLocateBackupPasteManually: 'FlowCrypt can\'t locate your backup automatically.</div><div class="line">Find "Your FlowCrypt Backup" email, open the attachment, copy all text and paste it below.',
     confirmSkipRecovery: 'Your account will be set up for encryption again, but your previous encrypted emails will be unreadable. You will need to inform your encrypted contacts that you have a new key. Regular email will not be affected. Are you sure?',
     nBackupsAlreadyRecoveredOrLeft: (nGot: number, nBups: number, txtTeft: string) => `You successfully recovered ${nGot} of ${nBups} backups. There ${txtTeft} left.<br><br>Try a different pass phrase to unlock all backups.`,

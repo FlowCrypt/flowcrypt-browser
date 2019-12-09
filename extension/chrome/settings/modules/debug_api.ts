@@ -3,30 +3,33 @@
 'use strict';
 
 import { Dict, Url } from '../../../js/common/core/common.js';
-import { Google } from '../../../js/common/api/google.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { View } from '../../../js/common/view.js';
+import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
 
 View.run(class DebugApiView extends View {
+
   private readonly acctEmail: string;
   private readonly which: string;
+  private readonly gmail: Gmail;
 
   constructor() {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'which']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.which = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'which', ['google_account', 'flowcrypt_account', 'flowcrypt_subscription', 'local_store']);
+    this.gmail = new Gmail(this.acctEmail);
   }
 
   async render() {
     if (this.which === 'google_account') {
       try {
-        const r = await Google.gmail.fetchAcctAliases(this.acctEmail);
-        this.renderCallRes('gmail.fetchAcctAliases', { acctEmail: this.acctEmail }, r);
+        const r = await this.gmail.fetchAcctAliases();
+        this.renderCallRes('gmail.fetchAcctAliases', {}, r);
       } catch (e) {
-        this.renderCallRes('gmail.fetchAcctAliases', { acctEmail: this.acctEmail }, undefined, e);
+        this.renderCallRes('gmail.fetchAcctAliases', {}, undefined, e);
       }
       this.renderCallRes('Store.getAcct.openid', { acctEmail: this.acctEmail }, await Store.getAcct(this.acctEmail, ['openid']));
     } else if (this.which === 'flowcrypt_account') {

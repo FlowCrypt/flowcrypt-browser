@@ -4,7 +4,7 @@
 
 import { Store } from '../../js/common/platform/store.js';
 import { Str, Url } from '../../js/common/core/common.js';
-import { Ui } from '../../js/common/browser.js';
+import { Ui } from '../../js/common/browser/ui.js';
 import { Lang } from '../../js/common/lang.js';
 import { Buf } from '../../js/common/core/buf.js';
 import { Assert } from '../../js/common/assert.js';
@@ -16,6 +16,7 @@ import { PgpBlockViewQuoteModule } from './pgp_block_modules/pgp_block_quote_mod
 import { PgpBlockViewErrorModule } from './pgp_block_modules/pgp_block_error_module.js';
 import { PgpBlockViewRenderModule } from './pgp_block_modules/pgp_block_render_module.js';
 import { PgpBlockViewDecryptModule } from './pgp_block_modules/pgp_block_decrypt_module.js';
+import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
 
 export class PgpBlockView extends View {
 
@@ -29,6 +30,8 @@ export class PgpBlockView extends View {
   public readonly msgId: string | undefined;
   public readonly encryptedMsgUrlParam: Buf | undefined;
   public signature: string | boolean | undefined; // when supplied with "true", decryptModule will replace this with actual signature data
+
+  public gmail: Gmail;
 
   public readonly attachmentsModule: PgpBlockViewAttachmentsModule;
   public readonly signatureModule: PgpBlockViewSignatureModule;
@@ -53,6 +56,7 @@ export class PgpBlockView extends View {
     this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
     this.encryptedMsgUrlParam = uncheckedUrlParams.message ? Buf.fromUtfStr(Assert.urlParamRequire.string(uncheckedUrlParams, 'message')) : undefined;
     this.signature = uncheckedUrlParams.signature === true ? true : (uncheckedUrlParams.signature ? String(uncheckedUrlParams.signature) : undefined);
+    this.gmail = new Gmail(this.acctEmail);
     // modules
     this.attachmentsModule = new PgpBlockViewAttachmentsModule(this);
     this.signatureModule = new PgpBlockViewSignatureModule(this);

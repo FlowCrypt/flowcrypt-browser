@@ -4,7 +4,7 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Ui } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Pgp, KeyInfo } from '../../../js/common/core/pgp.js';
 import { Lang } from '../../../js/common/lang.js';
@@ -43,11 +43,7 @@ View.run(class MyKeyUpdateView extends View {
 
   setHandlers() {
     $('.action_update_private_key').click(this.setHandlerPrevent('double', () => this.updatePrivateKeyHandler()));
-    $('.input_passphrase').keydown(this.setHandler((el, ev) => {
-      if (ev.which === 13) {
-        $('.action_update_private_key').click();
-      }
-    }));
+    $('.input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_update_private_key'));
   }
 
   private async storeUpdatedKeyAndPassphrase(updatedPrv: OpenPGP.key.Key, updatedPrvPassphrase: string) {

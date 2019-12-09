@@ -5,10 +5,10 @@
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Str, Url } from '../../js/common/core/common.js';
-import { Ui } from '../../js/common/browser.js';
+import { Ui } from '../../js/common/browser/ui.js';
 import { Lang } from '../../js/common/lang.js';
 import { Api } from '../../js/common/api/api.js';
-import { BrowserMsg, Bm } from '../../js/common/extension.js';
+import { BrowserMsg, Bm } from '../../js/common/browser/browser-msg.js';
 import { Backend, ProductName, Product } from '../../js/common/api/backend.js';
 import { Assert } from '../../js/common/assert.js';
 import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';

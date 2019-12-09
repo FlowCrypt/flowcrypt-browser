@@ -5,12 +5,12 @@
 import { PgpBlockView } from '../pgp_block.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Api } from '../../../js/common/api/api.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { FormatError } from '../../../js/common/core/pgp.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Ui } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 
 export class PgpBlockViewErrorModule {
 

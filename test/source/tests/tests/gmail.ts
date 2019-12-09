@@ -4,9 +4,9 @@ import { BrowserHandle, ControllablePage } from '../../browser';
 import * as ava from 'ava';
 import { expect } from 'chai';
 import { BrowserRecipe } from '../browser_recipe';
-import { GmailPageRecipe } from '../page_recipe';
 import { TestVariant, Util } from '../../util';
 import { AvaContext } from '..';
+import { GmailPageRecipe } from '../page_recipe/gmail-page-recipe';
 
 /**
  * All tests that use mail.google.com or have to operate without a Gmail API mock should go here

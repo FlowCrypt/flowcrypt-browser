@@ -4,15 +4,16 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
-import { Ui, Browser } from '../../js/common/browser.js';
+import { Browser } from '../../js/common/browser/browser.js';
 import { Api } from '../../js/common/api/api.js';
 import { DecryptErrTypes, PgpMsg } from '../../js/common/core/pgp.js';
-import { BrowserMsg } from '../../js/common/extension.js';
+import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Att } from '../../js/common/core/att.js';
-import { Google } from '../../js/common/api/google.js';
 import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Url } from '../../js/common/core/common.js';
+import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
+import { Ui } from '../../js/common/browser/ui.js';
 
 Catch.try(async () => {
 
@@ -35,6 +36,7 @@ Catch.try(async () => {
   const button = $('#download');
   let origHtmlContent: string;
   let progressEl: JQuery<HTMLElement>;
+  const gmail = new Gmail(acctEmail);
 
   let att: Att;
   try {
@@ -139,7 +141,7 @@ Catch.try(async () => {
     if (a.url) { // when content was downloaded and decrypted
       a.setData(await Api.download(a.url, renderProgress));
     } else if (a.id && a.msgId) { // gmail attId
-      const { data } = await Google.gmail.attGet(acctEmail, a.msgId, a.id, renderProgress);
+      const { data } = await gmail.attGet(a.msgId, a.id, renderProgress);
       a.setData(data);
     } else {
       throw new Error('File is missing both id and url - this should be fixed');
@@ -166,7 +168,7 @@ Catch.try(async () => {
 
   const recoverMissingAttIdIfNeeded = async (a: Att) => {
     if (!a.url && !a.id && a.msgId) {
-      const result = await Google.gmail.msgGet(acctEmail, a.msgId, 'full');
+      const result = await gmail.msgGet(a.msgId, 'full');
       if (result && result.payload && result.payload.parts) {
         for (const attMeta of result.payload.parts) {
           if (attMeta.filename === name && attMeta.body && attMeta.body.size === size && attMeta.body.attachmentId) {
@@ -182,7 +184,7 @@ Catch.try(async () => {
 
   const processAsPublicKeyAndHideAttIfAppropriate = async (a: Att) => {
     if (a.msgId && a.id && a.treatAs() === 'publicKey') { // this is encrypted public key - download && decrypt & parse & render
-      const { data } = await Google.gmail.attGet(acctEmail, a.msgId, a.id);
+      const { data } = await gmail.attGet(a.msgId, a.id);
       const decrRes = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(acctEmail), encryptedData: data });
       if (decrRes.success && decrRes.content) {
         const openpgpType = await PgpMsg.type({ data: decrRes.content });

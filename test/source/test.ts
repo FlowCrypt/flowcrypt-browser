@@ -1,3 +1,4 @@
+import { defineFlakyTests } from './tests/tests/flaky';
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
 import * as ava from 'ava';
@@ -16,7 +17,8 @@ import { FlowCryptApi } from './tests/api';
 import { getDebugHtmlAtts, AvaContext, standaloneTestTimeout, minutes, GlobalBrowser, newWithTimeoutsFunc } from './tests';
 import { mock } from './mock';
 
-const { testVariant, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
+const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
+const startedAt = Date.now();
 
 process.setMaxListeners(30);
 
@@ -25,8 +27,8 @@ const consts = { // higher concurrency can cause 429 google errs when composing
   TIMEOUT_EACH_RETRY: minutes(3),
   TIMEOUT_ALL_RETRIES: minutes(13), // this has to suffer waiting for semaphore between retries, thus almost the same as below
   TIMEOUT_OVERALL: minutes(14),
-  ATTEMPTS: oneIfNotPooled(3),
-  POOL_SIZE: oneIfNotPooled(isMock ? 13 : 2),
+  ATTEMPTS: testGroup === 'STANDARD-GROUP' ? oneIfNotPooled(3) : 3, // if it's FLAKY-GROUP, do 3 retries even if not pooled
+  POOL_SIZE: oneIfNotPooled(isMock ? 10 : 2),
   POOL_SIZE_COMPATIBILITY: oneIfNotPooled(isMock ? 5 : 1),
   POOL_SIZE_COMPOSE: oneIfNotPooled(isMock ? 1 : 0),
   PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>, // will be set right below
@@ -53,7 +55,6 @@ ava.before('set up global browsers and config', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY, t.title);
   Config.extensionId = await browserPool.getExtensionId(t);
   console.info(`Extension url: chrome-extension://${Config.extensionId}`);
-  await Util.sleep(1);
   if (isMock) {
     const mockApi = await mock(line => mockApiLogs.push(line));
     closeMockApi = mockApi.close;
@@ -62,7 +63,7 @@ ava.before('set up global browsers and config', async t => {
   const globalBrowsers: { [group: string]: BrowserHandle[] } = { compatibility: [], compose: [] };
   for (const group of Object.keys(browserGlobal)) {
     for (let i = 0; i < browserGlobal[group].browsers.poolSize; i++) {
-      const b = await browserGlobal[group].browsers.newBrowserHandle(t);
+      const b = await browserGlobal[group].browsers.newBrowserHandle(t, true, isMock);
       setupPromises.push(browserPool.withGlobalBrowserTimeoutAndRetry(b, (t, b) => BrowserRecipe.setUpCommonAcct(t, b, group as CommonBrowserGroup), t, consts));
       globalBrowsers[group].push(b);
     }
@@ -73,6 +74,7 @@ ava.before('set up global browsers and config', async t => {
       await browserGlobal[group].browsers.doneUsingBrowser(b);
     }
   }
+  console.info(`global browsers set up in: ${Math.round((Date.now() - startedAt) / 1000)}s`);
   t.pass();
 });
 
@@ -132,11 +134,15 @@ ava.after.always('send debug info if any', async t => {
   t.pass();
 });
 
-defineSetupTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineUnitTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineComposeTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineDecryptTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineGmailTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineSettingsTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineElementTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineAcctTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+if (testGroup === 'FLAKY-GROUP') {
+  defineFlakyTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+} else {
+  defineSetupTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+  defineUnitTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+  defineComposeTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+  defineDecryptTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+  defineGmailTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+  defineSettingsTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+  defineElementTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+  defineAcctTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+}

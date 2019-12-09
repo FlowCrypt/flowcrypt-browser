@@ -4,7 +4,7 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Ui } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Backend, FcUuidAuth } from '../../../js/common/api/backend.js';
@@ -70,11 +70,7 @@ View.run(class SecurityView extends View {
         }
       }));
       $('.cancel_passphrase_requirement_change').click(() => window.location.reload());
-      $('#passphrase_entry').keydown(this.setHandler((el, ev) => {
-        if (ev.which === 13) {
-          $('.confirm_passphrase_requirement_change').click();
-        }
-      }));
+      $('#passphrase_entry').keydown(this.setEnterHandlerThatClicks('.confirm_passphrase_requirement_change'));
     }
   }
 

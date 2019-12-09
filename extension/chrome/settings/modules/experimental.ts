@@ -5,16 +5,17 @@
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Ui, Browser } from '../../../js/common/browser.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
+import { Browser } from '../../../js/common/browser/browser.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Lang } from '../../../js/common/lang.js';
-import { GoogleAuth } from '../../../js/common/api/google.js';
+import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 
 View.run(class ExperimentalView extends View {
 

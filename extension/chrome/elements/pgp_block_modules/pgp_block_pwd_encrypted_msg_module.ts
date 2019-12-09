@@ -4,10 +4,10 @@
 
 import { PgpBlockView } from '../pgp_block';
 import { Store } from '../../../js/common/platform/store.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
-import { Ui } from '../../../js/common/browser.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Str } from '../../../js/common/core/common.js';
-import { Api, AuthError } from '../../../js/common/api/api.js';
+import { Api, BackendAuthErr } from '../../../js/common/api/api.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Backend, BackendRes } from '../../../js/common/api/backend.js';
@@ -38,7 +38,7 @@ export class PgpBlockViewPwdEncryptedMsgModule {
 
   public async recoverStoredAdminCodes() {
     const storage = await Store.getGlobal(['admin_codes']);
-    if (this.view.short && storage.admin_codes && storage.admin_codes[this.view.short] && storage.admin_codes[this.view.short].codes) {
+    if (this.view.short && storage.admin_codes && storage.admin_codes[this.view.short]?.codes) {
       this.adminCodes = storage.admin_codes[this.view.short].codes;
     }
   }
@@ -67,7 +67,7 @@ export class PgpBlockViewPwdEncryptedMsgModule {
     try {
       const fcAuth = await Store.authInfo(this.view.acctEmail);
       if (!fcAuth) {
-        throw new AuthError();
+        throw new BackendAuthErr();
       }
       const r = await Backend.messageExpiration(fcAuth, this.adminCodes || [], nDays);
       if (r.updated) { // todo - make backend return http error code when not updated, and skip this if/else

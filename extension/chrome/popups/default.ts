@@ -4,8 +4,8 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
-import { Ui } from '../../js/common/browser.js';
-import { BrowserMsg, BgNotReadyError } from '../../js/common/extension.js';
+import { Ui } from '../../js/common/browser/ui.js';
+import { BrowserMsg, BgNotReadyError } from '../../js/common/browser/browser-msg.js';
 
 Catch.try(async () => {
 
@@ -43,18 +43,18 @@ Catch.try(async () => {
 
   try {
     const activeTab = await BrowserMsg.send.bg.await.getActiveTabInfo();
-    if (activeTab && activeTab.acctEmail) {
+    if (activeTab?.acctEmail) {
       const { setup_done } = await Store.getAcct(activeTab.acctEmail, ['setup_done']);
       if (setup_done) {
         chooseEmailOrSettingsPopup(activeTab.acctEmail);
       } else {
         setupAcctPromptPopup(activeTab.acctEmail);
       }
-    } else if (activeTab && activeTab.provider && activeTab.sameWorld === true && activeTab.acctEmail) {
+    } else if (activeTab?.provider && activeTab.sameWorld === true && activeTab.acctEmail) {
       setupAcctPromptPopup(activeTab.acctEmail);
     } else {
       const acctEmails = await Store.acctEmailsGet();
-      if (acctEmails && acctEmails.length) {
+      if (acctEmails?.length) {
         const acctStorages = await Store.getAccounts(acctEmails, ['setup_done']);
         let functioningAccts = 0;
         for (const email of Object.keys(acctStorages)) {

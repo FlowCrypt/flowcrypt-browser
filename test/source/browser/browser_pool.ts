@@ -24,7 +24,7 @@ export class BrowserPool {
     this.semaphore = new Semaphore(poolSize, name);
   }
 
-  public newBrowserHandle = async (t: AvaContext, closeInitialPage = true) => {
+  public newBrowserHandle = async (t: AvaContext, closeInitialPage = true, isMock = false) => {
     await this.semaphore.acquire();
     // ext frames in gmail: https://github.com/GoogleChrome/puppeteer/issues/2506 https://github.com/GoogleChrome/puppeteer/issues/2548
     const args = [
@@ -38,10 +38,25 @@ export class BrowserPool {
     if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
       args.push(`--proxy-server=${Config.secrets.proxy.server}`);
     }
-    const browser = await launch({ args, headless: false, slowMo: 60, devtools: false });
+    const browser = await launch({ args, headless: false, slowMo: isMock ? undefined : 60, devtools: false });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {
-      await this.closeInitialExtensionPage(t, handle);
+      try {
+        const initialPage = await handle.newPageTriggeredBy(t, () => Promise.resolve()); // the page triggered on its own
+        await initialPage.waitAll('@initial-page'); // first page opened by flowcrypt
+        await initialPage.close();
+      } catch (e) {
+        if (String(e).includes('Action did not trigger a new page within timeout period')) { // could have opened before we had a chance to add a handler above
+          const pages = await handle.browser.pages();
+          const initialPage = pages.find(p => p.url().includes('chrome/settings/initial.htm'));
+          if (!initialPage) {
+            throw e;
+          }
+          await initialPage.close();
+        } else {
+          throw e;
+        }
+      }
     }
     return handle;
   }
@@ -197,11 +212,6 @@ export class BrowserPool {
     }
   }
 
-  private closeInitialExtensionPage = async (t: AvaContext, browser: BrowserHandle) => {
-    const initialPage = await browser.newPageTriggeredBy(t, () => Promise.resolve()); // the page triggered on its own
-    await initialPage.waitAll('@initial-page'); // first page opened by flowcrypt
-    await initialPage.close();
-  }
 }
 
 export class Semaphore {

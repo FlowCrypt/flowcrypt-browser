@@ -1,6 +1,6 @@
 'use strict';
 
-import { Ui } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Pgp, PgpMsg } from '../../../js/common/core/pgp.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Buf } from '../../../js/common/core/buf.js';
@@ -23,11 +23,7 @@ View.run(class CompatibilityView extends View {
 
   setHandlers() {
     $('.action_test_key').click(this.setHandlerPrevent('double', this.actionTestKeyHandler));
-    $('#input_passphrase').keydown(this.setHandler((el, ev) => {
-      if (ev.which === 13) {
-        $('.action_test_key').click();
-      }
-    }));
+    $('#input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_test_key'));
   }
 
   private async performKeyCompatibilityTests(keyString: string) {
@@ -64,7 +60,7 @@ View.run(class CompatibilityView extends View {
       }
       this.appendResult(`${kn} Primary User: ${await this.test(async () => {
         const user = await key.getPrimaryUser();
-        return user && user.user && user.user.userId ? user.user.userId.userid : 'No primary user';
+        return user?.user?.userId || 'No primary user';
       })}`);
       this.appendResult(`${kn} Fingerprint: ${await this.test(async () => await Pgp.key.fingerprint(key, 'spaced'))}`);
       this.appendResult(`${kn} Subkeys: ${await this.test(async () => key.subKeys ? key.subKeys.length : key.subKeys)}`);

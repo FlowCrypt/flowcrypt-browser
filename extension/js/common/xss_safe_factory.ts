@@ -9,9 +9,11 @@ import { Str, Dict, UrlParams, Url } from './core/common.js';
 import { Pgp } from './core/pgp.js';
 import { Att } from './core/att.js';
 import { MsgBlock } from './core/mime.js';
-import { Browser, Ui, WebMailName } from './browser.js';
+import { Browser } from './browser/browser.js';
 import { Xss } from './platform/xss.js';
 import { SendAsAlias } from './platform/store.js';
+import { Ui } from './browser/ui.js';
+import { WebMailName } from './browser/env.js';
 
 type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';

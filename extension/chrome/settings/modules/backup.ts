@@ -6,14 +6,14 @@ import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
 import { Store, KeyBackupMethod, EmailProvider } from '../../../js/common/platform/store.js';
 import { Value, Url } from '../../../js/common/core/common.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Ui, Browser } from '../../../js/common/browser.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
+import { Browser } from '../../../js/common/browser/browser.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Pgp, KeyInfo } from '../../../js/common/core/pgp.js';
-import { Google, GoogleAuth } from '../../../js/common/api/google.js';
+import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
 import { Assert } from '../../../js/common/assert.js';
@@ -21,6 +21,8 @@ import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { View } from '../../../js/common/view.js';
 import { KeyImportUi } from './../../../js/common/ui/key_import_ui.js';
+import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -29,9 +31,9 @@ View.run(class BackupView extends View {
   private acctEmail: string;
   private parentTabId: string | undefined;
   private action: string | undefined;
-
   private keyImportUi = new KeyImportUi({});
   private emailProvider: EmailProvider = 'gmail';
+  private readonly gmail: Gmail;
 
   private blocks = ['loading', 'step_0_status', 'step_1_password', 'step_2_confirm', 'step_3_automatic_backup_retry', 'step_3_manual'];
 
@@ -43,6 +45,7 @@ View.run(class BackupView extends View {
     if (this.action !== 'setup') {
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     }
+    this.gmail = new Gmail(this.acctEmail);
   }
 
   async render() {
@@ -82,11 +85,7 @@ View.run(class BackupView extends View {
     $('.action_go_auth_denied').click(this.setHandler(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' })));
     $('.auth_reconnect').click(this.setHandler(el => this.actionAuthReconnectHandler()));
     $('.reload').click(() => window.location.reload());
-    $("#password2").keydown(event => {
-      if (event.which === 13) {
-        $('.action_backup').click();
-      }
-    });
+    $("#password2").keydown(this.setEnterHandlerThatClicks('.action_backup'));
   }
 
   // --- PRIVATE
@@ -255,7 +254,7 @@ View.run(class BackupView extends View {
     if (this.emailProvider === 'gmail' && (scopes.read || scopes.modify)) {
       let keys;
       try {
-        keys = await Google.gmail.fetchKeyBackups(this.acctEmail);
+        keys = await this.gmail.fetchKeyBackups();
       } catch (e) {
         if (Api.err.isNetErr(e)) {
           Xss.sanitizeRender('#content', `Could not check for backups: no internet. ${Ui.retryLink()}`);
@@ -273,7 +272,7 @@ View.run(class BackupView extends View {
         return;
       }
       this.displayBlock('step_0_status');
-      if (keys && keys.length) {
+      if (keys?.length) {
         $('.status_summary').text('Backups found: ' + keys.length + '. Your account is backed up correctly in your email inbox.');
         Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_manual">SEE MORE BACKUP OPTIONS</div>');
       } else if (storage.key_backup_method) {
@@ -320,9 +319,9 @@ View.run(class BackupView extends View {
   private async doBackupOnEmailProvider(armoredKey: string) {
     const emailMsg = String(await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' }));
     const emailAtts = [this.asBackupFile(armoredKey)];
-    const msg = await Google.createMsgObj(this.acctEmail, this.acctEmail, { to: [this.acctEmail] }, GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
+    const msg = await this.gmail.createMsgObj(this.acctEmail, { to: [this.acctEmail] }, GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
     if (this.emailProvider === 'gmail') {
-      return await Google.gmail.msgSend(this.acctEmail, msg);
+      return await this.gmail.msgSend(msg);
     } else {
       throw Error(`Backup method not implemented for ${this.emailProvider}`);
     }

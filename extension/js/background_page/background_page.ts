@@ -5,10 +5,10 @@
 import { VERSION } from '../common/core/const.js';
 import { Catch } from '../common/platform/catch.js';
 import { Store, GlobalStore } from '../common/platform/store.js';
-import { BrowserMsg, Bm } from '../common/extension.js';
+import { BrowserMsg, Bm } from '../common/browser/browser-msg.js';
 import { injectFcIntoWebmail } from './inject.js';
 import { migrateGlobal } from './migrations.js';
-import { GoogleAuth } from '../common/api/google.js';
+import { GoogleAuth } from '../common/api/google-auth.js';
 import { BgUtils } from './bgutils.js';
 import { BgHandlers } from './bg_handlers.js';
 import { PgpMsg, Pgp } from '../common/core/pgp.js';
@@ -76,7 +76,7 @@ openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
   await BgHandlers.updateUninstallUrl({}, {});
   injectFcIntoWebmail();
 
-  if (storage.errors && storage.errors.length && storage.errors.length > 100) { // todo - ideally we should be trimming it to show the last 100
+  if (storage.errors?.length && storage.errors.length > 100) { // todo - ideally we should be trimming it to show the last 100
     await Store.removeGlobal(['errors']);
   }
 
