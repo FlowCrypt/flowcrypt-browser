@@ -229,7 +229,7 @@ View.run(class SettingsView extends View {
       try {
         const response = await Backend.accountUpdate(authInfo);
         $('#status-row #status_flowcrypt').text(`fc:ok`);
-        if (response && response.result && response.result.alias) {
+        if (response?.result?.alias) {
           statusContainer.find('.status-indicator-text').css('display', 'none');
           statusContainer.find('.status-indicator').addClass('active');
         } else {

@@ -60,7 +60,7 @@ View.run(class CompatibilityView extends View {
       }
       this.appendResult(`${kn} Primary User: ${await this.test(async () => {
         const user = await key.getPrimaryUser();
-        return user && user.user && user.user.userId ? user.user.userId.userid : 'No primary user';
+        return user?.user?.userId || 'No primary user';
       })}`);
       this.appendResult(`${kn} Fingerprint: ${await this.test(async () => await Pgp.key.fingerprint(key, 'spaced'))}`);
       this.appendResult(`${kn} Subkeys: ${await this.test(async () => key.subKeys ? key.subKeys.length : key.subKeys)}`);

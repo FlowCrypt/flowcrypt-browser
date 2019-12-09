@@ -224,7 +224,7 @@ export class ComposerRender extends ComposerComponent {
     }, this.composer.errs.handlers(`focus on recipient field`))).children().click(() => false);
     this.composer.atts.onComposeTableRender();
     if (this.view.isReplyBox) {
-      if (this.view.replyParams && this.view.replyParams.to.length) {
+      if (this.view.replyParams?.to.length) {
         // Firefox will not always respond to initial automatic $input_text.blur()
         // Recipients may be left unrendered, as standard text, with a trailing comma
         await this.composer.recipients.parseRenderRecipients(this.composer.S.cached('input_to')); // this will force firefox to render them on load
@@ -246,7 +246,7 @@ export class ComposerRender extends ComposerComponent {
     // Firefox needs an iframe to be focused before focusing its content
     BrowserMsg.send.focusFrame(this.view.parentTabId, { frameId: this.view.frameId });
     Catch.setHandledTimeout(() => { // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
-      this.composer.S.cached(this.view.isReplyBox && this.view.replyParams && this.view.replyParams.to.length ? 'input_text' : 'input_to').focus();
+      this.composer.S.cached(this.view.isReplyBox && this.view.replyParams?.to.length ? 'input_text' : 'input_to').focus();
       // document.getElementById('input_text')!.focus(); // #input_text is in the template
     }, 100);
     this.composer.size.onComposeTableRender();

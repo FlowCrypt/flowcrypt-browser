@@ -241,7 +241,7 @@ Catch.try(async () => {
       threadItem.find('.loading').text('');
       threadItem.find('.date').text(formatDate(lastMsg.internalDate));
       threadItem.addClass('loaded').click(Ui.event.handle(() => renderThread(thread.id, thread)));
-      if (lastMsg.labelIds && lastMsg.labelIds.includes(LABEL.UNREAD)) {
+      if (lastMsg.labelIds?.includes(LABEL.UNREAD)) {
         threadItem.css({ 'font-weight': 'bold', 'background': 'white' });
       }
       if (thread.messages.length > 1) {

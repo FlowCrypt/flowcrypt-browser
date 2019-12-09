@@ -88,7 +88,7 @@ export class PgpBlockViewDecryptModule {
         if (this.view.hasChallengePassword && optionalPwd) {
           this.view.pwdEncryptedMsgModule.userEnteredMsgPassword = optionalPwd;
         }
-        if (result.success && result.signature && result.signature.contact && !result.signature.match && this.canReadEmails && this.msgFetchedFromApi !== 'raw') {
+        if (result.success && result.signature?.contact && !result.signature.match && this.canReadEmails && this.msgFetchedFromApi !== 'raw') {
           console.info(`re-fetching message ${this.view.msgId} from api because failed signature check: ${!this.msgFetchedFromApi ? 'full' : 'raw'}`);
           await this.initialize(true);
         } else {

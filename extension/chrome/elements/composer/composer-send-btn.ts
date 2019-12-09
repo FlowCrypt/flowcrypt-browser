@@ -180,7 +180,7 @@ export class ComposerSendBtn extends ComposerComponent {
           name = sendAs[email].name!;
         } else {
           const [contact] = await Store.dbContactGet(undefined, [email]);
-          if (contact && contact.name) {
+          if (contact?.name) {
             name = contact.name;
           }
         }

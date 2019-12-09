@@ -272,7 +272,7 @@ View.run(class BackupView extends View {
         return;
       }
       this.displayBlock('step_0_status');
-      if (keys && keys.length) {
+      if (keys?.length) {
         $('.status_summary').text('Backups found: ' + keys.length + '. Your account is backed up correctly in your email inbox.');
         Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_manual">SEE MORE BACKUP OPTIONS</div>');
       } else if (storage.key_backup_method) {
