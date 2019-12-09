@@ -62,6 +62,7 @@ export const mockBackendEndpoints: HandlersDefinition = {
   '/api/message/upload': fwdToRealBackend,
   '/api/link/message': fwdToRealBackend,
   '/api/link/me': fwdToRealBackend,
+  '/help/feedback': fwdToRealBackend,
 };
 
 const throwIfNotPostWithAuth = (body: unknown, req: IncomingMessage) => {
