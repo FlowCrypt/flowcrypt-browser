@@ -7,7 +7,6 @@ import { Settings } from '../../../js/common/settings.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Dict } from '../../../js/common/core/common.js';
 import { SendAsAlias } from '../../../js/common/platform/store.js';
-import { Ui } from '../../../js/common/browser/ui.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -34,7 +33,7 @@ export class ComposerSender extends ComposerComponent {
       const showAliasChevronHtml = '<img tabindex="22" id="show_sender_aliases_options" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
       const inputAddrContainer = this.composer.S.cached('email_copy_actions');
       Xss.sanitizeAppend(inputAddrContainer, showAliasChevronHtml);
-      inputAddrContainer.find('#show_sender_aliases_options').click(Ui.event.handle((el) => {
+      inputAddrContainer.find('#show_sender_aliases_options').click(this.view.setHandler((el) => {
         this.renderSenderAliasesOptions(sendAs);
         el.remove();
       }, this.composer.errs.handlers(`show sending address options`)));

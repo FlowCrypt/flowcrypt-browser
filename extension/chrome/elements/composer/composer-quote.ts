@@ -46,7 +46,7 @@ export class ComposerQuote extends ComposerComponent {
       this.composer.S.cached('icon_show_prev_msg').removeClass('progress');
     }
     if (!this.messageToReplyOrForward && msgId) {
-      this.composer.S.cached('icon_show_prev_msg').click(Ui.event.handle(async () => {
+      this.composer.S.cached('icon_show_prev_msg').click(this.view.setHandler(async () => {
         this.composer.S.cached('icon_show_prev_msg').unbind('click');
         await this.addTripleDotQuoteExpandBtn(msgId, method);
         if (this.messageToReplyOrForward) {
@@ -236,7 +236,7 @@ export class ComposerQuote extends ComposerComponent {
 
   private setExpandingTextAfterClick() {
     this.composer.S.cached('icon_show_prev_msg')
-      .click(Ui.event.handle(el => {
+      .click(this.view.setHandler(el => {
         el.style.display = 'none';
         Xss.sanitizeAppend(this.composer.S.cached('input_text'), this.msgExpandingHTMLPart || '');
         this.msgExpandingHTMLPart = undefined;

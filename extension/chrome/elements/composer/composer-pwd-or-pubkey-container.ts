@@ -3,7 +3,6 @@
 'use strict';
 
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Ui } from '../../../js/common/browser/ui.js';
 import { RecipientStatuses, SendBtnTexts } from './composer-types.js';
 import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
 import { Store } from '../../../js/common/platform/store.js';
@@ -13,7 +12,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
   private keyImportUI = new KeyImportUi({});
 
   public async initActions() {
-    this.composer.S.cached('input_password').keyup(Ui.event.prevent('spree', () => this.showHideContainerAndColorSendBtn()));
+    this.composer.S.cached('input_password').keyup(this.view.setHandlerPrevent('spree', () => this.showHideContainerAndColorSendBtn()));
     this.composer.S.cached('input_password').focus(() => this.showHideContainerAndColorSendBtn());
     this.composer.S.cached('input_password').blur(() => this.showHideContainerAndColorSendBtn());
     const store = await Store.getAcct(this.view.acctEmail, ['hide_message_password']);

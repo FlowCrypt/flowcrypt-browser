@@ -45,15 +45,15 @@ export class ComposerRecipients extends ComposerComponent {
   initActions(): void {
     let preventSearchContacts = false;
     const inputs = this.composer.S.cached('recipients_inputs');
-    inputs.on('keyup', Ui.event.prevent('veryslowspree', async (target) => {
+    inputs.on('keyup', this.view.setHandlerPrevent('veryslowspree', async (target) => {
       if (!preventSearchContacts) {
         await this.searchContacts($(target));
       }
     }));
-    inputs.on('keydown', Ui.event.handle(async (target, e) => {
+    inputs.on('keydown', this.view.setHandler(async (target, e) => {
       preventSearchContacts = this.recipientInputKeydownHandler(e);
     }));
-    inputs.on('blur', Ui.event.handle(async (target, e) => {
+    inputs.on('blur', this.view.setHandler(async (target, e) => {
       if (this.dragged) { // blur while drag&drop
         return;
       }
@@ -64,14 +64,14 @@ export class ComposerRecipients extends ComposerComponent {
       await this.collapseIpnutsIfNeeded(e.relatedTarget);
       this.composer.errs.debug(`input_to.blur -> parseRenderRecipients done`);
     }));
-    inputs.on('dragenter', Ui.event.handle((target, e) => {
+    inputs.on('dragenter', this.view.setHandler((target, e) => {
       if (Catch.browser().name === 'firefox') {
         this.insertCursorBefore(target.previousElementSibling!, true);
       } else {
         target.focus();
       }
     }));
-    inputs.on('dragleave', Ui.event.handle((target) => {
+    inputs.on('dragleave', this.view.setHandler((target) => {
       if (Catch.browser().name === 'firefox') {
         this.removeCursor(target.previousElementSibling! as HTMLElement);
       } else {
@@ -79,7 +79,7 @@ export class ComposerRecipients extends ComposerComponent {
       }
     }));
     inputs.on('dragover', (e) => e.preventDefault());
-    inputs.on('drop', Ui.event.handle((target) => {
+    inputs.on('drop', this.view.setHandler((target) => {
       if (Catch.browser().name === 'firefox') {
         this.removeCursor(target.previousElementSibling as HTMLElement);
       }
@@ -108,31 +108,22 @@ export class ComposerRecipients extends ComposerComponent {
       this.composer.size.resizeComposeBox();
       this.composer.size.setInputTextHeightManuallyIfNeeded();
     };
-    this.composer.S.now('cc').on('click', Ui.event.handle((target) => {
+    this.composer.S.now('cc').click(this.view.setHandler((target) => {
       const newContainer = this.composer.S.cached('input_addresses_container_outer').find(`#input-container-cc`);
       handleCopyActionsClick(target, newContainer);
     }));
-    this.composer.S.now('bcc').on('click', Ui.event.handle((target) => {
+    this.composer.S.now('bcc').click(this.view.setHandler((target) => {
       const newContainer = this.composer.S.cached('input_addresses_container_outer').find(`#input-container-bcc`);
       handleCopyActionsClick(target, newContainer);
     }));
-    this.composer.S.cached('recipients_placeholder').on('click', Ui.event.handle((target) => {
+    this.composer.S.cached('recipients_placeholder').click(this.view.setHandler((target) => {
       this.composer.S.cached('input_to').focus();
     }));
-    const focusRecipients = Ui.event.handle(() => {
-      this.composer.S.cached('recipients_placeholder').hide();
-      this.composer.S.cached('input_addresses_container_outer').removeClass('invisible');
-      this.composer.size.resizeComposeBox();
-      if (this.view.isReplyBox) {
-        this.composer.size.resizeInput();
-      }
-      this.composer.size.setInputTextHeightManuallyIfNeeded();
-    });
-    this.composer.S.cached('input_to').on('focus', focusRecipients);
-    this.composer.S.cached('cc').on('focus', focusRecipients);
-    this.composer.S.cached('bcc').on('focus', focusRecipients);
-    this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.errs.handlers(`hide contact box`)));
-    this.composer.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
+    this.composer.S.cached('input_to').focus(this.view.setHandler(() => this.focusRecipients()));
+    this.composer.S.cached('cc').focus(this.view.setHandler(() => this.focusRecipients()));
+    this.composer.S.cached('bcc').focus(this.view.setHandler(() => this.focusRecipients()));
+    this.composer.S.cached('compose_table').click(this.view.setHandler(() => this.hideContacts(), this.composer.errs.handlers(`hide contact box`)));
+    this.composer.S.cached('add_their_pubkey').click(this.view.setHandler(() => {
       const noPgpRecipients = this.addedRecipients.filter(r => r.element.className.includes('no_pgp'));
       this.composer.render.renderAddPubkeyDialog(noPgpRecipients.map(r => r.email));
       clearInterval(this.addedPubkeyDbLookupInterval); // todo - get rid of Catch.set_interval. just supply tabId and wait for direct callback
@@ -330,7 +321,7 @@ export class ComposerRecipients extends ComposerComponent {
       }
       const contactItems = this.composer.S.cached('contacts').find('ul li.select_contact');
       contactItems.first().addClass('active');
-      contactItems.click(Ui.event.prevent('double', async (target: HTMLElement) => {
+      contactItems.click(this.view.setHandlerPrevent('double', async (target: HTMLElement) => {
         const email = Str.parseEmail($(target).attr('email') || '').email;
         if (email) {
           await this.selectContact(input, email, query);
@@ -340,7 +331,7 @@ export class ComposerRecipients extends ComposerComponent {
         contactItems.removeClass('active');
         $(this).addClass('active');
       });
-      this.composer.S.cached('contacts').find('ul li.auth_contacts').click(Ui.event.handle(() =>
+      this.composer.S.cached('contacts').find('ul li.auth_contacts').click(this.view.setHandler(() =>
         this.authContacts(this.view.acctEmail), this.composer.errs.handlers(`authorize contact search`)));
       const offset = input.offset()!;
       const inputToPadding = parseInt(input.css('padding-left'));
@@ -368,7 +359,7 @@ export class ComposerRecipients extends ComposerComponent {
     this.composer.S.cached('contacts')
       .append('<div class="allow-google-contact-search" data-test="action-auth-with-contacts-scope"><img src="/img/svgs/gmail.svg" />Enable Google Contact Search</div>') // xss-direct
       .find('.allow-google-contact-search')
-      .on('click', Ui.event.handle(async () => {
+      .click(this.view.setHandler(async () => {
         const authResult = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail: this.view.acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
         if (authResult.result === 'Success') {
           this.canSearchContacts = true;
@@ -455,7 +446,7 @@ export class ComposerRecipients extends ComposerComponent {
       Xss.sanitizeAppend(container.find('.recipients'), recipientsHtml);
       const element = document.getElementById(recipientId);
       if (element) { // if element wasn't created this means that Composer is used by another component
-        $(element).on('blur', Ui.event.handle(async (elem, event) => {
+        $(element).on('blur', this.view.setHandler(async (elem, event) => {
           if (!this.dragged) {
             await this.collapseIpnutsIfNeeded(event.relatedTarget);
           }
@@ -556,15 +547,15 @@ export class ComposerRecipients extends ComposerComponent {
     const contentHtml = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
     Xss.sanitizeAppend(el, contentHtml)
       .find('img.close-icon')
-      .click(Ui.event.handle(target => this.removeRecipient(target.parentElement!), this.composer.errs.handlers('remove recipient')));
+      .click(this.view.setHandler(target => this.removeRecipient(target.parentElement!), this.composer.errs.handlers('remove recipient')));
     if (contact === PUBKEY_LOOKUP_RESULT_FAIL) {
       recipient.status = RecipientStatuses.FAILED;
       $(el).attr('title', 'Failed to load, click to retry');
       $(el).addClass("failed");
       Xss.sanitizeReplace($(el).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">' +
         '<img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">');
-      $(el).find('.action_retry_pubkey_fetch').click(Ui.event.handle(async () => await this.refreshRecipients(), this.composer.errs.handlers('refresh recipient')));
-      $(el).find('.remove-reciepient').click(Ui.event.handle(element => this.removeRecipient(element.parentElement!), this.composer.errs.handlers('remove recipient')));
+      $(el).find('.action_retry_pubkey_fetch').click(this.view.setHandler(async () => await this.refreshRecipients(), this.composer.errs.handlers('refresh recipient')));
+      $(el).find('.remove-reciepient').click(this.view.setHandler(element => this.removeRecipient(element.parentElement!), this.composer.errs.handlers('remove recipient')));
     } else if (contact === PUBKEY_LOOKUP_RESULT_WRONG) {
       recipient.status = RecipientStatuses.WRONG;
       this.composer.errs.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${recipient.email}`);
@@ -846,4 +837,15 @@ export class ComposerRecipients extends ComposerComponent {
       return undefined;
     }
   }
+
+  private focusRecipients() {
+    this.composer.S.cached('recipients_placeholder').hide();
+    this.composer.S.cached('input_addresses_container_outer').removeClass('invisible');
+    this.composer.size.resizeComposeBox();
+    if (this.view.isReplyBox) {
+      this.composer.size.resizeInput();
+    }
+    this.composer.size.setInputTextHeightManuallyIfNeeded();
+  }
+
 }

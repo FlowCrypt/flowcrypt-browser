@@ -34,7 +34,7 @@ export class ComposerDraft extends ComposerComponent {
   }
 
   async initActions(): Promise<void> {
-    $('.delete_draft').click(Ui.event.handle(async () => {
+    $('.delete_draft').click(this.view.setHandler(async () => {
       await this.draftDelete();
       if (this.view.isReplyBox && !this.view.removeAfterClose) { // reload iframe so we don't leave users without a reply UI
         this.view.skipClickPrompt = false;
@@ -233,10 +233,10 @@ export class ComposerDraft extends ComposerComponent {
     } else {
       Xss.sanitizeRender(this.composer.S.cached('prompt'), `${promptText}<br><br><a href="#" class="action_close">close</a>`).css({ display: 'block', height: '100%' });
     }
-    this.composer.S.cached('prompt').find('a.action_open_passphrase_dialog').click(Ui.event.handle(() => {
+    this.composer.S.cached('prompt').find('a.action_open_passphrase_dialog').click(this.view.setHandler(() => {
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'draft', longids: ['primary'] });
     }));
-    this.composer.S.cached('prompt').find('a.action_close').click(Ui.event.handle(() => this.composer.render.closeMsg()));
+    this.composer.S.cached('prompt').find('a.action_close').click(this.view.setHandler(() => this.composer.render.closeMsg()));
     await this.composer.storage.whenMasterPassphraseEntered();
   }
 

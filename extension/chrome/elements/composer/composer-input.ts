@@ -4,14 +4,13 @@
 
 import { ComposerComponent } from './composer-abstract-component.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { Ui } from '../../../js/common/browser/ui.js';
 import { NewMsgData, RecipientElement } from './composer-types.js';
 import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
 
 export class ComposerInput extends ComposerComponent {
 
   initActions() {
-    this.composer.S.cached('add_intro').click(Ui.event.handle(target => {
+    this.composer.S.cached('add_intro').click(this.view.setHandler(target => {
       $(target).css('display', 'none');
       this.composer.S.cached('intro_container').css('display', 'table-row');
       this.composer.S.cached('input_intro').focus();

@@ -16,7 +16,7 @@ export class ComposerMyPubkey extends ComposerComponent {
 
   initActions() {
     this.composer.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
-    this.composer.S.cached('icon_pubkey').click(Ui.event.handle(target => {
+    this.composer.S.cached('icon_pubkey').click(this.view.setHandler(target => {
       this.toggledManually = true;
       const includePub = !$(target).is('.active'); // evaluating what the state of the icon was BEFORE clicking
       Ui.toast(`${includePub ? 'Attaching' : 'Removing'} your Public Key`).catch(Catch.reportErr);

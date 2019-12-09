@@ -6,7 +6,6 @@ import { ComposerComponent } from './composer-abstract-component.js';
 import { PopoverOpt, PopoverChoices } from './composer-types.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Lang } from '../../../js/common/lang.js';
-import { Ui } from '../../../js/common/browser/ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 
@@ -15,7 +14,7 @@ export class ComposerSendBtnPopover extends ComposerComponent {
   public choices: PopoverChoices = { encrypt: true, sign: true, richText: false }; // defaults, may be changed by user using the popover
 
   initActions(): void {
-    this.composer.S.cached('toggle_send_options').on('click', this.toggleVisible);
+    this.composer.S.cached('toggle_send_options').click(this.view.setHandler((el, ev) => this.toggleVisible(ev)));
   }
 
   async render() {
@@ -36,7 +35,7 @@ export class ComposerSendBtnPopover extends ComposerComponent {
             <span class="option-name">${Xss.escape(item.text)}</span>
         </div>`);
       this.renderCrossOrTick(elem, popoverOpt, this.choices[popoverOpt]);
-      elem.on('click', Ui.event.handle(() => this.toggleItemTick(elem, popoverOpt)));
+      elem.click(this.view.setHandler(() => this.toggleItemTick(elem, popoverOpt)));
       if (item.iconPath) {
         elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`); // xss-direct
       }
@@ -50,14 +49,14 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     const sendingContainer = $('.sending-container');
     sendingContainer.toggleClass('popover-opened');
     if (sendingContainer.hasClass('popover-opened')) {
-      $('body').click(Ui.event.handle((elem, event) => {
+      $('body').click(this.view.setHandler((elem, event) => {
         if (!this.composer.S.cached('sending_options_container')[0].contains(event.relatedTarget)) {
           sendingContainer.removeClass('popover-opened');
           $('body').off('click');
           this.composer.S.cached('toggle_send_options').off('keydown');
         }
       }));
-      this.composer.S.cached('toggle_send_options').on('keydown', Ui.event.handle(async (target, e) => this.keydownHandler(e)));
+      this.composer.S.cached('toggle_send_options').on('keydown', this.view.setHandler(async (target, e) => this.keydownHandler(e)));
       const sendingOptions = this.composer.S.cached('sending_options_container').find('.sending-option');
       sendingOptions.hover(function () {
         sendingOptions.removeClass('active');

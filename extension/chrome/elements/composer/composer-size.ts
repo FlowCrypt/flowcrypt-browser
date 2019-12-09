@@ -5,7 +5,6 @@
 import { ComposerComponent } from './composer-abstract-component.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { Ui } from '../../../js/common/browser/ui.js';
 
 export class ComposerSize extends ComposerComponent {
 
@@ -24,8 +23,8 @@ export class ComposerSize extends ComposerComponent {
       }
     });
     if (!this.view.isReplyBox) {
-      $('.minimize_new_message').click(Ui.event.handle(this.minimizeComposerWindow));
-      $('.popout').click(Ui.event.handle(async () => {
+      $('.minimize_new_message').click(this.view.setHandler(() => this.minimizeComposerWindow()));
+      $('.popout').click(this.view.setHandler(async () => {
         this.composer.S.cached('body').hide(); // Need to hide because it seems laggy on some devices
         await this.toggleFullScreen();
         this.composer.S.cached('body').show();
@@ -37,8 +36,8 @@ export class ComposerSize extends ComposerComponent {
     Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
       // we use veryslowspree for reply box because hand-resizing the main window will cause too many events
       // we use spree (faster) for new messages because rendering of window buttons on top right depend on it, else visible lag shows
-      $(window).resize(Ui.event.prevent(this.view.isReplyBox ? 'veryslowspree' : 'spree', () => this.windowResized().catch(Catch.reportErr)));
-      this.composer.S.cached('input_text').keyup(Ui.event.prevent('slowspree', () => this.windowResized().catch(Catch.reportErr)));
+      $(window).resize(this.view.setHandlerPrevent(this.view.isReplyBox ? 'veryslowspree' : 'spree', () => this.windowResized().catch(Catch.reportErr)));
+      this.composer.S.cached('input_text').keyup(this.view.setHandlerPrevent('slowspree', () => this.windowResized().catch(Catch.reportErr)));
     }, 1000);
   }
 
