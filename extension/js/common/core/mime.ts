@@ -57,7 +57,7 @@ type SendingType = 'to' | 'cc' | 'bcc';
 
 export class Mime {
 
-  public static processDecoded = (decoded: MimeContent): MimeProccesedMsg => {
+  public static processDecoded(decoded: MimeContent): MimeProccesedMsg {
     const blocks: MsgBlock[] = [];
     if (decoded.text) {
       const blocksFromTextPart = Pgp.armor.detectBlocks(Str.normalize(decoded.text)).blocks;
@@ -110,16 +110,16 @@ export class Mime {
     return { headers: decoded.headers, blocks, from: decoded.from, to: decoded.to, rawSignedContent: decoded.rawSignedContent };
   }
 
-  public static process = async (mimeMsg: Uint8Array): Promise<MimeProccesedMsg> => {
+  public static async process(mimeMsg: Uint8Array): Promise<MimeProccesedMsg> {
     const decoded = await Mime.decode(mimeMsg);
     return Mime.processDecoded(decoded);
   }
 
-  public static isPlainInlineImg = (b: MsgBlock) => {
+  public static isPlainInlineImg(b: MsgBlock) {
     return b.type === 'plainAtt' && b.attMeta?.inline && b.attMeta.type && ['image/jpeg', 'image/jpg', 'image/bmp', 'image/png', 'image/svg+xml'].includes(b.attMeta.type);
   }
 
-  private static headerGetAddress = (parsedMimeMsg: MimeContent, headersNames: Array<SendingType | 'from'>) => {
+  private static headerGetAddress(parsedMimeMsg: MimeContent, headersNames: Array<SendingType | 'from'>) {
     const result: { to: string[], cc: string[], bcc: string[] } = { to: [], cc: [], bcc: [] };
     let from: string | undefined;
     const getHdrValAsArr = (hdr: MimeContentHeader) => typeof hdr === 'string' ? [hdr].map(h => Str.parseEmail(h).email).filter(e => !!e) as string[] : hdr.map(h => h.address);
@@ -137,13 +137,13 @@ export class Mime {
     return { ...result, from };
   }
 
-  public static replyHeaders = (parsedMimeMsg: MimeContent) => {
+  public static replyHeaders(parsedMimeMsg: MimeContent) {
     const msgId = String(parsedMimeMsg.headers['message-id'] || '');
     const refs = String(parsedMimeMsg.headers['in-reply-to'] || '');
     return { 'in-reply-to': msgId, 'references': refs + ' ' + msgId };
   }
 
-  public static resemblesMsg = (msg: Uint8Array) => {
+  public static resemblesMsg(msg: Uint8Array) {
     const utf8 = new Buf(msg.slice(0, 1000)).toUtfStr().toLowerCase();
     const contentType = utf8.match(/content-type: +[0-9a-z\-\/]+/);
     if (!contentType) {
@@ -155,7 +155,7 @@ export class Mime {
     return Boolean(contentType.index === 0 && utf8.match(/boundary=/));
   }
 
-  private static retrieveRawSignedContent = (nodes: MimeParserNode[]): string | undefined => {
+  private static retrieveRawSignedContent(nodes: MimeParserNode[]): string | undefined {
     for (const node of nodes) {
       if (!node._childNodes || !node._childNodes.length) {
         continue; // signed nodes tend contain two children: content node, signature node. If no node, then this is not pgp/mime signed content
@@ -176,7 +176,7 @@ export class Mime {
     return undefined;
   }
 
-  public static decode = (mimeMsg: Uint8Array): Promise<MimeContent> => {
+  public static decode(mimeMsg: Uint8Array): Promise<MimeContent> {
     return new Promise(resolve => {
       let mimeContent: MimeContent = { atts: [], headers: {}, subject: undefined, text: undefined, html: undefined, signature: undefined, from: undefined, to: [], cc: [], bcc: [] };
       try {
@@ -304,21 +304,21 @@ export class Mime {
     return new MimeBuilder(type, { filename: att.name }).setHeader(header).setContent(att.getData()); // tslint:disable-line:no-unsafe-any
   }
 
-  private static getNodeType = (node: MimeParserNode) => {
+  private static getNodeType(node: MimeParserNode) {
     if (node.headers['content-type'] && node.headers['content-type'][0]) {
       return node.headers['content-type'][0].value;
     }
     return undefined;
   }
 
-  private static getNodeContentId = (node: MimeParserNode) => {
+  private static getNodeContentId(node: MimeParserNode) {
     if (node.headers['content-id'] && node.headers['content-id'][0]) {
       return node.headers['content-id'][0].value;
     }
     return undefined;
   }
 
-  private static getNodeFilename = (node: MimeParserNode): string | undefined => {
+  private static getNodeFilename(node: MimeParserNode): string | undefined {
     if (node.headers['content-disposition'] && node.headers['content-disposition'][0]) {
       const header = node.headers['content-disposition'][0];
       if (header.params && header.params.filename) {
@@ -334,14 +334,14 @@ export class Mime {
     return;
   }
 
-  private static fromEqualSignNotationAsBuf = (str: string): Buf => {
+  private static fromEqualSignNotationAsBuf(str: string): Buf {
     return Buf.fromRawBytesStr(str.replace(/(=[A-F0-9]{2})+/g, equalSignUtfPart => {
       const bytes = equalSignUtfPart.replace(/^=/, '').split('=').map(twoHexDigits => parseInt(twoHexDigits, 16));
       return new Buf(bytes).toRawBytesStr();
     }));
   }
 
-  private static getNodeAsAtt = (node: MimeParserNode): Att => {
+  private static getNodeAsAtt(node: MimeParserNode): Att {
     return new Att({
       name: Mime.getNodeFilename(node),
       type: Mime.getNodeType(node),
@@ -350,7 +350,7 @@ export class Mime {
     });
   }
 
-  private static getNodeContentAsUtfStr = (node: MimeParserNode): string => {
+  private static getNodeContentAsUtfStr(node: MimeParserNode): string {
     if (node.charset === 'utf-8' && node.contentTransferEncoding.value === 'base64') {
       return Buf.fromUint8(node.content).toUtfStr();
     }
@@ -364,7 +364,7 @@ export class Mime {
   }
 
   // tslint:disable-next-line:variable-name
-  private static newContentNode = (MimeBuilder: any, type: string, content: string): MimeParserNode => {
+  private static newContentNode(MimeBuilder: any, type: string, content: string): MimeParserNode {
     const node: MimeParserNode = new MimeBuilder(type).setContent(content); // tslint:disable-line:no-unsafe-any
     if (type === 'text/plain') {
       // gmail likes this

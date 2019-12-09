@@ -48,11 +48,11 @@ export namespace BackendRes {
 
 export class Backend extends Api {
 
-  private static request = (path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}): Promise<any> => {
+  private static request(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}): Promise<any> {
     return Backend.apiCall(Backend.url('api'), path, vals, fmt, undefined, { 'api-version': '3', ...addHeaders });
   }
 
-  public static url = (type: string, variable = '') => {
+  public static url(type: string, variable = '') {
     return ({
       'api': 'https://flowcrypt.com/api/',
       'me': 'https://flowcrypt.com/me/' + variable,
@@ -86,7 +86,7 @@ export class Backend extends Api {
   //   return { verified: response.verified === true, subscription: response.subscription };
   // }
 
-  public static loginWithOpenid = async (acctEmail: string, uuid: string, idToken: string): Promise<{ verified: boolean, subscription: SubscriptionInfo }> => {
+  public static async loginWithOpenid(acctEmail: string, uuid: string, idToken: string): Promise<{ verified: boolean, subscription: SubscriptionInfo }> {
     const response = await Backend.request('account/login', {
       account: acctEmail,
       uuid,
@@ -102,7 +102,7 @@ export class Backend extends Api {
     return { verified: true, subscription: response.subscription };
   }
 
-  public static getSubscriptionWithoutLogin = async (acctEmail: string) => {
+  public static async getSubscriptionWithoutLogin(acctEmail: string) {
     const r = await Backend.request('account/check', {
       emails: [acctEmail],
     }) as BackendRes.FcAccountCheck;
@@ -110,7 +110,7 @@ export class Backend extends Api {
     return r;
   }
 
-  public static accountUpdate = async (fcAuth: FcUuidAuth, profileUpdate: ProfileUpdate = {}): Promise<BackendRes.FcAccountUpdate> => {
+  public static async accountUpdate(fcAuth: FcUuidAuth, profileUpdate: ProfileUpdate = {}): Promise<BackendRes.FcAccountUpdate> {
     Backend.throwIfMissingUuid(fcAuth);
     const r = await Backend.request('account/update', {
       ...fcAuth,
@@ -121,7 +121,7 @@ export class Backend extends Api {
 
   public static accountGet = (fcAuth: FcUuidAuth) => Backend.accountUpdate(fcAuth, {});
 
-  public static accountSubscribe = async (fcAuth: FcUuidAuth, product: string, method: string, paymentSourceToken?: string): Promise<BackendRes.FcAccountSubscribe> => {
+  public static async accountSubscribe(fcAuth: FcUuidAuth, product: string, method: string, paymentSourceToken?: string): Promise<BackendRes.FcAccountSubscribe> {
     Backend.throwIfMissingUuid(fcAuth);
     const response = await Backend.request('account/subscribe', {
       ...fcAuth,
@@ -133,7 +133,7 @@ export class Backend extends Api {
     return response;
   }
 
-  public static messagePresignFiles = async (fcAuth: FcUuidAuth | FcMsgTokenAuth | undefined, atts: Att[]): Promise<BackendRes.FcMsgPresignFiles> => {
+  public static async messagePresignFiles(fcAuth: FcUuidAuth | FcMsgTokenAuth | undefined, atts: Att[]): Promise<BackendRes.FcMsgPresignFiles> {
     const response = await Backend.request('message/presign_files', {
       lengths: atts.map(a => a.length),
       ...(fcAuth || {})
@@ -151,17 +151,17 @@ export class Backend extends Api {
   /**
    * todo - DEPRECATE THIS. Send as JSON to message/store
    */
-  public static messageUpload = async (fcAuth: FcUuidAuth | undefined, encryptedDataArmored: string): Promise<BackendRes.FcMsgUpload> => {
+  public static async messageUpload(fcAuth: FcUuidAuth | undefined, encryptedDataArmored: string): Promise<BackendRes.FcMsgUpload> {
     const content = new Att({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: Buf.fromUtfStr(encryptedDataArmored) });
     return await Backend.request('message/upload', { content, ...(fcAuth || {}) }, 'FORM') as BackendRes.FcMsgUpload;
   }
 
-  public static messageToken = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcMsgToken> => {
+  public static async messageToken(fcAuth: FcUuidAuth): Promise<BackendRes.FcMsgToken> {
     Backend.throwIfMissingUuid(fcAuth);
     return await Backend.request('message/token', { ...fcAuth }) as BackendRes.FcMsgToken;
   }
 
-  public static messageExpiration = async (fcAuth: FcUuidAuth, adminCodes: string[], addDays?: number): Promise<BackendRes.ApirFcMsgExpiration> => {
+  public static async messageExpiration(fcAuth: FcUuidAuth, adminCodes: string[], addDays?: number): Promise<BackendRes.ApirFcMsgExpiration> {
     Backend.throwIfMissingUuid(fcAuth);
     return await Backend.request('message/expiration', {
       ...fcAuth,
@@ -194,11 +194,11 @@ export class Backend extends Api {
     alias,
   })
 
-  public static retrieveBlogPosts = async (): Promise<BackendRes.FcBlogPost[]> => {
+  public static async retrieveBlogPosts(): Promise<BackendRes.FcBlogPost[]> {
     return Api.ajax({ url: 'https://flowcrypt.com/feed', dataType: 'json' }, Catch.stackTrace()); // tslint:disable-line:no-direct-ajax
   }
 
-  public static s3Upload = (items: AwsS3UploadItem[], progressCb: ProgressCb) => {
+  public static s3Upload(items: AwsS3UploadItem[], progressCb: ProgressCb) {
     const progress = Value.arr.zeroes(items.length);
     const promises: Promise<void>[] = [];
     if (!items.length) {

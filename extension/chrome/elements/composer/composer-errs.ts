@@ -28,7 +28,7 @@ export class ComposerErrs extends ComposerComponent {
     // none
   }
 
-  public handlers = (couldNotDoWhat: string): BrowserEventErrHandler => {
+  public handlers(couldNotDoWhat: string): BrowserEventErrHandler {
     return {
       network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
       authPopup: async () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail }),
@@ -51,7 +51,7 @@ export class ComposerErrs extends ComposerComponent {
     };
   }
 
-  public debugFocusEvents = (...selNames: string[]) => {
+  public debugFocusEvents(...selNames: string[]) {
     for (const selName of selNames) {
       this.composer.S.cached(selName)
         .focusin(e => this.debug(`** ${selName} receiving focus from(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`))
@@ -59,13 +59,13 @@ export class ComposerErrs extends ComposerComponent {
     }
   }
 
-  public debug = (msg: string) => {
+  public debug(msg: string) {
     if (this.view.debug) {
       console.log(`[${this.debugId}] ${msg}`);
     }
   }
 
-  public handleSendErr = async (e: any) => {
+  public async handleSendErr(e: any) {
     if (Api.err.isNetErr(e)) {
       await Ui.modal.error('Could not send message due to network error. Please check your internet connection and try again.');
     } else if (Api.err.isAuthPopupNeeded(e)) {
@@ -99,7 +99,7 @@ export class ComposerErrs extends ComposerComponent {
     }
   }
 
-  public throwIfFormNotReady = (): void => {
+  public throwIfFormNotReady(): void {
     if (this.composer.S.cached('icon_show_prev_msg').hasClass('progress')) {
       throw new ComposerNotReadyError('Retrieving previous message, please wait.');
     }
@@ -122,13 +122,13 @@ export class ComposerErrs extends ComposerComponent {
     throw new ComposerNotReadyError('Still working, please wait.');
   }
 
-  public throwIfFormValsInvalid = async ({ subject, plaintext }: { subject: string, plaintext: string }) => {
+  public async throwIfFormValsInvalid({ subject, plaintext }: { subject: string, plaintext: string }) {
     if (!((plaintext !== '' || await Ui.modal.confirm('Send empty message?')) && (subject !== '' || await Ui.modal.confirm('Send without a subject?')))) {
       throw new ComposerResetBtnTrigger();
     }
   }
 
-  public throwIfEncryptionPasswordInvalid = async (senderKi: KeyInfo, { subject, pwd }: { subject: string, pwd?: Pwd }) => {
+  public async throwIfEncryptionPasswordInvalid(senderKi: KeyInfo, { subject, pwd }: { subject: string, pwd?: Pwd }) {
     if (pwd?.answer) {
       const pp = await this.composer.storage.passphraseGet(senderKi);
       if (pp && pwd.answer.toLowerCase() === pp.toLowerCase()) {

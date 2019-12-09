@@ -35,7 +35,7 @@ export class ComposerSendBtn extends ComposerComponent {
 
   initActions(): void {
     this.composer.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composer.size.isMinimized() && this.extractProcessSendMsg()));
-    this.composer.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
+    this.composer.S.cached('send_btn').click(this.view.setHandlerPrevent('double', () => this.extractProcessSendMsg()));
     this.popover.initActions();
   }
 
@@ -80,7 +80,7 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  private extractProcessSendMsg = async () => {
+  private async extractProcessSendMsg() {
     this.composer.sendBtn.disableBtn();
     this.composer.S.cached('toggle_send_options').hide();
     try {
@@ -125,7 +125,7 @@ export class ComposerSendBtn extends ComposerComponent {
     await this.addNamesToMsg(msg);
   }
 
-  private doSendMsg = async (msg: SendableMsg) => {
+  private async doSendMsg(msg: SendableMsg) {
     let msgSentRes: GmailRes.GmailMsgSend;
     try {
       this.isSendMessageInProgress = true;
@@ -150,7 +150,7 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  private decryptSenderKey = async (senderKi: KeyInfo): Promise<OpenPGP.key.Key | undefined> => {
+  private async decryptSenderKey(senderKi: KeyInfo): Promise<OpenPGP.key.Key | undefined> {
     const prv = await Pgp.key.read(senderKi.private);
     const passphrase = await this.composer.storage.passphraseGet(senderKi);
     if (typeof passphrase === 'undefined' && !prv.isFullyDecrypted()) {
@@ -169,14 +169,14 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  public renderUploadProgress = (progress: number) => {
+  public renderUploadProgress(progress: number) {
     if (this.composer.atts.attach.hasAtt()) {
       progress = Math.floor(progress);
       this.composer.S.now('send_btn_text').text(`${SendBtnTexts.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
     }
   }
 
-  private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
+  private async addNamesToMsg(msg: SendableMsg): Promise<void> {
     const { sendAs } = await Store.getAcct(this.view.acctEmail, ['sendAs']);
     const addNameToEmail = async (emails: string[]): Promise<string[]> => {
       return await Promise.all(emails.map(async email => {

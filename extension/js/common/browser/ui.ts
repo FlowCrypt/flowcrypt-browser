@@ -27,13 +27,13 @@ export class Ui {
 
   public static delay = (ms: number) => new Promise(resolve => Catch.setHandledTimeout(resolve, ms));
 
-  public static spinner = (color: string, placeholderCls: "small_spinner" | "large_spinner" = 'small_spinner') => {
+  public static spinner(color: string, placeholderCls: "small_spinner" | "large_spinner" = 'small_spinner') {
     const path = `/img/svgs/spinner-${color}-small.svg`;
     const url = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL ? chrome.runtime.getURL(path) : path;
     return `<i class="${placeholderCls}" data-test="spinner"><img src="${url}" /></i>`;
   }
 
-  public static renderOverlayPromptAwaitUserChoice = (btns: Dict<{ title?: string, color?: string }>, prompt: string, details?: string): Promise<string> => {
+  public static renderOverlayPromptAwaitUserChoice(btns: Dict<{ title?: string, color?: string }>, prompt: string, details?: string): Promise<string> {
     return new Promise(resolve => {
       const getEscapedColor = (id: string) => Xss.escape(btns[id].color || 'green');
       const getEscapedTitle = (id: string) => Xss.escape(btns[id].title || id.replace(/_/g, ' '));
@@ -70,41 +70,51 @@ export class Ui {
     });
   }
 
-  public static escape = (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
-    if (!e.metaKey && !e.ctrlKey && e.key === 'Escape') {
-      callback();
-    }
+  public static escape(callback: () => void) {
+    return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+      if (!e.metaKey && !e.ctrlKey && e.key === 'Escape') {
+        callback();
+      }
+    };
   }
 
-  public static tab = (callback: (e: JQuery.Event<HTMLElement>) => void) => (e: JQuery.Event<HTMLElement>) => { // returns a function
-    if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.key === 'Tab') {
-      callback(e);
-    }
+  public static tab(callback: (e: JQuery.Event<HTMLElement>) => void) {
+    return (e: JQuery.Event<HTMLElement>) => { // returns a function
+      if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.key === 'Tab') {
+        callback(e);
+      }
+    };
   }
 
-  public static shiftTab = (callback: (e: JQuery.Event<HTMLElement>) => void) => (e: JQuery.Event<HTMLElement>) => { // returns a function
-    if (!e.metaKey && !e.ctrlKey && e.shiftKey && e.key === 'Tab') {
-      callback(e);
-    }
+  public static shiftTab(callback: (e: JQuery.Event<HTMLElement>) => void) {
+    return (e: JQuery.Event<HTMLElement>) => { // returns a function
+      if (!e.metaKey && !e.ctrlKey && e.shiftKey && e.key === 'Tab') {
+        callback(e);
+      }
+    };
   }
 
-  public static enter = (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
-    if (!e.metaKey && !e.ctrlKey && e.key === 'Enter') {
-      callback();
-    }
+  public static enter(callback: () => void) {
+    return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+      if (!e.metaKey && !e.ctrlKey && e.key === 'Enter') {
+        callback();
+      }
+    };
   }
 
-  public static ctrlEnter = (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-      callback();
-    }
+  public static ctrlEnter(callback: () => void) {
+    return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        callback();
+      }
+    };
   }
 
-  public static setTestState = (state: 'ready' | 'working' | 'waiting') => {
+  public static setTestState(state: 'ready' | 'working' | 'waiting') {
     $('body').attr('data-test-state', state); // for automated tests
   }
 
-  public static buildJquerySels = (sels: Dict<string>): SelCache => {
+  public static buildJquerySels(sels: Dict<string>): SelCache {
     const cache: NamedSels = {};
     return {
       cached: (name: string) => {
@@ -131,7 +141,7 @@ export class Ui {
     };
   }
 
-  public static scroll = (sel: string | JQuery<HTMLElement>, repeat: number[] = []) => {
+  public static scroll(sel: string | JQuery<HTMLElement>, repeat: number[] = []) {
     const el = $(sel as string).first()[0]; // as string due to JQuery TS quirk. Do not convert to String() as this may actually be JQuery<HTMLElement>
     if (el) {
       el.scrollIntoView();
@@ -330,7 +340,7 @@ export class Ui {
     },
   };
 
-  public static toast = async (msg: string, seconds = 2): Promise<void> => {
+  public static async toast(msg: string, seconds = 2): Promise<void> {
     await Swal.fire({
       toast: true,
       title: msg,

@@ -36,7 +36,7 @@ export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | 
 
 abstract class ApiCallErr extends Error {
 
-  private static getPayloadStructure = (req: JQueryAjaxSettings): string => {
+  private static getPayloadStructure(req: JQueryAjaxSettings): string {
     if (typeof req.data === 'string') {
       try {
         return Object.keys(JSON.parse(req.data) as any).join(',');
@@ -80,7 +80,7 @@ export class AjaxErr extends ApiCallErr {
     GOOGLE_RECIPIENT_ADDRESS_REQUIRED: 'Recipient address required',
   };
 
-  public static fromXhr = (xhr: RawAjaxErr, req: JQueryAjaxSettings, stack: string) => {
+  public static fromXhr(xhr: RawAjaxErr, req: JQueryAjaxSettings, stack: string) {
     const responseText = xhr.responseText || '';
     const status = typeof xhr.status === 'number' ? xhr.status : -1;
     stack += `\n\nprovided ajax call stack:\n${stack}`;
@@ -96,7 +96,7 @@ export class AjaxErr extends ApiCallErr {
     super(message);
   }
 
-  public parseErrResMsg = (format: 'google') => {
+  public parseErrResMsg(format: 'google') {
     try {
       if (format === 'google') {
         const errMsg = ((JSON.parse(this.responseText) as any).error as any).message as string; // catching all errs below
@@ -268,26 +268,28 @@ export class Api {
     },
   };
 
-  public static download = (url: string, progress?: ProgressCb): Promise<Buf> => new Promise((resolve, reject) => {
-    const request = new XMLHttpRequest();
-    request.open('GET', url, true);
-    request.responseType = 'arraybuffer';
-    if (typeof progress === 'function') {
-      request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total);
-    }
-    request.onerror = progressEvent => {
-      if (!progressEvent.target) {
-        reject(new Error(`Api.download(${url}) failed with a null progressEvent.target`));
-      } else {
-        const { readyState, status, statusText } = progressEvent.target as XMLHttpRequest;
-        reject(AjaxErr.fromXhr({ readyState, status, statusText }, { url, method: 'GET' }, Catch.stackTrace()));
+  public static download(url: string, progress?: ProgressCb): Promise<Buf> {
+    return new Promise((resolve, reject) => {
+      const request = new XMLHttpRequest();
+      request.open('GET', url, true);
+      request.responseType = 'arraybuffer';
+      if (typeof progress === 'function') {
+        request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total);
       }
-    };
-    request.onload = e => resolve(new Buf(request.response as ArrayBuffer));
-    request.send();
-  })
+      request.onerror = progressEvent => {
+        if (!progressEvent.target) {
+          reject(new Error(`Api.download(${url}) failed with a null progressEvent.target`));
+        } else {
+          const { readyState, status, statusText } = progressEvent.target as XMLHttpRequest;
+          reject(AjaxErr.fromXhr({ readyState, status, statusText }, { url, method: 'GET' }, Catch.stackTrace()));
+        }
+      };
+      request.onload = e => resolve(new Buf(request.response as ArrayBuffer));
+      request.send();
+    });
+  }
 
-  public static ajax = async (req: JQueryAjaxSettings, stack: string): Promise<any | JQuery.jqXHR<any>> => {
+  public static async ajax(req: JQueryAjaxSettings, stack: string): Promise<any | JQuery.jqXHR<any>> {
     if (Env.isContentScript()) {
       // content script CORS not allowed anymore, have to drag it through background page
       // https://www.chromestatus.com/feature/5629709824032768
@@ -316,7 +318,7 @@ export class Api {
     }
   }
 
-  public static getAjaxProgressXhrFactory = (progressCbs?: ProgressCbs): (() => XMLHttpRequest) | undefined => {
+  public static getAjaxProgressXhrFactory(progressCbs?: ProgressCbs): (() => XMLHttpRequest) | undefined {
     if (Env.isContentScript() || Env.isBackgroundPage() || !progressCbs || !Object.keys(progressCbs).length) {
       // xhr object would cause 'The object could not be cloned.' lastError during BrowserMsg passing
       // thus no progress callbacks in bg or content scripts
@@ -351,11 +353,11 @@ export class Api {
     };
   }
 
-  private static isRawAjaxErr = (e: any): e is RawAjaxErr => {
+  private static isRawAjaxErr(e: any): e is RawAjaxErr {
     return e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number';
   }
 
-  private static isStandardError = (e: any): e is StandardError => {
+  private static isStandardError(e: any): e is StandardError {
     return e && typeof e === 'object' && (e as StandardError).hasOwnProperty('internal') && Boolean((e as StandardError).message);
   }
 

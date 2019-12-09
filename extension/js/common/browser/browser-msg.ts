@@ -174,63 +174,65 @@ export class BrowserMsg {
     addToContacts: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'addToContacts', {})
   };
 
-  private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<any>) => {
+  private static sendCatch(dest: Bm.Dest | undefined, name: string, bm: Dict<any>) {
     BrowserMsg.sendAwait(dest, name, bm).catch(Catch.reportErr);
   }
 
-  private static sendAwait = (destString: string | undefined, name: string, bm?: Dict<unknown>, awaitRes = false): Promise<Bm.Response> => new Promise((resolve, reject) => {
-    bm = bm || {};
-    const isBackgroundPage = Env.isBackgroundPage();
-    if (isBackgroundPage && BrowserMsg.HANDLERS_REGISTERED_BACKGROUND && typeof destString === 'undefined') { // calling from bg script to bg script: skip messaging
-      const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name];
-      handler(bm, 'background').then(resolve).catch(reject);
-    } else { // here browser messaging is used - msg has to be serializable - Buf instances need to be converted to object urls, and back upon receipt
-      const objUrls = BrowserMsg.replaceBufWithObjUrlInplace(bm);
-      const msg: Bm.Raw = { name, data: { bm, objUrls }, to: destString || null, uid: Str.sloppyRandom(10), stack: Catch.stackTrace() }; // tslint:disable-line:no-null-keyword
-      const processRawMsgResponse = (r: Bm.RawResponse) => {
-        if (!awaitRes) {
-          resolve();
-        } else if (!r || typeof r !== 'object') { // r can be null if we sent a message to a non-existent window id
-          const lastError = chrome.runtime.lastError ? chrome.runtime.lastError.message || '(empty lastError)' : '(no lastError)';
-          let e: Error;
-          if (typeof destString === 'undefined' && typeof r === 'undefined') {
-            if (lastError === 'The object could not be cloned.') {
-              e = new Error(`BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
-            } else if (lastError === 'Could not establish connection. Receiving end does not exist.' || lastError === 'The message port closed before a response was received.') {
-              // "The message port closed before a response was received." could also happen for otherwise working extension, if bg script
-              //    did not return `true` (indicating async response). That would be our own coding error in BrowserMsg.
-              e = new BgNotReadyError(`BgNotReadyError: BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
+  private static sendAwait(destString: string | undefined, name: string, bm?: Dict<unknown>, awaitRes = false): Promise<Bm.Response> {
+    return new Promise((resolve, reject) => {
+      bm = bm || {};
+      const isBackgroundPage = Env.isBackgroundPage();
+      if (isBackgroundPage && BrowserMsg.HANDLERS_REGISTERED_BACKGROUND && typeof destString === 'undefined') { // calling from bg script to bg script: skip messaging
+        const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name];
+        handler(bm, 'background').then(resolve).catch(reject);
+      } else { // here browser messaging is used - msg has to be serializable - Buf instances need to be converted to object urls, and back upon receipt
+        const objUrls = BrowserMsg.replaceBufWithObjUrlInplace(bm);
+        const msg: Bm.Raw = { name, data: { bm, objUrls }, to: destString || null, uid: Str.sloppyRandom(10), stack: Catch.stackTrace() }; // tslint:disable-line:no-null-keyword
+        const processRawMsgResponse = (r: Bm.RawResponse) => {
+          if (!awaitRes) {
+            resolve();
+          } else if (!r || typeof r !== 'object') { // r can be null if we sent a message to a non-existent window id
+            const lastError = chrome.runtime.lastError ? chrome.runtime.lastError.message || '(empty lastError)' : '(no lastError)';
+            let e: Error;
+            if (typeof destString === 'undefined' && typeof r === 'undefined') {
+              if (lastError === 'The object could not be cloned.') {
+                e = new Error(`BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
+              } else if (lastError === 'Could not establish connection. Receiving end does not exist.' || lastError === 'The message port closed before a response was received.') {
+                // "The message port closed before a response was received." could also happen for otherwise working extension, if bg script
+                //    did not return `true` (indicating async response). That would be our own coding error in BrowserMsg.
+                e = new BgNotReadyError(`BgNotReadyError: BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
+              } else {
+                e = new Error(`BrowserMsg.sendAwait(${name}) failed with unknown lastError: ${lastError}`);
+              }
             } else {
-              e = new Error(`BrowserMsg.sendAwait(${name}) failed with unknown lastError: ${lastError}`);
+              e = new Error(`BrowserMsg.sendAwait(${name}) returned(${String(r)}) with lastError: ${lastError}`);
             }
+            e.stack = `${msg.stack}\n\n${e.stack}`;
+            reject(e);
+          } else if (typeof r === 'object' && r.exception) {
+            reject(BrowserMsg.jsonToErr(r.exception, msg));
+          } else if (!r.result || typeof r.result !== 'object') {
+            resolve(r.result);
           } else {
-            e = new Error(`BrowserMsg.sendAwait(${name}) returned(${String(r)}) with lastError: ${lastError}`);
+            BrowserMsg.replaceObjUrlWithBuf(r.result, r.objUrls).then(resolve).catch(reject);
           }
-          e.stack = `${msg.stack}\n\n${e.stack}`;
-          reject(e);
-        } else if (typeof r === 'object' && r.exception) {
-          reject(BrowserMsg.jsonToErr(r.exception, msg));
-        } else if (!r.result || typeof r.result !== 'object') {
-          resolve(r.result);
-        } else {
-          BrowserMsg.replaceObjUrlWithBuf(r.result, r.objUrls).then(resolve).catch(reject);
-        }
-      };
-      try {
-        if (isBackgroundPage) {
-          chrome.tabs.sendMessage(BrowserMsg.browserMsgDestParse(msg.to).tab!, msg, {}, processRawMsgResponse);
-        } else {
-          chrome.runtime.sendMessage(msg, processRawMsgResponse);
-        }
-      } catch (e) {
-        if (e instanceof Error && e.message === 'Extension context invalidated.') {
-          BrowserMsg.showFatalUserNotification('Restart browser to re-enable FlowCrypt');
-        } else {
-          throw e;
+        };
+        try {
+          if (isBackgroundPage) {
+            chrome.tabs.sendMessage(BrowserMsg.browserMsgDestParse(msg.to).tab!, msg, {}, processRawMsgResponse);
+          } else {
+            chrome.runtime.sendMessage(msg, processRawMsgResponse);
+          }
+        } catch (e) {
+          if (e instanceof Error && e.message === 'Extension context invalidated.') {
+            BrowserMsg.showFatalUserNotification('Restart browser to re-enable FlowCrypt');
+          } else {
+            throw e;
+          }
         }
       }
-    }
-  })
+    });
+  }
 
   public static showFatalUserNotification(message: string) {
     const div = document.createElement('div');
@@ -246,7 +248,7 @@ export class BrowserMsg {
     window.document.body.appendChild(div);
   }
 
-  public static tabId = async (): Promise<string | null | undefined> => {
+  public static async tabId(): Promise<string | null | undefined> {
     try {
       const { tabId } = await BrowserMsg.sendAwait(undefined, '_tab_', undefined, true) as Bm.Res._tab_;
       return tabId;
@@ -258,7 +260,7 @@ export class BrowserMsg {
     }
   }
 
-  public static requiredTabId = async (attempts = 10, delay = 200): Promise<string> => {
+  public static async requiredTabId(attempts = 10, delay = 200): Promise<string> {
     let tabId;
     for (let i = 0; i < attempts; i++) { // sometimes returns undefined right after browser start due to BgNotReadyError
       tabId = await BrowserMsg.tabId();
@@ -270,7 +272,7 @@ export class BrowserMsg {
     throw new TabIdRequiredError(`tabId is required, but received '${String(tabId)}' after ${attempts} attempts`);
   }
 
-  public static addListener = (name: string, handler: Handler) => {
+  public static addListener(name: string, handler: Handler) {
     BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = handler;
   }
 
@@ -279,7 +281,7 @@ export class BrowserMsg {
    *
    * The requestOrResponse object will get directly updated in this function
    */
-  private static replaceBufWithObjUrlInplace = (requestOrResponse: unknown): Dict<string> => {
+  private static replaceBufWithObjUrlInplace(requestOrResponse: unknown): Dict<string> {
     const objUrls: Dict<string> = {};
     if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null) { // lgtm [js/comparison-between-incompatible-types]
       for (const possibleBufName of Object.keys(requestOrResponse)) {
@@ -305,7 +307,7 @@ export class BrowserMsg {
     return requestOrResponse;
   }
 
-  private static errToJson = (e: any): Bm.ErrAsJson => {
+  private static errToJson(e: any): Bm.ErrAsJson {
     if (e instanceof AjaxErr) {
       const { message, stack, status, url, responseText, statusText } = e;
       return { stack, message, errorConstructor: 'AjaxErr', ajaxErrorDetails: { status, url, responseText, statusText } };
@@ -314,7 +316,7 @@ export class BrowserMsg {
     return { stack, message, errorConstructor: 'Error' };
   }
 
-  private static jsonToErr = (errAsJson: Bm.ErrAsJson, msg: Bm.Raw) => {
+  private static jsonToErr(errAsJson: Bm.ErrAsJson, msg: Bm.Raw) {
     const stackInfo = `\n\n[callerStack]\n${msg.stack}\n[/callerStack]\n\n[responderStack]\n${errAsJson.stack}\n[/responderStack]\n`;
     if (errAsJson.errorConstructor === 'AjaxErr') {
       const { status, url, responseText, statusText } = errAsJson.ajaxErrorDetails;
@@ -325,7 +327,7 @@ export class BrowserMsg {
     return e;
   }
 
-  private static sendRawResponse = (handlerPromise: Promise<Bm.Res.Any>, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
+  private static sendRawResponse(handlerPromise: Promise<Bm.Res.Any>, rawRespond: (rawResponse: Bm.RawResponse) => void) {
     handlerPromise.then(result => {
       const objUrls = BrowserMsg.replaceBufWithObjUrlInplace(result); // this actually changes the result object
       rawRespond({ result, exception: undefined, objUrls });
@@ -334,7 +336,7 @@ export class BrowserMsg {
     });
   }
 
-  public static listen = (listenForTabId: string) => {
+  public static listen(listenForTabId: string) {
     const processed: string[] = [];
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
       try {
@@ -361,11 +363,11 @@ export class BrowserMsg {
     });
   }
 
-  public static bgAddListener = (name: string, handler: Handler) => {
+  public static bgAddListener(name: string, handler: Handler) {
     BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name] = handler;
   }
 
-  public static bgListen = () => {
+  public static bgListen() {
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, rawRespond: (rawRes: Bm.RawResponse) => void) => {
       const respondIfPageStillOpen = (response: Bm.RawResponse) => {
         try { // avoiding unnecessary errors when target tab gets closed
@@ -405,7 +407,7 @@ export class BrowserMsg {
     });
   }
 
-  private static browserMsgDestParse = (destString: string | null) => {
+  private static browserMsgDestParse(destString: string | null) {
     const parsed = { tab: undefined as undefined | number, frame: undefined as undefined | number };
     if (destString) {
       parsed.tab = Number(destString.split(':')[0]);

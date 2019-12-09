@@ -19,7 +19,7 @@ export class BrowserHandle {
     this.viewport = { height, width };
   }
 
-  newPage = async (t: AvaContext, url?: string, initialScript?: EvaluateFn): Promise<ControllablePage> => {
+  async newPage(t: AvaContext, url?: string, initialScript?: EvaluateFn): Promise<ControllablePage> {
     const page = await this.browser.newPage();
     if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
       await page.authenticate(Config.secrets.proxy.auth);
@@ -36,7 +36,7 @@ export class BrowserHandle {
     return controllablePage;
   }
 
-  newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>, cookieAcct?: string): Promise<ControllablePage> => {
+  async newPageTriggeredBy(t: AvaContext, triggeringAction: () => Promise<void>, cookieAcct?: string): Promise<ControllablePage> {
     const cookies = cookieAcct ? await FlowCryptApi.hookCiCookiesGet(cookieAcct) : undefined;
     const page = await this.doAwaitTriggeredPage(triggeringAction);
     if (cookies) {
@@ -54,7 +54,7 @@ export class BrowserHandle {
     return controllablePage;
   }
 
-  closeAllPages = async () => {
+  async closeAllPages() {
     for (const page of await this.browser.pages()) {
       if (page.url() !== 'about:blank') {
         await page.close();
@@ -63,16 +63,16 @@ export class BrowserHandle {
     this.pages = [];
   }
 
-  close = async () => {
+  async close() {
     await this.browser.close();
     this.semaphore.release();
   }
 
-  release = () => {
+  release() {
     this.semaphore.release();
   }
 
-  debugPagesHtml = async () => {
+  async debugPagesHtml() {
     let html = '';
     for (let i = 0; i < this.pages.length; i++) {
       const cPage = this.pages[i];
@@ -100,19 +100,21 @@ export class BrowserHandle {
     return html;
   }
 
-  private doAwaitTriggeredPage = (triggeringAction: () => Promise<void>): Promise<Page> => new Promise((resolve, reject) => {
-    setTimeout(() => reject(new Error('Action did not trigger a new page within timeout period')), TIMEOUT_ELEMENT_APPEAR * 1000);
-    let resolved = 0;
-    const listener = async (target: Target) => {
-      if (target.type() === 'page') {
-        if (!resolved++) {
-          this.browser.removeListener('targetcreated', listener);
-          target.page().then(resolve, reject);
+  private doAwaitTriggeredPage(triggeringAction: () => Promise<void>): Promise<Page> {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => reject(new Error('Action did not trigger a new page within timeout period')), TIMEOUT_ELEMENT_APPEAR * 1000);
+      let resolved = 0;
+      const listener = async (target: Target) => {
+        if (target.type() === 'page') {
+          if (!resolved++) {
+            this.browser.removeListener('targetcreated', listener);
+            target.page().then(resolve, reject);
+          }
         }
-      }
-    };
-    this.browser.on('targetcreated', listener);
-    triggeringAction().catch(console.error);
-  })
+      };
+      this.browser.on('targetcreated', listener);
+      triggeringAction().catch(console.error);
+    });
+  }
 
 }

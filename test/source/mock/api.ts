@@ -67,17 +67,19 @@ export class Api<REQ, RES> {
     });
   }
 
-  public listen = (port: number, host = '127.0.0.1', maxMb = 100) => new Promise((resolve, reject) => {
-    this.maxRequestSizeMb = maxMb;
-    this.maxRequestSizeBytes = maxMb * 1024 * 1024;
-    this.server.listen(port, host);
-    this.server.on('listening', () => {
-      const address = this.server.address();
-      const msg = `${this.apiName} listening on ${typeof address === 'object' && address ? address.port : address}`;
-      console.log(msg);
-      resolve();
+  public listen(port: number, host = '127.0.0.1', maxMb = 100) {
+    return new Promise((resolve, reject) => {
+      this.maxRequestSizeMb = maxMb;
+      this.maxRequestSizeBytes = maxMb * 1024 * 1024;
+      this.server.listen(port, host);
+      this.server.on('listening', () => {
+        const address = this.server.address();
+        const msg = `${this.apiName} listening on ${typeof address === 'object' && address ? address.port : address}`;
+        console.log(msg);
+        resolve();
+      });
     });
-  })
+  }
 
   public close = (): Promise<void> => new Promise((resolve, reject) => this.server.close((err: any) => err ? reject(err) : resolve()));
 
@@ -170,7 +172,7 @@ export class Api<REQ, RES> {
     });
   })
 
-  private parseUrlQuery = (url: string): { [k: string]: string } => {
+  private parseUrlQuery(url: string): { [k: string]: string } {
     const queryIndex = url.indexOf('?');
     if (!queryIndex) {
       return {};

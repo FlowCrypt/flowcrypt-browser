@@ -12,10 +12,10 @@ type Recipients = {
 
 export class ComposePageRecipe extends PageRecipe {
 
-  public static openStandalone = async (
+  public static async openStandalone(
     t: AvaContext, browser: BrowserHandle, group: CommonBrowserGroup | string, options:
       { appendUrl?: string, hasReplyPrompt?: boolean, skipClickPropt?: boolean, skipValidation?: boolean, initialScript?: EvaluateFn } = {}
-  ): Promise<ControllablePage> => {
+  ): Promise<ControllablePage> {
     if (group === 'compatibility') { // More common accounts
       group = 'flowcrypt.compatibility@gmail.com';
     } else if (group === 'compose') {
@@ -41,7 +41,7 @@ export class ComposePageRecipe extends PageRecipe {
     return composePage;
   }
 
-  public static openInSettings = async (settingsPage: ControllablePage): Promise<ControllableFrame> => {
+  public static async openInSettings(settingsPage: ControllablePage): Promise<ControllableFrame> {
     await settingsPage.waitAndClick('@action-show-compose-page');
     await settingsPage.waitAll('@dialog');
     const composeFrame = await settingsPage.getFrame(['compose.htm']);
@@ -50,13 +50,13 @@ export class ComposePageRecipe extends PageRecipe {
     return composeFrame;
   }
 
-  public static fillMsg = async (
+  public static async fillMsg(
     composePageOrFrame: Controllable,
     recipients: Recipients,
     subject?: string | undefined,
     sendingOpt: { encrypt?: boolean, sign?: boolean } = {}, // undefined means leave default
     windowType: 'new' | 'reply' = 'new'
-  ) => {
+  ) {
     await Util.sleep(0.5);
     await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients, windowType);
     if (subject) {
@@ -84,7 +84,7 @@ export class ComposePageRecipe extends PageRecipe {
     return { subject, body };
   }
 
-  public static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients, windowType: 'new' | 'reply') => {
+  public static async fillRecipients(composePageOrFrame: Controllable, recipients: Recipients, windowType: 'new' | 'reply') {
     if (windowType === 'reply') { // new messages should already have cc/bcc buttons visible, because they should have recipients in focus
       await composePageOrFrame.waitAndClick('@action-show-container-cc-bcc-buttons');
     }
@@ -106,7 +106,7 @@ export class ComposePageRecipe extends PageRecipe {
     }
   }
 
-  public static sendAndClose = async (composePage: ControllablePage, password?: string | undefined, timeout = 60) => {
+  public static async sendAndClose(composePage: ControllablePage, password?: string | undefined, timeout = 60) {
     if (password) {
       await composePage.waitAndType('@input-password', password);
     }

@@ -21,7 +21,7 @@ export class ComposerRender extends ComposerComponent {
   async initActions() {
     await this.initComposeBox();
     BrowserMsg.addListener('close_dialog', async () => { $('.featherlight.featherlight-iframe').remove(); });
-    this.composer.S.cached('icon_help').click(Ui.event.handle(() => this.renderHelpDialog(), this.composer.errs.handlers(`render help dialog`)));
+    this.composer.S.cached('icon_help').click(this.view.setHandler(() => this.renderHelpDialog(), this.composer.errs.handlers(`render help dialog`)));
     this.composer.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
     this.composer.atts.initActions();
     this.composer.draft.initActions().catch(Catch.reportErr);
@@ -37,7 +37,7 @@ export class ComposerRender extends ComposerComponent {
     await this.composer.sender.checkEmailAliases();
   }
 
-  private initComposeBox = async () => {
+  private async initComposeBox() {
     if (this.view.isReplyBox) {
       this.composer.S.cached('body').addClass('reply_box');
       this.composer.S.cached('header').remove();
@@ -62,7 +62,7 @@ export class ComposerRender extends ComposerComponent {
         if (this.view.skipClickPrompt) { // TODO: fix issue when loading recipients
           await this.renderReplyMsgComposeTable();
         } else {
-          $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(Ui.event.handle(async target => {
+          $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(this.view.setHandler(async target => {
             let method: 'reply' | 'forward' = 'reply';
             const typesToDelete: RecipientType[] = [];
             switch ($(target).attr('id')) {
@@ -97,7 +97,7 @@ export class ComposerRender extends ComposerComponent {
     BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page: '/chrome/settings/modules/help.htm' });
   }
 
-  public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
+  public async renderReplyMsgComposeTable(method: 'forward' | 'reply' = 'reply'): Promise<void> {
     this.composer.S.cached('prompt').css({ display: 'none' });
     this.composer.recipients.showHideCcAndBccInputsIfNeeded();
     await this.composer.recipients.setEmailsPreview(this.composer.recipients.getRecipients());
@@ -147,26 +147,28 @@ export class ComposerRender extends ComposerComponent {
       <br><br>Thank you</div>`);
     const [primaryKi] = await Store.keysGet(this.view.acctEmail, ['primary']);
     const att = Att.keyinfoAsPubkeyAtt(primaryKi);
-    await this.composer.atts.attach.addFile(new File([att.getData()], att.name));
+    this.composer.atts.attach.addFile(new File([att.getData()], att.name));
     this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
     this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-sign-sending-option'), 'sign', false); // don't sign
   }
 
-  private getFocusableEls = () => this.composer.S.cached('compose_table').find('[tabindex]:not([tabindex="-1"]):visible').toArray().sort((a, b) => {
-    const tabindexA = parseInt(a.getAttribute('tabindex') || '');
-    const tabindexB = parseInt(b.getAttribute('tabindex') || '');
-    if (tabindexA > tabindexB) { // sort according to tabindex
-      return 1;
-    } else if (tabindexA < tabindexB) {
-      return -1;
-    }
-    return 0;
-  })
+  private getFocusableEls() {
+    return this.composer.S.cached('compose_table').find('[tabindex]:not([tabindex="-1"]):visible').toArray().sort((a, b) => {
+      const tabindexA = parseInt(a.getAttribute('tabindex') || '');
+      const tabindexB = parseInt(b.getAttribute('tabindex') || '');
+      if (tabindexA > tabindexB) { // sort according to tabindex
+        return 1;
+      } else if (tabindexA < tabindexB) {
+        return -1;
+      }
+      return 0;
+    });
+  }
 
-  private renderComposeTable = async () => {
+  private async renderComposeTable() {
     this.composer.errs.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
     this.composer.S.cached('compose_table').css('display', 'table');
-    this.composer.S.cached('body').keydown(Ui.event.handle((_, e) => {
+    this.composer.S.cached('body').keydown(this.view.setHandler((_, e) => {
       if (this.composer.size.composeWindowIsMinimized) {
         return e.preventDefault();
       }
@@ -186,7 +188,7 @@ export class ComposerRender extends ComposerComponent {
     }));
     this.composer.recipients.initActions();
     this.composer.sendBtn.initActions();
-    this.composer.S.cached('input_to').bind('paste', Ui.event.handle(async (elem, event) => {
+    this.composer.S.cached('input_to').bind('paste', this.view.setHandler(async (elem, event) => {
       if (event.originalEvent instanceof ClipboardEvent && event.originalEvent.clipboardData) {
         const textData = event.originalEvent.clipboardData.getData('text/plain');
         const keyImportUi = new KeyImportUi({ checkEncryption: true });
@@ -216,7 +218,7 @@ export class ComposerRender extends ComposerComponent {
       }
     }));
     this.composer.S.cached('input_text').keyup(() => this.composer.S.cached('send_btn_note').text(''));
-    this.composer.S.cached('input_addresses_container_inner').click(Ui.event.handle(() => {
+    this.composer.S.cached('input_addresses_container_inner').click(this.view.setHandler(() => {
       if (!this.composer.S.cached('input_to').is(':focus')) {
         this.composer.errs.debug(`input_addresses_container_inner.click -> calling input_to.focus() when input_to.val(${this.composer.S.cached('input_to').val()})`);
         this.composer.S.cached('input_to').focus();
@@ -231,7 +233,7 @@ export class ComposerRender extends ComposerComponent {
       }
       await this.composer.sender.renderSenderAliasesOptionsToggle();
     } else {
-      $('.close_new_message').click(Ui.event.handle(async () => {
+      $('.close_new_message').click(this.view.setHandler(async () => {
         if (!this.composer.sendBtn.isSendMessageInProgres() ||
           await Ui.modal.confirm('A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?')) {
           this.composer.render.closeMsg();
@@ -252,7 +254,7 @@ export class ComposerRender extends ComposerComponent {
     this.composer.size.onComposeTableRender();
   }
 
-  private loadRecipientsThenSetTestStateReady = async () => {
+  private async loadRecipientsThenSetTestStateReady() {
     await Promise.all(this.composer.recipients.getRecipients().filter(r => r.evaluating).map(r => r.evaluating));
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }

@@ -8,7 +8,7 @@ import { FlatTypes } from '../platform/store.js';
 
 export class BrowserExtension { // todo - move extension-specific common.js code here
 
-  public static prepareBugReport = (name: string, details?: Dict<FlatTypes>, error?: Error | any): string => {
+  public static prepareBugReport(name: string, details?: Dict<FlatTypes>, error?: Error | any): string {
     const bugReport: Dict<string> = { name, stack: Catch.stackTrace() };
     try {
       bugReport.error = JSON.stringify(error, undefined, 2);

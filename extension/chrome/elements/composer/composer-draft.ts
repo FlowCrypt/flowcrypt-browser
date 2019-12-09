@@ -34,7 +34,7 @@ export class ComposerDraft extends ComposerComponent {
   }
 
   async initActions(): Promise<void> {
-    $('.delete_draft').click(Ui.event.handle(async () => {
+    $('.delete_draft').click(this.view.setHandler(async () => {
       await this.draftDelete();
       if (this.view.isReplyBox && !this.view.removeAfterClose) { // reload iframe so we don't leave users without a reply UI
         this.view.skipClickPrompt = false;
@@ -87,7 +87,7 @@ export class ComposerDraft extends ComposerComponent {
     }
   }
 
-  public draftSave = async (forceSave: boolean = false): Promise<void> => {
+  public async draftSave(forceSave: boolean = false): Promise<void> {
     if (this.hasBodyChanged(this.composer.S.cached('input_text').text()) || this.hasSubjectChanged(String(this.composer.S.cached('input_subject').val())) || forceSave) {
       this.currentlySavingDraft = true;
       try {
@@ -155,7 +155,7 @@ export class ComposerDraft extends ComposerComponent {
     }
   }
 
-  public draftDelete = async () => {
+  public async draftDelete() {
     clearInterval(this.saveDraftInterval);
     await Ui.time.wait(() => !this.currentlySavingDraft ? true : undefined);
     if (this.view.draftId) {
@@ -202,7 +202,7 @@ export class ComposerDraft extends ComposerComponent {
     return false;
   }
 
-  private hasBodyChanged = (msgBody: string) => {
+  private hasBodyChanged(msgBody: string) {
     if (this.lastDraftBody === undefined) { // first check
       this.lastDraftBody = msgBody;
       return false;
@@ -214,7 +214,7 @@ export class ComposerDraft extends ComposerComponent {
     return false;
   }
 
-  private hasSubjectChanged = (subject: string) => {
+  private hasSubjectChanged(subject: string) {
     if (this.view.isReplyBox) { // user cannot change reply subject
       return false; // this helps prevent unwanted empty drafts
     }
@@ -225,7 +225,7 @@ export class ComposerDraft extends ComposerComponent {
     return false;
   }
 
-  private renderPPDialogAndWaitWhenPPEntered = async () => {
+  private async renderPPDialogAndWaitWhenPPEntered() {
     const promptText = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
     if (this.view.isReplyBox) {
       Xss.sanitizeRender(this.composer.S.cached('prompt'), promptText).css({ display: 'block' });
@@ -233,10 +233,10 @@ export class ComposerDraft extends ComposerComponent {
     } else {
       Xss.sanitizeRender(this.composer.S.cached('prompt'), `${promptText}<br><br><a href="#" class="action_close">close</a>`).css({ display: 'block', height: '100%' });
     }
-    this.composer.S.cached('prompt').find('a.action_open_passphrase_dialog').click(Ui.event.handle(() => {
+    this.composer.S.cached('prompt').find('a.action_open_passphrase_dialog').click(this.view.setHandler(() => {
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'draft', longids: ['primary'] });
     }));
-    this.composer.S.cached('prompt').find('a.action_close').click(Ui.event.handle(() => this.composer.render.closeMsg()));
+    this.composer.S.cached('prompt').find('a.action_close').click(this.view.setHandler(() => this.composer.render.closeMsg()));
     await this.composer.storage.whenMasterPassphraseEntered();
   }
 
