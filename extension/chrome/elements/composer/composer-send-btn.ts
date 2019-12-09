@@ -129,11 +129,11 @@ export class ComposerSendBtn extends ComposerComponent {
     let msgSentRes: GmailRes.GmailMsgSend;
     try {
       this.isSendMessageInProgress = true;
-      msgSentRes = await this.composer.emailProvider.msgSend(msg, this.renderUploadProgress);
+      msgSentRes = await this.composer.emailProvider.msgSend(msg, (progress) => this.renderUploadProgress(progress));
     } catch (e) {
       if (msg.thread && Api.err.isNotFound(e) && this.view.threadId) { // cannot send msg because threadId not found - eg user since deleted it
         msg.thread = undefined;
-        msgSentRes = await this.composer.emailProvider.msgSend(msg, this.renderUploadProgress);
+        msgSentRes = await this.composer.emailProvider.msgSend(msg, (progress) => this.renderUploadProgress(progress));
       } else {
         this.isSendMessageInProgress = false;
         throw e;
@@ -169,8 +169,8 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  public renderUploadProgress(progress: number) {
-    if (this.composer.atts.attach.hasAtt()) {
+  public renderUploadProgress(progress: number | undefined) {
+    if (progress && this.composer.atts.attach.hasAtt()) {
       progress = Math.floor(progress);
       this.composer.S.now('send_btn_text').text(`${SendBtnTexts.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
     }
