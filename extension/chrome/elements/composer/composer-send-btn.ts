@@ -85,7 +85,7 @@ export class ComposerSendBtn extends ComposerComponent {
     this.composer.S.cached('toggle_send_options').hide();
     try {
       this.composer.errs.throwIfFormNotReady();
-      this.composer.S.now('send_btn_text').text('Loading');
+      this.composer.S.now('send_btn_text').text('Loading...');
       Xss.sanitizeRender(this.composer.S.now('send_btn_i'), Ui.spinner('white'));
       this.composer.S.cached('send_btn_note').text('');
       const newMsgData = this.composer.input.extractAll();
