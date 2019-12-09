@@ -27,13 +27,13 @@ export class Ui {
 
   public static delay = (ms: number) => new Promise(resolve => Catch.setHandledTimeout(resolve, ms));
 
-  public static spinner = (color: string, placeholderCls: "small_spinner" | "large_spinner" = 'small_spinner') => {
+  public static spinner(color: string, placeholderCls: "small_spinner" | "large_spinner" = 'small_spinner') {
     const path = `/img/svgs/spinner-${color}-small.svg`;
     const url = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL ? chrome.runtime.getURL(path) : path;
     return `<i class="${placeholderCls}" data-test="spinner"><img src="${url}" /></i>`;
   }
 
-  public static renderOverlayPromptAwaitUserChoice = (btns: Dict<{ title?: string, color?: string }>, prompt: string, details?: string): Promise<string> => {
+  public static renderOverlayPromptAwaitUserChoice(btns: Dict<{ title?: string, color?: string }>, prompt: string, details?: string): Promise<string> {
     return new Promise(resolve => {
       const getEscapedColor = (id: string) => Xss.escape(btns[id].color || 'green');
       const getEscapedTitle = (id: string) => Xss.escape(btns[id].title || id.replace(/_/g, ' '));
@@ -100,11 +100,11 @@ export class Ui {
     }
   }
 
-  public static setTestState = (state: 'ready' | 'working' | 'waiting') => {
+  public static setTestState(state: 'ready' | 'working' | 'waiting') {
     $('body').attr('data-test-state', state); // for automated tests
   }
 
-  public static buildJquerySels = (sels: Dict<string>): SelCache => {
+  public static buildJquerySels(sels: Dict<string>): SelCache {
     const cache: NamedSels = {};
     return {
       cached: (name: string) => {
@@ -131,7 +131,7 @@ export class Ui {
     };
   }
 
-  public static scroll = (sel: string | JQuery<HTMLElement>, repeat: number[] = []) => {
+  public static scroll(sel: string | JQuery<HTMLElement>, repeat: number[] = []) {
     const el = $(sel as string).first()[0]; // as string due to JQuery TS quirk. Do not convert to String() as this may actually be JQuery<HTMLElement>
     if (el) {
       el.scrollIntoView();

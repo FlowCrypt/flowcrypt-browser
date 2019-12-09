@@ -30,7 +30,7 @@ abstract class ControllableBase {
   protected isXpath = (selector: string): boolean => selector.match(/^\/\//) !== null;
 
   protected selector = (customSelLanguageQuery: string): string => { // supply browser selector, xpath, @test-id or @test-id(contains this text)
-    let m: RegExpMatchArray;
+    let m: RegExpMatchArray | null;
     if (this.isXpath(customSelLanguageQuery)) {
       return customSelLanguageQuery;
       // eslint-disable-next-line no-cond-assign

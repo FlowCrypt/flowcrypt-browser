@@ -45,7 +45,7 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     this.composer.S.cached('title').text(this.composeHeaderText());
   }
 
-  private toggleVisible = (event: JQuery.Event<HTMLElement, null>) => {
+  private toggleVisible(event: JQuery.Event<HTMLElement, null>) {
     event.stopPropagation();
     const sendingContainer = $('.sending-container');
     sendingContainer.toggleClass('popover-opened');
@@ -69,7 +69,7 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     }
   }
 
-  private keydownHandler = (e: JQuery.Event<HTMLElement, null>): void => {
+  private keydownHandler(e: JQuery.Event<HTMLElement, null>): void {
     const sendingOptions = this.composer.S.cached('sending_options_container').find('.sending-option');
     const currentActive = sendingOptions.filter('.active');
     if (e.key === 'Escape') {

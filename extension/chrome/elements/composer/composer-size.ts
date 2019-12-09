@@ -50,7 +50,7 @@ export class ComposerSize extends ComposerComponent {
     }
   }
 
-  resizeComposeBox = (addExtra: number = 0) => {
+  resizeComposeBox(addExtra: number = 0) {
     if (this.view.isReplyBox) {
       this.composer.S.cached('input_text').css('max-width', (this.composer.S.cached('body').width()! - 20) + 'px'); // body should always be present
       let minHeight = 0;
@@ -74,7 +74,7 @@ export class ComposerSize extends ComposerComponent {
     }
   }
 
-  private minimizeComposerWindow = () => {
+  private minimizeComposerWindow() {
     if (this.composeWindowIsMaximized) {
       this.addOrRemoveFullScreenStyles(this.composeWindowIsMinimized);
     }
@@ -101,7 +101,7 @@ export class ComposerSize extends ComposerComponent {
     this.composeWindowIsMaximized = !this.composeWindowIsMaximized;
   }
 
-  private addOrRemoveFullScreenStyles = (add: boolean) => {
+  private addOrRemoveFullScreenStyles(add: boolean) {
     if (add) {
       this.composer.S.cached('body').addClass(this.FULL_WINDOW_CLASS);
       BrowserMsg.send.addClass(this.view.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
@@ -120,7 +120,7 @@ export class ComposerSize extends ComposerComponent {
 *
 * @param updateRefBodyHeight - set to true to take a new snapshot of intended html body height
 */
-  public setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight: boolean = false) => {
+  public setInputTextHeightManuallyIfNeeded(updateRefBodyHeight: boolean = false) {
     if (!this.view.isReplyBox && Catch.browser().name === 'firefox') {
       this.composer.S.cached('input_text').css('height', '0');
       let cellHeightExceptText = 0;
@@ -137,7 +137,7 @@ export class ComposerSize extends ComposerComponent {
     }
   }
 
-  public resizeInput = (inputs?: JQuery<HTMLElement>) => {
+  public resizeInput(inputs?: JQuery<HTMLElement>) {
     if (!inputs) {
       inputs = this.composer.S.cached('recipients_inputs'); // Resize All Inputs
     }

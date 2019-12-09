@@ -8,7 +8,7 @@ export type WebMailName = 'gmail' | 'outlook' | 'settings';
 
 export class Env {
 
-  public static runtimeId = (orig = false) => {
+  public static runtimeId(orig = false) {
     if (chrome?.runtime?.id) {
       if (orig === true) {
         return chrome.runtime.id;
@@ -25,7 +25,7 @@ export class Env {
 
   public static isExtension = () => typeof Env.runtimeId() !== 'undefined';
 
-  public static keyCodes = () => { // todo - use e.key (string) instead? Keycodes not reliable. https://bugs.chromium.org/p/chromium/issues/detail?id=79407
+  public static keyCodes() { // todo - use e.key (string) instead? Keycodes not reliable. https://bugs.chromium.org/p/chromium/issues/detail?id=79407
     return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, };
   }
 
@@ -33,11 +33,11 @@ export class Env {
     return ['gmail']; // async because storage may be involved in the future
   }
 
-  public static getBaseUrl = () => {
+  public static getBaseUrl() {
     return window.location.protocol + '//' + window.location.hostname;
   }
 
-  public static getUrlNoParams = () => {
+  public static getUrlNoParams() {
     return window.location.protocol + '//' + window.location.hostname + window.location.pathname;
   }
 

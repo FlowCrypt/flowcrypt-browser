@@ -339,7 +339,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return keys;
   }
 
-  private apiGmailBuildFilteredQuery = (query: string, allRawEmails: string[]) => {
+  private apiGmailBuildFilteredQuery(query: string, allRawEmails: string[]) {
     let filteredQuery = query;
     for (const rawEmail of allRawEmails) {
       filteredQuery += ` -to:"${rawEmail}"`;

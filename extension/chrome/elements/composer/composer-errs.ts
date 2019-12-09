@@ -28,7 +28,7 @@ export class ComposerErrs extends ComposerComponent {
     // none
   }
 
-  public handlers = (couldNotDoWhat: string): BrowserEventErrHandler => {
+  public handlers(couldNotDoWhat: string): BrowserEventErrHandler {
     return {
       network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
       authPopup: async () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail }),
@@ -51,7 +51,7 @@ export class ComposerErrs extends ComposerComponent {
     };
   }
 
-  public debugFocusEvents = (...selNames: string[]) => {
+  public debugFocusEvents(...selNames: string[]) {
     for (const selName of selNames) {
       this.composer.S.cached(selName)
         .focusin(e => this.debug(`** ${selName} receiving focus from(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`))
@@ -59,7 +59,7 @@ export class ComposerErrs extends ComposerComponent {
     }
   }
 
-  public debug = (msg: string) => {
+  public debug(msg: string) {
     if (this.view.debug) {
       console.log(`[${this.debugId}] ${msg}`);
     }
@@ -99,7 +99,7 @@ export class ComposerErrs extends ComposerComponent {
     }
   }
 
-  public throwIfFormNotReady = (): void => {
+  public throwIfFormNotReady(): void {
     if (this.composer.S.cached('icon_show_prev_msg').hasClass('progress')) {
       throw new ComposerNotReadyError('Retrieving previous message, please wait.');
     }

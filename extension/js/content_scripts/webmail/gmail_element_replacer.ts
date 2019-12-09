@@ -67,14 +67,14 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.gmail = new Gmail(acctEmail);
   }
 
-  getIntervalFunctions = (): Array<IntervalFunction> => {
+  getIntervalFunctions(): Array<IntervalFunction> {
     return [
       { interval: 1000, handler: this.everything },
       { interval: 30000, handler: this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded }
     ];
   }
 
-  private everything = () => {
+  private everything() {
     this.replaceArmoredBlocks();
     this.replaceAtts().catch(Catch.reportErr);
     this.replaceFcTags();
@@ -93,12 +93,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  reinsertReplyBox = (replyMsgId: string) => {
+  reinsertReplyBox(replyMsgId: string) {
     const params: FactoryReplyParams = { sendAs: this.sendAs, replyMsgId };
     $('.reply_message_iframe_container:visible').last().append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
   }
 
-  scrollToElement = (selector: string) => {
+  scrollToElement(selector: string) {
     const scrollableEl = $(this.sel.convoRootScrollable).get(0);
     if (scrollableEl) {
       const element = $(selector).get(0);
@@ -110,7 +110,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private replaceArmoredBlocks = () => {
+  private replaceArmoredBlocks() {
     const emailsEontainingPgpBlock = $(this.sel.msgOuter).find(this.sel.msgInnerContainingPgp).not('.evaluated');
     for (const emailContainer of emailsEontainingPgpBlock) {
       $(emailContainer).addClass('evaluated');
@@ -131,7 +131,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private isEncrypted = (): boolean => !!$('iframe.pgp_block').filter(':visible').length;
 
-  private replaceConvoBtns = (force: boolean = false) => {
+  private replaceConvoBtns(force: boolean = false) {
     const convoUpperIcons = $('div.ade:visible');
     const useEncryptionInThisConvo = this.isEncrypted() || force;
     // reply buttons
@@ -169,7 +169,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private replaceFcTags = () => {
+  private replaceFcTags() {
     const allContenteditableEls = $("div[contenteditable='true']").not('.evaluated').addClass('evaluated');
     for (const contenteditableEl of allContenteditableEls) {
       const contenteditable = $(contenteditableEl);
@@ -365,14 +365,14 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return nRenderedAtts;
   }
 
-  private filterAtts = (potentialMatches: JQueryEl | HTMLElement, regExp: RegExp) => {
+  private filterAtts(potentialMatches: JQueryEl | HTMLElement, regExp: RegExp) {
     return $(potentialMatches).filter('span.aZo:visible, span.a5r:visible').find('span.aV3').filter(function () {
       const name = this.innerText.trim();
       return regExp.test(name);
     }).closest('span.aZo, span.a5r');
   }
 
-  private hideAtt = (attEl: JQueryEl | HTMLElement, attsContainerSel: JQueryEl | HTMLElement) => {
+  private hideAtt(attEl: JQueryEl | HTMLElement, attsContainerSel: JQueryEl | HTMLElement) {
     attEl = $(attEl);
     attsContainerSel = $(attsContainerSel);
     attEl.hide();
@@ -381,12 +381,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private determineMsgId = (innerMsgEl: HTMLElement | JQueryEl) => {
+  private determineMsgId(innerMsgEl: HTMLElement | JQueryEl) {
     const parents = $(innerMsgEl).parents(this.sel.msgOuter);
     return parents.attr('data-legacy-message-id') || parents.attr('data-message-id') || '';
   }
 
-  private determineThreadId = (convoRootEl: HTMLElement | JQueryEl) => { // todo - test and use data-thread-id with Gmail API once available
+  private determineThreadId(convoRootEl: HTMLElement | JQueryEl) { // todo - test and use data-thread-id with Gmail API once available
     return $(convoRootEl).find(this.sel.subject).attr('data-legacy-thread-id') || '';
   }
 
@@ -394,7 +394,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return $(this.sel.msgOuter).filter(`[data-legacy-message-id="${msgId}"]`).find(this.sel.msgInner);
   }
 
-  private wrapMsgBodyEl = (htmlContent: string) => {
+  private wrapMsgBodyEl(htmlContent: string) {
     return '<div class="message_inner_body evaluated">' + htmlContent + '</div>';
   }
 
@@ -403,7 +403,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
    *
    * new_html_content must be XSS safe
    */ // tslint:disable-next-line:variable-name
-  private updateMsgBodyEl_DANGEROUSLY = (el: HTMLElement | JQueryEl, method: 'set' | 'append', newHtmlContent_MUST_BE_XSS_SAFE: string) => {  // xss-dangerous-function
+  private updateMsgBodyEl_DANGEROUSLY(el: HTMLElement | JQueryEl, method: 'set' | 'append', newHtmlContent_MUST_BE_XSS_SAFE: string) {  // xss-dangerous-function
     // Messages in Gmail UI have to be replaced in a very particular way
     // The first time we update element, it should be completely replaced so that Gmail JS will lose reference to the original element and stop re-rendering it
     // Gmail message re-rendering causes the PGP message to flash back and forth, confusing the user and wasting cpu time
@@ -431,19 +431,19 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private getSenderEmail = (msgEl: HTMLElement | JQueryEl) => {
+  private getSenderEmail(msgEl: HTMLElement | JQueryEl) {
     return ($(msgEl).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
   }
 
-  private getLastMsgReplyParams = (convoRootEl: JQueryEl): FactoryReplyParams => {
+  private getLastMsgReplyParams(convoRootEl: JQueryEl): FactoryReplyParams {
     return { sendAs: this.sendAs, replyMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()) };
   }
 
-  private getGonvoRootEl = (anyInnerElement: HTMLElement) => {
+  private getGonvoRootEl(anyInnerElement: HTMLElement) {
     return $(anyInnerElement).closest('div.if, td.Bu').first();
   }
 
-  private insertEncryptedReplyBox = (messageContainer: JQuery<HTMLElement>) => {
+  private insertEncryptedReplyBox(messageContainer: JQuery<HTMLElement>) {
     const msgIdElement = messageContainer.find('[data-legacy-message-id], [data-message-id]');
     const msgId = msgIdElement.attr('data-legacy-message-id') || msgIdElement.attr('data-message-id');
     const replyParams: FactoryReplyParams = { sendAs: this.sendAs, replyMsgId: msgId, removeAfterClose: true };
@@ -556,7 +556,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private addSettingsBtn = () => {
+  private addSettingsBtn() {
     if (window.location.hash.startsWith('#settings')) {
       const settingsBtnContainer = $(this.sel.settingsBtnContainer);
       if (settingsBtnContainer.length && !settingsBtnContainer.find('#fc_settings_btn').length) {

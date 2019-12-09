@@ -25,19 +25,19 @@ export class Store {
     return [];
   }
 
-  static decryptedKeyCacheSet = (k: OpenPGP.key.Key) => {
+  static decryptedKeyCacheSet(k: OpenPGP.key.Key) {
     // tests don't need this
   }
 
-  static decryptedKeyCacheGet = (longid: string): OpenPGP.key.Key | undefined => {
+  static decryptedKeyCacheGet(longid: string): OpenPGP.key.Key | undefined {
     return undefined; // tests don't need this
   }
 
-  static armoredKeyCacheSet = (armored: string, k: OpenPGP.key.Key) => {
+  static armoredKeyCacheSet(armored: string, k: OpenPGP.key.Key) {
     // tests don't need this
   }
 
-  static armoredKeyCacheGet = (armored: string): OpenPGP.key.Key | undefined => {
+  static armoredKeyCacheGet(armored: string): OpenPGP.key.Key | undefined {
     return undefined; // tests don't need this
   }
 

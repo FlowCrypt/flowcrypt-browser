@@ -182,7 +182,7 @@ export class Store {
 
   private static singleScopeRawIndexArr = (scope: string, keys: string[]) => keys.map(key => Store.singleScopeRawIndex(scope, key));
 
-  private static manyScopesRawIndexArr = (scopes: string[], keys: string[]) => {
+  private static manyScopesRawIndexArr(scopes: string[], keys: string[]) {
     const allResults: string[] = [];
     for (const scope of scopes) {
       allResults.push(...Store.singleScopeRawIndexArr(scope, keys));
@@ -190,7 +190,7 @@ export class Store {
     return allResults;
   }
 
-  private static buildSingleAccountStoreFromRawResults = (scope: string, storageObj: RawStore): AccountStore => {
+  private static buildSingleAccountStoreFromRawResults(scope: string, storageObj: RawStore): AccountStore {
     const accountStore: AccountStore = {};
     for (const k of Object.keys(storageObj)) {
       const fixedKey = k.replace(Store.singleScopeRawIndex(scope, ''), '');
@@ -391,7 +391,7 @@ export class Store {
     return Store.buildSingleAccountStoreFromRawResults(Store.globalStorageScope, storageObj) as GlobalStore;
   }
 
-  static saveError = (err: any, errMsg?: string) => {
+  static saveError(err: any, errMsg?: string) {
     Store.getGlobal(['errors']).then(s => {
       if (typeof s.errors === 'undefined') {
         s.errors = [];
@@ -489,11 +489,11 @@ export class Store {
 
   /* db */
 
-  private static normalizeString = (str: string) => {
+  private static normalizeString(str: string) {
     return str.normalize('NFKD').replace(/[\u0300-\u036F]/g, '').toLowerCase();
   }
 
-  public static errCategorize = (err: any): Error => {
+  public static errCategorize(err: any): Error {
     let message: string;
     if (err instanceof Error) {
       message = err.message;
@@ -522,7 +522,7 @@ export class Store {
     }
   }
 
-  static dbOpen = (): Promise<IDBDatabase> => {
+  static dbOpen(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
       let openDbReq: IDBOpenDBRequest;
       openDbReq = indexedDB.open('cryptup', 3);
@@ -549,14 +549,14 @@ export class Store {
     });
   }
 
-  private static dbIndex = (hasPgp: boolean, substring: string) => {
+  private static dbIndex(hasPgp: boolean, substring: string) {
     if (!substring) {
       throw new Error('db_index has to include substring');
     }
     return (hasPgp ? 't:' : 'f:') + substring;
   }
 
-  private static dbCreateSearchIndexList = (email: string, name: string | null, hasPgp: boolean) => {
+  private static dbCreateSearchIndexList(email: string, name: string | null, hasPgp: boolean) {
     email = email.toLowerCase();
     name = name ? name.toLowerCase() : '';
     const parts = [email, name];
@@ -578,7 +578,7 @@ export class Store {
     return index;
   }
 
-  private static storablePgpClient = (rawPgpClient: 'pgp' | 'cryptup' | PgpClient | null): 'pgp' | 'cryptup' | null => {
+  private static storablePgpClient(rawPgpClient: 'pgp' | 'cryptup' | PgpClient | null): 'pgp' | 'cryptup' | null {
     if (rawPgpClient === 'flowcrypt') {
       return 'cryptup';
     } else if (rawPgpClient === 'pgp-other') {
@@ -662,7 +662,7 @@ export class Store {
     }
   })
 
-  static dbContactUpdate = (db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> => {
+  static dbContactUpdate(db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!db) { // relay op through background process
         // todo - currently will silently swallow errors
@@ -732,7 +732,7 @@ export class Store {
     }
   }
 
-  private static dbContactInternalGetOne = (db: IDBDatabase, emailOrLongid: string, searchSubkeyLongids: boolean): Promise<Contact | undefined> => {
+  private static dbContactInternalGetOne(db: IDBDatabase, emailOrLongid: string, searchSubkeyLongids: boolean): Promise<Contact | undefined> {
     return new Promise((resolve, reject) => {
       let tx: IDBRequest;
       if (!/^[A-F0-9]{16}$/.test(emailOrLongid)) { // email
@@ -747,7 +747,7 @@ export class Store {
     });
   }
 
-  static dbContactSearch = (db: IDBDatabase | undefined, query: DbContactFilter): Promise<Contact[]> => {
+  static dbContactSearch(db: IDBDatabase | undefined, query: DbContactFilter): Promise<Contact[]> {
     return new Promise((resolve, reject) => {
       if (!db) { // relay op through background process
         // todo - currently will silently swallow errors
@@ -800,33 +800,33 @@ export class Store {
     });
   }
 
-  static decryptedKeyCacheSet = (k: OpenPGP.key.Key) => {
+  static decryptedKeyCacheSet(k: OpenPGP.key.Key) {
     // todo - not yet used in browser extension, but planned to be enabled soon
     // Store.keyCacheRenewExpiry();
     // KEY_CACHE[keyLongid(k)] = k;
   }
 
-  static decryptedKeyCacheGet = (longid: string): OpenPGP.key.Key | undefined => {
+  static decryptedKeyCacheGet(longid: string): OpenPGP.key.Key | undefined {
     Store.keyCacheRenewExpiry();
     return KEY_CACHE[longid];
   }
 
-  static armoredKeyCacheSet = (armored: string, k: OpenPGP.key.Key) => {
+  static armoredKeyCacheSet(armored: string, k: OpenPGP.key.Key) {
     // todo - not yet used in browser extension, but planned to be enabled soon
     // Store.keyCacheRenewExpiry();
     // KEY_CACHE[armored] = k;
   }
 
-  static armoredKeyCacheGet = (armored: string): OpenPGP.key.Key | undefined => {
+  static armoredKeyCacheGet(armored: string): OpenPGP.key.Key | undefined {
     Store.keyCacheRenewExpiry();
     return KEY_CACHE[armored];
   }
 
-  static keyCacheWipe = () => {
+  static keyCacheWipe() {
     KEY_CACHE = {};
   }
 
-  private static keyCacheRenewExpiry = () => {
+  private static keyCacheRenewExpiry() {
     if (KEY_CACHE_WIPE_TIMEOUT) {
       clearTimeout(KEY_CACHE_WIPE_TIMEOUT);
     }

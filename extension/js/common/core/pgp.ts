@@ -331,7 +331,7 @@ export class Pgp {
     },
   };
 
-  public static friendlyMsgBlockTypeName = (type: MsgBlockType) => { // todo - remove this, just use the block type string
+  public static friendlyMsgBlockTypeName(type: MsgBlockType) { // todo - remove this, just use the block type string
     return Pgp.FRIENDLY_BLOCK_TYPE_NAMES[type];
   }
 
@@ -1056,7 +1056,7 @@ export class PgpMsg {
     return { blocks, subject: decoded.subject };
   }
 
-  public static extractFcAtts = (decryptedContent: string, blocks: MsgBlock[]) => {
+  public static extractFcAtts(decryptedContent: string, blocks: MsgBlock[]) {
     // these tags were created by FlowCrypt exclusively, so the structure is fairly rigid
     // `<a href="${att.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`
     // thus we use RegEx so that it works on both browser and node
@@ -1072,7 +1072,7 @@ export class PgpMsg {
     return decryptedContent;
   }
 
-  public static stripPublicKeys = (decryptedContent: string, foundPublicKeys: string[]) => {
+  public static stripPublicKeys(decryptedContent: string, foundPublicKeys: string[]) {
     let { blocks, normalized } = Pgp.armor.detectBlocks(decryptedContent); // tslint:disable-line:prefer-const
     for (const block of blocks) {
       if (block.type === 'publicKey') {
@@ -1096,7 +1096,7 @@ export class PgpMsg {
 
   public static stripFcTeplyToken = (decryptedContent: string) => decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
 
-  private static isFcAttLinkData = (o: any): o is FcAttLinkData => {
+  private static isFcAttLinkData(o: any): o is FcAttLinkData {
     return o && typeof o === 'object' && typeof (o as FcAttLinkData).name !== 'undefined'
       && typeof (o as FcAttLinkData).size !== 'undefined' && typeof (o as FcAttLinkData).type !== 'undefined';
   }

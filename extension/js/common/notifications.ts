@@ -32,7 +32,7 @@ export class Notifications {
     }
   }
 
-  showAuthPopupNeeded = (acctEmail: string) => {
+  showAuthPopupNeeded(acctEmail: string) {
     this.show(`${Lang.compose.pleaseReconnectAccount} <a href="#" class="auth_popup">Re-connect Account</a>`, {
       auth_popup: async () => {
         const authRes = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail });
@@ -45,7 +45,7 @@ export class Notifications {
     });
   }
 
-  clear = () => {
+  clear() {
     $('.webmail_notifications').text('');
   }
 

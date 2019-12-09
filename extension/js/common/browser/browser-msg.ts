@@ -174,7 +174,7 @@ export class BrowserMsg {
     addToContacts: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'addToContacts', {})
   };
 
-  private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<any>) => {
+  private static sendCatch(dest: Bm.Dest | undefined, name: string, bm: Dict<any>) {
     BrowserMsg.sendAwait(dest, name, bm).catch(Catch.reportErr);
   }
 
@@ -270,7 +270,7 @@ export class BrowserMsg {
     throw new TabIdRequiredError(`tabId is required, but received '${String(tabId)}' after ${attempts} attempts`);
   }
 
-  public static addListener = (name: string, handler: Handler) => {
+  public static addListener(name: string, handler: Handler) {
     BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = handler;
   }
 
@@ -279,7 +279,7 @@ export class BrowserMsg {
    *
    * The requestOrResponse object will get directly updated in this function
    */
-  private static replaceBufWithObjUrlInplace = (requestOrResponse: unknown): Dict<string> => {
+  private static replaceBufWithObjUrlInplace(requestOrResponse: unknown): Dict<string> {
     const objUrls: Dict<string> = {};
     if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null) { // lgtm [js/comparison-between-incompatible-types]
       for (const possibleBufName of Object.keys(requestOrResponse)) {
@@ -305,7 +305,7 @@ export class BrowserMsg {
     return requestOrResponse;
   }
 
-  private static errToJson = (e: any): Bm.ErrAsJson => {
+  private static errToJson(e: any): Bm.ErrAsJson {
     if (e instanceof AjaxErr) {
       const { message, stack, status, url, responseText, statusText } = e;
       return { stack, message, errorConstructor: 'AjaxErr', ajaxErrorDetails: { status, url, responseText, statusText } };
@@ -314,7 +314,7 @@ export class BrowserMsg {
     return { stack, message, errorConstructor: 'Error' };
   }
 
-  private static jsonToErr = (errAsJson: Bm.ErrAsJson, msg: Bm.Raw) => {
+  private static jsonToErr(errAsJson: Bm.ErrAsJson, msg: Bm.Raw) {
     const stackInfo = `\n\n[callerStack]\n${msg.stack}\n[/callerStack]\n\n[responderStack]\n${errAsJson.stack}\n[/responderStack]\n`;
     if (errAsJson.errorConstructor === 'AjaxErr') {
       const { status, url, responseText, statusText } = errAsJson.ajaxErrorDetails;
@@ -334,7 +334,7 @@ export class BrowserMsg {
     });
   }
 
-  public static listen = (listenForTabId: string) => {
+  public static listen(listenForTabId: string) {
     const processed: string[] = [];
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
       try {
@@ -361,11 +361,11 @@ export class BrowserMsg {
     });
   }
 
-  public static bgAddListener = (name: string, handler: Handler) => {
+  public static bgAddListener(name: string, handler: Handler) {
     BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name] = handler;
   }
 
-  public static bgListen = () => {
+  public static bgListen() {
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, rawRespond: (rawRes: Bm.RawResponse) => void) => {
       const respondIfPageStillOpen = (response: Bm.RawResponse) => {
         try { // avoiding unnecessary errors when target tab gets closed
@@ -405,7 +405,7 @@ export class BrowserMsg {
     });
   }
 
-  private static browserMsgDestParse = (destString: string | null) => {
+  private static browserMsgDestParse(destString: string | null) {
     const parsed = { tab: undefined as undefined | number, frame: undefined as undefined | number };
     if (destString) {
       parsed.tab = Number(destString.split(':')[0]);

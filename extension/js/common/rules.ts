@@ -36,7 +36,7 @@ export class Rules {
     }
   }
 
-  public static relaxSubscriptionRequirements = (emailAddr: string) => {
+  public static relaxSubscriptionRequirements(emailAddr: string) {
     return ['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(emailAddr.split('@')[1] || 'NONE');
   }
 
@@ -53,7 +53,7 @@ export class Rules {
   /**
    * temporarily hard coded for one domain until we have appropriate backend service for this
    */
-  getCustomKeyserver = () => {
+  getCustomKeyserver() {
     if (this.domainHash === 'xKzI/nSDX4g2Wfgih9y0sYIguRU=') {
       return Buf.fromBase64Str('aHR0cHM6Ly9za3MucG9kMDEuZmxlZXRzdHJlZXRvcHMuY29tLw==').toUtfStr();
     }

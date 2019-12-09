@@ -45,7 +45,7 @@ export class KeyImportUi {
     this.checkSigning = o.checkSigning === true;
   }
 
-  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined) => {
+  public initPrvImportSrcForm(acctEmail: string, parentTabId: string | undefined) {
     $('input[type=radio][name=source]').off().change(function () {
       if ((this as HTMLInputElement).value === 'file') {
         $('.input_private_key').val('').change().prop('disabled', true);
@@ -135,7 +135,7 @@ export class KeyImportUi {
     return normalized;
   }
 
-  renderPassPhraseStrengthValidationInput = (input: JQuery<HTMLElement>, submitButton?: JQuery<HTMLElement>, type: 'passphrase' | 'pwd' = 'passphrase') => {
+  renderPassPhraseStrengthValidationInput(input: JQuery<HTMLElement>, submitButton?: JQuery<HTMLElement>, type: 'passphrase' | 'pwd' = 'passphrase') {
     const validationElements = this.getPPValidationElements();
     const setBtnColor = (type: 'gray' | 'green') => {
       if (submitButton) { // submitButton may be undefined if we don't want password strength to affect color of any action button
@@ -204,7 +204,7 @@ export class KeyImportUi {
     return longid;
   }
 
-  private rejectIfNot = (type: KeyBlockType, k: OpenPGP.key.Key) => {
+  private rejectIfNot(type: KeyBlockType, k: OpenPGP.key.Key) {
     const headers = Pgp.armor.headers(type);
     if (type === 'privateKey' && k.isPublic()) {
       throw new UserAlert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + headers.begin + '"');
@@ -224,7 +224,7 @@ export class KeyImportUi {
     }
   }
 
-  private rejectIfDifferentFromSelectedLongid = (longid: string) => {
+  private rejectIfDifferentFromSelectedLongid(longid: string) {
     if (this.expectedLongid && longid !== this.expectedLongid) {
       throw new UserAlert(`Key does not match. Looking for key with KeyWords ${mnemonic(this.expectedLongid)} (${this.expectedLongid})`);
     }
@@ -293,7 +293,7 @@ export class KeyImportUi {
     }
   }
 
-  public static normalizeLongId = (longid: string) => {
+  public static normalizeLongId(longid: string) {
     let result = longid.trim().replace(/0x|\s|:|-/g, '').toUpperCase();
     if (result.length >= 16) {
       result = result.substring(result.length - 16);
@@ -304,7 +304,7 @@ export class KeyImportUi {
     return;
   }
 
-  private getPPValidationElements = () => {
+  private getPPValidationElements() {
     const passwordResultHTML = `<div class="line password_feedback" data-test="container-password-feedback">
                                   <span class="password_result"></span> (time to crack: <span class="password_time"></span>)<ul></ul>
                                 </div>`;

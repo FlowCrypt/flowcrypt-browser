@@ -164,7 +164,7 @@ export class ComposerRecipients extends ComposerComponent {
    * Returns the boolean value which indicates if this.searchContacts() should be
    * prevented from triggering (in keyup handler)
    */
-  private recipientInputKeydownHandler = (e: JQuery.Event<HTMLElement, null>): boolean => {
+  private recipientInputKeydownHandler(e: JQuery.Event<HTMLElement, null>): boolean {
     const currentActive = this.composer.S.cached('contacts').find('ul li.select_contact.active');
     if (e.key === 'Backspace') {
       if (!$(e.target).val()) {
@@ -291,7 +291,7 @@ export class ComposerRecipients extends ComposerComponent {
     });
   }
 
-  private renderSearchRes = (input: JQuery<HTMLElement>, contacts: Contact[], query: ProviderContactsQuery) => {
+  private renderSearchRes(input: JQuery<HTMLElement>, contacts: Contact[], query: ProviderContactsQuery) {
     const renderableContacts = contacts.slice(0, this.MAX_CONTACTS_LENGTH);
     renderableContacts.sort((a, b) =>
       (10 * (b.has_pgp - a.has_pgp)) + ((b.last_use || 0) - (a.last_use || 0) > 0 ? 1 : -1)).slice(8); // have pgp on top, no pgp bottom. Sort each groups by last used
@@ -361,7 +361,7 @@ export class ComposerRecipients extends ComposerComponent {
     }
   }
 
-  private addBtnToAllowSearchContactsFromGoogle = (input: JQuery<HTMLElement>) => {
+  private addBtnToAllowSearchContactsFromGoogle(input: JQuery<HTMLElement>) {
     if (this.composer.S.cached('contacts').find('.allow-google-contact-search').length) {
       return;
     }
@@ -397,7 +397,7 @@ export class ComposerRecipients extends ComposerComponent {
     this.hideContacts();
   }
 
-  public validateEmails = (uncheckedEmails: string[]): { valid: string[], invalid: string[] } => {
+  public validateEmails(uncheckedEmails: string[]): { valid: string[], invalid: string[] } {
     const valid: string[] = [];
     const invalid: string[] = [];
     for (const email of uncheckedEmails) {
@@ -447,7 +447,7 @@ export class ComposerRecipients extends ComposerComponent {
     }
   }
 
-  private createRecipientsElements = (container: JQuery<HTMLElement>, emails: string[], sendingType: RecipientType, status: RecipientStatus): RecipientElement[] => {
+  private createRecipientsElements(container: JQuery<HTMLElement>, emails: string[], sendingType: RecipientType, status: RecipientStatus): RecipientElement[] {
     const result = [];
     for (const email of emails) {
       const recipientId = this.generateRecipientId();
@@ -491,7 +491,7 @@ export class ComposerRecipients extends ComposerComponent {
     }
   }
 
-  public hideContacts = () => {
+  public hideContacts() {
     this.composer.S.cached('contacts').css('display', 'none');
     this.composer.S.cached('contacts').children().not('ul').remove();
   }
@@ -513,7 +513,7 @@ export class ComposerRecipients extends ComposerComponent {
     }
   }
 
-  private renderSearchResultsLoadingDone = () => {
+  private renderSearchResultsLoadingDone() {
     this.composer.S.cached('contacts').find('ul li.loading').remove();
     if (!this.composer.S.cached('contacts').find('ul li').length) {
       this.hideContacts();
@@ -591,7 +591,7 @@ export class ComposerRecipients extends ComposerComponent {
     this.composer.myPubkey.reevaluateShouldAttachOrNot();
   }
 
-  private removeRecipient = (element: HTMLElement) => {
+  private removeRecipient(element: HTMLElement) {
     this.recipientsMissingMyKey = Value.arr.withoutVal(this.recipientsMissingMyKey, $(element).parent().text());
     const index = this.addedRecipients.findIndex(r => r.element.isEqualNode(element));
     const container = element.parentElement!.parentElement!; // Get Container, e.g. '.input-container-cc'
@@ -650,7 +650,7 @@ export class ComposerRecipients extends ComposerComponent {
     this.composer.size.setInputTextHeightManuallyIfNeeded();
   }
 
-  private recipientKeyIdText = (contact: Contact) => {
+  private recipientKeyIdText(contact: Contact) {
     if (contact.client === 'cryptup' && contact.keywords) {
       return '\n\n' + 'Public KeyWords:\n' + contact.keywords;
     } else if (contact.fingerprint) {
@@ -660,7 +660,7 @@ export class ComposerRecipients extends ComposerComponent {
     }
   }
 
-  private generateRecipientId = (): string => {
+  private generateRecipientId(): string {
     return `recipient_${this.addedRecipients.length}`;
   }
 
@@ -711,7 +711,7 @@ export class ComposerRecipients extends ComposerComponent {
     }
   }
 
-  private addDraggableEvents = (element: HTMLElement) => {
+  private addDraggableEvents(element: HTMLElement) {
     element.draggable = true;
     element.ondragstart = (event) => {
       event.dataTransfer!.setData('text/plain', 'FlowCrypt Drag&Drop'); // Firefox requires to run the dataTransfer.setData function in the event.
@@ -753,7 +753,7 @@ export class ComposerRecipients extends ComposerComponent {
     element.ondragend = () => Catch.setHandledTimeout(() => this.dragged = undefined, 0);
   }
 
-  private insertCursorBefore = (element: HTMLElement | Element, append?: boolean) => {
+  private insertCursorBefore(element: HTMLElement | Element, append?: boolean) {
     const cursor = document.createElement('i');
     cursor.classList.add('drag-cursor');
     if (!append) {
@@ -767,7 +767,7 @@ export class ComposerRecipients extends ComposerComponent {
     return true;
   }
 
-  private removeCursor = (element: HTMLElement) => {
+  private removeCursor(element: HTMLElement) {
     for (const child of element.children) {
       if (child.classList.contains('drag-cursor')) {
         child.parentElement!.removeChild(child);
@@ -776,7 +776,7 @@ export class ComposerRecipients extends ComposerComponent {
     }
   }
 
-  public showHideCcAndBccInputsIfNeeded = () => {
+  public showHideCcAndBccInputsIfNeeded() {
     const isThere = { cc: false, bcc: false };
     for (const recipient of this.addedRecipients) {
       if (isThere.cc && isThere.bcc) {

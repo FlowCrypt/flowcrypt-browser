@@ -202,7 +202,7 @@ export class ComposerDraft extends ComposerComponent {
     return false;
   }
 
-  private hasBodyChanged = (msgBody: string) => {
+  private hasBodyChanged(msgBody: string) {
     if (this.lastDraftBody === undefined) { // first check
       this.lastDraftBody = msgBody;
       return false;
@@ -214,7 +214,7 @@ export class ComposerDraft extends ComposerComponent {
     return false;
   }
 
-  private hasSubjectChanged = (subject: string) => {
+  private hasSubjectChanged(subject: string) {
     if (this.view.isReplyBox) { // user cannot change reply subject
       return false; // this helps prevent unwanted empty drafts
     }

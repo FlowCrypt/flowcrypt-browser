@@ -34,7 +34,7 @@ export class Settings {
     return result;
   }
 
-  static evalPasswordStrength = (passphrase: string, type: 'passphrase' | 'pwd' = 'passphrase') => {
+  static evalPasswordStrength(passphrase: string, type: 'passphrase' | 'pwd' = 'passphrase') {
     return Pgp.password.estimateStrength(zxcvbn(passphrase, Pgp.password.weakWords()).guesses, type); // tslint:disable-line:no-unsafe-any
   }
 
@@ -46,7 +46,7 @@ export class Settings {
     }
   }
 
-  private static prepareNewSettingsLocationUrl = (acctEmail: string | undefined, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams): string => {
+  private static prepareNewSettingsLocationUrl(acctEmail: string | undefined, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams): string {
     const pageParams: UrlParams = { placement: 'settings', parentTabId };
     if (acctEmail) {
       pageParams.acctEmail = acctEmail;
@@ -60,7 +60,7 @@ export class Settings {
     return Url.create(page, pageParams) + (addUrlTextOrParams || '');
   }
 
-  static renderSubPage = (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
+  static renderSubPage(acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams) {
     let newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams);
     let iframeWidth, iframeHeight, variant, closeOnClick;
     const beforeClose = () => {
@@ -84,7 +84,7 @@ export class Settings {
     Xss.sanitizePrepend('.new_message_featherlight .featherlight-content', '<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>');
   }
 
-  static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
+  static redirectSubPage(acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams) {
     const newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, parentTabId, page, addUrlTextOrParams);
     if (Url.parse(['embedded']).embedded) { // embedded on the main page
       BrowserMsg.send.openPage(parentTabId, { page, addUrlText: addUrlTextOrParams });
@@ -200,9 +200,9 @@ export class Settings {
     await Store.acctEmailsRemove(oldAcctEmail);
   }
 
-  static renderPrvCompatFixUiAndWaitTilSubmittedByUser = (
+  static renderPrvCompatFixUiAndWaitTilSubmittedByUser(
     acctEmail: string, container: string | JQuery<HTMLElement>, origPrv: OpenPGP.key.Key, passphrase: string, backUrl: string
-  ): Promise<OpenPGP.key.Key> => {
+  ): Promise<OpenPGP.key.Key> {
     return new Promise((resolve, reject) => {
       const uids = origPrv.users.map(u => u.userId).filter(u => !!u && u.userid && Str.parseEmail(u.userid).email).map(u => u!.userid).filter(Boolean) as string[];
       if (!uids.length) {

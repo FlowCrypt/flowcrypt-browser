@@ -8,7 +8,7 @@ import { PubkeySearchResult, PgpClient } from './keyserver.js';
 
 export class Attester extends Api {
 
-  private static jsonCall = (path: string, values?: Dict<any>, method: ReqMethod = 'POST'): Promise<any> => {
+  private static jsonCall(path: string, values?: Dict<any>, method: ReqMethod = 'POST'): Promise<any> {
     return Api.apiCall('https://flowcrypt.com/attester/', path, values, 'JSON', undefined, { 'api-version': '3' }, 'json', method);
   }
 
@@ -54,11 +54,11 @@ export class Attester extends Api {
     return r.responseText;
   }
 
-  public static initialLegacySubmit = (email: string, pubkey: string): Promise<{ saved: boolean }> => {
+  public static initialLegacySubmit(email: string, pubkey: string): Promise<{ saved: boolean }> {
     return Attester.jsonCall('initial/legacy_submit', { email: Str.parseEmail(email).email, pubkey: pubkey.trim() });
   }
 
-  public static testWelcome = (email: string, pubkey: string): Promise<{ sent: boolean }> => {
+  public static testWelcome(email: string, pubkey: string): Promise<{ sent: boolean }> {
     return Attester.jsonCall('test/welcome', { email, pubkey });
   }
 

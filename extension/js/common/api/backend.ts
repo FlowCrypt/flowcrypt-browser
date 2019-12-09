@@ -48,11 +48,11 @@ export namespace BackendRes {
 
 export class Backend extends Api {
 
-  private static request = (path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}): Promise<any> => {
+  private static request(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}): Promise<any> {
     return Backend.apiCall(Backend.url('api'), path, vals, fmt, undefined, { 'api-version': '3', ...addHeaders });
   }
 
-  public static url = (type: string, variable = '') => {
+  public static url(type: string, variable = '') {
     return ({
       'api': 'https://flowcrypt.com/api/',
       'me': 'https://flowcrypt.com/me/' + variable,
@@ -198,7 +198,7 @@ export class Backend extends Api {
     return Api.ajax({ url: 'https://flowcrypt.com/feed', dataType: 'json' }, Catch.stackTrace()); // tslint:disable-line:no-direct-ajax
   }
 
-  public static s3Upload = (items: AwsS3UploadItem[], progressCb: ProgressCb) => {
+  public static s3Upload(items: AwsS3UploadItem[], progressCb: ProgressCb) {
     const progress = Value.arr.zeroes(items.length);
     const promises: Promise<void>[] = [];
     if (!items.length) {

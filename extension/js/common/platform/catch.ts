@@ -31,13 +31,13 @@ export class Catch {
     'ResizeObserver loop limit exceeded',
   ];
 
-  public static rewrapErr = (e: any, message: string) => {
+  public static rewrapErr(e: any, message: string) {
     const newErr = new Error(`${message}::${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`);
     newErr.stack += `\n\n${Catch.stringify(e)}`;
     return newErr;
   }
 
-  public static stringify = (e: any) => {
+  public static stringify(e: any) {
     if (e instanceof Error) {
       return `[typeof:Error:${e.name}] ${e.message}\n\n${e.stack}`;
     }
@@ -51,11 +51,11 @@ export class Catch {
     }
   }
 
-  public static hasStack = (e: any): e is ObjWithStack => {
+  public static hasStack(e: any): e is ObjWithStack {
     return e && typeof e === 'object' && typeof (e as ObjWithStack).stack === 'string' && Boolean((e as ObjWithStack).stack);
   }
 
-  public static onErrorInternalHandler = (errMsg: string | undefined, url: string, line: number, col: number, originalErr: any, isManuallyCalled: boolean) => {
+  public static onErrorInternalHandler(errMsg: string | undefined, url: string, line: number, col: number, originalErr: any, isManuallyCalled: boolean) {
     if (errMsg && Catch.IGNORE_ERR_MSG.indexOf(errMsg) !== -1) {
       return;
     }
@@ -135,7 +135,7 @@ export class Catch {
     return true;
   }
 
-  private static getErrorLineAndCol = (e: any) => {
+  private static getErrorLineAndCol(e: any) {
     try {
       const callerLine = e.stack!.split('\n')[1]; // tslint:disable-line:no-unsafe-any
       const matched = callerLine.match(/\.js:([0-9]+):([0-9]+)\)?/); // tslint:disable-line:no-unsafe-any
@@ -145,12 +145,12 @@ export class Catch {
     }
   }
 
-  public static reportErr = (e: any) => {
+  public static reportErr(e: any) {
     const { line, col } = Catch.getErrorLineAndCol(e);
     Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
   }
 
-  private static nameAndDetailsAsException = (name: string, details: any): Error => {
+  private static nameAndDetailsAsException(name: string, details: any): Error {
     try {
       throw new Error(name);
     } catch (e) {
@@ -159,11 +159,11 @@ export class Catch {
     }
   }
 
-  public static report = (name: string, details?: any) => {
+  public static report(name: string, details?: any) {
     Catch.reportErr(Catch.nameAndDetailsAsException(name, details));
   }
 
-  public static log = (name: string, details?: any) => {
+  public static log(name: string, details?: any) {
     const e = Catch.nameAndDetailsAsException(`Catch.log: ${name}`, details);
     try {
       Store.saveError(e, name);
@@ -172,7 +172,7 @@ export class Catch {
     }
   }
 
-  public static isPromise = (v: any): v is Promise<any> => {
+  public static isPromise(v: any): v is Promise<any> {
     return v && typeof v === 'object' && typeof (v as Promise<any>).then === 'function' && typeof (v as Promise<any>).catch === 'function';
   }
 
@@ -187,7 +187,7 @@ export class Catch {
     }
   }
 
-  public static browser = () => {  // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
+  public static browser() {  // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
     if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
       return { name: 'firefox', v: Number(RegExp.$1) };
     } else if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)) {
@@ -203,7 +203,7 @@ export class Catch {
     }
   }
 
-  public static environment = (url = window.location.href): string => {
+  public static environment(url = window.location.href): string {
     const browserName = Catch.browser().name;
     const origin = new URL(window.location.href).origin;
     let env = 'unknown';
@@ -229,7 +229,7 @@ export class Catch {
     return browserName + ':' + env;
   }
 
-  public static test = (type: 'error' | 'object' = 'error') => {
+  public static test(type: 'error' | 'object' = 'error') {
     if (type === 'error') {
       throw new Error('intentional error for debugging');
     } else {
@@ -237,7 +237,7 @@ export class Catch {
     }
   }
 
-  public static stackTrace = (): string => {
+  public static stackTrace(): string {
     try {
       Catch.test();
     } catch (e) {
@@ -247,7 +247,7 @@ export class Catch {
     return ''; // make ts happy - this will never happen
   }
 
-  private static isPromiseRejectionEvent = (ev: any): ev is PromiseRejectionEvent => {
+  private static isPromiseRejectionEvent(ev: any): ev is PromiseRejectionEvent {
     if (ev && typeof ev === 'object') {
       const eHasReason = (ev as {}).hasOwnProperty('reason') && typeof (ev as PromiseRejectionEvent).reason === 'object';
       const eHasPromise = (ev as {}).hasOwnProperty('promise') && Catch.isPromise((ev as PromiseRejectionEvent).promise);
@@ -256,7 +256,7 @@ export class Catch {
     return false;
   }
 
-  public static onUnhandledRejectionInternalHandler = (e: any) => {
+  public static onUnhandledRejectionInternalHandler(e: any) {
     if (Catch.isPromiseRejectionEvent(e)) {
       Catch.reportErr(e.reason);
     } else {

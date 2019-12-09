@@ -68,7 +68,7 @@ export class BrowserHandle {
     this.semaphore.release();
   }
 
-  release = () => {
+  release() {
     this.semaphore.release();
   }
 

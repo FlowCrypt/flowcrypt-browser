@@ -18,7 +18,7 @@ export class ComposerSender extends ComposerComponent {
     // none
   }
 
-  public getSender = (): string => {
+  public getSender(): string {
     if (this.composer.S.now('input_from').length) {
       return String(this.composer.S.now('input_from').val());
     }

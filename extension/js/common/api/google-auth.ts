@@ -47,7 +47,7 @@ export class GoogleAuth {
     }
   };
 
-  public static defaultScopes = (group: 'default' | 'contacts' | 'compose_only' | 'openid' = 'default') => {
+  public static defaultScopes(group: 'default' | 'contacts' | 'compose_only' | 'openid' = 'default') {
     const { readContacts, compose, modify, openid, email, profile } = GoogleAuth.OAUTH.scopes;
     console.info(`Not using scope ${modify} because not approved on oauth screen yet`);
     const read = GoogleAuth.OAUTH.legacy_scopes.read; // todo - remove as soon as "modify" is approved by google
@@ -151,7 +151,7 @@ export class GoogleAuth {
     chrome.windows.onRemoved.addListener(onOauthWinClosed);
   })
 
-  private static processOauthResTitle = (title: string): { result: GoogleAuthWindowResult$result, code?: string, error?: string, csrf?: string } => {
+  private static processOauthResTitle(title: string): { result: GoogleAuthWindowResult$result, code?: string, error?: string, csrf?: string } {
     const parts = title.split(' ', 2);
     const result = parts[0] as GoogleAuthWindowResult$result;
     const params = Url.parse(['code', 'state', 'error'], parts[1]);
@@ -214,7 +214,7 @@ export class GoogleAuth {
 
   private static apiGoogleAuthStatePack = (authReq: AuthReq) => GoogleAuth.OAUTH.state_header + JSON.stringify(authReq);
 
-  private static apiGoogleAuthStateUnpack = (state: string): AuthReq => {
+  private static apiGoogleAuthStateUnpack(state: string): AuthReq {
     if (!state.startsWith(GoogleAuth.OAUTH.state_header)) {
       throw new Error('Missing oauth state header');
     }
@@ -265,7 +265,7 @@ export class GoogleAuth {
 
   // todo - would be better to use a TS type guard instead of the type cast when checking OpenId
   // check for things we actually use: photo/name/locale
-  private static parseIdToken = (idToken: string): GmailRes.OpenId => {
+  private static parseIdToken(idToken: string): GmailRes.OpenId {
     const claims = JSON.parse(Buf.fromBase64UrlStr(idToken.split(/\./g)[1]).toUtfStr()) as GmailRes.OpenId;
     if (claims.email) {
       claims.email = claims.email.toLowerCase();

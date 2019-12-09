@@ -36,7 +36,7 @@
   }
 
   class Class {
-    static staticConstAttr = (type: Type) => {
+    static staticConstAttr(type: Type) {
       func(type);
     }
     static staticFunc(type: Type) {

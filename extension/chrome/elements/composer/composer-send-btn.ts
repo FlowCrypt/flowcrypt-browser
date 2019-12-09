@@ -164,7 +164,7 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  public renderUploadProgress = (progress: number) => {
+  public renderUploadProgress(progress: number) {
     if (this.composer.atts.attach.hasAtt()) {
       progress = Math.floor(progress);
       this.composer.S.now('send_btn_text').text(`${SendBtnTexts.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);

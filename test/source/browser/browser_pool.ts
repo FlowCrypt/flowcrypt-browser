@@ -123,7 +123,7 @@ export class BrowserPool {
     cb().then(resolve, reject);
   })
 
-  private processTestError = (err: any, t: AvaContext, attemptHtmls: string[]) => {
+  private processTestError(err: any, t: AvaContext, attemptHtmls: string[]) {
     t.retry = undefined;
     if (t.attemptNumber! < t.totalAttempts!) {
       t.log(`${t.attemptText} Retrying: ${String(err)}`);
@@ -244,7 +244,7 @@ export class Semaphore {
     }
   }
 
-  release = () => {
+  release() {
     if (this.debug) {
       console.info(`[${this.name}] releasing semaphore, previously available: ${this.availableLocks}`);
     }

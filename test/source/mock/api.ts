@@ -170,7 +170,7 @@ export class Api<REQ, RES> {
     });
   })
 
-  private parseUrlQuery = (url: string): { [k: string]: string } => {
+  private parseUrlQuery(url: string): { [k: string]: string } {
     const queryIndex = url.indexOf('?');
     if (!queryIndex) {
       return {};

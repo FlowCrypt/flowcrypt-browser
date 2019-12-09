@@ -36,7 +36,7 @@ export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | 
 
 abstract class ApiCallErr extends Error {
 
-  private static getPayloadStructure = (req: JQueryAjaxSettings): string => {
+  private static getPayloadStructure(req: JQueryAjaxSettings): string {
     if (typeof req.data === 'string') {
       try {
         return Object.keys(JSON.parse(req.data) as any).join(',');
@@ -80,7 +80,7 @@ export class AjaxErr extends ApiCallErr {
     GOOGLE_RECIPIENT_ADDRESS_REQUIRED: 'Recipient address required',
   };
 
-  public static fromXhr = (xhr: RawAjaxErr, req: JQueryAjaxSettings, stack: string) => {
+  public static fromXhr(xhr: RawAjaxErr, req: JQueryAjaxSettings, stack: string) {
     const responseText = xhr.responseText || '';
     const status = typeof xhr.status === 'number' ? xhr.status : -1;
     stack += `\n\nprovided ajax call stack:\n${stack}`;
@@ -96,7 +96,7 @@ export class AjaxErr extends ApiCallErr {
     super(message);
   }
 
-  public parseErrResMsg = (format: 'google') => {
+  public parseErrResMsg(format: 'google') {
     try {
       if (format === 'google') {
         const errMsg = ((JSON.parse(this.responseText) as any).error as any).message as string; // catching all errs below
@@ -351,11 +351,11 @@ export class Api {
     };
   }
 
-  private static isRawAjaxErr = (e: any): e is RawAjaxErr => {
+  private static isRawAjaxErr(e: any): e is RawAjaxErr {
     return e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number';
   }
 
-  private static isStandardError = (e: any): e is StandardError => {
+  private static isStandardError(e: any): e is StandardError {
     return e && typeof e === 'object' && (e as StandardError).hasOwnProperty('internal') && Boolean((e as StandardError).message);
   }
 

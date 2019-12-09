@@ -85,7 +85,7 @@ export class ComposerQuote extends ComposerComponent {
     }
   }
 
-  private createFooterHTML = (footer: string) => {
+  private createFooterHTML(footer: string) {
     const sanitizedPlainFooter = Xss.htmlSanitizeAndStripAllTags(footer, '\n', true); // true: strip away images because not supported yet
     const sanitizedHtmlFooter = sanitizedPlainFooter.replace(/\n/g, '<br>');
     const footerFirstLine = sanitizedPlainFooter.split('\n')[0];
@@ -98,7 +98,7 @@ export class ComposerQuote extends ComposerComponent {
     return `<br><br>--<br>${sanitizedHtmlFooter}`; // create a custom footer separator
   }
 
-  public replaceFooter = (newFooter: string | undefined) => {
+  public replaceFooter(newFooter: string | undefined) {
     newFooter = newFooter ? this.createFooterHTML(newFooter) : '';
     if (this.footerHTML) {
       let textHTML = this.msgExpandingHTMLPart || this.composer.S.cached('input_text').html();
@@ -229,12 +229,12 @@ export class ComposerQuote extends ComposerComponent {
     return text.split('\n').map(l => '<br>&gt; ' + l).join('\n');
   }
 
-  private generateHtmlPreviousMsgQuote = (text: string, date: Date, from: string) => {
+  private generateHtmlPreviousMsgQuote(text: string, date: Date, from: string) {
     const sanitizedQuote = Xss.htmlSanitize(`On ${Str.fromDate(date).replace(' ', ' at ')}, ${from} wrote:${this.quoteText(Xss.escape(text))}`);
     return `<blockquote>${sanitizedQuote}</blockquote>`;
   }
 
-  private setExpandingTextAfterClick = () => {
+  private setExpandingTextAfterClick() {
     this.composer.S.cached('icon_show_prev_msg')
       .click(Ui.event.handle(el => {
         el.style.display = 'none';

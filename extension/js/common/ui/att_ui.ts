@@ -28,7 +28,7 @@ export class AttUI {
     this.getLimits = getLimits;
   }
 
-  initAttDialog = (elId: string, btnId: string, callbacks: AttUICallbacks = {}) => {
+  initAttDialog(elId: string, btnId: string, callbacks: AttUICallbacks = {}) {
     this.callbacks = callbacks;
     $('#qq-template').load(this.templatePath, () => {
       const config = {
@@ -49,18 +49,18 @@ export class AttUI {
     });
   }
 
-  setInputAttributes = (): HTMLInputElement => {
+  setInputAttributes(): HTMLInputElement {
     const input: HTMLInputElement = this.uploader._buttons[0].getInput(); // tslint:disable-line:no-unsafe-any
     input.setAttribute('title', 'Attach a file');
     input.setAttribute('tabindex', '8');
     return input;
   }
 
-  hasAtt = () => {
+  hasAtt() {
     return Object.keys(this.attachedFiles).length > 0;
   }
 
-  getAttIds = () => {
+  getAttIds() {
     return Object.keys(this.attachedFiles);
   }
 
@@ -88,11 +88,11 @@ export class AttUI {
     return atts;
   }
 
-  clearAllAtts = () => {
+  clearAllAtts() {
     this.attachedFiles = {};
   }
 
-  private cancelAtt = (uploadFileId: string) => {
+  private cancelAtt(uploadFileId: string) {
     delete this.attachedFiles[uploadFileId];
     if (this.callbacks.uiChanged) {
       // run at next event loop cycle - let DOM changes render first
@@ -136,7 +136,7 @@ export class AttUI {
     this.uploader.addFiles([file]); // tslint:disable-line: no-unsafe-any
   }
 
-  private getFileSizeSum = () => {
+  private getFileSizeSum() {
     let sum = 0;
     for (const file of Object.values(this.attachedFiles)) {
       sum += file.size;
@@ -144,7 +144,7 @@ export class AttUI {
     return sum;
   }
 
-  private readAttDataAsUint8 = (uploadFileId: string): Promise<Uint8Array> => {
+  private readAttDataAsUint8(uploadFileId: string): Promise<Uint8Array> {
     return new Promise(resolve => {
       const reader = new FileReader();
       reader.onload = () => {

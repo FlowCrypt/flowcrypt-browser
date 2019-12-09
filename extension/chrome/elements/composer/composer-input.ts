@@ -24,7 +24,7 @@ export class ComposerInput extends ComposerComponent {
     Xss.sanitizeRender(this.composer.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(html));
   }
 
-  public inputTextPasteHtmlAsText = (clipboardEvent: ClipboardEvent) => {
+  public inputTextPasteHtmlAsText(clipboardEvent: ClipboardEvent) {
     if (!clipboardEvent.clipboardData) {
       return;
     }
@@ -43,7 +43,7 @@ export class ComposerInput extends ComposerComponent {
     }
   }
 
-  public extract = (type: 'text' | 'html', elSel: 'input_text' | 'input_intro', flag: 'SKIP-ADDONS' | undefined = undefined) => {
+  public extract(type: 'text' | 'html', elSel: 'input_text' | 'input_intro', flag: 'SKIP-ADDONS' | undefined = undefined) {
     let html = this.composer.S.cached(elSel)[0].innerHTML;
     if (elSel === 'input_text' && this.composer.quote.expandingHTMLPart && flag !== 'SKIP-ADDONS') {
       html += `<br /><br />${this.composer.quote.expandingHTMLPart}`;
@@ -54,7 +54,7 @@ export class ComposerInput extends ComposerComponent {
     return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(html, '\n')).trim();
   }
 
-  public extractAll = (): NewMsgData => {
+  public extractAll(): NewMsgData {
     const recipientElements = this.composer.recipients.getRecipients();
     const recipients = this.mapRecipients(recipientElements);
     const subject = this.view.isReplyBox && this.view.replyParams ? this.view.replyParams.subject : String($('#input_subject').val() || '');
@@ -66,7 +66,7 @@ export class ComposerInput extends ComposerComponent {
     return { recipients, subject, plaintext, plainhtml, pwd, sender };
   }
 
-  private mapRecipients = (recipients: RecipientElement[]) => {
+  private mapRecipients(recipients: RecipientElement[]) {
     const result: Recipients = { to: [], cc: [], bcc: [] };
     for (const recipient of recipients) {
       switch (recipient.sendingType) {

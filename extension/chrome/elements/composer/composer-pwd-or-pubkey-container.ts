@@ -24,7 +24,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
 
   private rmPwdStrengthValidationElements: (() => void) | undefined;
 
-  public showHideContainerAndColorSendBtn = () => {
+  public showHideContainerAndColorSendBtn() {
     this.composer.sendBtn.resetSendBtn();
     this.composer.S.cached('send_btn_note').text('');
     this.composer.S.cached('send_btn').removeAttr('title');
@@ -52,7 +52,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
     this.composer.size.setInputTextHeightManuallyIfNeeded();
   }
 
-  private showMsgPwdUiAndColorBtn = () => {
+  private showMsgPwdUiAndColorBtn() {
     this.composer.S.cached('password_or_pubkey').css('display', 'table-row');
     this.composer.S.cached('password_or_pubkey').css('display', 'table-row');
     if (this.composer.S.cached('input_password').val() || this.composer.S.cached('input_password').is(':focus')) {
@@ -74,7 +74,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
     }
   }
 
-  private hideMsgPwdUi = () => {
+  private hideMsgPwdUi() {
     this.composer.S.cached('password_or_pubkey').css('display', 'none');
     this.composer.S.cached('input_password').val('');
     this.composer.S.cached('add_intro').css('display', 'none');
