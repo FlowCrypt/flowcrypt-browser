@@ -30,7 +30,7 @@ abstract class ControllableBase {
   protected isXpath = (selector: string): boolean => selector.match(/^\/\//) !== null;
 
   protected selector = (customSelLanguageQuery: string): string => { // supply browser selector, xpath, @test-id or @test-id(contains this text)
-    let m;
+    let m: RegExpMatchArray;
     if (this.isXpath(customSelLanguageQuery)) {
       return customSelLanguageQuery;
       // eslint-disable-next-line no-cond-assign
@@ -63,13 +63,13 @@ abstract class ControllableBase {
 
   protected selsAsProcessedArr = (selector: string | string[]): string[] => (Array.isArray(selector) ? selector : [selector]).map(this.selector);
 
-  public waitForSelTestState = async (state: 'ready' | 'working' | 'waiting' | 'closed', timeout = TIMEOUT_TEST_STATE_SATISFY) => {
+  public async waitForSelTestState(state: 'ready' | 'working' | 'waiting' | 'closed', timeout = TIMEOUT_TEST_STATE_SATISFY) {
     await this.waitAll(`[data-test-state="${state}"]`, { timeout, visible: false });
   }
 
   public attr = async (elHandle: ElementHandle, name: string): Promise<string> => await (await elHandle.getProperty(name)).jsonValue();
 
-  public waitAll = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number, visible?: boolean } = {}) => {
+  public async waitAll(selector: string | string[], { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number, visible?: boolean } = {}) {
     const selectors = this.selsAsProcessedArr(selector);
     this.log(`wait_all:1:${selectors.join(',')}`);
     for (const selector of selectors) {
@@ -87,7 +87,7 @@ abstract class ControllableBase {
     this.log(`wait_all:7:${selectors.join(',')}`);
   }
 
-  public waitAny = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number, visible?: boolean } = {}): Promise<ElementHandle> => {
+  public async waitAny(selector: string | string[], { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number, visible?: boolean } = {}): Promise<ElementHandle> {
     timeout = Math.max(timeout, 1);
     const selectors = this.selsAsProcessedArr(selector);
     while (timeout-- > 0) {
@@ -101,7 +101,7 @@ abstract class ControllableBase {
           }
         }
       } catch (e) {
-        if (e.message.indexOf('Cannot find context with specified id undefined') === -1) {
+        if (e instanceof Error && e.message.indexOf('Cannot find context with specified id undefined') === -1) {
           throw e;
         }
       }
@@ -110,7 +110,7 @@ abstract class ControllableBase {
     throw Error(`waiting failed: Elements did not appear: ${selectors.join(',')}`);
   }
 
-  public waitTillGone = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_GONE }: { timeout?: number } = {}) => {
+  public async waitTillGone(selector: string | string[], { timeout = TIMEOUT_ELEMENT_GONE }: { timeout?: number } = {}) {
     let secondsLeft = typeof timeout !== 'undefined' ? timeout : TIMEOUT_ELEMENT_GONE;
     const selectors = Array.isArray(selector) ? selector : [selector];
     while (secondsLeft-- >= 0) {
@@ -128,7 +128,7 @@ abstract class ControllableBase {
 
   public notPresent = async (selector: string | string[]) => await this.waitTillGone(selector, { timeout: 0 });
 
-  public click = async (selector: string) => {
+  public async click(selector: string) {
     this.log(`click:1:${selector}`);
     const e = await this.element(selector);
     this.log(`click:2:${selector}`);
@@ -148,7 +148,7 @@ abstract class ControllableBase {
     this.log(`click:5:${selector}`);
   }
 
-  public type = async (selector: string, text: string, letterByLetter = false) => {
+  public async type(selector: string, text: string, letterByLetter = false) {
     const e = await this.element(selector);
     if (!e) {
       throw Error(`Element not found: ${selector}`);
@@ -177,7 +177,7 @@ abstract class ControllableBase {
     }
   }
 
-  public value = async (selector: string): Promise<string> => {
+  public async value(selector: string): Promise<string> {
     return await this.target.evaluate((s) => {
       const e = document.querySelector(s); // this will get evaluated in the browser
       if (e.tagName === 'SELECT') {
@@ -188,12 +188,12 @@ abstract class ControllableBase {
     }, this.selector(selector));
   }
 
-  public isChecked = async (selector: string): Promise<boolean> => {
+  public async isChecked(selector: string): Promise<boolean> {
     return await this.target.evaluate((s) => document.querySelector(s).checked, this.selector(selector));
   }
 
   // Get the current computed outer height (including padding, border)
-  public getOuterHeight = async (selector: string): Promise<string> => {
+  public async getOuterHeight(selector: string): Promise<string> {
     return await this.target.evaluate((s) => {
       const computedStyle = getComputedStyle(document.querySelector(s));
       const paddings = parseInt(computedStyle.getPropertyValue('padding-top')) + parseInt(computedStyle.getPropertyValue('padding-bottom'));
@@ -203,7 +203,7 @@ abstract class ControllableBase {
     }, this.selector(selector));
   }
 
-  public read = async (selector: string, onlyVisible = false): Promise<string> => {
+  public async read(selector: string, onlyVisible = false): Promise<string> {
     selector = this.selector(selector);
     if (onlyVisible) {
       return await this.target.evaluate((s) => [].slice.call(document.querySelectorAll(s)).find((el: HTMLElement) => el.offsetParent !== null).innerText, selector);
@@ -212,17 +212,17 @@ abstract class ControllableBase {
     }
   }
 
-  public selectOption = async (selector: string, choice: string) => {
+  public async selectOption(selector: string, choice: string) {
     await this.target.evaluate((s, v) => jQuery(s).val(v).trigger('change'), this.selector(selector), choice);
   }
 
-  public waitAndType = async (selector: string, text: string, { delay = 0.1 }: { delay?: number } = {}) => {
+  public async waitAndType(selector: string, text: string, { delay = 0.1 }: { delay?: number } = {}) {
     await this.waitAll(selector);
     await Util.sleep(delay);
     await this.type(selector, text);
   }
 
-  public waitAndRespondToModal = async (type: 'info' | 'warning' | 'error' | 'confirm' | 'confirm-checkbox', clickBtn: 'confirm' | 'cancel', message: string) => {
+  public async waitAndRespondToModal(type: 'info' | 'warning' | 'error' | 'confirm' | 'confirm-checkbox', clickBtn: 'confirm' | 'cancel', message: string) {
     await this.waitAll([`@ui-modal-${type}`, `@ui-modal-${type}:message`]);
     await Util.sleep(0.5);
     expect(await this.read(`@ui-modal-${type}:message`)).to.contain(message, `ui-modal-${type}:message does not contain expected text`);
@@ -232,7 +232,7 @@ abstract class ControllableBase {
     await this.waitAndClick(`@ui-modal-${type}-${clickBtn}`);
   }
 
-  public waitAndClick = async (selector: string, { delay = 0.1, confirmGone = false, retryErrs = false }: { delay?: number, confirmGone?: boolean, retryErrs?: boolean } = {}) => {
+  public async waitAndClick(selector: string, { delay = 0.1, confirmGone = false, retryErrs = false }: { delay?: number, confirmGone?: boolean, retryErrs?: boolean } = {}) {
     for (const i of [1, 2, 3]) {
       this.log(`wait_and_click(i${i}):1:${selector}`);
       await this.waitAll(selector);
@@ -266,7 +266,7 @@ abstract class ControllableBase {
     this.log(`wait_and_click:8:${selector}`);
   }
 
-  private getFramesUrlsInThisMoment = async (urlMatchables: string[]) => {
+  private async getFramesUrlsInThisMoment(urlMatchables: string[]) {
     const matchingLinks: string[] = [];
     for (const iframe of await this.target.$$('iframe')) {
       const srcHandle = await iframe.getProperty('src');
@@ -278,7 +278,7 @@ abstract class ControllableBase {
     return matchingLinks;
   }
 
-  public getFramesUrls = async (urlMatchables: string[], { sleep, appearIn }: { sleep?: number, appearIn?: number } = { sleep: 3 }): Promise<string[]> => {
+  public async getFramesUrls(urlMatchables: string[], { sleep, appearIn }: { sleep?: number, appearIn?: number } = { sleep: 3 }): Promise<string[]> {
     if (sleep) {
       await Util.sleep(sleep);
     }
@@ -295,7 +295,7 @@ abstract class ControllableBase {
     throw new Error(`Could not find any frame in ${appearIn}s that matches ${urlMatchables.join(' ')}`);
   }
 
-  public getFrame = async (urlMatchables: string[], { sleep = 1 } = { sleep: 1 }): Promise<ControllableFrame> => {
+  public async getFrame(urlMatchables: string[], { sleep = 1 } = { sleep: 1 }): Promise<ControllableFrame> {
     if (sleep) {
       await Util.sleep(sleep);
     }
@@ -332,12 +332,12 @@ export class ControllableAlert {
     this.target = alert;
   }
 
-  accept = async () => {
+  async accept() {
     await this.target.accept();
     this.active = false;
   }
 
-  dismiss = async () => {
+  async dismiss() {
     await this.target.dismiss();
     this.active = false;
   }
@@ -401,7 +401,7 @@ export class ControllablePage extends ControllableBase {
     return await dialogPromise;
   }
 
-  public waitForNavigationIfAny = async (seconds: number = 5) => {
+  public async waitForNavigationIfAny(seconds: number = 5) {
     try {
       await this.page.waitForNavigation({ timeout: seconds * 1000 });
     } catch (e) {
@@ -412,7 +412,7 @@ export class ControllablePage extends ControllableBase {
     }
   }
 
-  public goto = async (url: string) => {
+  public async goto(url: string) {
     url = url.indexOf('https://') === 0 || url.indexOf(TestUrls.extension('')) === 0 ? url : TestUrls.extension(url);
     // await this.page.goto(url); // may produce intermittent Navigation Timeout Exceeded in CI environment
     this.page.goto(url).catch(e => this.t.log(`goto: ${e.message}: ${url}`));
@@ -422,7 +422,7 @@ export class ControllablePage extends ControllableBase {
     ]);
   }
 
-  public close = async () => {
+  public async close() {
     if (this.preventclose) {
       this.t.log('page.close() was called but closing was prevented because we want to evaluate earlier errors (cannot screenshot a closed page)');
       this.preventclose = false;
@@ -431,7 +431,7 @@ export class ControllablePage extends ControllableBase {
     }
   }
 
-  private dismissActiveAlerts = async (): Promise<void> => {
+  private async dismissActiveAlerts(): Promise<void> {
     const activeAlerts = this.alerts.filter(a => a.active);
     for (const alert of activeAlerts) {
       // active alert will cause screenshot and other ops to hang: https://github.com/GoogleChrome/puppeteer/issues/2481
@@ -445,17 +445,17 @@ export class ControllablePage extends ControllableBase {
     }
   }
 
-  public screenshot = async (): Promise<string> => {
+  public async screenshot(): Promise<string> {
     await this.dismissActiveAlerts();
     return await Promise.race([this.page.screenshot({ encoding: 'base64' }), newTimeoutPromise('screenshot', 20)]);
   }
 
-  public html = async (): Promise<string> => {
+  public async html(): Promise<string> {
     await this.dismissActiveAlerts();
     return await Promise.race([this.page.content(), newTimeoutPromise('html content', 10)]);
   }
 
-  public console = async (): Promise<string> => {
+  public async console(): Promise<string> {
     await this.dismissActiveAlerts();
     let html = '';
     for (const msg of this.consoleMsgs) {

@@ -287,7 +287,7 @@ export class Api {
     request.send();
   })
 
-  public static ajax = async (req: JQueryAjaxSettings, stack: string): Promise<any | JQuery.jqXHR<any>> => {
+  public static async ajax(req: JQueryAjaxSettings, stack: string): Promise<any | JQuery.jqXHR<any>> {
     if (Env.isContentScript()) {
       // content script CORS not allowed anymore, have to drag it through background page
       // https://www.chromestatus.com/feature/5629709824032768

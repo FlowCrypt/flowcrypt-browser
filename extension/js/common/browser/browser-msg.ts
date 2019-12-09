@@ -246,7 +246,7 @@ export class BrowserMsg {
     window.document.body.appendChild(div);
   }
 
-  public static tabId = async (): Promise<string | null | undefined> => {
+  public static async tabId(): Promise<string | null | undefined> {
     try {
       const { tabId } = await BrowserMsg.sendAwait(undefined, '_tab_', undefined, true) as Bm.Res._tab_;
       return tabId;
@@ -258,7 +258,7 @@ export class BrowserMsg {
     }
   }
 
-  public static requiredTabId = async (attempts = 10, delay = 200): Promise<string> => {
+  public static async requiredTabId(attempts = 10, delay = 200): Promise<string> {
     let tabId;
     for (let i = 0; i < attempts; i++) { // sometimes returns undefined right after browser start due to BgNotReadyError
       tabId = await BrowserMsg.tabId();

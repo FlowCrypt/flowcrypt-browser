@@ -20,7 +20,7 @@ export class Notifications {
     this.tabId = tabId;
   }
 
-  showInitial = async (acctEmail: string) => {
+  async showInitial(acctEmail: string) {
     const acctStorage = await Store.getAcct(acctEmail, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple']);
     if (!acctStorage.notification_setup_done_seen) {
       await Store.setAcct(acctEmail, { notification_setup_done_seen: true });

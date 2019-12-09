@@ -32,7 +32,7 @@ export class Assert {
     },
   };
 
-  public static abortAndRenderErrOnUnprotectedKey = async (acctEmail?: string, tabId?: string) => {
+  public static async abortAndRenderErrOnUnprotectedKey(acctEmail?: string, tabId?: string) {
     if (acctEmail) {
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
       const { setup_done, setup_simple } = await Store.getAcct(acctEmail, ['setup_simple', 'setup_done']);

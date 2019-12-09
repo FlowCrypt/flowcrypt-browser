@@ -33,7 +33,7 @@ export class ComposerAtts extends ComposerComponent {
     });
   }
 
-  private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
+  private async getMaxAttSizeAndOversizeNotice(): Promise<AttLimits> {
     const subscription = await Store.subscription(this.view.acctEmail);
     if (!Rules.relaxSubscriptionRequirements(this.composer.sender.getSender()) && !subscription.active) {
       return {

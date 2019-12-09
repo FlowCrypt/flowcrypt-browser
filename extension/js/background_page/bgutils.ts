@@ -8,7 +8,7 @@ import { Store, StoreCorruptedError, StoreDeniedError, StoreFailedError } from '
 
 export class BgUtils {
 
-  public static openSettingsPage = async (path: string = 'index.htm', acctEmail?: string, page: string = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
+  public static async openSettingsPage(path: string = 'index.htm', acctEmail?: string, page: string = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) {
     const basePath = chrome.runtime.getURL(`chrome/settings/${path}`);
     const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : undefined;
     if (acctEmail || path === 'fatal.htm') {
@@ -21,7 +21,7 @@ export class BgUtils {
     }
   }
 
-  public static openExtensionTab = async (url: string) => {
+  public static async openExtensionTab(url: string) {
     const openedTab = await BgUtils.getFcSettingsTabIdIfOpen();
     if (!openedTab) {
       chrome.tabs.create({ url });
@@ -43,7 +43,7 @@ export class BgUtils {
     });
   })
 
-  public static handleStoreErr = async (e: any, reason?: 'storage_undefined' | 'db_corrupted' | 'db_denied' | 'db_failed') => {
+  public static async handleStoreErr(e: any, reason?: 'storage_undefined' | 'db_corrupted' | 'db_denied' | 'db_failed') {
     if (!reason) {
       if (e instanceof StoreCorruptedError) {
         reason = 'db_corrupted';

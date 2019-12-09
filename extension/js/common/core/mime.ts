@@ -110,7 +110,7 @@ export class Mime {
     return { headers: decoded.headers, blocks, from: decoded.from, to: decoded.to, rawSignedContent: decoded.rawSignedContent };
   }
 
-  public static process = async (mimeMsg: Uint8Array): Promise<MimeProccesedMsg> => {
+  public static async process(mimeMsg: Uint8Array): Promise<MimeProccesedMsg> {
     const decoded = await Mime.decode(mimeMsg);
     return Mime.processDecoded(decoded);
   }

@@ -65,7 +65,7 @@ export class ComposerErrs extends ComposerComponent {
     }
   }
 
-  public handleSendErr = async (e: any) => {
+  public async handleSendErr(e: any) {
     if (Api.err.isNetErr(e)) {
       await Ui.modal.error('Could not send message due to network error. Please check your internet connection and try again.');
     } else if (Api.err.isAuthPopupNeeded(e)) {
@@ -122,13 +122,13 @@ export class ComposerErrs extends ComposerComponent {
     throw new ComposerNotReadyError('Still working, please wait.');
   }
 
-  public throwIfFormValsInvalid = async ({ subject, plaintext }: { subject: string, plaintext: string }) => {
+  public async throwIfFormValsInvalid({ subject, plaintext }: { subject: string, plaintext: string }) {
     if (!((plaintext !== '' || await Ui.modal.confirm('Send empty message?')) && (subject !== '' || await Ui.modal.confirm('Send without a subject?')))) {
       throw new ComposerResetBtnTrigger();
     }
   }
 
-  public throwIfEncryptionPasswordInvalid = async (senderKi: KeyInfo, { subject, pwd }: { subject: string, pwd?: Pwd }) => {
+  public async throwIfEncryptionPasswordInvalid(senderKi: KeyInfo, { subject, pwd }: { subject: string, pwd?: Pwd }) {
     if (pwd?.answer) {
       const pp = await this.composer.storage.passphraseGet(senderKi);
       if (pp && pwd.answer.toLowerCase() === pp.toLowerCase()) {

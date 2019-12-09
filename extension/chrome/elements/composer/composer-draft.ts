@@ -87,7 +87,7 @@ export class ComposerDraft extends ComposerComponent {
     }
   }
 
-  public draftSave = async (forceSave: boolean = false): Promise<void> => {
+  public async draftSave(forceSave: boolean = false): Promise<void> {
     if (this.hasBodyChanged(this.composer.S.cached('input_text').text()) || this.hasSubjectChanged(String(this.composer.S.cached('input_subject').val())) || forceSave) {
       this.currentlySavingDraft = true;
       try {
@@ -155,7 +155,7 @@ export class ComposerDraft extends ComposerComponent {
     }
   }
 
-  public draftDelete = async () => {
+  public async draftDelete() {
     clearInterval(this.saveDraftInterval);
     await Ui.time.wait(() => !this.currentlySavingDraft ? true : undefined);
     if (this.view.draftId) {
@@ -225,7 +225,7 @@ export class ComposerDraft extends ComposerComponent {
     return false;
   }
 
-  private renderPPDialogAndWaitWhenPPEntered = async () => {
+  private async renderPPDialogAndWaitWhenPPEntered() {
     const promptText = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
     if (this.view.isReplyBox) {
       Xss.sanitizeRender(this.composer.S.cached('prompt'), promptText).css({ display: 'block' });

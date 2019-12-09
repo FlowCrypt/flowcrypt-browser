@@ -124,7 +124,7 @@ export class ComposerQuote extends ComposerComponent {
     this.footerHTML = newFooter || undefined;
   }
 
-  public getAndDecryptMessage = async (msgId: string, method: 'reply' | 'forward', progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> => {
+  public async getAndDecryptMessage(msgId: string, method: 'reply' | 'forward', progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> {
     try {
       const { raw } = await this.composer.emailProvider.msgGet(msgId, 'raw', progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
       const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw!));
@@ -206,7 +206,7 @@ export class ComposerQuote extends ComposerComponent {
     }
   }
 
-  private decryptMessage = async (encryptedData: Buf): Promise<string> => {
+  private async decryptMessage(encryptedData: Buf): Promise<string> {
     const decryptRes = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.view.acctEmail), encryptedData });
     if (decryptRes.success) {
       return decryptRes.content.toUtfStr();

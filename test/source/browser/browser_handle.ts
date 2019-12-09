@@ -19,7 +19,7 @@ export class BrowserHandle {
     this.viewport = { height, width };
   }
 
-  newPage = async (t: AvaContext, url?: string, initialScript?: EvaluateFn): Promise<ControllablePage> => {
+  async newPage(t: AvaContext, url?: string, initialScript?: EvaluateFn): Promise<ControllablePage> {
     const page = await this.browser.newPage();
     if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
       await page.authenticate(Config.secrets.proxy.auth);
@@ -54,7 +54,7 @@ export class BrowserHandle {
     return controllablePage;
   }
 
-  closeAllPages = async () => {
+  async closeAllPages() {
     for (const page of await this.browser.pages()) {
       if (page.url() !== 'about:blank') {
         await page.close();
@@ -63,7 +63,7 @@ export class BrowserHandle {
     this.pages = [];
   }
 
-  close = async () => {
+  async close() {
     await this.browser.close();
     this.semaphore.release();
   }
@@ -72,7 +72,7 @@ export class BrowserHandle {
     this.semaphore.release();
   }
 
-  debugPagesHtml = async () => {
+  async debugPagesHtml() {
     let html = '';
     for (let i = 0; i < this.pages.length; i++) {
       const cPage = this.pages[i];

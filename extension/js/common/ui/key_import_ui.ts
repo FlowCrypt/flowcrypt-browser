@@ -113,7 +113,7 @@ export class KeyImportUi {
     });
   }
 
-  checkPrv = async (acctEmail: string, armored: string, passphrase: string): Promise<KeyImportUiCheckResult> => {
+  async checkPrv(acctEmail: string, armored: string, passphrase: string): Promise<KeyImportUiCheckResult> {
     const { normalized } = await this.normalize('privateKey', armored);
     const decrypted = await this.read('privateKey', normalized);
     const encrypted = await this.read('privateKey', normalized);
@@ -127,7 +127,7 @@ export class KeyImportUi {
     return { normalized, longid, passphrase, fingerprint: (await Pgp.key.fingerprint(decrypted))!, decrypted, encrypted }; // will have fp if had longid
   }
 
-  checkPub = async (armored: string): Promise<string> => {
+  async checkPub(armored: string): Promise<string> {
     const { normalized } = await this.normalize('publicKey', armored);
     const parsed = await this.read('publicKey', normalized);
     await this.longid(parsed);
@@ -178,7 +178,7 @@ export class KeyImportUi {
     return { ...validationElements, removeValidationElements };
   }
 
-  private normalize = async (type: KeyBlockType, armored: string) => {
+  private async normalize(type: KeyBlockType, armored: string) {
     const headers = Pgp.armor.headers(type);
     const normalized = await Pgp.key.normalize(armored);
     if (!normalized) {
@@ -187,7 +187,7 @@ export class KeyImportUi {
     return normalized;
   }
 
-  private read = async (type: KeyBlockType, normalized: string) => {
+  private async read(type: KeyBlockType, normalized: string) {
     const headers = Pgp.armor.headers(type);
     const { keys: [k] } = await openpgp.key.readArmored(normalized);
     if (typeof k === 'undefined') {
@@ -196,7 +196,7 @@ export class KeyImportUi {
     return k;
   }
 
-  private longid = async (k: OpenPGP.key.Key) => {
+  private async longid(k: OpenPGP.key.Key) {
     const longid = await Pgp.key.longid(k);
     if (!longid) {
       throw new UserAlert('This key may not be compatible. Email human@flowcrypt.com and const us know which software created this key.\n\n(error: cannot get long_id)');
@@ -214,7 +214,7 @@ export class KeyImportUi {
     }
   }
 
-  private rejectKnownIfSelected = async (acctEmail: string, k: OpenPGP.key.Key) => {
+  private async rejectKnownIfSelected(acctEmail: string, k: OpenPGP.key.Key) {
     if (this.rejectKnown) {
       const keyinfos = await Store.keysGet(acctEmail);
       const privateKeysLongids = keyinfos.map(ki => ki.longid);
@@ -230,7 +230,7 @@ export class KeyImportUi {
     }
   }
 
-  private decryptAndEncryptAsNeeded = async (toDecrypt: OpenPGP.key.Key, toEncrypt: OpenPGP.key.Key, passphrase: string): Promise<void> => {
+  private async decryptAndEncryptAsNeeded(toDecrypt: OpenPGP.key.Key, toEncrypt: OpenPGP.key.Key, passphrase: string): Promise<void> {
     if (!passphrase) {
       throw new UserAlert('Please enter a pass phrase to use with this key');
     }
@@ -261,7 +261,7 @@ export class KeyImportUi {
     }
   }
 
-  private checkEncryptionPrvIfSelected = async (k: OpenPGP.key.Key, encrypted: OpenPGP.key.Key) => {
+  private async checkEncryptionPrvIfSelected(k: OpenPGP.key.Key, encrypted: OpenPGP.key.Key) {
     if (this.checkEncryption && ! await k.getEncryptionKey()) {
       if (await k.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert) { // known issues - key can be fixed
         throw new KeyCanBeFixed(encrypted);
@@ -281,13 +281,13 @@ export class KeyImportUi {
     }
   }
 
-  private checkEncryptionPubIfSelected = async (normalized: string) => {
+  private async checkEncryptionPubIfSelected(normalized: string) {
     if (this.checkEncryption && !await Pgp.key.usable(normalized)) {
       throw new UserAlert('This public key looks correctly formatted, but cannot be used for encryption. Please write at human@flowcrypt.com. We\'ll see if there is a way to fix it.');
     }
   }
 
-  private checkSigningIfSelected = async (k: OpenPGP.key.Key) => {
+  private async checkSigningIfSelected(k: OpenPGP.key.Key) {
     if (this.checkSigning && ! await k.getSigningKey()) {
       throw new UserAlert('This looks like a valid key but it cannot be used for signing. Please write at human@flowcrypt.com to see why is that.');
     }

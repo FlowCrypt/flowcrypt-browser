@@ -37,7 +37,7 @@ export class ComposerRender extends ComposerComponent {
     await this.composer.sender.checkEmailAliases();
   }
 
-  private initComposeBox = async () => {
+  private async initComposeBox() {
     if (this.view.isReplyBox) {
       this.composer.S.cached('body').addClass('reply_box');
       this.composer.S.cached('header').remove();
@@ -97,7 +97,7 @@ export class ComposerRender extends ComposerComponent {
     BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page: '/chrome/settings/modules/help.htm' });
   }
 
-  public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
+  public async renderReplyMsgComposeTable(method: 'forward' | 'reply' = 'reply'): Promise<void> {
     this.composer.S.cached('prompt').css({ display: 'none' });
     this.composer.recipients.showHideCcAndBccInputsIfNeeded();
     await this.composer.recipients.setEmailsPreview(this.composer.recipients.getRecipients());
@@ -163,7 +163,7 @@ export class ComposerRender extends ComposerComponent {
     return 0;
   })
 
-  private renderComposeTable = async () => {
+  private async renderComposeTable() {
     this.composer.errs.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
     this.composer.S.cached('compose_table').css('display', 'table');
     this.composer.S.cached('body').keydown(Ui.event.handle((_, e) => {
@@ -252,7 +252,7 @@ export class ComposerRender extends ComposerComponent {
     this.composer.size.onComposeTableRender();
   }
 
-  private loadRecipientsThenSetTestStateReady = async () => {
+  private async loadRecipientsThenSetTestStateReady() {
     await Promise.all(this.composer.recipients.getRecipients().filter(r => r.evaluating).map(r => r.evaluating));
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }

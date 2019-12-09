@@ -9,7 +9,7 @@ export type DomainRule = { flags: ('NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'STRICT_G
 
 export class Rules {
 
-  private static digest = async (domain: string) => {
+  private static async digest(domain: string) {
     return Buf.fromUint8(new Uint8Array(await crypto.subtle.digest('SHA-1', Buf.fromUtfStr(domain)))).toBase64Str();
   }
 
@@ -22,7 +22,7 @@ export class Rules {
     [this.other]: { flags: [] },
   };
 
-  public static newInstance = async (email?: string) => {
+  public static async newInstance(email?: string) {
     if (email && Str.isEmailValid(email)) {
       const domain = email.split('@')[1];
       return new Rules(await Rules.digest(domain));

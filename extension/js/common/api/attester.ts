@@ -16,7 +16,7 @@ export class Attester extends Api {
     return Api.apiCall('https://flowcrypt.com/attester/', resource, data, typeof data === 'string' ? 'TEXT' : undefined, undefined, undefined, 'xhr', method);
   }
 
-  public static lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
+  public static async lookupEmail(email: string): Promise<PubkeySearchResult> {
     try {
       const r = await Attester.pubCall(`pub/${email}`);
       // when requested from the content script, `getResponseHeader` will be missing because it's not a real XMLHttpRequest we are getting back
@@ -34,7 +34,7 @@ export class Attester extends Api {
     }
   }
 
-  public static lookupEmails = async (emails: string[]): Promise<Dict<PubkeySearchResult>> => {
+  public static async lookupEmails(emails: string[]): Promise<Dict<PubkeySearchResult>> {
     const results: Dict<PubkeySearchResult> = {};
     await Promise.all(emails.map(async (email: string) => {
       results[email] = await Attester.lookupEmail(email);
@@ -44,12 +44,12 @@ export class Attester extends Api {
 
   public static lookupLongid = (longid: string) => Attester.lookupEmail(longid); // the api accepts either email or longid
 
-  public static replacePubkey = async (email: string, pubkey: string): Promise<string> => { // replace key assigned to a certain email with a different one
+  public static async replacePubkey(email: string, pubkey: string): Promise<string> { // replace key assigned to a certain email with a different one
     const r = await Attester.pubCall(`pub/${email}`, 'POST', pubkey);
     return r.responseText;
   }
 
-  public static updatePubkey = async (longid: string, pubkey: string): Promise<string> => { // update key with a newer version of the same key
+  public static async updatePubkey(longid: string, pubkey: string): Promise<string> { // update key with a newer version of the same key
     const r = await Attester.pubCall(`pub/${longid}`, 'PUT', pubkey);
     return r.responseText;
   }

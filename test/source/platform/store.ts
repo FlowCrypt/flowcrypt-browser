@@ -21,7 +21,7 @@ export type KeyInfosWithPassphrases = { keys: PrvKeyInfo[]; passphrases: string[
 
 export class Store {
 
-  static dbContactGet = async (db: void, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
+  static async dbContactGet(db: void, emailOrLongid: string[]): Promise<(Contact | undefined)[]> {
     return [];
   }
 

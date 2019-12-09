@@ -350,7 +350,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return filteredQuery;
   }
 
-  private apiGmailGetNewUniqueRecipientsFromHeaders = async (toHeaders: string[], allResults: Contact[], allRawEmails: string[]): Promise<Contact[]> => {
+  private async apiGmailGetNewUniqueRecipientsFromHeaders(toHeaders: string[], allResults: Contact[], allRawEmails: string[]): Promise<Contact[]> {
     if (!toHeaders.length) {
       return [];
     }
@@ -406,7 +406,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     chunkedCb({ new: [], all: allResults });
   }
 
-  private extractHeadersFromMsgs = async (msgsIds: GmailRes.GmailMsgList$message[], headerNames: string[], msgLimit: number): Promise<Dict<string[]>> => {
+  private async extractHeadersFromMsgs(msgsIds: GmailRes.GmailMsgList$message[], headerNames: string[], msgLimit: number): Promise<Dict<string[]>> {
     const headerVals: Dict<string[]> = {};
     for (const headerName of headerNames) {
       headerVals[headerName] = [];

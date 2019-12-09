@@ -886,7 +886,7 @@ export class PgpMsg {
    * Returns signed data if detached=false, armored
    * Returns signature if detached=true, armored
    */
-  static sign = async (signingPrv: OpenPGP.key.Key, data: string, detached = false): Promise<string> => {
+  static async sign(signingPrv: OpenPGP.key.Key, data: string, detached = false): Promise<string> {
     const message = openpgp.cleartext.fromText(data);
     const signRes = await openpgp.sign({ message, armor: true, privateKeys: [signingPrv], detached });
     if (detached) {
@@ -898,7 +898,7 @@ export class PgpMsg {
     return await openpgp.stream.readToEnd((signRes as OpenPGP.SignArmorResult).data);
   }
 
-  static verify = async (msgOrVerResults: OpenpgpMsgOrCleartext | OpenPGP.message.Verification[], pubs: OpenPGP.key.Key[], contact?: Contact): Promise<VerifyRes> => {
+  static async verify(msgOrVerResults: OpenpgpMsgOrCleartext | OpenPGP.message.Verification[], pubs: OpenPGP.key.Key[], contact?: Contact): Promise<VerifyRes> {
     const sig: VerifyRes = { contact, match: null }; // tslint:disable-line:no-null-keyword
     try {
       // While this looks like bad method API design, it's here to ensure execution order when 1) reading data, 2) verifying, 3) processing signatures
@@ -1026,7 +1026,7 @@ export class PgpMsg {
   /**
    * textBlockType - choose if textual block should be returned as escaped html (for direct browser rendering) or text (other platforms)
    */
-  static fmtDecryptedAsSanitizedHtmlBlocks = async (decryptedContent: Uint8Array): Promise<{ blocks: MsgBlock[], subject: string | undefined }> => {
+  static async fmtDecryptedAsSanitizedHtmlBlocks(decryptedContent: Uint8Array): Promise<{ blocks: MsgBlock[], subject: string | undefined }> {
     const blocks: MsgBlock[] = [];
     if (!Mime.resemblesMsg(decryptedContent)) {
       let utf = Buf.fromUint8(decryptedContent).toUtfStr();
@@ -1101,7 +1101,7 @@ export class PgpMsg {
       && typeof (o as FcAttLinkData).size !== 'undefined' && typeof (o as FcAttLinkData).type !== 'undefined';
   }
 
-  private static pushArmoredPubkeysToBlocks = async (armoredPubkeys: string[], blocks: MsgBlock[]): Promise<void> => {
+  private static async pushArmoredPubkeysToBlocks(armoredPubkeys: string[], blocks: MsgBlock[]): Promise<void> {
     for (const armoredPubkey of armoredPubkeys) {
       const { keys } = await Pgp.key.parse(armoredPubkey);
       for (const keyDetails of keys) {

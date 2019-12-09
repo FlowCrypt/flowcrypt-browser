@@ -72,7 +72,7 @@ export class Injector {
     }
   }
 
-  insertEndSessionBtn = async (acctEmail: string) => {
+  async insertEndSessionBtn(acctEmail: string) {
     if ($('.action_finish_session').length) {
       return;
     }

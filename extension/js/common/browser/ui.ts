@@ -330,7 +330,7 @@ export class Ui {
     },
   };
 
-  public static toast = async (msg: string, seconds = 2): Promise<void> => {
+  public static async toast(msg: string, seconds = 2): Promise<void> {
     await Swal.fire({
       toast: true,
       title: msg,

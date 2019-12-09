@@ -84,7 +84,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.addSettingsBtn();
   }
 
-  setReplyBoxEditable = async () => {
+  async setReplyBoxEditable() {
     const replyContainerIframe = $('.reply_message_iframe_container > iframe').last();
     if (replyContainerIframe.length) {
       $(replyContainerIframe).replaceWith(this.factory.embeddedReply(this.getLastMsgReplyParams(this.getGonvoRootEl(replyContainerIframe[0])), true)); // xss-safe-value
@@ -200,7 +200,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
    * It may create unexpected behavior, such as removing the attachment but not rendering any message (sometimes noticeable for attached public keys)
    * Best would be, instead of checking every 1 second, to be able to listen to a certain element being inserted into the dom, and only respond then
    */
-  private replaceAtts = async () => {
+  private async replaceAtts() {
     for (const attsContainerEl of $(this.sel.attsContainerInner).not('.evaluated').addClass('evaluated')) {
       const attsContainer = $(attsContainerEl);
       const newPgpAtts = this.filterAtts(attsContainer.children(), Att.attachmentsPattern);
@@ -239,7 +239,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private processAtts = async (msgId: string, attMetas: Att[], attsContainerInner: JQueryEl | HTMLElement, skipGoogleDrive: boolean, newPgpAttsNames: string[] = []) => {
+  private async processAtts(msgId: string, attMetas: Att[], attsContainerInner: JQueryEl | HTMLElement, skipGoogleDrive: boolean, newPgpAttsNames: string[] = []) {
     let msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
     const senderEmail = this.getSenderEmail(msgEl);
     const isOutgoing = !!this.sendAs[senderEmail];
@@ -315,7 +315,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private processGoogleDriveAtts = async (msgId: string, msgEl: JQueryEl, attsContainerInner: JQueryEl) => {
+  private async processGoogleDriveAtts(msgId: string, msgEl: JQueryEl, attsContainerInner: JQueryEl) {
     const notProcessedAttsLoaders = attsContainerInner.find('.attachment_loader');
     if (notProcessedAttsLoaders.length && msgEl.find('.gmail_drive_chip, a[href^="https://drive.google.com/file"]').length) {
       // replace google drive attachments - they do not get returned by Gmail API thus did not get replaced above
@@ -333,7 +333,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private renderPublicKeyFromFile = async (attMeta: Att, attsContainerInner: JQueryEl, msgEl: JQueryEl, isOutgoing: boolean, attSel: JQueryEl, nRenderedAtts: number) => {
+  private async renderPublicKeyFromFile(attMeta: Att, attsContainerInner: JQueryEl, msgEl: JQueryEl, isOutgoing: boolean, attSel: JQueryEl, nRenderedAtts: number) {
     let downloadedAtt: GmailRes.GmailAtt;
     try {
       downloadedAtt = await this.gmail.attGet(attMeta.msgId!, attMeta.id!); // .id! is present when fetched from api
@@ -352,7 +352,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return nRenderedAtts;
   }
 
-  private renderBackupFromFile = async (attMeta: Att, attsContainerInner: JQueryEl, msgEl: JQueryEl, attSel: JQueryEl, nRenderedAtts: number) => {
+  private async renderBackupFromFile(attMeta: Att, attsContainerInner: JQueryEl, msgEl: JQueryEl, attSel: JQueryEl, nRenderedAtts: number) {
     let downloadedAtt: GmailRes.GmailAtt;
     try {
       downloadedAtt = await this.gmail.attGet(attMeta.msgId!, attMeta.id!); // .id! is present when fetched from api
@@ -451,7 +451,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     messageContainer.find('.adn.ads').parent().append(secureReplyBoxXssSafe); // xss-safe-factory
   }
 
-  private replaceStandardReplyBox = async (msgId?: string, editable: boolean = false, force: boolean = false) => {
+  private async replaceStandardReplyBox(msgId?: string, editable: boolean = false, force: boolean = false) {
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
       // cache for subseqent loop runs
@@ -491,7 +491,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private evaluateStandardComposeRecipients = async () => {
+  private async evaluateStandardComposeRecipients() {
     if (!this.currentlyEvaluatingStandardComposeBoxRecipients) {
       this.currentlyEvaluatingStandardComposeBoxRecipients = true;
       for (const standardComposeWinEl of $(this.sel.standardComposeWin)) {

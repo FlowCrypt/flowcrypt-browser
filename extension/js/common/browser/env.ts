@@ -29,7 +29,7 @@ export class Env {
     return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, };
   }
 
-  public static webmails = async (): Promise<WebMailName[]> => {
+  public static async webmails(): Promise<WebMailName[]> {
     return ['gmail']; // async because storage may be involved in the future
   }
 

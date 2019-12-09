@@ -64,12 +64,12 @@ export class AttUI {
     return Object.keys(this.attachedFiles);
   }
 
-  collectAtt = async (uploadFileId: string) => {
+  async collectAtt(uploadFileId: string) {
     const fileData = await this.readAttDataAsUint8(uploadFileId);
     return new Att({ name: this.attachedFiles[uploadFileId].name, type: this.attachedFiles[uploadFileId].type, data: fileData });
   }
 
-  collectAtts = async () => {
+  async collectAtts() {
     const atts: Att[] = [];
     for (const uploadFileId of Object.keys(this.attachedFiles)) {
       atts.push(await this.collectAtt(uploadFileId));
@@ -77,7 +77,7 @@ export class AttUI {
     return atts;
   }
 
-  collectEncryptAtts = async (pubkeys: string[], pwd?: Pwd): Promise<Att[]> => {
+  async collectEncryptAtts(pubkeys: string[], pwd?: Pwd): Promise<Att[]> {
     const atts: Att[] = [];
     for (const uploadFileId of Object.keys(this.attachedFiles)) {
       const file = this.attachedFiles[uploadFileId];
@@ -101,7 +101,7 @@ export class AttUI {
     }
   }
 
-  private processNewAtt = async (uploadFileId: string, name: string) => {
+  private async processNewAtt(uploadFileId: string, name: string) {
     const limits = await this.getLimits();
     if (limits.count && Object.keys(this.attachedFiles).length >= limits.count) {
       await Ui.modal.warning('Amount of attached files is limited to ' + limits.count);
@@ -132,7 +132,7 @@ export class AttUI {
     }
   }
 
-  public addFile = async (file: File) => {
+  public async addFile(file: File) {
     this.uploader.addFiles([file]); // tslint:disable-line: no-unsafe-any
   }
 

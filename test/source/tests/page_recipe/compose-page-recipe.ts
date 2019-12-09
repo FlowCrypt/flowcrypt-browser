@@ -41,7 +41,7 @@ export class ComposePageRecipe extends PageRecipe {
     return composePage;
   }
 
-  public static openInSettings = async (settingsPage: ControllablePage): Promise<ControllableFrame> => {
+  public static async openInSettings(settingsPage: ControllablePage): Promise<ControllableFrame> {
     await settingsPage.waitAndClick('@action-show-compose-page');
     await settingsPage.waitAll('@dialog');
     const composeFrame = await settingsPage.getFrame(['compose.htm']);
@@ -84,7 +84,7 @@ export class ComposePageRecipe extends PageRecipe {
     return { subject, body };
   }
 
-  public static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients, windowType: 'new' | 'reply') => {
+  public static async fillRecipients(composePageOrFrame: Controllable, recipients: Recipients, windowType: 'new' | 'reply') {
     if (windowType === 'reply') { // new messages should already have cc/bcc buttons visible, because they should have recipients in focus
       await composePageOrFrame.waitAndClick('@action-show-container-cc-bcc-buttons');
     }
@@ -106,7 +106,7 @@ export class ComposePageRecipe extends PageRecipe {
     }
   }
 
-  public static sendAndClose = async (composePage: ControllablePage, password?: string | undefined, timeout = 60) => {
+  public static async sendAndClose(composePage: ControllablePage, password?: string | undefined, timeout = 60) {
     if (password) {
       await composePage.waitAndType('@input-password', password);
     }

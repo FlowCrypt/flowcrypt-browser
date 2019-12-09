@@ -16,7 +16,7 @@ export class Browser {
     return window.URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
   }
 
-  public static objUrlConsume = async (url: string) => {
+  public static async objUrlConsume(url: string) {
     const buf = await Api.download(url);
     window.URL.revokeObjectURL(url);
     return buf;

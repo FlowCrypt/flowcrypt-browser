@@ -63,7 +63,7 @@
   };
 
   class ClassAsync {
-    static staticConstAttrAsync = async (type: Type) => {
+    static async staticConstAttrAsync(type: Type) {
       await wait();
       await obj.paramFunc(type);
       await wait();
@@ -129,6 +129,9 @@
       return process.exit(1);
     }
 
-  })();
+  })().catch(e => {
+    console.error(e);
+    process.exit(1);
+  });
 
 })();

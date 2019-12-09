@@ -73,7 +73,7 @@ export class GoogleAuth {
     }
   }
 
-  public static googleApiAuthHeader = async (acctEmail: string, forceRefresh = false): Promise<string> => {
+  public static async googleApiAuthHeader(acctEmail: string, forceRefresh = false): Promise<string> {
     if (!acctEmail) {
       throw new Error('missing account_email in api_gmail_call');
     }
@@ -95,7 +95,7 @@ export class GoogleAuth {
     }
   }
 
-  public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings): Promise<any> => {
+  public static async apiGoogleCallRetryAuthErrorOneTime(acctEmail: string, request: JQuery.AjaxSettings): Promise<any> {
     try {
       return await Api.ajax(request, Catch.stackTrace());
     } catch (firstAttemptErr) {
@@ -107,7 +107,7 @@ export class GoogleAuth {
     }
   }
 
-  public static newAuthPopup = async ({ acctEmail, scopes, save }: { acctEmail?: string, scopes?: string[], save?: boolean }): Promise<AuthRes> => {
+  public static async newAuthPopup({ acctEmail, scopes, save }: { acctEmail?: string, scopes?: string[], save?: boolean }): Promise<AuthRes> {
     if (acctEmail) {
       acctEmail = acctEmail.toLowerCase();
     }
@@ -137,7 +137,7 @@ export class GoogleAuth {
     return authRes;
   }
 
-  public static newOpenidAuthPopup = async ({ acctEmail }: { acctEmail?: string }): Promise<AuthRes> => {
+  public static async newOpenidAuthPopup({ acctEmail }: { acctEmail?: string }): Promise<AuthRes> {
     return await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('openid'), save: false });
   }
 
@@ -174,7 +174,7 @@ export class GoogleAuth {
 
   private static isForwarding = (title: string) => title.match(/^Forwarding /) !== null;
 
-  private static waitForAndProcessOauthWindowResult = async (windowId: number, acctEmail: string | undefined, scopes: string[], csrfToken: string, save: boolean): Promise<AuthRes> => {
+  private static async waitForAndProcessOauthWindowResult(windowId: number, acctEmail: string | undefined, scopes: string[], csrfToken: string, save: boolean): Promise<AuthRes> {
     while (true) {
       const [oauth] = await tabsQuery({ windowId });
       if (oauth?.title && oauth.title.includes(GoogleAuth.OAUTH.state_header) && !GoogleAuth.isAuthUrl(oauth.title) && !GoogleAuth.isForwarding(oauth.title)) {
@@ -221,7 +221,7 @@ export class GoogleAuth {
     return JSON.parse(state.replace(GoogleAuth.OAUTH.state_header, '')) as AuthReq;
   }
 
-  private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
+  private static async googleAuthSaveTokens(acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) {
     const openid = GoogleAuth.parseIdToken(tokensObj.id_token);
     const { full_name, picture } = await Store.getAcct(acctEmail, ['full_name', 'picture']);
     const toSave: AccountStore = {
@@ -276,7 +276,7 @@ export class GoogleAuth {
     return claims;
   }
 
-  private static retrieveAndSaveAuthToken = async (authCode: string, scopes: string[]): Promise<{ id_token: string }> => {
+  private static async retrieveAndSaveAuthToken(authCode: string, scopes: string[]): Promise<{ id_token: string }> {
     const tokensObj = await GoogleAuth.googleAuthGetTokens(authCode);
     await GoogleAuth.googleAuthCheckAccessToken(tokensObj.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
     const claims = GoogleAuth.parseIdToken(tokensObj.id_token);
@@ -287,7 +287,7 @@ export class GoogleAuth {
     return { id_token: tokensObj.id_token };
   }
 
-  private static apiGoogleAuthPopupPrepareAuthReqScopes = async (acctEmail: string | undefined, addScopes: string[]): Promise<string[]> => {
+  private static async apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail: string | undefined, addScopes: string[]): Promise<string[]> {
     if (acctEmail) {
       const { google_token_scopes } = await Store.getAcct(acctEmail, ['google_token_scopes']);
       addScopes.push(...(google_token_scopes || []));

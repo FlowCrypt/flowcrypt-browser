@@ -77,7 +77,7 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  private extractProcessSendMsg = async () => {
+  private async extractProcessSendMsg() {
     this.composer.S.cached('toggle_send_options').hide();
     try {
       this.composer.errs.throwIfFormNotReady();
@@ -120,7 +120,7 @@ export class ComposerSendBtn extends ComposerComponent {
     await this.addNamesToMsg(msg);
   }
 
-  private doSendMsg = async (msg: SendableMsg) => {
+  private async doSendMsg(msg: SendableMsg) {
     let msgSentRes: GmailRes.GmailMsgSend;
     try {
       this.isSendMessageInProgress = true;
@@ -145,7 +145,7 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  private decryptSenderKey = async (senderKi: KeyInfo): Promise<OpenPGP.key.Key | undefined> => {
+  private async decryptSenderKey(senderKi: KeyInfo): Promise<OpenPGP.key.Key | undefined> {
     const prv = await Pgp.key.read(senderKi.private);
     const passphrase = await this.composer.storage.passphraseGet(senderKi);
     if (typeof passphrase === 'undefined' && !prv.isFullyDecrypted()) {
@@ -171,7 +171,7 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
+  private async addNamesToMsg(msg: SendableMsg): Promise<void> {
     const { sendAs } = await Store.getAcct(this.view.acctEmail, ['sendAs']);
     const addNameToEmail = async (emails: string[]): Promise<string[]> => {
       return await Promise.all(emails.map(async email => {

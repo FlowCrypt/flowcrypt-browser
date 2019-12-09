@@ -42,7 +42,7 @@ export class ComposerSize extends ComposerComponent {
     }, 1000);
   }
 
-  private windowResized = async () => {
+  private async windowResized() {
     this.resizeComposeBox();
     this.setInputTextHeightManuallyIfNeeded(true);
     if (this.composer.S.cached('recipients_placeholder').is(':visible')) {
@@ -85,7 +85,7 @@ export class ComposerSize extends ComposerComponent {
     this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
   }
 
-  private toggleFullScreen = async () => {
+  private async toggleFullScreen() {
     if (this.composeWindowIsMinimized) {
       this.minimizeComposerWindow();
     }
