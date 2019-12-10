@@ -76,14 +76,6 @@ Catch.try(async () => {
         }
       }
     }
-    const drafts: GmailRes.GmailDraftGet[] = [];
-    for (const draftMeta of draftMetas) {
-      const messageIndex = msgsFull.findIndex(m => m.id === draftMeta.message.id);
-      if (messageIndex !== -1) {
-        drafts.push({ id: draftMeta.id, message: msgsFull[messageIndex] });
-        msgsFull.splice(messageIndex, 1); // if not remove msg it will make duplicates
-      }
-    }
     const messages: GmailRes.GmailMsg[] = [...msgsFull];
     print(`joining done. Downloading labels..`);
     const { labels } = await gmail.labelsGet();
@@ -113,7 +105,7 @@ Catch.try(async () => {
         h.value = censor(h.value);
       }
     }
-    const data = Buf.fromUtfStr(JSON.stringify({ messages, attachments, labels, drafts }));
+    const data = Buf.fromUtfStr(JSON.stringify({ messages, attachments, labels }));
     print(`export size: ${data.length / (1024 * 1024)} MB`);
     const pwd = prompt('Please enter encryption password');
     if (pwd) {
