@@ -1,5 +1,5 @@
 
-import { startGoogleApiMock } from './mock/google-api-mock';
+import { startAllApisMock } from './mock/all-apis-mock';
 import { Config } from './util';
 import * as request from 'fc-node-requests';
 import { writeFileSync, existsSync } from 'fs';
@@ -26,7 +26,7 @@ export const mock = async (logger: (line: string) => void) => {
     }
   }));
   console.info(`checking mock data took ${(Date.now() - start) / 1000} seconds`);
-  return await startGoogleApiMock(logger);
+  return await startAllApisMock(logger);
 };
 
 if (require.main === module) {
