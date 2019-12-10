@@ -48,6 +48,10 @@ const validateLine = (line: string, location: string) => {
     console.error(`wrongly using class method, which can cause binding loss (use fat arrow method properties instead):\n${line}\n`);
     errsFound++;
   }
+  if (line.match(/^  (public |private |protected |static )+?[a-z][a-zA-Z0-9]+ = (async )?\(.+\)(: .+)? => .+;$/)) {
+    console.error(`don't use single-line "method = (arg) => result" class methods, give them a method body and a return statement "method = (arg) => { return result; }":\n${line}\n`);
+    errsFound++;
+  }
 };
 
 const srcFilePaths = getAllFilesInDir('./extension', /\.ts$/);
