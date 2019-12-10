@@ -37,7 +37,7 @@ View.run(class SubscribeView extends View {
     this.placement = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'placement', ['settings', 'settings_compose', 'default', 'dialog', 'gmail', 'embedded', 'compose', undefined]);
   }
 
-  async render() {
+  render = async () => {
     Ui.event.protect();
     if (this.placement === 'settings') {
       $('#content').removeClass('dialog').css({ 'margin-top': 0, 'margin-bottom': 30 });
@@ -53,7 +53,7 @@ View.run(class SubscribeView extends View {
       .html(`${Lang.account.creditOrDebit}<br><br>${new XssSafeFactory(this.acctEmail, this.tabId).embeddedStripeCheckout()}<br>${Ui.retryLink('back')}`); // xss-safe-factory
   }
 
-  setHandlers() {
+  setHandlers = () => {
     $('.action_close').click(this.setHandler(() => this.closeDialog()));
     $('.action_show_stripe').click(this.setHandler(() => this.showStripeHandler()));
     $('.action_contact_page').click(this.setHandler(() => BrowserMsg.send.bg.settings({ page: '/chrome/settings/modules/contact_page.htm', acctEmail: this.acctEmail })));
@@ -65,7 +65,7 @@ View.run(class SubscribeView extends View {
     BrowserMsg.listen(this.tabId!);
   }
 
-  private async renderSubscriptionDetails() {
+  private renderSubscriptionDetails = async () => {
     this.authInfo = await Store.authInfo(this.acctEmail);
     try {
       await Backend.accountGet(this.authInfo);
@@ -112,13 +112,13 @@ View.run(class SubscribeView extends View {
     }
   }
 
-  private showStripeHandler() {
+  private showStripeHandler = () => {
     $('.status').text('You are subscribing to a $5 monthly payment for FlowCrypt Advanced.');
     $('.hide_on_checkout').css('display', 'none');
     $('.stripe_checkout').css('display', 'block');
   }
 
-  private async subscribeAndHandleResult(chosenProduct: Product, source: string | undefined) {
+  private subscribeAndHandleResult = async (chosenProduct: Product, source: string | undefined) => {
     try {
       const response = await Backend.accountSubscribe(this.authInfo!, chosenProduct.id!, chosenProduct.method!, source);
       if (response.subscription.level === chosenProduct.level && response.subscription.method === chosenProduct.method) {
@@ -143,12 +143,12 @@ View.run(class SubscribeView extends View {
     }
   }
 
-  private async stripeCcEnteredHandler({ token }: Bm.StripeResult) {
+  private stripeCcEnteredHandler = async ({ token }: Bm.StripeResult) => {
     $('.stripe_checkout').text('').css('display', 'none');
     await this.subscribeAndHandleResult(this.PRODUCTS.advancedMonthly, token);
   }
 
-  private closeDialog() {
+  private closeDialog = () => {
     $('body').attr('data-test-state', 'closed'); // used by automated tests
     if (this.placement === 'settings_compose') {
       window.close();

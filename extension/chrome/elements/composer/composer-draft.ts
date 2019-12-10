@@ -33,7 +33,7 @@ export class ComposerDraft extends ComposerComponent {
     }
   }
 
-  async initActions(): Promise<void> {
+  initActions = async (): Promise<void> => {
     $('.delete_draft').click(this.view.setHandler(async () => {
       await this.draftDelete();
       if (this.view.isReplyBox && !this.view.removeAfterClose) { // reload iframe so we don't leave users without a reply UI
@@ -49,7 +49,7 @@ export class ComposerDraft extends ComposerComponent {
     });
   }
 
-  public async initialDraftLoad(draftId: string): Promise<boolean> {
+  public initialDraftLoad = async (draftId: string): Promise<boolean> => {
     if (this.view.isReplyBox) {
       Xss.sanitizeRender(this.composer.S.cached('prompt'), `Loading draft.. ${Ui.spinner('green')}`);
     }
@@ -87,7 +87,7 @@ export class ComposerDraft extends ComposerComponent {
     }
   }
 
-  public async draftSave(forceSave: boolean = false): Promise<void> {
+  public draftSave = async (forceSave: boolean = false): Promise<void> => {
     if (this.hasBodyChanged(this.composer.S.cached('input_text').text()) || this.hasSubjectChanged(String(this.composer.S.cached('input_subject').val())) || forceSave) {
       this.currentlySavingDraft = true;
       try {
@@ -155,7 +155,7 @@ export class ComposerDraft extends ComposerComponent {
     }
   }
 
-  public async draftDelete() {
+  public draftDelete = async () => {
     clearInterval(this.saveDraftInterval);
     await Ui.time.wait(() => !this.currentlySavingDraft ? true : undefined);
     if (this.view.draftId) {
@@ -175,7 +175,7 @@ export class ComposerDraft extends ComposerComponent {
     }
   }
 
-  private async decryptAndRenderDraft(encryptedArmoredDraft: string, headers: { subject?: string, from?: string; to: string[], cc: string[], bcc: string[] }): Promise<boolean> {
+  private decryptAndRenderDraft = async (encryptedArmoredDraft: string, headers: { subject?: string, from?: string; to: string[], cc: string[], bcc: string[] }): Promise<boolean> => {
     const passphrase = await this.composer.storage.passphraseGet();
     if (typeof passphrase !== 'undefined') {
       const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.view.acctEmail), encryptedData: Buf.fromUtfStr(encryptedArmoredDraft) });
@@ -202,7 +202,7 @@ export class ComposerDraft extends ComposerComponent {
     return false;
   }
 
-  private hasBodyChanged(msgBody: string) {
+  private hasBodyChanged = (msgBody: string) => {
     if (this.lastDraftBody === undefined) { // first check
       this.lastDraftBody = msgBody;
       return false;
@@ -214,7 +214,7 @@ export class ComposerDraft extends ComposerComponent {
     return false;
   }
 
-  private hasSubjectChanged(subject: string) {
+  private hasSubjectChanged = (subject: string) => {
     if (this.view.isReplyBox) { // user cannot change reply subject
       return false; // this helps prevent unwanted empty drafts
     }
@@ -225,7 +225,7 @@ export class ComposerDraft extends ComposerComponent {
     return false;
   }
 
-  private async renderPPDialogAndWaitWhenPPEntered() {
+  private renderPPDialogAndWaitWhenPPEntered = async () => {
     const promptText = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
     if (this.view.isReplyBox) {
       Xss.sanitizeRender(this.composer.S.cached('prompt'), promptText).css({ display: 'block' });
@@ -240,7 +240,7 @@ export class ComposerDraft extends ComposerComponent {
     await this.composer.storage.whenMasterPassphraseEntered();
   }
 
-  private async abortAndRenderReplyMsgComposeTableIfIsReplyBox(reason: string) {
+  private abortAndRenderReplyMsgComposeTableIfIsReplyBox = async (reason: string) => {
     console.info(`gmail.initialDraftLoad: ${reason}`);
     if (this.view.isReplyBox) {
       await this.composer.render.renderReplyMsgComposeTable();

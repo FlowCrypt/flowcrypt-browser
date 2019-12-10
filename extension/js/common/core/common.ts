@@ -10,7 +10,7 @@ export type UrlParams = Dict<UrlParam>;
 
 export class Str {
 
-  public static parseEmail(full: string, flag: 'VALIDATE' | 'DO-NOT-VALIDATE' = 'VALIDATE') {
+  public static parseEmail = (full: string, flag: 'VALIDATE' | 'DO-NOT-VALIDATE' = 'VALIDATE') => {
     let email: string | undefined;
     let name: string | undefined;
     if (full.includes('<') && full.includes('>')) {
@@ -25,23 +25,23 @@ export class Str {
     return { email, name, full };
   }
 
-  public static prettyPrint(obj: any) {
+  public static prettyPrint = (obj: any) => {
     return (typeof obj === 'object') ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />') : String(obj);
   }
 
-  public static normalizeSpaces(str: string) {
+  public static normalizeSpaces = (str: string) => {
     return str.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32));
   }
 
-  public static normalizeDashes(str: string) {
+  public static normalizeDashes = (str: string) => {
     return str.replace(/^—–|—–$/gm, '-----');
   }
 
-  public static normalize(str: string) {
+  public static normalize = (str: string) => {
     return Str.normalizeSpaces(Str.normalizeDashes(str));
   }
 
-  public static numberFormat(number: number) {
+  public static numberFormat = (number: number) => {
     const nStr: string = number + '';
     const x = nStr.split('.');
     let x1 = x[0];
@@ -53,18 +53,18 @@ export class Str {
     return x1 + x2;
   }
 
-  public static isEmailValid(email: string) {
+  public static isEmailValid = (email: string) => {
     if (email.indexOf(' ') !== -1) {
       return false;
     }
     return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(email);
   }
 
-  public static monthName(monthIndex: number) {
+  public static monthName = (monthIndex: number) => {
     return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][monthIndex];
   }
 
-  public static sloppyRandom(length: number = 5) {
+  public static sloppyRandom = (length: number = 5) => {
     let id = '';
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     for (let i = 0; i < length; i++) {
@@ -73,19 +73,19 @@ export class Str {
     return id;
   }
 
-  public static regexEscape(toBeUsedInRegex: string) {
+  public static regexEscape = (toBeUsedInRegex: string) => {
     return toBeUsedInRegex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
-  public static asEscapedHtml(text: string) {
+  public static asEscapedHtml = (text: string) => {
     return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;').replace(/\n/g, '<br />');
   }
 
-  public static htmlAttrEncode(values: Dict<any>): string {
+  public static htmlAttrEncode = (values: Dict<any>): string => {
     return Str.base64urlUtfEncode(JSON.stringify(values));
   }
 
-  public static htmlAttrDecode(encoded: string): any {
+  public static htmlAttrDecode = (encoded: string): any => {
     try {
       return JSON.parse(Str.base64urlUtfDecode(encoded)); // tslint:disable-line:no-unsafe-any
     } catch (e) {
@@ -93,23 +93,23 @@ export class Str {
     }
   }
 
-  public static capitalize(string: string): string {
+  public static capitalize = (string: string): string => {
     return string.trim().split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
   }
 
-  public static toUtcTimestamp(datetimeStr: string, asStr: boolean = false) {
+  public static toUtcTimestamp = (datetimeStr: string, asStr: boolean = false) => {
     return asStr ? String(Date.parse(datetimeStr)) : Date.parse(datetimeStr);
   }
 
-  public static datetimeToDate(date: string) {
+  public static datetimeToDate = (date: string) => {
     return date.substr(0, 10).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
   }
 
-  public static fromDate(date: Date) {
+  public static fromDate = (date: Date) => {
     return date.toISOString().replace(/T/, ' ').replace(/:[^:]+$/, '');
   }
 
-  private static base64urlUtfEncode(str: string) {
+  private static base64urlUtfEncode = (str: string) => {
     // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
     if (typeof str === 'undefined') {
       return str;
@@ -118,7 +118,7 @@ export class Str {
       .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 
-  private static base64urlUtfDecode(str: string) {
+  private static base64urlUtfDecode = (str: string) => {
     // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
     if (typeof str === 'undefined') {
       return str;
@@ -188,7 +188,7 @@ export class Url {
    * will convert result to desired format: camelCase or snake_case, based on what was supplied in expectedKeys
    * todo - the camelCase or snake_case functionality can now be removed
    */
-  public static parse(expectedKeys: string[], parseThisUrl?: string) {
+  public static parse = (expectedKeys: string[], parseThisUrl?: string) => {
     const url = (parseThisUrl || window.location.search.replace('?', ''));
     const valuePairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
     const rawParams: Dict<string> = {};
@@ -205,7 +205,7 @@ export class Url {
     return processedParams;
   }
 
-  public static create(link: string, params: UrlParams) {
+  public static create = (link: string, params: UrlParams) => {
     for (const key of Object.keys(params)) {
       const value = params[key];
       if (typeof value !== 'undefined') {
@@ -216,7 +216,7 @@ export class Url {
     return link;
   }
 
-  public static removeParamsFromUrl(url: string, paramsToDelete: string[]) {
+  public static removeParamsFromUrl = (url: string, paramsToDelete: string[]) => {
     const urlParts = url.split('?');
     if (!urlParts[1]) { // Nothing to remove
       return url;
@@ -230,15 +230,15 @@ export class Url {
     return `${urlParts[0]}?${params.toString()}`;
   }
 
-  private static snakeCaseToCamelCase(s: string) {
+  private static snakeCaseToCamelCase = (s: string) => {
     return s.replace(/_[a-z]/g, boundary => boundary[1].toUpperCase());
   }
 
-  private static camelCaseToSnakeCase(s: string) {
+  private static camelCaseToSnakeCase = (s: string) => {
     return s.replace(/[a-z][A-Z]/g, boundary => `${boundary[0]}_${boundary[1].toLowerCase()}`);
   }
 
-  private static findAndProcessUrlParam(expectedParamName: string, rawParamNameDict: Dict<string>, rawParms: Dict<string>): UrlParam {
+  private static findAndProcessUrlParam = (expectedParamName: string, rawParamNameDict: Dict<string>, rawParms: Dict<string>): UrlParam => {
     if (typeof rawParamNameDict[expectedParamName] === 'undefined') {
       return undefined; // param name not found in param name dict
     }
@@ -252,7 +252,7 @@ export class Url {
     return decodeURIComponent(rawValue);
   }
 
-  private static fillPossibleUrlParamNameVariations(urlParamName: string, rawParamNameDict: Dict<string>) {
+  private static fillPossibleUrlParamNameVariations = (urlParamName: string, rawParamNameDict: Dict<string>) => {
     rawParamNameDict[urlParamName] = urlParamName;
     rawParamNameDict[Url.snakeCaseToCamelCase(urlParamName)] = urlParamName;
     rawParamNameDict[Url.camelCaseToSnakeCase(urlParamName)] = urlParamName;

@@ -52,18 +52,18 @@ export class Att {
     this.contentDescription = contentDescription || undefined;
   }
 
-  public hasData() {
+  public hasData = () => {
     return this.bytes instanceof Uint8Array;
   }
 
-  public setData(bytes: Uint8Array) {
+  public setData = (bytes: Uint8Array) => {
     if (this.hasData()) {
       throw new Error('Att bytes already set');
     }
     this.bytes = bytes;
   }
 
-  public getData(): Buf {
+  public getData = (): Buf => {
     if (this.bytes instanceof Buf) {
       return this.bytes;
     }
@@ -73,7 +73,7 @@ export class Att {
     throw new Error('Att has no data set');
   }
 
-  public treatAs(): Att$treatAs {
+  public treatAs = (): Att$treatAs => {
     if (this.treatAsValue) { // pre-set
       return this.treatAsValue;
     } else if (['PGPexch.htm.pgp', 'PGPMIME version identification', 'Version.txt', 'PGPMIME Versions Identification'].includes(this.name)) {
@@ -105,7 +105,7 @@ export class Att {
 
   public static readonly attachmentsPattern = /^(((cryptup|flowcrypt)-backup-[a-z]+\.key)|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|())$/gm;
 
-  public static keyinfoAsPubkeyAtt(ki: { public: string, longid: string }) {
+  public static keyinfoAsPubkeyAtt = (ki: { public: string, longid: string }) => {
     return new Att({ data: Buf.fromUtfStr(ki.public), type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
   }
 

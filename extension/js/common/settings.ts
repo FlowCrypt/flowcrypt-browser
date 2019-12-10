@@ -24,7 +24,7 @@ declare const zxcvbn: Function; // tslint:disable-line:ban-types
 
 export class Settings {
 
-  static async fetchAcctAliasesFromGmail(acctEmail: string): Promise<Dict<SendAsAlias>> {
+  static fetchAcctAliasesFromGmail = async (acctEmail: string): Promise<Dict<SendAsAlias>> => {
     const response = await new Gmail(acctEmail).fetchAcctAliases();
     const validAliases = response.sendAs.filter(alias => alias.isPrimary || alias.verificationStatus === 'accepted');
     const result: Dict<SendAsAlias> = {};
@@ -34,11 +34,11 @@ export class Settings {
     return result;
   }
 
-  static evalPasswordStrength(passphrase: string, type: 'passphrase' | 'pwd' = 'passphrase') {
+  static evalPasswordStrength = (passphrase: string, type: 'passphrase' | 'pwd' = 'passphrase') => {
     return Pgp.password.estimateStrength(zxcvbn(passphrase, Pgp.password.weakWords()).guesses, type); // tslint:disable-line:no-unsafe-any
   }
 
-  static async submitPubkeys(acctEmail: string, addresses: string[], pubkey: string) {
+  static submitPubkeys = async (acctEmail: string, addresses: string[], pubkey: string) => {
     await Attester.initialLegacySubmit(acctEmail, pubkey);
     const aliases = addresses.filter(a => a !== acctEmail);
     if (aliases.length) {
@@ -46,7 +46,7 @@ export class Settings {
     }
   }
 
-  private static prepareNewSettingsLocationUrl(acctEmail: string | undefined, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams): string {
+  private static prepareNewSettingsLocationUrl = (acctEmail: string | undefined, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams): string => {
     const pageParams: UrlParams = { placement: 'settings', parentTabId };
     if (acctEmail) {
       pageParams.acctEmail = acctEmail;
@@ -60,7 +60,7 @@ export class Settings {
     return Url.create(page, pageParams) + (addUrlTextOrParams || '');
   }
 
-  static renderSubPage(acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams) {
+  static renderSubPage = (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
     let newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams);
     let iframeWidth, iframeHeight, variant, closeOnClick;
     const beforeClose = () => {
@@ -84,7 +84,7 @@ export class Settings {
     Xss.sanitizePrepend('.new_message_featherlight .featherlight-content', '<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>');
   }
 
-  static redirectSubPage(acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams) {
+  static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
     const newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, parentTabId, page, addUrlTextOrParams);
     if (Url.parse(['embedded']).embedded) { // embedded on the main page
       BrowserMsg.send.openPage(parentTabId, { page, addUrlText: addUrlTextOrParams });
@@ -93,7 +93,7 @@ export class Settings {
     }
   }
 
-  static async refreshAcctAliases(acctEmail: string) {
+  static refreshAcctAliases = async (acctEmail: string) => {
     const fetchedSendAs = await Settings.fetchAcctAliasesFromGmail(acctEmail);
     const result = { isDefaultEmailChanged: false, isAliasesChanged: false, isFooterChanged: false, sendAs: fetchedSendAs };
     const { sendAs: storedAliases, addresses: oldStoredAddresses } = (await Store.getAcct(acctEmail, ['sendAs', 'addresses']));
@@ -117,7 +117,7 @@ export class Settings {
     return result.isAliasesChanged || result.isDefaultEmailChanged || result.isFooterChanged ? { ...result } : undefined;
   }
 
-  static acctStorageReset(acctEmail: string) {
+  static acctStorageReset = (acctEmail: string) => {
     return new Promise((resolve, reject) => {
       if (!acctEmail) {
         throw new Error('Missing account_email to reset');
@@ -153,7 +153,7 @@ export class Settings {
     });
   }
 
-  static async acctStorageChangeEmail(oldAcctEmail: string, newAcctEmail: string) {
+  static acctStorageChangeEmail = async (oldAcctEmail: string, newAcctEmail: string) => {
     if (!oldAcctEmail || !newAcctEmail || !Str.isEmailValid(newAcctEmail)) {
       throw new Error('Missing or wrong account_email to reset');
     }
@@ -202,9 +202,9 @@ export class Settings {
     await Store.acctEmailsRemove(oldAcctEmail);
   }
 
-  static renderPrvCompatFixUiAndWaitTilSubmittedByUser(
+  static renderPrvCompatFixUiAndWaitTilSubmittedByUser = (
     acctEmail: string, container: string | JQuery<HTMLElement>, origPrv: OpenPGP.key.Key, passphrase: string, backUrl: string
-  ): Promise<OpenPGP.key.Key> {
+  ): Promise<OpenPGP.key.Key> => {
     return new Promise((resolve, reject) => {
       const uids = origPrv.users.map(u => u.userId).filter(u => !!u && u.userid && Str.parseEmail(u.userid).email).map(u => u!.userid).filter(Boolean) as string[];
       if (!uids.length) {
@@ -271,7 +271,7 @@ export class Settings {
     });
   }
 
-  static async promptToRetry(type: 'REQUIRED', lastErr: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> {
+  static promptToRetry = async (type: 'REQUIRED', lastErr: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
     let userErrMsg = `${userMsg} ${Api.err.eli5(lastErr)}`;
     if (lastErr instanceof ApiErrResponse && lastErr.res.error.code === 400) {
       userErrMsg = `${userMsg}, ${lastErr.res.error.message}`; // this will make reason for err 400 obvious to user, very important for our main customer
@@ -292,7 +292,7 @@ export class Settings {
     return await retryCb();
   }
 
-  static async forbidAndRefreshPageIfCannot(action: 'CREATE_KEYS' | 'BACKUP_KEYS', rules: Rules) {
+  static forbidAndRefreshPageIfCannot = async (action: 'CREATE_KEYS' | 'BACKUP_KEYS', rules: Rules) => {
     if (action === 'CREATE_KEYS' && !rules.canCreateKeys()) {
       await Ui.modal.error(Lang.setup.creatingKeysNotAllowedPleaseImport);
       window.location.reload();
@@ -304,7 +304,7 @@ export class Settings {
     }
   }
 
-  static async newGoogleAcctAuthPromptThenAlertOrForward(settingsTabId: string | undefined, acctEmail?: string, scopes?: string[]) {
+  static newGoogleAcctAuthPromptThenAlertOrForward = async (settingsTabId: string | undefined, acctEmail?: string, scopes?: string[]) => {
     try {
       const response = await GoogleAuth.newAuthPopup({ acctEmail, scopes });
       if (response.result === 'Success' && response.acctEmail) {
@@ -341,7 +341,7 @@ export class Settings {
     }
   }
 
-  static async populateAccountsMenu(page: 'index.htm' | 'inbox.htm') {
+  static populateAccountsMenu = async (page: 'index.htm' | 'inbox.htm') => {
     const menuAcctHtml = (email: string, picture = '/img/svgs/profile-icon.svg', isHeaderRow: boolean) => {
       return [
         `<div ${isHeaderRow && 'id = "header-row"'} class="row alt-accounts action_select_account">`,
@@ -369,7 +369,7 @@ export class Settings {
     }));
   }
 
-  static offerToLoginWithPopupShowModalOnErr(acctEmail: string, then: (() => void) = () => undefined, prepend = '') {
+  static offerToLoginWithPopupShowModalOnErr = (acctEmail: string, then: (() => void) = () => undefined, prepend = '') => {
     (async () => {
       if (await Ui.modal.confirm(`${prepend}Please log in with FlowCrypt to continue.`)) {
         const authRes = await GoogleAuth.newOpenidAuthPopup({ acctEmail });
@@ -388,7 +388,7 @@ export class Settings {
     })().catch(Catch.reportErr);
   }
 
-  private static getDefaultEmailAlias(sendAs: Dict<SendAsAlias>) {
+  private static getDefaultEmailAlias = (sendAs: Dict<SendAsAlias>) => {
     for (const key of Object.keys(sendAs)) {
       if (sendAs[key] && sendAs[key].isDefault) {
         return key;

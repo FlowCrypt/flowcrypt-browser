@@ -10,7 +10,7 @@ export class PgpBlockViewQuoteModule {
   constructor(private view: PgpBlockView) {
   }
 
-  private appendCollapsedQuotedContentButton(message: string, isHtml: boolean = false) {
+  private appendCollapsedQuotedContentButton = (message: string, isHtml: boolean = false) => {
     const pgpBlk = $("#pgp_block");
     pgpBlk.append('<div id="action_show_quoted_content" data-test="action-show-quoted-content" class="three_dots"><img src="/img/svgs/three-dots.svg" /></div>'); // xss-direct
     pgpBlk.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(isHtml ? message : Xss.escapeTextAsRenderableHtml(message))}</div>`); // xss-sanitized
@@ -20,7 +20,7 @@ export class PgpBlockViewQuoteModule {
     }));
   }
 
-  public async separateQuotedContentAndRenderText(decryptedContent: string, isHtml: boolean) {
+  public separateQuotedContentAndRenderText = async (decryptedContent: string, isHtml: boolean) => {
     if (isHtml) {
       const message = $('<div>').html(Xss.htmlSanitize(decryptedContent)); // xss-sanitized
       let htmlBlockQuoteExists: boolean = false;

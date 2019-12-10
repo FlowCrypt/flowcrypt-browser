@@ -31,7 +31,7 @@ View.run(class AddKeyView extends View {
     this.gmail = new Gmail(this.acctEmail);
   }
 
-  async render() {
+  render = async () => {
     await initPassphraseToggle(['input_passphrase']);
     this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId);
     Xss.sanitizeRender('#spinner_container', Ui.spinner('green') + ' loading..');
@@ -40,12 +40,12 @@ View.run(class AddKeyView extends View {
     $('#spinner_container').text('');
   }
 
-  setHandlers() {
+  setHandlers = () => {
     $('.action_add_private_key').click(this.setHandlerPrevent('double', this.addPrivateKeyHandler));
     $('#input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_add_private_key'));
   }
 
-  private async loadAndRenderKeyBackupsOrRenderError() {
+  private loadAndRenderKeyBackupsOrRenderError = async () => {
     const keyInfos = await Store.keysGet(this.acctEmail);
     const privateKeysLongIds = keyInfos.map(ki => ki.longid);
     let keyBackups: OpenPGP.key.Key[] | undefined;
@@ -77,7 +77,7 @@ View.run(class AddKeyView extends View {
     }
   }
 
-  private async addPrivateKeyHandler(submitBtn: HTMLElement) {
+  private addPrivateKeyHandler = async (submitBtn: HTMLElement) => {
     if (submitBtn.className.includes('gray')) {
       await Ui.modal.warning('Please double check the pass phrase input field for any issues.');
       return;

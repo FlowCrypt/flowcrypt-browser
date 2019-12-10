@@ -34,7 +34,7 @@ View.run(class MyKeyView extends View {
     this.myKeyUpdateUrl = Url.create('my_key_update.htm', uncheckedUrlParams);
   }
 
-  async render() {
+  render = async () => {
     [this.primaryKi] = await Store.keysGet(this.acctEmail, [this.longid]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     const { keys: [prv] } = await openpgp.key.readArmored(this.primaryKi.private);
@@ -46,14 +46,14 @@ View.run(class MyKeyView extends View {
     await this.setPubkeyContainer();
   }
 
-  setHandlers() {
+  setHandlers = () => {
     $('.action_download_pubkey').click(this.setHandlerPrevent('double', () => this.downloadPubKeyHandler()));
     $('.action_download_prv').click(this.setHandlerPrevent('double', () => this.downloadPrvKeyHandler()));
     const clipboardOpts = { text: (trigger: HTMLElement) => trigger.className.includes('action_copy_pubkey') ? this.primaryKi!.public : this.primaryKi!.private };
     new ClipboardJS('.action_copy_pubkey, .action_copy_prv', clipboardOpts); // tslint:disable-line:no-unused-expression no-unsafe-any
   }
 
-  private async setPubkeyContainer() {
+  private setPubkeyContainer = async () => {
     try {
       const result = await Attester.lookupEmail(this.acctEmail);
       const url = Backend.url('pubkey', this.acctEmail);
@@ -70,11 +70,11 @@ View.run(class MyKeyView extends View {
     }
   }
 
-  private downloadPubKeyHandler() {
+  private downloadPubKeyHandler = () => {
     Browser.saveToDownloads(Att.keyinfoAsPubkeyAtt(this.primaryKi!), Catch.browser().name === 'firefox' ? $('body') : undefined);
   }
 
-  private downloadPrvKeyHandler() {
+  private downloadPrvKeyHandler = () => {
     const name = `flowcrypt-backup-${this.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}-0x${this.primaryKi!.longid}.asc`;
     const prvKeyAtt = new Att({ data: Buf.fromUtfStr(this.primaryKi!.private), type: 'application/pgp-keys', name });
     Browser.saveToDownloads(prvKeyAtt, Catch.browser().name === 'firefox' ? $('body') : undefined);

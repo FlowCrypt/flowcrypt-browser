@@ -14,7 +14,7 @@ export class ComposerMyPubkey extends ComposerComponent {
 
   private toggledManually = false;
 
-  initActions() {
+  initActions = () => {
     this.composer.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
     this.composer.S.cached('icon_pubkey').click(this.view.setHandler(target => {
       this.toggledManually = true;
@@ -24,7 +24,7 @@ export class ComposerMyPubkey extends ComposerComponent {
     }, this.composer.errs.handlers(`set/unset pubkey attachment`)));
   }
 
-  public reevaluateShouldAttachOrNot() {
+  public reevaluateShouldAttachOrNot = () => {
     if (this.toggledManually) { // leave it as is if toggled manually before
       return;
     }
@@ -44,7 +44,7 @@ export class ComposerMyPubkey extends ComposerComponent {
     })().catch(Api.err.reportIfSignificant);
   }
 
-  private setAttachPreference(includePubkey: boolean) {
+  private setAttachPreference = (includePubkey: boolean) => {
     if (includePubkey) {
       this.composer.S.cached('icon_pubkey').addClass('active').attr('title', Lang.compose.includePubkeyIconTitleActive);
     } else {
@@ -52,11 +52,11 @@ export class ComposerMyPubkey extends ComposerComponent {
     }
   }
 
-  public shouldAttach() {
+  public shouldAttach = () => {
     return this.composer.S.cached('icon_pubkey').is('.active');
   }
 
-  async chooseMyPublicKeyBySenderEmail(keys: KeyInfo[], email: string) {
+  chooseMyPublicKeyBySenderEmail = async (keys: KeyInfo[], email: string) => {
     for (const key of keys) {
       const parsedkey = await Pgp.key.read(key.public);
       if (parsedkey.users.find(u => !!u.userId && u.userId.userid.toLowerCase().includes(email.toLowerCase()))) {

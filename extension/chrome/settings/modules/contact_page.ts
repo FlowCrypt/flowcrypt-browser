@@ -48,7 +48,7 @@ View.run(class ContactPageView extends View {
     });
   }
 
-  async render() {
+  render = async () => {
     Xss.sanitizeRender(this.S.cached('status'), 'Loading..' + Ui.spinner('green'));
     try {
       const response = await Backend.accountUpdate(await this.authInfoPromise);
@@ -62,12 +62,12 @@ View.run(class ContactPageView extends View {
     }
   }
 
-  setHandlers() {
+  setHandlers = () => {
     this.S.cached('action_update').click(this.setHandlerPrevent('double', () => this.onUpdateHandler()));
     this.S.cached('action_close').click(this.setHandler(() => this.onCloseHandler()));
   }
 
-  private renderFields(result: BackendRes.FcAccountUpdate$result) {
+  private renderFields = (result: BackendRes.FcAccountUpdate$result) => {
     if (result.alias) {
       const me = Backend.url('me', result.alias);
       const meEscaped = Xss.escape(me);
@@ -95,7 +95,7 @@ View.run(class ContactPageView extends View {
     }
   }
 
-  private async findAvailableAlias(email: string): Promise<string> {
+  private findAvailableAlias = async (email: string): Promise<string> => {
     let alias = email.split('@')[0].replace(/[^a-z0-9]/g, '');
     while (alias.length < 3) {
       alias += Str.sloppyRandom(1).toLowerCase();
@@ -111,7 +111,7 @@ View.run(class ContactPageView extends View {
     }
   }
 
-  private async onUpdateHandler() {
+  private onUpdateHandler = async () => {
     if (!this.S.cached('input_name').val()) {
       await Ui.modal.warning('Please add your name');
     } else if (!this.S.cached('input_intro').val()) {
@@ -142,7 +142,7 @@ View.run(class ContactPageView extends View {
     }
   }
 
-  private async enableContactPage() {
+  private enableContactPage = async () => {
     Xss.sanitizeRender(this.S.cached('status'), 'Enabling..' + Ui.spinner('green'));
     const storage = await Store.getAcct(this.acctEmail, ['full_name']);
     try {
@@ -162,7 +162,7 @@ View.run(class ContactPageView extends View {
     }
   }
 
-  private onCloseHandler() {
+  private onCloseHandler = () => {
     BrowserMsg.send.closePage(this.parentTabId);
     BrowserMsg.send.reload(this.parentTabId, {});
   }

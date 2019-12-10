@@ -22,7 +22,7 @@ View.run(class AuthDeniedView extends View {
     this.emailProvider = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'emailProvider') || 'gmail';
   }
 
-  async render() {
+  render = async () => {
     if (!this.acctEmail) {
       this.renderSetupDone(false);
     } else {
@@ -39,14 +39,14 @@ View.run(class AuthDeniedView extends View {
     }
   }
 
-  setHandlers() {
+  setHandlers = () => {
     $('.action_auth_proceed').click(this.setHandler(() => BrowserMsg.send.openGoogleAuthDialog(this.parentTabId, { acctEmail: this.acctEmail })));
     $('.auth_action_limited').click(this.setHandler(() => BrowserMsg.send.openGoogleAuthDialog(this.parentTabId,
       { acctEmail: this.acctEmail, scopes: GoogleAuth.defaultScopes('compose_only') })));
     $('.close_page').click(this.setHandler(() => BrowserMsg.send.closePage(this.parentTabId)));
   }
 
-  private renderSetupDone(setupDone: boolean) {
+  private renderSetupDone = (setupDone: boolean) => {
     if (setupDone) {
       $('.show_if_setup_done').css('display', 'block');
     } else {

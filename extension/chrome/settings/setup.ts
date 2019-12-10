@@ -87,7 +87,7 @@ export class SetupView extends View {
     this.setupRender = new SetupRenderModule(this);
   }
 
-  async render() {
+  render = async () => {
     await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
     await initPassphraseToggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
     this.storage = await Store.getAcct(this.acctEmail, ['setup_done', 'key_backup_prompt', 'email_provider', 'sendAs']);
@@ -106,7 +106,7 @@ export class SetupView extends View {
     await this.setupRender.renderInitial();
   }
 
-  setHandlers() {
+  setHandlers = () => {
     BrowserMsg.addListener('close_page', async () => { $('.featherlight-close').click(); });
     BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => { await Ui.modal.info(notification); });
     BrowserMsg.listen(this.tabId!);
@@ -131,12 +131,12 @@ export class SetupView extends View {
     $("#recovery_pasword").on('keydown', this.setEnterHandlerThatClicks('#step_2_recovery .action_recover_account'));
   }
 
-  actionBackHandler() {
+  actionBackHandler = () => {
     $('h1').text('Set Up');
     this.setupRender.displayBlock('step_1_easy_or_manual');
   }
 
-  actionSubmitPublicKeyToggleHandler(target: HTMLElement) {
+  actionSubmitPublicKeyToggleHandler = (target: HTMLElement) => {
     // will be hidden / ignored / forced true when rules.mustSubmitToAttester() === true (for certain orgs)
     const inputSubmitAll = $(target).closest('.manual').find('.input_submit_all').first();
     if ($(target).prop('checked')) {
@@ -148,7 +148,7 @@ export class SetupView extends View {
     }
   }
 
-  actionCloseHandler() {
+  actionCloseHandler = () => {
     if (this.parentTabId) {
       BrowserMsg.send.redirect(this.parentTabId, { location: Url.create('index.htm', { acctEmail: this.acctEmail, advanced: true }) });
     } else {
@@ -156,7 +156,7 @@ export class SetupView extends View {
     }
   }
 
-  async preFinalizeSetup(options: SetupOptions): Promise<void> {
+  preFinalizeSetup = async (options: SetupOptions): Promise<void> => {
     await Store.setAcct(this.acctEmail, {
       tmp_submit_main: options.submit_main,
       tmp_submit_all: options.submit_all,
@@ -166,7 +166,7 @@ export class SetupView extends View {
     });
   }
 
-  async finalizeSetup({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> {
+  finalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
     const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
@@ -178,7 +178,7 @@ export class SetupView extends View {
     await Store.remove(this.acctEmail, ['tmp_submit_main', 'tmp_submit_all']);
   }
 
-  async saveKeys(prvs: OpenPGP.key.Key[], options: SetupOptions) {
+  saveKeys = async (prvs: OpenPGP.key.Key[], options: SetupOptions) => {
     for (const prv of prvs) {
       const longid = await Pgp.key.longid(prv);
       if (!longid) {
@@ -199,7 +199,7 @@ export class SetupView extends View {
     await Store.dbContactSave(undefined, myOwnEmailAddrsAsContacts);
   }
 
-  async saveAndFillSubmitOption(sendAsAliases: Dict<SendAsAlias>) {
+  saveAndFillSubmitOption = async (sendAsAliases: Dict<SendAsAlias>) => {
     this.submitKeyForAddrs = this.filterAddressesForSubmittingKeys(Object.keys(sendAsAliases));
     await Store.setAcct(this.acctEmail, { sendAs: sendAsAliases });
     if (this.submitKeyForAddrs.length > 1) {
@@ -208,7 +208,7 @@ export class SetupView extends View {
     }
   }
 
-  async submitPublicKeyIfNeeded(armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) {
+  submitPublicKeyIfNeeded = async (armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) => {
     if (!options.submit_main) {
       return;
     }
@@ -231,12 +231,12 @@ export class SetupView extends View {
     await Settings.submitPubkeys(this.acctEmail, addresses, armoredPubkey);
   }
 
-  filterAddressesForSubmittingKeys(addresses: string[]): string[] {
+  filterAddressesForSubmittingKeys = (addresses: string[]): string[] => {
     const filterAddrRegEx = new RegExp(`@(${this.emailDomainsToSkip.join('|')})`);
     return addresses.filter(e => !filterAddrRegEx.test(e));
   }
 
-  async getUniqueLongids(keys: OpenPGP.key.Key[]): Promise<string[]> {
+  getUniqueLongids = async (keys: OpenPGP.key.Key[]): Promise<string[]> => {
     return Value.arr.unique(await Promise.all(keys.map(Pgp.key.longid))).filter(Boolean) as string[];
   }
 

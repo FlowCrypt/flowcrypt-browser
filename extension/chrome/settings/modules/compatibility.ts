@@ -17,16 +17,16 @@ View.run(class CompatibilityView extends View {
     super();
   }
 
-  async render() {
+  render = async () => {
     // No need
   }
 
-  setHandlers() {
+  setHandlers = () => {
     $('.action_test_key').click(this.setHandlerPrevent('double', this.actionTestKeyHandler));
     $('#input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_test_key'));
   }
 
-  private async performKeyCompatibilityTests(keyString: string) {
+  private performKeyCompatibilityTests = async (keyString: string) => {
     $('pre').text('').css('display', 'block');
     try {
       this.testIndex = 1;
@@ -40,11 +40,11 @@ View.run(class CompatibilityView extends View {
     }
   }
 
-  private appendResult(str: string, err?: Error) {
+  private appendResult = (str: string, err?: Error) => {
     Xss.sanitizeAppend('pre', `(${Xss.escape(`${this.testIndex++}`)}) ${Xss.escape(str)} ${err ? Xss.escape(` !! ${err.message}`) : Xss.escape('')} \n`);
   }
 
-  private async outputKeyResults(keys: OpenPGP.key.Key[]) {
+  private outputKeyResults = async (keys: OpenPGP.key.Key[]) => {
     this.appendResult(`Primary keys found: ${keys.length}`);
     for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
       this.appendResult(`----- Testing key ${keyIndex} -----`);
@@ -119,7 +119,7 @@ View.run(class CompatibilityView extends View {
     }
   }
 
-  private async test(f: () => Promise<unknown>) {
+  private test = async (f: () => Promise<unknown>) => {
     try {
       return `[-] ${String(await f())}`;
     } catch (e) {
@@ -127,7 +127,7 @@ View.run(class CompatibilityView extends View {
     }
   }
 
-  private formatDate(date: Date | number | null, expiresInSecondsFromDate?: number | null) {
+  private formatDate = (date: Date | number | null, expiresInSecondsFromDate?: number | null) => {
     if (date === Infinity) {
       return '-';
     }
@@ -147,7 +147,7 @@ View.run(class CompatibilityView extends View {
     return `${date.getTime() / 1000} + ${expiresInSecondsFromDate} seconds, which is: ${expDate.getTime() / 1000} or ${expDate.toISOString()}`;
   }
 
-  private async testEncryptDecrypt(key: OpenPGP.key.Key): Promise<string[]> {
+  private testEncryptDecrypt = async (key: OpenPGP.key.Key): Promise<string[]> => {
     const output: string[] = [];
     try {
       const encryptedMsg = await openpgp.encrypt({ message: openpgp.message.fromText(this.encryptionText), publicKeys: key.toPublic(), armor: true });
@@ -164,7 +164,7 @@ View.run(class CompatibilityView extends View {
     return output;
   }
 
-  private async testSignVerify(key: OpenPGP.key.Key): Promise<string> {
+  private testSignVerify = async (key: OpenPGP.key.Key): Promise<string> => {
     const output: string[] = [];
     try {
       if (!key.isFullyDecrypted()) {
@@ -188,7 +188,7 @@ View.run(class CompatibilityView extends View {
     return output.join('|');
   }
 
-  private async actionTestKeyHandler(submitBtn: HTMLElement) {
+  private actionTestKeyHandler = async (submitBtn: HTMLElement) => {
     const keyString = String($('.input_key').val());
     if (!keyString) {
       await Ui.modal.warning('Please paste an OpenPGP in the input box');

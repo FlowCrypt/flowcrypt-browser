@@ -48,7 +48,7 @@ export class GoogleAuth {
     }
   };
 
-  public static defaultScopes(group: 'default' | 'contacts' | 'compose_only' | 'openid' = 'default') {
+  public static defaultScopes = (group: 'default' | 'contacts' | 'compose_only' | 'openid' = 'default') => {
     const { readContacts, compose, modify, openid, email, profile } = GoogleAuth.OAUTH.scopes;
     console.info(`Not using scope ${modify} because not approved on oauth screen yet`);
     const read = GoogleAuth.OAUTH.legacy_scopes.read; // todo - remove as soon as "modify" is approved by google
@@ -74,7 +74,7 @@ export class GoogleAuth {
     }
   }
 
-  public static async googleApiAuthHeader(acctEmail: string, forceRefresh = false): Promise<string> {
+  public static googleApiAuthHeader = async (acctEmail: string, forceRefresh = false): Promise<string> => {
     if (!acctEmail) {
       throw new Error('missing account_email in api_gmail_call');
     }
@@ -96,7 +96,7 @@ export class GoogleAuth {
     }
   }
 
-  public static async apiGoogleCallRetryAuthErrorOneTime(acctEmail: string, request: JQuery.AjaxSettings): Promise<any> {
+  public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings): Promise<any> => {
     try {
       return await Api.ajax(request, Catch.stackTrace());
     } catch (firstAttemptErr) {
@@ -108,7 +108,7 @@ export class GoogleAuth {
     }
   }
 
-  public static async newAuthPopup({ acctEmail, scopes, save }: { acctEmail?: string, scopes?: string[], save?: boolean }): Promise<AuthRes> {
+  public static newAuthPopup = async ({ acctEmail, scopes, save }: { acctEmail?: string, scopes?: string[], save?: boolean }): Promise<AuthRes> => {
     if (acctEmail) {
       acctEmail = acctEmail.toLowerCase();
     }
@@ -138,11 +138,11 @@ export class GoogleAuth {
     return authRes;
   }
 
-  public static async newOpenidAuthPopup({ acctEmail }: { acctEmail?: string }): Promise<AuthRes> {
+  public static newOpenidAuthPopup = async ({ acctEmail }: { acctEmail?: string }): Promise<AuthRes> => {
     return await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('openid'), save: false });
   }
 
-  private static waitForOauthWindowClosed(oauthWinId: number, acctEmail: string | undefined): Promise<AuthRes> {
+  private static waitForOauthWindowClosed = (oauthWinId: number, acctEmail: string | undefined): Promise<AuthRes> => {
     return new Promise(resolve => {
       const onOauthWinClosed = (closedWinId: number) => {
         if (closedWinId === oauthWinId) {
@@ -154,7 +154,7 @@ export class GoogleAuth {
     });
   }
 
-  private static processOauthResTitle(title: string): { result: GoogleAuthWindowResult$result, code?: string, error?: string, csrf?: string } {
+  private static processOauthResTitle = (title: string): { result: GoogleAuthWindowResult$result, code?: string, error?: string, csrf?: string } => {
     const parts = title.split(' ', 2);
     const result = parts[0] as GoogleAuthWindowResult$result;
     const params = Url.parse(['code', 'state', 'error'], parts[1]);
@@ -173,15 +173,15 @@ export class GoogleAuth {
   /**
    * Is the title actually just url of the page? (means real title not loaded yet)
    */
-  private static isAuthUrl(title: string) {
+  private static isAuthUrl = (title: string) => {
     return title.match(/^(?:https?:\/\/)?accounts\.google\.com/) !== null || title.startsWith(GOOGLE_OAUTH_SCREEN_HOST.replace(/^https?:\/\//, ''));
   }
 
-  private static isForwarding(title: string) {
+  private static isForwarding = (title: string) => {
     return title.match(/^Forwarding /) !== null;
   }
 
-  private static async waitForAndProcessOauthWindowResult(windowId: number, acctEmail: string | undefined, scopes: string[], csrfToken: string, save: boolean): Promise<AuthRes> {
+  private static waitForAndProcessOauthWindowResult = async (windowId: number, acctEmail: string | undefined, scopes: string[], csrfToken: string, save: boolean): Promise<AuthRes> => {
     while (true) {
       const [oauth] = await tabsQuery({ windowId });
       if (oauth?.title && oauth.title.includes(GoogleAuth.OAUTH.state_header) && !GoogleAuth.isAuthUrl(oauth.title) && !GoogleAuth.isForwarding(oauth.title)) {
@@ -209,7 +209,7 @@ export class GoogleAuth {
     }
   }
 
-  private static apiGoogleAuthCodeUrl(authReq: AuthReq) {
+  private static apiGoogleAuthCodeUrl = (authReq: AuthReq) => {
     return Url.create(GoogleAuth.OAUTH.url_code, {
       client_id: GoogleAuth.OAUTH.client_id,
       response_type: 'code',
@@ -221,18 +221,18 @@ export class GoogleAuth {
     });
   }
 
-  private static apiGoogleAuthStatePack(authReq: AuthReq) {
+  private static apiGoogleAuthStatePack = (authReq: AuthReq) => {
     return GoogleAuth.OAUTH.state_header + JSON.stringify(authReq);
   }
 
-  private static apiGoogleAuthStateUnpack(state: string): AuthReq {
+  private static apiGoogleAuthStateUnpack = (state: string): AuthReq => {
     if (!state.startsWith(GoogleAuth.OAUTH.state_header)) {
       throw new Error('Missing oauth state header');
     }
     return JSON.parse(state.replace(GoogleAuth.OAUTH.state_header, '')) as AuthReq;
   }
 
-  private static async googleAuthSaveTokens(acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) {
+  private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
     const openid = GoogleAuth.parseIdToken(tokensObj.id_token);
     const { full_name, picture } = await Store.getAcct(acctEmail, ['full_name', 'picture']);
     const toSave: AccountStore = {
@@ -249,7 +249,7 @@ export class GoogleAuth {
     await Store.setAcct(acctEmail, toSave);
   }
 
-  private static googleAuthGetTokens(code: string) {
+  private static googleAuthGetTokens = (code: string) => {
     return Api.ajax({
       url: Url.create(GoogleAuth.OAUTH.url_tokens, { grant_type: 'authorization_code', code, client_id: GoogleAuth.OAUTH.client_id, redirect_uri: GoogleAuth.OAUTH.url_redirect }),
       method: 'POST',
@@ -258,7 +258,7 @@ export class GoogleAuth {
     }, Catch.stackTrace()) as any as Promise<GoogleAuthTokensResponse>;
   }
 
-  private static googleAuthRefreshToken(refreshToken: string) {
+  private static googleAuthRefreshToken = (refreshToken: string) => {
     return Api.ajax({
       url: Url.create(GoogleAuth.OAUTH.url_tokens, { grant_type: 'refresh_token', refreshToken, client_id: GoogleAuth.OAUTH.client_id }),
       method: 'POST',
@@ -267,7 +267,7 @@ export class GoogleAuth {
     }, Catch.stackTrace()) as any as Promise<GoogleAuthTokensResponse>;
   }
 
-  private static googleAuthCheckAccessToken(accessToken: string) {
+  private static googleAuthCheckAccessToken = (accessToken: string) => {
     return Api.ajax({
       url: Url.create(`${GOOGLE_API_HOST}/oauth2/v1/tokeninfo`, { access_token: accessToken }),
       crossDomain: true,
@@ -278,13 +278,13 @@ export class GoogleAuth {
   /**
    * oauth token will be valid for another 2 min
    */
-  private static googleApiIsAuthTokenValid(s: AccountStore) {
+  private static googleApiIsAuthTokenValid = (s: AccountStore) => {
     return s.google_token_access && (!s.google_token_expires || s.google_token_expires > Date.now() + (120 * 1000));
   }
 
   // todo - would be better to use a TS type guard instead of the type cast when checking OpenId
   // check for things we actually use: photo/name/locale
-  private static parseIdToken(idToken: string): GmailRes.OpenId {
+  private static parseIdToken = (idToken: string): GmailRes.OpenId => {
     const claims = JSON.parse(Buf.fromBase64UrlStr(idToken.split(/\./g)[1]).toUtfStr()) as GmailRes.OpenId;
     if (claims.email) {
       claims.email = claims.email.toLowerCase();
@@ -295,7 +295,7 @@ export class GoogleAuth {
     return claims;
   }
 
-  private static async retrieveAndSaveAuthToken(authCode: string, scopes: string[]): Promise<{ id_token: string }> {
+  private static retrieveAndSaveAuthToken = async (authCode: string, scopes: string[]): Promise<{ id_token: string }> => {
     const tokensObj = await GoogleAuth.googleAuthGetTokens(authCode);
     await GoogleAuth.googleAuthCheckAccessToken(tokensObj.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
     const claims = GoogleAuth.parseIdToken(tokensObj.id_token);
@@ -306,7 +306,7 @@ export class GoogleAuth {
     return { id_token: tokensObj.id_token };
   }
 
-  private static async apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail: string | undefined, addScopes: string[]): Promise<string[]> {
+  private static apiGoogleAuthPopupPrepareAuthReqScopes = async (acctEmail: string | undefined, addScopes: string[]): Promise<string[]> => {
     if (acctEmail) {
       const { google_token_scopes } = await Store.getAcct(acctEmail, ['google_token_scopes']);
       addScopes.push(...(google_token_scopes || []));

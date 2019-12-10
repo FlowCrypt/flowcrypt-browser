@@ -71,7 +71,7 @@ export class ComposeView extends View {
     openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
   }
 
-  async render() {
+  render = async () => {
     this.storage = await Store.getAcct(this.acctEmail, ['google_token_scopes', 'addresses', 'sendAs', 'email_provider',
       'hide_message_password', 'drafts_reply']);
     this.tabId = await BrowserMsg.requiredTabId();
@@ -89,11 +89,11 @@ export class ComposeView extends View {
     this.composer = new Composer(this);
   }
 
-  setHandlers() {
+  setHandlers = () => {
     // all handled in Composer
   }
 
-  public urlParams() { // used to reload the frame with updated params
+  public urlParams = () => { // used to reload the frame with updated params
     return {
       acctEmail: this.acctEmail, draftId: this.draftId, threadId: this.threadId, replyMsgId: this.replyMsgId, ...this.replyParams,
       frameId: this.frameId, tabId: this.tabId!, isReplyBox: this.isReplyBox, skipClickPrompt: this.skipClickPrompt, parentTabId: this.parentTabId,
@@ -102,7 +102,7 @@ export class ComposeView extends View {
     };
   }
 
-  private async fetchReplyMeta(): Promise<void> {
+  private fetchReplyMeta = async (): Promise<void> => {
     Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: `Loading secure reply box..${Ui.spinner('green')}` }));
     try {
       const gmailMsg = await this.emailProvider.msgGet(this.replyMsgId!, 'metadata');

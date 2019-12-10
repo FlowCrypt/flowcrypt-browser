@@ -32,7 +32,7 @@ export class Assert {
     },
   };
 
-  public static async abortAndRenderErrOnUnprotectedKey(acctEmail?: string, tabId?: string) {
+  public static abortAndRenderErrOnUnprotectedKey = async (acctEmail?: string, tabId?: string) => {
     if (acctEmail) {
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
       const { setup_done, setup_simple } = await Store.getAcct(acctEmail, ['setup_simple', 'setup_done']);
@@ -50,7 +50,7 @@ export class Assert {
     }
   }
 
-  static abortAndRenderErrorIfKeyinfoEmpty(ki: KeyInfo | undefined, doThrow: boolean = true) {
+  static abortAndRenderErrorIfKeyinfoEmpty = (ki: KeyInfo | undefined, doThrow: boolean = true) => {
     if (!ki) {
       const msg = `Cannot find primary key. Is FlowCrypt not set up yet? ${Ui.retryLink()}`;
       Xss.sanitizeRender($('#content').length ? '#content' : 'body', msg);
@@ -60,7 +60,7 @@ export class Assert {
     }
   }
 
-  public static abortAndRenderErrOnUrlParamTypeMismatch(values: UrlParams, name: string, expectedType: string): UrlParam {
+  public static abortAndRenderErrOnUrlParamTypeMismatch = (values: UrlParams, name: string, expectedType: string): UrlParam => {
     const actualType = values[name] === null ? 'null' : typeof values[name];
     if (actualType === expectedType.replace(/\?$/, '')) { // eg expected string or optional string, and got string
       return values[name];

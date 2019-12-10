@@ -13,11 +13,11 @@ export class ComposerSendBtnPopover extends ComposerComponent {
 
   public choices: PopoverChoices = { encrypt: true, sign: true, richText: false }; // defaults, may be changed by user using the popover
 
-  initActions(): void {
+  initActions = (): void => {
     this.composer.S.cached('toggle_send_options').click(this.view.setHandler((el, ev) => this.toggleVisible(ev)));
   }
 
-  async render() {
+  render = async () => {
     const popoverItems = {
       richText: { text: 'Rich text (PGP/MIME) - experimental', iconPath: undefined },
       encrypt: { text: 'Encrypt message', iconPath: '/img/svgs/locked-icon-green.svg' },
@@ -44,7 +44,7 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     this.composer.S.cached('title').text(this.composeHeaderText());
   }
 
-  private toggleVisible(event: JQuery.Event<HTMLElement, null>) {
+  private toggleVisible = (event: JQuery.Event<HTMLElement, null>) => {
     event.stopPropagation();
     const sendingContainer = $('.sending-container');
     sendingContainer.toggleClass('popover-opened');
@@ -68,7 +68,7 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     }
   }
 
-  private keydownHandler(e: JQuery.Event<HTMLElement, null>): void {
+  private keydownHandler = (e: JQuery.Event<HTMLElement, null>): void => {
     const sendingOptions = this.composer.S.cached('sending_options_container').find('.sending-option');
     const currentActive = sendingOptions.filter('.active');
     if (e.key === 'Escape') {
@@ -100,7 +100,7 @@ export class ComposerSendBtnPopover extends ComposerComponent {
   /**
    * @param machineForceStateTo - if this is present, this is a programmatic call, therefore such choices should not be sticky
    */
-  public toggleItemTick(elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, machineForceStateTo?: boolean) {
+  public toggleItemTick = (elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, machineForceStateTo?: boolean) => {
     const currentlyTicked = this.isTicked(elem);
     const newToggleTicked = (typeof machineForceStateTo !== 'undefined') ? machineForceStateTo : !currentlyTicked;
     if (newToggleTicked === this.choices[popoverOpt] && newToggleTicked === currentlyTicked) {
@@ -128,16 +128,16 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     }
   }
 
-  private async richTextUserChoiceStore(isTicked: boolean) {
+  private richTextUserChoiceStore = async (isTicked: boolean) => {
     await Store.setAcct(this.view.acctEmail, { use_rich_text: isTicked });
   }
 
-  private async richTextUserChoiceRetrieve(): Promise<boolean> {
+  private richTextUserChoiceRetrieve = async (): Promise<boolean> => {
     const store = await Store.getAcct(this.view.acctEmail, ['use_rich_text']);
     return store.use_rich_text || false;
   }
 
-  private renderCrossOrTick(elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, renderTick: boolean) {
+  private renderCrossOrTick = (elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, renderTick: boolean) => {
     if (renderTick) {
       elem.find('img.icon-tick,img.icon-cross').remove();
       elem.append(`<img class="icon-tick" src="/img/svgs/tick.svg" data-test="icon-toggle-${Xss.escape(popoverOpt)}-tick" />`); // xss-escaped
@@ -149,11 +149,11 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     }
   }
 
-  private isTicked(popoverItemElem: JQuery<HTMLElement>) {
+  private isTicked = (popoverItemElem: JQuery<HTMLElement>) => {
     return !!popoverItemElem.find('img.icon-tick').length;
   }
 
-  private composeHeaderText(): string {
+  private composeHeaderText = (): string => {
     if (this.choices.encrypt && this.choices.sign) {
       return Lang.compose.headers.encryptedAndSigned;
     } else if (this.choices.encrypt) {

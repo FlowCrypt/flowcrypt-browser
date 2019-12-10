@@ -12,17 +12,17 @@ import { Ui } from './ui.js';
 
 export class Browser {
 
-  public static objUrlCreate(content: Uint8Array | string) {
+  public static objUrlCreate = (content: Uint8Array | string) => {
     return window.URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
   }
 
-  public static async objUrlConsume(url: string) {
+  public static objUrlConsume = async (url: string) => {
     const buf = await Api.download(url);
     window.URL.revokeObjectURL(url);
     return buf;
   }
 
-  public static saveToDownloads(att: Att, renderIn?: JQuery<HTMLElement>) {
+  public static saveToDownloads = (att: Att, renderIn?: JQuery<HTMLElement>) => {
     const blob = new Blob([att.getData()], { type: att.type });
     if (window.navigator && window.navigator.msSaveOrOpenBlob) {
       window.navigator.msSaveBlob(blob, att.name);
@@ -64,7 +64,7 @@ export class Browser {
     }
   }
 
-  public static arrFromDomNodeList(obj: NodeList | JQuery<HTMLElement>): Node[] {
+  public static arrFromDomNodeList = (obj: NodeList | JQuery<HTMLElement>): Node[] => {
     // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
     const array = [];
     for (let i = obj.length >>> 0; i--;) { // iterate backwards ensuring that length is an UInt32
