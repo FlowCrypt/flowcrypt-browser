@@ -10,9 +10,9 @@ import { Dict } from '../../../js/common/core/common.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { CollectPubkeysResult } from './composer-types.js';
 import { PubkeySearchResult, Keyserver } from '../../../js/common/api/keyserver.js';
-import { Api } from '../../../js/common/api/api.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from './composer-errs.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 export class ComposerStorage extends ComposerComponent {
 
@@ -150,7 +150,7 @@ export class ComposerStorage extends ComposerComponent {
           return PUBKEY_LOOKUP_RESULT_FAIL;
         }
       } catch (e) {
-        if (!Api.err.isNetErr(e) && !Api.err.isServerErr(e)) {
+        if (!ApiErr.isNetErr(e) && !ApiErr.isServerErr(e)) {
           Catch.reportErr(e);
         }
         return PUBKEY_LOOKUP_RESULT_FAIL;
@@ -182,7 +182,7 @@ export class ComposerStorage extends ComposerComponent {
         await Store.dbContactUpdate(undefined, contact.email, { pubkey_last_check: Date.now() });
       }
     } catch (e) {
-      if (Api.err.isSignificant(e)) {
+      if (ApiErr.isSignificant(e)) {
         throw e; // insignificant (temporary) errors ignored
       }
     }

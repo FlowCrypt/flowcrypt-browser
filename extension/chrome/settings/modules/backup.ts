@@ -11,7 +11,6 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Api } from '../../../js/common/api/api.js';
 import { Pgp, KeyInfo } from '../../../js/common/core/pgp.js';
 import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 import { Buf } from '../../../js/common/core/buf.js';
@@ -23,6 +22,7 @@ import { View } from '../../../js/common/view.js';
 import { KeyImportUi } from './../../../js/common/ui/key_import_ui.js';
 import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
 import { Ui } from '../../../js/common/browser/ui.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -114,9 +114,9 @@ View.run(class BackupView extends View {
         await this.doBackupOnEmailProvider(primaryKi.private);
         $('#content').text('Pass phrase changed. You will find a new backup in your inbox.');
       } catch (e) {
-        if (Api.err.isNetErr(e)) {
+        if (ApiErr.isNetErr(e)) {
           Xss.sanitizeRender('#content', 'Connection failed, please <a href="#" class="reload">try again</a>');
-        } else if (Api.err.isAuthPopupNeeded(e)) {
+        } else if (ApiErr.isAuthPopupNeeded(e)) {
           Xss.sanitizeRender('#content', 'Need to reconnect to Google to save backup: <a href="#" class="auth_reconnect">reconnect now</a>');
         } else {
           Xss.sanitizeRender('#content', `Unknown error: ${String(e)}<br><a href="#" class="reload">try again</a>`);
@@ -177,9 +177,9 @@ View.run(class BackupView extends View {
       try {
         await this.doBackupOnEmailProvider(prv.armor());
       } catch (e) {
-        if (Api.err.isNetErr(e)) {
+        if (ApiErr.isNetErr(e)) {
           await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
-        } else if (this.parentTabId && Api.err.isAuthPopupNeeded(e)) {
+        } else if (this.parentTabId && ApiErr.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
           await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
         } else {
@@ -256,15 +256,15 @@ View.run(class BackupView extends View {
       try {
         keys = await this.gmail.fetchKeyBackups();
       } catch (e) {
-        if (Api.err.isNetErr(e)) {
+        if (ApiErr.isNetErr(e)) {
           Xss.sanitizeRender('#content', `Could not check for backups: no internet. ${Ui.retryLink()}`);
-        } else if (Api.err.isAuthPopupNeeded(e)) {
+        } else if (ApiErr.isAuthPopupNeeded(e)) {
           if (this.parentTabId) {
             BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
           }
           Xss.sanitizeRender('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retryLink()}`);
         } else {
-          if (Api.err.isSignificant(e)) {
+          if (ApiErr.isSignificant(e)) {
             Catch.reportErr(e);
           }
           Xss.sanitizeRender('#content', `Could not check for backups: unknown error (${String(e)}). ${Ui.retryLink()}`);
@@ -349,9 +349,9 @@ View.run(class BackupView extends View {
     try {
       await this.doBackupOnEmailProvider(primaryKi.private);
     } catch (e) {
-      if (Api.err.isNetErr(e)) {
+      if (ApiErr.isNetErr(e)) {
         return await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
-      } else if (Api.err.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
         return await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
       } else {
@@ -425,7 +425,7 @@ View.run(class BackupView extends View {
       await this.doBackupOnEmailProvider(primaryKi.private);
       await this.writeBackupDoneAndRender(false, 'inbox');
     } catch (e) {
-      if (Api.err.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthPopupNeeded(e)) {
         await Ui.modal.info("Authorization Error. FlowCrypt needs to reconnect your Gmail account");
         const connectResult = await GoogleAuth.newAuthPopup({ acctEmail: this.acctEmail });
         if (!connectResult.error) {

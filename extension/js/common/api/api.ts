@@ -10,12 +10,10 @@ import { Att } from '../core/att.js';
 import { Catch } from '../platform/catch.js';
 import { Buf } from '../core/buf.js';
 import { BrowserMsg } from '../browser/browser-msg.js';
-import { Xss } from '../platform/xss.js';
 import { Contact } from '../core/pgp.js';
 import { secureRandomBytes } from '../platform/util.js';
+import { StandardErrRes, ApiErrResponse } from './error/api-error-types.js';
 
-type StandardError = { code: number | null; message: string; internal: string | null; data?: string; stack?: string; };
-type StandardErrRes = { error: StandardError };
 export type ReqFmt = 'JSON' | 'FORM' | 'TEXT';
 export type RecipientType = 'to' | 'cc' | 'bcc';
 type ResFmt = 'json' | 'xhr';
@@ -112,162 +110,7 @@ export class AjaxErr extends ApiCallErr {
 
 }
 
-export class ApiErrResponse extends ApiCallErr {
-
-  public res: StandardErrRes;
-  public url: string;
-
-  constructor(res: StandardErrRes, req: JQueryAjaxSettings) {
-    super(`Api error response when ${ApiCallErr.describeApiAction(req)}`);
-    this.res = res;
-    this.url = req.url || '(unknown url)';
-    this.stack += `\n\nresponse:\n${Catch.stringify(res)}`;
-  }
-
-}
-
-export abstract class AuthErr extends Error { }
-export class GoogleAuthErr extends AuthErr { }
-export class BackendAuthErr extends AuthErr { }
-
 export class Api {
-
-  public static err = {
-    eli5: (e: any) => {
-      if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
-        return 'Email account is disabled, or access has been blocked by admin policy. Contact your email administrator.';
-      } else if (Api.err.isAuthPopupNeeded(e)) {
-        return 'Browser needs to be re-connected to email account before proceeding.';
-      } else if (Api.err.isInsufficientPermission(e)) {
-        return 'Server says user has insufficient permissions for this action.';
-      } else if (Api.err.isBlockedByProxy(e)) {
-        return 'It seems that a company proxy or firewall is blocking internet traffic from this device.';
-      } else if (Api.err.isAuthErr(e)) {
-        return 'Server says this request was unauthorized, possibly caused by missing or wrong login.';
-      } else if (Api.err.isReqTooLarge(e)) {
-        return 'Server says this request is too large.';
-      } else if (Api.err.isNotFound(e)) {
-        return 'Server says this resource was not found';
-      } else if (Api.err.isBadReq(e)) {
-        return 'Server says this was a bad request (possibly a FlowCrypt bug)';
-      } else if (Api.err.isNetErr(e)) {
-        return 'Network connection issue.';
-      } else if (Api.err.isServerErr(e)) {
-        return 'Server responded with an unexpected error.';
-      } else if (e instanceof AjaxErr) {
-        return 'AjaxErr with unknown cause.';
-      } else {
-        return 'FlowCrypt encountered an error with unknown cause.';
-      }
-    },
-    detailsAsHtmlWithNewlines: (e: any) => {
-      let details = 'Below are technical details about the error. This may be useful for debugging.\n\n';
-      details += `<b>Error string</b>: ${Xss.escape(String(e))}\n\n`;
-      details += `<b>Error stack</b>: ${e instanceof Error ? Xss.escape((e.stack || '(empty)')) : '(no error stack)'}\n\n`;
-      if (e instanceof AjaxErr) {
-        details += `<b>Ajax response</b>:\n${Xss.escape(e.responseText)}\n<b>End of Ajax response</b>\n`;
-      }
-      return details;
-    },
-    isNetErr: (e: any) => {
-      if (e instanceof TypeError && (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')) {
-        return true; // openpgp.js uses fetch()... which produces these errors
-      }
-      if (e instanceof AjaxErr && (e.status === 0 && e.statusText === 'error' || e.statusText === 'timeout' || e.status === -1)) {
-        return true;
-      }
-      if (e instanceof AjaxErr && e.status === 400 && typeof e.responseText === 'string' && e.responseText.indexOf('RequestTimeout') !== -1) {
-        return true; // AWS: Your socket connection to the server was not read from or written to within the timeout period. Idle connections will be closed.
-      }
-      return false;
-    },
-    isAuthErr: (e: any) => {
-      if (e instanceof AuthErr) {
-        return true;
-      }
-      if (e && typeof e === 'object') {
-        if (Api.err.isStandardErr(e, 'auth')) {
-          return true; // API auth error response
-        }
-        if (e instanceof AjaxErr && e.status === 401) {
-          return true;
-        }
-      }
-      return false;
-    },
-    isStandardErr: (e: any, internalType: string) => {
-      if (e instanceof ApiErrResponse && typeof e.res === 'object' && typeof e.res.error === 'object' && e.res.error.internal === 'auth') {
-        return true;
-      }
-      if (Api.isStandardError(e) && e.internal === internalType) {
-        return true;
-      }
-      if ((e as StandardErrRes).error && typeof (e as StandardErrRes).error === 'object' && (e as StandardErrRes).error.internal === internalType) {
-        return true;
-      }
-      return false;
-    },
-    isAuthPopupNeeded: (e: any) => {
-      if (e instanceof GoogleAuthErr) {
-        return true;
-      }
-      if (e instanceof AjaxErr && e.status === 400 && typeof e.responseText === 'string') {
-        try {
-          const json = JSON.parse(e.responseText);
-          if (json && (json as any).error === 'invalid_grant') {
-            const jsonErrorDesc = (json as any).error_description;
-            return jsonErrorDesc === 'Bad Request' || jsonErrorDesc === 'Token has been expired or revoked.';
-          }
-        } catch (e) {
-          return false;
-        }
-      }
-      return false;
-    },
-    isMailOrAcctDisabledOrPolicy: (e: any): boolean => {
-      if (Api.err.isBadReq(e) && typeof e.responseText === 'string') {
-        if (e.responseText.indexOf('Mail service not enabled') !== -1 || e.responseText.indexOf('Account has been deleted') !== -1) {
-          return true;
-        }
-        if (e.responseText.indexOf('This application is currently blocked') !== -1 || e.responseText.indexOf('account data is restricted by policies') !== -1) {
-          return true; // could correctly be a separate type, but it's quite rare
-        }
-      }
-      return false;
-    },
-    isInsufficientPermission: (e: any): e is AjaxErr => e instanceof AjaxErr && e.status === 403 && e.responseText.indexOf('insufficientPermissions') !== -1,
-    isNotFound: (e: any): e is AjaxErr => e instanceof AjaxErr && e.status === 404,
-    isBadReq: (e: any): e is AjaxErr => e instanceof AjaxErr && e.status === 400,
-    isReqTooLarge: (e: any): e is AjaxErr => e instanceof AjaxErr && e.status === 413,
-    isServerErr: (e: any): e is AjaxErr => e instanceof AjaxErr && e.status >= 500,
-    isBlockedByProxy: (e: any): e is AjaxErr => {
-      if (!(e instanceof AjaxErr)) {
-        return false;
-      }
-      if (e.status === 200 || e.status === 403) {
-        if (/(site|content|script|internet|web) (is|has been|was|access|filter) (restricted|blocked|disabled|denied|violat)/i.test(e.responseText)) {
-          return true;
-        }
-        if (/access to the requested site|internet security by|blockedgateway/.test(e.responseText)) {
-          return true;
-        }
-      }
-      return false;
-    },
-    isSignificant: (e: any) => {
-      return !Api.err.isNetErr(e) && !Api.err.isServerErr(e) && !Api.err.isNotFound(e) && !Api.err.isMailOrAcctDisabledOrPolicy(e) && !Api.err.isAuthErr(e)
-        && !Api.err.isBlockedByProxy(e);
-    },
-    isInPrivateMode: (e: any) => {
-      return e instanceof Error && e.message.startsWith('BrowserMsg() (no status text): -1 when GET-ing blob:moz-extension://');
-    },
-    reportIfSignificant: (e: any) => {
-      if (Api.err.isSignificant(e)) {
-        Catch.reportErr(e);
-      }
-    },
-  };
-
   public static download = (url: string, progress?: ProgressCb): Promise<Buf> => {
     return new Promise((resolve, reject) => {
       const request = new XMLHttpRequest();
@@ -355,10 +198,6 @@ export class Api {
 
   private static isRawAjaxErr = (e: any): e is RawAjaxErr => {
     return e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number';
-  }
-
-  private static isStandardError = (e: any): e is StandardError => {
-    return e && typeof e === 'object' && (e as StandardError).hasOwnProperty('internal') && Boolean((e as StandardError).message);
   }
 
   protected static apiCall = async (

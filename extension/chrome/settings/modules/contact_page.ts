@@ -9,12 +9,12 @@ import { Att } from '../../../js/common/core/att.js';
 import { Ui, SelCache } from '../../../js/common/browser/ui.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Api } from '../../../js/common/api/api.js';
 import { Backend, BackendRes, FcUuidAuth } from '../../../js/common/api/backend.js';
 import { Assert } from '../../../js/common/assert.js';
 import { AttUI } from '../../../js/common/ui/att_ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { View } from '../../../js/common/view.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 View.run(class ContactPageView extends View {
   private readonly acctEmail: string;
@@ -54,10 +54,10 @@ View.run(class ContactPageView extends View {
       const response = await Backend.accountUpdate(await this.authInfoPromise);
       this.renderFields(response.result);
     } catch (e) {
-      if (Api.err.isAuthErr(e)) {
+      if (ApiErr.isAuthErr(e)) {
         Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => window.location.reload());
       } else {
-        this.S.cached('status').text(`Failed to load your Contact Page settings. Please try to reload this page. Let us know at human@flowcrypt.com if this persists.\n${Api.err.eli5(e)}`);
+        this.S.cached('status').text(`Failed to load your Contact Page settings. Please try to reload this page. Let us know at human@flowcrypt.com if this persists.\n${ApiErr.eli5(e)}`);
       }
     }
   }
@@ -126,12 +126,12 @@ View.run(class ContactPageView extends View {
       try {
         await Backend.accountUpdate(await this.authInfoPromise, update);
       } catch (e) {
-        if (Api.err.isNetErr(e)) {
+        if (ApiErr.isNetErr(e)) {
           await Ui.modal.error('No internet connection, please try again');
-        } else if (Api.err.isReqTooLarge(e)) {
+        } else if (ApiErr.isReqTooLarge(e)) {
           await Ui.modal.warning('Error: the image is too large, please choose a smaller one');
         } else {
-          if (!Api.err.isServerErr(e) && !Api.err.isAuthErr(e)) {
+          if (!ApiErr.isServerErr(e) && !ApiErr.isAuthErr(e)) {
             Catch.reportErr(e);
           }
           await Ui.modal.error('Error happened, please try again');

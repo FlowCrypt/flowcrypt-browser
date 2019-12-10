@@ -5,13 +5,14 @@
 
 'use strict';
 
-import { Api, ReqFmt, ProgressCb, BackendAuthErr } from './api.js';
+import { Api, ReqFmt, ProgressCb } from './api.js';
 import { Dict, Value } from '../core/common.js';
 import { Store } from '../platform/store.js';
 import { Catch } from '../platform/catch.js';
 import { Att } from '../core/att.js';
 import { Ui } from '../browser/ui.js';
 import { Buf } from '../core/buf.js';
+import { BackendAuthErr } from './error/api-error-types.js';
 
 type SubscriptionLevel = 'pro' | null;
 type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };

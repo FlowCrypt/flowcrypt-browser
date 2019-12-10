@@ -7,7 +7,6 @@ import { Store } from '../../../js/common/platform/store.js';
 import { Value, Url } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
-import { Api } from '../../../js/common/api/api.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Gmail } from './../../../js/common/api/email_provider/gmail/gmail.js';
 import { Assert } from '../../../js/common/assert.js';
@@ -15,6 +14,7 @@ import { KeyImportUi, UserAlert, KeyCanBeFixed } from '../../../js/common/ui/key
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { View } from '../../../js/common/view.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 View.run(class AddKeyView extends View {
 
@@ -69,7 +69,7 @@ View.run(class AddKeyView extends View {
         $('#source_backup').prop('disabled', true);
       }
     } catch (e) {
-      if (Api.err.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
       }
       $('label[for=source_backup]').text('Load from backup (error checking backups)').css('color', '#AAA');

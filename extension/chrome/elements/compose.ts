@@ -5,7 +5,6 @@
 import { Store, AccountStoreExtension, Scopes, AccountStore } from '../../js/common/platform/store.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Composer } from './composer/composer.js';
-import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { openpgp } from '../../js/common/core/pgp.js';
 import { ReplyParams, EmailProviderInterface } from '../../js/common/api/email_provider/email_provider_api.js';
@@ -17,6 +16,7 @@ import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
 import { GmailParser } from '../../js/common/api/email_provider/gmail/gmail-parser.js';
+import { ApiErr } from '../../js/common/api/error/api-error.js';
 
 export type DeterminedMsgHeaders = {
   lastMsgId: string,
@@ -67,7 +67,7 @@ export class ComposeView extends View {
     this.replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
     this.isReplyBox = !!this.replyMsgId;
     this.emailProvider = new Gmail(this.acctEmail);
-    Backend.getSubscriptionWithoutLogin(this.acctEmail).catch(Api.err.reportIfSignificant); // updates storage
+    Backend.getSubscriptionWithoutLogin(this.acctEmail).catch(e => ApiErr.reportIfSignificant(e)); // updates storage
     openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
   }
 
@@ -110,7 +110,7 @@ export class ComposeView extends View {
       this.replyParams = GmailParser.determineReplyMeta(this.acctEmail, aliases, gmailMsg);
       this.threadId = gmailMsg.threadId || '';
     } catch (e) {
-      if (Api.err.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
       }
       if (e instanceof Error) {

@@ -9,7 +9,7 @@ const BUILD = 'consumer'; // todo
 
 import { Catch } from '../platform/catch.js';
 import { Store, AccountStore } from '../platform/store.js';
-import { Api, GoogleAuthErr } from './api.js';
+import { Api } from './api.js';
 import { Ui } from '../browser/ui.js';
 import { Value, Url } from '../core/common.js';
 import { GoogleAuthWindowResult$result } from '../browser/browser-msg.js';
@@ -17,6 +17,8 @@ import { tabsQuery, windowsCreate } from './chrome.js';
 import { Buf } from '../core/buf.js';
 import { GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST } from '../core/const.js';
 import { GmailRes } from './email_provider/gmail/gmail-parser.js';
+import { GoogleAuthErr } from './error/api-error-types.js';
+import { ApiErr } from './error/api-error.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
@@ -100,7 +102,7 @@ export class GoogleAuth {
     try {
       return await Api.ajax(request, Catch.stackTrace());
     } catch (firstAttemptErr) {
-      if (Api.err.isAuthErr(firstAttemptErr)) { // force refresh token
+      if (ApiErr.isAuthErr(firstAttemptErr)) { // force refresh token
         request.headers!.Authorization = await GoogleAuth.googleApiAuthHeader(acctEmail, true);
         return await Api.ajax(request, Catch.stackTrace());
       }

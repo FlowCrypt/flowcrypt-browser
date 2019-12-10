@@ -16,9 +16,10 @@ import { ComposerComponent } from './composer-abstract-component.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { moveElementInArray } from '../../../js/common/platform/util.js';
-import { RecipientType, Api, ChunkedCb } from '../../../js/common/api/api.js';
+import { RecipientType, ChunkedCb } from '../../../js/common/api/api.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './composer-errs.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 export class ComposerRecipients extends ComposerComponent {
   private addedRecipients: RecipientElement[] = [];
@@ -264,22 +265,22 @@ export class ComposerRecipients extends ComposerComponent {
         this.composer.errs.debug(`searchContacts 6`);
       }
     } catch (e) {
-      Ui.toast(`Error searching contacts: ${Api.err.eli5(e)}`, 5).catch(Catch.reportErr);
+      Ui.toast(`Error searching contacts: ${ApiErr.eli5(e)}`, 5).catch(Catch.reportErr);
       throw e;
     }
   }
 
   private guessContactsFromSentEmails = (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => {
     this.composer.emailProvider.guessContactsFromSentEmails(query, knownContacts, multiCb).catch(e => {
-      if (Api.err.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
-      } else if (Api.err.isNetErr(e)) {
+      } else if (ApiErr.isNetErr(e)) {
         Ui.toast(`Network erroc - cannot search contacts`).catch(Catch.reportErr);
-      } else if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
+      } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         Ui.toast(`Cannot search contacts - account disabled or forbidden by admin policy`).catch(Catch.reportErr);
       } else {
         Catch.reportErr(e);
-        Ui.toast(`Error searching contacts: ${Api.err.eli5(e)}`).catch(Catch.reportErr);
+        Ui.toast(`Error searching contacts: ${ApiErr.eli5(e)}`).catch(Catch.reportErr);
       }
     });
   }
@@ -831,9 +832,9 @@ export class ComposerRecipients extends ComposerComponent {
         return false;
       }
     } catch (e) {
-      if (Api.err.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
-      } else if (!Api.err.isNetErr(e)) {
+      } else if (!ApiErr.isNetErr(e)) {
         Catch.reportErr(e);
       }
       return undefined;

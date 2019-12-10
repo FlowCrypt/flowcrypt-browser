@@ -7,10 +7,10 @@ import { Store } from '../../../js/common/platform/store.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Str } from '../../../js/common/core/common.js';
-import { Api } from '../../../js/common/api/api.js';
 import { VerifyRes, Pgp } from '../../../js/common/core/pgp.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 export class PgpBlockViewSignatureModule {
 
@@ -92,7 +92,7 @@ export class PgpBlockViewSignatureModule {
         });
       }
     } catch (e) {
-      if (Api.err.isSignificant(e)) {
+      if (ApiErr.isSignificant(e)) {
         Catch.reportErr(e);
         render(`Could not load sender pubkey ${signerLongid} due to an error.`, () => undefined);
       } else {

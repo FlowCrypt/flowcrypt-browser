@@ -6,12 +6,12 @@ import { ComposerComponent } from './composer-abstract-component.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
 import { Str } from '../../../js/common/core/common.js';
-import { Api } from '../../../js/common/api/api.js';
 import { SendBtnTexts } from './composer-types.js';
 import { KeyInfo, Pwd } from '../../../js/common/core/pgp.js';
 import { Settings } from '../../../js/common/settings.js';
 import { BrowserEventErrHandler, Ui } from '../../../js/common/browser/ui.js';
 import { BrowserExtension } from '../../../js/common/browser/browser-extension.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 export class ComposerUserError extends Error { }
 export class ComposerNotReadyError extends ComposerUserError { }
@@ -66,16 +66,16 @@ export class ComposerErrs extends ComposerComponent {
   }
 
   public handleSendErr = async (e: any) => {
-    if (Api.err.isNetErr(e)) {
+    if (ApiErr.isNetErr(e)) {
       await Ui.modal.error('Could not send message due to network error. Please check your internet connection and try again.');
-    } else if (Api.err.isAuthPopupNeeded(e)) {
+    } else if (ApiErr.isAuthPopupNeeded(e)) {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       await Ui.modal.error('Could not send message because FlowCrypt needs to be re-connected to google account.');
-    } else if (Api.err.isAuthErr(e)) {
+    } else if (ApiErr.isAuthErr(e)) {
       Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail);
-    } else if (Api.err.isReqTooLarge(e)) {
+    } else if (ApiErr.isReqTooLarge(e)) {
       await Ui.modal.error(`Could not send: message or attachments too large.`);
-    } else if (Api.err.isBadReq(e)) {
+    } else if (ApiErr.isBadReq(e)) {
       const errMsg = e.parseErrResMsg('google');
       if (errMsg === e.STD_ERR_MSGS.GOOGLE_INVALID_TO_HEADER || errMsg === e.STD_ERR_MSGS.GOOGLE_RECIPIENT_ADDRESS_REQUIRED) {
         await Ui.modal.error('Error from google: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.');

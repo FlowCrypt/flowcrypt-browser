@@ -4,13 +4,13 @@
 
 import { PgpBlockView } from '../pgp_block.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { Api } from '../../../js/common/api/api.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { FormatError } from '../../../js/common/core/pgp.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 export class PgpBlockViewErrorModule {
 
@@ -44,14 +44,14 @@ export class PgpBlockViewErrorModule {
   }
 
   public handleInitializeErr = async (e: any) => {
-    if (Api.err.isNetErr(e)) {
+    if (ApiErr.isNetErr(e)) {
       await this.renderErr(`Could not load message due to network error. ${Ui.retryLink()}`, undefined);
-    } else if (Api.err.isAuthPopupNeeded(e)) {
+    } else if (ApiErr.isAuthPopupNeeded(e)) {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       await this.renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`, undefined);
     } else if (e instanceof FormatError) {
       await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.dontKnowHowOpen, e.data);
-    } else if (Api.err.isInPrivateMode(e)) {
+    } else if (ApiErr.isInPrivateMode(e)) {
       await this.renderErr(`FlowCrypt does not work in a Firefox Private Window (or when Firefox Containers are used). Please try in a standard window.`, undefined);
     } else {
       Catch.reportErr(e);

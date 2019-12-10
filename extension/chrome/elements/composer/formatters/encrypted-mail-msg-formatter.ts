@@ -13,13 +13,13 @@ import { Backend, BackendRes, AwsS3UploadItem, FcUuidAuth } from '../../../../js
 import { Store, Subscription } from '../../../../js/common/platform/store.js';
 import { Value, Str } from '../../../../js/common/core/common.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
-import { Api } from '../../../../js/common/api/api.js';
 import { Att } from '../../../../js/common/core/att.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 import { Lang } from '../../../../js/common/lang.js';
 import { ComposerResetBtnTrigger, ComposerUserError } from '../composer-errs.js';
 import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
 import { Settings } from '../../../../js/common/settings.js';
+import { ApiErr } from '../../../../js/common/api/error/api-error.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -99,10 +99,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
       newMsgData.plainhtml += '<br /><br />' + infoDiv;
       return;
     } catch (msgTokenErr) {
-      if (Api.err.isAuthErr(msgTokenErr)) {
+      if (ApiErr.isAuthErr(msgTokenErr)) {
         Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail);
         throw new ComposerResetBtnTrigger();
-      } else if (Api.err.isStandardErr(msgTokenErr, 'subscription')) {
+      } else if (ApiErr.isStandardErr(msgTokenErr, 'subscription')) {
         return;
       }
       throw Catch.rewrapErr(msgTokenErr, 'There was a token error sending this message. Please try again. Let us know at human@flowcrypt.com if this happens repeatedly.');
