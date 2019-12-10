@@ -49,7 +49,7 @@ abstract class ApiCallErr extends Error {
     return '';
   }
 
-  protected static censoredUrl = (url: string | undefined): string => {
+  protected static censoredUrl(url: string | undefined): string {
     if (!url) {
       return '(unknown url)';
     }
@@ -65,7 +65,7 @@ abstract class ApiCallErr extends Error {
     return url;
   }
 
-  protected static describeApiAction = (req: JQueryAjaxSettings) => {
+  protected static describeApiAction(req: JQueryAjaxSettings) {
     const describeBody = typeof req.data === 'undefined' ? '(no body)' : typeof req.data;
     return `${req.method || 'GET'}-ing ${ApiCallErr.censoredUrl(req.url)} ${describeBody}: ${ApiCallErr.getPayloadStructure(req)}`;
   }
@@ -361,9 +361,9 @@ export class Api {
     return e && typeof e === 'object' && (e as StandardError).hasOwnProperty('internal') && Boolean((e as StandardError).message);
   }
 
-  protected static apiCall = async (
+  protected static async apiCall(
     url: string, path: string, fields?: Dict<any> | string, fmt?: ReqFmt, progress?: ProgressCbs, headers?: Dict<string>, resFmt: ResFmt = 'json', method: ReqMethod = 'POST'
-  ) => {
+  ) {
     progress = progress || {} as ProgressCbs;
     let formattedData: FormData | string | undefined;
     let contentType: string | false;

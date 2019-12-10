@@ -130,7 +130,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     Xss.sanitizeAppend(containerSel, iconHtml).children(iconSel).off().click(Ui.event.prevent('double', Catch.try(onClick)));
   }
 
-  private isEncrypted = (): boolean => !!$('iframe.pgp_block').filter(':visible').length;
+  private isEncrypted(): boolean {
+    return !!$('iframe.pgp_block').filter(':visible').length;
+  }
 
   private replaceConvoBtns(force: boolean = false) {
     const convoUpperIcons = $('div.ade:visible');

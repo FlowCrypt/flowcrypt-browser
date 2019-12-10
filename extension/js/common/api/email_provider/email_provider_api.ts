@@ -56,10 +56,10 @@ export class EmailProviderApi extends Api {
     super();
   }
 
-  public createMsgObj = async (
+  public async createMsgObj(
     from: string = '', recipients: Recipients, subject: string = '', body: SendableMsgBody, atts?: Att[], threadRef?: string,
     mimeRootType?: string, sign?: (content: string) => Promise<string>,
-  ): Promise<SendableMsg> => {
+  ): Promise<SendableMsg> {
     const allEmails = [...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []];
     const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
     if (!allEmails.length) {

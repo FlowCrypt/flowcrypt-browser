@@ -136,7 +136,8 @@ export class BrowserPool {
     }
   }
 
-  private testFailSingleAttemptDebugHtml = async (t: AvaContext, browser: BrowserHandle, err: any): Promise<string> => `
+  private async testFailSingleAttemptDebugHtml(t: AvaContext, browser: BrowserHandle, err: any): Promise<string> {
+    return `
     <div class="attempt">
       <div style="display:none;">
         <pre title="err.stack">${Util.htmlEscape((err instanceof Error ? err.stack : String(err)) || String(err))}</pre>
@@ -144,7 +145,8 @@ export class BrowserPool {
       </div>
       <a href="#" onclick="this.style.display='none';this.parentNode.firstElementChild.style = '';">${String(err)}</a>
     </div>
-    `
+    `;
+  }
 
   private async throwOnRetryFlagAndReset(t: AvaContext) {
     await Util.sleep(TIMEOUT_DESTROY_UNEXPECTED_ALERT + 1); // in case there was an unexpected alert, don't let that affect next round
@@ -227,7 +229,9 @@ export class Semaphore {
     this.name = name;
   }
 
-  private wait = () => new Promise(resolve => setTimeout(resolve, 1000 + Math.round(Math.random() * 2000))); // wait 1-3s
+  private wait() {
+    return new Promise(resolve => setTimeout(resolve, 1000 + Math.round(Math.random() * 2000))); // wait 1-3s
+  }
 
   async acquire() {
     let i = 0;

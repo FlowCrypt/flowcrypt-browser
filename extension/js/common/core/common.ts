@@ -25,13 +25,21 @@ export class Str {
     return { email, name, full };
   }
 
-  public static prettyPrint = (obj: any) => (typeof obj === 'object') ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />') : String(obj);
+  public static prettyPrint(obj: any) {
+    return (typeof obj === 'object') ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />') : String(obj);
+  }
 
-  public static normalizeSpaces = (str: string) => str.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32));
+  public static normalizeSpaces(str: string) {
+    return str.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32));
+  }
 
-  public static normalizeDashes = (str: string) => str.replace(/^—–|—–$/gm, '-----');
+  public static normalizeDashes(str: string) {
+    return str.replace(/^—–|—–$/gm, '-----');
+  }
 
-  public static normalize = (str: string) => Str.normalizeSpaces(Str.normalizeDashes(str));
+  public static normalize(str: string) {
+    return Str.normalizeSpaces(Str.normalizeDashes(str));
+  }
 
   public static numberFormat(number: number) {
     const nStr: string = number + '';
@@ -52,7 +60,9 @@ export class Str {
     return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(email);
   }
 
-  public static monthName = (monthIndex: number) => ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][monthIndex];
+  public static monthName(monthIndex: number) {
+    return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][monthIndex];
+  }
 
   public static sloppyRandom(length: number = 5) {
     let id = '';
@@ -63,13 +73,17 @@ export class Str {
     return id;
   }
 
-  public static regexEscape = (toBeUsedInRegex: string) => toBeUsedInRegex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  public static regexEscape(toBeUsedInRegex: string) {
+    return toBeUsedInRegex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
 
   public static asEscapedHtml(text: string) {
     return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;').replace(/\n/g, '<br />');
   }
 
-  public static htmlAttrEncode = (values: Dict<any>): string => Str.base64urlUtfEncode(JSON.stringify(values));
+  public static htmlAttrEncode(values: Dict<any>): string {
+    return Str.base64urlUtfEncode(JSON.stringify(values));
+  }
 
   public static htmlAttrDecode(encoded: string): any {
     try {
@@ -79,13 +93,21 @@ export class Str {
     }
   }
 
-  public static capitalize = (string: string): string => string.trim().split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+  public static capitalize(string: string): string {
+    return string.trim().split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+  }
 
-  public static toUtcTimestamp = (datetimeStr: string, asStr: boolean = false) => asStr ? String(Date.parse(datetimeStr)) : Date.parse(datetimeStr);
+  public static toUtcTimestamp(datetimeStr: string, asStr: boolean = false) {
+    return asStr ? String(Date.parse(datetimeStr)) : Date.parse(datetimeStr);
+  }
 
-  public static datetimeToDate = (date: string) => date.substr(0, 10).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+  public static datetimeToDate(date: string) {
+    return date.substr(0, 10).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+  }
 
-  public static fromDate = (date: Date) => date.toISOString().replace(/T/, ' ').replace(/:[^:]+$/, '');
+  public static fromDate(date: Date) {
+    return date.toISOString().replace(/T/, ' ').replace(/:[^:]+$/, '');
+  }
 
   private static base64urlUtfEncode(str: string) {
     // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
@@ -208,9 +230,13 @@ export class Url {
     return `${urlParts[0]}?${params.toString()}`;
   }
 
-  private static snakeCaseToCamelCase = (s: string) => s.replace(/_[a-z]/g, boundary => boundary[1].toUpperCase());
+  private static snakeCaseToCamelCase(s: string) {
+    return s.replace(/_[a-z]/g, boundary => boundary[1].toUpperCase());
+  }
 
-  private static camelCaseToSnakeCase = (s: string) => s.replace(/[a-z][A-Z]/g, boundary => `${boundary[0]}_${boundary[1].toLowerCase()}`);
+  private static camelCaseToSnakeCase(s: string) {
+    return s.replace(/[a-z][A-Z]/g, boundary => `${boundary[0]}_${boundary[1].toLowerCase()}`);
+  }
 
   private static findAndProcessUrlParam(expectedParamName: string, rawParamNameDict: Dict<string>, rawParms: Dict<string>): UrlParam {
     if (typeof rawParamNameDict[expectedParamName] === 'undefined') {

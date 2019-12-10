@@ -221,7 +221,9 @@ export class ComposerRecipients extends ComposerComponent {
     return false;
   }
 
-  public getRecipients = () => this.addedRecipients;
+  public getRecipients() {
+    return this.addedRecipients;
+  }
 
   private async searchContacts(input: JQuery<HTMLElement>, dbOnly = false) {
     try {

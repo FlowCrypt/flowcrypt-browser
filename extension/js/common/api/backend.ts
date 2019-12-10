@@ -1,6 +1,7 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
 // tslint:disable:oneliner-object-literal
+// tslint:disable:no-null-keyword
 
 'use strict';
 
@@ -62,18 +63,22 @@ export class Backend extends Api {
     } as Dict<string>)[type];
   }
 
-  public static helpFeedback = (acctEmail: string, message: string): Promise<BackendRes.FcHelpFeedback> => Backend.request('help/feedback', {
-    email: acctEmail,
-    message,
-  })
+  public static helpFeedback(acctEmail: string, message: string): Promise<BackendRes.FcHelpFeedback> {
+    return Backend.request('help/feedback', {
+      email: acctEmail,
+      message,
+    });
+  }
 
-  public static helpUninstall = (email: string, client: string): Promise<unknown> => Backend.request('help/uninstall', {
-    email,
-    client,
-    metrics: null, // tslint:disable-line:no-null-keyword
-  })
+  public static helpUninstall(email: string, client: string): Promise<unknown> {
+    return Backend.request('help/uninstall', {
+      email,
+      client,
+      metrics: null,
+    });
+  }
 
-  // public static loginWithVerificationEmail = async (account: string, uuid: string, token: string): Promise<{ verified: boolean, subscription: SubscriptionInfo }> => {
+  // public static async loginWithVerificationEmail(account: string, uuid: string, token: string): Promise<{ verified: boolean, subscription: SubscriptionInfo }> {
   //   const response = await Backend.request('account/login', {
   //     account,
   //     uuid,
@@ -82,7 +87,7 @@ export class Backend extends Api {
   //   if (response.registered !== true) {
   //     throw new Error('account_login did not result in successful registration');
   //   }
-  //   await Store.setAcct(acctEmail, { uuid, subscription: response.subscription });
+  //   await Store.setAcct(account, { uuid, subscription: response.subscription });
   //   return { verified: response.verified === true, subscription: response.subscription };
   // }
 
@@ -119,7 +124,9 @@ export class Backend extends Api {
     return r;
   }
 
-  public static accountGet = (fcAuth: FcUuidAuth) => Backend.accountUpdate(fcAuth, {});
+  public static accountGet(fcAuth: FcUuidAuth) {
+    return Backend.accountUpdate(fcAuth, {});
+  }
 
   public static async accountSubscribe(fcAuth: FcUuidAuth, product: string, method: string, paymentSourceToken?: string): Promise<BackendRes.FcAccountSubscribe> {
     Backend.throwIfMissingUuid(fcAuth);
@@ -144,9 +151,11 @@ export class Backend extends Api {
     throw new Error('Could not verify that all files were uploaded properly, please try again.');
   }
 
-  public static messageConfirmFiles = (identifiers: string[]): Promise<BackendRes.FcMsgConfirmFiles> => Backend.request('message/confirm_files', {
-    identifiers,
-  })
+  public static messageConfirmFiles(identifiers: string[]): Promise<BackendRes.FcMsgConfirmFiles> {
+    return Backend.request('message/confirm_files', {
+      identifiers,
+    });
+  }
 
   /**
    * todo - DEPRECATE THIS. Send as JSON to message/store
@@ -170,29 +179,37 @@ export class Backend extends Api {
     }) as BackendRes.ApirFcMsgExpiration;
   }
 
-  public static messageReply = (short: string, token: string, from: string, to: string, subject: string, message: string): Promise<unknown> => Backend.request('message/reply', {
-    short,
-    token,
-    from,
-    to,
-    subject,
-    message,
-  })
+  public static messageReply(short: string, token: string, from: string, to: string, subject: string, message: string): Promise<unknown> {
+    return Backend.request('message/reply', {
+      short,
+      token,
+      from,
+      to,
+      subject,
+      message,
+    });
+  }
 
-  public static messageContact = (sender: string, message: string, messageToken: FcAuthToken): Promise<unknown> => Backend.request('message/contact', {
-    message_token_account: messageToken.account,
-    message_token: messageToken.token,
-    sender,
-    message,
-  })
+  public static messageContact(sender: string, message: string, messageToken: FcAuthToken): Promise<unknown> {
+    return Backend.request('message/contact', {
+      message_token_account: messageToken.account,
+      message_token: messageToken.token,
+      sender,
+      message,
+    });
+  }
 
-  public static linkMessage = (short: string): Promise<BackendRes.FcLinkMsg> => Backend.request('link/message', {
-    short,
-  })
+  public static linkMessage(short: string): Promise<BackendRes.FcLinkMsg> {
+    return Backend.request('link/message', {
+      short,
+    });
+  }
 
-  public static linkMe = (alias: string): Promise<BackendRes.FcLinkMe> => Backend.request('link/me', {
-    alias,
-  })
+  public static linkMe(alias: string): Promise<BackendRes.FcLinkMe> {
+    return Backend.request('link/me', {
+      alias,
+    });
+  }
 
   public static async retrieveBlogPosts(): Promise<BackendRes.FcBlogPost[]> {
     return Api.ajax({ url: 'https://flowcrypt.com/feed', dataType: 'json' }, Catch.stackTrace()); // tslint:disable-line:no-direct-ajax

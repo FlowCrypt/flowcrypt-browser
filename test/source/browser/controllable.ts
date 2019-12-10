@@ -21,15 +21,17 @@ abstract class ControllableBase {
     this.debugNamespace = namespace;
   }
 
-  protected log = (msg: string) => {
+  protected log(msg: string) {
     if (this.debugNamespace) {
       console.info(`[debug][controllable][${this.debugNamespace}] ${msg}`);
     }
   }
 
-  protected isXpath = (selector: string): boolean => selector.match(/^\/\//) !== null;
+  protected isXpath(selector: string): boolean {
+    return selector.match(/^\/\//) !== null;
+  }
 
-  protected selector = (customSelLanguageQuery: string): string => { // supply browser selector, xpath, @test-id or @test-id(contains this text)
+  protected selector(customSelLanguageQuery: string): string { // supply browser selector, xpath, @test-id or @test-id(contains this text)
     let m: RegExpMatchArray | null;
     if (this.isXpath(customSelLanguageQuery)) {
       return customSelLanguageQuery;
@@ -50,7 +52,7 @@ abstract class ControllableBase {
     }
   }
 
-  protected element = async (selector: string): Promise<ElementHandle | null> => {
+  protected async element(selector: string): Promise<ElementHandle | null> {
     selector = this.selector(selector);
     if (this.isXpath(selector)) {
       return (await this.target.$x(selector))[0];
@@ -59,15 +61,21 @@ abstract class ControllableBase {
     }
   }
 
-  public isElementPresent = async (selector: string) => Boolean(await this.element(selector));
+  public async isElementPresent(selector: string) {
+    return Boolean(await this.element(selector));
+  }
 
-  protected selsAsProcessedArr = (selector: string | string[]): string[] => (Array.isArray(selector) ? selector : [selector]).map(this.selector);
+  protected selsAsProcessedArr(selector: string | string[]): string[] {
+    return (Array.isArray(selector) ? selector : [selector]).map(this.selector);
+  }
 
   public async waitForSelTestState(state: 'ready' | 'working' | 'waiting' | 'closed', timeout = TIMEOUT_TEST_STATE_SATISFY) {
     await this.waitAll(`[data-test-state="${state}"]`, { timeout, visible: false });
   }
 
-  public attr = async (elHandle: ElementHandle, name: string): Promise<string> => await (await elHandle.getProperty(name)).jsonValue();
+  public async attr(elHandle: ElementHandle, name: string): Promise<string> {
+    return await (await elHandle.getProperty(name)).jsonValue();
+  }
 
   public async waitAll(selector: string | string[], { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number, visible?: boolean } = {}) {
     const selectors = this.selsAsProcessedArr(selector);
@@ -126,7 +134,9 @@ abstract class ControllableBase {
     throw Error(`this.wait_till_gone: some of "${selectors.join(',')}" still present after timeout:${timeout}`);
   }
 
-  public notPresent = async (selector: string | string[]) => await this.waitTillGone(selector, { timeout: 0 });
+  public async notPresent(selector: string | string[]) {
+    return await this.waitTillGone(selector, { timeout: 0 });
+  }
 
   public async click(selector: string) {
     this.log(`click:1:${selector}`);

@@ -23,9 +23,13 @@ export class Ui {
   public static EVENT_SLOW_SPREE_MS = 200;
   public static EVENT_VERY_SLOW_SPREE_MS = 500;
 
-  public static retryLink = (caption: string = 'retry') => `<a href="${Xss.escape(window.location.href)}" data-test="action-retry-by-reloading">${Xss.escape(caption)}</a>`;
+  public static retryLink(caption: string = 'retry') {
+    return `<a href="${Xss.escape(window.location.href)}" data-test="action-retry-by-reloading">${Xss.escape(caption)}</a>`;
+  }
 
-  public static delay = (ms: number) => new Promise(resolve => Catch.setHandledTimeout(resolve, ms));
+  public static delay(ms: number) {
+    return new Promise(resolve => Catch.setHandledTimeout(resolve, ms));
+  }
 
   public static spinner(color: string, placeholderCls: "small_spinner" | "large_spinner" = 'small_spinner') {
     const path = `/img/svgs/spinner-${color}-small.svg`;
@@ -263,7 +267,9 @@ export class Ui {
     sleep: (ms: number, setCustomTimeout: (code: () => void, t: number) => void = Catch.setHandledTimeout) => new Promise(resolve => setCustomTimeout(resolve, ms)),
   };
 
-  public static e = (name: string, attrs: Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
+  public static e(name: string, attrs: Dict<string>) {
+    return $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
+  }
 
   public static modal = {
     info: async (text: string): Promise<void> => {

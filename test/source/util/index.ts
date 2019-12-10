@@ -46,16 +46,24 @@ export class Config {
 
   public static tests = JSON.parse(fs.readFileSync('test/tests.json', 'utf8')) as TestConfigInterface;
 
-  public static key = (title: string) => Config.secrets.keys.filter(k => k.title === title)[0];
+  public static key(title: string) {
+    return Config.secrets.keys.filter(k => k.title === title)[0];
+  }
 
 }
 
 export class Util {
 
-  public static sleep = (seconds: number) => new Promise(resolve => setTimeout(resolve, seconds * 1000));
+  public static sleep(seconds: number) {
+    return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+  }
 
-  public static lousyRandom = () => Math.random().toString(36).substring(2);
+  public static lousyRandom() {
+    return Math.random().toString(36).substring(2);
+  }
 
-  public static htmlEscape = (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
+  public static htmlEscape(str: string) {
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
+  }
 
 }
