@@ -272,33 +272,33 @@ View.run(class BackupView extends View {
       this.displayBlock('step_0_status');
       if (keys?.length) {
         $('.status_summary').text('Backups found: ' + keys.length + '. Your account is backed up correctly in your email inbox.');
-        Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_manual">SEE MORE BACKUP OPTIONS</div>');
+        Xss.sanitizeRender('#step_0_status .container', '<button class="button long green action_go_manual">SEE MORE BACKUP OPTIONS</button>');
       } else if (storage.key_backup_method) {
         if (storage.key_backup_method === 'file') {
           $('.status_summary').text('You have previously backed up your key into a file.');
-          Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</div>');
+          Xss.sanitizeRender('#step_0_status .container', '<button class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</button>');
         } else if (storage.key_backup_method === 'print') {
           $('.status_summary').text('You have previously backed up your key by printing it.');
-          Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</div>');
+          Xss.sanitizeRender('#step_0_status .container', '<button class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</button>');
         } else { // inbox or other methods
           $('.status_summary').text('There are no backups on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
-          Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_manual">SEE BACKUP OPTIONS</div>');
+          Xss.sanitizeRender('#step_0_status .container', '<button class="button long green action_go_manual">SEE BACKUP OPTIONS</button>');
         }
       } else {
         if (storage.setup_simple) {
           $('.status_summary').text('No backups found on this account. You can store a backup of your key in email inbox. Your key will be protected by a pass phrase of your choice.');
           Xss.sanitizeRender('#step_0_status .container',
-            '<div class="button long green action_proceed_default_backup_choice">BACK UP MY KEY</div><br><br><br><a href="#" class="action_go_manual">See more advanced backup options</a>');
+            '<button class="button long green action_proceed_default_backup_choice">BACK UP MY KEY</button><br><br><br><a href="#" class="action_go_manual">See more advanced backup options</a>');
         } else {
           $('.status_summary').text('No backups found on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
-          Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_manual">BACK UP MY KEY</div>');
+          Xss.sanitizeRender('#step_0_status .container', '<button class="button long green action_go_manual">BACK UP MY KEY</button>');
         }
       }
     } else { // gmail read permission not granted - cannot check for backups
       this.displayBlock('step_0_status');
       $('.status_summary').text('FlowCrypt cannot check your backups.');
-      const pemissionsBtnIfGmail = this.emailProvider === 'gmail' ? '<div class="button long green action_go_auth_denied">SEE PERMISSIONS</div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' : '';
-      Xss.sanitizeRender('#step_0_status .container', `${pemissionsBtnIfGmail}<div class="button long gray action_go_manual">SEE BACKUP OPTIONS</div>`);
+      const pemissionsBtnIfGmail = this.emailProvider === 'gmail' ? '<button class="button long green action_go_auth_denied">SEE PERMISSIONS</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' : '';
+      Xss.sanitizeRender('#step_0_status .container', `${pemissionsBtnIfGmail}<button class="button long gray action_go_manual">SEE BACKUP OPTIONS</button>`);
     }
   }
 
