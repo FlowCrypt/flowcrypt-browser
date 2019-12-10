@@ -93,7 +93,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
 
     ava.todo('settings - edit contact public key');
 
-    ava.default.only('[standalone] settings - change passphrase - current in local storage', testWithNewBrowser(async (t, browser) => {
+    ava.default('[standalone] settings - change passphrase - current in local storage', testWithNewBrowser(async (t, browser) => {
       const { acctEmail, settingsPage } = await BrowserRecipe.setUpFcPpChangeAcct(t, browser);
       const newPp = `temp ci test pp: ${Util.lousyRandom()}`;
       await SettingsPageRecipe.changePassphrase(settingsPage, undefined, newPp); // change pp and test
