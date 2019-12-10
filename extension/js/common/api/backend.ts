@@ -12,9 +12,9 @@ import { Catch } from '../platform/catch.js';
 import { Att } from '../core/att.js';
 import { Ui } from '../browser/ui.js';
 import { Buf } from '../core/buf.js';
+import { BackendAuthErr } from './error/api-error-types.js';
 import { DomainRules } from '../rules.js';
 import { BACKEND_API_HOST } from '../core/const.js';
-import { BackendAuthErr } from './error/api-error-types.js';
 
 type SubscriptionLevel = 'pro' | null;
 type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
