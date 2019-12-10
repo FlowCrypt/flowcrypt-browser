@@ -592,10 +592,26 @@ body#settings .signin_button:hover {
   opacity: 1;
   color: black;
 }
-body#settings .signin_button.gmail { background-image: url(/img/guidelined/google-signin.png); }
-body#settings .signin_button.gmail:active { background-image: url(/img/guidelined/google-signin-pressed.png); }
-body#settings .signin_button.outlook { background-image: url(/img/guidelined/microsoft-signin.png); }
-body#settings .signin_button.outlook:active { background-image: url(/img/guidelined/microsoft-signin-pressed.png); }
+
+body#settings .signin_button.gmail {
+  background-image: url(/img/guidelined/google-signin.png);
+  border: 0;
+}
+
+body#settings .signin_button.gmail:active,
+body#settings .signin_button.gmail:focus {
+  background-image: url(/img/guidelined/google-signin-pressed.png);
+}
+
+body#settings .signin_button.outlook {
+  background-image: url(/img/guidelined/microsoft-signin.png);
+  border: 0;
+}
+
+body#settings .signin_button.outlook:active,
+body#settings .signin_button.outlook:focus {
+  background-image: url(/img/guidelined/microsoft-signin-pressed.png);
+}
 
 body#settings > div#content.setup div#step_2_easy_generating {
   display: none;
