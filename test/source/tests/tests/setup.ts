@@ -3,6 +3,7 @@ import { BrowserRecipe } from '../browser_recipe';
 import * as ava from 'ava';
 import { TestVariant, Util } from '../../util';
 import { SetupPageRecipe } from '../page_recipe/setup-page-recipe';
+import { expect } from 'chai';
 
 // tslint:disable:no-blank-lines-func
 
@@ -130,12 +131,22 @@ export const defineSetupTests = (testVariant: TestVariant, testWithNewBrowser: T
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: true, usedPgpBefore: true, simulateRetryOffline: true });
     }));
 
-    ava.default.only('[standalone] has.pub@org-rules-test - no backup, no keygen', testWithNewBrowser(async (t, browser) => {
+    ava.default('[standalone] has.pub@org-rules-test - no backup, no keygen', testWithNewBrowser(async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'has.pub@org-rules-test.flowcrypt.com');
       await SetupPageRecipe.manualEnter(settingsPage, 'has.pub.orgrulestest', { noPrvCreateOrgRule: true, enforceAttesterSubmitOrgRule: true });
       await settingsPage.waitAll(['@action-show-encrypted-inbox', '@action-open-security-page']);
       await Util.sleep(1);
       await settingsPage.notPresent(['@action-open-backup-page']);
+    }));
+
+    ava.default('[standalone] no.pub@org-rules-test - no backup, no keygen, enforce attester submit with submit err', testWithNewBrowser(async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'no.pub@org-rules-test.flowcrypt.com');
+      await SetupPageRecipe.manualEnter(settingsPage, 'no.pub.orgrulestest', { noPrvCreateOrgRule: true, enforceAttesterSubmitOrgRule: true, fillOnly: true });
+      await settingsPage.waitAndClick('@input-step2bmanualenter-save');
+      await settingsPage.waitAll(['@container-overlay-prompt-text', '@action-overlay-retry']);
+      const renderedErr = await settingsPage.read('@container-overlay-prompt-text');
+      expect(renderedErr).to.contain(`Failed to submit to Attester`);
+      expect(renderedErr).to.contain(`Could not find LDAP pubkey on a LDAP-only domain for email no.pub@org-rules-test.flowcrypt.com on server keys.flowcrypt.com`);
     }));
 
   }

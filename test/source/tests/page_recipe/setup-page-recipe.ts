@@ -13,6 +13,7 @@ type ManualEnterOpts = {
   simulateRetryOffline?: boolean,
   noPrvCreateOrgRule?: boolean,
   enforceAttesterSubmitOrgRule?: boolean,
+  fillOnly?: boolean,
 };
 
 export class SetupPageRecipe extends PageRecipe {
@@ -71,7 +72,8 @@ export class SetupPageRecipe extends PageRecipe {
       genPp = false,
       simulateRetryOffline = false,
       noPrvCreateOrgRule = false,
-      enforceAttesterSubmitOrgRule = false
+      enforceAttesterSubmitOrgRule = false,
+      fillOnly = false,
     }: ManualEnterOpts = {}
   ) {
     const k = Config.key(keyTitle);
@@ -121,6 +123,9 @@ export class SetupPageRecipe extends PageRecipe {
       }
     }
     await settingsPage.waitAll('@input-step2bmanualenter-save');
+    if (fillOnly) {
+      return;
+    }
     try {
       if (simulateRetryOffline) {
         await settingsPage.page.setOfflineMode(true); // offline mode
