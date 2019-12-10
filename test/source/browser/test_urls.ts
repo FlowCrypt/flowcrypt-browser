@@ -8,7 +8,11 @@ export class TestUrls {
   }
 
   public static extensionSettings = (acctEmail?: string | undefined) => {
-    return `chrome/settings/index.htm?account_email=${acctEmail || ''}`;
+    return TestUrls.extension(`chrome/settings/index.htm?account_email=${acctEmail || ''}`);
+  }
+
+  public static extensionInbox = (acctEmail: string) => {
+    return TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`);
   }
 
   public static gmail = (acctLoginIndex = 0, urlEnd = '') => {

@@ -1,7 +1,7 @@
 import { PageRecipe } from './abstract-page-recipe';
 import { AvaContext } from '..';
 import { TestUrls } from '../../browser/test_urls';
-import { BrowserHandle } from '../../browser';
+import { BrowserHandle, ControllablePage, ControllableFrame } from '../../browser';
 import { Util } from '../../util';
 
 type CheckDecryptMsg$opt = { acctEmail: string, threadId: string, expectedContent: string, enterPp?: string, finishCurrentSession?: boolean };
@@ -66,6 +66,16 @@ export class InboxPageRecipe extends PageRecipe {
       await inboxPage.waitAll(`@container-msg-header(${sender})`);
     }
     await inboxPage.close();
+  }
+
+  public static openAndGetComposeFrame = async (inboxPage: ControllablePage): Promise<ControllableFrame> => {
+    await inboxPage.waitAndClick('@action-open-secure-compose-window');
+    await inboxPage.waitAll('@container-new-message');
+    await Util.sleep(0.5);
+    const composeFrame = await inboxPage.getFrame(['compose.htm']);
+    await composeFrame.waitAll(['@input-body', '@input-subject', '@action-send', '@container-cc-bcc-buttons']);
+    await composeFrame.waitForSelTestState('ready');
+    return composeFrame;
   }
 
 }
