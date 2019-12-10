@@ -53,11 +53,6 @@ View.run(class SettingsView extends View {
 
   render = async () => {
     $('#status-row #status_v').text(`v:${VERSION}`);
-    const rules = await Rules.newInstance(this.acctEmail);
-    if (!rules.canBackupKeys()) {
-      $('.show_settings_page[page="modules/backup.htm"]').parent().remove();
-      $('.settings-icons-rows').css({ position: 'relative', left: '64px' }); // lost a button - center it again
-    }
     for (const webmailLName of await Env.webmails()) {
       $('.signin_button.' + webmailLName).css('display', 'inline-block');
     }
@@ -176,6 +171,11 @@ View.run(class SettingsView extends View {
       const storage = await Store.getAcct(this.acctEmail, ['setup_done', 'email_provider', 'picture']);
       const scopes = await Store.getScopes(this.acctEmail);
       if (storage.setup_done) {
+        const rules = await Rules.newInstance(this.acctEmail);
+        if (!rules.canBackupKeys()) {
+          $('.show_settings_page[page="modules/backup.htm"]').parent().remove();
+          $('.settings-icons-rows').css({ position: 'relative', left: '64px' }); // lost a button - center it again
+        }
         this.checkGoogleAcct().catch(Catch.reportErr);
         this.checkFcAcctAndSubscriptionAndContactPage().catch(Catch.reportErr);
         if (storage.picture) {
@@ -227,9 +227,9 @@ View.run(class SettingsView extends View {
     const authInfo = await Store.authInfo(this.acctEmail!);
     if (authInfo.uuid) { // have auth email set
       try {
-        const response = await Backend.accountUpdate(authInfo);
+        const response = await Backend.accountGetAndUpdateLocalStore(authInfo);
         $('#status-row #status_flowcrypt').text(`fc:ok`);
-        if (response?.result?.alias) {
+        if (response?.account?.alias) {
           statusContainer.find('.status-indicator-text').css('display', 'none');
           statusContainer.find('.status-indicator').addClass('active');
         } else {

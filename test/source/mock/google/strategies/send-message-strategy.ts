@@ -1,20 +1,20 @@
-import { Data } from './../data';
+import { GoogleData } from '../google-data';
 import { UnsuportableStrategyError, ITestMsgStrategy } from './strategy-base.js';
 import { ParsedMail, AddressObject } from 'mailparser';
-import { HttpClientErr } from '../api.js';
-import { PgpMsg } from "../../core/pgp.js";
-import { Buf } from '../../core/buf.js';
-import { Config } from '../../util/index.js';
+import { HttpClientErr } from '../../lib/api';
+import { Config } from '../../../util';
+import { PgpMsg } from '../../../core/pgp';
+import { Buf } from '../../../core/buf';
 
 class PwdEncryptedMessageTestStrategy implements ITestMsgStrategy {
   test = async (mimeMsg: ParsedMail) => {
     if (!mimeMsg.text.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]{10}/)) {
-      throw new HttpClientErr(`Error: cannot find pwd encrypted link`);
+      throw new HttpClientErr(`Error: cannot find pwd encrypted link in:\n\n${mimeMsg.text}`);
     }
     if (!mimeMsg.text.includes('Follow this link to open it')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
     }
-    new Data(mimeMsg.from.value[0].address).storeSentMessage(mimeMsg);
+    new GoogleData(mimeMsg.from.value[0].address).storeSentMessage(mimeMsg);
   }
 }
 

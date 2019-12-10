@@ -34,13 +34,8 @@ export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBro
       let fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/large.jpg');
       await composePage.waitAndRespondToModal('confirm', 'confirm', 'The files are over 5 MB');
-      // get a trial - log in first
+      // get a trial - already logged in
       const subscribePage = await GmailPageRecipe.getSubscribeDialog(t, gmailPage, browser);
-      const oauthPage = await PageRecipe.waitForModalGetTriggeredPageAfterResponding(acct, t, browser, subscribePage, 'confirm', {
-        contentToCheck: 'Please log in with FlowCrypt to continue', clickOn: 'confirm'
-      });
-      await OauthPageRecipe.google(t, oauthPage, acct, 'login'); // should cause subscribePage to reload
-      // get a trial
       await subscribePage.waitAndClick('@action-get-trial', { delay: 1 });
       await PageRecipe.waitForModalAndRespond(subscribePage, 'info', { contentToCheck: 'Successfully upgraded to FlowCrypt Advanced', clickOn: 'confirm' });
       await gmailPage.waitTillGone('@dialog-subscribe', { timeout: 60 });

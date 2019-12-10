@@ -2,62 +2,78 @@
 
 'use strict';
 
-import { Str, Dict } from './core/common.js';
+import { Dict, Str } from './core/common.js';
 import { Buf } from './core/buf.js';
+import { Store } from './platform/store.js';
 
-export type DomainRule = { flags: ('NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'STRICT_GDPR' | 'ALLOW_CUSTOM_KEYSERVER' | 'ENFORCE_ATTESTER_SUBMIT')[] };
+type DomainRules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'ALLOW_CUSTOM_KEYSERVER' | 'ENFORCE_ATTESTER_SUBMIT';
+export type DomainRules = {
+  flags: DomainRules$flag[],
+  custom_keyserver_url?: string,
+};
 
 export class Rules {
 
-  private static digest = async (domain: string) => {
-    return Buf.fromUint8(new Uint8Array(await crypto.subtle.digest('SHA-1', Buf.fromUtfStr(domain)))).toBase64Str();
-  }
-
-  private other = 'other';
-  private domainHash: string = this.other;
-  private rules: Dict<DomainRule> = {
-    'dFEm3KyalKGTGjpeA/Ar44IPUdE=': { flags: ['NO_PRV_CREATE', 'NO_PRV_BACKUP', 'STRICT_GDPR', 'ENFORCE_ATTESTER_SUBMIT'] }, // n
-    'd3VLGOyz8vfFm/IM/gavrCpkWOw=': { flags: ['NO_PRV_CREATE', 'NO_PRV_BACKUP', 'STRICT_GDPR', 'ENFORCE_ATTESTER_SUBMIT'] }, // v
-    'xKzI/nSDX4g2Wfgih9y0sYIguRU=': { flags: ['NO_PRV_BACKUP', 'ALLOW_CUSTOM_KEYSERVER'] }, // h
-    [this.other]: { flags: [] },
-  };
-
-  public static newInstance = async (email?: string) => {
-    if (email && Str.isEmailValid(email)) {
-      const domain = email.split('@')[1];
-      return new Rules(await Rules.digest(domain));
+  public static newInstance = async (acctEmail: string): Promise<Rules> => {
+    if (!Str.parseEmail(acctEmail).email) {
+      throw new Error(`Not a valid email:${acctEmail}`);
     }
-    return new Rules();
-  }
-
-  private constructor(domainHash?: string) {
-    if (domainHash && Object.keys(this.rules).includes(domainHash)) {
-      this.domainHash = domainHash; // known domain, else initialized to this.other
+    const storage = await Store.getAcct(acctEmail, ['rules']);
+    if (storage.rules) {
+      return new Rules(storage.rules);
+    } else {
+      const legacyHardCoded = await Rules.legacyHardCodedRules(acctEmail);
+      await Store.setAcct(acctEmail, { rules: legacyHardCoded });
+      return new Rules(legacyHardCoded);
     }
   }
 
-  public static relaxSubscriptionRequirements = (emailAddr: string) => {
+  protected constructor(private domainRules: DomainRules) { }
+
+  public static isPublicEmailProviderDomain = (emailAddr: string) => {
     return ['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(emailAddr.split('@')[1] || 'NONE');
   }
 
-  canCreateKeys = () => !this.rules[this.domainHash].flags.includes('NO_PRV_CREATE');
+  canCreateKeys = () => {
+    return !this.domainRules.flags.includes('NO_PRV_CREATE');
+  }
 
-  canBackupKeys = () => !this.rules[this.domainHash].flags.includes('NO_PRV_BACKUP');
+  canBackupKeys = () => {
+    return !this.domainRules.flags.includes('NO_PRV_BACKUP');
+  }
 
-  hasStrictGdpr = () => this.rules[this.domainHash].flags.includes('STRICT_GDPR');
+  mustSubmitToAttester = () => {
+    return this.domainRules.flags.includes('ENFORCE_ATTESTER_SUBMIT');
+  }
 
-  mustSubmitToAttester = () => this.rules[this.domainHash].flags.includes('ENFORCE_ATTESTER_SUBMIT');
+  canUseCustomKeyserver = () => {
+    return this.domainRules.flags.includes('ALLOW_CUSTOM_KEYSERVER');
+  }
 
-  canUseCustomKeyserver = () => this.rules[this.domainHash].flags.includes('ALLOW_CUSTOM_KEYSERVER');
+  getCustomKeyserver = (): string | undefined => {
+    return this.canUseCustomKeyserver() ? this.domainRules.custom_keyserver_url : undefined;
+  }
 
-  /**
-   * temporarily hard coded for one domain until we have appropriate backend service for this
-   */
-  getCustomKeyserver = () => {
-    if (this.domainHash === 'xKzI/nSDX4g2Wfgih9y0sYIguRU=') {
-      return Buf.fromBase64Str('aHR0cHM6Ly9za3MucG9kMDEuZmxlZXRzdHJlZXRvcHMuY29tLw==').toUtfStr();
+  private static legacyHardCodedRules = async (acctEmail: string): Promise<DomainRules> => {
+    const hardCodedRules: Dict<DomainRules> = {
+      'dFEm3KyalKGTGjpeA/Ar44IPUdE=': { // n
+        flags: ['NO_PRV_CREATE', 'NO_PRV_BACKUP', 'ENFORCE_ATTESTER_SUBMIT']
+      },
+      'd3VLGOyz8vfFm/IM/gavrCpkWOw=': { // v
+        flags: ['NO_PRV_CREATE', 'NO_PRV_BACKUP', 'ENFORCE_ATTESTER_SUBMIT']
+      },
+      'xKzI/nSDX4g2Wfgih9y0sYIguRU=': { // h
+        flags: ['NO_PRV_BACKUP', 'ALLOW_CUSTOM_KEYSERVER'],
+        custom_keyserver_url: Buf.fromBase64Str('aHR0cHM6Ly9za3MucG9kMDEuZmxlZXRzdHJlZXRvcHMuY29tLw==').toUtfStr()
+      },
+    };
+    const domain = acctEmail.split('@')[1];
+    const sha1 = Buf.fromUint8(new Uint8Array(await crypto.subtle.digest('SHA-1', Buf.fromUtfStr(domain)))).toBase64Str();
+    const foundHardCoded = hardCodedRules[sha1];
+    if (foundHardCoded) {
+      return foundHardCoded;
     }
-    return undefined;
+    return { flags: [] };
   }
 
 }

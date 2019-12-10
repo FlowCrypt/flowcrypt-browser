@@ -12,7 +12,7 @@ import { TestVariant } from '../../util';
 import { expect } from "chai";
 import { AvaContext } from '..';
 import { Dict } from '../../core/common';
-import { Data } from '../../mock/data';
+import { GoogleData } from '../../mock/google/google-data';
 import * as request from 'fc-node-requests';
 import { PgpMsg } from '../../core/pgp';
 import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
@@ -461,7 +461,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt');
       await ComposePageRecipe.sendAndClose(composePage, msgPwd);
-      const msg = new Data('flowcrypt.compatibility@gmail.com').getMessageBySubject(subject)!;
+      const msg = new GoogleData('flowcrypt.compatibility@gmail.com').getMessageBySubject(subject)!;
       const webDecryptUrl = msg.payload.body!.data!.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]+/g)![0];
       const webDecryptPage = await browser.newPage(t, webDecryptUrl);
       await webDecryptPage.waitAndType('.decrypt_answer', msgPwd);

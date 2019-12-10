@@ -14,7 +14,11 @@ const edit = (filepath: string, editor: (content: string) => string) => {
 const makeMockBuild = (buildType: string) => {
   const mockBuildType = `${buildType}-mock`;
   exec(`cp -r ${buildDir(buildType)} ${buildDir(mockBuildType)}`);
-  const editor = (code: string) => code.replace(/const (GOOGLE_API_HOST|GOOGLE_OAUTH_SCREEN_HOST) = [^;]+;/g, `const $1 = '${MOCK_HOST[buildType]}';`);
+  const editor = (code: string) => {
+    return code
+      .replace(/const (GOOGLE_API_HOST|GOOGLE_CONTACTS_API_HOST|GOOGLE_OAUTH_SCREEN_HOST) = [^;]+;/g, `const $1 = '${MOCK_HOST[buildType]}';`)
+      .replace(/const (BACKEND_API_HOST) = [^;]+;/g, `const $1 = 'http://localhost:8001/api/';`);
+  };
   edit(`${buildDir(mockBuildType)}/js/common/core/const.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/content_scripts/webmail_bundle.js`, editor);
 };
