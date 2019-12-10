@@ -17,7 +17,7 @@ export class SetupRenderModule {
   constructor(private view: SetupView) {
   }
 
-  async renderInitial(): Promise<void> {
+  renderInitial = async (): Promise<void> => {
     $('h1').text('Set Up FlowCrypt');
     $('.email-address').text(this.view.acctEmail);
     $('.back').css('visibility', 'hidden');
@@ -54,7 +54,7 @@ export class SetupRenderModule {
     }
   }
 
-  async renderSetupDone() {
+  renderSetupDone = async () => {
     const storedKeys = await Store.keysGet(this.view.acctEmail);
     if (this.view.fetchedKeyBackupsUniqueLongids.length > storedKeys.length) { // recovery where not all keys were processed: some may have other pass phrase
       this.displayBlock('step_4_more_to_recover');
@@ -69,7 +69,7 @@ export class SetupRenderModule {
     }
   }
 
-  displayBlock(name: string) {
+  displayBlock = (name: string) => {
     const blocks = [
       'loading',
       'step_0_found_key',
@@ -90,7 +90,7 @@ export class SetupRenderModule {
     }
   }
 
-  async renderSetupDialog(): Promise<void> {
+  renderSetupDialog = async (): Promise<void> => {
     let keyserverRes;
     try {
       keyserverRes = await Keyserver.lookupEmail(this.view.acctEmail, this.view.acctEmail);

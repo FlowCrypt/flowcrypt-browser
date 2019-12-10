@@ -32,7 +32,7 @@ View.run(class PassphraseView extends View {
     this.type = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'type', ['embedded', 'sign', 'message', 'draft', 'attachment', 'quote', 'backup']);
   }
 
-  async render() {
+  render = async () => {
     Ui.event.protect();
     await initPassphraseToggle(['passphrase']);
     const allPrivateKeys = await Store.keysGet(this.acctEmail);
@@ -69,7 +69,7 @@ View.run(class PassphraseView extends View {
     }
   }
 
-  setHandlers() {
+  setHandlers = () => {
     $('#passphrase').keyup(this.setHandler(() => this.renderNormalPpPrompt()));
     $('.action_close').click(this.setHandler(() => this.closeDialog()));
     $('.action_ok').click(this.setHandler(() => this.submitHandler()));
@@ -85,25 +85,25 @@ View.run(class PassphraseView extends View {
     }));
   }
 
-  private renderNormalPpPrompt() {
+  private renderNormalPpPrompt = () => {
     $('#passphrase').css('border-color', '');
     $('#passphrase').css('color', 'black');
     $('#passphrase').focus();
   }
 
-  private renderFailedEntryPpPrompt() {
+  private renderFailedEntryPpPrompt = () => {
     $('#passphrase').val('');
     $('#passphrase').css('border-color', 'red');
     $('#passphrase').css('color', 'red');
     $('#passphrase').attr('placeholder', 'Please try again');
   }
 
-  private closeDialog(entered: boolean = false) {
+  private closeDialog = (entered: boolean = false) => {
     BrowserMsg.send.passphraseEntry('broadcast', { entered });
     BrowserMsg.send.closeDialog(this.parentTabId);
   }
 
-  private async submitHandler() {
+  private submitHandler = async () => {
     const pass = String($('#passphrase').val());
     const storageType: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
     let atLeastOneMatched = false;

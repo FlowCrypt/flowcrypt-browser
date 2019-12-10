@@ -11,19 +11,19 @@ export class Catch {
   public static RUNTIME_VERSION = VERSION;
   public static RUNTIME_ENVIRONMENT = 'undetermined';
 
-  public static handleErr(e: any) {
+  public static handleErr = (e: any) => {
     // core errs that are not rethrown are not very interesting
   }
 
-  public static reportErr(err: any) {
+  public static reportErr = (err: any) => {
     // core reports are not very interesting
   }
 
-  public static report(name: string) {
+  public static report = (name: string) => {
     // core reports are not very interesting
   }
 
-  public static version() {
+  public static version = () => {
     return Catch.RUNTIME_VERSION;
   }
 

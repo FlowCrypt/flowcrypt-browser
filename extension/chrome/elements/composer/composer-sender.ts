@@ -13,11 +13,11 @@ import { Catch } from '../../../js/common/platform/catch.js';
 
 export class ComposerSender extends ComposerComponent {
 
-  initActions() {
+  initActions = () => {
     // none
   }
 
-  public getSender(): string {
+  public getSender = (): string => {
     if (this.composer.S.now('input_from').length) {
       return String(this.composer.S.now('input_from').val());
     }
@@ -27,7 +27,7 @@ export class ComposerSender extends ComposerComponent {
     return this.view.acctEmail;
   }
 
-  public async renderSenderAliasesOptionsToggle() {
+  public renderSenderAliasesOptionsToggle = async () => {
     const sendAs = await this.composer.storage.getAddresses();
     if (sendAs && Object.keys(sendAs).length > 1) {
       const showAliasChevronHtml = '<img tabindex="22" id="show_sender_aliases_options" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
@@ -40,7 +40,7 @@ export class ComposerSender extends ComposerComponent {
     }
   }
 
-  public renderSenderAliasesOptions(sendAs: Dict<SendAsAlias>) {
+  public renderSenderAliasesOptions = (sendAs: Dict<SendAsAlias>) => {
     let emailAliases = Object.keys(sendAs);
     const inputAddrContainer = $('.recipients-inputs');
     inputAddrContainer.find('#input_from').remove();
@@ -63,7 +63,7 @@ export class ComposerSender extends ComposerComponent {
     }
   }
 
-  public async checkEmailAliases() {
+  public checkEmailAliases = async () => {
     try {
       const refreshResult = await Settings.refreshAcctAliases(this.view.acctEmail);
       if (refreshResult) {
@@ -86,7 +86,7 @@ export class ComposerSender extends ComposerComponent {
     }
   }
 
-  public async getFooter(): Promise<string | undefined> {
+  public getFooter = async (): Promise<string | undefined> => {
     const addresses = await this.composer.storage.getAddresses();
     const sender = this.getSender();
     return addresses[sender]?.footer || undefined;

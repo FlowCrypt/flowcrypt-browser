@@ -14,7 +14,7 @@ export type DomainRules = {
 
 export class Rules {
 
-  public static async newInstance(acctEmail: string): Promise<Rules> {
+  public static newInstance = async (acctEmail: string): Promise<Rules> => {
     if (!Str.parseEmail(acctEmail).email) {
       throw new Error(`Not a valid email:${acctEmail}`);
     }
@@ -54,7 +54,7 @@ export class Rules {
     return this.canUseCustomKeyserver() ? this.domainRules.custom_keyserver_url : undefined;
   }
 
-  private static async legacyHardCodedRules(acctEmail: string): Promise<DomainRules> {
+  private static legacyHardCodedRules = async (acctEmail: string): Promise<DomainRules> => {
     const hardCodedRules: Dict<DomainRules> = {
       'dFEm3KyalKGTGjpeA/Ar44IPUdE=': { // n
         flags: ['NO_PRV_CREATE', 'NO_PRV_BACKUP', 'ENFORCE_ATTESTER_SUBMIT']

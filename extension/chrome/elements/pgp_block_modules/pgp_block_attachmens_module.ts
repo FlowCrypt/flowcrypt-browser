@@ -19,7 +19,7 @@ export class PgpBlockViewAttachmentsModule {
   constructor(private view: PgpBlockView) {
   }
 
-  private async decryptAndSaveAttToDownloads(encrypted: Att, renderIn: JQuery<HTMLElement>) {
+  private decryptAndSaveAttToDownloads = async (encrypted: Att, renderIn: JQuery<HTMLElement>) => {
     const kisWithPp = await Store.keysGetAllWithPp(this.view.acctEmail);
     const decrypted = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData: encrypted.getData(), msgPwd: await this.view.pwdEncryptedMsgModule.getDecryptPwd() });
     if (decrypted.success) {
@@ -35,7 +35,7 @@ export class PgpBlockViewAttachmentsModule {
     }
   }
 
-  private renderProgress(element: JQuery<HTMLElement>, percent: number | undefined, received: number | undefined, size: number) {
+  private renderProgress = (element: JQuery<HTMLElement>, percent: number | undefined, received: number | undefined, size: number) => {
     if (percent) {
       element.text(percent + '%');
     } else if (size && received) {
@@ -43,7 +43,7 @@ export class PgpBlockViewAttachmentsModule {
     }
   }
 
-  public renderInnerAtts(atts: Att[]) {
+  public renderInnerAtts = (atts: Att[]) => {
     Xss.sanitizeAppend('#pgp_block', '<div id="attachments"></div>');
     this.includedAtts = atts;
     for (const i of atts.keys()) {

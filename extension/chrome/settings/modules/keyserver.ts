@@ -30,7 +30,7 @@ View.run(class KeyserverView extends View {
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   }
 
-  async render() {
+  render = async () => {
     $('.email-address').text(this.acctEmail);
     Xss.sanitizeRender('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
     (async () => {
@@ -62,14 +62,14 @@ View.run(class KeyserverView extends View {
     }
   }
 
-  setHandlers() {
+  setHandlers = () => {
     $('.action_submit_key').click(this.setHandlerPrevent('double', this.submitPublicKeyHandler));
     $('.action_replace_pubkey').click(this.setHandlerPrevent('double', this.replacePublicKeyHandler));
   }
 
   // -- PRIVATE
 
-  private async submitPublicKeyHandler(target: HTMLElement) {
+  private submitPublicKeyHandler = async (target: HTMLElement) => {
     Xss.sanitizeRender(target, Ui.spinner('white'));
     const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
@@ -85,7 +85,7 @@ View.run(class KeyserverView extends View {
     }
   }
 
-  private async replacePublicKeyHandler(target: HTMLElement) {
+  private replacePublicKeyHandler = async (target: HTMLElement) => {
     Xss.sanitizeRender(target, Ui.spinner('white'));
     const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
@@ -102,7 +102,7 @@ View.run(class KeyserverView extends View {
     }
   }
 
-  private async diagnoseKeyserverPubkeys(): Promise<AttesterKeyserverDiagnosis> {
+  private diagnoseKeyserverPubkeys = async (): Promise<AttesterKeyserverDiagnosis> => {
     const diagnosis: AttesterKeyserverDiagnosis = { hasPubkeyMissing: false, hasPubkeyMismatch: false, results: {} };
     const { sendAs } = await Store.getAcct(this.acctEmail, ['sendAs']);
     const storedKeys = await Store.keysGet(this.acctEmail);

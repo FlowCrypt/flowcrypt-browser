@@ -48,7 +48,7 @@ View.run(class BackupView extends View {
     this.gmail = new Gmail(this.acctEmail);
   }
 
-  async render() {
+  render = async () => {
     const storage = await Store.getAcct(this.acctEmail, ['setup_simple', 'email_provider']);
     this.emailProvider = storage.email_provider || 'gmail';
     const rules = await Rules.newInstance(this.acctEmail);
@@ -73,7 +73,7 @@ View.run(class BackupView extends View {
     }
   }
 
-  setHandlers() {
+  setHandlers = () => {
     $('.action_password').click(this.setHandler(el => this.actionEnterPassPhraseHandler(el)));
     $('.action_reset_password').click(this.setHandler(el => this.actionResetPassPhraseEntryHandler()));
     $('.action_backup').click(this.setHandlerPrevent('double', el => this.actionBackupHandler(el)));
@@ -90,7 +90,7 @@ View.run(class BackupView extends View {
 
   // --- PRIVATE
 
-  private async renderSetupAction(setupSimple: boolean | undefined) {
+  private renderSetupAction = async (setupSimple: boolean | undefined) => {
     $('.back').css('display', 'none');
     $('.action_skip_backup').parent().css('display', 'none');
     if (setupSimple) {
@@ -105,7 +105,7 @@ View.run(class BackupView extends View {
     }
   }
 
-  private async renderChangedPassPhraseGmailBackup(setupSimple: boolean | undefined) {
+  private renderChangedPassPhraseGmailBackup = async (setupSimple: boolean | undefined) => {
     if (setupSimple) {
       this.displayBlock('loading');
       const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
@@ -129,22 +129,22 @@ View.run(class BackupView extends View {
     }
   }
 
-  private async actionAuthReconnectHandler() {
+  private actionAuthReconnectHandler = async () => {
     await GoogleAuth.newAuthPopup({ acctEmail: this.acctEmail });
     window.location.reload();
   }
 
-  private async actionProceedDefaultBackupChoice() {
+  private actionProceedDefaultBackupChoice = async () => {
     this.displayBlock('step_1_password');
     $('h1').text('Set Backup Pass Phrase');
   }
 
-  private async actionShowManualBackupHandler() {
+  private actionShowManualBackupHandler = async () => {
     this.displayBlock('step_3_manual');
     $('h1').text('Back up your private key');
   }
 
-  private async actionEnterPassPhraseHandler(target: HTMLElement) {
+  private actionEnterPassPhraseHandler = async (target: HTMLElement) => {
     if ($(target).hasClass('green')) {
       this.displayBlock('step_2_confirm');
     } else {
@@ -152,14 +152,14 @@ View.run(class BackupView extends View {
     }
   }
 
-  private async actionResetPassPhraseEntryHandler() {
+  private actionResetPassPhraseEntryHandler = async () => {
     $('#password').val('').keyup();
     $('#password2').val('');
     this.displayBlock('step_1_password');
     $('#password').focus();
   }
 
-  private async actionBackupHandler(target: HTMLElement) {
+  private actionBackupHandler = async (target: HTMLElement) => {
     const newPassphrase = String($('#password').val());
     if (newPassphrase !== $('#password2').val()) {
       await Ui.modal.warning('The two pass phrases do not match, please try again.');
@@ -193,7 +193,7 @@ View.run(class BackupView extends View {
     }
   }
 
-  private async actionManualBackupHandler() {
+  private actionManualBackupHandler = async () => {
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
     const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
@@ -212,7 +212,7 @@ View.run(class BackupView extends View {
     }
   }
 
-  private async actionSkipBackupHandler() {
+  private actionSkipBackupHandler = async () => {
     if (this.action === 'setup') {
       await Store.setAcct(this.acctEmail, { key_backup_prompt: false });
       window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: this.acctEmail });
@@ -225,7 +225,7 @@ View.run(class BackupView extends View {
     }
   }
 
-  private actionSelectBackupMethodHandler(target: HTMLElement) {
+  private actionSelectBackupMethodHandler = (target: HTMLElement) => {
     if ($(target).val() === 'inbox') {
       $('.action_manual_backup').text('back up as email');
       $('.action_manual_backup').removeClass('red').addClass('green');
@@ -241,14 +241,14 @@ View.run(class BackupView extends View {
     }
   }
 
-  private displayBlock(name: string) {
+  private displayBlock = (name: string) => {
     for (const block of this.blocks) {
       $('#' + block).css('display', 'none');
     }
     $('#' + name).css('display', 'block');
   }
 
-  private async checkAndRenderBackupStatus() {
+  private checkAndRenderBackupStatus = async () => {
     const storage = await Store.getAcct(this.acctEmail, ['setup_simple', 'key_backup_method', 'email_provider']);
     const scopes = await Store.getScopes(this.acctEmail);
     if (this.emailProvider === 'gmail' && (scopes.read || scopes.modify)) {
@@ -304,7 +304,7 @@ View.run(class BackupView extends View {
     }
   }
 
-  private async isMasterPrivateKeyEncrypted(ki: KeyInfo) {
+  private isMasterPrivateKeyEncrypted = async (ki: KeyInfo) => {
     const { keys: [prv] } = await openpgp.key.readArmored(ki.private);
     if (await Pgp.key.decrypt(prv, '', undefined, 'OK-IF-ALREADY-DECRYPTED') === true) {
       return false;
@@ -312,11 +312,11 @@ View.run(class BackupView extends View {
     return prv.isFullyEncrypted();
   }
 
-  private asBackupFile(armoredKey: string) {
+  private asBackupFile = (armoredKey: string) => {
     return new Att({ name: `flowcrypt-backup-${this.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'text/plain', data: Buf.fromUtfStr(armoredKey) });
   }
 
-  private async doBackupOnEmailProvider(armoredKey: string) {
+  private doBackupOnEmailProvider = async (armoredKey: string) => {
     const emailMsg = String(await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' }));
     const emailAtts = [this.asBackupFile(armoredKey)];
     const msg = await this.gmail.createMsgObj(this.acctEmail, { to: [this.acctEmail] }, GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
@@ -327,7 +327,7 @@ View.run(class BackupView extends View {
     }
   }
 
-  private async backupOnEmailProviderAndUpdateUi(primaryKi: KeyInfo) {
+  private backupOnEmailProviderAndUpdateUi = async (primaryKi: KeyInfo) => {
     const pp = await Store.passphraseGet(this.acctEmail, primaryKi.longid);
     if (!this.parentTabId) {
       await Ui.modal.error(`Missing parentTabId. Please restart your browser and try again.`);
@@ -364,7 +364,7 @@ View.run(class BackupView extends View {
     await this.writeBackupDoneAndRender(false, 'inbox');
   }
 
-  private async backupAsFile(primaryKi: KeyInfo) { // todo - add a non-encrypted download option
+  private backupAsFile = async (primaryKi: KeyInfo) => { // todo - add a non-encrypted download option
     const attachment = this.asBackupFile(primaryKi.private);
     if (Catch.browser().name !== 'firefox') {
       Browser.saveToDownloads(attachment);
@@ -374,15 +374,15 @@ View.run(class BackupView extends View {
     }
   }
 
-  private async backupByBrint(primaryKi: KeyInfo) { // todo - implement + add a non-encrypted print option
+  private backupByBrint = async (primaryKi: KeyInfo) => { // todo - implement + add a non-encrypted print option
     throw new Error('not implemented');
   }
 
-  private async backupRefused(ki: KeyInfo) {
+  private backupRefused = async (ki: KeyInfo) => {
     await this.writeBackupDoneAndRender(Value.int.getFutureTimestampInMonths(3), 'none');
   }
 
-  private async writeBackupDoneAndRender(prompt: number | false, method: KeyBackupMethod) {
+  private writeBackupDoneAndRender = async (prompt: number | false, method: KeyBackupMethod) => {
     await Store.setAcct(this.acctEmail, { key_backup_prompt: prompt, key_backup_method: method });
     if (this.action === 'setup') {
       window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: this.acctEmail, action: 'finalize' });
@@ -391,7 +391,7 @@ View.run(class BackupView extends View {
     }
   }
 
-  private async isPassPhraseStrongEnough(ki: KeyInfo, passphrase: string) {
+  private isPassPhraseStrongEnough = async (ki: KeyInfo, passphrase: string) => {
     const prv = await Pgp.key.read(ki.private);
     if (!prv.isFullyEncrypted()) {
       return false;
@@ -414,7 +414,7 @@ View.run(class BackupView extends View {
     return false;
   }
 
-  private async setupCreateSimpleAutomaticInboxBackup() {
+  private setupCreateSimpleAutomaticInboxBackup = async () => {
     const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
     if (!(await Pgp.key.read(primaryKi.private)).isFullyEncrypted()) {
       await Ui.modal.warning('Key not protected with a pass phrase, skipping');

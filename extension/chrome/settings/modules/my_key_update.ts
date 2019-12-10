@@ -32,7 +32,7 @@ View.run(class MyKeyUpdateView extends View {
     this.showKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
   }
 
-  async render() {
+  render = async () => {
     [this.primaryKi] = await Store.keysGet(this.acctEmail, [this.longid]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     $('.action_show_public_key').attr('href', this.showKeyUrl);
@@ -41,12 +41,12 @@ View.run(class MyKeyUpdateView extends View {
     this.inputPrivateKey.attr('placeholder', this.inputPrivateKey.attr('placeholder') + ' (' + this.primaryKi.longid + ')');
   }
 
-  setHandlers() {
+  setHandlers = () => {
     $('.action_update_private_key').click(this.setHandlerPrevent('double', () => this.updatePrivateKeyHandler()));
     $('.input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_update_private_key'));
   }
 
-  private async storeUpdatedKeyAndPassphrase(updatedPrv: OpenPGP.key.Key, updatedPrvPassphrase: string) {
+  private storeUpdatedKeyAndPassphrase = async (updatedPrv: OpenPGP.key.Key, updatedPrvPassphrase: string) => {
     const storedPassphrase = await Store.passphraseGet(this.acctEmail, this.primaryKi!.longid, true);
     await Store.keysAdd(this.acctEmail, updatedPrv.armor());
     await Store.passphraseSave('local', this.acctEmail, this.primaryKi!.longid, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
@@ -64,7 +64,7 @@ View.run(class MyKeyUpdateView extends View {
     window.location.href = this.showKeyUrl;
   }
 
-  private async updatePrivateKeyHandler() {
+  private updatePrivateKeyHandler = async () => {
     const { keys: [uddatedKey] } = await openpgp.key.readArmored(String(this.inputPrivateKey.val()));
     const { keys: [uddatedKeyEncrypted] } = await openpgp.key.readArmored(String(this.inputPrivateKey.val()));
     const uddatedKeyPassphrase = String($('.input_passphrase').val());

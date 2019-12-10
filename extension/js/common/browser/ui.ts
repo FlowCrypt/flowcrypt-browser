@@ -23,17 +23,21 @@ export class Ui {
   public static EVENT_SLOW_SPREE_MS = 200;
   public static EVENT_VERY_SLOW_SPREE_MS = 500;
 
-  public static retryLink = (caption: string = 'retry') => `<a href="${Xss.escape(window.location.href)}" data-test="action-retry-by-reloading">${Xss.escape(caption)}</a>`;
+  public static retryLink = (caption: string = 'retry') => {
+    return `<a href="${Xss.escape(window.location.href)}" data-test="action-retry-by-reloading">${Xss.escape(caption)}</a>`;
+  }
 
-  public static delay = (ms: number) => new Promise(resolve => Catch.setHandledTimeout(resolve, ms));
+  public static delay = (ms: number) => {
+    return new Promise(resolve => Catch.setHandledTimeout(resolve, ms));
+  }
 
-  public static spinner(color: string, placeholderCls: "small_spinner" | "large_spinner" = 'small_spinner') {
+  public static spinner = (color: string, placeholderCls: "small_spinner" | "large_spinner" = 'small_spinner') => {
     const path = `/img/svgs/spinner-${color}-small.svg`;
     const url = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL ? chrome.runtime.getURL(path) : path;
     return `<i class="${placeholderCls}" data-test="spinner"><img src="${url}" /></i>`;
   }
 
-  public static renderOverlayPromptAwaitUserChoice(btns: Dict<{ title?: string, color?: string }>, prompt: string, details?: string): Promise<string> {
+  public static renderOverlayPromptAwaitUserChoice = (btns: Dict<{ title?: string, color?: string }>, prompt: string, details?: string): Promise<string> => {
     return new Promise(resolve => {
       const getEscapedColor = (id: string) => Xss.escape(btns[id].color || 'green');
       const getEscapedTitle = (id: string) => Xss.escape(btns[id].title || id.replace(/_/g, ' '));
@@ -70,7 +74,7 @@ export class Ui {
     });
   }
 
-  public static escape(callback: () => void) {
+  public static escape = (callback: () => void) => {
     return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
       if (!e.metaKey && !e.ctrlKey && e.key === 'Escape') {
         callback();
@@ -78,7 +82,7 @@ export class Ui {
     };
   }
 
-  public static tab(callback: (e: JQuery.Event<HTMLElement>) => void) {
+  public static tab = (callback: (e: JQuery.Event<HTMLElement>) => void) => {
     return (e: JQuery.Event<HTMLElement>) => { // returns a function
       if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.key === 'Tab') {
         callback(e);
@@ -86,7 +90,7 @@ export class Ui {
     };
   }
 
-  public static shiftTab(callback: (e: JQuery.Event<HTMLElement>) => void) {
+  public static shiftTab = (callback: (e: JQuery.Event<HTMLElement>) => void) => {
     return (e: JQuery.Event<HTMLElement>) => { // returns a function
       if (!e.metaKey && !e.ctrlKey && e.shiftKey && e.key === 'Tab') {
         callback(e);
@@ -94,7 +98,7 @@ export class Ui {
     };
   }
 
-  public static enter(callback: () => void) {
+  public static enter = (callback: () => void) => {
     return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
       if (!e.metaKey && !e.ctrlKey && e.key === 'Enter') {
         callback();
@@ -102,7 +106,7 @@ export class Ui {
     };
   }
 
-  public static ctrlEnter(callback: () => void) {
+  public static ctrlEnter = (callback: () => void) => {
     return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
         callback();
@@ -110,11 +114,11 @@ export class Ui {
     };
   }
 
-  public static setTestState(state: 'ready' | 'working' | 'waiting') {
+  public static setTestState = (state: 'ready' | 'working' | 'waiting') => {
     $('body').attr('data-test-state', state); // for automated tests
   }
 
-  public static buildJquerySels(sels: Dict<string>): SelCache {
+  public static buildJquerySels = (sels: Dict<string>): SelCache => {
     const cache: NamedSels = {};
     return {
       cached: (name: string) => {
@@ -141,7 +145,7 @@ export class Ui {
     };
   }
 
-  public static scroll(sel: string | JQuery<HTMLElement>, repeat: number[] = []) {
+  public static scroll = (sel: string | JQuery<HTMLElement>, repeat: number[] = []) => {
     const el = $(sel as string).first()[0]; // as string due to JQuery TS quirk. Do not convert to String() as this may actually be JQuery<HTMLElement>
     if (el) {
       el.scrollIntoView();
@@ -174,7 +178,7 @@ export class Ui {
       return function uiEventHandle(this: HTMLElement, event: JQuery.Event<HTMLElement, null>) {
         try {
           const r = cb.bind(originalThis)(this, event) as void | Promise<void>; // tslint:disable-line:no-unsafe-any
-          if (typeof r === 'object' && typeof r.catch === 'function') {
+          if (typeof r === 'object' && typeof r.catch === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
             r.catch(e => Ui.event._dispatchErr(e, errHandlers));
           }
         } catch (e) {
@@ -207,7 +211,7 @@ export class Ui {
       const cbWithErrsHandled = (el: HTMLElement) => {
         try {
           const r = cb.bind(originalThis)(el, cbResetTimer) as void | Promise<void>; // tslint:disable-line:no-unsafe-any
-          if (typeof r === 'object' && typeof r.catch === 'function') {
+          if (typeof r === 'object' && typeof r.catch === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
             r.catch(e => Ui.event._dispatchErr(e, errHandler));
           }
         } catch (e) {
@@ -263,7 +267,9 @@ export class Ui {
     sleep: (ms: number, setCustomTimeout: (code: () => void, t: number) => void = Catch.setHandledTimeout) => new Promise(resolve => setCustomTimeout(resolve, ms)),
   };
 
-  public static e = (name: string, attrs: Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
+  public static e(name: string, attrs: Dict<string>) {
+    return $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
+  }
 
   public static modal = {
     info: async (text: string): Promise<void> => {
@@ -340,7 +346,7 @@ export class Ui {
     },
   };
 
-  public static async toast(msg: string, seconds = 2): Promise<void> {
+  public static toast = async (msg: string, seconds = 2): Promise<void> => {
     await Swal.fire({
       toast: true,
       title: msg,

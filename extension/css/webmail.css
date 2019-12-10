@@ -66,6 +66,7 @@ body.cryptup_gmail .inserted div.reply_message_button {
   opacity: 0.75;
   margin-left: 18px;
   margin-right: 8px;
+  height: auto;
 }
 body.cryptup_gmail.firefox .inserted div.reply_message_button { padding-top: 16px; } /* else buttons misaligned vertically on FF */
 body.cryptup_gmail .inserted div.reply_message_button:hover {

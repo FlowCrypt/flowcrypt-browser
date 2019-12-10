@@ -33,7 +33,7 @@ export class GoogleData {
     }
   }
 
-  public storeSentMessage(parsedMail: ParsedMail): string {
+  public storeSentMessage = (parsedMail: ParsedMail): string => {
     const barebonesGmailMsg: GmailMsg = { // todo - could be improved - very barebones
       id: `msg_id_${Util.lousyRandom()}`,
       threadId: null, // tslint:disable-line:no-null-keyword
@@ -48,11 +48,11 @@ export class GoogleData {
     return barebonesGmailMsg.id;
   }
 
-  public getMessage(id: string): GmailMsg | undefined {
+  public getMessage = (id: string): GmailMsg | undefined => {
     return DATA[this.acct].messages.find(m => m.id === id);
   }
 
-  public getMessageBySubject(subject: string): GmailMsg | undefined {
+  public getMessageBySubject = (subject: string): GmailMsg | undefined => {
     return DATA[this.acct].messages.find(m => {
       if (m.payload.headers) {
         const subjectHeader = m.payload.headers.find(x => x.name === 'Subject');
@@ -64,11 +64,11 @@ export class GoogleData {
     });
   }
 
-  public getMessagesByThread(threadId: string) {
+  public getMessagesByThread = (threadId: string) => {
     return DATA[this.acct].messages.filter(m => m.threadId === threadId);
   }
 
-  public searchMessages(q: string) {
+  public searchMessages = (q: string) => {
     const subject = (q.match(/subject:"([^"]+)"/) || [])[1];
     if (subject) {
       // if any subject query found, all else is ignored
@@ -89,12 +89,12 @@ export class GoogleData {
     return [];
   }
 
-  private searchMessagesBySubject(subject: string) {
+  private searchMessagesBySubject = (subject: string) => {
     subject = subject.trim().toLowerCase();
     return DATA[this.acct].messages.filter(m => GoogleData.msgSubject(m).toLowerCase().includes(subject));
   }
 
-  private searchMessagesByPeople(includePeople: string[], excludePeople: string[]) {
+  private searchMessagesByPeople = (includePeople: string[], excludePeople: string[]) => {
     includePeople = includePeople.map(person => person.trim().toLowerCase());
     excludePeople = excludePeople.map(person => person.trim().toLowerCase());
     return DATA[this.acct].messages.filter(m => {
@@ -125,19 +125,19 @@ export class GoogleData {
     });
   }
 
-  public getDraft(id: string): GmailDraft | undefined {
+  public getDraft = (id: string): GmailDraft | undefined => {
     return DATA[this.acct].drafts.find(d => d.id === id);
   }
 
-  public getAttachment(attachmentId: string) {
+  public getAttachment = (attachmentId: string) => {
     return DATA[this.acct].attachments[attachmentId];
   }
 
-  public getLabels() {
+  public getLabels = () => {
     return DATA[this.acct].labels;
   }
 
-  public getThreads() {
+  public getThreads = () => {
     const threads: GmailThread[] = [];
     for (const thread of DATA[this.acct].messages.map(m => ({ historyId: m.historyId, id: m.threadId!, snippet: `MOCK SNIPPET: ${GoogleData.msgSubject(m)}` }))) {
       if (!threads.map(t => t.id).includes(thread.id)) {
@@ -147,16 +147,16 @@ export class GoogleData {
     return threads;
   }
 
-  private static msgSubject(m: GmailMsg): string {
+  private static msgSubject = (m: GmailMsg): string => {
     const subjectHeader = m.payload && m.payload.headers && m.payload.headers.find(h => h.name === 'Subject');
     return (subjectHeader && subjectHeader.value) || '(no subject)';
   }
 
-  private static msgPeople(m: GmailMsg): string {
+  private static msgPeople = (m: GmailMsg): string => {
     return String(m.payload && m.payload.headers && m.payload.headers.filter(h => h.name === 'To' || h.name === 'From').map(h => h.value!).filter(h => !!h).join(','));
   }
 
-  public static fmtMsg(m: GmailMsg, format: 'raw' | 'full' | 'metadata' | string) {
+  public static fmtMsg = (m: GmailMsg, format: 'raw' | 'full' | 'metadata' | string) => {
     format = format || 'full';
     if (!['raw', 'full', 'metadata'].includes(format)) {
       throw new Error(`Unknown format: ${format}`);

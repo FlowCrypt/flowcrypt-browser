@@ -29,7 +29,7 @@ View.run(class SecurityView extends View {
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   }
 
-  async render() {
+  render = async () => {
     await initPassphraseToggle(['passphrase_entry']);
     [this.primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
@@ -41,14 +41,14 @@ View.run(class SecurityView extends View {
     await this.loadAndRenderPwdEncryptedMsgSettings();
   }
 
-  setHandlers() {
+  setHandlers = () => {
     $('.action_change_passphrase').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm')));
     $('.action_test_passphrase').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/test_passphrase.htm')));
     $('#hide_message_password').change(this.setHandler((el) => this.hideMsgPasswordHandler(el)));
     $('.password_message_language').change(this.setHandler(() => this.onMsgLanguageUserChange()));
   }
 
-  private async renderPassPhraseOptionsIfStoredPermanently() {
+  private renderPassPhraseOptionsIfStoredPermanently = async () => {
     const keys = await Store.keysGet(this.acctEmail);
     if (await this.isAnyPassPhraseStoredPermanently(keys)) {
       $('.forget_passphrase').css('display', '');
@@ -74,7 +74,7 @@ View.run(class SecurityView extends View {
     }
   }
 
-  private async loadAndRenderPwdEncryptedMsgSettings() {
+  private loadAndRenderPwdEncryptedMsgSettings = async () => {
     const subscription = await Store.subscription(this.acctEmail);
     if (subscription.active) {
       Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
@@ -100,14 +100,14 @@ View.run(class SecurityView extends View {
     }
   }
 
-  private async onDefaultExpireUserChange() {
+  private onDefaultExpireUserChange = async () => {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
     await Backend.accountUpdate(this.authInfo!, { default_message_expire: Number($('.default_message_expire').val()) });
     window.location.reload();
   }
 
-  private async onMsgLanguageUserChange() {
+  private onMsgLanguageUserChange = async () => {
     const outgoingLanguage = String($('.password_message_language').val());
     if (['EN', 'DE'].includes(outgoingLanguage)) {
       await Store.setAcct(this.acctEmail, { outgoing_language: outgoingLanguage as 'DE' | 'EN' });
@@ -115,12 +115,12 @@ View.run(class SecurityView extends View {
     }
   }
 
-  private async hideMsgPasswordHandler(checkbox: HTMLElement) {
+  private hideMsgPasswordHandler = async (checkbox: HTMLElement) => {
     await Store.setAcct(this.acctEmail, { hide_message_password: $(checkbox).is(':checked') });
     window.location.reload();
   }
 
-  private async isAnyPassPhraseStoredPermanently(keys: KeyInfo[]) {
+  private isAnyPassPhraseStoredPermanently = async (keys: KeyInfo[]) => {
     for (const key of keys) {
       if (await Store.passphraseGet(this.acctEmail, key.longid, true)) {
         return true;

@@ -51,7 +51,7 @@ View.run(class SettingsView extends View {
     }
   }
 
-  async render() {
+  render = async () => {
     $('#status-row #status_v').text(`v:${VERSION}`);
     for (const webmailLName of await Env.webmails()) {
       $('.signin_button.' + webmailLName).css('display', 'inline-block');
@@ -68,7 +68,7 @@ View.run(class SettingsView extends View {
     Ui.setTestState('ready');
   }
 
-  setHandlers() {
+  setHandlers = () => {
     BrowserMsg.addListener('open_page', async ({ page, addUrlText }: Bm.OpenPage) => {
       Settings.renderSubPage(this.acctEmail, this.tabId!, page, addUrlText);
     });
@@ -152,7 +152,7 @@ View.run(class SettingsView extends View {
     $('#status-row #status_local_store').click(this.setHandler(() => Settings.renderSubPage(this.acctEmail!, this.tabId!, 'modules/debug_api.htm', { which: 'local_store' })));
   }
 
-  private displayOrig(selector: string) {
+  private displayOrig = (selector: string) => {
     const filterable = $(selector);
     filterable.filter('a, b, i, img, span, input, label, select').css('display', 'inline-block');
     filterable.filter('table').css('display', 'table');
@@ -161,7 +161,7 @@ View.run(class SettingsView extends View {
     filterable.not('a, b, i, img, span, input, label, select, table, tr, td').css('display', 'block');
   }
 
-  private async initialize() {
+  private initialize = async () => {
     if (this.addNewAcct) {
       $('.show_if_setup_not_done').css('display', 'initial');
       $('.hide_if_setup_not_done').css('display', 'none');
@@ -217,7 +217,7 @@ View.run(class SettingsView extends View {
     }).catch(e => Api.err.isSignificant(e) ? Catch.reportErr(e) : undefined);
   }
 
-  private async checkFcAcctAndSubscriptionAndContactPage() {
+  private checkFcAcctAndSubscriptionAndContactPage = async () => {
     const statusContainer = $('.public_profile_indicator_container');
     try {
       await this.renderSubscriptionStatusHeader(this.acctEmail!);
@@ -257,7 +257,7 @@ View.run(class SettingsView extends View {
     statusContainer.css('visibility', 'visible');
   }
 
-  private async resolveChangedGoogleAcct(newAcctEmail: string) {
+  private resolveChangedGoogleAcct = async (newAcctEmail: string) => {
     try {
       await Settings.refreshAcctAliases(this.acctEmail!);
       await Settings.acctStorageChangeEmail(this.acctEmail!, newAcctEmail);
@@ -277,7 +277,7 @@ View.run(class SettingsView extends View {
     }
   }
 
-  private async checkGoogleAcct() {
+  private checkGoogleAcct = async () => {
     try {
       const { sendAs } = await this.gmail!.fetchAcctAliases();
       const primary = sendAs.find(addr => addr.isPrimary === true);
@@ -314,7 +314,7 @@ View.run(class SettingsView extends View {
     }
   }
 
-  private async renderSubscriptionStatusHeader(acctEmail: string) {
+  private renderSubscriptionStatusHeader = async (acctEmail: string) => {
     let liveness = '';
     try {
       await Backend.getSubscriptionWithoutLogin(acctEmail);
@@ -353,7 +353,7 @@ View.run(class SettingsView extends View {
     }
   }
 
-  private async addKeyRowsHtml(privateKeys: KeyInfo[]) {
+  private addKeyRowsHtml = async (privateKeys: KeyInfo[]) => {
     let html = '';
     for (let i = 0; i < privateKeys.length; i++) {
       const ki = privateKeys[i];
@@ -382,7 +382,7 @@ View.run(class SettingsView extends View {
     }));
   }
 
-  private reload(advanced = false) {
+  private reload = (advanced = false) => {
     if (advanced) {
       window.location.href = Url.create('/chrome/settings/index.htm', { acctEmail: this.acctEmail, advanced: true });
     } else {

@@ -40,7 +40,7 @@ View.run(class ContactsView extends View {
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   }
 
-  async render() {
+  render = async () => {
     const tabId = await BrowserMsg.requiredTabId();
     BrowserMsg.listen(tabId); // set_css
     this.factory = new XssSafeFactory(this.acctEmail, tabId, undefined, undefined, { compact: true });
@@ -51,7 +51,7 @@ View.run(class ContactsView extends View {
     await this.loadAndRenderContactList();
   }
 
-  setHandlers() {
+  setHandlers = () => {
     $('a.action_show').off().click(this.setHandlerPrevent('double', this.actionRenderViewPublicKeyHandler));
     $('a.action_change').off().click(this.setHandlerPrevent('double', this.actionRenderChangePublicKeyHandler));
     $('#edit_contact .action_save_edited_pubkey').off().click(this.setHandlerPrevent('double', this.actionSaveEditedPublicKeyHandler));
@@ -63,7 +63,7 @@ View.run(class ContactsView extends View {
 
   // --- PRIVATE
 
-  private async loadAndRenderContactList() {
+  private loadAndRenderContactList = async () => {
     this.contacts = await Store.dbContactSearch(undefined, { has_pgp: true });
     let lineActionsHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
       '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;';
@@ -90,7 +90,7 @@ View.run(class ContactsView extends View {
     this.setHandlers();
   }
 
-  private async fileAddedHandler(file: Att) {
+  private fileAddedHandler = async (file: Att) => {
     this.attUI.clearAllAtts();
     const { keys, errs } = await Pgp.key.readMany(file.getData());
     if (keys.length) {
@@ -105,13 +105,13 @@ View.run(class ContactsView extends View {
     }
   }
 
-  private actionExportAllKeysHandler() {
+  private actionExportAllKeysHandler = () => {
     const allArmoredPublicKeys = this.contacts.map(c => (c.pubkey || '').trim()).join('\n');
     const exportFile = new Att({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: Buf.fromUtfStr(allArmoredPublicKeys) });
     Browser.saveToDownloads(exportFile, Catch.browser().name === 'firefox' ? $('.line.actions') : undefined);
   }
 
-  private async actionRenderViewPublicKeyHandler(viewPubkeyButton: HTMLElement) {
+  private actionRenderViewPublicKeyHandler = async (viewPubkeyButton: HTMLElement) => {
     const [contact] = await Store.dbContactGet(undefined, [$(viewPubkeyButton).closest('tr').attr('email')!]); // defined above
     $('.hide_when_rendering_subpage').css('display', 'none');
     Xss.sanitizeRender('h1', `${this.backBtn}${this.space}${contact!.email}`); // should exist - from list of contacts
@@ -127,7 +127,7 @@ View.run(class ContactsView extends View {
     $('#page_back_button').click(this.setHandler(el => this.loadAndRenderContactList()));
   }
 
-  private actionRenderChangePublicKeyHandler(changePubkeyButton: HTMLElement) {
+  private actionRenderChangePublicKeyHandler = (changePubkeyButton: HTMLElement) => {
     $('.hide_when_rendering_subpage').css('display', 'none');
     const email = $(changePubkeyButton).closest('tr').attr('email')!;
     Xss.sanitizeRender('h1', `${this.backBtn}${this.space}${Xss.escape(email)}${this.space}(edit)`);
@@ -136,7 +136,7 @@ View.run(class ContactsView extends View {
     $('#page_back_button').click(this.setHandler(el => this.loadAndRenderContactList()));
   }
 
-  private async actionSaveEditedPublicKeyHandler() {
+  private actionSaveEditedPublicKeyHandler = async () => {
     const armoredPubkey = String($('#edit_contact .input_pubkey').val());
     const email = $('#edit_contact .input_pubkey').attr('email');
     if (!armoredPubkey || !email) {
@@ -152,12 +152,12 @@ View.run(class ContactsView extends View {
     }
   }
 
-  private async actionRemovePublicKey(rmPubkeyButton: HTMLElement) {
+  private actionRemovePublicKey = async (rmPubkeyButton: HTMLElement) => {
     await Store.dbContactSave(undefined, await Store.dbContactObj({ email: $(rmPubkeyButton).closest('tr').attr('email')! }));
     await this.loadAndRenderContactList();
   }
 
-  private actionRenderBulkImportPageHandler() {
+  private actionRenderBulkImportPageHandler = () => {
     $('.hide_when_rendering_subpage').css('display', 'none');
     Xss.sanitizeRender('h1', `${this.backBtn}${this.space}Bulk Public Key Import${this.space}`);
     $('#bulk_import').css('display', 'block');
@@ -169,7 +169,7 @@ View.run(class ContactsView extends View {
     $('#page_back_button').click(this.setHandler(el => this.loadAndRenderContactList()));
   }
 
-  private async actionProcessBulkImportTextInput() {
+  private actionProcessBulkImportTextInput = async () => {
     try {
       const value = Str.normalize(String($('#bulk_import .input_pubkey').val())).trim();
       if (!value) {

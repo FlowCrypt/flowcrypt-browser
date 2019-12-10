@@ -26,7 +26,7 @@ View.run(class TestPassphrase extends View {
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   }
 
-  async render() {
+  render = async () => {
     const [keyInfo] = await Store.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(keyInfo);
     await initPassphraseToggle(['password']);
@@ -38,13 +38,13 @@ View.run(class TestPassphrase extends View {
     }
   }
 
-  setHandlers() {
+  setHandlers = () => {
     $('.action_verify').click(this.setHandler(() => this.verifyHandler()));
     $('#password').keydown(this.setEnterHandlerThatClicks('.action_verify'));
     $('.action_change_passphrase').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm')));
   }
 
-  private async verifyHandler() {
+  private verifyHandler = async () => {
     if (await Pgp.key.decrypt(this.primaryKey!, String($('#password').val())) === true) {
       Xss.sanitizeRender('#content', `
         <div class="line">${Lang.setup.ppMatchAllSet}</div>

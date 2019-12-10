@@ -23,7 +23,7 @@ View.run(class DebugApiView extends View {
     this.gmail = new Gmail(this.acctEmail);
   }
 
-  async render() {
+  render = async () => {
     if (this.which === 'google_account') {
       try {
         const r = await this.gmail.fetchAcctAliases();
@@ -49,11 +49,11 @@ View.run(class DebugApiView extends View {
     }
   }
 
-  setHandlers() {
+  setHandlers = () => {
     // No need
   }
 
-  private renderCallRes(api: string, variables: Dict<any>, result: any, error?: any) {
+  private renderCallRes = (api: string, variables: Dict<any>, result: any, error?: any) => {
     const r = `<b>${api} ${JSON.stringify(variables)}</b><pre>${JSON.stringify(result, undefined, 2)} (${error ? JSON.stringify(error) : 'no err'})</pre>`;
     Xss.sanitizeAppend('#content', r);
   }

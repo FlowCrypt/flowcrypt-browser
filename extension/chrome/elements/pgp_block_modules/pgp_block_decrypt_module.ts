@@ -24,7 +24,7 @@ export class PgpBlockViewDecryptModule {
   constructor(private view: PgpBlockView) {
   }
 
-  public async initialize(forcePullMsgFromApi = false) {
+  public initialize = async (forcePullMsgFromApi = false) => {
     try {
       if (this.canReadEmails && this.view.signature === true && this.view.msgId) {
         this.view.renderModule.renderText('Loading signed message...');
@@ -78,7 +78,7 @@ export class PgpBlockViewDecryptModule {
     }
   }
 
-  private async decryptAndRender(encryptedData: Buf, optionalPwd?: string, plainSubject?: string) {
+  private decryptAndRender = async (encryptedData: Buf, optionalPwd?: string, plainSubject?: string) => {
     if (typeof this.view.signature !== 'string') {
       const kisWithPp = await Store.keysGetAllWithPp(this.view.acctEmail);
       const result = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, msgPwd: await this.view.pwdEncryptedMsgModule.getDecryptPwd(optionalPwd) });

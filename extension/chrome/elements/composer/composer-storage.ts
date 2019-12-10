@@ -19,7 +19,7 @@ export class ComposerStorage extends ComposerComponent {
   private passphraseInterval: number | undefined;
   private ksLookupsByEmail: { [key: string]: PubkeySearchResult | Contact } = {};
 
-  initActions() {
+  initActions = () => {
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
       if (!entered) {
         clearInterval(this.passphraseInterval);
@@ -28,7 +28,7 @@ export class ComposerStorage extends ComposerComponent {
     });
   }
 
-  async getKey(senderEmail: string): Promise<KeyInfo> {
+  getKey = async (senderEmail: string): Promise<KeyInfo> => {
     const keys = await Store.keysGet(this.view.acctEmail);
     let result = await this.composer.myPubkey.chooseMyPublicKeyBySenderEmail(keys, senderEmail);
     if (!result) {
@@ -38,7 +38,7 @@ export class ComposerStorage extends ComposerComponent {
     return result!;
   }
 
-  async draftMetaSet(draftId: string, threadId: string, recipients: string[], subject: string) {
+  draftMetaSet = async (draftId: string, threadId: string, recipients: string[], subject: string) => {
     const draftStorage = await Store.getAcct(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
     if (threadId) { // it's a reply
       const drafts = draftStorage.drafts_reply || {};
@@ -51,7 +51,7 @@ export class ComposerStorage extends ComposerComponent {
     }
   }
 
-  async draftMetaDelete(draftId: string, threadId: string) {
+  draftMetaDelete = async (draftId: string, threadId: string) => {
     const draftStorage = await Store.getAcct(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
     if (threadId) { // it's a reply
       const drafts = draftStorage.drafts_reply || {};
@@ -64,14 +64,14 @@ export class ComposerStorage extends ComposerComponent {
     }
   }
 
-  async addAdminCodes(shortId: string, codes: string[]) {
+  addAdminCodes = async (shortId: string, codes: string[]) => {
     const adminCodeStorage = await Store.getGlobal(['admin_codes']);
     adminCodeStorage.admin_codes = adminCodeStorage.admin_codes || {};
     adminCodeStorage.admin_codes[shortId] = { date: Date.now(), codes };
     await Store.setGlobal(adminCodeStorage);
   }
 
-  async collectAllAvailablePublicKeys(senderEmail: string, senderKi: KeyInfo, recipients: string[]): Promise<CollectPubkeysResult> {
+  collectAllAvailablePublicKeys = async (senderEmail: string, senderKi: KeyInfo, recipients: string[]): Promise<CollectPubkeysResult> => {
     const contacts = await Store.dbContactGet(undefined, recipients);
     const armoredPubkeys = [{ pubkey: senderKi.public, email: senderEmail, isMine: true }];
     const emailsWithoutPubkeys = [];
@@ -88,7 +88,7 @@ export class ComposerStorage extends ComposerComponent {
     return { armoredPubkeys, emailsWithoutPubkeys };
   }
 
-  async passphraseGet(senderKi?: KeyInfo) {
+  passphraseGet = async (senderKi?: KeyInfo) => {
     if (!senderKi) {
       [senderKi] = await Store.keysGet(this.view.acctEmail, ['primary']);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(senderKi);
@@ -96,7 +96,7 @@ export class ComposerStorage extends ComposerComponent {
     return await Store.passphraseGet(this.view.acctEmail, senderKi.longid);
   }
 
-  async getAddresses(): Promise<Dict<SendAsAlias>> {
+  getAddresses = async (): Promise<Dict<SendAsAlias>> => {
     const arrayToSendAs = (arr: string[]): Dict<SendAsAlias> => {
       const result: Dict<SendAsAlias> = {}; // Temporary Solution
       for (let i = 0; i < arr.length; i++) {
@@ -112,7 +112,7 @@ export class ComposerStorage extends ComposerComponent {
     return storage.sendAs || arrayToSendAs(storage.addresses || [this.view.acctEmail]);
   }
 
-  async lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(email: string): Promise<Contact | "fail"> {
+  lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string): Promise<Contact | "fail"> => {
     const [dbContact] = await Store.dbContactGet(undefined, [email]);
     if (dbContact && dbContact.has_pgp && dbContact.pubkey) {
       // Potentially check if pubkey was updated - async. By the time user finishes composing, newer version would have been updated in db.
@@ -158,7 +158,7 @@ export class ComposerStorage extends ComposerComponent {
     }
   }
 
-  async checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(contact: Contact) {
+  checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded = async (contact: Contact) => {
     try {
       if (!contact.pubkey || !contact.longid) {
         return;
@@ -188,7 +188,7 @@ export class ComposerStorage extends ComposerComponent {
     }
   }
 
-  whenMasterPassphraseEntered(secondsTimeout?: number): Promise<string | undefined> {
+  whenMasterPassphraseEntered = (secondsTimeout?: number): Promise<string | undefined> => {
     return new Promise(resolve => {
       clearInterval(this.passphraseInterval);
       const timeoutAt = secondsTimeout ? Date.now() + secondsTimeout * 1000 : undefined;

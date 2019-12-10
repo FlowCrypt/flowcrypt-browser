@@ -32,7 +32,7 @@ View.run(class AddPubkeyView extends View {
     this.placement = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'placement');
   }
 
-  async render() {
+  render = async () => {
     Ui.event.protect();
     for (const missingPubkeyEmail of this.missingPubkeyEmails) {
       Xss.sanitizeAppend('select.email', `<option value="${Xss.escape(missingPubkeyEmail)}">${Xss.escape(missingPubkeyEmail)}</option>`);
@@ -48,7 +48,7 @@ View.run(class AddPubkeyView extends View {
     }
   }
 
-  setHandlers() {
+  setHandlers = () => {
     this.attUI.initAttDialog('fineuploader', 'fineuploader_button', {
       attAdded: async (file) => {
         this.attUI.clearAllAtts();
@@ -69,11 +69,11 @@ View.run(class AddPubkeyView extends View {
     $('.action_close').click(this.setHandler(() => this.closeDialog()));
   }
 
-  private closeDialog() {
+  private closeDialog = () => {
     BrowserMsg.send.closeDialog(this.parentTabId);
   }
 
-  private async copyFromEmailHandler(fromSelect: HTMLElement) {
+  private copyFromEmailHandler = async (fromSelect: HTMLElement) => {
     if ($(fromSelect).val()) {
       const [contact] = await Store.dbContactGet(undefined, [String($(fromSelect).val())]);
       if (contact?.pubkey) {
@@ -87,7 +87,7 @@ View.run(class AddPubkeyView extends View {
     }
   }
 
-  private async submitHandler() {
+  private submitHandler = async () => {
     try {
       const keyImportUi = new KeyImportUi({ checkEncryption: true });
       const normalized = await keyImportUi.checkPub(String($('.pubkey').val()));

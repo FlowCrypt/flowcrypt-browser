@@ -67,7 +67,7 @@ export class Api<REQ, RES> {
     });
   }
 
-  public listen(port: number, host = '127.0.0.1', maxMb = 100) {
+  public listen = (port: number, host = '127.0.0.1', maxMb = 100) => {
     return new Promise((resolve, reject) => {
       this.maxRequestSizeMb = maxMb;
       this.maxRequestSizeBytes = maxMb * 1024 * 1024;
@@ -81,9 +81,13 @@ export class Api<REQ, RES> {
     });
   }
 
-  public close = (): Promise<void> => new Promise((resolve, reject) => this.server.close((err: any) => err ? reject(err) : resolve()));
+  public close = (): Promise<void> => {
+    return new Promise((resolve, reject) => this.server.close((err: any) => err ? reject(err) : resolve()));
+  }
 
-  protected log = (req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => undefined as void;
+  protected log = (req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => {
+    return undefined as void;
+  }
 
   protected handleReq = async (req: IncomingMessage, res: ServerResponse): Promise<Buffer> => {
     if (req.method === 'OPTIONS') {
@@ -152,27 +156,29 @@ export class Api<REQ, RES> {
     return Buffer.from(JSON.stringify(response));
   }
 
-  protected collectReq = (req: IncomingMessage): Promise<Buffer> => new Promise((resolve, reject) => {
-    const body: Buffer[] = [];
-    let byteLength = 0;
-    req.on('data', (chunk: Buffer) => {
-      byteLength += chunk.length;
-      if (this.maxRequestSizeBytes && byteLength > this.maxRequestSizeBytes) {
-        reject(new HttpClientErr(`Message over ${this.maxRequestSizeMb} MB`));
-      } else {
-        body.push(chunk);
-      }
+  protected collectReq = (req: IncomingMessage): Promise<Buffer> => {
+    return new Promise((resolve, reject) => {
+      const body: Buffer[] = [];
+      let byteLength = 0;
+      req.on('data', (chunk: Buffer) => {
+        byteLength += chunk.length;
+        if (this.maxRequestSizeBytes && byteLength > this.maxRequestSizeBytes) {
+          reject(new HttpClientErr(`Message over ${this.maxRequestSizeMb} MB`));
+        } else {
+          body.push(chunk);
+        }
+      });
+      req.on('end', () => {
+        try {
+          resolve(Buffer.concat(body));
+        } catch (e) {
+          reject(e);
+        }
+      });
     });
-    req.on('end', () => {
-      try {
-        resolve(Buffer.concat(body));
-      } catch (e) {
-        reject(e);
-      }
-    });
-  })
+  }
 
-  private parseUrlQuery(url: string): { [k: string]: string } {
+  private parseUrlQuery = (url: string): { [k: string]: string } => {
     const queryIndex = url.indexOf('?');
     if (!queryIndex) {
       return {};

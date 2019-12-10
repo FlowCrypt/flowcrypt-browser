@@ -36,7 +36,7 @@ export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | 
 
 abstract class ApiCallErr extends Error {
 
-  private static getPayloadStructure(req: JQueryAjaxSettings): string {
+  private static getPayloadStructure = (req: JQueryAjaxSettings): string => {
     if (typeof req.data === 'string') {
       try {
         return Object.keys(JSON.parse(req.data) as any).join(',');
@@ -80,7 +80,7 @@ export class AjaxErr extends ApiCallErr {
     GOOGLE_RECIPIENT_ADDRESS_REQUIRED: 'Recipient address required',
   };
 
-  public static fromXhr(xhr: RawAjaxErr, req: JQueryAjaxSettings, stack: string) {
+  public static fromXhr = (xhr: RawAjaxErr, req: JQueryAjaxSettings, stack: string) => {
     const responseText = xhr.responseText || '';
     const status = typeof xhr.status === 'number' ? xhr.status : -1;
     stack += `\n\nprovided ajax call stack:\n${stack}`;
@@ -96,7 +96,7 @@ export class AjaxErr extends ApiCallErr {
     super(message);
   }
 
-  public parseErrResMsg(format: 'google') {
+  public parseErrResMsg = (format: 'google') => {
     try {
       if (format === 'google') {
         const errMsg = ((JSON.parse(this.responseText) as any).error as any).message as string; // catching all errs below
@@ -268,7 +268,7 @@ export class Api {
     },
   };
 
-  public static download(url: string, progress?: ProgressCb): Promise<Buf> {
+  public static download = (url: string, progress?: ProgressCb): Promise<Buf> => {
     return new Promise((resolve, reject) => {
       const request = new XMLHttpRequest();
       request.open('GET', url, true);
@@ -289,7 +289,7 @@ export class Api {
     });
   }
 
-  public static async ajax(req: JQueryAjaxSettings, stack: string): Promise<any | JQuery.jqXHR<any>> {
+  public static ajax = async (req: JQueryAjaxSettings, stack: string): Promise<any | JQuery.jqXHR<any>> => {
     if (Env.isContentScript()) {
       // content script CORS not allowed anymore, have to drag it through background page
       // https://www.chromestatus.com/feature/5629709824032768
@@ -318,7 +318,7 @@ export class Api {
     }
   }
 
-  public static getAjaxProgressXhrFactory(progressCbs?: ProgressCbs): (() => XMLHttpRequest) | undefined {
+  public static getAjaxProgressXhrFactory = (progressCbs?: ProgressCbs): (() => XMLHttpRequest) | undefined => {
     if (Env.isContentScript() || Env.isBackgroundPage() || !progressCbs || !Object.keys(progressCbs).length) {
       // xhr object would cause 'The object could not be cloned.' lastError during BrowserMsg passing
       // thus no progress callbacks in bg or content scripts
@@ -353,11 +353,11 @@ export class Api {
     };
   }
 
-  private static isRawAjaxErr(e: any): e is RawAjaxErr {
+  private static isRawAjaxErr = (e: any): e is RawAjaxErr => {
     return e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number';
   }
 
-  private static isStandardError(e: any): e is StandardError {
+  private static isStandardError = (e: any): e is StandardError => {
     return e && typeof e === 'object' && (e as StandardError).hasOwnProperty('internal') && Boolean((e as StandardError).message);
   }
 
@@ -410,7 +410,7 @@ export class Api {
     return res;
   }
 
-  static randomFortyHexChars(): string { // 40-character hex
+  static randomFortyHexChars = (): string => { // 40-character hex
     const bytes = Array.from(secureRandomBytes(20));
     return bytes.map(b => ('0' + (b & 0xFF).toString(16)).slice(-2)).join('');
   }
