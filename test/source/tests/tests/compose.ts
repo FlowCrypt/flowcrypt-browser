@@ -16,6 +16,7 @@ import { Data } from '../../mock/data';
 import * as request from 'fc-node-requests';
 import { PgpMsg } from '../../core/pgp';
 import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
+import { InboxPageRecipe } from '../page_recipe/inbox-page-recipe';
 // tslint:disable:no-blank-lines-func
 
 export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser: TestWithNewBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
@@ -23,10 +24,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
     ava.default('compose[global:compatibility] - toggle minimized state by clicking compose window header', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
-      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com`));
-      await inboxPage.waitAndClick('@secure-compose');
-      await inboxPage.waitAll('iframe');
-      const composeFrame = await inboxPage.getFrame(['compose.htm']);
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('flowcrypt.compatibility@gmail.com'));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       const initialComposeFrameHeight = await inboxPage.getOuterHeight('iframe');
       await composeFrame.waitAll('#section_header');
       const composeFrameHeaderHeight = await composeFrame.getOuterHeight('#section_header');
@@ -43,19 +42,22 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('test.ci.compose@org.flowcrypt.com'));
       await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
-      const composeFrame = await ComposePageRecipe.openInSettings(settingsPage);
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('test.ci.compose@org.flowcrypt.com'));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'sign with entered pass phrase', { encrypt: false });
       await composeFrame.waitAndClick('@action-send');
-      await settingsPage.waitAll('@dialog-passphrase');
-      const passphraseDialog = await settingsPage.getFrame(['passphrase.htm']);
+      await inboxPage.waitAll('@dialog-passphrase');
+      const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
       await passphraseDialog.waitAndType('@input-pass-phrase', k.passphrase);
-      await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry'); // confirming pass phrase will send the message
-      await settingsPage.waitTillGone('@dialog'); // however the @dialog would not go away - so that is a (weak but sufficient) telling sign
+      await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
+      await inboxPage.waitTillGone('@dialog-passphrase');
+      await inboxPage.waitTillGone('@container-new-message'); // confirming pass phrase will auto-send the message
       // signed - done, now try to see if it remembered pp in session
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'signed message pp in session', { encrypt: false });
       await ComposePageRecipe.sendAndClose(composePage);
       await settingsPage.close();
+      await inboxPage.close();
     }));
 
     ava.default('[standalone] compose - can load contact based on name', testWithNewBrowser(async (t, browser) => {
@@ -129,23 +131,23 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     }));
 
     ava.default('compose[global:compose] - settings - manually copied pubkey', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
-      let settingsPage = await browser.newPage(t, TestUrls.extensionSettings('test.ci.compose@org.flowcrypt.com'));
-      let composeFrame = await ComposePageRecipe.openInSettings(settingsPage);
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('test.ci.compose@org.flowcrypt.com'));
+      let composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'just to load - will close this page');
-      await Util.sleep(1); // todo: should wait until actually loaded
-      await settingsPage.close();
-      settingsPage = await browser.newPage(t, TestUrls.extensionSettings('test.ci.compose@org.flowcrypt.com'));
-      composeFrame = await ComposePageRecipe.openInSettings(settingsPage);
+      await Util.sleep(2); // todo: should wait until actually loaded
+      await composeFrame.waitAndClick('@action-close-new-message');
+      await inboxPage.waitTillGone('@container-new-message');
+      composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'human+manualcopypgp@flowcrypt.com' }, 'manual copied key');
       await composeFrame.waitAndClick('@action-open-add-pubkey-dialog', { delay: 1 });
-      await composeFrame.waitAll('@dialog');
-      const addPubkeyDialog = await composeFrame.getFrame(['add_pubkey.htm']);
+      await inboxPage.waitAll('@dialog-add-pubkey');
+      const addPubkeyDialog = await inboxPage.getFrame(['add_pubkey.htm']);
       await addPubkeyDialog.waitAll('@input-select-copy-from');
       await addPubkeyDialog.selectOption('@input-select-copy-from', 'human@flowcrypt.com');
       await addPubkeyDialog.waitAndClick('@action-add-pubkey');
-      await composeFrame.waitTillGone('@dialog');
+      await inboxPage.waitTillGone('@dialog-add-pubkey');
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
-      await settingsPage.waitTillGone('@dialog');
+      await inboxPage.waitTillGone('@container-new-message');
     }));
 
     ava.default('compose[global:compatibility] - reply - old gmail threadId fmt', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {

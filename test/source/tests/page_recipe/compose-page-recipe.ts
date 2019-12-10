@@ -41,15 +41,6 @@ export class ComposePageRecipe extends PageRecipe {
     return composePage;
   }
 
-  public static openInSettings = async (settingsPage: ControllablePage): Promise<ControllableFrame> => {
-    await settingsPage.waitAndClick('@action-show-compose-page');
-    await settingsPage.waitAll('@dialog');
-    const composeFrame = await settingsPage.getFrame(['compose.htm']);
-    await composeFrame.waitAll(['@input-body', '@input-subject', '@action-send', '@container-cc-bcc-buttons']);
-    await composeFrame.waitForSelTestState('ready');
-    return composeFrame;
-  }
-
   public static async fillMsg(
     composePageOrFrame: Controllable,
     recipients: Recipients,
