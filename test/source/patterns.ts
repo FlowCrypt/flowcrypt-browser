@@ -44,6 +44,10 @@ const validateLine = (line: string, location: string) => {
     console.error(`errors not handled in ${location} (make sure to use Catch.setHandledTimeout or Catch.setHandledInterval):\n${line}\n`);
     errsFound++;
   }
+  if (line.match(/^  (public |private |protected |static |async )*((?!constructor)[a-z][a-zA-Z0-9]+)\([^;]+[^>] \{$/)) {
+    console.error(`wrongly using class method, which can cause binding loss (use fat arrow method properties instead):\n${line}\n`);
+    errsFound++;
+  }
 };
 
 const srcFilePaths = getAllFilesInDir('./extension', /\.ts$/);
