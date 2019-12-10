@@ -121,18 +121,22 @@ export class ApiErr {
     return !ApiErr.isNetErr(e) && !ApiErr.isServerErr(e) && !ApiErr.isNotFound(e) && !ApiErr.isMailOrAcctDisabledOrPolicy(e)
       && !ApiErr.isAuthErr(e) && !ApiErr.isBlockedByProxy(e);
   }
+
   static isBadReq = (e: any): e is AjaxErr => {
     return e instanceof AjaxErr && e.status === 400;
   }
   static isInsufficientPermission = (e: any): e is AjaxErr => {
     return e instanceof AjaxErr && e.status === 403 && e.responseText.indexOf('insufficientPermissions') !== -1;
   }
+
   static isNotFound = (e: any): e is AjaxErr => {
     return e instanceof AjaxErr && e.status === 404;
   }
+
   static isReqTooLarge = (e: any): boolean => {
     return e instanceof AjaxErr && e.status === 413;
   }
+
   static isServerErr = (e: any): boolean => {
     return e instanceof AjaxErr && e.status >= 500;
   }
@@ -160,4 +164,5 @@ export class ApiErr {
   private static isStandardError = (e: any): boolean => {
     return e && typeof e === 'object' && (e as StandardError).hasOwnProperty('internal') && Boolean((e as StandardError).message);
   }
+
 }
