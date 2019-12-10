@@ -1,21 +1,21 @@
 import { Catch } from '../../platform/catch.js';
 
 export interface StandardError {
-    code: number | null;
-    message: string;
-    internal: string | null;
-    data?: string;
-    stack?: string;
+  code: number | null;
+  message: string;
+  internal: string | null;
+  data?: string;
+  stack?: string;
 }
 export interface StandardErrRes {
-    error: StandardError;
+  error: StandardError;
 }
 
 export interface RawAjaxErr {
-    readyState: number;
-    responseText?: string;
-    status?: number;
-    statusText?: string;
+  readyState: number;
+  responseText?: string;
+  status?: number;
+  statusText?: string;
 }
 
 export abstract class AuthErr extends Error { }
@@ -24,92 +24,92 @@ export class BackendAuthErr extends AuthErr { }
 
 abstract class ApiCallErr extends Error {
 
-    private static getPayloadStructure = (req: JQueryAjaxSettings): string => {
-        if (typeof req.data === 'string') {
-            try {
-                return Object.keys(JSON.parse(req.data) as any).join(',');
-            } catch (e) {
-                return 'not-a-json';
-            }
-        } else if (req.data && typeof req.data === 'object') {
-            return Object.keys(req.data).join(',');
-        }
-        return '';
+  private static getPayloadStructure = (req: JQueryAjaxSettings): string => {
+    if (typeof req.data === 'string') {
+      try {
+        return Object.keys(JSON.parse(req.data) as any).join(',');
+      } catch (e) {
+        return 'not-a-json';
+      }
+    } else if (req.data && typeof req.data === 'object') {
+      return Object.keys(req.data).join(',');
     }
+    return '';
+  }
 
-    protected static censoredUrl = (url: string | undefined): string => {
-        if (!url) {
-            return '(unknown url)';
-        }
-        if (url.indexOf('refreshToken=') !== -1) {
-            return `${url.split('?')[0]}~censored:refreshToken`;
-        }
-        if (url.indexOf('token=') !== -1) {
-            return `${url.split('?')[0]}~censored:token`;
-        }
-        if (url.indexOf('code=') !== -1) {
-            return `${url.split('?')[0]}~censored:code`;
-        }
-        return url;
+  protected static censoredUrl = (url: string | undefined): string => {
+    if (!url) {
+      return '(unknown url)';
     }
+    if (url.indexOf('refreshToken=') !== -1) {
+      return `${url.split('?')[0]}~censored:refreshToken`;
+    }
+    if (url.indexOf('token=') !== -1) {
+      return `${url.split('?')[0]}~censored:token`;
+    }
+    if (url.indexOf('code=') !== -1) {
+      return `${url.split('?')[0]}~censored:code`;
+    }
+    return url;
+  }
 
-    protected static describeApiAction = (req: JQueryAjaxSettings) => {
-        const describeBody = typeof req.data === 'undefined' ? '(no body)' : typeof req.data;
-        return `${req.method || 'GET'}-ing ${ApiCallErr.censoredUrl(req.url)} ${describeBody}: ${ApiCallErr.getPayloadStructure(req)}`;
-    }
+  protected static describeApiAction = (req: JQueryAjaxSettings) => {
+    const describeBody = typeof req.data === 'undefined' ? '(no body)' : typeof req.data;
+    return `${req.method || 'GET'}-ing ${ApiCallErr.censoredUrl(req.url)} ${describeBody}: ${ApiCallErr.getPayloadStructure(req)}`;
+  }
 
 }
 
 export class ApiErrResponse extends ApiCallErr {
 
-    public res: StandardErrRes;
-    public url: string;
+  public res: StandardErrRes;
+  public url: string;
 
-    constructor(res: StandardErrRes, req: JQueryAjaxSettings) {
-        super(`Api error response when ${ApiCallErr.describeApiAction(req)}`);
-        this.res = res;
-        this.url = req.url || '(unknown url)';
-        this.stack += `\n\nresponse:\n${Catch.stringify(res)}`;
-    }
+  constructor(res: StandardErrRes, req: JQueryAjaxSettings) {
+    super(`Api error response when ${ApiCallErr.describeApiAction(req)}`);
+    this.res = res;
+    this.url = req.url || '(unknown url)';
+    this.stack += `\n\nresponse:\n${Catch.stringify(res)}`;
+  }
 
 }
 
 export class AjaxErr extends ApiCallErr {
 
-    // todo - move these out of the class, they get weirdly serialized in err reports
-    public STD_ERR_MSGS = { // tslint:disable-line:oneliner-object-literal
-        GOOGLE_INVALID_TO_HEADER: 'Invalid to header',
-        GOOGLE_RECIPIENT_ADDRESS_REQUIRED: 'Recipient address required',
-    };
+  // todo - move these out of the class, they get weirdly serialized in err reports
+  public STD_ERR_MSGS = { // tslint:disable-line:oneliner-object-literal
+    GOOGLE_INVALID_TO_HEADER: 'Invalid to header',
+    GOOGLE_RECIPIENT_ADDRESS_REQUIRED: 'Recipient address required',
+  };
 
-    static fromXhr = (xhr: RawAjaxErr, req: JQueryAjaxSettings, stack: string) => {
-        const responseText = xhr.responseText || '';
-        const status = typeof xhr.status === 'number' ? xhr.status : -1;
-        stack += `\n\nprovided ajax call stack:\n${stack}`;
-        if (status === 400 || status === 403 || (status === 200 && responseText && responseText[0] !== '{')) {
-            // RawAjaxErr with status 200 can happen when it fails to parse response - eg non-json result
-            stack += `\n\nresponseText(0, 1000):\n${responseText.substr(0, 1000)}\n\npayload(0, 1000):\n${Catch.stringify(req.data).substr(0, 1000)}`;
+  static fromXhr = (xhr: RawAjaxErr, req: JQueryAjaxSettings, stack: string) => {
+    const responseText = xhr.responseText || '';
+    const status = typeof xhr.status === 'number' ? xhr.status : -1;
+    stack += `\n\nprovided ajax call stack:\n${stack}`;
+    if (status === 400 || status === 403 || (status === 200 && responseText && responseText[0] !== '{')) {
+      // RawAjaxErr with status 200 can happen when it fails to parse response - eg non-json result
+      stack += `\n\nresponseText(0, 1000):\n${responseText.substr(0, 1000)}\n\npayload(0, 1000):\n${Catch.stringify(req.data).substr(0, 1000)}`;
+    }
+    const message = `${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallErr.describeApiAction(req)}`;
+    return new AjaxErr(message, stack, status, AjaxErr.censoredUrl(req.url), responseText, xhr.statusText || '(no status text)');
+  }
+
+  constructor(message: string, public stack: string, public status: number, public url: string, public responseText: string, public statusText: string) {
+    super(message);
+  }
+
+  parseErrResMsg = (format: 'google') => {
+    try {
+      if (format === 'google') {
+        const errMsg = ((JSON.parse(this.responseText) as any).error as any).message as string; // catching all errs below
+        if (typeof errMsg === 'string') {
+          return errMsg;
         }
-        const message = `${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallErr.describeApiAction(req)}`;
-        return new AjaxErr(message, stack, status, AjaxErr.censoredUrl(req.url), responseText, xhr.statusText || '(no status text)');
+      }
+    } catch (e) {
+      return undefined;
     }
-
-    constructor(message: string, public stack: string, public status: number, public url: string, public responseText: string, public statusText: string) {
-        super(message);
-    }
-
-    parseErrResMsg = (format: 'google') => {
-        try {
-            if (format === 'google') {
-                const errMsg = ((JSON.parse(this.responseText) as any).error as any).message as string; // catching all errs below
-                if (typeof errMsg === 'string') {
-                    return errMsg;
-                }
-            }
-        } catch (e) {
-            return undefined;
-        }
-        return undefined;
-    }
+    return undefined;
+  }
 
 }
