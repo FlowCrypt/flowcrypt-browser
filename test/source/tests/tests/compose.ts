@@ -336,7 +336,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
 
     ava.default('compose[global:comaptibility] - loading drafts - new message, rendering cc/bcc and check if cc/bcc btns are hidden',
       testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
-        const appendUrl = 'draftId=r-8909860425873898730';
+        const appendUrl = 'draftId=draft-1';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
         await expectRecipientElements(composePage, { to: ['flowcryptcompatibility@gmail.com'], cc: ['flowcrypt.compatibility@gmail.com'], bcc: ['human@flowcrypt.com'] });
         const subjectElem = await composePage.waitAny('@input-subject');
@@ -351,7 +351,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       const appendUrl = 'threadId=16cfa9001baaac0a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16cfa9001baaac0a';
       const initialScript = () => {
-        chrome.storage.local.set({ 'cryptup_flowcryptcompatibilitygmailcom_drafts_reply': { '16cfa9001baaac0a': 'r-1543309186581841785' } });
+        chrome.storage.local.set({ 'cryptup_flowcryptcompatibilitygmailcom_drafts_reply': { '16cfa9001baaac0a': 'draft-3' } });
       };
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true, skipClickPropt: true, initialScript });
       await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
@@ -474,6 +474,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const res = await request.get({ url: attUrl, encoding: null }); // tslint:disable-line:no-null-keyword
       const decryptedFile = await PgpMsg.decrypt({ encryptedData: res.body as Buffer, kisWithPp: [], msgPwd: await Pgp.hash.challengeAnswer(msgPwd) });
       expect(decryptedFile.content!.toUtfStr()).to.equal(`small text file\nnot much here\nthis worked\n`);
+    }));
+
+    ava.default('compose[global:compatibility] - loading drafts - test tags in draft', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'draftId=draft-0';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
+      expect(await composePage.read('@input-body')).to.include('hello<draft>here');
     }));
 
     ava.todo('compose[global:compose] - reply - new gmail threadId fmt');

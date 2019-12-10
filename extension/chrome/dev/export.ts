@@ -56,16 +56,7 @@ Catch.try(async () => {
       nextCyclePageToken = nextPageToken;
     }
     print(`found in inbox: ${(msgMetas || []).length} msgs`);
-    print(`downloading draft list`);
-    const draftMetas: GmailRes.GmailDraftMeta[] = [];
-    let draftNextPageToken: string | undefined | null;
-    do {
-      const { drafts, nextPageToken } = await gmail.draftList();
-      draftMetas.push(...drafts);
-      draftNextPageToken = nextPageToken;
-    } while (draftNextPageToken);
-    print(`found ${draftMetas.length} drafts`);
-    const fullMsgIdsList = (msgMetas || []).map(m => m.id).concat(draftMetas.map(dm => dm.message.id));
+    const fullMsgIdsList = (msgMetas || []).map(m => m.id);
     print(`downloading full..`);
     const msgsFull = await gmail.msgsGet(fullMsgIdsList, 'full');
     print(`downloading full done. waiting 5 seconds..`);
@@ -83,14 +74,6 @@ Catch.try(async () => {
           }
           break;
         }
-      }
-    }
-    const drafts: GmailRes.GmailDraftGet[] = [];
-    for (const draftMeta of draftMetas) {
-      const messageIndex = msgsFull.findIndex(m => m.id === draftMeta.message.id);
-      if (messageIndex !== -1) {
-        drafts.push({ id: draftMeta.id, message: msgsFull[messageIndex] });
-        msgsFull.splice(messageIndex, 1); // if not remove msg it will make duplicates
       }
     }
     const messages: GmailRes.GmailMsg[] = [...msgsFull];
@@ -122,7 +105,7 @@ Catch.try(async () => {
         h.value = censor(h.value);
       }
     }
-    const data = Buf.fromUtfStr(JSON.stringify({ messages, attachments, labels, drafts }));
+    const data = Buf.fromUtfStr(JSON.stringify({ messages, attachments, labels }));
     print(`export size: ${data.length / (1024 * 1024)} MB`);
     const pwd = prompt('Please enter encryption password');
     if (pwd) {
