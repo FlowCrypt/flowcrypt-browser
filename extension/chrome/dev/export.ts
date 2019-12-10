@@ -5,7 +5,6 @@
 import { Catch } from '../../js/common/platform/catch.js';
 import { Browser } from '../../js/common/browser/browser.js';
 import { Assert } from '../../js/common/assert.js';
-import { Api } from '../../js/common/api/api.js';
 import { Att } from '../../js/common/core/att.js';
 import { Buf } from '../../js/common/core/buf.js';
 import { openpgp } from '../../js/common/core/pgp.js';
@@ -13,6 +12,7 @@ import { Url } from '../../js/common/core/common.js';
 import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
 import { GmailRes, GmailParser } from '../../js/common/api/email_provider/gmail/gmail-parser.js';
 import { Ui } from '../../js/common/browser/ui.js';
+import { ApiErr } from '../../js/common/api/error/api-error.js';
 
 Catch.try(async () => {
 
@@ -116,7 +116,7 @@ Catch.try(async () => {
       save(data);
     }
   } catch (e) {
-    print(Api.err.eli5(e));
+    print(ApiErr.eli5(e));
     print(String(e));
     if (e instanceof Error) {
       print(e.stack || 'no stack');

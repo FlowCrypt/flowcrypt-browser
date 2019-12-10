@@ -6,9 +6,9 @@ import { ComposerComponent } from './composer-abstract-component.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Lang } from '../../../js/common/lang.js';
-import { Api } from '../../../js/common/api/api.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { KeyInfo, Pgp } from '../../../js/common/core/pgp.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 export class ComposerMyPubkey extends ComposerComponent {
 
@@ -41,7 +41,7 @@ export class ComposerMyPubkey extends ComposerComponent {
         }
       }
       this.setAttachPreference(false);
-    })().catch(Api.err.reportIfSignificant);
+    })().catch(ApiErr.reportIfSignificant);
   }
 
   private setAttachPreference = (includePubkey: boolean) => {

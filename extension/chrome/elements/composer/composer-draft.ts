@@ -6,7 +6,6 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Pgp, PgpMsg } from '../../../js/common/core/pgp.js';
-import { Api, AjaxErr } from '../../../js/common/api/api.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
@@ -16,6 +15,8 @@ import { Url } from '../../../js/common/core/common.js';
 import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Env } from '../../../js/common/browser/env.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { AjaxErr } from '../../../js/common/api/error/api-error-types.js';
 
 export class ComposerDraft extends ComposerComponent {
 
@@ -67,12 +68,12 @@ export class ComposerDraft extends ComposerComponent {
       }
       return await this.decryptAndRenderDraft(armored, parsedMsg);
     } catch (e) {
-      if (Api.err.isNetErr(e)) {
+      if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender('body', `Failed to load draft. ${Ui.retryLink()}`);
-      } else if (Api.err.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
         Xss.sanitizeRender('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retryLink()}`);
-      } else if (this.view.isReplyBox && Api.err.isNotFound(e)) {
+      } else if (this.view.isReplyBox && ApiErr.isNotFound(e)) {
         Catch.log('about to reload reply_message automatically: get draft 404', this.view.acctEmail);
         await Ui.time.sleep(500);
         await this.composer.storage.draftMetaDelete(this.view.draftId, this.view.threadId);
@@ -130,19 +131,19 @@ export class ComposerDraft extends ComposerComponent {
           this.composer.S.cached('send_btn_note').text('Saved');
         }
       } catch (e) {
-        if (Api.err.isNetErr(e)) {
+        if (ApiErr.isNetErr(e)) {
           this.composer.S.cached('send_btn_note').text('Not saved (network)');
-        } else if (Api.err.isAuthPopupNeeded(e)) {
+        } else if (ApiErr.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
           this.composer.S.cached('send_btn_note').text('Not saved (reconnect)');
         } else if (e instanceof Error && e.message.indexOf('Could not find valid key packet for encryption in key') !== -1) {
           this.composer.S.cached('send_btn_note').text('Not saved (bad key)');
-        } else if (this.view.draftId && (Api.err.isNotFound(e) || (e instanceof AjaxErr && e.status === 400 && e.responseText.indexOf('Message not a draft') !== -1))) {
+        } else if (this.view.draftId && (ApiErr.isNotFound(e) || (e instanceof AjaxErr && e.status === 400 && e.responseText.indexOf('Message not a draft') !== -1))) {
           // not found - updating draft that was since deleted
           // not a draft - updating draft that was since sent as a message (in another window), and is not a draft anymore
           this.view.draftId = ''; // forget there was a draftId - next step will create a new draftId
           await this.draftSave(true); // forceSave=true to not skip
-        } else if (!this.view.draftId && Api.err.isNotFound(e)) {
+        } else if (!this.view.draftId && ApiErr.isNotFound(e)) {
           // not found - creating draft on a thread that does not exist
           this.view.threadId = ''; // forget there was a threadId
           await this.draftSave(true); // forceSave=true to not skip
@@ -164,11 +165,11 @@ export class ComposerDraft extends ComposerComponent {
         await this.composer.emailProvider.draftDelete(this.view.draftId);
         this.view.draftId = '';
       } catch (e) {
-        if (Api.err.isAuthPopupNeeded(e)) {
+        if (ApiErr.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
-        } else if (Api.err.isNotFound(e)) {
+        } else if (ApiErr.isNotFound(e)) {
           console.info(`draftDelete: ${e.message}`);
-        } else if (!Api.err.isNetErr(e)) {
+        } else if (!ApiErr.isNetErr(e)) {
           Catch.reportErr(e);
         }
       }

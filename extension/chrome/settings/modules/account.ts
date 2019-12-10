@@ -8,9 +8,9 @@ import { Settings } from '../../../js/common/settings.js';
 import { Backend } from '../../../js/common/api/backend.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { Api } from '../../../js/common/api/api.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 // todo - this this page should be removed, link from settings should point to flowcrypt.com/account once available
 
@@ -35,7 +35,7 @@ View.run(class AccountView extends View {
       subscription = new Subscription(r.subscription);
       await Backend.accountGetAndUpdateLocalStore(authInfo); // here to test auth
     } catch (e) {
-      if (Api.err.isAuthErr(e) && subscription.level) {
+      if (ApiErr.isAuthErr(e) && subscription.level) {
         Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => window.location.reload());
         return;
       }

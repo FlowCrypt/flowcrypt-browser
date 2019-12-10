@@ -9,7 +9,6 @@ import { BrowserMsg, Bm } from '../../js/common/browser/browser-msg.js';
 import { Rules } from '../../js/common/rules.js';
 import { Lang } from '../../js/common/lang.js';
 import { Settings } from '../../js/common/settings.js';
-import { Api } from '../../js/common/api/api.js';
 import { Pgp, Contact } from '../../js/common/core/pgp.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Google } from '../../js/common/api/google.js';
@@ -24,6 +23,7 @@ import { SetupCreateKeyModule } from './setup/setup-create-key.js';
 import { SetupImportKeyModule } from './setup/setup-import-key.js';
 import { SetupRenderModule } from './setup/setup-render.js';
 import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
+import { ApiErr } from '../../js/common/api/error/api-error.js';
 
 export interface SetupOptions {
   passphrase: string;
@@ -213,7 +213,7 @@ export class SetupView extends View {
       return;
     }
     Attester.testWelcome(this.acctEmail, armoredPubkey).catch(e => {
-      if (Api.err.isSignificant(e)) {
+      if (ApiErr.isSignificant(e)) {
         Catch.report('Attester.test_welcome: failed', e);
       }
     });

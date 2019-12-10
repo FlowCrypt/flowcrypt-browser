@@ -6,7 +6,6 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Api } from '../../../js/common/api/api.js';
 import { Backend, FcUuidAuth } from '../../../js/common/api/backend.js';
 import { Assert } from '../../../js/common/assert.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
@@ -14,6 +13,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { KeyInfo } from '../../../js/common/core/pgp.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 View.run(class SecurityView extends View {
 
@@ -84,9 +84,9 @@ View.run(class SecurityView extends View {
         $('.default_message_expire').val(Number(response.account.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
         $('.default_message_expire').change(this.setHandler(() => this.onDefaultExpireUserChange()));
       } catch (e) {
-        if (Api.err.isAuthErr(e)) {
+        if (ApiErr.isAuthErr(e)) {
           Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => window.location.reload());
-        } else if (Api.err.isNetErr(e)) {
+        } else if (ApiErr.isNetErr(e)) {
           Xss.sanitizeRender('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
         } else {
           Catch.reportErr(e);

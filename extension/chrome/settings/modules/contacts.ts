@@ -14,7 +14,6 @@ import { AttUI } from '../../../js/common/ui/att_ui.js';
 import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
 import { XssSafeFactory } from '../../../js/common/xss_safe_factory.js';
 import { Assert } from '../../../js/common/assert.js';
-import { Api } from '../../../js/common/api/api.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
@@ -22,6 +21,7 @@ import { Str, Url } from '../../../js/common/core/common.js';
 import { FetchKeyUI } from '../../../js/common/ui/fetch_key_ui.js';
 import { View } from '../../../js/common/view.js';
 import { Contact } from './../../../js/common/core/pgp';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 View.run(class ContactsView extends View {
 
@@ -211,10 +211,10 @@ View.run(class ContactsView extends View {
         $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import #fineuploader_button').css('display', 'none');
       }
     } catch (e) {
-      if (Api.err.isSignificant(e)) {
+      if (ApiErr.isSignificant(e)) {
         Catch.reportErr(e);
       }
-      await Ui.modal.error(`There was an error trying to find this public key.\n\n${Api.err.eli5(e)}`);
+      await Ui.modal.error(`There was an error trying to find this public key.\n\n${ApiErr.eli5(e)}`);
     }
   }
 

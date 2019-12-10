@@ -10,9 +10,9 @@ import { Pgp, KeyInfo } from '../../../js/common/core/pgp.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Attester } from '../../../js/common/api/attester.js';
-import { Api } from '../../../js/common/api/api.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -55,10 +55,10 @@ View.run(class MyKeyUpdateView extends View {
       try {
         await Ui.modal.info(await Attester.updatePubkey(this.primaryKi!.longid, updatedPrv.toPublic().armor()));
       } catch (e) {
-        if (Api.err.isSignificant(e)) {
+        if (ApiErr.isSignificant(e)) {
           Catch.reportErr(e);
         }
-        await Ui.modal.error(`Error updating public records:\n\n${Api.err.eli5(e)}\n\n(but local update was successful)`);
+        await Ui.modal.error(`Error updating public records:\n\n${ApiErr.eli5(e)}\n\n(but local update was successful)`);
       }
     }
     window.location.href = this.showKeyUrl;

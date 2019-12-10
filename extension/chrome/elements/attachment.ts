@@ -14,6 +14,7 @@ import { Xss } from '../../js/common/platform/xss.js';
 import { Url } from '../../js/common/core/common.js';
 import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
 import { Ui } from '../../js/common/browser/ui.js';
+import { ApiErr } from '../../js/common/api/error/api-error.js';
 
 Catch.try(async () => {
 
@@ -65,10 +66,10 @@ Catch.try(async () => {
   };
 
   const renderErr = (e: any) => {
-    if (Api.err.isAuthPopupNeeded(e)) {
+    if (ApiErr.isAuthPopupNeeded(e)) {
       BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
       Xss.sanitizeRender('body.attachment', `Error downloading file - google auth needed. ${Ui.retryLink()}`);
-    } else if (Api.err.isNetErr(e)) {
+    } else if (ApiErr.isNetErr(e)) {
       Xss.sanitizeRender('body.attachment', `Error downloading file - no internet. ${Ui.retryLink()}`);
     } else {
       Catch.reportErr(e);

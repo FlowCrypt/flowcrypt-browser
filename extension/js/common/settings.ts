@@ -8,7 +8,7 @@ import { Str, Dict, UrlParams, Url } from './core/common.js';
 import { BrowserMsg } from './browser/browser-msg.js';
 import { Lang } from './lang.js';
 import { Rules } from './rules.js';
-import { Api, ApiErrResponse } from './api/api.js';
+import { Api } from './api/api.js';
 import { Pgp } from './core/pgp.js';
 import { GoogleAuth } from './api/google-auth.js';
 import { Attester } from './api/attester.js';
@@ -18,6 +18,8 @@ import { storageLocalGetAll } from './api/chrome.js';
 import { Gmail } from './api/email_provider/gmail/gmail.js';
 import { Ui, JQS } from './browser/ui.js';
 import { Env } from './browser/env.js';
+import { ApiErr } from './api/error/api-error.js';
+import { ApiErrResponse } from './api/error/api-error-types.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
@@ -272,16 +274,16 @@ export class Settings {
   }
 
   static promptToRetry = async (type: 'REQUIRED', lastErr: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
-    let userErrMsg = `${userMsg} ${Api.err.eli5(lastErr)}`;
+    let userErrMsg = `${userMsg} ${ApiErr.eli5(lastErr)}`;
     if (lastErr instanceof ApiErrResponse && lastErr.res.error.code === 400) {
       userErrMsg = `${userMsg}, ${lastErr.res.error.message}`; // this will make reason for err 400 obvious to user, very important for our main customer
     }
-    while (await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, userErrMsg, Api.err.detailsAsHtmlWithNewlines(lastErr)) === 'retry') {
+    while (await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, userErrMsg, ApiErr.detailsAsHtmlWithNewlines(lastErr)) === 'retry') {
       try {
         return await retryCb();
       } catch (e2) {
         lastErr = e2;
-        if (Api.err.isSignificant(e2)) {
+        if (ApiErr.isSignificant(e2)) {
           Catch.reportErr(e2);
         }
       }
@@ -328,9 +330,9 @@ export class Settings {
         window.location.reload();
       }
     } catch (e) {
-      if (Api.err.isNetErr(e)) {
+      if (ApiErr.isNetErr(e)) {
         await Ui.modal.error('Could not complete due to network error. Please try again.');
-      } else if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
+      } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         await Ui.modal.error('Your Google account or Gmail service is disabled. Please check your Google account settings.');
       } else {
         Catch.reportErr(e);
@@ -379,7 +381,7 @@ export class Settings {
             await Backend.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
             then();
           } catch (e) {
-            await Ui.modal.error(`Could not log in with FlowCrypt:\n\n${Api.err.eli5(e)}\n\n${String(e)}`);
+            await Ui.modal.error(`Could not log in with FlowCrypt:\n\n${ApiErr.eli5(e)}\n\n${String(e)}`);
           }
         } else {
           await Ui.modal.warning(`Could not log in:\n\n${authRes.error || authRes.result}`);

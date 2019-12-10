@@ -7,12 +7,13 @@ import { Store } from '../../../js/common/platform/store.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Str } from '../../../js/common/core/common.js';
-import { Api, BackendAuthErr } from '../../../js/common/api/api.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Backend, BackendRes } from '../../../js/common/api/backend.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Lang } from '../../../js/common/lang.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { BackendAuthErr } from '../../../js/common/api/error/api-error-types.js';
 
 export class PgpBlockViewPwdEncryptedMsgModule {
 
@@ -76,7 +77,7 @@ export class PgpBlockViewPwdEncryptedMsgModule {
         throw r;
       }
     } catch (e) {
-      if (Api.err.isAuthErr(e)) {
+      if (ApiErr.isAuthErr(e)) {
         Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail);
       } else {
         Catch.report('error when extending message expiration', e);

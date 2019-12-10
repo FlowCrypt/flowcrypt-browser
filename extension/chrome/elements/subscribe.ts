@@ -7,7 +7,6 @@ import { Store } from '../../js/common/platform/store.js';
 import { Str, Url } from '../../js/common/core/common.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Lang } from '../../js/common/lang.js';
-import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/browser/browser-msg.js';
 import { Backend, ProductName, Product, FcUuidAuth } from '../../js/common/api/backend.js';
 import { Assert } from '../../js/common/assert.js';
@@ -15,6 +14,7 @@ import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Settings } from '../../js/common/settings.js';
 import { View } from '../../js/common/view.js';
+import { ApiErr } from '../../js/common/api/error/api-error.js';
 
 View.run(class SubscribeView extends View {
   private readonly acctEmail: string;
@@ -70,10 +70,10 @@ View.run(class SubscribeView extends View {
     try {
       await Backend.accountGetAndUpdateLocalStore(this.authInfo);
     } catch (e) {
-      if (Api.err.isAuthErr(e)) {
+      if (ApiErr.isAuthErr(e)) {
         Xss.sanitizeRender('#content', `Not logged in. ${Ui.retryLink()}`);
         Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => window.location.reload());
-      } else if (Api.err.isNetErr(e)) {
+      } else if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender('#content', `Failed to load due to internet connection. ${Ui.retryLink()}`);
       } else {
         Catch.reportErr(e);
@@ -131,9 +131,9 @@ View.run(class SubscribeView extends View {
         const debug = e ? `<pre>${Xss.escape(JSON.stringify(e, undefined, 2))}</pre>` : '';
         Xss.sanitizeRender('#content', `<br><br><br><div class="line">Could not complete action: ${msg}. ${Ui.retryLink()}</div><br><br>${debug}`);
       };
-      if (Api.err.isNetErr(e)) {
+      if (ApiErr.isNetErr(e)) {
         renderErr('network error');
-      } else if (Api.err.isAuthErr(e)) {
+      } else if (ApiErr.isAuthErr(e)) {
         renderErr('auth error', e);
       } else {
         renderErr('unknown error. Please write us at human@flowcrypt.com to get this resolved', e);

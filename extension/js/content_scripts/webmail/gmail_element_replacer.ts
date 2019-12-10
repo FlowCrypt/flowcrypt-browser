@@ -5,7 +5,6 @@
 import { Str, Dict } from '../../common/core/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
-import { Api, AjaxErr } from '../../common/api/api.js';
 import { Pgp } from '../../common/core/pgp.js';
 import { XssSafeFactory, WebmailVariantString, FactoryReplyParams } from '../../common/xss_safe_factory.js';
 import { Att } from '../../common/core/att.js';
@@ -20,6 +19,8 @@ import { Gmail } from '../../common/api/email_provider/gmail/gmail.js';
 import { Ui } from '../../common/browser/ui.js';
 import { Browser } from '../../common/browser/browser.js';
 import { BrowserMsg } from '../../common/browser/browser-msg.js';
+import { ApiErr } from '../../common/api/error/api-error.js';
+import { AjaxErr } from '../../common/api/error/api-error-types.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
@@ -232,13 +233,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
                 const msg = await this.gmail.msgGet(msgId, 'full');
                 await this.processAtts(msgId, GmailParser.findAtts(msg), attsContainer, false, newPgpAttsNames);
               } catch (e) {
-                if (Api.err.isAuthPopupNeeded(e)) {
+                if (ApiErr.isAuthPopupNeeded(e)) {
                   this.notifications.showAuthPopupNeeded(this.acctEmail);
                   $(newPgpAtts).find('.attachment_loader').text('Auth needed');
-                } else if (Api.err.isNetErr(e)) {
+                } else if (ApiErr.isNetErr(e)) {
                   $(newPgpAtts).find('.attachment_loader').text('Network error');
                 } else {
-                  if (!Api.err.isServerErr(e) && !Api.err.isMailOrAcctDisabledOrPolicy(e) && !Api.err.isNotFound(e)) {
+                  if (!ApiErr.isServerErr(e) && !ApiErr.isMailOrAcctDisabledOrPolicy(e) && !ApiErr.isNotFound(e)) {
                     Catch.reportErr(e);
                   }
                   $(newPgpAtts).find('.attachment_loader').text('Failed to load');
@@ -318,7 +319,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           attSel.addClass('attachment_processed').children('.attachment_loader').remove();
         }
       } catch (e) {
-        if (!Api.err.isSignificant(e) || (e instanceof AjaxErr && e.status === 200)) {
+        if (!ApiErr.isSignificant(e) || (e instanceof AjaxErr && e.status === 200)) {
           attSel.show().children('.attachment_loader').text('Categorize: net err');
           nRenderedAtts++;
         } else {
@@ -544,7 +545,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
                     break;
                   }
                 } catch (e) {
-                  if (Api.err.isSignificant(e)) {
+                  if (ApiErr.isSignificant(e)) {
                     Catch.reportErr(e);
                   }
                   // this is a low-importance request, so evaluate has_pgp as false on errors

@@ -7,13 +7,13 @@ import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { Pgp, KeyInfo } from '../../../js/common/core/pgp.js';
-import { Api } from '../../../js/common/api/api.js';
 import { Attester } from '../../../js/common/api/attester.js';
 import { Backend } from '../../../js/common/api/backend.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const ClipboardJS: any;
@@ -63,7 +63,7 @@ View.run(class MyKeyView extends View {
         $('.pubkey_link_container').remove();
       }
     } catch (e) {
-      if (Api.err.isSignificant(e)) {
+      if (ApiErr.isSignificant(e)) {
         Catch.reportErr(e);
       }
       $('.pubkey_link_container').remove();

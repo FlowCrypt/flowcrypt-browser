@@ -5,6 +5,7 @@
 import { Api } from './api.js';
 import { Pgp } from '../core/pgp.js';
 import { PubkeySearchResult } from './keyserver.js';
+import { ApiErr } from './error/api-error.js';
 
 export class Sks extends Api {
 
@@ -15,7 +16,7 @@ export class Sks extends Api {
       const { responseText } = await Api.apiCall(server, path, undefined, undefined, undefined, undefined, 'xhr', 'GET') as XMLHttpRequest;
       return responseText;
     } catch (e) {
-      if (Api.err.isNotFound(e)) {
+      if (ApiErr.isNotFound(e)) {
         return undefined;
       }
       throw e;
