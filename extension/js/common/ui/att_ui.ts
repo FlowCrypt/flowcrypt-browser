@@ -28,7 +28,7 @@ export class AttUI {
     this.getLimits = getLimits;
   }
 
-  initAttDialog(elId: string, btnId: string, callbacks: AttUICallbacks = {}) {
+  initAttDialog = (elId: string, btnId: string, callbacks: AttUICallbacks = {}) => {
     this.callbacks = callbacks;
     $('#qq-template').load(this.templatePath, () => {
       const config = {
@@ -49,27 +49,27 @@ export class AttUI {
     });
   }
 
-  setInputAttributes(): HTMLInputElement {
+  setInputAttributes = (): HTMLInputElement => {
     const input: HTMLInputElement = this.uploader._buttons[0].getInput(); // tslint:disable-line:no-unsafe-any
     input.setAttribute('title', 'Attach a file');
     input.setAttribute('tabindex', '8');
     return input;
   }
 
-  hasAtt() {
+  hasAtt = () => {
     return Object.keys(this.attachedFiles).length > 0;
   }
 
-  getAttIds() {
+  getAttIds = () => {
     return Object.keys(this.attachedFiles);
   }
 
-  async collectAtt(uploadFileId: string) {
+  collectAtt = async (uploadFileId: string) => {
     const fileData = await this.readAttDataAsUint8(uploadFileId);
     return new Att({ name: this.attachedFiles[uploadFileId].name, type: this.attachedFiles[uploadFileId].type, data: fileData });
   }
 
-  async collectAtts() {
+  collectAtts = async () => {
     const atts: Att[] = [];
     for (const uploadFileId of Object.keys(this.attachedFiles)) {
       atts.push(await this.collectAtt(uploadFileId));
@@ -77,7 +77,7 @@ export class AttUI {
     return atts;
   }
 
-  async collectEncryptAtts(pubkeys: string[], pwd?: Pwd): Promise<Att[]> {
+  collectEncryptAtts = async (pubkeys: string[], pwd?: Pwd): Promise<Att[]> => {
     const atts: Att[] = [];
     for (const uploadFileId of Object.keys(this.attachedFiles)) {
       const file = this.attachedFiles[uploadFileId];
@@ -88,11 +88,11 @@ export class AttUI {
     return atts;
   }
 
-  clearAllAtts() {
+  clearAllAtts = () => {
     this.attachedFiles = {};
   }
 
-  private cancelAtt(uploadFileId: string) {
+  private cancelAtt = (uploadFileId: string) => {
     delete this.attachedFiles[uploadFileId];
     if (this.callbacks.uiChanged) {
       // run at next event loop cycle - let DOM changes render first
@@ -101,7 +101,7 @@ export class AttUI {
     }
   }
 
-  private async processNewAtt(uploadFileId: string) {
+  private processNewAtt = async (uploadFileId: string) => {
     const limits = await this.getLimits();
     if (limits.count && Object.keys(this.attachedFiles).length >= limits.count) {
       await Ui.modal.warning('Amount of attached files is limited to ' + limits.count);
@@ -132,12 +132,12 @@ export class AttUI {
     }
   }
 
-  public addFile(file: File) {
+  public addFile = (file: File) => {
     console.log('addFile uploading file:', file);
     this.uploader.addFiles([file]); // tslint:disable-line: no-unsafe-any
   }
 
-  private getFileSizeSum() {
+  private getFileSizeSum = () => {
     let sum = 0;
     for (const file of Object.values(this.attachedFiles)) {
       sum += file.size;
@@ -145,7 +145,7 @@ export class AttUI {
     return sum;
   }
 
-  private readAttDataAsUint8(uploadFileId: string): Promise<Uint8Array> {
+  private readAttDataAsUint8 = (uploadFileId: string): Promise<Uint8Array> => {
     return new Promise(resolve => {
       const reader = new FileReader();
       reader.onload = () => {

@@ -28,7 +28,7 @@ View.run(class BackupView extends View {
     this.armoredPrvBackup = Assert.urlParamRequire.string(uncheckedUrlParams, 'armoredPrvBackup');
   }
 
-  async render() {
+  render = async () => {
     Ui.event.protect();
     await initPassphraseToggle(['pass_phrase']);
     const prvBackup = await Pgp.key.read(this.armoredPrvBackup);
@@ -54,7 +54,7 @@ View.run(class BackupView extends View {
     this.sendResizeMsg();
   }
 
-  setHandlers() {
+  setHandlers = () => {
     if (!this.storedPrvWithMatchingLongid) {
       $("#action_import_key").click(this.setHandler(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/add_key.htm' })));
     }
@@ -62,12 +62,12 @@ View.run(class BackupView extends View {
     $('#pass_phrase').keydown(this.setEnterHandlerThatClicks('.action_test_pass'));
   }
 
-  private sendResizeMsg() {
+  private sendResizeMsg = () => {
     const desiredHeight = $('#backup_block').height()!;
     BrowserMsg.send.setCss(this.parentTabId, { selector: `iframe#${this.frameId}`, css: { height: `${desiredHeight}px` } });
   }
 
-  private async testPassphraseHandler() {
+  private testPassphraseHandler = async () => {
     if (await Pgp.key.decrypt(await Pgp.key.read(this.armoredPrvBackup), String($('#pass_phrase').val())) === true) {
       await Ui.modal.info('Success - your pass phrase matches this backup!');
     } else {

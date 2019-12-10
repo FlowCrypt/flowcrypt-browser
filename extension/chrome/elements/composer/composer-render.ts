@@ -18,7 +18,7 @@ import { Att } from '../../../js/common/core/att.js';
 
 export class ComposerRender extends ComposerComponent {
 
-  async initActions() {
+  initActions = async () => {
     await this.initComposeBox();
     BrowserMsg.addListener('close_dialog', async () => { $('.featherlight.featherlight-iframe').remove(); });
     this.composer.S.cached('icon_help').click(this.view.setHandler(() => this.renderHelpDialog(), this.composer.errs.handlers(`render help dialog`)));
@@ -37,7 +37,7 @@ export class ComposerRender extends ComposerComponent {
     await this.composer.sender.checkEmailAliases();
   }
 
-  private async initComposeBox() {
+  private initComposeBox = async () => {
     if (this.view.isReplyBox) {
       this.composer.S.cached('body').addClass('reply_box');
       this.composer.S.cached('header').remove();
@@ -93,11 +93,11 @@ export class ComposerRender extends ComposerComponent {
     this.loadRecipientsThenSetTestStateReady().catch(Catch.reportErr);
   }
 
-  private renderHelpDialog() {
+  private renderHelpDialog = () => {
     BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page: '/chrome/settings/modules/help.htm' });
   }
 
-  public async renderReplyMsgComposeTable(method: 'forward' | 'reply' = 'reply'): Promise<void> {
+  public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
     this.composer.S.cached('prompt').css({ display: 'none' });
     this.composer.recipients.showHideCcAndBccInputsIfNeeded();
     await this.composer.recipients.setEmailsPreview(this.composer.recipients.getRecipients());
@@ -140,7 +140,7 @@ export class ComposerRender extends ComposerComponent {
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToElement(this.view.parentTabId, { selector: `#${this.view.frameId}` }), 300);
   }
 
-  private async renderReplyMsgAsReplyPubkeyMismatch() {
+  private renderReplyMsgAsReplyPubkeyMismatch = async () => {
     await this.composer.input.inputTextHtmlSetSafely(`Hello,
       <br><br>I was not able to read your encrypted message because it was encrypted for a wrong key.
       <br><br>My current public key is attached below. Please update your records and send me a new encrypted message.
@@ -152,7 +152,7 @@ export class ComposerRender extends ComposerComponent {
     this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-sign-sending-option'), 'sign', false); // don't sign
   }
 
-  private getFocusableEls() {
+  private getFocusableEls = () => {
     return this.composer.S.cached('compose_table').find('[tabindex]:not([tabindex="-1"]):visible').toArray().sort((a, b) => {
       const tabindexA = parseInt(a.getAttribute('tabindex') || '');
       const tabindexB = parseInt(b.getAttribute('tabindex') || '');
@@ -165,7 +165,7 @@ export class ComposerRender extends ComposerComponent {
     });
   }
 
-  private async renderComposeTable() {
+  private renderComposeTable = async () => {
     this.composer.errs.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
     this.composer.S.cached('compose_table').css('display', 'table');
     this.composer.S.cached('body').keydown(this.view.setHandler((_, e) => {
@@ -254,12 +254,12 @@ export class ComposerRender extends ComposerComponent {
     this.composer.size.onComposeTableRender();
   }
 
-  private async loadRecipientsThenSetTestStateReady() {
+  private loadRecipientsThenSetTestStateReady = async () => {
     await Promise.all(this.composer.recipients.getRecipients().filter(r => r.evaluating).map(r => r.evaluating));
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
 
-  public renderReplySuccess(msg: SendableMsg, msgId: string) {
+  public renderReplySuccess = (msg: SendableMsg, msgId: string) => {
     this.composer.render.renderReinsertReplyBox(msgId);
     if (!this.composer.sendBtn.popover.choices.encrypt) {
       this.composer.S.cached('replied_body').addClass('pgp_neutral').removeClass('pgp_secure');
@@ -278,7 +278,7 @@ export class ComposerRender extends ComposerComponent {
     this.composer.size.resizeComposeBox();
   }
 
-  private renderReplySuccessAtts(atts: Att[], msgId: string) {
+  private renderReplySuccessAtts = (atts: Att[], msgId: string) => {
     const hideAttTypes = this.composer.sendBtn.popover.choices.richText ? ['hidden', 'encryptedMsg', 'signature', 'publicKey'] : ['publicKey'];
     const renderableAtts = atts.filter(att => !hideAttTypes.includes(att.treatAs()));
     if (renderableAtts.length) {
@@ -289,11 +289,11 @@ export class ComposerRender extends ComposerComponent {
     }
   }
 
-  renderReinsertReplyBox(msgId: string) {
+  renderReinsertReplyBox = (msgId: string) => {
     BrowserMsg.send.reinsertReplyBox(this.view.parentTabId, { replyMsgId: msgId });
   }
 
-  renderAddPubkeyDialog(emails: string[]) {
+  renderAddPubkeyDialog = (emails: string[]) => {
     if (this.view.placement !== 'settings') {
       BrowserMsg.send.addPubkeyDialog(this.view.parentTabId, { emails });
     } else {
@@ -305,7 +305,7 @@ export class ComposerRender extends ComposerComponent {
     }
   }
 
-  closeMsg() {
+  closeMsg = () => {
     $('body').attr('data-test-state', 'closed'); // used by automated tests
     if (this.view.isReplyBox) {
       BrowserMsg.send.closeReplyMessage(this.view.parentTabId, { frameId: this.view.frameId });

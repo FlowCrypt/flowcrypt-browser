@@ -27,7 +27,7 @@ View.run(class HelpView extends View {
     this.bugReport = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'bugReport');
   }
 
-  async render() {
+  render = async () => {
     if (this.acctEmail) {
       $('#input_email').val(this.acctEmail).attr('disabled', 'disabled');
     }
@@ -38,13 +38,13 @@ View.run(class HelpView extends View {
     }
   }
 
-  setHandlers() {
+  setHandlers = () => {
     $('.action_send_feedback').click(this.setHandler(el => this.sendFeedbackHandler(el)));
   }
 
   // --- PRIVATE
 
-  private async sendFeedbackHandler(target: HTMLElement) {
+  private sendFeedbackHandler = async (target: HTMLElement) => {
     const textVal = $('#input_text').val();
     const emailVal = String($('#input_email').val());
     if (!Str.isEmailValid(emailVal)) {

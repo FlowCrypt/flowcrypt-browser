@@ -39,4 +39,4 @@ import { Url } from '../../js/common/core/common.js';
     return renderRes('Unknown unit test f');
   }
 
-})().catch(console.error);
+})().catch(e => console.error(e));

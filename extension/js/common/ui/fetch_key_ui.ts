@@ -8,7 +8,7 @@ import { KeyImportUi } from './key_import_ui.js';
 import { BrowserMsg } from '../browser/browser-msg.js';
 
 export class FetchKeyUI {
-  handleOnPaste(elem: JQuery<HTMLElement>) {
+  handleOnPaste = (elem: JQuery<HTMLElement>) => {
     elem.on('paste', Ui.event.handle(async (elem: HTMLInputElement, event) => {
       const clipboardEvent = event.originalEvent as ClipboardEvent;
       if (clipboardEvent.clipboardData) {
@@ -24,7 +24,7 @@ export class FetchKeyUI {
     }));
   }
 
-  private async fetchPubkey(url: string) {
+  private fetchPubkey = async (url: string) => {
     try {
       // tslint:disable-next-line: no-direct-ajax
       const result = (await BrowserMsg.send.bg.await.ajax({ req: { url, type: 'GET', dataType: 'text', async: true }, stack: Catch.stackTrace() })) as string;

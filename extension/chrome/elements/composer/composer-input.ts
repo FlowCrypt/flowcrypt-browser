@@ -9,7 +9,7 @@ import { Recipients } from '../../../js/common/api/email_provider/email_provider
 
 export class ComposerInput extends ComposerComponent {
 
-  initActions() {
+  initActions = () => {
     this.composer.S.cached('add_intro').click(this.view.setHandler(target => {
       $(target).css('display', 'none');
       this.composer.S.cached('intro_container').css('display', 'table-row');
@@ -19,11 +19,11 @@ export class ComposerInput extends ComposerComponent {
     this.composer.S.cached('input_text').get(0).onpaste = this.composer.input.inputTextPasteHtmlAsText;
   }
 
-  public async inputTextHtmlSetSafely(html: string) {
+  public inputTextHtmlSetSafely = async (html: string) => {
     Xss.sanitizeRender(this.composer.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(html));
   }
 
-  public inputTextPasteHtmlAsText(clipboardEvent: ClipboardEvent) {
+  public inputTextPasteHtmlAsText = (clipboardEvent: ClipboardEvent) => {
     if (!clipboardEvent.clipboardData) {
       return;
     }
@@ -42,7 +42,7 @@ export class ComposerInput extends ComposerComponent {
     }
   }
 
-  public extract(type: 'text' | 'html', elSel: 'input_text' | 'input_intro', flag?: 'SKIP-ADDONS') {
+  public extract = (type: 'text' | 'html', elSel: 'input_text' | 'input_intro', flag?: 'SKIP-ADDONS') => {
     let html = this.composer.S.cached(elSel)[0].innerHTML;
     if (elSel === 'input_text' && this.composer.quote.expandingHTMLPart && flag !== 'SKIP-ADDONS') {
       html += `<br /><br />${this.composer.quote.expandingHTMLPart}`;
@@ -53,7 +53,7 @@ export class ComposerInput extends ComposerComponent {
     return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(html, '\n')).trim();
   }
 
-  public extractAll(): NewMsgData {
+  public extractAll = (): NewMsgData => {
     const recipientElements = this.composer.recipients.getRecipients();
     const recipients = this.mapRecipients(recipientElements);
     const subject = this.view.isReplyBox && this.view.replyParams ? this.view.replyParams.subject : String($('#input_subject').val() || '');
@@ -65,7 +65,7 @@ export class ComposerInput extends ComposerComponent {
     return { recipients, subject, plaintext, plainhtml, pwd, sender };
   }
 
-  private mapRecipients(recipients: RecipientElement[]) {
+  private mapRecipients = (recipients: RecipientElement[]) => {
     const result: Recipients = { to: [], cc: [], bcc: [] };
     for (const recipient of recipients) {
       switch (recipient.sendingType) {

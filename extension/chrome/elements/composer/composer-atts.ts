@@ -20,11 +20,11 @@ export class ComposerAtts extends ComposerComponent {
     this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice());
   }
 
-  initActions() {
+  initActions = () => {
     // none
   }
 
-  onComposeTableRender() {
+  onComposeTableRender = () => {
     this.attach.initAttDialog('fineuploader', 'fineuploader_button', {
       uiChanged: () => {
         this.composer.size.setInputTextHeightManuallyIfNeeded();
@@ -33,7 +33,7 @@ export class ComposerAtts extends ComposerComponent {
     });
   }
 
-  private async getMaxAttSizeAndOversizeNotice(): Promise<AttLimits> {
+  private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
     const subscription = await Store.subscription(this.view.acctEmail);
     if (!Rules.relaxSubscriptionRequirements(this.composer.sender.getSender()) && !subscription.active) {
       return {

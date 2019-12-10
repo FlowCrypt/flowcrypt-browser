@@ -17,7 +17,7 @@ export class PgpBlockViewSignatureModule {
   constructor(private view: PgpBlockView) {
   }
 
-  public renderPgpSignatureCheckResult(signature: VerifyRes | undefined) {
+  public renderPgpSignatureCheckResult = (signature: VerifyRes | undefined) => {
     if (signature) {
       const signerEmail = signature.contact ? signature.contact.name || this.view.senderEmail : this.view.senderEmail;
       $('#pgp_signature > .cursive > span').text(signerEmail || 'Unknown Signer');
@@ -41,7 +41,10 @@ export class PgpBlockViewSignatureModule {
     }
   }
 
-  private async renderPgpSignatureCheckMissingPubkeyOptions(signerLongid: string, senderEmail: string | undefined): Promise<void> { // don't have appropriate pubkey by longid in contacts
+  /**
+   * don't have appropriate pubkey by longid in contacts
+   */
+  private renderPgpSignatureCheckMissingPubkeyOptions = async (signerLongid: string, senderEmail: string | undefined): Promise<void> => {
     const render = (note: string, action: () => void) => $('#pgp_signature').addClass('neutral').find('.result').text(note).click(this.view.setHandler(action));
     try {
       if (senderEmail) { // we know who sent it

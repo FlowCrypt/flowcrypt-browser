@@ -23,7 +23,7 @@ export class PgpBlockViewPwdEncryptedMsgModule {
   constructor(private view: PgpBlockView) {
   }
 
-  public renderFutureExpiration(date: string) {
+  public renderFutureExpiration = (date: string) => {
     let btns = '';
     if (this.adminCodes && this.adminCodes.length) {
       btns += ' <a href="#" class="extend_expiration">extend</a>';
@@ -36,14 +36,14 @@ export class PgpBlockViewPwdEncryptedMsgModule {
     $('.extend_expiration').click(this.view.setHandler(target => this.renderMsgExpirationRenewOptions(target)));
   }
 
-  public async recoverStoredAdminCodes() {
+  public recoverStoredAdminCodes = async () => {
     const storage = await Store.getGlobal(['admin_codes']);
     if (this.view.short && storage.admin_codes && storage.admin_codes[this.view.short]?.codes) {
       this.adminCodes = storage.admin_codes[this.view.short].codes;
     }
   }
 
-  public async renderMsgExpirationRenewOptions(target: HTMLElement) {
+  public renderMsgExpirationRenewOptions = async (target: HTMLElement) => {
     const parent = $(target).parent();
     const subscription = await Store.subscription(this.view.acctEmail);
     if (subscription.level && subscription.active) {
@@ -61,7 +61,7 @@ export class PgpBlockViewPwdEncryptedMsgModule {
     }
   }
 
-  private async handleExtendMsgExpirationClicked(self: HTMLElement) {
+  private handleExtendMsgExpirationClicked = async (self: HTMLElement) => {
     const nDays = Number($(self).attr('href')!.replace('#', ''));
     Xss.sanitizeRender($(self).parent(), `Updating..${Ui.spinner('green')}`);
     try {
@@ -87,7 +87,7 @@ export class PgpBlockViewPwdEncryptedMsgModule {
     }
   }
 
-  public async getDecryptPwd(suppliedPwd?: string | undefined): Promise<string | undefined> {
+  public getDecryptPwd = async (suppliedPwd?: string | undefined): Promise<string | undefined> => {
     const pwd = suppliedPwd || this.userEnteredMsgPassword;
     if (pwd && this.view.hasChallengePassword) {
       const { hashed } = await BrowserMsg.send.bg.await.pgpHashChallengeAnswer({ answer: pwd });
@@ -96,7 +96,7 @@ export class PgpBlockViewPwdEncryptedMsgModule {
     return pwd;
   }
 
-  public async renderPasswordPromptAndAwaitEntry(attempt: 'first' | 'retry'): Promise<string> {
+  public renderPasswordPromptAndAwaitEntry = async (attempt: 'first' | 'retry'): Promise<string> => {
     let prompt = `<p>${attempt === 'first' ? '' : `<span style="color: red; font-weight: bold;">${Lang.pgpBlock.wrongPassword}</span>`}${Lang.pgpBlock.decryptPasswordPrompt}</p>`;
     const btn = `<div class="button green long decrypt" data-test="action-decrypt-with-password">decrypt message</div>`;
     prompt += `<p><input id="answer" placeholder="Password" data-test="input-message-password"></p><p>${btn}</p>`;
@@ -109,7 +109,7 @@ export class PgpBlockViewPwdEncryptedMsgModule {
     return String($('#answer').val());
   }
 
-  public async renderPasswordEncryptedMsgLoadFail(linkRes: BackendRes.FcLinkMsg) {
+  public renderPasswordEncryptedMsgLoadFail = async (linkRes: BackendRes.FcLinkMsg) => {
     if (linkRes.expired) {
       let expirationMsg = Lang.pgpBlock.msgExpiredOn + Str.datetimeToDate(linkRes.expire) + '. ' + Lang.pgpBlock.msgsDontExpire + '\n\n';
       if (linkRes.deleted) {

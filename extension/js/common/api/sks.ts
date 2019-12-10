@@ -10,7 +10,7 @@ export class Sks extends Api {
 
   private static MR_VERSION_1 = 'info:1:';
 
-  private static async get(server: string, path: string): Promise<string | undefined> {
+  private static get = async (server: string, path: string): Promise<string | undefined> => {
     try {
       const { responseText } = await Api.apiCall(server, path, undefined, undefined, undefined, undefined, 'xhr', 'GET') as XMLHttpRequest;
       return responseText;
@@ -23,7 +23,7 @@ export class Sks extends Api {
   }
 
   // https://tools.ietf.org/html/draft-shaw-openpgp-hkp-00#section-5.1
-  public static async lookupEmail(server: string, email: string): Promise<PubkeySearchResult> {
+  public static lookupEmail = async (server: string, email: string): Promise<PubkeySearchResult> => {
     const index = await Sks.get(server, `pks/lookup?search=${encodeURIComponent(email)}&fingerprint=on&exact=on&options=mr&op=index`);
     if (!index || !index.startsWith(Sks.MR_VERSION_1)) {
       return { pubkey: null, pgpClient: null }; // tslint:disable-line:no-null-keyword
@@ -56,7 +56,7 @@ export class Sks extends Api {
     return await Sks.lookupLongid(server, Object.keys(foundUidsByLongid)[0]); // else return the first pubkey
   }
 
-  public static async lookupLongid(server: string, longid: string): Promise<PubkeySearchResult> {
+  public static lookupLongid = async (server: string, longid: string): Promise<PubkeySearchResult> => {
     const pubkey = await Sks.get(server, `pks/lookup?op=get&search=0x${longid}&options=mr`);
     if (!pubkey || !pubkey.includes(String(Pgp.armor.headers('publicKey').end))) {
       return { pubkey: null, pgpClient: null }; // tslint:disable-line:no-null-keyword

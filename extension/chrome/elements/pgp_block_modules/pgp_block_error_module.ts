@@ -17,7 +17,7 @@ export class PgpBlockViewErrorModule {
   constructor(private view: PgpBlockView) {
   }
 
-  public async renderErr(errBoxContent: string, renderRawMsg: string | undefined) {
+  public renderErr = async (errBoxContent: string, renderRawMsg: string | undefined) => {
     this.view.renderModule.setFrameColor('red');
     const showRawMsgPrompt = renderRawMsg ? '<a href="#" class="action_show_raw_pgp_block">show original message</a>' : '';
     await this.view.renderModule.renderContent(`<div class="error">${errBoxContent.replace(/\n/g, '<br>')}</div>${showRawMsgPrompt}`, true);
@@ -31,7 +31,7 @@ export class PgpBlockViewErrorModule {
     Ui.setTestState('ready');
   }
 
-  public async handlePrivateKeyMismatch(message: Uint8Array) { // todo - make it work for multiple stored keys
+  public handlePrivateKeyMismatch = async (message: Uint8Array) => { // todo - make it work for multiple stored keys
     const msgDiagnosis = await BrowserMsg.send.bg.await.pgpMsgDiagnosePubkeys({ privateKis: await Store.keysGet(this.view.acctEmail), message });
     if (msgDiagnosis.found_match) {
       await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.encryptedCorrectlyFileBug, undefined);
@@ -43,7 +43,7 @@ export class PgpBlockViewErrorModule {
     }
   }
 
-  public async handleInitializeErr(e: any) {
+  public handleInitializeErr = async (e: any) => {
     if (Api.err.isNetErr(e)) {
       await this.renderErr(`Could not load message due to network error. ${Ui.retryLink()}`, undefined);
     } else if (Api.err.isAuthPopupNeeded(e)) {
@@ -59,7 +59,7 @@ export class PgpBlockViewErrorModule {
     }
   }
 
-  public btnHtml(text: string, addClasses: string) {
+  public btnHtml = (text: string, addClasses: string) => {
     return `<div class="button long ${addClasses}" style="margin:30px 0;" target="cryptup">${text}</div>`;
   }
 

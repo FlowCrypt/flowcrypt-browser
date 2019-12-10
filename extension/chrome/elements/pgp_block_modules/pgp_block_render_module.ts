@@ -21,11 +21,11 @@ export class PgpBlockViewRenderModule {
   constructor(private view: PgpBlockView) {
   }
 
-  public renderText(text: string) {
+  public renderText = (text: string) => {
     document.getElementById('pgp_block')!.innerText = text;
   }
 
-  public resizePgpBlockFrame() {
+  public resizePgpBlockFrame = () => {
     let height = Math.max($('#pgp_block').height()!, 20) + 40;
     this.heightHist.push(height);
     const len = this.heightHist.length;
@@ -36,7 +36,7 @@ export class PgpBlockViewRenderModule {
     BrowserMsg.send.setCss(this.view.parentTabId, { selector: `iframe#${this.view.frameId}`, css: { height: `${height}px` } });
   }
 
-  private displayImageSrcLinkAsImg(a: HTMLAnchorElement, event: JQuery.Event<HTMLAnchorElement, null>) {
+  private displayImageSrcLinkAsImg = (a: HTMLAnchorElement, event: JQuery.Event<HTMLAnchorElement, null>) => {
     const img = document.createElement('img');
     img.setAttribute('style', a.getAttribute('style') || '');
     img.style.background = 'none';
@@ -62,7 +62,7 @@ export class PgpBlockViewRenderModule {
     event.stopImmediatePropagation();
   }
 
-  public async renderContent(htmlContent: string, isErr: boolean) {
+  public renderContent = async (htmlContent: string, isErr: boolean) => {
     if (!isErr && !this.view.isOutgoing) { // successfully opened incoming message
       await Store.setAcct(this.view.acctEmail, { successfully_received_at_leat_one_message: true });
     }
@@ -83,7 +83,7 @@ export class PgpBlockViewRenderModule {
     Catch.setHandledTimeout(() => $(window).resize(this.view.setHandlerPrevent('spree', () => this.resizePgpBlockFrame())), 1000); // start auto-resizing the window after 1s
   }
 
-  public setFrameColor(color: 'red' | 'green' | 'gray') {
+  public setFrameColor = (color: 'red' | 'green' | 'gray') => {
     if (color === 'red') {
       $('#pgp_background').removeClass('pgp_secure').removeClass('pgp_neutral').addClass('pgp_insecure');
     } else if (color === 'green') {
@@ -93,7 +93,7 @@ export class PgpBlockViewRenderModule {
     }
   }
 
-  public async decideDecryptedContentFormattingAndRender(decryptedBytes: Buf, isEncrypted: boolean, sigResult: VerifyRes | undefined, plainSubject?: string) {
+  public decideDecryptedContentFormattingAndRender = async (decryptedBytes: Buf, isEncrypted: boolean, sigResult: VerifyRes | undefined, plainSubject?: string) => {
     this.setFrameColor(isEncrypted ? 'green' : 'gray');
     this.view.signatureModule.renderPgpSignatureCheckResult(sigResult);
     const publicKeys: string[] = [];
@@ -148,7 +148,7 @@ export class PgpBlockViewRenderModule {
     }
   }
 
-  private getEncryptedSubjectText(subject: string, isHtml: boolean) {
+  private getEncryptedSubjectText = (subject: string, isHtml: boolean) => {
     if (isHtml) {
       return `<div style="font-size: 14px; border-bottom: 1px #cacaca"> Encrypted Subject:
                 <b> ${subject}</b>

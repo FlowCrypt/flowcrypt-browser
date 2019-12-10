@@ -32,14 +32,14 @@ View.run(class ExperimentalView extends View {
     }
   }
 
-  async render() {
+  render = async () => {
     if (Catch.environment() === 'ex:dev') {
       Xss.sanitizeAppend('.storage_link_container', ` - <a href="${Xss.escape(Url.create('/chrome/dev/storage.htm', { controls: true }))}">Storage</a>`);
     }
     $('.email').text(this.acctEmail);
   }
 
-  setHandlers() {
+  setHandlers = () => {
     $('.action_open_compatibility').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/compatibility.htm')));
     $('.action_open_decrypt').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/decrypt.htm')));
     $('.action_backup').click(this.setHandlerPrevent('double', () => this.collectInfoAndDownloadBackupFile().catch(Catch.reportErr)));
@@ -55,7 +55,7 @@ View.run(class ExperimentalView extends View {
 
   // -- PRIVATE
 
-  private async acctEmailChangedHandler() {
+  private acctEmailChangedHandler = async () => {
     if (await Ui.modal.confirm(Lang.setup.confirmManualAcctEmailChange(this.acctEmail))) {
       const response = await GoogleAuth.newAuthPopup({ acctEmail: this.acctEmail });
       if (response.result === 'Success' && response.acctEmail) {
@@ -85,22 +85,22 @@ View.run(class ExperimentalView extends View {
     }
   }
 
-  private async makeGoogleAuthTokenUnusableHandler() {
+  private makeGoogleAuthTokenUnusableHandler = async () => {
     await Store.setAcct(this.acctEmail, { google_token_access: 'flowcrypt_test_bad_access_token' });
     BrowserMsg.send.reload(this.parentTabId, {});
   }
 
-  private async makeGoogleRefreshTokenUnusableHandler() {
+  private makeGoogleRefreshTokenUnusableHandler = async () => {
     await Store.setAcct(this.acctEmail, { google_token_refresh: 'flowcrypt_test_bad_refresh_token' });
     BrowserMsg.send.reload(this.parentTabId, {});
   }
 
-  private async resetManagingAuthHandler() {
+  private resetManagingAuthHandler = async () => {
     await Store.setAcct(this.acctEmail, { 'subscription': undefined, 'uuid': undefined });
     BrowserMsg.send.reload(this.parentTabId, {});
   }
 
-  private async acctResetHandler() {
+  private acctResetHandler = async () => {
     if (await Ui.modal.confirm(Lang.setup.confirmResetAcct(this.acctEmail))) {
       await this.collectInfoAndDownloadBackupFile();
       if (await Ui.modal.confirm('Proceed to reset? Don\'t come back telling me I didn\'t warn you.')) {
@@ -110,14 +110,14 @@ View.run(class ExperimentalView extends View {
     }
   }
 
-  private async collectInfoAndDownloadBackupFile() {
+  private collectInfoAndDownloadBackupFile = async () => {
     const name = `FlowCrypt_BACKUP_FILE_${this.acctEmail.replace(/[^a-z0-9]+/, '')}.txt`;
     const backupText = await this.collectInfoForAccountBackup();
     Browser.saveToDownloads(new Att({ name, type: 'text/plain', data: Buf.fromUtfStr(backupText) }));
     await Ui.delay(1000);
   }
 
-  private async collectInfoForAccountBackup() {
+  private collectInfoForAccountBackup = async () => {
     const text = [
       'This file contains sensitive information, please put it in a safe place.',
       '',

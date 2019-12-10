@@ -13,11 +13,11 @@ import { GoogleAuth } from './google-auth.js';
 
 export class Google {
 
-  public static webmailUrl(acctEmail: string) {
+  public static webmailUrl = (acctEmail: string) => {
     return `https://mail.google.com/mail/u/${acctEmail}`;
   }
 
-  public static async gmailCall(acctEmail: string, method: ReqMethod, path: string, params: Dict<Serializable> | string | undefined, progress?: ProgressCbs, contentType?: string) {
+  public static gmailCall = async (acctEmail: string, method: ReqMethod, path: string, params: Dict<Serializable> | string | undefined, progress?: ProgressCbs, contentType?: string) => {
     progress = progress || {};
     let data, url;
     if (typeof progress.upload === 'function') {
@@ -38,7 +38,7 @@ export class Google {
     return await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request);
   }
 
-  public static async contactsGet(acctEmail: string, query?: string, progress?: ProgressCbs, max: number = 10, start: number = 0) {
+  public static contactsGet = async (acctEmail: string, query?: string, progress?: ProgressCbs, max: number = 10, start: number = 0) => {
     progress = progress || {};
     const method = 'GET';
     const contentType = 'application/json; charset=UTF-8';
@@ -56,7 +56,7 @@ export class Google {
       }));
   }
 
-  static encodeAsMultipartRelated(parts: Dict<string>) { // todo - this could probably be achieved with emailjs-mime-builder
+  static encodeAsMultipartRelated = (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
     const boundary = 'the_boundary_is_' + Str.sloppyRandom(10);
     let body = '';
     for (const type of Object.keys(parts)) {

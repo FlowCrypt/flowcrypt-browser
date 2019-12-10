@@ -20,7 +20,7 @@ export class SetupCreateKeyModule {
   constructor(private view: SetupView) {
   }
 
-  async actionCreateKeyHandler() {
+  actionCreateKeyHandler = async () => {
     await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.rules!);
     if (! await this.isCreatePrivateFormInputCorrect()) {
       return;
@@ -49,7 +49,7 @@ export class SetupCreateKeyModule {
     }
   }
 
-  async actionShowAdvancedSettingsHandle(target: HTMLElement) {
+  actionShowAdvancedSettingsHandle = async (target: HTMLElement) => {
     const advancedCreateSettings = $('#step_2a_manual_create .advanced_create_settings');
     const container = $('#step_2a_manual_create .advanced_create_settings_container');
     if (advancedCreateSettings.is(':visible')) {
@@ -63,7 +63,7 @@ export class SetupCreateKeyModule {
     }
   }
 
-  private async isCreatePrivateFormInputCorrect() {
+  private isCreatePrivateFormInputCorrect = async () => {
     const password1 = $('#step_2a_manual_create .input_password');
     const password2 = $('#step_2a_manual_create .input_password2');
     if (!password1.val()) {
@@ -95,7 +95,7 @@ export class SetupCreateKeyModule {
     return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassPhraseStickyNote);
   }
 
-  async createSaveKeyPair(options: SetupOptions) {
+  createSaveKeyPair = async (options: SetupOptions) => {
     await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.rules!);
     const { full_name } = await Store.getAcct(this.view.acctEmail, ['full_name']);
     try {

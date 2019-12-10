@@ -6,7 +6,7 @@ import { base64encode, base64decode } from '../platform/util.js';
 
 export class Buf extends Uint8Array {
 
-  public static concat(arrays: Uint8Array[]): Buf {
+  public static concat = (arrays: Uint8Array[]): Buf => {
     const result = new Uint8Array(arrays.reduce((totalLen, arr) => totalLen + arr.length, 0));
     let offset = 0;
     for (const array of arrays) {
@@ -16,7 +16,7 @@ export class Buf extends Uint8Array {
     return Buf.fromUint8(result);
   }
 
-  public static with(input: Uint8Array | Buf | string): Buf { // utf8 string or Typed Array bytes
+  public static with = (input: Uint8Array | Buf | string): Buf => { // utf8 string or Typed Array bytes
     if (input instanceof Buf) {
       return input;
     } else if (input instanceof Uint8Array) {
@@ -26,11 +26,11 @@ export class Buf extends Uint8Array {
     }
   }
 
-  public static fromUint8(u8a: Uint8Array): Buf {
+  public static fromUint8 = (u8a: Uint8Array): Buf => {
     return new Buf(u8a);
   }
 
-  public static fromRawBytesStr(rawStr: string): Buf {
+  public static fromRawBytesStr = (rawStr: string): Buf => {
     const length = rawStr.length;
     const buf = new Buf(length);
     for (let i = 0; i < length; i++) {
@@ -39,7 +39,7 @@ export class Buf extends Uint8Array {
     return buf;
   }
 
-  public static fromUtfStr(utfStr: string): Buf {
+  public static fromUtfStr = (utfStr: string): Buf => {
     // adapted from https://github.com/feross/buffer/blob/master/index.js see https://github.com/feross/buffer/blob/master/LICENSE (MIT as of Jan 2018)
     let codePoint;
     const length = utfStr.length;
@@ -85,15 +85,15 @@ export class Buf extends Uint8Array {
     return new Buf(bytes);
   }
 
-  public static fromBase64Str(b64str: string): Buf {
+  public static fromBase64Str = (b64str: string): Buf => {
     return Buf.fromRawBytesStr(base64decode(b64str));
   }
 
-  public static fromBase64UrlStr(b64UrlStr: string): Buf {
+  public static fromBase64UrlStr = (b64UrlStr: string): Buf => {
     return Buf.fromBase64Str(b64UrlStr.replace(/-/g, '+').replace(/_/g, '/'));
   }
 
-  public toUtfStr(mode: 'strict' | 'inform' | 'ignore' = 'inform'): string { // tom
+  public toUtfStr = (mode: 'strict' | 'inform' | 'ignore' = 'inform'): string => { // tom
     const length = this.length;
     let bytesLeftInChar = 0;
     let utf8string = '';
@@ -147,7 +147,7 @@ export class Buf extends Uint8Array {
     return utf8string;
   }
 
-  public toRawBytesStr(): string {
+  public toRawBytesStr = (): string => {
     const chunkSize = 0x8000;
     const length = this.length;
     const chars = [];
@@ -157,11 +157,11 @@ export class Buf extends Uint8Array {
     return chars.join('');
   }
 
-  public toBase64Str(): string {
+  public toBase64Str = (): string => {
     return base64encode(this.toRawBytesStr());
   }
 
-  public toBase64UrlStr(): string {
+  public toBase64UrlStr = (): string => {
     return this.toBase64Str().replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 

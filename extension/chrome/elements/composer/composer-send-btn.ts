@@ -33,17 +33,17 @@ export class ComposerSendBtn extends ComposerComponent {
     this.popover = new ComposerSendBtnPopover(composer);
   }
 
-  initActions(): void {
+  initActions = (): void => {
     this.composer.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composer.size.composeWindowIsMinimized && this.extractProcessSendMsg()));
     this.composer.S.cached('send_btn').click(this.view.setHandlerPrevent('double', () => this.extractProcessSendMsg()));
     this.popover.initActions();
   }
 
-  isSendMessageInProgres(): boolean {
+  isSendMessageInProgres = (): boolean => {
     return this.isSendMessageInProgress;
   }
 
-  resetSendBtn(delay?: number) {
+  resetSendBtn = (delay?: number) => {
     const doReset = () => {
       Xss.sanitizeRender(this.composer.S.cached('send_btn_text'), `<i></i>${this.btnText()}`);
       this.composer.S.cached('toggle_send_options').show();
@@ -58,17 +58,17 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  disableBtn() {
+  disableBtn = () => {
     this.composer.S.cached('send_btn').removeClass('green').addClass('gray').prop('disabled', true);
     this.composer.S.cached('toggle_send_options').removeClass('green').addClass('gray');
   }
 
-  enableBtn() {
+  enableBtn = () => {
     this.composer.S.cached('send_btn').removeClass('gray').addClass('green').prop('disabled', false);
     this.composer.S.cached('toggle_send_options').removeClass('gray').addClass('green');
   }
 
-  private btnText(): string {
+  private btnText = (): string => {
     if (this.popover.choices.encrypt && this.popover.choices.sign) {
       return SendBtnTexts.BTN_ENCRYPT_SIGN_AND_SEND;
     } else if (this.popover.choices.encrypt) {
@@ -80,7 +80,7 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  private async extractProcessSendMsg() {
+  private extractProcessSendMsg = async () => {
     this.composer.sendBtn.disableBtn();
     this.composer.S.cached('toggle_send_options').hide();
     try {
@@ -109,7 +109,7 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  private async finalizeSendableMsg(msg: SendableMsg, senderKi: KeyInfo) {
+  private finalizeSendableMsg = async (msg: SendableMsg, senderKi: KeyInfo) => {
     const choices = this.composer.sendBtn.popover.choices;
     for (const k of Object.keys(this.additionalMsgHeaders)) {
       msg.headers[k] = this.additionalMsgHeaders[k];
@@ -125,7 +125,7 @@ export class ComposerSendBtn extends ComposerComponent {
     await this.addNamesToMsg(msg);
   }
 
-  private async doSendMsg(msg: SendableMsg) {
+  private doSendMsg = async (msg: SendableMsg) => {
     let msgSentRes: GmailRes.GmailMsgSend;
     try {
       this.isSendMessageInProgress = true;
@@ -150,7 +150,7 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  private async decryptSenderKey(senderKi: KeyInfo): Promise<OpenPGP.key.Key | undefined> {
+  private decryptSenderKey = async (senderKi: KeyInfo): Promise<OpenPGP.key.Key | undefined> => {
     const prv = await Pgp.key.read(senderKi.private);
     const passphrase = await this.composer.storage.passphraseGet(senderKi);
     if (typeof passphrase === 'undefined' && !prv.isFullyDecrypted()) {
@@ -169,14 +169,14 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  public renderUploadProgress(progress: number | undefined) {
+  public renderUploadProgress = (progress: number | undefined) => {
     if (progress && this.composer.atts.attach.hasAtt()) {
       progress = Math.floor(progress);
       this.composer.S.now('send_btn_text').text(`${SendBtnTexts.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
     }
   }
 
-  private async addNamesToMsg(msg: SendableMsg): Promise<void> {
+  private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
     const { sendAs } = await Store.getAcct(this.view.acctEmail, ['sendAs']);
     const addNameToEmail = async (emails: string[]): Promise<string[]> => {
       return await Promise.all(emails.map(async email => {

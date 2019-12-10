@@ -39,7 +39,7 @@ View.run(class PgpPubkeyView extends View {
     this.minimized = uncheckedUrlParams.minimized === true;
   }
 
-  async render() {
+  render = async () => {
     Ui.event.protect();
     this.publicKeys = (await openpgp.key.readArmored(this.armoredPubkey)).keys;
     this.primaryPubKey = this.publicKeys[0];
@@ -99,18 +99,18 @@ View.run(class PgpPubkeyView extends View {
     this.sendResizeMsg();
   }
 
-  setHandlers() {
+  setHandlers = () => {
     $('.action_add_contact').click(this.setHandler(btn => this.addContactHandler(btn)));
     $('.input_email').keyup(this.setHandler(() => this.setBtnText()));
     $('.action_show_full').click(this.setHandler(btn => this.showFullKeyHandler(btn)));
   }
 
-  private sendResizeMsg() {
+  private sendResizeMsg = () => {
     const desiredHeight = $('#pgp_block').height()! + (this.compact ? 10 : 30); // #pgp_block is defined in template
     BrowserMsg.send.setCss(this.parentTabId, { selector: `iframe#${this.frameId}`, css: { height: `${desiredHeight}px` } });
   }
 
-  private async setBtnText() {
+  private setBtnText = async () => {
     if (this.publicKeys!.length > 1) {
       $('.action_add_contact').text('import ' + this.publicKeys!.length + ' public keys');
     } else {
@@ -121,14 +121,14 @@ View.run(class PgpPubkeyView extends View {
     }
   }
 
-  private showKeyNotUsableError() {
+  private showKeyNotUsableError = () => {
     $('.fingerprints, .add_contact').remove();
     $('#pgp_block.pgp_pubkey .result')
       .prepend('<span class="bad">This OpenPGP key is not usable.</span>'); // xss-direct
     $('.pubkey').addClass('bad');
   }
 
-  private async addContactHandler(addContactBtn: HTMLElement) {
+  private addContactHandler = async (addContactBtn: HTMLElement) => {
     if (this.publicKeys!.length > 1) {
       const contacts: Contact[] = [];
       for (const pubkey of this.publicKeys!) {
@@ -161,7 +161,7 @@ View.run(class PgpPubkeyView extends View {
     }
   }
 
-  private showFullKeyHandler(showFullBtn: HTMLElement) {
+  private showFullKeyHandler = (showFullBtn: HTMLElement) => {
     $(showFullBtn).css('display', 'none');
     $('pre.pubkey, .line.fingerprints, .line.add_contact').css('display', 'block');
     this.sendResizeMsg();
