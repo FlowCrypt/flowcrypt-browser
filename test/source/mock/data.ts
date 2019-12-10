@@ -33,7 +33,6 @@ export class Data {
         DATA[acct].drafts = UserMessages[acct].drafts;
         DATA[acct].messages.push(...UserMessages[acct].messages);
       }
-      DATA[acct].drafts = DATA[acct].drafts || []; // backward compatibility
     }
   }
 
