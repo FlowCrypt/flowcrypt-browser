@@ -110,8 +110,6 @@ export class ComposerSize extends ComposerComponent {
     }
   }
 
-  public isMinimized = () => this.composeWindowIsMinimized;
-
   /**
 * On Firefox, we have to manage textbox height manually. Only applies to composing new messages
 * (else ff will keep expanding body element beyond frame view)

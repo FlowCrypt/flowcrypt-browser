@@ -13,7 +13,9 @@ import { GoogleAuth } from './google-auth.js';
 
 export class Google {
 
-  public static webmailUrl = (acctEmail: string) => `https://mail.google.com/mail/u/${acctEmail}`;
+  public static webmailUrl(acctEmail: string) {
+    return `https://mail.google.com/mail/u/${acctEmail}`;
+  }
 
   public static async gmailCall(acctEmail: string, method: ReqMethod, path: string, params: Dict<Serializable> | string | undefined, progress?: ProgressCbs, contentType?: string) {
     progress = progress || {};

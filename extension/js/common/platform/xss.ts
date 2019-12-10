@@ -17,11 +17,21 @@ export class Xss {
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index', 'target'];
   private static HREF_REGEX_CACHE: RegExp | undefined;
 
-  // following methods are browser-specific, node implementation does not have them
-  public static sanitizeRender = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).html(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
-  public static sanitizeAppend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).append(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
-  public static sanitizePrepend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).prepend(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
-  public static sanitizeReplace = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).replaceWith(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
+  public static sanitizeRender(selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) { // browser-only (not on node)
+    return $(selector as any).html(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
+  }
+
+  public static sanitizeAppend(selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) { // browser-only (not on node)
+    return $(selector as any).append(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
+  }
+
+  public static sanitizePrepend(selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) { // browser-only (not on node)
+    return $(selector as any).prepend(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
+  }
+
+  public static sanitizeReplace(selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) { // browser-only (not on node)
+    return $(selector as any).replaceWith(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
+  }
 
   public static htmlSanitize(dirtyHtml: string): string {
     return DOMPurify.sanitize(dirtyHtml, { // tslint:disable-line:oneliner-object-literal

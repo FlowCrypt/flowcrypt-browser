@@ -1084,7 +1084,7 @@ export class PgpMsg {
     return normalized;
   }
 
-  // public static extractFcReplyToken = (decryptedContent: string) => { // todo - used exclusively on the web - move to a web package
+  // public static extractFcReplyToken(decryptedContent: string) { // todo - used exclusively on the web - move to a web package
   //   const fcTokenElement = $(`<div>${decryptedContent}</div>`).find('.cryptup_reply');
   //   if (fcTokenElement.length) {
   //     const fcData = fcTokenElement.attr('cryptup-data');
@@ -1094,7 +1094,9 @@ export class PgpMsg {
   //   }
   // }
 
-  public static stripFcTeplyToken = (decryptedContent: string) => decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
+  public static stripFcTeplyToken(decryptedContent: string) {
+    return decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
+  }
 
   private static isFcAttLinkData(o: any): o is FcAttLinkData {
     return o && typeof o === 'object' && typeof (o as FcAttLinkData).name !== 'undefined'

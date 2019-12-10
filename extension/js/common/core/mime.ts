@@ -224,9 +224,9 @@ export class Mime {
     });
   }
 
-  public static encode = async (
+  public static async encode(
     body: string | SendableMsgBody, headers: RichHeaders, atts: Att[] = [], rootType = 'multipart/mixed', sign?: (signable: string) => Promise<string>
-  ): Promise<string> => {
+  ): Promise<string> {
     if (typeof body === 'string') {
       body = { 'text/plain': body };
     }

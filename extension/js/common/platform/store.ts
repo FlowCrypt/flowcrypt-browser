@@ -178,9 +178,13 @@ export class Store {
   private static globalStorageScope: 'global' = 'global';
   private static dbQueryKeys = ['limit', 'substring', 'has_pgp'];
 
-  static singleScopeRawIndex = (scope: string, key: string) => `cryptup_${scope.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_${key}`;
+  static singleScopeRawIndex(scope: string, key: string) {
+    return `cryptup_${scope.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_${key}`;
+  }
 
-  private static singleScopeRawIndexArr = (scope: string, keys: string[]) => keys.map(key => Store.singleScopeRawIndex(scope, key));
+  private static singleScopeRawIndexArr(scope: string, keys: string[]) {
+    return keys.map(key => Store.singleScopeRawIndex(scope, key));
+  }
 
   private static manyScopesRawIndexArr(scopes: string[], keys: string[]) {
     const allResults: string[] = [];

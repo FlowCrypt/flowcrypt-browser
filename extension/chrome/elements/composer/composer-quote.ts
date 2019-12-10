@@ -245,5 +245,8 @@ export class ComposerQuote extends ComposerComponent {
       }));
   }
 
-  private setQuoteLoaderProgress = (text: string) => this.composer.S.cached('icon_show_prev_msg').find('#loader').text(text);
+  private setQuoteLoaderProgress(text: string) {
+    return this.composer.S.cached('icon_show_prev_msg').find('#loader').text(text);
+  }
+
 }

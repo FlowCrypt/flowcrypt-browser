@@ -42,7 +42,9 @@ export class Attester extends Api {
     return results;
   }
 
-  public static lookupLongid = (longid: string) => Attester.lookupEmail(longid); // the api accepts either email or longid
+  public static lookupLongid(longid: string) {
+    return Attester.lookupEmail(longid); // the api accepts either email or longid
+  }
 
   public static async replacePubkey(email: string, pubkey: string): Promise<string> { // replace key assigned to a certain email with a different one
     const r = await Attester.pubCall(`pub/${email}`, 'POST', pubkey);

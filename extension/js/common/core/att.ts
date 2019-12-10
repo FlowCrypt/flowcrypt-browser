@@ -52,7 +52,9 @@ export class Att {
     this.contentDescription = contentDescription || undefined;
   }
 
-  public hasData = () => this.bytes instanceof Uint8Array;
+  public hasData() {
+    return this.bytes instanceof Uint8Array;
+  }
 
   public setData(bytes: Uint8Array) {
     if (this.hasData()) {
@@ -103,6 +105,8 @@ export class Att {
 
   public static readonly attachmentsPattern = /^(((cryptup|flowcrypt)-backup-[a-z]+\.key)|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|())$/gm;
 
-  public static keyinfoAsPubkeyAtt = (ki: { public: string, longid: string }) => new Att({ data: Buf.fromUtfStr(ki.public), type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
+  public static keyinfoAsPubkeyAtt(ki: { public: string, longid: string }) {
+    return new Att({ data: Buf.fromUtfStr(ki.public), type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
+  }
 
 }

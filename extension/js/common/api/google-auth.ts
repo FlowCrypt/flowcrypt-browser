@@ -3,6 +3,7 @@
 'use strict';
 
 // tslint:disable:no-direct-ajax
+// tslint:disable:oneliner-object-literal
 
 const BUILD = 'consumer'; // todo
 
@@ -172,9 +173,13 @@ export class GoogleAuth {
   /**
    * Is the title actually just url of the page? (means real title not loaded yet)
    */
-  private static isAuthUrl = (title: string) => title.match(/^(?:https?:\/\/)?accounts\.google\.com/) !== null || title.startsWith(GOOGLE_OAUTH_SCREEN_HOST.replace(/^https?:\/\//, ''));
+  private static isAuthUrl(title: string) {
+    return title.match(/^(?:https?:\/\/)?accounts\.google\.com/) !== null || title.startsWith(GOOGLE_OAUTH_SCREEN_HOST.replace(/^https?:\/\//, ''));
+  }
 
-  private static isForwarding = (title: string) => title.match(/^Forwarding /) !== null;
+  private static isForwarding(title: string) {
+    return title.match(/^Forwarding /) !== null;
+  }
 
   private static async waitForAndProcessOauthWindowResult(windowId: number, acctEmail: string | undefined, scopes: string[], csrfToken: string, save: boolean): Promise<AuthRes> {
     while (true) {
@@ -204,17 +209,21 @@ export class GoogleAuth {
     }
   }
 
-  private static apiGoogleAuthCodeUrl = (authReq: AuthReq) => Url.create(GoogleAuth.OAUTH.url_code, {
-    client_id: GoogleAuth.OAUTH.client_id,
-    response_type: 'code',
-    access_type: 'offline',
-    state: GoogleAuth.apiGoogleAuthStatePack(authReq),
-    redirect_uri: GoogleAuth.OAUTH.url_redirect,
-    scope: (authReq.scopes || []).join(' '),
-    login_hint: authReq.acctEmail,
-  })
+  private static apiGoogleAuthCodeUrl(authReq: AuthReq) {
+    return Url.create(GoogleAuth.OAUTH.url_code, {
+      client_id: GoogleAuth.OAUTH.client_id,
+      response_type: 'code',
+      access_type: 'offline',
+      state: GoogleAuth.apiGoogleAuthStatePack(authReq),
+      redirect_uri: GoogleAuth.OAUTH.url_redirect,
+      scope: (authReq.scopes || []).join(' '),
+      login_hint: authReq.acctEmail,
+    });
+  }
 
-  private static apiGoogleAuthStatePack = (authReq: AuthReq) => GoogleAuth.OAUTH.state_header + JSON.stringify(authReq);
+  private static apiGoogleAuthStatePack(authReq: AuthReq) {
+    return GoogleAuth.OAUTH.state_header + JSON.stringify(authReq);
+  }
 
   private static apiGoogleAuthStateUnpack(state: string): AuthReq {
     if (!state.startsWith(GoogleAuth.OAUTH.state_header)) {
@@ -240,30 +249,38 @@ export class GoogleAuth {
     await Store.setAcct(acctEmail, toSave);
   }
 
-  private static googleAuthGetTokens = (code: string) => Api.ajax({
-    url: Url.create(GoogleAuth.OAUTH.url_tokens, { grant_type: 'authorization_code', code, client_id: GoogleAuth.OAUTH.client_id, redirect_uri: GoogleAuth.OAUTH.url_redirect }),
-    method: 'POST',
-    crossDomain: true,
-    async: true,
-  }, Catch.stackTrace()) as any as Promise<GoogleAuthTokensResponse>
+  private static googleAuthGetTokens(code: string) {
+    return Api.ajax({
+      url: Url.create(GoogleAuth.OAUTH.url_tokens, { grant_type: 'authorization_code', code, client_id: GoogleAuth.OAUTH.client_id, redirect_uri: GoogleAuth.OAUTH.url_redirect }),
+      method: 'POST',
+      crossDomain: true,
+      async: true,
+    }, Catch.stackTrace()) as any as Promise<GoogleAuthTokensResponse>;
+  }
 
-  private static googleAuthRefreshToken = (refreshToken: string) => Api.ajax({
-    url: Url.create(GoogleAuth.OAUTH.url_tokens, { grant_type: 'refresh_token', refreshToken, client_id: GoogleAuth.OAUTH.client_id }),
-    method: 'POST',
-    crossDomain: true,
-    async: true,
-  }, Catch.stackTrace()) as any as Promise<GoogleAuthTokensResponse>
+  private static googleAuthRefreshToken(refreshToken: string) {
+    return Api.ajax({
+      url: Url.create(GoogleAuth.OAUTH.url_tokens, { grant_type: 'refresh_token', refreshToken, client_id: GoogleAuth.OAUTH.client_id }),
+      method: 'POST',
+      crossDomain: true,
+      async: true,
+    }, Catch.stackTrace()) as any as Promise<GoogleAuthTokensResponse>;
+  }
 
-  private static googleAuthCheckAccessToken = (accessToken: string) => Api.ajax({
-    url: Url.create(`${GOOGLE_API_HOST}/oauth2/v1/tokeninfo`, { access_token: accessToken }),
-    crossDomain: true,
-    async: true,
-  }, Catch.stackTrace()) as any as Promise<GoogleAuthTokenInfo>
+  private static googleAuthCheckAccessToken(accessToken: string) {
+    return Api.ajax({
+      url: Url.create(`${GOOGLE_API_HOST}/oauth2/v1/tokeninfo`, { access_token: accessToken }),
+      crossDomain: true,
+      async: true,
+    }, Catch.stackTrace()) as any as Promise<GoogleAuthTokenInfo>;
+  }
 
   /**
    * oauth token will be valid for another 2 min
    */
-  private static googleApiIsAuthTokenValid = (s: AccountStore) => s.google_token_access && (!s.google_token_expires || s.google_token_expires > Date.now() + (120 * 1000));
+  private static googleApiIsAuthTokenValid(s: AccountStore) {
+    return s.google_token_access && (!s.google_token_expires || s.google_token_expires > Date.now() + (120 * 1000));
+  }
 
   // todo - would be better to use a TS type guard instead of the type cast when checking OpenId
   // check for things we actually use: photo/name/locale

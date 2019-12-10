@@ -225,9 +225,13 @@ export class XssSafeFactory {
     }
   }
 
-  private extUrl = (s: string) => chrome.runtime.getURL(s);
+  private extUrl(s: string) {
+    return chrome.runtime.getURL(s);
+  }
 
-  private newId = () => `frame_${Str.sloppyRandom(10)}`;
+  private newId() {
+    return `frame_${Str.sloppyRandom(10)}`;
+  }
 
   private iframe(src: string, classes: string[] = [], elAttributes: UrlParams = {}) {
     const id = String(Url.parse(['frameId'], src).frameId);
