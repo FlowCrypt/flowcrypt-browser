@@ -67,7 +67,7 @@ export class ComposeView extends View {
     this.replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
     this.isReplyBox = !!this.replyMsgId;
     this.emailProvider = new Gmail(this.acctEmail);
-    Backend.getSubscriptionWithoutLogin(this.acctEmail).catch(e => ApiErr.reportIfSignificant(e)); // updates storage
+    Backend.getSubscriptionWithoutLogin(this.acctEmail).catch(ApiErr.reportIfSignificant); // updates storage
     openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
   }
 

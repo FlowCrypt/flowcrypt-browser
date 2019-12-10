@@ -38,7 +38,7 @@ View.run(class KeyserverView extends View {
       if (isRefreshed && await Ui.modal.confirm(Lang.general.emailAliasChangedAskForReload)) {
         window.location.reload();
       }
-    })().catch(e => ApiErr.reportIfSignificant(e));
+    })().catch(ApiErr.reportIfSignificant);
     const diagnosis = await this.diagnoseKeyserverPubkeys();
     $('.summary').text('');
     for (const email of Object.keys(diagnosis.results)) {

@@ -24,7 +24,7 @@ export class BackendAuthErr extends AuthErr { }
 
 abstract class ApiCallErr extends Error {
 
-    private static getPayloadStructure(req: JQueryAjaxSettings): string {
+    private static getPayloadStructure = (req: JQueryAjaxSettings): string => {
         if (typeof req.data === 'string') {
             try {
                 return Object.keys(JSON.parse(req.data) as any).join(',');
@@ -37,7 +37,7 @@ abstract class ApiCallErr extends Error {
         return '';
     }
 
-    protected static censoredUrl(url: string | undefined): string {
+    protected static censoredUrl = (url: string | undefined): string => {
         if (!url) {
             return '(unknown url)';
         }
@@ -53,7 +53,7 @@ abstract class ApiCallErr extends Error {
         return url;
     }
 
-    protected static describeApiAction(req: JQueryAjaxSettings) {
+    protected static describeApiAction = (req: JQueryAjaxSettings) => {
         const describeBody = typeof req.data === 'undefined' ? '(no body)' : typeof req.data;
         return `${req.method || 'GET'}-ing ${ApiCallErr.censoredUrl(req.url)} ${describeBody}: ${ApiCallErr.getPayloadStructure(req)}`;
     }
@@ -82,7 +82,7 @@ export class AjaxErr extends ApiCallErr {
         GOOGLE_RECIPIENT_ADDRESS_REQUIRED: 'Recipient address required',
     };
 
-    public static fromXhr(xhr: RawAjaxErr, req: JQueryAjaxSettings, stack: string) {
+    static fromXhr = (xhr: RawAjaxErr, req: JQueryAjaxSettings, stack: string) => {
         const responseText = xhr.responseText || '';
         const status = typeof xhr.status === 'number' ? xhr.status : -1;
         stack += `\n\nprovided ajax call stack:\n${stack}`;
@@ -98,7 +98,7 @@ export class AjaxErr extends ApiCallErr {
         super(message);
     }
 
-    public parseErrResMsg(format: 'google') {
+    parseErrResMsg = (format: 'google') => {
         try {
             if (format === 'google') {
                 const errMsg = ((JSON.parse(this.responseText) as any).error as any).message as string; // catching all errs below

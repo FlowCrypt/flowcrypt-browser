@@ -41,7 +41,7 @@ export class ComposerMyPubkey extends ComposerComponent {
         }
       }
       this.setAttachPreference(false);
-    })().catch(e => ApiErr.reportIfSignificant(e));
+    })().catch(ApiErr.reportIfSignificant);
   }
 
   private setAttachPreference = (includePubkey: boolean) => {
