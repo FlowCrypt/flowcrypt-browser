@@ -13,6 +13,7 @@ import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
+import { PgpArmor } from '../../js/common/core/pgp/armor.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -33,7 +34,7 @@ View.run(class PgpPubkeyView extends View {
     const uncheckedUrlParams = Url.parse(['acctEmail', 'armoredPubkey', 'parentTabId', 'minimized', 'compact', 'frameId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-    this.armoredPubkey = Pgp.armor.normalize(Assert.urlParamRequire.string(uncheckedUrlParams, 'armoredPubkey'), 'publicKey');
+    this.armoredPubkey = PgpArmor.normalize(Assert.urlParamRequire.string(uncheckedUrlParams, 'armoredPubkey'), 'publicKey');
     this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
     this.compact = uncheckedUrlParams.compact === true;
     this.minimized = uncheckedUrlParams.minimized === true;

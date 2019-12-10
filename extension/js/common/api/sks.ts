@@ -3,8 +3,8 @@
 'use strict';
 
 import { Api } from './api.js';
-import { Pgp } from '../core/pgp.js';
 import { PubkeySearchResult } from './keyserver.js';
+import { PgpArmor } from '../core/pgp/armor.js';
 
 export class Sks extends Api {
 
@@ -58,7 +58,7 @@ export class Sks extends Api {
 
   public static lookupLongid = async (server: string, longid: string): Promise<PubkeySearchResult> => {
     const pubkey = await Sks.get(server, `pks/lookup?op=get&search=0x${longid}&options=mr`);
-    if (!pubkey || !pubkey.includes(String(Pgp.armor.headers('publicKey').end))) {
+    if (!pubkey || !pubkey.includes(String(PgpArmor.headers('publicKey').end))) {
       return { pubkey: null, pgpClient: null }; // tslint:disable-line:no-null-keyword
     }
     return { pubkey, pgpClient: 'pgp-other' };

@@ -6,7 +6,7 @@ import { VERSION } from './const.js';
 import { Catch } from '../platform/catch.js';
 import { Store } from '../platform/store.js';
 import { Str, Value } from './common.js';
-import { ReplaceableMsgBlockType, MsgBlock, MsgBlockType, Mime } from './mime.js';
+import { MsgBlock, MsgBlockType, Mime } from './mime.js';
 import { AttMeta } from './att.js';
 import { mnemonic } from './mnemonic.js';
 import { requireOpenpgp } from '../platform/require.js';
@@ -14,6 +14,7 @@ import { secureRandomBytes, base64encode } from '../platform/util.js';
 import { FcAttLinkData } from './att.js';
 import { Buf } from './buf.js';
 import { Xss } from '../platform/xss.js';
+import { PgpArmor } from './pgp/armor.js';
 
 export const openpgp = requireOpenpgp();
 
@@ -149,8 +150,6 @@ export type DecryptError = {
   success: false; error: DecryptError$error; longids: DecryptError$longids; content?: Buf;
   isEncrypted?: boolean; message?: OpenPGP.message.Message | OpenPGP.cleartext.CleartextMessage;
 };
-type CryptoArmorHeaderDefinition = { begin: string, middle?: string, end: string | RegExp, replace: boolean };
-type CryptoArmorHeaderDefinitions = { readonly [type in ReplaceableMsgBlockType | 'null' | 'signature']: CryptoArmorHeaderDefinition; };
 type PreparedForDecrypt = { isArmored: boolean, isCleartext: true, message: OpenPGP.cleartext.CleartextMessage }
   | { isArmored: boolean, isCleartext: false, message: OpenPGP.message.Message };
 
@@ -195,19 +194,9 @@ export class FormatError extends Error {
 
 export class Pgp {
 
-  private static ARMOR_HEADER_MAX_LENGTH = 50;
-  private static ARMOR_HEADER_DICT: CryptoArmorHeaderDefinitions = { // general passwordMsg begin: /^[^\n]+: (Open Message|Nachricht öffnen)/
-    null: { begin: '-----BEGIN', end: '-----END', replace: false },
-    publicKey: { begin: '-----BEGIN PGP PUBLIC KEY BLOCK-----', end: '-----END PGP PUBLIC KEY BLOCK-----', replace: true },
-    privateKey: { begin: '-----BEGIN PGP PRIVATE KEY BLOCK-----', end: '-----END PGP PRIVATE KEY BLOCK-----', replace: true },
-    signedMsg: { begin: '-----BEGIN PGP SIGNED MESSAGE-----', middle: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: true },
-    signature: { begin: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: false },
-    encryptedMsg: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----', replace: true },
-    encryptedMsgLink: { begin: 'This message is encrypted: Open Message', end: /https:(\/|&#x2F;){2}(cryptup\.org|flowcrypt\.com)(\/|&#x2F;)[a-zA-Z0-9]{10}(\n|$)/, replace: true },
-  };
   // (10k pc)*(2 core p/pc)*(4k guess p/core) httpshttps://www.abuse.ch/?p=3294://threatpost.com/how-much-does-botnet-cost-022813/77573/ https://www.abuse.ch/?p=3294
-  private static CRACK_GUESSES_PER_SECOND = 10000 * 2 * 4000;
-  private static CRACK_TIME_WORDS_PASS_PHRASE = [ // the requirements for a pass phrase are meant to be strict
+  static CRACK_GUESSES_PER_SECOND = 10000 * 2 * 4000;
+  static CRACK_TIME_WORDS_PASS_PHRASE = [ // the requirements for a pass phrase are meant to be strict
     { match: 'millenni', word: 'perfect', bar: 100, color: 'green', pass: true },
     { match: 'centu', word: 'great', bar: 80, color: 'green', pass: true },
     { match: 'year', word: 'good', bar: 60, color: 'orange', pass: true },
@@ -216,7 +205,7 @@ export class Pgp {
     { match: 'day', word: 'poor', bar: 20, color: 'darkred', pass: false },
     { match: '', word: 'weak', bar: 10, color: 'red', pass: false },
   ];
-  private static CRACK_TIME_WORDS_PWD = [ // the requirements for a one-time password are less strict
+  static CRACK_TIME_WORDS_PWD = [ // the requirements for a one-time password are less strict
     { match: 'millenni', word: 'perfect', bar: 100, color: 'green', pass: true },
     { match: 'centu', word: 'perfect', bar: 95, color: 'green', pass: true },
     { match: 'year', word: 'great', bar: 80, color: 'orange', pass: true },
@@ -228,7 +217,7 @@ export class Pgp {
     { match: '', word: 'weak', bar: 10, color: 'red', pass: false },
   ];
 
-  private static readonly FRIENDLY_BLOCK_TYPE_NAMES: { [type in MsgBlockType]: string } = { // todo - remove this, almost useless
+  static readonly FRIENDLY_BLOCK_TYPE_NAMES: { [type in MsgBlockType]: string } = { // todo - remove this, almost useless
     privateKey: 'Private Key',
     publicKey: 'Public Key',
     decryptErr: 'Decrypt Error',
@@ -245,75 +234,6 @@ export class Pgp {
     signedHtml: 'Signed HTML',
     signedMsg: 'Signed Message',
     verifiedMsg: 'Verified Message'
-  };
-
-  public static armor = {
-    clip: (text: string): string | undefined => {
-      if (text && text.includes(Pgp.ARMOR_HEADER_DICT.null.begin) && text.includes(String(Pgp.ARMOR_HEADER_DICT.null.end))) {
-        const match = text.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+-----END PGP (MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----)/gm);
-        return (match && match.length) ? match[0] : undefined;
-      }
-      return undefined;
-    },
-    headers: (blockType: ReplaceableMsgBlockType | 'null', format = 'string'): CryptoArmorHeaderDefinition => {
-      const h = Pgp.ARMOR_HEADER_DICT[blockType];
-      return {
-        begin: (typeof h.begin === 'string' && format === 're') ? h.begin.replace(/ /g, '\\\s') : h.begin,
-        end: (typeof h.end === 'string' && format === 're') ? h.end.replace(/ /g, '\\\s') : h.end,
-        replace: h.replace,
-      };
-    },
-    detectBlocks: (origText: string) => {
-      const blocks: MsgBlock[] = [];
-      const normalized = Str.normalize(origText);
-      let startAt = 0;
-      while (true) { // eslint-disable-line no-constant-condition
-        const r = Pgp.internal.detectBlockNext(normalized, startAt);
-        if (r.found) {
-          blocks.push(...r.found);
-        }
-        if (typeof r.continueAt === 'undefined') {
-          return { blocks, normalized };
-        } else {
-          if (r.continueAt <= startAt) {
-            Catch.report(`Pgp.armor.detect_blocks likely infinite loop: r.continue_at(${r.continueAt}) <= start_at(${startAt})`);
-            return { blocks, normalized }; // prevent infinite loop
-          }
-          startAt = r.continueAt;
-        }
-      }
-    },
-    normalize: (armored: string, type: ReplaceableMsgBlockType | 'key') => {
-      armored = Str.normalize(armored).replace(/\n /g, '\n');
-      if (['encryptedMsg', 'publicKey', 'privateKey', 'key'].includes(type)) {
-        armored = armored.replace(/\r?\n/g, '\n').trim();
-        const nl2 = armored.match(/\n\n/g);
-        const nl3 = armored.match(/\n\n\n/g);
-        const nl4 = armored.match(/\n\n\n\n/g);
-        const nl6 = armored.match(/\n\n\n\n\n\n/g);
-        if (nl3 && nl6 && nl3.length > 1 && nl6.length === 1) {
-          armored = armored.replace(/\n\n\n/g, '\n'); // newlines tripled: fix
-        } else if (nl2 && nl4 && nl2.length > 1 && nl4.length === 1) {
-          armored = armored.replace(/\n\n/g, '\n'); // newlines doubled. GPA on windows does this, and sometimes message can get extracted this way from html
-        }
-      }
-      const lines = armored.split('\n');
-      const h = Pgp.armor.headers(type === 'key' ? 'null' : type);
-      // check for and fix missing a mandatory empty line
-      if (lines.length > 5 && lines[0].includes(h.begin) && lines[lines.length - 1].includes(String(h.end)) && !lines.includes('')) {
-        for (let i = 1; i < 5; i++) {
-          if (lines[i].match(/^[a-zA-Z0-9\-_. ]+: .+$/)) {
-            continue; // skip comment lines, looking for first data line
-          }
-          if (lines[i].match(/^[a-zA-Z0-9\/+]{32,77}$/)) { // insert empty line before first data line
-            armored = `${lines.slice(0, i).join('\n')}\n\n${lines.slice(i).join('\n')}`;
-            break;
-          }
-          break; // don't do anything if format not as expected
-        }
-      }
-      return armored;
-    },
   };
 
   public static hash = {
@@ -368,7 +288,7 @@ export class Pgp {
     readMany: async (fileData: Buf): Promise<{ keys: OpenPGP.key.Key[], errs: Error[] }> => {
       const allKeys: OpenPGP.key.Key[] = [];
       const allErrs: Error[] = [];
-      const { blocks } = await Pgp.armor.detectBlocks(fileData.toUtfStr());
+      const { blocks } = PgpArmor.detectBlocks(fileData.toUtfStr());
       const armoredPublicKeyBlocks = blocks.filter(block => block.type === 'publicKey' || block.type === 'privateKey');
       if (armoredPublicKeyBlocks.length) {
         for (const block of blocks) {
@@ -436,12 +356,12 @@ export class Pgp {
     normalize: async (armored: string): Promise<{ normalized: string, keys: OpenPGP.key.Key[] }> => {
       try {
         let keys: OpenPGP.key.Key[] = [];
-        armored = Pgp.armor.normalize(armored, 'key');
-        if (RegExp(Pgp.armor.headers('publicKey', 're').begin).test(armored)) {
+        armored = PgpArmor.normalize(armored, 'key');
+        if (RegExp(PgpArmor.headers('publicKey', 're').begin).test(armored)) {
           keys = (await openpgp.key.readArmored(armored)).keys;
-        } else if (RegExp(Pgp.armor.headers('privateKey', 're').begin).test(armored)) {
+        } else if (RegExp(PgpArmor.headers('privateKey', 're').begin).test(armored)) {
           keys = (await openpgp.key.readArmored(armored)).keys;
-        } else if (RegExp(Pgp.armor.headers('encryptedMsg', 're').begin).test(armored)) {
+        } else if (RegExp(PgpArmor.headers('encryptedMsg', 're').begin).test(armored)) {
           keys = [new openpgp.key.Key((await openpgp.message.readArmored(armored)).packets)];
         }
         for (const k of keys) {
@@ -625,87 +545,11 @@ export class Pgp {
     msgBlockDecryptErrObj: (encryptedContent: string | Buf, decryptErr: DecryptError): MsgBlock => ({ type: 'decryptErr', content: encryptedContent, decryptErr, complete: true }),
     msgBlockAttObj: (type: MsgBlockType, content: string, attMeta: AttMeta): MsgBlock => ({ type, content, complete: true, attMeta }),
     msgBlockKeyObj: (type: MsgBlockType, content: string, keyDetails: KeyDetails): MsgBlock => ({ type, content, complete: true, keyDetails }),
-    detectBlockNext: (origText: string, startAt: number) => {
-      const result: { found: MsgBlock[], continueAt?: number } = { found: [] as MsgBlock[] };
-      const begin = origText.indexOf(Pgp.armor.headers('null').begin, startAt);
-      if (begin !== -1) { // found
-        const potentialBeginHeader = origText.substr(begin, Pgp.ARMOR_HEADER_MAX_LENGTH);
-        for (const xType of Object.keys(Pgp.ARMOR_HEADER_DICT)) {
-          const type = xType as ReplaceableMsgBlockType;
-          const blockHeaderDef = Pgp.ARMOR_HEADER_DICT[type];
-          if (blockHeaderDef.replace) {
-            const indexOfConfirmedBegin = potentialBeginHeader.indexOf(blockHeaderDef.begin);
-            if (indexOfConfirmedBegin === 0 || (type === 'encryptedMsgLink' && indexOfConfirmedBegin >= 0 && indexOfConfirmedBegin < 15)) { // identified beginning of a specific block
-              if (begin > startAt) {
-                const potentialTextBeforeBlockBegun = origText.substring(startAt, begin).trim();
-                if (potentialTextBeforeBlockBegun) {
-                  result.found.push(Pgp.internal.msgBlockObj('plainText', potentialTextBeforeBlockBegun));
-                }
-              }
-              let endIndex: number = -1;
-              let foundBlockEndHeaderLength = 0;
-              if (typeof blockHeaderDef.end === 'string') {
-                endIndex = origText.indexOf(blockHeaderDef.end, begin + blockHeaderDef.begin.length);
-                foundBlockEndHeaderLength = blockHeaderDef.end.length;
-              } else { // regexp
-                const origTextAfterBeginIndex = origText.substring(begin);
-                const matchEnd = origTextAfterBeginIndex.match(blockHeaderDef.end);
-                if (matchEnd) {
-                  endIndex = matchEnd.index ? begin + matchEnd.index : -1;
-                  foundBlockEndHeaderLength = matchEnd[0].length;
-                }
-              }
-              if (endIndex !== -1) { // identified end of the same block
-                if (type !== 'encryptedMsgLink') {
-                  result.found.push(Pgp.internal.msgBlockObj(type, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
-                } else {
-                  const pwdMsgFullText = origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim();
-                  const pwdMsgShortIdMatch = pwdMsgFullText.match(/[a-zA-Z0-9]{10}$/);
-                  if (pwdMsgShortIdMatch) {
-                    result.found.push(Pgp.internal.msgBlockObj(type, pwdMsgShortIdMatch[0]));
-                  } else {
-                    result.found.push(Pgp.internal.msgBlockObj('plainText', pwdMsgFullText));
-                  }
-                }
-                result.continueAt = endIndex + foundBlockEndHeaderLength;
-              } else { // corresponding end not found
-                result.found.push(Pgp.internal.msgBlockObj(type, origText.substr(begin), true));
-              }
-              break;
-            }
-          }
-        }
-      }
-      if (origText && !result.found.length) { // didn't find any blocks, but input is non-empty
-        const potentialText = origText.substr(startAt).trim();
-        if (potentialText) {
-          result.found.push(Pgp.internal.msgBlockObj('plainText', potentialText));
-        }
-      }
-      return result;
-    },
     cryptoHashSha256Loop: async (string: string, times = 100000) => {
       for (let i = 0; i < times; i++) {
         string = await Pgp.hash.sha256UtfStr(string);
       }
       return string;
-    },
-    cryptoMsgPrepareForDecrypt: async (encrypted: Uint8Array): Promise<PreparedForDecrypt> => {
-      if (!encrypted.length) {
-        throw new Error('Encrypted message could not be parsed because no data was provided');
-      }
-      const utfChunk = new Buf(encrypted.slice(0, 100)).toUtfStr('ignore'); // ignore errors - this may not be utf string, just testing
-      const isArmoredEncrypted = utfChunk.includes(Pgp.armor.headers('encryptedMsg').begin);
-      const isArmoredSignedOnly = utfChunk.includes(Pgp.armor.headers('signedMsg').begin);
-      const isArmored = isArmoredEncrypted || isArmoredSignedOnly;
-      if (isArmoredEncrypted) {
-        return { isArmored, isCleartext: false, message: await openpgp.message.readArmored(new Buf(encrypted).toUtfStr()) };
-      } else if (isArmoredSignedOnly) {
-        return { isArmored, isCleartext: true, message: await openpgp.cleartext.readArmored(new Buf(encrypted).toUtfStr()) };
-      } else if (encrypted instanceof Uint8Array) {
-        return { isArmored, isCleartext: false, message: await openpgp.message.read(encrypted) };
-      }
-      throw new Error('Message does not have armor headers');
     },
     longids: async (keyIds: OpenPGP.Keyid[]) => {
       const longids: string[] = [];
@@ -875,7 +719,7 @@ export class PgpMsg {
         return { armored: false, type: msgTpes.includes(tagNumber) ? 'encryptedMsg' : 'publicKey' };
       }
     }
-    const { blocks } = Pgp.armor.detectBlocks(new Buf(data.slice(0, 50)).toUtfStr().trim()); // only interested in first 50 bytes
+    const { blocks } = PgpArmor.detectBlocks(new Buf(data.slice(0, 50)).toUtfStr().trim()); // only interested in first 50 bytes
     if (blocks.length === 1 && blocks[0].complete === false && ['encryptedMsg', 'privateKey', 'publicKey', 'signedMsg'].includes(blocks[0].type)) {
       return { armored: true, type: blocks[0].type };
     }
@@ -938,7 +782,7 @@ export class PgpMsg {
     let prepared: PreparedForDecrypt;
     const longids: DecryptError$longids = { message: [], matching: [], chosen: [], needPassphrase: [] };
     try {
-      prepared = await Pgp.internal.cryptoMsgPrepareForDecrypt(encryptedData);
+      prepared = await PgpArmor.cryptoMsgPrepareForDecrypt(encryptedData);
     } catch (formatErr) {
       return { success: false, error: { type: DecryptErrTypes.format, message: String(formatErr) }, longids };
     }
@@ -1073,7 +917,7 @@ export class PgpMsg {
   }
 
   public static stripPublicKeys = (decryptedContent: string, foundPublicKeys: string[]) => {
-    let { blocks, normalized } = Pgp.armor.detectBlocks(decryptedContent); // tslint:disable-line:prefer-const
+    let { blocks, normalized } = PgpArmor.detectBlocks(decryptedContent); // tslint:disable-line:prefer-const
     for (const block of blocks) {
       if (block.type === 'publicKey') {
         const armored = block.content.toString();

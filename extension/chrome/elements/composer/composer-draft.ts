@@ -5,7 +5,7 @@
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { Pgp, PgpMsg } from '../../../js/common/core/pgp.js';
+import { PgpMsg } from '../../../js/common/core/pgp.js';
 import { Api, AjaxErr } from '../../../js/common/api/api.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -16,6 +16,7 @@ import { Url } from '../../../js/common/core/common.js';
 import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Env } from '../../../js/common/browser/env.js';
+import { PgpArmor } from '../../../js/common/core/pgp/armor.js';
 
 export class ComposerDraft extends ComposerComponent {
 
@@ -60,7 +61,7 @@ export class ComposerDraft extends ComposerComponent {
         return false;
       }
       const parsedMsg = await Mime.decode(Buf.fromBase64UrlStr(draftGetRes.message.raw!));
-      const armored = Pgp.armor.clip(parsedMsg.text || Xss.htmlSanitizeAndStripAllTags(parsedMsg.html || '', '\n') || '');
+      const armored = PgpArmor.clip(parsedMsg.text || Xss.htmlSanitizeAndStripAllTags(parsedMsg.html || '', '\n') || '');
       if (!armored) {
         await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!armored');
         return false;

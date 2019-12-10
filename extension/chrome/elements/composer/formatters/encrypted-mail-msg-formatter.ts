@@ -20,6 +20,7 @@ import { Lang } from '../../../../js/common/lang.js';
 import { ComposerResetBtnTrigger, ComposerUserError } from '../composer-errs.js';
 import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
 import { Settings } from '../../../../js/common/settings.js';
+import { PgpArmor } from '../../../../js/common/core/pgp/armor.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -198,7 +199,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     text.push(Lang.compose.msgEncryptedText[lang] + msgUrl + '\n');
     html.push(`
                 <div class="cryptup_encrypted_message_replaceable">
-                    <div style="opacity: 0;">${Pgp.armor.headers('null').begin}</div>
+                    <div style="opacity: 0;">${PgpArmor.headers('null').begin}</div>
                     ${Lang.compose.msgEncryptedHtml[lang] + a}<br/><br/>
                     ${Lang.compose.alternativelyCopyPaste[lang] + Xss.escape(msgUrl)}<br/><br/><br/>
                 </div>`);

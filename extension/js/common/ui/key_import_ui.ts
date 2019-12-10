@@ -12,6 +12,7 @@ import { Lang } from '../lang.js';
 import { Catch } from '../platform/catch.js';
 import { Settings } from '../settings.js';
 import { Url } from '../core/common.js';
+import { PgpArmor } from '../core/pgp/armor.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -93,8 +94,8 @@ export class KeyImportUi {
       attAdded: async file => {
         let prv: OpenPGP.key.Key | undefined;
         const utf = file.getData().toUtfStr();
-        if (utf.includes(Pgp.armor.headers('privateKey').begin)) {
-          const firstPrv = Pgp.armor.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
+        if (utf.includes(PgpArmor.headers('privateKey').begin)) {
+          const firstPrv = PgpArmor.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
           if (firstPrv) { // filter out all content except for the first encountered private key (GPGKeychain compatibility)
             prv = (await openpgp.key.readArmored(firstPrv.content.toString())).keys[0];
           }
@@ -179,7 +180,7 @@ export class KeyImportUi {
   }
 
   private normalize = async (type: KeyBlockType, armored: string) => {
-    const headers = Pgp.armor.headers(type);
+    const headers = PgpArmor.headers(type);
     const normalized = await Pgp.key.normalize(armored);
     if (!normalized) {
       throw new UserAlert('There was an error processing this key, possibly due to bad formatting.\nPlease insert complete key, including "' + headers.begin + '" and "' + headers.end + '"');
@@ -188,7 +189,7 @@ export class KeyImportUi {
   }
 
   private read = async (type: KeyBlockType, normalized: string) => {
-    const headers = Pgp.armor.headers(type);
+    const headers = PgpArmor.headers(type);
     const { keys: [k] } = await openpgp.key.readArmored(normalized);
     if (typeof k === 'undefined') {
       throw new UserAlert('Private key is not correctly formated. Please insert complete key, including "' + headers.begin + '" and "' + headers.end + '"');
@@ -205,7 +206,7 @@ export class KeyImportUi {
   }
 
   private rejectIfNot = (type: KeyBlockType, k: OpenPGP.key.Key) => {
-    const headers = Pgp.armor.headers(type);
+    const headers = PgpArmor.headers(type);
     if (type === 'privateKey' && k.isPublic()) {
       throw new UserAlert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + headers.begin + '"');
     }
