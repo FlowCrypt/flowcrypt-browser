@@ -998,7 +998,7 @@ export class PgpMsg {
     if (!pubkeys && !usedChallenge) {
       throw new Error('no-pubkeys-no-challenge');
     }
-    if (signingPrv && typeof signingPrv.isPrivate !== 'undefined' && signingPrv.isPrivate()) {
+    if (signingPrv && typeof signingPrv.isPrivate !== 'undefined' && signingPrv.isPrivate()) { // tslint:disable-line:no-unbound-method - only testing if exists
       options.privateKeys = [signingPrv];
     }
     return await openpgp.encrypt(options);

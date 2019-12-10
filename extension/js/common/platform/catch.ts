@@ -173,7 +173,9 @@ export class Catch {
   }
 
   public static isPromise = (v: any): v is Promise<any> => {
-    return v && typeof v === 'object' && typeof (v as Promise<any>).then === 'function' && typeof (v as Promise<any>).catch === 'function';
+    return v && typeof v === 'object'
+      && typeof (v as Promise<any>).then === 'function' // tslint:disable-line:no-unbound-method - only testing if exists
+      && typeof (v as Promise<any>).catch === 'function'; // tslint:disable-line:no-unbound-method - only testing if exists
   }
 
   public static try = (code: Function) => { // tslint:disable-line:ban-types

@@ -178,7 +178,7 @@ export class Ui {
       return function uiEventHandle(this: HTMLElement, event: JQuery.Event<HTMLElement, null>) {
         try {
           const r = cb.bind(originalThis)(this, event) as void | Promise<void>; // tslint:disable-line:no-unsafe-any
-          if (typeof r === 'object' && typeof r.catch === 'function') {
+          if (typeof r === 'object' && typeof r.catch === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
             r.catch(e => Ui.event._dispatchErr(e, errHandlers));
           }
         } catch (e) {
@@ -211,7 +211,7 @@ export class Ui {
       const cbWithErrsHandled = (el: HTMLElement) => {
         try {
           const r = cb.bind(originalThis)(el, cbResetTimer) as void | Promise<void>; // tslint:disable-line:no-unsafe-any
-          if (typeof r === 'object' && typeof r.catch === 'function') {
+          if (typeof r === 'object' && typeof r.catch === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
             r.catch(e => Ui.event._dispatchErr(e, errHandler));
           }
         } catch (e) {

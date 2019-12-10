@@ -42,7 +42,7 @@ export class Browser {
           return false;
         });
       } else {
-        if (typeof a.click === 'function') {
+        if (typeof a.click === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
           a.click();
         } else { // safari
           const ev = document.createEvent('MouseEvents');

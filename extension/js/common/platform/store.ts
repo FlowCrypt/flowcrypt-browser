@@ -405,8 +405,8 @@ export class Store {
       } else {
         s.errors.unshift(errMsg || String(err));
       }
-      Store.setGlobal(s).catch(console.error);
-    }).catch(console.error);
+      Store.setGlobal(s).catch(e => console.error(e));
+    }).catch(e => console.error(e));
   }
 
   static getAcct = async (acctEmail: string, keys: AccountIndex[]): Promise<AccountStore> => {
