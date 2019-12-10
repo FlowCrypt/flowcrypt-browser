@@ -1,17 +1,18 @@
 import { Util } from './../util/index';
 import { ParsedMail } from 'mailparser';
 import { readFileSync } from 'fs';
+import UserMessages from '../../samples/mock-data';
 
 type GmailMsg$header = { name: string, value: string };
 type GmailMsg$payload$body = { attachmentId: string, size: number, data?: string };
 type GmailMsg$payload$part = { body?: GmailMsg$payload$body, filename?: string, mimeType?: string, headers?: GmailMsg$header[] };
 type GmailMsg$payload = { parts?: GmailMsg$payload$part[], headers?: GmailMsg$header[], mimeType?: string, body?: GmailMsg$payload$body };
-type GmailMsg$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES';
+type GmailMsg$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES' | 'DRAFT';
 export type GmailMsg = {
   id: string; historyId: string; threadId?: string | null; payload: GmailMsg$payload; internalDate?: number | string;
   labelIds?: GmailMsg$labelId[]; snippet?: string; raw?: string;
 };
-type GmailDraft = {
+export type GmailDraft = {
   id: string,
   message: GmailMsg
 };
@@ -28,6 +29,10 @@ export class Data {
   constructor(private acct: string) {
     if (!DATA[acct]) {
       DATA[acct] = JSON.parse(readFileSync(`./test/samples/${acct.replace(/[^a-z0-9]+/g, '')}.json`, { encoding: 'UTF-8' })) as AcctDataFile;
+      if (UserMessages[acct]) {
+        DATA[acct].drafts = UserMessages[acct].drafts;
+        DATA[acct].messages.push(...UserMessages[acct].messages);
+      }
       DATA[acct].drafts = DATA[acct].drafts || []; // backward compatibility
     }
   }

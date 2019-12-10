@@ -56,16 +56,7 @@ Catch.try(async () => {
       nextCyclePageToken = nextPageToken;
     }
     print(`found in inbox: ${(msgMetas || []).length} msgs`);
-    print(`downloading draft list`);
-    const draftMetas: GmailRes.GmailDraftMeta[] = [];
-    let draftNextPageToken: string | undefined | null;
-    do {
-      const { drafts, nextPageToken } = await gmail.draftList();
-      draftMetas.push(...drafts);
-      draftNextPageToken = nextPageToken;
-    } while (draftNextPageToken);
-    print(`found ${draftMetas.length} drafts`);
-    const fullMsgIdsList = (msgMetas || []).map(m => m.id).concat(draftMetas.map(dm => dm.message.id));
+    const fullMsgIdsList = (msgMetas || []).map(m => m.id);
     print(`downloading full..`);
     const msgsFull = await gmail.msgsGet(fullMsgIdsList, 'full');
     print(`downloading full done. waiting 5 seconds..`);

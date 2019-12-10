@@ -336,7 +336,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
 
     ava.default('compose[global:comaptibility] - loading drafts - new message, rendering cc/bcc and check if cc/bcc btns are hidden',
       testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
-        const appendUrl = 'draftId=r-8909860425873898730';
+        const appendUrl = 'draftId=draft-1';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
         await expectRecipientElements(composePage, { to: ['flowcryptcompatibility@gmail.com'], cc: ['flowcrypt.compatibility@gmail.com'], bcc: ['human@flowcrypt.com'] });
         const subjectElem = await composePage.waitAny('@input-subject');
@@ -351,7 +351,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       const appendUrl = 'threadId=16cfa9001baaac0a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16cfa9001baaac0a';
       const initialScript = () => {
-        chrome.storage.local.set({ 'cryptup_flowcryptcompatibilitygmailcom_drafts_reply': { '16cfa9001baaac0a': 'r-1543309186581841785' } });
+        chrome.storage.local.set({ 'cryptup_flowcryptcompatibilitygmailcom_drafts_reply': { '16cfa9001baaac0a': 'draft-3' } });
       };
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true, skipClickPropt: true, initialScript });
       await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
@@ -477,7 +477,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     }));
 
     ava.default('compose[global:compatibility] - loading drafts - test tags in draft', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
-      const appendUrl = 'draftId=r304765387393056602';
+      const appendUrl = 'draftId=draft-0';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
       expect(await composePage.read('@input-body')).to.include('hello<draft>here');
     }));
