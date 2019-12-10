@@ -1,7 +1,7 @@
 import { Util } from '../../util/index';
 import { ParsedMail } from 'mailparser';
 import { readFileSync } from 'fs';
-import UserMessages from '../../samples/mock-data';
+import UserMessages from '../../../samples/mock-data';
 
 type GmailMsg$header = { name: string, value: string };
 type GmailMsg$payload$body = { attachmentId: string, size: number, data?: string };
