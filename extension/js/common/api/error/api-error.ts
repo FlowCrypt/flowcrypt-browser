@@ -124,7 +124,7 @@ export class ApiErr {
   static isBadReq = (e: any): e is AjaxErr => {
     return e instanceof AjaxErr && e.status === 400;
   }
-  static isInsufficientPermission(e: any): e is AjaxErr {
+  static isInsufficientPermission = (e: any): e is AjaxErr => {
     return e instanceof AjaxErr && e.status === 403 && e.responseText.indexOf('insufficientPermissions') !== -1;
   }
   static isNotFound = (e: any): e is AjaxErr => {

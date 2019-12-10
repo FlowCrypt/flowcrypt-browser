@@ -5,7 +5,6 @@
 import { Str, Dict } from '../../common/core/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
-import { AjaxErr } from '../../common/api/api.js';
 import { Pgp } from '../../common/core/pgp.js';
 import { XssSafeFactory, WebmailVariantString, FactoryReplyParams } from '../../common/xss_safe_factory.js';
 import { Att } from '../../common/core/att.js';
@@ -21,6 +20,7 @@ import { Ui } from '../../common/browser/ui.js';
 import { Browser } from '../../common/browser/browser.js';
 import { BrowserMsg } from '../../common/browser/browser-msg.js';
 import { ApiErr } from '../../common/api/error/api-error.js';
+import { AjaxErr } from '../../common/api/error/api-error-types.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 

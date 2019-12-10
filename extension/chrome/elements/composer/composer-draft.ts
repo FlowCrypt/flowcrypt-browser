@@ -6,7 +6,6 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Pgp, PgpMsg } from '../../../js/common/core/pgp.js';
-import { AjaxErr } from '../../../js/common/api/api.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
@@ -17,6 +16,7 @@ import { Recipients } from '../../../js/common/api/email_provider/email_provider
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Env } from '../../../js/common/browser/env.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { AjaxErr } from '../../../js/common/api/error/api-error-types.js';
 
 export class ComposerDraft extends ComposerComponent {
 
