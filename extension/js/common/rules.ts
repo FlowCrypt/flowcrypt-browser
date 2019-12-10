@@ -34,19 +34,19 @@ export class Rules {
     return ['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(emailAddr.split('@')[1] || 'NONE');
   }
 
-  canCreateKeys() {
+  canCreateKeys = () => {
     return !this.domainRules.flags.includes('NO_PRV_CREATE');
   }
 
-  canBackupKeys() {
+  canBackupKeys = () => {
     return !this.domainRules.flags.includes('NO_PRV_BACKUP');
   }
 
-  mustSubmitToAttester() {
+  mustSubmitToAttester = () => {
     return this.domainRules.flags.includes('ENFORCE_ATTESTER_SUBMIT');
   }
 
-  canUseCustomKeyserver() {
+  canUseCustomKeyserver = () => {
     return this.domainRules.flags.includes('ALLOW_CUSTOM_KEYSERVER');
   }
 
