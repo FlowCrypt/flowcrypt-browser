@@ -10,7 +10,7 @@ export class OauthPageRecipe extends PageRecipe {
   private static oauthPwdDelay = 2;
   private static longTimeout = 40;
 
-  public static async google(t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve" | 'login'): Promise<void> {
+  public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve" | 'login'): Promise<void> => {
     const isMock = oauthPage.target.url().includes('localhost');
     const auth = Config.secrets.auth.google.find(a => a.email === acctEmail)!;
     const selectors = {

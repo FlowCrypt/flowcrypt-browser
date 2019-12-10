@@ -67,7 +67,7 @@ export class Api<REQ, RES> {
     });
   }
 
-  public listen(port: number, host = '127.0.0.1', maxMb = 100) {
+  public listen = (port: number, host = '127.0.0.1', maxMb = 100) => {
     return new Promise((resolve, reject) => {
       this.maxRequestSizeMb = maxMb;
       this.maxRequestSizeBytes = maxMb * 1024 * 1024;
@@ -81,15 +81,15 @@ export class Api<REQ, RES> {
     });
   }
 
-  public close(): Promise<void> {
+  public close = (): Promise<void> => {
     return new Promise((resolve, reject) => this.server.close((err: any) => err ? reject(err) : resolve()));
   }
 
-  protected log(req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) {
+  protected log = (req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => {
     return undefined as void;
   }
 
-  protected async handleReq(req: IncomingMessage, res: ServerResponse): Promise<Buffer> {
+  protected handleReq = async (req: IncomingMessage, res: ServerResponse): Promise<Buffer> => {
     if (req.method === 'OPTIONS') {
       res.setHeader('Allow', 'GET,HEAD,POST,PUT,DELETE,OPTIONS');
       res.setHeader('Access-Control-Allow-Origin', '*');
@@ -111,7 +111,7 @@ export class Api<REQ, RES> {
     throw new HttpClientErr(`unknown MOCK path ${req.url}`);
   }
 
-  protected chooseHandler(req: IncomingMessage): RequestHandler<REQ, RES> | undefined {
+  protected chooseHandler = (req: IncomingMessage): RequestHandler<REQ, RES> | undefined => {
     if (!req.url) {
       throw new Error('no url');
     }
@@ -130,14 +130,14 @@ export class Api<REQ, RES> {
     }
   }
 
-  protected fmtErr(e: any): Buffer {
+  protected fmtErr = (e: any): Buffer => {
     if (String(e).includes('invalid_grant')) {
       return Buffer.from(JSON.stringify({ "error": "invalid_grant", "error_description": "Bad Request" }));
     }
     return Buffer.from(JSON.stringify({ "error": { "message": e instanceof Error ? e.message : String(e) } }));
   }
 
-  protected fmtHandlerRes(handlerRes: RES, serverRes: ServerResponse): Buffer {
+  protected fmtHandlerRes = (handlerRes: RES, serverRes: ServerResponse): Buffer => {
     if (String(handlerRes).match(/^<!DOCTYPE HTML><html>/)) {
       serverRes.setHeader('content-type', 'text/html');
     } else {
@@ -147,7 +147,7 @@ export class Api<REQ, RES> {
     return this.fmtRes(handlerRes);
   }
 
-  protected fmtRes(response: {} | string): Buffer {
+  protected fmtRes = (response: {} | string): Buffer => {
     if (response instanceof Buffer) {
       return response;
     } else if (typeof response === 'string') {
@@ -156,7 +156,7 @@ export class Api<REQ, RES> {
     return Buffer.from(JSON.stringify(response));
   }
 
-  protected collectReq(req: IncomingMessage): Promise<Buffer> {
+  protected collectReq = (req: IncomingMessage): Promise<Buffer> => {
     return new Promise((resolve, reject) => {
       const body: Buffer[] = [];
       let byteLength = 0;
@@ -178,7 +178,7 @@ export class Api<REQ, RES> {
     });
   }
 
-  private parseUrlQuery(url: string): { [k: string]: string } {
+  private parseUrlQuery = (url: string): { [k: string]: string } => {
     const queryIndex = url.indexOf('?');
     if (!queryIndex) {
       return {};
@@ -195,7 +195,7 @@ export class Api<REQ, RES> {
     return params;
   }
 
-  protected parseReqBody(body: Buffer, req: IncomingMessage): REQ {
+  protected parseReqBody = (body: Buffer, req: IncomingMessage): REQ => {
     return { query: this.parseUrlQuery(req.url!), body: body.length ? (req.url!.startsWith('/upload/') ? body.toString() : JSON.parse(body.toString())) : undefined } as unknown as REQ;
   }
 

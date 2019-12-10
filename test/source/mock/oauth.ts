@@ -15,18 +15,18 @@ export class OauthMock {
   public expiresIn = 2 * 60 * 60; // 2hrs in seconds
   public redirectUri = 'urn:ietf:wg:oauth:2.0:oob:auto';
 
-  public consentChooseAccountPage(url: string) {
+  public consentChooseAccountPage = (url: string) => {
     return this.htmlPage('oauth mock choose acct', '<h1>Choose mock oauth email</h1>' + Config.secrets.auth.google.map(({ email }) => {
       return `<a href="${url + '&login_hint=' + email}" id="profileIdentifier" data-email="${email}">${email}</a><br>`;
     }).join('<br>'));
   }
 
-  public consentPage(url: string, acct: string) {
+  public consentPage = (url: string, acct: string) => {
     this.checkKnownAcct(acct);
     return this.htmlPage('oauth mock', `Mock oauth: ${acct}<br><br><a href="${url}&result=Success" id="submit_approve_access">Approve</a>`);
   }
 
-  public consentResultPage(acct: string, state: string, result: string) {
+  public consentResultPage = (acct: string, state: string, result: string) => {
     this.checkKnownAcct(acct);
     if (result === 'Success') {
       const authCode = `mock-auth-code-${acct.replace(/[^a-z0-9]+/g, '')}`;
@@ -42,7 +42,7 @@ export class OauthMock {
     }
   }
 
-  public getRefreshTokenResponse(code: string) {
+  public getRefreshTokenResponse = (code: string) => {
     const refresh_token = this.refreshTokenByAuthCode[code];
     const access_token = this.getAccessToken(refresh_token);
     const acct = this.acctByAccessToken[access_token];
@@ -51,7 +51,7 @@ export class OauthMock {
     return { access_token, refresh_token, expires_in: this.expiresIn, id_token, token_type: 'refresh_token' }; // guessed the token_type
   }
 
-  public getAccessTokenResponse(refreshToken: string) {
+  public getAccessTokenResponse = (refreshToken: string) => {
     try {
       const access_token = this.getAccessToken(refreshToken);
       const acct = this.acctByAccessToken[access_token];
@@ -63,7 +63,7 @@ export class OauthMock {
     }
   }
 
-  public checkAuthorizationHeader(authorization: string | undefined) {
+  public checkAuthorizationHeader = (authorization: string | undefined) => {
     if (!authorization) {
       throw new HttpClientErr('Missing mock bearer authorization header', Status.UNAUTHORIZED);
     }
@@ -76,24 +76,24 @@ export class OauthMock {
     return acct;
   }
 
-  private getAccessToken(refreshToken: string): string {
+  private getAccessToken = (refreshToken: string): string => {
     if (this.accessTokenByRefreshToken[refreshToken]) {
       return this.accessTokenByRefreshToken[refreshToken];
     }
     throw new HttpClientErr('Wrong mock refresh token', Status.UNAUTHORIZED);
   }
 
-  private htmlPage(title: string, content: string) {
+  private htmlPage = (title: string, content: string) => {
     return `<!DOCTYPE HTML><html><head><title>${title}</title></head><body>${content}</body></html>`;
   }
 
-  private checkKnownAcct(acct: string) {
+  private checkKnownAcct = (acct: string) => {
     if (!Config.secrets.auth.google.map(a => a.email).includes(acct)) {
       throw new HttpClientErr(`Unknown test account: ${acct}`);
     }
   }
 
-  private getIdToken(email: string) {
+  private getIdToken = (email: string) => {
     const data = {
       at_hash: 'at_hash',
       exp: this.expiresIn,

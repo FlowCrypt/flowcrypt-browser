@@ -9,7 +9,7 @@ type CheckSentMsg$opt = { acctEmail: string, subject: string, expectedContent?: 
 
 export class InboxPageRecipe extends PageRecipe {
 
-  public static async checkDecryptMsg(t: AvaContext, browser: BrowserHandle, { acctEmail, threadId, enterPp, expectedContent, finishCurrentSession }: CheckDecryptMsg$opt) {
+  public static checkDecryptMsg = async (t: AvaContext, browser: BrowserHandle, { acctEmail, threadId, enterPp, expectedContent, finishCurrentSession }: CheckDecryptMsg$opt) => {
     const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
     await inboxPage.waitAll('iframe');
     if (finishCurrentSession) {
@@ -37,7 +37,7 @@ export class InboxPageRecipe extends PageRecipe {
     await inboxPage.close();
   }
 
-  public static async checkFinishingSession(t: AvaContext, browser: BrowserHandle, acctEmail: string, threadId: string) {
+  public static checkFinishingSession = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, threadId: string) => {
     const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
     await inboxPage.waitAll('iframe');
     await inboxPage.waitAndClick('@action-finish-session');
@@ -50,7 +50,7 @@ export class InboxPageRecipe extends PageRecipe {
     await inboxPage.waitAll('@dialog-passphrase');
   }
 
-  public static async checkSentMsg(t: AvaContext, browser: BrowserHandle, { acctEmail, subject, expectedContent, isEncrypted, isSigned, sender }: CheckSentMsg$opt) {
+  public static checkSentMsg = async (t: AvaContext, browser: BrowserHandle, { acctEmail, subject, expectedContent, isEncrypted, isSigned, sender }: CheckSentMsg$opt) => {
     if (typeof isSigned !== 'undefined') {
       throw new Error('checkSentMsg.isSigned not implemented');
     }

@@ -7,11 +7,11 @@ type ModalOpts = { contentToCheck?: string, clickOn?: 'confirm' | 'cancel', getT
 type ModalType = 'confirm' | 'error' | 'info' | 'warning';
 
 export abstract class PageRecipe {
-  public static async getElementPropertyJson(elem: ElementHandle<Element>, property: string) {
+  public static getElementPropertyJson = async (elem: ElementHandle<Element>, property: string) => {
     return await (await elem.getProperty(property)).jsonValue() as string;
   }
 
-  public static async waitForModalAndRespond(controllable: Controllable, type: ModalType, { contentToCheck, clickOn, timeout }: ModalOpts) {
+  public static waitForModalAndRespond = async (controllable: Controllable, type: ModalType, { contentToCheck, clickOn, timeout }: ModalOpts) => {
     const modalContainer = await controllable.waitAny(`.ui-modal-${type}`, { timeout });
     if (typeof contentToCheck !== 'undefined') {
       const contentElement = await modalContainer.$('#swal2-content');

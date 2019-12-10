@@ -8,7 +8,7 @@ import { SetupPageRecipe } from './page_recipe/setup-page-recipe';
 
 export class BrowserRecipe {
 
-  public static async openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t: AvaContext, browser: BrowserHandle, acctEmail: string) {
+  public static openSettingsLoginButCloseOauthWindowBeforeGrantingPermission = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
     const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
     const oauthPopup0 = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'), acctEmail);
     await OauthPageRecipe.google(t, oauthPopup0, acctEmail, 'close');
@@ -17,34 +17,34 @@ export class BrowserRecipe {
     return settingsPage;
   }
 
-  public static async openSettingsLoginApprove(t: AvaContext, browser: BrowserHandle, acctEmail: string) {
+  public static openSettingsLoginApprove = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
     const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
     const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'), acctEmail);
     await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'approve');
     return settingsPage;
   }
 
-  public static async openGmailPage(t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) {
+  public static openGmailPage = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
     const gmailPage = await browser.newPage(t, TestUrls.gmail(googleLoginIndex));
     await gmailPage.waitAll('div.z0'); // compose button container visible
     await Util.sleep(3); // give it extra time to make sure FlowCrypt is initialized if it was supposed to
     return gmailPage;
   }
 
-  public static async openGmailPageAndVerifyComposeBtnPresent(t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) {
+  public static openGmailPageAndVerifyComposeBtnPresent = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
     const gmailPage = await BrowserRecipe.openGmailPage(t, browser, googleLoginIndex);
     await gmailPage.waitAll('@action-secure-compose');
     return gmailPage;
   }
 
-  public static async openGmailPageAndVerifyComposeBtnNotPresent(t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) {
+  public static openGmailPageAndVerifyComposeBtnNotPresent = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
     const gmailPage = await BrowserRecipe.openGmailPage(t, browser, googleLoginIndex);
     await Util.sleep(3);
     await gmailPage.notPresent('@action-secure-compose');
     return gmailPage;
   }
 
-  public static async setUpCommonAcct(t: AvaContext, browser: BrowserHandle, group: 'compatibility' | 'compose') {
+  public static setUpCommonAcct = async (t: AvaContext, browser: BrowserHandle, group: 'compatibility' | 'compose') => {
     if (group === 'compatibility') {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', { hasRecoverMore: true, clickRecoverMore: true });
@@ -57,7 +57,7 @@ export class BrowserRecipe {
     }
   }
 
-  public static async setUpFcPpChangeAcct(t: AvaContext, browser: BrowserHandle) {
+  public static setUpFcPpChangeAcct = async (t: AvaContext, browser: BrowserHandle) => {
     const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
     const k = Config.key('flowcrypt.test.key.used.pgp');
     const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);

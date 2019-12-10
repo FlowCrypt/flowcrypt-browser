@@ -8,7 +8,7 @@ type ManualEnterOpts = { usedPgpBefore?: boolean, submitPubkey?: boolean, fixKey
 
 export class SetupPageRecipe extends PageRecipe {
 
-  private static async createBegin(settingsPage: ControllablePage, keyTitle: string, { usedPgpBefore = false }: { usedPgpBefore?: boolean } = {}) {
+  private static createBegin = async (settingsPage: ControllablePage, keyTitle: string, { usedPgpBefore = false }: { usedPgpBefore?: boolean } = {}) => {
     const k = Config.key(keyTitle);
     if (usedPgpBefore) {
       await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-create');
@@ -28,7 +28,7 @@ export class SetupPageRecipe extends PageRecipe {
   // }
 
   // tslint:disable-next-line:max-line-length
-  public static async createAdvanced(settingsPage: ControllablePage, keyTitle: string, backup: "none" | "email" | "file", { usedPgpBefore = false, submitPubkey = false }: { usedPgpBefore?: boolean, submitPubkey?: boolean } = {}) {
+  public static createAdvanced = async (settingsPage: ControllablePage, keyTitle: string, backup: "none" | "email" | "file", { usedPgpBefore = false, submitPubkey = false }: { usedPgpBefore?: boolean, submitPubkey?: boolean } = {}) => {
     await SetupPageRecipe.createBegin(settingsPage, keyTitle, { usedPgpBefore });
     await settingsPage.waitAndClick('@action-step2bmanualcreate-show-advanced-create-settings'); // unfold
     await settingsPage.waitAndClick('@input-step2bmanualcreate-backup-inbox'); // uncheck
@@ -124,7 +124,7 @@ export class SetupPageRecipe extends PageRecipe {
   }
 
   // tslint:disable-next-line:max-line-length
-  public static async recover(settingsPage: ControllablePage, keyTitle: string, { wrongPp = false, clickRecoverMore = false, hasRecoverMore = false, alreadyRecovered = false }: { wrongPp?: boolean, clickRecoverMore?: boolean, hasRecoverMore?: boolean, alreadyRecovered?: boolean } = {}) {
+  public static recover = async (settingsPage: ControllablePage, keyTitle: string, { wrongPp = false, clickRecoverMore = false, hasRecoverMore = false, alreadyRecovered = false }: { wrongPp?: boolean, clickRecoverMore?: boolean, hasRecoverMore?: boolean, alreadyRecovered?: boolean } = {}) => {
     const k = Config.key(keyTitle);
     await settingsPage.waitAll('@input-recovery-pass-phrase', { timeout: 40 }); // can sometimes be slow
     await settingsPage.waitAndType('@input-recovery-pass-phrase', k.passphrase);

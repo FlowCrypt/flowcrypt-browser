@@ -26,7 +26,7 @@ const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', '
 
 export const startGoogleApiMock = async (logger: (line: string) => void) => {
   class LoggedApi<REQ, RES> extends Api<REQ, RES> {
-    protected log(req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) {
+    protected log = (req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => {
       if (req.url !== '/favicon.ico') {
         logger(`${res.statusCode} ${req.method} ${req.url} | ${errRes ? errRes : ''}`);
       }
