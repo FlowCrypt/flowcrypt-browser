@@ -68,8 +68,7 @@ View.run(class SubscribeView extends View {
   private renderSubscriptionDetails = async () => {
     this.authInfo = await Store.authInfo(this.acctEmail);
     try {
-      await Backend.accountGet(this.authInfo);
-      await Backend.getSubscriptionWithoutLogin(this.acctEmail);
+      await Backend.accountGetAndUpdateLocalStore(this.authInfo);
     } catch (e) {
       if (ApiErr.isAuthErr(e)) {
         Xss.sanitizeRender('#content', `Not logged in. ${Ui.retryLink()}`);

@@ -12,6 +12,8 @@ import { Catch } from '../platform/catch.js';
 import { Att } from '../core/att.js';
 import { Ui } from '../browser/ui.js';
 import { Buf } from '../core/buf.js';
+import { DomainRules } from '../rules.js';
+import { BACKEND_API_HOST } from '../core/const.js';
 import { BackendAuthErr } from './error/api-error-types.js';
 
 type SubscriptionLevel = 'pro' | null;
@@ -30,8 +32,9 @@ export type AwsS3UploadItem = { baseUrl: string, fields: { key: string; file?: A
 export namespace BackendRes {
   export type FcHelpFeedback = { sent: boolean };
   export type FcAccountLogin = { registered: boolean, verified: boolean, subscription: SubscriptionInfo };
-  export type FcAccountUpdate$result = { alias: string, email: string, intro: string, name: string, photo: string, default_message_expire: number };
-  export type FcAccountUpdate = { result: FcAccountUpdate$result, updated: boolean };
+  export type FcAccount$info = { alias: string, email: string, intro: string, name: string, photo: string, default_message_expire: number };
+  export type FcAccountGet = { account: FcAccount$info, subscription: SubscriptionInfo, domain_org_rules: DomainRules };
+  export type FcAccountUpdate = { result: FcAccount$info, updated: boolean };
   export type FcAccountSubscribe = { subscription: SubscriptionInfo };
   export type FcAccountCheck = { email: string | null, subscription: SubscriptionInfo | null };
   export type FcBlogPost = { title: string, date: string, url: string };
@@ -54,13 +57,13 @@ export class Backend extends Api {
     return Backend.apiCall(Backend.url('api'), path, vals, fmt, undefined, { 'api-version': '3', ...addHeaders });
   }
 
-  public static url = (type: string, variable = '') => {
+  public static url = (type: 'api' | 'me' | 'pubkey' | 'decrypt' | 'web', resource = '') => {
     return ({
-      'api': 'https://flowcrypt.com/api/',
-      'me': 'https://flowcrypt.com/me/' + variable,
-      'pubkey': 'https://flowcrypt.com/pub/' + variable,
-      'decrypt': 'https://flowcrypt.com/' + variable,
-      'web': 'https://flowcrypt.com/',
+      api: BACKEND_API_HOST,
+      me: `https://flowcrypt.com/me/${resource}`,
+      pubkey: `https://flowcrypt.com/pub/${resource}`,
+      decrypt: `https://flowcrypt.com/${resource}`,
+      web: 'https://flowcrypt.com/',
     } as Dict<string>)[type];
   }
 
@@ -116,17 +119,19 @@ export class Backend extends Api {
     return r;
   }
 
-  public static accountUpdate = async (fcAuth: FcUuidAuth, profileUpdate: ProfileUpdate = {}): Promise<BackendRes.FcAccountUpdate> => {
+  public static accountUpdate = async (fcAuth: FcUuidAuth, profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {
     Backend.throwIfMissingUuid(fcAuth);
-    const r = await Backend.request('account/update', {
+    return await Backend.request('account/update', {
       ...fcAuth,
       ...profileUpdate
     }) as BackendRes.FcAccountUpdate;
-    return r;
   }
 
-  public static accountGet = (fcAuth: FcUuidAuth) => {
-    return Backend.accountUpdate(fcAuth, {});
+  public static accountGetAndUpdateLocalStore = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcAccountGet> => {
+    Backend.throwIfMissingUuid(fcAuth);
+    const r = await Backend.request('account/get', fcAuth) as BackendRes.FcAccountGet;
+    await Store.setAcct(fcAuth.account, { rules: r.domain_org_rules, subscription: r.subscription });
+    return r;
   }
 
   public static accountSubscribe = async (fcAuth: FcUuidAuth, product: string, method: string, paymentSourceToken?: string): Promise<BackendRes.FcAccountSubscribe> => {

@@ -51,8 +51,8 @@ View.run(class ContactPageView extends View {
   render = async () => {
     Xss.sanitizeRender(this.S.cached('status'), 'Loading..' + Ui.spinner('green'));
     try {
-      const response = await Backend.accountUpdate(await this.authInfoPromise);
-      this.renderFields(response.result);
+      const response = await Backend.accountGetAndUpdateLocalStore(await this.authInfoPromise);
+      this.renderFields(response.account);
     } catch (e) {
       if (ApiErr.isAuthErr(e)) {
         Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => window.location.reload());
@@ -67,7 +67,7 @@ View.run(class ContactPageView extends View {
     this.S.cached('action_close').click(this.setHandler(() => this.onCloseHandler()));
   }
 
-  private renderFields = (result: BackendRes.FcAccountUpdate$result) => {
+  private renderFields = (result: BackendRes.FcAccount$info) => {
     if (result.alias) {
       const me = Backend.url('me', result.alias);
       const meEscaped = Xss.escape(me);
