@@ -2,13 +2,15 @@ import { OauthMock } from '../lib/oauth';
 import { Dict } from '../../core/common';
 import { HttpAuthErr } from '../lib/api';
 
+// tslint:disable:no-null-keyword
+
 export class BackendData {
 
   private uuidsByAcctEmail: Dict<string[]> = {};
 
   constructor(private oauth: OauthMock) { }
 
-  registerOrThrow(acct: string, uuid: string, idToken: string) {
+  registerOrThrow = (acct: string, uuid: string, idToken: string) => {
     if (!this.oauth.isIdTokenValid(idToken)) {
       throw new HttpAuthErr(`Could not verify mock idToken: ${idToken}`);
     }
@@ -18,13 +20,13 @@ export class BackendData {
     this.uuidsByAcctEmail[acct].push(uuid);
   }
 
-  checkUuidOrThrow(acct: string, uuid: string) {
+  checkUuidOrThrow = (acct: string, uuid: string) => {
     if (!(this.uuidsByAcctEmail[acct] || []).includes(uuid)) {
       throw new HttpAuthErr(`Wrong mock uuid ${uuid} for acct ${acct}`);
     }
   }
 
-  getAcctRow(acct: string) {
+  getAcctRow = (acct: string) => {
     return {
       'email': acct,
       'alias': null,
@@ -39,11 +41,15 @@ export class BackendData {
     };
   }
 
-  getSubscription(acct: string) {
+  getSubscription = (acct: string) => {
     return { level: null, expire: null, method: null, expired: null };
   }
 
-  getOrgRules(acct: string) {
+  getOrgRules = (acct: string) => {
+    const domain = acct.split('@')[1];
+    if (domain === 'org-rules-test.flowcrypt.com') {
+      return { "flags": ["NO_PRV_CREATE", "NO_PRV_BACKUP", "ENFORCE_ATTESTER_SUBMIT"] };
+    }
     return { 'flags': [] };
   }
 

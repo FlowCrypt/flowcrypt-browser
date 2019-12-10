@@ -4,7 +4,16 @@ import { ControllablePage } from '../../browser';
 import { expect } from 'chai';
 import { SettingsPageRecipe } from './settings-page-recipe';
 
-type ManualEnterOpts = { usedPgpBefore?: boolean, submitPubkey?: boolean, fixKey?: boolean, naked?: boolean, genPp?: boolean, simulateRetryOffline?: boolean };
+type ManualEnterOpts = {
+  usedPgpBefore?: boolean,
+  submitPubkey?: boolean,
+  fixKey?: boolean,
+  naked?: boolean,
+  genPp?: boolean,
+  simulateRetryOffline?: boolean,
+  noPrvCreateOrgRule?: boolean,
+  enforceAttesterSubmitOrgRule?: boolean,
+};
 
 export class SetupPageRecipe extends PageRecipe {
 
@@ -54,17 +63,31 @@ export class SetupPageRecipe extends PageRecipe {
   public static async manualEnter(
     settingsPage: ControllablePage,
     keyTitle: string,
-    { usedPgpBefore = false, submitPubkey = false, fixKey = false, naked = false, genPp = false, simulateRetryOffline = false }: ManualEnterOpts = {}
+    {
+      usedPgpBefore = false,
+      submitPubkey = false,
+      fixKey = false,
+      naked = false,
+      genPp = false,
+      simulateRetryOffline = false,
+      noPrvCreateOrgRule = false,
+      enforceAttesterSubmitOrgRule = false
+    }: ManualEnterOpts = {}
   ) {
     const k = Config.key(keyTitle);
-    if (usedPgpBefore) {
-      await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-enter', { retryErrs: true });
-    } else {
-      await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-enter', { retryErrs: true });
+    if (!noPrvCreateOrgRule) {
+      if (usedPgpBefore) {
+        await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-enter', { retryErrs: true });
+      } else {
+        await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-enter', { retryErrs: true });
+      }
     }
     await settingsPage.waitAndClick('@input-step2bmanualenter-source-paste');
     await settingsPage.waitAndType('@input-step2bmanualenter-ascii-key', k.armored || '');
     await settingsPage.waitAndClick('@input-step2bmanualenter-passphrase'); // blur ascii key input
+    if (noPrvCreateOrgRule) { // NO_PRV_CREATE cannot use the back button, so that they cannot select another setup method
+      await settingsPage.notPresent('@action-setup-go-back');
+    }
     if (!naked) {
       await Util.sleep(1);
       await settingsPage.notPresent('@action-step2bmanualenter-new-random-passphrase');
@@ -89,8 +112,13 @@ export class SetupPageRecipe extends PageRecipe {
         await settingsPage.waitAndType('@input-step2bmanualenter-passphrase', k.passphrase);
       }
     }
-    if (!submitPubkey) {
-      await settingsPage.waitAndClick('@input-step2bmanualenter-submit-pubkey'); // uncheck
+    if (enforceAttesterSubmitOrgRule) {
+      await settingsPage.notPresent('@input-step2bmanualenter-submit-pubkey');
+    } else {
+      await settingsPage.waitAll('@input-step2bmanualenter-submit-pubkey');
+      if (!submitPubkey) {
+        await settingsPage.waitAndClick('@input-step2bmanualenter-submit-pubkey'); // uncheck
+      }
     }
     await settingsPage.waitAll('@input-step2bmanualenter-save');
     try {

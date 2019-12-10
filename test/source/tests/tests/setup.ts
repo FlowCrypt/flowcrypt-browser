@@ -1,7 +1,7 @@
 import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
 import { BrowserRecipe } from '../browser_recipe';
 import * as ava from 'ava';
-import { TestVariant } from '../../util';
+import { TestVariant, Util } from '../../util';
 import { SetupPageRecipe } from '../page_recipe/setup-page-recipe';
 
 // tslint:disable:no-blank-lines-func
@@ -128,6 +128,14 @@ export const defineSetupTests = (testVariant: TestVariant, testWithNewBrowser: T
     ava.default('[standalone] setup - import key - submit - offline - retry', testWithNewBrowser(async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.used.pgp@gmail.com');
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: true, usedPgpBefore: true, simulateRetryOffline: true });
+    }));
+
+    ava.default.only('[standalone] has.pub@org-rules-test - no backup, no keygen', testWithNewBrowser(async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'has.pub@org-rules-test.flowcrypt.com');
+      await SetupPageRecipe.manualEnter(settingsPage, 'has.pub.orgrulestest', { noPrvCreateOrgRule: true, enforceAttesterSubmitOrgRule: true });
+      await settingsPage.waitAll(['@action-show-encrypted-inbox', '@action-open-security-page']);
+      await Util.sleep(1);
+      await settingsPage.notPresent(['@action-open-backup-page']);
     }));
 
   }
