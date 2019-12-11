@@ -2,7 +2,6 @@
 
 'use strict';
 
-import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Dict, Url } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -76,9 +75,7 @@ View.run(class KeyserverView extends View {
     try {
       await Attester.initialLegacySubmit(String($(target).attr('email')), primaryKi.public);
     } catch (e) {
-      if (ApiErr.isSignificant(e)) {
-        Catch.reportErr(e);
-      }
+      ApiErr.reportIfSignificant(e);
       await Ui.modal.error(ApiErr.eli5(e));
     } finally {
       window.location.reload();
@@ -94,9 +91,7 @@ View.run(class KeyserverView extends View {
       await Ui.modal.info(responseText);
       BrowserMsg.send.closePage(this.parentTabId);
     } catch (e) {
-      if (ApiErr.isSignificant(e)) {
-        Catch.reportErr(e);
-      }
+      ApiErr.reportIfSignificant(e);
       await Ui.modal.error(ApiErr.eli5(e));
       window.location.reload();
     }

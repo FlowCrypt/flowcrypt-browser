@@ -545,9 +545,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
                     break;
                   }
                 } catch (e) {
-                  if (ApiErr.isSignificant(e)) {
-                    Catch.reportErr(e);
-                  }
+                  ApiErr.reportIfSignificant(e);
                   // this is a low-importance request, so evaluate has_pgp as false on errors
                   // this way faulty requests wouldn't unnecessarily repeat and overwhelm Attester
                   this.recipientHasPgpCache[email] = false;

@@ -71,9 +71,7 @@ View.run(class HelpView extends View {
         await Ui.modal.error('There was an error sending message. Our direct email is human@flowcrypt.com');
       }
     } catch (e) {
-      if (ApiErr.isSignificant(e)) {
-        Catch.reportErr(e);
-      }
+      ApiErr.reportIfSignificant(e);
       $(target).text(origBtnText);
       await Ui.modal.error(`There was an error sending message. Our direct email is human@flowcrypt.com\n\n${ApiErr.eli5(e)}`);
     }

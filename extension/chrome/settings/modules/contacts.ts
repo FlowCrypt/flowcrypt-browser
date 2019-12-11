@@ -211,9 +211,7 @@ View.run(class ContactsView extends View {
         $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import #fineuploader_button').css('display', 'none');
       }
     } catch (e) {
-      if (ApiErr.isSignificant(e)) {
-        Catch.reportErr(e);
-      }
+      ApiErr.reportIfSignificant(e);
       await Ui.modal.error(`There was an error trying to find this public key.\n\n${ApiErr.eli5(e)}`);
     }
   }

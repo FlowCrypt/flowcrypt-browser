@@ -264,10 +264,8 @@ View.run(class BackupView extends View {
           }
           Xss.sanitizeRender('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retryLink()}`);
         } else {
-          if (ApiErr.isSignificant(e)) {
-            Catch.reportErr(e);
-          }
-          Xss.sanitizeRender('#content', `Could not check for backups: unknown error (${String(e)}). ${Ui.retryLink()}`);
+          ApiErr.reportIfSignificant(e);
+          Xss.sanitizeRender('#content', `Could not check for backups: ${ApiErr.eli5(e)} (${String(e)}). ${Ui.retryLink()}`);
         }
         return;
       }

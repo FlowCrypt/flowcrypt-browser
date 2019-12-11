@@ -31,11 +31,14 @@ export class ApiErr {
     }
   }
 
-  static isStandardErr = (e: any, internalType: string): boolean => {
-    if (e instanceof ApiErrResponse && typeof e.res === 'object' && typeof e.res.error === 'object' && e.res.error.internal === 'auth') {
+  static isStandardErr = (e: any, internalType: 'auth' | 'subscription'): boolean => {
+    if (!e || !(typeof e === 'object')) {
+      return false;
+    }
+    if (e instanceof ApiErrResponse && typeof e.res === 'object' && typeof e.res.error === 'object' && e.res.error.internal === internalType) {
       return true;
     }
-    if (ApiErr.isStandardError(e) && (e as StandardError).internal === internalType) {
+    if ((e as StandardError).hasOwnProperty('internal') && !!((e as StandardError).message) && (e as StandardError).internal === internalType) {
       return true;
     }
     if ((e as StandardErrRes).error && typeof (e as StandardErrRes).error === 'object' && (e as StandardErrRes).error.internal === internalType) {
@@ -119,7 +122,7 @@ export class ApiErr {
 
   static isSignificant = (e: any): boolean => {
     return !ApiErr.isNetErr(e) && !ApiErr.isServerErr(e) && !ApiErr.isNotFound(e) && !ApiErr.isMailOrAcctDisabledOrPolicy(e)
-      && !ApiErr.isAuthErr(e) && !ApiErr.isBlockedByProxy(e);
+      && !ApiErr.isAuthErr(e) && !ApiErr.isBlockedByProxy(e) && !ApiErr.isAuthPopupNeeded(e);
   }
 
   static isBadReq = (e: any): e is AjaxErr => {
@@ -159,10 +162,6 @@ export class ApiErr {
     if (ApiErr.isSignificant(e)) {
       Catch.reportErr(e);
     }
-  }
-
-  private static isStandardError = (e: any): boolean => {
-    return e && typeof e === 'object' && (e as StandardError).hasOwnProperty('internal') && Boolean((e as StandardError).message);
   }
 
 }

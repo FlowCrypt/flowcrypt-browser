@@ -2,7 +2,6 @@
 
 'use strict';
 
-import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Settings } from '../../../js/common/settings.js';
@@ -55,9 +54,7 @@ View.run(class MyKeyUpdateView extends View {
       try {
         await Ui.modal.info(await Attester.updatePubkey(this.primaryKi!.longid, updatedPrv.toPublic().armor()));
       } catch (e) {
-        if (ApiErr.isSignificant(e)) {
-          Catch.reportErr(e);
-        }
+        ApiErr.reportIfSignificant(e);
         await Ui.modal.error(`Error updating public records:\n\n${ApiErr.eli5(e)}\n\n(but local update was successful)`);
       }
     }
