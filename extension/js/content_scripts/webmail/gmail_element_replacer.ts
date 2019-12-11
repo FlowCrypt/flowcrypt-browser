@@ -19,7 +19,7 @@ import { Gmail } from '../../common/api/email_provider/gmail/gmail.js';
 import { Ui } from '../../common/browser/ui.js';
 import { Browser } from '../../common/browser/browser.js';
 import { BrowserMsg } from '../../common/browser/browser-msg.js';
-import { PgpArmor } from '../../../../test/source/core/pgp/armor.js';
+import { PgpArmor } from '../../common/core/pgp/armor.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
