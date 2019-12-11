@@ -7,7 +7,6 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Catch } from '../../../js/common/platform/catch.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
@@ -79,9 +78,7 @@ export class SetupRecoverKeyModule {
         await this.view.setupRender.renderSetupDone();
       }
     } catch (e) {
-      if (ApiErr.isSignificant(e)) {
-        Catch.reportErr(e);
-      }
+      ApiErr.reportIfSignificant(e);
       await Ui.modal.error(`Error setting up FlowCrypt:\n\n${ApiErr.eli5(e)} (${String(e)})\n\nPlease write human@flowcrypt.com if this happens repeatedly.`);
     }
   }

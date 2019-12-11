@@ -63,9 +63,7 @@ View.run(class MyKeyView extends View {
         $('.pubkey_link_container').remove();
       }
     } catch (e) {
-      if (ApiErr.isSignificant(e)) {
-        Catch.reportErr(e);
-      }
+      ApiErr.reportIfSignificant(e);
       $('.pubkey_link_container').remove();
     }
   }

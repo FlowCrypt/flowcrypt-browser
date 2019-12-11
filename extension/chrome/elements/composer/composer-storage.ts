@@ -182,9 +182,7 @@ export class ComposerStorage extends ComposerComponent {
         await Store.dbContactUpdate(undefined, contact.email, { pubkey_last_check: Date.now() });
       }
     } catch (e) {
-      if (ApiErr.isSignificant(e)) {
-        throw e; // insignificant (temporary) errors ignored
-      }
+      ApiErr.reportIfSignificant(e);
     }
   }
 

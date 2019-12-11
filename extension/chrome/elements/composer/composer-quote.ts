@@ -38,9 +38,7 @@ export class ComposerQuote extends ComposerComponent {
       try {
         this.messageToReplyOrForward = await this.getAndDecryptMessage(msgId, method, (progress) => this.setQuoteLoaderProgress(progress + '%'));
       } catch (e) {
-        if (ApiErr.isSignificant(e)) {
-          Catch.reportErr(e);
-        }
+        ApiErr.reportIfSignificant(e);
         await Ui.modal.error(`Could not load quoted content, please try again.\n\n${ApiErr.eli5(e)}`);
       }
       this.composer.S.cached('icon_show_prev_msg').find('#loader').remove();

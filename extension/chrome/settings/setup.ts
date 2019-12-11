@@ -212,11 +212,7 @@ export class SetupView extends View {
     if (!options.submit_main) {
       return;
     }
-    Attester.testWelcome(this.acctEmail, armoredPubkey).catch(e => {
-      if (ApiErr.isSignificant(e)) {
-        Catch.report('Attester.test_welcome: failed', e);
-      }
-    });
+    Attester.testWelcome(this.acctEmail, armoredPubkey).catch(ApiErr.reportIfSignificant);
     let addresses;
     if (this.submitKeyForAddrs.length && options.submit_all) {
       addresses = [...this.submitKeyForAddrs];

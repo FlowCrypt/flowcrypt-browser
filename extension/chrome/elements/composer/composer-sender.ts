@@ -8,7 +8,6 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { Dict } from '../../../js/common/core/common.js';
 import { SendAsAlias } from '../../../js/common/platform/store.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Catch } from '../../../js/common/platform/catch.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 export class ComposerSender extends ComposerComponent {
@@ -80,9 +79,8 @@ export class ComposerSender extends ComposerComponent {
     } catch (e) {
       if (ApiErr.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
-      } else if (ApiErr.isSignificant(e)) {
-        Catch.reportErr(e);
       }
+      ApiErr.reportIfSignificant(e);
     }
   }
 
