@@ -62,19 +62,16 @@ export class Settings {
   }
 
   static renderSubPage = (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
-    const newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams);
-    let iframeWidth, iframeHeight, closeOnClick;
-    const beforeClose = () => {
-      const urlWithoutPageParam = Url.removeParamsFromUrl(window.location.href, ['page']);
-      window.history.pushState('', '', urlWithoutPageParam);
-    };
-    iframeWidth = Math.min(800, $('body').width()! - 200);
-    iframeHeight = $('body').height()! - ($('body').height()! > 800 ? 150 : 75);
-    closeOnClick = 'background';
-    ($ as JQS).featherlight({ beforeClose, closeOnClick, iframe: newLocation, iframeWidth, iframeHeight });
-    // todo - deprecate this - because we don't want to use this compose module this way, only on webmail or in settings/inbox
-    // for now some tests rely on it, so cannot be removed yet
-    Xss.sanitizePrepend('.new_message_featherlight .featherlight-content', '<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>');
+    ($ as JQS).featherlight({
+      beforeClose: () => {
+        const urlWithoutPageParam = Url.removeParamsFromUrl(window.location.href, ['page']);
+        window.history.pushState('', '', urlWithoutPageParam);
+      },
+      closeOnClick: 'background',
+      iframe: Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams),
+      iframeWidth: Math.min(800, $('body').width()! - 200),
+      iframeHeight: $('body').height()! - ($('body').height()! > 800 ? 150 : 75),
+    });
   }
 
   static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
