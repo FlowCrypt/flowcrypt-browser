@@ -48,7 +48,7 @@ View.run(class TestPassphrase extends View {
     if (await Pgp.key.decrypt(this.primaryKey!, String($('#password').val())) === true) {
       Xss.sanitizeRender('#content', `
         <div class="line">${Lang.setup.ppMatchAllSet}</div>
-        <div class="line"><div class="button green close" data-test="action-test-passphrase-successful-close">close</div></div>
+        <div class="line"><button class="button green close" data-test="action-test-passphrase-successful-close">close</button></div>
       `);
       $('.close').click(Ui.event.handle(() => BrowserMsg.send.closePage(this.parentTabId)));
     } else {

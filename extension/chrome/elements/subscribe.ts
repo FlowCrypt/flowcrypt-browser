@@ -105,7 +105,7 @@ View.run(class SubscribeView extends View {
         $('.action_get_trial').css('display', 'none');
         $('.action_show_stripe').removeClass('gray').addClass('green');
       } else {
-        Xss.sanitizeRender('#content', `<div class="line">${Lang.account.alreadyUpgraded}</div><div class="line"><div class="button green long action_close">close</div></div>`);
+        Xss.sanitizeRender('#content', `<div class="line">${Lang.account.alreadyUpgraded}</div><div class="line"><button class="button green long action_close">close</button></div>`);
         $('.action_close').click(this.setHandler(() => this.closeDialog()));
       }
     }

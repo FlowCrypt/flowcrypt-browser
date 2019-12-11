@@ -126,7 +126,7 @@ export class ComposerRender extends ComposerComponent {
     } else {
       Xss.sanitizeRender(this.composer.S.cached('prompt'),
         `${Lang.compose.needReadAccessToReply}<br/><br/><br/>
-        <div class="button green auth_settings">${Lang.compose.addMissingPermission}</div><br/><br/>
+        <button class="button green auth_settings">${Lang.compose.addMissingPermission}</button><br/><br/>
         Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>
       `);
       this.composer.S.cached('prompt').attr('style', 'border:none !important');

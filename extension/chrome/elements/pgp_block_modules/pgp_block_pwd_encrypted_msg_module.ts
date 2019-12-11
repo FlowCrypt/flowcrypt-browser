@@ -99,7 +99,7 @@ export class PgpBlockViewPwdEncryptedMsgModule {
 
   public renderPasswordPromptAndAwaitEntry = async (attempt: 'first' | 'retry'): Promise<string> => {
     let prompt = `<p>${attempt === 'first' ? '' : `<span style="color: red; font-weight: bold;">${Lang.pgpBlock.wrongPassword}</span>`}${Lang.pgpBlock.decryptPasswordPrompt}</p>`;
-    const btn = `<div class="button green long decrypt" data-test="action-decrypt-with-password">decrypt message</div>`;
+    const btn = `<button class="button green long decrypt" data-test="action-decrypt-with-password">decrypt message</button>`;
     prompt += `<p><input id="answer" placeholder="Password" data-test="input-message-password"></p><p>${btn}</p>`;
     await this.view.renderModule.renderContent(prompt, true);
     Ui.setTestState('ready');
@@ -116,11 +116,11 @@ export class PgpBlockViewPwdEncryptedMsgModule {
       if (linkRes.deleted) {
         expirationMsg += Lang.pgpBlock.msgDestroyed;
       } else if (this.view.isOutgoing && this.view.pwdEncryptedMsgModule.adminCodes) {
-        expirationMsg += '<div class="button gray2 extend_expiration">renew message</div>';
+        expirationMsg += '<button class="button gray2 extend_expiration">renew message</button>';
       } else if (!this.view.isOutgoing) {
         expirationMsg += Lang.pgpBlock.askSenderRenew;
       }
-      expirationMsg += '\n\n<div class="button gray2 action_security">security settings</div>';
+      expirationMsg += '\n\n<button class="button gray2 action_security">security settings</button>';
       await this.view.errorModule.renderErr(expirationMsg, undefined);
       this.view.renderModule.setFrameColor('gray');
       $('.action_security').click(this.view.setHandler(() => BrowserMsg.send.bg.settings({ page: '/chrome/settings/modules/security.htm', acctEmail: this.view.acctEmail })));
