@@ -90,7 +90,7 @@ View.run(class SettingsView extends View {
     BrowserMsg.addListener('subscribe_dialog', async ({ }: Bm.SubscribeDialog) => {
       // todo: use #cryptup_dialog just like passphrase_dialog does
       const factory = new XssSafeFactory(this.acctEmail!, this.tabId!);
-      const subscribeDialogSrc = factory.srcSubscribeDialog(undefined, 'settings_compose', undefined);
+      const subscribeDialogSrc = factory.srcSubscribeDialog('settings_compose', undefined);
       window.open(subscribeDialogSrc, '_blank', 'height=650,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
     });
     BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => {

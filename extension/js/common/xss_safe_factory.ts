@@ -60,15 +60,15 @@ export class XssSafeFactory {
   }
 
   srcComposeMsg = (draftId?: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), { frameId: this.newId(), draftId, placement: 'gmail' });
+    return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), { frameId: this.newId(), draftId });
   }
 
   srcPassphraseDialog = (longids: string[] = [], type: PassphraseDialogType) => {
     return this.frameSrc(this.extUrl('chrome/elements/passphrase.htm'), { type, longids });
   }
 
-  srcSubscribeDialog = (verificationEmailText?: string, placement?: Placement, isAuthErr?: boolean) => {
-    return this.frameSrc(this.extUrl('chrome/elements/subscribe.htm'), { verificationEmailText, placement, isAuthErr });
+  srcSubscribeDialog = (placement?: Placement, isAuthErr?: boolean) => {
+    return this.frameSrc(this.extUrl('chrome/elements/subscribe.htm'), { placement, isAuthErr });
   }
 
   srcAddPubkeyDialog = (emails: string[], placement: Placement) => {
@@ -100,7 +100,6 @@ export class XssSafeFactory {
     const params: UrlParams = {
       isReplyBox: true,
       frameId: `frame_${Str.sloppyRandom(10)}`,
-      placement: 'gmail',
       skipClickPrompt: Boolean(skipClickPrompt),
       ignoreDraft: Boolean(ignoreDraft),
       replyMsgId: convoParams.replyMsgId,
@@ -125,8 +124,8 @@ export class XssSafeFactory {
     return this.divDialog_DANGEROUS(this.iframe(this.srcPassphraseDialog(longids, type), ['medium'], { scrolling: 'no' }), 'dialog-passphrase'); // xss-safe-factory
   }
 
-  dialogSubscribe = (verifEmailText?: string, isAuthErr?: boolean) => {
-    const src = this.srcSubscribeDialog(verifEmailText, 'dialog', isAuthErr);
+  dialogSubscribe = (isAuthErr?: boolean) => {
+    const src = this.srcSubscribeDialog('dialog', isAuthErr);
     return this.divDialog_DANGEROUS(this.iframe(src, ['mediumtall'], { scrolling: 'no' }), 'dialog-subscribe'); // xss-safe-factory
   }
 
@@ -138,8 +137,8 @@ export class XssSafeFactory {
     return Ui.e('div', { id: 'new_message', class: 'new_message', 'data-test': 'container-new-message', html: this.iframe(this.srcComposeMsg(draftId), [], { scrolling: 'no' }) });
   }
 
-  embeddedSubscribe = (verifEmailText: string, isAuthErr: boolean) => {
-    return this.iframe(this.srcSubscribeDialog(verifEmailText, 'embedded', isAuthErr), ['short', 'embedded'], { scrolling: 'no' });
+  embeddedSubscribe = (isAuthErr: boolean) => {
+    return this.iframe(this.srcSubscribeDialog('embedded', isAuthErr), ['short', 'embedded'], { scrolling: 'no' });
   }
 
   embeddedAtta = (meta: Att, isEncrypted: boolean) => {

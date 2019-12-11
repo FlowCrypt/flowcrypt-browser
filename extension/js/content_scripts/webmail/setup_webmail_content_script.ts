@@ -150,7 +150,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     });
     BrowserMsg.addListener('subscribe_dialog', async ({ isAuthErr }: Bm.SubscribeDialog) => {
       if (!$('#cryptup_dialog').length) {
-        $('body').append(factory.dialogSubscribe(undefined, isAuthErr)); // xss-safe-factory
+        $('body').append(factory.dialogSubscribe(isAuthErr)); // xss-safe-factory
       }
     });
     BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {

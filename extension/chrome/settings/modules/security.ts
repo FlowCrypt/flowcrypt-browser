@@ -24,7 +24,7 @@ View.run(class SecurityView extends View {
 
   constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'embedded', 'parentTabId']);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   }

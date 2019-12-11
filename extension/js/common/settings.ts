@@ -5,7 +5,6 @@
 import { Catch } from './platform/catch.js';
 import { Store, SendAsAlias } from './platform/store.js';
 import { Str, Dict, UrlParams, Url } from './core/common.js';
-import { BrowserMsg } from './browser/browser-msg.js';
 import { Lang } from './lang.js';
 import { Rules } from './rules.js';
 import { Api } from './api/api.js';
@@ -63,36 +62,20 @@ export class Settings {
   }
 
   static renderSubPage = (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
-    let newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams);
-    let iframeWidth, iframeHeight, variant, closeOnClick;
-    const beforeClose = () => {
-      const urlWithoutPageParam = Url.removeParamsFromUrl(window.location.href, ['page']);
-      window.history.pushState('', '', urlWithoutPageParam);
-    };
-    if (page !== '/chrome/elements/compose.htm') {
-      iframeWidth = Math.min(800, $('body').width()! - 200);
-      iframeHeight = $('body').height()! - ($('body').height()! > 800 ? 150 : 75);
-      closeOnClick = 'background';
-    } else { // todo - deprecate this
-      iframeWidth = 542;
-      iframeHeight = Math.min(600, $('body').height()! - 150);
-      variant = 'new_message_featherlight';
-      closeOnClick = false;
-      newLocation += `&frameId=${Str.sloppyRandom(5)}`; // does not get added to <iframe>
-    }
-    ($ as JQS).featherlight({ beforeClose, closeOnClick, iframe: newLocation, iframeWidth, iframeHeight, variant });
-    // todo - deprecate this - because we don't want to use this compose module this way, only on webmail or in settings/inbox
-    // for now some tests rely on it, so cannot be removed yet
-    Xss.sanitizePrepend('.new_message_featherlight .featherlight-content', '<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>');
+    ($ as JQS).featherlight({
+      beforeClose: () => {
+        const urlWithoutPageParam = Url.removeParamsFromUrl(window.location.href, ['page']);
+        window.history.pushState('', '', urlWithoutPageParam);
+      },
+      closeOnClick: 'background',
+      iframe: Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams),
+      iframeWidth: Math.min(800, $('body').width()! - 200),
+      iframeHeight: $('body').height()! - ($('body').height()! > 800 ? 150 : 75),
+    });
   }
 
   static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
-    const newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, parentTabId, page, addUrlTextOrParams);
-    if (Url.parse(['embedded']).embedded) { // embedded on the main page
-      BrowserMsg.send.openPage(parentTabId, { page, addUrlText: addUrlTextOrParams });
-    } else { // on a sub page/module page, inside a lightbox. Just change location.
-      window.location.href = newLocation;
-    }
+    window.location.href = Settings.prepareNewSettingsLocationUrl(acctEmail, parentTabId, page, addUrlTextOrParams);
   }
 
   static refreshAcctAliases = async (acctEmail: string) => {
