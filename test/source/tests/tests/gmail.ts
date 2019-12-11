@@ -59,7 +59,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
       await newSettingsPage.waitAll('@action-connect-to-gmail');
     }));
 
-    ava.default.only('mail.google.com[standalone] success notification after setup, click hides it, does not re-appear + can re-connect', testWithNewBrowser(async (t, browser) => {
+    ava.default('mail.google.com[standalone] success notification after setup, click hides it, does not re-appear + can re-connect', testWithNewBrowser(async (t, browser) => {
       const acct = 'flowcrypt.compatibility@gmail.com';
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
@@ -77,7 +77,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
         await experimentalFrame.waitAndClick(wipeTokenBtnSelector);
       }
       // any message with pgp attachment will do because it will need to make a request to google
-      const gmailMsgWithAtt = `https://mail.google.com/mail/u/${acct}/#inbox/WhctKHTCGjFCdWqLhrdswHHkHLlvfzTxXGNlZLsCqkMPhZWNfHDBtpDlDmPBgMfjbMwwsSb`
+      const gmailMsgWithAtt = `https://mail.google.com/mail/u/${acct}/#inbox/WhctKHTCGjFCdWqLhrdswHHkHLlvfzTxXGNlZLsCqkMPhZWNfHDBtpDlDmPBgMfjbMwwsSb`;
       gmailPage = await browser.newPage(t, gmailMsgWithAtt);
       await gmailPage.waitAll(['@webmail-notification', '@action-reconnect-account']);
       expect(await gmailPage.read('@webmail-notification')).to.contain('Please reconnect FlowCrypt to your Gmail Account.');
