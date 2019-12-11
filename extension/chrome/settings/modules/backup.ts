@@ -197,7 +197,7 @@ View.run(class BackupView extends View {
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
     const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-    if (!await this.isMasterPrivateKeyEncrypted(primaryKi)) {
+    if (!await this.isPrivateKeyEncrypted(primaryKi)) {
       await Ui.modal.error('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
       return;
     }
@@ -302,7 +302,7 @@ View.run(class BackupView extends View {
     }
   }
 
-  private isMasterPrivateKeyEncrypted = async (ki: KeyInfo) => {
+  private isPrivateKeyEncrypted = async (ki: KeyInfo) => {
     const { keys: [prv] } = await openpgp.key.readArmored(ki.private);
     if (await Pgp.key.decrypt(prv, '', undefined, 'OK-IF-ALREADY-DECRYPTED') === true) {
       return false;
@@ -364,12 +364,9 @@ View.run(class BackupView extends View {
 
   private backupAsFile = async (primaryKi: KeyInfo) => { // todo - add a non-encrypted download option
     const attachment = this.asBackupFile(primaryKi.private);
-    if (Catch.browser().name !== 'firefox') {
-      Browser.saveToDownloads(attachment);
-      await this.writeBackupDoneAndRender(false, 'file');
-    } else {
-      Browser.saveToDownloads(attachment, $('.backup_action_buttons_container'));
-    }
+    Browser.saveToDownloads(attachment);
+    await Ui.modal.info('Downloading private key backup file..');
+    await this.writeBackupDoneAndRender(false, 'file');
   }
 
   private backupByBrint = async (primaryKi: KeyInfo) => { // todo - implement + add a non-encrypted print option
