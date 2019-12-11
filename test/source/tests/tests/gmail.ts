@@ -7,6 +7,8 @@ import { BrowserRecipe } from '../browser_recipe';
 import { TestVariant, Util } from '../../util';
 import { AvaContext } from '..';
 import { GmailPageRecipe } from '../page_recipe/gmail-page-recipe';
+import { OauthPageRecipe } from '../page_recipe/oauth-page-recipe';
+import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
 
 /**
  * All tests that use mail.google.com or have to operate without a Gmail API mock should go here
@@ -44,7 +46,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
       return gmialPage;
     };
 
-    ava.default('[standalone] gmail setup prompt notification + hides when close clicked + reappears + setup link opens settings', testWithNewBrowser(async (t, browser) => {
+    ava.default('mail.google.com[standalone] setup prompt notification + hides when close clicked + reappears + setup link opens settings', testWithNewBrowser(async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'flowcrypt.compatibility@gmail.com');
       await settingsPage.close();
       let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
@@ -57,7 +59,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
       await newSettingsPage.waitAll('@action-connect-to-gmail');
     }));
 
-    ava.default('[standalone] gmail shows success notification after setup + goes away after click + does not re-appear', testWithNewBrowser(async (t, browser) => {
+    ava.default('mail.google.com[standalone] success notification after setup, click hides it, does not re-appear + can re-connect', testWithNewBrowser(async (t, browser) => {
+      const acct = 'flowcrypt.compatibility@gmail.com';
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
       await gmailPage.waitAll(['@webmail-notification', '@notification-successfully-setup-action-close']);
@@ -65,9 +68,34 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
       await gmailPage.close();
       gmailPage = await BrowserRecipe.openGmailPage(t, browser);
       await gmailPage.notPresent(['@webmail-notification', '@notification-setup-action-close', '@notification-successfully-setup-action-close']);
+      await gmailPage.close();
+      // below test that can re-auth after lost access (simulating situation when user changed password on google)
+      for (const wipeTokenBtnSelector of ['@action-wipe-google-refresh-token', '@action-wipe-google-access-token']) {
+        const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
+        await experimentalFrame.waitAndClick(wipeTokenBtnSelector);
+      }
+      // any message with pgp attachment will do because it will need to make a request to google
+      const gmailMsgWithAtt = `https://mail.google.com/mail/u/${acct}/#inbox/WhctKHTCGjFCdWqLhrdswHHkHLlvfzTxXGNlZLsCqkMPhZWNfHDBtpDlDmPBgMfjbMwwsSb`;
+      gmailPage = await browser.newPage(t, gmailMsgWithAtt);
+      await gmailPage.waitAll(['@webmail-notification', '@action-reconnect-account']);
+      await Util.sleep(1);
+      expect(await gmailPage.read('@webmail-notification')).to.contain('Please reconnect FlowCrypt to your Gmail Account.');
+      const oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@action-reconnect-account'), acct);
+      await OauthPageRecipe.google(t, oauthPopup, acct, 'approve');
+      await gmailPage.waitAll(['@webmail-notification']);
+      await Util.sleep(1);
+      expect(await gmailPage.read('@webmail-notification')).to.contain('Connected successfully. You may need to reload the tab.');
+      await gmailPage.close();
+      // reload and test that message frame shows, and no more notifications
+      gmailPage = await browser.newPage(t, gmailMsgWithAtt);
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
+      expect(urls.length).to.equal(1);
+      await gmailPage.notPresent(['@webmail-notification']);
     }));
 
-    ava.default('[standalone] gmail setup prompt notification shows up + dismiss hides it + does not reappear if dismissed', testWithNewBrowser(async (t, browser) => {
+    ava.default('mail.google.com[standalone] setup prompt notification shows up + dismiss hides it + does not reappear if dismissed', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'flowcrypt.compatibility@gmail.com');
       let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
       await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);

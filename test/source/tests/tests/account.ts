@@ -5,7 +5,6 @@ import * as ava from 'ava';
 import { Util } from '../../util';
 import { FlowCryptApi } from '../api';
 import { TestVariant } from '../../util';
-import { OauthPageRecipe } from '../page_recipe/oauth-page-recipe';
 import { SetupPageRecipe } from '../page_recipe/setup-page-recipe';
 import { GmailPageRecipe } from '../page_recipe/gmail-page-recipe';
 import { ComposePageRecipe } from '../page_recipe/compose-page-recipe';
