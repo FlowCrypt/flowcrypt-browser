@@ -95,7 +95,7 @@ export class PgpArmor {
     return armored;
   }
 
-  static detectBlockNext = (origText: string, startAt: number) => {
+  private static detectBlockNext = (origText: string, startAt: number) => {
     const result: { found: MsgBlock[], continueAt?: number } = { found: [] as MsgBlock[] };
     const begin = origText.indexOf(PgpArmor.headers('null').begin, startAt);
     if (begin !== -1) { // found
