@@ -37,7 +37,7 @@ export class SetupPageRecipe extends PageRecipe {
   //   await settingsPage.wait_and_click('@action-step4done-account-settings');
   // }
 
-  // tslint:disable-next-line:max-line-length
+  // eslint-disable-next-line max-len
   public static createAdvanced = async (settingsPage: ControllablePage, keyTitle: string, backup: "none" | "email" | "file", { usedPgpBefore = false, submitPubkey = false }: { usedPgpBefore?: boolean, submitPubkey?: boolean } = {}) => {
     await SetupPageRecipe.createBegin(settingsPage, keyTitle, { usedPgpBefore });
     await settingsPage.waitAndClick('@action-step2bmanualcreate-show-advanced-create-settings'); // unfold
@@ -65,7 +65,6 @@ export class SetupPageRecipe extends PageRecipe {
     await SettingsPageRecipe.ready(settingsPage);
   }
 
-  // tslint:disable-next-line:max-line-length
   public static async manualEnter(
     settingsPage: ControllablePage,
     keyTitle: string,
@@ -161,7 +160,7 @@ export class SetupPageRecipe extends PageRecipe {
     }
   }
 
-  // tslint:disable-next-line:max-line-length
+  // eslint-disable-next-line max-len
   public static recover = async (settingsPage: ControllablePage, keyTitle: string, { wrongPp = false, clickRecoverMore = false, hasRecoverMore = false, alreadyRecovered = false }: { wrongPp?: boolean, clickRecoverMore?: boolean, hasRecoverMore?: boolean, alreadyRecovered?: boolean } = {}) => {
     const k = Config.key(keyTitle);
     await settingsPage.waitAll('@input-recovery-pass-phrase', { timeout: 40 }); // can sometimes be slow

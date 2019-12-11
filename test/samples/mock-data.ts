@@ -7,7 +7,7 @@ type UserMessages = {
   }
 };
 
-// tslint:disable: max-line-length
+/* eslint-disable max-len */
 const data: UserMessages = {
   'flowcrypt.compatibility@gmail.com': {
     drafts: [{

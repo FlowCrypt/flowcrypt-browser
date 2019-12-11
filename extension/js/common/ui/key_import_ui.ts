@@ -244,8 +244,8 @@ export class KeyImportUi {
         if (! await Pgp.key.decrypt(toDecrypt, passphrase)) {
           this.onBadPassphrase();
           if (this.expectedLongid) { // todo - double check this line, should it not say `this.expectedLongid === Pgp.key.longid() ? Or is that checked elsewhere beforehand?
-            // tslint:disable-next-line:max-line-length
-            throw new UserAlert('This is the right key! However, the pass phrase does not match. Please try a different pass phrase. Your original pass phrase might have been different then what you use now.');
+            throw new UserAlert(`This is the right key! However, the pass phrase does not match. Please try a different pass phrase.
+              Your original pass phrase might have been different then what you use now.`);
           } else {
             throw new UserAlert('The pass phrase does not match. Please try a different pass phrase.');
           }

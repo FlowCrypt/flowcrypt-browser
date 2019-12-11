@@ -58,13 +58,29 @@ export const mockGoogleEndpoints: HandlersDefinition = {
   '/gmail/v1/users/me/settings/sendAs': async (parsedReq, req) => {
     const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
     if (isGet(req)) {
-      // tslint:disable-next-line:max-line-length
-      const sendAs = [{ sendAsEmail: acct, displayName: 'First Last', replyToAddress: acct, signature: '', isDefault: true, isPrimary: true, treatAsAlias: false, verificationStatus: 'accepted' }];
+      const sendAs = [{
+        sendAsEmail: acct,
+        displayName: 'First Last',
+        replyToAddress: acct,
+        signature: '',
+        isDefault: true,
+        isPrimary: true,
+        treatAsAlias: false,
+        verificationStatus: 'accepted'
+      }];
       if (acct === 'flowcrypt.compatibility@gmail.com') {
         sendAs[0].signature = 'The best footer ever!';
         const alias = 'flowcryptcompatibility@gmail.com';
-        // tslint:disable-next-line:max-line-length
-        sendAs.push({ sendAsEmail: alias, displayName: 'An Alias', replyToAddress: alias, signature: '', isDefault: false, isPrimary: false, treatAsAlias: false, verificationStatus: 'accepted' });
+        sendAs.push({
+          sendAsEmail: alias,
+          displayName: 'An Alias',
+          replyToAddress: alias,
+          signature: '',
+          isDefault: false,
+          isPrimary: false,
+          treatAsAlias: false,
+          verificationStatus: 'accepted'
+        });
       }
       return { sendAs };
     }

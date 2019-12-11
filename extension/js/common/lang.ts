@@ -2,7 +2,7 @@
 
 'use strict';
 
-/* tslint:disable:max-line-length */
+/* eslint-disable max-len */
 
 export const Lang = { // tslint:disable-line:variable-name
   error: {
