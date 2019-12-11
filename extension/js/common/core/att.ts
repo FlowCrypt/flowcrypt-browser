@@ -88,7 +88,7 @@ export class Att {
       return 'encryptedMsg';
     } else if (this.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) { // ends with one of .gpg, .pgp, .???.asc, .????.asc
       return 'encryptedFile';
-    } else if (this.name.match(/(cryptup|flowcrypt)-backup-[a-z]+\.key/g)) {
+    } else if (this.name.match(/(cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc)$/g)) {
       return 'privateKey';
     } else if (this.name.match(/^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?.*\.asc$/g)) { // name starts with a key id
       return 'publicKey';
@@ -103,7 +103,7 @@ export class Att {
     }
   }
 
-  public static readonly attachmentsPattern = /^(((cryptup|flowcrypt)-backup-[a-z]+\.key)|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|())$/gm;
+  public static readonly attachmentsPattern = /^(((cryptup|flowcrypt)-backup-[a-z]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|())$/gm;
 
   public static keyinfoAsPubkeyAtt = (ki: { public: string, longid: string }) => {
     return new Att({ data: Buf.fromUtfStr(ki.public), type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });

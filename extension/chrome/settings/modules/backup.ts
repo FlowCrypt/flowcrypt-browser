@@ -311,7 +311,7 @@ View.run(class BackupView extends View {
   }
 
   private asBackupFile = (armoredKey: string) => {
-    return new Att({ name: `flowcrypt-backup-${this.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'text/plain', data: Buf.fromUtfStr(armoredKey) });
+    return new Att({ name: `flowcrypt-backup-${this.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'application/pgp-keys', data: Buf.fromUtfStr(armoredKey) });
   }
 
   private doBackupOnEmailProvider = async (armoredKey: string) => {
