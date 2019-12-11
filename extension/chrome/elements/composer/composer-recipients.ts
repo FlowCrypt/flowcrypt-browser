@@ -546,8 +546,8 @@ export class ComposerRecipients extends ComposerComponent {
     this.composer.errs.debug(`renderPubkeyResult.email(${recipient.email})`);
     this.composer.errs.debug(`renderPubkeyResult.contact(${JSON.stringify(contact)})`);
     $(el).children('img, i').remove();
-    // tslint:disable-next-line:max-line-length
-    const contentHtml = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
+    const contentHtml = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" />' +
+      '<img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
     Xss.sanitizeAppend(el, contentHtml)
       .find('img.close-icon')
       .click(this.view.setHandler(target => this.removeRecipient(target.parentElement!), this.composer.errs.handlers('remove recipient')));

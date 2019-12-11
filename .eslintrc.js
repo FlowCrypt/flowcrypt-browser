@@ -21,6 +21,7 @@ module.exports = {
   ],
   rules: {
     'indent': ['error', 2, { SwitchCase: 1 }],
+    'max-len': ['error', { code: 190 }],
     'semi': 'error',
     'no-constant-condition': 0,
     'no-prototype-builtins': 0,

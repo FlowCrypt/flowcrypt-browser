@@ -6,9 +6,6 @@ linterOptions:
     - node_modules
 rules: #
     allow-js: false
-    max-line-length:
-     - true
-     - limit: 190
     object-literal-sort-keys: false
     arrow-parens: false
     no-console: false
@@ -23,7 +20,7 @@ rules: #
      - ["Symbol", "Avoid using the `Symbol` type. Did you mean `symbol`?"]
     no-unsafe-any: true
     quotemark: false
-    variable-name: 
+    variable-name:
      - true
      - allow-leading-underscore
     member-access: false
