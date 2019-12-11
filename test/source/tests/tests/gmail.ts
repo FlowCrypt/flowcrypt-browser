@@ -80,9 +80,12 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
       const gmailMsgWithAtt = `https://mail.google.com/mail/u/${acct}/#inbox/WhctKHTCGjFCdWqLhrdswHHkHLlvfzTxXGNlZLsCqkMPhZWNfHDBtpDlDmPBgMfjbMwwsSb`;
       gmailPage = await browser.newPage(t, gmailMsgWithAtt);
       await gmailPage.waitAll(['@webmail-notification', '@action-reconnect-account']);
+      await Util.sleep(1);
       expect(await gmailPage.read('@webmail-notification')).to.contain('Please reconnect FlowCrypt to your Gmail Account.');
       const oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@action-reconnect-account'), acct);
       await OauthPageRecipe.google(t, oauthPopup, acct, 'approve');
+      await gmailPage.waitAll(['@webmail-notification']);
+      await Util.sleep(1);
       expect(await gmailPage.read('@webmail-notification')).to.contain('Connected successfully. You may need to reload the tab.');
       await gmailPage.close();
       // reload and test that message frame shows, and no more notifications
