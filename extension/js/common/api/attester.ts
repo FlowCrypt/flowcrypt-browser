@@ -5,6 +5,7 @@
 import { Api, ReqMethod } from './api.js';
 import { Dict, Str } from '../core/common.js';
 import { PubkeySearchResult, PgpClient } from './keyserver.js';
+import { ApiErr } from './error/api-error.js';
 
 export class Attester extends Api {
 
@@ -27,7 +28,7 @@ export class Attester extends Api {
       }
       return { pubkey: r.responseText, pgpClient: r.getResponseHeader('pgp-client') as PgpClient };
     } catch (e) {
-      if (Api.err.isNotFound(e)) {
+      if (ApiErr.isNotFound(e)) {
         return { pubkey: null, pgpClient: null }; // tslint:disable-line:no-null-keyword
       }
       throw e;
@@ -42,7 +43,9 @@ export class Attester extends Api {
     return results;
   }
 
-  public static lookupLongid = (longid: string) => Attester.lookupEmail(longid); // the api accepts either email or longid
+  public static lookupLongid = (longid: string) => {
+    return Attester.lookupEmail(longid); // the api accepts either email or longid
+  }
 
   public static replacePubkey = async (email: string, pubkey: string): Promise<string> => { // replace key assigned to a certain email with a different one
     const r = await Attester.pubCall(`pub/${email}`, 'POST', pubkey);

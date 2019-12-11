@@ -3,12 +3,12 @@
 'use strict';
 
 import { Store } from '../common/platform/store.js';
-import { Bm } from '../common/extension.js';
+import { Bm } from '../common/browser/browser-msg.js';
 import { BgUtils } from './bgutils.js';
-import { Env } from '../common/browser.js';
 import { Api } from '../common/api/api.js';
-import { Google } from '../common/api/google.js';
 import { Pgp } from '../common/core/pgp.js';
+import { Url } from '../common/core/common.js';
+import { Gmail } from '../common/api/email_provider/gmail/gmail.js';
 
 export class BgHandlers {
 
@@ -17,7 +17,7 @@ export class BgHandlers {
   }
 
   public static openInboxPageHandler: Bm.AsyncResponselessHandler = async (message: { acctEmail: string, threadId?: string, folder?: string }) => {
-    await BgUtils.openExtensionTab(Env.urlCreate(chrome.runtime.getURL(`chrome/settings/inbox/inbox.htm`), message));
+    await BgUtils.openExtensionTab(Url.create(chrome.runtime.getURL(`chrome/settings/inbox/inbox.htm`), message));
   }
 
   public static dbOperationHandler = async (db: IDBDatabase, request: Bm.Db): Promise<Bm.Res.Db> => {
@@ -37,7 +37,7 @@ export class BgHandlers {
   }
 
   public static ajaxGmailAttGetChunkHandler = async (r: Bm.AjaxGmailAttGetChunk): Promise<Bm.Res.AjaxGmailAttGetChunk> => {
-    return { chunk: await Google.gmail.attGetChunk(r.acctEmail, r.msgId, r.attId) };
+    return { chunk: await new Gmail(r.acctEmail).attGetChunk(r.msgId, r.attId) };
   }
 
   public static pgpKeyDetails = async ({ pubkey }: Bm.PgpKeyDetails): Promise<Bm.Res.PgpKeyDetails> => {
@@ -47,7 +47,7 @@ export class BgHandlers {
   public static updateUninstallUrl: Bm.AsyncResponselessHandler = async () => {
     const acctEmails = await Store.acctEmailsGet();
     if (typeof chrome.runtime.setUninstallURL !== 'undefined') {
-      const email = (acctEmails && acctEmails.length) ? acctEmails[0] : undefined;
+      const email = acctEmails?.length ? acctEmails[0] : undefined;
       chrome.runtime.setUninstallURL(`https://flowcrypt.com/leaving.htm#${JSON.stringify({ email, metrics: null })}`); // tslint:disable-line:no-null-keyword
     }
   }

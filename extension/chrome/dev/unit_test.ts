@@ -3,11 +3,11 @@
 'use strict';
 
 import { Pgp } from '../../js/common/core/pgp.js';
-import { Env } from '../../js/common/browser.js';
+import { Url } from '../../js/common/core/common.js';
 
 (async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['f', 'args']);
+  const uncheckedUrlParams = Url.parse(['f', 'args']);
   const f = String(uncheckedUrlParams.f);
   const args = JSON.parse(String(uncheckedUrlParams.args)) as any[];
 
@@ -39,4 +39,4 @@ import { Env } from '../../js/common/browser.js';
     return renderRes('Unknown unit test f');
   }
 
-})().catch(console.error);
+})().catch(e => console.error(e));

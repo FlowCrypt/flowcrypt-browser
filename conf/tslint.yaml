@@ -53,6 +53,7 @@ rules: #
     no-namespace: false
     jsdoc-format: false  # add back later
     no-null-keyword: true
+    no-unbound-method: true
     # custom rules below
     standard-loops: true
     no-blank-lines-func: true

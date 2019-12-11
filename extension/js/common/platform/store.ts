@@ -5,22 +5,23 @@
 import { Value, Str, Dict } from '../core/common.js';
 import { mnemonic } from '../core/mnemonic.js';
 import { Pgp, KeyInfo, Contact } from '../core/pgp.js';
-import { SubscriptionInfo } from '../api/backend.js';
-import { BrowserMsg, BgNotReadyError } from '../extension.js';
-import { Product, PaymentMethod, ProductLevel } from '../account.js';
-import { Env, Ui } from '../browser.js';
+import { SubscriptionInfo, PaymentMethod, ProductLevel, FcUuidAuth } from '../api/backend.js';
+import { BrowserMsg, BgNotReadyError } from '../browser/browser-msg.js';
 import { Catch, UnreportableError } from './catch.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chrome.js';
-import { GmailRes, GoogleAuth } from '../api/google.js';
 import { PgpClient } from '../api/keyserver.js';
+import { GmailRes } from '../api/email_provider/gmail/gmail-parser.js';
+import { GoogleAuth } from '../api/google-auth.js';
+import { DomainRules } from '../rules.js';
+import { Env } from '../browser/env.js';
+import { Ui } from '../browser/ui.js';
 
 // tslint:disable:no-null-keyword
 
 let KEY_CACHE: { [longidOrArmoredKey: string]: OpenPGP.key.Key } = {};
 let KEY_CACHE_WIPE_TIMEOUT: number;
 
-type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo;
-type StoredAuthInfo = { acctEmail: string | null, uuid: string | null };
+type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo | DomainRules;
 type StoredReplyDraftMeta = string; // draftId
 type StoredComposeDraftMeta = { recipients: string[], subject: string, date: number };
 type StoredAdminCode = { date: number, codes: string[] };
@@ -38,6 +39,16 @@ export type DbContactObjArg = {
 export type EmailProvider = 'gmail';
 export type GoogleAuthScopesNames = [keyof typeof GoogleAuth.OAUTH.scopes, keyof typeof GoogleAuth.OAUTH.legacy_scopes][number];
 
+export type Scopes = {
+  openid: boolean;
+  email: boolean;
+  profile: boolean;
+  compose: boolean;
+  modify: boolean;
+  readContacts: boolean;
+  read: boolean;
+  gmail: boolean;
+};
 export type KeyBackupMethod = 'file' | 'inbox' | 'none' | 'print';
 export type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number };
 export type StorageType = 'session' | 'local';
@@ -58,15 +69,11 @@ export type ContactUpdate = {
   pubkey_last_check?: number | null;
 };
 export type Storable = FlatTypes | string[] | KeyInfo[] | Dict<StoredReplyDraftMeta> | Dict<StoredComposeDraftMeta> | Dict<StoredAdminCode>
-  | SubscriptionAttempt | SubscriptionInfo | GmailRes.OpenId;
+  | SubscriptionInfo | GmailRes.OpenId | DomainRules;
 export type Serializable = SerializableTypes | SerializableTypes[] | Dict<SerializableTypes> | Dict<SerializableTypes>[];
 
 export interface RawStore {
   [key: string]: Storable;
-}
-
-export interface SubscriptionAttempt extends Product {
-  source: string | undefined;
 }
 
 export type GlobalStore = {
@@ -75,17 +82,16 @@ export type GlobalStore = {
   errors?: string[];
   settings_seen?: boolean;
   hide_pass_phrases?: boolean;
-  cryptup_account_email?: string | null;
-  cryptup_account_uuid?: string | null;
-  cryptup_account_subscription?: SubscriptionInfo | null;
+  cryptup_account_email?: string | null; // todo - remove
+  cryptup_account_uuid?: string | null; // todo - remove
+  cryptup_account_subscription?: SubscriptionInfo | null; // todo - remove
   dev_outlook_allow?: boolean;
-  cryptup_subscription_attempt?: SubscriptionAttempt;
   admin_codes?: Dict<StoredAdminCode>;
 };
 
 export type GlobalIndex = 'version' | 'account_emails' | 'errors' | 'settings_seen' | 'hide_pass_phrases' |
   'cryptup_account_email' | 'cryptup_account_uuid' | 'cryptup_account_subscription' | 'dev_outlook_allow' |
-  'cryptup_subscription_attempt' | 'admin_codes';
+  'admin_codes';
 
 export type SendAsAlias = {
   isPrimary: boolean;
@@ -105,7 +111,6 @@ export type AccountStore = {
   hide_message_password?: boolean; // is global?
   sendAs?: Dict<SendAsAlias>;
   addresses?: string[],
-  addresses_keyserver?: string[];
   drafts_reply?: Dict<StoredReplyDraftMeta>;
   drafts_compose?: Dict<StoredComposeDraftMeta>;
   pubkey_sent_to?: string[];
@@ -121,23 +126,27 @@ export type AccountStore = {
   picture?: string; // google image
   outgoing_language?: 'EN' | 'DE';
   setup_date?: number;
+  use_rich_text?: boolean;
   openid?: GmailRes.OpenId;
+  subscription?: SubscriptionInfo;
+  uuid?: string;
+  rules?: DomainRules;
   // temporary
   tmp_submit_main?: boolean;
   tmp_submit_all?: boolean;
 };
 
 export class AccountStoreExtension {
-  static getEmailAliasesIncludingPrimary(acct: string, sendAs: Dict<SendAsAlias> | undefined) {
+  static getEmailAliasesIncludingPrimary = (acct: string, sendAs: Dict<SendAsAlias> | undefined) => {
     return sendAs ? Object.keys(sendAs) : [acct];
   }
 }
 
 export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'email_provider' | 'google_token_access' | 'google_token_expires' | 'google_token_scopes' |
-  'google_token_refresh' | 'hide_message_password' | 'addresses' | 'sendAs' | 'addresses_keyserver' | 'drafts_reply' | 'drafts_compose' |
+  'google_token_refresh' | 'hide_message_password' | 'addresses' | 'sendAs' | 'drafts_reply' | 'drafts_compose' |
   'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' | 'setup_simple' | 'is_newly_created_key' | 'key_backup_method' |
   'key_backup_prompt' | 'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
-  'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all';
+  'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all' | 'subscription' | 'uuid' | 'use_rich_text' | 'rules';
 
 export class Subscription implements SubscriptionInfo {
   active?: boolean;
@@ -146,25 +155,13 @@ export class Subscription implements SubscriptionInfo {
   expire?: string;
   expired?: boolean;
 
-  constructor(storedSubscriptionInfo: SubscriptionInfo | undefined) {
+  constructor(storedSubscriptionInfo: SubscriptionInfo | undefined | null) {
     if (storedSubscriptionInfo) {
       this.active = storedSubscriptionInfo.active || undefined;
       this.method = storedSubscriptionInfo.method || undefined;
       this.level = storedSubscriptionInfo.level;
       this.expire = storedSubscriptionInfo.expire || undefined;
       this.expired = storedSubscriptionInfo.expired || undefined;
-    }
-  }
-
-  static updateSubscriptionGlobalStore = (gs: GlobalStore, stored: SubscriptionInfo, newest: SubscriptionInfo | null) => {
-    if (newest) {
-      if (newest.level !== stored.level || newest.method !== stored.method || newest.expire !== stored.expire || newest.active !== stored.active) {
-        gs.cryptup_account_subscription = newest;
-      }
-    } else {
-      if (stored.level || stored.expire || stored.active || stored.method) {
-        gs.cryptup_account_subscription = undefined;
-      }
     }
   }
 
@@ -183,9 +180,13 @@ export class Store {
   private static globalStorageScope: 'global' = 'global';
   private static dbQueryKeys = ['limit', 'substring', 'has_pgp'];
 
-  static singleScopeRawIndex = (scope: string, key: string) => `cryptup_${scope.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_${key}`;
+  static singleScopeRawIndex = (scope: string, key: string) => {
+    return `cryptup_${scope.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_${key}`;
+  }
 
-  private static singleScopeRawIndexArr = (scope: string, keys: string[]) => keys.map(key => Store.singleScopeRawIndex(scope, key));
+  private static singleScopeRawIndexArr = (scope: string, keys: string[]) => {
+    return keys.map(key => Store.singleScopeRawIndex(scope, key));
+  }
 
   private static manyScopesRawIndexArr = (scopes: string[], keys: string[]) => {
     const allResults: string[] = [];
@@ -206,7 +207,7 @@ export class Store {
     return accountStore;
   }
 
-  static getScopes = async (acctEmail: string) => {
+  static getScopes = async (acctEmail: string): Promise<Scopes> => {
     const { google_token_scopes } = await Store.getAcct(acctEmail, ['google_token_scopes']);
     const result: { [key in GoogleAuthScopesNames]: boolean } = {
       email: false, openid: false, profile: false, compose: false,
@@ -406,8 +407,8 @@ export class Store {
       } else {
         s.errors.unshift(errMsg || String(err));
       }
-      Store.setGlobal(s).catch(console.error);
-    }).catch(console.error);
+      Store.setGlobal(s).catch(e => console.error(e));
+    }).catch(e => console.error(e));
   }
 
   static getAcct = async (acctEmail: string, keys: AccountIndex[]): Promise<AccountStore> => {
@@ -482,18 +483,14 @@ export class Store {
     BrowserMsg.send.bg.updateUninstallUrl();
   }
 
-  static authInfo = async (): Promise<StoredAuthInfo> => {
-    const storage = await Store.getGlobal(['cryptup_account_email', 'cryptup_account_uuid']);
-    return { acctEmail: storage.cryptup_account_email || null, uuid: storage.cryptup_account_uuid || null };
+  static authInfo = async (acctEmail: string): Promise<FcUuidAuth> => {
+    const { uuid } = await Store.getAcct(acctEmail, ['uuid']);
+    return { account: acctEmail, uuid };
   }
 
-  static subscription = async (): Promise<Subscription> => {
-    const s = await Store.getGlobal(['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_subscription']);
-    if (s.cryptup_account_email && s.cryptup_account_uuid && s.cryptup_account_subscription && s.cryptup_account_subscription.level) {
-      return new Subscription(s.cryptup_account_subscription || undefined);
-    } else {
-      return new Subscription(undefined);
-    }
+  static subscription = async (acctEmail: string): Promise<Subscription> => {
+    const { subscription } = await Store.getAcct(acctEmail, ['subscription']);
+    return new Subscription(subscription);
   }
 
   /* db */
@@ -654,100 +651,97 @@ export class Store {
     }
   }
 
-  static dbContactSave = (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => new Promise(async (resolve, reject) => {
-    if (!db) { // relay op through background process
-      // todo - currently will silently swallow errors
-      BrowserMsg.send.bg.await.db({ f: 'dbContactSave', args: [contact] }).then(resolve).catch(Catch.reportErr);
-    } else {
-      if (Array.isArray(contact)) {
-        for (const singleContact of contact) {
-          await Store.dbContactSave(db, singleContact);
-        }
-        resolve();
-      } else {
-        const tx = db.transaction('contacts', 'readwrite');
-        const contactsTable = tx.objectStore('contacts');
-        contactsTable.put(contact);
-        tx.oncomplete = () => resolve();
-        tx.onabort = () => reject(Store.errCategorize(tx.error));
-      }
-    }
-  })
-
-  static dbContactUpdate = (db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> => {
-    return new Promise(async (resolve, reject) => {
+  static dbContactSave = (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => {
+    return new Promise((resolve, reject) => {
       if (!db) { // relay op through background process
         // todo - currently will silently swallow errors
-        BrowserMsg.send.bg.await.db({ f: 'dbContactUpdate', args: [email, update] }).then(resolve).catch(Catch.reportErr);
+        BrowserMsg.send.bg.await.db({ f: 'dbContactSave', args: [contact] }).then(resolve).catch(Catch.reportErr);
       } else {
-        if (Array.isArray(email)) {
-          for (const singleEmail of email) {
-            await Store.dbContactUpdate(db, singleEmail, update);
-          }
-          resolve();
+        if (Array.isArray(contact)) {
+          Promise.all(contact.map(oneContact => Store.dbContactSave(db, oneContact))).then(() => resolve(), reject);
         } else {
-          let [contact] = await Store.dbContactGet(db, [email]);
-          if (!contact) { // updating a non-existing contact, insert it first
-            await Store.dbContactSave(db, await Store.dbContactObj({ email }));
-            [contact] = await Store.dbContactGet(db, [email]);
-            if (!contact) {
-              reject(new Error('contact not found right after inserting it'));
-              return;
-            }
-          }
-          if (update.pubkey && update.pubkey.includes(Pgp.armor.headers('privateKey').begin)) { // wrongly saving prv instead of pub
-            Catch.report('Wrongly saving prv as contact - converting to pubkey');
-            const key = await Pgp.key.read(update.pubkey);
-            update.pubkey = key.toPublic().armor();
-          }
-          for (const k of Object.keys(update)) {
-            // @ts-ignore - may be saving any of the provided values - could do this one by one while ensuring proper types
-            contact[k] = update[k];
-          }
           const tx = db.transaction('contacts', 'readwrite');
           const contactsTable = tx.objectStore('contacts');
           contactsTable.put(contact);
-          tx.oncomplete = Catch.try(resolve);
+          tx.oncomplete = () => resolve();
           tx.onabort = () => reject(Store.errCategorize(tx.error));
         }
       }
     });
   }
 
-  static dbContactGet = (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
-    return new Promise(async (resolve, reject) => {
+  static dbContactUpdate = (db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> => {
+    return new Promise((resolve, reject) => {
       if (!db) { // relay op through background process
-        BrowserMsg.send.bg.await.db({ f: 'dbContactGet', args: [emailOrLongid] }).then(resolve).catch(reject);
+        // todo - currently will silently swallow errors
+        BrowserMsg.send.bg.await.db({ f: 'dbContactUpdate', args: [email, update] }).then(resolve).catch(Catch.reportErr);
       } else {
-        if (emailOrLongid.length === 1) {
-          // contacts imported before August 2019 may have only primary longid recorded, in index_longid (string)
-          // contacts imported after August 2019 have both index_longid (string) and index_longids (string[] containing all subkeys)
-          // below we search contact by first trying to only search by primary longid
-          // (or by email - such searches are not affected by longid indexing)
-          const contact = await Store.dbContactInternalGetOne(db, emailOrLongid[0], false);
-          if (contact || !/^[A-F0-9]{16}$/.test(emailOrLongid[0])) {
-            // if we found something, return it
-            // or if we were searching by email, return found contact or nothing
-            resolve([contact]);
-          } else {
-            // not found any key by primary longid, and searching by longid -> search by any subkey longid
-            // it may not find pubkeys imported before August 2019, re-importing such pubkeys will make them findable
-            resolve([await Store.dbContactInternalGetOne(db, emailOrLongid[0], true)]);
-          }
+        if (Array.isArray(email)) {
+          Promise.all(email.map(oneEmail => Store.dbContactUpdate(db, oneEmail, update))).then(() => resolve(), reject);
+          resolve();
         } else {
-          const results: (Contact | undefined)[] = [];
-          for (const singleEmailOrLongid of emailOrLongid) {
-            const [contact] = await Store.dbContactGet(db, [singleEmailOrLongid]);
-            results.push(contact);
-          }
-          resolve(results);
+          (async () => {
+            let [contact] = await Store.dbContactGet(db, [email]);
+            if (!contact) { // updating a non-existing contact, insert it first
+              await Store.dbContactSave(db, await Store.dbContactObj({ email }));
+              [contact] = await Store.dbContactGet(db, [email]);
+              if (!contact) {
+                reject(new Error('contact not found right after inserting it'));
+                return;
+              }
+            }
+            if (update.pubkey && update.pubkey.includes(Pgp.armor.headers('privateKey').begin)) { // wrongly saving prv instead of pub
+              Catch.report('Wrongly saving prv as contact - converting to pubkey');
+              const key = await Pgp.key.read(update.pubkey);
+              update.pubkey = key.toPublic().armor();
+            }
+            for (const k of Object.keys(update)) {
+              // @ts-ignore - may be saving any of the provided values - could do this one by one while ensuring proper types
+              contact[k] = update[k];
+            }
+            const tx = db.transaction('contacts', 'readwrite');
+            const contactsTable = tx.objectStore('contacts');
+            contactsTable.put(contact);
+            tx.oncomplete = Catch.try(resolve);
+            tx.onabort = () => reject(Store.errCategorize(tx.error));
+          })().catch(reject);
         }
       }
     });
   }
 
+  static dbContactGet = async (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
+    if (!db) { // relay op through background process
+      return await BrowserMsg.send.bg.await.db({ f: 'dbContactGet', args: [emailOrLongid] }) as (Contact | undefined)[];
+    } else {
+      if (emailOrLongid.length === 1) {
+        // contacts imported before August 2019 may have only primary longid recorded, in index_longid (string)
+        // contacts imported after August 2019 have both index_longid (string) and index_longids (string[] containing all subkeys)
+        // below we search contact by first trying to only search by primary longid
+        // (or by email - such searches are not affected by longid indexing)
+        const contact = await Store.dbContactInternalGetOne(db, emailOrLongid[0], false);
+        if (contact || !/^[A-F0-9]{16}$/.test(emailOrLongid[0])) {
+          // if we found something, return it
+          // or if we were searching by email, return found contact or nothing
+          return [contact];
+        } else {
+          // not found any key by primary longid, and searching by longid -> search by any subkey longid
+          // it may not find pubkeys imported before August 2019, re-importing such pubkeys will make them findable
+          return [await Store.dbContactInternalGetOne(db, emailOrLongid[0], true)];
+        }
+      } else {
+        const results: (Contact | undefined)[] = [];
+        for (const singleEmailOrLongid of emailOrLongid) {
+          const [contact] = await Store.dbContactGet(db, [singleEmailOrLongid]);
+          results.push(contact);
+        }
+        return results;
+      }
+    }
+  }
+
   private static dbContactInternalGetOne = (db: IDBDatabase, emailOrLongid: string, searchSubkeyLongids: boolean): Promise<Contact | undefined> => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       let tx: IDBRequest;
       if (!/^[A-F0-9]{16}$/.test(emailOrLongid)) { // email
         tx = db.transaction('contacts', 'readonly').objectStore('contacts').get(emailOrLongid);
@@ -756,13 +750,13 @@ export class Store {
       } else { // search primary longid
         tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(emailOrLongid);
       }
-      tx.onsuccess = Catch.try(() => resolve(tx.result)); // tslint:disable-line:no-unsafe-any
+      tx.onsuccess = Catch.try(() => resolve(tx.result || undefined)); // tslint:disable-line:no-unsafe-any
       tx.onerror = () => reject(Store.errCategorize(tx.error || new Error('Unknown db error')));
     });
   }
 
   static dbContactSearch = (db: IDBDatabase | undefined, query: DbContactFilter): Promise<Contact[]> => {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       if (!db) { // relay op through background process
         // todo - currently will silently swallow errors
         BrowserMsg.send.bg.await.db({ f: 'dbContactSearch', args: [query] }).then(resolve).catch(Catch.reportErr);
@@ -777,13 +771,16 @@ export class Store {
         if (typeof query.has_pgp === 'undefined') { // any query.has_pgp value
           query.substring = Store.normalizeString(query.substring || '');
           if (query.substring) {
-            const resultsWithPgp = await Store.dbContactSearch(db, { substring: query.substring, limit: query.limit, has_pgp: true });
-            if (query.limit && resultsWithPgp.length === query.limit) {
-              resolve(resultsWithPgp);
-            } else {
-              const resultsWithoutPgp = await Store.dbContactSearch(db, { substring: query.substring, limit: query.limit ? query.limit - resultsWithPgp.length : undefined, has_pgp: false });
-              resolve(resultsWithPgp.concat(resultsWithoutPgp));
-            }
+            (async () => {
+              const resultsWithPgp = await Store.dbContactSearch(db, { substring: query.substring, limit: query.limit, has_pgp: true });
+              if (query.limit && resultsWithPgp.length === query.limit) {
+                resolve(resultsWithPgp);
+              } else {
+                const limit = query.limit ? query.limit - resultsWithPgp.length : undefined;
+                const resultsWithoutPgp = await Store.dbContactSearch(db, { substring: query.substring, limit, has_pgp: false });
+                resolve(resultsWithPgp.concat(resultsWithoutPgp));
+              }
+            })().catch(reject);
           } else {
             search = contacts.openCursor();
           }

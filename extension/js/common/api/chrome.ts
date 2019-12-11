@@ -3,9 +3,11 @@
 'use strict';
 
 import { Store } from '../platform/store.js';
-import { Env, Ui } from '../browser.js';
 import { Catch } from '../platform/catch.js';
-import { ContentScriptWindow } from '../extension.js';
+import { Url } from '../core/common.js';
+import { Env } from '../browser/env.js';
+import { ContentScriptWindow } from '../browser/browser-window.js';
+import { Ui } from '../browser/ui.js';
 
 export const handleFatalErr = (reason: 'storage_undefined', error: Error) => {
   try {
@@ -16,7 +18,7 @@ export const handleFatalErr = (reason: 'storage_undefined', error: Error) => {
     } else if (!chrome.runtime) {
       console.error('Chrome.runtime missing, cannot continue', error);
     } else { // extension pages
-      window.location.href = chrome.runtime.getURL(Env.urlCreate(`chrome/settings/fatal.htm`, { reason, stack: error.stack }));
+      window.location.href = chrome.runtime.getURL(Url.create(`chrome/settings/fatal.htm`, { reason, stack: error.stack }));
     }
   } catch (e) {
     if (e && e instanceof Error && e.message === 'Extension context invalidated.') {
@@ -51,6 +53,14 @@ export const storageLocalGet = (keys: string[]): Promise<Object> => new Promise(
         reject(new Error(`storageLocalGet(${keys.join(',')}) produced undefined result without an error`));
       }
     });
+  }
+});
+
+export const storageLocalGetAll = (): Promise<{ [key: string]: any }> => new Promise((resolve) => {
+  if (typeof chrome.storage === 'undefined') {
+    handleFatalErr('storage_undefined', new Error('storage is undefined'));
+  } else {
+    chrome.storage.local.get(resolve);
   }
 });
 

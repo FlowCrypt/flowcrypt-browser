@@ -1,5 +1,33 @@
 <div>
 
+version 7.3.8 on Dec 10, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/376?closed=1" target="_blank">Code quality</a>
+
+version 7.3.7 on Dec 9, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/375?closed=1" target="_blank">Bugfixes</a>
+
+version 7.3.6 on Dec 9, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/373?closed=1" target="_blank">Fix reply pubkey mismatch</a>
+
+version 7.3.5 on Dec 8, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/372?closed=1" target="_blank">Refactor setup and compose</a>
+
+version 7.3.4 on Dec 7, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/371?closed=1" target="_blank">Fix unwanted drafts</a>
+
+version 7.3.3 on Dec 7, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/370?closed=1" target="_blank">Fix doubled end session btn</a>
+
+version 7.3.1 on Dec 5, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/369?closed=1" target="_blank">Fix pubkey auto-attach</a>
+
+version 7.3.0 on Dec 5, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/368?closed=1" target="_blank">Code maintenance</a>
+
+version 7.2.3 on Nov 29, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/367?closed=1" target="_blank">Decrypt bugfix</a>
+
+version 7.2.2 on Nov 25, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/366?closed=1" target="_blank">Password attachment fix</a>
+
+version 7.2.1 on Nov 25, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/365?closed=1" target="_blank">Verification bugfix</a>
+
+version 7.2.0 on Nov 22, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/364?closed=1" target="_blank">OpenID Connect</a>
+
+version 7.1.3 on Nov 22, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/363?closed=1" target="_blank">Experimental PGP/MIME compose</a>
+
+version 7.0.9 on Nov 18, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/362?closed=1" target="_blank">End session button bugfix</a>
+
 version 7.0.8 on Nov 7, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/361?closed=1" target="_blank">Reply to any message</a>
 
 version 7.0.7 on Nov 5, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/360?closed=1" target="_blank">Footer</a>

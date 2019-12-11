@@ -200,7 +200,6 @@ export class Pgp {
     null: { begin: '-----BEGIN', end: '-----END', replace: false },
     publicKey: { begin: '-----BEGIN PGP PUBLIC KEY BLOCK-----', end: '-----END PGP PUBLIC KEY BLOCK-----', replace: true },
     privateKey: { begin: '-----BEGIN PGP PRIVATE KEY BLOCK-----', end: '-----END PGP PRIVATE KEY BLOCK-----', replace: true },
-    cryptupVerification: { begin: '-----BEGIN CRYPTUP VERIFICATION-----', end: '-----END CRYPTUP VERIFICATION-----', replace: true },
     signedMsg: { begin: '-----BEGIN PGP SIGNED MESSAGE-----', middle: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: true },
     signature: { begin: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: false },
     encryptedMsg: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----', replace: true },
@@ -229,10 +228,9 @@ export class Pgp {
     { match: '', word: 'weak', bar: 10, color: 'red', pass: false },
   ];
 
-  private static readonly FRIENDLY_BLOCK_TYPE_NAMES: { [type in MsgBlockType]: string } = {
+  private static readonly FRIENDLY_BLOCK_TYPE_NAMES: { [type in MsgBlockType]: string } = { // todo - remove this, almost useless
     privateKey: 'Private Key',
     publicKey: 'Public Key',
-    cryptupVerification: 'Cryptup Verification',
     decryptErr: 'Decrypt Error',
     decryptedAtt: 'Decrypted Attachment',
     decryptedHtml: 'Decrypted HTML',
@@ -269,7 +267,7 @@ export class Pgp {
       const blocks: MsgBlock[] = [];
       const normalized = Str.normalize(origText);
       let startAt = 0;
-      while (true) {
+      while (true) { // eslint-disable-line no-constant-condition
         const r = Pgp.internal.detectBlockNext(normalized, startAt);
         if (r.found) {
           blocks.push(...r.found);
@@ -333,7 +331,7 @@ export class Pgp {
     },
   };
 
-  public static friendlyMsgBlockTypeName = (type: MsgBlockType) => {
+  public static friendlyMsgBlockTypeName = (type: MsgBlockType) => { // todo - remove this, just use the block type string
     return Pgp.FRIENDLY_BLOCK_TYPE_NAMES[type];
   }
 
@@ -884,9 +882,19 @@ export class PgpMsg {
     return undefined;
   }
 
-  static sign = async (signingPrv: OpenPGP.key.Key, data: string): Promise<string> => {
+  /**
+   * Returns signed data if detached=false, armored
+   * Returns signature if detached=true, armored
+   */
+  static sign = async (signingPrv: OpenPGP.key.Key, data: string, detached = false): Promise<string> => {
     const message = openpgp.cleartext.fromText(data);
-    const signRes = await openpgp.sign({ message, armor: true, privateKeys: [signingPrv] });
+    const signRes = await openpgp.sign({ message, armor: true, privateKeys: [signingPrv], detached });
+    if (detached) {
+      if (typeof signRes.signature !== 'string') {
+        throw new Error('signRes.signature unexpectedly not a string when creating detached signature');
+      }
+      return signRes.signature;
+    }
     return await openpgp.stream.readToEnd((signRes as OpenPGP.SignArmorResult).data);
   }
 
@@ -983,14 +991,14 @@ export class PgpMsg {
         options.publicKeys.push(...publicKeys);
       }
     }
-    if (pwd && pwd.answer) {
+    if (pwd?.answer) {
       options.passwords = [await Pgp.hash.challengeAnswer(pwd.answer)];
       usedChallenge = true;
     }
     if (!pubkeys && !usedChallenge) {
       throw new Error('no-pubkeys-no-challenge');
     }
-    if (signingPrv && typeof signingPrv.isPrivate !== 'undefined' && signingPrv.isPrivate()) {
+    if (signingPrv && typeof signingPrv.isPrivate !== 'undefined' && signingPrv.isPrivate()) { // tslint:disable-line:no-unbound-method - only testing if exists
       options.privateKeys = [signingPrv];
     }
     return await openpgp.encrypt(options);
@@ -1076,7 +1084,7 @@ export class PgpMsg {
     return normalized;
   }
 
-  // public static extractFcReplyToken = (decryptedContent: string) => { // todo - used exclusively on the web - move to a web package
+  // public static extractFcReplyToken =  (decryptedContent: string) => { // todo - used exclusively on the web - move to a web package
   //   const fcTokenElement = $(`<div>${decryptedContent}</div>`).find('.cryptup_reply');
   //   if (fcTokenElement.length) {
   //     const fcData = fcTokenElement.attr('cryptup-data');
@@ -1086,7 +1094,9 @@ export class PgpMsg {
   //   }
   // }
 
-  public static stripFcTeplyToken = (decryptedContent: string) => decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
+  public static stripFcTeplyToken = (decryptedContent: string) => {
+    return decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
+  }
 
   private static isFcAttLinkData = (o: any): o is FcAttLinkData => {
     return o && typeof o === 'object' && typeof (o as FcAttLinkData).name !== 'undefined'

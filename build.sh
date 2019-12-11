@@ -35,9 +35,3 @@ cp -r $OUTDIR ./build/chrome-consumer
 cp -r $OUTDIR ./build/firefox-consumer
 node ./build/tooling/build-manifests
 node ./build/tooling/build-types
-
-# used to have:
-# spacesToTabs: (folder) => gulp.src(`${folder}/**/*.js`)
-#   .pipe(replace(/}\n\s+(else|catch)/gm, (_, statement) => `} ${statement}`)) // `} catch () {` and `} else {` on the same line
-#   .pipe(replace(/^( {4})+/gm, (m) => '\t'.repeat(m.length / 4)))
-#   .pipe(gulp.dest(folder)),

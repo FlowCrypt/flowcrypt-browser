@@ -2,11 +2,11 @@
 
 'use strict';
 
-import { Env } from '../../js/common/browser.js';
 import { Lang } from '../../js/common/lang.js';
 import { Xss } from '../../js/common/platform/xss.js';
+import { Url } from '../../js/common/core/common.js';
 
-const uncheckedUrlParams = Env.urlParams(['reason', 'stack']);
+const uncheckedUrlParams = Url.parse(['reason', 'stack']);
 const reason = String(uncheckedUrlParams.reason);
 const stack = uncheckedUrlParams.stack ? String(uncheckedUrlParams.stack) : '';
 

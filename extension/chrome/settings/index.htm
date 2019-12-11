@@ -8,6 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
   <link rel="stylesheet" href="/css/cryptup.css">
+  <link rel="stylesheet" href="/css/sweetalert2.css" />
   <link rel="stylesheet" href="/css/settings.css">
   <link rel="stylesheet" href="/lib/featherlight/featherlight.css" />
   <link rel="stylesheet" href="/lib/bootstrap/bootstrap.min.css">
@@ -109,7 +110,7 @@
         </div>
 
         <div class="col-sm-2 col-xs-6">
-          <a href="#" class="show_settings_page" page="modules/backup.htm">
+          <a href="#" class="show_settings_page" page="modules/backup.htm" data-test="action-open-backup-page">
             <span class="box">
               <img src="/img/svgs/keys-icon.svg" class="keys-icon" alt="FlowCrypt, set up and backup your Keys">
             </span>
@@ -120,7 +121,7 @@
         </div>
 
         <div class="col-sm-2 col-xs-6">
-          <a href="#" class="show_settings_page" page="modules/help.htm">
+          <a href="#" class="show_settings_page" page="modules/help.htm" data-test="action-open-help-page">
             <span class="box">
               <img src="/img/svgs/feedback-icon.svg" class="feedback-icon" alt="Leave Feedback on FlowCrypt">
             </span>
@@ -219,7 +220,7 @@
       <div class="row my-keys-row">
         <div class="settings-border">
           <div class="row abs-row">
-            <div class="col-sm-12" style="padding-left:0;">
+            <div class="col-sm-12" style="padding-left: 0;">
               <img src="/img/svgs/key-icon.svg" class="key-icon" alt="key icon">
               <span class="my-keys-copy">My Keys</span>
               <span class="text-right change-passphrase">
@@ -266,6 +267,7 @@
 
   <script src="/lib/purify.min.js"></script>
   <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/sweetalert2.js"></script>
   <script src="/lib/openpgp.js"></script>
   <script src="/lib/bootstrap/bootstrap.min.js"></script>
   <script src="/lib/featherlight/featherlight.js"></script>

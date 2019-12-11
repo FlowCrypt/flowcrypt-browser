@@ -5,8 +5,8 @@
 import { Catch } from './platform/catch.js';
 import { Store } from './platform/store.js';
 import { Dict } from './core/common.js';
-import { BrowserMsg } from './extension.js';
-import { Ui } from './browser.js';
+import { BrowserMsg } from './browser/browser-msg.js';
+import { Ui } from './browser/ui.js';
 import { Lang } from './lang.js';
 import { Xss } from './platform/xss.js';
 

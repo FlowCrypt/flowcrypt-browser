@@ -1,11 +1,12 @@
+import { TestUrls } from './../../browser/test_urls';
 import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
-import { Url, BrowserHandle, ControllablePage } from '../../browser';
+import { BrowserHandle, ControllablePage } from '../../browser';
 import * as ava from 'ava';
 import { expect } from 'chai';
 import { BrowserRecipe } from '../browser_recipe';
-import { GmailPageRecipe } from '../page_recipe';
-import { TestVariant } from '../../util';
+import { TestVariant, Util } from '../../util';
 import { AvaContext } from '..';
+import { GmailPageRecipe } from '../page_recipe/gmail-page-recipe';
 
 /**
  * All tests that use mail.google.com or have to operate without a Gmail API mock should go here
@@ -17,13 +18,24 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
 
   if (testVariant === 'CONSUMER-LIVE-GMAIL') {
 
-    const pageHasReplyContainer = async (gmailPage: ControllablePage) => {
+    const pageHasReplyContainer = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, { isReplyPromptAccepted }: { isReplyPromptAccepted?: boolean } = {}) => {
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });
       expect(urls.length).to.equal(1);
+      if (typeof isReplyPromptAccepted !== 'undefined') {
+        const replyBox = await browser.newPage(t, urls[0]);
+        if (isReplyPromptAccepted) {
+          await replyBox.waitAll('@action-send');
+          await replyBox.notPresent('@action-accept-reply-prompt');
+        } else {
+          await replyBox.waitAll('@action-accept-reply-prompt');
+          await replyBox.notPresent('@action-send');
+        }
+        await replyBox.close();
+      }
     };
 
     const openGmailPage = async (t: AvaContext, browser: BrowserHandle, path: string): Promise<ControllablePage> => {
-      const url = Url.gmail(0, path);
+      const url = TestUrls.gmail(0, path);
       const gmialPage = await browser.newPage(t, url);
       await gmialPage.waitAll('@action-secure-compose');
       if (path) { // gmail does weird things with navigation sometimes, nudge it again
@@ -75,21 +87,30 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
       expect(urls.length).to.equal(1);
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, urls[0], ['This is a test, as requested by the Flowcrypt team', 'mutt + gnupg']);
-      await pageHasReplyContainer(gmailPage);
+      await pageHasReplyContainer(t, browser, gmailPage);
+    }));
+
+    ava.default('mail.google.com[global:compatibility] - secure reply btn accepts reply prompt', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/WhctKJTrdTXcmgcCRgXDpVnfjJNnjjLzSvcMDczxWPMsBTTfPxRDMrKCJClzDHtbXlhnwtV'); // encrypted convo
+      await Util.sleep(5);
+      await pageHasReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
+      await gmailPage.waitAndClick('@secure-reply-button');
+      await Util.sleep(5);
+      await pageHasReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
     }));
 
     ava.default('mail.google.com[global:compatibility] - pubkey file gets rendered', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/WhctKJTrSJzzjsZVrGcLhhcDLKCJKVrrHNMDLqTMbSjRZZftfDQWbjDWWDsmrpJVHWDblwg');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
       expect(urls.length).to.equal(1);
-      await pageHasReplyContainer(gmailPage);
+      await pageHasReplyContainer(t, browser, gmailPage);
     }));
 
     ava.default('mail.google.com[global:compatibility] - pubkey gets rendered when using quoted-printable mime', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/WhctKJVRFztXGwvSbwcrbDshGTnLWMFvhwJmhqllRWwvpKnlpblQMXVZLTsKfWdPWKhPFBV');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
       expect(urls.length).to.equal(1);
-      await pageHasReplyContainer(gmailPage);
+      await pageHasReplyContainer(t, browser, gmailPage);
       const pubkeyPage = await browser.newPage(t, urls[0]);
       const content = await pubkeyPage.read('body');
       expect(content).to.contain('STONE NEED REMAIN SLIDE DEPOSIT BRICK');
@@ -112,5 +133,4 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
     // log('gmail:tests:secure compose button (inbox.google.com)');
 
   }
-
 };

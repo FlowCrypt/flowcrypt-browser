@@ -1666,6 +1666,8 @@ table#compose td.bottom div.sending-container div.sending-options-container {
   box-sizing: border-box;
   z-index: 1;
   box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.2);
+  min-width: 256px;
+  bottom: 34px;
 }
 
 table#compose td.bottom div.sending-container.popover-opened div.sending-options-container {
@@ -1691,6 +1693,10 @@ table#compose td.bottom div.sending-container div.sending-options-container .sen
 
 table#compose td.bottom div.sending-container div.sending-options-container .sending-option img.icon-tick {
   height: 0.8em;
+  margin-left: 12px;
+}
+
+table#compose td.bottom div.sending-container div.sending-options-container .sending-option img.icon-cross {
   margin-left: 12px;
 }
 

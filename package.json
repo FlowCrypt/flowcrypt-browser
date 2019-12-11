@@ -1,6 +1,6 @@
 {
   "name": "flowcrypt-browser",
-  "version": "7.0.8",
+  "version": "7.3.8",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "resolutions": {
     "graceful-fs": "4.1.13"
@@ -14,9 +14,13 @@
     "@types/puppeteer": "1.11.1",
     "@types/request": "2.47.1",
     "@types/speakeasy": "2.0.5",
+    "@typescript-eslint/eslint-plugin": "^2.10.0",
+    "@typescript-eslint/parser": "^2.10.0",
     "ava": "1.4.1",
     "chai": "4.1.2",
     "del": "3.0.0",
+    "eslint": "^6.7.2",
+    "eslint-plugin-no-only-tests": "^2.4.0",
     "fc-node-requests": "git+https://git@github.com/FlowCrypt/node-requests.git",
     "json-stable-stringify": "1.0.1",
     "mailparser": "2.7.1",
@@ -27,8 +31,8 @@
     "stylelint-config-standard": "^19.0.0",
     "sweetalert2": "8.18.3",
     "tslint": "5.11.0",
-    "typescript": "3.6.2",
-    "web-ext": "3.2.0"
+    "typescript": "3.7.3",
+    "web-ext": "3.2.1"
   },
   "scripts": {
     "build": "./build.sh",
@@ -38,21 +42,22 @@
     "test_local_chrome_consumer_mock": "npm run-script pretest && npm run-script test_ci_chrome_consumer -- -- --pool-size=1",
     "test_local_chrome_enterprise_mock": "npm run-script pretest && npm run-script test_ci_chrome_enterprise -- -- --pool-size=1",
     "test_local_chrome_consumer_live_gmail": "npm run-script pretest && npm run-script test_ci_chrome_consumer_live_gmail -- -- --pool-size=1",
+    "test_local_chrome_consumer_mock_flaky": "npm run-script pretest && npm run-script test_ci_chrome_consumer_flaky -- -- --pool-size=1",
     "test_local_chrome_consumer_mock_headless": "xvfb-run npm run-script test_local_chrome_consumer_mock",
     "test_tslint": "npx tslint --project ./tsconfig.json --config ./conf/tslint.yaml && npx tslint --project ./conf/tsconfig.content_scripts.json --config ./conf/tslint.yaml",
-    "test_stylelint": "stylelint extension/css/cryptup.css extension/css/settings.css extension/css/webmail.css",
+    "test_stylelint": "stylelint extension/css/cryptup.css extension/css/settings.css extension/css/webmail.css extension/**/*.htm",
+    "test_eslint": "eslint --ext ts extension test tooling",
     "test_patterns": "node build/test/test/source/patterns.js",
     "test_async_stack": "node build/test/test/source/async-stack.js",
     "test_buf": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/buf.js",
     "test_ci_initialize": "node build/test/test/source/ci-initialize.js",
-    "test_ci_chrome_consumer_live_gmail": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js -- CONSUMER-LIVE-GMAIL",
-    "test_ci_chrome_consumer": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js -- CONSUMER-MOCK",
-    "test_ci_chrome_enterprise": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js -- ENTERPRISE-MOCK",
+    "test_ci_chrome_consumer_live_gmail": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js -- CONSUMER-LIVE-GMAIL STANDARD-GROUP",
+    "test_ci_chrome_consumer": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js -- CONSUMER-MOCK STANDARD-GROUP",
+    "test_ci_chrome_enterprise": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js -- ENTERPRISE-MOCK STANDARD-GROUP",
+    "test_ci_chrome_consumer_flaky": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js -- CONSUMER-MOCK FLAKY-GROUP",
     "dev_start_gmail_mock_api": "./build.sh && cd ./conf && node ../build/tooling/tsc-compiler --project tsconfig.test.json && cd .. && node ./build/test/test/source/mock.js",
     "run_firefox": "npm run-script build && npx web-ext run --source-dir ./build/firefox-consumer/ --firefox-profile ~/.mozilla/firefox/flowcrypt-dev --keep-profile-changes",
     "run_firefox_windows": "npm run-script build && npx web-ext run --source-dir ./build/firefox-consumer/ --firefox-profile %userprofile%/AppData/Local/Mozilla/Firefox/Profiles/flowcrypt-dev --keep-profile-changes",
-    "test_chrome_consumer": "echo 'deprecated, call test_ci_chrome_consumer instead' && sleep 10 && npm run-script test_ci_chrome_consumer",
-    "test_chrome_enterprise": "echo 'deprecated, call test_ci_chrome_enterprise instead' && sleep 10 && npm run-script test_ci_chrome_enterprise",
     "release": "npm run-script build && node ./tooling/release.js"
   },
   "repository": {

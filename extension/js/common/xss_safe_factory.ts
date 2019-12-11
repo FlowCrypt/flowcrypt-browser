@@ -5,13 +5,15 @@
 'use strict';
 
 import { Catch } from './platform/catch.js';
-import { Str, Dict } from './core/common.js';
+import { Str, Dict, UrlParams, Url } from './core/common.js';
 import { Pgp } from './core/pgp.js';
 import { Att } from './core/att.js';
 import { MsgBlock } from './core/mime.js';
-import { Browser, UrlParams, Env, Ui, WebMailName } from './browser.js';
+import { Browser } from './browser/browser.js';
 import { Xss } from './platform/xss.js';
 import { SendAsAlias } from './platform/store.js';
+import { Ui } from './browser/ui.js';
+import { WebMailName } from './browser/env.js';
 
 type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
@@ -54,7 +56,7 @@ export class XssSafeFactory {
     for (const k of Object.keys(this.setParams)) {
       params[k] = this.setParams[k];
     }
-    return Env.urlCreate(path, params);
+    return Url.create(path, params);
   }
 
   srcComposeMsg = (draftId?: string) => {
@@ -67,10 +69,6 @@ export class XssSafeFactory {
 
   srcSubscribeDialog = (verificationEmailText?: string, placement?: Placement, isAuthErr?: boolean) => {
     return this.frameSrc(this.extUrl('chrome/elements/subscribe.htm'), { verificationEmailText, placement, isAuthErr });
-  }
-
-  srcVerificationDialog = (verificationEmailText: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/verification.htm'), { verificationEmailText });
   }
 
   srcAddPubkeyDialog = (emails: string[], placement: Placement) => {
@@ -144,10 +142,6 @@ export class XssSafeFactory {
     return this.iframe(this.srcSubscribeDialog(verifEmailText, 'embedded', isAuthErr), ['short', 'embedded'], { scrolling: 'no' });
   }
 
-  embeddedVerification = (verifEmailText: string) => {
-    return this.iframe(this.srcVerificationDialog(verifEmailText), ['short', 'embedded'], { scrolling: 'no' });
-  }
-
   embeddedAtta = (meta: Att, isEncrypted: boolean) => {
     return Ui.e('span', { class: 'pgp_attachment', html: this.iframe(this.srcPgpAttIframe(meta, isEncrypted)) });
   }
@@ -190,13 +184,15 @@ export class XssSafeFactory {
     }
   }
 
-  btnReply = () => {
-    return `<div class="${this.destroyableCls} reply_message_button"><img title="Secure Reply" src="${this.srcImg('svgs/reply-icon.svg')}" /></div>`;
+  btnSecureReply = () => {
+    return `<div class="${this.destroyableCls} reply_message_button" data-test="secure-reply-button" role="button" tabindex="0" data-tooltip="Secure Reply" aria-label="Secure Reply">
+      <img title="Secure Reply" src="${this.srcImg('svgs/reply-icon.svg')}" />
+    </div>`;
   }
 
   btnEndPPSession = (webmailName: string) => {
-    return `<div class="finish_session zo" ${webmailName === 'gmail' ? 'data-tooltip' : 'title'}="End Current Session" data-test="finish-session">
-                <a class="gb_xe gb_ve gb_pb t6" ${webmailName === 'gmail' ? 'style="text-align: center;"' : ''}>
+    return `<div class="action_finish_session zo" ${webmailName === 'gmail' ? 'data-tooltip' : 'title'}="End Pass Phrase Session" data-test="action-finish-session">
+                <a class="gb_se t6" ${webmailName === 'gmail' ? 'style="text-align: center; width: 18px;"' : ''}>
                   <img src="${this.srcImg('svgs/unlock.svg')}"  ${webmailName === 'gmail' ? 'style="width: 18px;"' : ''} />
                 </a>
               </div>`;
@@ -229,12 +225,16 @@ export class XssSafeFactory {
     }
   }
 
-  private extUrl = (s: string) => chrome.runtime.getURL(s);
+  private extUrl = (s: string) => {
+    return chrome.runtime.getURL(s);
+  }
 
-  private newId = () => `frame_${Str.sloppyRandom(10)}`;
+  private newId = () => {
+    return `frame_${Str.sloppyRandom(10)}`;
+  }
 
   private iframe = (src: string, classes: string[] = [], elAttributes: UrlParams = {}) => {
-    const id = String(Env.urlParams(['frameId'], src).frameId);
+    const id = String(Url.parse(['frameId'], src).frameId);
     const classAttribute = (classes || []).concat(this.reloadableCls).join(' ');
     const attrs: Dict<string> = { id, class: classAttribute, src };
     for (const name of Object.keys(elAttributes)) {
@@ -244,7 +244,7 @@ export class XssSafeFactory {
   }
 
   // tslint:disable-next-line:variable-name
-  private divDialog_DANGEROUS = (content_MUST_BE_XSS_SAFE: string, dataTest: string) => { // xss-dangerous-function
+  private divDialog_DANGEROUS(content_MUST_BE_XSS_SAFE: string, dataTest: string) { // xss-dangerous-function
     return Ui.e('div', { id: 'cryptup_dialog', html: content_MUST_BE_XSS_SAFE, 'data-test': dataTest });
   }
 
@@ -270,8 +270,6 @@ export class XssSafeFactory {
       return factory.embeddedBackup(Pgp.armor.normalize(block.content.toString(), 'privateKey'));
     } else if (block.type === 'encryptedMsgLink') {
       return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, undefined, block.content.toString()); // here block.content is message short id
-    } else if (block.type === 'cryptupVerification') {
-      return factory.embeddedVerification(block.content.toString());
     } else if (block.type === 'encryptedAtt') {
       return block.attMeta ? factory.embeddedAtta(new Att(block.attMeta), true) : '[missing encrypted attachment details]';
     } else if (block.type === 'signedHtml') {

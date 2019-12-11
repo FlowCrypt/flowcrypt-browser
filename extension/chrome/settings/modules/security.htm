@@ -8,6 +8,7 @@
 
   <title>FlowCrypt</title>
   <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/sweetalert2.css" />
   <link rel="stylesheet" href="/css/open-sans.css" />
   <link rel="stylesheet" href="/css/animate.css" />
   <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
@@ -15,7 +16,7 @@
 </head>
 
 <body id="settings">
-  <div id="content" style="margin: 0px; text-align: left;">
+  <div id="content" style="margin: 0; text-align: left;">
     <div class="line title_container">
       <h1>Security</h1>
     </div>
@@ -57,7 +58,7 @@
         Password encrypted messages expire in
         <span class="expiration_container">
           <span class="select_loader_container"></span>
-          <select class="default_message_expire" style="display: none" , disabled="disabled">
+          <select class="default_message_expire" style="display: none;" , disabled="disabled">
             <option value="1">1</option>
             <option value="3">3</option>
             <option value="7">7</option>
@@ -91,6 +92,7 @@
 
   <script src="/lib/purify.min.js"></script>
   <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/sweetalert2.js"></script>
   <script src="/lib/openpgp.js"></script>
   <script src="security.js" type="module"></script>
 </body>

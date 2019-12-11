@@ -4,107 +4,118 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store, StorageType } from '../../js/common/platform/store.js';
-import { Ui, Env } from '../../js/common/browser.js';
+import { Ui } from '../../js/common/browser/ui.js';
 import { mnemonic } from '../../js/common/core/mnemonic.js';
-import { Pgp } from '../../js/common/core/pgp.js';
-import { BrowserMsg } from '../../js/common/extension.js';
+import { Pgp, KeyInfo } from '../../js/common/core/pgp.js';
+import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Assert } from '../../js/common/assert.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
 import { Xss } from '../../js/common/platform/xss.js';
+import { Url } from '../../js/common/core/common.js';
+import { View } from '../../js/common/view.js';
 
 declare const openpgp: typeof OpenPGP;
 
-Catch.try(async () => {
+View.run(class PassphraseView extends View {
+  private readonly acctEmail: string;
+  private readonly parentTabId: string;
+  private readonly longids: string[];
+  private readonly type: string;
+  private myPrivateKeys: KeyInfo[] | undefined;
 
-  Ui.event.protect();
+  constructor() {
+    super();
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'longids', 'type']);
+    this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+    this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+    this.longids = Assert.urlParamRequire.string(uncheckedUrlParams, 'longids').split(',');
+    this.type = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'type', ['embedded', 'sign', 'message', 'draft', 'attachment', 'quote', 'backup']);
+  }
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'longids', 'type']);
-  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const longids = Assert.urlParamRequire.string(uncheckedUrlParams, 'longids').split(',');
-  const type = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'type', ['embedded', 'sign', 'message', 'draft', 'attachment', 'quote', 'backup']);
-
-  const allPrivateKeys = await Store.keysGet(acctEmail);
-  const selectedPrivateKeys = allPrivateKeys.filter(ki => longids.includes(ki.longid) || (ki.primary && longids.includes('primary')));
-
-  await initPassphraseToggle(['passphrase']);
-
-  const renderInitial = () => {
-    $('#passphrase').keyup(renderNormalPpPrompt);
-    if (type === 'embedded') {
+  render = async () => {
+    Ui.event.protect();
+    await initPassphraseToggle(['passphrase']);
+    const allPrivateKeys = await Store.keysGet(this.acctEmail);
+    this.myPrivateKeys = allPrivateKeys.filter(ki => this.longids.includes(ki.longid) || (ki.primary && this.longids.includes('primary')));
+    if (this.type === 'embedded') {
       $('h1').parent().css('display', 'none');
       $('div.separator').css('display', 'none');
       $('body#settings > div#content.dialog').css({ width: 'inherit', background: '#fafafa', });
       $('.line.which_key').css({ display: 'none', position: 'absolute', visibility: 'hidden', left: '5000px', });
-    } else if (type === 'sign') {
+    } else if (this.type === 'sign') {
       $('h1').text('Enter your pass phrase to sign email');
-    } else if (type === 'draft') {
+    } else if (this.type === 'draft') {
       $('h1').text('Enter your pass phrase to load a draft');
-    } else if (type === 'attachment') {
+    } else if (this.type === 'attachment') {
       $('h1').text('Enter your pass phrase to decrypt a file');
-    } else if (type === 'quote') {
+    } else if (this.type === 'quote') {
       $('h1').text('Enter your pass phrase to load quoted content');
-    } else if (type === 'backup') {
+    } else if (this.type === 'backup') {
       $('h1').text('Enter your pass phrase to back up');
     }
     $('#passphrase').focus();
-    $('#passphrase').keydown(event => {
-      if (event.which === 13) {
-        $('.action_ok').click();
-      }
-    });
     if (allPrivateKeys.length > 1) {
       let html: string;
-      if (selectedPrivateKeys.length === 1) {
-        html = `For key: <span class="good">${Xss.escape(mnemonic(selectedPrivateKeys[0].longid) || '')}</span> (KeyWords)`;
+      if (this.myPrivateKeys.length === 1) {
+        html = `For key: <span class="good">${Xss.escape(mnemonic(this.myPrivateKeys[0].longid) || '')}</span> (KeyWords)`;
       } else {
         html = 'Pass phrase needed for any of the following keys:';
-        for (const i of selectedPrivateKeys.keys()) {
-          html += `KeyWords ${String(i + 1)}: <div class="good">${Xss.escape(mnemonic(selectedPrivateKeys[i].longid) || '')}</div>`;
+        for (const i of this.myPrivateKeys.keys()) {
+          html += `<div>KeyWords ${String(i + 1)}: <span class="good">${Xss.escape(mnemonic(this.myPrivateKeys[i].longid) || '')}</span></div>`;
         }
       }
       Xss.sanitizeRender('.which_key', html);
       $('.which_key').css('display', 'block');
     }
-  };
+  }
 
-  const renderFailedEntryPpPrompt = () => {
+  setHandlers = () => {
+    $('#passphrase').keyup(this.setHandler(() => this.renderNormalPpPrompt()));
+    $('.action_close').click(this.setHandler(() => this.closeDialog()));
+    $('.action_ok').click(this.setHandler(() => this.submitHandler()));
+    $('#passphrase').keydown(this.setHandler((el, ev) => {
+      if (ev.which === 13) {
+        $('.action_ok').click();
+      }
+    }));
+    $('body').on('keydown', this.setHandler((el, ev) => {
+      if (ev.which === 27) { // If 'ESC' key
+        this.closeDialog();
+      }
+    }));
+  }
+
+  private renderNormalPpPrompt = () => {
+    $('#passphrase').css('border-color', '');
+    $('#passphrase').css('color', 'black');
+    $('#passphrase').focus();
+  }
+
+  private renderFailedEntryPpPrompt = () => {
     $('#passphrase').val('');
     $('#passphrase').css('border-color', 'red');
     $('#passphrase').css('color', 'red');
     $('#passphrase').attr('placeholder', 'Please try again');
-  };
+  }
 
-  const renderNormalPpPrompt = () => {
-    $('#passphrase').css('border-color', '');
-    $('#passphrase').css('color', 'black');
-    $('#passphrase').focus();
-  };
-
-  const closeDialog = (entered: boolean = false) => {
+  private closeDialog = (entered: boolean = false) => {
     BrowserMsg.send.passphraseEntry('broadcast', { entered });
-    BrowserMsg.send.closeDialog(parentTabId);
-  };
-  $('.action_close').click(() => closeDialog());
-  $('body').on('keydown', ev => {
-    if (ev.which === 27) {
-      closeDialog();
-    }
-  });
+    BrowserMsg.send.closeDialog(this.parentTabId);
+  }
 
-  $('.action_ok').click(Ui.event.handle(async () => {
+  private submitHandler = async () => {
     const pass = String($('#passphrase').val());
     const storageType: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
     let atLeastOneMatched = false;
-    for (const keyinfo of selectedPrivateKeys) { // if passphrase matches more keys, it will save the pass phrase for all keys
+    for (const keyinfo of this.myPrivateKeys!) { // if passphrase matches more keys, it will save the pass phrase for all keys
       const { keys: [prv] } = await openpgp.key.readArmored(keyinfo.private);
       try {
         if (await Pgp.key.decrypt(prv, pass) === true) {
-          await Store.passphraseSave(storageType, acctEmail, keyinfo.longid, pass);
+          await Store.passphraseSave(storageType, this.acctEmail, keyinfo.longid, pass);
           atLeastOneMatched = true;
           if (storageType === 'session') {
             // TODO: change to 'broadcast' when issue with 'broadcast' is fixed
-            BrowserMsg.send.addEndSessionBtn(parentTabId);
+            BrowserMsg.send.addEndSessionBtn(this.parentTabId);
           }
         }
       } catch (e) {
@@ -116,13 +127,10 @@ Catch.try(async () => {
       }
     }
     if (atLeastOneMatched) {
-      closeDialog(true);
+      this.closeDialog(true);
     } else {
-      renderFailedEntryPpPrompt();
-      Catch.setHandledTimeout(renderNormalPpPrompt, 1500);
+      this.renderFailedEntryPpPrompt();
+      Catch.setHandledTimeout(() => this.renderNormalPpPrompt(), 1500);
     }
-  }));
-
-  renderInitial();
-
-})();
+  }
+});

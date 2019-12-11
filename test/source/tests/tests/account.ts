@@ -1,12 +1,15 @@
 
 import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
-import { ComposePageRecipe, SetupPageRecipe, GmailPageRecipe, InboxPageRecipe } from '../page_recipe';
 import { BrowserRecipe } from '../browser_recipe';
 import * as ava from 'ava';
-import { Config, Util } from '../../util';
-import { expect } from 'chai';
+import { Util } from '../../util';
 import { FlowCryptApi } from '../api';
 import { TestVariant } from '../../util';
+import { OauthPageRecipe } from '../page_recipe/oauth-page-recipe';
+import { SetupPageRecipe } from '../page_recipe/setup-page-recipe';
+import { GmailPageRecipe } from '../page_recipe/gmail-page-recipe';
+import { ComposePageRecipe } from '../page_recipe/compose-page-recipe';
+import { PageRecipe } from '../page_recipe/abstract-page-recipe';
 
 // tslint:disable:no-blank-lines-func
 
@@ -17,9 +20,10 @@ export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBro
     // todo - make a helper method that forces account tests to run in sequence with Semaphore
     ava.default('[standalone] compose > large file > subscribe > trial > attach again', testWithNewBrowser(async (t, browser) => {
       // delete account
-      await FlowCryptApi.hookCiAcctDelete('test.ci.trial@org.flowcrypt.com');
+      const acct = "test.ci.trial@org.flowcrypt.com";
+      await FlowCryptApi.hookCiAcctDelete(acct);
       // set up acct and open compose page
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, "test.ci.trial@org.flowcrypt.com");
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.recover(settingsPage, 'test.ci.trial', { hasRecoverMore: false });
       await browser.closeAllPages();
       const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
@@ -30,12 +34,11 @@ export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBro
       let fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/large.jpg');
       await composePage.waitAndRespondToModal('confirm', 'confirm', 'The files are over 5 MB');
-      // get a trial
+      // get a trial - already logged in
       const subscribePage = await GmailPageRecipe.getSubscribeDialog(t, gmailPage, browser);
       await subscribePage.waitAndClick('@action-get-trial', { delay: 1 });
+      await PageRecipe.waitForModalAndRespond(subscribePage, 'info', { contentToCheck: 'Successfully upgraded to FlowCrypt Advanced', clickOn: 'confirm' });
       await gmailPage.waitTillGone('@dialog-subscribe', { timeout: 60 });
-      await gmailPage.waitAll('@webmail-notification');
-      expect(await gmailPage.read('@webmail-notification')).contains('Successfully upgraded to FlowCrypt Advanced');
       await subscribePage.waitForSelTestState('closed');
       await subscribePage.close();
       // verify can add large file now

@@ -24,7 +24,7 @@ export class BrowserPool {
     this.semaphore = new Semaphore(poolSize, name);
   }
 
-  public newBrowserHandle = async (t: AvaContext, closeInitialPage = true) => {
+  public newBrowserHandle = async (t: AvaContext, closeInitialPage = true, isMock = false) => {
     await this.semaphore.acquire();
     // ext frames in gmail: https://github.com/GoogleChrome/puppeteer/issues/2506 https://github.com/GoogleChrome/puppeteer/issues/2548
     const args = [
@@ -38,10 +38,25 @@ export class BrowserPool {
     if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
       args.push(`--proxy-server=${Config.secrets.proxy.server}`);
     }
-    const browser = await launch({ args, headless: false, slowMo: 60, devtools: false });
+    const browser = await launch({ args, headless: false, slowMo: isMock ? undefined : 60, devtools: false });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {
-      await this.closeInitialExtensionPage(t, handle);
+      try {
+        const initialPage = await handle.newPageTriggeredBy(t, () => Promise.resolve()); // the page triggered on its own
+        await initialPage.waitAll('@initial-page'); // first page opened by flowcrypt
+        await initialPage.close();
+      } catch (e) {
+        if (String(e).includes('Action did not trigger a new page within timeout period')) { // could have opened before we had a chance to add a handler above
+          const pages = await handle.browser.pages();
+          const initialPage = pages.find(p => p.url().includes('chrome/settings/initial.htm'));
+          if (!initialPage) {
+            throw e;
+          }
+          await initialPage.close();
+        } else {
+          throw e;
+        }
+      }
     }
     return handle;
   }
@@ -103,10 +118,12 @@ export class BrowserPool {
     }
   }
 
-  public cbWithTimeout = (cb: () => Promise<void>, timeout: number): Promise<void> => new Promise((resolve, reject) => {
-    setTimeout(() => reject(new TimeoutError(`Test timed out after ${timeout}ms`)), timeout); // reject in
-    cb().then(resolve, reject);
-  })
+  public cbWithTimeout = (cb: () => Promise<void>, timeout: number): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => reject(new TimeoutError(`Test timed out after ${timeout}ms`)), timeout); // reject in
+      cb().then(resolve, reject);
+    });
+  }
 
   private processTestError = (err: any, t: AvaContext, attemptHtmls: string[]) => {
     t.retry = undefined;
@@ -119,7 +136,8 @@ export class BrowserPool {
     }
   }
 
-  private testFailSingleAttemptDebugHtml = async (t: AvaContext, browser: BrowserHandle, err: any): Promise<string> => `
+  private testFailSingleAttemptDebugHtml = async (t: AvaContext, browser: BrowserHandle, err: any): Promise<string> => {
+    return `
     <div class="attempt">
       <div style="display:none;">
         <pre title="err.stack">${Util.htmlEscape((err instanceof Error ? err.stack : String(err)) || String(err))}</pre>
@@ -127,7 +145,8 @@ export class BrowserPool {
       </div>
       <a href="#" onclick="this.style.display='none';this.parentNode.firstElementChild.style = '';">${String(err)}</a>
     </div>
-    `
+    `;
+  }
 
   private throwOnRetryFlagAndReset = async (t: AvaContext) => {
     await Util.sleep(TIMEOUT_DESTROY_UNEXPECTED_ALERT + 1); // in case there was an unexpected alert, don't let that affect next round
@@ -197,11 +216,6 @@ export class BrowserPool {
     }
   }
 
-  private closeInitialExtensionPage = async (t: AvaContext, browser: BrowserHandle) => {
-    const initialPage = await browser.newPageTriggeredBy(t, () => Promise.resolve()); // the page triggered on its own
-    await initialPage.waitAll('@initial-page'); // first page opened by flowcrypt
-    await initialPage.close();
-  }
 }
 
 export class Semaphore {
@@ -215,7 +229,9 @@ export class Semaphore {
     this.name = name;
   }
 
-  private wait = () => new Promise(resolve => setTimeout(resolve, 1000 + Math.round(Math.random() * 2000))); // wait 1-3s
+  private wait = () => {
+    return new Promise(resolve => setTimeout(resolve, 1000 + Math.round(Math.random() * 2000))); // wait 1-3s
+  }
 
   acquire = async () => {
     let i = 0;

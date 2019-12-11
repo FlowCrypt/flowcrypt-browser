@@ -6,11 +6,15 @@ import { PgpMsg, Pwd } from '../core/pgp.js';
 import { Dict } from '../core/common.js';
 import { Att } from '../core/att.js';
 import { Catch } from '../platform/catch.js';
-import { Ui } from '../browser.js';
+import { Ui } from '../browser/ui.js';
 
 declare const qq: any;
 
 export type AttLimits = { count?: number, size?: number, sizeMb?: number, oversize?: (newFileSize: number) => Promise<void> };
+type AttUICallbacks = {
+  attAdded?: (r: Att) => Promise<void>,
+  uiChanged?: () => void,
+};
 
 export class AttUI {
 
@@ -18,14 +22,14 @@ export class AttUI {
   private getLimits: () => Promise<AttLimits>;
   private attachedFiles: Dict<File> = {};
   private uploader: any = undefined;
-  private attAddedCb?: (r: Att) => Promise<void>;
-  private attRemovedCb?: () => void;
+  private callbacks: AttUICallbacks = {};
 
   constructor(getLimits: () => Promise<AttLimits>) {
     this.getLimits = getLimits;
   }
 
-  initAttDialog = (elId: string, btnId: string) => {
+  initAttDialog = (elId: string, btnId: string, callbacks: AttUICallbacks = {}) => {
+    this.callbacks = callbacks;
     $('#qq-template').load(this.templatePath, () => {
       const config = {
         autoUpload: false,
@@ -36,8 +40,8 @@ export class AttUI {
           extraDropzones: $('#input_text'),
         },
         callbacks: {
-          onSubmit: this.processNewAtt,
-          onCancel: (uploadFileId: string) => Catch.try(() => this.cancelAtt(uploadFileId))(),
+          onSubmit: (uploadFileId: string) => this.processNewAtt(uploadFileId).catch(Catch.reportErr),
+          onCancel: (uploadFileId: string) => this.cancelAtt(uploadFileId),
         },
       };
       this.uploader = new qq.FineUploader(config); // tslint:disable-line:no-unsafe-any
@@ -50,14 +54,6 @@ export class AttUI {
     input.setAttribute('title', 'Attach a file');
     input.setAttribute('tabindex', '8');
     return input;
-  }
-
-  setAttAddedCb = (cb: (r: Att) => Promise<void>) => {
-    this.attAddedCb = cb;
-  }
-
-  setAttRemovedCb = (cb: () => void) => {
-    this.attRemovedCb = cb;
   }
 
   hasAtt = () => {
@@ -98,14 +94,14 @@ export class AttUI {
 
   private cancelAtt = (uploadFileId: string) => {
     delete this.attachedFiles[uploadFileId];
-    if (this.attRemovedCb) {
+    if (this.callbacks.uiChanged) {
       // run at next event loop cycle - let DOM changes render first
       // this allows code that relies on this to evaluate the DOM after the file has been removed from it
-      Catch.setHandledTimeout(this.attRemovedCb, 0);
+      Catch.setHandledTimeout(this.callbacks.uiChanged, 0);
     }
   }
 
-  private processNewAtt = async (uploadFileId: string, name: string) => {
+  private processNewAtt = async (uploadFileId: string) => {
     const limits = await this.getLimits();
     if (limits.count && Object.keys(this.attachedFiles).length >= limits.count) {
       await Ui.modal.warning('Amount of attached files is limited to ' + limits.count);
@@ -121,17 +117,23 @@ export class AttUI {
         throw new Error(`Error: Combined file size is more than maximum.`);
       }
       this.attachedFiles[uploadFileId] = newFile;
-      if (typeof this.attAddedCb === 'function') {
+      if (typeof this.callbacks.attAdded === 'function') {
         const a = await this.collectAtt(uploadFileId);
-        await this.attAddedCb(a);
+        await this.callbacks.attAdded(a);
         const input = this.setInputAttributes();
         input.focus();
+      }
+      if (this.callbacks.uiChanged) {
+        // run at next event loop cycle - let DOM changes render first
+        // this allows code that relies on this to evaluate the DOM after the file has been removed from it
+        Catch.setHandledTimeout(this.callbacks.uiChanged, 0);
       }
       return true;
     }
   }
 
-  public addFile = async (file: File) => {
+  public addFile = (file: File) => {
+    console.log('addFile uploading file:', file);
     this.uploader.addFiles([file]); // tslint:disable-line: no-unsafe-any
   }
 

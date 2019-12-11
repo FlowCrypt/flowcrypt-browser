@@ -4,8 +4,8 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store, Storable, AccountStore, GlobalStore, GlobalIndex, AccountIndex, RawStore } from '../../js/common/platform/store.js';
-import { Str, Dict } from '../../js/common/core/common.js';
-import { Ui, Env } from '../../js/common/browser.js';
+import { Str, Dict, Url } from '../../js/common/core/common.js';
+import { Ui } from '../../js/common/browser/ui.js';
 import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';
 
@@ -15,7 +15,7 @@ Catch.try(async () => {
 
   const DEBUG_EMAILS = ['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com'];
 
-  const uncheckedUrlParams = Env.urlParams(['filter', 'keys', 'controls', 'title']);
+  const uncheckedUrlParams = Url.parse(['filter', 'keys', 'controls', 'title']);
   const filter = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'filter');
   const keys = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'keys');
   const title = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'title');
@@ -28,11 +28,11 @@ Catch.try(async () => {
   if (controls) {
     const acctEmails = await Store.acctEmailsGet();
     const emailsSel = $('.emails');
-    Xss.sanitizeAppend(emailsSel, `<a href="${Xss.escape(Env.urlCreate('storage.htm', { controls }))}">all</a>`);
-    Xss.sanitizeAppend(emailsSel, `<a href="${Xss.escape(Env.urlCreate('storage.htm', { filter: 'global', controls }))}">global</a>`);
+    Xss.sanitizeAppend(emailsSel, `<a href="${Xss.escape(Url.create('storage.htm', { controls }))}">all</a>`);
+    Xss.sanitizeAppend(emailsSel, `<a href="${Xss.escape(Url.create('storage.htm', { filter: 'global', controls }))}">global</a>`);
     Xss.sanitizeAppend('.namespace', '<option value="global">global</option>');
     for (const acctEmail of acctEmails) {
-      Xss.sanitizeAppend('.emails', `<a href="${Xss.escape(Env.urlCreate('storage.htm', { filter: acctEmail, controls }))}">${Xss.escape(acctEmail)}</a>`);
+      Xss.sanitizeAppend('.emails', `<a href="${Xss.escape(Url.create('storage.htm', { filter: acctEmail, controls }))}">${Xss.escape(acctEmail)}</a>`);
       Xss.sanitizeAppend('.namespace', `<option value="${Xss.escape(acctEmail)}">${Xss.escape(acctEmail)}</option>`);
     }
   }

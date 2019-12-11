@@ -6,7 +6,9 @@ Get [FlowCrypt](https://flowcrypt.com/) browser extension at: https://flowcrypt.
 
 ## Developers
 
-[![Tests](https://semaphoreci.com/api/v1/flowcrypt/flowcrypt-browser/branches/master/badge.svg)](https://semaphoreci.com/flowcrypt/flowcrypt-browser)
+Mock tests: ![Mock tests](https://flowcrypt.semaphoreci.com/badges/flowcrypt-browser.svg?key=d575b4ff-e35d-4217-9152-27cea9e72c19)
+
+Live tests: [![Live Tests](https://semaphoreci.com/api/v1/flowcrypt/flowcrypt-browser/branches/master/badge.svg)](https://semaphoreci.com/flowcrypt/flowcrypt-browser)
 
 ```js
 let you = new TeamMember();

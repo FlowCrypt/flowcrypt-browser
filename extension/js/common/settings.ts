@@ -4,16 +4,22 @@
 
 import { Catch } from './platform/catch.js';
 import { Store, SendAsAlias } from './platform/store.js';
-import { Str, Dict } from './core/common.js';
-import { Ui, Env, UrlParams, JQS } from './browser.js';
-import { BrowserMsg } from './extension.js';
+import { Str, Dict, UrlParams, Url } from './core/common.js';
+import { BrowserMsg } from './browser/browser-msg.js';
 import { Lang } from './lang.js';
 import { Rules } from './rules.js';
 import { Api } from './api/api.js';
 import { Pgp } from './core/pgp.js';
-import { Google, GoogleAuth } from './api/google.js';
+import { GoogleAuth } from './api/google-auth.js';
 import { Attester } from './api/attester.js';
 import { Xss } from './platform/xss.js';
+import { Backend } from './api/backend.js';
+import { storageLocalGetAll } from './api/chrome.js';
+import { Gmail } from './api/email_provider/gmail/gmail.js';
+import { Ui, JQS } from './browser/ui.js';
+import { Env } from './browser/env.js';
+import { ApiErr } from './api/error/api-error.js';
+import { ApiErrResponse } from './api/error/api-error-types.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
@@ -21,7 +27,7 @@ declare const zxcvbn: Function; // tslint:disable-line:ban-types
 export class Settings {
 
   static fetchAcctAliasesFromGmail = async (acctEmail: string): Promise<Dict<SendAsAlias>> => {
-    const response = await Google.gmail.fetchAcctAliases(acctEmail);
+    const response = await new Gmail(acctEmail).fetchAcctAliases();
     const validAliases = response.sendAs.filter(alias => alias.isPrimary || alias.verificationStatus === 'accepted');
     const result: Dict<SendAsAlias> = {};
     for (const alias of validAliases) {
@@ -53,14 +59,14 @@ export class Settings {
       }
       addUrlTextOrParams = undefined;
     }
-    return Env.urlCreate(page, pageParams) + (addUrlTextOrParams || '');
+    return Url.create(page, pageParams) + (addUrlTextOrParams || '');
   }
 
   static renderSubPage = (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
     let newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams);
     let iframeWidth, iframeHeight, variant, closeOnClick;
     const beforeClose = () => {
-      const urlWithoutPageParam = Env.removeParamsFromUrl(window.location.href, ['page']);
+      const urlWithoutPageParam = Url.removeParamsFromUrl(window.location.href, ['page']);
       window.history.pushState('', '', urlWithoutPageParam);
     };
     if (page !== '/chrome/elements/compose.htm') {
@@ -82,7 +88,7 @@ export class Settings {
 
   static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
     const newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, parentTabId, page, addUrlTextOrParams);
-    if (Boolean(Env.urlParams(['embedded']).embedded)) { // embedded on the main page
+    if (Url.parse(['embedded']).embedded) { // embedded on the main page
       BrowserMsg.send.openPage(parentTabId, { page, addUrlText: addUrlTextOrParams });
     } else { // on a sub page/module page, inside a lightbox. Just change location.
       window.location.href = newLocation;
@@ -113,40 +119,43 @@ export class Settings {
     return result.isAliasesChanged || result.isDefaultEmailChanged || result.isFooterChanged ? { ...result } : undefined;
   }
 
-  static acctStorageReset = (acctEmail: string) => new Promise(async (resolve, reject) => {
-    if (!acctEmail) {
-      throw new Error('Missing account_email to reset');
-    }
-    const acctEmails = await Store.acctEmailsGet();
-    if (!acctEmails.includes(acctEmail)) {
-      throw new Error(`"${acctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
-    }
-    const storageIndexesToRemove: string[] = [];
-    const filter = Store.singleScopeRawIndex(acctEmail, '');
-    if (!filter) {
-      throw new Error('Filter is empty for account_email"' + acctEmail + '"');
-    }
-    chrome.storage.local.get(async storage => {
-      try {
-        for (const storageIndex of Object.keys(storage)) {
-          if (storageIndex.indexOf(filter) === 0) {
-            storageIndexesToRemove.push(storageIndex.replace(filter, ''));
-          }
-        }
-        await Store.remove(acctEmail, storageIndexesToRemove);
-        for (const sessionStorageIndex of Object.keys(sessionStorage)) {
-          if (sessionStorageIndex.indexOf(filter) === 0) {
-            sessionStorage.removeItem(sessionStorageIndex);
-          }
-        }
-        resolve();
-      } catch (e) {
-        reject(e);
+  static acctStorageReset = (acctEmail: string) => {
+    return new Promise((resolve, reject) => {
+      if (!acctEmail) {
+        throw new Error('Missing account_email to reset');
       }
+      Store.acctEmailsGet().then(acctEmails => {
+        if (!acctEmails.includes(acctEmail)) {
+          throw new Error(`"${acctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
+        }
+        const storageIndexesToRemove: string[] = [];
+        const filter = Store.singleScopeRawIndex(acctEmail, '');
+        if (!filter) {
+          throw new Error('Filter is empty for account_email"' + acctEmail + '"');
+        }
+        chrome.storage.local.get(async storage => {
+          try {
+            for (const storageIndex of Object.keys(storage)) {
+              if (storageIndex.indexOf(filter) === 0) {
+                storageIndexesToRemove.push(storageIndex.replace(filter, ''));
+              }
+            }
+            await Store.remove(acctEmail, storageIndexesToRemove);
+            for (const sessionStorageIndex of Object.keys(sessionStorage)) {
+              if (sessionStorageIndex.indexOf(filter) === 0) {
+                sessionStorage.removeItem(sessionStorageIndex);
+              }
+            }
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
+        });
+      }, reject);
     });
-  })
+  }
 
-  static acctStorageChangeEmail = (oldAcctEmail: string, newAcctEmail: string) => new Promise(async (resolve, reject) => {
+  static acctStorageChangeEmail = async (oldAcctEmail: string, newAcctEmail: string) => {
     if (!oldAcctEmail || !newAcctEmail || !Str.isEmailValid(newAcctEmail)) {
       throw new Error('Missing or wrong account_email to reset');
     }
@@ -170,36 +179,30 @@ export class Settings {
       throw new Error(`Filter is empty for account_email "${oldAcctEmail}"`);
     }
     await Store.acctEmailsAdd(newAcctEmail);
-    chrome.storage.local.get(async storage => {
-      try {
-        for (const key of Object.keys(storage)) {
-          if (key.indexOf(oldAcctEmailIndexPrefix) === 0) {
-            storageIndexesToChange.push(key.replace(oldAcctEmailIndexPrefix, ''));
-          }
-        }
-        const oldAcctStorage = await Store.getAcct(oldAcctEmail, storageIndexesToChange as any);
-        await Store.setAcct(newAcctEmail, oldAcctStorage);
-        for (const sessionStorageIndex of Object.keys(sessionStorage)) {
-          if (sessionStorageIndex.indexOf(oldAcctEmailIndexPrefix) === 0) {
-            const v = sessionStorage.getItem(sessionStorageIndex);
-            sessionStorage.setItem(sessionStorageIndex.replace(oldAcctEmailIndexPrefix, newAcctEmailIndexPrefix), v!);
-            sessionStorage.removeItem(sessionStorageIndex);
-          }
-        }
-        for (const ki of destAccountPrivateKeys) {
-          await Store.keysAdd(newAcctEmail, ki.private);
-        }
-        for (const longid of Object.keys(destAcctPassPhrases)) {
-          await Store.passphraseSave('local', newAcctEmail, longid, destAcctPassPhrases[longid]);
-        }
-        await Settings.acctStorageReset(oldAcctEmail);
-        await Store.acctEmailsRemove(oldAcctEmail);
-        resolve();
-      } catch (e) {
-        reject(e);
+    const storage = await storageLocalGetAll();
+    for (const key of Object.keys(storage)) {
+      if (key.indexOf(oldAcctEmailIndexPrefix) === 0) {
+        storageIndexesToChange.push(key.replace(oldAcctEmailIndexPrefix, ''));
       }
-    });
-  })
+    }
+    const oldAcctStorage = await Store.getAcct(oldAcctEmail, storageIndexesToChange as any);
+    await Store.setAcct(newAcctEmail, oldAcctStorage);
+    for (const sessionStorageIndex of Object.keys(sessionStorage)) {
+      if (sessionStorageIndex.indexOf(oldAcctEmailIndexPrefix) === 0) {
+        const v = sessionStorage.getItem(sessionStorageIndex);
+        sessionStorage.setItem(sessionStorageIndex.replace(oldAcctEmailIndexPrefix, newAcctEmailIndexPrefix), v!);
+        sessionStorage.removeItem(sessionStorageIndex);
+      }
+    }
+    for (const ki of destAccountPrivateKeys) {
+      await Store.keysAdd(newAcctEmail, ki.private);
+    }
+    for (const longid of Object.keys(destAcctPassPhrases)) {
+      await Store.passphraseSave('local', newAcctEmail, longid, destAcctPassPhrases[longid]);
+    }
+    await Settings.acctStorageReset(oldAcctEmail);
+    await Store.acctEmailsRemove(oldAcctEmail);
+  }
 
   static renderPrvCompatFixUiAndWaitTilSubmittedByUser = (
     acctEmail: string, container: string | JQuery<HTMLElement>, origPrv: OpenPGP.key.Key, passphrase: string, backUrl: string
@@ -271,12 +274,16 @@ export class Settings {
   }
 
   static promptToRetry = async (type: 'REQUIRED', lastErr: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
-    while (await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, `${userMsg} ${Api.err.eli5(lastErr)}`, Api.err.detailsAsHtmlWithNewlines(lastErr)) === 'retry') {
+    let userErrMsg = `${userMsg} ${ApiErr.eli5(lastErr)}`;
+    if (lastErr instanceof ApiErrResponse && lastErr.res.error.code === 400) {
+      userErrMsg = `${userMsg}, ${lastErr.res.error.message}`; // this will make reason for err 400 obvious to user, very important for our main customer
+    }
+    while (await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, userErrMsg, ApiErr.detailsAsHtmlWithNewlines(lastErr)) === 'retry') {
       try {
         return await retryCb();
       } catch (e2) {
         lastErr = e2;
-        if (Api.err.isSignificant(e2)) {
+        if (ApiErr.isSignificant(e2)) {
           Catch.reportErr(e2);
         }
       }
@@ -307,10 +314,10 @@ export class Settings {
         const storage = await Store.getAcct(response.acctEmail, ['setup_done']);
         if (storage.setup_done) { // this was just an additional permission
           await Ui.modal.info('You\'re all set.');
-          window.location.href = Env.urlCreate('/chrome/settings/index.htm', { acctEmail: response.acctEmail });
+          window.location.href = Url.create('/chrome/settings/index.htm', { acctEmail: response.acctEmail });
         } else {
           await Store.setAcct(response.acctEmail, { email_provider: 'gmail' });
-          window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: response.acctEmail });
+          window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: response.acctEmail });
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
         if (settingsTabId) {
@@ -323,9 +330,9 @@ export class Settings {
         window.location.reload();
       }
     } catch (e) {
-      if (Api.err.isNetErr(e)) {
+      if (ApiErr.isNetErr(e)) {
         await Ui.modal.error('Could not complete due to network error. Please try again.');
-      } else if (Api.err.isMailOrAcctDisabled(e)) {
+      } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         await Ui.modal.error('Your Google account or Gmail service is disabled. Please check your Google account settings.');
       } else {
         Catch.reportErr(e);
@@ -359,12 +366,31 @@ export class Settings {
       const acctEmail = $(target).find('.contains_email').text();
       const acctStorage = acctStorages[acctEmail];
       window.location.href = acctStorage.setup_done
-        ? Env.urlCreate(page, { acctEmail })
-        : Env.urlCreate(Env.getBaseUrl() + '/chrome/settings/index.htm', { acctEmail });
+        ? Url.create(page, { acctEmail })
+        : Url.create(Env.getBaseUrl() + '/chrome/settings/index.htm', { acctEmail });
     }));
   }
 
-  private static getDefaultEmailAlias(sendAs: Dict<SendAsAlias>) {
+  static offerToLoginWithPopupShowModalOnErr = (acctEmail: string, then: (() => void) = () => undefined, prepend = '') => {
+    (async () => {
+      if (await Ui.modal.confirm(`${prepend}Please log in with FlowCrypt to continue.`)) {
+        const authRes = await GoogleAuth.newOpenidAuthPopup({ acctEmail });
+        if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
+          const uuid = Api.randomFortyHexChars();
+          try {
+            await Backend.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
+            then();
+          } catch (e) {
+            await Ui.modal.error(`Could not log in with FlowCrypt:\n\n${ApiErr.eli5(e)}\n\n${String(e)}`);
+          }
+        } else {
+          await Ui.modal.warning(`Could not log in:\n\n${authRes.error || authRes.result}`);
+        }
+      }
+    })().catch(Catch.reportErr);
+  }
+
+  private static getDefaultEmailAlias = (sendAs: Dict<SendAsAlias>) => {
     for (const key of Object.keys(sendAs)) {
       if (sendAs[key] && sendAs[key].isDefault) {
         return key;

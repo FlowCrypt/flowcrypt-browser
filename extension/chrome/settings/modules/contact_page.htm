@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>FlowCrypt</title>
   <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/sweetalert2.css" />
   <link rel="stylesheet" href="/css/open-sans.css" />
   <link rel="stylesheet" href="/css/animate.css" />
   <link rel="stylesheet" href="/lib/featherlight/featherlight.css" />
@@ -28,7 +29,7 @@
       Feel free to send me a test message.</div>
     <div class="line status"></div>
     <div class="show_if_active" style="display: none;">
-      <div class="profile_photo" style="position: absolute;width: 100px; height: 150px;z-index: 10;">
+      <div class="profile_photo" style="position: absolute; width: 100px; height: 150px; z-index: 10;">
         <img src="https://flowcrypt.com/assets/imgs/svgs/vexels-silhouette.svg"
           style="max-width: 100px; max-height: 100px;" /><br />
         <a href="#" id="select_photo" style="z-index: 20;">change picture</a>
@@ -37,13 +38,13 @@
         <input class="input_email" type="text" disabled="disabled" style="position: relative; left: 65px;" />
       </div>
       <div class="line">
-        <span style="position: absolute;margin-top: 10px;margin-left: 69px;color: #888;z-index: 10;">Full
+        <span style="position: absolute; margin-top: 10px; margin-left: 69px; color: #888; z-index: 10;">Full
           Name:</span><input class="input_name" type="text" placeholder="Your name"
-          style="padding-left: 80px;position: relative; left: 65px;" />
+          style="padding-left: 80px; position: relative; left: 65px;" />
       </div>
       <div class="line">
         <textarea class="input_intro" placeholder="Contact page intro."
-          style="width: 490px;height: 90px;">Use this page to send me encrypted messages and files.</textarea>
+          style="width: 490px; height: 90px;">Use this page to send me encrypted messages and files.</textarea>
       </div>
       <!--<div class="line">-->
       <!--flowcrypt.com/me/&nbsp;<input class="input_alias" placeholder="lowercaseonly" style="border: none; border-bottom: 1px solid #aaa;" />-->
@@ -57,13 +58,14 @@
 
   </div>
 
-  <div style="display: none">
+  <div style="display: none;">
     <div id="fineuploader"></div>
   </div>
 
   <script src="/lib/purify.min.js"></script>
   <script src="/lib/fine-uploader.js"></script>
   <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/sweetalert2.js"></script>
   <script src="contact_page.js" type="module"></script>
 
 </body>

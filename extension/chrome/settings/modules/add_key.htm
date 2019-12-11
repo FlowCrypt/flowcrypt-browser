@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>FlowCrypt</title>
   <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/sweetalert2.css" />
   <link rel="stylesheet" href="/css/open-sans.css" />
   <link rel="stylesheet" href="/css/animate.css" />
   <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
@@ -17,12 +18,12 @@
 
 <body id="settings">
   <div id="content" class="setup page">
-    <div id="step_2b_manual_enter" class="manual" style="display: block;text-align: left;">
+    <div id="step_2b_manual_enter" class="manual" style="display: block; text-align: left;">
       <div class="line">
         <h1>Add Private Key <span id="spinner_container"></span></h1>
       </div>
       <div class="line">
-        <ul style="list-style: none;margin-left: 0;padding-left: 0;" class="source_selector display_none">
+        <ul style="list-style: none; margin-left: 0; padding-left: 0;" class="source_selector display_none">
           <li><input type="radio" name="source" id="source_backup" value="backup"> <label for="source_backup">Load from
               backup</label></li>
           <li><input type="radio" name="source" id="source_file" value="file"> <label for="source_file">Load from a
@@ -65,6 +66,7 @@
     <script src="/lib/purify.min.js"></script>
     <script src="/lib/fine-uploader.js"></script>
     <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/sweetalert2.js"></script>
     <script src="/lib/openpgp.js"></script>
     <script src="/lib/zxcvbn.js"></script>
     <script src="add_key.js" type="module"></script>

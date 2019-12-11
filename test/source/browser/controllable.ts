@@ -1,7 +1,7 @@
 
 import { Page, ElementHandle, Frame, Dialog, ConsoleMessage } from 'puppeteer';
 import { Util } from '../util';
-import { Url } from './url';
+import { TestUrls } from './test_urls';
 import { TIMEOUT_TEST_STATE_SATISFY, TIMEOUT_ELEMENT_APPEAR, TIMEOUT_ELEMENT_GONE, TIMEOUT_PAGE_LOAD, TIMEOUT_DESTROY_UNEXPECTED_ALERT } from '.';
 import { newTimeoutPromise, AvaContext } from '../tests';
 import { expect } from 'chai';
@@ -27,18 +27,24 @@ abstract class ControllableBase {
     }
   }
 
-  protected isXpath = (selector: string): boolean => selector.match(/^\/\//) !== null;
+  protected isXpath = (selector: string): boolean => {
+    return selector.match(/^\/\//) !== null;
+  }
 
   protected selector = (customSelLanguageQuery: string): string => { // supply browser selector, xpath, @test-id or @test-id(contains this text)
-    let m;
+    let m: RegExpMatchArray | null;
     if (this.isXpath(customSelLanguageQuery)) {
       return customSelLanguageQuery;
+      // eslint-disable-next-line no-cond-assign
     } else if (m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)\:message/)) { // tslint:disable-line:no-conditional-assignment
       return `.${m[1]} #swal2-content`; // message inside the modal
+      // eslint-disable-next-line no-cond-assign
     } else if (m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)/)) { // tslint:disable-line:no-conditional-assignment
       return `.${m[1]}`; // represented as a class
+      // eslint-disable-next-line no-cond-assign
     } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-]+)$/)) { // tslint:disable-line:no-conditional-assignment
       return `[data-test="${m[1]}"]`;
+      // eslint-disable-next-line no-cond-assign
     } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-]+)\(([^()]*)\)$/)) { // tslint:disable-line:no-conditional-assignment
       return `//*[@data-test='${m[1]}' and contains(text(),'${m[2]}')]`;
     } else {
@@ -55,15 +61,21 @@ abstract class ControllableBase {
     }
   }
 
-  public isElementPresent = async (selector: string) => Boolean(await this.element(selector));
+  public isElementPresent = async (selector: string) => {
+    return Boolean(await this.element(selector));
+  }
 
-  protected selsAsProcessedArr = (selector: string | string[]): string[] => (Array.isArray(selector) ? selector : [selector]).map(this.selector);
+  protected selsAsProcessedArr = (selector: string | string[]): string[] => {
+    return (Array.isArray(selector) ? selector : [selector]).map(this.selector);
+  }
 
   public waitForSelTestState = async (state: 'ready' | 'working' | 'waiting' | 'closed', timeout = TIMEOUT_TEST_STATE_SATISFY) => {
     await this.waitAll(`[data-test-state="${state}"]`, { timeout, visible: false });
   }
 
-  public attr = async (elHandle: ElementHandle, name: string): Promise<string> => await (await elHandle.getProperty(name)).jsonValue();
+  public attr = async (elHandle: ElementHandle, name: string): Promise<string> => {
+    return await (await elHandle.getProperty(name)).jsonValue();
+  }
 
   public waitAll = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number, visible?: boolean } = {}) => {
     const selectors = this.selsAsProcessedArr(selector);
@@ -97,7 +109,7 @@ abstract class ControllableBase {
           }
         }
       } catch (e) {
-        if (e.message.indexOf('Cannot find context with specified id undefined') === -1) {
+        if (e instanceof Error && e.message.indexOf('Cannot find context with specified id undefined') === -1) {
           throw e;
         }
       }
@@ -122,7 +134,9 @@ abstract class ControllableBase {
     throw Error(`this.wait_till_gone: some of "${selectors.join(',')}" still present after timeout:${timeout}`);
   }
 
-  public notPresent = async (selector: string | string[]) => await this.waitTillGone(selector, { timeout: 0 });
+  public notPresent = async (selector: string | string[]) => {
+    return await this.waitTillGone(selector, { timeout: 0 });
+  }
 
   public click = async (selector: string) => {
     this.log(`click:1:${selector}`);
@@ -149,7 +163,7 @@ abstract class ControllableBase {
     if (!e) {
       throw Error(`Element not found: ${selector}`);
     }
-    if (letterByLetter || text.length < 20) {
+    if (letterByLetter || text.length < 10) {
       await e.type(text);
     } else {
       const typeLastTenChars = await this.target.evaluate((s, t) => {
@@ -160,7 +174,7 @@ abstract class ControllableBase {
           el.selectionStart = el.innerText.length;
           return false;
         }
-        el.value = t.substring(0, t.length - 10);
+        el.value = t.substring(0, t.length - 5);
         if (el.type !== 'email' && typeof el.value !== 'undefined') {
           el.selectionEnd = el.value.length;
           el.selectionStart = el.value.length;
@@ -168,7 +182,7 @@ abstract class ControllableBase {
         return true;
       }, this.selector(selector), text);
       if (typeLastTenChars) { // used to simulate typing events
-        await e.type(text.substring(text.length - 10, text.length));
+        await e.type(text.substring(text.length - 5, text.length));
       }
     }
   }
@@ -184,8 +198,23 @@ abstract class ControllableBase {
     }, this.selector(selector));
   }
 
+  public isDisabled = async (selector: string): Promise<boolean> => {
+    return await this.target.evaluate((s) => document.querySelector(s).disabled, this.selector(selector));
+  }
+
   public isChecked = async (selector: string): Promise<boolean> => {
     return await this.target.evaluate((s) => document.querySelector(s).checked, this.selector(selector));
+  }
+
+  // Get the current computed outer height (including padding, border)
+  public getOuterHeight = async (selector: string): Promise<string> => {
+    return await this.target.evaluate((s) => {
+      const computedStyle = getComputedStyle(document.querySelector(s));
+      const paddings = parseInt(computedStyle.getPropertyValue('padding-top')) + parseInt(computedStyle.getPropertyValue('padding-bottom'));
+      const border = parseInt(computedStyle.getPropertyValue('border-top-width')) + parseInt(computedStyle.getPropertyValue('border-bottom-width'));
+      let outerHeight = parseInt(computedStyle.getPropertyValue('height')) + paddings + border;
+      return outerHeight;
+    }, this.selector(selector));
   }
 
   public read = async (selector: string, onlyVisible = false): Promise<string> => {
@@ -212,7 +241,7 @@ abstract class ControllableBase {
     await Util.sleep(0.5);
     expect(await this.read(`@ui-modal-${type}:message`)).to.contain(message, `ui-modal-${type}:message does not contain expected text`);
     if (type === 'confirm-checkbox') {
-      await this.waitAndClick(`@ui-modal-${type}-input`)
+      await this.waitAndClick(`@ui-modal-${type}-input`);
     }
     await this.waitAndClick(`@ui-modal-${type}-${clickBtn}`);
   }
@@ -348,7 +377,7 @@ export class ControllablePage extends ControllableBase {
       const response = r.response();
       const fail = r.failure();
       const url = r.url();
-      if (url.indexOf(Url.extension('')) !== 0 || fail) { // not an extension url, or a fail
+      if (url.indexOf(TestUrls.extension('')) !== 0 || fail) { // not an extension url, or a fail
         this.consoleMsgs.push(new ConsoleEvent('request', `${response ? response.status() : '-1'} ${r.method()} ${url}: ${fail ? fail.errorText : 'ok'}`));
       }
     });
@@ -398,7 +427,7 @@ export class ControllablePage extends ControllableBase {
   }
 
   public goto = async (url: string) => {
-    url = url.indexOf('https://') === 0 || url.indexOf(Url.extension('')) === 0 ? url : Url.extension(url);
+    url = url.indexOf('https://') === 0 || url.indexOf(TestUrls.extension('')) === 0 ? url : TestUrls.extension(url);
     // await this.page.goto(url); // may produce intermittent Navigation Timeout Exceeded in CI environment
     this.page.goto(url).catch(e => this.t.log(`goto: ${e.message}: ${url}`));
     await Promise.race([

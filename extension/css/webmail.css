@@ -66,6 +66,7 @@ body.cryptup_gmail .inserted div.reply_message_button {
   opacity: 0.75;
   margin-left: 18px;
   margin-right: 8px;
+  height: auto;
 }
 body.cryptup_gmail.firefox .inserted div.reply_message_button { padding-top: 16px; } /* else buttons misaligned vertically on FF */
 body.cryptup_gmail .inserted div.reply_message_button:hover {
@@ -115,7 +116,7 @@ body.cryptup_gmail.cryptup_gmail_new div.ade.appended span.cryptup_convo_button 
 }
 
 /* buttons top navbar Gmail */
-body.cryptup_gmail div.finish_session img { padding: 0; }
+body.cryptup_gmail div.action_finish_session img { padding: 0; }
 
 /* buttons body.cryptup_outlook */
 body.cryptup_outlook .cryptup_compose_button_container {

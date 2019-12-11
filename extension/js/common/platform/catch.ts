@@ -173,21 +173,25 @@ export class Catch {
   }
 
   public static isPromise = (v: any): v is Promise<any> => {
-    return v && typeof v === 'object' && typeof (v as Promise<any>).then === 'function' && typeof (v as Promise<any>).catch === 'function';
+    return v && typeof v === 'object'
+      && typeof (v as Promise<any>).then === 'function' // tslint:disable-line:no-unbound-method - only testing if exists
+      && typeof (v as Promise<any>).catch === 'function'; // tslint:disable-line:no-unbound-method - only testing if exists
   }
 
-  public static try = (code: Function) => () => { // tslint:disable-line:ban-types // returns a function
-    try {
-      const r = code();
-      if (Catch.isPromise(r)) {
-        r.catch(Catch.reportErr);
+  public static try = (code: Function) => { // tslint:disable-line:ban-types
+    return () => { // returns a function
+      try {
+        const r = code();
+        if (Catch.isPromise(r)) {
+          r.catch(Catch.reportErr);
+        }
+      } catch (codeErr) {
+        Catch.reportErr(codeErr);
       }
-    } catch (codeErr) {
-      Catch.reportErr(codeErr);
-    }
+    };
   }
 
-  public static browser = () => {  // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
+  public static browser = () => { // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
     if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
       return { name: 'firefox', v: Number(RegExp.$1) };
     } else if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)) {

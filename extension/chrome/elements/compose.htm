@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>FlowCrypt</title>
   <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/sweetalert2.css" />
   <link rel="stylesheet" href="/css/animate.css" />
   <link rel="stylesheet" href="/css/fine-uploader-new.css" />
   <link rel="stylesheet" href="/lib/featherlight/featherlight.css" />
@@ -33,14 +34,14 @@
         <th>
           <div class="header">
             <!-- header -->
-            <h1 id="header_title">New Secure Message</h1>
+            <h1 id="header_title" data-test="header-title">New Secure Message</h1>
             <div class="actions_container">
               <span class="action_feedback" title="Feedback or Help"><img src="/img/svgs/question-icon-white.svg"
                   class="" alt="Help"></span>
               <span class="minimize_new_message" title="Minimize"></span>
               <span class="popout maximize_composer" title="Full-screen"><img src="/img/svgs/maximize.svg"
                   tabindex="-1"></span>
-              <span class="close_new_message" title="Save & close"><img src="/img/svgs/close-icon.svg"
+              <span class="close_new_message" title="Save & close" data-test="action-close-new-message"><img src="/img/svgs/close-icon.svg"
                   tabindex="-1"></span>
             </div>
           </div>
@@ -122,10 +123,10 @@
       <tr class="bottom">
         <td class="bottom">
           <div class="sending-container">
-            <div id="sending-options-container" class="sending-options-container">
+            <div id="sending-options-container" class="sending-options-container" data-test="container-sending-options">
             </div>
-            <button id="send_btn" class="button green" tabindex="6">
-              <span id="send_btn_text" class="btn-text" data-test="action-send"><i></i></span>
+            <button id="send_btn" class="button green" tabindex="6" data-test="action-send">
+              <span id="send_btn_text" class="btn-text"><i></i></span>
             </button>
             <button id="toggle_send_options" class="action-show-options-popover button green" title="More send options"
               tabindex="7" data-test="action-show-options-popover">
@@ -169,6 +170,7 @@
   <script src="/lib/purify.min.js"></script>
   <script src="/lib/openpgp.js"></script>
   <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/sweetalert2.js"></script>
   <script src="/lib/emailjs/punycode.js"></script>
   <script src="/lib/emailjs/emailjs-stringencoding.js"></script>
   <script src="/lib/emailjs/emailjs-mime-codec.js"></script>

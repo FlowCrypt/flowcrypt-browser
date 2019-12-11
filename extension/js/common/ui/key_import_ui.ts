@@ -3,7 +3,7 @@
 'use strict';
 
 import { Store } from '../platform/store.js';
-import { Ui, Env } from '../browser.js';
+import { Ui } from '../browser/ui.js';
 import { Pgp } from '../core/pgp.js';
 import { KeyBlockType } from '../core/mime.js';
 import { mnemonic } from '../core/mnemonic.js';
@@ -11,6 +11,7 @@ import { AttUI } from './att_ui.js';
 import { Lang } from '../lang.js';
 import { Catch } from '../platform/catch.js';
 import { Settings } from '../settings.js';
+import { Url } from '../core/common.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -56,7 +57,7 @@ export class KeyImportUi {
         $('.source_paste_container').css('display', 'block');
         $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
       } else if ((this as HTMLInputElement).value === 'backup') {
-        window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail, parentTabId, action: 'add_key' });
+        window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail, parentTabId, action: 'add_key' });
       }
     });
     $('.line.unprotected_key_create_pass_phrase .action_use_random_pass_phrase').click(Ui.event.handle(target => {
@@ -88,25 +89,26 @@ export class KeyImportUi {
       }
     }));
     const attach = new AttUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
-    attach.initAttDialog('fineuploader', 'fineuploader_button');
-    attach.setAttAddedCb(async file => {
-      let prv: OpenPGP.key.Key | undefined;
-      const utf = file.getData().toUtfStr();
-      if (utf.includes(Pgp.armor.headers('privateKey').begin)) {
-        const firstPrv = Pgp.armor.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
-        if (firstPrv) { // filter out all content except for the first encountered private key (GPGKeychain compatibility)
-          prv = (await openpgp.key.readArmored(firstPrv.content.toString())).keys[0];
+    attach.initAttDialog('fineuploader', 'fineuploader_button', {
+      attAdded: async file => {
+        let prv: OpenPGP.key.Key | undefined;
+        const utf = file.getData().toUtfStr();
+        if (utf.includes(Pgp.armor.headers('privateKey').begin)) {
+          const firstPrv = Pgp.armor.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
+          if (firstPrv) { // filter out all content except for the first encountered private key (GPGKeychain compatibility)
+            prv = (await openpgp.key.readArmored(firstPrv.content.toString())).keys[0];
+          }
+        } else {
+          prv = (await openpgp.key.read(file.getData())).keys[0];
         }
-      } else {
-        prv = (await openpgp.key.read(file.getData())).keys[0];
-      }
-      if (typeof prv !== 'undefined') {
-        $('.input_private_key').val(prv.armor()).change().prop('disabled', true);
-        $('.source_paste_container').css('display', 'block');
-      } else {
-        $('.input_private_key').val('').change().prop('disabled', false);
-        await Ui.modal.error('Not able to read this key. Is it a valid PGP private key?');
-        $('input[type=radio][name=source]').removeAttr('checked');
+        if (typeof prv !== 'undefined') {
+          $('.input_private_key').val(prv.armor()).change().prop('disabled', true);
+          $('.source_paste_container').css('display', 'block');
+        } else {
+          $('.input_private_key').val('').change().prop('disabled', false);
+          await Ui.modal.error('Not able to read this key. Is it a valid PGP private key?');
+          $('input[type=radio][name=source]').removeAttr('checked');
+        }
       }
     });
   }

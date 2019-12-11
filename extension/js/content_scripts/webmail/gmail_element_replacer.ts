@@ -5,23 +5,28 @@
 import { Str, Dict } from '../../common/core/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
-import { Api, AjaxError } from '../../common/api/api.js';
 import { Pgp } from '../../common/core/pgp.js';
-import { BrowserMsg } from '../../common/extension.js';
-import { Ui, Browser } from '../../common/browser.js';
 import { XssSafeFactory, WebmailVariantString, FactoryReplyParams } from '../../common/xss_safe_factory.js';
 import { Att } from '../../common/core/att.js';
 import { WebmailElementReplacer, IntervalFunction } from './setup_webmail_content_script.js';
 import { Catch } from '../../common/platform/catch.js';
-import { Google, GmailRes } from '../../common/api/google.js';
 import { Xss } from '../../common/platform/xss.js';
 import { Keyserver } from '../../common/api/keyserver.js';
 import { WebmailCommon } from "../../common/webmail.js";
 import { Store, SendAsAlias } from '../../common/platform/store.js';
+import { GmailRes, GmailParser } from '../../common/api/email_provider/gmail/gmail-parser.js';
+import { Gmail } from '../../common/api/email_provider/gmail/gmail.js';
+import { Ui } from '../../common/browser/ui.js';
+import { Browser } from '../../common/browser/browser.js';
+import { BrowserMsg } from '../../common/browser/browser-msg.js';
+import { ApiErr } from '../../common/api/error/api-error.js';
+import { AjaxErr } from '../../common/api/error/api-error-types.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
 export class GmailElementReplacer implements WebmailElementReplacer {
+
+  private gmail: Gmail;
   private recipientHasPgpCache: Dict<boolean> = {};
   private sendAs: Dict<SendAsAlias>;
   private factory: XssSafeFactory;
@@ -34,6 +39,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private cssHidden = `opacity: 0 !important; height: 1px !important; width: 1px !important; max-height: 1px !important;
   max-width: 1px !important; position: absolute !important; z-index: -1000 !important`;
   private currentlyEvaluatingStandardComposeBoxRecipients = false;
+  private currentlyReplacingAtts = false;
 
   private sel = { // gmail_variant=standard|new
     convoRoot: 'div.if',
@@ -60,12 +66,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.gmailVariant = gmailVariant;
     this.notifications = notifications;
     this.webmailCommon = new WebmailCommon(acctEmail, injector);
+    this.gmail = new Gmail(acctEmail);
   }
 
   getIntervalFunctions = (): Array<IntervalFunction> => {
     return [
-      { interval: 1000, handler: this.everything },
-      { interval: 30000, handler: this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded }
+      { interval: 1000, handler: () => this.everything() },
+      { interval: 30000, handler: () => this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded() }
     ];
   }
 
@@ -98,7 +105,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (scrollableEl) {
       const element = $(selector).get(0);
       if (element) {
-        scrollableEl.scrollTop = element.offsetTop; // scroll to the bottom of conversation where the reply box is
+        scrollableEl.scrollTop = element.offsetTop + element.clientHeight; // scroll to the element (reply box) is
       }
     } else if (window.location.hash.match(/^#inbox\/[a-zA-Z]+$/)) { // is a conversation view, but no scrollable conversation element
       Catch.report(`Cannot find Gmail scrollable element: ${this.sel.convoRootScrollable}`);
@@ -124,10 +131,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     Xss.sanitizeAppend(containerSel, iconHtml).children(iconSel).off().click(Ui.event.prevent('double', Catch.try(onClick)));
   }
 
+  private isEncrypted = (): boolean => {
+    return !!$('iframe.pgp_block').filter(':visible').length;
+  }
+
   private replaceConvoBtns = (force: boolean = false) => {
     const convoUpperIcons = $('div.ade:visible');
-    const isEncrypted = $('iframe.pgp_block').filter(':visible').length;
-    const useEncryptionInThisConvo = isEncrypted || force;
+    const useEncryptionInThisConvo = this.isEncrypted() || force;
     // reply buttons
     const visibleReplyBtns = $('td.acX:visible');
     if (visibleReplyBtns.not('.replaced, .inserted').length) { // last reply button in convo gets replaced
@@ -136,11 +146,15 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       // only replace the last one FlowCrypt reply button if does not have any buttons replaced yet, and only replace the last one
       for (const elem of convoReplyBtnsArr) {
         $(elem).addClass('inserted');
-        const element = $(this.factory.btnReply()).insertBefore($(elem).children().last());  // xss-safe-factory
-        element.click(Ui.event.prevent('double', Catch.try(async () => {
+        const gmailReplyBtn = $(elem).find('[aria-label="Reply"]');
+        const secureReplyBtn = $(this.factory.btnSecureReply()).insertAfter(gmailReplyBtn);  // xss-safe-factory
+        secureReplyBtn.addClass(gmailReplyBtn.attr('class') || '');
+        secureReplyBtn.on('focusin', Ui.event.handle((target) => { $(target).addClass('T-I-JO'); }));
+        secureReplyBtn.on('focusout', Ui.event.handle((target) => { $(target).removeClass('T-I-JO'); }));
+        secureReplyBtn.click(Ui.event.prevent('double', Catch.try(async () => {
           const messageContainer = $(elem.closest('.h7') as HTMLElement);
           if (messageContainer.is(':last-child')) {
-            if (isEncrypted) {
+            if (this.isEncrypted()) {
               await this.setReplyBoxEditable();
             } else {
               await this.replaceStandardReplyBox(undefined, true, true);
@@ -187,42 +201,63 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
+  /**
+   * The tricky part here is that we are checking attachments in intervals (1s)
+   * In the exact moment we check, only some of the attachments of a message may be loaded into the DOM, while others won't
+   * This is not fully handled (I don't yet know how to tell if attachment container already contains all attachments)
+   * It may create unexpected behavior, such as removing the attachment but not rendering any message (sometimes noticeable for attached public keys)
+   * Best would be, instead of checking every 1 second, to be able to listen to a certain element being inserted into the dom, and only respond then
+   * --
+   * Further complication is that certain elements may persist navigating away and back from conversation (but in a changed form)
+   * --
+   * Related bugs (fixed):
+   * https://github.com/FlowCrypt/flowcrypt-browser/issues/1870
+   * https://github.com/FlowCrypt/flowcrypt-browser/issues/2309
+   */
   private replaceAtts = async () => {
-    for (const attsContainerEl of $(this.sel.attsContainerInner)) {
-      const attsContainer = $(attsContainerEl);
-      const newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.attachmentsPattern).addClass('evaluated');
-      const newPgpAttsNames = Browser.arrFromDomNodeList(newPgpAtts.find('.aV3')).map(x => $.trim($(x).text()));
-      if (newPgpAtts.length) {
-        const msgId = this.determineMsgId(attsContainer);
-        if (msgId) {
-          if (this.canReadEmails) {
-            Xss.sanitizePrepend(newPgpAtts, this.factory.embeddedAttaStatus('Getting file info..' + Ui.spinner('green')));
-            try {
-              const msg = await Google.gmail.msgGet(this.acctEmail, msgId, 'full');
-              await this.processAtts(msgId, Google.gmail.findAtts(msg), attsContainer, false, newPgpAttsNames);
-            } catch (e) {
-              if (Api.err.isAuthPopupNeeded(e)) {
-                this.notifications.showAuthPopupNeeded(this.acctEmail);
-                $(newPgpAtts).find('.attachment_loader').text('Auth needed');
-              } else if (Api.err.isNetErr(e)) {
-                $(newPgpAtts).find('.attachment_loader').text('Network error');
-              } else {
-                if (!Api.err.isServerErr(e) && !Api.err.isMailOrAcctDisabled(e) && !Api.err.isNotFound(e)) {
-                  Catch.reportErr(e);
+    if (this.currentlyReplacingAtts) {
+      return;
+    }
+    try {
+      this.currentlyReplacingAtts = true;
+      for (const attsContainerEl of $(this.sel.attsContainerInner)) {
+        const attsContainer = $(attsContainerEl);
+        const newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.attachmentsPattern).addClass('evaluated');
+        const newPgpAttsNames = Browser.arrFromDomNodeList(newPgpAtts.find('.aV3')).map(x => $.trim($(x).text()));
+        if (newPgpAtts.length) {
+          const msgId = this.determineMsgId(attsContainer);
+          if (msgId) {
+            if (this.canReadEmails) {
+              Xss.sanitizePrepend(newPgpAtts, this.factory.embeddedAttaStatus('Getting file info..' + Ui.spinner('green')));
+              try {
+                const msg = await this.gmail.msgGet(msgId, 'full');
+                await this.processAtts(msgId, GmailParser.findAtts(msg), attsContainer, false, newPgpAttsNames);
+              } catch (e) {
+                if (ApiErr.isAuthPopupNeeded(e)) {
+                  this.notifications.showAuthPopupNeeded(this.acctEmail);
+                  $(newPgpAtts).find('.attachment_loader').text('Auth needed');
+                } else if (ApiErr.isNetErr(e)) {
+                  $(newPgpAtts).find('.attachment_loader').text('Network error');
+                } else {
+                  if (!ApiErr.isServerErr(e) && !ApiErr.isMailOrAcctDisabledOrPolicy(e) && !ApiErr.isNotFound(e)) {
+                    Catch.reportErr(e);
+                  }
+                  $(newPgpAtts).find('.attachment_loader').text('Failed to load');
                 }
-                $(newPgpAtts).find('.attachment_loader').text('Failed to load');
               }
+            } else {
+              const statusMsg = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
+              $(newPgpAtts).prepend(this.factory.embeddedAttaStatus(statusMsg)).children('a.auth_settings').click(Ui.event.handle(() => { // xss-safe-factory
+                BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' });
+              }));
             }
           } else {
-            const statusMsg = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
-            $(newPgpAtts).prepend(this.factory.embeddedAttaStatus(statusMsg)).children('a.auth_settings').click(Ui.event.handle(() => { // xss-safe-factory
-              BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' });
-            }));
+            $(newPgpAtts).prepend(this.factory.embeddedAttaStatus('Unknown message id')); // xss-safe-factory
           }
-        } else {
-          $(newPgpAtts).prepend(this.factory.embeddedAttaStatus('Unknown message id')); // xss-safe-factory
         }
       }
+    } finally {
+      this.currentlyReplacingAtts = false;
     }
   }
 
@@ -248,7 +283,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             const isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp'].includes(a.name); // ambiguous .asc name
             const isAmbiguousNonameFile = !a.name || a.name === 'noname'; // may not even be OpenPGP related
             if (isAmbiguousAscFile || isAmbiguousNonameFile) { // Inspect a chunk
-              const data = await Google.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
+              const data = await this.gmail.attGetChunk(msgId, a.id!); // .id is present when fetched from api
               const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ rawBytesStr: data.toRawBytesStr() });
               if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
                 nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
@@ -271,7 +306,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, replace ? 'set' : 'append', embeddedSignedMsgXssSafe); // xss-safe-factory
           }
         } else if (treatAs === 'plainFile' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
-          const data = await Google.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
+          const data = await this.gmail.attGetChunk(msgId, a.id!); // .id is present when fetched from api
           const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ rawBytesStr: data.toRawBytesStr() });
           if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
             nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
@@ -284,7 +319,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           attSel.addClass('attachment_processed').children('.attachment_loader').remove();
         }
       } catch (e) {
-        if (!Api.err.isSignificant(e) || (e instanceof AjaxError && e.status === 200)) {
+        if (!ApiErr.isSignificant(e) || (e instanceof AjaxErr && e.status === 200)) {
           attSel.show().children('.attachment_loader').text('Categorize: net err');
           nRenderedAtts++;
         } else {
@@ -323,7 +358,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private renderPublicKeyFromFile = async (attMeta: Att, attsContainerInner: JQueryEl, msgEl: JQueryEl, isOutgoing: boolean, attSel: JQueryEl, nRenderedAtts: number) => {
     let downloadedAtt: GmailRes.GmailAtt;
     try {
-      downloadedAtt = await Google.gmail.attGet(this.acctEmail, attMeta.msgId!, attMeta.id!); // .id! is present when fetched from api
+      downloadedAtt = await this.gmail.attGet(attMeta.msgId!, attMeta.id!); // .id! is present when fetched from api
     } catch (e) {
       attsContainerInner.show().addClass('attachment_processed').find('.attachment_loader').text('Please reload page');
       nRenderedAtts++;
@@ -342,7 +377,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private renderBackupFromFile = async (attMeta: Att, attsContainerInner: JQueryEl, msgEl: JQueryEl, attSel: JQueryEl, nRenderedAtts: number) => {
     let downloadedAtt: GmailRes.GmailAtt;
     try {
-      downloadedAtt = await Google.gmail.attGet(this.acctEmail, attMeta.msgId!, attMeta.id!); // .id! is present when fetched from api
+      downloadedAtt = await this.gmail.attGet(attMeta.msgId!, attMeta.id!); // .id! is present when fetched from api
     } catch (e) {
       attsContainerInner.show().addClass('attachment_processed').find('.attachment_loader').text('Please reload page');
       nRenderedAtts++;
@@ -377,7 +412,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return $(convoRootEl).find(this.sel.subject).attr('data-legacy-thread-id') || '';
   }
 
-  private getMsgBodyEl(msgId: string) {
+  private getMsgBodyEl = (msgId: string) => {
     return $(this.sel.msgOuter).filter(`[data-legacy-message-id="${msgId}"]`).find(this.sel.msgInner);
   }
 
@@ -390,7 +425,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
    *
    * new_html_content must be XSS safe
    */ // tslint:disable-next-line:variable-name
-  private updateMsgBodyEl_DANGEROUSLY = (el: HTMLElement | JQueryEl, method: 'set' | 'append', newHtmlContent_MUST_BE_XSS_SAFE: string) => {  // xss-dangerous-function
+  private updateMsgBodyEl_DANGEROUSLY(el: HTMLElement | JQueryEl, method: 'set' | 'append', newHtmlContent_MUST_BE_XSS_SAFE: string) {  // xss-dangerous-function
     // Messages in Gmail UI have to be replaced in a very particular way
     // The first time we update element, it should be completely replaced so that Gmail JS will lose reference to the original element and stop re-rendering it
     // Gmail message re-rendering causes the PGP message to flash back and forth, confusing the user and wasting cpu time
@@ -510,9 +545,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
                     break;
                   }
                 } catch (e) {
-                  if (Api.err.isSignificant(e)) {
-                    Catch.reportErr(e);
-                  }
+                  ApiErr.reportIfSignificant(e);
                   // this is a low-importance request, so evaluate has_pgp as false on errors
                   // this way faulty requests wouldn't unnecessarily repeat and overwhelm Attester
                   this.recipientHasPgpCache[email] = false;
@@ -548,8 +581,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const settingsBtnContainer = $(this.sel.settingsBtnContainer);
       if (settingsBtnContainer.length && !settingsBtnContainer.find('#fc_settings_btn').length) {
         settingsBtnContainer.children().last().before(this.factory.btnSettings('gmail')); // xss-safe-factory
-        settingsBtnContainer.find('#fc_settings_btn').on('click', Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail })));
+        settingsBtnContainer.find('#fc_settings_btn').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail })));
       }
     }
   }
+
 }

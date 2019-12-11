@@ -17,11 +17,21 @@ export class Xss {
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index', 'target'];
   private static HREF_REGEX_CACHE: RegExp | undefined;
 
-  // following methods are browser-specific, node implementation does not have them
-  public static sanitizeRender = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).html(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
-  public static sanitizeAppend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).append(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
-  public static sanitizePrepend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).prepend(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
-  public static sanitizeReplace = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).replaceWith(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
+  public static sanitizeRender = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => { // browser-only (not on node)
+    return $(selector as any).html(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
+  }
+
+  public static sanitizeAppend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => { // browser-only (not on node)
+    return $(selector as any).append(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
+  }
+
+  public static sanitizePrepend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => { // browser-only (not on node)
+    return $(selector as any).prepend(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
+  }
+
+  public static sanitizeReplace = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => { // browser-only (not on node)
+    return $(selector as any).replaceWith(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
+  }
 
   public static htmlSanitize = (dirtyHtml: string): string => {
     return DOMPurify.sanitize(dirtyHtml, { // tslint:disable-line:oneliner-object-literal
@@ -110,7 +120,7 @@ export class Xss {
 
   private static sanitizeHrefRegexp = () => { // allow href links that have same origin as our extension + cid
     if (typeof Xss.HREF_REGEX_CACHE === 'undefined') {
-      if (window && window.location && window.location.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
+      if (window?.location?.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
         Xss.HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|${Str.regexEscape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
       } else {
         Xss.HREF_REGEX_CACHE = /^(?:(http|https):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;

@@ -1,5 +1,5 @@
 
-import { startGoogleApiMock } from './mock/google-api-mock';
+import { startAllApisMock } from './mock/all-apis-mock';
 import { Config } from './util';
 import * as request from 'fc-node-requests';
 import { writeFileSync, existsSync } from 'fs';
@@ -8,7 +8,7 @@ import { openpgp } from './core/pgp';
 export const mock = async (logger: (line: string) => void) => {
   const start = Date.now();
   await Promise.all(Config.secrets.auth.google.map(a => a.email).map(async email => { // load and decrypt mock data if missing
-    if (email === 'flowcrypt.test.key.multibackup@gmail.com') {
+    if (['flowcrypt.test.key.multibackup@gmail.com', 'has.pub@org-rules-test.flowcrypt.com', 'no.pub@org-rules-test.flowcrypt.com'].includes(email)) {
       return; // missing mock data, not yet used
     }
     const filename = `${email.replace(/[^a-z0-9]+/g, '')}.json`;
@@ -26,7 +26,7 @@ export const mock = async (logger: (line: string) => void) => {
     }
   }));
   console.info(`checking mock data took ${(Date.now() - start) / 1000} seconds`);
-  return await startGoogleApiMock(logger);
+  return await startAllApisMock(logger);
 };
 
 if (require.main === module) {

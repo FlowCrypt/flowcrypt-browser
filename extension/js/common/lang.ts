@@ -17,6 +17,7 @@ export const Lang = { // tslint:disable-line:variable-name
     failedToCheckAccountBackups: 'Failed to check for account backups. ',
     failedToSubmitToAttester: 'Failed to submit to Attester. ',
     failedToBackUpKey: 'Failed to back up your key. ',
+    failedToLoadEmailAliases: 'Failed to load your email aliases. ',
     cannotLocateBackupPasteManually: 'FlowCrypt can\'t locate your backup automatically.</div><div class="line">Find "Your FlowCrypt Backup" email, open the attachment, copy all text and paste it below.',
     confirmSkipRecovery: 'Your account will be set up for encryption again, but your previous encrypted emails will be unreadable. You will need to inform your encrypted contacts that you have a new key. Regular email will not be affected. Are you sure?',
     nBackupsAlreadyRecoveredOrLeft: (nGot: number, nBups: number, txtTeft: string) => `You successfully recovered ${nGot} of ${nBups} backups. There ${txtTeft} left.<br><br>Try a different pass phrase to unlock all backups.`,
@@ -30,8 +31,8 @@ export const Lang = { // tslint:disable-line:variable-name
   account: {
     creditOrDebit: 'Enter credit or debit card to use. You can cancel anytime.',
     alreadyUpgraded: 'You have already upgraded to FlowCrypt Advanced',
-    verifyToSetUpContactPage: `Your email needs to be verified to set up a contact page. You can verify it by enabling a free trial. You do NOT need to pay or maintain the trial later. Your Contact Page will stay active even on Forever Free account.`,
-    googleAcctDisabled: `Your Google Account or Google Email seems to be disabled.`,
+    loginToSetUpContactPage: `Please log into FlowCrypt to set up a contact page.`,
+    googleAcctDisabledOrPolicy: `Your Google Account or Google Email seems to be disabled, or access to this app is disabled by your organisation admin policy. Contact your email administrator.`,
   },
   pgpBlock: {
     cantOpen: 'Could not open this message with FlowCrypt.\n\n',

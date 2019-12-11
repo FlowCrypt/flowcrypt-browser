@@ -6,20 +6,21 @@ export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-G
 
 export const getParsedCliParams = () => {
   let testVariant: TestVariant;
-  if (process.argv.indexOf('CONSUMER-MOCK') !== -1) {
+  if (process.argv.includes('CONSUMER-MOCK')) {
     testVariant = 'CONSUMER-MOCK';
-  } else if (process.argv.indexOf('ENTERPRISE-MOCK') !== -1) {
+  } else if (process.argv.includes('ENTERPRISE-MOCK')) {
     testVariant = 'ENTERPRISE-MOCK';
-  } else if (process.argv.indexOf('CONSUMER-LIVE-GMAIL') !== -1) {
+  } else if (process.argv.includes('CONSUMER-LIVE-GMAIL')) {
     testVariant = 'CONSUMER-LIVE-GMAIL';
   } else {
     throw new Error('Unknown test type: specify CONSUMER-MOCK or ENTERPRISE-MOCK CONSUMER-LIVE-GMAIL');
   }
+  const testGroup = (process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP') as 'FLAKY-GROUP' | 'STANDARD-GROUP';
   const buildDir = `build/chrome-${(testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : testVariant).toLowerCase()}`;
-  const poolSizeOne = process.argv.indexOf('--pool-size=1') !== -1;
+  const poolSizeOne = process.argv.includes('--pool-size=1') || testGroup === 'FLAKY-GROUP';
   const oneIfNotPooled = (suggestedPoolSize: number) => poolSizeOne ? Math.min(1, suggestedPoolSize) : suggestedPoolSize;
-  console.info(`TEST_VARIANT: ${testVariant} (build dir: ${buildDir}, poolSizeOne: ${poolSizeOne})`);
-  return { testVariant, oneIfNotPooled, buildDir, isMock: testVariant.includes('-MOCK') };
+  console.info(`TEST_VARIANT: ${testVariant}:${testGroup}, (build dir: ${buildDir}, poolSizeOne: ${poolSizeOne})`);
+  return { testVariant, testGroup, oneIfNotPooled, buildDir, isMock: testVariant.includes('-MOCK') };
 };
 
 interface TestConfigInterface {
@@ -45,16 +46,24 @@ export class Config {
 
   public static tests = JSON.parse(fs.readFileSync('test/tests.json', 'utf8')) as TestConfigInterface;
 
-  public static key = (title: string) => Config.secrets.keys.filter(k => k.title === title)[0];
+  public static key = (title: string) => {
+    return Config.secrets.keys.filter(k => k.title === title)[0];
+  }
 
 }
 
 export class Util {
 
-  public static sleep = (seconds: number) => new Promise(resolve => setTimeout(resolve, seconds * 1000));
+  public static sleep = (seconds: number) => {
+    return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+  }
 
-  public static lousyRandom = () => Math.random().toString(36).substring(2);
+  public static lousyRandom = () => {
+    return Math.random().toString(36).substring(2);
+  }
 
-  public static htmlEscape = (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
+  public static htmlEscape = (str: string) => {
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
+  }
 
 }

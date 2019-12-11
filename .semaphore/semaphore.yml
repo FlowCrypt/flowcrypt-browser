@@ -46,6 +46,7 @@ blocks:
         - name: code quality
           commands:
             - npm run-script test_tslint
+            - npm run-script test_eslint
             - npm run-script test_stylelint
             - npm run-script test_patterns
 
@@ -53,13 +54,17 @@ blocks:
         #   commands:
         #     - npm run-script test_chrome_consumer_live_gmail
 
-        - name: consumer mock
+        - name: consumer mock - standard test group
           commands:
-            - npm run-script test_chrome_consumer
+            - npm run-script test_ci_chrome_consumer
 
-        - name: enterprise mock
+        - name: enterprise mock - standard test group
           commands:
-            - npm run-script test_chrome_enterprise
+            - npm run-script test_ci_chrome_enterprise
+
+        - name: consumer mock - flaky test group
+          commands:
+            - npm run-script test_ci_chrome_consumer_flaky
 
         - name: internals
           commands:
