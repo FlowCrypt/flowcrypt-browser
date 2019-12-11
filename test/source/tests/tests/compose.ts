@@ -143,7 +143,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await inboxPage.waitAll('@dialog-add-pubkey');
       const addPubkeyDialog = await inboxPage.getFrame(['add_pubkey.htm']);
       await addPubkeyDialog.waitAll('@input-select-copy-from');
+      await Util.sleep(1);
       await addPubkeyDialog.selectOption('@input-select-copy-from', 'human@flowcrypt.com');
+      await Util.sleep(1);
       await addPubkeyDialog.waitAndClick('@action-add-pubkey');
       await inboxPage.waitTillGone('@dialog-add-pubkey');
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
