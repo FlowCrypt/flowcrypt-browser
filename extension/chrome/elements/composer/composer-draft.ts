@@ -17,7 +17,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Env } from '../../../js/common/browser/env.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { AjaxErr } from '../../../js/common/api/error/api-error-types.js';
-import { PgpArmor } from '../../../js/common/core/pgp/armor.js';
+import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
 
 export class ComposerDraft extends ComposerComponent {
 

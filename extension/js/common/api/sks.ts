@@ -4,7 +4,7 @@
 
 import { Api } from './api.js';
 import { PubkeySearchResult } from './keyserver.js';
-import { PgpArmor } from '../core/pgp/armor.js';
+import { PgpArmor } from '../core/pgp-armor.js';
 import { ApiErr } from './error/api-error.js';
 
 export class Sks extends Api {

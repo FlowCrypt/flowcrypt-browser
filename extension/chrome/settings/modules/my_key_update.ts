@@ -11,7 +11,7 @@ import { Assert } from '../../../js/common/assert.js';
 import { Attester } from '../../../js/common/api/attester.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
-import { PgpArmor } from '../../../js/common/core/pgp/armor.js';
+import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 declare const openpgp: typeof OpenPGP;

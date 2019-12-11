@@ -12,7 +12,7 @@ import { Lang } from '../lang.js';
 import { Catch } from '../platform/catch.js';
 import { Settings } from '../settings.js';
 import { Url } from '../core/common.js';
-import { PgpArmor } from '../core/pgp/armor.js';
+import { PgpArmor } from '../core/pgp-armor.js';
 
 declare const openpgp: typeof OpenPGP;
 

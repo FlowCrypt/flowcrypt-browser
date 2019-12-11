@@ -21,7 +21,7 @@ import { Str, Url } from '../../../js/common/core/common.js';
 import { FetchKeyUI } from '../../../js/common/ui/fetch_key_ui.js';
 import { View } from '../../../js/common/view.js';
 import { Contact } from './../../../js/common/core/pgp';
-import { PgpArmor } from '../../../js/common/core/pgp/armor.js';
+import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 View.run(class ContactsView extends View {

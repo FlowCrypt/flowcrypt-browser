@@ -14,7 +14,7 @@ import { secureRandomBytes, base64encode } from '../platform/util.js';
 import { FcAttLinkData } from './att.js';
 import { Buf } from './buf.js';
 import { Xss } from '../platform/xss.js';
-import { PgpArmor } from './pgp/armor.js';
+import { PgpArmor } from './pgp-armor.js';
 
 export const openpgp = requireOpenpgp();
 

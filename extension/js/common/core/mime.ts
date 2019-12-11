@@ -9,7 +9,7 @@ import { Catch } from '../platform/catch.js';
 import { requireMimeParser, requireMimeBuilder, requireIso88592 } from '../platform/require.js';
 import { Buf } from './buf.js';
 import { MimeParserNode } from './types/emailjs';
-import { PgpArmor } from './pgp/armor.js';
+import { PgpArmor } from './pgp-armor.js';
 
 const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
 const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name

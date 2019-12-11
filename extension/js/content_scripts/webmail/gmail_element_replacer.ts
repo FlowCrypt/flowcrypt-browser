@@ -19,8 +19,8 @@ import { Ui } from '../../common/browser/ui.js';
 import { Browser } from '../../common/browser/browser.js';
 import { BrowserMsg } from '../../common/browser/browser-msg.js';
 import { ApiErr } from '../../common/api/error/api-error.js';
-import { PgpArmor } from '../../common/core/pgp/armor.js';
 import { AjaxErr } from '../../common/api/error/api-error-types.js';
+import { PgpArmor } from '../../common/core/pgp-armor.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 

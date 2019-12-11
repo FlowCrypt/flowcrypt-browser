@@ -19,7 +19,7 @@ import { Lang } from '../../../../js/common/lang.js';
 import { ComposerResetBtnTrigger, ComposerUserError } from '../composer-errs.js';
 import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
 import { Settings } from '../../../../js/common/settings.js';
-import { PgpArmor } from '../../../../js/common/core/pgp/armor.js';
+import { PgpArmor } from '../../../../js/common/core/pgp-armor.js';
 import { ApiErr } from '../../../../js/common/api/error/api-error.js';
 
 declare const openpgp: typeof OpenPGP;

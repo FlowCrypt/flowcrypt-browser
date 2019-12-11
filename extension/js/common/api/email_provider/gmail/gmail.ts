@@ -19,7 +19,7 @@ import { Store } from '../../../platform/store.js';
 import { GmailRes, GmailParser } from './gmail-parser.js';
 import { GoogleAuth } from '../../google-auth.js';
 import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window.js';
-import { PgpArmor } from '../../../core/pgp/armor.js';
+import { PgpArmor } from '../../../core/pgp-armor.js';
 import { AjaxErr } from '../../error/api-error-types.js';
 
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';

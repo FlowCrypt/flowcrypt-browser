@@ -13,7 +13,7 @@ import { Xss } from './platform/xss.js';
 import { SendAsAlias } from './platform/store.js';
 import { Ui } from './browser/ui.js';
 import { WebMailName } from './browser/env.js';
-import { PgpArmor } from './core/pgp/armor.js';
+import { PgpArmor } from './core/pgp-armor.js';
 
 type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';

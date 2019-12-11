@@ -13,7 +13,7 @@ import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
-import { PgpArmor } from '../../js/common/core/pgp/armor.js';
+import { PgpArmor } from '../../js/common/core/pgp-armor.js';
 
 declare const openpgp: typeof OpenPGP;
 

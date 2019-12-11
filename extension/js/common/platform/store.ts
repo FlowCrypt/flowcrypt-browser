@@ -15,7 +15,7 @@ import { GoogleAuth } from '../api/google-auth.js';
 import { DomainRules } from '../rules.js';
 import { Env } from '../browser/env.js';
 import { Ui } from '../browser/ui.js';
-import { PgpArmor } from '../core/pgp/armor.js';
+import { PgpArmor } from '../core/pgp-armor.js';
 
 // tslint:disable:no-null-keyword
 

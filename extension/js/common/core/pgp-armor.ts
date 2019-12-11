@@ -2,11 +2,11 @@
 
 'use strict';
 
-import { ReplaceableMsgBlockType, MsgBlock } from '../mime.js';
-import { Str } from '../common.js';
-import { Pgp, openpgp } from '../pgp.js';
-import { Catch } from '../../platform/catch.js';
-import { Buf } from '../buf.js';
+import { ReplaceableMsgBlockType, MsgBlock } from './mime.js';
+import { Str } from './common.js';
+import { Pgp, openpgp } from './pgp.js';
+import { Catch } from '../platform/catch.js';
+import { Buf } from './buf.js';
 
 export type PreparedForDecrypt = { isArmored: boolean, isCleartext: true, message: OpenPGP.cleartext.CleartextMessage }
   | { isArmored: boolean, isCleartext: false, message: OpenPGP.message.Message };

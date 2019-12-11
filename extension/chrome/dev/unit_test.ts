@@ -4,7 +4,7 @@
 
 import { Pgp } from '../../js/common/core/pgp.js';
 import { Url } from '../../js/common/core/common.js';
-import { PgpArmor } from '../../js/common/core/pgp/armor.js';
+import { PgpArmor } from '../../js/common/core/pgp-armor.js';
 
 (async () => {
 
