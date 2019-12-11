@@ -288,7 +288,8 @@ View.run(class BackupView extends View {
         if (storage.setup_simple) {
           $('.status_summary').text('No backups found on this account. You can store a backup of your key in email inbox. Your key will be protected by a pass phrase of your choice.');
           Xss.sanitizeRender('#step_0_status .container',
-            '<button class="button long green action_proceed_default_backup_choice">BACK UP MY KEY</button><br><br><br><a href="#" class="action_go_manual">See more advanced backup options</a>');
+            `<button class="button long green action_proceed_default_backup_choice">BACK UP MY KEY</button><br><br><br>
+            <a href="#" class="action_go_manual">See more advanced backup options</a>`);
         } else {
           $('.status_summary').text('No backups found on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
           Xss.sanitizeRender('#step_0_status .container', '<button class="button long green action_go_manual">BACK UP MY KEY</button>');
@@ -297,7 +298,8 @@ View.run(class BackupView extends View {
     } else { // gmail read permission not granted - cannot check for backups
       this.displayBlock('step_0_status');
       $('.status_summary').text('FlowCrypt cannot check your backups.');
-      const pemissionsBtnIfGmail = this.emailProvider === 'gmail' ? '<button class="button long green action_go_auth_denied">SEE PERMISSIONS</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' : '';
+      const pemissionsBtnIfGmail = this.emailProvider === 'gmail' ?
+        '<button class="button long green action_go_auth_denied">SEE PERMISSIONS</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' : '';
       Xss.sanitizeRender('#step_0_status .container', `${pemissionsBtnIfGmail}<button class="button long gray action_go_manual">SEE BACKUP OPTIONS</button>`);
     }
   }
