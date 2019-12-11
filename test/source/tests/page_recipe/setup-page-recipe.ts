@@ -53,9 +53,12 @@ export class SetupPageRecipe extends PageRecipe {
     } else if (backup === 'email') {
       throw new Error('tests.setup_manual_create options.backup=email not implemented');
     } else if (backup === 'file') {
-      throw new Error('tests.setup_manual_create options.backup=file not implemented');
+      await settingsPage.waitAndClick('@input-backup-step3manual-file');
     }
     await settingsPage.waitAndClick('@action-backup-step3manual-continue');
+    if (backup === 'file') {
+      await settingsPage.waitAndRespondToModal('info', 'confirm', 'Downloading private key backup file');
+    }
     await settingsPage.waitAndClick('@action-step4done-account-settings');
     await SettingsPageRecipe.ready(settingsPage);
   }
