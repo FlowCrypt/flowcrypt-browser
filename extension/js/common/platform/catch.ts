@@ -147,6 +147,9 @@ export class Catch {
 
   public static reportErr = (e: any) => {
     const { line, col } = Catch.getErrorLineAndCol(e);
+    if (e instanceof Error) { // reporting stack may differ from the stack of the actual error, both may be interesting
+      e.stack += `\n\n### Catch.reportErr calling stack ###\n# ${Catch.stackTrace().split('\n').join('\n# ')}\n######################`;
+    }
     Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
   }
 
