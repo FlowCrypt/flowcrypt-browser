@@ -53,7 +53,8 @@ export class SetupPageRecipe extends PageRecipe {
     } else if (backup === 'email') {
       throw new Error('tests.setup_manual_create options.backup=email not implemented');
     } else if (backup === 'file') {
-      throw new Error('tests.setup_manual_create options.backup=file not implemented');
+      await settingsPage.waitAny('@action-backup-download'); // Only check if there is a checkbox.
+      return;
     }
     await settingsPage.waitAndClick('@action-backup-step3manual-continue');
     await settingsPage.waitAndClick('@action-step4done-account-settings');
