@@ -3,7 +3,7 @@
 'use strict';
 
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Ui, JQS } from '../../../js/common/browser/ui.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { RecipientType } from '../../../js/common/api/api.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -294,23 +294,13 @@ export class ComposerRender extends ComposerComponent {
   }
 
   renderAddPubkeyDialog = (emails: string[]) => {
-    if (this.view.placement !== 'settings') {
-      BrowserMsg.send.addPubkeyDialog(this.view.parentTabId, { emails });
-    } else {
-      ($ as JQS).featherlight({
-        iframe: this.composer.view.factory!.srcAddPubkeyDialog(emails, 'settings'),
-        iframeWidth: 515,
-        iframeHeight: $('body').height()! - 50, // body element is always present
-      });
-    }
+    BrowserMsg.send.addPubkeyDialog(this.view.parentTabId, { emails });
   }
 
   closeMsg = () => {
     $('body').attr('data-test-state', 'closed'); // used by automated tests
     if (this.view.isReplyBox) {
       BrowserMsg.send.closeReplyMessage(this.view.parentTabId, { frameId: this.view.frameId });
-    } else if (this.view.placement === 'settings') {
-      BrowserMsg.send.closePage(this.view.parentTabId);
     } else {
       BrowserMsg.send.closeNewMessage(this.view.parentTabId);
     }

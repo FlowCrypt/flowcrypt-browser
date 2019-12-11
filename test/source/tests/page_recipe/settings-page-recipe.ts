@@ -28,7 +28,7 @@ export class SettingsPageRecipe extends PageRecipe {
     await SettingsPageRecipe.ready(settingsPage);
     await settingsPage.waitAndClick(actionBtnSel);
     await settingsPage.waitAll('@dialog');
-    return await settingsPage.getFrame(frameUrlFilter); // placement=settings to differentiate from mini-security frame in settings
+    return await settingsPage.getFrame(frameUrlFilter);
   }
 
   public static swithAcct = async (settingsPage: ControllablePage, acctEmail: string) => {
