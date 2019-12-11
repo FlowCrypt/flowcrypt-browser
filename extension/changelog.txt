@@ -1,5 +1,7 @@
 <div>
 
+version 7.4.0 on Dec 11, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/374?closed=1" target="_blank">Dynamic org rules</a>
+
 version 7.3.8 on Dec 10, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/376?closed=1" target="_blank">Code quality</a>
 
 version 7.3.7 on Dec 9, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/375?closed=1" target="_blank">Bugfixes</a>
