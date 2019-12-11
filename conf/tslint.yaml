@@ -6,6 +6,7 @@ linterOptions:
     - node_modules
 rules: #
     allow-js: false
+    max-line-length: false
     object-literal-sort-keys: false
     arrow-parens: false
     no-console: false
