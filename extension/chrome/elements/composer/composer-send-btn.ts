@@ -8,7 +8,6 @@ import { Composer } from './composer.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { Api } from '../../../js/common/api/api.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Pgp, KeyInfo } from '../../../js/common/core/pgp.js';
 import { Store } from '../../../js/common/platform/store.js';
@@ -17,6 +16,7 @@ import { Att } from '../../../js/common/core/att.js';
 import { GeneralMailFormatter } from './formatters/composer-mail-formatter.js';
 import { ComposerSendBtnPopover } from './composer-send-btn-popover.js';
 import { GmailRes } from '../../../js/common/api/email_provider/gmail/gmail-parser.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 export class ComposerSendBtn extends ComposerComponent {
 
@@ -131,7 +131,7 @@ export class ComposerSendBtn extends ComposerComponent {
       this.isSendMessageInProgress = true;
       msgSentRes = await this.composer.emailProvider.msgSend(msg, (progress) => this.renderUploadProgress(progress));
     } catch (e) {
-      if (msg.thread && Api.err.isNotFound(e) && this.view.threadId) { // cannot send msg because threadId not found - eg user since deleted it
+      if (msg.thread && ApiErr.isNotFound(e) && this.view.threadId) { // cannot send msg because threadId not found - eg user since deleted it
         msg.thread = undefined;
         msgSentRes = await this.composer.emailProvider.msgSend(msg, (progress) => this.renderUploadProgress(progress));
       } else {

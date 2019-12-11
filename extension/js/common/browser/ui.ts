@@ -6,7 +6,7 @@ import Swal from 'sweetalert2';
 import { Dict } from '../core/common.js';
 import { Catch } from '../platform/catch.js';
 import { Xss } from '../platform/xss.js';
-import { Api } from '../api/api.js';
+import { ApiErr } from '../api/error/api-error.js';
 
 type NamedSels = Dict<JQuery<HTMLElement>>;
 type ProvidedEventHandler = (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>;
@@ -187,11 +187,11 @@ export class Ui {
       };
     },
     _dispatchErr: (e: any, errHandlers?: BrowserEventErrHandler) => {
-      if (Api.err.isNetErr(e) && errHandlers && errHandlers.network) {
+      if (ApiErr.isNetErr(e) && errHandlers && errHandlers.network) {
         errHandlers.network().catch(Catch.reportErr);
-      } else if (Api.err.isAuthErr(e) && errHandlers && errHandlers.auth) {
+      } else if (ApiErr.isAuthErr(e) && errHandlers && errHandlers.auth) {
         errHandlers.auth().catch(Catch.reportErr);
-      } else if (Api.err.isAuthPopupNeeded(e) && errHandlers && errHandlers.authPopup) {
+      } else if (ApiErr.isAuthPopupNeeded(e) && errHandlers && errHandlers.authPopup) {
         errHandlers.authPopup().catch(Catch.reportErr);
       } else if (errHandlers && errHandlers.other) {
         errHandlers.other(e).catch(Catch.reportErr);

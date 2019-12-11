@@ -7,11 +7,11 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Str, Url } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Api } from '../../../js/common/api/api.js';
 import { Backend } from '../../../js/common/api/backend.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { View } from '../../../js/common/view.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 View.run(class HelpView extends View {
 
@@ -71,11 +71,9 @@ View.run(class HelpView extends View {
         await Ui.modal.error('There was an error sending message. Our direct email is human@flowcrypt.com');
       }
     } catch (e) {
-      if (Api.err.isSignificant(e)) {
-        Catch.reportErr(e);
-      }
+      ApiErr.reportIfSignificant(e);
       $(target).text(origBtnText);
-      await Ui.modal.error(`There was an error sending message. Our direct email is human@flowcrypt.com\n\n${Api.err.eli5(e)}`);
+      await Ui.modal.error(`There was an error sending message. Our direct email is human@flowcrypt.com\n\n${ApiErr.eli5(e)}`);
     }
   }
 

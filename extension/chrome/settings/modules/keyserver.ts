@@ -2,19 +2,18 @@
 
 'use strict';
 
-import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Dict, Url } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Api } from '../../../js/common/api/api.js';
 import { Attester } from '../../../js/common/api/attester.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Lang } from '../../../js/common/lang.js';
 import { View } from '../../../js/common/view.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 type AttesterKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: string, match: boolean }> };
 
@@ -38,7 +37,7 @@ View.run(class KeyserverView extends View {
       if (isRefreshed && await Ui.modal.confirm(Lang.general.emailAliasChangedAskForReload)) {
         window.location.reload();
       }
-    })().catch(Api.err.reportIfSignificant);
+    })().catch(ApiErr.reportIfSignificant);
     const diagnosis = await this.diagnoseKeyserverPubkeys();
     $('.summary').text('');
     for (const email of Object.keys(diagnosis.results)) {
@@ -76,10 +75,8 @@ View.run(class KeyserverView extends View {
     try {
       await Attester.initialLegacySubmit(String($(target).attr('email')), primaryKi.public);
     } catch (e) {
-      if (Api.err.isSignificant(e)) {
-        Catch.reportErr(e);
-      }
-      await Ui.modal.error(Api.err.eli5(e));
+      ApiErr.reportIfSignificant(e);
+      await Ui.modal.error(ApiErr.eli5(e));
     } finally {
       window.location.reload();
     }
@@ -94,10 +91,8 @@ View.run(class KeyserverView extends View {
       await Ui.modal.info(responseText);
       BrowserMsg.send.closePage(this.parentTabId);
     } catch (e) {
-      if (Api.err.isSignificant(e)) {
-        Catch.reportErr(e);
-      }
-      await Ui.modal.error(Api.err.eli5(e));
+      ApiErr.reportIfSignificant(e);
+      await Ui.modal.error(ApiErr.eli5(e));
       window.location.reload();
     }
   }

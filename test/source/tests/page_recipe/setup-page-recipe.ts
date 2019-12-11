@@ -53,9 +53,14 @@ export class SetupPageRecipe extends PageRecipe {
     } else if (backup === 'email') {
       throw new Error('tests.setup_manual_create options.backup=email not implemented');
     } else if (backup === 'file') {
-      throw new Error('tests.setup_manual_create options.backup=file not implemented');
+      await settingsPage.waitAndClick('@input-backup-step3manual-file');
     }
     await settingsPage.waitAndClick('@action-backup-step3manual-continue');
+    if (backup === 'file') {
+      await settingsPage.waitAll('@ui-modal-info', { timeout: 60 }); // explicit wait first with longer timeout - creating key can take a while
+      await settingsPage.waitAndRespondToModal('info', 'confirm', 'Downloading private key backup file');
+    }
+    await settingsPage.waitAll('@action-step4done-account-settings', { timeout: 60 }); // create key timeout
     await settingsPage.waitAndClick('@action-step4done-account-settings');
     await SettingsPageRecipe.ready(settingsPage);
   }

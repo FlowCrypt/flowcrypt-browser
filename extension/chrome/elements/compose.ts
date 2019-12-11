@@ -5,7 +5,6 @@
 import { Store, AccountStoreExtension, Scopes, AccountStore } from '../../js/common/platform/store.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Composer } from './composer/composer.js';
-import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { openpgp } from '../../js/common/core/pgp.js';
 import { ReplyParams, EmailProviderInterface } from '../../js/common/api/email_provider/email_provider_api.js';
@@ -17,6 +16,7 @@ import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
 import { GmailParser } from '../../js/common/api/email_provider/gmail/gmail-parser.js';
+import { ApiErr } from '../../js/common/api/error/api-error.js';
 
 export type DeterminedMsgHeaders = {
   lastMsgId: string,
@@ -30,7 +30,6 @@ export class ComposeView extends View {
   public readonly frameId: string;
   public readonly ignoreDraft: boolean;
   public readonly removeAfterClose: boolean;
-  public readonly placement: 'settings' | 'gmail' | undefined;
   public readonly disableDraftSaving: boolean;
   public readonly debug: boolean;
   public readonly isReplyBox: boolean;
@@ -51,7 +50,7 @@ export class ComposeView extends View {
   constructor() {
     super();
     Ui.event.protect();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId',
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'draftId', 'frameId',
       'replyMsgId', 'skipClickPrompt', 'ignoreDraft', 'debug', 'removeAfterClose', 'replyPubkeyMismatch']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
@@ -59,7 +58,6 @@ export class ComposeView extends View {
     this.skipClickPrompt = uncheckedUrlParams.skipClickPrompt === true;
     this.ignoreDraft = uncheckedUrlParams.ignoreDraft === true;
     this.removeAfterClose = uncheckedUrlParams.removeAfterClose === true;
-    this.placement = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'placement', ['settings', 'gmail', undefined]);
     this.disableDraftSaving = false;
     this.debug = uncheckedUrlParams.debug === true;
     this.replyPubkeyMismatch = uncheckedUrlParams.replyPubkeyMismatch === true;
@@ -67,7 +65,7 @@ export class ComposeView extends View {
     this.replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
     this.isReplyBox = !!this.replyMsgId;
     this.emailProvider = new Gmail(this.acctEmail);
-    Backend.getSubscriptionWithoutLogin(this.acctEmail).catch(Api.err.reportIfSignificant); // updates storage
+    Backend.getSubscriptionWithoutLogin(this.acctEmail).catch(ApiErr.reportIfSignificant); // updates storage
     openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
   }
 
@@ -97,7 +95,7 @@ export class ComposeView extends View {
     return {
       acctEmail: this.acctEmail, draftId: this.draftId, threadId: this.threadId, replyMsgId: this.replyMsgId, ...this.replyParams,
       frameId: this.frameId, tabId: this.tabId!, isReplyBox: this.isReplyBox, skipClickPrompt: this.skipClickPrompt, parentTabId: this.parentTabId,
-      disableDraftSaving: this.disableDraftSaving, debug: this.debug, removeAfterClose: this.removeAfterClose, placement: this.placement,
+      disableDraftSaving: this.disableDraftSaving, debug: this.debug, removeAfterClose: this.removeAfterClose,
       replyPubkeyMismatch: this.replyPubkeyMismatch,
     };
   }
@@ -110,7 +108,7 @@ export class ComposeView extends View {
       this.replyParams = GmailParser.determineReplyMeta(this.acctEmail, aliases, gmailMsg);
       this.threadId = gmailMsg.threadId || '';
     } catch (e) {
-      if (Api.err.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
       }
       if (e instanceof Error) {

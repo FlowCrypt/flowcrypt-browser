@@ -19,17 +19,15 @@ View.run(class AddPubkeyView extends View {
   private readonly acctEmail: string;
   private readonly parentTabId: string;
   private readonly missingPubkeyEmails: string[];
-  private readonly placement: string | undefined;
   private readonly fetchKeyUi = new FetchKeyUI();
   private readonly attUI = new AttUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
 
   constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'emails', 'placement']);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'emails']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.missingPubkeyEmails = Assert.urlParamRequire.string(uncheckedUrlParams, 'emails').split(',');
-    this.placement = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'placement');
   }
 
   render = async () => {
@@ -41,11 +39,7 @@ View.run(class AddPubkeyView extends View {
       Xss.sanitizeAppend('select.copy_from_email', `<option value="${Xss.escape(contact.email)}">${Xss.escape(contact.email)}</option>`);
     }
     this.fetchKeyUi.handleOnPaste($('.pubkey'));
-    if (this.placement !== 'settings') {
-      $('.action_settings').click(this.setHandler(() => BrowserMsg.send.bg.settings({ path: 'index.htm', page: '/chrome/settings/modules/contacts.htm', acctEmail: this.acctEmail })));
-    } else {
-      $('#content').addClass('inside_compose');
-    }
+    $('.action_settings').click(this.setHandler(() => BrowserMsg.send.bg.settings({ path: 'index.htm', page: '/chrome/settings/modules/contacts.htm', acctEmail: this.acctEmail })));
   }
 
   setHandlers = () => {

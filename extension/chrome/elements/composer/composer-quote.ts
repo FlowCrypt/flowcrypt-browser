@@ -6,7 +6,7 @@ import { MessageToReplyOrForward } from './composer-types.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { Api, ProgressCb } from '../../../js/common/api/api.js';
+import { ProgressCb } from '../../../js/common/api/api.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposerComponent } from './composer-abstract-component.js';
 import { Mime, MsgBlock } from '../../../js/common/core/mime.js';
@@ -14,6 +14,7 @@ import { Buf } from '../../../js/common/core/buf.js';
 import { FormatError, PgpMsg } from '../../../js/common/core/pgp.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
 import { Store } from '../../../js/common/platform/store.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 export class ComposerQuote extends ComposerComponent {
   public messageToReplyOrForward: MessageToReplyOrForward | undefined;
@@ -37,10 +38,8 @@ export class ComposerQuote extends ComposerComponent {
       try {
         this.messageToReplyOrForward = await this.getAndDecryptMessage(msgId, method, (progress) => this.setQuoteLoaderProgress(progress + '%'));
       } catch (e) {
-        if (Api.err.isSignificant(e)) {
-          Catch.reportErr(e);
-        }
-        await Ui.modal.error(`Could not load quoted content, please try again.\n\n${Api.err.eli5(e)}`);
+        ApiErr.reportIfSignificant(e);
+        await Ui.modal.error(`Could not load quoted content, please try again.\n\n${ApiErr.eli5(e)}`);
       }
       this.composer.S.cached('icon_show_prev_msg').find('#loader').remove();
       this.composer.S.cached('icon_show_prev_msg').removeClass('progress');
@@ -195,9 +194,9 @@ export class ComposerQuote extends ComposerComponent {
     } catch (e) {
       if (e instanceof FormatError) {
         Xss.sanitizeAppend(this.composer.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.escape(e.data)}`);
-      } else if (Api.err.isNetErr(e)) {
+      } else if (ApiErr.isNetErr(e)) {
         // todo: retry
-      } else if (Api.err.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       } else {
         Catch.reportErr(e);

@@ -104,32 +104,31 @@ export class AttUI {
   private processNewAtt = async (uploadFileId: string) => {
     const limits = await this.getLimits();
     if (limits.count && Object.keys(this.attachedFiles).length >= limits.count) {
-      await Ui.modal.warning('Amount of attached files is limited to ' + limits.count);
-      throw new Error(`Error: Number of files is more than ${limits.count}`);
-    } else {
-      const newFile: File = this.uploader.getFile(uploadFileId); // tslint:disable-line:no-unsafe-any
-      if (limits.size && this.getFileSizeSum() + newFile.size > limits.size) {
-        if (typeof limits.oversize === 'function') {
-          await limits.oversize(this.getFileSizeSum() + newFile.size);
-        } else {
-          await Ui.modal.warning('Combined file size is limited to ' + limits.sizeMb + 'MB');
-        }
-        throw new Error(`Error: Combined file size is more than maximum.`);
-      }
-      this.attachedFiles[uploadFileId] = newFile;
-      if (typeof this.callbacks.attAdded === 'function') {
-        const a = await this.collectAtt(uploadFileId);
-        await this.callbacks.attAdded(a);
-        const input = this.setInputAttributes();
-        input.focus();
-      }
-      if (this.callbacks.uiChanged) {
-        // run at next event loop cycle - let DOM changes render first
-        // this allows code that relies on this to evaluate the DOM after the file has been removed from it
-        Catch.setHandledTimeout(this.callbacks.uiChanged, 0);
-      }
-      return true;
+      await Ui.modal.warning(`Amount of attached files is limited to ${limits.count}`);
+      return;
     }
+    const newFile: File = this.uploader.getFile(uploadFileId); // tslint:disable-line:no-unsafe-any
+    if (limits.size && this.getFileSizeSum() + newFile.size > limits.size) {
+      if (typeof limits.oversize === 'function') {
+        await limits.oversize(this.getFileSizeSum() + newFile.size);
+      } else {
+        await Ui.modal.warning(`Combined file size is limited to ${limits.sizeMb} MB`);
+      }
+      return;
+    }
+    this.attachedFiles[uploadFileId] = newFile;
+    if (typeof this.callbacks.attAdded === 'function') {
+      const a = await this.collectAtt(uploadFileId);
+      await this.callbacks.attAdded(a);
+      const input = this.setInputAttributes();
+      input.focus();
+    }
+    if (this.callbacks.uiChanged) {
+      // run at next event loop cycle - let DOM changes render first
+      // this allows code that relies on this to evaluate the DOM after the file has been removed from it
+      Catch.setHandledTimeout(this.callbacks.uiChanged, 0);
+    }
+    return true;
   }
 
   public addFile = (file: File) => {

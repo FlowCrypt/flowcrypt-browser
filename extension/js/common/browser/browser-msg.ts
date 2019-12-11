@@ -8,12 +8,12 @@ import { GlobalIndex, GlobalStore, AccountIndex, AccountStore } from '../platfor
 import { Browser } from './browser.js';
 import { Catch } from '../platform/catch.js';
 import { Buf } from '../core/buf.js';
-import { AjaxErr } from '../api/api.js';
 import { PassphraseDialogType } from '../xss_safe_factory.js';
 import { AuthRes } from '../api/google-auth.js';
 import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
 import { Env } from './env.js';
 import { Ui } from './ui.js';
+import { AjaxErr } from '../api/error/api-error-types.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 

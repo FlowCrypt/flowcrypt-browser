@@ -28,7 +28,7 @@ export class SettingsPageRecipe extends PageRecipe {
     await SettingsPageRecipe.ready(settingsPage);
     await settingsPage.waitAndClick(actionBtnSel);
     await settingsPage.waitAll('@dialog');
-    return await settingsPage.getFrame(frameUrlFilter); // placement=settings to differentiate from mini-security frame in settings
+    return await settingsPage.getFrame(frameUrlFilter);
   }
 
   public static swithAcct = async (settingsPage: ControllablePage, acctEmail: string) => {
@@ -82,7 +82,7 @@ export class SettingsPageRecipe extends PageRecipe {
     const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
     await securityFrame.waitAndClick('@action-test-passphrase-begin');
     await securityFrame.waitAndType('@input-test-passphrase', passphrase);
-    await securityFrame.waitAndClick('@action-test-passphrase');
+    await securityFrame.waitAndClick('@action-test-passphrase', { delay: 0.5 });
     if (expectMatch) {
       await securityFrame.waitAndClick('@action-test-passphrase-successful-close');
     } else {

@@ -20,6 +20,7 @@ module.exports = {
     'no-only-tests'
   ],
   rules: {
+    'indent': ['error', 2, { SwitchCase: 1 }],
     'semi': 'error',
     'no-constant-condition': 0,
     'no-prototype-builtins': 0,

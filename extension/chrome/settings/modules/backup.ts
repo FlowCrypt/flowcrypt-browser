@@ -11,7 +11,6 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Api } from '../../../js/common/api/api.js';
 import { Pgp, KeyInfo } from '../../../js/common/core/pgp.js';
 import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 import { Buf } from '../../../js/common/core/buf.js';
@@ -23,6 +22,7 @@ import { View } from '../../../js/common/view.js';
 import { KeyImportUi } from './../../../js/common/ui/key_import_ui.js';
 import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
 import { Ui } from '../../../js/common/browser/ui.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -114,9 +114,9 @@ View.run(class BackupView extends View {
         await this.doBackupOnEmailProvider(primaryKi.private);
         $('#content').text('Pass phrase changed. You will find a new backup in your inbox.');
       } catch (e) {
-        if (Api.err.isNetErr(e)) {
+        if (ApiErr.isNetErr(e)) {
           Xss.sanitizeRender('#content', 'Connection failed, please <a href="#" class="reload">try again</a>');
-        } else if (Api.err.isAuthPopupNeeded(e)) {
+        } else if (ApiErr.isAuthPopupNeeded(e)) {
           Xss.sanitizeRender('#content', 'Need to reconnect to Google to save backup: <a href="#" class="auth_reconnect">reconnect now</a>');
         } else {
           Xss.sanitizeRender('#content', `Unknown error: ${String(e)}<br><a href="#" class="reload">try again</a>`);
@@ -177,9 +177,9 @@ View.run(class BackupView extends View {
       try {
         await this.doBackupOnEmailProvider(prv.armor());
       } catch (e) {
-        if (Api.err.isNetErr(e)) {
+        if (ApiErr.isNetErr(e)) {
           await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
-        } else if (this.parentTabId && Api.err.isAuthPopupNeeded(e)) {
+        } else if (this.parentTabId && ApiErr.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
           await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
         } else {
@@ -197,7 +197,7 @@ View.run(class BackupView extends View {
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
     const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-    if (!await this.isMasterPrivateKeyEncrypted(primaryKi)) {
+    if (!await this.isPrivateKeyEncrypted(primaryKi)) {
       await Ui.modal.error('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
       return;
     }
@@ -256,18 +256,16 @@ View.run(class BackupView extends View {
       try {
         keys = await this.gmail.fetchKeyBackups();
       } catch (e) {
-        if (Api.err.isNetErr(e)) {
+        if (ApiErr.isNetErr(e)) {
           Xss.sanitizeRender('#content', `Could not check for backups: no internet. ${Ui.retryLink()}`);
-        } else if (Api.err.isAuthPopupNeeded(e)) {
+        } else if (ApiErr.isAuthPopupNeeded(e)) {
           if (this.parentTabId) {
             BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
           }
           Xss.sanitizeRender('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retryLink()}`);
         } else {
-          if (Api.err.isSignificant(e)) {
-            Catch.reportErr(e);
-          }
-          Xss.sanitizeRender('#content', `Could not check for backups: unknown error (${String(e)}). ${Ui.retryLink()}`);
+          ApiErr.reportIfSignificant(e);
+          Xss.sanitizeRender('#content', `Could not check for backups: ${ApiErr.eli5(e)} (${String(e)}). ${Ui.retryLink()}`);
         }
         return;
       }
@@ -304,7 +302,7 @@ View.run(class BackupView extends View {
     }
   }
 
-  private isMasterPrivateKeyEncrypted = async (ki: KeyInfo) => {
+  private isPrivateKeyEncrypted = async (ki: KeyInfo) => {
     const { keys: [prv] } = await openpgp.key.readArmored(ki.private);
     if (await Pgp.key.decrypt(prv, '', undefined, 'OK-IF-ALREADY-DECRYPTED') === true) {
       return false;
@@ -313,7 +311,7 @@ View.run(class BackupView extends View {
   }
 
   private asBackupFile = (armoredKey: string) => {
-    return new Att({ name: `flowcrypt-backup-${this.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'text/plain', data: Buf.fromUtfStr(armoredKey) });
+    return new Att({ name: `flowcrypt-backup-${this.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'application/pgp-keys', data: Buf.fromUtfStr(armoredKey) });
   }
 
   private doBackupOnEmailProvider = async (armoredKey: string) => {
@@ -349,9 +347,9 @@ View.run(class BackupView extends View {
     try {
       await this.doBackupOnEmailProvider(primaryKi.private);
     } catch (e) {
-      if (Api.err.isNetErr(e)) {
+      if (ApiErr.isNetErr(e)) {
         return await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
-      } else if (Api.err.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
         return await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
       } else {
@@ -366,12 +364,9 @@ View.run(class BackupView extends View {
 
   private backupAsFile = async (primaryKi: KeyInfo) => { // todo - add a non-encrypted download option
     const attachment = this.asBackupFile(primaryKi.private);
-    if (Catch.browser().name !== 'firefox') {
-      Browser.saveToDownloads(attachment);
-      await this.writeBackupDoneAndRender(false, 'file');
-    } else {
-      Browser.saveToDownloads(attachment, $('.backup_action_buttons_container'));
-    }
+    Browser.saveToDownloads(attachment);
+    await Ui.modal.info('Downloading private key backup file..');
+    await this.writeBackupDoneAndRender(false, 'file');
   }
 
   private backupByBrint = async (primaryKi: KeyInfo) => { // todo - implement + add a non-encrypted print option
@@ -425,7 +420,7 @@ View.run(class BackupView extends View {
       await this.doBackupOnEmailProvider(primaryKi.private);
       await this.writeBackupDoneAndRender(false, 'inbox');
     } catch (e) {
-      if (Api.err.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthPopupNeeded(e)) {
         await Ui.modal.info("Authorization Error. FlowCrypt needs to reconnect your Gmail account");
         const connectResult = await GoogleAuth.newAuthPopup({ acctEmail: this.acctEmail });
         if (!connectResult.error) {

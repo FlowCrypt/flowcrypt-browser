@@ -9,7 +9,6 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Notifications } from '../../../js/common/notifications.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Api } from '../../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { Lang } from '../../../js/common/lang.js';
@@ -23,6 +22,7 @@ import { WebmailCommon } from "../../../js/common/webmail.js";
 import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
 import { GmailRes, GmailParser } from '../../../js/common/api/email_provider/gmail/gmail-parser.js';
 import { BrowserMsgCommonHandlers } from '../../../js/common/browser/browser-msg-common-handlers.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 Catch.try(async () => {
 
@@ -112,7 +112,7 @@ Catch.try(async () => {
   });
   BrowserMsg.addListener('subscribe_dialog', async ({ isAuthErr }: Bm.SubscribeDialog) => {
     if (!$('#cryptup_dialog').length) {
-      $('body').append(factory.dialogSubscribe(undefined, isAuthErr)); // xss-safe-factory
+      $('body').append(factory.dialogSubscribe(isAuthErr)); // xss-safe-factory
     }
   });
   BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
@@ -248,11 +248,11 @@ Catch.try(async () => {
         threadItem.find('.msg_count').text(`(${thread.messages.length})`);
       }
     } catch (e) {
-      if (Api.err.isNetErr(e)) {
+      if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender(threadItem.find('.loading'), 'Failed to load (network) <a href="#">retry</a>').find('a').click(Ui.event.handle(() => renderInboxItem(threadId)));
-      } else if (Api.err.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthPopupNeeded(e)) {
         renderAndHandleAuthPopupNotification();
-      } else if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
+      } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         showNotification(Lang.account.googleAcctDisabledOrPolicy);
       } else {
         Catch.reportErr(e);
@@ -317,17 +317,17 @@ Catch.try(async () => {
       const { labels } = await gmail.labelsGet();
       renderMenuAndLabelStyles(labels);
     } catch (e) {
-      if (Api.err.isNetErr(e)) {
+      if (ApiErr.isNetErr(e)) {
         showNotification(`Connection error trying to get list of folders ${Ui.retryLink()}`);
-      } else if (Api.err.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthPopupNeeded(e)) {
         renderAndHandleAuthPopupNotification();
-      } else if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
+      } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         showNotification(Lang.account.googleAcctDisabledOrPolicy);
-      } else if (Api.err.isInsufficientPermission(e)) {
+      } else if (ApiErr.isInsufficientPermission(e)) {
         renderAndHandleAuthPopupNotification(true);
       } else {
         Catch.reportErr(e);
-        await Ui.modal.error(`Error trying to get list of folders: ${Api.err.eli5(e)}\n\n${String(e)}`);
+        await Ui.modal.error(`Error trying to get list of folders: ${ApiErr.eli5(e)}\n\n${String(e)}`);
         window.location.reload();
       }
     }
@@ -344,17 +344,17 @@ Catch.try(async () => {
         Xss.sanitizeRender('.threads', `<p>No encrypted messages in ${labelId} yet. ${Ui.retryLink()}</p>`);
       }
     } catch (e) {
-      if (Api.err.isNetErr(e)) {
+      if (ApiErr.isNetErr(e)) {
         showNotification(`Connection error trying to get list of messages ${Ui.retryLink()}`);
-      } else if (Api.err.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthPopupNeeded(e)) {
         renderAndHandleAuthPopupNotification();
-      } else if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
+      } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         showNotification(Lang.account.googleAcctDisabledOrPolicy);
-      } else if (Api.err.isInsufficientPermission(e)) {
+      } else if (ApiErr.isInsufficientPermission(e)) {
         renderAndHandleAuthPopupNotification(true);
       } else {
         Catch.reportErr(e);
-        await Ui.modal.error(`Error trying to get list of folders: ${Api.err.eli5(e)}\n\n${String(e)}`);
+        await Ui.modal.error(`Error trying to get list of folders: ${ApiErr.eli5(e)}\n\n${String(e)}`);
         window.location.reload();
       }
     }
@@ -383,11 +383,11 @@ Catch.try(async () => {
       }
       // await gmail.threadModify(acctEmail, threadId, [LABEL.UNREAD], []); // missing permission https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
     } catch (e) {
-      if (Api.err.isNetErr(e)) {
+      if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender('.thread', `<br>Failed to load thread - network error. ${Ui.retryLink()}`);
-      } else if (Api.err.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthPopupNeeded(e)) {
         renderAndHandleAuthPopupNotification();
-      } else if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
+      } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         showNotification(Lang.account.googleAcctDisabledOrPolicy);
       } else {
         Catch.reportErr(e);
@@ -431,11 +431,11 @@ Catch.try(async () => {
       r = `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(from)} <span style="float:right;">${headers.date}</p>` + r;
       $('.thread').append(wrapMsg(htmlId, r)); // xss-safe-factory
     } catch (e) {
-      if (Api.err.isNetErr(e)) {
+      if (ApiErr.isNetErr(e)) {
         Xss.sanitizeAppend('.thread', wrapMsg(htmlId, `Failed to load a message (network error), skipping. ${Ui.retryLink()}`));
-      } else if (Api.err.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthPopupNeeded(e)) {
         renderAndHandleAuthPopupNotification();
-      } else if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
+      } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         showNotification(Lang.account.googleAcctDisabledOrPolicy);
       } else {
         Catch.reportErr(e);
@@ -488,8 +488,8 @@ Catch.try(async () => {
     await every30Sec();
     Catch.setHandledInterval(every30Sec, 30000);
   } catch (e) {
-    Api.err.reportIfSignificant(e);
-    await Ui.modal.error(`${Api.err.eli5(e)}\n\n${String(e)}`);
+    ApiErr.reportIfSignificant(e);
+    await Ui.modal.error(`${ApiErr.eli5(e)}\n\n${String(e)}`);
   }
 
 })();

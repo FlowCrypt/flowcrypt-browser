@@ -10,7 +10,6 @@ import { Ui, JQS } from '../../js/common/browser/ui.js';
 import { Rules } from '../../js/common/rules.js';
 import { Notifications } from '../../js/common/notifications.js';
 import { Settings } from '../../js/common/settings.js';
-import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/browser/browser-msg.js';
 import { Lang } from '../../js/common/lang.js';
 import { KeyInfo } from '../../js/common/core/pgp.js';
@@ -21,6 +20,7 @@ import { Xss } from '../../js/common/platform/xss.js';
 import { View } from '../../js/common/view.js';
 import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
 import { Env } from '../../js/common/browser/env.js';
+import { ApiErr } from '../../js/common/api/error/api-error.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -90,7 +90,7 @@ View.run(class SettingsView extends View {
     BrowserMsg.addListener('subscribe_dialog', async ({ }: Bm.SubscribeDialog) => {
       // todo: use #cryptup_dialog just like passphrase_dialog does
       const factory = new XssSafeFactory(this.acctEmail!, this.tabId!);
-      const subscribeDialogSrc = factory.srcSubscribeDialog(undefined, 'settings_compose', undefined);
+      const subscribeDialogSrc = factory.srcSubscribeDialog('settings_compose', undefined);
       window.open(subscribeDialogSrc, '_blank', 'height=650,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
     });
     BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => {
@@ -214,7 +214,7 @@ View.run(class SettingsView extends View {
         const html = `<div class="line"><a href="https://flowcrypt.com${Xss.escape(post.url)}" target="_blank">${Xss.escape(post.title.trim())}</a> ${Xss.escape(post.date.trim())}</div>`;
         Xss.sanitizeAppend('.blog_post_list', html);
       }
-    }).catch(e => Api.err.isSignificant(e) ? Catch.reportErr(e) : undefined);
+    }).catch(ApiErr.reportIfSignificant);
   }
 
   private checkFcAcctAndSubscriptionAndContactPage = async () => {
@@ -236,11 +236,11 @@ View.run(class SettingsView extends View {
           statusContainer.find('.status-indicator').addClass('inactive');
         }
       } catch (e) {
-        if (Api.err.isAuthErr(e)) {
+        if (ApiErr.isAuthErr(e)) {
           const actionReauth = this.setHandler(() => Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail!));
           Xss.sanitizeRender(statusContainer, '<a class="bad" href="#">Auth Needed</a>').find('a').click(actionReauth);
           $('#status-row #status_flowcrypt').text(`fc:auth`).addClass('bad').addClass('link').click(actionReauth);
-        } else if (Api.err.isNetErr(e)) {
+        } else if (ApiErr.isNetErr(e)) {
           Xss.sanitizeRender(statusContainer, '<a href="#">Network Error - Retry</a>')
             .find('a').one('click', this.setHandler(() => this.checkFcAcctAndSubscriptionAndContactPage()));
           $('#status-row #status_flowcrypt').text(`fc:offline`);
@@ -264,15 +264,15 @@ View.run(class SettingsView extends View {
       await Ui.modal.info(`Email address changed to ${newAcctEmail}. You should now check that your public key is properly submitted.`);
       window.location.href = Url.create('index.htm', { acctEmail: newAcctEmail, page: '/chrome/settings/modules/keyserver.htm' });
     } catch (e) {
-      if (Api.err.isNetErr(e)) {
+      if (ApiErr.isNetErr(e)) {
         await Ui.modal.error('There was a network error, please try again.');
-      } else if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
+      } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         await Ui.modal.error(Lang.account.googleAcctDisabledOrPolicy);
-      } else if (Api.err.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthPopupNeeded(e)) {
         await Ui.modal.warning('New authorization needed. Please try Additional Settings -> Experimental -> Force Google Account email change');
       } else {
         Catch.reportErr(e);
-        await Ui.modal.error(`There was an error changing google account, please write human@flowcrypt.com\n\n${Api.err.eli5(e)}\n\n${String(e)}`);
+        await Ui.modal.error(`There was an error changing google account, please write human@flowcrypt.com\n\n${ApiErr.eli5(e)}\n\n${String(e)}`);
       }
     }
   }
@@ -297,15 +297,15 @@ View.run(class SettingsView extends View {
         }
       }
     } catch (e) {
-      if (Api.err.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthPopupNeeded(e)) {
         $('#status-row #status_google').text(`g:?:disconnected`).addClass('bad').attr('title', 'Not connected to Google Account, click to resolve.')
           .off().click(this.setHandler(() => Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId!, this.acctEmail)));
-      } else if (Api.err.isAuthErr(e)) {
+      } else if (ApiErr.isAuthErr(e)) {
         $('#status-row #status_google').text(`g:?:auth`).addClass('bad').attr('title', 'Auth error when checking Google Account, click to resolve.')
           .off().click(this.setHandler(() => Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId!, this.acctEmail)));
-      } else if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
+      } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         await Ui.modal.error(Lang.account.googleAcctDisabledOrPolicy);
-      } else if (Api.err.isNetErr(e)) {
+      } else if (ApiErr.isNetErr(e)) {
         $('#status-row #status_google').text(`g:?:offline`);
       } else {
         $('#status-row #status_google').text(`g:?:err`).addClass('bad').attr('title', `Cannot determine Google account: ${Xss.escape(String(e))}`);
@@ -320,7 +320,7 @@ View.run(class SettingsView extends View {
       await Backend.getSubscriptionWithoutLogin(acctEmail);
       liveness = 'live';
     } catch (e) {
-      if (!Api.err.isNetErr(e)) {
+      if (!ApiErr.isNetErr(e)) {
         Catch.reportErr(e);
         liveness = 'err';
       } else {

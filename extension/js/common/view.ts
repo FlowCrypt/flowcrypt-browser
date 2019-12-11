@@ -3,9 +3,9 @@
 
 'use strict';
 
-import { Api } from './api/api.js';
 import { Xss } from './platform/xss.js';
 import { Ui, BrowserEventErrHandler, PreventableEventName } from './browser/ui.js';
+import { ApiErr } from './api/error/api-error.js';
 
 export abstract class View {
 
@@ -26,8 +26,8 @@ export abstract class View {
   }
 
   private static reportAndRenderErr = (e: any) => {
-    Api.err.reportIfSignificant(e);
-    Xss.sanitizeRender('body', `${Api.err.eli5(e)}<br>${String(e)}<br><br>${Ui.retryLink()}`);
+    ApiErr.reportIfSignificant(e);
+    Xss.sanitizeRender('body', `${ApiErr.eli5(e)}<br>${String(e)}<br><br>${Ui.retryLink()}`);
   }
 
   public setHandler = (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) => {
