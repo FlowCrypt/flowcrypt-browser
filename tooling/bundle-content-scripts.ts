@@ -34,6 +34,7 @@ buildContentScript(([] as string[]).concat(
   getFilesInDir(`${sourceDir}/common/platform`, /\.js$/, false),
   getFilesInDir(`${sourceDir}/common/core`, /\.js$/, false),
   getFilesInDir(`${sourceDir}/common/api`, /\.js$/, false),
+  getFilesInDir(`${sourceDir}/common/api/error`, /\.js$/, false),
   getFilesInDir(`${sourceDir}/common/api/email_provider`, /\.js$/, false),
   getFilesInDir(`${sourceDir}/common/api/email_provider/gmail`, /\.js$/, false),
   getFilesInDir(`${sourceDir}/common/browser`, /\.js$/, false),
