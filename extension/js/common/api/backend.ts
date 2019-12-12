@@ -107,6 +107,7 @@ export class Backend extends Api {
     if (response.verified !== true) {
       throw new Error('account_login with id_token did not result in successful verificaion');
     }
+    await Store.setAcct(acctEmail, { uuid });
   }
 
   public static getSubscriptionWithoutLogin = async (acctEmail: string) => {
