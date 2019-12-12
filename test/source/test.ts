@@ -16,6 +16,7 @@ import { Config, Util, getParsedCliParams } from './util';
 import { FlowCryptApi } from './tests/api';
 import { getDebugHtmlAtts, AvaContext, standaloneTestTimeout, minutes, GlobalBrowser, newWithTimeoutsFunc } from './tests';
 import { mock } from './mock';
+import { mockBackendData } from './mock/backend/backend-endpoints';
 
 const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 const startedAt = Date.now();
@@ -115,6 +116,24 @@ if (isMock) {
     t.pass();
   });
 }
+
+ava.after.always('evaluate Catch.reportErr errors', async t => {
+  for (const e of mockBackendData.reportedErrors) {
+    console.info(`
+      --------------- mockBackendData Catch.reportErr ---------------
+      name: ${e.name}
+      message: ${e.message}
+      url: ${e.url}
+      line,col: ${e.line},${e.col}
+      trace: ${e.trace}
+    `);
+  }
+  if (mockBackendData.reportedErrors.length) {
+    t.fail(` Catch.reportErr errors: ${mockBackendData.reportedErrors.length}`);
+  } else {
+    t.pass();
+  }
+});
 
 ava.after.always('send debug info if any', async t => {
   console.info('send debug info - deciding');

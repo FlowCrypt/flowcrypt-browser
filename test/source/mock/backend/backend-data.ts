@@ -7,6 +7,7 @@ import { HttpAuthErr } from '../lib/api';
 export class BackendData {
 
   private uuidsByAcctEmail: Dict<string[]> = {};
+  public reportedErrors: { name: string, message: string, url: string, line: number, col: number, trace: string, version: string, environmane: string }[] = [];
 
   constructor(private oauth: OauthMock) { }
 
