@@ -145,10 +145,17 @@ export class Catch {
     }
   }
 
+  private static formattedStackBlock = (name: string, text: string) => {
+    return `\n\n### ${name} ###\n# ${Catch.stackTrace().split('\n').join('\n# ')}\n######################\n`;
+  }
+
   public static reportErr = (e: any) => {
     const { line, col } = Catch.getErrorLineAndCol(e);
     if (e instanceof Error) { // reporting stack may differ from the stack of the actual error, both may be interesting
-      e.stack += `\n\n### Catch.reportErr calling stack ###\n# ${Catch.stackTrace().split('\n').join('\n# ')}\n######################`;
+      e.stack += Catch.formattedStackBlock('Catch.reportErr calling stack', Catch.stackTrace());
+      if (e.hasOwnProperty('workerStack')) { // https://github.com/openpgpjs/openpgpjs/issues/656#event-1498323188
+        e.stack += Catch.formattedStackBlock('openpgp.js worker stack', String((e as any).workerStack));
+      }
     }
     Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
   }
