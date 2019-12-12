@@ -1,4 +1,3 @@
-import { Pgp } from './../../core/pgp';
 import { TestUrls } from './../../browser/test_urls';
 import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
 import { OauthPageRecipe } from '../page_recipe/oauth-page-recipe';
@@ -17,6 +16,7 @@ import * as request from 'fc-node-requests';
 import { PgpMsg } from '../../core/pgp';
 import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
 import { InboxPageRecipe } from '../page_recipe/inbox-page-recipe';
+import { PgpHash } from '../../core/pgp-hash';
 // tslint:disable:no-blank-lines-func
 
 export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser: TestWithNewBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
@@ -477,7 +477,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const [attElem] = await webDecryptPage.page.$x('.//@data-test-donwload-url');
       const attUrl = await PageRecipe.getElementPropertyJson(attElem, 'value');
       const res = await request.get({ url: attUrl, encoding: null }); // tslint:disable-line:no-null-keyword
-      const decryptedFile = await PgpMsg.decrypt({ encryptedData: res.body as Buffer, kisWithPp: [], msgPwd: await Pgp.hash.challengeAnswer(msgPwd) });
+      const decryptedFile = await PgpMsg.decrypt({ encryptedData: res.body as Buffer, kisWithPp: [], msgPwd: await PgpHash.challengeAnswer(msgPwd) });
       expect(decryptedFile.content!.toUtfStr()).to.equal(`small text file\nnot much here\nthis worked\n`);
     }));
 

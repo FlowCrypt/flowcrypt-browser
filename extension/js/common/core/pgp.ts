@@ -14,6 +14,7 @@ import { secureRandomBytes, base64encode } from '../platform/util.js';
 import { FcAttLinkData } from './att.js';
 import { Buf } from './buf.js';
 import { Xss } from '../platform/xss.js';
+import { PgpHash } from './pgp-hash.js';
 import { PgpArmor } from './pgp-armor.js';
 
 export const openpgp = requireOpenpgp();
@@ -235,22 +236,6 @@ export class Pgp {
     signedMsg: 'Signed Message',
     verifiedMsg: 'Verified Message'
   };
-
-  public static hash = {
-    sha1UtfStr: async (string: string): Promise<string> => {
-      return openpgp.util.Uint8Array_to_hex(await openpgp.crypto.hash.digest(openpgp.enums.hash.sha1, Buf.fromUtfStr(string)));
-    },
-    sha256UtfStr: async (string: string) => {
-      return openpgp.util.Uint8Array_to_hex(await openpgp.crypto.hash.digest(openpgp.enums.hash.sha256, Buf.fromUtfStr(string)));
-    },
-    doubleSha1Upper: async (string: string) => {
-      return (await Pgp.hash.sha1UtfStr(await Pgp.hash.sha1UtfStr(string))).toUpperCase();
-    },
-    challengeAnswer: async (answer: string) => {
-      return await Pgp.internal.cryptoHashSha256Loop(answer);
-    },
-  };
-
   public static friendlyMsgBlockTypeName = (type: MsgBlockType) => { // todo - remove this, just use the block type string
     return Pgp.FRIENDLY_BLOCK_TYPE_NAMES[type];
   }
@@ -545,12 +530,6 @@ export class Pgp {
     msgBlockDecryptErrObj: (encryptedContent: string | Buf, decryptErr: DecryptError): MsgBlock => ({ type: 'decryptErr', content: encryptedContent, decryptErr, complete: true }),
     msgBlockAttObj: (type: MsgBlockType, content: string, attMeta: AttMeta): MsgBlock => ({ type, content, complete: true, attMeta }),
     msgBlockKeyObj: (type: MsgBlockType, content: string, keyDetails: KeyDetails): MsgBlock => ({ type, content, complete: true, keyDetails }),
-    cryptoHashSha256Loop: async (string: string, times = 100000) => {
-      for (let i = 0; i < times; i++) {
-        string = await Pgp.hash.sha256UtfStr(string);
-      }
-      return string;
-    },
     longids: async (keyIds: OpenPGP.Keyid[]) => {
       const longids: string[] = [];
       for (const id of keyIds) {
@@ -836,7 +815,7 @@ export class PgpMsg {
       }
     }
     if (pwd?.answer) {
-      options.passwords = [await Pgp.hash.challengeAnswer(pwd.answer)];
+      options.passwords = [await PgpHash.challengeAnswer(pwd.answer)];
       usedChallenge = true;
     }
     if (!pubkeys && !usedChallenge) {
