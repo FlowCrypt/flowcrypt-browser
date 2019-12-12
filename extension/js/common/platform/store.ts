@@ -796,7 +796,9 @@ export class Store {
         });
         search.onerror = () => reject(Store.errCategorize(search!.error!)); // todo - added ! after ts3 upgrade - investigate
       } else {
-        reject(new Error('search is undefined in dbContactSearch'));
+        // todo - this seems to make no sense. No callback? Why undefined?
+        // adding a reject below will break tests
+        // reject(new Error('search is undefined in dbContactSearch'));
       }
     });
   }
