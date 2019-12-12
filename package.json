@@ -22,7 +22,6 @@
     "eslint": "^6.7.2",
     "eslint-plugin-no-only-tests": "^2.4.0",
     "fc-node-requests": "git+https://git@github.com/FlowCrypt/node-requests.git",
-    "json-stable-stringify": "1.0.1",
     "mailparser": "2.7.1",
     "openpgp": "4.5.4",
     "puppeteer": "1.11.0",
