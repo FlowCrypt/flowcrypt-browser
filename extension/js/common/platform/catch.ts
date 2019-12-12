@@ -3,7 +3,6 @@
 'use strict';
 
 import { VERSION } from '../core/const.js';
-import { Store } from './store.js';
 
 export class UnreportableError extends Error { }
 export type ObjWithStack = { stack: string };
@@ -127,11 +126,6 @@ export class Catch {
       console.error(ajaxErr);
       console.error('%cFlowCrypt ISSUE:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
     }
-    try {
-      Store.saveError(exception);
-    } catch (storageErr) {
-      console.error(`failed to locally log error ${String(exception)} because: ${String(storageErr)}`);
-    }
     return true;
   }
 
@@ -171,15 +165,6 @@ export class Catch {
 
   public static report = (name: string, details?: any) => {
     Catch.reportErr(Catch.nameAndDetailsAsException(name, details));
-  }
-
-  public static log = (name: string, details?: any) => {
-    const e = Catch.nameAndDetailsAsException(`Catch.log: ${name}`, details);
-    try {
-      Store.saveError(e, name);
-    } catch (storageErr) {
-      console.error(`failed to locally log "${String(name)}" because "${String(storageErr)}"`);
-    }
   }
 
   public static isPromise = (v: any): v is Promise<any> => {

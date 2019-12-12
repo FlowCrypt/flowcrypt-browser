@@ -29,7 +29,7 @@ openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
   try {
     await migrateGlobal();
     await Store.setGlobal({ version: Number(VERSION.replace(/\./g, '')) });
-    storage = await Store.getGlobal(['settings_seen', 'errors']);
+    storage = await Store.getGlobal(['settings_seen']);
   } catch (e) {
     await BgUtils.handleStoreErr(Store.errCategorize(e));
     return;
@@ -76,9 +76,5 @@ openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
 
   await BgHandlers.updateUninstallUrl({}, {});
   injectFcIntoWebmail();
-
-  if (storage.errors?.length && storage.errors.length > 100) { // todo - ideally we should be trimming it to show the last 100
-    await Store.removeGlobal(['errors']);
-  }
 
 })().catch(Catch.reportErr);
