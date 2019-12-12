@@ -210,7 +210,7 @@ export class Settings {
       '</div>',
       '<div class="line">FlowCrypt will attempt to update the key before importing.</div>',
       '<div class="line">',
-      '  <div class="button long gray action_fix_compatibility" data-test="action-fix-and-import-key">UPDATE AND IMPORT KEY</div>',
+      '  <button class="button long gray action_fix_compatibility" data-test="action-fix-and-import-key">UPDATE AND IMPORT KEY</button>',
       '</div>',
     ].join('\n'));
     container.find('select.input_fix_expire_years').change(Ui.event.handle(target => {
