@@ -361,6 +361,7 @@ export class Settings {
           const uuid = Api.randomFortyHexChars();
           try {
             await Backend.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
+            await Backend.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid });
             then();
           } catch (e) {
             await Ui.modal.error(`Could not log in with FlowCrypt:\n\n${ApiErr.eli5(e)}\n\n${String(e)}`);
