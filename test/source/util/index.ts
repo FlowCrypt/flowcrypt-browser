@@ -25,7 +25,6 @@ export const getParsedCliParams = () => {
 
 interface TestConfigInterface {
   messages: { name: string, content: string[], password?: string, params: string, quoted?: boolean }[];
-  unit_tests: { name: string, f: string, args: any[], result: any }[];
 }
 
 interface TestSecretsInterface {
@@ -54,8 +53,8 @@ export class Config {
 
 export class Util {
 
-  public static sleep = (seconds: number) => {
-    return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+  public static sleep = async (seconds: number) => {
+    return await new Promise(resolve => setTimeout(resolve, seconds * 1000));
   }
 
   public static lousyRandom = () => {

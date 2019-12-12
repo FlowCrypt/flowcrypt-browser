@@ -80,7 +80,6 @@ export interface RawStore {
 export type GlobalStore = {
   version?: number | null;
   account_emails?: string; // stringified array
-  errors?: string[];
   settings_seen?: boolean;
   hide_pass_phrases?: boolean;
   cryptup_account_email?: string | null; // todo - remove
@@ -90,7 +89,7 @@ export type GlobalStore = {
   admin_codes?: Dict<StoredAdminCode>;
 };
 
-export type GlobalIndex = 'version' | 'account_emails' | 'errors' | 'settings_seen' | 'hide_pass_phrases' |
+export type GlobalIndex = 'version' | 'account_emails' | 'settings_seen' | 'hide_pass_phrases' |
   'cryptup_account_email' | 'cryptup_account_uuid' | 'cryptup_account_subscription' | 'dev_outlook_allow' |
   'admin_codes';
 
@@ -396,20 +395,6 @@ export class Store {
     }
     const storageObj = await storageLocalGet(Store.singleScopeRawIndexArr(Store.globalStorageScope, keys)) as RawStore;
     return Store.buildSingleAccountStoreFromRawResults(Store.globalStorageScope, storageObj) as GlobalStore;
-  }
-
-  static saveError = (err: any, errMsg?: string) => {
-    Store.getGlobal(['errors']).then(s => {
-      if (typeof s.errors === 'undefined') {
-        s.errors = [];
-      }
-      if (err instanceof Error) {
-        s.errors.unshift(err.stack || errMsg || String(err));
-      } else {
-        s.errors.unshift(errMsg || String(err));
-      }
-      Store.setGlobal(s).catch(e => console.error(e));
-    }).catch(e => console.error(e));
   }
 
   static getAcct = async (acctEmail: string, keys: AccountIndex[]): Promise<AccountStore> => {
