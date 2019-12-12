@@ -163,8 +163,8 @@ export class GoogleAuth {
     return await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('openid'), save: false });
   }
 
-  private static waitForOauthWindowClosed = (oauthWinId: number, acctEmail: string | undefined): Promise<AuthRes> => {
-    return new Promise(resolve => {
+  private static waitForOauthWindowClosed = async (oauthWinId: number, acctEmail: string | undefined): Promise<AuthRes> => {
+    return await new Promise(resolve => {
       const onOauthWinClosed = (closedWinId: number) => {
         if (closedWinId === oauthWinId) {
           chrome.windows.onRemoved.removeListener(onOauthWinClosed);
@@ -270,30 +270,30 @@ export class GoogleAuth {
     await Store.setAcct(acctEmail, toSave);
   }
 
-  private static googleAuthGetTokens = (code: string) => {
-    return Api.ajax({
+  private static googleAuthGetTokens = async (code: string) => {
+    return await Api.ajax({
       url: Url.create(GoogleAuth.OAUTH.url_tokens, { grant_type: 'authorization_code', code, client_id: GoogleAuth.OAUTH.client_id, redirect_uri: GoogleAuth.OAUTH.url_redirect }),
       method: 'POST',
       crossDomain: true,
       async: true,
-    }, Catch.stackTrace()) as any as Promise<GoogleAuthTokensResponse>;
+    }, Catch.stackTrace()) as any as GoogleAuthTokensResponse;
   }
 
-  private static googleAuthRefreshToken = (refreshToken: string) => {
-    return Api.ajax({
+  private static googleAuthRefreshToken = async (refreshToken: string) => {
+    return await Api.ajax({
       url: Url.create(GoogleAuth.OAUTH.url_tokens, { grant_type: 'refresh_token', refreshToken, client_id: GoogleAuth.OAUTH.client_id }),
       method: 'POST',
       crossDomain: true,
       async: true,
-    }, Catch.stackTrace()) as any as Promise<GoogleAuthTokensResponse>;
+    }, Catch.stackTrace()) as any as GoogleAuthTokensResponse;
   }
 
-  private static googleAuthCheckAccessToken = (accessToken: string) => {
-    return Api.ajax({
+  private static googleAuthCheckAccessToken = async (accessToken: string) => {
+    return await Api.ajax({
       url: Url.create(`${GOOGLE_API_HOST}/oauth2/v1/tokeninfo`, { access_token: accessToken }),
       crossDomain: true,
       async: true,
-    }, Catch.stackTrace()) as any as Promise<GoogleAuthTokenInfo>;
+    }, Catch.stackTrace()) as any as GoogleAuthTokenInfo;
   }
 
   /**

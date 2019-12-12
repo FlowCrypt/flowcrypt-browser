@@ -102,39 +102,38 @@ export class Settings {
     return result.isAliasesChanged || result.isDefaultEmailChanged || result.isFooterChanged ? { ...result } : undefined;
   }
 
-  static acctStorageReset = (acctEmail: string) => {
-    return new Promise((resolve, reject) => {
-      if (!acctEmail) {
-        throw new Error('Missing account_email to reset');
-      }
-      Store.acctEmailsGet().then(acctEmails => {
-        if (!acctEmails.includes(acctEmail)) {
-          throw new Error(`"${acctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
-        }
-        const storageIndexesToRemove: string[] = [];
-        const filter = Store.singleScopeRawIndex(acctEmail, '');
-        if (!filter) {
-          throw new Error('Filter is empty for account_email"' + acctEmail + '"');
-        }
-        chrome.storage.local.get(async storage => {
-          try {
-            for (const storageIndex of Object.keys(storage)) {
-              if (storageIndex.indexOf(filter) === 0) {
-                storageIndexesToRemove.push(storageIndex.replace(filter, ''));
-              }
+  static acctStorageReset = async (acctEmail: string) => {
+    if (!acctEmail) {
+      throw new Error('Missing account_email to reset');
+    }
+    const acctEmails = await Store.acctEmailsGet();
+    if (!acctEmails.includes(acctEmail)) {
+      throw new Error(`"${acctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
+    }
+    const storageIndexesToRemove: string[] = [];
+    const filter = Store.singleScopeRawIndex(acctEmail, '');
+    if (!filter) {
+      throw new Error('Filter is empty for account_email"' + acctEmail + '"');
+    }
+    return await new Promise((resolve, reject) => {
+      chrome.storage.local.get(async storage => {
+        try {
+          for (const storageIndex of Object.keys(storage)) {
+            if (storageIndex.indexOf(filter) === 0) {
+              storageIndexesToRemove.push(storageIndex.replace(filter, ''));
             }
-            await Store.remove(acctEmail, storageIndexesToRemove);
-            for (const sessionStorageIndex of Object.keys(sessionStorage)) {
-              if (sessionStorageIndex.indexOf(filter) === 0) {
-                sessionStorage.removeItem(sessionStorageIndex);
-              }
-            }
-            resolve();
-          } catch (e) {
-            reject(e);
           }
-        });
-      }, reject);
+          await Store.remove(acctEmail, storageIndexesToRemove);
+          for (const sessionStorageIndex of Object.keys(sessionStorage)) {
+            if (sessionStorageIndex.indexOf(filter) === 0) {
+              sessionStorage.removeItem(sessionStorageIndex);
+            }
+          }
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      });
     });
   }
 
@@ -187,43 +186,43 @@ export class Settings {
     await Store.acctEmailsRemove(oldAcctEmail);
   }
 
-  static renderPrvCompatFixUiAndWaitTilSubmittedByUser = (
-    acctEmail: string, container: string | JQuery<HTMLElement>, origPrv: OpenPGP.key.Key, passphrase: string, backUrl: string
+  static renderPrvCompatFixUiAndWaitTilSubmittedByUser = async (
+    acctEmail: string, containerStr: string | JQuery<HTMLElement>, origPrv: OpenPGP.key.Key, passphrase: string, backUrl: string
   ): Promise<OpenPGP.key.Key> => {
-    return new Promise((resolve, reject) => {
-      const uids = origPrv.users.map(u => u.userId).filter(u => !!u && u.userid && Str.parseEmail(u.userid).email).map(u => u!.userid).filter(Boolean) as string[];
-      if (!uids.length) {
-        uids.push(acctEmail);
+    const uids = origPrv.users.map(u => u.userId).filter(u => !!u && u.userid && Str.parseEmail(u.userid).email).map(u => u!.userid).filter(Boolean) as string[];
+    if (!uids.length) {
+      uids.push(acctEmail);
+    }
+    const container = $(containerStr as JQuery<HTMLElement>); // due to JQuery TS quirk
+    Xss.sanitizeRender(container, [
+      `<div class="line">${Lang.setup.prvHasFixableCompatIssue}</div>`,
+      '<div class="line compatibility_fix_user_ids">' + uids.map(uid => '<div>' + Xss.escape(uid) + '</div>').join('') + '</div>',
+      '<div class="line">',
+      '  Choose expiration of updated key',
+      '  <select class="input_fix_expire_years" data-test="input-compatibility-fix-expire-years">',
+      '    <option  value="" disabled selected>please choose expiration</option>',
+      '    <option value="never">no expiration</option>',
+      '    <option value="1">1 year</option>',
+      '    <option value="2">2 years</option>',
+      '    <option value="3">3 years</option>',
+      '    <option value="5">5 years</option>',
+      '  </select>',
+      '</div>',
+      '<div class="line">FlowCrypt will attempt to update the key before importing.</div>',
+      '<div class="line">',
+      '  <div class="button long gray action_fix_compatibility" data-test="action-fix-and-import-key">UPDATE AND IMPORT KEY</div>',
+      '</div>',
+    ].join('\n'));
+    container.find('select.input_fix_expire_years').change(Ui.event.handle(target => {
+      if ($(target).val()) {
+        (container as JQuery<HTMLElement>).find('.action_fix_compatibility').removeClass('gray').addClass('green');
+      } else {
+        (container as JQuery<HTMLElement>).find('.action_fix_compatibility').removeClass('green').addClass('gray');
       }
-      container = $(container as JQuery<HTMLElement>); // due to JQuery TS quirk
-      Xss.sanitizeRender(container, [
-        `<div class="line">${Lang.setup.prvHasFixableCompatIssue}</div>`,
-        '<div class="line compatibility_fix_user_ids">' + uids.map(uid => '<div>' + Xss.escape(uid) + '</div>').join('') + '</div>',
-        '<div class="line">',
-        '  Choose expiration of updated key',
-        '  <select class="input_fix_expire_years" data-test="input-compatibility-fix-expire-years">',
-        '    <option  value="" disabled selected>please choose expiration</option>',
-        '    <option value="never">no expiration</option>',
-        '    <option value="1">1 year</option>',
-        '    <option value="2">2 years</option>',
-        '    <option value="3">3 years</option>',
-        '    <option value="5">5 years</option>',
-        '  </select>',
-        '</div>',
-        '<div class="line">FlowCrypt will attempt to update the key before importing.</div>',
-        '<div class="line">',
-        '  <div class="button long gray action_fix_compatibility" data-test="action-fix-and-import-key">UPDATE AND IMPORT KEY</div>',
-        '</div>',
-      ].join('\n'));
-      container.find('select.input_fix_expire_years').change(Ui.event.handle(target => {
-        if ($(target).val()) {
-          (container as JQuery<HTMLElement>).find('.action_fix_compatibility').removeClass('gray').addClass('green');
-        } else {
-          (container as JQuery<HTMLElement>).find('.action_fix_compatibility').removeClass('green').addClass('gray');
-        }
-      }));
+    }));
+    return await new Promise((resolve, reject) => {
       container.find('.action_fix_compatibility').click(Ui.event.handle(async target => {
-        const expireYears = String($(target).parents(container as string).find('select.input_fix_expire_years').val()); // JQuery quirk
+        const expireYears = String($(target).parents(container as any).find('select.input_fix_expire_years').val()); // JQuery quirk
         if (!expireYears) {
           await Ui.modal.warning('Please select key expiration');
         } else {

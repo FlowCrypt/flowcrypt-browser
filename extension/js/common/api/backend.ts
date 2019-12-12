@@ -53,8 +53,8 @@ export namespace BackendRes {
 
 export class Backend extends Api {
 
-  private static request = (path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}): Promise<any> => {
-    return Backend.apiCall(Backend.url('api'), path, vals, fmt, undefined, { 'api-version': '3', ...addHeaders });
+  private static request = async <RT>(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}): Promise<RT> => {
+    return await Backend.apiCall(Backend.url('api'), path, vals, fmt, undefined, { 'api-version': '3', ...addHeaders });
   }
 
   public static url = (type: 'api' | 'me' | 'pubkey' | 'decrypt' | 'web', resource = '') => {
@@ -67,15 +67,15 @@ export class Backend extends Api {
     } as Dict<string>)[type];
   }
 
-  public static helpFeedback = (acctEmail: string, message: string): Promise<BackendRes.FcHelpFeedback> => {
-    return Backend.request('help/feedback', {
+  public static helpFeedback = async (acctEmail: string, message: string): Promise<BackendRes.FcHelpFeedback> => {
+    return await Backend.request<BackendRes.FcHelpFeedback>('help/feedback', {
       email: acctEmail,
       message,
     });
   }
 
-  public static helpUninstall = (email: string, client: string): Promise<unknown> => {
-    return Backend.request('help/uninstall', {
+  public static helpUninstall = async (email: string, client: string): Promise<unknown> => {
+    return await Backend.request('help/uninstall', {
       email,
       client,
       metrics: null,
@@ -96,11 +96,11 @@ export class Backend extends Api {
   // }
 
   public static loginWithOpenid = async (acctEmail: string, uuid: string, idToken: string): Promise<{ verified: boolean, subscription: SubscriptionInfo }> => {
-    const response = await Backend.request('account/login', {
+    const response = await Backend.request<BackendRes.FcAccountLogin>('account/login', {
       account: acctEmail,
       uuid,
       token: null, // tslint:disable-line:no-null-keyword
-    }, undefined, { Authorization: `Bearer ${idToken}` }) as BackendRes.FcAccountLogin;
+    }, undefined, { Authorization: `Bearer ${idToken}` });
     if (response.registered !== true) {
       throw new Error('account_login with id_token did not result in successful registration');
     }
@@ -112,53 +112,53 @@ export class Backend extends Api {
   }
 
   public static getSubscriptionWithoutLogin = async (acctEmail: string) => {
-    const r = await Backend.request('account/check', {
+    const r = await Backend.request<BackendRes.FcAccountCheck>('account/check', {
       emails: [acctEmail],
-    }) as BackendRes.FcAccountCheck;
+    });
     await Store.setAcct(acctEmail, { subscription: r.subscription || undefined });
     return r;
   }
 
   public static accountUpdate = async (fcAuth: FcUuidAuth, profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {
     Backend.throwIfMissingUuid(fcAuth);
-    return await Backend.request('account/update', {
+    return await Backend.request<BackendRes.FcAccountUpdate>('account/update', {
       ...fcAuth,
       ...profileUpdate
-    }) as BackendRes.FcAccountUpdate;
+    });
   }
 
   public static accountGetAndUpdateLocalStore = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcAccountGet> => {
     Backend.throwIfMissingUuid(fcAuth);
-    const r = await Backend.request('account/get', fcAuth) as BackendRes.FcAccountGet;
+    const r = await Backend.request<BackendRes.FcAccountGet>('account/get', fcAuth);
     await Store.setAcct(fcAuth.account, { rules: r.domain_org_rules, subscription: r.subscription });
     return r;
   }
 
   public static accountSubscribe = async (fcAuth: FcUuidAuth, product: string, method: string, paymentSourceToken?: string): Promise<BackendRes.FcAccountSubscribe> => {
     Backend.throwIfMissingUuid(fcAuth);
-    const response = await Backend.request('account/subscribe', {
+    const response = await Backend.request<BackendRes.FcAccountSubscribe>('account/subscribe', {
       ...fcAuth,
       method,
       source: paymentSourceToken || null, // tslint:disable-line:no-null-keyword
       product,
-    }) as BackendRes.FcAccountSubscribe;
+    });
     await Store.setAcct(fcAuth.account, { subscription: response.subscription });
     return response;
   }
 
   public static messagePresignFiles = async (fcAuth: FcUuidAuth | FcMsgTokenAuth | undefined, atts: Att[]): Promise<BackendRes.FcMsgPresignFiles> => {
-    const response = await Backend.request('message/presign_files', {
+    const response = await Backend.request<BackendRes.FcMsgPresignFiles>('message/presign_files', {
       lengths: atts.map(a => a.length),
       ...(fcAuth || {})
-    }) as BackendRes.FcMsgPresignFiles;
+    });
     if (response.approvals && response.approvals.length === atts.length) {
       return response;
     }
     throw new Error('Could not verify that all files were uploaded properly, please try again.');
   }
 
-  public static messageConfirmFiles = (identifiers: string[]): Promise<BackendRes.FcMsgConfirmFiles> => {
-    return Backend.request('message/confirm_files', {
+  public static messageConfirmFiles = async (identifiers: string[]): Promise<BackendRes.FcMsgConfirmFiles> => {
+    return await Backend.request<BackendRes.FcMsgConfirmFiles>('message/confirm_files', {
       identifiers,
     });
   }
@@ -168,25 +168,25 @@ export class Backend extends Api {
    */
   public static messageUpload = async (fcAuth: FcUuidAuth | undefined, encryptedDataArmored: string): Promise<BackendRes.FcMsgUpload> => {
     const content = new Att({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: Buf.fromUtfStr(encryptedDataArmored) });
-    return await Backend.request('message/upload', { content, ...(fcAuth || {}) }, 'FORM') as BackendRes.FcMsgUpload;
+    return await Backend.request<BackendRes.FcMsgUpload>('message/upload', { content, ...(fcAuth || {}) }, 'FORM');
   }
 
   public static messageToken = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcMsgToken> => {
     Backend.throwIfMissingUuid(fcAuth);
-    return await Backend.request('message/token', { ...fcAuth }) as BackendRes.FcMsgToken;
+    return await Backend.request<BackendRes.FcMsgToken>('message/token', { ...fcAuth });
   }
 
   public static messageExpiration = async (fcAuth: FcUuidAuth, adminCodes: string[], addDays?: number): Promise<BackendRes.ApirFcMsgExpiration> => {
     Backend.throwIfMissingUuid(fcAuth);
-    return await Backend.request('message/expiration', {
+    return await Backend.request<BackendRes.ApirFcMsgExpiration>('message/expiration', {
       ...fcAuth,
       admin_codes: adminCodes,
       add_days: addDays || null, // tslint:disable-line:no-null-keyword
-    }) as BackendRes.ApirFcMsgExpiration;
+    });
   }
 
-  public static messageReply = (short: string, token: string, from: string, to: string, subject: string, message: string): Promise<unknown> => {
-    return Backend.request('message/reply', {
+  public static messageReply = async (short: string, token: string, from: string, to: string, subject: string, message: string): Promise<unknown> => {
+    return await Backend.request('message/reply', {
       short,
       token,
       from,
@@ -196,8 +196,8 @@ export class Backend extends Api {
     });
   }
 
-  public static messageContact = (sender: string, message: string, messageToken: FcAuthToken): Promise<unknown> => {
-    return Backend.request('message/contact', {
+  public static messageContact = async (sender: string, message: string, messageToken: FcAuthToken): Promise<unknown> => {
+    return await Backend.request('message/contact', {
       message_token_account: messageToken.account,
       message_token: messageToken.token,
       sender,
@@ -205,27 +205,27 @@ export class Backend extends Api {
     });
   }
 
-  public static linkMessage = (short: string): Promise<BackendRes.FcLinkMsg> => {
-    return Backend.request('link/message', {
+  public static linkMessage = async (short: string): Promise<BackendRes.FcLinkMsg> => {
+    return await Backend.request<BackendRes.FcLinkMsg>('link/message', {
       short,
     });
   }
 
-  public static linkMe = (alias: string): Promise<BackendRes.FcLinkMe> => {
-    return Backend.request('link/me', {
+  public static linkMe = async (alias: string): Promise<BackendRes.FcLinkMe> => {
+    return await Backend.request<BackendRes.FcLinkMe>('link/me', {
       alias,
     });
   }
 
   public static retrieveBlogPosts = async (): Promise<BackendRes.FcBlogPost[]> => {
-    return Api.ajax({ url: 'https://flowcrypt.com/feed', dataType: 'json' }, Catch.stackTrace()); // tslint:disable-line:no-direct-ajax
+    return await Api.ajax({ url: 'https://flowcrypt.com/feed', dataType: 'json' }, Catch.stackTrace()) as BackendRes.FcBlogPost[]; // tslint:disable-line:no-direct-ajax
   }
 
-  public static s3Upload = (items: AwsS3UploadItem[], progressCb: ProgressCb) => {
+  public static s3Upload = async (items: AwsS3UploadItem[], progressCb: ProgressCb) => {
     const progress = Value.arr.zeroes(items.length);
     const promises: Promise<void>[] = [];
     if (!items.length) {
-      return Promise.resolve(promises);
+      return await Promise.resolve([]);
     }
     for (const i of items.keys()) {
       const fields = items[i].fields;
@@ -237,7 +237,7 @@ export class Backend extends Api {
         }
       }));
     }
-    return Promise.all(promises);
+    return await Promise.all(promises);
   }
 
   private static throwIfMissingUuid = (fcAuth: FcUuidAuth) => {

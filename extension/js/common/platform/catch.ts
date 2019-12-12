@@ -181,7 +181,7 @@ export class Catch {
       && typeof (v as Promise<any>).catch === 'function'; // tslint:disable-line:no-unbound-method - only testing if exists
   }
 
-  public static try = (code: Function) => { // tslint:disable-line:ban-types
+  public static try = (code: () => void | Promise<void>) => { // tslint:disable-line:ban-types
     return () => { // returns a function
       try {
         const r = code();
@@ -277,11 +277,11 @@ export class Catch {
     }
   }
 
-  public static setHandledInterval = (cb: () => void, ms: number): number => {
+  public static setHandledInterval = (cb: () => void | Promise<void>, ms: number): number => {
     return window.setInterval(Catch.try(cb), ms); // error-handled: else setInterval will silently swallow errors
   }
 
-  public static setHandledTimeout = (cb: () => void, ms: number): number => {
+  public static setHandledTimeout = (cb: () => void | Promise<void>, ms: number): number => {
     return window.setTimeout(Catch.try(cb), ms); // error-handled: else setTimeout will silently swallow errors
   }
 

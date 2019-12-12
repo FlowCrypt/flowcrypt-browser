@@ -33,14 +33,15 @@ export type ProgressCb = (percent?: number, loaded?: number, total?: number) => 
 export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | null };
 
 export class Api {
-  public static download = (url: string, progress?: ProgressCb): Promise<Buf> => {
-    return new Promise((resolve, reject) => {
-      const request = new XMLHttpRequest();
-      request.open('GET', url, true);
-      request.responseType = 'arraybuffer';
-      if (typeof progress === 'function') {
-        request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total);
-      }
+
+  public static download = async (url: string, progress?: ProgressCb): Promise<Buf> => {
+    const request = new XMLHttpRequest();
+    request.open('GET', url, true);
+    request.responseType = 'arraybuffer';
+    if (typeof progress === 'function') {
+      request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total);
+    }
+    return await new Promise((resolve, reject) => {
       request.onerror = progressEvent => {
         if (!progressEvent.target) {
           reject(new Error(`Api.download(${url}) failed with a null progressEvent.target`));
@@ -122,9 +123,9 @@ export class Api {
     return e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number';
   }
 
-  protected static apiCall = async (
+  protected static apiCall = async <RT>(
     url: string, path: string, fields?: Dict<any> | string, fmt?: ReqFmt, progress?: ProgressCbs, headers?: Dict<string>, resFmt: ResFmt = 'json', method: ReqMethod = 'POST'
-  ) => {
+  ): Promise<RT> => {
     progress = progress || {} as ProgressCbs;
     let formattedData: FormData | string | undefined;
     let contentType: string | false;
@@ -168,7 +169,7 @@ export class Api {
     if (res && typeof res === 'object' && typeof (res as StandardErrRes).error === 'object' && (res as StandardErrRes).error.message) {
       throw new ApiErrResponse(res as StandardErrRes, req);
     }
-    return res;
+    return res as RT;
   }
 
   static randomFortyHexChars = (): string => { // 40-character hex
