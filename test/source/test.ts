@@ -118,17 +118,14 @@ if (isMock) {
 }
 
 ava.after.always('evaluate Catch.reportErr errors', async t => {
-  console.info(`Catch.reportErr errors: ${mockBackendData.reportedErrors.length}`);
-  if (mockBackendData.reportedErrors.length) {
-    for (const e of mockBackendData.reportedErrors) {
-      console.info(`
-      --------------- mockBackendData Catch.reportErr ---------------
-      name: ${e.name}
-      message: ${e.message}
-      url: ${e.url}
-      line,col: ${e.line},${e.col}
-      trace: ${e.trace}
-    `);
+  console.info(`\n\nCatch.reportErr errors: ${mockBackendData.reportedErrors.length}`);
+  const expectedErr = mockBackendData.reportedErrors.find(re => re.message === `intentional error for debugging`);
+  const unwantedErrs = mockBackendData.reportedErrors.filter(re => re.message !== `intentional error for debugging`);
+  if (!expectedErr) {
+    t.fail(`Catch.reportErr errors: missing intentional error`);
+  } else if (unwantedErrs.length) {
+    for (const e of unwantedErrs) {
+      console.info(`----- mockBackendData Catch.reportErr -----\nname: ${e.name}\nmessage: ${e.message}\nurl: ${e.url}\ntrace: ${e.trace}`);
     }
     t.fail(`Catch.reportErr errors: ${mockBackendData.reportedErrors.length}`);
   } else {
