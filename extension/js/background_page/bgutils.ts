@@ -30,8 +30,8 @@ export class BgUtils {
     }
   }
 
-  public static getFcSettingsTabIdIfOpen = (): Promise<number | undefined> => {
-    return new Promise(resolve => {
+  public static getFcSettingsTabIdIfOpen = async (): Promise<number | undefined> => {
+    return await new Promise(resolve => {
       chrome.tabs.query({ currentWindow: true }, tabs => {
         const extensionUrl = chrome.runtime.getURL('/');
         for (const tab of tabs) {

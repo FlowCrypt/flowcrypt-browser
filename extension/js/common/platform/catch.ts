@@ -147,6 +147,9 @@ export class Catch {
 
   public static reportErr = (e: any) => {
     const { line, col } = Catch.getErrorLineAndCol(e);
+    if (e instanceof Error) { // reporting stack may differ from the stack of the actual error, both may be interesting
+      e.stack += `\n\n### Catch.reportErr calling stack ###\n# ${Catch.stackTrace().split('\n').join('\n# ')}\n######################`;
+    }
     Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
   }
 
@@ -178,7 +181,7 @@ export class Catch {
       && typeof (v as Promise<any>).catch === 'function'; // tslint:disable-line:no-unbound-method - only testing if exists
   }
 
-  public static try = (code: Function) => { // tslint:disable-line:ban-types
+  public static try = (code: () => void | Promise<void>) => { // tslint:disable-line:ban-types
     return () => { // returns a function
       try {
         const r = code();
@@ -274,11 +277,11 @@ export class Catch {
     }
   }
 
-  public static setHandledInterval = (cb: () => void, ms: number): number => {
+  public static setHandledInterval = (cb: () => void | Promise<void>, ms: number): number => {
     return window.setInterval(Catch.try(cb), ms); // error-handled: else setInterval will silently swallow errors
   }
 
-  public static setHandledTimeout = (cb: () => void, ms: number): number => {
+  public static setHandledTimeout = (cb: () => void | Promise<void>, ms: number): number => {
     return window.setTimeout(Catch.try(cb), ms); // error-handled: else setTimeout will silently swallow errors
   }
 
