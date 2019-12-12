@@ -18,9 +18,31 @@ interface PasswordStrengthResult {
 }
 
 export class PgpPwd {
+  private static CRACK_GUESSES_PER_SECOND = 10000 * 2 * 4000;
+  private static CRACK_TIME_WORDS_PWD = [ // the requirements for a one-time password are less strict
+    { match: 'millenni', word: 'perfect', bar: 100, color: 'green', pass: true },
+    { match: 'centu', word: 'perfect', bar: 95, color: 'green', pass: true },
+    { match: 'year', word: 'great', bar: 80, color: 'orange', pass: true },
+    { match: 'month', word: 'good', bar: 70, color: 'darkorange', pass: true },
+    { match: 'week', word: 'good', bar: 30, color: 'darkred', pass: true },
+    { match: 'day', word: 'reasonable', bar: 40, color: 'darkorange', pass: true },
+    { match: 'hour', word: 'bare minimum', bar: 20, color: 'darkred', pass: true },
+    { match: 'minute', word: 'poor', bar: 15, color: 'red', pass: false },
+    { match: '', word: 'weak', bar: 10, color: 'red', pass: false },
+  ];
+  private static CRACK_TIME_WORDS_PASS_PHRASE = [ // the requirements for a pass phrase are meant to be strict
+    { match: 'millenni', word: 'perfect', bar: 100, color: 'green', pass: true },
+    { match: 'centu', word: 'great', bar: 80, color: 'green', pass: true },
+    { match: 'year', word: 'good', bar: 60, color: 'orange', pass: true },
+    { match: 'month', word: 'reasonable', bar: 40, color: 'darkorange', pass: true },
+    { match: 'week', word: 'poor', bar: 30, color: 'darkred', pass: false },
+    { match: 'day', word: 'poor', bar: 20, color: 'darkred', pass: false },
+    { match: '', word: 'weak', bar: 10, color: 'red', pass: false },
+  ];
+
   static estimateStrength = (zxcvbnResultGuesses: number, type: 'passphrase' | 'pwd' = 'passphrase'): PasswordStrengthResult => {
-    const timeToCrack = zxcvbnResultGuesses / Pgp.CRACK_GUESSES_PER_SECOND;
-    for (const word of type === 'pwd' ? Pgp.CRACK_TIME_WORDS_PWD : Pgp.CRACK_TIME_WORDS_PASS_PHRASE) {
+    const timeToCrack = zxcvbnResultGuesses / PgpPwd.CRACK_GUESSES_PER_SECOND;
+    for (const word of type === 'pwd' ? PgpPwd.CRACK_TIME_WORDS_PWD : PgpPwd.CRACK_TIME_WORDS_PASS_PHRASE) {
       const readableTime = Pgp.internal.readableCrackTime(timeToCrack);
       if (readableTime.includes(word.match)) { // looks for a word match from readable_crack_time, defaults on "weak"
         return { word, seconds: Math.round(timeToCrack), time: readableTime };
