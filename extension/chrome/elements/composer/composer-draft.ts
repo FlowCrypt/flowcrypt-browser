@@ -75,7 +75,7 @@ export class ComposerDraft extends ComposerComponent {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
         Xss.sanitizeRender('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retryLink()}`);
       } else if (this.view.isReplyBox && ApiErr.isNotFound(e)) {
-        Catch.log('about to reload reply_message automatically: get draft 404', this.view.acctEmail);
+        console.info('about to reload reply_message automatically: get draft 404', this.view.acctEmail);
         await Ui.time.sleep(500);
         await this.composer.storage.draftMetaDelete(this.view.draftId, this.view.threadId);
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');

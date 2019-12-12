@@ -12,7 +12,6 @@ import { Lang } from '../../../js/common/lang.js';
 import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Assert } from '../../../js/common/assert.js';
-import { Xss } from '../../../js/common/platform/xss.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -33,9 +32,6 @@ View.run(class ExperimentalView extends View {
   }
 
   render = async () => {
-    if (Catch.environment() === 'ex:dev') {
-      Xss.sanitizeAppend('.storage_link_container', ` - <a href="${Xss.escape(Url.create('/chrome/dev/storage.htm', { controls: true }))}">Storage</a>`);
-    }
     $('.email').text(this.acctEmail);
   }
 
