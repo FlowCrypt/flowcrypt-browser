@@ -21,6 +21,7 @@ const makeMockBuild = (buildType: string) => {
       .replace(/https:\/\/flowcrypt.com\/api\/help\/error/g, 'http://localhost:8001/api/help/error');
   };
   edit(`${buildDir(mockBuildType)}/js/common/core/const.js`, editor);
+  edit(`${buildDir(mockBuildType)}/js/common/platform/catch.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/content_scripts/webmail_bundle.js`, editor);
 };
 
