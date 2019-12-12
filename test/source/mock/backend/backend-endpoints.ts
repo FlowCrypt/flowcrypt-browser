@@ -67,6 +67,7 @@ export const mockBackendEndpoints: HandlersDefinition = {
   },
   '/api/help/error': async ({ body }, req) => {
     mockBackendData.reportedErrors.push(body as any);
+    return { saved: true };
   },
   '/api/help/feedback': fwdToRealBackend,
   '/api/message/presign_files': fwdToRealBackend,
