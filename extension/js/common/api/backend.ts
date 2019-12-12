@@ -223,10 +223,10 @@ export class Backend extends Api {
 
   public static s3Upload = async (items: AwsS3UploadItem[], progressCb: ProgressCb) => {
     const progress = Value.arr.zeroes(items.length);
-    const promises: Promise<void>[] = [];
     if (!items.length) {
-      return await Promise.resolve([]);
+      return [];
     }
+    const promises: Promise<void>[] = [];
     for (const i of items.keys()) {
       const fields = items[i].fields;
       fields.file = new Att({ name: 'encrypted_attachment', type: 'application/octet-stream', data: items[i].att.getData() });

@@ -35,13 +35,13 @@ export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | 
 export class Api {
 
   public static download = async (url: string, progress?: ProgressCb): Promise<Buf> => {
-    const request = new XMLHttpRequest();
-    request.open('GET', url, true);
-    request.responseType = 'arraybuffer';
-    if (typeof progress === 'function') {
-      request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total);
-    }
     return await new Promise((resolve, reject) => {
+      const request = new XMLHttpRequest();
+      request.open('GET', url, true);
+      request.responseType = 'arraybuffer';
+      if (typeof progress === 'function') {
+        request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total);
+      }
       request.onerror = progressEvent => {
         if (!progressEvent.target) {
           reject(new Error(`Api.download(${url}) failed with a null progressEvent.target`));

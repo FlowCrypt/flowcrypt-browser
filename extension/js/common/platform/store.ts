@@ -653,18 +653,19 @@ export class Store {
 
   static dbContactSave = async (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => {
     if (!db) { // relay op through background process
-      return await BrowserMsg.send.bg.await.db({ f: 'dbContactSave', args: [contact] }) as void;
+      await BrowserMsg.send.bg.await.db({ f: 'dbContactSave', args: [contact] });
+      return;
+    }
+    if (Array.isArray(contact)) {
+      await Promise.all(contact.map(oneContact => Store.dbContactSave(db, oneContact)));
+      return;
     }
     return await new Promise((resolve, reject) => {
-      if (Array.isArray(contact)) {
-        Promise.all(contact.map(oneContact => Store.dbContactSave(db, oneContact))).then(() => resolve(), reject);
-      } else {
-        const tx = db.transaction('contacts', 'readwrite');
-        const contactsTable = tx.objectStore('contacts');
-        contactsTable.put(contact);
-        tx.oncomplete = () => resolve();
-        tx.onabort = () => reject(Store.errCategorize(tx.error));
-      }
+      const tx = db.transaction('contacts', 'readwrite');
+      const contactsTable = tx.objectStore('contacts');
+      contactsTable.put(contact);
+      tx.oncomplete = () => resolve();
+      tx.onabort = () => reject(Store.errCategorize(tx.error));
     });
   }
 
