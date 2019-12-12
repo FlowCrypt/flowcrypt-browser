@@ -13,6 +13,7 @@ import { Catch } from '../platform/catch.js';
 import { Settings } from '../settings.js';
 import { Url } from '../core/common.js';
 import { PgpArmor } from '../core/pgp-armor.js';
+import { PgpPwd } from '../core/pgp-password.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -62,7 +63,7 @@ export class KeyImportUi {
       }
     });
     $('.line.unprotected_key_create_pass_phrase .action_use_random_pass_phrase').click(Ui.event.handle(target => {
-      $('.source_paste_container .input_passphrase').val(Pgp.password.random()).keyup();
+      $('.source_paste_container .input_passphrase').val(PgpPwd.random()).keyup();
       $('.input_passphrase').attr('type', 'text');
       $('#e_rememberPassphrase').prop('checked', true);
     }));

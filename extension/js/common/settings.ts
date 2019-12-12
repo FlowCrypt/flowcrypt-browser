@@ -19,6 +19,7 @@ import { Ui, JQS } from './browser/ui.js';
 import { Env } from './browser/env.js';
 import { ApiErr } from './api/error/api-error.js';
 import { ApiErrResponse } from './api/error/api-error-types.js';
+import { PgpPwd } from './core/pgp-password.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
@@ -36,7 +37,7 @@ export class Settings {
   }
 
   static evalPasswordStrength = (passphrase: string, type: 'passphrase' | 'pwd' = 'passphrase') => {
-    return Pgp.password.estimateStrength(zxcvbn(passphrase, Pgp.password.weakWords()).guesses, type); // tslint:disable-line:no-unsafe-any
+    return PgpPwd.estimateStrength(zxcvbn(passphrase, PgpPwd.weakWords()).guesses, type); // tslint:disable-line:no-unsafe-any
   }
 
   static submitPubkeys = async (acctEmail: string, addresses: string[], pubkey: string) => {
