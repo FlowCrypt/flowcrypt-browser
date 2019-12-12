@@ -36,8 +36,8 @@ export class PgpArmor {
   static headers = (blockType: ReplaceableMsgBlockType | 'null', format = 'string'): CryptoArmorHeaderDefinition => {
     const h = PgpArmor.ARMOR_HEADER_DICT[blockType];
     return {
-      begin: (typeof h.begin === 'string' && format === 're') ? h.begin.replace(/ /g, '\\\s') : h.begin,
-      end: (typeof h.end === 'string' && format === 're') ? h.end.replace(/ /g, '\\\s') : h.end,
+      begin: (typeof h.begin === 'string' && format === 're') ? h.begin.replace(/ /g, '\\s') : h.begin,
+      end: (typeof h.end === 'string' && format === 're') ? h.end.replace(/ /g, '\\s') : h.end,
       replace: h.replace,
     };
   }
