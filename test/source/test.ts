@@ -118,8 +118,8 @@ if (isMock) {
 }
 
 ava.after.always('evaluate Catch.reportErr errors', async t => {
-  if (!isMock) {
-    t.pass(); // can only collect reported errs when running with a mocked api
+  if (!isMock || testGroup !== 'STANDARD-GROUP') { // can only collect reported errs when running with a mocked api
+    t.pass();
     return;
   }
   const expectedErr = mockBackendData.reportedErrors.find(re => re.message === `intentional error for debugging`);
