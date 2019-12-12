@@ -17,7 +17,9 @@ export class Google {
     return `https://mail.google.com/mail/u/${acctEmail}`;
   }
 
-  public static gmailCall = async <RT>(acctEmail: string, method: ReqMethod, path: string, params: Dict<Serializable> | string | undefined, progress?: ProgressCbs, contentType?: string): Promise<RT> => {
+  public static gmailCall = async <RT>(
+    acctEmail: string, method: ReqMethod, path: string, params: Dict<Serializable> | string | undefined, progress?: ProgressCbs, contentType?: string
+  ): Promise<RT> => {
     progress = progress || {};
     let data, url;
     if (typeof progress.upload === 'function') {

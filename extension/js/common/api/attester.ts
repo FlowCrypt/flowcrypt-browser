@@ -7,13 +7,15 @@ import { Dict, Str } from '../core/common.js';
 import { PubkeySearchResult, PgpClient } from './keyserver.js';
 import { ApiErr } from './error/api-error.js';
 
+type PubCallRes = { responseText: string, getResponseHeader: (n: string) => string | null };
+
 export class Attester extends Api {
 
   private static jsonCall = async <RT>(path: string, values?: Dict<any>, method: ReqMethod = 'POST'): Promise<RT> => {
     return await Api.apiCall('https://flowcrypt.com/attester/', path, values, 'JSON', undefined, { 'api-version': '3' }, 'json', method) as RT;
   }
 
-  private static pubCall = async (resource: string, method: ReqMethod = 'GET', data?: string | undefined): Promise<{ responseText: string, getResponseHeader: (n: string) => string | null }> => {
+  private static pubCall = async (resource: string, method: ReqMethod = 'GET', data?: string | undefined): Promise<PubCallRes> => {
     return await Api.apiCall('https://flowcrypt.com/attester/', resource, data, typeof data === 'string' ? 'TEXT' : undefined, undefined, undefined, 'xhr', method);
   }
 
