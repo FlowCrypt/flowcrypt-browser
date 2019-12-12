@@ -31,9 +31,8 @@ View.run(class AccountView extends View {
     const authInfo = await Store.authInfo(this.acctEmail);
     let subscription = await Store.subscription(this.acctEmail);
     try {
-      const r = await Backend.getSubscriptionWithoutLogin(this.acctEmail);
+      const r = await Backend.accountGetAndUpdateLocalStore(authInfo);
       subscription = new Subscription(r.subscription);
-      await Backend.accountGetAndUpdateLocalStore(authInfo); // here to test auth
     } catch (e) {
       if (ApiErr.isAuthErr(e) && subscription.level) {
         Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => window.location.reload());
