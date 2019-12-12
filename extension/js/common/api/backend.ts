@@ -31,7 +31,7 @@ export type AwsS3UploadItem = { baseUrl: string, fields: { key: string; file?: A
 
 export namespace BackendRes {
   export type FcHelpFeedback = { sent: boolean };
-  export type FcAccountLogin = { registered: boolean, verified: boolean, subscription: SubscriptionInfo };
+  export type FcAccountLogin = { registered: boolean, verified: boolean };
   export type FcAccount$info = { alias: string, email: string, intro: string, name: string, photo: string, default_message_expire: number };
   export type FcAccountGet = { account: FcAccount$info, subscription: SubscriptionInfo, domain_org_rules: DomainRules };
   export type FcAccountUpdate = { result: FcAccount$info, updated: boolean };
@@ -95,7 +95,7 @@ export class Backend extends Api {
   //   return { verified: response.verified === true, subscription: response.subscription };
   // }
 
-  public static loginWithOpenid = async (acctEmail: string, uuid: string, idToken: string): Promise<{ verified: boolean, subscription: SubscriptionInfo }> => {
+  public static loginWithOpenid = async (acctEmail: string, uuid: string, idToken: string): Promise<void> => {
     const response = await Backend.request<BackendRes.FcAccountLogin>('account/login', {
       account: acctEmail,
       uuid,
@@ -107,8 +107,7 @@ export class Backend extends Api {
     if (response.verified !== true) {
       throw new Error('account_login with id_token did not result in successful verificaion');
     }
-    await Store.setAcct(acctEmail, { uuid, subscription: response.subscription });
-    return { verified: true, subscription: response.subscription };
+    await Store.setAcct(acctEmail, { uuid });
   }
 
   public static getSubscriptionWithoutLogin = async (acctEmail: string) => {

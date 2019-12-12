@@ -152,7 +152,7 @@ export class GoogleAuth {
           await Backend.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
           await Backend.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // will store org rules and subscription
         } catch (e) {
-          return { result: 'Error', error: `Grant successful but error loging into fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
+          return { result: 'Error', error: `Grant successful but error accessing fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
         }
       }
     }
