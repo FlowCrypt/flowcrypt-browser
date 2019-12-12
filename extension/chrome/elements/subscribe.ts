@@ -16,7 +16,10 @@ import { Settings } from '../../js/common/settings.js';
 import { View } from '../../js/common/view.js';
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 
+// todo - this this page should be removed, link from settings should point to flowcrypt.com/account once available
+
 View.run(class SubscribeView extends View {
+
   private readonly acctEmail: string;
   private readonly parentTabId: string;
   private readonly placement: string | undefined;
@@ -80,7 +83,7 @@ View.run(class SubscribeView extends View {
         Xss.sanitizeRender('#content', `Unknown error happened when fetching account info. ${Ui.retryLink()}`);
       }
     }
-    const subscription = await Store.subscription(this.acctEmail); // updated in getSubscriptionWithoutLogin
+    const subscription = await Store.subscription(this.acctEmail); // updated in accountGetAndUpdateLocalStore
     if (!subscription.active) {
       if (subscription.level && subscription.expire) {
         if (subscription.method === 'trial') {

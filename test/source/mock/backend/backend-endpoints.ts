@@ -7,7 +7,7 @@ import { oauth } from '../lib/oauth';
 import { BackendData } from './backend-data';
 import { Dict } from '../../core/common';
 
-const backendData = new BackendData(oauth);
+export const mockBackendData = new BackendData(oauth);
 
 const fwdToRealBackend = async (parsed: any, req: IncomingMessage): Promise<string> => {
   delete req.headers.host;
@@ -30,20 +30,27 @@ export const mockBackendEndpoints: HandlersDefinition = {
     if (!idToken) {
       throw new HttpClientErr('backend mock: Missing id_token');
     }
-    backendData.registerOrThrow(parsed.account, parsed.uuid, idToken);
+    mockBackendData.registerOrThrow(parsed.account, parsed.uuid, idToken);
     return JSON.stringify({
       registered: true,
       verified: true,
-      subscription: backendData.getSubscription(parsed.account),
+      subscription: mockBackendData.getSubscription(parsed.account),
     });
   },
   '/api/account/get': async ({ body }, req) => {
     const parsed = throwIfNotPostWithAuth(body, req);
-    backendData.checkUuidOrThrow(parsed.account, parsed.uuid);
+    mockBackendData.checkUuidOrThrow(parsed.account, parsed.uuid);
     return JSON.stringify({
-      account: backendData.getAcctRow(parsed.account),
-      subscription: backendData.getSubscription(parsed.account),
-      domain_org_rules: backendData.getOrgRules(parsed.account),
+      account: mockBackendData.getAcctRow(parsed.account),
+      subscription: mockBackendData.getSubscription(parsed.account),
+      domain_org_rules: mockBackendData.getOrgRules(parsed.account),
+    });
+  },
+  '/api/account/check': async ({ body }, req) => { // todo - this backend call should eventually be deprecated
+    const parsed = body as Dict<any>;
+    const acct = parsed.emails.pop();
+    return JSON.stringify({
+      subscription: mockBackendData.getSubscription(acct),
     });
   },
   '/api/account/update': async ({ body }, req) => {
@@ -59,8 +66,8 @@ export const mockBackendEndpoints: HandlersDefinition = {
     throw new Error(`${req.url} mock not implemented`); // will have to give fake token
   },
   '/api/help/error': async ({ body }, req) => {
-    console.error(`/help/error`, body); // todo - fail tests if received any error
-    throw new Error(`${req.url} mock not implemented`);
+    mockBackendData.reportedErrors.push(body as any);
+    return { saved: true };
   },
   '/api/help/feedback': fwdToRealBackend,
   '/api/message/presign_files': fwdToRealBackend,
