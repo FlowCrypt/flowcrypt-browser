@@ -146,14 +146,14 @@ export class GoogleAuth {
       if (!authRes.acctEmail) {
         return { result: 'Error', error: 'Grant was successful but missing acctEmail', acctEmail: authRes.acctEmail, id_token: undefined };
       }
-      try {
-        if (!Rules.isPublicEmailProviderDomain(authRes.acctEmail)) { // users on @custom-domain.com must check with backend to look for org rules, if any
+      if (!Rules.isPublicEmailProviderDomain(authRes.acctEmail)) { // users on @custom-domain.com must check with backend to look for org rules, if any
+        try {
           const uuid = Api.randomFortyHexChars();
           await Backend.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
           await Backend.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // will store org rules and subscription
+        } catch (e) {
+          return { result: 'Error', error: `Grant successful but error accessing fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
         }
-      } catch (e) {
-        return { result: 'Error', error: `Grant successful but error accessing fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
       }
     }
     return authRes;
