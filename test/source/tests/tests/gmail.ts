@@ -123,7 +123,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
       await Util.sleep(5);
       await pageHasReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
       await gmailPage.waitAndClick('@secure-reply-button');
-      await Util.sleep(5);
+      await Util.sleep(10);
       await pageHasReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
     }));
 
