@@ -60,7 +60,7 @@ export class PgpBlockViewErrorModule {
   }
 
   public btnHtml = (text: string, addClasses: string) => {
-    return `<div class="button long ${addClasses}" style="margin:30px 0;" target="cryptup">${text}</div>`;
+    return `<button class="button long ${addClasses}" style="margin:30px 0;" target="cryptup">${text}</button>`;
   }
 
 }

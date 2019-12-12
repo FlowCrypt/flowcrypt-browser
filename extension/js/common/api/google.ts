@@ -17,7 +17,9 @@ export class Google {
     return `https://mail.google.com/mail/u/${acctEmail}`;
   }
 
-  public static gmailCall = async (acctEmail: string, method: ReqMethod, path: string, params: Dict<Serializable> | string | undefined, progress?: ProgressCbs, contentType?: string) => {
+  public static gmailCall = async <RT>(
+    acctEmail: string, method: ReqMethod, path: string, params: Dict<Serializable> | string | undefined, progress?: ProgressCbs, contentType?: string
+  ): Promise<RT> => {
     progress = progress || {};
     let data, url;
     if (typeof progress.upload === 'function') {
@@ -35,7 +37,7 @@ export class Google {
     const headers = { 'Authorization': await GoogleAuth.googleApiAuthHeader(acctEmail) };
     const xhr = Api.getAjaxProgressXhrFactory(progress);
     const request = { xhr, url, method, data, headers, crossDomain: true, contentType, async: true };
-    return await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request);
+    return await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request) as RT;
   }
 
   public static contactsGet = async (acctEmail: string, query?: string, progress?: ProgressCbs, max: number = 10, start: number = 0) => {

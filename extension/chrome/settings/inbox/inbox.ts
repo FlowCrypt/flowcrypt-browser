@@ -88,10 +88,10 @@ Catch.try(async () => {
     await webmailCommon.addOrRemoveEndSessionBtnIfNeeded();
   };
 
-  Catch.setHandledTimeout(() => $('#banner a').css('color', 'red'), 500);
-  Catch.setHandledTimeout(() => $('#banner a').css('color', ''), 1000);
-  Catch.setHandledTimeout(() => $('#banner a').css('color', 'red'), 1500);
-  Catch.setHandledTimeout(() => $('#banner a').css('color', ''), 2000);
+  Catch.setHandledTimeout(() => { $('#banner a').css('color', 'red'); }, 500);
+  Catch.setHandledTimeout(() => { $('#banner a').css('color', ''); }, 1000);
+  Catch.setHandledTimeout(() => { $('#banner a').css('color', 'red'); }, 1500);
+  Catch.setHandledTimeout(() => { $('#banner a').css('color', ''); }, 2000);
   BrowserMsg.addListener('notification_show', notificationShowHandler);
   BrowserMsg.addListener('close_new_message', async () => {
     $('div.new_message').remove();
@@ -212,7 +212,7 @@ Catch.try(async () => {
     const name = Xss.escape(label.name);
     if (placement === 'menu') {
       const unread = Number(label.messagesUnread);
-      return `<div class="button gray2 label label_${id}" ${unread ? 'style="font-weight: bold;"' : ''}>${name}${unread ? ` (${unread})` : ''}</div><br>`;
+      return `<button class="button gray2 label label_${id}" ${unread ? 'style="font-weight: bold;"' : ''}>${name}${unread ? ` (${unread})` : ''}</button><br>`;
     } else if (placement === 'labels') {
       return `<span class="label label_${id}">${name}</span><br>`;
     } else {
@@ -299,7 +299,7 @@ Catch.try(async () => {
   const renderMenuAndLabelStyles = (labels: GmailRes.GmailLabels$label[]) => {
     allLabels = labels;
     addLabelStyles(labels);
-    Xss.sanitizeAppend('.menu', `<br>${renderableLabels(FOLDERS, 'menu')}<div class="button gray2 label label_ALL">ALL MAIL</div><br>`);
+    Xss.sanitizeAppend('.menu', `<br>${renderableLabels(FOLDERS, 'menu')}<button class="button gray2 label label_ALL">ALL MAIL</button><br>`);
     Xss.sanitizeAppend('.menu', '<br>' + renderableLabels(labels.sort((a, b) => {
       if (a.name > b.name) {
         return 1;

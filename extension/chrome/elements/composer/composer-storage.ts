@@ -186,10 +186,10 @@ export class ComposerStorage extends ComposerComponent {
     }
   }
 
-  whenMasterPassphraseEntered = (secondsTimeout?: number): Promise<string | undefined> => {
-    return new Promise(resolve => {
-      clearInterval(this.passphraseInterval);
-      const timeoutAt = secondsTimeout ? Date.now() + secondsTimeout * 1000 : undefined;
+  whenMasterPassphraseEntered = async (secondsTimeout?: number): Promise<string | undefined> => {
+    clearInterval(this.passphraseInterval);
+    const timeoutAt = secondsTimeout ? Date.now() + secondsTimeout * 1000 : undefined;
+    return await new Promise(resolve => {
       this.passphraseInterval = Catch.setHandledInterval(async () => {
         const passphrase = await this.passphraseGet();
         if (typeof passphrase !== 'undefined') {

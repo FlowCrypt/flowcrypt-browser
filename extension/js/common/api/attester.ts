@@ -7,14 +7,16 @@ import { Dict, Str } from '../core/common.js';
 import { PubkeySearchResult, PgpClient } from './keyserver.js';
 import { ApiErr } from './error/api-error.js';
 
+type PubCallRes = { responseText: string, getResponseHeader: (n: string) => string | null };
+
 export class Attester extends Api {
 
-  private static jsonCall = (path: string, values?: Dict<any>, method: ReqMethod = 'POST'): Promise<any> => {
-    return Api.apiCall('https://flowcrypt.com/attester/', path, values, 'JSON', undefined, { 'api-version': '3' }, 'json', method);
+  private static jsonCall = async <RT>(path: string, values?: Dict<any>, method: ReqMethod = 'POST'): Promise<RT> => {
+    return await Api.apiCall('https://flowcrypt.com/attester/', path, values, 'JSON', undefined, { 'api-version': '3' }, 'json', method) as RT;
   }
 
-  private static pubCall = (resource: string, method: ReqMethod = 'GET', data?: string | undefined): Promise<{ responseText: string, getResponseHeader: (n: string) => string | null }> => {
-    return Api.apiCall('https://flowcrypt.com/attester/', resource, data, typeof data === 'string' ? 'TEXT' : undefined, undefined, undefined, 'xhr', method);
+  private static pubCall = async (resource: string, method: ReqMethod = 'GET', data?: string | undefined): Promise<PubCallRes> => {
+    return await Api.apiCall('https://flowcrypt.com/attester/', resource, data, typeof data === 'string' ? 'TEXT' : undefined, undefined, undefined, 'xhr', method);
   }
 
   public static lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
@@ -43,8 +45,8 @@ export class Attester extends Api {
     return results;
   }
 
-  public static lookupLongid = (longid: string) => {
-    return Attester.lookupEmail(longid); // the api accepts either email or longid
+  public static lookupLongid = async (longid: string) => {
+    return await Attester.lookupEmail(longid); // the api accepts either email or longid
   }
 
   public static replacePubkey = async (email: string, pubkey: string): Promise<string> => { // replace key assigned to a certain email with a different one
@@ -57,12 +59,12 @@ export class Attester extends Api {
     return r.responseText;
   }
 
-  public static initialLegacySubmit = (email: string, pubkey: string): Promise<{ saved: boolean }> => {
-    return Attester.jsonCall('initial/legacy_submit', { email: Str.parseEmail(email).email, pubkey: pubkey.trim() });
+  public static initialLegacySubmit = async (email: string, pubkey: string): Promise<{ saved: boolean }> => {
+    return await Attester.jsonCall<{ saved: boolean }>('initial/legacy_submit', { email: Str.parseEmail(email).email, pubkey: pubkey.trim() });
   }
 
-  public static testWelcome = (email: string, pubkey: string): Promise<{ sent: boolean }> => {
-    return Attester.jsonCall('test/welcome', { email, pubkey });
+  public static testWelcome = async (email: string, pubkey: string): Promise<{ sent: boolean }> => {
+    return await Attester.jsonCall<{ sent: boolean }>('test/welcome', { email, pubkey });
   }
 
 }

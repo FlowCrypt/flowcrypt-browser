@@ -152,15 +152,15 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       const textMsgFrameUrl = `chrome/elements/pgp_block.htm?frameId=none&message=&hasPassword=___cu_false___&msgId=16a9c109bc51687d&` +
         `senderEmail=flowcrypt.compatibility%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
-      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, textMsgFrameUrl, ["1234"], undefined, false, ["Fetched pubkey, click to verify", "Flowcrypt.Compatibility@Protonmail.Com"]);
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, textMsgFrameUrl, ["1234"], undefined, false, ["Fetched pubkey, click to verify", "Flowcrypt.Compatibility@Protonmail.Com"]); // eslint-disable-line max-len
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, textMsgFrameUrl, ["1234"], undefined, false, ["matching signature", "Flowcrypt.Compatibility@Protonmail.Com"]);
     }));
 
     ava.default('[standalone] verify encrypted+signed message', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
-      const encryptedSignedMsgUrl = `chrome/elements/pgp_block.htm?frameId=none&message=&hasPassword=___cu_false___&msgId=1617429dc55600db&senderEmail=martin%40politick.ca&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
-      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, encryptedSignedMsgUrl, ['4) signed + encrypted email if supported'], undefined, false, ["Fetched pubkey, click to verify", "Martin@Politick.Ca"]);
-      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, encryptedSignedMsgUrl, ['4) signed + encrypted email if supported'], undefined, false, ["matching signature", "Martin@Politick.Ca"]);
+      const encryptedSignedMsgUrl = `chrome/elements/pgp_block.htm?frameId=none&message=&hasPassword=___cu_false___&msgId=1617429dc55600db&senderEmail=martin%40politick.ca&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`; // eslint-disable-line max-len
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, encryptedSignedMsgUrl, ['4) signed + encrypted email if supported'], undefined, false, ["Fetched pubkey, click to verify", "Martin@Politick.Ca"]); // eslint-disable-line max-len
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, encryptedSignedMsgUrl, ['4) signed + encrypted email if supported'], undefined, false, ["matching signature", "Martin@Politick.Ca"]); // eslint-disable-line max-len
     }));
 
     ava.default('[standalone] load key - expired key', testWithNewBrowser(async (t, browser) => {

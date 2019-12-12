@@ -69,9 +69,8 @@ export class Assert {
       return values[name];
     }
     console.info(values[name]);  // for local debugging
-    // tslint:disable-next-line:max-line-length
     const msg = `Cannot render page (expected ${Xss.escape(name)} to be of type ${Xss.escape(expectedType)} but got ${Xss.escape(actualType)})`;
-    const renderMsg = `${msg}<br><br><div class="button green long action_report_issue">report issue</div>`;
+    const renderMsg = `${msg}<br><br><button class="button green long action_report_issue">report issue</button>`;
     Xss.sanitizeRender('body', renderMsg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
     $('.action_report_issue').click(Ui.event.handle(async target => {
       Catch.report(msg, { currentUrl: window.location.href, params: values });
@@ -82,8 +81,8 @@ export class Assert {
 
   public static abortAndRenderErrOnUrlParamValMismatch = <T>(values: Dict<T>, name: string, expectedVals: T[]): T => {
     if (expectedVals.indexOf(values[name]) === -1) {
-      // tslint:disable-next-line:max-line-length
-      const msg = `Cannot render page (expected ${Xss.escape(name)} to be one of ${Xss.escape(expectedVals.map(String).join(','))} but got ${Xss.escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+      const msg = `Cannot render page (expected ${Xss.escape(name)} to be one of ${Xss.escape(expectedVals.map(String).join(','))}
+        but got ${Xss.escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
       Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
       throw new UnreportableError(msg);
     }

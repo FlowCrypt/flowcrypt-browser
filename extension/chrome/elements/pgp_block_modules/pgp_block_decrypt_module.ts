@@ -66,8 +66,8 @@ export class PgpBlockViewDecryptModule {
           this.msgFetchedFromApi = format;
           await this.decryptAndRender(Buf.fromUtfStr(armored), undefined, subject);
         } else { // gmail message read auth not allowed
-          // tslint:disable-next-line:max-line-length
-          const readAccess = `Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><div class="button green auth_settings">Add missing permission</div>`;
+          const readAccess = `Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/>
+            <button class="button green auth_settings">Add missing permission</button>`;
           Xss.sanitizeRender('#pgp_block', `This encrypted message is very large (possibly containing an attachment). ${readAccess}`);
           this.view.renderModule.resizePgpBlockFrame();
           $('.auth_settings').click(this.view.setHandler(() => BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' })));

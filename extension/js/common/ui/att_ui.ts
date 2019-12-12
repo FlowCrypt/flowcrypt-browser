@@ -144,8 +144,8 @@ export class AttUI {
     return sum;
   }
 
-  private readAttDataAsUint8 = (uploadFileId: string): Promise<Uint8Array> => {
-    return new Promise(resolve => {
+  private readAttDataAsUint8 = async (uploadFileId: string): Promise<Uint8Array> => {
+    return await new Promise(resolve => {
       const reader = new FileReader();
       reader.onload = () => {
         resolve(new Uint8Array(reader.result as ArrayBuffer)); // that's what we're getting

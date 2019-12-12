@@ -177,44 +177,48 @@ export class Mime {
     return undefined;
   }
 
-  public static decode = (mimeMsg: Uint8Array): Promise<MimeContent> => {
-    return new Promise(resolve => {
-      let mimeContent: MimeContent = { atts: [], headers: {}, subject: undefined, text: undefined, html: undefined, signature: undefined, from: undefined, to: [], cc: [], bcc: [] };
+  public static decode = async (mimeMsg: Uint8Array): Promise<MimeContent> => {
+    let mimeContent: MimeContent = { atts: [], headers: {}, subject: undefined, text: undefined, html: undefined, signature: undefined, from: undefined, to: [], cc: [], bcc: [] };
+    const parser = new MimeParser();
+    const leafNodes: { [key: string]: MimeParserNode } = {};
+    parser.onbody = (node: MimeParserNode) => {
+      const path = String(node.path.join('.'));
+      if (typeof leafNodes[path] === 'undefined') {
+        leafNodes[path] = node;
+      }
+    };
+    return await new Promise((resolve, reject) => {
       try {
-        const parser = new MimeParser();
-        const leafNodes: { [key: string]: MimeParserNode } = {};
-        parser.onbody = (node: MimeParserNode) => {
-          const path = String(node.path.join('.'));
-          if (typeof leafNodes[path] === 'undefined') {
-            leafNodes[path] = node;
-          }
-        };
         parser.onend = () => {
-          for (const name of Object.keys(parser.node.headers)) {
-            mimeContent.headers[name] = parser.node.headers[name][0].value;
-          }
-          mimeContent.rawSignedContent = Mime.retrieveRawSignedContent([parser.node]);
-          for (const node of Object.values(leafNodes)) {
-            if (Mime.getNodeType(node) === 'application/pgp-signature') {
-              mimeContent.signature = node.rawContent;
-            } else if (Mime.getNodeType(node) === 'text/html' && !Mime.getNodeFilename(node)) {
-              // html content may be broken up into smaller pieces by attachments in between
-              // AppleMail does this with inline attachments
-              mimeContent.html = (mimeContent.html || '') + Mime.getNodeContentAsUtfStr(node);
-            } else if (Mime.getNodeType(node) === 'text/plain' && !Mime.getNodeFilename(node)) {
-              mimeContent.text = Mime.getNodeContentAsUtfStr(node);
-            } else if (Mime.getNodeType(node) === 'text/rfc822-headers') {
-              if (node._parentNode && node._parentNode.headers.subject) {
-                mimeContent.subject = node._parentNode.headers.subject[0].value;
-              }
-            } else {
-              mimeContent.atts.push(Mime.getNodeAsAtt(node));
+          try {
+            for (const name of Object.keys(parser.node.headers)) {
+              mimeContent.headers[name] = parser.node.headers[name][0].value;
             }
+            mimeContent.rawSignedContent = Mime.retrieveRawSignedContent([parser.node]);
+            for (const node of Object.values(leafNodes)) {
+              if (Mime.getNodeType(node) === 'application/pgp-signature') {
+                mimeContent.signature = node.rawContent;
+              } else if (Mime.getNodeType(node) === 'text/html' && !Mime.getNodeFilename(node)) {
+                // html content may be broken up into smaller pieces by attachments in between
+                // AppleMail does this with inline attachments
+                mimeContent.html = (mimeContent.html || '') + Mime.getNodeContentAsUtfStr(node);
+              } else if (Mime.getNodeType(node) === 'text/plain' && !Mime.getNodeFilename(node)) {
+                mimeContent.text = Mime.getNodeContentAsUtfStr(node);
+              } else if (Mime.getNodeType(node) === 'text/rfc822-headers') {
+                if (node._parentNode && node._parentNode.headers.subject) {
+                  mimeContent.subject = node._parentNode.headers.subject[0].value;
+                }
+              } else {
+                mimeContent.atts.push(Mime.getNodeAsAtt(node));
+              }
+            }
+            const headers = Mime.headerGetAddress(mimeContent, ['from', 'to', 'cc', 'bcc']);
+            mimeContent.subject = String(mimeContent.subject || mimeContent.headers.subject || '(no subject)');
+            mimeContent = Object.assign(mimeContent, headers);
+            resolve(mimeContent);
+          } catch (e) {
+            reject(e);
           }
-          const headers = Mime.headerGetAddress(mimeContent, ['from', 'to', 'cc', 'bcc']);
-          mimeContent.subject = String(mimeContent.subject || mimeContent.headers.subject || '(no subject)');
-          mimeContent = Object.assign(mimeContent, headers);
-          resolve(mimeContent);
         };
         parser.write(mimeMsg);
         parser.end();

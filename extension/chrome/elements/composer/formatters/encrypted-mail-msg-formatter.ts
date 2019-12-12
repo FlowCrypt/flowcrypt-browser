@@ -43,7 +43,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
       await this.addReplyTokenToMsgBodyIfNeeded(authInfo, newMsg, subscription);
       let atts = await this.composer.atts.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey), newMsg.pwd);
       if (newMsg.pwd && atts.length) { // these will be password encrypted attachments
-        this.composer.sendBtn.btnUpdateTimeout = Catch.setHandledTimeout(() => this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING), 500);
+        this.composer.sendBtn.btnUpdateTimeout = Catch.setHandledTimeout(() => { this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING); }, 500);
         await this.uploadAttsToFc(authInfo, atts); // must strictly be preceeding the next function, because it's setting att.url
         newMsg.plaintext = this.addUploadedFileLinksToMsgBody(newMsg.plaintext, atts);
       }

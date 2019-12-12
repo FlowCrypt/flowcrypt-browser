@@ -80,7 +80,7 @@ export class PgpBlockViewRenderModule {
       }));
     }
     this.resizePgpBlockFrame(); // resize window now
-    Catch.setHandledTimeout(() => $(window).resize(this.view.setHandlerPrevent('spree', () => this.resizePgpBlockFrame())), 1000); // start auto-resizing the window after 1s
+    Catch.setHandledTimeout(() => { $(window).resize(this.view.setHandlerPrevent('spree', () => this.resizePgpBlockFrame())); }, 1000); // start auto-resizing the window after 1s
   }
 
   public setFrameColor = (color: 'red' | 'green' | 'gray') => {

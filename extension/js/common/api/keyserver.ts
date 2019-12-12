@@ -29,7 +29,7 @@ export class Keyserver {
         return res;
       }
     }
-    return Attester.lookupEmail(email);
+    return await Attester.lookupEmail(email);
   }
 
   public static lookupLongid = async (acctEmail: string, longid: string): Promise<PubkeySearchResult> => {
@@ -40,7 +40,7 @@ export class Keyserver {
         return res;
       }
     }
-    return Attester.lookupLongid(longid);
+    return await Attester.lookupLongid(longid);
   }
 
 }

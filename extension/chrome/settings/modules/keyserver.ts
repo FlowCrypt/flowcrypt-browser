@@ -45,7 +45,7 @@ View.run(class KeyserverView extends View {
       let note, action, color;
       if (!result.pubkey) {
         note = 'Missing record. Your contacts will not know you have encryption set up.';
-        action = `<div class="button gray2 small action_submit_key" email="${Xss.escape(email)}">Submit public key</div>`;
+        action = `<button class="button gray2 small action_submit_key" email="${Xss.escape(email)}">Submit public key</button>`;
         color = 'orange';
       } else if (result.match) {
         note = 'Submitted correctly, can receive encrypted email.';
@@ -54,7 +54,7 @@ View.run(class KeyserverView extends View {
       } else {
         note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
         // todo - pass public key and email in
-        action = `<div class="button gray2 small action_replace_pubkey" email="${Xss.escape(email)}">Correct public records</a>`;
+        action = `<button class="button gray2 small action_replace_pubkey" email="${Xss.escape(email)}">Correct public records</button>`;
         color = 'red';
       }
       Xss.sanitizeAppend('#content', `<div class="line left">${Xss.escape(email)}: <span class="${color}">${note}</span> ${action}</div>`);
