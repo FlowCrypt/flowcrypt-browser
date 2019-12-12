@@ -19,6 +19,7 @@ import { Store } from '../../../platform/store.js';
 import { GmailRes, GmailParser } from './gmail-parser.js';
 import { GoogleAuth } from '../../google-auth.js';
 import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window.js';
+import { PgpArmor } from '../../../core/pgp-armor.js';
 import { AjaxErr } from '../../error/api-error-types.js';
 
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
@@ -274,11 +275,11 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     if (format === 'full') {
       const bodies = GmailParser.findBodies(gmailMsg);
       const atts = GmailParser.findAtts(gmailMsg);
-      const fromTextBody = Pgp.armor.clip(Buf.fromBase64UrlStr(bodies['text/plain'] || '').toUtfStr());
+      const fromTextBody = PgpArmor.clip(Buf.fromBase64UrlStr(bodies['text/plain'] || '').toUtfStr());
       if (fromTextBody) {
         return { armored: fromTextBody, subject };
       }
-      const fromHtmlBody = Pgp.armor.clip(Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html'] || '').toUtfStr(), '\n'));
+      const fromHtmlBody = PgpArmor.clip(Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html'] || '').toUtfStr(), '\n'));
       if (fromHtmlBody) {
         return { armored: fromHtmlBody, subject };
       }
@@ -286,7 +287,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
         for (const att of atts) {
           if (att.treatAs() === 'encryptedMsg') {
             await this.fetchAtts([att], progressCb);
-            const armoredMsg = Pgp.armor.clip(att.getData().toUtfStr());
+            const armoredMsg = PgpArmor.clip(att.getData().toUtfStr());
             if (!armoredMsg) {
               throw new FormatError('Problem extracting armored message', att.getData().toUtfStr());
             }
@@ -301,7 +302,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       const mimeMsg = Buf.fromBase64UrlStr(gmailMsg.raw!);
       const decoded = await Mime.decode(mimeMsg);
       if (decoded.text !== undefined) {
-        const armoredMsg = Pgp.armor.clip(decoded.text); // todo - the message might be in attachments
+        const armoredMsg = PgpArmor.clip(decoded.text); // todo - the message might be in attachments
         if (armoredMsg) {
           return { armored: armoredMsg, subject };
         } else {

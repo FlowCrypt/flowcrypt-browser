@@ -16,6 +16,7 @@ import { Config, Util, getParsedCliParams } from './util';
 import { FlowCryptApi } from './tests/api';
 import { getDebugHtmlAtts, AvaContext, standaloneTestTimeout, minutes, GlobalBrowser, newWithTimeoutsFunc } from './tests';
 import { mock } from './mock';
+import { mockBackendData } from './mock/backend/backend-endpoints';
 
 const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 const startedAt = Date.now();
@@ -115,6 +116,25 @@ if (isMock) {
     t.pass();
   });
 }
+
+ava.after.always('evaluate Catch.reportErr errors', async t => {
+  if (!isMock || testGroup !== 'STANDARD-GROUP') { // can only collect reported errs when running with a mocked api
+    t.pass();
+    return;
+  }
+  const expectedErr = mockBackendData.reportedErrors.find(re => re.message === `intentional error for debugging`);
+  const unwantedErrs = mockBackendData.reportedErrors.filter(re => re.message !== `intentional error for debugging`);
+  if (!expectedErr) {
+    t.fail(`Catch.reportErr errors: missing intentional error`);
+  } else if (unwantedErrs.length) {
+    for (const e of unwantedErrs) {
+      console.info(`----- mockBackendData Catch.reportErr -----\nname: ${e.name}\nmessage: ${e.message}\nurl: ${e.url}\ntrace: ${e.trace}`);
+    }
+    t.fail(`Catch.reportErr errors: ${mockBackendData.reportedErrors.length}`);
+  } else {
+    t.pass();
+  }
+});
 
 ava.after.always('send debug info if any', async t => {
   console.info('send debug info - deciding');

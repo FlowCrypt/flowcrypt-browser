@@ -11,6 +11,7 @@ import { Assert } from '../../../js/common/assert.js';
 import { Attester } from '../../../js/common/api/attester.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
+import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 declare const openpgp: typeof OpenPGP;
@@ -20,7 +21,7 @@ View.run(class MyKeyUpdateView extends View {
   private readonly longid: string;
   private readonly showKeyUrl: string;
   private readonly inputPrivateKey = $('.input_private_key');
-  private readonly prvHeaders = Pgp.armor.headers('privateKey');
+  private readonly prvHeaders = PgpArmor.headers('privateKey');
   private primaryKi: KeyInfo | undefined;
 
   constructor() {
