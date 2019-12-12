@@ -1,6 +1,7 @@
 import { Xss } from '../../platform/xss.js';
 import { AjaxErr, ApiErrResponse, StandardError, StandardErrRes, AuthErr, GoogleAuthErr } from './api-error-types.js';
 import { Catch } from '../../platform/catch.js';
+import { BgNotReadyErr } from '../../browser/browser-msg.js';
 
 export class ApiErr {
   static eli5 = (e: any): string => {
@@ -26,6 +27,8 @@ export class ApiErr {
       return 'Server responded with an unexpected error.';
     } else if (e instanceof AjaxErr) {
       return 'AjaxErr with unknown cause.';
+    } else if (e instanceof BgNotReadyErr) {
+      return 'Extension not ready. Restarting the browser should help.';
     } else {
       return 'FlowCrypt encountered an error with unknown cause.';
     }

@@ -6,7 +6,7 @@ import { Value, Str, Dict } from '../core/common.js';
 import { mnemonic } from '../core/mnemonic.js';
 import { Pgp, KeyInfo, Contact } from '../core/pgp.js';
 import { SubscriptionInfo, PaymentMethod, ProductLevel, FcUuidAuth } from '../api/backend.js';
-import { BrowserMsg, BgNotReadyError } from '../browser/browser-msg.js';
+import { BrowserMsg, BgNotReadyErr } from '../browser/browser-msg.js';
 import { Catch, UnreportableError } from './catch.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chrome.js';
 import { PgpClient } from '../api/keyserver.js';
@@ -420,13 +420,13 @@ export class Store {
         try {
           return await BrowserMsg.send.bg.await.storeAcctGet({ acctEmail, keys });
         } catch (e) {
-          if (!(e instanceof BgNotReadyError) || i === 9) {
+          if (!(e instanceof BgNotReadyErr) || i === 9) {
             throw e;
           }
           await Ui.time.sleep(300);
         }
       }
-      throw new BgNotReadyError('this should never happen');
+      throw new BgNotReadyErr('this should never happen');
     }
     const storageObj = await storageLocalGet(Store.singleScopeRawIndexArr(acctEmail, keys)) as RawStore;
     return Store.buildSingleAccountStoreFromRawResults(acctEmail, storageObj) as AccountStore;
