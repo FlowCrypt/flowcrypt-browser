@@ -151,8 +151,6 @@ export class GoogleAuth {
           const uuid = Api.randomFortyHexChars();
           await Backend.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
           await Backend.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // will store org rules and subscription
-        } else {
-          await Backend.getSubscriptionWithoutLogin(authRes.acctEmail); // will store subscription
         }
       } catch (e) {
         return { result: 'Error', error: `Grant successful but error accessing fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
