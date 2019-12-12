@@ -118,7 +118,6 @@ if (isMock) {
 }
 
 ava.after.always('evaluate Catch.reportErr errors', async t => {
-  console.info(`\n\nCatch.reportErr errors: ${mockBackendData.reportedErrors.length}`);
   const expectedErr = mockBackendData.reportedErrors.find(re => re.message === `intentional error for debugging`);
   const unwantedErrs = mockBackendData.reportedErrors.filter(re => re.message !== `intentional error for debugging`);
   if (!expectedErr) {
