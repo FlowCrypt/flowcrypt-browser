@@ -11,8 +11,9 @@ import { migrateGlobal } from './migrations.js';
 import { GoogleAuth } from '../common/api/google-auth.js';
 import { BgUtils } from './bgutils.js';
 import { BgHandlers } from './bg_handlers.js';
-import { PgpMsg, Pgp } from '../common/core/pgp.js';
+import { PgpMsg } from '../common/core/pgp.js';
 import { Buf } from '../common/core/buf.js';
+import { PgpHash } from '../common/core/pgp-hash.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -58,7 +59,7 @@ openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
   // openpgp related handlers
   BrowserMsg.bgAddListener('pgpMsgType', (r: Bm.PgpMsgType) => PgpMsg.type({ data: Buf.fromRawBytesStr(r.rawBytesStr) }));
   BrowserMsg.bgAddListener('pgpMsgDiagnosePubkeys', PgpMsg.diagnosePubkeys);
-  BrowserMsg.bgAddListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await Pgp.hash.challengeAnswer(r.answer) }));
+  BrowserMsg.bgAddListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await PgpHash.challengeAnswer(r.answer) }));
   BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decrypt);
   BrowserMsg.bgAddListener('pgpMsgVerifyDetached', PgpMsg.verifyDetached);
   BrowserMsg.bgAddListener('pgpKeyDetails', BgHandlers.pgpKeyDetails);

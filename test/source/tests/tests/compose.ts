@@ -477,7 +477,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const [attElem] = await webDecryptPage.page.$x('.//@data-test-donwload-url');
       const attUrl = await PageRecipe.getElementPropertyJson(attElem, 'value');
       const res = await request.get({ url: attUrl, encoding: null }); // tslint:disable-line:no-null-keyword
-      const decryptedFile = await PgpMsg.decrypt({ encryptedData: res.body as Buffer, kisWithPp: [], msgPwd: await Pgp.hash.challengeAnswer(msgPwd) });
+      const decryptedFile = await PgpMsg.decrypt({ encryptedData: res.body as Buffer, kisWithPp: [], msgPwd: await PgpHash.challengeAnswer(msgPwd) });
       expect(decryptedFile.content!.toUtfStr()).to.equal(`small text file\nnot much here\nthis worked\n`);
     }));
 

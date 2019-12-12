@@ -8,8 +8,8 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { AttUI, AttLimits } from '../../../js/common/ui/att_ui.js';
 import { Composer } from './composer.js';
 import { Rules } from '../../../js/common/rules.js';
-import { Pgp } from '../../../js/common/core/pgp.js';
 import { Store } from '../../../js/common/platform/store.js';
+import { PgpHash } from '../../../js/common/core/pgp-hash.js';
 
 export class ComposerAtts extends ComposerComponent {
 
@@ -65,7 +65,7 @@ export class ComposerAtts extends ComposerComponent {
       };
     } else {
       const allowHugeAtts = ['94658c9c332a11f20b1e45c092e6e98a1e34c953', 'b092dcecf277c9b3502e20c93b9386ec7759443a', '9fbbe6720a6e6c8fc30243dc8ff0a06cbfa4630e'];
-      const sizeMb = (subscription.method !== 'trial' && allowHugeAtts.includes(await Pgp.hash.sha1UtfStr(this.view.acctEmail))) ? 200 : 25;
+      const sizeMb = (subscription.method !== 'trial' && allowHugeAtts.includes(await PgpHash.sha1UtfStr(this.view.acctEmail))) ? 200 : 25;
       return {
         sizeMb,
         size: sizeMb * 1024 * 1024,

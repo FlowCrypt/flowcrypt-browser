@@ -4,6 +4,7 @@
 
 import { Pgp } from '../../js/common/core/pgp.js';
 import { Url } from '../../js/common/core/common.js';
+import { PgpHash } from '../../js/common/core/pgp-hash.js';
 
 (async () => {
 
@@ -27,14 +28,14 @@ import { Url } from '../../js/common/core/common.js';
 
   if (f === 'Pgp.armor.detectBlocks') {
     return await test(Pgp.armor.detectBlocks, args);
-  } else if (f === 'Pgp.hash.sha1') {
-    return await test(Pgp.hash.sha1UtfStr, args);
-  } else if (f === 'Pgp.hash.sha256') {
-    return await test(Pgp.hash.sha256UtfStr, args);
-  } else if (f === 'Pgp.hash.doubleSha1Upper') {
-    return await test(Pgp.hash.doubleSha1Upper, args);
-  } else if (f === 'Pgp.hash.challengeAnswer') {
-    return await test(Pgp.hash.challengeAnswer, args);
+  } else if (f === 'PgpHash.sha1') {
+    return await test(PgpHash.sha1UtfStr, args);
+  } else if (f === 'PgpHash.sha256') {
+    return await test(PgpHash.sha256UtfStr, args);
+  } else if (f === 'PgpHash.doubleSha1Upper') {
+    return await test(PgpHash.doubleSha1Upper, args);
+  } else if (f === 'PgpHash.challengeAnswer') {
+    return await test(PgpHash.challengeAnswer, args);
   } else {
     return renderRes('Unknown unit test f');
   }
