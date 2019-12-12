@@ -757,25 +757,22 @@ export class Store {
         throw new Error('dbContactSearch: unknown key: ' + key);
       }
     }
+    query.substring = Store.normalizeString(query.substring || '');
+    if (typeof query.has_pgp === 'undefined' && query.substring) {
+      const resultsWithPgp = await Store.dbContactSearch(db, { substring: query.substring, limit: query.limit, has_pgp: true });
+      if (query.limit && resultsWithPgp.length === query.limit) {
+        return resultsWithPgp;
+      } else {
+        const limit = query.limit ? query.limit - resultsWithPgp.length : undefined;
+        const resultsWithoutPgp = await Store.dbContactSearch(db, { substring: query.substring, limit, has_pgp: false });
+        return resultsWithPgp.concat(resultsWithoutPgp);
+      }
+    }
     return await new Promise((resolve, reject) => {
       const contacts = db.transaction('contacts', 'readonly').objectStore('contacts');
-      let search: IDBRequest | undefined;
+      let search: IDBRequest;
       if (typeof query.has_pgp === 'undefined') { // any query.has_pgp value
-        query.substring = Store.normalizeString(query.substring || '');
-        if (query.substring) {
-          (async () => {
-            const resultsWithPgp = await Store.dbContactSearch(db, { substring: query.substring, limit: query.limit, has_pgp: true });
-            if (query.limit && resultsWithPgp.length === query.limit) {
-              resolve(resultsWithPgp);
-            } else {
-              const limit = query.limit ? query.limit - resultsWithPgp.length : undefined;
-              const resultsWithoutPgp = await Store.dbContactSearch(db, { substring: query.substring, limit, has_pgp: false });
-              resolve(resultsWithPgp.concat(resultsWithoutPgp));
-            }
-          })().catch(reject);
-        } else {
-          search = contacts.openCursor();
-        }
+        search = contacts.openCursor(); // no substring, already covered in `typeof query.has_pgp === 'undefined' && query.substring` above
       } else { // specific query.has_pgp value
         if (query.substring) {
           search = contacts.index('search').openCursor(IDBKeyRange.only(Store.dbIndex(query.has_pgp, query.substring)));
@@ -783,23 +780,17 @@ export class Store {
           search = contacts.index('index_has_pgp').openCursor(IDBKeyRange.only(Number(query.has_pgp)));
         }
       }
-      if (typeof search !== 'undefined') {
-        const found: Contact[] = [];
-        search.onsuccess = Catch.try(() => {
-          const cursor = search!.result; // checked it above
-          if (!cursor || found.length === query.limit) {
-            resolve(found);
-          } else {
-            found.push(cursor.value); // tslint:disable-line:no-unsafe-any
-            cursor.continue(); // tslint:disable-line:no-unsafe-any
-          }
-        });
-        search.onerror = () => reject(Store.errCategorize(search!.error!)); // todo - added ! after ts3 upgrade - investigate
-      } else {
-        // todo - this seems to make no sense. No callback? Why undefined?
-        // adding a reject below will break tests
-        // reject(new Error('search is undefined in dbContactSearch'));
-      }
+      const found: Contact[] = [];
+      search.onsuccess = Catch.try(() => {
+        const cursor = search!.result; // checked it above
+        if (!cursor || found.length === query.limit) {
+          resolve(found);
+        } else {
+          found.push(cursor.value); // tslint:disable-line:no-unsafe-any
+          cursor.continue(); // tslint:disable-line:no-unsafe-any
+        }
+      });
+      search.onerror = () => reject(Store.errCategorize(search!.error!)); // todo - added ! after ts3 upgrade - investigate
     });
   }
 
