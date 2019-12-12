@@ -58,4 +58,5 @@ rules: #
     oneliner-object-literal: true
     no-direct-ajax: true
     no-return-any: true
+    await-returned-promise: true
 ...
