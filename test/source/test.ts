@@ -118,8 +118,10 @@ if (isMock) {
 }
 
 ava.after.always('evaluate Catch.reportErr errors', async t => {
-  for (const e of mockBackendData.reportedErrors) {
-    console.info(`
+  console.info(`Catch.reportErr errors: ${mockBackendData.reportedErrors.length}`);
+  if (mockBackendData.reportedErrors.length) {
+    for (const e of mockBackendData.reportedErrors) {
+      console.info(`
       --------------- mockBackendData Catch.reportErr ---------------
       name: ${e.name}
       message: ${e.message}
@@ -127,9 +129,8 @@ ava.after.always('evaluate Catch.reportErr errors', async t => {
       line,col: ${e.line},${e.col}
       trace: ${e.trace}
     `);
-  }
-  if (mockBackendData.reportedErrors.length) {
-    t.fail(` Catch.reportErr errors: ${mockBackendData.reportedErrors.length}`);
+    }
+    t.fail(`Catch.reportErr errors: ${mockBackendData.reportedErrors.length}`);
   } else {
     t.pass();
   }
