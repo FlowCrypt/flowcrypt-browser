@@ -15,6 +15,7 @@ import { GoogleAuth } from '../api/google-auth.js';
 import { DomainRules } from '../rules.js';
 import { Env } from '../browser/env.js';
 import { Ui } from '../browser/ui.js';
+import { PgpArmor } from '../core/pgp-armor.js';
 
 // tslint:disable:no-null-keyword
 
@@ -686,7 +687,7 @@ export class Store {
         throw new Error('contact not found right after inserting it');
       }
     }
-    if (update.pubkey && update.pubkey.includes(Pgp.armor.headers('privateKey').begin)) { // wrongly saving prv instead of pub
+    if (update.pubkey && update.pubkey.includes(PgpArmor.headers('privateKey').begin)) { // wrongly saving prv instead of pub
       Catch.report('Wrongly saving prv as contact - converting to pubkey');
       const key = await Pgp.key.read(update.pubkey);
       update.pubkey = key.toPublic().armor();

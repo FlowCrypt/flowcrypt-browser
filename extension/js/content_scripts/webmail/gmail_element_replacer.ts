@@ -5,7 +5,6 @@
 import { Str, Dict } from '../../common/core/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
-import { Pgp } from '../../common/core/pgp.js';
 import { XssSafeFactory, WebmailVariantString, FactoryReplyParams } from '../../common/xss_safe_factory.js';
 import { Att } from '../../common/core/att.js';
 import { WebmailElementReplacer, IntervalFunction } from './setup_webmail_content_script.js';
@@ -21,6 +20,7 @@ import { Browser } from '../../common/browser/browser.js';
 import { BrowserMsg } from '../../common/browser/browser-msg.js';
 import { ApiErr } from '../../common/api/error/api-error.js';
 import { AjaxErr } from '../../common/api/error/api-error-types.js';
+import { PgpArmor } from '../../common/core/pgp-armor.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
@@ -47,7 +47,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     subject: 'h2.hP',
     msgOuter: 'div.adn',
     msgInner: 'div.a3s:not(.undefined), .message_inner_body',
-    msgInnerContainingPgp: "div.a3s:not(.undefined):contains('" + Pgp.armor.headers('null').begin + "')",
+    msgInnerContainingPgp: "div.a3s:not(.undefined):contains('" + PgpArmor.headers('null').begin + "')",
     attsContainerOuter: 'div.hq.gt',
     attsContainerInner: 'div.aQH',
     translatePrompt: '.adI',
@@ -302,7 +302,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             nRenderedAtts = await this.renderBackupFromFile(a, attsContainerInner, msgEl, attSel, nRenderedAtts);
           } else if (treatAs === 'signature') {
             const embeddedSignedMsgXssSafe = this.factory.embeddedMsg('', msgId, false, senderEmail, false, true);
-            const replace = !msgEl.is('.evaluated') && !msgEl.text().includes(Pgp.armor.headers('null').begin);
+            const replace = !msgEl.is('.evaluated') && !msgEl.text().includes(PgpArmor.headers('null').begin);
             msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, replace ? 'set' : 'append', embeddedSignedMsgXssSafe); // xss-safe-factory
           }
         } else if (treatAs === 'plainFile' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc

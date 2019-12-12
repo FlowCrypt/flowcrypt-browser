@@ -9,6 +9,7 @@ import { Catch } from '../platform/catch.js';
 import { requireMimeParser, requireMimeBuilder, requireIso88592 } from '../platform/require.js';
 import { Buf } from './buf.js';
 import { MimeParserNode } from './types/emailjs';
+import { PgpArmor } from './pgp-armor.js';
 
 const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
 const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name
@@ -60,7 +61,7 @@ export class Mime {
   public static processDecoded = (decoded: MimeContent): MimeProccesedMsg => {
     const blocks: MsgBlock[] = [];
     if (decoded.text) {
-      const blocksFromTextPart = Pgp.armor.detectBlocks(Str.normalize(decoded.text)).blocks;
+      const blocksFromTextPart = PgpArmor.detectBlocks(Str.normalize(decoded.text)).blocks;
       // if there are some encryption-related blocks found in the text section, which we can use, and not look at the html section
       if (blocksFromTextPart.find(b => b.type === 'encryptedMsg' || b.type === 'signedMsg' || b.type === 'publicKey' || b.type === 'privateKey')) {
         blocks.push(...blocksFromTextPart); // because the html most likely containt the same thing, just harder to parse pgp sections cause it's html
@@ -75,16 +76,16 @@ export class Mime {
     for (const file of decoded.atts) {
       const treatAs = file.treatAs();
       if (treatAs === 'encryptedMsg') {
-        const armored = Pgp.armor.clip(file.getData().toUtfStr());
+        const armored = PgpArmor.clip(file.getData().toUtfStr());
         if (armored) {
           blocks.push(Pgp.internal.msgBlockObj('encryptedMsg', armored));
         }
       } else if (treatAs === 'signature') {
         decoded.signature = decoded.signature || file.getData().toUtfStr();
       } else if (treatAs === 'publicKey') {
-        blocks.push(...Pgp.armor.detectBlocks(file.getData().toUtfStr()).blocks);
+        blocks.push(...PgpArmor.detectBlocks(file.getData().toUtfStr()).blocks);
       } else if (treatAs === 'privateKey') {
-        blocks.push(...Pgp.armor.detectBlocks(file.getData().toUtfStr()).blocks);
+        blocks.push(...PgpArmor.detectBlocks(file.getData().toUtfStr()).blocks);
       } else if (treatAs === 'encryptedFile') {
         blocks.push(Pgp.internal.msgBlockAttObj('encryptedAtt', '', { name: file.name, type: file.type, length: file.getData().length, data: file.getData() }));
       } else if (treatAs === 'plainFile') {

@@ -6,7 +6,6 @@
 
 import { Catch } from './platform/catch.js';
 import { Str, Dict, UrlParams, Url } from './core/common.js';
-import { Pgp } from './core/pgp.js';
 import { Att } from './core/att.js';
 import { MsgBlock } from './core/mime.js';
 import { Browser } from './browser/browser.js';
@@ -14,6 +13,7 @@ import { Xss } from './platform/xss.js';
 import { SendAsAlias } from './platform/store.js';
 import { Ui } from './browser/ui.js';
 import { WebMailName } from './browser/env.js';
+import { PgpArmor } from './core/pgp-armor.js';
 
 type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
@@ -260,13 +260,13 @@ export class XssSafeFactory {
     } else if (block.type === 'plainHtml') {
       return Xss.htmlSanitizeAndStripAllTags(block.content.toString(), '<br>') + '<br><br>';
     } else if (block.type === 'encryptedMsg') {
-      return factory.embeddedMsg(block.complete ? Pgp.armor.normalize(block.content.toString(), 'encryptedMsg') : '', msgId, isOutgoing, senderEmail, false);
+      return factory.embeddedMsg(block.complete ? PgpArmor.normalize(block.content.toString(), 'encryptedMsg') : '', msgId, isOutgoing, senderEmail, false);
     } else if (block.type === 'signedMsg') {
       return factory.embeddedMsg(block.content.toString(), msgId, isOutgoing, senderEmail, false);
     } else if (block.type === 'publicKey') {
-      return factory.embeddedPubkey(Pgp.armor.normalize(block.content.toString(), 'publicKey'), isOutgoing);
+      return factory.embeddedPubkey(PgpArmor.normalize(block.content.toString(), 'publicKey'), isOutgoing);
     } else if (block.type === 'privateKey') {
-      return factory.embeddedBackup(Pgp.armor.normalize(block.content.toString(), 'privateKey'));
+      return factory.embeddedBackup(PgpArmor.normalize(block.content.toString(), 'privateKey'));
     } else if (block.type === 'encryptedMsgLink') {
       return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, undefined, block.content.toString()); // here block.content is message short id
     } else if (block.type === 'encryptedAtt') {
@@ -287,7 +287,7 @@ export class XssSafeFactory {
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
   public static replaceRenderableMsgBlocks = (factory: XssSafeFactory, origText: string, msgId?: string, senderEmail?: string, isOutgoing?: boolean) => {
-    const { blocks } = Pgp.armor.detectBlocks(origText);
+    const { blocks } = PgpArmor.detectBlocks(origText);
     if (blocks.length === 1 && blocks[0].type === 'plainText') {
       return undefined; // only has single block which is plain text - meaning
     }

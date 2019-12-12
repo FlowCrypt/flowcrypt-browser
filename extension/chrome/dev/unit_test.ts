@@ -4,6 +4,7 @@
 
 import { Pgp } from '../../js/common/core/pgp.js';
 import { Url } from '../../js/common/core/common.js';
+import { PgpArmor } from '../../js/common/core/pgp-armor.js';
 
 (async () => {
 
@@ -26,7 +27,7 @@ import { Url } from '../../js/common/core/common.js';
   };
 
   if (f === 'Pgp.armor.detectBlocks') {
-    return await test(Pgp.armor.detectBlocks, args);
+    return await test(PgpArmor.detectBlocks, args);
   } else if (f === 'Pgp.hash.sha1') {
     return await test(Pgp.hash.sha1UtfStr, args);
   } else if (f === 'Pgp.hash.sha256') {
