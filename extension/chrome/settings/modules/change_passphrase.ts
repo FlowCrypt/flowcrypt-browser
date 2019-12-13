@@ -81,6 +81,7 @@ View.run(class ChangePassPhraseView extends View {
   private actionSetPassPhraseHandler = async (target: HTMLElement) => {
     if ($(target).hasClass('green')) {
       this.displayBlock('step_2_confirm_new');
+      $('#new_pass_phrase_confirm').focus();
     } else {
       await Ui.modal.warning('Please select a stronger pass phrase. Combinations of 4 to 5 uncommon words are the best.');
     }
