@@ -4,7 +4,6 @@
 
 import { Store } from '../platform/store.js';
 import { Ui } from '../browser/ui.js';
-import { Pgp } from '../core/pgp.js';
 import { KeyBlockType } from '../core/mime.js';
 import { mnemonic } from '../core/mnemonic.js';
 import { AttUI } from './att_ui.js';
@@ -14,6 +13,7 @@ import { Settings } from '../settings.js';
 import { Url } from '../core/common.js';
 import { PgpArmor } from '../core/pgp-armor.js';
 import { PgpPwd } from '../core/pgp-password.js';
+import { PgpKey } from '../core/pgp-key.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -126,7 +126,7 @@ export class KeyImportUi {
     await this.decryptAndEncryptAsNeeded(decrypted, encrypted, passphrase);
     await this.checkEncryptionPrvIfSelected(decrypted, encrypted);
     await this.checkSigningIfSelected(decrypted);
-    return { normalized, longid, passphrase, fingerprint: (await Pgp.key.fingerprint(decrypted))!, decrypted, encrypted }; // will have fp if had longid
+    return { normalized, longid, passphrase, fingerprint: (await PgpKey.fingerprint(decrypted))!, decrypted, encrypted }; // will have fp if had longid
   }
 
   checkPub = async (armored: string): Promise<string> => {
@@ -182,7 +182,7 @@ export class KeyImportUi {
 
   private normalize = async (type: KeyBlockType, armored: string) => {
     const headers = PgpArmor.headers(type);
-    const normalized = await Pgp.key.normalize(armored);
+    const normalized = await PgpKey.normalize(armored);
     if (!normalized) {
       throw new UserAlert('There was an error processing this key, possibly due to bad formatting.\nPlease insert complete key, including "' + headers.begin + '" and "' + headers.end + '"');
     }
@@ -199,7 +199,7 @@ export class KeyImportUi {
   }
 
   private longid = async (k: OpenPGP.key.Key) => {
-    const longid = await Pgp.key.longid(k);
+    const longid = await PgpKey.longid(k);
     if (!longid) {
       throw new UserAlert('This key may not be compatible. Email human@flowcrypt.com and const us know which software created this key.\n\n(error: cannot get long_id)');
     }
@@ -220,7 +220,7 @@ export class KeyImportUi {
     if (this.rejectKnown) {
       const keyinfos = await Store.keysGet(acctEmail);
       const privateKeysLongids = keyinfos.map(ki => ki.longid);
-      if (privateKeysLongids.includes(String(await Pgp.key.longid(k)))) {
+      if (privateKeysLongids.includes(String(await PgpKey.longid(k)))) {
         throw new UserAlert('This is one of your current keys, try another one.');
       }
     }
@@ -243,9 +243,9 @@ export class KeyImportUi {
         throw new UserAlert(Lang.setup.partiallyEncryptedKeyUnsupported);
       }
       if (toDecrypt.isFullyEncrypted()) {
-        if (! await Pgp.key.decrypt(toDecrypt, passphrase)) {
+        if (! await PgpKey.decrypt(toDecrypt, passphrase)) {
           this.onBadPassphrase();
-          if (this.expectedLongid) { // todo - double check this line, should it not say `this.expectedLongid === Pgp.key.longid() ? Or is that checked elsewhere beforehand?
+          if (this.expectedLongid) { // todo - double check this line, should it not say `this.expectedLongid === PgpKey.longid() ? Or is that checked elsewhere beforehand?
             throw new UserAlert(`This is the right key! However, the pass phrase does not match. Please try a different pass phrase.
               Your original pass phrase might have been different then what you use now.`);
           } else {
@@ -267,7 +267,7 @@ export class KeyImportUi {
     if (this.checkEncryption && ! await k.getEncryptionKey()) {
       if (await k.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert) { // known issues - key can be fixed
         throw new KeyCanBeFixed(encrypted);
-      } else if (await Pgp.key.usableButExpired(k)) {
+      } else if (await PgpKey.usableButExpired(k)) {
         // Maybe would be better to give user 3 abilities:
         // 1) Confirm importing expired key
         // 2) Fix expired key
@@ -284,7 +284,7 @@ export class KeyImportUi {
   }
 
   private checkEncryptionPubIfSelected = async (normalized: string) => {
-    if (this.checkEncryption && !await Pgp.key.usable(normalized)) {
+    if (this.checkEncryption && !await PgpKey.usable(normalized)) {
       throw new UserAlert('This public key looks correctly formatted, but cannot be used for encryption. Please write at human@flowcrypt.com. We\'ll see if there is a way to fix it.');
     }
   }

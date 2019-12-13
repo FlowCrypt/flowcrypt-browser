@@ -5,11 +5,12 @@
 import { Ui } from './browser/ui.js';
 import { Dict, UrlParams, UrlParam } from './core/common.js';
 import { Catch, UnreportableError } from './platform/catch.js';
-import { KeyInfo, Pgp } from './core/pgp.js';
+import { KeyInfo } from './core/pgp.js';
 import { BrowserMsg } from './browser/browser-msg.js';
 import { Store } from './platform/store.js';
 import { Settings } from './settings.js';
 import { Xss } from './platform/xss.js';
+import { PgpKey } from './core/pgp-key.js';
 
 /**
  * Methods in this class will render a fatal message in the browser when assertion fails.
@@ -36,7 +37,7 @@ export class Assert {
     if (acctEmail) {
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
       const { setup_done, setup_simple } = await Store.getAcct(acctEmail, ['setup_simple', 'setup_done']);
-      if (setup_done && setup_simple && primaryKi && !(await Pgp.key.read(primaryKi.private)).isFullyEncrypted()) {
+      if (setup_done && setup_simple && primaryKi && !(await PgpKey.read(primaryKi.private)).isFullyEncrypted()) {
         if (window.location.pathname === '/chrome/settings/index.htm') {
           Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
         } else {

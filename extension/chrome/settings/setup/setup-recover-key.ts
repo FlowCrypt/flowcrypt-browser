@@ -5,11 +5,11 @@
 import { SetupView, SetupOptions } from '../setup.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Lang } from '../../../js/common/lang.js';
-import { Pgp } from '../../../js/common/core/pgp.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -32,8 +32,8 @@ export class SetupRecoverKeyModule {
       }
       let matchedPreviouslyRecoveredKey = false;
       for (const fetchedKey of this.view.fetchedKeyBackups) {
-        const longid = await Pgp.key.longid(fetchedKey);
-        if (longid && await Pgp.key.decrypt(await Pgp.key.read(fetchedKey.armor()), passphrase) === true) { // attempt to decrypt a copy of the key
+        const longid = await PgpKey.longid(fetchedKey);
+        if (longid && await PgpKey.decrypt(await PgpKey.read(fetchedKey.armor()), passphrase) === true) { // attempt to decrypt a copy of the key
           if (!this.view.mathingPassphrases.includes(passphrase)) {
             this.view.mathingPassphrases.push(passphrase);
           }

@@ -9,7 +9,7 @@ import { BrowserMsg, Bm } from '../../js/common/browser/browser-msg.js';
 import { Rules } from '../../js/common/rules.js';
 import { Lang } from '../../js/common/lang.js';
 import { Settings } from '../../js/common/settings.js';
-import { Pgp, Contact } from '../../js/common/core/pgp.js';
+import { Contact } from '../../js/common/core/pgp.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Google } from '../../js/common/api/google.js';
 import { Attester } from '../../js/common/api/attester.js';
@@ -24,6 +24,7 @@ import { SetupImportKeyModule } from './setup/setup-import-key.js';
 import { SetupRenderModule } from './setup/setup-render.js';
 import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
 import { ApiErr } from '../../js/common/api/error/api-error.js';
+import { PgpKey } from '../../js/common/core/pgp-key.js';
 
 export interface SetupOptions {
   passphrase: string;
@@ -180,7 +181,7 @@ export class SetupView extends View {
 
   saveKeys = async (prvs: OpenPGP.key.Key[], options: SetupOptions) => {
     for (const prv of prvs) {
-      const longid = await Pgp.key.longid(prv);
+      const longid = await PgpKey.longid(prv);
       if (!longid) {
         await Ui.modal.error('Cannot save keys to storage because at least one of them is not valid.');
         return;
@@ -193,7 +194,7 @@ export class SetupView extends View {
     for (const email of this.submitKeyForAddrs) {
       myOwnEmailAddrsAsContacts.push(await Store.dbContactObj({
         email, name, client: 'cryptup', pubkey: prvs[0].toPublic().armor(), lastUse: Date.now(),
-        lastSig: await Pgp.key.lastSig(prvs[0].toPublic()), expiresOn: await Pgp.key.dateBeforeExpiration(prvs[0])
+        lastSig: await PgpKey.lastSig(prvs[0].toPublic()), expiresOn: await PgpKey.dateBeforeExpiration(prvs[0])
       }));
     }
     await Store.dbContactSave(undefined, myOwnEmailAddrsAsContacts);
@@ -219,7 +220,7 @@ export class SetupView extends View {
     } else {
       addresses = [this.acctEmail];
     }
-    if (this.acctEmailAttesterFingerprint && this.acctEmailAttesterFingerprint !== await Pgp.key.fingerprint(armoredPubkey)) {
+    if (this.acctEmailAttesterFingerprint && this.acctEmailAttesterFingerprint !== await PgpKey.fingerprint(armoredPubkey)) {
       // already submitted another pubkey for this email
       // todo - offer user to fix it up
       return;
@@ -233,7 +234,7 @@ export class SetupView extends View {
   }
 
   getUniqueLongids = async (keys: OpenPGP.key.Key[]): Promise<string[]> => {
-    return Value.arr.unique(await Promise.all(keys.map(Pgp.key.longid))).filter(Boolean) as string[];
+    return Value.arr.unique(await Promise.all(keys.map(PgpKey.longid))).filter(Boolean) as string[];
   }
 
 }

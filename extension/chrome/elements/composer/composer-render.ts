@@ -10,11 +10,11 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Lang } from '../../../js/common/lang.js';
 import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
-import { Pgp } from '../../../js/common/core/pgp.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { SendableMsg, Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
 import { Att } from '../../../js/common/core/att.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
 export class ComposerRender extends ComposerComponent {
 
@@ -198,7 +198,7 @@ export class ComposerRender extends ComposerComponent {
         } catch (e) {
           return; // key is invalid
         }
-        const { keys: [key] } = await Pgp.key.parse(normalizedPub);
+        const { keys: [key] } = await PgpKey.parse(normalizedPub);
         if (!key.users.length) { // there can be no users
           return;
         }
@@ -207,7 +207,7 @@ export class ComposerRender extends ComposerComponent {
           if (!await Store.dbContactGet(undefined, [keyUser.email])) {
             await Store.dbContactSave(undefined, await Store.dbContactObj({
               email: keyUser.email, name: keyUser.name, client: 'pgp',
-              pubkey: normalizedPub, lastCheck: Date.now(), expiresOn: await Pgp.key.dateBeforeExpiration(normalizedPub)
+              pubkey: normalizedPub, lastCheck: Date.now(), expiresOn: await PgpKey.dateBeforeExpiration(normalizedPub)
             }));
           }
           this.composer.S.cached('input_to').val(keyUser.email);

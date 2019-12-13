@@ -8,12 +8,12 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Attester } from '../../../js/common/api/attester.js';
-import { Pgp } from '../../../js/common/core/pgp.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Lang } from '../../../js/common/lang.js';
 import { View } from '../../../js/common/view.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
 type AttesterKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: string, match: boolean }> };
 
@@ -110,7 +110,7 @@ View.run(class KeyserverView extends View {
         diagnosis.results[email] = { pubkey: undefined, match: false };
       } else {
         let match = true;
-        if (!storedKeysLongids.includes(String(await Pgp.key.longid(pubkeySearchResult.pubkey)))) {
+        if (!storedKeysLongids.includes(String(await PgpKey.longid(pubkeySearchResult.pubkey)))) {
           diagnosis.hasPubkeyMismatch = true;
           match = false;
         }

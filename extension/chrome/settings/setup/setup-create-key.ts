@@ -10,8 +10,8 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { shouldPassPhraseBeHidden } from '../../../js/common/ui/passphrase_ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Pgp } from '../../../js/common/core/pgp.js';
 import { Lang } from '../../../js/common/lang.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -99,7 +99,7 @@ export class SetupCreateKeyModule {
     await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.rules!);
     const { full_name } = await Store.getAcct(this.view.acctEmail, ['full_name']);
     try {
-      const key = await Pgp.key.create([{ name: full_name || '', email: this.view.acctEmail }], 'rsa4096', options.passphrase); // todo - add all addresses?
+      const key = await PgpKey.create([{ name: full_name || '', email: this.view.acctEmail }], 'rsa4096', options.passphrase); // todo - add all addresses?
       options.is_newly_created_key = true;
       const { keys: [prv] } = await openpgp.key.readArmored(key.private);
       await this.view.saveKeys([prv], options);

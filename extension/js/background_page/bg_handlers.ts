@@ -6,9 +6,9 @@ import { Store } from '../common/platform/store.js';
 import { Bm } from '../common/browser/browser-msg.js';
 import { BgUtils } from './bgutils.js';
 import { Api } from '../common/api/api.js';
-import { Pgp } from '../common/core/pgp.js';
 import { Url } from '../common/core/common.js';
 import { Gmail } from '../common/api/email_provider/gmail/gmail.js';
+import { PgpKey } from '../common/core/pgp-key.js';
 
 export class BgHandlers {
 
@@ -41,7 +41,7 @@ export class BgHandlers {
   }
 
   public static pgpKeyDetails = async ({ pubkey }: Bm.PgpKeyDetails): Promise<Bm.Res.PgpKeyDetails> => {
-    return await Pgp.key.parse(pubkey);
+    return await PgpKey.parse(pubkey);
   }
 
   public static updateUninstallUrl: Bm.AsyncResponselessHandler = async () => {
