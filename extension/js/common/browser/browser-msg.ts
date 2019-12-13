@@ -108,7 +108,7 @@ export namespace Bm {
 type Handler = Bm.AsyncRespondingHandler | Bm.AsyncResponselessHandler;
 export type Handlers = Dict<Handler>;
 
-export class BgNotReadyError extends Error { }
+export class BgNotReadyErr extends Error { }
 export class TabIdRequiredError extends Error { }
 
 export class BrowserMsg {
@@ -201,7 +201,7 @@ export class BrowserMsg {
             } else if (lastError === 'Could not establish connection. Receiving end does not exist.' || lastError === 'The message port closed before a response was received.') {
               // "The message port closed before a response was received." could also happen for otherwise working extension, if bg script
               //    did not return `true` (indicating async response). That would be our own coding error in BrowserMsg.
-              e = new BgNotReadyError(`BgNotReadyError: BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
+              e = new BgNotReadyErr(`BgNotReadyErr: BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
             } else {
               e = new Error(`BrowserMsg.sendAwait(${name}) failed with unknown lastError: ${lastError}`);
             }
@@ -253,7 +253,7 @@ export class BrowserMsg {
       const { tabId } = await BrowserMsg.sendAwait(undefined, '_tab_', undefined, true) as Bm.Res._tab_;
       return tabId;
     } catch (e) {
-      if (e instanceof BgNotReadyError) {
+      if (e instanceof BgNotReadyErr) {
         return undefined;
       }
       throw e;
@@ -262,7 +262,7 @@ export class BrowserMsg {
 
   public static requiredTabId = async (attempts = 10, delay = 200): Promise<string> => {
     let tabId;
-    for (let i = 0; i < attempts; i++) { // sometimes returns undefined right after browser start due to BgNotReadyError
+    for (let i = 0; i < attempts; i++) { // sometimes returns undefined right after browser start due to BgNotReadyErr
       tabId = await BrowserMsg.tabId();
       if (tabId) {
         return tabId;

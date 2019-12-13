@@ -5,53 +5,26 @@
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Ui } from '../../js/common/browser/ui.js';
-import { BrowserMsg, BgNotReadyError } from '../../js/common/browser/browser-msg.js';
+import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
+import { View } from '../../js/common/view.js';
 
-Catch.try(async () => {
+View.run(class DefaultPopupView extends View {
 
-  const redirectToInitSetup = async (acctEmail?: string) => {
-    BrowserMsg.send.bg.settings({ acctEmail: acctEmail || undefined });
-    await Ui.time.sleep(100);
-    window.close();
-  };
+  constructor() {
+    super();
+  }
 
-  const chooseEmailOrSettingsPopup = (activeAcctEmail?: string) => {
-    $('#email_or_settings').css('display', 'block');
-    $('.action_open_settings').click(Ui.event.handle(async () => {
-      if (activeAcctEmail) {
-        await redirectToInitSetup(activeAcctEmail);
-      } else {
-        window.location.href = 'select_account.htm?action=settings';
-      }
-    }));
-    $('.action_open_encrypted_inbox').click(Ui.event.handle(async () => {
-      if (activeAcctEmail) {
-        BrowserMsg.send.bg.inbox({ acctEmail: activeAcctEmail });
-        await Ui.time.sleep(100);
-        window.close();
-      } else {
-        window.location.href = 'select_account.htm?action=inbox';
-      }
-    }));
-  };
-
-  const setupAcctPromptPopup = (activeAcctEmail: string) => {
-    $('#set_up_account').css('display', 'block');
-    $('.email').text(activeAcctEmail);
-    $('.action_set_up_account').click(Ui.event.prevent('double', () => redirectToInitSetup(activeAcctEmail).catch(Catch.reportErr)));
-  };
-
-  try {
+  render = async () => {
     const activeTab = await BrowserMsg.send.bg.await.getActiveTabInfo();
     if (activeTab?.acctEmail) {
       const { setup_done } = await Store.getAcct(activeTab.acctEmail, ['setup_done']);
       if (setup_done) {
-        chooseEmailOrSettingsPopup(activeTab.acctEmail);
+        this.renderChooseEmailOrSettingsPopup(activeTab.acctEmail);
       } else {
-        setupAcctPromptPopup(activeTab.acctEmail);
+        this.renderSetupAcctPromptPopup(activeTab.acctEmail);
       }
     } else if (activeTab?.provider && activeTab.sameWorld === true && activeTab.acctEmail) {
-      setupAcctPromptPopup(activeTab.acctEmail);
+      this.renderSetupAcctPromptPopup(activeTab.acctEmail);
     } else {
       const acctEmails = await Store.acctEmailsGet();
       if (acctEmails?.length) {
@@ -61,22 +34,50 @@ Catch.try(async () => {
           functioningAccts += Number(acctStorages[email].setup_done === true);
         }
         if (!functioningAccts) {
-          await redirectToInitSetup();
+          await this.redirectToInitSetup();
         } else {
-          chooseEmailOrSettingsPopup();
+          this.renderChooseEmailOrSettingsPopup();
         }
       } else {
-        await redirectToInitSetup();
+        await this.redirectToInitSetup();
       }
-    }
-  } catch (e) {
-    if (e instanceof BgNotReadyError) {
-      $('body').text('Extension not ready.\nRestarting the browser should help.\nWrite human@flowcrypt.com if you need help.').css({ 'white-space': 'pre', size: 16, padding: 6 });
-      return;
-    } else {
-      $('body').text(`Error: ${String(e)}`).css({ 'white-space': 'pre', size: 16, padding: 6 });
-      throw e;
     }
   }
 
-})();
+  setHandlers = () => {
+    // set below based on what renders
+  }
+
+  private redirectToInitSetup = async (acctEmail?: string) => {
+    BrowserMsg.send.bg.settings({ acctEmail: acctEmail || undefined });
+    await Ui.time.sleep(100);
+    window.close();
+  }
+
+  private renderChooseEmailOrSettingsPopup = (activeAcctEmail?: string) => {
+    $('#email_or_settings').css('display', 'block');
+    $('.action_open_settings').click(this.setHandler(async () => {
+      if (activeAcctEmail) {
+        await this.redirectToInitSetup(activeAcctEmail);
+      } else {
+        window.location.href = 'select_account.htm?action=settings';
+      }
+    }));
+    $('.action_open_encrypted_inbox').click(this.setHandler(async () => {
+      if (activeAcctEmail) {
+        BrowserMsg.send.bg.inbox({ acctEmail: activeAcctEmail });
+        await Ui.time.sleep(100);
+        window.close();
+      } else {
+        window.location.href = 'select_account.htm?action=inbox';
+      }
+    }));
+  }
+
+  private renderSetupAcctPromptPopup = (activeAcctEmail: string) => {
+    $('#set_up_account').css('display', 'block');
+    $('.email').text(activeAcctEmail);
+    $('.action_set_up_account').click(this.setHandlerPrevent('double', () => this.redirectToInitSetup(activeAcctEmail).catch(Catch.reportErr)));
+  }
+
+});
