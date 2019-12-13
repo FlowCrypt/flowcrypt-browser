@@ -16,7 +16,7 @@ import { Settings } from '../../js/common/settings.js';
 import { View } from '../../js/common/view.js';
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 
-// todo - this this page should be removed, link from settings should point to flowcrypt.com/account once available
+// todo - this page should be removed, link from settings should point to flowcrypt.com/account once available
 
 export type Product = { id: null | string, method: null | PaymentMethod, name: null | string, level: SubscriptionLevel };
 export type ProductName = 'null' | 'trial' | 'advancedMonthly';
