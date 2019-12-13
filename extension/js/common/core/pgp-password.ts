@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Pgp, openpgp } from './pgp.js';
+import { openpgp } from './pgp.js';
 import { base64encode, secureRandomBytes } from '../platform/util.js';
 
 interface PasswordStrengthResult {
