@@ -5,7 +5,7 @@
 import { ComposerComponent } from './composer-abstract-component.js';
 import { Store, SendAsAlias } from '../../../js/common/platform/store.js';
 import { Assert } from '../../../js/common/assert.js';
-import { KeyInfo, Contact } from '../../../js/common/core/pgp-msg.js';
+import { KeyInfo, Contact } from '../../../js/common/core/pgp-key.js';
 import { Dict } from '../../../js/common/core/common.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { CollectPubkeysResult } from './composer-types.js';

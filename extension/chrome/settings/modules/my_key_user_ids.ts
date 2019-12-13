@@ -7,7 +7,7 @@ import { Assert } from '../../../js/common/assert.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
-import { KeyInfo } from '../../../js/common/core/pgp-msg.js';
+import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 
 declare const openpgp: typeof OpenPGP;
 

@@ -20,10 +20,9 @@ import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { Str, Url } from '../../../js/common/core/common.js';
 import { FetchKeyUI } from '../../../js/common/ui/fetch_key_ui.js';
 import { View } from '../../../js/common/view.js';
-import { Contact } from '../../../js/common/core/pgp-msg';
 import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { PgpKey, Contact } from '../../../js/common/core/pgp-key.js';
 
 View.run(class ContactsView extends View {
 

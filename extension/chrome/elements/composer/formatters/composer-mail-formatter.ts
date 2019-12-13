@@ -3,7 +3,7 @@
 'use strict';
 
 import { NewMsgData } from "../composer-types.js";
-import { KeyInfo } from "../../../../js/common/core/pgp-msg.js";
+import { KeyInfo } from "../../../../js/common/core/pgp-key.js";
 import { Composer } from "../composer.js";
 import { PlainMsgMailFormatter } from './plain-mail-msg-formatter.js';
 import { SignedMsgMailFormatter } from './signed-msg-mail-formatter.js';

@@ -7,7 +7,7 @@ import { Store } from '../../js/common/platform/store.js';
 import { Str } from '../../js/common/core/common.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { mnemonic } from '../../js/common/core/mnemonic.js';
-import { Contact } from '../../js/common/core/pgp-msg.js';
+import { Contact } from '../../js/common/core/pgp-key.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';

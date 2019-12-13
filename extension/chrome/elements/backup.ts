@@ -4,7 +4,7 @@
 
 import { Ui } from '../../js/common/browser/ui.js';
 import { mnemonic } from '../../js/common/core/mnemonic.js';
-import { KeyInfo } from '../../js/common/core/pgp-msg.js';
+import { KeyInfo } from '../../js/common/core/pgp-key.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Assert } from '../../js/common/assert.js';

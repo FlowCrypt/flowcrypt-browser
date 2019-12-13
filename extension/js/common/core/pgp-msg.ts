@@ -12,7 +12,7 @@ import { Buf } from './buf.js';
 import { Xss } from '../platform/xss.js';
 import { PgpHash } from './pgp-hash.js';
 import { PgpArmor } from './pgp-armor.js';
-import { PgpKey, KeyDetails } from './pgp-key.js';
+import { PgpKey, KeyDetails, PrvKeyInfo, KeyInfo, Contact } from './pgp-key.js';
 import { openpgp } from './pgp.js';
 
 export namespace PgpMsgMethod {
@@ -28,39 +28,6 @@ export namespace PgpMsgMethod {
   export type Decrypt = (arg: Arg.Decrypt) => Promise<DecryptSuccess | DecryptError>;
   export type Type = (arg: Arg.Type) => Promise<PgpMsgTypeResult>;
   export type Encrypt = (arg: Arg.Encrypt) => Promise<OpenPGP.EncryptResult>;
-}
-
-export type Contact = {
-  email: string;
-  name: string | null;
-  pubkey: string | null;
-  has_pgp: 0 | 1;
-  searchable: string[];
-  client: string | null;
-  fingerprint: string | null;
-  longid: string | null;
-  longids: string[];
-  keywords: string | null;
-  pending_lookup: number;
-  last_use: number | null;
-  pubkey_last_sig: number | null;
-  pubkey_last_check: number | null;
-  expiresOn: number | null;
-};
-
-export interface PrvKeyInfo {
-  private: string;
-  longid: string;
-  passphrase?: string;
-  decrypted?: OpenPGP.key.Key;  // only for internal use in this file
-  parsed?: OpenPGP.key.Key;     // only for internal use in this file
-}
-
-export interface KeyInfo extends PrvKeyInfo {
-  public: string;
-  fingerprint: string;
-  primary: boolean;
-  keywords: string;
 }
 
 type SortedKeysForDecrypt = {

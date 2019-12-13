@@ -9,7 +9,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { KeyInfo } from '../../../js/common/core/pgp-msg.js';
+import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { SendableMsg } from '../../../js/common/api/email_provider/email_provider_api.js';
 import { Att } from '../../../js/common/core/att.js';

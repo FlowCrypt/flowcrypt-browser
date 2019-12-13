@@ -11,7 +11,6 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Settings } from '../../../js/common/settings.js';
-import { KeyInfo } from '../../../js/common/core/pgp-msg.js';
 import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
@@ -23,7 +22,7 @@ import { KeyImportUi } from './../../../js/common/ui/key_import_ui.js';
 import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { PgpKey, KeyInfo } from '../../../js/common/core/pgp-key.js';
 
 declare const openpgp: typeof OpenPGP;
 

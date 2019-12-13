@@ -12,7 +12,7 @@ import { Notifications } from '../../js/common/notifications.js';
 import { Settings } from '../../js/common/settings.js';
 import { BrowserMsg, Bm } from '../../js/common/browser/browser-msg.js';
 import { Lang } from '../../js/common/lang.js';
-import { KeyInfo } from '../../js/common/core/pgp-msg.js';
+import { KeyInfo } from '../../js/common/core/pgp-key.js';
 import { Backend } from '../../js/common/api/backend.js';
 import { Assert } from '../../js/common/assert.js';
 import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
