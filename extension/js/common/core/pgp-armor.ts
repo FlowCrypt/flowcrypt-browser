@@ -2,9 +2,9 @@
 
 'use strict';
 
-import { ReplaceableMsgBlockType, MsgBlock } from './mime.js';
+import { ReplaceableMsgBlockType, MsgBlock, MsgBlockType } from './mime.js';
 import { Str } from './common.js';
-import { Pgp, openpgp } from './pgp.js';
+import { openpgp } from './pgp.js';
 import { Catch } from '../platform/catch.js';
 import { Buf } from './buf.js';
 
@@ -109,7 +109,7 @@ export class PgpArmor {
             if (begin > startAt) {
               const potentialTextBeforeBlockBegun = origText.substring(startAt, begin).trim();
               if (potentialTextBeforeBlockBegun) {
-                result.found.push(Pgp.internal.msgBlockObj('plainText', potentialTextBeforeBlockBegun));
+                result.found.push(PgpArmor.msgBlockObj('plainText', potentialTextBeforeBlockBegun));
               }
             }
             let endIndex: number = -1;
@@ -127,19 +127,19 @@ export class PgpArmor {
             }
             if (endIndex !== -1) { // identified end of the same block
               if (type !== 'encryptedMsgLink') {
-                result.found.push(Pgp.internal.msgBlockObj(type, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
+                result.found.push(PgpArmor.msgBlockObj(type, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
               } else {
                 const pwdMsgFullText = origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim();
                 const pwdMsgShortIdMatch = pwdMsgFullText.match(/[a-zA-Z0-9]{10}$/);
                 if (pwdMsgShortIdMatch) {
-                  result.found.push(Pgp.internal.msgBlockObj(type, pwdMsgShortIdMatch[0]));
+                  result.found.push(PgpArmor.msgBlockObj(type, pwdMsgShortIdMatch[0]));
                 } else {
-                  result.found.push(Pgp.internal.msgBlockObj('plainText', pwdMsgFullText));
+                  result.found.push(PgpArmor.msgBlockObj('plainText', pwdMsgFullText));
                 }
               }
               result.continueAt = endIndex + foundBlockEndHeaderLength;
             } else { // corresponding end not found
-              result.found.push(Pgp.internal.msgBlockObj(type, origText.substr(begin), true));
+              result.found.push(PgpArmor.msgBlockObj(type, origText.substr(begin), true));
             }
             break;
           }
@@ -149,7 +149,7 @@ export class PgpArmor {
     if (origText && !result.found.length) { // didn't find any blocks, but input is non-empty
       const potentialText = origText.substr(startAt).trim();
       if (potentialText) {
-        result.found.push(Pgp.internal.msgBlockObj('plainText', potentialText));
+        result.found.push(PgpArmor.msgBlockObj('plainText', potentialText));
       }
     }
     return result;
@@ -171,5 +171,9 @@ export class PgpArmor {
       return { isArmored, isCleartext: false, message: await openpgp.message.read(encrypted) };
     }
     throw new Error('Message does not have armor headers');
+  }
+
+  static msgBlockObj = (type: MsgBlockType, content: string | Buf, missingEnd = false): MsgBlock => {
+    return { type, content, complete: !missingEnd };
   }
 }

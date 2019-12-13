@@ -182,22 +182,10 @@ export class Pgp {
   }
 
   public static internal = {
-    msgBlockObj: (type: MsgBlockType, content: string | Buf, missingEnd = false): MsgBlock => ({ type, content, complete: !missingEnd }),
-    msgBlockDecryptErrObj: (encryptedContent: string | Buf, decryptErr: DecryptError): MsgBlock => ({ type: 'decryptErr', content: encryptedContent, decryptErr, complete: true }),
     msgBlockAttObj: (type: MsgBlockType, content: string, attMeta: AttMeta): MsgBlock => ({ type, content, complete: true, attMeta }),
     msgBlockKeyObj: (type: MsgBlockType, content: string, keyDetails: KeyDetails): MsgBlock => ({ type, content, complete: true, keyDetails }),
-    longids: async (keyIds: OpenPGP.Keyid[]) => {
-      const longids: string[] = [];
-      for (const id of keyIds) {
-        const longid = await PgpKey.longid(id.bytes);
-        if (longid) {
-          longids.push(longid);
-        }
-      }
-      return longids;
-    },
     cryptoMsgGetSignedBy: async (msg: OpenpgpMsgOrCleartext, keys: SortedKeysForDecrypt) => {
-      keys.signedBy = Value.arr.unique(await Pgp.internal.longids(msg.getSigningKeyIds ? msg.getSigningKeyIds() : []));
+      keys.signedBy = Value.arr.unique(await PgpKey.longids(msg.getSigningKeyIds ? msg.getSigningKeyIds() : []));
       if (keys.signedBy.length && typeof Store.dbContactGet === 'function') {
         const verificationContacts = await Store.dbContactGet(undefined, keys.signedBy);
         keys.verificationContacts = verificationContacts.filter(contact => contact && contact.pubkey) as Contact[];
@@ -207,10 +195,6 @@ export class Pgp {
           keys.forVerification.push(...keysForVerification);
         }
       }
-    },
-    cryptoKeyOptionalMatchingKeyid: (key: OpenPGP.key.Key, forMsgKeyids: OpenPGP.Keyid[]) => {
-      const msgKeyidBytesArr = (forMsgKeyids || []).map(kid => kid.bytes);
-      return key.getKeyIds().find(kid => msgKeyidBytesArr.includes(kid.bytes));
     },
     cryptoMsgGetSortedKeys: async (kiWithPp: PrvKeyInfo[], msg: OpenpgpMsgOrCleartext): Promise<SortedKeysForDecrypt> => {
       const keys: SortedKeysForDecrypt = {
@@ -224,7 +208,7 @@ export class Pgp {
         prvForDecryptWithoutPassphrases: [],
       };
       const encryptedForKeyids = msg instanceof openpgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds() : [];
-      keys.encryptedFor = await Pgp.internal.longids(encryptedForKeyids);
+      keys.encryptedFor = await PgpKey.longids(encryptedForKeyids);
       await Pgp.internal.cryptoMsgGetSignedBy(msg, keys);
       if (keys.encryptedFor.length) {
         for (const ki of kiWithPp) {
@@ -245,7 +229,7 @@ export class Pgp {
         keys.prvForDecrypt = [];
       }
       for (const ki of keys.prvForDecrypt) {
-        const optionalMatchingKeyid = Pgp.internal.cryptoKeyOptionalMatchingKeyid(ki.parsed!, encryptedForKeyids);
+        const optionalMatchingKeyid = PgpKey.cryptoKeyOptionalMatchingKeyid(ki.parsed!, encryptedForKeyids);
         const cachedDecryptedKey = Store.decryptedKeyCacheGet(ki.longid);
         if (
           cachedDecryptedKey &&
@@ -284,48 +268,7 @@ export class Pgp {
       } else {
         return { type: DecryptErrTypes.other, message: e };
       }
-    },
-    readableCrackTime: (totalSeconds: number) => { // http://stackoverflow.com/questions/8211744/convert-time-interval-given-in-seconds-into-more-human-readable-form
-      const numberWordEnding = (n: number) => (n > 1) ? 's' : '';
-      totalSeconds = Math.round(totalSeconds);
-      const millennia = Math.round(totalSeconds / (86400 * 30 * 12 * 100 * 1000));
-      if (millennia) {
-        return millennia === 1 ? 'a millennium' : 'millennia';
-      }
-      const centuries = Math.round(totalSeconds / (86400 * 30 * 12 * 100));
-      if (centuries) {
-        return centuries === 1 ? 'a century' : 'centuries';
-      }
-      const years = Math.round(totalSeconds / (86400 * 30 * 12));
-      if (years) {
-        return years + ' year' + numberWordEnding(years);
-      }
-      const months = Math.round(totalSeconds / (86400 * 30));
-      if (months) {
-        return months + ' month' + numberWordEnding(months);
-      }
-      const weeks = Math.round(totalSeconds / (86400 * 7));
-      if (weeks) {
-        return weeks + ' week' + numberWordEnding(weeks);
-      }
-      const days = Math.round(totalSeconds / 86400);
-      if (days) {
-        return days + ' day' + numberWordEnding(days);
-      }
-      const hours = Math.round(totalSeconds / 3600);
-      if (hours) {
-        return hours + ' hour' + numberWordEnding(hours);
-      }
-      const minutes = Math.round(totalSeconds / 60);
-      if (minutes) {
-        return minutes + ' minute' + numberWordEnding(minutes);
-      }
-      const seconds = totalSeconds % 60;
-      if (seconds) {
-        return seconds + ' second' + numberWordEnding(seconds);
-      }
-      return 'less than a second';
-    },
+    }
   };
 
 }
@@ -513,17 +456,17 @@ export class PgpMsg {
       utf = PgpMsg.stripFcTeplyToken(utf);
       const armoredPubKeys: string[] = [];
       utf = PgpMsg.stripPublicKeys(utf, armoredPubKeys);
-      blocks.push(Pgp.internal.msgBlockObj('decryptedHtml', Str.asEscapedHtml(utf))); // escaped text as html
+      blocks.push(PgpArmor.msgBlockObj('decryptedHtml', Str.asEscapedHtml(utf))); // escaped text as html
       await PgpMsg.pushArmoredPubkeysToBlocks(armoredPubKeys, blocks);
       return { blocks, subject: undefined };
     }
     const decoded = await Mime.decode(decryptedContent);
     if (typeof decoded.html !== 'undefined') {
-      blocks.push(Pgp.internal.msgBlockObj('decryptedHtml', Xss.htmlSanitizeKeepBasicTags(decoded.html))); // sanitized html
+      blocks.push(PgpArmor.msgBlockObj('decryptedHtml', Xss.htmlSanitizeKeepBasicTags(decoded.html))); // sanitized html
     } else if (typeof decoded.text !== 'undefined') {
-      blocks.push(Pgp.internal.msgBlockObj('decryptedHtml', Str.asEscapedHtml(decoded.text))); // escaped text as html
+      blocks.push(PgpArmor.msgBlockObj('decryptedHtml', Str.asEscapedHtml(decoded.text))); // escaped text as html
     } else {
-      blocks.push(Pgp.internal.msgBlockObj('decryptedHtml', Str.asEscapedHtml(Buf.with(decryptedContent).toUtfStr()))); // escaped mime text as html
+      blocks.push(PgpArmor.msgBlockObj('decryptedHtml', Str.asEscapedHtml(Buf.with(decryptedContent).toUtfStr()))); // escaped mime text as html
     }
     for (const att of decoded.atts) {
       if (att.treatAs() === 'publicKey') {

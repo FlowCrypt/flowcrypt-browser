@@ -203,6 +203,17 @@ export class PgpKey {
     return await PgpKey.longid(await PgpKey.fingerprint(keyOrFingerprintOrBytes));
   }
 
+  static longids = async (keyIds: OpenPGP.Keyid[]) => {
+    const longids: string[] = [];
+    for (const id of keyIds) {
+      const longid = await PgpKey.longid(id.bytes);
+      if (longid) {
+        longids.push(longid);
+      }
+    }
+    return longids;
+  }
+
   static usable = async (armored: string) => { // is pubkey usable for encrytion?
     if (!PgpKey.fingerprint(armored)) {
       return false;
@@ -307,5 +318,10 @@ export class PgpKey {
       return newestSig.created.getTime();
     }
     throw new Error('No valid signature found in key');
+  }
+
+  static cryptoKeyOptionalMatchingKeyid = (key: OpenPGP.key.Key, forMsgKeyids: OpenPGP.Keyid[] | undefined) => {
+    const msgKeyidBytesArr = (forMsgKeyids || []).map(kid => kid.bytes);
+    return key.getKeyIds().find(kid => msgKeyidBytesArr.includes(kid.bytes));
   }
 }
