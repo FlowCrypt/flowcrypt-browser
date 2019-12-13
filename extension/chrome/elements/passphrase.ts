@@ -13,8 +13,7 @@ import { Xss } from '../../js/common/platform/xss.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { PgpKey, KeyInfo } from '../../js/common/core/pgp-key.js';
-
-declare const openpgp: typeof OpenPGP;
+import { openpgp } from '../../js/common/core/pgp.js';
 
 View.run(class PassphraseView extends View {
   private readonly acctEmail: string;

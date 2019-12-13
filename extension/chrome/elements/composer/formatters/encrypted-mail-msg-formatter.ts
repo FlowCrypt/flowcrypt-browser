@@ -23,8 +23,7 @@ import { PgpArmor } from '../../../../js/common/core/pgp-armor.js';
 import { ApiErr } from '../../../../js/common/api/error/api-error.js';
 import { PgpKey } from '../../../../js/common/core/pgp-key.js';
 import { Pwd } from '../../../../js/common/core/pgp-password.js';
-
-declare const openpgp: typeof OpenPGP;
+import { openpgp } from '../../../../js/common/core/pgp.js';
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
 

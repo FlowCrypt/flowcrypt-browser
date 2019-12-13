@@ -14,8 +14,7 @@ import { View } from '../../../js/common/view.js';
 import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
-
-declare const openpgp: typeof OpenPGP;
+import { openpgp } from '../../../js/common/core/pgp.js';
 
 View.run(class MyKeyUpdateView extends View {
   private readonly acctEmail: string;

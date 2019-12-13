@@ -24,8 +24,6 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { PgpKey, KeyInfo } from '../../../js/common/core/pgp-key.js';
 
-declare const openpgp: typeof OpenPGP;
-
 View.run(class BackupView extends View {
 
   private acctEmail: string;
@@ -170,7 +168,7 @@ View.run(class BackupView extends View {
       Xss.sanitizeRender(target, Ui.spinner('white'));
       const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-      const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
+      const prv = await PgpKey.read(primaryKi.private);
       await PgpKey.encrypt(prv, newPassphrase);
       await Store.passphraseSave('local', this.acctEmail, primaryKi.longid, newPassphrase);
       await Store.keysAdd(this.acctEmail, prv.armor());
@@ -305,7 +303,7 @@ View.run(class BackupView extends View {
   }
 
   private isPrivateKeyEncrypted = async (ki: KeyInfo) => {
-    const { keys: [prv] } = await openpgp.key.readArmored(ki.private);
+    const prv = await PgpKey.read(ki.private);
     if (await PgpKey.decrypt(prv, '', undefined, 'OK-IF-ALREADY-DECRYPTED') === true) {
       return false;
     }

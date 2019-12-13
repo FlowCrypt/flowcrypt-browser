@@ -14,8 +14,7 @@ import { Url } from '../core/common.js';
 import { PgpArmor } from '../core/pgp-armor.js';
 import { PgpPwd } from '../core/pgp-password.js';
 import { PgpKey } from '../core/pgp-key.js';
-
-declare const openpgp: typeof OpenPGP;
+import { openpgp } from '../core/pgp.js';
 
 type KeyImportUiCheckResult = {
   normalized: string; longid: string; passphrase: string; fingerprint: string; decrypted: OpenPGP.key.Key;

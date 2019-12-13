@@ -15,8 +15,7 @@ import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { PgpArmor } from '../../js/common/core/pgp-armor.js';
 import { PgpKey } from '../../js/common/core/pgp-key.js';
-
-declare const openpgp: typeof OpenPGP;
+import { openpgp } from '../../js/common/core/pgp.js';
 
 // todo - this should use KeyImportUI for consistency.
 View.run(class PgpPubkeyView extends View {

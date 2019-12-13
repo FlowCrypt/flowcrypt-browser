@@ -14,8 +14,6 @@ import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
-declare const openpgp: typeof OpenPGP;
-
 View.run(class ChangePassPhraseView extends View {
 
   private readonly acctEmail: string;
@@ -44,7 +42,7 @@ View.run(class ChangePassPhraseView extends View {
     this.primaryKi = primaryKi;
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     const storedOrSessionPp = await Store.passphraseGet(this.acctEmail, this.primaryKi.longid);
-    const { keys: [key] } = await openpgp.key.readArmored(this.primaryKi.private);
+    const key = await PgpKey.read(this.primaryKi.private);
     this.primaryPrv = key;
     if (this.primaryPrv.isFullyDecrypted() || (storedOrSessionPp && await PgpKey.decrypt(this.primaryPrv, storedOrSessionPp))) {
       this.displayBlock('step_1_enter_new'); // current pp is already known
@@ -67,7 +65,7 @@ View.run(class ChangePassPhraseView extends View {
   }
 
   private actionTestCurrentPassPhraseHandler = async () => {
-    const { keys: [prv] } = await openpgp.key.readArmored(this.primaryKi!.private);
+    const prv = await PgpKey.read(this.primaryKi!.private);
     if (await PgpKey.decrypt(prv, String($('#current_pass_phrase').val())) === true) {
       this.primaryPrv = prv;
       this.displayBlock('step_1_enter_new');

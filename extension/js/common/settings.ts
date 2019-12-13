@@ -20,8 +20,8 @@ import { ApiErr } from './api/error/api-error.js';
 import { ApiErrResponse } from './api/error/api-error-types.js';
 import { PgpPwd } from './core/pgp-password.js';
 import { PgpKey } from './core/pgp-key.js';
+import { openpgp } from './core/pgp.js';
 
-declare const openpgp: typeof OpenPGP;
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
 
 export class Settings {

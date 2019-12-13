@@ -12,7 +12,7 @@ import { Notifications } from '../../js/common/notifications.js';
 import { Settings } from '../../js/common/settings.js';
 import { BrowserMsg, Bm } from '../../js/common/browser/browser-msg.js';
 import { Lang } from '../../js/common/lang.js';
-import { KeyInfo } from '../../js/common/core/pgp-key.js';
+import { KeyInfo, PgpKey } from '../../js/common/core/pgp-key.js';
 import { Backend } from '../../js/common/api/backend.js';
 import { Assert } from '../../js/common/assert.js';
 import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
@@ -21,8 +21,6 @@ import { View } from '../../js/common/view.js';
 import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
 import { Env } from '../../js/common/browser/env.js';
 import { ApiErr } from '../../js/common/api/error/api-error.js';
-
-declare const openpgp: typeof OpenPGP;
 
 View.run(class SettingsView extends View {
 
@@ -357,7 +355,7 @@ View.run(class SettingsView extends View {
     let html = '';
     for (let i = 0; i < privateKeys.length; i++) {
       const ki = privateKeys[i];
-      const { keys: [prv] } = await openpgp.key.readArmored(ki.private);
+      const prv = await PgpKey.read(ki.private);
       const date = Str.monthName(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
       const escapedPrimaryOrRemove = (ki.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + Xss.escape(ki.longid) + '">remove</a>)';
       const escapedEmail = Xss.escape(Str.parseEmail(prv.users[0].userId ? prv.users[0].userId!.userid : '').email || '');
