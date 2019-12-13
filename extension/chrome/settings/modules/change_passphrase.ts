@@ -6,11 +6,11 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Pgp } from '../../../js/common/core/pgp.js';
 import { Assert } from '../../../js/common/assert.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
 import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
 import { Url } from '../../../js/common/core/common.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -44,7 +44,7 @@ Catch.try(async () => {
     $(`#${name}`).css('display', 'block');
   };
 
-  if (primaryPrv.isFullyDecrypted() || (storedOrSessionPp && await Pgp.key.decrypt(primaryPrv, storedOrSessionPp))) {
+  if (primaryPrv.isFullyDecrypted() || (storedOrSessionPp && await PgpKey.decrypt(primaryPrv, storedOrSessionPp))) {
     displayBlock('step_1_enter_new'); // current pp is already known
   } else {
     displayBlock('step_0_enter_current');
@@ -52,7 +52,7 @@ Catch.try(async () => {
 
   $('#step_0_enter_current .action_test_current_passphrase').click(Ui.event.handle(async () => {
     const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
-    if (await Pgp.key.decrypt(prv, String($('#original_password').val())) === true) {
+    if (await PgpKey.decrypt(prv, String($('#original_password').val())) === true) {
       primaryPrv = prv;
       displayBlock('step_1_enter_new');
     } else {
@@ -97,7 +97,7 @@ Catch.try(async () => {
       return;
     }
     try {
-      await Pgp.key.encrypt(primaryPrv, newPp);
+      await PgpKey.encrypt(primaryPrv, newPp);
     } catch (e) {
       Catch.reportErr(e);
       await Ui.modal.error(`There was an unexpected error. Please ask for help at human@flowcrypt.com:\n\n${e instanceof Error ? e.stack : String(e)}`);

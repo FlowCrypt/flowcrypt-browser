@@ -4,13 +4,14 @@
 
 import { Ui } from '../../js/common/browser/ui.js';
 import { mnemonic } from '../../js/common/core/mnemonic.js';
-import { Pgp, KeyInfo } from '../../js/common/core/pgp.js';
+import { KeyInfo } from '../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Assert } from '../../js/common/assert.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
+import { PgpKey } from '../../js/common/core/pgp-key.js';
 
 View.run(class BackupView extends View {
   private readonly acctEmail: string;
@@ -31,10 +32,10 @@ View.run(class BackupView extends View {
   render = async () => {
     Ui.event.protect();
     await initPassphraseToggle(['pass_phrase']);
-    const prvBackup = await Pgp.key.read(this.armoredPrvBackup);
-    const longid = await Pgp.key.longid(prvBackup) || '';
+    const prvBackup = await PgpKey.read(this.armoredPrvBackup);
+    const longid = await PgpKey.longid(prvBackup) || '';
     if (prvBackup) {
-      $('.line.fingerprints .fingerprint').text(await Pgp.key.fingerprint(prvBackup, 'spaced') || '(fingerprint error)');
+      $('.line.fingerprints .fingerprint').text(await PgpKey.fingerprint(prvBackup, 'spaced') || '(fingerprint error)');
       $('.line.fingerprints .keywords').text(mnemonic(longid) || '(mnemonic error)');
       if (! await prvBackup.getEncryptionKey() && ! await prvBackup.getSigningKey()) {
         $('.line.add_contact').addClass('bad').text('This private key looks correctly formatted, but cannot be used for encryption.');
@@ -68,7 +69,7 @@ View.run(class BackupView extends View {
   }
 
   private testPassphraseHandler = async () => {
-    if (await Pgp.key.decrypt(await Pgp.key.read(this.armoredPrvBackup), String($('#pass_phrase').val())) === true) {
+    if (await PgpKey.decrypt(await PgpKey.read(this.armoredPrvBackup), String($('#pass_phrase').val())) === true) {
       await Ui.modal.info('Success - your pass phrase matches this backup!');
     } else {
       await Ui.modal.warning('Pass phrase did not match. Please try again. If you forgot your pass phrase, please change it, so that you don\'t get' +

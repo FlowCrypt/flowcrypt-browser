@@ -7,8 +7,9 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { KeyInfo, Pgp } from '../../../js/common/core/pgp.js';
+import { KeyInfo } from '../../../js/common/core/pgp.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
 export class ComposerMyPubkey extends ComposerComponent {
 
@@ -58,7 +59,7 @@ export class ComposerMyPubkey extends ComposerComponent {
 
   chooseMyPublicKeyBySenderEmail = async (keys: KeyInfo[], email: string) => {
     for (const key of keys) {
-      const parsedkey = await Pgp.key.read(key.public);
+      const parsedkey = await PgpKey.read(key.public);
       if (parsedkey.users.find(u => !!u.userId && u.userId.userid.toLowerCase().includes(email.toLowerCase()))) {
         return key;
       }

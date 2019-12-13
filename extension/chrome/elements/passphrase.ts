@@ -6,13 +6,14 @@ import { Catch } from '../../js/common/platform/catch.js';
 import { Store, StorageType } from '../../js/common/platform/store.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { mnemonic } from '../../js/common/core/mnemonic.js';
-import { Pgp, KeyInfo } from '../../js/common/core/pgp.js';
+import { KeyInfo } from '../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Assert } from '../../js/common/assert.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
+import { PgpKey } from '../../js/common/core/pgp-key.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -110,7 +111,7 @@ View.run(class PassphraseView extends View {
     for (const keyinfo of this.myPrivateKeys!) { // if passphrase matches more keys, it will save the pass phrase for all keys
       const { keys: [prv] } = await openpgp.key.readArmored(keyinfo.private);
       try {
-        if (await Pgp.key.decrypt(prv, pass) === true) {
+        if (await PgpKey.decrypt(prv, pass) === true) {
           await Store.passphraseSave(storageType, this.acctEmail, keyinfo.longid, pass);
           atLeastOneMatched = true;
           if (storageType === 'session') {

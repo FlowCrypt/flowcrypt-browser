@@ -9,7 +9,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Pgp, KeyInfo } from '../../../js/common/core/pgp.js';
+import { KeyInfo } from '../../../js/common/core/pgp.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { SendableMsg } from '../../../js/common/api/email_provider/email_provider_api.js';
 import { Att } from '../../../js/common/core/att.js';
@@ -17,6 +17,7 @@ import { GeneralMailFormatter } from './formatters/composer-mail-formatter.js';
 import { ComposerSendBtnPopover } from './composer-send-btn-popover.js';
 import { GmailRes } from '../../../js/common/api/email_provider/gmail/gmail-parser.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
 export class ComposerSendBtn extends ComposerComponent {
 
@@ -151,7 +152,7 @@ export class ComposerSendBtn extends ComposerComponent {
   }
 
   private decryptSenderKey = async (senderKi: KeyInfo): Promise<OpenPGP.key.Key | undefined> => {
-    const prv = await Pgp.key.read(senderKi.private);
+    const prv = await PgpKey.read(senderKi.private);
     const passphrase = await this.composer.storage.passphraseGet(senderKi);
     if (typeof passphrase === 'undefined' && !prv.isFullyDecrypted()) {
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'sign', longids: [senderKi.longid] });
@@ -163,7 +164,7 @@ export class ComposerSendBtn extends ComposerComponent {
       }
     } else {
       if (!prv.isFullyDecrypted()) {
-        await Pgp.key.decrypt(prv, passphrase!); // checked !== undefined above
+        await PgpKey.decrypt(prv, passphrase!); // checked !== undefined above
       }
       return prv;
     }
@@ -181,7 +182,7 @@ export class ComposerSendBtn extends ComposerComponent {
     const addNameToEmail = async (emails: string[]): Promise<string[]> => {
       return await Promise.all(emails.map(async email => {
         let name: string | undefined;
-        if (sendAs && sendAs[email] && sendAs[email].name) {
+        if (sendAs && sendAs[email]?.name) {
           name = sendAs[email].name!;
         } else {
           const [contact] = await Store.dbContactGet(undefined, [email]);

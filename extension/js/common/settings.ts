@@ -8,7 +8,6 @@ import { Str, Dict, UrlParams, Url } from './core/common.js';
 import { Lang } from './lang.js';
 import { Rules } from './rules.js';
 import { Api } from './api/api.js';
-import { Pgp } from './core/pgp.js';
 import { GoogleAuth } from './api/google-auth.js';
 import { Attester } from './api/attester.js';
 import { Xss } from './platform/xss.js';
@@ -20,6 +19,7 @@ import { Env } from './browser/env.js';
 import { ApiErr } from './api/error/api-error.js';
 import { ApiErrResponse } from './api/error/api-error-types.js';
 import { PgpPwd } from './core/pgp-password.js';
+import { PgpKey } from './core/pgp-key.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
@@ -230,7 +230,7 @@ export class Settings {
           $(target).off();
           Xss.sanitizeRender(target, Ui.spinner('white'));
           const expireSeconds = (expireYears === 'never') ? 0 : Math.floor((Date.now() - origPrv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expireYears));
-          await Pgp.key.decrypt(origPrv, passphrase);
+          await PgpKey.decrypt(origPrv, passphrase);
           let reformatted;
           const userIds = uids.map(uid => Str.parseEmail(uid)).map(u => ({ email: u.email, name: u.name || '' }));
           try {

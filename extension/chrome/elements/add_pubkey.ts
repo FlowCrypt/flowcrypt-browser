@@ -9,11 +9,11 @@ import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Assert } from '../../js/common/assert.js';
 import { KeyImportUi, UserAlert, } from '../../js/common/ui/key_import_ui.js';
 import { AttUI } from '../../js/common/ui/att_ui.js';
-import { Pgp } from '../../js/common/core/pgp.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { FetchKeyUI } from '../../js/common/ui/fetch_key_ui.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
+import { PgpKey } from '../../js/common/core/pgp-key.js';
 
 View.run(class AddPubkeyView extends View {
   private readonly acctEmail: string;
@@ -46,7 +46,7 @@ View.run(class AddPubkeyView extends View {
     this.attUI.initAttDialog('fineuploader', 'fineuploader_button', {
       attAdded: async (file) => {
         this.attUI.clearAllAtts();
-        const { keys, errs } = await Pgp.key.readMany(file.getData());
+        const { keys, errs } = await PgpKey.readMany(file.getData());
         if (keys.length) {
           if (errs.length) {
             await Ui.modal.warning(`some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
@@ -87,7 +87,7 @@ View.run(class AddPubkeyView extends View {
       const normalized = await keyImportUi.checkPub(String($('.pubkey').val()));
       await Store.dbContactSave(undefined, await Store.dbContactObj({
         email: String($('select.email').val()), client: 'pgp', pubkey: normalized,
-        lastUse: Date.now(), expiresOn: await Pgp.key.dateBeforeExpiration(normalized)
+        lastUse: Date.now(), expiresOn: await PgpKey.dateBeforeExpiration(normalized)
       }));
       this.closeDialog();
     } catch (e) {

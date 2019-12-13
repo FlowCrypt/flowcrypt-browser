@@ -5,7 +5,7 @@
 import { Composer } from './composer.js';
 import { Str, Value } from '../../../js/common/core/common.js';
 import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
-import { Contact, Pgp } from '../../../js/common/core/pgp.js';
+import { Contact } from '../../../js/common/core/pgp.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Google } from '../../../js/common/api/google.js';
@@ -20,6 +20,7 @@ import { RecipientType, ChunkedCb } from '../../../js/common/api/api.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './composer-errs.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
 export class ComposerRecipients extends ComposerComponent {
   private addedRecipients: RecipientElement[] = [];
@@ -564,7 +565,7 @@ export class ComposerRecipients extends ComposerComponent {
       this.composer.errs.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${recipient.email}`);
       $(el).attr('title', 'This email address looks misspelled. Please try again.');
       $(el).addClass("wrong");
-    } else if (contact.pubkey && ((contact.expiresOn || Infinity) <= Date.now() || await Pgp.key.usableButExpired(await Pgp.key.read(contact.pubkey)))) {
+    } else if (contact.pubkey && ((contact.expiresOn || Infinity) <= Date.now() || await PgpKey.usableButExpired(await PgpKey.read(contact.pubkey)))) {
       recipient.status = RecipientStatuses.EXPIRED;
       $(el).addClass("expired");
       Xss.sanitizePrepend(el, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
