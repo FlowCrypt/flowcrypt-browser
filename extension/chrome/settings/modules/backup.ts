@@ -11,7 +11,6 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Settings } from '../../../js/common/settings.js';
-import { KeyInfo } from '../../../js/common/core/pgp.js';
 import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
@@ -23,9 +22,7 @@ import { KeyImportUi } from './../../../js/common/ui/key_import_ui.js';
 import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
-
-declare const openpgp: typeof OpenPGP;
+import { PgpKey, KeyInfo } from '../../../js/common/core/pgp-key.js';
 
 View.run(class BackupView extends View {
 
@@ -171,7 +168,7 @@ View.run(class BackupView extends View {
       Xss.sanitizeRender(target, Ui.spinner('white'));
       const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-      const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
+      const prv = await PgpKey.read(primaryKi.private);
       await PgpKey.encrypt(prv, newPassphrase);
       await Store.passphraseSave('local', this.acctEmail, primaryKi.longid, newPassphrase);
       await Store.keysAdd(this.acctEmail, prv.armor());
@@ -306,7 +303,7 @@ View.run(class BackupView extends View {
   }
 
   private isPrivateKeyEncrypted = async (ki: KeyInfo) => {
-    const { keys: [prv] } = await openpgp.key.readArmored(ki.private);
+    const prv = await PgpKey.read(ki.private);
     if (await PgpKey.decrypt(prv, '', undefined, 'OK-IF-ALREADY-DECRYPTED') === true) {
       return false;
     }

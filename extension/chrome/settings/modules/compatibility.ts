@@ -1,13 +1,12 @@
 'use strict';
 
 import { Ui } from '../../../js/common/browser/ui.js';
-import { PgpMsg } from '../../../js/common/core/pgp.js';
+import { PgpMsg } from '../../../js/common/core/pgp-msg.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { View } from '../../../js/common/view.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
-
-declare const openpgp: typeof OpenPGP;
+import { openpgp } from '../../../js/common/core/pgp.js';
 
 View.run(class CompatibilityView extends View {
 

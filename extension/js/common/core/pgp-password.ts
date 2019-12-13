@@ -5,7 +5,7 @@
 import { openpgp } from './pgp.js';
 import { base64encode, secureRandomBytes } from '../platform/util.js';
 
-interface PasswordStrengthResult {
+interface PwdStrengthResult {
   word: {
     match: string;
     word: string;
@@ -18,7 +18,10 @@ interface PasswordStrengthResult {
 }
 
 export class PgpPwd {
+
+  // (10k pc)*(2 core p/pc)*(4k guess p/core) httpshttps://www.abuse.ch/?p=3294://threatpost.com/how-much-does-botnet-cost-022813/77573/ https://www.abuse.ch/?p=3294
   private static CRACK_GUESSES_PER_SECOND = 10000 * 2 * 4000;
+
   private static CRACK_TIME_WORDS_PWD = [ // the requirements for a one-time password are less strict
     { match: 'millenni', word: 'perfect', bar: 100, color: 'green', pass: true },
     { match: 'centu', word: 'perfect', bar: 95, color: 'green', pass: true },
@@ -30,6 +33,7 @@ export class PgpPwd {
     { match: 'minute', word: 'poor', bar: 15, color: 'red', pass: false },
     { match: '', word: 'weak', bar: 10, color: 'red', pass: false },
   ];
+
   private static CRACK_TIME_WORDS_PASS_PHRASE = [ // the requirements for a pass phrase are meant to be strict
     { match: 'millenni', word: 'perfect', bar: 100, color: 'green', pass: true },
     { match: 'centu', word: 'great', bar: 80, color: 'green', pass: true },
@@ -40,7 +44,7 @@ export class PgpPwd {
     { match: '', word: 'weak', bar: 10, color: 'red', pass: false },
   ];
 
-  static estimateStrength = (zxcvbnResultGuesses: number, type: 'passphrase' | 'pwd' = 'passphrase'): PasswordStrengthResult => {
+  static estimateStrength = (zxcvbnResultGuesses: number, type: 'passphrase' | 'pwd' = 'passphrase'): PwdStrengthResult => {
     const timeToCrack = zxcvbnResultGuesses / PgpPwd.CRACK_GUESSES_PER_SECOND;
     for (const word of type === 'pwd' ? PgpPwd.CRACK_TIME_WORDS_PWD : PgpPwd.CRACK_TIME_WORDS_PASS_PHRASE) {
       const readableTime = PgpPwd.readableCrackTime(timeToCrack);
@@ -51,12 +55,14 @@ export class PgpPwd {
     throw Error('(thrown) estimate_strength: got to end without any result');
   }
 
-  static weakWords = () => [
-    'crypt', 'up', 'cryptup', 'flow', 'flowcrypt', 'encryption', 'pgp', 'email', 'set', 'backup', 'passphrase', 'best', 'pass', 'phrases', 'are', 'long', 'and', 'have', 'several',
-    'words', 'in', 'them', 'Best pass phrases are long', 'have several words', 'in them', 'bestpassphrasesarelong', 'haveseveralwords', 'inthem',
-    'Loss of this pass phrase', 'cannot be recovered', 'Note it down', 'on a paper', 'lossofthispassphrase', 'cannotberecovered', 'noteitdown', 'onapaper',
-    'setpassword', 'set password', 'set pass word', 'setpassphrase', 'set pass phrase', 'set passphrase'
-  ]
+  static weakWords = () => {
+    return [
+      'crypt', 'up', 'cryptup', 'flow', 'flowcrypt', 'encryption', 'pgp', 'email', 'set', 'backup', 'passphrase', 'best', 'pass', 'phrases', 'are', 'long', 'and', 'have', 'several',
+      'words', 'in', 'them', 'Best pass phrases are long', 'have several words', 'in them', 'bestpassphrasesarelong', 'haveseveralwords', 'inthem',
+      'Loss of this pass phrase', 'cannot be recovered', 'Note it down', 'on a paper', 'lossofthispassphrase', 'cannotberecovered', 'noteitdown', 'onapaper',
+      'setpassword', 'set password', 'set pass word', 'setpassphrase', 'set pass phrase', 'set passphrase'
+    ];
+  }
 
   static random = () => { // eg TDW6-DU5M-TANI-LJXY
     return base64encode(openpgp.util.Uint8Array_to_str(secureRandomBytes(128))).toUpperCase().replace(/[^A-Z0-9]|0|O|1/g, '').replace(/(.{4})/g, '$1-').substr(0, 19);

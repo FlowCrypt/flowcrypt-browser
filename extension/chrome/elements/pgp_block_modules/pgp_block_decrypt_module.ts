@@ -12,7 +12,7 @@ import { Backend } from '../../../js/common/api/backend.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Mime } from '../../../js/common/core/mime.js';
-import { DecryptErrTypes } from '../../../js/common/core/pgp.js';
+import { DecryptErrTypes } from '../../../js/common/core/pgp-msg.js';
 import { GmailResponseFormat } from '../../../js/common/api/email_provider/gmail/gmail.js';
 
 export class PgpBlockViewDecryptModule {

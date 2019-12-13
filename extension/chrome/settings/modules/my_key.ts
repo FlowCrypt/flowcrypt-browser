@@ -6,7 +6,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
 import { Browser } from '../../../js/common/browser/browser.js';
-import { KeyInfo } from '../../../js/common/core/pgp.js';
+import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { Attester } from '../../../js/common/api/attester.js';
 import { Backend } from '../../../js/common/api/backend.js';
 import { Assert } from '../../../js/common/assert.js';
@@ -16,7 +16,6 @@ import { View } from '../../../js/common/view.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
-declare const openpgp: typeof OpenPGP;
 declare const ClipboardJS: any;
 
 View.run(class MyKeyView extends View {
@@ -38,7 +37,7 @@ View.run(class MyKeyView extends View {
   render = async () => {
     [this.primaryKi] = await Store.keysGet(this.acctEmail, [this.longid]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
-    const { keys: [prv] } = await openpgp.key.readArmored(this.primaryKi.private);
+    const prv = await PgpKey.read(this.primaryKi.private);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
     $('.action_view_update').attr('href', this.myKeyUpdateUrl);
     $('.key_words').text(this.primaryKi.keywords);

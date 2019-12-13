@@ -9,7 +9,7 @@ import { BrowserMsg, Bm } from '../../js/common/browser/browser-msg.js';
 import { Rules } from '../../js/common/rules.js';
 import { Lang } from '../../js/common/lang.js';
 import { Settings } from '../../js/common/settings.js';
-import { Contact } from '../../js/common/core/pgp.js';
+import { Contact } from '../../js/common/core/pgp-key.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Google } from '../../js/common/api/google.js';
 import { Attester } from '../../js/common/api/attester.js';

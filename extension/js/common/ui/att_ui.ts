@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { PgpMsg, Pwd } from '../core/pgp.js';
+import { PgpMsg } from '../core/pgp-msg.js';
 import { Dict } from '../core/common.js';
 import { Att } from '../core/att.js';
 import { Catch } from '../platform/catch.js';
@@ -77,7 +77,7 @@ export class AttUI {
     return atts;
   }
 
-  collectEncryptAtts = async (pubkeys: string[], pwd?: Pwd): Promise<Att[]> => {
+  collectEncryptAtts = async (pubkeys: string[], pwd?: string): Promise<Att[]> => {
     const atts: Att[] = [];
     for (const uploadFileId of Object.keys(this.attachedFiles)) {
       const file = this.attachedFiles[uploadFileId];

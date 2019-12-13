@@ -13,8 +13,6 @@ import { Store } from '../../../js/common/platform/store.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
-declare const openpgp: typeof OpenPGP;
-
 export class SetupCreateKeyModule {
 
   constructor(private view: SetupView) {
@@ -101,7 +99,7 @@ export class SetupCreateKeyModule {
     try {
       const key = await PgpKey.create([{ name: full_name || '', email: this.view.acctEmail }], 'rsa4096', options.passphrase); // todo - add all addresses?
       options.is_newly_created_key = true;
-      const { keys: [prv] } = await openpgp.key.readArmored(key.private);
+      const prv = await PgpKey.read(key.private);
       await this.view.saveKeys([prv], options);
     } catch (e) {
       Catch.reportErr(e);

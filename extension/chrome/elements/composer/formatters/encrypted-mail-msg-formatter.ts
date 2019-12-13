@@ -5,7 +5,7 @@
 import { NewMsgData, PubkeyResult, SendBtnTexts } from '../composer-types.js';
 import { SendableMsg } from '../../../../js/common/api/email_provider/email_provider_api.js';
 import { Composer } from '../composer.js';
-import { PgpMsg, Pwd } from '../../../../js/common/core/pgp.js';
+import { PgpMsg } from '../../../../js/common/core/pgp-msg.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { SendableMsgBody, Mime } from '../../../../js/common/core/mime.js';
 import { Buf } from '../../../../js/common/core/buf.js';
@@ -22,8 +22,7 @@ import { Settings } from '../../../../js/common/settings.js';
 import { PgpArmor } from '../../../../js/common/core/pgp-armor.js';
 import { ApiErr } from '../../../../js/common/api/error/api-error.js';
 import { PgpKey } from '../../../../js/common/core/pgp-key.js';
-
-declare const openpgp: typeof OpenPGP;
+import { openpgp } from '../../../../js/common/core/pgp.js';
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
 
@@ -74,7 +73,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     }
   }
 
-  private encryptData = async (data: Buf, pwd: Pwd | undefined, pubkeys: string[], signingPrv?: OpenPGP.key.Key): Promise<OpenPGP.EncryptArmorResult> => {
+  private encryptData = async (data: Buf, pwd: string | undefined, pubkeys: string[], signingPrv?: OpenPGP.key.Key): Promise<OpenPGP.EncryptArmorResult> => {
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(this.armoredPubkeys);
     return await PgpMsg.encrypt({ pubkeys, signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
   }

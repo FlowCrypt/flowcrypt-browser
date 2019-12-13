@@ -7,9 +7,7 @@ import { Assert } from '../../../js/common/assert.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
-import { KeyInfo } from '../../../js/common/core/pgp.js';
-
-declare const openpgp: typeof OpenPGP;
+import { KeyInfo, PgpKey } from '../../../js/common/core/pgp-key.js';
 
 View.run(class MyKeyUserIdsView extends View {
   private readonly acctEmail: string;
@@ -28,7 +26,7 @@ View.run(class MyKeyUserIdsView extends View {
     [this.primaryKi] = await Store.keysGet(this.acctEmail, [this.longid]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     $('.action_show_public_key').attr('href', this.myKeyUrl);
-    const { keys: [prv] } = await openpgp.key.readArmored(this.primaryKi.private);
+    const prv = await PgpKey.read(this.primaryKi.private);
     const userIds = prv.users.map(u => u.userId).filter(Boolean).map(uid => uid!.userid); // todo - create a common function in settings.js for here and setup.js user_ids
     Xss.sanitizeRender('.user_ids', userIds.map((uid: string) => `<div>${Xss.escape(uid)}</div>`).join(''));
     $('.email').text(this.acctEmail);

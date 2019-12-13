@@ -8,6 +8,40 @@ import { PgpArmor } from './pgp-armor.js';
 import { Buf } from './buf.js';
 import { Catch } from '../platform/catch.js';
 import { mnemonic } from './mnemonic.js';
+import { MsgBlockParser } from './msg-block-parser.js';
+
+export type Contact = {
+  email: string;
+  name: string | null;
+  pubkey: string | null;
+  has_pgp: 0 | 1;
+  searchable: string[];
+  client: string | null;
+  fingerprint: string | null;
+  longid: string | null;
+  longids: string[];
+  keywords: string | null;
+  pending_lookup: number;
+  last_use: number | null;
+  pubkey_last_sig: number | null;
+  pubkey_last_check: number | null;
+  expiresOn: number | null;
+};
+
+export interface PrvKeyInfo {
+  private: string;
+  longid: string;
+  passphrase?: string;
+  decrypted?: OpenPGP.key.Key;  // only for internal use in this file
+  parsed?: OpenPGP.key.Key;     // only for internal use in this file
+}
+
+export interface KeyInfo extends PrvKeyInfo {
+  public: string;
+  fingerprint: string;
+  primary: boolean;
+  keywords: string;
+}
 
 type KeyDetails$ids = {
   shortid: string;
@@ -68,7 +102,7 @@ export class PgpKey {
   static readMany = async (fileData: Buf): Promise<{ keys: OpenPGP.key.Key[], errs: Error[] }> => {
     const allKeys: OpenPGP.key.Key[] = [];
     const allErrs: Error[] = [];
-    const { blocks } = PgpArmor.detectBlocks(fileData.toUtfStr());
+    const { blocks } = MsgBlockParser.detectBlocks(fileData.toUtfStr());
     const armoredPublicKeyBlocks = blocks.filter(block => block.type === 'publicKey' || block.type === 'privateKey');
     const pushKeysAndErrs = async (content: string | Buf, type: 'readArmored' | 'read') => {
       try {

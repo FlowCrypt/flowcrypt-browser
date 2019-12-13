@@ -11,7 +11,7 @@ import { SendableMsgBody } from '../../core/mime.js';
 import { Api, ProgressCb, ChunkedCb } from '../api.js';
 import { GmailResponseFormat } from './gmail/gmail.js';
 import { GmailRes } from './gmail/gmail-parser.js';
-import { Contact } from '../../core/pgp.js';
+import { Contact } from '../../core/pgp-key.js';
 
 export type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
 export type ProviderContactsQuery = { substring: string };

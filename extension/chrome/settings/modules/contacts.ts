@@ -8,7 +8,6 @@ import { Att } from '../../../js/common/core/att.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Pgp } from '../../../js/common/core/pgp.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { AttUI } from '../../../js/common/ui/att_ui.js';
 import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
@@ -20,10 +19,9 @@ import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { Str, Url } from '../../../js/common/core/common.js';
 import { FetchKeyUI } from '../../../js/common/ui/fetch_key_ui.js';
 import { View } from '../../../js/common/view.js';
-import { Contact } from './../../../js/common/core/pgp';
-import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { PgpKey, Contact } from '../../../js/common/core/pgp-key.js';
+import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 
 View.run(class ContactsView extends View {
 
@@ -191,7 +189,7 @@ View.run(class ContactsView extends View {
       } else {
         pub = value;
       }
-      let { blocks } = PgpArmor.detectBlocks(pub);
+      let { blocks } = MsgBlockParser.detectBlocks(pub);
       blocks = blocks.filter((b, i) => blocks.findIndex(f => f.content === b.content) === i); // remove duplicates
       if (!blocks.length) {
         await Ui.modal.warning('Could not find any new public keys.');
@@ -206,7 +204,7 @@ View.run(class ContactsView extends View {
               container.append(replacedHtmlSafe); // xss-safe-factory
             }
           } else {
-            Xss.sanitizeAppend(container, `<div class="bad">Skipping found '${Pgp.friendlyMsgBlockTypeName(block.type)}'</div>`);
+            Xss.sanitizeAppend(container, `<div class="bad">Skipping found ${block.type}</div>`);
           }
         }
         container.css('display', 'block');

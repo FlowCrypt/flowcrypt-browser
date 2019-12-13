@@ -11,8 +11,6 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
-declare const openpgp: typeof OpenPGP;
-
 export class SetupRecoverKeyModule {
 
   constructor(private view: SetupView) {
@@ -38,7 +36,7 @@ export class SetupRecoverKeyModule {
             this.view.mathingPassphrases.push(passphrase);
           }
           if (!this.view.importedKeysUniqueLongids.includes(longid)) {
-            const { keys: [prv] } = await openpgp.key.readArmored(fetchedKey.armor());
+            const prv = await PgpKey.read(fetchedKey.armor());
             newlyMatchingKeys.push(prv);
             this.view.importedKeysUniqueLongids.push(longid);
           } else {

@@ -4,7 +4,7 @@
 
 import { NewMsgData } from '../composer-types.js';
 import { SendableMsg } from '../../../../js/common/api/email_provider/email_provider_api.js';
-import { PgpMsg } from '../../../../js/common/core/pgp.js';
+import { PgpMsg } from '../../../../js/common/core/pgp-msg.js';
 import { BrowserWindow } from '../../../../js/common/browser/browser-window.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';

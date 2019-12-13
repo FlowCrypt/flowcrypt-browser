@@ -3,7 +3,7 @@ import { UnsuportableStrategyError, ITestMsgStrategy } from './strategy-base.js'
 import { ParsedMail, AddressObject } from 'mailparser';
 import { HttpClientErr } from '../../lib/api';
 import { Config } from '../../../util';
-import { PgpMsg } from '../../../core/pgp';
+import { PgpMsg } from '../../../core/pgp-msg';
 import { Buf } from '../../../core/buf';
 
 class PwdEncryptedMessageTestStrategy implements ITestMsgStrategy {

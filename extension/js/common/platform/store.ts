@@ -4,7 +4,7 @@
 
 import { Value, Str, Dict } from '../core/common.js';
 import { mnemonic } from '../core/mnemonic.js';
-import { KeyInfo, Contact } from '../core/pgp.js';
+import { KeyInfo, Contact } from '../core/pgp-key.js';
 import { SubscriptionInfo, PaymentMethod, FcUuidAuth, SubscriptionLevel } from '../api/backend.js';
 import { BrowserMsg, BgNotReadyErr } from '../browser/browser-msg.js';
 import { Catch, UnreportableError } from './catch.js';

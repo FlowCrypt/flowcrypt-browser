@@ -5,7 +5,7 @@
 import { ComposerComponent } from './composer-abstract-component.js';
 import { Store, SendAsAlias } from '../../../js/common/platform/store.js';
 import { Assert } from '../../../js/common/assert.js';
-import { KeyInfo, Contact, openpgp } from '../../../js/common/core/pgp.js';
+import { KeyInfo, Contact } from '../../../js/common/core/pgp-key.js';
 import { Dict } from '../../../js/common/core/common.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { CollectPubkeysResult } from './composer-types.js';
@@ -14,6 +14,7 @@ import { PUBKEY_LOOKUP_RESULT_FAIL } from './composer-errs.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { openpgp } from '../../../js/common/core/pgp.js';
 
 export class ComposerStorage extends ComposerComponent {
 

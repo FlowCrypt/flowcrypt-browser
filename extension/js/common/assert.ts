@@ -5,7 +5,7 @@
 import { Ui } from './browser/ui.js';
 import { Dict, UrlParams, UrlParam } from './core/common.js';
 import { Catch, UnreportableError } from './platform/catch.js';
-import { KeyInfo } from './core/pgp.js';
+import { KeyInfo } from './core/pgp-key.js';
 import { BrowserMsg } from './browser/browser-msg.js';
 import { Store } from './platform/store.js';
 import { Settings } from './settings.js';
