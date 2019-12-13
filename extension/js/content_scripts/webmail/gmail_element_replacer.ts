@@ -151,18 +151,14 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         secureReplyBtn.addClass(gmailReplyBtn.attr('class') || '');
         secureReplyBtn.on('focusin', Ui.event.handle((target) => { $(target).addClass('T-I-JO'); }));
         secureReplyBtn.on('focusout', Ui.event.handle((target) => { $(target).removeClass('T-I-JO'); }));
-        secureReplyBtn.click(Ui.event.prevent('double', Catch.try(async () => {
-          const messageContainer = $(elem.closest('.h7') as HTMLElement);
-          if (messageContainer.is(':last-child')) {
-            if (this.isEncrypted()) {
-              await this.setReplyBoxEditable();
-            } else {
-              await this.replaceStandardReplyBox(undefined, true, true);
-            }
-          } else {
-            this.insertEncryptedReplyBox(messageContainer);
+        secureReplyBtn.off();
+        secureReplyBtn.click(Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev)));
+        secureReplyBtn.keydown(event => {
+          if (event.which === 13) {
+            event.stopImmediatePropagation();
+            $(secureReplyBtn).click();
           }
-        })));
+        });
       }
     }
     // conversation top-right icon buttons
@@ -174,6 +170,20 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           });
         }
       }
+    }
+  }
+
+  private actionActivateSecureReplyHandler = async (btn: HTMLElement, event: JQuery.Event) => {
+    event.stopImmediatePropagation();
+    const messageContainer = $(btn.closest('.h7') as HTMLElement);
+    if (messageContainer.is(':last-child')) {
+      if (this.isEncrypted()) {
+        await this.setReplyBoxEditable();
+      } else {
+        await this.replaceStandardReplyBox(undefined, true, true);
+      }
+    } else {
+      this.insertEncryptedReplyBox(messageContainer);
     }
   }
 
