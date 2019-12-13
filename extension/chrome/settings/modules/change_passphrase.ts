@@ -6,12 +6,13 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Pgp, KeyInfo } from '../../../js/common/core/pgp.js';
+import { KeyInfo } from '../../../js/common/core/pgp.js';
 import { Assert } from '../../../js/common/assert.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
 import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -45,13 +46,14 @@ View.run(class ChangePassPhraseView extends View {
     const storedOrSessionPp = await Store.passphraseGet(this.acctEmail, this.primaryKi.longid);
     const { keys: [key] } = await openpgp.key.readArmored(this.primaryKi.private);
     this.primaryPrv = key;
-    if (this.primaryPrv.isFullyDecrypted() || (storedOrSessionPp && await Pgp.key.decrypt(this.primaryPrv, storedOrSessionPp))) {
+    if (this.primaryPrv.isFullyDecrypted() || (storedOrSessionPp && await PgpKey.decrypt(this.primaryPrv, storedOrSessionPp))) {
       this.displayBlock('step_1_enter_new'); // current pp is already known
     } else {
       this.displayBlock('step_0_enter_current');
     }
     this.keyImportUi.renderPassPhraseStrengthValidationInput($('#password'), $('.action_set_pass_phrase'));
   }
+
 
   setHandlers = () => {
     $('#step_0_enter_current .action_test_current_passphrase').click(this.setHandler(() => this.actionTestCurrentPassPhraseHandler()));
@@ -64,7 +66,7 @@ View.run(class ChangePassPhraseView extends View {
 
   private actionTestCurrentPassPhraseHandler = async () => {
     const { keys: [prv] } = await openpgp.key.readArmored(this.primaryKi!.private);
-    if (await Pgp.key.decrypt(prv, String($('#original_password').val())) === true) {
+    if (await PgpKey.decrypt(prv, String($('#original_password').val())) === true) {
       this.primaryPrv = prv;
       this.displayBlock('step_1_enter_new');
     } else {
@@ -97,7 +99,7 @@ View.run(class ChangePassPhraseView extends View {
       return;
     }
     try {
-      await Pgp.key.encrypt(this.primaryPrv!, newPp);
+      await PgpKey.encrypt(this.primaryPrv!, newPp);
     } catch (e) {
       Catch.reportErr(e);
       await Ui.modal.error(`There was an unexpected error. Please ask for help at human@flowcrypt.com:\n\n${e instanceof Error ? e.stack : String(e)}`);

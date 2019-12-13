@@ -4,7 +4,7 @@
 
 import { Value, Str, Dict } from '../core/common.js';
 import { mnemonic } from '../core/mnemonic.js';
-import { Pgp, KeyInfo, Contact } from '../core/pgp.js';
+import { KeyInfo, Contact } from '../core/pgp.js';
 import { SubscriptionInfo, PaymentMethod, ProductLevel, FcUuidAuth } from '../api/backend.js';
 import { BrowserMsg, BgNotReadyErr } from '../browser/browser-msg.js';
 import { Catch, UnreportableError } from './catch.js';
@@ -16,6 +16,7 @@ import { DomainRules } from '../rules.js';
 import { Env } from '../browser/env.js';
 import { Ui } from '../browser/ui.js';
 import { PgpArmor } from '../core/pgp-armor.js';
+import { PgpKey } from '../core/pgp-key.js';
 
 // tslint:disable:no-null-keyword
 
@@ -326,19 +327,19 @@ export class Store {
   }
 
   private static keysObj = async (armoredPrv: string, primary = false): Promise<KeyInfo> => {
-    const longid = await Pgp.key.longid(armoredPrv)!;
+    const longid = await PgpKey.longid(armoredPrv)!;
     if (!longid) {
       throw new Error('Store.keysObj: unexpectedly no longid');
     }
-    const prv = await Pgp.key.read(armoredPrv);
-    const fingerprint = await Pgp.key.fingerprint(armoredPrv);
+    const prv = await PgpKey.read(armoredPrv);
+    const fingerprint = await PgpKey.fingerprint(armoredPrv);
     return { private: armoredPrv, public: prv.toPublic().armor(), primary, longid, fingerprint: fingerprint!, keywords: mnemonic(longid)! };
   }
 
   static keysAdd = async (acctEmail: string, newKeyArmored: string) => { // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked key check
     const keyinfos = await Store.keysGet(acctEmail);
     let updated = false;
-    const newKeyLongid = await Pgp.key.longid(newKeyArmored);
+    const newKeyLongid = await PgpKey.longid(newKeyArmored);
     if (newKeyLongid) {
       for (const i in keyinfos) {
         if (newKeyLongid === keyinfos[i].longid) { // replacing a key
@@ -609,13 +610,13 @@ export class Store {
           expiresOn: null
         };
       }
-      const k = await Pgp.key.read(pubkey);
+      const k = await PgpKey.read(pubkey);
       if (!k) {
         throw new Error(`Could not read pubkey as valid OpenPGP key for: ${email}`);
       }
-      const keyDetails = await Pgp.key.details(k);
+      const keyDetails = await PgpKey.details(k);
       if (!lastSig) {
-        lastSig = await Pgp.key.lastSig(k);
+        lastSig = await PgpKey.lastSig(k);
       }
       return {
         email: validEmail,
@@ -674,7 +675,7 @@ export class Store {
     }
     if (update.pubkey && update.pubkey.includes(PgpArmor.headers('privateKey').begin)) { // wrongly saving prv instead of pub
       Catch.report('Wrongly saving prv as contact - converting to pubkey');
-      const key = await Pgp.key.read(update.pubkey);
+      const key = await PgpKey.read(update.pubkey);
       update.pubkey = key.toPublic().armor();
     }
     for (const k of Object.keys(update)) {

@@ -1,10 +1,11 @@
 'use strict';
 
 import { Ui } from '../../../js/common/browser/ui.js';
-import { Pgp, PgpMsg } from '../../../js/common/core/pgp.js';
+import { PgpMsg } from '../../../js/common/core/pgp.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { View } from '../../../js/common/view.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -30,7 +31,7 @@ View.run(class CompatibilityView extends View {
     $('pre').text('').css('display', 'block');
     try {
       this.testIndex = 1;
-      const { keys, errs } = await Pgp.key.readMany(Buf.fromUtfStr(keyString));
+      const { keys, errs } = await PgpKey.readMany(Buf.fromUtfStr(keyString));
       for (const err of errs) {
         this.appendResult(`Error parsing input: ${String(err)}`);
       }
@@ -62,11 +63,11 @@ View.run(class CompatibilityView extends View {
         const user = await key.getPrimaryUser();
         return user?.user?.userId || 'No primary user';
       })}`);
-      this.appendResult(`${kn} Fingerprint: ${await this.test(async () => await Pgp.key.fingerprint(key, 'spaced'))}`);
+      this.appendResult(`${kn} Fingerprint: ${await this.test(async () => await PgpKey.fingerprint(key, 'spaced'))}`);
       this.appendResult(`${kn} Subkeys: ${await this.test(async () => key.subKeys ? key.subKeys.length : key.subKeys)}`);
       this.appendResult(`${kn} Primary key algo: ${await this.test(async () => key.primaryKey.algorithm)}`);
       if (key.isPrivate()) {
-        this.appendResult(`${kn} key decrypt: ${await this.test(async () => Pgp.key.decrypt(key, String($('.input_passphrase').val())))}`);
+        this.appendResult(`${kn} key decrypt: ${await this.test(async () => PgpKey.decrypt(key, String($('.input_passphrase').val())))}`);
         this.appendResult(`${kn} isFullyDecrypted: ${await this.test(async () => key.isFullyDecrypted())}`);
         this.appendResult(`${kn} isFullyEncrypted: ${await this.test(async () => key.isFullyEncrypted())}`);
       }
@@ -85,7 +86,7 @@ View.run(class CompatibilityView extends View {
       for (let subKeyIndex = 0; subKeyIndex < key.subKeys.length; subKeyIndex++) {
         const subKey = key.subKeys[subKeyIndex];
         const skn = `${kn} SK ${subKeyIndex} >`;
-        this.appendResult(`${skn} LongId: ${await this.test(async () => Pgp.key.longid(subKey.getKeyId().bytes))}`);
+        this.appendResult(`${skn} LongId: ${await this.test(async () => PgpKey.longid(subKey.getKeyId().bytes))}`);
         this.appendResult(`${skn} Created: ${await this.test(async () => this.formatDate(subKey.keyPacket.created))}`);
         this.appendResult(`${skn} Algo: ${await this.test(async () => `${subKey.getAlgorithmInfo().algorithm}`)}`);
         this.appendResult(`${skn} Verify: ${await this.test(async () => {
@@ -114,8 +115,8 @@ View.run(class CompatibilityView extends View {
           this.appendResult(`${sgn} Verified: ${await this.test(async () => sig.verified)}`);
         }
       }
-      this.appendResult(`${kn} internal dateBeforeExpiration: ${await this.test(async () => Pgp.key.dateBeforeExpiration(key))}`);
-      this.appendResult(`${kn} internal usableButExpired: ${await this.test(async () => Pgp.key.usableButExpired(key))}`);
+      this.appendResult(`${kn} internal dateBeforeExpiration: ${await this.test(async () => PgpKey.dateBeforeExpiration(key))}`);
+      this.appendResult(`${kn} internal usableButExpired: ${await this.test(async () => PgpKey.usableButExpired(key))}`);
     }
   }
 
@@ -176,7 +177,7 @@ View.run(class CompatibilityView extends View {
       if (verifyResult.error !== null && typeof verifyResult.error !== 'undefined') {
         output.push(`verify failed: ${verifyResult.error}`);
       } else {
-        if (verifyResult.match && verifyResult.signer === (await Pgp.key.longid(key))) {
+        if (verifyResult.match && verifyResult.signer === (await PgpKey.longid(key))) {
           output.push('verify ok');
         } else {
           output.push(`verify mismatch: match[${verifyResult.match}] signer[${verifyResult.signer}]`);

@@ -6,7 +6,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
 import { Browser } from '../../../js/common/browser/browser.js';
-import { Pgp, KeyInfo } from '../../../js/common/core/pgp.js';
+import { KeyInfo } from '../../../js/common/core/pgp.js';
 import { Attester } from '../../../js/common/api/attester.js';
 import { Backend } from '../../../js/common/api/backend.js';
 import { Assert } from '../../../js/common/assert.js';
@@ -14,6 +14,7 @@ import { Buf } from '../../../js/common/core/buf.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const ClipboardJS: any;
@@ -42,7 +43,7 @@ View.run(class MyKeyView extends View {
     $('.action_view_update').attr('href', this.myKeyUpdateUrl);
     $('.key_words').text(this.primaryKi.keywords);
     $('.email').text(this.acctEmail);
-    $('.key_fingerprint').text(await Pgp.key.fingerprint(prv, 'spaced') || '(unknown fingerprint)');
+    $('.key_fingerprint').text(await PgpKey.fingerprint(prv, 'spaced') || '(unknown fingerprint)');
     await this.setPubkeyContainer();
   }
 
@@ -57,7 +58,7 @@ View.run(class MyKeyView extends View {
     try {
       const result = await Attester.lookupEmail(this.acctEmail);
       const url = Backend.url('pubkey', this.acctEmail);
-      if (result.pubkey && await Pgp.key.longid(result.pubkey) === this.primaryKi!.longid) {
+      if (result.pubkey && await PgpKey.longid(result.pubkey) === this.primaryKi!.longid) {
         $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('display', '');
       } else {
         $('.pubkey_link_container').remove();

@@ -3,7 +3,7 @@
 'use strict';
 
 import { Str, Dict, UrlParams } from '../core/common.js';
-import { DiagnoseMsgPubkeysResult, DecryptResult, VerifyRes, PgpMsgTypeResult, PgpMsgMethod, KeyDetails } from '../core/pgp.js';
+import { DiagnoseMsgPubkeysResult, DecryptResult, VerifyRes, PgpMsgTypeResult, PgpMsgMethod } from '../core/pgp.js';
 import { GlobalIndex, GlobalStore, AccountIndex, AccountStore } from '../platform/store.js';
 import { Browser } from './browser.js';
 import { Catch } from '../platform/catch.js';
@@ -14,6 +14,7 @@ import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
 import { Env } from './env.js';
 import { Ui } from './ui.js';
 import { AjaxErr } from '../api/error/api-error-types.js';
+import { KeyDetails } from '../core/pgp-key.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 

@@ -5,7 +5,7 @@
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Pgp, KeyInfo } from '../../../js/common/core/pgp.js';
+import { KeyInfo } from '../../../js/common/core/pgp.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Attester } from '../../../js/common/api/attester.js';
@@ -13,6 +13,7 @@ import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -70,15 +71,15 @@ View.run(class MyKeyUpdateView extends View {
       await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)));
     } else if (uddatedKey.isPublic()) {
       await Ui.modal.warning('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"');
-    } else if (await Pgp.key.fingerprint(uddatedKey) !== await Pgp.key.fingerprint(this.primaryKi!.public)) {
-      await Ui.modal.warning(`This key ${await Pgp.key.longid(uddatedKey)} does not match your current key ${this.primaryKi!.longid}`);
-    } else if (await Pgp.key.decrypt(uddatedKey, uddatedKeyPassphrase) !== true) {
+    } else if (await PgpKey.fingerprint(uddatedKey) !== await PgpKey.fingerprint(this.primaryKi!.public)) {
+      await Ui.modal.warning(`This key ${await PgpKey.longid(uddatedKey)} does not match your current key ${this.primaryKi!.longid}`);
+    } else if (await PgpKey.decrypt(uddatedKey, uddatedKeyPassphrase) !== true) {
       await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
     } else {
       if (await uddatedKey.getEncryptionKey()) {
         await this.storeUpdatedKeyAndPassphrase(uddatedKeyEncrypted, uddatedKeyPassphrase);
       } else { // cannot get a valid encryption key packet
-        if ((await uddatedKey.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert) || await Pgp.key.usableButExpired(uddatedKey)) { // known issues - key can be fixed
+        if ((await uddatedKey.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert) || await PgpKey.usableButExpired(uddatedKey)) { // known issues - key can be fixed
           const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
             this.acctEmail, '.compatibility_fix_container', uddatedKeyEncrypted, uddatedKeyPassphrase, this.showKeyUrl
           );

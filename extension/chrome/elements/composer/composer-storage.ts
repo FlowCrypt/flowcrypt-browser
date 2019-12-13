@@ -5,7 +5,7 @@
 import { ComposerComponent } from './composer-abstract-component.js';
 import { Store, SendAsAlias } from '../../../js/common/platform/store.js';
 import { Assert } from '../../../js/common/assert.js';
-import { KeyInfo, Pgp, Contact, openpgp } from '../../../js/common/core/pgp.js';
+import { KeyInfo, Contact, openpgp } from '../../../js/common/core/pgp.js';
 import { Dict } from '../../../js/common/core/common.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { CollectPubkeysResult } from './composer-types.js';
@@ -13,6 +13,7 @@ import { PubkeySearchResult, Keyserver } from '../../../js/common/api/keyserver.
 import { PUBKEY_LOOKUP_RESULT_FAIL } from './composer-errs.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
 export class ComposerStorage extends ComposerComponent {
 
@@ -130,8 +131,8 @@ export class ComposerStorage extends ComposerComponent {
             if (!key) {
               console.info('Dropping found but incompatible public key', { for: email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : undefined });
               lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
-            } else if (! await Pgp.key.usable(lookupResult.pubkey) && ! await Pgp.key.expired(key)) { // Not to skip expired keys
-              console.info('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: await Pgp.key.fingerprint(parsed.keys[0]) });
+            } else if (! await PgpKey.usable(lookupResult.pubkey) && ! await PgpKey.expired(key)) { // Not to skip expired keys
+              console.info('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: await PgpKey.fingerprint(parsed.keys[0]) });
               lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
             }
           }
@@ -164,14 +165,14 @@ export class ComposerStorage extends ComposerComponent {
         return;
       }
       if (!contact.pubkey_last_sig) {
-        const lastSig = await Pgp.key.lastSig(await Pgp.key.read(contact.pubkey));
+        const lastSig = await PgpKey.lastSig(await PgpKey.read(contact.pubkey));
         contact.pubkey_last_sig = lastSig;
         await Store.dbContactUpdate(undefined, contact.email, { pubkey_last_sig: lastSig });
       }
       if (!contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7)) { // last update > 7 days ago, or never
         const { pubkey: fetchedPubkey } = await Keyserver.lookupLongid(this.view.acctEmail, contact.longid);
         if (fetchedPubkey) {
-          const fetchedLastSig = await Pgp.key.lastSig(await Pgp.key.read(fetchedPubkey));
+          const fetchedLastSig = await PgpKey.lastSig(await PgpKey.read(fetchedPubkey));
           if (fetchedLastSig > contact.pubkey_last_sig) { // fetched pubkey has newer signature, update
             console.info(`Updating key ${contact.longid} for ${contact.email}: newer signature found: ${new Date(fetchedLastSig)} (old ${new Date(contact.pubkey_last_sig)})`);
             await Store.dbContactUpdate(undefined, contact.email, { pubkey: fetchedPubkey, pubkey_last_sig: fetchedLastSig, pubkey_last_check: Date.now() });

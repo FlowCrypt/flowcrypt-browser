@@ -5,7 +5,7 @@
 import { NewMsgData, PubkeyResult, SendBtnTexts } from '../composer-types.js';
 import { SendableMsg } from '../../../../js/common/api/email_provider/email_provider_api.js';
 import { Composer } from '../composer.js';
-import { PgpMsg, Pgp, Pwd } from '../../../../js/common/core/pgp.js';
+import { PgpMsg, Pwd } from '../../../../js/common/core/pgp.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { SendableMsgBody, Mime } from '../../../../js/common/core/mime.js';
 import { Buf } from '../../../../js/common/core/buf.js';
@@ -21,6 +21,7 @@ import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter
 import { Settings } from '../../../../js/common/settings.js';
 import { PgpArmor } from '../../../../js/common/core/pgp-armor.js';
 import { ApiErr } from '../../../../js/common/api/error/api-error.js';
+import { PgpKey } from '../../../../js/common/core/pgp-key.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -144,7 +145,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     const usableFrom: number[] = [];
     for (const armoredPubkey of armoredPubkeys) {
       const { keys: [pub] } = await openpgp.key.readArmored(armoredPubkey.pubkey);
-      const oneSecondBeforeExpiration = await Pgp.key.dateBeforeExpiration(pub);
+      const oneSecondBeforeExpiration = await PgpKey.dateBeforeExpiration(pub);
       usableFrom.push(pub.getCreationTime().getTime());
       if (typeof oneSecondBeforeExpiration !== 'undefined') { // key does expire
         usableUntil.push(oneSecondBeforeExpiration.getTime());
@@ -157,7 +158,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
       return undefined;
     }
     for (const myKey of armoredPubkeys.filter(ap => ap.isMine)) {
-      if (await Pgp.key.usableButExpired(await Pgp.key.read(myKey.pubkey))) {
+      if (await PgpKey.usableButExpired(await PgpKey.read(myKey.pubkey))) {
         const path = chrome.runtime.getURL(`chrome/settings/index.htm?acctEmail=${encodeURIComponent(myKey.email)}&page=%2Fchrome%2Fsettings%2Fmodules%2Fmy_key_update.htm`);
         await Ui.modal.error(
           ['This message could not be encrypted because your own Private Key is expired.',

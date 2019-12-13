@@ -7,10 +7,11 @@ import { Store } from '../../../js/common/platform/store.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Str } from '../../../js/common/core/common.js';
-import { VerifyRes, Pgp } from '../../../js/common/core/pgp.js';
+import { VerifyRes } from '../../../js/common/core/pgp.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
 export class PgpBlockViewSignatureModule {
 
@@ -64,7 +65,7 @@ export class PgpBlockViewSignatureModule {
           return;
         } // ---> and longid it matches signature
         await Store.dbContactSave(undefined, await Store.dbContactObj({
-          email: senderEmail, pubkey, client: pgpClient, expiresOn: await Pgp.key.dateBeforeExpiration(pubkey)
+          email: senderEmail, pubkey, client: pgpClient, expiresOn: await PgpKey.dateBeforeExpiration(pubkey)
         })); // <= TOFU auto-import
         render('Fetched pubkey, click to verify', () => window.location.reload());
       } else { // don't know who sent it
@@ -86,7 +87,7 @@ export class PgpBlockViewSignatureModule {
         }
         render(`Fetched matching pubkey ${signerLongid}. Click to load and use it.`, async () => {
           await Store.dbContactSave(undefined, await Store.dbContactObj({
-            email: pubkeyEmail, pubkey, client: pgpClient, expiresOn: await Pgp.key.dateBeforeExpiration(pubkey)
+            email: pubkeyEmail, pubkey, client: pgpClient, expiresOn: await PgpKey.dateBeforeExpiration(pubkey)
           })); // TOFU manual import
           window.location.reload();
         });

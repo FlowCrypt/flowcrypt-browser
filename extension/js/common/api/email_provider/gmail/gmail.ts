@@ -13,7 +13,7 @@ import { Env } from '../../../browser/env.js';
 import { BrowserMsg } from '../../../browser/browser-msg.js';
 import { Catch } from '../../../platform/catch.js';
 import { Att } from '../../../core/att.js';
-import { Contact, Pgp, FormatError } from '../../../core/pgp.js';
+import { Contact, FormatError } from '../../../core/pgp.js';
 import { Xss } from '../../../platform/xss.js';
 import { Store } from '../../../platform/store.js';
 import { GmailRes, GmailParser } from './gmail-parser.js';
@@ -21,6 +21,7 @@ import { GoogleAuth } from '../../google-auth.js';
 import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window.js';
 import { PgpArmor } from '../../../core/pgp-armor.js';
 import { AjaxErr } from '../../error/api-error-types.js';
+import { PgpKey } from '../../../core/pgp-key.js';
 
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 
@@ -335,7 +336,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       atts.push(...GmailParser.findAtts(msg));
     }
     await this.fetchAtts(atts);
-    const { keys } = await Pgp.key.readMany(Buf.fromUtfStr(atts.map(a => a.getData().toUtfStr()).join('\n')));
+    const { keys } = await PgpKey.readMany(Buf.fromUtfStr(atts.map(a => a.getData().toUtfStr()).join('\n')));
     return keys;
   }
 

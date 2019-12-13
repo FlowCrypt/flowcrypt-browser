@@ -6,7 +6,6 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Value, Url } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { Pgp } from '../../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Gmail } from './../../../js/common/api/email_provider/gmail/gmail.js';
 import { Assert } from '../../../js/common/assert.js';
@@ -15,6 +14,7 @@ import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { View } from '../../../js/common/view.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
 View.run(class AddKeyView extends View {
 
@@ -53,7 +53,7 @@ View.run(class AddKeyView extends View {
       keyBackups = await this.gmail.fetchKeyBackups();
       if (keyBackups.length) {
         const notImportedBackupLongids: string[] = [];
-        for (const longid of Value.arr.unique(await Promise.all(keyBackups.map(Pgp.key.longid)))) {
+        for (const longid of Value.arr.unique(await Promise.all(keyBackups.map(PgpKey.longid)))) {
           if (longid && !privateKeysLongIds.includes(longid)) {
             notImportedBackupLongids.push(longid);
           }

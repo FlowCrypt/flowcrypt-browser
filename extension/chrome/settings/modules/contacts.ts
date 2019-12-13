@@ -23,6 +23,7 @@ import { View } from '../../../js/common/view.js';
 import { Contact } from './../../../js/common/core/pgp';
 import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
 View.run(class ContactsView extends View {
 
@@ -93,7 +94,7 @@ View.run(class ContactsView extends View {
 
   private fileAddedHandler = async (file: Att) => {
     this.attUI.clearAllAtts();
-    const { keys, errs } = await Pgp.key.readMany(file.getData());
+    const { keys, errs } = await PgpKey.readMany(file.getData());
     if (keys.length) {
       if (errs.length) {
         await Ui.modal.warning(`some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
@@ -142,9 +143,9 @@ View.run(class ContactsView extends View {
     const email = $('#edit_contact .input_pubkey').attr('email');
     if (!armoredPubkey || !email) {
       await Ui.modal.warning('No public key entered');
-    } else if (await Pgp.key.fingerprint(armoredPubkey)) {
+    } else if (await PgpKey.fingerprint(armoredPubkey)) {
       await Store.dbContactSave(undefined, await Store.dbContactObj({
-        email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now(), expiresOn: await Pgp.key.dateBeforeExpiration(armoredPubkey)
+        email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now(), expiresOn: await PgpKey.dateBeforeExpiration(armoredPubkey)
       }));
       await this.loadAndRenderContactList();
     } else {

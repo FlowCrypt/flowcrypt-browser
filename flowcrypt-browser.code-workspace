@@ -12,7 +12,10 @@
     "eslint.autoFixOnSave": true,
     "eslint.validate": [
       "javascript",
-      "typescript"
+      {
+        "language": "typescript",
+        "autoFix": true
+      },
     ],
     "stylelint.autoFixOnSave": true,
     "files.exclude": {
