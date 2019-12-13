@@ -13,7 +13,7 @@ import { AvaContext } from '..';
 import { Dict } from '../../core/common';
 import { GoogleData } from '../../mock/google/google-data';
 import * as request from 'fc-node-requests';
-import { PgpMsg } from '../../core/pgp';
+import { PgpMsg } from '../../core/pgp-msg';
 import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
 import { InboxPageRecipe } from '../page_recipe/inbox-page-recipe';
 import { PgpHash } from '../../core/pgp-hash';

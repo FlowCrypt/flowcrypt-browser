@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Contact } from '../core/pgp';
+import { Contact } from '../core/pgp-key';
 
 export interface PrvKeyInfo {
   private: string;
