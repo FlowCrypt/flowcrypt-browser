@@ -33,11 +33,11 @@ View.run(class ChangePassPhraseView extends View {
   }
 
   render = async () => {
-    await initPassphraseToggle(['original_pass_phrase', 'new_pass_phrase', 'new_pass_phrase_confirm']);
+    await initPassphraseToggle(['current_pass_phrase', 'new_pass_phrase', 'new_pass_phrase_confirm']);
     const privateKeys = await Store.keysGet(this.acctEmail);
     if (privateKeys.length > 1) {
       $('#step_0_enter_current .sentence').text('Enter the current passphrase for your primary key');
-      $('#step_0_enter_current #original_pass_phrase').attr('placeholder', 'Current primary key pass phrase');
+      $('#step_0_enter_current #current_pass_phrase').attr('placeholder', 'Current primary key pass phrase');
       $('#step_1_enter_new #new_pass_phrase').attr('placeholder', 'Enter a new primary key pass phrase');
     }
     const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
@@ -48,29 +48,33 @@ View.run(class ChangePassPhraseView extends View {
     this.primaryPrv = key;
     if (this.primaryPrv.isFullyDecrypted() || (storedOrSessionPp && await PgpKey.decrypt(this.primaryPrv, storedOrSessionPp))) {
       this.displayBlock('step_1_enter_new'); // current pp is already known
+      $('#new_pass_phrase').focus();
     } else {
       this.displayBlock('step_0_enter_current');
+      $('#current_pass_phrase').focus();
     }
     this.keyImportUi.renderPassPhraseStrengthValidationInput($('#new_pass_phrase'), $('.action_set_pass_phrase'));
   }
 
   setHandlers = () => {
     $('#step_0_enter_current .action_test_current_passphrase').click(this.setHandler(() => this.actionTestCurrentPassPhraseHandler()));
-    $('#new_pass_phrase').on('keydown', this.setEnterHandlerThatClicks('#step_1_enter_new .action_set_pass_phrase'));
-    $("#new_pass_phrase_confirm").on('keydown', this.setEnterHandlerThatClicks('#step_2_confirm_new .action_change'));
     $('#step_1_enter_new .action_set_pass_phrase').click(this.setHandler(el => this.actionSetPassPhraseHandler(el)));
     $('#step_2_confirm_new .action_use_another').click(this.setHandler(el => this.actionUseAnotherPassPhraseHandler()));
     $('#step_2_confirm_new .action_change').click(this.setHandlerPrevent('double', () => this.actionDoChangePassPhraseHandler()));
+    $('#current_pass_phrase').on('keydown', this.setEnterHandlerThatClicks('#step_0_enter_current .action_test_current_passphrase'));
+    $('#new_pass_phrase').on('keydown', this.setEnterHandlerThatClicks('#step_1_enter_new .action_set_pass_phrase'));
+    $("#new_pass_phrase_confirm").on('keydown', this.setEnterHandlerThatClicks('#step_2_confirm_new .action_change'));
   }
 
   private actionTestCurrentPassPhraseHandler = async () => {
     const { keys: [prv] } = await openpgp.key.readArmored(this.primaryKi!.private);
-    if (await PgpKey.decrypt(prv, String($('#original_pass_phrase').val())) === true) {
+    if (await PgpKey.decrypt(prv, String($('#current_pass_phrase').val())) === true) {
       this.primaryPrv = prv;
       this.displayBlock('step_1_enter_new');
+      $('#new_pass_phrase').focus();
     } else {
       await Ui.modal.error('Pass phrase did not match, please try again.');
-      $('#original_pass_phrase').val('').focus();
+      $('#current_pass_phrase').val('').focus();
     }
   }
 
