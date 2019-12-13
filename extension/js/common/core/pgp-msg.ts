@@ -14,6 +14,7 @@ import { PgpHash } from './pgp-hash.js';
 import { PgpArmor } from './pgp-armor.js';
 import { PgpKey, KeyDetails, PrvKeyInfo, KeyInfo, Contact } from './pgp-key.js';
 import { openpgp } from './pgp.js';
+import { Pwd } from './pgp-password.js';
 
 export namespace PgpMsgMethod {
   export namespace Arg {
@@ -53,7 +54,6 @@ type PreparedForDecrypt = { isArmored: boolean, isCleartext: true, message: Open
 
 type OpenpgpMsgOrCleartext = OpenPGP.message.Message | OpenPGP.cleartext.CleartextMessage;
 
-export type Pwd = { question?: string; answer: string; };
 export type VerifyRes = { signer?: string; contact?: Contact; match: boolean | null; error?: string; };
 export type PgpMsgTypeResult = { armored: boolean, type: MsgBlockType } | undefined;
 export type DecryptResult = DecryptSuccess | DecryptError;

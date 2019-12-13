@@ -3,7 +3,7 @@
 'use strict';
 
 import { RecipientType } from '../../../js/common/api/api.js';
-import { Pwd } from '../../../js/common/core/pgp-msg.js';
+import { Pwd } from '../../../js/common/core/pgp-password.js';
 import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
 
 export type RecipientStatus = 0 | 1 | 2 | 3 | 4 | 5;

@@ -5,7 +5,7 @@
 import { NewMsgData, PubkeyResult, SendBtnTexts } from '../composer-types.js';
 import { SendableMsg } from '../../../../js/common/api/email_provider/email_provider_api.js';
 import { Composer } from '../composer.js';
-import { PgpMsg, Pwd } from '../../../../js/common/core/pgp-msg.js';
+import { PgpMsg } from '../../../../js/common/core/pgp-msg.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { SendableMsgBody, Mime } from '../../../../js/common/core/mime.js';
 import { Buf } from '../../../../js/common/core/buf.js';
@@ -22,6 +22,7 @@ import { Settings } from '../../../../js/common/settings.js';
 import { PgpArmor } from '../../../../js/common/core/pgp-armor.js';
 import { ApiErr } from '../../../../js/common/api/error/api-error.js';
 import { PgpKey } from '../../../../js/common/core/pgp-key.js';
+import { Pwd } from '../../../../js/common/core/pgp-password.js';
 
 declare const openpgp: typeof OpenPGP;
 
