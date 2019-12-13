@@ -8,7 +8,6 @@
     "tslint.configFile": "conf/tslint.yaml",
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
-    "editor.fontFamily": "'Hack', 'Droid Sans Mono', 'monospace', monospace, 'Droid Sans Fallback'",
     "eslint.autoFixOnSave": true,
     "eslint.validate": [
       "javascript",
