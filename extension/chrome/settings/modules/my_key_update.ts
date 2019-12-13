@@ -5,7 +5,7 @@
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Settings } from '../../../js/common/settings.js';
-import { KeyInfo } from '../../../js/common/core/pgp.js';
+import { KeyInfo } from '../../../js/common/core/pgp-msg.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Attester } from '../../../js/common/api/attester.js';

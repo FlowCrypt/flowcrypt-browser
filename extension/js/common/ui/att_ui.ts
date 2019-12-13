@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { PgpMsg, Pwd } from '../core/pgp.js';
+import { PgpMsg, Pwd } from '../core/pgp-msg.js';
 import { Dict } from '../core/common.js';
 import { Att } from '../core/att.js';
 import { Catch } from '../platform/catch.js';

@@ -12,7 +12,7 @@ import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
-import { KeyInfo } from '../../../js/common/core/pgp.js';
+import { KeyInfo } from '../../../js/common/core/pgp-msg.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 View.run(class SecurityView extends View {

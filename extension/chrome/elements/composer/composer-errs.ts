@@ -7,7 +7,7 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
 import { Str } from '../../../js/common/core/common.js';
 import { SendBtnTexts } from './composer-types.js';
-import { KeyInfo, Pwd } from '../../../js/common/core/pgp.js';
+import { KeyInfo, Pwd } from '../../../js/common/core/pgp-msg.js';
 import { Settings } from '../../../js/common/settings.js';
 import { BrowserEventErrHandler, Ui } from '../../../js/common/browser/ui.js';
 import { BrowserExtension } from '../../../js/common/browser/browser-extension.js';

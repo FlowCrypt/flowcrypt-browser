@@ -5,7 +5,7 @@
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { PgpMsg } from '../../../js/common/core/pgp.js';
+import { PgpMsg } from '../../../js/common/core/pgp-msg.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';

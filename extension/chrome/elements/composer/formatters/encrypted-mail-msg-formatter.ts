@@ -5,7 +5,7 @@
 import { NewMsgData, PubkeyResult, SendBtnTexts } from '../composer-types.js';
 import { SendableMsg } from '../../../../js/common/api/email_provider/email_provider_api.js';
 import { Composer } from '../composer.js';
-import { PgpMsg, Pwd } from '../../../../js/common/core/pgp.js';
+import { PgpMsg, Pwd } from '../../../../js/common/core/pgp-msg.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { SendableMsgBody, Mime } from '../../../../js/common/core/mime.js';
 import { Buf } from '../../../../js/common/core/buf.js';

@@ -10,7 +10,7 @@ import { Att } from '../core/att.js';
 import { Catch } from '../platform/catch.js';
 import { Buf } from '../core/buf.js';
 import { BrowserMsg } from '../browser/browser-msg.js';
-import { Contact } from '../core/pgp.js';
+import { Contact } from '../core/pgp-msg.js';
 import { secureRandomBytes } from '../platform/util.js';
 import { StandardErrRes, ApiErrResponse, AjaxErr } from './error/api-error-types.js';
 

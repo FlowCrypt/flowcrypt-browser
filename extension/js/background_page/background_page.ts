@@ -11,7 +11,7 @@ import { migrateGlobal } from './migrations.js';
 import { GoogleAuth } from '../common/api/google-auth.js';
 import { BgUtils } from './bgutils.js';
 import { BgHandlers } from './bg_handlers.js';
-import { PgpMsg } from '../common/core/pgp.js';
+import { PgpMsg } from '../common/core/pgp-msg.js';
 import { Buf } from '../common/core/buf.js';
 import { PgpHash } from '../common/core/pgp-hash.js';
 

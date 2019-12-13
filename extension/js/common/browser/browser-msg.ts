@@ -3,7 +3,7 @@
 'use strict';
 
 import { Str, Dict, UrlParams } from '../core/common.js';
-import { DiagnoseMsgPubkeysResult, DecryptResult, VerifyRes, PgpMsgTypeResult, PgpMsgMethod } from '../core/pgp.js';
+import { DiagnoseMsgPubkeysResult, DecryptResult, VerifyRes, PgpMsgTypeResult, PgpMsgMethod } from '../core/pgp-msg.js';
 import { GlobalIndex, GlobalStore, AccountIndex, AccountStore } from '../platform/store.js';
 import { Browser } from './browser.js';
 import { Catch } from '../platform/catch.js';

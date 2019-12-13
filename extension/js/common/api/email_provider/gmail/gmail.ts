@@ -13,7 +13,7 @@ import { Env } from '../../../browser/env.js';
 import { BrowserMsg } from '../../../browser/browser-msg.js';
 import { Catch } from '../../../platform/catch.js';
 import { Att } from '../../../core/att.js';
-import { Contact, FormatError } from '../../../core/pgp.js';
+import { Contact, FormatError } from '../../../core/pgp-msg.js';
 import { Xss } from '../../../platform/xss.js';
 import { Store } from '../../../platform/store.js';
 import { GmailRes, GmailParser } from './gmail-parser.js';

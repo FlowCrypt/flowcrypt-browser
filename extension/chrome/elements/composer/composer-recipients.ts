@@ -5,7 +5,7 @@
 import { Composer } from './composer.js';
 import { Str, Value } from '../../../js/common/core/common.js';
 import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
-import { Contact } from '../../../js/common/core/pgp.js';
+import { Contact } from '../../../js/common/core/pgp-msg.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Google } from '../../../js/common/api/google.js';

@@ -6,7 +6,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Settings } from '../../../js/common/settings.js';
-import { KeyInfo } from '../../../js/common/core/pgp.js';
+import { KeyInfo } from '../../../js/common/core/pgp-msg.js';
 import { Assert } from '../../../js/common/assert.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
 import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';

@@ -11,7 +11,7 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Settings } from '../../../js/common/settings.js';
-import { KeyInfo } from '../../../js/common/core/pgp.js';
+import { KeyInfo } from '../../../js/common/core/pgp-msg.js';
 import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';

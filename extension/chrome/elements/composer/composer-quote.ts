@@ -11,7 +11,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposerComponent } from './composer-abstract-component.js';
 import { Mime, MsgBlock } from '../../../js/common/core/mime.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { FormatError, PgpMsg } from '../../../js/common/core/pgp.js';
+import { FormatError, PgpMsg } from '../../../js/common/core/pgp-msg.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
