@@ -33,12 +33,12 @@ View.run(class ChangePassPhraseView extends View {
   }
 
   render = async () => {
-    await initPassphraseToggle(['original_password', 'password', 'password2']);
+    await initPassphraseToggle(['original_pass_phrase', 'new_pass_phrase', 'new_pass_phrase_confirm']);
     const privateKeys = await Store.keysGet(this.acctEmail);
     if (privateKeys.length > 1) {
       $('#step_0_enter_current .sentence').text('Enter the current passphrase for your primary key');
-      $('#step_0_enter_current #original_password').attr('placeholder', 'Current primary key pass phrase');
-      $('#step_1_enter_new #password').attr('placeholder', 'Enter a new primary key pass phrase');
+      $('#step_0_enter_current #original_pass_phrase').attr('placeholder', 'Current primary key pass phrase');
+      $('#step_1_enter_new #new_pass_phrase').attr('placeholder', 'Enter a new primary key pass phrase');
     }
     const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
     this.primaryKi = primaryKi;
@@ -51,14 +51,13 @@ View.run(class ChangePassPhraseView extends View {
     } else {
       this.displayBlock('step_0_enter_current');
     }
-    this.keyImportUi.renderPassPhraseStrengthValidationInput($('#password'), $('.action_set_pass_phrase'));
+    this.keyImportUi.renderPassPhraseStrengthValidationInput($('#new_pass_phrase'), $('.action_set_pass_phrase'));
   }
-
 
   setHandlers = () => {
     $('#step_0_enter_current .action_test_current_passphrase').click(this.setHandler(() => this.actionTestCurrentPassPhraseHandler()));
-    $('#password').on('keydown', this.setEnterHandlerThatClicks('#step_1_enter_new .action_set_pass_phrase'));
-    $("#password2").on('keydown', this.setEnterHandlerThatClicks('#step_2_confirm_new .action_change'));
+    $('#new_pass_phrase').on('keydown', this.setEnterHandlerThatClicks('#step_1_enter_new .action_set_pass_phrase'));
+    $("#new_pass_phrase_confirm").on('keydown', this.setEnterHandlerThatClicks('#step_2_confirm_new .action_change'));
     $('#step_1_enter_new .action_set_pass_phrase').click(this.setHandler(el => this.actionSetPassPhraseHandler(el)));
     $('#step_2_confirm_new .action_use_another').click(this.setHandler(el => this.actionUseAnotherPassPhraseHandler()));
     $('#step_2_confirm_new .action_change').click(this.setHandlerPrevent('double', () => this.actionDoChangePassPhraseHandler()));
@@ -66,12 +65,12 @@ View.run(class ChangePassPhraseView extends View {
 
   private actionTestCurrentPassPhraseHandler = async () => {
     const { keys: [prv] } = await openpgp.key.readArmored(this.primaryKi!.private);
-    if (await PgpKey.decrypt(prv, String($('#original_password').val())) === true) {
+    if (await PgpKey.decrypt(prv, String($('#original_pass_phrase').val())) === true) {
       this.primaryPrv = prv;
       this.displayBlock('step_1_enter_new');
     } else {
       await Ui.modal.error('Pass phrase did not match, please try again.');
-      $('#original_password').val('').focus();
+      $('#original_pass_phrase').val('').focus();
     }
   }
 
@@ -84,18 +83,18 @@ View.run(class ChangePassPhraseView extends View {
   }
 
   private actionUseAnotherPassPhraseHandler = () => {
-    $('#password').val('').keyup();
-    $('#password2').val('');
+    $('#new_pass_phrase').val('').keyup();
+    $('#new_pass_phrase_confirm').val('');
     this.displayBlock('step_1_enter_new');
-    $('#password').focus();
+    $('#new_pass_phrase').focus();
   }
 
   private actionDoChangePassPhraseHandler = async () => {
-    const newPp = String($('#password').val());
-    if (newPp !== $('#password2').val()) {
+    const newPp = String($('#new_pass_phrase').val());
+    if (newPp !== $('#new_pass_phrase_confirm').val()) {
       await Ui.modal.warning('The two pass phrases do not match, please try again.');
-      $('#password2').val('');
-      $('#password2').focus();
+      $('#new_pass_phrase_confirm').val('');
+      $('#new_pass_phrase_confirm').focus();
       return;
     }
     try {
