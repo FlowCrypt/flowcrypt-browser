@@ -50,4 +50,3 @@ if (typeof openpgp !== 'undefined') { // in certain environments, eg browser con
     return key.keyPacket.isDecrypted() === true;
   };
 }
-
