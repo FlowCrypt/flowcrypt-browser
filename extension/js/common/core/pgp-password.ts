@@ -43,7 +43,7 @@ export class PgpPwd {
   static estimateStrength = (zxcvbnResultGuesses: number, type: 'passphrase' | 'pwd' = 'passphrase'): PasswordStrengthResult => {
     const timeToCrack = zxcvbnResultGuesses / PgpPwd.CRACK_GUESSES_PER_SECOND;
     for (const word of type === 'pwd' ? PgpPwd.CRACK_TIME_WORDS_PWD : PgpPwd.CRACK_TIME_WORDS_PASS_PHRASE) {
-      const readableTime = Pgp.internal.readableCrackTime(timeToCrack);
+      const readableTime = PgpPwd.readableCrackTime(timeToCrack);
       if (readableTime.includes(word.match)) { // looks for a word match from readable_crack_time, defaults on "weak"
         return { word, seconds: Math.round(timeToCrack), time: readableTime };
       }
@@ -60,5 +60,47 @@ export class PgpPwd {
 
   static random = () => { // eg TDW6-DU5M-TANI-LJXY
     return base64encode(openpgp.util.Uint8Array_to_str(secureRandomBytes(128))).toUpperCase().replace(/[^A-Z0-9]|0|O|1/g, '').replace(/(.{4})/g, '$1-').substr(0, 19);
+  }
+
+  private static readableCrackTime = (totalSeconds: number) => { // http://stackoverflow.com/questions/8211744/convert-time-interval-given-in-seconds-into-more-human-readable-form
+    const numberWordEnding = (n: number) => (n > 1) ? 's' : '';
+    totalSeconds = Math.round(totalSeconds);
+    const millennia = Math.round(totalSeconds / (86400 * 30 * 12 * 100 * 1000));
+    if (millennia) {
+      return millennia === 1 ? 'a millennium' : 'millennia';
+    }
+    const centuries = Math.round(totalSeconds / (86400 * 30 * 12 * 100));
+    if (centuries) {
+      return centuries === 1 ? 'a century' : 'centuries';
+    }
+    const years = Math.round(totalSeconds / (86400 * 30 * 12));
+    if (years) {
+      return years + ' year' + numberWordEnding(years);
+    }
+    const months = Math.round(totalSeconds / (86400 * 30));
+    if (months) {
+      return months + ' month' + numberWordEnding(months);
+    }
+    const weeks = Math.round(totalSeconds / (86400 * 7));
+    if (weeks) {
+      return weeks + ' week' + numberWordEnding(weeks);
+    }
+    const days = Math.round(totalSeconds / 86400);
+    if (days) {
+      return days + ' day' + numberWordEnding(days);
+    }
+    const hours = Math.round(totalSeconds / 3600);
+    if (hours) {
+      return hours + ' hour' + numberWordEnding(hours);
+    }
+    const minutes = Math.round(totalSeconds / 60);
+    if (minutes) {
+      return minutes + ' minute' + numberWordEnding(minutes);
+    }
+    const seconds = totalSeconds % 60;
+    if (seconds) {
+      return seconds + ' second' + numberWordEnding(seconds);
+    }
+    return 'less than a second';
   }
 }

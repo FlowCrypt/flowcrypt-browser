@@ -67,19 +67,19 @@ export class Mime {
       if (blocksFromTextPart.find(b => b.type === 'encryptedMsg' || b.type === 'signedMsg' || b.type === 'publicKey' || b.type === 'privateKey')) {
         blocks.push(...blocksFromTextPart); // because the html most likely containt the same thing, just harder to parse pgp sections cause it's html
       } else if (decoded.html) { // if no pgp blocks found in text part and there is html part, prefer html
-        blocks.push(Pgp.internal.msgBlockObj('plainHtml', decoded.html));
+        blocks.push(PgpArmor.msgBlockObj('plainHtml', decoded.html));
       } else { // else if no html and just a plain text message, use that
         blocks.push(...blocksFromTextPart);
       }
     } else if (decoded.html) {
-      blocks.push(Pgp.internal.msgBlockObj('plainHtml', decoded.html));
+      blocks.push(PgpArmor.msgBlockObj('plainHtml', decoded.html));
     }
     for (const file of decoded.atts) {
       const treatAs = file.treatAs();
       if (treatAs === 'encryptedMsg') {
         const armored = PgpArmor.clip(file.getData().toUtfStr());
         if (armored) {
-          blocks.push(Pgp.internal.msgBlockObj('encryptedMsg', armored));
+          blocks.push(PgpArmor.msgBlockObj('encryptedMsg', armored));
         }
       } else if (treatAs === 'signature') {
         decoded.signature = decoded.signature || file.getData().toUtfStr();
