@@ -5,7 +5,7 @@
 import { Value, Str, Dict } from '../core/common.js';
 import { mnemonic } from '../core/mnemonic.js';
 import { KeyInfo, Contact } from '../core/pgp-key.js';
-import { SubscriptionInfo, PaymentMethod, ProductLevel, FcUuidAuth } from '../api/backend.js';
+import { SubscriptionInfo, PaymentMethod, FcUuidAuth, SubscriptionLevel } from '../api/backend.js';
 import { BrowserMsg, BgNotReadyErr } from '../browser/browser-msg.js';
 import { Catch, UnreportableError } from './catch.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chrome.js';
@@ -152,7 +152,7 @@ export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'ema
 export class Subscription implements SubscriptionInfo {
   active?: boolean;
   method?: PaymentMethod;
-  level?: ProductLevel;
+  level?: SubscriptionLevel;
   expire?: string;
   expired?: boolean;
 

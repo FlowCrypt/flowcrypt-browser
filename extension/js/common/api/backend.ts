@@ -16,16 +16,13 @@ import { BackendAuthErr } from './error/api-error-types.js';
 import { DomainRules } from '../rules.js';
 import { BACKEND_API_HOST } from '../core/const.js';
 
-type SubscriptionLevel = 'pro' | null;
 type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
 type FcAuthToken = { account: string, token: string };
 type FcMsgTokenAuth = { message_token_account: string, token: string };
 
+export type SubscriptionLevel = 'pro' | null;
 export type FcUuidAuth = { account: string, uuid: string | undefined };
 export type PaymentMethod = 'stripe' | 'group' | 'trial';
-export type ProductLevel = 'pro' | null;
-export type ProductName = 'null' | 'trial' | 'advancedMonthly';
-export type Product = { id: null | string, method: null | PaymentMethod, name: null | string, level: ProductLevel };
 export type SubscriptionInfo = { active?: boolean | null; method?: PaymentMethod | null; level?: SubscriptionLevel; expire?: string | null; expired?: boolean };
 export type AwsS3UploadItem = { baseUrl: string, fields: { key: string; file?: Att }, att: Att };
 
