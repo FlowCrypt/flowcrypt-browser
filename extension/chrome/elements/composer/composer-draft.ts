@@ -186,7 +186,7 @@ export class ComposerDraft extends ComposerComponent {
           this.composer.S.cached('input_subject').val(headers.subject);
         }
         this.composer.S.cached('prompt').css({ display: 'none' });
-        await this.composer.input.inputTextHtmlSetSafely(Xss.escape(result.content.toUtfStr()).replace(/\n/g, '<br>'));
+        this.composer.input.inputTextHtmlSetSafely(Xss.escape(result.content.toUtfStr()).replace(/\n/g, '<br>'));
         await this.composer.recipients.addRecipientsAndShowPreview({ to: headers.to, cc: headers.cc, bcc: headers.bcc });
         if (this.view.isReplyBox) {
           await this.composer.render.renderReplyMsgComposeTable();

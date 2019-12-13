@@ -10,36 +10,12 @@ import { Recipients } from '../../../js/common/api/email_provider/email_provider
 export class ComposerInput extends ComposerComponent {
 
   initActions = () => {
-    this.composer.S.cached('add_intro').click(this.view.setHandler(target => {
-      $(target).css('display', 'none');
-      this.composer.S.cached('intro_container').css('display', 'table-row');
-      this.composer.S.cached('input_intro').focus();
-      this.composer.size.setInputTextHeightManuallyIfNeeded();
-    }, this.composer.errs.handlers(`add intro`)));
-    this.composer.S.cached('input_text').get(0).onpaste = this.composer.input.inputTextPasteHtmlAsText;
+    this.composer.S.cached('add_intro').click(this.view.setHandler(el => this.actionAddIntroHandler(el), this.composer.errs.handlers(`add intro`)));
+    this.composer.S.cached('input_text').get(0).onpaste = (clipEv) => this.composer.input.textPastedIntoBodyHandler(clipEv);
   }
 
-  public inputTextHtmlSetSafely = async (html: string) => {
-    Xss.sanitizeRender(this.composer.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(html));
-  }
-
-  public inputTextPasteHtmlAsText = (clipboardEvent: ClipboardEvent) => {
-    if (!clipboardEvent.clipboardData) {
-      return;
-    }
-    const clipboardHtmlData = clipboardEvent.clipboardData.getData('text/html');
-    if (!clipboardHtmlData) {
-      return; // if it's text, let the original handlers paste it
-    }
-    clipboardEvent.preventDefault();
-    clipboardEvent.stopPropagation();
-    const sanitized = Xss.htmlSanitizeAndStripAllTags(clipboardHtmlData, '<br>');
-    // the lines below simulate ctrl+v, but not perfectly (old selected text does not get deleted)
-    const selection = window.getSelection();
-    if (selection) {
-      const r = selection.getRangeAt(0);
-      r.insertNode(r.createContextualFragment(sanitized));
-    }
+  public inputTextHtmlSetSafely = (html: string) => {
+    Xss.sanitizeRender(this.composer.S.cached('input_text'), Xss.htmlSanitizeKeepBasicTags(html));
   }
 
   public extract = (type: 'text' | 'html', elSel: 'input_text' | 'input_intro', flag?: 'SKIP-ADDONS') => {
@@ -63,6 +39,34 @@ export class ComposerInput extends ComposerComponent {
     const pwd = password ? { answer: String(password) } : undefined;
     const sender = this.composer.sender.getSender();
     return { recipients, subject, plaintext, plainhtml, pwd, sender };
+  }
+
+  // -- private
+
+  private textPastedIntoBodyHandler = (clipboardEvent: ClipboardEvent) => {
+    if (!clipboardEvent.clipboardData) {
+      return;
+    }
+    const clipboardHtmlData = clipboardEvent.clipboardData.getData('text/html');
+    if (!clipboardHtmlData) {
+      return; // if it's text, let the original handlers paste it
+    }
+    clipboardEvent.preventDefault();
+    clipboardEvent.stopPropagation();
+    const sanitized = Xss.htmlSanitizeAndStripAllTags(clipboardHtmlData, '<br>');
+    // the lines below simulate ctrl+v, but not perfectly (old selected text does not get deleted)
+    const selection = window.getSelection();
+    if (selection) {
+      const r = selection.getRangeAt(0);
+      r.insertNode(r.createContextualFragment(sanitized));
+    }
+  }
+
+  private actionAddIntroHandler = (addIntroBtn: HTMLElement) => {
+    $(addIntroBtn).css('display', 'none');
+    this.composer.S.cached('intro_container').css('display', 'table-row');
+    this.composer.S.cached('input_intro').focus();
+    this.composer.size.setInputTextHeightManuallyIfNeeded();
   }
 
   private mapRecipients = (recipients: RecipientElement[]) => {

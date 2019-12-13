@@ -141,7 +141,7 @@ export class ComposerRender extends ComposerComponent {
   }
 
   private renderReplyMsgAsReplyPubkeyMismatch = async () => {
-    await this.composer.input.inputTextHtmlSetSafely(`Hello,
+    this.composer.input.inputTextHtmlSetSafely(`Hello,
       <br><br>I was not able to read your encrypted message because it was encrypted for a wrong key.
       <br><br>My current public key is attached below. Please update your records and send me a new encrypted message.
       <br><br>Thank you</div>`);
