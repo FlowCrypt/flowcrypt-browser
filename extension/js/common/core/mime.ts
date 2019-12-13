@@ -3,7 +3,7 @@
 'use strict';
 
 import { Str, Dict } from './common.js';
-import { Pgp, DecryptError, VerifyRes } from './pgp-msg.js';
+import { DecryptError, VerifyRes } from './pgp-msg.js';
 import { Att, AttMeta } from './att.js';
 import { Catch } from '../platform/catch.js';
 import { requireMimeParser, requireMimeBuilder, requireIso88592 } from '../platform/require.js';
@@ -11,6 +11,7 @@ import { Buf } from './buf.js';
 import { MimeParserNode } from './types/emailjs';
 import { PgpArmor } from './pgp-armor.js';
 import { KeyDetails } from './pgp-key.js';
+import { Pgp } from './pgp.js';
 
 const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
 const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name
