@@ -11,7 +11,8 @@ import { PgpHash } from './pgp-hash.js';
 import { PgpArmor } from './pgp-armor.js';
 import { PgpKey, PrvKeyInfo, KeyInfo, Contact } from './pgp-key.js';
 import { openpgp } from './pgp.js';
-import { MsgBlockParser, MsgBlockType, MsgBlock } from './msg-block.js';
+import { MsgBlockType, MsgBlock } from './msg-block.js';
+import { MsgBlockParser } from './msg-block-parser.js';
 
 export namespace PgpMsgMethod {
   export namespace Arg {

@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import * as ava from 'ava';
 import { TestVariant } from '../../util';
 import { PgpHash } from '../../core/pgp-hash';
-import { MsgBlockParser } from '../../core/msg-block';
+import { MsgBlockParser } from '../../core/msg-block-parser';
 
 // tslint:disable:no-blank-lines-func
 /* eslint-disable max-len */

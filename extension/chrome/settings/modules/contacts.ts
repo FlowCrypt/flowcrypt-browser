@@ -21,7 +21,7 @@ import { FetchKeyUI } from '../../../js/common/ui/fetch_key_ui.js';
 import { View } from '../../../js/common/view.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { PgpKey, Contact } from '../../../js/common/core/pgp-key.js';
-import { MsgBlockParser } from '../../../js/common/core/msg-block.js';
+import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 
 View.run(class ContactsView extends View {
 

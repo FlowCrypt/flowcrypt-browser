@@ -13,7 +13,8 @@ import { SendAsAlias } from './platform/store.js';
 import { Ui } from './browser/ui.js';
 import { WebMailName } from './browser/env.js';
 import { PgpArmor } from './core/pgp-armor.js';
-import { MsgBlock, MsgBlockParser } from './core/msg-block.js';
+import { MsgBlock } from './core/msg-block.js';
+import { MsgBlockParser } from './core/msg-block-parser.js';
 
 type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';

@@ -8,8 +8,9 @@ import { requireMimeParser, requireMimeBuilder, requireIso88592 } from '../platf
 import { Buf } from './buf.js';
 import { MimeParserNode } from './types/emailjs';
 import { PgpArmor } from './pgp-armor.js';
-import { MsgBlock, MsgBlockParser } from './msg-block.js';
+import { MsgBlock } from './msg-block.js';
 import { Att } from './att.js';
+import { MsgBlockParser } from './msg-block-parser.js';
 
 const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
 const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name

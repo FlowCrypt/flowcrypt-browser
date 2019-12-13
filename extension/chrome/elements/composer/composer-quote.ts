@@ -15,7 +15,8 @@ import { FormatError, PgpMsg } from '../../../js/common/core/pgp-msg.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
-import { MsgBlock, MsgBlockParser } from '../../../js/common/core/msg-block.js';
+import { MsgBlock } from '../../../js/common/core/msg-block.js';
+import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 
 export class ComposerQuote extends ComposerComponent {
   public messageToReplyOrForward: MessageToReplyOrForward | undefined;

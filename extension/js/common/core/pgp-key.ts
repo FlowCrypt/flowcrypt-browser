@@ -8,7 +8,7 @@ import { PgpArmor } from './pgp-armor.js';
 import { Buf } from './buf.js';
 import { Catch } from '../platform/catch.js';
 import { mnemonic } from './mnemonic.js';
-import { MsgBlockParser } from './msg-block.js';
+import { MsgBlockParser } from './msg-block-parser.js';
 
 export type Contact = {
   email: string;

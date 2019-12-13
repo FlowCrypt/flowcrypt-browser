@@ -14,7 +14,8 @@ import { PgpArmor } from '../core/pgp-armor.js';
 import { PgpPwd } from '../core/pgp-password.js';
 import { PgpKey } from '../core/pgp-key.js';
 import { openpgp } from '../core/pgp.js';
-import { MsgBlockParser, KeyBlockType } from '../core/msg-block.js';
+import { KeyBlockType } from '../core/msg-block.js';
+import { MsgBlockParser } from '../core/msg-block-parser.js';
 
 type KeyImportUiCheckResult = {
   normalized: string; longid: string; passphrase: string; fingerprint: string; decrypted: OpenPGP.key.Key;
