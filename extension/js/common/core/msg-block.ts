@@ -14,7 +14,7 @@ export type MsgBlockType = ReplaceableMsgBlockType | 'plainText' | 'decryptedTex
 
 export class MsgBlock {
 
-  private constructor(
+  constructor(
     public type: MsgBlockType,
     public content: string | Buf,
     public complete: boolean,

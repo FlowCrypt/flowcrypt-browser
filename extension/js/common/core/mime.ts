@@ -92,7 +92,7 @@ export class Mime {
         }
       }
       if (!blocks.find(block => block.type === 'plainText' || block.type === 'plainHtml' || block.type === 'signedMsg' || block.type === 'signedHtml')) { // signed an empty message
-        blocks.push({ type: "signedMsg", "content": "", signature: decoded.signature, complete: true });
+        blocks.push(new MsgBlock("signedMsg", "", true, decoded.signature));
       }
     }
     return { headers: decoded.headers, blocks, from: decoded.from, to: decoded.to, rawSignedContent: decoded.rawSignedContent };
