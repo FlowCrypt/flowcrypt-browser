@@ -22,7 +22,6 @@ import { Settings } from '../../../../js/common/settings.js';
 import { PgpArmor } from '../../../../js/common/core/pgp-armor.js';
 import { ApiErr } from '../../../../js/common/api/error/api-error.js';
 import { PgpKey } from '../../../../js/common/core/pgp-key.js';
-import { Pwd } from '../../../../js/common/core/pgp-password.js';
 import { openpgp } from '../../../../js/common/core/pgp.js';
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
@@ -74,7 +73,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     }
   }
 
-  private encryptData = async (data: Buf, pwd: Pwd | undefined, pubkeys: string[], signingPrv?: OpenPGP.key.Key): Promise<OpenPGP.EncryptArmorResult> => {
+  private encryptData = async (data: Buf, pwd: string | undefined, pubkeys: string[], signingPrv?: OpenPGP.key.Key): Promise<OpenPGP.EncryptArmorResult> => {
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(this.armoredPubkeys);
     return await PgpMsg.encrypt({ pubkeys, signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
   }

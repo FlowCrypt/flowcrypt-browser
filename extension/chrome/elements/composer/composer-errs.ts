@@ -7,7 +7,6 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
 import { Str } from '../../../js/common/core/common.js';
 import { SendBtnTexts } from './composer-types.js';
-import { Pwd } from '../../../js/common/core/pgp-password.js';
 import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { BrowserEventErrHandler, Ui } from '../../../js/common/browser/ui.js';
@@ -129,20 +128,20 @@ export class ComposerErrs extends ComposerComponent {
     }
   }
 
-  public throwIfEncryptionPasswordInvalid = async (senderKi: KeyInfo, { subject, pwd }: { subject: string, pwd?: Pwd }) => {
-    if (pwd?.answer) {
+  public throwIfEncryptionPasswordInvalid = async (senderKi: KeyInfo, { subject, pwd }: { subject: string, pwd?: string }) => {
+    if (pwd) {
       const pp = await this.composer.storage.passphraseGet(senderKi);
-      if (pp && pwd.answer.toLowerCase() === pp.toLowerCase()) {
+      if (pp && pwd.toLowerCase() === pp.toLowerCase()) {
         throw new ComposerUserError('Please do not use your private key pass phrase as a password for this message.\n\n' +
           'You should come up with some other unique password that you can share with recipient.');
       }
-      if (subject.toLowerCase().includes(pwd.answer.toLowerCase())) {
+      if (subject.toLowerCase().includes(pwd.toLowerCase())) {
         throw new ComposerUserError(`Please do not include the password in the email subject. ` +
           `Sharing password over email undermines password based encryption.\n\n` +
           `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`);
       }
       const intro = this.composer.S.cached('input_intro').length ? this.composer.input.extract('text', 'input_intro') : '';
-      if (intro.toLowerCase().includes(pwd.answer.toLowerCase())) {
+      if (intro.toLowerCase().includes(pwd.toLowerCase())) {
         throw new ComposerUserError('Please do not include the password in the email intro. ' +
           `Sharing password over email undermines password based encryption.\n\n` +
           `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`);

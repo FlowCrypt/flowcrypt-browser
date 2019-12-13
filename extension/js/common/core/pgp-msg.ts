@@ -13,11 +13,10 @@ import { PgpHash } from './pgp-hash.js';
 import { PgpArmor } from './pgp-armor.js';
 import { PgpKey, PrvKeyInfo, KeyInfo, Contact } from './pgp-key.js';
 import { openpgp, Pgp } from './pgp.js';
-import { Pwd } from './pgp-password.js';
 
 export namespace PgpMsgMethod {
   export namespace Arg {
-    export type Encrypt = { pubkeys: string[], signingPrv?: OpenPGP.key.Key, pwd?: Pwd, data: Uint8Array, filename?: string, armor: boolean, date?: Date };
+    export type Encrypt = { pubkeys: string[], signingPrv?: OpenPGP.key.Key, pwd?: string, data: Uint8Array, filename?: string, armor: boolean, date?: Date };
     export type Type = { data: Uint8Array };
     export type Decrypt = { kisWithPp: PrvKeyInfo[], encryptedData: Uint8Array, msgPwd?: string };
     export type DiagnosePubkeys = { privateKis: KeyInfo[], message: Uint8Array };
@@ -216,8 +215,8 @@ export class PgpMsg {
         options.publicKeys.push(...publicKeys);
       }
     }
-    if (pwd?.answer) {
-      options.passwords = [await PgpHash.challengeAnswer(pwd.answer)];
+    if (pwd) {
+      options.passwords = [await PgpHash.challengeAnswer(pwd)];
       usedChallenge = true;
     }
     if (!pubkeys && !usedChallenge) {

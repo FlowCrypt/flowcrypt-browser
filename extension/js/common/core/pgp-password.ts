@@ -5,8 +5,6 @@
 import { openpgp } from './pgp.js';
 import { base64encode, secureRandomBytes } from '../platform/util.js';
 
-export type Pwd = { question?: string; answer: string; };
-
 interface PwdStrengthResult {
   word: {
     match: string;
