@@ -3,15 +3,13 @@
 'use strict';
 
 import { Str, Dict } from './common.js';
-import { DecryptError, VerifyRes } from './pgp-msg.js';
-import { Att, AttMeta } from './att.js';
 import { Catch } from '../platform/catch.js';
 import { requireMimeParser, requireMimeBuilder, requireIso88592 } from '../platform/require.js';
 import { Buf } from './buf.js';
 import { MimeParserNode } from './types/emailjs';
 import { PgpArmor } from './pgp-armor.js';
-import { KeyDetails } from './pgp-key.js';
-import { Pgp } from './pgp.js';
+import { MsgBlock, MsgBlockParser, MsgBlockFactory } from './msg-block.js';
+import { Att } from './att.js';
 
 const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
 const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name
@@ -35,20 +33,6 @@ export type MimeContent = {
 
 export type RichHeaders = Dict<string | string[]>;
 export type SendableMsgBody = { [key: string]: string | undefined; 'text/plain'?: string; 'text/html'?: string; };
-export type KeyBlockType = 'publicKey' | 'privateKey';
-export type ReplaceableMsgBlockType = KeyBlockType | 'signedMsg' | 'encryptedMsg' | 'encryptedMsgLink';
-export type MsgBlockType = ReplaceableMsgBlockType | 'plainText' | 'decryptedText' | 'plainHtml' | 'decryptedHtml' | 'plainAtt' | 'encryptedAtt'
-  | 'decryptedAtt' | 'encryptedAttLink' | 'decryptErr' | 'verifiedMsg' | 'signedHtml';
-export type MsgBlock = {
-  type: MsgBlockType;
-  content: string | Buf;
-  complete: boolean;
-  signature?: string;
-  keyDetails?: KeyDetails; // only in publicKey when returned to Android (could eventually be made mandatory, done straight in detectBlocks?)
-  attMeta?: AttMeta; // only in plainAtt, encryptedAtt, decryptedAtt, encryptedAttLink (not sure if always)
-  decryptErr?: DecryptError; // only in decryptErr block, always
-  verifyRes?: VerifyRes,
-};
 export type MimeProccesedMsg = {
   rawSignedContent: string | undefined,
   headers: Dict<MimeContentHeader>,
@@ -63,35 +47,35 @@ export class Mime {
   public static processDecoded = (decoded: MimeContent): MimeProccesedMsg => {
     const blocks: MsgBlock[] = [];
     if (decoded.text) {
-      const blocksFromTextPart = PgpArmor.detectBlocks(Str.normalize(decoded.text)).blocks;
+      const blocksFromTextPart = MsgBlockParser.detectBlocks(Str.normalize(decoded.text)).blocks;
       // if there are some encryption-related blocks found in the text section, which we can use, and not look at the html section
       if (blocksFromTextPart.find(b => b.type === 'encryptedMsg' || b.type === 'signedMsg' || b.type === 'publicKey' || b.type === 'privateKey')) {
         blocks.push(...blocksFromTextPart); // because the html most likely containt the same thing, just harder to parse pgp sections cause it's html
       } else if (decoded.html) { // if no pgp blocks found in text part and there is html part, prefer html
-        blocks.push(PgpArmor.msgBlockObj('plainHtml', decoded.html));
+        blocks.push(MsgBlockFactory.msgBlockObj('plainHtml', decoded.html));
       } else { // else if no html and just a plain text message, use that
         blocks.push(...blocksFromTextPart);
       }
     } else if (decoded.html) {
-      blocks.push(PgpArmor.msgBlockObj('plainHtml', decoded.html));
+      blocks.push(MsgBlockFactory.msgBlockObj('plainHtml', decoded.html));
     }
     for (const file of decoded.atts) {
       const treatAs = file.treatAs();
       if (treatAs === 'encryptedMsg') {
         const armored = PgpArmor.clip(file.getData().toUtfStr());
         if (armored) {
-          blocks.push(PgpArmor.msgBlockObj('encryptedMsg', armored));
+          blocks.push(MsgBlockFactory.msgBlockObj('encryptedMsg', armored));
         }
       } else if (treatAs === 'signature') {
         decoded.signature = decoded.signature || file.getData().toUtfStr();
       } else if (treatAs === 'publicKey') {
-        blocks.push(...PgpArmor.detectBlocks(file.getData().toUtfStr()).blocks);
+        blocks.push(...MsgBlockParser.detectBlocks(file.getData().toUtfStr()).blocks);
       } else if (treatAs === 'privateKey') {
-        blocks.push(...PgpArmor.detectBlocks(file.getData().toUtfStr()).blocks);
+        blocks.push(...MsgBlockParser.detectBlocks(file.getData().toUtfStr()).blocks);
       } else if (treatAs === 'encryptedFile') {
-        blocks.push(Pgp.internal.msgBlockAttObj('encryptedAtt', '', { name: file.name, type: file.type, length: file.getData().length, data: file.getData() }));
+        blocks.push(MsgBlockFactory.msgBlockAttObj('encryptedAtt', '', { name: file.name, type: file.type, length: file.getData().length, data: file.getData() }));
       } else if (treatAs === 'plainFile') {
-        blocks.push(Pgp.internal.msgBlockAttObj('plainAtt', '', {
+        blocks.push(MsgBlockFactory.msgBlockAttObj('plainAtt', '', {
           name: file.name, type: file.type, length: file.getData().length, data: file.getData(), inline: file.inline, cid: file.cid
         }));
       }

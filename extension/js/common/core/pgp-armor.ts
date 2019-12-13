@@ -2,11 +2,10 @@
 
 'use strict';
 
-import { ReplaceableMsgBlockType, MsgBlock, MsgBlockType } from './mime.js';
 import { Str } from './common.js';
 import { openpgp } from './pgp.js';
-import { Catch } from '../platform/catch.js';
 import { Buf } from './buf.js';
+import { ReplaceableMsgBlockType } from './msg-block.js';
 
 export type PreparedForDecrypt = { isArmored: boolean, isCleartext: true, message: OpenPGP.cleartext.CleartextMessage }
   | { isArmored: boolean, isCleartext: false, message: OpenPGP.message.Message };
@@ -15,8 +14,8 @@ type CryptoArmorHeaderDefinitions = { readonly [type in ReplaceableMsgBlockType 
 type CryptoArmorHeaderDefinition = { begin: string, middle?: string, end: string | RegExp, replace: boolean };
 
 export class PgpArmor {
-  private static ARMOR_HEADER_MAX_LENGTH = 50;
-  private static ARMOR_HEADER_DICT: CryptoArmorHeaderDefinitions = { // general passwordMsg begin: /^[^\n]+: (Open Message|Nachricht öffnen)/
+
+  public static ARMOR_HEADER_DICT: CryptoArmorHeaderDefinitions = { // general passwordMsg begin: /^[^\n]+: (Open Message|Nachricht öffnen)/
     null: { begin: '-----BEGIN', end: '-----END', replace: false },
     publicKey: { begin: '-----BEGIN PGP PUBLIC KEY BLOCK-----', end: '-----END PGP PUBLIC KEY BLOCK-----', replace: true },
     privateKey: { begin: '-----BEGIN PGP PRIVATE KEY BLOCK-----', end: '-----END PGP PRIVATE KEY BLOCK-----', replace: true },
@@ -25,6 +24,7 @@ export class PgpArmor {
     encryptedMsg: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----', replace: true },
     encryptedMsgLink: { begin: 'This message is encrypted: Open Message', end: /https:(\/|&#x2F;){2}(cryptup\.org|flowcrypt\.com)(\/|&#x2F;)[a-zA-Z0-9]{10}(\n|$)/, replace: true },
   };
+
   static clip = (text: string): string | undefined => {
     if (text?.includes(PgpArmor.ARMOR_HEADER_DICT.null.begin) && text.includes(String(PgpArmor.ARMOR_HEADER_DICT.null.end))) {
       const match = text.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+-----END PGP (MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----)/gm);
@@ -40,27 +40,6 @@ export class PgpArmor {
       end: (typeof h.end === 'string' && format === 're') ? h.end.replace(/ /g, '\\s') : h.end,
       replace: h.replace,
     };
-  }
-
-  static detectBlocks = (origText: string) => {
-    const blocks: MsgBlock[] = [];
-    const normalized = Str.normalize(origText);
-    let startAt = 0;
-    while (true) { // eslint-disable-line no-constant-condition
-      const r = PgpArmor.detectBlockNext(normalized, startAt);
-      if (r.found) {
-        blocks.push(...r.found);
-      }
-      if (typeof r.continueAt === 'undefined') {
-        return { blocks, normalized };
-      } else {
-        if (r.continueAt <= startAt) {
-          Catch.report(`PgpArmordetect_blocks likely infinite loop: r.continue_at(${r.continueAt}) <= start_at(${startAt})`);
-          return { blocks, normalized }; // prevent infinite loop
-        }
-        startAt = r.continueAt;
-      }
-    }
   }
 
   static normalize = (armored: string, type: ReplaceableMsgBlockType | 'key') => {
@@ -95,66 +74,6 @@ export class PgpArmor {
     return armored;
   }
 
-  private static detectBlockNext = (origText: string, startAt: number) => {
-    const result: { found: MsgBlock[], continueAt?: number } = { found: [] as MsgBlock[] };
-    const begin = origText.indexOf(PgpArmor.headers('null').begin, startAt);
-    if (begin !== -1) { // found
-      const potentialBeginHeader = origText.substr(begin, PgpArmor.ARMOR_HEADER_MAX_LENGTH);
-      for (const xType of Object.keys(PgpArmor.ARMOR_HEADER_DICT)) {
-        const type = xType as ReplaceableMsgBlockType;
-        const blockHeaderDef = PgpArmor.ARMOR_HEADER_DICT[type];
-        if (blockHeaderDef.replace) {
-          const indexOfConfirmedBegin = potentialBeginHeader.indexOf(blockHeaderDef.begin);
-          if (indexOfConfirmedBegin === 0 || (type === 'encryptedMsgLink' && indexOfConfirmedBegin >= 0 && indexOfConfirmedBegin < 15)) { // identified beginning of a specific block
-            if (begin > startAt) {
-              const potentialTextBeforeBlockBegun = origText.substring(startAt, begin).trim();
-              if (potentialTextBeforeBlockBegun) {
-                result.found.push(PgpArmor.msgBlockObj('plainText', potentialTextBeforeBlockBegun));
-              }
-            }
-            let endIndex: number = -1;
-            let foundBlockEndHeaderLength = 0;
-            if (typeof blockHeaderDef.end === 'string') {
-              endIndex = origText.indexOf(blockHeaderDef.end, begin + blockHeaderDef.begin.length);
-              foundBlockEndHeaderLength = blockHeaderDef.end.length;
-            } else { // regexp
-              const origTextAfterBeginIndex = origText.substring(begin);
-              const matchEnd = origTextAfterBeginIndex.match(blockHeaderDef.end);
-              if (matchEnd) {
-                endIndex = matchEnd.index ? begin + matchEnd.index : -1;
-                foundBlockEndHeaderLength = matchEnd[0].length;
-              }
-            }
-            if (endIndex !== -1) { // identified end of the same block
-              if (type !== 'encryptedMsgLink') {
-                result.found.push(PgpArmor.msgBlockObj(type, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
-              } else {
-                const pwdMsgFullText = origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim();
-                const pwdMsgShortIdMatch = pwdMsgFullText.match(/[a-zA-Z0-9]{10}$/);
-                if (pwdMsgShortIdMatch) {
-                  result.found.push(PgpArmor.msgBlockObj(type, pwdMsgShortIdMatch[0]));
-                } else {
-                  result.found.push(PgpArmor.msgBlockObj('plainText', pwdMsgFullText));
-                }
-              }
-              result.continueAt = endIndex + foundBlockEndHeaderLength;
-            } else { // corresponding end not found
-              result.found.push(PgpArmor.msgBlockObj(type, origText.substr(begin), true));
-            }
-            break;
-          }
-        }
-      }
-    }
-    if (origText && !result.found.length) { // didn't find any blocks, but input is non-empty
-      const potentialText = origText.substr(startAt).trim();
-      if (potentialText) {
-        result.found.push(PgpArmor.msgBlockObj('plainText', potentialText));
-      }
-    }
-    return result;
-  }
-
   static cryptoMsgPrepareForDecrypt = async (encrypted: Uint8Array): Promise<PreparedForDecrypt> => {
     if (!encrypted.length) {
       throw new Error('Encrypted message could not be parsed because no data was provided');
@@ -173,7 +92,4 @@ export class PgpArmor {
     throw new Error('Message does not have armor headers');
   }
 
-  static msgBlockObj = (type: MsgBlockType, content: string | Buf, missingEnd = false): MsgBlock => {
-    return { type, content, complete: !missingEnd };
-  }
 }

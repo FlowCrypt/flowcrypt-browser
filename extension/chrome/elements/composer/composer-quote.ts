@@ -9,12 +9,13 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { ProgressCb } from '../../../js/common/api/api.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Mime, MsgBlock } from '../../../js/common/core/mime.js';
+import { Mime } from '../../../js/common/core/mime.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { FormatError, PgpMsg } from '../../../js/common/core/pgp-msg.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { MsgBlock, MsgBlockParser } from '../../../js/common/core/msg-block.js';
 
 export class ComposerQuote extends ComposerComponent {
   public messageToReplyOrForward: MessageToReplyOrForward | undefined;
@@ -144,7 +145,7 @@ export class ComposerQuote extends ComposerComponent {
         if (['encryptedMsg', 'signedMsg'].includes(block.type)) {
           const stringContent = block.content.toString();
           const decrypted = await this.decryptMessage(Buf.fromUtfStr(stringContent));
-          const msgBlocks = await PgpMsg.fmtDecryptedAsSanitizedHtmlBlocks(Buf.fromUtfStr(decrypted));
+          const msgBlocks = await MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks(Buf.fromUtfStr(decrypted));
           readableBlocks.push(...msgBlocks.blocks.filter(b => decryptedBlockTypes.includes(b.type)));
         } else {
           readableBlocks.push(block);

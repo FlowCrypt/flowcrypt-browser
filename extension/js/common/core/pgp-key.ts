@@ -8,6 +8,7 @@ import { PgpArmor } from './pgp-armor.js';
 import { Buf } from './buf.js';
 import { Catch } from '../platform/catch.js';
 import { mnemonic } from './mnemonic.js';
+import { MsgBlockParser } from './msg-block.js';
 
 export type Contact = {
   email: string;
@@ -101,7 +102,7 @@ export class PgpKey {
   static readMany = async (fileData: Buf): Promise<{ keys: OpenPGP.key.Key[], errs: Error[] }> => {
     const allKeys: OpenPGP.key.Key[] = [];
     const allErrs: Error[] = [];
-    const { blocks } = PgpArmor.detectBlocks(fileData.toUtfStr());
+    const { blocks } = MsgBlockParser.detectBlocks(fileData.toUtfStr());
     const armoredPublicKeyBlocks = blocks.filter(block => block.type === 'publicKey' || block.type === 'privateKey');
     const pushKeysAndErrs = async (content: string | Buf, type: 'readArmored' | 'read') => {
       try {

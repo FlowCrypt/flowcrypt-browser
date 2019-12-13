@@ -4,9 +4,7 @@
 
 import { requireOpenpgp } from '../platform/require.js';
 import { VERSION } from './const.js';
-import { PgpKey, PrvPacket, KeyDetails } from './pgp-key.js';
-import { MsgBlockType, MsgBlock } from './mime.js';
-import { AttMeta } from './att.js';
+import { PgpKey, PrvPacket } from './pgp-key.js';
 
 export const openpgp = requireOpenpgp();
 
@@ -53,33 +51,3 @@ if (typeof openpgp !== 'undefined') { // in certain environments, eg browser con
   };
 }
 
-export class Pgp {
-
-  static readonly FRIENDLY_BLOCK_TYPE_NAMES: { [type in MsgBlockType]: string } = { // todo - remove this, almost useless
-    privateKey: 'Private Key',
-    publicKey: 'Public Key',
-    decryptErr: 'Decrypt Error',
-    decryptedAtt: 'Decrypted Attachment',
-    decryptedHtml: 'Decrypted HTML',
-    decryptedText: 'Decrypted Text',
-    encryptedAtt: 'Encrypted Attachment',
-    encryptedAttLink: 'Encrypted Attachment Link',
-    encryptedMsg: 'Encrypted Message',
-    encryptedMsgLink: 'Encrypted Message Link',
-    plainAtt: 'Plain Attachment',
-    plainHtml: 'Plain HTML',
-    plainText: 'Plain Text',
-    signedHtml: 'Signed HTML',
-    signedMsg: 'Signed Message',
-    verifiedMsg: 'Verified Message'
-  };
-  public static friendlyMsgBlockTypeName = (type: MsgBlockType) => { // todo - remove this, just use the block type string
-    return Pgp.FRIENDLY_BLOCK_TYPE_NAMES[type];
-  }
-
-  public static internal = {
-    msgBlockAttObj: (type: MsgBlockType, content: string, attMeta: AttMeta): MsgBlock => ({ type, content, complete: true, attMeta }),
-    msgBlockKeyObj: (type: MsgBlockType, content: string, keyDetails: KeyDetails): MsgBlock => ({ type, content, complete: true, keyDetails }),
-  };
-
-}

@@ -5,14 +5,13 @@
 import { Catch } from '../platform/catch.js';
 import { Store } from '../platform/store.js';
 import { Str, Value } from './common.js';
-import { MsgBlock, MsgBlockType, Mime } from './mime.js';
 import { FcAttLinkData } from './att.js';
 import { Buf } from './buf.js';
-import { Xss } from '../platform/xss.js';
 import { PgpHash } from './pgp-hash.js';
 import { PgpArmor } from './pgp-armor.js';
 import { PgpKey, PrvKeyInfo, KeyInfo, Contact } from './pgp-key.js';
-import { openpgp, Pgp } from './pgp.js';
+import { openpgp } from './pgp.js';
+import { MsgBlockParser, MsgBlockFactory, MsgBlockType, MsgBlock } from './msg-block.js';
 
 export namespace PgpMsgMethod {
   export namespace Arg {
@@ -99,7 +98,7 @@ export class PgpMsg {
         return { armored: false, type: msgTpes.includes(tagNumber) ? 'encryptedMsg' : 'publicKey' };
       }
     }
-    const { blocks } = PgpArmor.detectBlocks(new Buf(data.slice(0, 50)).toUtfStr().trim()); // only interested in first 50 bytes
+    const { blocks } = MsgBlockParser.detectBlocks(new Buf(data.slice(0, 50)).toUtfStr().trim()); // only interested in first 50 bytes
     if (blocks.length === 1 && blocks[0].complete === false && ['encryptedMsg', 'privateKey', 'publicKey', 'signedMsg'].includes(blocks[0].type)) {
       return { armored: true, type: blocks[0].type };
     }
@@ -247,39 +246,6 @@ export class PgpMsg {
     return diagnosis;
   }
 
-  /**
-   * textBlockType - choose if textual block should be returned as escaped html (for direct browser rendering) or text (other platforms)
-   */
-  static fmtDecryptedAsSanitizedHtmlBlocks = async (decryptedContent: Uint8Array): Promise<{ blocks: MsgBlock[], subject: string | undefined }> => {
-    const blocks: MsgBlock[] = [];
-    if (!Mime.resemblesMsg(decryptedContent)) {
-      let utf = Buf.fromUint8(decryptedContent).toUtfStr();
-      utf = PgpMsg.extractFcAtts(utf, blocks);
-      utf = PgpMsg.stripFcTeplyToken(utf);
-      const armoredPubKeys: string[] = [];
-      utf = PgpMsg.stripPublicKeys(utf, armoredPubKeys);
-      blocks.push(PgpArmor.msgBlockObj('decryptedHtml', Str.asEscapedHtml(utf))); // escaped text as html
-      await PgpMsg.pushArmoredPubkeysToBlocks(armoredPubKeys, blocks);
-      return { blocks, subject: undefined };
-    }
-    const decoded = await Mime.decode(decryptedContent);
-    if (typeof decoded.html !== 'undefined') {
-      blocks.push(PgpArmor.msgBlockObj('decryptedHtml', Xss.htmlSanitizeKeepBasicTags(decoded.html))); // sanitized html
-    } else if (typeof decoded.text !== 'undefined') {
-      blocks.push(PgpArmor.msgBlockObj('decryptedHtml', Str.asEscapedHtml(decoded.text))); // escaped text as html
-    } else {
-      blocks.push(PgpArmor.msgBlockObj('decryptedHtml', Str.asEscapedHtml(Buf.with(decryptedContent).toUtfStr()))); // escaped mime text as html
-    }
-    for (const att of decoded.atts) {
-      if (att.treatAs() === 'publicKey') {
-        await PgpMsg.pushArmoredPubkeysToBlocks([att.getData().toUtfStr()], blocks);
-      } else {
-        blocks.push(Pgp.internal.msgBlockAttObj('decryptedAtt', '', { name: att.name, data: att.getData(), length: att.length, type: att.type }));
-      }
-    }
-    return { blocks, subject: decoded.subject };
-  }
-
   public static extractFcAtts = (decryptedContent: string, blocks: MsgBlock[]) => {
     // these tags were created by FlowCrypt exclusively, so the structure is fairly rigid
     // `<a href="${att.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`
@@ -288,7 +254,7 @@ export class PgpMsg {
       decryptedContent = decryptedContent.replace(/<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm, (_, url, fcData) => {
         const a = Str.htmlAttrDecode(String(fcData));
         if (PgpMsg.isFcAttLinkData(a)) {
-          blocks.push(Pgp.internal.msgBlockAttObj('encryptedAttLink', '', { type: a.type, name: a.name, length: a.size, url: String(url) }));
+          blocks.push(MsgBlockFactory.msgBlockAttObj('encryptedAttLink', '', { type: a.type, name: a.name, length: a.size, url: String(url) }));
         }
         return '';
       });
@@ -297,7 +263,7 @@ export class PgpMsg {
   }
 
   public static stripPublicKeys = (decryptedContent: string, foundPublicKeys: string[]) => {
-    let { blocks, normalized } = PgpArmor.detectBlocks(decryptedContent); // tslint:disable-line:prefer-const
+    let { blocks, normalized } = MsgBlockParser.detectBlocks(decryptedContent); // tslint:disable-line:prefer-const
     for (const block of blocks) {
       if (block.type === 'publicKey') {
         const armored = block.content.toString();
@@ -325,15 +291,6 @@ export class PgpMsg {
   private static isFcAttLinkData = (o: any): o is FcAttLinkData => {
     return o && typeof o === 'object' && typeof (o as FcAttLinkData).name !== 'undefined'
       && typeof (o as FcAttLinkData).size !== 'undefined' && typeof (o as FcAttLinkData).type !== 'undefined';
-  }
-
-  private static pushArmoredPubkeysToBlocks = async (armoredPubkeys: string[], blocks: MsgBlock[]): Promise<void> => {
-    for (const armoredPubkey of armoredPubkeys) {
-      const { keys } = await PgpKey.parse(armoredPubkey);
-      for (const keyDetails of keys) {
-        blocks.push(Pgp.internal.msgBlockKeyObj('publicKey', keyDetails.public, keyDetails));
-      }
-    }
   }
 
   private static cryptoMsgGetSignedBy = async (msg: OpenpgpMsgOrCleartext, keys: SortedKeysForDecrypt) => {

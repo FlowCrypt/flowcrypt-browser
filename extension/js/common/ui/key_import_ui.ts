@@ -4,7 +4,6 @@
 
 import { Store } from '../platform/store.js';
 import { Ui } from '../browser/ui.js';
-import { KeyBlockType } from '../core/mime.js';
 import { mnemonic } from '../core/mnemonic.js';
 import { AttUI } from './att_ui.js';
 import { Lang } from '../lang.js';
@@ -15,6 +14,7 @@ import { PgpArmor } from '../core/pgp-armor.js';
 import { PgpPwd } from '../core/pgp-password.js';
 import { PgpKey } from '../core/pgp-key.js';
 import { openpgp } from '../core/pgp.js';
+import { MsgBlockParser, KeyBlockType } from '../core/msg-block.js';
 
 type KeyImportUiCheckResult = {
   normalized: string; longid: string; passphrase: string; fingerprint: string; decrypted: OpenPGP.key.Key;
@@ -95,7 +95,7 @@ export class KeyImportUi {
         let prv: OpenPGP.key.Key | undefined;
         const utf = file.getData().toUtfStr();
         if (utf.includes(PgpArmor.headers('privateKey').begin)) {
-          const firstPrv = PgpArmor.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
+          const firstPrv = MsgBlockParser.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
           if (firstPrv) { // filter out all content except for the first encountered private key (GPGKeychain compatibility)
             prv = (await openpgp.key.readArmored(firstPrv.content.toString())).keys[0];
           }
