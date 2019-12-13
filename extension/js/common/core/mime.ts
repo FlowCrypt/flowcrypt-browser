@@ -8,7 +8,7 @@ import { requireMimeParser, requireMimeBuilder, requireIso88592 } from '../platf
 import { Buf } from './buf.js';
 import { MimeParserNode } from './types/emailjs';
 import { PgpArmor } from './pgp-armor.js';
-import { MsgBlock, MsgBlockParser, MsgBlockFactory } from './msg-block.js';
+import { MsgBlock, MsgBlockParser } from './msg-block.js';
 import { Att } from './att.js';
 
 const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
@@ -52,19 +52,19 @@ export class Mime {
       if (blocksFromTextPart.find(b => b.type === 'encryptedMsg' || b.type === 'signedMsg' || b.type === 'publicKey' || b.type === 'privateKey')) {
         blocks.push(...blocksFromTextPart); // because the html most likely containt the same thing, just harder to parse pgp sections cause it's html
       } else if (decoded.html) { // if no pgp blocks found in text part and there is html part, prefer html
-        blocks.push(MsgBlockFactory.msgBlockObj('plainHtml', decoded.html));
+        blocks.push(MsgBlock.fromContent('plainHtml', decoded.html));
       } else { // else if no html and just a plain text message, use that
         blocks.push(...blocksFromTextPart);
       }
     } else if (decoded.html) {
-      blocks.push(MsgBlockFactory.msgBlockObj('plainHtml', decoded.html));
+      blocks.push(MsgBlock.fromContent('plainHtml', decoded.html));
     }
     for (const file of decoded.atts) {
       const treatAs = file.treatAs();
       if (treatAs === 'encryptedMsg') {
         const armored = PgpArmor.clip(file.getData().toUtfStr());
         if (armored) {
-          blocks.push(MsgBlockFactory.msgBlockObj('encryptedMsg', armored));
+          blocks.push(MsgBlock.fromContent('encryptedMsg', armored));
         }
       } else if (treatAs === 'signature') {
         decoded.signature = decoded.signature || file.getData().toUtfStr();
@@ -73,9 +73,9 @@ export class Mime {
       } else if (treatAs === 'privateKey') {
         blocks.push(...MsgBlockParser.detectBlocks(file.getData().toUtfStr()).blocks);
       } else if (treatAs === 'encryptedFile') {
-        blocks.push(MsgBlockFactory.msgBlockAttObj('encryptedAtt', '', { name: file.name, type: file.type, length: file.getData().length, data: file.getData() }));
+        blocks.push(MsgBlock.fromAtt('encryptedAtt', '', { name: file.name, type: file.type, length: file.getData().length, data: file.getData() }));
       } else if (treatAs === 'plainFile') {
-        blocks.push(MsgBlockFactory.msgBlockAttObj('plainAtt', '', {
+        blocks.push(MsgBlock.fromAtt('plainAtt', '', {
           name: file.name, type: file.type, length: file.getData().length, data: file.getData(), inline: file.inline, cid: file.cid
         }));
       }

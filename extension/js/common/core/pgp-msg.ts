@@ -11,7 +11,7 @@ import { PgpHash } from './pgp-hash.js';
 import { PgpArmor } from './pgp-armor.js';
 import { PgpKey, PrvKeyInfo, KeyInfo, Contact } from './pgp-key.js';
 import { openpgp } from './pgp.js';
-import { MsgBlockParser, MsgBlockFactory, MsgBlockType, MsgBlock } from './msg-block.js';
+import { MsgBlockParser, MsgBlockType, MsgBlock } from './msg-block.js';
 
 export namespace PgpMsgMethod {
   export namespace Arg {
@@ -254,7 +254,7 @@ export class PgpMsg {
       decryptedContent = decryptedContent.replace(/<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm, (_, url, fcData) => {
         const a = Str.htmlAttrDecode(String(fcData));
         if (PgpMsg.isFcAttLinkData(a)) {
-          blocks.push(MsgBlockFactory.msgBlockAttObj('encryptedAttLink', '', { type: a.type, name: a.name, length: a.size, url: String(url) }));
+          blocks.push(MsgBlock.fromAtt('encryptedAttLink', '', { type: a.type, name: a.name, length: a.size, url: String(url) }));
         }
         return '';
       });

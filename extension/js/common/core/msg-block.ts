@@ -13,29 +13,30 @@ export type ReplaceableMsgBlockType = KeyBlockType | 'signedMsg' | 'encryptedMsg
 export type MsgBlockType = ReplaceableMsgBlockType | 'plainText' | 'decryptedText' | 'plainHtml' | 'decryptedHtml' | 'plainAtt' | 'encryptedAtt'
   | 'decryptedAtt' | 'encryptedAttLink' | 'decryptErr' | 'verifiedMsg' | 'signedHtml';
 
-export type MsgBlock = { // todo - could be refactored as a class, and methods from MsgBlockFactory could be public constructors
-  type: MsgBlockType;
-  content: string | Buf;
-  complete: boolean;
-  signature?: string;
-  keyDetails?: KeyDetails; // only in publicKey when returned to Android (could eventually be made mandatory, done straight in detectBlocks?)
-  attMeta?: AttMeta; // only in plainAtt, encryptedAtt, decryptedAtt, encryptedAttLink (not sure if always)
-  decryptErr?: DecryptError; // only in decryptErr block, always
-  verifyRes?: VerifyRes,
-};
+export class MsgBlock {
 
-export class MsgBlockFactory {
-
-  static msgBlockObj = (type: MsgBlockType, content: string | Buf, missingEnd = false): MsgBlock => {
-    return { type, content, complete: !missingEnd };
+  private constructor(
+    public type: MsgBlockType,
+    public content: string | Buf,
+    public complete: boolean,
+    public signature?: string,
+    public keyDetails?: KeyDetails, // only in publicKey when returned to Android (could eventually be made mandatory, done straight in detectBlocks?)
+    public attMeta?: AttMeta, // only in plainAtt, encryptedAtt, decryptedAtt, encryptedAttLink (not sure if always)
+    public decryptErr?: DecryptError, // only in decryptErr block, always
+    public verifyRes?: VerifyRes,
+  ) {
   }
 
-  static msgBlockAttObj = (type: MsgBlockType, content: string, attMeta: AttMeta): MsgBlock => {
-    return { type, content, complete: true, attMeta };
+  static fromContent = (type: MsgBlockType, content: string | Buf, missingEnd = false): MsgBlock => {
+    return new MsgBlock(type, content, !missingEnd);
   }
 
-  static msgBlockKeyObj = (type: MsgBlockType, content: string, keyDetails: KeyDetails): MsgBlock => {
-    return { type, content, complete: true, keyDetails };
+  static fromKeyDetails = (type: MsgBlockType, content: string, keyDetails: KeyDetails): MsgBlock => {
+    return new MsgBlock(type, content, true, undefined, keyDetails);
+  }
+
+  static fromAtt = (type: MsgBlockType, content: string, attMeta: AttMeta): MsgBlock => {
+    return new MsgBlock(type, content, true, undefined, undefined, attMeta);
   }
 
 }
@@ -73,23 +74,23 @@ export class MsgBlockParser {
       utf = PgpMsg.stripFcTeplyToken(utf);
       const armoredPubKeys: string[] = [];
       utf = PgpMsg.stripPublicKeys(utf, armoredPubKeys);
-      blocks.push(MsgBlockFactory.msgBlockObj('decryptedHtml', Str.asEscapedHtml(utf))); // escaped text as html
+      blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(utf))); // escaped text as html
       await MsgBlockParser.pushArmoredPubkeysToBlocks(armoredPubKeys, blocks);
       return { blocks, subject: undefined };
     }
     const decoded = await Mime.decode(decryptedContent);
     if (typeof decoded.html !== 'undefined') {
-      blocks.push(MsgBlockFactory.msgBlockObj('decryptedHtml', Xss.htmlSanitizeKeepBasicTags(decoded.html))); // sanitized html
+      blocks.push(MsgBlock.fromContent('decryptedHtml', Xss.htmlSanitizeKeepBasicTags(decoded.html))); // sanitized html
     } else if (typeof decoded.text !== 'undefined') {
-      blocks.push(MsgBlockFactory.msgBlockObj('decryptedHtml', Str.asEscapedHtml(decoded.text))); // escaped text as html
+      blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(decoded.text))); // escaped text as html
     } else {
-      blocks.push(MsgBlockFactory.msgBlockObj('decryptedHtml', Str.asEscapedHtml(Buf.with(decryptedContent).toUtfStr()))); // escaped mime text as html
+      blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(Buf.with(decryptedContent).toUtfStr()))); // escaped mime text as html
     }
     for (const att of decoded.atts) {
       if (att.treatAs() === 'publicKey') {
         await MsgBlockParser.pushArmoredPubkeysToBlocks([att.getData().toUtfStr()], blocks);
       } else {
-        blocks.push(MsgBlockFactory.msgBlockAttObj('decryptedAtt', '', { name: att.name, data: att.getData(), length: att.length, type: att.type }));
+        blocks.push(MsgBlock.fromAtt('decryptedAtt', '', { name: att.name, data: att.getData(), length: att.length, type: att.type }));
       }
     }
     return { blocks, subject: decoded.subject };
@@ -109,7 +110,7 @@ export class MsgBlockParser {
             if (begin > startAt) {
               const potentialTextBeforeBlockBegun = origText.substring(startAt, begin).trim();
               if (potentialTextBeforeBlockBegun) {
-                result.found.push(MsgBlockFactory.msgBlockObj('plainText', potentialTextBeforeBlockBegun));
+                result.found.push(MsgBlock.fromContent('plainText', potentialTextBeforeBlockBegun));
               }
             }
             let endIndex: number = -1;
@@ -127,19 +128,19 @@ export class MsgBlockParser {
             }
             if (endIndex !== -1) { // identified end of the same block
               if (type !== 'encryptedMsgLink') {
-                result.found.push(MsgBlockFactory.msgBlockObj(type, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
+                result.found.push(MsgBlock.fromContent(type, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
               } else {
                 const pwdMsgFullText = origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim();
                 const pwdMsgShortIdMatch = pwdMsgFullText.match(/[a-zA-Z0-9]{10}$/);
                 if (pwdMsgShortIdMatch) {
-                  result.found.push(MsgBlockFactory.msgBlockObj(type, pwdMsgShortIdMatch[0]));
+                  result.found.push(MsgBlock.fromContent(type, pwdMsgShortIdMatch[0]));
                 } else {
-                  result.found.push(MsgBlockFactory.msgBlockObj('plainText', pwdMsgFullText));
+                  result.found.push(MsgBlock.fromContent('plainText', pwdMsgFullText));
                 }
               }
               result.continueAt = endIndex + foundBlockEndHeaderLength;
             } else { // corresponding end not found
-              result.found.push(MsgBlockFactory.msgBlockObj(type, origText.substr(begin), true));
+              result.found.push(MsgBlock.fromContent(type, origText.substr(begin), true));
             }
             break;
           }
@@ -149,7 +150,7 @@ export class MsgBlockParser {
     if (origText && !result.found.length) { // didn't find any blocks, but input is non-empty
       const potentialText = origText.substr(startAt).trim();
       if (potentialText) {
-        result.found.push(MsgBlockFactory.msgBlockObj('plainText', potentialText));
+        result.found.push(MsgBlock.fromContent('plainText', potentialText));
       }
     }
     return result;
@@ -159,7 +160,7 @@ export class MsgBlockParser {
     for (const armoredPubkey of armoredPubkeys) {
       const { keys } = await PgpKey.parse(armoredPubkey);
       for (const keyDetails of keys) {
-        blocks.push(MsgBlockFactory.msgBlockKeyObj('publicKey', keyDetails.public, keyDetails));
+        blocks.push(MsgBlock.fromKeyDetails('publicKey', keyDetails.public, keyDetails));
       }
     }
   }
