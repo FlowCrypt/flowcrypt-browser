@@ -487,6 +487,27 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       expect(await composePage.read('@input-body')).to.include('hello<draft>here');
     }));
 
+    ava.default('compose[global:compose] - test minimizing/maximizing', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+      const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=test.ci.compose%40org.flowcrypt.com');
+      await inboxPage.waitAndClick('@action-open-secure-compose-window');
+      await inboxPage.waitAll(['@container-new-message']);
+      const composeFrame = await inboxPage.getFrame(['compose.htm']);
+      await composeFrame.waitForSelTestState('ready');
+      const composeBody = await composeFrame.waitAny('body');
+      const initialWidth = Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetWidth'));
+      const initialHeight = Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'));
+      await composeFrame.waitAndClick('.popout', { sleepWhenDone: 1 });
+      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetWidth'))).to.be.greaterThan(initialWidth);
+      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.be.greaterThan(initialHeight);
+      await composeFrame.waitAndClick('.popout', { sleepWhenDone: 1 });
+      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetWidth'))).to.equal(initialWidth);
+      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.equal(initialHeight);
+      await composeFrame.waitAndClick('.minimize_new_message', { sleepWhenDone: 1 });
+      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.be.lessThan(initialHeight);
+      await composeFrame.waitAndClick('.minimize_new_message', { sleepWhenDone: 1 });
+      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.equal(initialHeight);
+    }));
+
     ava.todo('compose[global:compose] - reply - new gmail threadId fmt');
 
     ava.todo('compose[global:compose] - reply - skip click prompt');
