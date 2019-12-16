@@ -82,10 +82,10 @@ export class PgpArmor {
     const isArmoredEncrypted = utfChunk.includes(PgpArmor.headers('encryptedMsg').begin);
     const isArmoredSignedOnly = utfChunk.includes(PgpArmor.headers('signedMsg').begin);
     const isArmored = isArmoredEncrypted || isArmoredSignedOnly;
-    if (isArmoredEncrypted) {
-      return { isArmored, isCleartext: false, message: await openpgp.message.readArmored(new Buf(encrypted).toUtfStr()) };
-    } else if (isArmoredSignedOnly) {
+    if (isArmoredSignedOnly) {
       return { isArmored, isCleartext: true, message: await openpgp.cleartext.readArmored(new Buf(encrypted).toUtfStr()) };
+    } else if (isArmoredEncrypted) {
+      return { isArmored, isCleartext: false, message: await openpgp.message.readArmored(new Buf(encrypted).toUtfStr()) };
     } else if (encrypted instanceof Uint8Array) {
       return { isArmored, isCleartext: false, message: await openpgp.message.read(encrypted) };
     }

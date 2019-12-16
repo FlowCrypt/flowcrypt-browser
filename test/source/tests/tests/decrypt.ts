@@ -191,6 +191,15 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, expectedContent });
     }));
 
+    ava.default('[standalone] - inbox - encrypted message inside signed', testWithSemaphoredBrowser('compatibility', async (t, browser) => {
+      const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility%40gmail.com&threadId=16f0bfce331ca2fd');
+      await inboxPage.waitAll('iframe.pgp_block');
+      const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+      await pgpBlock.waitForSelTestState('ready');
+      const content = await pgpBlock.read('#pgp_block');
+      expect(content).to.include('-----BEGIN PGP MESSAGE-----Version: FlowCrypt 7.4.2 Gmail\nEncryptionComment: Seamlessly send and receive encrypted\nemailwcFMA0taL/zmLZUBAQ/+Kj48OQND');
+    }));
+
     ava.todo('[standalone] decrypt - by entering secondary pass phrase');
 
   }
