@@ -495,9 +495,7 @@ export class ComposerRecipients extends ComposerComponent {
       for (const contact of contacts) {
         const [inDb] = await Store.dbContactGet(undefined, [contact.email]);
         if (!inDb) {
-          await Store.dbContactSave(undefined, await Store.dbContactObj({
-            email: contact.email, name: contact.name, pendingLookup: true, lastUse: contact.last_use
-          }));
+          await this.composer.storage.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(contact.email);
         } else if (!inDb.name && contact.name) {
           const toUpdate = { name: contact.name };
           await Store.dbContactUpdate(undefined, contact.email, toUpdate);
