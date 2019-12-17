@@ -26,7 +26,6 @@ export class InboxView extends View {
   private readonly inboxNotificationModule: InboxNotificationModule;
   private readonly inboxThreadModule: InboxThreadModule;
   private readonly inboxThreadsModule: InboxThreadsModule;
-  private webmailCommon!: WebmailCommon;
 
   readonly acctEmail: string;
   readonly labelId: string;
@@ -37,6 +36,7 @@ export class InboxView extends View {
 
   helper: InboxHelperModule;
   injector!: Injector;
+  webmailCommon!: WebmailCommon;
   factory!: XssSafeFactory;
   storage!: AccountStore;
   tabId!: string;

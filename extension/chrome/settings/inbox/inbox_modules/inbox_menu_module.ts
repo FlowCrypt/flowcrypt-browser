@@ -20,7 +20,7 @@ export class InboxMenuModule extends InboxModule {
   };
 
   render = async () => {
-    this.renderNavbartTop();
+    await this.renderNavbartTop();
     this.allLabels = (await this.view.gmail.labelsGet()).labels;
     this.renderMenuAndLabelStyles();
     this.setHandlers();
@@ -103,7 +103,7 @@ export class InboxMenuModule extends InboxModule {
     }
   }
 
-  private renderNavbartTop = () => {
+  private renderNavbartTop = async () => {
     $('.action_open_webmail').attr('href', Google.webmailUrl(this.view.acctEmail));
     $('.action_choose_account').get(0).title = this.view.acctEmail;
     if (this.view.storage.picture) {
@@ -111,6 +111,7 @@ export class InboxMenuModule extends InboxModule {
         $(self).off().attr('src', '/img/svgs/profile-icon.svg');
       }));
     }
+    await this.view.webmailCommon.addOrRemoveEndSessionBtnIfNeeded();
     Catch.setHandledTimeout(() => { $('#banner a').css('color', 'red'); }, 500);
     Catch.setHandledTimeout(() => { $('#banner a').css('color', ''); }, 1000);
     Catch.setHandledTimeout(() => { $('#banner a').css('color', 'red'); }, 1500);
