@@ -19,9 +19,10 @@ export class InboxNotificationModule extends InboxModule {
 
   render() {
     this.view.S.cached('body').prepend(this.view.factory.metaNotificationContainer()); // xss-safe-factory
+    this.setHandlers();
   }
 
-  setHandlers() {
+  private setHandlers() {
     BrowserMsg.addListener('notification_show', this.notificationShowHandler);
     BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
       this.notifications.showAuthPopupNeeded(acctEmail);
@@ -33,16 +34,11 @@ export class InboxNotificationModule extends InboxModule {
     if (insufficientPermission) {
       msg = `Permission missing to load inbox <a href="#" class="action_add_permission">Revise Permissions</a>`;
     }
-    this.showNotification(msg, {
-      action_auth_popup: async () => {
-        await GoogleAuth.newAuthPopup({ acctEmail: this.view.acctEmail });
-        window.location.reload();
-      },
-      action_add_permission: async () => { // can just be unified with action_auth_popup
-        await GoogleAuth.newAuthPopup({ acctEmail: this.view.acctEmail });
-        window.location.reload();
-      },
-    });
+    const newAuthPopup = async () => {
+      await GoogleAuth.newAuthPopup({ acctEmail: this.view.acctEmail });
+      window.location.reload();
+    };
+    this.showNotification(msg, { action_auth_popup: newAuthPopup, action_add_permission: newAuthPopup });
   }
 
   showNotification = (notification: string, callbacks?: Dict<() => void>) => {

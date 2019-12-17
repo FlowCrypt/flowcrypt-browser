@@ -13,7 +13,7 @@ import { Google } from '../../../../js/common/api/google.js';
 
 export class InboxMenuModule extends InboxModule {
   private readonly FOLDERS = ['INBOX', 'STARRED', 'SENT', 'DRAFT', 'TRASH']; // 'UNREAD', 'SPAM'
-  private allLabels: GmailRes.GmailLabels$label[] | undefined;
+  private allLabels!: GmailRes.GmailLabels$label[];
 
   readonly LABEL: Dict<GmailRes.GmailMsg$labelId> = {
     INBOX: 'INBOX', UNREAD: 'UNREAD', CATEGORY_PERSONAL: 'CATEGORY_PERSONAL', IMPORTANT: 'IMPORTANT', SENT: 'SENT', CATEGORY_UPDATES: 'CATEGORY_UPDATES'
@@ -21,8 +21,8 @@ export class InboxMenuModule extends InboxModule {
 
   async render() {
     this.renderNavbartTop();
-    const { labels } = await this.view.gmail.labelsGet();
-    this.renderMenuAndLabelStyles(labels);
+    this.allLabels = (await this.view.gmail.labelsGet()).labels;
+    this.renderMenuAndLabelStyles();
     this.setHandlers();
   }
 
@@ -30,7 +30,7 @@ export class InboxMenuModule extends InboxModule {
     if (labelId === 'ALL') {
       return 'all folders';
     }
-    const label = (this.allLabels || []).find(l => l.id === labelId);
+    const label = this.allLabels?.find(l => l.id === labelId);
     if (label) {
       return label.name;
     }
@@ -53,11 +53,10 @@ export class InboxMenuModule extends InboxModule {
     $('.action_add_account').click(this.view.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.view.tabId)));
   }
 
-  private renderMenuAndLabelStyles = (labels: GmailRes.GmailLabels$label[]) => {
-    this.allLabels = labels;
-    this.addLabelStyles(labels);
+  private renderMenuAndLabelStyles = () => {
+    this.addLabelStyles(this.allLabels);
     Xss.sanitizeAppend('.menu', `<br>${this.renderableLabels(this.FOLDERS, 'menu')}<button class="button gray2 label label_ALL">ALL MAIL</button><br>`);
-    Xss.sanitizeAppend('.menu', '<br>' + this.renderableLabels(labels.sort((a, b) => {
+    Xss.sanitizeAppend('.menu', '<br>' + this.renderableLabels(this.allLabels.sort((a, b) => {
       if (a.name > b.name) {
         return 1;
       } else if (a.name < b.name) {
@@ -82,7 +81,7 @@ export class InboxMenuModule extends InboxModule {
   }
 
   private renderableLabel = (labelId: string, placement: 'messages' | 'menu' | 'labels') => {
-    const label = (this.allLabels || []).find(l => l.id === labelId);
+    const label = this.allLabels?.find(l => l.id === labelId);
     if (!label) {
       return '';
     }
@@ -122,11 +121,11 @@ export class InboxMenuModule extends InboxModule {
     for (const cls of labelEl.classList) {
       const labelId = (cls.match(/^label_([a-zA-Z0-9_]+)$/) || [])[1];
       if (labelId) {
-        this.view.redirectToUrl({ acctEmail: this.view.acctEmail, labelId });
+        this.view.helper.redirectToUrl({ acctEmail: this.view.acctEmail, labelId });
         return;
       }
     }
-    this.view.redirectToUrl({ acctEmail: this.view.acctEmail });
+    this.view.helper.redirectToUrl({ acctEmail: this.view.acctEmail });
   }
 
   private addBrowserMsgListeners() {
