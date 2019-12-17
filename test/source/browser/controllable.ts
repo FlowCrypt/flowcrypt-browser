@@ -246,7 +246,8 @@ abstract class ControllableBase {
     await this.waitAndClick(`@ui-modal-${type}-${clickBtn}`);
   }
 
-  public waitAndClick = async (selector: string, { delay = 0.1, confirmGone = false, retryErrs = false }: { delay?: number, confirmGone?: boolean, retryErrs?: boolean } = {}) => {
+  public waitAndClick = async (selector: string, { delay = 0.1, confirmGone = false, retryErrs = false, sleepWhenDone }:
+    { delay?: number, confirmGone?: boolean, retryErrs?: boolean, sleepWhenDone?: number } = {}) => {
     for (const i of [1, 2, 3]) {
       this.log(`wait_and_click(i${i}):1:${selector}`);
       await this.waitAll(selector);
@@ -278,6 +279,11 @@ abstract class ControllableBase {
       await this.waitTillGone(selector);
     }
     this.log(`wait_and_click:8:${selector}`);
+    if (sleepWhenDone) {
+      await Util.sleep(sleepWhenDone);
+      this.log(`wait_and_click:9:${selector}`);
+    }
+    this.log(`wait_and_click:10:${selector}`);
   }
 
   private getFramesUrlsInThisMoment = async (urlMatchables: string[]) => {
