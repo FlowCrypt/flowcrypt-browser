@@ -492,15 +492,17 @@ export class ComposerRecipients extends ComposerComponent {
 
   private renderAndAddToDBAPILoadedContacts = async (input: JQuery<HTMLElement>, contacts: Contact[]) => {
     if (contacts.length) {
+      const updatePromises: Promise<Contact | "fail">[] = [];
       for (const contact of contacts) {
         const [inDb] = await Store.dbContactGet(undefined, [contact.email]);
         if (!inDb) {
-          await this.composer.storage.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(contact.email);
+          updatePromises.push(this.composer.storage.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(contact.email));
         } else if (!inDb.name && contact.name) {
           const toUpdate = { name: contact.name };
           await Store.dbContactUpdate(undefined, contact.email, toUpdate);
         }
       }
+      await Promise.all(updatePromises);
       await this.searchContacts(input, true);
     }
   }
