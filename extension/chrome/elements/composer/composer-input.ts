@@ -6,12 +6,28 @@ import { ComposerComponent } from './composer-abstract-component.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { NewMsgData, RecipientElement } from './composer-types.js';
 import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
+import { SquireEditor, WillPasteEvent } from '../../../types/squire.js';
 
 export class ComposerInput extends ComposerComponent {
 
+  public squire = new window.Squire(this.composer.S.cached('input_text').get(0));
+  private richTextMode = false;
+
   initActions = () => {
     this.composer.S.cached('add_intro').click(this.view.setHandler(el => this.actionAddIntroHandler(el), this.composer.errs.handlers(`add intro`)));
-    this.composer.S.cached('input_text').get(0).onpaste = (clipEv) => this.composer.input.textPastedIntoBodyHandler(clipEv);
+    this.richTextMode = this.composer.sendBtn.popover.choices.richText;
+    this.handlePaste();
+    this.handlePasteImages();
+    this.initShortcuts();
+  }
+
+  enableRichText = () => {
+    this.richTextMode = true;
+  }
+
+  disableRichText = () => {
+    this.squire.setHTML(Xss.htmlSanitizeAndStripAllTags(this.squire.getHTML(), '<br>'));
+    this.richTextMode = false;
   }
 
   public inputTextHtmlSetSafely = (html: string) => {
@@ -43,23 +59,66 @@ export class ComposerInput extends ComposerComponent {
 
   // -- private
 
-  private textPastedIntoBodyHandler = (clipboardEvent: ClipboardEvent) => {
-    if (!clipboardEvent.clipboardData) {
-      return;
-    }
-    const clipboardHtmlData = clipboardEvent.clipboardData.getData('text/html');
-    if (!clipboardHtmlData) {
-      return; // if it's text, let the original handlers paste it
-    }
-    clipboardEvent.preventDefault();
-    clipboardEvent.stopPropagation();
-    const sanitized = Xss.htmlSanitizeAndStripAllTags(clipboardHtmlData, '<br>');
-    // the lines below simulate ctrl+v, but not perfectly (old selected text does not get deleted)
-    const selection = window.getSelection();
-    if (selection) {
-      const r = selection.getRangeAt(0);
-      r.insertNode(r.createContextualFragment(sanitized));
-    }
+  private handlePaste = () => {
+    this.squire.addEventListener('willPaste', (e: WillPasteEvent) => {
+      const plainTextDiv = document.createElement('div');
+      plainTextDiv.appendChild(e.fragment);
+      plainTextDiv.innerHTML = this.richTextMode ? Xss.htmlSanitize(plainTextDiv.innerHTML) : Xss.htmlSanitizeAndStripAllTags(plainTextDiv.innerHTML, '<br>'); // xss-sanitized
+      e.fragment.appendChild(plainTextDiv);
+    });
+  }
+
+  private handlePasteImages = () => {
+    this.squire.addEventListener('drop', (e: DragEvent) => {
+      if (!this.richTextMode) {
+        return;
+      }
+      if (!e.dataTransfer?.files.length) {
+        return;
+      }
+      const file = e.dataTransfer.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.squire.insertImage(reader.result as ArrayBuffer, { name: file.name, title: file.name });
+      };
+      reader.readAsDataURL(file);
+    });
+    this.squire.addEventListener('dragover', (e: DragEvent) => {
+      e.preventDefault(); // this is needed for 'drop' event to fire
+    });
+  }
+
+  private initShortcuts = () => {
+    const isMac = /Mac OS X/.test(navigator.userAgent);
+    const ctrlKey = isMac ? 'meta-' : 'ctrl-';
+    const mapKeyToFormat = (tag: string) => {
+      return (self: SquireEditor, event: Event) => {
+        event.preventDefault();
+        if (!this.richTextMode) {
+          return;
+        }
+        const range = self.getSelection();
+        if (self.hasFormat(tag)) {
+          self.changeFormat(null, { tag }, range); // tslint:disable-line:no-null-keyword
+        } else {
+          self.changeFormat({ tag }, null, range); // tslint:disable-line:no-null-keyword
+        }
+      };
+    };
+    const noop = (self: SquireEditor, event: Event) => {
+      event.preventDefault();
+    };
+    this.squire.setKeyHandler(ctrlKey + 'b', mapKeyToFormat('B'));
+    this.squire.setKeyHandler(ctrlKey + 'u', mapKeyToFormat('U'));
+    this.squire.setKeyHandler(ctrlKey + 'i', mapKeyToFormat('I'));
+    this.squire.setKeyHandler(ctrlKey + 'shift-7', noop); // default is 'S'
+    this.squire.setKeyHandler(ctrlKey + 'shift-5', noop); // default is 'SUB', { tag: 'SUP' }
+    this.squire.setKeyHandler(ctrlKey + 'shift-6', noop); // default is 'SUP', { tag: 'SUB' }
+    this.squire.setKeyHandler(ctrlKey + 'shift-8', noop); // default is 'makeUnorderedList'
+    this.squire.setKeyHandler(ctrlKey + 'shift-9', noop); // default is 'makeOrderedList'
+    this.squire.setKeyHandler(ctrlKey + '[', noop); // default is 'decreaseQuoteLevel'
+    this.squire.setKeyHandler(ctrlKey + ']', noop); // default is 'increaseQuoteLevel'
+    this.squire.setKeyHandler(ctrlKey + 'd', noop); // default is 'toggleCode'
   }
 
   private actionAddIntroHandler = (addIntroBtn: HTMLElement) => {

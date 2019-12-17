@@ -26,7 +26,7 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     this.choices.richText = await this.richTextUserChoiceRetrieve();
     for (const key of Object.keys(popoverItems)) {
       const popoverOpt = key as PopoverOpt;
-      if (popoverOpt === 'richText' && !['flowcrypt.compatibility@gmail.com', 'tom@flowcrypt.com', 'flowcrypt.oauth.demo@gmail.com'].includes(this.view.acctEmail)) {
+      if (popoverOpt === 'richText' && !['flowcrypt.compatibility@gmail.com', 'tom@flowcrypt.com', 'flowcrypt.oauth.demo@gmail.com', 'limon.monte@gmail.com'].includes(this.view.acctEmail)) {
         continue; // richText not supported yet. Only used for testing
       }
       const item = popoverItems[popoverOpt];
@@ -121,6 +121,7 @@ export class ComposerSendBtnPopover extends ComposerComponent {
       this.composer.S.cached('compose_table').addClass('not-encrypted');
       this.composer.S.now('attached_files').addClass('not-encrypted');
     }
+    this.choices.richText ? this.composer.input.enableRichText() : this.composer.input.disableRichText();
     this.composer.sendBtn.resetSendBtn();
     this.composer.pwdOrPubkeyContainer.showHideContainerAndColorSendBtn();
     if (typeof machineForceStateTo === 'undefined' && popoverOpt === 'richText') { // human-input choice of rich text
