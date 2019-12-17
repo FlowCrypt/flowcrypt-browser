@@ -6,8 +6,6 @@
     "typescript.preferences.importModuleSpecifier": "relative",
     "typescript.preferences.quoteStyle": "single",
     "tslint.configFile": "conf/tslint.yaml",
-    "editor.formatOnSave": true,
-    "editor.formatOnPaste": true,
     "eslint.autoFixOnSave": true,
     "eslint.validate": [
       "javascript",
