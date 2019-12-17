@@ -25,10 +25,7 @@
     ],
     "errorLens.errorColor": "#FF00000A",
     "errorLens.errorTextColor": "#FF000066",
-    "editor.tabSize": 2,
-    "editor.codeActionsOnSave": {
-      "source.fixAll.eslint": true
-    }
+    "editor.tabSize": 2
   },
   "folders": [
     {
