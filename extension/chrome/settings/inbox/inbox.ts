@@ -57,7 +57,7 @@ export class InboxView extends View {
     this.inboxThreadsModule = new InboxThreadsModule(this, this.inboxMenuModule, this.inboxNotificationModule, this.inboxThreadModule);
   }
 
-  async render() {
+  render = async () => {
     this.tabId = await BrowserMsg.requiredTabId();
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.injector = new Injector('settings', undefined, this.factory);
@@ -83,7 +83,7 @@ export class InboxView extends View {
     }
   }
 
-  async setHandlers() {
+  setHandlers = async () => {
     BrowserMsg.listen(this.tabId);
     Catch.setHandledInterval(this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded, 30000);
   }

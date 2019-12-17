@@ -17,12 +17,12 @@ export class InboxNotificationModule extends InboxModule {
     this.notifications = new Notifications(view.tabId);
   }
 
-  render() {
+  render = () => {
     this.view.S.cached('body').prepend(this.view.factory.metaNotificationContainer()); // xss-safe-factory
     this.setHandlers();
   }
 
-  private setHandlers() {
+  private setHandlers = () => {
     BrowserMsg.addListener('notification_show', this.notificationShowHandler);
     BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
       this.notifications.showAuthPopupNeeded(acctEmail);

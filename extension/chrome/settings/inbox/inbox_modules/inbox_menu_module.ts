@@ -19,7 +19,7 @@ export class InboxMenuModule extends InboxModule {
     INBOX: 'INBOX', UNREAD: 'UNREAD', CATEGORY_PERSONAL: 'CATEGORY_PERSONAL', IMPORTANT: 'IMPORTANT', SENT: 'SENT', CATEGORY_UPDATES: 'CATEGORY_UPDATES'
   };
 
-  async render() {
+  render = async () => {
     this.renderNavbartTop();
     this.allLabels = (await this.view.gmail.labelsGet()).labels;
     this.renderMenuAndLabelStyles();
@@ -41,7 +41,7 @@ export class InboxMenuModule extends InboxModule {
     return labelIds.map(id => this.renderableLabel(id, placement)).join('');
   }
 
-  private setHandlers() {
+  private setHandlers = () => {
     $('.action_open_secure_compose_window').click(this.view.setHandler(() => this.view.injector.openComposeWin()));
     $('.menu > .label').click(this.view.setHandler(this.renderFolder));
     this.addBrowserMsgListeners();
@@ -103,7 +103,7 @@ export class InboxMenuModule extends InboxModule {
     }
   }
 
-  private renderNavbartTop() {
+  private renderNavbartTop = () => {
     $('.action_open_webmail').attr('href', Google.webmailUrl(this.view.acctEmail));
     $('.action_choose_account').get(0).title = this.view.acctEmail;
     if (this.view.storage.picture) {
@@ -128,7 +128,7 @@ export class InboxMenuModule extends InboxModule {
     this.view.helper.redirectToUrl({ acctEmail: this.view.acctEmail });
   }
 
-  private addBrowserMsgListeners() {
+  private addBrowserMsgListeners = () => {
     BrowserMsg.addListener('add_end_session_btn', () => this.view.injector.insertEndSessionBtn(this.view.acctEmail));
     BrowserMsg.addListener('close_new_message', async () => {
       $('div.new_message').remove();

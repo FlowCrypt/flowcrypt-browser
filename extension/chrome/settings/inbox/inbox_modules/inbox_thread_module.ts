@@ -67,7 +67,7 @@ export class InboxThreadModule extends InboxModule {
     }
   }
 
-  setHandlers() {
+  setHandlers = () => {
     if (this.threadHasPgpBlock) {
       $(".action_see_original_message").click(this.view.setHandler(() => this.view.helper.redirectToUrl({
         acctEmail: this.view.acctEmail, threadId: this.threadId, showOriginal: !this.view.showOriginal
