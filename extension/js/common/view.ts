@@ -8,20 +8,39 @@ import { Ui, BrowserEventErrHandler, PreventableEventName } from './browser/ui.j
 import { ApiErr } from './api/error/api-error.js';
 
 export abstract class View {
-
+  private initialized = false;
   abstract async render(): Promise<void>;
-
   abstract setHandlers(): void;
+  getChildViews?(): View[];
+  async whenRendered?(): Promise<void>;
+
+  async init(): Promise<void> {
+    if (!this.initialized) {
+      return;
+    }
+    this.initialized = true;
+  }
 
   public static run<VIEW extends View>(viewClass: new () => VIEW) {
     try {
       const view = new viewClass();
-      (async () => {
-        await view.render();
-        view.setHandlers();
-      })().catch(View.reportAndRenderErr);
+      View.runInstanceAsync(view).catch(View.reportAndRenderErr);
     } catch (e) {
       View.reportAndRenderErr(e);
+    }
+  }
+
+  public static async runInstanceAsync(view: View) {
+    await view.init();
+    await view.render();
+    view.setHandlers();
+    if (view.getChildViews) {
+      const childVeiws = view.getChildViews();
+      await Promise.all(childVeiws.map(view => view.init()));
+      await Promise.all(childVeiws.map(view => View.runInstanceAsync(view)));
+    }
+    if (view.whenRendered) {
+      await view.whenRendered();
     }
   }
 
