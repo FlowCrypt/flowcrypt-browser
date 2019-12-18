@@ -323,7 +323,7 @@ export class PgpMsg {
     await PgpMsg.cryptoMsgGetSignedBy(msg, keys);
     if (keys.encryptedFor.length) {
       for (const ki of kiWithPp) {
-        ki.parsed = await PgpKey.read(ki.private);
+        ki.parsed = await PgpKey.read(ki.private); // todo
         // this is inefficient because we are doing unnecessary parsing of all keys here
         // better would be to compare to already stored KeyInfo, however KeyInfo currently only holds primary longid, not longids of subkeys
         // while messages are typically encrypted for subkeys, thus we have to parse the key to get the info
