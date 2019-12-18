@@ -62,7 +62,7 @@ export class ComposerInput extends ComposerComponent {
     this.squire.addEventListener('willPaste', (e: WillPasteEvent) => {
       const plainTextDiv = document.createElement('div');
       plainTextDiv.appendChild(e.fragment);
-      plainTextDiv.innerHTML = this.isRichText() ? Xss.htmlSanitize(plainTextDiv.innerHTML) : Xss.htmlSanitizeAndStripAllTags(plainTextDiv.innerHTML, '<br>'); // xss-sanitized
+      plainTextDiv.innerHTML = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(plainTextDiv.innerHTML) : Xss.htmlSanitizeAndStripAllTags(plainTextDiv.innerHTML, '<br>'); // xss-sanitized
       e.fragment.appendChild(plainTextDiv);
     });
   }
