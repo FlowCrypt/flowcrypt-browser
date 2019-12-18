@@ -354,8 +354,4 @@ export class PgpKey {
     throw new Error('No valid signature found in key');
   }
 
-  static cryptoKeyOptionalMatchingKeyid = (key: OpenPGP.key.Key, forMsgKeyids: OpenPGP.Keyid[] | undefined) => {
-    const msgKeyidBytesArr = (forMsgKeyids || []).map(kid => kid.bytes);
-    return key.getKeyIds().find(kid => msgKeyidBytesArr.includes(kid.bytes));
-  }
 }
