@@ -22,6 +22,7 @@ export class ComposerInput extends ComposerComponent {
     this.handlePaste();
     this.handlePasteImages();
     this.initShortcuts();
+    this.resizeReplyBox();
   }
 
   removeRichTextFormatting = () => {
@@ -120,6 +121,14 @@ export class ComposerInput extends ComposerComponent {
     } catch (e) {
       Catch.reportErr(e);
     }
+  }
+
+  private resizeReplyBox = () => {
+    this.squire.addEventListener('input', () => {
+      if (this.composer.view.isReplyBox) {
+        this.composer.size.resizeComposeBox();
+      }
+    });
   }
 
   private actionAddIntroHandler = (addIntroBtn: HTMLElement) => {

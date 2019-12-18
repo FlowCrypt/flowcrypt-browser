@@ -111,13 +111,14 @@ export class ComposerSize extends ComposerComponent {
   }
 
   /**
-   * Manage textbox height manually. Only applies to composing new messages
-   * (otherwise input_text will keep expanding beyond frame view)
+   * On Firefox, we have to manage textbox height manually. Only applies to composing new messages
+   * (else ff will keep expanding body element beyond frame view)
+   * A decade old firefox bug is the culprit: https://bugzilla.mozilla.org/show_bug.cgi?id=202081
    *
    * @param updateRefBodyHeight - set to true to take a new snapshot of intended html body height
    */
   public setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight: boolean = false) => {
-    if (!this.view.isReplyBox) {
+    if (!this.view.isReplyBox && Catch.browser().name === 'firefox') {
       this.composer.S.cached('input_text').css('height', '0');
       let cellHeightExceptText = 0;
       for (const cell of this.composer.S.cached('all_cells_except_text')) {
