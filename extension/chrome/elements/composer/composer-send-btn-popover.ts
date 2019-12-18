@@ -121,7 +121,9 @@ export class ComposerSendBtnPopover extends ComposerComponent {
       this.composer.S.cached('compose_table').addClass('not-encrypted');
       this.composer.S.now('attached_files').addClass('not-encrypted');
     }
-    this.choices.richText ? this.composer.input.enableRichText() : this.composer.input.disableRichText();
+    if (!this.choices.richText) {
+      this.composer.input.removeRichTextFormatting();
+    }
     this.composer.sendBtn.resetSendBtn();
     this.composer.pwdOrPubkeyContainer.showHideContainerAndColorSendBtn();
     if (typeof machineForceStateTo === 'undefined' && popoverOpt === 'richText') { // human-input choice of rich text

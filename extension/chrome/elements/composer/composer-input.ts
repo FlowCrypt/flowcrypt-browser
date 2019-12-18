@@ -11,23 +11,20 @@ import { SquireEditor, WillPasteEvent } from '../../../types/squire.js';
 export class ComposerInput extends ComposerComponent {
 
   public squire = new window.Squire(this.composer.S.cached('input_text').get(0));
-  private richTextMode = false;
+
+  private isRichText = () => {
+    return this.composer.sendBtn.popover.choices.richText;
+  }
 
   initActions = () => {
     this.composer.S.cached('add_intro').click(this.view.setHandler(el => this.actionAddIntroHandler(el), this.composer.errs.handlers(`add intro`)));
-    this.richTextMode = this.composer.sendBtn.popover.choices.richText;
     this.handlePaste();
     this.handlePasteImages();
     this.initShortcuts();
   }
 
-  enableRichText = () => {
-    this.richTextMode = true;
-  }
-
-  disableRichText = () => {
+  removeRichTextFormatting = () => {
     this.squire.setHTML(Xss.htmlSanitizeAndStripAllTags(this.squire.getHTML(), '<br>'));
-    this.richTextMode = false;
   }
 
   public inputTextHtmlSetSafely = (html: string) => {
@@ -63,14 +60,14 @@ export class ComposerInput extends ComposerComponent {
     this.squire.addEventListener('willPaste', (e: WillPasteEvent) => {
       const plainTextDiv = document.createElement('div');
       plainTextDiv.appendChild(e.fragment);
-      plainTextDiv.innerHTML = this.richTextMode ? Xss.htmlSanitize(plainTextDiv.innerHTML) : Xss.htmlSanitizeAndStripAllTags(plainTextDiv.innerHTML, '<br>'); // xss-sanitized
+      plainTextDiv.innerHTML = this.isRichText() ? Xss.htmlSanitize(plainTextDiv.innerHTML) : Xss.htmlSanitizeAndStripAllTags(plainTextDiv.innerHTML, '<br>'); // xss-sanitized
       e.fragment.appendChild(plainTextDiv);
     });
   }
 
   private handlePasteImages = () => {
     this.squire.addEventListener('drop', (e: DragEvent) => {
-      if (!this.richTextMode) {
+      if (!this.isRichText()) {
         return;
       }
       if (!e.dataTransfer?.files.length) {
@@ -94,7 +91,7 @@ export class ComposerInput extends ComposerComponent {
     const mapKeyToFormat = (tag: string) => {
       return (self: SquireEditor, event: Event) => {
         event.preventDefault();
-        if (!this.richTextMode) {
+        if (!this.isRichText()) {
           return;
         }
         const range = self.getSelection();
