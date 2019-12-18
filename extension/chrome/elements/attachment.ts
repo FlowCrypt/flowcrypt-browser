@@ -34,6 +34,7 @@ View.run(class AttachmentDownloadView extends View {
   private att!: Att;
   private button = $('#download');
   private originalButtonHTML: string | undefined;
+  private canClickOnAtt: boolean = false;
 
   constructor() {
     super();
@@ -73,10 +74,7 @@ View.run(class AttachmentDownloadView extends View {
       })().catch(Catch.reportErr);
     }
     try {
-      if (! await this.processAsPublicKeyAndHideAttIfAppropriate()) {
-        // normal attachment, let user download it by clickings
-        this.button.click(this.setHandlerPrevent('double', this.downloadButtonClickedHandler));
-      }
+      this.canClickOnAtt = ! await this.processAsPublicKeyAndHideAttIfAppropriate();
     } catch (e) {
       this.renderErr(e);
     }
@@ -84,6 +82,9 @@ View.run(class AttachmentDownloadView extends View {
 
   setHandlers = () => {
     Ui.event.protect();
+    if (this.canClickOnAtt) {
+      this.button.click(this.setHandlerPrevent('double', this.downloadButtonClickedHandler));
+    }
   }
 
   private getFileIconSrc = () => {
