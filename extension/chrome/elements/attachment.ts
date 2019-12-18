@@ -65,13 +65,12 @@ View.run(class AttachmentDownloadView extends View {
     $('#type').text(this.type || 'unknown type');
     $('#name').text(this.name || 'noname');
     $('img#file-format').attr('src', this.getFileIconSrc());
-    if (!this.size && this.url) { // download url of an unknown size
-      (async () => {
-        const fileSize = await this.getUrlFileSize(this.url!); // checked if url not empty above
+    if (!this.size && this.url) { // download url of a file that has an unknown size
+      this.getUrlFileSize(this.url!).then(fileSize => {
         if (typeof fileSize !== 'undefined') {
           this.size = fileSize;
         }
-      })().catch(Catch.reportErr);
+      }).catch(ApiErr.reportIfSignificant);
     }
     try {
       this.canClickOnAtt = ! await this.processAsPublicKeyAndHideAttIfAppropriate();
@@ -104,34 +103,33 @@ View.run(class AttachmentDownloadView extends View {
     }
   }
 
-  private getUrlFileSize = (origUrl: string): Promise<number | undefined> => new Promise(resolve => {
+  private getUrlFileSize = async (url: string): Promise<number | undefined> => {
     console.info('trying to figure out figetUrlFileSizee size');
-    let realUrl;
-    if (origUrl.indexOf('docs.googleusercontent.getUrlFileSizeom/docs/securesc') !== -1) {
+    if (url.indexOf('docs.googleusercontent.getUrlFileSizeom/docs/securesc') !== -1) {
       try {
-        const googleDriveFileId = origUrl.split('/').pop()!.split('?').shift(); // try and catch any errors below if structure is not as expected
-        realUrl = googleDriveFileId ? `https://drive.google.com/uc?export=download&id=${googleDriveFileId}` : origUrl; // attempt to get length headers from Google Drive file if available
+        const googleDriveFileId = url.split('/').pop()!.split('?').shift(); // try and catch any errors below if structure is not as expected
+        url = googleDriveFileId ? `https://drive.google.com/uc?export=download&id=${googleDriveFileId}` : url; // attempt to get length headers from Google Drive file if available
       } catch (e) {
-        realUrl = origUrl;
+        // leave url as is
       }
-    } else {
-      realUrl = origUrl;
     }
-    const xhr = new XMLHttpRequest();
-    xhr.open('HEAD', realUrl, true);
-    xhr.onreadystatechange = function () {
-      if (this.readyState === this.DONE) {
-        const contentLength = xhr.getResponseHeader('Content-Length');
-        if (contentLength !== null) {
-          resolve(parseInt(contentLength));
-        } else {
-          console.info('was not able to find out file size');
-          resolve(undefined);
+    return await new Promise(resolve => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('HEAD', url, true);
+      xhr.onreadystatechange = function () {
+        if (this.readyState === this.DONE) {
+          const contentLength = xhr.getResponseHeader('Content-Length');
+          if (contentLength !== null) {
+            resolve(parseInt(contentLength));
+          } else {
+            console.info('was not able to find out file size');
+            resolve(undefined);
+          }
         }
-      }
-    };
-    xhr.send();
-  })
+      };
+      xhr.send();
+    });
+  }
 
   private renderErr = (e: any) => {
     if (ApiErr.isAuthPopupNeeded(e)) {
