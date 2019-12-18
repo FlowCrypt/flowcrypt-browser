@@ -340,12 +340,12 @@ export class PgpMsg {
       keys.prvForDecrypt = [];
     }
     for (const ki of keys.prvForDecrypt) {
-      const mstchingKeyids = PgpMsg.matchingKeyids(ki.parsed!, encryptedForKeyids);
+      const matchingKeyids = PgpMsg.matchingKeyids(ki.parsed!, encryptedForKeyids);
       const cachedKey = Store.decryptedKeyCacheGet(ki.longid);
-      if (cachedKey && PgpMsg.isKeyDecryptedFor(cachedKey, mstchingKeyids)) {
+      if (cachedKey && PgpMsg.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
         ki.decrypted = cachedKey;
         keys.prvForDecryptDecrypted.push(ki);
-      } else if (PgpMsg.isKeyDecryptedFor(ki.parsed!, mstchingKeyids) || await PgpMsg.decryptKeyFor(ki.parsed!, ki.passphrase!, mstchingKeyids) === true) {
+      } else if (PgpMsg.isKeyDecryptedFor(ki.parsed!, matchingKeyids) || await PgpMsg.decryptKeyFor(ki.parsed!, ki.passphrase!, matchingKeyids) === true) {
         Store.decryptedKeyCacheSet(ki.parsed!);
         ki.decrypted = ki.parsed!;
         keys.prvForDecryptDecrypted.push(ki);
