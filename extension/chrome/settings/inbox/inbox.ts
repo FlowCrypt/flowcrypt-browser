@@ -16,17 +16,17 @@ import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { View } from '../../../js/common/view.js';
 import { InboxMenuModule } from './inbox_modules/inbox_menu_module.js';
-import { InboxThreadsModule } from './inbox_modules/inbox_threads_module.js';
+import { InboxListThreadsModule } from './inbox_modules/inbox_threads_module.js';
 import { InboxNotificationModule } from './inbox_modules/inbox_notification_module.js';
-import { InboxThreadModule } from './inbox_modules/inbox_thread_module.js';
+import { InboxActiveThreadModule } from './inbox_modules/inbox_thread_module.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
 export class InboxView extends View {
 
   readonly inboxMenuModule: InboxMenuModule;
   readonly inboxNotificationModule: InboxNotificationModule;
-  readonly inboxThreadModule: InboxThreadModule;
-  readonly inboxThreadsModule: InboxThreadsModule;
+  readonly inboxActiveThreadModule: InboxActiveThreadModule;
+  readonly inboxListThreadsModule: InboxListThreadsModule;
 
   readonly acctEmail: string;
   readonly labelId: string;
@@ -52,8 +52,8 @@ export class InboxView extends View {
     this.gmail = new Gmail(this.acctEmail);
     this.inboxMenuModule = new InboxMenuModule(this);
     this.inboxNotificationModule = new InboxNotificationModule(this);
-    this.inboxThreadModule = new InboxThreadModule(this);
-    this.inboxThreadsModule = new InboxThreadsModule(this);
+    this.inboxActiveThreadModule = new InboxActiveThreadModule(this);
+    this.inboxListThreadsModule = new InboxListThreadsModule(this);
   }
 
   render = async () => {
@@ -70,9 +70,9 @@ export class InboxView extends View {
       } else {
         await this.inboxMenuModule.render();
         if (this.threadId) {
-          await this.inboxThreadModule.render(this.threadId);
+          await this.inboxActiveThreadModule.render(this.threadId);
         } else {
-          await this.inboxThreadsModule.render(this.labelId);
+          await this.inboxListThreadsModule.render(this.labelId);
         }
       }
       await Settings.populateAccountsMenu('inbox.htm');

@@ -17,7 +17,7 @@ import { BrowserMsg, Bm } from '../../../../js/common/browser/browser-msg.js';
 import { BrowserMsgCommonHandlers } from '../../../../js/common/browser/browser-msg-common-handlers.js';
 import { ViewModule } from '../../../../js/common/view_module.js';
 
-export class InboxThreadModule extends ViewModule<InboxView> {
+export class InboxActiveThreadModule extends ViewModule<InboxView> {
 
   private threadId: string | undefined;
   private threadHasPgpBlock: boolean = false;

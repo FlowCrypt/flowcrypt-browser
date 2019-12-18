@@ -12,7 +12,7 @@ import { GmailParser } from '../../../../js/common/api/email_provider/gmail/gmai
 import { Str } from '../../../../js/common/core/common.js';
 import { ViewModule } from '../../../../js/common/view_module.js';
 
-export class InboxThreadsModule extends ViewModule<InboxView> {
+export class InboxListThreadsModule extends ViewModule<InboxView> {
 
   render = async (labelId: string) => {
     this.view.displayBlock('inbox', `Messages in ${this.view.inboxMenuModule.getLabelName(labelId)}`);
@@ -56,7 +56,7 @@ export class InboxThreadsModule extends ViewModule<InboxView> {
       }
       threadItem.find('.loading').text('');
       threadItem.find('.date').text(this.formatDate(lastMsg.internalDate));
-      threadItem.addClass('loaded').click(this.view.setHandler(() => this.view.inboxThreadModule.render(thread.id, thread)));
+      threadItem.addClass('loaded').click(this.view.setHandler(() => this.view.inboxActiveThreadModule.render(thread.id, thread)));
       if (lastMsg.labelIds?.includes(this.view.inboxMenuModule.LABEL.UNREAD)) {
         threadItem.css({ 'font-weight': 'bold', 'background': 'white' });
       }
