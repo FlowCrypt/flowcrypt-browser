@@ -4,7 +4,7 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store, AccountStore } from '../../../js/common/platform/store.js';
-import { Url } from '../../../js/common/core/common.js';
+import { Url, UrlParams } from '../../../js/common/core/common.js';
 import { Ui, SelCache } from '../../../js/common/browser/ui.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Settings } from '../../../js/common/settings.js';
@@ -19,13 +19,14 @@ import { InboxMenuModule } from './inbox_modules/inbox_menu_module.js';
 import { InboxThreadsModule } from './inbox_modules/inbox_threads_module.js';
 import { InboxNotificationModule } from './inbox_modules/inbox_notification_module.js';
 import { InboxThreadModule } from './inbox_modules/inbox_thread_module.js';
-import { InboxHelperModule } from './inbox_modules/inbox_helper_module.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 export class InboxView extends View {
-  private readonly inboxMenuModule: InboxMenuModule;
-  private readonly inboxNotificationModule: InboxNotificationModule;
-  private readonly inboxThreadModule: InboxThreadModule;
-  private readonly inboxThreadsModule: InboxThreadsModule;
+
+  readonly inboxMenuModule: InboxMenuModule;
+  readonly inboxNotificationModule: InboxNotificationModule;
+  readonly inboxThreadModule: InboxThreadModule;
+  readonly inboxThreadsModule: InboxThreadsModule;
 
   readonly acctEmail: string;
   readonly labelId: string;
@@ -34,7 +35,6 @@ export class InboxView extends View {
   readonly S: SelCache;
   readonly gmail: Gmail;
 
-  helper: InboxHelperModule;
   injector!: Injector;
   webmailCommon!: WebmailCommon;
   factory!: XssSafeFactory;
@@ -50,11 +50,10 @@ export class InboxView extends View {
     this.showOriginal = uncheckedUrlParams.showOriginal === true;
     this.S = Ui.buildJquerySels({ threads: '.threads', thread: '.thread', body: 'body' });
     this.gmail = new Gmail(this.acctEmail);
-    this.helper = new InboxHelperModule(this);
     this.inboxMenuModule = new InboxMenuModule(this);
     this.inboxNotificationModule = new InboxNotificationModule(this);
-    this.inboxThreadModule = new InboxThreadModule(this, this.inboxNotificationModule);
-    this.inboxThreadsModule = new InboxThreadsModule(this, this.inboxMenuModule, this.inboxNotificationModule, this.inboxThreadModule);
+    this.inboxThreadModule = new InboxThreadModule(this);
+    this.inboxThreadsModule = new InboxThreadsModule(this);
   }
 
   render = async () => {
@@ -87,6 +86,22 @@ export class InboxView extends View {
     BrowserMsg.listen(this.tabId);
     Catch.setHandledInterval(this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded, 30000);
   }
+
+  redirectToUrl = (params: UrlParams) => {
+    const newUrlSearch = Url.create('', params);
+    if (newUrlSearch !== window.location.search) {
+      window.location.search = newUrlSearch;
+    } else {
+      window.location.reload();
+    }
+  }
+
+  displayBlock = (name: string, title: string) => {
+    this.S.cached('threads').css('display', name === 'thread' ? 'none' : 'block');
+    this.S.cached('thread').css('display', name === 'thread' ? 'block' : 'none');
+    Xss.sanitizeRender('h1', `${title}`);
+  }
+
 }
 
 View.run(InboxView);

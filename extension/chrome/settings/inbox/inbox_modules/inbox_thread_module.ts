@@ -2,13 +2,11 @@
 
 'use strict';
 
-import { InboxModule } from './inbox_module.js';
 import { GmailRes, GmailParser } from '../../../../js/common/api/email_provider/gmail/gmail-parser.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 import { ApiErr } from '../../../../js/common/api/error/api-error.js';
 import { InboxView } from '../inbox.js';
-import { InboxNotificationModule } from './inbox_notification_module.js';
 import { Lang } from '../../../../js/common/lang.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { Url, UrlParams } from '../../../../js/common/core/common.js';
@@ -17,26 +15,21 @@ import { Mime } from '../../../../js/common/core/mime.js';
 import { XssSafeFactory, FactoryReplyParams } from '../../../../js/common/xss_safe_factory.js';
 import { BrowserMsg, Bm } from '../../../../js/common/browser/browser-msg.js';
 import { BrowserMsgCommonHandlers } from '../../../../js/common/browser/browser-msg-common-handlers.js';
+import { ViewModule } from '../../../../js/common/view_module.js';
 
-export class InboxThreadModule extends InboxModule {
-  private readonly inboxNotificationModule: InboxNotificationModule;
+export class InboxThreadModule extends ViewModule<InboxView> {
 
   private threadId: string | undefined;
   private threadHasPgpBlock: boolean = false;
 
-  constructor(view: InboxView, inboxNotificationModule: InboxNotificationModule) {
-    super(view);
-    this.inboxNotificationModule = inboxNotificationModule;
-  }
-
   render = async (threadId: string, thread?: GmailRes.GmailThread) => {
     this.threadId = threadId;
-    this.view.helper.displayBlock('thread', 'Loading..');
+    this.view.displayBlock('thread', 'Loading..');
     try {
       thread = thread || await this.view.gmail.threadGet(threadId, 'metadata');
       const subject = GmailParser.findHeader(thread.messages[0], 'subject') || '(no subject)';
       this.updateUrlWithoutRedirecting(`${subject} - FlowCrypt Inbox`, { acctEmail: this.view.acctEmail, threadId });
-      this.view.helper.displayBlock('thread', subject);
+      this.view.displayBlock('thread', subject);
       for (const m of thread.messages) {
         await this.renderMsg(m);
       }
@@ -56,9 +49,9 @@ export class InboxThreadModule extends InboxModule {
       if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender('.thread', `<br>Failed to load thread - network error. ${Ui.retryLink()}`);
       } else if (ApiErr.isAuthPopupNeeded(e)) {
-        this.inboxNotificationModule.renderAndHandleAuthPopupNotification();
+        this.view.inboxNotificationModule.renderAndHandleAuthPopupNotification();
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
-        this.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy);
+        this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy);
       } else {
         Catch.reportErr(e);
         const printable = Xss.escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
@@ -69,7 +62,7 @@ export class InboxThreadModule extends InboxModule {
 
   setHandlers = () => {
     if (this.threadHasPgpBlock) {
-      $(".action_see_original_message").click(this.view.setHandler(() => this.view.helper.redirectToUrl({
+      $(".action_see_original_message").click(this.view.setHandler(() => this.view.redirectToUrl({
         acctEmail: this.view.acctEmail, threadId: this.threadId, showOriginal: !this.view.showOriginal
       })));
     }
@@ -131,9 +124,9 @@ export class InboxThreadModule extends InboxModule {
       if (ApiErr.isNetErr(e)) {
         Xss.sanitizeAppend('.thread', this.wrapMsg(htmlId, `Failed to load a message (network error), skipping. ${Ui.retryLink()}`));
       } else if (ApiErr.isAuthPopupNeeded(e)) {
-        this.inboxNotificationModule.renderAndHandleAuthPopupNotification();
+        this.view.inboxNotificationModule.renderAndHandleAuthPopupNotification();
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
-        this.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy);
+        this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy);
       } else {
         Catch.reportErr(e);
         const printable = Xss.escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
@@ -161,4 +154,5 @@ export class InboxThreadModule extends InboxModule {
   private wrapMsg = (id: string, html: string) => {
     return Ui.e('div', { id, class: 'message line', html });
   }
+
 }

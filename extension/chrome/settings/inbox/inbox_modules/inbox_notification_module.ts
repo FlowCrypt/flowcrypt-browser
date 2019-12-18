@@ -2,14 +2,15 @@
 
 'use strict';
 
-import { InboxModule } from './inbox_module.js';
 import { Bm, BrowserMsg } from '../../../../js/common/browser/browser-msg.js';
 import { Dict } from '../../../../js/common/core/common.js';
 import { Notifications } from '../../../../js/common/notifications.js';
 import { InboxView } from '../inbox.js';
 import { GoogleAuth } from '../../../../js/common/api/google-auth.js';
+import { ViewModule } from '../../../../js/common/view_module.js';
 
-export class InboxNotificationModule extends InboxModule {
+export class InboxNotificationModule extends ViewModule<InboxView> {
+
   private readonly notifications: Notifications;
 
   constructor(view: InboxView) {
@@ -49,4 +50,5 @@ export class InboxNotificationModule extends InboxModule {
   private notificationShowHandler: Bm.AsyncResponselessHandler = async ({ notification, callbacks }: Bm.NotificationShow) => {
     this.showNotification(notification, callbacks);
   }
+
 }

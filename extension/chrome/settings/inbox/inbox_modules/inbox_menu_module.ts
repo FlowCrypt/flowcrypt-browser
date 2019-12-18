@@ -2,7 +2,6 @@
 
 'use strict';
 
-import { InboxModule } from './inbox_module.js';
 import { GmailRes } from '../../../../js/common/api/email_provider/gmail/gmail-parser.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 import { Dict } from '../../../../js/common/core/common.js';
@@ -10,8 +9,11 @@ import { BrowserMsg, Bm } from '../../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { Settings } from '../../../../js/common/settings.js';
 import { Google } from '../../../../js/common/api/google.js';
+import { ViewModule } from '../../../../js/common/view_module.js';
+import { InboxView } from '../inbox.js';
 
-export class InboxMenuModule extends InboxModule {
+export class InboxMenuModule extends ViewModule<InboxView> {
+
   private readonly FOLDERS = ['INBOX', 'STARRED', 'SENT', 'DRAFT', 'TRASH']; // 'UNREAD', 'SPAM'
   private allLabels!: GmailRes.GmailLabels$label[];
 
@@ -122,11 +124,11 @@ export class InboxMenuModule extends InboxModule {
     for (const cls of labelEl.classList) {
       const labelId = (cls.match(/^label_([a-zA-Z0-9_]+)$/) || [])[1];
       if (labelId) {
-        this.view.helper.redirectToUrl({ acctEmail: this.view.acctEmail, labelId });
+        this.view.redirectToUrl({ acctEmail: this.view.acctEmail, labelId });
         return;
       }
     }
-    this.view.helper.redirectToUrl({ acctEmail: this.view.acctEmail });
+    this.view.redirectToUrl({ acctEmail: this.view.acctEmail });
   }
 
   private addBrowserMsgListeners = () => {
@@ -156,4 +158,5 @@ export class InboxMenuModule extends InboxModule {
       $('#cryptup_dialog').remove();
     });
   }
+
 }
