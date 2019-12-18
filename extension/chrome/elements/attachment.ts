@@ -53,7 +53,7 @@ View.run(class AttachmentDownloadView extends View {
 
   }
 
-  async render() {
+  render = async () => {
     try {
       this.att = new Att({ name: this.origNameBasedOnFilename, type: this.type, msgId: this.msgId, id: this.id, url: this.url });
     } catch (e) {
@@ -82,7 +82,7 @@ View.run(class AttachmentDownloadView extends View {
     }
   }
 
-  setHandlers() {
+  setHandlers = () => {
     Ui.event.protect();
   }
 
