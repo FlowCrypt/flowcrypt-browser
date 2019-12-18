@@ -16,6 +16,7 @@
         "autoFix": true
       },
     ],
+    "html.format.enable": false,
     "stylelint.autoFixOnSave": true,
     "files.exclude": {
       "**/node_modules/**": true
