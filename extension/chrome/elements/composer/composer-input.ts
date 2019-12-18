@@ -7,6 +7,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { NewMsgData, RecipientElement } from './composer-types.js';
 import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
 import { SquireEditor, WillPasteEvent } from '../../../types/squire.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 
 export class ComposerInput extends ComposerComponent {
 
@@ -86,36 +87,39 @@ export class ComposerInput extends ComposerComponent {
   }
 
   private initShortcuts = () => {
-    const isMac = /Mac OS X/.test(navigator.userAgent);
-    const ctrlKey = isMac ? 'meta-' : 'ctrl-';
-    const mapKeyToFormat = (tag: string) => {
-      return (self: SquireEditor, event: Event) => {
-        event.preventDefault();
-        if (!this.isRichText()) {
-          return;
-        }
-        const range = self.getSelection();
-        if (self.hasFormat(tag)) {
-          self.changeFormat(null, { tag }, range); // tslint:disable-line:no-null-keyword
-        } else {
-          self.changeFormat({ tag }, null, range); // tslint:disable-line:no-null-keyword
-        }
+    try {
+      const isMac = /Mac OS X/.test(navigator.userAgent);
+      const ctrlKey = isMac ? 'meta-' : 'ctrl-';
+      const mapKeyToFormat = (tag: string) => {
+        return (self: SquireEditor, event: Event) => {
+          event.preventDefault();
+          if (!this.isRichText()) {
+            return;
+          }
+          const range = self.getSelection();
+          if (self.hasFormat(tag)) {
+            self.changeFormat(null, { tag }, range); // tslint:disable-line:no-null-keyword
+          } else {
+            self.changeFormat({ tag }, null, range); // tslint:disable-line:no-null-keyword
+          }
+        };
       };
-    };
-    const noop = (self: SquireEditor, event: Event) => {
-      event.preventDefault();
-    };
-    this.squire.setKeyHandler(ctrlKey + 'b', mapKeyToFormat('B'));
-    this.squire.setKeyHandler(ctrlKey + 'u', mapKeyToFormat('U'));
-    this.squire.setKeyHandler(ctrlKey + 'i', mapKeyToFormat('I'));
-    this.squire.setKeyHandler(ctrlKey + 'shift-7', noop); // default is 'S'
-    this.squire.setKeyHandler(ctrlKey + 'shift-5', noop); // default is 'SUB', { tag: 'SUP' }
-    this.squire.setKeyHandler(ctrlKey + 'shift-6', noop); // default is 'SUP', { tag: 'SUB' }
-    this.squire.setKeyHandler(ctrlKey + 'shift-8', noop); // default is 'makeUnorderedList'
-    this.squire.setKeyHandler(ctrlKey + 'shift-9', noop); // default is 'makeOrderedList'
-    this.squire.setKeyHandler(ctrlKey + '[', noop); // default is 'decreaseQuoteLevel'
-    this.squire.setKeyHandler(ctrlKey + ']', noop); // default is 'increaseQuoteLevel'
-    this.squire.setKeyHandler(ctrlKey + 'd', noop); // default is 'toggleCode'
+      const noop = (self: SquireEditor, event: Event) => {
+        event.preventDefault();
+      };
+      this.squire.setKeyHandler(ctrlKey + 'b', mapKeyToFormat('B'));
+      this.squire.setKeyHandler(ctrlKey + 'u', mapKeyToFormat('U'));
+      this.squire.setKeyHandler(ctrlKey + 'i', mapKeyToFormat('I'));
+      this.squire.setKeyHandler(ctrlKey + 'shift-7', noop); // default is 'S'
+      this.squire.setKeyHandler(ctrlKey + 'shift-5', noop); // default is 'SUB', { tag: 'SUP' }
+      this.squire.setKeyHandler(ctrlKey + 'shift-6', noop); // default is 'SUP', { tag: 'SUB' }
+      this.squire.setKeyHandler(ctrlKey + 'shift-8', noop); // default is 'makeUnorderedList'
+      this.squire.setKeyHandler(ctrlKey + 'shift-9', noop); // default is 'makeOrderedList'
+      this.squire.setKeyHandler(ctrlKey + '[', noop); // default is 'decreaseQuoteLevel'
+      this.squire.setKeyHandler(ctrlKey + ']', noop); // default is 'increaseQuot
+    } catch (e) {
+      Catch.reportErr(e);
+    }
   }
 
   private actionAddIntroHandler = (addIntroBtn: HTMLElement) => {
