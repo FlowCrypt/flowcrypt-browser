@@ -154,7 +154,7 @@ export class PgpMsg {
   static verifyDetached: PgpMsgMethod.VerifyDetached = async ({ plaintext, sigText }) => {
     const message = openpgp.message.fromText(Buf.fromUint8(plaintext).toUtfStr());
     await message.appendSignature(Buf.fromUint8(sigText).toUtfStr());
-    const keys = await PgpMsg.cryptoMsgGetSortedKeys([], message);
+    const keys = await PgpMsg.getSortedKeys([], message);
     return await PgpMsg.verify(message, keys.forVerification, keys.verificationContacts[0]);
   }
 
@@ -166,7 +166,7 @@ export class PgpMsg {
     } catch (formatErr) {
       return { success: false, error: { type: DecryptErrTypes.format, message: String(formatErr) }, longids };
     }
-    const keys = await PgpMsg.cryptoMsgGetSortedKeys(kisWithPp, prepared.message);
+    const keys = await PgpMsg.getSortedKeys(kisWithPp, prepared.message);
     longids.message = keys.encryptedFor;
     longids.matching = keys.prvForDecrypt.map(ki => ki.longid);
     longids.chosen = keys.prvForDecryptDecrypted.map(ki => ki.longid);
@@ -307,7 +307,7 @@ export class PgpMsg {
     }
   }
 
-  private static cryptoMsgGetSortedKeys = async (kiWithPp: PrvKeyInfo[], msg: OpenpgpMsgOrCleartext): Promise<SortedKeysForDecrypt> => {
+  private static getSortedKeys = async (kiWithPp: PrvKeyInfo[], msg: OpenpgpMsgOrCleartext): Promise<SortedKeysForDecrypt> => {
     const keys: SortedKeysForDecrypt = {
       verificationContacts: [],
       forVerification: [],
@@ -323,7 +323,7 @@ export class PgpMsg {
     await PgpMsg.cryptoMsgGetSignedBy(msg, keys);
     if (keys.encryptedFor.length) {
       for (const ki of kiWithPp) {
-        ki.parsed = await PgpKey.read(ki.private);
+        ki.parsed = await PgpKey.read(ki.private); // todo
         // this is inefficient because we are doing unnecessary parsing of all keys here
         // better would be to compare to already stored KeyInfo, however KeyInfo currently only holds primary longid, not longids of subkeys
         // while messages are typically encrypted for subkeys, thus we have to parse the key to get the info
@@ -340,19 +340,12 @@ export class PgpMsg {
       keys.prvForDecrypt = [];
     }
     for (const ki of keys.prvForDecrypt) {
-      const optionalMatchingKeyid = PgpKey.cryptoKeyOptionalMatchingKeyid(ki.parsed!, encryptedForKeyids);
-      const cachedDecryptedKey = Store.decryptedKeyCacheGet(ki.longid);
-      if (
-        cachedDecryptedKey &&
-        (cachedDecryptedKey.isFullyDecrypted() || (optionalMatchingKeyid && cachedDecryptedKey.isPacketDecrypted(optionalMatchingKeyid)))
-      ) {
-        ki.decrypted = cachedDecryptedKey;
+      const matchingKeyids = PgpMsg.matchingKeyids(ki.parsed!, encryptedForKeyids);
+      const cachedKey = Store.decryptedKeyCacheGet(ki.longid);
+      if (cachedKey && PgpMsg.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
+        ki.decrypted = cachedKey;
         keys.prvForDecryptDecrypted.push(ki);
-      } else if (
-        ki.parsed!.isFullyDecrypted() ||
-        (optionalMatchingKeyid && ki.parsed!.isPacketDecrypted(optionalMatchingKeyid)) ||
-        await PgpKey.decrypt(ki.parsed!, ki.passphrase!, optionalMatchingKeyid, 'OK-IF-ALREADY-DECRYPTED') === true
-      ) {
+      } else if (PgpMsg.isKeyDecryptedFor(ki.parsed!, matchingKeyids) || await PgpMsg.decryptKeyFor(ki.parsed!, ki.passphrase!, matchingKeyids) === true) {
         Store.decryptedKeyCacheSet(ki.parsed!);
         ki.decrypted = ki.parsed!;
         keys.prvForDecryptDecrypted.push(ki);
@@ -361,6 +354,36 @@ export class PgpMsg {
       }
     }
     return keys;
+  }
+
+  private static matchingKeyids = (key: OpenPGP.key.Key, encryptedFor: OpenPGP.Keyid[]): OpenPGP.Keyid[] => {
+    const msgKeyidBytesArr = (encryptedFor || []).map(kid => kid.bytes);
+    return key.getKeyIds().filter(kid => msgKeyidBytesArr.includes(kid.bytes));
+  }
+
+  private static decryptKeyFor = async (prv: OpenPGP.key.Key, passphrase: string, matchingKeyIds: OpenPGP.Keyid[]): Promise<boolean> => {
+    if (!matchingKeyIds.length) { // we don't know which keyids match, decrypt all key packets
+      return await PgpKey.decrypt(prv, passphrase, undefined, 'OK-IF-ALREADY-DECRYPTED');
+    }
+    for (const matchingKeyId of matchingKeyIds) { // we know which keyids match, decrypt only matching key packets
+      if (! await PgpKey.decrypt(prv, passphrase, matchingKeyId, 'OK-IF-ALREADY-DECRYPTED')) {
+        return false; // failed to decrypt a particular needed key packet
+      }
+    }
+    return true;
+  }
+
+  private static isKeyDecryptedFor = (prv: OpenPGP.key.Key, msgKeyIds: OpenPGP.Keyid[]): boolean => {
+    if (prv.isFullyDecrypted()) {
+      return true; // primary k + all subkeys decrypted, therefore it must be decrypted for any/every particular keyid
+    }
+    if (prv.isFullyEncrypted()) {
+      return false; // not decrypted at all
+    }
+    if (!msgKeyIds.length) {
+      return false; // we don't know which keyId to decrypt - must decrypt all (but key is only partially decrypted)
+    }
+    return msgKeyIds.filter(kid => prv.isPacketDecrypted(kid)).length === msgKeyIds.length; // test if all needed key packets are decrypted
   }
 
   private static cryptoMsgDecryptCategorizeErr = (decryptErr: any, msgPwd?: string): DecryptError$error => {
