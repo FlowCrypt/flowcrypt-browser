@@ -23,6 +23,7 @@ export class ComposerInput extends ComposerComponent {
     this.handlePasteImages();
     this.initShortcuts();
     this.resizeReplyBox();
+    this.scrollIntoView();
   }
 
   removeRichTextFormatting = () => {
@@ -140,6 +141,23 @@ export class ComposerInput extends ComposerComponent {
     this.squire.addEventListener('input', () => {
       if (this.composer.view.isReplyBox) {
         this.composer.size.resizeComposeBox();
+      }
+    });
+  }
+
+  // https://github.com/FlowCrypt/flowcrypt-browser/issues/2400
+  private scrollIntoView = () => {
+    this.squire.addEventListener('cursor', () => {
+      try {
+        const inputText = this.composer.S.cached('input_text').get(0);
+        const offsetBottom = this.squire.getCursorPosition().bottom - inputText.getBoundingClientRect().top;
+        const editorRootHeight = this.composer.S.cached('input_text').height() || 0;
+        if (offsetBottom > editorRootHeight) {
+          const scrollBy = offsetBottom - editorRootHeight;
+          inputText.scrollBy(0, Math.round(scrollBy));
+        }
+      } catch (e) {
+        Catch.reportErr(e);
       }
     });
   }
