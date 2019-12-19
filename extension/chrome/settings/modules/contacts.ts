@@ -2,7 +2,6 @@
 
 'use strict';
 
-import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
 import { Browser } from '../../../js/common/browser/browser.js';
@@ -108,7 +107,7 @@ View.run(class ContactsView extends View {
   private actionExportAllKeysHandler = () => {
     const allArmoredPublicKeys = this.contacts.map(c => (c.pubkey || '').trim()).join('\n');
     const exportFile = new Att({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: Buf.fromUtfStr(allArmoredPublicKeys) });
-    Browser.saveToDownloads(exportFile, Catch.browser().name === 'firefox' ? $('.line.actions') : undefined);
+    Browser.saveToDownloads(exportFile);
   }
 
   private actionRenderViewPublicKeyHandler = async (viewPubkeyButton: HTMLElement) => {
