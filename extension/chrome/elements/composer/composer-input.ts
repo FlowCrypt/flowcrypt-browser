@@ -68,19 +68,27 @@ export class ComposerInput extends ComposerComponent {
   }
 
   private handlePasteImages = () => {
-    this.squire.addEventListener('drop', (e: DragEvent) => {
-      if (!this.isRichText()) {
-        return;
+    this.squire.addEventListener('drop', (ev: DragEvent) => {
+      try {
+        if (!this.isRichText()) {
+          return;
+        }
+        if (!ev.dataTransfer?.files.length) {
+          return;
+        }
+        const file = ev.dataTransfer.files[0];
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            this.squire.insertImage(reader.result as ArrayBuffer, { name: file.name, title: file.name });
+          } catch (e) {
+            Catch.reportErr(e);
+          }
+        };
+        reader.readAsDataURL(file);
+      } catch (e) {
+        Catch.reportErr(e);
       }
-      if (!e.dataTransfer?.files.length) {
-        return;
-      }
-      const file = e.dataTransfer.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.squire.insertImage(reader.result as ArrayBuffer, { name: file.name, title: file.name });
-      };
-      reader.readAsDataURL(file);
     });
     this.squire.addEventListener('dragover', (e: DragEvent) => {
       e.preventDefault(); // this is needed for 'drop' event to fire
