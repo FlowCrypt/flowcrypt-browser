@@ -35,6 +35,7 @@ View.run(class AttachmentDownloadView extends View {
   private button = $('#download');
   private originalButtonHTML: string | undefined;
   private canClickOnAtt: boolean = false;
+  private downloadInProgress = false;
 
   constructor() {
     super();
@@ -82,7 +83,7 @@ View.run(class AttachmentDownloadView extends View {
   setHandlers = () => {
     Ui.event.protect();
     if (this.canClickOnAtt) {
-      this.button.click(this.setHandlerPrevent('double', this.downloadButtonClickedHandler));
+      this.button.click(this.setHandlerPrevent('double', () => this.downloadButtonClickedHandler()));
     }
   }
 
@@ -161,6 +162,10 @@ View.run(class AttachmentDownloadView extends View {
   }
 
   private downloadButtonClickedHandler = async () => {
+    if (this.downloadInProgress) {
+      return;
+    }
+    this.downloadInProgress = true;
     try {
       this.originalButtonHTML = this.button.html();
       this.button.addClass('visible');
@@ -174,6 +179,8 @@ View.run(class AttachmentDownloadView extends View {
       }
     } catch (e) {
       this.renderErr(e);
+    } finally {
+      this.downloadInProgress = false;
     }
   }
 
