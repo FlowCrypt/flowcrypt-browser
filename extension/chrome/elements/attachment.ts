@@ -173,7 +173,7 @@ View.run(class AttachmentDownloadView extends View {
       await this.recoverMissingAttIdIfNeeded();
       await this.downloadDataIfNeeded();
       if (!this.isEncrypted) {
-        Browser.saveToDownloads(this.att, Catch.browser().name === 'firefox' ? $('body') : undefined);
+        Browser.saveToDownloads(this.att, $('body'));
       } else {
         await this.decryptAndSaveAttToDownloads();
       }
@@ -200,7 +200,7 @@ View.run(class AttachmentDownloadView extends View {
       delete result.message;
       console.info(result);
       $('body.attachment').text(`Error decrypting file (${result.error.type}: ${result.error.message}). Downloading original..`);
-      Browser.saveToDownloads(new Att({ name, type: this.type, data: this.att.getData() }));
+      Browser.saveToDownloads(new Att({ name, type: this.type, data: this.att.getData() })); // won't work in ff, possibly neither on some chrome versions (on webmail)
     }
   }
 

@@ -2,7 +2,6 @@
 
 'use strict';
 
-import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
 import { Browser } from '../../../js/common/browser/browser.js';
@@ -69,12 +68,12 @@ View.run(class MyKeyView extends View {
   }
 
   private downloadPubKeyHandler = () => {
-    Browser.saveToDownloads(Att.keyinfoAsPubkeyAtt(this.primaryKi!), Catch.browser().name === 'firefox' ? $('body') : undefined);
+    Browser.saveToDownloads(Att.keyinfoAsPubkeyAtt(this.primaryKi!));
   }
 
   private downloadPrvKeyHandler = () => {
     const name = `flowcrypt-backup-${this.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}-0x${this.primaryKi!.longid}.asc`;
     const prvKeyAtt = new Att({ data: Buf.fromUtfStr(this.primaryKi!.private), type: 'application/pgp-keys', name });
-    Browser.saveToDownloads(prvKeyAtt, Catch.browser().name === 'firefox' ? $('body') : undefined);
+    Browser.saveToDownloads(prvKeyAtt);
   }
 });
