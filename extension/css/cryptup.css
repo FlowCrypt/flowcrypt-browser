@@ -1827,18 +1827,14 @@ table#compose td.text {
 }
 
 table#compose td.text div#input_text {
-  padding-top: 8px;
-  padding-left: 8px;
+  padding: 8px 8px 16px;
   outline: none;
   border: none !important;
-  -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important;
   box-shadow: none !important;
   height: 100%;
   word-wrap: break-word;
   max-width: 525px;
   overflow-y: auto;
-  padding-bottom: 16px;
   min-height: 140px;
 }
 

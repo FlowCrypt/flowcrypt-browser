@@ -41,16 +41,15 @@ export class Xss {
     });
   }
 
-  public static htmlSanitizeKeepBasicTags = (dirtyHtml: string, removeImgs: boolean = false): string => {
+  public static htmlSanitizeKeepBasicTags = (dirtyHtml: string, imgHandling: 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-LINK'): string => {
     // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
     DOMPurify.removeAllHooks();
     DOMPurify.addHook('afterSanitizeAttributes', node => {
       if ('src' in node) {
-        // replace images with a link that points to that image
         const img: Element = node;
-        if (removeImgs) {
-          img.remove();
-        } else {
+        if (imgHandling === 'IMG-DEL') {
+          img.remove(); // just skip images
+        } else if (imgHandling === 'IMG-TO-LINK') { // replace images with a link that points to that image
           const src = img.getAttribute('src')!;
           const title = img.getAttribute('title');
           img.removeAttribute('src');
@@ -58,7 +57,7 @@ export class Xss {
           a.href = src;
           a.className = 'image_src_link';
           a.target = '_blank';
-          a.innerText = title || 'show image';
+          a.innerText = (title || 'show image') + (src.startsWith('data:image/') ? '' : ' (remote)');
           const heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'};max-width:98%;`;
           a.setAttribute('style', `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; ${heightWidth}`);
           img.outerHTML = a.outerHTML; // xss-safe-value - "a" was build using dom node api
@@ -78,8 +77,8 @@ export class Xss {
     return cleanHtml;
   }
 
-  public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string, removeImgs: boolean = false): string => {
-    let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, removeImgs);
+  public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string): string => {
+    let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, 'IMG-DEL');
     const random = Str.sloppyRandom(5);
     const br = `CU_BR_${random}`;
     const blockStart = `CU_BS_${random}`;
@@ -118,10 +117,10 @@ export class Xss {
     return str.replace(/&nbsp;/g, ' ').replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
   }
 
-  private static sanitizeHrefRegexp = () => { // allow href links that have same origin as our extension + cid
+  private static sanitizeHrefRegexp = () => { // allow href links that have same origin as our extension + cid + inline image
     if (typeof Xss.HREF_REGEX_CACHE === 'undefined') {
       if (window?.location?.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
-        Xss.HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|${Str.regexEscape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
+        Xss.HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|data:image/|${Str.regexEscape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
       } else {
         Xss.HREF_REGEX_CACHE = /^(?:(http|https):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
       }

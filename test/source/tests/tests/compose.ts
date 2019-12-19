@@ -263,8 +263,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await passPhraseFrame.waitAndClick('@action-cancel-pass-phrase-entry');
       await inboxPage.waitTillGone('@dialog');
       await replyFrame.waitAll(['@action-expand-quoted-text']);
+      const inputBody = await replyFrame.read('@input-body');
       // tslint:disable: no-unused-expression
-      expect(await replyFrame.read('@input-body')).to.be.empty;
+      expect(inputBody.trim()).to.be.empty;
       await baseQuotingTest(replyFrame, [
         'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
         '> (Skipping previous message quote)'

@@ -217,7 +217,7 @@ export class ComposerRender extends ComposerComponent {
         }
       }
     }));
-    this.composer.S.cached('input_text').keyup(() => this.composer.S.cached('send_btn_note').text(''));
+    this.composer.input.squire.addEventListener('keyup', () => this.composer.S.cached('send_btn_note').text(''));
     this.composer.S.cached('input_addresses_container_inner').click(this.view.setHandler(() => {
       if (!this.composer.S.cached('input_to').is(':focus')) {
         this.composer.errs.debug(`input_addresses_container_inner.click -> calling input_to.focus() when input_to.val(${this.composer.S.cached('input_to').val()})`);
