@@ -1,6 +1,6 @@
 <div>
 
-version 7.5.1 on Dec 19, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/382?closed=1" target="_blank">Code maintenance III</a>
+version 7.5.2 on Dec 19, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/382?closed=1" target="_blank">Code maintenance III</a>
 
 version 7.5.0 on Dec 19, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/380?closed=1" target="_blank">Code maintenance II</a>
 
