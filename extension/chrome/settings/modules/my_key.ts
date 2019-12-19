@@ -91,6 +91,12 @@ View.run(class MyKeyView extends View {
     }
     $('.enter_pp').hide();
     $('#input_passphrase').val('');
+    let revokeConfirmMsg = `Revocation cert is used when you want to revoke your Public Key (meaning you are asking others to stop using it).\n\n`;
+    revokeConfirmMsg += `You can save it do your hard drive, and use it later in case you ever need it.\n\n`;
+    revokeConfirmMsg += `Would you like to generate and save a revocation cert now?`;
+    if (! await Ui.modal.confirm(revokeConfirmMsg)) {
+      return;
+    }
     const revokedArmored = await PgpKey.revoke(prv);
     if (!revokedArmored) {
       await Ui.modal.error(`Could not produce revocation cert (empty)`);
