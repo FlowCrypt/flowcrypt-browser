@@ -705,26 +705,11 @@ declare namespace OpenPGP {
     }
 
     enum reasonForRevocation {
-      /**
-       * No reason specified (key revocations or cert revocations)
-       */
-      no_reason = 0,
-      /**
-       * Key is superseded (key revocations)
-       */
-      key_superseded = 1,
-      /**
-       * Key material has been comPromise<any>d (key revocations)
-       */
-      key_comPromised = 2,
-      /**
-       * Key is retired and no longer used (key revocations)
-       */
-      key_retired = 3,
-      /**
-       * User ID information is no longer valid (cert revocations)
-       */
-      userid_invalid = 32,
+      no_reason = 0, // No reason specified (key revocations or cert revocations)
+      key_superseded = 1, // Key is superseded (key revocations)
+      key_compromised = 2, // Key material has been compromised (key revocations)
+      key_retired = 3, // Key is retired and no longer used (key revocations)
+      userid_invalid = 32, // User ID information is no longer valid (cert revocations)
     }
 
     export type compressionNames = 'uncompressed' | 'zip' | 'zlib' | 'bzip2';
@@ -841,7 +826,7 @@ declare namespace OpenPGP {
       update(key: Key): void;
       verifyPrimaryKey(): Promise<enums.keyStatus>;
       isRevoked(): Promise<boolean>;
-      revoke(easonForRevocation: revoke_reasonForRevocation, date?: Date): Promise<Key>;
+      revoke(reason: { flag?: enums.reasonForRevocation; string?: string; }, date?: Date): Promise<Key>;
       getRevocationCertificate(): Promise<Stream<string> | string | undefined>;
       getEncryptionKey(keyid?: Keyid | null, date?: Date, userId?: UserId | null): Promise<packet.PublicSubkey | packet.SecretSubkey | packet.SecretKey | packet.PublicKey | null>;
       getSigningKey(): Promise<packet.PublicSubkey | packet.SecretSubkey | packet.SecretKey | packet.PublicKey | null>;
@@ -873,11 +858,6 @@ declare namespace OpenPGP {
       getCreationTime(): Date;
       getAlgorithmInfo(): AlgorithmInfo;
       getKeyId(): Keyid;
-    }
-
-    export interface revoke_reasonForRevocation {
-      flag?: enums.reasonForRevocation;
-      string?: string;
     }
 
     export interface User {
