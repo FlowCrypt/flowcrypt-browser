@@ -138,7 +138,7 @@ export class ComposerInput extends ComposerComponent {
   }
 
   private resizeReplyBox = () => {
-    this.squire.addEventListener('input', () => {
+    this.squire.addEventListener('cursor', () => {
       if (this.composer.view.isReplyBox) {
         this.composer.size.resizeComposeBox();
       }
