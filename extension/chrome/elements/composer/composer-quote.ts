@@ -87,7 +87,7 @@ export class ComposerQuote extends ComposerComponent {
   }
 
   private createFooterHTML = (footer: string) => {
-    const sanitizedPlainFooter = Xss.htmlSanitizeAndStripAllTags(footer, '\n', true); // true: strip away images because not supported yet
+    const sanitizedPlainFooter = Xss.htmlSanitizeAndStripAllTags(footer, '\n');
     const sanitizedHtmlFooter = sanitizedPlainFooter.replace(/\n/g, '<br>');
     const footerFirstLine = sanitizedPlainFooter.split('\n')[0];
     if (!footerFirstLine) {

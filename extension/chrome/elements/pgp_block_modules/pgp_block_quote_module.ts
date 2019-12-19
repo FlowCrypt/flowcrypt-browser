@@ -13,7 +13,8 @@ export class PgpBlockViewQuoteModule {
   private appendCollapsedQuotedContentButton = (message: string, isHtml: boolean = false) => {
     const pgpBlk = $("#pgp_block");
     pgpBlk.append('<div id="action_show_quoted_content" data-test="action-show-quoted-content" class="three_dots"><img src="/img/svgs/three-dots.svg" /></div>'); // xss-direct
-    pgpBlk.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(isHtml ? message : Xss.escapeTextAsRenderableHtml(message))}</div>`); // xss-sanitized
+    const messageHtml = isHtml ? message : Xss.escapeTextAsRenderableHtml(message);
+    pgpBlk.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(messageHtml, 'IMG-TO-LINK')}</div>`); // xss-sanitized
     pgpBlk.find('#action_show_quoted_content').click(this.view.setHandler(() => {
       $(".quoted_content").css('display', $(".quoted_content").css('display') === 'none' ? 'block' : 'none');
       this.view.renderModule.resizePgpBlockFrame();

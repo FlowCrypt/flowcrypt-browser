@@ -30,7 +30,7 @@ export class ComposerInput extends ComposerComponent {
   }
 
   public inputTextHtmlSetSafely = (html: string) => {
-    Xss.sanitizeRender(this.composer.S.cached('input_text'), Xss.htmlSanitizeKeepBasicTags(html));
+    Xss.sanitizeRender(this.composer.S.cached('input_text'), Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP'));
   }
 
   public extract = (type: 'text' | 'html', elSel: 'input_text' | 'input_intro', flag?: 'SKIP-ADDONS') => {
@@ -39,7 +39,7 @@ export class ComposerInput extends ComposerComponent {
       html += `<br /><br />${this.composer.quote.expandingHTMLPart}`;
     }
     if (type === 'html') {
-      return Xss.htmlSanitizeKeepBasicTags(html);
+      return Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP');
     }
     return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(html, '\n')).trim();
   }
@@ -60,10 +60,11 @@ export class ComposerInput extends ComposerComponent {
 
   private handlePaste = () => {
     this.squire.addEventListener('willPaste', (e: WillPasteEvent) => {
-      const plainTextDiv = document.createElement('div');
-      plainTextDiv.appendChild(e.fragment);
-      plainTextDiv.innerHTML = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(plainTextDiv.innerHTML) : Xss.htmlSanitizeAndStripAllTags(plainTextDiv.innerHTML, '<br>'); // xss-sanitized
-      e.fragment.appendChild(plainTextDiv);
+      const div = document.createElement('div');
+      div.appendChild(e.fragment);
+      const html = div.innerHTML;
+      div.innerHTML = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP') : Xss.htmlSanitizeAndStripAllTags(html, '<br>'); // xss-sanitized
+      e.fragment.appendChild(div);
     });
   }
 

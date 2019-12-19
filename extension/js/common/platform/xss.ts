@@ -41,16 +41,15 @@ export class Xss {
     });
   }
 
-  public static htmlSanitizeKeepBasicTags = (dirtyHtml: string, removeImgs: boolean = false): string => {
+  public static htmlSanitizeKeepBasicTags = (dirtyHtml: string, imgHandling: 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-LINK'): string => {
     // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
     DOMPurify.removeAllHooks();
     DOMPurify.addHook('afterSanitizeAttributes', node => {
       if ('src' in node) {
-        // replace images with a link that points to that image
         const img: Element = node;
-        if (removeImgs) {
-          img.remove();
-        } else {
+        if (imgHandling === 'IMG-DEL') {
+          img.remove(); // just skip images
+        } else if (imgHandling === 'IMG-TO-LINK') { // replace images with a link that points to that image
           const src = img.getAttribute('src')!;
           const title = img.getAttribute('title');
           img.removeAttribute('src');
@@ -78,8 +77,8 @@ export class Xss {
     return cleanHtml;
   }
 
-  public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string, removeImgs: boolean = false): string => {
-    let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, removeImgs);
+  public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string): string => {
+    let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, 'IMG-DEL');
     const random = Str.sloppyRandom(5);
     const br = `CU_BR_${random}`;
     const blockStart = `CU_BS_${random}`;
