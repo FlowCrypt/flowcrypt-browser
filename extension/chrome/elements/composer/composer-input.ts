@@ -101,15 +101,19 @@ export class ComposerInput extends ComposerComponent {
       const ctrlKey = isMac ? 'meta-' : 'ctrl-';
       const mapKeyToFormat = (tag: string) => {
         return (self: SquireEditor, event: Event) => {
-          event.preventDefault();
-          if (!this.isRichText()) {
-            return;
-          }
-          const range = self.getSelection();
-          if (self.hasFormat(tag)) {
-            self.changeFormat(null, { tag }, range); // tslint:disable-line:no-null-keyword
-          } else {
-            self.changeFormat({ tag }, null, range); // tslint:disable-line:no-null-keyword
+          try {
+            event.preventDefault();
+            if (!this.isRichText()) {
+              return;
+            }
+            const range = self.getSelection();
+            if (self.hasFormat(tag)) {
+              self.changeFormat(null, { tag }, range); // tslint:disable-line:no-null-keyword
+            } else {
+              self.changeFormat({ tag }, null, range); // tslint:disable-line:no-null-keyword
+            }
+          } catch (e) {
+            Catch.reportErr(e);
           }
         };
       };
