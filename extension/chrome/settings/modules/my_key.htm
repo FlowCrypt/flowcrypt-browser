@@ -36,8 +36,17 @@
     <div class="line-separator"></div>
     <div class="line">
       <b class="key_type">Private Key</b> for <span class="email"></span>&nbsp;&nbsp;<a href="#"
-        class="action_view_update">update</a>
+        class="action_view_update">update</a>&nbsp;&nbsp;<a href="#"
+        class="action_download_revocation_cert">revocation certificate</a>
     </div>
+    <div class="line enter_pp" style="display: none;">
+      <input id="input_passphrase" type="text" placeholder="Enter your pass phrase" />
+    </div>
+    <div class="line enter_pp" style="display: none;">
+      <button class="button green action_continue_download">download</button>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <button class="button gray action_cancel_download_cert">cancel</button>
+      </div>
     <div class="line"><span class="red_label">Never send this to anyone!</span></div>
     <div class="line">
       <a href="#" class="action_copy_prv bad">Copy private key to clipboard</a>

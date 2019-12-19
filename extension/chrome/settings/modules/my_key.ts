@@ -15,6 +15,8 @@ import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 
 declare const ClipboardJS: any;
 
@@ -23,7 +25,7 @@ View.run(class MyKeyView extends View {
   private readonly longid: string;
   private readonly myKeyUserIdsUrl: string;
   private readonly myKeyUpdateUrl: string;
-  private primaryKi: KeyInfo | undefined;
+  private primaryKi!: KeyInfo;
 
   constructor() {
     super();
@@ -44,12 +46,21 @@ View.run(class MyKeyView extends View {
     $('.email').text(this.acctEmail);
     $('.key_fingerprint').text(await PgpKey.fingerprint(prv, 'spaced') || '(unknown fingerprint)');
     await this.setPubkeyContainer();
+    await initPassphraseToggle(['input_passphrase']);
   }
 
   setHandlers = () => {
-    $('.action_download_pubkey').click(this.setHandlerPrevent('double', () => this.downloadPubKeyHandler()));
-    $('.action_download_prv').click(this.setHandlerPrevent('double', () => this.downloadPrvKeyHandler()));
-    const clipboardOpts = { text: (trigger: HTMLElement) => trigger.className.includes('action_copy_pubkey') ? this.primaryKi!.public : this.primaryKi!.private };
+    $('.action_download_revocation_cert').click(this.setHandlerPrevent('double', () => this.downloadRevocationCert()));
+    $('.action_continue_download').click(this.setHandlerPrevent('double', () => this.downloadRevocationCert(String($('#input_passphrase').val()))));
+    $('#input_passphrase').on('keydown', this.setHandler((el, ev) => {
+      if (ev.which === 13) {
+        $('.action_continue_download').click();
+      }
+    }));
+    $('.action_cancel_download_cert').click(this.setHandler(() => { $('.enter_pp').hide(); }));
+    $('.action_download_pubkey').click(this.setHandlerPrevent('double', this.downloadPubKeyHandler));
+    $('.action_download_prv').click(this.setHandlerPrevent('double', this.downloadPrvKeyHandler));
+    const clipboardOpts = { text: (trigger: HTMLElement) => trigger.className.includes('action_copy_pubkey') ? this.primaryKi.public : this.primaryKi.private };
     new ClipboardJS('.action_copy_pubkey, .action_copy_prv', clipboardOpts); // tslint:disable-line:no-unused-expression no-unsafe-any
   }
 
@@ -57,7 +68,7 @@ View.run(class MyKeyView extends View {
     try {
       const result = await Attester.lookupEmail(this.acctEmail);
       const url = Backend.url('pubkey', this.acctEmail);
-      if (result.pubkey && await PgpKey.longid(result.pubkey) === this.primaryKi!.longid) {
+      if (result.pubkey && await PgpKey.longid(result.pubkey) === this.primaryKi.longid) {
         $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('display', '');
       } else {
         $('.pubkey_link_container').remove();
@@ -68,13 +79,35 @@ View.run(class MyKeyView extends View {
     }
   }
 
+  private downloadRevocationCert = async (enteredPP?: string) => {
+    const prv = await PgpKey.read(this.primaryKi.private);
+    if (!prv.isFullyDecrypted()) {
+      const passphrase = await Store.passphraseGet(this.acctEmail, this.primaryKi.longid) || enteredPP;
+      if (passphrase) {
+        if (! await PgpKey.decrypt(prv, passphrase) && enteredPP) {
+          await Ui.modal.error('Pass phrase did not match, please try again.');
+          return;
+        }
+      } else {
+        $('.enter_pp').show();
+        return;
+      }
+    }
+    $('.enter_pp').hide();
+    $('#input_passphrase').val('');
+    const revokedArmored = await PgpKey.revoke(prv);
+    const name = `${this.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}-0x${this.primaryKi.longid}.revoked.asc`;
+    const prvKeyAtt = new Att({ data: Buf.fromUtfStr(revokedArmored!), type: 'application/pgp-keys', name });
+    Browser.saveToDownloads(prvKeyAtt, Catch.browser().name === 'firefox' ? $('body') : undefined);
+  }
+
   private downloadPubKeyHandler = () => {
-    Browser.saveToDownloads(Att.keyinfoAsPubkeyAtt(this.primaryKi!), Catch.browser().name === 'firefox' ? $('body') : undefined);
+    Browser.saveToDownloads(Att.keyinfoAsPubkeyAtt(this.primaryKi), Catch.browser().name === 'firefox' ? $('body') : undefined);
   }
 
   private downloadPrvKeyHandler = () => {
-    const name = `flowcrypt-backup-${this.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}-0x${this.primaryKi!.longid}.asc`;
-    const prvKeyAtt = new Att({ data: Buf.fromUtfStr(this.primaryKi!.private), type: 'application/pgp-keys', name });
+    const name = `flowcrypt-backup-${this.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}-0x${this.primaryKi.longid}.asc`;
+    const prvKeyAtt = new Att({ data: Buf.fromUtfStr(this.primaryKi.private), type: 'application/pgp-keys', name });
     Browser.saveToDownloads(prvKeyAtt, Catch.browser().name === 'firefox' ? $('body') : undefined);
   }
 });
