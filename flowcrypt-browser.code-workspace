@@ -8,13 +8,9 @@
     "tslint.configFile": "conf/tslint.yaml",
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
-    "eslint.autoFixOnSave": true,
     "eslint.validate": [
       "javascript",
-      {
-        "language": "typescript",
-        "autoFix": true
-      },
+      "typescript",
     ],
     "html.format.enable": false,
     "stylelint.autoFixOnSave": true,
