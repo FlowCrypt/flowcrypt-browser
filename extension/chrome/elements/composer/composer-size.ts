@@ -51,6 +51,7 @@ export class ComposerSize extends ComposerComponent {
 
   resizeComposeBox = (addExtra: number = 0) => {
     if (this.view.isReplyBox) {
+      console.log('evaluating');
       this.composer.S.cached('input_text').css('max-width', (this.composer.S.cached('body').width()! - 20) + 'px'); // body should always be present
       let minHeight = 0;
       let currentHeight = 0;
