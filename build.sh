@@ -15,6 +15,7 @@ fi
 
 if [[ "$#" == 1 ]] && [[ "$1" == "--incremental" ]]; then
 
+  mkdir -p ./build
   rm -rf ./build/firefox-consumer
   rm -rf ./build/chrome-consumer
   rm -rf ./build/chrome-consumer-mock
@@ -25,6 +26,7 @@ if [[ "$#" == 1 ]] && [[ "$1" == "--incremental" ]]; then
   # build concurrently - using standard typescript compiler with --incremental flag
   npx tsc --project ./tsconfig.json --incremental --tsBuildInfoFile ./build/tsconfig.tsbuildinfo & pids+=($!)
   npx tsc --project ./conf/tsconfig.content_scripts.json --incremental --tsBuildInfoFile ./build/tsconfig.content_scripts.tsbuildinfo & pids+=($!)
+  [[ -d ./build/tooling ]] || npx tsc --project ./conf/tsconfig.tooling.json & pids+=($!)  # only build tooling if missing
   for pid in "${pids[@]}"; do wait "$pid" || exit 1; done
 
 else
