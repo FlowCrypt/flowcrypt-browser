@@ -20,10 +20,15 @@ export class ComposerInput extends ComposerComponent {
     this.initShortcuts();
     this.resizeReplyBox();
     this.scrollIntoView();
+    this.squire.setConfig({ richText: this.isRichText() });
   }
 
+  addRichTextFormatting = () => {
+    this.squire.setConfig({ richText: true });
+  }
   removeRichTextFormatting = () => {
     this.squire.setHTML(Xss.htmlSanitizeAndStripAllTags(this.squire.getHTML(), '<br>'));
+    this.squire.setConfig({ richText: false });
   }
 
   public inputTextHtmlSetSafely = (html: string) => {

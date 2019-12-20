@@ -1,5 +1,9 @@
 /* Copyright © 2011-2015 by Neil Jenkins. MIT Licensed. */
 
+// ! CUSTOM CHANGES, please apply the same changes when upgrading the library !
+//
+// 1. handleEnter(): Wrap addLinks( range.startContainer, root, self ) into if (self._config.richText) { }
+
 ( function ( doc, undefined ) {
 
 "use strict";
@@ -1434,7 +1438,9 @@ var handleEnter = function ( self, shiftKey, range ) {
     // Remove any zws so we don't think there's content in an empty
     // block.
     self._recordUndoState( range );
-    addLinks( range.startContainer, root, self );
+    if (self._config.richText) {
+        addLinks( range.startContainer, root, self );
+    }
     self._removeZWS();
     self._getRangeAndRemoveBookmark( range );
 
