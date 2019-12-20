@@ -128,9 +128,9 @@ export class ComposerErrs extends ComposerComponent {
     if (this.composer.quote.getFooterHTML) {
       plainFooter = Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.composer.quote.getFooterHTML, '\n')).trim();
     }
-    if ((!plaintext || plaintext === plainFooter) && ! await Ui.modal.confirm('Send empty message?')) {
+    if (!subject && ! await Ui.modal.confirm('Send without a subject?')) {
       throw new ComposerResetBtnTrigger();
-    } else if (!subject && ! await Ui.modal.confirm('Send without a subject?')) {
+    } else if ((!plaintext || plaintext === plainFooter) && ! await Ui.modal.confirm('Send empty message?')) {
       throw new ComposerResetBtnTrigger();
     }
   }
