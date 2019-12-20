@@ -186,7 +186,8 @@ export class Catch {
     };
   }
 
-  public static browser = () => { // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
+  public static browser = (): { name: 'firefox' | 'ie' | 'chrome' | 'opera' | 'safari' | 'unknown', v: number | undefined } => {
+    // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
     if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
       return { name: 'firefox', v: Number(RegExp.$1) };
     } else if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)) {
