@@ -57,11 +57,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         atts = pubkeys.length === 1 ? [] : [new Att({ data: Buf.fromUtfStr(encrypted.data), name: 'encrypted.asc' })];
       }
       return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, encryptedBody, atts, this.composer.view.threadId);
+    } else if (newMsg.pwd) { // don't allow rich-text pwd msg yet
+      this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-richText-sending-option'), 'richText', false); // do not use rich text
+      throw new ComposerUserError('Rich text is not yet supported for password encrypted messages, please retry (formatting will be removed).');
     } else { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
-      if (newMsg.pwd) {
-        this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-richText-sending-option'), 'richText', false); // do not use rich text
-        throw new ComposerUserError('Rich text is not yet supported for password encrypted messages, please retry (formatting will be removed).');
-      }
       const plainAtts = await this.composer.atts.attach.collectAtts();
       const pgpMimeToEncrypt = await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject }, plainAtts);
       const encrypted = await this.encryptData(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubkeys, signingPrv);
