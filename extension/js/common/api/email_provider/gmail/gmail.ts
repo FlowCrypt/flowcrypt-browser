@@ -86,11 +86,11 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
 
   msgSend = async (message: SendableMsg, progressCb?: ProgressCb): Promise<GmailRes.GmailMsgSend> => {
     message.headers.From = message.from;
-    for (const key of Object.keys(message.recipients)) {
-      const sendingType = key as RecipientType;
-      if (message.recipients[sendingType] && message.recipients[sendingType]!.length) {
+    for (const recipientTypeStr of Object.keys(message.recipients)) {
+      const recipientType = recipientTypeStr as RecipientType;
+      if (message.recipients[recipientType] && message.recipients[recipientType]!.length) {
         // todo - properly escape/encode this header using emailjs
-        message.headers[sendingType[0].toUpperCase() + sendingType.slice(1)] = message.recipients[sendingType]!.map(h => h.replace(/[,]/g, '')).join(',');
+        message.headers[recipientType[0].toUpperCase() + recipientType.slice(1)] = message.recipients[recipientType]!.map(h => h.replace(/[,]/g, '')).join(',');
       }
     }
     message.headers.Subject = message.subject;
