@@ -24,6 +24,10 @@ export class ComposerQuote extends ComposerComponent {
 
   private footerHTML: string | undefined;
 
+  get getFooterHTML(): string | undefined {
+    return this.footerHTML;
+  }
+
   get expandingHTMLPart(): string | undefined {
     return this.msgExpandingHTMLPart;
   }

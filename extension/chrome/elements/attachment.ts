@@ -67,6 +67,8 @@ View.run(class AttachmentDownloadView extends View {
     }
     $('#type').text(this.type || 'unknown type');
     $('#name').text(this.name || 'noname');
+    $('#header > span').text(`${this.isEncrypted ? 'ENCRYPTED\n' : 'PLAIN\n'} FILE`);
+    $('#name').attr('title', this.name || '');
     $('img#file-format').attr('src', this.getFileIconSrc());
     if (!this.size && this.url) { // download url of a file that has an unknown size
       this.getUrlFileSize(this.url!).then(fileSize => {
@@ -87,6 +89,14 @@ View.run(class AttachmentDownloadView extends View {
     if (this.canClickOnAtt) {
       this.button.click(this.setHandlerPrevent('double', () => this.downloadButtonClickedHandler()));
     }
+    $('.attachment').mouseenter(this.setHandler((el) => {
+      $('#header').hide();
+      this.button.show();
+    }));
+    $('.attachment').mouseleave(this.setHandler((el) => {
+      $('#header').show();
+      this.button.hide();
+    }));
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
       if (!entered) {
         this.downloadInProgress = false;

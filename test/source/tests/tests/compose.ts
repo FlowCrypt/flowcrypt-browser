@@ -446,9 +446,22 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
 
     ava.default('[compose[global:compatibility]] - standalone - new message, open footer', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Test Footer New Message', {}, 'new');
-      await composePage.waitAndClick('@action-expand-quoted-text');
-      expect(await composePage.read('@input-body')).to.include('The best footer ever!');
+      await ComposePageRecipe.fillRecipients(composePage, { to: 'human@flowcrypt.com' }, 'new');
+      await composePage.waitAndClick(`@action-send`);
+      expect(await composePage.read('#swal2-content')).to.include('Send without a subject?');
+      await composePage.waitAndClick('.swal2-cancel');
+      await composePage.waitAndType('@input-subject', 'Testing new message with footer', { delay: 1 });
+      await composePage.waitAndClick(`@action-send`);
+      expect(await composePage.read('#swal2-content')).to.include('Send empty message?');
+      await composePage.waitAndClick('.swal2-cancel');
+      await composePage.waitAndClick('@action-expand-quoted-text', { delay: 1 });
+      const footer = await composePage.read('@input-body');
+      expect(footer).to.include('The best footer ever!');
+      await composePage.waitAndClick(`@action-send`);
+      expect(await composePage.read('#swal2-content')).to.include('Send empty message?');
+      await composePage.waitAndClick('.swal2-cancel');
+      await composePage.waitAndType('@input-body', 'New message\n' + footer, { delay: 1 });
+      await ComposePageRecipe.sendAndClose(composePage);
     }));
 
     ava.default('[compose[global:compatibility]] - standalone - new message, Footer Mock Test', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
