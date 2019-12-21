@@ -105,7 +105,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
         if (r) {
           r += '<br><br>';
         }
-        if (block.type === 'encryptedAtt') {
+        if (['encryptedAtt', 'plainAtt'].includes(block.type)) {
           renderedAtts += XssSafeFactory.renderableMsgBlock(this.view.factory, block, message.id, from,
             this.view.storage.sendAs && !!this.view.storage.sendAs[from]);
         } else if (this.view.showOriginal) {

@@ -2268,12 +2268,11 @@ body.attachment #download {
   position: absolute;
   width: 100px;
   z-index: 1;
-  background-color: white;
   height: 80px;
   left: 68px;
   opacity: 1;
   color: #444;
-  visibility: hidden;
+  display: none;
 }
 
 body.attachment #download:hover,
@@ -2317,6 +2316,10 @@ body.attachment #header {
   line-height: 1.5;
   top: 15px;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 45px;
 }
 
 body.attachment #type {
