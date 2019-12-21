@@ -2,6 +2,8 @@
 
 'use strict';
 
+import { Buf } from '../core/buf';
+
 /**
  * Functions which must be written differently to run in NodeJS versus in web browsers.
  *
@@ -31,4 +33,9 @@ export const moveElementInArray = <T>(arr: Array<T>, oldIndex: number, newIndex:
   }
   arr.splice(newIndex, 0, arr.splice(oldIndex, 1)[0]);
   return arr;
+};
+
+export const iso2022jpToUtf = (content: Buf) => {
+  const decoder = new TextDecoder();
+  return decoder.decode(content);
 };

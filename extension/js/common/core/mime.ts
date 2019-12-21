@@ -11,6 +11,7 @@ import { PgpArmor } from './pgp-armor.js';
 import { MsgBlock } from './msg-block.js';
 import { Att } from './att.js';
 import { MsgBlockParser } from './msg-block-parser.js';
+import { iso2022jpToUtf } from '../platform/util.js';
 
 const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
 const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name
@@ -351,6 +352,9 @@ export class Mime {
     }
     if (node.charset && Iso88592.labels.includes(node.charset)) {
       return Iso88592.decode(node.rawContent!); // tslint:disable-line:no-unsafe-any
+    }
+    if (node.headers['content-type'] && node.headers['content-type'][0] && node.headers['content-type'][0].initial.includes('charset=ISO-2022-JP')) {
+      return iso2022jpToUtf(Buf.fromUint8(node.content));
     }
     return Buf.fromRawBytesStr(node.rawContent!).toUtfStr();
   }
