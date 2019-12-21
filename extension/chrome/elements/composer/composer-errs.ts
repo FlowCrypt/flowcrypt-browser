@@ -12,6 +12,7 @@ import { Settings } from '../../../js/common/settings.js';
 import { BrowserEventErrHandler, Ui } from '../../../js/common/browser/ui.js';
 import { BrowserExtension } from '../../../js/common/browser/browser-extension.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerUserError extends Error { }
 export class ComposerNotReadyError extends ComposerUserError { }
@@ -123,7 +124,13 @@ export class ComposerErrs extends ComposerComponent {
   }
 
   public throwIfFormValsInvalid = async ({ subject, plaintext }: { subject: string, plaintext: string }) => {
-    if (!((plaintext !== '' || await Ui.modal.confirm('Send empty message?')) && (subject !== '' || await Ui.modal.confirm('Send without a subject?')))) {
+    let plainFooter: string | undefined;
+    if (this.composer.quote.getFooterHTML) {
+      plainFooter = Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.composer.quote.getFooterHTML, '\n')).trim();
+    }
+    if (!subject && ! await Ui.modal.confirm('Send without a subject?')) {
+      throw new ComposerResetBtnTrigger();
+    } else if ((!plaintext || plaintext === plainFooter) && ! await Ui.modal.confirm('Send empty message?')) {
       throw new ComposerResetBtnTrigger();
     }
   }
