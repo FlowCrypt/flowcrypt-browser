@@ -57,8 +57,14 @@ export class EmailProviderApi extends Api {
   }
 
   public createMsgObj = async (
-    from: string = '', recipients: Recipients, subject: string = '', body: SendableMsgBody, atts?: Att[], threadRef?: string,
-    mimeRootType?: string, sign?: (content: string) => Promise<string>,
+    from: string = '',
+    recipients: Recipients,
+    subject: string = '',
+    body: SendableMsgBody,
+    atts?: Att[],
+    threadRef?: string,
+    mimeRootType?: string,
+    sign?: (content: string) => Promise<string>,
   ): Promise<SendableMsg> => {
     const allEmails = [...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []];
     const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
