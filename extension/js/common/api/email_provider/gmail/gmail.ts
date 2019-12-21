@@ -94,7 +94,12 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       }
     }
     message.headers.Subject = message.subject;
-    const mimeMsg = await Mime.encode(message.body, message.headers, message.atts, message.mimeRootType, message.sign);
+    let mimeMsg: string;
+    if (message.sign) {
+      mimeMsg = await Mime.encodePgpMimeSigned(message.body, message.headers, message.atts, message.sign);
+    } else {
+      mimeMsg = await Mime.encode(message.body, message.headers, message.atts, message.type);
+    }
     const request = Google.encodeAsMultipartRelated({ 'application/json; charset=UTF-8': JSON.stringify({ threadId: message.thread }), 'message/rfc822': mimeMsg });
     return await Google.gmailCall<GmailRes.GmailMsgSend>(this.acctEmail, 'POST', 'messages/send', request.body, { upload: progressCb || Value.noop }, request.contentType);
   }

@@ -15,6 +15,7 @@ import { Contact } from '../../core/pgp-key.js';
 
 export type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
 export type ProviderContactsQuery = { substring: string };
+export type SendableMsgType = 'pgpMimeEncrypted' | undefined;
 export type SendableMsg = {
   headers: Dict<string>;
   from: string;
@@ -23,7 +24,7 @@ export type SendableMsg = {
   body: SendableMsgBody;
   atts: Att[];
   thread?: string;
-  mimeRootType: string,
+  type: SendableMsgType,
   sign?: (signable: string) => Promise<string>,
 };
 export type ReplyParams = {
@@ -44,8 +45,8 @@ export interface EmailProviderInterface {
   draftDelete(id: string): Promise<GmailRes.GmailDraftDelete>;
   msgSend(message: SendableMsg, progressCb?: ProgressCb): Promise<GmailRes.GmailMsgSend>;
   guessContactsFromSentEmails(userQuery: string, knownContacts: Contact[], chunkedCb: ChunkedCb): Promise<void>;
-  createMsgObj(from: string, recipients: Recipients, subject: string, body: SendableMsgBody, atts?: Att[], threadRef?: string,
-    mimeRootType?: string, sign?: (content: string) => Promise<string>): Promise<SendableMsg>;
+  createMsgObj(from: string, recipients: Recipients, subject: string, body: SendableMsgBody, atts?: Att[], thread?: string,
+    type?: SendableMsgType, sign?: (content: string) => Promise<string>): Promise<SendableMsg>;
   msgGet(msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<GmailRes.GmailMsg>;
   msgList(q: string, includeDeleted?: boolean, pageToken?: string): Promise<GmailRes.GmailMsgList>;
 }
@@ -62,8 +63,8 @@ export class EmailProviderApi extends Api {
     subject: string = '',
     body: SendableMsgBody,
     atts?: Att[],
-    threadRef?: string,
-    mimeRootType?: string,
+    thread?: string,
+    type?: SendableMsgType,
     sign?: (content: string) => Promise<string>,
   ): Promise<SendableMsg> => {
     const allEmails = [...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []];
@@ -75,17 +76,8 @@ export class EmailProviderApi extends Api {
     if (invalidEmails.length) {
       throw new Error(`The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`);
     }
-    return {
-      headers: primaryKi ? { OpenPGP: `id=${primaryKi.fingerprint}` } : {},
-      from,
-      recipients,
-      subject,
-      body: typeof body === 'object' ? body : { 'text/plain': body },
-      atts: atts || [],
-      thread: threadRef,
-      mimeRootType: mimeRootType || 'multipart/mixed',
-      sign,
-    };
+    const headers: Dict<string> = primaryKi ? { OpenPGP: `id=${primaryKi.fingerprint}` } : {}; // todo - use autocrypt format
+    return { headers, from, recipients, subject, body, atts: atts || [], thread, type, sign };
   }
 
 }

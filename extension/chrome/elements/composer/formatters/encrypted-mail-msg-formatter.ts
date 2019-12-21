@@ -27,7 +27,6 @@ import { openpgp } from '../../../../js/common/core/pgp.js';
 export class EncryptedMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
 
   private armoredPubkeys: PubkeyResult[];
-  private pgpMimeRootType = `multipart/encrypted; protocol="application/pgp-encrypted";`;
   private fcAdminCodes: string[] = [];
 
   constructor(composer: Composer, armoredPubkeys: PubkeyResult[]) {
@@ -66,9 +65,9 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
       const encrypted = await this.encryptData(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubkeys, signingPrv);
       const atts = [
         new Att({ data: Buf.fromUtfStr('Version: 1'), type: 'application/pgp-encrypted', contentDescription: 'PGP/MIME version identification' }),
-        new Att({ data: Buf.fromUtfStr(encrypted.data), type: 'application/octet-stream', contentDescription: 'OpenPGP encrypted message', name: 'encrypted.asc' }),
+        new Att({ data: Buf.fromUtfStr(encrypted.data), type: 'application/octet-stream', contentDescription: 'OpenPGP encrypted message', name: 'encrypted.asc', inline: true }),
       ];
-      return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, {}, atts, this.composer.view.threadId, this.pgpMimeRootType);
+      return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, {}, atts, this.composer.view.threadId, 'pgpMimeEncrypted');
     }
   }
 
