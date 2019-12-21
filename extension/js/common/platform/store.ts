@@ -137,6 +137,9 @@ export type AccountStore = {
   tmp_submit_all?: boolean;
 };
 
+export type PromiseCancellationToken = { cancel: boolean };
+export class PromiseCancelledError extends Error { }
+
 export class AccountStoreExtension {
   static getEmailAliasesIncludingPrimary = (acct: string, sendAs: Dict<SendAsAlias> | undefined) => {
     return sendAs ? Object.keys(sendAs) : [acct];
@@ -289,13 +292,17 @@ export class Store {
     return result;
   }
 
-  static waitUntilPassphraseChanged = async (acctEmail: string, missingOrWrongPpKeyLongids: string[], interval = 1000) => {
+  static waitUntilPassphraseChanged = async (acctEmail: string, missingOrWrongPpKeyLongids: string[], interval = 1000,
+    cancellationToken: PromiseCancellationToken = { cancel: false }) => {
     const missingOrWrongPassprases: Dict<string | undefined> = {};
     const passphrases = await Promise.all(missingOrWrongPpKeyLongids.map(longid => Store.passphraseGet(acctEmail, longid)));
     for (const i of missingOrWrongPpKeyLongids.keys()) {
       missingOrWrongPassprases[missingOrWrongPpKeyLongids[i]] = passphrases[i];
     }
     while (true) {
+      if (cancellationToken.cancel) {
+        throw new PromiseCancelledError();
+      }
       await Ui.time.sleep(interval);
       const longidsMissingPp = Object.keys(missingOrWrongPassprases);
       const updatedPpArr = await Promise.all(longidsMissingPp.map(longid => Store.passphraseGet(acctEmail, longid)));
