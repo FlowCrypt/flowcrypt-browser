@@ -102,6 +102,10 @@ export class ComposePageRecipe extends PageRecipe {
       await composePage.waitAndType('@input-password', password);
     }
     await composePage.waitAndClick('@action-send', { delay: 1 });
+    await ComposePageRecipe.close(composePage, timeout);
+  }
+
+  public static close = async (composePage: ControllablePage, timeout = 60) => {
     await Promise.race([
       composePage.waitForSelTestState('closed', timeout), // in case this was a new message compose
       composePage.waitAny('@container-reply-msg-successful', { timeout }) // in case of reply
