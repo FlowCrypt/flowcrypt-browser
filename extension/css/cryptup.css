@@ -1845,6 +1845,12 @@ table#compose td.text div.text_container {
   overflow-x: hidden;
   background-image: url(/img/lock-seamless-bg-alpha.png);
 }
+
+/* https://github.com/FlowCrypt/flowcrypt-browser/issues/2420 */
+#new_message:not(.reply_box) table#compose td.text div.text_container {
+  max-height: -webkit-fill-available;
+}
+
 #new_message table#compose td.text div#input_text { overflow-x: hidden; }
 
 table#compose td.text div.text_container .action_show_prev_msg {
