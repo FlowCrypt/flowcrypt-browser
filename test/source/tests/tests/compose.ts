@@ -204,6 +204,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
         '&ignoreDraft=___cu_false___&replyMsgId=16b36861a890bb26';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
+      expect(await composePage.read('@input-body')).to.not.include('The best footer ever!');
       await baseQuotingTest(composePage, [
         'On 2019-06-08 at 09:57, human@flowcrypt.com wrote:',
         '> Used to fail on Android app',
