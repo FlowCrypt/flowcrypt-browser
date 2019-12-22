@@ -7,7 +7,7 @@
 import { Dict, Str } from '../../core/common.js';
 import { Store } from '../../platform/store.js';
 import { Att } from '../../core/att.js';
-import { SendableMsgBody } from '../../core/mime.js';
+import { SendableMsgBody, MimeEncodeType } from '../../core/mime.js';
 import { Api, ProgressCb, ChunkedCb } from '../api.js';
 import { GmailResponseFormat } from './gmail/gmail.js';
 import { GmailRes } from './gmail/gmail-parser.js';
@@ -15,7 +15,7 @@ import { Contact } from '../../core/pgp-key.js';
 
 export type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
 export type ProviderContactsQuery = { substring: string };
-export type SendableMsgType = 'pgpMimeEncrypted' | undefined;
+
 export type SendableMsg = {
   headers: Dict<string>;
   from: string;
@@ -24,7 +24,7 @@ export type SendableMsg = {
   body: SendableMsgBody;
   atts: Att[];
   thread?: string;
-  type: SendableMsgType,
+  type: MimeEncodeType,
   sign?: (signable: string) => Promise<string>,
 };
 export type ReplyParams = {
@@ -46,7 +46,7 @@ export interface EmailProviderInterface {
   msgSend(message: SendableMsg, progressCb?: ProgressCb): Promise<GmailRes.GmailMsgSend>;
   guessContactsFromSentEmails(userQuery: string, knownContacts: Contact[], chunkedCb: ChunkedCb): Promise<void>;
   createMsgObj(from: string, recipients: Recipients, subject: string, body: SendableMsgBody, atts?: Att[], thread?: string,
-    type?: SendableMsgType, sign?: (content: string) => Promise<string>): Promise<SendableMsg>;
+    type?: MimeEncodeType, sign?: (content: string) => Promise<string>): Promise<SendableMsg>;
   msgGet(msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<GmailRes.GmailMsg>;
   msgList(q: string, includeDeleted?: boolean, pageToken?: string): Promise<GmailRes.GmailMsgList>;
 }
@@ -64,7 +64,7 @@ export class EmailProviderApi extends Api {
     body: SendableMsgBody,
     atts?: Att[],
     thread?: string,
-    type?: SendableMsgType,
+    type?: MimeEncodeType,
     sign?: (content: string) => Promise<string>,
   ): Promise<SendableMsg> => {
     const allEmails = [...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []];

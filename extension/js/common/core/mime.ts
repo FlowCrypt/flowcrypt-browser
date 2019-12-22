@@ -11,7 +11,6 @@ import { PgpArmor } from './pgp-armor.js';
 import { MsgBlock } from './msg-block.js';
 import { Att } from './att.js';
 import { MsgBlockParser } from './msg-block-parser.js';
-import { SendableMsgType } from '../api/email_provider/email_provider_api.js';
 
 const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
 const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name
@@ -33,6 +32,7 @@ export type MimeContent = {
   bcc: string[];
 };
 
+export type MimeEncodeType = 'pgpMimeEncrypted' | 'pgpMimeSigned' | undefined;
 export type RichHeaders = Dict<string | string[]>;
 export type SendableMsgBody = { [key: string]: string | undefined; 'text/plain'?: string; 'text/html'?: string; };
 export type MimeProccesedMsg = {
@@ -217,7 +217,7 @@ export class Mime {
     });
   }
 
-  public static encode = async (body: SendableMsgBody, headers: RichHeaders, atts: Att[] = [], type?: SendableMsgType): Promise<string> => {
+  public static encode = async (body: SendableMsgBody, headers: RichHeaders, atts: Att[] = [], type?: MimeEncodeType): Promise<string> => {
     const rootContentType = type !== 'pgpMimeEncrypted' ? 'multipart/mixed' : `multipart/encrypted; protocol="application/pgp-encrypted";`;
     const rootNode = new MimeBuilder(rootContentType, { includeBccInHeader: true }); // tslint:disable-line:no-unsafe-any
     for (const key of Object.keys(headers)) {
