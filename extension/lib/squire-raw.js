@@ -1,9 +1,5 @@
 /* Copyright © 2011-2015 by Neil Jenkins. MIT Licensed. */
 
-// ! CUSTOM CHANGES, please apply the same changes when upgrading the library !
-//
-// 1. handleEnter(): Wrap addLinks( range.startContainer, root, self ) into if (self._config.richText) { }
-
 ( function ( doc, undefined ) {
 
 "use strict";
@@ -1438,7 +1434,7 @@ var handleEnter = function ( self, shiftKey, range ) {
     // Remove any zws so we don't think there's content in an empty
     // block.
     self._recordUndoState( range );
-    if (self._config.richText) {
+    if ( self._config.addLinks ) {
         addLinks( range.startContainer, root, self );
     }
     self._removeZWS();
@@ -1791,7 +1787,9 @@ var keyHandlers = {
         var node, parent;
         var root = self._root;
         self._recordUndoState( range );
-        addLinks( range.startContainer, root, self );
+        if ( self._config.addLinks ) {
+            addLinks( range.startContainer, root, self );
+        }
         self._getRangeAndRemoveBookmark( range );
 
         // If the cursor is at the end of a link (<a>foo|</a>) then move it
@@ -2756,7 +2754,8 @@ proto.setConfig = function ( config ) {
         sanitizeToDOMFragment:
             typeof DOMPurify !== 'undefined' && DOMPurify.isSupported ?
             sanitizeToDOMFragment : null,
-        willCutCopy: null
+        willCutCopy: null,
+        addLinks: true
     }, config, true );
 
     // Users may specify block tag in lower case
