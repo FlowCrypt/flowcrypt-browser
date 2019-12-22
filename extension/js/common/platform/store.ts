@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Value, Str, Dict } from '../core/common.js';
+import { Value, Str, Dict, PromiseCancellation } from '../core/common.js';
 import { mnemonic } from '../core/mnemonic.js';
 import { KeyInfo, Contact } from '../core/pgp-key.js';
 import { SubscriptionInfo, PaymentMethod, FcUuidAuth, SubscriptionLevel } from '../api/backend.js';
@@ -289,13 +289,15 @@ export class Store {
     return result;
   }
 
-  static waitUntilPassphraseChanged = async (acctEmail: string, missingOrWrongPpKeyLongids: string[], interval = 1000) => {
+  static waitUntilPassphraseChanged = async (
+    acctEmail: string, missingOrWrongPpKeyLongids: string[], interval = 1000, cancellation: PromiseCancellation = { cancel: false }
+  ): Promise<boolean> => {
     const missingOrWrongPassprases: Dict<string | undefined> = {};
     const passphrases = await Promise.all(missingOrWrongPpKeyLongids.map(longid => Store.passphraseGet(acctEmail, longid)));
     for (const i of missingOrWrongPpKeyLongids.keys()) {
       missingOrWrongPassprases[missingOrWrongPpKeyLongids[i]] = passphrases[i];
     }
-    while (true) {
+    while (!cancellation.cancel) {
       await Ui.time.sleep(interval);
       const longidsMissingPp = Object.keys(missingOrWrongPassprases);
       const updatedPpArr = await Promise.all(longidsMissingPp.map(longid => Store.passphraseGet(acctEmail, longid)));
@@ -303,10 +305,11 @@ export class Store {
         const missingOrWrongPp = missingOrWrongPassprases[longidsMissingPp[i]];
         const updatedPp = updatedPpArr[i];
         if (updatedPp !== missingOrWrongPp) {
-          return;
+          return true;
         }
       }
     }
+    return false;
   }
 
   static keysGet = async (acctEmail: string, longids?: string[]) => {
