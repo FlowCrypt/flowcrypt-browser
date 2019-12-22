@@ -37,7 +37,7 @@ export class ComposerSize extends ComposerComponent {
       // we use veryslowspree for reply box because hand-resizing the main window will cause too many events
       // we use spree (faster) for new messages because rendering of window buttons on top right depend on it, else visible lag shows
       $(window).resize(this.view.setHandlerPrevent(this.view.isReplyBox ? 'veryslowspree' : 'spree', () => this.windowResized().catch(Catch.reportErr)));
-      this.composer.S.cached('input_text').keyup(this.view.setHandlerPrevent('slowspree', () => this.windowResized().catch(Catch.reportErr)));
+      this.composer.input.squire.addEventListener('keyup', () => this.view.setHandlerPrevent('slowspree', () => this.windowResized().catch(Catch.reportErr)));
     }, 1000);
   }
 
@@ -111,12 +111,12 @@ export class ComposerSize extends ComposerComponent {
   }
 
   /**
-* On Firefox, we have to manage textbox height manually. Only applies to composing new messages
-* (else ff will keep expanding body element beyond frame view)
-* A decade old firefox bug is the culprit: https://bugzilla.mozilla.org/show_bug.cgi?id=202081
-*
-* @param updateRefBodyHeight - set to true to take a new snapshot of intended html body height
-*/
+   * On Firefox, we have to manage textbox height manually. Only applies to composing new messages
+   * (else ff will keep expanding body element beyond frame view)
+   * A decade old firefox bug is the culprit: https://bugzilla.mozilla.org/show_bug.cgi?id=202081
+   *
+   * @param updateRefBodyHeight - set to true to take a new snapshot of intended html body height
+   */
   public setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight: boolean = false) => {
     if (!this.view.isReplyBox && Catch.browser().name === 'firefox') {
       this.composer.S.cached('input_text').css('height', '0');

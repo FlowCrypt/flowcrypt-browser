@@ -2,6 +2,8 @@
 import * as http from 'http';
 import { IncomingMessage, ServerResponse } from 'http';
 
+// tslint:disable:await-returned-promise
+
 export class HttpAuthErr extends Error { }
 export class HttpClientErr extends Error {
   constructor(message: string, public statusCode = 400) {
@@ -30,6 +32,7 @@ export class Api<REQ, RES> {
   protected apiName: string;
   protected maxRequestSizeMb = 0;
   protected maxRequestSizeBytes = 0;
+  protected throttleChunkMs = 0;
 
   constructor(apiName: string, protected handlers: Handlers<REQ, RES>, protected urlPrefix = '') {
     this.apiName = apiName;
@@ -166,6 +169,10 @@ export class Api<REQ, RES> {
           reject(new HttpClientErr(`Message over ${this.maxRequestSizeMb} MB`));
         } else {
           body.push(chunk);
+        }
+        if (this.throttleChunkMs) {
+          req.pause(); // slow down accepting data by a certain amount of ms per chunk
+          setTimeout(() => req.resume(), this.throttleChunkMs);
         }
       });
       req.on('end', () => {

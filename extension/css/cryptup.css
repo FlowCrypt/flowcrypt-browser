@@ -1827,18 +1827,14 @@ table#compose td.text {
 }
 
 table#compose td.text div#input_text {
-  padding-top: 8px;
-  padding-left: 8px;
+  padding: 8px 8px 16px;
   outline: none;
   border: none !important;
-  -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important;
   box-shadow: none !important;
   height: 100%;
   word-wrap: break-word;
   max-width: 525px;
   overflow-y: auto;
-  padding-bottom: 16px;
   min-height: 140px;
 }
 
@@ -1849,6 +1845,12 @@ table#compose td.text div.text_container {
   overflow-x: hidden;
   background-image: url(/img/lock-seamless-bg-alpha.png);
 }
+
+/* https://github.com/FlowCrypt/flowcrypt-browser/issues/2420 */
+#new_message:not(.reply_box) table#compose td.text div.text_container {
+  max-height: -webkit-fill-available;
+}
+
 #new_message table#compose td.text div#input_text { overflow-x: hidden; }
 
 table#compose td.text div.text_container .action_show_prev_msg {
@@ -2272,12 +2274,11 @@ body.attachment #download {
   position: absolute;
   width: 100px;
   z-index: 1;
-  background-color: white;
   height: 80px;
   left: 68px;
   opacity: 1;
   color: #444;
-  visibility: hidden;
+  display: none;
 }
 
 body.attachment #download:hover,
@@ -2321,6 +2322,10 @@ body.attachment #header {
   line-height: 1.5;
   top: 15px;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 45px;
 }
 
 body.attachment #type {

@@ -7,6 +7,7 @@ import { base64encode, base64decode } from '../platform/util.js';
 export type Dict<T> = { [key: string]: T; };
 export type UrlParam = string | number | null | undefined | boolean | string[];
 export type UrlParams = Dict<UrlParam>;
+export type PromiseCancellation = { cancel: boolean };
 
 export class Str {
 

@@ -445,9 +445,10 @@ export class ComposerRecipients extends ComposerComponent {
 
   private createRecipientsElements = (container: JQuery<HTMLElement>, emails: string[], sendingType: RecipientType, status: RecipientStatus): RecipientElement[] => {
     const result = [];
-    for (const email of emails) {
+    for (const rawEmail of emails) {
+      const { email } = Str.parseEmail(rawEmail);
       const recipientId = this.generateRecipientId();
-      const recipientsHtml = `<span tabindex="0" id="${recipientId}"><span>${Xss.escape(email)}</span> ${Ui.spinner('green')}</span>`;
+      const recipientsHtml = `<span tabindex="0" id="${recipientId}"><span>${Xss.escape(email || rawEmail)}</span> ${Ui.spinner('green')}</span>`;
       Xss.sanitizeAppend(container.find('.recipients'), recipientsHtml);
       const element = document.getElementById(recipientId);
       if (element) { // if element wasn't created this means that Composer is used by another component
@@ -457,7 +458,7 @@ export class ComposerRecipients extends ComposerComponent {
           }
         }));
         this.addDraggableEvents(element);
-        const recipient = { email, element, id: recipientId, sendingType, status };
+        const recipient = { email: email || rawEmail, element, id: recipientId, sendingType, status: email ? status : RecipientStatuses.WRONG };
         this.addedRecipients.push(recipient);
         result.push(recipient);
       }
@@ -471,8 +472,8 @@ export class ComposerRecipients extends ComposerComponent {
       if (recipients.hasOwnProperty(key)) {
         const sendingType = key as RecipientType;
         if (recipients[sendingType] && recipients[sendingType]!.length) {
-          newRecipients = newRecipients.concat(this.createRecipientsElements(this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`),
-            recipients[sendingType]!, sendingType, RecipientStatuses.EVALUATING));
+          const recipientsContainer = this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`);
+          newRecipients = newRecipients.concat(this.createRecipientsElements(recipientsContainer, recipients[sendingType]!, sendingType, RecipientStatuses.EVALUATING));
           this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`).css('display', '');
           this.composer.size.resizeInput(this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType} input`));
         }

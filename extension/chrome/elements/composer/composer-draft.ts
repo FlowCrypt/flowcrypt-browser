@@ -90,7 +90,7 @@ export class ComposerDraft extends ComposerComponent {
   }
 
   public draftSave = async (forceSave: boolean = false): Promise<void> => {
-    if (this.hasBodyChanged(this.composer.S.cached('input_text').text()) || this.hasSubjectChanged(String(this.composer.S.cached('input_subject').val())) || forceSave) {
+    if (this.hasBodyChanged(this.composer.input.squire.getHTML()) || this.hasSubjectChanged(String(this.composer.S.cached('input_subject').val())) || forceSave) {
       this.currentlySavingDraft = true;
       try {
         this.composer.S.cached('send_btn_note').text('Saving');
@@ -194,7 +194,7 @@ export class ComposerDraft extends ComposerComponent {
         if (headers.from) {
           this.composer.S.now('input_from').val(headers.from);
         }
-        this.composer.S.cached('input_text').focus();
+        this.composer.input.squire.focus();
         return true;
       }
     } else {

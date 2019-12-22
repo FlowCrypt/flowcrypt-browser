@@ -51,7 +51,7 @@ export class MsgBlockParser {
     }
     const decoded = await Mime.decode(decryptedContent);
     if (typeof decoded.html !== 'undefined') {
-      blocks.push(MsgBlock.fromContent('decryptedHtml', Xss.htmlSanitizeKeepBasicTags(decoded.html))); // sanitized html
+      blocks.push(MsgBlock.fromContent('decryptedHtml', Xss.htmlSanitizeKeepBasicTags(decoded.html, 'IMG-TO-LINK'))); // sanitized html
     } else if (typeof decoded.text !== 'undefined') {
       blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(decoded.text))); // escaped text as html
     } else {

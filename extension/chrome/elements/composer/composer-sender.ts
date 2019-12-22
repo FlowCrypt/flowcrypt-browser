@@ -71,7 +71,7 @@ export class ComposerSender extends ComposerComponent {
         }
         if (refreshResult.isFooterChanged && !this.view.draftId) {
           const alias = refreshResult.sendAs[this.getSender()];
-          if (alias) {
+          if (alias && !this.view.isReplyBox) {
             this.composer.quote.replaceFooter(alias.footer || undefined);
           }
         }

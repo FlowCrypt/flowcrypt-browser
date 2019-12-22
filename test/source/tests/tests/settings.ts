@@ -1,5 +1,5 @@
 import { TestUrls } from './../../browser/test_urls';
-import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
+import { TestWithNewBrowser, TestWithGlobalBrowser, internalTestState } from '../../test';
 import * as ava from 'ava';
 import { Util, Config } from '../../util';
 import { expect } from 'chai';
@@ -133,10 +133,12 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
     }));
 
     ava.default('settings[global:compatibility] - Catch.reportErr reports an error', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
       await experimentalFrame.waitAndClick('@action-throw-err'); // mock tests will verify that err was reported to mock backend in `test.ts`
+      internalTestState.expectiIntentionalErrReport = true;
     }));
 
     ava.todo('[standalone] settings - change passphrase - mismatch curent pp');

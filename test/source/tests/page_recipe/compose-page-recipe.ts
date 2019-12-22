@@ -97,11 +97,21 @@ export class ComposePageRecipe extends PageRecipe {
     }
   }
 
-  public static sendAndClose = async (composePage: ControllablePage, password?: string | undefined, timeout = 60) => {
+  public static sendAndClose = async (
+    composePage: ControllablePage,
+    { password, timeout, expectProgress }: { password?: string, timeout?: number, expectProgress?: boolean } = { timeout: 60 }
+  ) => {
     if (password) {
       await composePage.waitAndType('@input-password', password);
     }
     await composePage.waitAndClick('@action-send', { delay: 1 });
+    if (expectProgress) {
+      await composePage.waitForContent('@action-send', '%', 20, 10);
+    }
+    await ComposePageRecipe.closed(composePage, timeout);
+  }
+
+  public static closed = async (composePage: ControllablePage, timeout = 60) => {
     await Promise.race([
       composePage.waitForSelTestState('closed', timeout), // in case this was a new message compose
       composePage.waitAny('@container-reply-msg-successful', { timeout }) // in case of reply

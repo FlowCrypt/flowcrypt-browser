@@ -24,6 +24,10 @@ export class ComposerQuote extends ComposerComponent {
 
   private footerHTML: string | undefined;
 
+  get getFooterHTML(): string | undefined {
+    return this.footerHTML;
+  }
+
   get expandingHTMLPart(): string | undefined {
     return this.msgExpandingHTMLPart;
   }
@@ -87,7 +91,7 @@ export class ComposerQuote extends ComposerComponent {
   }
 
   private createFooterHTML = (footer: string) => {
-    const sanitizedPlainFooter = Xss.htmlSanitizeAndStripAllTags(footer, '\n', true); // true: strip away images because not supported yet
+    const sanitizedPlainFooter = Xss.htmlSanitizeAndStripAllTags(footer, '\n');
     const sanitizedHtmlFooter = sanitizedPlainFooter.replace(/\n/g, '<br>');
     const footerFirstLine = sanitizedPlainFooter.split('\n')[0];
     if (!footerFirstLine) {
@@ -102,7 +106,7 @@ export class ComposerQuote extends ComposerComponent {
   public replaceFooter = (newFooter: string | undefined) => {
     newFooter = newFooter ? this.createFooterHTML(newFooter) : '';
     if (this.footerHTML) {
-      let textHTML = this.msgExpandingHTMLPart || this.composer.S.cached('input_text').html();
+      let textHTML = this.msgExpandingHTMLPart || this.composer.input.squire.getHTML();
       const lastOccurrenceIndex = textHTML.lastIndexOf(this.footerHTML);
       if (lastOccurrenceIndex !== -1) {
         textHTML = textHTML.substr(0, lastOccurrenceIndex) + newFooter + textHTML.substr(lastOccurrenceIndex + this.footerHTML.length);
@@ -112,14 +116,14 @@ export class ComposerQuote extends ComposerComponent {
             this.composer.S.cached('icon_show_prev_msg').hide();
           }
         } else {
-          this.composer.S.cached('input_text').html(textHTML); // xss-sanitized
+          this.composer.input.squire.setHTML(textHTML); // xss-sanitized
         }
       }
     } else {
       if (this.msgExpandingHTMLPart) {
         this.msgExpandingHTMLPart = newFooter + this.msgExpandingHTMLPart;
       } else {
-        this.composer.S.cached('input_text').append(newFooter); // xss-sanitized
+        this.composer.input.squire.insertHTML(newFooter); // xss-sanitized
       }
     }
     this.footerHTML = newFooter || undefined;
@@ -241,7 +245,7 @@ export class ComposerQuote extends ComposerComponent {
         el.style.display = 'none';
         Xss.sanitizeAppend(this.composer.S.cached('input_text'), this.msgExpandingHTMLPart || '');
         this.msgExpandingHTMLPart = undefined;
-        this.composer.S.cached('input_text').focus();
+        this.composer.input.squire.focus();
         this.composer.size.resizeComposeBox();
       }));
   }

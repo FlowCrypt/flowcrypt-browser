@@ -43,7 +43,7 @@ export class PgpBlockViewRenderModule {
     img.style.background = 'none';
     img.style.border = 'none';
     img.addEventListener('load', () => this.resizePgpBlockFrame());
-    if (a.href.indexOf('cid:') === 0) { // image included in the email
+    if (a.href.startsWith('cid:')) { // image included in the email
       const contentId = a.href.replace(/^cid:/g, '');
       const content = this.view.attachmentsModule.includedAtts.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${contentId}>`)[0];
       if (content) {
@@ -52,7 +52,10 @@ export class PgpBlockViewRenderModule {
       } else {
         a.outerHTML = Xss.escape(`[broken link: ${a.href}]`); // xss-escaped
       }
-    } else if (a.href.indexOf('https://') === 0 || a.href.indexOf('http://') === 0) { // image referenced as url
+    } else if (a.href.startsWith('https://') || a.href.startsWith('http://')) { // image referenced as url
+      img.src = a.href;
+      a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
+    } else if (a.href.startsWith('data:image/')) { // image directly inlined
       img.src = a.href;
       a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
     } else {
@@ -68,7 +71,7 @@ export class PgpBlockViewRenderModule {
       await Store.setAcct(this.view.acctEmail, { successfully_received_at_leat_one_message: true });
     }
     if (!isErr) { // rendering message content
-      const pgpBlock = $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(htmlContent)); // xss-sanitized
+      const pgpBlock = $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(htmlContent, 'IMG-TO-LINK')); // xss-sanitized
       pgpBlock.find('a.image_src_link').one('click', this.view.setHandler((el, ev) => this.displayImageSrcLinkAsImg(el as HTMLAnchorElement, ev as JQuery.Event<HTMLAnchorElement, null>)));
     } else { // rendering our own ui
       Xss.sanitizeRender('#pgp_block', htmlContent);

@@ -1,6 +1,6 @@
 {
   "name": "flowcrypt-browser",
-  "version": "7.4.2",
+  "version": "7.5.3",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "resolutions": {
     "graceful-fs": "4.1.13"
@@ -35,6 +35,7 @@
   },
   "scripts": {
     "build": "./build.sh",
+    "build-incremental": "./build.sh --incremental",
     "build-assets-only": "./build.sh --assets-only",
     "pretest": "npm run-script build --silent && cd conf && node ../build/tooling/tsc-compiler --project tsconfig.test.json",
     "test": "npm run-script test_buf && npm run-script test_tslint && npm run-script test_patterns && npm run-script test_async_stack && npm run-script test_ci_chrome_consumer -- -- --pool-size=1",

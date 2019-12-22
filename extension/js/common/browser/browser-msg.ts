@@ -221,12 +221,14 @@ export class BrowserMsg {
       try {
         if (isBackgroundPage) {
           chrome.tabs.sendMessage(BrowserMsg.browserMsgDestParse(msg.to).tab!, msg, {}, processRawMsgResponse);
-        } else {
+        } else if (chrome.runtime) {
           chrome.runtime.sendMessage(msg, processRawMsgResponse);
+        } else {
+          BrowserMsg.renderFatalErrCorner('Error: missing chrome.runtime', 'RED-RELOAD-PROMPT');
         }
       } catch (e) {
         if (e instanceof Error && e.message === 'Extension context invalidated.') {
-          BrowserMsg.showFatalUserNotification('Restart browser to re-enable FlowCrypt');
+          BrowserMsg.renderFatalErrCorner('Restart browser to re-enable FlowCrypt', 'GREEN-NOTIFICATION');
         } else {
           throw e;
         }
@@ -234,7 +236,7 @@ export class BrowserMsg {
     });
   }
 
-  public static showFatalUserNotification = (message: string) => {
+  public static renderFatalErrCorner = (message: string, style: 'GREEN-NOTIFICATION' | 'RED-RELOAD-PROMPT') => {
     const div = document.createElement('div');
     div.textContent = message;
     div.style.position = 'fixed';
@@ -245,6 +247,18 @@ export class BrowserMsg {
     div.style.color = 'white';
     div.style.padding = '1px 3px';
     div.style.zIndex = '1000';
+    if (style === 'RED-RELOAD-PROMPT') {
+      div.style.fontSize = '14px';
+      div.style.backgroundColor = '#a44';
+      div.style.padding = '4px 6px';
+      const a = document.createElement('a');
+      a.href = window.location.href.split('#')[0];
+      a.textContent = 'RELOAD';
+      a.style.color = 'white';
+      a.style.fontWeight = 'bold';
+      a.style.marginLeft = '12px';
+      div.appendChild(a);
+    }
     window.document.body.appendChild(div);
   }
 

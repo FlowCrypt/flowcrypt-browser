@@ -26,8 +26,8 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     this.choices.richText = await this.richTextUserChoiceRetrieve();
     for (const key of Object.keys(popoverItems)) {
       const popoverOpt = key as PopoverOpt;
-      if (popoverOpt === 'richText' && !['flowcrypt.compatibility@gmail.com', 'tom@flowcrypt.com', 'flowcrypt.oauth.demo@gmail.com'].includes(this.view.acctEmail)) {
-        continue; // richText not supported yet. Only used for testing
+      if (popoverOpt === 'richText' && Catch.browser().name !== 'firefox') {
+        continue; // richText not deployed to Chrome yet, for now only allow firefox
       }
       const item = popoverItems[popoverOpt];
       const elem = $(`
@@ -120,6 +120,9 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     } else {
       this.composer.S.cached('compose_table').addClass('not-encrypted');
       this.composer.S.now('attached_files').addClass('not-encrypted');
+    }
+    if (!this.choices.richText) {
+      this.composer.input.removeRichTextFormatting();
     }
     this.composer.sendBtn.resetSendBtn();
     this.composer.pwdOrPubkeyContainer.showHideContainerAndColorSendBtn();
