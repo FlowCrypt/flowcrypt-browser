@@ -44,7 +44,7 @@ export class Att {
     this.name = name || '';
     this.type = type || 'application/octet-stream';
     this.url = url || undefined;
-    this.inline = inline !== true;
+    this.inline = !!inline;
     this.id = id || undefined;
     this.msgId = msgId || undefined;
     this.treatAsValue = treatAs || undefined;

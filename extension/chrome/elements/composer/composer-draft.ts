@@ -111,7 +111,7 @@ export class ComposerDraft extends ComposerComponent {
         for (const recipient of this.composer.recipients.getRecipients()) {
           recipients[recipient.sendingType]!.push(recipient.email);
         }
-        const mimeMsg = await Mime.encode(body, {
+        const mimeMsg = await Mime.encode({ 'text/plain': body }, {
           To: recipients.to!.join(','),
           Cc: recipients.cc!.join(','),
           Bcc: recipients.bcc!.join(','),

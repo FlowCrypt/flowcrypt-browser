@@ -56,8 +56,8 @@
     "test_ci_chrome_enterprise": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js -- ENTERPRISE-MOCK STANDARD-GROUP",
     "test_ci_chrome_consumer_flaky": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js -- CONSUMER-MOCK FLAKY-GROUP",
     "dev_start_gmail_mock_api": "./build.sh && cd ./conf && node ../build/tooling/tsc-compiler --project tsconfig.test.json && cd .. && node ./build/test/test/source/mock.js",
-    "run_firefox": "npm run-script build && npx web-ext run --source-dir ./build/firefox-consumer/ --firefox-profile ~/.mozilla/firefox/flowcrypt-dev --keep-profile-changes",
-    "run_firefox_windows": "npm run-script build && npx web-ext run --source-dir ./build/firefox-consumer/ --firefox-profile %userprofile%/AppData/Local/Mozilla/Firefox/Profiles/flowcrypt-dev --keep-profile-changes",
+    "run_firefox": "npm run-script build-incremental && npx web-ext run --source-dir ./build/firefox-consumer/ --firefox-profile ~/.mozilla/firefox/flowcrypt-dev --keep-profile-changes",
+    "run_firefox_windows": "npm run-script build-incremental && npx web-ext run --source-dir ./build/firefox-consumer/ --firefox-profile %userprofile%/AppData/Local/Mozilla/Firefox/Profiles/flowcrypt-dev --keep-profile-changes",
     "release": "npm run-script build && node ./tooling/release.js"
   },
   "repository": {

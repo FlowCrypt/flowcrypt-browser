@@ -35,7 +35,7 @@ export class SignedMsgMailFormatter extends BaseMailFormatter implements MailFor
       return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, body, atts, this.composer.view.threadId);
     }
     // pgp/mime detached signature - it must be signed later, while being mime-encoded
-    // prepare a sign function first, which will be used by Mime.encode later
+    // prepare a sign function first, which will be used by Mime.encodePgpMimeSigned later
     const sign = (signable: string) => PgpMsg.sign(signingPrv, signable, true);
     const body: SendableMsgBody = { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml };
     return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, body, atts, this.composer.view.threadId, undefined, sign);

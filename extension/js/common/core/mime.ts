@@ -32,6 +32,7 @@ export type MimeContent = {
   bcc: string[];
 };
 
+export type MimeEncodeType = 'pgpMimeEncrypted' | 'pgpMimeSigned' | undefined;
 export type RichHeaders = Dict<string | string[]>;
 export type SendableMsgBody = { [key: string]: string | undefined; 'text/plain'?: string; 'text/html'?: string; };
 export type MimeProccesedMsg = {
@@ -216,21 +217,13 @@ export class Mime {
     });
   }
 
-  public static encode = async (
-    body: string | SendableMsgBody, headers: RichHeaders, atts: Att[] = [], rootType = 'multipart/mixed', sign?: (signable: string) => Promise<string>
-  ): Promise<string> => {
-    if (typeof body === 'string') {
-      body = { 'text/plain': body };
-    }
-    if (sign) { // PGP/MIME detached signature
-      return await Mime.encodePgpMimeSigned(body, headers, atts, sign);
-    }
-    // other type of message
-    const rootNode = new MimeBuilder(rootType, { includeBccInHeader: true }); // tslint:disable-line:no-unsafe-any
+  public static encode = async (body: SendableMsgBody, headers: RichHeaders, atts: Att[] = [], type?: MimeEncodeType): Promise<string> => {
+    const rootContentType = type !== 'pgpMimeEncrypted' ? 'multipart/mixed' : `multipart/encrypted; protocol="application/pgp-encrypted";`;
+    const rootNode = new MimeBuilder(rootContentType, { includeBccInHeader: true }); // tslint:disable-line:no-unsafe-any
     for (const key of Object.keys(headers)) {
       rootNode.addHeader(key, headers[key]); // tslint:disable-line:no-unsafe-any
     }
-    if (!rootType.startsWith('multipart/encrypted')) { // pgp/mime encrypted messages have no body - just attachments. Skip if this is pgp/mime encrypted
+    if (Object.keys(body).length) {
       let contentNode: MimeParserNode;
       if (Object.keys(body).length === 1) {
         contentNode = Mime.newContentNode(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0] as "text/plain" | "text/html"] || '');
@@ -252,9 +245,7 @@ export class Mime {
     return subject.replace(/^((Re|Fwd): ?)+/g, '').trim();
   }
 
-  private static encodePgpMimeSigned = async (
-    body: SendableMsgBody, headers: RichHeaders, atts: Att[] = [], sign: (signable: string) => Promise<string>
-  ): Promise<string> => {
+  public static encodePgpMimeSigned = async (body: SendableMsgBody, headers: RichHeaders, atts: Att[] = [], sign: (data: string) => Promise<string>): Promise<string> => {
     const sigPlaceholder = `SIG_PLACEHOLDER_${Str.sloppyRandom(10)}`;
     const rootNode = new MimeBuilder(`multipart/signed; protocol="application/pgp-signature";`, { includeBccInHeader: true }); // tslint:disable-line:no-unsafe-any
     for (const key of Object.keys(headers)) {
@@ -292,7 +283,14 @@ export class Mime {
   private static createAttNode = (att: Att): any => { // todo: MimeBuilder types
     const type = `${att.type}; name="${att.name}"`;
     const id = `f_${Str.sloppyRandom(30)}@flowcrypt`;
-    const header = { 'Content-Disposition': 'attachment', 'X-Attachment-Id': id, 'Content-ID': `<${id}>`, 'Content-Transfer-Encoding': 'base64' };
+    const header: Dict<string> = {};
+    if (att.contentDescription) {
+      header['Content-Description'] = att.contentDescription;
+    }
+    header['Content-Disposition'] = att.inline ? 'inline' : 'attachment';
+    header['X-Attachment-Id'] = id;
+    header['Content-ID'] = `<${id}>`;
+    header['Content-Transfer-Encoding'] = 'base64';
     return new MimeBuilder(type, { filename: att.name }).setHeader(header).setContent(att.getData()); // tslint:disable-line:no-unsafe-any
   }
 
