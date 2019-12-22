@@ -3,7 +3,7 @@
 'use strict';
 
 import { Catch } from '../../js/common/platform/catch.js';
-import { Store, PromiseCancellationToken, PromiseCancelledError } from '../../js/common/platform/store.js';
+import { Store, PromiseCancellation } from '../../js/common/platform/store.js';
 import { Browser } from '../../js/common/browser/browser.js';
 import { Api } from '../../js/common/api/api.js';
 import { DecryptErrTypes, PgpMsg } from '../../js/common/core/pgp-msg.js';
@@ -36,7 +36,7 @@ View.run(class AttachmentDownloadView extends View {
   private originalButtonHTML: string | undefined;
   private canClickOnAtt: boolean = false;
   private downloadInProgress = false;
-  private cancellationToken: PromiseCancellationToken = { cancel: false };
+  private ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
   private tabId!: string;
 
   constructor() {
@@ -100,8 +100,8 @@ View.run(class AttachmentDownloadView extends View {
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
       if (!entered) {
         this.downloadInProgress = false;
-        this.cancellationToken.cancel = true;
-        this.cancellationToken = { cancel: false };
+        this.ppChangedPromiseCancellation.cancel = true; // update original object which is monitored by a promise
+        this.ppChangedPromiseCancellation = { cancel: false }; // set to a new, not yet used object
       }
     });
     BrowserMsg.listen(this.tabId);
@@ -214,13 +214,8 @@ View.run(class AttachmentDownloadView extends View {
       Browser.saveToDownloads(new Att({ name: result.filename, type: this.att.type, data: result.content }), $('body'));
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'attachment', longids: result.longids.needPassphrase });
-      try {
-        await Store.waitUntilPassphraseChanged(this.acctEmail, result.longids.needPassphrase, 1000, this.cancellationToken);
-      } catch (e) {
-        if (e instanceof PromiseCancelledError) {
-          return;
-        }
-        throw e;
+      if (! await Store.waitUntilPassphraseChanged(this.acctEmail, result.longids.needPassphrase, 1000, this.ppChangedPromiseCancellation)) {
+        return;
       }
       await this.decryptAndSaveAttToDownloads();
     } else {

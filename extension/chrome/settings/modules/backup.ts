@@ -3,7 +3,7 @@
 'use strict';
 
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
-import { Store, KeyBackupMethod, EmailProvider, PromiseCancellationToken, PromiseCancelledError } from '../../../js/common/platform/store.js';
+import { Store, KeyBackupMethod, EmailProvider, PromiseCancellation } from '../../../js/common/platform/store.js';
 import { Value, Url } from '../../../js/common/core/common.js';
 import { Att } from '../../../js/common/core/att.js';
 import { Browser } from '../../../js/common/browser/browser.js';
@@ -33,7 +33,7 @@ View.run(class BackupView extends View {
   private action: string | undefined;
   private keyImportUi = new KeyImportUi({});
   private emailProvider: EmailProvider = 'gmail';
-  private cancellationToken: PromiseCancellationToken = { cancel: false };
+  private ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
 
   private blocks = ['loading', 'step_0_status', 'step_1_password', 'step_2_confirm', 'step_3_automatic_backup_retry', 'step_3_manual'];
 
@@ -89,8 +89,8 @@ View.run(class BackupView extends View {
     $("#password2").keydown(this.setEnterHandlerThatClicks('.action_backup'));
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
       if (!entered) {
-        this.cancellationToken.cancel = true;
-        this.cancellationToken = { cancel: false };
+        this.ppChangedPromiseCancellation.cancel = true; // update original object which is monitored by a promise
+        this.ppChangedPromiseCancellation = { cancel: false }; // set to a new, not yet used object
       }
     });
     BrowserMsg.listen(this.tabId);
@@ -343,13 +343,8 @@ View.run(class BackupView extends View {
     }
     if (!pp) {
       BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'backup', longids: [primaryKi.longid] });
-      try {
-        await Store.waitUntilPassphraseChanged(this.acctEmail, [primaryKi.longid], 1000, this.cancellationToken);
-      } catch (e) {
-        if (e instanceof PromiseCancelledError) {
-          return;
-        }
-        throw e;
+      if (! await Store.waitUntilPassphraseChanged(this.acctEmail, [primaryKi.longid], 1000, this.ppChangedPromiseCancellation)) {
+        return;
       }
       await this.backupOnEmailProviderAndUpdateUi(primaryKi);
       return;
