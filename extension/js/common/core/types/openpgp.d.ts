@@ -704,6 +704,14 @@ declare namespace OpenPGP {
       signature = 6,
     }
 
+    enum reasonForRevocation {
+      no_reason = 0, // No reason specified (key revocations or cert revocations)
+      key_superseded = 1, // Key is superseded (key revocations)
+      key_compromised = 2, // Key material has been compromised (key revocations)
+      key_retired = 3, // Key is retired and no longer used (key revocations)
+      userid_invalid = 32, // User ID information is no longer valid (cert revocations)
+    }
+
     export type compressionNames = 'uncompressed' | 'zip' | 'zlib' | 'bzip2';
     enum compression {
       uncompressed = 0,
@@ -818,6 +826,8 @@ declare namespace OpenPGP {
       update(key: Key): void;
       verifyPrimaryKey(): Promise<enums.keyStatus>;
       isRevoked(): Promise<boolean>;
+      revoke(reason: { flag?: enums.reasonForRevocation; string?: string; }, date?: Date): Promise<Key>;
+      getRevocationCertificate(): Promise<Stream<string> | string | undefined>;
       getEncryptionKey(keyid?: Keyid | null, date?: Date, userId?: UserId | null): Promise<packet.PublicSubkey | packet.SecretSubkey | packet.SecretKey | packet.PublicKey | null>;
       getSigningKey(): Promise<packet.PublicSubkey | packet.SecretSubkey | packet.SecretKey | packet.PublicKey | null>;
       getKeys(keyId?: Keyid): (Key | SubKey)[];
