@@ -286,6 +286,20 @@ abstract class ControllableBase {
     this.log(`wait_and_click:10:${selector}`);
   }
 
+  public waitForContent = async (selector: string, needle: string, timeoutSec = 20, testLoopLengthMs = 100) => {
+    await this.waitAll(selector);
+    const start = Date.now();
+    let text = '';
+    while (Date.now() - start < timeoutSec * 1000) {
+      text = await this.read(selector, true);
+      if (text.includes(needle)) {
+        return;
+      }
+      await Util.sleep(testLoopLengthMs / 1000);
+    }
+    throw new Error(`Slector ${selector} was found but did not contain text "${needle}" whithin ${timeoutSec}s. Last content: "${text}"`);
+  }
+
   private getFramesUrlsInThisMoment = async (urlMatchables: string[]) => {
     const matchingLinks: string[] = [];
     for (const iframe of await this.target.$$('iframe')) {

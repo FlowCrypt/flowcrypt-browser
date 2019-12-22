@@ -20,6 +20,7 @@ import { mockBackendData } from './mock/backend/backend-endpoints';
 
 const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 const startedAt = Date.now();
+export const internalTestState = { expectiIntentionalErrReport: false }; // updated when a particular test that causes an error is run
 
 process.setMaxListeners(30);
 
@@ -122,12 +123,12 @@ ava.after.always('evaluate Catch.reportErr errors', async t => {
     t.pass();
     return;
   }
-  const expectedErr = mockBackendData.reportedErrors.find(re => re.message === `intentional error for debugging`);
-  const unwantedErrs = mockBackendData.reportedErrors.filter(re => re.message !== `intentional error for debugging`);
-  if (!expectedErr) {
+  const foundExpectedErr = mockBackendData.reportedErrors.find(re => re.message === `intentional error for debugging`);
+  const foundUnwantedErrs = mockBackendData.reportedErrors.filter(re => re.message !== `intentional error for debugging`);
+  if (!foundExpectedErr && internalTestState.expectiIntentionalErrReport) {
     t.fail(`Catch.reportErr errors: missing intentional error`);
-  } else if (unwantedErrs.length) {
-    for (const e of unwantedErrs) {
+  } else if (foundUnwantedErrs.length) {
+    for (const e of foundUnwantedErrs) {
       console.info(`----- mockBackendData Catch.reportErr -----\nname: ${e.name}\nmessage: ${e.message}\nurl: ${e.url}\ntrace: ${e.trace}`);
     }
     t.fail(`Catch.reportErr errors: ${mockBackendData.reportedErrors.length}`);
