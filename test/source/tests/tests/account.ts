@@ -46,7 +46,7 @@ export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBro
       await fileInput!.uploadFile('test/samples/large.jpg');
       await Util.sleep(2); // give it a little time to make tests less brittle
       await composePage.waitAndClick('@action-send', { delay: 1 });
-      await composePage.page.waitForFunction(() => document.querySelector('[data-test="action-send"]')!.textContent!.includes('%'));
+      await composePage.waitForContent('@action-send', '%', 20, 10);
       await ComposePageRecipe.close(composePage);
       await gmailPage.waitTillGone('@container-new-message');
     }));
