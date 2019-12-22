@@ -98,7 +98,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     ava.default('compose[global:compose] - standalone - nopgp', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human+nopgp@flowcrypt.com' }, 'unknown pubkey');
-      await ComposePageRecipe.sendAndClose(composePage, 'test-pass');
+      await ComposePageRecipe.sendAndClose(composePage, { password: 'test-pass' });
     }));
 
     ava.default('compose[global:compatibility] - standalone - from alias', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
@@ -108,12 +108,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default('compose[global:compose] - standalone - with attachments', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+    ava.default('compose[global:compatibility] - standalone - with attachments + shows progress %', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'with files');
       const fileInput = await composePage.target.$('input[type=file]');
-      await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
-      await ComposePageRecipe.sendAndClose(composePage);
+      await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf', 'test/samples/large.jpg');
+      await ComposePageRecipe.sendAndClose(composePage, { expectProgress: true });
     }));
 
     ava.default('compose[global:compose] - standalone - with attachments + nopgp', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
@@ -121,7 +121,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.fillMsg(composePage, { to: 'human+nopgp@flowcrypt.com' }, 'with files + nonppg');
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
-      await ComposePageRecipe.sendAndClose(composePage, 'test-pass', 90);
+      await ComposePageRecipe.sendAndClose(composePage, { password: 'test-pass', timeout: 90 });
     }));
 
     ava.default('compose[global:compose] - signed message', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
@@ -318,7 +318,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.fillMsg(composePage, { bcc: "test@email.com" }, undefined, undefined, 'reply');
       await expectRecipientElements(composePage, { to: ['censored@email.com'], cc: ['censored@email.com'], bcc: ['test@email.com'] });
       await Util.sleep(3);
-      await ComposePageRecipe.sendAndClose(composePage, 'test-pass');
+      await ComposePageRecipe.sendAndClose(composePage, { password: 'test-pass' });
     }));
 
     ava.default('compose[global:compatibility] - reply - CC&BCC test forward', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
@@ -478,7 +478,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt');
-      await ComposePageRecipe.sendAndClose(composePage, msgPwd);
+      await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
       const msg = new GoogleData('flowcrypt.compatibility@gmail.com').getMessageBySubject(subject)!;
       const webDecryptUrl = msg.payload.body!.data!.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]+/g)![0];
       const webDecryptPage = await browser.newPage(t, webDecryptUrl);

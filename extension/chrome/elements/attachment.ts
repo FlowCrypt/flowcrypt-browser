@@ -7,11 +7,11 @@ import { Store } from '../../js/common/platform/store.js';
 import { Browser } from '../../js/common/browser/browser.js';
 import { Api } from '../../js/common/api/api.js';
 import { DecryptErrTypes, PgpMsg } from '../../js/common/core/pgp-msg.js';
-import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
+import { BrowserMsg, Bm } from '../../js/common/browser/browser-msg.js';
 import { Att } from '../../js/common/core/att.js';
 import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';
-import { Url } from '../../js/common/core/common.js';
+import { Url, PromiseCancellation } from '../../js/common/core/common.js';
 import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { ApiErr } from '../../js/common/api/error/api-error.js';
@@ -36,6 +36,8 @@ View.run(class AttachmentDownloadView extends View {
   private originalButtonHTML: string | undefined;
   private canClickOnAtt: boolean = false;
   private downloadInProgress = false;
+  private ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
+  private tabId!: string;
 
   constructor() {
     super();
@@ -52,10 +54,10 @@ View.run(class AttachmentDownloadView extends View {
     // url contains either actual url of remote content or objectUrl for direct content, either way needs to be downloaded
     this.url = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'url');
     this.gmail = new Gmail(this.acctEmail);
-
   }
 
   render = async () => {
+    this.tabId = await BrowserMsg.requiredTabId();
     try {
       this.att = new Att({ name: this.origNameBasedOnFilename, type: this.type, msgId: this.msgId, id: this.id, url: this.url });
     } catch (e) {
@@ -95,6 +97,14 @@ View.run(class AttachmentDownloadView extends View {
       $('#header').show();
       this.button.hide();
     }));
+    BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
+      if (!entered) {
+        this.downloadInProgress = false;
+        this.ppChangedPromiseCancellation.cancel = true; // update original object which is monitored by a promise
+        this.ppChangedPromiseCancellation = { cancel: false }; // set to a new, not yet used object
+      }
+    });
+    BrowserMsg.listen(this.tabId);
   }
 
   private getFileIconSrc = () => {
@@ -204,7 +214,9 @@ View.run(class AttachmentDownloadView extends View {
       Browser.saveToDownloads(new Att({ name: result.filename, type: this.att.type, data: result.content }), $('body'));
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'attachment', longids: result.longids.needPassphrase });
-      await Store.waitUntilPassphraseChanged(this.acctEmail, result.longids.needPassphrase);
+      if (! await Store.waitUntilPassphraseChanged(this.acctEmail, result.longids.needPassphrase, 1000, this.ppChangedPromiseCancellation)) {
+        return;
+      }
       await this.decryptAndSaveAttToDownloads();
     } else {
       delete result.message;
