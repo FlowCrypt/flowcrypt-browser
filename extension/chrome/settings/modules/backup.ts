@@ -3,8 +3,8 @@
 'use strict';
 
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
-import { Store, KeyBackupMethod, EmailProvider, PromiseCancellation } from '../../../js/common/platform/store.js';
-import { Value, Url } from '../../../js/common/core/common.js';
+import { Store, KeyBackupMethod, EmailProvider } from '../../../js/common/platform/store.js';
+import { Value, Url, PromiseCancellation } from '../../../js/common/core/common.js';
 import { Att } from '../../../js/common/core/att.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';

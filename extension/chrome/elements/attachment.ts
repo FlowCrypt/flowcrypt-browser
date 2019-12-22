@@ -3,7 +3,7 @@
 'use strict';
 
 import { Catch } from '../../js/common/platform/catch.js';
-import { Store, PromiseCancellation } from '../../js/common/platform/store.js';
+import { Store } from '../../js/common/platform/store.js';
 import { Browser } from '../../js/common/browser/browser.js';
 import { Api } from '../../js/common/api/api.js';
 import { DecryptErrTypes, PgpMsg } from '../../js/common/core/pgp-msg.js';
@@ -11,7 +11,7 @@ import { BrowserMsg, Bm } from '../../js/common/browser/browser-msg.js';
 import { Att } from '../../js/common/core/att.js';
 import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';
-import { Url } from '../../js/common/core/common.js';
+import { Url, PromiseCancellation } from '../../js/common/core/common.js';
 import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { ApiErr } from '../../js/common/api/error/api-error.js';

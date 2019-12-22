@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Value, Str, Dict } from '../core/common.js';
+import { Value, Str, Dict, PromiseCancellation } from '../core/common.js';
 import { mnemonic } from '../core/mnemonic.js';
 import { KeyInfo, Contact } from '../core/pgp-key.js';
 import { SubscriptionInfo, PaymentMethod, FcUuidAuth, SubscriptionLevel } from '../api/backend.js';
@@ -136,8 +136,6 @@ export type AccountStore = {
   tmp_submit_main?: boolean;
   tmp_submit_all?: boolean;
 };
-
-export type PromiseCancellation = { cancel: boolean };
 
 export class AccountStoreExtension {
   static getEmailAliasesIncludingPrimary = (acct: string, sendAs: Dict<SendAsAlias> | undefined) => {
