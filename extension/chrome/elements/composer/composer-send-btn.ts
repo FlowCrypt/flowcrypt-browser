@@ -47,7 +47,8 @@ export class ComposerSendBtn extends ComposerComponent {
   resetSendBtn = (delay?: number) => {
     const doReset = () => {
       Xss.sanitizeRender(this.composer.S.cached('send_btn_text'), `<i></i>${this.btnText()}`);
-      this.composer.S.cached('toggle_send_options').show();
+      this.composer.S.cached('send_btn').addClass('green').removeClass('gray').prop('disabled', false);
+      this.composer.S.cached('toggle_send_options').addClass('green').removeClass('gray').show();
     };
     if (typeof this.btnUpdateTimeout !== 'undefined') {
       clearTimeout(this.btnUpdateTimeout);

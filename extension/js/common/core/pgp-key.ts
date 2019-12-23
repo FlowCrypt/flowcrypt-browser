@@ -354,4 +354,15 @@ export class PgpKey {
     throw new Error('No valid signature found in key');
   }
 
+  static revoke = async (key: OpenPGP.key.Key): Promise<string | undefined> => {
+    if (! await key.isRevoked()) {
+      key = await key.revoke({});
+    }
+    const certificate = await key.getRevocationCertificate();
+    if (!certificate || typeof certificate === 'string') {
+      return certificate || undefined;
+    } else {
+      return await openpgp.stream.readToEnd(certificate);
+    }
+  }
 }
