@@ -19,6 +19,10 @@ import { MsgBlock } from '../../../js/common/core/msg-block.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 
 export class ComposerQuote extends ComposerComponent {
+  private msgExpandingHTMLPart: string | undefined;
+
+  private footerHTML: string | undefined;
+  public messageToReplyOrForward: MessageToReplyOrForward | undefined;
 
   get getFooterHTML(): string | undefined {
     return this.footerHTML;
@@ -27,10 +31,6 @@ export class ComposerQuote extends ComposerComponent {
   get expandingHTMLPart(): string | undefined {
     return this.msgExpandingHTMLPart;
   }
-  private msgExpandingHTMLPart: string | undefined;
-
-  private footerHTML: string | undefined;
-  public messageToReplyOrForward: MessageToReplyOrForward | undefined;
 
   initActions = (): void => {
     // No need
