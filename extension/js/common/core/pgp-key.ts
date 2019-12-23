@@ -68,7 +68,8 @@ export interface KeyDetails {
 export type PrvPacket = (OpenPGP.packet.SecretKey | OpenPGP.packet.SecretSubkey);
 
 export class PgpKey {
-  public static create = async (userIds: { name: string, email: string }[], variant: 'rsa2048' | 'rsa4096' | 'curve25519', passphrase: string): Promise<{ private: string, public: string }> => {
+  public static create = async (userIds: { name: string, email: string }[], variant: 'rsa2048' | 'rsa4096' | 'curve25519', passphrase: string):
+    Promise<{ private: string, public: string }> => {
     const opt: OpenPGP.KeyOptions = { userIds, passphrase };
     if (variant === 'curve25519') {
       opt.curve = 'curve25519';

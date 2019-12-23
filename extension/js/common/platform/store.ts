@@ -406,7 +406,8 @@ export class Store {
     return keys;
   }
 
-  public static keysAdd = async (acctEmail: string, newKeyArmored: string) => { // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked key check
+  // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked key check
+  public static keysAdd = async (acctEmail: string, newKeyArmored: string) => {
     const keyinfos = await Store.keysGet(acctEmail);
     let updated = false;
     const newKeyLongid = await PgpKey.longid(newKeyArmored);
