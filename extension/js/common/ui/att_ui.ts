@@ -92,6 +92,11 @@ export class AttUI {
     this.attachedFiles = {};
   }
 
+  public addFile = (file: File) => {
+    console.log('addFile uploading file:', file);
+    this.uploader.addFiles([file]); // tslint:disable-line: no-unsafe-any
+  }
+
   private cancelAtt = (uploadFileId: string) => {
     delete this.attachedFiles[uploadFileId];
     if (this.callbacks.uiChanged) {
@@ -129,11 +134,6 @@ export class AttUI {
       Catch.setHandledTimeout(this.callbacks.uiChanged, 0);
     }
     return true;
-  }
-
-  public addFile = (file: File) => {
-    console.log('addFile uploading file:', file);
-    this.uploader.addFiles([file]); // tslint:disable-line: no-unsafe-any
   }
 
   private getFileSizeSum = () => {

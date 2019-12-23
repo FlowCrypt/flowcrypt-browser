@@ -70,6 +70,10 @@ export namespace GmailRes { // responses
 
 export class GmailParser {
 
+  private static getAddressesHeader = (gmailMsg: GmailRes.GmailMsg, headerName: RecipientType) => {
+    return Value.arr.unique((GmailParser.findHeader(gmailMsg, headerName) || '').split(',').map(e => Str.parseEmail(e).email!).filter(e => !!e));
+  }
+
   static findHeader = (apiGmailMsgObj: GmailRes.GmailMsg | GmailRes.GmailMsg$payload, headerName: string) => {
     const node: GmailRes.GmailMsg$payload = apiGmailMsgObj.hasOwnProperty('payload') ? (apiGmailMsgObj as GmailRes.GmailMsg).payload! : apiGmailMsgObj as GmailRes.GmailMsg$payload;
     if (typeof node.headers !== 'undefined') {
@@ -152,10 +156,6 @@ export class GmailParser {
       headers.to = replyToWithoutMyEmail;
     }
     return { to: headers.to, cc: headers.cc, bcc: headers.bcc, from: myEmail, subject: headers.subject };
-  }
-
-  private static getAddressesHeader = (gmailMsg: GmailRes.GmailMsg, headerName: RecipientType) => {
-    return Value.arr.unique((GmailParser.findHeader(gmailMsg, headerName) || '').split(',').map(e => Str.parseEmail(e).email!).filter(e => !!e));
   }
 
 }

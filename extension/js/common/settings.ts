@@ -26,6 +26,29 @@ declare const zxcvbn: Function; // tslint:disable-line:ban-types
 
 export class Settings {
 
+  private static prepareNewSettingsLocationUrl = (acctEmail: string | undefined, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams): string => {
+    const pageParams: UrlParams = { placement: 'settings', parentTabId };
+    if (acctEmail) {
+      pageParams.acctEmail = acctEmail;
+    }
+    if (typeof addUrlTextOrParams === 'object' && addUrlTextOrParams) { // it's a list of params - add them. It could also be a text - then it will be added the end of url below
+      for (const k of Object.keys(addUrlTextOrParams)) {
+        pageParams[k] = addUrlTextOrParams[k];
+      }
+      addUrlTextOrParams = undefined;
+    }
+    return Url.create(page, pageParams) + (addUrlTextOrParams || '');
+  }
+
+  private static getDefaultEmailAlias = (sendAs: Dict<SendAsAlias>) => {
+    for (const key of Object.keys(sendAs)) {
+      if (sendAs[key] && sendAs[key].isDefault) {
+        return key;
+      }
+    }
+    return undefined;
+  }
+
   static fetchAcctAliasesFromGmail = async (acctEmail: string): Promise<Dict<SendAsAlias>> => {
     const response = await new Gmail(acctEmail).fetchAcctAliases();
     const validAliases = response.sendAs.filter(alias => alias.isPrimary || alias.verificationStatus === 'accepted');
@@ -46,20 +69,6 @@ export class Settings {
     if (aliases.length) {
       await Promise.all(aliases.map(a => Attester.initialLegacySubmit(a, pubkey)));
     }
-  }
-
-  private static prepareNewSettingsLocationUrl = (acctEmail: string | undefined, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams): string => {
-    const pageParams: UrlParams = { placement: 'settings', parentTabId };
-    if (acctEmail) {
-      pageParams.acctEmail = acctEmail;
-    }
-    if (typeof addUrlTextOrParams === 'object' && addUrlTextOrParams) { // it's a list of params - add them. It could also be a text - then it will be added the end of url below
-      for (const k of Object.keys(addUrlTextOrParams)) {
-        pageParams[k] = addUrlTextOrParams[k];
-      }
-      addUrlTextOrParams = undefined;
-    }
-    return Url.create(page, pageParams) + (addUrlTextOrParams || '');
   }
 
   static renderSubPage = (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
@@ -372,15 +381,6 @@ export class Settings {
         }
       }
     })().catch(Catch.reportErr);
-  }
-
-  private static getDefaultEmailAlias = (sendAs: Dict<SendAsAlias>) => {
-    for (const key of Object.keys(sendAs)) {
-      if (sendAs[key] && sendAs[key].isDefault) {
-        return key;
-      }
-    }
-    return undefined;
   }
 
 }

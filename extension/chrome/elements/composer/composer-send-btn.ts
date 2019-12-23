@@ -21,11 +21,11 @@ import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
 export class ComposerSendBtn extends ComposerComponent {
 
+  private isSendMessageInProgress = false;
+
   public additionalMsgHeaders: { [key: string]: string } = {};
 
   public btnUpdateTimeout?: number;
-
-  private isSendMessageInProgress = false;
 
   public popover: ComposerSendBtnPopover;
 
@@ -68,6 +68,13 @@ export class ComposerSendBtn extends ComposerComponent {
   enableBtn = () => {
     this.composer.S.cached('send_btn').removeClass('gray').addClass('green').prop('disabled', false);
     this.composer.S.cached('toggle_send_options').removeClass('gray').addClass('green');
+  }
+
+  public renderUploadProgress = (progress: number | undefined) => {
+    if (progress && this.composer.atts.attach.hasAtt()) {
+      progress = Math.floor(progress);
+      this.composer.S.now('send_btn_text').text(`${SendBtnTexts.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
+    }
   }
 
   private btnText = (): string => {
@@ -168,13 +175,6 @@ export class ComposerSendBtn extends ComposerComponent {
         await PgpKey.decrypt(prv, passphrase!); // checked !== undefined above
       }
       return prv;
-    }
-  }
-
-  public renderUploadProgress = (progress: number | undefined) => {
-    if (progress && this.composer.atts.attach.hasAtt()) {
-      progress = Math.floor(progress);
-      this.composer.S.now('send_btn_text').text(`${SendBtnTexts.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
     }
   }
 

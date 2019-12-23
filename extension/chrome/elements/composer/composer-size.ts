@@ -8,12 +8,12 @@ import { Catch } from '../../../js/common/platform/catch.js';
 
 export class ComposerSize extends ComposerComponent {
 
-  public composeWindowIsMinimized = false;
-
   private FULL_WINDOW_CLASS = 'full_window';
   private lastReplyBoxTableHeight = 0;
   private composeWindowIsMaximized = false;
   private refBodyHeight?: number;
+
+  public composeWindowIsMinimized = false;
 
   initActions = () => {
     $('body').click(event => {
@@ -41,14 +41,6 @@ export class ComposerSize extends ComposerComponent {
     }, 1000);
   }
 
-  private windowResized = async () => {
-    this.resizeComposeBox();
-    this.setInputTextHeightManuallyIfNeeded(true);
-    if (this.composer.S.cached('recipients_placeholder').is(':visible')) {
-      await this.composer.recipients.setEmailsPreview(this.composer.recipients.getRecipients());
-    }
-  }
-
   resizeComposeBox = (addExtra: number = 0) => {
     if (this.view.isReplyBox) {
       this.composer.S.cached('input_text').css('max-width', (this.composer.S.cached('body').width()! - 20) + 'px'); // body should always be present
@@ -70,43 +62,6 @@ export class ComposerSize extends ComposerComponent {
       this.composer.S.cached('input_text').css('max-width', '');
       this.resizeInput();
       this.composer.S.cached('input_text').css('max-width', $('.text_container').width()! - 8 + 'px');
-    }
-  }
-
-  private minimizeComposerWindow = () => {
-    if (this.composeWindowIsMaximized) {
-      this.addOrRemoveFullScreenStyles(this.composeWindowIsMinimized);
-    }
-    BrowserMsg.send.setCss(this.view.parentTabId, {
-      selector: `iframe#${this.view.frameId}, div#new_message`,
-      css: { height: this.composeWindowIsMinimized ? '' : this.composer.S.cached('header').css('height') },
-    });
-    this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
-  }
-
-  private toggleFullScreen = async () => {
-    if (this.composeWindowIsMinimized) {
-      this.minimizeComposerWindow();
-    }
-    this.addOrRemoveFullScreenStyles(!this.composeWindowIsMaximized);
-    if (!this.composeWindowIsMaximized) {
-      this.composer.S.cached('icon_popout').attr('src', '/img/svgs/minimize.svg');
-    } else {
-      this.composer.S.cached('icon_popout').attr('src', '/img/svgs/maximize.svg');
-    }
-    if (this.composer.S.cached('recipients_placeholder').is(':visible')) {
-      await this.composer.recipients.setEmailsPreview(this.composer.recipients.getRecipients());
-    }
-    this.composeWindowIsMaximized = !this.composeWindowIsMaximized;
-  }
-
-  private addOrRemoveFullScreenStyles = (add: boolean) => {
-    if (add) {
-      this.composer.S.cached('body').addClass(this.FULL_WINDOW_CLASS);
-      BrowserMsg.send.addClass(this.view.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
-    } else {
-      this.composer.S.cached('body').removeClass(this.FULL_WINDOW_CLASS);
-      BrowserMsg.send.removeClass(this.view.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
     }
   }
 
@@ -153,6 +108,51 @@ export class ComposerSize extends ComposerComponent {
         offset = Math.ceil(lastRecipient.position().left + lastRecipient.outerWidth()!);
       }
       jqueryElem.css('width', (containerWidth - offset - additionalWidth - 11) + 'px');
+    }
+  }
+
+  private windowResized = async () => {
+    this.resizeComposeBox();
+    this.setInputTextHeightManuallyIfNeeded(true);
+    if (this.composer.S.cached('recipients_placeholder').is(':visible')) {
+      await this.composer.recipients.setEmailsPreview(this.composer.recipients.getRecipients());
+    }
+  }
+
+  private minimizeComposerWindow = () => {
+    if (this.composeWindowIsMaximized) {
+      this.addOrRemoveFullScreenStyles(this.composeWindowIsMinimized);
+    }
+    BrowserMsg.send.setCss(this.view.parentTabId, {
+      selector: `iframe#${this.view.frameId}, div#new_message`,
+      css: { height: this.composeWindowIsMinimized ? '' : this.composer.S.cached('header').css('height') },
+    });
+    this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
+  }
+
+  private toggleFullScreen = async () => {
+    if (this.composeWindowIsMinimized) {
+      this.minimizeComposerWindow();
+    }
+    this.addOrRemoveFullScreenStyles(!this.composeWindowIsMaximized);
+    if (!this.composeWindowIsMaximized) {
+      this.composer.S.cached('icon_popout').attr('src', '/img/svgs/minimize.svg');
+    } else {
+      this.composer.S.cached('icon_popout').attr('src', '/img/svgs/maximize.svg');
+    }
+    if (this.composer.S.cached('recipients_placeholder').is(':visible')) {
+      await this.composer.recipients.setEmailsPreview(this.composer.recipients.getRecipients());
+    }
+    this.composeWindowIsMaximized = !this.composeWindowIsMaximized;
+  }
+
+  private addOrRemoveFullScreenStyles = (add: boolean) => {
+    if (add) {
+      this.composer.S.cached('body').addClass(this.FULL_WINDOW_CLASS);
+      BrowserMsg.send.addClass(this.view.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
+    } else {
+      this.composer.S.cached('body').removeClass(this.FULL_WINDOW_CLASS);
+      BrowserMsg.send.removeClass(this.view.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
     }
   }
 

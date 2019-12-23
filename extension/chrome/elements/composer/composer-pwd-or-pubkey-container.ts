@@ -11,6 +11,8 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
 
   private keyImportUI = new KeyImportUi({});
 
+  private rmPwdStrengthValidationElements: (() => void) | undefined;
+
   public initActions = async () => {
     this.composer.S.cached('input_password').keyup(this.view.setHandlerPrevent('spree', () => this.showHideContainerAndColorSendBtn()));
     this.composer.S.cached('input_password').focus(() => this.showHideContainerAndColorSendBtn());
@@ -20,8 +22,6 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
       this.composer.S.cached('input_password').attr('type', 'password');
     }
   }
-
-  private rmPwdStrengthValidationElements: (() => void) | undefined;
 
   public showHideContainerAndColorSendBtn = () => {
     this.composer.sendBtn.resetSendBtn();

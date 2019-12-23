@@ -54,6 +54,12 @@ export class Backend extends Api {
     return await Backend.apiCall(Backend.url('api'), path, vals, fmt, undefined, { 'api-version': '3', ...addHeaders });
   }
 
+  private static throwIfMissingUuid = (fcAuth: FcUuidAuth) => {
+    if (!fcAuth.uuid) {
+      throw new BackendAuthErr('Please log into FlowCrypt account first');
+    }
+  }
+
   public static url = (type: 'api' | 'me' | 'pubkey' | 'decrypt' | 'web', resource = '') => {
     return ({
       api: BACKEND_API_HOST,
@@ -234,12 +240,6 @@ export class Backend extends Api {
       }));
     }
     return await Promise.all(promises);
-  }
-
-  private static throwIfMissingUuid = (fcAuth: FcUuidAuth) => {
-    if (!fcAuth.uuid) {
-      throw new BackendAuthErr('Please log into FlowCrypt account first');
-    }
   }
 
 }

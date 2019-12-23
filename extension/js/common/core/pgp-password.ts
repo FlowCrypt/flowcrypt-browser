@@ -44,30 +44,6 @@ export class PgpPwd {
     { match: '', word: 'weak', bar: 10, color: 'red', pass: false },
   ];
 
-  static estimateStrength = (zxcvbnResultGuesses: number, type: 'passphrase' | 'pwd' = 'passphrase'): PwdStrengthResult => {
-    const timeToCrack = zxcvbnResultGuesses / PgpPwd.CRACK_GUESSES_PER_SECOND;
-    for (const word of type === 'pwd' ? PgpPwd.CRACK_TIME_WORDS_PWD : PgpPwd.CRACK_TIME_WORDS_PASS_PHRASE) {
-      const readableTime = PgpPwd.readableCrackTime(timeToCrack);
-      if (readableTime.includes(word.match)) { // looks for a word match from readable_crack_time, defaults on "weak"
-        return { word, seconds: Math.round(timeToCrack), time: readableTime };
-      }
-    }
-    throw Error('(thrown) estimate_strength: got to end without any result');
-  }
-
-  static weakWords = () => {
-    return [
-      'crypt', 'up', 'cryptup', 'flow', 'flowcrypt', 'encryption', 'pgp', 'email', 'set', 'backup', 'passphrase', 'best', 'pass', 'phrases', 'are', 'long', 'and', 'have', 'several',
-      'words', 'in', 'them', 'Best pass phrases are long', 'have several words', 'in them', 'bestpassphrasesarelong', 'haveseveralwords', 'inthem',
-      'Loss of this pass phrase', 'cannot be recovered', 'Note it down', 'on a paper', 'lossofthispassphrase', 'cannotberecovered', 'noteitdown', 'onapaper',
-      'setpassword', 'set password', 'set pass word', 'setpassphrase', 'set pass phrase', 'set passphrase'
-    ];
-  }
-
-  static random = () => { // eg TDW6-DU5M-TANI-LJXY
-    return base64encode(openpgp.util.Uint8Array_to_str(secureRandomBytes(128))).toUpperCase().replace(/[^A-Z0-9]|0|O|1/g, '').replace(/(.{4})/g, '$1-').substr(0, 19);
-  }
-
   private static readableCrackTime = (totalSeconds: number) => { // http://stackoverflow.com/questions/8211744/convert-time-interval-given-in-seconds-into-more-human-readable-form
     const numberWordEnding = (n: number) => (n > 1) ? 's' : '';
     totalSeconds = Math.round(totalSeconds);
@@ -108,5 +84,29 @@ export class PgpPwd {
       return seconds + ' second' + numberWordEnding(seconds);
     }
     return 'less than a second';
+  }
+
+  static estimateStrength = (zxcvbnResultGuesses: number, type: 'passphrase' | 'pwd' = 'passphrase'): PwdStrengthResult => {
+    const timeToCrack = zxcvbnResultGuesses / PgpPwd.CRACK_GUESSES_PER_SECOND;
+    for (const word of type === 'pwd' ? PgpPwd.CRACK_TIME_WORDS_PWD : PgpPwd.CRACK_TIME_WORDS_PASS_PHRASE) {
+      const readableTime = PgpPwd.readableCrackTime(timeToCrack);
+      if (readableTime.includes(word.match)) { // looks for a word match from readable_crack_time, defaults on "weak"
+        return { word, seconds: Math.round(timeToCrack), time: readableTime };
+      }
+    }
+    throw Error('(thrown) estimate_strength: got to end without any result');
+  }
+
+  static weakWords = () => {
+    return [
+      'crypt', 'up', 'cryptup', 'flow', 'flowcrypt', 'encryption', 'pgp', 'email', 'set', 'backup', 'passphrase', 'best', 'pass', 'phrases', 'are', 'long', 'and', 'have', 'several',
+      'words', 'in', 'them', 'Best pass phrases are long', 'have several words', 'in them', 'bestpassphrasesarelong', 'haveseveralwords', 'inthem',
+      'Loss of this pass phrase', 'cannot be recovered', 'Note it down', 'on a paper', 'lossofthispassphrase', 'cannotberecovered', 'noteitdown', 'onapaper',
+      'setpassword', 'set password', 'set pass word', 'setpassphrase', 'set pass phrase', 'set passphrase'
+    ];
+  }
+
+  static random = () => { // eg TDW6-DU5M-TANI-LJXY
+    return base64encode(openpgp.util.Uint8Array_to_str(secureRandomBytes(128))).toUpperCase().replace(/[^A-Z0-9]|0|O|1/g, '').replace(/(.{4})/g, '$1-').substr(0, 19);
   }
 }

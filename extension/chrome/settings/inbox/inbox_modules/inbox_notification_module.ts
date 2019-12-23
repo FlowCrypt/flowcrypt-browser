@@ -23,13 +23,6 @@ export class InboxNotificationModule extends ViewModule<InboxView> {
     this.setHandlers();
   }
 
-  private setHandlers = () => {
-    BrowserMsg.addListener('notification_show', this.notificationShowHandler);
-    BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
-      this.notifications.showAuthPopupNeeded(acctEmail);
-    });
-  }
-
   renderAndHandleAuthPopupNotification = (insufficientPermission = false) => {
     let msg = `Your Google Account needs to be re-connected to your browser <a href="#" class="action_auth_popup">Connect Account</a>`;
     if (insufficientPermission) {
@@ -45,6 +38,13 @@ export class InboxNotificationModule extends ViewModule<InboxView> {
   showNotification = (notification: string, callbacks?: Dict<() => void>) => {
     this.notifications.show(notification, callbacks);
     $('body').one('click', this.view.setHandler(this.notifications.clear));
+  }
+
+  private setHandlers = () => {
+    BrowserMsg.addListener('notification_show', this.notificationShowHandler);
+    BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
+      this.notifications.showAuthPopupNeeded(acctEmail);
+    });
   }
 
   private notificationShowHandler: Bm.AsyncResponselessHandler = async ({ notification, callbacks }: Bm.NotificationShow) => {

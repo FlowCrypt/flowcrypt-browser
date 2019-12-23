@@ -25,6 +25,20 @@ export class ComposerMyPubkey extends ComposerComponent {
     }, this.composer.errs.handlers(`set/unset pubkey attachment`)));
   }
 
+  public shouldAttach = () => {
+    return this.composer.S.cached('icon_pubkey').is('.active');
+  }
+
+  chooseMyPublicKeyBySenderEmail = async (keys: KeyInfo[], email: string) => {
+    for (const key of keys) {
+      const parsedkey = await PgpKey.read(key.public);
+      if (parsedkey.users.find(u => !!u.userId && u.userId.userid.toLowerCase().includes(email.toLowerCase()))) {
+        return key;
+      }
+    }
+    return undefined;
+  }
+
   public reevaluateShouldAttachOrNot = () => {
     if (this.toggledManually) { // leave it as is if toggled manually before
       return;
@@ -52,19 +66,4 @@ export class ComposerMyPubkey extends ComposerComponent {
       this.composer.S.cached('icon_pubkey').removeClass('active').attr('title', Lang.compose.includePubkeyIconTitle);
     }
   }
-
-  public shouldAttach = () => {
-    return this.composer.S.cached('icon_pubkey').is('.active');
-  }
-
-  chooseMyPublicKeyBySenderEmail = async (keys: KeyInfo[], email: string) => {
-    for (const key of keys) {
-      const parsedkey = await PgpKey.read(key.public);
-      if (parsedkey.users.find(u => !!u.userId && u.userId.userid.toLowerCase().includes(email.toLowerCase()))) {
-        return key;
-      }
-    }
-    return undefined;
-  }
-
 }
