@@ -48,7 +48,7 @@ View.run(class BackupView extends View {
     this.gmail = new Gmail(this.acctEmail);
   }
 
-  render = async () => {
+  public render = async () => {
     this.tabId = await BrowserMsg.requiredTabId();
     const storage = await Store.getAcct(this.acctEmail, ['setup_simple', 'email_provider']);
     this.emailProvider = storage.email_provider || 'gmail';
@@ -74,7 +74,7 @@ View.run(class BackupView extends View {
     }
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     $('.action_password').click(this.setHandler(el => this.actionEnterPassPhraseHandler(el)));
     $('.action_reset_password').click(this.setHandler(el => this.actionResetPassPhraseEntryHandler()));
     $('.action_backup').click(this.setHandlerPrevent('double', el => this.actionBackupHandler(el)));

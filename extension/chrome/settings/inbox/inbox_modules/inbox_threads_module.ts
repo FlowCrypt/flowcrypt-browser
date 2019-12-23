@@ -14,7 +14,7 @@ import { ViewModule } from '../../../../js/common/view_module.js';
 
 export class InboxListThreadsModule extends ViewModule<InboxView> {
 
-  render = async (labelId: string) => {
+  public render = async (labelId: string) => {
     this.view.displayBlock('inbox', `Messages in ${this.view.inboxMenuModule.getLabelName(labelId)}`);
     try {
       const { threads } = await this.view.gmail.threadList(labelId);

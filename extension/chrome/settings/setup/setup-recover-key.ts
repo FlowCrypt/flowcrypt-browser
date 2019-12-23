@@ -81,7 +81,7 @@ export class SetupRecoverKeyModule {
     }
   }
 
-  actionRecoverRemainingKeysHandler = async () => {
+  public actionRecoverRemainingKeysHandler = async () => {
     this.view.setupRender.displayBlock('step_2_recovery');
     $('#recovery_pasword').val('');
     const nImported = (await Store.keysGet(this.view.acctEmail)).length;
@@ -97,7 +97,7 @@ export class SetupRecoverKeyModule {
     }
   }
 
-  actionSkipRecoveryHandler = async () => {
+  public actionSkipRecoveryHandler = async () => {
     if (await Ui.modal.confirm(Lang.setup.confirmSkipRecovery)) {
       this.view.fetchedKeyBackups = [];
       this.view.fetchedKeyBackupsUniqueLongids = [];
@@ -107,7 +107,7 @@ export class SetupRecoverKeyModule {
     }
   }
 
-  renderAddKeyFromBackup = async () => { // at this point, account is already set up, and this page is showing in a lightbox after selecting "from backup" in add_key.htm
+  public renderAddKeyFromBackup = async () => { // at this point, account is already set up, and this page is showing in a lightbox after selecting "from backup" in add_key.htm
     $('.profile-row, .skip_recover_remaining, .action_send, .action_account_settings, .action_skip_recovery').css({ display: 'none', visibility: 'hidden', opacity: 0 });
     Xss.sanitizeRender($('h1').parent(), '<h1>Recover key from backup</h1>');
     $('.action_recover_account').text('load key from backup');

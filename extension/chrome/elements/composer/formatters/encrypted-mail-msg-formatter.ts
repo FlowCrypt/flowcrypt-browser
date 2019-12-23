@@ -34,7 +34,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     this.armoredPubkeys = armoredPubkeys;
   }
 
-  sendableMsg = async (newMsg: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> => {
+  public sendableMsg = async (newMsg: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> => {
     const subscription = await Store.subscription(this.acctEmail);
     const pubkeys = this.armoredPubkeys.map(p => p.pubkey);
     if (!this.richText) { // simple text: PGP/Inline

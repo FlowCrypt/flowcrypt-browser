@@ -9,7 +9,7 @@ export class BrowserMsgCommonHandlers {
 
   // -- these few are set on every listener automatically
 
-  static setCss = async (data: Bm.SetCss) => {
+  public static setCss = async (data: Bm.SetCss) => {
     let el = $(data.selector);
     const traverseUpLevels = data.traverseUp as number || 0;
     for (let i = 0; i < traverseUpLevels; i++) {
@@ -18,17 +18,17 @@ export class BrowserMsgCommonHandlers {
     el.css(data.css);
   }
 
-  static addClass = async (data: Bm.AddOrRemoveClass) => {
+  public static addClass = async (data: Bm.AddOrRemoveClass) => {
     $(data.selector).addClass(data.class);
   }
 
-  static removeClass = async (data: Bm.AddOrRemoveClass) => {
+  public static removeClass = async (data: Bm.AddOrRemoveClass) => {
     $(data.selector).removeClass(data.class);
   }
 
   // -- these below have to be set manually when appropriate
 
-  static replyPubkeyMismatch = async () => {
+  public static replyPubkeyMismatch = async () => {
     const replyIframe = $('iframe.reply_message').get(0) as HTMLIFrameElement | undefined;
     if (replyIframe) {
       const bareSrc = Url.removeParamsFromUrl(replyIframe.src, ['ignoreDraft', 'disableDraftSaving', 'draftId', 'replyPubkeyMismatch', 'skipClickPrompt']);

@@ -8,12 +8,12 @@ import { Recipients } from '../../../js/common/api/email_provider/email_provider
 export type RecipientStatus = 0 | 1 | 2 | 3 | 4 | 5;
 
 export class RecipientStatuses {
-  static EVALUATING: RecipientStatus = 0;
-  static HAS_PGP: RecipientStatus = 1;
-  static NO_PGP: RecipientStatus = 2;
-  static EXPIRED: RecipientStatus = 3;
-  static WRONG: RecipientStatus = 4;
-  static FAILED: RecipientStatus = 5;
+  public static EVALUATING: RecipientStatus = 0;
+  public static HAS_PGP: RecipientStatus = 1;
+  public static NO_PGP: RecipientStatus = 2;
+  public static EXPIRED: RecipientStatus = 3;
+  public static WRONG: RecipientStatus = 4;
+  public static FAILED: RecipientStatus = 5;
 }
 
 export interface BaseRecipient {

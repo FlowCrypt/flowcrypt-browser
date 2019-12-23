@@ -45,7 +45,7 @@ export class ComposerRecipients extends ComposerComponent {
     this.canSearchContacts = this.composer.view.scopes!.readContacts;
   }
 
-  initActions = (): void => {
+  public initActions = (): void => {
     let preventSearchContacts = false;
     const inputs = this.composer.S.cached('recipients_inputs');
     inputs.on('keyup', this.view.setHandlerPrevent('veryslowspree', async (target) => {
@@ -357,7 +357,7 @@ export class ComposerRecipients extends ComposerComponent {
     this.onRecipientAddedCallbacks.push(callback);
   }
 
-  doesRecipientHaveMyPubkey = async (theirEmailUnchecked: string): Promise<boolean | undefined> => {
+  public doesRecipientHaveMyPubkey = async (theirEmailUnchecked: string): Promise<boolean | undefined> => {
     const theirEmail = Str.parseEmail(theirEmailUnchecked).email;
     if (!theirEmail) {
       return false;

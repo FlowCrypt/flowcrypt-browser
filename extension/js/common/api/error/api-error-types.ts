@@ -76,7 +76,7 @@ export class ApiErrResponse extends ApiCallErr {
 
 export class AjaxErr extends ApiCallErr {
 
-  static fromXhr = (xhr: RawAjaxErr, req: JQueryAjaxSettings, stack: string) => {
+  public static fromXhr = (xhr: RawAjaxErr, req: JQueryAjaxSettings, stack: string) => {
     const responseText = xhr.responseText || '';
     const status = typeof xhr.status === 'number' ? xhr.status : -1;
     stack += `\n\nprovided ajax call stack:\n${stack}`;
@@ -98,7 +98,7 @@ export class AjaxErr extends ApiCallErr {
     super(message);
   }
 
-  parseErrResMsg = (format: 'google') => {
+  public parseErrResMsg = (format: 'google') => {
     try {
       if (format === 'google') {
         const errMsg = ((JSON.parse(this.responseText) as any).error as any).message as string; // catching all errs below

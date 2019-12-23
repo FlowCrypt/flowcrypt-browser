@@ -9,7 +9,7 @@ import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter
 
 export class PlainMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
 
-  sendableMsg = async (newMsgData: NewMsgData): Promise<SendableMsg> => {
+  public sendableMsg = async (newMsgData: NewMsgData): Promise<SendableMsg> => {
     this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING);
     const atts = await this.composer.atts.attach.collectAtts();
     const body: SendableMsgBody = { 'text/plain': newMsgData.plaintext };

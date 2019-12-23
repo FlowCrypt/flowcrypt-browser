@@ -14,7 +14,7 @@ View.run(class DefaultPopupView extends View {
     super();
   }
 
-  render = async () => {
+  public render = async () => {
     const activeTab = await BrowserMsg.send.bg.await.getActiveTabInfo();
     if (activeTab?.acctEmail) {
       const { setup_done } = await Store.getAcct(activeTab.acctEmail, ['setup_done']);
@@ -44,7 +44,7 @@ View.run(class DefaultPopupView extends View {
     }
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     // set below based on what renders
   }
 

@@ -14,15 +14,15 @@ export type MsgBlockType = ReplaceableMsgBlockType | 'plainText' | 'decryptedTex
 
 export class MsgBlock {
 
-  static fromContent = (type: MsgBlockType, content: string | Buf, missingEnd = false): MsgBlock => {
+  public static fromContent = (type: MsgBlockType, content: string | Buf, missingEnd = false): MsgBlock => {
     return new MsgBlock(type, content, !missingEnd);
   }
 
-  static fromKeyDetails = (type: MsgBlockType, content: string, keyDetails: KeyDetails): MsgBlock => {
+  public static fromKeyDetails = (type: MsgBlockType, content: string, keyDetails: KeyDetails): MsgBlock => {
     return new MsgBlock(type, content, true, undefined, keyDetails);
   }
 
-  static fromAtt = (type: MsgBlockType, content: string, attMeta: AttMeta): MsgBlock => {
+  public static fromAtt = (type: MsgBlockType, content: string, attMeta: AttMeta): MsgBlock => {
     return new MsgBlock(type, content, true, undefined, undefined, attMeta);
   }
 

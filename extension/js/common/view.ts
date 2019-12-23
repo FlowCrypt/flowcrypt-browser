@@ -26,9 +26,9 @@ export abstract class View {
     }
   }
 
-  abstract async render(): Promise<void>;
+  public abstract async render(): Promise<void>;
 
-  abstract setHandlers(): void;
+  public abstract setHandlers(): void;
 
   public setHandler = (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) => {
     return Ui.event.handle(cb, errHandlers, this);

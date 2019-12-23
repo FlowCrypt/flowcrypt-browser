@@ -48,7 +48,7 @@ View.run(class ContactPageView extends View {
     });
   }
 
-  render = async () => {
+  public render = async () => {
     Xss.sanitizeRender(this.S.cached('status'), 'Loading..' + Ui.spinner('green'));
     try {
       const response = await Backend.accountGetAndUpdateLocalStore(await this.authInfoPromise);
@@ -62,7 +62,7 @@ View.run(class ContactPageView extends View {
     }
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     this.S.cached('action_update').click(this.setHandlerPrevent('double', () => this.onUpdateHandler()));
     this.S.cached('action_close').click(this.setHandler(() => this.onCloseHandler()));
   }

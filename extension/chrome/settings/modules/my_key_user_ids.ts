@@ -22,7 +22,7 @@ View.run(class MyKeyUserIdsView extends View {
     this.myKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
   }
 
-  render = async () => {
+  public render = async () => {
     [this.primaryKi] = await Store.keysGet(this.acctEmail, [this.longid]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     $('.action_show_public_key').attr('href', this.myKeyUrl);
@@ -33,7 +33,7 @@ View.run(class MyKeyUserIdsView extends View {
     $('.key_words').text(this.primaryKi.keywords);
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     // No need
   }
 });

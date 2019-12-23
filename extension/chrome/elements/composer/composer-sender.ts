@@ -12,7 +12,7 @@ import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 export class ComposerSender extends ComposerComponent {
 
-  initActions = () => {
+  public initActions = () => {
     // none
   }
 

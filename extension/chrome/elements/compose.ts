@@ -69,7 +69,7 @@ export class ComposeView extends View {
     openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
   }
 
-  render = async () => {
+  public render = async () => {
     this.storage = await Store.getAcct(this.acctEmail, ['google_token_scopes', 'addresses', 'sendAs', 'email_provider',
       'hide_message_password', 'drafts_reply']);
     this.tabId = await BrowserMsg.requiredTabId();
@@ -87,7 +87,7 @@ export class ComposeView extends View {
     this.composer = new Composer(this);
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     // all handled in Composer
   }
 

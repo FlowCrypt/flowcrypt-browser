@@ -85,7 +85,7 @@ export class MsgBlockParser {
     }
   }
 
-  static detectBlocks = (origText: string) => {
+  public static detectBlocks = (origText: string) => {
     const blocks: MsgBlock[] = [];
     const normalized = Str.normalize(origText);
     let startAt = 0;
@@ -106,7 +106,7 @@ export class MsgBlockParser {
     }
   }
 
-  static fmtDecryptedAsSanitizedHtmlBlocks = async (decryptedContent: Uint8Array): Promise<{ blocks: MsgBlock[], subject: string | undefined }> => {
+  public static fmtDecryptedAsSanitizedHtmlBlocks = async (decryptedContent: Uint8Array): Promise<{ blocks: MsgBlock[], subject: string | undefined }> => {
     const blocks: MsgBlock[] = [];
     if (!Mime.resemblesMsg(decryptedContent)) {
       let utf = Buf.fromUint8(decryptedContent).toUtfStr();

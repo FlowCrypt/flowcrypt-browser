@@ -58,7 +58,7 @@ export class Google {
       }));
   }
 
-  static encodeAsMultipartRelated = (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
+  public static encodeAsMultipartRelated = (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
     const boundary = 'the_boundary_is_' + Str.sloppyRandom(10);
     let body = '';
     for (const type of Object.keys(parts)) {

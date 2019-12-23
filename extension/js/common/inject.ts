@@ -50,18 +50,18 @@ export class Injector {
     });
   }
 
-  meta = () => {
+  public meta = () => {
     this.S.cached('body').addClass(`cryptup_${this.webmailName} cryptup_${this.webmailName}_${this.webmailVariant} ${Catch.browser().name}`)
       .append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer());  // xss-safe-factory
   }
 
-  openComposeWin = () => {
+  public openComposeWin = () => {
     if (this.S.now('compose_window').length === 0) {
       this.S.cached('body').append(this.factory.embeddedCompose()); // xss-safe-factory
     }
   }
 
-  btns = () => {
+  public btns = () => {
     if (this.S.now('compose_button_container').length === 0) { // don't inject too early
       (window as unknown as ContentScriptWindow).TrySetDestroyableTimeout(() => this.btns(), 300);
     } else {
@@ -72,7 +72,7 @@ export class Injector {
     }
   }
 
-  insertEndSessionBtn = async (acctEmail: string) => {
+  public insertEndSessionBtn = async (acctEmail: string) => {
     if ($('.action_finish_session').length) {
       return;
     }

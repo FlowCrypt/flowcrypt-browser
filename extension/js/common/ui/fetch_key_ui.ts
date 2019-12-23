@@ -8,7 +8,7 @@ import { KeyImportUi } from './key_import_ui.js';
 import { BrowserMsg } from '../browser/browser-msg.js';
 
 export class FetchKeyUI {
-  handleOnPaste = (elem: JQuery<HTMLElement>) => {
+  public handleOnPaste = (elem: JQuery<HTMLElement>) => {
     elem.on('paste', Ui.event.handle(async (elem: HTMLInputElement, event) => {
       const clipboardEvent = event.originalEvent as ClipboardEvent;
       if (clipboardEvent.clipboardData) {

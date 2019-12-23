@@ -23,7 +23,7 @@ type KeyImportUiCheckResult = {
 };
 
 export class KeyCanBeFixed extends Error {
-  encrypted: OpenPGP.key.Key;
+  public encrypted: OpenPGP.key.Key;
   constructor(encrypted: OpenPGP.key.Key) {
     super();
     this.encrypted = encrypted;
@@ -126,7 +126,7 @@ export class KeyImportUi {
     });
   }
 
-  checkPrv = async (acctEmail: string, armored: string, passphrase: string): Promise<KeyImportUiCheckResult> => {
+  public checkPrv = async (acctEmail: string, armored: string, passphrase: string): Promise<KeyImportUiCheckResult> => {
     const { normalized } = await this.normalize('privateKey', armored);
     const decrypted = await this.read('privateKey', normalized);
     const encrypted = await this.read('privateKey', normalized);
@@ -140,7 +140,7 @@ export class KeyImportUi {
     return { normalized, longid, passphrase, fingerprint: (await PgpKey.fingerprint(decrypted))!, decrypted, encrypted }; // will have fp if had longid
   }
 
-  checkPub = async (armored: string): Promise<string> => {
+  public checkPub = async (armored: string): Promise<string> => {
     const { normalized } = await this.normalize('publicKey', armored);
     const parsed = await this.read('publicKey', normalized);
     await this.longid(parsed);
@@ -148,7 +148,7 @@ export class KeyImportUi {
     return normalized;
   }
 
-  renderPassPhraseStrengthValidationInput = (input: JQuery<HTMLElement>, submitButton?: JQuery<HTMLElement>, type: 'passphrase' | 'pwd' = 'passphrase') => {
+  public renderPassPhraseStrengthValidationInput = (input: JQuery<HTMLElement>, submitButton?: JQuery<HTMLElement>, type: 'passphrase' | 'pwd' = 'passphrase') => {
     const validationElements = this.getPPValidationElements();
     const setBtnColor = (type: 'gray' | 'green') => {
       if (submitButton) { // submitButton may be undefined if we don't want password strength to affect color of any action button

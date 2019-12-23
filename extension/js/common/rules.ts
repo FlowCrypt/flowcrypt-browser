@@ -56,23 +56,23 @@ export class Rules {
 
   protected constructor(private domainRules: DomainRules) { }
 
-  canCreateKeys = () => {
+  public canCreateKeys = () => {
     return !this.domainRules.flags.includes('NO_PRV_CREATE');
   }
 
-  canBackupKeys = () => {
+  public canBackupKeys = () => {
     return !this.domainRules.flags.includes('NO_PRV_BACKUP');
   }
 
-  mustSubmitToAttester = () => {
+  public mustSubmitToAttester = () => {
     return this.domainRules.flags.includes('ENFORCE_ATTESTER_SUBMIT');
   }
 
-  canUseCustomKeyserver = () => {
+  public canUseCustomKeyserver = () => {
     return this.domainRules.flags.includes('ALLOW_CUSTOM_KEYSERVER');
   }
 
-  getCustomKeyserver = (): string | undefined => {
+  public getCustomKeyserver = (): string | undefined => {
     return this.canUseCustomKeyserver() ? this.domainRules.custom_keyserver_url : undefined;
   }
 

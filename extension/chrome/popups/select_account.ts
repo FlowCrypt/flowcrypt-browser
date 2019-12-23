@@ -21,7 +21,7 @@ View.run(class SelectAcctPopupView extends View {
     this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['inbox', 'settings']);
   }
 
-  render = async () => {
+  public render = async () => {
     $('#title').text(this.action === 'inbox' ? 'Choose inbox account' : 'Select an account to open settings');
     const acctStorages = await Store.getAccounts(await Store.acctEmailsGet(), ['setup_done', 'picture']);
     let emailsUlHtml = '';
@@ -39,7 +39,7 @@ View.run(class SelectAcctPopupView extends View {
     $('html, body').css('height', $('.content').height()! + (Catch.browser().name === 'firefox' ? 40 : 0)); // .content is in template
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     $('ul.emails a').click(this.setHandler(el => this.actionChooseAcctHandler(el)));
     $('.action_add_account').click(this.setHandler(el => this.actionRedirectToAddAcctPageHandler()));
   }

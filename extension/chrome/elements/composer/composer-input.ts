@@ -12,7 +12,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 export class ComposerInput extends ComposerComponent {
   public squire = new window.Squire(this.composer.S.cached('input_text').get(0));
 
-  initActions = () => {
+  public initActions = () => {
     this.composer.S.cached('add_intro').click(this.view.setHandler(el => this.actionAddIntroHandler(el), this.composer.errs.handlers(`add intro`)));
     this.handlePaste();
     this.handlePasteImages();
@@ -21,7 +21,7 @@ export class ComposerInput extends ComposerComponent {
     this.scrollIntoView();
   }
 
-  removeRichTextFormatting = () => {
+  public removeRichTextFormatting = () => {
     this.squire.setHTML(Xss.htmlSanitizeAndStripAllTags(this.squire.getHTML(), '<br>'));
   }
 

@@ -24,7 +24,7 @@ rules: #
     variable-name:
      - true
      - allow-leading-underscore
-    member-access: false
+    member-access: true
     member-ordering: 
       - true
       - order:

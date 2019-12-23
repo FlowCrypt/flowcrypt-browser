@@ -31,11 +31,11 @@ View.run(class ExperimentalView extends View {
     }
   }
 
-  render = async () => {
+  public render = async () => {
     $('.email').text(this.acctEmail);
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     $('.action_open_compatibility').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/compatibility.htm')));
     $('.action_open_decrypt').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/decrypt.htm')));
     $('.action_backup').click(this.setHandlerPrevent('double', () => this.collectInfoAndDownloadBackupFile().catch(Catch.reportErr)));

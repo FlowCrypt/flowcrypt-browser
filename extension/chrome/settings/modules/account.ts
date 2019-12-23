@@ -26,7 +26,7 @@ View.run(class AccountView extends View {
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   }
 
-  render = async () => {
+  public render = async () => {
     Xss.sanitizeRender('.loading', Ui.spinner('green', 'large_spinner'));
     const authInfo = await Store.authInfo(this.acctEmail);
     let subscription = await Store.subscription(this.acctEmail);
@@ -62,7 +62,7 @@ View.run(class AccountView extends View {
     $('.list_table').css('display', 'block');
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     $('.action_go_subscription').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/elements/subscribe.htm', '&placement=settings')));
   }
 

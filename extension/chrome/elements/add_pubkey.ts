@@ -30,7 +30,7 @@ View.run(class AddPubkeyView extends View {
     this.missingPubkeyEmails = Assert.urlParamRequire.string(uncheckedUrlParams, 'emails').split(',');
   }
 
-  render = async () => {
+  public render = async () => {
     Ui.event.protect();
     for (const missingPubkeyEmail of this.missingPubkeyEmails) {
       Xss.sanitizeAppend('select.email', `<option value="${Xss.escape(missingPubkeyEmail)}">${Xss.escape(missingPubkeyEmail)}</option>`);
@@ -42,7 +42,7 @@ View.run(class AddPubkeyView extends View {
     $('.action_settings').click(this.setHandler(() => BrowserMsg.send.bg.settings({ path: 'index.htm', page: '/chrome/settings/modules/contacts.htm', acctEmail: this.acctEmail })));
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     this.attUI.initAttDialog('fineuploader', 'fineuploader_button', {
       attAdded: async (file) => {
         this.attUI.clearAllAtts();

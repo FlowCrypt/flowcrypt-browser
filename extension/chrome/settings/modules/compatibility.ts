@@ -17,11 +17,11 @@ View.run(class CompatibilityView extends View {
     super();
   }
 
-  render = async () => {
+  public render = async () => {
     // No need
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     $('.action_test_key').click(this.setHandlerPrevent('double', this.actionTestKeyHandler));
     $('#input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_test_key'));
   }

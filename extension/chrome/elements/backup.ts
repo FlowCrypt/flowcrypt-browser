@@ -29,7 +29,7 @@ View.run(class BackupView extends View {
     this.armoredPrvBackup = Assert.urlParamRequire.string(uncheckedUrlParams, 'armoredPrvBackup');
   }
 
-  render = async () => {
+  public render = async () => {
     Ui.event.protect();
     await initPassphraseToggle(['pass_phrase']);
     const prvBackup = await PgpKey.read(this.armoredPrvBackup);
@@ -55,7 +55,7 @@ View.run(class BackupView extends View {
     this.sendResizeMsg();
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     if (!this.storedPrvWithMatchingLongid) {
       $("#action_import_key").click(this.setHandler(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/add_key.htm' })));
     }

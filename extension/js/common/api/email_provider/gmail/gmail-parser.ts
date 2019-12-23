@@ -74,7 +74,7 @@ export class GmailParser {
     return Value.arr.unique((GmailParser.findHeader(gmailMsg, headerName) || '').split(',').map(e => Str.parseEmail(e).email!).filter(e => !!e));
   }
 
-  static findHeader = (apiGmailMsgObj: GmailRes.GmailMsg | GmailRes.GmailMsg$payload, headerName: string) => {
+  public static findHeader = (apiGmailMsgObj: GmailRes.GmailMsg | GmailRes.GmailMsg$payload, headerName: string) => {
     const node: GmailRes.GmailMsg$payload = apiGmailMsgObj.hasOwnProperty('payload') ? (apiGmailMsgObj as GmailRes.GmailMsg).payload! : apiGmailMsgObj as GmailRes.GmailMsg$payload;
     if (typeof node.headers !== 'undefined') {
       for (const header of node.headers) {
@@ -86,7 +86,7 @@ export class GmailParser {
     return undefined;
   }
 
-  static findAtts = (msgOrPayloadOrPart: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part, internalResults: Att[] = [], internalMsgId?: string) => {
+  public static findAtts = (msgOrPayloadOrPart: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part, internalResults: Att[] = [], internalMsgId?: string) => {
     if (msgOrPayloadOrPart.hasOwnProperty('payload')) {
       internalMsgId = (msgOrPayloadOrPart as GmailRes.GmailMsg).id;
       GmailParser.findAtts((msgOrPayloadOrPart as GmailRes.GmailMsg).payload!, internalResults, internalMsgId);
@@ -109,7 +109,7 @@ export class GmailParser {
     return internalResults;
   }
 
-  static findBodies = (gmailMsg: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part, internalResults: SendableMsgBody = {}): SendableMsgBody => {
+  public static findBodies = (gmailMsg: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part, internalResults: SendableMsgBody = {}): SendableMsgBody => {
     const isGmailMsgWithPayload = (v: any): v is GmailRes.GmailMsg => v && typeof (v as GmailRes.GmailMsg).payload !== 'undefined';
     const isGmailMsgPayload = (v: any): v is GmailRes.GmailMsg$payload => v && typeof (v as GmailRes.GmailMsg$payload).parts !== 'undefined';
     const isGmailMsgPayloadPart = (v: any): v is GmailRes.GmailMsg$payload$part => v && typeof (v as GmailRes.GmailMsg$payload$part).body !== 'undefined';
@@ -129,7 +129,7 @@ export class GmailParser {
     return internalResults;
   }
 
-  static determineReplyMeta = (acctEmail: string, addresses: string[], lastGmailMsg: GmailRes.GmailMsg): ReplyParams => {
+  public static determineReplyMeta = (acctEmail: string, addresses: string[], lastGmailMsg: GmailRes.GmailMsg): ReplyParams => {
     const headers = {
       from: Str.parseEmail(GmailParser.findHeader(lastGmailMsg, 'from') || '').email,
       to: GmailParser.getAddressesHeader(lastGmailMsg, 'to'),

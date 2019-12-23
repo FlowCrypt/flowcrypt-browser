@@ -18,12 +18,12 @@ export class InboxNotificationModule extends ViewModule<InboxView> {
     this.notifications = new Notifications(view.tabId);
   }
 
-  render = () => {
+  public render = () => {
     this.view.S.cached('body').prepend(this.view.factory.metaNotificationContainer()); // xss-safe-factory
     this.setHandlers();
   }
 
-  renderAndHandleAuthPopupNotification = (insufficientPermission = false) => {
+  public renderAndHandleAuthPopupNotification = (insufficientPermission = false) => {
     let msg = `Your Google Account needs to be re-connected to your browser <a href="#" class="action_auth_popup">Connect Account</a>`;
     if (insufficientPermission) {
       msg = `Permission missing to load inbox <a href="#" class="action_add_permission">Revise Permissions</a>`;
@@ -35,7 +35,7 @@ export class InboxNotificationModule extends ViewModule<InboxView> {
     this.showNotification(msg, { action_auth_popup: newAuthPopup, action_add_permission: newAuthPopup });
   }
 
-  showNotification = (notification: string, callbacks?: Dict<() => void>) => {
+  public showNotification = (notification: string, callbacks?: Dict<() => void>) => {
     this.notifications.show(notification, callbacks);
     $('body').one('click', this.view.setHandler(this.notifications.clear));
   }

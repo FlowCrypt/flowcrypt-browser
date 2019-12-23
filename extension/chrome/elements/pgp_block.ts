@@ -67,7 +67,7 @@ export class PgpBlockView extends View {
     this.decryptModule = new PgpBlockViewDecryptModule(this);
   }
 
-  render = async () => {
+  public render = async () => {
     const storage = await Store.getAcct(this.acctEmail, ['setup_done', 'google_token_scopes']);
     const scopes = await Store.getScopes(this.acctEmail);
     this.decryptModule.canReadEmails = scopes.read || scopes.modify;
@@ -78,7 +78,7 @@ export class PgpBlockView extends View {
     }
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     // defined as needed, depending on what rendered
   }
 

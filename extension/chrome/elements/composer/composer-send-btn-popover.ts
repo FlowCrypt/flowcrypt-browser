@@ -13,11 +13,11 @@ export class ComposerSendBtnPopover extends ComposerComponent {
 
   public choices: PopoverChoices = { encrypt: true, sign: true, richText: false }; // defaults, may be changed by user using the popover
 
-  initActions = (): void => {
+  public initActions = (): void => {
     this.composer.S.cached('toggle_send_options').click(this.view.setHandler((el, ev) => this.toggleVisible(ev)));
   }
 
-  render = async () => {
+  public render = async () => {
     const popoverItems = {
       richText: { text: 'Rich text (PGP/MIME) - experimental', iconPath: undefined },
       encrypt: { text: 'Encrypt message', iconPath: '/img/svgs/locked-icon-green.svg' },

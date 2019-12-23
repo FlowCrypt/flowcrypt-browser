@@ -22,7 +22,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
   private threadId: string | undefined;
   private threadHasPgpBlock: boolean = false;
 
-  render = async (threadId: string, thread?: GmailRes.GmailThread) => {
+  public render = async (threadId: string, thread?: GmailRes.GmailThread) => {
     this.threadId = threadId;
     this.view.displayBlock('thread', 'Loading..');
     try {
@@ -60,7 +60,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
     }
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     if (this.threadHasPgpBlock) {
       $(".action_see_original_message").click(this.view.setHandler(() => this.view.redirectToUrl({
         acctEmail: this.view.acctEmail, threadId: this.threadId, showOriginal: !this.view.showOriginal
