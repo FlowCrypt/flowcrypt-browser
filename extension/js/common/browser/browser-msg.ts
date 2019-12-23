@@ -2,19 +2,20 @@
 
 'use strict';
 
-import { Str, Dict, UrlParams } from '../core/common.js';
-import { DiagnoseMsgPubkeysResult, DecryptResult, VerifyRes, PgpMsgTypeResult, PgpMsgMethod } from '../core/pgp-msg.js';
-import { GlobalIndex, GlobalStore, AccountIndex, AccountStore } from '../platform/store.js';
-import { Browser } from './browser.js';
-import { Catch } from '../platform/catch.js';
-import { Buf } from '../core/buf.js';
-import { PassphraseDialogType } from '../xss_safe_factory.js';
-import { AuthRes } from '../api/google-auth.js';
-import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
-import { Env } from './env.js';
-import { Ui } from './ui.js';
+import { AccountIndex, AccountStore, GlobalIndex, GlobalStore } from '../platform/store.js';
+import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, PgpMsgTypeResult, VerifyRes } from '../core/pgp-msg.js';
+import { Dict, Str, UrlParams } from '../core/common.js';
+
 import { AjaxErr } from '../api/error/api-error-types.js';
+import { AuthRes } from '../api/google-auth.js';
+import { Browser } from './browser.js';
+import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
+import { Buf } from '../core/buf.js';
+import { Catch } from '../platform/catch.js';
+import { Env } from './env.js';
 import { KeyDetails } from '../core/pgp-key.js';
+import { PassphraseDialogType } from '../xss_safe_factory.js';
+import { Ui } from './ui.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 

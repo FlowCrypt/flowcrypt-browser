@@ -2,20 +2,20 @@
 
 'use strict';
 
-import { Store } from '../../../js/common/platform/store.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { Assert } from '../../../js/common/assert.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Browser } from '../../../js/common/browser/browser.js';
-import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { Attester } from '../../../js/common/api/attester.js';
 import { Backend } from '../../../js/common/api/backend.js';
-import { Assert } from '../../../js/common/assert.js';
+import { Browser } from '../../../js/common/browser/browser.js';
 import { Buf } from '../../../js/common/core/buf.js';
+import { KeyInfo } from '../../../js/common/core/pgp-key.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
-import { Ui } from '../../../js/common/browser/ui.js';
 
 declare const ClipboardJS: any;
 

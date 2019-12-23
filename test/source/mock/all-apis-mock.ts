@@ -2,10 +2,12 @@
 
 'use strict';
 
-import { Api, Handlers } from './lib/api';
 import * as http from 'http';
-import { mockGoogleEndpoints } from './google/google-endpoints';
+
+import { Api, Handlers } from './lib/api';
+
 import { mockBackendEndpoints } from './backend/backend-endpoints';
+import { mockGoogleEndpoints } from './google/google-endpoints';
 
 export type HandlersDefinition = Handlers<{ query: { [k: string]: string; }; body?: unknown; }, unknown>;
 

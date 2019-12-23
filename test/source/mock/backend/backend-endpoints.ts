@@ -1,11 +1,13 @@
-import { isPost } from '../lib/mock-util';
-import { HttpClientErr, HttpAuthErr } from '../lib/api';
-import { HandlersDefinition } from '../all-apis-mock';
-import { IncomingMessage } from 'http';
 import * as request from 'fc-node-requests';
-import { oauth } from '../lib/oauth';
+
+import { HttpAuthErr, HttpClientErr } from '../lib/api';
+
 import { BackendData } from './backend-data';
 import { Dict } from '../../core/common';
+import { HandlersDefinition } from '../all-apis-mock';
+import { IncomingMessage } from 'http';
+import { isPost } from '../lib/mock-util';
+import { oauth } from '../lib/oauth';
 
 export const mockBackendData = new BackendData(oauth);
 

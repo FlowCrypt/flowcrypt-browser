@@ -2,17 +2,17 @@
 
 'use strict';
 
+import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
+import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
+import { KeyInfo } from '../../../js/common/core/pgp-key.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { Settings } from '../../../js/common/settings.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { Settings } from '../../../js/common/settings.js';
-import { KeyInfo } from '../../../js/common/core/pgp-key.js';
-import { Assert } from '../../../js/common/assert.js';
-import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
-import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
 
 View.run(class ChangePassPhraseView extends View {
 

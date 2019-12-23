@@ -2,15 +2,16 @@
 
 'use strict';
 
-import { Catch } from '../platform/catch.js';
-import { Str } from './common.js';
-import { PgpArmor } from './pgp-armor.js';
-import { Mime } from './mime.js';
-import { Xss } from '../platform/xss.js';
 import { MsgBlock, ReplaceableMsgBlockType } from './msg-block.js';
+
 import { Buf } from './buf.js';
-import { PgpMsg } from './pgp-msg.js';
+import { Catch } from '../platform/catch.js';
+import { Mime } from './mime.js';
+import { PgpArmor } from './pgp-armor.js';
 import { PgpKey } from './pgp-key.js';
+import { PgpMsg } from './pgp-msg.js';
+import { Str } from './common.js';
+import { Xss } from '../platform/xss.js';
 
 export class MsgBlockParser {
 

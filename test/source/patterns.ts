@@ -1,6 +1,6 @@
-
-import { readdirSync, statSync, readFileSync } from 'fs';
 import * as path from 'path';
+
+import { readFileSync, readdirSync, statSync } from 'fs';
 
 let errsFound = 0;
 

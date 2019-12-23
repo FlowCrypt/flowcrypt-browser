@@ -1,22 +1,24 @@
-import { defineFlakyTests } from './tests/tests/flaky';
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
-
 import * as ava from 'ava';
+
+import { AvaContext, GlobalBrowser, getDebugHtmlAtts, minutes, newWithTimeoutsFunc, standaloneTestTimeout } from './tests';
 import { BrowserHandle, BrowserPool } from './browser';
+import { Config, Util, getParsedCliParams } from './util';
+
 import { BrowserRecipe } from './tests/browser_recipe';
-import { defineUnitTests } from './tests/tests/unit';
-import { defineSetupTests } from './tests/tests/setup';
+import { FlowCryptApi } from './tests/api';
+import { defineConsumerAcctTests as defineAcctTests } from './tests/tests/account';
 import { defineComposeTests } from './tests/tests/compose';
 import { defineDecryptTests } from './tests/tests/decrypt';
+import { defineElementTests } from './tests/tests/elements';
+import { defineFlakyTests } from './tests/tests/flaky';
 import { defineGmailTests } from './tests/tests/gmail';
 import { defineSettingsTests } from './tests/tests/settings';
-import { defineElementTests } from './tests/tests/elements';
-import { defineConsumerAcctTests as defineAcctTests } from './tests/tests/account';
-import { Config, Util, getParsedCliParams } from './util';
-import { FlowCryptApi } from './tests/api';
-import { getDebugHtmlAtts, AvaContext, standaloneTestTimeout, minutes, GlobalBrowser, newWithTimeoutsFunc } from './tests';
+import { defineSetupTests } from './tests/tests/setup';
+import { defineUnitTests } from './tests/tests/unit';
 import { mock } from './mock';
 import { mockBackendData } from './mock/backend/backend-endpoints';
+/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+
 
 const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 const startedAt = Date.now();

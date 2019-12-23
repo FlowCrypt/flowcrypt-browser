@@ -1,8 +1,9 @@
+import { BrowserHandle, Controllable, ControllableFrame, ControllablePage } from '../../browser';
+
 import { AvaContext } from '..';
-import { PageRecipe } from './abstract-page-recipe';
-import { BrowserHandle, ControllablePage, ControllableFrame, Controllable } from '../../browser';
 import { CommonBrowserGroup } from '../../test';
 import { EvaluateFn } from 'puppeteer';
+import { PageRecipe } from './abstract-page-recipe';
 import { Util } from '../../util';
 
 type RecipientType = "to" | "cc" | "bcc";

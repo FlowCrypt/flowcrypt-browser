@@ -1,11 +1,12 @@
+import { HttpClientErr, Status } from '../lib/api';
+import Parse, { ParseMsgResult } from '../../util/parse';
+import { isDelete, isGet, isPost, isPut, parseResourceId } from '../lib/mock-util';
+
+import { GoogleData } from './google-data';
+import { HandlersDefinition } from '../all-apis-mock';
+import { ParsedMail } from 'mailparser';
 import { TestBySubjectStrategyContext } from './strategies/send-message-strategy';
 import { UnsuportableStrategyError } from './strategies/strategy-base';
-import { isGet, isPost, parseResourceId, isPut, isDelete } from '../lib/mock-util';
-import { HttpClientErr, Status } from '../lib/api';
-import { GoogleData } from './google-data';
-import { ParsedMail } from 'mailparser';
-import Parse, { ParseMsgResult } from '../../util/parse';
-import { HandlersDefinition } from '../all-apis-mock';
 import { oauth } from '../lib/oauth';
 
 type DraftSaveModel = { message: { raw: string, threadId: string } };

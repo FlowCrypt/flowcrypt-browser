@@ -2,25 +2,26 @@
 
 'use strict';
 
-import { Catch } from './platform/catch.js';
-import { Store, SendAsAlias } from './platform/store.js';
-import { Str, Dict, UrlParams, Url } from './core/common.js';
-import { Lang } from './lang.js';
-import { Rules } from './rules.js';
+import { Dict, Str, Url, UrlParams } from './core/common.js';
+import { JQS, Ui } from './browser/ui.js';
+import { SendAsAlias, Store } from './platform/store.js';
+
 import { Api } from './api/api.js';
-import { GoogleAuth } from './api/google-auth.js';
-import { Attester } from './api/attester.js';
-import { Xss } from './platform/xss.js';
-import { Backend } from './api/backend.js';
-import { storageLocalGetAll } from './api/chrome.js';
-import { Gmail } from './api/email_provider/gmail/gmail.js';
-import { Ui, JQS } from './browser/ui.js';
-import { Env } from './browser/env.js';
 import { ApiErr } from './api/error/api-error.js';
 import { ApiErrResponse } from './api/error/api-error-types.js';
-import { PgpPwd } from './core/pgp-password.js';
+import { Attester } from './api/attester.js';
+import { Backend } from './api/backend.js';
+import { Catch } from './platform/catch.js';
+import { Env } from './browser/env.js';
+import { Gmail } from './api/email_provider/gmail/gmail.js';
+import { GoogleAuth } from './api/google-auth.js';
+import { Lang } from './lang.js';
 import { PgpKey } from './core/pgp-key.js';
+import { PgpPwd } from './core/pgp-password.js';
+import { Rules } from './rules.js';
+import { Xss } from './platform/xss.js';
 import { openpgp } from './core/pgp.js';
+import { storageLocalGetAll } from './api/chrome.js';
 
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
 

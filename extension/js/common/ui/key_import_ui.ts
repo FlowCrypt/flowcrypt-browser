@@ -2,20 +2,20 @@
 
 'use strict';
 
+import { AttUI } from './att_ui.js';
+import { Catch } from '../platform/catch.js';
+import { KeyBlockType } from '../core/msg-block.js';
+import { Lang } from '../lang.js';
+import { MsgBlockParser } from '../core/msg-block-parser.js';
+import { PgpArmor } from '../core/pgp-armor.js';
+import { PgpKey } from '../core/pgp-key.js';
+import { PgpPwd } from '../core/pgp-password.js';
+import { Settings } from '../settings.js';
 import { Store } from '../platform/store.js';
 import { Ui } from '../browser/ui.js';
-import { mnemonic } from '../core/mnemonic.js';
-import { AttUI } from './att_ui.js';
-import { Lang } from '../lang.js';
-import { Catch } from '../platform/catch.js';
-import { Settings } from '../settings.js';
 import { Url } from '../core/common.js';
-import { PgpArmor } from '../core/pgp-armor.js';
-import { PgpPwd } from '../core/pgp-password.js';
-import { PgpKey } from '../core/pgp-key.js';
+import { mnemonic } from '../core/mnemonic.js';
 import { openpgp } from '../core/pgp.js';
-import { KeyBlockType } from '../core/msg-block.js';
-import { MsgBlockParser } from '../core/msg-block-parser.js';
 
 type KeyImportUiCheckResult = {
   normalized: string; longid: string; passphrase: string; fingerprint: string; decrypted: OpenPGP.key.Key;

@@ -2,19 +2,20 @@
 
 'use strict';
 
-import { ComposerComponent } from './composer-abstract-component.js';
-import { Ui } from '../../../js/common/browser/ui.js';
-import { RecipientType } from '../../../js/common/api/api.js';
-import { Xss } from '../../../js/common/platform/xss.js';
-import { Catch } from '../../../js/common/platform/catch.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Lang } from '../../../js/common/lang.js';
-import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
-import { Str } from '../../../js/common/core/common.js';
-import { Store } from '../../../js/common/platform/store.js';
-import { SendableMsg, Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
+import { Recipients, SendableMsg } from '../../../js/common/api/email_provider/email_provider_api.js';
+
 import { Att } from '../../../js/common/core/att.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
+import { Lang } from '../../../js/common/lang.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { RecipientType } from '../../../js/common/api/api.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { Str } from '../../../js/common/core/common.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerRender extends ComposerComponent {
 

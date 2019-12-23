@@ -2,17 +2,18 @@
 
 'use strict';
 
-import { VERSION } from '../../common/core/const.js';
+import { Bm, BrowserMsg, TabIdRequiredError } from '../../common/browser/browser-msg.js';
+import { Env, WebMailName } from '../../common/browser/env.js';
+import { WebmailVariantString, XssSafeFactory } from '../../common/xss_safe_factory.js';
+
+import { BrowserMsgCommonHandlers } from '../../common/browser/browser-msg-common-handlers.js';
 import { Catch } from '../../common/platform/catch.js';
-import { Store } from '../../common/platform/store.js';
+import { ContentScriptWindow } from '../../common/browser/browser-window.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
-import { BrowserMsg, TabIdRequiredError, Bm } from '../../common/browser/browser-msg.js';
-import { XssSafeFactory, WebmailVariantString } from '../../common/xss_safe_factory.js';
-import { WebMailName, Env } from '../../common/browser/env.js';
+import { Store } from '../../common/platform/store.js';
 import { Ui } from '../../common/browser/ui.js';
-import { ContentScriptWindow } from '../../common/browser/browser-window.js';
-import { BrowserMsgCommonHandlers } from '../../common/browser/browser-msg-common-handlers.js';
+import { VERSION } from '../../common/core/const.js';
 
 export type WebmailVariantObject = { newDataLayer: undefined | boolean, newUi: undefined | boolean, email: undefined | string, gmailVariant: WebmailVariantString };
 export type IntervalFunction = { interval: number, handler: () => void };

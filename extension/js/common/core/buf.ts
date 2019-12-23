@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { base64encode, base64decode } from '../platform/util.js';
+import { base64decode, base64encode } from '../platform/util.js';
 
 export class Buf extends Uint8Array {
 

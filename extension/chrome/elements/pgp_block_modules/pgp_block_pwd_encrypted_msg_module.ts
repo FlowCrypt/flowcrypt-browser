@@ -2,18 +2,19 @@
 
 'use strict';
 
-import { PgpBlockView } from '../pgp_block';
-import { Store } from '../../../js/common/platform/store.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Ui } from '../../../js/common/browser/ui.js';
-import { Str } from '../../../js/common/core/common.js';
-import { Catch } from '../../../js/common/platform/catch.js';
-import { Xss } from '../../../js/common/platform/xss.js';
 import { Backend, BackendRes } from '../../../js/common/api/backend.js';
-import { Settings } from '../../../js/common/settings.js';
-import { Lang } from '../../../js/common/lang.js';
+
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BackendAuthErr } from '../../../js/common/api/error/api-error-types.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { Lang } from '../../../js/common/lang.js';
+import { PgpBlockView } from '../pgp_block';
+import { Settings } from '../../../js/common/settings.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { Str } from '../../../js/common/core/common.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 export class PgpBlockViewPwdEncryptedMsgModule {
 

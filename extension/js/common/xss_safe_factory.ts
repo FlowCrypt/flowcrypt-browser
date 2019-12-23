@@ -4,17 +4,18 @@
 
 'use strict';
 
-import { Catch } from './platform/catch.js';
-import { Str, Dict, UrlParams, Url } from './core/common.js';
+import { Dict, Str, Url, UrlParams } from './core/common.js';
+
 import { Att } from './core/att.js';
 import { Browser } from './browser/browser.js';
-import { Xss } from './platform/xss.js';
+import { Catch } from './platform/catch.js';
+import { MsgBlock } from './core/msg-block.js';
+import { MsgBlockParser } from './core/msg-block-parser.js';
+import { PgpArmor } from './core/pgp-armor.js';
 import { SendAsAlias } from './platform/store.js';
 import { Ui } from './browser/ui.js';
 import { WebMailName } from './browser/env.js';
-import { PgpArmor } from './core/pgp-armor.js';
-import { MsgBlock } from './core/msg-block.js';
-import { MsgBlockParser } from './core/msg-block-parser.js';
+import { Xss } from './platform/xss.js';
 
 type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';

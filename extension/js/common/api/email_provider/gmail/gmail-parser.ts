@@ -2,12 +2,13 @@
 
 'use strict';
 
-import { Value, Str } from '../../../core/common.js';
+import { Mime, SendableMsgBody } from '../../../core/mime.js';
+import { Str, Value } from '../../../core/common.js';
+
 import { Att } from '../../../core/att.js';
-import { SendableMsgBody, Mime } from '../../../core/mime.js';
-import { ReplyParams } from '../email_provider_api.js';
-import { RecipientType } from '../../api.js';
 import { Buf } from '../../../core/buf.js';
+import { RecipientType } from '../../api.js';
+import { ReplyParams } from '../email_provider_api.js';
 
 export namespace GmailRes { // responses
 

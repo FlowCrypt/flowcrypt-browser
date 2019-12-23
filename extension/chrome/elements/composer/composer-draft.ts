@@ -2,22 +2,22 @@
 
 'use strict';
 
-import { Xss } from '../../../js/common/platform/xss.js';
-import { Mime } from '../../../js/common/core/mime.js';
-import { Buf } from '../../../js/common/core/buf.js';
-import { PgpMsg } from '../../../js/common/core/pgp-msg.js';
+import { AjaxErr } from '../../../js/common/api/error/api-error-types.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Composer } from './composer.js';
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Url } from '../../../js/common/core/common.js';
-import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
-import { Ui } from '../../../js/common/browser/ui.js';
 import { Env } from '../../../js/common/browser/env.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
-import { AjaxErr } from '../../../js/common/api/error/api-error-types.js';
+import { Mime } from '../../../js/common/core/mime.js';
 import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
+import { PgpMsg } from '../../../js/common/core/pgp-msg.js';
+import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { Url } from '../../../js/common/core/common.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerDraft extends ComposerComponent {
 

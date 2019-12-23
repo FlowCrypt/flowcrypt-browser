@@ -2,21 +2,22 @@
 
 'use strict';
 
-import { Store, AccountStoreExtension, Scopes, AccountStore } from '../../js/common/platform/store.js';
-import { Ui } from '../../js/common/browser/ui.js';
-import { Composer } from './composer/composer.js';
-import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
-import { openpgp } from '../../js/common/core/pgp.js';
-import { ReplyParams, EmailProviderInterface } from '../../js/common/api/email_provider/email_provider_api.js';
+import { AccountStore, AccountStoreExtension, Scopes, Store } from '../../js/common/platform/store.js';
+import { EmailProviderInterface, ReplyParams } from '../../js/common/api/email_provider/email_provider_api.js';
+
+import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { Assert } from '../../js/common/assert.js';
-import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
-import { Xss } from '../../js/common/platform/xss.js';
 import { Backend } from '../../js/common/api/backend.js';
-import { Url } from '../../js/common/core/common.js';
-import { View } from '../../js/common/view.js';
+import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
+import { Composer } from './composer/composer.js';
 import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
 import { GmailParser } from '../../js/common/api/email_provider/gmail/gmail-parser.js';
-import { ApiErr } from '../../js/common/api/error/api-error.js';
+import { Ui } from '../../js/common/browser/ui.js';
+import { Url } from '../../js/common/core/common.js';
+import { View } from '../../js/common/view.js';
+import { Xss } from '../../js/common/platform/xss.js';
+import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
+import { openpgp } from '../../js/common/core/pgp.js';
 
 export type DeterminedMsgHeaders = {
   lastMsgId: string,

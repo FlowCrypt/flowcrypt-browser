@@ -2,10 +2,10 @@
 
 'use strict';
 
-import { Store } from '../../../js/common/platform/store.js';
+import { Assert } from '../../../js/common/assert.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { GoogleAuth } from '../../../js/common/api/google-auth.js';
-import { Assert } from '../../../js/common/assert.js';
+import { Store } from '../../../js/common/platform/store.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 

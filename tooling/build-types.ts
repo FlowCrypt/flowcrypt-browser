@@ -1,5 +1,6 @@
-import { execSync as exec } from 'child_process';
 import { readFileSync, writeFileSync } from 'fs';
+
+import { execSync as exec } from 'child_process';
 
 const CHROME_CONSUMER = 'chrome-consumer';
 const CHROME_ENTERPRISE = 'chrome-enterprise';

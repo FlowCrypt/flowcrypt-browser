@@ -1,8 +1,9 @@
-import { PageRecipe } from './abstract-page-recipe';
 import { Config, Util } from '../../util';
+
 import { ControllablePage } from '../../browser';
-import { expect } from 'chai';
+import { PageRecipe } from './abstract-page-recipe';
 import { SettingsPageRecipe } from './settings-page-recipe';
+import { expect } from 'chai';
 
 type ManualEnterOpts = {
   usedPgpBefore?: boolean,

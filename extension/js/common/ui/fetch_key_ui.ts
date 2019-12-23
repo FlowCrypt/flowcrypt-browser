@@ -2,10 +2,10 @@
 
 'use strict';
 
-import { Ui } from '../browser/ui.js';
+import { BrowserMsg } from '../browser/browser-msg.js';
 import { Catch } from '../platform/catch.js';
 import { KeyImportUi } from './key_import_ui.js';
-import { BrowserMsg } from '../browser/browser-msg.js';
+import { Ui } from '../browser/ui.js';
 
 export class FetchKeyUI {
   handleOnPaste = (elem: JQuery<HTMLElement>) => {
