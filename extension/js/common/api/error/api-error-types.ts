@@ -76,12 +76,6 @@ export class ApiErrResponse extends ApiCallErr {
 
 export class AjaxErr extends ApiCallErr {
 
-  // todo - move these out of the class, they get weirdly serialized in err reports
-  public STD_ERR_MSGS = { // tslint:disable-line:oneliner-object-literal
-    GOOGLE_INVALID_TO_HEADER: 'Invalid to header',
-    GOOGLE_RECIPIENT_ADDRESS_REQUIRED: 'Recipient address required',
-  };
-
   static fromXhr = (xhr: RawAjaxErr, req: JQueryAjaxSettings, stack: string) => {
     const responseText = xhr.responseText || '';
     const status = typeof xhr.status === 'number' ? xhr.status : -1;
@@ -93,6 +87,12 @@ export class AjaxErr extends ApiCallErr {
     const message = `${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallErr.describeApiAction(req)}`;
     return new AjaxErr(message, stack, status, AjaxErr.censoredUrl(req.url), responseText, xhr.statusText || '(no status text)');
   }
+
+  // todo - move these out of the class, they get weirdly serialized in err reports
+  public STD_ERR_MSGS = { // tslint:disable-line:oneliner-object-literal
+    GOOGLE_INVALID_TO_HEADER: 'Invalid to header',
+    GOOGLE_RECIPIENT_ADDRESS_REQUIRED: 'Recipient address required',
+  };
 
   constructor(message: string, public stack: string, public status: number, public url: string, public responseText: string, public statusText: string) {
     super(message);

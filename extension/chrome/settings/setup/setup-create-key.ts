@@ -61,6 +61,20 @@ export class SetupCreateKeyModule {
     }
   }
 
+  createSaveKeyPair = async (options: SetupOptions) => {
+    await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.rules!);
+    const { full_name } = await Store.getAcct(this.view.acctEmail, ['full_name']);
+    try {
+      const key = await PgpKey.create([{ name: full_name || '', email: this.view.acctEmail }], 'rsa4096', options.passphrase); // todo - add all addresses?
+      options.is_newly_created_key = true;
+      const prv = await PgpKey.read(key.private);
+      await this.view.saveKeys([prv], options);
+    } catch (e) {
+      Catch.reportErr(e);
+      Xss.sanitizeRender('#step_2_easy_generating, #step_2a_manual_create', Lang.setup.fcDidntSetUpProperly);
+    }
+  }
+
   private isCreatePrivateFormInputCorrect = async () => {
     const password1 = $('#step_2a_manual_create .input_password');
     const password2 = $('#step_2a_manual_create .input_password2');
@@ -91,20 +105,6 @@ export class SetupCreateKeyModule {
       <div class="passphrase-sticky-note">${notePp}</div>
     `;
     return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassPhraseStickyNote);
-  }
-
-  createSaveKeyPair = async (options: SetupOptions) => {
-    await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.rules!);
-    const { full_name } = await Store.getAcct(this.view.acctEmail, ['full_name']);
-    try {
-      const key = await PgpKey.create([{ name: full_name || '', email: this.view.acctEmail }], 'rsa4096', options.passphrase); // todo - add all addresses?
-      options.is_newly_created_key = true;
-      const prv = await PgpKey.read(key.private);
-      await this.view.saveKeys([prv], options);
-    } catch (e) {
-      Catch.reportErr(e);
-      Xss.sanitizeRender('#step_2_easy_generating, #step_2a_manual_create', Lang.setup.fcDidntSetUpProperly);
-    }
   }
 
 }

@@ -62,32 +62,6 @@ export class PgpBlockViewPwdEncryptedMsgModule {
     }
   }
 
-  private handleExtendMsgExpirationClicked = async (self: HTMLElement) => {
-    const nDays = Number($(self).attr('href')!.replace('#', ''));
-    Xss.sanitizeRender($(self).parent(), `Updating..${Ui.spinner('green')}`);
-    try {
-      const fcAuth = await Store.authInfo(this.view.acctEmail);
-      if (!fcAuth) {
-        throw new BackendAuthErr();
-      }
-      const r = await Backend.messageExpiration(fcAuth, this.adminCodes || [], nDays);
-      if (r.updated) { // todo - make backend return http error code when not updated, and skip this if/else
-        window.location.reload();
-      } else {
-        throw r;
-      }
-    } catch (e) {
-      if (ApiErr.isAuthErr(e)) {
-        Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail);
-      } else {
-        Catch.report('error when extending message expiration', e);
-      }
-      Xss.sanitizeRender($(self).parent(), 'Error updating expiration. <a href="#" class="retry_expiration_change">Click here to try again</a>').addClass('bad');
-      const el = await Ui.event.clicked('.retry_expiration_change');
-      await this.handleExtendMsgExpirationClicked(el);
-    }
-  }
-
   public getDecryptPwd = async (suppliedPwd?: string | undefined): Promise<string | undefined> => {
     const pwd = suppliedPwd || this.userEnteredMsgPassword;
     if (pwd && this.view.hasChallengePassword) {
@@ -129,6 +103,32 @@ export class PgpBlockViewPwdEncryptedMsgModule {
       await this.view.errorModule.renderErr(Lang.pgpBlock.cannotLocate + Lang.pgpBlock.brokenLink, undefined);
     } else {
       await this.view.errorModule.renderErr(Lang.pgpBlock.cannotLocate + Lang.general.writeMeToFixIt + ' Details:\n\n' + Xss.escape(JSON.stringify(linkRes)), undefined);
+    }
+  }
+
+  private handleExtendMsgExpirationClicked = async (self: HTMLElement) => {
+    const nDays = Number($(self).attr('href')!.replace('#', ''));
+    Xss.sanitizeRender($(self).parent(), `Updating..${Ui.spinner('green')}`);
+    try {
+      const fcAuth = await Store.authInfo(this.view.acctEmail);
+      if (!fcAuth) {
+        throw new BackendAuthErr();
+      }
+      const r = await Backend.messageExpiration(fcAuth, this.adminCodes || [], nDays);
+      if (r.updated) { // todo - make backend return http error code when not updated, and skip this if/else
+        window.location.reload();
+      } else {
+        throw r;
+      }
+    } catch (e) {
+      if (ApiErr.isAuthErr(e)) {
+        Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail);
+      } else {
+        Catch.report('error when extending message expiration', e);
+      }
+      Xss.sanitizeRender($(self).parent(), 'Error updating expiration. <a href="#" class="retry_expiration_change">Click here to try again</a>').addClass('bad');
+      const el = await Ui.event.clicked('.retry_expiration_change');
+      await this.handleExtendMsgExpirationClicked(el);
     }
   }
 

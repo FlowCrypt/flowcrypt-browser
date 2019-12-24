@@ -44,6 +44,40 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     this.composer.S.cached('title').text(this.composeHeaderText());
   }
 
+  /**
+   * @param machineForceStateTo - if this is present, this is a programmatic call, therefore such choices should not be sticky
+   */
+  public toggleItemTick = (elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, machineForceStateTo?: boolean) => {
+    const currentlyTicked = this.isTicked(elem);
+    const newToggleTicked = (typeof machineForceStateTo !== 'undefined') ? machineForceStateTo : !currentlyTicked;
+    if (newToggleTicked === this.choices[popoverOpt] && newToggleTicked === currentlyTicked) {
+      return; // internal state as well as UI state is in sync with newly desired result, nothing to do
+    }
+    this.choices[popoverOpt] = newToggleTicked;
+    if (currentlyTicked && !newToggleTicked) {
+      this.renderCrossOrTick(elem, popoverOpt, false);
+    }
+    if (!currentlyTicked && newToggleTicked) {
+      this.renderCrossOrTick(elem, popoverOpt, true);
+    }
+    this.composer.S.cached('title').text(this.composeHeaderText());
+    if (this.choices.encrypt) {
+      this.composer.S.cached('compose_table').removeClass('not-encrypted');
+      this.composer.S.now('attached_files').removeClass('not-encrypted');
+    } else {
+      this.composer.S.cached('compose_table').addClass('not-encrypted');
+      this.composer.S.now('attached_files').addClass('not-encrypted');
+    }
+    if (!this.choices.richText) {
+      this.composer.input.removeRichTextFormatting();
+    }
+    this.composer.sendBtn.resetSendBtn();
+    this.composer.pwdOrPubkeyContainer.showHideContainerAndColorSendBtn();
+    if (typeof machineForceStateTo === 'undefined' && popoverOpt === 'richText') { // human-input choice of rich text
+      this.richTextUserChoiceStore(newToggleTicked).catch(Catch.reportErr);
+    }
+  }
+
   private toggleVisible = (event: JQuery.Event<HTMLElement, null>) => {
     event.stopPropagation();
     const sendingContainer = $('.sending-container');
@@ -94,40 +128,6 @@ export class ComposerSendBtnPopover extends ComposerComponent {
       e.stopPropagation();
       e.preventDefault();
       currentActive.click();
-    }
-  }
-
-  /**
-   * @param machineForceStateTo - if this is present, this is a programmatic call, therefore such choices should not be sticky
-   */
-  public toggleItemTick = (elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, machineForceStateTo?: boolean) => {
-    const currentlyTicked = this.isTicked(elem);
-    const newToggleTicked = (typeof machineForceStateTo !== 'undefined') ? machineForceStateTo : !currentlyTicked;
-    if (newToggleTicked === this.choices[popoverOpt] && newToggleTicked === currentlyTicked) {
-      return; // internal state as well as UI state is in sync with newly desired result, nothing to do
-    }
-    this.choices[popoverOpt] = newToggleTicked;
-    if (currentlyTicked && !newToggleTicked) {
-      this.renderCrossOrTick(elem, popoverOpt, false);
-    }
-    if (!currentlyTicked && newToggleTicked) {
-      this.renderCrossOrTick(elem, popoverOpt, true);
-    }
-    this.composer.S.cached('title').text(this.composeHeaderText());
-    if (this.choices.encrypt) {
-      this.composer.S.cached('compose_table').removeClass('not-encrypted');
-      this.composer.S.now('attached_files').removeClass('not-encrypted');
-    } else {
-      this.composer.S.cached('compose_table').addClass('not-encrypted');
-      this.composer.S.now('attached_files').addClass('not-encrypted');
-    }
-    if (!this.choices.richText) {
-      this.composer.input.removeRichTextFormatting();
-    }
-    this.composer.sendBtn.resetSendBtn();
-    this.composer.pwdOrPubkeyContainer.showHideContainerAndColorSendBtn();
-    if (typeof machineForceStateTo === 'undefined' && popoverOpt === 'richText') { // human-input choice of rich text
-      this.richTextUserChoiceStore(newToggleTicked).catch(Catch.reportErr);
     }
   }
 

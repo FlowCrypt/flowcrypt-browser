@@ -34,11 +34,21 @@ export class UserAlert extends Error { }
 
 export class KeyImportUi {
 
+  public static normalizeLongId = (longid: string) => {
+    let result = longid.trim().replace(/0x|\s|:|-/g, '').toUpperCase();
+    if (result.length >= 16) {
+      result = result.substring(result.length - 16);
+      if (result.match(/[A-F0-9]{16}/g)) {
+        return result;
+      }
+    }
+    return;
+  }
+
   private expectedLongid?: string;
   private rejectKnown: boolean;
   private checkEncryption: boolean;
   private checkSigning: boolean;
-  public onBadPassphrase: VoidCallback = () => undefined;
 
   constructor(o: { expectLongid?: string, rejectKnown?: boolean, checkEncryption?: boolean, checkSigning?: boolean }) {
     this.expectedLongid = o.expectLongid;
@@ -46,6 +56,7 @@ export class KeyImportUi {
     this.checkEncryption = o.checkEncryption === true;
     this.checkSigning = o.checkSigning === true;
   }
+  public onBadPassphrase: VoidCallback = () => undefined;
 
   public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined) => {
     $('input[type=radio][name=source]').off().change(function () {
@@ -293,17 +304,6 @@ export class KeyImportUi {
     if (this.checkSigning && ! await k.getSigningKey()) {
       throw new UserAlert('This looks like a valid key but it cannot be used for signing. Please write at human@flowcrypt.com to see why is that.');
     }
-  }
-
-  public static normalizeLongId = (longid: string) => {
-    let result = longid.trim().replace(/0x|\s|:|-/g, '').toUpperCase();
-    if (result.length >= 16) {
-      result = result.substring(result.length - 16);
-      if (result.match(/[A-F0-9]{16}/g)) {
-        return result;
-      }
-    }
-    return;
   }
 
   private getPPValidationElements = () => {

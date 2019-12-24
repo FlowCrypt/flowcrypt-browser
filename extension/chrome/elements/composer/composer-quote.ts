@@ -19,10 +19,10 @@ import { MsgBlock } from '../../../js/common/core/msg-block.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 
 export class ComposerQuote extends ComposerComponent {
-  public messageToReplyOrForward: MessageToReplyOrForward | undefined;
   private msgExpandingHTMLPart: string | undefined;
 
   private footerHTML: string | undefined;
+  public messageToReplyOrForward: MessageToReplyOrForward | undefined;
 
   get getFooterHTML(): string | undefined {
     return this.footerHTML;
@@ -88,19 +88,6 @@ export class ComposerQuote extends ComposerComponent {
       this.msgExpandingHTMLPart = safePreviousMsg;
       this.setExpandingTextAfterClick();
     }
-  }
-
-  private createFooterHTML = (footer: string) => {
-    const sanitizedPlainFooter = Xss.htmlSanitizeAndStripAllTags(footer, '\n');
-    const sanitizedHtmlFooter = sanitizedPlainFooter.replace(/\n/g, '<br>');
-    const footerFirstLine = sanitizedPlainFooter.split('\n')[0];
-    if (!footerFirstLine) {
-      return '';
-    }
-    if (/^[*-_=+#~ ]+$/.test(footerFirstLine)) {
-      return `<br>${sanitizedHtmlFooter}`;  // first line of footer is already a footer separator, made of special characters
-    }
-    return `<br><br>--<br>${sanitizedHtmlFooter}`; // create a custom footer separator
   }
 
   public replaceFooter = (newFooter: string | undefined) => {
@@ -209,6 +196,19 @@ export class ComposerQuote extends ComposerComponent {
       }
       return;
     }
+  }
+
+  private createFooterHTML = (footer: string) => {
+    const sanitizedPlainFooter = Xss.htmlSanitizeAndStripAllTags(footer, '\n');
+    const sanitizedHtmlFooter = sanitizedPlainFooter.replace(/\n/g, '<br>');
+    const footerFirstLine = sanitizedPlainFooter.split('\n')[0];
+    if (!footerFirstLine) {
+      return '';
+    }
+    if (/^[*-_=+#~ ]+$/.test(footerFirstLine)) {
+      return `<br>${sanitizedHtmlFooter}`;  // first line of footer is already a footer separator, made of special characters
+    }
+    return `<br><br>--<br>${sanitizedHtmlFooter}`; // create a custom footer separator
   }
 
   private decryptMessage = async (encryptedData: Buf): Promise<string> => {

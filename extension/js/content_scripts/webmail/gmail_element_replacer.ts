@@ -76,16 +76,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     ];
   }
 
-  private everything = () => {
-    this.replaceArmoredBlocks();
-    this.replaceAtts().catch(Catch.reportErr);
-    this.replaceFcTags();
-    this.replaceConvoBtns();
-    this.replaceStandardReplyBox().catch(Catch.reportErr);
-    this.evaluateStandardComposeRecipients().catch(Catch.reportErr);
-    this.addSettingsBtn();
-  }
-
   setReplyBoxEditable = async () => {
     const replyContainerIframe = $('.reply_message_iframe_container > iframe').last();
     if (replyContainerIframe.length) {
@@ -110,6 +100,16 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     } else if (window.location.hash.match(/^#inbox\/[a-zA-Z]+$/)) { // is a conversation view, but no scrollable conversation element
       Catch.report(`Cannot find Gmail scrollable element: ${this.sel.convoRootScrollable}`);
     }
+  }
+
+  private everything = () => {
+    this.replaceArmoredBlocks();
+    this.replaceAtts().catch(Catch.reportErr);
+    this.replaceFcTags();
+    this.replaceConvoBtns();
+    this.replaceStandardReplyBox().catch(Catch.reportErr);
+    this.evaluateStandardComposeRecipients().catch(Catch.reportErr);
+    this.addSettingsBtn();
   }
 
   private replaceArmoredBlocks = () => {

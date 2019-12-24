@@ -25,7 +25,24 @@ rules: #
      - true
      - allow-leading-underscore
     member-access: false
-    member-ordering: false
+    member-ordering: 
+      - true
+      - order:
+        - "private-static-field"
+        - "protected-static-field"
+        - "public-static-field"
+        - "private-static-method"
+        - "protected-static-method"
+        - "public-static-method"
+        - "private-instance-field"
+        - "protected-instance-field"
+        - "public-instance-field"
+        - "private-constructor"
+        - "protected-constructor"
+        - "public-constructor"
+        - "public-instance-method"
+        - "protected-instance-method"
+        - "private-instance-method"
     one-variable-per-declaration: false
     radix: false
     no-shadowed-variable: false

@@ -10,12 +10,7 @@ import { SquireEditor, WillPasteEvent } from '../../../types/squire.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 
 export class ComposerInput extends ComposerComponent {
-
   public squire = new window.Squire(this.composer.S.cached('input_text').get(0));
-
-  private isRichText = () => {
-    return this.composer.sendBtn.popover.choices.richText;
-  }
 
   initActions = () => {
     this.composer.S.cached('add_intro').click(this.view.setHandler(el => this.actionAddIntroHandler(el), this.composer.errs.handlers(`add intro`)));
@@ -56,8 +51,6 @@ export class ComposerInput extends ComposerComponent {
     const sender = this.composer.sender.getSender();
     return { recipients, subject, plaintext, plainhtml, pwd, sender };
   }
-
-  // -- private
 
   private handlePaste = () => {
     this.squire.addEventListener('willPaste', (e: WillPasteEvent) => {
@@ -187,4 +180,7 @@ export class ComposerInput extends ComposerComponent {
     return result;
   }
 
+  private isRichText = () => {
+    return this.composer.sendBtn.popover.choices.richText;
+  }
 }
