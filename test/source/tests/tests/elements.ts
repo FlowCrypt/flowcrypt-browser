@@ -1,7 +1,9 @@
-import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
 import * as ava from 'ava';
-import { expect } from 'chai';
+
+import { TestWithGlobalBrowser, TestWithNewBrowser } from '../../test';
+
 import { TestVariant } from '../../util';
+import { expect } from 'chai';
 
 // tslint:disable:no-blank-lines-func
 

@@ -2,25 +2,26 @@
 
 'use strict';
 
-import { Str, Dict } from '../../common/core/common.js';
-import { Injector } from '../../common/inject.js';
-import { Notifications } from '../../common/notifications.js';
-import { XssSafeFactory, WebmailVariantString, FactoryReplyParams } from '../../common/xss_safe_factory.js';
+import { Dict, Str } from '../../common/core/common.js';
+import { FactoryReplyParams, WebmailVariantString, XssSafeFactory } from '../../common/xss_safe_factory.js';
+import { GmailParser, GmailRes } from '../../common/api/email_provider/gmail/gmail-parser.js';
+import { IntervalFunction, WebmailElementReplacer } from './setup_webmail_content_script.js';
+import { SendAsAlias, Store } from '../../common/platform/store.js';
+
+import { AjaxErr } from '../../common/api/error/api-error-types.js';
+import { ApiErr } from '../../common/api/error/api-error.js';
 import { Att } from '../../common/core/att.js';
-import { WebmailElementReplacer, IntervalFunction } from './setup_webmail_content_script.js';
-import { Catch } from '../../common/platform/catch.js';
-import { Xss } from '../../common/platform/xss.js';
-import { Keyserver } from '../../common/api/keyserver.js';
-import { WebmailCommon } from "../../common/webmail.js";
-import { Store, SendAsAlias } from '../../common/platform/store.js';
-import { GmailRes, GmailParser } from '../../common/api/email_provider/gmail/gmail-parser.js';
-import { Gmail } from '../../common/api/email_provider/gmail/gmail.js';
-import { Ui } from '../../common/browser/ui.js';
 import { Browser } from '../../common/browser/browser.js';
 import { BrowserMsg } from '../../common/browser/browser-msg.js';
-import { ApiErr } from '../../common/api/error/api-error.js';
-import { AjaxErr } from '../../common/api/error/api-error-types.js';
+import { Catch } from '../../common/platform/catch.js';
+import { Gmail } from '../../common/api/email_provider/gmail/gmail.js';
+import { Injector } from '../../common/inject.js';
+import { Keyserver } from '../../common/api/keyserver.js';
+import { Notifications } from '../../common/notifications.js';
 import { PgpArmor } from '../../common/core/pgp-armor.js';
+import { Ui } from '../../common/browser/ui.js';
+import { WebmailCommon } from "../../common/webmail.js";
+import { Xss } from '../../common/platform/xss.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 

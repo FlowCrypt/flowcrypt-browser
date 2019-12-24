@@ -1,14 +1,15 @@
-
-import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
-import { BrowserRecipe } from '../browser_recipe';
 import * as ava from 'ava';
-import { Util } from '../../util';
-import { FlowCryptApi } from '../api';
-import { TestVariant } from '../../util';
-import { SetupPageRecipe } from '../page_recipe/setup-page-recipe';
-import { GmailPageRecipe } from '../page_recipe/gmail-page-recipe';
+
+import { TestWithGlobalBrowser, TestWithNewBrowser } from '../../test';
+
+import { BrowserRecipe } from '../browser_recipe';
 import { ComposePageRecipe } from '../page_recipe/compose-page-recipe';
+import { FlowCryptApi } from '../api';
+import { GmailPageRecipe } from '../page_recipe/gmail-page-recipe';
 import { PageRecipe } from '../page_recipe/abstract-page-recipe';
+import { SetupPageRecipe } from '../page_recipe/setup-page-recipe';
+import { TestVariant } from '../../util';
+import { Util } from '../../util';
 
 // tslint:disable:no-blank-lines-func
 

@@ -2,13 +2,14 @@
 
 'use strict';
 
-import { XssSafeFactory, WebmailVariantString } from './xss_safe_factory.js';
-import { Catch } from './platform/catch.js';
-import { Store } from './platform/store.js';
-import { Dict } from './core/common.js';
-import { WebMailName } from './browser/env.js';
 import { SelCache, Ui } from './browser/ui.js';
+import { WebmailVariantString, XssSafeFactory } from './xss_safe_factory.js';
+
+import { Catch } from './platform/catch.js';
 import { ContentScriptWindow } from './browser/browser-window.js';
+import { Dict } from './core/common.js';
+import { Store } from './platform/store.js';
+import { WebMailName } from './browser/env.js';
 
 type Host = {
   gmail: string,

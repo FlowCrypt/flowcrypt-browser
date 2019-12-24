@@ -2,16 +2,16 @@
 
 'use strict';
 
-import { PgpBlockView } from '../pgp_block';
-import { Store } from '../../../js/common/platform/store.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Ui } from '../../../js/common/browser/ui.js';
-import { Str } from '../../../js/common/core/common.js';
-import { VerifyRes } from '../../../js/common/core/pgp-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { PgpBlockView } from '../pgp_block';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { Str } from '../../../js/common/core/common.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { VerifyRes } from '../../../js/common/core/pgp-msg.js';
 
 export class PgpBlockViewSignatureModule {
 

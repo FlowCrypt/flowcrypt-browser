@@ -2,20 +2,21 @@
 
 'use strict';
 
-import { Catch } from '../../js/common/platform/catch.js';
-import { Store } from '../../js/common/platform/store.js';
-import { Browser } from '../../js/common/browser/browser.js';
-import { Api } from '../../js/common/api/api.js';
+import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { DecryptErrTypes, PgpMsg } from '../../js/common/core/pgp-msg.js';
-import { BrowserMsg, Bm } from '../../js/common/browser/browser-msg.js';
-import { Att } from '../../js/common/core/att.js';
-import { Assert } from '../../js/common/assert.js';
-import { Xss } from '../../js/common/platform/xss.js';
-import { Url, PromiseCancellation } from '../../js/common/core/common.js';
-import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
-import { Ui } from '../../js/common/browser/ui.js';
+import { PromiseCancellation, Url } from '../../js/common/core/common.js';
+
+import { Api } from '../../js/common/api/api.js';
 import { ApiErr } from '../../js/common/api/error/api-error.js';
+import { Assert } from '../../js/common/assert.js';
+import { Att } from '../../js/common/core/att.js';
+import { Browser } from '../../js/common/browser/browser.js';
+import { Catch } from '../../js/common/platform/catch.js';
+import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
+import { Store } from '../../js/common/platform/store.js';
+import { Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
+import { Xss } from '../../js/common/platform/xss.js';
 
 View.run(class AttachmentDownloadView extends View {
   private readonly acctEmail: string;

@@ -1,9 +1,9 @@
+import { AvaContext, newTimeoutPromise } from '../tests';
+import { ConsoleMessage, Dialog, ElementHandle, Frame, Page } from 'puppeteer';
+import { TIMEOUT_DESTROY_UNEXPECTED_ALERT, TIMEOUT_ELEMENT_APPEAR, TIMEOUT_ELEMENT_GONE, TIMEOUT_PAGE_LOAD, TIMEOUT_TEST_STATE_SATISFY } from '.';
 
-import { Page, ElementHandle, Frame, Dialog, ConsoleMessage } from 'puppeteer';
-import { Util } from '../util';
 import { TestUrls } from './test_urls';
-import { TIMEOUT_TEST_STATE_SATISFY, TIMEOUT_ELEMENT_APPEAR, TIMEOUT_ELEMENT_GONE, TIMEOUT_PAGE_LOAD, TIMEOUT_DESTROY_UNEXPECTED_ALERT } from '.';
-import { newTimeoutPromise, AvaContext } from '../tests';
+import { Util } from '../util';
 import { expect } from 'chai';
 
 declare const jQuery: any;

@@ -2,10 +2,11 @@
 
 'use strict';
 
+import { DecryptError, VerifyRes } from './pgp-msg.js';
+
+import { AttMeta } from './att.js';
 import { Buf } from './buf.js';
 import { KeyDetails } from './pgp-key.js';
-import { AttMeta } from './att.js';
-import { DecryptError, VerifyRes } from './pgp-msg.js';
 
 export type KeyBlockType = 'publicKey' | 'privateKey';
 export type ReplaceableMsgBlockType = KeyBlockType | 'signedMsg' | 'encryptedMsg' | 'encryptedMsgLink';

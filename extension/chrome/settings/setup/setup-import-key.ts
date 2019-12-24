@@ -2,12 +2,13 @@
 
 'use strict';
 
-import { SetupView, SetupOptions } from '../setup.js';
-import { Ui } from '../../../js/common/browser/ui.js';
+import { KeyCanBeFixed, UserAlert } from '../../../js/common/ui/key_import_ui.js';
+import { SetupOptions, SetupView } from '../setup.js';
+
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Settings } from '../../../js/common/settings.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { UserAlert, KeyCanBeFixed } from '../../../js/common/ui/key_import_ui.js';
 
 export class SetupImportKeyModule {
 

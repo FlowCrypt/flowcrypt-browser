@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { openpgp } from './pgp.js';
 import { Buf } from './buf.js';
+import { openpgp } from './pgp.js';
 
 export class PgpHash {
 

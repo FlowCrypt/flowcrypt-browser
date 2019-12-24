@@ -2,11 +2,11 @@
 
 'use strict';
 
-import Swal from 'sweetalert2';
-import { Dict } from '../core/common.js';
-import { Catch } from '../platform/catch.js';
-import { Xss } from '../platform/xss.js';
 import { ApiErr } from '../api/error/api-error.js';
+import { Catch } from '../platform/catch.js';
+import { Dict } from '../core/common.js';
+import Swal from 'sweetalert2';
+import { Xss } from '../platform/xss.js';
 
 type NamedSels = Dict<JQuery<HTMLElement>>;
 type ProvidedEventHandler = (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>;

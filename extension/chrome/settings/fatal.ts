@@ -3,8 +3,8 @@
 'use strict';
 
 import { Lang } from '../../js/common/lang.js';
-import { Xss } from '../../js/common/platform/xss.js';
 import { Url } from '../../js/common/core/common.js';
+import { Xss } from '../../js/common/platform/xss.js';
 
 const uncheckedUrlParams = Url.parse(['reason', 'stack']);
 const reason = String(uncheckedUrlParams.reason);

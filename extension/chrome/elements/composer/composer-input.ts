@@ -2,12 +2,13 @@
 
 'use strict';
 
-import { ComposerComponent } from './composer-abstract-component.js';
-import { Xss } from '../../../js/common/platform/xss.js';
 import { NewMsgData, RecipientElement } from './composer-types.js';
-import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
 import { SquireEditor, WillPasteEvent } from '../../../types/squire.js';
+
 import { Catch } from '../../../js/common/platform/catch.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerInput extends ComposerComponent {
   public squire = new window.Squire(this.composer.S.cached('input_text').get(0));

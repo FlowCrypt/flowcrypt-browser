@@ -1,4 +1,4 @@
-import { GmailMsg, GmailDraft } from '../source/mock/google/google-data';
+import { GmailDraft, GmailMsg } from '../source/mock/google/google-data';
 
 type UserMessages = {
   [email: string]: {
@@ -46,7 +46,8 @@ const data: UserMessages = {
             "name": "MIME-Version", "value": "1.0"
           }],
           "parts": [{
-            "headers": [{ "name": "Content-Type", "value": "text/plain" },
+            "headers": [
+              { "name": "Content-Type", "value": "text/plain" },
               { "name": "Content-Transfer-Encoding", "value": "quoted-printable" }],
             "body": {
               attachmentId: "",
@@ -79,7 +80,8 @@ const data: UserMessages = {
             { "name": "MIME-Version", "value": "1.0" }],
           "parts": [
             {
-              "headers": [{ "name": "Content-Type", "value": "text/plain" },
+              "headers": [
+                { "name": "Content-Type", "value": "text/plain" },
                 { "name": "Content-Transfer-Encoding", "value": "quoted-printable" }],
             }]
         },

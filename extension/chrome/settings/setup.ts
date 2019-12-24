@@ -2,29 +2,30 @@
 
 'use strict';
 
-import { Store, SendAsAlias, AccountStore, Scopes } from '../../js/common/platform/store.js';
-import { Value, Dict, Url } from '../../js/common/core/common.js';
-import { Ui } from '../../js/common/browser/ui.js';
-import { BrowserMsg, Bm } from '../../js/common/browser/browser-msg.js';
-import { Rules } from '../../js/common/rules.js';
-import { Lang } from '../../js/common/lang.js';
-import { Settings } from '../../js/common/settings.js';
-import { Contact } from '../../js/common/core/pgp-key.js';
-import { Catch } from '../../js/common/platform/catch.js';
-import { Google } from '../../js/common/api/google.js';
-import { Attester } from '../../js/common/api/attester.js';
+import { AccountStore, Scopes, SendAsAlias, Store } from '../../js/common/platform/store.js';
+import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
+import { Dict, Url, Value } from '../../js/common/core/common.js';
+
+import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { Assert } from '../../js/common/assert.js';
+import { Attester } from '../../js/common/api/attester.js';
+import { Catch } from '../../js/common/platform/catch.js';
+import { Contact } from '../../js/common/core/pgp-key.js';
+import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
+import { Google } from '../../js/common/api/google.js';
 import { KeyImportUi } from '../../js/common/ui/key_import_ui.js';
-import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
-import { Xss } from '../../js/common/platform/xss.js';
-import { View } from '../../js/common/view.js';
-import { SetupRecoverKeyModule } from './setup/setup-recover-key.js';
+import { Lang } from '../../js/common/lang.js';
+import { PgpKey } from '../../js/common/core/pgp-key.js';
+import { Rules } from '../../js/common/rules.js';
+import { Settings } from '../../js/common/settings.js';
 import { SetupCreateKeyModule } from './setup/setup-create-key.js';
 import { SetupImportKeyModule } from './setup/setup-import-key.js';
+import { SetupRecoverKeyModule } from './setup/setup-recover-key.js';
 import { SetupRenderModule } from './setup/setup-render.js';
-import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
-import { ApiErr } from '../../js/common/api/error/api-error.js';
-import { PgpKey } from '../../js/common/core/pgp-key.js';
+import { Ui } from '../../js/common/browser/ui.js';
+import { View } from '../../js/common/view.js';
+import { Xss } from '../../js/common/platform/xss.js';
+import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
 
 export interface SetupOptions {
   passphrase: string;

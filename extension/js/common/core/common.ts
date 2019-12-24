@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { base64encode, base64decode } from '../platform/util.js';
+import { base64decode, base64encode } from '../platform/util.js';
 
 export type Dict<T> = { [key: string]: T; };
 export type UrlParam = string | number | null | undefined | boolean | string[];

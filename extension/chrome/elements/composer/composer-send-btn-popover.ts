@@ -2,12 +2,13 @@
 
 'use strict';
 
-import { ComposerComponent } from './composer-abstract-component.js';
-import { PopoverOpt, PopoverChoices } from './composer-types.js';
-import { Xss } from '../../../js/common/platform/xss.js';
-import { Lang } from '../../../js/common/lang.js';
+import { PopoverChoices, PopoverOpt } from './composer-types.js';
+
 import { Catch } from '../../../js/common/platform/catch.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { Lang } from '../../../js/common/lang.js';
 import { Store } from '../../../js/common/platform/store.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerSendBtnPopover extends ComposerComponent {
 

@@ -2,15 +2,16 @@
 
 'use strict';
 
-import { Str, Dict } from './common.js';
-import { Catch } from '../platform/catch.js';
-import { requireMimeParser, requireMimeBuilder, requireIso88592 } from '../platform/require.js';
-import { Buf } from './buf.js';
-import { MimeParserNode } from './types/emailjs';
-import { PgpArmor } from './pgp-armor.js';
-import { MsgBlock } from './msg-block.js';
+import { Dict, Str } from './common.js';
+import { requireIso88592, requireMimeBuilder, requireMimeParser } from '../platform/require.js';
+
 import { Att } from './att.js';
+import { Buf } from './buf.js';
+import { Catch } from '../platform/catch.js';
+import { MimeParserNode } from './types/emailjs';
+import { MsgBlock } from './msg-block.js';
 import { MsgBlockParser } from './msg-block-parser.js';
+import { PgpArmor } from './pgp-armor.js';
 
 const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
 const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name

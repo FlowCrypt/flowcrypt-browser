@@ -2,18 +2,18 @@
 
 'use strict';
 
-import { Store } from '../../../js/common/platform/store.js';
-import { Ui } from '../../../js/common/browser/ui.js';
-import { Settings } from '../../../js/common/settings.js';
-import { KeyInfo } from '../../../js/common/core/pgp-key.js';
-import { Lang } from '../../../js/common/lang.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Attester } from '../../../js/common/api/attester.js';
+import { KeyInfo } from '../../../js/common/core/pgp-key.js';
+import { Lang } from '../../../js/common/lang.js';
+import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { Settings } from '../../../js/common/settings.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
-import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { openpgp } from '../../../js/common/core/pgp.js';
 
 View.run(class MyKeyUpdateView extends View {

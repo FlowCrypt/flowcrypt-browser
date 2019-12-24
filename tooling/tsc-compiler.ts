@@ -4,8 +4,9 @@
 
 // tslint:disable:no-unsafe-any
 
-import * as ts from 'typescript';
 import * as path from 'path';
+import * as ts from 'typescript';
+
 import { readFileSync } from 'fs';
 
 let tsconfigAbsPath: string | undefined;

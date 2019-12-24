@@ -31,6 +31,12 @@ module.exports = {
     'require-atomic-updates': 0,
     'no-empty-pattern': 0,
     'no-fallthrough': 0,
-    'no-undef': 0
+    'no-undef': 0,
+    'sort-imports': ['error', {
+      "ignoreCase": false,
+      "ignoreDeclarationSort": false,
+      "ignoreMemberSort": false,
+      "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
+    }]
   }
 }

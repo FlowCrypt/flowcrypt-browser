@@ -2,17 +2,18 @@
 
 'use strict';
 
-import { PgpBlockView } from '../pgp_block.js';
-import { Xss } from '../../../js/common/platform/xss.js';
-import { Mime } from '../../../js/common/core/mime.js';
+import { PgpMsg, VerifyRes } from '../../../js/common/core/pgp-msg.js';
+
 import { Att } from '../../../js/common/core/att.js';
-import { Buf } from '../../../js/common/core/buf.js';
-import { VerifyRes, PgpMsg } from '../../../js/common/core/pgp-msg.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Ui } from '../../../js/common/browser/ui.js';
-import { Store } from '../../../js/common/platform/store.js';
+import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
+import { Mime } from '../../../js/common/core/mime.js';
 import { MsgBlock } from '../../../js/common/core/msg-block.js';
+import { PgpBlockView } from '../pgp_block.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 export class PgpBlockViewRenderModule {
 

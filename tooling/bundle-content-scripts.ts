@@ -4,7 +4,8 @@
 
 // tslint:disable:no-unsafe-any
 
-import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'fs';
+
 import { getFilesInDir } from './utils/tooling-utils';
 
 const OUT_DIR = `./build/generic-extension-wip/js/content_scripts`;

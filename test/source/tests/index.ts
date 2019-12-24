@@ -1,7 +1,7 @@
+import * as ava from 'ava';
 
 import { BrowserPool } from '../browser';
 import { Consts } from '../test';
-import * as ava from 'ava';
 
 export type AvaContext = ava.ExecutionContext<{}> & { retry?: true, attemptNumber?: number, totalAttempts?: number, attemptText?: string };
 export type GlobalBrowser = { browsers: BrowserPool };

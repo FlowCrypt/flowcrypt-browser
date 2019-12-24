@@ -2,10 +2,10 @@
 
 'use strict';
 
+import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Ui } from '../../js/common/browser/ui.js';
-import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { View } from '../../js/common/view.js';
 
 View.run(class DefaultPopupView extends View {

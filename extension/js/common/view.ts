@@ -3,9 +3,10 @@
 
 'use strict';
 
-import { Xss } from './platform/xss.js';
-import { Ui, BrowserEventErrHandler, PreventableEventName } from './browser/ui.js';
+import { BrowserEventErrHandler, PreventableEventName, Ui } from './browser/ui.js';
+
 import { ApiErr } from './api/error/api-error.js';
+import { Xss } from './platform/xss.js';
 
 export abstract class View {
 
