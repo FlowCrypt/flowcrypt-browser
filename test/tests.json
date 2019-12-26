@@ -1,6 +1,13 @@
 {
   "messages": [
     {
+      "name": "[enigmail] encrypted iso-2022-jp, plain text",
+      "content": [
+        "ゾし逸現飲"
+      ],
+      "params": "?frameId=none&msgId=16f431a0b9056562&senderEmail=michael.flowcrypt2%40gmail.com&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0"
+    },
+    {
       "name": "quoted part parsing will not crash browser",
       "content": [
         "point to them directly",
