@@ -1,10 +1,12 @@
-import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
-import { expect } from 'chai';
 import * as ava from 'ava';
-import { TestVariant } from '../../util';
-import { PgpHash } from '../../core/pgp-hash';
-import { MsgBlockParser } from '../../core/msg-block-parser';
+
+import { TestWithGlobalBrowser, TestWithNewBrowser } from '../../test';
+
 import { MsgBlock } from '../../core/msg-block';
+import { MsgBlockParser } from '../../core/msg-block-parser';
+import { PgpHash } from '../../core/pgp-hash';
+import { TestVariant } from '../../util';
+import { expect } from 'chai';
 
 // tslint:disable:no-blank-lines-func
 /* eslint-disable max-len */

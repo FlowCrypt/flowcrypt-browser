@@ -2,16 +2,17 @@
 
 'use strict';
 
-import { SetupView, SetupOptions } from '../setup.js';
-import { Ui } from '../../../js/common/browser/ui.js';
+import { SetupOptions, SetupView } from '../setup.js';
+
 import { Catch } from '../../../js/common/platform/catch.js';
-import { Settings } from '../../../js/common/settings.js';
-import { Xss } from '../../../js/common/platform/xss.js';
-import { shouldPassPhraseBeHidden } from '../../../js/common/ui/passphrase_ui.js';
-import { Url } from '../../../js/common/core/common.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { Settings } from '../../../js/common/settings.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { Url } from '../../../js/common/core/common.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { shouldPassPhraseBeHidden } from '../../../js/common/ui/passphrase_ui.js';
 
 export class SetupCreateKeyModule {
 

@@ -2,12 +2,13 @@
 
 'use strict';
 
-import { NewMsgData } from '../composer-types.js';
-import { SendableMsg } from '../../../../js/common/api/email_provider/email_provider_api.js';
-import { PgpMsg } from '../../../../js/common/core/pgp-msg.js';
+import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
+
 import { BrowserWindow } from '../../../../js/common/browser/browser-window.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
-import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
+import { NewMsgData } from '../composer-types.js';
+import { PgpMsg } from '../../../../js/common/core/pgp-msg.js';
+import { SendableMsg } from '../../../../js/common/api/email_provider/email_provider_api.js';
 import { SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { Store } from '../../../../js/common/platform/store.js';
 

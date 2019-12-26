@@ -2,17 +2,17 @@
 
 'use strict';
 
+import { Assert } from '../../../js/common/assert.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Lang } from '../../../js/common/lang.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { Settings } from '../../../js/common/settings.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Settings } from '../../../js/common/settings.js';
-import { Lang } from '../../../js/common/lang.js';
-import { Assert } from '../../../js/common/assert.js';
-import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
-import { Xss } from '../../../js/common/platform/xss.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
 
 View.run(class TestPassphrase extends View {
   private readonly acctEmail: string;

@@ -1,7 +1,8 @@
-import { Xss } from '../../platform/xss.js';
-import { AjaxErr, ApiErrResponse, StandardError, StandardErrRes, AuthErr, GoogleAuthErr } from './api-error-types.js';
-import { Catch } from '../../platform/catch.js';
+import { AjaxErr, ApiErrResponse, AuthErr, GoogleAuthErr, StandardErrRes, StandardError } from './api-error-types.js';
+
 import { BgNotReadyErr } from '../../browser/browser-msg.js';
+import { Catch } from '../../platform/catch.js';
+import { Xss } from '../../platform/xss.js';
 
 export class ApiErr {
   public static eli5 = (e: any): string => {

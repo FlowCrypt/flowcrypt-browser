@@ -5,16 +5,17 @@
 
 'use strict';
 
-import { Api, ReqFmt, ProgressCb } from './api.js';
+import { Api, ProgressCb, ReqFmt } from './api.js';
 import { Dict, Value } from '../core/common.js';
-import { Store } from '../platform/store.js';
-import { Catch } from '../platform/catch.js';
+
 import { Att } from '../core/att.js';
-import { Ui } from '../browser/ui.js';
-import { Buf } from '../core/buf.js';
-import { BackendAuthErr } from './error/api-error-types.js';
-import { DomainRules } from '../rules.js';
 import { BACKEND_API_HOST } from '../core/const.js';
+import { BackendAuthErr } from './error/api-error-types.js';
+import { Buf } from '../core/buf.js';
+import { Catch } from '../platform/catch.js';
+import { DomainRules } from '../rules.js';
+import { Store } from '../platform/store.js';
+import { Ui } from '../browser/ui.js';
 
 type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
 type FcAuthToken = { account: string, token: string };

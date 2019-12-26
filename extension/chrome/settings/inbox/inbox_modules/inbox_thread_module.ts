@@ -2,20 +2,21 @@
 
 'use strict';
 
-import { GmailRes, GmailParser } from '../../../../js/common/api/email_provider/gmail/gmail-parser.js';
-import { Catch } from '../../../../js/common/platform/catch.js';
-import { Xss } from '../../../../js/common/platform/xss.js';
+import { Bm, BrowserMsg } from '../../../../js/common/browser/browser-msg.js';
+import { FactoryReplyParams, XssSafeFactory } from '../../../../js/common/xss_safe_factory.js';
+import { GmailParser, GmailRes } from '../../../../js/common/api/email_provider/gmail/gmail-parser.js';
+import { Url, UrlParams } from '../../../../js/common/core/common.js';
+
 import { ApiErr } from '../../../../js/common/api/error/api-error.js';
+import { BrowserMsgCommonHandlers } from '../../../../js/common/browser/browser-msg-common-handlers.js';
+import { Buf } from '../../../../js/common/core/buf.js';
+import { Catch } from '../../../../js/common/platform/catch.js';
 import { InboxView } from '../inbox.js';
 import { Lang } from '../../../../js/common/lang.js';
-import { Ui } from '../../../../js/common/browser/ui.js';
-import { Url, UrlParams } from '../../../../js/common/core/common.js';
-import { Buf } from '../../../../js/common/core/buf.js';
 import { Mime } from '../../../../js/common/core/mime.js';
-import { XssSafeFactory, FactoryReplyParams } from '../../../../js/common/xss_safe_factory.js';
-import { BrowserMsg, Bm } from '../../../../js/common/browser/browser-msg.js';
-import { BrowserMsgCommonHandlers } from '../../../../js/common/browser/browser-msg-common-handlers.js';
+import { Ui } from '../../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../../js/common/view_module.js';
+import { Xss } from '../../../../js/common/platform/xss.js';
 
 export class InboxActiveThreadModule extends ViewModule<InboxView> {
 

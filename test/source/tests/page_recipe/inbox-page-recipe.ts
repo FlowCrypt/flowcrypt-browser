@@ -1,7 +1,8 @@
-import { PageRecipe } from './abstract-page-recipe';
+import { BrowserHandle, ControllableFrame, ControllablePage } from '../../browser';
+
 import { AvaContext } from '..';
+import { PageRecipe } from './abstract-page-recipe';
 import { TestUrls } from '../../browser/test_urls';
-import { BrowserHandle, ControllablePage, ControllableFrame } from '../../browser';
 import { Util } from '../../util';
 
 type CheckDecryptMsg$opt = { acctEmail: string, threadId: string, expectedContent: string, enterPp?: string, finishCurrentSession?: boolean };

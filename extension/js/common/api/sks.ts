@@ -3,9 +3,9 @@
 'use strict';
 
 import { Api } from './api.js';
-import { PubkeySearchResult } from './keyserver.js';
-import { PgpArmor } from '../core/pgp-armor.js';
 import { ApiErr } from './error/api-error.js';
+import { PgpArmor } from '../core/pgp-armor.js';
+import { PubkeySearchResult } from './keyserver.js';
 
 export class Sks extends Api {
 

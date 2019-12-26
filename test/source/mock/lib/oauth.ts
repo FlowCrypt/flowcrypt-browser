@@ -1,6 +1,7 @@
-import { HttpClientErr, Status, HttpAuthErr } from './api';
-import { Config } from '../../util';
+import { HttpAuthErr, HttpClientErr, Status } from './api';
+
 import { Buf } from '../../core/buf';
+import { Config } from '../../util';
 import { Str } from '../../core/common';
 
 // tslint:disable:variable-name

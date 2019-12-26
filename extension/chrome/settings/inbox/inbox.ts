@@ -2,24 +2,25 @@
 
 'use strict';
 
-import { Catch } from '../../../js/common/platform/catch.js';
-import { Store, AccountStore } from '../../../js/common/platform/store.js';
+import { AccountStore, Store } from '../../../js/common/platform/store.js';
+import { SelCache, Ui } from '../../../js/common/browser/ui.js';
 import { Url, UrlParams } from '../../../js/common/core/common.js';
-import { Ui, SelCache } from '../../../js/common/browser/ui.js';
+
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { Assert } from '../../../js/common/assert.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
+import { InboxActiveThreadModule } from './inbox_modules/inbox_thread_module.js';
+import { InboxListThreadsModule } from './inbox_modules/inbox_threads_module.js';
+import { InboxMenuModule } from './inbox_modules/inbox_menu_module.js';
+import { InboxNotificationModule } from './inbox_modules/inbox_notification_module.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Settings } from '../../../js/common/settings.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Assert } from '../../../js/common/assert.js';
-import { XssSafeFactory } from '../../../js/common/xss_safe_factory.js';
-import { WebmailCommon } from "../../../js/common/webmail.js";
-import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { View } from '../../../js/common/view.js';
-import { InboxMenuModule } from './inbox_modules/inbox_menu_module.js';
-import { InboxListThreadsModule } from './inbox_modules/inbox_threads_module.js';
-import { InboxNotificationModule } from './inbox_modules/inbox_notification_module.js';
-import { InboxActiveThreadModule } from './inbox_modules/inbox_thread_module.js';
+import { WebmailCommon } from "../../../js/common/webmail.js";
 import { Xss } from '../../../js/common/platform/xss.js';
+import { XssSafeFactory } from '../../../js/common/xss_safe_factory.js';
 
 export class InboxView extends View {
 

@@ -1,9 +1,10 @@
-import { ControllablePage } from '../../browser';
-import { Util, Config } from '../../util';
+import { Config, Util } from '../../util';
+
 import { AvaContext } from '..';
+import { ControllablePage } from '../../browser';
 import { FlowCryptApi } from '../api';
-import { totp as produce2faToken } from 'speakeasy';
 import { PageRecipe } from './abstract-page-recipe';
+import { totp as produce2faToken } from 'speakeasy';
 
 export class OauthPageRecipe extends PageRecipe {
 

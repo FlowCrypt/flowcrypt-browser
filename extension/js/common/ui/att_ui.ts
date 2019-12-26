@@ -2,10 +2,10 @@
 
 'use strict';
 
-import { PgpMsg } from '../core/pgp-msg.js';
-import { Dict } from '../core/common.js';
 import { Att } from '../core/att.js';
 import { Catch } from '../platform/catch.js';
+import { Dict } from '../core/common.js';
+import { PgpMsg } from '../core/pgp-msg.js';
 import { Ui } from '../browser/ui.js';
 
 declare const qq: any;

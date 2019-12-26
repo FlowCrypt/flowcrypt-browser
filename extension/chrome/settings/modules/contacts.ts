@@ -2,25 +2,26 @@
 
 'use strict';
 
-import { Store } from '../../../js/common/platform/store.js';
+import { Contact, PgpKey } from '../../../js/common/core/pgp-key.js';
+import { Str, Url } from '../../../js/common/core/common.js';
+
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { Assert } from '../../../js/common/assert.js';
 import { Att } from '../../../js/common/core/att.js';
+import { AttUI } from '../../../js/common/ui/att_ui.js';
 import { Browser } from '../../../js/common/browser/browser.js';
-import { Ui } from '../../../js/common/browser/ui.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { AttUI } from '../../../js/common/ui/att_ui.js';
-import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
-import { XssSafeFactory } from '../../../js/common/xss_safe_factory.js';
-import { Assert } from '../../../js/common/assert.js';
-import { Xss } from '../../../js/common/platform/xss.js';
-import { Rules } from '../../../js/common/rules.js';
-import { Keyserver } from '../../../js/common/api/keyserver.js';
-import { Str, Url } from '../../../js/common/core/common.js';
 import { FetchKeyUI } from '../../../js/common/ui/fetch_key_ui.js';
-import { View } from '../../../js/common/view.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
-import { PgpKey, Contact } from '../../../js/common/core/pgp-key.js';
+import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
+import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
+import { Rules } from '../../../js/common/rules.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { View } from '../../../js/common/view.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { XssSafeFactory } from '../../../js/common/xss_safe_factory.js';
 
 View.run(class ContactsView extends View {
 

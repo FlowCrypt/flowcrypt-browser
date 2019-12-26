@@ -2,13 +2,13 @@
 
 'use strict';
 
-import { openpgp } from './pgp.js';
-import { Store } from '../platform/store.js';
-import { PgpArmor } from './pgp-armor.js';
 import { Buf } from './buf.js';
 import { Catch } from '../platform/catch.js';
-import { mnemonic } from './mnemonic.js';
 import { MsgBlockParser } from './msg-block-parser.js';
+import { PgpArmor } from './pgp-armor.js';
+import { Store } from '../platform/store.js';
+import { mnemonic } from './mnemonic.js';
+import { openpgp } from './pgp.js';
 
 export type Contact = {
   email: string;

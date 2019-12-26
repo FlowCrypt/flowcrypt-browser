@@ -4,7 +4,7 @@
 
 import { Api, ReqMethod } from './api.js';
 import { Dict, Str } from '../core/common.js';
-import { PubkeySearchResult, PgpClient } from './keyserver.js';
+import { PgpClient, PubkeySearchResult } from './keyserver.js';
 import { ApiErr } from './error/api-error.js';
 
 type PubCallRes = { responseText: string, getResponseHeader: (n: string) => string | null };

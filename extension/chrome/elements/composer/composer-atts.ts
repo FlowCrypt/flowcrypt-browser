@@ -2,14 +2,15 @@
 
 'use strict';
 
-import { ComposerComponent } from './composer-abstract-component.js';
-import { Ui } from '../../../js/common/browser/ui.js';
+import { AttLimits, AttUI } from '../../../js/common/ui/att_ui.js';
+
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { AttUI, AttLimits } from '../../../js/common/ui/att_ui.js';
 import { Composer } from './composer.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { PgpHash } from '../../../js/common/core/pgp-hash.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { PgpHash } from '../../../js/common/core/pgp-hash.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 
 export class ComposerAtts extends ComposerComponent {
 

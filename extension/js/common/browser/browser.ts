@@ -4,11 +4,11 @@
 
 'use strict';
 
-import { Catch } from '../platform/catch.js';
 import { Api } from '../api/api.js';
 import { Att } from '../core/att.js';
-import { Xss } from '../platform/xss.js';
+import { Catch } from '../platform/catch.js';
 import { Ui } from './ui.js';
+import { Xss } from '../platform/xss.js';
 
 export class Browser {
 

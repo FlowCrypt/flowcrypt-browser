@@ -2,21 +2,22 @@
 
 'use strict';
 
-import { Store } from '../../js/common/platform/store.js';
 import { Str, Url } from '../../js/common/core/common.js';
-import { Ui } from '../../js/common/browser/ui.js';
-import { Lang } from '../../js/common/lang.js';
-import { Buf } from '../../js/common/core/buf.js';
+
 import { Assert } from '../../js/common/assert.js';
-import { View } from '../../js/common/view.js';
+import { Buf } from '../../js/common/core/buf.js';
+import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
+import { Lang } from '../../js/common/lang.js';
 import { PgpBlockViewAttachmentsModule } from './pgp_block_modules/pgp_block_attachmens_module.js';
-import { PgpBlockViewSignatureModule } from './pgp_block_modules/pgp_block_signature_module.js';
+import { PgpBlockViewDecryptModule } from './pgp_block_modules/pgp_block_decrypt_module.js';
+import { PgpBlockViewErrorModule } from './pgp_block_modules/pgp_block_error_module.js';
 import { PgpBlockViewPwdEncryptedMsgModule } from './pgp_block_modules/pgp_block_pwd_encrypted_msg_module.js';
 import { PgpBlockViewQuoteModule } from './pgp_block_modules/pgp_block_quote_module.js';
-import { PgpBlockViewErrorModule } from './pgp_block_modules/pgp_block_error_module.js';
 import { PgpBlockViewRenderModule } from './pgp_block_modules/pgp_block_render_module.js';
-import { PgpBlockViewDecryptModule } from './pgp_block_modules/pgp_block_decrypt_module.js';
-import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
+import { PgpBlockViewSignatureModule } from './pgp_block_modules/pgp_block_signature_module.js';
+import { Store } from '../../js/common/platform/store.js';
+import { Ui } from '../../js/common/browser/ui.js';
+import { View } from '../../js/common/view.js';
 
 export class PgpBlockView extends View {
 

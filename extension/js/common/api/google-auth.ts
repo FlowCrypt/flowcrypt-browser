@@ -7,20 +7,21 @@
 
 const BUILD = 'consumer'; // todo
 
-import { Catch } from '../platform/catch.js';
-import { Store, AccountStore } from '../platform/store.js';
-import { Api } from './api.js';
-import { Ui } from '../browser/ui.js';
-import { Value, Url } from '../core/common.js';
-import { GoogleAuthWindowResult$result } from '../browser/browser-msg.js';
-import { tabsQuery, windowsCreate } from './chrome.js';
-import { Buf } from '../core/buf.js';
+import { AccountStore, Store } from '../platform/store.js';
 import { GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST } from '../core/const.js';
-import { GmailRes } from './email_provider/gmail/gmail-parser.js';
-import { GoogleAuthErr } from './error/api-error-types.js';
+import { Url, Value } from '../core/common.js';
+import { tabsQuery, windowsCreate } from './chrome.js';
+
+import { Api } from './api.js';
 import { ApiErr } from './error/api-error.js';
 import { Backend } from './backend.js';
+import { Buf } from '../core/buf.js';
+import { Catch } from '../platform/catch.js';
+import { GmailRes } from './email_provider/gmail/gmail-parser.js';
+import { GoogleAuthErr } from './error/api-error-types.js';
+import { GoogleAuthWindowResult$result } from '../browser/browser-msg.js';
 import { Rules } from '../rules.js';
+import { Ui } from '../browser/ui.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };

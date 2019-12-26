@@ -1,6 +1,7 @@
-import { PageRecipe } from './abstract-page-recipe';
+import { BrowserHandle, ControllablePage } from '../../browser';
+
 import { AvaContext } from '..';
-import { ControllablePage, BrowserHandle } from '../../browser';
+import { PageRecipe } from './abstract-page-recipe';
 import { expect } from 'chai';
 
 export class GmailPageRecipe extends PageRecipe {

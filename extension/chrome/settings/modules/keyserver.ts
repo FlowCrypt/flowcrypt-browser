@@ -2,18 +2,19 @@
 
 'use strict';
 
-import { Store } from '../../../js/common/platform/store.js';
 import { Dict, Url } from '../../../js/common/core/common.js';
-import { Ui } from '../../../js/common/browser/ui.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Settings } from '../../../js/common/settings.js';
-import { Attester } from '../../../js/common/api/attester.js';
-import { Assert } from '../../../js/common/assert.js';
-import { Xss } from '../../../js/common/platform/xss.js';
-import { Lang } from '../../../js/common/lang.js';
-import { View } from '../../../js/common/view.js';
+
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { Assert } from '../../../js/common/assert.js';
+import { Attester } from '../../../js/common/api/attester.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Lang } from '../../../js/common/lang.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { Settings } from '../../../js/common/settings.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { View } from '../../../js/common/view.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 type AttesterKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: string, match: boolean }> };
 

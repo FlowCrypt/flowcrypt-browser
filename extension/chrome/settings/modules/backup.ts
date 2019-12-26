@@ -2,27 +2,28 @@
 
 'use strict';
 
+import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
-import { Store, KeyBackupMethod, EmailProvider } from '../../../js/common/platform/store.js';
-import { Value, Url, PromiseCancellation } from '../../../js/common/core/common.js';
+import { EmailProvider, KeyBackupMethod, Store } from '../../../js/common/platform/store.js';
+import { KeyInfo, PgpKey } from '../../../js/common/core/pgp-key.js';
+import { PromiseCancellation, Url, Value } from '../../../js/common/core/common.js';
+
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { Assert } from '../../../js/common/assert.js';
 import { Att } from '../../../js/common/core/att.js';
 import { Browser } from '../../../js/common/browser/browser.js';
-import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
-import { Rules } from '../../../js/common/rules.js';
-import { Lang } from '../../../js/common/lang.js';
-import { Settings } from '../../../js/common/settings.js';
-import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
-import { Assert } from '../../../js/common/assert.js';
-import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
-import { Xss } from '../../../js/common/platform/xss.js';
-import { View } from '../../../js/common/view.js';
-import { KeyImportUi } from './../../../js/common/ui/key_import_ui.js';
 import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
+import { GoogleAuth } from '../../../js/common/api/google-auth.js';
+import { KeyImportUi } from './../../../js/common/ui/key_import_ui.js';
+import { Lang } from '../../../js/common/lang.js';
+import { Rules } from '../../../js/common/rules.js';
+import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
-import { PgpKey, KeyInfo } from '../../../js/common/core/pgp-key.js';
+import { View } from '../../../js/common/view.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
 
 View.run(class BackupView extends View {
   private readonly gmail: Gmail;

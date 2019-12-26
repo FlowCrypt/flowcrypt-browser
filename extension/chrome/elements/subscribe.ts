@@ -2,19 +2,20 @@
 
 'use strict';
 
-import { Catch } from '../../js/common/platform/catch.js';
-import { Store } from '../../js/common/platform/store.js';
-import { Str, Url } from '../../js/common/core/common.js';
-import { Ui } from '../../js/common/browser/ui.js';
-import { Lang } from '../../js/common/lang.js';
-import { BrowserMsg, Bm } from '../../js/common/browser/browser-msg.js';
 import { Backend, FcUuidAuth, PaymentMethod, SubscriptionLevel } from '../../js/common/api/backend.js';
-import { Assert } from '../../js/common/assert.js';
-import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
-import { Xss } from '../../js/common/platform/xss.js';
-import { Settings } from '../../js/common/settings.js';
-import { View } from '../../js/common/view.js';
+import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
+import { Str, Url } from '../../js/common/core/common.js';
+
 import { ApiErr } from '../../js/common/api/error/api-error.js';
+import { Assert } from '../../js/common/assert.js';
+import { Catch } from '../../js/common/platform/catch.js';
+import { Lang } from '../../js/common/lang.js';
+import { Settings } from '../../js/common/settings.js';
+import { Store } from '../../js/common/platform/store.js';
+import { Ui } from '../../js/common/browser/ui.js';
+import { View } from '../../js/common/view.js';
+import { Xss } from '../../js/common/platform/xss.js';
+import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
 
 // todo - this page should be removed, link from settings should point to flowcrypt.com/account once available
 

@@ -2,21 +2,22 @@
 
 'use strict';
 
-import { Value, Str, Dict, PromiseCancellation } from '../core/common.js';
-import { mnemonic } from '../core/mnemonic.js';
-import { KeyInfo, Contact } from '../core/pgp-key.js';
-import { SubscriptionInfo, PaymentMethod, FcUuidAuth, SubscriptionLevel } from '../api/backend.js';
-import { BrowserMsg, BgNotReadyErr } from '../browser/browser-msg.js';
+import { BgNotReadyErr, BrowserMsg } from '../browser/browser-msg.js';
 import { Catch, UnreportableError } from './catch.js';
-import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chrome.js';
-import { PgpClient } from '../api/keyserver.js';
-import { GmailRes } from '../api/email_provider/gmail/gmail-parser.js';
-import { GoogleAuth } from '../api/google-auth.js';
+import { Contact, KeyInfo } from '../core/pgp-key.js';
+import { Dict, PromiseCancellation, Str, Value } from '../core/common.js';
+import { FcUuidAuth, PaymentMethod, SubscriptionInfo, SubscriptionLevel } from '../api/backend.js';
+import { storageLocalGet, storageLocalRemove, storageLocalSet } from '../api/chrome.js';
+
 import { DomainRules } from '../rules.js';
 import { Env } from '../browser/env.js';
-import { Ui } from '../browser/ui.js';
+import { GmailRes } from '../api/email_provider/gmail/gmail-parser.js';
+import { GoogleAuth } from '../api/google-auth.js';
 import { PgpArmor } from '../core/pgp-armor.js';
+import { PgpClient } from '../api/keyserver.js';
 import { PgpKey } from '../core/pgp-key.js';
+import { Ui } from '../browser/ui.js';
+import { mnemonic } from '../core/mnemonic.js';
 
 // tslint:disable:no-null-keyword
 

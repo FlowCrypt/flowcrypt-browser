@@ -1,22 +1,24 @@
-import { TestUrls } from './../../browser/test_urls';
-import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
-import { OauthPageRecipe } from '../page_recipe/oauth-page-recipe';
-import { ComposePageRecipe } from '../page_recipe/compose-page-recipe';
-import { PageRecipe } from '../page_recipe/abstract-page-recipe';
-import { BrowserRecipe } from '../browser_recipe';
-import { Controllable, BrowserHandle, ControllablePage } from '../../browser';
 import * as ava from 'ava';
-import { Util, Config } from '../../util';
-import { TestVariant } from '../../util';
-import { expect } from "chai";
+import * as request from 'fc-node-requests';
+
+import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
+import { Config, Util } from '../../util';
+import { TestWithGlobalBrowser, TestWithNewBrowser } from '../../test';
+
 import { AvaContext } from '..';
+import { BrowserRecipe } from '../browser_recipe';
+import { ComposePageRecipe } from '../page_recipe/compose-page-recipe';
 import { Dict } from '../../core/common';
 import { GoogleData } from '../../mock/google/google-data';
-import * as request from 'fc-node-requests';
+import { InboxPageRecipe } from '../page_recipe/inbox-page-recipe';
+import { OauthPageRecipe } from '../page_recipe/oauth-page-recipe';
+import { PageRecipe } from '../page_recipe/abstract-page-recipe';
+import { PgpHash } from '../../core/pgp-hash';
 import { PgpMsg } from '../../core/pgp-msg';
 import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
-import { InboxPageRecipe } from '../page_recipe/inbox-page-recipe';
-import { PgpHash } from '../../core/pgp-hash';
+import { TestUrls } from './../../browser/test_urls';
+import { TestVariant } from '../../util';
+import { expect } from "chai";
 // tslint:disable:no-blank-lines-func
 
 export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser: TestWithNewBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {

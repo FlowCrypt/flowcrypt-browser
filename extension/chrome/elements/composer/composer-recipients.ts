@@ -2,24 +2,25 @@
 
 'use strict';
 
-import { Composer } from './composer.js';
-import { Str, Value } from '../../../js/common/core/common.js';
+import { ChunkedCb, RecipientType } from '../../../js/common/api/api.js';
+import { Contact, PgpKey } from '../../../js/common/core/pgp-key.js';
+import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './composer-errs.js';
 import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
-import { Xss } from '../../../js/common/platform/xss.js';
-import { Ui } from '../../../js/common/browser/ui.js';
+import { RecipientElement, RecipientStatus, RecipientStatuses } from './composer-types.js';
+import { Str, Value } from '../../../js/common/core/common.js';
+
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { Composer } from './composer.js';
+import { ComposerComponent } from './composer-abstract-component.js';
 import { Google } from '../../../js/common/api/google.js';
 import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 import { Lang } from '../../../js/common/lang.js';
-import { RecipientElement, RecipientStatus, RecipientStatuses } from './composer-types.js';
-import { ComposerComponent } from './composer-abstract-component.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Catch } from '../../../js/common/platform/catch.js';
-import { moveElementInArray } from '../../../js/common/platform/util.js';
-import { RecipientType, ChunkedCb } from '../../../js/common/api/api.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './composer-errs.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
-import { PgpKey, Contact } from '../../../js/common/core/pgp-key.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { moveElementInArray } from '../../../js/common/platform/util.js';
 
 export class ComposerRecipients extends ComposerComponent {
   private readonly failedLookupEmails: string[] = [];

@@ -1,7 +1,8 @@
-import { ElementHandle } from 'puppeteer';
-import { Controllable, BrowserHandle, ControllablePage } from '../../browser';
-import { expect } from 'chai';
+import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
+
 import { AvaContext } from '..';
+import { ElementHandle } from 'puppeteer';
+import { expect } from 'chai';
 
 type ModalOpts = { contentToCheck?: string, clickOn?: 'confirm' | 'cancel', getTriggeredPage?: boolean, timeout?: number };
 type ModalType = 'confirm' | 'error' | 'info' | 'warning';

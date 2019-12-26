@@ -1,6 +1,6 @@
-import { OauthMock } from '../lib/oauth';
 import { Dict } from '../../core/common';
 import { HttpAuthErr } from '../lib/api';
+import { OauthMock } from '../lib/oauth';
 
 // tslint:disable:no-null-keyword
 

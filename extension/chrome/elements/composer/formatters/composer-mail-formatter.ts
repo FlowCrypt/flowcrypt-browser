@@ -2,13 +2,13 @@
 
 'use strict';
 
-import { NewMsgData } from "../composer-types.js";
-import { KeyInfo } from "../../../../js/common/core/pgp-key.js";
 import { Composer } from "../composer.js";
-import { PlainMsgMailFormatter } from './plain-mail-msg-formatter.js';
-import { SignedMsgMailFormatter } from './signed-msg-mail-formatter.js';
 import { EncryptedMsgMailFormatter } from './encrypted-mail-msg-formatter.js';
+import { KeyInfo } from "../../../../js/common/core/pgp-key.js";
+import { NewMsgData } from "../composer-types.js";
+import { PlainMsgMailFormatter } from './plain-mail-msg-formatter.js';
 import { SendableMsg } from '../../../../js/common/api/email_provider/email_provider_api.js';
+import { SignedMsgMailFormatter } from './signed-msg-mail-formatter.js';
 
 export class GeneralMailFormatter {
 

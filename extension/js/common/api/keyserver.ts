@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { Rules } from '../rules.js';
 import { Attester } from './attester.js';
+import { Rules } from '../rules.js';
 import { Sks } from './sks.js';
 
 export type PgpClient = 'flowcrypt' | 'pgp-other' | null;

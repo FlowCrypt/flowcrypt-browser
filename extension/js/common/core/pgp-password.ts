@@ -2,8 +2,9 @@
 
 'use strict';
 
-import { openpgp } from './pgp.js';
 import { base64encode, secureRandomBytes } from '../platform/util.js';
+
+import { openpgp } from './pgp.js';
 
 interface PwdStrengthResult {
   word: {

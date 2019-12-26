@@ -2,15 +2,16 @@
 
 'use strict';
 
-import { Ui } from './browser/ui.js';
-import { Dict, UrlParams, UrlParam } from './core/common.js';
 import { Catch, UnreportableError } from './platform/catch.js';
-import { KeyInfo } from './core/pgp-key.js';
+import { Dict, UrlParam, UrlParams } from './core/common.js';
+
 import { BrowserMsg } from './browser/browser-msg.js';
-import { Store } from './platform/store.js';
-import { Settings } from './settings.js';
-import { Xss } from './platform/xss.js';
+import { KeyInfo } from './core/pgp-key.js';
 import { PgpKey } from './core/pgp-key.js';
+import { Settings } from './settings.js';
+import { Store } from './platform/store.js';
+import { Ui } from './browser/ui.js';
+import { Xss } from './platform/xss.js';
 
 /**
  * Methods in this class will render a fatal message in the browser when assertion fails.

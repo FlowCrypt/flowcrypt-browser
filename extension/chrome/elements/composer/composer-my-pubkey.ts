@@ -2,14 +2,14 @@
 
 'use strict';
 
-import { ComposerComponent } from './composer-abstract-component.js';
-import { Ui } from '../../../js/common/browser/ui.js';
-import { Catch } from '../../../js/common/platform/catch.js';
-import { Lang } from '../../../js/common/lang.js';
-import { Store } from '../../../js/common/platform/store.js';
-import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { KeyInfo } from '../../../js/common/core/pgp-key.js';
+import { Lang } from '../../../js/common/lang.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 
 export class ComposerMyPubkey extends ComposerComponent {
 

@@ -2,19 +2,19 @@
 
 'use strict';
 
-import { Catch } from '../../../js/common/platform/catch.js';
-import { Store } from '../../../js/common/platform/store.js';
+import { Assert } from '../../../js/common/assert.js';
 import { Att } from '../../../js/common/core/att.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Settings } from '../../../js/common/settings.js';
-import { Lang } from '../../../js/common/lang.js';
-import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { Assert } from '../../../js/common/assert.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { GoogleAuth } from '../../../js/common/api/google-auth.js';
+import { Lang } from '../../../js/common/lang.js';
+import { Settings } from '../../../js/common/settings.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
-import { Ui } from '../../../js/common/browser/ui.js';
 
 View.run(class ExperimentalView extends View {
 

@@ -2,19 +2,20 @@
 
 'use strict';
 
-import { Catch } from '../../../js/common/platform/catch.js';
-import { Store, Serializable } from '../../../js/common/platform/store.js';
-import { Value, Str, Dict, Url } from '../../../js/common/core/common.js';
-import { Att } from '../../../js/common/core/att.js';
-import { Ui, SelCache } from '../../../js/common/browser/ui.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Settings } from '../../../js/common/settings.js';
 import { Backend, BackendRes, FcUuidAuth } from '../../../js/common/api/backend.js';
-import { Assert } from '../../../js/common/assert.js';
-import { AttUI } from '../../../js/common/ui/att_ui.js';
-import { Xss } from '../../../js/common/platform/xss.js';
-import { View } from '../../../js/common/view.js';
+import { Dict, Str, Url, Value } from '../../../js/common/core/common.js';
+import { SelCache, Ui } from '../../../js/common/browser/ui.js';
+import { Serializable, Store } from '../../../js/common/platform/store.js';
+
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { Assert } from '../../../js/common/assert.js';
+import { Att } from '../../../js/common/core/att.js';
+import { AttUI } from '../../../js/common/ui/att_ui.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { Settings } from '../../../js/common/settings.js';
+import { View } from '../../../js/common/view.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 View.run(class ContactPageView extends View {
   private readonly acctEmail: string;

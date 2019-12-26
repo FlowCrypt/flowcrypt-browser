@@ -1,10 +1,10 @@
+import { AvaContext, addDebugHtml, newWithTimeoutsFunc } from '../tests';
+import { Config, Util } from "../util";
 
-import { launch } from "puppeteer";
 import { BrowserHandle } from './browser_handle';
-import { Util, Config } from "../util";
-import { addDebugHtml, AvaContext, newWithTimeoutsFunc } from '../tests';
 import { Consts } from '../test';
 import { TIMEOUT_DESTROY_UNEXPECTED_ALERT } from '.';
+import { launch } from "puppeteer";
 
 class TimeoutError extends Error { }
 

@@ -2,14 +2,15 @@
 
 'use strict';
 
-import { SetupView, SetupOptions } from '../setup.js';
-import { Ui } from '../../../js/common/browser/ui.js';
+import { SetupOptions, SetupView } from '../setup.js';
+
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Lang } from '../../../js/common/lang.js';
+import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Store } from '../../../js/common/platform/store.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
 
 export class SetupRecoverKeyModule {
 

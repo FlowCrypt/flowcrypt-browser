@@ -3,14 +3,15 @@
 'use strict';
 
 import { Store, Subscription } from '../../../js/common/platform/store.js';
-import { Ui } from '../../../js/common/browser/ui.js';
-import { Settings } from '../../../js/common/settings.js';
-import { Backend } from '../../../js/common/api/backend.js';
+
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { Xss } from '../../../js/common/platform/xss.js';
+import { Backend } from '../../../js/common/api/backend.js';
+import { Settings } from '../../../js/common/settings.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 // todo - this this page should be removed, link from settings should point to flowcrypt.com/account once available
 

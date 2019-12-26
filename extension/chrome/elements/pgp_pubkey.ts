@@ -2,19 +2,19 @@
 
 'use strict';
 
+import { Assert } from '../../js/common/assert.js';
+import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
+import { Contact } from '../../js/common/core/pgp-key.js';
+import { PgpArmor } from '../../js/common/core/pgp-armor.js';
+import { PgpKey } from '../../js/common/core/pgp-key.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Str } from '../../js/common/core/common.js';
 import { Ui } from '../../js/common/browser/ui.js';
-import { mnemonic } from '../../js/common/core/mnemonic.js';
-import { Contact } from '../../js/common/core/pgp-key.js';
-import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
-import { Assert } from '../../js/common/assert.js';
-import { Xss } from '../../js/common/platform/xss.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
-import { PgpArmor } from '../../js/common/core/pgp-armor.js';
-import { PgpKey } from '../../js/common/core/pgp-key.js';
+import { Xss } from '../../js/common/platform/xss.js';
+import { mnemonic } from '../../js/common/core/mnemonic.js';
 import { openpgp } from '../../js/common/core/pgp.js';
 
 // todo - this should use KeyImportUI for consistency.

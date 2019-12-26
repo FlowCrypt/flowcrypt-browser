@@ -1,7 +1,9 @@
-import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
-import { BrowserRecipe } from '../browser_recipe';
 import * as ava from 'ava';
+
 import { TestVariant, Util } from '../../util';
+import { TestWithGlobalBrowser, TestWithNewBrowser } from '../../test';
+
+import { BrowserRecipe } from '../browser_recipe';
 import { SetupPageRecipe } from '../page_recipe/setup-page-recipe';
 import { expect } from 'chai';
 

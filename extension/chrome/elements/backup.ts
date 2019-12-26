@@ -2,16 +2,16 @@
 
 'use strict';
 
-import { Ui } from '../../js/common/browser/ui.js';
-import { mnemonic } from '../../js/common/core/mnemonic.js';
-import { KeyInfo } from '../../js/common/core/pgp-key.js';
-import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
-import { Store } from '../../js/common/platform/store.js';
 import { Assert } from '../../js/common/assert.js';
-import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
+import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
+import { KeyInfo } from '../../js/common/core/pgp-key.js';
+import { PgpKey } from '../../js/common/core/pgp-key.js';
+import { Store } from '../../js/common/platform/store.js';
+import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
-import { PgpKey } from '../../js/common/core/pgp-key.js';
+import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
+import { mnemonic } from '../../js/common/core/mnemonic.js';
 
 View.run(class BackupView extends View {
   private readonly acctEmail: string;

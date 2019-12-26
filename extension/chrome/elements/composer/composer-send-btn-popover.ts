@@ -2,12 +2,13 @@
 
 'use strict';
 
-import { ComposerComponent } from './composer-abstract-component.js';
-import { PopoverOpt, PopoverChoices } from './composer-types.js';
-import { Xss } from '../../../js/common/platform/xss.js';
-import { Lang } from '../../../js/common/lang.js';
+import { PopoverChoices, PopoverOpt } from './composer-types.js';
+
 import { Catch } from '../../../js/common/platform/catch.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { Lang } from '../../../js/common/lang.js';
 import { Store } from '../../../js/common/platform/store.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerSendBtnPopover extends ComposerComponent {
 
@@ -68,9 +69,7 @@ export class ComposerSendBtnPopover extends ComposerComponent {
       this.composer.S.cached('compose_table').addClass('not-encrypted');
       this.composer.S.now('attached_files').addClass('not-encrypted');
     }
-    if (!this.choices.richText) {
-      this.composer.input.removeRichTextFormatting();
-    }
+    this.choices.richText ? this.composer.input.addRichTextFormatting() : this.composer.input.removeRichTextFormatting();
     this.composer.sendBtn.resetSendBtn();
     this.composer.pwdOrPubkeyContainer.showHideContainerAndColorSendBtn();
     if (typeof machineForceStateTo === 'undefined' && popoverOpt === 'richText') { // human-input choice of rich text
