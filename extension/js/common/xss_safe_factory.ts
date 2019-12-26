@@ -103,7 +103,9 @@ export class XssSafeFactory {
     this.setParams.parentTabId = parentTabId;
   }
 
-  public srcImg = (relPath: string) => this.extUrl(`img/${relPath}`);
+  public srcImg = (relPath: string) => {
+    return this.extUrl(`img/${relPath}`);
+  }
 
   public srcComposeMsg = (draftId?: string) => {
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), { frameId: this.newId(), draftId });

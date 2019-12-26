@@ -23,6 +23,10 @@ export class ComposerInput extends ComposerComponent {
     this.squire.setConfig({ addLinks: this.isRichText() });
   }
 
+  public addRichTextFormatting = () => {
+    this.squire.setConfig({ addLinks: true });
+  }
+
   public removeRichTextFormatting = () => {
     this.squire.setHTML(Xss.htmlSanitizeAndStripAllTags(this.squire.getHTML(), '<br>'));
     this.squire.setConfig({ addLinks: false });
