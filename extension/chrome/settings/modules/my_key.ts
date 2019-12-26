@@ -36,7 +36,7 @@ View.run(class MyKeyView extends View {
     this.myKeyUpdateUrl = Url.create('my_key_update.htm', uncheckedUrlParams);
   }
 
-  render = async () => {
+  public render = async () => {
     [this.keyInfo] = await Store.keysGet(this.acctEmail, [this.longid]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo);
     const prv = await PgpKey.read(this.keyInfo.private);
@@ -49,7 +49,7 @@ View.run(class MyKeyView extends View {
     await initPassphraseToggle(['input_passphrase']);
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     $('.action_download_pubkey').click(this.setHandlerPrevent('double', () => this.downloadPubKeyHandler()));
     $('.action_download_prv').click(this.setHandlerPrevent('double', () => this.downloadPrvKeyHandler()));
     $('.action_download_revocation_cert').click(this.setHandlerPrevent('double', () => this.downloadRevocationCert()));

@@ -15,7 +15,7 @@ export class ComposerSize extends ComposerComponent {
 
   public composeWindowIsMinimized = false;
 
-  initActions = () => {
+  public initActions = () => {
     $('body').click(event => {
       const target = $(event.target);
       if (this.composeWindowIsMaximized && target.is($('body'))) {
@@ -32,7 +32,7 @@ export class ComposerSize extends ComposerComponent {
     }
   }
 
-  onComposeTableRender = () => {
+  public onComposeTableRender = () => {
     Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
       // we use veryslowspree for reply box because hand-resizing the main window will cause too many events
       // we use spree (faster) for new messages because rendering of window buttons on top right depend on it, else visible lag shows
@@ -41,7 +41,7 @@ export class ComposerSize extends ComposerComponent {
     }, 1000);
   }
 
-  resizeComposeBox = (addExtra: number = 0) => {
+  public resizeComposeBox = (addExtra: number = 0) => {
     if (this.view.isReplyBox) {
       this.composer.S.cached('input_text').css('max-width', (this.composer.S.cached('body').width()! - 20) + 'px'); // body should always be present
       let minHeight = 0;

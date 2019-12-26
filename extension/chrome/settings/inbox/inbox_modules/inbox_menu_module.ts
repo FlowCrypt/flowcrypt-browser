@@ -18,18 +18,18 @@ export class InboxMenuModule extends ViewModule<InboxView> {
   private readonly FOLDERS = ['INBOX', 'STARRED', 'SENT', 'DRAFT', 'TRASH']; // 'UNREAD', 'SPAM'
   private allLabels!: GmailRes.GmailLabels$label[];
 
-  readonly LABEL: Dict<GmailRes.GmailMsg$labelId> = {
+  public readonly LABEL: Dict<GmailRes.GmailMsg$labelId> = {
     INBOX: 'INBOX', UNREAD: 'UNREAD', CATEGORY_PERSONAL: 'CATEGORY_PERSONAL', IMPORTANT: 'IMPORTANT', SENT: 'SENT', CATEGORY_UPDATES: 'CATEGORY_UPDATES'
   };
 
-  render = async () => {
+  public render = async () => {
     await this.renderNavbartTop();
     this.allLabels = (await this.view.gmail.labelsGet()).labels;
     this.renderMenuAndLabelStyles();
     this.setHandlers();
   }
 
-  getLabelName = (labelId: string) => {
+  public getLabelName = (labelId: string) => {
     if (labelId === 'ALL') {
       return 'all folders';
     }
@@ -40,7 +40,7 @@ export class InboxMenuModule extends ViewModule<InboxView> {
     return `UNKNOWN LABEL: ${labelId}`;
   }
 
-  renderableLabels = (labelIds: (GmailRes.GmailMsg$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
+  public renderableLabels = (labelIds: (GmailRes.GmailMsg$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
     return labelIds.map(id => this.renderableLabel(id, placement)).join('');
   }
 

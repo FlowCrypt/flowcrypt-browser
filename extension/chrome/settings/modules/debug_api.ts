@@ -24,7 +24,7 @@ View.run(class DebugApiView extends View {
     this.gmail = new Gmail(this.acctEmail);
   }
 
-  render = async () => {
+  public render = async () => {
     if (this.which === 'google_account') {
       try {
         const r = await this.gmail.fetchAcctAliases();
@@ -50,7 +50,7 @@ View.run(class DebugApiView extends View {
     }
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     // No need
   }
 

@@ -12,7 +12,7 @@ import { SignedMsgMailFormatter } from './signed-msg-mail-formatter.js';
 
 export class GeneralMailFormatter {
 
-  static processNewMsg = async (composer: Composer, newMsgData: NewMsgData, senderKi: KeyInfo, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> => {
+  public static processNewMsg = async (composer: Composer, newMsgData: NewMsgData, senderKi: KeyInfo, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> => {
     const choices = composer.sendBtn.popover.choices;
     const recipientsEmails = Array.prototype.concat.apply([], Object.values(newMsgData.recipients).filter(arr => !!arr)) as string[];
     if (!choices.encrypt && !choices.sign) { // plain

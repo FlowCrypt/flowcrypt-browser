@@ -19,7 +19,7 @@ export class SetupCreateKeyModule {
   constructor(private view: SetupView) {
   }
 
-  actionCreateKeyHandler = async () => {
+  public actionCreateKeyHandler = async () => {
     await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.rules!);
     if (! await this.isCreatePrivateFormInputCorrect()) {
       return;
@@ -48,7 +48,7 @@ export class SetupCreateKeyModule {
     }
   }
 
-  actionShowAdvancedSettingsHandle = async (target: HTMLElement) => {
+  public actionShowAdvancedSettingsHandle = async (target: HTMLElement) => {
     const advancedCreateSettings = $('#step_2a_manual_create .advanced_create_settings');
     const container = $('#step_2a_manual_create .advanced_create_settings_container');
     if (advancedCreateSettings.is(':visible')) {
@@ -62,7 +62,7 @@ export class SetupCreateKeyModule {
     }
   }
 
-  createSaveKeyPair = async (options: SetupOptions) => {
+  public createSaveKeyPair = async (options: SetupOptions) => {
     await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.rules!);
     const { full_name } = await Store.getAcct(this.view.acctEmail, ['full_name']);
     try {

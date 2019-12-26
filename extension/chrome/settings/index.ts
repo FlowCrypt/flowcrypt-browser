@@ -50,7 +50,7 @@ View.run(class SettingsView extends View {
     }
   }
 
-  render = async () => {
+  public render = async () => {
     $('#status-row #status_v').text(`v:${VERSION}`);
     for (const webmailLName of await Env.webmails()) {
       $('.signin_button.' + webmailLName).css('display', 'inline-block');
@@ -67,7 +67,7 @@ View.run(class SettingsView extends View {
     Ui.setTestState('ready');
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     BrowserMsg.addListener('open_page', async ({ page, addUrlText }: Bm.OpenPage) => {
       Settings.renderSubPage(this.acctEmail, this.tabId!, page, addUrlText);
     });

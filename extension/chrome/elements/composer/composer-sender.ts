@@ -12,7 +12,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerSender extends ComposerComponent {
 
-  initActions = () => {
+  public initActions = () => {
     // none
   }
 

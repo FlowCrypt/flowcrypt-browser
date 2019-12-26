@@ -57,7 +57,7 @@ View.run(class AttachmentDownloadView extends View {
     this.gmail = new Gmail(this.acctEmail);
   }
 
-  render = async () => {
+  public render = async () => {
     this.tabId = await BrowserMsg.requiredTabId();
     try {
       this.att = new Att({ name: this.origNameBasedOnFilename, type: this.type, msgId: this.msgId, id: this.id, url: this.url });
@@ -85,7 +85,7 @@ View.run(class AttachmentDownloadView extends View {
     }
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     Ui.event.protect();
     if (this.canClickOnAtt) {
       this.button.click(this.setHandlerPrevent('double', () => this.downloadButtonClickedHandler()));

@@ -21,11 +21,11 @@ export class ComposerAtts extends ComposerComponent {
     this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice());
   }
 
-  initActions = () => {
+  public initActions = () => {
     // none
   }
 
-  onComposeTableRender = () => {
+  public onComposeTableRender = () => {
     this.attach.initAttDialog('fineuploader', 'fineuploader_button', {
       uiChanged: () => {
         this.composer.size.setInputTextHeightManuallyIfNeeded();

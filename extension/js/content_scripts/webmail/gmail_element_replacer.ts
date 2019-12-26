@@ -70,14 +70,14 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.gmail = new Gmail(acctEmail);
   }
 
-  getIntervalFunctions = (): Array<IntervalFunction> => {
+  public getIntervalFunctions = (): Array<IntervalFunction> => {
     return [
       { interval: 1000, handler: () => this.everything() },
       { interval: 30000, handler: () => this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded() }
     ];
   }
 
-  setReplyBoxEditable = async () => {
+  public setReplyBoxEditable = async () => {
     const replyContainerIframe = $('.reply_message_iframe_container > iframe').last();
     if (replyContainerIframe.length) {
       $(replyContainerIframe).replaceWith(this.factory.embeddedReply(this.getLastMsgReplyParams(this.getGonvoRootEl(replyContainerIframe[0])), true)); // xss-safe-value
@@ -86,12 +86,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  reinsertReplyBox = (replyMsgId: string) => {
+  public reinsertReplyBox = (replyMsgId: string) => {
     const params: FactoryReplyParams = { sendAs: this.sendAs, replyMsgId };
     $('.reply_message_iframe_container:visible').last().append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
   }
 
-  scrollToElement = (selector: string) => {
+  public scrollToElement = (selector: string) => {
     const scrollableEl = $(this.sel.convoRootScrollable).get(0);
     if (scrollableEl) {
       const element = $(selector).get(0);

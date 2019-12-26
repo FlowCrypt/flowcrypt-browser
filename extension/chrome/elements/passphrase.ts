@@ -32,7 +32,7 @@ View.run(class PassphraseView extends View {
     this.type = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'type', ['embedded', 'sign', 'message', 'draft', 'attachment', 'quote', 'backup']);
   }
 
-  render = async () => {
+  public render = async () => {
     Ui.event.protect();
     await initPassphraseToggle(['passphrase']);
     const allPrivateKeys = await Store.keysGet(this.acctEmail);
@@ -69,7 +69,7 @@ View.run(class PassphraseView extends View {
     }
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     $('#passphrase').keyup(this.setHandler(() => this.renderNormalPpPrompt()));
     $('.action_close').click(this.setHandler(() => this.closeDialog()));
     $('.action_ok').click(this.setHandler(() => this.submitHandler()));

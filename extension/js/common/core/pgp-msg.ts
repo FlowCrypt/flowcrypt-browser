@@ -194,7 +194,7 @@ export class PgpMsg {
     }
   }
 
-  static type: PgpMsgMethod.Type = async ({ data }) => { // promisified because used through bg script
+  public static type: PgpMsgMethod.Type = async ({ data }) => { // promisified because used through bg script
     if (!data || !data.length) {
       return undefined;
     }
@@ -227,7 +227,7 @@ export class PgpMsg {
    * Returns signed data if detached=false, armored
    * Returns signature if detached=true, armored
    */
-  static sign = async (signingPrv: OpenPGP.key.Key, data: string, detached = false): Promise<string> => {
+  public static sign = async (signingPrv: OpenPGP.key.Key, data: string, detached = false): Promise<string> => {
     const message = openpgp.cleartext.fromText(data);
     const signRes = await openpgp.sign({ message, armor: true, privateKeys: [signingPrv], detached });
     if (detached) {
@@ -239,7 +239,7 @@ export class PgpMsg {
     return await openpgp.stream.readToEnd((signRes as OpenPGP.SignArmorResult).data);
   }
 
-  static verify = async (msgOrVerResults: OpenpgpMsgOrCleartext | OpenPGP.message.Verification[], pubs: OpenPGP.key.Key[], contact?: Contact): Promise<VerifyRes> => {
+  public static verify = async (msgOrVerResults: OpenpgpMsgOrCleartext | OpenPGP.message.Verification[], pubs: OpenPGP.key.Key[], contact?: Contact): Promise<VerifyRes> => {
     const sig: VerifyRes = { contact, match: null }; // tslint:disable-line:no-null-keyword
     try {
       // While this looks like bad method API design, it's here to ensure execution order when 1) reading data, 2) verifying, 3) processing signatures
@@ -268,14 +268,14 @@ export class PgpMsg {
     return sig;
   }
 
-  static verifyDetached: PgpMsgMethod.VerifyDetached = async ({ plaintext, sigText }) => {
+  public static verifyDetached: PgpMsgMethod.VerifyDetached = async ({ plaintext, sigText }) => {
     const message = openpgp.message.fromText(Buf.fromUint8(plaintext).toUtfStr());
     await message.appendSignature(Buf.fromUint8(sigText).toUtfStr());
     const keys = await PgpMsg.getSortedKeys([], message);
     return await PgpMsg.verify(message, keys.forVerification, keys.verificationContacts[0]);
   }
 
-  static decrypt: PgpMsgMethod.Decrypt = async ({ kisWithPp, encryptedData, msgPwd }) => {
+  public static decrypt: PgpMsgMethod.Decrypt = async ({ kisWithPp, encryptedData, msgPwd }) => {
     let prepared: PreparedForDecrypt;
     const longids: DecryptError$longids = { message: [], matching: [], chosen: [], needPassphrase: [] };
     try {
@@ -321,7 +321,7 @@ export class PgpMsg {
     }
   }
 
-  static encrypt: PgpMsgMethod.Encrypt = async ({ pubkeys, signingPrv, pwd, data, filename, armor, date }) => {
+  public static encrypt: PgpMsgMethod.Encrypt = async ({ pubkeys, signingPrv, pwd, data, filename, armor, date }) => {
     const message = openpgp.message.fromBinary(data, filename, date);
     const options: OpenPGP.EncryptOptions = { armor, message, date };
     let usedChallenge = false;
@@ -345,7 +345,7 @@ export class PgpMsg {
     return await openpgp.encrypt(options);
   }
 
-  static diagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = async ({ privateKis, message }) => {
+  public static diagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = async ({ privateKis, message }) => {
     const m = await openpgp.message.readArmored(Buf.fromUint8(message).toUtfStr());
     const msgKeyIds = m.getEncryptionKeyIds ? m.getEncryptionKeyIds() : [];
     const localKeyIds: OpenPGP.Keyid[] = [];

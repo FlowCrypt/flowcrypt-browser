@@ -40,7 +40,7 @@ View.run(class PgpPubkeyView extends View {
     this.minimized = uncheckedUrlParams.minimized === true;
   }
 
-  render = async () => {
+  public render = async () => {
     Ui.event.protect();
     this.publicKeys = (await openpgp.key.readArmored(this.armoredPubkey)).keys;
     this.primaryPubKey = this.publicKeys[0];
@@ -100,7 +100,7 @@ View.run(class PgpPubkeyView extends View {
     this.sendResizeMsg();
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     $('.action_add_contact').click(this.setHandler(btn => this.addContactHandler(btn)));
     $('.input_email').keyup(this.setHandler(() => this.setBtnText()));
     $('.action_show_full').click(this.setHandler(btn => this.showFullKeyHandler(btn)));

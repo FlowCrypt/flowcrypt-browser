@@ -15,7 +15,7 @@ export class ComposerMyPubkey extends ComposerComponent {
 
   private toggledManually = false;
 
-  initActions = () => {
+  public initActions = () => {
     this.composer.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
     this.composer.S.cached('icon_pubkey').click(this.view.setHandler(target => {
       this.toggledManually = true;
@@ -29,7 +29,7 @@ export class ComposerMyPubkey extends ComposerComponent {
     return this.composer.S.cached('icon_pubkey').is('.active');
   }
 
-  chooseMyPublicKeyBySenderEmail = async (keys: KeyInfo[], email: string) => {
+  public chooseMyPublicKeyBySenderEmail = async (keys: KeyInfo[], email: string) => {
     for (const key of keys) {
       const parsedkey = await PgpKey.read(key.public);
       if (parsedkey.users.find(u => !!u.userId && u.userId.userid.toLowerCase().includes(email.toLowerCase()))) {

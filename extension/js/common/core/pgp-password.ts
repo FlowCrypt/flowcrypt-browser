@@ -87,7 +87,7 @@ export class PgpPwd {
     return 'less than a second';
   }
 
-  static estimateStrength = (zxcvbnResultGuesses: number, type: 'passphrase' | 'pwd' = 'passphrase'): PwdStrengthResult => {
+  public static estimateStrength = (zxcvbnResultGuesses: number, type: 'passphrase' | 'pwd' = 'passphrase'): PwdStrengthResult => {
     const timeToCrack = zxcvbnResultGuesses / PgpPwd.CRACK_GUESSES_PER_SECOND;
     for (const word of type === 'pwd' ? PgpPwd.CRACK_TIME_WORDS_PWD : PgpPwd.CRACK_TIME_WORDS_PASS_PHRASE) {
       const readableTime = PgpPwd.readableCrackTime(timeToCrack);
@@ -98,7 +98,7 @@ export class PgpPwd {
     throw Error('(thrown) estimate_strength: got to end without any result');
   }
 
-  static weakWords = () => {
+  public static weakWords = () => {
     return [
       'crypt', 'up', 'cryptup', 'flow', 'flowcrypt', 'encryption', 'pgp', 'email', 'set', 'backup', 'passphrase', 'best', 'pass', 'phrases', 'are', 'long', 'and', 'have', 'several',
       'words', 'in', 'them', 'Best pass phrases are long', 'have several words', 'in them', 'bestpassphrasesarelong', 'haveseveralwords', 'inthem',
@@ -107,7 +107,7 @@ export class PgpPwd {
     ];
   }
 
-  static random = () => { // eg TDW6-DU5M-TANI-LJXY
+  public static random = () => { // eg TDW6-DU5M-TANI-LJXY
     return base64encode(openpgp.util.Uint8Array_to_str(secureRandomBytes(128))).toUpperCase().replace(/[^A-Z0-9]|0|O|1/g, '').replace(/(.{4})/g, '$1-').substr(0, 19);
   }
 }

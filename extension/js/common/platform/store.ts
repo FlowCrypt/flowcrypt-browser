@@ -139,7 +139,7 @@ export type AccountStore = {
 };
 
 export class AccountStoreExtension {
-  static getEmailAliasesIncludingPrimary = (acct: string, sendAs: Dict<SendAsAlias> | undefined) => {
+  public static getEmailAliasesIncludingPrimary = (acct: string, sendAs: Dict<SendAsAlias> | undefined) => {
     return sendAs ? Object.keys(sendAs) : [acct];
   }
 }
@@ -151,11 +151,11 @@ export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'ema
   'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all' | 'subscription' | 'uuid' | 'use_rich_text' | 'rules';
 
 export class Subscription implements SubscriptionInfo {
-  active?: boolean;
-  method?: PaymentMethod;
-  level?: SubscriptionLevel;
-  expire?: string;
-  expired?: boolean;
+  public active?: boolean;
+  public method?: PaymentMethod;
+  public level?: SubscriptionLevel;
+  public expire?: string;
+  public expired?: boolean;
 
   constructor(storedSubscriptionInfo: SubscriptionInfo | undefined | null) {
     if (storedSubscriptionInfo) {
@@ -282,11 +282,11 @@ export class Store {
     KEY_CACHE_WIPE_TIMEOUT = Catch.setHandledTimeout(Store.keyCacheWipe, 2 * 60 * 1000);
   }
 
-  static singleScopeRawIndex = (scope: string, key: string) => {
+  public static singleScopeRawIndex = (scope: string, key: string) => {
     return `cryptup_${scope.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_${key}`;
   }
 
-  static getScopes = async (acctEmail: string): Promise<Scopes> => {
+  public static getScopes = async (acctEmail: string): Promise<Scopes> => {
     const { google_token_scopes } = await Store.getAcct(acctEmail, ['google_token_scopes']);
     const result: { [key in GoogleAuthScopesNames]: boolean } = {
       email: false, openid: false, profile: false, compose: false,
@@ -305,7 +305,7 @@ export class Store {
     return result;
   }
 
-  static sessionGet = async (acctEmail: string, key: string): Promise<string | null> => {
+  public static sessionGet = async (acctEmail: string, key: string): Promise<string | null> => {
     if (!Env.isBackgroundPage()) {
       // session in background page is separated from content script frames
       // must always go through background page to be consistent
@@ -314,7 +314,7 @@ export class Store {
     return window.sessionStorage.getItem(Store.singleScopeRawIndex(acctEmail, key));
   }
 
-  static sessionSet = async (acctEmail: string, key: string, value: string | undefined): Promise<void> => {
+  public static sessionSet = async (acctEmail: string, key: string, value: string | undefined): Promise<void> => {
     if (!Env.isBackgroundPage()) {
       // session in background page is separated from content script frames
       // must always go through background page to be consistent
@@ -327,7 +327,7 @@ export class Store {
     }
   }
 
-  static passphraseSave = async (storageType: StorageType, acctEmail: string, longid: string, passphrase: string | undefined) => {
+  public static passphraseSave = async (storageType: StorageType, acctEmail: string, longid: string, passphrase: string | undefined) => {
     const storageKey: AccountIndex = `passphrase_${longid}` as AccountIndex;
     if (storageType === 'session') {
       await Store.sessionSet(acctEmail, storageKey, passphrase);
@@ -343,7 +343,7 @@ export class Store {
     }
   }
 
-  static passphraseGet = async (acctEmail: string, longid: string, ignoreSession: boolean = false): Promise<string | undefined> => {
+  public static passphraseGet = async (acctEmail: string, longid: string, ignoreSession: boolean = false): Promise<string | undefined> => {
     const storageKey = `passphrase_${longid}` as AccountIndex;
     const storage = await Store.getAcct(acctEmail, [storageKey as AccountIndex]);
     const found = storage[storageKey];
@@ -354,7 +354,7 @@ export class Store {
     return fromSession && !ignoreSession ? fromSession : undefined;
   }
 
-  static getKeysCurrentlyInSession = async (acctEmail: string) => {
+  public static getKeysCurrentlyInSession = async (acctEmail: string) => {
     const keys = await Store.keysGet(acctEmail);
     const result: Array<KeyInfo> = [];
     for (const key of keys) {
@@ -367,7 +367,7 @@ export class Store {
     return result;
   }
 
-  static waitUntilPassphraseChanged = async (
+  public static waitUntilPassphraseChanged = async (
     acctEmail: string, missingOrWrongPpKeyLongids: string[], interval = 1000, cancellation: PromiseCancellation = { cancel: false }
   ): Promise<boolean> => {
     const missingOrWrongPassprases: Dict<string | undefined> = {};
@@ -390,7 +390,7 @@ export class Store {
     return false;
   }
 
-  static keysGet = async (acctEmail: string, longids?: string[]) => {
+  public static keysGet = async (acctEmail: string, longids?: string[]) => {
     const stored = await Store.getAcct(acctEmail, ['keys']);
     const keys: KeyInfo[] = stored.keys || [];
     if (!longids) {
@@ -399,7 +399,7 @@ export class Store {
     return keys.filter(ki => longids.includes(ki.longid) || (longids.includes('primary') && ki.primary));
   }
 
-  static keysGetAllWithPp = async (acctEmail: string): Promise<KeyInfo[]> => {
+  public static keysGetAllWithPp = async (acctEmail: string): Promise<KeyInfo[]> => {
     const keys = await Store.keysGet(acctEmail);
     for (const ki of keys) {
       ki.passphrase = await Store.passphraseGet(acctEmail, ki.longid);
@@ -407,7 +407,8 @@ export class Store {
     return keys;
   }
 
-  static keysAdd = async (acctEmail: string, newKeyArmored: string) => { // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked key check
+  // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked key check
+  public static keysAdd = async (acctEmail: string, newKeyArmored: string) => {
     const keyinfos = await Store.keysGet(acctEmail);
     let updated = false;
     const newKeyLongid = await PgpKey.longid(newKeyArmored);
@@ -425,13 +426,13 @@ export class Store {
     }
   }
 
-  static keysRemove = async (acctEmail: string, removeLongid: string): Promise<void> => {
+  public static keysRemove = async (acctEmail: string, removeLongid: string): Promise<void> => {
     const privateKeys = await Store.keysGet(acctEmail);
     const filteredPrivateKeys = privateKeys.filter(ki => ki.longid !== removeLongid);
     await Store.setAcct(acctEmail, { keys: filteredPrivateKeys });
   }
 
-  static setAcct = async (acctEmail: string, values: AccountStore): Promise<void> => {
+  public static setAcct = async (acctEmail: string, values: AccountStore): Promise<void> => {
     if (Env.isContentScript()) {
       // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
       // always go through bg script to avoid such errors
@@ -445,7 +446,7 @@ export class Store {
     await storageLocalSet(storageUpdate);
   }
 
-  static setGlobal = async (values: GlobalStore): Promise<void> => {
+  public static setGlobal = async (values: GlobalStore): Promise<void> => {
     if (Env.isContentScript()) {
       // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
       // always go through bg script to avoid such errors
@@ -459,7 +460,7 @@ export class Store {
     await storageLocalSet(storageUpdate);
   }
 
-  static getGlobal = async (keys: GlobalIndex[]): Promise<GlobalStore> => {
+  public static getGlobal = async (keys: GlobalIndex[]): Promise<GlobalStore> => {
     if (Env.isContentScript()) {
       // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
       // always go through bg script to avoid such errors
@@ -469,7 +470,7 @@ export class Store {
     return Store.buildSingleAccountStoreFromRawResults(Store.globalStorageScope, storageObj) as GlobalStore;
   }
 
-  static getAcct = async (acctEmail: string, keys: AccountIndex[]): Promise<AccountStore> => {
+  public static getAcct = async (acctEmail: string, keys: AccountIndex[]): Promise<AccountStore> => {
     if (Env.isContentScript()) {
       // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
       // go through bg script to avoid such errors
@@ -489,7 +490,7 @@ export class Store {
     return Store.buildSingleAccountStoreFromRawResults(acctEmail, storageObj) as AccountStore;
   }
 
-  static getAccounts = async (acctEmails: string[], keys: string[]): Promise<Dict<AccountStore>> => {
+  public static getAccounts = async (acctEmails: string[], keys: string[]): Promise<Dict<AccountStore>> => {
     const storageObj = await storageLocalGet(Store.manyScopesRawIndexArr(acctEmails, keys)) as RawStore;
     const resultsByAcct: Dict<AccountStore> = {};
     for (const account of acctEmails) {
@@ -498,15 +499,15 @@ export class Store {
     return resultsByAcct;
   }
 
-  static remove = async (acctEmail: string, keys: string[]) => {
+  public static remove = async (acctEmail: string, keys: string[]) => {
     await storageLocalRemove(Store.singleScopeRawIndexArr(acctEmail, keys));
   }
 
-  static removeGlobal = async (keys: string[]) => {
+  public static removeGlobal = async (keys: string[]) => {
     await storageLocalRemove(Store.singleScopeRawIndexArr(Store.globalStorageScope, keys));
   }
 
-  static acctEmailsGet = async (): Promise<string[]> => {
+  public static acctEmailsGet = async (): Promise<string[]> => {
     const storage = await Store.getGlobal(['account_emails']);
     const acctEmails: string[] = [];
     if (typeof storage.account_emails !== 'undefined') {
@@ -519,7 +520,7 @@ export class Store {
     return acctEmails;
   }
 
-  static acctEmailsAdd = async (acctEmail: string): Promise<void> => { // todo: concurrency issues with another tab loaded at the same time
+  public static acctEmailsAdd = async (acctEmail: string): Promise<void> => { // todo: concurrency issues with another tab loaded at the same time
     if (!acctEmail) {
       throw new Error(`attempting to save empty acctEmail: ${acctEmail}`);
     }
@@ -535,18 +536,18 @@ export class Store {
     }
   }
 
-  static acctEmailsRemove = async (acctEmail: string): Promise<void> => { // todo: concurrency issues with another tab loaded at the same time
+  public static acctEmailsRemove = async (acctEmail: string): Promise<void> => { // todo: concurrency issues with another tab loaded at the same time
     const acctEmails = await Store.acctEmailsGet();
     await Store.setGlobal({ account_emails: JSON.stringify(Value.arr.withoutVal(acctEmails, acctEmail)) });
     BrowserMsg.send.bg.updateUninstallUrl();
   }
 
-  static authInfo = async (acctEmail: string): Promise<FcUuidAuth> => {
+  public static authInfo = async (acctEmail: string): Promise<FcUuidAuth> => {
     const { uuid } = await Store.getAcct(acctEmail, ['uuid']);
     return { account: acctEmail, uuid };
   }
 
-  static subscription = async (acctEmail: string): Promise<Subscription> => {
+  public static subscription = async (acctEmail: string): Promise<Subscription> => {
     const { subscription } = await Store.getAcct(acctEmail, ['subscription']);
     return new Subscription(subscription);
   }
@@ -580,7 +581,7 @@ export class Store {
     }
   }
 
-  static dbOpen = async (): Promise<IDBDatabase> => {
+  public static dbOpen = async (): Promise<IDBDatabase> => {
     return await new Promise((resolve, reject) => {
       let openDbReq: IDBOpenDBRequest;
       openDbReq = indexedDB.open('cryptup', 3);
@@ -607,7 +608,7 @@ export class Store {
     });
   }
 
-  static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig, expiresOn }: DbContactObjArg): Promise<Contact> => {
+  public static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig, expiresOn }: DbContactObjArg): Promise<Contact> => {
     const expiresOnMs = Number(expiresOn) || undefined;
     // @ts-ignore - if openpgp is mising, relay op through background process
     if (typeof openpgp === 'undefined') {
@@ -664,7 +665,7 @@ export class Store {
     }
   }
 
-  static dbContactSave = async (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => {
+  public static dbContactSave = async (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => {
     if (!db) { // relay op through background process
       await BrowserMsg.send.bg.await.db({ f: 'dbContactSave', args: [contact] });
       return;
@@ -682,7 +683,7 @@ export class Store {
     });
   }
 
-  static dbContactUpdate = async (db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> => {
+  public static dbContactUpdate = async (db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> => {
     if (!db) { // relay op through background process
       await BrowserMsg.send.bg.await.db({ f: 'dbContactUpdate', args: [email, update] });
       return;
@@ -717,7 +718,7 @@ export class Store {
     });
   }
 
-  static dbContactGet = async (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
+  public static dbContactGet = async (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
     if (!db) { // relay op through background process
       return await BrowserMsg.send.bg.await.db({ f: 'dbContactGet', args: [emailOrLongid] }) as (Contact | undefined)[];
     }
@@ -746,7 +747,7 @@ export class Store {
     }
   }
 
-  static dbContactSearch = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<Contact[]> => {
+  public static dbContactSearch = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<Contact[]> => {
     if (!db) { // relay op through background process
       return await BrowserMsg.send.bg.await.db({ f: 'dbContactSearch', args: [query] }) as Contact[];
     }
@@ -792,29 +793,29 @@ export class Store {
     });
   }
 
-  static decryptedKeyCacheSet = (k: OpenPGP.key.Key) => {
+  public static decryptedKeyCacheSet = (k: OpenPGP.key.Key) => {
     // todo - not yet used in browser extension, but planned to be enabled soon
     // Store.keyCacheRenewExpiry();
     // KEY_CACHE[keyLongid(k)] = k;
   }
 
-  static decryptedKeyCacheGet = (longid: string): OpenPGP.key.Key | undefined => {
+  public static decryptedKeyCacheGet = (longid: string): OpenPGP.key.Key | undefined => {
     Store.keyCacheRenewExpiry();
     return KEY_CACHE[longid];
   }
 
-  static armoredKeyCacheSet = (armored: string, k: OpenPGP.key.Key) => {
+  public static armoredKeyCacheSet = (armored: string, k: OpenPGP.key.Key) => {
     // todo - not yet used in browser extension, but planned to be enabled soon
     // Store.keyCacheRenewExpiry();
     // KEY_CACHE[armored] = k;
   }
 
-  static armoredKeyCacheGet = (armored: string): OpenPGP.key.Key | undefined => {
+  public static armoredKeyCacheGet = (armored: string): OpenPGP.key.Key | undefined => {
     Store.keyCacheRenewExpiry();
     return KEY_CACHE[armored];
   }
 
-  static keyCacheWipe = () => {
+  public static keyCacheWipe = () => {
     KEY_CACHE = {};
   }
 

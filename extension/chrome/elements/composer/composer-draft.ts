@@ -35,7 +35,7 @@ export class ComposerDraft extends ComposerComponent {
     }
   }
 
-  initActions = async (): Promise<void> => {
+  public initActions = async (): Promise<void> => {
     $('.delete_draft').click(this.view.setHandler(async () => {
       await this.draftDelete();
       if (this.view.isReplyBox && !this.view.removeAfterClose) { // reload iframe so we don't leave users without a reply UI

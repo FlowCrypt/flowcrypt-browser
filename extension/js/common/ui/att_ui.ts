@@ -28,7 +28,7 @@ export class AttUI {
     this.getLimits = getLimits;
   }
 
-  initAttDialog = (elId: string, btnId: string, callbacks: AttUICallbacks = {}) => {
+  public initAttDialog = (elId: string, btnId: string, callbacks: AttUICallbacks = {}) => {
     this.callbacks = callbacks;
     $('#qq-template').load(this.templatePath, () => {
       const config = {
@@ -49,27 +49,27 @@ export class AttUI {
     });
   }
 
-  setInputAttributes = (): HTMLInputElement => {
+  public setInputAttributes = (): HTMLInputElement => {
     const input: HTMLInputElement = this.uploader._buttons[0].getInput(); // tslint:disable-line:no-unsafe-any
     input.setAttribute('title', 'Attach a file');
     input.setAttribute('tabindex', '8');
     return input;
   }
 
-  hasAtt = () => {
+  public hasAtt = () => {
     return Object.keys(this.attachedFiles).length > 0;
   }
 
-  getAttIds = () => {
+  public getAttIds = () => {
     return Object.keys(this.attachedFiles);
   }
 
-  collectAtt = async (uploadFileId: string) => {
+  public collectAtt = async (uploadFileId: string) => {
     const fileData = await this.readAttDataAsUint8(uploadFileId);
     return new Att({ name: this.attachedFiles[uploadFileId].name, type: this.attachedFiles[uploadFileId].type, data: fileData });
   }
 
-  collectAtts = async () => {
+  public collectAtts = async () => {
     const atts: Att[] = [];
     for (const uploadFileId of Object.keys(this.attachedFiles)) {
       atts.push(await this.collectAtt(uploadFileId));
@@ -77,7 +77,7 @@ export class AttUI {
     return atts;
   }
 
-  collectEncryptAtts = async (pubkeys: string[], pwd?: string): Promise<Att[]> => {
+  public collectEncryptAtts = async (pubkeys: string[], pwd?: string): Promise<Att[]> => {
     const atts: Att[] = [];
     for (const uploadFileId of Object.keys(this.attachedFiles)) {
       const file = this.attachedFiles[uploadFileId];
@@ -88,7 +88,7 @@ export class AttUI {
     return atts;
   }
 
-  clearAllAtts = () => {
+  public clearAllAtts = () => {
     this.attachedFiles = {};
   }
 

@@ -5,7 +5,7 @@ import { Catch } from '../../platform/catch.js';
 import { Xss } from '../../platform/xss.js';
 
 export class ApiErr {
-  static eli5 = (e: any): string => {
+  public static eli5 = (e: any): string => {
     if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
       return 'Email account is disabled, or access has been blocked by admin policy. Contact your email administrator.';
     } else if (ApiErr.isAuthPopupNeeded(e)) {
@@ -35,7 +35,7 @@ export class ApiErr {
     }
   }
 
-  static isStandardErr = (e: any, internalType: 'auth' | 'subscription'): boolean => {
+  public static isStandardErr = (e: any, internalType: 'auth' | 'subscription'): boolean => {
     if (!e || !(typeof e === 'object')) {
       return false;
     }
@@ -51,7 +51,7 @@ export class ApiErr {
     return false;
   }
 
-  static isAuthErr = (e: any): boolean => {
+  public static isAuthErr = (e: any): boolean => {
     if (e instanceof AuthErr) {
       return true;
     }
@@ -66,7 +66,7 @@ export class ApiErr {
     return false;
   }
 
-  static isAuthPopupNeeded = (e: any): boolean => {
+  public static isAuthPopupNeeded = (e: any): boolean => {
     if (e instanceof GoogleAuthErr) {
       return true;
     }
@@ -84,7 +84,7 @@ export class ApiErr {
     return false;
   }
 
-  static isMailOrAcctDisabledOrPolicy = (e: any): boolean => {
+  public static isMailOrAcctDisabledOrPolicy = (e: any): boolean => {
     if (e instanceof AjaxErr && ApiErr.isBadReq(e) && typeof e.responseText === 'string') {
       if (e.responseText.indexOf('Mail service not enabled') !== -1 || e.responseText.indexOf('Account has been deleted') !== -1) {
         return true;
@@ -96,7 +96,7 @@ export class ApiErr {
     return false;
   }
 
-  static isBlockedByProxy = (e: any): boolean => {
+  public static isBlockedByProxy = (e: any): boolean => {
     if (!(e instanceof AjaxErr)) {
       return false;
     }
@@ -111,7 +111,7 @@ export class ApiErr {
     return false;
   }
 
-  static isNetErr = (e: any): boolean => {
+  public static isNetErr = (e: any): boolean => {
     if (e instanceof TypeError && (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')) {
       return true; // openpgp.js uses fetch()... which produces these errors
     }
@@ -124,31 +124,31 @@ export class ApiErr {
     return false;
   }
 
-  static isSignificant = (e: any): boolean => {
+  public static isSignificant = (e: any): boolean => {
     return !ApiErr.isNetErr(e) && !ApiErr.isServerErr(e) && !ApiErr.isNotFound(e) && !ApiErr.isMailOrAcctDisabledOrPolicy(e)
       && !ApiErr.isAuthErr(e) && !ApiErr.isBlockedByProxy(e) && !ApiErr.isAuthPopupNeeded(e);
   }
 
-  static isBadReq = (e: any): e is AjaxErr => {
+  public static isBadReq = (e: any): e is AjaxErr => {
     return e instanceof AjaxErr && e.status === 400;
   }
-  static isInsufficientPermission = (e: any): e is AjaxErr => {
+  public static isInsufficientPermission = (e: any): e is AjaxErr => {
     return e instanceof AjaxErr && e.status === 403 && e.responseText.indexOf('insufficientPermissions') !== -1;
   }
 
-  static isNotFound = (e: any): e is AjaxErr => {
+  public static isNotFound = (e: any): e is AjaxErr => {
     return e instanceof AjaxErr && e.status === 404;
   }
 
-  static isReqTooLarge = (e: any): boolean => {
+  public static isReqTooLarge = (e: any): boolean => {
     return e instanceof AjaxErr && e.status === 413;
   }
 
-  static isServerErr = (e: any): boolean => {
+  public static isServerErr = (e: any): boolean => {
     return e instanceof AjaxErr && e.status >= 500;
   }
 
-  static detailsAsHtmlWithNewlines = (e: any): string => {
+  public static detailsAsHtmlWithNewlines = (e: any): string => {
     let details = 'Below are technical details about the error. This may be useful for debugging.\n\n';
     details += `<b>Error string</b>: ${Xss.escape(String(e))}\n\n`;
     details += `<b>Error stack</b>: ${e instanceof Error ? Xss.escape((e.stack || '(empty)')) : '(no error stack)'}\n\n`;
@@ -158,11 +158,11 @@ export class ApiErr {
     return details;
   }
 
-  static isInPrivateMode = (e: any) => {
+  public static isInPrivateMode = (e: any) => {
     return e instanceof Error && e.message.startsWith('BrowserMsg() (no status text): -1 when GET-ing blob:moz-extension://');
   }
 
-  static reportIfSignificant = (e: any) => {
+  public static reportIfSignificant = (e: any) => {
     if (ApiErr.isSignificant(e)) {
       Catch.reportErr(e);
     }

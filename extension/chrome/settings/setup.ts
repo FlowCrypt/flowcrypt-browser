@@ -40,29 +40,29 @@ export interface SetupOptions {
 
 export class SetupView extends View {
 
-  readonly acctEmail: string;
-  readonly parentTabId: string | undefined;
-  readonly action: 'add_key' | 'finalize' | undefined;
+  public readonly acctEmail: string;
+  public readonly parentTabId: string | undefined;
+  public readonly action: 'add_key' | 'finalize' | undefined;
 
-  readonly emailDomainsToSkip = ['yahoo', 'live', 'outlook'];
-  readonly keyImportUi = new KeyImportUi({ checkEncryption: true });
-  readonly gmail: Gmail;
-  readonly setupRecoverKey: SetupRecoverKeyModule;
-  readonly setupCreateKey: SetupCreateKeyModule;
-  readonly setupImportKey: SetupImportKeyModule;
-  readonly setupRender: SetupRenderModule;
+  public readonly emailDomainsToSkip = ['yahoo', 'live', 'outlook'];
+  public readonly keyImportUi = new KeyImportUi({ checkEncryption: true });
+  public readonly gmail: Gmail;
+  public readonly setupRecoverKey: SetupRecoverKeyModule;
+  public readonly setupCreateKey: SetupCreateKeyModule;
+  public readonly setupImportKey: SetupImportKeyModule;
+  public readonly setupRender: SetupRenderModule;
 
-  tabId: string | undefined;
-  scopes: Scopes | undefined;
-  storage: AccountStore | undefined;
-  rules: Rules | undefined;
+  public tabId: string | undefined;
+  public scopes: Scopes | undefined;
+  public storage: AccountStore | undefined;
+  public rules: Rules | undefined;
 
-  acctEmailAttesterFingerprint: string | undefined;
-  fetchedKeyBackups: OpenPGP.key.Key[] = [];
-  fetchedKeyBackupsUniqueLongids: string[] = [];
-  importedKeysUniqueLongids: string[] = [];
-  mathingPassphrases: string[] = [];
-  submitKeyForAddrs: string[];
+  public acctEmailAttesterFingerprint: string | undefined;
+  public fetchedKeyBackups: OpenPGP.key.Key[] = [];
+  public fetchedKeyBackupsUniqueLongids: string[] = [];
+  public importedKeysUniqueLongids: string[] = [];
+  public mathingPassphrases: string[] = [];
+  public submitKeyForAddrs: string[];
 
   constructor() {
     super();
@@ -89,7 +89,7 @@ export class SetupView extends View {
     this.setupRender = new SetupRenderModule(this);
   }
 
-  render = async () => {
+  public render = async () => {
     await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
     await initPassphraseToggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
     this.storage = await Store.getAcct(this.acctEmail, ['setup_done', 'key_backup_prompt', 'email_provider', 'sendAs']);
@@ -108,7 +108,7 @@ export class SetupView extends View {
     await this.setupRender.renderInitial();
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     BrowserMsg.addListener('close_page', async () => { $('.featherlight-close').click(); });
     BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => { await Ui.modal.info(notification); });
     BrowserMsg.listen(this.tabId!);
@@ -133,12 +133,12 @@ export class SetupView extends View {
     $("#recovery_pasword").on('keydown', this.setEnterHandlerThatClicks('#step_2_recovery .action_recover_account'));
   }
 
-  actionBackHandler = () => {
+  public actionBackHandler = () => {
     $('h1').text('Set Up');
     this.setupRender.displayBlock('step_1_easy_or_manual');
   }
 
-  actionSubmitPublicKeyToggleHandler = (target: HTMLElement) => {
+  public actionSubmitPublicKeyToggleHandler = (target: HTMLElement) => {
     // will be hidden / ignored / forced true when rules.mustSubmitToAttester() === true (for certain orgs)
     const inputSubmitAll = $(target).closest('.manual').find('.input_submit_all').first();
     if ($(target).prop('checked')) {
@@ -150,7 +150,7 @@ export class SetupView extends View {
     }
   }
 
-  actionCloseHandler = () => {
+  public actionCloseHandler = () => {
     if (this.parentTabId) {
       BrowserMsg.send.redirect(this.parentTabId, { location: Url.create('index.htm', { acctEmail: this.acctEmail, advanced: true }) });
     } else {
@@ -158,7 +158,7 @@ export class SetupView extends View {
     }
   }
 
-  preFinalizeSetup = async (options: SetupOptions): Promise<void> => {
+  public preFinalizeSetup = async (options: SetupOptions): Promise<void> => {
     await Store.setAcct(this.acctEmail, {
       tmp_submit_main: options.submit_main,
       tmp_submit_all: options.submit_all,
@@ -168,7 +168,7 @@ export class SetupView extends View {
     });
   }
 
-  finalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
+  public finalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
     const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
@@ -180,7 +180,7 @@ export class SetupView extends View {
     await Store.remove(this.acctEmail, ['tmp_submit_main', 'tmp_submit_all']);
   }
 
-  saveKeys = async (prvs: OpenPGP.key.Key[], options: SetupOptions) => {
+  public saveKeys = async (prvs: OpenPGP.key.Key[], options: SetupOptions) => {
     for (const prv of prvs) {
       const longid = await PgpKey.longid(prv);
       if (!longid) {
@@ -201,7 +201,7 @@ export class SetupView extends View {
     await Store.dbContactSave(undefined, myOwnEmailAddrsAsContacts);
   }
 
-  saveAndFillSubmitOption = async (sendAsAliases: Dict<SendAsAlias>) => {
+  public saveAndFillSubmitOption = async (sendAsAliases: Dict<SendAsAlias>) => {
     this.submitKeyForAddrs = this.filterAddressesForSubmittingKeys(Object.keys(sendAsAliases));
     await Store.setAcct(this.acctEmail, { sendAs: sendAsAliases });
     if (this.submitKeyForAddrs.length > 1) {
@@ -210,7 +210,7 @@ export class SetupView extends View {
     }
   }
 
-  submitPublicKeyIfNeeded = async (armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) => {
+  public submitPublicKeyIfNeeded = async (armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) => {
     if (!options.submit_main) {
       return;
     }
@@ -229,12 +229,12 @@ export class SetupView extends View {
     await Settings.submitPubkeys(this.acctEmail, addresses, armoredPubkey);
   }
 
-  filterAddressesForSubmittingKeys = (addresses: string[]): string[] => {
+  public filterAddressesForSubmittingKeys = (addresses: string[]): string[] => {
     const filterAddrRegEx = new RegExp(`@(${this.emailDomainsToSkip.join('|')})`);
     return addresses.filter(e => !filterAddrRegEx.test(e));
   }
 
-  getUniqueLongids = async (keys: OpenPGP.key.Key[]): Promise<string[]> => {
+  public getUniqueLongids = async (keys: OpenPGP.key.Key[]): Promise<string[]> => {
     return Value.arr.unique(await Promise.all(keys.map(PgpKey.longid))).filter(Boolean) as string[];
   }
 

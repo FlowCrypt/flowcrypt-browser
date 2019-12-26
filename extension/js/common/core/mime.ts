@@ -325,7 +325,7 @@ export class Mime {
     return rootNode.build(); // tslint:disable-line:no-unsafe-any
   }
 
-  static subjectWithoutPrefixes = (subject: string): string => {
+  public static subjectWithoutPrefixes = (subject: string): string => {
     return subject.replace(/^((Re|Fwd): ?)+/g, '').trim();
   }
 

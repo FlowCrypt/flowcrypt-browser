@@ -44,7 +44,7 @@ View.run(class SubscribeView extends View {
     this.placement = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'placement', ['settings', 'settings_compose', 'default', 'dialog', 'gmail', 'compose', undefined]);
   }
 
-  render = async () => {
+  public render = async () => {
     Ui.event.protect();
     if (this.placement === 'settings') {
       $('#content').removeClass('dialog').css({ 'margin-top': 0, 'margin-bottom': 30 });
@@ -60,7 +60,7 @@ View.run(class SubscribeView extends View {
       .html(`${Lang.account.creditOrDebit}<br><br>${new XssSafeFactory(this.acctEmail, this.tabId).embeddedStripeCheckout()}<br>${Ui.retryLink('back')}`); // xss-safe-factory
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     $('.action_close').click(this.setHandler(() => this.closeDialog()));
     $('.action_show_stripe').click(this.setHandler(() => this.showStripeHandler()));
     $('.action_contact_page').click(this.setHandler(() => BrowserMsg.send.bg.settings({ page: '/chrome/settings/modules/contact_page.htm', acctEmail: this.acctEmail })));

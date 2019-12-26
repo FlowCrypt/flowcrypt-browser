@@ -30,14 +30,14 @@ View.run(class ManualDecryptView extends View {
     this.attUi.initAttDialog('fineuploader', 'fineuploader_button');
   }
 
-  render = async () => {
+  public render = async () => {
     const tabId = await BrowserMsg.requiredTabId();
     this.factory = new XssSafeFactory(this.acctEmail, tabId);
     BrowserMsg.addListener('close_dialog', async () => { $('.passphrase_dialog').text(''); });
     BrowserMsg.listen(tabId);
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     $('.action_decrypt_and_download').click(this.setHandlerPrevent('double', el => this.actionDecryptAndDownloadHandler(el)));
   }
 

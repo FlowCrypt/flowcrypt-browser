@@ -22,7 +22,7 @@ View.run(class AuthDeniedView extends View {
     this.emailProvider = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'emailProvider') || 'gmail';
   }
 
-  render = async () => {
+  public render = async () => {
     if (!this.acctEmail) {
       this.renderSetupDone(false);
     } else {
@@ -39,7 +39,7 @@ View.run(class AuthDeniedView extends View {
     }
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     $('.action_auth_proceed').click(this.setHandler(() => BrowserMsg.send.openGoogleAuthDialog(this.parentTabId, { acctEmail: this.acctEmail })));
     $('.auth_action_limited').click(this.setHandler(() => BrowserMsg.send.openGoogleAuthDialog(this.parentTabId,
       { acctEmail: this.acctEmail, scopes: GoogleAuth.defaultScopes('compose_only') })));

@@ -14,5 +14,5 @@ export abstract class ComposerComponent {
     this.view = composer.view;
   }
 
-  abstract initActions(): void;
+  public abstract initActions(): void;
 }

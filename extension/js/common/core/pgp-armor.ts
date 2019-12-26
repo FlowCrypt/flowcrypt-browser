@@ -25,7 +25,7 @@ export class PgpArmor {
     encryptedMsgLink: { begin: 'This message is encrypted: Open Message', end: /https:(\/|&#x2F;){2}(cryptup\.org|flowcrypt\.com)(\/|&#x2F;)[a-zA-Z0-9]{10}(\n|$)/, replace: true },
   };
 
-  static clip = (text: string): string | undefined => {
+  public static clip = (text: string): string | undefined => {
     if (text?.includes(PgpArmor.ARMOR_HEADER_DICT.null.begin) && text.includes(String(PgpArmor.ARMOR_HEADER_DICT.null.end))) {
       const match = text.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+-----END PGP (MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----)/gm);
       return (match && match.length) ? match[0] : undefined;
@@ -33,7 +33,7 @@ export class PgpArmor {
     return undefined;
   }
 
-  static headers = (blockType: ReplaceableMsgBlockType | 'null', format = 'string'): CryptoArmorHeaderDefinition => {
+  public static headers = (blockType: ReplaceableMsgBlockType | 'null', format = 'string'): CryptoArmorHeaderDefinition => {
     const h = PgpArmor.ARMOR_HEADER_DICT[blockType];
     return {
       begin: (typeof h.begin === 'string' && format === 're') ? h.begin.replace(/ /g, '\\s') : h.begin,
@@ -42,7 +42,7 @@ export class PgpArmor {
     };
   }
 
-  static normalize = (armored: string, type: ReplaceableMsgBlockType | 'key') => {
+  public static normalize = (armored: string, type: ReplaceableMsgBlockType | 'key') => {
     armored = Str.normalize(armored).replace(/\n /g, '\n');
     if (['encryptedMsg', 'publicKey', 'privateKey', 'key'].includes(type)) {
       armored = armored.replace(/\r?\n/g, '\n').trim();
@@ -74,7 +74,7 @@ export class PgpArmor {
     return armored;
   }
 
-  static cryptoMsgPrepareForDecrypt = async (encrypted: Uint8Array): Promise<PreparedForDecrypt> => {
+  public static cryptoMsgPrepareForDecrypt = async (encrypted: Uint8Array): Promise<PreparedForDecrypt> => {
     if (!encrypted.length) {
       throw new Error('Encrypted message could not be parsed because no data was provided');
     }

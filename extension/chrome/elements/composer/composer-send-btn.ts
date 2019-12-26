@@ -34,17 +34,17 @@ export class ComposerSendBtn extends ComposerComponent {
     this.popover = new ComposerSendBtnPopover(composer);
   }
 
-  initActions = (): void => {
+  public initActions = (): void => {
     this.composer.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composer.size.composeWindowIsMinimized && this.extractProcessSendMsg()));
     this.composer.S.cached('send_btn').click(this.view.setHandlerPrevent('double', () => this.extractProcessSendMsg()));
     this.popover.initActions();
   }
 
-  isSendMessageInProgres = (): boolean => {
+  public isSendMessageInProgres = (): boolean => {
     return this.isSendMessageInProgress;
   }
 
-  resetSendBtn = (delay?: number) => {
+  public resetSendBtn = (delay?: number) => {
     const doReset = () => {
       Xss.sanitizeRender(this.composer.S.cached('send_btn_text'), `<i></i>${this.btnText()}`);
       this.composer.S.cached('send_btn').addClass('green').removeClass('gray').prop('disabled', false);
@@ -60,12 +60,12 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  disableBtn = () => {
+  public disableBtn = () => {
     this.composer.S.cached('send_btn').removeClass('green').addClass('gray').prop('disabled', true);
     this.composer.S.cached('toggle_send_options').removeClass('green').addClass('gray');
   }
 
-  enableBtn = () => {
+  public enableBtn = () => {
     this.composer.S.cached('send_btn').removeClass('gray').addClass('green').prop('disabled', false);
     this.composer.S.cached('toggle_send_options').removeClass('gray').addClass('green');
   }

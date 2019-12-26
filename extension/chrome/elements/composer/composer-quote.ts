@@ -33,7 +33,7 @@ export class ComposerQuote extends ComposerComponent {
     return this.msgExpandingHTMLPart;
   }
 
-  initActions = (): void => {
+  public initActions = (): void => {
     // No need
   }
 

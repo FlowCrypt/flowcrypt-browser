@@ -30,7 +30,7 @@ View.run(class KeyserverView extends View {
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   }
 
-  render = async () => {
+  public render = async () => {
     $('.email-address').text(this.acctEmail);
     Xss.sanitizeRender('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
     (async () => {
@@ -62,7 +62,7 @@ View.run(class KeyserverView extends View {
     }
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     $('.action_submit_key').click(this.setHandlerPrevent('double', this.submitPublicKeyHandler));
     $('.action_replace_pubkey').click(this.setHandlerPrevent('double', this.replacePublicKeyHandler));
   }

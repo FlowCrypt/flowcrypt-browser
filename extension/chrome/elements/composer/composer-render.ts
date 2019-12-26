@@ -19,7 +19,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerRender extends ComposerComponent {
 
-  initActions = async () => {
+  public initActions = async () => {
     await this.initComposeBox();
     BrowserMsg.addListener('close_dialog', async () => { $('.featherlight.featherlight-iframe').remove(); });
     this.composer.S.cached('icon_help').click(this.view.setHandler(() => this.renderHelpDialog(), this.composer.errs.handlers(`render help dialog`)));
@@ -100,15 +100,15 @@ export class ComposerRender extends ComposerComponent {
     this.composer.size.resizeComposeBox();
   }
 
-  renderReinsertReplyBox = (msgId: string) => {
+  public renderReinsertReplyBox = (msgId: string) => {
     BrowserMsg.send.reinsertReplyBox(this.view.parentTabId, { replyMsgId: msgId });
   }
 
-  renderAddPubkeyDialog = (emails: string[]) => {
+  public renderAddPubkeyDialog = (emails: string[]) => {
     BrowserMsg.send.addPubkeyDialog(this.view.parentTabId, { emails });
   }
 
-  closeMsg = () => {
+  public closeMsg = () => {
     $('body').attr('data-test-state', 'closed'); // used by automated tests
     if (this.view.isReplyBox) {
       BrowserMsg.send.closeReplyMessage(this.view.parentTabId, { frameId: this.view.frameId });

@@ -32,7 +32,7 @@ View.run(class AddKeyView extends View {
     this.gmail = new Gmail(this.acctEmail);
   }
 
-  render = async () => {
+  public render = async () => {
     await initPassphraseToggle(['input_passphrase']);
     this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId);
     Xss.sanitizeRender('#spinner_container', Ui.spinner('green') + ' loading..');
@@ -41,7 +41,7 @@ View.run(class AddKeyView extends View {
     $('#spinner_container').text('');
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     $('.action_add_private_key').click(this.setHandlerPrevent('double', this.addPrivateKeyHandler));
     $('#input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_add_private_key'));
   }

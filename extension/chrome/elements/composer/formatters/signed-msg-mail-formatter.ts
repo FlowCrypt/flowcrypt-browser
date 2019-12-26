@@ -14,7 +14,7 @@ import { Store } from '../../../../js/common/platform/store.js';
 
 export class SignedMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
 
-  sendableMsg = async (newMsg: NewMsgData, signingPrv: OpenPGP.key.Key): Promise<SendableMsg> => {
+  public sendableMsg = async (newMsg: NewMsgData, signingPrv: OpenPGP.key.Key): Promise<SendableMsg> => {
     const atts = await this.composer.atts.attach.collectAtts();
     if (!this.richText) {
       // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used

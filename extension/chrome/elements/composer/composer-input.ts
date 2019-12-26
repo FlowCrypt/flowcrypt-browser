@@ -13,7 +13,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 export class ComposerInput extends ComposerComponent {
   public squire = new window.Squire(this.composer.S.cached('input_text').get(0));
 
-  initActions = () => {
+  public initActions = () => {
     this.composer.S.cached('add_intro').click(this.view.setHandler(el => this.actionAddIntroHandler(el), this.composer.errs.handlers(`add intro`)));
     this.handlePaste();
     this.handlePasteImages();
@@ -23,10 +23,11 @@ export class ComposerInput extends ComposerComponent {
     this.squire.setConfig({ addLinks: this.isRichText() });
   }
 
-  addRichTextFormatting = () => {
+  public addRichTextFormatting = () => {
     this.squire.setConfig({ addLinks: true });
   }
-  removeRichTextFormatting = () => {
+
+  public removeRichTextFormatting = () => {
     this.squire.setHTML(Xss.htmlSanitizeAndStripAllTags(this.squire.getHTML(), '<br>'));
     this.squire.setConfig({ addLinks: false });
   }

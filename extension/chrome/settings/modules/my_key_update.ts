@@ -32,7 +32,7 @@ View.run(class MyKeyUpdateView extends View {
     this.showKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
   }
 
-  render = async () => {
+  public render = async () => {
     [this.primaryKi] = await Store.keysGet(this.acctEmail, [this.longid]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     $('.action_show_public_key').attr('href', this.showKeyUrl);
@@ -41,7 +41,7 @@ View.run(class MyKeyUpdateView extends View {
     this.inputPrivateKey.attr('placeholder', this.inputPrivateKey.attr('placeholder') + ' (' + this.primaryKi.longid + ')');
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     $('.action_update_private_key').click(this.setHandlerPrevent('double', () => this.updatePrivateKeyHandler()));
     $('.input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_update_private_key'));
   }

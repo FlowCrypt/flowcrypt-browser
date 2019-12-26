@@ -40,7 +40,7 @@ View.run(class ContactsView extends View {
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   }
 
-  render = async () => {
+  public render = async () => {
     const tabId = await BrowserMsg.requiredTabId();
     BrowserMsg.listen(tabId); // set_css
     this.factory = new XssSafeFactory(this.acctEmail, tabId, undefined, undefined, { compact: true });
@@ -51,7 +51,7 @@ View.run(class ContactsView extends View {
     await this.loadAndRenderContactList();
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     $('a.action_show').off().click(this.setHandlerPrevent('double', this.actionRenderViewPublicKeyHandler));
     $('a.action_change').off().click(this.setHandlerPrevent('double', this.actionRenderChangePublicKeyHandler));
     $('#edit_contact .action_save_edited_pubkey').off().click(this.setHandlerPrevent('double', this.actionSaveEditedPublicKeyHandler));

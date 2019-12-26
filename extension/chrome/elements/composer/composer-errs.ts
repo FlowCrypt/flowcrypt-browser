@@ -26,7 +26,7 @@ export class ComposerErrs extends ComposerComponent {
 
   private debugId = Str.sloppyRandom();
 
-  initActions = () => {
+  public initActions = () => {
     // none
   }
 

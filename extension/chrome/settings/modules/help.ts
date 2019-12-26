@@ -28,7 +28,7 @@ View.run(class HelpView extends View {
     this.bugReport = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'bugReport');
   }
 
-  render = async () => {
+  public render = async () => {
     if (this.acctEmail) {
       $('#input_email').val(this.acctEmail).attr('disabled', 'disabled');
     }
@@ -39,7 +39,7 @@ View.run(class HelpView extends View {
     }
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     $('.action_send_feedback').click(this.setHandler(el => this.sendFeedbackHandler(el)));
   }
 

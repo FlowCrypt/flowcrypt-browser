@@ -30,7 +30,7 @@ View.run(class SecurityView extends View {
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   }
 
-  render = async () => {
+  public render = async () => {
     await initPassphraseToggle(['passphrase_entry']);
     [this.primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
@@ -42,7 +42,7 @@ View.run(class SecurityView extends View {
     await this.loadAndRenderPwdEncryptedMsgSettings();
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     $('.action_change_passphrase').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm')));
     $('.action_test_passphrase').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/test_passphrase.htm')));
     $('#hide_message_password').change(this.setHandler((el) => this.hideMsgPasswordHandler(el)));

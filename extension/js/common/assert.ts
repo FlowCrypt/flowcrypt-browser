@@ -52,7 +52,7 @@ export class Assert {
     }
   }
 
-  static abortAndRenderErrorIfKeyinfoEmpty = (ki: KeyInfo | undefined, doThrow: boolean = true) => {
+  public static abortAndRenderErrorIfKeyinfoEmpty = (ki: KeyInfo | undefined, doThrow: boolean = true) => {
     if (!ki) {
       const msg = `Cannot find primary key. Is FlowCrypt not set up yet? ${Ui.retryLink()}`;
       Xss.sanitizeRender($('#content').length ? '#content' : 'body', msg);

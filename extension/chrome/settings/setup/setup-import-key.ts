@@ -15,7 +15,7 @@ export class SetupImportKeyModule {
   constructor(private view: SetupView) {
   }
 
-  actionImportPrivateKeyHandle = async (button: HTMLElement) => {
+  public actionImportPrivateKeyHandle = async (button: HTMLElement) => {
     if (button.className.includes('gray')) {
       await Ui.modal.warning('Please double check the pass phrase input field for any issues.');
       return;
@@ -49,7 +49,7 @@ export class SetupImportKeyModule {
     }
   }
 
-  renderCompatibilityFixBlockAndFinalizeSetup = async (origPrv: OpenPGP.key.Key, options: SetupOptions) => {
+  public renderCompatibilityFixBlockAndFinalizeSetup = async (origPrv: OpenPGP.key.Key, options: SetupOptions) => {
     this.view.setupRender.displayBlock('step_3_compatibility_fix');
     let fixedPrv;
     try {

@@ -24,23 +24,23 @@ import { XssSafeFactory } from '../../../js/common/xss_safe_factory.js';
 
 export class InboxView extends View {
 
-  readonly inboxMenuModule: InboxMenuModule;
-  readonly inboxNotificationModule: InboxNotificationModule;
-  readonly inboxActiveThreadModule: InboxActiveThreadModule;
-  readonly inboxListThreadsModule: InboxListThreadsModule;
+  public readonly inboxMenuModule: InboxMenuModule;
+  public readonly inboxNotificationModule: InboxNotificationModule;
+  public readonly inboxActiveThreadModule: InboxActiveThreadModule;
+  public readonly inboxListThreadsModule: InboxListThreadsModule;
 
-  readonly acctEmail: string;
-  readonly labelId: string;
-  readonly threadId: string | undefined;
-  readonly showOriginal: boolean;
-  readonly S: SelCache;
-  readonly gmail: Gmail;
+  public readonly acctEmail: string;
+  public readonly labelId: string;
+  public readonly threadId: string | undefined;
+  public readonly showOriginal: boolean;
+  public readonly S: SelCache;
+  public readonly gmail: Gmail;
 
-  injector!: Injector;
-  webmailCommon!: WebmailCommon;
-  factory!: XssSafeFactory;
-  storage!: AccountStore;
-  tabId!: string;
+  public injector!: Injector;
+  public webmailCommon!: WebmailCommon;
+  public factory!: XssSafeFactory;
+  public storage!: AccountStore;
+  public tabId!: string;
 
   constructor() {
     super();
@@ -57,7 +57,7 @@ export class InboxView extends View {
     this.inboxListThreadsModule = new InboxListThreadsModule(this);
   }
 
-  render = async () => {
+  public render = async () => {
     this.tabId = await BrowserMsg.requiredTabId();
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.injector = new Injector('settings', undefined, this.factory);
@@ -83,12 +83,12 @@ export class InboxView extends View {
     }
   }
 
-  setHandlers = async () => {
+  public setHandlers = async () => {
     BrowserMsg.listen(this.tabId);
     Catch.setHandledInterval(this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded, 30000);
   }
 
-  redirectToUrl = (params: UrlParams) => {
+  public redirectToUrl = (params: UrlParams) => {
     const newUrlSearch = Url.create('', params);
     if (newUrlSearch !== window.location.search) {
       window.location.search = newUrlSearch;
@@ -97,7 +97,7 @@ export class InboxView extends View {
     }
   }
 
-  displayBlock = (name: string, title: string) => {
+  public displayBlock = (name: string, title: string) => {
     this.S.cached('threads').css('display', name === 'thread' ? 'none' : 'block');
     this.S.cached('thread').css('display', name === 'thread' ? 'block' : 'none');
     Xss.sanitizeRender('h1', `${title}`);

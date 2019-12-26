@@ -30,7 +30,7 @@ View.run(class ChangePassPhraseView extends View {
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   }
 
-  render = async () => {
+  public render = async () => {
     await initPassphraseToggle(['current_pass_phrase', 'new_pass_phrase', 'new_pass_phrase_confirm']);
     const privateKeys = await Store.keysGet(this.acctEmail);
     if (privateKeys.length > 1) {
@@ -54,7 +54,7 @@ View.run(class ChangePassPhraseView extends View {
     this.keyImportUi.renderPassPhraseStrengthValidationInput($('#new_pass_phrase'), $('.action_set_pass_phrase'));
   }
 
-  setHandlers = () => {
+  public setHandlers = () => {
     $('#step_0_enter_current .action_test_current_passphrase').click(this.setHandler(() => this.actionTestCurrentPassPhraseHandler()));
     $('#step_1_enter_new .action_set_pass_phrase').click(this.setHandler(el => this.actionSetPassPhraseHandler(el)));
     $('#step_2_confirm_new .action_use_another').click(this.setHandler(el => this.actionUseAnotherPassPhraseHandler()));
