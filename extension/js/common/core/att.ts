@@ -15,7 +15,7 @@ export type FcAttLinkData = { name: string, type: string, size: number };
 
 export class Att {
 
-  public static readonly attachmentsPattern = /^(((cryptup|flowcrypt)-backup-[a-z]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|())$/gm;
+  public static readonly attachmentsPattern = /^(((cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|())$/gm;
 
   public static keyinfoAsPubkeyAtt = (ki: { public: string, longid: string }) => {
     return new Att({ data: Buf.fromUtfStr(ki.public), type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
