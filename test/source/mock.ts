@@ -13,7 +13,7 @@ export const mock = async (logger: (line: string) => void) => {
       return; // missing mock data, not yet used
     }
     const filename = `${email.replace(/[^a-z0-9]+/g, '')}.json`;
-    const url = `https://github.com/michael-volynets/flowcrypt-bin/raw/master/gmail-mock-data/${filename}`;
+    const url = `https://github.com/FlowCrypt/flowcrypt-bin/raw/master/gmail-mock-data/${filename}`;
     const filepath = `./test/samples/${filename}`;
     if (!existsSync(filepath)) {
       const { body, statusCode } = await request.get({ url, encoding: null }); // tslint:disable-line:no-null-keyword

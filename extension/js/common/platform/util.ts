@@ -37,8 +37,8 @@ export const moveElementInArray = <T>(arr: Array<T>, oldIndex: number, newIndex:
 
 export const iso2022jpToUtf = (content: Buf) => {
   if (!TextDecoder) {
-    throw new Error('iso2022jpToUtf not implemented on node.');
+    throw new Error('Your browser does is not supported(missing TextDecoder).');
   }
-  const decoder = new TextDecoder('utf-8');
+  const decoder = new TextDecoder('iso-2022-jp');
   return decoder.decode(content);
 };

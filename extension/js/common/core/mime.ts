@@ -159,7 +159,7 @@ export class Mime {
     }
     if (node.charset?.toUpperCase() === 'ISO-2022-JP' ||
       node.charset === 'utf-8' && Mime.getNodeType(node, 'initial')?.includes('ISO-2022-JP')) { // TODO: Add a comment
-      return iso2022jpToUtf(Buf.fromUint8(node.content));
+      return iso2022jpToUtf(Buf.fromRawBytesStr(node.rawContent!));
     }
     return Buf.fromRawBytesStr(node.rawContent!).toUtfStr();
   }
