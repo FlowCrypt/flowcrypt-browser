@@ -2,9 +2,9 @@
 
 'use strict';
 
+import { Composer } from '../composer.js';
 import { NewMsgData } from '../composer-types.js';
 import { SendableMsg } from '../../../../js/common/api/email_provider/email_provider_api.js';
-import { Composer } from '../composer.js';
 
 export interface MailFormatterInterface {
   sendableMsg(newMsgData: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg>;

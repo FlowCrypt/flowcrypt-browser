@@ -2,11 +2,11 @@
 
 'use strict';
 
-import Swal from 'sweetalert2';
-import { Dict } from '../core/common.js';
-import { Catch } from '../platform/catch.js';
-import { Xss } from '../platform/xss.js';
 import { ApiErr } from '../api/error/api-error.js';
+import { Catch } from '../platform/catch.js';
+import { Dict } from '../core/common.js';
+import Swal from 'sweetalert2';
+import { Xss } from '../platform/xss.js';
 
 type NamedSels = Dict<JQuery<HTMLElement>>;
 type ProvidedEventHandler = (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>;
@@ -22,6 +22,193 @@ export class Ui {
   public static EVENT_SPREE_MS = 50;
   public static EVENT_SLOW_SPREE_MS = 200;
   public static EVENT_VERY_SLOW_SPREE_MS = 500;
+
+  public static event = {
+    clicked: (selector: string | JQuery<HTMLElement>): Promise<HTMLElement> => new Promise(resolve => $(selector as string).one('click', function () { resolve(this); })),
+    stop: () => (e: JQuery.Event) => { // returns a function
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    },
+    protect: () => {
+      // prevent events that could potentially leak information about sensitive info from bubbling above the frame
+      $('body').on('keyup keypress keydown click drag drop dragover dragleave dragend submit', e => {
+        // don't ask me how come Chrome allows it to bubble cross-domain
+        // should be used in embedded frames where the parent cannot be trusted (eg parent is webmail)
+        // should be further combined with iframe type=content + sandboxing, but these could potentially be changed by the parent frame
+        // so this indeed seems like the only defense
+        // happened on only one machine, but could potentially happen to other users as well
+        // if you know more than I do about the hows and whys of events bubbling out of iframes on different domains, let me know
+        e.stopPropagation();
+      });
+    },
+    handle: (cb: ProvidedEventHandler, errHandlers?: BrowserEventErrHandler, originalThis?: unknown) => {
+      return function uiEventHandle(this: HTMLElement, event: JQuery.Event<HTMLElement, null>) {
+        try {
+          const r = cb.bind(originalThis)(this, event) as void | Promise<void>; // tslint:disable-line:no-unsafe-any
+          if (typeof r === 'object' && typeof r.catch === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
+            r.catch(e => Ui.event._dispatchErr(e, errHandlers));
+          }
+        } catch (e) {
+          Ui.event._dispatchErr(e, errHandlers);
+        }
+      };
+    },
+    _dispatchErr: (e: any, errHandlers?: BrowserEventErrHandler) => {
+      if (ApiErr.isNetErr(e) && errHandlers && errHandlers.network) {
+        errHandlers.network().catch(Catch.reportErr);
+      } else if (ApiErr.isAuthErr(e) && errHandlers && errHandlers.auth) {
+        errHandlers.auth().catch(Catch.reportErr);
+      } else if (ApiErr.isAuthPopupNeeded(e) && errHandlers && errHandlers.authPopup) {
+        errHandlers.authPopup().catch(Catch.reportErr);
+      } else if (errHandlers && errHandlers.other) {
+        errHandlers.other(e).catch(Catch.reportErr);
+      } else {
+        Catch.reportErr(e);
+      }
+    },
+    prevent: <THIS extends HTMLElement | void>(
+      evName: PreventableEventName, cb: (el: HTMLElement, resetTimer: () => void) => void | Promise<void>, errHandler?: BrowserEventErrHandler, originalThis?: unknown
+    ) => {
+      let eventTimer: number | undefined;
+      let eventFiredOn: number | undefined;
+      const cbResetTimer = () => {
+        eventTimer = undefined;
+        eventFiredOn = undefined;
+      };
+      const cbWithErrsHandled = (el: HTMLElement) => {
+        try {
+          const r = cb.bind(originalThis)(el, cbResetTimer) as void | Promise<void>; // tslint:disable-line:no-unsafe-any
+          if (typeof r === 'object' && typeof r.catch === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
+            r.catch(e => Ui.event._dispatchErr(e, errHandler));
+          }
+        } catch (e) {
+          Ui.event._dispatchErr(e, errHandler);
+        }
+      };
+      return function (this: THIS) {
+        if (evName === 'spree') {
+          clearTimeout(eventTimer);
+          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this as HTMLElement), Ui.EVENT_SPREE_MS);
+        } else if (evName === 'slowspree') {
+          clearTimeout(eventTimer);
+          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this as HTMLElement), Ui.EVENT_SLOW_SPREE_MS);
+        } else if (evName === 'veryslowspree') {
+          clearTimeout(eventTimer);
+          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this as HTMLElement), Ui.EVENT_VERY_SLOW_SPREE_MS);
+        } else {
+          if (eventFiredOn) {
+            if (evName === 'parallel') {
+              // event handling is still being processed. Do not call back
+            } else if (evName === 'double') {
+              if (Date.now() - eventFiredOn > Ui.EVENT_DOUBLE_MS) {
+                eventFiredOn = Date.now();
+                cbWithErrsHandled(this as HTMLElement);
+              }
+            }
+          } else {
+            eventFiredOn = Date.now();
+            cbWithErrsHandled(this as HTMLElement);
+          }
+        }
+      };
+    }
+  };
+
+  public static time = {
+    wait: (untilThisFunctionEvalsTrue: () => boolean | undefined) => new Promise((success, error) => {
+      const interval = Catch.setHandledInterval(() => {
+        const result = untilThisFunctionEvalsTrue();
+        if (result === true) {
+          clearInterval(interval);
+          if (success) {
+            success();
+          }
+        } else if (result === false) {
+          clearInterval(interval);
+          if (error) {
+            error();
+          }
+        }
+      }, 50);
+    }),
+    sleep: (ms: number, setCustomTimeout: (code: () => void, t: number) => void = Catch.setHandledTimeout) => new Promise(resolve => setCustomTimeout(resolve, ms)),
+  };
+
+  public static modal = {
+    info: async (text: string): Promise<void> => {
+      await Swal.fire({
+        html: Xss.escape(text).replace(/\n/g, '<br>'),
+        animation: false,
+        allowOutsideClick: false,
+        customClass: {
+          popup: 'ui-modal-info',
+          confirmButton: 'ui-modal-info-confirm',
+        },
+      });
+    },
+    warning: async (text: string): Promise<void> => {
+      await Swal.fire({
+        html: `<span class="orange">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
+        animation: false,
+        allowOutsideClick: false,
+        customClass: {
+          popup: 'ui-modal-warning',
+          confirmButton: 'ui-modal-warning-confirm',
+        },
+      });
+    },
+    error: async (text: string, isHTML: boolean = false): Promise<void> => {
+      text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
+      await Swal.fire({
+        html: `<span class="red">${text}</span>`,
+        animation: false,
+        allowOutsideClick: false,
+        customClass: {
+          popup: 'ui-modal-error',
+          confirmButton: 'ui-modal-error-confirm',
+        },
+      });
+    },
+    confirm: async (text: string): Promise<boolean> => {
+      const { dismiss } = await Swal.fire({
+        html: Xss.escape(text).replace(/\n/g, '<br>'),
+        animation: false,
+        allowOutsideClick: false,
+        showCancelButton: true,
+        customClass: {
+          popup: 'ui-modal-confirm',
+          confirmButton: 'ui-modal-confirm-confirm',
+          cancelButton: 'ui-modal-confirm-cancel',
+        },
+      });
+      return typeof dismiss === 'undefined';
+    },
+    confirmWithCheckbox: async (label: string, html: string = ''): Promise<boolean> => {
+      const { dismiss } = await Swal.fire({
+        html,
+        input: 'checkbox',
+        inputPlaceholder: label,
+        animation: false,
+        allowOutsideClick: false,
+        customClass: {
+          popup: 'ui-modal-confirm-checkbox',
+          confirmButton: 'ui-modal-confirm-checkbox-confirm',
+          cancelButton: 'ui-modal-confirm-checkbox-cancel',
+          input: 'ui-modal-confirm-checkbox-input',
+        },
+        onOpen: () => {
+          const input = Swal.getInput();
+          const confirmButton = Swal.getConfirmButton();
+          $(confirmButton).prop('disabled', true);
+          $(input).on('change', () => {
+            $(confirmButton).prop('disabled', !input.checked);
+          });
+        }
+      });
+      return typeof dismiss === 'undefined';
+    },
+  };
 
   public static retryLink = (caption: string = 'retry') => {
     return `<a href="${Xss.escape(window.location.href)}" data-test="action-retry-by-reloading">${Xss.escape(caption)}</a>`;
@@ -155,196 +342,9 @@ export class Ui {
     }
   }
 
-  public static event = {
-    clicked: (selector: string | JQuery<HTMLElement>): Promise<HTMLElement> => new Promise(resolve => $(selector as string).one('click', function () { resolve(this); })),
-    stop: () => (e: JQuery.Event) => { // returns a function
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    },
-    protect: () => {
-      // prevent events that could potentially leak information about sensitive info from bubbling above the frame
-      $('body').on('keyup keypress keydown click drag drop dragover dragleave dragend submit', e => {
-        // don't ask me how come Chrome allows it to bubble cross-domain
-        // should be used in embedded frames where the parent cannot be trusted (eg parent is webmail)
-        // should be further combined with iframe type=content + sandboxing, but these could potentially be changed by the parent frame
-        // so this indeed seems like the only defense
-        // happened on only one machine, but could potentially happen to other users as well
-        // if you know more than I do about the hows and whys of events bubbling out of iframes on different domains, let me know
-        e.stopPropagation();
-      });
-    },
-    handle: (cb: ProvidedEventHandler, errHandlers?: BrowserEventErrHandler, originalThis?: unknown) => {
-      return function uiEventHandle(this: HTMLElement, event: JQuery.Event<HTMLElement, null>) {
-        try {
-          const r = cb.bind(originalThis)(this, event) as void | Promise<void>; // tslint:disable-line:no-unsafe-any
-          if (typeof r === 'object' && typeof r.catch === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
-            r.catch(e => Ui.event._dispatchErr(e, errHandlers));
-          }
-        } catch (e) {
-          Ui.event._dispatchErr(e, errHandlers);
-        }
-      };
-    },
-    _dispatchErr: (e: any, errHandlers?: BrowserEventErrHandler) => {
-      if (ApiErr.isNetErr(e) && errHandlers && errHandlers.network) {
-        errHandlers.network().catch(Catch.reportErr);
-      } else if (ApiErr.isAuthErr(e) && errHandlers && errHandlers.auth) {
-        errHandlers.auth().catch(Catch.reportErr);
-      } else if (ApiErr.isAuthPopupNeeded(e) && errHandlers && errHandlers.authPopup) {
-        errHandlers.authPopup().catch(Catch.reportErr);
-      } else if (errHandlers && errHandlers.other) {
-        errHandlers.other(e).catch(Catch.reportErr);
-      } else {
-        Catch.reportErr(e);
-      }
-    },
-    prevent: <THIS extends HTMLElement | void>(
-      evName: PreventableEventName, cb: (el: HTMLElement, resetTimer: () => void) => void | Promise<void>, errHandler?: BrowserEventErrHandler, originalThis?: unknown
-    ) => {
-      let eventTimer: number | undefined;
-      let eventFiredOn: number | undefined;
-      const cbResetTimer = () => {
-        eventTimer = undefined;
-        eventFiredOn = undefined;
-      };
-      const cbWithErrsHandled = (el: HTMLElement) => {
-        try {
-          const r = cb.bind(originalThis)(el, cbResetTimer) as void | Promise<void>; // tslint:disable-line:no-unsafe-any
-          if (typeof r === 'object' && typeof r.catch === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
-            r.catch(e => Ui.event._dispatchErr(e, errHandler));
-          }
-        } catch (e) {
-          Ui.event._dispatchErr(e, errHandler);
-        }
-      };
-      return function (this: THIS) {
-        if (evName === 'spree') {
-          clearTimeout(eventTimer);
-          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this as HTMLElement), Ui.EVENT_SPREE_MS);
-        } else if (evName === 'slowspree') {
-          clearTimeout(eventTimer);
-          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this as HTMLElement), Ui.EVENT_SLOW_SPREE_MS);
-        } else if (evName === 'veryslowspree') {
-          clearTimeout(eventTimer);
-          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this as HTMLElement), Ui.EVENT_VERY_SLOW_SPREE_MS);
-        } else {
-          if (eventFiredOn) {
-            if (evName === 'parallel') {
-              // event handling is still being processed. Do not call back
-            } else if (evName === 'double') {
-              if (Date.now() - eventFiredOn > Ui.EVENT_DOUBLE_MS) {
-                eventFiredOn = Date.now();
-                cbWithErrsHandled(this as HTMLElement);
-              }
-            }
-          } else {
-            eventFiredOn = Date.now();
-            cbWithErrsHandled(this as HTMLElement);
-          }
-        }
-      };
-    }
-  };
-
-  public static time = {
-    wait: (untilThisFunctionEvalsTrue: () => boolean | undefined) => new Promise((success, error) => {
-      const interval = Catch.setHandledInterval(() => {
-        const result = untilThisFunctionEvalsTrue();
-        if (result === true) {
-          clearInterval(interval);
-          if (success) {
-            success();
-          }
-        } else if (result === false) {
-          clearInterval(interval);
-          if (error) {
-            error();
-          }
-        }
-      }, 50);
-    }),
-    sleep: (ms: number, setCustomTimeout: (code: () => void, t: number) => void = Catch.setHandledTimeout) => new Promise(resolve => setCustomTimeout(resolve, ms)),
-  };
-
   public static e(name: string, attrs: Dict<string>) {
     return $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
   }
-
-  public static modal = {
-    info: async (text: string): Promise<void> => {
-      await Swal.fire({
-        html: Xss.escape(text).replace(/\n/g, '<br>'),
-        animation: false,
-        allowOutsideClick: false,
-        customClass: {
-          popup: 'ui-modal-info',
-          confirmButton: 'ui-modal-info-confirm',
-        },
-      });
-    },
-    warning: async (text: string): Promise<void> => {
-      await Swal.fire({
-        html: `<span class="orange">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
-        animation: false,
-        allowOutsideClick: false,
-        customClass: {
-          popup: 'ui-modal-warning',
-          confirmButton: 'ui-modal-warning-confirm',
-        },
-      });
-    },
-    error: async (text: string, isHTML: boolean = false): Promise<void> => {
-      text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
-      await Swal.fire({
-        html: `<span class="red">${text}</span>`,
-        animation: false,
-        allowOutsideClick: false,
-        customClass: {
-          popup: 'ui-modal-error',
-          confirmButton: 'ui-modal-error-confirm',
-        },
-      });
-    },
-    confirm: async (text: string): Promise<boolean> => {
-      const { dismiss } = await Swal.fire({
-        html: Xss.escape(text).replace(/\n/g, '<br>'),
-        animation: false,
-        allowOutsideClick: false,
-        showCancelButton: true,
-        customClass: {
-          popup: 'ui-modal-confirm',
-          confirmButton: 'ui-modal-confirm-confirm',
-          cancelButton: 'ui-modal-confirm-cancel',
-        },
-      });
-      return typeof dismiss === 'undefined';
-    },
-    confirmWithCheckbox: async (label: string, html: string = ''): Promise<boolean> => {
-      const { dismiss } = await Swal.fire({
-        html,
-        input: 'checkbox',
-        inputPlaceholder: label,
-        animation: false,
-        allowOutsideClick: false,
-        customClass: {
-          popup: 'ui-modal-confirm-checkbox',
-          confirmButton: 'ui-modal-confirm-checkbox-confirm',
-          cancelButton: 'ui-modal-confirm-checkbox-cancel',
-          input: 'ui-modal-confirm-checkbox-input',
-        },
-        onOpen: () => {
-          const input = Swal.getInput();
-          const confirmButton = Swal.getConfirmButton();
-          $(confirmButton).prop('disabled', true);
-          $(input).on('change', () => {
-            $(confirmButton).prop('disabled', !input.checked);
-          });
-        }
-      });
-      return typeof dismiss === 'undefined';
-    },
-  };
 
   public static toast = async (msg: string, seconds = 2): Promise<void> => {
     await Swal.fire({

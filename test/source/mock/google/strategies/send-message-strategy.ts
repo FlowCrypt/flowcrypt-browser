@@ -1,10 +1,11 @@
-import { GoogleData } from '../google-data';
-import { UnsuportableStrategyError, ITestMsgStrategy } from './strategy-base.js';
-import { ParsedMail, AddressObject } from 'mailparser';
-import { HttpClientErr } from '../../lib/api';
-import { Config } from '../../../util';
-import { PgpMsg } from '../../../core/pgp-msg';
+import { AddressObject, ParsedMail } from 'mailparser';
+import { ITestMsgStrategy, UnsuportableStrategyError } from './strategy-base.js';
+
 import { Buf } from '../../../core/buf';
+import { Config } from '../../../util';
+import { GoogleData } from '../google-data';
+import { HttpClientErr } from '../../lib/api';
+import { PgpMsg } from '../../../core/pgp-msg';
 
 class PwdEncryptedMessageTestStrategy implements ITestMsgStrategy {
   test = async (mimeMsg: ParsedMail) => {

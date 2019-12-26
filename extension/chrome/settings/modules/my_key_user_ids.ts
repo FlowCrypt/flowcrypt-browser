@@ -2,12 +2,13 @@
 
 'use strict';
 
-import { Store } from '../../../js/common/platform/store.js';
+import { KeyInfo, PgpKey } from '../../../js/common/core/pgp-key.js';
+
 import { Assert } from '../../../js/common/assert.js';
-import { Xss } from '../../../js/common/platform/xss.js';
+import { Store } from '../../../js/common/platform/store.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
-import { KeyInfo, PgpKey } from '../../../js/common/core/pgp-key.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 View.run(class MyKeyUserIdsView extends View {
   private readonly acctEmail: string;

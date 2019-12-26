@@ -2,45 +2,21 @@
 
 'use strict';
 
+import { Api } from '../../../js/common/api/api.js';
 import { Att } from '../../../js/common/core/att.js';
+import { Browser } from '../../../js/common/browser/browser.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { PgpBlockView } from '../pgp_block';
 import { Store } from '../../../js/common/platform/store.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Browser } from '../../../js/common/browser/browser.js';
-import { Xss } from '../../../js/common/platform/xss.js';
 import { Str } from '../../../js/common/core/common.js';
-import { Api } from '../../../js/common/api/api.js';
 import { Ui } from '../../../js/common/browser/ui.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 export class PgpBlockViewAttachmentsModule {
 
   public includedAtts: Att[] = [];
 
   constructor(private view: PgpBlockView) {
-  }
-
-  private decryptAndSaveAttToDownloads = async (encrypted: Att, renderIn: JQuery<HTMLElement>) => {
-    const kisWithPp = await Store.keysGetAllWithPp(this.view.acctEmail);
-    const decrypted = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData: encrypted.getData(), msgPwd: await this.view.pwdEncryptedMsgModule.getDecryptPwd() });
-    if (decrypted.success) {
-      const att = new Att({ name: encrypted.name.replace(/\.(pgp|gpg)$/, ''), type: encrypted.type, data: decrypted.content });
-      Browser.saveToDownloads(att, renderIn);
-      this.view.renderModule.resizePgpBlockFrame();
-    } else {
-      delete decrypted.message;
-      console.info(decrypted);
-      await Ui.modal.error(`There was a problem decrypting this file (${decrypted.error.type}: ${decrypted.error.message}). Downloading encrypted original.`);
-      Browser.saveToDownloads(encrypted, renderIn);
-      this.view.renderModule.resizePgpBlockFrame();
-    }
-  }
-
-  private renderProgress = (element: JQuery<HTMLElement>, percent: number | undefined, received: number | undefined, size: number) => {
-    if (percent) {
-      element.text(percent + '%');
-    } else if (size && received) {
-      element.text(Math.floor(((received * 0.75) / size) * 100) + '%');
-    }
   }
 
   public renderInnerAtts = (atts: Att[]) => {
@@ -66,6 +42,30 @@ export class PgpBlockViewAttachmentsModule {
         await this.decryptAndSaveAttToDownloads(att, $(target));
       }
     }));
+  }
+
+  private decryptAndSaveAttToDownloads = async (encrypted: Att, renderIn: JQuery<HTMLElement>) => {
+    const kisWithPp = await Store.keysGetAllWithPp(this.view.acctEmail);
+    const decrypted = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData: encrypted.getData(), msgPwd: await this.view.pwdEncryptedMsgModule.getDecryptPwd() });
+    if (decrypted.success) {
+      const att = new Att({ name: encrypted.name.replace(/\.(pgp|gpg)$/, ''), type: encrypted.type, data: decrypted.content });
+      Browser.saveToDownloads(att, renderIn);
+      this.view.renderModule.resizePgpBlockFrame();
+    } else {
+      delete decrypted.message;
+      console.info(decrypted);
+      await Ui.modal.error(`There was a problem decrypting this file (${decrypted.error.type}: ${decrypted.error.message}). Downloading encrypted original.`);
+      Browser.saveToDownloads(encrypted, renderIn);
+      this.view.renderModule.resizePgpBlockFrame();
+    }
+  }
+
+  private renderProgress = (element: JQuery<HTMLElement>, percent: number | undefined, received: number | undefined, size: number) => {
+    if (percent) {
+      element.text(percent + '%');
+    } else if (size && received) {
+      element.text(Math.floor(((received * 0.75) / size) * 100) + '%');
+    }
   }
 
 }

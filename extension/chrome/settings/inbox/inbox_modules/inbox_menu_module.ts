@@ -2,15 +2,16 @@
 
 'use strict';
 
-import { GmailRes } from '../../../../js/common/api/email_provider/gmail/gmail-parser.js';
-import { Xss } from '../../../../js/common/platform/xss.js';
-import { Dict } from '../../../../js/common/core/common.js';
-import { BrowserMsg, Bm } from '../../../../js/common/browser/browser-msg.js';
+import { Bm, BrowserMsg } from '../../../../js/common/browser/browser-msg.js';
+
 import { Catch } from '../../../../js/common/platform/catch.js';
-import { Settings } from '../../../../js/common/settings.js';
+import { Dict } from '../../../../js/common/core/common.js';
+import { GmailRes } from '../../../../js/common/api/email_provider/gmail/gmail-parser.js';
 import { Google } from '../../../../js/common/api/google.js';
-import { ViewModule } from '../../../../js/common/view_module.js';
 import { InboxView } from '../inbox.js';
+import { Settings } from '../../../../js/common/settings.js';
+import { ViewModule } from '../../../../js/common/view_module.js';
+import { Xss } from '../../../../js/common/platform/xss.js';
 
 export class InboxMenuModule extends ViewModule<InboxView> {
 

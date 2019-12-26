@@ -2,30 +2,30 @@
 
 'use strict';
 
-import { ComposerComponent } from './composer-abstract-component.js';
-import { SendBtnTexts } from './composer-types.js';
-import { Composer } from './composer.js';
-import { Xss } from '../../../js/common/platform/xss.js';
-import { Ui } from '../../../js/common/browser/ui.js';
-import { Catch } from '../../../js/common/platform/catch.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { KeyInfo } from '../../../js/common/core/pgp-key.js';
-import { Store } from '../../../js/common/platform/store.js';
-import { SendableMsg } from '../../../js/common/api/email_provider/email_provider_api.js';
-import { Att } from '../../../js/common/core/att.js';
-import { GeneralMailFormatter } from './formatters/composer-mail-formatter.js';
-import { ComposerSendBtnPopover } from './composer-send-btn-popover.js';
-import { GmailRes } from '../../../js/common/api/email_provider/gmail/gmail-parser.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { Att } from '../../../js/common/core/att.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { Composer } from './composer.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { ComposerSendBtnPopover } from './composer-send-btn-popover.js';
+import { GeneralMailFormatter } from './formatters/composer-mail-formatter.js';
+import { GmailRes } from '../../../js/common/api/email_provider/gmail/gmail-parser.js';
+import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { SendBtnTexts } from './composer-types.js';
+import { SendableMsg } from '../../../js/common/api/email_provider/email_provider_api.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerSendBtn extends ComposerComponent {
+
+  private isSendMessageInProgress = false;
 
   public additionalMsgHeaders: { [key: string]: string } = {};
 
   public btnUpdateTimeout?: number;
-
-  private isSendMessageInProgress = false;
 
   public popover: ComposerSendBtnPopover;
 
@@ -68,6 +68,13 @@ export class ComposerSendBtn extends ComposerComponent {
   enableBtn = () => {
     this.composer.S.cached('send_btn').removeClass('gray').addClass('green').prop('disabled', false);
     this.composer.S.cached('toggle_send_options').removeClass('gray').addClass('green');
+  }
+
+  public renderUploadProgress = (progress: number | undefined) => {
+    if (progress && this.composer.atts.attach.hasAtt()) {
+      progress = Math.floor(progress);
+      this.composer.S.now('send_btn_text').text(`${SendBtnTexts.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
+    }
   }
 
   private btnText = (): string => {
@@ -168,13 +175,6 @@ export class ComposerSendBtn extends ComposerComponent {
         await PgpKey.decrypt(prv, passphrase!); // checked !== undefined above
       }
       return prv;
-    }
-  }
-
-  public renderUploadProgress = (progress: number | undefined) => {
-    if (progress && this.composer.atts.attach.hasAtt()) {
-      progress = Math.floor(progress);
-      this.composer.S.now('send_btn_text').text(`${SendBtnTexts.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
     }
   }
 

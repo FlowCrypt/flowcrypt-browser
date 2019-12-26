@@ -2,27 +2,28 @@
 
 'use strict';
 
-import { GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
-import { EmailProviderApi, EmailProviderInterface, SendableMsg } from '../email_provider_api.js';
-import { Google } from '../../google.js';
-import { ProgressCb, RecipientType, ChunkedCb, ProviderContactsResults } from '../../api.js';
-import { Buf } from '../../../core/buf.js';
-import { Mime } from '../../../core/mime.js';
-import { Value, Str, Dict } from '../../../core/common.js';
-import { Env } from '../../../browser/env.js';
-import { BrowserMsg } from '../../../browser/browser-msg.js';
-import { Catch } from '../../../platform/catch.js';
-import { Att } from '../../../core/att.js';
-import { FormatError } from '../../../core/pgp-msg.js';
-import { Contact } from '../../../core/pgp-key.js';
-import { Xss } from '../../../platform/xss.js';
-import { Store } from '../../../platform/store.js';
-import { GmailRes, GmailParser } from './gmail-parser.js';
-import { GoogleAuth } from '../../google-auth.js';
 import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window.js';
-import { PgpArmor } from '../../../core/pgp-armor.js';
+import { ChunkedCb, ProgressCb, ProviderContactsResults, RecipientType } from '../../api.js';
+import { Dict, Str, Value } from '../../../core/common.js';
+import { EmailProviderApi, EmailProviderInterface, SendableMsg } from '../email_provider_api.js';
+import { GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
+import { GmailParser, GmailRes } from './gmail-parser.js';
+
 import { AjaxErr } from '../../error/api-error-types.js';
+import { Att } from '../../../core/att.js';
+import { BrowserMsg } from '../../../browser/browser-msg.js';
+import { Buf } from '../../../core/buf.js';
+import { Catch } from '../../../platform/catch.js';
+import { Contact } from '../../../core/pgp-key.js';
+import { Env } from '../../../browser/env.js';
+import { FormatError } from '../../../core/pgp-msg.js';
+import { Google } from '../../google.js';
+import { GoogleAuth } from '../../google-auth.js';
+import { Mime } from '../../../core/mime.js';
+import { PgpArmor } from '../../../core/pgp-armor.js';
 import { PgpKey } from '../../../core/pgp-key.js';
+import { Store } from '../../../platform/store.js';
+import { Xss } from '../../../platform/xss.js';
 
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 

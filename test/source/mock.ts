@@ -1,9 +1,10 @@
-
-import { startAllApisMock } from './mock/all-apis-mock';
-import { Config } from './util';
 import * as request from 'fc-node-requests';
-import { writeFileSync, existsSync } from 'fs';
+
+import { existsSync, writeFileSync } from 'fs';
+
+import { Config } from './util';
 import { openpgp } from './core/pgp';
+import { startAllApisMock } from './mock/all-apis-mock';
 
 export const mock = async (logger: (line: string) => void) => {
   const start = Date.now();

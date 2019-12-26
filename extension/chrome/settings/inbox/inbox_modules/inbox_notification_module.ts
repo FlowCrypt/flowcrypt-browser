@@ -3,10 +3,11 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../../../js/common/browser/browser-msg.js';
+
 import { Dict } from '../../../../js/common/core/common.js';
-import { Notifications } from '../../../../js/common/notifications.js';
-import { InboxView } from '../inbox.js';
 import { GoogleAuth } from '../../../../js/common/api/google-auth.js';
+import { InboxView } from '../inbox.js';
+import { Notifications } from '../../../../js/common/notifications.js';
 import { ViewModule } from '../../../../js/common/view_module.js';
 
 export class InboxNotificationModule extends ViewModule<InboxView> {
@@ -21,13 +22,6 @@ export class InboxNotificationModule extends ViewModule<InboxView> {
   render = () => {
     this.view.S.cached('body').prepend(this.view.factory.metaNotificationContainer()); // xss-safe-factory
     this.setHandlers();
-  }
-
-  private setHandlers = () => {
-    BrowserMsg.addListener('notification_show', this.notificationShowHandler);
-    BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
-      this.notifications.showAuthPopupNeeded(acctEmail);
-    });
   }
 
   renderAndHandleAuthPopupNotification = (insufficientPermission = false) => {
@@ -45,6 +39,13 @@ export class InboxNotificationModule extends ViewModule<InboxView> {
   showNotification = (notification: string, callbacks?: Dict<() => void>) => {
     this.notifications.show(notification, callbacks);
     $('body').one('click', this.view.setHandler(this.notifications.clear));
+  }
+
+  private setHandlers = () => {
+    BrowserMsg.addListener('notification_show', this.notificationShowHandler);
+    BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
+      this.notifications.showAuthPopupNeeded(acctEmail);
+    });
   }
 
   private notificationShowHandler: Bm.AsyncResponselessHandler = async ({ notification, callbacks }: Bm.NotificationShow) => {

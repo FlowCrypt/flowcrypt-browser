@@ -2,13 +2,13 @@
 
 'use strict';
 
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Settings } from '../../../js/common/settings.js';
-import { Xss } from '../../../js/common/platform/xss.js';
 import { Dict } from '../../../js/common/core/common.js';
 import { SendAsAlias } from '../../../js/common/platform/store.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { Settings } from '../../../js/common/settings.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerSender extends ComposerComponent {
 

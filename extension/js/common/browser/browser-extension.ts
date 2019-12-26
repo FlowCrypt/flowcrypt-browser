@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { Dict } from '../core/common.js';
 import { Catch } from '../platform/catch.js';
+import { Dict } from '../core/common.js';
 import { FlatTypes } from '../platform/store.js';
 
 export class BrowserExtension { // todo - move extension-specific common.js code here

@@ -2,17 +2,18 @@
 
 'use strict';
 
-import { Catch } from '../platform/catch.js';
-import { Store } from '../platform/store.js';
+import { Contact, KeyInfo, PgpKey, PrvKeyInfo } from './pgp-key.js';
+import { MsgBlock, MsgBlockType } from './msg-block.js';
 import { Str, Value } from './common.js';
-import { FcAttLinkData } from './att.js';
+
 import { Buf } from './buf.js';
-import { PgpHash } from './pgp-hash.js';
-import { PgpArmor } from './pgp-armor.js';
-import { PgpKey, PrvKeyInfo, KeyInfo, Contact } from './pgp-key.js';
-import { openpgp } from './pgp.js';
-import { MsgBlockType, MsgBlock } from './msg-block.js';
+import { Catch } from '../platform/catch.js';
+import { FcAttLinkData } from './att.js';
 import { MsgBlockParser } from './msg-block-parser.js';
+import { PgpArmor } from './pgp-armor.js';
+import { PgpHash } from './pgp-hash.js';
+import { Store } from '../platform/store.js';
+import { openpgp } from './pgp.js';
 
 export namespace PgpMsgMethod {
   export namespace Arg {
@@ -76,6 +77,122 @@ export class FormatError extends Error {
 }
 
 export class PgpMsg {
+
+  private static isFcAttLinkData = (o: any): o is FcAttLinkData => {
+    return o && typeof o === 'object' && typeof (o as FcAttLinkData).name !== 'undefined'
+      && typeof (o as FcAttLinkData).size !== 'undefined' && typeof (o as FcAttLinkData).type !== 'undefined';
+  }
+
+  private static cryptoMsgGetSignedBy = async (msg: OpenpgpMsgOrCleartext, keys: SortedKeysForDecrypt) => {
+    keys.signedBy = Value.arr.unique(await PgpKey.longids(msg.getSigningKeyIds ? msg.getSigningKeyIds() : []));
+    if (keys.signedBy.length && typeof Store.dbContactGet === 'function') {
+      const verificationContacts = await Store.dbContactGet(undefined, keys.signedBy);
+      keys.verificationContacts = verificationContacts.filter(contact => contact && contact.pubkey) as Contact[];
+      keys.forVerification = [];
+      for (const contact of keys.verificationContacts) {
+        const { keys: keysForVerification } = await openpgp.key.readArmored(contact.pubkey!);
+        keys.forVerification.push(...keysForVerification);
+      }
+    }
+  }
+
+  private static getSortedKeys = async (kiWithPp: PrvKeyInfo[], msg: OpenpgpMsgOrCleartext): Promise<SortedKeysForDecrypt> => {
+    const keys: SortedKeysForDecrypt = {
+      verificationContacts: [],
+      forVerification: [],
+      encryptedFor: [],
+      signedBy: [],
+      prvMatching: [],
+      prvForDecrypt: [],
+      prvForDecryptDecrypted: [],
+      prvForDecryptWithoutPassphrases: [],
+    };
+    const encryptedForKeyids = msg instanceof openpgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds() : [];
+    keys.encryptedFor = await PgpKey.longids(encryptedForKeyids);
+    await PgpMsg.cryptoMsgGetSignedBy(msg, keys);
+    if (keys.encryptedFor.length) {
+      for (const ki of kiWithPp) {
+        ki.parsed = await PgpKey.read(ki.private); // todo
+        // this is inefficient because we are doing unnecessary parsing of all keys here
+        // better would be to compare to already stored KeyInfo, however KeyInfo currently only holds primary longid, not longids of subkeys
+        // while messages are typically encrypted for subkeys, thus we have to parse the key to get the info
+        // we are filtering here to avoid a significant performance issue of having to attempt decrypting with all keys simultaneously
+        for (const longid of await Promise.all(ki.parsed.getKeyIds().map(({ bytes }) => PgpKey.longid(bytes)))) {
+          if (keys.encryptedFor.includes(longid!)) {
+            keys.prvMatching.push(ki);
+            break;
+          }
+        }
+      }
+      keys.prvForDecrypt = keys.prvMatching.length ? keys.prvMatching : kiWithPp;
+    } else { // prvs not needed for signed msgs
+      keys.prvForDecrypt = [];
+    }
+    for (const ki of keys.prvForDecrypt) {
+      const matchingKeyids = PgpMsg.matchingKeyids(ki.parsed!, encryptedForKeyids);
+      const cachedKey = Store.decryptedKeyCacheGet(ki.longid);
+      if (cachedKey && PgpMsg.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
+        ki.decrypted = cachedKey;
+        keys.prvForDecryptDecrypted.push(ki);
+      } else if (PgpMsg.isKeyDecryptedFor(ki.parsed!, matchingKeyids) || await PgpMsg.decryptKeyFor(ki.parsed!, ki.passphrase!, matchingKeyids) === true) {
+        Store.decryptedKeyCacheSet(ki.parsed!);
+        ki.decrypted = ki.parsed!;
+        keys.prvForDecryptDecrypted.push(ki);
+      } else {
+        keys.prvForDecryptWithoutPassphrases.push(ki);
+      }
+    }
+    return keys;
+  }
+
+  private static matchingKeyids = (key: OpenPGP.key.Key, encryptedFor: OpenPGP.Keyid[]): OpenPGP.Keyid[] => {
+    const msgKeyidBytesArr = (encryptedFor || []).map(kid => kid.bytes);
+    return key.getKeyIds().filter(kid => msgKeyidBytesArr.includes(kid.bytes));
+  }
+
+  private static decryptKeyFor = async (prv: OpenPGP.key.Key, passphrase: string, matchingKeyIds: OpenPGP.Keyid[]): Promise<boolean> => {
+    if (!matchingKeyIds.length) { // we don't know which keyids match, decrypt all key packets
+      return await PgpKey.decrypt(prv, passphrase, undefined, 'OK-IF-ALREADY-DECRYPTED');
+    }
+    for (const matchingKeyId of matchingKeyIds) { // we know which keyids match, decrypt only matching key packets
+      if (! await PgpKey.decrypt(prv, passphrase, matchingKeyId, 'OK-IF-ALREADY-DECRYPTED')) {
+        return false; // failed to decrypt a particular needed key packet
+      }
+    }
+    return true;
+  }
+
+  private static isKeyDecryptedFor = (prv: OpenPGP.key.Key, msgKeyIds: OpenPGP.Keyid[]): boolean => {
+    if (prv.isFullyDecrypted()) {
+      return true; // primary k + all subkeys decrypted, therefore it must be decrypted for any/every particular keyid
+    }
+    if (prv.isFullyEncrypted()) {
+      return false; // not decrypted at all
+    }
+    if (!msgKeyIds.length) {
+      return false; // we don't know which keyId to decrypt - must decrypt all (but key is only partially decrypted)
+    }
+    return msgKeyIds.filter(kid => prv.isPacketDecrypted(kid)).length === msgKeyIds.length; // test if all needed key packets are decrypted
+  }
+
+  private static cryptoMsgDecryptCategorizeErr = (decryptErr: any, msgPwd?: string): DecryptError$error => {
+    const e = String(decryptErr).replace('Error: ', '').replace('Error decrypting message: ', '');
+    const keyMismatchErrStrings = ['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null',
+      'TypeprivateKeyPacket is null', 'Session key decryption failed.', 'Invalid session key for decryption.'];
+    if (keyMismatchErrStrings.includes(e) && !msgPwd) {
+      return { type: DecryptErrTypes.keyMismatch, message: e };
+    } else if (msgPwd && ['Invalid enum value.', 'CFB decrypt: invalid key', 'Session key decryption failed.'].includes(e)) {
+      return { type: DecryptErrTypes.wrongPwd, message: e };
+    } else if (e === 'Decryption failed due to missing MDC in combination with modern cipher.' || e === 'Decryption failed due to missing MDC.') {
+      return { type: DecryptErrTypes.noMdc, message: e };
+    } else if (e === 'Decryption error') {
+      return { type: DecryptErrTypes.format, message: e };
+    } else if (e === 'Modification detected.') {
+      return { type: DecryptErrTypes.badMdc, message: `Security threat - opening this message is dangerous because it was modified in transit.` };
+    } else {
+      return { type: DecryptErrTypes.other, message: e };
+    }
+  }
 
   static type: PgpMsgMethod.Type = async ({ data }) => { // promisified because used through bg script
     if (!data || !data.length) {
@@ -287,122 +404,6 @@ export class PgpMsg {
 
   public static stripFcTeplyToken = (decryptedContent: string) => {
     return decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
-  }
-
-  private static isFcAttLinkData = (o: any): o is FcAttLinkData => {
-    return o && typeof o === 'object' && typeof (o as FcAttLinkData).name !== 'undefined'
-      && typeof (o as FcAttLinkData).size !== 'undefined' && typeof (o as FcAttLinkData).type !== 'undefined';
-  }
-
-  private static cryptoMsgGetSignedBy = async (msg: OpenpgpMsgOrCleartext, keys: SortedKeysForDecrypt) => {
-    keys.signedBy = Value.arr.unique(await PgpKey.longids(msg.getSigningKeyIds ? msg.getSigningKeyIds() : []));
-    if (keys.signedBy.length && typeof Store.dbContactGet === 'function') {
-      const verificationContacts = await Store.dbContactGet(undefined, keys.signedBy);
-      keys.verificationContacts = verificationContacts.filter(contact => contact && contact.pubkey) as Contact[];
-      keys.forVerification = [];
-      for (const contact of keys.verificationContacts) {
-        const { keys: keysForVerification } = await openpgp.key.readArmored(contact.pubkey!);
-        keys.forVerification.push(...keysForVerification);
-      }
-    }
-  }
-
-  private static getSortedKeys = async (kiWithPp: PrvKeyInfo[], msg: OpenpgpMsgOrCleartext): Promise<SortedKeysForDecrypt> => {
-    const keys: SortedKeysForDecrypt = {
-      verificationContacts: [],
-      forVerification: [],
-      encryptedFor: [],
-      signedBy: [],
-      prvMatching: [],
-      prvForDecrypt: [],
-      prvForDecryptDecrypted: [],
-      prvForDecryptWithoutPassphrases: [],
-    };
-    const encryptedForKeyids = msg instanceof openpgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds() : [];
-    keys.encryptedFor = await PgpKey.longids(encryptedForKeyids);
-    await PgpMsg.cryptoMsgGetSignedBy(msg, keys);
-    if (keys.encryptedFor.length) {
-      for (const ki of kiWithPp) {
-        ki.parsed = await PgpKey.read(ki.private); // todo
-        // this is inefficient because we are doing unnecessary parsing of all keys here
-        // better would be to compare to already stored KeyInfo, however KeyInfo currently only holds primary longid, not longids of subkeys
-        // while messages are typically encrypted for subkeys, thus we have to parse the key to get the info
-        // we are filtering here to avoid a significant performance issue of having to attempt decrypting with all keys simultaneously
-        for (const longid of await Promise.all(ki.parsed.getKeyIds().map(({ bytes }) => PgpKey.longid(bytes)))) {
-          if (keys.encryptedFor.includes(longid!)) {
-            keys.prvMatching.push(ki);
-            break;
-          }
-        }
-      }
-      keys.prvForDecrypt = keys.prvMatching.length ? keys.prvMatching : kiWithPp;
-    } else { // prvs not needed for signed msgs
-      keys.prvForDecrypt = [];
-    }
-    for (const ki of keys.prvForDecrypt) {
-      const matchingKeyids = PgpMsg.matchingKeyids(ki.parsed!, encryptedForKeyids);
-      const cachedKey = Store.decryptedKeyCacheGet(ki.longid);
-      if (cachedKey && PgpMsg.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
-        ki.decrypted = cachedKey;
-        keys.prvForDecryptDecrypted.push(ki);
-      } else if (PgpMsg.isKeyDecryptedFor(ki.parsed!, matchingKeyids) || await PgpMsg.decryptKeyFor(ki.parsed!, ki.passphrase!, matchingKeyids) === true) {
-        Store.decryptedKeyCacheSet(ki.parsed!);
-        ki.decrypted = ki.parsed!;
-        keys.prvForDecryptDecrypted.push(ki);
-      } else {
-        keys.prvForDecryptWithoutPassphrases.push(ki);
-      }
-    }
-    return keys;
-  }
-
-  private static matchingKeyids = (key: OpenPGP.key.Key, encryptedFor: OpenPGP.Keyid[]): OpenPGP.Keyid[] => {
-    const msgKeyidBytesArr = (encryptedFor || []).map(kid => kid.bytes);
-    return key.getKeyIds().filter(kid => msgKeyidBytesArr.includes(kid.bytes));
-  }
-
-  private static decryptKeyFor = async (prv: OpenPGP.key.Key, passphrase: string, matchingKeyIds: OpenPGP.Keyid[]): Promise<boolean> => {
-    if (!matchingKeyIds.length) { // we don't know which keyids match, decrypt all key packets
-      return await PgpKey.decrypt(prv, passphrase, undefined, 'OK-IF-ALREADY-DECRYPTED');
-    }
-    for (const matchingKeyId of matchingKeyIds) { // we know which keyids match, decrypt only matching key packets
-      if (! await PgpKey.decrypt(prv, passphrase, matchingKeyId, 'OK-IF-ALREADY-DECRYPTED')) {
-        return false; // failed to decrypt a particular needed key packet
-      }
-    }
-    return true;
-  }
-
-  private static isKeyDecryptedFor = (prv: OpenPGP.key.Key, msgKeyIds: OpenPGP.Keyid[]): boolean => {
-    if (prv.isFullyDecrypted()) {
-      return true; // primary k + all subkeys decrypted, therefore it must be decrypted for any/every particular keyid
-    }
-    if (prv.isFullyEncrypted()) {
-      return false; // not decrypted at all
-    }
-    if (!msgKeyIds.length) {
-      return false; // we don't know which keyId to decrypt - must decrypt all (but key is only partially decrypted)
-    }
-    return msgKeyIds.filter(kid => prv.isPacketDecrypted(kid)).length === msgKeyIds.length; // test if all needed key packets are decrypted
-  }
-
-  private static cryptoMsgDecryptCategorizeErr = (decryptErr: any, msgPwd?: string): DecryptError$error => {
-    const e = String(decryptErr).replace('Error: ', '').replace('Error decrypting message: ', '');
-    const keyMismatchErrStrings = ['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null',
-      'TypeprivateKeyPacket is null', 'Session key decryption failed.', 'Invalid session key for decryption.'];
-    if (keyMismatchErrStrings.includes(e) && !msgPwd) {
-      return { type: DecryptErrTypes.keyMismatch, message: e };
-    } else if (msgPwd && ['Invalid enum value.', 'CFB decrypt: invalid key', 'Session key decryption failed.'].includes(e)) {
-      return { type: DecryptErrTypes.wrongPwd, message: e };
-    } else if (e === 'Decryption failed due to missing MDC in combination with modern cipher.' || e === 'Decryption failed due to missing MDC.') {
-      return { type: DecryptErrTypes.noMdc, message: e };
-    } else if (e === 'Decryption error') {
-      return { type: DecryptErrTypes.format, message: e };
-    } else if (e === 'Modification detected.') {
-      return { type: DecryptErrTypes.badMdc, message: `Security threat - opening this message is dangerous because it was modified in transit.` };
-    } else {
-      return { type: DecryptErrTypes.other, message: e };
-    }
   }
 
 }

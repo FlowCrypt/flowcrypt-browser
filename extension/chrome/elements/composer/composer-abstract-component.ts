@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { Composer } from './composer';
 import { ComposeView } from '../../../chrome/elements/compose';
+import { Composer } from './composer';
 
 export abstract class ComposerComponent {
   protected composer: Composer;

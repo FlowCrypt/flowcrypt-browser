@@ -3,15 +3,17 @@
 
 'use strict';
 
-import { Xss } from './platform/xss.js';
-import { Ui, BrowserEventErrHandler, PreventableEventName } from './browser/ui.js';
+import { BrowserEventErrHandler, PreventableEventName, Ui } from './browser/ui.js';
+
 import { ApiErr } from './api/error/api-error.js';
+import { Xss } from './platform/xss.js';
 
 export abstract class View {
 
-  abstract async render(): Promise<void>;
-
-  abstract setHandlers(): void;
+  private static reportAndRenderErr = (e: any) => {
+    ApiErr.reportIfSignificant(e);
+    Xss.sanitizeRender('body', `${ApiErr.eli5(e)}<br>${String(e)}<br><br>${Ui.retryLink()}`);
+  }
 
   public static run<VIEW extends View>(viewClass: new () => VIEW) {
     try {
@@ -25,10 +27,9 @@ export abstract class View {
     }
   }
 
-  private static reportAndRenderErr = (e: any) => {
-    ApiErr.reportIfSignificant(e);
-    Xss.sanitizeRender('body', `${ApiErr.eli5(e)}<br>${String(e)}<br><br>${Ui.retryLink()}`);
-  }
+  abstract async render(): Promise<void>;
+
+  abstract setHandlers(): void;
 
   public setHandler = (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) => {
     return Ui.event.handle(cb, errHandlers, this);

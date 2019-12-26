@@ -4,17 +4,18 @@
 
 'use strict';
 
-import { Catch } from './platform/catch.js';
-import { Str, Dict, UrlParams, Url } from './core/common.js';
+import { Dict, Str, Url, UrlParams } from './core/common.js';
+
 import { Att } from './core/att.js';
 import { Browser } from './browser/browser.js';
-import { Xss } from './platform/xss.js';
+import { Catch } from './platform/catch.js';
+import { MsgBlock } from './core/msg-block.js';
+import { MsgBlockParser } from './core/msg-block-parser.js';
+import { PgpArmor } from './core/pgp-armor.js';
 import { SendAsAlias } from './platform/store.js';
 import { Ui } from './browser/ui.js';
 import { WebMailName } from './browser/env.js';
-import { PgpArmor } from './core/pgp-armor.js';
-import { MsgBlock } from './core/msg-block.js';
-import { MsgBlockParser } from './core/msg-block-parser.js';
+import { Xss } from './platform/xss.js';
 
 type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
@@ -27,6 +28,57 @@ export type FactoryReplyParams = {
 };
 
 export class XssSafeFactory {
+
+  /**
+   * XSS WARNING
+   *
+   * Return values are inserted directly into DOM. Results must be html escaped.
+   *
+   * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
+   */
+  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId?: string, senderEmail?: string, isOutgoing?: boolean) => {
+    if (block.type === 'plainText') {
+      return Xss.escape(block.content.toString()).replace(/\n/g, '<br>') + '<br><br>';
+    } else if (block.type === 'plainHtml') {
+      return Xss.htmlSanitizeAndStripAllTags(block.content.toString(), '<br>') + '<br><br>';
+    } else if (block.type === 'encryptedMsg') {
+      return factory.embeddedMsg(block.complete ? PgpArmor.normalize(block.content.toString(), 'encryptedMsg') : '', msgId, isOutgoing, senderEmail, false);
+    } else if (block.type === 'signedMsg') {
+      return factory.embeddedMsg(block.content.toString(), msgId, isOutgoing, senderEmail, false);
+    } else if (block.type === 'publicKey') {
+      return factory.embeddedPubkey(PgpArmor.normalize(block.content.toString(), 'publicKey'), isOutgoing);
+    } else if (block.type === 'privateKey') {
+      return factory.embeddedBackup(PgpArmor.normalize(block.content.toString(), 'privateKey'));
+    } else if (block.type === 'encryptedMsgLink') {
+      return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, undefined, block.content.toString()); // here block.content is message short id
+    } else if (['encryptedAtt', 'plainAtt'].includes(block.type)) {
+      return block.attMeta ? factory.embeddedAtta(new Att(block.attMeta), block.type === 'encryptedAtt') : '[missing encrypted attachment details]';
+    } else if (block.type === 'signedHtml') {
+      return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, false, true); // empty msg so it re-fetches from api. True at the and for "signature"
+    } else {
+      Catch.report(`don't know how to process block type: ${block.type} (not a hard fail)`);
+      return '';
+    }
+  }
+
+  /**
+   * XSS WARNING
+   *
+   * Return values are inserted directly into DOM. Results must be html escaped.
+   *
+   * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
+   */
+  public static replaceRenderableMsgBlocks = (factory: XssSafeFactory, origText: string, msgId?: string, senderEmail?: string, isOutgoing?: boolean) => {
+    const { blocks } = MsgBlockParser.detectBlocks(origText);
+    if (blocks.length === 1 && blocks[0].type === 'plainText') {
+      return undefined; // only has single block which is plain text - meaning
+    }
+    let r = '';
+    for (const block of blocks) {
+      r += (r ? '\n\n' : '') + XssSafeFactory.renderableMsgBlock(factory, block, msgId, senderEmail, isOutgoing);
+    }
+    return r;
+  }
 
   /**
    * XSS WARNING
@@ -52,13 +104,6 @@ export class XssSafeFactory {
   }
 
   srcImg = (relPath: string) => this.extUrl(`img/${relPath}`);
-
-  private frameSrc = (path: string, params: UrlParams = {}) => {
-    for (const k of Object.keys(this.setParams)) {
-      params[k] = this.setParams[k];
-    }
-    return Url.create(path, params);
-  }
 
   srcComposeMsg = (draftId?: string) => {
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), { frameId: this.newId(), draftId });
@@ -225,6 +270,13 @@ export class XssSafeFactory {
     }
   }
 
+  private frameSrc = (path: string, params: UrlParams = {}) => {
+    for (const k of Object.keys(this.setParams)) {
+      params[k] = this.setParams[k];
+    }
+    return Url.create(path, params);
+  }
+
   private extUrl = (s: string) => {
     return chrome.runtime.getURL(s);
   }
@@ -246,57 +298,6 @@ export class XssSafeFactory {
   // tslint:disable-next-line:variable-name
   private divDialog_DANGEROUS(content_MUST_BE_XSS_SAFE: string, dataTest: string) { // xss-dangerous-function
     return Ui.e('div', { id: 'cryptup_dialog', html: content_MUST_BE_XSS_SAFE, 'data-test': dataTest });
-  }
-
-  /**
-   * XSS WARNING
-   *
-   * Return values are inserted directly into DOM. Results must be html escaped.
-   *
-   * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
-   */
-  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId?: string, senderEmail?: string, isOutgoing?: boolean) => {
-    if (block.type === 'plainText') {
-      return Xss.escape(block.content.toString()).replace(/\n/g, '<br>') + '<br><br>';
-    } else if (block.type === 'plainHtml') {
-      return Xss.htmlSanitizeAndStripAllTags(block.content.toString(), '<br>') + '<br><br>';
-    } else if (block.type === 'encryptedMsg') {
-      return factory.embeddedMsg(block.complete ? PgpArmor.normalize(block.content.toString(), 'encryptedMsg') : '', msgId, isOutgoing, senderEmail, false);
-    } else if (block.type === 'signedMsg') {
-      return factory.embeddedMsg(block.content.toString(), msgId, isOutgoing, senderEmail, false);
-    } else if (block.type === 'publicKey') {
-      return factory.embeddedPubkey(PgpArmor.normalize(block.content.toString(), 'publicKey'), isOutgoing);
-    } else if (block.type === 'privateKey') {
-      return factory.embeddedBackup(PgpArmor.normalize(block.content.toString(), 'privateKey'));
-    } else if (block.type === 'encryptedMsgLink') {
-      return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, undefined, block.content.toString()); // here block.content is message short id
-    } else if (['encryptedAtt', 'plainAtt'].includes(block.type)) {
-      return block.attMeta ? factory.embeddedAtta(new Att(block.attMeta), block.type === 'encryptedAtt') : '[missing encrypted attachment details]';
-    } else if (block.type === 'signedHtml') {
-      return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, false, true); // empty msg so it re-fetches from api. True at the and for "signature"
-    } else {
-      Catch.report(`don't know how to process block type: ${block.type} (not a hard fail)`);
-      return '';
-    }
-  }
-
-  /**
-   * XSS WARNING
-   *
-   * Return values are inserted directly into DOM. Results must be html escaped.
-   *
-   * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
-   */
-  public static replaceRenderableMsgBlocks = (factory: XssSafeFactory, origText: string, msgId?: string, senderEmail?: string, isOutgoing?: boolean) => {
-    const { blocks } = MsgBlockParser.detectBlocks(origText);
-    if (blocks.length === 1 && blocks[0].type === 'plainText') {
-      return undefined; // only has single block which is plain text - meaning
-    }
-    let r = '';
-    for (const block of blocks) {
-      r += (r ? '\n\n' : '') + XssSafeFactory.renderableMsgBlock(factory, block, msgId, senderEmail, isOutgoing);
-    }
-    return r;
   }
 
 }

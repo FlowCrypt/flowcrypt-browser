@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { Store } from './platform/store.js';
 import { Injector } from './inject.js';
+import { Store } from './platform/store.js';
 
 export class WebmailCommon {
   private acctEmail: string;

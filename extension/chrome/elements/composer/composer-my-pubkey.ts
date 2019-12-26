@@ -2,14 +2,14 @@
 
 'use strict';
 
-import { ComposerComponent } from './composer-abstract-component.js';
-import { Ui } from '../../../js/common/browser/ui.js';
-import { Catch } from '../../../js/common/platform/catch.js';
-import { Lang } from '../../../js/common/lang.js';
-import { Store } from '../../../js/common/platform/store.js';
-import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { KeyInfo } from '../../../js/common/core/pgp-key.js';
+import { Lang } from '../../../js/common/lang.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 
 export class ComposerMyPubkey extends ComposerComponent {
 
@@ -23,6 +23,20 @@ export class ComposerMyPubkey extends ComposerComponent {
       Ui.toast(`${includePub ? 'Attaching' : 'Removing'} your Public Key`).catch(Catch.reportErr);
       this.setAttachPreference(includePub);
     }, this.composer.errs.handlers(`set/unset pubkey attachment`)));
+  }
+
+  public shouldAttach = () => {
+    return this.composer.S.cached('icon_pubkey').is('.active');
+  }
+
+  chooseMyPublicKeyBySenderEmail = async (keys: KeyInfo[], email: string) => {
+    for (const key of keys) {
+      const parsedkey = await PgpKey.read(key.public);
+      if (parsedkey.users.find(u => !!u.userId && u.userId.userid.toLowerCase().includes(email.toLowerCase()))) {
+        return key;
+      }
+    }
+    return undefined;
   }
 
   public reevaluateShouldAttachOrNot = () => {
@@ -52,19 +66,4 @@ export class ComposerMyPubkey extends ComposerComponent {
       this.composer.S.cached('icon_pubkey').removeClass('active').attr('title', Lang.compose.includePubkeyIconTitle);
     }
   }
-
-  public shouldAttach = () => {
-    return this.composer.S.cached('icon_pubkey').is('.active');
-  }
-
-  chooseMyPublicKeyBySenderEmail = async (keys: KeyInfo[], email: string) => {
-    for (const key of keys) {
-      const parsedkey = await PgpKey.read(key.public);
-      if (parsedkey.users.find(u => !!u.userId && u.userId.userid.toLowerCase().includes(email.toLowerCase()))) {
-        return key;
-      }
-    }
-    return undefined;
-  }
-
 }

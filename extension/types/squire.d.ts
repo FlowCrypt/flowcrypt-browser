@@ -70,6 +70,7 @@ export declare class SquireEditor {
   toggleCode(): SquireEditor;
   removeAllFormatting(): void;
   changeFormat(formattingToAdd: any, formattingToRemove: any, range: Range): void;
+  setConfig(config: any): SquireEditor;
 }
 
 export declare class WillPasteEvent extends ClipboardEvent {

@@ -2,21 +2,22 @@
 
 'use strict';
 
-import { Value, Str, Dict, PromiseCancellation } from '../core/common.js';
-import { mnemonic } from '../core/mnemonic.js';
-import { KeyInfo, Contact } from '../core/pgp-key.js';
-import { SubscriptionInfo, PaymentMethod, FcUuidAuth, SubscriptionLevel } from '../api/backend.js';
-import { BrowserMsg, BgNotReadyErr } from '../browser/browser-msg.js';
+import { BgNotReadyErr, BrowserMsg } from '../browser/browser-msg.js';
 import { Catch, UnreportableError } from './catch.js';
-import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chrome.js';
-import { PgpClient } from '../api/keyserver.js';
-import { GmailRes } from '../api/email_provider/gmail/gmail-parser.js';
-import { GoogleAuth } from '../api/google-auth.js';
+import { Contact, KeyInfo } from '../core/pgp-key.js';
+import { Dict, PromiseCancellation, Str, Value } from '../core/common.js';
+import { FcUuidAuth, PaymentMethod, SubscriptionInfo, SubscriptionLevel } from '../api/backend.js';
+import { storageLocalGet, storageLocalRemove, storageLocalSet } from '../api/chrome.js';
+
 import { DomainRules } from '../rules.js';
 import { Env } from '../browser/env.js';
-import { Ui } from '../browser/ui.js';
+import { GmailRes } from '../api/email_provider/gmail/gmail-parser.js';
+import { GoogleAuth } from '../api/google-auth.js';
 import { PgpArmor } from '../core/pgp-armor.js';
+import { PgpClient } from '../api/keyserver.js';
 import { PgpKey } from '../core/pgp-key.js';
+import { Ui } from '../browser/ui.js';
+import { mnemonic } from '../core/mnemonic.js';
 
 // tslint:disable:no-null-keyword
 
@@ -181,10 +182,6 @@ export class Store {
   private static globalStorageScope: 'global' = 'global';
   private static dbQueryKeys = ['limit', 'substring', 'has_pgp'];
 
-  static singleScopeRawIndex = (scope: string, key: string) => {
-    return `cryptup_${scope.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_${key}`;
-  }
-
   private static singleScopeRawIndexArr = (scope: string, keys: string[]) => {
     return keys.map(key => Store.singleScopeRawIndex(scope, key));
   }
@@ -206,6 +203,87 @@ export class Store {
       }
     }
     return accountStore;
+  }
+
+  private static keysObj = async (armoredPrv: string, primary = false): Promise<KeyInfo> => {
+    const longid = await PgpKey.longid(armoredPrv)!;
+    if (!longid) {
+      throw new Error('Store.keysObj: unexpectedly no longid');
+    }
+    const prv = await PgpKey.read(armoredPrv);
+    const fingerprint = await PgpKey.fingerprint(armoredPrv);
+    return { private: armoredPrv, public: prv.toPublic().armor(), primary, longid, fingerprint: fingerprint!, keywords: mnemonic(longid)! };
+  }
+
+  /* db */
+
+  private static normalizeString = (str: string) => {
+    return str.normalize('NFKD').replace(/[\u0300-\u036F]/g, '').toLowerCase();
+  }
+
+  private static dbIndex = (hasPgp: boolean, substring: string) => {
+    if (!substring) {
+      throw new Error('db_index has to include substring');
+    }
+    return (hasPgp ? 't:' : 'f:') + substring;
+  }
+
+  private static dbCreateSearchIndexList = (email: string, name: string | null, hasPgp: boolean) => {
+    email = email.toLowerCase();
+    name = name ? name.toLowerCase() : '';
+    const parts = [email, name];
+    parts.push(...email.split(/[^a-z0-9]/));
+    parts.push(...name.split(/[^a-z0-9]/));
+    const index: string[] = [];
+    for (const part of parts) {
+      if (part) {
+        let substring = '';
+        for (const letter of part.split('')) {
+          substring += letter;
+          const normalized = Store.normalizeString(substring);
+          if (!index.includes(normalized)) {
+            index.push(Store.dbIndex(hasPgp, normalized));
+          }
+        }
+      }
+    }
+    return index;
+  }
+
+  private static storablePgpClient = (rawPgpClient: 'pgp' | 'cryptup' | PgpClient | null): 'pgp' | 'cryptup' | null => {
+    if (rawPgpClient === 'flowcrypt') {
+      return 'cryptup';
+    } else if (rawPgpClient === 'pgp-other') {
+      return 'pgp';
+    } else {
+      return rawPgpClient;
+    }
+  }
+
+  private static dbContactInternalGetOne = async (db: IDBDatabase, emailOrLongid: string, searchSubkeyLongids: boolean): Promise<Contact | undefined> => {
+    return await new Promise((resolve, reject) => {
+      let tx: IDBRequest;
+      if (!/^[A-F0-9]{16}$/.test(emailOrLongid)) { // email
+        tx = db.transaction('contacts', 'readonly').objectStore('contacts').get(emailOrLongid);
+      } else if (searchSubkeyLongids) { // search all longids
+        tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longids').get(emailOrLongid);
+      } else { // search primary longid
+        tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(emailOrLongid);
+      }
+      tx.onsuccess = Catch.try(() => resolve(tx.result || undefined)); // tslint:disable-line:no-unsafe-any
+      tx.onerror = () => reject(Store.errCategorize(tx.error || new Error('Unknown db error')));
+    });
+  }
+
+  private static keyCacheRenewExpiry = () => {
+    if (KEY_CACHE_WIPE_TIMEOUT) {
+      clearTimeout(KEY_CACHE_WIPE_TIMEOUT);
+    }
+    KEY_CACHE_WIPE_TIMEOUT = Catch.setHandledTimeout(Store.keyCacheWipe, 2 * 60 * 1000);
+  }
+
+  static singleScopeRawIndex = (scope: string, key: string) => {
+    return `cryptup_${scope.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_${key}`;
   }
 
   static getScopes = async (acctEmail: string): Promise<Scopes> => {
@@ -327,16 +405,6 @@ export class Store {
       ki.passphrase = await Store.passphraseGet(acctEmail, ki.longid);
     }
     return keys;
-  }
-
-  private static keysObj = async (armoredPrv: string, primary = false): Promise<KeyInfo> => {
-    const longid = await PgpKey.longid(armoredPrv)!;
-    if (!longid) {
-      throw new Error('Store.keysObj: unexpectedly no longid');
-    }
-    const prv = await PgpKey.read(armoredPrv);
-    const fingerprint = await PgpKey.fingerprint(armoredPrv);
-    return { private: armoredPrv, public: prv.toPublic().armor(), primary, longid, fingerprint: fingerprint!, keywords: mnemonic(longid)! };
   }
 
   static keysAdd = async (acctEmail: string, newKeyArmored: string) => { // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked key check
@@ -483,12 +551,6 @@ export class Store {
     return new Subscription(subscription);
   }
 
-  /* db */
-
-  private static normalizeString = (str: string) => {
-    return str.normalize('NFKD').replace(/[\u0300-\u036F]/g, '').toLowerCase();
-  }
-
   public static errCategorize = (err: any): Error => {
     let message: string;
     if (err instanceof Error) {
@@ -543,45 +605,6 @@ export class Store {
       openDbReq.onblocked = () => reject(Store.errCategorize(openDbReq.error));
       openDbReq.onerror = () => reject(Store.errCategorize(openDbReq.error));
     });
-  }
-
-  private static dbIndex = (hasPgp: boolean, substring: string) => {
-    if (!substring) {
-      throw new Error('db_index has to include substring');
-    }
-    return (hasPgp ? 't:' : 'f:') + substring;
-  }
-
-  private static dbCreateSearchIndexList = (email: string, name: string | null, hasPgp: boolean) => {
-    email = email.toLowerCase();
-    name = name ? name.toLowerCase() : '';
-    const parts = [email, name];
-    parts.push(...email.split(/[^a-z0-9]/));
-    parts.push(...name.split(/[^a-z0-9]/));
-    const index: string[] = [];
-    for (const part of parts) {
-      if (part) {
-        let substring = '';
-        for (const letter of part.split('')) {
-          substring += letter;
-          const normalized = Store.normalizeString(substring);
-          if (!index.includes(normalized)) {
-            index.push(Store.dbIndex(hasPgp, normalized));
-          }
-        }
-      }
-    }
-    return index;
-  }
-
-  private static storablePgpClient = (rawPgpClient: 'pgp' | 'cryptup' | PgpClient | null): 'pgp' | 'cryptup' | null => {
-    if (rawPgpClient === 'flowcrypt') {
-      return 'cryptup';
-    } else if (rawPgpClient === 'pgp-other') {
-      return 'pgp';
-    } else {
-      return rawPgpClient;
-    }
   }
 
   static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig, expiresOn }: DbContactObjArg): Promise<Contact> => {
@@ -723,21 +746,6 @@ export class Store {
     }
   }
 
-  private static dbContactInternalGetOne = async (db: IDBDatabase, emailOrLongid: string, searchSubkeyLongids: boolean): Promise<Contact | undefined> => {
-    return await new Promise((resolve, reject) => {
-      let tx: IDBRequest;
-      if (!/^[A-F0-9]{16}$/.test(emailOrLongid)) { // email
-        tx = db.transaction('contacts', 'readonly').objectStore('contacts').get(emailOrLongid);
-      } else if (searchSubkeyLongids) { // search all longids
-        tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longids').get(emailOrLongid);
-      } else { // search primary longid
-        tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(emailOrLongid);
-      }
-      tx.onsuccess = Catch.try(() => resolve(tx.result || undefined)); // tslint:disable-line:no-unsafe-any
-      tx.onerror = () => reject(Store.errCategorize(tx.error || new Error('Unknown db error')));
-    });
-  }
-
   static dbContactSearch = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<Contact[]> => {
     if (!db) { // relay op through background process
       return await BrowserMsg.send.bg.await.db({ f: 'dbContactSearch', args: [query] }) as Contact[];
@@ -808,13 +816,6 @@ export class Store {
 
   static keyCacheWipe = () => {
     KEY_CACHE = {};
-  }
-
-  private static keyCacheRenewExpiry = () => {
-    if (KEY_CACHE_WIPE_TIMEOUT) {
-      clearTimeout(KEY_CACHE_WIPE_TIMEOUT);
-    }
-    KEY_CACHE_WIPE_TIMEOUT = Catch.setHandledTimeout(Store.keyCacheWipe, 2 * 60 * 1000);
   }
 
 }

@@ -1,6 +1,7 @@
-import { Util, Config } from '../../util';
+import { Config, Util } from '../../util';
+import { ControllableFrame, ControllablePage } from '../../browser';
+
 import { PageRecipe } from './abstract-page-recipe';
-import { ControllablePage, ControllableFrame } from '../../browser';
 import { expect } from 'chai';
 
 export class SettingsPageRecipe extends PageRecipe {

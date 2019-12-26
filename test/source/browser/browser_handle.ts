@@ -1,10 +1,11 @@
-import { Page, Browser, Target, EvaluateFn } from 'puppeteer';
-import { Semaphore } from './browser_pool';
-import { ControllablePage } from './controllable';
-import { Util, Config } from '../util';
-import { TIMEOUT_ELEMENT_APPEAR } from '.';
+import { Browser, EvaluateFn, Page, Target } from 'puppeteer';
+import { Config, Util } from '../util';
+
 import { AvaContext } from '../tests';
+import { ControllablePage } from './controllable';
 import { FlowCryptApi } from '../tests/api';
+import { Semaphore } from './browser_pool';
+import { TIMEOUT_ELEMENT_APPEAR } from '.';
 
 export class BrowserHandle {
 

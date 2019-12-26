@@ -1,11 +1,13 @@
-import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
+import * as ava from 'ava';
+
+import { TestWithGlobalBrowser, TestWithNewBrowser } from '../../test';
+
+import { BrowserRecipe } from '../browser_recipe';
 import { ComposePageRecipe } from '../page_recipe/compose-page-recipe';
 import { PageRecipe } from '../page_recipe/abstract-page-recipe';
-import { BrowserRecipe } from '../browser_recipe';
-import * as ava from 'ava';
-import { TestVariant } from '../../util';
 import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
 import { SetupPageRecipe } from '../page_recipe/setup-page-recipe';
+import { TestVariant } from '../../util';
 // tslint:disable:no-blank-lines-func
 
 // these tests are run serially, one after another, because they are somewhat more sensitive to parallel testing

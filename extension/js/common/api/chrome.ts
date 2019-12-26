@@ -2,12 +2,12 @@
 
 'use strict';
 
-import { Store } from '../platform/store.js';
 import { Catch } from '../platform/catch.js';
-import { Url } from '../core/common.js';
-import { Env } from '../browser/env.js';
 import { ContentScriptWindow } from '../browser/browser-window.js';
+import { Env } from '../browser/env.js';
+import { Store } from '../platform/store.js';
 import { Ui } from '../browser/ui.js';
+import { Url } from '../core/common.js';
 
 export const handleFatalErr = (reason: 'storage_undefined', error: Error) => {
   try {

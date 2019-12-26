@@ -2,19 +2,20 @@
 
 'use strict';
 
-import { Str, Dict, UrlParams } from '../core/common.js';
-import { DiagnoseMsgPubkeysResult, DecryptResult, VerifyRes, PgpMsgTypeResult, PgpMsgMethod } from '../core/pgp-msg.js';
-import { GlobalIndex, GlobalStore, AccountIndex, AccountStore } from '../platform/store.js';
-import { Browser } from './browser.js';
-import { Catch } from '../platform/catch.js';
-import { Buf } from '../core/buf.js';
-import { PassphraseDialogType } from '../xss_safe_factory.js';
-import { AuthRes } from '../api/google-auth.js';
-import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
-import { Env } from './env.js';
-import { Ui } from './ui.js';
+import { AccountIndex, AccountStore, GlobalIndex, GlobalStore } from '../platform/store.js';
+import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, PgpMsgTypeResult, VerifyRes } from '../core/pgp-msg.js';
+import { Dict, Str, UrlParams } from '../core/common.js';
+
 import { AjaxErr } from '../api/error/api-error-types.js';
+import { AuthRes } from '../api/google-auth.js';
+import { Browser } from './browser.js';
+import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
+import { Buf } from '../core/buf.js';
+import { Catch } from '../platform/catch.js';
+import { Env } from './env.js';
 import { KeyDetails } from '../core/pgp-key.js';
+import { PassphraseDialogType } from '../xss_safe_factory.js';
+import { Ui } from './ui.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -112,14 +113,14 @@ export class BgNotReadyErr extends Error { }
 export class TabIdRequiredError extends Error { }
 
 export class BrowserMsg {
-
-  public static MAX_SIZE = 1024 * 1024; // 1MB
   private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};
   private static HANDLERS_REGISTERED_FRAME: Handlers = {
     set_css: BrowserMsgCommonHandlers.setCss,
     add_class: BrowserMsgCommonHandlers.addClass,
     remove_class: BrowserMsgCommonHandlers.removeClass,
   };
+
+  public static MAX_SIZE = 1024 * 1024; // 1MB
 
   public static send = { // todo - may want to organise this differently, seems to always confuse me when sending a message
     bg: {
@@ -236,60 +237,6 @@ export class BrowserMsg {
     });
   }
 
-  public static renderFatalErrCorner = (message: string, style: 'GREEN-NOTIFICATION' | 'RED-RELOAD-PROMPT') => {
-    const div = document.createElement('div');
-    div.textContent = message;
-    div.style.position = 'fixed';
-    div.style.bottom = '0';
-    div.style.right = '0';
-    div.style.fontSize = '12px';
-    div.style.backgroundColor = '#31a217';
-    div.style.color = 'white';
-    div.style.padding = '1px 3px';
-    div.style.zIndex = '1000';
-    if (style === 'RED-RELOAD-PROMPT') {
-      div.style.fontSize = '14px';
-      div.style.backgroundColor = '#a44';
-      div.style.padding = '4px 6px';
-      const a = document.createElement('a');
-      a.href = window.location.href.split('#')[0];
-      a.textContent = 'RELOAD';
-      a.style.color = 'white';
-      a.style.fontWeight = 'bold';
-      a.style.marginLeft = '12px';
-      div.appendChild(a);
-    }
-    window.document.body.appendChild(div);
-  }
-
-  public static tabId = async (): Promise<string | null | undefined> => {
-    try {
-      const { tabId } = await BrowserMsg.sendAwait(undefined, '_tab_', undefined, true) as Bm.Res._tab_;
-      return tabId;
-    } catch (e) {
-      if (e instanceof BgNotReadyErr) {
-        return undefined;
-      }
-      throw e;
-    }
-  }
-
-  public static requiredTabId = async (attempts = 10, delay = 200): Promise<string> => {
-    let tabId;
-    for (let i = 0; i < attempts; i++) { // sometimes returns undefined right after browser start due to BgNotReadyErr
-      tabId = await BrowserMsg.tabId();
-      if (tabId) {
-        return tabId;
-      }
-      await Ui.time.sleep(delay);
-    }
-    throw new TabIdRequiredError(`tabId is required, but received '${String(tabId)}' after ${attempts} attempts`);
-  }
-
-  public static addListener = (name: string, handler: Handler) => {
-    BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = handler;
-  }
-
   /**
    * Be careful when editting - the type system won't help you here and you'll likely make mistakes
    *
@@ -348,6 +295,70 @@ export class BrowserMsg {
     }).catch(e => {
       rawRespond({ result: undefined, exception: BrowserMsg.errToJson(e), objUrls: {} });
     });
+  }
+
+  private static browserMsgDestParse = (destString: string | null) => {
+    const parsed = { tab: undefined as undefined | number, frame: undefined as undefined | number };
+    if (destString) {
+      parsed.tab = Number(destString.split(':')[0]);
+      const parsedFrame = Number(destString.split(':')[1]);
+      parsed.frame = !isNaN(parsedFrame) ? parsedFrame : undefined;
+    }
+    return parsed;
+  }
+
+  public static renderFatalErrCorner = (message: string, style: 'GREEN-NOTIFICATION' | 'RED-RELOAD-PROMPT') => {
+    const div = document.createElement('div');
+    div.textContent = message;
+    div.style.position = 'fixed';
+    div.style.bottom = '0';
+    div.style.right = '0';
+    div.style.fontSize = '12px';
+    div.style.backgroundColor = '#31a217';
+    div.style.color = 'white';
+    div.style.padding = '1px 3px';
+    div.style.zIndex = '1000';
+    if (style === 'RED-RELOAD-PROMPT') {
+      div.style.fontSize = '14px';
+      div.style.backgroundColor = '#a44';
+      div.style.padding = '4px 6px';
+      const a = document.createElement('a');
+      a.href = window.location.href.split('#')[0];
+      a.textContent = 'RELOAD';
+      a.style.color = 'white';
+      a.style.fontWeight = 'bold';
+      a.style.marginLeft = '12px';
+      div.appendChild(a);
+    }
+    window.document.body.appendChild(div);
+  }
+
+  public static tabId = async (): Promise<string | null | undefined> => {
+    try {
+      const { tabId } = await BrowserMsg.sendAwait(undefined, '_tab_', undefined, true) as Bm.Res._tab_;
+      return tabId;
+    } catch (e) {
+      if (e instanceof BgNotReadyErr) {
+        return undefined;
+      }
+      throw e;
+    }
+  }
+
+  public static requiredTabId = async (attempts = 10, delay = 200): Promise<string> => {
+    let tabId;
+    for (let i = 0; i < attempts; i++) { // sometimes returns undefined right after browser start due to BgNotReadyErr
+      tabId = await BrowserMsg.tabId();
+      if (tabId) {
+        return tabId;
+      }
+      await Ui.time.sleep(delay);
+    }
+    throw new TabIdRequiredError(`tabId is required, but received '${String(tabId)}' after ${attempts} attempts`);
+  }
+
+  public static addListener = (name: string, handler: Handler) => {
+    BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = handler;
   }
 
   public static listen = (listenForTabId: string) => {
@@ -419,16 +430,6 @@ export class BrowserMsg {
         return true; // will respond
       }
     });
-  }
-
-  private static browserMsgDestParse = (destString: string | null) => {
-    const parsed = { tab: undefined as undefined | number, frame: undefined as undefined | number };
-    if (destString) {
-      parsed.tab = Number(destString.split(':')[0]);
-      const parsedFrame = Number(destString.split(':')[1]);
-      parsed.frame = !isNaN(parsedFrame) ? parsedFrame : undefined;
-    }
-    return parsed;
   }
 
 }

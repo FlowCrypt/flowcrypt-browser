@@ -2,27 +2,28 @@
 
 'use strict';
 
-import { MessageToReplyOrForward } from './composer-types.js';
-import { Xss } from '../../../js/common/platform/xss.js';
-import { Str } from '../../../js/common/core/common.js';
-import { Ui } from '../../../js/common/browser/ui.js';
-import { ProgressCb } from '../../../js/common/api/api.js';
+import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { FormatError, PgpMsg } from '../../../js/common/core/pgp-msg.js';
+
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposerComponent } from './composer-abstract-component.js';
+import { MessageToReplyOrForward } from './composer-types.js';
 import { Mime } from '../../../js/common/core/mime.js';
-import { Buf } from '../../../js/common/core/buf.js';
-import { FormatError, PgpMsg } from '../../../js/common/core/pgp-msg.js';
-import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
-import { Store } from '../../../js/common/platform/store.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { MsgBlock } from '../../../js/common/core/msg-block.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
+import { ProgressCb } from '../../../js/common/api/api.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { Str } from '../../../js/common/core/common.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerQuote extends ComposerComponent {
-  public messageToReplyOrForward: MessageToReplyOrForward | undefined;
   private msgExpandingHTMLPart: string | undefined;
 
   private footerHTML: string | undefined;
+  public messageToReplyOrForward: MessageToReplyOrForward | undefined;
 
   get getFooterHTML(): string | undefined {
     return this.footerHTML;
@@ -88,19 +89,6 @@ export class ComposerQuote extends ComposerComponent {
       this.msgExpandingHTMLPart = safePreviousMsg;
       this.setExpandingTextAfterClick();
     }
-  }
-
-  private createFooterHTML = (footer: string) => {
-    const sanitizedPlainFooter = Xss.htmlSanitizeAndStripAllTags(footer, '\n');
-    const sanitizedHtmlFooter = sanitizedPlainFooter.replace(/\n/g, '<br>');
-    const footerFirstLine = sanitizedPlainFooter.split('\n')[0];
-    if (!footerFirstLine) {
-      return '';
-    }
-    if (/^[*-_=+#~ ]+$/.test(footerFirstLine)) {
-      return `<br>${sanitizedHtmlFooter}`;  // first line of footer is already a footer separator, made of special characters
-    }
-    return `<br><br>--<br>${sanitizedHtmlFooter}`; // create a custom footer separator
   }
 
   public replaceFooter = (newFooter: string | undefined) => {
@@ -209,6 +197,19 @@ export class ComposerQuote extends ComposerComponent {
       }
       return;
     }
+  }
+
+  private createFooterHTML = (footer: string) => {
+    const sanitizedPlainFooter = Xss.htmlSanitizeAndStripAllTags(footer, '\n');
+    const sanitizedHtmlFooter = sanitizedPlainFooter.replace(/\n/g, '<br>');
+    const footerFirstLine = sanitizedPlainFooter.split('\n')[0];
+    if (!footerFirstLine) {
+      return '';
+    }
+    if (/^[*-_=+#~ ]+$/.test(footerFirstLine)) {
+      return `<br>${sanitizedHtmlFooter}`;  // first line of footer is already a footer separator, made of special characters
+    }
+    return `<br><br>--<br>${sanitizedHtmlFooter}`; // create a custom footer separator
   }
 
   private decryptMessage = async (encryptedData: Buf): Promise<string> => {

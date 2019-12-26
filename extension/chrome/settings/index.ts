@@ -2,25 +2,26 @@
 
 'use strict';
 
-import { VERSION } from '../../js/common/core/const.js';
-import { Catch } from '../../js/common/platform/catch.js';
-import { Store } from '../../js/common/platform/store.js';
-import { Str, UrlParams, Url } from '../../js/common/core/common.js';
-import { Ui, JQS } from '../../js/common/browser/ui.js';
-import { Rules } from '../../js/common/rules.js';
-import { Notifications } from '../../js/common/notifications.js';
-import { Settings } from '../../js/common/settings.js';
-import { BrowserMsg, Bm } from '../../js/common/browser/browser-msg.js';
-import { Lang } from '../../js/common/lang.js';
+import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
+import { JQS, Ui } from '../../js/common/browser/ui.js';
 import { KeyInfo, PgpKey } from '../../js/common/core/pgp-key.js';
-import { Backend } from '../../js/common/api/backend.js';
-import { Assert } from '../../js/common/assert.js';
-import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
-import { Xss } from '../../js/common/platform/xss.js';
-import { View } from '../../js/common/view.js';
-import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
-import { Env } from '../../js/common/browser/env.js';
+import { Str, Url, UrlParams } from '../../js/common/core/common.js';
+
 import { ApiErr } from '../../js/common/api/error/api-error.js';
+import { Assert } from '../../js/common/assert.js';
+import { Backend } from '../../js/common/api/backend.js';
+import { Catch } from '../../js/common/platform/catch.js';
+import { Env } from '../../js/common/browser/env.js';
+import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
+import { Lang } from '../../js/common/lang.js';
+import { Notifications } from '../../js/common/notifications.js';
+import { Rules } from '../../js/common/rules.js';
+import { Settings } from '../../js/common/settings.js';
+import { Store } from '../../js/common/platform/store.js';
+import { VERSION } from '../../js/common/core/const.js';
+import { View } from '../../js/common/view.js';
+import { Xss } from '../../js/common/platform/xss.js';
+import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
 
 View.run(class SettingsView extends View {
 

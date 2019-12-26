@@ -2,14 +2,17 @@
 
 'use strict';
 
-import { ComposerComponent } from './composer-abstract-component.js';
 import { RecipientStatuses, SendBtnTexts } from './composer-types.js';
+
+import { ComposerComponent } from './composer-abstract-component.js';
 import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
 import { Store } from '../../../js/common/platform/store.js';
 
 export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
 
   private keyImportUI = new KeyImportUi({});
+
+  private rmPwdStrengthValidationElements: (() => void) | undefined;
 
   public initActions = async () => {
     this.composer.S.cached('input_password').keyup(this.view.setHandlerPrevent('spree', () => this.showHideContainerAndColorSendBtn()));
@@ -20,8 +23,6 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
       this.composer.S.cached('input_password').attr('type', 'password');
     }
   }
-
-  private rmPwdStrengthValidationElements: (() => void) | undefined;
 
   public showHideContainerAndColorSendBtn = () => {
     this.composer.sendBtn.resetSendBtn();

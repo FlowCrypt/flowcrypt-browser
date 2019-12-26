@@ -8,8 +8,6 @@ export class UnreportableError extends Error { }
 export type ObjWithStack = { stack: string };
 
 export class Catch {
-
-  public static RUNTIME_ENVIRONMENT = 'undetermined';
   private static ORIG_ONERROR = window.onerror;
   private static CONSOLE_MSG = ' Please report errors above to human@flowcrypt.com. We fix errors VERY promptly.';
   private static IGNORE_ERR_MSG = [
@@ -29,6 +27,40 @@ export class Catch {
     // benign error https://github.com/WICG/ResizeObserver/issues/38#issuecomment-422126006 https://stackoverflow.com/questions/49384120/resizeobserver-loop-limit-exceeded
     'ResizeObserver loop limit exceeded',
   ];
+
+  public static RUNTIME_ENVIRONMENT = 'undetermined';
+
+  private static getErrorLineAndCol = (e: any) => {
+    try {
+      const callerLine = e.stack!.split('\n')[1]; // tslint:disable-line:no-unsafe-any
+      const matched = callerLine.match(/\.js:([0-9]+):([0-9]+)\)?/); // tslint:disable-line:no-unsafe-any
+      return { line: Number(matched![1]), col: Number(matched![2]) }; // tslint:disable-line:no-unsafe-any
+    } catch (lineErr) {
+      return { line: 0, col: 0 };
+    }
+  }
+
+  private static formattedStackBlock = (name: string, text: string) => {
+    return `\n\n### ${name} ###\n# ${Catch.stackTrace().split('\n').join('\n# ')}\n######################\n`;
+  }
+
+  private static nameAndDetailsAsException = (name: string, details: any): Error => {
+    try {
+      throw new Error(name);
+    } catch (e) {
+      (e as Error).stack += `\n\n\ndetails:\n${Catch.stringify(details)}`;
+      return e as Error;
+    }
+  }
+
+  private static isPromiseRejectionEvent = (ev: any): ev is PromiseRejectionEvent => {
+    if (ev && typeof ev === 'object') {
+      const eHasReason = (ev as {}).hasOwnProperty('reason') && typeof (ev as PromiseRejectionEvent).reason === 'object';
+      const eHasPromise = (ev as {}).hasOwnProperty('promise') && Catch.isPromise((ev as PromiseRejectionEvent).promise);
+      return eHasReason && eHasPromise;
+    }
+    return false;
+  }
 
   public static rewrapErr = (e: any, message: string) => {
     const newErr = new Error(`${message}::${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`);
@@ -129,20 +161,6 @@ export class Catch {
     return true;
   }
 
-  private static getErrorLineAndCol = (e: any) => {
-    try {
-      const callerLine = e.stack!.split('\n')[1]; // tslint:disable-line:no-unsafe-any
-      const matched = callerLine.match(/\.js:([0-9]+):([0-9]+)\)?/); // tslint:disable-line:no-unsafe-any
-      return { line: Number(matched![1]), col: Number(matched![2]) }; // tslint:disable-line:no-unsafe-any
-    } catch (lineErr) {
-      return { line: 0, col: 0 };
-    }
-  }
-
-  private static formattedStackBlock = (name: string, text: string) => {
-    return `\n\n### ${name} ###\n# ${Catch.stackTrace().split('\n').join('\n# ')}\n######################\n`;
-  }
-
   public static reportErr = (e: any) => {
     const { line, col } = Catch.getErrorLineAndCol(e);
     if (e instanceof Error) { // reporting stack may differ from the stack of the actual error, both may be interesting
@@ -152,15 +170,6 @@ export class Catch {
       }
     }
     Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
-  }
-
-  private static nameAndDetailsAsException = (name: string, details: any): Error => {
-    try {
-      throw new Error(name);
-    } catch (e) {
-      (e as Error).stack += `\n\n\ndetails:\n${Catch.stringify(details)}`;
-      return e as Error;
-    }
   }
 
   public static report = (name: string, details?: any) => {
@@ -245,15 +254,6 @@ export class Catch {
       return `${((e as Error).stack || '').split('\n').splice(3).join('\n')}\n\nurl: ${window.location.href}\n`;
     }
     return ''; // make ts happy - this will never happen
-  }
-
-  private static isPromiseRejectionEvent = (ev: any): ev is PromiseRejectionEvent => {
-    if (ev && typeof ev === 'object') {
-      const eHasReason = (ev as {}).hasOwnProperty('reason') && typeof (ev as PromiseRejectionEvent).reason === 'object';
-      const eHasPromise = (ev as {}).hasOwnProperty('promise') && Catch.isPromise((ev as PromiseRejectionEvent).promise);
-      return eHasReason && eHasPromise;
-    }
-    return false;
   }
 
   public static onUnhandledRejectionInternalHandler = (e: any) => {

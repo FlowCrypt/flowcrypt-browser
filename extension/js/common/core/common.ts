@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { base64encode, base64decode } from '../platform/util.js';
+import { base64decode, base64encode } from '../platform/util.js';
 
 export type Dict<T> = { [key: string]: T; };
 export type UrlParam = string | number | null | undefined | boolean | string[];
@@ -10,6 +10,26 @@ export type UrlParams = Dict<UrlParam>;
 export type PromiseCancellation = { cancel: boolean };
 
 export class Str {
+
+  private static base64urlUtfEncode = (str: string) => {
+    // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
+    if (typeof str === 'undefined') {
+      return str;
+    }
+    return base64encode(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(String(p1), 16))))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  private static base64urlUtfDecode = (str: string) => {
+    // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
+    if (typeof str === 'undefined') {
+      return str;
+    }
+    // tslint:disable-next-line:no-unsafe-any
+    return decodeURIComponent(Array.prototype.map.call(base64decode(str.replace(/-/g, '+').replace(/_/g, '/')), (c: string) => {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+  }
 
   public static parseEmail = (full: string, flag: 'VALIDATE' | 'DO-NOT-VALIDATE' = 'VALIDATE') => {
     let email: string | undefined;
@@ -110,26 +130,6 @@ export class Str {
     return date.toISOString().replace(/T/, ' ').replace(/:[^:]+$/, '');
   }
 
-  private static base64urlUtfEncode = (str: string) => {
-    // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
-    if (typeof str === 'undefined') {
-      return str;
-    }
-    return base64encode(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(String(p1), 16))))
-      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  }
-
-  private static base64urlUtfDecode = (str: string) => {
-    // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
-    if (typeof str === 'undefined') {
-      return str;
-    }
-    // tslint:disable-next-line:no-unsafe-any
-    return decodeURIComponent(Array.prototype.map.call(base64decode(str.replace(/-/g, '+').replace(/_/g, '/')), (c: string) => {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-  }
-
 }
 
 export class Value {
@@ -185,6 +185,37 @@ export class Url {
 
   private static URL_PARAM_DICT: Dict<boolean | null> = { '___cu_true___': true, '___cu_false___': false, '___cu_null___': null }; // tslint:disable-line:no-null-keyword
 
+  private static snakeCaseToCamelCase = (s: string) => {
+    return s.replace(/_[a-z]/g, boundary => boundary[1].toUpperCase());
+  }
+
+  private static camelCaseToSnakeCase = (s: string) => {
+    return s.replace(/[a-z][A-Z]/g, boundary => `${boundary[0]}_${boundary[1].toLowerCase()}`);
+  }
+
+  private static findAndProcessUrlParam = (expectedParamName: string, rawParamNameDict: Dict<string>, rawParms: Dict<string>): UrlParam => {
+    if (typeof rawParamNameDict[expectedParamName] === 'undefined') {
+      return undefined; // param name not found in param name dict
+    }
+    const rawValue = rawParms[rawParamNameDict[expectedParamName]];
+    if (typeof rawValue === 'undefined') {
+      return undefined; // original param name not found in raw params
+    }
+    if (typeof Url.URL_PARAM_DICT[rawValue] !== 'undefined') {
+      return Url.URL_PARAM_DICT[rawValue]; // raw value was converted using a value dict to get proper: true, false, undefined, null
+    }
+    return decodeURIComponent(rawValue);
+  }
+
+  private static fillPossibleUrlParamNameVariations = (urlParamName: string, rawParamNameDict: Dict<string>) => {
+    rawParamNameDict[urlParamName] = urlParamName;
+    rawParamNameDict[Url.snakeCaseToCamelCase(urlParamName)] = urlParamName;
+    rawParamNameDict[Url.camelCaseToSnakeCase(urlParamName)] = urlParamName;
+    const shortened = urlParamName.replace('account', 'acct').replace('message', 'msg').replace('attachment', 'att');
+    rawParamNameDict[Url.snakeCaseToCamelCase(shortened)] = urlParamName;
+    rawParamNameDict[Url.camelCaseToSnakeCase(shortened)] = urlParamName;
+  }
+
   /**
    * will convert result to desired format: camelCase or snake_case, based on what was supplied in expectedKeys
    * todo - the camelCase or snake_case functionality can now be removed
@@ -229,37 +260,6 @@ export class Url {
       params.delete(p);
     }
     return `${urlParts[0]}?${params.toString()}`;
-  }
-
-  private static snakeCaseToCamelCase = (s: string) => {
-    return s.replace(/_[a-z]/g, boundary => boundary[1].toUpperCase());
-  }
-
-  private static camelCaseToSnakeCase = (s: string) => {
-    return s.replace(/[a-z][A-Z]/g, boundary => `${boundary[0]}_${boundary[1].toLowerCase()}`);
-  }
-
-  private static findAndProcessUrlParam = (expectedParamName: string, rawParamNameDict: Dict<string>, rawParms: Dict<string>): UrlParam => {
-    if (typeof rawParamNameDict[expectedParamName] === 'undefined') {
-      return undefined; // param name not found in param name dict
-    }
-    const rawValue = rawParms[rawParamNameDict[expectedParamName]];
-    if (typeof rawValue === 'undefined') {
-      return undefined; // original param name not found in raw params
-    }
-    if (typeof Url.URL_PARAM_DICT[rawValue] !== 'undefined') {
-      return Url.URL_PARAM_DICT[rawValue]; // raw value was converted using a value dict to get proper: true, false, undefined, null
-    }
-    return decodeURIComponent(rawValue);
-  }
-
-  private static fillPossibleUrlParamNameVariations = (urlParamName: string, rawParamNameDict: Dict<string>) => {
-    rawParamNameDict[urlParamName] = urlParamName;
-    rawParamNameDict[Url.snakeCaseToCamelCase(urlParamName)] = urlParamName;
-    rawParamNameDict[Url.camelCaseToSnakeCase(urlParamName)] = urlParamName;
-    const shortened = urlParamName.replace('account', 'acct').replace('message', 'msg').replace('attachment', 'att');
-    rawParamNameDict[Url.snakeCaseToCamelCase(shortened)] = urlParamName;
-    rawParamNameDict[Url.camelCaseToSnakeCase(shortened)] = urlParamName;
   }
 
 }

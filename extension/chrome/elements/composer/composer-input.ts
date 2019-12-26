@@ -2,20 +2,16 @@
 
 'use strict';
 
-import { ComposerComponent } from './composer-abstract-component.js';
-import { Xss } from '../../../js/common/platform/xss.js';
 import { NewMsgData, RecipientElement } from './composer-types.js';
-import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
 import { SquireEditor, WillPasteEvent } from '../../../types/squire.js';
+
 import { Catch } from '../../../js/common/platform/catch.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerInput extends ComposerComponent {
-
   public squire = new window.Squire(this.composer.S.cached('input_text').get(0));
-
-  private isRichText = () => {
-    return this.composer.sendBtn.popover.choices.richText;
-  }
 
   initActions = () => {
     this.composer.S.cached('add_intro').click(this.view.setHandler(el => this.actionAddIntroHandler(el), this.composer.errs.handlers(`add intro`)));
@@ -24,10 +20,15 @@ export class ComposerInput extends ComposerComponent {
     this.initShortcuts();
     this.resizeReplyBox();
     this.scrollIntoView();
+    this.squire.setConfig({ addLinks: this.isRichText() });
   }
 
+  addRichTextFormatting = () => {
+    this.squire.setConfig({ addLinks: true });
+  }
   removeRichTextFormatting = () => {
     this.squire.setHTML(Xss.htmlSanitizeAndStripAllTags(this.squire.getHTML(), '<br>'));
+    this.squire.setConfig({ addLinks: false });
   }
 
   public inputTextHtmlSetSafely = (html: string) => {
@@ -56,8 +57,6 @@ export class ComposerInput extends ComposerComponent {
     const sender = this.composer.sender.getSender();
     return { recipients, subject, plaintext, plainhtml, pwd, sender };
   }
-
-  // -- private
 
   private handlePaste = () => {
     this.squire.addEventListener('willPaste', (e: WillPasteEvent) => {
@@ -187,4 +186,7 @@ export class ComposerInput extends ComposerComponent {
     return result;
   }
 
+  private isRichText = () => {
+    return this.composer.sendBtn.popover.choices.richText;
+  }
 }

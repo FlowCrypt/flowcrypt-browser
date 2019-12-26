@@ -2,16 +2,17 @@
 
 'use strict';
 
-import { ComposerComponent } from './composer-abstract-component.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
-import { Str } from '../../../js/common/core/common.js';
-import { SendBtnTexts } from './composer-types.js';
-import { KeyInfo } from '../../../js/common/core/pgp-key.js';
-import { Settings } from '../../../js/common/settings.js';
 import { BrowserEventErrHandler, Ui } from '../../../js/common/browser/ui.js';
-import { BrowserExtension } from '../../../js/common/browser/browser-extension.js';
+import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
+
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { BrowserExtension } from '../../../js/common/browser/browser-extension.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { ComposerComponent } from './composer-abstract-component.js';
+import { KeyInfo } from '../../../js/common/core/pgp-key.js';
+import { SendBtnTexts } from './composer-types.js';
+import { Settings } from '../../../js/common/settings.js';
+import { Str } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerUserError extends Error { }

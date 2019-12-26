@@ -2,8 +2,9 @@
 
 'use strict';
 
-import { readdirSync, statSync } from 'fs';
 import * as path from 'path';
+
+import { readdirSync, statSync } from 'fs';
 
 export const getFilesInDir = (dir: string, filePattern: RegExp, recursive = true): string[] => {
   const all: string[] = [];

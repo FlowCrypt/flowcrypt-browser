@@ -2,18 +2,19 @@
 
 'use strict';
 
-import { VERSION } from '../common/core/const.js';
+import { Bm, BrowserMsg } from '../common/browser/browser-msg.js';
+import { GlobalStore, Store } from '../common/platform/store.js';
+
+import { BgHandlers } from './bg_handlers.js';
+import { BgUtils } from './bgutils.js';
+import { Buf } from '../common/core/buf.js';
 import { Catch } from '../common/platform/catch.js';
-import { Store, GlobalStore } from '../common/platform/store.js';
-import { BrowserMsg, Bm } from '../common/browser/browser-msg.js';
+import { GoogleAuth } from '../common/api/google-auth.js';
+import { PgpHash } from '../common/core/pgp-hash.js';
+import { PgpMsg } from '../common/core/pgp-msg.js';
+import { VERSION } from '../common/core/const.js';
 import { injectFcIntoWebmail } from './inject.js';
 import { migrateGlobal } from './migrations.js';
-import { GoogleAuth } from '../common/api/google-auth.js';
-import { BgUtils } from './bgutils.js';
-import { BgHandlers } from './bg_handlers.js';
-import { PgpMsg } from '../common/core/pgp-msg.js';
-import { Buf } from '../common/core/buf.js';
-import { PgpHash } from '../common/core/pgp-hash.js';
 import { openpgp } from '../common/core/pgp.js';
 
 console.info('background_process.js starting');

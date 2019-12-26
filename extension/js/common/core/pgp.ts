@@ -2,9 +2,10 @@
 
 'use strict';
 
-import { requireOpenpgp } from '../platform/require.js';
-import { VERSION } from './const.js';
 import { PgpKey, PrvPacket } from './pgp-key.js';
+
+import { VERSION } from './const.js';
+import { requireOpenpgp } from '../platform/require.js';
 
 export const openpgp = requireOpenpgp();
 

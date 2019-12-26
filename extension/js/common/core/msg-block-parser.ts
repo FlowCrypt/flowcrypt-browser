@@ -2,70 +2,20 @@
 
 'use strict';
 
-import { Catch } from '../platform/catch.js';
-import { Str } from './common.js';
-import { PgpArmor } from './pgp-armor.js';
-import { Mime } from './mime.js';
-import { Xss } from '../platform/xss.js';
 import { MsgBlock, ReplaceableMsgBlockType } from './msg-block.js';
+
 import { Buf } from './buf.js';
-import { PgpMsg } from './pgp-msg.js';
+import { Catch } from '../platform/catch.js';
+import { Mime } from './mime.js';
+import { PgpArmor } from './pgp-armor.js';
 import { PgpKey } from './pgp-key.js';
+import { PgpMsg } from './pgp-msg.js';
+import { Str } from './common.js';
+import { Xss } from '../platform/xss.js';
 
 export class MsgBlockParser {
 
   private static ARMOR_HEADER_MAX_LENGTH = 50;
-
-  static detectBlocks = (origText: string) => {
-    const blocks: MsgBlock[] = [];
-    const normalized = Str.normalize(origText);
-    let startAt = 0;
-    while (true) { // eslint-disable-line no-constant-condition
-      const r = MsgBlockParser.detectBlockNext(normalized, startAt);
-      if (r.found) {
-        blocks.push(...r.found);
-      }
-      if (typeof r.continueAt === 'undefined') {
-        return { blocks, normalized };
-      } else {
-        if (r.continueAt <= startAt) {
-          Catch.report(`PgpArmordetect_blocks likely infinite loop: r.continue_at(${r.continueAt}) <= start_at(${startAt})`);
-          return { blocks, normalized }; // prevent infinite loop
-        }
-        startAt = r.continueAt;
-      }
-    }
-  }
-
-  static fmtDecryptedAsSanitizedHtmlBlocks = async (decryptedContent: Uint8Array): Promise<{ blocks: MsgBlock[], subject: string | undefined }> => {
-    const blocks: MsgBlock[] = [];
-    if (!Mime.resemblesMsg(decryptedContent)) {
-      let utf = Buf.fromUint8(decryptedContent).toUtfStr();
-      utf = PgpMsg.extractFcAtts(utf, blocks);
-      utf = PgpMsg.stripFcTeplyToken(utf);
-      const armoredPubKeys: string[] = [];
-      utf = PgpMsg.stripPublicKeys(utf, armoredPubKeys);
-      blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(utf))); // escaped text as html
-      await MsgBlockParser.pushArmoredPubkeysToBlocks(armoredPubKeys, blocks);
-      return { blocks, subject: undefined };
-    }
-    const decoded = await Mime.decode(decryptedContent);
-    if (typeof decoded.html !== 'undefined') {
-      blocks.push(MsgBlock.fromContent('decryptedHtml', Xss.htmlSanitizeKeepBasicTags(decoded.html, 'IMG-TO-LINK'))); // sanitized html
-    } else if (typeof decoded.text !== 'undefined') {
-      blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(decoded.text))); // escaped text as html
-    } else {
-      blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(Buf.with(decryptedContent).toUtfStr()))); // escaped mime text as html
-    }
-    for (const att of decoded.atts) {
-      if (att.treatAs() === 'publicKey') {
-        await MsgBlockParser.pushArmoredPubkeysToBlocks([att.getData().toUtfStr()], blocks);
-      } else {
-        blocks.push(MsgBlock.fromAtt('decryptedAtt', '', { name: att.name, data: att.getData(), length: att.length, type: att.type }));
-      }
-    }
-    return { blocks, subject: decoded.subject };
-  }
 
   private static detectBlockNext = (origText: string, startAt: number) => {
     const result: { found: MsgBlock[], continueAt?: number } = { found: [] as MsgBlock[] };
@@ -134,6 +84,57 @@ export class MsgBlockParser {
         blocks.push(MsgBlock.fromKeyDetails('publicKey', keyDetails.public, keyDetails));
       }
     }
+  }
+
+  static detectBlocks = (origText: string) => {
+    const blocks: MsgBlock[] = [];
+    const normalized = Str.normalize(origText);
+    let startAt = 0;
+    while (true) { // eslint-disable-line no-constant-condition
+      const r = MsgBlockParser.detectBlockNext(normalized, startAt);
+      if (r.found) {
+        blocks.push(...r.found);
+      }
+      if (typeof r.continueAt === 'undefined') {
+        return { blocks, normalized };
+      } else {
+        if (r.continueAt <= startAt) {
+          Catch.report(`PgpArmordetect_blocks likely infinite loop: r.continue_at(${r.continueAt}) <= start_at(${startAt})`);
+          return { blocks, normalized }; // prevent infinite loop
+        }
+        startAt = r.continueAt;
+      }
+    }
+  }
+
+  static fmtDecryptedAsSanitizedHtmlBlocks = async (decryptedContent: Uint8Array): Promise<{ blocks: MsgBlock[], subject: string | undefined }> => {
+    const blocks: MsgBlock[] = [];
+    if (!Mime.resemblesMsg(decryptedContent)) {
+      let utf = Buf.fromUint8(decryptedContent).toUtfStr();
+      utf = PgpMsg.extractFcAtts(utf, blocks);
+      utf = PgpMsg.stripFcTeplyToken(utf);
+      const armoredPubKeys: string[] = [];
+      utf = PgpMsg.stripPublicKeys(utf, armoredPubKeys);
+      blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(utf))); // escaped text as html
+      await MsgBlockParser.pushArmoredPubkeysToBlocks(armoredPubKeys, blocks);
+      return { blocks, subject: undefined };
+    }
+    const decoded = await Mime.decode(decryptedContent);
+    if (typeof decoded.html !== 'undefined') {
+      blocks.push(MsgBlock.fromContent('decryptedHtml', Xss.htmlSanitizeKeepBasicTags(decoded.html, 'IMG-TO-LINK'))); // sanitized html
+    } else if (typeof decoded.text !== 'undefined') {
+      blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(decoded.text))); // escaped text as html
+    } else {
+      blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(Buf.with(decryptedContent).toUtfStr()))); // escaped mime text as html
+    }
+    for (const att of decoded.atts) {
+      if (att.treatAs() === 'publicKey') {
+        await MsgBlockParser.pushArmoredPubkeysToBlocks([att.getData().toUtfStr()], blocks);
+      } else {
+        blocks.push(MsgBlock.fromAtt('decryptedAtt', '', { name: att.name, data: att.getData(), length: att.length, type: att.type }));
+      }
+    }
+    return { blocks, subject: decoded.subject };
   }
 
 }
