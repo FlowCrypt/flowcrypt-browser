@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { randomBytes } from 'crypto';
 import { Buf } from '../core/buf';
+import { randomBytes } from 'crypto';
 
 export const secureRandomBytes = (length: number): Uint8Array => {
   return randomBytes(length);
