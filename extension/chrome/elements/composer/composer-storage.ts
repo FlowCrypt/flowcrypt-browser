@@ -100,19 +100,11 @@ export class ComposerStorage extends ComposerComponent {
   }
 
   public getAddresses = async (): Promise<Dict<SendAsAlias>> => {
-    const arrayToSendAs = (arr: string[]): Dict<SendAsAlias> => {
-      const result: Dict<SendAsAlias> = {}; // Temporary Solution
-      for (let i = 0; i < arr.length; i++) {
-        const alias: SendAsAlias = { isDefault: i === 0, isPrimary: arr[i] === this.view.acctEmail }; // before first element was default
-        result[arr[i]] = alias;
-      }
-      if (arr.length) {
-        Store.setAcct(this.view.acctEmail, { sendAs: result }).catch(Catch.reportErr);
-      }
-      return result;
-    };
-    const storage = await Store.getAcct(this.view.acctEmail, ['sendAs', 'addresses']);
-    return storage.sendAs || arrayToSendAs(storage.addresses || [this.view.acctEmail]);
+    const storage = await Store.getAcct(this.view.acctEmail, ['sendAs']);
+    if (!storage.sendAs) {
+      throw new Error('Unexpectedly missing sendAs - please restart browser');
+    }
+    return storage.sendAs;
   }
 
   public lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string): Promise<Contact | "fail"> => {
