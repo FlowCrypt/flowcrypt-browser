@@ -269,8 +269,8 @@ export class Store {
   }
 
   private static fixAcctStorageResult = (acctEmail: string, acctStore: AccountStore, keys: AccountIndex[]): AccountStore => {
-    if (keys.includes('sendAs') || !acctStore.sendAs) {
-      acctStore.sendAs = { acctEmail: { isPrimary: true, isDefault: true } };
+    if (keys.includes('sendAs') || !acctStore.sendAs) { // TODO - FIX THIS (remove?)
+      acctStore.sendAs = { [acctEmail]: { isPrimary: true, isDefault: true } };
     }
     return acctStore;
   }

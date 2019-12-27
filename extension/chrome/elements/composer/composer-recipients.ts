@@ -335,7 +335,7 @@ export class ComposerRecipients extends ComposerComponent {
     this.composer.S.cached('cc').css('display', isThere.cc ? 'none' : '');
     this.composer.S.cached('input_addresses_container_outer').find(`#input-container-bcc`).css('display', isThere.bcc ? '' : 'none');
     this.composer.S.cached('bcc').css('display', isThere.bcc ? 'none' : '');
-    this.composer.S.cached('input_addresses_container_outer').children(`:not([style="display: none;"])`).last().append(this.composer.S.cached('email_copy_actions')); // xss-safe-value
+    this.composer.S.cached('input_addresses_container_outer').children(`:not([style="display: none;"])`).last().append(this.composer.S.cached('container_cc_bcc_buttons')); // xss-reinsert
   }
 
   public collapseIpnutsIfNeeded = async (relatedTarget?: HTMLElement | null) => { // TODO: fix issue when loading no-pgp email and user starts typing

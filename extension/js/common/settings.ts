@@ -50,6 +50,7 @@ export class Settings {
     return undefined;
   }
 
+  // TODO - FIX THIS (make private)
   public static fetchAcctAliasesFromGmail = async (acctEmail: string): Promise<Dict<SendAsAlias>> => {
     const response = await new Gmail(acctEmail).fetchAcctAliases();
     const validAliases = response.sendAs.filter(alias => alias.isPrimary || alias.verificationStatus === 'accepted');
@@ -89,7 +90,7 @@ export class Settings {
     window.location.href = Settings.prepareNewSettingsLocationUrl(acctEmail, parentTabId, page, addUrlTextOrParams);
   }
 
-  public static refreshAcctAliases = async (acctEmail: string) => {
+  public static refreshSendAs = async (acctEmail: string) => {
     const fetchedSendAs = await Settings.fetchAcctAliasesFromGmail(acctEmail);
     const result = { defaultEmailChanged: false, aliasesChanged: false, footerChanged: false, sendAs: fetchedSendAs };
     const { sendAs: storedSendAs } = await Store.getAcct(acctEmail, ['sendAs']);

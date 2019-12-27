@@ -351,7 +351,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
         const subjectElem = await composePage.waitAny('@input-subject');
         expect(await (await subjectElem.getProperty('value')).jsonValue()).to.equal('Test Draft - New Message');
         expect(await composePage.read('@input-body')).to.equal('Testing Drafts (Do not delete)');
-        for (const elem of await composePage.target.$$('.email-copy-actions > span')) {
+        for (const elem of await composePage.target.$$('.container-cc-bcc-buttons > span')) {
           expect(await PageRecipe.getElementPropertyJson(elem, 'offsetHeight')).to.equal(0); // CC/BCC btn isn't visible
         }
       }));
@@ -470,7 +470,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     ava.default('[compose[global:compatibility]] - standalone - new message, Footer Mock Test', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Test Footer (Mock Test)', {}, 'new');
-      await ComposePageRecipe.sendAndClose(composePage);
+      await ComposePageRecipe.sendAndClose(composePage, { timeout: 200 });
     }));
 
     ava.default('compose[global:compatibility] - standalone - send pwd encrypted msg & check on flowcrypt site', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {

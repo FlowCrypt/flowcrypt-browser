@@ -63,7 +63,7 @@ export class ComposerErrs extends ComposerComponent {
 
   public debug = (msg: string) => {
     if (this.view.debug) {
-      console.log(`[${this.debugId}] ${msg}`);
+      console.log(`[${this.debugId}] ${msg}`); // TODO - FIX THIS - uncomment
     }
   }
 
@@ -102,7 +102,7 @@ export class ComposerErrs extends ComposerComponent {
   }
 
   public throwIfFormNotReady = (): void => {
-    if (this.composer.S.cached('icon_show_prev_msg').hasClass('progress')) {
+    if (this.composer.S.cached('triple_dot').hasClass('progress')) {
       throw new ComposerNotReadyError('Retrieving previous message, please wait.');
     }
     const btnReadyTexts = [
@@ -125,13 +125,14 @@ export class ComposerErrs extends ComposerComponent {
   }
 
   public throwIfFormValsInvalid = async ({ subject, plaintext }: { subject: string, plaintext: string }) => {
-    let plainFooter: string | undefined;
-    if (this.composer.quote.getFooterHTML) {
-      plainFooter = Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.composer.quote.getFooterHTML, '\n')).trim();
-    }
     if (!subject && ! await Ui.modal.confirm('Send without a subject?')) {
       throw new ComposerResetBtnTrigger();
-    } else if ((!plaintext || plaintext === plainFooter) && ! await Ui.modal.confirm('Send empty message?')) {
+    }
+    let footer = await this.composer.footer.getFooter();
+    if (footer) { // format footer the way it would be in outgoing plaintext
+      footer = Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.composer.footer.createFooterHtml(footer), '\n')).trim();
+    }
+    if ((!plaintext.trim() || (footer && plaintext.trim() === footer.trim())) && ! await Ui.modal.confirm('Send empty message?')) {
       throw new ComposerResetBtnTrigger();
     }
   }

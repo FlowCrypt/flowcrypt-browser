@@ -38,8 +38,8 @@ export class ComposerInput extends ComposerComponent {
 
   public extract = (type: 'text' | 'html', elSel: 'input_text' | 'input_intro', flag?: 'SKIP-ADDONS') => {
     let html = this.composer.S.cached(elSel)[0].innerHTML;
-    if (elSel === 'input_text' && this.composer.quote.expandingHTMLPart && flag !== 'SKIP-ADDONS') {
-      html += `<br /><br />${this.composer.quote.expandingHTMLPart}`;
+    if (elSel === 'input_text' && flag !== 'SKIP-ADDONS') {
+      html += this.composer.quote.getTripleDotSanitizedFormattedHtmlContent();
     }
     if (type === 'html') {
       return Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP');
