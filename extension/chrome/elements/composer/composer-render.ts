@@ -222,18 +222,16 @@ export class ComposerRender extends ComposerComponent {
     this.composer.S.cached('input_addresses_container_inner').click(this.view.setHandler(() => this.onRecipientsClickHandler(), this.composer.errs.handlers(`focus recipients`)));
     this.composer.S.cached('input_addresses_container_inner').children().click(() => false);
     this.composer.atts.onComposeTableRender();
-    const { sendAs } = await Store.getAcct(this.view.acctEmail, ['sendAs']);
+    await this.composer.sender.renderSendFromOrChevron();
     if (this.view.isReplyBox) {
       if (this.view.replyParams?.to.length) {
         // Firefox will not always respond to initial automatic $input_text.blur(): recipients may be left unrendered, as standard text, with a trailing comma
         await this.composer.recipients.parseRenderRecipients(this.composer.S.cached('input_to')); // this will force firefox to render them on load
       }
-      await this.composer.sender.renderSendFromChevronIfMoreThanOneAlias(sendAs!);
     } else {
       $('.close_new_message').click(this.view.setHandler(() => this.actionCloseHandler(), this.composer.errs.handlers(`close message`)));
       this.composer.S.cached('header').find('#header_title').click(() => $('.minimize_new_message').click());
       await this.composer.quote.addTripleDotQuoteExpandFooterOnlyBtn();
-      await this.composer.sender.renderSendFromIfMoreThanOneAlias(sendAs!);
       this.composer.size.setInputTextHeightManuallyIfNeeded();
     }
     // Firefox needs an iframe to be focused before focusing its content
