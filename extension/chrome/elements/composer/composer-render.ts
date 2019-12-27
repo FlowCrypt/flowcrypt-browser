@@ -119,11 +119,11 @@ export class ComposerRender extends ComposerComponent {
   private initComposeBox = async () => {
     this.initComposeBoxStyles();
     if (this.view.draftId) {
+      this.composer.S.cached('triple_dot').remove(); // if it's draft, footer and quote should already be included in the draft
       await this.composer.draft.initialDraftLoad(this.view.draftId);
-      if (this.view.isReplyBox) { // todo - should be moved out of here and put right after where
+      if (this.view.isReplyBox) {
         await this.composer.render.renderReplyMsgComposeTable();
       }
-      this.composer.S.cached('triple_dot').remove(); // if it's draft, footer and quote should already be included in the draft
     } else {
       if (this.view.isReplyBox && this.view.replyParams) {
         const recipients: Recipients = { to: this.view.replyParams.to, cc: this.view.replyParams.cc, bcc: this.view.replyParams.bcc };
