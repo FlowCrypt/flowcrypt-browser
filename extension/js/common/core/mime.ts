@@ -12,6 +12,7 @@ import { MimeParserNode } from './types/emailjs';
 import { MsgBlock } from './msg-block.js';
 import { MsgBlockParser } from './msg-block-parser.js';
 import { PgpArmor } from './pgp-armor.js';
+import { iso2022jpToUtf } from '../platform/util.js';
 
 const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
 const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name
@@ -100,9 +101,9 @@ export class Mime {
     return new MimeBuilder(type, { filename: att.name }).setHeader(header).setContent(att.getData()); // tslint:disable-line:no-unsafe-any
   }
 
-  private static getNodeType = (node: MimeParserNode) => {
+  private static getNodeType = (node: MimeParserNode, type: 'value' | 'initial' = 'value') => {
     if (node.headers['content-type'] && node.headers['content-type'][0]) {
-      return node.headers['content-type'][0].value;
+      return node.headers['content-type'][0][type];
     }
     return undefined;
   }
@@ -155,6 +156,9 @@ export class Mime {
     }
     if (node.charset && Iso88592.labels.includes(node.charset)) {
       return Iso88592.decode(node.rawContent!); // tslint:disable-line:no-unsafe-any
+    }
+    if (node.charset?.toUpperCase() === 'ISO-2022-JP' || (node.charset === 'utf-8' && Mime.getNodeType(node, 'initial')?.includes('ISO-2022-JP'))) {
+      return iso2022jpToUtf(Buf.fromRawBytesStr(node.rawContent!));
     }
     return Buf.fromRawBytesStr(node.rawContent!).toUtfStr();
   }
