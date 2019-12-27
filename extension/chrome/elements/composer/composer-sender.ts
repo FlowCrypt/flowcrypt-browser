@@ -2,11 +2,11 @@
 
 'use strict';
 
-import { SendAsAlias, Store } from '../../../js/common/platform/store.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { ComposerComponent } from './composer-abstract-component.js';
 import { Dict } from '../../../js/common/core/common.js';
+import { SendAsAlias } from '../../../js/common/platform/store.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
@@ -30,17 +30,16 @@ export class ComposerSender extends ComposerComponent {
    * The chevron-left is rotated to become a down chevron, and rendered along with to cc and bcc buttons
    * This is used for reply boxes (send-from are rendered automatically for new msgs)
    */
-  public renderSendFromChevron = async () => {
-    const { sendAs } = await Store.getAcct(this.view.acctEmail, ['sendAs']);
-    if (sendAs && Object.keys(sendAs).length > 1) {
+  public renderSendFromChevronIfMoreThanOneAlias = async (sendAs: Dict<SendAsAlias>) => {
+    if (Object.keys(sendAs).length > 1) {
       const showAliasChevronHtml = '<img tabindex="22" id="render_send_from" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
       const inputAddrContainer = this.composer.S.cached('container_cc_bcc_buttons');
       Xss.sanitizeAppend(inputAddrContainer, showAliasChevronHtml);
-      inputAddrContainer.find('#render_send_from').click(this.view.setHandler(() => this.renderSendFrom(sendAs), this.composer.errs.handlers(`render send-from`)));
+      inputAddrContainer.find('#render_send_from').click(this.view.setHandler(() => this.renderSendFromIfMoreThanOneAlias(sendAs), this.composer.errs.handlers(`render send-from`)));
     }
   }
 
-  public renderSendFrom = (sendAs: Dict<SendAsAlias>) => {
+  public renderSendFromIfMoreThanOneAlias = (sendAs: Dict<SendAsAlias>) => {
     $('#render_send_from').remove(); // created in renderSendFromChevron, if any
     const emailAliases = Object.keys(sendAs);
     const inputAddrContainer = $('.recipients-inputs');
@@ -63,7 +62,7 @@ export class ComposerSender extends ComposerComponent {
       const refreshResult = await Settings.refreshSendAs(this.view.acctEmail);
       if (refreshResult) {
         if (refreshResult.aliasesChanged || refreshResult.defaultEmailChanged) {
-          this.renderSendFrom(refreshResult.sendAs);
+          this.renderSendFromIfMoreThanOneAlias(refreshResult.sendAs);
         }
         if (refreshResult.footerChanged && !this.composer.draft.wasMsgLoadedFromDraft) {
           const sendAsAlias = refreshResult.sendAs[this.getSender()];

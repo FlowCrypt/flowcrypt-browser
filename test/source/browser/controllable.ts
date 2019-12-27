@@ -227,6 +227,7 @@ abstract class ControllableBase {
   }
 
   public selectOption = async (selector: string, choice: string) => {
+    await this.waitAll(selector, { visible: true });
     await this.target.evaluate((s, v) => jQuery(s).val(v).trigger('change'), this.selector(selector), choice);
   }
 
