@@ -470,7 +470,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     ava.default('[compose[global:compatibility]] - standalone - new message, Footer Mock Test', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Test Footer (Mock Test)', {}, 'new');
-      await ComposePageRecipe.sendAndClose(composePage, { timeout: 200 });
+      await ComposePageRecipe.sendAndClose(composePage);
     }));
 
     ava.default('compose[global:compatibility] - standalone - send pwd encrypted msg & check on flowcrypt site', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
