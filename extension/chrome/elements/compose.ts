@@ -71,7 +71,7 @@ export class ComposeView extends View {
   }
 
   public render = async () => {
-    this.storage = await Store.getAcct(this.acctEmail, ['google_token_scopes', 'addresses', 'sendAs', 'email_provider', 'hide_message_password', 'drafts_reply']);
+    this.storage = await Store.getAcct(this.acctEmail, ['google_token_scopes', 'sendAs', 'email_provider', 'hide_message_password', 'drafts_reply']);
     this.tabId = await BrowserMsg.requiredTabId();
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.scopes = await Store.getScopes(this.acctEmail);

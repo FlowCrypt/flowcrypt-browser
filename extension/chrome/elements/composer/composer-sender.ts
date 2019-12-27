@@ -66,10 +66,10 @@ export class ComposerSender extends ComposerComponent {
     try {
       const refreshResult = await Settings.refreshAcctAliases(this.view.acctEmail);
       if (refreshResult) {
-        if (refreshResult.isAliasesChanged || refreshResult.isDefaultEmailChanged) {
+        if (refreshResult.aliasesChanged || refreshResult.defaultEmailChanged) {
           this.renderSenderAliasesOptions(refreshResult.sendAs);
         }
-        if (refreshResult.isFooterChanged && !this.view.draftId) {
+        if (refreshResult.footerChanged && !this.view.draftId) {
           const alias = refreshResult.sendAs[this.getSender()];
           if (alias && !this.view.isReplyBox) {
             this.composer.quote.replaceFooter(alias.footer || undefined);
