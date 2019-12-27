@@ -46,6 +46,15 @@ export class Str {
     return { email, name, full };
   }
 
+  public static rmSpecialCharsKeepUtf = (str: string, mode: 'ALLOW-SOME' | 'ALLOW-NONE'): string => {
+    // not a whitelist because we still want utf chars
+    str = str.replace(/[@&#`();:'",<>\{\}\[\]\\\/\n\t\r]/gi, '');
+    if (mode === 'ALLOW-SOME') {
+      return str;
+    }
+    return str.replace(/[.~!$%^*=?]/gi, '');
+  }
+
   public static prettyPrint = (obj: any) => {
     return (typeof obj === 'object') ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />') : String(obj);
   }
