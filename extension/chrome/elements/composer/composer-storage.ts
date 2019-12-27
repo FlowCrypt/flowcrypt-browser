@@ -5,16 +5,14 @@
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Contact, KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { Keyserver, PubkeySearchResult } from '../../../js/common/api/keyserver.js';
-import { SendAsAlias, Store } from '../../../js/common/platform/store.js';
-
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { CollectPubkeysResult } from './composer-types.js';
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Dict } from '../../../js/common/core/common.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from './composer-errs.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { Store } from '../../../js/common/platform/store.js';
 import { openpgp } from '../../../js/common/core/pgp.js';
 
 export class ComposerStorage extends ComposerComponent {
@@ -97,22 +95,6 @@ export class ComposerStorage extends ComposerComponent {
       Assert.abortAndRenderErrorIfKeyinfoEmpty(senderKi);
     }
     return await Store.passphraseGet(this.view.acctEmail, senderKi.longid);
-  }
-
-  public getAddresses = async (): Promise<Dict<SendAsAlias>> => {
-    const arrayToSendAs = (arr: string[]): Dict<SendAsAlias> => {
-      const result: Dict<SendAsAlias> = {}; // Temporary Solution
-      for (let i = 0; i < arr.length; i++) {
-        const alias: SendAsAlias = { isDefault: i === 0, isPrimary: arr[i] === this.view.acctEmail }; // before first element was default
-        result[arr[i]] = alias;
-      }
-      if (arr.length) {
-        Store.setAcct(this.view.acctEmail, { sendAs: result }).catch(Catch.reportErr);
-      }
-      return result;
-    };
-    const storage = await Store.getAcct(this.view.acctEmail, ['sendAs', 'addresses']);
-    return storage.sendAs || arrayToSendAs(storage.addresses || [this.view.acctEmail]);
   }
 
   public lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string): Promise<Contact | "fail"> => {

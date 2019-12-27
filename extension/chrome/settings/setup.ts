@@ -2,10 +2,9 @@
 
 'use strict';
 
-import { AccountStore, Scopes, SendAsAlias, Store } from '../../js/common/platform/store.js';
+import { AccountStore, Scopes, Store } from '../../js/common/platform/store.js';
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
-import { Dict, Url, Value } from '../../js/common/core/common.js';
-
+import { Url, Value } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Attester } from '../../js/common/api/attester.js';
@@ -44,7 +43,6 @@ export class SetupView extends View {
   public readonly parentTabId: string | undefined;
   public readonly action: 'add_key' | 'finalize' | undefined;
 
-  public readonly emailDomainsToSkip = ['yahoo', 'live', 'outlook'];
   public readonly keyImportUi = new KeyImportUi({ checkEncryption: true });
   public readonly gmail: Gmail;
   public readonly setupRecoverKey: SetupRecoverKeyModule;
@@ -92,7 +90,7 @@ export class SetupView extends View {
   public render = async () => {
     await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
     await initPassphraseToggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
-    this.storage = await Store.getAcct(this.acctEmail, ['setup_done', 'key_backup_prompt', 'email_provider', 'sendAs']);
+    this.storage = await Store.getAcct(this.acctEmail, ['setup_done', 'key_backup_prompt', 'email_provider']);
     this.scopes = await Store.getScopes(this.acctEmail);
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.rules = await Rules.newInstance(this.acctEmail);
@@ -201,15 +199,6 @@ export class SetupView extends View {
     await Store.dbContactSave(undefined, myOwnEmailAddrsAsContacts);
   }
 
-  public saveAndFillSubmitOption = async (sendAsAliases: Dict<SendAsAlias>) => {
-    this.submitKeyForAddrs = this.filterAddressesForSubmittingKeys(Object.keys(sendAsAliases));
-    await Store.setAcct(this.acctEmail, { sendAs: sendAsAliases });
-    if (this.submitKeyForAddrs.length > 1) {
-      $('.addresses').text(Value.arr.withoutVal(this.submitKeyForAddrs, this.acctEmail).join(', '));
-      $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
-    }
-  }
-
   public submitPublicKeyIfNeeded = async (armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) => {
     if (!options.submit_main) {
       return;
@@ -227,11 +216,6 @@ export class SetupView extends View {
       return;
     }
     await Settings.submitPubkeys(this.acctEmail, addresses, armoredPubkey);
-  }
-
-  public filterAddressesForSubmittingKeys = (addresses: string[]): string[] => {
-    const filterAddrRegEx = new RegExp(`@(${this.emailDomainsToSkip.join('|')})`);
-    return addresses.filter(e => !filterAddrRegEx.test(e));
   }
 
   public getUniqueLongids = async (keys: OpenPGP.key.Key[]): Promise<string[]> => {

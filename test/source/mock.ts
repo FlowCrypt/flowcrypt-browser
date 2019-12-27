@@ -31,7 +31,7 @@ export const mock = async (logger: (line: string) => void) => {
 };
 
 if (require.main === module) {
-  mock(console.log).catch(e => {
+  mock(msgLog => console.log(msgLog)).catch(e => {
     console.error(e);
     process.exit(1);
   });

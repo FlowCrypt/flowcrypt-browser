@@ -93,7 +93,6 @@ export class AttUI {
   }
 
   public addFile = (file: File) => {
-    console.log('addFile uploading file:', file);
     this.uploader.addFiles([file]); // tslint:disable-line: no-unsafe-any
   }
 

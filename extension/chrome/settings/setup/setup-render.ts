@@ -2,6 +2,7 @@
 
 'use strict';
 
+import { Url, Value } from '../../../js/common/core/common.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
@@ -9,10 +10,11 @@ import { Settings } from '../../../js/common/settings.js';
 import { SetupView } from '../setup.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
 export class SetupRenderModule {
+
+  public readonly emailDomainsToSkip = ['yahoo', 'live', 'outlook'];
 
   constructor(private view: SetupView) {
   }
@@ -23,8 +25,9 @@ export class SetupRenderModule {
     $('.back').css('visibility', 'hidden');
     if (this.view.storage!.email_provider === 'gmail') { // show alternative account addresses in setup form + save them for later
       try {
-        const sendAs = this.view.scopes!.read || this.view.scopes!.modify ? await Settings.fetchAcctAliasesFromGmail(this.view.acctEmail) : {};
-        await this.view.saveAndFillSubmitOption(sendAs);
+        await Settings.refreshSendAs(this.view.acctEmail);
+        const { sendAs } = await Store.getAcct(this.view.acctEmail, ['sendAs']);
+        this.saveAndFillSubmitPubkeysOption(Object.keys(sendAs!));
       } catch (e) {
         return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToLoadEmailAliases, () => this.renderInitial());
       }
@@ -134,6 +137,19 @@ export class SetupRenderModule {
         this.displayBlock('step_2b_manual_enter');
       }
     }
+  }
+
+  private saveAndFillSubmitPubkeysOption = (addresses: string[]) => {
+    this.view.submitKeyForAddrs = this.filterAddressesForSubmittingKeys(addresses);
+    if (this.view.submitKeyForAddrs.length > 1) {
+      $('.addresses').text(Value.arr.withoutVal(this.view.submitKeyForAddrs, this.view.acctEmail).join(', '));
+      $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
+    }
+  }
+
+  private filterAddressesForSubmittingKeys = (addresses: string[]): string[] => {
+    const filterAddrRegEx = new RegExp(`@(${this.emailDomainsToSkip.join('|')})`);
+    return addresses.filter(e => !filterAddrRegEx.test(e));
   }
 
 }

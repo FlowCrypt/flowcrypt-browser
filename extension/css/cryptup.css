@@ -1540,7 +1540,7 @@ table#compose td.recipients-inputs > div#input_addresses_container div .recipien
   background-color: #58e;
 }
 
-table#compose td.recipients-inputs > div#input_addresses_container div span.email-copy-actions {
+table#compose td.recipients-inputs > div#input_addresses_container div span.container-cc-bcc-buttons {
   position: absolute;
   right: 8px;
   bottom: 8px;
@@ -1548,7 +1548,7 @@ table#compose td.recipients-inputs > div#input_addresses_container div span.emai
   color: #636c72;
 }
 
-table#compose td.recipients-inputs > div#input_addresses_container div span.email-copy-actions button {
+table#compose td.recipients-inputs > div#input_addresses_container div span.container-cc-bcc-buttons button {
   font-size: 1em;
   color: #636c72;
   background: none;
@@ -1556,7 +1556,7 @@ table#compose td.recipients-inputs > div#input_addresses_container div span.emai
   border: 0;
 }
 
-table#compose td.recipients-inputs > div#input_addresses_container div span.email-copy-actions img {
+table#compose td.recipients-inputs > div#input_addresses_container div span.container-cc-bcc-buttons img {
   opacity: 0.6;
   width: 8px;
   height: 15px;
@@ -1564,9 +1564,9 @@ table#compose td.recipients-inputs > div#input_addresses_container div span.emai
   margin-left: 3px;
   cursor: pointer;
 }
-table#compose td.recipients-inputs > div#input_addresses_container div span.email-copy-actions img#show_sender_aliases_options { transform: rotate(270deg); }
-table#compose td.recipients-inputs > div#input_addresses_container div span.email-copy-actions button:hover { text-decoration: underline; }
-table#compose td.recipients-inputs > div#input_addresses_container div span.email-copy-actions img:hover { opacity: 0.8; }
+table#compose td.recipients-inputs > div#input_addresses_container div span.container-cc-bcc-buttons img#show_sender_aliases_options { transform: rotate(270deg); }
+table#compose td.recipients-inputs > div#input_addresses_container div span.container-cc-bcc-buttons button:hover { text-decoration: underline; }
+table#compose td.recipients-inputs > div#input_addresses_container div span.container-cc-bcc-buttons img:hover { opacity: 0.8; }
 
 table#compose.not-encrypted .recipients span {
   border: none !important;

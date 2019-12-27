@@ -47,10 +47,9 @@ export class ComposerRender extends ComposerComponent {
       if (this.view.replyParams) {
         this.view.replyParams.subject = `${(method === 'reply' ? 'Re' : 'Fwd')}: ${this.view.replyParams.subject}`;
       }
-      if (!this.view.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
+      if (!this.composer.draft.wasMsgLoadedFromDraft) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
         (async () => { // not awaited because can take a long time & blocks rendering
-          const footer = await this.composer.sender.getFooter();
-          await this.composer.quote.addTripleDotQuoteExpandBtn(this.view.replyMsgId, method, footer);
+          await this.composer.quote.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, method);
           if (this.composer.quote.messageToReplyOrForward) {
             const msgId = this.composer.quote.messageToReplyOrForward.headers['message-id'];
             this.composer.sendBtn.additionalMsgHeaders['In-Reply-To'] = msgId;
@@ -118,22 +117,13 @@ export class ComposerRender extends ComposerComponent {
   }
 
   private initComposeBox = async () => {
-    if (this.view.isReplyBox) {
-      this.composer.S.cached('body').addClass('reply_box');
-      this.composer.S.cached('header').remove();
-      this.composer.S.cached('subject').remove();
-      this.composer.S.cached('contacts').css('top', '39px');
-      this.composer.S.cached('compose_table').css({ 'border-bottom': '1px solid #cfcfcf', 'border-top': '1px solid #cfcfcf' });
-      this.composer.S.cached('input_text').css('overflow-y', 'hidden');
-      if (!this.view.skipClickPrompt && !this.view.draftId) {
-        this.composer.S.cached('prompt').css('display', 'block');
-      }
-    } else {
-      this.composer.S.cached('compose_table').css({ 'height': '100%' });
-    }
+    this.initComposeBoxStyles();
     if (this.view.draftId) {
+      this.composer.S.cached('triple_dot').remove(); // if it's draft, footer and quote should already be included in the draft
       await this.composer.draft.initialDraftLoad(this.view.draftId);
-      this.composer.S.cached('icon_show_prev_msg').remove(); // if it's draft a footer should already be there
+      if (this.view.isReplyBox) {
+        await this.composer.render.renderReplyMsgComposeTable();
+      }
     } else {
       if (this.view.isReplyBox && this.view.replyParams) {
         const recipients: Recipients = { to: this.view.replyParams.to, cc: this.view.replyParams.cc, bcc: this.view.replyParams.bcc };
@@ -142,22 +132,8 @@ export class ComposerRender extends ComposerComponent {
         if (this.view.skipClickPrompt) { // TODO: fix issue when loading recipients
           await this.renderReplyMsgComposeTable();
         } else {
-          $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(this.view.setHandler(async target => {
-            let method: 'reply' | 'forward' = 'reply';
-            const typesToDelete: RecipientType[] = [];
-            switch ($(target).attr('id')) {
-              case 'a_forward':
-                method = 'forward';
-                typesToDelete.push('to');
-              case 'reply_click_area':
-              case 'a_reply':
-                typesToDelete.push('cc');
-                typesToDelete.push('bcc');
-                break;
-            }
-            this.composer.recipients.deleteRecipientsBySendingType(typesToDelete);
-            await this.renderReplyMsgComposeTable(method);
-          }, this.composer.errs.handlers(`activate repply box`)));
+          $('#reply_click_area,#a_reply,#a_reply_all,#a_forward')
+            .click(this.view.setHandler((el) => this.actionActivateReplyBoxHandler(el), this.composer.errs.handlers(`activate repply box`)));
         }
       }
     }
@@ -171,6 +147,39 @@ export class ComposerRender extends ComposerComponent {
     this.composer.sendBtn.resetSendBtn();
     await this.composer.sendBtn.popover.render();
     this.loadRecipientsThenSetTestStateReady().catch(Catch.reportErr);
+  }
+
+  private initComposeBoxStyles = () => {
+    if (this.view.isReplyBox) {
+      this.composer.S.cached('body').addClass('reply_box');
+      this.composer.S.cached('header').remove();
+      this.composer.S.cached('subject').remove();
+      this.composer.S.cached('contacts').css('top', '39px');
+      this.composer.S.cached('compose_table').css({ 'border-bottom': '1px solid #cfcfcf', 'border-top': '1px solid #cfcfcf' });
+      this.composer.S.cached('input_text').css('overflow-y', 'hidden');
+      if (!this.view.skipClickPrompt && !this.view.draftId) {
+        this.composer.S.cached('prompt').css('display', 'block');
+      }
+    } else {
+      this.composer.S.cached('compose_table').css({ 'height': '100%' });
+    }
+  }
+
+  private actionActivateReplyBoxHandler = async (target: HTMLElement) => {
+    let method: 'reply' | 'forward' = 'reply';
+    const typesToDelete: RecipientType[] = [];
+    switch ($(target).attr('id')) {
+      case 'a_forward':
+        method = 'forward';
+        typesToDelete.push('to');
+      case 'reply_click_area':
+      case 'a_reply':
+        typesToDelete.push('cc');
+        typesToDelete.push('bcc');
+        break;
+    }
+    this.composer.recipients.deleteRecipientsBySendingType(typesToDelete);
+    await this.renderReplyMsgComposeTable(method);
   }
 
   private renderHelpDialog = () => {
@@ -205,81 +214,24 @@ export class ComposerRender extends ComposerComponent {
   private renderComposeTable = async () => {
     this.composer.errs.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
     this.composer.S.cached('compose_table').css('display', 'table');
-    this.composer.S.cached('body').keydown(this.view.setHandler((_, e) => {
-      if (this.composer.size.composeWindowIsMinimized) {
-        return e.preventDefault();
-      }
-      Ui.escape(() => !this.view.isReplyBox && $('.close_new_message').click())(e);
-      const focusableEls = this.getFocusableEls();
-      const focusIndex = focusableEls.indexOf(e.target);
-      if (focusIndex !== -1) { // Focus trap (Tab, Shift+Tab)
-        Ui.tab((e) => { // rollover to first item or focus next
-          focusableEls[focusIndex === focusableEls.length - 1 ? 0 : focusIndex + 1].focus();
-          e.preventDefault();
-        })(e);
-        Ui.shiftTab((e) => { // rollover to last item or focus prev
-          focusableEls[focusIndex === 0 ? focusableEls.length - 1 : focusIndex - 1].focus();
-          e.preventDefault();
-        })(e);
-      }
-    }));
+    this.composer.S.cached('body').keydown(this.view.setHandler((el, ev) => this.onBodyKeydownHandler(el, ev)));
     this.composer.recipients.initActions();
     this.composer.sendBtn.initActions();
-    this.composer.S.cached('input_to').bind('paste', this.view.setHandler(async (elem, event) => {
-      if (event.originalEvent instanceof ClipboardEvent && event.originalEvent.clipboardData) {
-        const textData = event.originalEvent.clipboardData.getData('text/plain');
-        const keyImportUi = new KeyImportUi({ checkEncryption: true });
-        let normalizedPub: string;
-        try {
-          normalizedPub = await keyImportUi.checkPub(textData);
-        } catch (e) {
-          return; // key is invalid
-        }
-        const { keys: [key] } = await PgpKey.parse(normalizedPub);
-        if (!key.users.length) { // there can be no users
-          return;
-        }
-        const keyUser = Str.parseEmail(key.users[0]);
-        if (keyUser.email) {
-          if (!await Store.dbContactGet(undefined, [keyUser.email])) {
-            await Store.dbContactSave(undefined, await Store.dbContactObj({
-              email: keyUser.email, name: keyUser.name, client: 'pgp',
-              pubkey: normalizedPub, lastCheck: Date.now(), expiresOn: await PgpKey.dateBeforeExpiration(normalizedPub)
-            }));
-          }
-          this.composer.S.cached('input_to').val(keyUser.email);
-          await this.composer.recipients.parseRenderRecipients(this.composer.S.cached('input_to'));
-        } else {
-          await Ui.modal.warning(`The email listed in this public key does not seem valid: ${keyUser}`);
-        }
-      }
-    }));
+    this.composer.S.cached('input_to').bind('paste', this.view.setHandler((el, ev) => this.onRecipientPasteHandler(el, ev)));
     this.composer.input.squire.addEventListener('keyup', () => this.composer.S.cached('send_btn_note').text(''));
-    this.composer.S.cached('input_addresses_container_inner').click(this.view.setHandler(() => {
-      if (!this.composer.S.cached('input_to').is(':focus')) {
-        this.composer.errs.debug(`input_addresses_container_inner.click -> calling input_to.focus() when input_to.val(${this.composer.S.cached('input_to').val()})`);
-        this.composer.S.cached('input_to').focus();
-      }
-    }, this.composer.errs.handlers(`focus on recipient field`))).children().click(() => false);
+    this.composer.S.cached('input_addresses_container_inner').click(this.view.setHandler(() => this.onRecipientsClickHandler(), this.composer.errs.handlers(`focus recipients`)));
+    this.composer.S.cached('input_addresses_container_inner').children().click(() => false);
     this.composer.atts.onComposeTableRender();
+    await this.composer.sender.renderSendFromOrChevron();
     if (this.view.isReplyBox) {
       if (this.view.replyParams?.to.length) {
-        // Firefox will not always respond to initial automatic $input_text.blur()
-        // Recipients may be left unrendered, as standard text, with a trailing comma
+        // Firefox will not always respond to initial automatic $input_text.blur(): recipients may be left unrendered, as standard text, with a trailing comma
         await this.composer.recipients.parseRenderRecipients(this.composer.S.cached('input_to')); // this will force firefox to render them on load
       }
-      await this.composer.sender.renderSenderAliasesOptionsToggle();
     } else {
-      $('.close_new_message').click(this.view.setHandler(async () => {
-        if (!this.composer.sendBtn.isSendMessageInProgres() ||
-          await Ui.modal.confirm('A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?')) {
-          this.composer.render.closeMsg();
-        }
-      }, this.composer.errs.handlers(`close message`)));
+      $('.close_new_message').click(this.view.setHandler(() => this.actionCloseHandler(), this.composer.errs.handlers(`close message`)));
       this.composer.S.cached('header').find('#header_title').click(() => $('.minimize_new_message').click());
-      this.composer.sender.renderSenderAliasesOptions(await this.composer.storage.getAddresses());
-      const footer = await this.composer.sender.getFooter();
-      await this.composer.quote.addTripleDotQuoteExpandBtn(undefined, undefined, footer);
+      await this.composer.quote.addTripleDotQuoteExpandFooterOnlyBtn();
       this.composer.size.setInputTextHeightManuallyIfNeeded();
     }
     // Firefox needs an iframe to be focused before focusing its content
@@ -289,6 +241,68 @@ export class ComposerRender extends ComposerComponent {
       // document.getElementById('input_text')!.focus(); // #input_text is in the template
     }, 100);
     this.composer.size.onComposeTableRender();
+  }
+
+  private actionCloseHandler = async () => {
+    if (!this.composer.sendBtn.isSendMessageInProgres() || await Ui.modal.confirm(Lang.compose.abortSending)) {
+      this.composer.render.closeMsg();
+    }
+  }
+
+  private onRecipientsClickHandler = () => {
+    if (!this.composer.S.cached('input_to').is(':focus')) {
+      this.composer.errs.debug(`input_addresses_container_inner.click -> calling input_to.focus() when input_to.val(${this.composer.S.cached('input_to').val()})`);
+      this.composer.S.cached('input_to').focus();
+    }
+  }
+
+  private onRecipientPasteHandler = async (elem: HTMLElement, event: JQuery.Event<HTMLElement>) => {
+    if (event.originalEvent instanceof ClipboardEvent && event.originalEvent.clipboardData) {
+      const textData = event.originalEvent.clipboardData.getData('text/plain');
+      const keyImportUi = new KeyImportUi({ checkEncryption: true });
+      let normalizedPub: string;
+      try {
+        normalizedPub = await keyImportUi.checkPub(textData);
+      } catch (e) {
+        return; // key is invalid
+      }
+      const { keys: [key] } = await PgpKey.parse(normalizedPub);
+      if (!key.users.length) { // there can be no users
+        return;
+      }
+      const keyUser = Str.parseEmail(key.users[0]);
+      if (keyUser.email) {
+        if (!await Store.dbContactGet(undefined, [keyUser.email])) {
+          await Store.dbContactSave(undefined, await Store.dbContactObj({
+            email: keyUser.email, name: keyUser.name, client: 'pgp',
+            pubkey: normalizedPub, lastCheck: Date.now(), expiresOn: await PgpKey.dateBeforeExpiration(normalizedPub)
+          }));
+        }
+        this.composer.S.cached('input_to').val(keyUser.email);
+        await this.composer.recipients.parseRenderRecipients(this.composer.S.cached('input_to'));
+      } else {
+        await Ui.modal.warning(`The email listed in this public key does not seem valid: ${keyUser}`);
+      }
+    }
+  }
+
+  private onBodyKeydownHandler = (_: HTMLElement, e: JQuery.Event<HTMLElement>) => {
+    if (this.composer.size.composeWindowIsMinimized) {
+      return e.preventDefault();
+    }
+    Ui.escape(() => !this.view.isReplyBox && $('.close_new_message').click())(e);
+    const focusableEls = this.getFocusableEls();
+    const focusIndex = focusableEls.indexOf(e.target);
+    if (focusIndex !== -1) { // Focus trap (Tab, Shift+Tab)
+      Ui.tab((e) => { // rollover to first item or focus next
+        focusableEls[focusIndex === focusableEls.length - 1 ? 0 : focusIndex + 1].focus();
+        e.preventDefault();
+      })(e);
+      Ui.shiftTab((e) => { // rollover to last item or focus prev
+        focusableEls[focusIndex === 0 ? focusableEls.length - 1 : focusIndex - 1].focus();
+        e.preventDefault();
+      })(e);
+    }
   }
 
   private loadRecipientsThenSetTestStateReady = async () => {

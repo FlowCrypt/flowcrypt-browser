@@ -13,63 +13,57 @@ import { MessageToReplyOrForward } from './composer-types.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { MsgBlock } from '../../../js/common/core/msg-block.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
-import { ProgressCb } from '../../../js/common/api/api.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerQuote extends ComposerComponent {
-  private msgExpandingHTMLPart: string | undefined;
 
-  private footerHTML: string | undefined;
+  public tripleDotSanitizedHtmlContent: { quote: string | undefined, footer: string | undefined } | undefined;
   public messageToReplyOrForward: MessageToReplyOrForward | undefined;
-
-  get getFooterHTML(): string | undefined {
-    return this.footerHTML;
-  }
-
-  get expandingHTMLPart(): string | undefined {
-    return this.msgExpandingHTMLPart;
-  }
 
   public initActions = (): void => {
     // No need
   }
 
-  public addTripleDotQuoteExpandBtn = async (msgId: string | undefined, method?: ('reply' | 'forward'), footer?: string) => {
-    if (!this.messageToReplyOrForward && msgId && method) {
-      this.composer.S.cached('icon_show_prev_msg').addClass('progress');
-      Xss.sanitizeAppend(this.composer.S.cached('icon_show_prev_msg'), '<div id="loader">0%</div>');
+  public getTripleDotSanitizedFormattedHtmlContent = (): string => { // email content order: [myMsg, myFooter, theirQuote]
+    if (this.tripleDotSanitizedHtmlContent) {
+      return '<br />' + (this.tripleDotSanitizedHtmlContent.footer || '') + (this.tripleDotSanitizedHtmlContent.quote || '');
+    }
+    return '';
+  }
+
+  public addTripleDotQuoteExpandFooterOnlyBtn = async () => {
+    const textFooter = await this.composer.footer.getFooterFromStorage(this.composer.sender.getSender());
+    if (!textFooter) {
+      this.composer.S.cached('triple_dot').hide();
+      return;
+    }
+    const sanitizedFooter = textFooter && !this.composer.draft.wasMsgLoadedFromDraft ? this.composer.footer.createFooterHtml(textFooter) : undefined;
+    this.tripleDotSanitizedHtmlContent = { footer: sanitizedFooter, quote: undefined };
+    this.composer.S.cached('triple_dot').click(this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el)));
+  }
+
+  public addTripleDotQuoteExpandFooterAndQuoteBtn = async (msgId: string, method: 'reply' | 'forward') => {
+    if (!this.messageToReplyOrForward) {
+      this.composer.S.cached('triple_dot').addClass('progress');
+      Xss.sanitizeAppend(this.composer.S.cached('triple_dot'), '<div id="loader">0%</div>');
       this.composer.size.resizeComposeBox();
       try {
-        this.messageToReplyOrForward = await this.getAndDecryptMessage(msgId, method, (progress) => this.setQuoteLoaderProgress(progress + '%'));
+        this.messageToReplyOrForward = await this.getAndDecryptMessage(msgId, method);
       } catch (e) {
         ApiErr.reportIfSignificant(e);
         await Ui.modal.error(`Could not load quoted content, please try again.\n\n${ApiErr.eli5(e)}`);
       }
-      this.composer.S.cached('icon_show_prev_msg').find('#loader').remove();
-      this.composer.S.cached('icon_show_prev_msg').removeClass('progress');
+      this.composer.S.cached('triple_dot').find('#loader').remove();
+      this.composer.S.cached('triple_dot').removeClass('progress');
     }
-    if (!this.messageToReplyOrForward && msgId) {
-      this.composer.S.cached('icon_show_prev_msg').click(this.view.setHandler(async () => {
-        this.composer.S.cached('icon_show_prev_msg').unbind('click');
-        await this.addTripleDotQuoteExpandBtn(msgId, method);
-        if (this.messageToReplyOrForward) {
-          this.composer.S.cached('icon_show_prev_msg').click();
-        }
-      }));
-      return;
-    }
-    let safePreviousMsg = '';
-    if (footer && !this.view.draftId) {
-      this.footerHTML = this.createFooterHTML(footer);
-      safePreviousMsg += this.footerHTML;
-    }
+    let sanitizedQuote = '';
     if (this.messageToReplyOrForward?.text) {
       const sentDate = new Date(String(this.messageToReplyOrForward.headers.date));
       if (this.messageToReplyOrForward.headers.from && this.messageToReplyOrForward.headers.date) {
-        safePreviousMsg += `<br><br>${this.generateHtmlPreviousMsgQuote(this.messageToReplyOrForward.text, sentDate, this.messageToReplyOrForward.headers.from)}`;
+        sanitizedQuote += `<br><br>${this.generateHtmlPreviousMsgQuote(this.messageToReplyOrForward.text, sentDate, this.messageToReplyOrForward.headers.from)}`;
       }
       if (method === 'forward' && this.messageToReplyOrForward.decryptedFiles.length) {
         for (const file of this.messageToReplyOrForward.decryptedFiles) {
@@ -77,49 +71,24 @@ export class ComposerQuote extends ComposerComponent {
         }
       }
     }
-    if (!safePreviousMsg) {
-      this.composer.S.cached('icon_show_prev_msg').remove();
+    const textFooter = await this.composer.footer.getFooterFromStorage(this.composer.sender.getSender());
+    const sanitizedFooter = textFooter && !this.composer.draft.wasMsgLoadedFromDraft ? this.composer.footer.createFooterHtml(textFooter) : undefined;
+    if (!sanitizedQuote && !sanitizedFooter) {
+      this.composer.S.cached('triple_dot').hide();
       return;
     }
+    this.tripleDotSanitizedHtmlContent = { footer: sanitizedFooter, quote: sanitizedQuote };
     if (method === 'forward') {
-      this.composer.S.cached('icon_show_prev_msg').remove();
-      Xss.sanitizeAppend(this.composer.S.cached('input_text'), safePreviousMsg);
-      this.composer.size.resizeComposeBox();
+      this.actionRenderTripleDotContentHandle(this.composer.S.cached('triple_dot')[0]);
     } else {
-      this.msgExpandingHTMLPart = safePreviousMsg;
-      this.setExpandingTextAfterClick();
+      this.composer.S.cached('triple_dot').click(this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el)));
     }
   }
 
-  public replaceFooter = (newFooter: string | undefined) => {
-    newFooter = newFooter ? this.createFooterHTML(newFooter) : '';
-    if (this.footerHTML) {
-      let textHTML = this.msgExpandingHTMLPart || this.composer.input.squire.getHTML();
-      const lastOccurrenceIndex = textHTML.lastIndexOf(this.footerHTML);
-      if (lastOccurrenceIndex !== -1) {
-        textHTML = textHTML.substr(0, lastOccurrenceIndex) + newFooter + textHTML.substr(lastOccurrenceIndex + this.footerHTML.length);
-        if (this.msgExpandingHTMLPart) {
-          this.msgExpandingHTMLPart = textHTML;
-          if (!textHTML) {
-            this.composer.S.cached('icon_show_prev_msg').hide();
-          }
-        } else {
-          this.composer.input.squire.setHTML(textHTML); // xss-sanitized
-        }
-      }
-    } else {
-      if (this.msgExpandingHTMLPart) {
-        this.msgExpandingHTMLPart = newFooter + this.msgExpandingHTMLPart;
-      } else {
-        this.composer.input.squire.insertHTML(newFooter); // xss-sanitized
-      }
-    }
-    this.footerHTML = newFooter || undefined;
-  }
-
-  public getAndDecryptMessage = async (msgId: string, method: 'reply' | 'forward', progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> => {
+  private getAndDecryptMessage = async (msgId: string, method: 'reply' | 'forward'): Promise<MessageToReplyOrForward | undefined> => {
     try {
-      const { raw } = await this.composer.emailProvider.msgGet(msgId, 'raw', progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
+      const { raw } = await this.composer.emailProvider.msgGet(msgId, 'raw', (progress) => this.setQuoteLoaderProgress(progress));
+      this.setQuoteLoaderProgress('processing...');
       const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw!));
       const headers = {
         date: String(decoded.headers.date), from: decoded.from,
@@ -136,8 +105,8 @@ export class ComposerQuote extends ComposerComponent {
       const readableBlocks: MsgBlock[] = [];
       for (const block of message.blocks.filter(b => readableBlockTypes.includes(b.type))) {
         if (['encryptedMsg', 'signedMsg'].includes(block.type)) {
-          const stringContent = block.content.toString();
-          const decrypted = await this.decryptMessage(Buf.fromUtfStr(stringContent));
+          this.setQuoteLoaderProgress('decrypting...');
+          const decrypted = await this.decryptMessage(Buf.fromUtfStr(block.content.toString()));
           const msgBlocks = await MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks(Buf.fromUtfStr(decrypted));
           readableBlocks.push(...msgBlocks.blocks.filter(b => decryptedBlockTypes.includes(b.type)));
         } else {
@@ -146,20 +115,18 @@ export class ComposerQuote extends ComposerComponent {
       }
       const decryptedAndFormatedContent: string[] = [];
       const decryptedFiles: File[] = [];
-      for (const [index, block] of readableBlocks.entries()) {
+      for (const block of readableBlocks) {
         const stringContent = block.content.toString();
         if (block.type === 'decryptedHtml') {
           const htmlParsed = Xss.htmlSanitizeAndStripAllTags(block ? block.content.toString() : 'No Content', '\n');
           decryptedAndFormatedContent.push(Xss.htmlUnescape(htmlParsed));
-          if (progressCb) {
-            progressCb(60 + (Math.round((40 / readableBlocks.length) * (index + 1))));
-          }
         } else if (block.type === 'plainHtml') {
           decryptedAndFormatedContent.push(Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n')));
         } else if (['encryptedAtt', 'decryptedAtt', 'plainAtt'].includes(block.type)) {
           if (block.attMeta?.data) {
             let attMeta: { content: Buf, filename?: string } | undefined;
             if (block.type === 'encryptedAtt') {
+              this.setQuoteLoaderProgress('decrypting...');
               const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.view.acctEmail), encryptedData: block.attMeta.data });
               if (result.success) {
                 attMeta = { content: result.content, filename: result.filename };
@@ -170,9 +137,6 @@ export class ComposerQuote extends ComposerComponent {
             if (attMeta) {
               const file = new File([attMeta.content], attMeta.filename || '');
               decryptedFiles.push(file);
-            }
-            if (progressCb) {
-              progressCb(60 + (Math.round((40 / readableBlocks.length) * (index + 1))));
             }
           }
         } else {
@@ -197,19 +161,6 @@ export class ComposerQuote extends ComposerComponent {
       }
       return;
     }
-  }
-
-  private createFooterHTML = (footer: string) => {
-    const sanitizedPlainFooter = Xss.htmlSanitizeAndStripAllTags(footer, '\n');
-    const sanitizedHtmlFooter = sanitizedPlainFooter.replace(/\n/g, '<br>');
-    const footerFirstLine = sanitizedPlainFooter.split('\n')[0];
-    if (!footerFirstLine) {
-      return '';
-    }
-    if (/^[*-_=+#~ ]+$/.test(footerFirstLine)) {
-      return `<br>${sanitizedHtmlFooter}`;  // first line of footer is already a footer separator, made of special characters
-    }
-    return `<br><br>--<br>${sanitizedHtmlFooter}`; // create a custom footer separator
   }
 
   private decryptMessage = async (encryptedData: Buf): Promise<string> => {
@@ -240,19 +191,18 @@ export class ComposerQuote extends ComposerComponent {
     return `<blockquote>${sanitizedQuote}</blockquote>`;
   }
 
-  private setExpandingTextAfterClick = () => {
-    this.composer.S.cached('icon_show_prev_msg')
-      .click(this.view.setHandler(el => {
-        el.style.display = 'none';
-        Xss.sanitizeAppend(this.composer.S.cached('input_text'), this.msgExpandingHTMLPart || '');
-        this.msgExpandingHTMLPart = undefined;
-        this.composer.input.squire.focus();
-        this.composer.size.resizeComposeBox();
-      }));
+  private actionRenderTripleDotContentHandle = (el: HTMLElement) => {
+    $(el).remove();
+    Xss.sanitizeAppend(this.composer.S.cached('input_text'), this.getTripleDotSanitizedFormattedHtmlContent());
+    this.tripleDotSanitizedHtmlContent = undefined;
+    this.composer.input.squire.focus();
+    this.composer.size.resizeComposeBox();
   }
 
-  private setQuoteLoaderProgress = (text: string) => {
-    return this.composer.S.cached('icon_show_prev_msg').find('#loader').text(text);
+  private setQuoteLoaderProgress = (percentOrString: string | number | undefined): void => {
+    if (percentOrString) {
+      this.composer.S.cached('triple_dot').find('#loader').text(typeof percentOrString === 'number' ? `${percentOrString}%` : percentOrString);
+    }
   }
 
 }

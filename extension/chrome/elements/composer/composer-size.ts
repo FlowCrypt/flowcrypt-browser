@@ -84,7 +84,7 @@ export class ComposerSize extends ComposerComponent {
       }
       const attListHeight = $("#att_list").height() || 0;
       const inputTextVerticalPadding = parseInt(this.composer.S.cached('input_text').css('padding-top')) + parseInt(this.composer.S.cached('input_text').css('padding-bottom'));
-      const iconShowPrevMsgHeight = this.composer.S.cached('icon_show_prev_msg').outerHeight(true) || 0;
+      const iconShowPrevMsgHeight = this.composer.S.cached('triple_dot').outerHeight(true) || 0;
       this.composer.S.cached('input_text').css('height', this.refBodyHeight - cellHeightExceptText - attListHeight - inputTextVerticalPadding - iconShowPrevMsgHeight);
     }
   }

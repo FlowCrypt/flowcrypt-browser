@@ -258,7 +258,7 @@ View.run(class SettingsView extends View {
 
   private resolveChangedGoogleAcct = async (newAcctEmail: string) => {
     try {
-      await Settings.refreshAcctAliases(this.acctEmail!);
+      await Settings.refreshSendAs(this.acctEmail!);
       await Settings.acctStorageChangeEmail(this.acctEmail!, newAcctEmail);
       await Ui.modal.info(`Email address changed to ${newAcctEmail}. You should now check that your public key is properly submitted.`);
       window.location.href = Url.create('index.htm', { acctEmail: newAcctEmail, page: '/chrome/settings/modules/keyserver.htm' });

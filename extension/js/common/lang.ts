@@ -64,6 +64,7 @@ export const Lang = { // tslint:disable-line:variable-name
     brokenLink: 'It seems it contains a broken link.',
   },
   compose: {
+    abortSending: 'A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?',
     pleaseReconnectAccount: 'Please reconnect FlowCrypt to your Gmail Account. This is typically needed after a long time of no use, a password change, or similar account changes. ',
     msgEncryptedHtml: { EN: 'This&nbsp;message&nbsp;is&nbsp;encrypted: ', DE: 'Diese&nbsp;Nachricht&nbsp;ist&nbsp;verschlüsselt: ' },
     msgEncryptedText: { EN: 'This message is encrypted. Follow this link to open it: ', DE: 'Diese Nachricht ist verschlüsselt. Nachricht öffnen: ' },

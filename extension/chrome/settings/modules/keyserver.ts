@@ -34,7 +34,7 @@ View.run(class KeyserverView extends View {
     $('.email-address').text(this.acctEmail);
     Xss.sanitizeRender('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
     (async () => {
-      const isRefreshed = await Settings.refreshAcctAliases(this.acctEmail);
+      const isRefreshed = await Settings.refreshSendAs(this.acctEmail);
       if (isRefreshed && await Ui.modal.confirm(Lang.general.emailAliasChangedAskForReload)) {
         window.location.reload();
       }

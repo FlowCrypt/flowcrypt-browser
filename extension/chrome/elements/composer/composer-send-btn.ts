@@ -16,6 +16,7 @@ import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { SendBtnTexts } from './composer-types.js';
 import { SendableMsg } from '../../../js/common/api/email_provider/email_provider_api.js';
 import { Store } from '../../../js/common/platform/store.js';
+import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
@@ -191,7 +192,11 @@ export class ComposerSendBtn extends ComposerComponent {
             name = contact.name;
           }
         }
-        return name ? `${name.replace(/[<>,'"/\\\n\r\t]/g, '')} <${email}>` : email;
+        const fixedEmail = Str.parseEmail(email).email;
+        if (!fixedEmail) {
+          throw new Error(`Recipient email ${email} is not valid`);
+        }
+        return name ? `${Str.rmSpecialCharsKeepUtf(name, 'ALLOW-SOME')} <${fixedEmail}>` : fixedEmail;
       }));
     };
     msg.recipients.to = await addNameToEmail(msg.recipients.to || []);

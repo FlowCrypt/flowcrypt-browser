@@ -8,6 +8,7 @@ import { ComposeView } from '../../../js/common/../../chrome/elements/compose.js
 import { ComposerAtts } from './composer-atts.js';
 import { ComposerDraft } from './composer-draft.js';
 import { ComposerErrs } from './composer-errs.js';
+import { ComposerFooter } from './composer-footer.js';
 import { ComposerInput } from './composer-input.js';
 import { ComposerMyPubkey } from './composer-my-pubkey.js';
 import { ComposerPwdOrPubkeyContainer } from './composer-pwd-or-pubkey-container.js';
@@ -50,7 +51,7 @@ export class Composer {
     icon_pubkey: '.icon.action_include_pubkey',
     icon_help: '.action_feedback',
     icon_popout: '.popout img',
-    icon_show_prev_msg: '.action_show_prev_msg',
+    triple_dot: '.action_show_prev_msg',
     prompt: 'div#initial_prompt',
     reply_msg_successful: '#reply_message_successful_container',
     replied_body: '.replied_body',
@@ -61,7 +62,7 @@ export class Composer {
     input_addresses_container_inner: '#input_addresses_container > div:first',
     recipients_inputs: '#input_addresses_container input',
     attached_files: 'table#compose #fineuploader .qq-upload-list li',
-    email_copy_actions: '#input_addresses_container .email-copy-actions',
+    container_cc_bcc_buttons: '#input_addresses_container .container-cc-bcc-buttons',
     cc: '#cc',
     bcc: '#bcc',
     sending_options_container: '#sending-options-container'
@@ -74,6 +75,7 @@ export class Composer {
   public pwdOrPubkeyContainer: ComposerPwdOrPubkeyContainer;
   public size: ComposerSize;
   public sender: ComposerSender;
+  public footer: ComposerFooter;
   public atts: ComposerAtts;
   public errs: ComposerErrs;
   public input: ComposerInput;
@@ -94,6 +96,7 @@ export class Composer {
     this.pwdOrPubkeyContainer = new ComposerPwdOrPubkeyContainer(this);
     this.size = new ComposerSize(this);
     this.sender = new ComposerSender(this);
+    this.footer = new ComposerFooter(this);
     this.atts = new ComposerAtts(this);
     this.errs = new ComposerErrs(this);
     this.input = new ComposerInput(this);

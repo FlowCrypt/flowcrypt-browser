@@ -4,13 +4,12 @@
 
 import { BrowserEventErrHandler, Ui } from '../../../js/common/browser/ui.js';
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
-
+import { NewMsgData, SendBtnTexts } from './composer-types.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserExtension } from '../../../js/common/browser/browser-extension.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { ComposerComponent } from './composer-abstract-component.js';
 import { KeyInfo } from '../../../js/common/core/pgp-key.js';
-import { SendBtnTexts } from './composer-types.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -102,7 +101,7 @@ export class ComposerErrs extends ComposerComponent {
   }
 
   public throwIfFormNotReady = (): void => {
-    if (this.composer.S.cached('icon_show_prev_msg').hasClass('progress')) {
+    if (this.composer.S.cached('triple_dot').hasClass('progress')) {
       throw new ComposerNotReadyError('Retrieving previous message, please wait.');
     }
     const btnReadyTexts = [
@@ -124,14 +123,15 @@ export class ComposerErrs extends ComposerComponent {
     throw new ComposerNotReadyError('Still working, please wait.');
   }
 
-  public throwIfFormValsInvalid = async ({ subject, plaintext }: { subject: string, plaintext: string }) => {
-    let plainFooter: string | undefined;
-    if (this.composer.quote.getFooterHTML) {
-      plainFooter = Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.composer.quote.getFooterHTML, '\n')).trim();
-    }
+  public throwIfFormValsInvalid = async ({ subject, plaintext, sender }: NewMsgData) => {
     if (!subject && ! await Ui.modal.confirm('Send without a subject?')) {
       throw new ComposerResetBtnTrigger();
-    } else if ((!plaintext || plaintext === plainFooter) && ! await Ui.modal.confirm('Send empty message?')) {
+    }
+    let footer = await this.composer.footer.getFooterFromStorage(sender);
+    if (footer) { // format footer the way it would be in outgoing plaintext
+      footer = Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.composer.footer.createFooterHtml(footer), '\n')).trim();
+    }
+    if ((!plaintext.trim() || (footer && plaintext.trim() === footer.trim())) && ! await Ui.modal.confirm('Send empty message?')) {
       throw new ComposerResetBtnTrigger();
     }
   }

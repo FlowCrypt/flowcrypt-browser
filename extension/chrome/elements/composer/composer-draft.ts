@@ -28,6 +28,8 @@ export class ComposerDraft extends ComposerComponent {
 
   private SAVE_DRAFT_FREQUENCY = 3000;
 
+  public wasMsgLoadedFromDraft = false;
+
   constructor(composer: Composer) {
     super(composer);
     if (!this.view.disableDraftSaving) {
@@ -51,7 +53,7 @@ export class ComposerDraft extends ComposerComponent {
     });
   }
 
-  public initialDraftLoad = async (draftId: string): Promise<boolean> => {
+  public initialDraftLoad = async (draftId: string): Promise<void> => {
     if (this.view.isReplyBox) {
       Xss.sanitizeRender(this.composer.S.cached('prompt'), `Loading draft.. ${Ui.spinner('green')}`);
     }
@@ -59,15 +61,15 @@ export class ComposerDraft extends ComposerComponent {
       const draftGetRes = await this.composer.emailProvider.draftGet(draftId, 'raw');
       if (!draftGetRes) {
         await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!draftGetRes');
-        return false;
+        return;
       }
       const parsedMsg = await Mime.decode(Buf.fromBase64UrlStr(draftGetRes.message.raw!));
       const armored = PgpArmor.clip(parsedMsg.text || Xss.htmlSanitizeAndStripAllTags(parsedMsg.html || '', '\n') || '');
       if (!armored) {
         await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!armored');
-        return false;
+        return;
       }
-      return await this.decryptAndRenderDraft(armored, parsedMsg);
+      await this.decryptAndRenderDraft(armored, parsedMsg);
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender('body', `Failed to load draft. ${Ui.retryLink()}`);
@@ -85,7 +87,6 @@ export class ComposerDraft extends ComposerComponent {
         Catch.reportErr(e);
         await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('exception');
       }
-      return false;
     }
   }
 
@@ -177,31 +178,27 @@ export class ComposerDraft extends ComposerComponent {
     }
   }
 
-  private decryptAndRenderDraft = async (encryptedArmoredDraft: string, headers: { subject?: string, from?: string; to: string[], cc: string[], bcc: string[] }): Promise<boolean> => {
+  private decryptAndRenderDraft = async (encryptedArmoredDraft: string, headers: { subject?: string, from?: string; to: string[], cc: string[], bcc: string[] }): Promise<void> => {
     const passphrase = await this.composer.storage.passphraseGet();
     if (typeof passphrase !== 'undefined') {
       const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.view.acctEmail), encryptedData: Buf.fromUtfStr(encryptedArmoredDraft) });
       if (result.success) {
+        this.wasMsgLoadedFromDraft = true;
         if (headers.subject) {
           this.composer.S.cached('input_subject').val(headers.subject);
         }
         this.composer.S.cached('prompt').css({ display: 'none' });
         this.composer.input.inputTextHtmlSetSafely(Xss.escape(result.content.toUtfStr()).replace(/\n/g, '<br>'));
         await this.composer.recipients.addRecipientsAndShowPreview({ to: headers.to, cc: headers.cc, bcc: headers.bcc });
-        if (this.view.isReplyBox) {
-          await this.composer.render.renderReplyMsgComposeTable();
-        }
         if (headers.from) {
           this.composer.S.now('input_from').val(headers.from);
         }
         this.composer.input.squire.focus();
-        return true;
       }
     } else {
       await this.renderPPDialogAndWaitWhenPPEntered();
-      return await this.decryptAndRenderDraft(encryptedArmoredDraft, headers);
+      await this.decryptAndRenderDraft(encryptedArmoredDraft, headers);
     }
-    return false;
   }
 
   private hasBodyChanged = (msgBody: string) => {

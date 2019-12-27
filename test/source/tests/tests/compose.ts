@@ -351,7 +351,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
         const subjectElem = await composePage.waitAny('@input-subject');
         expect(await (await subjectElem.getProperty('value')).jsonValue()).to.equal('Test Draft - New Message');
         expect(await composePage.read('@input-body')).to.equal('Testing Drafts (Do not delete)');
-        for (const elem of await composePage.target.$$('.email-copy-actions > span')) {
+        for (const elem of await composePage.target.$$('.container-cc-bcc-buttons > span')) {
           expect(await PageRecipe.getElementPropertyJson(elem, 'offsetHeight')).to.equal(0); // CC/BCC btn isn't visible
         }
       }));
