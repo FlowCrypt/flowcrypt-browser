@@ -157,8 +157,7 @@ export class Mime {
     if (node.charset && Iso88592.labels.includes(node.charset)) {
       return Iso88592.decode(node.rawContent!); // tslint:disable-line:no-unsafe-any
     }
-    if (node.charset?.toUpperCase() === 'ISO-2022-JP' ||
-      node.charset === 'utf-8' && Mime.getNodeType(node, 'initial')?.includes('ISO-2022-JP')) {
+    if (node.charset?.toUpperCase() === 'ISO-2022-JP' || (node.charset === 'utf-8' && Mime.getNodeType(node, 'initial')?.includes('ISO-2022-JP'))) {
       return iso2022jpToUtf(Buf.fromRawBytesStr(node.rawContent!));
     }
     return Buf.fromRawBytesStr(node.rawContent!).toUtfStr();
