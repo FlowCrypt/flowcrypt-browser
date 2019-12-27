@@ -2,11 +2,11 @@
 
 'use strict';
 
+import { SendAsAlias, Store } from '../../../js/common/platform/store.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { ComposerComponent } from './composer-abstract-component.js';
 import { Dict } from '../../../js/common/core/common.js';
-import { SendAsAlias } from '../../../js/common/platform/store.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
@@ -27,7 +27,7 @@ export class ComposerSender extends ComposerComponent {
   }
 
   public renderSenderAliasesOptionsToggle = async () => {
-    const sendAs = await this.composer.storage.getAddresses();
+    const { sendAs } = await Store.getAcct(this.view.acctEmail, ['sendAs']);
     if (sendAs && Object.keys(sendAs).length > 1) {
       const showAliasChevronHtml = '<img tabindex="22" id="show_sender_aliases_options" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
       const inputAddrContainer = this.composer.S.cached('email_copy_actions');
@@ -85,9 +85,12 @@ export class ComposerSender extends ComposerComponent {
   }
 
   public getFooter = async (): Promise<string | undefined> => {
-    const addresses = await this.composer.storage.getAddresses();
+    const { sendAs } = await Store.getAcct(this.view.acctEmail, ['sendAs']);
+    if (!sendAs) {
+      return;
+    }
     const sender = this.getSender();
-    return addresses[sender]?.footer || undefined;
+    return sendAs[sender]?.footer || undefined;
   }
 
 }

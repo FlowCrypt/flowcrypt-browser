@@ -5,16 +5,14 @@
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Contact, KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { Keyserver, PubkeySearchResult } from '../../../js/common/api/keyserver.js';
-import { SendAsAlias, Store } from '../../../js/common/platform/store.js';
-
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { CollectPubkeysResult } from './composer-types.js';
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Dict } from '../../../js/common/core/common.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from './composer-errs.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { Store } from '../../../js/common/platform/store.js';
 import { openpgp } from '../../../js/common/core/pgp.js';
 
 export class ComposerStorage extends ComposerComponent {
@@ -97,14 +95,6 @@ export class ComposerStorage extends ComposerComponent {
       Assert.abortAndRenderErrorIfKeyinfoEmpty(senderKi);
     }
     return await Store.passphraseGet(this.view.acctEmail, senderKi.longid);
-  }
-
-  public getAddresses = async (): Promise<Dict<SendAsAlias>> => {
-    const storage = await Store.getAcct(this.view.acctEmail, ['sendAs']);
-    if (!storage.sendAs) {
-      throw new Error('Unexpectedly missing sendAs - please restart browser');
-    }
-    return storage.sendAs;
   }
 
   public lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string): Promise<Contact | "fail"> => {

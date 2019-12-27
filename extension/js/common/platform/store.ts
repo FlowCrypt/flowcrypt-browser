@@ -8,7 +8,6 @@ import { Contact, KeyInfo } from '../core/pgp-key.js';
 import { Dict, PromiseCancellation, Str, Value } from '../core/common.js';
 import { FcUuidAuth, PaymentMethod, SubscriptionInfo, SubscriptionLevel } from '../api/backend.js';
 import { storageLocalGet, storageLocalRemove, storageLocalSet } from '../api/chrome.js';
-
 import { DomainRules } from '../rules.js';
 import { Env } from '../browser/env.js';
 import { GmailRes } from '../api/email_provider/gmail/gmail-parser.js';
@@ -137,12 +136,6 @@ export type AccountStore = {
   tmp_submit_main?: boolean;
   tmp_submit_all?: boolean;
 };
-
-export class AccountStoreExtension {
-  public static getEmailAliasesIncludingPrimary = (acct: string, sendAs: Dict<SendAsAlias> | undefined) => {
-    return sendAs ? Object.keys(sendAs) : [acct];
-  }
-}
 
 export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'email_provider' | 'google_token_access' | 'google_token_expires' | 'google_token_scopes' |
   'google_token_refresh' | 'hide_message_password' | 'addresses' | 'sendAs' | 'drafts_reply' | 'drafts_compose' |
@@ -273,6 +266,13 @@ export class Store {
       tx.onsuccess = Catch.try(() => resolve(tx.result || undefined)); // tslint:disable-line:no-unsafe-any
       tx.onerror = () => reject(Store.errCategorize(tx.error || new Error('Unknown db error')));
     });
+  }
+
+  private static fixAcctStorageResult = (acctEmail: string, acctStore: AccountStore, keys: AccountIndex[]): AccountStore => {
+    if (keys.includes('sendAs') || !acctStore.sendAs) {
+      acctStore.sendAs = { acctEmail: { isPrimary: true, isDefault: true } };
+    }
+    return acctStore;
   }
 
   private static keyCacheRenewExpiry = () => {
@@ -487,7 +487,8 @@ export class Store {
       throw new BgNotReadyErr('this should never happen');
     }
     const storageObj = await storageLocalGet(Store.singleScopeRawIndexArr(acctEmail, keys)) as RawStore;
-    return Store.buildSingleAccountStoreFromRawResults(acctEmail, storageObj) as AccountStore;
+    const result = Store.buildSingleAccountStoreFromRawResults(acctEmail, storageObj) as AccountStore;
+    return Store.fixAcctStorageResult(acctEmail, result, keys);
   }
 
   public static getAccounts = async (acctEmails: string[], keys: string[]): Promise<Dict<AccountStore>> => {

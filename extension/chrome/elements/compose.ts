@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { AccountStore, AccountStoreExtension, Scopes, Store } from '../../js/common/platform/store.js';
+import { AccountStore, Scopes, Store } from '../../js/common/platform/store.js';
 import { EmailProviderInterface, ReplyParams } from '../../js/common/api/email_provider/email_provider_api.js';
 
 import { ApiErr } from '../../js/common/api/error/api-error.js';
@@ -40,12 +40,12 @@ export class ComposeView extends View {
   public draftId: string;
   public threadId: string = '';
 
-  public scopes: Scopes | undefined;
-  public tabId: string | undefined;
-  public storage: AccountStore | undefined;
-  public factory: XssSafeFactory | undefined;
+  public scopes!: Scopes;
+  public tabId!: string;
+  public storage!: AccountStore;
+  public factory!: XssSafeFactory;
   public replyParams: ReplyParams | undefined;
-  public composer: Composer | undefined;
+  public composer!: Composer;
   public emailProvider: EmailProviderInterface;
 
   constructor() {
@@ -71,8 +71,7 @@ export class ComposeView extends View {
   }
 
   public render = async () => {
-    this.storage = await Store.getAcct(this.acctEmail, ['google_token_scopes', 'addresses', 'sendAs', 'email_provider',
-      'hide_message_password', 'drafts_reply']);
+    this.storage = await Store.getAcct(this.acctEmail, ['google_token_scopes', 'addresses', 'sendAs', 'email_provider', 'hide_message_password', 'drafts_reply']);
     this.tabId = await BrowserMsg.requiredTabId();
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.scopes = await Store.getScopes(this.acctEmail);
@@ -95,7 +94,7 @@ export class ComposeView extends View {
   public urlParams = () => { // used to reload the frame with updated params
     return {
       acctEmail: this.acctEmail, draftId: this.draftId, threadId: this.threadId, replyMsgId: this.replyMsgId, ...this.replyParams,
-      frameId: this.frameId, tabId: this.tabId!, isReplyBox: this.isReplyBox, skipClickPrompt: this.skipClickPrompt, parentTabId: this.parentTabId,
+      frameId: this.frameId, tabId: this.tabId, isReplyBox: this.isReplyBox, skipClickPrompt: this.skipClickPrompt, parentTabId: this.parentTabId,
       disableDraftSaving: this.disableDraftSaving, debug: this.debug, removeAfterClose: this.removeAfterClose,
       replyPubkeyMismatch: this.replyPubkeyMismatch,
     };
@@ -105,7 +104,7 @@ export class ComposeView extends View {
     Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: `Loading secure reply box..${Ui.spinner('green')}` }));
     try {
       const gmailMsg = await this.emailProvider.msgGet(this.replyMsgId!, 'metadata');
-      const aliases = AccountStoreExtension.getEmailAliasesIncludingPrimary(this.acctEmail, this.storage!.sendAs);
+      const aliases = Object.keys(this.storage.sendAs!);
       this.replyParams = GmailParser.determineReplyMeta(this.acctEmail, aliases, gmailMsg);
       this.threadId = gmailMsg.threadId || '';
     } catch (e) {
