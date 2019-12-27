@@ -41,9 +41,9 @@ export class ComposerFooter extends ComposerComponent {
       return '';
     }
     if (/^[*-_=+#~ ]+$/.test(footerFirstLine)) {
-      return `<br>${sanitizedHtmlFooter}`;  // first line of footer is already a footer separator, made of special characters
+      return sanitizedHtmlFooter;  // first line of footer is already a footer separator, made of special characters
     }
-    return `<br>--<br>${sanitizedHtmlFooter}`; // create a custom footer separator
+    return `--<br>${sanitizedHtmlFooter}`; // create a custom footer separator
   }
 
 }

@@ -70,7 +70,8 @@ export const mockGoogleEndpoints: HandlersDefinition = {
         verificationStatus: 'accepted'
       }];
       if (acct === 'flowcrypt.compatibility@gmail.com') {
-        sendAs[0].signature = 'The best footer ever!';
+        // eslint-disable-next-line max-len
+        sendAs[0].signature = '<div dir="ltr">The best footer ever!<br><img src="https://www.smallbizgenius.net/wp-content/uploads/2019/11/smallbizgenius_favicon.png" alt="Image result for small image"><br></div>';
         const alias = 'flowcryptcompatibility@gmail.com';
         sendAs.push({
           sendAsEmail: alias,

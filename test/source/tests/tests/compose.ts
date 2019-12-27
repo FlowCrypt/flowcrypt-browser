@@ -459,7 +459,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await composePage.waitAndClick('.swal2-cancel');
       await composePage.waitAndClick('@action-expand-quoted-text', { delay: 1 });
       const footer = await composePage.read('@input-body');
-      expect(footer).to.include('The best footer ever!');
+      expect(footer).to.eq('\n\n\n--\nThe best footer ever!');
       await composePage.waitAndClick(`@action-send`);
       expect(await composePage.read('#swal2-content')).to.include('Send empty message?');
       await composePage.waitAndClick('.swal2-cancel');
