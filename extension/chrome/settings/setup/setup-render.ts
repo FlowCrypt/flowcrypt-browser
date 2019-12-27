@@ -141,7 +141,6 @@ export class SetupRenderModule {
 
   private saveAndFillSubmitPubkeysOption = (addresses: string[]) => {
     this.view.submitKeyForAddrs = this.filterAddressesForSubmittingKeys(addresses);
-    console.log(this.view.submitKeyForAddrs);
     if (this.view.submitKeyForAddrs.length > 1) {
       $('.addresses').text(Value.arr.withoutVal(this.view.submitKeyForAddrs, this.view.acctEmail).join(', '));
       $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
