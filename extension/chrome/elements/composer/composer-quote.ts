@@ -35,7 +35,7 @@ export class ComposerQuote extends ComposerComponent {
   }
 
   public addTripleDotQuoteExpandFooterOnlyBtn = async () => {
-    const textFooter = await this.composer.footer.getFooter();
+    const textFooter = await this.composer.footer.getFooterFromStorage(this.composer.sender.getSender());
     if (!textFooter) {
       this.composer.S.cached('triple_dot').hide();
       return;
@@ -71,7 +71,7 @@ export class ComposerQuote extends ComposerComponent {
         }
       }
     }
-    const textFooter = await this.composer.footer.getFooter();
+    const textFooter = await this.composer.footer.getFooterFromStorage(this.composer.sender.getSender());
     const sanitizedFooter = textFooter && !this.composer.draft.wasMsgLoadedFromDraft ? this.composer.footer.createFooterHtml(textFooter) : undefined;
     if (!sanitizedQuote && !sanitizedFooter) {
       this.composer.S.cached('triple_dot').hide();

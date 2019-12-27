@@ -68,7 +68,7 @@ export class ComposerSender extends ComposerComponent {
         if (refreshResult.footerChanged && !this.composer.draft.wasMsgLoadedFromDraft) {
           const sendAsAlias = refreshResult.sendAs[this.getSender()];
           if (sendAsAlias && !this.view.isReplyBox) {
-            this.composer.footer.replaceFooter(sendAsAlias.footer || undefined);
+            this.composer.footer.onFooterUpdated(sendAsAlias.footer || undefined);
           }
         }
       }
@@ -83,7 +83,7 @@ export class ComposerSender extends ComposerComponent {
   private actionInputFromChangeHanlder = async () => {
     await this.composer.recipients.reEvaluateRecipients(this.composer.recipients.getRecipients());
     await this.composer.recipients.setEmailsPreview(this.composer.recipients.getRecipients());
-    this.composer.footer.replaceFooter(await this.composer.footer.getFooter());
+    this.composer.footer.onFooterUpdated(await this.composer.footer.getFooterFromStorage(this.composer.sender.getSender()));
   }
 
 }

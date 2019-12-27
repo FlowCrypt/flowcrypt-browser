@@ -12,12 +12,11 @@ export class ComposerFooter extends ComposerComponent {
     // none
   }
 
-  public getFooter = async (): Promise<string | undefined> => {
+  public getFooterFromStorage = async (sender: string): Promise<string | undefined> => {
     const { sendAs } = await Store.getAcct(this.view.acctEmail, ['sendAs']);
     if (!sendAs) {
       return;
     }
-    const sender = this.view.composer.sender.getSender();
     return sendAs[sender]?.footer || undefined;
   }
 
@@ -26,7 +25,7 @@ export class ComposerFooter extends ComposerComponent {
    * Since user has to first explicitly click ellipsis to render footer (not very common),
    * it does not bother us if old footer stays in the text (eg when user later changes sendFrom address)
    */
-  public replaceFooter = (newFooter: string | undefined) => {
+  public onFooterUpdated = (newFooter: string | undefined) => {
     if (this.composer.quote.tripleDotSanitizedHtmlContent) { // footer not yet rendered
       this.composer.quote.tripleDotSanitizedHtmlContent.footer = newFooter ? this.createFooterHtml(newFooter) : '';
     } else if (this.composer.S.cached('triple_dot')[0] && newFooter) { // ellipsis preset (not yet clicked), but not visible (likely no footer earlier)
