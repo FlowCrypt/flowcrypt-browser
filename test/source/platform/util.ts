@@ -18,9 +18,5 @@ export const base64decode = (b64tr: string): string => {
 };
 
 export const iso2022jpToUtf = (content: Buf) => {
-  if (!TextDecoder) {
-    throw new Error('iso2022jpToUtf not implemented on node.');
-  }
-  const decoder = new TextDecoder();
-  return decoder.decode(content);
+  throw new Error('iso2022jpToUtf not implemented on node');
 };
