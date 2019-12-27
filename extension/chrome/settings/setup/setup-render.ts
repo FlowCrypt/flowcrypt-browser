@@ -23,8 +23,9 @@ export class SetupRenderModule {
     $('.back').css('visibility', 'hidden');
     if (this.view.storage!.email_provider === 'gmail') { // show alternative account addresses in setup form + save them for later
       try {
-        const sendAs = await Settings.fetchAcctAliasesFromGmail(this.view.acctEmail); // TODO - FIX THIS (to save it to storage)
-        await this.view.saveAndFillSubmitOption(sendAs);
+        await Settings.refreshSendAs(this.view.acctEmail);
+        const { sendAs } = await Store.getAcct(this.view.acctEmail, ['sendAs']);
+        await this.view.saveAndFillSubmitOption(sendAs!);
       } catch (e) {
         return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToLoadEmailAliases, () => this.renderInitial());
       }

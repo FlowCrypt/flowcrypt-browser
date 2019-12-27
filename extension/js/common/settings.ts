@@ -50,8 +50,7 @@ export class Settings {
     return undefined;
   }
 
-  // TODO - FIX THIS (make private)
-  public static fetchAcctAliasesFromGmail = async (acctEmail: string): Promise<Dict<SendAsAlias>> => {
+  private static fetchAcctAliasesFromGmail = async (acctEmail: string): Promise<Dict<SendAsAlias>> => {
     const response = await new Gmail(acctEmail).fetchAcctAliases();
     const validAliases = response.sendAs.filter(alias => alias.isPrimary || alias.verificationStatus === 'accepted');
     const result: Dict<SendAsAlias> = {};

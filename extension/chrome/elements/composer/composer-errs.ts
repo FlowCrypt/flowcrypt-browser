@@ -63,7 +63,7 @@ export class ComposerErrs extends ComposerComponent {
 
   public debug = (msg: string) => {
     if (this.view.debug) {
-      console.log(`[${this.debugId}] ${msg}`); // TODO - FIX THIS - uncomment
+      console.log(`[${this.debugId}] ${msg}`);
     }
   }
 
