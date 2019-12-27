@@ -27,7 +27,7 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     this.choices.richText = await this.richTextUserChoiceRetrieve();
     for (const key of Object.keys(popoverItems)) {
       const popoverOpt = key as PopoverOpt;
-      if (popoverOpt === 'richText' && Catch.browser().name !== 'firefox') {
+      if (popoverOpt === 'richText' && (!this.view.debug && Catch.browser().name !== 'firefox')) {
         continue; // richText not deployed to Chrome yet, for now only allow firefox
       }
       const item = popoverItems[popoverOpt];

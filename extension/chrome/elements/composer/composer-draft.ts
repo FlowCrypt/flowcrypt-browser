@@ -96,8 +96,8 @@ export class ComposerDraft extends ComposerComponent {
       try {
         this.composer.S.cached('send_btn_note').text('Saving');
         const primaryKi = await this.composer.storage.getKey(this.composer.sender.getSender());
-        const plaintext = this.composer.input.extract('text', 'input_text');
-        const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(plaintext), armor: true }) as OpenPGP.EncryptArmorResult;
+        const plainHTML = this.composer.input.extract('html', 'input_text');
+        const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(plainHTML), armor: true }) as OpenPGP.EncryptArmorResult;
         let body: string;
         if (this.view.threadId) { // reply draft
           body = `[cryptup:link:draft_reply:${this.view.threadId}]\n\n${encrypted.data}`;
@@ -188,7 +188,7 @@ export class ComposerDraft extends ComposerComponent {
           this.composer.S.cached('input_subject').val(headers.subject);
         }
         this.composer.S.cached('prompt').css({ display: 'none' });
-        this.composer.input.inputTextHtmlSetSafely(Xss.escape(result.content.toUtfStr()).replace(/\n/g, '<br>'));
+        this.composer.input.inputTextHtmlSetSafely(result.content.toUtfStr());
         await this.composer.recipients.addRecipientsAndShowPreview({ to: headers.to, cc: headers.cc, bcc: headers.bcc });
         if (headers.from) {
           this.composer.S.now('input_from').val(headers.from);
