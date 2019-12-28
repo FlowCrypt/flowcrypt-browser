@@ -19,6 +19,7 @@ import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
 import { TestUrls } from './../../browser/test_urls';
 import { TestVariant } from '../../util';
 import { expect } from "chai";
+
 // tslint:disable:no-blank-lines-func
 
 export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser: TestWithNewBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
@@ -523,6 +524,23 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.be.lessThan(initialHeight);
       await composeFrame.waitAndClick('.minimize_new_message', { sleepWhenDone: 1 });
       expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.equal(initialHeight);
+    }));
+
+    ava.default.only('compose[global:compose] - saving and rendering a draft with image ', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Test Saving Drafts In Mock');
+      await composePage.page.evaluate(() => {
+        // eslint-disable-next-line max-len
+        $('[data-test=action-insert-image]').val('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAnElEQVR42u3RAQ0AAAgDIE1u9FvDOahAVzLFGS1ECEKEIEQIQoQgRIgQIQgRghAhCBGCECEIQYgQhAhBiBCECEEIQoQgRAhChCBECEIQIgQhQhAiBCFCEIIQIQgRghAhCBGCEIQIQYgQhAhBiBCEIEQIQoQgRAhChCAEIUIQIgQhQhAiBCEIEYIQIQgRghAhCBEiRAhChCBECEK+W3uw+TnWoJc/AAAAAElFTkSuQmCC')
+          .click();
+      });
+      await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
+      await composePage.close();
+      const appendUrl = 'draftId=draft_testsavingdraftsinmock';
+      composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
+      const body = await composePage.waitAny('@input-body');
+      const image = await body.$eval('img', el => el.getAttribute('src'));
+      expect(image).to.not.be.empty;
     }));
 
     ava.todo('compose[global:compose] - reply - new gmail threadId fmt');

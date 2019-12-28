@@ -21,6 +21,9 @@ export class ComposerInput extends ComposerComponent {
     this.resizeReplyBox();
     this.scrollIntoView();
     this.squire.setConfig({ addLinks: this.isRichText() });
+    if (this.view.debug) {
+      this.insertDebugElements();
+    }
   }
 
   public addRichTextFormatting = () => {
@@ -185,6 +188,15 @@ export class ComposerInput extends ComposerComponent {
       }
     }
     return result;
+  }
+
+  // We need this method to test imagees in drafts because we can't paste them dirctly in tests.
+  private insertDebugElements = () => {
+    this.composer.S.cached('body').append('<input type="hidden" id="test_insertImage" data-test="action-insert-image" />'); // xss-direct
+    $('#test_insertImage').on('click', this.view.setHandler((input) => {
+      const base64Img = $(input).val();
+      this.squire.insertImage(base64Img! as string, {});
+    }));
   }
 
   private isRichText = () => {

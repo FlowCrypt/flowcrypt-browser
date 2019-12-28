@@ -1,4 +1,5 @@
-import { ParsedMail } from 'mailparser';
+import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
+
 import UserMessages from '../../../samples/mock-data';
 import { Util } from '../../util/index';
 import { readFileSync } from 'fs';
@@ -8,17 +9,75 @@ type GmailMsg$payload$body = { attachmentId: string, size: number, data?: string
 type GmailMsg$payload$part = { body?: GmailMsg$payload$body, filename?: string, mimeType?: string, headers?: GmailMsg$header[] };
 type GmailMsg$payload = { parts?: GmailMsg$payload$part[], headers?: GmailMsg$header[], mimeType?: string, body?: GmailMsg$payload$body };
 type GmailMsg$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES' | 'DRAFT';
-export type GmailMsg = {
-  id: string; historyId: string; threadId?: string | null; payload: GmailMsg$payload; internalDate?: number | string;
-  labelIds?: GmailMsg$labelId[]; snippet?: string; raw?: string;
-};
-export type GmailDraft = {
-  id: string,
-  message: GmailMsg
-};
 type GmailThread = { historyId: string; id: string; snippet: string; };
 type Label = { id: string, name: "CATEGORY_SOCIAL", messageListVisibility: "hide", labelListVisibility: "labelHide", type: 'system' };
 type AcctDataFile = { messages: GmailMsg[]; drafts: GmailDraft[], attachments: { [id: string]: { data: string, size: number } }, labels: Label[] };
+
+export class GmailMsg {
+  public id: string;
+  public historyId: string;
+  public threadId?: string | null;
+  public payload: GmailMsg$payload;
+  public internalDate?: number | string;
+  public labelIds?: GmailMsg$labelId[];
+  public snippet?: string;
+  public raw?: string;
+
+  constructor(msg?: { id: string, labelId: GmailMsg$labelId, raw: string, mimeMsg: ParsedMail }) {
+    if (msg) {
+      this.id = `msg_${msg.id}`;
+      this.historyId = this.id;
+      this.threadId = this.id;
+      this.labelIds = [msg.labelId];
+      this.raw = msg.raw;
+      const contentTypeHeader = msg.mimeMsg.headers.get('content-type')! as StructuredHeader;
+      const toHeader = msg.mimeMsg.headers.get('to')! as AddressObject;
+      const fromHeader = msg.mimeMsg.headers.get('from')! as AddressObject;
+      const subjectHeader = msg.mimeMsg.headers.get('subject')! as string;
+      const dateHeader = msg.mimeMsg.headers.get('date')! as Date;
+      const messageIdHeader = msg.mimeMsg.headers.get('message-id')! as string;
+      const mimeVersionHeader = msg.mimeMsg.headers.get('mime-version')! as string;
+      const textBase64 = Buffer.from(msg.mimeMsg.text, 'utf-8').toString('base64');
+      this.payload = {
+        mimeType: contentTypeHeader.value,
+        headers: [
+          // tslint:disable-next-line: no-unsafe-any
+          { name: "Content-Type", value: `${contentTypeHeader.value}; boundary=\"${contentTypeHeader.params.boundary}\"` },
+          { name: "Message-Id", value: messageIdHeader },
+          { name: "Mime-Version", value: mimeVersionHeader }
+        ],
+        body: {
+          attachmentId: '',
+          size: textBase64.length,
+          data: textBase64
+        }
+      };
+      if (toHeader) {
+        this.payload.headers!.push({ name: 'To', value: toHeader.value.map(a => a.address).join(',') });
+      }
+      if (fromHeader) {
+        this.payload.headers!.push({ name: 'From', value: fromHeader.value[0].address });
+      }
+      if (subjectHeader) {
+        this.payload.headers!.push({ name: 'Subject', value: subjectHeader });
+      }
+      if (dateHeader) {
+        this.payload.headers!.push({ name: 'Date', value: dateHeader.toString() });
+      }
+    }
+  }
+}
+export class GmailDraft {
+  public id: string;
+  public message: GmailMsg;
+
+  constructor(draft?: { id: string, raw: string, mimeMsg: ParsedMail }) {
+    if (draft) {
+      this.id = `draft_${draft.id}`;
+      this.message = new GmailMsg({ labelId: 'DRAFT', ...draft });
+    }
+  }
+}
 
 const DATA: { [acct: string]: AcctDataFile } = {};
 
@@ -127,6 +186,15 @@ export class GoogleData {
       }
       return shouldInclude && !shouldExclude;
     });
+  }
+
+  public addDraft = (draft: GmailDraft) => {
+    const index = DATA[this.acct].drafts.findIndex(d => d.id === draft.id);
+    if (index === -1) {
+      DATA[this.acct].drafts.push(draft);
+    } else {
+      DATA[this.acct].drafts[index] = draft;
+    }
   }
 
   public getDraft = (id: string): GmailDraft | undefined => {

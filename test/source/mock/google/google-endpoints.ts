@@ -1,8 +1,8 @@
+import { GmailDraft, GoogleData } from './google-data';
 import { HttpClientErr, Status } from '../lib/api';
 import Parse, { ParseMsgResult } from '../../util/parse';
 import { isDelete, isGet, isPost, isPut, parseResourceId } from '../lib/mock-util';
 
-import { GoogleData } from './google-data';
 import { HandlersDefinition } from '../all-apis-mock';
 import { ParsedMail } from 'mailparser';
 import { TestBySubjectStrategyContext } from './strategies/send-message-strategy';
@@ -193,6 +193,16 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       }
       throw new HttpClientErr(`MOCK draft not found for ${acct} (draftId: ${id})`, Status.NOT_FOUND);
     } else if (isPut(req)) {
+      // tslint:disable-next-line: no-unsafe-any
+      const raw = (parsedReq.body as any)?.message?.raw as string;
+      if (raw) {
+        const mimeMsg = await Parse.convertBase64ToMimeMsg(raw);
+        if (mimeMsg.subject.includes('Test Saving Drafts In Mock')) {
+          const draft = new GmailDraft({ id: mimeMsg.subject.replace(/\s/g, '').toLocaleLowerCase(), raw, mimeMsg });
+          const data = new GoogleData(acct);
+          data.addDraft(draft);
+        }
+      }
       return {};
     } else if (isDelete(req)) {
       return {};

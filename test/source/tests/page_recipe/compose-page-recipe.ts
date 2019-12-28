@@ -54,7 +54,7 @@ export class ComposePageRecipe extends PageRecipe {
     if (subject) {
       await composePageOrFrame.click('@input-subject');
       await Util.sleep(1);
-      await composePageOrFrame.type('@input-subject', `Automated puppeteer test: ${subject}`);
+      await composePageOrFrame.type('@input-subject', subject);
     }
     const body = `This is an automated puppeteer test: ${subject || '(no-subject)'}`;
     await composePageOrFrame.type('@input-body', body);
@@ -96,6 +96,10 @@ export class ComposePageRecipe extends PageRecipe {
       await composePageOrFrame.page.evaluate(() => { $('#input_text').focus(); });
       await Util.sleep(1);
     }
+  }
+
+  public static waitWhenDraftIsSaved = async (composePageOrFrame: Controllable) => {
+    await composePageOrFrame.verifyContentIsPresentContinuously('@send-btn-note', 'Saved');
   }
 
   public static sendAndClose = async (

@@ -301,6 +301,25 @@ abstract class ControllableBase {
     throw new Error(`Slector ${selector} was found but did not contain text "${needle}" whithin ${timeoutSec}s. Last content: "${text}"`);
   }
 
+  public verifyContentIsPresentContinuously = async (selector: string, content: string, shouldBePresentMS: number = 3000, timeoutSec = 20) => {
+    await this.waitAll(selector);
+    const start = Date.now();
+    const sleepMS = 10;
+    let presentForMS: number = 0;
+    while (Date.now() - start < timeoutSec * 1000) {
+      await Util.sleep(sleepMS / 1000);
+      const text = await this.read(selector, true);
+      presentForMS += sleepMS;
+      if (!text.includes(content)) {
+        presentForMS = 0;
+      }
+      if (presentForMS === shouldBePresentMS) {
+        return;
+      }
+    }
+    throw new Error('Error!!!');
+  }
+
   private getFramesUrlsInThisMoment = async (urlMatchables: string[]) => {
     const matchingLinks: string[] = [];
     for (const iframe of await this.target.$$('iframe')) {
