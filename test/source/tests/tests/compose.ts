@@ -526,7 +526,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.equal(initialHeight);
     }));
 
-    ava.default.only('compose[global:compose] - saving and rendering a draft with image ', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compose] - saving and rendering a draft with image ', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Test Saving Drafts In Mock');
       await composePage.page.evaluate(() => {
