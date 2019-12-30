@@ -151,7 +151,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
         await validateMimeMsg(acct, parseResult.mimeMsg, parseResult.threadId);
         try {
           const testingStrategyContext = new TestBySubjectStrategyContext(parseResult.mimeMsg.subject);
-          await testingStrategyContext.test(parseResult.mimeMsg);
+          await testingStrategyContext.test(parseResult.mimeMsg, parseResult.base64);
         } catch (e) {
           if (!(e instanceof UnsuportableStrategyError)) { // No such strategy for test
             throw e;

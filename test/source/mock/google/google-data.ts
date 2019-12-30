@@ -1,5 +1,6 @@
-import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
+import { AddressObject, Attachment, ParsedMail, StructuredHeader } from 'mailparser';
 
+import { Buf } from '../../core/buf';
 import UserMessages from '../../../samples/mock-data';
 import { Util } from '../../util/index';
 import { readFileSync } from 'fs';
@@ -96,10 +97,12 @@ export class GoogleData {
     }
   }
 
-  public storeSentMessage = (parsedMail: ParsedMail): string => {
+  public storeSentMessage = (parsedMail: ParsedMail, base64Msg: string): string => {
     let attId = '';
+    let signatureAtt: Attachment | undefined;
     if (parsedMail.attachments?.length) {
-      const att = parsedMail.attachments.find(a => a.filename === 'encrypted.asc');
+      const att = parsedMail.attachments.find(a => ['encrypted.asc', 'signature.asc'].includes(a.filename!));
+      signatureAtt = parsedMail.attachments.find(a => 'signature.asc' === a.filename);
       if (att) {
         attId = Util.lousyRandom();
         DATA[this.acct].attachments[attId] = { data: att.content.toString('base64'), size: att.size };
@@ -114,6 +117,7 @@ export class GoogleData {
         headers: [{ name: 'Subject', value: parsedMail.subject }],
         body: { data: parsedMail.text, attachmentId: attId, size: parsedMail.text?.length }
       },
+      raw: base64Msg
     };
     DATA[this.acct].messages.push(barebonesGmailMsg);
     return barebonesGmailMsg.id;

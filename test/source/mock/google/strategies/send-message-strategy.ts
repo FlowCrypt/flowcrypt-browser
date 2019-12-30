@@ -9,20 +9,21 @@ import { PgpMsg } from '../../../core/pgp-msg';
 
 // TODO: Make a better structure of ITestMsgStrategy. Because this class doesn't test anything, it only saves message in the Mock
 class SaveMessageInStorageStrategy implements ITestMsgStrategy {
-  test = async (mimeMsg: ParsedMail) => {
-    new GoogleData(mimeMsg.from.value[0].address).storeSentMessage(mimeMsg);
+  test = async (mimeMsg: ParsedMail, base64Msg: string) => {
+    console.log('adding to db');
+    new GoogleData(mimeMsg.from.value[0].address).storeSentMessage(mimeMsg, base64Msg);
   }
 }
 
-class PwdEncryptedMessageTestStrategy extends SaveMessageInStorageStrategy {
-  test = async (mimeMsg: ParsedMail) => {
+class PwdEncryptedMessageTestStrategy implements ITestMsgStrategy {
+  test = async (mimeMsg: ParsedMail, base64Msg: string) => {
     if (!mimeMsg.text.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]{10}/)) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted link in:\n\n${mimeMsg.text}`);
     }
     if (!mimeMsg.text.includes('Follow this link to open it')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
     }
-    super.test(mimeMsg);
+    new GoogleData(mimeMsg.from.value[0].address).storeSentMessage(mimeMsg, base64Msg);
   }
 }
 
@@ -133,14 +134,15 @@ export class TestBySubjectStrategyContext {
       this.strategy = new MessageWithFooterTestStrategy();
     } else if (subject.includes('PWD encrypted message')) {
       this.strategy = new PwdEncryptedMessageTestStrategy();
-    } else if (subject.includes('Test Sending Message With Image')) {
+    } else if (subject.includes('Test Sending Encrypted Message With Image') ||
+      subject.includes('Test Sending Signed Message With Image')) {
       this.strategy = new SaveMessageInStorageStrategy();
     } else {
       throw new UnsuportableStrategyError(`There isn't any strategy for this subject: ${subject}`);
     }
   }
 
-  test = async (mimeMsg: ParsedMail) => {
-    await this.strategy.test(mimeMsg);
+  test = async (mimeMsg: ParsedMail, base64Msg: string) => {
+    await this.strategy.test(mimeMsg, base64Msg);
   }
 }
