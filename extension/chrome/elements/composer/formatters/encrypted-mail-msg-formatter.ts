@@ -35,7 +35,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     this.armoredPubkeys = armoredPubkeys;
   }
 
-  public sendableMsg = async (newMsg: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> => {
+  public sendableMsg = async (newMsg: NewMsgData, signingPrv?: OpenPGP.key.Key, validate: boolean = true): Promise<SendableMsg> => {
     const subscription = await Store.subscription(this.acctEmail);
     const pubkeys = this.armoredPubkeys.map(p => p.pubkey);
     if (!this.richtext) { // simple text: PGP/Inline
@@ -56,7 +56,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         // however if there is more than one recipient with pubkeys, still append the encrypted message as attachment
         atts = pubkeys.length === 1 ? [] : [new Att({ data: Buf.fromUtfStr(encrypted.data), name: 'encrypted.asc' })];
       }
-      return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, encryptedBody, atts, this.composer.view.threadId);
+      return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, encryptedBody, atts,
+        this.composer.view.threadId, undefined, undefined, validate);
     } else if (newMsg.pwd) { // don't allow rich-text pwd msg yet
       this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-richText-sending-option'), 'richtext', false); // do not use rich text
       throw new ComposerUserError('Rich text is not yet supported for password encrypted messages, please retry (formatting will be removed).');
@@ -64,11 +65,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
       const plainAtts = await this.composer.atts.attach.collectAtts();
       const pgpMimeToEncrypt = await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject }, plainAtts);
       const encrypted = await this.encryptData(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubkeys, signingPrv);
-      const atts = [
-        new Att({ data: Buf.fromUtfStr('Version: 1'), type: 'application/pgp-encrypted', contentDescription: 'PGP/MIME version identification' }),
-        new Att({ data: Buf.fromUtfStr(encrypted.data), type: 'application/octet-stream', contentDescription: 'OpenPGP encrypted message', name: 'encrypted.asc', inline: true }),
-      ];
-      return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, {}, atts, this.composer.view.threadId, 'pgpMimeEncrypted');
+      const atts = PgpMsg.createPgpMimeAtts(encrypted.data);
+      return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, {}, atts, this.composer.view.threadId, 'pgpMimeEncrypted', undefined, validate);
     }
   }
 

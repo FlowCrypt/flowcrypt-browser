@@ -2,21 +2,22 @@
 
 'use strict';
 
+import { Dict, Url } from '../../../js/common/core/common.js';
+import { Mime, SendableMsgBody } from '../../../js/common/core/mime.js';
+
 import { AjaxErr } from '../../../js/common/api/error/api-error-types.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { Att } from '../../../js/common/core/att.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Composer } from './composer.js';
 import { ComposerComponent } from './composer-abstract-component.js';
 import { Env } from '../../../js/common/browser/env.js';
-import { Mime } from '../../../js/common/core/mime.js';
 import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
 import { PgpMsg } from '../../../js/common/core/pgp-msg.js';
-import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerDraft extends ComposerComponent {
@@ -64,12 +65,13 @@ export class ComposerDraft extends ComposerComponent {
         return;
       }
       const parsedMsg = await Mime.decode(Buf.fromBase64UrlStr(draftGetRes.message.raw!));
-      const armored = PgpArmor.clip(parsedMsg.text || Xss.htmlSanitizeAndStripAllTags(parsedMsg.html || '', '\n') || '');
+      const encryptedMsg = parsedMsg.atts.find(att => att.treatAs() === 'encryptedMsg')?.getData().toUtfStr();
+      const armored = PgpArmor.clip(parsedMsg.text || Xss.htmlSanitizeAndStripAllTags(parsedMsg.html || '', '\n') || '') || encryptedMsg;
       if (!armored) {
         await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!armored');
         return;
       }
-      await this.decryptAndRenderDraft(armored, parsedMsg);
+      await this.decryptAndRenderDraft(armored, parsedMsg, armored === encryptedMsg);
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender('body', `Failed to load draft. ${Ui.retryLink()}`);
@@ -95,35 +97,38 @@ export class ComposerDraft extends ComposerComponent {
       this.currentlySavingDraft = true;
       try {
         this.composer.S.cached('send_btn_note').text('Saving');
-        const primaryKi = await this.composer.storage.getKey(this.composer.sender.getSender());
-        const plainHTML = this.composer.input.extract('html', 'input_text');
-        const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(plainHTML), armor: true }) as OpenPGP.EncryptArmorResult;
-        let body: string;
+        const msgData = this.composer.input.extractAll();
+        const headers: Dict<string | string[]> = {
+          To: msgData.recipients.to || [],
+          Cc: msgData.recipients.cc || [],
+          Bcc: msgData.recipients.bcc || [],
+          From: msgData.sender,
+          Subject: msgData.subject || (this.view.replyParams ? this.view.replyParams.subject : undefined) || 'FlowCrypt draft'
+        };
+        const primaryKi = await this.composer.storage.getKey(msgData.sender);
+        let atts: Att[] | undefined;
+        let msgBody: SendableMsgBody = { "text/plain": msgData.plaintext };
+        if (this.composer.sendBtn.popover.choices.richtext) {
+          msgBody['text/html'] = msgData.plainhtml;
+          const mimeMsg = await Mime.encode(msgBody, {});
+          const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(mimeMsg), armor: true }) as OpenPGP.EncryptArmorResult;
+          atts = PgpMsg.createPgpMimeAtts(encrypted.data);
+          msgBody = {};
+        } else {
+          const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(msgData.plainhtml), armor: true }) as OpenPGP.EncryptArmorResult;
+          msgBody['text/plain'] = encrypted.data;
+        }
         if (this.view.threadId) { // reply draft
-          body = `[cryptup:link:draft_reply:${this.view.threadId}]\n\n${encrypted.data}`;
+          msgBody['text/plain'] = `[cryptup:link:draft_reply:${this.view.threadId}]\n\n${msgBody['text/plain'] || ''}`;
         } else if (this.view.draftId) { // new message compose draft with known draftid
-          body = `[cryptup:link:draft_compose:${this.view.draftId}]\n\n${encrypted.data}`;
-        } else { // new message compose draft where draftId is not yet known
-          body = encrypted.data;
+          msgBody['text/plain'] = `[cryptup:link:draft_compose:${this.view.draftId}]\n\n${msgBody['text/plain'] || ''}`;
         }
-        const subject = String(this.composer.S.cached('input_subject').val() || (this.view.replyParams ? this.view.replyParams.subject : undefined) || 'FlowCrypt draft');
-        const to = this.composer.recipients.getRecipients().map(r => r.email); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
-        const recipients: Recipients = { to: [], cc: [], bcc: [] };
-        for (const recipient of this.composer.recipients.getRecipients()) {
-          recipients[recipient.sendingType]!.push(recipient.email);
-        }
-        const mimeMsg = await Mime.encode({ 'text/plain': body }, {
-          To: recipients.to!.join(','),
-          Cc: recipients.cc!.join(','),
-          Bcc: recipients.bcc!.join(','),
-          From: this.composer.sender.getSender(),
-          Subject: subject
-        }, []);
+        const mimeMsg = await Mime.encode(msgBody, headers, atts);
         if (!this.view.draftId) {
           const { id } = await this.composer.emailProvider.draftCreate(mimeMsg, this.view.threadId);
           this.composer.S.cached('send_btn_note').text('Saved');
           this.view.draftId = id;
-          await this.composer.storage.draftMetaSet(id, this.view.threadId, to, String(this.composer.S.cached('input_subject').val()));
+          await this.composer.storage.draftMetaSet(id, this.view.threadId, msgData.recipients.to || [], String(this.composer.S.cached('input_subject').val()));
           // recursing one more time, because we need the draftId we get from this reply in the message itself
           // essentially everytime we save draft for the first time, we have to save it twice
           // currentlySavingDraft will remain true for now
@@ -178,7 +183,8 @@ export class ComposerDraft extends ComposerComponent {
     }
   }
 
-  private decryptAndRenderDraft = async (encryptedArmoredDraft: string, headers: { subject?: string, from?: string; to: string[], cc: string[], bcc: string[] }): Promise<void> => {
+  private decryptAndRenderDraft = async (encryptedArmoredDraft: string,
+    headers: { subject?: string, from?: string; to: string[], cc: string[], bcc: string[] }, isRichText: boolean): Promise<void> => {
     const passphrase = await this.composer.storage.passphraseGet();
     if (typeof passphrase !== 'undefined') {
       const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.view.acctEmail), encryptedData: Buf.fromUtfStr(encryptedArmoredDraft) });
@@ -188,7 +194,23 @@ export class ComposerDraft extends ComposerComponent {
           this.composer.S.cached('input_subject').val(headers.subject);
         }
         this.composer.S.cached('prompt').css({ display: 'none' });
-        this.composer.input.inputTextHtmlSetSafely(result.content.toUtfStr());
+        let decryptedContent: string;
+        if (!Mime.resemblesMsg(result.content)) {
+          decryptedContent = Xss.escape(result.content.toUtfStr()).replace(/\n/g, '<br>');
+        } else {
+          const decoded = await Mime.decode(result.content);
+          if (typeof decoded.html !== 'undefined') {
+            decryptedContent = decoded.html;
+          } else if (typeof decoded.text !== 'undefined') {
+            decryptedContent = decoded.text;
+          } else {
+            decryptedContent = '';
+          }
+        }
+        if (isRichText) {
+          this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-richText-sending-option'), 'richtext', true);
+        }
+        this.composer.input.inputTextHtmlSetSafely(decryptedContent);
         await this.composer.recipients.addRecipientsAndShowPreview({ to: headers.to, cc: headers.cc, bcc: headers.bcc });
         if (headers.from) {
           this.composer.S.now('input_from').val(headers.from);
@@ -197,7 +219,7 @@ export class ComposerDraft extends ComposerComponent {
       }
     } else {
       await this.renderPPDialogAndWaitWhenPPEntered();
-      await this.decryptAndRenderDraft(encryptedArmoredDraft, headers);
+      await this.decryptAndRenderDraft(encryptedArmoredDraft, headers, isRichText);
     }
   }
 

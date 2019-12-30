@@ -47,7 +47,7 @@ export interface EmailProviderInterface {
   msgSend(message: SendableMsg, progressCb?: ProgressCb): Promise<GmailRes.GmailMsgSend>;
   guessContactsFromSentEmails(userQuery: string, knownContacts: Contact[], chunkedCb: ChunkedCb): Promise<void>;
   createMsgObj(from: string, recipients: Recipients, subject: string, body: SendableMsgBody, atts?: Att[], thread?: string,
-    type?: MimeEncodeType, sign?: (content: string) => Promise<string>): Promise<SendableMsg>;
+    type?: MimeEncodeType, sign?: (content: string) => Promise<string>, validate?: boolean): Promise<SendableMsg>;
   msgGet(msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<GmailRes.GmailMsg>;
   msgList(q: string, includeDeleted?: boolean, pageToken?: string): Promise<GmailRes.GmailMsgList>;
 }
@@ -67,16 +67,19 @@ export class EmailProviderApi extends Api {
     thread?: string,
     type?: MimeEncodeType,
     sign?: (content: string) => Promise<string>,
+    validate: boolean = true
   ): Promise<SendableMsg> => {
-    const allEmails = [...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []];
+    if (validate) {
+      const allEmails = [...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []];
+      if (validate && !allEmails.length) {
+        throw new Error('The To: field is empty. Please add recipients and try again');
+      }
+      const invalidEmails = allEmails.filter(email => !Str.isEmailValid(email));
+      if (invalidEmails.length) {
+        throw new Error(`The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`);
+      }
+    }
     const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
-    if (!allEmails.length) {
-      throw new Error('The To: field is empty. Please add recipients and try again');
-    }
-    const invalidEmails = allEmails.filter(email => !Str.isEmailValid(email));
-    if (invalidEmails.length) {
-      throw new Error(`The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`);
-    }
     const headers: Dict<string> = primaryKi ? { OpenPGP: `id=${primaryKi.fingerprint}` } : {}; // todo - use autocrypt format
     return { headers, from, recipients, subject, body, atts: atts || [], thread, type, sign };
   }
