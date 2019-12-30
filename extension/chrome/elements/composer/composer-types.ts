@@ -43,7 +43,7 @@ export type MessageToReplyOrForward = {
 export type PubkeyResult = { pubkey: string, email: string, isMine: boolean };
 export type CollectPubkeysResult = { armoredPubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] };
 
-export type PopoverOpt = 'encrypt' | 'sign' | 'richText';
+export type PopoverOpt = 'encrypt' | 'sign' | 'richtext';
 export type PopoverChoices = { [key in PopoverOpt]: boolean };
 
 export type NewMsgData = { recipients: Recipients, subject: string, plaintext: string, plainhtml: string, pwd: string | undefined, sender: string };

@@ -124,7 +124,7 @@ export class ComposerSendBtn extends ComposerComponent {
     for (const k of Object.keys(this.additionalMsgHeaders)) {
       msg.headers[k] = this.additionalMsgHeaders[k];
     }
-    if (choices.encrypt && !choices.richText) {
+    if (choices.encrypt && !choices.richtext) {
       for (const a of msg.atts) {
         a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
       }

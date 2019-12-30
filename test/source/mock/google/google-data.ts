@@ -97,6 +97,14 @@ export class GoogleData {
   }
 
   public storeSentMessage = (parsedMail: ParsedMail): string => {
+    let attId = '';
+    if (parsedMail.attachments?.length) {
+      const att = parsedMail.attachments.find(a => a.filename === 'encrypted.asc');
+      if (att) {
+        attId = Util.lousyRandom();
+        DATA[this.acct].attachments[attId] = { data: att.content.toString('base64'), size: att.size };
+      }
+    }
     const barebonesGmailMsg: GmailMsg = { // todo - could be improved - very barebones
       id: `msg_id_${Util.lousyRandom()}`,
       threadId: null, // tslint:disable-line:no-null-keyword
@@ -104,7 +112,7 @@ export class GoogleData {
       labelIds: ['SENT' as GmailMsg$labelId],
       payload: {
         headers: [{ name: 'Subject', value: parsedMail.subject }],
-        body: { data: parsedMail.text, attachmentId: '', size: parsedMail.text.length }
+        body: { data: parsedMail.text, attachmentId: attId, size: parsedMail.text?.length }
       },
     };
     DATA[this.acct].messages.push(barebonesGmailMsg);

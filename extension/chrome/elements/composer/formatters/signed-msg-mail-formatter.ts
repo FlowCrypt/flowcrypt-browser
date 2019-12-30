@@ -16,7 +16,7 @@ export class SignedMsgMailFormatter extends BaseMailFormatter implements MailFor
 
   public sendableMsg = async (newMsg: NewMsgData, signingPrv: OpenPGP.key.Key): Promise<SendableMsg> => {
     const atts = await this.composer.atts.attach.collectAtts();
-    if (!this.richText) {
+    if (!this.richtext) {
       // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
       // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
       // resulting in.. wait for it.. signatures that don't match

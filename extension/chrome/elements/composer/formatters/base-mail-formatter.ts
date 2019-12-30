@@ -13,12 +13,12 @@ export interface MailFormatterInterface {
 export class BaseMailFormatter {
 
   protected composer: Composer;
-  protected richText: boolean;
+  protected richtext: boolean;
   protected acctEmail: string;
 
   constructor(composer: Composer) {
     this.composer = composer;
-    this.richText = composer.sendBtn.popover.choices.richText;
+    this.richtext = composer.sendBtn.popover.choices.richtext;
     this.acctEmail = this.composer.view.acctEmail;
   }
 }

@@ -526,21 +526,41 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.equal(initialHeight);
     }));
 
-    ava.default('compose[global:compose] - saving and rendering a draft with image ', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - saving and rendering a draft with image ', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      // eslint-disable-next-line max-len
+      const imageBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAnElEQVR42u3RAQ0AAAgDIE1u9FvDOahAVzLFGS1ECEKEIEQIQoQgRIgQIQgRghAhCBGCECEIQYgQhAhBiBCECEEIQoQgRAhChCBECEIQIgQhQhAiBCFCEIIQIQgRghAhCBGCEIQIQYgQhAhBiBCEIEQIQoQgRAhChCAEIUIQIgQhQhAiBCEIEYIQIQgRghAhCBEiRAhChCBECEK+W3uw+TnWoJc/AAAAAElFTkSuQmCC';
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Test Saving Drafts In Mock');
-      await composePage.page.evaluate(() => {
-        // eslint-disable-next-line max-len
-        $('[data-test=action-insert-image]').val('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAnElEQVR42u3RAQ0AAAgDIE1u9FvDOahAVzLFGS1ECEKEIEQIQoQgRIgQIQgRghAhCBGCECEIQYgQhAhBiBCECEEIQoQgRAhChCBECEIQIgQhQhAiBCFCEIIQIQgRghAhCBGCEIQIQYgQhAhBiBCEIEQIQoQgRAhChCAEIUIQIgQhQhAiBCEIEYIQIQgRghAhCBEiRAhChCBECEK+W3uw+TnWoJc/AAAAAElFTkSuQmCC')
+      await composePage.page.evaluate((image: string) => {
+        $('[data-test=action-insert-image]').val(image)
           .click();
-      });
+      }, imageBase64);
       await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
       await composePage.close();
       const appendUrl = 'draftId=draft_testsavingdraftsinmock';
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
       const body = await composePage.waitAny('@input-body');
-      const image = await body.$eval('img', el => el.getAttribute('src'));
-      expect(image).to.not.be.empty;
+      const imageSrc = await body.$eval('img', el => el.getAttribute('src'));
+      expect(imageSrc).to.eq(imageBase64);
+    }));
+
+    ava.default('compose[global:compatibility] - sending and rendering with image ', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      // eslint-disable-next-line max-len
+      const imageBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAnElEQVR42u3RAQ0AAAgDIE1u9FvDOahAVzLFGS1ECEKEIEQIQoQgRIgQIQgRghAhCBGCECEIQYgQhAhBiBCECEEIQoQgRAhChCBECEIQIgQhQhAiBCFCEIIQIQgRghAhCBGCEIQIQYgQhAhBiBCEIEQIQoQgRAhChCAEIUIQIgQhQhAiBCEIEYIQIQgRghAhCBEiRAhChCBECEK+W3uw+TnWoJc/AAAAAElFTkSuQmCC';
+      const subject = 'Test Sending Message With Image';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, { richtext: true });
+      await composePage.page.evaluate((image: string) => {
+        $('[data-test=action-insert-image]').val(image)
+          .click();
+      }, imageBase64);
+      await ComposePageRecipe.sendAndClose(composePage);
+      const msg = new GoogleData('flowcrypt.compatibility@gmail.com').getMessageBySubject(subject)!;
+      // eslint-disable-next-line max-len
+      const pgpBlockPage = await browser.newPage(t, `chrome/elements/pgp_block.htm?frameId=none&msgId=${encodeURIComponent(msg.id)}&senderEmail=flowcrypt.compatibility%40gmail.com &isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`);
+      await pgpBlockPage.waitAndClick('.image_src_link');
+      const img = await pgpBlockPage.waitAny('body img');
+      expect(await PageRecipe.getElementPropertyJson(img, 'src')).to.eq(imageBase64);
     }));
 
     ava.todo('compose[global:compose] - reply - new gmail threadId fmt');

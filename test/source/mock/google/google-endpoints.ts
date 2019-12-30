@@ -263,8 +263,8 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
       throw new HttpClientErr(`Error: Incorrect Email Alias. Should be 'flowcryptcompatibility@gmail.com'. Current '${mimeMsg.from.value[0].address}'`);
     }
   }
-  if (!mimeMsg.text) {
-    throw new HttpClientErr('Error: Message body is required', 400);
+  if (!mimeMsg.text && !mimeMsg.attachments?.length) {
+    throw new HttpClientErr('Error: Message body cannot be empty', 400);
   }
   if (!mimeMsg.to.value.length || mimeMsg.to.value.find(em => !allowedRecipients.includes(em.address))) {
     throw new HttpClientErr('Error: You can\'t send a message to unexisting email address(es)');

@@ -311,7 +311,7 @@ export class ComposerRender extends ComposerComponent {
   }
 
   private renderReplySuccessAtts = (atts: Att[], msgId: string) => {
-    const hideAttTypes = this.composer.sendBtn.popover.choices.richText ? ['hidden', 'encryptedMsg', 'signature', 'publicKey'] : ['publicKey'];
+    const hideAttTypes = this.composer.sendBtn.popover.choices.richtext ? ['hidden', 'encryptedMsg', 'signature', 'publicKey'] : ['publicKey'];
     const renderableAtts = atts.filter(att => !hideAttTypes.includes(att.treatAs()));
     if (renderableAtts.length) {
       this.composer.S.cached('replied_attachments').html(renderableAtts.map(att => { // xss-safe-factory

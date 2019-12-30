@@ -38,7 +38,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
   public sendableMsg = async (newMsg: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> => {
     const subscription = await Store.subscription(this.acctEmail);
     const pubkeys = this.armoredPubkeys.map(p => p.pubkey);
-    if (!this.richText) { // simple text: PGP/Inline
+    if (!this.richtext) { // simple text: PGP/Inline
       const authInfo = subscription.active ? await Store.authInfo(this.acctEmail) : undefined;
       await this.addReplyTokenToMsgBodyIfNeeded(authInfo, newMsg, subscription);
       let atts = await this.composer.atts.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey), newMsg.pwd);
@@ -58,7 +58,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
       }
       return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, encryptedBody, atts, this.composer.view.threadId);
     } else if (newMsg.pwd) { // don't allow rich-text pwd msg yet
-      this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-richText-sending-option'), 'richText', false); // do not use rich text
+      this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-richText-sending-option'), 'richtext', false); // do not use rich text
       throw new ComposerUserError('Rich text is not yet supported for password encrypted messages, please retry (formatting will be removed).');
     } else { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
       const plainAtts = await this.composer.atts.attach.collectAtts();

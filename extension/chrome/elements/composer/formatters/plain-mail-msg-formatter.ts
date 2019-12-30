@@ -14,7 +14,7 @@ export class PlainMsgMailFormatter extends BaseMailFormatter implements MailForm
     this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING);
     const atts = await this.composer.atts.attach.collectAtts();
     const body: SendableMsgBody = { 'text/plain': newMsgData.plaintext };
-    if (this.richText) {
+    if (this.richtext) {
       body['text/html'] = newMsgData.plainhtml;
     }
     return await this.composer.emailProvider.createMsgObj(newMsgData.sender, newMsgData.recipients, newMsgData.subject, body, atts, this.composer.view.threadId);

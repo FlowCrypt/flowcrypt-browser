@@ -46,7 +46,7 @@ export class ComposePageRecipe extends PageRecipe {
     composePageOrFrame: Controllable,
     recipients: Recipients,
     subject?: string | undefined,
-    sendingOpt: { encrypt?: boolean, sign?: boolean } = {}, // undefined means leave default
+    sendingOpt: { encrypt?: boolean, sign?: boolean, richtext?: boolean } = {}, // undefined means leave default
     windowType: 'new' | 'reply' = 'new'
   ) {
     await Util.sleep(0.5);
