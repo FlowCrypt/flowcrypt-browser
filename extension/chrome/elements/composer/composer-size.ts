@@ -8,12 +8,12 @@ import { ComposerComponent } from './composer-abstract-component.js';
 
 export class ComposerSize extends ComposerComponent {
 
+  public composeWindowIsMinimized = false;
+
   private FULL_WINDOW_CLASS = 'full_window';
   private lastReplyBoxTableHeight = 0;
   private composeWindowIsMaximized = false;
   private refBodyHeight?: number;
-
-  public composeWindowIsMinimized = false;
 
   public initActions = () => {
     $('body').click(event => {

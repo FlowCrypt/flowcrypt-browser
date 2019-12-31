@@ -10,11 +10,6 @@ import { Xss } from './platform/xss.js';
 
 export abstract class View {
 
-  private static reportAndRenderErr = (e: any) => {
-    ApiErr.reportIfSignificant(e);
-    Xss.sanitizeRender('body', `${ApiErr.eli5(e)}<br>${String(e)}<br><br>${Ui.retryLink()}`);
-  }
-
   public static run<VIEW extends View>(viewClass: new () => VIEW) {
     try {
       const view = new viewClass();
@@ -25,6 +20,11 @@ export abstract class View {
     } catch (e) {
       View.reportAndRenderErr(e);
     }
+  }
+
+  private static reportAndRenderErr = (e: any) => {
+    ApiErr.reportIfSignificant(e);
+    Xss.sanitizeRender('body', `${ApiErr.eli5(e)}<br>${String(e)}<br><br>${Ui.retryLink()}`);
   }
 
   public abstract async render(): Promise<void>;

@@ -28,18 +28,22 @@ rules: #
     member-ordering: 
       - true
       - order:
-        - "private-static-field"
-        - "protected-static-field"
         - "public-static-field"
-        - "private-static-method"
-        - "protected-static-method"
-        - "public-static-method"
-        - "private-instance-field"
-        - "protected-instance-field"
+        - "protected-static-field"
+        - "private-static-field"
+
         - "public-instance-field"
-        - "private-constructor"
-        - "protected-constructor"
+        - "protected-instance-field"
+        - "private-instance-field"
+
+        - "public-static-method"
+        - "protected-static-method"
+        - "private-static-method"
+
         - "public-constructor"
+        - "protected-constructor"
+        - "private-constructor"
+
         - "public-instance-method"
         - "protected-instance-method"
         - "private-instance-method"

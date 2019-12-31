@@ -35,59 +35,6 @@ export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | 
 
 export class Api {
 
-  private static isRawAjaxErr = (e: any): e is RawAjaxErr => {
-    return e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number';
-  }
-
-  protected static apiCall = async <RT>(
-    url: string, path: string, fields?: Dict<any> | string, fmt?: ReqFmt, progress?: ProgressCbs, headers?: Dict<string>, resFmt: ResFmt = 'json', method: ReqMethod = 'POST'
-  ): Promise<RT> => {
-    progress = progress || {} as ProgressCbs;
-    let formattedData: FormData | string | undefined;
-    let contentType: string | false;
-    if (fmt === 'JSON' && fields) {
-      formattedData = JSON.stringify(fields);
-      contentType = 'application/json; charset=UTF-8';
-    } else if (fmt === 'TEXT' && typeof fields === 'string') {
-      formattedData = fields;
-      contentType = false;
-    } else if (fmt === 'FORM' && fields && typeof fields !== 'string') {
-      formattedData = new FormData();
-      for (const formFieldName of Object.keys(fields)) {
-        const a: Att | string = fields[formFieldName]; // tslint:disable-line:no-unsafe-any
-        if (a instanceof Att) {
-          formattedData.append(formFieldName, new Blob([a.getData()], { type: a.type }), a.name); // xss-none
-        } else {
-          formattedData.append(formFieldName, a); // xss-none
-        }
-      }
-      contentType = false;
-    } else if (!fmt && !fields && method === 'GET') {
-      formattedData = undefined;
-      contentType = false;
-    } else {
-      throw new Error('unknown format:' + String(fmt));
-    }
-    const req: JQueryAjaxSettings = {
-      xhr: Api.getAjaxProgressXhrFactory(progress),
-      url: url + path,
-      method,
-      data: formattedData,
-      dataType: resFmt,
-      crossDomain: true,
-      headers,
-      processData: false,
-      contentType,
-      async: true,
-      timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000, // substituted with {} above
-    };
-    const res = await Api.ajax(req, Catch.stackTrace());
-    if (res && typeof res === 'object' && typeof (res as StandardErrRes).error === 'object' && (res as StandardErrRes).error.message) {
-      throw new ApiErrResponse(res as StandardErrRes, req);
-    }
-    return res as RT;
-  }
-
   public static download = async (url: string, progress?: ProgressCb): Promise<Buf> => {
     return await new Promise((resolve, reject) => {
       const request = new XMLHttpRequest();
@@ -176,6 +123,59 @@ export class Api {
   public static randomFortyHexChars = (): string => { // 40-character hex
     const bytes = Array.from(secureRandomBytes(20));
     return bytes.map(b => ('0' + (b & 0xFF).toString(16)).slice(-2)).join('');
+  }
+
+  protected static apiCall = async <RT>(
+    url: string, path: string, fields?: Dict<any> | string, fmt?: ReqFmt, progress?: ProgressCbs, headers?: Dict<string>, resFmt: ResFmt = 'json', method: ReqMethod = 'POST'
+  ): Promise<RT> => {
+    progress = progress || {} as ProgressCbs;
+    let formattedData: FormData | string | undefined;
+    let contentType: string | false;
+    if (fmt === 'JSON' && fields) {
+      formattedData = JSON.stringify(fields);
+      contentType = 'application/json; charset=UTF-8';
+    } else if (fmt === 'TEXT' && typeof fields === 'string') {
+      formattedData = fields;
+      contentType = false;
+    } else if (fmt === 'FORM' && fields && typeof fields !== 'string') {
+      formattedData = new FormData();
+      for (const formFieldName of Object.keys(fields)) {
+        const a: Att | string = fields[formFieldName]; // tslint:disable-line:no-unsafe-any
+        if (a instanceof Att) {
+          formattedData.append(formFieldName, new Blob([a.getData()], { type: a.type }), a.name); // xss-none
+        } else {
+          formattedData.append(formFieldName, a); // xss-none
+        }
+      }
+      contentType = false;
+    } else if (!fmt && !fields && method === 'GET') {
+      formattedData = undefined;
+      contentType = false;
+    } else {
+      throw new Error('unknown format:' + String(fmt));
+    }
+    const req: JQueryAjaxSettings = {
+      xhr: Api.getAjaxProgressXhrFactory(progress),
+      url: url + path,
+      method,
+      data: formattedData,
+      dataType: resFmt,
+      crossDomain: true,
+      headers,
+      processData: false,
+      contentType,
+      async: true,
+      timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000, // substituted with {} above
+    };
+    const res = await Api.ajax(req, Catch.stackTrace());
+    if (res && typeof res === 'object' && typeof (res as StandardErrRes).error === 'object' && (res as StandardErrRes).error.message) {
+      throw new ApiErrResponse(res as StandardErrRes, req);
+    }
+    return res as RT;
+  }
+
+  private static isRawAjaxErr = (e: any): e is RawAjaxErr => {
+    return e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number';
   }
 
 }

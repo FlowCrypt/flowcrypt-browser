@@ -53,6 +53,117 @@ export class GoogleAuth {
     }
   };
 
+  public static defaultScopes = (group: 'default' | 'contacts' | 'compose_only' | 'openid' = 'default') => {
+    const { readContacts, compose, modify, openid, email, profile } = GoogleAuth.OAUTH.scopes;
+    console.info(`Not using scope ${modify} because not approved on oauth screen yet`);
+    const read = GoogleAuth.OAUTH.legacy_scopes.read; // todo - remove as soon as "modify" is approved by google
+    if (group === 'openid') {
+      return [openid, email, profile];
+    } else if (group === 'default') {
+      if (BUILD === 'consumer') {
+        // todo - replace "read" with "modify" when approved by google
+        return [openid, email, profile, compose, read]; // consumer may freak out that extension asks for their contacts early on
+      } else if (BUILD === 'enterprise') {
+        // todo - replace "read" with "modify" when approved by google
+        return [openid, email, profile, compose, read, readContacts]; // enterprise expects their contact search to work properly
+      } else {
+        throw new Error(`Unknown build ${BUILD}`);
+      }
+    } else if (group === 'contacts') {
+      // todo - replace "read" with "modify" when approved by google
+      return [openid, email, profile, compose, read, readContacts];
+    } else if (group === 'compose_only') {
+      return [openid, email, profile, compose]; // consumer may freak out that the extension asks for read email permission
+    } else {
+      throw new Error(`Unknown scope group ${group}`);
+    }
+  }
+
+  public static googleApiAuthHeader = async (acctEmail: string, forceRefresh = false): Promise<string> => {
+    if (!acctEmail) {
+      throw new Error('missing account_email in api_gmail_call');
+    }
+    const storage = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires', 'google_token_scopes', 'google_token_refresh']);
+    if (!storage.google_token_access || !storage.google_token_refresh) {
+      throw new GoogleAuthErr(`Account ${acctEmail} not connected to FlowCrypt Browser Extension`);
+    } else if (GoogleAuth.googleApiIsAuthTokenValid(storage) && !forceRefresh) {
+      return `Bearer ${storage.google_token_access}`;
+    } else { // refresh token
+      const refreshTokenRes = await GoogleAuth.googleAuthRefreshToken(storage.google_token_refresh);
+      await GoogleAuth.googleAuthCheckAccessToken(refreshTokenRes.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
+      await GoogleAuth.googleAuthSaveTokens(acctEmail, refreshTokenRes, storage.google_token_scopes || []);
+      const auth = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires']);
+      if (GoogleAuth.googleApiIsAuthTokenValid(auth)) { // have a valid gmail_api oauth token
+        return `Bearer ${auth.google_token_access}`;
+      } else {
+        throw new GoogleAuthErr(`Could not refresh google auth token - did not become valid (access:${!!auth.google_token_access},expires:${auth.google_token_expires},now:${Date.now()})`);
+      }
+    }
+  }
+
+  public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings): Promise<any> => {
+    try {
+      return await Api.ajax(request, Catch.stackTrace());
+    } catch (firstAttemptErr) {
+      if (ApiErr.isAuthErr(firstAttemptErr)) { // force refresh token
+        request.headers!.Authorization = await GoogleAuth.googleApiAuthHeader(acctEmail, true);
+        return await Api.ajax(request, Catch.stackTrace());
+      }
+      throw firstAttemptErr;
+    }
+  }
+
+  public static newAuthPopup = async ({ acctEmail, scopes, save }: { acctEmail?: string, scopes?: string[], save?: boolean }): Promise<AuthRes> => {
+    if (acctEmail) {
+      acctEmail = acctEmail.toLowerCase();
+    }
+    if (typeof save === 'undefined') {
+      save = true;
+    }
+    if (save || !scopes) { // if tokens will be saved (meaning also scopes should be pulled from storage) or if no scopes supplied
+      scopes = await GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes || GoogleAuth.defaultScopes());
+    }
+    const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
+    const url = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
+    const oauthWin = await windowsCreate({ url, left: 100, top: 50, height: 700, width: 600, type: 'popup' });
+    if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length) {
+      return { result: 'Error', error: 'No oauth window renturned after initiating it', acctEmail, id_token: undefined };
+    }
+    const authRes = await Promise.race([
+      GoogleAuth.waitForAndProcessOauthWindowResult(oauthWin.id, acctEmail, scopes, authRequest.csrfToken, save),
+      GoogleAuth.waitForOauthWindowClosed(oauthWin.id, acctEmail),
+    ]);
+    try {
+      chrome.windows.remove(oauthWin.id);
+    } catch (e) {
+      if (String(e).indexOf('No window with id') === -1) {
+        Catch.reportErr(e);
+      }
+    }
+    if (authRes.result === 'Success') {
+      if (!authRes.id_token) {
+        return { result: 'Error', error: 'Grant was successful but missing id_token', acctEmail: authRes.acctEmail, id_token: undefined };
+      }
+      if (!authRes.acctEmail) {
+        return { result: 'Error', error: 'Grant was successful but missing acctEmail', acctEmail: authRes.acctEmail, id_token: undefined };
+      }
+      if (!Rules.isPublicEmailProviderDomain(authRes.acctEmail)) {
+        try { // users on @custom-domain.com must check with backend to look for org rules, if any
+          const uuid = Api.randomFortyHexChars();
+          await Backend.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
+          await Backend.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // will store org rules and subscription
+        } catch (e) {
+          return { result: 'Error', error: `Grant successful but error accessing fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
+        }
+      }
+    }
+    return authRes;
+  }
+
+  public static newOpenidAuthPopup = async ({ acctEmail }: { acctEmail?: string }): Promise<AuthRes> => {
+    return await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('openid'), save: false });
+  }
+
   private static waitForOauthWindowClosed = async (oauthWinId: number, acctEmail: string | undefined): Promise<AuthRes> => {
     return await new Promise(resolve => {
       const onOauthWinClosed = (closedWinId: number) => {
@@ -241,117 +352,6 @@ export class GoogleAuth {
       addScopes.push(GoogleAuth.OAUTH.legacy_scopes.read);
     }
     return addScopes;
-  }
-
-  public static defaultScopes = (group: 'default' | 'contacts' | 'compose_only' | 'openid' = 'default') => {
-    const { readContacts, compose, modify, openid, email, profile } = GoogleAuth.OAUTH.scopes;
-    console.info(`Not using scope ${modify} because not approved on oauth screen yet`);
-    const read = GoogleAuth.OAUTH.legacy_scopes.read; // todo - remove as soon as "modify" is approved by google
-    if (group === 'openid') {
-      return [openid, email, profile];
-    } else if (group === 'default') {
-      if (BUILD === 'consumer') {
-        // todo - replace "read" with "modify" when approved by google
-        return [openid, email, profile, compose, read]; // consumer may freak out that extension asks for their contacts early on
-      } else if (BUILD === 'enterprise') {
-        // todo - replace "read" with "modify" when approved by google
-        return [openid, email, profile, compose, read, readContacts]; // enterprise expects their contact search to work properly
-      } else {
-        throw new Error(`Unknown build ${BUILD}`);
-      }
-    } else if (group === 'contacts') {
-      // todo - replace "read" with "modify" when approved by google
-      return [openid, email, profile, compose, read, readContacts];
-    } else if (group === 'compose_only') {
-      return [openid, email, profile, compose]; // consumer may freak out that the extension asks for read email permission
-    } else {
-      throw new Error(`Unknown scope group ${group}`);
-    }
-  }
-
-  public static googleApiAuthHeader = async (acctEmail: string, forceRefresh = false): Promise<string> => {
-    if (!acctEmail) {
-      throw new Error('missing account_email in api_gmail_call');
-    }
-    const storage = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires', 'google_token_scopes', 'google_token_refresh']);
-    if (!storage.google_token_access || !storage.google_token_refresh) {
-      throw new GoogleAuthErr(`Account ${acctEmail} not connected to FlowCrypt Browser Extension`);
-    } else if (GoogleAuth.googleApiIsAuthTokenValid(storage) && !forceRefresh) {
-      return `Bearer ${storage.google_token_access}`;
-    } else { // refresh token
-      const refreshTokenRes = await GoogleAuth.googleAuthRefreshToken(storage.google_token_refresh);
-      await GoogleAuth.googleAuthCheckAccessToken(refreshTokenRes.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
-      await GoogleAuth.googleAuthSaveTokens(acctEmail, refreshTokenRes, storage.google_token_scopes || []);
-      const auth = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires']);
-      if (GoogleAuth.googleApiIsAuthTokenValid(auth)) { // have a valid gmail_api oauth token
-        return `Bearer ${auth.google_token_access}`;
-      } else {
-        throw new GoogleAuthErr(`Could not refresh google auth token - did not become valid (access:${!!auth.google_token_access},expires:${auth.google_token_expires},now:${Date.now()})`);
-      }
-    }
-  }
-
-  public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings): Promise<any> => {
-    try {
-      return await Api.ajax(request, Catch.stackTrace());
-    } catch (firstAttemptErr) {
-      if (ApiErr.isAuthErr(firstAttemptErr)) { // force refresh token
-        request.headers!.Authorization = await GoogleAuth.googleApiAuthHeader(acctEmail, true);
-        return await Api.ajax(request, Catch.stackTrace());
-      }
-      throw firstAttemptErr;
-    }
-  }
-
-  public static newAuthPopup = async ({ acctEmail, scopes, save }: { acctEmail?: string, scopes?: string[], save?: boolean }): Promise<AuthRes> => {
-    if (acctEmail) {
-      acctEmail = acctEmail.toLowerCase();
-    }
-    if (typeof save === 'undefined') {
-      save = true;
-    }
-    if (save || !scopes) { // if tokens will be saved (meaning also scopes should be pulled from storage) or if no scopes supplied
-      scopes = await GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes || GoogleAuth.defaultScopes());
-    }
-    const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
-    const url = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
-    const oauthWin = await windowsCreate({ url, left: 100, top: 50, height: 700, width: 600, type: 'popup' });
-    if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length) {
-      return { result: 'Error', error: 'No oauth window renturned after initiating it', acctEmail, id_token: undefined };
-    }
-    const authRes = await Promise.race([
-      GoogleAuth.waitForAndProcessOauthWindowResult(oauthWin.id, acctEmail, scopes, authRequest.csrfToken, save),
-      GoogleAuth.waitForOauthWindowClosed(oauthWin.id, acctEmail),
-    ]);
-    try {
-      chrome.windows.remove(oauthWin.id);
-    } catch (e) {
-      if (String(e).indexOf('No window with id') === -1) {
-        Catch.reportErr(e);
-      }
-    }
-    if (authRes.result === 'Success') {
-      if (!authRes.id_token) {
-        return { result: 'Error', error: 'Grant was successful but missing id_token', acctEmail: authRes.acctEmail, id_token: undefined };
-      }
-      if (!authRes.acctEmail) {
-        return { result: 'Error', error: 'Grant was successful but missing acctEmail', acctEmail: authRes.acctEmail, id_token: undefined };
-      }
-      if (!Rules.isPublicEmailProviderDomain(authRes.acctEmail)) {
-        try { // users on @custom-domain.com must check with backend to look for org rules, if any
-          const uuid = Api.randomFortyHexChars();
-          await Backend.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
-          await Backend.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // will store org rules and subscription
-        } catch (e) {
-          return { result: 'Error', error: `Grant successful but error accessing fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
-        }
-      }
-    }
-    return authRes;
-  }
-
-  public static newOpenidAuthPopup = async ({ acctEmail }: { acctEmail?: string }): Promise<AuthRes> => {
-    return await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('openid'), save: false });
   }
 
 }

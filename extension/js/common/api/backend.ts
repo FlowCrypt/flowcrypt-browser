@@ -51,16 +51,6 @@ export namespace BackendRes {
 
 export class Backend extends Api {
 
-  private static request = async <RT>(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}): Promise<RT> => {
-    return await Backend.apiCall(Backend.url('api'), path, vals, fmt, undefined, { 'api-version': '3', ...addHeaders });
-  }
-
-  private static throwIfMissingUuid = (fcAuth: FcUuidAuth) => {
-    if (!fcAuth.uuid) {
-      throw new BackendAuthErr('Please log into FlowCrypt account first');
-    }
-  }
-
   public static url = (type: 'api' | 'me' | 'pubkey' | 'decrypt' | 'web', resource = '') => {
     return ({
       api: BACKEND_API_HOST,
@@ -241,6 +231,16 @@ export class Backend extends Api {
       }));
     }
     return await Promise.all(promises);
+  }
+
+  private static request = async <RT>(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}): Promise<RT> => {
+    return await Backend.apiCall(Backend.url('api'), path, vals, fmt, undefined, { 'api-version': '3', ...addHeaders });
+  }
+
+  private static throwIfMissingUuid = (fcAuth: FcUuidAuth) => {
+    if (!fcAuth.uuid) {
+      throw new BackendAuthErr('Please log into FlowCrypt account first');
+    }
   }
 
 }

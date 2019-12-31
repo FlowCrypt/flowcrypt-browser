@@ -32,6 +32,21 @@ export class XssSafeFactory {
   /**
    * XSS WARNING
    *
+   * Method return values are inserted directly into DOM.
+   *
+   * All public methods are expected to escape unknown content to prevent XSS.
+   *
+   * If you add or edit a method, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
+   */
+
+  private setParams: UrlParams;
+  private reloadableCls: string;
+  private destroyableCls: string;
+  private hideGmailNewMsgInThreadNotification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
+
+  /**
+   * XSS WARNING
+   *
    * Return values are inserted directly into DOM. Results must be html escaped.
    *
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
@@ -79,21 +94,6 @@ export class XssSafeFactory {
     }
     return r;
   }
-
-  /**
-   * XSS WARNING
-   *
-   * Method return values are inserted directly into DOM.
-   *
-   * All public methods are expected to escape unknown content to prevent XSS.
-   *
-   * If you add or edit a method, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
-   */
-
-  private setParams: UrlParams;
-  private reloadableCls: string;
-  private destroyableCls: string;
-  private hideGmailNewMsgInThreadNotification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
 
   constructor(acctEmail: string, parentTabId: string, reloadableCls: string = '', destroyableCls: string = '', setParams: UrlParams = {}) {
     this.reloadableCls = Xss.escape(reloadableCls);
