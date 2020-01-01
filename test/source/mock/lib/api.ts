@@ -137,7 +137,7 @@ export class Api<REQ, RES> {
     if (String(e).includes('invalid_grant')) {
       return Buffer.from(JSON.stringify({ "error": "invalid_grant", "error_description": "Bad Request" }));
     }
-    return Buffer.from(JSON.stringify({ "error": { "message": e instanceof Error ? e.message : String(e) } }));
+    return Buffer.from(JSON.stringify({ "error": { "message": e instanceof Error ? e.message : String(e), stack: e instanceof Error ? e.stack : '' } }));
   }
 
   protected fmtHandlerRes = (handlerRes: RES, serverRes: ServerResponse): Buffer => {
