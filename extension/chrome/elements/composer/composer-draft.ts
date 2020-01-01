@@ -2,12 +2,8 @@
 
 'use strict';
 
-import { Dict, Url } from '../../../js/common/core/common.js';
-import { Mime, SendableMsgBody } from '../../../js/common/core/mime.js';
-
 import { AjaxErr } from '../../../js/common/api/error/api-error-types.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
-import { Att } from '../../../js/common/core/att.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -15,10 +11,12 @@ import { Composer } from './composer.js';
 import { ComposerComponent } from './composer-abstract-component.js';
 import { EncryptedMsgMailFormatter } from './formatters/encrypted-mail-msg-formatter.js';
 import { Env } from '../../../js/common/browser/env.js';
+import { Mime } from '../../../js/common/core/mime.js';
 import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
 import { PgpMsg } from '../../../js/common/core/pgp-msg.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
+import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerDraft extends ComposerComponent {
@@ -116,34 +114,18 @@ export class ComposerDraft extends ComposerComponent {
     if (this.hasBodyChanged(this.composer.input.squire.getHTML()) || this.hasSubjectChanged(String(this.composer.S.cached('input_subject').val())) || forceSave) {
       this.currentlySavingDraft = true;
       try {
-        this.composer.S.cached('send_btn_note').text('Saving');
         const msgData = this.composer.input.extractAll();
-        const headers: Dict<string | string[]> = {
-          To: msgData.recipients.to || [],
-          Cc: msgData.recipients.cc || [],
-          Bcc: msgData.recipients.bcc || [],
-          From: msgData.from,
-          Subject: msgData.subject || (this.view.replyParams ? this.view.replyParams.subject : undefined) || 'FlowCrypt draft'
-        };
         const primaryKi = await this.composer.storage.getKey(msgData.from);
-        let atts: Att[] | undefined;
-        let msgBody: SendableMsgBody = { "text/plain": msgData.plaintext };
-        if (this.composer.sendBtn.popover.choices.richtext) {
-          msgBody['text/html'] = msgData.plainhtml;
-          const mimeMsg = await Mime.encode(msgBody, {});
-          const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(mimeMsg), armor: true }) as OpenPGP.EncryptArmorResult;
-          atts = EncryptedMsgMailFormatter.createPgpMimeAtts(encrypted.data);
-          msgBody = {};
-        } else {
-          const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(msgData.plainhtml), armor: true }) as OpenPGP.EncryptArmorResult;
-          msgBody['text/plain'] = encrypted.data;
-        }
+        const pubkeys = [{ isMine: true, email: msgData.from, pubkey: primaryKi.public }];
+        msgData.pwd = undefined; // not needed for drafts
+        const sendable = await new EncryptedMsgMailFormatter(this.composer, pubkeys, true).sendableMsg(msgData);
+        this.composer.S.cached('send_btn_note').text('Saving');
         if (this.view.threadId) { // reply draft
-          msgBody['text/plain'] = `[cryptup:link:draft_reply:${this.view.threadId}]\n\n${msgBody['text/plain'] || ''}`;
+          sendable.body['text/plain'] = `[cryptup:link:draft_reply:${this.view.threadId}]\n\n${sendable.body['text/plain'] || ''}`;
         } else if (this.view.draftId) { // new message compose draft with known draftid
-          msgBody['text/plain'] = `[cryptup:link:draft_compose:${this.view.draftId}]\n\n${msgBody['text/plain'] || ''}`;
+          sendable.body['text/plain'] = `[cryptup:link:draft_compose:${this.view.draftId}]\n\n${sendable.body['text/plain'] || ''}`;
         }
-        const mimeMsg = await Mime.encode(msgBody, headers, atts);
+        const mimeMsg = await sendable.toMime();
         if (!this.view.draftId) {
           const { id } = await this.composer.emailProvider.draftCreate(mimeMsg, this.view.threadId);
           this.composer.S.cached('send_btn_note').text('Saved');

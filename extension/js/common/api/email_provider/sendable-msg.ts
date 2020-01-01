@@ -3,9 +3,10 @@
 'use strict';
 
 import { Dict, Str } from '../../core/common.js';
-import { MimeEncodeType, SendableMsgBody } from '../../core/mime.js';
+import { Mime, MimeEncodeType, SendableMsgBody } from '../../core/mime.js';
 
 import { Att } from '../../core/att.js';
+import { RecipientType } from '../api.js';
 import { Store } from '../../platform/store.js';
 
 export type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
@@ -71,6 +72,23 @@ export class SendableMsg {
       throw new Error('Signing method may only be set on pgpMimeSigned type');
     }
     this.sign = methodThatSignsData;
+  }
+
+  public toMime = async () => {
+    this.headers.From = this.from;
+    for (const recipientTypeStr of Object.keys(this.recipients)) {
+      const recipientType = recipientTypeStr as RecipientType;
+      if (this.recipients[recipientType] && this.recipients[recipientType]!.length) {
+        // todo - properly escape/encode this header using emailjs
+        this.headers[recipientType[0].toUpperCase() + recipientType.slice(1)] = this.recipients[recipientType]!.map(h => h.replace(/[,]/g, '')).join(',');
+      }
+    }
+    this.headers.Subject = this.subject;
+    if (this.type === 'pgpMimeSigned' && this.sign) {
+      return await Mime.encodePgpMimeSigned(this.body, this.headers, this.atts, this.sign);
+    } else {
+      return await Mime.encode(this.body, this.headers, this.atts, this.type);
+    }
   }
 
 }

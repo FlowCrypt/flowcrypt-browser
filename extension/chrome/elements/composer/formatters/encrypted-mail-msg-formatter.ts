@@ -27,7 +27,6 @@ import { openpgp } from '../../../../js/common/core/pgp.js';
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
 
-  private armoredPubkeys: PubkeyResult[];
   private fcAdminCodes: string[] = [];
 
   public static createPgpMimeAtts = (content: string) => { // todo - make this a regular private method
@@ -37,9 +36,12 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     ];
   }
 
-  constructor(composer: Composer, armoredPubkeys: PubkeyResult[]) {
+  constructor(
+    composer: Composer,
+    private armoredPubkeys: PubkeyResult[],
+    private isDraft = false
+  ) {
     super(composer);
-    this.armoredPubkeys = armoredPubkeys;
   }
 
   public sendableMsg = async (newMsg: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> => {
@@ -63,7 +65,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         // however if there is more than one recipient with pubkeys, still append the encrypted message as attachment
         atts = pubkeys.length === 1 ? [] : [new Att({ data: Buf.fromUtfStr(encrypted.data), name: 'encrypted.asc' })];
       }
-      return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: encryptedBody, atts });
+      return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: encryptedBody, atts, isDraft: this.isDraft });
     } else if (newMsg.pwd) { // don't allow rich-text pwd msg yet
       this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-richText-sending-option'), 'richtext', false); // do not use rich text
       throw new ComposerUserError('Rich text is not yet supported for password encrypted messages, please retry (formatting will be removed).');
@@ -72,12 +74,12 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
       const pgpMimeToEncrypt = await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject }, plainAtts);
       const encrypted = await this.encryptData(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubkeys, signingPrv);
       const atts = EncryptedMsgMailFormatter.createPgpMimeAtts(encrypted.data);
-      return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: {}, atts, type: 'pgpMimeEncrypted', });
+      return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: {}, atts, type: 'pgpMimeEncrypted', isDraft: this.isDraft });
     }
   }
 
   private encryptData = async (data: Buf, pwd: string | undefined, pubkeys: string[], signingPrv?: OpenPGP.key.Key): Promise<OpenPGP.EncryptArmorResult> => {
-    const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(this.armoredPubkeys);
+    const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal();
     return await PgpMsg.encrypt({ pubkeys, signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
   }
 
@@ -142,10 +144,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     return plaintext;
   }
 
-  private encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal = async (armoredPubkeys: PubkeyResult[]): Promise<Date | undefined> => {
+  private encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal = async (): Promise<Date | undefined> => {
     const usableUntil: number[] = [];
     const usableFrom: number[] = [];
-    for (const armoredPubkey of armoredPubkeys) {
+    for (const armoredPubkey of this.armoredPubkeys) {
       const { keys: [pub] } = await openpgp.key.readArmored(armoredPubkey.pubkey);
       const oneSecondBeforeExpiration = await PgpKey.dateBeforeExpiration(pub);
       usableFrom.push(pub.getCreationTime().getTime());
@@ -159,7 +161,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     if (Math.max(...usableUntil) > Date.now()) { // all keys either don't expire or expire in the future
       return undefined;
     }
-    for (const myKey of armoredPubkeys.filter(ap => ap.isMine)) {
+    for (const myKey of this.armoredPubkeys.filter(ap => ap.isMine)) {
       if (await PgpKey.usableButExpired(await PgpKey.read(myKey.pubkey))) {
         const path = chrome.runtime.getURL(`chrome/settings/index.htm?acctEmail=${encodeURIComponent(myKey.email)}&page=%2Fchrome%2Fsettings%2Fmodules%2Fmy_key_update.htm`);
         await Ui.modal.error(

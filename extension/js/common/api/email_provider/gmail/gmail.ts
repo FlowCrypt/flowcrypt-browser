@@ -3,7 +3,7 @@
 'use strict';
 
 import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window.js';
-import { ChunkedCb, ProgressCb, ProviderContactsResults, RecipientType } from '../../api.js';
+import { ChunkedCb, ProgressCb, ProviderContactsResults } from '../../api.js';
 import { Dict, Str, Value } from '../../../core/common.js';
 import { EmailProviderApi, EmailProviderInterface } from '../email-provider-api.js';
 import { GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
@@ -86,24 +86,12 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return await Google.gmailCall<GmailRes.GmailDraftSend>(this.acctEmail, 'POST', 'drafts/send', { id });
   }
 
-  public msgSend = async (message: SendableMsg, progressCb?: ProgressCb): Promise<GmailRes.GmailMsgSend> => {
-    message.headers.From = message.from;
-    for (const recipientTypeStr of Object.keys(message.recipients)) {
-      const recipientType = recipientTypeStr as RecipientType;
-      if (message.recipients[recipientType] && message.recipients[recipientType]!.length) {
-        // todo - properly escape/encode this header using emailjs
-        message.headers[recipientType[0].toUpperCase() + recipientType.slice(1)] = message.recipients[recipientType]!.map(h => h.replace(/[,]/g, '')).join(',');
-      }
-    }
-    message.headers.Subject = message.subject;
-    let mimeMsg: string;
-    if (message.sign) {
-      mimeMsg = await Mime.encodePgpMimeSigned(message.body, message.headers, message.atts, message.sign);
-    } else {
-      mimeMsg = await Mime.encode(message.body, message.headers, message.atts, message.type);
-    }
-    const request = Google.encodeAsMultipartRelated({ 'application/json; charset=UTF-8': JSON.stringify({ threadId: message.thread }), 'message/rfc822': mimeMsg });
-    return await Google.gmailCall<GmailRes.GmailMsgSend>(this.acctEmail, 'POST', 'messages/send', request.body, { upload: progressCb || Value.noop }, request.contentType);
+  public msgSend = async (sendableMsg: SendableMsg, progressCb?: ProgressCb): Promise<GmailRes.GmailMsgSend> => {
+    const cbs = { upload: progressCb || Value.noop };
+    const jsonPart = JSON.stringify({ threadId: sendableMsg.thread });
+    const mimeMsg = await sendableMsg.toMime();
+    const request = Google.encodeAsMultipartRelated({ 'application/json; charset=UTF-8': jsonPart, 'message/rfc822': mimeMsg });
+    return await Google.gmailCall<GmailRes.GmailMsgSend>(this.acctEmail, 'POST', 'messages/send', request.body, cbs, request.contentType);
   }
 
   public msgList = async (q: string, includeDeleted: boolean = false, pageToken?: string): Promise<GmailRes.GmailMsgList> => {
