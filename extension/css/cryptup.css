@@ -1855,7 +1855,8 @@ table#compose td.text div.text_container {
 
 table#compose td.text div.text_container .action_show_prev_msg {
   text-align: center;
-  width: 25px;
+  width: max-content;
+  padding: 0 5px;
   display: block;
   background-color: #e8eaed;
   border-radius: 5.5px;
@@ -1866,12 +1867,12 @@ table#compose td.text div.text_container .action_show_prev_msg {
 table#compose td.text div.text_container .action_show_prev_msg.progress {
   display: flex;
   justify-content: space-around;
-  width: 60px;
   opacity: 0.6;
   cursor: default;
   white-space: nowrap;
 }
 table#compose td.text div.text_container .action_show_prev_msg img { width: 13px; }
+table#compose td.text div.text_container .action_show_prev_msg.progress img { display: none; }
 
 table#compose td.text .action_add_intro {
   display: none;
