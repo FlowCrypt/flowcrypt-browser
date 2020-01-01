@@ -14,6 +14,24 @@ export type DomainRules = {
 
 export class Rules {
 
+  public static newInstance = async (acctEmail: string): Promise<Rules> => {
+    if (!Str.parseEmail(acctEmail).email) {
+      throw new Error(`Not a valid email:${acctEmail}`);
+    }
+    const storage = await Store.getAcct(acctEmail, ['rules']);
+    if (storage.rules) {
+      return new Rules(storage.rules);
+    } else {
+      const legacyHardCoded = await Rules.legacyHardCodedRules(acctEmail);
+      await Store.setAcct(acctEmail, { rules: legacyHardCoded });
+      return new Rules(legacyHardCoded);
+    }
+  }
+
+  public static isPublicEmailProviderDomain = (emailAddr: string) => {
+    return ['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(emailAddr.split('@')[1] || 'NONE');
+  }
+
   private static legacyHardCodedRules = async (acctEmail: string): Promise<DomainRules> => {
     const hardCodedRules: Dict<DomainRules> = {
       'dFEm3KyalKGTGjpeA/Ar44IPUdE=': { // n
@@ -34,24 +52,6 @@ export class Rules {
       return foundHardCoded;
     }
     return { flags: [] };
-  }
-
-  public static newInstance = async (acctEmail: string): Promise<Rules> => {
-    if (!Str.parseEmail(acctEmail).email) {
-      throw new Error(`Not a valid email:${acctEmail}`);
-    }
-    const storage = await Store.getAcct(acctEmail, ['rules']);
-    if (storage.rules) {
-      return new Rules(storage.rules);
-    } else {
-      const legacyHardCoded = await Rules.legacyHardCodedRules(acctEmail);
-      await Store.setAcct(acctEmail, { rules: legacyHardCoded });
-      return new Rules(legacyHardCoded);
-    }
-  }
-
-  public static isPublicEmailProviderDomain = (emailAddr: string) => {
-    return ['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(emailAddr.split('@')[1] || 'NONE');
   }
 
   protected constructor(private domainRules: DomainRules) { }

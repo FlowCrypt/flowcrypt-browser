@@ -11,18 +11,6 @@ export class Sks extends Api {
 
   private static MR_VERSION_1 = 'info:1:';
 
-  private static get = async (server: string, path: string): Promise<string | undefined> => {
-    try {
-      const { responseText } = await Api.apiCall(server, path, undefined, undefined, undefined, undefined, 'xhr', 'GET') as XMLHttpRequest;
-      return responseText;
-    } catch (e) {
-      if (ApiErr.isNotFound(e)) {
-        return undefined;
-      }
-      throw e;
-    }
-  }
-
   // https://tools.ietf.org/html/draft-shaw-openpgp-hkp-00#section-5.1
   public static lookupEmail = async (server: string, email: string): Promise<PubkeySearchResult> => {
     const index = await Sks.get(server, `pks/lookup?search=${encodeURIComponent(email)}&fingerprint=on&exact=on&options=mr&op=index`);
@@ -63,6 +51,18 @@ export class Sks extends Api {
       return { pubkey: null, pgpClient: null }; // tslint:disable-line:no-null-keyword
     }
     return { pubkey, pgpClient: 'pgp-other' };
+  }
+
+  private static get = async (server: string, path: string): Promise<string | undefined> => {
+    try {
+      const { responseText } = await Api.apiCall(server, path, undefined, undefined, undefined, undefined, 'xhr', 'GET') as XMLHttpRequest;
+      return responseText;
+    } catch (e) {
+      if (ApiErr.isNotFound(e)) {
+        return undefined;
+      }
+      throw e;
+    }
   }
 
 }

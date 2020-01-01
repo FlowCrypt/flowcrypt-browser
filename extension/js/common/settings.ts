@@ -27,39 +27,6 @@ declare const zxcvbn: Function; // tslint:disable-line:ban-types
 
 export class Settings {
 
-  private static prepareNewSettingsLocationUrl = (acctEmail: string | undefined, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams): string => {
-    const pageParams: UrlParams = { placement: 'settings', parentTabId };
-    if (acctEmail) {
-      pageParams.acctEmail = acctEmail;
-    }
-    if (typeof addUrlTextOrParams === 'object' && addUrlTextOrParams) { // it's a list of params - add them. It could also be a text - then it will be added the end of url below
-      for (const k of Object.keys(addUrlTextOrParams)) {
-        pageParams[k] = addUrlTextOrParams[k];
-      }
-      addUrlTextOrParams = undefined;
-    }
-    return Url.create(page, pageParams) + (addUrlTextOrParams || '');
-  }
-
-  private static getDefaultEmailAlias = (sendAs: Dict<SendAsAlias>) => {
-    for (const key of Object.keys(sendAs)) {
-      if (sendAs[key] && sendAs[key].isDefault) {
-        return key;
-      }
-    }
-    return undefined;
-  }
-
-  private static fetchAcctAliasesFromGmail = async (acctEmail: string): Promise<Dict<SendAsAlias>> => {
-    const response = await new Gmail(acctEmail).fetchAcctAliases();
-    const validAliases = response.sendAs.filter(alias => alias.isPrimary || alias.verificationStatus === 'accepted');
-    const result: Dict<SendAsAlias> = {};
-    for (const a of validAliases) {
-      result[a.sendAsEmail.toLowerCase()] = { name: a.displayName, isPrimary: !!a.isPrimary, isDefault: a.isDefault, footer: a.signature };
-    }
-    return result;
-  }
-
   public static evalPasswordStrength = (passphrase: string, type: 'passphrase' | 'pwd' = 'passphrase') => {
     return PgpPwd.estimateStrength(zxcvbn(passphrase, PgpPwd.weakWords()).guesses, type); // tslint:disable-line:no-unsafe-any
   }
@@ -381,6 +348,39 @@ export class Settings {
         }
       }
     })().catch(Catch.reportErr);
+  }
+
+  private static prepareNewSettingsLocationUrl = (acctEmail: string | undefined, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams): string => {
+    const pageParams: UrlParams = { placement: 'settings', parentTabId };
+    if (acctEmail) {
+      pageParams.acctEmail = acctEmail;
+    }
+    if (typeof addUrlTextOrParams === 'object' && addUrlTextOrParams) { // it's a list of params - add them. It could also be a text - then it will be added the end of url below
+      for (const k of Object.keys(addUrlTextOrParams)) {
+        pageParams[k] = addUrlTextOrParams[k];
+      }
+      addUrlTextOrParams = undefined;
+    }
+    return Url.create(page, pageParams) + (addUrlTextOrParams || '');
+  }
+
+  private static getDefaultEmailAlias = (sendAs: Dict<SendAsAlias>) => {
+    for (const key of Object.keys(sendAs)) {
+      if (sendAs[key] && sendAs[key].isDefault) {
+        return key;
+      }
+    }
+    return undefined;
+  }
+
+  private static fetchAcctAliasesFromGmail = async (acctEmail: string): Promise<Dict<SendAsAlias>> => {
+    const response = await new Gmail(acctEmail).fetchAcctAliases();
+    const validAliases = response.sendAs.filter(alias => alias.isPrimary || alias.verificationStatus === 'accepted');
+    const result: Dict<SendAsAlias> = {};
+    for (const a of validAliases) {
+      result[a.sendAsEmail.toLowerCase()] = { name: a.displayName, isPrimary: !!a.isPrimary, isDefault: a.isDefault, footer: a.signature };
+    }
+    return result;
   }
 
 }

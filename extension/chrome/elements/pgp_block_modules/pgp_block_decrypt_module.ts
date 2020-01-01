@@ -17,9 +17,9 @@ import { Xss } from '../../../js/common/platform/xss.js';
 
 export class PgpBlockViewDecryptModule {
 
-  private msgFetchedFromApi: false | GmailResponseFormat = false;
-
   public canReadEmails: undefined | boolean;
+
+  private msgFetchedFromApi: false | GmailResponseFormat = false;
 
   constructor(private view: PgpBlockView) {
   }

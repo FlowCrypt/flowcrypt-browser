@@ -16,11 +16,6 @@ export type PubkeySearchResult = { pubkey: string | null; pgpClient: PgpClient }
  */
 export class Keyserver {
 
-  private static getCustomKeyserverByAcctEmail = async (acctEmail: string) => {
-    const rules = await Rules.newInstance(acctEmail);
-    return rules.canUseCustomKeyserver() ? rules.getCustomKeyserver() : undefined;
-  }
-
   public static lookupEmail = async (acctEmail: string, email: string): Promise<PubkeySearchResult> => {
     const customKs = await Keyserver.getCustomKeyserverByAcctEmail(acctEmail);
     if (customKs) {
@@ -41,6 +36,11 @@ export class Keyserver {
       }
     }
     return await Attester.lookupLongid(longid);
+  }
+
+  private static getCustomKeyserverByAcctEmail = async (acctEmail: string) => {
+    const rules = await Rules.newInstance(acctEmail);
+    return rules.canUseCustomKeyserver() ? rules.getCustomKeyserver() : undefined;
   }
 
 }

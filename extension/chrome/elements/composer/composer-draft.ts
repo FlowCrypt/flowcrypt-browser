@@ -21,14 +21,14 @@ import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerDraft extends ComposerComponent {
 
+  public wasMsgLoadedFromDraft = false;
+
   private currentlySavingDraft = false;
   private saveDraftInterval?: number;
   private lastDraftBody?: string;
   private lastDraftSubject = '';
 
   private SAVE_DRAFT_FREQUENCY = 3000;
-
-  public wasMsgLoadedFromDraft = false;
 
   constructor(composer: Composer) {
     super(composer);
