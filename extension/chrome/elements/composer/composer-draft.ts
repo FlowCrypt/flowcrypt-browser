@@ -29,7 +29,6 @@ export class ComposerDraft extends ComposerComponent {
   private saveDraftInterval?: number;
   private lastDraftBody?: string;
   private lastDraftSubject = '';
-
   private SAVE_DRAFT_FREQUENCY = 3000;
 
   constructor(composer: Composer) {
@@ -89,6 +88,26 @@ export class ComposerDraft extends ComposerComponent {
       } else {
         Catch.reportErr(e);
         await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('exception');
+      }
+    }
+  }
+
+  public draftDelete = async () => {
+    clearInterval(this.saveDraftInterval);
+    await Ui.time.wait(() => !this.currentlySavingDraft ? true : undefined);
+    if (this.view.draftId) {
+      await this.composer.storage.draftMetaDelete(this.view.draftId, this.view.threadId);
+      try {
+        await this.composer.emailProvider.draftDelete(this.view.draftId);
+        this.view.draftId = '';
+      } catch (e) {
+        if (ApiErr.isAuthPopupNeeded(e)) {
+          BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
+        } else if (ApiErr.isNotFound(e)) {
+          console.info(`draftDelete: ${e.message}`);
+        } else if (!ApiErr.isNetErr(e)) {
+          Catch.reportErr(e);
+        }
       }
     }
   }
@@ -161,26 +180,6 @@ export class ComposerDraft extends ComposerComponent {
         }
       }
       this.currentlySavingDraft = false;
-    }
-  }
-
-  public draftDelete = async () => {
-    clearInterval(this.saveDraftInterval);
-    await Ui.time.wait(() => !this.currentlySavingDraft ? true : undefined);
-    if (this.view.draftId) {
-      await this.composer.storage.draftMetaDelete(this.view.draftId, this.view.threadId);
-      try {
-        await this.composer.emailProvider.draftDelete(this.view.draftId);
-        this.view.draftId = '';
-      } catch (e) {
-        if (ApiErr.isAuthPopupNeeded(e)) {
-          BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
-        } else if (ApiErr.isNotFound(e)) {
-          console.info(`draftDelete: ${e.message}`);
-        } else if (!ApiErr.isNetErr(e)) {
-          Catch.reportErr(e);
-        }
-      }
     }
   }
 
