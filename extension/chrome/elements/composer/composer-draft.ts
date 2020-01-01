@@ -93,7 +93,7 @@ export class ComposerDraft extends ComposerComponent {
     }
   }
 
-  public draftSave = async (forceSave: boolean = false): Promise<void> => {
+  private draftSave = async (forceSave: boolean = false): Promise<void> => {
     if (this.hasBodyChanged(this.composer.input.squire.getHTML()) || this.hasSubjectChanged(String(this.composer.S.cached('input_subject').val())) || forceSave) {
       this.currentlySavingDraft = true;
       try {
