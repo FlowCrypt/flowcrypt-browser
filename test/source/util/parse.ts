@@ -19,8 +19,7 @@ const strictParse = async (source: string): Promise<ParseMsgResult> => {
   } else {
     throw new Error('ThreadId property doesn\'t exist');
   }
-  if (lines[6] === 'Content-Type: message/rfc822' &&
-    lines[7] === 'Content-Transfer-Encoding: base64' && lines[9]) {
+  if (lines[6] === 'Content-Type: message/rfc822' && lines[7] === 'Content-Transfer-Encoding: base64' && lines[9]) {
     result.base64 = lines[9];
     result.mimeMsg = await convertBase64ToMimeMsg(lines[9]);
   } else {
