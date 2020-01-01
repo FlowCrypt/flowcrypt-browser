@@ -5,6 +5,7 @@
 import { NewMsgData, RecipientElement } from './composer-types.js';
 import { SquireEditor, WillPasteEvent } from '../../../types/squire.js';
 
+import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposerComponent } from './composer-abstract-component.js';
 import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
@@ -194,8 +195,7 @@ export class ComposerInput extends ComposerComponent {
   private insertDebugElements = () => {
     this.composer.S.cached('body').append('<input type="hidden" id="test_insertImage" data-test="action-insert-image" />'); // xss-direct
     $('#test_insertImage').on('click', this.view.setHandler((input) => {
-      const base64Img = $(input).val();
-      this.squire.insertImage(base64Img! as string, {});
+      this.squire.insertImage(Buf.fromBase64Str(String($(input).val())), {});
     }));
   }
 
