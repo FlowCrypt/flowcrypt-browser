@@ -194,8 +194,8 @@ export class ComposerInput extends ComposerComponent {
   // We need this method to test images in drafts because we can't paste them dirctly in tests.
   private insertDebugElements = () => {
     this.composer.S.cached('body').append('<input type="hidden" id="test_insertImage" data-test="action-insert-image" />'); // xss-direct
-    $('#test_insertImage').on('click', this.view.setHandler((input) => {
-      this.squire.insertImage(Buf.fromBase64Str(String($(input).val())), {});
+    $('#test_insertImage').on('click', this.view.setHandler((input) => { // value should start with `data:image/png;base64,`
+      this.squire.insertImage(Buf.fromBase64Str(String($(input).val()).split(',')[1]), {});
     }));
   }
 
