@@ -14,7 +14,7 @@ import { GmailRes } from '../../../js/common/api/email_provider/gmail/gmail-pars
 import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { SendBtnTexts } from './composer-types.js';
-import { SendableMsg } from '../../../js/common/api/email_provider/email_provider_api.js';
+import { SendableMsg } from '../../../js/common/api/email_provider/sendable-msg.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';

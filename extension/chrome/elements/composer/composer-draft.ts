@@ -122,10 +122,10 @@ export class ComposerDraft extends ComposerComponent {
           To: msgData.recipients.to || [],
           Cc: msgData.recipients.cc || [],
           Bcc: msgData.recipients.bcc || [],
-          From: msgData.sender,
+          From: msgData.from,
           Subject: msgData.subject || (this.view.replyParams ? this.view.replyParams.subject : undefined) || 'FlowCrypt draft'
         };
-        const primaryKi = await this.composer.storage.getKey(msgData.sender);
+        const primaryKi = await this.composer.storage.getKey(msgData.from);
         let atts: Att[] | undefined;
         let msgBody: SendableMsgBody = { "text/plain": msgData.plaintext };
         if (this.composer.sendBtn.popover.choices.richtext) {
@@ -267,4 +267,5 @@ export class ComposerDraft extends ComposerComponent {
       await this.composer.render.renderReplyMsgComposeTable();
     }
   }
+
 }

@@ -3,7 +3,7 @@
 'use strict';
 
 import { AccountStore, Scopes, Store } from '../../js/common/platform/store.js';
-import { EmailProviderInterface, ReplyParams } from '../../js/common/api/email_provider/email_provider_api.js';
+import { EmailProviderInterface, ReplyParams } from '../../js/common/api/email_provider/email-provider-api.js';
 
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { Assert } from '../../js/common/assert.js';

@@ -5,7 +5,7 @@
 import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window.js';
 import { ChunkedCb, ProgressCb, ProviderContactsResults, RecipientType } from '../../api.js';
 import { Dict, Str, Value } from '../../../core/common.js';
-import { EmailProviderApi, EmailProviderInterface, SendableMsg } from '../email_provider_api.js';
+import { EmailProviderApi, EmailProviderInterface } from '../email-provider-api.js';
 import { GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
 import { GmailParser, GmailRes } from './gmail-parser.js';
 
@@ -22,6 +22,7 @@ import { GoogleAuth } from '../../google-auth.js';
 import { Mime } from '../../../core/mime.js';
 import { PgpArmor } from '../../../core/pgp-armor.js';
 import { PgpKey } from '../../../core/pgp-key.js';
+import { SendableMsg } from '../sendable-msg.js';
 import { Store } from '../../../platform/store.js';
 import { Xss } from '../../../platform/xss.js';
 

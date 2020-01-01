@@ -5,6 +5,7 @@
 import { BrowserEventErrHandler, Ui } from '../../../js/common/browser/ui.js';
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
 import { NewMsgData, SendBtnTexts } from './composer-types.js';
+
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserExtension } from '../../../js/common/browser/browser-extension.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
@@ -123,7 +124,7 @@ export class ComposerErrs extends ComposerComponent {
     throw new ComposerNotReadyError('Still working, please wait.');
   }
 
-  public throwIfFormValsInvalid = async ({ subject, plaintext, sender }: NewMsgData) => {
+  public throwIfFormValsInvalid = async ({ subject, plaintext, from: sender }: NewMsgData) => {
     if (!subject && ! await Ui.modal.confirm('Send without a subject?')) {
       throw new ComposerResetBtnTrigger();
     }

@@ -8,7 +8,7 @@ import { SquireEditor, WillPasteEvent } from '../../../types/squire.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
+import { Recipients } from '../../../js/common/api/email_provider/email-provider-api.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerInput extends ComposerComponent {
@@ -60,7 +60,7 @@ export class ComposerInput extends ComposerComponent {
     const password = this.composer.S.cached('input_password').val();
     const pwd = typeof password === 'string' && password ? password : undefined;
     const sender = this.composer.sender.getSender();
-    return { recipients, subject, plaintext, plainhtml, pwd, sender };
+    return { recipients, subject, plaintext, plainhtml, pwd, from: sender };
   }
 
   private handlePaste = () => {

@@ -5,19 +5,19 @@
 import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
 import { NewMsgData, SendBtnTexts } from '../composer-types.js';
 
-import { SendableMsg } from '../../../../js/common/api/email_provider/email_provider_api.js';
+import { SendableMsg } from '../../../../js/common/api/email_provider/sendable-msg.js';
 import { SendableMsgBody } from '../../../../js/common/core/mime.js';
 
 export class PlainMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
 
-  public sendableMsg = async (newMsgData: NewMsgData): Promise<SendableMsg> => {
+  public sendableMsg = async (newMsg: NewMsgData): Promise<SendableMsg> => {
     this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING);
     const atts = await this.composer.atts.attach.collectAtts();
-    const body: SendableMsgBody = { 'text/plain': newMsgData.plaintext };
+    const body: SendableMsgBody = { 'text/plain': newMsg.plaintext };
     if (this.richtext) {
-      body['text/html'] = newMsgData.plainhtml;
+      body['text/html'] = newMsg.plainhtml;
     }
-    return await this.composer.emailProvider.createMsgObj(newMsgData.sender, newMsgData.recipients, newMsgData.subject, body, atts, this.composer.view.threadId);
+    return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body, atts });
   }
 
 }

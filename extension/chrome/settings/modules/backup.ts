@@ -19,6 +19,7 @@ import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 import { KeyImportUi } from './../../../js/common/ui/key_import_ui.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Rules } from '../../../js/common/rules.js';
+import { SendableMsg } from '../../../js/common/api/email_provider/sendable-msg.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
@@ -328,7 +329,13 @@ View.run(class BackupView extends View {
   private doBackupOnEmailProvider = async (armoredKey: string) => {
     const emailMsg = String(await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' }));
     const emailAtts = [this.asBackupFile(armoredKey)];
-    const msg = await this.gmail.createMsgObj(this.acctEmail, { to: [this.acctEmail] }, GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
+    const msg = await SendableMsg.create(this.acctEmail, {
+      from: this.acctEmail,
+      recipients: { to: [this.acctEmail] },
+      subject: GMAIL_RECOVERY_EMAIL_SUBJECTS[0],
+      body: { 'text/html': emailMsg },
+      atts: emailAtts
+    });
     if (this.emailProvider === 'gmail') {
       return await this.gmail.msgSend(msg);
     } else {

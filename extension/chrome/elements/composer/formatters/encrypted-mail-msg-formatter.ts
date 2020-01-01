@@ -19,7 +19,7 @@ import { Lang } from '../../../../js/common/lang.js';
 import { PgpArmor } from '../../../../js/common/core/pgp-armor.js';
 import { PgpKey } from '../../../../js/common/core/pgp-key.js';
 import { PgpMsg } from '../../../../js/common/core/pgp-msg.js';
-import { SendableMsg } from '../../../../js/common/api/email_provider/email_provider_api.js';
+import { SendableMsg } from '../../../../js/common/api/email_provider/sendable-msg.js';
 import { Settings } from '../../../../js/common/settings.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
@@ -63,7 +63,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         // however if there is more than one recipient with pubkeys, still append the encrypted message as attachment
         atts = pubkeys.length === 1 ? [] : [new Att({ data: Buf.fromUtfStr(encrypted.data), name: 'encrypted.asc' })];
       }
-      return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, encryptedBody, atts, this.composer.view.threadId);
+      return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: encryptedBody, atts });
     } else if (newMsg.pwd) { // don't allow rich-text pwd msg yet
       this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-richText-sending-option'), 'richtext', false); // do not use rich text
       throw new ComposerUserError('Rich text is not yet supported for password encrypted messages, please retry (formatting will be removed).');
@@ -72,7 +72,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
       const pgpMimeToEncrypt = await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject }, plainAtts);
       const encrypted = await this.encryptData(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubkeys, signingPrv);
       const atts = EncryptedMsgMailFormatter.createPgpMimeAtts(encrypted.data);
-      return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, {}, atts, this.composer.view.threadId, 'pgpMimeEncrypted');
+      return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: {}, atts, type: 'pgpMimeEncrypted', });
     }
   }
 
@@ -92,8 +92,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         'style': 'display: none;',
         'class': 'cryptup_reply',
         'cryptup-data': Str.htmlAttrEncode({
-          sender: newMsgData.sender,
-          recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.sender), this.acctEmail),
+          sender: newMsgData.from,
+          recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.from), this.acctEmail),
           subject: newMsgData,
           token: response.token,
         })

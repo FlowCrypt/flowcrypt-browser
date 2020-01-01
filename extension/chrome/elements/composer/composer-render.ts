@@ -2,8 +2,6 @@
 
 'use strict';
 
-import { Recipients, SendableMsg } from '../../../js/common/api/email_provider/email_provider_api.js';
-
 import { Att } from '../../../js/common/core/att.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -12,6 +10,8 @@ import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { RecipientType } from '../../../js/common/api/api.js';
+import { Recipients } from '../../../js/common/api/email_provider/email-provider-api.js';
+import { SendableMsg } from '../../../js/common/api/email_provider/sendable-msg.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
