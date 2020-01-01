@@ -13,6 +13,7 @@ import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Composer } from './composer.js';
 import { ComposerComponent } from './composer-abstract-component.js';
+import { EncryptedMsgMailFormatter } from './formatters/encrypted-mail-msg-formatter.js';
 import { Env } from '../../../js/common/browser/env.js';
 import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
 import { PgpMsg } from '../../../js/common/core/pgp-msg.js';
@@ -112,7 +113,7 @@ export class ComposerDraft extends ComposerComponent {
           msgBody['text/html'] = msgData.plainhtml;
           const mimeMsg = await Mime.encode(msgBody, {});
           const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(mimeMsg), armor: true }) as OpenPGP.EncryptArmorResult;
-          atts = PgpMsg.createPgpMimeAtts(encrypted.data);
+          atts = EncryptedMsgMailFormatter.createPgpMimeAtts(encrypted.data);
           msgBody = {};
         } else {
           const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(msgData.plainhtml), armor: true }) as OpenPGP.EncryptArmorResult;

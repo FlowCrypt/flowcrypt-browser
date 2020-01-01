@@ -2,13 +2,13 @@
 
 'use strict';
 
-import { Att, FcAttLinkData } from './att.js';
 import { Contact, KeyInfo, PgpKey, PrvKeyInfo } from './pgp-key.js';
 import { MsgBlock, MsgBlockType } from './msg-block.js';
 import { Str, Value } from './common.js';
 
 import { Buf } from './buf.js';
 import { Catch } from '../platform/catch.js';
+import { FcAttLinkData } from './att.js';
 import { MsgBlockParser } from './msg-block-parser.js';
 import { PgpArmor } from './pgp-armor.js';
 import { PgpHash } from './pgp-hash.js';
@@ -378,13 +378,6 @@ export class PgpMsg {
       });
     }
     return decryptedContent;
-  }
-
-  public static createPgpMimeAtts = (content: string) => {
-    return [
-      new Att({ data: Buf.fromUtfStr('Version: 1'), type: 'application/pgp-encrypted', contentDescription: 'PGP/MIME version identification' }),
-      new Att({ data: Buf.fromUtfStr(content), type: 'application/octet-stream', contentDescription: 'OpenPGP encrypted message', name: 'encrypted.asc', inline: true })
-    ];
   }
 
   public static stripPublicKeys = (decryptedContent: string, foundPublicKeys: string[]) => {
