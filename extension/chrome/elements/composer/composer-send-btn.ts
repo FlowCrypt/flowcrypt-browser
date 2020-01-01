@@ -22,13 +22,13 @@ import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerSendBtn extends ComposerComponent {
 
-  private isSendMessageInProgress = false;
-
   public additionalMsgHeaders: { [key: string]: string } = {};
 
   public btnUpdateTimeout?: number;
 
   public popover: ComposerSendBtnPopover;
+
+  private isSendMessageInProgress = false;
 
   constructor(composer: Composer) {
     super(composer);

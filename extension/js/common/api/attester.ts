@@ -11,14 +11,6 @@ type PubCallRes = { responseText: string, getResponseHeader: (n: string) => stri
 
 export class Attester extends Api {
 
-  private static jsonCall = async <RT>(path: string, values?: Dict<any>, method: ReqMethod = 'POST'): Promise<RT> => {
-    return await Api.apiCall('https://flowcrypt.com/attester/', path, values, 'JSON', undefined, { 'api-version': '3' }, 'json', method) as RT;
-  }
-
-  private static pubCall = async (resource: string, method: ReqMethod = 'GET', data?: string | undefined): Promise<PubCallRes> => {
-    return await Api.apiCall('https://flowcrypt.com/attester/', resource, data, typeof data === 'string' ? 'TEXT' : undefined, undefined, undefined, 'xhr', method);
-  }
-
   public static lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
     try {
       const r = await Attester.pubCall(`pub/${email}`);
@@ -65,6 +57,14 @@ export class Attester extends Api {
 
   public static testWelcome = async (email: string, pubkey: string): Promise<{ sent: boolean }> => {
     return await Attester.jsonCall<{ sent: boolean }>('test/welcome', { email, pubkey });
+  }
+
+  private static jsonCall = async <RT>(path: string, values?: Dict<any>, method: ReqMethod = 'POST'): Promise<RT> => {
+    return await Api.apiCall('https://flowcrypt.com/attester/', path, values, 'JSON', undefined, { 'api-version': '3' }, 'json', method) as RT;
+  }
+
+  private static pubCall = async (resource: string, method: ReqMethod = 'GET', data?: string | undefined): Promise<PubCallRes> => {
+    return await Api.apiCall('https://flowcrypt.com/attester/', resource, data, typeof data === 'string' ? 'TEXT' : undefined, undefined, undefined, 'xhr', method);
   }
 
 }

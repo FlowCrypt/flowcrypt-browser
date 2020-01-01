@@ -16,9 +16,9 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
 export class PgpBlockViewRenderModule {
+  public doNotSetStateAsReadyYet = false;
 
   private heightHist: number[] = [];
-  public doNotSetStateAsReadyYet = false;
 
   constructor(private view: PgpBlockView) {
   }

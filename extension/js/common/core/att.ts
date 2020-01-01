@@ -17,13 +17,6 @@ export class Att {
 
   public static readonly attachmentsPattern = /^(((cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|())$/gm;
 
-  public static keyinfoAsPubkeyAtt = (ki: { public: string, longid: string }) => {
-    return new Att({ data: Buf.fromUtfStr(ki.public), type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
-  }
-
-  private bytes: Uint8Array | undefined;
-  private treatAsValue: Att$treatAs | undefined;
-
   public length: number = NaN;
   public type: string;
   public name: string;
@@ -33,6 +26,13 @@ export class Att {
   public inline: boolean;
   public cid: string | undefined;
   public contentDescription: string | undefined;
+
+  private bytes: Uint8Array | undefined;
+  private treatAsValue: Att$treatAs | undefined;
+
+  public static keyinfoAsPubkeyAtt = (ki: { public: string, longid: string }) => {
+    return new Att({ data: Buf.fromUtfStr(ki.public), type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
+  }
 
   constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid, contentDescription }: AttMeta) {
     if (typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {

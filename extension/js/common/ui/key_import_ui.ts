@@ -34,6 +34,11 @@ export class UserAlert extends Error { }
 
 export class KeyImportUi {
 
+  private expectedLongid?: string;
+  private rejectKnown: boolean;
+  private checkEncryption: boolean;
+  private checkSigning: boolean;
+
   public static normalizeLongId = (longid: string) => {
     let result = longid.trim().replace(/0x|\s|:|-/g, '').toUpperCase();
     if (result.length >= 16) {
@@ -44,11 +49,6 @@ export class KeyImportUi {
     }
     return;
   }
-
-  private expectedLongid?: string;
-  private rejectKnown: boolean;
-  private checkEncryption: boolean;
-  private checkSigning: boolean;
 
   constructor(o: { expectLongid?: string, rejectKnown?: boolean, checkEncryption?: boolean, checkSigning?: boolean }) {
     this.expectedLongid = o.expectLongid;

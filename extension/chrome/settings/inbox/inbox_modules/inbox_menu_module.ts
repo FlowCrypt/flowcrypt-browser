@@ -15,12 +15,12 @@ import { Xss } from '../../../../js/common/platform/xss.js';
 
 export class InboxMenuModule extends ViewModule<InboxView> {
 
-  private readonly FOLDERS = ['INBOX', 'STARRED', 'SENT', 'DRAFT', 'TRASH']; // 'UNREAD', 'SPAM'
-  private allLabels!: GmailRes.GmailLabels$label[];
-
   public readonly LABEL: Dict<GmailRes.GmailMsg$labelId> = {
     INBOX: 'INBOX', UNREAD: 'UNREAD', CATEGORY_PERSONAL: 'CATEGORY_PERSONAL', IMPORTANT: 'IMPORTANT', SENT: 'SENT', CATEGORY_UPDATES: 'CATEGORY_UPDATES'
   };
+
+  private readonly FOLDERS = ['INBOX', 'STARRED', 'SENT', 'DRAFT', 'TRASH']; // 'UNREAD', 'SPAM'
+  private allLabels!: GmailRes.GmailLabels$label[];
 
   public render = async () => {
     await this.renderNavbartTop();

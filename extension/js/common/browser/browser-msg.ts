@@ -113,12 +113,6 @@ export class BgNotReadyErr extends Error { }
 export class TabIdRequiredError extends Error { }
 
 export class BrowserMsg {
-  private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};
-  private static HANDLERS_REGISTERED_FRAME: Handlers = {
-    set_css: BrowserMsgCommonHandlers.setCss,
-    add_class: BrowserMsgCommonHandlers.addClass,
-    remove_class: BrowserMsgCommonHandlers.removeClass,
-  };
 
   public static MAX_SIZE = 1024 * 1024; // 1MB
 
@@ -175,6 +169,137 @@ export class BrowserMsg {
     openGoogleAuthDialog: (dest: Bm.Dest, bm: Bm.OpenGoogleAuthDialog) => BrowserMsg.sendCatch(dest, 'open_google_auth_dialog', bm),
     addToContacts: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'addToContacts', {})
   };
+  private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};
+  private static HANDLERS_REGISTERED_FRAME: Handlers = {
+    set_css: BrowserMsgCommonHandlers.setCss,
+    add_class: BrowserMsgCommonHandlers.addClass,
+    remove_class: BrowserMsgCommonHandlers.removeClass,
+  };
+
+  public static renderFatalErrCorner = (message: string, style: 'GREEN-NOTIFICATION' | 'RED-RELOAD-PROMPT') => {
+    const div = document.createElement('div');
+    div.textContent = message;
+    div.style.position = 'fixed';
+    div.style.bottom = '0';
+    div.style.right = '0';
+    div.style.fontSize = '12px';
+    div.style.backgroundColor = '#31a217';
+    div.style.color = 'white';
+    div.style.padding = '1px 3px';
+    div.style.zIndex = '1000';
+    if (style === 'RED-RELOAD-PROMPT') {
+      div.style.fontSize = '14px';
+      div.style.backgroundColor = '#a44';
+      div.style.padding = '4px 6px';
+      const a = document.createElement('a');
+      a.href = window.location.href.split('#')[0];
+      a.textContent = 'RELOAD';
+      a.style.color = 'white';
+      a.style.fontWeight = 'bold';
+      a.style.marginLeft = '12px';
+      div.appendChild(a);
+    }
+    window.document.body.appendChild(div);
+  }
+
+  public static tabId = async (): Promise<string | null | undefined> => {
+    try {
+      const { tabId } = await BrowserMsg.sendAwait(undefined, '_tab_', undefined, true) as Bm.Res._tab_;
+      return tabId;
+    } catch (e) {
+      if (e instanceof BgNotReadyErr) {
+        return undefined;
+      }
+      throw e;
+    }
+  }
+
+  public static requiredTabId = async (attempts = 10, delay = 200): Promise<string> => {
+    let tabId;
+    for (let i = 0; i < attempts; i++) { // sometimes returns undefined right after browser start due to BgNotReadyErr
+      tabId = await BrowserMsg.tabId();
+      if (tabId) {
+        return tabId;
+      }
+      await Ui.time.sleep(delay);
+    }
+    throw new TabIdRequiredError(`tabId is required, but received '${String(tabId)}' after ${attempts} attempts`);
+  }
+
+  public static addListener = (name: string, handler: Handler) => {
+    BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = handler;
+  }
+
+  public static listen = (listenForTabId: string) => {
+    const processed: string[] = [];
+    chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
+      try {
+        if (msg.to === listenForTabId || msg.to === 'broadcast') {
+          if (!processed.includes(msg.uid)) {
+            processed.push(msg.uid);
+            if (typeof BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name] !== 'undefined') {
+              const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name];
+              BrowserMsg.replaceObjUrlWithBuf(msg.data.bm, msg.data.objUrls)
+                .then(bm => BrowserMsg.sendRawResponse(handler(bm, sender), rawRespond))
+                .catch(e => BrowserMsg.sendRawResponse(Promise.reject(e), rawRespond));
+              return true; // will respond
+            } else if (msg.name !== '_tab_' && msg.to !== 'broadcast') {
+              BrowserMsg.sendRawResponse(Promise.reject(new Error(`BrowserMsg.listen error: handler "${msg.name}" not set`)), rawRespond);
+              return true; // will respond
+            }
+          }
+        }
+      } catch (e) {
+        BrowserMsg.sendRawResponse(Promise.reject(e), rawRespond);
+        return true; // will respond
+      }
+      return false; // will not respond
+    });
+  }
+
+  public static bgAddListener = (name: string, handler: Handler) => {
+    BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name] = handler;
+  }
+
+  public static bgListen = () => {
+    chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, rawRespond: (rawRes: Bm.RawResponse) => void) => {
+      const respondIfPageStillOpen = (response: Bm.RawResponse) => {
+        try { // avoiding unnecessary errors when target tab gets closed
+          rawRespond(response);
+        } catch (cannotRespondErr) {
+          if (cannotRespondErr instanceof Error && cannotRespondErr.message === 'Attempting to use a disconnected port object') {
+            // the page we're responding to is closed - ec when closing secure compose
+          } else {
+            if (cannotRespondErr instanceof Error) {
+              cannotRespondErr.stack += `\n\nOriginal msg sender stack: ${msg.stack}`;
+            }
+            Catch.reportErr(Catch.rewrapErr(cannotRespondErr, `BrowserMsg.bgListen.respondIfPageStillOpen:${msg.name}`));
+          }
+        }
+      };
+      try {
+        if (msg.to && msg.to !== 'broadcast') { // the bg is relaying a msg from one page to another
+          msg.sender = sender;
+          chrome.tabs.sendMessage(BrowserMsg.browserMsgDestParse(msg.to).tab!, msg, {}, respondIfPageStillOpen);
+          return true; // will respond
+        } else if (Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND).includes(msg.name)) { // standard or broadcast message
+          const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[msg.name];
+          BrowserMsg.replaceObjUrlWithBuf(msg.data.bm, msg.data.objUrls)
+            .then(bm => BrowserMsg.sendRawResponse(handler(bm, sender), respondIfPageStillOpen))
+            .catch(e => BrowserMsg.sendRawResponse(Promise.reject(e), respondIfPageStillOpen));
+          return true; // will respond
+        } else if (msg.to !== 'broadcast') { // non-broadcast message that we don't have a handler for
+          BrowserMsg.sendRawResponse(Promise.reject(new Error(`BrowserMsg.bgListen:${msg.name}:no such handler`)), respondIfPageStillOpen);
+          return true; // will respond
+        } else { // broadcast message that backend does not have a handler for - ignored
+          return false; // no plans to respond
+        }
+      } catch (exception) {
+        BrowserMsg.sendRawResponse(Promise.reject(exception), respondIfPageStillOpen);
+        return true; // will respond
+      }
+    });
+  }
 
   private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<any>) => {
     BrowserMsg.sendAwait(dest, name, bm).catch(Catch.reportErr);
@@ -305,131 +430,6 @@ export class BrowserMsg {
       parsed.frame = !isNaN(parsedFrame) ? parsedFrame : undefined;
     }
     return parsed;
-  }
-
-  public static renderFatalErrCorner = (message: string, style: 'GREEN-NOTIFICATION' | 'RED-RELOAD-PROMPT') => {
-    const div = document.createElement('div');
-    div.textContent = message;
-    div.style.position = 'fixed';
-    div.style.bottom = '0';
-    div.style.right = '0';
-    div.style.fontSize = '12px';
-    div.style.backgroundColor = '#31a217';
-    div.style.color = 'white';
-    div.style.padding = '1px 3px';
-    div.style.zIndex = '1000';
-    if (style === 'RED-RELOAD-PROMPT') {
-      div.style.fontSize = '14px';
-      div.style.backgroundColor = '#a44';
-      div.style.padding = '4px 6px';
-      const a = document.createElement('a');
-      a.href = window.location.href.split('#')[0];
-      a.textContent = 'RELOAD';
-      a.style.color = 'white';
-      a.style.fontWeight = 'bold';
-      a.style.marginLeft = '12px';
-      div.appendChild(a);
-    }
-    window.document.body.appendChild(div);
-  }
-
-  public static tabId = async (): Promise<string | null | undefined> => {
-    try {
-      const { tabId } = await BrowserMsg.sendAwait(undefined, '_tab_', undefined, true) as Bm.Res._tab_;
-      return tabId;
-    } catch (e) {
-      if (e instanceof BgNotReadyErr) {
-        return undefined;
-      }
-      throw e;
-    }
-  }
-
-  public static requiredTabId = async (attempts = 10, delay = 200): Promise<string> => {
-    let tabId;
-    for (let i = 0; i < attempts; i++) { // sometimes returns undefined right after browser start due to BgNotReadyErr
-      tabId = await BrowserMsg.tabId();
-      if (tabId) {
-        return tabId;
-      }
-      await Ui.time.sleep(delay);
-    }
-    throw new TabIdRequiredError(`tabId is required, but received '${String(tabId)}' after ${attempts} attempts`);
-  }
-
-  public static addListener = (name: string, handler: Handler) => {
-    BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = handler;
-  }
-
-  public static listen = (listenForTabId: string) => {
-    const processed: string[] = [];
-    chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
-      try {
-        if (msg.to === listenForTabId || msg.to === 'broadcast') {
-          if (!processed.includes(msg.uid)) {
-            processed.push(msg.uid);
-            if (typeof BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name] !== 'undefined') {
-              const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name];
-              BrowserMsg.replaceObjUrlWithBuf(msg.data.bm, msg.data.objUrls)
-                .then(bm => BrowserMsg.sendRawResponse(handler(bm, sender), rawRespond))
-                .catch(e => BrowserMsg.sendRawResponse(Promise.reject(e), rawRespond));
-              return true; // will respond
-            } else if (msg.name !== '_tab_' && msg.to !== 'broadcast') {
-              BrowserMsg.sendRawResponse(Promise.reject(new Error(`BrowserMsg.listen error: handler "${msg.name}" not set`)), rawRespond);
-              return true; // will respond
-            }
-          }
-        }
-      } catch (e) {
-        BrowserMsg.sendRawResponse(Promise.reject(e), rawRespond);
-        return true; // will respond
-      }
-      return false; // will not respond
-    });
-  }
-
-  public static bgAddListener = (name: string, handler: Handler) => {
-    BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name] = handler;
-  }
-
-  public static bgListen = () => {
-    chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, rawRespond: (rawRes: Bm.RawResponse) => void) => {
-      const respondIfPageStillOpen = (response: Bm.RawResponse) => {
-        try { // avoiding unnecessary errors when target tab gets closed
-          rawRespond(response);
-        } catch (cannotRespondErr) {
-          if (cannotRespondErr instanceof Error && cannotRespondErr.message === 'Attempting to use a disconnected port object') {
-            // the page we're responding to is closed - ec when closing secure compose
-          } else {
-            if (cannotRespondErr instanceof Error) {
-              cannotRespondErr.stack += `\n\nOriginal msg sender stack: ${msg.stack}`;
-            }
-            Catch.reportErr(Catch.rewrapErr(cannotRespondErr, `BrowserMsg.bgListen.respondIfPageStillOpen:${msg.name}`));
-          }
-        }
-      };
-      try {
-        if (msg.to && msg.to !== 'broadcast') { // the bg is relaying a msg from one page to another
-          msg.sender = sender;
-          chrome.tabs.sendMessage(BrowserMsg.browserMsgDestParse(msg.to).tab!, msg, {}, respondIfPageStillOpen);
-          return true; // will respond
-        } else if (Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND).includes(msg.name)) { // standard or broadcast message
-          const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[msg.name];
-          BrowserMsg.replaceObjUrlWithBuf(msg.data.bm, msg.data.objUrls)
-            .then(bm => BrowserMsg.sendRawResponse(handler(bm, sender), respondIfPageStillOpen))
-            .catch(e => BrowserMsg.sendRawResponse(Promise.reject(e), respondIfPageStillOpen));
-          return true; // will respond
-        } else if (msg.to !== 'broadcast') { // non-broadcast message that we don't have a handler for
-          BrowserMsg.sendRawResponse(Promise.reject(new Error(`BrowserMsg.bgListen:${msg.name}:no such handler`)), respondIfPageStillOpen);
-          return true; // will respond
-        } else { // broadcast message that backend does not have a handler for - ignored
-          return false; // no plans to respond
-        }
-      } catch (exception) {
-        BrowserMsg.sendRawResponse(Promise.reject(exception), respondIfPageStillOpen);
-        return true; // will respond
-      }
-    });
   }
 
 }
