@@ -60,7 +60,7 @@ export class ComposeView extends View {
     this.ignoreDraft = uncheckedUrlParams.ignoreDraft === true;
     this.removeAfterClose = uncheckedUrlParams.removeAfterClose === true;
     this.disableDraftSaving = false;
-    this.debug = true;
+    this.debug = uncheckedUrlParams.debug === true;
     this.replyPubkeyMismatch = uncheckedUrlParams.replyPubkeyMismatch === true;
     this.draftId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
     this.replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
