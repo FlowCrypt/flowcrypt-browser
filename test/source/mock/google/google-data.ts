@@ -12,7 +12,7 @@ type GmailMsg$payload = { parts?: GmailMsg$payload$part[], headers?: GmailMsg$he
 type GmailMsg$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES' | 'DRAFT';
 type GmailThread = { historyId: string; id: string; snippet: string; };
 type Label = { id: string, name: "CATEGORY_SOCIAL", messageListVisibility: "hide", labelListVisibility: "labelHide", type: 'system' };
-type AcctDataFile = { messages: GmailMsg[]; drafts: GmailDraft[], attachments: { [id: string]: { data: string, size: number } }, labels: Label[] };
+type AcctDataFile = { messages: GmailMsg[]; drafts: GmailDraft[], attachments: { [id: string]: { data: string, size: number, filename?: string } }, labels: Label[] };
 
 export class GmailMsg {
   public id: string;
@@ -99,14 +99,9 @@ export class GoogleData {
 
   public storeSentMessage = (parsedMail: ParsedMail, base64Msg: string): string => {
     let attId = '';
-    let signatureAtt: Attachment | undefined;
-    if (parsedMail.attachments?.length) {
-      const att = parsedMail.attachments.find(a => ['encrypted.asc', 'signature.asc'].includes(a.filename!));
-      signatureAtt = parsedMail.attachments.find(a => 'signature.asc' === a.filename);
-      if (att) {
-        attId = Util.lousyRandom();
-        DATA[this.acct].attachments[attId] = { data: att.content.toString('base64'), size: att.size };
-      }
+    for (const att of parsedMail.attachments || []) {
+      attId = Util.lousyRandom();
+      DATA[this.acct].attachments[attId] = { data: att.content.toString('base64'), size: att.size, filename: att.filename };
     }
     const barebonesGmailMsg: GmailMsg = { // todo - could be improved - very barebones
       id: `msg_id_${Util.lousyRandom()}`,
