@@ -207,7 +207,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
         '&ignoreDraft=___cu_false___&replyMsgId=16b36861a890bb26';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
-      expect(await composePage.read('@input-body')).to.not.include('The best footer ever!');
+      expect(await composePage.read('@input-body')).to.not.include('flowcrypt.compatibility test footer with an img');
       await baseQuotingTest(composePage, [
         'On 2019-06-08 at 09:57, human@flowcrypt.com wrote:',
         '> Used to fail on Android app',
@@ -460,7 +460,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await composePage.waitAndClick('.swal2-cancel');
       await composePage.waitAndClick('@action-expand-quoted-text', { delay: 1 });
       const footer = await composePage.read('@input-body');
-      expect(footer).to.eq('\n\n\n--\nThe best footer ever!');
+      expect(footer).to.eq('\n\n\n--\nflowcrypt.compatibility test footer with an img');
       await composePage.waitAndClick(`@action-send`);
       expect(await composePage.read('#swal2-content')).to.include('Send empty message?');
       await composePage.waitAndClick('.swal2-cancel');
@@ -490,7 +490,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await webDecryptPage.waitAll('.pgp_block');
       await Util.sleep(0.5); // todo - would be better to find a way to wait until ready
       expect(await webDecryptPage.read('.pgp_block')).to.include(subject);
-      expect(await webDecryptPage.read('.pgp_block')).to.include('The best footer ever!'); // test if footer is present
+      expect(await webDecryptPage.read('.pgp_block')).to.include('flowcrypt.compatibility test footer with an img'); // test if footer is present
       expect(await webDecryptPage.read('.attachment')).to.include('small.txt.pgp');
       const [attElem] = await webDecryptPage.page.$x('.//@data-test-donwload-url');
       const attUrl = await PageRecipe.getElementPropertyJson(attElem, 'value');

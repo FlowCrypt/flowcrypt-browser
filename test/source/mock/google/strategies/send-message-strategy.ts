@@ -28,7 +28,7 @@ class PwdEncryptedMessageTestStrategy implements ITestMsgStrategy {
 }
 
 class MessageWithFooterTestStrategy implements ITestMsgStrategy {
-  private readonly footer = 'The best footer ever!';
+  private readonly footer = 'flowcrypt.compatibility test footer with an img';
 
   test = async (mimeMsg: ParsedMail) => {
     const keyInfo = Config.secrets.keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
