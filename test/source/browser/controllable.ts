@@ -317,7 +317,7 @@ abstract class ControllableBase {
         return;
       }
     }
-    throw new Error('Error!!!');
+    throw new Error('Unexpectedly reached the end of verifyContentIsPresentContinuously - should have returned above');
   }
 
   private getFramesUrlsInThisMoment = async (urlMatchables: string[]) => {
