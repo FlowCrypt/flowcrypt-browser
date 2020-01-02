@@ -1,7 +1,7 @@
 import * as ava from 'ava';
 
 import { Config, Util } from '../../util';
-import { TestWithNewBrowser, internalTestState } from '../../test';
+import { TestWithBrowser, internalTestState } from '../../test';
 
 import { BrowserRecipe } from '../browser_recipe';
 import { InboxPageRecipe } from '../page_recipe/inbox-page-recipe';
@@ -12,11 +12,11 @@ import { expect } from 'chai';
 
 // tslint:disable:no-blank-lines-func
 
-export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: TestWithNewBrowser) => {
+export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
-    ava.default('settings[global:compatibility] - my own emails show as contacts', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('settings[global:compatibility] - my own emails show as contacts', testWithBrowser('compatibility', async (t, browser) => {
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const comtactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
@@ -28,7 +28,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
       await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
     }));
 
-    ava.default('settings[global:compatibility] - attester shows my emails', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('settings[global:compatibility] - attester shows my emails', testWithBrowser('compatibility', async (t, browser) => {
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const attesterFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-attester-page', ['keyserver.htm', 'placement=settings']);
@@ -42,12 +42,12 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
       await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
     }));
 
-    ava.default('settings[global:compatibility] - verify key presense 1pp1', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('settings[global:compatibility] - verify key presense 1pp1', testWithBrowser('compatibility', async (t, browser) => {
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await SettingsPageRecipe.verifyMyKeyPage(settingsPage, 'flowcrypt.compatibility.1pp1', 'button');
     }));
 
-    ava.default('settings[global:compatibility] - test pass phrase', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('settings[global:compatibility] - test pass phrase', testWithBrowser('compatibility', async (t, browser) => {
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await SettingsPageRecipe.passphraseTest(settingsPage, Config.key('flowcrypt.wrong.passphrase').passphrase, false);
       await SettingsPageRecipe.passphraseTest(settingsPage, Config.key('flowcrypt.compatibility.1pp1').passphrase, true);
@@ -56,7 +56,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
     ava.todo('settings - verify 2pp1 key presense');
     // await tests.settings_my_key_tests(settingsPage, 'flowcrypt.compatibility.2pp1', 'link');
 
-    ava.default('settings[global:compatibility] - feedback form', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('settings[global:compatibility] - feedback form', testWithBrowser('compatibility', async (t, browser) => {
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await settingsPage.waitAndClick('@action-open-modules-help');
       await settingsPage.waitAll('@dialog');
@@ -66,7 +66,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
       await helpFrame.waitAndRespondToModal('info', 'confirm', 'Message sent!');
     }));
 
-    ava.default('settings[new:compatibility] - view contact public key', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('settings[new:compatibility] - view contact public key', testWithBrowser('compatibility', async (t, browser) => {
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
@@ -86,7 +86,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
       await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
     }));
 
-    ava.default('settings[global:compatibility] - my key page - primary + secondary', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('settings[global:compatibility] - my key page - primary + secondary', testWithBrowser('compatibility', async (t, browser) => {
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await SettingsPageRecipe.verifyMyKeyPage(settingsPage, 'flowcrypt.compatibility.1pp1', 'link', 0);
       await SettingsPageRecipe.verifyMyKeyPage(settingsPage, 'flowcrypt.compatibility.2pp1', 'link', 1);
@@ -94,14 +94,14 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
 
     ava.todo('settings - edit contact public key');
 
-    ava.default('[standalone] settings - change passphrase - current in local storage', testWithNewBrowser(undefined, async (t, browser) => {
+    ava.default('[standalone] settings - change passphrase - current in local storage', testWithBrowser(undefined, async (t, browser) => {
       const { acctEmail, settingsPage } = await BrowserRecipe.setUpFcPpChangeAcct(t, browser);
       const newPp = `temp ci test pp: ${Util.lousyRandom()}`;
       await SettingsPageRecipe.changePassphrase(settingsPage, undefined, newPp); // change pp and test
       await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId: '16819bec18d4e011', expectedContent: 'changed correctly if this can be decrypted' });
     }));
 
-    ava.default('[standalone] settings - change passphrase - current in session known', testWithNewBrowser(undefined, async (t, browser) => {
+    ava.default('[standalone] settings - change passphrase - current in session known', testWithBrowser(undefined, async (t, browser) => {
       const { acctEmail, k, settingsPage } = await BrowserRecipe.setUpFcPpChangeAcct(t, browser);
       const newPp = `temp ci test pp: ${Util.lousyRandom()}`;
       await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
@@ -118,7 +118,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
       });
     }));
 
-    ava.default('[standalone] settings - change passphrase - current in session unknown', testWithNewBrowser(undefined, async (t, browser) => {
+    ava.default('[standalone] settings - change passphrase - current in session unknown', testWithBrowser(undefined, async (t, browser) => {
       const { acctEmail, k, settingsPage } = await BrowserRecipe.setUpFcPpChangeAcct(t, browser);
       const newPp = `temp ci test pp: ${Util.lousyRandom()}`;
       await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
@@ -133,7 +133,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
       });
     }));
 
-    ava.default('settings[global:compatibility] - Catch.reportErr reports an error', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('settings[global:compatibility] - Catch.reportErr reports an error', testWithBrowser('compatibility', async (t, browser) => {
 
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');

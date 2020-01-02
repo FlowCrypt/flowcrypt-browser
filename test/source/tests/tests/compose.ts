@@ -16,16 +16,16 @@ import { PgpMsg } from '../../core/pgp-msg';
 import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
 import { TestUrls } from './../../browser/test_urls';
 import { TestVariant } from '../../util';
-import { TestWithNewBrowser } from '../../test';
+import { TestWithBrowser } from '../../test';
 import { expect } from "chai";
 
 // tslint:disable:no-blank-lines-func
 
-export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser: TestWithNewBrowser) => {
+export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
-    ava.default('compose[global:compatibility] - toggle minimized state by clicking compose window header', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - toggle minimized state by clicking compose window header', testWithBrowser('compatibility', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('flowcrypt.compatibility@gmail.com'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       const initialComposeFrameHeight = await inboxPage.getOuterHeight('iframe');
@@ -39,7 +39,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       expect(await inboxPage.getOuterHeight('iframe')).to.eq(initialComposeFrameHeight);
     }));
 
-    ava.default('[standalone] compose - signed with entered pass phrase + will remember pass phrase in session', testWithNewBrowser('compose', async (t, browser) => {
+    ava.default('[standalone] compose - signed with entered pass phrase + will remember pass phrase in session', testWithBrowser('compose', async (t, browser) => {
       const k = Config.key('test.ci.compose');
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('test.ci.compose@org.flowcrypt.com'));
       await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
@@ -61,13 +61,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await inboxPage.close();
     }));
 
-    ava.default('[standalone] compose - can load contact based on name', testWithNewBrowser('compose', async (t, browser) => {
+    ava.default('[standalone] compose - can load contact based on name', testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await composePage.type('@input-to', 'human'); // test loading of contacts
       await composePage.waitAll(['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
     }));
 
-    ava.default(`[standalone] compose - can choose found contact`, testWithNewBrowser('compose', async (t, browser) => {
+    ava.default(`[standalone] compose - can choose found contact`, testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       // composePage.enable_debugging('choose-contact');
       await composePage.type('@input-to', 'human'); // test loading of contacts
@@ -80,32 +80,32 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default(`[standalone] compose - freshly loaded pubkey`, testWithNewBrowser('compose', async (t, browser) => {
+    ava.default(`[standalone] compose - freshly loaded pubkey`, testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'freshly loaded pubkey');
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default('[standalone] compose - recipient pasted including name', testWithNewBrowser('compose', async (t, browser) => {
+    ava.default('[standalone] compose - recipient pasted including name', testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'Human at Flowcrypt <Human@FlowCrypt.com>' }, 'recipient pasted including name');
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default('compose[global:compose] - standalone - nopgp', testWithNewBrowser('compose', async (t, browser) => {
+    ava.default('compose[global:compose] - standalone - nopgp', testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human+nopgp@flowcrypt.com' }, 'unknown pubkey');
       await ComposePageRecipe.sendAndClose(composePage, { password: 'test-pass' });
     }));
 
-    ava.default('compose[global:compatibility] - standalone - from alias', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - standalone - from alias', testWithBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await composePage.selectOption('@input-from', 'flowcryptcompatibility@gmail.com');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'from alias');
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default('compose[global:compatibility] - standalone - with attachments + shows progress %', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - standalone - with attachments + shows progress %', testWithBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'with files');
       const fileInput = await composePage.target.$('input[type=file]');
@@ -113,7 +113,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage, { expectProgress: true });
     }));
 
-    ava.default('compose[global:compose] - standalone - with attachments + nopgp', testWithNewBrowser('compose', async (t, browser) => {
+    ava.default('compose[global:compose] - standalone - with attachments + nopgp', testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human+nopgp@flowcrypt.com' }, 'with files + nonppg');
       const fileInput = await composePage.target.$('input[type=file]');
@@ -121,13 +121,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage, { password: 'test-pass', timeout: 90 });
     }));
 
-    ava.default('compose[global:compose] - signed message', testWithNewBrowser('compose', async (t, browser) => {
+    ava.default('compose[global:compose] - signed message', testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'signed message', { encrypt: false });
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default('compose[global:compose] - settings - manually copied pubkey', testWithNewBrowser('compose', async (t, browser) => {
+    ava.default('compose[global:compose] - settings - manually copied pubkey', testWithBrowser('compose', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('test.ci.compose@org.flowcrypt.com'));
       let composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'just to load - will close this page');
@@ -149,7 +149,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await inboxPage.waitTillGone('@container-new-message');
     }));
 
-    ava.default('compose[global:compatibility] - reply - old gmail threadId fmt', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - reply - old gmail threadId fmt', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadId=16841ce0ce5cb74d&replyMsgId=16841ce0ce5cb74d';
       const replyFrame = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, skipValidation: true });
       await replyFrame.waitAll(['#new_message', '@action-retry-by-reloading']);
@@ -157,7 +157,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await replyFrame.notPresent('@action-accept-reply-prompt');
     }));
 
-    ava.default('compose[global:compatibility] - reply - thread id does not exist', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - reply - thread id does not exist', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadId=16804894591b3a4b&replyMsgId=16804894591b3a4b';
       const replyFrame = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, skipValidation: true, });
       await replyFrame.waitAll(['#new_message', '@action-retry-by-reloading']);
@@ -165,7 +165,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await replyFrame.notPresent('@action-accept-reply-prompt');
     }));
 
-    ava.default('compose[global:compose] - standalone - quote - can load quote from encrypted/text email', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compose] - standalone - quote - can load quote from encrypted/text email', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=16b584ed95837510&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16b584ed95837510';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 5 });
@@ -184,7 +184,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default('compose[global:compatibility] - standalone - quote - can load quote from plain/text email', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - standalone - quote - can load quote from plain/text email', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=16402d6dc4342e7f&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
         '&replyMsgId=16402d6dc4342e7f';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
@@ -195,7 +195,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       ].join('\n'));
     }));
 
-    ava.default('compose[global:compatibility] - reply - can load quote from plain/html email', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - reply - can load quote from plain/html email', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=16b36861a890bb26&skipClickPrompt=___cu_false___' +
         '&ignoreDraft=___cu_false___&replyMsgId=16b36861a890bb26';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
@@ -213,7 +213,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       ].join('\n'));
     }));
 
-    ava.default('compose[global:compatibility] - reply - can load quote from encrypted/html email', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - reply - can load quote from encrypted/html email', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=1663a65bbd73ce1a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=1663a65bbd73ce1a';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
@@ -225,7 +225,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       ].join('\n'));
     }));
 
-    ava.default('compose[global:compatibility] - reply - pass phrase dialog - dialog ok', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - reply - pass phrase dialog - dialog ok', testWithBrowser('compatibility', async (t, browser) => {
       const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
       const { inboxPage, replyFrame } = await setRequirePassPhraseAndOpenRepliedMessage(t, browser, pp);
       // Get Passphrase dialog and write confirm passphrase
@@ -249,7 +249,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       ].join('\n'));
     }));
 
-    ava.default('compose[global:compatibility] - reply - pass phrase dialog - dialog cancel', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - reply - pass phrase dialog - dialog cancel', testWithBrowser('compatibility', async (t, browser) => {
       const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
       const { inboxPage, replyFrame } = await setRequirePassPhraseAndOpenRepliedMessage(t, browser, pp);
       // Get Passphrase dialog and cancel confirm passphrase
@@ -267,7 +267,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       ].join('\n'));
     }));
 
-    ava.default('compose[global:compatibility] - reply - signed message', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - reply - signed message', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=15f7f5face7101db&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=15f7f5face7101db';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
@@ -281,7 +281,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default('compose[global:compatibility] - forward - pgp/mime signed-only', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - forward - pgp/mime signed-only', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=15f7fc2919788f03&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=15f7fc2919788f03';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-forward');
@@ -290,7 +290,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await composePage.waitAny('.qq-file-id-0');
     }));
 
-    ava.default('compose[global:compose] - standalone- hide/show btns after signing', testWithNewBrowser('compose', async (t, browser) => {
+    ava.default('compose[global:compose] - standalone- hide/show btns after signing', testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'test.no.pgp@test.com' }, 'Signed Message', { encrypt: false });
       expect(await composePage.isElementPresent('@add-intro')).to.be.true;
@@ -299,13 +299,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await composePage.notPresent('@password-or-pubkey-container');
     }));
 
-    ava.default('compose[global:compose] - standalone - CC&BCC new message', testWithNewBrowser('compose', async (t, browser) => {
+    ava.default('compose[global:compose] - standalone - CC&BCC new message', testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com', cc: 'human@flowcrypt.com', bcc: 'human@flowcrypt.com' }, 'Testing CC And BCC');
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default('compose[global:compatibility] - reply - CC&BCC test reply', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - reply - CC&BCC test reply', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16ce2c965c75e5a6';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 2 });
@@ -315,7 +315,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage, { password: 'test-pass' });
     }));
 
-    ava.default('compose[global:compatibility] - reply - CC&BCC test forward', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - reply - CC&BCC test forward', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16ce2c965c75e5a6';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-forward', { delay: 2 });
@@ -323,7 +323,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await expectRecipientElements(composePage, { to: [], cc: [], bcc: [] });
     }));
 
-    ava.default('compose[global:compose] - standalone - expired can still send', testWithNewBrowser('compose', async (t, browser) => {
+    ava.default('compose[global:compose] - standalone - expired can still send', testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'expired.on.attester@domain.com' }, 'Test Expired Email');
       const expandContainer = await composePage.waitAny('@action-show-container-cc-bcc-buttons');
@@ -336,7 +336,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     }));
 
     ava.default('compose[global:comaptibility] - loading drafts - new message, rendering cc/bcc and check if cc/bcc btns are hidden',
-      testWithNewBrowser('compatibility', async (t, browser) => {
+      testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'draftId=draft-1';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
         await expectRecipientElements(composePage, { to: ['flowcryptcompatibility@gmail.com'], cc: ['flowcrypt.compatibility@gmail.com'], bcc: ['human@flowcrypt.com'] });
@@ -348,7 +348,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
         }
       }));
 
-    ava.default('compose[global:compatibility] - loading drafts - reply', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - loading drafts - reply', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=16cfa9001baaac0a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16cfa9001baaac0a';
       const initialScript = () => {
         chrome.storage.local.set({ 'cryptup_flowcryptcompatibilitygmailcom_drafts_reply': { '16cfa9001baaac0a': 'draft-3' } });
@@ -359,7 +359,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       expect(await composePage.read('@input-body')).to.include('Test Draft Reply (Do not delete, tests is using this draft)');
     }));
 
-    ava.default('key-mismatch[global:compatibility] - standalone - key mismatch loading', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('key-mismatch[global:compatibility] - standalone - key mismatch loading', testWithBrowser('compatibility', async (t, browser) => {
       const params = 'threadId=15f7f5630573be2d&skipClickPrompt=___cu_true___&ignoreDraft=___cu_true___&replyMsgId=15f7f5630573be2d&disableDraftSaving=___cu_true___&replyPubkeyMismatch=___cu_true___'; // eslint-disable-line max-len
       const replyMismatchPage = await browser.newPage(t, 'chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com&parent_tab_id=0&debug=___cu_true___&frameId=none&' + params); // eslint-disable-line max-len
       await replyMismatchPage.waitForSelTestState('ready');
@@ -370,7 +370,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(replyMismatchPage);
     }));
 
-    ava.default('compose[global:compatibility] - reply all - TO/CC/BCC when replying all', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - reply all - TO/CC/BCC when replying all', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = `threadId=16d6a6c2d6ae618f&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16d6a6c2d6ae618f`;
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt');
@@ -387,13 +387,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       }
     }));
 
-    ava.default('compose[global:compose] - standalone - send new plain message', testWithNewBrowser('compose', async (t, browser) => {
+    ava.default('compose[global:compose] - standalone - send new plain message', testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Plain Message', { encrypt: false, sign: false });
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default('compose[global:compose] - standalone - send btn should be disabled while encrypting/sending', testWithNewBrowser('compose', async (t, browser) => {
+    ava.default('compose[global:compose] - standalone - send btn should be disabled while encrypting/sending', testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, '');
       await composePage.waitAndClick('@action-send', { delay: 1 });
@@ -402,7 +402,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       expect(await composePage.isDisabled('#send_btn')).to.be.false;
     }));
 
-    ava.default('compose[global:compose] - standalone - load contacts through API', testWithNewBrowser('compose', async (t, browser) => {
+    ava.default('compose[global:compose] - standalone - load contacts through API', testWithBrowser('compose', async (t, browser) => {
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
       // first search, did not yet receive contacts scope
@@ -420,7 +420,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await composePage.notPresent('@action-auth-with-contacts-scope');
     }));
 
-    ava.default('[compose[global:compatibility] - standalone - different send from, new signed message, verification in mock', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('[compose[global:compatibility] - standalone - different send from, new signed message, verification in mock', testWithBrowser('compatibility', async (t, browser) => {
       const settingsPage = await browser.newPage(t, '/chrome/settings/modules/add_key.htm?acctEmail=flowcrypt.compatibility%40gmail.com&parent_tab_id=0');
       const key = Config.key('flowcryptcompatibility.from.address');
       await settingsPage.waitAndClick('#source_paste');
@@ -436,7 +436,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default('[compose[global:compatibility]] - standalone - new message, open footer', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('[compose[global:compatibility]] - standalone - new message, open footer', testWithBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await ComposePageRecipe.fillRecipients(composePage, { to: 'human@flowcrypt.com' }, 'new');
       await composePage.waitAndClick(`@action-send`);
@@ -456,13 +456,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default('[compose[global:compatibility]] - standalone - new message, Footer Mock Test', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('[compose[global:compatibility]] - standalone - new message, Footer Mock Test', testWithBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Test Footer (Mock Test)', {}, 'new');
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default('compose[global:compatibility] - standalone - send pwd encrypted msg & check on flowcrypt site', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - standalone - send pwd encrypted msg & check on flowcrypt site', testWithBrowser('compatibility', async (t, browser) => {
       const msgPwd = 'super hard password for the message';
       const subject = 'PWD encrypted message with attachment';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -487,13 +487,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       expect(decryptedFile.content!.toUtfStr()).to.equal(`small text file\nnot much here\nthis worked\n`);
     }));
 
-    ava.default('compose[global:compatibility] - loading drafts - test tags in draft', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - loading drafts - test tags in draft', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'draftId=draft-0';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
       expect(await composePage.read('@input-body')).to.include('hello<draft>here');
     }));
 
-    ava.default('compose[global:compose] - test minimizing/maximizing', testWithNewBrowser('compose', async (t, browser) => {
+    ava.default('compose[global:compose] - test minimizing/maximizing', testWithBrowser('compose', async (t, browser) => {
       const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=test.ci.compose%40org.flowcrypt.com');
       await inboxPage.waitAndClick('@action-open-secure-compose-window');
       await inboxPage.waitAll(['@container-new-message']);
@@ -514,7 +514,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.equal(initialHeight);
     }));
 
-    ava.default('compose[global:compatibility] - saving and rendering a draft with image', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - saving and rendering a draft with image', testWithBrowser('compatibility', async (t, browser) => {
       // eslint-disable-next-line max-len
       const imgBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAnElEQVR42u3RAQ0AAAgDIE1u9FvDOahAVzLFGS1ECEKEIEQIQoQgRIgQIQgRghAhCBGCECEIQYgQhAhBiBCECEEIQoQgRAhChCBECEIQIgQhQhAiBCFCEIIQIQgRghAhCBGCEIQIQYgQhAhBiBCEIEQIQoQgRAhChCAEIUIQIgQhQhAiBCEIEYIQIQgRghAhCBEiRAhChCBECEK+W3uw+TnWoJc/AAAAAElFTkSuQmCC';
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -529,11 +529,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       expect(await body.$eval('#input_text img', el => el.getAttribute('src'))).to.eq(imgBase64);
     }));
 
-    ava.default('compose[global:compatibility] - sending and rendering encrypted message with image ', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - sending and rendering encrypted message with image ', testWithBrowser('compatibility', async (t, browser) => {
       await sendImgAndVerifyPresentInSentMsg(t, browser, 'encrypt');
     }));
 
-    ava.default('compose[global:compatibility] - sending and rendering signed message with image ', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - sending and rendering signed message with image ', testWithBrowser('compatibility', async (t, browser) => {
       await sendImgAndVerifyPresentInSentMsg(t, browser, 'sign');
     }));
 

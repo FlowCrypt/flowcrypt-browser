@@ -65,7 +65,7 @@ ava.before('set config and mock api', async t => {
   t.pass();
 });
 
-const testWithNewBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>): ava.Implementation<{}> => {
+const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>): ava.Implementation<{}> => {
   return async (t: AvaContext) => {
     await browserPool.withNewBrowserTimeoutAndRetry(async (t, browser) => {
       if (acct) {
@@ -77,7 +77,7 @@ const testWithNewBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, br
   };
 };
 
-export type TestWithNewBrowser = typeof testWithNewBrowser;
+export type TestWithBrowser = typeof testWithBrowser;
 
 ava.after.always('close browsers', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
@@ -132,14 +132,14 @@ ava.after.always('send debug info if any', async t => {
 });
 
 if (testGroup === 'FLAKY-GROUP') {
-  defineFlakyTests(testVariant, testWithNewBrowser);
+  defineFlakyTests(testVariant, testWithBrowser);
 } else {
-  defineSetupTests(testVariant, testWithNewBrowser);
-  defineUnitTests(testVariant, testWithNewBrowser);
-  defineComposeTests(testVariant, testWithNewBrowser);
-  defineDecryptTests(testVariant, testWithNewBrowser);
-  defineGmailTests(testVariant, testWithNewBrowser);
-  defineSettingsTests(testVariant, testWithNewBrowser);
-  defineElementTests(testVariant, testWithNewBrowser);
-  defineAcctTests(testVariant, testWithNewBrowser);
+  defineSetupTests(testVariant, testWithBrowser);
+  defineUnitTests(testVariant, testWithBrowser);
+  defineComposeTests(testVariant, testWithBrowser);
+  defineDecryptTests(testVariant, testWithBrowser);
+  defineGmailTests(testVariant, testWithBrowser);
+  defineSettingsTests(testVariant, testWithBrowser);
+  defineElementTests(testVariant, testWithBrowser);
+  defineAcctTests(testVariant, testWithBrowser);
 }

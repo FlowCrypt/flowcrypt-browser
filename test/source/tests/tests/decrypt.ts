@@ -6,7 +6,7 @@ import { BrowserRecipe } from '../browser_recipe';
 import { InboxPageRecipe } from '../page_recipe/inbox-page-recipe';
 import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
 import { TestUrls } from './../../browser/test_urls';
-import { TestWithNewBrowser } from '../../test';
+import { TestWithBrowser } from '../../test';
 import { expect } from "chai";
 
 // tslint:disable:no-blank-lines-func
@@ -108,17 +108,17 @@ WO7S8BcGKp5KkYMRZgBkO+9SL8tYLooaH3Hj2QARAQAB
 =qgj+
 -----END PGP PUBLIC KEY BLOCK-----`;
 
-export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser: TestWithNewBrowser) => {
+export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
     for (const m of Config.tests.messages) {
-      ava.default(`decrypt[global:compatibility] - ${m.name}`, testWithNewBrowser('compatibility', async (t, browser) => {
+      ava.default(`decrypt[global:compatibility] - ${m.name}`, testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, `chrome/elements/pgp_block.htm${m.params}`, m.content, m.password, m.quoted);
       }));
     }
 
-    ava.default('[standalone] decrypt - by entering pass phrase + remember in session', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('[standalone] decrypt - by entering pass phrase + remember in session', testWithBrowser('compatibility', async (t, browser) => {
       const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
       const threadId = '15f7f5630573be2d';
       const expectedContent = 'The International DUBLIN Literary Award is an international literary award';
@@ -133,7 +133,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       await InboxPageRecipe.checkFinishingSession(t, browser, acctEmail, threadId);
     }));
 
-    ava.default('[standalone] protonmail - load pubkey into contact + verify detached msg', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('[standalone] protonmail - load pubkey into contact + verify detached msg', testWithBrowser('compatibility', async (t, browser) => {
       const textMsgFrameUrl = `chrome/elements/pgp_block.htm?frameId=none&message=&hasPassword=___cu_false___&msgId=16a9c109bc51687d&` +
         `senderEmail=mismatch%40mail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, textMsgFrameUrl, ["1234"], undefined, false, ["Missing pubkey", "Mismatch@Mail.Com"]);
@@ -148,20 +148,20 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, htmlMsgFrameUrl, ["1234"], undefined, false, ["matching signature", "Flowcrypt.Compatibility@Protonmail.Com"]);
     }));
 
-    ava.default('[standalone] protonmail - auto TOFU load matching pubkey first time', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('[standalone] protonmail - auto TOFU load matching pubkey first time', testWithBrowser('compatibility', async (t, browser) => {
       const textMsgFrameUrl = `chrome/elements/pgp_block.htm?frameId=none&message=&hasPassword=___cu_false___&msgId=16a9c109bc51687d&` +
         `senderEmail=flowcrypt.compatibility%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, textMsgFrameUrl, ["1234"], undefined, false, ["Fetched pubkey, click to verify", "Flowcrypt.Compatibility@Protonmail.Com"]); // eslint-disable-line max-len
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, textMsgFrameUrl, ["1234"], undefined, false, ["matching signature", "Flowcrypt.Compatibility@Protonmail.Com"]);
     }));
 
-    ava.default('[standalone] verify encrypted+signed message', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('[standalone] verify encrypted+signed message', testWithBrowser('compatibility', async (t, browser) => {
       const encryptedSignedMsgUrl = `chrome/elements/pgp_block.htm?frameId=none&message=&hasPassword=___cu_false___&msgId=1617429dc55600db&senderEmail=martin%40politick.ca&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`; // eslint-disable-line max-len
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, encryptedSignedMsgUrl, ['4) signed + encrypted email if supported'], undefined, false, ["Fetched pubkey, click to verify", "Martin@Politick.Ca"]); // eslint-disable-line max-len
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, encryptedSignedMsgUrl, ['4) signed + encrypted email if supported'], undefined, false, ["matching signature", "Martin@Politick.Ca"]); // eslint-disable-line max-len
     }));
 
-    ava.default('[standalone] load key - expired key', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('[standalone] load key - expired key', testWithBrowser('compatibility', async (t, browser) => {
       const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(expiredPub)}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
       const pubFrame = await browser.newPage(t, pubFrameUrl);
       await pubFrame.waitAll('@action-add-contact');
@@ -171,7 +171,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       await pubFrame.close();
     }));
 
-    ava.default('[standalone] load key - unusable key', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('[standalone] load key - unusable key', testWithBrowser('compatibility', async (t, browser) => {
       const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(unusableKey)}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
       const pubFrame = await browser.newPage(t, pubFrameUrl);
       await Util.sleep(1);
@@ -180,14 +180,14 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       await pubFrame.close();
     }));
 
-    ava.default('[standalone] - wrong message - checksum throws error', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('[standalone] - wrong message - checksum throws error', testWithBrowser('compatibility', async (t, browser) => {
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const threadId = '15f7ffb9320bd79e';
       const expectedContent = 'Ascii armor integrity check on message failed';
       await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, expectedContent });
     }));
 
-    ava.default('[standalone] - inbox - encrypted message inside signed', testWithNewBrowser('compatibility', async (t, browser) => {
+    ava.default('[standalone] - inbox - encrypted message inside signed', testWithBrowser('compatibility', async (t, browser) => {
       const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility%40gmail.com&threadId=16f0bfce331ca2fd');
       await inboxPage.waitAll('iframe.pgp_block');
       const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
