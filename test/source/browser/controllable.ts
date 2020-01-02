@@ -301,23 +301,23 @@ abstract class ControllableBase {
     throw new Error(`Slector ${selector} was found but did not contain text "${needle}" whithin ${timeoutSec}s. Last content: "${text}"`);
   }
 
-  public verifyContentIsPresentContinuously = async (selector: string, content: string, shouldBePresentMS: number = 3000, timeoutSec = 20) => {
+  public verifyContentIsPresentContinuously = async (selector: string, content: string, expectPresentForMs: number = 3000, timeoutSec = 20) => {
     await this.waitAll(selector);
     const start = Date.now();
-    const sleepMS = 10;
-    let presentForMS: number = 0;
+    const sleepMs = 10;
+    let presentForMs: number = 0;
     while (Date.now() - start < timeoutSec * 1000) {
-      await Util.sleep(sleepMS / 1000);
+      await Util.sleep(sleepMs / 1000);
       const text = await this.read(selector, true);
-      presentForMS += sleepMS;
+      presentForMs += sleepMs;
       if (!text.includes(content)) {
-        presentForMS = 0;
+        presentForMs = 0;
       }
-      if (presentForMS === shouldBePresentMS) {
+      if (presentForMs >= expectPresentForMs) {
         return;
       }
     }
-    throw new Error('Unexpectedly reached the end of verifyContentIsPresentContinuously - should have returned above');
+    throw new Error(`selector ${selector} not continuously present for ${expectPresentForMs}ms within ${timeoutSec}s`);
   }
 
   private getFramesUrlsInThisMoment = async (urlMatchables: string[]) => {
