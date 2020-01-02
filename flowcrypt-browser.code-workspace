@@ -24,7 +24,8 @@
     "errorLens.errorTextColor": "#FF000066",
     "editor.tabSize": 2,
     "editor.codeActionsOnSave": {
-      "source.fixAll.eslint": true
+      "source.fixAll.eslint": true,
+      "source.fixAll.tslint": true
     }
   },
   "folders": [
