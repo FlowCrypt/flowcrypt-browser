@@ -113,7 +113,7 @@ abstract class ControllableBase {
           throw e;
         }
       }
-      await Util.sleep(0.5);
+      await Util.sleep(0.05);
     }
     throw Error(`waiting failed: Elements did not appear: ${selectors.join(',')}`);
   }

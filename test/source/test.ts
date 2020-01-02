@@ -33,7 +33,7 @@ const consts = { // higher concurrency can cause 429 google errs when composing
   TIMEOUT_ALL_RETRIES: minutes(13), // this has to suffer waiting for semaphore between retries, thus almost the same as below
   TIMEOUT_OVERALL: minutes(14),
   ATTEMPTS: testGroup === 'STANDARD-GROUP' ? oneIfNotPooled(3) : 3, // if it's FLAKY-GROUP, do 3 retries even if not pooled
-  POOL_SIZE: oneIfNotPooled(isMock ? 10 : 2),
+  POOL_SIZE: oneIfNotPooled(isMock ? 15 : 2),
   POOL_SIZE_COMPATIBILITY: oneIfNotPooled(isMock ? 5 : 1),
   POOL_SIZE_COMPOSE: oneIfNotPooled(isMock ? 1 : 0),
   PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>, // will be set right below
@@ -64,22 +64,22 @@ ava.before('set up global browsers and config', async t => {
     const mockApi = await mock(line => mockApiLogs.push(line));
     closeMockApi = mockApi.close;
   }
-  const setupPromises: Promise<void>[] = [];
-  const globalBrowsers: { [group: string]: BrowserHandle[] } = { compatibility: [], compose: [] };
-  for (const group of Object.keys(browserGlobal)) {
-    for (let i = 0; i < browserGlobal[group].browsers.poolSize; i++) {
-      const b = await browserGlobal[group].browsers.newBrowserHandle(t, true, isMock);
-      setupPromises.push(browserPool.withGlobalBrowserTimeoutAndRetry(b, (t, b) => BrowserRecipe.setUpCommonAcct(t, b, group as CommonBrowserGroup), t, consts));
-      globalBrowsers[group].push(b);
-    }
-  }
-  await Promise.all(setupPromises);
-  for (const group of Object.keys(browserGlobal)) {
-    for (const b of globalBrowsers[group]) {
-      await browserGlobal[group].browsers.doneUsingBrowser(b);
-    }
-  }
-  console.info(`global browsers set up in: ${Math.round((Date.now() - startedAt) / 1000)}s`);
+  // const setupPromises: Promise<void>[] = [];
+  // const globalBrowsers: { [group: string]: BrowserHandle[] } = { compatibility: [], compose: [] };
+  // for (const group of Object.keys(browserGlobal)) {
+  //   for (let i = 0; i < browserGlobal[group].browsers.poolSize; i++) {
+  //     const b = await browserGlobal[group].browsers.newBrowserHandle(t, true, isMock);
+  //     setupPromises.push(browserPool.withGlobalBrowserTimeoutAndRetry(b, (t, b) => BrowserRecipe.setUpCommonAcct(t, b, group as CommonBrowserGroup), t, consts));
+  //     globalBrowsers[group].push(b);
+  //   }
+  // }
+  // await Promise.all(setupPromises);
+  // for (const group of Object.keys(browserGlobal)) {
+  //   for (const b of globalBrowsers[group]) {
+  //     await browserGlobal[group].browsers.doneUsingBrowser(b);
+  //   }
+  // }
+  // console.info(`global browsers set up in: ${Math.round((Date.now() - startedAt) / 1000)}s`);
   t.pass();
 });
 

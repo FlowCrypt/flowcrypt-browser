@@ -23,8 +23,8 @@ export class OauthPageRecipe extends PageRecipe {
     };
     const enterPwdAndConfirm = async () => {
       await Util.sleep(isMock ? 0 : OauthPageRecipe.oauthPwdDelay);
-      await oauthPage.waitAndType(selectors.pwd_input, auth.password, { delay: OauthPageRecipe.oauthPwdDelay });
-      await oauthPage.waitAndClick(selectors.pwd_confirm_btn, { delay: 1 });  // confirm password
+      await oauthPage.waitAndType(selectors.pwd_input, auth.password, { delay: isMock ? 0 : OauthPageRecipe.oauthPwdDelay });
+      await oauthPage.waitAndClick(selectors.pwd_confirm_btn, { delay: isMock ? 0 : 1 });  // confirm password
       await oauthPage.waitForNavigationIfAny();
     };
     try {
@@ -35,20 +35,23 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitAndClick('#next');
         await oauthPage.waitForNavigationIfAny();
         await Util.sleep(isMock ? 0 : OauthPageRecipe.oauthPwdDelay);
-        await oauthPage.waitAndType('#Passwd', auth.password, { delay: OauthPageRecipe.oauthPwdDelay });
+        await oauthPage.waitAndType('#Passwd', auth.password, { delay: isMock ? 0 : OauthPageRecipe.oauthPwdDelay });
         await oauthPage.waitForNavigationIfAny();
-        await oauthPage.waitAndClick('#signIn', { delay: 1 });
+        await oauthPage.waitAndClick('#signIn', { delay: isMock ? 0 : 1 });
         await oauthPage.waitForNavigationIfAny();
       } else if (await oauthPage.target.$('#identifierId') !== null) { // 2017-style login
         await oauthPage.waitAll('#identifierId', { timeout: OauthPageRecipe.longTimeout });
-        await oauthPage.waitAndType('#identifierId', auth.email, { delay: 2 });
-        await oauthPage.waitAndClick('.zZhnYe', { delay: 2 });  // confirm email
+        await oauthPage.waitAndType('#identifierId', auth.email, { delay: isMock ? 0 : 2 });
+        await oauthPage.waitAndClick('.zZhnYe', { delay: isMock ? 0 : 2 });  // confirm email
         await oauthPage.waitForNavigationIfAny();
         await enterPwdAndConfirm();
       } else if (await oauthPage.target.$(`#profileIdentifier[data-email="${auth.email}"]`) !== null) { // already logged in - just choose an account
-        await oauthPage.waitAndClick(`#profileIdentifier[data-email="${auth.email}"]`, { delay: 1 });
+        await oauthPage.waitAndClick(`#profileIdentifier[data-email="${auth.email}"]`, { delay: isMock ? 0 : 1 });
+        if (isMock) {
+          await oauthPage.page.waitForNavigation();
+        }
       } else if (await oauthPage.target.$('.w6VTHd') !== null) { // select from accounts where already logged in
-        await oauthPage.waitAndClick('.bLzI3e', { delay: 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
+        await oauthPage.waitAndClick('.bLzI3e', { delay: isMock ? 0 : 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
         await Util.sleep(isMock ? 0 : 2);
         return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // start from beginning after clicking "other email acct"
       }
@@ -64,8 +67,8 @@ export class OauthPageRecipe extends PageRecipe {
       await Util.sleep(isMock ? 0 : 1);
       if (await oauthPage.isElementPresent(selectors.backup_email_verification_choice)) { // asks for registered backup email
         await element.click();
-        await oauthPage.waitAndType('#knowledge-preregistered-email-response', auth.backup, { delay: 2 });
-        await oauthPage.waitAndClick('#next', { delay: 2 });
+        await oauthPage.waitAndType('#knowledge-preregistered-email-response', auth.backup, { delay: isMock ? 0 : 2 });
+        await oauthPage.waitAndClick('#next', { delay: isMock ? 0 : 2 });
       } else if (await oauthPage.isElementPresent(selectors.pwd_input)) {
         await enterPwdAndConfirm(); // unsure why it requires a password second time, but sometimes happens
       } else if (await oauthPage.isElementPresent(selectors.secret_2fa)) {
@@ -74,7 +77,7 @@ export class OauthPageRecipe extends PageRecipe {
         }
         const token = produce2faToken({ secret: auth.secret_2fa, encoding: 'base32' });
         await oauthPage.waitAndType(selectors.secret_2fa, token);
-        await oauthPage.waitAndClick('#totpNext', { delay: 2, confirmGone: true });
+        await oauthPage.waitAndClick('#totpNext', { delay: isMock ? 0 : 2, confirmGone: true });
       }
       await oauthPage.waitAll('#submit_approve_access'); // if succeeds, we are logged in and presented with approve/deny choice
       // since we are successfully logged in, we may save cookies to keep them fresh
@@ -85,9 +88,10 @@ export class OauthPageRecipe extends PageRecipe {
       } else if (action === 'deny') {
         throw new Error('tests.handle_gmail_oauth options.deny.true not implemented');
       } else {
-        await oauthPage.waitAndClick('#submit_approve_access', { delay: 1 });
+        await oauthPage.waitAndClick('#submit_approve_access', { delay: isMock ? 0 : 1 });
       }
     } catch (e) {
+      console.log(e);
       const eStr = String(e);
       if (eStr.indexOf('Execution context was destroyed') === -1 && eStr.indexOf('Cannot find context with specified id') === -1) {
         throw e; // not a known retriable error
