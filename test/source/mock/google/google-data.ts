@@ -1,6 +1,5 @@
-import { AddressObject, Attachment, ParsedMail, StructuredHeader } from 'mailparser';
+import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
 
-import { Buf } from '../../core/buf';
 import UserMessages from '../../../samples/mock-data';
 import { Util } from '../../util/index';
 import { readFileSync } from 'fs';
@@ -15,56 +14,54 @@ type Label = { id: string, name: "CATEGORY_SOCIAL", messageListVisibility: "hide
 type AcctDataFile = { messages: GmailMsg[]; drafts: GmailMsg[], attachments: { [id: string]: { data: string, size: number, filename?: string } }, labels: Label[] };
 
 export class GmailMsg {
+
   public id: string;
   public historyId: string;
-  public threadId?: string | null;
+  public threadId: string | null;
   public payload: GmailMsg$payload;
   public internalDate?: number | string;
   public labelIds?: GmailMsg$labelId[];
   public snippet?: string;
   public raw?: string;
 
-  constructor(msg?: { id: string, labelId: GmailMsg$labelId, raw: string, mimeMsg: ParsedMail }) {
-    if (msg) {
-      this.id = msg.id;
-      this.historyId = this.id;
-      this.threadId = this.id;
-      this.labelIds = [msg.labelId];
-      this.raw = msg.raw;
-      const contentTypeHeader = msg.mimeMsg.headers.get('content-type')! as StructuredHeader;
-      const toHeader = msg.mimeMsg.headers.get('to')! as AddressObject;
-      const fromHeader = msg.mimeMsg.headers.get('from')! as AddressObject;
-      const subjectHeader = msg.mimeMsg.headers.get('subject')! as string;
-      const dateHeader = msg.mimeMsg.headers.get('date')! as Date;
-      const messageIdHeader = msg.mimeMsg.headers.get('message-id')! as string;
-      const mimeVersionHeader = msg.mimeMsg.headers.get('mime-version')! as string;
-      const textBase64 = Buffer.from(msg.mimeMsg.text, 'utf-8').toString('base64');
-      this.payload = {
-        mimeType: contentTypeHeader.value,
-        headers: [
-          // tslint:disable-next-line: no-unsafe-any
-          { name: "Content-Type", value: `${contentTypeHeader.value}; boundary=\"${contentTypeHeader.params.boundary}\"` },
-          { name: "Message-Id", value: messageIdHeader },
-          { name: "Mime-Version", value: mimeVersionHeader }
-        ],
-        body: {
-          attachmentId: '',
-          size: textBase64.length,
-          data: textBase64
-        }
-      };
-      if (toHeader) {
-        this.payload.headers!.push({ name: 'To', value: toHeader.value.map(a => a.address).join(',') });
+  constructor(msg: { id: string, labelId: GmailMsg$labelId, raw: string, mimeMsg: ParsedMail }) {
+    this.id = msg.id;
+    this.historyId = msg.id;
+    this.threadId = msg.id;
+    this.labelIds = [msg.labelId];
+    this.raw = msg.raw;
+    const contentTypeHeader = msg.mimeMsg.headers.get('content-type')! as StructuredHeader;
+    const toHeader = msg.mimeMsg.headers.get('to')! as AddressObject;
+    const fromHeader = msg.mimeMsg.headers.get('from')! as AddressObject;
+    const subjectHeader = msg.mimeMsg.headers.get('subject')! as string;
+    const dateHeader = msg.mimeMsg.headers.get('date')! as Date;
+    const messageIdHeader = msg.mimeMsg.headers.get('message-id')! as string;
+    const mimeVersionHeader = msg.mimeMsg.headers.get('mime-version')! as string;
+    const textBase64 = Buffer.from(msg.mimeMsg.text, 'utf-8').toString('base64');
+    this.payload = {
+      mimeType: contentTypeHeader.value,
+      headers: [
+        { name: "Content-Type", value: `${contentTypeHeader.value}; boundary=\"${contentTypeHeader.params.boundary}\"` },
+        { name: "Message-Id", value: messageIdHeader },
+        { name: "Mime-Version", value: mimeVersionHeader }
+      ],
+      body: {
+        attachmentId: '',
+        size: textBase64.length,
+        data: textBase64
       }
-      if (fromHeader) {
-        this.payload.headers!.push({ name: 'From', value: fromHeader.value[0].address });
-      }
-      if (subjectHeader) {
-        this.payload.headers!.push({ name: 'Subject', value: subjectHeader });
-      }
-      if (dateHeader) {
-        this.payload.headers!.push({ name: 'Date', value: dateHeader.toString() });
-      }
+    };
+    if (toHeader) {
+      this.payload.headers!.push({ name: 'To', value: toHeader.value.map(a => a.address).join(',') });
+    }
+    if (fromHeader) {
+      this.payload.headers!.push({ name: 'From', value: fromHeader.value[0].address });
+    }
+    if (subjectHeader) {
+      this.payload.headers!.push({ name: 'Subject', value: subjectHeader });
+    }
+    if (dateHeader) {
+      this.payload.headers!.push({ name: 'Date', value: dateHeader.toString() });
     }
   }
 }

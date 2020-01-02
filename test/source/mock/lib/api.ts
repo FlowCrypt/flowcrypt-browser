@@ -1,5 +1,5 @@
-
 import * as http from 'http';
+
 import { IncomingMessage, ServerResponse } from 'http';
 
 // tslint:disable:await-returned-promise
@@ -94,9 +94,9 @@ export class Api<REQ, RES> {
 
   protected handleReq = async (req: IncomingMessage, res: ServerResponse): Promise<Buffer> => {
     if (req.method === 'OPTIONS') {
-      res.setHeader('Allow', 'GET,HEAD,POST,PUT,DELETE,OPTIONS');
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Headers', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,POST,PUT,DELETE,OPTIONS');
       return this.fmtRes({});
     }
     const handler = this.chooseHandler(req);
