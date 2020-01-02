@@ -5,7 +5,6 @@ import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
 import { Config, Util } from '../../util';
 
 import { AvaContext } from '..';
-import { BrowserRecipe } from '../browser_recipe';
 import { ComposePageRecipe } from '../page_recipe/compose-page-recipe';
 import { Dict } from '../../core/common';
 import { GoogleData } from '../../mock/google/google-data';
