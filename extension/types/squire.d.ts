@@ -30,7 +30,7 @@ export declare class SquireEditor {
   getHTML(): string;
   setHTML(html: string): SquireEditor;
   getSelectedText(): string;
-  insertImage(image: ArrayBuffer, imageAttributes: any): HTMLElement;
+  insertImage(image: ArrayBuffer | string, imageAttributes: any): HTMLElement;
   insertHTML(html: string): SquireEditor;
   getPath(): string;
   getFontInfo(): FontInfo;

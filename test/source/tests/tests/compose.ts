@@ -545,11 +545,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     }));
 
     ava.default('compose[global:compatibility] - sending and rendering encrypted message with image ', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
-      await testImagesWhenSendingMessages(t, browser, 'encrypt');
+      await sendImgAndVerifyPresentInSentMsg(t, browser, 'encrypt');
     }));
 
     ava.default('compose[global:compatibility] - sending and rendering signed message with image ', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
-      await testImagesWhenSendingMessages(t, browser, 'sign');
+      await sendImgAndVerifyPresentInSentMsg(t, browser, 'sign');
     }));
 
     ava.todo('compose[global:compose] - reply - new gmail threadId fmt');
@@ -560,27 +560,30 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
 
 };
 
-const testImagesWhenSendingMessages = async (t: AvaContext, browser: BrowserHandle, sendingType: 'encrypt' | 'sign') => {
-  // eslint-disable-next-line max-len
-  const imageBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAnElEQVR42u3RAQ0AAAgDIE1u9FvDOahAVzLFGS1ECEKEIEQIQoQgRIgQIQgRghAhCBGCECEIQYgQhAhBiBCECEEIQoQgRAhChCBECEIQIgQhQhAiBCFCEIIQIQgRghAhCBGCEIQIQYgQhAhBiBCEIEQIQoQgRAhChCAEIUIQIgQhQhAiBCEIEYIQIQgRghAhCBEiRAhChCBECEK+W3uw+TnWoJc/AAAAAElFTkSuQmCC';
-  const subject = `Test Sending ${sendingType === 'sign' ? 'Signed' : 'Encrypted'} Message With Image`;
+const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserHandle, sendingType: 'encrypt' | 'sign') => {
+  // send a message with image in it
+  const imgBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAnElEQVR42u3RAQ0AAAgDIE1u9FvDOahAVzLFGS1ECEKEIEQIQoQgRIgQIQgRghAhCBGCECEIQYgQhAhBiBCECEEIQoQgRAhChCBECEIQIgQhQhAiBCFCEIIQIQgRghAhCBGCEIQIQYgQhAhBiBCEIEQIQoQgRAhChCAEIUIQIgQhQhAiBCEIEYIQIQgRghAhCBEiRAhChCBECEK+W3uw+TnWoJc/AAAAAElFTkSuQmCC'; // eslint-disable-line max-len
+  const subject = `Test Sending ${sendingType === 'sign' ? 'Signed' : 'Encrypted'} Message With Image ${Util.lousyRandom()}`;
   const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
   await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, { richtext: true, sign: sendingType === 'sign', encrypt: sendingType === 'encrypt' });
-  await composePage.page.evaluate((image: string) => {
-    $('[data-test=action-insert-image]').val(image)
-      .click();
-  }, imageBase64);
+  // the following is a temporary hack - currently not able to directly paste an image with puppeteer
+  // instead we should find a way to load the image into clipboard, and paste it into textbox
+  await composePage.page.evaluate((src: string) => { $('[data-test=action-insert-image]').val(src).click(); }, imgBase64);
   await ComposePageRecipe.sendAndClose(composePage);
-  const msg = new GoogleData('flowcrypt.compatibility@gmail.com').getMessageBySubject(subject)!;
-  // eslint-disable-next-line max-len
-  let url = `chrome/elements/pgp_block.htm?frameId=none&msgId=${encodeURIComponent(msg.id)}&senderEmail=flowcrypt.compatibility%40gmail.com &isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
+  // get sent msg id from mock
+  const sentMsg = new GoogleData('flowcrypt.compatibility@gmail.com').getMessageBySubject(subject)!;
+  let url = `chrome/elements/pgp_block.htm?frameId=none&msgId=${encodeURIComponent(sentMsg.id)}&senderEmail=flowcrypt.compatibility%40gmail.com&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`; // eslint-disable-line max-len
   if (sendingType === 'sign') {
     url += '&signature=___cu_true___';
   }
+  // open a page with the sent msg, investigate img
   const pgpBlockPage = await browser.newPage(t, url);
+  await pgpBlockPage.waitAll('.image_src_link');
+  expect(await pgpBlockPage.read('.image_src_link')).to.contain('show image');
   await pgpBlockPage.waitAndClick('.image_src_link');
+  await pgpBlockPage.waitTillGone('.image_src_link');
   const img = await pgpBlockPage.waitAny('body img');
-  expect(await PageRecipe.getElementPropertyJson(img, 'src')).to.eq(imageBase64);
+  expect(await PageRecipe.getElementPropertyJson(img, 'src')).to.eq(imgBase64);
 };
 
 const setRequirePassPhraseAndOpenRepliedMessage = async (t: AvaContext, browser: BrowserHandle, passpharase: string) => {
