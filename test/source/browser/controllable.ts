@@ -304,21 +304,25 @@ abstract class ControllableBase {
   public verifyContentIsPresentContinuously = async (selector: string, expectedText: string, expectPresentForMs: number = 3000, timeoutSec = 20) => {
     await this.waitAll(selector);
     const start = Date.now();
-    const sleepMs = 10;
+    const sleepMs = 100;
     let presentForMs: number = 0;
     let actualText = '';
+    const history: string[] = [];
     while (Date.now() - start < timeoutSec * 1000) {
       await Util.sleep(sleepMs / 1000);
       actualText = await this.read(selector, true);
-      presentForMs += sleepMs;
       if (!actualText.includes(expectedText)) {
         presentForMs = 0;
+      } else {
+        presentForMs += sleepMs;
       }
+      history.push(`${actualText} for ${presentForMs}`);
       if (presentForMs >= expectPresentForMs) {
         return;
       }
     }
-    throw new Error(`selector ${selector} not continuously containing (${expectedText}) for ${expectPresentForMs}ms within ${timeoutSec}s, last content:${actualText}`);
+    console.log(`verifyContentIsPresentContinuously:\n${history.join('\n')}`);
+    throw new Error(`selector ${selector} not continuously containing "${expectedText}" for ${expectPresentForMs}ms within ${timeoutSec}s, last content:${actualText}`);
   }
 
   private getFramesUrlsInThisMoment = async (urlMatchables: string[]) => {
