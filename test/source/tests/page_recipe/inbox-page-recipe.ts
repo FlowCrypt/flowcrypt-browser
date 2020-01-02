@@ -1,3 +1,5 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 import { BrowserHandle, ControllableFrame, ControllablePage } from '../../browser';
 
 import { AvaContext } from '..';

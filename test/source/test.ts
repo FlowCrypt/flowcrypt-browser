@@ -1,3 +1,5 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 import * as ava from 'ava';
 
 import { AvaContext, GlobalBrowser, getDebugHtmlAtts, minutes, newWithTimeoutsFunc, standaloneTestTimeout } from './tests';
@@ -17,7 +19,8 @@ import { defineSetupTests } from './tests/tests/setup';
 import { defineUnitTests } from './tests/tests/unit';
 import { mock } from './mock';
 import { mockBackendData } from './mock/backend/backend-endpoints';
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 
 const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();

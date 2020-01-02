@@ -1,3 +1,5 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 import * as request from 'fc-node-requests';
 
 import { existsSync, writeFileSync } from 'fs';

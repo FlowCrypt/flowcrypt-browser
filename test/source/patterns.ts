@@ -1,3 +1,5 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 import * as path from 'path';
 
 import { readFileSync, readdirSync, statSync } from 'fs';

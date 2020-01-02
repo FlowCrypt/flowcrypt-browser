@@ -1,4 +1,6 @@
 
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 import { IncomingMessage } from 'http';
 
 export const isGet = (r: IncomingMessage) => r.method === 'GET' || r.method === 'HEAD';

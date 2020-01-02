@@ -1,3 +1,5 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 export { BrowserHandle } from './browser_handle';
 export { BrowserPool, Semaphore } from './browser_pool';
 export { Controllable, ControllablePage, ControllableFrame } from './controllable';

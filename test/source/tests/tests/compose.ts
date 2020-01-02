@@ -1,3 +1,5 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 import * as ava from 'ava';
 import * as request from 'fc-node-requests';
 
@@ -19,6 +21,7 @@ import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
 import { TestUrls } from './../../browser/test_urls';
 import { TestVariant } from '../../util';
 import { expect } from "chai";
+
 // tslint:disable:no-blank-lines-func
 
 export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser: TestWithNewBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {

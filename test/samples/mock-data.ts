@@ -1,3 +1,5 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 import { GmailDraft, GmailMsg } from '../source/mock/google/google-data';
 
 type UserMessages = {

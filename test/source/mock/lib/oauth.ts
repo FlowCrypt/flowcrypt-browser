@@ -1,3 +1,5 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 import { HttpAuthErr, HttpClientErr, Status } from './api';
 
 import { Buf } from '../../core/buf';

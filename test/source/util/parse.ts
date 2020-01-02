@@ -1,13 +1,15 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 import { ParsedMail, simpleParser } from "mailparser";
 
 type ThreadIdObject = {
-    threadId: string;
+  threadId: string;
 };
 
 
 export class ParseMsgResult {
-    threadId?: string;
-    mimeMsg: ParsedMail;
+  threadId?: string;
+  mimeMsg: ParsedMail;
 }
 
 
@@ -21,7 +23,7 @@ const strictParse = async (source: string): Promise<ParseMsgResult> => {
     throw new Error('ThreadId property doesn\'t exist');
   }
   if (lines[6] === 'Content-Type: message/rfc822' &&
-        lines[7] === 'Content-Transfer-Encoding: base64' && lines[9]) {
+    lines[7] === 'Content-Transfer-Encoding: base64' && lines[9]) {
     result.mimeMsg = await convertBase64ToMimeMsg(lines[9]);
   } else {
     throw new Error('Base64 MIME Msg wasn\'t found');
