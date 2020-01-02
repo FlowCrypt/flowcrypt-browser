@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Buf } from '../core/buf';
+import { Buf } from '../core/buf.js';
 
 /**
  * Functions which must be written differently to run in NodeJS versus in web browsers.
