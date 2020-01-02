@@ -12,7 +12,7 @@ type GmailMsg$payload = { parts?: GmailMsg$payload$part[], headers?: GmailMsg$he
 type GmailMsg$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES' | 'DRAFT';
 type GmailThread = { historyId: string; id: string; snippet: string; };
 type Label = { id: string, name: "CATEGORY_SOCIAL", messageListVisibility: "hide", labelListVisibility: "labelHide", type: 'system' };
-type AcctDataFile = { messages: GmailMsg[]; drafts: GmailDraft[], attachments: { [id: string]: { data: string, size: number, filename?: string } }, labels: Label[] };
+type AcctDataFile = { messages: GmailMsg[]; drafts: GmailMsg[], attachments: { [id: string]: { data: string, size: number, filename?: string } }, labels: Label[] };
 
 export class GmailMsg {
   public id: string;
@@ -26,7 +26,7 @@ export class GmailMsg {
 
   constructor(msg?: { id: string, labelId: GmailMsg$labelId, raw: string, mimeMsg: ParsedMail }) {
     if (msg) {
-      this.id = `msg_${msg.id}`;
+      this.id = msg.id;
       this.historyId = this.id;
       this.threadId = this.id;
       this.labelIds = [msg.labelId];
@@ -65,17 +65,6 @@ export class GmailMsg {
       if (dateHeader) {
         this.payload.headers!.push({ name: 'Date', value: dateHeader.toString() });
       }
-    }
-  }
-}
-export class GmailDraft {
-  public id: string;
-  public message: GmailMsg;
-
-  constructor(draft?: { id: string, raw: string, mimeMsg: ParsedMail }) {
-    if (draft) {
-      this.id = `draft_${draft.id}`;
-      this.message = new GmailMsg({ labelId: 'DRAFT', ...draft });
     }
   }
 }
@@ -195,7 +184,8 @@ export class GoogleData {
     });
   }
 
-  public addDraft = (draft: GmailDraft) => {
+  public addDraft = (id: string, raw: string, mimeMsg: ParsedMail) => {
+    const draft = new GmailMsg({ labelId: 'DRAFT', id, raw, mimeMsg });
     const index = DATA[this.acct].drafts.findIndex(d => d.id === draft.id);
     if (index === -1) {
       DATA[this.acct].drafts.push(draft);
@@ -204,7 +194,7 @@ export class GoogleData {
     }
   }
 
-  public getDraft = (id: string): GmailDraft | undefined => {
+  public getDraft = (id: string): GmailMsg | undefined => {
     return DATA[this.acct].drafts.find(d => d.id === id);
   }
 

@@ -1,8 +1,8 @@
-import { GmailDraft, GoogleData } from './google-data';
 import { HttpClientErr, Status } from '../lib/api';
 import Parse, { ParseMsgResult } from '../../util/parse';
 import { isDelete, isGet, isPost, isPut, parseResourceId } from '../lib/mock-util';
 
+import { GoogleData } from './google-data';
 import { HandlersDefinition } from '../all-apis-mock';
 import { ParsedMail } from 'mailparser';
 import { TestBySubjectStrategyContext } from './strategies/send-message-strategy';
@@ -189,7 +189,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       const data = new GoogleData(acct);
       const draft = data.getDraft(id);
       if (draft) {
-        return draft;
+        return { id: draft.id, message: draft };
       }
       throw new HttpClientErr(`MOCK draft not found for ${acct} (draftId: ${id})`, Status.NOT_FOUND);
     } else if (isPut(req)) {
@@ -198,10 +198,9 @@ export const mockGoogleEndpoints: HandlersDefinition = {
         throw new Error('mock Draft PUT without raw data');
       }
       const mimeMsg = await Parse.convertBase64ToMimeMsg(raw);
-      if ((mimeMsg.subject || '').includes('Test Saving Drafts In Mock')) {
-        const draft = new GmailDraft({ id: mimeMsg.subject.replace(/\s/g, '').toLocaleLowerCase(), raw, mimeMsg });
+      if ((mimeMsg.subject || '').includes('saving and rendering a draft with image')) {
         const data = new GoogleData(acct);
-        data.addDraft(draft);
+        data.addDraft('draft_with_image', raw, mimeMsg);
       }
       return {};
     } else if (isDelete(req)) {

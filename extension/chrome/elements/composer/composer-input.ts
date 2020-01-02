@@ -86,6 +86,7 @@ export class ComposerInput extends ComposerComponent {
         reader.onload = () => {
           try {
             this.squire.insertImage(reader.result as ArrayBuffer, { name: file.name, title: file.name });
+            this.composer.draft.draftSave().catch(Catch.reportErr);
           } catch (e) {
             Catch.reportErr(e);
           }
@@ -193,8 +194,9 @@ export class ComposerInput extends ComposerComponent {
   // We need this method to test images in drafts because we can't paste them dirctly in tests.
   private insertDebugElements = () => {
     this.composer.S.cached('body').append('<input type="hidden" id="test_insertImage" data-test="action-insert-image" />'); // xss-direct
-    $('#test_insertImage').on('click', this.view.setHandler((input) => {
+    $('#test_insertImage').on('click', this.view.setHandler(async (input) => {
       this.squire.insertImage(String($(input).val()), {});
+      await this.composer.draft.draftSave();
     }));
   }
 

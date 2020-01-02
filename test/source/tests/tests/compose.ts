@@ -526,22 +526,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.equal(initialHeight);
     }));
 
-    ava.default('compose[global:compatibility] - saving and rendering a draft with image ', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - saving and rendering a draft with image', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       // eslint-disable-next-line max-len
-      const imageBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAnElEQVR42u3RAQ0AAAgDIE1u9FvDOahAVzLFGS1ECEKEIEQIQoQgRIgQIQgRghAhCBGCECEIQYgQhAhBiBCECEEIQoQgRAhChCBECEIQIgQhQhAiBCFCEIIQIQgRghAhCBGCEIQIQYgQhAhBiBCEIEQIQoQgRAhChCAEIUIQIgQhQhAiBCEIEYIQIQgRghAhCBEiRAhChCBECEK+W3uw+TnWoJc/AAAAAElFTkSuQmCC';
+      const imgBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAnElEQVR42u3RAQ0AAAgDIE1u9FvDOahAVzLFGS1ECEKEIEQIQoQgRIgQIQgRghAhCBGCECEIQYgQhAhBiBCECEEIQoQgRAhChCBECEIQIgQhQhAiBCFCEIIQIQgRghAhCBGCEIQIQYgQhAhBiBCEIEQIQoQgRAhChCAEIUIQIgQhQhAiBCEIEYIQIQgRghAhCBEiRAhChCBECEK+W3uw+TnWoJc/AAAAAElFTkSuQmCC';
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Test Saving Drafts In Mock', { 'richtext': true });
-      await composePage.page.evaluate((image: string) => {
-        $('[data-test=action-insert-image]').val(image)
-          .click();
-      }, imageBase64);
+      const subject = `saving and rendering a draft with image ${Util.lousyRandom()}`;
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, { 'richtext': true });
+      await composePage.page.evaluate((src: string) => { $('[data-test=action-insert-image]').val(src).click(); }, imgBase64);
       await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
       await composePage.close();
-      const appendUrl = 'draftId=draft_testsavingdraftsinmock';
-      composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
+      composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl: 'draftId=draft_with_image' });
       const body = await composePage.waitAny('@input-body');
-      const imageSrc = await body.$eval('img', el => el.getAttribute('src'));
-      expect(imageSrc).to.eq(imageBase64);
+      await composePage.waitAll('#input_text img');
+      expect(await body.$eval('#input_text img', el => el.getAttribute('src'))).to.eq(imgBase64);
     }));
 
     ava.default('compose[global:compatibility] - sending and rendering encrypted message with image ', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
