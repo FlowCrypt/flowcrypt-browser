@@ -96,7 +96,7 @@ export class GoogleData {
       labelIds: ['SENT' as GmailMsg$labelId],
       payload: {
         headers: [{ name: 'Subject', value: parsedMail.subject }],
-        body: { data: parsedMail.text, attachmentId: attId, size: parsedMail.text?.length }
+        body: { data: parsedMail.text || '', attachmentId: attId, size: parsedMail.text?.length || 0 }
       },
       raw: base64Msg
     };
