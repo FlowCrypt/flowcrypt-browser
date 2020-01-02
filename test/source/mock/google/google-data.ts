@@ -5,7 +5,7 @@ import { Util } from '../../util/index';
 import { readFileSync } from 'fs';
 
 type GmailMsg$header = { name: string, value: string };
-type GmailMsg$payload$body = { attachmentId: string, size: number, data?: string };
+type GmailMsg$payload$body = { attachmentId?: string, size: number, data?: string };
 type GmailMsg$payload$part = { body?: GmailMsg$payload$body, filename?: string, mimeType?: string, headers?: GmailMsg$header[] };
 type GmailMsg$payload = { parts?: GmailMsg$payload$part[], headers?: GmailMsg$header[], mimeType?: string, body?: GmailMsg$payload$body };
 type GmailMsg$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES' | 'DRAFT';
@@ -84,10 +84,22 @@ export class GoogleData {
   }
 
   public storeSentMessage = (parsedMail: ParsedMail, base64Msg: string): string => {
-    let attId = '';
+    let bodyContentAtt: { data: string; size: number; filename?: string; id: string } | undefined;
     for (const att of parsedMail.attachments || []) {
-      attId = Util.lousyRandom();
-      DATA[this.acct].attachments[attId] = { data: att.content.toString('base64'), size: att.size, filename: att.filename };
+      const attId = Util.lousyRandom();
+      const gmailAtt = { data: att.content.toString('base64'), size: att.size, filename: att.filename, id: attId };
+      DATA[this.acct].attachments[attId] = gmailAtt;
+      if (att.filename === 'encrypted.asc') {
+        bodyContentAtt = gmailAtt;
+      }
+    }
+    let body: GmailMsg$payload$body;
+    if (parsedMail.text) {
+      body = { data: parsedMail.text, size: parsedMail.text.length };
+    } else if (bodyContentAtt) {
+      body = { attachmentId: bodyContentAtt.id, size: bodyContentAtt.size };
+    } else {
+      throw new Error('MOCK storeSentMessage: no parsedMail body, no appropriate bodyContentAtt');
     }
     const barebonesGmailMsg: GmailMsg = { // todo - could be improved - very barebones
       id: `msg_id_${Util.lousyRandom()}`,
@@ -96,7 +108,7 @@ export class GoogleData {
       labelIds: ['SENT' as GmailMsg$labelId],
       payload: {
         headers: [{ name: 'Subject', value: parsedMail.subject }],
-        body: { data: parsedMail.text || '', attachmentId: attId, size: parsedMail.text?.length || 0 }
+        body
       },
       raw: base64Msg
     };
