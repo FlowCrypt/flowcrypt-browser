@@ -107,7 +107,7 @@ ava.after.always('evaluate Catch.reportErr errors', async t => {
     for (const e of foundUnwantedErrs) {
       console.info(`----- mockBackendData Catch.reportErr -----\nname: ${e.name}\nmessage: ${e.message}\nurl: ${e.url}\ntrace: ${e.trace}`);
     }
-    t.fail(`Catch.reportErr errors: ${mockBackendData.reportedErrors.length}`);
+    t.fail(`Catch.reportErr errors: ${foundUnwantedErrs.length}`);
   } else {
     t.pass();
   }

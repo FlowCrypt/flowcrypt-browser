@@ -427,7 +427,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await settingsPage.waitAndType('.input_private_key', key.armored!);
       await settingsPage.waitAndClick('#toggle_input_passphrase');
       await settingsPage.waitAndType('#input_passphrase', key.passphrase!);
-      await settingsPage.waitAndClick('.action_add_private_key');
+      await settingsPage.waitAndClick('.action_add_private_key', { delay: 1 });
       await settingsPage.waitTillGone('.featherlight.featherlight-iframe'); // dialog closed
       await settingsPage.close();
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
