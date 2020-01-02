@@ -150,7 +150,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
         const parseResult = await parseMultipartDataAsMimeMsg(parsedReq.body);
         await validateMimeMsg(acct, parseResult.mimeMsg, parseResult.threadId);
         try {
-          const testingStrategyContext = new TestBySubjectStrategyContext(parseResult.mimeMsg.subject);
+          const testingStrategyContext = new TestBySubjectStrategyContext(parseResult.mimeMsg.subject || '');
           await testingStrategyContext.test(parseResult.mimeMsg, parseResult.base64);
         } catch (e) {
           if (!(e instanceof UnsuportableStrategyError)) { // No such strategy for test
@@ -193,16 +193,12 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       }
       throw new HttpClientErr(`MOCK draft not found for ${acct} (draftId: ${id})`, Status.NOT_FOUND);
     } else if (isPut(req)) {
-      // tslint:disable-next-line: no-unsafe-any
-      const raw = (parsedReq.body as any)?.message?.raw as string;
+      const raw = (parsedReq.body as any)?.message?.raw as string; // tslint:disable-line: no-unsafe-any
       if (!raw) {
         throw new Error('mock Draft PUT without raw data');
       }
       const mimeMsg = await Parse.convertBase64ToMimeMsg(raw);
-      if (typeof mimeMsg.subject !== 'string') {
-        throw new Error(`mock Draft PUT mimeMsg.subject not a string: ${mimeMsg.subject}`);
-      }
-      if (mimeMsg.subject.includes('Test Saving Drafts In Mock')) {
+      if ((mimeMsg.subject || '').includes('Test Saving Drafts In Mock')) {
         const draft = new GmailDraft({ id: mimeMsg.subject.replace(/\s/g, '').toLocaleLowerCase(), raw, mimeMsg });
         const data = new GoogleData(acct);
         data.addDraft(draft);
