@@ -206,7 +206,7 @@ export class GoogleData {
   public getThreads = () => {
     const threads: GmailThread[] = [];
     for (const thread of DATA[this.acct].messages.map(m => ({ historyId: m.historyId, id: m.threadId!, snippet: `MOCK SNIPPET: ${GoogleData.msgSubject(m)}` }))) {
-      if (!threads.map(t => t.id).includes(thread.id)) {
+      if (thread.id && !threads.map(t => t.id).includes(thread.id)) {
         threads.push(thread);
       }
     }
