@@ -17,6 +17,7 @@ import { defineSetupTests } from './tests/tests/setup';
 import { defineUnitTests } from './tests/tests/unit';
 import { mock } from './mock';
 import { mockBackendData } from './mock/backend/backend-endpoints';
+
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
 
@@ -91,15 +92,22 @@ const testWithNewBrowser = (cb: (t: AvaContext, browser: BrowserHandle) => Promi
 
 const testWithSemaphoredGlobalBrowser = (group: CommonBrowserGroup, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>): ava.Implementation<{}> => {
   return async (t: AvaContext) => {
-    const withTimeouts = newWithTimeoutsFunc(consts);
-    const browser = await withTimeouts(browserGlobal[group].browsers.openOrReuseBrowser(t));
-    try {
-      await browserPool.withGlobalBrowserTimeoutAndRetry(browser, cb, t, consts);
-      t.pass();
-    } finally {
-      await browserGlobal[group].browsers.doneUsingBrowser(browser);
-    }
+    await browserPool.withNewBrowserTimeoutAndRetry(async (t, browser) => {
+      await BrowserRecipe.setUpCommonAcct(t, browser, group);
+      await cb(t, browser);
+    }, t, consts);
+    t.pass();
   };
+  // return async (t: AvaContext) => {
+  //   const withTimeouts = newWithTimeoutsFunc(consts);
+  //   const browser = await withTimeouts(browserGlobal[group].browsers.openOrReuseBrowser(t));
+  //   try {
+  //     await browserPool.withGlobalBrowserTimeoutAndRetry(browser, cb, t, consts);
+  //     t.pass();
+  //   } finally {
+  //     await browserGlobal[group].browsers.doneUsingBrowser(browser);
+  //   }
+  // };
 };
 
 export type TestWithNewBrowser = typeof testWithNewBrowser;

@@ -11,6 +11,8 @@ type Recipients = {
   [key in RecipientType]?: string;
 };
 
+type PopoverOpt = 'encrypt' | 'sign' | 'richtext';
+
 export class ComposePageRecipe extends PageRecipe {
 
   public static async openStandalone(
@@ -62,18 +64,22 @@ export class ComposePageRecipe extends PageRecipe {
     for (const opt of Object.keys(sendingOpts)) {
       const shouldBeTicked = sendingOpts[opt];
       if (typeof shouldBeTicked !== 'undefined') {
-        await composePageOrFrame.waitAndClick('@action-show-options-popover');
-        await composePageOrFrame.waitAll('@container-sending-options');
-        const isCurrentlyTicked = await composePageOrFrame.isElementPresent(`@icon-toggle-${opt}-tick`);
-        if ((!isCurrentlyTicked && shouldBeTicked) || (isCurrentlyTicked && !shouldBeTicked)) { // not in desired state
-          await composePageOrFrame.waitAndClick(`@action-toggle-${opt}`); // toggling should set it to desired state
-        } else { // in desired state
-          await composePageOrFrame.waitAndClick('@input-body'); // close popover
-        }
-        await composePageOrFrame.waitTillGone('@container-sending-options');
+        await ComposePageRecipe.setPopoverToggle(composePageOrFrame, opt as PopoverOpt, shouldBeTicked);
       }
     }
     return { subject, body };
+  }
+
+  public static setPopoverToggle = async (composePageOrFrame: Controllable, opt: PopoverOpt, shouldBeTicked: boolean) => {
+    await composePageOrFrame.waitAndClick('@action-show-options-popover');
+    await composePageOrFrame.waitAll('@container-sending-options');
+    const isCurrentlyTicked = await composePageOrFrame.isElementPresent(`@icon-toggle-${opt}-tick`);
+    if ((!isCurrentlyTicked && shouldBeTicked) || (isCurrentlyTicked && !shouldBeTicked)) { // not in desired state
+      await composePageOrFrame.waitAndClick(`@action-toggle-${opt}`); // toggling should set it to desired state
+    } else { // in desired state
+      await composePageOrFrame.waitAndClick('@input-body'); // close popover
+    }
+    await composePageOrFrame.waitTillGone('@container-sending-options');
   }
 
   public static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients, windowType: 'new' | 'reply') => {

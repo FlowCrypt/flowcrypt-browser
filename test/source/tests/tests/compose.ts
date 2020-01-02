@@ -176,7 +176,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const appendUrl = 'threadId=16b584ed95837510&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16b584ed95837510';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 5 });
-      await baseQuotingTest(composePage, [
+      await clickTripleDotAndExpectQuoteToLoad(composePage, [
         'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
         '> This is some message',
         '>',
@@ -196,7 +196,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
         '&replyMsgId=16402d6dc4342e7f';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
-      await baseQuotingTest(composePage, [
+      await clickTripleDotAndExpectQuoteToLoad(composePage, [
         'On 2018-06-15 at 09:46, info@nvimp.com wrote:',
         '> cropping all except for the image below'
       ].join('\n'));
@@ -208,7 +208,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
       expect(await composePage.read('@input-body')).to.not.include('flowcrypt.compatibility test footer with an img');
-      await baseQuotingTest(composePage, [
+      await clickTripleDotAndExpectQuoteToLoad(composePage, [
         'On 2019-06-08 at 09:57, human@flowcrypt.com wrote:',
         '> Used to fail on Android app',
         '>',
@@ -224,7 +224,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const appendUrl = 'threadId=1663a65bbd73ce1a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=1663a65bbd73ce1a';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
-      await baseQuotingTest(composePage, [
+      await clickTripleDotAndExpectQuoteToLoad(composePage, [
         'On 2018-10-03 at 14:47, henry.electrum@gmail.com wrote:',
         '> The following text is bold: this is bold',
         '>',
@@ -243,7 +243,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await passPhraseFrame.waitAndClick('@action-confirm-pass-phrase-entry');
       await inboxPage.waitTillGone('@dialog');
       // Then we can try to run base test
-      await baseQuotingTest(replyFrame, [
+      await clickTripleDotAndExpectQuoteToLoad(replyFrame, [
         'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
         '> This is some message',
         '>',
@@ -270,7 +270,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const inputBody = await replyFrame.read('@input-body');
       // tslint:disable: no-unused-expression
       expect(inputBody.trim()).to.be.empty;
-      await baseQuotingTest(replyFrame, [
+      await clickTripleDotAndExpectQuoteToLoad(replyFrame, [
         'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
         '> (Skipping previous message quote)'
       ].join('\n'));
@@ -596,7 +596,7 @@ const setRequirePassPhraseAndOpenRepliedMessage = async (t: AvaContext, browser:
   return { inboxPage, replyFrame };
 };
 
-const baseQuotingTest = async (composePage: Controllable, textToInclude: string) => {
+const clickTripleDotAndExpectQuoteToLoad = async (composePage: Controllable, textToInclude: string) => {
   await composePage.waitAll(['@action-expand-quoted-text']);
   await Util.sleep(2); // wait for quote to be loaded and button activated
   expect(await composePage.read('@input-body')).to.not.include(textToInclude);
