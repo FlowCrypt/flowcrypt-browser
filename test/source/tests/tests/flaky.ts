@@ -1,11 +1,12 @@
 import * as ava from 'ava';
 
+import { Config, TestVariant } from '../../util';
+
 import { BrowserRecipe } from '../browser_recipe';
 import { ComposePageRecipe } from '../page_recipe/compose-page-recipe';
 import { PageRecipe } from '../page_recipe/abstract-page-recipe';
 import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
 import { SetupPageRecipe } from '../page_recipe/setup-page-recipe';
-import { TestVariant } from '../../util';
 import { TestWithBrowser } from '../../test';
 
 // tslint:disable:no-blank-lines-func
@@ -59,6 +60,22 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default('[standalone] setup - craete key - backup as file', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.new.manual@gmail.com');
       await SetupPageRecipe.createAdvanced(settingsPage, 'flowcrypt.test.key.used.pgp', 'file', { submitPubkey: false, usedPgpBefore: true });
+    }));
+
+    ava.default('[compose[global:compatibility] - standalone - different send from, new signed message, verification in mock', testWithBrowser('compatibility', async (t, browser) => {
+      const settingsPage = await browser.newPage(t, '/chrome/settings/modules/add_key.htm?acctEmail=flowcrypt.compatibility%40gmail.com&parent_tab_id=0');
+      const key = Config.key('flowcryptcompatibility.from.address');
+      await settingsPage.waitAndClick('#source_paste');
+      await settingsPage.waitAndType('.input_private_key', key.armored!);
+      await settingsPage.waitAndClick('#toggle_input_passphrase');
+      await settingsPage.waitAndType('#input_passphrase', key.passphrase!);
+      await settingsPage.waitAndClick('.action_add_private_key', { delay: 1 });
+      await settingsPage.waitTillGone('.featherlight.featherlight-iframe'); // dialog closed
+      await settingsPage.close();
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+      await composePage.selectOption('@input-from', 'flowcryptcompatibility@gmail.com');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Signed Message (Mock Test)', { encrypt: false });
+      await ComposePageRecipe.sendAndClose(composePage);
     }));
 
   }
