@@ -195,13 +195,17 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     } else if (isPut(req)) {
       // tslint:disable-next-line: no-unsafe-any
       const raw = (parsedReq.body as any)?.message?.raw as string;
-      if (raw) {
-        const mimeMsg = await Parse.convertBase64ToMimeMsg(raw);
-        if (mimeMsg.subject.includes('Test Saving Drafts In Mock')) {
-          const draft = new GmailDraft({ id: mimeMsg.subject.replace(/\s/g, '').toLocaleLowerCase(), raw, mimeMsg });
-          const data = new GoogleData(acct);
-          data.addDraft(draft);
-        }
+      if (!raw) {
+        throw new Error('mock Draft PUT without raw data');
+      }
+      const mimeMsg = await Parse.convertBase64ToMimeMsg(raw);
+      if (typeof mimeMsg.subject !== 'string') {
+        throw new Error(`mock Draft PUT mimeMsg.subject not a string: ${mimeMsg.subject}`);
+      }
+      if (mimeMsg.subject.includes('Test Saving Drafts In Mock')) {
+        const draft = new GmailDraft({ id: mimeMsg.subject.replace(/\s/g, '').toLocaleLowerCase(), raw, mimeMsg });
+        const data = new GoogleData(acct);
+        data.addDraft(draft);
       }
       return {};
     } else if (isDelete(req)) {
