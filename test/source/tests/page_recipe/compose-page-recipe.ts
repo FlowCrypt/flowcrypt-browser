@@ -1,7 +1,7 @@
 import { BrowserHandle, Controllable, ControllableFrame, ControllablePage } from '../../browser';
 
 import { AvaContext } from '..';
-import { CommonBrowserGroup } from '../../test';
+import { CommonAcct } from '../../test';
 import { EvaluateFn } from 'puppeteer';
 import { PageRecipe } from './abstract-page-recipe';
 import { Util } from '../../util';
@@ -16,7 +16,7 @@ type PopoverOpt = 'encrypt' | 'sign' | 'richtext';
 export class ComposePageRecipe extends PageRecipe {
 
   public static async openStandalone(
-    t: AvaContext, browser: BrowserHandle, group: CommonBrowserGroup | string, options:
+    t: AvaContext, browser: BrowserHandle, group: CommonAcct | string, options:
       { appendUrl?: string, hasReplyPrompt?: boolean, skipClickPropt?: boolean, skipValidation?: boolean, initialScript?: EvaluateFn } = {}
   ): Promise<ControllablePage> {
     if (group === 'compatibility') { // More common accounts

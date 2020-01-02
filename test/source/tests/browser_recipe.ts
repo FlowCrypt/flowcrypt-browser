@@ -58,6 +58,7 @@ export class BrowserRecipe {
     }
   }
 
+  // todo - ideally we could just add a 3rd common account: 'compatibility' | 'compose' | 'pp-change' in setUpCommonAcct
   public static setUpFcPpChangeAcct = async (t: AvaContext, browser: BrowserHandle) => {
     const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
     const k = Config.key('flowcrypt.test.key.used.pgp');

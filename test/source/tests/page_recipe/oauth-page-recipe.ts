@@ -46,9 +46,13 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitForNavigationIfAny();
         await enterPwdAndConfirm();
       } else if (await oauthPage.target.$(`#profileIdentifier[data-email="${auth.email}"]`) !== null) { // already logged in - just choose an account
-        await oauthPage.waitAndClick(`#profileIdentifier[data-email="${auth.email}"]`, { delay: isMock ? 0 : 1 });
+        await oauthPage.waitAndClick(`#profileIdentifier[data-email="${auth.email}"]`, { delay: isMock ? 0.1 : 1 });
         if (isMock) {
-          await oauthPage.page.waitForNavigation();
+          try {
+            await oauthPage.page.waitForNavigation({ timeout: 3000 });
+          } catch (e) {
+            // continue, should not cause trouble
+          }
         }
       } else if (await oauthPage.target.$('.w6VTHd') !== null) { // select from accounts where already logged in
         await oauthPage.waitAndClick('.bLzI3e', { delay: isMock ? 0 : 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
@@ -91,7 +95,6 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitAndClick('#submit_approve_access', { delay: isMock ? 0 : 1 });
       }
     } catch (e) {
-      console.log(e);
       const eStr = String(e);
       if (eStr.indexOf('Execution context was destroyed') === -1 && eStr.indexOf('Cannot find context with specified id') === -1) {
         throw e; // not a known retriable error

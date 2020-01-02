@@ -1,6 +1,6 @@
 import * as ava from 'ava';
 
-import { AvaContext, GlobalBrowser, getDebugHtmlAtts, minutes, newWithTimeoutsFunc, standaloneTestTimeout } from './tests';
+import { AvaContext, GlobalBrowser, getDebugHtmlAtts, minutes, standaloneTestTimeout } from './tests';
 import { BrowserHandle, BrowserPool } from './browser';
 import { Config, Util, getParsedCliParams } from './util';
 
@@ -20,9 +20,7 @@ import { mockBackendData } from './mock/backend/backend-endpoints';
 
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-
 const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
-const startedAt = Date.now();
 export const internalTestState = { expectiIntentionalErrReport: false }; // updated when a particular test that causes an error is run
 
 process.setMaxListeners(30);
@@ -33,7 +31,7 @@ const consts = { // higher concurrency can cause 429 google errs when composing
   TIMEOUT_ALL_RETRIES: minutes(13), // this has to suffer waiting for semaphore between retries, thus almost the same as below
   TIMEOUT_OVERALL: minutes(14),
   ATTEMPTS: testGroup === 'STANDARD-GROUP' ? oneIfNotPooled(3) : 3, // if it's FLAKY-GROUP, do 3 retries even if not pooled
-  POOL_SIZE: oneIfNotPooled(isMock ? 14 : 2),
+  POOL_SIZE: oneIfNotPooled(isMock ? 12 : 2),
   POOL_SIZE_COMPATIBILITY: oneIfNotPooled(isMock ? 1 : 1),
   POOL_SIZE_COMPOSE: oneIfNotPooled(isMock ? 1 : 0),
   PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>, // will be set right below
@@ -42,7 +40,7 @@ console.info('consts: ', JSON.stringify(consts), '\n');
 consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) => setTimeout(() => reject(new Error(`TIMEOUT_OVERALL`)), consts.TIMEOUT_OVERALL));
 
 export type Consts = typeof consts;
-export type CommonBrowserGroup = 'compatibility' | 'compose';
+export type CommonAcct = 'compatibility' | 'compose';
 
 const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false, buildDir);
 const browserGlobal: { [group: string]: GlobalBrowser } = {
@@ -56,7 +54,7 @@ const browserGlobal: { [group: string]: GlobalBrowser } = {
 let closeMockApi: () => Promise<void>;
 const mockApiLogs: string[] = [];
 
-ava.before('set up global browsers and config', async t => {
+ava.before('set config and mock api', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY, t.title);
   Config.extensionId = await browserPool.getExtensionId(t);
   console.info(`Extension url: chrome-extension://${Config.extensionId}`);
@@ -64,54 +62,22 @@ ava.before('set up global browsers and config', async t => {
     const mockApi = await mock(line => mockApiLogs.push(line));
     closeMockApi = mockApi.close;
   }
-  // const setupPromises: Promise<void>[] = [];
-  // const globalBrowsers: { [group: string]: BrowserHandle[] } = { compatibility: [], compose: [] };
-  // for (const group of Object.keys(browserGlobal)) {
-  //   for (let i = 0; i < browserGlobal[group].browsers.poolSize; i++) {
-  //     const b = await browserGlobal[group].browsers.newBrowserHandle(t, true, isMock);
-  //     setupPromises.push(browserPool.withGlobalBrowserTimeoutAndRetry(b, (t, b) => BrowserRecipe.setUpCommonAcct(t, b, group as CommonBrowserGroup), t, consts));
-  //     globalBrowsers[group].push(b);
-  //   }
-  // }
-  // await Promise.all(setupPromises);
-  // for (const group of Object.keys(browserGlobal)) {
-  //   for (const b of globalBrowsers[group]) {
-  //     await browserGlobal[group].browsers.doneUsingBrowser(b);
-  //   }
-  // }
-  // console.info(`global browsers set up in: ${Math.round((Date.now() - startedAt) / 1000)}s`);
   t.pass();
 });
 
-const testWithNewBrowser = (cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>): ava.Implementation<{}> => {
-  return async (t: AvaContext) => {
-    await browserPool.withNewBrowserTimeoutAndRetry(cb, t, consts);
-    t.pass();
-  };
-};
-
-const testWithSemaphoredGlobalBrowser = (group: CommonBrowserGroup, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>): ava.Implementation<{}> => {
+const testWithNewBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>): ava.Implementation<{}> => {
   return async (t: AvaContext) => {
     await browserPool.withNewBrowserTimeoutAndRetry(async (t, browser) => {
-      await BrowserRecipe.setUpCommonAcct(t, browser, group);
+      if (acct) {
+        await BrowserRecipe.setUpCommonAcct(t, browser, acct);
+      }
       await cb(t, browser);
     }, t, consts);
     t.pass();
   };
-  // return async (t: AvaContext) => {
-  //   const withTimeouts = newWithTimeoutsFunc(consts);
-  //   const browser = await withTimeouts(browserGlobal[group].browsers.openOrReuseBrowser(t));
-  //   try {
-  //     await browserPool.withGlobalBrowserTimeoutAndRetry(browser, cb, t, consts);
-  //     t.pass();
-  //   } finally {
-  //     await browserGlobal[group].browsers.doneUsingBrowser(browser);
-  //   }
-  // };
 };
 
 export type TestWithNewBrowser = typeof testWithNewBrowser;
-export type TestWithGlobalBrowser = typeof testWithSemaphoredGlobalBrowser;
 
 ava.after.always('close browsers', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
@@ -166,14 +132,14 @@ ava.after.always('send debug info if any', async t => {
 });
 
 if (testGroup === 'FLAKY-GROUP') {
-  defineFlakyTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+  defineFlakyTests(testVariant, testWithNewBrowser);
 } else {
-  defineSetupTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-  defineUnitTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-  defineComposeTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-  defineDecryptTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-  defineGmailTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-  defineSettingsTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-  defineElementTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-  defineAcctTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+  defineSetupTests(testVariant, testWithNewBrowser);
+  defineUnitTests(testVariant, testWithNewBrowser);
+  defineComposeTests(testVariant, testWithNewBrowser);
+  defineDecryptTests(testVariant, testWithNewBrowser);
+  defineGmailTests(testVariant, testWithNewBrowser);
+  defineSettingsTests(testVariant, testWithNewBrowser);
+  defineElementTests(testVariant, testWithNewBrowser);
+  defineAcctTests(testVariant, testWithNewBrowser);
 }
