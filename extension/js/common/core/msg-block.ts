@@ -39,4 +39,12 @@ export class MsgBlock {
   ) {
   }
 
+  /**
+   * todo - rethink - cannot 100% garantee that would be UTF string, what if it was raw bytes string?
+   *    see if we can review usage and forbid use of strings in this.content. Also investigate if used in flowcrypt-mobile-core, and why
+   */
+  public getContentBuf = () => {
+    return this.content instanceof Buf ? this.content : Buf.fromUtfStr(this.content);
+  }
+
 }
