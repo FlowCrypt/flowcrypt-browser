@@ -2,7 +2,7 @@
 
 import * as ava from 'ava';
 
-import { AvaContext, GlobalBrowser, getDebugHtmlAtts, minutes, standaloneTestTimeout } from './tests';
+import { AvaContext, getDebugHtmlAtts, minutes, standaloneTestTimeout } from './tests';
 import { BrowserHandle, BrowserPool } from './browser';
 import { Config, Util, getParsedCliParams } from './util';
 
@@ -32,8 +32,6 @@ const consts = { // higher concurrency can cause 429 google errs when composing
   TIMEOUT_OVERALL: minutes(14),
   ATTEMPTS: testGroup === 'STANDARD-GROUP' ? oneIfNotPooled(3) : 3, // if it's FLAKY-GROUP, do 3 retries even if not pooled
   POOL_SIZE: oneIfNotPooled(isMock ? 12 : 2),
-  POOL_SIZE_COMPATIBILITY: oneIfNotPooled(isMock ? 1 : 1),
-  POOL_SIZE_COMPOSE: oneIfNotPooled(isMock ? 1 : 0),
   PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>, // will be set right below
 };
 console.info('consts: ', JSON.stringify(consts), '\n');
@@ -43,14 +41,6 @@ export type Consts = typeof consts;
 export type CommonAcct = 'compatibility' | 'compose';
 
 const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false, buildDir);
-const browserGlobal: { [group: string]: GlobalBrowser } = {
-  compatibility: {
-    browsers: new BrowserPool(consts.POOL_SIZE_COMPATIBILITY, 'browserPoolGlobal', true, buildDir),
-  },
-  compose: {
-    browsers: new BrowserPool(consts.POOL_SIZE_COMPOSE, 'browserPoolGlobal', true, buildDir),
-  },
-};
 let closeMockApi: () => Promise<void>;
 const mockApiLogs: string[] = [];
 
@@ -82,7 +72,6 @@ export type TestWithBrowser = typeof testWithBrowser;
 ava.after.always('close browsers', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
   await browserPool.close();
-  await browserGlobal.compatibility.browsers.close();
   t.pass();
 });
 
