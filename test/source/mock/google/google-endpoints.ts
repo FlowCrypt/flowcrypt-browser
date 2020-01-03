@@ -259,7 +259,7 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
       throw new HttpClientErr("Error: Incorrect subject. Subject must start from 'Re:' or 'Fwd:' " +
         `if the message has threaId or 'In-Reply-To' header. Current subject is '${mimeMsg.subject}'`, 400);
     }
-    // Special check for 'compose[global:compatibility] - standalone - from alias' test
+    // Special check for 'from alias' test
     if (mimeMsg.subject.endsWith('from alias') && mimeMsg.from.value[0].address !== 'flowcryptcompatibility@gmail.com') {
       throw new HttpClientErr(`Error: Incorrect Email Alias. Should be 'flowcryptcompatibility@gmail.com'. Current '${mimeMsg.from.value[0].address}'`);
     }

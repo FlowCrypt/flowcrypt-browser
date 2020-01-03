@@ -19,7 +19,7 @@ export const defineConsumerAcctTests = (testVariant: TestVariant, testWithBrowse
   if (testVariant === 'CONSUMER-LIVE-GMAIL') {
 
     // todo - make a helper method that forces account tests to run in sequence with Semaphore
-    ava.default('[standalone] compose > large file > subscribe > trial > attach again', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('compose > large file > subscribe > trial > attach again', testWithBrowser(undefined, async (t, browser) => {
       // delete account
       const acct = "test.ci.trial@org.flowcrypt.com";
       await FlowCryptApi.hookCiAcctDelete(acct);
