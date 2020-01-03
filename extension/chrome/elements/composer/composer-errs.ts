@@ -124,11 +124,11 @@ export class ComposerErrs extends ComposerComponent {
     throw new ComposerNotReadyError('Still working, please wait.');
   }
 
-  public throwIfFormValsInvalid = async ({ subject, plaintext, from: sender }: NewMsgData) => {
+  public throwIfFormValsInvalid = async ({ subject, plaintext, from }: NewMsgData) => {
     if (!subject && ! await Ui.modal.confirm('Send without a subject?')) {
       throw new ComposerResetBtnTrigger();
     }
-    let footer = await this.composer.footer.getFooterFromStorage(sender);
+    let footer = await this.composer.footer.getFooterFromStorage(from);
     if (footer) { // format footer the way it would be in outgoing plaintext
       footer = Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.composer.footer.createFooterHtml(footer), '\n')).trim();
     }
