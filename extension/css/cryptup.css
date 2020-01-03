@@ -669,11 +669,13 @@ body#settings > div#content.setup div.manual a.back i {
 
 body#settings > div#content.setup div.manual input[type=checkbox] {
   margin: 0 6px;
-  margin-right: 0;
-  -webkit-transform: scale(1.6);
   transform: scale(1.6);
   position: relative;
   top: 2px;
+}
+
+body#settings > div#content.setup div.manual label {
+  font-weight: 400;
 }
 
 body#settings > div#content.setup div.action_add_private_key {
@@ -729,56 +731,6 @@ body#settings > div#content.setup div#step_2_recovery div#error_text {
   -webkit-animation: fadeInDown 0.7s;
   animation: fadeInDown 0.7s;
 }
-
-body#settings > div#content.setup .squaredFour {
-  width: 20px;
-  margin: 5px;
-  display: inline-block;
-  position: relative;
-  left: 16px;
-}
-
-body#settings > div#content.setup .squaredFour label {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  position: absolute;
-  top: 0;
-  left: 0;
-  background: #fcfff4;
-  background: -webkit-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
-  background: linear-gradient(to bottom, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
-  border-radius: 4px;
-  box-shadow: inset 0 1px 1px white, 0 1px 3px rgba(0, 0, 0, 0.5);
-}
-
-body#settings > div#content.setup .squaredFour label::after {
-  content: '';
-  width: 9px;
-  height: 5px;
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  border: 3px solid #333;
-  border-top: none;
-  border-right: none;
-  background: transparent;
-  opacity: 0;
-  -webkit-transform: rotate(-45deg);
-  transform: rotate(-45deg);
-}
-body#settings > div#content.setup .squaredFour label:hover::after { opacity: 0.5; }
-body#settings > div#content.setup .squaredFour input[type=checkbox] { visibility: hidden; }
-body#settings > div#content.setup .squaredFour input[type=checkbox]:checked + label::after { opacity: 1; }
-
-body#settings > div#content.setup .labelCopy {
-  margin-top: 7px;
-  position: absolute;
-  text-align: left;
-  text-indent: 30px;
-  z-index: -10;
-}
-body#settings > div#content.setup label.checkboxSquaredOne { padding-left: 0 !important; }
 
 .passphrase-sticky-note {
   position: relative;

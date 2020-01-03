@@ -128,41 +128,31 @@
       </div>
 
       <div class="line left">
-        <div class="squaredFour">
-          <input type="checkbox" class="input_passphrase_save" value="" id="c_rememberPassphraseAfterClosing"
-            name="check" checked="" />
-          <label class="checkboxSquaredOne" for="c_rememberPassphraseAfterClosing"
-            data-test="input-step2bmanualcreate-save-passphrase"></label>
-        </div>
-        <span class="labelCopy">Remember Pass Phrase after closing browser (recommended)</span>
+        <label>
+          <input type="checkbox" class="input_passphrase_save" value="" name="check" checked="" />
+          Remember Pass Phrase after closing browser (recommended)
+        </label>
       </div>
       <div class="line left">
-        <div class="squaredFour">
-          <input type="checkbox" class="input_backup_inbox" value="" id="c_backupInInbox" name="check"
-            checked="" />
-          <label class="checkboxSquaredOne" for="c_backupInInbox"
-            data-test="input-step2bmanualcreate-backup-inbox"></label>
-        </div>
-        <span class="labelCopy">Back up encrypted private key in inbox (recommended)</span>
+        <label>
+          <input type="checkbox" class="input_backup_inbox" value="" name="check" checked="" />
+          Back up encrypted private key in inbox (recommended)
+        </label>
       </div>
 
       <div class="line left remove_if_enforce_submit_to_attester">
-        <div class="squaredFour">
-          <input type="checkbox" class="input_submit_key" value="" id="c_submitPubkeytoKeyserver" name="check"
-            checked="">
-          <label class="checkboxSquaredOne" for="c_submitPubkeytoKeyserver"
-            data-test="input-step2bmanualcreate-submit-pubkey"></label>
-        </div>
-        <span class="labelCopy">Submit corresponding pubkey to FlowCrypt Attester (recommended)</span>
+        <label>
+          <input type="checkbox" class="input_submit_key" value="" name="check" checked="">
+          Submit corresponding pubkey to FlowCrypt Attester (recommended)
+        </label>
       </div>
       <div class="line left display_none remove_if_enforce_submit_to_attester">
-        <div class="squaredFour">
-          <input type="checkbox" class="input_submit_all" disabled="disabled" id="c_submitAll" />
-          <label class="checkboxSquaredOne" for="c_submitAll"></label>
-        </div>
-        <label class="checkboxSquaredOne" for="c_submitAll" style="position: relative; left: 25px;">
-          Also submit the same pubkey for:
-          <br /><span class="addresses" style="padding-left: 35px;"></span>
+        <label>
+          <input type="checkbox" class="input_submit_all" disabled="disabled" />
+          <span>
+            Also submit the same pubkey for:
+            <br /><span class="addresses"></span>
+          </span>
         </label>
       </div>
 
@@ -205,30 +195,24 @@
               id="step_2b_manual_enter_passphrase" data-test="input-step2bmanualenter-passphrase" />
           </div>
           <div class="line left">
-            <div class="squaredFour">
-              <input type="checkbox" value="" id="e_rememberPassphrase" name="check"
-                class="input_passphrase_save squaredFour" checked="">
-              <label class="checkboxSquaredOne" for="e_rememberPassphrase"
-                data-test="input-step2bmanualenter-save-passphrase"></label>
-            </div>
-            <span class="labelCopy">Remember Pass Phrase after closing browser</span>
+            <label>
+              <input type="checkbox" value="" name="check" class="input_passphrase_save" checked="">
+              Remember Pass Phrase after closing browser
+            </label>
           </div>
           <div class="line left remove_if_enforce_submit_to_attester">
-            <div class="squaredFour">
-              <input type="checkbox" value="" id="e_submitPubkey" name="check" checked="" class="input_submit_key">
-              <label class="checkboxSquaredOne" for="e_submitPubkey"
-                data-test="input-step2bmanualenter-submit-pubkey"></label>
-            </div>
-            <span class="labelCopy">Submit corresponding pubkey to FlowCrypt Attester</span>
+            <label>
+              <input type="checkbox" value="" name="check" checked="" class="input_submit_key">
+              Submit corresponding pubkey to FlowCrypt Attester
+            </label>
           </div>
           <div class="line left remove_if_enforce_submit_to_attester" style="visibility: hidden;">
-            <div class="squaredFour">
-              <input type="checkbox" class="input_submit_all" disabled="disabled" id="e_submitAll" />
-              <label class="checkboxSquaredOne" for="e_submitAll"></label>
-            </div>
-            <label class="checkboxSquaredOne" for="e_submitAll" style="position: relative; left: 25px;">
-              Also submit the same pubkey for:
-              <br /><span class="addresses" style="padding-left: 35px; font-size: 14px;"></span>
+            <label>
+              <input type="checkbox" class="input_submit_all" disabled="disabled" />
+              <span>
+                Also submit the same pubkey for:
+                <br /><span class="addresses"></span>
+              </span>
             </label>
           </div>
 
