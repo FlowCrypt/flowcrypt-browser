@@ -43,7 +43,6 @@ export class SetupPageRecipe extends PageRecipe {
   // eslint-disable-next-line max-len
   public static createAdvanced = async (settingsPage: ControllablePage, keyTitle: string, backup: "none" | "email" | "file", { usedPgpBefore = false, submitPubkey = false }: { usedPgpBefore?: boolean, submitPubkey?: boolean } = {}) => {
     await SetupPageRecipe.createBegin(settingsPage, keyTitle, { usedPgpBefore });
-    await settingsPage.waitAndClick('@action-step2bmanualcreate-show-advanced-create-settings'); // unfold
     await settingsPage.waitAndClick('@input-step2bmanualcreate-backup-inbox'); // uncheck
     if (!submitPubkey) {
       await settingsPage.waitAndClick('@input-step2bmanualcreate-submit-pubkey'); // uncheck

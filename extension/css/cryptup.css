@@ -780,22 +780,6 @@ body#settings > div#content.setup .labelCopy {
 }
 body#settings > div#content.setup label.checkboxSquaredOne { padding-left: 0 !important; }
 
-body#settings > div#content.setup #step_2a_manual_create .advanced_create_settings_container {
-  border: 1px solid rgba(0, 0, 0, 0.25);
-  padding-top: 6px;
-  margin-top: 20px;
-  width: 360px;
-  padding-bottom: 10px;
-}
-body#settings > div#content.setup #step_2a_manual_create .action_show_advanced_create_settings { cursor: pointer; }
-
-body#settings > div#content.setup #step_2a_manual_create .action_show_advanced_create_settings img {
-  height: 22px;
-  padding: 0 20px;
-  position: relative;
-  top: 5px;
-}
-
 .passphrase-sticky-note {
   position: relative;
   margin: 20px auto;
