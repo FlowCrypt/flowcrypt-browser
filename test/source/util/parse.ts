@@ -1,3 +1,5 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 import { ParsedMail, simpleParser } from "mailparser";
 
 type ThreadIdObject = {
@@ -5,9 +7,9 @@ type ThreadIdObject = {
 };
 
 export class ParseMsgResult {
-  threadId?: string;
-  mimeMsg: ParsedMail;
-  base64: string
+  public threadId?: string;
+  public mimeMsg: ParsedMail;
+  public base64: string;
 }
 
 const strictParse = async (source: string): Promise<ParseMsgResult> => {

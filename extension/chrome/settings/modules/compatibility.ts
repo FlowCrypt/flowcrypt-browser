@@ -1,3 +1,5 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 'use strict';
 
 import { Buf } from '../../../js/common/core/buf.js';

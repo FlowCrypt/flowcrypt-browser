@@ -1,3 +1,5 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 import * as http from 'http';
 
 import { IncomingMessage, ServerResponse } from 'http';
@@ -185,6 +187,18 @@ export class Api<REQ, RES> {
     });
   }
 
+  protected parseReqBody = (body: Buffer, req: IncomingMessage): REQ => {
+    let parsedBody: string | undefined;
+    if (body.length) {
+      if (req.url!.startsWith('/upload/') || req.url!.startsWith('/api/message/upload')) {
+        parsedBody = body.toString();
+      } else {
+        parsedBody = JSON.parse(body.toString());
+      }
+    }
+    return { query: this.parseUrlQuery(req.url!), body: parsedBody } as unknown as REQ;
+  }
+
   private parseUrlQuery = (url: string): { [k: string]: string } => {
     const queryIndex = url.indexOf('?');
     if (!queryIndex) {
@@ -200,18 +214,6 @@ export class Api<REQ, RES> {
       }
     }
     return params;
-  }
-
-  protected parseReqBody = (body: Buffer, req: IncomingMessage): REQ => {
-    let parsedBody: string | undefined;
-    if (body.length) {
-      if (req.url!.startsWith('/upload/') || req.url!.startsWith('/api/message/upload')) {
-        parsedBody = body.toString();
-      } else {
-        parsedBody = JSON.parse(body.toString());
-      }
-    }
-    return { query: this.parseUrlQuery(req.url!), body: parsedBody } as unknown as REQ;
   }
 
 }

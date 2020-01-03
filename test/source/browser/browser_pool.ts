@@ -1,3 +1,5 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 import { AvaContext, addDebugHtml, newWithTimeoutsFunc } from '../tests';
 import { Config, Util } from "../util";
 

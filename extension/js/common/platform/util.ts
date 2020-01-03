@@ -1,8 +1,8 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
-import { Buf } from '../core/buf';
+import { Buf } from '../core/buf.js';
 
 /**
  * Functions which must be written differently to run in NodeJS versus in web browsers.

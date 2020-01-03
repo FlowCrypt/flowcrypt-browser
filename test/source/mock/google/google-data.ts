@@ -1,3 +1,5 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
 
 import UserMessages from '../../../samples/mock-data';
@@ -72,6 +74,35 @@ export class GoogleData {
 
   private exludePplSearchQuery = /(?:-from|-to):"?([a-zA-Z0-9@.\-_]+)"?/g;
   private includePplSearchQuery = /(?:from|to):"?([a-zA-Z0-9@.\-_]+)"?/g;
+
+  public static fmtMsg = (m: GmailMsg, format: 'raw' | 'full' | 'metadata' | string) => {
+    format = format || 'full';
+    if (!['raw', 'full', 'metadata'].includes(format)) {
+      throw new Error(`Unknown format: ${format}`);
+    }
+    const msgCopy = JSON.parse(JSON.stringify(m)) as GmailMsg;
+    if (format === 'raw') {
+      if (!msgCopy.raw) {
+        throw new Error(`MOCK: format=raw missing data for message id ${m.id}. Solution: add them to ./test/source/mock/data/acct.json`);
+      }
+    } else {
+      msgCopy.raw = undefined;
+    }
+    if (format === 'metadata' || format === 'raw') {
+      msgCopy.payload.body = undefined;
+      msgCopy.payload.parts = undefined;
+    }
+    return msgCopy;
+  }
+
+  private static msgSubject = (m: GmailMsg): string => {
+    const subjectHeader = m.payload && m.payload.headers && m.payload.headers.find(h => h.name === 'Subject');
+    return (subjectHeader && subjectHeader.value) || '(no subject)';
+  }
+
+  private static msgPeople = (m: GmailMsg): string => {
+    return String(m.payload && m.payload.headers && m.payload.headers.filter(h => h.name === 'To' || h.name === 'From').map(h => h.value!).filter(h => !!h).join(','));
+  }
 
   constructor(private acct: string) {
     if (!DATA[acct]) {
@@ -157,6 +188,38 @@ export class GoogleData {
     return [];
   }
 
+  public addDraft = (id: string, raw: string, mimeMsg: ParsedMail) => {
+    const draft = new GmailMsg({ labelId: 'DRAFT', id, raw, mimeMsg });
+    const index = DATA[this.acct].drafts.findIndex(d => d.id === draft.id);
+    if (index === -1) {
+      DATA[this.acct].drafts.push(draft);
+    } else {
+      DATA[this.acct].drafts[index] = draft;
+    }
+  }
+
+  public getDraft = (id: string): GmailMsg | undefined => {
+    return DATA[this.acct].drafts.find(d => d.id === id);
+  }
+
+  public getAttachment = (attachmentId: string) => {
+    return DATA[this.acct].attachments[attachmentId];
+  }
+
+  public getLabels = () => {
+    return DATA[this.acct].labels;
+  }
+
+  public getThreads = () => {
+    const threads: GmailThread[] = [];
+    for (const thread of DATA[this.acct].messages.map(m => ({ historyId: m.historyId, id: m.threadId!, snippet: `MOCK SNIPPET: ${GoogleData.msgSubject(m)}` }))) {
+      if (thread.id && !threads.map(t => t.id).includes(thread.id)) {
+        threads.push(thread);
+      }
+    }
+    return threads;
+  }
+
   private searchMessagesBySubject = (subject: string) => {
     subject = subject.trim().toLowerCase();
     return DATA[this.acct].messages.filter(m => GoogleData.msgSubject(m).toLowerCase().includes(subject));
@@ -191,67 +254,6 @@ export class GoogleData {
       }
       return shouldInclude && !shouldExclude;
     });
-  }
-
-  public addDraft = (id: string, raw: string, mimeMsg: ParsedMail) => {
-    const draft = new GmailMsg({ labelId: 'DRAFT', id, raw, mimeMsg });
-    const index = DATA[this.acct].drafts.findIndex(d => d.id === draft.id);
-    if (index === -1) {
-      DATA[this.acct].drafts.push(draft);
-    } else {
-      DATA[this.acct].drafts[index] = draft;
-    }
-  }
-
-  public getDraft = (id: string): GmailMsg | undefined => {
-    return DATA[this.acct].drafts.find(d => d.id === id);
-  }
-
-  public getAttachment = (attachmentId: string) => {
-    return DATA[this.acct].attachments[attachmentId];
-  }
-
-  public getLabels = () => {
-    return DATA[this.acct].labels;
-  }
-
-  public getThreads = () => {
-    const threads: GmailThread[] = [];
-    for (const thread of DATA[this.acct].messages.map(m => ({ historyId: m.historyId, id: m.threadId!, snippet: `MOCK SNIPPET: ${GoogleData.msgSubject(m)}` }))) {
-      if (thread.id && !threads.map(t => t.id).includes(thread.id)) {
-        threads.push(thread);
-      }
-    }
-    return threads;
-  }
-
-  private static msgSubject = (m: GmailMsg): string => {
-    const subjectHeader = m.payload && m.payload.headers && m.payload.headers.find(h => h.name === 'Subject');
-    return (subjectHeader && subjectHeader.value) || '(no subject)';
-  }
-
-  private static msgPeople = (m: GmailMsg): string => {
-    return String(m.payload && m.payload.headers && m.payload.headers.filter(h => h.name === 'To' || h.name === 'From').map(h => h.value!).filter(h => !!h).join(','));
-  }
-
-  public static fmtMsg = (m: GmailMsg, format: 'raw' | 'full' | 'metadata' | string) => {
-    format = format || 'full';
-    if (!['raw', 'full', 'metadata'].includes(format)) {
-      throw new Error(`Unknown format: ${format}`);
-    }
-    const msgCopy = JSON.parse(JSON.stringify(m)) as GmailMsg;
-    if (format === 'raw') {
-      if (!msgCopy.raw) {
-        throw new Error(`MOCK: format=raw missing data for message id ${m.id}. Solution: add them to ./test/source/mock/data/acct.json`);
-      }
-    } else {
-      msgCopy.raw = undefined;
-    }
-    if (format === 'metadata' || format === 'raw') {
-      msgCopy.payload.body = undefined;
-      msgCopy.payload.parts = undefined;
-    }
-    return msgCopy;
   }
 
 }

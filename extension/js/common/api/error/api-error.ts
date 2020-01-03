@@ -1,3 +1,5 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 import { AjaxErr, ApiErrResponse, AuthErr, GoogleAuthErr, StandardErrRes, StandardError } from './api-error-types.js';
 
 import { BgNotReadyErr } from '../../browser/browser-msg.js';

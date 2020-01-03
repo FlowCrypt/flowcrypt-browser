@@ -1,3 +1,5 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 import { Browser, EvaluateFn, Page, Target } from 'puppeteer';
 import { Config, Util } from '../util';
 
