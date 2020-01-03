@@ -128,20 +128,20 @@
       </div>
 
       <div class="line left">
-        <label>
+        <label data-test="input-step2bmanualcreate-save-passphrase">
           <input type="checkbox" class="input_passphrase_save" value="" name="check" checked="" />
           Remember Pass Phrase after closing browser (recommended)
         </label>
       </div>
       <div class="line left">
-        <label>
+        <label data-test="input-step2bmanualcreate-backup-inbox">
           <input type="checkbox" class="input_backup_inbox" value="" name="check" checked="" />
           Back up encrypted private key in inbox (recommended)
         </label>
       </div>
 
       <div class="line left remove_if_enforce_submit_to_attester">
-        <label>
+        <label data-test="input-step2bmanualcreate-submit-pubkey">
           <input type="checkbox" class="input_submit_key" value="" name="check" checked="">
           Submit corresponding pubkey to FlowCrypt Attester (recommended)
         </label>
@@ -195,13 +195,13 @@
               id="step_2b_manual_enter_passphrase" data-test="input-step2bmanualenter-passphrase" />
           </div>
           <div class="line left">
-            <label>
+            <label data-test="input-step2bmanualenter-save-passphrase">
               <input type="checkbox" value="" name="check" class="input_passphrase_save" checked="">
               Remember Pass Phrase after closing browser
             </label>
           </div>
           <div class="line left remove_if_enforce_submit_to_attester">
-            <label>
+            <label data-test="input-step2bmanualenter-submit-pubkey">
               <input type="checkbox" value="" name="check" checked="" class="input_submit_key">
               Submit corresponding pubkey to FlowCrypt Attester
             </label>
