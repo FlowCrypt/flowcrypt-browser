@@ -1,5 +1,4 @@
-
-// tslint:disable:only-arrow-functions
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 (() => {
 

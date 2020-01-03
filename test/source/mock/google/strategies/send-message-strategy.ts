@@ -1,3 +1,5 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 import { AddressObject, ParsedMail } from 'mailparser';
 import { ITestMsgStrategy, UnsuportableStrategyError } from './strategy-base.js';
 

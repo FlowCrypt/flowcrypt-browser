@@ -17,7 +17,8 @@ module.exports = {
     // 'plugin:@typescript-eslint/recommended'
   ],
   plugins: [
-    'no-only-tests'
+    'no-only-tests',
+    'header'
   ],
   rules: {
     'indent': ['error', 2, { SwitchCase: 1 }],
@@ -38,5 +39,13 @@ module.exports = {
       "ignoreMemberSort": false,
       "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
     }]
-  }
+  },
+  overrides: [
+    {
+      'files': ['./extension/**/*.ts', './test/**/*.ts'],
+      'rules': {
+        'header/header': ['error', 'block', ' ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com ']
+      }
+    }
+  ]
 }

@@ -1,5 +1,8 @@
 
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 import * as http from 'http';
+
 import { IncomingMessage, ServerResponse } from 'http';
 
 // tslint:disable:await-returned-promise

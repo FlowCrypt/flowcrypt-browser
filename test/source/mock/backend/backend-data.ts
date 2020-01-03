@@ -1,3 +1,5 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 import { Dict } from '../../core/common';
 import { HttpAuthErr } from '../lib/api';
 import { OauthMock } from '../lib/oauth';

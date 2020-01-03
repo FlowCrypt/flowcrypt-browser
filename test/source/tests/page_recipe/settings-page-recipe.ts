@@ -1,3 +1,5 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
 import { Config, Util } from '../../util';
 import { ControllableFrame, ControllablePage } from '../../browser';
 
