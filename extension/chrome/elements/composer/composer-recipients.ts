@@ -206,7 +206,7 @@ export class ComposerRecipients extends ComposerComponent {
   public addRecipients = async (recipients: Recipients, triggerCallback: boolean = true) => {
     let newRecipients: RecipientElement[] = [];
     for (const key in recipients) {
-      if (recipients.hasOwnProperty(key)) {
+      if (recipients.hasOwnProperty(key) && ['to', 'cc', 'bcc'].includes(key)) {
         const sendingType = key as RecipientType;
         if (recipients[sendingType] && recipients[sendingType]!.length) {
           const recipientsContainer = this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`);

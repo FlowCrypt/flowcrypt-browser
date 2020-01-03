@@ -162,7 +162,7 @@ export class ComposerDraft extends ComposerComponent {
   }
 
   private fillAndRenderDraftHeaders = async (decoded: MimeContent) => {
-    await this.composer.recipients.addRecipientsAndShowPreview(decoded);
+    await this.composer.recipients.addRecipientsAndShowPreview({ to: decoded.to, cc: decoded.cc, bcc: decoded.bcc });
     if (decoded.from) {
       this.composer.S.now('input_from').val(decoded.from);
     }
@@ -184,7 +184,7 @@ export class ComposerDraft extends ComposerComponent {
       }
       this.wasMsgLoadedFromDraft = true;
       this.composer.S.cached('prompt').css({ display: 'none' });
-      const { blocks, isRichText } = await MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks(decrypted.content);
+      const { blocks, isRichText } = await MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks(decrypted.content, 'IMG-KEEP');
       const sanitizedContent = blocks.find(b => b.type === 'decryptedHtml')?.content;
       if (!sanitizedContent) {
         return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!sanitizedContent');
