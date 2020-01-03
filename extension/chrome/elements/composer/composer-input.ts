@@ -58,8 +58,8 @@ export class ComposerInput extends ComposerComponent {
     const plainhtml = this.composer.input.extract('html', 'input_text');
     const password = this.composer.S.cached('input_password').val();
     const pwd = typeof password === 'string' && password ? password : undefined;
-    const sender = this.composer.sender.getSender();
-    return { recipients, subject, plaintext, plainhtml, pwd, from: sender };
+    const from = this.composer.sender.getSender();
+    return { recipients, subject, plaintext, plainhtml, pwd, from };
   }
 
   private handlePaste = () => {
