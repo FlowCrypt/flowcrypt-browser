@@ -16,7 +16,7 @@ export let defineUnitTests = (testVariant: TestVariant, testWithBrowser: TestWit
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
-    ava.default(`[unit][MsgBlockParser.detectBlocks] will not run into infinite loop with multiple passwordMsg`, async t => {
+    ava.default.only(`[unit][MsgBlockParser.detectBlocks] will not run into infinite loop with multiple passwordMsg`, async t => {
       expect(MsgBlockParser.detectBlocks("Office\n---------- Forwarded message ----------\nBlablabla\n\nhttps://flowcrypt.com/IFgvrSVR8b\n\nqwertyuiop\n\n---------- Forwarded message ----------\nblabla2\n\n\n-----BEGIN\nThis message is encrypted: Open Message\n\nAlternatively copy and paste the following link: https://flowcrypt.com/IFgvrSVR8b\n\n")).to.deep.equal({
         "blocks": [
           MsgBlock.fromContent("plainText", "Office\n---------- Forwarded message ----------\nBlablabla\n\nhttps://flowcrypt.com/IFgvrSVR8b\n\nqwertyuiop\n\n---------- Forwarded message ----------\nblabla2"),

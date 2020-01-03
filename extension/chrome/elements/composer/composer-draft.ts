@@ -176,9 +176,10 @@ export class ComposerDraft extends ComposerComponent {
     if (!rawBlock) {
       return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!rawBlock');
     }
+    const encryptedData = rawBlock.content instanceof Buf ? rawBlock.content : Buf.fromUtfStr(rawBlock.content);
     const passphrase = await this.composer.storage.passphraseGet();
     if (typeof passphrase !== 'undefined') {
-      const decrypted = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.view.acctEmail), encryptedData: rawBlock.getContentBuf() });
+      const decrypted = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.view.acctEmail), encryptedData });
       if (!decrypted.success) {
         return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!decrypted.success');
       }
