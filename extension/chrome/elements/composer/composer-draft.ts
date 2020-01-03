@@ -2,6 +2,8 @@
 
 'use strict';
 
+import { Mime, MimeContent, MimeProccesedMsg } from '../../../js/common/core/mime.js';
+
 import { AjaxErr } from '../../../js/common/api/error/api-error-types.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
@@ -9,11 +11,10 @@ import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Composer } from './composer.js';
 import { ComposerComponent } from './composer-abstract-component.js';
+import { EncryptedMsgMailFormatter } from './formatters/encrypted-mail-msg-formatter.js';
 import { Env } from '../../../js/common/browser/env.js';
-import { Mime } from '../../../js/common/core/mime.js';
-import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
+import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 import { PgpMsg } from '../../../js/common/core/pgp-msg.js';
-import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
@@ -27,7 +28,6 @@ export class ComposerDraft extends ComposerComponent {
   private saveDraftInterval?: number;
   private lastDraftBody?: string;
   private lastDraftSubject = '';
-
   private SAVE_DRAFT_FREQUENCY = 3000;
 
   constructor(composer: Composer) {
@@ -60,16 +60,12 @@ export class ComposerDraft extends ComposerComponent {
     try {
       const draftGetRes = await this.composer.emailProvider.draftGet(draftId, 'raw');
       if (!draftGetRes) {
-        await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!draftGetRes');
-        return;
+        return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!draftGetRes');
       }
-      const parsedMsg = await Mime.decode(Buf.fromBase64UrlStr(draftGetRes.message.raw!));
-      const armored = PgpArmor.clip(parsedMsg.text || Xss.htmlSanitizeAndStripAllTags(parsedMsg.html || '', '\n') || '');
-      if (!armored) {
-        await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!armored');
-        return;
-      }
-      await this.decryptAndRenderDraft(armored, parsedMsg);
+      const decoded = await Mime.decode(Buf.fromBase64UrlStr(draftGetRes.message.raw!));
+      const processed = Mime.processDecoded(decoded);
+      await this.fillAndRenderDraftHeaders(decoded);
+      await this.decryptAndRenderDraft(processed);
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender('body', `Failed to load draft. ${Ui.retryLink()}`);
@@ -90,40 +86,47 @@ export class ComposerDraft extends ComposerComponent {
     }
   }
 
+  public draftDelete = async () => {
+    clearInterval(this.saveDraftInterval);
+    await Ui.time.wait(() => !this.currentlySavingDraft ? true : undefined);
+    if (this.view.draftId) {
+      await this.composer.storage.draftMetaDelete(this.view.draftId, this.view.threadId);
+      try {
+        await this.composer.emailProvider.draftDelete(this.view.draftId);
+        this.view.draftId = '';
+      } catch (e) {
+        if (ApiErr.isAuthPopupNeeded(e)) {
+          BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
+        } else if (ApiErr.isNotFound(e)) {
+          console.info(`draftDelete: ${e.message}`);
+        } else if (!ApiErr.isNetErr(e)) {
+          Catch.reportErr(e);
+        }
+      }
+    }
+  }
+
   public draftSave = async (forceSave: boolean = false): Promise<void> => {
     if (this.hasBodyChanged(this.composer.input.squire.getHTML()) || this.hasSubjectChanged(String(this.composer.S.cached('input_subject').val())) || forceSave) {
       this.currentlySavingDraft = true;
       try {
+        const msgData = this.composer.input.extractAll();
+        const primaryKi = await this.composer.storage.getKey(msgData.from);
+        const pubkeys = [{ isMine: true, email: msgData.from, pubkey: primaryKi.public }];
+        msgData.pwd = undefined; // not needed for drafts
+        const sendable = await new EncryptedMsgMailFormatter(this.composer, pubkeys, true).sendableMsg(msgData);
         this.composer.S.cached('send_btn_note').text('Saving');
-        const primaryKi = await this.composer.storage.getKey(this.composer.sender.getSender());
-        const plaintext = this.composer.input.extract('text', 'input_text');
-        const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(plaintext), armor: true }) as OpenPGP.EncryptArmorResult;
-        let body: string;
         if (this.view.threadId) { // reply draft
-          body = `[cryptup:link:draft_reply:${this.view.threadId}]\n\n${encrypted.data}`;
+          sendable.body['text/plain'] = `[cryptup:link:draft_reply:${this.view.threadId}]\n\n${sendable.body['text/plain'] || ''}`;
         } else if (this.view.draftId) { // new message compose draft with known draftid
-          body = `[cryptup:link:draft_compose:${this.view.draftId}]\n\n${encrypted.data}`;
-        } else { // new message compose draft where draftId is not yet known
-          body = encrypted.data;
+          sendable.body['text/plain'] = `[cryptup:link:draft_compose:${this.view.draftId}]\n\n${sendable.body['text/plain'] || ''}`;
         }
-        const subject = String(this.composer.S.cached('input_subject').val() || (this.view.replyParams ? this.view.replyParams.subject : undefined) || 'FlowCrypt draft');
-        const to = this.composer.recipients.getRecipients().map(r => r.email); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
-        const recipients: Recipients = { to: [], cc: [], bcc: [] };
-        for (const recipient of this.composer.recipients.getRecipients()) {
-          recipients[recipient.sendingType]!.push(recipient.email);
-        }
-        const mimeMsg = await Mime.encode({ 'text/plain': body }, {
-          To: recipients.to!.join(','),
-          Cc: recipients.cc!.join(','),
-          Bcc: recipients.bcc!.join(','),
-          From: this.composer.sender.getSender(),
-          Subject: subject
-        }, []);
+        const mimeMsg = await sendable.toMime();
         if (!this.view.draftId) {
           const { id } = await this.composer.emailProvider.draftCreate(mimeMsg, this.view.threadId);
           this.composer.S.cached('send_btn_note').text('Saved');
           this.view.draftId = id;
-          await this.composer.storage.draftMetaSet(id, this.view.threadId, to, String(this.composer.S.cached('input_subject').val()));
+          await this.composer.storage.draftMetaSet(id, this.view.threadId, msgData.recipients.to || [], String(this.composer.S.cached('input_subject').val()));
           // recursing one more time, because we need the draftId we get from this reply in the message itself
           // essentially everytime we save draft for the first time, we have to save it twice
           // currentlySavingDraft will remain true for now
@@ -158,46 +161,43 @@ export class ComposerDraft extends ComposerComponent {
     }
   }
 
-  public draftDelete = async () => {
-    clearInterval(this.saveDraftInterval);
-    await Ui.time.wait(() => !this.currentlySavingDraft ? true : undefined);
-    if (this.view.draftId) {
-      await this.composer.storage.draftMetaDelete(this.view.draftId, this.view.threadId);
-      try {
-        await this.composer.emailProvider.draftDelete(this.view.draftId);
-        this.view.draftId = '';
-      } catch (e) {
-        if (ApiErr.isAuthPopupNeeded(e)) {
-          BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
-        } else if (ApiErr.isNotFound(e)) {
-          console.info(`draftDelete: ${e.message}`);
-        } else if (!ApiErr.isNetErr(e)) {
-          Catch.reportErr(e);
-        }
-      }
+  private fillAndRenderDraftHeaders = async (decoded: MimeContent) => {
+    await this.composer.recipients.addRecipientsAndShowPreview({ to: decoded.to, cc: decoded.cc, bcc: decoded.bcc });
+    if (decoded.from) {
+      this.composer.S.now('input_from').val(decoded.from);
+    }
+    if (decoded.subject) {
+      this.composer.S.cached('input_subject').val(decoded.subject);
     }
   }
 
-  private decryptAndRenderDraft = async (encryptedArmoredDraft: string, headers: { subject?: string, from?: string; to: string[], cc: string[], bcc: string[] }): Promise<void> => {
+  private decryptAndRenderDraft = async (encrypted: MimeProccesedMsg): Promise<void> => {
+    const rawBlock = encrypted.blocks.find(b => b.type === 'encryptedMsg' || b.type === 'signedMsg');
+    if (!rawBlock) {
+      return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!rawBlock');
+    }
+    const encryptedData = rawBlock.content instanceof Buf ? rawBlock.content : Buf.fromUtfStr(rawBlock.content);
     const passphrase = await this.composer.storage.passphraseGet();
     if (typeof passphrase !== 'undefined') {
-      const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.view.acctEmail), encryptedData: Buf.fromUtfStr(encryptedArmoredDraft) });
-      if (result.success) {
-        this.wasMsgLoadedFromDraft = true;
-        if (headers.subject) {
-          this.composer.S.cached('input_subject').val(headers.subject);
-        }
-        this.composer.S.cached('prompt').css({ display: 'none' });
-        this.composer.input.inputTextHtmlSetSafely(Xss.escape(result.content.toUtfStr()).replace(/\n/g, '<br>'));
-        await this.composer.recipients.addRecipientsAndShowPreview({ to: headers.to, cc: headers.cc, bcc: headers.bcc });
-        if (headers.from) {
-          this.composer.S.now('input_from').val(headers.from);
-        }
-        this.composer.input.squire.focus();
+      const decrypted = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.view.acctEmail), encryptedData });
+      if (!decrypted.success) {
+        return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!decrypted.success');
       }
+      this.wasMsgLoadedFromDraft = true;
+      this.composer.S.cached('prompt').css({ display: 'none' });
+      const { blocks, isRichText } = await MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks(decrypted.content, 'IMG-KEEP');
+      const sanitizedContent = blocks.find(b => b.type === 'decryptedHtml')?.content;
+      if (!sanitizedContent) {
+        return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!sanitizedContent');
+      }
+      if (isRichText) {
+        this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-richtext-sending-option'), 'richtext', true);
+      }
+      this.composer.input.inputTextHtmlSetSafely(sanitizedContent.toString());
+      this.composer.input.squire.focus();
     } else {
       await this.renderPPDialogAndWaitWhenPPEntered();
-      await this.decryptAndRenderDraft(encryptedArmoredDraft, headers);
+      await this.decryptAndRenderDraft(encrypted);
     }
   }
 
@@ -245,4 +245,5 @@ export class ComposerDraft extends ComposerComponent {
       await this.composer.render.renderReplyMsgComposeTable();
     }
   }
+
 }

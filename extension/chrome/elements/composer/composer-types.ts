@@ -3,7 +3,7 @@
 'use strict';
 
 import { RecipientType } from '../../../js/common/api/api.js';
-import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
+import { Recipients } from '../../../js/common/api/email_provider/email-provider-api.js';
 
 export type RecipientStatus = 0 | 1 | 2 | 3 | 4 | 5;
 
@@ -43,10 +43,10 @@ export type MessageToReplyOrForward = {
 export type PubkeyResult = { pubkey: string, email: string, isMine: boolean };
 export type CollectPubkeysResult = { armoredPubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] };
 
-export type PopoverOpt = 'encrypt' | 'sign' | 'richText';
+export type PopoverOpt = 'encrypt' | 'sign' | 'richtext';
 export type PopoverChoices = { [key in PopoverOpt]: boolean };
 
-export type NewMsgData = { recipients: Recipients, subject: string, plaintext: string, plainhtml: string, pwd: string | undefined, sender: string };
+export type NewMsgData = { recipients: Recipients, subject: string, plaintext: string, plainhtml: string, pwd: string | undefined, from: string };
 
 export class SendBtnTexts {
   public static readonly BTN_ENCRYPT_AND_SEND: string = "Encrypt and Send";

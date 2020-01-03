@@ -115,7 +115,7 @@ abstract class ControllableBase {
           throw e;
         }
       }
-      await Util.sleep(0.5);
+      await Util.sleep(0.05);
     }
     throw Error(`waiting failed: Elements did not appear: ${selectors.join(',')}`);
   }
@@ -301,6 +301,30 @@ abstract class ControllableBase {
       await Util.sleep(testLoopLengthMs / 1000);
     }
     throw new Error(`Slector ${selector} was found but did not contain text "${needle}" whithin ${timeoutSec}s. Last content: "${text}"`);
+  }
+
+  public verifyContentIsPresentContinuously = async (selector: string, expectedText: string, expectPresentForMs: number = 3000, timeoutSec = 20) => {
+    await this.waitAll(selector);
+    const start = Date.now();
+    const sleepMs = 100;
+    let presentForMs: number = 0;
+    let actualText = '';
+    const history: string[] = [];
+    while (Date.now() - start < timeoutSec * 1000) {
+      await Util.sleep(sleepMs / 1000);
+      actualText = await this.read(selector, true);
+      if (!actualText.includes(expectedText)) {
+        presentForMs = 0;
+      } else {
+        presentForMs += sleepMs;
+      }
+      history.push(`${actualText} for ${presentForMs}`);
+      if (presentForMs >= expectPresentForMs) {
+        return;
+      }
+    }
+    console.log(`verifyContentIsPresentContinuously:\n${history.join('\n')}`);
+    throw new Error(`selector ${selector} not continuously containing "${expectedText}" for ${expectPresentForMs}ms within ${timeoutSec}s, last content:${actualText}`);
   }
 
   private getFramesUrlsInThisMoment = async (urlMatchables: string[]) => {

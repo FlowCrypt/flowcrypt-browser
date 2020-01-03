@@ -3,6 +3,7 @@
 'use strict';
 
 import { MsgBlock, ReplaceableMsgBlockType } from './msg-block.js';
+import { SanitizeImgHandling, Xss } from '../platform/xss.js';
 
 import { Buf } from './buf.js';
 import { Catch } from '../platform/catch.js';
@@ -11,7 +12,8 @@ import { PgpArmor } from './pgp-armor.js';
 import { PgpKey } from './pgp-key.js';
 import { PgpMsg } from './pgp-msg.js';
 import { Str } from './common.js';
-import { Xss } from '../platform/xss.js';
+
+type SanitizedBlocks = { blocks: MsgBlock[], subject: string | undefined, isRichText: boolean };
 
 export class MsgBlockParser {
 
@@ -38,8 +40,9 @@ export class MsgBlockParser {
     }
   }
 
-  public static fmtDecryptedAsSanitizedHtmlBlocks = async (decryptedContent: Uint8Array): Promise<{ blocks: MsgBlock[], subject: string | undefined }> => {
+  public static fmtDecryptedAsSanitizedHtmlBlocks = async (decryptedContent: Uint8Array, imgHandling: SanitizeImgHandling = 'IMG-TO-LINK'): Promise<SanitizedBlocks> => {
     const blocks: MsgBlock[] = [];
+    let isRichText = false;
     if (!Mime.resemblesMsg(decryptedContent)) {
       let utf = Buf.fromUint8(decryptedContent).toUtfStr();
       utf = PgpMsg.extractFcAtts(utf, blocks);
@@ -48,11 +51,12 @@ export class MsgBlockParser {
       utf = PgpMsg.stripPublicKeys(utf, armoredPubKeys);
       blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(utf))); // escaped text as html
       await MsgBlockParser.pushArmoredPubkeysToBlocks(armoredPubKeys, blocks);
-      return { blocks, subject: undefined };
+      return { blocks, subject: undefined, isRichText };
     }
     const decoded = await Mime.decode(decryptedContent);
     if (typeof decoded.html !== 'undefined') {
-      blocks.push(MsgBlock.fromContent('decryptedHtml', Xss.htmlSanitizeKeepBasicTags(decoded.html, 'IMG-TO-LINK'))); // sanitized html
+      blocks.push(MsgBlock.fromContent('decryptedHtml', Xss.htmlSanitizeKeepBasicTags(decoded.html, imgHandling))); // sanitized html
+      isRichText = true;
     } else if (typeof decoded.text !== 'undefined') {
       blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(decoded.text))); // escaped text as html
     } else {
@@ -65,7 +69,7 @@ export class MsgBlockParser {
         blocks.push(MsgBlock.fromAtt('decryptedAtt', '', { name: att.name, data: att.getData(), length: att.length, type: att.type }));
       }
     }
-    return { blocks, subject: decoded.subject };
+    return { blocks, subject: decoded.subject, isRichText };
   }
 
   private static detectBlockNext = (origText: string, startAt: number) => {

@@ -7,7 +7,7 @@ import { SquireEditor, WillPasteEvent } from '../../../types/squire.js';
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposerComponent } from './composer-abstract-component.js';
-import { Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
+import { Recipients } from '../../../js/common/api/email_provider/email-provider-api.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerInput extends ComposerComponent {
@@ -21,6 +21,9 @@ export class ComposerInput extends ComposerComponent {
     this.resizeReplyBox();
     this.scrollIntoView();
     this.squire.setConfig({ addLinks: this.isRichText() });
+    if (this.view.debug) {
+      this.insertDebugElements();
+    }
   }
 
   public addRichTextFormatting = () => {
@@ -55,8 +58,8 @@ export class ComposerInput extends ComposerComponent {
     const plainhtml = this.composer.input.extract('html', 'input_text');
     const password = this.composer.S.cached('input_password').val();
     const pwd = typeof password === 'string' && password ? password : undefined;
-    const sender = this.composer.sender.getSender();
-    return { recipients, subject, plaintext, plainhtml, pwd, sender };
+    const from = this.composer.sender.getSender();
+    return { recipients, subject, plaintext, plainhtml, pwd, from };
   }
 
   private handlePaste = () => {
@@ -83,6 +86,7 @@ export class ComposerInput extends ComposerComponent {
         reader.onload = () => {
           try {
             this.squire.insertImage(reader.result as ArrayBuffer, { name: file.name, title: file.name });
+            this.composer.draft.draftSave().catch(Catch.reportErr);
           } catch (e) {
             Catch.reportErr(e);
           }
@@ -187,7 +191,16 @@ export class ComposerInput extends ComposerComponent {
     return result;
   }
 
+  // We need this method to test images in drafts because we can't paste them dirctly in tests.
+  private insertDebugElements = () => {
+    this.composer.S.cached('body').append('<input type="hidden" id="test_insertImage" data-test="action-insert-image" />'); // xss-direct
+    $('#test_insertImage').on('click', this.view.setHandler(async (input) => {
+      this.squire.insertImage(String($(input).val()), {});
+      await this.composer.draft.draftSave();
+    }));
+  }
+
   private isRichText = () => {
-    return this.composer.sendBtn.popover.choices.richText;
+    return this.composer.sendBtn.popover.choices.richtext;
   }
 }

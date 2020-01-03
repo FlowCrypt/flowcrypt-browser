@@ -3,7 +3,7 @@
 import { BrowserHandle, Controllable, ControllableFrame, ControllablePage } from '../../browser';
 
 import { AvaContext } from '..';
-import { CommonBrowserGroup } from '../../test';
+import { CommonAcct } from '../../test';
 import { EvaluateFn } from 'puppeteer';
 import { PageRecipe } from './abstract-page-recipe';
 import { Util } from '../../util';
@@ -13,10 +13,12 @@ type Recipients = {
   [key in RecipientType]?: string;
 };
 
+type PopoverOpt = 'encrypt' | 'sign' | 'richtext';
+
 export class ComposePageRecipe extends PageRecipe {
 
   public static async openStandalone(
-    t: AvaContext, browser: BrowserHandle, group: CommonBrowserGroup | string, options:
+    t: AvaContext, browser: BrowserHandle, group: CommonAcct | string, options:
       { appendUrl?: string, hasReplyPrompt?: boolean, skipClickPropt?: boolean, skipValidation?: boolean, initialScript?: EvaluateFn } = {}
   ): Promise<ControllablePage> {
     if (group === 'compatibility') { // More common accounts
@@ -48,7 +50,7 @@ export class ComposePageRecipe extends PageRecipe {
     composePageOrFrame: Controllable,
     recipients: Recipients,
     subject?: string | undefined,
-    sendingOpt: { encrypt?: boolean, sign?: boolean } = {}, // undefined means leave default
+    sendingOpt: { encrypt?: boolean, sign?: boolean, richtext?: boolean } = {}, // undefined means leave default
     windowType: 'new' | 'reply' = 'new'
   ) {
     await Util.sleep(0.5);
@@ -64,18 +66,22 @@ export class ComposePageRecipe extends PageRecipe {
     for (const opt of Object.keys(sendingOpts)) {
       const shouldBeTicked = sendingOpts[opt];
       if (typeof shouldBeTicked !== 'undefined') {
-        await composePageOrFrame.waitAndClick('@action-show-options-popover');
-        await composePageOrFrame.waitAll('@container-sending-options');
-        const isCurrentlyTicked = await composePageOrFrame.isElementPresent(`@icon-toggle-${opt}-tick`);
-        if ((!isCurrentlyTicked && shouldBeTicked) || (isCurrentlyTicked && !shouldBeTicked)) { // not in desired state
-          await composePageOrFrame.waitAndClick(`@action-toggle-${opt}`); // toggling should set it to desired state
-        } else { // in desired state
-          await composePageOrFrame.waitAndClick('@input-body'); // close popover
-        }
-        await composePageOrFrame.waitTillGone('@container-sending-options');
+        await ComposePageRecipe.setPopoverToggle(composePageOrFrame, opt as PopoverOpt, shouldBeTicked);
       }
     }
     return { subject, body };
+  }
+
+  public static setPopoverToggle = async (composePageOrFrame: Controllable, opt: PopoverOpt, shouldBeTicked: boolean) => {
+    await composePageOrFrame.waitAndClick('@action-show-options-popover');
+    await composePageOrFrame.waitAll('@container-sending-options');
+    const isCurrentlyTicked = await composePageOrFrame.isElementPresent(`@icon-toggle-${opt}-tick`);
+    if ((!isCurrentlyTicked && shouldBeTicked) || (isCurrentlyTicked && !shouldBeTicked)) { // not in desired state
+      await composePageOrFrame.waitAndClick(`@action-toggle-${opt}`); // toggling should set it to desired state
+    } else { // in desired state
+      await composePageOrFrame.waitAndClick('@input-body'); // close popover
+    }
+    await composePageOrFrame.waitTillGone('@container-sending-options');
   }
 
   public static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients, windowType: 'new' | 'reply') => {
@@ -98,6 +104,10 @@ export class ComposePageRecipe extends PageRecipe {
       await composePageOrFrame.page.evaluate(() => { $('#input_text').focus(); });
       await Util.sleep(1);
     }
+  }
+
+  public static waitWhenDraftIsSaved = async (composePageOrFrame: Controllable) => {
+    await composePageOrFrame.verifyContentIsPresentContinuously('@send-btn-note', 'Saved');
   }
 
   public static sendAndClose = async (

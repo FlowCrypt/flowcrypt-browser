@@ -189,35 +189,6 @@ export class BrowserPool {
     }
   }
 
-  public withGlobalBrowserTimeoutAndRetry = async (browser: BrowserHandle, cb: (t: AvaContext, b: BrowserHandle) => void, t: AvaContext, consts: Consts) => {
-    const withTimeouts = newWithTimeoutsFunc(consts);
-    const attemptDebugHtmls: string[] = [];
-    t.totalAttempts = consts.ATTEMPTS;
-    for (let attemptNumber = 1; attemptNumber <= consts.ATTEMPTS; attemptNumber++) {
-      t.attemptNumber = attemptNumber;
-      t.attemptText = `(attempt ${t.attemptNumber} of ${t.totalAttempts})`;
-      try {
-        await browser.closeAllPages();
-        try {
-          await withTimeouts(this.cbWithTimeout(async () => await cb(t, browser), consts.TIMEOUT_EACH_RETRY));
-          await this.throwOnRetryFlagAndReset(t);
-          if (attemptDebugHtmls.length) {
-            addDebugHtml(`<h1>Test (later succeeded): ${Util.htmlEscape(t.title)}</h1>${attemptDebugHtmls.join('')}`);
-          }
-          return;
-        } catch (err) {
-          attemptDebugHtmls.push(await this.testFailSingleAttemptDebugHtml(t, browser, err));
-          throw err;
-        } finally {
-          await Util.sleep(1);
-          await browser.closeAllPages();
-        }
-      } catch (err) {
-        this.processTestError(err, t, attemptDebugHtmls);
-      }
-    }
-  }
-
 }
 
 export class Semaphore {

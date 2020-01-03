@@ -14,7 +14,7 @@ import { GmailRes } from '../../../js/common/api/email_provider/gmail/gmail-pars
 import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { SendBtnTexts } from './composer-types.js';
-import { SendableMsg } from '../../../js/common/api/email_provider/email_provider_api.js';
+import { SendableMsg } from '../../../js/common/api/email_provider/sendable-msg.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -124,7 +124,7 @@ export class ComposerSendBtn extends ComposerComponent {
     for (const k of Object.keys(this.additionalMsgHeaders)) {
       msg.headers[k] = this.additionalMsgHeaders[k];
     }
-    if (choices.encrypt && !choices.richText) {
+    if (choices.encrypt && !choices.richtext) {
       for (const a of msg.atts) {
         a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
       }

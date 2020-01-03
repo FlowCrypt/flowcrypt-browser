@@ -6,12 +6,11 @@ type ThreadIdObject = {
   threadId: string;
 };
 
-
 export class ParseMsgResult {
-  threadId?: string;
-  mimeMsg: ParsedMail;
+  public threadId?: string;
+  public mimeMsg: ParsedMail;
+  public base64: string;
 }
-
 
 const strictParse = async (source: string): Promise<ParseMsgResult> => {
   const lines = source.split('\n');
@@ -22,8 +21,8 @@ const strictParse = async (source: string): Promise<ParseMsgResult> => {
   } else {
     throw new Error('ThreadId property doesn\'t exist');
   }
-  if (lines[6] === 'Content-Type: message/rfc822' &&
-    lines[7] === 'Content-Transfer-Encoding: base64' && lines[9]) {
+  if (lines[6] === 'Content-Type: message/rfc822' && lines[7] === 'Content-Transfer-Encoding: base64' && lines[9]) {
+    result.base64 = lines[9];
     result.mimeMsg = await convertBase64ToMimeMsg(lines[9]);
   } else {
     throw new Error('Base64 MIME Msg wasn\'t found');

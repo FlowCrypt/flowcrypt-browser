@@ -3,7 +3,10 @@
 'use strict';
 
 import * as DOMPurify from 'dompurify';
+
 import { Str } from '../core/common.js';
+
+export type SanitizeImgHandling = 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-LINK';
 
 /**
  * This class is in platform/ folder because most of it depends on platform specific code
@@ -41,7 +44,7 @@ export class Xss {
     });
   }
 
-  public static htmlSanitizeKeepBasicTags = (dirtyHtml: string, imgHandling: 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-LINK'): string => {
+  public static htmlSanitizeKeepBasicTags = (dirtyHtml: string, imgHandling: SanitizeImgHandling): string => {
     // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
     DOMPurify.removeAllHooks();
     DOMPurify.addHook('afterSanitizeAttributes', node => {

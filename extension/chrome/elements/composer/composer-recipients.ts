@@ -5,7 +5,7 @@
 import { ChunkedCb, RecipientType } from '../../../js/common/api/api.js';
 import { Contact, PgpKey } from '../../../js/common/core/pgp-key.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './composer-errs.js';
-import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email_provider/email_provider_api.js';
+import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email_provider/email-provider-api.js';
 import { RecipientElement, RecipientStatus, RecipientStatuses } from './composer-types.js';
 import { Str, Value } from '../../../js/common/core/common.js';
 
@@ -206,7 +206,7 @@ export class ComposerRecipients extends ComposerComponent {
   public addRecipients = async (recipients: Recipients, triggerCallback: boolean = true) => {
     let newRecipients: RecipientElement[] = [];
     for (const key in recipients) {
-      if (recipients.hasOwnProperty(key)) {
+      if (recipients.hasOwnProperty(key) && ['to', 'cc', 'bcc'].includes(key)) {
         const sendingType = key as RecipientType;
         if (recipients[sendingType] && recipients[sendingType]!.length) {
           const recipientsContainer = this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`);

@@ -5,6 +5,7 @@
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Contact, KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { Keyserver, PubkeySearchResult } from '../../../js/common/api/keyserver.js';
+
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -33,9 +34,13 @@ export class ComposerStorage extends ComposerComponent {
     const keys = await Store.keysGet(this.view.acctEmail);
     let result = await this.composer.myPubkey.chooseMyPublicKeyBySenderEmail(keys, senderEmail);
     if (!result) {
+      this.composer.errs.debug(`ComposerStorage.getKey: could not find key based on senderEmail: ${senderEmail}, using primary instead`);
       result = keys.find(ki => ki.primary);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(result);
+    } else {
+      this.composer.errs.debug(`ComposerStorage.getKey: found key based on senderEmail: ${senderEmail}`);
     }
+    this.composer.errs.debug(`ComposerStorage.getKey: returning key longid: ${result!.longid}`);
     return result!;
   }
 

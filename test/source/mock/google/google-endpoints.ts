@@ -72,7 +72,8 @@ export const mockGoogleEndpoints: HandlersDefinition = {
         verificationStatus: 'accepted'
       }];
       if (acct === 'flowcrypt.compatibility@gmail.com') {
-        sendAs[0].signature = 'The best footer ever!';
+        // eslint-disable-next-line max-len
+        sendAs[0].signature = '<div dir="ltr">flowcrypt.compatibility test footer with an img<br><img src="https://flowcrypt.com/assets/imgs/svgs/flowcrypt-logo.svg" alt="Image result for small image"><br></div>';
         const alias = 'flowcryptcompatibility@gmail.com';
         sendAs.push({
           sendAsEmail: alias,
@@ -151,8 +152,8 @@ export const mockGoogleEndpoints: HandlersDefinition = {
         const parseResult = await parseMultipartDataAsMimeMsg(parsedReq.body);
         await validateMimeMsg(acct, parseResult.mimeMsg, parseResult.threadId);
         try {
-          const testingStrategyContext = new TestBySubjectStrategyContext(parseResult.mimeMsg.subject);
-          await testingStrategyContext.test(parseResult.mimeMsg);
+          const testingStrategyContext = new TestBySubjectStrategyContext(parseResult.mimeMsg.subject || '');
+          await testingStrategyContext.test(parseResult.mimeMsg, parseResult.base64);
         } catch (e) {
           if (!(e instanceof UnsuportableStrategyError)) { // No such strategy for test
             throw e;
@@ -190,10 +191,19 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       const data = new GoogleData(acct);
       const draft = data.getDraft(id);
       if (draft) {
-        return draft;
+        return { id: draft.id, message: draft };
       }
       throw new HttpClientErr(`MOCK draft not found for ${acct} (draftId: ${id})`, Status.NOT_FOUND);
     } else if (isPut(req)) {
+      const raw = (parsedReq.body as any)?.message?.raw as string; // tslint:disable-line: no-unsafe-any
+      if (!raw) {
+        throw new Error('mock Draft PUT without raw data');
+      }
+      const mimeMsg = await Parse.convertBase64ToMimeMsg(raw);
+      if ((mimeMsg.subject || '').includes('saving and rendering a draft with image')) {
+        const data = new GoogleData(acct);
+        data.addDraft('draft_with_image', raw, mimeMsg);
+      }
       return {};
     } else if (isDelete(req)) {
       return {};
@@ -249,13 +259,13 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
       throw new HttpClientErr("Error: Incorrect subject. Subject must start from 'Re:' or 'Fwd:' " +
         `if the message has threaId or 'In-Reply-To' header. Current subject is '${mimeMsg.subject}'`, 400);
     }
-    // Special check for 'compose[global:compatibility] - standalone - from alias' test
+    // Special check for 'from alias' test
     if (mimeMsg.subject.endsWith('from alias') && mimeMsg.from.value[0].address !== 'flowcryptcompatibility@gmail.com') {
       throw new HttpClientErr(`Error: Incorrect Email Alias. Should be 'flowcryptcompatibility@gmail.com'. Current '${mimeMsg.from.value[0].address}'`);
     }
   }
-  if (!mimeMsg.text) {
-    throw new HttpClientErr('Error: Message body is required', 400);
+  if (!mimeMsg.text && !mimeMsg.attachments?.length) {
+    throw new HttpClientErr('Error: Message body cannot be empty', 400);
   }
   if (!mimeMsg.to.value.length || mimeMsg.to.value.find(em => !allowedRecipients.includes(em.address))) {
     throw new HttpClientErr('Error: You can\'t send a message to unexisting email address(es)');

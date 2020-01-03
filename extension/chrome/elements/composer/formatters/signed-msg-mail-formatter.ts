@@ -7,16 +7,18 @@ import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter
 import { BrowserWindow } from '../../../../js/common/browser/browser-window.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { NewMsgData } from '../composer-types.js';
+import { PgpKey } from '../../../../js/common/core/pgp-key.js';
 import { PgpMsg } from '../../../../js/common/core/pgp-msg.js';
-import { SendableMsg } from '../../../../js/common/api/email_provider/email_provider_api.js';
+import { SendableMsg } from '../../../../js/common/api/email_provider/sendable-msg.js';
 import { SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { Store } from '../../../../js/common/platform/store.js';
 
 export class SignedMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
 
   public sendableMsg = async (newMsg: NewMsgData, signingPrv: OpenPGP.key.Key): Promise<SendableMsg> => {
+    this.composer.errs.debug(`SignedMsgMailFormatter.sendableMsg signing with key: ${await PgpKey.longid(signingPrv)}`);
     const atts = await this.composer.atts.attach.collectAtts();
-    if (!this.richText) {
+    if (!this.richtext) {
       // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
       // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
       // resulting in.. wait for it.. signatures that don't match
@@ -33,13 +35,14 @@ export class SignedMsgMailFormatter extends BaseMailFormatter implements MailFor
       const allContacts = [...newMsg.recipients.to || [], ...newMsg.recipients.cc || [], ...newMsg.recipients.bcc || []];
       Store.dbContactUpdate(undefined, allContacts, { last_use: Date.now() }).catch(Catch.reportErr);
       const body = { 'text/plain': signedData };
-      return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, body, atts, this.composer.view.threadId);
+      return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body, atts });
     }
     // pgp/mime detached signature - it must be signed later, while being mime-encoded
     // prepare a sign function first, which will be used by Mime.encodePgpMimeSigned later
-    const sign = (signable: string) => PgpMsg.sign(signingPrv, signable, true);
     const body: SendableMsgBody = { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml };
-    return await this.composer.emailProvider.createMsgObj(newMsg.sender, newMsg.recipients, newMsg.subject, body, atts, this.composer.view.threadId, undefined, sign);
+    const sendable = await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body, atts, type: 'pgpMimeSigned' });
+    sendable.setSignMethod((signable: string) => PgpMsg.sign(signingPrv, signable, true));
+    return sendable;
   }
 
 }

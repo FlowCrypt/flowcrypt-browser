@@ -32,5 +32,13 @@
     {
       "path": "."
     }
-  ]
+  ],
+  "extensions": {
+    "recommendations": [
+      "amatiasq.sort-imports",
+      "dbaeumer.vscode-eslint",
+      "hex-ci.stylelint-plus",
+      "ms-vscode.vscode-typescript-tslint-plugin"
+    ]
+  }
 }

@@ -2,18 +2,17 @@
 
 import * as ava from 'ava';
 
-import { TestWithGlobalBrowser, TestWithNewBrowser } from '../../test';
-
 import { MsgBlock } from '../../core/msg-block';
 import { MsgBlockParser } from '../../core/msg-block-parser';
 import { PgpHash } from '../../core/pgp-hash';
 import { TestVariant } from '../../util';
+import { TestWithBrowser } from '../../test';
 import { expect } from 'chai';
 
 // tslint:disable:no-blank-lines-func
 /* eslint-disable max-len */
 
-export let defineUnitTests = (testVariant: TestVariant, testWithNewBrowser: TestWithNewBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
+export let defineUnitTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 

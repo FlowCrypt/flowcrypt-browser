@@ -12,7 +12,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 
 export class ComposerSendBtnPopover extends ComposerComponent {
 
-  public choices: PopoverChoices = { encrypt: true, sign: true, richText: false }; // defaults, may be changed by user using the popover
+  public choices: PopoverChoices = { encrypt: true, sign: true, richtext: false }; // defaults, may be changed by user using the popover
 
   public initActions = (): void => {
     this.composer.S.cached('toggle_send_options').click(this.view.setHandler((el, ev) => this.toggleVisible(ev)));
@@ -20,15 +20,15 @@ export class ComposerSendBtnPopover extends ComposerComponent {
 
   public render = async () => {
     const popoverItems = {
-      richText: { text: 'Rich text (PGP/MIME) - experimental', iconPath: undefined },
+      richtext: { text: 'Rich text (PGP/MIME) - experimental', iconPath: undefined },
       encrypt: { text: 'Encrypt message', iconPath: '/img/svgs/locked-icon-green.svg' },
       sign: { text: 'Sign message', iconPath: '/img/svgs/signature-gray.svg' },
     };
-    this.choices.richText = await this.richTextUserChoiceRetrieve();
+    this.choices.richtext = await this.richTextUserChoiceRetrieve();
     for (const key of Object.keys(popoverItems)) {
       const popoverOpt = key as PopoverOpt;
-      if (popoverOpt === 'richText' && Catch.browser().name !== 'firefox') {
-        continue; // richText not deployed to Chrome yet, for now only allow firefox
+      if (popoverOpt === 'richtext' && !this.view.debug && Catch.browser().name !== 'firefox') {
+        continue; // richtext not deployed to Chrome yet, for now only allow firefox (and also in automated tests which set debug===true)
       }
       const item = popoverItems[popoverOpt];
       const elem = $(`
@@ -69,10 +69,10 @@ export class ComposerSendBtnPopover extends ComposerComponent {
       this.composer.S.cached('compose_table').addClass('not-encrypted');
       this.composer.S.now('attached_files').addClass('not-encrypted');
     }
-    this.choices.richText ? this.composer.input.addRichTextFormatting() : this.composer.input.removeRichTextFormatting();
+    this.choices.richtext ? this.composer.input.addRichTextFormatting() : this.composer.input.removeRichTextFormatting();
     this.composer.sendBtn.resetSendBtn();
     this.composer.pwdOrPubkeyContainer.showHideContainerAndColorSendBtn();
-    if (typeof machineForceStateTo === 'undefined' && popoverOpt === 'richText') { // human-input choice of rich text
+    if (typeof machineForceStateTo === 'undefined' && popoverOpt === 'richtext') { // human-input choice of rich text
       this.richTextUserChoiceStore(newToggleTicked).catch(Catch.reportErr);
     }
   }

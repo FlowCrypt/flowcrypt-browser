@@ -1,5 +1,6 @@
 import * as ts from "typescript";
 import * as tslint from "tslint";
+
 import { isIdentifier } from 'tsutils';
 
 const AWAIT_RETURNED_PROMISE = `must explicitly await returned promise (see https://github.com/FlowCrypt/flowcrypt-browser/pull/2349)`;
