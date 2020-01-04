@@ -164,10 +164,11 @@
 
     <div id="step_2b_manual_enter" class="manual">
       <div class="aligncenter">
-        <div class="wide line">Import your private key. Keys are stored safely in your local browser extension storage.
+        <div class="line left">
+          Import your private key. Keys are stored safely in your local browser extension storage.<br>
+          The key will not leave your browser.
         </div>
-        <div class="wide line">The key will not leave your browser.</div>
-        <div class="wide line">
+        <div class="line left">
           <ul style="list-style: none; margin-left: 0; padding-left: 0;" class="source_selector">
             <li><input type="radio" name="source" id="source_file" value="file"> <label for="source_file">Load from a
                 file</label></li>
@@ -181,7 +182,7 @@
           <div class="line display_none" id="fineuploader"></div>
         </div>
         <div class="source_paste_container setup_page display_none">
-          <div class="wide line">
+          <div class="line left">
             <textarea class="input_private_key" placeholder="ASCII Armored Private Key"
               data-test="input-step2bmanualenter-ascii-key"></textarea>
           </div>
@@ -190,7 +191,7 @@
               data-test="action-step2bmanualenter-new-random-passphrase">use
               a random one</a>.
           </div>
-          <div class="line pp_container">
+          <div class="line left">
             <input class="input_passphrase" type="text" placeholder="Private Key Passphrase"
               id="step_2b_manual_enter_passphrase" data-test="input-step2bmanualenter-passphrase" />
           </div>
