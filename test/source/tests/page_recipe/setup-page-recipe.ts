@@ -9,6 +9,7 @@ import { expect } from 'chai';
 
 type ManualEnterOpts = {
   usedPgpBefore?: boolean,
+  savePassphrase?: boolean,
   submitPubkey?: boolean,
   fixKey?: boolean,
   naked?: boolean,
@@ -20,17 +21,6 @@ type ManualEnterOpts = {
 };
 
 export class SetupPageRecipe extends PageRecipe {
-
-  private static createBegin = async (settingsPage: ControllablePage, keyTitle: string, { usedPgpBefore = false }: { usedPgpBefore?: boolean } = {}) => {
-    const k = Config.key(keyTitle);
-    if (usedPgpBefore) {
-      await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-create');
-    } else {
-      await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-create');
-    }
-    await settingsPage.waitAndType('@input-step2bmanualcreate-passphrase-1', k.passphrase);
-    await settingsPage.waitAndType('@input-step2bmanualcreate-passphrase-2', k.passphrase);
-  }
 
   // public static setup_create_simple = async (settingsPage: ControllablePage, key_title: string, {used_pgp_before=false}: {used_pgp_before?: boolean}={}) => {
   //   await PageRecipe.setup_create_begin(settingsPage, key_title, {used_pgp_before});
@@ -72,6 +62,7 @@ export class SetupPageRecipe extends PageRecipe {
     keyTitle: string,
     {
       usedPgpBefore = false,
+      savePassphrase = false,
       submitPubkey = false,
       fixKey = false,
       naked = false,
@@ -95,6 +86,9 @@ export class SetupPageRecipe extends PageRecipe {
     await settingsPage.waitAndClick('@input-step2bmanualenter-passphrase'); // blur ascii key input
     if (noPrvCreateOrgRule) { // NO_PRV_CREATE cannot use the back button, so that they cannot select another setup method
       await settingsPage.notPresent('@action-setup-go-back');
+    }
+    if (savePassphrase) {
+      await settingsPage.waitAndClick('@input-step2bmanualenter-save-passphrase');
     }
     if (!naked) {
       await Util.sleep(1);
@@ -193,6 +187,17 @@ export class SetupPageRecipe extends PageRecipe {
         }
       }
     }
+  }
+
+  private static createBegin = async (settingsPage: ControllablePage, keyTitle: string, { usedPgpBefore = false }: { usedPgpBefore?: boolean } = {}) => {
+    const k = Config.key(keyTitle);
+    if (usedPgpBefore) {
+      await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-create');
+    } else {
+      await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-create');
+    }
+    await settingsPage.waitAndType('@input-step2bmanualcreate-passphrase-1', k.passphrase);
+    await settingsPage.waitAndType('@input-step2bmanualcreate-passphrase-2', k.passphrase);
   }
 
 }
