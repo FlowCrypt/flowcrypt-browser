@@ -49,12 +49,10 @@
           <input id="input_passphrase" class="input_passphrase" type="text" placeholder="Private Key Passphrase" />
         </div>
         <div class="line">
-          <div class="squaredFour">
-            <input type="checkbox" value="" id="e_rememberPassphrase" name="check"
-              class="input_passphrase_save squaredFour" checked="">
-            <label class="checkboxSquaredOne" for="e_rememberPassphrase"></label>
-          </div>
-          <span class="labelCopy">Remember Pass Phrase after closing browser.</span>
+          <label>
+            <input type="checkbox" value="" name="check" class="input_passphrase_save" checked="">
+            Remember Pass Phrase after closing browser.
+          </label>
         </div>
         <div class="line">
           <br />
@@ -62,14 +60,15 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <script src="/lib/purify.min.js"></script>
-    <script src="/lib/fine-uploader.js"></script>
-    <script src="/lib/jquery.min.js"></script>
-    <script src="/lib/sweetalert2.js"></script>
-    <script src="/lib/openpgp.js"></script>
-    <script src="/lib/zxcvbn.js"></script>
-    <script src="add_key.js" type="module"></script>
+  <script src="/lib/purify.min.js"></script>
+  <script src="/lib/fine-uploader.js"></script>
+  <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/sweetalert2.js"></script>
+  <script src="/lib/openpgp.js"></script>
+  <script src="/lib/zxcvbn.js"></script>
+  <script src="add_key.js" type="module"></script>
 </body>
 
 </html>

@@ -128,53 +128,32 @@
       </div>
 
       <div class="line left">
-        <div class="advanced_create_settings_container">
-          <div class="action_show_advanced_create_settings"
-            data-test="action-step2bmanualcreate-show-advanced-create-settings"><img
-              src="/img/svgs/settings-icon.svg" /><span>Show
-              Advanced Settings</span></div>
-          <div class="line advanced_create_settings display_none">
-            <hr style="border: 1px dotted rgba(0, 0, 0, 0.25); height: 1px; border-bottom: none; margin: 0;">
-            <div class="line left">
-              <div class="squaredFour">
-                <input type="checkbox" class="input_passphrase_save" value="" id="c_rememberPassphraseAfterClosing"
-                  name="check" checked="" />
-                <label class="checkboxSquaredOne" for="c_rememberPassphraseAfterClosing"
-                  data-test="input-step2bmanualcreate-save-passphrase"></label>
-              </div>
-              <span class="labelCopy">Remember Pass Phrase after closing browser (recommended)</span>
-            </div>
-            <div class="line left">
-              <div class="squaredFour">
-                <input type="checkbox" class="input_backup_inbox" value="" id="c_backupInInbox" name="check"
-                  checked="" />
-                <label class="checkboxSquaredOne" for="c_backupInInbox"
-                  data-test="input-step2bmanualcreate-backup-inbox"></label>
-              </div>
-              <span class="labelCopy">Back up encrypted private key in inbox (recommended)</span>
-            </div>
+        <label data-test="input-step2bmanualcreate-save-passphrase">
+          <input type="checkbox" class="input_passphrase_save" value="" name="check" />
+          Remember Pass Phrase after closing browser
+        </label>
+      </div>
+      <div class="line left">
+        <label data-test="input-step2bmanualcreate-backup-inbox">
+          <input type="checkbox" class="input_backup_inbox" value="" name="check" checked="" />
+          Back up encrypted private key in inbox (recommended)
+        </label>
+      </div>
 
-            <div class="line left remove_if_enforce_submit_to_attester">
-              <div class="squaredFour">
-                <input type="checkbox" class="input_submit_key" value="" id="c_submitPubkeytoKeyserver" name="check"
-                  checked="">
-                <label class="checkboxSquaredOne" for="c_submitPubkeytoKeyserver"
-                  data-test="input-step2bmanualcreate-submit-pubkey"></label>
-              </div>
-              <span class="labelCopy">Submit corresponding pubkey to FlowCrypt Attester (recommended)</span>
-            </div>
-            <div class="line left display_none remove_if_enforce_submit_to_attester">
-              <div class="squaredFour">
-                <input type="checkbox" class="input_submit_all" disabled="disabled" id="c_submitAll" />
-                <label class="checkboxSquaredOne" for="c_submitAll"></label>
-              </div>
-              <label class="checkboxSquaredOne" for="c_submitAll" style="position: relative; left: 25px;">
-                Also submit the same pubkey for:
-                <br /><span class="addresses" style="padding-left: 35px;"></span>
-              </label>
-            </div>
-          </div>
-        </div>
+      <div class="line left remove_if_enforce_submit_to_attester">
+        <label data-test="input-step2bmanualcreate-submit-pubkey">
+          <input type="checkbox" class="input_submit_key" value="" name="check" checked="">
+          Submit corresponding pubkey to FlowCrypt Attester (recommended)
+        </label>
+      </div>
+      <div class="line left display_none remove_if_enforce_submit_to_attester">
+        <label>
+          <input type="checkbox" class="input_submit_all" disabled="disabled" />
+          <span>
+            Also submit the same pubkey for:
+            <br /><span class="addresses"></span>
+          </span>
+        </label>
       </div>
 
       <div class="line left">
@@ -185,10 +164,11 @@
 
     <div id="step_2b_manual_enter" class="manual">
       <div class="aligncenter">
-        <div class="wide line">Import your private key. Keys are stored safely in your local browser extension storage.
+        <div class="line left">
+          Import your private key. Keys are stored safely in your local browser extension storage.<br>
+          The key will not leave your browser.
         </div>
-        <div class="wide line">The key will not leave your browser.</div>
-        <div class="wide line">
+        <div class="line left">
           <ul style="list-style: none; margin-left: 0; padding-left: 0;" class="source_selector">
             <li><input type="radio" name="source" id="source_file" value="file"> <label for="source_file">Load from a
                 file</label></li>
@@ -202,7 +182,7 @@
           <div class="line display_none" id="fineuploader"></div>
         </div>
         <div class="source_paste_container setup_page display_none">
-          <div class="wide line">
+          <div class="line left">
             <textarea class="input_private_key" placeholder="ASCII Armored Private Key"
               data-test="input-step2bmanualenter-ascii-key"></textarea>
           </div>
@@ -211,35 +191,29 @@
               data-test="action-step2bmanualenter-new-random-passphrase">use
               a random one</a>.
           </div>
-          <div class="line pp_container">
+          <div class="line left">
             <input class="input_passphrase" type="text" placeholder="Private Key Passphrase"
               id="step_2b_manual_enter_passphrase" data-test="input-step2bmanualenter-passphrase" />
           </div>
           <div class="line left">
-            <div class="squaredFour">
-              <input type="checkbox" value="" id="e_rememberPassphrase" name="check"
-                class="input_passphrase_save squaredFour" checked="">
-              <label class="checkboxSquaredOne" for="e_rememberPassphrase"
-                data-test="input-step2bmanualenter-save-passphrase"></label>
-            </div>
-            <span class="labelCopy">Remember Pass Phrase after closing browser</span>
+            <label data-test="input-step2bmanualenter-save-passphrase">
+              <input type="checkbox" value="" name="check" class="input_passphrase_save">
+              Remember Pass Phrase after closing browser
+            </label>
           </div>
           <div class="line left remove_if_enforce_submit_to_attester">
-            <div class="squaredFour">
-              <input type="checkbox" value="" id="e_submitPubkey" name="check" checked="" class="input_submit_key">
-              <label class="checkboxSquaredOne" for="e_submitPubkey"
-                data-test="input-step2bmanualenter-submit-pubkey"></label>
-            </div>
-            <span class="labelCopy">Submit corresponding pubkey to FlowCrypt Attester</span>
+            <label data-test="input-step2bmanualenter-submit-pubkey">
+              <input type="checkbox" value="" name="check" checked="" class="input_submit_key">
+              Submit corresponding pubkey to FlowCrypt Attester
+            </label>
           </div>
           <div class="line left remove_if_enforce_submit_to_attester" style="visibility: hidden;">
-            <div class="squaredFour">
-              <input type="checkbox" class="input_submit_all" disabled="disabled" id="e_submitAll" />
-              <label class="checkboxSquaredOne" for="e_submitAll"></label>
-            </div>
-            <label class="checkboxSquaredOne" for="e_submitAll" style="position: relative; left: 25px;">
-              Also submit the same pubkey for:
-              <br /><span class="addresses" style="padding-left: 35px; font-size: 14px;"></span>
+            <label>
+              <input type="checkbox" class="input_submit_all" disabled="disabled" />
+              <span>
+                Also submit the same pubkey for:
+                <br /><span class="addresses"></span>
+              </span>
             </label>
           </div>
 
