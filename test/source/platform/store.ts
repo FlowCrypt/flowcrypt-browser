@@ -21,23 +21,23 @@ export type KeyInfosWithPassphrases = { keys: PrvKeyInfo[]; passphrases: string[
 
 export class Store {
 
-  static dbContactGet = async (db: void, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
+  public static dbContactGet = async (db: void, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
     return [];
   }
 
-  static decryptedKeyCacheSet = (k: OpenPGP.key.Key) => {
+  public static decryptedKeyCacheSet = (k: OpenPGP.key.Key) => {
     // tests don't need this
   }
 
-  static decryptedKeyCacheGet = (longid: string): OpenPGP.key.Key | undefined => {
+  public static decryptedKeyCacheGet = (longid: string): OpenPGP.key.Key | undefined => {
     return undefined; // tests don't need this
   }
 
-  static armoredKeyCacheSet = (armored: string, k: OpenPGP.key.Key) => {
+  public static armoredKeyCacheSet = (armored: string, k: OpenPGP.key.Key) => {
     // tests don't need this
   }
 
-  static armoredKeyCacheGet = (armored: string): OpenPGP.key.Key | undefined => {
+  public static armoredKeyCacheGet = (armored: string): OpenPGP.key.Key | undefined => {
     return undefined; // tests don't need this
   }
 
