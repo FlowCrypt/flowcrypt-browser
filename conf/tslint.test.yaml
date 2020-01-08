@@ -1,0 +1,8 @@
+---
+extends: "./tslint.yaml"
+rules: #
+    no-unsafe-any: false
+    only-arrow-functions: false
+    no-unbound-method: false
+    await-returned-promise: false
+...

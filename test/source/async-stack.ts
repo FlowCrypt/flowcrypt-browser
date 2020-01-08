@@ -35,10 +35,10 @@
   }
 
   class Class {
-    static staticConstAttr = (type: Type) => {
+    public static staticConstAttr = (type: Type) => {
       func(type);
     }
-    static staticFunc(type: Type) {
+    public static staticFunc(type: Type) {
       Class.staticConstAttr(type);
     }
   }
@@ -62,12 +62,12 @@
   };
 
   class ClassAsync {
-    static staticConstAttrAsync = async (type: Type) => {
+    public static staticConstAttrAsync = async (type: Type) => {
       await wait();
       await obj.paramFunc(type);
       await wait();
     }
-    static async staticAsyncFunc(type: Type) {
+    public static async staticAsyncFunc(type: Type) {
       await wait();
       await ClassAsync.staticConstAttrAsync(type);
       await wait();

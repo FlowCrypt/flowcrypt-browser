@@ -11,13 +11,13 @@ import { PgpMsg } from '../../../core/pgp-msg';
 
 // TODO: Make a better structure of ITestMsgStrategy. Because this class doesn't test anything, it only saves message in the Mock
 class SaveMessageInStorageStrategy implements ITestMsgStrategy {
-  test = async (mimeMsg: ParsedMail, base64Msg: string) => {
+  public test = async (mimeMsg: ParsedMail, base64Msg: string) => {
     new GoogleData(mimeMsg.from.value[0].address).storeSentMessage(mimeMsg, base64Msg);
   }
 }
 
 class PwdEncryptedMessageTestStrategy implements ITestMsgStrategy {
-  test = async (mimeMsg: ParsedMail, base64Msg: string) => {
+  public test = async (mimeMsg: ParsedMail, base64Msg: string) => {
     if (!mimeMsg.text.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]{10}/)) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted link in:\n\n${mimeMsg.text}`);
     }
@@ -31,7 +31,7 @@ class PwdEncryptedMessageTestStrategy implements ITestMsgStrategy {
 class MessageWithFooterTestStrategy implements ITestMsgStrategy {
   private readonly footer = 'flowcrypt.compatibility test footer with an img';
 
-  test = async (mimeMsg: ParsedMail) => {
+  public test = async (mimeMsg: ParsedMail) => {
     const keyInfo = Config.secrets.keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
     const decrypted = await PgpMsg.decrypt({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
     if (!decrypted.success) {
@@ -48,7 +48,7 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
   private readonly expectedText = 'New Signed Message (Mock Test)';
   private readonly signedBy = 'B6BE3C4293DDCF66'; // could potentially grab this from test-secrets.json file
 
-  test = async (mimeMsg: ParsedMail) => {
+  public test = async (mimeMsg: ParsedMail) => {
     const keyInfo = Config.secrets.keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
     const decrypted = await PgpMsg.decrypt({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
     if (!decrypted.success) {
@@ -70,7 +70,7 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
 class PlainTextMessageTestStrategy implements ITestMsgStrategy {
   private readonly expectedText = 'New Plain Message';
 
-  test = async (mimeMsg: ParsedMail) => {
+  public test = async (mimeMsg: ParsedMail) => {
     if (!mimeMsg.text.includes(this.expectedText)) {
       throw new HttpClientErr(`Error: Msg Text is not matching expected. Current: '${mimeMsg.text}', expected: '${this.expectedText}'`);
     }
@@ -91,7 +91,7 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
     '> >> again double quote'
   ].join('\n');
 
-  test = async (mimeMsg: ParsedMail) => {
+  public test = async (mimeMsg: ParsedMail) => {
     const keyInfo = Config.secrets.keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
     const decrypted = await PgpMsg.decrypt({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
     if (!decrypted.success) {
@@ -105,7 +105,7 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
 }
 
 class NewMessageCCAndBCCTestStrategy implements ITestMsgStrategy {
-  test = async (mimeMsg: ParsedMail) => {
+  public test = async (mimeMsg: ParsedMail) => {
     const hasAddr = (ao?: AddressObject) => ao && ao.value && ao.value.length && ao.value[0].address;
     if (!hasAddr(mimeMsg.to)) {
       throw new HttpClientErr(`Error: There is no 'To' header.`, 400);
@@ -142,7 +142,7 @@ export class TestBySubjectStrategyContext {
     }
   }
 
-  test = async (mimeMsg: ParsedMail, base64Msg: string) => {
+  public test = async (mimeMsg: ParsedMail, base64Msg: string) => {
     await this.strategy.test(mimeMsg, base64Msg);
   }
 }

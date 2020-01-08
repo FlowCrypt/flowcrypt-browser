@@ -23,52 +23,8 @@ abstract class ControllableBase {
     this.debugNamespace = namespace;
   }
 
-  protected log = (msg: string) => {
-    if (this.debugNamespace) {
-      console.info(`[debug][controllable][${this.debugNamespace}] ${msg}`);
-    }
-  }
-
-  protected isXpath = (selector: string): boolean => {
-    return selector.match(/^\/\//) !== null;
-  }
-
-  protected selector = (customSelLanguageQuery: string): string => { // supply browser selector, xpath, @test-id or @test-id(contains this text)
-    let m: RegExpMatchArray | null;
-    if (this.isXpath(customSelLanguageQuery)) {
-      return customSelLanguageQuery;
-      // eslint-disable-next-line no-cond-assign
-    } else if (m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)\:message/)) { // tslint:disable-line:no-conditional-assignment
-      return `.${m[1]} #swal2-content`; // message inside the modal
-      // eslint-disable-next-line no-cond-assign
-    } else if (m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)/)) { // tslint:disable-line:no-conditional-assignment
-      return `.${m[1]}`; // represented as a class
-      // eslint-disable-next-line no-cond-assign
-    } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-]+)$/)) { // tslint:disable-line:no-conditional-assignment
-      return `[data-test="${m[1]}"]`;
-      // eslint-disable-next-line no-cond-assign
-    } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-]+)\(([^()]*)\)$/)) { // tslint:disable-line:no-conditional-assignment
-      return `//*[@data-test='${m[1]}' and contains(text(),'${m[2]}')]`;
-    } else {
-      return customSelLanguageQuery;
-    }
-  }
-
-  protected element = async (selector: string): Promise<ElementHandle | null> => {
-    selector = this.selector(selector);
-    if (this.isXpath(selector)) {
-      return (await this.target.$x(selector))[0];
-    } else {
-      return await this.target.$(selector);
-    }
-  }
-
   public isElementPresent = async (selector: string) => {
     return Boolean(await this.element(selector));
-  }
-
-  protected selsAsProcessedArr = (selector: string | string[]): string[] => {
-    return (Array.isArray(selector) ? selector : [selector]).map(this.selector);
   }
 
   public waitForSelTestState = async (state: 'ready' | 'working' | 'waiting' | 'closed', timeout = TIMEOUT_TEST_STATE_SATISFY) => {
@@ -214,7 +170,7 @@ abstract class ControllableBase {
       const computedStyle = getComputedStyle(document.querySelector(s));
       const paddings = parseInt(computedStyle.getPropertyValue('padding-top')) + parseInt(computedStyle.getPropertyValue('padding-bottom'));
       const border = parseInt(computedStyle.getPropertyValue('border-top-width')) + parseInt(computedStyle.getPropertyValue('border-bottom-width'));
-      let outerHeight = parseInt(computedStyle.getPropertyValue('height')) + paddings + border;
+      const outerHeight = parseInt(computedStyle.getPropertyValue('height')) + paddings + border;
       return outerHeight;
     }, this.selector(selector));
   }
@@ -327,18 +283,6 @@ abstract class ControllableBase {
     throw new Error(`selector ${selector} not continuously containing "${expectedText}" for ${expectPresentForMs}ms within ${timeoutSec}s, last content:${actualText}`);
   }
 
-  private getFramesUrlsInThisMoment = async (urlMatchables: string[]) => {
-    const matchingLinks: string[] = [];
-    for (const iframe of await this.target.$$('iframe')) {
-      const srcHandle = await iframe.getProperty('src');
-      const src = await srcHandle.jsonValue() as string;
-      if (urlMatchables.filter(m => src.indexOf(m) !== -1).length === urlMatchables.length) {
-        matchingLinks.push(src);
-      }
-    }
-    return matchingLinks;
-  }
-
   public getFramesUrls = async (urlMatchables: string[], { sleep, appearIn }: { sleep?: number, appearIn?: number } = { sleep: 3 }): Promise<string[]> => {
     if (sleep) {
       await Util.sleep(sleep);
@@ -382,6 +326,62 @@ abstract class ControllableBase {
     throw Error(`Frame not found: ${urlMatchables.join(',')}`);
   }
 
+  protected log = (msg: string) => {
+    if (this.debugNamespace) {
+      console.info(`[debug][controllable][${this.debugNamespace}] ${msg}`);
+    }
+  }
+
+  protected isXpath = (selector: string): boolean => {
+    return selector.match(/^\/\//) !== null;
+  }
+
+  protected selector = (customSelLanguageQuery: string): string => { // supply browser selector, xpath, @test-id or @test-id(contains this text)
+    let m: RegExpMatchArray | null;
+    if (this.isXpath(customSelLanguageQuery)) {
+      return customSelLanguageQuery;
+      // eslint-disable-next-line no-cond-assign
+    } else if (m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)\:message/)) { // tslint:disable-line:no-conditional-assignment
+      return `.${m[1]} #swal2-content`; // message inside the modal
+      // eslint-disable-next-line no-cond-assign
+    } else if (m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)/)) { // tslint:disable-line:no-conditional-assignment
+      return `.${m[1]}`; // represented as a class
+      // eslint-disable-next-line no-cond-assign
+    } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-]+)$/)) { // tslint:disable-line:no-conditional-assignment
+      return `[data-test="${m[1]}"]`;
+      // eslint-disable-next-line no-cond-assign
+    } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-]+)\(([^()]*)\)$/)) { // tslint:disable-line:no-conditional-assignment
+      return `//*[@data-test='${m[1]}' and contains(text(),'${m[2]}')]`;
+    } else {
+      return customSelLanguageQuery;
+    }
+  }
+
+  protected element = async (selector: string): Promise<ElementHandle | null> => {
+    selector = this.selector(selector);
+    if (this.isXpath(selector)) {
+      return (await this.target.$x(selector))[0];
+    } else {
+      return await this.target.$(selector);
+    }
+  }
+
+  protected selsAsProcessedArr = (selector: string | string[]): string[] => {
+    return (Array.isArray(selector) ? selector : [selector]).map(this.selector);
+  }
+
+  private getFramesUrlsInThisMoment = async (urlMatchables: string[]) => {
+    const matchingLinks: string[] = [];
+    for (const iframe of await this.target.$$('iframe')) {
+      const srcHandle = await iframe.getProperty('src');
+      const src = await srcHandle.jsonValue() as string;
+      if (urlMatchables.filter(m => src.indexOf(m) !== -1).length === urlMatchables.length) {
+        matchingLinks.push(src);
+      }
+    }
+    return matchingLinks;
+  }
+
 }
 
 export class ControllableAlert {
@@ -393,12 +393,12 @@ export class ControllableAlert {
     this.target = alert;
   }
 
-  accept = async () => {
+  public accept = async () => {
     await this.target.accept();
     this.active = false;
   }
 
-  dismiss = async () => {
+  public dismiss = async () => {
     await this.target.dismiss();
     this.active = false;
   }
@@ -492,20 +492,6 @@ export class ControllablePage extends ControllableBase {
     }
   }
 
-  private dismissActiveAlerts = async (): Promise<void> => {
-    const activeAlerts = this.alerts.filter(a => a.active);
-    for (const alert of activeAlerts) {
-      // active alert will cause screenshot and other ops to hang: https://github.com/GoogleChrome/puppeteer/issues/2481
-      try {
-        await Promise.race([alert.dismiss(), newTimeoutPromise('alert dismiss', 10)]);
-      } catch (e) {
-        if (!(e instanceof Error && e.message === 'Cannot dismiss dialog which is already handled!')) {
-          throw e;
-        }
-      }
-    }
-  }
-
   public screenshot = async (): Promise<string> => {
     await this.dismissActiveAlerts();
     return await Promise.race([this.page.screenshot({ encoding: 'base64' }), newTimeoutPromise('screenshot', 20)]);
@@ -542,6 +528,20 @@ export class ControllablePage extends ControllableBase {
       }
     }
     return html;
+  }
+
+  private dismissActiveAlerts = async (): Promise<void> => {
+    const activeAlerts = this.alerts.filter(a => a.active);
+    for (const alert of activeAlerts) {
+      // active alert will cause screenshot and other ops to hang: https://github.com/GoogleChrome/puppeteer/issues/2481
+      try {
+        await Promise.race([alert.dismiss(), newTimeoutPromise('alert dismiss', 10)]);
+      } catch (e) {
+        if (!(e instanceof Error && e.message === 'Cannot dismiss dialog which is already handled!')) {
+          throw e;
+        }
+      }
+    }
   }
 }
 

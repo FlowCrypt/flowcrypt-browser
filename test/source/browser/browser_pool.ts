@@ -127,6 +127,35 @@ export class BrowserPool {
     });
   }
 
+  public withNewBrowserTimeoutAndRetry = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext, consts: Consts) => {
+    const withTimeouts = newWithTimeoutsFunc(consts);
+    const attemptDebugHtmls: string[] = [];
+    t.totalAttempts = consts.ATTEMPTS;
+    for (let attemptNumber = 1; attemptNumber <= consts.ATTEMPTS; attemptNumber++) {
+      t.attemptNumber = attemptNumber;
+      t.attemptText = `(attempt ${t.attemptNumber} of ${t.totalAttempts})`;
+      try {
+        const browser = await withTimeouts(this.newBrowserHandle(t));
+        try {
+          await withTimeouts(this.cbWithTimeout(async () => await cb(t, browser), consts.TIMEOUT_EACH_RETRY));
+          await this.throwOnRetryFlagAndReset(t);
+          if (attemptDebugHtmls.length) {
+            addDebugHtml(`<h1>Test (later succeeded): ${Util.htmlEscape(t.title)}</h1>${attemptDebugHtmls.join('')}`);
+          }
+          return;
+        } catch (err) {
+          attemptDebugHtmls.push(await this.testFailSingleAttemptDebugHtml(t, browser, err));
+          throw err;
+        } finally {
+          await Util.sleep(1);
+          await browser.close();
+        }
+      } catch (err) {
+        this.processTestError(err, t, attemptDebugHtmls);
+      }
+    }
+  }
+
   private processTestError = (err: any, t: AvaContext, attemptHtmls: string[]) => {
     t.retry = undefined;
     if (t.attemptNumber! < t.totalAttempts!) {
@@ -160,35 +189,6 @@ export class BrowserPool {
     }
   }
 
-  public withNewBrowserTimeoutAndRetry = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext, consts: Consts) => {
-    const withTimeouts = newWithTimeoutsFunc(consts);
-    const attemptDebugHtmls: string[] = [];
-    t.totalAttempts = consts.ATTEMPTS;
-    for (let attemptNumber = 1; attemptNumber <= consts.ATTEMPTS; attemptNumber++) {
-      t.attemptNumber = attemptNumber;
-      t.attemptText = `(attempt ${t.attemptNumber} of ${t.totalAttempts})`;
-      try {
-        const browser = await withTimeouts(this.newBrowserHandle(t));
-        try {
-          await withTimeouts(this.cbWithTimeout(async () => await cb(t, browser), consts.TIMEOUT_EACH_RETRY));
-          await this.throwOnRetryFlagAndReset(t);
-          if (attemptDebugHtmls.length) {
-            addDebugHtml(`<h1>Test (later succeeded): ${Util.htmlEscape(t.title)}</h1>${attemptDebugHtmls.join('')}`);
-          }
-          return;
-        } catch (err) {
-          attemptDebugHtmls.push(await this.testFailSingleAttemptDebugHtml(t, browser, err));
-          throw err;
-        } finally {
-          await Util.sleep(1);
-          await browser.close();
-        }
-      } catch (err) {
-        this.processTestError(err, t, attemptDebugHtmls);
-      }
-    }
-  }
-
 }
 
 export class Semaphore {
@@ -202,11 +202,7 @@ export class Semaphore {
     this.name = name;
   }
 
-  private wait = () => {
-    return new Promise(resolve => setTimeout(resolve, 1000 + Math.round(Math.random() * 2000))); // wait 1-3s
-  }
-
-  acquire = async () => {
+  public acquire = async () => {
     let i = 0;
     while (this.availableLocks < 1) {
       if (this.debug) {
@@ -223,7 +219,7 @@ export class Semaphore {
     }
   }
 
-  release = () => {
+  public release = () => {
     if (this.debug) {
       console.info(`[${this.name}] releasing semaphore, previously available: ${this.availableLocks}`);
     }
@@ -231,6 +227,10 @@ export class Semaphore {
     if (this.debug) {
       console.info(`[${this.name}] released semaphore, now available: ${this.availableLocks}`);
     }
+  }
+
+  private wait = () => {
+    return new Promise(resolve => setTimeout(resolve, 1000 + Math.round(Math.random() * 2000))); // wait 1-3s
   }
 
 }

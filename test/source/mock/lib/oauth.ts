@@ -10,15 +10,15 @@ import { Str } from '../../core/common';
 
 export class OauthMock {
 
+  public clientId = '717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com';
+  public expiresIn = 2 * 60 * 60; // 2hrs in seconds
+  public redirectUri = 'urn:ietf:wg:oauth:2.0:oob:auto';
+
   private authCodesByAcct: { [acct: string]: string } = {};
   private refreshTokenByAuthCode: { [authCode: string]: string } = {};
   private accessTokenByRefreshToken: { [refreshToken: string]: string } = {};
   private acctByAccessToken: { [acct: string]: string } = {};
   private issuedIdTokensByAcct: { [acct: string]: string[] } = {};
-
-  public clientId = '717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com';
-  public expiresIn = 2 * 60 * 60; // 2hrs in seconds
-  public redirectUri = 'urn:ietf:wg:oauth:2.0:oob:auto';
 
   public consentChooseAccountPage = (url: string) => {
     return this.htmlPage('oauth mock choose acct', '<h1>Choose mock oauth email</h1>' + Config.secrets.auth.google.map(({ email }) => {

@@ -20,14 +20,6 @@ export class FlowCryptApi {
 
   private static COOKIE_CACHE: { [acct: string]: Cookie[] } = {};
 
-  private static call = async (url: string, values: { [k: string]: any }) => {
-    const r = await request.post({ url, json: values, headers: { 'api-version': 3 } });
-    if (r.body.error) {
-      throw new ApiErrResponse(`FlowCryptApi ${url} returned an error: ${r.body.error.message}`, r);
-    }
-    return r;
-  }
-
   public static hookCiAcctDelete = async (email: string) => {
     try {
       await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_account_delete', { ci_admin_token, email });
@@ -77,6 +69,14 @@ export class FlowCryptApi {
         }
       }
     }
+  }
+
+  private static call = async (url: string, values: { [k: string]: any }) => {
+    const r = await request.post({ url, json: values, headers: { 'api-version': 3 } });
+    if (r.body.error) {
+      throw new ApiErrResponse(`FlowCryptApi ${url} returned an error: ${r.body.error.message}`, r);
+    }
+    return r;
   }
 
 }

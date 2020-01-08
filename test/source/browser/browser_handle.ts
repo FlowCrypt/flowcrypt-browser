@@ -22,7 +22,7 @@ export class BrowserHandle {
     this.viewport = { height, width };
   }
 
-  newPage = async (t: AvaContext, url?: string, initialScript?: EvaluateFn): Promise<ControllablePage> => {
+  public newPage = async (t: AvaContext, url?: string, initialScript?: EvaluateFn): Promise<ControllablePage> => {
     const page = await this.browser.newPage();
     if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
       await page.authenticate(Config.secrets.proxy.auth);
@@ -39,7 +39,7 @@ export class BrowserHandle {
     return controllablePage;
   }
 
-  newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>, cookieAcct?: string): Promise<ControllablePage> => {
+  public newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>, cookieAcct?: string): Promise<ControllablePage> => {
     const cookies = cookieAcct ? await FlowCryptApi.hookCiCookiesGet(cookieAcct) : undefined;
     const page = await this.doAwaitTriggeredPage(triggeringAction);
     if (cookies) {
@@ -57,7 +57,7 @@ export class BrowserHandle {
     return controllablePage;
   }
 
-  closeAllPages = async () => {
+  public closeAllPages = async () => {
     for (const page of await this.browser.pages()) {
       if (page.url() !== 'about:blank') {
         await page.close();
@@ -66,16 +66,16 @@ export class BrowserHandle {
     this.pages = [];
   }
 
-  close = async () => {
+  public close = async () => {
     await this.browser.close();
     this.semaphore.release();
   }
 
-  release = () => {
+  public release = () => {
     this.semaphore.release();
   }
 
-  debugPagesHtml = async () => {
+  public debugPagesHtml = async () => {
     let html = '';
     for (let i = 0; i < this.pages.length; i++) {
       const cPage = this.pages[i];
