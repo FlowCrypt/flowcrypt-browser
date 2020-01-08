@@ -3,11 +3,11 @@
 import * as ava from 'ava';
 
 import { BrowserRecipe } from '../browser-recipe';
-import { ComposePageRecipe } from '../page_recipe/compose-page-recipe';
+import { ComposePageRecipe } from '../page-recipe/compose-page-recipe';
 import { FlowCryptApi } from '../api';
-import { GmailPageRecipe } from '../page_recipe/gmail-page-recipe';
-import { PageRecipe } from '../page_recipe/abstract-page-recipe';
-import { SetupPageRecipe } from '../page_recipe/setup-page-recipe';
+import { GmailPageRecipe } from '../page-recipe/gmail-page-recipe';
+import { PageRecipe } from '../page-recipe/abstract-page-recipe';
+import { SetupPageRecipe } from '../page-recipe/setup-page-recipe';
 import { TestVariant } from '../../util';
 import { TestWithBrowser } from '../../test';
 import { Util } from '../../util';

@@ -15,7 +15,7 @@ import { InboxView } from '../inbox.js';
 import { Lang } from '../../../../js/common/lang.js';
 import { Mime } from '../../../../js/common/core/mime.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
-import { ViewModule } from '../../../../js/common/view_module.js';
+import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 
 export class InboxActiveThreadModule extends ViewModule<InboxView> {

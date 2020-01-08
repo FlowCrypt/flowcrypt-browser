@@ -6,8 +6,8 @@ import { Config, Util } from '../../util';
 import { TestWithBrowser, internalTestState } from '../../test';
 
 import { BrowserRecipe } from '../browser-recipe';
-import { InboxPageRecipe } from '../page_recipe/inbox-page-recipe';
-import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
+import { InboxPageRecipe } from '../page-recipe/inbox-page-recipe';
+import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
 import { TestUrls } from '../../browser/test-urls';
 import { TestVariant } from '../../util';
 import { expect } from 'chai';

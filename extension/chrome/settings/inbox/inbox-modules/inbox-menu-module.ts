@@ -10,7 +10,7 @@ import { GmailRes } from '../../../../js/common/api/email_provider/gmail/gmail-p
 import { Google } from '../../../../js/common/api/google.js';
 import { InboxView } from '../inbox.js';
 import { Settings } from '../../../../js/common/settings.js';
-import { ViewModule } from '../../../../js/common/view_module.js';
+import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 
 export class InboxMenuModule extends ViewModule<InboxView> {

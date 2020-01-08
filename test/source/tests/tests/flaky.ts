@@ -5,10 +5,10 @@ import * as ava from 'ava';
 import { Config, TestVariant } from '../../util';
 
 import { BrowserRecipe } from '../browser-recipe';
-import { ComposePageRecipe } from '../page_recipe/compose-page-recipe';
-import { PageRecipe } from '../page_recipe/abstract-page-recipe';
-import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
-import { SetupPageRecipe } from '../page_recipe/setup-page-recipe';
+import { ComposePageRecipe } from '../page-recipe/compose-page-recipe';
+import { PageRecipe } from '../page-recipe/abstract-page-recipe';
+import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
+import { SetupPageRecipe } from '../page-recipe/setup-page-recipe';
 import { TestWithBrowser } from '../../test';
 
 // tslint:disable:no-blank-lines-func
