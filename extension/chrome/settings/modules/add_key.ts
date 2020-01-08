@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { KeyCanBeFixed, KeyImportUi, UserAlert } from '../../../js/common/ui/key_import_ui.js';
+import { KeyCanBeFixed, KeyImportUi, UserAlert } from '../../../js/common/ui/key-import-ui.js';
 import { Url, Value } from '../../../js/common/core/common.js';
 
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
@@ -15,7 +15,7 @@ import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 
 View.run(class AddKeyView extends View {
 

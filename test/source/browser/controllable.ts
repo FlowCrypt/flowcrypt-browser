@@ -4,7 +4,7 @@ import { AvaContext, newTimeoutPromise } from '../tests';
 import { ConsoleMessage, Dialog, ElementHandle, Frame, Page } from 'puppeteer';
 import { TIMEOUT_DESTROY_UNEXPECTED_ALERT, TIMEOUT_ELEMENT_APPEAR, TIMEOUT_ELEMENT_GONE, TIMEOUT_PAGE_LOAD, TIMEOUT_TEST_STATE_SATISFY } from '.';
 
-import { TestUrls } from './test_urls';
+import { TestUrls } from './test-urls';
 import { Util } from '../util';
 import { expect } from 'chai';
 

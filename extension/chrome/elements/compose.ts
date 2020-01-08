@@ -16,7 +16,7 @@ import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
-import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
+import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 import { openpgp } from '../../js/common/core/pgp.js';
 
 export type DeterminedMsgHeaders = {

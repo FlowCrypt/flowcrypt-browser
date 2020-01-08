@@ -2,13 +2,13 @@
 
 'use strict';
 
-import { KeyImportUi, UserAlert, } from '../../js/common/ui/key_import_ui.js';
+import { KeyImportUi, UserAlert, } from '../../js/common/ui/key-import-ui.js';
 
 import { Assert } from '../../js/common/assert.js';
-import { AttUI } from '../../js/common/ui/att_ui.js';
+import { AttUI } from '../../js/common/ui/att-ui.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { FetchKeyUI } from '../../js/common/ui/fetch_key_ui.js';
+import { FetchKeyUI } from '../../js/common/ui/fetch-key-ui.js';
 import { PgpKey } from '../../js/common/core/pgp-key.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Ui } from '../../js/common/browser/ui.js';

@@ -20,7 +20,7 @@ import { Settings } from '../../../js/common/settings.js';
 import { View } from '../../../js/common/view.js';
 import { WebmailCommon } from "../../../js/common/webmail.js";
 import { Xss } from '../../../js/common/platform/xss.js';
-import { XssSafeFactory } from '../../../js/common/xss_safe_factory.js';
+import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 
 export class InboxView extends View {
 

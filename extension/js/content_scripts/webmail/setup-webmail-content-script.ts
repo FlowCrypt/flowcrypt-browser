@@ -4,7 +4,7 @@
 
 import { Bm, BrowserMsg, TabIdRequiredError } from '../../common/browser/browser-msg.js';
 import { Env, WebMailName } from '../../common/browser/env.js';
-import { WebmailVariantString, XssSafeFactory } from '../../common/xss_safe_factory.js';
+import { WebmailVariantString, XssSafeFactory } from '../../common/xss-safe-factory.js';
 
 import { BrowserMsgCommonHandlers } from '../../common/browser/browser-msg-common-handlers.js';
 import { Catch } from '../../common/platform/catch.js';

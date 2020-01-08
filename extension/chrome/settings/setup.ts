@@ -5,6 +5,7 @@
 import { AccountStore, Scopes, Store } from '../../js/common/platform/store.js';
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Url, Value } from '../../js/common/core/common.js';
+
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Attester } from '../../js/common/api/attester.js';
@@ -12,7 +13,7 @@ import { Catch } from '../../js/common/platform/catch.js';
 import { Contact } from '../../js/common/core/pgp-key.js';
 import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/google.js';
-import { KeyImportUi } from '../../js/common/ui/key_import_ui.js';
+import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
 import { Lang } from '../../js/common/lang.js';
 import { PgpKey } from '../../js/common/core/pgp-key.js';
 import { Rules } from '../../js/common/rules.js';
@@ -24,7 +25,7 @@ import { SetupRenderModule } from './setup/setup-render.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
-import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
+import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 
 export interface SetupOptions {
   passphrase: string;

@@ -2,7 +2,7 @@
 
 import * as ava from 'ava';
 
-import { BrowserRecipe } from '../browser_recipe';
+import { BrowserRecipe } from '../browser-recipe';
 import { ComposePageRecipe } from '../page_recipe/compose-page-recipe';
 import { FlowCryptApi } from '../api';
 import { GmailPageRecipe } from '../page_recipe/gmail-page-recipe';

@@ -4,10 +4,10 @@ import * as ava from 'ava';
 
 import { Config, TestVariant, Util } from '../../util';
 
-import { BrowserRecipe } from '../browser_recipe';
+import { BrowserRecipe } from '../browser-recipe';
 import { InboxPageRecipe } from '../page_recipe/inbox-page-recipe';
 import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
-import { TestUrls } from './../../browser/test_urls';
+import { TestUrls } from '../../browser/test-urls';
 import { TestWithBrowser } from '../../test';
 import { expect } from "chai";
 

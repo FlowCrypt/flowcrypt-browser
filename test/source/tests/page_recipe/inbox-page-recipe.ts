@@ -4,7 +4,7 @@ import { BrowserHandle, ControllableFrame, ControllablePage } from '../../browse
 
 import { AvaContext } from '..';
 import { PageRecipe } from './abstract-page-recipe';
-import { TestUrls } from '../../browser/test_urls';
+import { TestUrls } from '../../browser/test-urls';
 import { Util } from '../../util';
 
 type CheckDecryptMsg$opt = { acctEmail: string, threadId: string, expectedContent: string, enterPp?: string, finishCurrentSession?: boolean };

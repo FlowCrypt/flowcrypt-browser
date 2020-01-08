@@ -3,9 +3,9 @@
 'use strict';
 
 import { Dict, Str } from '../../common/core/common.js';
-import { FactoryReplyParams, WebmailVariantString, XssSafeFactory } from '../../common/xss_safe_factory.js';
+import { FactoryReplyParams, WebmailVariantString, XssSafeFactory } from '../../common/xss-safe-factory.js';
 import { GmailParser, GmailRes } from '../../common/api/email_provider/gmail/gmail-parser.js';
-import { IntervalFunction, WebmailElementReplacer } from './setup_webmail_content_script.js';
+import { IntervalFunction, WebmailElementReplacer } from './setup-webmail-content-script.js';
 import { SendAsAlias, Store } from '../../common/platform/store.js';
 
 import { AjaxErr } from '../../common/api/error/api-error-types.js';

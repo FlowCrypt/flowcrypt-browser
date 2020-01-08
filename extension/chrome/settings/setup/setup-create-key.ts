@@ -12,7 +12,7 @@ import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { shouldPassPhraseBeHidden } from '../../../js/common/ui/passphrase_ui.js';
+import { shouldPassPhraseBeHidden } from '../../../js/common/ui/passphrase-ui.js';
 
 export class SetupCreateKeyModule {
 

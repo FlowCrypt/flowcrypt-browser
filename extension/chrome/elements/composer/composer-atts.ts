@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { AttLimits, AttUI } from '../../../js/common/ui/att_ui.js';
+import { AttLimits, AttUI } from '../../../js/common/ui/att-ui.js';
 
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Composer } from './composer.js';

@@ -5,7 +5,7 @@
 import { Bm, BrowserMsg } from '../common/browser/browser-msg.js';
 import { GlobalStore, Store } from '../common/platform/store.js';
 
-import { BgHandlers } from './bg_handlers.js';
+import { BgHandlers } from './bg-handlers.js';
 import { BgUtils } from './bgutils.js';
 import { Buf } from '../common/core/buf.js';
 import { Catch } from '../common/platform/catch.js';

@@ -15,7 +15,7 @@ import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
-import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 
 declare const ClipboardJS: any;
 

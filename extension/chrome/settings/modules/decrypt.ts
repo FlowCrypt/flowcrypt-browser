@@ -6,7 +6,7 @@ import { DecryptErrTypes, PgpMsg } from '../../../js/common/core/pgp-msg.js';
 
 import { Assert } from '../../../js/common/assert.js';
 import { Att } from '../../../js/common/core/att.js';
-import { AttUI } from '../../../js/common/ui/att_ui.js';
+import { AttUI } from '../../../js/common/ui/att-ui.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Store } from '../../../js/common/platform/store.js';
@@ -14,7 +14,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { XssSafeFactory } from '../../../js/common/xss_safe_factory.js';
+import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 
 View.run(class ManualDecryptView extends View {
 

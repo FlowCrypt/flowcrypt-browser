@@ -3,7 +3,7 @@
 import { AvaContext, addDebugHtml, newWithTimeoutsFunc } from '../tests';
 import { Config, Util } from "../util";
 
-import { BrowserHandle } from './browser_handle';
+import { BrowserHandle } from './browser-handle';
 import { Consts } from '../test';
 import { TIMEOUT_DESTROY_UNEXPECTED_ALERT } from '.';
 import { launch } from "puppeteer";

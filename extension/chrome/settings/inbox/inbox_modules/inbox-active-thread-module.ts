@@ -3,7 +3,7 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../../../js/common/browser/browser-msg.js';
-import { FactoryReplyParams, XssSafeFactory } from '../../../../js/common/xss_safe_factory.js';
+import { FactoryReplyParams, XssSafeFactory } from '../../../../js/common/xss-safe-factory.js';
 import { GmailParser, GmailRes } from '../../../../js/common/api/email_provider/gmail/gmail-parser.js';
 import { Url, UrlParams } from '../../../../js/common/core/common.js';
 

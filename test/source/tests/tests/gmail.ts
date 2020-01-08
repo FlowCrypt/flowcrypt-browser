@@ -6,11 +6,11 @@ import { BrowserHandle, ControllablePage } from '../../browser';
 import { TestVariant, Util } from '../../util';
 
 import { AvaContext } from '..';
-import { BrowserRecipe } from '../browser_recipe';
+import { BrowserRecipe } from '../browser-recipe';
 import { GmailPageRecipe } from '../page_recipe/gmail-page-recipe';
 import { OauthPageRecipe } from '../page_recipe/oauth-page-recipe';
 import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
-import { TestUrls } from './../../browser/test_urls';
+import { TestUrls } from '../../browser/test-urls';
 import { TestWithBrowser } from '../../test';
 import { expect } from 'chai';
 

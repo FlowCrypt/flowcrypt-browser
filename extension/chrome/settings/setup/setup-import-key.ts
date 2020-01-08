@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { KeyCanBeFixed, UserAlert } from '../../../js/common/ui/key_import_ui.js';
+import { KeyCanBeFixed, UserAlert } from '../../../js/common/ui/key-import-ui.js';
 import { SetupOptions, SetupView } from '../setup.js';
 
 import { Catch } from '../../../js/common/platform/catch.js';

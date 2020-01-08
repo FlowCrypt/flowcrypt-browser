@@ -16,7 +16,7 @@ import { PageRecipe } from '../page_recipe/abstract-page-recipe';
 import { PgpHash } from '../../core/pgp-hash';
 import { PgpMsg } from '../../core/pgp-msg';
 import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
-import { TestUrls } from './../../browser/test_urls';
+import { TestUrls } from '../../browser/test-urls';
 import { TestVariant } from '../../util';
 import { TestWithBrowser } from '../../test';
 import { expect } from "chai";

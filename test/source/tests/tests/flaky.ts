@@ -4,7 +4,7 @@ import * as ava from 'ava';
 
 import { Config, TestVariant } from '../../util';
 
-import { BrowserRecipe } from '../browser_recipe';
+import { BrowserRecipe } from '../browser-recipe';
 import { ComposePageRecipe } from '../page_recipe/compose-page-recipe';
 import { PageRecipe } from '../page_recipe/abstract-page-recipe';
 import { SettingsPageRecipe } from '../page_recipe/settings-page-recipe';
