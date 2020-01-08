@@ -11,6 +11,7 @@
     "@types/dompurify": "0.0.31",
     "@types/jquery": "3.3.31",
     "@types/mailparser": "2.4.0",
+    "@types/md5": "^2.1.33",
     "@types/puppeteer": "1.11.1",
     "@types/request": "2.47.1",
     "@types/speakeasy": "2.0.5",

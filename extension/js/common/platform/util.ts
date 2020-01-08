@@ -3,6 +3,7 @@
 'use strict';
 
 import { Buf } from '../core/buf.js';
+import { requireMD5 } from './require.js';
 
 /**
  * Functions which must be written differently to run in NodeJS versus in web browsers.
@@ -14,6 +15,12 @@ export const secureRandomBytes = (length: number): Uint8Array => {
   const secureRandomArray = new Uint8Array(length);
   window.crypto.getRandomValues(secureRandomArray);
   return secureRandomArray;
+};
+
+export const md5Encode = (binary: string | ArrayBuffer | SharedArrayBuffer): string => {
+  const md5 = requireMD5();
+  // tslint:disable-next-line: no-unsafe-any
+  return md5.base64(binary);
 };
 
 export const base64encode = (binary: string): string => {

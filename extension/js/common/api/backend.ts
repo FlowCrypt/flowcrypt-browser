@@ -223,12 +223,13 @@ export class Backend extends Api {
     for (const i of items.keys()) {
       const fields = items[i].fields;
       fields.file = new Att({ name: 'encrypted_attachment', type: 'application/octet-stream', data: items[i].att.getData() });
+      const base64 = md5Encode(fields.file.getData());
       promises.push(Api.apiCall(items[i].baseUrl, '', fields, 'FORM', {
         upload: (singleFileProgress: number) => {
           progress[i] = singleFileProgress;
           Ui.event.prevent('spree', () => progressCb(Value.arr.average(progress)))();
         }
-      }));
+      }, { 'Content-MD5': base64 }));
     }
     return await Promise.all(promises);
   }
