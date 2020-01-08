@@ -1,9 +1,9 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-export { BrowserHandle } from './browser_handle';
-export { BrowserPool, Semaphore } from './browser_pool';
+export { BrowserHandle } from './browser-handle';
+export { BrowserPool, Semaphore } from './browser-pool';
 export { Controllable, ControllablePage, ControllableFrame } from './controllable';
-export { TestUrls as Urls } from './test_urls';
+export { TestUrls as Urls } from './test-urls';
 
 export const TIMEOUT_ELEMENT_GONE = 20;
 export const TIMEOUT_ELEMENT_APPEAR = 20;

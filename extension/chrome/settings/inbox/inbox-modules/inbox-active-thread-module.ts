@@ -3,8 +3,8 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../../../js/common/browser/browser-msg.js';
-import { FactoryReplyParams, XssSafeFactory } from '../../../../js/common/xss_safe_factory.js';
-import { GmailParser, GmailRes } from '../../../../js/common/api/email_provider/gmail/gmail-parser.js';
+import { FactoryReplyParams, XssSafeFactory } from '../../../../js/common/xss-safe-factory.js';
+import { GmailParser, GmailRes } from '../../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { Url, UrlParams } from '../../../../js/common/core/common.js';
 
 import { ApiErr } from '../../../../js/common/api/error/api-error.js';
@@ -15,7 +15,7 @@ import { InboxView } from '../inbox.js';
 import { Lang } from '../../../../js/common/lang.js';
 import { Mime } from '../../../../js/common/core/mime.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
-import { ViewModule } from '../../../../js/common/view_module.js';
+import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 
 export class InboxActiveThreadModule extends ViewModule<InboxView> {

@@ -10,7 +10,7 @@ import { Serializable, Store } from '../../../js/common/platform/store.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Att } from '../../../js/common/core/att.js';
-import { AttUI } from '../../../js/common/ui/att_ui.js';
+import { AttUI } from '../../../js/common/ui/att-ui.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Settings } from '../../../js/common/settings.js';

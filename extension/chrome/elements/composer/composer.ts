@@ -19,7 +19,7 @@ import { ComposerSendBtn } from './composer-send-btn.js';
 import { ComposerSender } from './composer-sender.js';
 import { ComposerSize } from './composer-size.js';
 import { ComposerStorage } from './composer-storage.js';
-import { EmailProviderInterface } from '../../../js/common/api/email_provider/email-provider-api.js';
+import { EmailProviderInterface } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 
 export class Composer {

@@ -8,12 +8,12 @@ import { Str, Url } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Att } from '../../../js/common/core/att.js';
-import { AttUI } from '../../../js/common/ui/att_ui.js';
+import { AttUI } from '../../../js/common/ui/att-ui.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { FetchKeyUI } from '../../../js/common/ui/fetch_key_ui.js';
-import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
+import { FetchKeyUI } from '../../../js/common/ui/fetch-key-ui.js';
+import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 import { Rules } from '../../../js/common/rules.js';
@@ -21,7 +21,7 @@ import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { XssSafeFactory } from '../../../js/common/xss_safe_factory.js';
+import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 
 View.run(class ContactsView extends View {
 

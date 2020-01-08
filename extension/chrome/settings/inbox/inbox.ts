@@ -10,17 +10,17 @@ import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
-import { InboxActiveThreadModule } from './inbox_modules/inbox-active-thread-module.js';
-import { InboxListThreadsModule } from './inbox_modules/inbox-list-threads-module.js';
-import { InboxMenuModule } from './inbox_modules/inbox-menu-module.js';
-import { InboxNotificationModule } from './inbox_modules/inbox-notification-module.js';
+import { Gmail } from '../../../js/common/api/email-provider/gmail/gmail.js';
+import { InboxActiveThreadModule } from './inbox-modules/inbox-active-thread-module.js';
+import { InboxListThreadsModule } from './inbox-modules/inbox-list-threads-module.js';
+import { InboxMenuModule } from './inbox-modules/inbox-menu-module.js';
+import { InboxNotificationModule } from './inbox-modules/inbox-notification-module.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Settings } from '../../../js/common/settings.js';
 import { View } from '../../../js/common/view.js';
 import { WebmailCommon } from "../../../js/common/webmail.js";
 import { Xss } from '../../../js/common/platform/xss.js';
-import { XssSafeFactory } from '../../../js/common/xss_safe_factory.js';
+import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 
 export class InboxView extends View {
 

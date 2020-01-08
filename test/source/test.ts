@@ -6,7 +6,7 @@ import { AvaContext, getDebugHtmlAtts, minutes, standaloneTestTimeout } from './
 import { BrowserHandle, BrowserPool } from './browser';
 import { Config, Util, getParsedCliParams } from './util';
 
-import { BrowserRecipe } from './tests/browser_recipe';
+import { BrowserRecipe } from './tests/browser-recipe';
 import { FlowCryptApi } from './tests/api';
 import { defineConsumerAcctTests as defineAcctTests } from './tests/tests/account';
 import { defineComposeTests } from './tests/tests/compose';

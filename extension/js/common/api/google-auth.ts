@@ -17,7 +17,7 @@ import { ApiErr } from './error/api-error.js';
 import { Backend } from './backend.js';
 import { Buf } from '../core/buf.js';
 import { Catch } from '../platform/catch.js';
-import { GmailRes } from './email_provider/gmail/gmail-parser.js';
+import { GmailRes } from './email-provider/gmail/gmail-parser';
 import { GoogleAuthErr } from './error/api-error-types.js';
 import { GoogleAuthWindowResult$result } from '../browser/browser-msg.js';
 import { Rules } from '../rules.js';

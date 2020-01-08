@@ -4,7 +4,7 @@
 
 import { BrowserMsg } from '../browser/browser-msg.js';
 import { Catch } from '../platform/catch.js';
-import { KeyImportUi } from './key_import_ui.js';
+import { KeyImportUi } from './key-import-ui.js';
 import { Ui } from '../browser/ui.js';
 
 export class FetchKeyUI {

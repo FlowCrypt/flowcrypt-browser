@@ -7,7 +7,7 @@ import { EncryptedMsgMailFormatter } from './encrypted-mail-msg-formatter.js';
 import { KeyInfo } from "../../../../js/common/core/pgp-key.js";
 import { NewMsgData } from "../composer-types.js";
 import { PlainMsgMailFormatter } from './plain-mail-msg-formatter.js';
-import { SendableMsg } from '../../../../js/common/api/email_provider/sendable-msg.js';
+import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { SignedMsgMailFormatter } from './signed-msg-mail-formatter.js';
 
 export class GeneralMailFormatter {

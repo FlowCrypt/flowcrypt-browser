@@ -14,7 +14,7 @@ import { Buf } from '../core/buf.js';
 import { Catch } from '../platform/catch.js';
 import { Env } from './env.js';
 import { KeyDetails } from '../core/pgp-key.js';
-import { PassphraseDialogType } from '../xss_safe_factory.js';
+import { PassphraseDialogType } from '../xss-safe-factory.js';
 import { Ui } from './ui.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';

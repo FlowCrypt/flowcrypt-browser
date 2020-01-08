@@ -13,7 +13,7 @@ import { Attester } from './api/attester.js';
 import { Backend } from './api/backend.js';
 import { Catch } from './platform/catch.js';
 import { Env } from './browser/env.js';
-import { Gmail } from './api/email_provider/gmail/gmail.js';
+import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { GoogleAuth } from './api/google-auth.js';
 import { Lang } from './lang.js';
 import { PgpKey } from './core/pgp-key.js';

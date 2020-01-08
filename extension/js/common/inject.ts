@@ -3,7 +3,7 @@
 'use strict';
 
 import { SelCache, Ui } from './browser/ui.js';
-import { WebmailVariantString, XssSafeFactory } from './xss_safe_factory.js';
+import { WebmailVariantString, XssSafeFactory } from './xss-safe-factory.js';
 
 import { Catch } from './platform/catch.js';
 import { ContentScriptWindow } from './browser/browser-window.js';

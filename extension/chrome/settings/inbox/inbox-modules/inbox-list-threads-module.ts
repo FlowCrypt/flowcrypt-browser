@@ -4,12 +4,12 @@
 
 import { ApiErr } from '../../../../js/common/api/error/api-error.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
-import { GmailParser } from '../../../../js/common/api/email_provider/gmail/gmail-parser.js';
+import { GmailParser } from '../../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { InboxView } from '../inbox.js';
 import { Lang } from '../../../../js/common/lang.js';
 import { Str } from '../../../../js/common/core/common.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
-import { ViewModule } from '../../../../js/common/view_module.js';
+import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 
 export class InboxListThreadsModule extends ViewModule<InboxView> {

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { AttUI } from './att_ui.js';
+import { AttUI } from './att-ui.js';
 import { Catch } from '../platform/catch.js';
 import { KeyBlockType } from '../core/msg-block.js';
 import { Lang } from '../lang.js';

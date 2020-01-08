@@ -4,10 +4,10 @@ import { Config, Util } from '../util';
 
 import { AvaContext } from '.';
 import { BrowserHandle } from '../browser';
-import { OauthPageRecipe } from './page_recipe/oauth-page-recipe';
-import { SettingsPageRecipe } from './page_recipe/settings-page-recipe';
-import { SetupPageRecipe } from './page_recipe/setup-page-recipe';
-import { TestUrls } from './../browser/test_urls';
+import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
+import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
+import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
+import { TestUrls } from '../browser/test-urls';
 
 export class BrowserRecipe {
 

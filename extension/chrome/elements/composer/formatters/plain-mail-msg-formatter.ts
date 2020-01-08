@@ -5,7 +5,7 @@
 import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
 import { NewMsgData, SendBtnTexts } from '../composer-types.js';
 
-import { SendableMsg } from '../../../../js/common/api/email_provider/sendable-msg.js';
+import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { SendableMsgBody } from '../../../../js/common/core/mime.js';
 
 export class PlainMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {

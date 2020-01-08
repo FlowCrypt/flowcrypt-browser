@@ -8,7 +8,7 @@ import { Dict } from '../../../../js/common/core/common.js';
 import { GoogleAuth } from '../../../../js/common/api/google-auth.js';
 import { InboxView } from '../inbox.js';
 import { Notifications } from '../../../../js/common/notifications.js';
-import { ViewModule } from '../../../../js/common/view_module.js';
+import { ViewModule } from '../../../../js/common/view-module.js';
 
 export class InboxNotificationModule extends ViewModule<InboxView> {
 

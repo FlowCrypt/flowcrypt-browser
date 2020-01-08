@@ -6,17 +6,17 @@
 
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
 
-import { WebmailVariantObject, contentScriptSetupIfVacant } from './setup_webmail_content_script.js';
+import { WebmailVariantObject, contentScriptSetupIfVacant } from './setup-webmail-content-script.js';
 
 import { Catch } from '../../common/platform/catch.js';
 import { ContentScriptWindow } from '../../common/browser/browser-window.js';
 import { Env } from '../../common/browser/env.js';
-import { GmailElementReplacer } from './gmail_element_replacer.js';
+import { GmailElementReplacer } from './gmail-element-replacer.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
 import { Store } from '../../common/platform/store.js';
 import { Str } from '../../common/core/common.js';
-import { XssSafeFactory } from '../../common/xss_safe_factory.js';
+import { XssSafeFactory } from '../../common/xss-safe-factory.js';
 
 Catch.try(async () => {
 

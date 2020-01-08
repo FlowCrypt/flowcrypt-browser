@@ -14,17 +14,17 @@ import { Att } from '../../../js/common/core/att.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
-import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
+import { Gmail } from '../../../js/common/api/email-provider/gmail/gmail.js';
 import { GoogleAuth } from '../../../js/common/api/google-auth.js';
-import { KeyImportUi } from './../../../js/common/ui/key_import_ui.js';
+import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Rules } from '../../../js/common/rules.js';
-import { SendableMsg } from '../../../js/common/api/email_provider/sendable-msg.js';
+import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 
 View.run(class BackupView extends View {
   private readonly gmail: Gmail;

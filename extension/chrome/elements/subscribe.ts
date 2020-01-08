@@ -15,7 +15,7 @@ import { Store } from '../../js/common/platform/store.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
-import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
+import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 
 // todo - this page should be removed, link from settings should point to flowcrypt.com/account once available
 

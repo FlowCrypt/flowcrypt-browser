@@ -6,7 +6,7 @@ import { Config, Util } from '../util';
 import { AvaContext } from '../tests';
 import { ControllablePage } from './controllable';
 import { FlowCryptApi } from '../tests/api';
-import { Semaphore } from './browser_pool';
+import { Semaphore } from './browser-pool';
 import { TIMEOUT_ELEMENT_APPEAR } from '.';
 
 export class BrowserHandle {

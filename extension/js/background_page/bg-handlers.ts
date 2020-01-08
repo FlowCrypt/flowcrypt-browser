@@ -5,7 +5,7 @@
 import { Api } from '../common/api/api.js';
 import { BgUtils } from './bgutils.js';
 import { Bm } from '../common/browser/browser-msg.js';
-import { Gmail } from '../common/api/email_provider/gmail/gmail.js';
+import { Gmail } from '../common/api/email-provider/gmail/gmail.js';
 import { PgpKey } from '../common/core/pgp-key.js';
 import { Store } from '../common/platform/store.js';
 import { Url } from '../common/core/common.js';

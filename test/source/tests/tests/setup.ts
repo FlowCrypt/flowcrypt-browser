@@ -4,8 +4,8 @@ import * as ava from 'ava';
 
 import { TestVariant, Util } from '../../util';
 
-import { BrowserRecipe } from '../browser_recipe';
-import { SetupPageRecipe } from '../page_recipe/setup-page-recipe';
+import { BrowserRecipe } from '../browser-recipe';
+import { SetupPageRecipe } from '../page-recipe/setup-page-recipe';
 import { TestWithBrowser } from '../../test';
 import { expect } from 'chai';
 

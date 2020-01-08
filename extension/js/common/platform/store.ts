@@ -10,7 +10,7 @@ import { FcUuidAuth, PaymentMethod, SubscriptionInfo, SubscriptionLevel } from '
 import { storageLocalGet, storageLocalRemove, storageLocalSet } from '../api/chrome.js';
 import { DomainRules } from '../rules.js';
 import { Env } from '../browser/env.js';
-import { GmailRes } from '../api/email_provider/gmail/gmail-parser.js';
+import { GmailRes } from '../api/email-provider/gmail/gmail-parser.js';
 import { GoogleAuth } from '../api/google-auth.js';
 import { PgpArmor } from '../core/pgp-armor.js';
 import { PgpClient } from '../api/keyserver.js';
