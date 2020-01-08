@@ -9,7 +9,7 @@ import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { Gmail } from './../../../js/common/api/email_provider/gmail/gmail.js';
+import { Gmail } from '../../../js/common/api/email-provider/gmail/gmail.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';

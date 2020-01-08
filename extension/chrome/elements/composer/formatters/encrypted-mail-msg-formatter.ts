@@ -19,7 +19,7 @@ import { Lang } from '../../../../js/common/lang.js';
 import { PgpArmor } from '../../../../js/common/core/pgp-armor.js';
 import { PgpKey } from '../../../../js/common/core/pgp-key.js';
 import { PgpMsg } from '../../../../js/common/core/pgp-msg.js';
-import { SendableMsg } from '../../../../js/common/api/email_provider/sendable-msg.js';
+import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { Settings } from '../../../../js/common/settings.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { Xss } from '../../../../js/common/platform/xss.js';

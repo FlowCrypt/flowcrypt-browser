@@ -6,7 +6,7 @@ import { Str, Url } from '../../js/common/core/common.js';
 
 import { Assert } from '../../js/common/assert.js';
 import { Buf } from '../../js/common/core/buf.js';
-import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
+import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Lang } from '../../js/common/lang.js';
 import { PgpBlockViewAttachmentsModule } from './pgp_block_modules/pgp-block-attachmens-module.js';
 import { PgpBlockViewDecryptModule } from './pgp_block_modules/pgp-block-decrypt-module.js';

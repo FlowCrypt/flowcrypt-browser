@@ -4,7 +4,7 @@
 
 import { Dict, Str } from '../../common/core/common.js';
 import { FactoryReplyParams, WebmailVariantString, XssSafeFactory } from '../../common/xss-safe-factory.js';
-import { GmailParser, GmailRes } from '../../common/api/email_provider/gmail/gmail-parser.js';
+import { GmailParser, GmailRes } from '../../common/api/email-provider/gmail/gmail-parser.js';
 import { IntervalFunction, WebmailElementReplacer } from './setup-webmail-content-script.js';
 import { SendAsAlias, Store } from '../../common/platform/store.js';
 
@@ -14,7 +14,7 @@ import { Att } from '../../common/core/att.js';
 import { Browser } from '../../common/browser/browser.js';
 import { BrowserMsg } from '../../common/browser/browser-msg.js';
 import { Catch } from '../../common/platform/catch.js';
-import { Gmail } from '../../common/api/email_provider/gmail/gmail.js';
+import { Gmail } from '../../common/api/email-provider/gmail/gmail.js';
 import { Injector } from '../../common/inject.js';
 import { Keyserver } from '../../common/api/keyserver.js';
 import { Notifications } from '../../common/notifications.js';

@@ -3,7 +3,7 @@
 'use strict';
 
 import { RecipientType } from '../../../js/common/api/api.js';
-import { Recipients } from '../../../js/common/api/email_provider/email-provider-api.js';
+import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 
 export type RecipientStatus = 0 | 1 | 2 | 3 | 4 | 5;
 

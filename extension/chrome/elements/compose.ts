@@ -3,15 +3,15 @@
 'use strict';
 
 import { AccountStore, Scopes, Store } from '../../js/common/platform/store.js';
-import { EmailProviderInterface, ReplyParams } from '../../js/common/api/email_provider/email-provider-api.js';
+import { EmailProviderInterface, ReplyParams } from '../../js/common/api/email-provider/email-provider-api.js';
 
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Backend } from '../../js/common/api/backend.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Composer } from './composer/composer.js';
-import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
-import { GmailParser } from '../../js/common/api/email_provider/gmail/gmail-parser.js';
+import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
+import { GmailParser } from '../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';

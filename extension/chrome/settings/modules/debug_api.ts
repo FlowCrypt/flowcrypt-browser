@@ -5,7 +5,7 @@
 import { Dict, Url } from '../../../js/common/core/common.js';
 
 import { Assert } from '../../../js/common/assert.js';
-import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
+import { Gmail } from '../../../js/common/api/email-provider/gmail/gmail.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';

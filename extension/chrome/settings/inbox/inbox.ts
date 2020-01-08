@@ -10,7 +10,7 @@ import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { Gmail } from '../../../js/common/api/email_provider/gmail/gmail.js';
+import { Gmail } from '../../../js/common/api/email-provider/gmail/gmail.js';
 import { InboxActiveThreadModule } from './inbox-modules/inbox-active-thread-module.js';
 import { InboxListThreadsModule } from './inbox-modules/inbox-list-threads-module.js';
 import { InboxMenuModule } from './inbox-modules/inbox-menu-module.js';

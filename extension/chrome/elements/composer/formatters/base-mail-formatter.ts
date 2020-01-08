@@ -4,7 +4,7 @@
 
 import { Composer } from '../composer.js';
 import { NewMsgData } from '../composer-types.js';
-import { SendableMsg } from '../../../../js/common/api/email_provider/sendable-msg';
+import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg';
 
 export interface MailFormatterInterface {
   sendableMsg(newMsgData: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg>;

@@ -4,7 +4,7 @@
 
 import { Bm, BrowserMsg } from '../../../../js/common/browser/browser-msg.js';
 import { FactoryReplyParams, XssSafeFactory } from '../../../../js/common/xss-safe-factory.js';
-import { GmailParser, GmailRes } from '../../../../js/common/api/email_provider/gmail/gmail-parser.js';
+import { GmailParser, GmailRes } from '../../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { Url, UrlParams } from '../../../../js/common/core/common.js';
 
 import { ApiErr } from '../../../../js/common/api/error/api-error.js';

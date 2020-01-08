@@ -12,7 +12,7 @@ import { Assert } from '../../js/common/assert.js';
 import { Backend } from '../../js/common/api/backend.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Env } from '../../js/common/browser/env.js';
-import { Gmail } from '../../js/common/api/email_provider/gmail/gmail.js';
+import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Lang } from '../../js/common/lang.js';
 import { Notifications } from '../../js/common/notifications.js';
 import { Rules } from '../../js/common/rules.js';
