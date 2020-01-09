@@ -103,6 +103,10 @@ export class SetupView extends View {
     if (this.rules.mustSubmitToAttester()) {
       $('.remove_if_enforce_submit_to_attester').remove();
     }
+    if (this.rules.rememberPassPhraseByDefault()) {
+      $('#step_2a_manual_create .input_passphrase_save').prop('checked', true);
+      $('#step_2b_manual_enter .input_passphrase_save').prop('checked', true);
+    }
     this.tabId = await BrowserMsg.requiredTabId();
     await this.setupRender.renderInitial();
   }
