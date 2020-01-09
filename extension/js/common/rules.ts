@@ -3,10 +3,11 @@
 'use strict';
 
 import { Dict, Str } from './core/common.js';
+
 import { Buf } from './core/buf.js';
 import { Store } from './platform/store.js';
 
-type DomainRules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'ALLOW_CUSTOM_KEYSERVER' | 'ENFORCE_ATTESTER_SUBMIT';
+type DomainRules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'ALLOW_CUSTOM_KEYSERVER' | 'ENFORCE_ATTESTER_SUBMIT' | 'DEFAULT_REMEMBER_PASS_PHRASE';
 export type DomainRules = {
   flags: DomainRules$flag[],
   custom_keyserver_url?: string,
@@ -70,6 +71,10 @@ export class Rules {
 
   public canUseCustomKeyserver = () => {
     return this.domainRules.flags.includes('ALLOW_CUSTOM_KEYSERVER');
+  }
+
+  public rememberPassPhraseByDefault = () => {
+    return this.domainRules.flags.includes('DEFAULT_REMEMBER_PASS_PHRASE');
   }
 
   public getCustomKeyserver = (): string | undefined => {
