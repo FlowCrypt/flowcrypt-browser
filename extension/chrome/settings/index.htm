@@ -63,6 +63,48 @@
 
   <section id="settings-row">
     <div class="container basic">
+      <div class="settings-banners-container">
+        <!-- TODO(@limonte): uncomment this line and remove the next one -->
+        <!-- <div class="settings-banner auth_denied_warning hidden"> -->
+        <div class="settings-banner auth_denied_warning">
+          <div class="settings-banner-text">
+            <b class="red">Following features are disabled for <span class="email-address"></span>:</b>
+            encrypted attachments, encrypted replies, alternative "From" email addresses and more.
+          </div>
+          <button class="button green action_go_auth_denied">revise permissions</button>
+        </div>
+        <div class="settings-banner install_app_notification hidden">
+          <div class="settings-banner-text">
+            <img width="32" src="/img/material-design-icons/cellphone-key.svg" class="settings-banner-icon">
+            Install FlowCrypt on your phone. Until you have at least 2 devices, you risk losing data.
+          </div>
+          <a href="https://play.google.com/store/apps/details?id=com.flowcrypt.email" target="_blank" class="button green">
+            Get the app
+          </a>
+          <a href="#" class="dismiss-settings-banner">Later</a>
+        </div>
+        <div class="settings-banner install_app_notification hidden">
+          <div class="settings-banner-text">
+            <img width="32" src="/img/material-design-icons/cellphone-arrow-down.svg" class="settings-banner-icon">
+            Install FlowCrypt on your phone. Until you have at least 2 devices, you risk losing data.
+          </div>
+          <a href="https://play.google.com/store/apps/details?id=com.flowcrypt.email" target="_blank" class="button green">
+            Get the app
+          </a>
+          <a href="#" class="dismiss-settings-banner">Later</a>
+        </div>
+        <div class="settings-banner install_app_notification hidden">
+          <div class="settings-banner-text">
+            <img width="32" src="/img/material-design-icons/monitor-cellphone.svg" class="settings-banner-icon">
+            Install FlowCrypt on your phone. Until you have at least 2 devices, you risk losing data.
+          </div>
+          <a href="https://play.google.com/store/apps/details?id=com.flowcrypt.email" target="_blank" class="button green">
+            Get the app
+          </a>
+          <a href="#" class="dismiss-settings-banner">Later</a>
+        </div>
+      </div>
+
       <div class="row hide_if_setup_not_done">
         <h1 class="text-center">FlowCrypt Settings</h1>
         <div class="separator" style="background: none;"></div>
@@ -131,15 +173,6 @@
             </p>
           </a>
         </div>
-      </div>
-      <div class="line auth_denied_warning" style="display: none;">
-        <br />
-        <br />
-        <br /><b class="red">Following features are disabled for <span class="email-address"></span>:</b> encrypted
-        attachments, encrypted replies, alternative "From" email addresses and more.
-        <br />
-        <br />
-        <button class="button long green action_go_auth_denied">revise permissions</button>
       </div>
       <div class="blog_post_list hide_if_setup_not_done mt-40"></div>
     </div>

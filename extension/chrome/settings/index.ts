@@ -183,7 +183,11 @@ View.run(class SettingsView extends View {
           }));
         }
         if (!(scopes.read || scopes.modify) && (storage.email_provider || 'gmail') === 'gmail') {
-          $('.auth_denied_warning').css('display', 'block');
+          $('.auth_denied_warning').removeClass('hidden');
+        }
+        // TODO(@tomholub): add the actual logic
+        if ('user-does-not-have-flowcrypt-on-any-other-device' === 'user-does-not-have-flowcrypt-on-any-other-device') {
+          $('.install_app_notification').removeClass('hidden');
         }
         this.displayOrig('.hide_if_setup_not_done');
         $('.show_if_setup_not_done').css('display', 'none');
