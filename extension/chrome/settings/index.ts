@@ -185,10 +185,19 @@ View.run(class SettingsView extends View {
         if (!(scopes.read || scopes.modify) && (storage.email_provider || 'gmail') === 'gmail') {
           $('.auth_denied_warning').removeClass('hidden');
         }
-        // TODO(@tomholub): add the actual logic
-        if ('user-does-not-have-flowcrypt-on-any-other-device' === 'user-does-not-have-flowcrypt-on-any-other-device') {
+        const installAppNotificationDismissedStorage = await Store.getGlobal(['install_app_notification_dismissed']);
+        console.log(installAppNotificationDismissedStorage.install_app_notification_dismissed);
+        if (
+          !installAppNotificationDismissedStorage.install_app_notification_dismissed &&
+          // TODO(@tomholub): add the actual logic
+          'user-does-not-have-flowcrypt-on-any-other-device' === 'user-does-not-have-flowcrypt-on-any-other-device'
+        ) {
           $('.install_app_notification').removeClass('hidden');
         }
+        $('.dismiss_install_app_notification').click(this.setHandler(async () => {
+          await Store.setGlobal({ install_app_notification_dismissed: true });
+          $('.install_app_notification').remove();
+        }));
         this.displayOrig('.hide_if_setup_not_done');
         $('.show_if_setup_not_done').css('display', 'none');
         if (this.advanced) {

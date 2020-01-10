@@ -88,11 +88,12 @@ export type GlobalStore = {
   cryptup_account_subscription?: SubscriptionInfo | null; // todo - remove
   dev_outlook_allow?: boolean;
   admin_codes?: Dict<StoredAdminCode>;
+  install_app_notification_dismissed?: boolean;
 };
 
 export type GlobalIndex = 'version' | 'account_emails' | 'settings_seen' | 'hide_pass_phrases' |
   'cryptup_account_email' | 'cryptup_account_uuid' | 'cryptup_account_subscription' | 'dev_outlook_allow' |
-  'admin_codes';
+  'admin_codes' | 'install_app_notification_dismissed';
 
 export type SendAsAlias = {
   isPrimary: boolean;
