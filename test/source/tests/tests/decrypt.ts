@@ -115,7 +115,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
     for (const m of Config.tests.messages) {
-      ava.default.only(`decrypt - ${m.name}`, testWithBrowser('compatibility', async (t, browser) => {
+      ava.default(`decrypt - ${m.name}`, testWithBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, `chrome/elements/pgp_block.htm${m.params}`, m.content, m.unexpectedContent, m.password, m.quoted);
       }));
     }
