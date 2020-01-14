@@ -26,7 +26,7 @@ export const getParsedCliParams = () => {
 };
 
 interface TestConfigInterface {
-  messages: { name: string, content: string[], password?: string, params: string, quoted?: boolean }[];
+  messages: { name: string, content: string[], unexpectedContent?: string[], password?: string, params: string, quoted?: boolean }[];
 }
 
 interface TestSecretsInterface {

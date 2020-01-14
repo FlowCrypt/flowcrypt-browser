@@ -70,7 +70,7 @@ export class BrowserRecipe {
   }
 
   public static async pgpBlockVerifyDecryptedContent(
-    t: AvaContext, browser: BrowserHandle, url: string, expectedContents: string[], password?: string, quoted?: boolean, signature?: string[]
+    t: AvaContext, browser: BrowserHandle, url: string, expectedContents: string[], unexpectedContents?: string[], password?: string, quoted?: boolean, signature?: string[]
   ) {
     const pgpBlockPage = await browser.newPage(t, url);
     await pgpBlockPage.waitAll('@pgp-block-content');
@@ -93,7 +93,14 @@ export class BrowserRecipe {
     const content = await pgpBlockPage.read('@pgp-block-content');
     for (const expectedContent of expectedContents) {
       if (content.indexOf(expectedContent) === -1) {
-        throw new Error(`pgp_block_verify_decrypted_content:missing expected content:${expectedContent}`);
+        throw new Error(`pgp_block_verify_decrypted_content:missing expected content: ${expectedContent}`);
+      }
+    }
+    if (unexpectedContents) {
+      for (const unexpectedContent of unexpectedContents) {
+        if (content.indexOf(unexpectedContent) !== -1) {
+          throw new Error(`pgp_block_verify_decrypted_content:unexpected content presents: ${unexpectedContent}`);
+        }
       }
     }
     if (signature) {
