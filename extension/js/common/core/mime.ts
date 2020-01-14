@@ -106,8 +106,8 @@ export class Mime {
     return Mime.processDecoded(decoded);
   }
 
-  public static isPlainInlineImg = (b: MsgBlock) => {
-    return b.type === 'plainAtt' && b.attMeta?.inline && b.attMeta.type && ['image/jpeg', 'image/jpg', 'image/bmp', 'image/png', 'image/svg+xml'].includes(b.attMeta.type);
+  public static isPlainImgAtt = (b: MsgBlock) => {
+    return b.type === 'plainAtt' && b.attMeta && b.attMeta.type && ['image/jpeg', 'image/jpg', 'image/bmp', 'image/png', 'image/svg+xml'].includes(b.attMeta.type);
   }
 
   public static replyHeaders = (parsedMimeMsg: MimeContent) => {
