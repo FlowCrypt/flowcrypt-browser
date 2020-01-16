@@ -96,7 +96,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         'cryptup-data': Str.htmlAttrEncode({
           sender: newMsgData.from,
           recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.from), this.acctEmail),
-          subject: newMsgData,
+          subject: newMsgData.subject,
           token: response.token,
         })
       });
