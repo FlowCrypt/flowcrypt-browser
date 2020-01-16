@@ -3,6 +3,7 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
+import { EmailProvider, Store } from '../../js/common/platform/store.js';
 import { JQS, Ui } from '../../js/common/browser/ui.js';
 import { KeyInfo, PgpKey } from '../../js/common/core/pgp-key.js';
 import { Str, Url, UrlParams } from '../../js/common/core/common.js';
@@ -17,7 +18,6 @@ import { Lang } from '../../js/common/lang.js';
 import { Notifications } from '../../js/common/notifications.js';
 import { Rules } from '../../js/common/rules.js';
 import { Settings } from '../../js/common/settings.js';
-import { Store } from '../../js/common/platform/store.js';
 import { VERSION } from '../../js/common/core/const.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
@@ -168,7 +168,6 @@ View.run(class SettingsView extends View {
     } else if (this.acctEmail) {
       $('.email-address').text(this.acctEmail);
       const storage = await Store.getAcct(this.acctEmail, ['setup_done', 'email_provider', 'picture']);
-      const scopes = await Store.getScopes(this.acctEmail);
       if (storage.setup_done) {
         const rules = await Rules.newInstance(this.acctEmail);
         if (!rules.canBackupKeys()) {
@@ -182,22 +181,7 @@ View.run(class SettingsView extends View {
             $(self).off().attr('src', '/img/svgs/profile-icon.svg');
           }));
         }
-        if (!(scopes.read || scopes.modify) && (storage.email_provider || 'gmail') === 'gmail') {
-          $('.auth_denied_warning').removeClass('hidden');
-        }
-        const installAppNotificationDismissedStorage = await Store.getGlobal(['install_app_notification_dismissed']);
-        console.log(installAppNotificationDismissedStorage.install_app_notification_dismissed);
-        if (
-          !installAppNotificationDismissedStorage.install_app_notification_dismissed &&
-          // TODO(@tomholub): add the actual logic
-          'user-does-not-have-flowcrypt-on-any-other-device' === 'user-does-not-have-flowcrypt-on-any-other-device'
-        ) {
-          $('.install_app_notification').removeClass('hidden');
-        }
-        $('.dismiss_install_app_notification').click(this.setHandler(async () => {
-          await Store.setGlobal({ install_app_notification_dismissed: true });
-          $('.install_app_notification').remove();
-        }));
+        await this.renderNotificationBanners(storage.email_provider || 'gmail', rules);
         this.displayOrig('.hide_if_setup_not_done');
         $('.show_if_setup_not_done').css('display', 'none');
         if (this.advanced) {
@@ -227,6 +211,27 @@ View.run(class SettingsView extends View {
         Xss.sanitizeAppend('.blog_post_list', html);
       }
     }).catch(ApiErr.reportIfSignificant);
+  }
+
+  private renderNotificationBanners = async (emailProvider: EmailProvider, rules: Rules) => {
+    if (!this.acctEmail) {
+      return;
+    }
+    const scopes = await Store.getScopes(this.acctEmail);
+    if (!(scopes.read || scopes.modify) && emailProvider === 'gmail') {
+      $('.auth_denied_warning').removeClass('hidden');
+    }
+    const globalStorage = await Store.getGlobal(['install_mobile_app_notification_dismissed']);
+    if (!globalStorage.install_mobile_app_notification_dismissed && rules.canBackupKeys() && rules.canCreateKeys()) {
+      // only show this notification if user is allowed to:
+      //   - backup keys: when not allowed, company typically has other forms of backup
+      //   - create keys: when not allowed, key must have been imported from some other system that already takes care of backups
+      $('.install_app_notification').removeClass('hidden');
+    }
+    $('.dismiss_install_app_notification').click(this.setHandler(async () => {
+      await Store.setGlobal({ install_mobile_app_notification_dismissed: true });
+      $('.install_app_notification').remove();
+    }));
   }
 
   private checkFcAcctAndSubscriptionAndContactPage = async () => {

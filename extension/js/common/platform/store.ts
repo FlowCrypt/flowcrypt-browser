@@ -8,6 +8,7 @@ import { Contact, KeyInfo } from '../core/pgp-key.js';
 import { Dict, PromiseCancellation, Str, Value } from '../core/common.js';
 import { FcUuidAuth, PaymentMethod, SubscriptionInfo, SubscriptionLevel } from '../api/backend.js';
 import { storageLocalGet, storageLocalRemove, storageLocalSet } from '../api/chrome.js';
+
 import { DomainRules } from '../rules.js';
 import { Env } from '../browser/env.js';
 import { GmailRes } from '../api/email-provider/gmail/gmail-parser.js';
@@ -88,12 +89,12 @@ export type GlobalStore = {
   cryptup_account_subscription?: SubscriptionInfo | null; // todo - remove
   dev_outlook_allow?: boolean;
   admin_codes?: Dict<StoredAdminCode>;
-  install_app_notification_dismissed?: boolean;
+  install_mobile_app_notification_dismissed?: boolean;
 };
 
 export type GlobalIndex = 'version' | 'account_emails' | 'settings_seen' | 'hide_pass_phrases' |
   'cryptup_account_email' | 'cryptup_account_uuid' | 'cryptup_account_subscription' | 'dev_outlook_allow' |
-  'admin_codes' | 'install_app_notification_dismissed';
+  'admin_codes' | 'install_mobile_app_notification_dismissed';
 
 export type SendAsAlias = {
   isPrimary: boolean;
