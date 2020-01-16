@@ -4,7 +4,6 @@
 
 import { Assert } from '../../../js/common/assert.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
@@ -41,8 +40,6 @@ View.run(class AuthDeniedView extends View {
 
   public setHandlers = () => {
     $('.action_auth_proceed').click(this.setHandler(() => BrowserMsg.send.openGoogleAuthDialog(this.parentTabId, { acctEmail: this.acctEmail })));
-    $('.auth_action_limited').click(this.setHandler(() => BrowserMsg.send.openGoogleAuthDialog(this.parentTabId,
-      { acctEmail: this.acctEmail, scopes: GoogleAuth.defaultScopes('compose_only') })));
     $('.close_page').click(this.setHandler(() => BrowserMsg.send.closePage(this.parentTabId)));
   }
 
