@@ -863,6 +863,37 @@ body#settings .input_password2 {
   margin-bottom: 0 !important;
 }
 
+body#settings .settings-banners-container {
+  margin-bottom: 2em;
+}
+
+body#settings .settings-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: -1px;
+  border-top: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;
+  padding: 0.5em 0;
+}
+
+body#settings .settings-banner > * {
+  margin: 0.5em 1em;
+}
+
+body#settings .settings-banner .settings-banner-icon {
+  margin: 0 1em;
+}
+
+body#settings .settings-banner .settings-banner-text {
+  text-align: start;
+}
+
+body#settings .settings-banner .button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 body#settings > div#content h2 {
   font-size: 22px;
   font-weight: 100;
@@ -2530,5 +2561,16 @@ body#settings div.webmail_notifications div.webmail_notification a:hover { text-
     padding: 4px 16px !important;
     font-size: 12px;
     font-weight: bold;
+  }
+}
+
+/* medium frames (aligned with Bootstrap) */
+@media (max-width: 768px) {
+  body#settings .settings-banner {
+    flex-direction: column;
+  }
+
+  body#settings .settings-banner .settings-banner-text {
+    text-align: center;
   }
 }

@@ -53,7 +53,7 @@ export class GoogleAuth {
     }
   };
 
-  public static defaultScopes = (group: 'default' | 'contacts' | 'compose_only' | 'openid' = 'default') => {
+  public static defaultScopes = (group: 'default' | 'contacts' | 'openid' = 'default') => {
     const { readContacts, compose, modify, openid, email, profile } = GoogleAuth.OAUTH.scopes;
     console.info(`Not using scope ${modify} because not approved on oauth screen yet`);
     const read = GoogleAuth.OAUTH.legacy_scopes.read; // todo - remove as soon as "modify" is approved by google
@@ -72,8 +72,6 @@ export class GoogleAuth {
     } else if (group === 'contacts') {
       // todo - replace "read" with "modify" when approved by google
       return [openid, email, profile, compose, read, readContacts];
-    } else if (group === 'compose_only') {
-      return [openid, email, profile, compose]; // consumer may freak out that the extension asks for read email permission
     } else {
       throw new Error(`Unknown scope group ${group}`);
     }

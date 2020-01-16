@@ -31,7 +31,7 @@ export class SetupRenderModule {
       } catch (e) {
         return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToLoadEmailAliases, () => this.renderInitial());
       }
-      $('.auth_denied_warning').css('display', this.view.scopes!.read || this.view.scopes!.modify ? 'none' : 'block');
+      $('.auth_denied_warning').toggleClass('hidden', this.view.scopes!.read || this.view.scopes!.modify);
     }
     if (this.view.storage!.setup_done) {
       if (this.view.action !== 'add_key') {
