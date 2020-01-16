@@ -60,7 +60,6 @@ export class SetupRecoverKeyModule {
       const options: SetupOptions = {
         submit_main: false, // todo - reevaluate submitting when recovering
         submit_all: false,
-        key_type: 'rsa4096', // TODO(@limonte): ask Tom is this right?
         passphrase,
         passphrase_save: true, // todo - reevaluate saving passphrase when recovering
         key_backup_prompt: false,

@@ -6,7 +6,7 @@ import { SetupOptions, SetupView } from '../setup.js';
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Lang } from '../../../js/common/lang.js';
-import { PgpKey, KeyType } from '../../../js/common/core/pgp-key.js';
+import { PgpKey, KeyAlgo } from '../../../js/common/core/pgp-key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -28,7 +28,6 @@ export class SetupCreateKeyModule {
       $('#step_2a_manual_create input').prop('disabled', true);
       Xss.sanitizeRender('#step_2a_manual_create .action_create_private', Ui.spinner('white') + 'just a minute');
       const options: SetupOptions = {
-        key_type: $('#step_2a_manual_create .key_type').val() as KeyType,
         passphrase: String($('#step_2a_manual_create .input_password').val()),
         passphrase_save: Boolean($('#step_2a_manual_create .input_passphrase_save').prop('checked')),
         submit_main: Boolean($('#step_2a_manual_create .input_submit_key').prop('checked') || this.view.rules!.mustSubmitToAttester()),
@@ -38,7 +37,8 @@ export class SetupCreateKeyModule {
         setup_simple: Boolean($('#step_2a_manual_create .input_backup_inbox').prop('checked')),
         is_newly_created_key: true,
       };
-      await this.createSaveKeyPair(options);
+      const keyAlgo = $('#step_2a_manual_create .key_type').val() as KeyAlgo
+      await this.createSaveKeyPair(options, keyAlgo);
       await this.view.preFinalizeSetup(options);
       // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
       window.location.href = Url.create('modules/backup.htm', { action: 'setup', acctEmail: this.view.acctEmail });
@@ -63,11 +63,11 @@ export class SetupCreateKeyModule {
     }
   }
 
-  public createSaveKeyPair = async (options: SetupOptions) => {
+  public createSaveKeyPair = async (options: SetupOptions, keyAlgo: KeyAlgo) => {
     await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.rules!);
     const { full_name } = await Store.getAcct(this.view.acctEmail, ['full_name']);
     try {
-      const key = await PgpKey.create([{ name: full_name || '', email: this.view.acctEmail }], options.key_type, options.passphrase); // todo - add all addresses?
+      const key = await PgpKey.create([{ name: full_name || '', email: this.view.acctEmail }], keyAlgo, options.passphrase); // todo - add all addresses?
       options.is_newly_created_key = true;
       const prv = await PgpKey.read(key.private);
       await this.view.saveKeys([prv], options);

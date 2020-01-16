@@ -6,7 +6,6 @@ import { KeyCanBeFixed, UserAlert } from '../../../js/common/ui/key-import-ui.js
 import { SetupOptions, SetupView } from '../setup.js';
 
 import { Catch } from '../../../js/common/platform/catch.js';
-import { KeyType } from '../../../js/common/core/pgp-key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -22,7 +21,6 @@ export class SetupImportKeyModule {
       return;
     }
     const options: SetupOptions = {
-      key_type: $('#step_2a_manual_enter .key_type').val() as KeyType,
       passphrase: String($('#step_2b_manual_enter .input_passphrase').val()),
       key_backup_prompt: false,
       submit_main: Boolean($('#step_2b_manual_enter .input_submit_key').prop('checked') || this.view.rules!.mustSubmitToAttester()),
