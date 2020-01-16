@@ -15,7 +15,7 @@ import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/google.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
 import { Lang } from '../../js/common/lang.js';
-import { PgpKey } from '../../js/common/core/pgp-key.js';
+import { PgpKey, KeyType } from '../../js/common/core/pgp-key.js';
 import { Rules } from '../../js/common/rules.js';
 import { Settings } from '../../js/common/settings.js';
 import { SetupCreateKeyModule } from './setup/setup-create-key.js';
@@ -30,6 +30,7 @@ import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 export interface SetupOptions {
   passphrase: string;
   passphrase_save: boolean;
+  key_type: KeyType;
   submit_main: boolean;
   submit_all: boolean;
   setup_simple: boolean;
