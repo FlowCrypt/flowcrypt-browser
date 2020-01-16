@@ -1,6 +1,6 @@
 <div>
 
-version 7.5.7 on Jan 16, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/386?closed=1" target="_blank">Fix pwd msg online reply</a>
+version 7.5.8 on Jan 16, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/386?closed=1" target="_blank">Fix pwd msg online reply</a>
 
 version 7.5.5 on Jan 9, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/385?closed=1" target="_blank">Default don't remember pass phrase</a>
 
