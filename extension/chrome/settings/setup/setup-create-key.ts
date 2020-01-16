@@ -37,7 +37,7 @@ export class SetupCreateKeyModule {
         setup_simple: Boolean($('#step_2a_manual_create .input_backup_inbox').prop('checked')),
         is_newly_created_key: true,
       };
-      const keyAlgo = $('#step_2a_manual_create .key_type').val() as KeyAlgo
+      const keyAlgo = $('#step_2a_manual_create .key_type').val() as KeyAlgo;
       await this.createSaveKeyPair(options, keyAlgo);
       await this.view.preFinalizeSetup(options);
       // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
