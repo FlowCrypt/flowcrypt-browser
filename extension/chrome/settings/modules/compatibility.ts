@@ -172,7 +172,7 @@ View.run(class CompatibilityView extends View {
       if (!key.isFullyDecrypted()) {
         return 'skiped, not fully decrypted';
       }
-      const signedMessage = openpgp.message.fromText(this.encryptionText).sign([key]);
+      const signedMessage = await openpgp.message.fromText(this.encryptionText).sign([key]);
       output.push('sign msg ok');
       const verifyResult = await PgpMsg.verify(signedMessage, [key]);
       if (verifyResult.error !== null && typeof verifyResult.error !== 'undefined') {

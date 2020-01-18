@@ -962,7 +962,7 @@ declare namespace OpenPGP {
       /** Sign the message (the literal data packet of the message)
           @param privateKey private keys with decrypted secret key data for signing
       */
-      sign(privateKey: key.Key[]): Message;
+      sign(privateKey: key.Key[]): Promise<Message>;
 
       /** Unwrap compressed message
        */
