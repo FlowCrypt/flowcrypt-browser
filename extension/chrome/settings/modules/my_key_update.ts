@@ -69,11 +69,11 @@ View.run(class MyKeyUpdateView extends View {
     if (typeof uddatedKey === 'undefined') {
       await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
     } else if (uddatedKey.isPublic()) {
-      await Ui.modal.warning('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"', Ui.testCompatibilityLink);
+      await Ui.modal.warning('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"');
     } else if (await PgpKey.fingerprint(uddatedKey) !== await PgpKey.fingerprint(this.primaryKi!.public)) {
-      await Ui.modal.warning(`This key ${await PgpKey.longid(uddatedKey)} does not match your current key ${this.primaryKi!.longid}`, Ui.testCompatibilityLink);
+      await Ui.modal.warning(`This key ${await PgpKey.longid(uddatedKey)} does not match your current key ${this.primaryKi!.longid}`);
     } else if (await PgpKey.decrypt(uddatedKey, uddatedKeyPassphrase) !== true) {
-      await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.', false, Ui.testCompatibilityLink);
+      await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
     } else {
       if (await uddatedKey.getEncryptionKey()) {
         await this.storeUpdatedKeyAndPassphrase(uddatedKeyEncrypted, uddatedKeyPassphrase);
@@ -84,7 +84,10 @@ View.run(class MyKeyUpdateView extends View {
           );
           await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, uddatedKeyPassphrase);
         } else {
-          await Ui.modal.warning('Key update: This looks like a valid key but it cannot be used for encryption. Email human@flowcrypt.com to see why is that. We\'re prompt to respond.', Ui.testCompatibilityLink);
+          await Ui.modal.warning(
+            'Key update: This looks like a valid key but it cannot be used for encryption. Email human@flowcrypt.com to see why is that. We\'re prompt to respond.',
+            Ui.testCompatibilityLink
+          );
           window.location.href = this.showKeyUrl;
         }
       }
