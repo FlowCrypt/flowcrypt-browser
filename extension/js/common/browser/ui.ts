@@ -147,9 +147,10 @@ export class Ui {
         },
       });
     },
-    warning: async (text: string): Promise<void> => {
+    warning: async (text: string, footer?: string): Promise<void> => {
       await Swal.fire({
         html: `<span class="orange">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
+        footer: footer ? Xss.htmlSanitize(footer) : '',
         animation: false,
         allowOutsideClick: false,
         customClass: {
@@ -158,10 +159,11 @@ export class Ui {
         },
       });
     },
-    error: async (text: string, isHTML: boolean = false): Promise<void> => {
+    error: async (text: string, isHTML: boolean = false, footer?: string): Promise<void> => {
       text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
       await Swal.fire({
         html: `<span class="red">${text}</span>`,
+        footer: footer ? Xss.htmlSanitize(footer) : '',
         animation: false,
         allowOutsideClick: false,
         customClass: {
@@ -209,6 +211,8 @@ export class Ui {
       return typeof dismiss === 'undefined';
     },
   };
+
+  public static testCompatibilityLink = '<a href="/chrome/settings/modules/compatibility.htm" target="_blank">Test your private key compatibility</a>';
 
   public static retryLink = (caption: string = 'retry') => {
     return `<a href="${Xss.escape(window.location.href)}" data-test="action-retry-by-reloading">${Xss.escape(caption)}</a>`;

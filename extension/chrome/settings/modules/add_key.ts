@@ -93,12 +93,12 @@ View.run(class AddKeyView extends View {
       }
     } catch (e) {
       if (e instanceof UserAlert) {
-        return await Ui.modal.warning(e.message);
+        return await Ui.modal.warning(e.message, Ui.testCompatibilityLink);
       } else if (e instanceof KeyCanBeFixed) {
-        return await Ui.modal.error(`This type of key cannot be set as non-primary yet. Please write human@flowcrypt.com`);
+        return await Ui.modal.error(`This type of key cannot be set as non-primary yet. Please write human@flowcrypt.com`, false, Ui.testCompatibilityLink);
       } else {
         Catch.reportErr(e);
-        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
+        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`, false, Ui.testCompatibilityLink);
       }
     }
   }

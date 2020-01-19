@@ -119,7 +119,7 @@ export class KeyImportUi {
           $('.source_paste_container').css('display', 'block');
         } else {
           $('.input_private_key').val('').change().prop('disabled', false);
-          await Ui.modal.error('Not able to read this key. Is it a valid PGP private key?');
+          await Ui.modal.error('Not able to read this key. Is it a valid PGP private key?', false, Ui.testCompatibilityLink);
           $('input[type=radio][name=source]').removeAttr('checked');
         }
       }
