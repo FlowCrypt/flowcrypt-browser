@@ -203,9 +203,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         }
         if (button) {
           Xss.sanitizeReplace(contenteditable, button);
-          $(`a.open_draft_${buttonHrefId}`).click(Ui.event.handle(() => {
+          $(`a.open_draft_${buttonHrefId}`).click(Ui.event.handle((target) => {
             $('div.new_message').remove();
             $('body').append(this.factory.embeddedCompose(buttonHrefId)); // xss-safe-factory
+            // close original draft window
+            const mouseUpEvent = document.createEvent('Event');
+            mouseUpEvent.initEvent('mouseup', true, true); // Gmail listens for the mouseup event, not click
+            $(target).closest('.dw').find('.Ha')[0].dispatchEvent(mouseUpEvent); // jquery's trigger('mouseup') doesn't work for some reason
           }));
         }
       }
