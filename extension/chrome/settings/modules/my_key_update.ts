@@ -67,7 +67,7 @@ View.run(class MyKeyUpdateView extends View {
     const { keys: [uddatedKeyEncrypted] } = await openpgp.key.readArmored(String(this.inputPrivateKey.val()));
     const uddatedKeyPassphrase = String($('.input_passphrase').val());
     if (typeof uddatedKey === 'undefined') {
-      await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)));
+      await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
     } else if (uddatedKey.isPublic()) {
       await Ui.modal.warning('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"');
     } else if (await PgpKey.fingerprint(uddatedKey) !== await PgpKey.fingerprint(this.primaryKi!.public)) {
@@ -84,7 +84,10 @@ View.run(class MyKeyUpdateView extends View {
           );
           await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, uddatedKeyPassphrase);
         } else {
-          await Ui.modal.warning('Key update: This looks like a valid key but it cannot be used for encryption. Email human@flowcrypt.com to see why is that. We\'re prompt to respond.');
+          await Ui.modal.warning(
+            'Key update: This looks like a valid key but it cannot be used for encryption. Email human@flowcrypt.com to see why is that. We\'re prompt to respond.',
+            Ui.testCompatibilityLink
+          );
           window.location.href = this.showKeyUrl;
         }
       }

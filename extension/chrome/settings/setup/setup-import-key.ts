@@ -39,12 +39,12 @@ export class SetupImportKeyModule {
       await this.view.setupRender.renderSetupDone();
     } catch (e) {
       if (e instanceof UserAlert) {
-        return await Ui.modal.warning(e.message);
+        return await Ui.modal.warning(e.message, Ui.testCompatibilityLink);
       } else if (e instanceof KeyCanBeFixed) {
         return await this.renderCompatibilityFixBlockAndFinalizeSetup(e.encrypted, options);
       } else {
         Catch.reportErr(e);
-        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
+        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`, false, Ui.testCompatibilityLink);
       }
     }
   }
@@ -57,7 +57,7 @@ export class SetupImportKeyModule {
         this.view.acctEmail, '#step_3_compatibility_fix', origPrv, options.passphrase, window.location.href.replace(/#$/, ''));
     } catch (e) {
       Catch.reportErr(e);
-      await Ui.modal.error(`Failed to fix key (${String(e)}). Please write us at human@flowcrypt.com, we are very prompt to fix similar issues.`);
+      await Ui.modal.error(`Failed to fix key (${String(e)}). Please write us at human@flowcrypt.com, we are very prompt to fix similar issues.`, false, Ui.testCompatibilityLink);
       this.view.setupRender.displayBlock('step_2b_manual_enter');
       return;
     }
