@@ -16,8 +16,19 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
 
   public initActions = async () => {
     this.composer.S.cached('input_password').keyup(this.view.setHandlerPrevent('spree', () => this.showHideContainerAndColorSendBtn()));
-    this.composer.S.cached('input_password').focus(() => this.showHideContainerAndColorSendBtn());
-    this.composer.S.cached('input_password').blur(() => this.showHideContainerAndColorSendBtn());
+    this.composer.S.cached('input_password').focus(this.view.setHandlerPrevent('spree', () => {
+      const passwordContainerHeight = this.composer.S.cached('password_or_pubkey').outerHeight() || 0;
+      const footerHeight = this.composer.S.cached('footer').outerHeight() || 0;
+      this.composer.S.cached('expiration_note').css({
+        bottom: (passwordContainerHeight + footerHeight) + 'px'
+      });
+      this.composer.S.cached('expiration_note').fadeIn();
+      this.showHideContainerAndColorSendBtn();
+    }));
+    this.composer.S.cached('input_password').blur(() => {
+      this.composer.S.cached('expiration_note').fadeOut();
+      this.showHideContainerAndColorSendBtn();
+    });
     const store = await Store.getAcct(this.view.acctEmail, ['hide_message_password']);
     if (store.hide_message_password) {
       this.composer.S.cached('input_password').attr('type', 'password');
