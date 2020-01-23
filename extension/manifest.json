@@ -28,7 +28,11 @@
   "permissions": [
     "storage",
     "tabs",
-    "*://*/*",
+    "https://flowcrypt.com/*",
+    "https://*.google.com/*",
+    "https://outlook.live.com/*",
+    "https://outlook.office365.com/*",
+    "https://outlook.office.com/*",
     "unlimitedStorage"
   ],
   "content_scripts": [
