@@ -9,6 +9,7 @@ import { RecipientStatuses, SendBtnTexts } from './composer-types.js';
 import { ComposerComponent } from './composer-abstract-component.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Store } from '../../../js/common/platform/store.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 import { Str } from '../../../js/common/core/common.js';
 
 export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
@@ -29,7 +30,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
       this.showHideContainerAndColorSendBtn();
     }));
     this.composer.S.cached('input_password').blur(() => {
-      setTimeout(() => { // timeout here is needed so <a> will be visible once clicked
+      Catch.setHandledTimeout(() => { // timeout here is needed so <a> will be visible once clicked
         this.composer.S.cached('expiration_note').fadeOut();
       }, 100);
       this.showHideContainerAndColorSendBtn();
