@@ -9,6 +9,7 @@ import { RecipientStatuses, SendBtnTexts } from './composer-types.js';
 import { ComposerComponent } from './composer-abstract-component.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Store } from '../../../js/common/platform/store.js';
+import { Str } from '../../../js/common/core/common.js';
 
 export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
 
@@ -35,8 +36,8 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
     });
     this.composer.S.cached('expiration_note').find('#expiration_note_settings_link').click(this.view.setHandler((el, e) => {
       e.preventDefault();
-      this.composer.render.renderSettingsWithDialog('security'), this.composer.errs.handlers(`render settings dialog`);
-    }));
+      this.composer.render.renderSettingsWithDialog('security');
+    }, this.composer.errs.handlers(`render settings dialog`)));
 
     const store = await Store.getAcct(this.view.acctEmail, ['hide_message_password']);
     if (store.hide_message_password) {
@@ -82,8 +83,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
       } catch (e) {
         // ignore, use the default 3 days message expire
       }
-      const pluralize = (count: number, noun: string, suffix = 's') => `${count} ${noun}${count > 1 ? suffix : ''}`; // TODO: where to move this helper?
-      this.composer.S.cached('expiration_note').find('#expiration_note_message_expire').text(pluralize(messageExpire, 'day'));
+      this.composer.S.cached('expiration_note').find('#expiration_note_message_expire').text(Str.pluralize(messageExpire, 'day'));
       this.composer.S.cached('password_or_pubkey').css('display', 'table-row');
     }
     if (this.composer.S.cached('input_password').val() || this.composer.S.cached('input_password').is(':focus')) {
