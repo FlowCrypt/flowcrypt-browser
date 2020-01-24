@@ -2,6 +2,8 @@
 
 'use strict';
 
+import { Backend } from '../../../js/common/api/backend.js';
+
 import { RecipientStatuses, SendBtnTexts } from './composer-types.js';
 
 import { ComposerComponent } from './composer-abstract-component.js';
@@ -16,20 +18,20 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
 
   public initActions = async () => {
     this.composer.S.cached('input_password').keyup(this.view.setHandlerPrevent('spree', () => this.showHideContainerAndColorSendBtn()));
-    this.composer.S.cached('input_password').focus(this.view.setHandlerPrevent('spree', () => {
+    this.composer.S.cached('input_password').focus(this.view.setHandlerPrevent('spree', async () => {
       const passwordContainerHeight = this.composer.S.cached('password_or_pubkey').outerHeight() || 0;
       const footerHeight = this.composer.S.cached('footer').outerHeight() || 0;
       this.composer.S.cached('expiration_note').css({
         bottom: (passwordContainerHeight + footerHeight) + 'px'
       });
       this.composer.S.cached('expiration_note').fadeIn();
-      this.showHideContainerAndColorSendBtn();
+      await this.showHideContainerAndColorSendBtn();
     }));
-    this.composer.S.cached('input_password').blur(() => {
-      setTimeout(() => { // timeout here is needed for <a> to be visible once clicked
+    this.composer.S.cached('input_password').blur(async () => {
+      setTimeout(() => { // timeout here is needed so <a> will be visible once clicked
         this.composer.S.cached('expiration_note').fadeOut();
-        this.showHideContainerAndColorSendBtn();
       }, 100);
+      await this.showHideContainerAndColorSendBtn();
     });
     this.composer.S.cached('expiration_note').find('#expiration_note_settings_link').click(this.view.setHandler((el, e) => {
       e.preventDefault();
@@ -42,7 +44,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
     }
   }
 
-  public showHideContainerAndColorSendBtn = () => {
+  public showHideContainerAndColorSendBtn = async () => {
     this.composer.sendBtn.resetSendBtn();
     this.composer.S.cached('send_btn_note').text('');
     this.composer.S.cached('send_btn').removeAttr('title');
@@ -51,7 +53,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
       this.hideMsgPwdUi(); // Hide 'Add Pasword' prompt if there are no recipients or message is not encrypted
       this.composer.sendBtn.enableBtn();
     } else if (this.composer.recipients.getRecipients().find(r => r.status === RecipientStatuses.NO_PGP)) {
-      this.showMsgPwdUiAndColorBtn();
+      await this.showMsgPwdUiAndColorBtn();
     } else if (this.composer.recipients.getRecipients().find(r => [RecipientStatuses.FAILED, RecipientStatuses.WRONG].includes(r.status))) {
       this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_WRONG_ENTRY);
       this.composer.S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
@@ -70,9 +72,20 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
     this.composer.size.setInputTextHeightManuallyIfNeeded();
   }
 
-  private showMsgPwdUiAndColorBtn = () => {
-    this.composer.S.cached('password_or_pubkey').css('display', 'table-row');
-    this.composer.S.cached('password_or_pubkey').css('display', 'table-row');
+  private showMsgPwdUiAndColorBtn = async () => {
+    if (this.composer.S.cached('password_or_pubkey').is(':hidden')) {
+      let messageExpire: number = 3;
+      try {
+        const authInfo = await Store.authInfo(this.view.acctEmail);
+        const response = await Backend.accountGetAndUpdateLocalStore(authInfo);
+        messageExpire = response.account.default_message_expire;
+      } catch (e) {
+        // ignore, use the default 3 days message expire
+      }
+      const pluralize = (count: number, noun: string, suffix = 's') => `${count} ${noun}${count > 1 ? suffix : ''}`; // TODO: where to move this helper?
+      this.composer.S.cached('expiration_note').find('#expiration_note_message_expire').text(pluralize(messageExpire, 'day'));
+      this.composer.S.cached('password_or_pubkey').css('display', 'table-row');
+    }
     if (this.composer.S.cached('input_password').val() || this.composer.S.cached('input_password').is(':focus')) {
       this.composer.S.cached('password_label').css('display', 'inline-block');
       this.composer.S.cached('input_password').attr('placeholder', '');
