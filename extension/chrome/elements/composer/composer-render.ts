@@ -22,7 +22,7 @@ export class ComposerRender extends ComposerComponent {
   public initActions = async () => {
     await this.initComposeBox();
     BrowserMsg.addListener('close_dialog', async () => { $('.featherlight.featherlight-iframe').remove(); });
-    this.composer.S.cached('icon_help').click(this.view.setHandler(() => this.renderHelpDialog(), this.composer.errs.handlers(`render help dialog`)));
+    this.composer.S.cached('icon_help').click(this.view.setHandler(() => this.renderSettingsWithDialog('help'), this.composer.errs.handlers(`render help dialog`)));
     this.composer.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
     this.composer.atts.initActions();
     this.composer.draft.initActions().catch(Catch.reportErr);
@@ -116,6 +116,10 @@ export class ComposerRender extends ComposerComponent {
     }
   }
 
+  public renderSettingsWithDialog = (settingsModule: string) => {
+    BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page: `/chrome/settings/modules/${settingsModule}.htm` });
+  }
+
   private initComposeBox = async () => {
     this.initComposeBoxStyles();
     if (this.view.draftId) {
@@ -180,10 +184,6 @@ export class ComposerRender extends ComposerComponent {
     }
     this.composer.recipients.deleteRecipientsBySendingType(typesToDelete);
     await this.renderReplyMsgComposeTable(method);
-  }
-
-  private renderHelpDialog = () => {
-    BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page: '/chrome/settings/modules/help.htm' });
   }
 
   private renderReplyMsgAsReplyPubkeyMismatch = async () => {

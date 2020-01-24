@@ -26,9 +26,16 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
       this.showHideContainerAndColorSendBtn();
     }));
     this.composer.S.cached('input_password').blur(() => {
-      this.composer.S.cached('expiration_note').fadeOut();
-      this.showHideContainerAndColorSendBtn();
+      setTimeout(() => { // timeout here is needed for <a> to be visible once clicked
+        this.composer.S.cached('expiration_note').fadeOut();
+        this.showHideContainerAndColorSendBtn();
+      }, 100);
     });
+    this.composer.S.cached('expiration_note').find('#expiration_note_settings_link').click(this.view.setHandler((el, e) => {
+      e.preventDefault();
+      this.composer.render.renderSettingsWithDialog('security'), this.composer.errs.handlers(`render settings dialog`);
+    }));
+
     const store = await Store.getAcct(this.view.acctEmail, ['hide_message_password']);
     if (store.hide_message_password) {
       this.composer.S.cached('input_password').attr('type', 'password');

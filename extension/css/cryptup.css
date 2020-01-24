@@ -2079,6 +2079,12 @@ table#compose tr#password_or_pubkey_container #expiration_note {
   font-size: 0.9em;
 }
 
+table#compose tr#password_or_pubkey_container #expiration_note_settings_link,
+table#compose tr#password_or_pubkey_container #expiration_note_settings_link:hover,
+table#compose tr#password_or_pubkey_container #expiration_note_settings_link:visited {
+  color: white;
+}
+
 table#compose span.start,
 table#compose span.end {
   font-weight: 900;
