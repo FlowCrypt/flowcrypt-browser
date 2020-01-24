@@ -55,7 +55,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
       this.hideMsgPwdUi(); // Hide 'Add Pasword' prompt if there are no recipients or message is not encrypted
       this.composer.sendBtn.enableBtn();
     } else if (this.composer.recipients.getRecipients().find(r => r.status === RecipientStatuses.NO_PGP)) {
-      this.showMsgPwdUiAndColorBtn(); // tslint:disable-line:no-floating-promises
+      this.showMsgPwdUiAndColorBtn().catch(Catch.reportErr);
     } else if (this.composer.recipients.getRecipients().find(r => [RecipientStatuses.FAILED, RecipientStatuses.WRONG].includes(r.status))) {
       this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_WRONG_ENTRY);
       this.composer.S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
