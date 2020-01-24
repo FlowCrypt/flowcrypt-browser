@@ -19,20 +19,20 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
 
   public initActions = async () => {
     this.composer.S.cached('input_password').keyup(this.view.setHandlerPrevent('spree', () => this.showHideContainerAndColorSendBtn()));
-    this.composer.S.cached('input_password').focus(this.view.setHandlerPrevent('spree', async () => {
+    this.composer.S.cached('input_password').focus(this.view.setHandlerPrevent('spree', () => {
       const passwordContainerHeight = this.composer.S.cached('password_or_pubkey').outerHeight() || 0;
       const footerHeight = this.composer.S.cached('footer').outerHeight() || 0;
       this.composer.S.cached('expiration_note').css({
         bottom: (passwordContainerHeight + footerHeight) + 'px'
       });
       this.composer.S.cached('expiration_note').fadeIn();
-      await this.showHideContainerAndColorSendBtn();
+      this.showHideContainerAndColorSendBtn();
     }));
-    this.composer.S.cached('input_password').blur(async () => {
+    this.composer.S.cached('input_password').blur(() => {
       setTimeout(() => { // timeout here is needed so <a> will be visible once clicked
         this.composer.S.cached('expiration_note').fadeOut();
       }, 100);
-      await this.showHideContainerAndColorSendBtn();
+      this.showHideContainerAndColorSendBtn();
     });
     this.composer.S.cached('expiration_note').find('#expiration_note_settings_link').click(this.view.setHandler((el, e) => {
       e.preventDefault();
@@ -45,7 +45,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
     }
   }
 
-  public showHideContainerAndColorSendBtn = async () => {
+  public showHideContainerAndColorSendBtn = () => {
     this.composer.sendBtn.resetSendBtn();
     this.composer.S.cached('send_btn_note').text('');
     this.composer.S.cached('send_btn').removeAttr('title');
@@ -54,7 +54,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
       this.hideMsgPwdUi(); // Hide 'Add Pasword' prompt if there are no recipients or message is not encrypted
       this.composer.sendBtn.enableBtn();
     } else if (this.composer.recipients.getRecipients().find(r => r.status === RecipientStatuses.NO_PGP)) {
-      await this.showMsgPwdUiAndColorBtn();
+      this.showMsgPwdUiAndColorBtn(); // tslint:disable-line:no-floating-promises
     } else if (this.composer.recipients.getRecipients().find(r => [RecipientStatuses.FAILED, RecipientStatuses.WRONG].includes(r.status))) {
       this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_WRONG_ENTRY);
       this.composer.S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
