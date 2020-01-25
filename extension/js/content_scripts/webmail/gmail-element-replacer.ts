@@ -473,7 +473,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private ensureHasParentNode = (el: JQuery<HTMLElement>) => {
     if (!el.parent().length) {
       const dummyParent = $('<div>');
-      dummyParent.append(el);
+      dummyParent.append(el); // xss-direct
     }
   }
 
