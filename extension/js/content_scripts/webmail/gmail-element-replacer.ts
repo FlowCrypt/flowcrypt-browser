@@ -451,6 +451,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (replace) {
         const parent = msgBody.parent();
         msgBody.replaceWith(this.wrapMsgBodyEl(newHtmlContent_MUST_BE_XSS_SAFE)); // xss-safe-value
+        this.ensureHasParentNode(msgBody); // Gmail is using msgBody.parentNode (#2271)
         return parent.find('.message_inner_body'); // need to return new selector - old element was replaced
       } else {
         return msgBody.html(newHtmlContent_MUST_BE_XSS_SAFE); // xss-safe-value
@@ -459,12 +460,20 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (replace) {
         const parent = msgBody.parent();
         msgBody.replaceWith(this.wrapMsgBodyEl(msgBody.html() + newHtmlContent_MUST_BE_XSS_SAFE)); // xss-reinsert // xss-safe-value
+        this.ensureHasParentNode(msgBody); // Gmail is using msgBody.parentNode (#2271)
         return parent.find('.message_inner_body'); // need to return new selector - old element was replaced
       } else {
         return msgBody.append(newHtmlContent_MUST_BE_XSS_SAFE); // xss-safe-value
       }
     } else {
       throw new Error('Unknown update_message_body_element method:' + method);
+    }
+  }
+
+  private ensureHasParentNode = (el: JQuery<HTMLElement>) => {
+    if (!el.parent().length) {
+      const dummyParent = $('<div>');
+      dummyParent.append(el); // xss-direct
     }
   }
 
