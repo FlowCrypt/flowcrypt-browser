@@ -1829,6 +1829,17 @@ table#compose td.text div.text_container .action_show_prev_msg {
   border-radius: 5.5px;
   margin: 3px 8px;
   cursor: pointer;
+  border: 1px solid transparent;
+  transition: border-color 0.1s ease-in;
+}
+
+table#compose td.text div.text_container .action_show_prev_msg:focus {
+  outline: none;
+  border-color: #31a217;
+}
+
+table#compose td.text div.text_container .action_show_prev_msg::-moz-focus-inner {
+  border: 0;
 }
 
 table#compose td.text div.text_container .action_show_prev_msg.progress {
