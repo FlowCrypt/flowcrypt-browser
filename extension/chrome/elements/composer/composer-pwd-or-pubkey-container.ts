@@ -11,11 +11,12 @@ import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Str } from '../../../js/common/core/common.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
 
 export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
 
+  private MSG_EXPIRE_DAYS_DEFAULT = 3; // todo - update to 7 (needs backend work)
   private keyImportUI = new KeyImportUi({});
-
   private rmPwdStrengthValidationElements: (() => void) | undefined;
 
   public initActions = async () => {
@@ -73,18 +74,21 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
     }
     this.composer.size.setInputTextHeightManuallyIfNeeded();
   }
-
   private showMsgPwdUiAndColorBtn = async () => {
     if (this.composer.S.cached('password_or_pubkey').is(':hidden')) {
-      let messageExpire: number = 3;
-      try {
-        const authInfo = await Store.authInfo(this.view.acctEmail);
-        const response = await Backend.accountGetAndUpdateLocalStore(authInfo);
-        messageExpire = response.account.default_message_expire;
-      } catch (e) {
-        // ignore, use the default 3 days message expire
+      const authInfo = await Store.authInfo(this.view.acctEmail);
+      const expirationTextEl = this.composer.S.cached('expiration_note').find('#expiration_note_message_expire');
+      if (!authInfo) {
+        expirationTextEl.text(Str.pluralize(this.MSG_EXPIRE_DAYS_DEFAULT, 'day'));
+      } else {
+        try {
+          const response = await Backend.accountGetAndUpdateLocalStore(authInfo);
+          expirationTextEl.text(Str.pluralize(response.account.default_message_expire, 'day'));
+        } catch (e) {
+          ApiErr.reportIfSignificant(e);
+          expirationTextEl.text(`(unknown days: ${ApiErr.eli5(e)})`);
+        }
       }
-      this.composer.S.cached('expiration_note').find('#expiration_note_message_expire').text(Str.pluralize(messageExpire, 'day'));
       this.composer.S.cached('password_or_pubkey').css('display', 'table-row');
     }
     if (this.composer.S.cached('input_password').val() || this.composer.S.cached('input_password').is(':focus')) {
