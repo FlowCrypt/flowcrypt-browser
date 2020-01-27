@@ -333,12 +333,22 @@ export class Store {
       // always go through bg script to avoid such errors
       return await BrowserMsg.send.bg.await.storeAcctSet({ acctEmail, values });
     }
-    const storageUpdate: RawStore = {};
+    const indexedUpdateFields: RawStore = {};
+    const removeFields: AccountIndex[] = [];
     for (const key of Object.keys(values)) {
-      const index = Store.singleScopeRawIndex(acctEmail, key);
-      storageUpdate[index] = values[key as AccountIndex];
+      if (typeof values[key as AccountIndex] !== 'undefined') {
+        const index = Store.singleScopeRawIndex(acctEmail, key);
+        indexedUpdateFields[index] = values[key as AccountIndex];
+      } else {
+        removeFields.push(key as AccountIndex);
+      }
     }
-    await storageLocalSet(storageUpdate);
+    if (Object.keys(indexedUpdateFields).length) {
+      await storageLocalSet(indexedUpdateFields);
+    }
+    if (removeFields.length) {
+      await storageLocalRemove(removeFields);
+    }
   }
 
   public static setGlobal = async (values: GlobalStore): Promise<void> => {
