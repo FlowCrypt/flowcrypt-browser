@@ -334,20 +334,21 @@ export class Store {
       return await BrowserMsg.send.bg.await.storeAcctSet({ acctEmail, values });
     }
     const indexedUpdateFields: RawStore = {};
-    const removeFields: AccountIndex[] = [];
+    const indexedRemoveFields: string[] = [];
     for (const key of Object.keys(values)) {
+      const index = Store.singleScopeRawIndex(acctEmail, key);
       if (typeof values[key as AccountIndex] !== 'undefined') {
-        const index = Store.singleScopeRawIndex(acctEmail, key);
         indexedUpdateFields[index] = values[key as AccountIndex];
       } else {
-        removeFields.push(key as AccountIndex);
+        indexedRemoveFields.push(index);
       }
     }
+    console.log(values, indexedUpdateFields, indexedRemoveFields);
     if (Object.keys(indexedUpdateFields).length) {
       await storageLocalSet(indexedUpdateFields);
     }
-    if (removeFields.length) {
-      await storageLocalRemove(removeFields);
+    if (indexedRemoveFields.length) {
+      await storageLocalRemove(indexedRemoveFields);
     }
   }
 
