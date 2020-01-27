@@ -92,7 +92,7 @@ View.run(class ExperimentalView extends View {
   }
 
   private resetManagingAuthHandler = async () => {
-    await Store.setAcct(this.acctEmail, { 'subscription': undefined, 'uuid': undefined });
+    await Store.setAcct(this.acctEmail, { subscription: undefined, uuid: undefined });
     BrowserMsg.send.reload(this.parentTabId, {});
   }
 
