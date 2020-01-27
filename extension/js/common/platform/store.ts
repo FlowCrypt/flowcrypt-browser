@@ -343,7 +343,6 @@ export class Store {
         indexedRemoveFields.push(index);
       }
     }
-    console.log(values, indexedUpdateFields, indexedRemoveFields);
     if (Object.keys(indexedUpdateFields).length) {
       await storageLocalSet(indexedUpdateFields);
     }
