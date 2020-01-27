@@ -7,7 +7,7 @@ import { ContentScriptWindow } from '../browser/browser-window.js';
 import { Env } from '../browser/env.js';
 import { Store } from '../platform/store.js';
 import { Ui } from '../browser/ui.js';
-import { Url } from '../core/common.js';
+import { Url, Dict } from '../core/common.js';
 
 export const handleFatalErr = (reason: 'storage_undefined', error: Error) => {
   try {
@@ -44,7 +44,7 @@ export const windowsCreate = (q: chrome.windows.CreateData): Promise<chrome.wind
   });
 };
 
-export const storageLocalGet = (keys: string[]): Promise<Object> => {
+export const storageLocalGet = (keys: string[]): Promise<Dict<unknown>> => {
   return new Promise((resolve, reject) => { // tslint:disable-line:ban-types
     if (typeof chrome.storage === 'undefined') {
       handleFatalErr('storage_undefined', new Error('storage is undefined'));
@@ -72,7 +72,7 @@ export const storageLocalGetAll = (): Promise<{ [key: string]: any }> => {
   });
 };
 
-export const storageLocalSet = (values: Object): Promise<void> => {
+export const storageLocalSet = (values: Dict<any>): Promise<void> => {
   return new Promise((resolve) => { // tslint:disable-line:ban-types
     if (typeof chrome.storage === 'undefined') {
       handleFatalErr('storage_undefined', new Error('storage is undefined'));
