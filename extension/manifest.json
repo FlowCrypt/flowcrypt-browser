@@ -33,6 +33,11 @@
     "https://outlook.live.com/*",
     "https://outlook.office365.com/*",
     "https://outlook.office.com/*",
+    "https://graph.microsoft.com/*",
+    "https://login.microsoftonline.com/*",
+    "https://outlook.office.com/*",
+    "https://outlook.office365.com/*",
+    "https://www.googleapis.com/*",
     "unlimitedStorage"
   ],
   "content_scripts": [
