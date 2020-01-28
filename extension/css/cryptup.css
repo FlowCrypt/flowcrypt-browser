@@ -2079,6 +2079,23 @@ table#compose tr#password_or_pubkey_container td .grey {
   border-radius: 5px;
 }
 
+table#compose tr#password_or_pubkey_container #expiration_note {
+  display: none;
+  position: absolute;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  left: 50px;
+  right: 0;
+  padding: 1em;
+  font-size: 0.9em;
+}
+
+table#compose tr#password_or_pubkey_container #expiration_note_settings_link,
+table#compose tr#password_or_pubkey_container #expiration_note_settings_link:hover,
+table#compose tr#password_or_pubkey_container #expiration_note_settings_link:visited {
+  color: white;
+}
+
 table#compose span.start,
 table#compose span.end {
   font-weight: 900;

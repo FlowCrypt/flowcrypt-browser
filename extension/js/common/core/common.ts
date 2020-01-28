@@ -107,6 +107,10 @@ export class Str {
     return string.trim().split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
   }
 
+  public static pluralize = (count: number, noun: string, suffix: string = 's'): string => {
+    return `${count} ${noun}${count > 1 ? suffix : ''}`;
+  }
+
   public static toUtcTimestamp = (datetimeStr: string, asStr: boolean = false) => {
     return asStr ? String(Date.parse(datetimeStr)) : Date.parse(datetimeStr);
   }

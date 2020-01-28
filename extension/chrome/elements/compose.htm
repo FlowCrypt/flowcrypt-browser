@@ -110,6 +110,11 @@
       </tr>
       <tr id="password_or_pubkey_container" data-test="password-or-pubkey-container">
         <td>
+          <div id="expiration_note">
+            Recipient will have access to this message <a href="#" id="expiration_note_settings_link">for <span id="expiration_note_message_expire">(loading)</span></a>. You are responsible for sharing this password with them (use other medium to share the password - not email).
+            <br /> <br />
+            (messages sent to FlowCrypt users have no limit, and don't need password exchange)
+          </div>
           <div>
             Emails <span class="grey">in grey</span> don't use encryption.
             <br /><a href="#" class="add_pubkey" data-test="action-open-add-pubkey-dialog">Add their Public Key</a> or
@@ -120,7 +125,7 @@
           </div>
         </td>
       </tr>
-      <tr class="bottom">
+      <tr id="section_footer" class="bottom">
         <td class="bottom">
           <div class="sending-container">
             <div id="sending-options-container" class="sending-options-container" data-test="container-sending-options">
@@ -133,39 +138,38 @@
               <div class="icon-chevron"></div>
             </button>
           </div>
-  </div>
-  <div class="icon attach" id="fineuploader_button"><img src="/img/svgs/paperclip-icon.svg" class="attach-file"
-      alt="Attach File"></div>
-  <div id="send_btn_note" data-test="send-btn-note"></div>
-  <button class="icon right delete_draft" tabindex="11" title="Delete draft"><img src="/img/svgs/trash-can-icon.svg"
-      class="delete-draft" alt="Delete Email"></button>
-  <button class="icon right action_include_pubkey" tabindex="10" title="Include your Public Key"><i
-      alt="pubkey"></i></button>
-  </td>
-  </tr>
-  </table>
-
-  <div id="reply_message_successful_container" data-test="container-reply-msg-successful">
-    <table>
-      <tr class="first">
-        <td>
-          <!-- to -->
-          <div class="replied_from"></div>
-          <div class="replied_to">to <span></span></div>
-        </td>
-        <td class="right">
-          <div class="replied_time"></div>
-        </td>
-      </tr>
-      <tr>
-        <td colspan="2">
-          <!-- body -->
-          <div class="replied_body pgp_secure"></div>
+          <div class="icon attach" id="fineuploader_button"><img src="/img/svgs/paperclip-icon.svg" class="attach-file"
+              alt="Attach File"></div>
+          <div id="send_btn_note" data-test="send-btn-note"></div>
+          <button class="icon right delete_draft" tabindex="11" title="Delete draft"><img src="/img/svgs/trash-can-icon.svg"
+              class="delete-draft" alt="Delete Email"></button>
+          <button class="icon right action_include_pubkey" tabindex="10" title="Include your Public Key"><i
+              alt="pubkey"></i></button>
         </td>
       </tr>
     </table>
-    <div id="attachments"></div>
-  </div>
+
+    <div id="reply_message_successful_container" data-test="container-reply-msg-successful">
+      <table>
+        <tr class="first">
+          <td>
+            <!-- to -->
+            <div class="replied_from"></div>
+            <div class="replied_to">to <span></span></div>
+          </td>
+          <td class="right">
+            <div class="replied_time"></div>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <!-- body -->
+            <div class="replied_body pgp_secure"></div>
+          </td>
+        </tr>
+      </table>
+      <div id="attachments"></div>
+    </div>
   </div>
   <script src="/lib/purify.min.js"></script>
   <script src="/lib/openpgp.js"></script>
