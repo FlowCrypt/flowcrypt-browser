@@ -48,12 +48,17 @@ export class Xss {
     // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
     DOMPurify.removeAllHooks();
     DOMPurify.addHook('afterSanitizeAttributes', node => {
+      if (!node) {
+        return;
+      }
       if ('src' in node) {
         const img: Element = node;
+        const src = img.getAttribute('src');
         if (imgHandling === 'IMG-DEL') {
           img.remove(); // just skip images
+        } else if (!src) {
+          img.remove(); // src that exists but is null is suspicious
         } else if (imgHandling === 'IMG-TO-LINK') { // replace images with a link that points to that image
-          const src = img.getAttribute('src')!;
           const title = img.getAttribute('title');
           img.removeAttribute('src');
           const a = document.createElement('a');
