@@ -154,7 +154,7 @@ export class Mime {
                 // AppleMail does this with inline attachments
                 mimeContent.html = (mimeContent.html || '') + Mime.getNodeContentAsUtfStr(node);
               } else if (Mime.getNodeType(node) === 'text/plain' && !Mime.getNodeFilename(node)) {
-                mimeContent.text = Mime.getNodeContentAsUtfStr(node);
+                mimeContent.text = (mimeContent.text ? `${mimeContent.text}\n\n` : '') + Mime.getNodeContentAsUtfStr(node);
               } else if (Mime.getNodeType(node) === 'text/rfc822-headers') {
                 if (node._parentNode && node._parentNode.headers.subject) {
                   mimeContent.subject = node._parentNode.headers.subject[0].value;
