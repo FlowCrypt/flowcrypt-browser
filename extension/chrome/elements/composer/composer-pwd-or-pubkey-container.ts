@@ -24,9 +24,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
     this.composer.S.cached('input_password').focus(this.view.setHandlerPrevent('spree', () => {
       const passwordContainerHeight = this.composer.S.cached('password_or_pubkey').outerHeight() || 0;
       const footerHeight = this.composer.S.cached('footer').outerHeight() || 0;
-      this.composer.S.cached('expiration_note').css({
-        bottom: (passwordContainerHeight + footerHeight) + 'px'
-      });
+      this.composer.S.cached('expiration_note').css({ bottom: (passwordContainerHeight + footerHeight) + 'px' });
       this.composer.S.cached('expiration_note').fadeIn();
       this.showHideContainerAndColorSendBtn();
     }));
@@ -40,7 +38,6 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
       e.preventDefault();
       this.composer.render.renderSettingsWithDialog('security');
     }, this.composer.errs.handlers(`render settings dialog`)));
-
     const store = await Store.getAcct(this.view.acctEmail, ['hide_message_password']);
     if (store.hide_message_password) {
       this.composer.S.cached('input_password').attr('type', 'password');

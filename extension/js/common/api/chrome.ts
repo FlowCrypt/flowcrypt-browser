@@ -30,12 +30,12 @@ export const handleFatalErr = (reason: 'storage_undefined', error: Error) => {
   }
 };
 
-export const tabsQuery = (q: chrome.tabs.QueryInfo): Promise<chrome.tabs.Tab[]> => {
-  return new Promise(resolve => chrome.tabs.query(q, resolve));
+export const tabsQuery = async (q: chrome.tabs.QueryInfo): Promise<chrome.tabs.Tab[]> => {
+  return await new Promise(resolve => chrome.tabs.query(q, resolve));
 };
 
-export const windowsCreate = (q: chrome.windows.CreateData): Promise<chrome.windows.Window | undefined> => {
-  return new Promise(resolve => {
+export const windowsCreate = async (q: chrome.windows.CreateData): Promise<chrome.windows.Window | undefined> => {
+  return await new Promise(resolve => {
     if (typeof chrome.windows !== 'undefined') {
       chrome.windows.create(q, resolve);
     } else {
@@ -44,8 +44,8 @@ export const windowsCreate = (q: chrome.windows.CreateData): Promise<chrome.wind
   });
 };
 
-export const storageLocalGet = (keys: string[]): Promise<Dict<unknown>> => {
-  return new Promise((resolve, reject) => { // tslint:disable-line:ban-types
+export const storageLocalGet = async (keys: string[]): Promise<Dict<unknown>> => {
+  return await new Promise((resolve, reject) => {
     if (typeof chrome.storage === 'undefined') {
       handleFatalErr('storage_undefined', new Error('storage is undefined'));
     } else {
@@ -62,8 +62,8 @@ export const storageLocalGet = (keys: string[]): Promise<Dict<unknown>> => {
   });
 };
 
-export const storageLocalGetAll = (): Promise<{ [key: string]: any }> => {
-  return new Promise((resolve) => {
+export const storageLocalGetAll = async (): Promise<{ [key: string]: any }> => {
+  return await new Promise((resolve) => {
     if (typeof chrome.storage === 'undefined') {
       handleFatalErr('storage_undefined', new Error('storage is undefined'));
     } else {
@@ -72,8 +72,8 @@ export const storageLocalGetAll = (): Promise<{ [key: string]: any }> => {
   });
 };
 
-export const storageLocalSet = (values: Dict<any>): Promise<void> => {
-  return new Promise((resolve) => { // tslint:disable-line:ban-types
+export const storageLocalSet = async (values: Dict<any>): Promise<void> => {
+  return await new Promise((resolve) => {
     if (typeof chrome.storage === 'undefined') {
       handleFatalErr('storage_undefined', new Error('storage is undefined'));
     } else {
@@ -82,8 +82,8 @@ export const storageLocalSet = (values: Dict<any>): Promise<void> => {
   });
 };
 
-export const storageLocalRemove = (keys: string[]): Promise<void> => {
-  return new Promise((resolve) => { // tslint:disable-line:ban-types
+export const storageLocalRemove = async (keys: string[]): Promise<void> => {
+  return await new Promise((resolve) => {
     if (typeof chrome.storage === 'undefined') {
       handleFatalErr('storage_undefined', new Error('storage is undefined'));
     } else {
