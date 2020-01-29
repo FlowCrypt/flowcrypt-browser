@@ -12,7 +12,7 @@ export class PgpBlockViewQuoteModule {
 
   public separateQuotedContentAndRenderText = async (decryptedContent: string, isHtml: boolean) => {
     if (isHtml) {
-      const message = $('<div>').html(Xss.htmlSanitize(decryptedContent)); // xss-sanitized
+      const message = $('<div>').html(Xss.htmlSanitizeKeepBasicTags(decryptedContent, 'IMG-TO-LINK')); // xss-sanitized
       let htmlBlockQuoteExists: boolean = false;
       const shouldBeQuoted: Array<Element> = [];
       for (let i = message[0].children.length - 1; i >= 0; i--) {

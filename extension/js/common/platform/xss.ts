@@ -18,6 +18,7 @@ export class Xss {
   private static ALLOWED_HTML_TAGS = ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5',
     'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font'];
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index', 'target'];
+  private static FORBID_ATTR = ['background'];
   private static HREF_REGEX_CACHE: RegExp | undefined;
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => { // browser-only (not on node)
@@ -40,6 +41,7 @@ export class Xss {
     return DOMPurify.sanitize(dirtyHtml, { // tslint:disable-line:oneliner-object-literal
       SAFE_FOR_JQUERY: true,
       ADD_ATTR: Xss.ADD_ATTR,
+      FORBID_ATTR: Xss.FORBID_ATTR,
       ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
     });
   }
@@ -47,9 +49,15 @@ export class Xss {
   public static htmlSanitizeKeepBasicTags = (dirtyHtml: string, imgHandling: SanitizeImgHandling): string => {
     // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
     DOMPurify.removeAllHooks();
-    DOMPurify.addHook('afterSanitizeAttributes', node => {
+    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
       if (!node) {
         return;
+      }
+      if ('style' in node) {
+        const style = (node as Element).getAttribute('style');
+        if (style && (style.includes('url(') || style.includes('@import'))) {
+          (node as Element).removeAttribute('style'); // don't want any leaks through css url()
+        }
       }
       if ('src' in node) {
         const img: Element = node;
@@ -78,6 +86,7 @@ export class Xss {
     const cleanHtml = DOMPurify.sanitize(dirtyHtml, {
       SAFE_FOR_JQUERY: true,
       ADD_ATTR: Xss.ADD_ATTR,
+      FORBID_ATTR: Xss.FORBID_ATTR,
       ALLOWED_TAGS: Xss.ALLOWED_HTML_TAGS,
       ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
     });
