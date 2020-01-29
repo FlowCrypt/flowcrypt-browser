@@ -153,8 +153,8 @@ export class Mime {
                 // html content may be broken up into smaller pieces by attachments in between
                 // AppleMail does this with inline attachments
                 mimeContent.html = (mimeContent.html || '') + Mime.getNodeContentAsUtfStr(node);
-              } else if (Mime.getNodeType(node) === 'text/plain' && !Mime.getNodeFilename(node)) {
-                mimeContent.text = Mime.getNodeContentAsUtfStr(node);
+              } else if (Mime.getNodeType(node) === 'text/plain' && (!Mime.getNodeFilename(node) || Mime.isNodeInline(node))) {
+                mimeContent.text = (mimeContent.text ? `${mimeContent.text}\n\n` : '') + Mime.getNodeContentAsUtfStr(node);
               } else if (Mime.getNodeType(node) === 'text/rfc822-headers') {
                 if (node._parentNode && node._parentNode.headers.subject) {
                   mimeContent.subject = node._parentNode.headers.subject[0].value;
@@ -324,6 +324,11 @@ export class Mime {
       }
     }
     return;
+  }
+
+  private static isNodeInline = (node: MimeParserNode): boolean => {
+    const cd = node.headers['content-disposition'];
+    return cd && cd[0] && cd[0].value === 'inline';
   }
 
   private static fromEqualSignNotationAsBuf = (str: string): Buf => {
