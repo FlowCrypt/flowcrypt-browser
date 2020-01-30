@@ -9,7 +9,7 @@ import { requireOpenpgp } from '../platform/require.js';
 
 export const openpgp = requireOpenpgp();
 
-if (typeof openpgp !== 'undefined') { // in certain environments, eg browser content scripts, openpgp is not included (not all functions below need it)
+if (typeof openpgp !== 'undefined') { // in certain environments, eg pgp_block.htm, openpgp is not included
   openpgp.config.versionstring = `FlowCrypt ${VERSION} Gmail Encryption`;
   openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
   openpgp.config.ignore_mdc_error = true; // we manually check for missing MDC and show loud warning to user (no auto-decrypt)

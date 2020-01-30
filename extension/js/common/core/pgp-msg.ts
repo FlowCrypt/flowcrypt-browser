@@ -230,8 +230,6 @@ export class PgpMsg {
   }
 
   public static diagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = async ({ privateKis, message }) => {
-    // openpgp is undefined here
-    debugger;
     const m = await openpgp.message.readArmored(Buf.fromUint8(message).toUtfStr());
     const msgKeyIds = m.getEncryptionKeyIds ? m.getEncryptionKeyIds() : [];
     const localKeyIds: OpenPGP.Keyid[] = [];
