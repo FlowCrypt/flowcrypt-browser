@@ -166,7 +166,10 @@ export class BrowserMsg {
     reload: (dest: Bm.Dest, bm: Bm.Reload) => BrowserMsg.sendCatch(dest, 'reload', bm),
     redirect: (dest: Bm.Dest, bm: Bm.Redirect) => BrowserMsg.sendCatch(dest, 'redirect', bm),
     openGoogleAuthDialog: (dest: Bm.Dest, bm: Bm.OpenGoogleAuthDialog) => BrowserMsg.sendCatch(dest, 'open_google_auth_dialog', bm),
-    addToContacts: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'addToContacts', {})
+    addToContacts: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'addToContacts', {}),
+    await: {
+      pgpMsgDiagnosePubkeys: (dest: Bm.Dest, bm: Bm.PgpMsgDiagnoseMsgPubkeys) => BrowserMsg.sendAwait(dest, 'pgpMsgDiagnosePubkeys', bm, true) as Promise<Bm.Res.PgpMsgDiagnoseMsgPubkeys>,
+    }
   };
   private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};
   private static HANDLERS_REGISTERED_FRAME: Handlers = {
