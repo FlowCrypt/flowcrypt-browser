@@ -26,7 +26,6 @@ export class BackupSetupActionModule extends ViewModule<BackupView> {
 
   public renderSetupAction = async (setupSimple: boolean | undefined) => {
     $('.back').css('display', 'none');
-    $('#module_manual .action_skip_backup').parent().css('display', 'none');
     if (setupSimple) {
       try {
         await this.view.manualActionModule.setupCreateSimpleAutomaticInboxBackup();

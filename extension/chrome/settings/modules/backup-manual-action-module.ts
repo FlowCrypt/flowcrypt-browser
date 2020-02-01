@@ -39,7 +39,6 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   public setHandlers = () => {
     $('#module_manual input[name=input_backup_choice]').click(this.view.setHandler(el => this.actionSelectBackupMethodHandler(el)));
     $('#module_manual .action_manual_backup').click(this.view.setHandlerPrevent('double', el => this.actionManualBackupHandler()));
-    $('#module_manual .action_skip_backup').click(this.view.setHandler(el => this.actionSkipBackupHandler()));
   }
 
   public doBackupOnEmailProvider = async (armoredKey: string) => {
@@ -204,19 +203,6 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     } else {
       btn.text('try my luck');
       btn.removeClass('green').addClass('red');
-    }
-  }
-
-  private actionSkipBackupHandler = async () => {
-    if (this.view.action === 'setup') {
-      await Store.setAcct(this.view.acctEmail, { key_backup_prompt: false });
-      window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: this.view.acctEmail });
-    } else {
-      if (this.view.parentTabId) {
-        BrowserMsg.send.closePage(this.view.parentTabId);
-      } else {
-        Catch.report(`backup.ts: missing parentTabId for ${this.view.action}`);
-      }
     }
   }
 
