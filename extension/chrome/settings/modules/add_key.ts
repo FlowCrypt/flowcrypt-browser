@@ -3,14 +3,12 @@
 'use strict';
 
 import { KeyCanBeFixed, KeyImportUi, UserAlert } from '../../../js/common/ui/key-import-ui.js';
-import { Url, Value } from '../../../js/common/core/common.js';
-
+import { Url } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Gmail } from '../../../js/common/api/email-provider/gmail/gmail.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
@@ -47,26 +45,15 @@ View.run(class AddKeyView extends View {
   }
 
   private loadAndRenderKeyBackupsOrRenderError = async () => {
-    const keyInfos = await Store.keysGet(this.acctEmail);
-    const privateKeysLongIds = keyInfos.map(ki => ki.longid);
-    let keyBackups: OpenPGP.key.Key[] | undefined;
     try {
-      keyBackups = await this.gmail.fetchKeyBackups();
-      if (keyBackups.length) {
-        const notImportedBackupLongids: string[] = [];
-        for (const longid of Value.arr.unique(await Promise.all(keyBackups.map(PgpKey.longid)))) {
-          if (longid && !privateKeysLongIds.includes(longid)) {
-            notImportedBackupLongids.push(longid);
-          }
-        }
-        if (notImportedBackupLongids.length) {
-          $('label[for=source_backup]').text('Load from backup (' + notImportedBackupLongids.length + ' new to import)');
-        } else {
-          $('label[for=source_backup]').text('Load from backup (already loaded)').css('color', '#AAA');
-          $('#source_backup').prop('disabled', true);
-        }
-      } else {
+      const backups = await this.gmail.fetchKeyBackups();
+      if (!backups.longids.backups.length) {
         $('label[for=source_backup]').text('Load from backup (no backups found)').css('color', '#AAA');
+        $('#source_backup').prop('disabled', true);
+      } else if (backups.longids.backupsNotImported.length) {
+        $('label[for=source_backup]').text(`Load from backup (${backups.longids.backupsNotImported.length} new to import)`);
+      } else {
+        $('label[for=source_backup]').text(`Load from backup (${backups.longids.backups.length} already loaded)`).css('color', '#AAA');
         $('#source_backup').prop('disabled', true);
       }
     } catch (e) {

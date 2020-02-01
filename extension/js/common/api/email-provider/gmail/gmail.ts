@@ -5,7 +5,7 @@
 import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window.js';
 import { ChunkedCb, ProgressCb, ProviderContactsResults } from '../../api.js';
 import { Dict, Str, Value } from '../../../core/common.js';
-import { EmailProviderApi, EmailProviderInterface } from '../email-provider-api.js';
+import { EmailProviderApi, EmailProviderInterface, Backups } from '../email-provider-api.js';
 import { GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
 import { GmailParser, GmailRes } from './gmail-parser.js';
 
@@ -320,20 +320,33 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return await this.extractHeadersFromMsgs(messages || [], headerNames, msgLimit);
   }
 
-  public fetchKeyBackups = async () => {
+  public fetchKeyBackups = async (): Promise<Backups> => {
     const res = await this.msgList(gmailBackupSearchQuery(this.acctEmail), true);
-    if (!res.messages) {
-      return [];
-    }
-    const msgIds = res.messages.map(m => m.id);
+    const msgIds = (res.messages || []).map(m => m.id);
     const msgs = await this.msgsGet(msgIds, 'full');
     const atts: Att[] = [];
     for (const msg of msgs) {
       atts.push(...GmailParser.findAtts(msg));
     }
     await this.fetchAtts(atts);
-    const { keys } = await PgpKey.readMany(Buf.fromUtfStr(atts.map(a => a.getData().toUtfStr()).join('\n')));
-    return keys;
+    const { keys: foundBackupKeys } = await PgpKey.readMany(Buf.fromUtfStr(atts.map(a => a.getData().toUtfStr()).join('\n')));
+    const backups = await Promise.all(foundBackupKeys.map(k => Store.keyInfoObj(k)));
+    const imported = await Store.keysGet(this.acctEmail);
+    const importedLongids = imported.map(ki => ki.longid);
+    const backedUpLongids = backups.map(ki => ki.longid);
+    const keyinfos = {
+      backups,
+      backupsImported: backups.filter(backupKi => importedLongids.includes(backupKi.longid)),
+      backupsNotImported: backups.filter(backupKi => !importedLongids.includes(backupKi.longid)),
+      importedNotBackedUp: imported.filter(importedKi => !backedUpLongids.includes(importedKi.longid)),
+    };
+    const longids = {
+      backups: Value.arr.unique(keyinfos.backups.map(ki => ki.longid)),
+      backupsImported: Value.arr.unique(keyinfos.backupsImported.map(ki => ki.longid)),
+      backupsNotImported: Value.arr.unique(keyinfos.backupsNotImported.map(ki => ki.longid)),
+      importedNotBackedUp: Value.arr.unique(keyinfos.importedNotBackedUp.map(ki => ki.longid)),
+    };
+    return { keyinfos, longids };
   }
 
   private apiGmailBuildFilteredQuery = (query: string, allRawEmails: string[]) => {

@@ -107,8 +107,9 @@ export class SetupRenderModule {
         this.displayBlock('step_2b_manual_enter');
       } else if (this.view.storage!.email_provider === 'gmail' && (this.view.scopes!.read || this.view.scopes!.modify)) {
         try {
-          this.view.fetchedKeyBackups = await this.view.gmail.fetchKeyBackups();
-          this.view.fetchedKeyBackupsUniqueLongids = await this.view.getUniqueLongids(this.view.fetchedKeyBackups);
+          const backups = await this.view.gmail.fetchKeyBackups();
+          this.view.fetchedKeyBackups = backups.keyinfos.backups;
+          this.view.fetchedKeyBackupsUniqueLongids = backups.longids.backups;
         } catch (e) {
           return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToCheckAccountBackups, () => this.renderSetupDialog());
         }

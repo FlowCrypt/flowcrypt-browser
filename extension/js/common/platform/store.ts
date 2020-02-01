@@ -284,7 +284,7 @@ export class Store {
     return false;
   }
 
-  public static keysGet = async (acctEmail: string, longids?: string[]) => {
+  public static keysGet = async (acctEmail: string, longids?: string[]): Promise<KeyInfo[]> => {
     const stored = await Store.getAcct(acctEmail, ['keys']);
     const keys: KeyInfo[] = stored.keys || [];
     if (!longids) {
@@ -305,16 +305,17 @@ export class Store {
   public static keysAdd = async (acctEmail: string, newKeyArmored: string) => {
     const keyinfos = await Store.keysGet(acctEmail);
     let updated = false;
-    const newKeyLongid = await PgpKey.longid(newKeyArmored);
+    const prv = await PgpKey.read(newKeyArmored);
+    const newKeyLongid = await PgpKey.longid(prv);
     if (newKeyLongid) {
       for (const i in keyinfos) {
         if (newKeyLongid === keyinfos[i].longid) { // replacing a key
-          keyinfos[i] = await Store.keysObj(newKeyArmored, keyinfos[i].primary);
+          keyinfos[i] = await Store.keyInfoObj(prv, keyinfos[i].primary);
           updated = true;
         }
       }
       if (!updated) {
-        keyinfos.push(await Store.keysObj(newKeyArmored, keyinfos.length === 0));
+        keyinfos.push(await Store.keyInfoObj(prv, keyinfos.length === 0));
       }
       await Store.setAcct(acctEmail, { keys: keyinfos });
     }
@@ -724,6 +725,15 @@ export class Store {
     KEY_CACHE = {};
   }
 
+  public static keyInfoObj = async (prv: OpenPGP.key.Key, primary = false): Promise<KeyInfo> => {
+    const longid = await PgpKey.longid(prv);
+    if (!longid) {
+      throw new Error('Store.keysObj: unexpectedly no longid');
+    }
+    const fingerprint = await PgpKey.fingerprint(prv);
+    return { private: prv.armor(), public: prv.toPublic().armor(), primary, longid, fingerprint: fingerprint!, keywords: mnemonic(longid)! };
+  }
+
   private static singleScopeRawIndexArr = (scope: string, keys: string[]) => {
     return keys.map(key => Store.singleScopeRawIndex(scope, key));
   }
@@ -745,16 +755,6 @@ export class Store {
       }
     }
     return accountStore;
-  }
-
-  private static keysObj = async (armoredPrv: string, primary = false): Promise<KeyInfo> => {
-    const longid = await PgpKey.longid(armoredPrv)!;
-    if (!longid) {
-      throw new Error('Store.keysObj: unexpectedly no longid');
-    }
-    const prv = await PgpKey.read(armoredPrv);
-    const fingerprint = await PgpKey.fingerprint(armoredPrv);
-    return { private: armoredPrv, public: prv.toPublic().armor(), primary, longid, fingerprint: fingerprint!, keywords: mnemonic(longid)! };
   }
 
   /* db */
