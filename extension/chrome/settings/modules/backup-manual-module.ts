@@ -117,14 +117,14 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     } finally {
       this.proceedBtn.text(origBtnText);
     }
-    await this.view.writeBackupDoneAndRender(false, 'inbox');
+    await this.view.renderBackupDone(false, 'inbox');
   }
 
   private backupAsFile = async (primaryKi: KeyInfo) => { // todo - add a non-encrypted download option
     const attachment = this.asBackupFile(primaryKi.private);
     Browser.saveToDownloads(attachment);
     await Ui.modal.info('Downloading private key backup file..');
-    await this.view.writeBackupDoneAndRender(false, 'file');
+    await this.view.renderBackupDone(false, 'file');
   }
 
   private backupByBrint = async (primaryKi: KeyInfo) => { // todo - implement + add a non-encrypted print option
@@ -132,7 +132,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private backupRefused = async (ki: KeyInfo) => {
-    await this.view.writeBackupDoneAndRender(Value.int.getFutureTimestampInMonths(3), 'none');
+    await this.view.renderBackupDone(Value.int.getFutureTimestampInMonths(3), 'none');
   }
 
   private isPassPhraseStrongEnough = async (ki: KeyInfo, passphrase: string) => {

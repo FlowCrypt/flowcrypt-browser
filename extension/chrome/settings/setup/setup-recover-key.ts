@@ -61,7 +61,6 @@ export class SetupRecoverKeyModule {
         submit_all: false,
         passphrase,
         passphrase_save: true, // todo - reevaluate saving passphrase when recovering
-        key_backup_prompt: false,
         recovered: true,
         is_newly_created_key: false,
       };

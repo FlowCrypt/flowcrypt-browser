@@ -121,8 +121,6 @@ export type AccountStore = {
   cryptup_enabled?: boolean;
   setup_done?: boolean;
   is_newly_created_key?: boolean;
-  key_backup_method?: KeyBackupMethod;
-  key_backup_prompt?: number | false;
   successfully_received_at_leat_one_message?: boolean;
   notification_setup_done_seen?: boolean;
   picture?: string; // google image
@@ -140,8 +138,8 @@ export type AccountStore = {
 
 export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'email_provider' | 'google_token_access' | 'google_token_expires' | 'google_token_scopes' |
   'google_token_refresh' | 'hide_message_password' | 'sendAs' | 'drafts_reply' | 'drafts_compose' |
-  'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' | 'is_newly_created_key' | 'key_backup_method' |
-  'key_backup_prompt' | 'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
+  'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' | 'is_newly_created_key' |
+  'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
   'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all' | 'subscription' | 'uuid' | 'use_rich_text' | 'rules';
 
 export class Subscription implements SubscriptionInfo {

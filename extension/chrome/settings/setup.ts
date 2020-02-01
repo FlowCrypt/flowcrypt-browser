@@ -32,7 +32,6 @@ export interface SetupOptions {
   passphrase_save: boolean;
   submit_main: boolean;
   submit_all: boolean;
-  key_backup_prompt: number | false;
   recovered?: boolean;
   is_newly_created_key: boolean;
 }
@@ -90,7 +89,7 @@ export class SetupView extends View {
   public render = async () => {
     await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
     await initPassphraseToggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
-    this.storage = await Store.getAcct(this.acctEmail, ['setup_done', 'key_backup_prompt', 'email_provider']);
+    this.storage = await Store.getAcct(this.acctEmail, ['setup_done', 'email_provider']);
     this.scopes = await Store.getScopes(this.acctEmail);
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.rules = await Rules.newInstance(this.acctEmail);
@@ -164,7 +163,6 @@ export class SetupView extends View {
     await Store.setAcct(this.acctEmail, {
       tmp_submit_main: options.submit_main,
       tmp_submit_all: options.submit_all,
-      key_backup_prompt: options.key_backup_prompt,
       is_newly_created_key: options.is_newly_created_key,
     });
   }

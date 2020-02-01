@@ -33,7 +33,7 @@ export class BackupAutomaticModule extends ViewModule<BackupView> {
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
       await this.view.manualModule.doBackupOnEmailProvider(primaryKi.private);
-      await this.view.writeBackupDoneAndRender(false, 'inbox');
+      await this.view.renderBackupDone(false, 'inbox');
     } catch (e) {
       if (ApiErr.isAuthPopupNeeded(e)) {
         await Ui.modal.info("Authorization Error. FlowCrypt needs to reconnect your Gmail account");

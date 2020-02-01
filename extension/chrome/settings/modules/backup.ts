@@ -72,8 +72,7 @@ export class BackupView extends View {
     }
   }
 
-  public writeBackupDoneAndRender = async (prompt: number | false, method: KeyBackupMethod) => {
-    await Store.setAcct(this.acctEmail, { key_backup_prompt: prompt, key_backup_method: method });
+  public renderBackupDone = async (prompt: number | false, method: KeyBackupMethod) => {
     if (this.action === 'setup_automatic' || this.action === 'setup_manual') {
       window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: this.acctEmail, action: 'finalize' });
     } else {

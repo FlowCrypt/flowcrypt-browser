@@ -2,14 +2,13 @@
 
 'use strict';
 
-import { Url, Value } from '../../../js/common/core/common.js';
+import { Value } from '../../../js/common/core/common.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { SetupView } from '../setup.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
 export class SetupRenderModule {
@@ -40,14 +39,9 @@ export class SetupRenderModule {
         await this.view.setupRecoverKey.renderAddKeyFromBackup();
       }
     } else if (this.view.action === 'finalize') {
-      const { tmp_submit_all, tmp_submit_main, key_backup_method } = await Store.getAcct(this.view.acctEmail, ['tmp_submit_all', 'tmp_submit_main', 'key_backup_method']);
+      const { tmp_submit_all, tmp_submit_main } = await Store.getAcct(this.view.acctEmail, ['tmp_submit_all', 'tmp_submit_main']);
       if (typeof tmp_submit_all === 'undefined' || typeof tmp_submit_main === 'undefined') {
         $('#content').text(`Setup session expired. To set up FlowCrypt, please click the FlowCrypt icon on top right.`);
-        return;
-      }
-      if (typeof key_backup_method !== 'string') {
-        await Ui.modal.error('Backup has not successfully finished, will retry');
-        window.location.href = Url.create('modules/backup.htm', { action: 'setup_manual', acctEmail: this.view.acctEmail });
         return;
       }
       await this.view.finalizeSetup({ submit_all: tmp_submit_all, submit_main: tmp_submit_main });

@@ -32,7 +32,6 @@ export class SetupCreateKeyModule {
         passphrase_save: Boolean($('#step_2a_manual_create .input_passphrase_save').prop('checked')),
         submit_main: Boolean($('#step_2a_manual_create .input_submit_key').prop('checked') || this.view.rules!.mustSubmitToAttester()),
         submit_all: Boolean($('#step_2a_manual_create .input_submit_all').prop('checked') || this.view.rules!.mustSubmitToAttester()),
-        key_backup_prompt: this.view.rules!.canBackupKeys() ? Date.now() : false,
         recovered: false,
         is_newly_created_key: true,
       };

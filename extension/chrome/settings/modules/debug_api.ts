@@ -40,8 +40,8 @@ View.run(class DebugApiView extends View {
     } else if (this.which === 'local_store') {
       const storage = await Store.getAcct(this.acctEmail, [
         'notification_setup_needed_dismissed', 'email_provider', 'google_token_scopes', 'hide_message_password', 'sendAs', 'outgoing_language',
-        'full_name', 'cryptup_enabled', 'setup_done', 'is_newly_created_key', 'key_backup_method',
-        'key_backup_prompt', 'successfully_received_at_leat_one_message', 'notification_setup_done_seen', 'openid',
+        'full_name', 'cryptup_enabled', 'setup_done', 'is_newly_created_key',
+        'successfully_received_at_leat_one_message', 'notification_setup_done_seen', 'openid',
         'rules', 'subscription', 'use_rich_text',
       ]);
       this.renderCallRes('Local account storage', { acctEmail: this.acctEmail }, storage);
