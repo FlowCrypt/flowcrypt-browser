@@ -14,8 +14,8 @@ import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 export class BackupChangePpActionModule extends ViewModule<BackupView> {
 
   public setHandlers = () => {
-    $('.action_change_pp_reload').click(() => window.location.reload());
-    $('.auth_reconnect').click(this.view.setHandler(el => this.actionAuthReconnectHandler()));
+    $('#content .action_change_pp_reload').click(() => window.location.reload());
+    $('#content .auth_reconnect').click(this.view.setHandler(el => this.actionAuthReconnectHandler()));
   }
 
   public renderChangedPassPhraseGmailBackup = async (setupSimple: boolean | undefined) => {

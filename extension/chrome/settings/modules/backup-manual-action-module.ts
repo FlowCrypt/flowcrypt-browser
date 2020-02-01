@@ -12,10 +12,9 @@ import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
 import { PgpKey, KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
-import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { Value, Url, PromiseCancellation } from '../../../js/common/core/common.js';
 import { Settings } from '../../../js/common/settings.js';
@@ -55,29 +54,6 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       return await this.view.gmail.msgSend(msg);
     } else {
       throw Error(`Backup method not implemented for ${this.view.emailProvider}`);
-    }
-  }
-
-  public setupCreateSimpleAutomaticInboxBackup = async () => {
-    const [primaryKi] = await Store.keysGet(this.view.acctEmail, ['primary']);
-    if (!(await PgpKey.read(primaryKi.private)).isFullyEncrypted()) {
-      await Ui.modal.warning('Key not protected with a pass phrase, skipping');
-      throw new UnreportableError('Key not protected with a pass phrase, skipping');
-    }
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-    try {
-      await this.doBackupOnEmailProvider(primaryKi.private);
-      await this.view.writeBackupDoneAndRender(false, 'inbox');
-    } catch (e) {
-      if (ApiErr.isAuthPopupNeeded(e)) {
-        await Ui.modal.info("Authorization Error. FlowCrypt needs to reconnect your Gmail account");
-        const connectResult = await GoogleAuth.newAuthPopup({ acctEmail: this.view.acctEmail });
-        if (!connectResult.error) {
-          await this.setupCreateSimpleAutomaticInboxBackup();
-        } else {
-          throw e;
-        }
-      }
     }
   }
 

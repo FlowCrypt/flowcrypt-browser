@@ -14,9 +14,7 @@ import { BackupChangePpActionModule } from './backup-change-pp-action-module.js'
 import { BackupStatusModule } from './backup-status-module.js';
 import { BackupManualActionModule } from './backup-manual-action-module.js';
 import { BackupSetupActionModule } from './backup-setup-action-module.js';
-import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Lang } from '../../../js/common/lang.js';
-import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 
 export class BackupView extends View {
 
@@ -33,8 +31,7 @@ export class BackupView extends View {
   public readonly parentTabId: string | undefined;
   public tabId!: string;
 
-  private keyImportUi = new KeyImportUi({});
-  private blocks = ['loading', 'module_status', 'module_setup_1_enter_pp', 'module_setup_2_confirm_pp', 'module_manual'];
+  private blocks = ['loading', 'module_status', 'module_manual'];
 
   constructor() {
     super();
@@ -60,8 +57,6 @@ export class BackupView extends View {
       Xss.sanitizeRender('body', `<div class="line" style="margin-top: 100px;">${Lang.setup.keyBackupsNotAllowed}</div>`);
       return;
     }
-    await initPassphraseToggle(['password', 'pass_phrase_confirm']);
-    this.keyImportUi.renderPassPhraseStrengthValidationInput($('#password'), $('#module_setup_1_enter_pp .action_password'));
     if (this.action === 'setup') {
       await this.setupActionModule.renderSetupAction(storage.setup_simple);
     } else if (this.action === 'passphrase_change_gmail_backup') {
