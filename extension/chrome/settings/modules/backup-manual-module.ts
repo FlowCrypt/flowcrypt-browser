@@ -12,10 +12,9 @@ import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
 import { PgpKey, KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
-import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { Value, Url, PromiseCancellation } from '../../../js/common/core/common.js';
 import { Settings } from '../../../js/common/settings.js';
@@ -24,6 +23,7 @@ import { Buf } from '../../../js/common/core/buf.js';
 export class BackupManualActionModule extends ViewModule<BackupView> {
 
   private ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
+  private readonly proceedBtn = $('#module_manual .action_manual_backup');
 
   constructor(view: BackupView) {
     super(view);
@@ -37,8 +37,8 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   public setHandlers = () => {
-    $('#step_3_manual input[name=input_backup_choice]').click(this.view.setHandler(el => this.actionSelectBackupMethodHandler(el)));
-    $('.action_manual_backup').click(this.view.setHandlerPrevent('double', el => this.actionManualBackupHandler()));
+    $('#module_manual input[name=input_backup_choice]').click(this.view.setHandler(el => this.actionSelectBackupMethodHandler(el)));
+    this.proceedBtn.click(this.view.setHandlerPrevent('double', el => this.actionManualBackupHandler()));
   }
 
   public doBackupOnEmailProvider = async (armoredKey: string) => {
@@ -58,30 +58,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     }
   }
 
-  public setupCreateSimpleAutomaticInboxBackup = async () => {
-    const [primaryKi] = await Store.keysGet(this.view.acctEmail, ['primary']);
-    if (!(await PgpKey.read(primaryKi.private)).isFullyEncrypted()) {
-      await Ui.modal.warning('Key not protected with a pass phrase, skipping');
-      throw new UnreportableError('Key not protected with a pass phrase, skipping');
-    }
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-    try {
-      await this.doBackupOnEmailProvider(primaryKi.private);
-      await this.view.writeBackupDoneAndRender(false, 'inbox');
-    } catch (e) {
-      if (ApiErr.isAuthPopupNeeded(e)) {
-        await Ui.modal.info("Authorization Error. FlowCrypt needs to reconnect your Gmail account");
-        const connectResult = await GoogleAuth.newAuthPopup({ acctEmail: this.view.acctEmail });
-        if (!connectResult.error) {
-          await this.setupCreateSimpleAutomaticInboxBackup();
-        } else {
-          throw e;
-        }
-      }
-    }
-  }
-
-  public actionManualBackupHandler = async () => {
+  private actionManualBackupHandler = async () => {
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
     const [primaryKi] = await Store.keysGet(this.view.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
@@ -118,13 +95,13 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       await this.backupOnEmailProviderAndUpdateUi(primaryKi);
       return;
     }
-    if (!this.isPassPhraseStrongEnough(primaryKi, pp) && await Ui.modal.confirm('Your key is not protected with strong pass phrase, would you like to change pass phrase now?')) {
+    if (!this.isPassPhraseStrongEnough(primaryKi, pp)) {
+      await Ui.modal.warning('Your key is not protected with strong pass phrase.\n\nYou should change your pass phrase.');
       window.location.href = Url.create('/chrome/settings/modules/change_passphrase.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
       return;
     }
-    const btn = $('.action_manual_backup');
-    const origBtnText = btn.text();
-    Xss.sanitizeRender(btn, Ui.spinner('white'));
+    const origBtnText = this.proceedBtn.text();
+    Xss.sanitizeRender(this.proceedBtn, Ui.spinner('white'));
     try {
       await this.doBackupOnEmailProvider(primaryKi.private);
     } catch (e) {
@@ -138,16 +115,16 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
         return await Ui.modal.error(`Error happened: ${String(e)}`);
       }
     } finally {
-      btn.text(origBtnText);
+      this.proceedBtn.text(origBtnText);
     }
-    await this.view.writeBackupDoneAndRender(false, 'inbox');
+    await this.view.renderBackupDone(false, 'inbox');
   }
 
   private backupAsFile = async (primaryKi: KeyInfo) => { // todo - add a non-encrypted download option
     const attachment = this.asBackupFile(primaryKi.private);
     Browser.saveToDownloads(attachment);
     await Ui.modal.info('Downloading private key backup file..');
-    await this.view.writeBackupDoneAndRender(false, 'file');
+    await this.view.renderBackupDone(false, 'file');
   }
 
   private backupByBrint = async (primaryKi: KeyInfo) => { // todo - implement + add a non-encrypted print option
@@ -155,7 +132,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private backupRefused = async (ki: KeyInfo) => {
-    await this.view.writeBackupDoneAndRender(Value.int.getFutureTimestampInMonths(3), 'none');
+    await this.view.renderBackupDone(Value.int.getFutureTimestampInMonths(3), 'none');
   }
 
   private isPassPhraseStrongEnough = async (ki: KeyInfo, passphrase: string) => {
@@ -191,17 +168,17 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
 
   private actionSelectBackupMethodHandler = (target: HTMLElement) => {
     if ($(target).val() === 'inbox') {
-      $('.action_manual_backup').text('back up as email');
-      $('.action_manual_backup').removeClass('red').addClass('green');
+      this.proceedBtn.text('back up as email');
+      this.proceedBtn.removeClass('red').addClass('green');
     } else if ($(target).val() === 'file') {
-      $('.action_manual_backup').text('back up as a file');
-      $('.action_manual_backup').removeClass('red').addClass('green');
+      this.proceedBtn.text('back up as a file');
+      this.proceedBtn.removeClass('red').addClass('green');
     } else if ($(target).val() === 'print') {
-      $('.action_manual_backup').text('back up on paper');
-      $('.action_manual_backup').removeClass('red').addClass('green');
+      this.proceedBtn.text('back up on paper');
+      this.proceedBtn.removeClass('red').addClass('green');
     } else {
-      $('.action_manual_backup').text('try my luck');
-      $('.action_manual_backup').removeClass('green').addClass('red');
+      this.proceedBtn.text('try my luck');
+      this.proceedBtn.removeClass('green').addClass('red');
     }
   }
 

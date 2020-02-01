@@ -120,10 +120,7 @@ export type AccountStore = {
   full_name?: string;
   cryptup_enabled?: boolean;
   setup_done?: boolean;
-  setup_simple?: boolean;
   is_newly_created_key?: boolean;
-  key_backup_method?: KeyBackupMethod;
-  key_backup_prompt?: number | false;
   successfully_received_at_leat_one_message?: boolean;
   notification_setup_done_seen?: boolean;
   picture?: string; // google image
@@ -141,8 +138,8 @@ export type AccountStore = {
 
 export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'email_provider' | 'google_token_access' | 'google_token_expires' | 'google_token_scopes' |
   'google_token_refresh' | 'hide_message_password' | 'sendAs' | 'drafts_reply' | 'drafts_compose' |
-  'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' | 'setup_simple' | 'is_newly_created_key' | 'key_backup_method' |
-  'key_backup_prompt' | 'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
+  'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' | 'is_newly_created_key' |
+  'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
   'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all' | 'subscription' | 'uuid' | 'use_rich_text' | 'rules';
 
 export class Subscription implements SubscriptionInfo {
@@ -285,7 +282,7 @@ export class Store {
     return false;
   }
 
-  public static keysGet = async (acctEmail: string, longids?: string[]) => {
+  public static keysGet = async (acctEmail: string, longids?: string[]): Promise<KeyInfo[]> => {
     const stored = await Store.getAcct(acctEmail, ['keys']);
     const keys: KeyInfo[] = stored.keys || [];
     if (!longids) {
@@ -306,16 +303,17 @@ export class Store {
   public static keysAdd = async (acctEmail: string, newKeyArmored: string) => {
     const keyinfos = await Store.keysGet(acctEmail);
     let updated = false;
-    const newKeyLongid = await PgpKey.longid(newKeyArmored);
+    const prv = await PgpKey.read(newKeyArmored);
+    const newKeyLongid = await PgpKey.longid(prv);
     if (newKeyLongid) {
       for (const i in keyinfos) {
         if (newKeyLongid === keyinfos[i].longid) { // replacing a key
-          keyinfos[i] = await Store.keysObj(newKeyArmored, keyinfos[i].primary);
+          keyinfos[i] = await Store.keyInfoObj(prv, keyinfos[i].primary);
           updated = true;
         }
       }
       if (!updated) {
-        keyinfos.push(await Store.keysObj(newKeyArmored, keyinfos.length === 0));
+        keyinfos.push(await Store.keyInfoObj(prv, keyinfos.length === 0));
       }
       await Store.setAcct(acctEmail, { keys: keyinfos });
     }
@@ -725,6 +723,15 @@ export class Store {
     KEY_CACHE = {};
   }
 
+  public static keyInfoObj = async (prv: OpenPGP.key.Key, primary = false): Promise<KeyInfo> => {
+    const longid = await PgpKey.longid(prv);
+    if (!longid) {
+      throw new Error('Store.keysObj: unexpectedly no longid');
+    }
+    const fingerprint = await PgpKey.fingerprint(prv);
+    return { private: prv.armor(), public: prv.toPublic().armor(), primary, longid, fingerprint: fingerprint!, keywords: mnemonic(longid)! };
+  }
+
   private static singleScopeRawIndexArr = (scope: string, keys: string[]) => {
     return keys.map(key => Store.singleScopeRawIndex(scope, key));
   }
@@ -746,16 +753,6 @@ export class Store {
       }
     }
     return accountStore;
-  }
-
-  private static keysObj = async (armoredPrv: string, primary = false): Promise<KeyInfo> => {
-    const longid = await PgpKey.longid(armoredPrv)!;
-    if (!longid) {
-      throw new Error('Store.keysObj: unexpectedly no longid');
-    }
-    const prv = await PgpKey.read(armoredPrv);
-    const fingerprint = await PgpKey.fingerprint(armoredPrv);
-    return { private: armoredPrv, public: prv.toPublic().armor(), primary, longid, fingerprint: fingerprint!, keywords: mnemonic(longid)! };
   }
 
   /* db */

@@ -38,38 +38,13 @@
       <div class="loading_copy">Loading...</div>
     </div>
 
-    <div id="step_0_status">
+    <div id="module_status">
       <div class="line status_summary"></div>
+      <div class="line"><pre class="status_details"></pre></div>
       <div class="line container"></div>
     </div>
 
-    <div id="step_1_password">
-      <div class="wide line">Create a pass phrase to protect your encrypted emails. See <a href="#"
-          data-featherlight="/chrome/texts/passphrase_help.htm">choosing
-          secure pass phrases</a>.</div>
-      <div class="line">
-        <input id="password" type="text" placeholder="Pass phrase" />
-      </div>
-      <div class="line ">Loss of this pass phrase cannot be recovered. Note it down on a paper.</div>
-      <div class="line">
-        <button class="button long gray action_password">SET PASS PHRASE</button>
-      </div>
-    </div>
-
-    <div id="step_2_confirm">
-      <div class="line">Please repeat it one more time. Make sure to note the pass phrase down.</div>
-      <div class="line">
-        <input id="password2" type="text" placeholder="Repeat pass phrase" />
-      </div>
-      <div class="line">
-        <button class="button long green action_backup">CONFIRM PASS PHRASE</button>
-      </div>
-      <div class="line">
-        <button class="button long gray action_reset_password">USE ANOTHER PASS PHRASE</button>
-      </div>
-    </div>
-
-    <div id="step_3_manual">
+    <div id="module_manual">
       <div class="line">Your key is stored in the browser. Backups are useful if you ever lose your device.</div>
       <div class="line">
         <div class="details text-left mt-40">
@@ -120,12 +95,12 @@
       <div class="line">
       </div>
       <div class="line backup_action_buttons_container">
-        <button class="button long green action_manual_backup" data-test="action-backup-step3manual-continue">BACK UP AS
-          EMAIL</button>
-        <span>&nbsp;&nbsp;&nbsp;&nbsp;or&nbsp;&nbsp;&nbsp;&nbsp;<button class="button long gray action_skip_backup">LATER
-          </button></span>
+        <button class="button long green action_manual_backup" data-test="action-backup-step3manual-continue">
+          BACK UP AS EMAIL
+        </button>
       </div>
     </div>
+
   </div>
 
   <script src="/lib/purify.min.js"></script>

@@ -4,13 +4,13 @@
 
 import { AccountStore, Scopes, Store } from '../../js/common/platform/store.js';
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
-import { Url, Value } from '../../js/common/core/common.js';
+import { Url } from '../../js/common/core/common.js';
 
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Attester } from '../../js/common/api/attester.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Contact } from '../../js/common/core/pgp-key.js';
+import { Contact, KeyInfo } from '../../js/common/core/pgp-key.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/google.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
@@ -32,8 +32,6 @@ export interface SetupOptions {
   passphrase_save: boolean;
   submit_main: boolean;
   submit_all: boolean;
-  setup_simple: boolean;
-  key_backup_prompt: number | false;
   recovered?: boolean;
   is_newly_created_key: boolean;
 }
@@ -57,7 +55,7 @@ export class SetupView extends View {
   public rules: Rules | undefined;
 
   public acctEmailAttesterFingerprint: string | undefined;
-  public fetchedKeyBackups: OpenPGP.key.Key[] = [];
+  public fetchedKeyBackups: KeyInfo[] = [];
   public fetchedKeyBackupsUniqueLongids: string[] = [];
   public importedKeysUniqueLongids: string[] = [];
   public mathingPassphrases: string[] = [];
@@ -91,7 +89,7 @@ export class SetupView extends View {
   public render = async () => {
     await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
     await initPassphraseToggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
-    this.storage = await Store.getAcct(this.acctEmail, ['setup_done', 'key_backup_prompt', 'email_provider']);
+    this.storage = await Store.getAcct(this.acctEmail, ['setup_done', 'email_provider']);
     this.scopes = await Store.getScopes(this.acctEmail);
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.rules = await Rules.newInstance(this.acctEmail);
@@ -165,8 +163,6 @@ export class SetupView extends View {
     await Store.setAcct(this.acctEmail, {
       tmp_submit_main: options.submit_main,
       tmp_submit_all: options.submit_all,
-      setup_simple: options.setup_simple,
-      key_backup_prompt: options.key_backup_prompt,
       is_newly_created_key: options.is_newly_created_key,
     });
   }
@@ -221,10 +217,6 @@ export class SetupView extends View {
       return;
     }
     await Settings.submitPubkeys(this.acctEmail, addresses, armoredPubkey);
-  }
-
-  public getUniqueLongids = async (keys: OpenPGP.key.Key[]): Promise<string[]> => {
-    return Value.arr.unique(await Promise.all(keys.map(PgpKey.longid))).filter(Boolean) as string[];
   }
 
 }

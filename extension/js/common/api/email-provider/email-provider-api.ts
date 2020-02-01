@@ -6,7 +6,7 @@
 
 import { Api, ChunkedCb, ProgressCb } from '../api.js';
 
-import { Contact } from '../../core/pgp-key.js';
+import { Contact, KeyInfo } from '../../core/pgp-key.js';
 import { GmailRes } from './gmail/gmail-parser.js';
 import { GmailResponseFormat } from './gmail/gmail.js';
 import { SendableMsg } from './sendable-msg.js';
@@ -20,6 +20,11 @@ export type ReplyParams = {
   bcc: string[];
   from: string;
   subject: string;
+};
+
+export type Backups = {
+  keyinfos: { backups: KeyInfo[], backupsImported: KeyInfo[], backupsNotImported: KeyInfo[], importedNotBackedUp: KeyInfo[] },
+  longids: { backups: string[], backupsImported: string[], backupsNotImported: string[], importedNotBackedUp: string[] },
 };
 
 /**

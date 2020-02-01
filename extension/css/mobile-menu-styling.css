@@ -2,62 +2,75 @@
   body {
     overflow-x: hidden;
   }
+
   .featherlight .featherlight-content {
     margin: 0 auto;
     width: 90%;
   }
+
   .profile-img {
     left: -5px;
     top: -10px;
+    margin-top: 0;
   }
+
   #settings-row {
     padding: 20px 0 30px;
   }
+
   #footer-row {
     margin: 0 auto;
     position: relative;
     text-align: center;
   }
+
   body#settings #view_contact pre {
     white-space: normal;
   }
+
   .featherlight-inner {
     width: 100%;
   }
+
   .settings-icons-rows {
     margin: 0 auto;
     width: 60%;
   }
+
   .box + p {
     padding-bottom: 15px;
   }
+
   .show_settings_page {
     display: block;
     margin-bottom: 20px;
     text-align: center;
   }
+
   .toggle-settings,
   .advanced.toggle-settings {
     display: block;
     margin-top: 20px;
     text-align: center;
   }
+
   #toggle-accounts-profile-img {
     left: 10px;
     top: -5px;
   }
-  .profile-img {
-    margin-top: 0;
-  }
+
   .subscription {
     font-size: 13px;
   }
+
   a.gray_link {
     line-height: 2.5;
   }
+
   table#compose th {
     width: 100% !important;
   }
+
   body#settings .pubkeys.page #emails tr[email] td:first-child {
     width: 45% !important;
   }
@@ -67,17 +80,21 @@
   .logo-row {
     margin-top: 0;
   }
+
   .settings-icons-rows {
     margin: 0 auto;
     width: 90%;
   }
+
   #settings-row .box {
     height: 100px;
     width: 100px;
   }
+
   #settings-row .box img {
     width: 100%;
   }
+
   #settings-row .box img.new-email-icon,
   #settings-row .box img.security-icon,
   #settings-row .box img.feedback-icon,
@@ -87,34 +104,43 @@
   #settings-row .box img.servers-icon {
     width: 60px;
   }
+
   #settings-row .box img.pub-key-icon {
     width: 50px;
   }
+
   #settings-row .box img.keys-icon {
     top: 12px;
   }
+
   #settings-row .box img.security-icon {
     top: 15px;
   }
-  .subscription, .cryptup-logo-row {
+
+  .subscription,
+  .cryptup-logo-row {
     display: block;
     margin: 0 auto;
     position: relative;
     text-align: center;
   }
+
   .subscription {
     display: block;
     margin: 0 auto;
     font-size: 13px;
   }
+
   .cryptup-logo-row {
     padding: 10px 0;
     text-align: center;
   }
+
   .profile-row {
     position: relative;
     text-align: center;
   }
+
   .add-account {
     display: block !important;
     font-size: 14px !important;
@@ -125,50 +151,63 @@
     text-align: center !important;
     transition: 0.25s;
   }
+
   .public-profile-container {
     position: relative;
   }
+
   #alt-accounts.accounts-row {
     left: 0 !important;
     margin: 0 auto;
     right: 0 !important;
     width: 90%;
   }
+
   .advanced_link {
     margin-bottom: 0;
   }
+
   .featherlight-inner {
     width: 100%;
+    padding: 0;
   }
+
   #compose {
     width: 100%;
   }
+
   #content > .line {
     width: 100%;
   }
+
   #section_subject,
   #new_message table#compose td.text div#input_text,
   table#compose td.recipients-inputs > div#input_addresses_container > div .recipients span {
     word-break: break-all;
   }
+
   #settings #content {
     text-align: left;
   }
+
   body#settings > div#content,
   body#settings > div#content.page {
     margin-top: 25px;
   }
-  body#settings>div#content h2 {
+
+  body#settings > div#content h2 {
     font-size: 18px;
   }
+
   #settings-row h1,
   body#settings > div#content h1,
   div#content h2,
-  body#settings>div#content h2 {
+  body#settings > div#content h2 {
     font-size: 20px;
     font-weight: 500;
     color: #333;
   }
+
   .line .button,
   body#settings > div#content.help .button,
   body#settings > div#content.help .button.green,
@@ -178,28 +217,33 @@
     padding: 10px 5px;
     width: 90%;
   }
-  .featherlight-inner {
-    padding: 0;
-  }
+
   .new_message_featherlight .featherlight-content {
     padding-top: 0;
   }
+
   .mt-mobile {
     margin-top: 30px;
   }
-  .featherlight:before {
+
+  .featherlight::before {
     margin-right: 0;
   }
-  div.line, .key-content-row {
+
+  div.line,
+  .key-content-row {
     font-size: 13px;
   }
+
   body#settings > div#content .list_table table tr td:first-child,
   body#settings > div#content .list_table table tr th:first-child {
     padding-left: 5px;
     font-size: 10px;
   }
+
   #settings div.line,
-  #settings-row .line, #settings-row p.line,
+  #settings-row .line,
+  #settings-row p.line,
   #content p.line,
   .input_email,
   #settings .email-address,
@@ -208,78 +252,94 @@
     font-size: 13px;
     font-weight: 300;
     line-height: 1.75;
-    letter-spacing: .025;
+    letter-spacing: 0.025;
     margin: 0 auto;
     opacity: 1;
     width: 85%;
   }
+
   body#settings > div.profile-row > .email-address {
     font-size: 13px;
   }
+
   table#compose input#input_to {
     width: 100%;
   }
+
   .recovery_passphrase_container {
     text-align: center;
   }
+
   #settings-row .line a,
   .featherlight-content b a {
     font-weight: 500;
     text-decoration: underline;
   }
+
   .featherlight-content b,
   .featherlight-inner {
     font-size: 13px;
     font-family: "Open Sans", sans-serif;
     font-weight: 400;
     line-height: 1.75;
-    letter-spacing: .05;
+    letter-spacing: 0.05;
   }
+
   #footer-row a {
     font-size: 12px;
   }
 
-  div#content .subscribe--header-row { text-align: right;}
+  div#content .subscribe--header-row { text-align: right; }
 
   body#settings > div#content input[type=password],
   body#settings > div#content input[type=text] {
     margin: 0 auto;
-    width: 90%!important;
+    width: 90% !important;
   }
+
   body#settings > div#content.help #input_text {
     width: 100%;
   }
+
   body#settings > div.profile-row {
     position: relative;
     left: 0;
     top: 20px;
   }
+
   body#settings .setup h1 {
     margin-top: 25px;
   }
+
   body#settings .action_show_help {
     margin-left: 0;
     right: 0;
     top: 42px;
   }
+
   body#settings > div.profile-row .profile-img {
     padding-top: 0;
   }
+
   table#compose td.bottom div#send_btn {
     display: block;
     margin: 0 auto;
     margin-bottom: 10px;
     padding: 10px 5px;
   }
+
   table#compose td.bottom {
     padding-bottom: 10px;
   }
+
   body#settings .colored_label {
     margin: 3px 0;
   }
-  div#step_3_manual .backup_action_buttons_container {
+
+  div#module_manual .backup_action_buttons_container {
     text-align: center;
   }
+
   body#settings .pubkeys.page #emails td:nth-child(2),
   body#settings .pubkeys.page #emails td:nth-child(3),
   body#settings .pubkeys.page #emails td:nth-child(4) {
@@ -307,24 +367,25 @@
     margin: 0 auto;
     padding-left: 0 !important;
     text-align: left !important;
-    text-indent: 0!important;
+    text-indent: 0 !important;
   }
 
   body#settings > div#content textarea {
     width: 100%;
   }
 
-  body#settings a.action_show:before,
-  body#settings a.action_change:before,
-  body#settings a.action_remove:before {
+  body#settings a.action_show::before,
+  body#settings a.action_change::before,
+  body#settings a.action_remove::before {
     background-size: 100%;
-    content:"";
+    content: "";
     height: 20px;
     left: 2px;
     position: absolute;
     top: 2.5px;
     width: 20px;
   }
+
   body#settings > div#content.pubkeys table#emails tbody {
     width: 100%;
   }

@@ -37,8 +37,8 @@ export class Assert {
   public static abortAndRenderErrOnUnprotectedKey = async (acctEmail?: string, tabId?: string) => {
     if (acctEmail) {
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      const { setup_done, setup_simple } = await Store.getAcct(acctEmail, ['setup_simple', 'setup_done']);
-      if (setup_done && setup_simple && primaryKi && !(await PgpKey.read(primaryKi.private)).isFullyEncrypted()) {
+      const { setup_done } = await Store.getAcct(acctEmail, ['setup_done']);
+      if (setup_done && primaryKi && !(await PgpKey.read(primaryKi.private)).isFullyEncrypted()) {
         if (window.location.pathname === '/chrome/settings/index.htm') {
           Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
         } else {

@@ -32,16 +32,15 @@ export class SetupCreateKeyModule {
         passphrase_save: Boolean($('#step_2a_manual_create .input_passphrase_save').prop('checked')),
         submit_main: Boolean($('#step_2a_manual_create .input_submit_key').prop('checked') || this.view.rules!.mustSubmitToAttester()),
         submit_all: Boolean($('#step_2a_manual_create .input_submit_all').prop('checked') || this.view.rules!.mustSubmitToAttester()),
-        key_backup_prompt: this.view.rules!.canBackupKeys() ? Date.now() : false,
         recovered: false,
-        setup_simple: Boolean($('#step_2a_manual_create .input_backup_inbox').prop('checked')),
         is_newly_created_key: true,
       };
       const keyAlgo = $('#step_2a_manual_create .key_type').val() as KeyAlgo;
+      const action = $('#step_2a_manual_create .input_backup_inbox').prop('checked') ? 'setup_automatic' : 'setup_manual';
       await this.createSaveKeyPair(options, keyAlgo);
       await this.view.preFinalizeSetup(options);
       // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
-      window.location.href = Url.create('modules/backup.htm', { action: 'setup', acctEmail: this.view.acctEmail });
+      window.location.href = Url.create('modules/backup.htm', { action, acctEmail: this.view.acctEmail });
     } catch (e) {
       Catch.reportErr(e);
       await Ui.modal.error(`There was an error, please try again.\n\n(${String(e)})`);
