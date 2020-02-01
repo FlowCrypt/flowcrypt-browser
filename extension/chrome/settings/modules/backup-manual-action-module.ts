@@ -38,7 +38,8 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
 
   public setHandlers = () => {
     $('#module_manual input[name=input_backup_choice]').click(this.view.setHandler(el => this.actionSelectBackupMethodHandler(el)));
-    $('.action_manual_backup').click(this.view.setHandlerPrevent('double', el => this.actionManualBackupHandler()));
+    $('#module_manual .action_manual_backup').click(this.view.setHandlerPrevent('double', el => this.actionManualBackupHandler()));
+    $('#module_manual .action_skip_backup').click(this.view.setHandler(el => this.actionSkipBackupHandler()));
   }
 
   public doBackupOnEmailProvider = async (armoredKey: string) => {
@@ -122,7 +123,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       window.location.href = Url.create('/chrome/settings/modules/change_passphrase.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
       return;
     }
-    const btn = $('.action_manual_backup');
+    const btn = $('#module_manual .action_manual_backup');
     const origBtnText = btn.text();
     Xss.sanitizeRender(btn, Ui.spinner('white'));
     try {
@@ -190,18 +191,32 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private actionSelectBackupMethodHandler = (target: HTMLElement) => {
+    const btn = $('#module_manual .action_manual_backup');
     if ($(target).val() === 'inbox') {
-      $('.action_manual_backup').text('back up as email');
-      $('.action_manual_backup').removeClass('red').addClass('green');
+      btn.text('back up as email');
+      btn.removeClass('red').addClass('green');
     } else if ($(target).val() === 'file') {
-      $('.action_manual_backup').text('back up as a file');
-      $('.action_manual_backup').removeClass('red').addClass('green');
+      btn.text('back up as a file');
+      btn.removeClass('red').addClass('green');
     } else if ($(target).val() === 'print') {
-      $('.action_manual_backup').text('back up on paper');
-      $('.action_manual_backup').removeClass('red').addClass('green');
+      btn.text('back up on paper');
+      btn.removeClass('red').addClass('green');
     } else {
-      $('.action_manual_backup').text('try my luck');
-      $('.action_manual_backup').removeClass('green').addClass('red');
+      btn.text('try my luck');
+      btn.removeClass('green').addClass('red');
+    }
+  }
+
+  private actionSkipBackupHandler = async () => {
+    if (this.view.action === 'setup') {
+      await Store.setAcct(this.view.acctEmail, { key_backup_prompt: false });
+      window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: this.view.acctEmail });
+    } else {
+      if (this.view.parentTabId) {
+        BrowserMsg.send.closePage(this.view.parentTabId);
+      } else {
+        Catch.report(`backup.ts: missing parentTabId for ${this.view.action}`);
+      }
     }
   }
 

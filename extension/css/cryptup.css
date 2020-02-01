@@ -792,8 +792,8 @@ body#settings > div#content.backup .colored_label {
   opacity: 0.75;
 }
 
-body#settings > div#content.backup div#module_setup_step_1_enter_password { display: none; }
-body#settings > div#content.backup div#module_setup_step_2_confirm_password { display: none; }
+body#settings > div#content.backup div#module_setup_1_enter_pp { display: none; }
+body#settings > div#content.backup div#module_setup_2_confirm_pp { display: none; }
 body#settings > div#content.backup div#module_manual { display: none; }
 body#settings > div#content.backup div#module_manual .details { text-align: left; }
 

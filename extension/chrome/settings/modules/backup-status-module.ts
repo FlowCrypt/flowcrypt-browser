@@ -13,9 +13,11 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 export class BackupStatusModule extends ViewModule<BackupView> {
 
   public setHandlers = () => { // is run after checkAndRenderBackupStatus, which renders (some of) these fields first
-    $('.action_go_manual').click(this.view.setHandler(el => this.actionShowManualBackupHandler()));
-    $('.action_proceed_default_backup_choice').click(this.view.setHandler(el => this.actionProceedDefaultBackupChoiceHandler()));
-    $('.action_go_auth_denied').click(this.view.setHandler(() => BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' })));
+    $('#module_status .action_go_manual').click(this.view.setHandler(el => this.actionShowManualBackupHandler()));
+    $('#module_status .action_proceed_default_backup_choice').click(this.view.setHandler(el => this.actionProceedDefaultBackupChoiceHandler()));
+    $('#module_status .action_go_auth_denied').click(this.view.setHandler(() => BrowserMsg.send.bg.settings({
+      acctEmail: this.view.acctEmail, page: '/chrome/settings/modules/auth_denied.htm'
+    })));
   }
 
   public checkAndRenderBackupStatus = async () => {
@@ -75,7 +77,7 @@ export class BackupStatusModule extends ViewModule<BackupView> {
   }
 
   private actionProceedDefaultBackupChoiceHandler = async () => {
-    this.view.displayBlock('module_setup_step_1_enter_password');
+    this.view.displayBlock('module_setup_1_enter_pp');
     $('h1').text('Set Backup Pass Phrase');
   }
 

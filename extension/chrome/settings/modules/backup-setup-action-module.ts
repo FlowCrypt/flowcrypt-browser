@@ -9,7 +9,6 @@ import { Settings } from '../../../js/common/settings.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { Url } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
@@ -19,16 +18,15 @@ import { Xss } from '../../../js/common/platform/xss.js';
 export class BackupSetupActionModule extends ViewModule<BackupView> {
 
   public setHandlers = () => { // is run after renderSetupAction
-    $('.action_skip_backup').click(this.view.setHandler(el => this.actionSkipBackupHandler()));
-    $("#password2").keydown(this.view.setEnterHandlerThatClicks('.action_backup'));
-    $('.action_password').click(this.view.setHandler(el => this.actionEnterPassPhraseHandler(el)));
-    $('.action_reset_password').click(this.view.setHandler(el => this.actionResetPassPhraseEntryHandler()));
-    $('.action_backup').click(this.view.setHandlerPrevent('double', el => this.actionBackupHandler(el)));
+    $('#module_setup_1_enter_pp .action_password').click(this.view.setHandler(el => this.actionEnterPassPhraseHandler(el)));
+    $("#module_setup_2_confirm_pp #pass_phrase_confirm").keydown(this.view.setEnterHandlerThatClicks('#module_setup_2_confirm_pp .action_backup'));
+    $('#module_setup_2_confirm_pp .action_reset_password').click(this.view.setHandler(el => this.actionResetPassPhraseEntryHandler()));
+    $('#module_setup_2_confirm_pp .action_backup').click(this.view.setHandlerPrevent('double', el => this.actionBackupHandler(el)));
   }
 
   public renderSetupAction = async (setupSimple: boolean | undefined) => {
     $('.back').css('display', 'none');
-    $('.action_skip_backup').parent().css('display', 'none'); // todo - looks like it will never be showing?
+    $('#module_manual .action_skip_backup').parent().css('display', 'none');
     if (setupSimple) {
       try {
         await this.view.manualActionModule.setupCreateSimpleAutomaticInboxBackup();
@@ -41,40 +39,27 @@ export class BackupSetupActionModule extends ViewModule<BackupView> {
     }
   }
 
-  private actionSkipBackupHandler = async () => {
-    if (this.view.action === 'setup') {
-      await Store.setAcct(this.view.acctEmail, { key_backup_prompt: false });
-      window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: this.view.acctEmail });
-    } else {
-      if (this.view.parentTabId) {
-        BrowserMsg.send.closePage(this.view.parentTabId);
-      } else {
-        Catch.report(`backup.ts: missing parentTabId for ${this.view.action}`);
-      }
-    }
-  }
-
   private actionEnterPassPhraseHandler = async (target: HTMLElement) => {
     if ($(target).hasClass('green')) {
-      this.view.displayBlock('module_setup_step_2_confirm_password');
+      this.view.displayBlock('module_setup_2_confirm_pp');
     } else {
       await Ui.modal.warning('Please select a stronger pass phrase. Combinations of 4 to 5 uncommon words are the best.');
     }
   }
 
   private actionResetPassPhraseEntryHandler = async () => {
-    $('#password').val('').keyup();
-    $('#password2').val('');
-    this.view.displayBlock('module_setup_step_1_enter_password');
-    $('#password').focus();
+    $('#module_setup_1_enter_pp #password').val('').keyup();
+    $('#module_setup_2_confirm_pp #pass_phrase_confirm').val('');
+    this.view.displayBlock('module_setup_1_enter_pp');
+    $('#module_setup_1_enter_pp #password').focus();
   }
 
   private actionBackupHandler = async (target: HTMLElement) => {
     const newPassphrase = String($('#password').val());
-    if (newPassphrase !== $('#password2').val()) {
+    if (newPassphrase !== $('#module_setup_2_confirm_pp #pass_phrase_confirm').val()) {
       await Ui.modal.warning('The two pass phrases do not match, please try again.');
-      $('#password2').val('');
-      $('#password2').focus();
+      $('#module_setup_2_confirm_pp #pass_phrase_confirm').val('');
+      $('#module_setup_2_confirm_pp #pass_phrase_confirm').focus();
     } else {
       const btnText = $(target).text();
       Xss.sanitizeRender(target, Ui.spinner('white'));
