@@ -237,7 +237,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       this.currentlyReplacingAtts = true;
       for (const attsContainerEl of $(this.sel.attsContainerInner)) {
         const attsContainer = $(attsContainerEl);
-        const newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.attachmentsPattern).addClass('evaluated');
+        const newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.webmailNamePattern).addClass('evaluated');
         const newPgpAttsNames = Browser.arrFromDomNodeList(newPgpAtts.find('.aV3')).map(x => $.trim($(x).text()));
         if (newPgpAtts.length) {
           const msgId = this.determineMsgId(attsContainer);
@@ -295,7 +295,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             attsContainerInner.prepend(this.factory.embeddedAtta(a, true)); // xss-safe-factory
             nRenderedAtts++;
           } else if (treatAs === 'encryptedMsg') {
-            const isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp'].includes(a.name); // ambiguous .asc name
+            const isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !Att.encryptedMsgNames.includes(a.name); // ambiguous .asc name
             const isAmbiguousNonameFile = !a.name || a.name === 'noname'; // may not even be OpenPGP related
             if (isAmbiguousAscFile || isAmbiguousNonameFile) { // Inspect a chunk
               const data = await this.gmail.attGetChunk(msgId, a.id!); // .id is present when fetched from api
