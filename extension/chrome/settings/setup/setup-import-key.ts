@@ -28,7 +28,6 @@ export class SetupImportKeyModule {
       passphrase_save: Boolean($('#step_2b_manual_enter .input_passphrase_save').prop('checked')),
       is_newly_created_key: false,
       recovered: false,
-      setup_simple: false,
     };
     try {
       const checked = await this.view.keyImportUi.checkPrv(this.view.acctEmail, String($('#step_2b_manual_enter .input_private_key').val()), options.passphrase);

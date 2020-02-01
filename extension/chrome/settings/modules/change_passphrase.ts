@@ -111,13 +111,8 @@ View.run(class ChangePassPhraseView extends View {
     const persistentlyStoredPp = await Store.passphraseGet(this.acctEmail, this.primaryKi!.longid, true);
     await Store.passphraseSave('local', this.acctEmail, this.primaryKi!.longid, typeof persistentlyStoredPp === 'undefined' ? undefined : newPp);
     await Store.passphraseSave('session', this.acctEmail, this.primaryKi!.longid, typeof persistentlyStoredPp === 'undefined' ? newPp : undefined);
-    const { setup_simple } = await Store.getAcct(this.acctEmail, ['setup_simple']);
-    if (setup_simple) {
-      Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/backup.htm', '&action=passphrase_change_gmail_backup');
-    } else {
-      await Ui.modal.info('Now that you changed your pass phrase, you should back up your key. New backup will be protected with new passphrase.');
-      Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/backup.htm', '&action=options');
-    }
+    await Ui.modal.info('Now that you changed your pass phrase, you should back up your key. New backup will be protected with new passphrase.');
+    Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/backup.htm', '&action=options');
   }
 
   private displayBlock = (name: string) => {

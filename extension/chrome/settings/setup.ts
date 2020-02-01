@@ -32,7 +32,6 @@ export interface SetupOptions {
   passphrase_save: boolean;
   submit_main: boolean;
   submit_all: boolean;
-  setup_simple: boolean;
   key_backup_prompt: number | false;
   recovered?: boolean;
   is_newly_created_key: boolean;
@@ -165,7 +164,6 @@ export class SetupView extends View {
     await Store.setAcct(this.acctEmail, {
       tmp_submit_main: options.submit_main,
       tmp_submit_all: options.submit_all,
-      setup_simple: options.setup_simple,
       key_backup_prompt: options.key_backup_prompt,
       is_newly_created_key: options.is_newly_created_key,
     });

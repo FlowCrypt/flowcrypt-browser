@@ -47,7 +47,7 @@ export class SetupRenderModule {
       }
       if (typeof key_backup_method !== 'string') {
         await Ui.modal.error('Backup has not successfully finished, will retry');
-        window.location.href = Url.create('modules/backup.htm', { action: 'setup', acctEmail: this.view.acctEmail });
+        window.location.href = Url.create('modules/backup.htm', { action: 'setup_manual', acctEmail: this.view.acctEmail });
         return;
       }
       await this.view.finalizeSetup({ submit_all: tmp_submit_all, submit_main: tmp_submit_main });

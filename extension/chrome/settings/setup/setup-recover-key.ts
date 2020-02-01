@@ -64,7 +64,6 @@ export class SetupRecoverKeyModule {
         passphrase_save: true, // todo - reevaluate saving passphrase when recovering
         key_backup_prompt: false,
         recovered: true,
-        setup_simple: true,
         is_newly_created_key: false,
       };
       await this.view.saveKeys(newlyMatchingKeys, options);

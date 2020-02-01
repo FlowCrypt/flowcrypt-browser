@@ -10,7 +10,6 @@ import { Gmail } from '../../../js/common/api/email-provider/gmail/gmail.js';
 import { Rules } from '../../../js/common/rules.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { BackupChangePpModule as BackupChangePpModule } from './backup-change-pp-module.js';
 import { BackupStatusModule } from './backup-status-module.js';
 import { BackupManualActionModule as BackupManualModule } from './backup-manual-module.js';
 import { BackupAutomaticModule } from './backup-automatic-module.js';
@@ -19,14 +18,13 @@ import { Lang } from '../../../js/common/lang.js';
 export class BackupView extends View {
 
   public readonly statusModule: BackupStatusModule;
-  public readonly changePpModule: BackupChangePpModule;
   public readonly manualModule: BackupManualModule;
   public readonly automaticModule: BackupAutomaticModule;
 
   public readonly acctEmail: string;
   public emailProvider: EmailProvider = 'gmail';
   public rules!: Rules;
-  public readonly action: 'setup' | 'passphrase_change_gmail_backup' | 'options' | undefined;
+  public readonly action: 'setup_automatic' | 'setup_manual' | 'options' | undefined;
   public readonly gmail: Gmail;
   public readonly parentTabId: string | undefined;
   public tabId!: string;
@@ -37,12 +35,11 @@ export class BackupView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'action']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['setup', 'passphrase_change_gmail_backup', 'options', undefined]);
-    if (this.action !== 'setup') {
+    this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['setup_automatic', 'setup_manual', 'options', undefined]);
+    if (this.action !== 'setup_automatic' && this.action !== 'setup_manual') {
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     }
     this.gmail = new Gmail(this.acctEmail);
-    this.changePpModule = new BackupChangePpModule(this);
     this.statusModule = new BackupStatusModule(this);
     this.manualModule = new BackupManualModule(this);
     this.automaticModule = new BackupAutomaticModule(this);
@@ -51,22 +48,19 @@ export class BackupView extends View {
   public render = async () => {
     this.tabId = await BrowserMsg.requiredTabId();
     this.rules = await Rules.newInstance(this.acctEmail);
-    const storage = await Store.getAcct(this.acctEmail, ['setup_simple', 'email_provider']);
+    const storage = await Store.getAcct(this.acctEmail, ['email_provider']);
     this.emailProvider = storage.email_provider || 'gmail';
     if (!this.rules.canBackupKeys()) {
       Xss.sanitizeRender('body', `<div class="line" style="margin-top: 100px;">${Lang.setup.keyBackupsNotAllowed}</div>`);
       return;
     }
-    if (this.action === 'setup') {
+    if (this.action === 'setup_automatic') {
       $('.back').css('display', 'none');
-      if (storage.setup_simple) {
-        await this.automaticModule.simpleSetupAutoBackupRetryUntilSuccessful();
-      } else {
-        this.displayBlock('module_manual');
-        $('h1').text('Back up your private key');
-      }
-    } else if (this.action === 'passphrase_change_gmail_backup') {
-      await this.changePpModule.renderChangedPassPhraseGmailBackup(storage.setup_simple);
+      await this.automaticModule.simpleSetupAutoBackupRetryUntilSuccessful();
+    } else if (this.action === 'setup_manual') {
+      $('.back').css('display', 'none');
+      this.displayBlock('module_manual');
+      $('h1').text('Back up your private key');
     } else if (this.action === 'options') {
       this.displayBlock('module_manual');
       $('h1').text('Back up your private key');
@@ -80,7 +74,7 @@ export class BackupView extends View {
 
   public writeBackupDoneAndRender = async (prompt: number | false, method: KeyBackupMethod) => {
     await Store.setAcct(this.acctEmail, { key_backup_prompt: prompt, key_backup_method: method });
-    if (this.action === 'setup') {
+    if (this.action === 'setup_automatic' || this.action === 'setup_manual') {
       window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: this.acctEmail, action: 'finalize' });
     } else {
       window.location.reload();
@@ -97,7 +91,6 @@ export class BackupView extends View {
   public setHandlers = () => {
     this.statusModule.setHandlers();
     this.manualModule.setHandlers();
-    this.changePpModule.setHandlers();
   }
 
 }

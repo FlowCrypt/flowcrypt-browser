@@ -20,7 +20,7 @@ export class BackupStatusModule extends ViewModule<BackupView> {
   }
 
   public checkAndRenderBackupStatus = async () => {
-    const storage = await Store.getAcct(this.view.acctEmail, ['setup_simple', 'key_backup_method', 'email_provider']);
+    const storage = await Store.getAcct(this.view.acctEmail, ['key_backup_method', 'email_provider']);
     const scopes = await Store.getScopes(this.view.acctEmail);
     if (this.view.emailProvider === 'gmail' && (scopes.read || scopes.modify)) {
       let keys;
