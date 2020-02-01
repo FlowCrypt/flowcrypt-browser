@@ -14,27 +14,17 @@ import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Assert } from '../../../js/common/assert.js';
 import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 
-export class BackupSetupActionModule extends ViewModule<BackupView> {
+export class BackupAutomaticModule extends ViewModule<BackupView> {
 
-  public setHandlers = () => { // is run after renderSetupAction
-
-  }
-
-  public renderSetupAction = async (setupSimple: boolean | undefined) => {
-    $('.back').css('display', 'none');
-    if (setupSimple) {
-      try {
-        await this.setupCreateSimpleAutomaticInboxBackup();
-      } catch (e) {
-        return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToBackUpKey, this.setupCreateSimpleAutomaticInboxBackup);
-      }
-    } else {
-      this.view.displayBlock('module_manual');
-      $('h1').text('Back up your private key');
+  public simpleSetupAutoBackupRetryUntilSuccessful = async () => {
+    try {
+      await this.setupCreateSimpleAutomaticInboxBackup();
+    } catch (e) {
+      return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToBackUpKey, this.setupCreateSimpleAutomaticInboxBackup);
     }
   }
 
-  public setupCreateSimpleAutomaticInboxBackup = async () => {
+  private setupCreateSimpleAutomaticInboxBackup = async () => {
     const [primaryKi] = await Store.keysGet(this.view.acctEmail, ['primary']);
     if (!(await PgpKey.read(primaryKi.private)).isFullyEncrypted()) {
       await Ui.modal.warning('Key not protected with a pass phrase, skipping');
@@ -42,7 +32,7 @@ export class BackupSetupActionModule extends ViewModule<BackupView> {
     }
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
-      await this.view.manualActionModule.doBackupOnEmailProvider(primaryKi.private);
+      await this.view.manualModule.doBackupOnEmailProvider(primaryKi.private);
       await this.view.writeBackupDoneAndRender(false, 'inbox');
     } catch (e) {
       if (ApiErr.isAuthPopupNeeded(e)) {

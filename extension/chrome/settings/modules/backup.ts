@@ -10,18 +10,18 @@ import { Gmail } from '../../../js/common/api/email-provider/gmail/gmail.js';
 import { Rules } from '../../../js/common/rules.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { BackupChangePpActionModule } from './backup-change-pp-action-module.js';
+import { BackupChangePpModule as BackupChangePpModule } from './backup-change-pp-module.js';
 import { BackupStatusModule } from './backup-status-module.js';
-import { BackupManualActionModule } from './backup-manual-action-module.js';
-import { BackupSetupActionModule } from './backup-setup-action-module.js';
+import { BackupManualActionModule as BackupManualModule } from './backup-manual-module.js';
+import { BackupAutomaticModule } from './backup-automatic-module.js';
 import { Lang } from '../../../js/common/lang.js';
 
 export class BackupView extends View {
 
   public readonly statusModule: BackupStatusModule;
-  public readonly changePpActionModule: BackupChangePpActionModule;
-  public readonly manualActionModule: BackupManualActionModule;
-  public readonly setupActionModule: BackupSetupActionModule;
+  public readonly changePpModule: BackupChangePpModule;
+  public readonly manualModule: BackupManualModule;
+  public readonly automaticModule: BackupAutomaticModule;
 
   public readonly acctEmail: string;
   public emailProvider: EmailProvider = 'gmail';
@@ -42,10 +42,10 @@ export class BackupView extends View {
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     }
     this.gmail = new Gmail(this.acctEmail);
-    this.changePpActionModule = new BackupChangePpActionModule(this);
+    this.changePpModule = new BackupChangePpModule(this);
     this.statusModule = new BackupStatusModule(this);
-    this.manualActionModule = new BackupManualActionModule(this);
-    this.setupActionModule = new BackupSetupActionModule(this);
+    this.manualModule = new BackupManualModule(this);
+    this.automaticModule = new BackupAutomaticModule(this);
   }
 
   public render = async () => {
@@ -58,9 +58,15 @@ export class BackupView extends View {
       return;
     }
     if (this.action === 'setup') {
-      await this.setupActionModule.renderSetupAction(storage.setup_simple);
+      $('.back').css('display', 'none');
+      if (storage.setup_simple) {
+        await this.automaticModule.simpleSetupAutoBackupRetryUntilSuccessful();
+      } else {
+        this.displayBlock('module_manual');
+        $('h1').text('Back up your private key');
+      }
     } else if (this.action === 'passphrase_change_gmail_backup') {
-      await this.changePpActionModule.renderChangedPassPhraseGmailBackup(storage.setup_simple);
+      await this.changePpModule.renderChangedPassPhraseGmailBackup(storage.setup_simple);
     } else if (this.action === 'options') {
       this.displayBlock('module_manual');
       $('h1').text('Back up your private key');
@@ -90,9 +96,8 @@ export class BackupView extends View {
 
   public setHandlers = () => {
     this.statusModule.setHandlers();
-    this.manualActionModule.setHandlers();
-    this.setupActionModule.setHandlers();
-    this.changePpActionModule.setHandlers();
+    this.manualModule.setHandlers();
+    this.changePpModule.setHandlers();
   }
 
 }

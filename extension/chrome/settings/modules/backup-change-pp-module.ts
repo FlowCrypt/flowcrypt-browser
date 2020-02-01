@@ -11,7 +11,7 @@ import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 
-export class BackupChangePpActionModule extends ViewModule<BackupView> {
+export class BackupChangePpModule extends ViewModule<BackupView> {
 
   public setHandlers = () => {
     $('#content .action_change_pp_reload').click(() => window.location.reload());
@@ -24,7 +24,7 @@ export class BackupChangePpActionModule extends ViewModule<BackupView> {
       const [primaryKi] = await Store.keysGet(this.view.acctEmail, ['primary']);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
       try {
-        await this.view.manualActionModule.doBackupOnEmailProvider(primaryKi.private);
+        await this.view.manualModule.doBackupOnEmailProvider(primaryKi.private);
         $('#content').text('Pass phrase changed. You will find a new backup in your inbox.');
       } catch (e) {
         if (ApiErr.isNetErr(e)) {
