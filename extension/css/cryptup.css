@@ -791,25 +791,26 @@ body#settings > div#content.backup .colored_label {
   float: right;
   opacity: 0.75;
 }
-body#settings > div#content.backup div#step_0_enter { display: none; }
-body#settings > div#content.backup div#step_3_done { display: none; }
-body#settings > div#content.backup div#step_1_password { display: none; }
-body#settings > div#content.backup div#step_2_confirm { display: none; }
-body#settings > div#content.backup div#step_3_manual { display: none; }
-body#settings > div#content.backup div#step_3_automatic_backup_retry { display: none; }
-body#settings > div#content.backup div#step_3_manual .details { text-align: left; }
 
-body#settings > div#content.backup div#step_3_manual .backup_options_details_option {
+body#settings > div#content.backup div#module_setup_step_1_enter_password { display: none; }
+body#settings > div#content.backup div#module_setup_step_2_confirm_password { display: none; }
+body#settings > div#content.backup div#module_manual { display: none; }
+body#settings > div#content.backup div#module_manual .details { text-align: left; }
+
+body#settings > div#content.change_passphrase div#step_0_enter { display: none; }
+body#settings > div#content.change_passphrase div#step_3_done { display: none; }
+
+body#settings > div#content.backup div#module_manual .backup_options_details_option {
   margin-bottom: 10px;
   display: inline-block;
   margin-right: 10px;
   width: 100%;
 }
-body#settings > div#content.backup div#step_3_manual .backup_options_details_option label { font-weight: 600; }
-body#settings > div#content.backup div#step_3_manual .d-inline-block { display: inline-block; }
-body#settings > div#content.backup div#step_3_manual table.backup_options tr.text td { padding-bottom: 20px; }
+body#settings > div#content.backup div#module_manual .backup_options_details_option label { font-weight: 600; }
+body#settings > div#content.backup div#module_manual .d-inline-block { display: inline-block; }
+body#settings > div#content.backup div#module_manual table.backup_options tr.text td { padding-bottom: 20px; }
 
-body#settings > div#content.backup div#step_3_manual table.backup_options label {
+body#settings > div#content.backup div#module_manual table.backup_options label {
   text-transform: uppercase;
   font-weight: bold;
   position: relative;

@@ -38,12 +38,14 @@
       <div class="loading_copy">Loading...</div>
     </div>
 
-    <div id="step_0_status">
+    <div id="module_status">
       <div class="line status_summary"></div>
       <div class="line container"></div>
     </div>
 
-    <div id="step_1_password">
+    <!-- SETUP MODULE: user may be sent here during setup, to choose their own pass phrase for backup -->
+
+    <div id="module_setup_step_1_enter_password">
       <div class="wide line">Create a pass phrase to protect your encrypted emails. See <a href="#"
           data-featherlight="/chrome/texts/passphrase_help.htm">choosing
           secure pass phrases</a>.</div>
@@ -56,7 +58,7 @@
       </div>
     </div>
 
-    <div id="step_2_confirm">
+    <div id="module_setup_step_2_confirm_password">
       <div class="line">Please repeat it one more time. Make sure to note the pass phrase down.</div>
       <div class="line">
         <input id="password2" type="text" placeholder="Repeat pass phrase" />
@@ -69,7 +71,9 @@
       </div>
     </div>
 
-    <div id="step_3_manual">
+  <!-- MANUAL MODULE: user gets to choose the type of backup they want, either in settings or as last step of setup -->
+
+    <div id="module_manual">
       <div class="line">Your key is stored in the browser. Backups are useful if you ever lose your device.</div>
       <div class="line">
         <div class="details text-left mt-40">
@@ -126,6 +130,7 @@
           </button></span>
       </div>
     </div>
+
   </div>
 
   <script src="/lib/purify.min.js"></script>

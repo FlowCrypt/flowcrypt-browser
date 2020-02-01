@@ -36,7 +36,7 @@ export class BackupSetupActionModule extends ViewModule<BackupView> {
         return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToBackUpKey, this.view.manualActionModule.setupCreateSimpleAutomaticInboxBackup);
       }
     } else {
-      this.view.displayBlock('step_3_manual');
+      this.view.displayBlock('module_manual');
       $('h1').text('Back up your private key');
     }
   }
@@ -56,7 +56,7 @@ export class BackupSetupActionModule extends ViewModule<BackupView> {
 
   private actionEnterPassPhraseHandler = async (target: HTMLElement) => {
     if ($(target).hasClass('green')) {
-      this.view.displayBlock('step_2_confirm');
+      this.view.displayBlock('module_setup_step_2_confirm_password');
     } else {
       await Ui.modal.warning('Please select a stronger pass phrase. Combinations of 4 to 5 uncommon words are the best.');
     }
@@ -65,7 +65,7 @@ export class BackupSetupActionModule extends ViewModule<BackupView> {
   private actionResetPassPhraseEntryHandler = async () => {
     $('#password').val('').keyup();
     $('#password2').val('');
-    this.view.displayBlock('step_1_password');
+    this.view.displayBlock('module_setup_step_1_enter_password');
     $('#password').focus();
   }
 

@@ -10,7 +10,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 
-export class BackupCheckModule extends ViewModule<BackupView> {
+export class BackupStatusModule extends ViewModule<BackupView> {
 
   public setHandlers = () => { // is run after checkAndRenderBackupStatus, which renders (some of) these fields first
     $('.action_go_manual').click(this.view.setHandler(el => this.actionShowManualBackupHandler()));
@@ -39,48 +39,48 @@ export class BackupCheckModule extends ViewModule<BackupView> {
         }
         return;
       }
-      this.view.displayBlock('step_0_status');
+      this.view.displayBlock('module_status');
       if (keys?.length) {
         $('.status_summary').text('Backups found: ' + keys.length + '. Your account is backed up correctly in your email inbox.');
-        Xss.sanitizeRender('#step_0_status .container', '<button class="button long green action_go_manual">SEE MORE BACKUP OPTIONS</button>');
+        Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_manual">SEE MORE BACKUP OPTIONS</button>');
       } else if (storage.key_backup_method) {
         if (storage.key_backup_method === 'file') {
           $('.status_summary').text('You have previously backed up your key into a file.');
-          Xss.sanitizeRender('#step_0_status .container', '<button class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</button>');
+          Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</button>');
         } else if (storage.key_backup_method === 'print') {
           $('.status_summary').text('You have previously backed up your key by printing it.');
-          Xss.sanitizeRender('#step_0_status .container', '<button class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</button>');
+          Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</button>');
         } else { // inbox or other methods
           $('.status_summary').text('There are no backups on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
-          Xss.sanitizeRender('#step_0_status .container', '<button class="button long green action_go_manual">SEE BACKUP OPTIONS</button>');
+          Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_manual">SEE BACKUP OPTIONS</button>');
         }
       } else {
         if (storage.setup_simple) {
           $('.status_summary').text('No backups found on this account. You can store a backup of your key in email inbox. Your key will be protected by a pass phrase of your choice.');
-          Xss.sanitizeRender('#step_0_status .container',
+          Xss.sanitizeRender('#module_status .container',
             `<button class="button long green action_proceed_default_backup_choice">BACK UP MY KEY</button><br><br><br>
             <a href="#" class="action_go_manual">See more advanced backup options</a>`);
         } else {
           $('.status_summary').text('No backups found on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
-          Xss.sanitizeRender('#step_0_status .container', '<button class="button long green action_go_manual">BACK UP MY KEY</button>');
+          Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_manual">BACK UP MY KEY</button>');
         }
       }
     } else { // gmail read permission not granted - cannot check for backups
-      this.view.displayBlock('step_0_status');
+      this.view.displayBlock('module_status');
       $('.status_summary').text('FlowCrypt cannot check your backups.');
       const pemissionsBtnIfGmail = this.view.emailProvider === 'gmail' ?
         '<button class="button long green action_go_auth_denied">SEE PERMISSIONS</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' : '';
-      Xss.sanitizeRender('#step_0_status .container', `${pemissionsBtnIfGmail}<button class="button long gray action_go_manual">SEE BACKUP OPTIONS</button>`);
+      Xss.sanitizeRender('#module_status .container', `${pemissionsBtnIfGmail}<button class="button long gray action_go_manual">SEE BACKUP OPTIONS</button>`);
     }
   }
 
   private actionProceedDefaultBackupChoiceHandler = async () => {
-    this.view.displayBlock('step_1_password');
+    this.view.displayBlock('module_setup_step_1_enter_password');
     $('h1').text('Set Backup Pass Phrase');
   }
 
   private actionShowManualBackupHandler = async () => {
-    this.view.displayBlock('step_3_manual');
+    this.view.displayBlock('module_manual');
     $('h1').text('Back up your private key');
   }
 

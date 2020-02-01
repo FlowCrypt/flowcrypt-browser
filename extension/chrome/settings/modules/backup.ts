@@ -11,7 +11,7 @@ import { Rules } from '../../../js/common/rules.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { BackupChangePpActionModule } from './backup-change-pp-action-module.js';
-import { BackupCheckModule } from './backup-check-module.js';
+import { BackupStatusModule } from './backup-status-module.js';
 import { BackupManualActionModule } from './backup-manual-action-module.js';
 import { BackupSetupActionModule } from './backup-setup-action-module.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
@@ -20,7 +20,7 @@ import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 
 export class BackupView extends View {
 
-  public readonly checkModule: BackupCheckModule;
+  public readonly statusModule: BackupStatusModule;
   public readonly changePpActionModule: BackupChangePpActionModule;
   public readonly manualActionModule: BackupManualActionModule;
   public readonly setupActionModule: BackupSetupActionModule;
@@ -34,7 +34,7 @@ export class BackupView extends View {
   public tabId!: string;
 
   private keyImportUi = new KeyImportUi({});
-  private blocks = ['loading', 'step_0_status', 'step_1_password', 'step_2_confirm', 'step_3_automatic_backup_retry', 'step_3_manual'];
+  private blocks = ['loading', 'module_status', 'module_setup_step_1_enter_password', 'module_setup_step_2_confirm_password', 'module_manual'];
 
   constructor() {
     super();
@@ -46,7 +46,7 @@ export class BackupView extends View {
     }
     this.gmail = new Gmail(this.acctEmail);
     this.changePpActionModule = new BackupChangePpActionModule(this);
-    this.checkModule = new BackupCheckModule(this);
+    this.statusModule = new BackupStatusModule(this);
     this.manualActionModule = new BackupManualActionModule(this);
     this.setupActionModule = new BackupSetupActionModule(this);
   }
@@ -67,13 +67,13 @@ export class BackupView extends View {
     } else if (this.action === 'passphrase_change_gmail_backup') {
       await this.changePpActionModule.renderChangedPassPhraseGmailBackup(storage.setup_simple);
     } else if (this.action === 'options') {
-      this.displayBlock('step_3_manual');
+      this.displayBlock('module_manual');
       $('h1').text('Back up your private key');
     } else {
       $('.hide_if_backup_done').css('display', 'none');
       $('h1').text('Key Backups');
       this.displayBlock('loading');
-      await this.checkModule.checkAndRenderBackupStatus();
+      await this.statusModule.checkAndRenderBackupStatus();
     }
   }
 
@@ -94,7 +94,7 @@ export class BackupView extends View {
   }
 
   public setHandlers = () => {
-    this.checkModule.setHandlers();
+    this.statusModule.setHandlers();
     this.manualActionModule.setHandlers();
     this.setupActionModule.setHandlers();
     this.changePpActionModule.setHandlers();

@@ -37,7 +37,7 @@ export class BackupChangePpActionModule extends ViewModule<BackupView> {
         }
       }
     } else { // should never happen on this action. Just in case.
-      this.view.displayBlock('step_3_manual');
+      this.view.displayBlock('module_manual');
       $('h1').text('Back up your private key');
     }
   }

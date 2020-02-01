@@ -37,7 +37,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   public setHandlers = () => {
-    $('#step_3_manual input[name=input_backup_choice]').click(this.view.setHandler(el => this.actionSelectBackupMethodHandler(el)));
+    $('#module_manual input[name=input_backup_choice]').click(this.view.setHandler(el => this.actionSelectBackupMethodHandler(el)));
     $('.action_manual_backup').click(this.view.setHandlerPrevent('double', el => this.actionManualBackupHandler()));
   }
 
