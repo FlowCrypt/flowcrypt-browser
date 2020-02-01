@@ -23,6 +23,7 @@ import { Buf } from '../../../js/common/core/buf.js';
 export class BackupManualActionModule extends ViewModule<BackupView> {
 
   private ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
+  private readonly proceedBtn = $('#module_manual .action_manual_backup');
 
   constructor(view: BackupView) {
     super(view);
@@ -37,7 +38,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
 
   public setHandlers = () => {
     $('#module_manual input[name=input_backup_choice]').click(this.view.setHandler(el => this.actionSelectBackupMethodHandler(el)));
-    $('#module_manual .action_manual_backup').click(this.view.setHandlerPrevent('double', el => this.actionManualBackupHandler()));
+    this.proceedBtn.click(this.view.setHandlerPrevent('double', el => this.actionManualBackupHandler()));
   }
 
   public doBackupOnEmailProvider = async (armoredKey: string) => {
@@ -57,7 +58,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     }
   }
 
-  public actionManualBackupHandler = async () => {
+  private actionManualBackupHandler = async () => {
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
     const [primaryKi] = await Store.keysGet(this.view.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
@@ -94,13 +95,13 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       await this.backupOnEmailProviderAndUpdateUi(primaryKi);
       return;
     }
-    if (!this.isPassPhraseStrongEnough(primaryKi, pp) && await Ui.modal.confirm('Your key is not protected with strong pass phrase, would you like to change pass phrase now?')) {
+    if (!this.isPassPhraseStrongEnough(primaryKi, pp)) {
+      await Ui.modal.warning('Your key is not protected with strong pass phrase.\n\nYou should change your pass phrase.');
       window.location.href = Url.create('/chrome/settings/modules/change_passphrase.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
       return;
     }
-    const btn = $('#module_manual .action_manual_backup');
-    const origBtnText = btn.text();
-    Xss.sanitizeRender(btn, Ui.spinner('white'));
+    const origBtnText = this.proceedBtn.text();
+    Xss.sanitizeRender(this.proceedBtn, Ui.spinner('white'));
     try {
       await this.doBackupOnEmailProvider(primaryKi.private);
     } catch (e) {
@@ -114,7 +115,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
         return await Ui.modal.error(`Error happened: ${String(e)}`);
       }
     } finally {
-      btn.text(origBtnText);
+      this.proceedBtn.text(origBtnText);
     }
     await this.view.writeBackupDoneAndRender(false, 'inbox');
   }
@@ -166,19 +167,18 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private actionSelectBackupMethodHandler = (target: HTMLElement) => {
-    const btn = $('#module_manual .action_manual_backup');
     if ($(target).val() === 'inbox') {
-      btn.text('back up as email');
-      btn.removeClass('red').addClass('green');
+      this.proceedBtn.text('back up as email');
+      this.proceedBtn.removeClass('red').addClass('green');
     } else if ($(target).val() === 'file') {
-      btn.text('back up as a file');
-      btn.removeClass('red').addClass('green');
+      this.proceedBtn.text('back up as a file');
+      this.proceedBtn.removeClass('red').addClass('green');
     } else if ($(target).val() === 'print') {
-      btn.text('back up on paper');
-      btn.removeClass('red').addClass('green');
+      this.proceedBtn.text('back up on paper');
+      this.proceedBtn.removeClass('red').addClass('green');
     } else {
-      btn.text('try my luck');
-      btn.removeClass('green').addClass('red');
+      this.proceedBtn.text('try my luck');
+      this.proceedBtn.removeClass('green').addClass('red');
     }
   }
 
