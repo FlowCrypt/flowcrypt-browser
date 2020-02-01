@@ -24,7 +24,7 @@ export class BackupView extends View {
   public readonly acctEmail: string;
   public emailProvider: EmailProvider = 'gmail';
   public rules!: Rules;
-  public readonly action: 'setup_automatic' | 'setup_manual' | 'options' | undefined;
+  public readonly action: 'setup_automatic' | 'setup_manual' | 'backup_manual' | undefined;
   public readonly gmail: Gmail;
   public readonly parentTabId: string | undefined;
   public tabId!: string;
@@ -35,7 +35,7 @@ export class BackupView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'action']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['setup_automatic', 'setup_manual', 'options', undefined]);
+    this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['setup_automatic', 'setup_manual', 'backup_manual', undefined]);
     if (this.action !== 'setup_automatic' && this.action !== 'setup_manual') {
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     }
@@ -61,10 +61,10 @@ export class BackupView extends View {
       $('.back').css('display', 'none');
       this.displayBlock('module_manual');
       $('h1').text('Back up your private key');
-    } else if (this.action === 'options') {
+    } else if (this.action === 'backup_manual') {
       this.displayBlock('module_manual');
       $('h1').text('Back up your private key');
-    } else {
+    } else { // action = view status
       $('.hide_if_backup_done').css('display', 'none');
       $('h1').text('Key Backups');
       this.displayBlock('loading');
