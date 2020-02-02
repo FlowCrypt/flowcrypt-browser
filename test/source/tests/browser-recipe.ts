@@ -72,6 +72,10 @@ export class BrowserRecipe {
   public static async pgpBlockVerifyDecryptedContent(t: AvaContext, browser: BrowserHandle, m: TestMessage) {
     const pgpBlockPage = await browser.newPage(t, `chrome/elements/pgp_block.htm${m.params}`);
     await pgpBlockPage.waitAll('@pgp-block-content');
+    if (m.expectPercentageProgress) {
+      await pgpBlockPage.waitForContent('@pgp-block-content', 'Retrieving message...');
+      await pgpBlockPage.waitForContent('@pgp-block-content', '%');
+    }
     await pgpBlockPage.waitForSelTestState('ready', 100);
     await Util.sleep(1);
     if (m.password) {
