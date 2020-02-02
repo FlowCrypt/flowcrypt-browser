@@ -34,7 +34,7 @@ export type TestMessage = {
   quoted?: boolean,
   expectPercentageProgress?: boolean,
   signature?: string[],
-}
+};
 
 interface TestConfigInterface {
   messages: TestMessage[];
