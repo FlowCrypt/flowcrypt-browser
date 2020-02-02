@@ -144,7 +144,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pageHasReplyContainer(t, browser, gmailPage);
       const pubkeyPage = await browser.newPage(t, urls[0]);
       const content = await pubkeyPage.read('body');
-      expect(content).to.contain('STONE NEED REMAIN SLIDE DEPOSIT BRICK');
+      expect(content).to.contain('Longid: D652 7AD6 65C3 B0DD');
     }));
 
   }
