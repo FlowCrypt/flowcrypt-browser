@@ -226,7 +226,7 @@ export class Backend extends Api {
       promises.push(Api.apiCall(items[i].baseUrl, '', fields, 'FORM', {
         upload: (singleFileProgress: number) => {
           progress[i] = singleFileProgress;
-          Ui.event.prevent('spree', () => progressCb(Value.arr.average(progress)))();
+          Ui.event.prevent('spree', () => progressCb(Value.arr.average(progress), 0, 0))();
         }
       }));
     }
