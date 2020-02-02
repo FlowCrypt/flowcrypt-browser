@@ -56,11 +56,11 @@ View.run(class PassphraseView extends View {
     if (allPrivateKeys.length > 1) {
       let html: string;
       if (this.myPrivateKeys.length === 1) {
-        html = `For key: <span class="good">${Xss.escape(Str.spaced(this.myPrivateKeys[0].longid || ''))}</span> (KeyWords)`;
+        html = `For key Longid: <span class="good">${Xss.escape(Str.spaced(this.myPrivateKeys[0].longid || ''))}</span>`;
       } else {
         html = 'Pass phrase needed for any of the following keys:';
         for (const i of this.myPrivateKeys.keys()) {
-          html += `<div>KeyWords ${String(i + 1)}: <span class="good">${Xss.escape(Str.spaced(this.myPrivateKeys[i].longid) || '')}</span></div>`;
+          html += `<div>Longid ${String(i + 1)}: <span class="good">${Xss.escape(Str.spaced(this.myPrivateKeys[i].longid) || '')}</span></div>`;
         }
       }
       Xss.sanitizeRender('.which_key', html);
