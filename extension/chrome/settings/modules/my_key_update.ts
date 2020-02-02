@@ -12,7 +12,7 @@ import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { Url } from '../../../js/common/core/common.js';
+import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { openpgp } from '../../../js/common/core/pgp.js';
 
@@ -37,7 +37,7 @@ View.run(class MyKeyUpdateView extends View {
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     $('.action_show_public_key').attr('href', this.showKeyUrl);
     $('.email').text(this.acctEmail);
-    $('.key_words').text(this.primaryKi.keywords).attr('title', this.primaryKi.longid);
+    $('.longid').text(Str.spaced(this.primaryKi.longid)).attr('title', this.primaryKi.longid);
     this.inputPrivateKey.attr('placeholder', this.inputPrivateKey.attr('placeholder') + ' (' + this.primaryKi.longid + ')');
   }
 
@@ -70,8 +70,8 @@ View.run(class MyKeyUpdateView extends View {
       await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
     } else if (uddatedKey.isPublic()) {
       await Ui.modal.warning('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"');
-    } else if (await PgpKey.fingerprint(uddatedKey) !== await PgpKey.fingerprint(this.primaryKi!.public)) {
-      await Ui.modal.warning(`This key ${await PgpKey.longid(uddatedKey)} does not match your current key ${this.primaryKi!.longid}`);
+    } else if (await PgpKey.longid(uddatedKey) !== await PgpKey.longid(this.primaryKi!.public)) {
+      await Ui.modal.warning(`This key ${Str.spaced(await PgpKey.longid(uddatedKey) || 'err')} does not match your current key ${Str.spaced(this.primaryKi!.longid)}`);
     } else if (await PgpKey.decrypt(uddatedKey, uddatedKeyPassphrase) !== true) {
       await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
     } else {

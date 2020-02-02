@@ -54,7 +54,7 @@ export class SetupView extends View {
   public storage: AccountStore | undefined;
   public rules: Rules | undefined;
 
-  public acctEmailAttesterFingerprint: string | undefined;
+  public acctEmailAttesterLongid: string | undefined;
   public fetchedKeyBackups: KeyInfo[] = [];
   public fetchedKeyBackupsUniqueLongids: string[] = [];
   public importedKeysUniqueLongids: string[] = [];
@@ -211,7 +211,7 @@ export class SetupView extends View {
     } else {
       addresses = [this.acctEmail];
     }
-    if (this.acctEmailAttesterFingerprint && this.acctEmailAttesterFingerprint !== await PgpKey.fingerprint(armoredPubkey)) {
+    if (this.acctEmailAttesterLongid && this.acctEmailAttesterLongid !== await PgpKey.longid(armoredPubkey)) {
       // already submitted another pubkey for this email
       // todo - offer user to fix it up
       return;

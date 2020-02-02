@@ -6,7 +6,7 @@ import { KeyInfo, PgpKey } from '../../../js/common/core/pgp-key.js';
 
 import { Assert } from '../../../js/common/assert.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Url } from '../../../js/common/core/common.js';
+import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
@@ -31,7 +31,7 @@ View.run(class MyKeyUserIdsView extends View {
     const userIds = prv.users.map(u => u.userId).filter(Boolean).map(uid => uid!.userid); // todo - create a common function in settings.js for here and setup.js user_ids
     Xss.sanitizeRender('.user_ids', userIds.map((uid: string) => `<div>${Xss.escape(uid)}</div>`).join(''));
     $('.email').text(this.acctEmail);
-    $('.key_words').text(this.primaryKi.keywords);
+    $('.longid').text(Str.spaced(this.primaryKi.longid));
   }
 
   public setHandlers = () => {
