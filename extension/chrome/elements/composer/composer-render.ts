@@ -266,7 +266,7 @@ export class ComposerRender extends ComposerComponent {
       } catch (e) {
         return; // key is invalid
       }
-      const { keys: [key] } = await PgpKey.parse(normalizedPub);
+      const { keys: [key] } = await PgpKey.parseDetails(normalizedPub);
       if (!key.users.length) { // there can be no users
         return;
       }

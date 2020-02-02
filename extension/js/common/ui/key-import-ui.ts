@@ -294,7 +294,7 @@ export class KeyImportUi {
   }
 
   private checkEncryptionPubIfSelected = async (normalized: string) => {
-    if (this.checkEncryption && !await PgpKey.usable(normalized)) {
+    if (this.checkEncryption && !await PgpKey.usableForEncryption(normalized)) {
       throw new UserAlert('This public key looks correctly formatted, but cannot be used for encryption. Please write at human@flowcrypt.com. We\'ll see if there is a way to fix it.');
     }
   }

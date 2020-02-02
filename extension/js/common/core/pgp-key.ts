@@ -247,7 +247,7 @@ export class PgpKey {
     return longids;
   }
 
-  public static usable = async (armored: string) => { // is pubkey usable for encrytion?
+  public static usableForEncryption = async (armored: string) => { // is pubkey usable for encrytion?
     if (!await PgpKey.longid(armored)) {
       return false;
     }
@@ -299,7 +299,7 @@ export class PgpKey {
     return undefined;
   }
 
-  public static parse = async (armored: string): Promise<{ original: string, normalized: string, keys: KeyDetails[] }> => {
+  public static parseDetails = async (armored: string): Promise<{ original: string, normalized: string, keys: KeyDetails[] }> => {
     const { normalized, keys } = await PgpKey.normalize(armored);
     return { original: armored, normalized, keys: await Promise.all(keys.map(PgpKey.details)) };
   }
