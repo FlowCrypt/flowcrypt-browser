@@ -103,9 +103,10 @@ export class PgpKey {
     const allErrs: Error[] = [];
     const { blocks } = MsgBlockParser.detectBlocks(fileData.toUtfStr());
     const armoredPublicKeyBlocks = blocks.filter(block => block.type === 'publicKey' || block.type === 'privateKey');
-    const pushKeysAndErrs = async (content: string | Buf, type: 'readArmored' | 'read') => {
+    const pushKeysAndErrs = async (content: string | Buf, isArmored: boolean) => {
       try {
-        const { err, keys } = type === 'readArmored' ? await openpgp.key.readArmored(content.toString())
+        const { err, keys } = isArmored
+          ? await openpgp.key.readArmored(content.toString())
           : await openpgp.key.read(typeof content === 'string' ? Buf.fromUtfStr(content) : content);
         allErrs.push(...(err || []));
         allKeys.push(...keys);
@@ -115,10 +116,10 @@ export class PgpKey {
     };
     if (armoredPublicKeyBlocks.length) {
       for (const block of blocks) {
-        await pushKeysAndErrs(block.content, 'readArmored');
+        await pushKeysAndErrs(block.content, true);
       }
     } else {
-      await pushKeysAndErrs(fileData, 'read');
+      await pushKeysAndErrs(fileData, false);
     }
     return { keys: allKeys, errs: allErrs };
   }
