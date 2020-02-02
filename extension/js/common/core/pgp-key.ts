@@ -147,7 +147,7 @@ export class PgpKey {
       try {
         await prvPacket.decrypt(passphrase); // throws on password mismatch
       } catch (e) {
-        if (e instanceof Error && e.message.toLowerCase().includes('passphrase')) {
+        if (e instanceof Error && e.message.toLowerCase().includes('incorrect key passphrase')) {
           return false;
         }
         throw e;
