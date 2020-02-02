@@ -77,8 +77,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await contactsFrame.waitAndClick('@action-show-pubkey', { confirmGone: true });
       await Util.sleep(1);
       expect(await contactsFrame.read('@page-contacts')).to.contain('flowcrypt.compatibility@gmail.com');
-      expect(await contactsFrame.read('@page-contacts')).to.contain('LEMON VIABLE BEST MULE TUNA COUNTRY');
-      expect(await contactsFrame.read('@page-contacts')).to.contain('5520CACE2CB61EA713E5B0057FDE685548AEA788');
+      expect(await contactsFrame.read('@page-contacts')).to.contain('7FDE 6855 48AE A788');
       expect(await contactsFrame.read('@page-contacts')).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
       await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
       await Util.sleep(1);

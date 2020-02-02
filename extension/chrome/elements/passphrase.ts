@@ -9,11 +9,10 @@ import { Assert } from '../../js/common/assert.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Ui } from '../../js/common/browser/ui.js';
-import { Url } from '../../js/common/core/common.js';
+import { Url, Str } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
-import { mnemonic } from '../../js/common/core/mnemonic.js';
 import { openpgp } from '../../js/common/core/pgp.js';
 
 View.run(class PassphraseView extends View {
@@ -57,11 +56,11 @@ View.run(class PassphraseView extends View {
     if (allPrivateKeys.length > 1) {
       let html: string;
       if (this.myPrivateKeys.length === 1) {
-        html = `For key: <span class="good">${Xss.escape(mnemonic(this.myPrivateKeys[0].longid) || '')}</span> (KeyWords)`;
+        html = `For key Longid: <span class="good">${Xss.escape(Str.spaced(this.myPrivateKeys[0].longid || ''))}</span>`;
       } else {
         html = 'Pass phrase needed for any of the following keys:';
         for (const i of this.myPrivateKeys.keys()) {
-          html += `<div>KeyWords ${String(i + 1)}: <span class="good">${Xss.escape(mnemonic(this.myPrivateKeys[i].longid) || '')}</span></div>`;
+          html += `<div>Longid ${String(i + 1)}: <span class="good">${Xss.escape(Str.spaced(this.myPrivateKeys[i].longid) || '')}</span></div>`;
         }
       }
       Xss.sanitizeRender('.which_key', html);

@@ -8,12 +8,12 @@ import { KeyInfo } from '../../js/common/core/pgp-key.js';
 import { PgpKey } from '../../js/common/core/pgp-key.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Ui } from '../../js/common/browser/ui.js';
-import { Url } from '../../js/common/core/common.js';
+import { Url, Str } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
-import { mnemonic } from '../../js/common/core/mnemonic.js';
 
 View.run(class BackupView extends View {
+
   private readonly acctEmail: string;
   private readonly parentTabId: string;
   private readonly frameId: string;
@@ -35,14 +35,13 @@ View.run(class BackupView extends View {
     const prvBackup = await PgpKey.read(this.armoredPrvBackup);
     const longid = await PgpKey.longid(prvBackup) || '';
     if (prvBackup) {
-      $('.line.fingerprints .fingerprint').text(await PgpKey.fingerprint(prvBackup, 'spaced') || '(fingerprint error)');
-      $('.line.fingerprints .keywords').text(mnemonic(longid) || '(mnemonic error)');
+      $('.line.longids .longid').text(Str.spaced(await PgpKey.longid(prvBackup) || 'err'));
       if (! await prvBackup.getEncryptionKey() && ! await prvBackup.getSigningKey()) {
         $('.line.add_contact').addClass('bad').text('This private key looks correctly formatted, but cannot be used for encryption.');
-        $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
+        $('.line.longids').css({ display: 'none', visibility: 'hidden' });
       }
     } else {
-      $('.line.fingerprints').css({ display: 'none' });
+      $('.line.longids').css({ display: 'none' });
     }
     [this.storedPrvWithMatchingLongid] = await Store.keysGet(this.acctEmail, [longid]);
     if (this.storedPrvWithMatchingLongid) {

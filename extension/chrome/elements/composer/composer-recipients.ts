@@ -8,7 +8,6 @@ import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './compose
 import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { RecipientElement, RecipientStatus, RecipientStatuses } from './composer-types.js';
 import { Str, Value } from '../../../js/common/core/common.js';
-
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -772,10 +771,8 @@ export class ComposerRecipients extends ComposerComponent {
   }
 
   private recipientKeyIdText = (contact: Contact) => {
-    if (contact.client === 'cryptup' && contact.keywords) {
-      return '\n\n' + 'Public KeyWords:\n' + contact.keywords;
-    } else if (contact.fingerprint) {
-      return '\n\n' + 'Key fingerprint:\n' + contact.fingerprint;
+    if (contact.longid) {
+      return `\n\nRecipient public key longid:\n${Str.spaced(contact.longid)}`;
     } else {
       return '';
     }

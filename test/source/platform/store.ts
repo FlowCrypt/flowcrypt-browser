@@ -14,7 +14,6 @@ export interface KeyInfo extends PrvKeyInfo {
   public: string;
   fingerprint: string;
   primary: boolean;
-  keywords: string;
 }
 
 export type KeyInfosWithPassphrases = { keys: PrvKeyInfo[]; passphrases: string[]; };

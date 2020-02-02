@@ -13,7 +13,7 @@ import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { Url } from '../../../js/common/core/common.js';
+import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 
@@ -39,12 +39,10 @@ View.run(class MyKeyView extends View {
   public render = async () => {
     [this.keyInfo] = await Store.keysGet(this.acctEmail, [this.longid]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo);
-    const prv = await PgpKey.read(this.keyInfo.private);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
     $('.action_view_update').attr('href', this.myKeyUpdateUrl);
-    $('.key_words').text(this.keyInfo.keywords);
+    $('.longid').text(Str.spaced(this.keyInfo.longid));
     $('.email').text(this.acctEmail);
-    $('.key_fingerprint').text(await PgpKey.fingerprint(prv, 'spaced') || '(unknown fingerprint)');
     await this.setPubkeyContainer();
     await initPassphraseToggle(['input_passphrase']);
   }

@@ -17,7 +17,6 @@ import { PgpArmor } from '../core/pgp-armor.js';
 import { PgpClient } from '../api/keyserver.js';
 import { PgpKey } from '../core/pgp-key.js';
 import { Ui } from '../browser/ui.js';
-import { mnemonic } from '../core/mnemonic.js';
 
 // tslint:disable:no-null-keyword
 
@@ -65,7 +64,6 @@ export type ContactUpdate = {
   client?: string | null;
   fingerprint?: string | null;
   longid?: string | null;
-  keywords?: string | null;
   pending_lookup?: number;
   last_use?: number | null;
   pubkey_last_sig?: number | null;
@@ -536,7 +534,6 @@ export class Store {
           fingerprint: null,
           longid: null,
           longids: [],
-          keywords: null,
           last_use: lastUse || null,
           pubkey_last_sig: null,
           pubkey_last_check: null,
@@ -561,7 +558,6 @@ export class Store {
         fingerprint: keyDetails.ids[0].fingerprint,
         longid: keyDetails.ids[0].longid,
         longids: keyDetails.ids.map(id => id.longid),
-        keywords: keyDetails.ids[0].keywords,
         pending_lookup: 0,
         last_use: lastUse || null,
         pubkey_last_sig: lastSig || null,
@@ -731,7 +727,7 @@ export class Store {
       throw new Error('Store.keysObj: unexpectedly no longid');
     }
     const fingerprint = await PgpKey.fingerprint(prv);
-    return { private: prv.armor(), public: prv.toPublic().armor(), primary, longid, fingerprint: fingerprint!, keywords: mnemonic(longid)! };
+    return { private: prv.armor(), public: prv.toPublic().armor(), primary, longid, fingerprint: fingerprint! };
   }
 
   private static singleScopeRawIndexArr = (scope: string, keys: string[]) => {
