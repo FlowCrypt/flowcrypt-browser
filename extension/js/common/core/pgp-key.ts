@@ -169,6 +169,9 @@ export class PgpKey {
       throw new Error(`Cannot encrypt a key that has ${encryptedPacketCount} of ${secretPackets.length} private packets still encrypted`);
     }
     await prv.encrypt(passphrase);
+    if (!prv.isFullyEncrypted()) {
+      throw new Error('Expected key to be fully encrypted after prv.encrypt');
+    }
   }
 
   public static normalize = async (armored: string): Promise<{ normalized: string, keys: OpenPGP.key.Key[] }> => {
