@@ -134,7 +134,7 @@ export class MsgBlockParser {
 
   private static pushArmoredPubkeysToBlocks = async (armoredPubkeys: string[], blocks: MsgBlock[]): Promise<void> => {
     for (const armoredPubkey of armoredPubkeys) {
-      const { keys } = await PgpKey.parse(armoredPubkey);
+      const { keys } = await PgpKey.parseDetails(armoredPubkey);
       for (const keyDetails of keys) {
         blocks.push(MsgBlock.fromKeyDetails('publicKey', keyDetails.public, keyDetails));
       }

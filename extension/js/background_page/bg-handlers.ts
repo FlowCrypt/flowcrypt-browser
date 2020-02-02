@@ -41,7 +41,7 @@ export class BgHandlers {
   }
 
   public static pgpKeyDetails = async ({ pubkey }: Bm.PgpKeyDetails): Promise<Bm.Res.PgpKeyDetails> => {
-    return await PgpKey.parse(pubkey);
+    return await PgpKey.parseDetails(pubkey);
   }
 
   public static updateUninstallUrl: Bm.AsyncResponselessHandler = async () => {

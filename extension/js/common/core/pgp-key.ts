@@ -103,9 +103,10 @@ export class PgpKey {
     const allErrs: Error[] = [];
     const { blocks } = MsgBlockParser.detectBlocks(fileData.toUtfStr());
     const armoredPublicKeyBlocks = blocks.filter(block => block.type === 'publicKey' || block.type === 'privateKey');
-    const pushKeysAndErrs = async (content: string | Buf, type: 'readArmored' | 'read') => {
+    const pushKeysAndErrs = async (content: string | Buf, isArmored: boolean) => {
       try {
-        const { err, keys } = type === 'readArmored' ? await openpgp.key.readArmored(content.toString())
+        const { err, keys } = isArmored
+          ? await openpgp.key.readArmored(content.toString())
           : await openpgp.key.read(typeof content === 'string' ? Buf.fromUtfStr(content) : content);
         allErrs.push(...(err || []));
         allKeys.push(...keys);
@@ -115,10 +116,10 @@ export class PgpKey {
     };
     if (armoredPublicKeyBlocks.length) {
       for (const block of blocks) {
-        await pushKeysAndErrs(block.content, 'readArmored');
+        await pushKeysAndErrs(block.content, true);
       }
     } else {
-      await pushKeysAndErrs(fileData, 'read');
+      await pushKeysAndErrs(fileData, false);
     }
     return { keys: allKeys, errs: allErrs };
   }
@@ -146,7 +147,7 @@ export class PgpKey {
       try {
         await prvPacket.decrypt(passphrase); // throws on password mismatch
       } catch (e) {
-        if (e instanceof Error && e.message.toLowerCase().includes('passphrase')) {
+        if (e instanceof Error && e.message.toLowerCase().includes('incorrect key passphrase')) {
           return false;
         }
         throw e;
@@ -168,6 +169,9 @@ export class PgpKey {
       throw new Error(`Cannot encrypt a key that has ${encryptedPacketCount} of ${secretPackets.length} private packets still encrypted`);
     }
     await prv.encrypt(passphrase);
+    if (!prv.isFullyEncrypted()) {
+      throw new Error('Expected key to be fully encrypted after prv.encrypt');
+    }
   }
 
   public static normalize = async (armored: string): Promise<{ normalized: string, keys: OpenPGP.key.Key[] }> => {
@@ -243,7 +247,7 @@ export class PgpKey {
     return longids;
   }
 
-  public static usable = async (armored: string) => { // is pubkey usable for encrytion?
+  public static usableForEncryption = async (armored: string) => { // is pubkey usable for encrytion?
     if (!await PgpKey.longid(armored)) {
       return false;
     }
@@ -295,7 +299,7 @@ export class PgpKey {
     return undefined;
   }
 
-  public static parse = async (armored: string): Promise<{ original: string, normalized: string, keys: KeyDetails[] }> => {
+  public static parseDetails = async (armored: string): Promise<{ original: string, normalized: string, keys: KeyDetails[] }> => {
     const { normalized, keys } = await PgpKey.normalize(armored);
     return { original: armored, normalized, keys: await Promise.all(keys.map(PgpKey.details)) };
   }

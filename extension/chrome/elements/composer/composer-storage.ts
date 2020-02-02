@@ -120,7 +120,7 @@ export class ComposerStorage extends ComposerComponent {
             if (!key) {
               console.info('Dropping found but incompatible public key', { for: email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : undefined });
               lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
-            } else if (! await PgpKey.usable(lookupResult.pubkey) && ! await PgpKey.expired(key)) { // Not to skip expired keys
+            } else if (! await PgpKey.usableForEncryption(lookupResult.pubkey) && ! await PgpKey.expired(key)) { // Not to skip expired keys
               console.info('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, longid: await PgpKey.longid(parsed.keys[0]) });
               lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
             }
