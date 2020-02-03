@@ -15,7 +15,7 @@ export class ComposerSendBtnPopover extends ViewModule<ComposeView> {
 
   public choices: PopoverChoices = { encrypt: true, sign: true, richtext: false }; // defaults, may be changed by user using the popover
 
-  public initActions = (): void => {
+  public setHandlers = (): void => {
     this.view.S.cached('toggle_send_options').click(this.view.setHandler((el, ev) => this.toggleVisible(ev)));
   }
 

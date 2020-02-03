@@ -9,10 +9,6 @@ import { ComposeView } from '../compose.js';
 
 export class ComposerFooter extends ViewModule<ComposeView> {
 
-  public initActions = () => {
-    // none
-  }
-
   public getFooterFromStorage = async (sender: string): Promise<string | undefined> => {
     const { sendAs } = await Store.getAcct(this.view.acctEmail, ['sendAs']);
     if (!sendAs) {

@@ -12,10 +12,6 @@ import { ComposeView } from '../compose.js';
 
 export class ComposerSender extends ViewModule<ComposeView> {
 
-  public initActions = () => {
-    // none
-  }
-
   public getSender = (): string => {
     if (this.view.S.now('input_from').length) {
       return String(this.view.S.now('input_from').val());

@@ -197,8 +197,6 @@ export class ComposerRender extends ViewModule<ComposeView> {
     this.view.errModule.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
     this.view.S.cached('compose_table').css('display', 'table');
     this.view.S.cached('body').keydown(this.view.setHandler((el, ev) => this.onBodyKeydownHandler(el, ev)));
-    this.view.recipientsModule.initActions();
-    this.view.sendBtnModule.initActions();
     this.view.S.cached('input_to').bind('paste', this.view.setHandler((el, ev) => this.onRecipientPasteHandler(el, ev)));
     this.view.inputModule.squire.addEventListener('keyup', () => this.view.S.cached('send_btn_note').text(''));
     this.view.S.cached('input_addresses_container_inner').click(this.view.setHandler(() => this.onRecipientsClickHandler(), this.view.errModule.handle(`focus recipients`)));

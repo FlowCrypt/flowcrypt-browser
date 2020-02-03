@@ -184,8 +184,8 @@ export class ComposeView extends View {
     this.pwdOrPubkeyContainerModule.setHandlers();
     this.sizeModule.setHandlers();
     this.storageModule.setHandlers();
-    // this.recipients.initActions - initiated in renderComposeTable
-    // this.sendBtn.initActions - initiated in renderComposeTable
+    this.recipientsModule.setHandlers();
+    this.sendBtnModule.setHandlers();
     await this.senderModule.checkEmailAliases();
     this.draftModule.setHandlers(); // must be last for 'onRecipientAdded/draftSave' to work properly
   }

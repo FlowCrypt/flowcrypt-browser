@@ -35,10 +35,10 @@ export class ComposerSendBtn extends ViewModule<ComposeView> {
     this.popover = new ComposerSendBtnPopover(view);
   }
 
-  public initActions = (): void => {
+  public setHandlers = (): void => {
     this.view.S.cached('body').keypress(Ui.ctrlEnter(() => !this.view.sizeModule.composeWindowIsMinimized && this.extractProcessSendMsg()));
     this.view.S.cached('send_btn').click(this.view.setHandlerPrevent('double', () => this.extractProcessSendMsg()));
-    this.popover.initActions();
+    this.popover.setHandlers();
   }
 
   public isSendMessageInProgres = (): boolean => {

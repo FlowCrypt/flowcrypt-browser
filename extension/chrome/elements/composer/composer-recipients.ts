@@ -47,7 +47,7 @@ export class ComposerRecipients extends ViewModule<ComposeView> {
     this.canReadEmails = this.view.scopes.read || this.view.scopes.modify;
   }
 
-  public initActions = (): void => {
+  public setHandlers = (): void => {
     let preventSearchContacts = false;
     const inputs = this.view.S.cached('recipients_inputs');
     inputs.on('keyup', this.view.setHandlerPrevent('veryslowspree', async (target) => {
