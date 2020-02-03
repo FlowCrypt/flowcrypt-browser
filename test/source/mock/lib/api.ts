@@ -70,16 +70,6 @@ export class Api<REQ, RES> {
     });
   }
 
-  private throttledResponse = async (response: http.ServerResponse, data: Buffer) => {
-    const chunkSize = 100 * 1024;
-    for (let i = 0; i < data.length; i += chunkSize) {
-      const chunk = data.slice(i, i + chunkSize);
-      response.write(chunk);
-      await Util.sleep(this.throttleChunkMs / 1000);
-    }
-    response.end();
-  }
-
   public listen = (port: number, host = '127.0.0.1', maxMb = 100) => {
     return new Promise((resolve, reject) => {
       this.maxRequestSizeMb = maxMb;
@@ -205,6 +195,16 @@ export class Api<REQ, RES> {
       }
     }
     return { query: this.parseUrlQuery(req.url!), body: parsedBody } as unknown as REQ;
+  }
+
+  private throttledResponse = async (response: http.ServerResponse, data: Buffer) => {
+    const chunkSize = 100 * 1024;
+    for (let i = 0; i < data.length; i += chunkSize) {
+      const chunk = data.slice(i, i + chunkSize);
+      response.write(chunk);
+      await Util.sleep(this.throttleChunkMs / 1000);
+    }
+    response.end();
   }
 
   private parseUrlQuery = (url: string): { [k: string]: string } => {
