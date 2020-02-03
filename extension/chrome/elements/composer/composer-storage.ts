@@ -21,7 +21,7 @@ export class ComposerStorage extends ViewModule<ComposeView> {
   private passphraseInterval: number | undefined;
   private ksLookupsByEmail: { [key: string]: PubkeySearchResult | Contact } = {};
 
-  public initActions = () => {
+  public setHandlers = () => {
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
       if (!entered) {
         clearInterval(this.passphraseInterval);

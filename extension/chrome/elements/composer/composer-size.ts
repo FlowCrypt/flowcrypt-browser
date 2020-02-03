@@ -16,21 +16,24 @@ export class ComposerSize extends ViewModule<ComposeView> {
   private composeWindowIsMaximized = false;
   private refBodyHeight?: number;
 
-  public initActions = () => {
-    $('body').click(event => {
-      const target = $(event.target);
-      if (this.composeWindowIsMaximized && target.is($('body'))) {
-        this.minimizeComposerWindow();
-      }
-    });
+  public setHandlers = () => {
+    $('body').click(this.view.setHandler((el) => this.bodyClickHandler(el)));
     if (!this.view.isReplyBox) {
       $('.minimize_new_message').click(this.view.setHandler(() => this.minimizeComposerWindow()));
-      $('.popout').click(this.view.setHandler(async () => {
-        this.view.S.cached('body').hide(); // Need to hide because it seems laggy on some devices
-        await this.toggleFullScreen();
-        this.view.S.cached('body').show();
-      }));
+      $('.popout').click(this.view.setHandler(() => this.popoutClickHandler()));
     }
+  }
+
+  public bodyClickHandler = (target: HTMLElement) => {
+    if (this.composeWindowIsMaximized && $(target).is($('body'))) {
+      this.minimizeComposerWindow();
+    }
+  }
+
+  public popoutClickHandler = async () => {
+    this.view.S.cached('body').hide(); // Need to hide because it seems laggy on some devices
+    await this.toggleFullScreen();
+    this.view.S.cached('body').show();
   }
 
   public onComposeTableRender = () => {

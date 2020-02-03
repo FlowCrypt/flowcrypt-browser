@@ -16,14 +16,16 @@ export class ComposerMyPubkey extends ViewModule<ComposeView> {
 
   private toggledManually = false;
 
-  public initActions = () => {
+  public setHandlers = () => {
     this.view.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
-    this.view.S.cached('icon_pubkey').click(this.view.setHandler(target => {
-      this.toggledManually = true;
-      const includePub = !$(target).is('.active'); // evaluating what the state of the icon was BEFORE clicking
-      Ui.toast(`${includePub ? 'Attaching' : 'Removing'} your Public Key`).catch(Catch.reportErr);
-      this.setAttachPreference(includePub);
-    }, this.view.errModule.handlers(`set/unset pubkey attachment`)));
+    this.view.S.cached('icon_pubkey').click(this.view.setHandler((el) => this.iconPubkeyClickHandler(el), this.view.errModule.handle(`set/unset pub att`)));
+  }
+
+  public iconPubkeyClickHandler = (target: HTMLElement) => {
+    this.toggledManually = true;
+    const includePub = !$(target).is('.active'); // evaluating what the state of the icon was BEFORE clicking
+    Ui.toast(`${includePub ? 'Attaching' : 'Removing'} your Public Key`).catch(Catch.reportErr);
+    this.setAttachPreference(includePub);
   }
 
   public shouldAttach = () => {
@@ -67,4 +69,5 @@ export class ComposerMyPubkey extends ViewModule<ComposeView> {
       this.view.S.cached('icon_pubkey').removeClass('active').attr('title', Lang.compose.includePubkeyIconTitle);
     }
   }
+
 }

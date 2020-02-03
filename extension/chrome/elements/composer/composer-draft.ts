@@ -37,20 +37,9 @@ export class ComposerDraft extends ViewModule<ComposeView> {
     }
   }
 
-  public initActions = async (): Promise<void> => {
-    $('.delete_draft').click(this.view.setHandler(async () => {
-      await this.draftDelete();
-      if (this.view.isReplyBox && !this.view.removeAfterClose) { // reload iframe so we don't leave users without a reply UI
-        this.view.skipClickPrompt = false;
-        window.location.href = Url.create(Env.getUrlNoParams(), this.urlParams());
-      } else { // close new msg
-        this.view.renderModule.closeMsg();
-      }
-    }, this.view.errModule.handlers('delete draft')));
-    await this.view.initPromise;
-    this.view.recipientsModule.onRecipientAdded(async () => {
-      await this.draftSave(true);
-    });
+  public setHandlers = () => {
+    $('.delete_draft').click(this.view.setHandler(() => this.deleteDraftClickHandler(), this.view.errModule.handle('delete draft')));
+    this.view.recipientsModule.onRecipientAdded(async () => await this.draftSave(true));
   }
 
   public initialDraftLoad = async (draftId: string): Promise<void> => {
@@ -158,6 +147,16 @@ export class ComposerDraft extends ViewModule<ComposeView> {
         }
       }
       this.currentlySavingDraft = false;
+    }
+  }
+
+  private deleteDraftClickHandler = async () => {
+    await this.draftDelete();
+    if (this.view.isReplyBox && !this.view.removeAfterClose) { // reload iframe so we don't leave users without a reply UI
+      this.view.skipClickPrompt = false;
+      window.location.href = Url.create(Env.getUrlNoParams(), this.urlParams());
+    } else { // close new msg
+      this.view.renderModule.closeMsg();
     }
   }
 

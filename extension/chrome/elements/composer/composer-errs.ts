@@ -27,11 +27,7 @@ export class ComposerErrs extends ViewModule<ComposeView> {
 
   private debugId = Str.sloppyRandom();
 
-  public initActions = () => {
-    // none
-  }
-
-  public handlers = (couldNotDoWhat: string): BrowserEventErrHandler => {
+  public handle = (couldNotDoWhat: string): BrowserEventErrHandler => {
     return {
       network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
       authPopup: async () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail }),

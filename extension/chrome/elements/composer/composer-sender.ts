@@ -33,7 +33,7 @@ export class ComposerSender extends ViewModule<ComposeView> {
         const showAliasChevronHtml = '<img tabindex="22" id="render_send_from" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
         const inputAddrContainer = this.view.S.cached('container_cc_bcc_buttons');
         Xss.sanitizeAppend(inputAddrContainer, showAliasChevronHtml);
-        inputAddrContainer.find('#render_send_from').click(this.view.setHandler(() => this.renderSendFromIfMoreThanOneAlias(), this.view.errModule.handlers(`render send-from`)));
+        inputAddrContainer.find('#render_send_from').click(this.view.setHandler(() => this.renderSendFromIfMoreThanOneAlias(), this.view.errModule.handle(`render send-from`)));
       }
     } else {
       await this.renderSendFromIfMoreThanOneAlias();

@@ -24,10 +24,6 @@ export class ComposerQuote extends ViewModule<ComposeView> {
   public tripleDotSanitizedHtmlContent: { quote: string | undefined, footer: string | undefined } | undefined;
   public messageToReplyOrForward: MessageToReplyOrForward | undefined;
 
-  public initActions = (): void => {
-    // No need
-  }
-
   public getTripleDotSanitizedFormattedHtmlContent = (): string => { // email content order: [myMsg, myFooter, theirQuote]
     if (this.tripleDotSanitizedHtmlContent) {
       return '<br />' + (this.tripleDotSanitizedHtmlContent.footer || '') + (this.tripleDotSanitizedHtmlContent.quote || '');

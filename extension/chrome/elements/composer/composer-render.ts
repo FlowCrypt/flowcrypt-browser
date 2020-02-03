@@ -119,7 +119,7 @@ export class ComposerRender extends ViewModule<ComposeView> {
           await this.renderReplyMsgComposeTable();
         } else {
           $('#reply_click_area,#a_reply,#a_reply_all,#a_forward')
-            .click(this.view.setHandler((el) => this.actionActivateReplyBoxHandler(el), this.view.errModule.handlers(`activate repply box`)));
+            .click(this.view.setHandler((el) => this.actionActivateReplyBoxHandler(el), this.view.errModule.handle(`activate repply box`)));
         }
       }
     }
@@ -201,9 +201,8 @@ export class ComposerRender extends ViewModule<ComposeView> {
     this.view.sendBtnModule.initActions();
     this.view.S.cached('input_to').bind('paste', this.view.setHandler((el, ev) => this.onRecipientPasteHandler(el, ev)));
     this.view.inputModule.squire.addEventListener('keyup', () => this.view.S.cached('send_btn_note').text(''));
-    this.view.S.cached('input_addresses_container_inner').click(this.view.setHandler(() => this.onRecipientsClickHandler(), this.view.errModule.handlers(`focus recipients`)));
+    this.view.S.cached('input_addresses_container_inner').click(this.view.setHandler(() => this.onRecipientsClickHandler(), this.view.errModule.handle(`focus recipients`)));
     this.view.S.cached('input_addresses_container_inner').children().click(() => false);
-    this.view.attsModule.onComposeTableRender();
     await this.view.senderModule.renderSendFromOrChevron();
     if (this.view.isReplyBox) {
       if (this.view.replyParams?.to.length) {
@@ -211,7 +210,7 @@ export class ComposerRender extends ViewModule<ComposeView> {
         await this.view.recipientsModule.parseRenderRecipients(this.view.S.cached('input_to')); // this will force firefox to render them on load
       }
     } else {
-      $('.close_new_message').click(this.view.setHandler(() => this.actionCloseHandler(), this.view.errModule.handlers(`close message`)));
+      $('.close_new_message').click(this.view.setHandler(() => this.actionCloseHandler(), this.view.errModule.handle(`close message`)));
       this.view.S.cached('header').find('#header_title').click(() => $('.minimize_new_message').click());
       await this.view.quoteModule.addTripleDotQuoteExpandFooterOnlyBtn();
       this.view.sizeModule.setInputTextHeightManuallyIfNeeded();

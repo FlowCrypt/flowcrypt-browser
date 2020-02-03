@@ -4,7 +4,6 @@
 
 import { AccountStore, Scopes, Store } from '../../js/common/platform/store.js';
 import { EmailProviderInterface, ReplyParams } from '../../js/common/api/email-provider/email-provider-api.js';
-
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Backend } from '../../js/common/api/backend.js';
@@ -31,7 +30,6 @@ import { ComposerSendBtn } from './composer/composer-send-btn.js';
 import { ComposerSender } from './composer/composer-sender.js';
 import { ComposerSize } from './composer/composer-size.js';
 import { ComposerStorage } from './composer/composer-storage.js';
-import { Catch } from '../../js/common/platform/catch.js';
 
 export type DeterminedMsgHeaders = {
   lastMsgId: string,
@@ -60,8 +58,6 @@ export class ComposeView extends View {
   public factory!: XssSafeFactory;
   public replyParams: ReplyParams | undefined;
   public emailProvider: EmailProviderInterface;
-
-  public initPromise!: Promise<void>;
 
   public quoteModule!: ComposerQuote;
   public sendBtnModule!: ComposerSendBtn;
@@ -177,25 +173,21 @@ export class ComposeView extends View {
     BrowserMsg.listen(this.tabId!);
   }
 
-  public setHandlers = () => {
-    this.initPromise = (async () => {
-      await this.renderModule.initComposeBox();
-      BrowserMsg.addListener('close_dialog', async () => { $('.featherlight.featherlight-iframe').remove(); });
-      this.S.cached('icon_help').click(this.setHandler(() => this.renderModule.renderSettingsWithDialog('help'), this.errModule.handlers(`help dialog`)));
-      this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to interfere
-      this.attsModule.initActions();
-      this.draftModule.initActions().catch(Catch.reportErr);
-      this.errModule.initActions();
-      this.inputModule.initActions();
-      this.myPubkeyModule.initActions();
-      await this.pwdOrPubkeyContainerModule.initActions();
-      this.quoteModule.initActions();
-      this.sizeModule.initActions();
-      this.storageModule.initActions();
-      // this.recipients.initActions - initiated in renderComposeTable
-      // this.sendBtn.initActions - initiated in renderComposeTable
-      await this.senderModule.checkEmailAliases();
-    })().catch(Catch.reportErr);
+  public setHandlers = async () => {
+    await this.renderModule.initComposeBox();
+    BrowserMsg.addListener('close_dialog', async () => { $('.featherlight.featherlight-iframe').remove(); });
+    this.S.cached('icon_help').click(this.setHandler(() => this.renderModule.renderSettingsWithDialog('help'), this.errModule.handle(`help dialog`)));
+    this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to interfere
+    this.attsModule.setHandlers();
+    this.inputModule.setHandlers();
+    this.myPubkeyModule.setHandlers();
+    this.pwdOrPubkeyContainerModule.setHandlers();
+    this.sizeModule.setHandlers();
+    this.storageModule.setHandlers();
+    // this.recipients.initActions - initiated in renderComposeTable
+    // this.sendBtn.initActions - initiated in renderComposeTable
+    await this.senderModule.checkEmailAliases();
+    this.draftModule.setHandlers(); // must be last for 'onRecipientAdded/draftSave' to work properly
   }
 
   private fetchReplyMeta = async (): Promise<void> => {

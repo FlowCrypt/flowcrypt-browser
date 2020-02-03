@@ -77,8 +77,8 @@ export class ComposerRecipients extends ViewModule<ComposeView> {
     this.view.S.cached('input_to').focus(this.view.setHandler(() => this.focusRecipients()));
     this.view.S.cached('cc').focus(this.view.setHandler(() => this.focusRecipients()));
     this.view.S.cached('bcc').focus(this.view.setHandler(() => this.focusRecipients()));
-    this.view.S.cached('compose_table').click(this.view.setHandler(() => this.hideContacts(), this.view.errModule.handlers(`hide contact box`)));
-    this.view.S.cached('add_their_pubkey').click(this.view.setHandler(() => this.addTheirPubkeyClickHandler(), this.view.errModule.handlers('add pubkey')));
+    this.view.S.cached('compose_table').click(this.view.setHandler(() => this.hideContacts(), this.view.errModule.handle(`hide contact box`)));
+    this.view.S.cached('add_their_pubkey').click(this.view.setHandler(() => this.addTheirPubkeyClickHandler(), this.view.errModule.handle('add pubkey')));
     BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
     BrowserMsg.listen(this.view.parentTabId);
   }
@@ -581,13 +581,13 @@ export class ComposerRecipients extends ViewModule<ComposeView> {
         if (email) {
           await this.selectContact(input, email, query);
         }
-      }, this.view.errModule.handlers(`select contact`)));
+      }, this.view.errModule.handle(`select contact`)));
       contactItems.hover(function () {
         contactItems.removeClass('active');
         $(this).addClass('active');
       });
       this.view.S.cached('contacts').find('ul li.auth_contacts').click(this.view.setHandler(() =>
-        this.authContacts(this.view.acctEmail), this.view.errModule.handlers(`authorize contact search`)));
+        this.authContacts(this.view.acctEmail), this.view.errModule.handle(`authorize contact search`)));
       const offset = input.offset()!;
       const inputToPadding = parseInt(input.css('padding-left'));
       let leftOffset: number;
@@ -734,15 +734,15 @@ export class ComposerRecipients extends ViewModule<ComposeView> {
       '<img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
     Xss.sanitizeAppend(el, contentHtml)
       .find('img.close-icon')
-      .click(this.view.setHandler(target => this.removeRecipient(target.parentElement!), this.view.errModule.handlers('remove recipient')));
+      .click(this.view.setHandler(target => this.removeRecipient(target.parentElement!), this.view.errModule.handle('remove recipient')));
     if (contact === PUBKEY_LOOKUP_RESULT_FAIL) {
       recipient.status = RecipientStatuses.FAILED;
       $(el).attr('title', 'Failed to load, click to retry');
       $(el).addClass("failed");
       Xss.sanitizeReplace($(el).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">' +
         '<img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">');
-      $(el).find('.action_retry_pubkey_fetch').click(this.view.setHandler(async () => await this.refreshRecipients(), this.view.errModule.handlers('refresh recipient')));
-      $(el).find('.remove-reciepient').click(this.view.setHandler(element => this.removeRecipient(element.parentElement!), this.view.errModule.handlers('remove recipient')));
+      $(el).find('.action_retry_pubkey_fetch').click(this.view.setHandler(async () => await this.refreshRecipients(), this.view.errModule.handle('refresh recipient')));
+      $(el).find('.remove-reciepient').click(this.view.setHandler(element => this.removeRecipient(element.parentElement!), this.view.errModule.handle('remove recipient')));
     } else if (contact === PUBKEY_LOOKUP_RESULT_WRONG) {
       recipient.status = RecipientStatuses.WRONG;
       this.view.errModule.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${recipient.email}`);

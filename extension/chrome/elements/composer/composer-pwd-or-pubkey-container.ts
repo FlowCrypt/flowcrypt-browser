@@ -18,29 +18,38 @@ export class ComposerPwdOrPubkeyContainer extends ViewModule<ComposeView> {
   private keyImportUI = new KeyImportUi({});
   private rmPwdStrengthValidationElements: (() => void) | undefined;
 
-  public initActions = async () => {
+  constructor(view: ComposeView) {
+    super(view);
+    Store.getAcct(this.view.acctEmail, ['hide_message_password']).then(store => {
+      if (store.hide_message_password) {
+        this.view.S.cached('input_password').attr('type', 'password');
+      }
+    }).catch(Catch.reportErr);
+  }
+
+  public setHandlers = () => {
     this.view.S.cached('input_password').keyup(this.view.setHandlerPrevent('spree', () => this.showHideContainerAndColorSendBtn()));
-    this.view.S.cached('input_password').focus(this.view.setHandlerPrevent('spree', () => {
-      const passwordContainerHeight = this.view.S.cached('password_or_pubkey').outerHeight() || 0;
-      const footerHeight = this.view.S.cached('footer').outerHeight() || 0;
-      this.view.S.cached('expiration_note').css({ bottom: (passwordContainerHeight + footerHeight) + 'px' });
-      this.view.S.cached('expiration_note').fadeIn();
-      this.showHideContainerAndColorSendBtn();
-    }));
-    this.view.S.cached('input_password').blur(() => {
-      Catch.setHandledTimeout(() => { // timeout here is needed so <a> will be visible once clicked
-        this.view.S.cached('expiration_note').fadeOut();
-      }, 100);
-      this.showHideContainerAndColorSendBtn();
-    });
+    this.view.S.cached('input_password').focus(this.view.setHandlerPrevent('spree', () => this.inputPwdFocusHandler()));
+    this.view.S.cached('input_password').blur(this.view.setHandler(() => this.inputPwdBlurHandler()));
     this.view.S.cached('expiration_note').find('#expiration_note_settings_link').click(this.view.setHandler((el, e) => {
       e.preventDefault();
       this.view.renderModule.renderSettingsWithDialog('security');
-    }, this.view.errModule.handlers(`render settings dialog`)));
-    const store = await Store.getAcct(this.view.acctEmail, ['hide_message_password']);
-    if (store.hide_message_password) {
-      this.view.S.cached('input_password').attr('type', 'password');
-    }
+    }, this.view.errModule.handle(`render settings dialog`)));
+  }
+
+  public inputPwdFocusHandler = () => {
+    const passwordContainerHeight = this.view.S.cached('password_or_pubkey').outerHeight() || 0;
+    const footerHeight = this.view.S.cached('footer').outerHeight() || 0;
+    this.view.S.cached('expiration_note').css({ bottom: (passwordContainerHeight + footerHeight) + 'px' });
+    this.view.S.cached('expiration_note').fadeIn();
+    this.showHideContainerAndColorSendBtn();
+  }
+
+  public inputPwdBlurHandler = () => {
+    Catch.setHandledTimeout(() => { // timeout here is needed so <a> will be visible once clicked
+      this.view.S.cached('expiration_note').fadeOut();
+    }, 100);
+    this.showHideContainerAndColorSendBtn();
   }
 
   public showHideContainerAndColorSendBtn = () => {
