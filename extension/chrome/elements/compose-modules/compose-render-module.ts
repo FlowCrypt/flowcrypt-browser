@@ -17,6 +17,8 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
+import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { GmailParser } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 
 export class ComposeRenderModule extends ViewModule<ComposeView> {
 
@@ -133,6 +135,25 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.sendBtnModule.resetSendBtn();
     await this.view.sendBtnModule.popover.render();
     this.loadRecipientsThenSetTestStateReady().catch(Catch.reportErr);
+  }
+
+  public fetchReplyMeta = async (aliases: string[]): Promise<void> => {
+    Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: `Loading secure reply box..${Ui.spinner('green')}` }));
+    try {
+      const gmailMsg = await this.view.emailProvider.msgGet(this.view.replyMsgId!, 'metadata');
+      this.view.replyParams = GmailParser.determineReplyMeta(this.view.acctEmail, aliases, gmailMsg);
+      this.view.threadId = gmailMsg.threadId || '';
+    } catch (e) {
+      if (ApiErr.isAuthPopupNeeded(e)) {
+        BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
+      }
+      if (e instanceof Error) {
+        e.message = `Cannot get reply data for the message you are replying to.`;
+      }
+      throw e;
+    } finally {
+      $('#loader').remove();
+    }
   }
 
   private initComposeBoxStyles = () => {

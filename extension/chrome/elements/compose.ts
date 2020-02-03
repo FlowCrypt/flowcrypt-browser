@@ -9,11 +9,9 @@ import { Assert } from '../../js/common/assert.js';
 import { Backend } from '../../js/common/api/backend.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
-import { GmailParser } from '../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
-import { Xss } from '../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 import { openpgp } from '../../js/common/core/pgp.js';
 import { ComposeAttsModule } from './compose-modules/compose-atts-module.js';
@@ -31,11 +29,6 @@ import { ComposeSenderModule } from './compose-modules/compose-sender-module.js'
 import { ComposeSizeModule } from './compose-modules/compose-size-module.js';
 import { ComposeStorageModule } from './compose-modules/compose-storage-module.js';
 import { Catch } from '../../js/common/platform/catch.js';
-
-export type DeterminedMsgHeaders = {
-  lastMsgId: string,
-  headers: { 'In-Reply-To': string, 'References': string }
-};
 
 export class ComposeView extends View {
 
@@ -151,7 +144,7 @@ export class ComposeView extends View {
       await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail);
     }
     if (this.replyMsgId) {
-      await this.fetchReplyMeta(Object.keys(storage.sendAs!));
+      await this.renderModule.fetchReplyMeta(Object.keys(storage.sendAs!));
     }
     if (this.isReplyBox && this.threadId && !this.ignoreDraft && storage.drafts_reply && storage.drafts_reply[this.threadId]) {
       this.draftId = storage.drafts_reply[this.threadId]; // there may be a draft we want to load
@@ -186,26 +179,7 @@ export class ComposeView extends View {
     this.storageModule.setHandlers();
     this.recipientsModule.setHandlers();
     this.sendBtnModule.setHandlers();
-    this.draftModule.setHandlers(); // must be last for 'onRecipientAdded/draftSave' to work properly
-  }
-
-  private fetchReplyMeta = async (aliases: string[]): Promise<void> => {
-    Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: `Loading secure reply box..${Ui.spinner('green')}` }));
-    try {
-      const gmailMsg = await this.emailProvider.msgGet(this.replyMsgId!, 'metadata');
-      this.replyParams = GmailParser.determineReplyMeta(this.acctEmail, aliases, gmailMsg);
-      this.threadId = gmailMsg.threadId || '';
-    } catch (e) {
-      if (ApiErr.isAuthPopupNeeded(e)) {
-        BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
-      }
-      if (e instanceof Error) {
-        e.message = `Cannot get reply data for the message you are replying to.`;
-      }
-      throw e;
-    } finally {
-      $('#loader').remove();
-    }
+    this.draftModule.setHandlers(); // must be the last one so that 'onRecipientAdded/draftSave' to works properly
   }
 
 }
