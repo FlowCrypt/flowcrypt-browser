@@ -56,68 +56,18 @@ export class ComposerRecipients extends ComposerComponent {
     inputs.on('keydown', this.view.setHandler(async (target, e) => {
       preventSearchContacts = this.recipientInputKeydownHandler(e);
     }));
-    inputs.on('blur', this.view.setHandler(async (target, e) => {
-      if (this.dragged) { // blur while drag&drop
-        return;
-      }
-      this.composer.errs.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
-      await this.parseRenderRecipients($(target));
-      // If thereis no related target or related target isn't in recipients functionality
-      // then we need to collapse inputs
-      await this.collapseIpnutsIfNeeded(e.relatedTarget);
-      this.composer.errs.debug(`input_to.blur -> parseRenderRecipients done`);
-    }));
-    inputs.on('dragenter', this.view.setHandler((target, e) => {
-      if (Catch.browser().name === 'firefox') {
-        this.insertCursorBefore(target.previousElementSibling!, true);
-      } else {
-        target.focus();
-      }
-    }));
-    inputs.on('dragleave', this.view.setHandler((target) => {
-      if (Catch.browser().name === 'firefox') {
-        this.removeCursor(target.previousElementSibling! as HTMLElement);
-      } else {
-        target.blur();
-      }
-    }));
+    inputs.on('blur', this.view.setHandler((target, e) => this.inputsBlurHandler(target, e)));
+    inputs.on('dragenter', this.view.setHandler((target, e) => this.inputsDragEnterHandler(target)));
+    inputs.on('dragleave', this.view.setHandler((target) => this.inputsDragLeaveHandler(target)));
     inputs.on('dragover', (e) => e.preventDefault());
-    inputs.on('drop', this.view.setHandler((target) => {
-      if (Catch.browser().name === 'firefox') {
-        this.removeCursor(target.previousElementSibling as HTMLElement);
-      }
-      if (this.dragged) {
-        const previousInput = this.dragged.parentElement!.nextElementSibling!;
-        this.dragged.parentElement!.removeChild(this.dragged);
-        const sendingType = target.getAttribute('data-sending-type') as RecipientType;
-        const jqueryTarget = $(target);
-        jqueryTarget.siblings('.recipients').append(this.dragged); // xss-safe-value
-        const draggableElementIndex = this.addedRecipients.findIndex(r => r.element === this.dragged);
-        this.addedRecipients[draggableElementIndex].sendingType = sendingType;
-        this.addedRecipients = moveElementInArray(this.addedRecipients, draggableElementIndex, this.addedRecipients.length - 1);
-        this.composer.size.resizeInput(jqueryTarget.add(previousInput));
-        target.focus();
-      }
-    }));
-    const handleCopyActionsClick = (target: HTMLElement, newContainer: JQuery<HTMLElement>) => {
-      const buttonsContainer = target.parentElement!;
-      const curentContainer = buttonsContainer.parentElement!;
-      const input = newContainer.find('input');
-      curentContainer.removeChild(buttonsContainer);
-      newContainer.append(buttonsContainer); // xss-safe-value
-      newContainer.css('display', 'block');
-      target.style.display = 'none';
-      input.focus();
-      this.composer.size.resizeComposeBox();
-      this.composer.size.setInputTextHeightManuallyIfNeeded();
-    };
+    inputs.on('drop', this.view.setHandler((target) => this.inputsDropHandler(target)));
     this.composer.S.now('cc').click(this.view.setHandler((target) => {
       const newContainer = this.composer.S.cached('input_addresses_container_outer').find(`#input-container-cc`);
-      handleCopyActionsClick(target, newContainer);
+      this.copyCcBccActionsClickHandler(target, newContainer);
     }));
     this.composer.S.now('bcc').click(this.view.setHandler((target) => {
       const newContainer = this.composer.S.cached('input_addresses_container_outer').find(`#input-container-bcc`);
-      handleCopyActionsClick(target, newContainer);
+      this.copyCcBccActionsClickHandler(target, newContainer);
     }));
     this.composer.S.cached('recipients_placeholder').click(this.view.setHandler((target) => {
       this.composer.S.cached('input_to').focus();
@@ -126,24 +76,7 @@ export class ComposerRecipients extends ComposerComponent {
     this.composer.S.cached('cc').focus(this.view.setHandler(() => this.focusRecipients()));
     this.composer.S.cached('bcc').focus(this.view.setHandler(() => this.focusRecipients()));
     this.composer.S.cached('compose_table').click(this.view.setHandler(() => this.hideContacts(), this.composer.errs.handlers(`hide contact box`)));
-    this.composer.S.cached('add_their_pubkey').click(this.view.setHandler(() => {
-      const noPgpRecipients = this.addedRecipients.filter(r => r.element.className.includes('no_pgp'));
-      this.composer.render.renderAddPubkeyDialog(noPgpRecipients.map(r => r.email));
-      clearInterval(this.addedPubkeyDbLookupInterval); // todo - get rid of Catch.set_interval. just supply tabId and wait for direct callback
-      this.addedPubkeyDbLookupInterval = Catch.setHandledInterval(async () => {
-        const recipientsHasPgp: RecipientElement[] = [];
-        for (const recipient of noPgpRecipients) {
-          const [contact] = await Store.dbContactGet(undefined, [recipient.email]);
-          if (contact && contact.has_pgp) {
-            $(recipient.element).removeClass('no_pgp').find('i').remove();
-            clearInterval(this.addedPubkeyDbLookupInterval);
-            recipientsHasPgp.push(recipient);
-          }
-        }
-        await this.evaluateRecipients(recipientsHasPgp);
-        await this.setEmailsPreview(this.getRecipients());
-      }, 1000);
-    }, this.composer.errs.handlers('add recipient public key')));
+    this.composer.S.cached('add_their_pubkey').click(this.view.setHandler(() => this.addTheirPubkeyClickHandler(), this.composer.errs.handlers('add pubkey')));
     BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
     BrowserMsg.listen(this.view.parentTabId);
   }
@@ -387,6 +320,84 @@ export class ComposerRecipients extends ComposerComponent {
       }
       return undefined;
     }
+  }
+
+  private inputsBlurHandler = async (target: HTMLElement, e: JQuery.Event<HTMLElement, null>) => {
+    if (this.dragged) { // blur while drag&drop
+      return;
+    }
+    this.composer.errs.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
+    await this.parseRenderRecipients($(target));
+    // If thereis no related target or related target isn't in recipients functionality
+    // then we need to collapse inputs
+    await this.collapseIpnutsIfNeeded(e.relatedTarget);
+    this.composer.errs.debug(`input_to.blur -> parseRenderRecipients done`);
+  }
+
+  private inputsDragEnterHandler = (target: HTMLElement) => {
+    if (Catch.browser().name === 'firefox') {
+      this.insertCursorBefore(target.previousElementSibling!, true);
+    } else {
+      target.focus();
+    }
+  }
+
+  private inputsDragLeaveHandler = (target: HTMLElement) => {
+    if (Catch.browser().name === 'firefox') {
+      this.removeCursor(target.previousElementSibling! as HTMLElement);
+    } else {
+      target.blur();
+    }
+  }
+
+  private inputsDropHandler = (target: HTMLElement) => {
+    if (Catch.browser().name === 'firefox') {
+      this.removeCursor(target.previousElementSibling as HTMLElement);
+    }
+    if (this.dragged) {
+      const previousInput = this.dragged.parentElement!.nextElementSibling!;
+      this.dragged.parentElement!.removeChild(this.dragged);
+      const sendingType = target.getAttribute('data-sending-type') as RecipientType;
+      const jqueryTarget = $(target);
+      jqueryTarget.siblings('.recipients').append(this.dragged); // xss-safe-value
+      const draggableElementIndex = this.addedRecipients.findIndex(r => r.element === this.dragged);
+      this.addedRecipients[draggableElementIndex].sendingType = sendingType;
+      this.addedRecipients = moveElementInArray(this.addedRecipients, draggableElementIndex, this.addedRecipients.length - 1);
+      this.composer.size.resizeInput(jqueryTarget.add(previousInput));
+      target.focus();
+    }
+  }
+
+  private copyCcBccActionsClickHandler = (target: HTMLElement, newContainer: JQuery<HTMLElement>) => {
+    const buttonsContainer = target.parentElement!;
+    const curentContainer = buttonsContainer.parentElement!;
+    const input = newContainer.find('input');
+    curentContainer.removeChild(buttonsContainer);
+    newContainer.append(buttonsContainer); // xss-safe-value
+    newContainer.css('display', 'block');
+    target.style.display = 'none';
+    input.focus();
+    this.composer.size.resizeComposeBox();
+    this.composer.size.setInputTextHeightManuallyIfNeeded();
+  }
+
+  private addTheirPubkeyClickHandler = () => {
+    const noPgpRecipients = this.addedRecipients.filter(r => r.element.className.includes('no_pgp'));
+    this.composer.render.renderAddPubkeyDialog(noPgpRecipients.map(r => r.email));
+    clearInterval(this.addedPubkeyDbLookupInterval); // todo - get rid of Catch.set_interval. just supply tabId and wait for direct callback
+    this.addedPubkeyDbLookupInterval = Catch.setHandledInterval(async () => {
+      const recipientsHasPgp: RecipientElement[] = [];
+      for (const recipient of noPgpRecipients) {
+        const [contact] = await Store.dbContactGet(undefined, [recipient.email]);
+        if (contact && contact.has_pgp) {
+          $(recipient.element).removeClass('no_pgp').find('i').remove();
+          clearInterval(this.addedPubkeyDbLookupInterval);
+          recipientsHasPgp.push(recipient);
+        }
+      }
+      await this.evaluateRecipients(recipientsHasPgp);
+      await this.setEmailsPreview(this.getRecipients());
+    }, 1000);
   }
 
   /**
