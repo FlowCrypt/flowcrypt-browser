@@ -2,11 +2,12 @@
 
 'use strict';
 
-import { ComposerComponent } from './composer-abstract-component.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { ViewModule } from '../../../js/common/view-module.js';
+import { ComposeView } from '../compose.js';
 
-export class ComposerFooter extends ComposerComponent {
+export class ComposerFooter extends ViewModule<ComposeView> {
 
   public initActions = () => {
     // none
@@ -26,10 +27,10 @@ export class ComposerFooter extends ComposerComponent {
    * it does not bother us if old footer stays in the text (eg when user later changes sendFrom address)
    */
   public onFooterUpdated = (newFooter: string | undefined) => {
-    if (this.composer.quote.tripleDotSanitizedHtmlContent) { // footer not yet rendered
-      this.composer.quote.tripleDotSanitizedHtmlContent.footer = newFooter ? this.createFooterHtml(newFooter) : '';
-    } else if (this.composer.S.cached('triple_dot')[0] && newFooter) { // ellipsis preset (not yet clicked), but not visible (likely no footer earlier)
-      this.composer.quote.tripleDotSanitizedHtmlContent = { footer: this.createFooterHtml(newFooter), quote: '' };
+    if (this.view.quoteModule.tripleDotSanitizedHtmlContent) { // footer not yet rendered
+      this.view.quoteModule.tripleDotSanitizedHtmlContent.footer = newFooter ? this.createFooterHtml(newFooter) : '';
+    } else if (this.view.S.cached('triple_dot')[0] && newFooter) { // ellipsis preset (not yet clicked), but not visible (likely no footer earlier)
+      this.view.quoteModule.tripleDotSanitizedHtmlContent = { footer: this.createFooterHtml(newFooter), quote: '' };
     }
   }
 

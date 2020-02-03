@@ -6,8 +6,6 @@ import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Att } from '../../../js/common/core/att.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { Composer } from './composer.js';
-import { ComposerComponent } from './composer-abstract-component.js';
 import { ComposerSendBtnPopover } from './composer-send-btn-popover.js';
 import { GeneralMailFormatter } from './formatters/composer-mail-formatter.js';
 import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
@@ -19,8 +17,10 @@ import { Store } from '../../../js/common/platform/store.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { ViewModule } from '../../../js/common/view-module.js';
+import { ComposeView } from '../compose.js';
 
-export class ComposerSendBtn extends ComposerComponent {
+export class ComposerSendBtn extends ViewModule<ComposeView> {
 
   public additionalMsgHeaders: { [key: string]: string } = {};
 
@@ -30,14 +30,14 @@ export class ComposerSendBtn extends ComposerComponent {
 
   private isSendMessageInProgress = false;
 
-  constructor(composer: Composer) {
-    super(composer);
-    this.popover = new ComposerSendBtnPopover(composer);
+  constructor(view: ComposeView) {
+    super(view);
+    this.popover = new ComposerSendBtnPopover(view);
   }
 
   public initActions = (): void => {
-    this.composer.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composer.size.composeWindowIsMinimized && this.extractProcessSendMsg()));
-    this.composer.S.cached('send_btn').click(this.view.setHandlerPrevent('double', () => this.extractProcessSendMsg()));
+    this.view.S.cached('body').keypress(Ui.ctrlEnter(() => !this.view.sizeModule.composeWindowIsMinimized && this.extractProcessSendMsg()));
+    this.view.S.cached('send_btn').click(this.view.setHandlerPrevent('double', () => this.extractProcessSendMsg()));
     this.popover.initActions();
   }
 
@@ -47,9 +47,9 @@ export class ComposerSendBtn extends ComposerComponent {
 
   public resetSendBtn = (delay?: number) => {
     const doReset = () => {
-      Xss.sanitizeRender(this.composer.S.cached('send_btn_text'), `<i></i>${this.btnText()}`);
-      this.composer.S.cached('send_btn').addClass('green').removeClass('gray').prop('disabled', false);
-      this.composer.S.cached('toggle_send_options').addClass('green').removeClass('gray').show();
+      Xss.sanitizeRender(this.view.S.cached('send_btn_text'), `<i></i>${this.btnText()}`);
+      this.view.S.cached('send_btn').addClass('green').removeClass('gray').prop('disabled', false);
+      this.view.S.cached('toggle_send_options').addClass('green').removeClass('gray').show();
     };
     if (typeof this.btnUpdateTimeout !== 'undefined') {
       clearTimeout(this.btnUpdateTimeout);
@@ -62,19 +62,19 @@ export class ComposerSendBtn extends ComposerComponent {
   }
 
   public disableBtn = () => {
-    this.composer.S.cached('send_btn').removeClass('green').addClass('gray').prop('disabled', true);
-    this.composer.S.cached('toggle_send_options').removeClass('green').addClass('gray');
+    this.view.S.cached('send_btn').removeClass('green').addClass('gray').prop('disabled', true);
+    this.view.S.cached('toggle_send_options').removeClass('green').addClass('gray');
   }
 
   public enableBtn = () => {
-    this.composer.S.cached('send_btn').removeClass('gray').addClass('green').prop('disabled', false);
-    this.composer.S.cached('toggle_send_options').removeClass('gray').addClass('green');
+    this.view.S.cached('send_btn').removeClass('gray').addClass('green').prop('disabled', false);
+    this.view.S.cached('toggle_send_options').removeClass('gray').addClass('green');
   }
 
   public renderUploadProgress = (progress: number | undefined) => {
-    if (progress && this.composer.atts.attach.hasAtt()) {
+    if (progress && this.view.attsModule.attach.hasAtt()) {
       progress = Math.floor(progress);
-      this.composer.S.now('send_btn_text').text(`${SendBtnTexts.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
+      this.view.S.now('send_btn_text').text(`${SendBtnTexts.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
     }
   }
 
@@ -91,16 +91,16 @@ export class ComposerSendBtn extends ComposerComponent {
   }
 
   private extractProcessSendMsg = async () => {
-    this.composer.sendBtn.disableBtn();
-    this.composer.S.cached('toggle_send_options').hide();
+    this.view.sendBtnModule.disableBtn();
+    this.view.S.cached('toggle_send_options').hide();
     try {
-      this.composer.errs.throwIfFormNotReady();
-      this.composer.S.now('send_btn_text').text('Loading...');
-      Xss.sanitizeRender(this.composer.S.now('send_btn_i'), Ui.spinner('white'));
-      this.composer.S.cached('send_btn_note').text('');
-      const newMsgData = this.composer.input.extractAll();
-      await this.composer.errs.throwIfFormValsInvalid(newMsgData);
-      const senderKi = await this.composer.storage.getKey(this.composer.sender.getSender());
+      this.view.errModule.throwIfFormNotReady();
+      this.view.S.now('send_btn_text').text('Loading...');
+      Xss.sanitizeRender(this.view.S.now('send_btn_i'), Ui.spinner('white'));
+      this.view.S.cached('send_btn_note').text('');
+      const newMsgData = this.view.inputModule.extractAll();
+      await this.view.errModule.throwIfFormValsInvalid(newMsgData);
+      const senderKi = await this.view.storageModule.getKey(this.view.senderModule.getSender());
       let signingPrv: OpenPGP.key.Key | undefined;
       if (this.popover.choices.sign) {
         signingPrv = await this.decryptSenderKey(senderKi);
@@ -108,19 +108,19 @@ export class ComposerSendBtn extends ComposerComponent {
           return; // user has canceled the pass phrase dialog, or didn't respond to it in time
         }
       }
-      const msgObj = await GeneralMailFormatter.processNewMsg(this.composer, newMsgData, senderKi, signingPrv);
+      const msgObj = await GeneralMailFormatter.processNewMsg(this.view, newMsgData, senderKi, signingPrv);
       await this.finalizeSendableMsg(msgObj, senderKi);
       await this.doSendMsg(msgObj);
     } catch (e) {
-      await this.composer.errs.handleSendErr(e);
+      await this.view.errModule.handleSendErr(e);
     } finally {
-      this.composer.sendBtn.enableBtn();
-      this.composer.S.cached('toggle_send_options').show();
+      this.view.sendBtnModule.enableBtn();
+      this.view.S.cached('toggle_send_options').show();
     }
   }
 
   private finalizeSendableMsg = async (msg: SendableMsg, senderKi: KeyInfo) => {
-    const choices = this.composer.sendBtn.popover.choices;
+    const choices = this.view.sendBtnModule.popover.choices;
     for (const k of Object.keys(this.additionalMsgHeaders)) {
       msg.headers[k] = this.additionalMsgHeaders[k];
     }
@@ -129,7 +129,7 @@ export class ComposerSendBtn extends ComposerComponent {
         a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
       }
     }
-    if (this.composer.myPubkey.shouldAttach()) {
+    if (this.view.myPubkeyModule.shouldAttach()) {
       msg.atts.push(Att.keyinfoAsPubkeyAtt(senderKi));
     }
     await this.addNamesToMsg(msg);
@@ -139,11 +139,11 @@ export class ComposerSendBtn extends ComposerComponent {
     let msgSentRes: GmailRes.GmailMsgSend;
     try {
       this.isSendMessageInProgress = true;
-      msgSentRes = await this.composer.emailProvider.msgSend(msg, (progress) => this.renderUploadProgress(progress));
+      msgSentRes = await this.view.emailProvider.msgSend(msg, (progress) => this.renderUploadProgress(progress));
     } catch (e) {
       if (msg.thread && ApiErr.isNotFound(e) && this.view.threadId) { // cannot send msg because threadId not found - eg user since deleted it
         msg.thread = undefined;
-        msgSentRes = await this.composer.emailProvider.msgSend(msg, (progress) => this.renderUploadProgress(progress));
+        msgSentRes = await this.view.emailProvider.msgSend(msg, (progress) => this.renderUploadProgress(progress));
       } else {
         this.isSendMessageInProgress = false;
         throw e;
@@ -151,21 +151,21 @@ export class ComposerSendBtn extends ComposerComponent {
     }
     BrowserMsg.send.notificationShow(this.view.parentTabId, { notification: `Your ${this.view.isReplyBox ? 'reply' : 'message'} has been sent.` });
     BrowserMsg.send.focusBody(this.view.parentTabId); // Bring focus back to body so Gmails shortcuts will work
-    await this.composer.draft.draftDelete();
+    await this.view.draftModule.draftDelete();
     this.isSendMessageInProgress = false;
     if (this.view.isReplyBox) {
-      this.composer.render.renderReplySuccess(msg, msgSentRes.id);
+      this.view.renderModule.renderReplySuccess(msg, msgSentRes.id);
     } else {
-      this.composer.render.closeMsg();
+      this.view.renderModule.closeMsg();
     }
   }
 
   private decryptSenderKey = async (senderKi: KeyInfo): Promise<OpenPGP.key.Key | undefined> => {
     const prv = await PgpKey.read(senderKi.private);
-    const passphrase = await this.composer.storage.passphraseGet(senderKi);
+    const passphrase = await this.view.storageModule.passphraseGet(senderKi);
     if (typeof passphrase === 'undefined' && !prv.isFullyDecrypted()) {
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'sign', longids: [senderKi.longid] });
-      if ((typeof await this.composer.storage.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
+      if ((typeof await this.view.storageModule.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
         return await this.decryptSenderKey(senderKi);
       } else { // timeout - reset - no passphrase entered
         this.resetSendBtn();

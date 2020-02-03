@@ -6,15 +6,17 @@ import { NewMsgData, RecipientElement } from './composer-types.js';
 import { SquireEditor, WillPasteEvent } from '../../../types/squire.js';
 
 import { Catch } from '../../../js/common/platform/catch.js';
-import { ComposerComponent } from './composer-abstract-component.js';
 import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { ViewModule } from '../../../js/common/view-module.js';
+import { ComposeView } from '../compose.js';
 
-export class ComposerInput extends ComposerComponent {
-  public squire = new window.Squire(this.composer.S.cached('input_text').get(0));
+export class ComposerInput extends ViewModule<ComposeView> {
+
+  public squire = new window.Squire(this.view.S.cached('input_text').get(0));
 
   public initActions = () => {
-    this.composer.S.cached('add_intro').click(this.view.setHandler(el => this.actionAddIntroHandler(el), this.composer.errs.handlers(`add intro`)));
+    this.view.S.cached('add_intro').click(this.view.setHandler(el => this.actionAddIntroHandler(el), this.view.errModule.handlers(`add intro`)));
     this.handlePaste();
     this.handlePasteImages();
     this.initShortcuts();
@@ -36,13 +38,13 @@ export class ComposerInput extends ComposerComponent {
   }
 
   public inputTextHtmlSetSafely = (html: string) => {
-    Xss.sanitizeRender(this.composer.S.cached('input_text'), Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP'));
+    Xss.sanitizeRender(this.view.S.cached('input_text'), Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP'));
   }
 
   public extract = (type: 'text' | 'html', elSel: 'input_text' | 'input_intro', flag?: 'SKIP-ADDONS') => {
-    let html = this.composer.S.cached(elSel)[0].innerHTML;
+    let html = this.view.S.cached(elSel)[0].innerHTML;
     if (elSel === 'input_text' && flag !== 'SKIP-ADDONS') {
-      html += this.composer.quote.getTripleDotSanitizedFormattedHtmlContent();
+      html += this.view.quoteModule.getTripleDotSanitizedFormattedHtmlContent();
     }
     if (type === 'html') {
       return Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP');
@@ -51,14 +53,14 @@ export class ComposerInput extends ComposerComponent {
   }
 
   public extractAll = (): NewMsgData => {
-    const recipientElements = this.composer.recipients.getRecipients();
+    const recipientElements = this.view.recipientsModule.getRecipients();
     const recipients = this.mapRecipients(recipientElements);
     const subject = this.view.isReplyBox && this.view.replyParams ? this.view.replyParams.subject : String($('#input_subject').val() || '');
-    const plaintext = this.composer.input.extract('text', 'input_text');
-    const plainhtml = this.composer.input.extract('html', 'input_text');
-    const password = this.composer.S.cached('input_password').val();
+    const plaintext = this.view.inputModule.extract('text', 'input_text');
+    const plainhtml = this.view.inputModule.extract('html', 'input_text');
+    const password = this.view.S.cached('input_password').val();
     const pwd = typeof password === 'string' && password ? password : undefined;
-    const from = this.composer.sender.getSender();
+    const from = this.view.senderModule.getSender();
     return { recipients, subject, plaintext, plainhtml, pwd, from };
   }
 
@@ -86,7 +88,7 @@ export class ComposerInput extends ComposerComponent {
         reader.onload = () => {
           try {
             this.squire.insertImage(reader.result as ArrayBuffer, { name: file.name, title: file.name });
-            this.composer.draft.draftSave().catch(Catch.reportErr);
+            this.view.draftModule.draftSave().catch(Catch.reportErr);
           } catch (e) {
             Catch.reportErr(e);
           }
@@ -143,8 +145,8 @@ export class ComposerInput extends ComposerComponent {
 
   private resizeReplyBox = () => {
     this.squire.addEventListener('cursor', () => {
-      if (this.composer.view.isReplyBox) {
-        this.composer.size.resizeComposeBox();
+      if (this.view.isReplyBox) {
+        this.view.sizeModule.resizeComposeBox();
       }
     });
   }
@@ -153,9 +155,9 @@ export class ComposerInput extends ComposerComponent {
   private scrollIntoView = () => {
     this.squire.addEventListener('cursor', () => {
       try {
-        const inputText = this.composer.S.cached('input_text').get(0);
+        const inputText = this.view.S.cached('input_text').get(0);
         const offsetBottom = this.squire.getCursorPosition().bottom - inputText.getBoundingClientRect().top;
-        const editorRootHeight = this.composer.S.cached('input_text').height() || 0;
+        const editorRootHeight = this.view.S.cached('input_text').height() || 0;
         if (offsetBottom > editorRootHeight) {
           const scrollBy = offsetBottom - editorRootHeight;
           inputText.scrollBy(0, Math.round(scrollBy));
@@ -168,9 +170,9 @@ export class ComposerInput extends ComposerComponent {
 
   private actionAddIntroHandler = (addIntroBtn: HTMLElement) => {
     $(addIntroBtn).css('display', 'none');
-    this.composer.S.cached('intro_container').css('display', 'table-row');
-    this.composer.S.cached('input_intro').focus();
-    this.composer.size.setInputTextHeightManuallyIfNeeded();
+    this.view.S.cached('intro_container').css('display', 'table-row');
+    this.view.S.cached('input_intro').focus();
+    this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
   }
 
   private mapRecipients = (recipients: RecipientElement[]) => {
@@ -193,14 +195,14 @@ export class ComposerInput extends ComposerComponent {
 
   // We need this method to test images in drafts because we can't paste them dirctly in tests.
   private insertDebugElements = () => {
-    this.composer.S.cached('body').append('<input type="hidden" id="test_insertImage" data-test="action-insert-image" />'); // xss-direct
+    this.view.S.cached('body').append('<input type="hidden" id="test_insertImage" data-test="action-insert-image" />'); // xss-direct
     $('#test_insertImage').on('click', this.view.setHandler(async (input) => {
       this.squire.insertImage(String($(input).val()), {});
-      await this.composer.draft.draftSave();
+      await this.view.draftModule.draftSave();
     }));
   }
 
   private isRichText = () => {
-    return this.composer.sendBtn.popover.choices.richtext;
+    return this.view.sendBtnModule.popover.choices.richtext;
   }
 }

@@ -5,17 +5,18 @@
 import { PopoverChoices, PopoverOpt } from './composer-types.js';
 
 import { Catch } from '../../../js/common/platform/catch.js';
-import { ComposerComponent } from './composer-abstract-component.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { ViewModule } from '../../../js/common/view-module.js';
+import { ComposeView } from '../compose.js';
 
-export class ComposerSendBtnPopover extends ComposerComponent {
+export class ComposerSendBtnPopover extends ViewModule<ComposeView> {
 
   public choices: PopoverChoices = { encrypt: true, sign: true, richtext: false }; // defaults, may be changed by user using the popover
 
   public initActions = (): void => {
-    this.composer.S.cached('toggle_send_options').click(this.view.setHandler((el, ev) => this.toggleVisible(ev)));
+    this.view.S.cached('toggle_send_options').click(this.view.setHandler((el, ev) => this.toggleVisible(ev)));
   }
 
   public render = async () => {
@@ -40,9 +41,9 @@ export class ComposerSendBtnPopover extends ComposerComponent {
       if (item.iconPath) {
         elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`); // xss-direct
       }
-      this.composer.S.cached('sending_options_container').append(elem); // xss-safe-factory
+      this.view.S.cached('sending_options_container').append(elem); // xss-safe-factory
     }
-    this.composer.S.cached('title').text(this.composeHeaderText());
+    this.view.S.cached('title').text(this.composeHeaderText());
   }
 
   /**
@@ -61,17 +62,17 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     if (!currentlyTicked && newToggleTicked) {
       this.renderCrossOrTick(elem, popoverOpt, true);
     }
-    this.composer.S.cached('title').text(this.composeHeaderText());
+    this.view.S.cached('title').text(this.composeHeaderText());
     if (this.choices.encrypt) {
-      this.composer.S.cached('compose_table').removeClass('not-encrypted');
-      this.composer.S.now('attached_files').removeClass('not-encrypted');
+      this.view.S.cached('compose_table').removeClass('not-encrypted');
+      this.view.S.now('attached_files').removeClass('not-encrypted');
     } else {
-      this.composer.S.cached('compose_table').addClass('not-encrypted');
-      this.composer.S.now('attached_files').addClass('not-encrypted');
+      this.view.S.cached('compose_table').addClass('not-encrypted');
+      this.view.S.now('attached_files').addClass('not-encrypted');
     }
-    this.choices.richtext ? this.composer.input.addRichTextFormatting() : this.composer.input.removeRichTextFormatting();
-    this.composer.sendBtn.resetSendBtn();
-    this.composer.pwdOrPubkeyContainer.showHideContainerAndColorSendBtn();
+    this.choices.richtext ? this.view.inputModule.addRichTextFormatting() : this.view.inputModule.removeRichTextFormatting();
+    this.view.sendBtnModule.resetSendBtn();
+    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn();
     if (typeof machineForceStateTo === 'undefined' && popoverOpt === 'richtext') { // human-input choice of rich text
       this.richTextUserChoiceStore(newToggleTicked).catch(Catch.reportErr);
     }
@@ -83,26 +84,26 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     sendingContainer.toggleClass('popover-opened');
     if (sendingContainer.hasClass('popover-opened')) {
       $('body').click(this.view.setHandler((elem, event) => {
-        if (!this.composer.S.cached('sending_options_container')[0].contains(event.relatedTarget)) {
+        if (!this.view.S.cached('sending_options_container')[0].contains(event.relatedTarget)) {
           sendingContainer.removeClass('popover-opened');
           $('body').off('click');
-          this.composer.S.cached('toggle_send_options').off('keydown');
+          this.view.S.cached('toggle_send_options').off('keydown');
         }
       }));
-      this.composer.S.cached('toggle_send_options').on('keydown', this.view.setHandler(async (target, e) => this.keydownHandler(e)));
-      const sendingOptions = this.composer.S.cached('sending_options_container').find('.sending-option');
+      this.view.S.cached('toggle_send_options').on('keydown', this.view.setHandler(async (target, e) => this.keydownHandler(e)));
+      const sendingOptions = this.view.S.cached('sending_options_container').find('.sending-option');
       sendingOptions.hover(function () {
         sendingOptions.removeClass('active');
         $(this).addClass('active');
       });
     } else {
       $('body').off('click');
-      this.composer.S.cached('toggle_send_options').off('keydown');
+      this.view.S.cached('toggle_send_options').off('keydown');
     }
   }
 
   private keydownHandler = (e: JQuery.Event<HTMLElement, null>): void => {
-    const sendingOptions = this.composer.S.cached('sending_options_container').find('.sending-option');
+    const sendingOptions = this.view.S.cached('sending_options_container').find('.sending-option');
     const currentActive = sendingOptions.filter('.active');
     if (e.key === 'Escape') {
       e.stopPropagation();

@@ -11,8 +11,8 @@ import { SendableMsgBody } from '../../../../js/common/core/mime.js';
 export class PlainMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
 
   public sendableMsg = async (newMsg: NewMsgData): Promise<SendableMsg> => {
-    this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING);
-    const atts = await this.composer.atts.attach.collectAtts();
+    this.view.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING);
+    const atts = await this.view.attsModule.attach.collectAtts();
     const body: SendableMsgBody = { 'text/plain': newMsg.plaintext };
     if (this.richtext) {
       body['text/html'] = newMsg.plainhtml;

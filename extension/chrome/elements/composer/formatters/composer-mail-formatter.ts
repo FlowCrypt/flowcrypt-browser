@@ -2,33 +2,33 @@
 
 'use strict';
 
-import { Composer } from "../composer.js";
 import { EncryptedMsgMailFormatter } from './encrypted-mail-msg-formatter.js';
 import { KeyInfo } from "../../../../js/common/core/pgp-key.js";
 import { NewMsgData } from "../composer-types.js";
 import { PlainMsgMailFormatter } from './plain-mail-msg-formatter.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { SignedMsgMailFormatter } from './signed-msg-mail-formatter.js';
+import { ComposeView } from '../../compose.js';
 
 export class GeneralMailFormatter {
 
-  public static processNewMsg = async (composer: Composer, newMsgData: NewMsgData, senderKi: KeyInfo, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> => {
-    const choices = composer.sendBtn.popover.choices;
+  public static processNewMsg = async (view: ComposeView, newMsgData: NewMsgData, senderKi: KeyInfo, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> => {
+    const choices = view.sendBtnModule.popover.choices;
     const recipientsEmails = Array.prototype.concat.apply([], Object.values(newMsgData.recipients).filter(arr => !!arr)) as string[];
     if (!choices.encrypt && !choices.sign) { // plain
-      return await new PlainMsgMailFormatter(composer).sendableMsg(newMsgData);
+      return await new PlainMsgMailFormatter(view).sendableMsg(newMsgData);
     }
     if (!choices.encrypt && choices.sign) { // sign only
-      composer.S.now('send_btn_text').text('Signing...');
-      return await new SignedMsgMailFormatter(composer).sendableMsg(newMsgData, signingPrv!);
+      view.S.now('send_btn_text').text('Signing...');
+      return await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingPrv!);
     }
     // encrypt (optionally sign)
-    const { armoredPubkeys, emailsWithoutPubkeys } = await composer.storage.collectAllAvailablePublicKeys(newMsgData.from, senderKi, recipientsEmails);
+    const { armoredPubkeys, emailsWithoutPubkeys } = await view.storageModule.collectAllAvailablePublicKeys(newMsgData.from, senderKi, recipientsEmails);
     if (emailsWithoutPubkeys.length) {
-      await composer.errs.throwIfEncryptionPasswordInvalid(senderKi, newMsgData);
+      await view.errModule.throwIfEncryptionPasswordInvalid(senderKi, newMsgData);
     }
-    composer.S.now('send_btn_text').text('Encrypting...');
-    return await new EncryptedMsgMailFormatter(composer, armoredPubkeys).sendableMsg(newMsgData, signingPrv);
+    view.S.now('send_btn_text').text('Encrypting...');
+    return await new EncryptedMsgMailFormatter(view, armoredPubkeys).sendableMsg(newMsgData, signingPrv);
   }
 
 }
