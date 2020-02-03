@@ -174,12 +174,28 @@ export class ComposeView extends View {
     this.renderModule = new ComposerRender(this);
     this.myPubkeyModule = new ComposerMyPubkey(this);
     this.storageModule = new ComposerStorage(this);
-    this.initPromise = this.renderModule.initActions().catch(Catch.reportErr);
     BrowserMsg.listen(this.tabId!);
   }
 
   public setHandlers = () => {
-    // all handled in Composer
+    this.initPromise = (async () => {
+      await this.renderModule.initComposeBox();
+      BrowserMsg.addListener('close_dialog', async () => { $('.featherlight.featherlight-iframe').remove(); });
+      this.S.cached('icon_help').click(this.setHandler(() => this.renderModule.renderSettingsWithDialog('help'), this.errModule.handlers(`help dialog`)));
+      this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to interfere
+      this.attsModule.initActions();
+      this.draftModule.initActions().catch(Catch.reportErr);
+      this.errModule.initActions();
+      this.inputModule.initActions();
+      this.myPubkeyModule.initActions();
+      await this.pwdOrPubkeyContainerModule.initActions();
+      this.quoteModule.initActions();
+      this.sizeModule.initActions();
+      this.storageModule.initActions();
+      // this.recipients.initActions - initiated in renderComposeTable
+      // this.sendBtn.initActions - initiated in renderComposeTable
+      await this.senderModule.checkEmailAliases();
+    })().catch(Catch.reportErr);
   }
 
   private fetchReplyMeta = async (): Promise<void> => {

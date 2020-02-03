@@ -20,25 +20,6 @@ import { ComposeView } from '../compose.js';
 
 export class ComposerRender extends ViewModule<ComposeView> {
 
-  public initActions = async () => {
-    await this.initComposeBox();
-    BrowserMsg.addListener('close_dialog', async () => { $('.featherlight.featherlight-iframe').remove(); });
-    this.view.S.cached('icon_help').click(this.view.setHandler(() => this.renderSettingsWithDialog('help'), this.view.errModule.handlers(`render help dialog`)));
-    this.view.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
-    this.view.attsModule.initActions();
-    this.view.draftModule.initActions().catch(Catch.reportErr);
-    this.view.errModule.initActions();
-    this.view.inputModule.initActions();
-    this.view.myPubkeyModule.initActions();
-    await this.view.pwdOrPubkeyContainerModule.initActions();
-    this.view.quoteModule.initActions();
-    this.view.sizeModule.initActions();
-    this.view.storageModule.initActions();
-    // this.view.recipients.initActions - initiated below
-    // this.view.sendBtn.initActions - initiated below
-    await this.view.senderModule.checkEmailAliases();
-  }
-
   public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
     this.view.S.cached('prompt').css({ display: 'none' });
     this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
@@ -121,7 +102,7 @@ export class ComposerRender extends ViewModule<ComposeView> {
     BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page: `/chrome/settings/modules/${settingsModule}.htm` });
   }
 
-  private initComposeBox = async () => {
+  public initComposeBox = async () => {
     this.initComposeBoxStyles();
     if (this.view.draftId) {
       this.view.S.cached('triple_dot').remove(); // if it's draft, footer and quote should already be included in the draft
