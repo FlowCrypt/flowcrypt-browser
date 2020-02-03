@@ -25,8 +25,19 @@ export const getParsedCliParams = () => {
   return { testVariant, testGroup, oneIfNotPooled, buildDir, isMock: testVariant.includes('-MOCK') };
 };
 
+export type TestMessage = {
+  name?: string,
+  content: string[],
+  unexpectedContent?: string[],
+  password?: string,
+  params: string,
+  quoted?: boolean,
+  expectPercentageProgress?: boolean,
+  signature?: string[],
+};
+
 interface TestConfigInterface {
-  messages: { name: string, content: string[], unexpectedContent?: string[], password?: string, params: string, quoted?: boolean }[];
+  messages: TestMessage[];
 }
 
 interface TestSecretsInterface {

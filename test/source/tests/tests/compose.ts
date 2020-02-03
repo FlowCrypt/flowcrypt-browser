@@ -33,9 +33,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const initialComposeFrameHeight = await inboxPage.getOuterHeight('iframe');
       await composeFrame.waitAll('#section_header');
       const composeFrameHeaderHeight = await composeFrame.getOuterHeight('#section_header');
+      await Util.sleep(4); // todo - should be fixed, caused by `$('body').attr('data-test-state', 'ready');` baing called in two differing situations
       // mimimize compose frame
       await composeFrame.waitAndClick('@header-title');
-      expect(await inboxPage.getOuterHeight('iframe')).to.eq(composeFrameHeaderHeight);
+      expect(await inboxPage.getOuterHeight('iframe')).to.eq(composeFrameHeaderHeight, 'compose box height failed to collapse');
       // restore compose frame
       await composeFrame.waitAndClick('@header-title');
       expect(await inboxPage.getOuterHeight('iframe')).to.eq(initialComposeFrameHeight);

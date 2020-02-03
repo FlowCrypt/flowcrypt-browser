@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { Config, Util } from '../util';
+import { Config, Util, TestMessage } from '../util';
 
 import { AvaContext } from '.';
 import { BrowserHandle } from '../browser';
@@ -69,20 +69,22 @@ export class BrowserRecipe {
     return { acctEmail, k, settingsPage };
   }
 
-  public static async pgpBlockVerifyDecryptedContent(
-    t: AvaContext, browser: BrowserHandle, url: string, expectedContents: string[], unexpectedContents?: string[], password?: string, quoted?: boolean, signature?: string[]
-  ) {
-    const pgpBlockPage = await browser.newPage(t, url);
+  public static async pgpBlockVerifyDecryptedContent(t: AvaContext, browser: BrowserHandle, m: TestMessage) {
+    const pgpBlockPage = await browser.newPage(t, `chrome/elements/pgp_block.htm${m.params}`);
     await pgpBlockPage.waitAll('@pgp-block-content');
+    if (m.expectPercentageProgress) {
+      await pgpBlockPage.waitForContent('@pgp-block-content', 'Retrieving message...');
+      await pgpBlockPage.waitForContent('@pgp-block-content', '%');
+    }
     await pgpBlockPage.waitForSelTestState('ready', 100);
     await Util.sleep(1);
-    if (password) {
-      await pgpBlockPage.waitAndType('@input-message-password', password);
+    if (m.password) {
+      await pgpBlockPage.waitAndType('@input-message-password', m.password);
       await pgpBlockPage.waitAndClick('@action-decrypt-with-password');
       await Util.sleep(1);
       await pgpBlockPage.waitForSelTestState('ready', 30);
     }
-    if (quoted) {
+    if (m.quoted) {
       await pgpBlockPage.waitAndClick('@action-show-quoted-content');
       await Util.sleep(1);
     } else {
@@ -91,21 +93,21 @@ export class BrowserRecipe {
       }
     }
     const content = await pgpBlockPage.read('@pgp-block-content');
-    for (const expectedContent of expectedContents) {
+    for (const expectedContent of m.content) {
       if (content.indexOf(expectedContent) === -1) {
         throw new Error(`pgp_block_verify_decrypted_content:missing expected content: ${expectedContent}`);
       }
     }
-    if (unexpectedContents) {
-      for (const unexpectedContent of unexpectedContents) {
+    if (m.unexpectedContent) {
+      for (const unexpectedContent of m.unexpectedContent) {
         if (content.indexOf(unexpectedContent) !== -1) {
           throw new Error(`pgp_block_verify_decrypted_content:unexpected content presents: ${unexpectedContent}`);
         }
       }
     }
-    if (signature) {
+    if (m.signature) {
       const sigContent = await pgpBlockPage.read('@pgp-signature');
-      for (const expectedSigContent of signature) {
+      for (const expectedSigContent of m.signature) {
         if (sigContent.indexOf(expectedSigContent) === -1) {
           throw new Error(`pgp_block_verify_decrypted_content:missing expected signature content:${expectedSigContent}`);
         }

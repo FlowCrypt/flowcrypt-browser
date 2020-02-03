@@ -214,7 +214,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     }
     let lastProgressPercent = -1;
     const loadedAr: Array<number> = [];
-    // 1.33 is a coefficient we need to multiply because total size we need to download is larger than all files together
+    // 1.33 is approximate ratio of downloaded data to what we expected, likely due to encoding
     const total = atts.map(x => x.length).reduce((a, b) => a + b) * 1.33;
     const responses = await Promise.all(atts.map((a, index) => this.attGet(a.msgId!, a.id!, (_, loaded, s) => {
       if (progressCb) {
@@ -267,7 +267,10 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
    * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
    */
   public extractArmoredBlock = async (msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<{ armored: string, subject?: string }> => {
-    const gmailMsg = await this.msgGet(msgId, format);
+    // only track progress in this call if we are getting RAW mime, because these tend to be big, while 'full' and 'metadata' are tiny
+    // since we often do full + get attachments below, the user would see 100% after the first short request,
+    //   and then again 0% when attachments start downloading, which would be confusing
+    const gmailMsg = await this.msgGet(msgId, format, format === 'raw' ? progressCb : undefined);
     const subject = gmailMsg.payload ? GmailParser.findHeader(gmailMsg.payload, 'subject') : undefined;
     if (format === 'full') {
       const bodies = GmailParser.findBodies(gmailMsg);

@@ -30,7 +30,7 @@ type RawAjaxErr = {
 };
 
 export type ChunkedCb = (r: ProviderContactsResults) => void;
-export type ProgressCb = (percent?: number, loaded?: number, total?: number) => void;
+export type ProgressCb = (percent: number | undefined, loaded: number, total: number) => void;
 export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | null };
 
 export class Api {
@@ -100,14 +100,14 @@ export class Api {
           const newProgressPercent = evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : undefined;
           if (newProgressPercent && newProgressPercent !== lastProgressPercent) {
             lastProgressPercent = newProgressPercent;
-            progressCbs.upload!(newProgressPercent); // checked ===function above
+            progressCbs.upload!(newProgressPercent, evt.loaded, evt.total); // checked ===function above
           }
         }, false);
       }
       if (progressCbs && typeof progressCbs.download === 'function') {
         progressPeportingXhr.addEventListener('progress', (evt: ProgressEvent) => {
           // 100 because if the request takes less time than 1-2 seconds browsers trigger this function only once and when it's completed
-          const newProgressPercent = evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : 100;
+          const newProgressPercent = evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined;
           if (typeof newProgressPercent === 'undefined' || newProgressPercent !== lastProgressPercent) {
             if (newProgressPercent) {
               lastProgressPercent = newProgressPercent;
