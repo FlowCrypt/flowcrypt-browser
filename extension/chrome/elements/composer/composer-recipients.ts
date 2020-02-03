@@ -39,10 +39,12 @@ export class ComposerRecipients extends ViewModule<ComposeView> {
   private dragged: Element | undefined = undefined;
 
   private canSearchContacts: boolean;
+  private canReadEmails: boolean;
 
   constructor(view: ComposeView) {
     super(view);
-    this.canSearchContacts = this.view.scopes!.readContacts;
+    this.canSearchContacts = this.view.scopes.readContacts;
+    this.canReadEmails = this.view.scopes.read || this.view.scopes.modify;
   }
 
   public initActions = (): void => {
@@ -299,8 +301,8 @@ export class ComposerRecipients extends ViewModule<ComposeView> {
     if (storage.pubkey_sent_to && storage.pubkey_sent_to.includes(theirEmail)) {
       return true;
     }
-    if (!this.view.scopes!.read && !this.view.scopes!.modify) {
-      return undefined; // cannot read email
+    if (!this.canReadEmails) {
+      return undefined;
     }
     const qSentPubkey = `is:sent to:${theirEmail} "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"`;
     const qReceivedMsg = `from:${theirEmail} "BEGIN PGP MESSAGE" "END PGP MESSAGE"`;
@@ -484,7 +486,7 @@ export class ComposerRecipients extends ViewModule<ComposeView> {
       if (substring) {
         const query = { substring };
         const contacts = await Store.dbContactSearch(undefined, query);
-        const canLoadContactsFromAPI = this.view.scopes!.read && this.view.scopes!.modify || this.canSearchContacts;
+        const canLoadContactsFromAPI = this.canReadEmails || this.canSearchContacts;
         if (dbOnly || contacts.length >= this.MAX_CONTACTS_LENGTH || !canLoadContactsFromAPI) {
           this.view.errModule.debug(`searchContacts 1`);
           this.renderSearchRes(input, contacts, query);
@@ -501,7 +503,7 @@ export class ComposerRecipients extends ViewModule<ComposeView> {
               const mappedContactsFromGmail = await Promise.all(newContacts.map(({ email, name }) => Store.dbContactObj({ email, name })));
               await this.renderAndAddToDBAPILoadedContacts(input, mappedContactsFromGmail);
             }
-          } else if (this.view.scopes!.read && this.view.scopes!.modify) {
+          } else if (this.canReadEmails) {
             this.view.errModule.debug(`searchContacts (Gmail Sent Messages) 3`);
             this.guessContactsFromSentEmails(query.substring, contacts, contacts => this.renderAndAddToDBAPILoadedContacts(input, contacts.new));
           }
@@ -699,8 +701,10 @@ export class ComposerRecipients extends ViewModule<ComposeView> {
     this.removeRecipient(lastRecipient.element);
     const authRes = await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
     if (authRes.result === 'Success') {
-      this.view.scopes!.readContacts = true;
-      this.view.scopes!.read = true;
+      this.canSearchContacts = true;
+      this.canReadEmails = true;
+      this.view.scopes.readContacts = true;
+      this.view.scopes.read = true;
       await this.searchContacts(this.view.S.cached('input_to'));
     } else if (authRes.result === 'Denied' || authRes.result === 'Closed') {
       await Ui.modal.error('FlowCrypt needs this permission to search your contacts on Gmail. Without it, FlowCrypt will keep a separate contact list.');
