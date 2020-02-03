@@ -30,6 +30,7 @@ import { ComposeSendBtnModule } from './compose-modules/compose-send-btn-module.
 import { ComposeSenderModule } from './compose-modules/compose-sender-module.js';
 import { ComposeSizeModule } from './compose-modules/compose-size-module.js';
 import { ComposeStorageModule } from './compose-modules/compose-storage-module.js';
+import { Catch } from '../../js/common/platform/catch.js';
 
 export type DeterminedMsgHeaders = {
   lastMsgId: string,
@@ -170,13 +171,13 @@ export class ComposeView extends View {
     this.myPubkeyModule = new ComposeMyPubkeyModule(this);
     this.storageModule = new ComposeStorageModule(this);
     BrowserMsg.listen(this.tabId!);
+    await this.renderModule.initComposeBox();
+    this.senderModule.checkEmailAliases().catch(Catch.reportErr);
   }
 
-  public setHandlers = async () => {
-    await this.renderModule.initComposeBox();
+  public setHandlers = () => {
     BrowserMsg.addListener('close_dialog', async () => { $('.featherlight.featherlight-iframe').remove(); });
     this.S.cached('icon_help').click(this.setHandler(() => this.renderModule.renderSettingsWithDialog('help'), this.errModule.handle(`help dialog`)));
-    this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to interfere
     this.attsModule.setHandlers();
     this.inputModule.setHandlers();
     this.myPubkeyModule.setHandlers();
@@ -185,7 +186,6 @@ export class ComposeView extends View {
     this.storageModule.setHandlers();
     this.recipientsModule.setHandlers();
     this.sendBtnModule.setHandlers();
-    await this.senderModule.checkEmailAliases();
     this.draftModule.setHandlers(); // must be last for 'onRecipientAdded/draftSave' to work properly
   }
 
