@@ -4,8 +4,7 @@
 
 import { BrowserEventErrHandler, Ui } from '../../../js/common/browser/ui.js';
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
-import { NewMsgData, SendBtnTexts } from './composer-types.js';
-
+import { NewMsgData, SendBtnTexts } from './compose-types.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserExtension } from '../../../js/common/browser/browser-extension.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
@@ -23,7 +22,7 @@ export class ComposerResetBtnTrigger extends Error { }
 export const PUBKEY_LOOKUP_RESULT_FAIL: 'fail' = 'fail';
 export const PUBKEY_LOOKUP_RESULT_WRONG: 'wrong' = 'wrong';
 
-export class ComposerErrs extends ViewModule<ComposeView> {
+export class ComposeErrModule extends ViewModule<ComposeView> {
 
   private debugId = Str.sloppyRandom();
 

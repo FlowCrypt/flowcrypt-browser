@@ -6,7 +6,7 @@ import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter
 
 import { BrowserWindow } from '../../../../js/common/browser/browser-window.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
-import { NewMsgData } from '../composer-types.js';
+import { NewMsgData } from '../compose-types.js';
 import { PgpKey } from '../../../../js/common/core/pgp-key.js';
 import { PgpMsg } from '../../../../js/common/core/pgp-msg.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';

@@ -18,7 +18,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 
-export class ComposerRender extends ViewModule<ComposeView> {
+export class ComposeRenderModule extends ViewModule<ComposeView> {
 
   public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
     this.view.S.cached('prompt').css({ display: 'none' });

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { PopoverChoices, PopoverOpt } from './composer-types.js';
+import { PopoverChoices, PopoverOpt } from './compose-types.js';
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Lang } from '../../../js/common/lang.js';
@@ -11,7 +11,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 
-export class ComposerSendBtnPopover extends ViewModule<ComposeView> {
+export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
 
   public choices: PopoverChoices = { encrypt: true, sign: true, richtext: false }; // defaults, may be changed by user using the popover
 

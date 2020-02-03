@@ -7,7 +7,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 
-export class ComposerSize extends ViewModule<ComposeView> {
+export class ComposeSizeModule extends ViewModule<ComposeView> {
 
   public composeWindowIsMinimized = false;
 

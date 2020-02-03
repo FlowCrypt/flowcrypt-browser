@@ -7,7 +7,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 
-export class ComposerFooter extends ViewModule<ComposeView> {
+export class ComposeFooterModule extends ViewModule<ComposeView> {
 
   public getFooterFromStorage = async (sender: string): Promise<string | undefined> => {
     const { sendAs } = await Store.getAcct(this.view.acctEmail, ['sendAs']);

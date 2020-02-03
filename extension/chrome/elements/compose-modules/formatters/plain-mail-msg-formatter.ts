@@ -3,7 +3,7 @@
 'use strict';
 
 import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
-import { NewMsgData, SendBtnTexts } from '../composer-types.js';
+import { NewMsgData, SendBtnTexts } from '../compose-types.js';
 
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { SendableMsgBody } from '../../../../js/common/core/mime.js';

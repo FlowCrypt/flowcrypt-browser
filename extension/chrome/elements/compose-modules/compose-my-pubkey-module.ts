@@ -12,7 +12,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 
-export class ComposerMyPubkey extends ViewModule<ComposeView> {
+export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
 
   private toggledManually = false;
 

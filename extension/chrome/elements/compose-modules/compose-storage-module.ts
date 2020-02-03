@@ -8,15 +8,15 @@ import { Keyserver, PubkeySearchResult } from '../../../js/common/api/keyserver.
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { CollectPubkeysResult } from './composer-types.js';
-import { PUBKEY_LOOKUP_RESULT_FAIL } from './composer-errs.js';
+import { CollectPubkeysResult } from './compose-types.js';
+import { PUBKEY_LOOKUP_RESULT_FAIL } from './compose-err-module.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { openpgp } from '../../../js/common/core/pgp.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 
-export class ComposerStorage extends ViewModule<ComposeView> {
+export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   private passphraseInterval: number | undefined;
   private ksLookupsByEmail: { [key: string]: PubkeySearchResult | Contact } = {};

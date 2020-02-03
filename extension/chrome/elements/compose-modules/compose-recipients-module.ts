@@ -4,9 +4,9 @@
 
 import { ChunkedCb, RecipientType } from '../../../js/common/api/api.js';
 import { Contact, PgpKey } from '../../../js/common/core/pgp-key.js';
-import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './composer-errs.js';
+import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './compose-err-module.js';
 import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
-import { RecipientElement, RecipientStatus, RecipientStatuses } from './composer-types.js';
+import { RecipientElement, RecipientStatus, RecipientStatuses } from './compose-types.js';
 import { Str, Value } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
@@ -21,7 +21,8 @@ import { moveElementInArray } from '../../../js/common/platform/util.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 
-export class ComposerRecipients extends ViewModule<ComposeView> {
+export class ComposeRecipientsModule extends ViewModule<ComposeView> {
+
   private readonly failedLookupEmails: string[] = [];
 
   private addedRecipients: RecipientElement[] = [];

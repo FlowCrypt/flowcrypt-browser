@@ -6,12 +6,12 @@ import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Att } from '../../../js/common/core/att.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { ComposerSendBtnPopover } from './composer-send-btn-popover.js';
+import { ComposeSendBtnPopoverModule } from './compose-send-btn-popover-module.js';
 import { GeneralMailFormatter } from './formatters/composer-mail-formatter.js';
 import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
-import { SendBtnTexts } from './composer-types.js';
+import { SendBtnTexts } from './compose-types.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Str } from '../../../js/common/core/common.js';
@@ -20,19 +20,19 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 
-export class ComposerSendBtn extends ViewModule<ComposeView> {
+export class ComposeSendBtnModule extends ViewModule<ComposeView> {
 
   public additionalMsgHeaders: { [key: string]: string } = {};
 
   public btnUpdateTimeout?: number;
 
-  public popover: ComposerSendBtnPopover;
+  public popover: ComposeSendBtnPopoverModule;
 
   private isSendMessageInProgress = false;
 
   constructor(view: ComposeView) {
     super(view);
-    this.popover = new ComposerSendBtnPopover(view);
+    this.popover = new ComposeSendBtnPopoverModule(view);
   }
 
   public setHandlers = (): void => {

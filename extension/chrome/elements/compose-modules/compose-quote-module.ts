@@ -4,11 +4,9 @@
 
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { FormatError, PgpMsg } from '../../../js/common/core/pgp-msg.js';
-
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { MessageToReplyOrForward } from './composer-types.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { MsgBlock } from '../../../js/common/core/msg-block.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
@@ -18,8 +16,9 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
+import { MessageToReplyOrForward } from './compose-types.js';
 
-export class ComposerQuote extends ViewModule<ComposeView> {
+export class ComposeQuoteModule extends ViewModule<ComposeView> {
 
   public tripleDotSanitizedHtmlContent: { quote: string | undefined, footer: string | undefined } | undefined;
   public messageToReplyOrForward: MessageToReplyOrForward | undefined;

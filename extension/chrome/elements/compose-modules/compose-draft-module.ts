@@ -20,7 +20,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 
-export class ComposerDraft extends ViewModule<ComposeView> {
+export class ComposeDraftModule extends ViewModule<ComposeView> {
 
   public wasMsgLoadedFromDraft = false;
 

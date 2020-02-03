@@ -4,9 +4,9 @@
 
 import { AwsS3UploadItem, Backend, BackendRes, FcUuidAuth } from '../../../../js/common/api/backend.js';
 import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
-import { ComposerResetBtnTrigger, ComposerUserError } from '../composer-errs.js';
+import { ComposerResetBtnTrigger, ComposerUserError } from '../compose-err-module.js';
 import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
-import { NewMsgData, PubkeyResult, SendBtnTexts } from '../composer-types.js';
+import { NewMsgData, PubkeyResult, SendBtnTexts } from '../compose-types.js';
 import { Store, Subscription } from '../../../../js/common/platform/store.js';
 import { Str, Value } from '../../../../js/common/core/common.js';
 import { ApiErr } from '../../../../js/common/api/error/api-error.js';

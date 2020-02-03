@@ -10,7 +10,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 
-export class ComposerSender extends ViewModule<ComposeView> {
+export class ComposeSenderModule extends ViewModule<ComposeView> {
 
   public getSender = (): string => {
     if (this.view.S.now('input_from').length) {

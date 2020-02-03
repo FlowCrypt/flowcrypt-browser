@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { NewMsgData, RecipientElement } from './composer-types.js';
+import { NewMsgData, RecipientElement } from './compose-types.js';
 import { SquireEditor, WillPasteEvent } from '../../../types/squire.js';
 
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -11,7 +11,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 
-export class ComposerInput extends ViewModule<ComposeView> {
+export class ComposeInputModule extends ViewModule<ComposeView> {
 
   public squire = new window.Squire(this.view.S.cached('input_text').get(0));
 

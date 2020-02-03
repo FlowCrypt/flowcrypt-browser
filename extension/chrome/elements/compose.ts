@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { AccountStore, Scopes, Store } from '../../js/common/platform/store.js';
+import { Scopes, Store } from '../../js/common/platform/store.js';
 import { EmailProviderInterface, ReplyParams } from '../../js/common/api/email-provider/email-provider-api.js';
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { Assert } from '../../js/common/assert.js';
@@ -16,20 +16,20 @@ import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 import { openpgp } from '../../js/common/core/pgp.js';
-import { ComposerAtts } from './composer/composer-atts.js';
-import { ComposerDraft } from './composer/composer-draft.js';
-import { ComposerErrs } from './composer/composer-errs.js';
-import { ComposerFooter } from './composer/composer-footer.js';
-import { ComposerInput } from './composer/composer-input.js';
-import { ComposerMyPubkey } from './composer/composer-my-pubkey.js';
-import { ComposerPwdOrPubkeyContainer } from './composer/composer-pwd-or-pubkey-container.js';
-import { ComposerQuote } from './composer/composer-quote.js';
-import { ComposerRecipients } from './composer/composer-recipients.js';
-import { ComposerRender } from './composer/composer-render.js';
-import { ComposerSendBtn } from './composer/composer-send-btn.js';
-import { ComposerSender } from './composer/composer-sender.js';
-import { ComposerSize } from './composer/composer-size.js';
-import { ComposerStorage } from './composer/composer-storage.js';
+import { ComposeAttsModule } from './compose-modules/compose-atts-module.js';
+import { ComposeDraftModule } from './compose-modules/compose-draft-module.js';
+import { ComposeErrModule } from './compose-modules/compose-err-module.js';
+import { ComposeFooterModule } from './compose-modules/compose-footer-module.js';
+import { ComposeInputModule } from './compose-modules/compose-input-module.js';
+import { ComposeMyPubkeyModule } from './compose-modules/compose-my-pubkey-module.js';
+import { ComposePwdOrPubkeyContainerModule } from './compose-modules/compose-pwd-or-pubkey-container-module.js';
+import { ComposeQuoteModule } from './compose-modules/compose-quote-module.js';
+import { ComposeRecipientsModule } from './compose-modules/compose-recipients-module.js';
+import { ComposeRenderModule } from './compose-modules/compose-render-module.js';
+import { ComposeSendBtnModule } from './compose-modules/compose-send-btn-module.js';
+import { ComposeSenderModule } from './compose-modules/compose-sender-module.js';
+import { ComposeSizeModule } from './compose-modules/compose-size-module.js';
+import { ComposeStorageModule } from './compose-modules/compose-storage-module.js';
 
 export type DeterminedMsgHeaders = {
   lastMsgId: string,
@@ -54,25 +54,24 @@ export class ComposeView extends View {
 
   public scopes!: Scopes;
   public tabId!: string;
-  public storage!: AccountStore;
   public factory!: XssSafeFactory;
   public replyParams: ReplyParams | undefined;
   public emailProvider: EmailProviderInterface;
 
-  public quoteModule!: ComposerQuote;
-  public sendBtnModule!: ComposerSendBtn;
-  public draftModule!: ComposerDraft;
-  public recipientsModule!: ComposerRecipients;
-  public pwdOrPubkeyContainerModule!: ComposerPwdOrPubkeyContainer;
-  public sizeModule!: ComposerSize;
-  public senderModule!: ComposerSender;
-  public footerModule!: ComposerFooter;
-  public attsModule!: ComposerAtts;
-  public errModule!: ComposerErrs;
-  public inputModule!: ComposerInput;
-  public renderModule!: ComposerRender;
-  public myPubkeyModule!: ComposerMyPubkey;
-  public storageModule!: ComposerStorage;
+  public quoteModule!: ComposeQuoteModule;
+  public sendBtnModule!: ComposeSendBtnModule;
+  public draftModule!: ComposeDraftModule;
+  public recipientsModule!: ComposeRecipientsModule;
+  public pwdOrPubkeyContainerModule!: ComposePwdOrPubkeyContainerModule;
+  public sizeModule!: ComposeSizeModule;
+  public senderModule!: ComposeSenderModule;
+  public footerModule!: ComposeFooterModule;
+  public attsModule!: ComposeAttsModule;
+  public errModule!: ComposeErrModule;
+  public inputModule!: ComposeInputModule;
+  public renderModule!: ComposeRenderModule;
+  public myPubkeyModule!: ComposeMyPubkeyModule;
+  public storageModule!: ComposeStorageModule;
 
   public S = Ui.buildJquerySels({
     body: 'body',
@@ -143,7 +142,7 @@ export class ComposeView extends View {
   }
 
   public render = async () => {
-    this.storage = await Store.getAcct(this.acctEmail, ['google_token_scopes', 'sendAs', 'email_provider', 'hide_message_password', 'drafts_reply']);
+    const storage = await Store.getAcct(this.acctEmail, ['google_token_scopes', 'sendAs', 'email_provider', 'hide_message_password', 'drafts_reply']);
     this.tabId = await BrowserMsg.requiredTabId();
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.scopes = await Store.getScopes(this.acctEmail);
@@ -151,25 +150,25 @@ export class ComposeView extends View {
       await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail);
     }
     if (this.replyMsgId) {
-      await this.fetchReplyMeta();
+      await this.fetchReplyMeta(Object.keys(storage.sendAs!));
     }
-    if (this.isReplyBox && this.threadId && !this.ignoreDraft && this.storage.drafts_reply && this.storage.drafts_reply[this.threadId]) {
-      this.draftId = this.storage.drafts_reply[this.threadId]; // there may be a draft we want to load
+    if (this.isReplyBox && this.threadId && !this.ignoreDraft && storage.drafts_reply && storage.drafts_reply[this.threadId]) {
+      this.draftId = storage.drafts_reply[this.threadId]; // there may be a draft we want to load
     }
-    this.draftModule = new ComposerDraft(this);
-    this.quoteModule = new ComposerQuote(this);
-    this.recipientsModule = new ComposerRecipients(this);
-    this.sendBtnModule = new ComposerSendBtn(this);
-    this.pwdOrPubkeyContainerModule = new ComposerPwdOrPubkeyContainer(this);
-    this.sizeModule = new ComposerSize(this);
-    this.senderModule = new ComposerSender(this);
-    this.footerModule = new ComposerFooter(this);
-    this.attsModule = new ComposerAtts(this);
-    this.errModule = new ComposerErrs(this);
-    this.inputModule = new ComposerInput(this);
-    this.renderModule = new ComposerRender(this);
-    this.myPubkeyModule = new ComposerMyPubkey(this);
-    this.storageModule = new ComposerStorage(this);
+    this.draftModule = new ComposeDraftModule(this);
+    this.quoteModule = new ComposeQuoteModule(this);
+    this.recipientsModule = new ComposeRecipientsModule(this);
+    this.sendBtnModule = new ComposeSendBtnModule(this);
+    this.pwdOrPubkeyContainerModule = new ComposePwdOrPubkeyContainerModule(this);
+    this.sizeModule = new ComposeSizeModule(this);
+    this.senderModule = new ComposeSenderModule(this);
+    this.footerModule = new ComposeFooterModule(this);
+    this.attsModule = new ComposeAttsModule(this);
+    this.errModule = new ComposeErrModule(this);
+    this.inputModule = new ComposeInputModule(this);
+    this.renderModule = new ComposeRenderModule(this);
+    this.myPubkeyModule = new ComposeMyPubkeyModule(this);
+    this.storageModule = new ComposeStorageModule(this);
     BrowserMsg.listen(this.tabId!);
   }
 
@@ -190,11 +189,10 @@ export class ComposeView extends View {
     this.draftModule.setHandlers(); // must be last for 'onRecipientAdded/draftSave' to work properly
   }
 
-  private fetchReplyMeta = async (): Promise<void> => {
+  private fetchReplyMeta = async (aliases: string[]): Promise<void> => {
     Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: `Loading secure reply box..${Ui.spinner('green')}` }));
     try {
       const gmailMsg = await this.emailProvider.msgGet(this.replyMsgId!, 'metadata');
-      const aliases = Object.keys(this.storage.sendAs!);
       this.replyParams = GmailParser.determineReplyMeta(this.acctEmail, aliases, gmailMsg);
       this.threadId = gmailMsg.threadId || '';
     } catch (e) {

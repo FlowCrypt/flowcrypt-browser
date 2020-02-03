@@ -11,7 +11,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 
-export class ComposerAtts extends ViewModule<ComposeView> {
+export class ComposeAttsModule extends ViewModule<ComposeView> {
 
   public attach: AttUI;
 

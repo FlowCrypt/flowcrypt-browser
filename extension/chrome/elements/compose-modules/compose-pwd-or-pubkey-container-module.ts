@@ -3,7 +3,7 @@
 'use strict';
 
 import { Backend } from '../../../js/common/api/backend.js';
-import { RecipientStatuses, SendBtnTexts } from './composer-types.js';
+import { RecipientStatuses, SendBtnTexts } from './compose-types.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -12,7 +12,7 @@ import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 
-export class ComposerPwdOrPubkeyContainer extends ViewModule<ComposeView> {
+export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
 
   private MSG_EXPIRE_DAYS_DEFAULT = 3; // todo - update to 7 (needs backend work)
   private keyImportUI = new KeyImportUi({});
