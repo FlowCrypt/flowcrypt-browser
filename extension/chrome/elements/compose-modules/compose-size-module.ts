@@ -11,22 +11,20 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
 
   public composeWindowIsMinimized = false;
 
+  private composeWindowIsMaximized = false;
   private FULL_WINDOW_CLASS = 'full_window';
   private lastReplyBoxTableHeight = 0;
-  private composeWindowIsMaximized = false;
   private refBodyHeight?: number;
 
   public setHandlers = () => {
-    $('body').click(this.view.setHandler((el) => this.bodyClickHandler(el)));
+    $('body').click(event => {
+      if (this.composeWindowIsMaximized && $(event.target).is($('body'))) {
+        this.minimizeComposerWindow();
+      }
+    });
     if (!this.view.isReplyBox) {
       $('.minimize_new_message').click(this.view.setHandler(() => this.minimizeComposerWindow()));
       $('.popout').click(this.view.setHandler(() => this.popoutClickHandler()));
-    }
-  }
-
-  public bodyClickHandler = (target: HTMLElement) => {
-    if (this.composeWindowIsMaximized && $(target).is($('body'))) {
-      this.minimizeComposerWindow();
     }
   }
 

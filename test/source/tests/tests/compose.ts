@@ -482,15 +482,15 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const initialWidth = Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetWidth'));
       const initialHeight = Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'));
       await composeFrame.waitAndClick('.popout', { sleepWhenDone: 1 });
-      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetWidth'))).to.be.greaterThan(initialWidth);
-      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.be.greaterThan(initialHeight);
+      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetWidth'))).to.be.greaterThan(initialWidth, 'popout width greater than initial');
+      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.be.greaterThan(initialHeight, 'popout weight greater than initial');
       await composeFrame.waitAndClick('.popout', { sleepWhenDone: 1 });
-      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetWidth'))).to.equal(initialWidth);
-      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.equal(initialHeight);
+      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetWidth'))).to.equal(initialWidth, 'width back to initial');
+      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.equal(initialHeight, 'height back to initial');
       await composeFrame.waitAndClick('.minimize_new_message', { sleepWhenDone: 1 });
-      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.be.lessThan(initialHeight);
+      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.be.lessThan(initialHeight, 'minimized lower than initial');
       await composeFrame.waitAndClick('.minimize_new_message', { sleepWhenDone: 1 });
-      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.equal(initialHeight);
+      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.equal(initialHeight, 'back to initial after un-minimizing');
     }));
 
     ava.default('compose - saving and rendering a draft with image', testWithBrowser('compatibility', async (t, browser) => {
