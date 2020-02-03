@@ -182,15 +182,6 @@ export class ComposeView extends View {
     // all handled in Composer
   }
 
-  public urlParams = () => { // used to reload the frame with updated params
-    return {
-      acctEmail: this.acctEmail, draftId: this.draftId, threadId: this.threadId, replyMsgId: this.replyMsgId, ...this.replyParams,
-      frameId: this.frameId, tabId: this.tabId, isReplyBox: this.isReplyBox, skipClickPrompt: this.skipClickPrompt, parentTabId: this.parentTabId,
-      disableDraftSaving: this.disableDraftSaving, debug: this.debug, removeAfterClose: this.removeAfterClose,
-      replyPubkeyMismatch: this.replyPubkeyMismatch,
-    };
-  }
-
   private fetchReplyMeta = async (): Promise<void> => {
     Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: `Loading secure reply box..${Ui.spinner('green')}` }));
     try {

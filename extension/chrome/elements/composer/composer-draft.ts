@@ -42,7 +42,7 @@ export class ComposerDraft extends ViewModule<ComposeView> {
       await this.draftDelete();
       if (this.view.isReplyBox && !this.view.removeAfterClose) { // reload iframe so we don't leave users without a reply UI
         this.view.skipClickPrompt = false;
-        window.location.href = Url.create(Env.getUrlNoParams(), this.view.urlParams());
+        window.location.href = Url.create(Env.getUrlNoParams(), this.urlParams());
       } else { // close new msg
         this.view.renderModule.closeMsg();
       }
@@ -78,7 +78,7 @@ export class ComposerDraft extends ViewModule<ComposeView> {
         await this.view.storageModule.draftMetaDelete(this.view.draftId, this.view.threadId);
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
         this.view.draftId = '';
-        window.location.href = Url.create(Env.getUrlNoParams(), this.view.urlParams());
+        window.location.href = Url.create(Env.getUrlNoParams(), this.urlParams());
       } else {
         Catch.reportErr(e);
         await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('exception');
@@ -244,6 +244,15 @@ export class ComposerDraft extends ViewModule<ComposeView> {
     if (this.view.isReplyBox) {
       await this.view.renderModule.renderReplyMsgComposeTable();
     }
+  }
+
+  private urlParams = () => { // used to reload the frame with updated params
+    return {
+      acctEmail: this.view.acctEmail, draftId: this.view.draftId, threadId: this.view.threadId, replyMsgId: this.view.replyMsgId,
+      ...this.view.replyParams, frameId: this.view.frameId, tabId: this.view.tabId, isReplyBox: this.view.isReplyBox,
+      skipClickPrompt: this.view.skipClickPrompt, parentTabId: this.view.parentTabId, disableDraftSaving: this.view.disableDraftSaving,
+      debug: this.view.debug, removeAfterClose: this.view.removeAfterClose, replyPubkeyMismatch: this.view.replyPubkeyMismatch,
+    };
   }
 
 }
