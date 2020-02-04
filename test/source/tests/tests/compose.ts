@@ -144,6 +144,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await inboxPage.waitTillGone('@container-new-message');
     }));
 
+    ava.default('compose - keyboard - Ctrl+Enter sends message', testWithBrowser('compose', async (t, browser) => {
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('test.ci.compose@org.flowcrypt.com'));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await composeFrame.target.evaluateHandle(() => document.body.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', ctrlKey: true })));
+      await composeFrame.waitAndRespondToModal('error', 'confirm', 'Please add a recipient first');
+    }));
+
     ava.default('compose - reply - old gmail threadId fmt', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadId=16841ce0ce5cb74d&replyMsgId=16841ce0ce5cb74d';
       const replyFrame = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, skipValidation: true });
