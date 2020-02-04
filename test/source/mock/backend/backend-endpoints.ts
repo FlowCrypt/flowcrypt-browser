@@ -67,7 +67,7 @@ export const mockBackendEndpoints: HandlersDefinition = {
   },
   '/api/message/token': async ({ body }, req) => {
     const parsed = throwIfNotPostWithAuth(body, req);
-    throw new Error(`${req.url} mock not implemented`); // will have to give fake token
+    return { token: 'MT_xMOCKTOKEN' };
   },
   '/api/help/error': async ({ body }, req) => {
     mockBackendData.reportedErrors.push(body as any);
