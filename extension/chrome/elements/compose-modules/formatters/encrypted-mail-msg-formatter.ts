@@ -4,17 +4,15 @@
 
 import { AwsS3UploadItem, Backend, BackendRes, FcUuidAuth } from '../../../../js/common/api/backend.js';
 import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
-import { ComposerResetBtnTrigger, ComposerUserError } from '../composer-errs.js';
+import { ComposerResetBtnTrigger, ComposerUserError } from '../compose-err-module.js';
 import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
-import { NewMsgData, PubkeyResult, SendBtnTexts } from '../composer-types.js';
+import { NewMsgData, PubkeyResult, SendBtnTexts } from '../compose-types.js';
 import { Store, Subscription } from '../../../../js/common/platform/store.js';
 import { Str, Value } from '../../../../js/common/core/common.js';
-
 import { ApiErr } from '../../../../js/common/api/error/api-error.js';
 import { Att } from '../../../../js/common/core/att.js';
 import { Buf } from '../../../../js/common/core/buf.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
-import { Composer } from '../composer.js';
 import { Lang } from '../../../../js/common/lang.js';
 import { PgpArmor } from '../../../../js/common/core/pgp-armor.js';
 import { PgpKey } from '../../../../js/common/core/pgp-key.js';
@@ -24,6 +22,7 @@ import { Settings } from '../../../../js/common/settings.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 import { openpgp } from '../../../../js/common/core/pgp.js';
+import { ComposeView } from '../../compose.js';
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
 
@@ -37,11 +36,11 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
   }
 
   constructor(
-    composer: Composer,
+    view: ComposeView,
     private armoredPubkeys: PubkeyResult[],
     private isDraft = false
   ) {
-    super(composer);
+    super(view);
   }
 
   public sendableMsg = async (newMsg: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> => {
@@ -50,9 +49,9 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     if (!this.richtext) { // simple text: PGP/Inline
       const authInfo = subscription.active ? await Store.authInfo(this.acctEmail) : undefined;
       await this.addReplyTokenToMsgBodyIfNeeded(authInfo, newMsg, subscription);
-      let atts = await this.composer.atts.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey), newMsg.pwd);
+      let atts = await this.view.attsModule.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey), newMsg.pwd);
       if (newMsg.pwd && atts.length) { // these will be password encrypted attachments
-        this.composer.sendBtn.btnUpdateTimeout = Catch.setHandledTimeout(() => { this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING); }, 500);
+        this.view.sendBtnModule.btnUpdateTimeout = Catch.setHandledTimeout(() => { this.view.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING); }, 500);
         await this.uploadAttsToFc(authInfo, atts); // must strictly be preceeding the next function, because it's setting att.url
         newMsg.plaintext = this.addUploadedFileLinksToMsgBody(newMsg.plaintext, atts);
       }
@@ -67,10 +66,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
       }
       return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: encryptedBody, atts, isDraft: this.isDraft });
     } else if (newMsg.pwd) { // don't allow rich-text pwd msg yet
-      this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-richtext-sending-option'), 'richtext', false); // do not use rich text
+      this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-richtext-sending-option'), 'richtext', false); // do not use rich text
       throw new ComposerUserError('Rich text is not yet supported for password encrypted messages, please retry (formatting will be removed).');
     } else { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
-      const plainAtts = await this.composer.atts.attach.collectAtts();
+      const plainAtts = await this.view.attsModule.attach.collectAtts();
       const pgpMimeToEncrypt = await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject }, plainAtts);
       const encrypted = await this.encryptData(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubkeys, signingPrv);
       const atts = EncryptedMsgMailFormatter.createPgpMimeAtts(encrypted.data);
@@ -120,7 +119,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     for (const i of pfRes.approvals.keys()) {
       items.push({ baseUrl: pfRes.approvals[i].base_url, fields: pfRes.approvals[i].fields, att: atts[i] });
     }
-    await Backend.s3Upload(items, this.composer.sendBtn.renderUploadProgress);
+    await Backend.s3Upload(items, this.view.sendBtnModule.renderUploadProgress);
     const { admin_codes, confirmed } = await Backend.messageConfirmFiles(items.map(item => item.fields.key));
     if (!confirmed || confirmed.length !== items.length) {
       throw new Error('Attachments did not upload properly, please try again');
@@ -194,7 +193,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     const a = `<a href="${Xss.escape(msgUrl)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">
                     ${Lang.compose.openMsg[lang]}
                    </a>`;
-    const intro = this.composer.S.cached('input_intro').length && this.composer.input.extract('text', 'input_intro');
+    const intro = this.view.S.cached('input_intro').length && this.view.inputModule.extract('text', 'input_intro');
     const text = [];
     const html = [];
     if (intro) {
@@ -208,7 +207,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
                     ${Lang.compose.msgEncryptedHtml[lang] + a}<br/><br/>
                     ${Lang.compose.alternativelyCopyPaste[lang] + Xss.escape(msgUrl)}<br/><br/><br/>
                 </div>`);
-    await this.composer.storage.addAdminCodes(short, [admin_code].concat(this.fcAdminCodes));
+    await this.view.storageModule.addAdminCodes(short, [admin_code].concat(this.fcAdminCodes));
     encryptedBody['text/plain'] = text.join('\n');
     encryptedBody['text/html'] = html.join('\n');
   }

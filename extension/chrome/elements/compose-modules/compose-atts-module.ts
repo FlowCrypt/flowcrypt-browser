@@ -3,40 +3,36 @@
 'use strict';
 
 import { AttLimits, AttUI } from '../../../js/common/ui/att-ui.js';
-
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Composer } from './composer.js';
-import { ComposerComponent } from './composer-abstract-component.js';
 import { PgpHash } from '../../../js/common/core/pgp-hash.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
+import { ViewModule } from '../../../js/common/view-module.js';
+import { ComposeView } from '../compose.js';
 
-export class ComposerAtts extends ComposerComponent {
+export class ComposeAttsModule extends ViewModule<ComposeView> {
 
   public attach: AttUI;
 
-  constructor(composer: Composer) {
-    super(composer);
+  constructor(view: ComposeView) {
+    super(view);
     this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice());
   }
 
-  public initActions = () => {
-    // none
-  }
-
-  public onComposeTableRender = () => {
+  public setHandlers = () => {
+    this.view.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to interfere
     this.attach.initAttDialog('fineuploader', 'fineuploader_button', {
       uiChanged: () => {
-        this.composer.size.setInputTextHeightManuallyIfNeeded();
-        this.composer.size.resizeComposeBox();
+        this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
+        this.view.sizeModule.resizeComposeBox();
       }
     });
   }
 
   private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
     const subscription = await Store.subscription(this.view.acctEmail);
-    if (!Rules.isPublicEmailProviderDomain(this.composer.sender.getSender()) && !subscription.active) {
+    if (!Rules.isPublicEmailProviderDomain(this.view.senderModule.getSender()) && !subscription.active) {
       return {
         sizeMb: 5,
         size: 5 * 1024 * 1024,

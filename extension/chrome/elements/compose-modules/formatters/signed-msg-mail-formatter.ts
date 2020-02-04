@@ -6,7 +6,7 @@ import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter
 
 import { BrowserWindow } from '../../../../js/common/browser/browser-window.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
-import { NewMsgData } from '../composer-types.js';
+import { NewMsgData } from '../compose-types.js';
 import { PgpKey } from '../../../../js/common/core/pgp-key.js';
 import { PgpMsg } from '../../../../js/common/core/pgp-msg.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
@@ -16,8 +16,8 @@ import { Store } from '../../../../js/common/platform/store.js';
 export class SignedMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
 
   public sendableMsg = async (newMsg: NewMsgData, signingPrv: OpenPGP.key.Key): Promise<SendableMsg> => {
-    this.composer.errs.debug(`SignedMsgMailFormatter.sendableMsg signing with key: ${await PgpKey.longid(signingPrv)}`);
-    const atts = await this.composer.atts.attach.collectAtts();
+    this.view.errModule.debug(`SignedMsgMailFormatter.sendableMsg signing with key: ${await PgpKey.longid(signingPrv)}`);
+    const atts = await this.view.attsModule.attach.collectAtts();
     if (!this.richtext) {
       // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
       // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well

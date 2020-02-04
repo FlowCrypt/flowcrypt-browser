@@ -5,42 +5,42 @@
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Contact, KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { Keyserver, PubkeySearchResult } from '../../../js/common/api/keyserver.js';
-
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { CollectPubkeysResult } from './composer-types.js';
-import { ComposerComponent } from './composer-abstract-component.js';
-import { PUBKEY_LOOKUP_RESULT_FAIL } from './composer-errs.js';
+import { CollectPubkeysResult } from './compose-types.js';
+import { PUBKEY_LOOKUP_RESULT_FAIL } from './compose-err-module.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { openpgp } from '../../../js/common/core/pgp.js';
+import { ViewModule } from '../../../js/common/view-module.js';
+import { ComposeView } from '../compose.js';
 
-export class ComposerStorage extends ComposerComponent {
+export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   private passphraseInterval: number | undefined;
   private ksLookupsByEmail: { [key: string]: PubkeySearchResult | Contact } = {};
 
-  public initActions = () => {
+  public setHandlers = () => {
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
       if (!entered) {
         clearInterval(this.passphraseInterval);
-        this.composer.sendBtn.resetSendBtn();
+        this.view.sendBtnModule.resetSendBtn();
       }
     });
   }
 
   public getKey = async (senderEmail: string): Promise<KeyInfo> => {
     const keys = await Store.keysGet(this.view.acctEmail);
-    let result = await this.composer.myPubkey.chooseMyPublicKeyBySenderEmail(keys, senderEmail);
+    let result = await this.view.myPubkeyModule.chooseMyPublicKeyBySenderEmail(keys, senderEmail);
     if (!result) {
-      this.composer.errs.debug(`ComposerStorage.getKey: could not find key based on senderEmail: ${senderEmail}, using primary instead`);
+      this.view.errModule.debug(`ComposerStorage.getKey: could not find key based on senderEmail: ${senderEmail}, using primary instead`);
       result = keys.find(ki => ki.primary);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(result);
     } else {
-      this.composer.errs.debug(`ComposerStorage.getKey: found key based on senderEmail: ${senderEmail}`);
+      this.view.errModule.debug(`ComposerStorage.getKey: found key based on senderEmail: ${senderEmail}`);
     }
-    this.composer.errs.debug(`ComposerStorage.getKey: returning key longid: ${result!.longid}`);
+    this.view.errModule.debug(`ComposerStorage.getKey: returning key longid: ${result!.longid}`);
     return result!;
   }
 

@@ -2,9 +2,9 @@
 
 'use strict';
 
-import { Composer } from '../composer.js';
-import { NewMsgData } from '../composer-types.js';
+import { NewMsgData } from '../compose-types.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg';
+import { ComposeView } from '../../compose.js';
 
 export interface MailFormatterInterface {
   sendableMsg(newMsgData: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg>;
@@ -12,17 +12,18 @@ export interface MailFormatterInterface {
 
 export class BaseMailFormatter {
 
-  protected composer: Composer;
+  protected view: ComposeView;
   protected richtext: boolean;
   protected acctEmail: string;
 
-  constructor(composer: Composer) {
-    this.composer = composer;
-    this.richtext = composer.sendBtn.popover.choices.richtext;
-    this.acctEmail = this.composer.view.acctEmail;
+  constructor(view: ComposeView) {
+    this.view = view;
+    this.richtext = view.sendBtnModule.popover.choices.richtext;
+    this.acctEmail = this.view.acctEmail;
   }
 
   protected headers = (newMsg: NewMsgData) => {
-    return { from: newMsg.from, recipients: newMsg.recipients, subject: newMsg.subject, thread: this.composer.view.threadId };
+    return { from: newMsg.from, recipients: newMsg.recipients, subject: newMsg.subject, thread: this.view.threadId };
   }
+
 }

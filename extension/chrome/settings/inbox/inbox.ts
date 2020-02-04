@@ -83,7 +83,7 @@ export class InboxView extends View {
     }
   }
 
-  public setHandlers = async () => {
+  public setHandlers = () => {
     BrowserMsg.listen(this.tabId);
     Catch.setHandledInterval(this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded, 30000);
   }

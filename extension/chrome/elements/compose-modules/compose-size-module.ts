@@ -4,32 +4,34 @@
 
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { ComposerComponent } from './composer-abstract-component.js';
+import { ViewModule } from '../../../js/common/view-module.js';
+import { ComposeView } from '../compose.js';
 
-export class ComposerSize extends ComposerComponent {
+export class ComposeSizeModule extends ViewModule<ComposeView> {
 
   public composeWindowIsMinimized = false;
 
+  private composeWindowIsMaximized = false;
   private FULL_WINDOW_CLASS = 'full_window';
   private lastReplyBoxTableHeight = 0;
-  private composeWindowIsMaximized = false;
   private refBodyHeight?: number;
 
-  public initActions = () => {
+  public setHandlers = () => {
     $('body').click(event => {
-      const target = $(event.target);
-      if (this.composeWindowIsMaximized && target.is($('body'))) {
+      if (this.composeWindowIsMaximized && $(event.target).is($('body'))) {
         this.minimizeComposerWindow();
       }
     });
     if (!this.view.isReplyBox) {
       $('.minimize_new_message').click(this.view.setHandler(() => this.minimizeComposerWindow()));
-      $('.popout').click(this.view.setHandler(async () => {
-        this.composer.S.cached('body').hide(); // Need to hide because it seems laggy on some devices
-        await this.toggleFullScreen();
-        this.composer.S.cached('body').show();
-      }));
+      $('.popout').click(this.view.setHandler(() => this.popoutClickHandler()));
     }
+  }
+
+  public popoutClickHandler = async () => {
+    this.view.S.cached('body').hide(); // Need to hide because it seems laggy on some devices
+    await this.toggleFullScreen();
+    this.view.S.cached('body').show();
   }
 
   public onComposeTableRender = () => {
@@ -37,31 +39,31 @@ export class ComposerSize extends ComposerComponent {
       // we use veryslowspree for reply box because hand-resizing the main window will cause too many events
       // we use spree (faster) for new messages because rendering of window buttons on top right depend on it, else visible lag shows
       $(window).resize(this.view.setHandlerPrevent(this.view.isReplyBox ? 'veryslowspree' : 'spree', () => this.windowResized().catch(Catch.reportErr)));
-      this.composer.input.squire.addEventListener('keyup', () => this.view.setHandlerPrevent('slowspree', () => this.windowResized().catch(Catch.reportErr)));
+      this.view.inputModule.squire.addEventListener('keyup', () => this.view.setHandlerPrevent('slowspree', () => this.windowResized().catch(Catch.reportErr)));
     }, 1000);
   }
 
   public resizeComposeBox = (addExtra: number = 0) => {
     if (this.view.isReplyBox) {
-      this.composer.S.cached('input_text').css('max-width', (this.composer.S.cached('body').width()! - 20) + 'px'); // body should always be present
+      this.view.S.cached('input_text').css('max-width', (this.view.S.cached('body').width()! - 20) + 'px'); // body should always be present
       let minHeight = 0;
       let currentHeight = 0;
-      if (this.composer.S.cached('compose_table').is(':visible')) {
-        currentHeight = this.composer.S.cached('compose_table').outerHeight() || 0;
+      if (this.view.S.cached('compose_table').is(':visible')) {
+        currentHeight = this.view.S.cached('compose_table').outerHeight() || 0;
         minHeight = 260;
-      } else if (this.composer.S.cached('reply_msg_successful').is(':visible')) {
-        currentHeight = this.composer.S.cached('reply_msg_successful').outerHeight() || 0;
+      } else if (this.view.S.cached('reply_msg_successful').is(':visible')) {
+        currentHeight = this.view.S.cached('reply_msg_successful').outerHeight() || 0;
       } else {
-        currentHeight = this.composer.S.cached('prompt').outerHeight() || 0;
+        currentHeight = this.view.S.cached('prompt').outerHeight() || 0;
       }
       if (currentHeight !== this.lastReplyBoxTableHeight && Math.abs(currentHeight - this.lastReplyBoxTableHeight) > 2) { // more then two pixel difference compared to last time
         this.lastReplyBoxTableHeight = currentHeight;
         BrowserMsg.send.setCss(this.view.parentTabId, { selector: `iframe#${this.view.frameId}`, css: { height: `${(Math.max(minHeight, currentHeight) + addExtra)}px` } });
       }
     } else {
-      this.composer.S.cached('input_text').css('max-width', '');
+      this.view.S.cached('input_text').css('max-width', '');
       this.resizeInput();
-      this.composer.S.cached('input_text').css('max-width', $('.text_container').width()! - 8 + 'px');
+      this.view.S.cached('input_text').css('max-width', $('.text_container').width()! - 8 + 'px');
     }
   }
 
@@ -74,24 +76,24 @@ export class ComposerSize extends ComposerComponent {
    */
   public setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight: boolean = false) => {
     if (!this.view.isReplyBox && Catch.browser().name === 'firefox') {
-      this.composer.S.cached('input_text').css('height', '0');
+      this.view.S.cached('input_text').css('height', '0');
       let cellHeightExceptText = 0;
-      for (const cell of this.composer.S.cached('all_cells_except_text')) {
+      for (const cell of this.view.S.cached('all_cells_except_text')) {
         cellHeightExceptText += $(cell).is(':visible') ? ($(cell).parent('tr').height() || 0) + 1 : 0; // add a 1px border height for each table row
       }
       if (updateRefBodyHeight || !this.refBodyHeight) {
-        this.refBodyHeight = this.composer.S.cached('body').height() || 605;
+        this.refBodyHeight = this.view.S.cached('body').height() || 605;
       }
       const attListHeight = $("#att_list").height() || 0;
-      const inputTextVerticalPadding = parseInt(this.composer.S.cached('input_text').css('padding-top')) + parseInt(this.composer.S.cached('input_text').css('padding-bottom'));
-      const iconShowPrevMsgHeight = this.composer.S.cached('triple_dot').outerHeight(true) || 0;
-      this.composer.S.cached('input_text').css('height', this.refBodyHeight - cellHeightExceptText - attListHeight - inputTextVerticalPadding - iconShowPrevMsgHeight);
+      const inputTextVerticalPadding = parseInt(this.view.S.cached('input_text').css('padding-top')) + parseInt(this.view.S.cached('input_text').css('padding-bottom'));
+      const iconShowPrevMsgHeight = this.view.S.cached('triple_dot').outerHeight(true) || 0;
+      this.view.S.cached('input_text').css('height', this.refBodyHeight - cellHeightExceptText - attListHeight - inputTextVerticalPadding - iconShowPrevMsgHeight);
     }
   }
 
   public resizeInput = (inputs?: JQuery<HTMLElement>) => {
     if (!inputs) {
-      inputs = this.composer.S.cached('recipients_inputs'); // Resize All Inputs
+      inputs = this.view.S.cached('recipients_inputs'); // Resize All Inputs
     }
     inputs.css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
     for (const inputElement of inputs) {
@@ -114,8 +116,8 @@ export class ComposerSize extends ComposerComponent {
   private windowResized = async () => {
     this.resizeComposeBox();
     this.setInputTextHeightManuallyIfNeeded(true);
-    if (this.composer.S.cached('recipients_placeholder').is(':visible')) {
-      await this.composer.recipients.setEmailsPreview(this.composer.recipients.getRecipients());
+    if (this.view.S.cached('recipients_placeholder').is(':visible')) {
+      await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
     }
   }
 
@@ -125,7 +127,7 @@ export class ComposerSize extends ComposerComponent {
     }
     BrowserMsg.send.setCss(this.view.parentTabId, {
       selector: `iframe#${this.view.frameId}, div#new_message`,
-      css: { height: this.composeWindowIsMinimized ? '' : this.composer.S.cached('header').css('height') },
+      css: { height: this.composeWindowIsMinimized ? '' : this.view.S.cached('header').css('height') },
     });
     this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
   }
@@ -136,22 +138,22 @@ export class ComposerSize extends ComposerComponent {
     }
     this.addOrRemoveFullScreenStyles(!this.composeWindowIsMaximized);
     if (!this.composeWindowIsMaximized) {
-      this.composer.S.cached('icon_popout').attr('src', '/img/svgs/minimize.svg');
+      this.view.S.cached('icon_popout').attr('src', '/img/svgs/minimize.svg');
     } else {
-      this.composer.S.cached('icon_popout').attr('src', '/img/svgs/maximize.svg');
+      this.view.S.cached('icon_popout').attr('src', '/img/svgs/maximize.svg');
     }
-    if (this.composer.S.cached('recipients_placeholder').is(':visible')) {
-      await this.composer.recipients.setEmailsPreview(this.composer.recipients.getRecipients());
+    if (this.view.S.cached('recipients_placeholder').is(':visible')) {
+      await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
     }
     this.composeWindowIsMaximized = !this.composeWindowIsMaximized;
   }
 
   private addOrRemoveFullScreenStyles = (add: boolean) => {
     if (add) {
-      this.composer.S.cached('body').addClass(this.FULL_WINDOW_CLASS);
+      this.view.S.cached('body').addClass(this.FULL_WINDOW_CLASS);
       BrowserMsg.send.addClass(this.view.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
     } else {
-      this.composer.S.cached('body').removeClass(this.FULL_WINDOW_CLASS);
+      this.view.S.cached('body').removeClass(this.FULL_WINDOW_CLASS);
       BrowserMsg.send.removeClass(this.view.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
     }
   }
