@@ -44,11 +44,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
   }
 
   public sendableMsg = async (newMsg: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> => {
-    const subscription = await Store.subscription(this.acctEmail);
     const pubkeys = this.armoredPubkeys.map(p => p.pubkey);
     if (!this.richtext) { // simple text: PGP/Inline
-      const authInfo = subscription.active ? await Store.authInfo(this.acctEmail) : undefined;
-      await this.addReplyTokenToMsgBodyIfNeeded(authInfo, newMsg, subscription);
+      const authInfo = await Store.authInfo(this.acctEmail);
+      await this.addReplyTokenToMsgBodyIfNeeded(authInfo, newMsg);
       let atts = await this.view.attsModule.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey), newMsg.pwd);
       if (newMsg.pwd && atts.length) { // these will be password encrypted attachments
         this.view.sendBtnModule.btnUpdateTimeout = Catch.setHandledTimeout(() => { this.view.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING); }, 500);
@@ -82,8 +81,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     return await PgpMsg.encrypt({ pubkeys, signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
   }
 
-  private addReplyTokenToMsgBodyIfNeeded = async (authInfo: FcUuidAuth | undefined, newMsgData: NewMsgData, subscription: Subscription): Promise<void> => {
-    if (!newMsgData.pwd || !subscription.active || !authInfo) {
+  private addReplyTokenToMsgBodyIfNeeded = async (authInfo: FcUuidAuth, newMsgData: NewMsgData): Promise<void> => {
+    if (!newMsgData.pwd || !authInfo.uuid) {
       return;
     }
     const recipients = Array.prototype.concat.apply([], Object.values(newMsgData.recipients));
@@ -113,8 +112,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     }
   }
 
-  private uploadAttsToFc = async (authInfo: FcUuidAuth | undefined, atts: Att[]): Promise<void> => {
-    const pfRes: BackendRes.FcMsgPresignFiles = await Backend.messagePresignFiles(authInfo, atts);
+  private uploadAttsToFc = async (authInfo: FcUuidAuth, atts: Att[]): Promise<void> => {
+    const pfRes: BackendRes.FcMsgPresignFiles = await Backend.messagePresignFiles(authInfo.uuid ? authInfo : undefined, atts);
     const items: AwsS3UploadItem[] = [];
     for (const i of pfRes.approvals.keys()) {
       items.push({ baseUrl: pfRes.approvals[i].base_url, fields: pfRes.approvals[i].fields, att: atts[i] });
@@ -183,10 +182,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     return new Date(usableTimeUntil); // latest date none of the keys were expired
   }
 
-  private uploadAndFormatPwdProtectedEmail = async (authInfo: FcUuidAuth | undefined, encryptedBody: SendableMsgBody): Promise<void> => {
+  private uploadAndFormatPwdProtectedEmail = async (authInfo: FcUuidAuth, encryptedBody: SendableMsgBody): Promise<void> => {
     // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
     // admin_code stays locally and helps the sender extend life of the message or delete it
-    const { short, admin_code } = await Backend.messageUpload(authInfo, encryptedBody['text/plain']!);
+    const { short, admin_code } = await Backend.messageUpload(authInfo.uuid ? authInfo : undefined, encryptedBody['text/plain']!);
     const storage = await Store.getAcct(this.acctEmail, ['outgoing_language']);
     const lang = storage.outgoing_language || 'EN';
     const msgUrl = Backend.url('decrypt', short);
