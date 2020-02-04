@@ -18,13 +18,11 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
   private keyImportUI = new KeyImportUi({});
   private rmPwdStrengthValidationElements: (() => void) | undefined;
 
-  constructor(view: ComposeView) {
+  constructor(view: ComposeView, hideMsgPwd: boolean | undefined) {
     super(view);
-    Store.getAcct(this.view.acctEmail, ['hide_message_password']).then(store => {
-      if (store.hide_message_password) {
-        this.view.S.cached('input_password').attr('type', 'password');
-      }
-    }).catch(Catch.reportErr);
+    if (hideMsgPwd) {
+      this.view.S.cached('input_password').attr('type', 'password');
+    }
   }
 
   public setHandlers = () => {
@@ -79,6 +77,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     }
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
   }
+
   private showMsgPwdUiAndColorBtn = async () => {
     if (this.view.S.cached('password_or_pubkey').is(':hidden')) {
       const authInfo = await Store.authInfo(this.view.acctEmail);

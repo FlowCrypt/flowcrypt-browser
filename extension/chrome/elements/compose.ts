@@ -136,24 +136,15 @@ export class ComposeView extends View {
   }
 
   public render = async () => {
-    const storage = await Store.getAcct(this.acctEmail, ['google_token_scopes', 'sendAs', 'email_provider', 'hide_message_password', 'drafts_reply']);
+    const storage = await Store.getAcct(this.acctEmail, ['sendAs', 'hide_message_password', 'drafts_reply']);
     this.tabId = await BrowserMsg.requiredTabId();
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.scopes = await Store.getScopes(this.acctEmail);
-    if (!this.isReplyBox) { // don't want to deal with resizing the frame
-      await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail);
-    }
-    if (this.replyMsgId) {
-      await this.renderModule.fetchReplyMeta(Object.keys(storage.sendAs!));
-    }
-    if (this.isReplyBox && this.threadId && !this.ignoreDraft && storage.drafts_reply && storage.drafts_reply[this.threadId]) {
-      this.draftId = storage.drafts_reply[this.threadId]; // there may be a draft we want to load
-    }
     this.draftModule = new ComposeDraftModule(this);
     this.quoteModule = new ComposeQuoteModule(this);
     this.recipientsModule = new ComposeRecipientsModule(this);
     this.sendBtnModule = new ComposeSendBtnModule(this);
-    this.pwdOrPubkeyContainerModule = new ComposePwdOrPubkeyContainerModule(this);
+    this.pwdOrPubkeyContainerModule = new ComposePwdOrPubkeyContainerModule(this, storage.hide_message_password);
     this.sizeModule = new ComposeSizeModule(this);
     this.senderModule = new ComposeSenderModule(this);
     this.footerModule = new ComposeFooterModule(this);
@@ -163,6 +154,15 @@ export class ComposeView extends View {
     this.renderModule = new ComposeRenderModule(this);
     this.myPubkeyModule = new ComposeMyPubkeyModule(this);
     this.storageModule = new ComposeStorageModule(this);
+    if (!this.isReplyBox) {
+      await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail);
+    }
+    if (this.replyMsgId) {
+      await this.renderModule.fetchReplyMeta(Object.keys(storage.sendAs!));
+    }
+    if (this.isReplyBox && this.threadId && !this.ignoreDraft && storage.drafts_reply && storage.drafts_reply[this.threadId]) {
+      this.draftId = storage.drafts_reply[this.threadId]; // there may be a draft we want to load
+    }
     BrowserMsg.listen(this.tabId!);
     await this.renderModule.initComposeBox();
     this.senderModule.checkEmailAliases().catch(Catch.reportErr);
