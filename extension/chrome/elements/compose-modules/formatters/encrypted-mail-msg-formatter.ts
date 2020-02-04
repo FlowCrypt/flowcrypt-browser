@@ -7,7 +7,7 @@ import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter
 import { ComposerResetBtnTrigger, ComposerUserError } from '../compose-err-module.js';
 import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { NewMsgData, PubkeyResult, SendBtnTexts } from '../compose-types.js';
-import { Store, Subscription } from '../../../../js/common/platform/store.js';
+import { Store } from '../../../../js/common/platform/store.js';
 import { Str, Value } from '../../../../js/common/core/common.js';
 import { ApiErr } from '../../../../js/common/api/error/api-error.js';
 import { Att } from '../../../../js/common/core/att.js';
