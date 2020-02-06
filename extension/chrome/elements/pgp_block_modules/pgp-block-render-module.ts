@@ -76,7 +76,7 @@ export class PgpBlockViewRenderModule {
     let renderableAtts: Att[] = [];
     let decryptedContent = decryptedBytes.toUtfStr();
     let isHtml: boolean = false;
-    // todo - replace with PgpMsg.fmtDecrypted
+    // todo - replace with MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks
     if (!Mime.resemblesMsg(decryptedBytes)) {
       const fcAttBlocks: MsgBlock[] = [];
       decryptedContent = PgpMsg.extractFcAtts(decryptedContent, fcAttBlocks);
