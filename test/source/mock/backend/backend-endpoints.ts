@@ -14,13 +14,23 @@ import { oauth } from '../lib/oauth';
 export const mockBackendData = new BackendData(oauth);
 
 const fwdToRealBackend = async (parsed: any, req: IncomingMessage): Promise<string> => {
+  // we are forwarding this request to backend, but we are not properly authenticated with real backend
+  // better remove authentication, request that we currently forward during tests don't actually require it
   delete req.headers.host;
   delete req.headers['content-length'];
   const forwarding: any = { headers: req.headers, url: `https://flowcrypt.com${req.url}` };
   if (req.url!.includes('message/upload')) {
+    // Removing mock auth when forwarding request to real backend at ${req.url}
+    // here a bit more difficult, because the request was already encoded as form-data
+    parsed.body = (parsed.body as string).replace(/(-----END PGP MESSAGE-----\r\n\r\n------[A-Za-z0-9]+)(.|\r\n)*$/gm, (_, found) => `${found}--\r\n`);
     forwarding.body = parsed.body; // FORM-DATA
     const r = await request.post(forwarding);
     return r.body; // already json-stringified for this call, maybe because backend doesn't return proper content-type
+  }
+  if (parsed.body && typeof parsed.body === 'object' && parsed.body.account && parsed.body.uuid) {
+    // Removing mock auth when forwarding request to real backend at ${req.url}
+    delete parsed.body.account;
+    delete parsed.body.uuid;
   }
   forwarding.json = parsed.body; // JSON
   const r = await request.post(forwarding);
@@ -67,7 +77,7 @@ export const mockBackendEndpoints: HandlersDefinition = {
   },
   '/api/message/token': async ({ body }, req) => {
     const parsed = throwIfNotPostWithAuth(body, req);
-    throw new Error(`${req.url} mock not implemented`); // will have to give fake token
+    return { token: 'MT_xMOCKTOKEN' };
   },
   '/api/help/error': async ({ body }, req) => {
     mockBackendData.reportedErrors.push(body as any);
