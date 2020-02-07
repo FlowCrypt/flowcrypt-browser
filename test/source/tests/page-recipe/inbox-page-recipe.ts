@@ -17,7 +17,8 @@ export class InboxPageRecipe extends PageRecipe {
     await inboxPage.waitAll('iframe');
     if (finishCurrentSession) {
       await inboxPage.waitAndClick('@action-finish-session');
-      await Util.sleep(3); // give frames time to reload, else we will be manipulating them while reloading -> Error: waitForFunction failed: frame got detached.
+      await Util.sleep(5); // give frames time to reload, else we will be manipulating them while reloading -> Error: waitForFunction failed: frame got detached.
+      await inboxPage.waitAll('iframe');
     }
     const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
     await pgpBlockFrame.waitAll('@pgp-block-content');

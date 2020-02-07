@@ -382,7 +382,7 @@ View.run(class SettingsView extends View {
       const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=${escapedLongid}">${escapedEmail}</a>`;
       html += `<div class="row key-content-row key_${Xss.escape(ki.longid)}">`;
       html += `  <div class="col-sm-12">${escapedLink} from ${Xss.escape(date)}&nbsp;&nbsp;&nbsp;&nbsp;${escapedPrimaryOrRemove}</div>`;
-      html += `  <div class="col-sm-12">KeyWords: <span class="good">${Xss.escape(ki.keywords)}</span></div>`;
+      html += `  <div class="col-sm-12">Longid: <span class="good">${Xss.escape(Str.spaced(ki.longid))}</span></div>`;
       html += `</div>`;
     }
     Xss.sanitizeAppend('.key_list', html);

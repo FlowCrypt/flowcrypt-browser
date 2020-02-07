@@ -9,6 +9,7 @@ export interface StandardError {
   data?: string;
   stack?: string;
 }
+
 export interface StandardErrRes {
   error: StandardError;
 }

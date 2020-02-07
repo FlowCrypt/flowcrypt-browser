@@ -2,17 +2,16 @@
 
 'use strict';
 
-import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
-import { NewMsgData, SendBtnTexts } from '../composer-types.js';
-
+import { BaseMailFormatter } from './base-mail-formatter.js';
+import { NewMsgData, SendBtnTexts } from '../compose-types.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { SendableMsgBody } from '../../../../js/common/core/mime.js';
 
-export class PlainMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
+export class PlainMsgMailFormatter extends BaseMailFormatter {
 
   public sendableMsg = async (newMsg: NewMsgData): Promise<SendableMsg> => {
-    this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING);
-    const atts = await this.composer.atts.attach.collectAtts();
+    this.view.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING);
+    const atts = this.isDraft ? [] : await this.view.attsModule.attach.collectAtts();
     const body: SendableMsgBody = { 'text/plain': newMsg.plaintext };
     if (this.richtext) {
       body['text/html'] = newMsg.plainhtml;

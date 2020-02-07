@@ -159,7 +159,8 @@
       "content": [
         "Your current key cannot open this message."
       ],
-      "params": "?account_email=flowcrypt.compatibility%40gmail.com&frame_id=frame_yVMKFLRDiY&message=&has_password=___cu_false___&message_id=162275c819bcbf9b&sender_email=human%40flowcrypt.com&is_outgoing=___cu_false___&parent_tab_id=0"
+      "params": "?account_email=flowcrypt.compatibility%40gmail.com&frame_id=frame_yVMKFLRDiY&message=&has_password=___cu_false___&message_id=162275c819bcbf9b&sender_email=human%40flowcrypt.com&is_outgoing=___cu_false___&parent_tab_id=0",
+      "expectPercentageProgress": true
     },
     {
       "name": "pgp/mime with large attachment",
@@ -167,7 +168,8 @@
         "This will will have a larger attachment below",
         "image-large.jpg"
       ],
-      "params": "?account_email=flowcrypt.compatibility%40gmail.com&frame_id=frame_yVMKFLRDiY&message=&has_password=___cu_false___&message_id=1622ea42f3654ddc&sender_email=human%40flowcrypt.com&is_outgoing=___cu_false___&parent_tab_id=0"
+      "params": "?account_email=flowcrypt.compatibility%40gmail.com&frame_id=frame_yVMKFLRDiY&message=&has_password=___cu_false___&message_id=1622ea42f3654ddc&sender_email=human%40flowcrypt.com&is_outgoing=___cu_false___&parent_tab_id=0",
+      "expectPercentageProgress": true
     },
     {
       "name": "pgp/mime with large attachment as message.asc",
@@ -175,7 +177,8 @@
         "This will will have a larger attachment below",
         "image-large.jpg"
       ],
-      "params": "?account_email=flowcrypt.compatibility%40gmail.com&frame_id=frame_yVMKFLRDiY&message=&has_password=___cu_false___&message_id=1622eaa286f90737&sender_email=human%40flowcrypt.com&is_outgoing=___cu_false___&parent_tab_id=0"
+      "params": "?account_email=flowcrypt.compatibility%40gmail.com&frame_id=frame_yVMKFLRDiY&message=&has_password=___cu_false___&message_id=1622eaa286f90737&sender_email=human%40flowcrypt.com&is_outgoing=___cu_false___&parent_tab_id=0",
+      "expectPercentageProgress": true
     },
     {
       "name": "pgp/mime with small attachments as message.asc",

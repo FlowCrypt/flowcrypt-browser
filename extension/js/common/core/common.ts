@@ -51,6 +51,10 @@ export class Str {
     return Str.normalizeSpaces(Str.normalizeDashes(str));
   }
 
+  public static spaced = (longidOrFingerprint: string) => {
+    return longidOrFingerprint.replace(/(.{4})/g, '$1 ').trim();
+  }
+
   public static numberFormat = (number: number) => {
     const nStr: string = number + '';
     const x = nStr.split('.');

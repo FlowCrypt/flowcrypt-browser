@@ -3,40 +3,35 @@
 'use strict';
 
 import { AttLimits, AttUI } from '../../../js/common/ui/att-ui.js';
-
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Composer } from './composer.js';
-import { ComposerComponent } from './composer-abstract-component.js';
-import { PgpHash } from '../../../js/common/core/pgp-hash.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
+import { ViewModule } from '../../../js/common/view-module.js';
+import { ComposeView } from '../compose.js';
 
-export class ComposerAtts extends ComposerComponent {
+export class ComposeAttsModule extends ViewModule<ComposeView> {
 
   public attach: AttUI;
 
-  constructor(composer: Composer) {
-    super(composer);
+  constructor(view: ComposeView) {
+    super(view);
     this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice());
   }
 
-  public initActions = () => {
-    // none
-  }
-
-  public onComposeTableRender = () => {
+  public setHandlers = () => {
+    this.view.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to interfere
     this.attach.initAttDialog('fineuploader', 'fineuploader_button', {
       uiChanged: () => {
-        this.composer.size.setInputTextHeightManuallyIfNeeded();
-        this.composer.size.resizeComposeBox();
+        this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
+        this.view.sizeModule.resizeComposeBox();
       }
     });
   }
 
   private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
     const subscription = await Store.subscription(this.view.acctEmail);
-    if (!Rules.isPublicEmailProviderDomain(this.composer.sender.getSender()) && !subscription.active) {
+    if (!subscription.active && !Rules.isPublicEmailProviderDomain(this.view.senderModule.getSender())) {
       return {
         sizeMb: 5,
         size: 5 * 1024 * 1024,
@@ -65,8 +60,7 @@ export class ComposerAtts extends ComposerComponent {
         },
       };
     } else {
-      const allowHugeAtts = ['94658c9c332a11f20b1e45c092e6e98a1e34c953', 'b092dcecf277c9b3502e20c93b9386ec7759443a', '9fbbe6720a6e6c8fc30243dc8ff0a06cbfa4630e'];
-      const sizeMb = (subscription.method !== 'trial' && allowHugeAtts.includes(await PgpHash.sha1UtfStr(this.view.acctEmail))) ? 200 : 25;
+      const sizeMb = 25;
       return {
         sizeMb,
         size: sizeMb * 1024 * 1024,

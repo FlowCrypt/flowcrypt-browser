@@ -9,6 +9,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { openpgp } from '../../../js/common/core/pgp.js';
+import { Str } from '../../../js/common/core/common.js';
 
 View.run(class CompatibilityView extends View {
 
@@ -64,7 +65,7 @@ View.run(class CompatibilityView extends View {
         const user = await key.getPrimaryUser();
         return user?.user?.userId || 'No primary user';
       })}`);
-      this.appendResult(`${kn} Fingerprint: ${await this.test(async () => await PgpKey.fingerprint(key, 'spaced'))}`);
+      this.appendResult(`${kn} Longid: ${await this.test(async () => Str.spaced(await PgpKey.longid(key) || 'err'))}`);
       this.appendResult(`${kn} Subkeys: ${await this.test(async () => key.subKeys ? key.subKeys.length : key.subKeys)}`);
       this.appendResult(`${kn} Primary key algo: ${await this.test(async () => key.primaryKey.algorithm)}`);
       if (key.isPrivate()) {

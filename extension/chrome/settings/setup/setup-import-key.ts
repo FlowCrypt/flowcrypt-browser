@@ -22,13 +22,11 @@ export class SetupImportKeyModule {
     }
     const options: SetupOptions = {
       passphrase: String($('#step_2b_manual_enter .input_passphrase').val()),
-      key_backup_prompt: false,
       submit_main: Boolean($('#step_2b_manual_enter .input_submit_key').prop('checked') || this.view.rules!.mustSubmitToAttester()),
       submit_all: Boolean($('#step_2b_manual_enter .input_submit_all').prop('checked') || this.view.rules!.mustSubmitToAttester()),
       passphrase_save: Boolean($('#step_2b_manual_enter .input_passphrase_save').prop('checked')),
       is_newly_created_key: false,
       recovered: false,
-      setup_simple: false,
     };
     try {
       const checked = await this.view.keyImportUi.checkPrv(this.view.acctEmail, String($('#step_2b_manual_enter .input_private_key').val()), options.passphrase);

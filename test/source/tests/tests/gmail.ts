@@ -117,7 +117,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const gmailPage = await openGmailPage(t, browser, '/WhctKJTrdTXcmgcCRgXDpVnfjJNnjjLzSvcMDczxWPMsBTTfPxRDMrKCJClzDHtbXlhnwtV');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
       expect(urls.length).to.equal(1);
-      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, urls[0], ['This is a test, as requested by the Flowcrypt team', 'mutt + gnupg']);
+      const params = urls[0].split('/chrome/elements/pgp_block.htm')[1];
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
+        params,
+        content: ['This is a test, as requested by the Flowcrypt team', 'mutt + gnupg']
+      });
       await pageHasReplyContainer(t, browser, gmailPage);
     }));
 
@@ -144,7 +148,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pageHasReplyContainer(t, browser, gmailPage);
       const pubkeyPage = await browser.newPage(t, urls[0]);
       const content = await pubkeyPage.read('body');
-      expect(content).to.contain('STONE NEED REMAIN SLIDE DEPOSIT BRICK');
+      expect(content).to.contain('Longid: D652 7AD6 65C3 B0DD');
     }));
 
   }

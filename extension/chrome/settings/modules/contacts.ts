@@ -121,8 +121,7 @@ View.run(class ContactsView extends View {
       Xss.sanitizeAppend('h1', '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
     }
     $('#view_contact .key_dump').text(contact!.pubkey!); // should exist - from list of contacts && should have pgp - filtered
-    $('#view_contact .key_fingerprint').text(contact!.fingerprint!); // should exist - from list of contacts && should have pgp - filtered
-    $('#view_contact .key_words').text(contact!.keywords!); // should exist - from list of contacts && should have pgp - filtered
+    $('#view_contact .key_longid').text(Str.spaced(contact!.longid!)); // should exist - from list of contacts && should have pgp - filtered
     $('#view_contact').css('display', 'block');
     $('#page_back_button').click(this.setHandler(el => this.loadAndRenderContactList()));
   }
@@ -141,7 +140,7 @@ View.run(class ContactsView extends View {
     const email = $('#edit_contact .input_pubkey').attr('email');
     if (!armoredPubkey || !email) {
       await Ui.modal.warning('No public key entered');
-    } else if (await PgpKey.fingerprint(armoredPubkey)) {
+    } else if (await PgpKey.longid(armoredPubkey)) {
       await Store.dbContactSave(undefined, await Store.dbContactObj({
         email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now(), expiresOn: await PgpKey.dateBeforeExpiration(armoredPubkey)
       }));

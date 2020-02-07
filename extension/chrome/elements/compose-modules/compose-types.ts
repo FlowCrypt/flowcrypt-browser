@@ -16,12 +16,9 @@ export class RecipientStatuses {
   public static FAILED: RecipientStatus = 5;
 }
 
-export interface BaseRecipient {
+export interface RecipientElement {
   email: string;
   sendingType: RecipientType;
-}
-
-export interface RecipientElement extends BaseRecipient {
   element: HTMLElement;
   id: string;
   status: RecipientStatus;

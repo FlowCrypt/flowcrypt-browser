@@ -4,12 +4,9 @@
 
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { FormatError, PgpMsg } from '../../../js/common/core/pgp-msg.js';
-
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { ComposerComponent } from './composer-abstract-component.js';
-import { MessageToReplyOrForward } from './composer-types.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { MsgBlock } from '../../../js/common/core/msg-block.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
@@ -17,15 +14,14 @@ import { Store } from '../../../js/common/platform/store.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { ViewModule } from '../../../js/common/view-module.js';
+import { ComposeView } from '../compose.js';
+import { MessageToReplyOrForward } from './compose-types.js';
 
-export class ComposerQuote extends ComposerComponent {
+export class ComposeQuoteModule extends ViewModule<ComposeView> {
 
   public tripleDotSanitizedHtmlContent: { quote: string | undefined, footer: string | undefined } | undefined;
   public messageToReplyOrForward: MessageToReplyOrForward | undefined;
-
-  public initActions = (): void => {
-    // No need
-  }
 
   public getTripleDotSanitizedFormattedHtmlContent = (): string => { // email content order: [myMsg, myFooter, theirQuote]
     if (this.tripleDotSanitizedHtmlContent) {
@@ -35,29 +31,29 @@ export class ComposerQuote extends ComposerComponent {
   }
 
   public addTripleDotQuoteExpandFooterOnlyBtn = async () => {
-    const textFooter = await this.composer.footer.getFooterFromStorage(this.composer.sender.getSender());
+    const textFooter = await this.view.footerModule.getFooterFromStorage(this.view.senderModule.getSender());
     if (!textFooter) {
-      this.composer.S.cached('triple_dot').hide();
+      this.view.S.cached('triple_dot').hide();
       return;
     }
-    const sanitizedFooter = textFooter && !this.composer.draft.wasMsgLoadedFromDraft ? this.composer.footer.createFooterHtml(textFooter) : undefined;
+    const sanitizedFooter = textFooter && !this.view.draftModule.wasMsgLoadedFromDraft ? this.view.footerModule.createFooterHtml(textFooter) : undefined;
     this.tripleDotSanitizedHtmlContent = { footer: sanitizedFooter, quote: undefined };
-    this.composer.S.cached('triple_dot').click(this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el)));
+    this.view.S.cached('triple_dot').click(this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el)));
   }
 
   public addTripleDotQuoteExpandFooterAndQuoteBtn = async (msgId: string, method: 'reply' | 'forward') => {
     if (!this.messageToReplyOrForward) {
-      this.composer.S.cached('triple_dot').addClass('progress');
-      Xss.sanitizeAppend(this.composer.S.cached('triple_dot'), '<div id="loader">0%</div>');
-      this.composer.size.resizeComposeBox();
+      this.view.S.cached('triple_dot').addClass('progress');
+      Xss.sanitizeAppend(this.view.S.cached('triple_dot'), '<div id="loader">0%</div>');
+      this.view.sizeModule.resizeComposeBox();
       try {
         this.messageToReplyOrForward = await this.getAndDecryptMessage(msgId, method);
       } catch (e) {
         ApiErr.reportIfSignificant(e);
         await Ui.modal.error(`Could not load quoted content, please try again.\n\n${ApiErr.eli5(e)}`);
       }
-      this.composer.S.cached('triple_dot').find('#loader').remove();
-      this.composer.S.cached('triple_dot').removeClass('progress');
+      this.view.S.cached('triple_dot').find('#loader').remove();
+      this.view.S.cached('triple_dot').removeClass('progress');
     }
     let sanitizedQuote = '';
     if (this.messageToReplyOrForward?.text) {
@@ -67,27 +63,27 @@ export class ComposerQuote extends ComposerComponent {
       }
       if (method === 'forward' && this.messageToReplyOrForward.decryptedFiles.length) {
         for (const file of this.messageToReplyOrForward.decryptedFiles) {
-          this.composer.atts.attach.addFile(file);
+          this.view.attsModule.attach.addFile(file);
         }
       }
     }
-    const textFooter = await this.composer.footer.getFooterFromStorage(this.composer.sender.getSender());
-    const sanitizedFooter = textFooter && !this.composer.draft.wasMsgLoadedFromDraft ? this.composer.footer.createFooterHtml(textFooter) : undefined;
+    const textFooter = await this.view.footerModule.getFooterFromStorage(this.view.senderModule.getSender());
+    const sanitizedFooter = textFooter && !this.view.draftModule.wasMsgLoadedFromDraft ? this.view.footerModule.createFooterHtml(textFooter) : undefined;
     if (!sanitizedQuote && !sanitizedFooter) {
-      this.composer.S.cached('triple_dot').hide();
+      this.view.S.cached('triple_dot').hide();
       return;
     }
     this.tripleDotSanitizedHtmlContent = { footer: sanitizedFooter, quote: sanitizedQuote };
     if (method === 'forward') {
-      this.actionRenderTripleDotContentHandle(this.composer.S.cached('triple_dot')[0]);
+      this.actionRenderTripleDotContentHandle(this.view.S.cached('triple_dot')[0]);
     } else {
-      this.composer.S.cached('triple_dot').click(this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el)));
+      this.view.S.cached('triple_dot').click(this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el)));
     }
   }
 
   private getAndDecryptMessage = async (msgId: string, method: 'reply' | 'forward'): Promise<MessageToReplyOrForward | undefined> => {
     try {
-      const { raw } = await this.composer.emailProvider.msgGet(msgId, 'raw', (progress) => this.setQuoteLoaderProgress(progress));
+      const { raw } = await this.view.emailProvider.msgGet(msgId, 'raw', (progress) => this.setQuoteLoaderProgress(progress));
       this.setQuoteLoaderProgress('processing...');
       const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw!));
       const headers = {
@@ -151,7 +147,7 @@ export class ComposerQuote extends ComposerComponent {
       };
     } catch (e) {
       if (e instanceof FormatError) {
-        Xss.sanitizeAppend(this.composer.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.escape(e.data)}`);
+        Xss.sanitizeAppend(this.view.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.escape(e.data)}`);
       } else if (ApiErr.isNetErr(e)) {
         // todo: retry
       } else if (ApiErr.isAuthPopupNeeded(e)) {
@@ -193,15 +189,15 @@ export class ComposerQuote extends ComposerComponent {
 
   private actionRenderTripleDotContentHandle = (el: HTMLElement) => {
     $(el).remove();
-    Xss.sanitizeAppend(this.composer.S.cached('input_text'), this.getTripleDotSanitizedFormattedHtmlContent());
+    Xss.sanitizeAppend(this.view.S.cached('input_text'), this.getTripleDotSanitizedFormattedHtmlContent());
     this.tripleDotSanitizedHtmlContent = undefined;
-    this.composer.input.squire.focus();
-    this.composer.size.resizeComposeBox();
+    this.view.inputModule.squire.focus();
+    this.view.sizeModule.resizeComposeBox();
   }
 
   private setQuoteLoaderProgress = (percentOrString: string | number | undefined): void => {
     if (percentOrString) {
-      this.composer.S.cached('triple_dot').find('#loader').text(typeof percentOrString === 'number' ? `${percentOrString}%` : percentOrString);
+      this.view.S.cached('triple_dot').find('#loader').text(typeof percentOrString === 'number' ? `${percentOrString}%` : percentOrString);
     }
   }
 

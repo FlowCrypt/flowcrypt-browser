@@ -36,6 +36,7 @@ export const Lang = { // tslint:disable-line:variable-name
   },
   pgpBlock: {
     cantOpen: 'Could not open this message with FlowCrypt.\n\n',
+    pwdMsgOnlyReadableOnWeb: 'This password-encrypted message (received before installing FlowCrypt?) is only readable on the web.\n\nPlease ask the sender to re-send it. Newly received encrypted messages will be readable in inbox.\n\n',
     yourKeyCantOpenImportIfHave: 'Your current key cannot open this message. If you have any other keys available, you should import them now.\n',
     encryptedCorrectlyFileBug: 'It\'s correctly encrypted for you. Please file a bug report if you see this on multiple messages. ',
     singleSender: 'Normally, messages are encrypted for at least two people (sender and the receiver). It seems the sender encrypted this message manually for themselves, and forgot to add you as a receiver. This sometimes happens when the sender is using OpenPGP software other than FlowCrypt, because they have to configure encryption manually, and mistakes can happen.',

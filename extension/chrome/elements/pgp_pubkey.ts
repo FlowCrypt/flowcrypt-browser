@@ -14,7 +14,6 @@ import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
-import { mnemonic } from '../../js/common/core/mnemonic.js';
 import { openpgp } from '../../js/common/core/pgp.js';
 
 // todo - this should use KeyImportUI for consistency.
@@ -51,12 +50,11 @@ View.run(class PgpPubkeyView extends View {
       $('body').css({ border: 'none', padding: 0 });
       $('.line').removeClass('line');
     }
-    $('.line.fingerprints, .line.add_contact').css('display', this.minimized ? 'none' : 'block');
+    $('.line.longids, .line.add_contact').css('display', this.minimized ? 'none' : 'block');
     if (this.publicKeys.length === 1) {
-      $('.line.fingerprints .fingerprint').text(await PgpKey.fingerprint(this.primaryPubKey, 'spaced') || '(fingerprint error)');
-      $('.line.fingerprints .keywords').text(mnemonic(await PgpKey.longid(this.primaryPubKey) || '') || '(mnemonic error)');
+      $('.line.longids .longid').text(Str.spaced(await PgpKey.longid(this.primaryPubKey) || 'err'));
     } else {
-      $('.line.fingerprints').css({ display: 'none' });
+      $('.line.longids').css({ display: 'none' });
     }
     if (this.primaryPubKey) {
       const isUsableButExpired = await PgpKey.usableButExpired(this.primaryPubKey);
@@ -123,7 +121,7 @@ View.run(class PgpPubkeyView extends View {
   }
 
   private showKeyNotUsableError = () => {
-    $('.fingerprints, .add_contact').remove();
+    $('.longids, .add_contact').remove();
     $('#pgp_block.pgp_pubkey .result')
       .prepend('<span class="bad">This OpenPGP key is not usable.</span>'); // xss-direct
     $('.pubkey').addClass('bad');
@@ -164,7 +162,7 @@ View.run(class PgpPubkeyView extends View {
 
   private showFullKeyHandler = (showFullBtn: HTMLElement) => {
     $(showFullBtn).css('display', 'none');
-    $('pre.pubkey, .line.fingerprints, .line.add_contact').css('display', 'block');
+    $('pre.pubkey, .line.longids, .line.add_contact').css('display', 'block');
     this.sendResizeMsg();
   }
 });

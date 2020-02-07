@@ -20,7 +20,7 @@ export let defineElementTests = (testVariant: TestVariant, testWithBrowser: Test
       const page = await browser.newPage(t, url);
       const content = await page.read('body');
       expect(content).to.contain('cryptup.tester@gmail.com');
-      expect(content).to.contain('ALMOST FAMOUS EXILE LOYAL FICTION COME');
+      expect(content).to.contain('06CA 553E C245 5D70');
     }));
 
     ava.todo('elements/pgp_pubkey shows graceful error when pubkey not usable');

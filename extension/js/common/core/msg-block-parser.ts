@@ -10,10 +10,10 @@ import { Catch } from '../platform/catch.js';
 import { Mime } from './mime.js';
 import { PgpArmor } from './pgp-armor.js';
 import { PgpKey } from './pgp-key.js';
-import { PgpMsg } from './pgp-msg.js';
 import { Str } from './common.js';
+import { FcAttLinkData } from './att.js';
 
-type SanitizedBlocks = { blocks: MsgBlock[], subject: string | undefined, isRichText: boolean };
+type SanitizedBlocks = { blocks: MsgBlock[], subject: string | undefined, isRichText: boolean, webReplyToken: any | undefined };
 
 export class MsgBlockParser {
 
@@ -43,21 +43,33 @@ export class MsgBlockParser {
   public static fmtDecryptedAsSanitizedHtmlBlocks = async (decryptedContent: Uint8Array, imgHandling: SanitizeImgHandling = 'IMG-TO-LINK'): Promise<SanitizedBlocks> => {
     const blocks: MsgBlock[] = [];
     let isRichText = false;
+    let webReplyToken: any | undefined;
     if (!Mime.resemblesMsg(decryptedContent)) {
-      let utf = Buf.fromUint8(decryptedContent).toUtfStr();
-      utf = PgpMsg.extractFcAtts(utf, blocks);
-      utf = PgpMsg.stripFcTeplyToken(utf);
+      let plain = Buf.fromUint8(decryptedContent).toUtfStr();
+      plain = MsgBlockParser.extractFcAtts(plain, blocks);
+      webReplyToken = MsgBlockParser.extractFcReplyToken(plain);
+      if (webReplyToken) {
+        plain = MsgBlockParser.stripFcTeplyToken(plain);
+      }
       const armoredPubKeys: string[] = [];
-      utf = PgpMsg.stripPublicKeys(utf, armoredPubKeys);
-      blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(utf))); // escaped text as html
+      plain = MsgBlockParser.stripPublicKeys(plain, armoredPubKeys);
+      blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(plain))); // escaped text as html
       await MsgBlockParser.pushArmoredPubkeysToBlocks(armoredPubKeys, blocks);
-      return { blocks, subject: undefined, isRichText };
+      return { blocks, subject: undefined, isRichText, webReplyToken };
     }
     const decoded = await Mime.decode(decryptedContent);
     if (typeof decoded.html !== 'undefined') {
+      webReplyToken = MsgBlockParser.extractFcReplyToken(decoded.html);
+      if (webReplyToken) {
+        decoded.html = MsgBlockParser.stripFcTeplyToken(decoded.html);
+      }
       blocks.push(MsgBlock.fromContent('decryptedHtml', Xss.htmlSanitizeKeepBasicTags(decoded.html, imgHandling))); // sanitized html
       isRichText = true;
     } else if (typeof decoded.text !== 'undefined') {
+      webReplyToken = MsgBlockParser.extractFcReplyToken(decoded.text);
+      if (webReplyToken) {
+        decoded.text = MsgBlockParser.stripFcTeplyToken(decoded.text);
+      }
       blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(decoded.text))); // escaped text as html
     } else {
       blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(Buf.with(decryptedContent).toUtfStr()))); // escaped mime text as html
@@ -69,7 +81,54 @@ export class MsgBlockParser {
         blocks.push(MsgBlock.fromAtt('decryptedAtt', '', { name: att.name, data: att.getData(), length: att.length, type: att.type }));
       }
     }
-    return { blocks, subject: decoded.subject, isRichText };
+    return { blocks, subject: decoded.subject, isRichText, webReplyToken };
+  }
+
+  public static extractFcAtts = (decryptedContent: string, blocks: MsgBlock[]) => {
+    // these tags were created by FlowCrypt exclusively, so the structure is rigid (not arbitrary html)
+    // `<a href="${att.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`
+    // thus we use RegEx so that it works on both browser and node
+    if (decryptedContent.includes('class="cryptup_file"')) {
+      decryptedContent = decryptedContent.replace(/<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm, (_, url, fcData) => {
+        const a = Str.htmlAttrDecode(String(fcData));
+        if (MsgBlockParser.isFcAttLinkData(a)) {
+          blocks.push(MsgBlock.fromAtt('encryptedAttLink', '', { type: a.type, name: a.name, length: a.size, url: String(url) }));
+        }
+        return '';
+      });
+    }
+    return decryptedContent;
+  }
+
+  public static stripPublicKeys = (decryptedContent: string, foundPublicKeys: string[]) => {
+    let { blocks, normalized } = MsgBlockParser.detectBlocks(decryptedContent); // tslint:disable-line:prefer-const
+    for (const block of blocks) {
+      if (block.type === 'publicKey') {
+        const armored = block.content.toString();
+        foundPublicKeys.push(armored);
+        normalized = normalized.replace(armored, '');
+      }
+    }
+    return normalized;
+  }
+
+  public static extractFcReplyToken = (decryptedContent: string): undefined | any => {
+    const fcTokenElement = $(`<div>${decryptedContent}</div>`).find('.cryptup_reply');
+    if (fcTokenElement.length) {
+      const fcData = fcTokenElement.attr('cryptup-data');
+      if (fcData) {
+        return Str.htmlAttrDecode(fcData);
+      }
+    }
+  }
+
+  public static stripFcTeplyToken = (decryptedContent: string) => {
+    return decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
+  }
+
+  private static isFcAttLinkData = (o: any): o is FcAttLinkData => {
+    return o && typeof o === 'object' && typeof (o as FcAttLinkData).name !== 'undefined'
+      && typeof (o as FcAttLinkData).size !== 'undefined' && typeof (o as FcAttLinkData).type !== 'undefined';
   }
 
   private static detectBlockNext = (origText: string, startAt: number) => {
@@ -134,7 +193,7 @@ export class MsgBlockParser {
 
   private static pushArmoredPubkeysToBlocks = async (armoredPubkeys: string[], blocks: MsgBlock[]): Promise<void> => {
     for (const armoredPubkey of armoredPubkeys) {
-      const { keys } = await PgpKey.parse(armoredPubkey);
+      const { keys } = await PgpKey.parseDetails(armoredPubkey);
       for (const keyDetails of keys) {
         blocks.push(MsgBlock.fromKeyDetails('publicKey', keyDetails.public, keyDetails));
       }

@@ -5,7 +5,7 @@
 import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window.js';
 import { ChunkedCb, ProgressCb, ProviderContactsResults } from '../../api.js';
 import { Dict, Str, Value } from '../../../core/common.js';
-import { EmailProviderApi, EmailProviderInterface } from '../email-provider-api.js';
+import { EmailProviderApi, EmailProviderInterface, Backups } from '../email-provider-api.js';
 import { GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
 import { GmailParser, GmailRes } from './gmail-parser.js';
 
@@ -214,7 +214,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     }
     let lastProgressPercent = -1;
     const loadedAr: Array<number> = [];
-    // 1.33 is a coefficient we need to multiply because total size we need to download is larger than all files together
+    // 1.33 is approximate ratio of downloaded data to what we expected, likely due to encoding
     const total = atts.map(x => x.length).reduce((a, b) => a + b) * 1.33;
     const responses = await Promise.all(atts.map((a, index) => this.attGet(a.msgId!, a.id!, (_, loaded, s) => {
       if (progressCb) {
@@ -266,19 +266,23 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   /**
    * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
    */
-  public extractArmoredBlock = async (msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<{ armored: string, subject?: string }> => {
-    const gmailMsg = await this.msgGet(msgId, format);
+  public extractArmoredBlock = async (msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<{ armored: string, subject?: string, isPwdMsg: boolean }> => {
+    // only track progress in this call if we are getting RAW mime, because these tend to be big, while 'full' and 'metadata' are tiny
+    // since we often do full + get attachments below, the user would see 100% after the first short request,
+    //   and then again 0% when attachments start downloading, which would be confusing
+    const gmailMsg = await this.msgGet(msgId, format, format === 'raw' ? progressCb : undefined);
+    const isPwdMsg = /https:\/\/flowcrypt\.com\/[a-zA-Z0-9]{10}$/.test(gmailMsg.snippet || '');
     const subject = gmailMsg.payload ? GmailParser.findHeader(gmailMsg.payload, 'subject') : undefined;
     if (format === 'full') {
       const bodies = GmailParser.findBodies(gmailMsg);
       const atts = GmailParser.findAtts(gmailMsg);
       const fromTextBody = PgpArmor.clip(Buf.fromBase64UrlStr(bodies['text/plain'] || '').toUtfStr());
       if (fromTextBody) {
-        return { armored: fromTextBody, subject };
+        return { armored: fromTextBody, subject, isPwdMsg };
       }
       const fromHtmlBody = PgpArmor.clip(Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html'] || '').toUtfStr(), '\n'));
       if (fromHtmlBody) {
-        return { armored: fromHtmlBody, subject };
+        return { armored: fromHtmlBody, subject, isPwdMsg };
       }
       if (atts.length) {
         for (const att of atts) {
@@ -288,7 +292,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
             if (!armoredMsg) {
               throw new FormatError('Problem extracting armored message', att.getData().toUtfStr());
             }
-            return { armored: armoredMsg, subject };
+            return { armored: armoredMsg, subject, isPwdMsg };
           }
         }
         throw new FormatError('Armored message not found', JSON.stringify(gmailMsg.payload, undefined, 2));
@@ -301,7 +305,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       if (decoded.text !== undefined) {
         const armoredMsg = PgpArmor.clip(decoded.text); // todo - the message might be in attachments
         if (armoredMsg) {
-          return { armored: armoredMsg, subject };
+          return { armored: armoredMsg, subject, isPwdMsg };
         } else {
           throw new FormatError('Could not find armored message in parsed raw mime', mimeMsg.toUtfStr());
         }
@@ -320,20 +324,33 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return await this.extractHeadersFromMsgs(messages || [], headerNames, msgLimit);
   }
 
-  public fetchKeyBackups = async () => {
+  public fetchKeyBackups = async (): Promise<Backups> => {
     const res = await this.msgList(gmailBackupSearchQuery(this.acctEmail), true);
-    if (!res.messages) {
-      return [];
-    }
-    const msgIds = res.messages.map(m => m.id);
+    const msgIds = (res.messages || []).map(m => m.id);
     const msgs = await this.msgsGet(msgIds, 'full');
     const atts: Att[] = [];
     for (const msg of msgs) {
       atts.push(...GmailParser.findAtts(msg));
     }
     await this.fetchAtts(atts);
-    const { keys } = await PgpKey.readMany(Buf.fromUtfStr(atts.map(a => a.getData().toUtfStr()).join('\n')));
-    return keys;
+    const { keys: foundBackupKeys } = await PgpKey.readMany(Buf.fromUtfStr(atts.map(a => a.getData().toUtfStr()).join('\n')));
+    const backups = await Promise.all(foundBackupKeys.map(k => Store.keyInfoObj(k)));
+    const imported = await Store.keysGet(this.acctEmail);
+    const importedLongids = imported.map(ki => ki.longid);
+    const backedUpLongids = backups.map(ki => ki.longid);
+    const keyinfos = {
+      backups,
+      backupsImported: backups.filter(backupKi => importedLongids.includes(backupKi.longid)),
+      backupsNotImported: backups.filter(backupKi => !importedLongids.includes(backupKi.longid)),
+      importedNotBackedUp: imported.filter(importedKi => !backedUpLongids.includes(importedKi.longid)),
+    };
+    const longids = {
+      backups: Value.arr.unique(keyinfos.backups.map(ki => ki.longid)),
+      backupsImported: Value.arr.unique(keyinfos.backupsImported.map(ki => ki.longid)),
+      backupsNotImported: Value.arr.unique(keyinfos.backupsNotImported.map(ki => ki.longid)),
+      importedNotBackedUp: Value.arr.unique(keyinfos.importedNotBackedUp.map(ki => ki.longid)),
+    };
+    return { keyinfos, longids };
   }
 
   private apiGmailBuildFilteredQuery = (query: string, allRawEmails: string[]) => {

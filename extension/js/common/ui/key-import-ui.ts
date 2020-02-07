@@ -13,8 +13,7 @@ import { PgpPwd } from '../core/pgp-password.js';
 import { Settings } from '../settings.js';
 import { Store } from '../platform/store.js';
 import { Ui } from '../browser/ui.js';
-import { Url } from '../core/common.js';
-import { mnemonic } from '../core/mnemonic.js';
+import { Url, Str } from '../core/common.js';
 import { openpgp } from '../core/pgp.js';
 
 type KeyImportUiCheckResult = {
@@ -239,7 +238,7 @@ export class KeyImportUi {
 
   private rejectIfDifferentFromSelectedLongid = (longid: string) => {
     if (this.expectedLongid && longid !== this.expectedLongid) {
-      throw new UserAlert(`Key does not match. Looking for key with KeyWords ${mnemonic(this.expectedLongid)} (${this.expectedLongid})`);
+      throw new UserAlert(`Key does not match. Looking for key with Longid ${Str.spaced(this.expectedLongid)}`);
     }
   }
 
@@ -295,7 +294,7 @@ export class KeyImportUi {
   }
 
   private checkEncryptionPubIfSelected = async (normalized: string) => {
-    if (this.checkEncryption && !await PgpKey.usable(normalized)) {
+    if (this.checkEncryption && !await PgpKey.usableForEncryption(normalized)) {
       throw new UserAlert('This public key looks correctly formatted, but cannot be used for encryption. Please write at human@flowcrypt.com. We\'ll see if there is a way to fix it.');
     }
   }

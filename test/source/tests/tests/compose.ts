@@ -33,9 +33,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const initialComposeFrameHeight = await inboxPage.getOuterHeight('iframe');
       await composeFrame.waitAll('#section_header');
       const composeFrameHeaderHeight = await composeFrame.getOuterHeight('#section_header');
+      await Util.sleep(4); // todo - should be fixed, caused by `$('body').attr('data-test-state', 'ready');` baing called in two differing situations
       // mimimize compose frame
       await composeFrame.waitAndClick('@header-title');
-      expect(await inboxPage.getOuterHeight('iframe')).to.eq(composeFrameHeaderHeight);
+      expect(await inboxPage.getOuterHeight('iframe')).to.eq(composeFrameHeaderHeight, 'compose box height failed to collapse');
       // restore compose frame
       await composeFrame.waitAndClick('@header-title');
       expect(await inboxPage.getOuterHeight('iframe')).to.eq(initialComposeFrameHeight);
@@ -141,6 +142,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await inboxPage.waitTillGone('@dialog-add-pubkey');
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
       await inboxPage.waitTillGone('@container-new-message');
+    }));
+
+    ava.default('compose - keyboard - Ctrl+Enter sends message', testWithBrowser('compose', async (t, browser) => {
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('test.ci.compose@org.flowcrypt.com'));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await composeFrame.target.evaluateHandle(() => document.body.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', ctrlKey: true })));
+      await composeFrame.waitAndRespondToModal('error', 'confirm', 'Please add a recipient first');
     }));
 
     ava.default('compose - reply - old gmail threadId fmt', testWithBrowser('compatibility', async (t, browser) => {
@@ -451,18 +459,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const msg = new GoogleData('flowcrypt.compatibility@gmail.com').getMessageBySubject(subject)!;
       const webDecryptUrl = msg.payload.body!.data!.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]+/g)![0];
       const webDecryptPage = await browser.newPage(t, webDecryptUrl);
-      await webDecryptPage.waitAndType('.decrypt_answer', msgPwd);
-      await webDecryptPage.waitAndClick('.action_decrypt');
-      await webDecryptPage.waitAll('.pgp_block');
-      await Util.sleep(0.5); // todo - would be better to find a way to wait until ready
-      expect(await webDecryptPage.read('.pgp_block')).to.include(subject);
-      expect(await webDecryptPage.read('.pgp_block')).to.include('flowcrypt.compatibility test footer with an img'); // test if footer is present
-      expect(await webDecryptPage.read('.attachment')).to.include('small.txt.pgp');
-      const [attElem] = await webDecryptPage.page.$x('.//@data-test-donwload-url');
-      const attUrl = await PageRecipe.getElementPropertyJson(attElem, 'value');
-      const res = await request.get({ url: attUrl, encoding: null }); // tslint:disable-line:no-null-keyword
-      const decryptedFile = await PgpMsg.decrypt({ encryptedData: res.body as Buffer, kisWithPp: [], msgPwd: await PgpHash.challengeAnswer(msgPwd) });
-      expect(decryptedFile.content!.toUtfStr()).to.equal(`small text file\nnot much here\nthis worked\n`);
+      await webDecryptPage.waitAndType('@input-msg-pwd', msgPwd);
+      await webDecryptPage.waitAndClick('@action-decrypt');
+      await webDecryptPage.waitForContent('@container-pgp-decrypted-content', subject);
+      await webDecryptPage.waitForContent('@container-pgp-decrypted-content', 'flowcrypt.compatibility test footer with an img');
+      await webDecryptPage.waitAll('@container-att-name(small.txt)');
+      const fileText = await webDecryptPage.awaitDownloadTriggeredByClicking('@container-att-name(small.txt)');
+      expect(fileText.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
     }));
 
     ava.default('compose - loading drafts - test tags in draft', testWithBrowser('compatibility', async (t, browser) => {
@@ -481,15 +484,15 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const initialWidth = Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetWidth'));
       const initialHeight = Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'));
       await composeFrame.waitAndClick('.popout', { sleepWhenDone: 1 });
-      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetWidth'))).to.be.greaterThan(initialWidth);
-      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.be.greaterThan(initialHeight);
+      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetWidth'))).to.be.greaterThan(initialWidth, 'popout width greater than initial');
+      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.be.greaterThan(initialHeight, 'popout weight greater than initial');
       await composeFrame.waitAndClick('.popout', { sleepWhenDone: 1 });
-      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetWidth'))).to.equal(initialWidth);
-      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.equal(initialHeight);
+      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetWidth'))).to.equal(initialWidth, 'width back to initial');
+      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.equal(initialHeight, 'height back to initial');
       await composeFrame.waitAndClick('.minimize_new_message', { sleepWhenDone: 1 });
-      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.be.lessThan(initialHeight);
+      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.be.lessThan(initialHeight, 'minimized lower than initial');
       await composeFrame.waitAndClick('.minimize_new_message', { sleepWhenDone: 1 });
-      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.equal(initialHeight);
+      expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.equal(initialHeight, 'back to initial after un-minimizing');
     }));
 
     ava.default('compose - saving and rendering a draft with image', testWithBrowser('compatibility', async (t, browser) => {
@@ -512,6 +515,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default('compose - sending and rendering signed message with image ', testWithBrowser('compatibility', async (t, browser) => {
       await sendImgAndVerifyPresentInSentMsg(t, browser, 'sign');
+    }));
+
+    ava.default('oversize attachment does not get errorneously added', testWithBrowser('compose', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      // big file will get canceled
+      const fileInput = await composePage.target.$('input[type=file]');
+      await fileInput!.uploadFile('test/samples/large.jpg');
+      await composePage.waitAndRespondToModal('confirm', 'cancel', 'The files are over 5 MB');
+      await Util.sleep(1);
+      await composePage.notPresent('.qq-upload-file-selector');
+      // small file will get accepted
+      await fileInput!.uploadFile('test/samples/small.png');
+      await composePage.waitForContent('.qq-upload-file-selector', 'small.png');
     }));
 
     ava.todo('compose - reply - new gmail threadId fmt');

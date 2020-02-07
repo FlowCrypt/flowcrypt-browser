@@ -4,16 +4,16 @@
 
 import { BrowserEventErrHandler, Ui } from '../../../js/common/browser/ui.js';
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
-import { NewMsgData, SendBtnTexts } from './composer-types.js';
-
+import { NewMsgData, SendBtnTexts } from './compose-types.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserExtension } from '../../../js/common/browser/browser-extension.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { ComposerComponent } from './composer-abstract-component.js';
 import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { ViewModule } from '../../../js/common/view-module.js';
+import { ComposeView } from '../compose.js';
 
 export class ComposerUserError extends Error { }
 export class ComposerNotReadyError extends ComposerUserError { }
@@ -22,15 +22,11 @@ export class ComposerResetBtnTrigger extends Error { }
 export const PUBKEY_LOOKUP_RESULT_FAIL: 'fail' = 'fail';
 export const PUBKEY_LOOKUP_RESULT_WRONG: 'wrong' = 'wrong';
 
-export class ComposerErrs extends ComposerComponent {
+export class ComposeErrModule extends ViewModule<ComposeView> {
 
   private debugId = Str.sloppyRandom();
 
-  public initActions = () => {
-    // none
-  }
-
-  public handlers = (couldNotDoWhat: string): BrowserEventErrHandler => {
+  public handle = (couldNotDoWhat: string): BrowserEventErrHandler => {
     return {
       network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
       authPopup: async () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail }),
@@ -55,7 +51,7 @@ export class ComposerErrs extends ComposerComponent {
 
   public debugFocusEvents = (...selNames: string[]) => {
     for (const selName of selNames) {
-      this.composer.S.cached(selName)
+      this.view.S.cached(selName)
         .focusin(e => this.debug(`** ${selName} receiving focus from(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`))
         .focusout(e => this.debug(`** ${selName} giving focus to(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`));
     }
@@ -97,12 +93,12 @@ export class ComposerErrs extends ComposerComponent {
       }
     }
     if (!(e instanceof ComposerNotReadyError)) {
-      this.composer.sendBtn.resetSendBtn(100);
+      this.view.sendBtnModule.resetSendBtn(100);
     }
   }
 
   public throwIfFormNotReady = (): void => {
-    if (this.composer.S.cached('triple_dot').hasClass('progress')) {
+    if (this.view.S.cached('triple_dot').hasClass('progress')) {
       throw new ComposerNotReadyError('Retrieving previous message, please wait.');
     }
     const btnReadyTexts = [
@@ -111,11 +107,11 @@ export class ComposerErrs extends ComposerComponent {
       SendBtnTexts.BTN_ENCRYPT_SIGN_AND_SEND,
       SendBtnTexts.BTN_PLAIN_SEND
     ];
-    const recipients = this.composer.recipients.getRecipients();
-    if (btnReadyTexts.includes(this.composer.S.now('send_btn_text').text().trim()) && recipients.length) {
+    const recipients = this.view.recipientsModule.getRecipients();
+    if (btnReadyTexts.includes(this.view.S.now('send_btn_text').text().trim()) && recipients.length) {
       return; // all good
     }
-    if (this.composer.S.now('send_btn_text').text().trim() === SendBtnTexts.BTN_WRONG_ENTRY) {
+    if (this.view.S.now('send_btn_text').text().trim() === SendBtnTexts.BTN_WRONG_ENTRY) {
       throw new ComposerUserError('Please re-enter recipients marked in red color.');
     }
     if (!recipients.length) {
@@ -128,9 +124,9 @@ export class ComposerErrs extends ComposerComponent {
     if (!subject && ! await Ui.modal.confirm('Send without a subject?')) {
       throw new ComposerResetBtnTrigger();
     }
-    let footer = await this.composer.footer.getFooterFromStorage(from);
+    let footer = await this.view.footerModule.getFooterFromStorage(from);
     if (footer) { // format footer the way it would be in outgoing plaintext
-      footer = Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.composer.footer.createFooterHtml(footer), '\n')).trim();
+      footer = Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.view.footerModule.createFooterHtml(footer), '\n')).trim();
     }
     if ((!plaintext.trim() || (footer && plaintext.trim() === footer.trim())) && ! await Ui.modal.confirm('Send empty message?')) {
       throw new ComposerResetBtnTrigger();
@@ -139,7 +135,7 @@ export class ComposerErrs extends ComposerComponent {
 
   public throwIfEncryptionPasswordInvalid = async (senderKi: KeyInfo, { subject, pwd }: { subject: string, pwd?: string }) => {
     if (pwd) {
-      const pp = await this.composer.storage.passphraseGet(senderKi);
+      const pp = await this.view.storageModule.passphraseGet(senderKi);
       if (pp && pwd.toLowerCase() === pp.toLowerCase()) {
         throw new ComposerUserError('Please do not use your private key pass phrase as a password for this message.\n\n' +
           'You should come up with some other unique password that you can share with recipient.');
@@ -149,14 +145,14 @@ export class ComposerErrs extends ComposerComponent {
           `Sharing password over email undermines password based encryption.\n\n` +
           `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`);
       }
-      const intro = this.composer.S.cached('input_intro').length ? this.composer.input.extract('text', 'input_intro') : '';
+      const intro = this.view.S.cached('input_intro').length ? this.view.inputModule.extract('text', 'input_intro') : '';
       if (intro.toLowerCase().includes(pwd.toLowerCase())) {
         throw new ComposerUserError('Please do not include the password in the email intro. ' +
           `Sharing password over email undermines password based encryption.\n\n` +
           `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`);
       }
     } else {
-      this.composer.S.cached('input_password').focus();
+      this.view.S.cached('input_password').focus();
       throw new ComposerUserError('Some recipients don\'t have encryption set up. Please add a password.');
     }
   }

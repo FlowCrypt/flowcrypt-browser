@@ -16,6 +16,8 @@ type AttUICallbacks = {
   uiChanged?: () => void,
 };
 
+class CancelAttSubmit extends Error { }
+
 export class AttUI {
 
   private templatePath = '/chrome/elements/shared/attach.template.htm';
@@ -40,7 +42,7 @@ export class AttUI {
           extraDropzones: $('#input_text'),
         },
         callbacks: {
-          onSubmit: (uploadFileId: string) => this.processNewAtt(uploadFileId).catch(Catch.reportErr),
+          onSubmit: (uploadFileId: string) => this.processNewAtt(uploadFileId),
           onCancel: (uploadFileId: string) => this.cancelAtt(uploadFileId),
         },
       };
@@ -77,12 +79,12 @@ export class AttUI {
     return atts;
   }
 
-  public collectEncryptAtts = async (pubkeys: string[], pwd?: string): Promise<Att[]> => {
+  public collectEncryptAtts = async (pubkeys: string[]): Promise<Att[]> => {
     const atts: Att[] = [];
     for (const uploadFileId of Object.keys(this.attachedFiles)) {
       const file = this.attachedFiles[uploadFileId];
       const data = await this.readAttDataAsUint8(uploadFileId);
-      const encrypted = await PgpMsg.encrypt({ pubkeys, data, pwd, filename: file.name, armor: false }) as OpenPGP.EncryptBinaryResult;
+      const encrypted = await PgpMsg.encrypt({ pubkeys, data, filename: file.name, armor: false }) as OpenPGP.EncryptBinaryResult;
       atts.push(new Att({ name: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', type: file.type, data: encrypted.message.packets.write() }));
     }
     return atts;
@@ -108,17 +110,19 @@ export class AttUI {
   private processNewAtt = async (uploadFileId: string) => {
     const limits = await this.getLimits();
     if (limits.count && Object.keys(this.attachedFiles).length >= limits.count) {
-      await Ui.modal.warning(`Amount of attached files is limited to ${limits.count}`);
-      return;
+      const msg = `Amount of attached files is limited to ${limits.count}`;
+      await Ui.modal.warning(msg);
+      throw new CancelAttSubmit(msg);
     }
     const newFile: File = this.uploader.getFile(uploadFileId); // tslint:disable-line:no-unsafe-any
     if (limits.size && this.getFileSizeSum() + newFile.size > limits.size) {
+      const msg = `Combined file size is limited to ${limits.sizeMb} MB`;
       if (typeof limits.oversize === 'function') {
         await limits.oversize(this.getFileSizeSum() + newFile.size);
       } else {
-        await Ui.modal.warning(`Combined file size is limited to ${limits.sizeMb} MB`);
+        await Ui.modal.warning(msg);
       }
-      return;
+      throw new CancelAttSubmit(msg);
     }
     this.attachedFiles[uploadFileId] = newFile;
     if (typeof this.callbacks.attAdded === 'function') {

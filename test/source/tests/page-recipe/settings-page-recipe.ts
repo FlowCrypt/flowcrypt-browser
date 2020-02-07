@@ -5,6 +5,7 @@ import { ControllableFrame, ControllablePage } from '../../browser';
 
 import { PageRecipe } from './abstract-page-recipe';
 import { expect } from 'chai';
+import { Str } from '../../core/common';
 
 export class SettingsPageRecipe extends PageRecipe {
 
@@ -74,8 +75,11 @@ export class SettingsPageRecipe extends PageRecipe {
       trigger === 'button' ? '@action-open-pubkey-page' : `@action-show-key-${linkIndex}`, ['my_key.htm', 'placement=settings']);
     await Util.sleep(1);
     const k = Config.key(expectedKeyName);
-    await myKeyFrame.waitAll('@content-key-words');
-    expect(await myKeyFrame.read('@content-key-words')).to.equal(k.keywords);
+    await myKeyFrame.waitAll('@content-longid');
+    if (!k.longid) {
+      throw new Error(`Missing key longid for tests: ${expectedKeyName}`);
+    }
+    expect(await myKeyFrame.read('@content-longid')).to.equal(Str.spaced(k.longid));
     await SettingsPageRecipe.closeDialog(settingsPage);
     await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
   }

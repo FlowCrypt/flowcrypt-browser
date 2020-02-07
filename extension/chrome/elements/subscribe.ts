@@ -63,7 +63,6 @@ View.run(class SubscribeView extends View {
   public setHandlers = () => {
     $('.action_close').click(this.setHandler(() => this.closeDialog()));
     $('.action_show_stripe').click(this.setHandler(() => this.showStripeHandler()));
-    $('.action_contact_page').click(this.setHandler(() => BrowserMsg.send.bg.settings({ page: '/chrome/settings/modules/contact_page.htm', acctEmail: this.acctEmail })));
     $('.action_get_trial').click(this.setHandlerPrevent('parallel', async (target, done) => {
       await this.subscribeAndHandleResult(this.PRODUCTS.trial, undefined);
       done();

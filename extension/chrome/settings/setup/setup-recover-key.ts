@@ -31,15 +31,14 @@ export class SetupRecoverKeyModule {
       }
       let matchedPreviouslyRecoveredKey = false;
       for (const fetchedKey of this.view.fetchedKeyBackups) {
-        const longid = await PgpKey.longid(fetchedKey);
-        if (longid && await PgpKey.decrypt(await PgpKey.read(fetchedKey.armor()), passphrase) === true) { // attempt to decrypt a copy of the key
+        if (await PgpKey.decrypt(await PgpKey.read(fetchedKey.private), passphrase) === true) {
           if (!this.view.mathingPassphrases.includes(passphrase)) {
             this.view.mathingPassphrases.push(passphrase);
           }
-          if (!this.view.importedKeysUniqueLongids.includes(longid)) {
-            const prv = await PgpKey.read(fetchedKey.armor());
+          if (!this.view.importedKeysUniqueLongids.includes(fetchedKey.longid)) {
+            const prv = await PgpKey.read(fetchedKey.private);
             newlyMatchingKeys.push(prv);
-            this.view.importedKeysUniqueLongids.push(longid);
+            this.view.importedKeysUniqueLongids.push(fetchedKey.longid);
           } else {
             matchedPreviouslyRecoveredKey = true;
           }
@@ -62,9 +61,7 @@ export class SetupRecoverKeyModule {
         submit_all: false,
         passphrase,
         passphrase_save: true, // todo - reevaluate saving passphrase when recovering
-        key_backup_prompt: false,
         recovered: true,
-        setup_simple: true,
         is_newly_created_key: false,
       };
       await this.view.saveKeys(newlyMatchingKeys, options);
@@ -113,8 +110,9 @@ export class SetupRecoverKeyModule {
     Xss.sanitizeRender($('h1').parent(), '<h1>Recover key from backup</h1>');
     $('.action_recover_account').text('load key from backup');
     try {
-      this.view.fetchedKeyBackups = await this.view.gmail.fetchKeyBackups();
-      this.view.fetchedKeyBackupsUniqueLongids = await this.view.getUniqueLongids(this.view.fetchedKeyBackups);
+      const backups = await this.view.gmail.fetchKeyBackups();
+      this.view.fetchedKeyBackups = backups.keyinfos.backups;
+      this.view.fetchedKeyBackupsUniqueLongids = backups.longids.backups;
     } catch (e) {
       window.location.href = Url.create('modules/add_key.htm', { acctEmail: this.view.acctEmail, parentTabId: this.view.parentTabId });
       return;

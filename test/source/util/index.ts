@@ -25,8 +25,19 @@ export const getParsedCliParams = () => {
   return { testVariant, testGroup, oneIfNotPooled, buildDir, isMock: testVariant.includes('-MOCK') };
 };
 
+export type TestMessage = {
+  name?: string,
+  content: string[],
+  unexpectedContent?: string[],
+  password?: string,
+  params: string,
+  quoted?: boolean,
+  expectPercentageProgress?: boolean,
+  signature?: string[],
+};
+
 interface TestConfigInterface {
-  messages: { name: string, content: string[], unexpectedContent?: string[], password?: string, params: string, quoted?: boolean }[];
+  messages: TestMessage[];
 }
 
 interface TestSecretsInterface {
@@ -35,7 +46,7 @@ interface TestSecretsInterface {
   data_encryption_password: string;
   proxy?: { enabled: boolean, server: string, auth: { username: string, password: string } };
   auth: { google: { email: string, password: string, backup: string, secret_2fa: string | undefined }[], };
-  keys: { title: string, passphrase: string, armored: string | null, keywords: string | null }[];
+  keys: { title: string, passphrase: string, armored: string | null, longid: string | null }[];
   keyInfo: Array<{ email: string, key: KeyInfo[] }>;
 }
 
