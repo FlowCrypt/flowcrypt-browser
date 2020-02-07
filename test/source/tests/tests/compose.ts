@@ -517,6 +517,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await sendImgAndVerifyPresentInSentMsg(t, browser, 'sign');
     }));
 
+    ava.default('oversize attachment does not get errorneously added', testWithBrowser('compose', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      // big file will get canceled
+      const fileInput = await composePage.target.$('input[type=file]');
+      await fileInput!.uploadFile('test/samples/large.jpg');
+      await composePage.waitAndRespondToModal('confirm', 'cancel', 'The files are over 5 MB');
+      await Util.sleep(1);
+      await composePage.notPresent('.qq-upload-file-selector');
+      // small file will get accepted
+      await fileInput!.uploadFile('test/samples/small.png');
+      await composePage.waitForContent('.qq-upload-file-selector', 'small.png');
+    }));
+
     ava.todo('compose - reply - new gmail threadId fmt');
 
     ava.todo('compose - reply - skip click prompt');
