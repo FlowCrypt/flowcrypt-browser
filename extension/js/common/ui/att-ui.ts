@@ -16,6 +16,8 @@ type AttUICallbacks = {
   uiChanged?: () => void,
 };
 
+class CancelAttSubmit extends Error { }
+
 export class AttUI {
 
   private templatePath = '/chrome/elements/shared/attach.template.htm';
@@ -40,7 +42,7 @@ export class AttUI {
           extraDropzones: $('#input_text'),
         },
         callbacks: {
-          onSubmit: (uploadFileId: string) => this.processNewAtt(uploadFileId).catch(Catch.reportErr),
+          onSubmit: (uploadFileId: string) => this.processNewAtt(uploadFileId),
           onCancel: (uploadFileId: string) => this.cancelAtt(uploadFileId),
         },
       };
@@ -108,17 +110,19 @@ export class AttUI {
   private processNewAtt = async (uploadFileId: string) => {
     const limits = await this.getLimits();
     if (limits.count && Object.keys(this.attachedFiles).length >= limits.count) {
-      await Ui.modal.warning(`Amount of attached files is limited to ${limits.count}`);
-      return;
+      const msg = `Amount of attached files is limited to ${limits.count}`;
+      await Ui.modal.warning(msg);
+      throw new CancelAttSubmit(msg);
     }
     const newFile: File = this.uploader.getFile(uploadFileId); // tslint:disable-line:no-unsafe-any
     if (limits.size && this.getFileSizeSum() + newFile.size > limits.size) {
+      const msg = `Combined file size is limited to ${limits.sizeMb} MB`;
       if (typeof limits.oversize === 'function') {
         await limits.oversize(this.getFileSizeSum() + newFile.size);
       } else {
-        await Ui.modal.warning(`Combined file size is limited to ${limits.sizeMb} MB`);
+        await Ui.modal.warning(msg);
       }
-      return;
+      throw new CancelAttSubmit(msg);
     }
     this.attachedFiles[uploadFileId] = newFile;
     if (typeof this.callbacks.attAdded === 'function') {
