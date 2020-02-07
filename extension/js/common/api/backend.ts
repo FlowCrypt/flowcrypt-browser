@@ -6,18 +6,15 @@
 'use strict';
 
 import { Api, ProgressCb, ProgressCbs, ReqFmt } from './api.js';
-import { Dict, Value } from '../core/common.js';
+import { Dict } from '../core/common.js';
 import { Att } from '../core/att.js';
 import { BACKEND_API_HOST } from '../core/const.js';
 import { BackendAuthErr } from './error/api-error-types.js';
 import { Catch } from '../platform/catch.js';
 import { DomainRules } from '../rules.js';
 import { Store } from '../platform/store.js';
-import { Ui } from '../browser/ui.js';
 
 type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
-type FcAuthToken = { account: string, token: string };
-type FcMsgTokenAuth = { message_token_account: string, token: string };
 
 export type SubscriptionLevel = 'pro' | null;
 export type FcUuidAuth = { account: string, uuid: string | undefined };
@@ -34,8 +31,6 @@ export namespace BackendRes {
   export type FcAccountSubscribe = { subscription: SubscriptionInfo };
   export type FcAccountCheck = { email: string | null, subscription: SubscriptionInfo | null };
   export type FcBlogPost = { title: string, date: string, url: string };
-  export type FcMsgPresignFiles = { approvals: { base_url: string, fields: { key: string } }[] };
-  export type FcMsgConfirmFiles = { confirmed: string[], admin_codes: string[] };
   export type FcMsgToken = { token: string };
   export type FcMsgUpload = { short: string, admin_code: string };
   export type FcLinkMsg = { expire: string, deleted: boolean, url: string, expired: boolean };
@@ -43,7 +38,6 @@ export namespace BackendRes {
     alias: string | null, name: string | null, photo: string | null, intro: string | null, web: string | null,
     phone: string | null, token: string | null, subscription_level: string | null, subscription_method: string | null, email: string | null
   };
-  export type FcLinkMe = { profile: null | FcLinkMe$profile };
   export type ApirFcMsgExpiration = { updated: boolean };
 }
 
@@ -137,23 +131,6 @@ export class Backend extends Api {
     return response;
   }
 
-  public static messagePresignFiles = async (fcAuth: FcUuidAuth | FcMsgTokenAuth | undefined, atts: Att[]): Promise<BackendRes.FcMsgPresignFiles> => {
-    const response = await Backend.request<BackendRes.FcMsgPresignFiles>('message/presign_files', {
-      lengths: atts.map(a => a.length),
-      ...(fcAuth || {})
-    });
-    if (response.approvals && response.approvals.length === atts.length) {
-      return response;
-    }
-    throw new Error('Could not verify that all files were uploaded properly, please try again.');
-  }
-
-  public static messageConfirmFiles = async (identifiers: string[]): Promise<BackendRes.FcMsgConfirmFiles> => {
-    return await Backend.request<BackendRes.FcMsgConfirmFiles>('message/confirm_files', {
-      identifiers,
-    });
-  }
-
   public static messageUpload = async (fcAuth: FcUuidAuth | undefined, encryptedDataBinary: Uint8Array, progressCb: ProgressCb): Promise<BackendRes.FcMsgUpload> => {
     const content = new Att({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encryptedDataBinary });
     return await Backend.request<BackendRes.FcMsgUpload>('message/upload', { content, ...(fcAuth || {}) }, 'FORM', undefined, { upload: progressCb });
@@ -173,59 +150,14 @@ export class Backend extends Api {
     });
   }
 
-  public static messageReply = async (short: string, token: string, from: string, to: string, subject: string, message: string): Promise<unknown> => {
-    return await Backend.request('message/reply', {
-      short,
-      token,
-      from,
-      to,
-      subject,
-      message,
-    });
-  }
-
-  public static messageContact = async (sender: string, message: string, messageToken: FcAuthToken): Promise<unknown> => {
-    return await Backend.request('message/contact', {
-      message_token_account: messageToken.account,
-      message_token: messageToken.token,
-      sender,
-      message,
-    });
-  }
-
   public static linkMessage = async (short: string): Promise<BackendRes.FcLinkMsg> => {
     return await Backend.request<BackendRes.FcLinkMsg>('link/message', {
       short,
     });
   }
 
-  public static linkMe = async (alias: string): Promise<BackendRes.FcLinkMe> => {
-    return await Backend.request<BackendRes.FcLinkMe>('link/me', {
-      alias,
-    });
-  }
-
   public static retrieveBlogPosts = async (): Promise<BackendRes.FcBlogPost[]> => {
     return await Api.ajax({ url: 'https://flowcrypt.com/feed', dataType: 'json' }, Catch.stackTrace()) as BackendRes.FcBlogPost[]; // tslint:disable-line:no-direct-ajax
-  }
-
-  public static s3Upload = async (items: AwsS3UploadItem[], progressCb: ProgressCb) => {
-    const progress = Value.arr.zeroes(items.length);
-    if (!items.length) {
-      return [];
-    }
-    const promises: Promise<void>[] = [];
-    for (const i of items.keys()) {
-      const fields = items[i].fields;
-      fields.file = new Att({ name: 'encrypted_attachment', type: 'application/octet-stream', data: items[i].att.getData() });
-      promises.push(Api.apiCall(items[i].baseUrl, '', fields, 'FORM', {
-        upload: (singleFileProgress: number) => {
-          progress[i] = singleFileProgress;
-          Ui.event.prevent('spree', () => progressCb(Value.arr.average(progress), 0, 0))();
-        }
-      }));
-    }
-    return await Promise.all(promises);
   }
 
   private static request = async <RT>(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}, progressCbs?: ProgressCbs): Promise<RT> => {
