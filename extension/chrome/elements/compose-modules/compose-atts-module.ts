@@ -4,7 +4,6 @@
 
 import { AttLimits, AttUI } from '../../../js/common/ui/att-ui.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { PgpHash } from '../../../js/common/core/pgp-hash.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -32,7 +31,7 @@ export class ComposeAttsModule extends ViewModule<ComposeView> {
 
   private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
     const subscription = await Store.subscription(this.view.acctEmail);
-    if (!Rules.isPublicEmailProviderDomain(this.view.senderModule.getSender()) && !subscription.active) {
+    if (!subscription.active && !Rules.isPublicEmailProviderDomain(this.view.senderModule.getSender())) {
       return {
         sizeMb: 5,
         size: 5 * 1024 * 1024,
@@ -61,8 +60,7 @@ export class ComposeAttsModule extends ViewModule<ComposeView> {
         },
       };
     } else {
-      const allowHugeAtts = ['94658c9c332a11f20b1e45c092e6e98a1e34c953', 'b092dcecf277c9b3502e20c93b9386ec7759443a', '9fbbe6720a6e6c8fc30243dc8ff0a06cbfa4630e'];
-      const sizeMb = (subscription.method !== 'trial' && allowHugeAtts.includes(await PgpHash.sha1UtfStr(this.view.acctEmail))) ? 200 : 25;
+      const sizeMb = 25;
       return {
         sizeMb,
         size: sizeMb * 1024 * 1024,
