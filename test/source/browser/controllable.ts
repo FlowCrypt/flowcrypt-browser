@@ -3,10 +3,12 @@
 import { AvaContext, newTimeoutPromise } from '../tests';
 import { ConsoleMessage, Dialog, ElementHandle, Frame, Page } from 'puppeteer';
 import { TIMEOUT_DESTROY_UNEXPECTED_ALERT, TIMEOUT_ELEMENT_APPEAR, TIMEOUT_ELEMENT_GONE, TIMEOUT_PAGE_LOAD, TIMEOUT_TEST_STATE_SATISFY } from '.';
-
 import { TestUrls } from './test-urls';
 import { Util } from '../util';
 import { expect } from 'chai';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as mkdirp from 'mkdirp';
 
 declare const jQuery: any;
 
@@ -381,6 +383,29 @@ abstract class ControllableBase {
     }
     return matchingLinks;
   }
+
+  public awaitDownloadTriggeredByClicking = async (selector: string): Promise<Buffer> => {
+    const resolvePromise: Promise<Buffer> = (async () => {
+      const downloadPath = path.resolve(__dirname, 'download', Util.lousyRandom());
+      mkdirp.sync(downloadPath);
+      await (this.target as any)._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
+      await this.waitAndClick(selector);
+      let filename = await this.waitForFileToDownload(downloadPath);
+      return fs.readFileSync(path.resolve(downloadPath, filename));
+    })();
+    const timeoutPromise = newTimeoutPromise(`awaitDownloadTriggeredByClicking timeout for ${selector}`, 20);
+    return await Promise.race([resolvePromise, timeoutPromise]);
+  }
+
+  private waitForFileToDownload = async (downloadPath: string) => {
+    let filename;
+    while (!filename || filename.endsWith('.crdownload')) {
+      filename = fs.readdirSync(downloadPath)[0];
+      await Util.sleep(1);
+    }
+    return filename;
+  }
+
 
 }
 
