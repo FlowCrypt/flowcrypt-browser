@@ -103,7 +103,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         const primaryKi = await this.view.storageModule.getKey(msgData.from);
         const pubkeys = [{ isMine: true, email: msgData.from, pubkey: primaryKi.public }];
         msgData.pwd = undefined; // not needed for drafts
-        const sendable = await new EncryptedMsgMailFormatter(this.view, pubkeys, true).sendableMsg(msgData);
+        const sendable = await new EncryptedMsgMailFormatter(this.view, true).sendableMsg(msgData, pubkeys);
         this.view.S.cached('send_btn_note').text('Saving');
         if (this.view.threadId) { // reply draft
           sendable.body['text/plain'] = `[cryptup:link:draft_reply:${this.view.threadId}]\n\n${sendable.body['text/plain'] || ''}`;

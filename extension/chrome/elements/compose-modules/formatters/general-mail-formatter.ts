@@ -28,7 +28,7 @@ export class GeneralMailFormatter {
       await view.errModule.throwIfEncryptionPasswordInvalid(senderKi, newMsgData);
     }
     view.S.now('send_btn_text').text('Encrypting...');
-    return await new EncryptedMsgMailFormatter(view, armoredPubkeys).sendableMsg(newMsgData, signingPrv);
+    return await new EncryptedMsgMailFormatter(view).sendableMsg(newMsgData, armoredPubkeys, signingPrv);
   }
 
 }

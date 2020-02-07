@@ -3,12 +3,7 @@
 'use strict';
 
 import { NewMsgData } from '../compose-types.js';
-import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg';
 import { ComposeView } from '../../compose.js';
-
-export interface MailFormatterInterface {
-  sendableMsg(newMsgData: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg>;
-}
 
 export class BaseMailFormatter {
 
@@ -16,7 +11,7 @@ export class BaseMailFormatter {
   protected richtext: boolean;
   protected acctEmail: string;
 
-  constructor(view: ComposeView) {
+  constructor(view: ComposeView, protected isDraft = false) {
     this.view = view;
     this.richtext = view.sendBtnModule.popover.choices.richtext;
     this.acctEmail = this.view.acctEmail;
