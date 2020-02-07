@@ -5,13 +5,11 @@
 
 'use strict';
 
-import { Api, ProgressCb, ReqFmt } from './api.js';
+import { Api, ProgressCb, ProgressCbs, ReqFmt } from './api.js';
 import { Dict, Value } from '../core/common.js';
-
 import { Att } from '../core/att.js';
 import { BACKEND_API_HOST } from '../core/const.js';
 import { BackendAuthErr } from './error/api-error-types.js';
-import { Buf } from '../core/buf.js';
 import { Catch } from '../platform/catch.js';
 import { DomainRules } from '../rules.js';
 import { Store } from '../platform/store.js';
@@ -156,12 +154,9 @@ export class Backend extends Api {
     });
   }
 
-  /**
-   * todo - DEPRECATE THIS. Send as JSON to message/store
-   */
-  public static messageUpload = async (fcAuth: FcUuidAuth | undefined, encryptedDataArmored: string): Promise<BackendRes.FcMsgUpload> => {
-    const content = new Att({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: Buf.fromUtfStr(encryptedDataArmored) });
-    return await Backend.request<BackendRes.FcMsgUpload>('message/upload', { content, ...(fcAuth || {}) }, 'FORM');
+  public static messageUpload = async (fcAuth: FcUuidAuth | undefined, encryptedDataBinary: Uint8Array, progressCb: ProgressCb): Promise<BackendRes.FcMsgUpload> => {
+    const content = new Att({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encryptedDataBinary });
+    return await Backend.request<BackendRes.FcMsgUpload>('message/upload', { content, ...(fcAuth || {}) }, 'FORM', undefined, { upload: progressCb });
   }
 
   public static messageToken = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcMsgToken> => {
@@ -233,8 +228,8 @@ export class Backend extends Api {
     return await Promise.all(promises);
   }
 
-  private static request = async <RT>(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}): Promise<RT> => {
-    return await Backend.apiCall(Backend.url('api'), path, vals, fmt, undefined, { 'api-version': '3', ...addHeaders });
+  private static request = async <RT>(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}, progressCbs?: ProgressCbs): Promise<RT> => {
+    return await Backend.apiCall(Backend.url('api'), path, vals, fmt, progressCbs, { 'api-version': '3', ...addHeaders });
   }
 
   private static throwIfMissingUuid = (fcAuth: FcUuidAuth) => {

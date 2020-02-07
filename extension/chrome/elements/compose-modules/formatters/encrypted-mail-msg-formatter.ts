@@ -36,51 +36,53 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
   public sendableMsg = async (newMsg: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> => {
     await Store.dbContactUpdate(undefined, Array.prototype.concat.apply([], Object.values(newMsg.recipients)), { last_use: Date.now() });
     const pubkeys = this.armoredPubkeys.map(p => p.pubkey);
-    if (!this.richtext && !newMsg.pwd) { // simple text: PGP/Inline with attachments in separate files
-      const atts = await this.view.attsModule.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey), newMsg.pwd);
-      const encrypted = await this.encryptData(Buf.fromUtfStr(newMsg.plaintext), newMsg.pwd, pubkeys, signingPrv);
-      const encryptedBody = { 'text/plain': encrypted.data };
-      return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: encryptedBody, atts, isDraft: this.isDraft });
+    if (newMsg.pwd) { // password-protected message, temporarily uploaded (encrypted) to FlowCrypt servers, to be served to recipient through web
+      // encoded as:
+      //   upload: PGP/MIME + included attachments (encrypted for password only)
+      //   gmail: PGP/MIME-like structure but with attachments as external files due to email size limit (encrypted for pubkeys only)
+      const authInfo = await Store.authInfo(this.acctEmail);
+      const msgBodyWithReplyToken = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(authInfo, newMsg);
+      const pgpMimeWithAtts = await Mime.encode(msgBodyWithReplyToken, { Subject: newMsg.subject }, await this.view.attsModule.attach.collectAtts());
+      const pwdEncryptedWithAtts = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAtts), newMsg.pwd, [], signingPrv); // encrypted only for pwd
+      const short = await this.uploadPwdEncryptedMsgToFc(authInfo, pwdEncryptedWithAtts);
+      // below preparing email itself
+      const emailIntroAndLinkBody = await this.formatPwdEncryptedMsgBodyLink(short);
+      const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
+      const pgpMimeNoAtts = await Mime.encode(msgBody, { Subject: newMsg.subject }, []); // no atts, attached to email separately
+      const pubEncryptedNoAtts = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeNoAtts), undefined, pubkeys, signingPrv); // encrypted only for pubs
+      const atts = this.createPgpMimeAtts(pubEncryptedNoAtts).concat(await this.view.attsModule.attach.collectEncryptAtts(pubkeys)); // encrypted only for pubs
+      return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: emailIntroAndLinkBody, atts, isDraft: this.isDraft });
     }
-    if (this.richtext && !newMsg.pwd) { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
+    if (!this.richtext) { // simple text: PGP/Inline with attachments in separate files
+      const atts = await this.view.attsModule.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey));
+      const encrypted = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubkeys, signingPrv);
+      const encryptedBody = { 'text/plain': encrypted.toString() };
+      return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: encryptedBody, atts, isDraft: this.isDraft });
+    } else { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
       const plainAtts = await this.view.attsModule.attach.collectAtts();
       const pgpMimeToEncrypt = await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject }, plainAtts);
-      const encrypted = await this.encryptData(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubkeys, signingPrv);
-      const atts = this.createPgpMimeAtts(encrypted.data, 'GMAIL-RFC-LIKE');
+      const encrypted = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubkeys, signingPrv);
+      const atts = this.createPgpMimeAtts(encrypted);
       return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: {}, atts, type: 'pgpMimeEncrypted', isDraft: this.isDraft });
     }
-    // password-protected message, temporarily uploaded (encrypted) to FlowCrypt servers, to be served to recipient through web, encoded as PGP/MIME
-    const authInfo = await Store.authInfo(this.acctEmail);
-    if (authInfo.uuid) { // logged in
-      await this.addOnlineReplyTokenToMsgBody(authInfo, newMsg);
-    }
-    const plainAtts = await this.view.attsModule.attach.collectAtts();
-    const bodyParts = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
-    const pgpMimeToEncrypt = await Mime.encode(bodyParts, { Subject: newMsg.subject }, plainAtts);
-    const encrypted = await this.encryptData(Buf.fromUtfStr(pgpMimeToEncrypt), newMsg.pwd, pubkeys, signingPrv);
-    const short = await this.uploadPwdEncryptedMsgToFc(authInfo, encrypted.data);
-    const introAndLinkBody = await this.formatPwdEncryptedMsgBodyLink(short);
-    const atts = this.createPgpMimeAtts(encrypted.data, 'PWD-ENCRYPTED-MSG');
-    return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: introAndLinkBody, atts, isDraft: this.isDraft });
   }
 
-  private createPgpMimeAtts = (content: string, format: 'GMAIL-RFC-LIKE' | 'PWD-ENCRYPTED-MSG') => { // todo - make this a regular private method
+  private createPgpMimeAtts = (data: Uint8Array) => { // todo - make this a regular private method
     const atts: Att[] = [];
-    if (format === 'GMAIL-RFC-LIKE') {
-      atts.push(new Att({ data: Buf.fromUtfStr('Version: 1'), type: 'application/pgp-encrypted', contentDescription: 'PGP/MIME version identification' }));
-    }
-    atts.push(new Att({ data: Buf.fromUtfStr(content), type: 'application/octet-stream', contentDescription: 'OpenPGP encrypted message', name: 'encrypted.asc', inline: true }));
+    atts.push(new Att({ data: Buf.fromUtfStr('Version: 1'), type: 'application/pgp-encrypted', contentDescription: 'PGP/MIME version identification' }));
+    atts.push(new Att({ data, type: 'application/octet-stream', contentDescription: 'OpenPGP encrypted message', name: 'encrypted.asc', inline: true }));
     return atts;
   }
 
-  private encryptData = async (data: Buf, pwd: string | undefined, pubkeys: string[], signingPrv?: OpenPGP.key.Key): Promise<OpenPGP.EncryptArmorResult> => {
+  private encryptDataArmor = async (data: Buf, pwd: string | undefined, pubkeys: string[], signingPrv?: OpenPGP.key.Key): Promise<Uint8Array> => {
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal();
-    return await PgpMsg.encrypt({ pubkeys, signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
+    const armored = await PgpMsg.encrypt({ pubkeys, signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
+    return Buf.fromUtfStr(armored.data);
   }
 
-  private addOnlineReplyTokenToMsgBody = async (authInfo: FcUuidAuth, newMsgData: NewMsgData): Promise<void> => {
-    if (!newMsgData.pwd || !authInfo.uuid) {
-      return;
+  private getPwdMsgSendableBodyWithOnlineReplyMsgToken = async (authInfo: FcUuidAuth, newMsgData: NewMsgData): Promise<SendableMsgBody> => {
+    if (!authInfo.uuid) {
+      return { 'text/plain': newMsgData.plaintext, 'text/html': newMsgData.plainhtml };
     }
     const recipients = Array.prototype.concat.apply([], Object.values(newMsgData.recipients));
     try {
@@ -95,9 +97,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
           token: response.token,
         })
       });
-      newMsgData.plaintext += '\n\n' + infoDiv;
-      newMsgData.plainhtml += '<br /><br />' + infoDiv;
-      return;
+      return { 'text/plain': newMsgData.plaintext + '\n\n' + infoDiv, 'text/html': newMsgData.plainhtml + '<br /><br />' + infoDiv };
     } catch (msgTokenErr) {
       if (ApiErr.isAuthErr(msgTokenErr)) {
         Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail);
@@ -147,10 +147,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     return new Date(usableTimeUntil); // latest date none of the keys were expired
   }
 
-  private uploadPwdEncryptedMsgToFc = async (authInfo: FcUuidAuth, pgpMimeEncryptedArmored: string): Promise<string> => {
+  private uploadPwdEncryptedMsgToFc = async (authInfo: FcUuidAuth, pgpMimeEncryptedArmored: Uint8Array): Promise<string> => {
     // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
     // admin_code stays locally and helps the sender extend life of the message or delete it
-    const { short, admin_code } = await Backend.messageUpload(authInfo.uuid ? authInfo : undefined, pgpMimeEncryptedArmored);
+    const { short, admin_code } = await Backend.messageUpload(authInfo.uuid ? authInfo : undefined, pgpMimeEncryptedArmored, this.view.sendBtnModule.renderUploadProgress);
     await this.view.storageModule.addAdminCodes(short, [admin_code]);
     return short;
   }
