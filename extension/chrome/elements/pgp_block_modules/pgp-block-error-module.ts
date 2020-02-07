@@ -31,13 +31,14 @@ export class PgpBlockViewErrorModule {
     Ui.setTestState('ready');
   }
 
-  public handlePrivateKeyMismatch = async (message: Uint8Array) => { // todo - make it work for multiple stored keys
+  public handlePrivateKeyMismatch = async (message: Uint8Array, isPwdMsg: boolean) => { // todo - make it work for multiple stored keys
     const msgDiagnosis = await BrowserMsg.send.bg.await.pgpMsgDiagnosePubkeys({ privateKis: await Store.keysGet(this.view.acctEmail), message });
     if (msgDiagnosis.found_match) {
       await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.encryptedCorrectlyFileBug, undefined);
+    } else if (isPwdMsg) {
+      await this.renderErr(Lang.pgpBlock.pwdMsgOnlyReadableOnWeb + this.btnHtml('ask sender to re-send', 'gray2 short reply_pubkey_mismatch'), undefined);
     } else {
-      const startText = msgDiagnosis.receivers === 1 ?
-        Lang.pgpBlock.cantOpen + Lang.pgpBlock.singleSender + Lang.pgpBlock.askResend : Lang.pgpBlock.yourKeyCantOpenImportIfHave;
+      const startText = msgDiagnosis.receivers === 1 ? Lang.pgpBlock.cantOpen + Lang.pgpBlock.singleSender + Lang.pgpBlock.askResend : Lang.pgpBlock.yourKeyCantOpenImportIfHave;
       await this.renderErr(startText + this.btnHtml('import missing key', 'gray2 settings_add_key') + '&nbsp; &nbsp;'
         + this.btnHtml('ask sender to update', 'gray2 short reply_pubkey_mismatch') + '&nbsp; &nbsp;' + this.btnHtml('settings', 'gray2 settings_keyserver'), undefined);
     }

@@ -266,22 +266,23 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   /**
    * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
    */
-  public extractArmoredBlock = async (msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<{ armored: string, subject?: string }> => {
+  public extractArmoredBlock = async (msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<{ armored: string, subject?: string, isPwdMsg: boolean }> => {
     // only track progress in this call if we are getting RAW mime, because these tend to be big, while 'full' and 'metadata' are tiny
     // since we often do full + get attachments below, the user would see 100% after the first short request,
     //   and then again 0% when attachments start downloading, which would be confusing
     const gmailMsg = await this.msgGet(msgId, format, format === 'raw' ? progressCb : undefined);
+    const isPwdMsg = /https:\/\/flowcrypt\.com\/[a-zA-Z0-9]{10}$/.test(gmailMsg.snippet || '');
     const subject = gmailMsg.payload ? GmailParser.findHeader(gmailMsg.payload, 'subject') : undefined;
     if (format === 'full') {
       const bodies = GmailParser.findBodies(gmailMsg);
       const atts = GmailParser.findAtts(gmailMsg);
       const fromTextBody = PgpArmor.clip(Buf.fromBase64UrlStr(bodies['text/plain'] || '').toUtfStr());
       if (fromTextBody) {
-        return { armored: fromTextBody, subject };
+        return { armored: fromTextBody, subject, isPwdMsg };
       }
       const fromHtmlBody = PgpArmor.clip(Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html'] || '').toUtfStr(), '\n'));
       if (fromHtmlBody) {
-        return { armored: fromHtmlBody, subject };
+        return { armored: fromHtmlBody, subject, isPwdMsg };
       }
       if (atts.length) {
         for (const att of atts) {
@@ -291,7 +292,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
             if (!armoredMsg) {
               throw new FormatError('Problem extracting armored message', att.getData().toUtfStr());
             }
-            return { armored: armoredMsg, subject };
+            return { armored: armoredMsg, subject, isPwdMsg };
           }
         }
         throw new FormatError('Armored message not found', JSON.stringify(gmailMsg.payload, undefined, 2));
@@ -304,7 +305,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       if (decoded.text !== undefined) {
         const armoredMsg = PgpArmor.clip(decoded.text); // todo - the message might be in attachments
         if (armoredMsg) {
-          return { armored: armoredMsg, subject };
+          return { armored: armoredMsg, subject, isPwdMsg };
         } else {
           throw new FormatError('Could not find armored message in parsed raw mime', mimeMsg.toUtfStr());
         }
