@@ -1,6 +1,6 @@
 {
   "name": "flowcrypt-browser",
-  "version": "7.5.9",
+  "version": "7.6.0",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "resolutions": {
     "graceful-fs": "4.1.13"
