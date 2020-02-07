@@ -53,7 +53,11 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     const msgBodyWithReplyToken = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(authInfo, newMsg);
     const pgpMimeWithAtts = await Mime.encode(msgBodyWithReplyToken, { Subject: newMsg.subject }, await this.view.attsModule.attach.collectAtts());
     const pwdEncryptedWithAtts = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAtts), newMsg.pwd, []); // encrypted only for pwd, not signed
-    const { short, admin_code } = await Backend.messageUpload(authInfo.uuid ? authInfo : undefined, pwdEncryptedWithAtts, this.view.sendBtnModule.renderUploadProgress);
+    const { short, admin_code } = await Backend.messageUpload(
+      authInfo.uuid ? authInfo : undefined,
+      pwdEncryptedWithAtts,
+      (p) => this.view.sendBtnModule.renderUploadProgress(p, 'FIRST-HALF'), // still need to upload to Gmail later, this request represents first half of progress
+    );
     await this.view.storageModule.addAdminCodes(short, [admin_code]); // admin_code stays locally and helps the sender extend life of the message or delete it
     return short;
   }
