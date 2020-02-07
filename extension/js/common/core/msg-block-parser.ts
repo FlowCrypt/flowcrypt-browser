@@ -10,8 +10,8 @@ import { Catch } from '../platform/catch.js';
 import { Mime } from './mime.js';
 import { PgpArmor } from './pgp-armor.js';
 import { PgpKey } from './pgp-key.js';
-import { PgpMsg } from './pgp-msg.js';
 import { Str } from './common.js';
+import { FcAttLinkData } from './att.js';
 
 type SanitizedBlocks = { blocks: MsgBlock[], subject: string | undefined, isRichText: boolean };
 
@@ -45,10 +45,10 @@ export class MsgBlockParser {
     let isRichText = false;
     if (!Mime.resemblesMsg(decryptedContent)) {
       let utf = Buf.fromUint8(decryptedContent).toUtfStr();
-      utf = PgpMsg.extractFcAtts(utf, blocks);
-      utf = PgpMsg.stripFcTeplyToken(utf);
+      utf = MsgBlockParser.extractFcAtts(utf, blocks);
+      utf = MsgBlockParser.stripFcTeplyToken(utf);
       const armoredPubKeys: string[] = [];
-      utf = PgpMsg.stripPublicKeys(utf, armoredPubKeys);
+      utf = MsgBlockParser.stripPublicKeys(utf, armoredPubKeys);
       blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(utf))); // escaped text as html
       await MsgBlockParser.pushArmoredPubkeysToBlocks(armoredPubKeys, blocks);
       return { blocks, subject: undefined, isRichText };
@@ -70,6 +70,53 @@ export class MsgBlockParser {
       }
     }
     return { blocks, subject: decoded.subject, isRichText };
+  }
+
+  public static extractFcAtts = (decryptedContent: string, blocks: MsgBlock[]) => {
+    // these tags were created by FlowCrypt exclusively, so the structure is fairly rigid
+    // `<a href="${att.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`
+    // thus we use RegEx so that it works on both browser and node
+    if (decryptedContent.includes('class="cryptup_file"')) {
+      decryptedContent = decryptedContent.replace(/<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm, (_, url, fcData) => {
+        const a = Str.htmlAttrDecode(String(fcData));
+        if (MsgBlockParser.isFcAttLinkData(a)) {
+          blocks.push(MsgBlock.fromAtt('encryptedAttLink', '', { type: a.type, name: a.name, length: a.size, url: String(url) }));
+        }
+        return '';
+      });
+    }
+    return decryptedContent;
+  }
+
+  public static stripPublicKeys = (decryptedContent: string, foundPublicKeys: string[]) => {
+    let { blocks, normalized } = MsgBlockParser.detectBlocks(decryptedContent); // tslint:disable-line:prefer-const
+    for (const block of blocks) {
+      if (block.type === 'publicKey') {
+        const armored = block.content.toString();
+        foundPublicKeys.push(armored);
+        normalized = normalized.replace(armored, '');
+      }
+    }
+    return normalized;
+  }
+
+  // public static extractFcReplyToken =  (decryptedContent: string) => { // todo - used exclusively on the web - move to a web package
+  //   const fcTokenElement = $(`<div>${decryptedContent}</div>`).find('.cryptup_reply');
+  //   if (fcTokenElement.length) {
+  //     const fcData = fcTokenElement.attr('cryptup-data');
+  //     if (fcData) {
+  //       return Str.htmlAttrDecode(fcData);
+  //     }
+  //   }
+  // }
+
+  public static stripFcTeplyToken = (decryptedContent: string) => {
+    return decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
+  }
+
+  private static isFcAttLinkData = (o: any): o is FcAttLinkData => {
+    return o && typeof o === 'object' && typeof (o as FcAttLinkData).name !== 'undefined'
+      && typeof (o as FcAttLinkData).size !== 'undefined' && typeof (o as FcAttLinkData).type !== 'undefined';
   }
 
   private static detectBlockNext = (origText: string, startAt: number) => {

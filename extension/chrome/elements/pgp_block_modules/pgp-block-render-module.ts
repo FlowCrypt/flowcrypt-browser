@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { PgpMsg, VerifyRes } from '../../../js/common/core/pgp-msg.js';
+import { VerifyRes } from '../../../js/common/core/pgp-msg.js';
 
 import { Att } from '../../../js/common/core/att.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
@@ -14,6 +14,7 @@ import { PgpBlockView } from '../pgp_block.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 
 export class PgpBlockViewRenderModule {
   public doNotSetStateAsReadyYet = false;
@@ -76,12 +77,12 @@ export class PgpBlockViewRenderModule {
     let renderableAtts: Att[] = [];
     let decryptedContent = decryptedBytes.toUtfStr();
     let isHtml: boolean = false;
-    // todo - replace with MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks
+    // todo - replace with MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks, then the extract/strip methods could be private?
     if (!Mime.resemblesMsg(decryptedBytes)) {
       const fcAttBlocks: MsgBlock[] = [];
-      decryptedContent = PgpMsg.extractFcAtts(decryptedContent, fcAttBlocks);
-      decryptedContent = PgpMsg.stripFcTeplyToken(decryptedContent);
-      decryptedContent = PgpMsg.stripPublicKeys(decryptedContent, publicKeys);
+      decryptedContent = MsgBlockParser.extractFcAtts(decryptedContent, fcAttBlocks);
+      decryptedContent = MsgBlockParser.stripFcTeplyToken(decryptedContent);
+      decryptedContent = MsgBlockParser.stripPublicKeys(decryptedContent, publicKeys);
       if (fcAttBlocks.length) {
         renderableAtts = fcAttBlocks.map(attBlock => new Att(attBlock.attMeta!));
       }
