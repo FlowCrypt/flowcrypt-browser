@@ -87,7 +87,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: {}, atts, type: 'pgpMimeEncrypted', isDraft: this.isDraft });
   }
 
-  private createPgpMimeAtts = (data: Uint8Array) => { // todo - make this a regular private method
+  private createPgpMimeAtts = (data: Uint8Array) => {
     const atts: Att[] = [];
     atts.push(new Att({ data: Buf.fromUtfStr('Version: 1'), type: 'application/pgp-encrypted', contentDescription: 'PGP/MIME version identification' }));
     atts.push(new Att({ data, type: 'application/octet-stream', contentDescription: 'OpenPGP encrypted message', name: 'encrypted.asc', inline: true }));
