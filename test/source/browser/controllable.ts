@@ -328,6 +328,19 @@ abstract class ControllableBase {
     throw Error(`Frame not found: ${urlMatchables.join(',')}`);
   }
 
+  public awaitDownloadTriggeredByClicking = async (selector: string): Promise<Buffer> => {
+    const resolvePromise: Promise<Buffer> = (async () => {
+      const downloadPath = path.resolve(__dirname, 'download', Util.lousyRandom());
+      mkdirp.sync(downloadPath);
+      await (this.target as any)._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
+      await this.waitAndClick(selector);
+      const filename = await this.waitForFileToDownload(downloadPath);
+      return fs.readFileSync(path.resolve(downloadPath, filename));
+    })();
+    const timeoutPromise = newTimeoutPromise(`awaitDownloadTriggeredByClicking timeout for ${selector}`, 20);
+    return await Promise.race([resolvePromise, timeoutPromise]);
+  }
+
   protected log = (msg: string) => {
     if (this.debugNamespace) {
       console.info(`[debug][controllable][${this.debugNamespace}] ${msg}`);
@@ -384,19 +397,6 @@ abstract class ControllableBase {
     return matchingLinks;
   }
 
-  public awaitDownloadTriggeredByClicking = async (selector: string): Promise<Buffer> => {
-    const resolvePromise: Promise<Buffer> = (async () => {
-      const downloadPath = path.resolve(__dirname, 'download', Util.lousyRandom());
-      mkdirp.sync(downloadPath);
-      await (this.target as any)._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
-      await this.waitAndClick(selector);
-      let filename = await this.waitForFileToDownload(downloadPath);
-      return fs.readFileSync(path.resolve(downloadPath, filename));
-    })();
-    const timeoutPromise = newTimeoutPromise(`awaitDownloadTriggeredByClicking timeout for ${selector}`, 20);
-    return await Promise.race([resolvePromise, timeoutPromise]);
-  }
-
   private waitForFileToDownload = async (downloadPath: string) => {
     let filename;
     while (!filename || filename.endsWith('.crdownload')) {
@@ -405,7 +405,6 @@ abstract class ControllableBase {
     }
     return filename;
   }
-
 
 }
 
