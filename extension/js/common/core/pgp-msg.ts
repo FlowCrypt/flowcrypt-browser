@@ -3,11 +3,10 @@
 'use strict';
 
 import { Contact, KeyInfo, PgpKey, PrvKeyInfo } from './pgp-key.js';
-import { MsgBlockType } from './msg-block.js';
+import { MsgBlockType, ReplaceableMsgBlockType } from './msg-block.js';
 import { Value } from './common.js';
 import { Buf } from './buf.js';
 import { Catch } from '../platform/catch.js';
-import { MsgBlockParser } from './msg-block-parser.js';
 import { PgpArmor } from './pgp-armor.js';
 import { PgpHash } from './pgp-hash.js';
 import { Store } from '../platform/store.js';
@@ -92,16 +91,18 @@ export class PgpMsg {
       if (Object.values(openpgp.enums.packet).includes(tagNumber)) {
         // Indeed a valid OpenPGP packet tag number
         // This does not 100% mean it's OpenPGP message
-        // But it's a good indication that it may
+        // But it's a good indication that it may be
         const t = openpgp.enums.packet;
         const msgTpes = [t.symEncryptedIntegrityProtected, t.modificationDetectionCode, t.symEncryptedAEADProtected, t.symmetricallyEncrypted, t.compressed];
         return { armored: false, type: msgTpes.includes(tagNumber) ? 'encryptedMsg' : 'publicKey' };
       }
     }
-    // todo - refactor to not rely on MsgBlockParser to drop a cross-dependency: data.includes(header) would do
-    const { blocks } = MsgBlockParser.detectBlocks(new Buf(data.slice(0, 50)).toUtfStr().trim()); // only interested in first 50 bytes
-    if (blocks.length === 1 && blocks[0].complete === false && ['encryptedMsg', 'privateKey', 'publicKey', 'signedMsg'].includes(blocks[0].type)) {
-      return { armored: true, type: blocks[0].type };
+    const fiftyBytesUtf = new Buf(data.slice(0, 50)).toUtfStr().trim();
+    const armorTypes: ReplaceableMsgBlockType[] = ['encryptedMsg', 'privateKey', 'publicKey', 'signedMsg'];
+    for (const type of armorTypes) {
+      if (fiftyBytesUtf.includes(PgpArmor.headers(type).begin)) {
+        return { armored: true, type };
+      }
     }
     return undefined;
   }
