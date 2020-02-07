@@ -249,6 +249,16 @@ export class BrowserMsg {
               BrowserMsg.sendRawResponse(Promise.reject(new Error(`BrowserMsg.listen error: handler "${msg.name}" not set`)), rawRespond);
               return true; // will respond
             }
+          } else {
+            // sometimes received events get duplicated
+            // while first event is being processed, second even will arrive
+            // that's why we generate a unique id of each request (uid) and filter them above to identify truly unique requests
+            // if we got here, that means we are handing a duplicate request
+            // we'll indicate will respond = true, so that the processing of the actual request is not negatively affected
+            // leaving it at "false" would respond with null, which would throw an error back to the original BrowserMsg sender:
+            // "Error: BrowserMsg.sendAwait(pgpMsgDiagnosePubkeys) returned(null) with lastError: (no lastError)"
+            // why the requests get duplicated in the first place I'm not sure, it feels like a browser bug
+            return true;
           }
         }
       } catch (e) {
