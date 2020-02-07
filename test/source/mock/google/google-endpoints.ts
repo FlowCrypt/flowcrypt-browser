@@ -3,7 +3,6 @@
 import { HttpClientErr, Status } from '../lib/api';
 import Parse, { ParseMsgResult } from '../../util/parse';
 import { isDelete, isGet, isPost, isPut, parseResourceId } from '../lib/mock-util';
-
 import { GoogleData } from './google-data';
 import { HandlersDefinition } from '../all-apis-mock';
 import { ParsedMail } from 'mailparser';
