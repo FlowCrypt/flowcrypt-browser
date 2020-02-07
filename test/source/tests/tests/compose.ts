@@ -459,18 +459,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const msg = new GoogleData('flowcrypt.compatibility@gmail.com').getMessageBySubject(subject)!;
       const webDecryptUrl = msg.payload.body!.data!.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]+/g)![0];
       const webDecryptPage = await browser.newPage(t, webDecryptUrl);
-      await webDecryptPage.waitAndType('.decrypt_answer', msgPwd);
-      await webDecryptPage.waitAndClick('.action_decrypt');
-      await webDecryptPage.waitAll('.pgp_block');
-      await Util.sleep(0.5); // todo - would be better to find a way to wait until ready
-      expect(await webDecryptPage.read('.pgp_block')).to.include(subject);
-      expect(await webDecryptPage.read('.pgp_block')).to.include('flowcrypt.compatibility test footer with an img'); // test if footer is present
-      expect(await webDecryptPage.read('.attachment')).to.include('small.txt.pgp');
-      const [attElem] = await webDecryptPage.page.$x('.//@data-test-donwload-url');
-      const attUrl = await PageRecipe.getElementPropertyJson(attElem, 'value');
-      const res = await request.get({ url: attUrl, encoding: null }); // tslint:disable-line:no-null-keyword
-      const decryptedFile = await PgpMsg.decrypt({ encryptedData: res.body as Buffer, kisWithPp: [], msgPwd: await PgpHash.challengeAnswer(msgPwd) });
-      expect(decryptedFile.content!.toUtfStr()).to.equal(`small text file\nnot much here\nthis worked\n`);
+      await webDecryptPage.waitAndType('@input-msg-pwd', msgPwd);
+      await webDecryptPage.waitAndClick('@action-decrypt');
+      await webDecryptPage.waitForContent('@container-pgp-decrypted-content', subject);
+      await webDecryptPage.waitForContent('@container-pgp-decrypted-content', 'flowcrypt.compatibility test footer with an img');
+      await webDecryptPage.waitAll('@container-att-name(small.txt)');
+      const fileText = await webDecryptPage.awaitDownloadTriggeredByClicking('@container-att-name(small.txt)');
+      expect(fileText.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
     }));
 
     ava.default('compose - loading drafts - test tags in draft', testWithBrowser('compatibility', async (t, browser) => {

@@ -3,13 +3,10 @@
 'use strict';
 
 import { Contact, KeyInfo, PgpKey, PrvKeyInfo } from './pgp-key.js';
-import { MsgBlock, MsgBlockType } from './msg-block.js';
-import { Str, Value } from './common.js';
-
+import { MsgBlockType, ReplaceableMsgBlockType } from './msg-block.js';
+import { Value } from './common.js';
 import { Buf } from './buf.js';
 import { Catch } from '../platform/catch.js';
-import { FcAttLinkData } from './att.js';
-import { MsgBlockParser } from './msg-block-parser.js';
 import { PgpArmor } from './pgp-armor.js';
 import { PgpHash } from './pgp-hash.js';
 import { Store } from '../platform/store.js';
@@ -94,15 +91,18 @@ export class PgpMsg {
       if (Object.values(openpgp.enums.packet).includes(tagNumber)) {
         // Indeed a valid OpenPGP packet tag number
         // This does not 100% mean it's OpenPGP message
-        // But it's a good indication that it may
+        // But it's a good indication that it may be
         const t = openpgp.enums.packet;
         const msgTpes = [t.symEncryptedIntegrityProtected, t.modificationDetectionCode, t.symEncryptedAEADProtected, t.symmetricallyEncrypted, t.compressed];
         return { armored: false, type: msgTpes.includes(tagNumber) ? 'encryptedMsg' : 'publicKey' };
       }
     }
-    const { blocks } = MsgBlockParser.detectBlocks(new Buf(data.slice(0, 50)).toUtfStr().trim()); // only interested in first 50 bytes
-    if (blocks.length === 1 && blocks[0].complete === false && ['encryptedMsg', 'privateKey', 'publicKey', 'signedMsg'].includes(blocks[0].type)) {
-      return { armored: true, type: blocks[0].type };
+    const fiftyBytesUtf = new Buf(data.slice(0, 50)).toUtfStr().trim();
+    const armorTypes: ReplaceableMsgBlockType[] = ['encryptedMsg', 'privateKey', 'publicKey', 'signedMsg'];
+    for (const type of armorTypes) {
+      if (fiftyBytesUtf.includes(PgpArmor.headers(type).begin)) {
+        return { armored: true, type };
+      }
     }
     return undefined;
   }
@@ -246,53 +246,6 @@ export class PgpMsg {
       }
     }
     return diagnosis;
-  }
-
-  public static extractFcAtts = (decryptedContent: string, blocks: MsgBlock[]) => {
-    // these tags were created by FlowCrypt exclusively, so the structure is fairly rigid
-    // `<a href="${att.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`
-    // thus we use RegEx so that it works on both browser and node
-    if (decryptedContent.includes('class="cryptup_file"')) {
-      decryptedContent = decryptedContent.replace(/<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm, (_, url, fcData) => {
-        const a = Str.htmlAttrDecode(String(fcData));
-        if (PgpMsg.isFcAttLinkData(a)) {
-          blocks.push(MsgBlock.fromAtt('encryptedAttLink', '', { type: a.type, name: a.name, length: a.size, url: String(url) }));
-        }
-        return '';
-      });
-    }
-    return decryptedContent;
-  }
-
-  public static stripPublicKeys = (decryptedContent: string, foundPublicKeys: string[]) => {
-    let { blocks, normalized } = MsgBlockParser.detectBlocks(decryptedContent); // tslint:disable-line:prefer-const
-    for (const block of blocks) {
-      if (block.type === 'publicKey') {
-        const armored = block.content.toString();
-        foundPublicKeys.push(armored);
-        normalized = normalized.replace(armored, '');
-      }
-    }
-    return normalized;
-  }
-
-  // public static extractFcReplyToken =  (decryptedContent: string) => { // todo - used exclusively on the web - move to a web package
-  //   const fcTokenElement = $(`<div>${decryptedContent}</div>`).find('.cryptup_reply');
-  //   if (fcTokenElement.length) {
-  //     const fcData = fcTokenElement.attr('cryptup-data');
-  //     if (fcData) {
-  //       return Str.htmlAttrDecode(fcData);
-  //     }
-  //   }
-  // }
-
-  public static stripFcTeplyToken = (decryptedContent: string) => {
-    return decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
-  }
-
-  private static isFcAttLinkData = (o: any): o is FcAttLinkData => {
-    return o && typeof o === 'object' && typeof (o as FcAttLinkData).name !== 'undefined'
-      && typeof (o as FcAttLinkData).size !== 'undefined' && typeof (o as FcAttLinkData).type !== 'undefined';
   }
 
   private static cryptoMsgGetSignedBy = async (msg: OpenpgpMsgOrCleartext, keys: SortedKeysForDecrypt) => {

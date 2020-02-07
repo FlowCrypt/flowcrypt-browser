@@ -23,9 +23,7 @@ import { ComposeView } from '../compose.js';
 export class ComposeSendBtnModule extends ViewModule<ComposeView> {
 
   public additionalMsgHeaders: { [key: string]: string } = {};
-
   public btnUpdateTimeout?: number;
-
   public popover: ComposeSendBtnPopoverModule;
 
   private isSendMessageInProgress = false;
@@ -71,9 +69,15 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     this.view.S.cached('toggle_send_options').removeClass('gray').addClass('green');
   }
 
-  public renderUploadProgress = (progress: number | undefined) => {
+  public renderUploadProgress = (progress: number | undefined, progressRepresents: 'FIRST-HALF' | 'SECOND-HALF' | 'EVERYTHING') => {
     if (progress && this.view.attsModule.attach.hasAtt()) {
-      progress = Math.floor(progress);
+      if (progressRepresents === 'FIRST-HALF') {
+        progress = Math.floor(progress / 2); // show 0-50% instead of 0-100%
+      } else if (progressRepresents === 'SECOND-HALF') {
+        progress = Math.floor(50 + progress / 2); // show 50-100% instead of 0-100%
+      } else {
+        progress = Math.floor(progress); // show 0-100%
+      }
       this.view.S.now('send_btn_text').text(`${SendBtnTexts.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
     }
   }
@@ -136,14 +140,17 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   }
 
   private doSendMsg = async (msg: SendableMsg) => {
+    // if this is a password-encrypted message, then we've already shown progress for uploading to backend
+    // and this requests represents second half of uploadable effort. Else this represents all (no previous heavy requests)
+    const progressRepresents = this.view.pwdOrPubkeyContainerModule.isVisible() ? 'SECOND-HALF' : 'EVERYTHING';
     let msgSentRes: GmailRes.GmailMsgSend;
     try {
       this.isSendMessageInProgress = true;
-      msgSentRes = await this.view.emailProvider.msgSend(msg, (progress) => this.renderUploadProgress(progress));
+      msgSentRes = await this.view.emailProvider.msgSend(msg, (p) => this.renderUploadProgress(p, progressRepresents));
     } catch (e) {
       if (msg.thread && ApiErr.isNotFound(e) && this.view.threadId) { // cannot send msg because threadId not found - eg user since deleted it
         msg.thread = undefined;
-        msgSentRes = await this.view.emailProvider.msgSend(msg, (progress) => this.renderUploadProgress(progress));
+        msgSentRes = await this.view.emailProvider.msgSend(msg, (p) => this.renderUploadProgress(p, progressRepresents));
       } else {
         this.isSendMessageInProgress = false;
         throw e;

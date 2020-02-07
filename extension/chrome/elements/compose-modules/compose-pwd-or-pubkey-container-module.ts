@@ -78,8 +78,12 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
   }
 
+  public isVisible = () => {
+    return !this.view.S.cached('password_or_pubkey').is(':hidden');
+  }
+
   private showMsgPwdUiAndColorBtn = async () => {
-    if (this.view.S.cached('password_or_pubkey').is(':hidden')) {
+    if (!this.isVisible()) {
       const authInfo = await Store.authInfo(this.view.acctEmail);
       const expirationTextEl = this.view.S.cached('expiration_note').find('#expiration_note_message_expire');
       if (!authInfo) {

@@ -20,6 +20,7 @@ export class PgpBlockViewDecryptModule {
   public canReadEmails: undefined | boolean;
 
   private msgFetchedFromApi: false | GmailResponseFormat = false;
+  private isPwdMsgBasedOnMsgSnippet: boolean | undefined;
 
   constructor(private view: PgpBlockView) {
   }
@@ -42,6 +43,7 @@ export class PgpBlockViewDecryptModule {
         this.view.renderModule.renderText(this.view.signature ? 'Verifying..' : 'Decrypting...');
         await this.decryptAndRender(this.view.encryptedMsgUrlParam);
       } else if (!this.view.encryptedMsgUrlParam && this.view.hasChallengePassword && this.view.short) { // need to fetch the message from FlowCrypt API
+        // todo - remove this Apr 2020
         this.view.renderModule.renderText('Loading message...');
         await this.view.pwdEncryptedMsgModule.recoverStoredAdminCodes();
         const msgLinkRes = await Backend.linkMessage(this.view.short);
@@ -59,9 +61,10 @@ export class PgpBlockViewDecryptModule {
         } else if (this.canReadEmails) {
           this.view.renderModule.renderText('Retrieving message...');
           const format: GmailResponseFormat = (!this.msgFetchedFromApi) ? 'full' : 'raw';
-          const { armored, subject } = await this.view.gmail.extractArmoredBlock(this.view.msgId, format, (progress) => {
+          const { armored, subject, isPwdMsg } = await this.view.gmail.extractArmoredBlock(this.view.msgId, format, (progress) => {
             this.view.renderModule.renderText(`Retrieving message... ${progress}%`);
           });
+          this.isPwdMsgBasedOnMsgSnippet = isPwdMsg;
           this.view.renderModule.renderText('Decrypting...');
           this.msgFetchedFromApi = format;
           await this.decryptAndRender(Buf.fromUtfStr(armored), undefined, subject);
@@ -117,16 +120,16 @@ export class PgpBlockViewDecryptModule {
           await this.view.errorModule.renderErr(Lang.pgpBlock.notProperlySetUp + this.view.errorModule.btnHtml('FlowCrypt settings', 'green settings'), undefined);
         } else if (result.error.type === DecryptErrTypes.keyMismatch) {
           if (this.view.hasChallengePassword && !optionalPwd) {
-            const pwd = await this.view.pwdEncryptedMsgModule.renderPasswordPromptAndAwaitEntry('first');
+            const pwd = await this.view.pwdEncryptedMsgModule.renderPasswordPromptAndAwaitEntry('first'); // todo - remove around Mar 2020
             await this.decryptAndRender(encryptedData, pwd);
           } else {
-            await this.view.errorModule.handlePrivateKeyMismatch(encryptedData);
+            await this.view.errorModule.handlePrivateKeyMismatch(encryptedData, this.isPwdMsgBasedOnMsgSnippet === true);
           }
         } else if (result.error.type === DecryptErrTypes.wrongPwd) {
-          const pwd = await this.view.pwdEncryptedMsgModule.renderPasswordPromptAndAwaitEntry('retry');
+          const pwd = await this.view.pwdEncryptedMsgModule.renderPasswordPromptAndAwaitEntry('retry'); // todo - remove around Mar 2020
           await this.decryptAndRender(encryptedData, pwd);
         } else if (result.error.type === DecryptErrTypes.usePassword) {
-          const pwd = await this.view.pwdEncryptedMsgModule.renderPasswordPromptAndAwaitEntry('first');
+          const pwd = await this.view.pwdEncryptedMsgModule.renderPasswordPromptAndAwaitEntry('first'); // todo - remove around Mar 2020
           await this.decryptAndRender(encryptedData, pwd);
         } else if (result.error.type === DecryptErrTypes.noMdc) {
           await this.view.errorModule.renderErr(result.error.message, result.content!.toUtfStr()); // missing mdc - only render the result after user confirmation
