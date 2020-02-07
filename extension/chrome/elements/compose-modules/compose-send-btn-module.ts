@@ -7,7 +7,7 @@ import { Att } from '../../../js/common/core/att.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposeSendBtnPopoverModule } from './compose-send-btn-popover-module.js';
-import { GeneralMailFormatter } from './formatters/composer-mail-formatter.js';
+import { GeneralMailFormatter } from './formatters/general-mail-formatter.js';
 import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
