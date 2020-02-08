@@ -102,49 +102,53 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     return await Store.passphraseGet(this.view.acctEmail, senderKi.longid);
   }
 
-  public lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string): Promise<Contact | "fail"> => {
-    const [dbContact] = await Store.dbContactGet(undefined, [email]);
-    if (dbContact && dbContact.has_pgp && dbContact.pubkey) {
+  public lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string, name: string | undefined): Promise<Contact | "fail"> => {
+    const [storedContact] = await Store.dbContactGet(undefined, [email]);
+    if (storedContact && storedContact.has_pgp && storedContact.pubkey) {
       // Potentially check if pubkey was updated - async. By the time user finishes composing, newer version would have been updated in db.
       // If sender didn't pull a particular pubkey for a long time and it has since expired, but there actually is a newer version on attester, this may unnecessarily show "bad pubkey",
       //      -> until next time user tries to pull it. This could be fixed by attempting to fix up the rendered recipient inside the async function below.
-      this.checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(dbContact).catch(Catch.reportErr);
-      return dbContact;
-    } else {
-      try {
-        const lookupResult = await Keyserver.lookupEmail(this.view.acctEmail, email);
-        if (lookupResult && email) {
-          if (lookupResult.pubkey) {
-            const parsed = await openpgp.key.readArmored(lookupResult.pubkey);
-            const key = parsed.keys[0];
-            if (!key) {
-              console.info('Dropping found but incompatible public key', { for: email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : undefined });
-              lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
-            } else if (! await PgpKey.usableForEncryption(lookupResult.pubkey) && ! await PgpKey.expired(key)) { // Not to skip expired keys
-              console.info('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, longid: await PgpKey.longid(parsed.keys[0]) });
-              lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
-            }
+      this.checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(storedContact).catch(Catch.reportErr);
+      return storedContact;
+    }
+    return await this.ksLookupUnknownContactPubAndSaveToDb(email, name);
+  }
+
+  public ksLookupUnknownContactPubAndSaveToDb = async (email: string, name: string | undefined): Promise<Contact | "fail"> => {
+    try {
+      const lookupResult = await Keyserver.lookupEmail(this.view.acctEmail, email);
+      if (lookupResult && email) {
+        if (lookupResult.pubkey) {
+          const parsed = await openpgp.key.readArmored(lookupResult.pubkey);
+          const key = parsed.keys[0];
+          if (!key) {
+            console.info('Dropping found but incompatible public key', { for: email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : undefined });
+            lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
+          } else if (! await PgpKey.usableForEncryption(lookupResult.pubkey) && ! await PgpKey.expired(key)) { // Not to skip expired keys
+            console.info('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, longid: await PgpKey.longid(parsed.keys[0]) });
+            lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
           }
-          const ksContact = await Store.dbContactObj({
-            email,
-            name: dbContact && dbContact.name ? dbContact.name : undefined,
-            client: lookupResult.pgpClient === 'flowcrypt' ? 'cryptup' : 'pgp', // todo - clean up as "flowcrypt|pgp-other'. Already in storage, fixing involves migration
-            pubkey: lookupResult.pubkey,
-            lastUse: Date.now(),
-            lastCheck: Date.now(),
-          });
-          this.ksLookupsByEmail[email] = ksContact;
-          await Store.dbContactSave(undefined, ksContact);
-          return ksContact;
-        } else {
-          return PUBKEY_LOOKUP_RESULT_FAIL;
         }
-      } catch (e) {
-        if (!ApiErr.isNetErr(e) && !ApiErr.isServerErr(e)) {
-          Catch.reportErr(e);
-        }
+        const client = lookupResult.pgpClient === 'flowcrypt' ? 'cryptup' : 'pgp'; // todo - clean up as "flowcrypt|pgp-other'. Already in storage, fixing involves migration
+        const ksContact = await Store.dbContactObj({
+          email,
+          name,
+          pubkey: lookupResult.pubkey,
+          client: lookupResult.pubkey ? client : undefined,
+          lastUse: Date.now(),
+          lastCheck: Date.now(),
+        });
+        this.ksLookupsByEmail[email] = ksContact;
+        await Store.dbContactSave(undefined, ksContact);
+        return ksContact;
+      } else {
         return PUBKEY_LOOKUP_RESULT_FAIL;
       }
+    } catch (e) {
+      if (!ApiErr.isNetErr(e) && !ApiErr.isServerErr(e)) {
+        Catch.reportErr(e);
+      }
+      return PUBKEY_LOOKUP_RESULT_FAIL;
     }
   }
 

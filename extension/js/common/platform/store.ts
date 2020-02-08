@@ -160,9 +160,7 @@ export class Subscription implements SubscriptionInfo {
 }
 
 export class StoreCorruptedError extends Error { }
-
 export class StoreDeniedError extends Error { }
-
 export class StoreFailedError extends Error { }
 
 export class Store {
@@ -594,11 +592,11 @@ export class Store {
       await Promise.all(email.map(oneEmail => Store.dbContactUpdate(db, oneEmail, update)));
       return;
     }
-    let [contact] = await Store.dbContactGet(db, [email]);
-    if (!contact) { // updating a non-existing contact, insert it first
+    let [existing] = await Store.dbContactGet(db, [email]);
+    if (!existing) { // updating a non-existing contact, insert it first
       await Store.dbContactSave(db, await Store.dbContactObj({ email }));
-      [contact] = await Store.dbContactGet(db, [email]);
-      if (!contact) {
+      [existing] = await Store.dbContactGet(db, [email]);
+      if (!existing) {
         throw new Error('contact not found right after inserting it');
       }
     }
@@ -607,14 +605,19 @@ export class Store {
       const key = await PgpKey.read(update.pubkey);
       update.pubkey = key.toPublic().armor();
     }
+    if (!update.searchable && (update.name !== existing.name || update.has_pgp !== existing.has_pgp)) { // update searchable index based on new name or new has_pgp
+      const newHasPgp = Boolean(typeof update.has_pgp !== 'undefined' && update.has_pgp !== null ? update.has_pgp : existing.has_pgp);
+      const newName = typeof update.name !== 'undefined' && update.name !== null ? update.name : existing.name;
+      update.searchable = Store.dbCreateSearchIndexList(existing.email, newName, newHasPgp);
+    }
     for (const k of Object.keys(update)) {
       // @ts-ignore - may be saving any of the provided values - could do this one by one while ensuring proper types
-      contact[k] = update[k];
+      existing[k] = update[k];
     }
     return await new Promise((resolve, reject) => {
       const tx = db.transaction('contacts', 'readwrite');
       const contactsTable = tx.objectStore('contacts');
-      contactsTable.put(contact);
+      contactsTable.put(existing);
       tx.oncomplete = Catch.try(resolve);
       tx.onabort = () => reject(Store.errCategorize(tx.error));
     });
