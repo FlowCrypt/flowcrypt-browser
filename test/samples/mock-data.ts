@@ -116,6 +116,35 @@ const data: UserMessages = {
       "raw": "UmVjZWl2ZWQ6IGZyb20gNzE3Mjg0NzMwMjQ0DQoJbmFtZWQgdW5rbm93bg0KCWJ5IGdtYWlsYXBpLmdvb2dsZS5jb20NCgl3aXRoIEhUVFBSRVNUOw0KCVR1ZSwgMyBTZXAgMjAxOSAyMzo1NTowNCAtMDcwMA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7DQogYm91bmRhcnk9Ii0tLS1zaW5pa2FlbC0_PV8xLTE1Njc1ODAxMDM5NDkwLjE3Mjc4Njc3NjUyMjgxMTUiDQpUbzogZmxvd2NyeXB0Y29tcGF0aWJpbGl0eUBnbWFpbC5jb20NCkZyb206IGZsb3djcnlwdC5jb21wYXRpYmlsaXR5QGdtYWlsLmNvbQ0KU3ViamVjdDogUmU6IFRlc3QgRHJhZnQgU2F2ZQ0KRGF0ZTogVHVlLCAzIFNlcCAyMDE5IDIzOjU1OjA0IC0wNzAwDQpNZXNzYWdlLUlkOiA8Q0FLYnVMVG9KaWlya0h1YVRfSERMcmRSMVlwR1NaZVpfNG56S0p1XzBmY2Fkdj11R2hnQG1haWwuZ21haWwuY29tPg0KTUlNRS1WZXJzaW9uOiAxLjANCg0KLS0tLS0tc2luaWthZWwtPz1fMS0xNTY3NTgwMTAzOTQ5MC4xNzI3ODY3NzY1MjI4MTE1DQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KW2NyeXB0dXA6bGluazpkcmFmdF9yZXBseToxNmNmYTkwMDFiYWFhYzBhXQ0KDQotLS0tLUJFR0lOIFBHUCBNRVNTQUdFLS0tLS0NClZlcnNpb246IEZsb3dDcnlwdCA2LjkuOSBHbWFpbCBFbmNyeXB0aW9uDQpDb21tZW50OiBTZWFtbGVzc2x5IHNlbmQgYW5kIHJlY2VpdmUgZW5jcnlwdGVkIGVtYWlsDQoNCndjRk1BMHRhTC96bUxaVUJBUS84Q0NtWWl2TVk0ckhoMUZOTDcwM1NvNkZia3ZTdDRnMEU4MnJHVDZIQg0KWnM2Nm1VQzBVWWI0bUF1VW9IazYyQ1F6TmtqZjJxbXBnRUNtN1VBZXNFdVdQZFljZ0dhMm0xVmtTSzVHDQo3ajd0UGl0S2RXMVlQZzFPeDE5cnhGbkxZQ2h6QnVOL1BqQk02ZG92dVl4SnZGVzBudGN6MEZkbVFTL0MNCkNiVklRViszMVBFREg1YXd1Wit6WlFlM2hUM1diRVo4N3RRTW9ESFZSQzhjdGVhZ3NoVFZPbldhb3h6RA0Ka3ZGajVENUEwWDljUXJ6Q3JwSnhYZFZvTmJBUng0UmFQbTR0K3ZGN29lSU1SRjBYWWxSWExmRlJKejRNDQo3WmhTTlNsNWNHRndTaEZxWlRoN3JDWlkxZGduUGtxS21PSkQyMDFHMmd0MjF0amViWnJoc3Y5K1cxSm4NCk5PTUkzSzFSMlNKMlVNWG9yYnhIaG5TNjBvWGxUc0hUTkdUWDFZd1BGeElpWkJzdjc2OG1LZDhBY3liTg0KSXRJMVEyd1FFWlVJekxYdTlxZmJ3V2owMGFmNkM0YUdVcW5RMkJReE9CenFHbHU0TU4zUjg3SUJOYUpsDQpmKzdYSmFjaGYvWUpJa284SlN4cnR6T1BBRnlOcmxjWURVZHdhQzBhTEUwY09CVXFkRW9sQkxiY1FhdWUNCi9sbGRRSnJreVdFZnNTVk1qWWwyeEhRdXlnZGhleW9sOTlKdlM3Y0E5YkJLN3lteXdoMm1XdVpGY1NNMQ0KTUdBeXBBdE9wZEV2bnJjeVZ0TVEyWGVwcDFJMGJCVTJGRzNOVWhsemRzS3dHVVdPUTB0QWlLeUkxQ3hKDQppMzZVVC9ud25CdnRqcE1PeTFyQTNEbUFrZjNsbXA2SHAyRUJyMnc2YWdqU3dBWUJlamhUYXliVmhsY3QNCmZFNW5GaGZvSWtTWXh4S1dIaU5uK2dHVGJ3THRqbVl2L2U4dGI1UmxUdHdzM2QyTUZBcVZXVVUzRlU5VQ0KRVV3K0FaT2ozZExkcVNWYTVXMEpmQ21KcU5jS0Z1QlFQWkdlL0ZlRE5hS24wYkhUTHdlekNKSEhrbDdNDQpXWFNhYTViaUpkVzR6RTNFQU95c2dGNFRmTmg0Q0pWR0ZRM2puRjhPVDUrVy9MVFZkWUwrT3pqa092MWkNCi9Sdnd2WHhBYkFFVG03V09zMkxTZnhMVGdNQVY3b0lPLzhBc0F2VVpHaUszSlh0Mm0zdkZvaVZVQjJKdA0KUkFtSEtPakhaMHc9M0QNCj0zRDUyN1YNCi0tLS0tRU5EIFBHUCBNRVNTQUdFLS0tLS0NCg0KLS0tLS0tc2luaWthZWwtPz1fMS0xNTY3NTgwMTAzOTQ5MC4xNzI3ODY3NzY1MjI4MTE1LS0NCg=="
     }],
     messages: []
+  },
+  "test.ci.compose@org.flowcrypt.com": {
+    "drafts": [],
+    "messages": [{
+      "id": "msg-0",
+      "threadId": "16eec6ebc087faaa",
+      "labelIds": ["SENT"],
+      "snippet": "email snippet",
+      "historyId": "1105694",
+      "internalDate": "1575924710000",
+      "payload": {
+        "mimeType": "text/plain",
+        "headers": [
+          { "name": "Content-Type", "value": "text/plain" },
+          { "name": "To", "value": "FirstName LastName <therecipient@theirdomain.com>" },
+          { "name": "From", "value": "contacts@gmail.com" },
+          { "name": "Subject", "value": "Sent email for recipient guessing" },
+          { "name": "Date", "value": "Mon, 9 Dec 2019 12:51:50 -0800" },
+          { "name": "Message-Id", "value": "<CAKbuLTSjDLGX9M4QWFg@mail.gmail.com>" },
+          { "name": "MIME-Version", "value": "1.0" }
+        ],
+        "body": {
+          attachmentId: "",
+          "size": 29,
+          "data": "bm90IG5lZWRlZCwganVzdCBuZWVkIGhlYWRlcnM="
+        }
+      },
+      "raw": undefined
+    }]
   }
 };
 
