@@ -138,7 +138,7 @@ export class Xss {
   }
 
   private static throwIfNotSupported = () => {
-    if (!window.DOMPurify.isSupported) {
+    if (!DOMPurify.isSupported) {
       throw new Error('Your browser is not supported. Please use Firefox, Chrome or Edge.');
     }
   }
