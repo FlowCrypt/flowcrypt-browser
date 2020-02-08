@@ -14,7 +14,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Google } from '../../../js/common/api/google.js';
 import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 import { Lang } from '../../../js/common/lang.js';
-import { Store } from '../../../js/common/platform/store.js';
+import { Store, ContactUpdate } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { moveElementInArray } from '../../../js/common/platform/util.js';
@@ -189,7 +189,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       recipient.evaluating = (async () => {
         let pubkeyLookupRes: Contact | 'fail' | 'wrong';
         if (recipient.status !== RecipientStatuses.WRONG) {
-          pubkeyLookupRes = await this.view.storageModule.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(recipient.email);
+          pubkeyLookupRes = await this.view.storageModule.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(recipient.email, undefined);
         } else {
           pubkeyLookupRes = 'wrong';
         }
@@ -486,10 +486,12 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.errModule.debug(`searchContacts.query.substring(${JSON.stringify(substring)})`);
       if (substring) {
         const query = { substring };
+        this.view.errModule.debug(`searchContacts substring: ${substring}`);
         const contacts = await Store.dbContactSearch(undefined, query);
+        this.view.errModule.debug(`searchContacts db count: ${contacts.length}`);
         const canLoadContactsFromAPI = this.canReadEmails || this.canSearchContacts;
         if (dbOnly || contacts.length >= this.MAX_CONTACTS_LENGTH || !canLoadContactsFromAPI) {
-          this.view.errModule.debug(`searchContacts 1`);
+          this.view.errModule.debug(`searchContacts 1, count: ${contacts.length}`);
           this.renderSearchRes(input, contacts, query);
         } else {
           this.view.errModule.debug(`searchContacts 2`);
@@ -667,21 +669,30 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     return result;
   }
 
+  // todo - refactor this
   private renderAndAddToDBAPILoadedContacts = async (input: JQuery<HTMLElement>, contacts: Contact[]) => {
     if (contacts.length) {
       const updatePromises: Promise<void>[] = [];
       for (const contact of contacts) {
-        const [inDb] = await Store.dbContactGet(undefined, [contact.email]);
-        if (!inDb && !this.failedLookupEmails.includes(contact.email)) {
+        const [storedContact] = await Store.dbContactGet(undefined, [contact.email]);
+        if (!storedContact && !this.failedLookupEmails.includes(contact.email)) {
           updatePromises.push((async () => {
-            const lookupRes = await this.view.storageModule.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(contact.email);
+            const lookupRes = await this.view.storageModule.lookupPubOnKsAndSaveToStorageWhenNoStoredContact(contact.email, contact.name || undefined);
             if (lookupRes === 'fail') {
               this.failedLookupEmails.push(contact.email);
             }
           })());
-        } else if (!inDb?.name && contact.name) {
-          const toUpdate = { name: contact.name };
-          await Store.dbContactUpdate(undefined, contact.email, toUpdate);
+        } else if (storedContact) { // potentially update
+          const toUpdate: ContactUpdate = {};
+          if (!storedContact.name && contact.name) {
+            toUpdate.name = contact.name;
+          }
+          if (storedContact.searchable.length !== contact.searchable.length && storedContact.searchable.join(',') !== contact.searchable.join(',')) {
+            toUpdate.searchable = contact.searchable;
+          }
+          if (Object.keys(toUpdate).length) {
+            await Store.dbContactUpdate(undefined, contact.email, toUpdate);
+          }
         }
       }
       await Promise.all(updatePromises);
