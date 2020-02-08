@@ -38,6 +38,7 @@ export class Xss {
   }
 
   public static htmlSanitize = (dirtyHtml: string): string => {
+    Xss.throwIfNotSupported();
     return DOMPurify.sanitize(dirtyHtml, { // tslint:disable-line:oneliner-object-literal
       SAFE_FOR_JQUERY: true,
       ADD_ATTR: Xss.ADD_ATTR,
@@ -47,6 +48,7 @@ export class Xss {
   }
 
   public static htmlSanitizeKeepBasicTags = (dirtyHtml: string, imgHandling: SanitizeImgHandling): string => {
+    Xss.throwIfNotSupported();
     // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
     DOMPurify.removeAllHooks();
     DOMPurify.addHook('afterSanitizeAttributes', (node) => {
@@ -95,6 +97,7 @@ export class Xss {
   }
 
   public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string): string => {
+    Xss.throwIfNotSupported();
     let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, 'IMG-DEL');
     const random = Str.sloppyRandom(5);
     const br = `CU_BR_${random}`;
@@ -134,6 +137,12 @@ export class Xss {
     return str.replace(/&nbsp;/g, ' ').replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
   }
 
+  private static throwIfNotSupported = () => {
+    if (!DOMPurify.isSupported) {
+      throw new Error('Your browser is not supported. Please use Firefox, Chrome or Edge.');
+    }
+  }
+
   private static sanitizeHrefRegexp = () => { // allow href links that have same origin as our extension + cid + inline image
     if (typeof Xss.HREF_REGEX_CACHE === 'undefined') {
       if (window?.location?.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
@@ -144,4 +153,5 @@ export class Xss {
     }
     return Xss.HREF_REGEX_CACHE;
   }
+
 }
