@@ -504,11 +504,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
             if (contactsGmail) {
               const newContacts = contactsGmail.filter(cGmail => !contacts.find(c => c.email === cGmail.email));
               const mappedContactsFromGmail = await Promise.all(newContacts.map(({ email, name }) => Store.dbContactObj({ email, name })));
-              await this.renderAndAddToDBAPILoadedContacts(input, mappedContactsFromGmail);
+              await this.renderApiLoadedContactsAndtoDb(input, mappedContactsFromGmail);
             }
           } else if (this.canReadEmails) {
             this.view.errModule.debug(`searchContacts (Gmail Sent Messages) 3`);
-            this.guessContactsFromSentEmails(query.substring, contacts, contacts => this.renderAndAddToDBAPILoadedContacts(input, contacts.new));
+            this.guessContactsFromSentEmails(query.substring, contacts, contacts => this.renderApiLoadedContactsAndtoDb(input, contacts.new));
           }
           this.view.errModule.debug(`searchContacts 4`);
           this.renderSearchResultsLoadingDone();
@@ -669,20 +669,12 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     return result;
   }
 
-  // todo - refactor this
-  private renderAndAddToDBAPILoadedContacts = async (input: JQuery<HTMLElement>, contacts: Contact[]) => {
+  private renderApiLoadedContactsAndtoDb = async (input: JQuery<HTMLElement>, contacts: Contact[]) => {
     if (contacts.length) {
-      const updatePromises: Promise<void>[] = [];
+      const toLookup: Contact[] = [];
       for (const contact of contacts) {
         const [storedContact] = await Store.dbContactGet(undefined, [contact.email]);
-        if (!storedContact && !this.failedLookupEmails.includes(contact.email)) {
-          updatePromises.push((async () => {
-            const lookupRes = await this.view.storageModule.lookupPubOnKsAndSaveToStorageWhenNoStoredContact(contact.email, contact.name || undefined);
-            if (lookupRes === 'fail') {
-              this.failedLookupEmails.push(contact.email);
-            }
-          })());
-        } else if (storedContact) { // potentially update
+        if (storedContact) {
           const toUpdate: ContactUpdate = {};
           if (!storedContact.name && contact.name) {
             toUpdate.name = contact.name;
@@ -693,9 +685,15 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           if (Object.keys(toUpdate).length) {
             await Store.dbContactUpdate(undefined, contact.email, toUpdate);
           }
+        } else if (!this.failedLookupEmails.includes(contact.email)) {
+          toLookup.push(contact);
         }
       }
-      await Promise.all(updatePromises);
+      await Promise.all(toLookup.map(c => this.view.storageModule.ksLookupUnknownContactPubAndSaveToDb(c.email, c.name || undefined).then(lookupRes => {
+        if (lookupRes === 'fail') {
+          this.failedLookupEmails.push(c.email);
+        }
+      })));
       await this.searchContacts(input, true);
     }
   }

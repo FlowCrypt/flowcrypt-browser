@@ -111,10 +111,10 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       this.checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(storedContact).catch(Catch.reportErr);
       return storedContact;
     }
-    return await this.lookupPubOnKsAndSaveToStorageWhenNoStoredContact(email, name);
+    return await this.ksLookupUnknownContactPubAndSaveToDb(email, name);
   }
 
-  public lookupPubOnKsAndSaveToStorageWhenNoStoredContact = async (email: string, name: string | undefined): Promise<Contact | "fail"> => {
+  public ksLookupUnknownContactPubAndSaveToDb = async (email: string, name: string | undefined): Promise<Contact | "fail"> => {
     try {
       const lookupResult = await Keyserver.lookupEmail(this.view.acctEmail, email);
       if (lookupResult && email) {
