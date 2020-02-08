@@ -11,6 +11,10 @@ import { Xss } from './platform/xss.js';
 export abstract class View {
 
   public static run<VIEW extends View>(viewClass: new () => VIEW) {
+    if (!Xss.isSupported()) {
+      View.renderErr(new Error('Your browser is not supported. Please use Firefox, Chrome or Edge.'));
+      return;
+    }
     try {
       const view = new viewClass();
       (async () => {
@@ -24,6 +28,10 @@ export abstract class View {
 
   private static reportAndRenderErr = (e: any) => {
     ApiErr.reportIfSignificant(e);
+    View.renderErr(e);
+  }
+
+  private static renderErr = (e: any) => {
     Xss.sanitizeRender('body', `${ApiErr.eli5(e)}<br>${String(e)}<br><br>${Ui.retryLink()}`);
   }
 
