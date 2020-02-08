@@ -65,15 +65,25 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('compose - can load contact based on name', testWithBrowser('compose', async (t, browser) => {
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await composePage.type('@input-to', 'human'); // test guessing of contacts
-      await composePage.waitAll(['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
+      // works on first search
+      const composePage1 = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await composePage1.type('@input-to', 'human'); // test guessing of contacts
+      await composePage1.waitAll(['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
+      // works on subsequent search
+      const composePage2 = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await composePage2.type('@input-to', 'human'); // test guessing of contacts
+      await composePage2.waitAll(['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
     }));
 
     ava.default('compose - can load contact based on name different from email', testWithBrowser('compose', async (t, browser) => {
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await composePage.type('@input-to', 'FirstName'); // test guessing of contacts when the name is not included in email address
-      await composePage.waitAll(['@container-contacts', '@action-select-contact(therecipient@theirdomain.com)']);
+      // works on the first search
+      const composePage1 = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await composePage1.type('@input-to', 'FirstName'); // test guessing of contacts when the name is not included in email address
+      await composePage1.waitAll(['@container-contacts', '@action-select-contact(therecipient@theirdomain.com)']);
+      // works on subsequent search
+      const composePage2 = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await composePage2.type('@input-to', 'FirstName'); // test guessing of contacts when the name is not included in email address
+      await composePage2.waitAll(['@container-contacts', '@action-select-contact(therecipient@theirdomain.com)']);
     }));
 
     ava.default(`compose - can choose found contact`, testWithBrowser('compose', async (t, browser) => {
