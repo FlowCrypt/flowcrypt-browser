@@ -16,7 +16,7 @@ Catch.try(async () => {
   BrowserMsg.listen(tabId);
 
   let src = Env.getBaseUrl();
-  src += `/chrome/elements/pgp_block.htm?account_email=flowcrypt.compatibility%40gmail.com&frame_id=frame_yVMKFLRDiY&message=&has_password=___cu_false___&message_id=162275c819bcbf9b&sender_email=human%40flowcrypt.com&is_outgoing=___cu_false___`;
+  src += `/chrome/elements/pgp_block.htm?${location.search}`;
   src += `&parentTabId=${encodeURIComponent(tabId)}`;
   $('body').append(`<iframe src="${src}" frameborder="0"></iframe>`);
 })();
