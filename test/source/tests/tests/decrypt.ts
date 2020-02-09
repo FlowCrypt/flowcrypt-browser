@@ -162,9 +162,9 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       });
     }));
 
-    ava.default('decrypt - protonmail - auto TOFU load matching pubkey first time', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default.only('decrypt - protonmail - auto TOFU load matching pubkey first time', testWithBrowser('compatibility', async (t, browser) => {
       const params = `?frameId=none&message=&hasPassword=___cu_false___&msgId=16a9c109bc51687d&` +
-        `senderEmail=flowcrypt.compatibility%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
+        `senderEmail=flowcrypt.compatibility%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com`;
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: ["1234"],
