@@ -18,5 +18,5 @@ Catch.try(async () => {
   let src = Env.getBaseUrl();
   src += `/chrome/elements/pgp_block.htm?${location.search}`;
   src += `&parentTabId=${encodeURIComponent(tabId)}`;
-  $('body').append(`<iframe src="${src}" frameborder="0"></iframe>`);
+  $('body').append(`<iframe src="${src}" frameborder="0"></iframe>`); // xss-direct
 })();
