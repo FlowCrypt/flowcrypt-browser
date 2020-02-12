@@ -25,20 +25,20 @@
 
 import { MimeParser } from '../core/types/emailjs.js';
 
-declare const openpgp: typeof OpenPGP;
-
 type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode: (text: string) => string, labels: string[], version: string };
 
 export const requireOpenpgp = (): typeof OpenPGP => {
-  try {
-    openpgp.config.versionstring = `FlowCrypt Gmail Encryption`;
-    openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
-    // openpgp.config.require_uid_self_cert = false;
-    return openpgp;
-  } catch (e) {
-    // a hack for content scripts, which do not currently need openpgp, until we come up with something better
-    return undefined as any as typeof OpenPGP;
+  // make content scripts happy
+  // because content scripts files are concatenated and sources inside `pgp.ts` contain `const openpgp = ...`
+  // if we used `openpgp` directly as a var, it would complain openpgp was used before declaratiom
+  const openpgp = (window as any).openpgp as typeof OpenPGP;
+  if (!openpgp) {
+    return openpgp; // in some environments, openpgp is indeed undefined, eg pgp_block.htm
   }
+  openpgp.config.versionstring = `FlowCrypt Gmail Encryption`;
+  openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
+  // openpgp.config.require_uid_self_cert = false;
+  return openpgp;
 };
 
 export const requireMimeParser = (): typeof MimeParser => {

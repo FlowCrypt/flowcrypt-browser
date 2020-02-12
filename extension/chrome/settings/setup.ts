@@ -193,8 +193,12 @@ export class SetupView extends View {
     const { full_name: name } = await Store.getAcct(this.acctEmail, ['full_name']);
     for (const email of this.submitKeyForAddrs) {
       myOwnEmailAddrsAsContacts.push(await Store.dbContactObj({
-        email, name, client: 'cryptup', pubkey: prvs[0].toPublic().armor(), lastUse: Date.now(),
-        lastSig: await PgpKey.lastSig(prvs[0].toPublic()), expiresOn: await PgpKey.dateBeforeExpiration(prvs[0])
+        email,
+        name,
+        client: 'cryptup',
+        pubkey: prvs[0].toPublic().armor(),
+        lastUse: Date.now(),
+        lastSig: await PgpKey.lastSig(prvs[0].toPublic())
       }));
     }
     await Store.dbContactSave(undefined, myOwnEmailAddrsAsContacts);

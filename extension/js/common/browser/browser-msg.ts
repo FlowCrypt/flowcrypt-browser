@@ -132,7 +132,6 @@ export class BrowserMsg {
         storeAcctSet: (bm: Bm.StoreAcctSet) => BrowserMsg.sendAwait(undefined, 'storeAcctSet', bm, true) as Promise<Bm.Res.StoreAcctSet>,
         db: (bm: Bm.Db): Promise<Bm.Res.Db> => BrowserMsg.sendAwait(undefined, 'db', bm, true) as Promise<Bm.Res.Db>,
         pgpMsgType: (bm: Bm.PgpMsgType) => BrowserMsg.sendAwait(undefined, 'pgpMsgType', { rawBytesStr: bm.rawBytesStr.slice(0, 50) }, true) as Promise<Bm.Res.PgpMsgType>,
-        pgpMsgDiagnosePubkeys: (bm: Bm.PgpMsgDiagnoseMsgPubkeys) => BrowserMsg.sendAwait(undefined, 'pgpMsgDiagnosePubkeys', bm, true) as Promise<Bm.Res.PgpMsgDiagnoseMsgPubkeys>,
         pgpHashChallengeAnswer: (bm: Bm.PgpHashChallengeAnswer) => BrowserMsg.sendAwait(undefined, 'pgpHashChallengeAnswer', bm, true) as Promise<Bm.Res.PgpHashChallengeAnswer>,
         pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
         pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
@@ -167,7 +166,10 @@ export class BrowserMsg {
     reload: (dest: Bm.Dest, bm: Bm.Reload) => BrowserMsg.sendCatch(dest, 'reload', bm),
     redirect: (dest: Bm.Dest, bm: Bm.Redirect) => BrowserMsg.sendCatch(dest, 'redirect', bm),
     openGoogleAuthDialog: (dest: Bm.Dest, bm: Bm.OpenGoogleAuthDialog) => BrowserMsg.sendCatch(dest, 'open_google_auth_dialog', bm),
-    addToContacts: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'addToContacts', {})
+    addToContacts: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'addToContacts', {}),
+    await: {
+      pgpMsgDiagnosePubkeys: (dest: Bm.Dest, bm: Bm.PgpMsgDiagnoseMsgPubkeys) => BrowserMsg.sendAwait(dest, 'pgpMsgDiagnosePubkeys', bm, true) as Promise<Bm.Res.PgpMsgDiagnoseMsgPubkeys>,
+    }
   };
   private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};
   private static HANDLERS_REGISTERED_FRAME: Handlers = {
@@ -247,6 +249,16 @@ export class BrowserMsg {
               BrowserMsg.sendRawResponse(Promise.reject(new Error(`BrowserMsg.listen error: handler "${msg.name}" not set`)), rawRespond);
               return true; // will respond
             }
+          } else {
+            // sometimes received events get duplicated
+            // while first event is being processed, second even will arrive
+            // that's why we generate a unique id of each request (uid) and filter them above to identify truly unique requests
+            // if we got here, that means we are handing a duplicate request
+            // we'll indicate will respond = true, so that the processing of the actual request is not negatively affected
+            // leaving it at "false" would respond with null, which would throw an error back to the original BrowserMsg sender:
+            // "Error: BrowserMsg.sendAwait(pgpMsgDiagnosePubkeys) returned(null) with lastError: (no lastError)"
+            // why the requests get duplicated in the first place I'm not sure, it feels like a browser bug
+            return true;
           }
         }
       } catch (e) {

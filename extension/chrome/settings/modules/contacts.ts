@@ -141,9 +141,7 @@ View.run(class ContactsView extends View {
     if (!armoredPubkey || !email) {
       await Ui.modal.warning('No public key entered');
     } else if (await PgpKey.longid(armoredPubkey)) {
-      await Store.dbContactSave(undefined, await Store.dbContactObj({
-        email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now(), expiresOn: await PgpKey.dateBeforeExpiration(armoredPubkey)
-      }));
+      await Store.dbContactSave(undefined, await Store.dbContactObj({ email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now() }));
       await this.loadAndRenderContactList();
     } else {
       await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let us know at human@flowcrypt.com if you need help.');

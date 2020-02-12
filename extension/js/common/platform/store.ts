@@ -8,7 +8,6 @@ import { Contact, KeyInfo } from '../core/pgp-key.js';
 import { Dict, PromiseCancellation, Str, Value } from '../core/common.js';
 import { FcUuidAuth, PaymentMethod, SubscriptionInfo, SubscriptionLevel } from '../api/backend.js';
 import { storageLocalGet, storageLocalRemove, storageLocalSet } from '../api/chrome.js';
-
 import { DomainRules } from '../rules.js';
 import { Env } from '../browser/env.js';
 import { GmailRes } from '../api/email-provider/gmail/gmail-parser.js';
@@ -17,6 +16,7 @@ import { PgpArmor } from '../core/pgp-armor.js';
 import { PgpClient } from '../api/keyserver.js';
 import { PgpKey } from '../core/pgp-key.js';
 import { Ui } from '../browser/ui.js';
+import { openpgp } from '../core/pgp.js';
 
 // tslint:disable:no-null-keyword
 
@@ -36,7 +36,6 @@ export type DbContactObjArg = {
   lastUse?: number | null, // when was this contact last used to send an email
   lastSig?: number | null, // last pubkey signature (when was pubkey last updated by owner)
   lastCheck?: number | null; // when was the local copy of the pubkey last updated (or checked against Attester)
-  expiresOn?: Date | null;
 };
 export type EmailProvider = 'gmail';
 export type GoogleAuthScopesNames = [keyof typeof GoogleAuth.OAUTH.scopes, keyof typeof GoogleAuth.OAUTH.legacy_scopes][number];
@@ -506,11 +505,9 @@ export class Store {
     });
   }
 
-  public static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig, expiresOn }: DbContactObjArg): Promise<Contact> => {
-    const expiresOnMs = Number(expiresOn) || undefined;
-    // @ts-ignore - if openpgp is mising, relay op through background process
+  public static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig }: DbContactObjArg): Promise<Contact> => {
     if (typeof openpgp === 'undefined') {
-      return await BrowserMsg.send.bg.await.db({ f: 'dbContactObj', args: [{ email, name, client, pubkey, pendingLookup, lastUse, lastSig, lastCheck, expiresOnMs }] }) as Contact;
+      return await BrowserMsg.send.bg.await.db({ f: 'dbContactObj', args: [{ email, name, client, pubkey, pendingLookup, lastUse, lastSig, lastCheck }] }) as Contact;
     } else {
       const validEmail = Str.parseEmail(email).email;
       if (!validEmail) {
@@ -542,6 +539,7 @@ export class Store {
       if (!lastSig) {
         lastSig = await PgpKey.lastSig(k);
       }
+      const expiresOnMs = Number(await PgpKey.dateBeforeExpiration(k)) || undefined;
       return {
         email: validEmail,
         name: name || null,

@@ -274,8 +274,11 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       if (keyUser.email) {
         if (!await Store.dbContactGet(undefined, [keyUser.email])) {
           await Store.dbContactSave(undefined, await Store.dbContactObj({
-            email: keyUser.email, name: keyUser.name, client: 'pgp',
-            pubkey: normalizedPub, lastCheck: Date.now(), expiresOn: await PgpKey.dateBeforeExpiration(normalizedPub)
+            email: keyUser.email,
+            name: keyUser.name,
+            client: 'pgp',
+            pubkey: normalizedPub,
+            lastCheck: Date.now(),
           }));
         }
         this.view.S.cached('input_to').val(keyUser.email);

@@ -134,8 +134,11 @@ View.run(class PgpPubkeyView extends View {
         const email = Str.parseEmail(pubkey.users[0].userId?.userid || '').email;
         if (email) {
           contacts.push(await Store.dbContactObj({
-            email, client: 'pgp', pubkey: pubkey.armor(), lastUse: Date.now(), lastSig: await PgpKey.lastSig(pubkey),
-            expiresOn: await PgpKey.dateBeforeExpiration(pubkey)
+            email,
+            client: 'pgp',
+            pubkey: pubkey.armor(),
+            lastUse: Date.now(),
+            lastSig: await PgpKey.lastSig(pubkey),
           }));
         }
       }
@@ -146,8 +149,11 @@ View.run(class PgpPubkeyView extends View {
     } else if (this.publicKeys!.length) {
       if (Str.isEmailValid(String($('.input_email').val()))) {
         const contact = await Store.dbContactObj({
-          email: String($('.input_email').val()), client: 'pgp', pubkey: this.publicKeys![0].armor(), lastUse: Date.now(),
-          lastSig: await PgpKey.lastSig(this.publicKeys![0]), expiresOn: await PgpKey.dateBeforeExpiration(this.publicKeys![0])
+          email: String($('.input_email').val()),
+          client: 'pgp',
+          pubkey: this.publicKeys![0].armor(),
+          lastUse: Date.now(),
+          lastSig: await PgpKey.lastSig(this.publicKeys![0])
         });
         await Store.dbContactSave(undefined, contact);
         BrowserMsg.send.addToContacts(this.parentTabId);
