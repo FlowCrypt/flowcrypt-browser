@@ -137,7 +137,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default('decrypt - protonmail - load pubkey into contact + verify detached msg', testWithBrowser('compatibility', async (t, browser) => {
       const textParams = `?frameId=none&message=&hasPassword=___cu_false___&msgId=16a9c109bc51687d&` +
-        `senderEmail=mismatch%40mail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
+        `senderEmail=mismatch%40mail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com`;
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params: textParams,
         content: ["1234"],
@@ -154,7 +154,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         signature: ["matching signature", "Mismatch@Mail.Com"]
       });
       const htmlParams = `?frameId=none&message=&hasPassword=___cu_false___&msgId=16a9c0fe4e034bc2&` +
-        `senderEmail=flowcrypt.compatibility%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
+        `senderEmail=flowcrypt.compatibility%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com`;
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params: htmlParams,
         content: ["1234"],
@@ -162,7 +162,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       });
     }));
 
-    ava.default.only('decrypt - protonmail - auto TOFU load matching pubkey first time', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('decrypt - protonmail - auto TOFU load matching pubkey first time', testWithBrowser('compatibility', async (t, browser) => {
       const params = `?frameId=none&message=&hasPassword=___cu_false___&msgId=16a9c109bc51687d&` +
         `senderEmail=flowcrypt.compatibility%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com`;
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
@@ -178,7 +178,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('decrypt - verify encrypted+signed message', testWithBrowser('compatibility', async (t, browser) => {
-      const params = `?frameId=none&message=&hasPassword=___cu_false___&msgId=1617429dc55600db&senderEmail=martin%40politick.ca&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`; // eslint-disable-line max-len
+      const params = `?frameId=none&message=&hasPassword=___cu_false___&msgId=1617429dc55600db&senderEmail=martin%40politick.ca&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com`; // eslint-disable-line max-len
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: ['4) signed + encrypted email if supported'],
