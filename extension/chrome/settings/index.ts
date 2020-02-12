@@ -121,8 +121,13 @@ View.run(class SettingsView extends View {
       $('#cryptup_dialog').remove();
     });
     BrowserMsg.listen(this.tabId!);
-    $('.show_settings_page').click(this.setHandler(target => {
-      Settings.renderSubPage(this.acctEmail!, this.tabId!, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
+    $('.show_settings_page').click(this.setHandler(async target => {
+      const page = $(target).attr('page');
+      if (page) {
+        Settings.renderSubPage(this.acctEmail!, this.tabId!, page, $(target).attr('addurltext') || '');
+      } else {
+        Catch.report(`Unknown target page in element: ${target.outerHTML}`);
+      }
     }));
     $('.action_show_encrypted_inbox').click(this.setHandler(target => {
       window.location.href = Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: this.acctEmail! });
