@@ -7,7 +7,6 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { PgpBlockView } from '../pgp_block';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -64,9 +63,7 @@ export class PgpBlockViewSignatureModule {
           render(`Fetched sender's pubkey ${keyDetails.ids[0].longid} but message was signed with a different key: ${signerLongid}, will not verify.`, () => undefined);
           return;
         } // ---> and longid it matches signature
-        await Store.dbContactSave(undefined, await Store.dbContactObj({
-          email: senderEmail, pubkey, client: pgpClient, expiresOn: await PgpKey.dateBeforeExpiration(pubkey)
-        })); // <= TOFU auto-import
+        await Store.dbContactSave(undefined, await Store.dbContactObj({ email: senderEmail, pubkey, client: pgpClient })); // <= TOFU auto-import
         render('Fetched pubkey, click to verify', () => window.location.reload());
       } else { // don't know who sent it
         const { pubkey, pgpClient } = await Keyserver.lookupLongid(this.view.acctEmail, signerLongid);
@@ -86,9 +83,7 @@ export class PgpBlockViewSignatureModule {
           return;
         }
         render(`Fetched matching pubkey ${signerLongid}. Click to load and use it.`, async () => {
-          await Store.dbContactSave(undefined, await Store.dbContactObj({
-            email: pubkeyEmail, pubkey, client: pgpClient, expiresOn: await PgpKey.dateBeforeExpiration(pubkey)
-          })); // TOFU manual import
+          await Store.dbContactSave(undefined, await Store.dbContactObj({ email: pubkeyEmail, pubkey, client: pgpClient })); // TOFU manual import
           window.location.reload();
         });
       }
