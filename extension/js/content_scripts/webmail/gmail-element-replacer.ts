@@ -104,7 +104,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private everything = async () => {
+  private everything = () => {
     this.replaceArmoredBlocks();
     this.replaceAtts().catch(Catch.reportErr);
     this.replaceFcTags();
