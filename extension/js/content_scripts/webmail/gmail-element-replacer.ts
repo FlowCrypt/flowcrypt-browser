@@ -27,8 +27,7 @@ type JQueryEl = JQuery<HTMLElement>;
 
 export class GmailElementReplacer implements WebmailElementReplacer {
 
-  public tabId: string;
-
+  private tabId: string;
   private gmail: Gmail;
   private recipientHasPgpCache: Dict<boolean> = {};
   private sendAs: Dict<SendAsAlias>;
@@ -105,7 +104,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private everything = () => {
+  private everything = async () => {
+    this.tabId = await BrowserMsg.requiredTabId();
     this.replaceArmoredBlocks();
     this.replaceAtts().catch(Catch.reportErr);
     this.replaceFcTags();
