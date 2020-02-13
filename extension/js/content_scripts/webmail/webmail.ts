@@ -6,9 +6,10 @@
 
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
 
-import { BrowserMsg } from '../../common/browser/browser-msg.js';
+import { Bm, BrowserMsg } from '../../common/browser/browser-msg.js';
 import { WebmailVariantObject, contentScriptSetupIfVacant } from './setup-webmail-content-script.js';
 
+import { Buf } from '../../common/core/buf.js';
 import { Catch } from '../../common/platform/catch.js';
 import { ContentScriptWindow } from '../../common/browser/browser-window.js';
 import { Env } from '../../common/browser/env.js';
@@ -135,6 +136,7 @@ Catch.try(async () => {
       start,
     });
 
+    BrowserMsg.addListener('pgpMsgType', (r: Bm.PgpMsgType) => PgpMsg.type({ data: Buf.fromRawBytesStr(r.rawBytesStr) }));
     BrowserMsg.addListener('pgpMsgDiagnosePubkeys', PgpMsg.diagnosePubkeys);
   };
 
