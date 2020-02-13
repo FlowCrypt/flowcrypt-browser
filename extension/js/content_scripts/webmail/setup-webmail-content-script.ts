@@ -23,7 +23,7 @@ type WebmailSpecificInfo = {
   getUserAccountEmail: () => string | undefined;
   getUserFullName: () => string | undefined;
   getReplacer: () => WebmailElementReplacer;
-  start: (acctEmail: string, inject: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => Promise<void>;
+  start: (acctEmail: string, inject: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void, tabId: string) => Promise<void>;
 };
 export interface WebmailElementReplacer {
   getIntervalFunctions: () => Array<IntervalFunction>;
@@ -201,7 +201,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       const { tabId, notifications, factory, inject } = await initInternalVars(acctEmail);
       await showNotificationsAndWaitTilAcctSetUp(acctEmail, notifications);
       browserMsgListen(acctEmail, tabId, inject, factory, notifications);
-      await webmailSpecific.start(acctEmail, inject, notifications, factory, notifyMurdered);
+      await webmailSpecific.start(acctEmail, inject, notifications, factory, notifyMurdered, tabId);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {
         console.error(`FlowCrypt cannot start: ${String(e)}`);
