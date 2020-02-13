@@ -136,7 +136,6 @@ Catch.try(async () => {
       start,
     });
 
-    BrowserMsg.addListener('pgpMsgType', (r: Bm.PgpMsgType) => PgpMsg.type({ data: Buf.fromRawBytesStr(r.rawBytesStr) }));
     BrowserMsg.addListener('pgpMsgDiagnosePubkeys', PgpMsg.diagnosePubkeys);
   };
 
