@@ -3,7 +3,7 @@
 'use strict';
 
 import { AccountIndex, AccountStore, GlobalIndex, GlobalStore } from '../platform/store.js';
-import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, PgpMsgTypeResult, VerifyRes } from '../core/pgp-msg.js';
+import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, VerifyRes } from '../core/pgp-msg.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
 
 import { AjaxErr } from '../api/error/api-error-types.js';
@@ -55,7 +55,6 @@ export namespace Bm {
   export type Inbox = { acctEmail?: string };
   export type ReconnectAcctAuthPopup = { acctEmail: string, scopes?: string[] };
   export type PgpKeyDetails = { pubkey: string };
-  export type PgpMsgType = { rawBytesStr: string };
   export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
   export type PgpMsgDiagnoseMsgPubkeys = PgpMsgMethod.Arg.DiagnosePubkeys;
   export type PgpMsgVerifyDetached = PgpMsgMethod.Arg.VerifyDetached;
@@ -73,7 +72,6 @@ export namespace Bm {
     export type StoreAcctSet = void;
     export type ReconnectAcctAuthPopup = AuthRes;
     export type PgpKeyDetails = { original: string, normalized: string, keys: KeyDetails[] };
-    export type PgpMsgType = PgpMsgTypeResult;
     export type PgpMsgDecrypt = DecryptResult;
     export type PgpMsgDiagnoseMsgPubkeys = DiagnoseMsgPubkeysResult;
     export type PgpMsgVerify = VerifyRes;
@@ -84,7 +82,7 @@ export namespace Bm {
     export type Ajax = any; // not included in Any below
 
     export type Any = GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup | PgpKeyDetails
-      | PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer
+      | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer
       | StoreSessionGet | StoreSessionSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet
       | AjaxGmailAttGetChunk;
   }
@@ -93,7 +91,7 @@ export namespace Bm {
     AddPubkeyDialog | ReinsertReplyBox | CloseReplyMessage | ScrollToElement | SubscribeDialog | RenderPublicKeys | NotificationShowAuthPopupNeeded |
     NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass | ReconnectAcctAuthPopup |
     PgpKeyDetails | Db | StoreSessionSet | StoreSessionGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
-    PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | Ajax | FocusFrame;
+    PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | Ajax | FocusFrame;
 
   // export type RawResponselessHandler = (req: AnyRequest) => Promise<void>;
   // export type RawRespoHandler = (req: AnyRequest) => Promise<void>;
@@ -131,7 +129,6 @@ export class BrowserMsg {
         storeAcctGet: (bm: Bm.StoreAcctGet) => BrowserMsg.sendAwait(undefined, 'storeAcctGet', bm, true) as Promise<Bm.Res.StoreAcctGet>,
         storeAcctSet: (bm: Bm.StoreAcctSet) => BrowserMsg.sendAwait(undefined, 'storeAcctSet', bm, true) as Promise<Bm.Res.StoreAcctSet>,
         db: (bm: Bm.Db): Promise<Bm.Res.Db> => BrowserMsg.sendAwait(undefined, 'db', bm, true) as Promise<Bm.Res.Db>,
-        pgpMsgType: (bm: Bm.PgpMsgType) => BrowserMsg.sendAwait(undefined, 'pgpMsgType', { rawBytesStr: bm.rawBytesStr.slice(0, 50) }, true) as Promise<Bm.Res.PgpMsgType>,
         pgpHashChallengeAnswer: (bm: Bm.PgpHashChallengeAnswer) => BrowserMsg.sendAwait(undefined, 'pgpHashChallengeAnswer', bm, true) as Promise<Bm.Res.PgpHashChallengeAnswer>,
         pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
         pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,

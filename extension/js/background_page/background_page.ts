@@ -7,7 +7,6 @@ import { GlobalStore, Store } from '../common/platform/store.js';
 
 import { BgHandlers } from './bg-handlers.js';
 import { BgUtils } from './bgutils.js';
-import { Buf } from '../common/core/buf.js';
 import { Catch } from '../common/platform/catch.js';
 import { GoogleAuth } from '../common/api/google-auth.js';
 import { PgpHash } from '../common/core/pgp-hash.js';
@@ -57,7 +56,6 @@ openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
   BrowserMsg.bgAddListener('storeAcctSet', (r: Bm.StoreAcctSet) => Store.setAcct(r.acctEmail, r.values));
 
   // openpgp related handlers
-  BrowserMsg.bgAddListener('pgpMsgType', (r: Bm.PgpMsgType) => PgpMsg.type({ data: Buf.fromRawBytesStr(r.rawBytesStr) }));
   BrowserMsg.bgAddListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await PgpHash.challengeAnswer(r.answer) }));
   BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decrypt);
   BrowserMsg.bgAddListener('pgpMsgVerifyDetached', PgpMsg.verifyDetached);
