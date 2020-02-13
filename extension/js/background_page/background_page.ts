@@ -9,7 +9,6 @@ import { BgHandlers } from './bg-handlers.js';
 import { BgUtils } from './bgutils.js';
 import { Catch } from '../common/platform/catch.js';
 import { GoogleAuth } from '../common/api/google-auth.js';
-import { PgpHash } from '../common/core/pgp-hash.js';
 import { PgpMsg } from '../common/core/pgp-msg.js';
 import { VERSION } from '../common/core/const.js';
 import { injectFcIntoWebmail } from './inject.js';
@@ -56,7 +55,6 @@ openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
   BrowserMsg.bgAddListener('storeAcctSet', (r: Bm.StoreAcctSet) => Store.setAcct(r.acctEmail, r.values));
 
   // openpgp related handlers
-  BrowserMsg.bgAddListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await PgpHash.challengeAnswer(r.answer) }));
   BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decrypt);
   BrowserMsg.bgAddListener('pgpMsgVerifyDetached', PgpMsg.verifyDetached);
   BrowserMsg.bgAddListener('pgpKeyDetails', BgHandlers.pgpKeyDetails);

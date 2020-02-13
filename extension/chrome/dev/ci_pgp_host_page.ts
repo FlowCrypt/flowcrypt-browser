@@ -5,7 +5,6 @@
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Xss } from '../../js/common/platform/xss.js';
-import { PgpMsg } from '../../js/common/core/pgp-msg.js';
 import { Env } from '../../js/common/browser/env.js';
 
 /* eslint-disable max-len */
@@ -13,7 +12,7 @@ import { Env } from '../../js/common/browser/env.js';
 Catch.try(async () => {
   const tabId = await BrowserMsg.requiredTabId();
 
-  BrowserMsg.addListener('pgpMsgDiagnosePubkeys', PgpMsg.diagnosePubkeys);
+  BrowserMsg.addPgpListeners();
   BrowserMsg.listen(tabId);
 
   let src = Env.getBaseUrl();

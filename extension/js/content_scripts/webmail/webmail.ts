@@ -15,7 +15,6 @@ import { Env } from '../../common/browser/env.js';
 import { GmailElementReplacer } from './gmail-element-replacer.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
-import { PgpMsg } from '../../../js/common/core/pgp-msg.js';
 import { Store } from '../../common/platform/store.js';
 import { Str } from '../../common/core/common.js';
 import { XssSafeFactory } from '../../common/xss-safe-factory.js';
@@ -135,7 +134,7 @@ Catch.try(async () => {
       start,
     });
 
-    BrowserMsg.addListener('pgpMsgDiagnosePubkeys', PgpMsg.diagnosePubkeys);
+    BrowserMsg.addPgpListeners();
   };
 
   // when we support more webmails, there will be if/else here to figure out which one to run

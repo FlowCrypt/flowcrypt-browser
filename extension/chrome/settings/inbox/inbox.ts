@@ -84,6 +84,7 @@ export class InboxView extends View {
   }
 
   public setHandlers = () => {
+    BrowserMsg.addPgpListeners();
     BrowserMsg.listen(this.tabId);
     Catch.setHandledInterval(this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded, 30000);
   }
