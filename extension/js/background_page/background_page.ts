@@ -9,7 +9,6 @@ import { BgHandlers } from './bg-handlers.js';
 import { BgUtils } from './bgutils.js';
 import { Catch } from '../common/platform/catch.js';
 import { GoogleAuth } from '../common/api/google-auth.js';
-import { PgpMsg } from '../common/core/pgp-msg.js';
 import { VERSION } from '../common/core/const.js';
 import { injectFcIntoWebmail } from './inject.js';
 import { migrateGlobal } from './migrations.js';
@@ -53,11 +52,6 @@ openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
   BrowserMsg.bgAddListener('storeGlobalSet', (r: Bm.StoreGlobalSet) => Store.setGlobal(r.values));
   BrowserMsg.bgAddListener('storeAcctGet', (r: Bm.StoreAcctGet) => Store.getAcct(r.acctEmail, r.keys));
   BrowserMsg.bgAddListener('storeAcctSet', (r: Bm.StoreAcctSet) => Store.setAcct(r.acctEmail, r.values));
-
-  // openpgp related handlers
-  BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decrypt);
-  BrowserMsg.bgAddListener('pgpMsgVerifyDetached', PgpMsg.verifyDetached);
-  BrowserMsg.bgAddListener('pgpKeyDetails', BgHandlers.pgpKeyDetails);
 
   BrowserMsg.bgAddListener('ajax', BgHandlers.ajaxHandler);
   BrowserMsg.bgAddListener('ajaxGmailAttGetChunk', BgHandlers.ajaxGmailAttGetChunkHandler);

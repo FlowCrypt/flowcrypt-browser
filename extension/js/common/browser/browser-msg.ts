@@ -16,6 +16,7 @@ import { Env } from './env.js';
 import { KeyDetails } from '../core/pgp-key.js';
 import { PassphraseDialogType } from '../xss-safe-factory.js';
 import { PgpHash } from '../core/pgp-hash.js';
+import { PgpKey } from '../core/pgp-key.js';
 import { PgpMsg } from '../core/pgp-msg.js';
 import { Ui } from './ui.js';
 
@@ -131,11 +132,8 @@ export class BrowserMsg {
         storeAcctGet: (bm: Bm.StoreAcctGet) => BrowserMsg.sendAwait(undefined, 'storeAcctGet', bm, true) as Promise<Bm.Res.StoreAcctGet>,
         storeAcctSet: (bm: Bm.StoreAcctSet) => BrowserMsg.sendAwait(undefined, 'storeAcctSet', bm, true) as Promise<Bm.Res.StoreAcctSet>,
         db: (bm: Bm.Db): Promise<Bm.Res.Db> => BrowserMsg.sendAwait(undefined, 'db', bm, true) as Promise<Bm.Res.Db>,
-        pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
-        pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
         ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> => BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
         ajaxGmailAttGetChunk: (bm: Bm.AjaxGmailAttGetChunk) => BrowserMsg.sendAwait(undefined, 'ajaxGmailAttGetChunk', bm, true) as Promise<Bm.Res.AjaxGmailAttGetChunk>,
-        pgpKeyDetails: (bm: Bm.PgpKeyDetails) => BrowserMsg.sendAwait(undefined, 'pgpKeyDetails', bm, true) as Promise<Bm.Res.PgpKeyDetails>,
       },
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),
@@ -168,6 +166,9 @@ export class BrowserMsg {
     await: {
       pgpMsgDiagnosePubkeys: (dest: Bm.Dest, bm: Bm.PgpMsgDiagnoseMsgPubkeys) => BrowserMsg.sendAwait(dest, 'pgpMsgDiagnosePubkeys', bm, true) as Promise<Bm.Res.PgpMsgDiagnoseMsgPubkeys>,
       pgpHashChallengeAnswer: (dest: Bm.Dest, bm: Bm.PgpHashChallengeAnswer) => BrowserMsg.sendAwait(dest, 'pgpHashChallengeAnswer', bm, true) as Promise<Bm.Res.PgpHashChallengeAnswer>,
+      pgpMsgDecrypt: (dest: Bm.Dest, bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(dest, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
+      pgpMsgVerifyDetached: (dest: Bm.Dest, bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(dest, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
+      pgpKeyDetails: (dest: Bm.Dest, bm: Bm.PgpKeyDetails) => BrowserMsg.sendAwait(dest, 'pgpKeyDetails', bm, true) as Promise<Bm.Res.PgpKeyDetails>,
     }
   };
   private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};
@@ -230,6 +231,9 @@ export class BrowserMsg {
   public static addPgpListeners = () => {
     BrowserMsg.addListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await PgpHash.challengeAnswer(r.answer) }));
     BrowserMsg.addListener('pgpMsgDiagnosePubkeys', PgpMsg.diagnosePubkeys);
+    BrowserMsg.addListener('pgpMsgDecrypt', PgpMsg.decrypt);
+    BrowserMsg.addListener('pgpMsgVerifyDetached', PgpMsg.verifyDetached);
+    BrowserMsg.addListener('pgpKeyDetails', async ({ pubkey }: Bm.PgpKeyDetails): Promise<Bm.Res.PgpKeyDetails> => await PgpKey.parseDetails(pubkey));
   }
 
   public static addListener = (name: string, handler: Handler) => {

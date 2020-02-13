@@ -58,7 +58,7 @@ export class PgpBlockViewSignatureModule {
           render(`Missing pubkey ${signerLongid}`, () => undefined);
           return;
         } // ---> and pubkey found on keyserver by sender email
-        const { keys: [keyDetails] } = await BrowserMsg.send.bg.await.pgpKeyDetails({ pubkey });
+        const { keys: [keyDetails] } = await BrowserMsg.send.await.pgpKeyDetails(this.view.parentTabId, { pubkey });
         if (!keyDetails || !keyDetails.ids.map(ids => ids.longid).includes(signerLongid)) {
           render(`Fetched sender's pubkey ${keyDetails.ids[0].longid} but message was signed with a different key: ${signerLongid}, will not verify.`, () => undefined);
           return;
@@ -71,7 +71,7 @@ export class PgpBlockViewSignatureModule {
           render(`Could not find sender's pubkey anywhere: ${signerLongid}`, () => undefined);
           return;
         }
-        const { keys: [keyDetails] } = await BrowserMsg.send.bg.await.pgpKeyDetails({ pubkey });
+        const { keys: [keyDetails] } = await BrowserMsg.send.await.pgpKeyDetails(this.view.parentTabId, { pubkey });
         const pubkeyEmail = Str.parseEmail(keyDetails.users[0] || '').email!;
         if (!pubkeyEmail) {
           render(`Fetched matching pubkey ${signerLongid} but no valid email address is listed in it.`, () => undefined);

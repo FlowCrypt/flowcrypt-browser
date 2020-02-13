@@ -84,7 +84,7 @@ export class PgpBlockViewDecryptModule {
   private decryptAndRender = async (encryptedData: Buf, optionalPwd?: string, plainSubject?: string) => {
     if (typeof this.view.signature !== 'string') {
       const kisWithPp = await Store.keysGetAllWithPp(this.view.acctEmail);
-      const result = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, msgPwd: await this.view.pwdEncryptedMsgModule.getDecryptPwd(optionalPwd) });
+      const result = await BrowserMsg.send.await.pgpMsgDecrypt(this.view.parentTabId, { kisWithPp, encryptedData, msgPwd: await this.view.pwdEncryptedMsgModule.getDecryptPwd(optionalPwd) });
       if (typeof result === 'undefined') {
         await this.view.errorModule.renderErr(Lang.general.restartBrowserAndTryAgain, undefined);
       } else if (result.success) {
@@ -141,7 +141,7 @@ export class PgpBlockViewDecryptModule {
         }
       }
     } else {
-      const signatureResult = await BrowserMsg.send.bg.await.pgpMsgVerifyDetached({ plaintext: encryptedData, sigText: Buf.fromUtfStr(this.view.signature) });
+      const signatureResult = await BrowserMsg.send.await.pgpMsgVerifyDetached(this.view.parentTabId, { plaintext: encryptedData, sigText: Buf.fromUtfStr(this.view.signature) });
       await this.view.renderModule.decideDecryptedContentFormattingAndRender(encryptedData, false, signatureResult);
     }
   }
