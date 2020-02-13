@@ -15,6 +15,8 @@ import { Catch } from '../platform/catch.js';
 import { Env } from './env.js';
 import { KeyDetails } from '../core/pgp-key.js';
 import { PassphraseDialogType } from '../xss-safe-factory.js';
+import { PgpHash } from '../core/pgp-hash.js';
+import { PgpMsg } from '../core/pgp-msg.js';
 import { Ui } from './ui.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
@@ -223,6 +225,11 @@ export class BrowserMsg {
       await Ui.time.sleep(delay);
     }
     throw new TabIdRequiredError(`tabId is required, but received '${String(tabId)}' after ${attempts} attempts`);
+  }
+
+  public static addPgpListeners = () => {
+    BrowserMsg.addListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await PgpHash.challengeAnswer(r.answer) }));
+    BrowserMsg.addListener('pgpMsgDiagnosePubkeys', PgpMsg.diagnosePubkeys);
   }
 
   public static addListener = (name: string, handler: Handler) => {

@@ -8,7 +8,7 @@ import { Url, UrlParams } from '../../../js/common/core/common.js';
 
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Gmail } from '../../../js/common/api/email-provider/gmail/gmail.js';
 import { InboxActiveThreadModule } from './inbox-modules/inbox-active-thread-module.js';
@@ -16,8 +16,6 @@ import { InboxListThreadsModule } from './inbox-modules/inbox-list-threads-modul
 import { InboxMenuModule } from './inbox-modules/inbox-menu-module.js';
 import { InboxNotificationModule } from './inbox-modules/inbox-notification-module.js';
 import { Injector } from '../../../js/common/inject.js';
-import { PgpHash } from '../../../js/common/core/pgp-hash.js';
-import { PgpMsg } from '../../../js/common/core/pgp-msg.js';
 import { Settings } from '../../../js/common/settings.js';
 import { View } from '../../../js/common/view.js';
 import { WebmailCommon } from "../../../js/common/webmail.js";
@@ -86,8 +84,7 @@ export class InboxView extends View {
   }
 
   public setHandlers = () => {
-    BrowserMsg.addListener('pgpMsgDiagnosePubkeys', PgpMsg.diagnosePubkeys);
-    BrowserMsg.addListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await PgpHash.challengeAnswer(r.answer) }));
+    BrowserMsg.addPgpListeners();
     BrowserMsg.listen(this.tabId);
     Catch.setHandledInterval(this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded, 30000);
   }
