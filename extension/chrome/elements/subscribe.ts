@@ -130,7 +130,11 @@ View.run(class SubscribeView extends View {
         await Ui.modal.info('Successfully upgraded to FlowCrypt Advanced.');
         this.closeDialog();
       }
-      throw new Error('Something went wrong when upgrading (values don\'t match), please email human@flowcrypt.com to get this resolved.');
+      let errMsg = `Something went wrong when upgrading (values don't match), please email human@flowcrypt.com to get this resolved.\n`;
+      errMsg += `expected: ${chosenProduct.level}/${chosenProduct.method}\n`;
+      errMsg += `received: ${response.subscription.level}/${response.subscription.method}\n`;
+      errMsg += `when upgrading ${this.acctEmail}`;
+      throw new Error(errMsg);
     } catch (e) {
       const renderErr = (msg: string, e?: any) => {
         msg = Xss.escape(msg);
