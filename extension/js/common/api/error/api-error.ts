@@ -5,6 +5,7 @@ import { AjaxErr, ApiErrResponse, AuthErr, GoogleAuthErr, StandardErrRes, Standa
 import { BgNotReadyErr } from '../../browser/browser-msg.js';
 import { Catch } from '../../platform/catch.js';
 import { Xss } from '../../platform/xss.js';
+import { StoreFailedError } from '../../platform/store.js';
 
 export class ApiErr {
   public static eli5 = (e: any): string => {
@@ -32,6 +33,8 @@ export class ApiErr {
       return 'AjaxErr with unknown cause.';
     } else if (e instanceof BgNotReadyErr) {
       return 'Extension not ready. Restarting the browser should help.';
+    } else if (e instanceof StoreFailedError) {
+      return 'Failed to access browser extension storage. Restarting the browser should help.';
     } else {
       return 'FlowCrypt encountered an error with unknown cause.';
     }
