@@ -8,7 +8,7 @@ import { Xss } from '../../platform/xss.js';
 import { StoreFailedError } from '../../platform/store.js';
 
 export class ApiErr {
-  public static eli5 = (e: any): string => {
+  public static eli5 = (e: any): string => { // "explain like I'm five"
     if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
       return 'Email account is disabled, or access has been blocked by admin policy. Contact your email administrator.';
     } else if (ApiErr.isAuthPopupNeeded(e)) {
