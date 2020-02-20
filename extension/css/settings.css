@@ -746,9 +746,10 @@ body#settings .settings-border .key_list {
 }
 
 #settings.client > table td.menu .button {
-  width: 160px !important;
+  min-width: 160px !important;
   margin-bottom: 8px !important;
   text-align: left !important;
+  white-space: nowrap;
 }
 
 #settings.client > table td.menu span.label {
