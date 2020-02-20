@@ -34,7 +34,7 @@ abstract class ControllableBase {
   }
 
   public attr = async (elHandle: ElementHandle, name: string): Promise<string> => {
-    return await (await elHandle.getProperty(name)).jsonValue() as string;
+    return await (await elHandle.getProperty(name)).jsonValue();
   }
 
   public waitAll = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number, visible?: boolean } = {}) => {
@@ -173,7 +173,7 @@ abstract class ControllableBase {
       const paddings = parseInt(computedStyle.getPropertyValue('padding-top')) + parseInt(computedStyle.getPropertyValue('padding-bottom'));
       const border = parseInt(computedStyle.getPropertyValue('border-top-width')) + parseInt(computedStyle.getPropertyValue('border-bottom-width'));
       const outerHeight = parseInt(computedStyle.getPropertyValue('height')) + paddings + border;
-      return outerHeight.toString();
+      return outerHeight;
     }, this.selector(selector));
   }
 
