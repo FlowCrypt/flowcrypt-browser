@@ -27,7 +27,7 @@ export namespace Bm {
   export type Sender = chrome.runtime.MessageSender | 'background';
   export type Response = any;
   export type RawResponse = { result: any, objUrls: { [name: string]: string }, exception?: Bm.ErrAsJson };
-  export type Raw = { name: string; data: { bm: AnyRequest | {}, objUrls: Dict<string> }; to: Dest | null; uid: string; stack: string; sender?: Sender; };
+  export type Raw = { name: string; data: { bm: AnyRequest | {}, objUrls: Dict<string> }; to: Dest | null; uid: string; stack: string };
 
   export type SetCss = { css: Dict<string>, traverseUp?: number, selector: string; };
   export type AddOrRemoveClass = { class: string, selector: string; };
@@ -243,6 +243,7 @@ export class BrowserMsg {
   public static listen = (listenForTabId: string) => {
     const processed: string[] = [];
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
+      // console.debug(`listener(${listenForTabId}) new message: ${msg.name} from ${msg.sender} to ${msg.to} with id ${msg.uid}`);
       try {
         if (msg.to === listenForTabId || msg.to === 'broadcast') {
           if (!processed.includes(msg.uid)) {
@@ -265,7 +266,7 @@ export class BrowserMsg {
             // we'll indicate will respond = true, so that the processing of the actual request is not negatively affected
             // leaving it at "false" would respond with null, which would throw an error back to the original BrowserMsg sender:
             // "Error: BrowserMsg.sendAwait(pgpMsgDiagnosePubkeys) returned(null) with lastError: (no lastError)"
-            // why the requests get duplicated in the first place I'm not sure, it feels like a browser bug
+            // the duplication is likely caused by our routing mechanism. Sometimes browser will deliver the message directly as well as through bg
             return true;
           }
         }
@@ -298,8 +299,7 @@ export class BrowserMsg {
         }
       };
       try {
-        if (msg.to && msg.to !== 'broadcast') { // the bg is relaying a msg from one page to another
-          msg.sender = sender;
+        if (BrowserMsg.shouldRelayMsgToOtherPage(sender, msg.to)) { // message that has to be relayed through bg
           chrome.tabs.sendMessage(BrowserMsg.browserMsgDestParse(msg.to).tab!, msg, {}, respondIfPageStillOpen);
           return true; // will respond
         } else if (Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND).includes(msg.name)) { // standard or broadcast message
@@ -308,7 +308,7 @@ export class BrowserMsg {
             .then(bm => BrowserMsg.sendRawResponse(handler(bm, sender), respondIfPageStillOpen))
             .catch(e => BrowserMsg.sendRawResponse(Promise.reject(e), respondIfPageStillOpen));
           return true; // will respond
-        } else if (msg.to !== 'broadcast') { // non-broadcast message that we don't have a handler for
+        } else if (!msg.to) { // message meant for bg that we don't have a handler for
           BrowserMsg.sendRawResponse(Promise.reject(new Error(`BrowserMsg.bgListen:${msg.name}:no such handler`)), respondIfPageStillOpen);
           return true; // will respond
         } else { // broadcast message that backend does not have a handler for - ignored
@@ -319,6 +319,26 @@ export class BrowserMsg {
         return true; // will respond
       }
     });
+  }
+
+  /**
+   * When sending message from iframe within extension page, the browser will deliver the message to BOTH
+   *    the parent frame as well as the background (when we ment to just send to parent).
+   *    In such situations, we don't have to relay this message from bg to that frame, it already got it.
+   * When sending message from iframe within content script page (mail.google.com), the parent will NOT get such message
+   *    directly, and it will only be delivered to background page, from where we have to relay it around.
+   */
+  private static shouldRelayMsgToOtherPage = (sender: chrome.runtime.MessageSender, destination: string | null) => {
+    if (!sender.tab || !destination) {
+      return false;
+    }
+    if (destination !== `${sender.tab.id}:0`) { // zero mains the main frame in a tab, the parent frame
+      return true; // not sending to a parent (must relay, browser does not send directly)
+    }
+    if (sender.url?.includes(chrome.runtime.id) && sender.tab.url?.startsWith('https://')) {
+      return true; // sending to a parent content script (must relay, browser does not send directly)
+    }
+    return false; // sending to a parent that is an extension frame (do not relay, browser does send directly)
   }
 
   private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<any>) => {
@@ -383,8 +403,8 @@ export class BrowserMsg {
   }
 
   /**
+   * Browser messages cannot send a lot of data per message. This will replace Buf objects (which can be large) with an ObjectURL
    * Be careful when editting - the type system won't help you here and you'll likely make mistakes
-   *
    * The requestOrResponse object will get directly updated in this function
    */
   private static replaceBufWithObjUrlInplace = (requestOrResponse: unknown): Dict<string> => {
@@ -402,6 +422,7 @@ export class BrowserMsg {
   }
 
   /**
+   * This method does the opposite of replaceBufWithObjUrlInplace so we end up with original message (or response) containing possibly a large Buf
    * Be careful when editting - the type system won't help you here and you'll likely make mistakes
    */
   private static replaceObjUrlWithBuf = async <T>(requestOrResponse: T, objUrls: Dict<string>): Promise<T> => {
