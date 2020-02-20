@@ -243,7 +243,7 @@ export class BrowserMsg {
   public static listen = (listenForTabId: string) => {
     const processed: string[] = [];
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
-      // console.debug(`listener(${listenForTabId}) new message: ${msg.name} from ${msg.sender} to ${msg.to} with id ${msg.uid}`);
+      // console.debug(`listener(${listenForTabId}) new message: ${msg.name} to ${msg.to} with id ${msg.uid} from`, sender);
       try {
         if (msg.to === listenForTabId || msg.to === 'broadcast') {
           if (!processed.includes(msg.uid)) {
@@ -299,8 +299,14 @@ export class BrowserMsg {
         }
       };
       try {
+        // console.debug(`bgListen: ${msg.name} from ${sender.tab?.id}:${sender.tab?.index} to ${msg.to}`);
         if (BrowserMsg.shouldRelayMsgToOtherPage(sender, msg.to)) { // message that has to be relayed through bg
-          chrome.tabs.sendMessage(BrowserMsg.browserMsgDestParse(msg.to).tab!, msg, {}, respondIfPageStillOpen);
+          const { tab, frame } = BrowserMsg.browserMsgDestParse(msg.to);
+          if (!tab) {
+            BrowserMsg.sendRawResponse(Promise.reject(new Error(`BrowserMsg.bgListen:${msg.name}:cannot parse destination tab in ${msg.to}`)), respondIfPageStillOpen);
+          } else {
+            chrome.tabs.sendMessage(tab, msg, { frameId: frame }, respondIfPageStillOpen);
+          }
           return true; // will respond
         } else if (Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND).includes(msg.name)) { // standard or broadcast message
           const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[msg.name];
@@ -330,7 +336,10 @@ export class BrowserMsg {
    */
   private static shouldRelayMsgToOtherPage = (sender: chrome.runtime.MessageSender, destination: string | null) => {
     if (!sender.tab || !destination) {
-      return false;
+      return false; // messages meant to bg, or from unknown sender, should not be relayed
+    }
+    if (Catch.browser().name !== 'chrome') {
+      return true; // only chrome sends messages directly to extension frame parent (in addition to sending to bg)
     }
     if (destination !== `${sender.tab.id}:0`) { // zero mains the main frame in a tab, the parent frame
       return true; // not sending to a parent (must relay, browser does not send directly)
@@ -347,6 +356,7 @@ export class BrowserMsg {
 
   private static sendAwait = async (destString: string | undefined, name: string, bm?: Dict<unknown>, awaitRes = false): Promise<Bm.Response> => {
     bm = bm || {};
+    // console.debug(`sendAwait ${name} to ${destString || 'bg'}`, bm);
     const isBackgroundPage = Env.isBackgroundPage();
     if (isBackgroundPage && BrowserMsg.HANDLERS_REGISTERED_BACKGROUND && typeof destString === 'undefined') { // calling from bg script to bg script: skip messaging
       const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name];
@@ -386,7 +396,11 @@ export class BrowserMsg {
       };
       try {
         if (isBackgroundPage) {
-          chrome.tabs.sendMessage(BrowserMsg.browserMsgDestParse(msg.to).tab!, msg, {}, processRawMsgResponse);
+          const { tab, frame } = BrowserMsg.browserMsgDestParse(msg.to);
+          if (!tab) {
+            throw new Error(`Cannot parse tab in ${msg.to}: ${tab} when sending ${msg.name}`);
+          }
+          chrome.tabs.sendMessage(tab, msg, { frameId: frame }, processRawMsgResponse);
         } else if (chrome.runtime) {
           chrome.runtime.sendMessage(msg, processRawMsgResponse);
         } else {
