@@ -167,6 +167,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composeFrame.waitAndRespondToModal('error', 'confirm', 'Please add a recipient first');
     }));
 
+    ava.default('compose - keyboard - Opening & changing composer send btn popover using keyboard', testWithBrowser('compose', async (t, browser) => {
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('test.ci.compose@org.flowcrypt.com'));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await composeFrame.waitAndFocus('@action-show-options-popover');
+      await inboxPage.press('Enter', 'ArrowDown', 'ArrowDown', 'ArrowDown', 'Enter'); // more arrow downs to ensure that active element selection loops
+      expect(await composeFrame.read('@action-send')).to.eq('Sign and Send');
+    }));
+
     ava.default('compose - reply - old gmail threadId fmt', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadId=16841ce0ce5cb74d&replyMsgId=16841ce0ce5cb74d';
       const replyFrame = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, skipValidation: true });
