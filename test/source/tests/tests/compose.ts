@@ -251,47 +251,57 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       ].join('\n'));
     }));
 
-    ava.default('compose - reply - pass phrase dialog - dialog ok', testWithBrowser('compatibility', async (t, browser) => {
-      const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
-      const { inboxPage, replyFrame } = await setRequirePassPhraseAndOpenRepliedMessage(t, browser, pp);
-      // Get Passphrase dialog and write confirm passphrase
-      await inboxPage.waitAll('@dialog-passphrase');
-      const passPhraseFrame = await inboxPage.getFrame(['passphrase.htm']);
-      await passPhraseFrame.waitAndType('@input-pass-phrase', pp);
-      await passPhraseFrame.waitAndClick('@action-confirm-pass-phrase-entry');
-      await inboxPage.waitTillGone('@dialog');
-      // Then we can try to run base test
-      await clickTripleDotAndExpectQuoteToLoad(replyFrame, [
-        'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
-        '> This is some message',
-        '>',
-        '> and below is the quote',
-        '>',
-        '> > this is the quote',
-        '> > still the quote',
-        '> > third line',
-        '> >> double quote',
-        '> >> again double quote'
-      ].join('\n'));
-    }));
+    for (const inputMethod of ['mouse', 'keyboard']) {
+      ava.default(`compose - reply - pass phrase dialog - dialog ok (${inputMethod})`, testWithBrowser('compatibility', async (t, browser) => {
+        const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
+        const { inboxPage, replyFrame } = await setRequirePassPhraseAndOpenRepliedMessage(t, browser, pp);
+        // Get Passphrase dialog and write confirm passphrase
+        await inboxPage.waitAll('@dialog-passphrase');
+        const passPhraseFrame = await inboxPage.getFrame(['passphrase.htm']);
+        await passPhraseFrame.waitAndType('@input-pass-phrase', pp);
+        if (inputMethod === 'mouse') {
+          await passPhraseFrame.waitAndClick('@action-confirm-pass-phrase-entry');
+        } else if (inputMethod === 'keyboard') {
+          await inboxPage.press('Enter');
+        }
+        await inboxPage.waitTillGone('@dialog');
+        // Then we can try to run base test
+        await clickTripleDotAndExpectQuoteToLoad(replyFrame, [
+          'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
+          '> This is some message',
+          '>',
+          '> and below is the quote',
+          '>',
+          '> > this is the quote',
+          '> > still the quote',
+          '> > third line',
+          '> >> double quote',
+          '> >> again double quote'
+        ].join('\n'));
+      }));
 
-    ava.default('compose - reply - pass phrase dialog - dialog cancel', testWithBrowser('compatibility', async (t, browser) => {
-      const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
-      const { inboxPage, replyFrame } = await setRequirePassPhraseAndOpenRepliedMessage(t, browser, pp);
-      // Get Passphrase dialog and cancel confirm passphrase
-      await inboxPage.waitAll('@dialog-passphrase');
-      const passPhraseFrame = await inboxPage.getFrame(['passphrase.htm']);
-      await passPhraseFrame.waitAndClick('@action-cancel-pass-phrase-entry');
-      await inboxPage.waitTillGone('@dialog');
-      await replyFrame.waitAll(['@action-expand-quoted-text']);
-      const inputBody = await replyFrame.read('@input-body');
-      // tslint:disable: no-unused-expression
-      expect(inputBody.trim()).to.be.empty;
-      await clickTripleDotAndExpectQuoteToLoad(replyFrame, [
-        'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
-        '> (Skipping previous message quote)'
-      ].join('\n'));
-    }));
+      ava.default.only(`compose - reply - pass phrase dialog - dialog cancel(${inputMethod})`, testWithBrowser('compatibility', async (t, browser) => {
+        const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
+        const { inboxPage, replyFrame } = await setRequirePassPhraseAndOpenRepliedMessage(t, browser, pp);
+        // Get Passphrase dialog and cancel confirm passphrase
+        await inboxPage.waitAll('@dialog-passphrase');
+        const passPhraseFrame = await inboxPage.getFrame(['passphrase.htm']);
+        if (inputMethod === 'mouse') {
+          await passPhraseFrame.waitAndClick('@action-cancel-pass-phrase-entry');
+        } else if (inputMethod === 'keyboard') {
+          await inboxPage.press('Escape');
+        }
+        await inboxPage.waitTillGone('@dialog');
+        await replyFrame.waitAll(['@action-expand-quoted-text']);
+        const inputBody = await replyFrame.read('@input-body');
+        // tslint:disable: no-unused-expression
+        expect(inputBody.trim()).to.be.empty;
+        await clickTripleDotAndExpectQuoteToLoad(replyFrame, [
+          'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
+          '> (Skipping previous message quote)'
+        ].join('\n'));
+      }));
+    }
 
     ava.default('compose - reply - signed message', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=15f7f5face7101db&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=15f7f5face7101db';
