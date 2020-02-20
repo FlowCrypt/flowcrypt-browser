@@ -20,7 +20,7 @@ import { PgpKey } from './core/pgp-key.js';
 import { PgpPwd } from './core/pgp-password.js';
 import { Rules } from './rules.js';
 import { Xss } from './platform/xss.js';
-import { openpgp } from './core/pgp.js';
+import { opgp } from './core/pgp.js';
 import { storageLocalGetAll } from './api/chrome.js';
 
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
@@ -210,7 +210,7 @@ export class Settings {
           let reformatted;
           const userIds = uids.map(uid => Str.parseEmail(uid)).map(u => ({ email: u.email, name: u.name || '' }));
           try {
-            reformatted = await openpgp.reformatKey({ privateKey: origPrv, passphrase, userIds, keyExpirationTime: expireSeconds }) as { key: OpenPGP.key.Key };
+            reformatted = await opgp.reformatKey({ privateKey: origPrv, passphrase, userIds, keyExpirationTime: expireSeconds }) as { key: OpenPGP.key.Key };
           } catch (e) {
             reject(e);
             return;

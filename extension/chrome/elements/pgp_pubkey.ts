@@ -14,7 +14,7 @@ import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
-import { openpgp } from '../../js/common/core/pgp.js';
+import { opgp } from '../../js/common/core/pgp.js';
 
 // todo - this should use KeyImportUI for consistency.
 View.run(class PgpPubkeyView extends View {
@@ -41,7 +41,7 @@ View.run(class PgpPubkeyView extends View {
 
   public render = async () => {
     Ui.event.protect();
-    this.publicKeys = (await openpgp.key.readArmored(this.armoredPubkey)).keys;
+    this.publicKeys = (await opgp.key.readArmored(this.armoredPubkey)).keys;
     this.primaryPubKey = this.publicKeys[0];
     this.isExpired = await PgpKey.expired(this.primaryPubKey);
     $('.pubkey').text(this.armoredPubkey);

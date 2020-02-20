@@ -12,11 +12,11 @@ import { GoogleAuth } from '../common/api/google-auth.js';
 import { VERSION } from '../common/core/const.js';
 import { injectFcIntoWebmail } from './inject.js';
 import { migrateGlobal } from './migrations.js';
-import { openpgp } from '../common/core/pgp.js';
+import { opgp } from '../common/core/pgp.js';
 
 console.info('background_process.js starting');
 
-openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
+opgp.initWorker({ path: '/lib/openpgp.worker.js' });
 
 (async () => {
 

@@ -16,7 +16,7 @@ import { PgpArmor } from '../core/pgp-armor.js';
 import { PgpClient } from '../api/keyserver.js';
 import { PgpKey } from '../core/pgp-key.js';
 import { Ui } from '../browser/ui.js';
-import { openpgp } from '../core/pgp.js';
+import { opgp } from '../core/pgp.js';
 
 // tslint:disable:no-null-keyword
 
@@ -506,7 +506,7 @@ export class Store {
   }
 
   public static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig }: DbContactObjArg): Promise<Contact> => {
-    if (typeof openpgp === 'undefined') {
+    if (typeof opgp === 'undefined') {
       return await BrowserMsg.send.bg.await.db({ f: 'dbContactObj', args: [{ email, name, client, pubkey, pendingLookup, lastUse, lastSig, lastCheck }] }) as Contact;
     } else {
       const validEmail = Str.parseEmail(email).email;

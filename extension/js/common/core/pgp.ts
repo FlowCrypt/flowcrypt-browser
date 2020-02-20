@@ -7,12 +7,12 @@ import { PgpKey, PrvPacket } from './pgp-key.js';
 import { VERSION } from './const.js';
 import { requireOpenpgp } from '../platform/require.js';
 
-export const openpgp = requireOpenpgp();
+export const opgp = requireOpenpgp();
 
-if (typeof openpgp !== 'undefined') { // in certain environments, eg pgp_block.htm, openpgp is not included
-  openpgp.config.versionstring = `FlowCrypt ${VERSION} Gmail Encryption`;
-  openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
-  openpgp.config.ignore_mdc_error = true; // we manually check for missing MDC and show loud warning to user (no auto-decrypt)
+if (typeof opgp !== 'undefined') { // in certain environments, eg pgp_block.htm, openpgp is not included
+  opgp.config.versionstring = `FlowCrypt ${VERSION} Gmail Encryption`;
+  opgp.config.commentstring = 'Seamlessly send and receive encrypted email';
+  opgp.config.ignore_mdc_error = true; // we manually check for missing MDC and show loud warning to user (no auto-decrypt)
   // openpgp.config.require_uid_self_cert = false;
   const getPrvPackets = (k: OpenPGP.key.Key) => {
     if (!k.isPrivate()) {
@@ -31,13 +31,13 @@ if (typeof openpgp !== 'undefined') { // in certain environments, eg pgp_block.h
     }
     return nonDummyPrvPackets;
   };
-  openpgp.key.Key.prototype.isFullyDecrypted = function () {
+  opgp.key.Key.prototype.isFullyDecrypted = function () {
     return getPrvPackets(this).every(p => p.isDecrypted() === true);
   };
-  openpgp.key.Key.prototype.isFullyEncrypted = function () {
+  opgp.key.Key.prototype.isFullyEncrypted = function () {
     return getPrvPackets(this).every(p => p.isDecrypted() === false);
   };
-  openpgp.key.Key.prototype.isPacketDecrypted = function (keyId: OpenPGP.Keyid) {
+  opgp.key.Key.prototype.isPacketDecrypted = function (keyId: OpenPGP.Keyid) {
     if (!this.isPrivate()) {
       throw new Error("Cannot check packet encryption status of secret key in a Public Key");
     }

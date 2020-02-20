@@ -14,7 +14,7 @@ import { Settings } from '../settings.js';
 import { Store } from '../platform/store.js';
 import { Ui } from '../browser/ui.js';
 import { Url, Str } from '../core/common.js';
-import { openpgp } from '../core/pgp.js';
+import { opgp } from '../core/pgp.js';
 
 type KeyImportUiCheckResult = {
   normalized: string; longid: string; passphrase: string; fingerprint: string; decrypted: OpenPGP.key.Key;
@@ -78,7 +78,7 @@ export class KeyImportUi {
       $('#e_rememberPassphrase').prop('checked', true);
     }));
     $('.input_private_key').change(Ui.event.handle(async target => {
-      const { keys: [prv] } = await openpgp.key.readArmored(String($(target).val()));
+      const { keys: [prv] } = await opgp.key.readArmored(String($(target).val()));
       $('.input_passphrase').val('');
       if (!prv || !prv.isPrivate()) {
         $('.line.unprotected_key_create_pass_phrase').hide();
@@ -108,10 +108,10 @@ export class KeyImportUi {
         if (utf.includes(PgpArmor.headers('privateKey').begin)) {
           const firstPrv = MsgBlockParser.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
           if (firstPrv) { // filter out all content except for the first encountered private key (GPGKeychain compatibility)
-            prv = (await openpgp.key.readArmored(firstPrv.content.toString())).keys[0];
+            prv = (await opgp.key.readArmored(firstPrv.content.toString())).keys[0];
           }
         } else {
-          prv = (await openpgp.key.read(file.getData())).keys[0];
+          prv = (await opgp.key.read(file.getData())).keys[0];
         }
         if (typeof prv !== 'undefined') {
           $('.input_private_key').val(prv.armor()).change().prop('disabled', true);
@@ -201,7 +201,7 @@ export class KeyImportUi {
 
   private read = async (type: KeyBlockType, normalized: string) => {
     const headers = PgpArmor.headers(type);
-    const { keys: [k] } = await openpgp.key.readArmored(normalized);
+    const { keys: [k] } = await opgp.key.readArmored(normalized);
     if (typeof k === 'undefined') {
       throw new UserAlert(`${type === 'privateKey' ? 'Private' : 'Public'} key is not correctly formated. Please insert complete key, including "${headers.begin}" and "${headers.end}"`);
     }
@@ -275,7 +275,7 @@ export class KeyImportUi {
 
   private checkEncryptionPrvIfSelected = async (k: OpenPGP.key.Key, encrypted: OpenPGP.key.Key) => {
     if (this.checkEncryption && ! await k.getEncryptionKey()) {
-      if (await k.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert) { // known issues - key can be fixed
+      if (await k.verifyPrimaryKey() === opgp.enums.keyStatus.no_self_cert) { // known issues - key can be fixed
         throw new KeyCanBeFixed(encrypted);
       } else if (await PgpKey.usableButExpired(k)) {
         // Maybe would be better to give user 3 abilities:
