@@ -230,12 +230,12 @@ export class BrowserMsg {
   }
 
   public static addPgpListeners = () => {
-    BrowserMsg.addListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await PgpHash.challengeAnswer(r.answer) }));
-    BrowserMsg.addListener('pgpMsgDiagnosePubkeys', PgpMsg.diagnosePubkeys);
-    BrowserMsg.addListener('pgpMsgDecrypt', PgpMsg.decrypt);
-    BrowserMsg.addListener('pgpMsgVerifyDetached', PgpMsg.verifyDetached);
-    BrowserMsg.addListener('pgpKeyDetails', async ({ pubkey }: Bm.PgpKeyDetails): Promise<Bm.Res.PgpKeyDetails> => await PgpKey.parseDetails(pubkey));
-    BrowserMsg.addListener('pgpMsgType', PgpMsg.type);
+    BrowserMsg.bgAddListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await PgpHash.challengeAnswer(r.answer) }));
+    BrowserMsg.bgAddListener('pgpMsgDiagnosePubkeys', PgpMsg.diagnosePubkeys);
+    BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decrypt);
+    BrowserMsg.bgAddListener('pgpMsgVerifyDetached', PgpMsg.verifyDetached);
+    BrowserMsg.bgAddListener('pgpKeyDetails', async ({ pubkey }: Bm.PgpKeyDetails): Promise<Bm.Res.PgpKeyDetails> => await PgpKey.parseDetails(pubkey));
+    BrowserMsg.bgAddListener('pgpMsgType', PgpMsg.type);
   }
 
   public static addListener = (name: string, handler: Handler) => {
