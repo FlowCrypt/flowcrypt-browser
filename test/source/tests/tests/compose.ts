@@ -280,7 +280,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         ].join('\n'));
       }));
 
-      ava.default(`compose - reply - pass phrase dialog - dialog cancel(${inputMethod})`, testWithBrowser('compatibility', async (t, browser) => {
+      ava.default(`compose - reply - pass phrase dialog - dialog cancel (${inputMethod})`, testWithBrowser('compatibility', async (t, browser) => {
         const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
         const { inboxPage, replyFrame } = await setRequirePassPhraseAndOpenRepliedMessage(t, browser, pp);
         // Get Passphrase dialog and cancel confirm passphrase
