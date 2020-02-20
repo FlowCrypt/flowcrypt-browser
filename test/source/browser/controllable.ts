@@ -173,7 +173,7 @@ abstract class ControllableBase {
       const paddings = parseInt(computedStyle.getPropertyValue('padding-top')) + parseInt(computedStyle.getPropertyValue('padding-bottom'));
       const border = parseInt(computedStyle.getPropertyValue('border-top-width')) + parseInt(computedStyle.getPropertyValue('border-bottom-width'));
       const outerHeight = parseInt(computedStyle.getPropertyValue('height')) + paddings + border;
-      return outerHeight;
+      return outerHeight.toString();
     }, this.selector(selector));
   }
 
@@ -252,18 +252,18 @@ abstract class ControllableBase {
     this.log(`wait_and_click:10:${selector}`);
   }
 
-  public waitForContent = async (selector: string, needle: string, timeoutSec = 20, testLoopLengthMs = 100) => {
+  public waitForContent = async (selector: string, needle: string | RegExp, timeoutSec = 20, testLoopLengthMs = 100) => {
     await this.waitAll(selector);
     const start = Date.now();
     let text = '';
     while (Date.now() - start < timeoutSec * 1000) {
       text = await this.read(selector, true);
-      if (text.includes(needle)) {
+      if (text.match(needle)) {
         return;
       }
       await Util.sleep(testLoopLengthMs / 1000);
     }
-    throw new Error(`Slector ${selector} was found but did not contain text "${needle}" whithin ${timeoutSec}s. Last content: "${text}"`);
+    throw new Error(`Selector ${selector} was found but did not contain text "${needle}" whithin ${timeoutSec}s. Last content: "${text}"`);
   }
 
   public verifyContentIsPresentContinuously = async (selector: string, expectedText: string, expectPresentForMs: number = 3000, timeoutSec = 20) => {
