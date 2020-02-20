@@ -12,7 +12,7 @@ import { Env } from '../../js/common/browser/env.js';
 Catch.try(async () => {
   const tabId = await BrowserMsg.requiredTabId();
 
-  BrowserMsg.addPgpListeners();
+  // BrowserMsg.addPgpListeners(); // todo - re-allow when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
   BrowserMsg.listen(tabId);
 
   let src = Env.getBaseUrl();

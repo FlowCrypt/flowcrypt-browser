@@ -84,7 +84,7 @@ export class InboxView extends View {
   }
 
   public setHandlers = () => {
-    BrowserMsg.addPgpListeners();
+    // BrowserMsg.addPgpListeners(); // todo - re-allow when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
     BrowserMsg.listen(this.tabId);
     Catch.setHandledInterval(this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded, 30000);
   }
