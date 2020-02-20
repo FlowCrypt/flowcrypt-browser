@@ -49,7 +49,6 @@
       "js": [
         "/lib/purify.min.js",
         "/lib/jquery.min.js",
-        "/lib/openpgp.js",
         "/js/content_scripts/webmail_bundle.js"
       ]
     },
