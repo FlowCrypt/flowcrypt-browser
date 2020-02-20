@@ -3,7 +3,7 @@
 'use strict';
 
 import { AccountIndex, AccountStore, GlobalIndex, GlobalStore } from '../platform/store.js';
-import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, VerifyRes } from '../core/pgp-msg.js';
+import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, VerifyRes, PgpMsgTypeResult } from '../core/pgp-msg.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
 
 import { AjaxErr } from '../api/error/api-error-types.js';
@@ -16,6 +16,7 @@ import { Env } from './env.js';
 import { KeyDetails } from '../core/pgp-key.js';
 import { PassphraseDialogType } from '../xss-safe-factory.js';
 import { PgpHash } from '../core/pgp-hash.js';
+import { PgpKey } from '../core/pgp-key.js';
 import { PgpMsg } from '../core/pgp-msg.js';
 import { Ui } from './ui.js';
 
@@ -26,7 +27,7 @@ export namespace Bm {
   export type Sender = chrome.runtime.MessageSender | 'background';
   export type Response = any;
   export type RawResponse = { result: any, objUrls: { [name: string]: string }, exception?: Bm.ErrAsJson };
-  export type Raw = { name: string; data: { bm: AnyRequest | {}, objUrls: Dict<string> }; to: Dest | null; uid: string; stack: string; sender?: Sender; };
+  export type Raw = { name: string; data: { bm: AnyRequest | {}, objUrls: Dict<string> }; to: Dest | null; uid: string; stack: string };
 
   export type SetCss = { css: Dict<string>, traverseUp?: number, selector: string; };
   export type AddOrRemoveClass = { class: string, selector: string; };
@@ -61,6 +62,7 @@ export namespace Bm {
   export type PgpMsgDiagnoseMsgPubkeys = PgpMsgMethod.Arg.DiagnosePubkeys;
   export type PgpMsgVerifyDetached = PgpMsgMethod.Arg.VerifyDetached;
   export type PgpHashChallengeAnswer = { answer: string };
+  export type PgpMsgType = PgpMsgMethod.Arg.Type;
   export type Ajax = { req: JQueryAjaxSettings, stack: string };
   export type AjaxGmailAttGetChunk = { acctEmail: string, msgId: string, attId: string };
 
@@ -77,6 +79,7 @@ export namespace Bm {
     export type PgpMsgDecrypt = DecryptResult;
     export type PgpMsgDiagnoseMsgPubkeys = DiagnoseMsgPubkeysResult;
     export type PgpMsgVerify = VerifyRes;
+    export type PgpMsgType = PgpMsgTypeResult;
     export type PgpHashChallengeAnswer = { hashed: string };
     export type AjaxGmailAttGetChunk = { chunk: Buf };
     export type _tab_ = { tabId: string | null | undefined };
@@ -84,7 +87,7 @@ export namespace Bm {
     export type Ajax = any; // not included in Any below
 
     export type Any = GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup | PgpKeyDetails
-      | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer
+      | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer | PgpMsgType
       | StoreSessionGet | StoreSessionSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet
       | AjaxGmailAttGetChunk;
   }
@@ -93,7 +96,7 @@ export namespace Bm {
     AddPubkeyDialog | ReinsertReplyBox | CloseReplyMessage | ScrollToElement | SubscribeDialog | RenderPublicKeys | NotificationShowAuthPopupNeeded |
     NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass | ReconnectAcctAuthPopup |
     PgpKeyDetails | Db | StoreSessionSet | StoreSessionGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
-    PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | Ajax | FocusFrame;
+    PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | PgpMsgType | Ajax | FocusFrame;
 
   // export type RawResponselessHandler = (req: AnyRequest) => Promise<void>;
   // export type RawRespoHandler = (req: AnyRequest) => Promise<void>;
@@ -131,11 +134,14 @@ export class BrowserMsg {
         storeAcctGet: (bm: Bm.StoreAcctGet) => BrowserMsg.sendAwait(undefined, 'storeAcctGet', bm, true) as Promise<Bm.Res.StoreAcctGet>,
         storeAcctSet: (bm: Bm.StoreAcctSet) => BrowserMsg.sendAwait(undefined, 'storeAcctSet', bm, true) as Promise<Bm.Res.StoreAcctSet>,
         db: (bm: Bm.Db): Promise<Bm.Res.Db> => BrowserMsg.sendAwait(undefined, 'db', bm, true) as Promise<Bm.Res.Db>,
-        pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
-        pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
         ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> => BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
         ajaxGmailAttGetChunk: (bm: Bm.AjaxGmailAttGetChunk) => BrowserMsg.sendAwait(undefined, 'ajaxGmailAttGetChunk', bm, true) as Promise<Bm.Res.AjaxGmailAttGetChunk>,
+        pgpMsgDiagnosePubkeys: (bm: Bm.PgpMsgDiagnoseMsgPubkeys) => BrowserMsg.sendAwait(undefined, 'pgpMsgDiagnosePubkeys', bm, true) as Promise<Bm.Res.PgpMsgDiagnoseMsgPubkeys>,
+        pgpHashChallengeAnswer: (bm: Bm.PgpHashChallengeAnswer) => BrowserMsg.sendAwait(undefined, 'pgpHashChallengeAnswer', bm, true) as Promise<Bm.Res.PgpHashChallengeAnswer>,
+        pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
+        pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
         pgpKeyDetails: (bm: Bm.PgpKeyDetails) => BrowserMsg.sendAwait(undefined, 'pgpKeyDetails', bm, true) as Promise<Bm.Res.PgpKeyDetails>,
+        pgpMsgType: (bm: Bm.PgpMsgType) => BrowserMsg.sendAwait(undefined, 'pgpMsgType', bm, true) as Promise<Bm.Res.PgpMsgType>,
       },
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),
@@ -165,10 +171,6 @@ export class BrowserMsg {
     redirect: (dest: Bm.Dest, bm: Bm.Redirect) => BrowserMsg.sendCatch(dest, 'redirect', bm),
     openGoogleAuthDialog: (dest: Bm.Dest, bm: Bm.OpenGoogleAuthDialog) => BrowserMsg.sendCatch(dest, 'open_google_auth_dialog', bm),
     addToContacts: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'addToContacts', {}),
-    await: {
-      pgpMsgDiagnosePubkeys: (dest: Bm.Dest, bm: Bm.PgpMsgDiagnoseMsgPubkeys) => BrowserMsg.sendAwait(dest, 'pgpMsgDiagnosePubkeys', bm, true) as Promise<Bm.Res.PgpMsgDiagnoseMsgPubkeys>,
-      pgpHashChallengeAnswer: (dest: Bm.Dest, bm: Bm.PgpHashChallengeAnswer) => BrowserMsg.sendAwait(dest, 'pgpHashChallengeAnswer', bm, true) as Promise<Bm.Res.PgpHashChallengeAnswer>,
-    }
   };
   private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};
   private static HANDLERS_REGISTERED_FRAME: Handlers = {
@@ -228,8 +230,12 @@ export class BrowserMsg {
   }
 
   public static addPgpListeners = () => {
-    BrowserMsg.addListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await PgpHash.challengeAnswer(r.answer) }));
-    BrowserMsg.addListener('pgpMsgDiagnosePubkeys', PgpMsg.diagnosePubkeys);
+    BrowserMsg.bgAddListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await PgpHash.challengeAnswer(r.answer) }));
+    BrowserMsg.bgAddListener('pgpMsgDiagnosePubkeys', PgpMsg.diagnosePubkeys);
+    BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decrypt);
+    BrowserMsg.bgAddListener('pgpMsgVerifyDetached', PgpMsg.verifyDetached);
+    BrowserMsg.bgAddListener('pgpKeyDetails', async ({ pubkey }: Bm.PgpKeyDetails): Promise<Bm.Res.PgpKeyDetails> => await PgpKey.parseDetails(pubkey));
+    BrowserMsg.bgAddListener('pgpMsgType', PgpMsg.type);
   }
 
   public static addListener = (name: string, handler: Handler) => {
@@ -239,6 +245,7 @@ export class BrowserMsg {
   public static listen = (listenForTabId: string) => {
     const processed: string[] = [];
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
+      // console.debug(`listener(${listenForTabId}) new message: ${msg.name} to ${msg.to} with id ${msg.uid} from`, sender);
       try {
         if (msg.to === listenForTabId || msg.to === 'broadcast') {
           if (!processed.includes(msg.uid)) {
@@ -261,7 +268,7 @@ export class BrowserMsg {
             // we'll indicate will respond = true, so that the processing of the actual request is not negatively affected
             // leaving it at "false" would respond with null, which would throw an error back to the original BrowserMsg sender:
             // "Error: BrowserMsg.sendAwait(pgpMsgDiagnosePubkeys) returned(null) with lastError: (no lastError)"
-            // why the requests get duplicated in the first place I'm not sure, it feels like a browser bug
+            // the duplication is likely caused by our routing mechanism. Sometimes browser will deliver the message directly as well as through bg
             return true;
           }
         }
@@ -294,9 +301,14 @@ export class BrowserMsg {
         }
       };
       try {
-        if (msg.to && msg.to !== 'broadcast') { // the bg is relaying a msg from one page to another
-          msg.sender = sender;
-          chrome.tabs.sendMessage(BrowserMsg.browserMsgDestParse(msg.to).tab!, msg, {}, respondIfPageStillOpen);
+        // console.debug(`bgListen: ${msg.name} from ${sender.tab?.id}:${sender.tab?.index} to ${msg.to}`);
+        if (BrowserMsg.shouldRelayMsgToOtherPage(sender, msg.to)) { // message that has to be relayed through bg
+          const { tab, frame } = BrowserMsg.browserMsgDestParse(msg.to);
+          if (!tab) {
+            BrowserMsg.sendRawResponse(Promise.reject(new Error(`BrowserMsg.bgListen:${msg.name}:cannot parse destination tab in ${msg.to}`)), respondIfPageStillOpen);
+          } else {
+            chrome.tabs.sendMessage(tab, msg, { frameId: frame }, respondIfPageStillOpen);
+          }
           return true; // will respond
         } else if (Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND).includes(msg.name)) { // standard or broadcast message
           const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[msg.name];
@@ -304,7 +316,7 @@ export class BrowserMsg {
             .then(bm => BrowserMsg.sendRawResponse(handler(bm, sender), respondIfPageStillOpen))
             .catch(e => BrowserMsg.sendRawResponse(Promise.reject(e), respondIfPageStillOpen));
           return true; // will respond
-        } else if (msg.to !== 'broadcast') { // non-broadcast message that we don't have a handler for
+        } else if (!msg.to) { // message meant for bg that we don't have a handler for
           BrowserMsg.sendRawResponse(Promise.reject(new Error(`BrowserMsg.bgListen:${msg.name}:no such handler`)), respondIfPageStillOpen);
           return true; // will respond
         } else { // broadcast message that backend does not have a handler for - ignored
@@ -317,12 +329,36 @@ export class BrowserMsg {
     });
   }
 
+  /**
+   * When sending message from iframe within extension page, the browser will deliver the message to BOTH
+   *    the parent frame as well as the background (when we ment to just send to parent).
+   *    In such situations, we don't have to relay this message from bg to that frame, it already got it.
+   * When sending message from iframe within content script page (mail.google.com), the parent will NOT get such message
+   *    directly, and it will only be delivered to background page, from where we have to relay it around.
+   */
+  private static shouldRelayMsgToOtherPage = (sender: chrome.runtime.MessageSender, destination: string | null) => {
+    if (!sender.tab || !destination) {
+      return false; // messages meant to bg, or from unknown sender, should not be relayed
+    }
+    if (Catch.browser().name !== 'chrome') {
+      return true; // only chrome sends messages directly to extension frame parent (in addition to sending to bg)
+    }
+    if (destination !== `${sender.tab.id}:0`) { // zero mains the main frame in a tab, the parent frame
+      return true; // not sending to a parent (must relay, browser does not send directly)
+    }
+    if (sender.url?.includes(chrome.runtime.id) && sender.tab.url?.startsWith('https://')) {
+      return true; // sending to a parent content script (must relay, browser does not send directly)
+    }
+    return false; // sending to a parent that is an extension frame (do not relay, browser does send directly)
+  }
+
   private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<any>) => {
     BrowserMsg.sendAwait(dest, name, bm).catch(Catch.reportErr);
   }
 
   private static sendAwait = async (destString: string | undefined, name: string, bm?: Dict<unknown>, awaitRes = false): Promise<Bm.Response> => {
     bm = bm || {};
+    // console.debug(`sendAwait ${name} to ${destString || 'bg'}`, bm);
     const isBackgroundPage = Env.isBackgroundPage();
     if (isBackgroundPage && BrowserMsg.HANDLERS_REGISTERED_BACKGROUND && typeof destString === 'undefined') { // calling from bg script to bg script: skip messaging
       const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name];
@@ -362,7 +398,11 @@ export class BrowserMsg {
       };
       try {
         if (isBackgroundPage) {
-          chrome.tabs.sendMessage(BrowserMsg.browserMsgDestParse(msg.to).tab!, msg, {}, processRawMsgResponse);
+          const { tab, frame } = BrowserMsg.browserMsgDestParse(msg.to);
+          if (!tab) {
+            throw new Error(`Cannot parse tab in ${msg.to}: ${tab} when sending ${msg.name}`);
+          }
+          chrome.tabs.sendMessage(tab, msg, { frameId: frame }, processRawMsgResponse);
         } else if (chrome.runtime) {
           chrome.runtime.sendMessage(msg, processRawMsgResponse);
         } else {
@@ -379,8 +419,8 @@ export class BrowserMsg {
   }
 
   /**
+   * Browser messages cannot send a lot of data per message. This will replace Buf objects (which can be large) with an ObjectURL
    * Be careful when editting - the type system won't help you here and you'll likely make mistakes
-   *
    * The requestOrResponse object will get directly updated in this function
    */
   private static replaceBufWithObjUrlInplace = (requestOrResponse: unknown): Dict<string> => {
@@ -398,6 +438,7 @@ export class BrowserMsg {
   }
 
   /**
+   * This method does the opposite of replaceBufWithObjUrlInplace so we end up with original message (or response) containing possibly a large Buf
    * Be careful when editting - the type system won't help you here and you'll likely make mistakes
    */
   private static replaceObjUrlWithBuf = async <T>(requestOrResponse: T, objUrls: Dict<string>): Promise<T> => {

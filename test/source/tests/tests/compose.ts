@@ -566,12 +566,13 @@ const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserH
   await ComposePageRecipe.sendAndClose(composePage);
   // get sent msg id from mock
   const sentMsg = new GoogleData('flowcrypt.compatibility@gmail.com').getMessageBySubject(subject)!;
-  let url = `chrome/elements/pgp_block.htm?frameId=none&msgId=${encodeURIComponent(sentMsg.id)}&senderEmail=flowcrypt.compatibility%40gmail.com&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`; // eslint-disable-line max-len
+  let url = `chrome/dev/ci_pgp_host_page.htm?frameId=none&msgId=${encodeURIComponent(sentMsg.id)}&senderEmail=flowcrypt.compatibility%40gmail.com&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com`; // eslint-disable-line max-len
   if (sendingType === 'sign') {
     url += '&signature=___cu_true___';
   }
   // open a page with the sent msg, investigate img
-  const pgpBlockPage = await browser.newPage(t, url);
+  const pgpHostPage = await browser.newPage(t, url);
+  const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
   await pgpBlockPage.waitAll('.image_src_link');
   expect(await pgpBlockPage.read('.image_src_link')).to.contain('show image');
   await pgpBlockPage.waitAndClick('.image_src_link');

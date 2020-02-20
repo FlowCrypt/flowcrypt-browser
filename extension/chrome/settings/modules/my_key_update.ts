@@ -14,7 +14,7 @@ import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
-import { openpgp } from '../../../js/common/core/pgp.js';
+import { opgp } from '../../../js/common/core/pgp.js';
 
 View.run(class MyKeyUpdateView extends View {
   private readonly acctEmail: string;
@@ -63,8 +63,8 @@ View.run(class MyKeyUpdateView extends View {
   }
 
   private updatePrivateKeyHandler = async () => {
-    const { keys: [uddatedKey] } = await openpgp.key.readArmored(String(this.inputPrivateKey.val()));
-    const { keys: [uddatedKeyEncrypted] } = await openpgp.key.readArmored(String(this.inputPrivateKey.val()));
+    const { keys: [uddatedKey] } = await opgp.key.readArmored(String(this.inputPrivateKey.val()));
+    const { keys: [uddatedKeyEncrypted] } = await opgp.key.readArmored(String(this.inputPrivateKey.val()));
     const uddatedKeyPassphrase = String($('.input_passphrase').val());
     if (typeof uddatedKey === 'undefined') {
       await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
@@ -78,7 +78,7 @@ View.run(class MyKeyUpdateView extends View {
       if (await uddatedKey.getEncryptionKey()) {
         await this.storeUpdatedKeyAndPassphrase(uddatedKeyEncrypted, uddatedKeyPassphrase);
       } else { // cannot get a valid encryption key packet
-        if ((await uddatedKey.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert) || await PgpKey.usableButExpired(uddatedKey)) { // known issues - key can be fixed
+        if ((await uddatedKey.verifyPrimaryKey() === opgp.enums.keyStatus.no_self_cert) || await PgpKey.usableButExpired(uddatedKey)) { // known issues - key can be fixed
           const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
             this.acctEmail, '.compatibility_fix_container', uddatedKeyEncrypted, uddatedKeyPassphrase, this.showKeyUrl
           );

@@ -6,9 +6,7 @@
 
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
 
-import { BrowserMsg } from '../../common/browser/browser-msg.js';
 import { WebmailVariantObject, contentScriptSetupIfVacant } from './setup-webmail-content-script.js';
-
 import { Catch } from '../../common/platform/catch.js';
 import { ContentScriptWindow } from '../../common/browser/browser-window.js';
 import { Env } from '../../common/browser/env.js';
@@ -134,7 +132,7 @@ Catch.try(async () => {
       start,
     });
 
-    BrowserMsg.addPgpListeners();
+    // BrowserMsg.addPgpListeners(); // todo - re-allow when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
   };
 
   // when we support more webmails, there will be if/else here to figure out which one to run

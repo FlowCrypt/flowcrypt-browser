@@ -5,7 +5,7 @@
 import { Buf } from './buf.js';
 import { ReplaceableMsgBlockType } from './msg-block.js';
 import { Str } from './common.js';
-import { openpgp } from './pgp.js';
+import { opgp } from './pgp.js';
 
 export type PreparedForDecrypt = { isArmored: boolean, isCleartext: true, message: OpenPGP.cleartext.CleartextMessage }
   | { isArmored: boolean, isCleartext: false, message: OpenPGP.message.Message };
@@ -83,11 +83,11 @@ export class PgpArmor {
     const isArmoredSignedOnly = utfChunk.includes(PgpArmor.headers('signedMsg').begin);
     const isArmored = isArmoredEncrypted || isArmoredSignedOnly;
     if (isArmoredSignedOnly) {
-      return { isArmored, isCleartext: true, message: await openpgp.cleartext.readArmored(new Buf(encrypted).toUtfStr()) };
+      return { isArmored, isCleartext: true, message: await opgp.cleartext.readArmored(new Buf(encrypted).toUtfStr()) };
     } else if (isArmoredEncrypted) {
-      return { isArmored, isCleartext: false, message: await openpgp.message.readArmored(new Buf(encrypted).toUtfStr()) };
+      return { isArmored, isCleartext: false, message: await opgp.message.readArmored(new Buf(encrypted).toUtfStr()) };
     } else if (encrypted instanceof Uint8Array) {
-      return { isArmored, isCleartext: false, message: await openpgp.message.read(encrypted) };
+      return { isArmored, isCleartext: false, message: await opgp.message.read(encrypted) };
     }
     throw new Error('Message does not have armor headers');
   }

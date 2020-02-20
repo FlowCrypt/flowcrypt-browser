@@ -32,7 +32,7 @@ export class PgpBlockViewErrorModule {
   }
 
   public handlePrivateKeyMismatch = async (message: Uint8Array, isPwdMsg: boolean) => { // todo - make it work for multiple stored keys
-    const msgDiagnosis = await BrowserMsg.send.await.pgpMsgDiagnosePubkeys(this.view.parentTabId, { privateKis: await Store.keysGet(this.view.acctEmail), message });
+    const msgDiagnosis = await BrowserMsg.send.bg.await.pgpMsgDiagnosePubkeys({ privateKis: await Store.keysGet(this.view.acctEmail), message });
     if (msgDiagnosis.found_match) {
       await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.encryptedCorrectlyFileBug, undefined);
     } else if (isPwdMsg) {

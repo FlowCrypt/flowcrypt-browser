@@ -9,15 +9,14 @@ import { BgHandlers } from './bg-handlers.js';
 import { BgUtils } from './bgutils.js';
 import { Catch } from '../common/platform/catch.js';
 import { GoogleAuth } from '../common/api/google-auth.js';
-import { PgpMsg } from '../common/core/pgp-msg.js';
 import { VERSION } from '../common/core/const.js';
 import { injectFcIntoWebmail } from './inject.js';
 import { migrateGlobal } from './migrations.js';
-import { openpgp } from '../common/core/pgp.js';
+import { opgp } from '../common/core/pgp.js';
 
 console.info('background_process.js starting');
 
-openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
+opgp.initWorker({ path: '/lib/openpgp.worker.js' });
 
 (async () => {
 
@@ -54,10 +53,7 @@ openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
   BrowserMsg.bgAddListener('storeAcctGet', (r: Bm.StoreAcctGet) => Store.getAcct(r.acctEmail, r.keys));
   BrowserMsg.bgAddListener('storeAcctSet', (r: Bm.StoreAcctSet) => Store.setAcct(r.acctEmail, r.values));
 
-  // openpgp related handlers
-  BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decrypt);
-  BrowserMsg.bgAddListener('pgpMsgVerifyDetached', PgpMsg.verifyDetached);
-  BrowserMsg.bgAddListener('pgpKeyDetails', BgHandlers.pgpKeyDetails);
+  BrowserMsg.addPgpListeners(); // todo - remove https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
 
   BrowserMsg.bgAddListener('ajax', BgHandlers.ajaxHandler);
   BrowserMsg.bgAddListener('ajaxGmailAttGetChunk', BgHandlers.ajaxGmailAttGetChunkHandler);

@@ -20,7 +20,7 @@ import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-m
 import { Settings } from '../../../../js/common/settings.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
-import { openpgp } from '../../../../js/common/core/pgp.js';
+import { opgp } from '../../../../js/common/core/pgp.js';
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
@@ -124,7 +124,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const usableUntil: number[] = [];
     const usableFrom: number[] = [];
     for (const armoredPubkey of pubs) {
-      const { keys: [pub] } = await openpgp.key.readArmored(armoredPubkey.pubkey);
+      const { keys: [pub] } = await opgp.key.readArmored(armoredPubkey.pubkey);
       const oneSecondBeforeExpiration = await PgpKey.dateBeforeExpiration(pub);
       usableFrom.push(pub.getCreationTime().getTime());
       if (typeof oneSecondBeforeExpiration !== 'undefined') { // key does expire

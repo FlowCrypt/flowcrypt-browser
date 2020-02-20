@@ -13,7 +13,7 @@ import { Catch } from '../../js/common/platform/catch.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
-import { openpgp } from '../../js/common/core/pgp.js';
+import { opgp } from '../../js/common/core/pgp.js';
 
 Catch.try(async () => {
 
@@ -111,7 +111,7 @@ Catch.try(async () => {
     const pwd = prompt('Please enter encryption password');
     if (pwd) {
       print('encrypting..');
-      const encrypted = await openpgp.encrypt({ armor: false, message: openpgp.message.fromBinary(data), passwords: [pwd] });
+      const encrypted = await opgp.encrypt({ armor: false, message: opgp.message.fromBinary(data), passwords: [pwd] });
       save(encrypted.message.packets.write());
     } else {
       save(data);

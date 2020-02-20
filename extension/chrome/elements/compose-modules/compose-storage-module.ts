@@ -12,7 +12,7 @@ import { CollectPubkeysResult } from './compose-types.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from './compose-err-module.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { openpgp } from '../../../js/common/core/pgp.js';
+import { opgp } from '../../../js/common/core/pgp.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 
@@ -119,7 +119,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       const lookupResult = await Keyserver.lookupEmail(this.view.acctEmail, email);
       if (lookupResult && email) {
         if (lookupResult.pubkey) {
-          const parsed = await openpgp.key.readArmored(lookupResult.pubkey);
+          const parsed = await opgp.key.readArmored(lookupResult.pubkey);
           const key = parsed.keys[0];
           if (!key) {
             console.info('Dropping found but incompatible public key', { for: email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : undefined });

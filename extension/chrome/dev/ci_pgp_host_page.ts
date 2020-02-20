@@ -12,11 +12,11 @@ import { Env } from '../../js/common/browser/env.js';
 Catch.try(async () => {
   const tabId = await BrowserMsg.requiredTabId();
 
-  BrowserMsg.addPgpListeners();
+  // BrowserMsg.addPgpListeners(); // todo - re-allow when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
   BrowserMsg.listen(tabId);
 
   let src = Env.getBaseUrl();
-  src += `/chrome/elements/pgp_block.htm?${location.search}`;
+  src += `/chrome/elements/pgp_block.htm${location.search}`;
   src += `&parentTabId=${encodeURIComponent(tabId)}`;
-  $('body').append(`<iframe src="${Xss.escape(src)}" frameborder="0"></iframe>`); // xss-escaped
+  $('body').append(`<iframe width="100%" src="${Xss.escape(src)}" frameborder="0"></iframe>`); // xss-escaped
 })();

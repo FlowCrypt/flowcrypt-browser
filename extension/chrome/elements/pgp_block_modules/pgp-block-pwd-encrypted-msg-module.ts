@@ -66,7 +66,7 @@ export class PgpBlockViewPwdEncryptedMsgModule {
   public getDecryptPwd = async (suppliedPwd?: string | undefined): Promise<string | undefined> => {
     const pwd = suppliedPwd || this.userEnteredMsgPassword;
     if (pwd && this.view.hasChallengePassword) {
-      const { hashed } = await BrowserMsg.send.await.pgpHashChallengeAnswer(this.view.parentTabId, { answer: pwd });
+      const { hashed } = await BrowserMsg.send.bg.await.pgpHashChallengeAnswer({ answer: pwd });
       return hashed;
     }
     return pwd;

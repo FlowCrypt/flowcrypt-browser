@@ -8,7 +8,7 @@ import { PgpMsg } from '../../../js/common/core/pgp-msg.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { openpgp } from '../../../js/common/core/pgp.js';
+import { opgp } from '../../../js/common/core/pgp.js';
 import { Str } from '../../../js/common/core/common.js';
 
 View.run(class CompatibilityView extends View {
@@ -75,7 +75,7 @@ View.run(class CompatibilityView extends View {
       }
       this.appendResult(`${kn} Primary key verify: ${await this.test(async () => {
         const verifyResNum = await key.verifyPrimaryKey();
-        const veryfyResWord = openpgp.enums.read(openpgp.enums.keyStatus, 1);
+        const veryfyResWord = opgp.enums.read(opgp.enums.keyStatus, 1);
         return `${verifyResNum}: ${veryfyResWord}`;
       })}`);
       this.appendResult(`${kn} Primary key creation? ${await this.test(async () => this.formatDate(await key.getCreationTime()))}`);
@@ -93,7 +93,7 @@ View.run(class CompatibilityView extends View {
         this.appendResult(`${skn} Algo: ${await this.test(async () => `${subKey.getAlgorithmInfo().algorithm}`)}`);
         this.appendResult(`${skn} Verify: ${await this.test(async () => {
           const verifyResNum = await subKey.verify(key.primaryKey);
-          const veryfyResWord = openpgp.enums.read(openpgp.enums.keyStatus, 1);
+          const veryfyResWord = opgp.enums.read(opgp.enums.keyStatus, 1);
           return `${verifyResNum}: ${veryfyResWord}`;
         })}`);
         this.appendResult(`${skn} Subkey tag: ${await this.test(async () => subKey.keyPacket.tag)}`);
@@ -153,10 +153,10 @@ View.run(class CompatibilityView extends View {
   private testEncryptDecrypt = async (key: OpenPGP.key.Key): Promise<string[]> => {
     const output: string[] = [];
     try {
-      const encryptedMsg = await openpgp.encrypt({ message: openpgp.message.fromText(this.encryptionText), publicKeys: key.toPublic(), armor: true });
+      const encryptedMsg = await opgp.encrypt({ message: opgp.message.fromText(this.encryptionText), publicKeys: key.toPublic(), armor: true });
       output.push(`Encryption with key was successful`);
       if (key.isPrivate() && key.isFullyDecrypted()) {
-        const decryptedMsg = await openpgp.decrypt({ message: await openpgp.message.readArmored(encryptedMsg.data), privateKeys: key });
+        const decryptedMsg = await opgp.decrypt({ message: await opgp.message.readArmored(encryptedMsg.data), privateKeys: key });
         output.push(`Decryption with key ${decryptedMsg.data === this.encryptionText ? 'succeeded' : 'failed!'}`);
       } else {
         output.push(`Skipping decryption because isPrivate:${key.isPrivate()} isFullyDecrypted:${key.isFullyDecrypted()}`);
@@ -173,7 +173,7 @@ View.run(class CompatibilityView extends View {
       if (!key.isFullyDecrypted()) {
         return 'skiped, not fully decrypted';
       }
-      const signedMessage = await openpgp.message.fromText(this.encryptionText).sign([key]);
+      const signedMessage = await opgp.message.fromText(this.encryptionText).sign([key]);
       output.push('sign msg ok');
       const verifyResult = await PgpMsg.verify(signedMessage, [key]);
       if (verifyResult.error !== null && typeof verifyResult.error !== 'undefined') {
