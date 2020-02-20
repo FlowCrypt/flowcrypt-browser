@@ -3,6 +3,8 @@
 import * as ava from 'ava';
 import * as request from 'fc-node-requests';
 
+import { Page } from 'puppeteer';
+
 import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
 import { Config, Util } from '../../util';
 
@@ -173,6 +175,16 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composeFrame.waitAndFocus('@action-show-options-popover');
       await inboxPage.press('Enter', 'ArrowDown', 'ArrowDown', 'ArrowDown', 'Enter'); // more arrow downs to ensure that active element selection loops
       expect(await composeFrame.read('@action-send')).to.eq('Sign and Send');
+    }));
+
+    ava.default('compose - keyboard - Attaching file using keyboard', testWithBrowser('compose', async (t, browser) => {
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('test.ci.compose@org.flowcrypt.com'));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await composeFrame.waitAndFocus('@action-attach-files');
+      await Promise.all([
+        (inboxPage.target as Page).waitForFileChooser(), // must be called before the file chooser is launched
+        inboxPage.press('Enter')
+      ]);
     }));
 
     ava.default('compose - reply - old gmail threadId fmt', testWithBrowser('compatibility', async (t, browser) => {

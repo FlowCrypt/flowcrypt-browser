@@ -55,6 +55,7 @@ export class AttUI {
     const input: HTMLInputElement = this.uploader._buttons[0].getInput(); // tslint:disable-line:no-unsafe-any
     input.setAttribute('title', 'Attach a file');
     input.setAttribute('tabindex', '8');
+    input.setAttribute('data-test', 'action-attach-files');
     return input;
   }
 
