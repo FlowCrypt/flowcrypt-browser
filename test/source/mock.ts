@@ -5,7 +5,7 @@ import * as request from 'fc-node-requests';
 import { existsSync, writeFileSync } from 'fs';
 
 import { Config } from './util';
-import { openpgp } from './core/pgp';
+import { opgp } from './core/pgp';
 import { startAllApisMock } from './mock/all-apis-mock';
 
 export const mock = async (logger: (line: string) => void) => {
@@ -22,8 +22,8 @@ export const mock = async (logger: (line: string) => void) => {
       if (statusCode !== 200) {
         throw new Error(`Missing gmail mock data at ${url}`);
       }
-      const message = await openpgp.message.read(body as Buffer);
-      const msg = await openpgp.decrypt({ message, passwords: [Config.secrets.data_encryption_password], format: 'binary' });
+      const message = await opgp.message.read(body as Buffer);
+      const msg = await opgp.decrypt({ message, passwords: [Config.secrets.data_encryption_password], format: 'binary' });
       writeFileSync(filepath, msg.data);
       console.info(`downloaded mock data to ${filepath}`);
     }
