@@ -141,7 +141,7 @@ export class BrowserMsg {
         pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
         pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
         pgpKeyDetails: (bm: Bm.PgpKeyDetails) => BrowserMsg.sendAwait(undefined, 'pgpKeyDetails', bm, true) as Promise<Bm.Res.PgpKeyDetails>,
-        pgpMsgType: (bm: Bm.PgpMsgType) => BrowserMsg.sendAwait(undefined, 'pgpKeyDetails', bm, true) as Promise<Bm.Res.PgpMsgType>,
+        pgpMsgType: (bm: Bm.PgpMsgType) => BrowserMsg.sendAwait(undefined, 'pgpMsgType', bm, true) as Promise<Bm.Res.PgpMsgType>,
       },
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),
