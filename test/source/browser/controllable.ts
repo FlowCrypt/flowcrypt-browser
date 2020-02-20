@@ -197,6 +197,11 @@ abstract class ControllableBase {
     await this.type(selector, text);
   }
 
+  public waitAndFocus = async (selector: string) => {
+    await this.waitAll(selector);
+    await this.target.focus(this.selector(selector));
+  }
+
   public waitAndRespondToModal = async (type: 'info' | 'warning' | 'error' | 'confirm' | 'confirm-checkbox', clickBtn: 'confirm' | 'cancel', message: string) => {
     await this.waitAll([`@ui-modal-${type}`, `@ui-modal-${type}:message`]);
     await Util.sleep(0.5);
@@ -513,6 +518,12 @@ export class ControllablePage extends ControllableBase {
       this.preventclose = false;
     } else {
       await this.page.close();
+    }
+  }
+
+  public press = async (...keys: string[]) => {
+    for (const key of keys) {
+      await this.page.keyboard.press(key);
     }
   }
 
