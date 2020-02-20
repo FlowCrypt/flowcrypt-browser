@@ -173,7 +173,7 @@ abstract class ControllableBase {
       const paddings = parseInt(computedStyle.getPropertyValue('padding-top')) + parseInt(computedStyle.getPropertyValue('padding-bottom'));
       const border = parseInt(computedStyle.getPropertyValue('border-top-width')) + parseInt(computedStyle.getPropertyValue('border-bottom-width'));
       const outerHeight = parseInt(computedStyle.getPropertyValue('height')) + paddings + border;
-      return outerHeight;
+      return outerHeight.toString();
     }, this.selector(selector));
   }
 
