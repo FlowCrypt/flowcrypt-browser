@@ -3,7 +3,6 @@
 'use strict';
 
 import { Value } from '../../../js/common/core/common.js';
-import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Settings } from '../../../js/common/settings.js';
@@ -90,7 +89,7 @@ export class SetupRenderModule {
   public renderSetupDialog = async (): Promise<void> => {
     let keyserverRes;
     try {
-      keyserverRes = await Keyserver.lookupEmail(this.view.acctEmail, this.view.acctEmail);
+      keyserverRes = await this.view.keyserver.lookupEmail(this.view.acctEmail);
     } catch (e) {
       return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => this.renderSetupDialog());
     }

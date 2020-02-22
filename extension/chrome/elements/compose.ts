@@ -29,6 +29,8 @@ import { ComposeSenderModule } from './compose-modules/compose-sender-module.js'
 import { ComposeSizeModule } from './compose-modules/compose-size-module.js';
 import { ComposeStorageModule } from './compose-modules/compose-storage-module.js';
 import { Catch } from '../../js/common/platform/catch.js';
+import { Rules } from '../../js/common/rules.js';
+import { Keyserver } from '../../js/common/api/keyserver.js';
 
 export class ComposeView extends View {
 
@@ -51,6 +53,8 @@ export class ComposeView extends View {
   public factory!: XssSafeFactory;
   public replyParams: ReplyParams | undefined;
   public emailProvider: EmailProviderInterface;
+  public rules!: Rules;
+  public keyserver!: Keyserver;
 
   public quoteModule!: ComposeQuoteModule;
   public sendBtnModule!: ComposeSendBtnModule;
@@ -137,6 +141,8 @@ export class ComposeView extends View {
 
   public render = async () => {
     const storage = await Store.getAcct(this.acctEmail, ['sendAs', 'hide_message_password', 'drafts_reply']);
+    this.rules = await Rules.newInstance(this.acctEmail);
+    this.keyserver = new Keyserver(this.rules);
     this.tabId = await BrowserMsg.requiredTabId();
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.scopes = await Store.getScopes(this.acctEmail);

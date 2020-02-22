@@ -5,7 +5,6 @@
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { PgpBlockView } from '../pgp_block';
 import { Store } from '../../../js/common/platform/store.js';
 import { Str } from '../../../js/common/core/common.js';
@@ -53,7 +52,7 @@ export class PgpBlockViewSignatureModule {
           render(`Fetched the right pubkey ${signerLongid} from keyserver, but will not use it because you have conflicting pubkey ${senderContactByEmail.longid} loaded.`, () => undefined);
           return;
         } // ---> and user doesn't have pubkey for that email addr
-        const { pubkey, pgpClient } = await Keyserver.lookupEmail(this.view.acctEmail, senderEmail);
+        const { pubkey, pgpClient } = await this.view.keyserver.lookupEmail(senderEmail);
         if (!pubkey) {
           render(`Missing pubkey ${signerLongid}`, () => undefined);
           return;
@@ -66,7 +65,7 @@ export class PgpBlockViewSignatureModule {
         await Store.dbContactSave(undefined, await Store.dbContactObj({ email: senderEmail, pubkey, client: pgpClient })); // <= TOFU auto-import
         render('Fetched pubkey, click to verify', () => window.location.reload());
       } else { // don't know who sent it
-        const { pubkey, pgpClient } = await Keyserver.lookupLongid(this.view.acctEmail, signerLongid);
+        const { pubkey, pgpClient } = await this.view.keyserver.lookupLongid(signerLongid);
         if (!pubkey) { // but can find matching pubkey by longid on keyserver
           render(`Could not find sender's pubkey anywhere: ${signerLongid}`, () => undefined);
           return;

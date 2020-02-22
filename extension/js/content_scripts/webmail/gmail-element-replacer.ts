@@ -21,6 +21,7 @@ import { PgpArmor } from '../../common/core/pgp-armor.js';
 import { Ui } from '../../common/browser/ui.js';
 import { WebmailCommon } from "../../common/webmail.js";
 import { Xss } from '../../common/platform/xss.js';
+import { Rules } from '../../common/rules.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
@@ -30,6 +31,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private recipientHasPgpCache: Dict<boolean> = {};
   private sendAs: Dict<SendAsAlias>;
   private factory: XssSafeFactory;
+  private rules: Rules;
+  private keyserver: Keyserver;
   private acctEmail: string;
   private canReadEmails: boolean;
   private injector: Injector;
@@ -56,7 +59,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
   };
 
-  constructor(factory: XssSafeFactory, acctEmail: string, sendAs: Dict<SendAsAlias>, canReadEmails: boolean,
+  constructor(factory: XssSafeFactory, rules: Rules, acctEmail: string, sendAs: Dict<SendAsAlias>, canReadEmails: boolean,
     injector: Injector, notifications: Notifications, gmailVariant: WebmailVariantString) {
     this.factory = factory;
     this.acctEmail = acctEmail;
@@ -67,6 +70,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.notifications = notifications;
     this.webmailCommon = new WebmailCommon(acctEmail, injector);
     this.gmail = new Gmail(acctEmail);
+    this.rules = rules;
+    this.keyserver = new Keyserver(this.rules);
   }
 
   public getIntervalFunctions = (): Array<IntervalFunction> => {
@@ -558,7 +563,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
                   const [contact] = await Store.dbContactGet(undefined, [email]);
                   if (contact && contact.pubkey) {
                     this.recipientHasPgpCache[email] = true;
-                  } else if ((await Keyserver.lookupEmail(this.acctEmail, email)).pubkey) {
+                  } else if ((await this.keyserver.lookupEmail(email)).pubkey) {
                     this.recipientHasPgpCache[email] = true;
                   } else {
                     this.recipientHasPgpCache[email] = false;

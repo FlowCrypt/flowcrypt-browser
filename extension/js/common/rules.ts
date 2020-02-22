@@ -7,7 +7,9 @@ import { Dict, Str } from './core/common.js';
 import { Buf } from './core/buf.js';
 import { Store } from './platform/store.js';
 
-type DomainRules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'ALLOW_CUSTOM_KEYSERVER' | 'ENFORCE_ATTESTER_SUBMIT' | 'DEFAULT_REMEMBER_PASS_PHRASE';
+type DomainRules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' |
+  'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' |
+  'DEFAULT_REMEMBER_PASS_PHRASE';
 export type DomainRules = {
   flags: DomainRules$flag[],
   custom_keyserver_url?: string,
@@ -21,11 +23,11 @@ export class Rules {
     }
     const storage = await Store.getAcct(acctEmail, ['rules']);
     if (storage.rules) {
-      return new Rules(storage.rules);
+      return new Rules(acctEmail, storage.rules);
     } else {
       const legacyHardCoded = await Rules.legacyHardCodedRules(acctEmail);
       await Store.setAcct(acctEmail, { rules: legacyHardCoded });
-      return new Rules(legacyHardCoded);
+      return new Rules(acctEmail, legacyHardCoded);
     }
   }
 
@@ -42,7 +44,7 @@ export class Rules {
         flags: ['NO_PRV_CREATE', 'NO_PRV_BACKUP', 'ENFORCE_ATTESTER_SUBMIT']
       },
       'xKzI/nSDX4g2Wfgih9y0sYIguRU=': { // h
-        flags: ['NO_PRV_BACKUP', 'ALLOW_CUSTOM_KEYSERVER'],
+        flags: ['NO_PRV_BACKUP'],
         custom_keyserver_url: Buf.fromBase64Str('aHR0cHM6Ly9za3MucG9kMDEuZmxlZXRzdHJlZXRvcHMuY29tLw==').toUtfStr()
       },
     };
@@ -55,7 +57,7 @@ export class Rules {
     return { flags: [] };
   }
 
-  protected constructor(private domainRules: DomainRules) { }
+  protected constructor(public acctEmail: string, private domainRules: DomainRules) { }
 
   public canCreateKeys = () => {
     return !this.domainRules.flags.includes('NO_PRV_CREATE');
@@ -69,16 +71,16 @@ export class Rules {
     return this.domainRules.flags.includes('ENFORCE_ATTESTER_SUBMIT');
   }
 
-  public canUseCustomKeyserver = () => {
-    return this.domainRules.flags.includes('ALLOW_CUSTOM_KEYSERVER');
-  }
-
   public rememberPassPhraseByDefault = () => {
     return this.domainRules.flags.includes('DEFAULT_REMEMBER_PASS_PHRASE');
   }
 
   public getCustomKeyserver = (): string | undefined => {
-    return this.canUseCustomKeyserver() ? this.domainRules.custom_keyserver_url : undefined;
+    return this.domainRules.custom_keyserver_url;
+  }
+
+  public forbidAttesterSubmit = () => {
+    return this.domainRules.flags.includes('NO_ATTESTER_SUBMIT');
   }
 
 }
