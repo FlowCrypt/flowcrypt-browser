@@ -5,10 +5,8 @@
 import { AccountStore, Scopes, Store } from '../../js/common/platform/store.js';
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Url } from '../../js/common/core/common.js';
-
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { Assert } from '../../js/common/assert.js';
-import { Attester } from '../../js/common/api/attester.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Contact, KeyInfo } from '../../js/common/core/pgp-key.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
@@ -211,7 +209,7 @@ export class SetupView extends View {
     if (!options.submit_main) {
       return;
     }
-    Attester.testWelcome(this.acctEmail, armoredPubkey).catch(ApiErr.reportIfSignificant);
+    this.keyserver.attester.testWelcome(this.acctEmail, armoredPubkey).catch(ApiErr.reportIfSignificant);
     let addresses;
     if (this.submitKeyForAddrs.length && options.submit_all) {
       addresses = [...this.submitKeyForAddrs];
@@ -223,7 +221,15 @@ export class SetupView extends View {
       // todo - offer user to fix it up
       return;
     }
-    await Settings.submitPubkeys(this.acctEmail, addresses, armoredPubkey);
+    await this.submitPubkeys(addresses, armoredPubkey);
+  }
+
+  private submitPubkeys = async (addresses: string[], pubkey: string) => {
+    await this.keyserver.attester.initialLegacySubmit(this.acctEmail, pubkey);
+    const aliases = addresses.filter(a => a !== this.acctEmail);
+    if (aliases.length) {
+      await Promise.all(aliases.map(a => this.keyserver.attester.initialLegacySubmit(a, pubkey)));
+    }
   }
 
 }

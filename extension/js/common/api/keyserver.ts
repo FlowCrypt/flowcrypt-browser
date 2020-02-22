@@ -16,9 +16,12 @@ export type PubkeySearchResult = { pubkey: string | null; pgpClient: PgpClient }
  */
 export class Keyserver {
 
+  public attester: Attester;
+
   constructor(
     private rules: Rules
   ) {
+    this.attester = new Attester();
   }
 
   public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
@@ -29,7 +32,7 @@ export class Keyserver {
         return res;
       }
     }
-    return await Attester.lookupEmail(email);
+    return await this.attester.lookupEmail(email);
   }
 
   public lookupLongid = async (longid: string): Promise<PubkeySearchResult> => {
@@ -40,7 +43,7 @@ export class Keyserver {
         return res;
       }
     }
-    return await Attester.lookupLongid(longid);
+    return await this.attester.lookupLongid(longid);
   }
 
 }

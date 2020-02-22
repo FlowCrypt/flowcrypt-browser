@@ -6,7 +6,6 @@ import { Dict, Url } from '../../../js/common/core/common.js';
 
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { Attester } from '../../../js/common/api/attester.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
@@ -15,6 +14,8 @@ import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { Keyserver } from '../../../js/common/api/keyserver.js';
+import { Rules } from '../../../js/common/rules.js';
 
 type AttesterKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: string, match: boolean }> };
 
@@ -22,6 +23,8 @@ View.run(class KeyserverView extends View {
 
   private acctEmail: string;
   private parentTabId: string;
+  private keyserver!: Keyserver;
+  private rules!: Rules;
 
   constructor() {
     super();
@@ -31,6 +34,8 @@ View.run(class KeyserverView extends View {
   }
 
   public render = async () => {
+    this.rules = await Rules.newInstance(this.acctEmail);
+    this.keyserver = new Keyserver(this.rules);
     $('.email-address').text(this.acctEmail);
     Xss.sanitizeRender('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
     (async () => {
@@ -74,7 +79,7 @@ View.run(class KeyserverView extends View {
     const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
-      await Attester.initialLegacySubmit(String($(target).attr('email')), primaryKi.public);
+      await this.keyserver.attester.initialLegacySubmit(String($(target).attr('email')), primaryKi.public);
     } catch (e) {
       ApiErr.reportIfSignificant(e);
       await Ui.modal.error(ApiErr.eli5(e));
@@ -88,7 +93,7 @@ View.run(class KeyserverView extends View {
     const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
-      const responseText = await Attester.replacePubkey(String($(target).attr('email')), primaryKi.public);
+      const responseText = await this.keyserver.attester.replacePubkey(String($(target).attr('email')), primaryKi.public);
       await Ui.modal.info(responseText);
       BrowserMsg.send.closePage(this.parentTabId);
     } catch (e) {
@@ -103,7 +108,7 @@ View.run(class KeyserverView extends View {
     const { sendAs } = await Store.getAcct(this.acctEmail, ['sendAs']);
     const storedKeys = await Store.keysGet(this.acctEmail);
     const storedKeysLongids = storedKeys.map(ki => ki.longid);
-    const results = await Attester.lookupEmails(sendAs ? Object.keys(sendAs) : [this.acctEmail]);
+    const results = await this.keyserver.attester.lookupEmails(sendAs ? Object.keys(sendAs) : [this.acctEmail]);
     for (const email of Object.keys(results)) {
       const pubkeySearchResult = results[email];
       if (!pubkeySearchResult.pubkey) {

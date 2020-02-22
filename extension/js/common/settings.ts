@@ -5,11 +5,9 @@
 import { Dict, Str, Url, UrlParams } from './core/common.js';
 import { JQS, Ui } from './browser/ui.js';
 import { SendAsAlias, Store } from './platform/store.js';
-
 import { Api } from './api/api.js';
 import { ApiErr } from './api/error/api-error.js';
 import { ApiErrResponse } from './api/error/api-error-types.js';
-import { Attester } from './api/attester.js';
 import { Backend } from './api/backend.js';
 import { Catch } from './platform/catch.js';
 import { Env } from './browser/env.js';
@@ -29,14 +27,6 @@ export class Settings {
 
   public static evalPasswordStrength = (passphrase: string, type: 'passphrase' | 'pwd' = 'passphrase') => {
     return PgpPwd.estimateStrength(zxcvbn(passphrase, PgpPwd.weakWords()).guesses, type); // tslint:disable-line:no-unsafe-any
-  }
-
-  public static submitPubkeys = async (acctEmail: string, addresses: string[], pubkey: string) => {
-    await Attester.initialLegacySubmit(acctEmail, pubkey);
-    const aliases = addresses.filter(a => a !== acctEmail);
-    if (aliases.length) {
-      await Promise.all(aliases.map(a => Attester.initialLegacySubmit(a, pubkey)));
-    }
   }
 
   public static renderSubPage = (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {

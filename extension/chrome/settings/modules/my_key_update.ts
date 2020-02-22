@@ -4,7 +4,6 @@
 
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { Attester } from '../../../js/common/api/attester.js';
 import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
@@ -15,6 +14,8 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { opgp } from '../../../js/common/core/pgp.js';
+import { Rules } from '../../../js/common/rules.js';
+import { Keyserver } from '../../../js/common/api/keyserver.js';
 
 View.run(class MyKeyUpdateView extends View {
   private readonly acctEmail: string;
@@ -23,6 +24,8 @@ View.run(class MyKeyUpdateView extends View {
   private readonly inputPrivateKey = $('.input_private_key');
   private readonly prvHeaders = PgpArmor.headers('privateKey');
   private primaryKi: KeyInfo | undefined;
+  private rules!: Rules;
+  private keyserver!: Keyserver;
 
   constructor() {
     super();
@@ -33,6 +36,8 @@ View.run(class MyKeyUpdateView extends View {
   }
 
   public render = async () => {
+    this.rules = await Rules.newInstance(this.acctEmail);
+    this.keyserver = new Keyserver(this.rules);
     [this.primaryKi] = await Store.keysGet(this.acctEmail, [this.longid]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     $('.action_show_public_key').attr('href', this.showKeyUrl);
@@ -53,7 +58,7 @@ View.run(class MyKeyUpdateView extends View {
     await Store.passphraseSave('session', this.acctEmail, this.primaryKi!.longid, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
     if (await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
       try {
-        await Ui.modal.info(await Attester.updatePubkey(this.primaryKi!.longid, updatedPrv.toPublic().armor()));
+        await Ui.modal.info(await this.keyserver.attester.updatePubkey(this.primaryKi!.longid, updatedPrv.toPublic().armor()));
       } catch (e) {
         ApiErr.reportIfSignificant(e);
         await Ui.modal.error(`Error updating public records:\n\n${ApiErr.eli5(e)}\n\n(but local update was successful)`);
