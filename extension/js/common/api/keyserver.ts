@@ -21,7 +21,7 @@ export class Keyserver {
   constructor(
     private rules: Rules
   ) {
-    this.attester = new Attester();
+    this.attester = new Attester(rules);
   }
 
   public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
