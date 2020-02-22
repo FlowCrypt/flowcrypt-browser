@@ -32,9 +32,9 @@ View.run(class SettingsView extends View {
   private readonly advanced: boolean;
 
   private readonly gmail: Gmail | undefined;
-
-  private tabId: string | undefined;
-  private notifications: Notifications | undefined;
+  private tabId!: string;
+  private notifications!: Notifications;
+  private rules: Rules | undefined;
 
   constructor() {
     super();
@@ -57,6 +57,12 @@ View.run(class SettingsView extends View {
     }
     this.tabId = await BrowserMsg.requiredTabId();
     this.notifications = new Notifications(this.tabId);
+    if (this.acctEmail) {
+      this.rules = await Rules.newInstance(this.acctEmail);
+    }
+    if (this.rules && !this.rules.canSubmitPubToAttester()) {
+      $('.public_profile_indicator_container').hide(); // contact page is useless if user cannot submit to attester
+    }
     $.get('/changelog.txt', data => ($('#status-row #status_v') as any as JQS).featherlight(String(data).replace(/\n/g, '<br>')), 'html');
     await this.initialize();
     await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail, this.tabId!);

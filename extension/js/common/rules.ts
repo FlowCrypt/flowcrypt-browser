@@ -79,8 +79,8 @@ export class Rules {
     return this.domainRules.custom_keyserver_url;
   }
 
-  public forbidAttesterSubmit = () => {
-    return this.domainRules.flags.includes('NO_ATTESTER_SUBMIT');
+  public canSubmitPubToAttester = () => {
+    return !this.domainRules.flags.includes('NO_ATTESTER_SUBMIT');
   }
 
 }

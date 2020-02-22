@@ -6,12 +6,14 @@ import { Api, ReqMethod } from './api.js';
 import { Dict, Str } from '../core/common.js';
 import { PgpClient, PubkeySearchResult } from './keyserver.js';
 import { ApiErr } from './error/api-error.js';
+import { Rules } from '../rules.js';
 
 type PubCallRes = { responseText: string, getResponseHeader: (n: string) => string | null };
 
 export class Attester extends Api {
 
   constructor(
+    private rules: Rules
   ) {
     super();
   }
@@ -47,16 +49,25 @@ export class Attester extends Api {
   }
 
   public replacePubkey = async (email: string, pubkey: string): Promise<string> => { // replace key assigned to a certain email with a different one
+    if (!this.rules.canSubmitPubToAttester()) {
+      throw new Error('Cannot replace pubkey at attester because your organisation rules forbid it');
+    }
     const r = await this.pubCall(`pub/${email}`, 'POST', pubkey);
     return r.responseText;
   }
 
   public updatePubkey = async (longid: string, pubkey: string): Promise<string> => { // update key with a newer version of the same key
+    if (!this.rules.canSubmitPubToAttester()) {
+      throw new Error('Cannot update pubkey at attester because your organisation rules forbid it');
+    }
     const r = await this.pubCall(`pub/${longid}`, 'PUT', pubkey);
     return r.responseText;
   }
 
   public initialLegacySubmit = async (email: string, pubkey: string): Promise<{ saved: boolean }> => {
+    if (!this.rules.canSubmitPubToAttester()) {
+      throw new Error('Cannot submit pubkey to attester because your organisation rules forbid it');
+    }
     return await this.jsonCall<{ saved: boolean }>('initial/legacy_submit', { email: Str.parseEmail(email).email, pubkey: pubkey.trim() });
   }
 
