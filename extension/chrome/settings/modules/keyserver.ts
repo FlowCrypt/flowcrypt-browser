@@ -75,6 +75,9 @@ View.run(class KeyserverView extends View {
   // -- PRIVATE
 
   private submitPublicKeyHandler = async (target: HTMLElement) => {
+    if (!this.rules.canSubmitPubToAttester()) {
+      return await Ui.modal.error('Disallowed by your organisation rules');
+    }
     Xss.sanitizeRender(target, Ui.spinner('white'));
     const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
@@ -89,6 +92,9 @@ View.run(class KeyserverView extends View {
   }
 
   private replacePublicKeyHandler = async (target: HTMLElement) => {
+    if (!this.rules.canSubmitPubToAttester()) {
+      return await Ui.modal.error('Disallowed by your organisation rules');
+    }
     Xss.sanitizeRender(target, Ui.spinner('white'));
     const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);

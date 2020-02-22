@@ -56,7 +56,7 @@ View.run(class MyKeyUpdateView extends View {
     await Store.keysAdd(this.acctEmail, updatedPrv.armor());
     await Store.passphraseSave('local', this.acctEmail, this.primaryKi!.longid, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
     await Store.passphraseSave('session', this.acctEmail, this.primaryKi!.longid, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
-    if (await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
+    if (this.rules.canSubmitPubToAttester() && await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
       try {
         await Ui.modal.info(await this.keyserver.attester.updatePubkey(this.primaryKi!.longid, updatedPrv.toPublic().armor()));
       } catch (e) {
