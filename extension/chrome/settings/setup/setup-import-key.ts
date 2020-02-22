@@ -22,8 +22,8 @@ export class SetupImportKeyModule {
     }
     const options: SetupOptions = {
       passphrase: String($('#step_2b_manual_enter .input_passphrase').val()),
-      submit_main: Boolean($('#step_2b_manual_enter .input_submit_key').prop('checked') || this.view.rules!.mustSubmitToAttester()),
-      submit_all: Boolean($('#step_2b_manual_enter .input_submit_all').prop('checked') || this.view.rules!.mustSubmitToAttester()),
+      submit_main: this.view.shouldSubmitPubkey('#step_2b_manual_enter .input_submit_key'),
+      submit_all: this.view.shouldSubmitPubkey('#step_2b_manual_enter .input_submit_all'),
       passphrase_save: Boolean($('#step_2b_manual_enter .input_passphrase_save').prop('checked')),
       is_newly_created_key: false,
       recovered: false,

@@ -9,9 +9,16 @@ import { opgp } from './core/pgp';
 import { startAllApisMock } from './mock/all-apis-mock';
 
 export const mock = async (logger: (line: string) => void) => {
+  const acctsWithoutMockData = [
+    'flowcrypt.test.key.multibackup@gmail.com',
+    'has.pub@org-rules-test.flowcrypt.com',
+    'no.pub@org-rules-test.flowcrypt.com',
+    'user@no-submit-org-rule.flowcrypt.com',
+    'user@no-search-domains-org-rule.flowcrypt.com',
+  ];
   const start = Date.now();
   await Promise.all(Config.secrets.auth.google.map(a => a.email).map(async email => { // load and decrypt mock data if missing
-    if (['flowcrypt.test.key.multibackup@gmail.com', 'has.pub@org-rules-test.flowcrypt.com', 'no.pub@org-rules-test.flowcrypt.com'].includes(email)) {
+    if (acctsWithoutMockData.includes(email)) {
       return; // missing mock data, not yet used
     }
     const filename = `${email.replace(/[^a-z0-9]+/g, '')}.json`;

@@ -5,10 +5,8 @@
 import { AccountStore, Scopes, Store } from '../../js/common/platform/store.js';
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Url } from '../../js/common/core/common.js';
-
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { Assert } from '../../js/common/assert.js';
-import { Attester } from '../../js/common/api/attester.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Contact, KeyInfo } from '../../js/common/core/pgp-key.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
@@ -26,6 +24,7 @@ import { Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
+import { Keyserver } from '../../js/common/api/keyserver.js';
 
 export interface SetupOptions {
   passphrase: string;
@@ -49,10 +48,11 @@ export class SetupView extends View {
   public readonly setupImportKey: SetupImportKeyModule;
   public readonly setupRender: SetupRenderModule;
 
-  public tabId: string | undefined;
-  public scopes: Scopes | undefined;
-  public storage: AccountStore | undefined;
-  public rules: Rules | undefined;
+  public tabId!: string;
+  public scopes!: Scopes;
+  public storage!: AccountStore;
+  public rules!: Rules;
+  public keyserver!: Keyserver;
 
   public acctEmailAttesterLongid: string | undefined;
   public fetchedKeyBackups: KeyInfo[] = [];
@@ -93,13 +93,14 @@ export class SetupView extends View {
     this.scopes = await Store.getScopes(this.acctEmail);
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.rules = await Rules.newInstance(this.acctEmail);
+    this.keyserver = new Keyserver(this.rules);
     if (!this.rules.canCreateKeys()) {
       const forbidden = `${Lang.setup.creatingKeysNotAllowedPleaseImport} <a href="${Xss.escape(window.location.href)}">Back</a>`;
       Xss.sanitizeRender('#step_2a_manual_create, #step_2_easy_generating', `<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
       $('.back').remove(); // back button would allow users to choose other options (eg create - not allowed)
     }
-    if (this.rules.mustSubmitToAttester()) {
-      $('.remove_if_enforce_submit_to_attester').remove();
+    if (this.rules.mustSubmitToAttester() || !this.rules.canSubmitPubToAttester()) {
+      $('.remove_if_pubkey_submitting_not_user_configurable').remove();
     }
     if (this.rules.rememberPassPhraseByDefault()) {
       $('#step_2a_manual_create .input_passphrase_save').prop('checked', true);
@@ -112,7 +113,7 @@ export class SetupView extends View {
   public setHandlers = () => {
     BrowserMsg.addListener('close_page', async () => { $('.featherlight-close').click(); });
     BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => { await Ui.modal.info(notification); });
-    BrowserMsg.listen(this.tabId!);
+    BrowserMsg.listen(this.tabId);
     $('.action_send').attr('href', Google.webmailUrl(this.acctEmail));
     $('.action_show_help').click(this.setHandler(() => Settings.renderSubPage(this.acctEmail, this.tabId!, '/chrome/settings/modules/help.htm')));
     $('.back').off().click(this.setHandler(() => this.actionBackHandler()));
@@ -204,11 +205,28 @@ export class SetupView extends View {
     await Store.dbContactSave(undefined, myOwnEmailAddrsAsContacts);
   }
 
-  public submitPublicKeyIfNeeded = async (armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) => {
+  public shouldSubmitPubkey = (checkboxSelector: string) => {
+    if (this.rules.mustSubmitToAttester() && !this.rules.canSubmitPubToAttester()) {
+      throw new Error('Organisation rules are misconfigured: ENFORCE_ATTESTER_SUBMIT not compatible with NO_ATTESTER_SUBMIT');
+    }
+    if (!this.rules.canSubmitPubToAttester()) {
+      return false;
+    }
+    if (this.rules.mustSubmitToAttester()) {
+      return true;
+    }
+    return Boolean($(checkboxSelector).prop('checked'));
+  }
+
+  private submitPublicKeyIfNeeded = async (armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) => {
     if (!options.submit_main) {
       return;
     }
-    Attester.testWelcome(this.acctEmail, armoredPubkey).catch(ApiErr.reportIfSignificant);
+    if (!this.rules.canSubmitPubToAttester()) {
+      await Ui.modal.error('Not submitting public key to Attester - disabled for your org');
+      return;
+    }
+    this.keyserver.attester.testWelcome(this.acctEmail, armoredPubkey).catch(ApiErr.reportIfSignificant);
     let addresses;
     if (this.submitKeyForAddrs.length && options.submit_all) {
       addresses = [...this.submitKeyForAddrs];
@@ -220,7 +238,15 @@ export class SetupView extends View {
       // todo - offer user to fix it up
       return;
     }
-    await Settings.submitPubkeys(this.acctEmail, addresses, armoredPubkey);
+    await this.submitPubkeys(addresses, armoredPubkey);
+  }
+
+  private submitPubkeys = async (addresses: string[], pubkey: string) => {
+    await this.keyserver.attester.initialLegacySubmit(this.acctEmail, pubkey);
+    const aliases = addresses.filter(a => a !== this.acctEmail);
+    if (aliases.length) {
+      await Promise.all(aliases.map(a => this.keyserver.attester.initialLegacySubmit(a, pubkey)));
+    }
   }
 
 }

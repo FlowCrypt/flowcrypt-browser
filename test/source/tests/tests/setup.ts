@@ -8,6 +8,7 @@ import { BrowserRecipe } from '../browser-recipe';
 import { SetupPageRecipe } from '../page-recipe/setup-page-recipe';
 import { TestWithBrowser } from '../../test';
 import { expect } from 'chai';
+import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
 
 // tslint:disable:no-blank-lines-func
 
@@ -146,6 +147,15 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       const renderedErr = await settingsPage.read('@container-overlay-prompt-text');
       expect(renderedErr).to.contain(`Failed to submit to Attester`);
       expect(renderedErr).to.contain(`Could not find LDAP pubkey on a LDAP-only domain for email no.pub@org-rules-test.flowcrypt.com on server keys.flowcrypt.com`);
+    }));
+
+    ava.default('user@no-submit-org-rule.flowcrypt.com - do not submit to attester', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-org-rule.flowcrypt.com');
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { noPubSubmitRule: true });
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const attesterFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-attester-page', ['keyserver.htm']);
+      await attesterFrame.waitAndClick('@action-submit-pub');
+      await attesterFrame.waitAndRespondToModal('error', 'confirm', 'Disallowed by your organisation rules');
     }));
 
   }

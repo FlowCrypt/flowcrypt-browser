@@ -30,7 +30,8 @@ View.run(class ContactsView extends View {
   private contacts: Contact[] = [];
   private factory: XssSafeFactory | undefined; // set in render()
   private attUI = new AttUI(() => Promise.resolve({ sizeMb: 5, size: 5 * 1024 * 1024, count: 1 }));
-  private rules: Rules | undefined; // set in render()
+  private rules!: Rules;
+  private keyserver!: Keyserver;
   private backBtn = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">back</a>';
   private space = '&nbsp;&nbsp;&nbsp;&nbsp;';
 
@@ -45,6 +46,7 @@ View.run(class ContactsView extends View {
     BrowserMsg.listen(tabId); // set_css
     this.factory = new XssSafeFactory(this.acctEmail, tabId, undefined, undefined, { compact: true });
     this.rules = await Rules.newInstance(this.acctEmail);
+    this.keyserver = new Keyserver(this.rules);
     this.attUI.initAttDialog('fineuploader', 'fineuploader_button', { attAdded: this.fileAddedHandler });
     const fetchKeyUI = new FetchKeyUI();
     fetchKeyUI.handleOnPaste($('.input_pubkey'));
@@ -67,7 +69,7 @@ View.run(class ContactsView extends View {
     this.contacts = await Store.dbContactSearch(undefined, { has_pgp: true });
     let lineActionsHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
       '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;';
-    if (this.rules!.canUseCustomKeyserver() && this.rules!.getCustomKeyserver()) {
+    if (this.rules.getCustomKeyserver()) {
       lineActionsHtml += `&nbsp;&nbsp;<br><br><b class="bad">using custom keyserver: ${Xss.escape(this.rules!.getCustomKeyserver()!)}</b>`;
     } else {
       lineActionsHtml += '&nbsp;&nbsp;<a href="https://flowcrypt.com/docs/technical/keyserver-integration.html" target="_blank">use custom keyserver</a>&nbsp;&nbsp;';
@@ -176,7 +178,7 @@ View.run(class ContactsView extends View {
       const normalizedLongid = KeyImportUi.normalizeLongId(value);
       let pub: string;
       if (normalizedLongid) {
-        const data = await Keyserver.lookupLongid(this.acctEmail, normalizedLongid);
+        const data = await this.keyserver.lookupLongid(normalizedLongid);
         if (data.pubkey) {
           pub = data.pubkey;
         } else {

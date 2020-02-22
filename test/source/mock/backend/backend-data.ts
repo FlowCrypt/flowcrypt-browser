@@ -53,6 +53,9 @@ export class BackendData {
     if (domain === 'org-rules-test.flowcrypt.com') {
       return { "flags": ["NO_PRV_CREATE", "NO_PRV_BACKUP", "ENFORCE_ATTESTER_SUBMIT"] };
     }
+    if (domain === 'no-submit-org-rule.flowcrypt.com') {
+      return { "flags": ["NO_ATTESTER_SUBMIT"] };
+    }
     return { 'flags': [] };
   }
 

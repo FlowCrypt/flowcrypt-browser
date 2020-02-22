@@ -2,12 +2,12 @@
 
 'use strict';
 
-import { Dict, Str } from './core/common.js';
-
-import { Buf } from './core/buf.js';
+import { Str } from './core/common.js';
 import { Store } from './platform/store.js';
 
-type DomainRules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'ALLOW_CUSTOM_KEYSERVER' | 'ENFORCE_ATTESTER_SUBMIT' | 'DEFAULT_REMEMBER_PASS_PHRASE';
+type DomainRules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' |
+  'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' |
+  'DEFAULT_REMEMBER_PASS_PHRASE';
 export type DomainRules = {
   flags: DomainRules$flag[],
   custom_keyserver_url?: string,
@@ -15,44 +15,19 @@ export type DomainRules = {
 
 export class Rules {
 
+  private static readonly default = { flags: [] };
+
   public static newInstance = async (acctEmail: string): Promise<Rules> => {
-    if (!Str.parseEmail(acctEmail).email) {
+    const email = Str.parseEmail(acctEmail).email;
+    if (!email) {
       throw new Error(`Not a valid email:${acctEmail}`);
     }
-    const storage = await Store.getAcct(acctEmail, ['rules']);
-    if (storage.rules) {
-      return new Rules(storage.rules);
-    } else {
-      const legacyHardCoded = await Rules.legacyHardCodedRules(acctEmail);
-      await Store.setAcct(acctEmail, { rules: legacyHardCoded });
-      return new Rules(legacyHardCoded);
-    }
+    const storage = await Store.getAcct(email, ['rules']);
+    return new Rules(storage.rules || Rules.default);
   }
 
   public static isPublicEmailProviderDomain = (emailAddr: string) => {
     return ['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(emailAddr.split('@')[1] || 'NONE');
-  }
-
-  private static legacyHardCodedRules = async (acctEmail: string): Promise<DomainRules> => {
-    const hardCodedRules: Dict<DomainRules> = {
-      'dFEm3KyalKGTGjpeA/Ar44IPUdE=': { // n
-        flags: ['NO_PRV_CREATE', 'NO_PRV_BACKUP', 'ENFORCE_ATTESTER_SUBMIT']
-      },
-      'd3VLGOyz8vfFm/IM/gavrCpkWOw=': { // v
-        flags: ['NO_PRV_CREATE', 'NO_PRV_BACKUP', 'ENFORCE_ATTESTER_SUBMIT']
-      },
-      'xKzI/nSDX4g2Wfgih9y0sYIguRU=': { // h
-        flags: ['NO_PRV_BACKUP', 'ALLOW_CUSTOM_KEYSERVER'],
-        custom_keyserver_url: Buf.fromBase64Str('aHR0cHM6Ly9za3MucG9kMDEuZmxlZXRzdHJlZXRvcHMuY29tLw==').toUtfStr()
-      },
-    };
-    const domain = acctEmail.split('@')[1];
-    const sha1 = Buf.fromUint8(new Uint8Array(await crypto.subtle.digest('SHA-1', Buf.fromUtfStr(domain)))).toBase64Str();
-    const foundHardCoded = hardCodedRules[sha1];
-    if (foundHardCoded) {
-      return foundHardCoded;
-    }
-    return { flags: [] };
   }
 
   protected constructor(private domainRules: DomainRules) { }
@@ -69,16 +44,16 @@ export class Rules {
     return this.domainRules.flags.includes('ENFORCE_ATTESTER_SUBMIT');
   }
 
-  public canUseCustomKeyserver = () => {
-    return this.domainRules.flags.includes('ALLOW_CUSTOM_KEYSERVER');
-  }
-
   public rememberPassPhraseByDefault = () => {
     return this.domainRules.flags.includes('DEFAULT_REMEMBER_PASS_PHRASE');
   }
 
   public getCustomKeyserver = (): string | undefined => {
-    return this.canUseCustomKeyserver() ? this.domainRules.custom_keyserver_url : undefined;
+    return this.domainRules.custom_keyserver_url;
+  }
+
+  public canSubmitPubToAttester = () => {
+    return !this.domainRules.flags.includes('NO_ATTESTER_SUBMIT');
   }
 
 }

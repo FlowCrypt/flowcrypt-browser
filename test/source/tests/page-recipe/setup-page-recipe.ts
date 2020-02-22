@@ -17,6 +17,7 @@ type ManualEnterOpts = {
   simulateRetryOffline?: boolean,
   noPrvCreateOrgRule?: boolean,
   enforceAttesterSubmitOrgRule?: boolean,
+  noPubSubmitRule?: boolean,
   fillOnly?: boolean,
 };
 
@@ -71,6 +72,7 @@ export class SetupPageRecipe extends PageRecipe {
       noPrvCreateOrgRule = false,
       enforceAttesterSubmitOrgRule = false,
       fillOnly = false,
+      noPubSubmitRule = false,
     }: ManualEnterOpts = {}
   ) {
     const k = Config.key(keyTitle);
@@ -114,7 +116,7 @@ export class SetupPageRecipe extends PageRecipe {
         await settingsPage.waitAndType('@input-step2bmanualenter-passphrase', k.passphrase);
       }
     }
-    if (enforceAttesterSubmitOrgRule) {
+    if (enforceAttesterSubmitOrgRule || noPubSubmitRule) {
       await settingsPage.notPresent('@input-step2bmanualenter-submit-pubkey');
     } else {
       await settingsPage.waitAll('@input-step2bmanualenter-submit-pubkey');

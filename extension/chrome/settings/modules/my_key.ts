@@ -5,7 +5,6 @@
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Attester } from '../../../js/common/api/attester.js';
 import { Backend } from '../../../js/common/api/backend.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { Buf } from '../../../js/common/core/buf.js';
@@ -16,6 +15,8 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
+import { Keyserver } from '../../../js/common/api/keyserver.js';
+import { Rules } from '../../../js/common/rules.js';
 
 declare const ClipboardJS: any;
 
@@ -26,6 +27,8 @@ View.run(class MyKeyView extends View {
   private readonly myKeyUserIdsUrl: string;
   private readonly myKeyUpdateUrl: string;
   private keyInfo!: KeyInfo;
+  private rules!: Rules;
+  private keyserver!: Keyserver;
 
   constructor() {
     super();
@@ -37,6 +40,8 @@ View.run(class MyKeyView extends View {
   }
 
   public render = async () => {
+    this.rules = await Rules.newInstance(this.acctEmail);
+    this.keyserver = new Keyserver(this.rules);
     [this.keyInfo] = await Store.keysGet(this.acctEmail, [this.longid]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
@@ -60,7 +65,7 @@ View.run(class MyKeyView extends View {
 
   private setPubkeyContainer = async () => {
     try {
-      const result = await Attester.lookupEmail(this.acctEmail);
+      const result = await this.keyserver.attester.lookupEmail(this.acctEmail);
       const url = Backend.url('pubkey', this.acctEmail);
       if (result.pubkey && await PgpKey.longid(result.pubkey) === this.keyInfo.longid) {
         $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('display', '');

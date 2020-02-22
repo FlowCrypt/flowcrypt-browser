@@ -18,6 +18,8 @@ import { PgpBlockViewSignatureModule } from './pgp_block_modules/pgp-block-signa
 import { Store } from '../../js/common/platform/store.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
+import { Keyserver } from '../../js/common/api/keyserver.js';
+import { Rules } from '../../js/common/rules.js';
 
 export class PgpBlockView extends View {
 
@@ -33,6 +35,8 @@ export class PgpBlockView extends View {
   public signature: string | boolean | undefined; // when supplied with "true", decryptModule will replace this with actual signature data
 
   public gmail: Gmail;
+  public rules!: Rules;
+  public keyserver!: Keyserver;
 
   public readonly attachmentsModule: PgpBlockViewAttachmentsModule;
   public readonly signatureModule: PgpBlockViewSignatureModule;
@@ -70,6 +74,8 @@ export class PgpBlockView extends View {
 
   public render = async () => {
     const storage = await Store.getAcct(this.acctEmail, ['setup_done', 'google_token_scopes']);
+    this.rules = await Rules.newInstance(this.acctEmail);
+    this.keyserver = new Keyserver(this.rules);
     const scopes = await Store.getScopes(this.acctEmail);
     this.decryptModule.canReadEmails = scopes.read || scopes.modify;
     if (storage.setup_done) {
