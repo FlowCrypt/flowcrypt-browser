@@ -51,7 +51,7 @@ View.run(class KeyserverView extends View {
       let note, action, color;
       if (!result.pubkey) {
         note = 'Missing record. Your contacts will not know you have encryption set up.';
-        action = `<button class="button gray2 small action_submit_key" email="${Xss.escape(email)}">Submit public key</button>`;
+        action = `<button class="button gray2 small action_submit_key" data-test="action-submit-pub" email="${Xss.escape(email)}">Submit public key</button>`;
         color = 'orange';
       } else if (result.match) {
         note = 'Submitted correctly, can receive encrypted email.';
