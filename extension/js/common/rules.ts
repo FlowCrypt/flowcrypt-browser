@@ -23,11 +23,11 @@ export class Rules {
     }
     const storage = await Store.getAcct(acctEmail, ['rules']);
     if (storage.rules) {
-      return new Rules(acctEmail, storage.rules);
+      return new Rules(storage.rules);
     } else {
       const legacyHardCoded = await Rules.legacyHardCodedRules(acctEmail);
       await Store.setAcct(acctEmail, { rules: legacyHardCoded });
-      return new Rules(acctEmail, legacyHardCoded);
+      return new Rules(legacyHardCoded);
     }
   }
 
@@ -57,7 +57,7 @@ export class Rules {
     return { flags: [] };
   }
 
-  protected constructor(public acctEmail: string, private domainRules: DomainRules) { }
+  protected constructor(private domainRules: DomainRules) { }
 
   public canCreateKeys = () => {
     return !this.domainRules.flags.includes('NO_PRV_CREATE');
