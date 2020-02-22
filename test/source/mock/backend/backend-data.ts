@@ -56,6 +56,9 @@ export class BackendData {
     if (domain === 'no-submit-org-rule.flowcrypt.com') {
       return { "flags": ["NO_ATTESTER_SUBMIT"] };
     }
+    if (domain === 'no-search-domains-org-rule.flowcrypt.com') {
+      return { "flags": [], "disallow_attester_search_for_domains": ["flowcrypt.com"] };
+    }
     return { 'flags': [] };
   }
 

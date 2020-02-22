@@ -19,6 +19,10 @@ export class Attester extends Api {
   }
 
   public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
+    if (!this.rules.canLookupThisRecipientOnAttester(email)) {
+      console.info(`Skipping attester lookup of ${email} because attester search on this domain is disabled.`);
+      return { pubkey: null, pgpClient: null }; // tslint:disable-line:no-null-keyword
+    }
     try {
       const r = await this.pubCall(`pub/${email}`);
       // when requested from the content script, `getResponseHeader` will be missing because it's not a real XMLHttpRequest we are getting back

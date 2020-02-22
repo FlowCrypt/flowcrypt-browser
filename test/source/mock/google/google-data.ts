@@ -5,6 +5,7 @@ import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
 import UserMessages from '../../../samples/mock-data';
 import { Util } from '../../util/index';
 import { readFileSync } from 'fs';
+import { acctsWithoutMockData } from '../../mock';
 
 type GmailMsg$header = { name: string, value: string };
 type GmailMsg$payload$body = { attachmentId?: string, size: number, data?: string };
@@ -106,7 +107,11 @@ export class GoogleData {
 
   constructor(private acct: string) {
     if (!DATA[acct]) {
-      DATA[acct] = JSON.parse(readFileSync(`./test/samples/${acct.replace(/[^a-z0-9]+/g, '')}.json`, { encoding: 'UTF-8' })) as AcctDataFile;
+      if (acctsWithoutMockData.includes(acct)) {
+        DATA[acct] = { drafts: [], messages: [], attachments: {}, labels: [] };
+      } else {
+        DATA[acct] = JSON.parse(readFileSync(`./test/samples/${acct.replace(/[^a-z0-9]+/g, '')}.json`, { encoding: 'UTF-8' })) as AcctDataFile;
+      }
       if (UserMessages[acct]) {
         DATA[acct].drafts = UserMessages[acct].drafts;
         DATA[acct].messages.push(...UserMessages[acct].messages);
