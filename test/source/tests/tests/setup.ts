@@ -9,6 +9,7 @@ import { SetupPageRecipe } from '../page-recipe/setup-page-recipe';
 import { TestWithBrowser } from '../../test';
 import { expect } from 'chai';
 import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
+import { ComposePageRecipe } from '../page-recipe/compose-page-recipe';
 
 // tslint:disable:no-blank-lines-func
 
@@ -156,6 +157,18 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       const attesterFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-attester-page', ['keyserver.htm']);
       await attesterFrame.waitAndClick('@action-submit-pub');
       await attesterFrame.waitAndRespondToModal('error', 'confirm', 'Disallowed by your organisation rules');
+    }));
+
+    ava.default('user@no-search-domains-org-rule.flowcrypt.com - do not search attester for recipients on particular domains', testWithBrowser(undefined, async (t, browser) => {
+      // disallowed searching attester for pubkeys on "flowcrypt.com" domain
+      // below we search for human@flowcrypt.com which normally has pubkey on attester, but none should be found due to the rule
+      const acct = 'user@no-search-domains-org-rule.flowcrypt.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'normally has pubkey but should show none');
+      await composePage.waitForContent('.email_address.no_pgp', 'human@flowcrypt.com');
+      await composePage.waitAll('@input-password');
     }));
 
   }

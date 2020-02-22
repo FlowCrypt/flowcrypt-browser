@@ -8,14 +8,15 @@ import { Config } from './util';
 import { opgp } from './core/pgp';
 import { startAllApisMock } from './mock/all-apis-mock';
 
+export const acctsWithoutMockData = [
+  'flowcrypt.test.key.multibackup@gmail.com',
+  'has.pub@org-rules-test.flowcrypt.com',
+  'no.pub@org-rules-test.flowcrypt.com',
+  'user@no-submit-org-rule.flowcrypt.com',
+  'user@no-search-domains-org-rule.flowcrypt.com',
+];
+
 export const mock = async (logger: (line: string) => void) => {
-  const acctsWithoutMockData = [
-    'flowcrypt.test.key.multibackup@gmail.com',
-    'has.pub@org-rules-test.flowcrypt.com',
-    'no.pub@org-rules-test.flowcrypt.com',
-    'user@no-submit-org-rule.flowcrypt.com',
-    'user@no-search-domains-org-rule.flowcrypt.com',
-  ];
   const start = Date.now();
   await Promise.all(Config.secrets.auth.google.map(a => a.email).map(async email => { // load and decrypt mock data if missing
     if (acctsWithoutMockData.includes(email)) {
