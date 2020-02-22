@@ -22,6 +22,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     this.initShortcuts();
     this.resizeReplyBox();
     this.scrollIntoView();
+    this.handleRTL();
     this.squire.setConfig({ addLinks: this.isRichText() });
     if (this.view.debug) {
       this.insertDebugElements();
@@ -101,6 +102,34 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     this.squire.addEventListener('dragover', (e: DragEvent) => {
       e.preventDefault(); // this is needed for 'drop' event to fire
     });
+  }
+
+  private handleRTL = () => {
+    const checkRTL = (e: KeyboardEvent) => {
+      if (e.key.length > 1) {
+        return; // 'Enter', 'Space', etc.
+      }
+      const container = this.squire.getSelection().commonAncestorContainer as HTMLElement;
+      if (container && container.textContent?.length === 0) {
+        // ranges are taken from https://stackoverflow.com/a/14824756
+        // with the '\u0300' -> '\u0370' modification, because from '\u0300' to '\u0370' there are only punctuation marks
+        // see https://www.utf8-chartable.de/unicode-utf8-table.pl
+        const ltrChars = 'A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02B8\u0370-\u0590\u0800-\u1FFF' + '\u2C00-\uFB1C\uFDFE-\uFE6F\uFEFD-\uFFFF';
+        const rtlChars = '\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC';
+        const ltrDirCheck = new RegExp('[' + ltrChars + ']');
+        const rtlDirCheck = new RegExp('[' + rtlChars + ']');
+        // Switch to LTR
+        if (ltrDirCheck.test(e.key)) {
+          container.setAttribute('dir', 'ltr');
+          // Switch to RTL
+        } else if (rtlDirCheck.test(e.key)) {
+          container.setAttribute('dir', 'rtl');
+        } else {
+          // keep the previous direction for other characters and digits
+        }
+      }
+    };
+    this.squire.addEventListener('keydown', checkRTL);
   }
 
   private initShortcuts = () => {
