@@ -99,8 +99,8 @@ export class SetupView extends View {
       Xss.sanitizeRender('#step_2a_manual_create, #step_2_easy_generating', `<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
       $('.back').remove(); // back button would allow users to choose other options (eg create - not allowed)
     }
-    if (this.rules.mustSubmitToAttester()) {
-      $('.remove_if_enforce_submit_to_attester').remove();
+    if (this.rules.mustSubmitToAttester() || !this.rules.canSubmitPubToAttester()) {
+      $('.remove_if_pubkey_submitting_not_user_configurable').remove();
     }
     if (this.rules.rememberPassPhraseByDefault()) {
       $('#step_2a_manual_create .input_passphrase_save').prop('checked', true);
@@ -205,8 +205,25 @@ export class SetupView extends View {
     await Store.dbContactSave(undefined, myOwnEmailAddrsAsContacts);
   }
 
-  public submitPublicKeyIfNeeded = async (armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) => {
+  public shouldSubmitPubkey = (checkboxSelector: string) => {
+    if (this.rules.mustSubmitToAttester() && !this.rules.canSubmitPubToAttester()) {
+      throw new Error('Organisation rules are misconfigured: ENFORCE_ATTESTER_SUBMIT not compatible with NO_ATTESTER_SUBMIT');
+    }
+    if (!this.rules.canSubmitPubToAttester()) {
+      return false;
+    }
+    if (this.rules.mustSubmitToAttester()) {
+      return true;
+    }
+    return Boolean($(checkboxSelector).prop('checked'));
+  }
+
+  private submitPublicKeyIfNeeded = async (armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) => {
     if (!options.submit_main) {
+      return;
+    }
+    if (!this.rules.canSubmitPubToAttester()) {
+      await Ui.modal.error('Not submitting public key to Attester - disabled for your org');
       return;
     }
     this.keyserver.attester.testWelcome(this.acctEmail, armoredPubkey).catch(ApiErr.reportIfSignificant);

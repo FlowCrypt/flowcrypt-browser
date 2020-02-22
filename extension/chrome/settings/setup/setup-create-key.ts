@@ -20,7 +20,7 @@ export class SetupCreateKeyModule {
   }
 
   public actionCreateKeyHandler = async () => {
-    await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.rules!);
+    await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.rules);
     if (! await this.isCreatePrivateFormInputCorrect()) {
       return;
     }
@@ -30,8 +30,8 @@ export class SetupCreateKeyModule {
       const options: SetupOptions = {
         passphrase: String($('#step_2a_manual_create .input_password').val()),
         passphrase_save: Boolean($('#step_2a_manual_create .input_passphrase_save').prop('checked')),
-        submit_main: Boolean($('#step_2a_manual_create .input_submit_key').prop('checked') || this.view.rules!.mustSubmitToAttester()),
-        submit_all: Boolean($('#step_2a_manual_create .input_submit_all').prop('checked') || this.view.rules!.mustSubmitToAttester()),
+        submit_main: this.view.shouldSubmitPubkey('#step_2a_manual_create .input_submit_key'),
+        submit_all: this.view.shouldSubmitPubkey('#step_2a_manual_create .input_submit_all'),
         recovered: false,
         is_newly_created_key: true,
       };
@@ -63,7 +63,7 @@ export class SetupCreateKeyModule {
   }
 
   public createSaveKeyPair = async (options: SetupOptions, keyAlgo: KeyAlgo) => {
-    await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.rules!);
+    await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.rules);
     const { full_name } = await Store.getAcct(this.view.acctEmail, ['full_name']);
     try {
       const key = await PgpKey.create([{ name: full_name || '', email: this.view.acctEmail }], keyAlgo, options.passphrase); // todo - add all addresses?

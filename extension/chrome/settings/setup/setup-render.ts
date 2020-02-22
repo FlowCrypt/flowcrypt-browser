@@ -95,7 +95,7 @@ export class SetupRenderModule {
     }
     if (keyserverRes.pubkey) {
       this.view.acctEmailAttesterLongid = await PgpKey.longid(keyserverRes.pubkey);
-      if (!this.view.rules!.canBackupKeys()) {
+      if (!this.view.rules.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         this.displayBlock('step_2b_manual_enter');
       } else if (this.view.storage!.email_provider === 'gmail' && (this.view.scopes!.read || this.view.scopes!.modify)) {
@@ -116,7 +116,7 @@ export class SetupRenderModule {
           // a key has been created, and the user has used cryptup in the past - this suggest they likely have a backup available, but we cannot fetch it. Enter it manually
           this.displayBlock('step_2b_manual_enter');
           Xss.sanitizePrepend('#step_2b_manual_enter', `<div class="line red">${Lang.setup.cannotLocateBackupPasteManually}<br/><br/></div>`);
-        } else if (this.view.rules!.canCreateKeys()) {
+        } else if (this.view.rules.canCreateKeys()) {
           // has a key registered, key creating allowed on the domain. This may be old key from PKS, let them choose
           this.displayBlock('step_1_easy_or_manual');
         } else {
@@ -125,7 +125,7 @@ export class SetupRenderModule {
         }
       }
     } else { // no indication that the person used pgp before
-      if (this.view.rules!.canCreateKeys()) {
+      if (this.view.rules.canCreateKeys()) {
         this.displayBlock('step_1_easy_or_manual');
       } else {
         this.displayBlock('step_2b_manual_enter');
