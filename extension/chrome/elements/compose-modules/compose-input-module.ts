@@ -106,6 +106,9 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
 
   private handleRTL = () => {
     const checkRTL = (e: KeyboardEvent) => {
+      if (!this.isRichText()) { // RTL is supported for pgp/mime (rich text) only
+        return;
+      }
       if (e.key.length > 1) {
         return; // 'Enter', 'Space', etc.
       }
