@@ -8,7 +8,7 @@ import { Url, UrlParams } from '../../../js/common/core/common.js';
 
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Gmail } from '../../../js/common/api/email-provider/gmail/gmail.js';
 import { InboxActiveThreadModule } from './inbox-modules/inbox-active-thread-module.js';
@@ -66,6 +66,7 @@ export class InboxView extends View {
     this.inboxNotificationModule.render();
     const emailProvider = this.storage.email_provider || 'gmail';
     try {
+      await Settings.populateAccountsMenu('inbox.htm');
       if (emailProvider !== 'gmail') {
         $('body').text('Not supported for ' + emailProvider);
       } else {
@@ -76,10 +77,14 @@ export class InboxView extends View {
           await this.inboxListThreadsModule.render(this.labelId);
         }
       }
-      await Settings.populateAccountsMenu('inbox.htm');
     } catch (e) {
       ApiErr.reportIfSignificant(e);
-      await Ui.modal.error(`${ApiErr.eli5(e)}\n\n${String(e)}`);
+      if (ApiErr.isAuthErr(e) || ApiErr.isAuthPopupNeeded(e)) {
+        await Ui.modal.warning(`FlowCrypt must be re-connected to your Google account.`);
+        await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail);
+      } else {
+        await Ui.modal.error(`${ApiErr.eli5(e)}\n\n${String(e)}`);
+      }
     }
   }
 
@@ -87,6 +92,13 @@ export class InboxView extends View {
     // BrowserMsg.addPgpListeners(); // todo - re-allow when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
     BrowserMsg.listen(this.tabId);
     Catch.setHandledInterval(this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded, 30000);
+    $('.action_open_settings').click(this.setHandler(self => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail })));
+    $(".action-toggle-accounts-menu").click(this.setHandler((target, event) => {
+      event.stopPropagation();
+      $("#alt-accounts").toggleClass("active");
+    }));
+    $('.action_add_account').click(this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId)));
+    this.addBrowserMsgListeners();
   }
 
   public redirectToUrl = (params: UrlParams) => {
@@ -102,6 +114,34 @@ export class InboxView extends View {
     this.S.cached('threads').css('display', name === 'thread' ? 'none' : 'block');
     this.S.cached('thread').css('display', name === 'thread' ? 'block' : 'none');
     Xss.sanitizeRender('h1', `${title}`);
+  }
+
+  private addBrowserMsgListeners = () => {
+    BrowserMsg.addListener('add_end_session_btn', () => this.injector.insertEndSessionBtn(this.acctEmail));
+    BrowserMsg.addListener('close_new_message', async () => {
+      $('div.new_message').remove();
+    });
+    BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
+      if (!$('#cryptup_dialog').length) {
+        $('body').append(this.factory.dialogPassphrase(longids, type))  // xss-safe-factory;
+          .click(this.setHandler(e => { // click on the area outside the iframe
+            $('#cryptup_dialog').remove();
+          }));
+      }
+    });
+    BrowserMsg.addListener('subscribe_dialog', async ({ isAuthErr }: Bm.SubscribeDialog) => {
+      if (!$('#cryptup_dialog').length) {
+        $('body').append(this.factory.dialogSubscribe(isAuthErr)); // xss-safe-factory
+      }
+    });
+    BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
+      if (!$('#cryptup_dialog').length) {
+        $('body').append(this.factory.dialogAddPubkey(emails)); // xss-safe-factory
+      }
+    });
+    BrowserMsg.addListener('close_dialog', async () => {
+      $('#cryptup_dialog').remove();
+    });
   }
 
 }

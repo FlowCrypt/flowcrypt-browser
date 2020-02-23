@@ -2,14 +2,11 @@
 
 'use strict';
 
-import { Bm, BrowserMsg } from '../../../../js/common/browser/browser-msg.js';
-
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { Dict } from '../../../../js/common/core/common.js';
 import { GmailRes } from '../../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { Google } from '../../../../js/common/api/google.js';
 import { InboxView } from '../inbox.js';
-import { Settings } from '../../../../js/common/settings.js';
 import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 
@@ -47,13 +44,6 @@ export class InboxMenuModule extends ViewModule<InboxView> {
   private setHandlers = () => {
     $('.action_open_secure_compose_window').click(this.view.setHandler(() => this.view.injector.openComposeWin()));
     $('.menu > .label').click(this.view.setHandler(this.renderFolder));
-    this.addBrowserMsgListeners();
-    $('.action_open_settings').click(this.view.setHandler(self => BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail })));
-    $(".action-toggle-accounts-menu").click(this.view.setHandler((target, event) => {
-      event.stopPropagation();
-      $("#alt-accounts").toggleClass("active");
-    }));
-    $('.action_add_account').click(this.view.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.view.tabId)));
   }
 
   private renderMenuAndLabelStyles = () => {
@@ -130,34 +120,6 @@ export class InboxMenuModule extends ViewModule<InboxView> {
       }
     }
     this.view.redirectToUrl({ acctEmail: this.view.acctEmail });
-  }
-
-  private addBrowserMsgListeners = () => {
-    BrowserMsg.addListener('add_end_session_btn', () => this.view.injector.insertEndSessionBtn(this.view.acctEmail));
-    BrowserMsg.addListener('close_new_message', async () => {
-      $('div.new_message').remove();
-    });
-    BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
-      if (!$('#cryptup_dialog').length) {
-        $('body').append(this.view.factory.dialogPassphrase(longids, type))  // xss-safe-factory;
-          .click(this.view.setHandler(e => { // click on the area outside the iframe
-            $('#cryptup_dialog').remove();
-          }));
-      }
-    });
-    BrowserMsg.addListener('subscribe_dialog', async ({ isAuthErr }: Bm.SubscribeDialog) => {
-      if (!$('#cryptup_dialog').length) {
-        $('body').append(this.view.factory.dialogSubscribe(isAuthErr)); // xss-safe-factory
-      }
-    });
-    BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
-      if (!$('#cryptup_dialog').length) {
-        $('body').append(this.view.factory.dialogAddPubkey(emails)); // xss-safe-factory
-      }
-    });
-    BrowserMsg.addListener('close_dialog', async () => {
-      $('#cryptup_dialog').remove();
-    });
   }
 
 }
