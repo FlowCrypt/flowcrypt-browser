@@ -8,8 +8,9 @@ import { WebmailVariantString, XssSafeFactory } from './xss-safe-factory.js';
 import { Catch } from './platform/catch.js';
 import { ContentScriptWindow } from './browser/browser-window.js';
 import { Dict } from './core/common.js';
-import { Store } from './platform/store/abstract-store.js';
 import { WebMailName } from './browser/env.js';
+import { AcctKeyStore } from './platform/store/acct-key-store.js';
+import { PassphraseStore } from './platform/store/passphrase-store.js';
 
 type Host = {
   gmail: string,
@@ -89,9 +90,9 @@ export class Injector {
     }
     prependToElem.append(this.factory.btnEndPPSession(this.webmailName)) // xss-safe-factory
       .find('.action_finish_session').click(Ui.event.prevent('double', async el => {
-        const keysInSession = await Store.getKeysCurrentlyInSession(acctEmail);
+        const keysInSession = await AcctKeyStore.getKeysCurrentlyInSession(acctEmail);
         if (keysInSession.length) {
-          await Promise.all(keysInSession.map(async k => await Store.passphraseSave('session', acctEmail, k.longid, undefined)));
+          await Promise.all(keysInSession.map(async k => await PassphraseStore.passphraseSave('session', acctEmail, k.longid, undefined)));
         }
         if (this.webmailName === 'gmail') {
           $('.' + (window as unknown as ContentScriptWindow).reloadable_class).each((i, reloadableEl) => {

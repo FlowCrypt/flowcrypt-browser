@@ -10,12 +10,13 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { Rules } from '../../../js/common/rules.js';
+import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 type AttesterKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: string, match: boolean }> };
 

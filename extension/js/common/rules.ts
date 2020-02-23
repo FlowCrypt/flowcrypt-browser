@@ -3,7 +3,7 @@
 'use strict';
 
 import { Str } from './core/common.js';
-import { Store } from './platform/store/abstract-store.js';
+import { AcctStore } from './platform/store/acct-store.js';
 
 type DomainRules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' |
   'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' |

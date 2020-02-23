@@ -5,10 +5,10 @@
 import { KeyInfo, PgpKey } from '../../../js/common/core/pgp-key.js';
 
 import { Assert } from '../../../js/common/assert.js';
-import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
 
 View.run(class MyKeyUserIdsView extends View {
   private readonly acctEmail: string;

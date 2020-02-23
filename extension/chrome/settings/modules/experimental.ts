@@ -11,10 +11,12 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
+import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
 
 View.run(class ExperimentalView extends View {
 
@@ -126,7 +128,7 @@ View.run(class ExperimentalView extends View {
       '',
       'acctEmail: ' + this.acctEmail,
     ];
-    const globalStorage = await Store.getGlobal(['version']);
+    const globalStorage = await GlobalStore.getGlobal(['version']);
     const acctStorage = await AcctStore.getAcct(this.acctEmail, ['is_newly_created_key', 'setup_date', 'full_name']);
     text.push('global_storage: ' + JSON.stringify(globalStorage));
     text.push('account_storage: ' + JSON.stringify(acctStorage));

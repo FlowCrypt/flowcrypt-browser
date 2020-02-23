@@ -4,7 +4,6 @@
 
 import { Contact, PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Str, Url } from '../../../js/common/core/common.js';
-
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Att } from '../../../js/common/core/att.js';
@@ -17,11 +16,11 @@ import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 import { Rules } from '../../../js/common/rules.js';
-import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
+import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 
 View.run(class ContactsView extends View {
 

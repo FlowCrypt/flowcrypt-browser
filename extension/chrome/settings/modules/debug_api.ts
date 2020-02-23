@@ -3,12 +3,11 @@
 'use strict';
 
 import { Dict, Url } from '../../../js/common/core/common.js';
-
 import { Assert } from '../../../js/common/assert.js';
 import { Gmail } from '../../../js/common/api/email-provider/gmail/gmail.js';
-import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 View.run(class DebugApiView extends View {
 

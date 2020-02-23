@@ -9,9 +9,9 @@ import { Buf } from './buf.js';
 import { Catch } from '../platform/catch.js';
 import { PgpArmor } from './pgp-armor.js';
 import { PgpHash } from './pgp-hash.js';
-import { Store } from '../platform/store/abstract-store.js';
 import { opgp } from './pgp.js';
 import { KeyCache } from '../platform/key-cache.js';
+import { ContactStore } from '../platform/store/contact-store.js';
 
 export namespace PgpMsgMethod {
   export namespace Arg {

@@ -11,10 +11,10 @@ import { PgpArmor } from '../core/pgp-armor.js';
 import { PgpKey } from '../core/pgp-key.js';
 import { PgpPwd } from '../core/pgp-password.js';
 import { Settings } from '../settings.js';
-import { Store } from '../platform/store/abstract-store.js';
 import { Ui } from '../browser/ui.js';
 import { Url, Str } from '../core/common.js';
 import { opgp } from '../core/pgp.js';
+import { AcctKeyStore } from '../platform/store/acct-key-store.js';
 
 type KeyImportUiCheckResult = {
   normalized: string; longid: string; passphrase: string; fingerprint: string; decrypted: OpenPGP.key.Key;

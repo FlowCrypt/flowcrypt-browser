@@ -9,13 +9,13 @@ import { Lang } from '../../../js/common/lang.js';
 import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { opgp } from '../../../js/common/core/pgp.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
+import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
 
 View.run(class MyKeyUpdateView extends View {
   private readonly acctEmail: string;

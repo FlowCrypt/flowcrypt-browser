@@ -4,7 +4,6 @@
 
 import { Dict, Str, Url, UrlParams } from './core/common.js';
 import { JQS, Ui } from './browser/ui.js';
-import { SendAsAlias, Store } from './platform/store/abstract-store.js';
 import { Api } from './api/api.js';
 import { ApiErr } from './api/error/api-error.js';
 import { ApiErrResponse } from './api/error/api-error-types.js';
@@ -20,6 +19,11 @@ import { Rules } from './rules.js';
 import { Xss } from './platform/xss.js';
 import { opgp } from './core/pgp.js';
 import { storageLocalGetAll } from './api/chrome.js';
+import { AcctStore, SendAsAlias } from './platform/store/acct-store.js';
+import { GlobalStore } from './platform/store/global-store.js';
+import { AbstractStore } from './platform/store/abstract-store.js';
+import { AcctKeyStore } from './platform/store/acct-key-store.js';
+import { PassphraseStore } from './platform/store/passphrase-store.js';
 
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
 
@@ -73,12 +77,12 @@ export class Settings {
     if (!acctEmail) {
       throw new Error('Missing account_email to reset');
     }
-    const acctEmails = await Store.acctEmailsGet();
+    const acctEmails = await GlobalStore.acctEmailsGet();
     if (!acctEmails.includes(acctEmail)) {
       throw new Error(`"${acctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
     }
     const storageIndexesToRemove: string[] = [];
-    const filter = Store.singleScopeRawIndex(acctEmail, '');
+    const filter = AbstractStore.singleScopeRawIndex(acctEmail, '');
     if (!filter) {
       throw new Error('Filter is empty for account_email"' + acctEmail + '"');
     }
@@ -90,7 +94,7 @@ export class Settings {
               storageIndexesToRemove.push(storageIndex.replace(filter, ''));
             }
           }
-          await Store.remove(acctEmail, storageIndexesToRemove);
+          await AcctStore.remove(acctEmail, storageIndexesToRemove);
           for (const sessionStorageIndex of Object.keys(sessionStorage)) {
             if (sessionStorageIndex.indexOf(filter) === 0) {
               sessionStorage.removeItem(sessionStorageIndex);
@@ -108,18 +112,18 @@ export class Settings {
     if (!oldAcctEmail || !newAcctEmail || !Str.isEmailValid(newAcctEmail)) {
       throw new Error('Missing or wrong account_email to reset');
     }
-    const acctEmails = await Store.acctEmailsGet();
+    const acctEmails = await GlobalStore.acctEmailsGet();
     if (!acctEmails.includes(oldAcctEmail)) {
       throw new Error(`"${oldAcctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
     }
     const storageIndexesToChange: string[] = [];
-    const oldAcctEmailIndexPrefix = Store.singleScopeRawIndex(oldAcctEmail, '');
-    const newAcctEmailIndexPrefix = Store.singleScopeRawIndex(newAcctEmail, '');
+    const oldAcctEmailIndexPrefix = AbstractStore.singleScopeRawIndex(oldAcctEmail, '');
+    const newAcctEmailIndexPrefix = AbstractStore.singleScopeRawIndex(newAcctEmail, '');
     // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
     const destAccountPrivateKeys = await AcctKeyStore.keysGet(newAcctEmail);
     const destAcctPassPhrases: Dict<string> = {};
     for (const ki of destAccountPrivateKeys) {
-      const pp = await Store.passphraseGet(newAcctEmail, ki.longid, true);
+      const pp = await PassphraseStore.passphraseGet(newAcctEmail, ki.longid, true);
       if (pp) {
         destAcctPassPhrases[ki.longid] = pp;
       }
@@ -127,7 +131,7 @@ export class Settings {
     if (!oldAcctEmailIndexPrefix) {
       throw new Error(`Filter is empty for account_email "${oldAcctEmail}"`);
     }
-    await Store.acctEmailsAdd(newAcctEmail);
+    await GlobalStore.acctEmailsAdd(newAcctEmail);
     const storage = await storageLocalGetAll();
     for (const key of Object.keys(storage)) {
       if (key.indexOf(oldAcctEmailIndexPrefix) === 0) {
@@ -144,13 +148,13 @@ export class Settings {
       }
     }
     for (const ki of destAccountPrivateKeys) {
-      await Store.keysAdd(newAcctEmail, ki.private);
+      await AcctKeyStore.keysAdd(newAcctEmail, ki.private);
     }
     for (const longid of Object.keys(destAcctPassPhrases)) {
-      await Store.passphraseSave('local', newAcctEmail, longid, destAcctPassPhrases[longid]);
+      await PassphraseStore.passphraseSave('local', newAcctEmail, longid, destAcctPassPhrases[longid]);
     }
     await Settings.acctStorageReset(oldAcctEmail);
-    await Store.acctEmailsRemove(oldAcctEmail);
+    await GlobalStore.acctEmailsRemove(oldAcctEmail);
   }
 
   public static renderPrvCompatFixUiAndWaitTilSubmittedByUser = async (
@@ -259,7 +263,7 @@ export class Settings {
     try {
       const response = await GoogleAuth.newAuthPopup({ acctEmail, scopes });
       if (response.result === 'Success' && response.acctEmail) {
-        await Store.acctEmailsAdd(response.acctEmail);
+        await GlobalStore.acctEmailsAdd(response.acctEmail);
         const storage = await AcctStore.getAcct(response.acctEmail, ['setup_done']);
         if (storage.setup_done) { // this was just an additional permission
           await Ui.modal.info('You\'re all set.');
@@ -303,8 +307,8 @@ export class Settings {
         '</div>',
       ].join('');
     };
-    const acctEmails = await Store.acctEmailsGet();
-    const acctStorages = await Store.getAccounts(acctEmails, ['picture', 'setup_done']);
+    const acctEmails = await GlobalStore.acctEmailsGet();
+    const acctStorages = await AcctStore.getAccounts(acctEmails, ['picture', 'setup_done']);
     for (const email of acctEmails) {
       Xss.sanitizePrepend('#alt-accounts', menuAcctHtml(email, acctStorages[email].picture, page === 'inbox.htm'));
     }

@@ -6,9 +6,9 @@ import { BrowserMsg } from './browser/browser-msg.js';
 import { Catch } from './platform/catch.js';
 import { Dict } from './core/common.js';
 import { Lang } from './lang.js';
-import { Store } from './platform/store/abstract-store.js';
 import { Ui } from './browser/ui.js';
 import { Xss } from './platform/xss.js';
+import { AcctStore } from './platform/store/acct-store.js';
 
 export type NotificationWithHandlers = { notification: string, callbacks: Dict<() => void> };
 

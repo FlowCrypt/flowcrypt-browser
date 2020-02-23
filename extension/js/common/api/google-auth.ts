@@ -7,7 +7,6 @@
 
 const BUILD = 'consumer'; // todo
 
-import { AccountStore, Store } from '../platform/store/abstract-store.js';
 import { GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST } from '../core/const.js';
 import { Url, Value } from '../core/common.js';
 import { tabsQuery, windowsCreate } from './chrome.js';
@@ -22,6 +21,7 @@ import { GoogleAuthErr } from './error/api-error-types.js';
 import { GoogleAuthWindowResult$result } from '../browser/browser-msg.js';
 import { Rules } from '../rules.js';
 import { Ui } from '../browser/ui.js';
+import { AcctStore, AcctStoreDict } from '../platform/store/acct-store.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
@@ -255,7 +255,7 @@ export class GoogleAuth {
   private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
     const openid = GoogleAuth.parseIdToken(tokensObj.id_token);
     const { full_name, picture } = await AcctStore.getAcct(acctEmail, ['full_name', 'picture']);
-    const toSave: AccountStore = {
+    const toSave: AcctStoreDict = {
       openid,
       google_token_access: tokensObj.access_token,
       google_token_expires: new Date().getTime() + (tokensObj.expires_in as number) * 1000,
@@ -298,7 +298,7 @@ export class GoogleAuth {
   /**
    * oauth token will be valid for another 2 min
    */
-  private static googleApiIsAuthTokenValid = (s: AccountStore) => {
+  private static googleApiIsAuthTokenValid = (s: AcctStoreDict) => {
     return s.google_token_access && (!s.google_token_expires || s.google_token_expires > Date.now() + (120 * 1000));
   }
 

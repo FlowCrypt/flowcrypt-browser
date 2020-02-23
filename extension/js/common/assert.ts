@@ -4,14 +4,14 @@
 
 import { Catch, UnreportableError } from './platform/catch.js';
 import { Dict, UrlParam, UrlParams } from './core/common.js';
-
 import { BrowserMsg } from './browser/browser-msg.js';
 import { KeyInfo } from './core/pgp-key.js';
 import { PgpKey } from './core/pgp-key.js';
 import { Settings } from './settings.js';
-import { Store } from './platform/store/abstract-store.js';
 import { Ui } from './browser/ui.js';
 import { Xss } from './platform/xss.js';
+import { AcctKeyStore } from './platform/store/acct-key-store.js';
+import { AcctStore } from './platform/store/acct-store.js';
 
 /**
  * Methods in this class will render a fatal message in the browser when assertion fails.
