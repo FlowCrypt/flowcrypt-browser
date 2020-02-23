@@ -66,9 +66,9 @@ View.run(class SettingsView extends View {
     }
     $.get('/changelog.txt', data => ($('#status-row #status_v') as any as JQS).featherlight(String(data).replace(/\n/g, '<br>')), 'html');
     await this.initialize();
-    await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail, this.tabId!);
+    await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail, this.tabId);
     if (this.page) {
-      Settings.renderSubPage(this.acctEmail, this.tabId!, this.page, this.pageUrlParams);
+      Settings.renderSubPage(this.acctEmail, this.tabId, this.page, this.pageUrlParams);
     }
     await Settings.populateAccountsMenu('index.htm');
     Ui.setTestState('ready');
@@ -76,7 +76,7 @@ View.run(class SettingsView extends View {
 
   public setHandlers = () => {
     BrowserMsg.addListener('open_page', async ({ page, addUrlText }: Bm.OpenPage) => {
-      Settings.renderSubPage(this.acctEmail, this.tabId!, page, addUrlText);
+      Settings.renderSubPage(this.acctEmail, this.tabId, page, addUrlText);
     });
     BrowserMsg.addListener('redirect', async ({ location }: Bm.Redirect) => {
       window.location.href = location;
@@ -90,12 +90,12 @@ View.run(class SettingsView extends View {
     });
     BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
       // todo: use #cryptup_dialog just like passphrase_dialog does
-      const factory = new XssSafeFactory(this.acctEmail!, this.tabId!);
+      const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
       window.open(factory.srcAddPubkeyDialog(emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
     });
     BrowserMsg.addListener('subscribe_dialog', async ({ }: Bm.SubscribeDialog) => {
       // todo: use #cryptup_dialog just like passphrase_dialog does
-      const factory = new XssSafeFactory(this.acctEmail!, this.tabId!);
+      const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
       const subscribeDialogSrc = factory.srcSubscribeDialog('settings_compose', undefined);
       window.open(subscribeDialogSrc, '_blank', 'height=650,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
     });
@@ -113,11 +113,11 @@ View.run(class SettingsView extends View {
     });
     BrowserMsg.addListener('open_google_auth_dialog', async ({ acctEmail, scopes }: Bm.OpenGoogleAuthDialog) => {
       $('.featherlight-close').click();
-      await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId!, acctEmail, scopes);
+      await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, acctEmail, scopes);
     });
     BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
       if (!$('#cryptup_dialog').length) {
-        const factory = new XssSafeFactory(this.acctEmail!, this.tabId!);
+        const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
         $('body').append(factory.dialogPassphrase(longids, type)); // xss-safe-factory
       }
     });
@@ -127,11 +127,11 @@ View.run(class SettingsView extends View {
     BrowserMsg.addListener('close_dialog', async () => {
       $('#cryptup_dialog').remove();
     });
-    BrowserMsg.listen(this.tabId!);
+    BrowserMsg.listen(this.tabId);
     $('.show_settings_page').click(this.setHandler(async target => {
       const page = $(target).attr('page');
       if (page) {
-        Settings.renderSubPage(this.acctEmail!, this.tabId!, page, $(target).attr('addurltext') || '');
+        Settings.renderSubPage(this.acctEmail!, this.tabId, page, $(target).attr('addurltext') || '');
       } else {
         Catch.report(`Unknown target page in element: ${target.outerHTML}`);
       }
@@ -139,9 +139,9 @@ View.run(class SettingsView extends View {
     $('.action_show_encrypted_inbox').click(this.setHandler(target => {
       window.location.href = Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: this.acctEmail! });
     }));
-    $('.action_go_auth_denied').click(this.setHandler(() => Settings.renderSubPage(this.acctEmail!, this.tabId!, '/chrome/settings/modules/auth_denied.htm')));
-    $('.action_add_account').click(this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId!)));
-    $('.action_google_auth').click(this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId!, this.acctEmail)));
+    $('.action_go_auth_denied').click(this.setHandler(() => Settings.renderSubPage(this.acctEmail!, this.tabId, '/chrome/settings/modules/auth_denied.htm')));
+    $('.action_add_account').click(this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId)));
+    $('.action_google_auth').click(this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail)));
     // $('.action_microsoft_auth').click(this.setHandlerPrevent('double', function() {
     //   new_microsoft_account_authentication_prompt(account_email);
     // }));
@@ -159,8 +159,8 @@ View.run(class SettingsView extends View {
       $(".ion-ios-arrow-down").toggleClass("up");
       $(".add-account").toggleClass("hidden");
     }));
-    $('#status-row #status_google').click(this.setHandler(() => Settings.renderSubPage(this.acctEmail!, this.tabId!, 'modules/debug_api.htm', { which: 'google_account' })));
-    $('#status-row #status_local_store').click(this.setHandler(() => Settings.renderSubPage(this.acctEmail!, this.tabId!, 'modules/debug_api.htm', { which: 'local_store' })));
+    $('#status-row #status_google').click(this.setHandler(() => Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'google_account' })));
+    $('#status-row #status_local_store').click(this.setHandler(() => Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'local_store' })));
   }
 
   private displayOrig = (selector: string) => {
@@ -176,7 +176,7 @@ View.run(class SettingsView extends View {
     if (this.addNewAcct) {
       $('.show_if_setup_not_done').css('display', 'initial');
       $('.hide_if_setup_not_done').css('display', 'none');
-      await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId!);
+      await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId);
     } else if (this.acctEmail) {
       $('.email-address').text(this.acctEmail);
       const storage = await Store.getAcct(this.acctEmail, ['setup_done', 'email_provider', 'picture']);
@@ -326,12 +326,11 @@ View.run(class SettingsView extends View {
         }
       }
     } catch (e) {
-      if (ApiErr.isAuthPopupNeeded(e)) {
-        $('#status-row #status_google').text(`g:?:disconnected`).addClass('bad').attr('title', 'Not connected to Google Account, click to resolve.')
-          .off().click(this.setHandler(() => Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId!, this.acctEmail)));
-      } else if (ApiErr.isAuthErr(e)) {
-        $('#status-row #status_google').text(`g:?:auth`).addClass('bad').attr('title', 'Auth error when checking Google Account, click to resolve.')
-          .off().click(this.setHandler(() => Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId!, this.acctEmail)));
+      if (ApiErr.isAuthPopupNeeded(e) || ApiErr.isAuthErr(e)) {
+        $('#status-row #status_google').text(`g:?:auth`).addClass('bad');
+        if (await Ui.modal.confirm(`FlowCrypt must be re-connected to your Google account.`)) {
+          await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail);
+        }
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         await Ui.modal.error(Lang.account.googleAcctDisabledOrPolicy);
       } else if (ApiErr.isNetErr(e)) {
@@ -359,7 +358,7 @@ View.run(class SettingsView extends View {
     const subscription = await Store.subscription(acctEmail);
     $('#status-row #status_subscription').text(`s:${liveness}:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
     if (subscription.active) {
-      const showAcct = () => Settings.renderSubPage(acctEmail, this.tabId!, '/chrome/settings/modules/account.htm');
+      const showAcct = () => Settings.renderSubPage(acctEmail, this.tabId, '/chrome/settings/modules/account.htm');
       $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(this.setHandler(showAcct)).css('cursor', 'pointer');
       if (subscription.method === 'trial') {
         $('.logo-row .subscription .expire').text(subscription.expire ? ('trial ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
@@ -400,7 +399,7 @@ View.run(class SettingsView extends View {
     Xss.sanitizeAppend('.key_list', html);
     $('.action_show_key').click(this.setHandler(target => {
       // the UI below only gets rendered when account_email is available
-      Settings.renderSubPage(this.acctEmail!, this.tabId!, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
+      Settings.renderSubPage(this.acctEmail!, this.tabId, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
     }));
     $('.action_remove_key').click(this.setHandler(async target => {
       // the UI below only gets rendered when account_email is available
