@@ -66,6 +66,7 @@ export class InboxView extends View {
     this.inboxNotificationModule.render();
     const emailProvider = this.storage.email_provider || 'gmail';
     try {
+      await Settings.populateAccountsMenu('inbox.htm');
       if (emailProvider !== 'gmail') {
         $('body').text('Not supported for ' + emailProvider);
       } else {
@@ -76,7 +77,6 @@ export class InboxView extends View {
           await this.inboxListThreadsModule.render(this.labelId);
         }
       }
-      await Settings.populateAccountsMenu('inbox.htm');
     } catch (e) {
       ApiErr.reportIfSignificant(e);
       if (ApiErr.isAuthErr(e) || ApiErr.isAuthPopupNeeded(e)) {
