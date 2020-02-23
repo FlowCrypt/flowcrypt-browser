@@ -20,9 +20,6 @@ import { opgp } from '../core/pgp.js';
 
 // tslint:disable:no-null-keyword
 
-let KEY_CACHE: { [longidOrArmoredKey: string]: OpenPGP.key.Key } = {};
-let KEY_CACHE_WIPE_TIMEOUT: number;
-
 type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo | DomainRules;
 type StoredReplyDraftMeta = string; // draftId
 type StoredComposeDraftMeta = { recipients: string[], subject: string, date: number };
@@ -692,32 +689,6 @@ export class Store {
     });
   }
 
-  public static decryptedKeyCacheSet = (k: OpenPGP.key.Key) => {
-    // todo - not yet used in browser extension, but planned to be enabled soon
-    // Store.keyCacheRenewExpiry();
-    // KEY_CACHE[keyLongid(k)] = k;
-  }
-
-  public static decryptedKeyCacheGet = (longid: string): OpenPGP.key.Key | undefined => {
-    Store.keyCacheRenewExpiry();
-    return KEY_CACHE[longid];
-  }
-
-  public static armoredKeyCacheSet = (armored: string, k: OpenPGP.key.Key) => {
-    // todo - not yet used in browser extension, but planned to be enabled soon
-    // Store.keyCacheRenewExpiry();
-    // KEY_CACHE[armored] = k;
-  }
-
-  public static armoredKeyCacheGet = (armored: string): OpenPGP.key.Key | undefined => {
-    Store.keyCacheRenewExpiry();
-    return KEY_CACHE[armored];
-  }
-
-  public static keyCacheWipe = () => {
-    KEY_CACHE = {};
-  }
-
   public static keyInfoObj = async (prv: OpenPGP.key.Key, primary = false): Promise<KeyInfo> => {
     const longid = await PgpKey.longid(prv);
     if (!longid) {
@@ -815,13 +786,6 @@ export class Store {
       acctStore.sendAs = { [acctEmail]: { isPrimary: true, isDefault: true } };
     }
     return acctStore;
-  }
-
-  private static keyCacheRenewExpiry = () => {
-    if (KEY_CACHE_WIPE_TIMEOUT) {
-      clearTimeout(KEY_CACHE_WIPE_TIMEOUT);
-    }
-    KEY_CACHE_WIPE_TIMEOUT = Catch.setHandledTimeout(Store.keyCacheWipe, 2 * 60 * 1000);
   }
 
 }

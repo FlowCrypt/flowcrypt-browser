@@ -11,6 +11,7 @@ import { PgpArmor } from './pgp-armor.js';
 import { PgpHash } from './pgp-hash.js';
 import { Store } from '../platform/store.js';
 import { opgp } from './pgp.js';
+import { KeyCache } from '../platform/key-cache.js';
 
 export namespace PgpMsgMethod {
   export namespace Arg {
@@ -295,12 +296,12 @@ export class PgpMsg {
     }
     for (const ki of keys.prvForDecrypt) {
       const matchingKeyids = PgpMsg.matchingKeyids(ki.parsed!, encryptedForKeyids);
-      const cachedKey = Store.decryptedKeyCacheGet(ki.longid);
+      const cachedKey = KeyCache.getDecrypted(ki.longid);
       if (cachedKey && PgpMsg.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
         ki.decrypted = cachedKey;
         keys.prvForDecryptDecrypted.push(ki);
       } else if (PgpMsg.isKeyDecryptedFor(ki.parsed!, matchingKeyids) || await PgpMsg.decryptKeyFor(ki.parsed!, ki.passphrase!, matchingKeyids) === true) {
-        Store.decryptedKeyCacheSet(ki.parsed!);
+        KeyCache.setDecrypted(ki.parsed!);
         ki.decrypted = ki.parsed!;
         keys.prvForDecryptDecrypted.push(ki);
       } else {
