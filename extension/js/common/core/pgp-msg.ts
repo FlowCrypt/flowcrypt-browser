@@ -251,7 +251,7 @@ export class PgpMsg {
 
   private static cryptoMsgGetSignedBy = async (msg: OpenpgpMsgOrCleartext, keys: SortedKeysForDecrypt) => {
     keys.signedBy = Value.arr.unique(await PgpKey.longids(msg.getSigningKeyIds ? msg.getSigningKeyIds() : []));
-    if (keys.signedBy.length && typeof Store.dbContactGet === 'function') {
+    if (keys.signedBy.length && typeof ContactStore.dbContactGet === 'function') {
       const verificationContacts = await ContactStore.dbContactGet(undefined, keys.signedBy);
       keys.verificationContacts = verificationContacts.filter(contact => contact && contact.pubkey) as Contact[];
       keys.forVerification = [];

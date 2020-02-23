@@ -13,10 +13,10 @@ import { Env } from '../../common/browser/env.js';
 import { GmailElementReplacer } from './gmail-element-replacer.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
-import { Store } from '../../common/platform/store.js';
 import { Str } from '../../common/core/common.js';
 import { XssSafeFactory } from '../../common/xss-safe-factory.js';
 import { Rules } from '../../common/rules.js';
+import { AcctStore } from '../../common/platform/store/acct-store.js';
 
 Catch.try(async () => {
 
@@ -86,7 +86,7 @@ Catch.try(async () => {
       hijackGmailHotkeys();
       const storage = await AcctStore.getAcct(acctEmail, ['sendAs', 'google_token_scopes', 'full_name']);
       const rules = await Rules.newInstance(acctEmail);
-      const scopes = await Store.getScopes(acctEmail);
+      const scopes = await AcctStore.getScopes(acctEmail);
       if (!storage.sendAs) {
         storage.sendAs = {};
         storage.sendAs[acctEmail] = { name: storage.full_name, isPrimary: true };

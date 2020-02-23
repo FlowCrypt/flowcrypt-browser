@@ -4,9 +4,9 @@
 
 import { Assert } from '../../../js/common/assert.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 View.run(class AuthDeniedView extends View {
   private readonly acctEmail: string | undefined;

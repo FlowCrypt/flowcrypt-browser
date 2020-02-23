@@ -5,17 +5,16 @@
 import { Backend, FcUuidAuth, PaymentMethod, SubscriptionLevel } from '../../js/common/api/backend.js';
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Str, Url } from '../../js/common/core/common.js';
-
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Lang } from '../../js/common/lang.js';
 import { Settings } from '../../js/common/settings.js';
-import { Store } from '../../js/common/platform/store/abstract-store.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
+import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 
 // todo - this page should be removed, link from settings should point to flowcrypt.com/account once available
 
@@ -72,7 +71,7 @@ View.run(class SubscribeView extends View {
   }
 
   private renderSubscriptionDetails = async () => {
-    this.authInfo = await Store.authInfo(this.acctEmail);
+    this.authInfo = await AcctStore.authInfo(this.acctEmail);
     try {
       await Backend.accountGetAndUpdateLocalStore(this.authInfo);
     } catch (e) {
@@ -86,7 +85,7 @@ View.run(class SubscribeView extends View {
         Xss.sanitizeRender('#content', `Unknown error happened when fetching account info. ${Ui.retryLink()}`);
       }
     }
-    const subscription = await Store.subscription(this.acctEmail); // updated in accountGetAndUpdateLocalStore
+    const subscription = await AcctStore.subscription(this.acctEmail); // updated in accountGetAndUpdateLocalStore
     if (!subscription.active) {
       if (subscription.level && subscription.expire) {
         if (subscription.method === 'trial') {

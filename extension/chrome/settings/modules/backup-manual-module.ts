@@ -5,7 +5,6 @@
 import { ViewModule } from '../../../js/common/view-module.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { BackupView } from './backup.js';
-import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Att } from '../../../js/common/core/att.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
@@ -16,9 +15,11 @@ import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Browser } from '../../../js/common/browser/browser.js';
-import { Value, Url, PromiseCancellation } from '../../../js/common/core/common.js';
+import { Url, PromiseCancellation } from '../../../js/common/core/common.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Buf } from '../../../js/common/core/buf.js';
+import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
+import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
 
 export class BackupManualActionModule extends ViewModule<BackupView> {
 
@@ -82,14 +83,14 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private backupOnEmailProviderAndUpdateUi = async (primaryKi: KeyInfo) => {
-    const pp = await Store.passphraseGet(this.view.acctEmail, primaryKi.longid);
+    const pp = await PassphraseStore.passphraseGet(this.view.acctEmail, primaryKi.longid);
     if (!this.view.parentTabId) {
       await Ui.modal.error(`Missing parentTabId. Please restart your browser and try again.`);
       return;
     }
     if (!pp) {
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'backup', longids: [primaryKi.longid] });
-      if (! await Store.waitUntilPassphraseChanged(this.view.acctEmail, [primaryKi.longid], 1000, this.ppChangedPromiseCancellation)) {
+      if (! await PassphraseStore.waitUntilPassphraseChanged(this.view.acctEmail, [primaryKi.longid], 1000, this.ppChangedPromiseCancellation)) {
         return;
       }
       await this.backupOnEmailProviderAndUpdateUi(primaryKi);

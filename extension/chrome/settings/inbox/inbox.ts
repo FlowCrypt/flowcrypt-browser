@@ -2,10 +2,8 @@
 
 'use strict';
 
-import { AccountStore, Store } from '../../../js/common/platform/store/abstract-store.js';
 import { SelCache, Ui } from '../../../js/common/browser/ui.js';
 import { Url, UrlParams } from '../../../js/common/core/common.js';
-
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
@@ -21,6 +19,7 @@ import { View } from '../../../js/common/view.js';
 import { WebmailCommon } from "../../../js/common/webmail.js";
 import { Xss } from '../../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
+import { AcctStore, AcctStoreDict } from '../../../js/common/platform/store/acct-store.js';
 
 export class InboxView extends View {
 
@@ -39,7 +38,7 @@ export class InboxView extends View {
   public injector!: Injector;
   public webmailCommon!: WebmailCommon;
   public factory!: XssSafeFactory;
-  public storage!: AccountStore;
+  public storage!: AcctStoreDict;
   public tabId!: string;
 
   constructor() {

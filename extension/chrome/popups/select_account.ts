@@ -5,11 +5,12 @@
 import { Assert } from '../../js/common/assert.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Store } from '../../js/common/platform/store/abstract-store.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
+import { AcctStore } from '../../js/common/platform/store/acct-store.js';
+import { GlobalStore } from '../../js/common/platform/store/global-store.js';
 
 View.run(class SelectAcctPopupView extends View {
 
@@ -23,7 +24,7 @@ View.run(class SelectAcctPopupView extends View {
 
   public render = async () => {
     $('#title').text(this.action === 'inbox' ? 'Choose inbox account' : 'Select an account to open settings');
-    const acctStorages = await Store.getAccounts(await Store.acctEmailsGet(), ['setup_done', 'picture']);
+    const acctStorages = await AcctStore.getAccounts(await GlobalStore.acctEmailsGet(), ['setup_done', 'picture']);
     let emailsUlHtml = '';
     for (const email of Object.keys(acctStorages)) {
       if (acctStorages[email].setup_done === true) {

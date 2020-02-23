@@ -16,6 +16,7 @@ import { opgp } from '../../../js/common/core/pgp.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
+import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 
 View.run(class MyKeyUpdateView extends View {
   private readonly acctEmail: string;
@@ -52,10 +53,10 @@ View.run(class MyKeyUpdateView extends View {
   }
 
   private storeUpdatedKeyAndPassphrase = async (updatedPrv: OpenPGP.key.Key, updatedPrvPassphrase: string) => {
-    const storedPassphrase = await Store.passphraseGet(this.acctEmail, this.primaryKi!.longid, true);
-    await Store.keysAdd(this.acctEmail, updatedPrv.armor());
-    await Store.passphraseSave('local', this.acctEmail, this.primaryKi!.longid, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
-    await Store.passphraseSave('session', this.acctEmail, this.primaryKi!.longid, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
+    const storedPassphrase = await PassphraseStore.passphraseGet(this.acctEmail, this.primaryKi!.longid, true);
+    await AcctKeyStore.keysAdd(this.acctEmail, updatedPrv.armor());
+    await PassphraseStore.passphraseSave('local', this.acctEmail, this.primaryKi!.longid, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
+    await PassphraseStore.passphraseSave('session', this.acctEmail, this.primaryKi!.longid, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
     if (this.rules.canSubmitPubToAttester() && await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
       try {
         await Ui.modal.info(await this.keyserver.attester.updatePubkey(this.primaryKi!.longid, updatedPrv.toPublic().armor()));

@@ -5,15 +5,15 @@
 import { Bm, BrowserMsg, TabIdRequiredError } from '../../common/browser/browser-msg.js';
 import { Env, WebMailName } from '../../common/browser/env.js';
 import { WebmailVariantString, XssSafeFactory } from '../../common/xss-safe-factory.js';
-
 import { BrowserMsgCommonHandlers } from '../../common/browser/browser-msg-common-handlers.js';
 import { Catch } from '../../common/platform/catch.js';
 import { ContentScriptWindow } from '../../common/browser/browser-window.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
-import { Store } from '../../common/platform/store.js';
 import { Ui } from '../../common/browser/ui.js';
 import { VERSION } from '../../common/core/const.js';
+import { AcctStore } from '../../common/platform/store/acct-store.js';
+import { GlobalStore } from '../../common/platform/store/global-store.js';
 
 export type WebmailVariantObject = { newDataLayer: undefined | boolean, newUi: undefined | boolean, email: undefined | string, gmailVariant: WebmailVariantString };
 export type IntervalFunction = { interval: number, handler: () => void };
@@ -77,7 +77,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     const factory = new XssSafeFactory(acctEmail, tabId, win.reloadable_class, win.destroyable_class);
     const inject = new Injector(webmailSpecific.name, webmailSpecific.variant, factory);
     inject.meta();
-    await Store.acctEmailsAdd(acctEmail);
+    await GlobalStore.acctEmailsAdd(acctEmail);
     saveAcctEmailFullNameIfNeeded(acctEmail).catch(Catch.reportErr); // may take a long time, thus async
     return { tabId, notifications, factory, inject };
   };

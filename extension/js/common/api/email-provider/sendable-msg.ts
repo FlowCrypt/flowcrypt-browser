@@ -4,10 +4,9 @@
 
 import { Dict, Str } from '../../core/common.js';
 import { Mime, MimeEncodeType, SendableMsgBody } from '../../core/mime.js';
-
 import { Att } from '../../core/att.js';
 import { RecipientType } from '../api.js';
-import { Store } from '../../platform/store/abstract-store.js';
+import { AcctKeyStore } from '../../platform/store/acct-key-store.js';
 
 export type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
 export type ProviderContactsQuery = { substring: string };

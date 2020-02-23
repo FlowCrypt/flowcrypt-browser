@@ -6,13 +6,13 @@ import { Lang } from '../../../js/common/lang.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { BackupView } from './backup.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { UnreportableError } from '../../../js/common/platform/catch.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Assert } from '../../../js/common/assert.js';
 import { GoogleAuth } from '../../../js/common/api/google-auth.js';
+import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
 
 export class BackupAutomaticModule extends ViewModule<BackupView> {
 

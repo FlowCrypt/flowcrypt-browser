@@ -10,13 +10,14 @@ import { Browser } from '../../../js/common/browser/browser.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
-import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { Rules } from '../../../js/common/rules.js';
+import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
+import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
 
 declare const ClipboardJS: any;
 
@@ -81,7 +82,7 @@ View.run(class MyKeyView extends View {
   private downloadRevocationCert = async (enteredPP?: string) => {
     const prv = await PgpKey.read(this.keyInfo.private);
     if (!prv.isFullyDecrypted()) {
-      const passphrase = await Store.passphraseGet(this.acctEmail, this.keyInfo.longid) || enteredPP;
+      const passphrase = await PassphraseStore.passphraseGet(this.acctEmail, this.keyInfo.longid) || enteredPP;
       if (passphrase) {
         if (! await PgpKey.decrypt(prv, passphrase) && enteredPP) {
           await Ui.modal.error('Pass phrase did not match, please try again.');

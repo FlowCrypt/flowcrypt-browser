@@ -6,8 +6,9 @@ import { Api } from '../common/api/api.js';
 import { BgUtils } from './bgutils.js';
 import { Bm } from '../common/browser/browser-msg.js';
 import { Gmail } from '../common/api/email-provider/gmail/gmail.js';
-import { Store } from '../common/platform/store/abstract-store.js';
 import { Url } from '../common/core/common.js';
+import { GlobalStore } from '../common/platform/store/global-store.js';
+import { ContactStore } from '../common/platform/store/contact-store.js';
 
 export class BgHandlers {
 
@@ -24,7 +25,7 @@ export class BgHandlers {
       console.info(`db corrupted, skipping: ${request.f}`);
       return await new Promise(resolve => undefined); // never resolve, error was already shown
     }
-    const dbFunc = (Store as any)[request.f] as (db: IDBDatabase, ...args: any[]) => Promise<Bm.Res.Db>; // due to https://github.com/Microsoft/TypeScript/issues/6480
+    const dbFunc = (ContactStore as any)[request.f] as (db: IDBDatabase, ...args: any[]) => Promise<Bm.Res.Db>; // due to https://github.com/Microsoft/TypeScript/issues/6480
     if (request.f === 'dbContactObj') {
       return await dbFunc(request.args[0] as any); // db not needed, it goes through background because openpgp.js may not be available in the frame
     }
@@ -40,7 +41,7 @@ export class BgHandlers {
   }
 
   public static updateUninstallUrl: Bm.AsyncResponselessHandler = async () => {
-    const acctEmails = await Store.acctEmailsGet();
+    const acctEmails = await GlobalStore.acctEmailsGet();
     if (typeof chrome.runtime.setUninstallURL !== 'undefined') {
       const email = acctEmails?.length ? acctEmails[0] : undefined;
       chrome.runtime.setUninstallURL(`https://flowcrypt.com/leaving.htm#${JSON.stringify({ email, metrics: null })}`); // tslint:disable-line:no-null-keyword

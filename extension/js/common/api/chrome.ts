@@ -5,9 +5,9 @@
 import { Catch } from '../platform/catch.js';
 import { ContentScriptWindow } from '../browser/browser-window.js';
 import { Env } from '../browser/env.js';
-import { Store } from '../platform/store/abstract-store.js';
 import { Ui } from '../browser/ui.js';
 import { Url, Dict } from '../core/common.js';
+import { AbstractStore } from '../platform/store/abstract-store.js';
 
 export const handleFatalErr = (reason: 'storage_undefined', error: Error) => {
   try {
@@ -53,7 +53,7 @@ export const storageLocalGet = async (keys: string[]): Promise<Dict<unknown>> =>
         if (typeof result !== 'undefined') {
           resolve(result);
         } else if (chrome.runtime.lastError) {
-          reject(Store.errCategorize(chrome.runtime.lastError));
+          reject(AbstractStore.errCategorize(chrome.runtime.lastError));
         } else {
           reject(new Error(`storageLocalGet(${keys.join(',')}) produced undefined result without an error`));
         }

@@ -3,18 +3,19 @@
 'use strict';
 
 import { Backend, FcUuidAuth } from '../../../js/common/api/backend.js';
-
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
+import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 
 View.run(class SecurityView extends View {
 
@@ -34,7 +35,7 @@ View.run(class SecurityView extends View {
     await initPassphraseToggle(['passphrase_entry']);
     [this.primaryKi] = await AcctKeyStore.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
-    this.authInfo = await Store.authInfo(this.acctEmail);
+    this.authInfo = await AcctStore.authInfo(this.acctEmail);
     const storage = await AcctStore.getAcct(this.acctEmail, ['hide_message_password', 'outgoing_language']);
     $('#hide_message_password').prop('checked', storage.hide_message_password === true);
     $('.password_message_language').val(storage.outgoing_language || 'EN');
@@ -58,11 +59,11 @@ View.run(class SecurityView extends View {
         $('.passphrase_entry_container').css('display', '');
       }));
       $('.confirm_passphrase_requirement_change').click(this.setHandler(async () => {
-        const primaryKiPP = await Store.passphraseGet(this.acctEmail, this.primaryKi!.longid);
+        const primaryKiPP = await PassphraseStore.passphraseGet(this.acctEmail, this.primaryKi!.longid);
         if ($('input#passphrase_entry').val() === primaryKiPP) {
           for (const key of keys) {
-            await Store.passphraseSave('local', this.acctEmail, key.longid, undefined);
-            await Store.passphraseSave('session', this.acctEmail, key.longid, undefined);
+            await PassphraseStore.passphraseSave('local', this.acctEmail, key.longid, undefined);
+            await PassphraseStore.passphraseSave('session', this.acctEmail, key.longid, undefined);
           }
           window.location.reload();
         } else {
@@ -76,7 +77,7 @@ View.run(class SecurityView extends View {
   }
 
   private loadAndRenderPwdEncryptedMsgSettings = async () => {
-    const subscription = await Store.subscription(this.acctEmail);
+    const subscription = await AcctStore.subscription(this.acctEmail);
     if (subscription.active) {
       Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
       try {
@@ -123,7 +124,7 @@ View.run(class SecurityView extends View {
 
   private isAnyPassPhraseStoredPermanently = async (keys: KeyInfo[]) => {
     for (const key of keys) {
-      if (await Store.passphraseGet(this.acctEmail, key.longid, true)) {
+      if (await PassphraseStore.passphraseGet(this.acctEmail, key.longid, true)) {
         return true;
       }
     }

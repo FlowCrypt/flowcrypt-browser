@@ -3,7 +3,6 @@
 'use strict';
 
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { EmailProvider, Store } from '../../../js/common/platform/store/abstract-store.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Gmail } from '../../../js/common/api/email-provider/gmail/gmail.js';
@@ -14,6 +13,7 @@ import { BackupStatusModule } from './backup-status-module.js';
 import { BackupManualActionModule as BackupManualModule } from './backup-manual-module.js';
 import { BackupAutomaticModule } from './backup-automatic-module.js';
 import { Lang } from '../../../js/common/lang.js';
+import { AcctStore, EmailProvider } from '../../../js/common/platform/store/acct-store.js';
 
 export class BackupView extends View {
 

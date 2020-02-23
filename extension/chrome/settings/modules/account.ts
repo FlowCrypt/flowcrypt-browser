@@ -2,8 +2,6 @@
 
 'use strict';
 
-import { Store, Subscription } from '../../../js/common/platform/store/abstract-store.js';
-
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Backend } from '../../../js/common/api/backend.js';
@@ -12,6 +10,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { AcctStore, Subscription } from '../../../js/common/platform/store/acct-store.js';
 
 // todo - this this page should be removed, link from settings should point to flowcrypt.com/account once available
 
@@ -29,8 +28,8 @@ View.run(class AccountView extends View {
 
   public render = async () => {
     Xss.sanitizeRender('.loading', Ui.spinner('green', 'large_spinner'));
-    const authInfo = await Store.authInfo(this.acctEmail);
-    let subscription = await Store.subscription(this.acctEmail);
+    const authInfo = await AcctStore.authInfo(this.acctEmail);
+    let subscription = await AcctStore.subscription(this.acctEmail);
     try {
       const r = await Backend.accountGetAndUpdateLocalStore(authInfo);
       subscription = new Subscription(r.subscription);
