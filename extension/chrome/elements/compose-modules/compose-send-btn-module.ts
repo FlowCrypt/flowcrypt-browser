@@ -13,12 +13,13 @@ import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { SendBtnTexts } from './compose-types.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 
 export class ComposeSendBtnModule extends ViewModule<ComposeView> {
 
@@ -187,14 +188,14 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   }
 
   private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
-    const { sendAs } = await Store.getAcct(this.view.acctEmail, ['sendAs']);
+    const { sendAs } = await AcctStore.getAcct(this.view.acctEmail, ['sendAs']);
     const addNameToEmail = async (emails: string[]): Promise<string[]> => {
       return await Promise.all(emails.map(async email => {
         let name: string | undefined;
         if (sendAs && sendAs[email]?.name) {
           name = sendAs[email].name!;
         } else {
-          const [contact] = await Store.dbContactGet(undefined, [email]);
+          const [contact] = await ContactStore.dbContactGet(undefined, [email]);
           if (contact?.name) {
             name = contact.name;
           }

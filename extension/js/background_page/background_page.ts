@@ -3,7 +3,7 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../common/browser/browser-msg.js';
-import { GlobalStore, Store } from '../common/platform/store.js';
+import { GlobalStore, Store } from '../common/platform/store/abstract-store.js';
 
 import { BgHandlers } from './bg-handlers.js';
 import { BgUtils } from './bgutils.js';
@@ -38,7 +38,7 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
   }
 
   try {
-    db = await Store.dbOpen(); // takes 4-10 ms first time
+    db = await ContactStore.dbOpen(); // takes 4-10 ms first time
   } catch (e) {
     await BgUtils.handleStoreErr(e);
     return;
@@ -51,7 +51,7 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
   BrowserMsg.bgAddListener('storeGlobalGet', (r: Bm.StoreGlobalGet) => Store.getGlobal(r.keys));
   BrowserMsg.bgAddListener('storeGlobalSet', (r: Bm.StoreGlobalSet) => Store.setGlobal(r.values));
   BrowserMsg.bgAddListener('storeAcctGet', (r: Bm.StoreAcctGet) => Store.getAcct(r.acctEmail, r.keys));
-  BrowserMsg.bgAddListener('storeAcctSet', (r: Bm.StoreAcctSet) => Store.setAcct(r.acctEmail, r.values));
+  BrowserMsg.bgAddListener('storeAcctSet', (r: Bm.StoreAcctSet) => AcctStore.setAcct(r.acctEmail, r.values));
 
   BrowserMsg.addPgpListeners(); // todo - remove https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
 

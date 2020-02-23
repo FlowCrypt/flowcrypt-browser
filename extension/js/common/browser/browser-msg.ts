@@ -2,10 +2,8 @@
 
 'use strict';
 
-import { AccountIndex, AccountStore, GlobalIndex, GlobalStore } from '../platform/store.js';
 import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, VerifyRes, PgpMsgTypeResult } from '../core/pgp-msg.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
-
 import { AjaxErr } from '../api/error/api-error-types.js';
 import { AuthRes } from '../api/google-auth.js';
 import { Browser } from './browser.js';
@@ -19,6 +17,8 @@ import { PgpHash } from '../core/pgp-hash.js';
 import { PgpKey } from '../core/pgp-key.js';
 import { PgpMsg } from '../core/pgp-msg.js';
 import { Ui } from './ui.js';
+import { GlobalStoreDict, GlobalIndex } from '../platform/store/global-store.js';
+import { AcctStoreDict, AccountIndex } from '../platform/store/acct-store.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -52,9 +52,9 @@ export namespace Bm {
   export type StoreSessionSet = { acctEmail: string, key: string, value: string | undefined };
   export type StoreSessionGet = { acctEmail: string, key: string };
   export type StoreGlobalGet = { keys: GlobalIndex[]; };
-  export type StoreGlobalSet = { values: GlobalStore; };
+  export type StoreGlobalSet = { values: GlobalStoreDict; };
   export type StoreAcctGet = { acctEmail: string, keys: AccountIndex[]; };
-  export type StoreAcctSet = { acctEmail: string, values: AccountStore; };
+  export type StoreAcctSet = { acctEmail: string, values: AcctStoreDict; };
   export type Inbox = { acctEmail?: string };
   export type ReconnectAcctAuthPopup = { acctEmail: string, scopes?: string[] };
   export type PgpKeyDetails = { pubkey: string };
@@ -70,9 +70,9 @@ export namespace Bm {
     export type GetActiveTabInfo = { provider: 'gmail' | undefined, acctEmail: string | undefined, sameWorld: boolean | undefined };
     export type StoreSessionGet = string | null;
     export type StoreSessionSet = void;
-    export type StoreGlobalGet = GlobalStore;
+    export type StoreGlobalGet = GlobalStoreDict;
     export type StoreGlobalSet = void;
-    export type StoreAcctGet = AccountStore;
+    export type StoreAcctGet = AcctStoreDict;
     export type StoreAcctSet = void;
     export type ReconnectAcctAuthPopup = AuthRes;
     export type PgpKeyDetails = { original: string, normalized: string, keys: KeyDetails[] };

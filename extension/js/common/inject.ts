@@ -8,7 +8,7 @@ import { WebmailVariantString, XssSafeFactory } from './xss-safe-factory.js';
 import { Catch } from './platform/catch.js';
 import { ContentScriptWindow } from './browser/browser-window.js';
 import { Dict } from './core/common.js';
-import { Store } from './platform/store.js';
+import { Store } from './platform/store/abstract-store.js';
 import { WebMailName } from './browser/env.js';
 
 type Host = {

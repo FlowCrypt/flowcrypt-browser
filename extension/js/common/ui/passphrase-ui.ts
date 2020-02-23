@@ -4,7 +4,7 @@
 'use strict';
 
 import { Catch } from '../platform/catch.js';
-import { Store } from '../platform/store.js';
+import { Store } from '../platform/store/abstract-store.js';
 import { Ui } from '../browser/ui.js';
 import { Xss } from '../platform/xss.js';
 

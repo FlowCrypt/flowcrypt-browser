@@ -5,7 +5,7 @@
 import { ViewModule } from '../../../js/common/view-module.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { BackupView } from './backup.js';
-import { Store } from '../../../js/common/platform/store.js';
+import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Att } from '../../../js/common/core/att.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
@@ -60,7 +60,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
 
   private actionManualBackupHandler = async () => {
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
-    const [primaryKi] = await Store.keysGet(this.view.acctEmail, ['primary']);
+    const [primaryKi] = await AcctKeyStore.keysGet(this.view.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     if (!await this.isPrivateKeyEncrypted(primaryKi)) {
       await Ui.modal.error('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
@@ -117,14 +117,14 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     } finally {
       this.proceedBtn.text(origBtnText);
     }
-    await this.view.renderBackupDone(false, 'inbox');
+    await this.view.renderBackupDone();
   }
 
   private backupAsFile = async (primaryKi: KeyInfo) => { // todo - add a non-encrypted download option
     const attachment = this.asBackupFile(primaryKi.private);
     Browser.saveToDownloads(attachment);
     await Ui.modal.info('Downloading private key backup file..');
-    await this.view.renderBackupDone(false, 'file');
+    await this.view.renderBackupDone();
   }
 
   private backupByBrint = async (primaryKi: KeyInfo) => { // todo - implement + add a non-encrypted print option
@@ -132,7 +132,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private backupRefused = async (ki: KeyInfo) => {
-    await this.view.renderBackupDone(Value.int.getFutureTimestampInMonths(3), 'none');
+    await this.view.renderBackupDone();
   }
 
   private isPassPhraseStrongEnough = async (ki: KeyInfo, passphrase: string) => {

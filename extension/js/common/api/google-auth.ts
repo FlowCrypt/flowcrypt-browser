@@ -7,7 +7,7 @@
 
 const BUILD = 'consumer'; // todo
 
-import { AccountStore, Store } from '../platform/store.js';
+import { AccountStore, Store } from '../platform/store/abstract-store.js';
 import { GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST } from '../core/const.js';
 import { Url, Value } from '../core/common.js';
 import { tabsQuery, windowsCreate } from './chrome.js';
@@ -81,7 +81,7 @@ export class GoogleAuth {
     if (!acctEmail) {
       throw new Error('missing account_email in api_gmail_call');
     }
-    const storage = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires', 'google_token_scopes', 'google_token_refresh']);
+    const storage = await AcctStore.getAcct(acctEmail, ['google_token_access', 'google_token_expires', 'google_token_scopes', 'google_token_refresh']);
     if (!storage.google_token_access || !storage.google_token_refresh) {
       throw new GoogleAuthErr(`Account ${acctEmail} not connected to FlowCrypt Browser Extension`);
     } else if (GoogleAuth.googleApiIsAuthTokenValid(storage) && !forceRefresh) {
@@ -90,7 +90,7 @@ export class GoogleAuth {
       const refreshTokenRes = await GoogleAuth.googleAuthRefreshToken(storage.google_token_refresh);
       await GoogleAuth.googleAuthCheckAccessToken(refreshTokenRes.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
       await GoogleAuth.googleAuthSaveTokens(acctEmail, refreshTokenRes, storage.google_token_scopes || []);
-      const auth = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires']);
+      const auth = await AcctStore.getAcct(acctEmail, ['google_token_access', 'google_token_expires']);
       if (GoogleAuth.googleApiIsAuthTokenValid(auth)) { // have a valid gmail_api oauth token
         return `Bearer ${auth.google_token_access}`;
       } else {
@@ -254,7 +254,7 @@ export class GoogleAuth {
 
   private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
     const openid = GoogleAuth.parseIdToken(tokensObj.id_token);
-    const { full_name, picture } = await Store.getAcct(acctEmail, ['full_name', 'picture']);
+    const { full_name, picture } = await AcctStore.getAcct(acctEmail, ['full_name', 'picture']);
     const toSave: AccountStore = {
       openid,
       google_token_access: tokensObj.access_token,
@@ -266,7 +266,7 @@ export class GoogleAuth {
     if (typeof tokensObj.refresh_token !== 'undefined') {
       toSave.google_token_refresh = tokensObj.refresh_token;
     }
-    await Store.setAcct(acctEmail, toSave);
+    await AcctStore.setAcct(acctEmail, toSave);
   }
 
   private static googleAuthGetTokens = async (code: string) => {
@@ -328,7 +328,7 @@ export class GoogleAuth {
 
   private static apiGoogleAuthPopupPrepareAuthReqScopes = async (acctEmail: string | undefined, addScopes: string[]): Promise<string[]> => {
     if (acctEmail) {
-      const { google_token_scopes } = await Store.getAcct(acctEmail, ['google_token_scopes']);
+      const { google_token_scopes } = await AcctStore.getAcct(acctEmail, ['google_token_scopes']);
       addScopes.push(...(google_token_scopes || []));
     }
     addScopes = Value.arr.unique(addScopes);

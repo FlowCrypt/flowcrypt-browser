@@ -6,10 +6,10 @@ import { PopoverChoices, PopoverOpt } from './compose-types.js';
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Lang } from '../../../js/common/lang.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
 
@@ -132,11 +132,11 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
   }
 
   private richTextUserChoiceStore = async (isTicked: boolean) => {
-    await Store.setAcct(this.view.acctEmail, { use_rich_text: isTicked });
+    await AcctStore.setAcct(this.view.acctEmail, { use_rich_text: isTicked });
   }
 
   private richTextUserChoiceRetrieve = async (): Promise<boolean> => {
-    const store = await Store.getAcct(this.view.acctEmail, ['use_rich_text']);
+    const store = await AcctStore.getAcct(this.view.acctEmail, ['use_rich_text']);
     return store.use_rich_text || false;
   }
 

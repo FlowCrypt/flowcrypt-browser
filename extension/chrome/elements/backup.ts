@@ -6,11 +6,11 @@ import { Assert } from '../../js/common/assert.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { KeyInfo } from '../../js/common/core/pgp-key.js';
 import { PgpKey } from '../../js/common/core/pgp-key.js';
-import { Store } from '../../js/common/platform/store.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url, Str } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
+import { AcctKeyStore } from '../../js/common/platform/store/acct-key-store.js';
 
 View.run(class BackupView extends View {
 
@@ -43,7 +43,7 @@ View.run(class BackupView extends View {
     } else {
       $('.line.longids').css({ display: 'none' });
     }
-    [this.storedPrvWithMatchingLongid] = await Store.keysGet(this.acctEmail, [longid]);
+    [this.storedPrvWithMatchingLongid] = await AcctKeyStore.keysGet(this.acctEmail, [longid]);
     if (this.storedPrvWithMatchingLongid) {
       $('.line .private_key_status').text('This Private Key is already imported.');
     } else {

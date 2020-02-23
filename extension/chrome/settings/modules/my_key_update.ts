@@ -9,7 +9,7 @@ import { Lang } from '../../../js/common/lang.js';
 import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Store } from '../../../js/common/platform/store.js';
+import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
@@ -38,7 +38,7 @@ View.run(class MyKeyUpdateView extends View {
   public render = async () => {
     this.rules = await Rules.newInstance(this.acctEmail);
     this.keyserver = new Keyserver(this.rules);
-    [this.primaryKi] = await Store.keysGet(this.acctEmail, [this.longid]);
+    [this.primaryKi] = await AcctKeyStore.keysGet(this.acctEmail, [this.longid]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     $('.action_show_public_key').attr('href', this.showKeyUrl);
     $('.email').text(this.acctEmail);

@@ -11,7 +11,6 @@ import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { RecipientType } from '../../../js/common/api/api.js';
 import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -19,6 +18,8 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { GmailParser } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
+import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
+import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 
 export class ComposeRenderModule extends ViewModule<ComposeView> {
 
@@ -194,7 +195,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       <br><br>I was not able to read your encrypted message because it was encrypted for a wrong key.
       <br><br>My current public key is attached below. Please update your records and send me a new encrypted message.
       <br><br>Thank you</div>`);
-    const [primaryKi] = await Store.keysGet(this.view.acctEmail, ['primary']);
+    const [primaryKi] = await AcctKeyStore.keysGet(this.view.acctEmail, ['primary']);
     const att = Att.keyinfoAsPubkeyAtt(primaryKi);
     this.view.attsModule.attach.addFile(new File([att.getData()], att.name));
     this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
@@ -272,8 +273,8 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       }
       const keyUser = Str.parseEmail(key.users[0]);
       if (keyUser.email) {
-        if (!await Store.dbContactGet(undefined, [keyUser.email])) {
-          await Store.dbContactSave(undefined, await Store.dbContactObj({
+        if (!await ContactStore.dbContactGet(undefined, [keyUser.email])) {
+          await ContactStore.dbContactSave(undefined, await ContactStore.dbContactObj({
             email: keyUser.email,
             name: keyUser.name,
             client: 'pgp',

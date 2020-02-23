@@ -6,7 +6,7 @@ import { Lang } from '../../../js/common/lang.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { BackupView } from './backup.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Store } from '../../../js/common/platform/store.js';
+import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { UnreportableError } from '../../../js/common/platform/catch.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
@@ -25,7 +25,7 @@ export class BackupAutomaticModule extends ViewModule<BackupView> {
   }
 
   private setupCreateSimpleAutomaticInboxBackup = async () => {
-    const [primaryKi] = await Store.keysGet(this.view.acctEmail, ['primary']);
+    const [primaryKi] = await AcctKeyStore.keysGet(this.view.acctEmail, ['primary']);
     if (!(await PgpKey.read(primaryKi.private)).isFullyEncrypted()) {
       await Ui.modal.warning('Key not protected with a pass phrase, skipping');
       throw new UnreportableError('Key not protected with a pass phrase, skipping');
@@ -33,7 +33,7 @@ export class BackupAutomaticModule extends ViewModule<BackupView> {
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
       await this.view.manualModule.doBackupOnEmailProvider(primaryKi.private);
-      await this.view.renderBackupDone(false, 'inbox');
+      await this.view.renderBackupDone();
     } catch (e) {
       if (ApiErr.isAuthPopupNeeded(e)) {
         await Ui.modal.info("Authorization Error. FlowCrypt needs to reconnect your Gmail account");

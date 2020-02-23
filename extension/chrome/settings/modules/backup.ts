@@ -3,7 +3,7 @@
 'use strict';
 
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { EmailProvider, Store, KeyBackupMethod } from '../../../js/common/platform/store.js';
+import { EmailProvider, Store } from '../../../js/common/platform/store/abstract-store.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Gmail } from '../../../js/common/api/email-provider/gmail/gmail.js';
@@ -48,7 +48,7 @@ export class BackupView extends View {
   public render = async () => {
     this.tabId = await BrowserMsg.requiredTabId();
     this.rules = await Rules.newInstance(this.acctEmail);
-    const storage = await Store.getAcct(this.acctEmail, ['email_provider']);
+    const storage = await AcctStore.getAcct(this.acctEmail, ['email_provider']);
     this.emailProvider = storage.email_provider || 'gmail';
     if (!this.rules.canBackupKeys()) {
       Xss.sanitizeRender('body', `<div class="line" style="margin-top: 100px;">${Lang.setup.keyBackupsNotAllowed}</div>`);
@@ -72,7 +72,7 @@ export class BackupView extends View {
     }
   }
 
-  public renderBackupDone = async (prompt: number | false, method: KeyBackupMethod) => {
+  public renderBackupDone = async () => {
     if (this.action === 'setup_automatic' || this.action === 'setup_manual') {
       window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: this.acctEmail, action: 'finalize' });
     } else {

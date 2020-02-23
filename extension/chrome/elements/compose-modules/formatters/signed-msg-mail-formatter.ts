@@ -11,7 +11,7 @@ import { PgpKey } from '../../../../js/common/core/pgp-key.js';
 import { PgpMsg } from '../../../../js/common/core/pgp-msg.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { SendableMsgBody } from '../../../../js/common/core/mime.js';
-import { Store } from '../../../../js/common/platform/store.js';
+import { Store } from '../../../../js/common/platform/store/abstract-store.js';
 
 export class SignedMsgMailFormatter extends BaseMailFormatter {
 

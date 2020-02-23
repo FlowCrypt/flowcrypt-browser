@@ -9,7 +9,7 @@ import { BrowserMsg } from './browser/browser-msg.js';
 import { KeyInfo } from './core/pgp-key.js';
 import { PgpKey } from './core/pgp-key.js';
 import { Settings } from './settings.js';
-import { Store } from './platform/store.js';
+import { Store } from './platform/store/abstract-store.js';
 import { Ui } from './browser/ui.js';
 import { Xss } from './platform/xss.js';
 
@@ -36,8 +36,8 @@ export class Assert {
 
   public static abortAndRenderErrOnUnprotectedKey = async (acctEmail?: string, tabId?: string) => {
     if (acctEmail) {
-      const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      const { setup_done } = await Store.getAcct(acctEmail, ['setup_done']);
+      const [primaryKi] = await AcctKeyStore.keysGet(acctEmail, ['primary']);
+      const { setup_done } = await AcctStore.getAcct(acctEmail, ['setup_done']);
       if (setup_done && primaryKi && !(await PgpKey.read(primaryKi.private)).isFullyEncrypted()) {
         if (window.location.pathname === '/chrome/settings/index.htm') {
           Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');

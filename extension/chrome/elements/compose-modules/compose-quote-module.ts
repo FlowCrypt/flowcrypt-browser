@@ -10,13 +10,13 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { MsgBlock } from '../../../js/common/core/msg-block.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { MessageToReplyOrForward } from './compose-types.js';
+import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
 
 export class ComposeQuoteModule extends ViewModule<ComposeView> {
 
@@ -123,7 +123,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
             let attMeta: { content: Buf, filename?: string } | undefined;
             if (block.type === 'encryptedAtt') {
               this.setQuoteLoaderProgress('decrypting...');
-              const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.view.acctEmail), encryptedData: block.attMeta.data });
+              const result = await PgpMsg.decrypt({ kisWithPp: await AcctKeyStore.keysGetAllWithPp(this.view.acctEmail), encryptedData: block.attMeta.data });
               if (result.success) {
                 attMeta = { content: result.content, filename: result.filename };
               }
@@ -160,7 +160,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
   }
 
   private decryptMessage = async (encryptedData: Buf): Promise<string> => {
-    const decryptRes = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.view.acctEmail), encryptedData });
+    const decryptRes = await PgpMsg.decrypt({ kisWithPp: await AcctKeyStore.keysGetAllWithPp(this.view.acctEmail), encryptedData });
     if (decryptRes.success) {
       return decryptRes.content.toUtfStr();
     } else if (decryptRes.error && decryptRes.error.type === 'need_passphrase') {

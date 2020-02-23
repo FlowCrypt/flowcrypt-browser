@@ -9,7 +9,7 @@ import { Buf } from './buf.js';
 import { Catch } from '../platform/catch.js';
 import { PgpArmor } from './pgp-armor.js';
 import { PgpHash } from './pgp-hash.js';
-import { Store } from '../platform/store.js';
+import { Store } from '../platform/store/abstract-store.js';
 import { opgp } from './pgp.js';
 import { KeyCache } from '../platform/key-cache.js';
 
@@ -252,7 +252,7 @@ export class PgpMsg {
   private static cryptoMsgGetSignedBy = async (msg: OpenpgpMsgOrCleartext, keys: SortedKeysForDecrypt) => {
     keys.signedBy = Value.arr.unique(await PgpKey.longids(msg.getSigningKeyIds ? msg.getSigningKeyIds() : []));
     if (keys.signedBy.length && typeof Store.dbContactGet === 'function') {
-      const verificationContacts = await Store.dbContactGet(undefined, keys.signedBy);
+      const verificationContacts = await ContactStore.dbContactGet(undefined, keys.signedBy);
       keys.verificationContacts = verificationContacts.filter(contact => contact && contact.pubkey) as Contact[];
       keys.forVerification = [];
       for (const contact of keys.verificationContacts) {

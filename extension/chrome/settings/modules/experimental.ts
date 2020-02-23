@@ -11,7 +11,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { GoogleAuth } from '../../../js/common/api/google-auth.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Store } from '../../../js/common/platform/store.js';
+import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
@@ -82,17 +82,17 @@ View.run(class ExperimentalView extends View {
   }
 
   private makeGoogleAuthTokenUnusableHandler = async () => {
-    await Store.setAcct(this.acctEmail, { google_token_access: 'flowcrypt_test_bad_access_token' });
+    await AcctStore.setAcct(this.acctEmail, { google_token_access: 'flowcrypt_test_bad_access_token' });
     BrowserMsg.send.reload(this.parentTabId, {});
   }
 
   private makeGoogleRefreshTokenUnusableHandler = async () => {
-    await Store.setAcct(this.acctEmail, { google_token_refresh: 'flowcrypt_test_bad_refresh_token' });
+    await AcctStore.setAcct(this.acctEmail, { google_token_refresh: 'flowcrypt_test_bad_refresh_token' });
     BrowserMsg.send.reload(this.parentTabId, {});
   }
 
   private resetManagingAuthHandler = async () => {
-    await Store.setAcct(this.acctEmail, { subscription: undefined, uuid: undefined });
+    await AcctStore.setAcct(this.acctEmail, { subscription: undefined, uuid: undefined });
     BrowserMsg.send.reload(this.parentTabId, {});
   }
 
@@ -127,11 +127,11 @@ View.run(class ExperimentalView extends View {
       'acctEmail: ' + this.acctEmail,
     ];
     const globalStorage = await Store.getGlobal(['version']);
-    const acctStorage = await Store.getAcct(this.acctEmail, ['is_newly_created_key', 'setup_date', 'full_name']);
+    const acctStorage = await AcctStore.getAcct(this.acctEmail, ['is_newly_created_key', 'setup_date', 'full_name']);
     text.push('global_storage: ' + JSON.stringify(globalStorage));
     text.push('account_storage: ' + JSON.stringify(acctStorage));
     text.push('');
-    const keyinfos = await Store.keysGet(this.acctEmail);
+    const keyinfos = await AcctKeyStore.keysGet(this.acctEmail);
     for (const keyinfo of keyinfos) {
       text.push('');
       text.push('key_longid: ' + keyinfo.longid);

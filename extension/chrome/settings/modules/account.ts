@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, Subscription } from '../../../js/common/platform/store.js';
+import { Store, Subscription } from '../../../js/common/platform/store/abstract-store.js';
 
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';

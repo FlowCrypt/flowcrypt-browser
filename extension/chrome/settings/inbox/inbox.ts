@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { AccountStore, Store } from '../../../js/common/platform/store.js';
+import { AccountStore, Store } from '../../../js/common/platform/store/abstract-store.js';
 import { SelCache, Ui } from '../../../js/common/browser/ui.js';
 import { Url, UrlParams } from '../../../js/common/core/common.js';
 
@@ -62,7 +62,7 @@ export class InboxView extends View {
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.injector = new Injector('settings', undefined, this.factory);
     this.webmailCommon = new WebmailCommon(this.acctEmail, this.injector);
-    this.storage = await Store.getAcct(this.acctEmail, ['email_provider', 'picture', 'sendAs']);
+    this.storage = await AcctStore.getAcct(this.acctEmail, ['email_provider', 'picture', 'sendAs']);
     this.inboxNotificationModule.render();
     const emailProvider = this.storage.email_provider || 'gmail';
     try {

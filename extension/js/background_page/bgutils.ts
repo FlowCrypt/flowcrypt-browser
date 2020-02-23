@@ -4,7 +4,7 @@
 
 import { Catch, UnreportableError } from '../common/platform/catch.js';
 import { Dict, Url, UrlParam } from '../common/core/common.js';
-import { Store, StoreCorruptedError, StoreDeniedError, StoreFailedError } from '../common/platform/store.js';
+import { Store, StoreCorruptedError, StoreDeniedError, StoreFailedError } from '../common/platform/store/abstract-store.js';
 
 export class BgUtils {
 

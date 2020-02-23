@@ -5,7 +5,7 @@
 import { Catch } from '../platform/catch.js';
 import { ContentScriptWindow } from '../browser/browser-window.js';
 import { Env } from '../browser/env.js';
-import { Store } from '../platform/store.js';
+import { Store } from '../platform/store/abstract-store.js';
 import { Ui } from '../browser/ui.js';
 import { Url, Dict } from '../core/common.js';
 

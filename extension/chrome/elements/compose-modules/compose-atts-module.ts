@@ -5,10 +5,10 @@
 import { AttLimits, AttUI } from '../../../js/common/ui/att-ui.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Rules } from '../../../js/common/rules.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 export class ComposeAttsModule extends ViewModule<ComposeView> {
 
@@ -30,7 +30,7 @@ export class ComposeAttsModule extends ViewModule<ComposeView> {
   }
 
   private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
-    const subscription = await Store.subscription(this.view.acctEmail);
+    const subscription = await AcctStore.subscription(this.view.acctEmail);
     if (!subscription.active && !Rules.isPublicEmailProviderDomain(this.view.senderModule.getSender())) {
       return {
         sizeMb: 5,

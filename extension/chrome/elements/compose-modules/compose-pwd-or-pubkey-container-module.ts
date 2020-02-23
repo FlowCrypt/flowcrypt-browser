@@ -5,12 +5,12 @@
 import { Backend } from '../../../js/common/api/backend.js';
 import { RecipientStatuses, SendBtnTexts } from './compose-types.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Str } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
 
@@ -84,7 +84,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
 
   private showMsgPwdUiAndColorBtn = async () => {
     if (!this.isVisible()) {
-      const authInfo = await Store.authInfo(this.view.acctEmail);
+      const authInfo = await AcctStore.authInfo(this.view.acctEmail);
       const expirationTextEl = this.view.S.cached('expiration_note').find('#expiration_note_message_expire');
       if (!authInfo) {
         expirationTextEl.text(Str.pluralize(this.MSG_EXPIRE_DAYS_DEFAULT, 'day'));

@@ -5,7 +5,7 @@ import { AjaxErr, ApiErrResponse, AuthErr, GoogleAuthErr, StandardErrRes, Standa
 import { BgNotReadyErr } from '../../browser/browser-msg.js';
 import { Catch } from '../../platform/catch.js';
 import { Xss } from '../../platform/xss.js';
-import { StoreFailedError } from '../../platform/store.js';
+import { StoreFailedError } from '../../platform/store/abstract-store.js';
 
 export class ApiErr {
   public static eli5 = (e: any): string => { // "explain like I'm five"

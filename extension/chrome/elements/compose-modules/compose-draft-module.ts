@@ -3,7 +3,6 @@
 'use strict';
 
 import { Mime, MimeContent, MimeProccesedMsg } from '../../../js/common/core/mime.js';
-
 import { AjaxErr } from '../../../js/common/api/error/api-error-types.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
@@ -13,12 +12,12 @@ import { EncryptedMsgMailFormatter } from './formatters/encrypted-mail-msg-forma
 import { Env } from '../../../js/common/browser/env.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 import { PgpMsg } from '../../../js/common/core/pgp-msg.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
+import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
 
 export class ComposeDraftModule extends ViewModule<ComposeView> {
 
@@ -178,7 +177,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     const encryptedData = rawBlock.content instanceof Buf ? rawBlock.content : Buf.fromUtfStr(rawBlock.content);
     const passphrase = await this.view.storageModule.passphraseGet();
     if (typeof passphrase !== 'undefined') {
-      const decrypted = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.view.acctEmail), encryptedData });
+      const decrypted = await PgpMsg.decrypt({ kisWithPp: await AcctKeyStore.keysGetAllWithPp(this.view.acctEmail), encryptedData });
       if (!decrypted.success) {
         return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!decrypted.success');
       }

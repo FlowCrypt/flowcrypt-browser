@@ -11,10 +11,10 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { MsgBlock } from '../../../js/common/core/msg-block.js';
 import { PgpBlockView } from '../pgp_block.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 export class PgpBlockViewRenderModule {
   public doNotSetStateAsReadyYet = false;
@@ -41,7 +41,7 @@ export class PgpBlockViewRenderModule {
 
   public renderContent = async (htmlContent: string, isErr: boolean) => {
     if (!isErr && !this.view.isOutgoing) { // successfully opened incoming message
-      await Store.setAcct(this.view.acctEmail, { successfully_received_at_leat_one_message: true });
+      await AcctStore.setAcct(this.view.acctEmail, { successfully_received_at_leat_one_message: true });
     }
     if (!isErr) { // rendering message content
       const pgpBlock = $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(htmlContent, 'IMG-TO-LINK')); // xss-sanitized

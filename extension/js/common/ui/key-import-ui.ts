@@ -11,7 +11,7 @@ import { PgpArmor } from '../core/pgp-armor.js';
 import { PgpKey } from '../core/pgp-key.js';
 import { PgpPwd } from '../core/pgp-password.js';
 import { Settings } from '../settings.js';
-import { Store } from '../platform/store.js';
+import { Store } from '../platform/store/abstract-store.js';
 import { Ui } from '../browser/ui.js';
 import { Url, Str } from '../core/common.js';
 import { opgp } from '../core/pgp.js';
@@ -228,7 +228,7 @@ export class KeyImportUi {
 
   private rejectKnownIfSelected = async (acctEmail: string, k: OpenPGP.key.Key) => {
     if (this.rejectKnown) {
-      const keyinfos = await Store.keysGet(acctEmail);
+      const keyinfos = await AcctKeyStore.keysGet(acctEmail);
       const privateKeysLongids = keyinfos.map(ki => ki.longid);
       if (privateKeysLongids.includes(String(await PgpKey.longid(k)))) {
         throw new UserAlert('This is one of your current keys, try another one.');

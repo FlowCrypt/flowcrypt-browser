@@ -4,7 +4,7 @@
 
 import { Catch } from '../platform/catch.js';
 import { Dict } from '../core/common.js';
-import { FlatTypes } from '../platform/store.js';
+import { FlatTypes } from '../platform/store/abstract-store.js';
 
 export class BrowserExtension { // todo - move extension-specific common.js code here
 

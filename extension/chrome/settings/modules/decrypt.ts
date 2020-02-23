@@ -9,7 +9,7 @@ import { Att } from '../../../js/common/core/att.js';
 import { AttUI } from '../../../js/common/ui/att-ui.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Store } from '../../../js/common/platform/store.js';
+import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
@@ -55,7 +55,7 @@ View.run(class ManualDecryptView extends View {
   }
 
   private decryptAndDownload = async (encrypted: Att) => { // todo - this is more or less copy-pasted from att.js, should use common function
-    const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.acctEmail), encryptedData: encrypted.getData() });
+    const result = await PgpMsg.decrypt({ kisWithPp: await AcctKeyStore.keysGetAllWithPp(this.acctEmail), encryptedData: encrypted.getData() });
     if (result.success) {
       const attachment = new Att({ name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content });
       Browser.saveToDownloads(attachment);

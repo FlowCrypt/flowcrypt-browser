@@ -4,7 +4,7 @@
 
 import { Dict, Str, Url, UrlParams } from './core/common.js';
 import { JQS, Ui } from './browser/ui.js';
-import { SendAsAlias, Store } from './platform/store.js';
+import { SendAsAlias, Store } from './platform/store/abstract-store.js';
 import { Api } from './api/api.js';
 import { ApiErr } from './api/error/api-error.js';
 import { ApiErrResponse } from './api/error/api-error-types.js';
@@ -49,8 +49,8 @@ export class Settings {
   public static refreshSendAs = async (acctEmail: string) => {
     const fetchedSendAs = await Settings.fetchAcctAliasesFromGmail(acctEmail);
     const result = { defaultEmailChanged: false, aliasesChanged: false, footerChanged: false, sendAs: fetchedSendAs };
-    const { sendAs: storedSendAs } = await Store.getAcct(acctEmail, ['sendAs']);
-    await Store.setAcct(acctEmail, { sendAs: fetchedSendAs });
+    const { sendAs: storedSendAs } = await AcctStore.getAcct(acctEmail, ['sendAs']);
+    await AcctStore.setAcct(acctEmail, { sendAs: fetchedSendAs });
     if (!storedSendAs) { // Aliases changed (it was previously undefined)
       result.aliasesChanged = true;
       return result;
@@ -116,7 +116,7 @@ export class Settings {
     const oldAcctEmailIndexPrefix = Store.singleScopeRawIndex(oldAcctEmail, '');
     const newAcctEmailIndexPrefix = Store.singleScopeRawIndex(newAcctEmail, '');
     // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
-    const destAccountPrivateKeys = await Store.keysGet(newAcctEmail);
+    const destAccountPrivateKeys = await AcctKeyStore.keysGet(newAcctEmail);
     const destAcctPassPhrases: Dict<string> = {};
     for (const ki of destAccountPrivateKeys) {
       const pp = await Store.passphraseGet(newAcctEmail, ki.longid, true);
@@ -134,8 +134,8 @@ export class Settings {
         storageIndexesToChange.push(key.replace(oldAcctEmailIndexPrefix, ''));
       }
     }
-    const oldAcctStorage = await Store.getAcct(oldAcctEmail, storageIndexesToChange as any);
-    await Store.setAcct(newAcctEmail, oldAcctStorage);
+    const oldAcctStorage = await AcctStore.getAcct(oldAcctEmail, storageIndexesToChange as any);
+    await AcctStore.setAcct(newAcctEmail, oldAcctStorage);
     for (const sessionStorageIndex of Object.keys(sessionStorage)) {
       if (sessionStorageIndex.indexOf(oldAcctEmailIndexPrefix) === 0) {
         const v = sessionStorage.getItem(sessionStorageIndex);
@@ -260,12 +260,12 @@ export class Settings {
       const response = await GoogleAuth.newAuthPopup({ acctEmail, scopes });
       if (response.result === 'Success' && response.acctEmail) {
         await Store.acctEmailsAdd(response.acctEmail);
-        const storage = await Store.getAcct(response.acctEmail, ['setup_done']);
+        const storage = await AcctStore.getAcct(response.acctEmail, ['setup_done']);
         if (storage.setup_done) { // this was just an additional permission
           await Ui.modal.info('You\'re all set.');
           window.location.href = Url.create('/chrome/settings/index.htm', { acctEmail: response.acctEmail });
         } else {
-          await Store.setAcct(response.acctEmail, { email_provider: 'gmail' });
+          await AcctStore.setAcct(response.acctEmail, { email_provider: 'gmail' });
           window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: response.acctEmail });
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {

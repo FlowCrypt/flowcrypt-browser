@@ -8,7 +8,6 @@ import { Dict, Str, Value } from '../../../core/common.js';
 import { EmailProviderApi, EmailProviderInterface, Backups } from '../email-provider-api.js';
 import { GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
 import { GmailParser, GmailRes } from './gmail-parser.js';
-
 import { AjaxErr } from '../../error/api-error-types.js';
 import { Att } from '../../../core/att.js';
 import { BrowserMsg } from '../../../browser/browser-msg.js';
@@ -23,8 +22,9 @@ import { Mime } from '../../../core/mime.js';
 import { PgpArmor } from '../../../core/pgp-armor.js';
 import { PgpKey } from '../../../core/pgp-key.js';
 import { SendableMsg } from '../sendable-msg.js';
-import { Store } from '../../../platform/store.js';
 import { Xss } from '../../../platform/xss.js';
+import { AcctKeyStore } from '../../../platform/store/acct-key-store.js';
+import { ContactStore } from '../../../platform/store/contact-store.js';
 
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 
@@ -338,8 +338,8 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     }
     await this.fetchAtts(atts);
     const { keys: foundBackupKeys } = await PgpKey.readMany(Buf.fromUtfStr(atts.map(a => a.getData().toUtfStr()).join('\n')));
-    const backups = await Promise.all(foundBackupKeys.map(k => Store.keyInfoObj(k)));
-    const imported = await Store.keysGet(this.acctEmail);
+    const backups = await Promise.all(foundBackupKeys.map(k => AcctKeyStore.keyInfoObj(k)));
+    const imported = await AcctKeyAcctKeyStore.keysGet(this.acctEmail);
     const importedLongids = imported.map(ki => ki.longid);
     const backedUpLongids = backups.map(ki => ki.longid);
     const keyinfos = {
@@ -383,7 +383,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       }
     }
     const rawValidEmails = rawParsedResults.filter(r => r.address && Str.isEmailValid(r.address));
-    const newValidResults = await Promise.all(rawValidEmails.map(({ address, name }) => Store.dbContactObj({ email: address!, name })));
+    const newValidResults = await Promise.all(rawValidEmails.map(({ address, name }) => ContactStore.dbContactObj({ email: address!, name })));
     const uniqueNewValidResults: Contact[] = [];
     for (const newValidRes of newValidResults) {
       if (allResults.map(c => c.email).indexOf(newValidRes.email) === -1) {

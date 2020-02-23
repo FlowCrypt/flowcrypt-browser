@@ -3,7 +3,7 @@
 'use strict';
 
 import { KeyInfo, PgpKey } from '../../js/common/core/pgp-key.js';
-import { StorageType, Store } from '../../js/common/platform/store.js';
+import { StorageType } from '../../js/common/platform/store/abstract-store.js';
 
 import { Assert } from '../../js/common/assert.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
@@ -14,6 +14,8 @@ import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 import { opgp } from '../../js/common/core/pgp.js';
+import { AcctKeyStore } from '../../js/common/platform/store/acct-key-store.js';
+import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 
 View.run(class PassphraseView extends View {
   private readonly acctEmail: string;
@@ -34,7 +36,7 @@ View.run(class PassphraseView extends View {
   public render = async () => {
     Ui.event.protect();
     await initPassphraseToggle(['passphrase']);
-    const allPrivateKeys = await Store.keysGet(this.acctEmail);
+    const allPrivateKeys = await AcctKeyStore.keysGet(this.acctEmail);
     this.myPrivateKeys = allPrivateKeys.filter(ki => this.longids.includes(ki.longid) || (ki.primary && this.longids.includes('primary')));
     if (this.type === 'embedded') {
       $('h1').parent().css('display', 'none');
@@ -110,7 +112,7 @@ View.run(class PassphraseView extends View {
       const { keys: [prv] } = await opgp.key.readArmored(keyinfo.private);
       try {
         if (await PgpKey.decrypt(prv, pass) === true) {
-          await Store.passphraseSave(storageType, this.acctEmail, keyinfo.longid, pass);
+          await PassphraseStore.passphraseSave(storageType, this.acctEmail, keyinfo.longid, pass);
           atLeastOneMatched = true;
           if (storageType === 'session') {
             // TODO: change to 'broadcast' when issue with 'broadcast' is fixed

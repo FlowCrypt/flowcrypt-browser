@@ -8,9 +8,9 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { FormatError } from '../../../js/common/core/pgp-msg.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpBlockView } from '../pgp_block.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
 
 export class PgpBlockViewErrorModule {
 
@@ -32,7 +32,7 @@ export class PgpBlockViewErrorModule {
   }
 
   public handlePrivateKeyMismatch = async (message: Uint8Array, isPwdMsg: boolean) => { // todo - make it work for multiple stored keys
-    const msgDiagnosis = await BrowserMsg.send.bg.await.pgpMsgDiagnosePubkeys({ privateKis: await Store.keysGet(this.view.acctEmail), message });
+    const msgDiagnosis = await BrowserMsg.send.bg.await.pgpMsgDiagnosePubkeys({ privateKis: await AcctKeyStore.keysGet(this.view.acctEmail), message });
     if (msgDiagnosis.found_match) {
       await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.encryptedCorrectlyFileBug, undefined);
     } else if (isPwdMsg) {

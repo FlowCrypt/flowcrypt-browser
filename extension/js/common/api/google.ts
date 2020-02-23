@@ -10,7 +10,7 @@ import { Dict, Str } from '../core/common.js';
 import { GOOGLE_API_HOST } from '../core/const.js';
 import { GmailRes } from './email-provider/gmail/gmail-parser.js';
 import { GoogleAuth } from './google-auth.js';
-import { Serializable } from '../platform/store.js';
+import { Serializable } from '../platform/store/abstract-store.js';
 
 export class Google {
 

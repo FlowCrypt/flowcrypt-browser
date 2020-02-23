@@ -8,7 +8,7 @@ import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Store } from '../../../js/common/platform/store.js';
+import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
@@ -32,13 +32,13 @@ View.run(class ChangePassPhraseView extends View {
 
   public render = async () => {
     await initPassphraseToggle(['current_pass_phrase', 'new_pass_phrase', 'new_pass_phrase_confirm']);
-    const privateKeys = await Store.keysGet(this.acctEmail);
+    const privateKeys = await AcctKeyStore.keysGet(this.acctEmail);
     if (privateKeys.length > 1) {
       $('#step_0_enter_current .sentence').text('Enter the current passphrase for your primary key');
       $('#step_0_enter_current #current_pass_phrase').attr('placeholder', 'Current primary key pass phrase');
       $('#step_1_enter_new #new_pass_phrase').attr('placeholder', 'Enter a new primary key pass phrase');
     }
-    const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
+    const [primaryKi] = await AcctKeyStore.keysGet(this.acctEmail, ['primary']);
     this.primaryKi = primaryKi;
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     const storedOrSessionPp = await Store.passphraseGet(this.acctEmail, this.primaryKi.longid);

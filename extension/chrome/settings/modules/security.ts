@@ -9,7 +9,7 @@ import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Store } from '../../../js/common/platform/store.js';
+import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
@@ -32,10 +32,10 @@ View.run(class SecurityView extends View {
 
   public render = async () => {
     await initPassphraseToggle(['passphrase_entry']);
-    [this.primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
+    [this.primaryKi] = await AcctKeyStore.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     this.authInfo = await Store.authInfo(this.acctEmail);
-    const storage = await Store.getAcct(this.acctEmail, ['hide_message_password', 'outgoing_language']);
+    const storage = await AcctStore.getAcct(this.acctEmail, ['hide_message_password', 'outgoing_language']);
     $('#hide_message_password').prop('checked', storage.hide_message_password === true);
     $('.password_message_language').val(storage.outgoing_language || 'EN');
     await this.renderPassPhraseOptionsIfStoredPermanently();
@@ -50,7 +50,7 @@ View.run(class SecurityView extends View {
   }
 
   private renderPassPhraseOptionsIfStoredPermanently = async () => {
-    const keys = await Store.keysGet(this.acctEmail);
+    const keys = await AcctKeyStore.keysGet(this.acctEmail);
     if (await this.isAnyPassPhraseStoredPermanently(keys)) {
       $('.forget_passphrase').css('display', '');
       $('.action_forget_pp').click(this.setHandler(() => {
@@ -111,13 +111,13 @@ View.run(class SecurityView extends View {
   private onMsgLanguageUserChange = async () => {
     const outgoingLanguage = String($('.password_message_language').val());
     if (['EN', 'DE'].includes(outgoingLanguage)) {
-      await Store.setAcct(this.acctEmail, { outgoing_language: outgoingLanguage as 'DE' | 'EN' });
+      await AcctStore.setAcct(this.acctEmail, { outgoing_language: outgoingLanguage as 'DE' | 'EN' });
       window.location.reload();
     }
   }
 
   private hideMsgPasswordHandler = async (checkbox: HTMLElement) => {
-    await Store.setAcct(this.acctEmail, { hide_message_password: $(checkbox).is(':checked') });
+    await AcctStore.setAcct(this.acctEmail, { hide_message_password: $(checkbox).is(':checked') });
     window.location.reload();
   }
 

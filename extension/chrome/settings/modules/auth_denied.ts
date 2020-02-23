@@ -4,7 +4,7 @@
 
 import { Assert } from '../../../js/common/assert.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Store } from '../../../js/common/platform/store.js';
+import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 
@@ -25,7 +25,7 @@ View.run(class AuthDeniedView extends View {
     if (!this.acctEmail) {
       this.renderSetupDone(false);
     } else {
-      const { setup_done } = await Store.getAcct(this.acctEmail!, ['setup_done']);
+      const { setup_done } = await AcctStore.getAcct(this.acctEmail!, ['setup_done']);
       this.renderSetupDone(!!setup_done);
     }
     $('.hidable').not(`.${this.emailProvider}`).css('display', 'none');

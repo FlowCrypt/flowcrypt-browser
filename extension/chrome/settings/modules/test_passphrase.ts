@@ -7,7 +7,7 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Store } from '../../../js/common/platform/store.js';
+import { Store } from '../../../js/common/platform/store/abstract-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
@@ -27,7 +27,7 @@ View.run(class TestPassphrase extends View {
   }
 
   public render = async () => {
-    const [keyInfo] = await Store.keysGet(this.acctEmail, ['primary']);
+    const [keyInfo] = await AcctKeyStore.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(keyInfo);
     await initPassphraseToggle(['password']);
     this.primaryKey = await PgpKey.read(keyInfo.private);

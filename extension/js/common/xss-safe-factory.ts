@@ -12,7 +12,7 @@ import { Catch } from './platform/catch.js';
 import { MsgBlock } from './core/msg-block.js';
 import { MsgBlockParser } from './core/msg-block-parser.js';
 import { PgpArmor } from './core/pgp-armor.js';
-import { SendAsAlias } from './platform/store.js';
+import { SendAsAlias } from './platform/store/abstract-store.js';
 import { Ui } from './browser/ui.js';
 import { WebMailName } from './browser/env.js';
 import { Xss } from './platform/xss.js';

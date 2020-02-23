@@ -2,7 +2,6 @@
 
 'use strict';
 
-import { AccountStore, Scopes, Store } from '../../js/common/platform/store.js';
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Url } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/error/api-error.js';
@@ -25,6 +24,10 @@ import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 import { Keyserver } from '../../js/common/api/keyserver.js';
+import { Scopes, AcctStoreDict, AcctStore } from '../../js/common/platform/store/acct-store.js';
+import { AcctKeyStore } from '../../js/common/platform/store/acct-key-store.js';
+import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
+import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 
 export interface SetupOptions {
   passphrase: string;
@@ -50,7 +53,7 @@ export class SetupView extends View {
 
   public tabId!: string;
   public scopes!: Scopes;
-  public storage!: AccountStore;
+  public storage!: AcctStoreDict;
   public rules!: Rules;
   public keyserver!: Keyserver;
 
@@ -89,8 +92,8 @@ export class SetupView extends View {
   public render = async () => {
     await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
     await initPassphraseToggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
-    this.storage = await Store.getAcct(this.acctEmail, ['setup_done', 'email_provider']);
-    this.scopes = await Store.getScopes(this.acctEmail);
+    this.storage = await AcctStore.getAcct(this.acctEmail, ['setup_done', 'email_provider']);
+    this.scopes = await AcctStore.getScopes(this.acctEmail);
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.rules = await Rules.newInstance(this.acctEmail);
     this.keyserver = new Keyserver(this.rules);
@@ -161,7 +164,7 @@ export class SetupView extends View {
   }
 
   public preFinalizeSetup = async (options: SetupOptions): Promise<void> => {
-    await Store.setAcct(this.acctEmail, {
+    await AcctStore.setAcct(this.acctEmail, {
       tmp_submit_main: options.submit_main,
       tmp_submit_all: options.submit_all,
       is_newly_created_key: options.is_newly_created_key,
@@ -169,15 +172,15 @@ export class SetupView extends View {
   }
 
   public finalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
-    const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
+    const [primaryKi] = await AcctKeyStore.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
       await this.submitPublicKeyIfNeeded(primaryKi.public, { submit_main, submit_all });
     } catch (e) {
       return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToSubmitToAttester, () => this.finalizeSetup({ submit_main, submit_all }));
     }
-    await Store.setAcct(this.acctEmail, { setup_date: Date.now(), setup_done: true, cryptup_enabled: true });
-    await Store.remove(this.acctEmail, ['tmp_submit_main', 'tmp_submit_all']);
+    await AcctStore.setAcct(this.acctEmail, { setup_date: Date.now(), setup_done: true, cryptup_enabled: true });
+    await AcctStore.remove(this.acctEmail, ['tmp_submit_main', 'tmp_submit_all']);
   }
 
   public saveKeys = async (prvs: OpenPGP.key.Key[], options: SetupOptions) => {
@@ -187,13 +190,13 @@ export class SetupView extends View {
         await Ui.modal.error('Cannot save keys to storage because at least one of them is not valid.');
         return;
       }
-      await Store.keysAdd(this.acctEmail, prv.armor());
-      await Store.passphraseSave(options.passphrase_save ? 'local' : 'session', this.acctEmail, longid, options.passphrase);
+      await AcctKeyStore.keysAdd(this.acctEmail, prv.armor());
+      await PassphraseStore.passphraseSave(options.passphrase_save ? 'local' : 'session', this.acctEmail, longid, options.passphrase);
     }
     const myOwnEmailAddrsAsContacts: Contact[] = [];
-    const { full_name: name } = await Store.getAcct(this.acctEmail, ['full_name']);
+    const { full_name: name } = await AcctStore.getAcct(this.acctEmail, ['full_name']);
     for (const email of this.submitKeyForAddrs) {
-      myOwnEmailAddrsAsContacts.push(await Store.dbContactObj({
+      myOwnEmailAddrsAsContacts.push(await ContactStore.dbContactObj({
         email,
         name,
         client: 'cryptup',
@@ -202,7 +205,7 @@ export class SetupView extends View {
         lastSig: await PgpKey.lastSig(prvs[0].toPublic())
       }));
     }
-    await Store.dbContactSave(undefined, myOwnEmailAddrsAsContacts);
+    await ContactStore.dbContactSave(undefined, myOwnEmailAddrsAsContacts);
   }
 
   public shouldSubmitPubkey = (checkboxSelector: string) => {

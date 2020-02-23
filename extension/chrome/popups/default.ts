@@ -4,9 +4,10 @@
 
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Store } from '../../js/common/platform/store.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
+import { AcctStore } from '../../js/common/platform/store/acct-store.js';
+import { GlobalStore } from '../../js/common/platform/store/global-store.js';
 
 View.run(class DefaultPopupView extends View {
 
@@ -17,7 +18,7 @@ View.run(class DefaultPopupView extends View {
   public render = async () => {
     const activeTab = await BrowserMsg.send.bg.await.getActiveTabInfo();
     if (activeTab?.acctEmail) {
-      const { setup_done } = await Store.getAcct(activeTab.acctEmail, ['setup_done']);
+      const { setup_done } = await AcctStore.getAcct(activeTab.acctEmail, ['setup_done']);
       if (setup_done) {
         this.renderChooseEmailOrSettingsPopup(activeTab.acctEmail);
       } else {
@@ -26,9 +27,9 @@ View.run(class DefaultPopupView extends View {
     } else if (activeTab?.provider && activeTab.sameWorld === true && activeTab.acctEmail) {
       this.renderSetupAcctPromptPopup(activeTab.acctEmail);
     } else {
-      const acctEmails = await Store.acctEmailsGet();
+      const acctEmails = await GlobalStore.acctEmailsGet();
       if (acctEmails?.length) {
-        const acctStorages = await Store.getAccounts(acctEmails, ['setup_done']);
+        const acctStorages = await AcctStore.getAccounts(acctEmails, ['setup_done']);
         let functioningAccts = 0;
         for (const email of Object.keys(acctStorages)) {
           functioningAccts += Number(acctStorages[email].setup_done === true);
