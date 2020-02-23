@@ -316,7 +316,11 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   }
 
   public fetchAcctAliases = async (): Promise<GmailRes.GmailAliases> => {
-    return await Google.gmailCall<GmailRes.GmailAliases>(this.acctEmail, 'GET', 'settings/sendAs', {});
+    const res = await Google.gmailCall<GmailRes.GmailAliases>(this.acctEmail, 'GET', 'settings/sendAs', {}) as GmailRes.GmailAliases;
+    for (const sendAs of res.sendAs) {
+      sendAs.sendAsEmail = sendAs.sendAsEmail.toLowerCase();
+    }
+    return res;
   }
 
   public fetchMsgsHeadersBasedOnQuery = async (q: string, headerNames: string[], msgLimit: number) => {

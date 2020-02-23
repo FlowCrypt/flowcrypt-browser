@@ -46,6 +46,7 @@ View.run(class SettingsView extends View {
     this.addNewAcct = uncheckedUrlParams.addNewAcct === true;
     this.advanced = uncheckedUrlParams.advanced === true;
     if (this.acctEmail) {
+      this.acctEmail = this.acctEmail.toLowerCase().trim();
       this.gmail = new Gmail(this.acctEmail);
     }
   }
