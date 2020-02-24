@@ -117,15 +117,25 @@ export class Mime {
   }
 
   public static resemblesMsg = (msg: Uint8Array) => {
-    const utf8 = new Buf(msg.slice(0, 1000)).toUtfStr().toLowerCase();
-    const contentType = utf8.match(/content-type: +[0-9a-z\-\/]+/);
+    const chunk = new Buf(msg.slice(0, 3000)).toUtfStr().toLowerCase().replace(/\r\n/g, '\n');
+    const headers = chunk.split('\n\n')[0];
+    if (!headers) {
+      return false;
+    }
+    const contentType = headers.match(/content-type: +[0-9a-z\-\/]+/);
     if (!contentType) {
       return false;
     }
-    if (utf8.match(/content-transfer-encoding: +[0-9a-z\-\/]+/) || utf8.match(/content-disposition: +[0-9a-z\-\/]+/) || utf8.match(/; boundary=/) || utf8.match(/; charset=/)) {
+    if (headers.match(/;\s+boundary=/) || headers.match(/;\s+charset=/)) {
       return true;
     }
-    return Boolean(contentType.index === 0 && utf8.match(/boundary=/));
+    if (!headers.match(/boundary=/)) {
+      return false;
+    }
+    if (chunk.match(/\ncontent-transfer-encoding: +[0-9a-z\-\/]+/) || chunk.match(/\ncontent-disposition: +[0-9a-z\-\/]+/)) {
+      return true; // these tend to be inside body-part headers, after the first `\n\n` which we test above
+    }
+    return contentType.index === 0;
   }
 
   public static decode = async (mimeMsg: Uint8Array): Promise<MimeContent> => {
