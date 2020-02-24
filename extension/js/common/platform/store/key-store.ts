@@ -22,7 +22,7 @@ export class KeyStore extends AbstractStore {
   public static getAllWithPp = async (acctEmail: string): Promise<KeyInfo[]> => {
     const keys = await KeyStore.get(acctEmail);
     for (const ki of keys) {
-      ki.passphrase = await PassphraseStore.passphraseGet(acctEmail, ki.longid);
+      ki.passphrase = await PassphraseStore.get(acctEmail, ki.longid);
     }
     return keys;
   }
@@ -59,7 +59,7 @@ export class KeyStore extends AbstractStore {
     const keys = await KeyStore.get(acctEmail);
     const result: string[] = [];
     for (const key of keys) {
-      if (! await PassphraseStore.passphraseGet(acctEmail, key.longid, true) && await PassphraseStore.passphraseGet(acctEmail, key.longid, false)) {
+      if (! await PassphraseStore.get(acctEmail, key.longid, true) && await PassphraseStore.get(acctEmail, key.longid, false)) {
         result.push(key.longid);
       }
     }

@@ -83,7 +83,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private backupOnEmailProviderAndUpdateUi = async (primaryKi: KeyInfo) => {
-    const pp = await PassphraseStore.passphraseGet(this.view.acctEmail, primaryKi.longid);
+    const pp = await PassphraseStore.get(this.view.acctEmail, primaryKi.longid);
     if (!this.view.parentTabId) {
       await Ui.modal.error(`Missing parentTabId. Please restart your browser and try again.`);
       return;

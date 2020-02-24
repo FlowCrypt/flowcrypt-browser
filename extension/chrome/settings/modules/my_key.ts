@@ -82,7 +82,7 @@ View.run(class MyKeyView extends View {
   private downloadRevocationCert = async (enteredPP?: string) => {
     const prv = await PgpKey.read(this.keyInfo.private);
     if (!prv.isFullyDecrypted()) {
-      const passphrase = await PassphraseStore.passphraseGet(this.acctEmail, this.keyInfo.longid) || enteredPP;
+      const passphrase = await PassphraseStore.get(this.acctEmail, this.keyInfo.longid) || enteredPP;
       if (passphrase) {
         if (! await PgpKey.decrypt(prv, passphrase) && enteredPP) {
           await Ui.modal.error('Pass phrase did not match, please try again.');

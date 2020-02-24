@@ -53,10 +53,10 @@ View.run(class MyKeyUpdateView extends View {
   }
 
   private storeUpdatedKeyAndPassphrase = async (updatedPrv: OpenPGP.key.Key, updatedPrvPassphrase: string) => {
-    const storedPassphrase = await PassphraseStore.passphraseGet(this.acctEmail, this.primaryKi!.longid, true);
+    const storedPassphrase = await PassphraseStore.get(this.acctEmail, this.primaryKi!.longid, true);
     await KeyStore.add(this.acctEmail, updatedPrv.armor());
-    await PassphraseStore.passphraseSave('local', this.acctEmail, this.primaryKi!.longid, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
-    await PassphraseStore.passphraseSave('session', this.acctEmail, this.primaryKi!.longid, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
+    await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.longid, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
+    await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.longid, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
     if (this.rules.canSubmitPubToAttester() && await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
       try {
         await Ui.modal.info(await this.keyserver.attester.updatePubkey(this.primaryKi!.longid, updatedPrv.toPublic().armor()));

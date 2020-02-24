@@ -191,7 +191,7 @@ export class SetupView extends View {
         return;
       }
       await KeyStore.add(this.acctEmail, prv.armor());
-      await PassphraseStore.passphraseSave(options.passphrase_save ? 'local' : 'session', this.acctEmail, longid, options.passphrase);
+      await PassphraseStore.set(options.passphrase_save ? 'local' : 'session', this.acctEmail, longid, options.passphrase);
     }
     const myOwnEmailAddrsAsContacts: Contact[] = [];
     const { full_name: name } = await AcctStore.get(this.acctEmail, ['full_name']);

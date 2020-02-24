@@ -406,8 +406,8 @@ View.run(class SettingsView extends View {
     $('.action_remove_key').click(this.setHandler(async target => {
       // the UI below only gets rendered when account_email is available
       await KeyStore.remove(this.acctEmail!, $(target).attr('longid')!);
-      await PassphraseStore.passphraseSave('local', this.acctEmail!, $(target).attr('longid')!, undefined);
-      await PassphraseStore.passphraseSave('session', this.acctEmail!, $(target).attr('longid')!, undefined);
+      await PassphraseStore.set('local', this.acctEmail!, $(target).attr('longid')!, undefined);
+      await PassphraseStore.set('session', this.acctEmail!, $(target).attr('longid')!, undefined);
       this.reload(true);
     }));
   }

@@ -59,11 +59,11 @@ View.run(class SecurityView extends View {
         $('.passphrase_entry_container').css('display', '');
       }));
       $('.confirm_passphrase_requirement_change').click(this.setHandler(async () => {
-        const primaryKiPP = await PassphraseStore.passphraseGet(this.acctEmail, this.primaryKi!.longid);
+        const primaryKiPP = await PassphraseStore.get(this.acctEmail, this.primaryKi!.longid);
         if ($('input#passphrase_entry').val() === primaryKiPP) {
           for (const key of keys) {
-            await PassphraseStore.passphraseSave('local', this.acctEmail, key.longid, undefined);
-            await PassphraseStore.passphraseSave('session', this.acctEmail, key.longid, undefined);
+            await PassphraseStore.set('local', this.acctEmail, key.longid, undefined);
+            await PassphraseStore.set('session', this.acctEmail, key.longid, undefined);
           }
           window.location.reload();
         } else {
@@ -124,7 +124,7 @@ View.run(class SecurityView extends View {
 
   private isAnyPassPhraseStoredPermanently = async (keys: KeyInfo[]) => {
     for (const key of keys) {
-      if (await PassphraseStore.passphraseGet(this.acctEmail, key.longid, true)) {
+      if (await PassphraseStore.get(this.acctEmail, key.longid, true)) {
         return true;
       }
     }

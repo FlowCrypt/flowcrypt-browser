@@ -75,7 +75,7 @@ View.run(class AddKeyView extends View {
       const checked = await this.keyImportUi.checkPrv(this.acctEmail, String($('.input_private_key').val()), String($('.input_passphrase').val()));
       if (checked) {
         await KeyStore.add(this.acctEmail, checked.normalized); // resulting new_key checked above
-        await PassphraseStore.passphraseSave($('.input_passphrase_save').prop('checked') ? 'local' : 'session', this.acctEmail,
+        await PassphraseStore.set($('.input_passphrase_save').prop('checked') ? 'local' : 'session', this.acctEmail,
           checked.longid, checked.passphrase);
         BrowserMsg.send.reload(this.parentTabId, { advanced: true });
       }
