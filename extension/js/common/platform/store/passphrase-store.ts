@@ -14,7 +14,7 @@ export class PassphraseStore extends AbstractStore {
   public static set = async (storageType: StorageType, acctEmail: string, longid: string, passphrase: string | undefined) => {
     const storageKey: AccountIndex = `passphrase_${longid}` as AccountIndex;
     if (storageType === 'session') {
-      await SessionStore.sessionSet(acctEmail, storageKey, passphrase);
+      await SessionStore.set(acctEmail, storageKey, passphrase);
     } else {
       if (typeof passphrase === 'undefined') {
         await AcctStore.remove(acctEmail, [storageKey]);
@@ -34,7 +34,7 @@ export class PassphraseStore extends AbstractStore {
     if (typeof found === 'string') {
       return found;
     }
-    const fromSession = await SessionStore.sessionGet(acctEmail, storageKey);
+    const fromSession = await SessionStore.get(acctEmail, storageKey);
     return fromSession && !ignoreSession ? fromSession : undefined;
   }
 

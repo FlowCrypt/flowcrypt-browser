@@ -9,7 +9,7 @@ import { AbstractStore } from './abstract-store.js';
  */
 export class SessionStore extends AbstractStore {
 
-  public static sessionGet = async (acctEmail: string, key: string): Promise<string | null> => {
+  public static get = async (acctEmail: string, key: string): Promise<string | null> => {
     if (!Env.isBackgroundPage()) {
       // session in background page is separated from content script frames
       // must always go through background page to be consistent
@@ -18,7 +18,7 @@ export class SessionStore extends AbstractStore {
     return window.sessionStorage.getItem(SessionStore.singleScopeRawIndex(acctEmail, key));
   }
 
-  public static sessionSet = async (acctEmail: string, key: string, value: string | undefined): Promise<void> => {
+  public static set = async (acctEmail: string, key: string, value: string | undefined): Promise<void> => {
     if (!Env.isBackgroundPage()) {
       // session in background page is separated from content script frames
       // must always go through background page to be consistent
