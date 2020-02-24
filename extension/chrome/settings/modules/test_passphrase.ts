@@ -27,7 +27,7 @@ View.run(class TestPassphrase extends View {
   }
 
   public render = async () => {
-    const [keyInfo] = await KeyStore.keysGet(this.acctEmail, ['primary']);
+    const [keyInfo] = await KeyStore.get(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(keyInfo);
     await initPassphraseToggle(['password']);
     this.primaryKey = await PgpKey.read(keyInfo.private);

@@ -16,7 +16,7 @@ export class WebmailCommon {
 
   public addOrRemoveEndSessionBtnIfNeeded = async () => {
     const finishSessionBtn = $('.action_finish_session');
-    const longids = await KeyStore.getKeyLongidsThatCurrentlyHavePassPhraseInSession(this.acctEmail);
+    const longids = await KeyStore.getLongidsThatCurrentlyHavePassPhraseInSession(this.acctEmail);
     if (longids.length) {
       if (!finishSessionBtn.length) {
         await this.injector.insertEndSessionBtn(this.acctEmail);

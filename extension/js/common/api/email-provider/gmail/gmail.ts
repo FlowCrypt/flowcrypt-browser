@@ -339,7 +339,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     await this.fetchAtts(atts);
     const { keys: foundBackupKeys } = await PgpKey.readMany(Buf.fromUtfStr(atts.map(a => a.getData().toUtfStr()).join('\n')));
     const backups = await Promise.all(foundBackupKeys.map(k => KeyStore.keyInfoObj(k)));
-    const imported = await KeyStore.keysGet(this.acctEmail);
+    const imported = await KeyStore.get(this.acctEmail);
     const importedLongids = imported.map(ki => ki.longid);
     const backedUpLongids = backups.map(ki => ki.longid);
     const keyinfos = {

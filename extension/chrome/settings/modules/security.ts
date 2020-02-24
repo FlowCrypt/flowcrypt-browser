@@ -33,7 +33,7 @@ View.run(class SecurityView extends View {
 
   public render = async () => {
     await initPassphraseToggle(['passphrase_entry']);
-    [this.primaryKi] = await KeyStore.keysGet(this.acctEmail, ['primary']);
+    [this.primaryKi] = await KeyStore.get(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     this.authInfo = await AcctStore.authInfo(this.acctEmail);
     const storage = await AcctStore.get(this.acctEmail, ['hide_message_password', 'outgoing_language']);
@@ -51,7 +51,7 @@ View.run(class SecurityView extends View {
   }
 
   private renderPassPhraseOptionsIfStoredPermanently = async () => {
-    const keys = await KeyStore.keysGet(this.acctEmail);
+    const keys = await KeyStore.get(this.acctEmail);
     if (await this.isAnyPassPhraseStoredPermanently(keys)) {
       $('.forget_passphrase').css('display', '');
       $('.action_forget_pp').click(this.setHandler(() => {

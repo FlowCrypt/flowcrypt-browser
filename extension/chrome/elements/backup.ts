@@ -43,7 +43,7 @@ View.run(class BackupView extends View {
     } else {
       $('.line.longids').css({ display: 'none' });
     }
-    [this.storedPrvWithMatchingLongid] = await KeyStore.keysGet(this.acctEmail, [longid]);
+    [this.storedPrvWithMatchingLongid] = await KeyStore.get(this.acctEmail, [longid]);
     if (this.storedPrvWithMatchingLongid) {
       $('.line .private_key_status').text('This Private Key is already imported.');
     } else {

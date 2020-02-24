@@ -133,7 +133,7 @@ View.run(class ExperimentalView extends View {
     text.push('global_storage: ' + JSON.stringify(globalStorage));
     text.push('account_storage: ' + JSON.stringify(acctStorage));
     text.push('');
-    const keyinfos = await KeyStore.keysGet(this.acctEmail);
+    const keyinfos = await KeyStore.get(this.acctEmail);
     for (const keyinfo of keyinfos) {
       text.push('');
       text.push('key_longid: ' + keyinfo.longid);

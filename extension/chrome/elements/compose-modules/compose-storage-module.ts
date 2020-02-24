@@ -35,7 +35,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   }
 
   public getKey = async (senderEmail: string): Promise<KeyInfo> => {
-    const keys = await KeyStore.keysGet(this.view.acctEmail);
+    const keys = await KeyStore.get(this.view.acctEmail);
     let result = await this.view.myPubkeyModule.chooseMyPublicKeyBySenderEmail(keys, senderEmail);
     if (!result) {
       this.view.errModule.debug(`ComposerStorage.getKey: could not find key based on senderEmail: ${senderEmail}, using primary instead`);
@@ -100,7 +100,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   public passphraseGet = async (senderKi?: KeyInfo) => {
     if (!senderKi) {
-      [senderKi] = await KeyStore.keysGet(this.view.acctEmail, ['primary']);
+      [senderKi] = await KeyStore.get(this.view.acctEmail, ['primary']);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(senderKi);
     }
     return await PassphraseStore.passphraseGet(this.view.acctEmail, senderKi.longid);

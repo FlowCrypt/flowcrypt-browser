@@ -10,7 +10,7 @@ import { AbstractStore } from './abstract-store.js';
  */
 export class KeyStore extends AbstractStore {
 
-  public static keysGet = async (acctEmail: string, longids?: string[]): Promise<KeyInfo[]> => {
+  public static get = async (acctEmail: string, longids?: string[]): Promise<KeyInfo[]> => {
     const stored = await AcctStore.get(acctEmail, ['keys']);
     const keys: KeyInfo[] = stored.keys || [];
     if (!longids) {
@@ -19,16 +19,16 @@ export class KeyStore extends AbstractStore {
     return keys.filter(ki => longids.includes(ki.longid) || (longids.includes('primary') && ki.primary));
   }
 
-  public static keysGetAllWithPp = async (acctEmail: string): Promise<KeyInfo[]> => {
-    const keys = await KeyStore.keysGet(acctEmail);
+  public static getAllWithPp = async (acctEmail: string): Promise<KeyInfo[]> => {
+    const keys = await KeyStore.get(acctEmail);
     for (const ki of keys) {
       ki.passphrase = await PassphraseStore.passphraseGet(acctEmail, ki.longid);
     }
     return keys;
   }
 
-  public static keysAdd = async (acctEmail: string, newKeyArmored: string) => {
-    const keyinfos = await KeyStore.keysGet(acctEmail);
+  public static add = async (acctEmail: string, newKeyArmored: string) => {
+    const keyinfos = await KeyStore.get(acctEmail);
     let updated = false;
     const prv = await PgpKey.read(newKeyArmored);
     if (!prv.isFullyEncrypted()) {
@@ -49,14 +49,14 @@ export class KeyStore extends AbstractStore {
     }
   }
 
-  public static keysRemove = async (acctEmail: string, removeLongid: string): Promise<void> => {
-    const privateKeys = await KeyStore.keysGet(acctEmail);
+  public static remove = async (acctEmail: string, removeLongid: string): Promise<void> => {
+    const privateKeys = await KeyStore.get(acctEmail);
     const filteredPrivateKeys = privateKeys.filter(ki => ki.longid !== removeLongid);
     await AcctStore.set(acctEmail, { keys: filteredPrivateKeys });
   }
 
-  public static getKeyLongidsThatCurrentlyHavePassPhraseInSession = async (acctEmail: string): Promise<string[]> => {
-    const keys = await KeyStore.keysGet(acctEmail);
+  public static getLongidsThatCurrentlyHavePassPhraseInSession = async (acctEmail: string): Promise<string[]> => {
+    const keys = await KeyStore.get(acctEmail);
     const result: string[] = [];
     for (const key of keys) {
       if (! await PassphraseStore.passphraseGet(acctEmail, key.longid, true) && await PassphraseStore.passphraseGet(acctEmail, key.longid, false)) {

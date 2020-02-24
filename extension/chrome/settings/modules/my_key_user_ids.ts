@@ -24,7 +24,7 @@ View.run(class MyKeyUserIdsView extends View {
   }
 
   public render = async () => {
-    [this.primaryKi] = await KeyStore.keysGet(this.acctEmail, [this.longid]);
+    [this.primaryKi] = await KeyStore.get(this.acctEmail, [this.longid]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     $('.action_show_public_key').attr('href', this.myKeyUrl);
     const prv = await PgpKey.read(this.primaryKi.private);

@@ -45,7 +45,7 @@ export class PgpBlockViewAttachmentsModule {
   }
 
   private decryptAndSaveAttToDownloads = async (encrypted: Att, renderIn: JQuery<HTMLElement>) => {
-    const kisWithPp = await KeyStore.keysGetAllWithPp(this.view.acctEmail);
+    const kisWithPp = await KeyStore.getAllWithPp(this.view.acctEmail);
     const decrypted = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData: encrypted.getData(), msgPwd: await this.view.pwdEncryptedMsgModule.getDecryptPwd() }); // eslint-disable-line max-len
     if (decrypted.success) {
       const att = new Att({ name: encrypted.name.replace(/\.(pgp|gpg)$/, ''), type: encrypted.type, data: decrypted.content });

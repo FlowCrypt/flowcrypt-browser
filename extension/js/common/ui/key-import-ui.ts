@@ -228,7 +228,7 @@ export class KeyImportUi {
 
   private rejectKnownIfSelected = async (acctEmail: string, k: OpenPGP.key.Key) => {
     if (this.rejectKnown) {
-      const keyinfos = await KeyStore.keysGet(acctEmail);
+      const keyinfos = await KeyStore.get(acctEmail);
       const privateKeysLongids = keyinfos.map(ki => ki.longid);
       if (privateKeysLongids.includes(String(await PgpKey.longid(k)))) {
         throw new UserAlert('This is one of your current keys, try another one.');

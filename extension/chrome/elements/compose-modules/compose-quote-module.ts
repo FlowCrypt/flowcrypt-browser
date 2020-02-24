@@ -123,7 +123,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
             let attMeta: { content: Buf, filename?: string } | undefined;
             if (block.type === 'encryptedAtt') {
               this.setQuoteLoaderProgress('decrypting...');
-              const result = await PgpMsg.decrypt({ kisWithPp: await KeyStore.keysGetAllWithPp(this.view.acctEmail), encryptedData: block.attMeta.data });
+              const result = await PgpMsg.decrypt({ kisWithPp: await KeyStore.getAllWithPp(this.view.acctEmail), encryptedData: block.attMeta.data });
               if (result.success) {
                 attMeta = { content: result.content, filename: result.filename };
               }
@@ -160,7 +160,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
   }
 
   private decryptMessage = async (encryptedData: Buf): Promise<string> => {
-    const decryptRes = await PgpMsg.decrypt({ kisWithPp: await KeyStore.keysGetAllWithPp(this.view.acctEmail), encryptedData });
+    const decryptRes = await PgpMsg.decrypt({ kisWithPp: await KeyStore.getAllWithPp(this.view.acctEmail), encryptedData });
     if (decryptRes.success) {
       return decryptRes.content.toUtfStr();
     } else if (decryptRes.error && decryptRes.error.type === 'need_passphrase') {

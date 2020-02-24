@@ -43,7 +43,7 @@ View.run(class MyKeyView extends View {
   public render = async () => {
     this.rules = await Rules.newInstance(this.acctEmail);
     this.keyserver = new Keyserver(this.rules);
-    [this.keyInfo] = await KeyStore.keysGet(this.acctEmail, [this.longid]);
+    [this.keyInfo] = await KeyStore.get(this.acctEmail, [this.longid]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
     $('.action_view_update').attr('href', this.myKeyUpdateUrl);

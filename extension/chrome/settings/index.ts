@@ -201,7 +201,7 @@ View.run(class SettingsView extends View {
         if (this.advanced) {
           $("#settings").toggleClass("advanced");
         }
-        const privateKeys = await KeyStore.keysGet(this.acctEmail);
+        const privateKeys = await KeyStore.get(this.acctEmail);
         if (privateKeys.length > 4) {
           $('.key_list').css('overflow-y', 'scroll');
         }
@@ -405,7 +405,7 @@ View.run(class SettingsView extends View {
     }));
     $('.action_remove_key').click(this.setHandler(async target => {
       // the UI below only gets rendered when account_email is available
-      await KeyStore.keysRemove(this.acctEmail!, $(target).attr('longid')!);
+      await KeyStore.remove(this.acctEmail!, $(target).attr('longid')!);
       await PassphraseStore.passphraseSave('local', this.acctEmail!, $(target).attr('longid')!, undefined);
       await PassphraseStore.passphraseSave('session', this.acctEmail!, $(target).attr('longid')!, undefined);
       this.reload(true);
