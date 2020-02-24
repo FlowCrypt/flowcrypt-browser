@@ -86,7 +86,7 @@ View.run(class AddPubkeyView extends View {
     try {
       const keyImportUi = new KeyImportUi({ checkEncryption: true });
       const normalized = await keyImportUi.checkPub(String($('.pubkey').val()));
-      await ContactStore.set(undefined, await ContactStore.obj({
+      await ContactStore.save(undefined, await ContactStore.obj({
         email: String($('select.email').val()),
         client: 'pgp',
         pubkey: normalized,

@@ -62,7 +62,7 @@ export class PgpBlockViewSignatureModule {
           render(`Fetched sender's pubkey ${keyDetails.ids[0].longid} but message was signed with a different key: ${signerLongid}, will not verify.`, () => undefined);
           return;
         } // ---> and longid it matches signature
-        await ContactStore.set(undefined, await ContactStore.obj({ email: senderEmail, pubkey, client: pgpClient })); // <= TOFU auto-import
+        await ContactStore.save(undefined, await ContactStore.obj({ email: senderEmail, pubkey, client: pgpClient })); // <= TOFU auto-import
         render('Fetched pubkey, click to verify', () => window.location.reload());
       } else { // don't know who sent it
         const { pubkey, pgpClient } = await this.view.keyserver.lookupLongid(signerLongid);
@@ -82,7 +82,7 @@ export class PgpBlockViewSignatureModule {
           return;
         }
         render(`Fetched matching pubkey ${signerLongid}. Click to load and use it.`, async () => {
-          await ContactStore.set(undefined, await ContactStore.obj({ email: pubkeyEmail, pubkey, client: pgpClient })); // TOFU manual import
+          await ContactStore.save(undefined, await ContactStore.obj({ email: pubkeyEmail, pubkey, client: pgpClient })); // TOFU manual import
           window.location.reload();
         });
       }

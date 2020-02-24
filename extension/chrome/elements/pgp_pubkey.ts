@@ -142,7 +142,7 @@ View.run(class PgpPubkeyView extends View {
           }));
         }
       }
-      await ContactStore.set(undefined, contacts);
+      await ContactStore.save(undefined, contacts);
       Xss.sanitizeReplace(addContactBtn, '<span class="good">added public keys</span>');
       BrowserMsg.send.addToContacts(this.parentTabId);
       $('.input_email').remove();
@@ -155,7 +155,7 @@ View.run(class PgpPubkeyView extends View {
           lastUse: Date.now(),
           lastSig: await PgpKey.lastSig(this.publicKeys![0])
         });
-        await ContactStore.set(undefined, contact);
+        await ContactStore.save(undefined, contact);
         BrowserMsg.send.addToContacts(this.parentTabId);
         Xss.sanitizeReplace(addContactBtn, `<span class="good">${Xss.escape(String($('.input_email').val()))} added</span>`);
         $('.input_email').remove();

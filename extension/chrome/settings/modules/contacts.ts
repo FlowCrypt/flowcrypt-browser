@@ -142,7 +142,7 @@ View.run(class ContactsView extends View {
     if (!armoredPubkey || !email) {
       await Ui.modal.warning('No public key entered');
     } else if (await PgpKey.longid(armoredPubkey)) {
-      await ContactStore.set(undefined, await ContactStore.obj({ email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now() }));
+      await ContactStore.save(undefined, await ContactStore.obj({ email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now() }));
       await this.loadAndRenderContactList();
     } else {
       await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let us know at human@flowcrypt.com if you need help.');
@@ -151,7 +151,7 @@ View.run(class ContactsView extends View {
   }
 
   private actionRemovePublicKey = async (rmPubkeyButton: HTMLElement) => {
-    await ContactStore.set(undefined, await ContactStore.obj({ email: $(rmPubkeyButton).closest('tr').attr('email')! }));
+    await ContactStore.save(undefined, await ContactStore.obj({ email: $(rmPubkeyButton).closest('tr').attr('email')! }));
     await this.loadAndRenderContactList();
   }
 

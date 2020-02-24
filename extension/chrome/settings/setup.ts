@@ -205,7 +205,7 @@ export class SetupView extends View {
         lastSig: await PgpKey.lastSig(prvs[0].toPublic())
       }));
     }
-    await ContactStore.set(undefined, myOwnEmailAddrsAsContacts);
+    await ContactStore.save(undefined, myOwnEmailAddrsAsContacts);
   }
 
   public shouldSubmitPubkey = (checkboxSelector: string) => {

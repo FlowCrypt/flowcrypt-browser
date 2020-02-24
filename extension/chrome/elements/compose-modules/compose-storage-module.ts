@@ -143,7 +143,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           lastCheck: Date.now(),
         });
         this.ksLookupsByEmail[email] = ksContact;
-        await ContactStore.set(undefined, ksContact);
+        await ContactStore.save(undefined, ksContact);
         return ksContact;
       } else {
         return PUBKEY_LOOKUP_RESULT_FAIL;

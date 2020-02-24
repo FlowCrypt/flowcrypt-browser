@@ -131,13 +131,16 @@ export class ContactStore extends AbstractStore {
     }
   }
 
-  public static set = async (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => {
+  /**
+   * Used to save a contact that does not yet exist
+   */
+  public static save = async (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => {
     if (!db) { // relay op through background process
-      await BrowserMsg.send.bg.await.db({ f: 'set', args: [contact] });
+      await BrowserMsg.send.bg.await.db({ f: 'save', args: [contact] });
       return;
     }
     if (Array.isArray(contact)) {
-      await Promise.all(contact.map(oneContact => ContactStore.set(db, oneContact)));
+      await Promise.all(contact.map(oneContact => ContactStore.save(db, oneContact)));
       return;
     }
     return await new Promise((resolve, reject) => {
@@ -149,6 +152,9 @@ export class ContactStore extends AbstractStore {
     });
   }
 
+  /**
+   * used to update existing contact
+   */
   public static update = async (db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> => {
     if (!db) { // relay op through background process
       await BrowserMsg.send.bg.await.db({ f: 'update', args: [email, update] });
@@ -160,7 +166,7 @@ export class ContactStore extends AbstractStore {
     }
     let [existing] = await ContactStore.get(db, [email]);
     if (!existing) { // updating a non-existing contact, insert it first
-      await ContactStore.set(db, await ContactStore.obj({ email }));
+      await ContactStore.save(db, await ContactStore.obj({ email }));
       [existing] = await ContactStore.get(db, [email]);
       if (!existing) {
         throw new Error('contact not found right after inserting it');
