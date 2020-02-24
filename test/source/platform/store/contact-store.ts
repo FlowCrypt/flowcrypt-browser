@@ -4,7 +4,7 @@ import { Contact } from '../../core/pgp-key.js';
 
 export class ContactStore {
 
-  public static dbContactGet = async (db: void, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
+  public static get = async (db: void, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
     return [];
   }
 
