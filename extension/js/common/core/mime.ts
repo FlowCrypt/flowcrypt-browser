@@ -117,15 +117,22 @@ export class Mime {
   }
 
   public static resemblesMsg = (msg: Uint8Array) => {
-    const utf8 = new Buf(msg.slice(0, 1000)).toUtfStr().toLowerCase();
-    const contentType = utf8.match(/content-type: +[0-9a-z\-\/]+/);
+    let headers = new Buf(msg.slice(0, 3000)).toUtfStr().toLowerCase();
+    headers = headers.replace(/\r\n/g, '\n').split('\n\n')[0];
+    if (!headers) {
+      return false;
+    }
+    const contentType = headers.match(/content-type: +[0-9a-z\-\/]+/);
     if (!contentType) {
       return false;
     }
-    if (utf8.match(/content-transfer-encoding: +[0-9a-z\-\/]+/) || utf8.match(/content-disposition: +[0-9a-z\-\/]+/) || utf8.match(/; boundary=/) || utf8.match(/; charset=/)) {
+    if (headers.match(/content-transfer-encoding: +[0-9a-z\-\/]+/) || headers.match(/content-disposition: +[0-9a-z\-\/]+/)) {
       return true;
     }
-    return Boolean(contentType.index === 0 && utf8.match(/boundary=/));
+    if (headers.includes('; boundary=/') || headers.includes('; charset=') || headers.includes('\nboundary=')) {
+      return true;
+    }
+    return Boolean(contentType.index === 0 && headers.match(/boundary=/));
   }
 
   public static decode = async (mimeMsg: Uint8Array): Promise<MimeContent> => {
