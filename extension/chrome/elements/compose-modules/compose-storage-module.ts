@@ -82,7 +82,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   }
 
   public collectAllAvailablePublicKeys = async (senderEmail: string, senderKi: KeyInfo, recipients: string[]): Promise<CollectPubkeysResult> => {
-    const contacts = await ContactStore.dbContactGet(undefined, recipients);
+    const contacts = await ContactStore.get(undefined, recipients);
     const armoredPubkeys = [{ pubkey: senderKi.public, email: senderEmail, isMine: true }];
     const emailsWithoutPubkeys = [];
     for (const i of contacts.keys()) {
@@ -107,7 +107,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   }
 
   public lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string, name: string | undefined): Promise<Contact | "fail"> => {
-    const [storedContact] = await ContactStore.dbContactGet(undefined, [email]);
+    const [storedContact] = await ContactStore.get(undefined, [email]);
     if (storedContact && storedContact.has_pgp && storedContact.pubkey) {
       // Potentially check if pubkey was updated - async. By the time user finishes composing, newer version would have been updated in db.
       // If sender didn't pull a particular pubkey for a long time and it has since expired, but there actually is a newer version on attester, this may unnecessarily show "bad pubkey",
@@ -134,7 +134,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           }
         }
         const client = lookupResult.pgpClient === 'flowcrypt' ? 'cryptup' : 'pgp'; // todo - clean up as "flowcrypt|pgp-other'. Already in storage, fixing involves migration
-        const ksContact = await ContactStore.dbContactObj({
+        const ksContact = await ContactStore.obj({
           email,
           name,
           pubkey: lookupResult.pubkey,
@@ -143,7 +143,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           lastCheck: Date.now(),
         });
         this.ksLookupsByEmail[email] = ksContact;
-        await ContactStore.dbContactSave(undefined, ksContact);
+        await ContactStore.set(undefined, ksContact);
         return ksContact;
       } else {
         return PUBKEY_LOOKUP_RESULT_FAIL;
@@ -164,7 +164,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       if (!contact.pubkey_last_sig) {
         const lastSig = await PgpKey.lastSig(await PgpKey.read(contact.pubkey));
         contact.pubkey_last_sig = lastSig;
-        await ContactStore.dbContactUpdate(undefined, contact.email, { pubkey_last_sig: lastSig });
+        await ContactStore.update(undefined, contact.email, { pubkey_last_sig: lastSig });
       }
       if (!contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7)) { // last update > 7 days ago, or never
         const { pubkey: fetchedPubkey } = await this.view.keyserver.lookupLongid(contact.longid);
@@ -172,12 +172,12 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           const fetchedLastSig = await PgpKey.lastSig(await PgpKey.read(fetchedPubkey));
           if (fetchedLastSig > contact.pubkey_last_sig) { // fetched pubkey has newer signature, update
             console.info(`Updating key ${contact.longid} for ${contact.email}: newer signature found: ${new Date(fetchedLastSig)} (old ${new Date(contact.pubkey_last_sig)})`);
-            await ContactStore.dbContactUpdate(undefined, contact.email, { pubkey: fetchedPubkey, pubkey_last_sig: fetchedLastSig, pubkey_last_check: Date.now() });
+            await ContactStore.update(undefined, contact.email, { pubkey: fetchedPubkey, pubkey_last_sig: fetchedLastSig, pubkey_last_check: Date.now() });
             return;
           }
         }
         // we checked for newer key and it did not result in updating the key, don't check again for another week
-        await ContactStore.dbContactUpdate(undefined, contact.email, { pubkey_last_check: Date.now() });
+        await ContactStore.update(undefined, contact.email, { pubkey_last_check: Date.now() });
       }
     } catch (e) {
       ApiErr.reportIfSignificant(e);

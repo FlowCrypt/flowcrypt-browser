@@ -65,7 +65,7 @@ View.run(class ContactsView extends View {
   // --- PRIVATE
 
   private loadAndRenderContactList = async () => {
-    this.contacts = await ContactStore.dbContactSearch(undefined, { has_pgp: true });
+    this.contacts = await ContactStore.search(undefined, { has_pgp: true });
     let lineActionsHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
       '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;';
     if (this.rules.getCustomKeyserver()) {
@@ -113,7 +113,7 @@ View.run(class ContactsView extends View {
   }
 
   private actionRenderViewPublicKeyHandler = async (viewPubkeyButton: HTMLElement) => {
-    const [contact] = await ContactStore.dbContactGet(undefined, [$(viewPubkeyButton).closest('tr').attr('email')!]); // defined above
+    const [contact] = await ContactStore.get(undefined, [$(viewPubkeyButton).closest('tr').attr('email')!]); // defined above
     $('.hide_when_rendering_subpage').css('display', 'none');
     Xss.sanitizeRender('h1', `${this.backBtn}${this.space}${contact!.email}`); // should exist - from list of contacts
     if (contact!.client === 'cryptup') {
@@ -142,7 +142,7 @@ View.run(class ContactsView extends View {
     if (!armoredPubkey || !email) {
       await Ui.modal.warning('No public key entered');
     } else if (await PgpKey.longid(armoredPubkey)) {
-      await ContactStore.dbContactSave(undefined, await ContactStore.dbContactObj({ email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now() }));
+      await ContactStore.set(undefined, await ContactStore.obj({ email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now() }));
       await this.loadAndRenderContactList();
     } else {
       await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let us know at human@flowcrypt.com if you need help.');
@@ -151,7 +151,7 @@ View.run(class ContactsView extends View {
   }
 
   private actionRemovePublicKey = async (rmPubkeyButton: HTMLElement) => {
-    await ContactStore.dbContactSave(undefined, await ContactStore.dbContactObj({ email: $(rmPubkeyButton).closest('tr').attr('email')! }));
+    await ContactStore.set(undefined, await ContactStore.obj({ email: $(rmPubkeyButton).closest('tr').attr('email')! }));
     await this.loadAndRenderContactList();
   }
 

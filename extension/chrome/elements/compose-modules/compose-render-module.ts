@@ -273,8 +273,8 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       }
       const keyUser = Str.parseEmail(key.users[0]);
       if (keyUser.email) {
-        if (!await ContactStore.dbContactGet(undefined, [keyUser.email])) {
-          await ContactStore.dbContactSave(undefined, await ContactStore.dbContactObj({
+        if (!await ContactStore.get(undefined, [keyUser.email])) {
+          await ContactStore.set(undefined, await ContactStore.obj({
             email: keyUser.email,
             name: keyUser.name,
             client: 'pgp',

@@ -196,7 +196,7 @@ export class SetupView extends View {
     const myOwnEmailAddrsAsContacts: Contact[] = [];
     const { full_name: name } = await AcctStore.get(this.acctEmail, ['full_name']);
     for (const email of this.submitKeyForAddrs) {
-      myOwnEmailAddrsAsContacts.push(await ContactStore.dbContactObj({
+      myOwnEmailAddrsAsContacts.push(await ContactStore.obj({
         email,
         name,
         client: 'cryptup',
@@ -205,7 +205,7 @@ export class SetupView extends View {
         lastSig: await PgpKey.lastSig(prvs[0].toPublic())
       }));
     }
-    await ContactStore.dbContactSave(undefined, myOwnEmailAddrsAsContacts);
+    await ContactStore.set(undefined, myOwnEmailAddrsAsContacts);
   }
 
   public shouldSubmitPubkey = (checkboxSelector: string) => {

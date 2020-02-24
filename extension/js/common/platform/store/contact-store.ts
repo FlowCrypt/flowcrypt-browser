@@ -77,9 +77,9 @@ export class ContactStore extends AbstractStore {
     });
   }
 
-  public static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig }: DbContactObjArg): Promise<Contact> => {
+  public static obj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig }: DbContactObjArg): Promise<Contact> => {
     if (typeof opgp === 'undefined') {
-      return await BrowserMsg.send.bg.await.db({ f: 'dbContactObj', args: [{ email, name, client, pubkey, pendingLookup, lastUse, lastSig, lastCheck }] }) as Contact;
+      return await BrowserMsg.send.bg.await.db({ f: 'obj', args: [{ email, name, client, pubkey, pendingLookup, lastUse, lastSig, lastCheck }] }) as Contact;
     } else {
       const validEmail = Str.parseEmail(email).email;
       if (!validEmail) {
@@ -131,13 +131,13 @@ export class ContactStore extends AbstractStore {
     }
   }
 
-  public static dbContactSave = async (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => {
+  public static set = async (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => {
     if (!db) { // relay op through background process
-      await BrowserMsg.send.bg.await.db({ f: 'dbContactSave', args: [contact] });
+      await BrowserMsg.send.bg.await.db({ f: 'set', args: [contact] });
       return;
     }
     if (Array.isArray(contact)) {
-      await Promise.all(contact.map(oneContact => ContactStore.dbContactSave(db, oneContact)));
+      await Promise.all(contact.map(oneContact => ContactStore.set(db, oneContact)));
       return;
     }
     return await new Promise((resolve, reject) => {
@@ -149,19 +149,19 @@ export class ContactStore extends AbstractStore {
     });
   }
 
-  public static dbContactUpdate = async (db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> => {
+  public static update = async (db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> => {
     if (!db) { // relay op through background process
-      await BrowserMsg.send.bg.await.db({ f: 'dbContactUpdate', args: [email, update] });
+      await BrowserMsg.send.bg.await.db({ f: 'update', args: [email, update] });
       return;
     }
     if (Array.isArray(email)) {
-      await Promise.all(email.map(oneEmail => ContactStore.dbContactUpdate(db, oneEmail, update)));
+      await Promise.all(email.map(oneEmail => ContactStore.update(db, oneEmail, update)));
       return;
     }
-    let [existing] = await ContactStore.dbContactGet(db, [email]);
+    let [existing] = await ContactStore.get(db, [email]);
     if (!existing) { // updating a non-existing contact, insert it first
-      await ContactStore.dbContactSave(db, await ContactStore.dbContactObj({ email }));
-      [existing] = await ContactStore.dbContactGet(db, [email]);
+      await ContactStore.set(db, await ContactStore.obj({ email }));
+      [existing] = await ContactStore.get(db, [email]);
       if (!existing) {
         throw new Error('contact not found right after inserting it');
       }
@@ -189,9 +189,9 @@ export class ContactStore extends AbstractStore {
     });
   }
 
-  public static dbContactGet = async (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
+  public static get = async (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
     if (!db) { // relay op through background process
-      return await BrowserMsg.send.bg.await.db({ f: 'dbContactGet', args: [emailOrLongid] }) as (Contact | undefined)[];
+      return await BrowserMsg.send.bg.await.db({ f: 'get', args: [emailOrLongid] }) as (Contact | undefined)[];
     }
     if (emailOrLongid.length === 1) {
       // contacts imported before August 2019 may have only primary longid recorded, in index_longid (string)
@@ -211,30 +211,30 @@ export class ContactStore extends AbstractStore {
     } else {
       const results: (Contact | undefined)[] = [];
       for (const singleEmailOrLongid of emailOrLongid) {
-        const [contact] = await ContactStore.dbContactGet(db, [singleEmailOrLongid]);
+        const [contact] = await ContactStore.get(db, [singleEmailOrLongid]);
         results.push(contact);
       }
       return results;
     }
   }
 
-  public static dbContactSearch = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<Contact[]> => {
+  public static search = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<Contact[]> => {
     if (!db) { // relay op through background process
-      return await BrowserMsg.send.bg.await.db({ f: 'dbContactSearch', args: [query] }) as Contact[];
+      return await BrowserMsg.send.bg.await.db({ f: 'search', args: [query] }) as Contact[];
     }
     for (const key of Object.keys(query)) {
       if (!ContactStore.dbQueryKeys.includes(key)) {
-        throw new Error('dbContactSearch: unknown key: ' + key);
+        throw new Error('ContactStore.search: unknown key: ' + key);
       }
     }
     query.substring = ContactStore.normalizeString(query.substring || '');
     if (typeof query.has_pgp === 'undefined' && query.substring) {
-      const resultsWithPgp = await ContactStore.dbContactSearch(db, { substring: query.substring, limit: query.limit, has_pgp: true });
+      const resultsWithPgp = await ContactStore.search(db, { substring: query.substring, limit: query.limit, has_pgp: true });
       if (query.limit && resultsWithPgp.length === query.limit) {
         return resultsWithPgp;
       } else {
         const limit = query.limit ? query.limit - resultsWithPgp.length : undefined;
-        const resultsWithoutPgp = await ContactStore.dbContactSearch(db, { substring: query.substring, limit, has_pgp: false });
+        const resultsWithoutPgp = await ContactStore.search(db, { substring: query.substring, limit, has_pgp: false });
         return resultsWithPgp.concat(resultsWithoutPgp);
       }
     }

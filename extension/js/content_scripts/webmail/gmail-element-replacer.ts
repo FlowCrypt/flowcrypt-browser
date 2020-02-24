@@ -561,7 +561,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               }
               if (typeof cache === 'undefined') {
                 try {
-                  const [contact] = await ContactStore.dbContactGet(undefined, [email]);
+                  const [contact] = await ContactStore.get(undefined, [email]);
                   if (contact && contact.pubkey) {
                     this.recipientHasPgpCache[email] = true;
                   } else if ((await this.keyserver.lookupEmail(email)).pubkey) {

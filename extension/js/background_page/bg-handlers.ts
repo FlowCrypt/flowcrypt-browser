@@ -26,7 +26,7 @@ export class BgHandlers {
       return await new Promise(resolve => undefined); // never resolve, error was already shown
     }
     const dbFunc = (ContactStore as any)[request.f] as (db: IDBDatabase, ...args: any[]) => Promise<Bm.Res.Db>; // due to https://github.com/Microsoft/TypeScript/issues/6480
-    if (request.f === 'dbContactObj') {
+    if (request.f === 'obj') {
       return await dbFunc(request.args[0] as any); // db not needed, it goes through background because openpgp.js may not be available in the frame
     }
     return await dbFunc(db, ...request.args);

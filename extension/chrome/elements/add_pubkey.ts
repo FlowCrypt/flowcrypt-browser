@@ -36,7 +36,7 @@ View.run(class AddPubkeyView extends View {
     for (const missingPubkeyEmail of this.missingPubkeyEmails) {
       Xss.sanitizeAppend('select.email', `<option value="${Xss.escape(missingPubkeyEmail)}">${Xss.escape(missingPubkeyEmail)}</option>`);
     }
-    for (const contact of await ContactStore.dbContactSearch(undefined, { has_pgp: true })) {
+    for (const contact of await ContactStore.search(undefined, { has_pgp: true })) {
       Xss.sanitizeAppend('select.copy_from_email', `<option value="${Xss.escape(contact.email)}">${Xss.escape(contact.email)}</option>`);
     }
     this.fetchKeyUi.handleOnPaste($('.pubkey'));
@@ -70,7 +70,7 @@ View.run(class AddPubkeyView extends View {
 
   private copyFromEmailHandler = async (fromSelect: HTMLElement) => {
     if ($(fromSelect).val()) {
-      const [contact] = await ContactStore.dbContactGet(undefined, [String($(fromSelect).val())]);
+      const [contact] = await ContactStore.get(undefined, [String($(fromSelect).val())]);
       if (contact?.pubkey) {
         $('.pubkey').val(contact.pubkey).prop('disabled', true);
       } else {
@@ -86,7 +86,7 @@ View.run(class AddPubkeyView extends View {
     try {
       const keyImportUi = new KeyImportUi({ checkEncryption: true });
       const normalized = await keyImportUi.checkPub(String($('.pubkey').val()));
-      await ContactStore.dbContactSave(undefined, await ContactStore.dbContactObj({
+      await ContactStore.set(undefined, await ContactStore.obj({
         email: String($('select.email').val()),
         client: 'pgp',
         pubkey: normalized,

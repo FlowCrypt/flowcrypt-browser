@@ -47,7 +47,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
       return;
     }
     (async () => {
-      const contacts = await ContactStore.dbContactGet(undefined, this.view.recipientsModule.getRecipients().map(r => r.email));
+      const contacts = await ContactStore.get(undefined, this.view.recipientsModule.getRecipients().map(r => r.email));
       for (const contact of contacts) {
         if (contact?.has_pgp && contact.client !== 'cryptup') {
           // new message, and my key is not uploaded where the recipient would look for it

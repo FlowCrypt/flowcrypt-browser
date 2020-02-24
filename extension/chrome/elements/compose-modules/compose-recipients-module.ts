@@ -392,7 +392,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.addedPubkeyDbLookupInterval = Catch.setHandledInterval(async () => {
       const recipientsHasPgp: RecipientElement[] = [];
       for (const recipient of noPgpRecipients) {
-        const [contact] = await ContactStore.dbContactGet(undefined, [recipient.email]);
+        const [contact] = await ContactStore.get(undefined, [recipient.email]);
         if (contact && contact.has_pgp) {
           $(recipient.element).removeClass('no_pgp').find('i').remove();
           clearInterval(this.addedPubkeyDbLookupInterval);
@@ -488,7 +488,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       if (substring) {
         const query = { substring };
         this.view.errModule.debug(`searchContacts substring: ${substring}`);
-        const contacts = await ContactStore.dbContactSearch(undefined, query);
+        const contacts = await ContactStore.search(undefined, query);
         this.view.errModule.debug(`searchContacts db count: ${contacts.length}`);
         const canLoadContactsFromAPI = this.canReadEmails || this.canSearchContacts;
         if (dbOnly || contacts.length >= this.MAX_CONTACTS_LENGTH || !canLoadContactsFromAPI) {
@@ -504,7 +504,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
             const contactsGmail = await Google.contactsGet(this.view.acctEmail, substring, undefined, this.MAX_CONTACTS_LENGTH);
             if (contactsGmail) {
               const newContacts = contactsGmail.filter(cGmail => !contacts.find(c => c.email === cGmail.email));
-              const mappedContactsFromGmail = await Promise.all(newContacts.map(({ email, name }) => ContactStore.dbContactObj({ email, name })));
+              const mappedContactsFromGmail = await Promise.all(newContacts.map(({ email, name }) => ContactStore.obj({ email, name })));
               await this.renderApiLoadedContactsAndtoDb(input, mappedContactsFromGmail);
             }
           } else if (this.canReadEmails) {
@@ -674,7 +674,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (contacts.length) {
       const toLookup: Contact[] = [];
       for (const contact of contacts) {
-        const [storedContact] = await ContactStore.dbContactGet(undefined, [contact.email]);
+        const [storedContact] = await ContactStore.get(undefined, [contact.email]);
         if (storedContact) {
           const toUpdate: ContactUpdate = {};
           if (!storedContact.name && contact.name) {
@@ -684,7 +684,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
             toUpdate.searchable = contact.searchable;
           }
           if (Object.keys(toUpdate).length) {
-            await ContactStore.dbContactUpdate(undefined, contact.email, toUpdate);
+            await ContactStore.update(undefined, contact.email, toUpdate);
           }
         } else if (!this.failedLookupEmails.includes(contact.email)) {
           toLookup.push(contact);
@@ -727,7 +727,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private checkReciepientsKeys = async () => {
     for (const recipientEl of this.addedRecipients.filter(r => r.element.className.includes('no_pgp'))) {
       const email = $(recipientEl).text().trim();
-      const [dbContact] = await ContactStore.dbContactGet(undefined, [email]);
+      const [dbContact] = await ContactStore.get(undefined, [email]);
       if (dbContact) {
         recipientEl.element.classList.remove('no_pgp');
         await this.renderPubkeyResult(recipientEl, dbContact);

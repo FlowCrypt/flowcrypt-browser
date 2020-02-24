@@ -195,7 +195,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         if (sendAs && sendAs[email]?.name) {
           name = sendAs[email].name!;
         } else {
-          const [contact] = await ContactStore.dbContactGet(undefined, [email]);
+          const [contact] = await ContactStore.get(undefined, [email]);
           if (contact?.name) {
             name = contact.name;
           }
