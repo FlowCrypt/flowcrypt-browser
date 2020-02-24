@@ -3,7 +3,7 @@
 'use strict';
 
 import { Str } from './core/common.js';
-import { Store } from './platform/store.js';
+import { AcctStore } from './platform/store/acct-store.js';
 
 type DomainRules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' |
   'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' |
@@ -23,7 +23,7 @@ export class Rules {
     if (!email) {
       throw new Error(`Not a valid email:${acctEmail}`);
     }
-    const storage = await Store.getAcct(email, ['rules']);
+    const storage = await AcctStore.get(email, ['rules']);
     return new Rules(storage.rules || Rules.default);
   }
 

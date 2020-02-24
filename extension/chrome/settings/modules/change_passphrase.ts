@@ -8,11 +8,12 @@ import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
+import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
 View.run(class ChangePassPhraseView extends View {
 
@@ -32,16 +33,16 @@ View.run(class ChangePassPhraseView extends View {
 
   public render = async () => {
     await initPassphraseToggle(['current_pass_phrase', 'new_pass_phrase', 'new_pass_phrase_confirm']);
-    const privateKeys = await Store.keysGet(this.acctEmail);
+    const privateKeys = await KeyStore.get(this.acctEmail);
     if (privateKeys.length > 1) {
       $('#step_0_enter_current .sentence').text('Enter the current passphrase for your primary key');
       $('#step_0_enter_current #current_pass_phrase').attr('placeholder', 'Current primary key pass phrase');
       $('#step_1_enter_new #new_pass_phrase').attr('placeholder', 'Enter a new primary key pass phrase');
     }
-    const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
+    const [primaryKi] = await KeyStore.get(this.acctEmail, ['primary']);
     this.primaryKi = primaryKi;
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
-    const storedOrSessionPp = await Store.passphraseGet(this.acctEmail, this.primaryKi.longid);
+    const storedOrSessionPp = await PassphraseStore.get(this.acctEmail, this.primaryKi.longid);
     const key = await PgpKey.read(this.primaryKi.private);
     this.primaryPrv = key;
     if (this.primaryPrv.isFullyDecrypted() || (storedOrSessionPp && await PgpKey.decrypt(this.primaryPrv, storedOrSessionPp))) {
@@ -107,10 +108,10 @@ View.run(class ChangePassPhraseView extends View {
       await Ui.modal.error(`There was an unexpected error. Please ask for help at human@flowcrypt.com:\n\n${e instanceof Error ? e.stack : String(e)}`);
       return;
     }
-    await Store.keysAdd(this.acctEmail, this.primaryPrv!.armor());
-    const persistentlyStoredPp = await Store.passphraseGet(this.acctEmail, this.primaryKi!.longid, true);
-    await Store.passphraseSave('local', this.acctEmail, this.primaryKi!.longid, typeof persistentlyStoredPp === 'undefined' ? undefined : newPp);
-    await Store.passphraseSave('session', this.acctEmail, this.primaryKi!.longid, typeof persistentlyStoredPp === 'undefined' ? newPp : undefined);
+    await KeyStore.add(this.acctEmail, this.primaryPrv!.armor());
+    const persistentlyStoredPp = await PassphraseStore.get(this.acctEmail, this.primaryKi!.longid, true);
+    await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.longid, typeof persistentlyStoredPp === 'undefined' ? undefined : newPp);
+    await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.longid, typeof persistentlyStoredPp === 'undefined' ? newPp : undefined);
     await Ui.modal.info('Now that you changed your pass phrase, you should back up your key. New backup will be protected with new passphrase.');
     Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/backup.htm', '&action=backup_manual');
   }

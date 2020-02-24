@@ -7,10 +7,11 @@ import { SetupOptions, SetupView } from '../setup.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
 export class SetupRecoverKeyModule {
 
@@ -65,7 +66,7 @@ export class SetupRecoverKeyModule {
         is_newly_created_key: false,
       };
       await this.view.saveKeys(newlyMatchingKeys, options);
-      const { setup_done } = await Store.getAcct(this.view.acctEmail, ['setup_done']);
+      const { setup_done } = await AcctStore.get(this.view.acctEmail, ['setup_done']);
       if (!setup_done) { // normal situation - fresh setup
         await this.view.preFinalizeSetup(options);
         await this.view.finalizeSetup(options);
@@ -82,7 +83,7 @@ export class SetupRecoverKeyModule {
   public actionRecoverRemainingKeysHandler = async () => {
     this.view.setupRender.displayBlock('step_2_recovery');
     $('#recovery_pasword').val('');
-    const nImported = (await Store.keysGet(this.view.acctEmail)).length;
+    const nImported = (await KeyStore.get(this.view.acctEmail)).length;
     const nFetched = this.view.fetchedKeyBackupsUniqueLongids.length;
     const txtKeysTeft = (nFetched - nImported > 1) ? `are ${nFetched - nImported} backups` : 'is one backup';
     if (this.view.action !== 'add_key') {
@@ -118,7 +119,7 @@ export class SetupRecoverKeyModule {
       return;
     }
     if (this.view.fetchedKeyBackupsUniqueLongids.length) {
-      const storedKeys = await Store.keysGet(this.view.acctEmail);
+      const storedKeys = await KeyStore.get(this.view.acctEmail);
       this.view.importedKeysUniqueLongids = storedKeys.map(ki => ki.longid);
       await this.view.setupRender.renderSetupDone();
       $('#step_4_more_to_recover .action_recover_remaining').click();

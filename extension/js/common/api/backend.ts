@@ -12,7 +12,7 @@ import { BACKEND_API_HOST } from '../core/const.js';
 import { BackendAuthErr } from './error/api-error-types.js';
 import { Catch } from '../platform/catch.js';
 import { DomainRules } from '../rules.js';
-import { Store } from '../platform/store.js';
+import { AcctStore } from '../platform/store/acct-store.js';
 
 type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
 
@@ -77,7 +77,7 @@ export class Backend extends Api {
   //   if (response.registered !== true) {
   //     throw new Error('account_login did not result in successful registration');
   //   }
-  //   await Store.setAcct(account, { uuid, subscription: response.subscription });
+  //   await AcctStore.set(account, { uuid, subscription: response.subscription });
   //   return { verified: response.verified === true, subscription: response.subscription };
   // }
 
@@ -93,14 +93,14 @@ export class Backend extends Api {
     if (response.verified !== true) {
       throw new Error('account_login with id_token did not result in successful verificaion');
     }
-    await Store.setAcct(acctEmail, { uuid });
+    await AcctStore.set(acctEmail, { uuid });
   }
 
   public static getSubscriptionWithoutLogin = async (acctEmail: string) => {
     const r = await Backend.request<BackendRes.FcAccountCheck>('account/check', {
       emails: [acctEmail],
     });
-    await Store.setAcct(acctEmail, { subscription: r.subscription || undefined });
+    await AcctStore.set(acctEmail, { subscription: r.subscription || undefined });
     return r;
   }
 
@@ -115,7 +115,7 @@ export class Backend extends Api {
   public static accountGetAndUpdateLocalStore = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcAccountGet> => {
     Backend.throwIfMissingUuid(fcAuth);
     const r = await Backend.request<BackendRes.FcAccountGet>('account/get', fcAuth);
-    await Store.setAcct(fcAuth.account, { rules: r.domain_org_rules, subscription: r.subscription });
+    await AcctStore.set(fcAuth.account, { rules: r.domain_org_rules, subscription: r.subscription });
     return r;
   }
 
@@ -127,7 +127,7 @@ export class Backend extends Api {
       source: paymentSourceToken || null, // tslint:disable-line:no-null-keyword
       product,
     });
-    await Store.setAcct(fcAuth.account, { subscription: response.subscription });
+    await AcctStore.set(fcAuth.account, { subscription: response.subscription });
     return response;
   }
 

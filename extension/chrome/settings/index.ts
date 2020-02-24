@@ -3,11 +3,9 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
-import { EmailProvider, Store } from '../../js/common/platform/store.js';
 import { JQS, Ui } from '../../js/common/browser/ui.js';
 import { KeyInfo, PgpKey } from '../../js/common/core/pgp-key.js';
 import { Str, Url, UrlParams } from '../../js/common/core/common.js';
-
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Backend } from '../../js/common/api/backend.js';
@@ -22,6 +20,10 @@ import { VERSION } from '../../js/common/core/const.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
+import { AcctStore, EmailProvider } from '../../js/common/platform/store/acct-store.js';
+import { KeyStore } from '../../js/common/platform/store/key-store.js';
+import { GlobalStore } from '../../js/common/platform/store/global-store.js';
+import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 
 View.run(class SettingsView extends View {
 
@@ -179,7 +181,7 @@ View.run(class SettingsView extends View {
       await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId);
     } else if (this.acctEmail) {
       $('.email-address').text(this.acctEmail);
-      const storage = await Store.getAcct(this.acctEmail, ['setup_done', 'email_provider', 'picture']);
+      const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider', 'picture']);
       if (storage.setup_done) {
         const rules = await Rules.newInstance(this.acctEmail);
         if (!rules.canBackupKeys()) {
@@ -199,7 +201,7 @@ View.run(class SettingsView extends View {
         if (this.advanced) {
           $("#settings").toggleClass("advanced");
         }
-        const privateKeys = await Store.keysGet(this.acctEmail);
+        const privateKeys = await KeyStore.get(this.acctEmail);
         if (privateKeys.length > 4) {
           $('.key_list').css('overflow-y', 'scroll');
         }
@@ -209,7 +211,7 @@ View.run(class SettingsView extends View {
         $('.hide_if_setup_not_done').css('display', 'none');
       }
     } else {
-      const acctEmails = await Store.acctEmailsGet();
+      const acctEmails = await GlobalStore.acctEmailsGet();
       if (acctEmails && acctEmails[0]) {
         window.location.href = Url.create('index.htm', { acctEmail: acctEmails[0] });
       } else {
@@ -229,11 +231,11 @@ View.run(class SettingsView extends View {
     if (!this.acctEmail) {
       return;
     }
-    const scopes = await Store.getScopes(this.acctEmail);
+    const scopes = await AcctStore.getScopes(this.acctEmail);
     if (!(scopes.read || scopes.modify) && emailProvider === 'gmail') {
       $('.auth_denied_warning').removeClass('hidden');
     }
-    const globalStorage = await Store.getGlobal(['install_mobile_app_notification_dismissed']);
+    const globalStorage = await GlobalStore.get(['install_mobile_app_notification_dismissed']);
     if (!globalStorage.install_mobile_app_notification_dismissed && rules.canBackupKeys() && rules.canCreateKeys()) {
       // only show this notification if user is allowed to:
       //   - backup keys: when not allowed, company typically has other forms of backup
@@ -241,7 +243,7 @@ View.run(class SettingsView extends View {
       $('.install_app_notification').removeClass('hidden');
     }
     $('.dismiss_install_app_notification').click(this.setHandler(async () => {
-      await Store.setGlobal({ install_mobile_app_notification_dismissed: true });
+      await GlobalStore.set({ install_mobile_app_notification_dismissed: true });
       $('.install_app_notification').remove();
     }));
   }
@@ -253,7 +255,7 @@ View.run(class SettingsView extends View {
     } catch (e) {
       Catch.reportErr(e);
     }
-    const authInfo = await Store.authInfo(this.acctEmail!);
+    const authInfo = await AcctStore.authInfo(this.acctEmail!);
     if (authInfo.uuid) { // have auth email set
       try {
         const response = await Backend.accountGetAndUpdateLocalStore(authInfo);
@@ -355,7 +357,7 @@ View.run(class SettingsView extends View {
         liveness = 'offline';
       }
     }
-    const subscription = await Store.subscription(acctEmail);
+    const subscription = await AcctStore.getSubscription(acctEmail);
     $('#status-row #status_subscription').text(`s:${liveness}:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
     if (subscription.active) {
       const showAcct = () => Settings.renderSubPage(acctEmail, this.tabId, '/chrome/settings/modules/account.htm');
@@ -403,9 +405,9 @@ View.run(class SettingsView extends View {
     }));
     $('.action_remove_key').click(this.setHandler(async target => {
       // the UI below only gets rendered when account_email is available
-      await Store.keysRemove(this.acctEmail!, $(target).attr('longid')!);
-      await Store.passphraseSave('local', this.acctEmail!, $(target).attr('longid')!, undefined);
-      await Store.passphraseSave('session', this.acctEmail!, $(target).attr('longid')!, undefined);
+      await KeyStore.remove(this.acctEmail!, $(target).attr('longid')!);
+      await PassphraseStore.set('local', this.acctEmail!, $(target).attr('longid')!, undefined);
+      await PassphraseStore.set('session', this.acctEmail!, $(target).attr('longid')!, undefined);
       this.reload(true);
     }));
   }

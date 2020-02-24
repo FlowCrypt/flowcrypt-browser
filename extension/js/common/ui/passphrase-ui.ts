@@ -4,12 +4,12 @@
 'use strict';
 
 import { Catch } from '../platform/catch.js';
-import { Store } from '../platform/store.js';
 import { Ui } from '../browser/ui.js';
 import { Xss } from '../platform/xss.js';
+import { GlobalStore } from '../platform/store/global-store.js';
 
 export const shouldPassPhraseBeHidden = async () => {
-  const storage = await Store.getGlobal(['hide_pass_phrases']);
+  const storage = await GlobalStore.get(['hide_pass_phrases']);
   return !!storage.hide_pass_phrases;
 };
 
@@ -41,11 +41,11 @@ export const initPassphraseToggle = async (passphraseInputIds: string[], forceIn
       if (passphraseInput.attr('type') === 'password') {
         $(`#${id}`).attr('type', 'text');
         Xss.sanitizeRender(target, buttonHide);
-        Store.setGlobal({ hide_pass_phrases: false }).catch(Catch.reportErr);
+        GlobalStore.set({ hide_pass_phrases: false }).catch(Catch.reportErr);
       } else {
         $(`#${id}`).attr('type', 'password');
         Xss.sanitizeRender(target, buttonShow);
-        Store.setGlobal({ hide_pass_phrases: true }).catch(Catch.reportErr);
+        GlobalStore.set({ hide_pass_phrases: true }).catch(Catch.reportErr);
       }
     })).click().click(); // double-click the toggle to prevent browser from prefilling values
   }

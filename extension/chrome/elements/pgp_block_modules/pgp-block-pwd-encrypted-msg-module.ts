@@ -3,7 +3,6 @@
 'use strict';
 
 import { Backend, BackendRes } from '../../../js/common/api/backend.js';
-
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BackendAuthErr } from '../../../js/common/api/error/api-error-types.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
@@ -11,10 +10,11 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpBlockView } from '../pgp_block';
 import { Settings } from '../../../js/common/settings.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
 
 export class PgpBlockViewPwdEncryptedMsgModule {
 
@@ -39,7 +39,7 @@ export class PgpBlockViewPwdEncryptedMsgModule {
   }
 
   public recoverStoredAdminCodes = async () => {
-    const storage = await Store.getGlobal(['admin_codes']);
+    const storage = await GlobalStore.get(['admin_codes']);
     if (this.view.short && storage.admin_codes && storage.admin_codes[this.view.short]?.codes) {
       this.adminCodes = storage.admin_codes[this.view.short].codes;
     }
@@ -47,7 +47,7 @@ export class PgpBlockViewPwdEncryptedMsgModule {
 
   public renderMsgExpirationRenewOptions = async (target: HTMLElement) => {
     const parent = $(target).parent();
-    const subscription = await Store.subscription(this.view.acctEmail);
+    const subscription = await AcctStore.getSubscription(this.view.acctEmail);
     if (subscription.level && subscription.active) {
       const btns = `<a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a>`;
       Xss.sanitizeRender(parent, `<div style="font-family: monospace;">Extend message expiration: ${btns}</div>`);
@@ -111,7 +111,7 @@ export class PgpBlockViewPwdEncryptedMsgModule {
     const nDays = Number($(self).attr('href')!.replace('#', ''));
     Xss.sanitizeRender($(self).parent(), `Updating..${Ui.spinner('green')}`);
     try {
-      const fcAuth = await Store.authInfo(this.view.acctEmail);
+      const fcAuth = await AcctStore.authInfo(this.view.acctEmail);
       if (!fcAuth) {
         throw new BackendAuthErr();
       }

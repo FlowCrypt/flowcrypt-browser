@@ -8,13 +8,13 @@ import { Catch } from '../../js/common/platform/catch.js';
 import { Contact } from '../../js/common/core/pgp-key.js';
 import { PgpArmor } from '../../js/common/core/pgp-armor.js';
 import { PgpKey } from '../../js/common/core/pgp-key.js';
-import { Store } from '../../js/common/platform/store.js';
 import { Str } from '../../js/common/core/common.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { opgp } from '../../js/common/core/pgp.js';
+import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 
 // todo - this should use KeyImportUI for consistency.
 View.run(class PgpPubkeyView extends View {
@@ -113,7 +113,7 @@ View.run(class PgpPubkeyView extends View {
     if (this.publicKeys!.length > 1) {
       $('.action_add_contact').text('import ' + this.publicKeys!.length + ' public keys');
     } else {
-      const [contact] = await Store.dbContactGet(undefined, [String($('.input_email').val())]);
+      const [contact] = await ContactStore.get(undefined, [String($('.input_email').val())]);
       $('.action_add_contact')
         .text(contact?.has_pgp ? 'update key' : `import ${this.isExpired ? 'expired ' : ''}key`)
         .css('background-color', this.isExpired ? '#989898' : '');
@@ -133,7 +133,7 @@ View.run(class PgpPubkeyView extends View {
       for (const pubkey of this.publicKeys!) {
         const email = Str.parseEmail(pubkey.users[0].userId?.userid || '').email;
         if (email) {
-          contacts.push(await Store.dbContactObj({
+          contacts.push(await ContactStore.obj({
             email,
             client: 'pgp',
             pubkey: pubkey.armor(),
@@ -142,20 +142,20 @@ View.run(class PgpPubkeyView extends View {
           }));
         }
       }
-      await Store.dbContactSave(undefined, contacts);
+      await ContactStore.save(undefined, contacts);
       Xss.sanitizeReplace(addContactBtn, '<span class="good">added public keys</span>');
       BrowserMsg.send.addToContacts(this.parentTabId);
       $('.input_email').remove();
     } else if (this.publicKeys!.length) {
       if (Str.isEmailValid(String($('.input_email').val()))) {
-        const contact = await Store.dbContactObj({
+        const contact = await ContactStore.obj({
           email: String($('.input_email').val()),
           client: 'pgp',
           pubkey: this.publicKeys![0].armor(),
           lastUse: Date.now(),
           lastSig: await PgpKey.lastSig(this.publicKeys![0])
         });
-        await Store.dbContactSave(undefined, contact);
+        await ContactStore.save(undefined, contact);
         BrowserMsg.send.addToContacts(this.parentTabId);
         Xss.sanitizeReplace(addContactBtn, `<span class="good">${Xss.escape(String($('.input_email').val()))} added</span>`);
         $('.input_email').remove();

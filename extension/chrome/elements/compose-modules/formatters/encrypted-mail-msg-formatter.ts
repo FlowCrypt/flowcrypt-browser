@@ -7,7 +7,6 @@ import { BaseMailFormatter } from './base-mail-formatter.js';
 import { ComposerResetBtnTrigger } from '../compose-err-module.js';
 import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { NewMsgData, PubkeyResult } from '../compose-types.js';
-import { Store } from '../../../../js/common/platform/store.js';
 import { Str, Value } from '../../../../js/common/core/common.js';
 import { ApiErr } from '../../../../js/common/api/error/api-error.js';
 import { Att } from '../../../../js/common/core/att.js';
@@ -21,11 +20,13 @@ import { Settings } from '../../../../js/common/settings.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 import { opgp } from '../../../../js/common/core/pgp.js';
+import { ContactStore } from '../../../../js/common/platform/store/contact-store.js';
+import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
   public sendableMsg = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> => {
-    await Store.dbContactUpdate(undefined, Array.prototype.concat.apply([], Object.values(newMsg.recipients)), { last_use: Date.now() });
+    await ContactStore.update(undefined, Array.prototype.concat.apply([], Object.values(newMsg.recipients)), { last_use: Date.now() });
     if (newMsg.pwd && !this.isDraft) { // password-protected message, temporarily uploaded (encrypted) to FlowCrypt servers, to be served to recipient through web
       const short = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
       newMsg.pwd = undefined;
@@ -39,7 +40,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
   private prepareAndUploadPwdEncryptedMsg = async (newMsg: NewMsgData): Promise<string> => {
     // PGP/MIME + included attachments (encrypted for password only)
-    const authInfo = await Store.authInfo(this.acctEmail);
+    const authInfo = await AcctStore.authInfo(this.acctEmail);
     const msgBodyWithReplyToken = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(authInfo, newMsg);
     const pgpMimeWithAtts = await Mime.encode(msgBodyWithReplyToken, { Subject: newMsg.subject }, await this.view.attsModule.attach.collectAtts());
     const pwdEncryptedWithAtts = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAtts), newMsg.pwd, []); // encrypted only for pwd, not signed
@@ -163,7 +164,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   }
 
   private formatPwdEncryptedMsgBodyLink = async (short: string): Promise<SendableMsgBody> => {
-    const storage = await Store.getAcct(this.acctEmail, ['outgoing_language']);
+    const storage = await AcctStore.get(this.acctEmail, ['outgoing_language']);
     const lang = storage.outgoing_language || 'EN';
     const msgUrl = Backend.url('decrypt', short);
     const aStyle = `padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;`;

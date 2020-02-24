@@ -6,7 +6,6 @@ import { Dict, Str } from '../../common/core/common.js';
 import { FactoryReplyParams, WebmailVariantString, XssSafeFactory } from '../../common/xss-safe-factory.js';
 import { GmailParser, GmailRes } from '../../common/api/email-provider/gmail/gmail-parser.js';
 import { IntervalFunction, WebmailElementReplacer } from './setup-webmail-content-script.js';
-import { SendAsAlias, Store } from '../../common/platform/store.js';
 import { AjaxErr } from '../../common/api/error/api-error-types.js';
 import { ApiErr } from '../../common/api/error/api-error.js';
 import { Att } from '../../common/core/att.js';
@@ -22,6 +21,8 @@ import { Ui } from '../../common/browser/ui.js';
 import { WebmailCommon } from "../../common/webmail.js";
 import { Xss } from '../../common/platform/xss.js';
 import { Rules } from '../../common/rules.js';
+import { SendAsAlias, AcctStore } from '../../common/platform/store/acct-store.js';
+import { ContactStore } from '../../common/platform/store/contact-store.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
@@ -505,7 +506,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
       // cache for subseqent loop runs
-      const { drafts_reply } = await Store.getAcct(this.acctEmail, ['drafts_reply']);
+      const { drafts_reply } = await AcctStore.get(this.acctEmail, ['drafts_reply']);
       const convoRootEl = this.getGonvoRootEl(newReplyBoxes[0]);
       const replyParams = this.getLastMsgReplyParams(convoRootEl!);
       const threadId = this.determineThreadId(convoRootEl!);
@@ -560,7 +561,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               }
               if (typeof cache === 'undefined') {
                 try {
-                  const [contact] = await Store.dbContactGet(undefined, [email]);
+                  const [contact] = await ContactStore.get(undefined, [email]);
                   if (contact && contact.pubkey) {
                     this.recipientHasPgpCache[email] = true;
                   } else if ((await this.keyserver.lookupEmail(email)).pubkey) {

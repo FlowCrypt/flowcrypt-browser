@@ -3,7 +3,7 @@
 'use strict';
 
 import { Injector } from './inject.js';
-import { Store } from './platform/store.js';
+import { KeyStore } from './platform/store/key-store.js';
 
 export class WebmailCommon {
   private acctEmail: string;
@@ -16,7 +16,8 @@ export class WebmailCommon {
 
   public addOrRemoveEndSessionBtnIfNeeded = async () => {
     const finishSessionBtn = $('.action_finish_session');
-    if ((await Store.getKeysCurrentlyInSession(this.acctEmail)).length) {
+    const longids = await KeyStore.getLongidsThatCurrentlyHavePassPhraseInSession(this.acctEmail);
+    if (longids.length) {
       if (!finishSessionBtn.length) {
         await this.injector.insertEndSessionBtn(this.acctEmail);
       }

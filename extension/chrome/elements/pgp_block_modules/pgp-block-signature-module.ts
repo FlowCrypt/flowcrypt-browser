@@ -6,10 +6,10 @@ import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { PgpBlockView } from '../pgp_block';
-import { Store } from '../../../js/common/platform/store.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { VerifyRes } from '../../../js/common/core/pgp-msg.js';
+import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 
 export class PgpBlockViewSignatureModule {
 
@@ -47,7 +47,7 @@ export class PgpBlockViewSignatureModule {
     const render = (note: string, action: () => void) => $('#pgp_signature').addClass('neutral').find('.result').text(note).click(this.view.setHandler(action));
     try {
       if (senderEmail) { // we know who sent it
-        const [senderContactByEmail] = await Store.dbContactGet(undefined, [senderEmail]);
+        const [senderContactByEmail] = await ContactStore.get(undefined, [senderEmail]);
         if (senderContactByEmail && senderContactByEmail.pubkey) {
           render(`Fetched the right pubkey ${signerLongid} from keyserver, but will not use it because you have conflicting pubkey ${senderContactByEmail.longid} loaded.`, () => undefined);
           return;
@@ -62,7 +62,7 @@ export class PgpBlockViewSignatureModule {
           render(`Fetched sender's pubkey ${keyDetails.ids[0].longid} but message was signed with a different key: ${signerLongid}, will not verify.`, () => undefined);
           return;
         } // ---> and longid it matches signature
-        await Store.dbContactSave(undefined, await Store.dbContactObj({ email: senderEmail, pubkey, client: pgpClient })); // <= TOFU auto-import
+        await ContactStore.save(undefined, await ContactStore.obj({ email: senderEmail, pubkey, client: pgpClient })); // <= TOFU auto-import
         render('Fetched pubkey, click to verify', () => window.location.reload());
       } else { // don't know who sent it
         const { pubkey, pgpClient } = await this.view.keyserver.lookupLongid(signerLongid);
@@ -76,13 +76,13 @@ export class PgpBlockViewSignatureModule {
           render(`Fetched matching pubkey ${signerLongid} but no valid email address is listed in it.`, () => undefined);
           return;
         }
-        const [conflictingContact] = await Store.dbContactGet(undefined, [pubkeyEmail]);
+        const [conflictingContact] = await ContactStore.get(undefined, [pubkeyEmail]);
         if (conflictingContact && conflictingContact.pubkey) {
           render(`Fetched matching pubkey ${signerLongid} but conflicting key is in local contacts ${conflictingContact.longid} for email ${pubkeyEmail}, cannot verify.`, () => undefined);
           return;
         }
         render(`Fetched matching pubkey ${signerLongid}. Click to load and use it.`, async () => {
-          await Store.dbContactSave(undefined, await Store.dbContactObj({ email: pubkeyEmail, pubkey, client: pgpClient })); // TOFU manual import
+          await ContactStore.save(undefined, await ContactStore.obj({ email: pubkeyEmail, pubkey, client: pgpClient })); // TOFU manual import
           window.location.reload();
         });
       }

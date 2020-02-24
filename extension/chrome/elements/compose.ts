@@ -2,7 +2,6 @@
 
 'use strict';
 
-import { Scopes, Store } from '../../js/common/platform/store.js';
 import { EmailProviderInterface, ReplyParams } from '../../js/common/api/email-provider/email-provider-api.js';
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { Assert } from '../../js/common/assert.js';
@@ -31,6 +30,7 @@ import { ComposeStorageModule } from './compose-modules/compose-storage-module.j
 import { Catch } from '../../js/common/platform/catch.js';
 import { Rules } from '../../js/common/rules.js';
 import { Keyserver } from '../../js/common/api/keyserver.js';
+import { Scopes, AcctStore } from '../../js/common/platform/store/acct-store.js';
 
 export class ComposeView extends View {
 
@@ -140,12 +140,12 @@ export class ComposeView extends View {
   }
 
   public render = async () => {
-    const storage = await Store.getAcct(this.acctEmail, ['sendAs', 'hide_message_password', 'drafts_reply']);
+    const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password', 'drafts_reply']);
     this.rules = await Rules.newInstance(this.acctEmail);
     this.keyserver = new Keyserver(this.rules);
     this.tabId = await BrowserMsg.requiredTabId();
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
-    this.scopes = await Store.getScopes(this.acctEmail);
+    this.scopes = await AcctStore.getScopes(this.acctEmail);
     this.draftModule = new ComposeDraftModule(this);
     this.quoteModule = new ComposeQuoteModule(this);
     this.recipientsModule = new ComposeRecipientsModule(this);

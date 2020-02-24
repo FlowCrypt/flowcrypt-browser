@@ -6,8 +6,8 @@ import { Buf } from './buf.js';
 import { Catch } from '../platform/catch.js';
 import { MsgBlockParser } from './msg-block-parser.js';
 import { PgpArmor } from './pgp-armor.js';
-import { Store } from '../platform/store.js';
 import { opgp } from './pgp.js';
+import { KeyCache } from '../platform/key-cache.js';
 
 export type Contact = {
   email: string;
@@ -84,13 +84,13 @@ export class PgpKey {
    * used only for keys that we ourselves parsed / formatted before, eg from local storage, because no err handling
    */
   public static read = async (armoredKey: string) => { // should be renamed to readOne
-    const fromCache = Store.armoredKeyCacheGet(armoredKey);
+    const fromCache = KeyCache.getArmored(armoredKey);
     if (fromCache) {
       return fromCache;
     }
     const { keys: [key] } = await opgp.key.readArmored(armoredKey);
     if (key?.isPrivate()) {
-      Store.armoredKeyCacheSet(armoredKey, key);
+      KeyCache.setArmored(armoredKey, key);
     }
     return key;
   }
@@ -248,7 +248,7 @@ export class PgpKey {
   }
 
   public static usableForEncryption = async (armored: string) => { // is pubkey usable for encrytion?
-    if (!await PgpKey.longid(armored)) {
+    if (! await PgpKey.longid(armored)) {
       return false;
     }
     const { keys: [pubkey] } = await opgp.key.readArmored(armored);

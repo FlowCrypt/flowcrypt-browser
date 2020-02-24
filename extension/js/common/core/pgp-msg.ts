@@ -9,8 +9,9 @@ import { Buf } from './buf.js';
 import { Catch } from '../platform/catch.js';
 import { PgpArmor } from './pgp-armor.js';
 import { PgpHash } from './pgp-hash.js';
-import { Store } from '../platform/store.js';
 import { opgp } from './pgp.js';
+import { KeyCache } from '../platform/key-cache.js';
+import { ContactStore } from '../platform/store/contact-store.js';
 
 export namespace PgpMsgMethod {
   export namespace Arg {
@@ -250,8 +251,8 @@ export class PgpMsg {
 
   private static cryptoMsgGetSignedBy = async (msg: OpenpgpMsgOrCleartext, keys: SortedKeysForDecrypt) => {
     keys.signedBy = Value.arr.unique(await PgpKey.longids(msg.getSigningKeyIds ? msg.getSigningKeyIds() : []));
-    if (keys.signedBy.length && typeof Store.dbContactGet === 'function') {
-      const verificationContacts = await Store.dbContactGet(undefined, keys.signedBy);
+    if (keys.signedBy.length && typeof ContactStore.get === 'function') {
+      const verificationContacts = await ContactStore.get(undefined, keys.signedBy);
       keys.verificationContacts = verificationContacts.filter(contact => contact && contact.pubkey) as Contact[];
       keys.forVerification = [];
       for (const contact of keys.verificationContacts) {
@@ -295,12 +296,12 @@ export class PgpMsg {
     }
     for (const ki of keys.prvForDecrypt) {
       const matchingKeyids = PgpMsg.matchingKeyids(ki.parsed!, encryptedForKeyids);
-      const cachedKey = Store.decryptedKeyCacheGet(ki.longid);
+      const cachedKey = KeyCache.getDecrypted(ki.longid);
       if (cachedKey && PgpMsg.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
         ki.decrypted = cachedKey;
         keys.prvForDecryptDecrypted.push(ki);
       } else if (PgpMsg.isKeyDecryptedFor(ki.parsed!, matchingKeyids) || await PgpMsg.decryptKeyFor(ki.parsed!, ki.passphrase!, matchingKeyids) === true) {
-        Store.decryptedKeyCacheSet(ki.parsed!);
+        KeyCache.setDecrypted(ki.parsed!);
         ki.decrypted = ki.parsed!;
         keys.prvForDecryptDecrypted.push(ki);
       } else {

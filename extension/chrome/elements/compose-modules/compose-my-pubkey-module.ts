@@ -7,10 +7,10 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
+import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 
 export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
 
@@ -47,7 +47,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
       return;
     }
     (async () => {
-      const contacts = await Store.dbContactGet(undefined, this.view.recipientsModule.getRecipients().map(r => r.email));
+      const contacts = await ContactStore.get(undefined, this.view.recipientsModule.getRecipients().map(r => r.email));
       for (const contact of contacts) {
         if (contact?.has_pgp && contact.client !== 'cryptup') {
           // new message, and my key is not uploaded where the recipient would look for it

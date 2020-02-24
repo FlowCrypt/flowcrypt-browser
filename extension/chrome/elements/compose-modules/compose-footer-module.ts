@@ -2,15 +2,15 @@
 
 'use strict';
 
-import { Store } from '../../../js/common/platform/store.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 export class ComposeFooterModule extends ViewModule<ComposeView> {
 
   public getFooterFromStorage = async (sender: string): Promise<string | undefined> => {
-    const { sendAs } = await Store.getAcct(this.view.acctEmail, ['sendAs']);
+    const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
     if (!sendAs) {
       return;
     }

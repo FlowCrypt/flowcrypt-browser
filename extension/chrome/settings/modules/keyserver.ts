@@ -10,12 +10,13 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { Rules } from '../../../js/common/rules.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 type AttesterKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: string, match: boolean }> };
 
@@ -79,7 +80,7 @@ View.run(class KeyserverView extends View {
       return await Ui.modal.error('Disallowed by your organisation rules');
     }
     Xss.sanitizeRender(target, Ui.spinner('white'));
-    const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
+    const [primaryKi] = await KeyStore.get(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
       await this.keyserver.attester.initialLegacySubmit(String($(target).attr('email')), primaryKi.public);
@@ -96,7 +97,7 @@ View.run(class KeyserverView extends View {
       return await Ui.modal.error('Disallowed by your organisation rules');
     }
     Xss.sanitizeRender(target, Ui.spinner('white'));
-    const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
+    const [primaryKi] = await KeyStore.get(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
       const responseText = await this.keyserver.attester.replacePubkey(String($(target).attr('email')), primaryKi.public);
@@ -111,8 +112,8 @@ View.run(class KeyserverView extends View {
 
   private diagnoseKeyserverPubkeys = async (): Promise<AttesterKeyserverDiagnosis> => {
     const diagnosis: AttesterKeyserverDiagnosis = { hasPubkeyMissing: false, hasPubkeyMismatch: false, results: {} };
-    const { sendAs } = await Store.getAcct(this.acctEmail, ['sendAs']);
-    const storedKeys = await Store.keysGet(this.acctEmail);
+    const { sendAs } = await AcctStore.get(this.acctEmail, ['sendAs']);
+    const storedKeys = await KeyStore.get(this.acctEmail);
     const storedKeysLongids = storedKeys.map(ki => ki.longid);
     const results = await this.keyserver.attester.lookupEmails(sendAs ? Object.keys(sendAs) : [this.acctEmail]);
     for (const email of Object.keys(results)) {

@@ -3,8 +3,6 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../common/browser/browser-msg.js';
-import { GlobalStore, Store } from '../common/platform/store.js';
-
 import { BgHandlers } from './bg-handlers.js';
 import { BgUtils } from './bgutils.js';
 import { Catch } from '../common/platform/catch.js';
@@ -13,6 +11,10 @@ import { VERSION } from '../common/core/const.js';
 import { injectFcIntoWebmail } from './inject.js';
 import { migrateGlobal } from './migrations.js';
 import { opgp } from '../common/core/pgp.js';
+import { GlobalStoreDict, GlobalStore } from '../common/platform/store/global-store.js';
+import { ContactStore } from '../common/platform/store/contact-store.js';
+import { SessionStore } from '../common/platform/store/session-store.js';
+import { AcctStore } from '../common/platform/store/acct-store.js';
 
 console.info('background_process.js starting');
 
@@ -21,24 +23,24 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
 (async () => {
 
   let db: IDBDatabase;
-  let storage: GlobalStore;
+  let storage: GlobalStoreDict;
 
   try {
     await migrateGlobal();
-    await Store.setGlobal({ version: Number(VERSION.replace(/\./g, '')) });
-    storage = await Store.getGlobal(['settings_seen']);
+    await GlobalStore.set({ version: Number(VERSION.replace(/\./g, '')) });
+    storage = await GlobalStore.get(['settings_seen']);
   } catch (e) {
-    await BgUtils.handleStoreErr(Store.errCategorize(e));
+    await BgUtils.handleStoreErr(GlobalStore.errCategorize(e));
     return;
   }
 
   if (!storage.settings_seen) {
     await BgUtils.openSettingsPage('initial.htm'); // called after the very first installation of the plugin
-    await Store.setGlobal({ settings_seen: true });
+    await GlobalStore.set({ settings_seen: true });
   }
 
   try {
-    db = await Store.dbOpen(); // takes 4-10 ms first time
+    db = await ContactStore.dbOpen(); // takes 4-10 ms first time
   } catch (e) {
     await BgUtils.handleStoreErr(e);
     return;
@@ -46,12 +48,12 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
 
   // storage related handlers
   BrowserMsg.bgAddListener('db', (r: Bm.Db) => BgHandlers.dbOperationHandler(db, r));
-  BrowserMsg.bgAddListener('session_set', (r: Bm.StoreSessionSet) => Store.sessionSet(r.acctEmail, r.key, r.value));
-  BrowserMsg.bgAddListener('session_get', (r: Bm.StoreSessionGet) => Store.sessionGet(r.acctEmail, r.key));
-  BrowserMsg.bgAddListener('storeGlobalGet', (r: Bm.StoreGlobalGet) => Store.getGlobal(r.keys));
-  BrowserMsg.bgAddListener('storeGlobalSet', (r: Bm.StoreGlobalSet) => Store.setGlobal(r.values));
-  BrowserMsg.bgAddListener('storeAcctGet', (r: Bm.StoreAcctGet) => Store.getAcct(r.acctEmail, r.keys));
-  BrowserMsg.bgAddListener('storeAcctSet', (r: Bm.StoreAcctSet) => Store.setAcct(r.acctEmail, r.values));
+  BrowserMsg.bgAddListener('session_set', (r: Bm.StoreSessionSet) => SessionStore.set(r.acctEmail, r.key, r.value));
+  BrowserMsg.bgAddListener('session_get', (r: Bm.StoreSessionGet) => SessionStore.get(r.acctEmail, r.key));
+  BrowserMsg.bgAddListener('storeGlobalGet', (r: Bm.StoreGlobalGet) => GlobalStore.get(r.keys));
+  BrowserMsg.bgAddListener('storeGlobalSet', (r: Bm.StoreGlobalSet) => GlobalStore.set(r.values));
+  BrowserMsg.bgAddListener('storeAcctGet', (r: Bm.StoreAcctGet) => AcctStore.get(r.acctEmail, r.keys));
+  BrowserMsg.bgAddListener('storeAcctSet', (r: Bm.StoreAcctSet) => AcctStore.set(r.acctEmail, r.values));
 
   BrowserMsg.addPgpListeners(); // todo - remove https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
 

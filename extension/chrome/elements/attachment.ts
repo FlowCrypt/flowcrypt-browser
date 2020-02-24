@@ -5,7 +5,6 @@
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { DecryptErrTypes, PgpMsg } from '../../js/common/core/pgp-msg.js';
 import { PromiseCancellation, Url } from '../../js/common/core/common.js';
-
 import { Api } from '../../js/common/api/api.js';
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { Assert } from '../../js/common/assert.js';
@@ -13,10 +12,11 @@ import { Att } from '../../js/common/core/att.js';
 import { Browser } from '../../js/common/browser/browser.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
-import { Store } from '../../js/common/platform/store.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
+import { KeyStore } from '../../js/common/platform/store/key-store.js';
+import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 
 View.run(class AttachmentDownloadView extends View {
   private readonly acctEmail: string;
@@ -168,7 +168,7 @@ View.run(class AttachmentDownloadView extends View {
   private processAsPublicKeyAndHideAttIfAppropriate = async () => {
     if (this.att.msgId && this.att.id && this.att.treatAs() === 'publicKey') { // this is encrypted public key - download && decrypt & parse & render
       const { data } = await this.gmail.attGet(this.att.msgId, this.att.id);
-      const decrRes = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.acctEmail), encryptedData: data });
+      const decrRes = await PgpMsg.decrypt({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: data });
       if (decrRes.success && decrRes.content) {
         const openpgpType = await PgpMsg.type({ data: decrRes.content });
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // 'openpgpType.armored': could potentially process unarmored pubkey files, maybe later
@@ -206,7 +206,7 @@ View.run(class AttachmentDownloadView extends View {
   }
 
   private decryptAndSaveAttToDownloads = async () => {
-    const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.acctEmail), encryptedData: this.att.getData() });
+    const result = await PgpMsg.decrypt({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: this.att.getData() });
     Xss.sanitizeRender(this.button, this.originalButtonHTML || '').removeClass('visible');
     if (result.success) {
       if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {
@@ -215,7 +215,7 @@ View.run(class AttachmentDownloadView extends View {
       Browser.saveToDownloads(new Att({ name: result.filename, type: this.att.type, data: result.content }), $('body'));
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'attachment', longids: result.longids.needPassphrase });
-      if (! await Store.waitUntilPassphraseChanged(this.acctEmail, result.longids.needPassphrase, 1000, this.ppChangedPromiseCancellation)) {
+      if (! await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.longids.needPassphrase, 1000, this.ppChangedPromiseCancellation)) {
         return;
       }
       await this.decryptAndSaveAttToDownloads();

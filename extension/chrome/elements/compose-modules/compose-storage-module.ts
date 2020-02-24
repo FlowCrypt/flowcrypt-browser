@@ -11,10 +11,14 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { CollectPubkeysResult } from './compose-types.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from './compose-err-module.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { opgp } from '../../../js/common/core/pgp.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
+import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
+import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 
 export class ComposeStorageModule extends ViewModule<ComposeView> {
 
@@ -31,7 +35,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   }
 
   public getKey = async (senderEmail: string): Promise<KeyInfo> => {
-    const keys = await Store.keysGet(this.view.acctEmail);
+    const keys = await KeyStore.get(this.view.acctEmail);
     let result = await this.view.myPubkeyModule.chooseMyPublicKeyBySenderEmail(keys, senderEmail);
     if (!result) {
       this.view.errModule.debug(`ComposerStorage.getKey: could not find key based on senderEmail: ${senderEmail}, using primary instead`);
@@ -45,40 +49,40 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   }
 
   public draftMetaSet = async (draftId: string, threadId: string, recipients: string[], subject: string) => {
-    const draftStorage = await Store.getAcct(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
+    const draftStorage = await AcctStore.get(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
     if (threadId) { // it's a reply
       const drafts = draftStorage.drafts_reply || {};
       drafts[threadId] = draftId;
-      await Store.setAcct(this.view.acctEmail, { drafts_reply: drafts });
+      await AcctStore.set(this.view.acctEmail, { drafts_reply: drafts });
     } else { // it's a new message
       const drafts = draftStorage.drafts_compose || {};
       drafts[draftId] = { recipients, subject, date: new Date().getTime() };
-      await Store.setAcct(this.view.acctEmail, { drafts_compose: drafts });
+      await AcctStore.set(this.view.acctEmail, { drafts_compose: drafts });
     }
   }
 
   public draftMetaDelete = async (draftId: string, threadId: string) => {
-    const draftStorage = await Store.getAcct(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
+    const draftStorage = await AcctStore.get(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
     if (threadId) { // it's a reply
       const drafts = draftStorage.drafts_reply || {};
       delete drafts[threadId];
-      await Store.setAcct(this.view.acctEmail, { drafts_reply: drafts });
+      await AcctStore.set(this.view.acctEmail, { drafts_reply: drafts });
     } else { // it's a new message
       const drafts = draftStorage.drafts_compose || {};
       delete drafts[draftId];
-      await Store.setAcct(this.view.acctEmail, { drafts_compose: drafts });
+      await AcctStore.set(this.view.acctEmail, { drafts_compose: drafts });
     }
   }
 
   public addAdminCodes = async (shortId: string, codes: string[]) => {
-    const adminCodeStorage = await Store.getGlobal(['admin_codes']);
+    const adminCodeStorage = await GlobalStore.get(['admin_codes']);
     adminCodeStorage.admin_codes = adminCodeStorage.admin_codes || {};
     adminCodeStorage.admin_codes[shortId] = { date: Date.now(), codes };
-    await Store.setGlobal(adminCodeStorage);
+    await GlobalStore.set(adminCodeStorage);
   }
 
   public collectAllAvailablePublicKeys = async (senderEmail: string, senderKi: KeyInfo, recipients: string[]): Promise<CollectPubkeysResult> => {
-    const contacts = await Store.dbContactGet(undefined, recipients);
+    const contacts = await ContactStore.get(undefined, recipients);
     const armoredPubkeys = [{ pubkey: senderKi.public, email: senderEmail, isMine: true }];
     const emailsWithoutPubkeys = [];
     for (const i of contacts.keys()) {
@@ -96,14 +100,14 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   public passphraseGet = async (senderKi?: KeyInfo) => {
     if (!senderKi) {
-      [senderKi] = await Store.keysGet(this.view.acctEmail, ['primary']);
+      [senderKi] = await KeyStore.get(this.view.acctEmail, ['primary']);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(senderKi);
     }
-    return await Store.passphraseGet(this.view.acctEmail, senderKi.longid);
+    return await PassphraseStore.get(this.view.acctEmail, senderKi.longid);
   }
 
   public lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string, name: string | undefined): Promise<Contact | "fail"> => {
-    const [storedContact] = await Store.dbContactGet(undefined, [email]);
+    const [storedContact] = await ContactStore.get(undefined, [email]);
     if (storedContact && storedContact.has_pgp && storedContact.pubkey) {
       // Potentially check if pubkey was updated - async. By the time user finishes composing, newer version would have been updated in db.
       // If sender didn't pull a particular pubkey for a long time and it has since expired, but there actually is a newer version on attester, this may unnecessarily show "bad pubkey",
@@ -130,7 +134,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           }
         }
         const client = lookupResult.pgpClient === 'flowcrypt' ? 'cryptup' : 'pgp'; // todo - clean up as "flowcrypt|pgp-other'. Already in storage, fixing involves migration
-        const ksContact = await Store.dbContactObj({
+        const ksContact = await ContactStore.obj({
           email,
           name,
           pubkey: lookupResult.pubkey,
@@ -139,7 +143,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           lastCheck: Date.now(),
         });
         this.ksLookupsByEmail[email] = ksContact;
-        await Store.dbContactSave(undefined, ksContact);
+        await ContactStore.save(undefined, ksContact);
         return ksContact;
       } else {
         return PUBKEY_LOOKUP_RESULT_FAIL;
@@ -160,7 +164,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       if (!contact.pubkey_last_sig) {
         const lastSig = await PgpKey.lastSig(await PgpKey.read(contact.pubkey));
         contact.pubkey_last_sig = lastSig;
-        await Store.dbContactUpdate(undefined, contact.email, { pubkey_last_sig: lastSig });
+        await ContactStore.update(undefined, contact.email, { pubkey_last_sig: lastSig });
       }
       if (!contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7)) { // last update > 7 days ago, or never
         const { pubkey: fetchedPubkey } = await this.view.keyserver.lookupLongid(contact.longid);
@@ -168,12 +172,12 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           const fetchedLastSig = await PgpKey.lastSig(await PgpKey.read(fetchedPubkey));
           if (fetchedLastSig > contact.pubkey_last_sig) { // fetched pubkey has newer signature, update
             console.info(`Updating key ${contact.longid} for ${contact.email}: newer signature found: ${new Date(fetchedLastSig)} (old ${new Date(contact.pubkey_last_sig)})`);
-            await Store.dbContactUpdate(undefined, contact.email, { pubkey: fetchedPubkey, pubkey_last_sig: fetchedLastSig, pubkey_last_check: Date.now() });
+            await ContactStore.update(undefined, contact.email, { pubkey: fetchedPubkey, pubkey_last_sig: fetchedLastSig, pubkey_last_check: Date.now() });
             return;
           }
         }
         // we checked for newer key and it did not result in updating the key, don't check again for another week
-        await Store.dbContactUpdate(undefined, contact.email, { pubkey_last_check: Date.now() });
+        await ContactStore.update(undefined, contact.email, { pubkey_last_check: Date.now() });
       }
     } catch (e) {
       ApiErr.reportIfSignificant(e);

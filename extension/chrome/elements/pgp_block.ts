@@ -3,7 +3,6 @@
 'use strict';
 
 import { Str, Url } from '../../js/common/core/common.js';
-
 import { Assert } from '../../js/common/assert.js';
 import { Buf } from '../../js/common/core/buf.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
@@ -15,11 +14,11 @@ import { PgpBlockViewPwdEncryptedMsgModule } from './pgp_block_modules/pgp-block
 import { PgpBlockViewQuoteModule } from './pgp_block_modules/pgp-block-quote-module.js';
 import { PgpBlockViewRenderModule } from './pgp_block_modules/pgp-block-render-module.js';
 import { PgpBlockViewSignatureModule } from './pgp_block_modules/pgp-block-signature-module.js';
-import { Store } from '../../js/common/platform/store.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
 import { Keyserver } from '../../js/common/api/keyserver.js';
 import { Rules } from '../../js/common/rules.js';
+import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 
 export class PgpBlockView extends View {
 
@@ -73,10 +72,10 @@ export class PgpBlockView extends View {
   }
 
   public render = async () => {
-    const storage = await Store.getAcct(this.acctEmail, ['setup_done', 'google_token_scopes']);
+    const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'google_token_scopes']);
     this.rules = await Rules.newInstance(this.acctEmail);
     this.keyserver = new Keyserver(this.rules);
-    const scopes = await Store.getScopes(this.acctEmail);
+    const scopes = await AcctStore.getScopes(this.acctEmail);
     this.decryptModule.canReadEmails = scopes.read || scopes.modify;
     if (storage.setup_done) {
       await this.decryptModule.initialize();

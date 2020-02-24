@@ -11,10 +11,10 @@ import { PgpArmor } from '../core/pgp-armor.js';
 import { PgpKey } from '../core/pgp-key.js';
 import { PgpPwd } from '../core/pgp-password.js';
 import { Settings } from '../settings.js';
-import { Store } from '../platform/store.js';
 import { Ui } from '../browser/ui.js';
 import { Url, Str } from '../core/common.js';
 import { opgp } from '../core/pgp.js';
+import { KeyStore } from '../platform/store/key-store.js';
 
 type KeyImportUiCheckResult = {
   normalized: string; longid: string; passphrase: string; fingerprint: string; decrypted: OpenPGP.key.Key;
@@ -228,7 +228,7 @@ export class KeyImportUi {
 
   private rejectKnownIfSelected = async (acctEmail: string, k: OpenPGP.key.Key) => {
     if (this.rejectKnown) {
-      const keyinfos = await Store.keysGet(acctEmail);
+      const keyinfos = await KeyStore.get(acctEmail);
       const privateKeysLongids = keyinfos.map(ki => ki.longid);
       if (privateKeysLongids.includes(String(await PgpKey.longid(k)))) {
         throw new UserAlert('This is one of your current keys, try another one.');
@@ -294,7 +294,7 @@ export class KeyImportUi {
   }
 
   private checkEncryptionPubIfSelected = async (normalized: string) => {
-    if (this.checkEncryption && !await PgpKey.usableForEncryption(normalized)) {
+    if (this.checkEncryption && ! await PgpKey.usableForEncryption(normalized)) {
       throw new UserAlert('This public key looks correctly formatted, but cannot be used for encryption. Please write at human@flowcrypt.com. We\'ll see if there is a way to fix it.');
     }
   }

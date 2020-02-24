@@ -7,8 +7,9 @@ import { Lang } from '../../../js/common/lang.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { SetupView } from '../setup.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
 export class SetupRenderModule {
 
@@ -24,7 +25,7 @@ export class SetupRenderModule {
     if (this.view.storage!.email_provider === 'gmail') { // show alternative account addresses in setup form + save them for later
       try {
         await Settings.refreshSendAs(this.view.acctEmail);
-        const { sendAs } = await Store.getAcct(this.view.acctEmail, ['sendAs']);
+        const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
         this.saveAndFillSubmitPubkeysOption(Object.keys(sendAs!));
       } catch (e) {
         return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToLoadEmailAliases, () => this.renderInitial());
@@ -38,7 +39,7 @@ export class SetupRenderModule {
         await this.view.setupRecoverKey.renderAddKeyFromBackup();
       }
     } else if (this.view.action === 'finalize') {
-      const { tmp_submit_all, tmp_submit_main } = await Store.getAcct(this.view.acctEmail, ['tmp_submit_all', 'tmp_submit_main']);
+      const { tmp_submit_all, tmp_submit_main } = await AcctStore.get(this.view.acctEmail, ['tmp_submit_all', 'tmp_submit_main']);
       if (typeof tmp_submit_all === 'undefined' || typeof tmp_submit_main === 'undefined') {
         $('#content').text(`Setup session expired. To set up FlowCrypt, please click the FlowCrypt icon on top right.`);
         return;
@@ -51,7 +52,7 @@ export class SetupRenderModule {
   }
 
   public renderSetupDone = async () => {
-    const storedKeys = await Store.keysGet(this.view.acctEmail);
+    const storedKeys = await KeyStore.get(this.view.acctEmail);
     if (this.view.fetchedKeyBackupsUniqueLongids.length > storedKeys.length) { // recovery where not all keys were processed: some may have other pass phrase
       this.displayBlock('step_4_more_to_recover');
       $('h1').text('More keys to recover');

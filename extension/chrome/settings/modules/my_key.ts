@@ -10,13 +10,14 @@ import { Browser } from '../../../js/common/browser/browser.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { KeyInfo } from '../../../js/common/core/pgp-key.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { Rules } from '../../../js/common/rules.js';
+import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
 declare const ClipboardJS: any;
 
@@ -42,7 +43,7 @@ View.run(class MyKeyView extends View {
   public render = async () => {
     this.rules = await Rules.newInstance(this.acctEmail);
     this.keyserver = new Keyserver(this.rules);
-    [this.keyInfo] = await Store.keysGet(this.acctEmail, [this.longid]);
+    [this.keyInfo] = await KeyStore.get(this.acctEmail, [this.longid]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
     $('.action_view_update').attr('href', this.myKeyUpdateUrl);
@@ -81,7 +82,7 @@ View.run(class MyKeyView extends View {
   private downloadRevocationCert = async (enteredPP?: string) => {
     const prv = await PgpKey.read(this.keyInfo.private);
     if (!prv.isFullyDecrypted()) {
-      const passphrase = await Store.passphraseGet(this.acctEmail, this.keyInfo.longid) || enteredPP;
+      const passphrase = await PassphraseStore.get(this.acctEmail, this.keyInfo.longid) || enteredPP;
       if (passphrase) {
         if (! await PgpKey.decrypt(prv, passphrase) && enteredPP) {
           await Ui.modal.error('Pass phrase did not match, please try again.');

@@ -4,7 +4,6 @@
 
 import { Contact, PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Str, Url } from '../../../js/common/core/common.js';
-
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Att } from '../../../js/common/core/att.js';
@@ -17,11 +16,11 @@ import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 import { Rules } from '../../../js/common/rules.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
+import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 
 View.run(class ContactsView extends View {
 
@@ -66,7 +65,7 @@ View.run(class ContactsView extends View {
   // --- PRIVATE
 
   private loadAndRenderContactList = async () => {
-    this.contacts = await Store.dbContactSearch(undefined, { has_pgp: true });
+    this.contacts = await ContactStore.search(undefined, { has_pgp: true });
     let lineActionsHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
       '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;';
     if (this.rules.getCustomKeyserver()) {
@@ -114,7 +113,7 @@ View.run(class ContactsView extends View {
   }
 
   private actionRenderViewPublicKeyHandler = async (viewPubkeyButton: HTMLElement) => {
-    const [contact] = await Store.dbContactGet(undefined, [$(viewPubkeyButton).closest('tr').attr('email')!]); // defined above
+    const [contact] = await ContactStore.get(undefined, [$(viewPubkeyButton).closest('tr').attr('email')!]); // defined above
     $('.hide_when_rendering_subpage').css('display', 'none');
     Xss.sanitizeRender('h1', `${this.backBtn}${this.space}${contact!.email}`); // should exist - from list of contacts
     if (contact!.client === 'cryptup') {
@@ -143,7 +142,7 @@ View.run(class ContactsView extends View {
     if (!armoredPubkey || !email) {
       await Ui.modal.warning('No public key entered');
     } else if (await PgpKey.longid(armoredPubkey)) {
-      await Store.dbContactSave(undefined, await Store.dbContactObj({ email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now() }));
+      await ContactStore.save(undefined, await ContactStore.obj({ email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now() }));
       await this.loadAndRenderContactList();
     } else {
       await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let us know at human@flowcrypt.com if you need help.');
@@ -152,7 +151,7 @@ View.run(class ContactsView extends View {
   }
 
   private actionRemovePublicKey = async (rmPubkeyButton: HTMLElement) => {
-    await Store.dbContactSave(undefined, await Store.dbContactObj({ email: $(rmPubkeyButton).closest('tr').attr('email')! }));
+    await ContactStore.save(undefined, await ContactStore.obj({ email: $(rmPubkeyButton).closest('tr').attr('email')! }));
     await this.loadAndRenderContactList();
   }
 

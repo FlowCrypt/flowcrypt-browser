@@ -3,7 +3,6 @@
 'use strict';
 
 import { BaseMailFormatter } from './base-mail-formatter.js';
-
 import { BrowserWindow } from '../../../../js/common/browser/browser-window.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { NewMsgData } from '../compose-types.js';
@@ -11,7 +10,7 @@ import { PgpKey } from '../../../../js/common/core/pgp-key.js';
 import { PgpMsg } from '../../../../js/common/core/pgp-msg.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { SendableMsgBody } from '../../../../js/common/core/mime.js';
-import { Store } from '../../../../js/common/platform/store.js';
+import { ContactStore } from '../../../../js/common/platform/store/contact-store.js';
 
 export class SignedMsgMailFormatter extends BaseMailFormatter {
 
@@ -33,7 +32,7 @@ export class SignedMsgMailFormatter extends BaseMailFormatter {
       newMsg.plaintext = newMsg.plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
       const signedData = await PgpMsg.sign(signingPrv, newMsg.plaintext);
       const allContacts = [...newMsg.recipients.to || [], ...newMsg.recipients.cc || [], ...newMsg.recipients.bcc || []];
-      Store.dbContactUpdate(undefined, allContacts, { last_use: Date.now() }).catch(Catch.reportErr);
+      ContactStore.update(undefined, allContacts, { last_use: Date.now() }).catch(Catch.reportErr);
       const body = { 'text/plain': signedData };
       return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body, atts });
     }
