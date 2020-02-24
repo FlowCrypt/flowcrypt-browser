@@ -75,10 +75,10 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   }
 
   public addAdminCodes = async (shortId: string, codes: string[]) => {
-    const adminCodeStorage = await GlobalStore.getGlobal(['admin_codes']);
+    const adminCodeStorage = await GlobalStore.get(['admin_codes']);
     adminCodeStorage.admin_codes = adminCodeStorage.admin_codes || {};
     adminCodeStorage.admin_codes[shortId] = { date: Date.now(), codes };
-    await GlobalStore.setGlobal(adminCodeStorage);
+    await GlobalStore.set(adminCodeStorage);
   }
 
   public collectAllAvailablePublicKeys = async (senderEmail: string, senderKi: KeyInfo, recipients: string[]): Promise<CollectPubkeysResult> => {

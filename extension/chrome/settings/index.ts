@@ -235,7 +235,7 @@ View.run(class SettingsView extends View {
     if (!(scopes.read || scopes.modify) && emailProvider === 'gmail') {
       $('.auth_denied_warning').removeClass('hidden');
     }
-    const globalStorage = await GlobalStore.getGlobal(['install_mobile_app_notification_dismissed']);
+    const globalStorage = await GlobalStore.get(['install_mobile_app_notification_dismissed']);
     if (!globalStorage.install_mobile_app_notification_dismissed && rules.canBackupKeys() && rules.canCreateKeys()) {
       // only show this notification if user is allowed to:
       //   - backup keys: when not allowed, company typically has other forms of backup
@@ -243,7 +243,7 @@ View.run(class SettingsView extends View {
       $('.install_app_notification').removeClass('hidden');
     }
     $('.dismiss_install_app_notification').click(this.setHandler(async () => {
-      await GlobalStore.setGlobal({ install_mobile_app_notification_dismissed: true });
+      await GlobalStore.set({ install_mobile_app_notification_dismissed: true });
       $('.install_app_notification').remove();
     }));
   }

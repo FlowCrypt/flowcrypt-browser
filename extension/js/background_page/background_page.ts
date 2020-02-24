@@ -27,8 +27,8 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
 
   try {
     await migrateGlobal();
-    await GlobalStore.setGlobal({ version: Number(VERSION.replace(/\./g, '')) });
-    storage = await GlobalStore.getGlobal(['settings_seen']);
+    await GlobalStore.set({ version: Number(VERSION.replace(/\./g, '')) });
+    storage = await GlobalStore.get(['settings_seen']);
   } catch (e) {
     await BgUtils.handleStoreErr(GlobalStore.errCategorize(e));
     return;
@@ -36,7 +36,7 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
 
   if (!storage.settings_seen) {
     await BgUtils.openSettingsPage('initial.htm'); // called after the very first installation of the plugin
-    await GlobalStore.setGlobal({ settings_seen: true });
+    await GlobalStore.set({ settings_seen: true });
   }
 
   try {
@@ -50,8 +50,8 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
   BrowserMsg.bgAddListener('db', (r: Bm.Db) => BgHandlers.dbOperationHandler(db, r));
   BrowserMsg.bgAddListener('session_set', (r: Bm.StoreSessionSet) => SessionStore.sessionSet(r.acctEmail, r.key, r.value));
   BrowserMsg.bgAddListener('session_get', (r: Bm.StoreSessionGet) => SessionStore.sessionGet(r.acctEmail, r.key));
-  BrowserMsg.bgAddListener('storeGlobalGet', (r: Bm.StoreGlobalGet) => GlobalStore.getGlobal(r.keys));
-  BrowserMsg.bgAddListener('storeGlobalSet', (r: Bm.StoreGlobalSet) => GlobalStore.setGlobal(r.values));
+  BrowserMsg.bgAddListener('storeGlobalGet', (r: Bm.StoreGlobalGet) => GlobalStore.get(r.keys));
+  BrowserMsg.bgAddListener('storeGlobalSet', (r: Bm.StoreGlobalSet) => GlobalStore.set(r.values));
   BrowserMsg.bgAddListener('storeAcctGet', (r: Bm.StoreAcctGet) => AcctStore.get(r.acctEmail, r.keys));
   BrowserMsg.bgAddListener('storeAcctSet', (r: Bm.StoreAcctSet) => AcctStore.set(r.acctEmail, r.values));
 

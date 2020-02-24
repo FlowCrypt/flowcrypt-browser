@@ -29,7 +29,7 @@ export class GlobalStore extends AbstractStore {
 
   private static globalStorageScope: 'global' = 'global';
 
-  public static setGlobal = async (values: GlobalStoreDict): Promise<void> => {
+  public static set = async (values: GlobalStoreDict): Promise<void> => {
     if (Env.isContentScript()) {
       // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
       // always go through bg script to avoid such errors
@@ -43,7 +43,7 @@ export class GlobalStore extends AbstractStore {
     await storageLocalSet(storageUpdate);
   }
 
-  public static getGlobal = async (keys: GlobalIndex[]): Promise<GlobalStoreDict> => {
+  public static get = async (keys: GlobalIndex[]): Promise<GlobalStoreDict> => {
     if (Env.isContentScript()) {
       // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
       // always go through bg script to avoid such errors
@@ -53,12 +53,12 @@ export class GlobalStore extends AbstractStore {
     return GlobalStore.buildSingleAccountStoreFromRawResults(GlobalStore.globalStorageScope, storageObj) as GlobalStore;
   }
 
-  public static removeGlobal = async (keys: string[]) => {
+  public static remove = async (keys: string[]) => {
     await storageLocalRemove(GlobalStore.singleScopeRawIndexArr(GlobalStore.globalStorageScope, keys));
   }
 
   public static acctEmailsGet = async (): Promise<string[]> => {
-    const storage = await GlobalStore.getGlobal(['account_emails']);
+    const storage = await GlobalStore.get(['account_emails']);
     const acctEmails: string[] = [];
     if (typeof storage.account_emails !== 'undefined') {
       for (const acctEmail of JSON.parse(storage.account_emails) as string[]) {
@@ -81,14 +81,14 @@ export class GlobalStore extends AbstractStore {
     const acctEmails = await GlobalStore.acctEmailsGet();
     if (!acctEmails.includes(acctEmail) && acctEmail) {
       acctEmails.push(acctEmail);
-      await GlobalStore.setGlobal({ account_emails: JSON.stringify(acctEmails) });
+      await GlobalStore.set({ account_emails: JSON.stringify(acctEmails) });
       BrowserMsg.send.bg.updateUninstallUrl();
     }
   }
 
   public static acctEmailsRemove = async (acctEmail: string): Promise<void> => { // todo: concurrency issues with another tab loaded at the same time
     const acctEmails = await GlobalStore.acctEmailsGet();
-    await GlobalStore.setGlobal({ account_emails: JSON.stringify(Value.arr.withoutVal(acctEmails, acctEmail)) });
+    await GlobalStore.set({ account_emails: JSON.stringify(Value.arr.withoutVal(acctEmails, acctEmail)) });
     BrowserMsg.send.bg.updateUninstallUrl();
   }
 }
