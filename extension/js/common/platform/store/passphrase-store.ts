@@ -5,11 +5,12 @@ import { AccountIndex, AcctStore, AcctStoreDict } from './acct-store.js';
 import { SessionStore } from './session-store.js';
 import { PromiseCancellation, Dict } from '../../core/common.js';
 import { Ui } from '../../browser/ui.js';
+import { GlobalStore } from './global-store.js';
 
 /**
  * Local or session store of pass phrases
  */
-export class PassphraseStore extends AcctStore {
+export class PassphraseStore extends GlobalStore {
 
   public static passphraseSave = async (storageType: StorageType, acctEmail: string, longid: string, passphrase: string | undefined) => {
     const storageKey: AccountIndex = `passphrase_${longid}` as AccountIndex;
@@ -17,7 +18,7 @@ export class PassphraseStore extends AcctStore {
       await SessionStore.sessionSet(acctEmail, storageKey, passphrase);
     } else {
       if (typeof passphrase === 'undefined') {
-        await PassphraseStore.remove(acctEmail, [storageKey]);
+        await AcctStore.remove(acctEmail, [storageKey]);
       } else {
         const toSave: AcctStoreDict = {};
         // @ts-ignore - this is too dynamic for TS
