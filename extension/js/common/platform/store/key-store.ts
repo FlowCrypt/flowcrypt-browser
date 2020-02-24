@@ -3,11 +3,12 @@
 import { KeyInfo, PgpKey } from '../../core/pgp-key.js';
 import { AcctStore } from './acct-store.js';
 import { PassphraseStore } from './passphrase-store.js';
+import { AbstractStore } from './abstract-store.js';
 
 /**
  * Local store of account private keys
  */
-export class KeyStore extends AcctStore {
+export class KeyStore extends AbstractStore {
 
   public static keysGet = async (acctEmail: string, longids?: string[]): Promise<KeyInfo[]> => {
     const stored = await AcctStore.get(acctEmail, ['keys']);
