@@ -21,7 +21,7 @@ import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 import { AcctStore, EmailProvider } from '../../js/common/platform/store/acct-store.js';
-import { AcctKeyStore } from '../../js/common/platform/store/acct-key-store.js';
+import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { GlobalStore } from '../../js/common/platform/store/global-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 
@@ -201,7 +201,7 @@ View.run(class SettingsView extends View {
         if (this.advanced) {
           $("#settings").toggleClass("advanced");
         }
-        const privateKeys = await AcctKeyStore.keysGet(this.acctEmail);
+        const privateKeys = await KeyStore.keysGet(this.acctEmail);
         if (privateKeys.length > 4) {
           $('.key_list').css('overflow-y', 'scroll');
         }
@@ -405,7 +405,7 @@ View.run(class SettingsView extends View {
     }));
     $('.action_remove_key').click(this.setHandler(async target => {
       // the UI below only gets rendered when account_email is available
-      await AcctKeyStore.keysRemove(this.acctEmail!, $(target).attr('longid')!);
+      await KeyStore.keysRemove(this.acctEmail!, $(target).attr('longid')!);
       await PassphraseStore.passphraseSave('local', this.acctEmail!, $(target).attr('longid')!, undefined);
       await PassphraseStore.passphraseSave('session', this.acctEmail!, $(target).attr('longid')!, undefined);
       this.reload(true);

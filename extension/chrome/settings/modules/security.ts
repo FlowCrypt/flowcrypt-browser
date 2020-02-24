@@ -14,7 +14,7 @@ import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 
 View.run(class SecurityView extends View {
@@ -33,7 +33,7 @@ View.run(class SecurityView extends View {
 
   public render = async () => {
     await initPassphraseToggle(['passphrase_entry']);
-    [this.primaryKi] = await AcctKeyStore.keysGet(this.acctEmail, ['primary']);
+    [this.primaryKi] = await KeyStore.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     this.authInfo = await AcctStore.authInfo(this.acctEmail);
     const storage = await AcctStore.getAcct(this.acctEmail, ['hide_message_password', 'outgoing_language']);
@@ -51,7 +51,7 @@ View.run(class SecurityView extends View {
   }
 
   private renderPassPhraseOptionsIfStoredPermanently = async () => {
-    const keys = await AcctKeyStore.keysGet(this.acctEmail);
+    const keys = await KeyStore.keysGet(this.acctEmail);
     if (await this.isAnyPassPhraseStoredPermanently(keys)) {
       $('.forget_passphrase').css('display', '');
       $('.action_forget_pp').click(this.setHandler(() => {

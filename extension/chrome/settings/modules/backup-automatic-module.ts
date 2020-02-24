@@ -12,7 +12,7 @@ import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Assert } from '../../../js/common/assert.js';
 import { GoogleAuth } from '../../../js/common/api/google-auth.js';
-import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
 export class BackupAutomaticModule extends ViewModule<BackupView> {
 
@@ -25,7 +25,7 @@ export class BackupAutomaticModule extends ViewModule<BackupView> {
   }
 
   private setupCreateSimpleAutomaticInboxBackup = async () => {
-    const [primaryKi] = await AcctKeyStore.keysGet(this.view.acctEmail, ['primary']);
+    const [primaryKi] = await KeyStore.keysGet(this.view.acctEmail, ['primary']);
     if (!(await PgpKey.read(primaryKi.private)).isFullyEncrypted()) {
       await Ui.modal.warning('Key not protected with a pass phrase, skipping');
       throw new UnreportableError('Key not protected with a pass phrase, skipping');

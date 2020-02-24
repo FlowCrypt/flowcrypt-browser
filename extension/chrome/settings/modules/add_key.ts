@@ -14,7 +14,7 @@ import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
-import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
 View.run(class AddKeyView extends View {
 
@@ -74,7 +74,7 @@ View.run(class AddKeyView extends View {
     try {
       const checked = await this.keyImportUi.checkPrv(this.acctEmail, String($('.input_private_key').val()), String($('.input_passphrase').val()));
       if (checked) {
-        await AcctKeyStore.keysAdd(this.acctEmail, checked.normalized); // resulting new_key checked above
+        await KeyStore.keysAdd(this.acctEmail, checked.normalized); // resulting new_key checked above
         await PassphraseStore.passphraseSave($('.input_passphrase_save').prop('checked') ? 'local' : 'session', this.acctEmail,
           checked.longid, checked.passphrase);
         BrowserMsg.send.reload(this.parentTabId, { advanced: true });

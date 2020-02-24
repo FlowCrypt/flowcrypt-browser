@@ -3,7 +3,7 @@
 'use strict';
 
 import { Injector } from './inject.js';
-import { AcctKeyStore } from './platform/store/acct-key-store.js';
+import { KeyStore } from './platform/store/key-store.js';
 
 export class WebmailCommon {
   private acctEmail: string;
@@ -16,7 +16,7 @@ export class WebmailCommon {
 
   public addOrRemoveEndSessionBtnIfNeeded = async () => {
     const finishSessionBtn = $('.action_finish_session');
-    if ((await AcctKeyStore.getKeysCurrentlyInSession(this.acctEmail)).length) {
+    if ((await KeyStore.getKeysCurrentlyInSession(this.acctEmail)).length) {
       if (!finishSessionBtn.length) {
         await this.injector.insertEndSessionBtn(this.acctEmail);
       }

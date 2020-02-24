@@ -10,7 +10,7 @@ import { PgpKey } from './core/pgp-key.js';
 import { Settings } from './settings.js';
 import { Ui } from './browser/ui.js';
 import { Xss } from './platform/xss.js';
-import { AcctKeyStore } from './platform/store/acct-key-store.js';
+import { KeyStore } from './platform/store/key-store.js';
 import { AcctStore } from './platform/store/acct-store.js';
 
 /**
@@ -36,7 +36,7 @@ export class Assert {
 
   public static abortAndRenderErrOnUnprotectedKey = async (acctEmail?: string, tabId?: string) => {
     if (acctEmail) {
-      const [primaryKi] = await AcctKeyStore.keysGet(acctEmail, ['primary']);
+      const [primaryKi] = await KeyStore.keysGet(acctEmail, ['primary']);
       const { setup_done } = await AcctStore.getAcct(acctEmail, ['setup_done']);
       if (setup_done && primaryKi && !(await PgpKey.read(primaryKi.private)).isFullyEncrypted()) {
         if (window.location.pathname === '/chrome/settings/index.htm') {

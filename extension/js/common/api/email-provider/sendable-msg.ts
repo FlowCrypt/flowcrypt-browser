@@ -6,7 +6,7 @@ import { Dict, Str } from '../../core/common.js';
 import { Mime, MimeEncodeType, SendableMsgBody } from '../../core/mime.js';
 import { Att } from '../../core/att.js';
 import { RecipientType } from '../api.js';
-import { AcctKeyStore } from '../../platform/store/acct-key-store.js';
+import { KeyStore } from '../../platform/store/key-store.js';
 
 export type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
 export type ProviderContactsQuery = { substring: string };
@@ -28,7 +28,7 @@ export class SendableMsg {
   public sign?: (signable: string) => Promise<string>;
 
   public static create = async (acctEmail: string, { from, recipients, subject, body, atts, thread, type, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
-    const [primaryKi] = await AcctKeyStore.keysGet(acctEmail, ['primary']);
+    const [primaryKi] = await KeyStore.keysGet(acctEmail, ['primary']);
     const headers: Dict<string> = primaryKi ? { OpenPGP: `id=${primaryKi.longid}` } : {}; // todo - use autocrypt format
     return new SendableMsg(
       acctEmail,

@@ -13,7 +13,7 @@ import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
-import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
 View.run(class ChangePassPhraseView extends View {
 
@@ -33,13 +33,13 @@ View.run(class ChangePassPhraseView extends View {
 
   public render = async () => {
     await initPassphraseToggle(['current_pass_phrase', 'new_pass_phrase', 'new_pass_phrase_confirm']);
-    const privateKeys = await AcctKeyStore.keysGet(this.acctEmail);
+    const privateKeys = await KeyStore.keysGet(this.acctEmail);
     if (privateKeys.length > 1) {
       $('#step_0_enter_current .sentence').text('Enter the current passphrase for your primary key');
       $('#step_0_enter_current #current_pass_phrase').attr('placeholder', 'Current primary key pass phrase');
       $('#step_1_enter_new #new_pass_phrase').attr('placeholder', 'Enter a new primary key pass phrase');
     }
-    const [primaryKi] = await AcctKeyStore.keysGet(this.acctEmail, ['primary']);
+    const [primaryKi] = await KeyStore.keysGet(this.acctEmail, ['primary']);
     this.primaryKi = primaryKi;
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     const storedOrSessionPp = await PassphraseStore.passphraseGet(this.acctEmail, this.primaryKi.longid);
@@ -108,7 +108,7 @@ View.run(class ChangePassPhraseView extends View {
       await Ui.modal.error(`There was an unexpected error. Please ask for help at human@flowcrypt.com:\n\n${e instanceof Error ? e.stack : String(e)}`);
       return;
     }
-    await AcctKeyStore.keysAdd(this.acctEmail, this.primaryPrv!.armor());
+    await KeyStore.keysAdd(this.acctEmail, this.primaryPrv!.armor());
     const persistentlyStoredPp = await PassphraseStore.passphraseGet(this.acctEmail, this.primaryKi!.longid, true);
     await PassphraseStore.passphraseSave('local', this.acctEmail, this.primaryKi!.longid, typeof persistentlyStoredPp === 'undefined' ? undefined : newPp);
     await PassphraseStore.passphraseSave('session', this.acctEmail, this.primaryKi!.longid, typeof persistentlyStoredPp === 'undefined' ? newPp : undefined);

@@ -9,7 +9,7 @@ import { Catch } from './platform/catch.js';
 import { ContentScriptWindow } from './browser/browser-window.js';
 import { Dict } from './core/common.js';
 import { WebMailName } from './browser/env.js';
-import { AcctKeyStore } from './platform/store/acct-key-store.js';
+import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
 
 type Host = {
@@ -90,7 +90,7 @@ export class Injector {
     }
     prependToElem.append(this.factory.btnEndPPSession(this.webmailName)) // xss-safe-factory
       .find('.action_finish_session').click(Ui.event.prevent('double', async el => {
-        const keysInSession = await AcctKeyStore.getKeysCurrentlyInSession(acctEmail);
+        const keysInSession = await KeyStore.getKeysCurrentlyInSession(acctEmail);
         if (keysInSession.length) {
           await Promise.all(keysInSession.map(async k => await PassphraseStore.passphraseSave('session', acctEmail, k.longid, undefined)));
         }

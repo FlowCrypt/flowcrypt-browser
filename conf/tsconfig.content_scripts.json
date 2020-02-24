@@ -27,11 +27,6 @@
   },
   "include": [
     "../extension/types/*.ts",
-    "../extension/js/common/storage.ts",
-    "../extension/js/common/common.ts",
-    "../extension/js/common/factory.ts",
-    "../extension/js/common/inject.ts",
-    "../extension/js/common/notifications.ts",
     "../extension/js/content_scripts/**/*.ts"
   ],
   "exclude": [

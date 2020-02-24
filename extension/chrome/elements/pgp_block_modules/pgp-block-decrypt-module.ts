@@ -13,7 +13,7 @@ import { Mime } from '../../../js/common/core/mime.js';
 import { PgpBlockView } from '../pgp_block.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 
 export class PgpBlockViewDecryptModule {
@@ -84,7 +84,7 @@ export class PgpBlockViewDecryptModule {
 
   private decryptAndRender = async (encryptedData: Buf, optionalPwd?: string, plainSubject?: string) => {
     if (typeof this.view.signature !== 'string') {
-      const kisWithPp = await AcctKeyStore.keysGetAllWithPp(this.view.acctEmail);
+      const kisWithPp = await KeyStore.keysGetAllWithPp(this.view.acctEmail);
       const result = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, msgPwd: await this.view.pwdEncryptedMsgModule.getDecryptPwd(optionalPwd) });
       if (typeof result === 'undefined') {
         await this.view.errorModule.renderErr(Lang.general.restartBrowserAndTryAgain, undefined);
@@ -116,7 +116,7 @@ export class PgpBlockViewDecryptModule {
         this.view.renderModule.renderText('Decrypting...');
         await this.decryptAndRender(encryptedData, optionalPwd);
       } else {
-        const [primaryKi] = await AcctKeyStore.keysGet(this.view.acctEmail, ['primary']);
+        const [primaryKi] = await KeyStore.keysGet(this.view.acctEmail, ['primary']);
         if (!result.longids.chosen && !primaryKi) {
           await this.view.errorModule.renderErr(Lang.pgpBlock.notProperlySetUp + this.view.errorModule.btnHtml('FlowCrypt settings', 'green settings'), undefined);
         } else if (result.error.type === DecryptErrTypes.keyMismatch) {

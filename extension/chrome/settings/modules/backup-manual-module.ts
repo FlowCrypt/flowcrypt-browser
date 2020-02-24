@@ -19,7 +19,7 @@ import { Url, PromiseCancellation } from '../../../js/common/core/common.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
-import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
 export class BackupManualActionModule extends ViewModule<BackupView> {
 
@@ -61,7 +61,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
 
   private actionManualBackupHandler = async () => {
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
-    const [primaryKi] = await AcctKeyStore.keysGet(this.view.acctEmail, ['primary']);
+    const [primaryKi] = await KeyStore.keysGet(this.view.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     if (!await this.isPrivateKeyEncrypted(primaryKi)) {
       await Ui.modal.error('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');

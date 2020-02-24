@@ -14,7 +14,7 @@ import { Settings } from '../settings.js';
 import { Ui } from '../browser/ui.js';
 import { Url, Str } from '../core/common.js';
 import { opgp } from '../core/pgp.js';
-import { AcctKeyStore } from '../platform/store/acct-key-store.js';
+import { KeyStore } from '../platform/store/key-store.js';
 
 type KeyImportUiCheckResult = {
   normalized: string; longid: string; passphrase: string; fingerprint: string; decrypted: OpenPGP.key.Key;
@@ -228,7 +228,7 @@ export class KeyImportUi {
 
   private rejectKnownIfSelected = async (acctEmail: string, k: OpenPGP.key.Key) => {
     if (this.rejectKnown) {
-      const keyinfos = await AcctKeyStore.keysGet(acctEmail);
+      const keyinfos = await KeyStore.keysGet(acctEmail);
       const privateKeysLongids = keyinfos.map(ki => ki.longid);
       if (privateKeysLongids.includes(String(await PgpKey.longid(k)))) {
         throw new UserAlert('This is one of your current keys, try another one.');

@@ -14,7 +14,7 @@ import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
-import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
 View.run(class ManualDecryptView extends View {
 
@@ -55,7 +55,7 @@ View.run(class ManualDecryptView extends View {
   }
 
   private decryptAndDownload = async (encrypted: Att) => { // todo - this is more or less copy-pasted from att.js, should use common function
-    const result = await PgpMsg.decrypt({ kisWithPp: await AcctKeyStore.keysGetAllWithPp(this.acctEmail), encryptedData: encrypted.getData() });
+    const result = await PgpMsg.decrypt({ kisWithPp: await KeyStore.keysGetAllWithPp(this.acctEmail), encryptedData: encrypted.getData() });
     if (result.success) {
       const attachment = new Att({ name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content });
       Browser.saveToDownloads(attachment);

@@ -14,7 +14,7 @@ import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
-import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
 
@@ -133,7 +133,7 @@ View.run(class ExperimentalView extends View {
     text.push('global_storage: ' + JSON.stringify(globalStorage));
     text.push('account_storage: ' + JSON.stringify(acctStorage));
     text.push('');
-    const keyinfos = await AcctKeyStore.keysGet(this.acctEmail);
+    const keyinfos = await KeyStore.keysGet(this.acctEmail);
     for (const keyinfo of keyinfos) {
       text.push('');
       text.push('key_longid: ' + keyinfo.longid);

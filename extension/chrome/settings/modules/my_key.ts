@@ -17,7 +17,7 @@ import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { Rules } from '../../../js/common/rules.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
-import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
 declare const ClipboardJS: any;
 
@@ -43,7 +43,7 @@ View.run(class MyKeyView extends View {
   public render = async () => {
     this.rules = await Rules.newInstance(this.acctEmail);
     this.keyserver = new Keyserver(this.rules);
-    [this.keyInfo] = await AcctKeyStore.keysGet(this.acctEmail, [this.longid]);
+    [this.keyInfo] = await KeyStore.keysGet(this.acctEmail, [this.longid]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
     $('.action_view_update').attr('href', this.myKeyUpdateUrl);

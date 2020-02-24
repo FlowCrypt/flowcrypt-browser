@@ -14,7 +14,7 @@ import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { opgp } from '../../../js/common/core/pgp.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
-import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
@@ -35,7 +35,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   }
 
   public getKey = async (senderEmail: string): Promise<KeyInfo> => {
-    const keys = await AcctKeyStore.keysGet(this.view.acctEmail);
+    const keys = await KeyStore.keysGet(this.view.acctEmail);
     let result = await this.view.myPubkeyModule.chooseMyPublicKeyBySenderEmail(keys, senderEmail);
     if (!result) {
       this.view.errModule.debug(`ComposerStorage.getKey: could not find key based on senderEmail: ${senderEmail}, using primary instead`);
@@ -100,7 +100,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   public passphraseGet = async (senderKi?: KeyInfo) => {
     if (!senderKi) {
-      [senderKi] = await AcctKeyStore.keysGet(this.view.acctEmail, ['primary']);
+      [senderKi] = await KeyStore.keysGet(this.view.acctEmail, ['primary']);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(senderKi);
     }
     return await PassphraseStore.passphraseGet(this.view.acctEmail, senderKi.longid);

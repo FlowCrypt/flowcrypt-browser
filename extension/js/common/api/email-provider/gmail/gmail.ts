@@ -23,7 +23,7 @@ import { PgpArmor } from '../../../core/pgp-armor.js';
 import { PgpKey } from '../../../core/pgp-key.js';
 import { SendableMsg } from '../sendable-msg.js';
 import { Xss } from '../../../platform/xss.js';
-import { AcctKeyStore } from '../../../platform/store/acct-key-store.js';
+import { KeyStore } from '../../../platform/store/key-store.js';
 import { ContactStore } from '../../../platform/store/contact-store.js';
 
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
@@ -338,8 +338,8 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     }
     await this.fetchAtts(atts);
     const { keys: foundBackupKeys } = await PgpKey.readMany(Buf.fromUtfStr(atts.map(a => a.getData().toUtfStr()).join('\n')));
-    const backups = await Promise.all(foundBackupKeys.map(k => AcctKeyStore.keyInfoObj(k)));
-    const imported = await AcctKeyStore.keysGet(this.acctEmail);
+    const backups = await Promise.all(foundBackupKeys.map(k => KeyStore.keyInfoObj(k)));
+    const imported = await KeyStore.keysGet(this.acctEmail);
     const importedLongids = imported.map(ki => ki.longid);
     const backedUpLongids = backups.map(ki => ki.longid);
     const keyinfos = {

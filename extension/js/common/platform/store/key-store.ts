@@ -4,10 +4,10 @@ import { KeyInfo, PgpKey } from '../../core/pgp-key.js';
 import { AcctStore } from './acct-store.js';
 import { PassphraseStore } from './passphrase-store.js';
 
-export class AcctKeyStore extends AcctStore {
+export class KeyStore extends AcctStore {
 
   public static keysGet = async (acctEmail: string, longids?: string[]): Promise<KeyInfo[]> => {
-    const stored = await AcctKeyStore.getAcct(acctEmail, ['keys']);
+    const stored = await KeyStore.getAcct(acctEmail, ['keys']);
     const keys: KeyInfo[] = stored.keys || [];
     if (!longids) {
       return keys;
@@ -16,7 +16,7 @@ export class AcctKeyStore extends AcctStore {
   }
 
   public static keysGetAllWithPp = async (acctEmail: string): Promise<KeyInfo[]> => {
-    const keys = await AcctKeyStore.keysGet(acctEmail);
+    const keys = await KeyStore.keysGet(acctEmail);
     for (const ki of keys) {
       ki.passphrase = await PassphraseStore.passphraseGet(acctEmail, ki.longid);
     }
@@ -24,7 +24,7 @@ export class AcctKeyStore extends AcctStore {
   }
 
   public static keysAdd = async (acctEmail: string, newKeyArmored: string) => {
-    const keyinfos = await AcctKeyStore.keysGet(acctEmail);
+    const keyinfos = await KeyStore.keysGet(acctEmail);
     let updated = false;
     const prv = await PgpKey.read(newKeyArmored);
     if (!prv.isFullyEncrypted()) {
@@ -34,26 +34,26 @@ export class AcctKeyStore extends AcctStore {
     if (newKeyLongid) {
       for (const i in keyinfos) {
         if (newKeyLongid === keyinfos[i].longid) { // replacing a key
-          keyinfos[i] = await AcctKeyStore.keyInfoObj(prv, keyinfos[i].primary);
+          keyinfos[i] = await KeyStore.keyInfoObj(prv, keyinfos[i].primary);
           updated = true;
         }
       }
       if (!updated) {
-        keyinfos.push(await AcctKeyStore.keyInfoObj(prv, keyinfos.length === 0));
+        keyinfos.push(await KeyStore.keyInfoObj(prv, keyinfos.length === 0));
       }
-      await AcctKeyStore.setAcct(acctEmail, { keys: keyinfos });
+      await KeyStore.setAcct(acctEmail, { keys: keyinfos });
     }
   }
 
   public static keysRemove = async (acctEmail: string, removeLongid: string): Promise<void> => {
-    const privateKeys = await AcctKeyStore.keysGet(acctEmail);
+    const privateKeys = await KeyStore.keysGet(acctEmail);
     const filteredPrivateKeys = privateKeys.filter(ki => ki.longid !== removeLongid);
-    await AcctKeyStore.setAcct(acctEmail, { keys: filteredPrivateKeys });
+    await KeyStore.setAcct(acctEmail, { keys: filteredPrivateKeys });
   }
 
   public static getKeysCurrentlyInSession = async (acctEmail: string) => {
     // todo - rename
-    const keys = await AcctKeyStore.keysGet(acctEmail);
+    const keys = await KeyStore.keysGet(acctEmail);
     const result: Array<KeyInfo> = [];
     for (const key of keys) {
       // Check if passpharse in the session

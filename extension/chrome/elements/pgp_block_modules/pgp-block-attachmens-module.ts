@@ -10,7 +10,7 @@ import { PgpBlockView } from '../pgp_block';
 import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
 export class PgpBlockViewAttachmentsModule {
 
@@ -45,7 +45,7 @@ export class PgpBlockViewAttachmentsModule {
   }
 
   private decryptAndSaveAttToDownloads = async (encrypted: Att, renderIn: JQuery<HTMLElement>) => {
-    const kisWithPp = await AcctKeyStore.keysGetAllWithPp(this.view.acctEmail);
+    const kisWithPp = await KeyStore.keysGetAllWithPp(this.view.acctEmail);
     const decrypted = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData: encrypted.getData(), msgPwd: await this.view.pwdEncryptedMsgModule.getDecryptPwd() }); // eslint-disable-line max-len
     if (decrypted.success) {
       const att = new Att({ name: encrypted.name.replace(/\.(pgp|gpg)$/, ''), type: encrypted.type, data: decrypted.content });

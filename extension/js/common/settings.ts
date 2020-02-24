@@ -22,7 +22,7 @@ import { storageLocalGetAll } from './api/chrome.js';
 import { AcctStore, SendAsAlias } from './platform/store/acct-store.js';
 import { GlobalStore } from './platform/store/global-store.js';
 import { AbstractStore } from './platform/store/abstract-store.js';
-import { AcctKeyStore } from './platform/store/acct-key-store.js';
+import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
 
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
@@ -120,7 +120,7 @@ export class Settings {
     const oldAcctEmailIndexPrefix = AbstractStore.singleScopeRawIndex(oldAcctEmail, '');
     const newAcctEmailIndexPrefix = AbstractStore.singleScopeRawIndex(newAcctEmail, '');
     // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
-    const destAccountPrivateKeys = await AcctKeyStore.keysGet(newAcctEmail);
+    const destAccountPrivateKeys = await KeyStore.keysGet(newAcctEmail);
     const destAcctPassPhrases: Dict<string> = {};
     for (const ki of destAccountPrivateKeys) {
       const pp = await PassphraseStore.passphraseGet(newAcctEmail, ki.longid, true);
@@ -148,7 +148,7 @@ export class Settings {
       }
     }
     for (const ki of destAccountPrivateKeys) {
-      await AcctKeyStore.keysAdd(newAcctEmail, ki.private);
+      await KeyStore.keysAdd(newAcctEmail, ki.private);
     }
     for (const longid of Object.keys(destAcctPassPhrases)) {
       await PassphraseStore.passphraseSave('local', newAcctEmail, longid, destAcctPassPhrases[longid]);

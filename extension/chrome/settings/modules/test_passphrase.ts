@@ -12,7 +12,7 @@ import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
-import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
 View.run(class TestPassphrase extends View {
   private readonly acctEmail: string;
@@ -27,7 +27,7 @@ View.run(class TestPassphrase extends View {
   }
 
   public render = async () => {
-    const [keyInfo] = await AcctKeyStore.keysGet(this.acctEmail, ['primary']);
+    const [keyInfo] = await KeyStore.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(keyInfo);
     await initPassphraseToggle(['password']);
     this.primaryKey = await PgpKey.read(keyInfo.private);

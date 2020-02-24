@@ -25,7 +25,7 @@ import { Xss } from '../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 import { Keyserver } from '../../js/common/api/keyserver.js';
 import { Scopes, AcctStoreDict, AcctStore } from '../../js/common/platform/store/acct-store.js';
-import { AcctKeyStore } from '../../js/common/platform/store/acct-key-store.js';
+import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 
@@ -172,7 +172,7 @@ export class SetupView extends View {
   }
 
   public finalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
-    const [primaryKi] = await AcctKeyStore.keysGet(this.acctEmail, ['primary']);
+    const [primaryKi] = await KeyStore.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
       await this.submitPublicKeyIfNeeded(primaryKi.public, { submit_main, submit_all });
@@ -190,7 +190,7 @@ export class SetupView extends View {
         await Ui.modal.error('Cannot save keys to storage because at least one of them is not valid.');
         return;
       }
-      await AcctKeyStore.keysAdd(this.acctEmail, prv.armor());
+      await KeyStore.keysAdd(this.acctEmail, prv.armor());
       await PassphraseStore.passphraseSave(options.passphrase_save ? 'local' : 'session', this.acctEmail, longid, options.passphrase);
     }
     const myOwnEmailAddrsAsContacts: Contact[] = [];

@@ -8,7 +8,7 @@ import { Assert } from '../../../js/common/assert.js';
 import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { AcctKeyStore } from '../../../js/common/platform/store/acct-key-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
 View.run(class MyKeyUserIdsView extends View {
   private readonly acctEmail: string;
@@ -24,7 +24,7 @@ View.run(class MyKeyUserIdsView extends View {
   }
 
   public render = async () => {
-    [this.primaryKi] = await AcctKeyStore.keysGet(this.acctEmail, [this.longid]);
+    [this.primaryKi] = await KeyStore.keysGet(this.acctEmail, [this.longid]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     $('.action_show_public_key').attr('href', this.myKeyUrl);
     const prv = await PgpKey.read(this.primaryKi.private);
