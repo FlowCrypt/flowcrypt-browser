@@ -28,7 +28,7 @@ export class PassphraseStore extends AbstractStore {
 
   public static get = async (acctEmail: string, longid: string, ignoreSession: boolean = false): Promise<string | undefined> => {
     const storageKey = `passphrase_${longid}` as AccountIndex;
-    const storage = await AcctStore.get(acctEmail, [storageKey as AccountIndex]);
+    const storage = await AcctStore.get(acctEmail, [storageKey]);
     const found = storage[storageKey];
     if (typeof found === 'string') {
       return found;
