@@ -20,8 +20,7 @@ export class PassphraseStore extends AbstractStore {
         await AcctStore.remove(acctEmail, [storageKey]);
       } else {
         const toSave: AcctStoreDict = {};
-        // @ts-ignore - this is too dynamic for TS
-        toSave[storageKey] = passphrase;
+        toSave[storageKey] = passphrase as any;
         await AcctStore.set(acctEmail, toSave);
       }
     }
