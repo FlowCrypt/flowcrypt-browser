@@ -1,16 +1,15 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { StorageType } from './abstract-store.js';
+import { StorageType, AbstractStore } from './abstract-store.js';
 import { AccountIndex, AcctStore, AcctStoreDict } from './acct-store.js';
 import { SessionStore } from './session-store.js';
 import { PromiseCancellation, Dict } from '../../core/common.js';
 import { Ui } from '../../browser/ui.js';
-import { GlobalStore } from './global-store.js';
 
 /**
  * Local or session store of pass phrases
  */
-export class PassphraseStore extends GlobalStore {
+export class PassphraseStore extends AbstractStore {
 
   public static passphraseSave = async (storageType: StorageType, acctEmail: string, longid: string, passphrase: string | undefined) => {
     const storageKey: AccountIndex = `passphrase_${longid}` as AccountIndex;
