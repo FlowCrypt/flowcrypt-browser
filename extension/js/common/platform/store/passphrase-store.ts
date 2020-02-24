@@ -22,7 +22,7 @@ export class PassphraseStore extends AcctStore {
         const toSave: AcctStoreDict = {};
         // @ts-ignore - this is too dynamic for TS
         toSave[storageKey] = passphrase;
-        await PassphraseStore.setAcct(acctEmail, toSave);
+        await AcctStore.setAcct(acctEmail, toSave);
       }
     }
   }
