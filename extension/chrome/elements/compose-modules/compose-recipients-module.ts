@@ -299,7 +299,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (!theirEmail) {
       return false;
     }
-    const storage = await AcctStore.getAcct(this.view.acctEmail, ['pubkey_sent_to']);
+    const storage = await AcctStore.get(this.view.acctEmail, ['pubkey_sent_to']);
     if (storage.pubkey_sent_to && storage.pubkey_sent_to.includes(theirEmail)) {
       return true;
     }
@@ -311,7 +311,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     try {
       const response = await this.view.emailProvider.msgList(`(${qSentPubkey}) OR (${qReceivedMsg})`, true);
       if (response.messages) {
-        await AcctStore.setAcct(this.view.acctEmail, { pubkey_sent_to: (storage.pubkey_sent_to || []).concat(theirEmail) });
+        await AcctStore.set(this.view.acctEmail, { pubkey_sent_to: (storage.pubkey_sent_to || []).concat(theirEmail) });
         return true;
       } else {
         return false;

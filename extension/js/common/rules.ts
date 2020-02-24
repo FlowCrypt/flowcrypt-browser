@@ -23,7 +23,7 @@ export class Rules {
     if (!email) {
       throw new Error(`Not a valid email:${acctEmail}`);
     }
-    const storage = await AcctStore.getAcct(email, ['rules']);
+    const storage = await AcctStore.get(email, ['rules']);
     return new Rules(storage.rules || Rules.default);
   }
 

@@ -18,7 +18,7 @@ View.run(class DefaultPopupView extends View {
   public render = async () => {
     const activeTab = await BrowserMsg.send.bg.await.getActiveTabInfo();
     if (activeTab?.acctEmail) {
-      const { setup_done } = await AcctStore.getAcct(activeTab.acctEmail, ['setup_done']);
+      const { setup_done } = await AcctStore.get(activeTab.acctEmail, ['setup_done']);
       if (setup_done) {
         this.renderChooseEmailOrSettingsPopup(activeTab.acctEmail);
       } else {

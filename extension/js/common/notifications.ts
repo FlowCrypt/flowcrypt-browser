@@ -21,9 +21,9 @@ export class Notifications {
   }
 
   public showInitial = async (acctEmail: string) => {
-    const acctStorage = await AcctStore.getAcct(acctEmail, ['notification_setup_done_seen']);
+    const acctStorage = await AcctStore.get(acctEmail, ['notification_setup_done_seen']);
     if (!acctStorage.notification_setup_done_seen) {
-      await AcctStore.setAcct(acctEmail, { notification_setup_done_seen: true });
+      await AcctStore.set(acctEmail, { notification_setup_done_seen: true });
       this.show('FlowCrypt was successfully set up for this account. <a href="#" class="close" data-test="notification-successfully-setup-action-close">close</a>');
     }
   }

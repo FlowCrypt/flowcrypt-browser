@@ -85,13 +85,13 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
   const showNotificationsAndWaitTilAcctSetUp = async (acctEmail: string, notifications: Notifications) => {
     let showSetupNeededNotificationIfSetupNotDone = true;
     while (true) {
-      const storage = await AcctStore.getAcct(acctEmail, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed']);
+      const storage = await AcctStore.get(acctEmail, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed']);
       if (storage.setup_done === true && storage.cryptup_enabled !== false) { // "not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
         notifications.clear();
         return;
       } else if (!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && showSetupNeededNotificationIfSetupNotDone && storage.cryptup_enabled !== false) {
         notifications.show(setUpNotification, {
-          notification_setup_needed_dismiss: () => AcctStore.setAcct(acctEmail, { notification_setup_needed_dismissed: true }).then(() => notifications.clear()).catch(Catch.reportErr),
+          notification_setup_needed_dismiss: () => AcctStore.set(acctEmail, { notification_setup_needed_dismissed: true }).then(() => notifications.clear()).catch(Catch.reportErr),
           action_open_settings: () => BrowserMsg.send.bg.settings({ acctEmail }),
           close: () => {
             showSetupNeededNotificationIfSetupNotDone = false;
@@ -172,13 +172,13 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
   };
 
   const saveAcctEmailFullNameIfNeeded = async (acctEmail: string) => {
-    const storage = await AcctStore.getAcct(acctEmail, ['full_name']);
+    const storage = await AcctStore.get(acctEmail, ['full_name']);
     let timeout = 1000;
     if (typeof storage.full_name === 'undefined') {
       while (true) {
         const fullName = webmailSpecific.getUserFullName();
         if (fullName) {
-          await AcctStore.setAcct(acctEmail, { full_name: fullName });
+          await AcctStore.set(acctEmail, { full_name: fullName });
           return;
         }
         await Ui.time.sleep(timeout, win.TrySetDestroyableTimeout);

@@ -181,7 +181,7 @@ View.run(class SettingsView extends View {
       await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId);
     } else if (this.acctEmail) {
       $('.email-address').text(this.acctEmail);
-      const storage = await AcctStore.getAcct(this.acctEmail, ['setup_done', 'email_provider', 'picture']);
+      const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider', 'picture']);
       if (storage.setup_done) {
         const rules = await Rules.newInstance(this.acctEmail);
         if (!rules.canBackupKeys()) {

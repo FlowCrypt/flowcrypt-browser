@@ -77,7 +77,7 @@ export class Backend extends Api {
   //   if (response.registered !== true) {
   //     throw new Error('account_login did not result in successful registration');
   //   }
-  //   await AcctStore.setAcct(account, { uuid, subscription: response.subscription });
+  //   await AcctStore.set(account, { uuid, subscription: response.subscription });
   //   return { verified: response.verified === true, subscription: response.subscription };
   // }
 
@@ -93,14 +93,14 @@ export class Backend extends Api {
     if (response.verified !== true) {
       throw new Error('account_login with id_token did not result in successful verificaion');
     }
-    await AcctStore.setAcct(acctEmail, { uuid });
+    await AcctStore.set(acctEmail, { uuid });
   }
 
   public static getSubscriptionWithoutLogin = async (acctEmail: string) => {
     const r = await Backend.request<BackendRes.FcAccountCheck>('account/check', {
       emails: [acctEmail],
     });
-    await AcctStore.setAcct(acctEmail, { subscription: r.subscription || undefined });
+    await AcctStore.set(acctEmail, { subscription: r.subscription || undefined });
     return r;
   }
 
@@ -115,7 +115,7 @@ export class Backend extends Api {
   public static accountGetAndUpdateLocalStore = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcAccountGet> => {
     Backend.throwIfMissingUuid(fcAuth);
     const r = await Backend.request<BackendRes.FcAccountGet>('account/get', fcAuth);
-    await AcctStore.setAcct(fcAuth.account, { rules: r.domain_org_rules, subscription: r.subscription });
+    await AcctStore.set(fcAuth.account, { rules: r.domain_org_rules, subscription: r.subscription });
     return r;
   }
 
@@ -127,7 +127,7 @@ export class Backend extends Api {
       source: paymentSourceToken || null, // tslint:disable-line:no-null-keyword
       product,
     });
-    await AcctStore.setAcct(fcAuth.account, { subscription: response.subscription });
+    await AcctStore.set(fcAuth.account, { subscription: response.subscription });
     return response;
   }
 

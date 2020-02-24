@@ -164,7 +164,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   }
 
   private formatPwdEncryptedMsgBodyLink = async (short: string): Promise<SendableMsgBody> => {
-    const storage = await AcctStore.getAcct(this.acctEmail, ['outgoing_language']);
+    const storage = await AcctStore.get(this.acctEmail, ['outgoing_language']);
     const lang = storage.outgoing_language || 'EN';
     const msgUrl = Backend.url('decrypt', short);
     const aStyle = `padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;`;

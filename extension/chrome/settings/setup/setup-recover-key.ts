@@ -66,7 +66,7 @@ export class SetupRecoverKeyModule {
         is_newly_created_key: false,
       };
       await this.view.saveKeys(newlyMatchingKeys, options);
-      const { setup_done } = await AcctStore.getAcct(this.view.acctEmail, ['setup_done']);
+      const { setup_done } = await AcctStore.get(this.view.acctEmail, ['setup_done']);
       if (!setup_done) { // normal situation - fresh setup
         await this.view.preFinalizeSetup(options);
         await this.view.finalizeSetup(options);

@@ -92,7 +92,7 @@ export class SetupView extends View {
   public render = async () => {
     await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
     await initPassphraseToggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
-    this.storage = await AcctStore.getAcct(this.acctEmail, ['setup_done', 'email_provider']);
+    this.storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider']);
     this.scopes = await AcctStore.getScopes(this.acctEmail);
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.rules = await Rules.newInstance(this.acctEmail);
@@ -164,7 +164,7 @@ export class SetupView extends View {
   }
 
   public preFinalizeSetup = async (options: SetupOptions): Promise<void> => {
-    await AcctStore.setAcct(this.acctEmail, {
+    await AcctStore.set(this.acctEmail, {
       tmp_submit_main: options.submit_main,
       tmp_submit_all: options.submit_all,
       is_newly_created_key: options.is_newly_created_key,
@@ -179,7 +179,7 @@ export class SetupView extends View {
     } catch (e) {
       return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToSubmitToAttester, () => this.finalizeSetup({ submit_main, submit_all }));
     }
-    await AcctStore.setAcct(this.acctEmail, { setup_date: Date.now(), setup_done: true, cryptup_enabled: true });
+    await AcctStore.set(this.acctEmail, { setup_date: Date.now(), setup_done: true, cryptup_enabled: true });
     await AcctStore.remove(this.acctEmail, ['tmp_submit_main', 'tmp_submit_all']);
   }
 
@@ -194,7 +194,7 @@ export class SetupView extends View {
       await PassphraseStore.passphraseSave(options.passphrase_save ? 'local' : 'session', this.acctEmail, longid, options.passphrase);
     }
     const myOwnEmailAddrsAsContacts: Contact[] = [];
-    const { full_name: name } = await AcctStore.getAcct(this.acctEmail, ['full_name']);
+    const { full_name: name } = await AcctStore.get(this.acctEmail, ['full_name']);
     for (const email of this.submitKeyForAddrs) {
       myOwnEmailAddrsAsContacts.push(await ContactStore.dbContactObj({
         email,

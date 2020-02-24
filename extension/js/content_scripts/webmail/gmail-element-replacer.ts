@@ -506,7 +506,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
       // cache for subseqent loop runs
-      const { drafts_reply } = await AcctStore.getAcct(this.acctEmail, ['drafts_reply']);
+      const { drafts_reply } = await AcctStore.get(this.acctEmail, ['drafts_reply']);
       const convoRootEl = this.getGonvoRootEl(newReplyBoxes[0]);
       const replyParams = this.getLastMsgReplyParams(convoRootEl!);
       const threadId = this.determineThreadId(convoRootEl!);

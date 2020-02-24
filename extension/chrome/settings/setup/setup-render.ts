@@ -25,7 +25,7 @@ export class SetupRenderModule {
     if (this.view.storage!.email_provider === 'gmail') { // show alternative account addresses in setup form + save them for later
       try {
         await Settings.refreshSendAs(this.view.acctEmail);
-        const { sendAs } = await AcctStore.getAcct(this.view.acctEmail, ['sendAs']);
+        const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
         this.saveAndFillSubmitPubkeysOption(Object.keys(sendAs!));
       } catch (e) {
         return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToLoadEmailAliases, () => this.renderInitial());
@@ -39,7 +39,7 @@ export class SetupRenderModule {
         await this.view.setupRecoverKey.renderAddKeyFromBackup();
       }
     } else if (this.view.action === 'finalize') {
-      const { tmp_submit_all, tmp_submit_main } = await AcctStore.getAcct(this.view.acctEmail, ['tmp_submit_all', 'tmp_submit_main']);
+      const { tmp_submit_all, tmp_submit_main } = await AcctStore.get(this.view.acctEmail, ['tmp_submit_all', 'tmp_submit_main']);
       if (typeof tmp_submit_all === 'undefined' || typeof tmp_submit_main === 'undefined') {
         $('#content').text(`Setup session expired. To set up FlowCrypt, please click the FlowCrypt icon on top right.`);
         return;

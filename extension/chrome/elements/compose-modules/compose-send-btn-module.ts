@@ -188,7 +188,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   }
 
   private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
-    const { sendAs } = await AcctStore.getAcct(this.view.acctEmail, ['sendAs']);
+    const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
     const addNameToEmail = async (emails: string[]): Promise<string[]> => {
       return await Promise.all(emails.map(async email => {
         let name: string | undefined;

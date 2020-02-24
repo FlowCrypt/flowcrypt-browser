@@ -36,7 +36,7 @@ View.run(class SecurityView extends View {
     [this.primaryKi] = await KeyStore.keysGet(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     this.authInfo = await AcctStore.authInfo(this.acctEmail);
-    const storage = await AcctStore.getAcct(this.acctEmail, ['hide_message_password', 'outgoing_language']);
+    const storage = await AcctStore.get(this.acctEmail, ['hide_message_password', 'outgoing_language']);
     $('#hide_message_password').prop('checked', storage.hide_message_password === true);
     $('.password_message_language').val(storage.outgoing_language || 'EN');
     await this.renderPassPhraseOptionsIfStoredPermanently();
@@ -112,13 +112,13 @@ View.run(class SecurityView extends View {
   private onMsgLanguageUserChange = async () => {
     const outgoingLanguage = String($('.password_message_language').val());
     if (['EN', 'DE'].includes(outgoingLanguage)) {
-      await AcctStore.setAcct(this.acctEmail, { outgoing_language: outgoingLanguage as 'DE' | 'EN' });
+      await AcctStore.set(this.acctEmail, { outgoing_language: outgoingLanguage as 'DE' | 'EN' });
       window.location.reload();
     }
   }
 
   private hideMsgPasswordHandler = async (checkbox: HTMLElement) => {
-    await AcctStore.setAcct(this.acctEmail, { hide_message_password: $(checkbox).is(':checked') });
+    await AcctStore.set(this.acctEmail, { hide_message_password: $(checkbox).is(':checked') });
     window.location.reload();
   }
 

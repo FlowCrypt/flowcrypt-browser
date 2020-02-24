@@ -140,7 +140,7 @@ export class ComposeView extends View {
   }
 
   public render = async () => {
-    const storage = await AcctStore.getAcct(this.acctEmail, ['sendAs', 'hide_message_password', 'drafts_reply']);
+    const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password', 'drafts_reply']);
     this.rules = await Rules.newInstance(this.acctEmail);
     this.keyserver = new Keyserver(this.rules);
     this.tabId = await BrowserMsg.requiredTabId();

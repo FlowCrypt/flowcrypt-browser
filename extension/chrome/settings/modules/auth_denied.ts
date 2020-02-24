@@ -25,7 +25,7 @@ View.run(class AuthDeniedView extends View {
     if (!this.acctEmail) {
       this.renderSetupDone(false);
     } else {
-      const { setup_done } = await AcctStore.getAcct(this.acctEmail!, ['setup_done']);
+      const { setup_done } = await AcctStore.get(this.acctEmail!, ['setup_done']);
       this.renderSetupDone(!!setup_done);
     }
     $('.hidable').not(`.${this.emailProvider}`).css('display', 'none');

@@ -64,7 +64,7 @@ export class SetupCreateKeyModule {
 
   public createSaveKeyPair = async (options: SetupOptions, keyAlgo: KeyAlgo) => {
     await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.rules);
-    const { full_name } = await AcctStore.getAcct(this.view.acctEmail, ['full_name']);
+    const { full_name } = await AcctStore.get(this.view.acctEmail, ['full_name']);
     try {
       const key = await PgpKey.create([{ name: full_name || '', email: this.view.acctEmail }], keyAlgo, options.passphrase); // todo - add all addresses?
       options.is_newly_created_key = true;

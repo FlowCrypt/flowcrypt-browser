@@ -10,7 +10,7 @@ import { PassphraseStore } from './passphrase-store.js';
 export class KeyStore extends AcctStore {
 
   public static keysGet = async (acctEmail: string, longids?: string[]): Promise<KeyInfo[]> => {
-    const stored = await AcctStore.getAcct(acctEmail, ['keys']);
+    const stored = await AcctStore.get(acctEmail, ['keys']);
     const keys: KeyInfo[] = stored.keys || [];
     if (!longids) {
       return keys;
@@ -44,14 +44,14 @@ export class KeyStore extends AcctStore {
       if (!updated) {
         keyinfos.push(await KeyStore.keyInfoObj(prv, keyinfos.length === 0));
       }
-      await AcctStore.setAcct(acctEmail, { keys: keyinfos });
+      await AcctStore.set(acctEmail, { keys: keyinfos });
     }
   }
 
   public static keysRemove = async (acctEmail: string, removeLongid: string): Promise<void> => {
     const privateKeys = await KeyStore.keysGet(acctEmail);
     const filteredPrivateKeys = privateKeys.filter(ki => ki.longid !== removeLongid);
-    await AcctStore.setAcct(acctEmail, { keys: filteredPrivateKeys });
+    await AcctStore.set(acctEmail, { keys: filteredPrivateKeys });
   }
 
   public static getKeyLongidsThatCurrentlyHavePassPhraseInSession = async (acctEmail: string): Promise<string[]> => {

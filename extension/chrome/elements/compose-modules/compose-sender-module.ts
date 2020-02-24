@@ -24,7 +24,7 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
 
   public renderSendFromOrChevron = async () => {
     if (this.view.isReplyBox) {
-      const { sendAs } = await AcctStore.getAcct(this.view.acctEmail, ['sendAs']);
+      const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
       if (Object.keys(sendAs!).length > 1) {
         const showAliasChevronHtml = '<img tabindex="22" id="render_send_from" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
         const inputAddrContainer = this.view.S.cached('container_cc_bcc_buttons');
@@ -59,7 +59,7 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
   }
 
   private renderSendFromIfMoreThanOneAlias = async () => {
-    const { sendAs } = await AcctStore.getAcct(this.view.acctEmail, ['sendAs']);
+    const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
     $('#render_send_from').remove(); // created in renderSendFromChevron, if any
     const emailAliases = Object.keys(sendAs!);
     const inputAddrContainer = $('.recipients-inputs');

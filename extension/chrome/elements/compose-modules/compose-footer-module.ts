@@ -10,7 +10,7 @@ import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 export class ComposeFooterModule extends ViewModule<ComposeView> {
 
   public getFooterFromStorage = async (sender: string): Promise<string | undefined> => {
-    const { sendAs } = await AcctStore.getAcct(this.view.acctEmail, ['sendAs']);
+    const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
     if (!sendAs) {
       return;
     }

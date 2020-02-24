@@ -53,8 +53,8 @@ export class Settings {
   public static refreshSendAs = async (acctEmail: string) => {
     const fetchedSendAs = await Settings.fetchAcctAliasesFromGmail(acctEmail);
     const result = { defaultEmailChanged: false, aliasesChanged: false, footerChanged: false, sendAs: fetchedSendAs };
-    const { sendAs: storedSendAs } = await AcctStore.getAcct(acctEmail, ['sendAs']);
-    await AcctStore.setAcct(acctEmail, { sendAs: fetchedSendAs });
+    const { sendAs: storedSendAs } = await AcctStore.get(acctEmail, ['sendAs']);
+    await AcctStore.set(acctEmail, { sendAs: fetchedSendAs });
     if (!storedSendAs) { // Aliases changed (it was previously undefined)
       result.aliasesChanged = true;
       return result;
@@ -138,8 +138,8 @@ export class Settings {
         storageIndexesToChange.push(key.replace(oldAcctEmailIndexPrefix, ''));
       }
     }
-    const oldAcctStorage = await AcctStore.getAcct(oldAcctEmail, storageIndexesToChange as any);
-    await AcctStore.setAcct(newAcctEmail, oldAcctStorage);
+    const oldAcctStorage = await AcctStore.get(oldAcctEmail, storageIndexesToChange as any);
+    await AcctStore.set(newAcctEmail, oldAcctStorage);
     for (const sessionStorageIndex of Object.keys(sessionStorage)) {
       if (sessionStorageIndex.indexOf(oldAcctEmailIndexPrefix) === 0) {
         const v = sessionStorage.getItem(sessionStorageIndex);
@@ -264,12 +264,12 @@ export class Settings {
       const response = await GoogleAuth.newAuthPopup({ acctEmail, scopes });
       if (response.result === 'Success' && response.acctEmail) {
         await GlobalStore.acctEmailsAdd(response.acctEmail);
-        const storage = await AcctStore.getAcct(response.acctEmail, ['setup_done']);
+        const storage = await AcctStore.get(response.acctEmail, ['setup_done']);
         if (storage.setup_done) { // this was just an additional permission
           await Ui.modal.info('You\'re all set.');
           window.location.href = Url.create('/chrome/settings/index.htm', { acctEmail: response.acctEmail });
         } else {
-          await AcctStore.setAcct(response.acctEmail, { email_provider: 'gmail' });
+          await AcctStore.set(response.acctEmail, { email_provider: 'gmail' });
           window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: response.acctEmail });
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {

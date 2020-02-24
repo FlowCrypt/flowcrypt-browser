@@ -48,7 +48,7 @@ export class BackupView extends View {
   public render = async () => {
     this.tabId = await BrowserMsg.requiredTabId();
     this.rules = await Rules.newInstance(this.acctEmail);
-    const storage = await AcctStore.getAcct(this.acctEmail, ['email_provider']);
+    const storage = await AcctStore.get(this.acctEmail, ['email_provider']);
     this.emailProvider = storage.email_provider || 'gmail';
     if (!this.rules.canBackupKeys()) {
       Xss.sanitizeRender('body', `<div class="line" style="margin-top: 100px;">${Lang.setup.keyBackupsNotAllowed}</div>`);

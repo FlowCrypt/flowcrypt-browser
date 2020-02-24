@@ -49,28 +49,28 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   }
 
   public draftMetaSet = async (draftId: string, threadId: string, recipients: string[], subject: string) => {
-    const draftStorage = await AcctStore.getAcct(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
+    const draftStorage = await AcctStore.get(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
     if (threadId) { // it's a reply
       const drafts = draftStorage.drafts_reply || {};
       drafts[threadId] = draftId;
-      await AcctStore.setAcct(this.view.acctEmail, { drafts_reply: drafts });
+      await AcctStore.set(this.view.acctEmail, { drafts_reply: drafts });
     } else { // it's a new message
       const drafts = draftStorage.drafts_compose || {};
       drafts[draftId] = { recipients, subject, date: new Date().getTime() };
-      await AcctStore.setAcct(this.view.acctEmail, { drafts_compose: drafts });
+      await AcctStore.set(this.view.acctEmail, { drafts_compose: drafts });
     }
   }
 
   public draftMetaDelete = async (draftId: string, threadId: string) => {
-    const draftStorage = await AcctStore.getAcct(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
+    const draftStorage = await AcctStore.get(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
     if (threadId) { // it's a reply
       const drafts = draftStorage.drafts_reply || {};
       delete drafts[threadId];
-      await AcctStore.setAcct(this.view.acctEmail, { drafts_reply: drafts });
+      await AcctStore.set(this.view.acctEmail, { drafts_reply: drafts });
     } else { // it's a new message
       const drafts = draftStorage.drafts_compose || {};
       delete drafts[draftId];
-      await AcctStore.setAcct(this.view.acctEmail, { drafts_compose: drafts });
+      await AcctStore.set(this.view.acctEmail, { drafts_compose: drafts });
     }
   }
 

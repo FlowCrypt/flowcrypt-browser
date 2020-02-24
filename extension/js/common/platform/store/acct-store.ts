@@ -81,7 +81,7 @@ export type AcctStoreDict = {
  */
 export class AcctStore extends AbstractStore {
 
-  public static getAcct = async (acctEmail: string, keys: AccountIndex[]): Promise<AcctStoreDict> => {
+  public static get = async (acctEmail: string, keys: AccountIndex[]): Promise<AcctStoreDict> => {
     if (Env.isContentScript()) {
       // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
       // go through bg script to avoid such errors
@@ -111,7 +111,7 @@ export class AcctStore extends AbstractStore {
     return resultsByAcct;
   }
 
-  public static setAcct = async (acctEmail: string, values: AcctStoreDict): Promise<void> => {
+  public static set = async (acctEmail: string, values: AcctStoreDict): Promise<void> => {
     if (Env.isContentScript()) {
       // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
       // always go through bg script to avoid such errors
@@ -136,12 +136,12 @@ export class AcctStore extends AbstractStore {
   }
 
   public static authInfo = async (acctEmail: string): Promise<FcUuidAuth> => {
-    const { uuid } = await AcctStore.getAcct(acctEmail, ['uuid']);
+    const { uuid } = await AcctStore.get(acctEmail, ['uuid']);
     return { account: acctEmail, uuid };
   }
 
   public static getSubscription = async (acctEmail: string): Promise<Subscription> => {
-    const { subscription } = await AcctStore.getAcct(acctEmail, ['subscription']);
+    const { subscription } = await AcctStore.get(acctEmail, ['subscription']);
     return new Subscription(subscription);
   }
 
@@ -150,7 +150,7 @@ export class AcctStore extends AbstractStore {
   }
 
   public static getScopes = async (acctEmail: string): Promise<Scopes> => {
-    const { google_token_scopes } = await AcctStore.getAcct(acctEmail, ['google_token_scopes']);
+    const { google_token_scopes } = await AcctStore.get(acctEmail, ['google_token_scopes']);
     const result: { [key in GoogleAuthScopesNames]: boolean } = {
       email: false, openid: false, profile: false, compose: false,
       modify: false, readContacts: false, gmail: false, read: false

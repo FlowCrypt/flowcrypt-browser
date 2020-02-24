@@ -132,11 +132,11 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
   }
 
   private richTextUserChoiceStore = async (isTicked: boolean) => {
-    await AcctStore.setAcct(this.view.acctEmail, { use_rich_text: isTicked });
+    await AcctStore.set(this.view.acctEmail, { use_rich_text: isTicked });
   }
 
   private richTextUserChoiceRetrieve = async (): Promise<boolean> => {
-    const store = await AcctStore.getAcct(this.view.acctEmail, ['use_rich_text']);
+    const store = await AcctStore.get(this.view.acctEmail, ['use_rich_text']);
     return store.use_rich_text || false;
   }
 

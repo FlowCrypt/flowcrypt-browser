@@ -84,7 +84,7 @@ Catch.try(async () => {
 
     const start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
       hijackGmailHotkeys();
-      const storage = await AcctStore.getAcct(acctEmail, ['sendAs', 'google_token_scopes', 'full_name']);
+      const storage = await AcctStore.get(acctEmail, ['sendAs', 'google_token_scopes', 'full_name']);
       const rules = await Rules.newInstance(acctEmail);
       const scopes = await AcctStore.getScopes(acctEmail);
       if (!storage.sendAs) {

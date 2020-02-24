@@ -22,14 +22,14 @@ export class PassphraseStore extends AcctStore {
         const toSave: AcctStoreDict = {};
         // @ts-ignore - this is too dynamic for TS
         toSave[storageKey] = passphrase;
-        await AcctStore.setAcct(acctEmail, toSave);
+        await AcctStore.set(acctEmail, toSave);
       }
     }
   }
 
   public static passphraseGet = async (acctEmail: string, longid: string, ignoreSession: boolean = false): Promise<string | undefined> => {
     const storageKey = `passphrase_${longid}` as AccountIndex;
-    const storage = await PassphraseStore.getAcct(acctEmail, [storageKey as AccountIndex]);
+    const storage = await AcctStore.get(acctEmail, [storageKey as AccountIndex]);
     const found = storage[storageKey];
     if (typeof found === 'string') {
       return found;

@@ -41,7 +41,7 @@ export class PgpBlockViewRenderModule {
 
   public renderContent = async (htmlContent: string, isErr: boolean) => {
     if (!isErr && !this.view.isOutgoing) { // successfully opened incoming message
-      await AcctStore.setAcct(this.view.acctEmail, { successfully_received_at_leat_one_message: true });
+      await AcctStore.set(this.view.acctEmail, { successfully_received_at_leat_one_message: true });
     }
     if (!isErr) { // rendering message content
       const pgpBlock = $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(htmlContent, 'IMG-TO-LINK')); // xss-sanitized

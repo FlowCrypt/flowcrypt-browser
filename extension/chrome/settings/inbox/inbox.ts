@@ -61,7 +61,7 @@ export class InboxView extends View {
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.injector = new Injector('settings', undefined, this.factory);
     this.webmailCommon = new WebmailCommon(this.acctEmail, this.injector);
-    this.storage = await AcctStore.getAcct(this.acctEmail, ['email_provider', 'picture', 'sendAs']);
+    this.storage = await AcctStore.get(this.acctEmail, ['email_provider', 'picture', 'sendAs']);
     this.inboxNotificationModule.render();
     const emailProvider = this.storage.email_provider || 'gmail';
     try {
