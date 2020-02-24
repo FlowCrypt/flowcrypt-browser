@@ -12,28 +12,28 @@ import { Ui } from '../../browser/ui.js';
 export class PassphraseStore extends AbstractStore {
 
   public static set = async (storageType: StorageType, acctEmail: string, longid: string, passphrase: string | undefined) => {
-    const storageKey: AccountIndex = `passphrase_${longid}` as AccountIndex;
+    const storageIndex = PassphraseStore.getIndex(longid);
     if (storageType === 'session') {
-      await SessionStore.set(acctEmail, storageKey, passphrase);
+      await SessionStore.set(acctEmail, storageIndex, passphrase);
     } else {
       if (typeof passphrase === 'undefined') {
-        await AcctStore.remove(acctEmail, [storageKey]);
+        await AcctStore.remove(acctEmail, [storageIndex]);
       } else {
         const toSave: AcctStoreDict = {};
-        toSave[storageKey] = passphrase as any;
+        toSave[storageIndex] = passphrase as any;
         await AcctStore.set(acctEmail, toSave);
       }
     }
   }
 
   public static get = async (acctEmail: string, longid: string, ignoreSession: boolean = false): Promise<string | undefined> => {
-    const storageKey = `passphrase_${longid}` as AccountIndex;
-    const storage = await AcctStore.get(acctEmail, [storageKey]);
-    const found = storage[storageKey];
+    const storageIndex = PassphraseStore.getIndex(longid);
+    const storage = await AcctStore.get(acctEmail, [storageIndex]);
+    const found = storage[storageIndex];
     if (typeof found === 'string') {
       return found;
     }
-    const fromSession = await SessionStore.get(acctEmail, storageKey);
+    const fromSession = await SessionStore.get(acctEmail, storageIndex);
     return fromSession && !ignoreSession ? fromSession : undefined;
   }
 
@@ -58,6 +58,10 @@ export class PassphraseStore extends AbstractStore {
       }
     }
     return false;
+  }
+
+  private static getIndex = (longid: string): AccountIndex => {
+    return `passphrase_${longid}` as AccountIndex;
   }
 
 }
