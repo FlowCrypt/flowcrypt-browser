@@ -248,7 +248,7 @@ export class PgpKey {
   }
 
   public static usableForEncryption = async (armored: string) => { // is pubkey usable for encrytion?
-    if (!await PgpKey.longid(armored)) {
+    if (! await PgpKey.longid(armored)) {
       return false;
     }
     const { keys: [pubkey] } = await opgp.key.readArmored(armored);

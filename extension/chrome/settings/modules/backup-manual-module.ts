@@ -63,7 +63,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
     const [primaryKi] = await KeyStore.get(this.view.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-    if (!await this.isPrivateKeyEncrypted(primaryKi)) {
+    if (! await this.isPrivateKeyEncrypted(primaryKi)) {
       await Ui.modal.error('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
       return;
     }
