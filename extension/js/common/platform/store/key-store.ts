@@ -54,15 +54,12 @@ export class KeyStore extends AcctStore {
     await KeyStore.setAcct(acctEmail, { keys: filteredPrivateKeys });
   }
 
-  public static getKeysCurrentlyInSession = async (acctEmail: string) => {
-    // todo - rename
+  public static getKeyLongidsThatCurrentlyHavePassPhraseInSession = async (acctEmail: string): Promise<string[]> => {
     const keys = await KeyStore.keysGet(acctEmail);
-    const result: Array<KeyInfo> = [];
+    const result: string[] = [];
     for (const key of keys) {
-      // Check if passpharse in the session
-      if (!(await PassphraseStore.passphraseGet(acctEmail, key.longid, true)) &&
-        await PassphraseStore.passphraseGet(acctEmail, key.longid, false)) {
-        result.push(key);
+      if (! await PassphraseStore.passphraseGet(acctEmail, key.longid, true) && await PassphraseStore.passphraseGet(acctEmail, key.longid, false)) {
+        result.push(key.longid);
       }
     }
     return result;

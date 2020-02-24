@@ -90,9 +90,8 @@ export class Injector {
     }
     prependToElem.append(this.factory.btnEndPPSession(this.webmailName)) // xss-safe-factory
       .find('.action_finish_session').click(Ui.event.prevent('double', async el => {
-        const keysInSession = await KeyStore.getKeysCurrentlyInSession(acctEmail);
-        if (keysInSession.length) {
-          await Promise.all(keysInSession.map(async k => await PassphraseStore.passphraseSave('session', acctEmail, k.longid, undefined)));
+        for (const longid of await KeyStore.getKeyLongidsThatCurrentlyHavePassPhraseInSession(acctEmail)) {
+          await PassphraseStore.passphraseSave('session', acctEmail, longid, undefined);
         }
         if (this.webmailName === 'gmail') {
           $('.' + (window as unknown as ContentScriptWindow).reloadable_class).each((i, reloadableEl) => {
