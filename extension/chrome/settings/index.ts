@@ -357,7 +357,7 @@ View.run(class SettingsView extends View {
         liveness = 'offline';
       }
     }
-    const subscription = await AcctStore.subscription(acctEmail);
+    const subscription = await AcctStore.getSubscription(acctEmail);
     $('#status-row #status_subscription').text(`s:${liveness}:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
     if (subscription.active) {
       const showAcct = () => Settings.renderSubPage(acctEmail, this.tabId, '/chrome/settings/modules/account.htm');

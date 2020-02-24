@@ -4,6 +4,9 @@ import { Env } from '../../browser/env.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { AbstractStore } from './abstract-store.js';
 
+/**
+ * Local session store of information to store temporarily, such as pass phrases
+ */
 export class SessionStore extends AbstractStore {
 
   public static sessionGet = async (acctEmail: string, key: string): Promise<string | null> => {

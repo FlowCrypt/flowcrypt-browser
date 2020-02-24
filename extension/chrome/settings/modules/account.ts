@@ -10,7 +10,8 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { AcctStore, Subscription } from '../../../js/common/platform/store/acct-store.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { Subscription } from '../../../js/common/subscription.js';
 
 // todo - this this page should be removed, link from settings should point to flowcrypt.com/account once available
 
@@ -29,7 +30,7 @@ View.run(class AccountView extends View {
   public render = async () => {
     Xss.sanitizeRender('.loading', Ui.spinner('green', 'large_spinner'));
     const authInfo = await AcctStore.authInfo(this.acctEmail);
-    let subscription = await AcctStore.subscription(this.acctEmail);
+    let subscription = await AcctStore.getSubscription(this.acctEmail);
     try {
       const r = await Backend.accountGetAndUpdateLocalStore(authInfo);
       subscription = new Subscription(r.subscription);

@@ -30,7 +30,7 @@ export class ComposeAttsModule extends ViewModule<ComposeView> {
   }
 
   private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
-    const subscription = await AcctStore.subscription(this.view.acctEmail);
+    const subscription = await AcctStore.getSubscription(this.view.acctEmail);
     if (!subscription.active && !Rules.isPublicEmailProviderDomain(this.view.senderModule.getSender())) {
       return {
         sizeMb: 5,

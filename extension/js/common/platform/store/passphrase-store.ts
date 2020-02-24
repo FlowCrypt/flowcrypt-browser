@@ -6,6 +6,9 @@ import { SessionStore } from './session-store.js';
 import { PromiseCancellation, Dict } from '../../core/common.js';
 import { Ui } from '../../browser/ui.js';
 
+/**
+ * Local or session store of pass phrases
+ */
 export class PassphraseStore extends AcctStore {
 
   public static passphraseSave = async (storageType: StorageType, acctEmail: string, longid: string, passphrase: string | undefined) => {

@@ -77,7 +77,7 @@ View.run(class SecurityView extends View {
   }
 
   private loadAndRenderPwdEncryptedMsgSettings = async () => {
-    const subscription = await AcctStore.subscription(this.acctEmail);
+    const subscription = await AcctStore.getSubscription(this.acctEmail);
     if (subscription.active) {
       Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
       try {

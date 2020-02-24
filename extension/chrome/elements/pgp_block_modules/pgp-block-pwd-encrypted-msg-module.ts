@@ -47,7 +47,7 @@ export class PgpBlockViewPwdEncryptedMsgModule {
 
   public renderMsgExpirationRenewOptions = async (target: HTMLElement) => {
     const parent = $(target).parent();
-    const subscription = await AcctStore.subscription(this.view.acctEmail);
+    const subscription = await AcctStore.getSubscription(this.view.acctEmail);
     if (subscription.level && subscription.active) {
       const btns = `<a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a>`;
       Xss.sanitizeRender(parent, `<div style="font-family: monospace;">Extend message expiration: ${btns}</div>`);

@@ -5,13 +5,14 @@ import { GoogleAuth } from '../../api/google-auth.js';
 import { KeyInfo } from '../../core/pgp-key.js';
 import { Dict } from '../../core/common.js';
 import { GmailRes } from '../../api/email-provider/gmail/gmail-parser.js';
-import { SubscriptionInfo, PaymentMethod, SubscriptionLevel, FcUuidAuth } from '../../api/backend.js';
+import { SubscriptionInfo, FcUuidAuth } from '../../api/backend.js';
 import { DomainRules } from '../../rules.js';
 import { BrowserMsg, BgNotReadyErr } from '../../browser/browser-msg.js';
 import { Ui } from '../../browser/ui.js';
 import { storageLocalGet, storageLocalSet, storageLocalRemove } from '../../api/chrome.js';
 import { AbstractStore } from './abstract-store.js';
 import { RawStore } from './abstract-store.js';
+import { Subscription } from '../../subscription.js';
 
 export type StoredReplyDraftMeta = string; // draftId
 export type StoredComposeDraftMeta = { recipients: string[], subject: string, date: number };
@@ -75,25 +76,9 @@ export type AcctStoreDict = {
   tmp_submit_all?: boolean;
 };
 
-export class Subscription implements SubscriptionInfo {
-  public active?: boolean;
-  public method?: PaymentMethod;
-  public level?: SubscriptionLevel;
-  public expire?: string;
-  public expired?: boolean;
-
-  constructor(storedSubscriptionInfo: SubscriptionInfo | undefined | null) {
-    if (storedSubscriptionInfo) {
-      this.active = storedSubscriptionInfo.active || undefined;
-      this.method = storedSubscriptionInfo.method || undefined;
-      this.level = storedSubscriptionInfo.level;
-      this.expire = storedSubscriptionInfo.expire || undefined;
-      this.expired = storedSubscriptionInfo.expired || undefined;
-    }
-  }
-
-}
-
+/**
+ * Local storage of data related to a particular email account
+ */
 export class AcctStore extends AbstractStore {
 
   public static getAcct = async (acctEmail: string, keys: AccountIndex[]): Promise<AcctStoreDict> => {
@@ -155,7 +140,7 @@ export class AcctStore extends AbstractStore {
     return { account: acctEmail, uuid };
   }
 
-  public static subscription = async (acctEmail: string): Promise<Subscription> => {
+  public static getSubscription = async (acctEmail: string): Promise<Subscription> => {
     const { subscription } = await AcctStore.getAcct(acctEmail, ['subscription']);
     return new Subscription(subscription);
   }

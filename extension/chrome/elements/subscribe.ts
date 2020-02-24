@@ -85,7 +85,7 @@ View.run(class SubscribeView extends View {
         Xss.sanitizeRender('#content', `Unknown error happened when fetching account info. ${Ui.retryLink()}`);
       }
     }
-    const subscription = await AcctStore.subscription(this.acctEmail); // updated in accountGetAndUpdateLocalStore
+    const subscription = await AcctStore.getSubscription(this.acctEmail); // updated in accountGetAndUpdateLocalStore
     if (!subscription.active) {
       if (subscription.level && subscription.expire) {
         if (subscription.method === 'trial') {

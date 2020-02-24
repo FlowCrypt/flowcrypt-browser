@@ -39,6 +39,11 @@ export type ContactUpdate = {
 
 export type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number };
 
+/**
+ * Store of contacts and their public keys
+ * This includes an index of email and name substrings for easier search when user is typing
+ * Db is initialized in the background page and accessed through BrowserMsg
+ */
 export class ContactStore extends AbstractStore {
 
   // static [f: string]: Function; // https://github.com/Microsoft/TypeScript/issues/6480
