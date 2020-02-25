@@ -85,8 +85,7 @@ export class PgpArmor {
     if (isArmoredSignedOnly) {
       return { isArmored, isCleartext: true, message: await opgp.cleartext.readArmored(new Buf(encrypted).toUtfStr()) };
     } else if (isArmoredEncrypted) {
-      const armoredUtf = new Buf(encrypted).toUtfStr();
-      const message = await opgp.message.readArmored(armoredUtf);
+      const message = await opgp.message.readArmored(new Buf(encrypted).toUtfStr());
       const isCleartext = !!message.getLiteralData() && !!message.getSigningKeyIds().length && !message.getEncryptionKeyIds().length;
       return { isArmored: true, isCleartext, message };
     } else if (encrypted instanceof Uint8Array) {
