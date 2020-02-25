@@ -60,8 +60,6 @@ export class ComposePageRecipe extends PageRecipe {
       await Util.sleep(1);
       await composePageOrFrame.type('@input-subject', `Automated puppeteer test: ${subject}`);
     }
-    const body = `This is an automated puppeteer test: ${subject || '(no-subject)'}`;
-    await composePageOrFrame.type('@input-body', body);
     const sendingOpts = sendingOpt as { [key: string]: boolean | undefined };
     for (const opt of Object.keys(sendingOpts)) {
       const shouldBeTicked = sendingOpts[opt];
@@ -69,6 +67,8 @@ export class ComposePageRecipe extends PageRecipe {
         await ComposePageRecipe.setPopoverToggle(composePageOrFrame, opt as PopoverOpt, shouldBeTicked);
       }
     }
+    const body = subject?.match(/RTL/) ? 'مرحبا' : `This is an automated puppeteer test: ${subject || '(no-subject)'}`;
+    await composePageOrFrame.type('@input-body', body);
     return { subject, body };
   }
 
