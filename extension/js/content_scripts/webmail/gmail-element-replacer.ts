@@ -322,8 +322,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             nRenderedAtts = await this.renderBackupFromFile(a, attsContainerInner, msgEl, attSel, nRenderedAtts);
           } else if (treatAs === 'signature') {
             const embeddedSignedMsgXssSafe = this.factory.embeddedMsg('', msgId, false, senderEmail, false, true);
-            const replace = !msgEl.is('.evaluated') && !msgEl.text().includes(PgpArmor.headers('null').begin);
-            msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, replace ? 'set' : 'append', embeddedSignedMsgXssSafe); // xss-safe-factory
+            msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', embeddedSignedMsgXssSafe); // xss-safe-factory
           }
         } else if (treatAs === 'plainFile' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
           const data = await this.gmail.attGetChunk(msgId, a.id!); // .id is present when fetched from api
