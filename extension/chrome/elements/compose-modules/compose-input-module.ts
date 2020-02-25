@@ -113,8 +113,8 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       if (container.prop('tagName') !== 'DIV') { // commonAncestorContainer might be a text node
         container = container.closest('div');
       }
-      if (container.text().length === 1) {
-        const firstCharacter = container.text();
+      if (container.text()) {
+        const firstCharacter = container.text()[0];
         // ranges are taken from https://stackoverflow.com/a/14824756
         // with the '\u0300' -> '\u0370' modification, because from '\u0300' to '\u0370' there are only punctuation marks
         // see https://www.utf8-chartable.de/unicode-utf8-table.pl
