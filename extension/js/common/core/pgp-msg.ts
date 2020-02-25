@@ -7,7 +7,7 @@ import { MsgBlockType, ReplaceableMsgBlockType } from './msg-block.js';
 import { Value } from './common.js';
 import { Buf } from './buf.js';
 import { Catch } from '../platform/catch.js';
-import { PgpArmor } from './pgp-armor.js';
+import { PgpArmor, PreparedForDecrypt } from './pgp-armor.js';
 import { PgpHash } from './pgp-hash.js';
 import { opgp } from './pgp.js';
 import { KeyCache } from '../platform/key-cache.js';
@@ -46,8 +46,6 @@ export type DecryptError = {
   success: false; error: DecryptError$error; longids: DecryptError$longids; content?: Buf;
   isEncrypted?: boolean; message?: OpenPGP.message.Message | OpenPGP.cleartext.CleartextMessage;
 };
-type PreparedForDecrypt = { isArmored: boolean, isCleartext: true, message: OpenPGP.cleartext.CleartextMessage }
-  | { isArmored: boolean, isCleartext: false, message: OpenPGP.message.Message };
 
 type OpenpgpMsgOrCleartext = OpenPGP.message.Message | OpenPGP.cleartext.CleartextMessage;
 
@@ -161,8 +159,8 @@ export class PgpMsg {
   }
 
   public static decrypt: PgpMsgMethod.Decrypt = async ({ kisWithPp, encryptedData, msgPwd }) => {
-    let prepared: PreparedForDecrypt;
     const longids: DecryptError$longids = { message: [], matching: [], chosen: [], needPassphrase: [] };
+    let prepared: PreparedForDecrypt;
     try {
       prepared = await PgpArmor.cryptoMsgPrepareForDecrypt(encryptedData);
     } catch (formatErr) {

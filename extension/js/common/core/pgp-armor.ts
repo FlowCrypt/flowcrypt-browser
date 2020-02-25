@@ -7,7 +7,7 @@ import { ReplaceableMsgBlockType } from './msg-block.js';
 import { Str } from './common.js';
 import { opgp } from './pgp.js';
 
-export type PreparedForDecrypt = { isArmored: boolean, isCleartext: true, message: OpenPGP.cleartext.CleartextMessage }
+export type PreparedForDecrypt = { isArmored: boolean, isCleartext: true, message: OpenPGP.cleartext.CleartextMessage | OpenPGP.message.Message }
   | { isArmored: boolean, isCleartext: false, message: OpenPGP.message.Message };
 
 type CryptoArmorHeaderDefinitions = { readonly [type in ReplaceableMsgBlockType | 'null' | 'signature']: CryptoArmorHeaderDefinition; };
@@ -85,7 +85,10 @@ export class PgpArmor {
     if (isArmoredSignedOnly) {
       return { isArmored, isCleartext: true, message: await opgp.cleartext.readArmored(new Buf(encrypted).toUtfStr()) };
     } else if (isArmoredEncrypted) {
-      return { isArmored, isCleartext: false, message: await opgp.message.readArmored(new Buf(encrypted).toUtfStr()) };
+      const armoredUtf = new Buf(encrypted).toUtfStr();
+      const message = await opgp.message.readArmored(armoredUtf);
+      const isCleartext = !!message.getLiteralData() && !!message.getSigningKeyIds().length && !message.getEncryptionKeyIds().length;
+      return { isArmored: true, isCleartext, message };
     } else if (encrypted instanceof Uint8Array) {
       return { isArmored, isCleartext: false, message: await opgp.message.read(encrypted) };
     }

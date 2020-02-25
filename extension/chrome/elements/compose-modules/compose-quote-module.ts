@@ -3,7 +3,7 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { FormatError, PgpMsg } from '../../../js/common/core/pgp-msg.js';
+import { FormatError, PgpMsg, DecryptErrTypes } from '../../../js/common/core/pgp-msg.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -163,7 +163,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     const decryptRes = await PgpMsg.decrypt({ kisWithPp: await KeyStore.getAllWithPp(this.view.acctEmail), encryptedData });
     if (decryptRes.success) {
       return decryptRes.content.toUtfStr();
-    } else if (decryptRes.error && decryptRes.error.type === 'need_passphrase') {
+    } else if (decryptRes.error && decryptRes.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'quote', longids: decryptRes.longids.needPassphrase });
       const wasPpEntered: boolean = await new Promise(resolve => {
         BrowserMsg.addListener('passphrase_entry', async (response: Bm.PassphraseEntry) => resolve(response.entered));
