@@ -77,7 +77,7 @@ export class ComposeView extends View {
     header: '#section_header',
     subject: '#section_subject',
     footer: '#section_footer',
-    title: 'table#compose th h1',
+    title: '#header_title',
     input_text: 'div#input_text',
     input_to: '#input_to',
     input_from: '#input_from',
