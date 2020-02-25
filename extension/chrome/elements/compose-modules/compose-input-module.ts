@@ -22,6 +22,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     this.initShortcuts();
     this.resizeReplyBox();
     this.scrollIntoView();
+    this.handleRTL();
     this.squire.setConfig({ addLinks: this.isRichText() });
     if (this.view.debug) {
       this.insertDebugElements();
@@ -101,6 +102,36 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     this.squire.addEventListener('dragover', (e: DragEvent) => {
       e.preventDefault(); // this is needed for 'drop' event to fire
     });
+  }
+
+  private handleRTL = () => {
+    const checkRTL = () => {
+      if (!this.isRichText()) { // RTL is supported for pgp/mime (rich text) only
+        return;
+      }
+      let container = $(this.squire.getSelection().commonAncestorContainer);
+      if (container.prop('tagName') !== 'DIV') { // commonAncestorContainer might be a text node
+        container = container.closest('div');
+      }
+      if (container.text()) {
+        const firstCharacter = container.text()[0];
+        // ranges are taken from https://stackoverflow.com/a/14824756
+        // with the '\u0300' -> '\u0370' modification, because from '\u0300' to '\u0370' there are only punctuation marks
+        // see https://www.utf8-chartable.de/unicode-utf8-table.pl
+        const ltrChars = 'A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02B8\u0370-\u0590\u0800-\u1FFF\u2C00-\uFB1C\uFDFE-\uFE6F\uFEFD-\uFFFF';
+        const rtlChars = '\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC';
+        const ltrDirCheck = new RegExp('[' + ltrChars + ']');
+        const rtlDirCheck = new RegExp('[' + rtlChars + ']');
+        if (ltrDirCheck.test(firstCharacter) && container.attr('dir') !== 'ltr') { // Switch to LTR
+          container.attr('dir', 'ltr');
+        } else if (rtlDirCheck.test(firstCharacter) && container.attr('dir') !== 'rtl') { // Switch to RTL
+          container.attr('dir', 'rtl');
+        } else {
+          // keep the previous direction for digits, punctuation marks, and other characters
+        }
+      }
+    };
+    this.squire.addEventListener('input', checkRTL);
   }
 
   private initShortcuts = () => {

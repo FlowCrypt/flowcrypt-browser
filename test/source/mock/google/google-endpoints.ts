@@ -203,6 +203,10 @@ export const mockGoogleEndpoints: HandlersDefinition = {
         const data = new GoogleData(acct);
         data.addDraft('draft_with_image', raw, mimeMsg);
       }
+      if ((mimeMsg.subject || '').includes('saving and rendering a draft with RTL text')) {
+        const data = new GoogleData(acct);
+        data.addDraft('draft_with_rtl_text', raw, mimeMsg);
+      }
       return {};
     } else if (isDelete(req)) {
       return {};

@@ -1,9 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import * as ava from 'ava';
-import * as request from 'fc-node-requests';
-
-import { Page } from 'puppeteer';
 
 import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
 import { Config, Util } from '../../util';
@@ -15,8 +12,6 @@ import { GoogleData } from '../../mock/google/google-data';
 import { InboxPageRecipe } from '../page-recipe/inbox-page-recipe';
 import { OauthPageRecipe } from '../page-recipe/oauth-page-recipe';
 import { PageRecipe } from '../page-recipe/abstract-page-recipe';
-import { PgpHash } from '../../core/pgp-hash';
-import { PgpMsg } from '../../core/pgp-msg';
 import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
 import { TestUrls } from '../../browser/test-urls';
 import { TestVariant } from '../../util';
@@ -182,7 +177,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await composeFrame.waitAndFocus('@action-attach-files');
       await Promise.all([
-        (inboxPage.target as Page).waitForFileChooser(), // must be called before the file chooser is launched
+        inboxPage.page.waitForFileChooser(), // must be called before the file chooser is launched
         inboxPage.press('Enter')
       ]);
     }));
@@ -553,6 +548,16 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const body = await composePage.waitAny('@input-body');
       await composePage.waitAll('#input_text img');
       expect(await body.$eval('#input_text img', el => el.getAttribute('src'))).to.eq(imgBase64);
+    }));
+
+    ava.default('compose - saving and rendering a draft with RTL text', testWithBrowser('compatibility', async (t, browser) => {
+      let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+      const subject = `saving and rendering a draft with RTL text`;
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, { richtext: true });
+      await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
+      await composePage.close();
+      composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl: 'draftId=draft_with_rtl_text' });
+      expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا</div>');
     }));
 
     ava.default('compose - sending and rendering encrypted message with image ', testWithBrowser('compatibility', async (t, browser) => {
