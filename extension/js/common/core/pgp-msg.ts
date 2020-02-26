@@ -16,7 +16,7 @@ import { ContactStore } from '../platform/store/contact-store.js';
 export namespace PgpMsgMethod {
   export namespace Arg {
     export type Encrypt = { pubkeys: string[], signingPrv?: OpenPGP.key.Key, pwd?: string, data: Uint8Array, filename?: string, armor: boolean, date?: Date };
-    export type Type = { data: Uint8Array };
+    export type Type = { data: Uint8Array | string };
     export type Decrypt = { kisWithPp: PrvKeyInfo[], encryptedData: Uint8Array, msgPwd?: string };
     export type DiagnosePubkeys = { privateKis: KeyInfo[], message: Uint8Array };
     export type VerifyDetached = { plaintext: Uint8Array, sigText: Uint8Array };
@@ -77,6 +77,12 @@ export class PgpMsg {
   public static type: PgpMsgMethod.Type = async ({ data }) => { // promisified because used through bg script
     if (!data || !data.length) {
       return undefined;
+    }
+    if (typeof data === 'string') {
+      // Uint8Array sent over BrowserMsg gets converted to blobs on the sending side, and read on the receiving side
+      // Firefox blocks such blobs from content scripts to background, see: https://github.com/FlowCrypt/flowcrypt-browser/issues/2587
+      // that's why we add an option to send data as a base64 formatted string
+      data = Buf.fromBase64Str(data);
     }
     const firstByte = data[0];
     // attempt to understand this as a binary PGP packet: https://tools.ietf.org/html/rfc4880#section-4.2
