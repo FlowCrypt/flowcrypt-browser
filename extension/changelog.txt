@@ -1,5 +1,7 @@
 <div>
 
+version 7.6.3 on Feb 26, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/391?closed=1" target="_blank">Rich text RTL support</a>
+
 version 7.6.2 on Feb 25, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/390?closed=1" target="_blank">Jira compatibility</a>
 
 version 7.6.1 on Feb 23, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/389?closed=1" target="_blank">Enterprise functionality</a>
