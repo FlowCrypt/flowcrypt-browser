@@ -3,7 +3,6 @@
 import * as request from 'fc-node-requests';
 
 import { existsSync, writeFileSync } from 'fs';
-
 import { Config } from './util';
 import { opgp } from './core/pgp';
 import { startAllApisMock } from './mock/all-apis-mock';
@@ -14,7 +13,8 @@ export const acctsWithoutMockData = [
   'no.pub@org-rules-test.flowcrypt.com',
   'user@no-submit-org-rule.flowcrypt.com',
   'user@no-search-domains-org-rule.flowcrypt.com',
-  "user@key-manager-autogen.flowcrypt.com",
+  "get.key@key-manager-autogen.flowcrypt.com",
+  "put.key@key-manager-autogen.flowcrypt.com",
 ];
 
 export const mock = async (logger: (line: string) => void) => {

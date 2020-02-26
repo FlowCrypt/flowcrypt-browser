@@ -4,6 +4,7 @@
 
 import { Str } from './core/common.js';
 import { AcctStore } from './platform/store/acct-store.js';
+import { KeyAlgo } from './core/pgp-key.js';
 
 type DomainRules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'PRV_AUTOIMPORT_OR_AUTOGEN' | 'PASS_PHRASE_QUIET_AUTOGEN' |
   'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' |
@@ -14,6 +15,7 @@ export type DomainRules = {
   custom_keyserver_url?: string,
   private_key_manager_url?: string,
   disallow_attester_search_for_domains?: string[],
+  enforce_keygen_algo?: string,
 };
 
 /**
@@ -53,6 +55,15 @@ export class Rules {
    */
   public getPrivateKeyManagerUrl = (): string | undefined => {
     return this.domainRules.private_key_manager_url;
+  }
+
+  // optional vars
+
+  /**
+   * Enforce a key algo for keygen, eg rsa2048,rsa4096,ecc25519
+   */
+  public getEnforcedKeygenAlgo = (): KeyAlgo | undefined => {
+    return this.domainRules.enforce_keygen_algo as KeyAlgo | undefined;
   }
 
   // bools

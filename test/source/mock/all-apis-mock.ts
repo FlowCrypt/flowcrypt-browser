@@ -8,6 +8,7 @@ import { Api, Handlers } from './lib/api';
 
 import { mockBackendEndpoints } from './backend/backend-endpoints';
 import { mockGoogleEndpoints } from './google/google-endpoints';
+import { mockKeyManagerEndpoints } from './key-manager/key-manager-endpoints';
 
 export type HandlersDefinition = Handlers<{ query: { [k: string]: string; }; body?: unknown; }, unknown>;
 
@@ -23,6 +24,7 @@ export const startAllApisMock = async (logger: (line: string) => void) => {
   const api = new LoggedApi<{ query: { [k: string]: string }, body?: unknown }, unknown>('google-mock', {
     ...mockGoogleEndpoints,
     ...mockBackendEndpoints,
+    ...mockKeyManagerEndpoints,
     '/favicon.ico': async () => '',
   });
   await api.listen(8001);
