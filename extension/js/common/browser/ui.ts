@@ -140,6 +140,7 @@ export class Ui {
       await Swal.fire({
         html: Xss.escape(text).replace(/\n/g, '<br>'),
         animation: false,
+        scrollbarPadding: false,
         allowOutsideClick: false,
         customClass: {
           popup: 'ui-modal-info',
@@ -152,6 +153,7 @@ export class Ui {
         html: `<span class="orange">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
         footer: footer ? Xss.htmlSanitize(footer) : '',
         animation: false,
+        scrollbarPadding: false,
         allowOutsideClick: false,
         customClass: {
           popup: 'ui-modal-warning',
@@ -165,6 +167,7 @@ export class Ui {
         html: `<span class="red">${text}</span>`,
         footer: footer ? Xss.htmlSanitize(footer) : '',
         animation: false,
+        scrollbarPadding: false,
         allowOutsideClick: false,
         customClass: {
           popup: 'ui-modal-error',
@@ -176,6 +179,7 @@ export class Ui {
       const { dismiss } = await Swal.fire({
         html: Xss.escape(text).replace(/\n/g, '<br>'),
         animation: false,
+        scrollbarPadding: false,
         allowOutsideClick: false,
         showCancelButton: true,
         customClass: {
@@ -192,6 +196,7 @@ export class Ui {
         input: 'checkbox',
         inputPlaceholder: label,
         animation: false,
+        scrollbarPadding: false,
         allowOutsideClick: false,
         customClass: {
           popup: 'ui-modal-confirm-checkbox',
