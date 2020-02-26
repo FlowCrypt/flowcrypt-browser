@@ -80,7 +80,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await experimentalFrame.waitAndClick(wipeTokenBtnSelector);
       }
       // any message with pgp attachment will do because it will need to make a request to google
-      const gmailMsgWithAtt = `https://mail.google.com/mail/u/${acct}/#inbox/WhctKHTCGjFCdWqLhrdswHHkHLlvfzTxXGNlZLsCqkMPhZWNfHDBtpDlDmPBgMfjbMwwsSb`;
+      const gmailMsgWithAtt = `https://mail.google.com/mail/u/0/#inbox/WhctKHTCGjFCdWqLhrdswHHkHLlvfzTxXGNlZLsCqkMPhZWNfHDBtpDlDmPBgMfjbMwwsSb`;
       gmailPage = await browser.newPage(t, gmailMsgWithAtt);
       await gmailPage.waitAll(['@webmail-notification', '@action-reconnect-account']);
       await Util.sleep(1);
