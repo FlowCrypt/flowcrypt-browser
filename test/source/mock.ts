@@ -14,6 +14,7 @@ export const acctsWithoutMockData = [
   'no.pub@org-rules-test.flowcrypt.com',
   'user@no-submit-org-rule.flowcrypt.com',
   'user@no-search-domains-org-rule.flowcrypt.com',
+  "user@key-manager-autogen.flowcrypt.com",
 ];
 
 export const mock = async (logger: (line: string) => void) => {
