@@ -34,7 +34,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         expect(details.keys[0].ids[0].longid).to.equal(longid);
         expect(details.keys[0].users).to.have.length(1);
         expect(details.keys[0].users[0]).to.equal('put.key@key-manager-autogen.flowcrypt.com');
-        expect(details.keys[0].isFullyDecrypted).to.be.true;
+        expect(details.keys[0].isFullyDecrypted).to.be.true('key must be decrypted');
         return {};
       }
       throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/keys/private PUT with acct ${acctEmail}`);
