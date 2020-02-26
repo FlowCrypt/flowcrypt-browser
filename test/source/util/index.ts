@@ -56,8 +56,6 @@ export class Config {
 
   public static secrets = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8')) as TestSecretsInterface;
 
-  public static tests = JSON.parse(fs.readFileSync('test/tests.json', 'utf8')) as TestConfigInterface;
-
   public static key = (title: string) => {
     return Config.secrets.keys.filter(k => k.title === title)[0];
   }
