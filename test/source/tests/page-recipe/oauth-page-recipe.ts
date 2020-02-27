@@ -7,6 +7,7 @@ import { ControllablePage } from '../../browser';
 import { FlowCryptApi } from '../api';
 import { PageRecipe } from './abstract-page-recipe';
 import { totp as produce2faToken } from 'speakeasy';
+import { expect } from 'chai';
 
 export class OauthPageRecipe extends PageRecipe {
 

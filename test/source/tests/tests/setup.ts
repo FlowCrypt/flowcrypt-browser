@@ -12,6 +12,7 @@ import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
 import { ComposePageRecipe } from '../page-recipe/compose-page-recipe';
 import { TestUrls } from '../../browser/test-urls';
 import { Str } from '../../core/common';
+import { MOCK_KM_LAST_INSERTED_KEY } from '../../mock/key-manager/key-manager-endpoints';
 
 // tslint:disable:no-blank-lines-func
 
@@ -183,6 +184,27 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await Util.sleep(1);
       await myKeyFrame.waitAll('@content-longid');
       expect(await myKeyFrame.read('@content-longid')).to.equal('00B0 1158 0796 9D75');
+      await SettingsPageRecipe.closeDialog(settingsPage);
+      await Util.sleep(2);
+      // check that it does not offer any pass phrase options
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
+      const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
+      await Util.sleep(1);
+      await securityFrame.notPresent(['@action-change-passphrase-begin', '@action-test-passphrase-begin', '@action-forget-pp']);
+    }));
+
+    ava.default('put.key@key-manager-autogen.flowcrypt.com - automatic setup with key not found on key manager, then generated', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'put.key@key-manager-autogen.flowcrypt.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoKeygen(settingsPage);
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      // check imported key
+      const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
+      await Util.sleep(1);
+      await myKeyFrame.waitAll('@content-longid');
+      const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
+      expect(fromKm).to.exist;
+      expect(await myKeyFrame.read('@content-longid')).to.equal(Str.spaced(fromKm.longid));
       await SettingsPageRecipe.closeDialog(settingsPage);
       await Util.sleep(2);
       // check that it does not offer any pass phrase options
