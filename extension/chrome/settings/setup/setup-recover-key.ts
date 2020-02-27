@@ -63,7 +63,6 @@ export class SetupRecoverKeyModule {
         passphrase,
         passphrase_save: true, // todo - reevaluate saving passphrase when recovering
         recovered: true,
-        is_newly_created_key: false,
       };
       await this.view.saveKeys(newlyMatchingKeys, options);
       const { setup_done } = await AcctStore.get(this.view.acctEmail, ['setup_done']);

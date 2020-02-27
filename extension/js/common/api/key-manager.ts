@@ -24,8 +24,8 @@ export class KeyManager extends Api {
     return await this.request('GET', '/keys/private') as LoadPrvRes;
   }
 
-  public storePrivateKey = async (decryptedKey: string, longid: string): Promise<void> => {
-    return await this.request('PUT', '/keys/private', { decryptedKey, longid });
+  public storePrivateKey = async (decryptedKey: string, publicKey: string, longid: string): Promise<void> => {
+    return await this.request('PUT', '/keys/private', { decryptedKey, publicKey, longid });
   }
 
   private request = async <RT>(method: ReqMethod, path: string, vals?: Dict<any>): Promise<RT> => {

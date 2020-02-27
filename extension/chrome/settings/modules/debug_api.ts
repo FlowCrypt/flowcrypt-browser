@@ -39,7 +39,7 @@ View.run(class DebugApiView extends View {
     } else if (this.which === 'local_store') {
       const storage = await AcctStore.get(this.acctEmail, [
         'notification_setup_needed_dismissed', 'email_provider', 'google_token_scopes', 'hide_message_password', 'sendAs', 'outgoing_language',
-        'full_name', 'cryptup_enabled', 'setup_done', 'is_newly_created_key',
+        'full_name', 'cryptup_enabled', 'setup_done',
         'successfully_received_at_leat_one_message', 'notification_setup_done_seen', 'openid',
         'rules', 'subscription', 'use_rich_text',
       ]);

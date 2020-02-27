@@ -19,7 +19,7 @@ export class SetupRenderModule {
   }
 
   public renderInitial = async (): Promise<void> => {
-    $('h1').text('Set Up FlowCrypt');
+    $('h1').text(this.view.rules.mustAutoImportOrAutogenPrvWithKeyManager() ? 'Setting up FlowCrypt, please wait...' : 'Set Up FlowCrypt');
     $('.email-address').text(this.view.acctEmail);
     $('.back').css('visibility', 'hidden');
     if (this.view.storage!.email_provider === 'gmail') { // show alternative account addresses in setup form + save them for later
@@ -35,6 +35,8 @@ export class SetupRenderModule {
     if (this.view.storage!.setup_done) {
       if (this.view.action !== 'add_key') {
         await this.renderSetupDone();
+      } else if (this.view.rules.mustAutoImportOrAutogenPrvWithKeyManager()) {
+        // todo - handle autogen case
       } else {
         await this.view.setupRecoverKey.renderAddKeyFromBackup();
       }
@@ -46,6 +48,8 @@ export class SetupRenderModule {
       }
       await this.view.finalizeSetup({ submit_all: tmp_submit_all, submit_main: tmp_submit_main });
       await this.renderSetupDone();
+    } else if (this.view.rules.mustAutoImportOrAutogenPrvWithKeyManager()) {
+      await this.view.setupKeyManagerAutogen.getKeyFromKeyManagerOrAutogenAndStoreItThenRenderSetupDone();
     } else {
       await this.renderSetupDialog();
     }

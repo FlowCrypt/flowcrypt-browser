@@ -25,7 +25,6 @@ export class SetupImportKeyModule {
       submit_main: this.view.shouldSubmitPubkey('#step_2b_manual_enter .input_submit_key'),
       submit_all: this.view.shouldSubmitPubkey('#step_2b_manual_enter .input_submit_all'),
       passphrase_save: Boolean($('#step_2b_manual_enter .input_passphrase_save').prop('checked')),
-      is_newly_created_key: false,
       recovered: false,
     };
     try {
