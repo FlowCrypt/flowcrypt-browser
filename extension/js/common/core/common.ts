@@ -3,6 +3,7 @@
 'use strict';
 
 import { base64decode, base64encode } from '../platform/util.js';
+import { Xss } from '../platform/xss.js';
 
 export type Dict<T> = { [key: string]: T; };
 export type UrlParam = string | number | null | undefined | boolean | string[];
@@ -10,6 +11,12 @@ export type UrlParams = Dict<UrlParam>;
 export type PromiseCancellation = { cancel: boolean };
 
 export class Str {
+
+  // ranges are taken from https://stackoverflow.com/a/14824756
+  // with the '\u0300' -> '\u0370' modification, because from '\u0300' to '\u0370' there are only punctuation marks
+  // see https://www.utf8-chartable.de/unicode-utf8-table.pl
+  public static readonly ltrChars = 'A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02B8\u0370-\u0590\u0800-\u1FFF\u2C00-\uFB1C\uFDFE-\uFE6F\uFEFD-\uFFFF';
+  public static readonly rtlChars = '\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC';
 
   public static parseEmail = (full: string, flag: 'VALIDATE' | 'DO-NOT-VALIDATE' = 'VALIDATE') => {
     let email: string | undefined;
@@ -91,8 +98,14 @@ export class Str {
     return toBeUsedInRegex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
-  public static asEscapedHtml = (text: string) => {
-    return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;').replace(/\n/g, '<br />');
+  public static escapeTextAsRenderableHtml = (text: string) => {
+    const rtlRegexp = new RegExp(`^([${Str.rtlChars}].*)$`, 'gm');
+    return Xss.escape(text)
+      .replace(rtlRegexp, '<div dir="rtl">$1</div>') // RTL lines
+      .replace(/\n/g, '<br>\n') // leave newline so that following replaces work
+      .replace(/^ +/gm, spaces => spaces.replace(/ /g, '&nbsp;'))
+      .replace(/^\t+/gm, tabs => tabs.replace(/\t/g, '&#9;'))
+      .replace(/\n/g, ''); // strip newlines, already have <br>
   }
 
   public static htmlAttrEncode = (values: Dict<any>): string => {

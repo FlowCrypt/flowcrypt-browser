@@ -75,7 +75,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.S.cached('reply_msg_successful').find('div.replied_from').text(this.view.senderModule.getSender());
     this.view.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
     const repliedBodyEl = this.view.S.cached('reply_msg_successful').find('div.replied_body');
-    Xss.sanitizeRender(repliedBodyEl, Xss.escapeTextAsRenderableHtml(this.view.inputModule.extract('text', 'input_text', 'SKIP-ADDONS')));
+    Xss.sanitizeRender(repliedBodyEl, Str.escapeTextAsRenderableHtml(this.view.inputModule.extract('text', 'input_text', 'SKIP-ADDONS')));
     const t = new Date();
     const time = ((t.getHours() !== 12) ? (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
     this.view.S.cached('reply_msg_successful').find('div.replied_time').text(time);
