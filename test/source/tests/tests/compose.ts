@@ -385,7 +385,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await expectRecipientElements(composePage, { to: ['flowcryptcompatibility@gmail.com'], cc: ['flowcrypt.compatibility@gmail.com'], bcc: ['human@flowcrypt.com'] });
         const subjectElem = await composePage.waitAny('@input-subject');
         expect(await (await subjectElem.getProperty('value')).jsonValue()).to.equal('Test Draft - New Message');
-        expect(await composePage.read('@input-body')).to.equal('Testing Drafts (Do not delete)');
+        expect((await composePage.read('@input-body')).trim()).to.equal('Testing Drafts (Do not delete)');
         for (const elem of await composePage.target.$$('.container-cc-bcc-buttons > span')) {
           expect(await PageRecipe.getElementPropertyJson(elem, 'offsetHeight')).to.equal(0); // CC/BCC btn isn't visible
         }
@@ -567,7 +567,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
       await composePage.close();
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl: 'draftId=draft_with_rtl_text' });
-      expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا</div>');
+      expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا<br></div>');
     }));
 
     ava.default('compose - sending and rendering encrypted message with image ', testWithBrowser('compatibility', async (t, browser) => {
