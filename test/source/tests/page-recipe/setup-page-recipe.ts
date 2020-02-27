@@ -191,6 +191,11 @@ export class SetupPageRecipe extends PageRecipe {
     }
   }
 
+  public static autoKeygen = async (settingsPage: ControllablePage): Promise<void> => {
+    await settingsPage.waitAndClick('@action-step4done-account-settings');
+    await SettingsPageRecipe.ready(settingsPage);
+  }
+
   private static createBegin = async (settingsPage: ControllablePage, keyTitle: string, { usedPgpBefore = false }: { usedPgpBefore?: boolean } = {}) => {
     const k = Config.key(keyTitle);
     if (usedPgpBefore) {

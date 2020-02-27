@@ -174,12 +174,9 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     }));
 
     ava.default('get.key@key-manager-autogen.flowcrypt.com - automatic setup with key found on key manager', testWithBrowser(undefined, async (t, browser) => {
-      // todo, create SetupPageRecipe.autoKeygen
       const acct = 'get.key@key-manager-autogen.flowcrypt.com';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await settingsPage.target.waitForNavigation();
-      await settingsPage.waitAndClick('@action-step4done-account-settings');
-      await SettingsPageRecipe.ready(settingsPage);
+      await SetupPageRecipe.autoKeygen(settingsPage);
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       // check imported key
       const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
