@@ -56,7 +56,9 @@ export class SetupKeyManagerAutogenModule {
         const generated = await PgpKey.create([{ name: full_name || '', email: this.view.acctEmail }], keygenAlgo, passphrase);
         const decryptablePrv = await PgpKey.read(generated.private);
         const generatedKeyLongid = await PgpKey.longid(decryptablePrv);
-        await PgpKey.decrypt(decryptablePrv, passphrase);
+        if (! await PgpKey.decrypt(decryptablePrv, passphrase)) {
+          throw new Error('Unexpectedly cannot decrypt newly generated key');
+        }
         await this.view.keyManager!.storePrivateKey(decryptablePrv.armor(), decryptablePrv.toPublic().armor(), generatedKeyLongid!); // store decrypted key on KM
         await this.view.saveKeys([await PgpKey.read(generated.private)], opts); // store encrypted key + pass phrase locally
       }
