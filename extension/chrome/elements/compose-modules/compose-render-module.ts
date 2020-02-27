@@ -247,6 +247,14 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.inputModule.squire.addEventListener('keyup', () => this.view.S.cached('send_btn_note').text(''));
     this.view.S.cached('input_addresses_container_inner').click(this.view.setHandler(() => this.onRecipientsClickHandler(), this.view.errModule.handle(`focus recipients`)));
     this.view.S.cached('input_addresses_container_inner').children().click(() => false);
+    this.view.S.cached('input_subject').keyup(this.view.setHandler((el: HTMLInputElement) => {
+      const rtlCheck = new RegExp('^[' + Str.rtlChars + ']');
+      if (el.value.match(rtlCheck)) {
+        $(el).attr('dir', 'rtl');
+      } else {
+        $(el).removeAttr('dir');
+      }
+    }));
   }
 
   private actionCloseHandler = async () => {
