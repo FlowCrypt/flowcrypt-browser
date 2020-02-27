@@ -270,7 +270,7 @@ export class Settings {
           window.location.href = Url.create('/chrome/settings/index.htm', { acctEmail: response.acctEmail });
         } else {
           await AcctStore.set(response.acctEmail, { email_provider: 'gmail' });
-          window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: response.acctEmail });
+          window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: response.acctEmail, idToken: response.id_token });
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
         if (settingsTabId) {
