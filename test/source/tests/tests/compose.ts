@@ -19,7 +19,7 @@ import { TestWithBrowser } from '../../test';
 import { expect } from "chai";
 
 // tslint:disable:no-blank-lines-func
-// tslint:disable:no-unused-expressions
+// tslint:disable:no-unused-expression
 
 export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 

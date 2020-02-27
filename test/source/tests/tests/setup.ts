@@ -14,7 +14,7 @@ import { Str } from '../../core/common';
 import { MOCK_KM_LAST_INSERTED_KEY } from '../../mock/key-manager/key-manager-endpoints';
 
 // tslint:disable:no-blank-lines-func
-// tslint:disable:no-unused-expressions
+// tslint:disable:no-unused-expression
 /* eslint-disable no-unused-expressions */
 /* eslint-disable max-len */
 
