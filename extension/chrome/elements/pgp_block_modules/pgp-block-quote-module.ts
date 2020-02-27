@@ -3,6 +3,7 @@
 'use strict';
 
 import { PgpBlockView } from '../pgp_block.js';
+import { Str } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
 export class PgpBlockViewQuoteModule {
@@ -57,7 +58,7 @@ export class PgpBlockViewQuoteModule {
       if (linesQuotedPart.length && !lines.length) { // only got quoted part, no real text -> show everything as real text, without quoting
         lines.push(...linesQuotedPart.splice(0, linesQuotedPart.length));
       }
-      await this.view.renderModule.renderContent(Xss.escapeTextAsRenderableHtml(lines.join('\n')), false);
+      await this.view.renderModule.renderContent(Str.escapeTextAsRenderableHtml(lines.join('\n')), false);
       if (linesQuotedPart.length) {
         this.appendCollapsedQuotedContentButton(linesQuotedPart.join('\n'));
       }
@@ -67,7 +68,7 @@ export class PgpBlockViewQuoteModule {
   private appendCollapsedQuotedContentButton = (message: string, isHtml: boolean = false) => {
     const pgpBlk = $("#pgp_block");
     pgpBlk.append('<div id="action_show_quoted_content" data-test="action-show-quoted-content" class="three_dots"><img src="/img/svgs/three-dots.svg" /></div>'); // xss-direct
-    const messageHtml = isHtml ? message : Xss.escapeTextAsRenderableHtml(message);
+    const messageHtml = isHtml ? message : Str.escapeTextAsRenderableHtml(message);
     pgpBlk.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(messageHtml, 'IMG-TO-LINK')}</div>`); // xss-sanitized
     pgpBlk.find('#action_show_quoted_content').click(this.view.setHandler(() => {
       $(".quoted_content").css('display', $(".quoted_content").css('display') === 'none' ? 'block' : 'none');
