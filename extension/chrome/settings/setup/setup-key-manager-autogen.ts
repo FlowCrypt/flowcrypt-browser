@@ -38,6 +38,9 @@ export class SetupKeyManagerAutogenModule {
       const { keys } = await this.view.keyManager!.getPrivateKeys();
       if (keys.length) { // keys already exist on keyserver, auto-import
         const { keys: prvs } = await PgpKey.readMany(Buf.fromUtfStr(keys.join('\n')));
+        if (!prvs.length) {
+          throw new Error(`Could not parse any valid keys from Key Manager response for user ${this.view.acctEmail}`);
+        }
         for (const prv of prvs) {
           if (!prv.isPrivate()) {
             throw new Error(`Key ${await PgpKey.longid(prv)} for user ${this.view.acctEmail} is not a private key`);
