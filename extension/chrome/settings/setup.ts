@@ -44,7 +44,7 @@ export class SetupView extends View {
   public readonly acctEmail: string;
   public readonly parentTabId: string | undefined;
   public readonly action: 'add_key' | 'finalize' | undefined;
-  public readonly idToken: string;
+  public readonly idToken: string | undefined; // only needed for initial setup, not for add_key or 'finalize'
 
   public readonly keyImportUi = new KeyImportUi({ checkEncryption: true });
   public readonly gmail: Gmail;
@@ -72,10 +72,13 @@ export class SetupView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'action', 'idToken', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.idToken = Assert.urlParamRequire.string(uncheckedUrlParams, 'idToken');
+    this.idToken = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'idToken');
     this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'finalize', undefined]) as 'add_key' | 'finalize' | undefined;
     if (this.action === 'add_key') {
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+    }
+    if (this.action !== 'add_key' && this.action !== 'finalize') {
+      Assert.urlParamRequire.string(uncheckedUrlParams, 'idToken'); // will render error if missing
     }
     if (this.acctEmail) {
       BrowserMsg.send.bg.updateUninstallUrl();
@@ -103,7 +106,7 @@ export class SetupView extends View {
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.rules = await Rules.newInstance(this.acctEmail);
     this.keyserver = new Keyserver(this.rules);
-    if (this.rules.getPrivateKeyManagerUrl()) {
+    if (this.rules.getPrivateKeyManagerUrl() && this.idToken) {
       this.keyManager = new KeyManager(this.rules.getPrivateKeyManagerUrl()!, this.idToken);
     }
     if (!this.rules.canCreateKeys()) {
