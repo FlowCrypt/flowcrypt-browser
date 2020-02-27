@@ -7,6 +7,7 @@ import { SquireEditor, WillPasteEvent } from '../../../types/squire.js';
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
+import { Str } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
@@ -39,7 +40,9 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   }
 
   public inputTextHtmlSetSafely = (html: string) => {
-    Xss.sanitizeRender(this.view.S.cached('input_text'), Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP'));
+    this.squire.setHTML(
+      Xss.htmlSanitize(Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP'))
+    );
   }
 
   public extract = (type: 'text' | 'html', elSel: 'input_text' | 'input_intro', flag?: 'SKIP-ADDONS') => {
@@ -106,22 +109,14 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
 
   private handleRTL = () => {
     const checkRTL = () => {
-      if (!this.isRichText()) { // RTL is supported for pgp/mime (rich text) only
-        return;
-      }
       let container = $(this.squire.getSelection().commonAncestorContainer);
       if (container.prop('tagName') !== 'DIV') { // commonAncestorContainer might be a text node
         container = container.closest('div');
       }
       if (container.text()) {
         const firstCharacter = container.text()[0];
-        // ranges are taken from https://stackoverflow.com/a/14824756
-        // with the '\u0300' -> '\u0370' modification, because from '\u0300' to '\u0370' there are only punctuation marks
-        // see https://www.utf8-chartable.de/unicode-utf8-table.pl
-        const ltrChars = 'A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02B8\u0370-\u0590\u0800-\u1FFF\u2C00-\uFB1C\uFDFE-\uFE6F\uFEFD-\uFFFF';
-        const rtlChars = '\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC';
-        const ltrDirCheck = new RegExp('[' + ltrChars + ']');
-        const rtlDirCheck = new RegExp('[' + rtlChars + ']');
+        const ltrDirCheck = new RegExp('[' + Str.ltrChars + ']');
+        const rtlDirCheck = new RegExp('[' + Str.rtlChars + ']');
         if (ltrDirCheck.test(firstCharacter) && container.attr('dir') !== 'ltr') { // Switch to LTR
           container.attr('dir', 'ltr');
         } else if (rtlDirCheck.test(firstCharacter) && container.attr('dir') !== 'rtl') { // Switch to RTL

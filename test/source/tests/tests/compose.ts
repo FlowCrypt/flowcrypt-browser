@@ -550,9 +550,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await body.$eval('#input_text img', el => el.getAttribute('src'))).to.eq(imgBase64);
     }));
 
-    ava.default('compose - saving and rendering a draft with RTL text', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('compose - saving and rendering a draft with RTL text (plain text)', testWithBrowser('compatibility', async (t, browser) => {
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      const subject = `saving and rendering a draft with RTL text`;
+      const subject = `saving and rendering a draft with RTL text (plain text)`;
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject);
+      await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
+      await composePage.close();
+      composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl: 'draftId=draft_with_rtl_text' });
+      expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا<br></div>');
+    }));
+
+    ava.default('compose - saving and rendering a draft with RTL text (rich text)', testWithBrowser('compatibility', async (t, browser) => {
+      let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+      const subject = `saving and rendering a draft with RTL text (rich text)`;
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, { richtext: true });
       await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
       await composePage.close();
