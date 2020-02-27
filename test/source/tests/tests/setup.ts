@@ -15,6 +15,7 @@ import { Str } from '../../core/common';
 import { MOCK_KM_LAST_INSERTED_KEY } from '../../mock/key-manager/key-manager-endpoints';
 
 // tslint:disable:no-blank-lines-func
+/* eslint-disable no-unused-expressions */
 
 export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
