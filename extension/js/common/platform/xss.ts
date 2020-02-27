@@ -124,16 +124,6 @@ export class Xss {
     return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
   }
 
-  public static escapeTextAsRenderableHtml = (text: string) => {
-    const rtlRegexp = new RegExp(`^([${Str.rtlChars}].*)$`, 'gm');
-    return Xss.escape(text)
-      .replace(/\n/g, '<br>\n') // leave newline so that following replaces work
-      .replace(/^ +/gm, spaces => spaces.replace(/ /g, '&nbsp;'))
-      .replace(/^\t+/gm, tabs => tabs.replace(/\t/g, '&#9;'))
-      .replace(rtlRegexp, '<div dir="rtl">$1</div>') // RTL lines
-      .replace(/\n/g, ''); // strip newlines, already have <br>
-  }
-
   public static htmlUnescape = (str: string) => {
     // the &nbsp; at the end is replaced with an actual NBSP character, not a space character. IDE won't show you the difference. Do not change.
     return str.replace(/&nbsp;/g, ' ').replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');

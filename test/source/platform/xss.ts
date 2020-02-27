@@ -20,11 +20,7 @@ export class Xss {
   }
 
   public static escape = (str: string) => {
-    throw new Error('not implemented / not needed by tests yet');
-  }
-
-  public static escapeTextAsRenderableHtml = (text: string) => {
-    throw new Error('not implemented / not needed by tests yet');
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
   }
 
   public static htmlUnescape = (str: string) => {

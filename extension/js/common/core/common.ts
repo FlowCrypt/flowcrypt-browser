@@ -3,6 +3,7 @@
 'use strict';
 
 import { base64decode, base64encode } from '../platform/util.js';
+import { Xss } from '../platform/xss.js';
 
 export type Dict<T> = { [key: string]: T; };
 export type UrlParam = string | number | null | undefined | boolean | string[];
@@ -97,16 +98,14 @@ export class Str {
     return toBeUsedInRegex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
-  public static asEscapedHtml = (text: string) => {
+  public static escapeTextAsRenderableHtml = (text: string) => {
     const rtlRegexp = new RegExp(`^([${Str.rtlChars}].*)$`, 'gm');
-    return text.replace(/&/g, '&amp;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\//g, '&#x2F;')
+    return Xss.escape(text)
       .replace(rtlRegexp, '<div dir="rtl">$1</div>') // RTL lines
-      .replace(/\n/g, '<br />');
+      .replace(/\n/g, '<br>\n') // leave newline so that following replaces work
+      .replace(/^ +/gm, spaces => spaces.replace(/ /g, '&nbsp;'))
+      .replace(/^\t+/gm, tabs => tabs.replace(/\t/g, '&#9;'))
+      .replace(/\n/g, ''); // strip newlines, already have <br>
   }
 
   public static htmlAttrEncode = (values: Dict<any>): string => {

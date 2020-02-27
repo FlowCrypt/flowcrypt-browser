@@ -53,7 +53,7 @@ export class MsgBlockParser {
       }
       const armoredPubKeys: string[] = [];
       plain = MsgBlockParser.stripPublicKeys(plain, armoredPubKeys);
-      blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(plain))); // escaped text as html
+      blocks.push(MsgBlock.fromContent('decryptedHtml', Str.escapeTextAsRenderableHtml(plain))); // escaped text as html
       await MsgBlockParser.pushArmoredPubkeysToBlocks(armoredPubKeys, blocks);
       return { blocks, subject: undefined, isRichText, webReplyToken };
     }
@@ -70,9 +70,9 @@ export class MsgBlockParser {
       if (webReplyToken) {
         decoded.text = MsgBlockParser.stripFcTeplyToken(decoded.text);
       }
-      blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(decoded.text))); // escaped text as html
+      blocks.push(MsgBlock.fromContent('decryptedHtml', Str.escapeTextAsRenderableHtml(decoded.text))); // escaped text as html
     } else {
-      blocks.push(MsgBlock.fromContent('decryptedHtml', Str.asEscapedHtml(Buf.with(decryptedContent).toUtfStr()))); // escaped mime text as html
+      blocks.push(MsgBlock.fromContent('decryptedHtml', Str.escapeTextAsRenderableHtml(Buf.with(decryptedContent).toUtfStr()))); // escaped mime text as html
     }
     for (const att of decoded.atts) {
       if (att.treatAs() === 'publicKey') {
