@@ -188,8 +188,8 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       expect(await myKeyFrame.read('@content-longid')).to.equal('00B0 1158 0796 9D75');
       await SettingsPageRecipe.closeDialog(settingsPage);
       await Util.sleep(2);
-      // todo - check that it does not offer any pass phrase options
-      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      // check that it does not offer any pass phrase options
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
       const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
       await Util.sleep(1);
       await securityFrame.notPresent(['@action-change-passphrase-begin', '@action-test-passphrase-begin', '@action-forget-pp']);
