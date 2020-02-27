@@ -236,10 +236,11 @@ View.run(class SettingsView extends View {
       $('.auth_denied_warning').removeClass('hidden');
     }
     const globalStorage = await GlobalStore.get(['install_mobile_app_notification_dismissed']);
-    if (!globalStorage.install_mobile_app_notification_dismissed && rules.canBackupKeys() && rules.canCreateKeys()) {
+    if (!globalStorage.install_mobile_app_notification_dismissed && rules.canBackupKeys() && rules.canCreateKeys() && !rules.getPrivateKeyManagerUrl()) {
       // only show this notification if user is allowed to:
       //   - backup keys: when not allowed, company typically has other forms of backup
       //   - create keys: when not allowed, key must have been imported from some other system that already takes care of backups
+      // and doesn't use custom key manager, because backups are then taken care of
       $('.install_app_notification').removeClass('hidden');
     }
     $('.dismiss_install_app_notification').click(this.setHandler(async () => {
