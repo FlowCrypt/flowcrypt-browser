@@ -442,7 +442,7 @@ a.gray_link {
   width: 100%;
 }
 
-.abs-row span.change-passphrase {
+.abs-row span.keys-link-top-right-container {
   display: inline-block;
   position: absolute;
   right: 10px;

@@ -66,6 +66,9 @@ View.run(class SettingsView extends View {
     if (this.rules && !this.rules.canSubmitPubToAttester()) {
       $('.public_profile_indicator_container').hide(); // contact page is useless if user cannot submit to attester
     }
+    if (this.rules && this.rules.getPrivateKeyManagerUrl()) {
+      $(".add_key").hide(); // users which a key manager should not be adding keys manually
+    }
     $.get('/changelog.txt', data => ($('#status-row #status_v') as any as JQS).featherlight(String(data).replace(/\n/g, '<br>')), 'html');
     await this.initialize();
     await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail, this.tabId);
