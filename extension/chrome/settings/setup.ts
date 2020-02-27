@@ -188,7 +188,7 @@ export class SetupView extends View {
     try {
       await this.submitPublicKeyIfNeeded(primaryKi.public, { submit_main, submit_all });
     } catch (e) {
-      return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToSubmitToAttester, () => this.finalizeSetup({ submit_main, submit_all }));
+      return await Settings.promptToRetry(e, Lang.setup.failedToSubmitToAttester, () => this.finalizeSetup({ submit_main, submit_all }));
     }
     await AcctStore.set(this.acctEmail, { setup_date: Date.now(), setup_done: true, cryptup_enabled: true });
     await AcctStore.remove(this.acctEmail, ['tmp_submit_main', 'tmp_submit_all']);

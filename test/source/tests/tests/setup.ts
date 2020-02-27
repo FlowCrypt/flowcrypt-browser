@@ -234,12 +234,13 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default('put.error@key-manager-autogen.flowcrypt.com - handles error during KM key PUT', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'put.error@key-manager-autogen.flowcrypt.com';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.autoKeygen(settingsPage, {
-        expectErr: {
-          title: 'Server responded with an unexpected error.',
-          text: '500 when PUT-ing http://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedKey,publicKey,longid -> Intentional error for put.error user to test client behavior',
-        }
-      });
+      await settingsPage.waitAll(['@action-overlay-retry', '@container-overlay-prompt-text', '@action-show-overlay-details']);
+      await Util.sleep(0.5);
+      expect(await settingsPage.read('@container-overlay-prompt-text')).to.contain('Server responded with an unexpected error.');
+      await settingsPage.click('@action-show-overlay-details');
+      await settingsPage.waitAll('@container-overlay-details');
+      await Util.sleep(0.5);
+      expect(await settingsPage.read('@container-overlay-details')).to.contain('500 when PUT-ing http://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedKey,publicKey,longid -> Intentional error for put.error user to test client behavior');
     }));
 
     ava.default('fail@key-manager-server-offline.flowcrypt.com - shows friendly KM not reachable error', testWithBrowser(undefined, async (t, browser) => {

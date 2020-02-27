@@ -28,7 +28,7 @@ export class SetupRenderModule {
         const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
         this.saveAndFillSubmitPubkeysOption(Object.keys(sendAs!));
       } catch (e) {
-        return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToLoadEmailAliases, () => this.renderInitial());
+        return await Settings.promptToRetry(e, Lang.setup.failedToLoadEmailAliases, () => this.renderInitial());
       }
       $('.auth_denied_warning').toggleClass('hidden', this.view.scopes!.read || this.view.scopes!.modify);
     }
@@ -96,7 +96,7 @@ export class SetupRenderModule {
     try {
       keyserverRes = await this.view.keyserver.lookupEmail(this.view.acctEmail);
     } catch (e) {
-      return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => this.renderSetupDialog());
+      return await Settings.promptToRetry(e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => this.renderSetupDialog());
     }
     if (keyserverRes.pubkey) {
       this.view.acctEmailAttesterLongid = await PgpKey.longid(keyserverRes.pubkey);
@@ -109,7 +109,7 @@ export class SetupRenderModule {
           this.view.fetchedKeyBackups = backups.keyinfos.backups;
           this.view.fetchedKeyBackupsUniqueLongids = backups.longids.backups;
         } catch (e) {
-          return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToCheckAccountBackups, () => this.renderSetupDialog());
+          return await Settings.promptToRetry(e, Lang.setup.failedToCheckAccountBackups, () => this.renderSetupDialog());
         }
         if (this.view.fetchedKeyBackupsUniqueLongids.length) {
           this.displayBlock('step_2_recovery');

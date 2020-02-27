@@ -12,6 +12,7 @@ import { Buf } from '../../../js/common/core/buf.js';
 import { PgpPwd } from '../../../js/common/core/pgp-password.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Api } from '../../../js/common/api/api.js';
+import { Settings } from '../../../js/common/settings.js';
 
 export class SetupKeyManagerAutogenModule {
 
@@ -59,7 +60,8 @@ export class SetupKeyManagerAutogenModule {
         if (! await PgpKey.decrypt(decryptablePrv, passphrase)) {
           throw new Error('Unexpectedly cannot decrypt newly generated key');
         }
-        await this.view.keyManager!.storePrivateKey(decryptablePrv.armor(), decryptablePrv.toPublic().armor(), generatedKeyLongid!); // store decrypted key on KM
+        const storePrvOnKm = () => this.view.keyManager!.storePrivateKey(decryptablePrv.armor(), decryptablePrv.toPublic().armor(), generatedKeyLongid!);
+        await Settings.retryUntilSuccessful(storePrvOnKm, 'Failed to store newly generated key on FlowCrypt Email Key Manager');
         await this.view.saveKeys([await PgpKey.read(generated.private)], opts); // store encrypted key + pass phrase locally
       }
       await this.view.finalizeSetup(opts);
