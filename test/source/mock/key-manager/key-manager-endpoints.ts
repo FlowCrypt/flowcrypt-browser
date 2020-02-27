@@ -26,15 +26,23 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/keys/private GET with acct ${acctEmail}`);
     }
     if (isPut(req)) {
-      const { decryptedKey, longid } = body as Dict<string>;
+      const { decryptedKey, publicKey, longid } = body as Dict<string>;
       if (acctEmail === 'put.key@key-manager-autogen.flowcrypt.com') {
-        const details = await PgpKey.parseDetails(decryptedKey);
-        expect(details.keys).to.have.length(1);
-        expect(details.keys[0].algo.bits).to.equal(2048);
-        expect(details.keys[0].ids[0].longid).to.equal(longid);
-        expect(details.keys[0].users).to.have.length(1);
-        expect(details.keys[0].users[0]).to.equal('put.key@key-manager-autogen.flowcrypt.com');
-        expect(details.keys[0].isFullyDecrypted).to.be.true('key must be decrypted');
+        const prvDetails = await PgpKey.parseDetails(decryptedKey);
+        expect(prvDetails.keys).to.have.length(1);
+        expect(prvDetails.keys[0].algo.bits).to.equal(2048);
+        expect(prvDetails.keys[0].ids[0].longid).to.equal(longid);
+        expect(prvDetails.keys[0].users).to.have.length(1);
+        expect(prvDetails.keys[0].users[0]).to.equal('put.key@key-manager-autogen.flowcrypt.com');
+        expect(prvDetails.keys[0].private).to.exist('key must be private');
+        expect(prvDetails.keys[0].isFullyDecrypted).to.be.true('key must be decrypted');
+        const pubDetails = await PgpKey.parseDetails(publicKey);
+        expect(pubDetails.keys).to.have.length(1);
+        expect(pubDetails.keys[0].algo.bits).to.equal(2048);
+        expect(pubDetails.keys[0].ids[0].longid).to.equal(longid);
+        expect(pubDetails.keys[0].users).to.have.length(1);
+        expect(pubDetails.keys[0].users[0]).to.equal('put.key@key-manager-autogen.flowcrypt.com');
+        expect(pubDetails.keys[0].private).to.not.exist('key must be public');
         return {};
       }
       throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/keys/private PUT with acct ${acctEmail}`);
