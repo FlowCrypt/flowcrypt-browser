@@ -550,6 +550,16 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await body.$eval('#input_text img', el => el.getAttribute('src'))).to.eq(imgBase64);
     }));
 
+    ava.default('compose - RTL subject', testWithBrowser('compatibility', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+      await composePage.type('@input-subject', 'ش');
+      expect(await composePage.attr('@input-subject', 'dir')).to.eq('rtl');
+      await composePage.press('Backspace');
+      expect(await composePage.attr('@input-subject', 'dir')).to.be.null;
+      await composePage.type('@input-subject', 'a');
+      expect(await composePage.attr('@input-subject', 'dir')).to.be.null;
+    }));
+
     ava.default('compose - saving and rendering a draft with RTL text (plain text)', testWithBrowser('compatibility', async (t, browser) => {
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       const subject = `saving and rendering a draft with RTL text (plain text)`;
