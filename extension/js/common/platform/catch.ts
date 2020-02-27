@@ -219,9 +219,28 @@ export class Catch {
       Catch.test();
     } catch (e) {
       // return stack after removing first 3 lines plus url
-      return `${((e as Error).stack || '').split('\n').splice(3).join('\n')}\n\nurl: ${window.location.href}\n`;
+      return `${((e as Error).stack || '').split('\n').splice(3).join('\n')}\n\nurl: ${Catch.censoredUrl(window.location.href)}\n`;
     }
     return ''; // make ts happy - this will never happen
+  }
+
+  public static censoredUrl = (url: string | undefined): string => {
+    if (!url) {
+      return '(unknown url)';
+    }
+    if (url.indexOf('refreshToken=') !== -1) {
+      return `${url.split('?')[0]}~censored:refreshToken`;
+    }
+    if (url.indexOf('token=') !== -1) {
+      return `${url.split('?')[0]}~censored:token`;
+    }
+    if (url.indexOf('code=') !== -1) {
+      return `${url.split('?')[0]}~censored:code`;
+    }
+    if (url.indexOf('idToken=') !== -1) {
+      return `${url.split('?')[0]}~censored:idToken`;
+    }
+    return url;
   }
 
   public static onUnhandledRejectionInternalHandler = (e: any) => {

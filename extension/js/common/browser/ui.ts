@@ -243,7 +243,7 @@ export class Ui {
       const formattedBtns = Object.keys(btns).map(formatBtn).join('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
       if (details) {
         const a = `<a href="#" class="action-show-overlay-details" data-test="action-show-overlay-details" style="display:block;text-align:center;">Show technical details</a>`;
-        details = `${a}<pre class="display_none" data-test="container-overlay-details">${details.replace(/\n/g, '<br>')}</pre>`;
+        details = `${a}<pre style="font-size:10px;width:900px;overflow-x: scroll;" class="display_none" data-test="container-overlay-details">${details.replace(/\n/g, '<br>')}</pre>`;
       }
       Xss.sanitizeAppend('body', `
         <div class="featherlight white prompt_overlay" style="display: block;">

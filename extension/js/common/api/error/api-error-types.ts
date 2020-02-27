@@ -27,25 +27,9 @@ export class BackendAuthErr extends AuthErr { }
 
 abstract class ApiCallErr extends Error {
 
-  protected static censoredUrl = (url: string | undefined): string => {
-    if (!url) {
-      return '(unknown url)';
-    }
-    if (url.indexOf('refreshToken=') !== -1) {
-      return `${url.split('?')[0]}~censored:refreshToken`;
-    }
-    if (url.indexOf('token=') !== -1) {
-      return `${url.split('?')[0]}~censored:token`;
-    }
-    if (url.indexOf('code=') !== -1) {
-      return `${url.split('?')[0]}~censored:code`;
-    }
-    return url;
-  }
-
   protected static describeApiAction = (req: JQueryAjaxSettings) => {
     const describeBody = typeof req.data === 'undefined' ? '(no body)' : typeof req.data;
-    return `${req.method || 'GET'}-ing ${ApiCallErr.censoredUrl(req.url)} ${describeBody}: ${ApiCallErr.getPayloadStructure(req)}`;
+    return `${req.method || 'GET'}-ing ${Catch.censoredUrl(req.url)} ${describeBody}: ${ApiCallErr.getPayloadStructure(req)}`;
   }
 
   private static getPayloadStructure = (req: JQueryAjaxSettings): string => {
@@ -94,7 +78,7 @@ export class AjaxErr extends ApiCallErr {
       stack += `\n\nresponseText(0, 1000):\n${responseText.substr(0, 1000)}\n\npayload(0, 1000):\n${Catch.stringify(req.data).substr(0, 1000)}`;
     }
     const message = `${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallErr.describeApiAction(req)}`;
-    return new AjaxErr(message, stack, status, AjaxErr.censoredUrl(req.url), responseText, xhr.statusText || '(no status text)');
+    return new AjaxErr(message, stack, status, Catch.censoredUrl(req.url), responseText, xhr.statusText || '(no status text)');
   }
 
   constructor(message: string, public stack: string, public status: number, public url: string, public responseText: string, public statusText: string) {

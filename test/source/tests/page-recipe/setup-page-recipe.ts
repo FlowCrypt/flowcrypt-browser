@@ -146,6 +146,7 @@ export class SetupPageRecipe extends PageRecipe {
         await settingsPage.waitAll('@container-overlay-details');
         await Util.sleep(0.5);
         expect(await settingsPage.read('@container-overlay-details')).to.contain('Error stack');
+        expect(await settingsPage.read('@container-overlay-details')).to.contain('censored:idToken');
         await settingsPage.page.setOfflineMode(false); // back online
         await settingsPage.click('@action-overlay-retry');
         // after retry, the rest should continue as usual below
