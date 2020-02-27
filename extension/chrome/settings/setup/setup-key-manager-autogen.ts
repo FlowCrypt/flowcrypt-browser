@@ -47,7 +47,7 @@ export class SetupKeyManagerAutogenModule {
           }
           await PgpKey.encrypt(prv, passphrase);
         }
-        await this.view.saveKeys(prvs, { passphrase_save: true, submit_all: true, submit_main: true, passphrase });
+        await this.view.saveKeys(prvs, { passphrase_save: true, submit_main: true, submit_all: false, passphrase });
       } else { // generate keys and store them on key manager
         const { full_name } = await AcctStore.get(this.view.acctEmail, ['full_name']);
         const generated = await PgpKey.create([{ name: full_name || '', email: this.view.acctEmail }], keygenAlgo, passphrase);
