@@ -33,7 +33,7 @@
     "stylelint-config-standard": "^19.0.0",
     "sweetalert2": "8.18.3",
     "tslint": "5.20.1",
-    "typescript": "3.7.3",
+    "typescript": "3.7.5",
     "web-ext": "3.2.1"
   },
   "scripts": {
