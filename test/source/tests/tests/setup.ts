@@ -10,6 +10,7 @@ import { TestWithBrowser } from '../../test';
 import { expect } from 'chai';
 import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
 import { ComposePageRecipe } from '../page-recipe/compose-page-recipe';
+import { TestUrls } from '../../browser/test-urls';
 
 // tslint:disable:no-blank-lines-func
 
@@ -169,6 +170,18 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'normally has pubkey but should show none');
       await composePage.waitForContent('.email_address.no_pgp', 'human@flowcrypt.com');
       await composePage.waitAll('@input-password');
+    }));
+
+    ava.default.skip('get.key@key-manager-autogen.flowcrypt.com - automatic setup with key found on key manager', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'get.key@key-manager-autogen.flowcrypt.com';
+      const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await setupPage.target.waitForNavigation();
+      expect(setupPage.target.url()).contain('https://mail.google.com'); // auto-redirect to gmail
+      await setupPage.close();
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      // todo - check imported key
+      // todo - check that it does not offer to forget pass phrase
     }));
 
   }

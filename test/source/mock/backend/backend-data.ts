@@ -5,6 +5,7 @@ import { HttpAuthErr } from '../lib/api';
 import { OauthMock } from '../lib/oauth';
 
 // tslint:disable:no-null-keyword
+// tslint:disable:oneliner-object-literal
 
 export class BackendData {
   public reportedErrors: { name: string, message: string, url: string, line: number, col: number, trace: string, version: string, environmane: string }[] = [];
