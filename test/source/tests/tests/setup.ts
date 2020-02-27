@@ -11,6 +11,7 @@ import { expect } from 'chai';
 import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
 import { ComposePageRecipe } from '../page-recipe/compose-page-recipe';
 import { TestUrls } from '../../browser/test-urls';
+import { Str } from '../../core/common';
 
 // tslint:disable:no-blank-lines-func
 
@@ -172,7 +173,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await composePage.waitAll('@input-password');
     }));
 
-    ava.default.skip('get.key@key-manager-autogen.flowcrypt.com - automatic setup with key found on key manager', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('get.key@key-manager-autogen.flowcrypt.com - automatic setup with key found on key manager', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'get.key@key-manager-autogen.flowcrypt.com';
       const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await setupPage.target.waitForNavigation();
@@ -180,8 +181,16 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await setupPage.close();
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-      // todo - check imported key
-      // todo - check that it does not offer to forget pass phrase
+      // check imported key
+      const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-1`, ['my_key.htm', 'placement=settings']);
+      await Util.sleep(1);
+      await myKeyFrame.waitAll('@content-longid');
+      expect(await myKeyFrame.read('@content-longid')).to.equal(Str.spaced('unknown'));
+      await SettingsPageRecipe.closeDialog(settingsPage);
+      // todo - check that it does not offer any pass phrase options
+      const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
+      await Util.sleep(1);
+      await securityFrame.notPresent(['@action-change-passphrase-begin', '@action-test-passphrase-begin', '@action-forget-pp']);
     }));
 
   }
