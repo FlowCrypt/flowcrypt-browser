@@ -116,7 +116,7 @@ export class ApiErr {
     return false;
   }
 
-  public static isNetErr = (e: any): boolean => {
+  public static isNetErr = (e: any): e is Error => {
     if (e instanceof TypeError && (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')) {
       return true; // openpgp.js uses fetch()... which produces these errors
     }

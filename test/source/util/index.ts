@@ -73,6 +73,7 @@ Config.secrets.auth.google.push( // these don't contain any secrets, so not wort
   { "email": "put.key@key-manager-autogen.flowcrypt.com" },
   { "email": "get.error@key-manager-autogen.flowcrypt.com" },
   { "email": "put.error@key-manager-autogen.flowcrypt.com" },
+  { "email": "fail@key-manager-server-offline.flowcrypt.com" },
 );
 
 export class Util {

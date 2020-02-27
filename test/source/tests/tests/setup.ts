@@ -240,7 +240,17 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
           text: '500 when PUT-ing http://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedKey,publicKey,longid -> Intentional error for put.error user to test client behavior',
         }
       });
+    }));
 
+    ava.default('fail@key-manager-server-offline.flowcrypt.com - shows friendly KM not reachable error', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'fail@key-manager-server-offline.flowcrypt.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoKeygen(settingsPage, {
+        expectErr: {
+          title: 'Network connection issue.',
+          text: 'FlowCrypt Email Key Manager at https://localhost:1230/intentionally-wrong is down, please inform your network admin.',
+        }
+      });
     }));
 
   }

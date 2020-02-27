@@ -17,6 +17,7 @@ export const acctsWithoutMockData = [
   "put.key@key-manager-autogen.flowcrypt.com",
   "get.error@key-manager-autogen.flowcrypt.com",
   "put.error@key-manager-autogen.flowcrypt.com",
+  "fail@key-manager-server-offline.flowcrypt.com",
 ];
 
 export const mock = async (logger: (line: string) => void) => {

@@ -73,17 +73,24 @@ export class BackendData {
         "disallow_attester_search_for_domains": ["flowcrypt.com"]
       };
     }
+    const keyManagerAutogenRules = {
+      "flags": [
+        "NO_PRV_BACKUP",
+        "ENFORCE_ATTESTER_SUBMIT",
+        "PRV_AUTOIMPORT_OR_AUTOGEN",
+        "PASS_PHRASE_QUIET_AUTOGEN",
+        "DEFAULT_REMEMBER_PASS_PHRASE"
+      ],
+      "private_key_manager_url": "http://localhost:8001/flowcrypt-email-key-manager",
+      "enforce_keygen_algo": "rsa2048",
+    };
     if (domain === 'key-manager-autogen.flowcrypt.com') {
+      return keyManagerAutogenRules;
+    }
+    if (domain === 'key-manager-server-offline.flowcrypt.com') {
       return {
-        "flags": [
-          "NO_PRV_BACKUP",
-          "ENFORCE_ATTESTER_SUBMIT",
-          "PRV_AUTOIMPORT_OR_AUTOGEN",
-          "PASS_PHRASE_QUIET_AUTOGEN",
-          "DEFAULT_REMEMBER_PASS_PHRASE"
-        ],
-        "private_key_manager_url": "http://localhost:8001/flowcrypt-email-key-manager",
-        "enforce_keygen_algo": "rsa2048",
+        ...keyManagerAutogenRules,
+        "private_key_manager_url": "https://localhost:1230/intentionally-wrong",
       };
     }
     return {
