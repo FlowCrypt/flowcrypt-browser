@@ -38,14 +38,14 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
   },
   '/oauth2/v1/tokeninfo': async ({ query: { access_token } }, req) => {
-    oauth.checkAuthorizationHeader(`Bearer ${access_token}`);
+    oauth.checkAuthorizationHeaderWithAccessToken(`Bearer ${access_token}`);
     if (isGet(req)) {
       return { issued_to: 'issued_to', audience: 'audience', scope: 'scope', expires_in: oauth.expiresIn, access_type: 'offline' };
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
   '/m8/feeds/contacts/default/thin': async (parsedReq, req) => {
-    const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
+    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req) && acct === 'test.ci.compose@org.flowcrypt.com') {
       return {
         feed: {
@@ -58,7 +58,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
   '/gmail/v1/users/me/settings/sendAs': async (parsedReq, req) => {
-    const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
+    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
       const sendAs = [{
         sendAsEmail: acct,
@@ -90,7 +90,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
   '/gmail/v1/users/me/messages': async ({ query: { q } }, req) => { // search messages
-    const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
+    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req) && q) {
       const msgs = new GoogleData(acct).searchMessages(q);
       return { messages: msgs.map(({ id, threadId }) => ({ id, threadId })), resultSizeEstimate: msgs.length };
@@ -98,7 +98,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
   '/gmail/v1/users/me/messages/?': async ({ query: { format } }, req) => { // get msg or attachment
-    const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
+    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
       const id = parseResourceId(req.url!);
       const data = new GoogleData(acct);
@@ -118,14 +118,14 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
   '/gmail/v1/users/me/labels': async (parsedReq, req) => {
-    const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
+    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
       return { labels: new GoogleData(acct).getLabels() };
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
   '/gmail/v1/users/me/threads': async ({ query: { labelIds, includeSpamTrash } }, req) => {
-    const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
+    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
       const threads = new GoogleData(acct).getThreads();
       return { threads, resultSizeEstimate: threads.length };
@@ -133,7 +133,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
   '/gmail/v1/users/me/threads/?': async ({ query: { format } }, req) => {
-    const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
+    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req) && (format === 'metadata' || format === 'full')) {
       const id = parseResourceId(req.url!);
       const msgs = new GoogleData(acct).getMessagesByThread(id);
@@ -145,7 +145,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     }
   },
   '/upload/gmail/v1/users/me/messages/send?uploadType=multipart': async (parsedReq, req) => {
-    const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
+    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isPost(req)) {
       if (parsedReq.body && typeof parsedReq.body === 'string') {
         const parseResult = await parseMultipartDataAsMimeMsg(parsedReq.body);
@@ -165,7 +165,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
   },
   '/gmail/v1/users/me/drafts': async (parsedReq, req) => {
     if (isPost(req)) {
-      const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
+      const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
       const body = parsedReq.body as DraftSaveModel;
       if (body && body.message && body.message.raw
         && typeof body.message.raw === 'string') {
@@ -184,7 +184,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
   '/gmail/v1/users/me/drafts/?': async (parsedReq, req) => {
-    const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
+    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
       const id = parseResourceId(req.url!);
       const data = new GoogleData(acct);

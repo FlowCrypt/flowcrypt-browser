@@ -29,7 +29,7 @@ export class KeyManager extends Api {
   }
 
   private request = async <RT>(method: ReqMethod, path: string, vals?: Dict<any>): Promise<RT> => {
-    return await Api.apiCall(this.url, path, vals, 'JSON', undefined, { Authorization: `Bearer ${this.idToken}` }, undefined, method);
+    return await Api.apiCall(this.url, path, vals, vals ? 'JSON' : undefined, undefined, { Authorization: `Bearer ${this.idToken}` }, undefined, method);
   }
 
 }
