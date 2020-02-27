@@ -192,9 +192,16 @@ export class SetupPageRecipe extends PageRecipe {
     }
   }
 
-  public static autoKeygen = async (settingsPage: ControllablePage): Promise<void> => {
-    await settingsPage.waitAndClick('@action-step4done-account-settings');
-    await SettingsPageRecipe.ready(settingsPage);
+  public static autoKeygen = async (settingsPage: ControllablePage, { expectErr }: { expectErr?: { title: string, text: string } } = {}): Promise<void> => {
+    if (expectErr) {
+      await settingsPage.waitAll(['@container-err-title', '@container-err-text', '@action-retry-by-reloading']);
+      expect(await settingsPage.read('@container-err-title')).to.contain(expectErr.title);
+      await Util.sleep(20);
+      expect(await settingsPage.read('@container-err-text')).to.contain(expectErr.text);
+    } else {
+      await settingsPage.waitAndClick('@action-step4done-account-settings');
+      await SettingsPageRecipe.ready(settingsPage);
+    }
   }
 
   private static createBegin = async (settingsPage: ControllablePage, keyTitle: string, { usedPgpBefore = false }: { usedPgpBefore?: boolean } = {}) => {

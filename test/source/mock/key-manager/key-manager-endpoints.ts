@@ -27,6 +27,12 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'put.key@key-manager-autogen.flowcrypt.com') {
         return { keys: [] };
       }
+      if (acctEmail === 'put.error@key-manager-autogen.flowcrypt.com') {
+        return { keys: [] };
+      }
+      if (acctEmail === 'get.error@key-manager-autogen.flowcrypt.com') {
+        throw new Error('Intentional error for get.error to test client behavior');
+      }
       throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/keys/private GET with acct ${acctEmail}`);
     }
     if (isPut(req)) {
@@ -49,6 +55,9 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         expect(pubDetails.keys[0].private).to.not.exist;
         MOCK_KM_LAST_INSERTED_KEY[acctEmail] = { decryptedKey, publicKey, longid };
         return {};
+      }
+      if (acctEmail === 'put.error@key-manager-autogen.flowcrypt.com') {
+        throw new Error('Intentional error for put.error user to test client behavior');
       }
       throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/keys/private PUT with acct ${acctEmail}`);
     }

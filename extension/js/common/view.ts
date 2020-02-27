@@ -24,7 +24,15 @@ export abstract class View {
 
   private static reportAndRenderErr = (e: any) => {
     ApiErr.reportIfSignificant(e);
-    Xss.sanitizeRender('body', `${ApiErr.eli5(e)}<br>${String(e)}<br><br>${Ui.retryLink()}`);
+    Xss.sanitizeRender('body', `
+      <br>
+      <div data-test="container-err-title">${ApiErr.eli5(e)}</div>
+      <br>
+      <div data-test="container-err-text">${String(e)}</div>
+      <br>
+      <br>
+      ${Ui.retryLink()}
+    `);
   }
 
   public abstract async render(): Promise<void>;

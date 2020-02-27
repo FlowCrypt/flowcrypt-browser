@@ -74,13 +74,12 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     } else if (ApiErr.isReqTooLarge(e)) {
       await Ui.modal.error(`Could not send: message or attachments too large.`);
     } else if (ApiErr.isBadReq(e)) {
-      const errMsg = e.parseErrResMsg('google');
-      if (errMsg === e.STD_ERR_MSGS.GOOGLE_INVALID_TO_HEADER || errMsg === e.STD_ERR_MSGS.GOOGLE_RECIPIENT_ADDRESS_REQUIRED) {
+      if (e.parsedErrMsg === e.STD_ERR_MSGS.GOOGLE_INVALID_TO_HEADER || e.parsedErrMsg === e.STD_ERR_MSGS.GOOGLE_RECIPIENT_ADDRESS_REQUIRED) {
         await Ui.modal.error('Error from google: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.');
       } else {
         if (await Ui.modal.confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
           const page = '/chrome/settings/modules/help.htm';
-          const pageUrlParams = { bugReport: BrowserExtension.prepareBugReport(`composer: send: bad request (errMsg: ${errMsg})`, {}, e) };
+          const pageUrlParams = { bugReport: BrowserExtension.prepareBugReport(`composer: send: bad request (errMsg: ${e.parsedErrMsg})`, {}, e) };
           BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page, pageUrlParams });
         }
       }

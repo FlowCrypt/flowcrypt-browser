@@ -106,7 +106,7 @@ export namespace Bm {
 
   export type ErrAsJson =
     { stack?: string; message: string, errorConstructor: 'Error' } |
-    { stack?: string; message: string, errorConstructor: 'AjaxErr', ajaxErrorDetails: { status: number, url: string, responseText: string, statusText: string } };
+    { stack?: string; message: string, errorConstructor: 'AjaxErr', ajaxErrorDetails: { status: number, url: string, responseText: string, statusText: string, parsedErrMsg: string | undefined } };
 }
 
 type Handler = Bm.AsyncRespondingHandler | Bm.AsyncResponselessHandler;
@@ -463,7 +463,7 @@ export class BrowserMsg {
     const stackInfo = `\n\n[callerStack]\n${msg.stack}\n[/callerStack]\n\n[responderStack]\n${errAsJson.stack}\n[/responderStack]\n`;
     if (errAsJson.errorConstructor === 'AjaxErr') {
       const { status, url, responseText, statusText } = errAsJson.ajaxErrorDetails;
-      return new AjaxErr(`BrowserMsg(${name}) ${errAsJson.message}`, stackInfo, status, url, responseText, statusText);
+      return new AjaxErr(`BrowserMsg(${name}) ${errAsJson.message}`, stackInfo, status, url, responseText, statusText, '');
     }
     const e = new Error(`BrowserMsg(${name}) ${errAsJson.message}`);
     e.stack += stackInfo;

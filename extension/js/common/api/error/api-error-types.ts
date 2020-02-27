@@ -77,18 +77,15 @@ export class AjaxErr extends ApiCallErr {
       // RawAjaxErr with status 200 can happen when it fails to parse response - eg non-json result
       stack += `\n\nresponseText(0, 1000):\n${responseText.substr(0, 1000)}\n\npayload(0, 1000):\n${Catch.stringify(req.data).substr(0, 1000)}`;
     }
-    const message = `${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallErr.describeApiAction(req)}`;
-    return new AjaxErr(message, stack, status, Catch.censoredUrl(req.url), responseText, xhr.statusText || '(no status text)');
+    const errMsg = AjaxErr.parseErrMsg(responseText, 'JSON[error][message]');
+    const message = `${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallErr.describeApiAction(req)} -> ${errMsg}`;
+    return new AjaxErr(message, stack, status, Catch.censoredUrl(req.url), responseText, xhr.statusText || '(no status text)', errMsg);
   }
 
-  constructor(message: string, public stack: string, public status: number, public url: string, public responseText: string, public statusText: string) {
-    super(message);
-  }
-
-  public parseErrResMsg = (format: 'google') => {
+  private static parseErrMsg = (responseText: string, format: 'JSON[error][message]') => {
     try {
-      if (format === 'google') {
-        const errMsg = ((JSON.parse(this.responseText) as any).error as any).message as string; // catching all errs below
+      if (format === 'JSON[error][message]') {
+        const errMsg = ((JSON.parse(responseText) as any).error as any).message as string; // catching all errs below
         if (typeof errMsg === 'string') {
           return errMsg;
         }
@@ -97,6 +94,18 @@ export class AjaxErr extends ApiCallErr {
       return undefined;
     }
     return undefined;
+  }
+
+  constructor(
+    message: string,
+    public stack: string,
+    public status: number,
+    public url: string,
+    public responseText: string,
+    public statusText: string,
+    public parsedErrMsg: string | undefined
+  ) {
+    super(message);
   }
 
 }
