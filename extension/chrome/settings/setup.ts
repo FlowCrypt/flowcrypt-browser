@@ -121,6 +121,9 @@ export class SetupView extends View {
       $('#step_2a_manual_create .input_passphrase_save').prop('checked', true);
       $('#step_2b_manual_enter .input_passphrase_save').prop('checked', true);
     }
+    if (this.rules.getEnforcedKeygenAlgo()) {
+      $('.key_type').val(this.rules.getEnforcedKeygenAlgo()!).prop('disabled', true);
+    }
     this.tabId = await BrowserMsg.requiredTabId();
     await this.setupRender.renderInitial();
   }

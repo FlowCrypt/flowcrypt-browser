@@ -3,7 +3,6 @@
 'use strict';
 
 import { SetupOptions, SetupView } from '../setup.js';
-
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpKey, KeyAlgo } from '../../../js/common/core/pgp-key.js';
@@ -34,7 +33,7 @@ export class SetupCreateKeyModule {
         submit_all: this.view.shouldSubmitPubkey('#step_2a_manual_create .input_submit_all'),
         recovered: false,
       };
-      const keyAlgo = $('#step_2a_manual_create .key_type').val() as KeyAlgo;
+      const keyAlgo = this.view.rules.getEnforcedKeygenAlgo() || $('#step_2a_manual_create .key_type').val() as KeyAlgo;
       const action = $('#step_2a_manual_create .input_backup_inbox').prop('checked') ? 'setup_automatic' : 'setup_manual';
       await this.createSaveKeyPair(options, keyAlgo);
       await this.view.preFinalizeSetup(options);
