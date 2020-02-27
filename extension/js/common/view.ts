@@ -26,11 +26,10 @@ export abstract class View {
     ApiErr.reportIfSignificant(e);
     Xss.sanitizeRender('body', `
       <br>
-      <div data-test="container-err-title">${ApiErr.eli5(e)}</div>
-      <br>
-      <div data-test="container-err-text">${String(e)}</div>
-      <br>
-      <br>
+      <div data-test="container-err-title" style="width: 900px;display:inline-block;">${ApiErr.eli5(e)}</div>
+      <br><br>
+      <div data-test="container-err-text" style="width: 900px;display:inline-block;">${String(e)}</div>
+      <br><br>
       ${Ui.retryLink()}
     `);
   }

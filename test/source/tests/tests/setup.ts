@@ -16,6 +16,7 @@ import { MOCK_KM_LAST_INSERTED_KEY } from '../../mock/key-manager/key-manager-en
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expressions
 /* eslint-disable no-unused-expressions */
+/* eslint-disable max-len */
 
 export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
@@ -219,17 +220,27 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await securityFrame.notPresent(['@action-change-passphrase-begin', '@action-test-passphrase-begin', '@action-forget-pp']);
     }));
 
-    ava.default.only('get.error@key-manager-autogen.flowcrypt.com - automatic setup with key not found on key manager, then generated', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('get.error@key-manager-autogen.flowcrypt.com - handles error during KM key GET', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'get.error@key-manager-autogen.flowcrypt.com';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.autoKeygen(settingsPage, { expectErr: { title: 'Server responded with an unexpected error.', text: 'dunno' } });
+      await SetupPageRecipe.autoKeygen(settingsPage, {
+        expectErr: {
+          title: 'Server responded with an unexpected error.',
+          text: '500 when GET-ing http://localhost:8001/flowcrypt-email-key-manager/keys/private (no body): -> Intentional error for get.error to test client behavior',
+        }
+      });
     }));
 
-    ava.default.skip('put.error@key-manager-autogen.flowcrypt.com - automatic setup with key not found on key manager, then generated', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('put.error@key-manager-autogen.flowcrypt.com - handles error during KM key PUT', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'put.error@key-manager-autogen.flowcrypt.com';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.autoKeygen(settingsPage);
-      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      await SetupPageRecipe.autoKeygen(settingsPage, {
+        expectErr: {
+          title: 'Server responded with an unexpected error.',
+          text: '500 when PUT-ing http://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedKey,publicKey,longid -> Intentional error for put.error user to test client behavior',
+        }
+      });
+
     }));
 
   }
