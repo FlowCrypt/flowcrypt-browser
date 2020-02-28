@@ -562,17 +562,18 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default('compose - saving and rendering a draft with RTL text (plain text)', testWithBrowser('compatibility', async (t, browser) => {
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      const subject = `saving and rendering a draft with RTL text (plain text)`;
+      const subject = `مرحبا RTL plain text`;
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, { richtext: false });
       await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
       await composePage.close();
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl: 'draftId=draft_with_rtl_text' });
+      expect(await composePage.attr('@input-subject', 'dir')).to.eq('rtl');
       expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا<br></div>');
     }));
 
     ava.default('compose - saving and rendering a draft with RTL text (rich text)', testWithBrowser('compatibility', async (t, browser) => {
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      const subject = `saving and rendering a draft with RTL text (rich text)`;
+      const subject = `مرحبا RTL rich text`;
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, { richtext: true });
       await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
       await composePage.close();
