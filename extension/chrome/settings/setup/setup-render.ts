@@ -36,7 +36,7 @@ export class SetupRenderModule {
       if (this.view.action !== 'add_key') {
         await this.renderSetupDone();
       } else if (this.view.rules.mustAutoImportOrAutogenPrvWithKeyManager()) {
-        // todo - handle autogen case
+        throw new Error('Manual add_key is not supported when PRV_AUTOIMPORT_OR_AUTOGEN org rule is in use');
       } else {
         await this.view.setupRecoverKey.renderAddKeyFromBackup();
       }
