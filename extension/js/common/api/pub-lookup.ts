@@ -36,6 +36,12 @@ export class PubLookup {
   }
 
   public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
+    if (this.keyManager) {
+      const res = await this.keyManager.lookupPublicKey(email);
+      if (res.publicKeys.length) {
+        return { pubkey: res.publicKeys[0].publicKey, pgpClient: 'flowcrypt' };
+      }
+    }
     if (this.internalSks) {
       const res = await this.internalSks.lookupEmail(email);
       if (res.pubkey) {
@@ -46,6 +52,12 @@ export class PubLookup {
   }
 
   public lookupLongid = async (longid: string): Promise<PubkeySearchResult> => {
+    if (this.keyManager) {
+      const res = await this.keyManager.lookupPublicKey(longid);
+      if (res.publicKeys.length) {
+        return { pubkey: res.publicKeys[0].publicKey, pgpClient: 'flowcrypt' };
+      }
+    }
     if (this.internalSks) {
       const res = await this.internalSks.lookupLongid(longid);
       if (res.pubkey) {
