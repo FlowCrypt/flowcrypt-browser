@@ -11,6 +11,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { MsgBlock } from '../../../js/common/core/msg-block.js';
 import { PgpBlockView } from '../pgp_block.js';
+import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
@@ -110,6 +111,9 @@ export class PgpBlockViewRenderModule {
       }
     }
     await this.view.quoteModule.separateQuotedContentAndRenderText(decryptedContent, isHtml);
+    if (decryptedContent.match(new RegExp('[' + Str.rtlChars + ']'))) {
+      $('#pgp_signature').addClass('rtl');
+    }
     if (publicKeys.length) {
       BrowserMsg.send.renderPublicKeys(this.view.parentTabId, { afterFrameId: this.view.frameId, publicKeys });
     }
