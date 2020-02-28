@@ -1240,12 +1240,17 @@ td {
 }
 
 #pgp_signature {
+  float: right;
   text-align: right;
-  position: fixed;
-  top: 6px;
-  right: 12px;
   opacity: 0.5;
-  width: fit-content;
+  margin-left: 1em;
+}
+
+#pgp_signature.rtl {
+  float: left;
+  text-align: left;
+  margin-left: 0;
+  margin-right: 1em;
 }
 
 #pgp_signature > .cursive {
@@ -1258,16 +1263,14 @@ td {
 #pgp_signature > .result {
   font-size: 10px;
   font-family: monospace;
-  width: 200px;
-  float: right;
 }
 
 #pgp_signature.neutral,
 #pgp_signature.bad,
 #pgp_signature:hover { opacity: 1; }
-#pgp_signature.neutral > .cursive > span { border-bottom: 1px dotted #b7b7b7; }
-#pgp_signature.bad > .cursive > span { border-bottom: 1px dotted #a44; }
-#pgp_signature.good > .cursive > span { border-bottom: 1px dotted #088447; }
+#pgp_signature.neutral > .cursive { border-bottom: 1px dotted #b7b7b7; }
+#pgp_signature.bad > .cursive { border-bottom: 1px dotted #a44; }
+#pgp_signature.good > .cursive { border-bottom: 1px dotted #088447; }
 
 #pgp_block.pgp_pubkey { padding-top: 7px; }
 #pgp_block.pgp_pubkey .line { margin: 0; }
