@@ -58,7 +58,7 @@ export class ComposePageRecipe extends PageRecipe {
     if (subject) {
       await composePageOrFrame.click('@input-subject');
       await Util.sleep(1);
-      await composePageOrFrame.type('@input-subject', `Automated puppeteer test: ${subject}`);
+      await composePageOrFrame.type('@input-subject', subject?.match(/RTL/) ? subject : `Automated puppeteer test: ${subject}`);
     }
     const sendingOpts = sendingOpt as { [key: string]: boolean | undefined };
     for (const opt of Object.keys(sendingOpts)) {
