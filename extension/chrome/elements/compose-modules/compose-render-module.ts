@@ -28,7 +28,6 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
     await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
     await this.renderComposeTable();
-    await this.addComposeTableHandlers();
     if (this.view.scopes.read || this.view.scopes.modify) {
       if (this.view.replyParams) {
         this.view.replyParams.subject = `${(method === 'reply' ? 'Re' : 'Fwd')}: ${this.view.replyParams.subject}`;
@@ -132,7 +131,6 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     } else {
       this.view.S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
       await this.renderComposeTable();
-      await this.addComposeTableHandlers();
       await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
     }
     this.view.sendBtnModule.resetSendBtn();
@@ -220,6 +218,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   private renderComposeTable = async () => {
     this.view.errModule.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
     this.view.S.cached('compose_table').css('display', 'table');
+    await this.addComposeTableHandlers();
     await this.view.senderModule.renderSendFromOrChevron();
     if (this.view.isReplyBox) {
       if (this.view.replyParams?.to.length) {
