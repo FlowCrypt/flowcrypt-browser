@@ -36,7 +36,7 @@ export class SetupKeyManagerAutogenModule {
     const passphrase = PgpPwd.random(); // mustAutogenPassPhraseQuietly
     const opts: SetupOptions = { passphrase_save: true, submit_main: true, submit_all: false, passphrase };
     try {
-      const { privateKeys } = await this.view.keyManager!.getPrivateKeys();
+      const { privateKeys } = await this.view.keyManager!.getPrivateKeys(this.view.idToken!);
       if (privateKeys.length) { // keys already exist on keyserver, auto-import
         const { keys } = await PgpKey.readMany(Buf.fromUtfStr(privateKeys.map(pk => pk.decryptedPrivateKey).join('\n')));
         if (!keys.length) {
@@ -60,7 +60,7 @@ export class SetupKeyManagerAutogenModule {
         if (! await PgpKey.decrypt(decryptablePrv, passphrase)) {
           throw new Error('Unexpectedly cannot decrypt newly generated key');
         }
-        const storePrvOnKm = () => this.view.keyManager!.storePrivateKey(decryptablePrv.armor(), decryptablePrv.toPublic().armor(), generatedKeyLongid!);
+        const storePrvOnKm = () => this.view.keyManager!.storePrivateKey(this.view.idToken!, decryptablePrv.armor(), decryptablePrv.toPublic().armor(), generatedKeyLongid!);
         await Settings.retryUntilSuccessful(storePrvOnKm, 'Failed to store newly generated key on FlowCrypt Email Key Manager');
         await this.view.saveKeys([await PgpKey.read(generated.private)], opts); // store encrypted key + pass phrase locally
       }
@@ -68,7 +68,7 @@ export class SetupKeyManagerAutogenModule {
       await this.view.setupRender.renderSetupDone();
     } catch (e) {
       if (ApiErr.isNetErr(e) && await Api.isInternetAccessible()) { // frendly message when key manager is down, helpful during initial infrastructure setup
-        e.message = `FlowCrypt Email Key Manager at ${this.view.rules.getPrivateKeyManagerUrl()} is down, please inform your network admin.`;
+        e.message = `FlowCrypt Email Key Manager at ${this.view.rules.getKeyManagerUrl()} is down, please inform your network admin.`;
       }
       throw e;
     }

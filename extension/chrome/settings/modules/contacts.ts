@@ -13,7 +13,7 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { FetchKeyUI } from '../../../js/common/ui/fetch-key-ui.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
-import { Keyserver } from '../../../js/common/api/keyserver.js';
+import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -30,7 +30,7 @@ View.run(class ContactsView extends View {
   private factory: XssSafeFactory | undefined; // set in render()
   private attUI = new AttUI(() => Promise.resolve({ sizeMb: 5, size: 5 * 1024 * 1024, count: 1 }));
   private rules!: Rules;
-  private keyserver!: Keyserver;
+  private pubLookup!: PubLookup;
   private backBtn = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">back</a>';
   private space = '&nbsp;&nbsp;&nbsp;&nbsp;';
 
@@ -45,7 +45,7 @@ View.run(class ContactsView extends View {
     BrowserMsg.listen(tabId); // set_css
     this.factory = new XssSafeFactory(this.acctEmail, tabId, undefined, undefined, { compact: true });
     this.rules = await Rules.newInstance(this.acctEmail);
-    this.keyserver = new Keyserver(this.rules);
+    this.pubLookup = new PubLookup(this.rules);
     this.attUI.initAttDialog('fineuploader', 'fineuploader_button', { attAdded: this.fileAddedHandler });
     const fetchKeyUI = new FetchKeyUI();
     fetchKeyUI.handleOnPaste($('.input_pubkey'));
@@ -68,8 +68,8 @@ View.run(class ContactsView extends View {
     this.contacts = await ContactStore.search(undefined, { has_pgp: true });
     let lineActionsHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
       '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;';
-    if (this.rules.getCustomKeyserver()) {
-      lineActionsHtml += `&nbsp;&nbsp;<br><br><b class="bad">using custom keyserver: ${Xss.escape(this.rules!.getCustomKeyserver()!)}</b>`;
+    if (this.rules.getCustomSksPubkeyServer()) {
+      lineActionsHtml += `&nbsp;&nbsp;<br><br><b class="bad">using custom SKS pubkeyserver: ${Xss.escape(this.rules!.getCustomSksPubkeyServer()!)}</b>`;
     } else {
       lineActionsHtml += '&nbsp;&nbsp;<a href="https://flowcrypt.com/docs/technical/keyserver-integration.html" target="_blank">use custom keyserver</a>&nbsp;&nbsp;';
     }
@@ -177,7 +177,7 @@ View.run(class ContactsView extends View {
       const normalizedLongid = KeyImportUi.normalizeLongId(value);
       let pub: string;
       if (normalizedLongid) {
-        const data = await this.keyserver.lookupLongid(normalizedLongid);
+        const data = await this.pubLookup.lookupLongid(normalizedLongid);
         if (data.pubkey) {
           pub = data.pubkey;
         } else {

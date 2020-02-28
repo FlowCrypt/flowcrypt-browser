@@ -63,4 +63,21 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr(`Unknown method: ${req.method}`);
   },
+  '/flowcrypt-email-key-manager/keys/public/?': async ({ body }, req) => {
+    if (!isGet(req)) {
+      throw new Error(`keys/public: expecting GET, got ${req.method}`);
+    }
+    const query = req.url!.split('/').pop()!;
+    const publicKey = (await PgpKey.read(existingPrv)).toPublic().armor();
+    if (query.includes('@')) { // search by email
+      const email = query.toLowerCase().trim();
+      if (email === 'find.public.key@key-manager-autogen.flowcrypt.com') {
+        return { "publicKeys": [{ publicKey }] };
+      }
+      return { publicKeys: [] };
+    } else { // search by longid
+      // const longid = query;
+      return { publicKeys: [] };
+    }
+  },
 };

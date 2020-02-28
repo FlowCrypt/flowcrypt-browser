@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { PgpClient } from '../../api/keyserver.js';
+import { PgpClient } from '../../api/pub-lookup.js';
 import { AbstractStore } from './abstract-store.js';
 import { Catch } from '../catch.js';
 import { opgp } from '../../core/pgp.js';

@@ -14,7 +14,7 @@ import { BrowserMsg } from '../../common/browser/browser-msg.js';
 import { Catch } from '../../common/platform/catch.js';
 import { Gmail } from '../../common/api/email-provider/gmail/gmail.js';
 import { Injector } from '../../common/inject.js';
-import { Keyserver } from '../../common/api/keyserver.js';
+import { PubLookup } from '../../common/api/pub-lookup.js';
 import { Notifications } from '../../common/notifications.js';
 import { PgpArmor } from '../../common/core/pgp-armor.js';
 import { Ui } from '../../common/browser/ui.js';
@@ -34,7 +34,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private sendAs: Dict<SendAsAlias>;
   private factory: XssSafeFactory;
   private rules: Rules;
-  private keyserver: Keyserver;
+  private pubLookup: PubLookup;
   private acctEmail: string;
   private canReadEmails: boolean;
   private injector: Injector;
@@ -73,7 +73,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.webmailCommon = new WebmailCommon(acctEmail, injector);
     this.gmail = new Gmail(acctEmail);
     this.rules = rules;
-    this.keyserver = new Keyserver(this.rules);
+    this.pubLookup = new PubLookup(this.rules);
   }
 
   public getIntervalFunctions = (): Array<IntervalFunction> => {
@@ -564,7 +564,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
                   const [contact] = await ContactStore.get(undefined, [email]);
                   if (contact && contact.pubkey) {
                     this.recipientHasPgpCache[email] = true;
-                  } else if ((await this.keyserver.lookupEmail(email)).pubkey) {
+                  } else if ((await this.pubLookup.lookupEmail(email)).pubkey) {
                     this.recipientHasPgpCache[email] = true;
                   } else {
                     this.recipientHasPgpCache[email] = false;

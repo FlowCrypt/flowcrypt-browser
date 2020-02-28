@@ -52,7 +52,7 @@ export class PgpBlockViewSignatureModule {
           render(`Fetched the right pubkey ${signerLongid} from keyserver, but will not use it because you have conflicting pubkey ${senderContactByEmail.longid} loaded.`, () => undefined);
           return;
         } // ---> and user doesn't have pubkey for that email addr
-        const { pubkey, pgpClient } = await this.view.keyserver.lookupEmail(senderEmail);
+        const { pubkey, pgpClient } = await this.view.pubLookup.lookupEmail(senderEmail);
         if (!pubkey) {
           render(`Missing pubkey ${signerLongid}`, () => undefined);
           return;
@@ -65,7 +65,7 @@ export class PgpBlockViewSignatureModule {
         await ContactStore.save(undefined, await ContactStore.obj({ email: senderEmail, pubkey, client: pgpClient })); // <= TOFU auto-import
         render('Fetched pubkey, click to verify', () => window.location.reload());
       } else { // don't know who sent it
-        const { pubkey, pgpClient } = await this.view.keyserver.lookupLongid(signerLongid);
+        const { pubkey, pgpClient } = await this.view.pubLookup.lookupLongid(signerLongid);
         if (!pubkey) { // but can find matching pubkey by longid on keyserver
           render(`Could not find sender's pubkey anywhere: ${signerLongid}`, () => undefined);
           return;

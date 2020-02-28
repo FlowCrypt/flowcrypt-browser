@@ -23,7 +23,7 @@ import { Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
-import { Keyserver } from '../../js/common/api/keyserver.js';
+import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { Scopes, AcctStoreDict, AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
@@ -58,7 +58,7 @@ export class SetupView extends View {
   public scopes!: Scopes;
   public storage!: AcctStoreDict;
   public rules!: Rules;
-  public keyserver!: Keyserver;
+  public pubLookup!: PubLookup;
   public keyManager: KeyManager | undefined; // not set if no url in org rules
 
   public acctEmailAttesterLongid: string | undefined;
@@ -105,9 +105,9 @@ export class SetupView extends View {
     this.scopes = await AcctStore.getScopes(this.acctEmail);
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.rules = await Rules.newInstance(this.acctEmail);
-    this.keyserver = new Keyserver(this.rules);
-    if (this.rules.getPrivateKeyManagerUrl() && this.idToken) {
-      this.keyManager = new KeyManager(this.rules.getPrivateKeyManagerUrl()!, this.idToken);
+    this.pubLookup = new PubLookup(this.rules);
+    if (this.rules.getKeyManagerUrl() && this.idToken) {
+      this.keyManager = new KeyManager(this.rules.getKeyManagerUrl()!);
     }
     if (!this.rules.canCreateKeys()) {
       const forbidden = `${Lang.setup.creatingKeysNotAllowedPleaseImport} <a href="${Xss.escape(window.location.href)}">Back</a>`;
@@ -240,7 +240,7 @@ export class SetupView extends View {
       await Ui.modal.error('Not submitting public key to Attester - disabled for your org');
       return;
     }
-    this.keyserver.attester.testWelcome(this.acctEmail, armoredPubkey).catch(ApiErr.reportIfSignificant);
+    this.pubLookup.attester.testWelcome(this.acctEmail, armoredPubkey).catch(ApiErr.reportIfSignificant);
     let addresses;
     if (this.submitKeyForAddrs.length && options.submit_all) {
       addresses = [...this.submitKeyForAddrs];
@@ -256,10 +256,10 @@ export class SetupView extends View {
   }
 
   private submitPubkeys = async (addresses: string[], pubkey: string) => {
-    await this.keyserver.attester.initialLegacySubmit(this.acctEmail, pubkey);
+    await this.pubLookup.attester.initialLegacySubmit(this.acctEmail, pubkey);
     const aliases = addresses.filter(a => a !== this.acctEmail);
     if (aliases.length) {
-      await Promise.all(aliases.map(a => this.keyserver.attester.initialLegacySubmit(a, pubkey)));
+      await Promise.all(aliases.map(a => this.pubLookup.attester.initialLegacySubmit(a, pubkey)));
     }
   }
 

@@ -13,7 +13,7 @@ type DomainRules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'PRV_AUTOIMPORT_OR_A
 export type DomainRules = {
   flags: DomainRules$flag[],
   custom_keyserver_url?: string,
-  private_key_manager_url?: string,
+  key_manager_url?: string,
   disallow_attester_search_for_domains?: string[],
   enforce_keygen_algo?: string,
 };
@@ -46,15 +46,15 @@ export class Rules {
   /**
    * Internal company SKS-like public key server to trust above Attester
    */
-  public getCustomKeyserver = (): string | undefined => {
+  public getCustomSksPubkeyServer = (): string | undefined => {
     return this.domainRules.custom_keyserver_url;
   }
 
   /**
-   * an internal org FlowCrypt Email Key Manager instance
+   * an internal org FlowCrypt Email Key Manager instance, can manage both public and private keys
    */
-  public getPrivateKeyManagerUrl = (): string | undefined => {
-    return this.domainRules.private_key_manager_url;
+  public getKeyManagerUrl = (): string | undefined => {
+    return this.domainRules.key_manager_url;
   }
 
   // optional vars
@@ -109,8 +109,8 @@ export class Rules {
     if (!this.domainRules.flags.includes('PRV_AUTOIMPORT_OR_AUTOGEN')) {
       return false;
     }
-    if (!this.getPrivateKeyManagerUrl()) {
-      throw new Error('Wrong org rules config: using PRV_AUTOIMPORT_OR_AUTOGEN without private_key_manager_url');
+    if (!this.getKeyManagerUrl()) {
+      throw new Error('Wrong org rules config: using PRV_AUTOIMPORT_OR_AUTOGEN without key_manager_url');
     }
     return true;
   }
