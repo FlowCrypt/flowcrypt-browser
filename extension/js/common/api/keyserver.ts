@@ -5,6 +5,7 @@
 import { Attester } from './attester.js';
 import { Rules } from '../rules.js';
 import { Sks } from './sks.js';
+import { KeyManager } from './key-manager.js';
 
 export type PgpClient = 'flowcrypt' | 'pgp-other' | null;
 export type PubkeySearchResult = { pubkey: string | null; pgpClient: PgpClient };
@@ -16,18 +17,27 @@ export type PubkeySearchResult = { pubkey: string | null; pgpClient: PgpClient }
  */
 export class Keyserver {
 
-  public attester: Attester;
+  public attester: Attester; // attester is a publicly available public key server
+  public keyManager: KeyManager | undefined; // key manager is a flowcrypt-provided internal company private and public key server
+  public internalSks: Sks | undefined; // this is an internal company pubkey server that has SKS-like interface
 
   constructor(
     private rules: Rules
   ) {
+    const privateKeyManagerUrl = rules.getPrivateKeyManagerUrl();
+    const internalSksUrl = this.rules.getCustomKeyserver();
     this.attester = new Attester(rules);
+    if (privateKeyManagerUrl) {
+      this.keyManager = new KeyManager(privateKeyManagerUrl);
+    }
+    if (internalSksUrl) {
+      this.internalSks = new Sks(internalSksUrl);
+    }
   }
 
   public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
-    const customKs = await this.rules.getCustomKeyserver();
-    if (customKs) {
-      const res = await Sks.lookupEmail(customKs, email);
+    if (this.internalSks) {
+      const res = await this.internalSks.lookupEmail(email);
       if (res.pubkey) {
         return res;
       }
@@ -36,9 +46,8 @@ export class Keyserver {
   }
 
   public lookupLongid = async (longid: string): Promise<PubkeySearchResult> => {
-    const customKs = await this.rules.getCustomKeyserver();
-    if (customKs) {
-      const res = await Sks.lookupLongid(customKs, longid);
+    if (this.internalSks) {
+      const res = await this.internalSks.lookupLongid(longid);
       if (res.pubkey) {
         return res;
       }

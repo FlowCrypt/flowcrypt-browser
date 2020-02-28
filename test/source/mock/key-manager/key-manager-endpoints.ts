@@ -67,7 +67,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
     if (!isGet(req)) {
       throw new Error(`keys/public: expecting GET, got ${req.method}`);
     }
-    const query = req.url!.split('/').pop();
+    const query = req.url!.split('/').pop()!;
     const publicKey = (await PgpKey.read(existingPrv)).toPublic().armor();
     if (query.includes('@')) { // search by email
       const email = query.toLowerCase().trim();
