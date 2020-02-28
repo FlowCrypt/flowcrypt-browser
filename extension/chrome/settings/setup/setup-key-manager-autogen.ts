@@ -36,13 +36,13 @@ export class SetupKeyManagerAutogenModule {
     const passphrase = PgpPwd.random(); // mustAutogenPassPhraseQuietly
     const opts: SetupOptions = { passphrase_save: true, submit_main: true, submit_all: false, passphrase };
     try {
-      const { keys } = await this.view.keyManager!.getPrivateKeys();
-      if (keys.length) { // keys already exist on keyserver, auto-import
-        const { keys: prvs } = await PgpKey.readMany(Buf.fromUtfStr(keys.join('\n')));
-        if (!prvs.length) {
+      const { privateKeys } = await this.view.keyManager!.getPrivateKeys();
+      if (privateKeys.length) { // keys already exist on keyserver, auto-import
+        const { keys } = await PgpKey.readMany(Buf.fromUtfStr(privateKeys.map(pk => pk.decryptedPrivateKey).join('\n')));
+        if (!keys.length) {
           throw new Error(`Could not parse any valid keys from Key Manager response for user ${this.view.acctEmail}`);
         }
-        for (const prv of prvs) {
+        for (const prv of keys) {
           if (!prv.isPrivate()) {
             throw new Error(`Key ${await PgpKey.longid(prv)} for user ${this.view.acctEmail} is not a private key`);
           }
@@ -51,7 +51,7 @@ export class SetupKeyManagerAutogenModule {
           }
           await PgpKey.encrypt(prv, passphrase);
         }
-        await this.view.saveKeys(prvs, opts);
+        await this.view.saveKeys(keys, opts);
       } else { // generate keys and store them on key manager
         const { full_name } = await AcctStore.get(this.view.acctEmail, ['full_name']);
         const generated = await PgpKey.create([{ name: full_name || '', email: this.view.acctEmail }], keygenAlgo, passphrase);

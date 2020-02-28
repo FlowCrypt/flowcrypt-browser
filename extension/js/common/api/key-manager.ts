@@ -8,7 +8,8 @@
 import { Api, ReqMethod } from './api.js';
 import { Dict } from '../core/common.js';
 
-type LoadPrvRes = { keys: string[] };
+type LoadPrvRes = { privateKeys: { decryptedPrivateKey: string }[] };
+// type LoadPubRes = { publicKeys: { publicKey: string }[] };
 
 export class KeyManager extends Api {
 
@@ -24,8 +25,8 @@ export class KeyManager extends Api {
     return await this.request('GET', '/keys/private') as LoadPrvRes;
   }
 
-  public storePrivateKey = async (decryptedKey: string, publicKey: string, longid: string): Promise<void> => {
-    return await this.request('PUT', '/keys/private', { decryptedKey, publicKey, longid });
+  public storePrivateKey = async (decryptedPrivateKey: string, publicKey: string, longid: string): Promise<void> => {
+    return await this.request('PUT', '/keys/private', { decryptedPrivateKey, publicKey, longid });
   }
 
   private request = async <RT>(method: ReqMethod, path: string, vals?: Dict<any>): Promise<RT> => {
