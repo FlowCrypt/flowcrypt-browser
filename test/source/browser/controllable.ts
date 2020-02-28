@@ -33,10 +33,6 @@ abstract class ControllableBase {
     await this.waitAll(`[data-test-state="${state}"]`, { timeout, visible: false });
   }
 
-  public attr = async (elHandle: ElementHandle, name: string): Promise<string> => {
-    return await (await elHandle.getProperty(name)).jsonValue();
-  }
-
   public waitAll = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number, visible?: boolean } = {}) => {
     const selectors = this.selsAsProcessedArr(selector);
     this.log(`wait_all:1:${selectors.join(',')}`);
@@ -145,6 +141,13 @@ abstract class ControllableBase {
         await e.type(text.substring(text.length - 5, text.length));
       }
     }
+  }
+
+  public attr = async (selector: string, attr: string): Promise<string | null> => {
+    return await this.target.evaluate((selector, attr) => {
+      const el = document.querySelector(selector); // this will get evaluated in the browser
+      return el.getAttribute(attr);
+    }, this.selector(selector), attr);
   }
 
   public value = async (selector: string): Promise<string> => {

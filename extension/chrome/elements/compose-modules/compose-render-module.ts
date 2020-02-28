@@ -218,11 +218,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   private renderComposeTable = async () => {
     this.view.errModule.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
     this.view.S.cached('compose_table').css('display', 'table');
-    this.view.S.cached('body').keydown(this.view.setHandler((el, ev) => this.onBodyKeydownHandler(el, ev)));
-    this.view.S.cached('input_to').bind('paste', this.view.setHandler((el, ev) => this.onRecipientPasteHandler(el, ev)));
-    this.view.inputModule.squire.addEventListener('keyup', () => this.view.S.cached('send_btn_note').text(''));
-    this.view.S.cached('input_addresses_container_inner').click(this.view.setHandler(() => this.onRecipientsClickHandler(), this.view.errModule.handle(`focus recipients`)));
-    this.view.S.cached('input_addresses_container_inner').children().click(() => false);
+    await this.addComposeTableHandlers();
     await this.view.senderModule.renderSendFromOrChevron();
     if (this.view.isReplyBox) {
       if (this.view.replyParams?.to.length) {
@@ -242,6 +238,24 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       // document.getElementById('input_text')!.focus(); // #input_text is in the template
     }, 100);
     this.view.sizeModule.onComposeTableRender();
+  }
+
+  private addComposeTableHandlers = async () => {
+    this.view.S.cached('body').keydown(this.view.setHandler((el, ev) => this.onBodyKeydownHandler(el, ev)));
+    this.view.S.cached('input_to').bind('paste', this.view.setHandler((el, ev) => this.onRecipientPasteHandler(el, ev)));
+    this.view.inputModule.squire.addEventListener('keyup', () => this.view.S.cached('send_btn_note').text(''));
+    this.view.S.cached('input_addresses_container_inner').click(this.view.setHandler(() => this.onRecipientsClickHandler(), this.view.errModule.handle(`focus recipients`)));
+    this.view.S.cached('input_addresses_container_inner').children().click(() => false);
+    this.view.S.cached('input_subject').bind('input', this.view.setHandler((el: HTMLInputElement) => this.subjectRTLHandler(el)));
+  }
+
+  private subjectRTLHandler = (el: HTMLInputElement) => {
+    const rtlCheck = new RegExp('^[' + Str.rtlChars + ']');
+    if (el.value.match(rtlCheck)) {
+      $(el).attr('dir', 'rtl');
+    } else {
+      $(el).removeAttr('dir');
+    }
   }
 
   private actionCloseHandler = async () => {

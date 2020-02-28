@@ -113,17 +113,14 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       if (container.prop('tagName') !== 'DIV') { // commonAncestorContainer might be a text node
         container = container.closest('div');
       }
-      if (container.text()) {
-        const firstCharacter = container.text()[0];
-        const ltrDirCheck = new RegExp('[' + Str.ltrChars + ']');
-        const rtlDirCheck = new RegExp('[' + Str.rtlChars + ']');
-        if (ltrDirCheck.test(firstCharacter) && container.attr('dir') !== 'ltr') { // Switch to LTR
-          container.attr('dir', 'ltr');
-        } else if (rtlDirCheck.test(firstCharacter) && container.attr('dir') !== 'rtl') { // Switch to RTL
-          container.attr('dir', 'rtl');
-        } else {
-          // keep the previous direction for digits, punctuation marks, and other characters
-        }
+      const ltrCheck = new RegExp('^[' + Str.ltrChars + ']');
+      const rtlCheck = new RegExp('^[' + Str.rtlChars + ']');
+      if (ltrCheck.test(container.text()) && container.attr('dir') !== 'ltr') { // Switch to LTR
+        container.attr('dir', 'ltr');
+      } else if (rtlCheck.test(container.text()) && container.attr('dir') !== 'rtl') { // Switch to RTL
+        container.attr('dir', 'rtl');
+      } else {
+        // keep the previous direction for digits, punctuation marks, and other characters
       }
     };
     this.squire.addEventListener('input', checkRTL);
