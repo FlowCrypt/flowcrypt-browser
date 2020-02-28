@@ -183,8 +183,13 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
   }
 
   private generateHtmlPreviousMsgQuote = (text: string, date: Date, from: string) => {
-    const sanitizedQuote = Xss.htmlSanitize(`On ${Str.fromDate(date).replace(' ', ' at ')}, ${from} wrote:${this.quoteText(Xss.escape(text))}`);
-    return `<blockquote>${sanitizedQuote}</blockquote>`;
+    let onDateUserWrote = `On ${Str.fromDate(date).replace(' ', ' at ')}, ${from} wrote:`;
+    const rtl = text.match(new RegExp('[' + Str.rtlChars + ']'));
+    if (rtl) {
+      onDateUserWrote = `<div dir="ltr">${onDateUserWrote}</div>`;
+    }
+    const sanitizedQuote = Xss.htmlSanitize(onDateUserWrote + this.quoteText(Xss.escape(text)));
+    return `<blockquote${rtl ? ' dir="rtl"' : ''}>${sanitizedQuote}</blockquote>`;
   }
 
   private actionRenderTripleDotContentHandle = (el: HTMLElement) => {
