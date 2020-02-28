@@ -68,7 +68,7 @@ export class SetupKeyManagerAutogenModule {
       await this.view.setupRender.renderSetupDone();
     } catch (e) {
       if (ApiErr.isNetErr(e) && await Api.isInternetAccessible()) { // frendly message when key manager is down, helpful during initial infrastructure setup
-        e.message = `FlowCrypt Email Key Manager at ${this.view.rules.getPrivateKeyManagerUrl()} is down, please inform your network admin.`;
+        e.message = `FlowCrypt Email Key Manager at ${this.view.rules.getKeyManagerUrl()} is down, please inform your network admin.`;
       }
       throw e;
     }

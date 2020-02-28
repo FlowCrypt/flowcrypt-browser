@@ -68,8 +68,8 @@ View.run(class ContactsView extends View {
     this.contacts = await ContactStore.search(undefined, { has_pgp: true });
     let lineActionsHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
       '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;';
-    if (this.rules.getCustomKeyserver()) {
-      lineActionsHtml += `&nbsp;&nbsp;<br><br><b class="bad">using custom keyserver: ${Xss.escape(this.rules!.getCustomKeyserver()!)}</b>`;
+    if (this.rules.getCustomSksPubkeyServer()) {
+      lineActionsHtml += `&nbsp;&nbsp;<br><br><b class="bad">using custom SKS pubkeyserver: ${Xss.escape(this.rules!.getCustomSksPubkeyServer()!)}</b>`;
     } else {
       lineActionsHtml += '&nbsp;&nbsp;<a href="https://flowcrypt.com/docs/technical/keyserver-integration.html" target="_blank">use custom keyserver</a>&nbsp;&nbsp;';
     }

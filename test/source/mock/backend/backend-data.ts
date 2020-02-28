@@ -81,7 +81,7 @@ export class BackendData {
         "PASS_PHRASE_QUIET_AUTOGEN",
         "DEFAULT_REMEMBER_PASS_PHRASE"
       ],
-      "private_key_manager_url": "http://localhost:8001/flowcrypt-email-key-manager",
+      "key_manager_url": "http://localhost:8001/flowcrypt-email-key-manager",
       "enforce_keygen_algo": "rsa2048",
     };
     if (domain === 'key-manager-autogen.flowcrypt.com') {
@@ -90,7 +90,7 @@ export class BackendData {
     if (domain === 'key-manager-server-offline.flowcrypt.com') {
       return {
         ...keyManagerAutogenRules,
-        "private_key_manager_url": "https://localhost:1230/intentionally-wrong",
+        "key_manager_url": "https://localhost:1230/intentionally-wrong",
       };
     }
     return {
