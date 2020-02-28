@@ -107,7 +107,7 @@ export class SetupView extends View {
     this.rules = await Rules.newInstance(this.acctEmail);
     this.keyserver = new Keyserver(this.rules);
     if (this.rules.getPrivateKeyManagerUrl() && this.idToken) {
-      this.keyManager = new KeyManager(this.rules.getPrivateKeyManagerUrl()!, this.idToken);
+      this.keyManager = new KeyManager(this.rules.getPrivateKeyManagerUrl()!);
     }
     if (!this.rules.canCreateKeys()) {
       const forbidden = `${Lang.setup.creatingKeysNotAllowedPleaseImport} <a href="${Xss.escape(window.location.href)}">Back</a>`;
