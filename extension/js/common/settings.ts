@@ -226,7 +226,18 @@ export class Settings {
     });
   }
 
-  public static promptToRetry = async (type: 'REQUIRED', lastErr: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
+  public static retryUntilSuccessful = async (action: () => Promise<void>, errTitle: string) => {
+    try {
+      await action();
+    } catch (e) {
+      return await Settings.promptToRetry(e, errTitle, action);
+    }
+  }
+
+  /**
+   * todo - could probably replace most usages of this method with retryPromptUntilSuccessful which is more intuitive
+   */
+  public static promptToRetry = async (lastErr: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
     let userErrMsg = `${userMsg} ${ApiErr.eli5(lastErr)}`;
     if (lastErr instanceof ApiErrResponse && lastErr.res.error.code === 400) {
       userErrMsg = `${userMsg}, ${lastErr.res.error.message}`; // this will make reason for err 400 obvious to user, very important for our main customer
@@ -270,7 +281,7 @@ export class Settings {
           window.location.href = Url.create('/chrome/settings/index.htm', { acctEmail: response.acctEmail });
         } else {
           await AcctStore.set(response.acctEmail, { email_provider: 'gmail' });
-          window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: response.acctEmail });
+          window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: response.acctEmail, idToken: response.id_token });
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
         if (settingsTabId) {

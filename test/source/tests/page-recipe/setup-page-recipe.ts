@@ -146,6 +146,7 @@ export class SetupPageRecipe extends PageRecipe {
         await settingsPage.waitAll('@container-overlay-details');
         await Util.sleep(0.5);
         expect(await settingsPage.read('@container-overlay-details')).to.contain('Error stack');
+        expect(await settingsPage.read('@container-overlay-details')).to.contain('censored:idToken');
         await settingsPage.page.setOfflineMode(false); // back online
         await settingsPage.click('@action-overlay-retry');
         // after retry, the rest should continue as usual below
@@ -188,6 +189,17 @@ export class SetupPageRecipe extends PageRecipe {
           await SettingsPageRecipe.ready(settingsPage);
         }
       }
+    }
+  }
+
+  public static autoKeygen = async (settingsPage: ControllablePage, { expectErr }: { expectErr?: { title: string, text: string } } = {}): Promise<void> => {
+    if (expectErr) {
+      await settingsPage.waitAll(['@container-err-title', '@container-err-text', '@action-retry-by-reloading']);
+      expect(await settingsPage.read('@container-err-title')).to.contain(expectErr.title);
+      expect(await settingsPage.read('@container-err-text')).to.contain(expectErr.text);
+    } else {
+      await settingsPage.waitAndClick('@action-step4done-account-settings');
+      await SettingsPageRecipe.ready(settingsPage);
     }
   }
 

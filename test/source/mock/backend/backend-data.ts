@@ -5,6 +5,7 @@ import { HttpAuthErr } from '../lib/api';
 import { OauthMock } from '../lib/oauth';
 
 // tslint:disable:no-null-keyword
+// tslint:disable:oneliner-object-literal
 
 export class BackendData {
   public reportedErrors: { name: string, message: string, url: string, line: number, col: number, trace: string, version: string, environmane: string }[] = [];
@@ -51,15 +52,50 @@ export class BackendData {
   public getOrgRules = (acct: string) => {
     const domain = acct.split('@')[1];
     if (domain === 'org-rules-test.flowcrypt.com') {
-      return { "flags": ["NO_PRV_CREATE", "NO_PRV_BACKUP", "ENFORCE_ATTESTER_SUBMIT"] };
+      return {
+        "flags": [
+          "NO_PRV_CREATE",
+          "NO_PRV_BACKUP",
+          "ENFORCE_ATTESTER_SUBMIT"
+        ]
+      };
     }
     if (domain === 'no-submit-org-rule.flowcrypt.com') {
-      return { "flags": ["NO_ATTESTER_SUBMIT"] };
+      return {
+        "flags": [
+          "NO_ATTESTER_SUBMIT"
+        ]
+      };
     }
     if (domain === 'no-search-domains-org-rule.flowcrypt.com') {
-      return { "flags": [], "disallow_attester_search_for_domains": ["flowcrypt.com"] };
+      return {
+        "flags": [],
+        "disallow_attester_search_for_domains": ["flowcrypt.com"]
+      };
     }
-    return { 'flags': [] };
+    const keyManagerAutogenRules = {
+      "flags": [
+        "NO_PRV_BACKUP",
+        "ENFORCE_ATTESTER_SUBMIT",
+        "PRV_AUTOIMPORT_OR_AUTOGEN",
+        "PASS_PHRASE_QUIET_AUTOGEN",
+        "DEFAULT_REMEMBER_PASS_PHRASE"
+      ],
+      "private_key_manager_url": "http://localhost:8001/flowcrypt-email-key-manager",
+      "enforce_keygen_algo": "rsa2048",
+    };
+    if (domain === 'key-manager-autogen.flowcrypt.com') {
+      return keyManagerAutogenRules;
+    }
+    if (domain === 'key-manager-server-offline.flowcrypt.com') {
+      return {
+        ...keyManagerAutogenRules,
+        "private_key_manager_url": "https://localhost:1230/intentionally-wrong",
+      };
+    }
+    return {
+      "flags": []
+    };
   }
 
 }

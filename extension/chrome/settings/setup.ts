@@ -28,6 +28,8 @@ import { Scopes, AcctStoreDict, AcctStore } from '../../js/common/platform/store
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
+import { KeyManager } from '../../js/common/api/key-manager.js';
+import { SetupKeyManagerAutogenModule } from './setup/setup-key-manager-autogen.js';
 
 export interface SetupOptions {
   passphrase: string;
@@ -35,7 +37,6 @@ export interface SetupOptions {
   submit_main: boolean;
   submit_all: boolean;
   recovered?: boolean;
-  is_newly_created_key: boolean;
 }
 
 export class SetupView extends View {
@@ -43,6 +44,7 @@ export class SetupView extends View {
   public readonly acctEmail: string;
   public readonly parentTabId: string | undefined;
   public readonly action: 'add_key' | 'finalize' | undefined;
+  public readonly idToken: string | undefined; // only needed for initial setup, not for add_key or 'finalize'
 
   public readonly keyImportUi = new KeyImportUi({ checkEncryption: true });
   public readonly gmail: Gmail;
@@ -50,12 +52,14 @@ export class SetupView extends View {
   public readonly setupCreateKey: SetupCreateKeyModule;
   public readonly setupImportKey: SetupImportKeyModule;
   public readonly setupRender: SetupRenderModule;
+  public readonly setupKeyManagerAutogen: SetupKeyManagerAutogenModule;
 
   public tabId!: string;
   public scopes!: Scopes;
   public storage!: AcctStoreDict;
   public rules!: Rules;
   public keyserver!: Keyserver;
+  public keyManager: KeyManager | undefined; // not set if no url in org rules
 
   public acctEmailAttesterLongid: string | undefined;
   public fetchedKeyBackups: KeyInfo[] = [];
@@ -66,11 +70,15 @@ export class SetupView extends View {
 
   constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'action', 'parentTabId']);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'action', 'idToken', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+    this.idToken = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'idToken');
     this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'finalize', undefined]) as 'add_key' | 'finalize' | undefined;
     if (this.action === 'add_key') {
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+    }
+    if (this.action !== 'add_key' && this.action !== 'finalize') {
+      Assert.urlParamRequire.string(uncheckedUrlParams, 'idToken'); // will render error if missing
     }
     if (this.acctEmail) {
       BrowserMsg.send.bg.updateUninstallUrl();
@@ -87,6 +95,7 @@ export class SetupView extends View {
     this.setupCreateKey = new SetupCreateKeyModule(this);
     this.setupImportKey = new SetupImportKeyModule(this);
     this.setupRender = new SetupRenderModule(this);
+    this.setupKeyManagerAutogen = new SetupKeyManagerAutogenModule(this);
   }
 
   public render = async () => {
@@ -97,6 +106,9 @@ export class SetupView extends View {
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.rules = await Rules.newInstance(this.acctEmail);
     this.keyserver = new Keyserver(this.rules);
+    if (this.rules.getPrivateKeyManagerUrl() && this.idToken) {
+      this.keyManager = new KeyManager(this.rules.getPrivateKeyManagerUrl()!, this.idToken);
+    }
     if (!this.rules.canCreateKeys()) {
       const forbidden = `${Lang.setup.creatingKeysNotAllowedPleaseImport} <a href="${Xss.escape(window.location.href)}">Back</a>`;
       Xss.sanitizeRender('#step_2a_manual_create, #step_2_easy_generating', `<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
@@ -108,6 +120,9 @@ export class SetupView extends View {
     if (this.rules.rememberPassPhraseByDefault()) {
       $('#step_2a_manual_create .input_passphrase_save').prop('checked', true);
       $('#step_2b_manual_enter .input_passphrase_save').prop('checked', true);
+    }
+    if (this.rules.getEnforcedKeygenAlgo()) {
+      $('.key_type').val(this.rules.getEnforcedKeygenAlgo()!).prop('disabled', true);
     }
     this.tabId = await BrowserMsg.requiredTabId();
     await this.setupRender.renderInitial();
@@ -164,11 +179,7 @@ export class SetupView extends View {
   }
 
   public preFinalizeSetup = async (options: SetupOptions): Promise<void> => {
-    await AcctStore.set(this.acctEmail, {
-      tmp_submit_main: options.submit_main,
-      tmp_submit_all: options.submit_all,
-      is_newly_created_key: options.is_newly_created_key,
-    });
+    await AcctStore.set(this.acctEmail, { tmp_submit_main: options.submit_main, tmp_submit_all: options.submit_all });
   }
 
   public finalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
@@ -177,7 +188,7 @@ export class SetupView extends View {
     try {
       await this.submitPublicKeyIfNeeded(primaryKi.public, { submit_main, submit_all });
     } catch (e) {
-      return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToSubmitToAttester, () => this.finalizeSetup({ submit_main, submit_all }));
+      return await Settings.promptToRetry(e, Lang.setup.failedToSubmitToAttester, () => this.finalizeSetup({ submit_main, submit_all }));
     }
     await AcctStore.set(this.acctEmail, { setup_date: Date.now(), setup_done: true, cryptup_enabled: true });
     await AcctStore.remove(this.acctEmail, ['tmp_submit_main', 'tmp_submit_all']);

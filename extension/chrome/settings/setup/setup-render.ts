@@ -19,7 +19,7 @@ export class SetupRenderModule {
   }
 
   public renderInitial = async (): Promise<void> => {
-    $('h1').text('Set Up FlowCrypt');
+    $('h1').text(this.view.rules.mustAutoImportOrAutogenPrvWithKeyManager() ? 'Setting up FlowCrypt, please wait...' : 'Set Up FlowCrypt');
     $('.email-address').text(this.view.acctEmail);
     $('.back').css('visibility', 'hidden');
     if (this.view.storage!.email_provider === 'gmail') { // show alternative account addresses in setup form + save them for later
@@ -28,13 +28,15 @@ export class SetupRenderModule {
         const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
         this.saveAndFillSubmitPubkeysOption(Object.keys(sendAs!));
       } catch (e) {
-        return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToLoadEmailAliases, () => this.renderInitial());
+        return await Settings.promptToRetry(e, Lang.setup.failedToLoadEmailAliases, () => this.renderInitial());
       }
       $('.auth_denied_warning').toggleClass('hidden', this.view.scopes!.read || this.view.scopes!.modify);
     }
     if (this.view.storage!.setup_done) {
       if (this.view.action !== 'add_key') {
         await this.renderSetupDone();
+      } else if (this.view.rules.mustAutoImportOrAutogenPrvWithKeyManager()) {
+        throw new Error('Manual add_key is not supported when PRV_AUTOIMPORT_OR_AUTOGEN org rule is in use');
       } else {
         await this.view.setupRecoverKey.renderAddKeyFromBackup();
       }
@@ -46,6 +48,8 @@ export class SetupRenderModule {
       }
       await this.view.finalizeSetup({ submit_all: tmp_submit_all, submit_main: tmp_submit_main });
       await this.renderSetupDone();
+    } else if (this.view.rules.mustAutoImportOrAutogenPrvWithKeyManager()) {
+      await this.view.setupKeyManagerAutogen.getKeyFromKeyManagerOrAutogenAndStoreItThenRenderSetupDone();
     } else {
       await this.renderSetupDialog();
     }
@@ -92,7 +96,7 @@ export class SetupRenderModule {
     try {
       keyserverRes = await this.view.keyserver.lookupEmail(this.view.acctEmail);
     } catch (e) {
-      return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => this.renderSetupDialog());
+      return await Settings.promptToRetry(e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => this.renderSetupDialog());
     }
     if (keyserverRes.pubkey) {
       this.view.acctEmailAttesterLongid = await PgpKey.longid(keyserverRes.pubkey);
@@ -105,7 +109,7 @@ export class SetupRenderModule {
           this.view.fetchedKeyBackups = backups.keyinfos.backups;
           this.view.fetchedKeyBackupsUniqueLongids = backups.longids.backups;
         } catch (e) {
-          return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToCheckAccountBackups, () => this.renderSetupDialog());
+          return await Settings.promptToRetry(e, Lang.setup.failedToCheckAccountBackups, () => this.renderSetupDialog());
         }
         if (this.view.fetchedKeyBackupsUniqueLongids.length) {
           this.displayBlock('step_2_recovery');

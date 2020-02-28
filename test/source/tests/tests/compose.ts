@@ -19,6 +19,7 @@ import { TestWithBrowser } from '../../test';
 import { expect } from "chai";
 
 // tslint:disable:no-blank-lines-func
+// tslint:disable:no-unused-expression
 
 export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
@@ -301,7 +302,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await inboxPage.waitTillGone('@dialog');
         await replyFrame.waitAll(['@action-expand-quoted-text']);
         const inputBody = await replyFrame.read('@input-body');
-        // tslint:disable: no-unused-expression
         expect(inputBody.trim()).to.be.empty;
         await clickTripleDotAndExpectQuoteToLoad(replyFrame, [
           'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',

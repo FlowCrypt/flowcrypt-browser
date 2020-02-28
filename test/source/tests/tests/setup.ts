@@ -10,8 +10,13 @@ import { TestWithBrowser } from '../../test';
 import { expect } from 'chai';
 import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
 import { ComposePageRecipe } from '../page-recipe/compose-page-recipe';
+import { Str } from '../../core/common';
+import { MOCK_KM_LAST_INSERTED_KEY } from '../../mock/key-manager/key-manager-endpoints';
 
 // tslint:disable:no-blank-lines-func
+// tslint:disable:no-unused-expression
+/* eslint-disable no-unused-expressions */
+/* eslint-disable max-len */
 
 export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
@@ -169,6 +174,84 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'normally has pubkey but should show none');
       await composePage.waitForContent('.email_address.no_pgp', 'human@flowcrypt.com');
       await composePage.waitAll('@input-password');
+    }));
+
+    ava.default('get.key@key-manager-autogen.flowcrypt.com - automatic setup with key found on key manager', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'get.key@key-manager-autogen.flowcrypt.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoKeygen(settingsPage);
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      // check no "add key"
+      await settingsPage.notPresent('@action-open-add-key-page');
+      // check imported key
+      const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
+      await Util.sleep(1);
+      await myKeyFrame.waitAll('@content-longid');
+      expect(await myKeyFrame.read('@content-longid')).to.equal('00B0 1158 0796 9D75');
+      await SettingsPageRecipe.closeDialog(settingsPage);
+      await Util.sleep(2);
+      // check that it does not offer any pass phrase options
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
+      const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
+      await Util.sleep(1);
+      await securityFrame.notPresent(['@action-change-passphrase-begin', '@action-test-passphrase-begin', '@action-forget-pp']);
+    }));
+
+    ava.default('put.key@key-manager-autogen.flowcrypt.com - automatic setup with key not found on key manager, then generated', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'put.key@key-manager-autogen.flowcrypt.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoKeygen(settingsPage);
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      // check no "add key"
+      await settingsPage.notPresent('@action-open-add-key-page');
+      // check imported key
+      const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
+      await Util.sleep(1);
+      await myKeyFrame.waitAll('@content-longid');
+      const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
+      expect(fromKm).to.exist;
+      expect(await myKeyFrame.read('@content-longid')).to.equal(Str.spaced(fromKm.longid));
+      await SettingsPageRecipe.closeDialog(settingsPage);
+      await Util.sleep(2);
+      // check that it does not offer any pass phrase options
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
+      const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
+      await Util.sleep(1);
+      await securityFrame.notPresent(['@action-change-passphrase-begin', '@action-test-passphrase-begin', '@action-forget-pp']);
+    }));
+
+    ava.default('get.error@key-manager-autogen.flowcrypt.com - handles error during KM key GET', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'get.error@key-manager-autogen.flowcrypt.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoKeygen(settingsPage, {
+        expectErr: {
+          title: 'Server responded with an unexpected error.',
+          text: '500 when GET-ing http://localhost:8001/flowcrypt-email-key-manager/keys/private (no body): -> Intentional error for get.error to test client behavior',
+        }
+      });
+    }));
+
+    ava.default('put.error@key-manager-autogen.flowcrypt.com - handles error during KM key PUT', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'put.error@key-manager-autogen.flowcrypt.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await settingsPage.waitAll(['@action-overlay-retry', '@container-overlay-prompt-text', '@action-show-overlay-details']);
+      await Util.sleep(0.5);
+      expect(await settingsPage.read('@container-overlay-prompt-text')).to.contain('Server responded with an unexpected error.');
+      await settingsPage.click('@action-show-overlay-details');
+      await settingsPage.waitAll('@container-overlay-details');
+      await Util.sleep(0.5);
+      expect(await settingsPage.read('@container-overlay-details')).to.contain('500 when PUT-ing http://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedPrivateKey,publicKey,longid -> Intentional error for put.error user to test client behavior');
+    }));
+
+    ava.default('fail@key-manager-server-offline.flowcrypt.com - shows friendly KM not reachable error', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'fail@key-manager-server-offline.flowcrypt.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoKeygen(settingsPage, {
+        expectErr: {
+          title: 'Network connection issue.',
+          text: 'FlowCrypt Email Key Manager at https://localhost:1230/intentionally-wrong is down, please inform your network admin.',
+        }
+      });
     }));
 
   }

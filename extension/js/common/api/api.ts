@@ -14,6 +14,7 @@ import { Contact } from '../core/pgp-key.js';
 import { Dict } from '../core/common.js';
 import { Env } from '../browser/env.js';
 import { secureRandomBytes } from '../platform/util.js';
+import { ApiErr } from './error/api-error.js';
 
 export type ReqFmt = 'JSON' | 'FORM' | 'TEXT';
 export type RecipientType = 'to' | 'cc' | 'bcc';
@@ -82,6 +83,18 @@ export class Api {
         throw AjaxErr.fromXhr(e, req, stack);
       }
       throw new Error(`Unknown Ajax error (${String(e)}) type when calling ${req.url}`);
+    }
+  }
+
+  public static isInternetAccessible = async () => {
+    try {
+      await Api.download('https://google.com');
+      return true;
+    } catch (e) {
+      if (ApiErr.isNetErr(e)) {
+        return false;
+      }
+      throw e;
     }
   }
 

@@ -129,7 +129,7 @@ View.run(class ExperimentalView extends View {
       'acctEmail: ' + this.acctEmail,
     ];
     const globalStorage = await GlobalStore.get(['version']);
-    const acctStorage = await AcctStore.get(this.acctEmail, ['is_newly_created_key', 'setup_date', 'full_name']);
+    const acctStorage = await AcctStore.get(this.acctEmail, ['setup_date', 'full_name']);
     text.push('global_storage: ' + JSON.stringify(globalStorage));
     text.push('account_storage: ' + JSON.stringify(acctStorage));
     text.push('');

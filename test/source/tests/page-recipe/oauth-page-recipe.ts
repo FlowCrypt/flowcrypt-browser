@@ -7,6 +7,7 @@ import { ControllablePage } from '../../browser';
 import { FlowCryptApi } from '../api';
 import { PageRecipe } from './abstract-page-recipe';
 import { totp as produce2faToken } from 'speakeasy';
+import { expect } from 'chai';
 
 export class OauthPageRecipe extends PageRecipe {
 
@@ -17,7 +18,6 @@ export class OauthPageRecipe extends PageRecipe {
     const isMock = oauthPage.target.url().includes('localhost');
     const auth = Config.secrets.auth.google.find(a => a.email === acctEmail)!;
     const selectors = {
-      backup_email_verification_choice: "//div[@class='vdE7Oc' and text() = 'Confirm your recovery email']",
       approve_button: '#submit_approve_access',
       pwd_input: 'input[type="password"]', // pwd_input: '.zHQkBf',
       pwd_confirm_btn: '.CwaK9',
@@ -25,7 +25,7 @@ export class OauthPageRecipe extends PageRecipe {
     };
     const enterPwdAndConfirm = async () => {
       await Util.sleep(isMock ? 0 : OauthPageRecipe.oauthPwdDelay);
-      await oauthPage.waitAndType(selectors.pwd_input, auth.password, { delay: isMock ? 0 : OauthPageRecipe.oauthPwdDelay });
+      await oauthPage.waitAndType(selectors.pwd_input, auth.password!, { delay: isMock ? 0 : OauthPageRecipe.oauthPwdDelay });
       await oauthPage.waitAndClick(selectors.pwd_confirm_btn, { delay: isMock ? 0 : 1 });  // confirm password
       await oauthPage.waitForNavigationIfAny();
     };
@@ -37,7 +37,7 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitAndClick('#next');
         await oauthPage.waitForNavigationIfAny();
         await Util.sleep(isMock ? 0 : OauthPageRecipe.oauthPwdDelay);
-        await oauthPage.waitAndType('#Passwd', auth.password, { delay: isMock ? 0 : OauthPageRecipe.oauthPwdDelay });
+        await oauthPage.waitAndType('#Passwd', auth.password!, { delay: isMock ? 0 : OauthPageRecipe.oauthPwdDelay });
         await oauthPage.waitForNavigationIfAny();
         await oauthPage.waitAndClick('#signIn', { delay: isMock ? 0 : 1 });
         await oauthPage.waitForNavigationIfAny();
@@ -69,13 +69,9 @@ export class OauthPageRecipe extends PageRecipe {
         }
         throw new Error('Oauth page didnt close after login. Should increase timeout or await close event');
       }
-      const element = await oauthPage.waitAny([selectors.approve_button, selectors.backup_email_verification_choice, selectors.pwd_input, selectors.secret_2fa]);
+      await oauthPage.waitAny([selectors.approve_button, selectors.pwd_input, selectors.secret_2fa]);
       await Util.sleep(isMock ? 0 : 1);
-      if (await oauthPage.isElementPresent(selectors.backup_email_verification_choice)) { // asks for registered backup email
-        await element.click();
-        await oauthPage.waitAndType('#knowledge-preregistered-email-response', auth.backup, { delay: isMock ? 0 : 2 });
-        await oauthPage.waitAndClick('#next', { delay: isMock ? 0 : 2 });
-      } else if (await oauthPage.isElementPresent(selectors.pwd_input)) {
+      if (await oauthPage.isElementPresent(selectors.pwd_input)) {
         await enterPwdAndConfirm(); // unsure why it requires a password second time, but sometimes happens
       } else if (await oauthPage.isElementPresent(selectors.secret_2fa)) {
         if (!auth.secret_2fa) {

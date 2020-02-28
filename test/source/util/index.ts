@@ -36,16 +36,12 @@ export type TestMessage = {
   signature?: string[],
 };
 
-interface TestConfigInterface {
-  messages: TestMessage[];
-}
-
 interface TestSecretsInterface {
   ci_admin_token: string;
   ci_dev_account: string;
   data_encryption_password: string;
   proxy?: { enabled: boolean, server: string, auth: { username: string, password: string } };
-  auth: { google: { email: string, password: string, backup: string, secret_2fa: string | undefined }[], };
+  auth: { google: { email: string, password?: string, secret_2fa?: string }[], };
   keys: { title: string, passphrase: string, armored: string | null, longid: string | null }[];
   keyInfo: Array<{ email: string, key: KeyInfo[] }>;
 }
@@ -61,6 +57,24 @@ export class Config {
   }
 
 }
+
+Config.secrets.auth.google.push( // these don't contain any secrets, so not worth syncing through secrets file
+  { "email": "flowcrypt.test.key.used.pgp@gmail.com" },
+  { "email": "flowcrypt.test.key.imported@gmail.com" },
+  { "email": "flowcrypt.test.key.import.naked@gmail.com" },
+  { "email": "flowcrypt.test.key.recovered@gmail.com" },
+  { "email": "flowcrypt.test.key.new.manual@gmail.com" },
+  { "email": "flowcrypt.test.key.multibackup@gmail.com" },
+  { "email": "has.pub@org-rules-test.flowcrypt.com" },
+  { "email": "no.pub@org-rules-test.flowcrypt.com" },
+  { "email": "user@no-submit-org-rule.flowcrypt.com" },
+  { "email": "user@no-search-domains-org-rule.flowcrypt.com" },
+  { "email": "get.key@key-manager-autogen.flowcrypt.com" },
+  { "email": "put.key@key-manager-autogen.flowcrypt.com" },
+  { "email": "get.error@key-manager-autogen.flowcrypt.com" },
+  { "email": "put.error@key-manager-autogen.flowcrypt.com" },
+  { "email": "fail@key-manager-server-offline.flowcrypt.com" },
+);
 
 export class Util {
 

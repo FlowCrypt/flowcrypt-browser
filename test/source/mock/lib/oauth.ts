@@ -18,6 +18,7 @@ export class OauthMock {
   private refreshTokenByAuthCode: { [authCode: string]: string } = {};
   private accessTokenByRefreshToken: { [refreshToken: string]: string } = {};
   private acctByAccessToken: { [acct: string]: string } = {};
+  private acctByIdToken: { [acct: string]: string } = {};
   private issuedIdTokensByAcct: { [acct: string]: string[] } = {};
 
   public consentChooseAccountPage = (url: string) => {
@@ -68,7 +69,7 @@ export class OauthMock {
     }
   }
 
-  public checkAuthorizationHeader = (authorization: string | undefined) => {
+  public checkAuthorizationHeaderWithAccessToken = (authorization: string | undefined) => {
     if (!authorization) {
       throw new HttpClientErr('Missing mock bearer authorization header', Status.UNAUTHORIZED);
     }
@@ -76,6 +77,22 @@ export class OauthMock {
     const acct = this.acctByAccessToken[accessToken];
     if (!acct) {
       throw new HttpClientErr('Invalid auth token', Status.UNAUTHORIZED);
+    }
+    this.checkKnownAcct(acct);
+    return acct;
+  }
+
+  /**
+   * As if a 3rd party was evaluating it, such as key manager
+   */
+  public checkAuthorizationHeaderWithIdToken = (authorization: string | undefined) => {
+    if (!authorization) {
+      throw new HttpClientErr('Missing mock bearer authorization header', Status.UNAUTHORIZED);
+    }
+    const accessToken = authorization.replace(/^Bearer /, '');
+    const acct = this.acctByIdToken[accessToken];
+    if (!acct) {
+      throw new HttpClientErr('Invalid idToken token', Status.UNAUTHORIZED);
     }
     this.checkKnownAcct(acct);
     return acct;
@@ -126,6 +143,7 @@ export class OauthMock {
       this.issuedIdTokensByAcct[email] = [];
     }
     this.issuedIdTokensByAcct[email].push(newIdToken);
+    this.acctByIdToken[newIdToken] = email;
     return newIdToken;
   }
 

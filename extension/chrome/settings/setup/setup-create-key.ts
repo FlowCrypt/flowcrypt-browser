@@ -3,7 +3,6 @@
 'use strict';
 
 import { SetupOptions, SetupView } from '../setup.js';
-
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpKey, KeyAlgo } from '../../../js/common/core/pgp-key.js';
@@ -33,9 +32,8 @@ export class SetupCreateKeyModule {
         submit_main: this.view.shouldSubmitPubkey('#step_2a_manual_create .input_submit_key'),
         submit_all: this.view.shouldSubmitPubkey('#step_2a_manual_create .input_submit_all'),
         recovered: false,
-        is_newly_created_key: true,
       };
-      const keyAlgo = $('#step_2a_manual_create .key_type').val() as KeyAlgo;
+      const keyAlgo = this.view.rules.getEnforcedKeygenAlgo() || $('#step_2a_manual_create .key_type').val() as KeyAlgo;
       const action = $('#step_2a_manual_create .input_backup_inbox').prop('checked') ? 'setup_automatic' : 'setup_manual';
       await this.createSaveKeyPair(options, keyAlgo);
       await this.view.preFinalizeSetup(options);
@@ -67,7 +65,6 @@ export class SetupCreateKeyModule {
     const { full_name } = await AcctStore.get(this.view.acctEmail, ['full_name']);
     try {
       const key = await PgpKey.create([{ name: full_name || '', email: this.view.acctEmail }], keyAlgo, options.passphrase); // todo - add all addresses?
-      options.is_newly_created_key = true;
       const prv = await PgpKey.read(key.private);
       await this.view.saveKeys([prv], options);
     } catch (e) {
