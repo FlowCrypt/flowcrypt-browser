@@ -17,6 +17,8 @@ import { TestUrls } from '../../browser/test-urls';
 import { TestVariant } from '../../util';
 import { TestWithBrowser } from '../../test';
 import { expect } from "chai";
+import { BrowserRecipe } from '../browser-recipe';
+import { SetupPageRecipe } from '../page-recipe/setup-page-recipe';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -600,6 +602,16 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       // small file will get accepted
       await fileInput!.uploadFile('test/samples/small.png');
       await composePage.waitForContent('.qq-upload-file-selector', 'small.png');
+    }));
+
+    ava.default('can lookup public key from FlowCrypt Email Key Manager', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'get.key@key-manager-autogen.flowcrypt.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoKeygen(settingsPage);
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'find.public.key@key-manager-autogen.flowcrypt.com' }, 'should find pubkey from key manager');
+      await composePage.waitForContent('.email_address.has_pgp', 'find.public.key@key-manager-autogen.flowcrypt.com');
+      expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('00B0 1158 0796 9D75');
     }));
 
     ava.todo('compose - reply - new gmail threadId fmt');
