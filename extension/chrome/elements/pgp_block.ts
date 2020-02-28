@@ -16,7 +16,7 @@ import { PgpBlockViewRenderModule } from './pgp_block_modules/pgp-block-render-m
 import { PgpBlockViewSignatureModule } from './pgp_block_modules/pgp-block-signature-module.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
-import { Keyserver } from '../../js/common/api/keyserver.js';
+import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { Rules } from '../../js/common/rules.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 
@@ -35,7 +35,7 @@ export class PgpBlockView extends View {
 
   public gmail: Gmail;
   public rules!: Rules;
-  public keyserver!: Keyserver;
+  public pubLookup!: PubLookup;
 
   public readonly attachmentsModule: PgpBlockViewAttachmentsModule;
   public readonly signatureModule: PgpBlockViewSignatureModule;
@@ -74,7 +74,7 @@ export class PgpBlockView extends View {
   public render = async () => {
     const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'google_token_scopes']);
     this.rules = await Rules.newInstance(this.acctEmail);
-    this.keyserver = new Keyserver(this.rules);
+    this.pubLookup = new PubLookup(this.rules);
     const scopes = await AcctStore.getScopes(this.acctEmail);
     this.decryptModule.canReadEmails = scopes.read || scopes.modify;
     if (storage.setup_done) {

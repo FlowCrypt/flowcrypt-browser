@@ -4,7 +4,7 @@
 
 import { Api, ReqMethod } from './api.js';
 import { Dict, Str } from '../core/common.js';
-import { PgpClient, PubkeySearchResult } from './keyserver.js';
+import { PgpClient, PubkeySearchResult } from './pub-lookup.js';
 import { ApiErr } from './error/api-error.js';
 import { Rules } from '../rules.js';
 

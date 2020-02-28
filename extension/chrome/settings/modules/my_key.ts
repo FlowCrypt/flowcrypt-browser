@@ -14,7 +14,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
-import { Keyserver } from '../../../js/common/api/keyserver.js';
+import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { Rules } from '../../../js/common/rules.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
@@ -29,7 +29,7 @@ View.run(class MyKeyView extends View {
   private readonly myKeyUpdateUrl: string;
   private keyInfo!: KeyInfo;
   private rules!: Rules;
-  private keyserver!: Keyserver;
+  private pubLookup!: PubLookup;
 
   constructor() {
     super();
@@ -42,7 +42,7 @@ View.run(class MyKeyView extends View {
 
   public render = async () => {
     this.rules = await Rules.newInstance(this.acctEmail);
-    this.keyserver = new Keyserver(this.rules);
+    this.pubLookup = new PubLookup(this.rules);
     [this.keyInfo] = await KeyStore.get(this.acctEmail, [this.longid]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
@@ -66,7 +66,7 @@ View.run(class MyKeyView extends View {
 
   private setPubkeyContainer = async () => {
     try {
-      const result = await this.keyserver.attester.lookupEmail(this.acctEmail);
+      const result = await this.pubLookup.attester.lookupEmail(this.acctEmail);
       const url = Backend.url('pubkey', this.acctEmail);
       if (result.pubkey && await PgpKey.longid(result.pubkey) === this.keyInfo.longid) {
         $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('display', '');

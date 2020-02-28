@@ -15,7 +15,7 @@ export type PubkeySearchResult = { pubkey: string | null; pgpClient: PgpClient }
  *
  * Some orgs may have a preference to use their own keyserver. In such cases, results from their own keyserver will be preferred.
  */
-export class Keyserver {
+export class PubLookup {
 
   public attester: Attester; // attester is a publicly available public key server
   public keyManager: KeyManager | undefined; // key manager is a flowcrypt-provided internal company private and public key server

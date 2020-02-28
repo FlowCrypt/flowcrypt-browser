@@ -4,7 +4,7 @@
 
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Contact, KeyInfo } from '../../../js/common/core/pgp-key.js';
-import { PubkeySearchResult } from '../../../js/common/api/keyserver.js';
+import { PubkeySearchResult } from '../../../js/common/api/pub-lookup.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -120,7 +120,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   public ksLookupUnknownContactPubAndSaveToDb = async (email: string, name: string | undefined): Promise<Contact | "fail"> => {
     try {
-      const lookupResult = await this.view.keyserver.lookupEmail(email);
+      const lookupResult = await this.view.pubLookup.lookupEmail(email);
       if (lookupResult && email) {
         if (lookupResult.pubkey) {
           const parsed = await opgp.key.readArmored(lookupResult.pubkey);
@@ -167,7 +167,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         await ContactStore.update(undefined, contact.email, { pubkey_last_sig: lastSig });
       }
       if (!contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7)) { // last update > 7 days ago, or never
-        const { pubkey: fetchedPubkey } = await this.view.keyserver.lookupLongid(contact.longid);
+        const { pubkey: fetchedPubkey } = await this.view.pubLookup.lookupLongid(contact.longid);
         if (fetchedPubkey) {
           const fetchedLastSig = await PgpKey.lastSig(await PgpKey.read(fetchedPubkey));
           if (fetchedLastSig > contact.pubkey_last_sig) { // fetched pubkey has newer signature, update

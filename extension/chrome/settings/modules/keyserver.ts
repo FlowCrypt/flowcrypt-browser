@@ -13,7 +13,7 @@ import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { Keyserver } from '../../../js/common/api/keyserver.js';
+import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { Rules } from '../../../js/common/rules.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
@@ -24,7 +24,7 @@ View.run(class KeyserverView extends View {
 
   private acctEmail: string;
   private parentTabId: string;
-  private keyserver!: Keyserver;
+  private pubLookup!: PubLookup;
   private rules!: Rules;
 
   constructor() {
@@ -36,7 +36,7 @@ View.run(class KeyserverView extends View {
 
   public render = async () => {
     this.rules = await Rules.newInstance(this.acctEmail);
-    this.keyserver = new Keyserver(this.rules);
+    this.pubLookup = new PubLookup(this.rules);
     $('.email-address').text(this.acctEmail);
     Xss.sanitizeRender('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
     (async () => {
@@ -83,7 +83,7 @@ View.run(class KeyserverView extends View {
     const [primaryKi] = await KeyStore.get(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
-      await this.keyserver.attester.initialLegacySubmit(String($(target).attr('email')), primaryKi.public);
+      await this.pubLookup.attester.initialLegacySubmit(String($(target).attr('email')), primaryKi.public);
     } catch (e) {
       ApiErr.reportIfSignificant(e);
       await Ui.modal.error(ApiErr.eli5(e));
@@ -100,7 +100,7 @@ View.run(class KeyserverView extends View {
     const [primaryKi] = await KeyStore.get(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
-      const responseText = await this.keyserver.attester.replacePubkey(String($(target).attr('email')), primaryKi.public);
+      const responseText = await this.pubLookup.attester.replacePubkey(String($(target).attr('email')), primaryKi.public);
       await Ui.modal.info(responseText);
       BrowserMsg.send.closePage(this.parentTabId);
     } catch (e) {
@@ -115,7 +115,7 @@ View.run(class KeyserverView extends View {
     const { sendAs } = await AcctStore.get(this.acctEmail, ['sendAs']);
     const storedKeys = await KeyStore.get(this.acctEmail);
     const storedKeysLongids = storedKeys.map(ki => ki.longid);
-    const results = await this.keyserver.attester.lookupEmails(sendAs ? Object.keys(sendAs) : [this.acctEmail]);
+    const results = await this.pubLookup.attester.lookupEmails(sendAs ? Object.keys(sendAs) : [this.acctEmail]);
     for (const email of Object.keys(results)) {
       const pubkeySearchResult = results[email];
       if (!pubkeySearchResult.pubkey) {

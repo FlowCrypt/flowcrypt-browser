@@ -94,7 +94,7 @@ export class SetupRenderModule {
   public renderSetupDialog = async (): Promise<void> => {
     let keyserverRes;
     try {
-      keyserverRes = await this.view.keyserver.lookupEmail(this.view.acctEmail);
+      keyserverRes = await this.view.pubLookup.lookupEmail(this.view.acctEmail);
     } catch (e) {
       return await Settings.promptToRetry(e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => this.renderSetupDialog());
     }
