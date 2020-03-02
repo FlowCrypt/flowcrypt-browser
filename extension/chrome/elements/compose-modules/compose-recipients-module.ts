@@ -563,7 +563,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         }
         displayEmail = '<div class="select_contact_email" data-test="action-select-contact-email">' + Xss.escape(displayEmail) + '</div>';
         if (contact.name) {
-          ulHtml += '<div class="select_contact_name">' + Xss.escape(contact.name) + displayEmail + '</div>';
+          ulHtml += '<div class="select_contact_name" data-test="action-select-contact-name">' + Xss.escape(contact.name) + displayEmail + '</div>';
         } else {
           ulHtml += displayEmail;
         }
