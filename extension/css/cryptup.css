@@ -2004,6 +2004,24 @@ div#contacts ul li {
   text-overflow: ellipsis;
 }
 
+div#contacts .select_contact {
+  display: flex;
+  align-items: center;
+}
+
+div#contacts .select_contact .select_contact_name {
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+div#contacts .select_contact .select_contact_email {
+  font-size: 0.85em;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 div#contacts ul li img,
 div#contacts div.allow-google-contact-search img {
   padding-left: 6px;
@@ -2012,7 +2030,12 @@ div#contacts div.allow-google-contact-search img {
   position: relative;
   top: 1px;
 }
-div#contacts ul li:not(.loading) { cursor: pointer; }
+
+div#contacts ul li:not(.loading) {
+  height: 20px;
+  cursor: pointer;
+}
+
 div#contacts ul li.active:not(.loading) { background: #d6d6d6; }
 
 div#contacts ul li.auth_contacts {

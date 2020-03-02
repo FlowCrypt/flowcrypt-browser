@@ -561,10 +561,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           const parts = contact.email.split('@');
           displayEmail = parts[0].replace(/<\/?b>/g, '').substr(0, 10) + '...@' + parts[1];
         }
+        displayEmail = '<div class="select_contact_email">' + Xss.escape(displayEmail) + '</div>';
         if (contact.name) {
-          ulHtml += (Xss.escape(contact.name) + ' &lt;' + Xss.escape(displayEmail) + '&gt;');
+          ulHtml += '<div class="select_contact_name">' + Xss.escape(contact.name) + displayEmail + '</div>';
         } else {
-          ulHtml += Xss.escape(displayEmail);
+          ulHtml += displayEmail;
         }
         ulHtml += '</li>';
       }
