@@ -68,30 +68,32 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       // works on first search
       const composePage1 = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await composePage1.type('@input-to', 'human'); // test guessing of contacts
-      await composePage1.waitAll(['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
+      await composePage1.waitAll(['@container-contacts', '@action-select-contact-name(Human at FlowCrypt)']);
+      await composePage1.waitAll(['@container-contacts', '@action-select-contact-email(human@flowcrypt.com)']);
       // works on subsequent search
       const composePage2 = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await composePage2.type('@input-to', 'human'); // test guessing of contacts
-      await composePage2.waitAll(['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
+      await composePage2.waitAll(['@container-contacts', '@action-select-contact-name(Human at FlowCrypt)']);
+      await composePage2.waitAll(['@container-contacts', '@action-select-contact-email(human@flowcrypt.com)']);
     }));
 
     ava.default('compose - can load contact based on name different from email', testWithBrowser('compose', async (t, browser) => {
       // works on the first search
       const composePage1 = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await composePage1.type('@input-to', 'FirstName'); // test guessing of contacts when the name is not included in email address
-      await composePage1.waitAll(['@container-contacts', '@action-select-contact(therecipient@theirdomain.com)']);
+      await composePage1.waitAll(['@container-contacts', '@action-select-contact-email(therecipient@theirdomain.com)']);
       // works on subsequent search
       const composePage2 = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await composePage2.type('@input-to', 'FirstName'); // test guessing of contacts when the name is not included in email address
-      await composePage2.waitAll(['@container-contacts', '@action-select-contact(therecipient@theirdomain.com)']);
+      await composePage2.waitAll(['@container-contacts', '@action-select-contact-email(therecipient@theirdomain.com)']);
     }));
 
     ava.default(`compose - can choose found contact`, testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       // composePage.enable_debugging('choose-contact');
       await composePage.type('@input-to', 'human'); // test loading of contacts
-      await composePage.waitAll(['@container-contacts', '@action-select-contact(human@flowcrypt.com)'], { timeout: 30 });
-      await composePage.waitAndClick('@action-select-contact(human@flowcrypt.com)', { retryErrs: true, confirmGone: true, delay: 0 });
+      await composePage.waitAll(['@container-contacts', '@action-select-contact-email(human@flowcrypt.com)'], { timeout: 30 });
+      await composePage.waitAndClick('@action-select-contact-email(human@flowcrypt.com)', { retryErrs: true, confirmGone: true, delay: 0 });
       // todo - verify that the contact/pubkey is showing in green once clicked
       await composePage.waitAndClick('@input-subject');
       await composePage.type('@input-subject', `Automated puppeteer test: pubkey chosen by clicking found contact`);

@@ -548,7 +548,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if ((renderableContacts.length > 0 || this.contactSearchInProgress) || !this.canSearchContacts) {
       let ulHtml = '';
       for (const contact of renderableContacts) {
-        ulHtml += `<li class="select_contact" data-test="action-select-contact" email="${Xss.escape(contact.email.replace(/<\/?b>/g, ''))}">`;
+        ulHtml += `<li class="select_contact" email="${Xss.escape(contact.email.replace(/<\/?b>/g, ''))}">`;
         if (contact.has_pgp) {
           ulHtml += '<img class="lock-icon" src="/img/svgs/locked-icon-green.svg" />';
         } else {
@@ -561,10 +561,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           const parts = contact.email.split('@');
           displayEmail = parts[0].replace(/<\/?b>/g, '').substr(0, 10) + '...@' + parts[1];
         }
+        displayEmail = '<div class="select_contact_email" data-test="action-select-contact-email">' + Xss.escape(displayEmail) + '</div>';
         if (contact.name) {
-          ulHtml += (Xss.escape(contact.name) + ' &lt;' + Xss.escape(displayEmail) + '&gt;');
+          ulHtml += '<div class="select_contact_name" data-test="action-select-contact-name">' + Xss.escape(contact.name) + displayEmail + '</div>';
         } else {
-          ulHtml += Xss.escape(displayEmail);
+          ulHtml += displayEmail;
         }
         ulHtml += '</li>';
       }
