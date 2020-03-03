@@ -159,6 +159,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         secureReplyBtn.off();
         secureReplyBtn.on('focusin', Ui.event.handle((target) => { $(target).addClass('T-I-JO'); }));
         secureReplyBtn.on('focusout', Ui.event.handle((target) => { $(target).removeClass('T-I-JO'); }));
+        secureReplyBtn.on('mouseenter', Ui.event.handle((target) => { $(target).addClass('T-I-JW'); }));
+        secureReplyBtn.on('mouseleave', Ui.event.handle((target) => { $(target).removeClass('T-I-JW'); }));
         secureReplyBtn.click(Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev)));
         secureReplyBtn.keydown(event => {
           if (event.key === 'Enter') {
