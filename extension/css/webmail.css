@@ -62,12 +62,19 @@ body.cryptup_inbox .pgp_message_container .nk .tq:first-child { display: none !i
 body.cryptup_gmail .inserted div.reply_message_button {
   position: relative;
   display: inline-flex;
-  padding: 20px 12px 4px 10px;
+  padding: 20px 12px 0 10px;
   opacity: 0.75;
   margin-left: 18px;
   margin-right: 8px;
   height: auto;
 }
+
+@-moz-document url-prefix() { /* Firefox specific */
+  body.cryptup_gmail .inserted div.reply_message_button {
+    padding-bottom: 4px;
+  }
+}
+
 body.cryptup_gmail.firefox .inserted div.reply_message_button { padding-top: 16px; } /* else buttons misaligned vertically on FF */
 body.cryptup_gmail .inserted div.reply_message_button:hover {
   opacity: 0.9;
