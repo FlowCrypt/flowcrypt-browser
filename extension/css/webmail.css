@@ -69,7 +69,7 @@ body.cryptup_gmail .inserted div.reply_message_button {
   height: auto;
 }
 
-@-moz-document url-prefix() {
+@-moz-document url-prefix() { /* Firefox specific */
   body.cryptup_gmail .inserted div.reply_message_button {
     padding-bottom: 4px;
   }
