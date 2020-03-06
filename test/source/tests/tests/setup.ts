@@ -12,6 +12,7 @@ import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
 import { ComposePageRecipe } from '../page-recipe/compose-page-recipe';
 import { Str } from '../../core/common';
 import { MOCK_KM_LAST_INSERTED_KEY } from '../../mock/key-manager/key-manager-endpoints';
+import { PgpKey } from '../../core/pgp-key';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -210,7 +211,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await myKeyFrame.waitAll('@content-longid');
       const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
       expect(fromKm).to.exist;
-      expect(await myKeyFrame.read('@content-longid')).to.equal(Str.spaced(fromKm.longid));
+      expect(await myKeyFrame.read('@content-longid')).to.equal(Str.spaced(await PgpKey.longid(fromKm.fingerprint)));
       await SettingsPageRecipe.closeDialog(settingsPage);
       await Util.sleep(2);
       // check that it does not offer any pass phrase options
