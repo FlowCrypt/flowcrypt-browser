@@ -12,6 +12,7 @@ import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
 import { ComposePageRecipe } from '../page-recipe/compose-page-recipe';
 import { Str } from '../../core/common';
 import { MOCK_KM_LAST_INSERTED_KEY } from '../../mock/key-manager/key-manager-endpoints';
+import { PgpKey } from '../../core/pgp-key';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -210,7 +211,8 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await myKeyFrame.waitAll('@content-longid');
       const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
       expect(fromKm).to.exist;
-      expect(await myKeyFrame.read('@content-longid')).to.equal(Str.spaced(fromKm.longid));
+      const longid = await PgpKey.longid(fromKm.fingerprint);
+      expect(await myKeyFrame.read('@content-longid')).to.equal(Str.spaced(longid!));
       await SettingsPageRecipe.closeDialog(settingsPage);
       await Util.sleep(2);
       // check that it does not offer any pass phrase options
@@ -240,7 +242,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await settingsPage.click('@action-show-overlay-details');
       await settingsPage.waitAll('@container-overlay-details');
       await Util.sleep(0.5);
-      expect(await settingsPage.read('@container-overlay-details')).to.contain('500 when PUT-ing http://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedPrivateKey,publicKey,longid -> Intentional error for put.error user to test client behavior');
+      expect(await settingsPage.read('@container-overlay-details')).to.contain('500 when PUT-ing http://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedPrivateKey,publicKey,fingerprint -> Intentional error for put.error user to test client behavior');
     }));
 
     ava.default('fail@key-manager-server-offline.flowcrypt.com - shows friendly KM not reachable error', testWithBrowser(undefined, async (t, browser) => {

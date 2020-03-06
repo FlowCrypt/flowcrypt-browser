@@ -6,7 +6,6 @@ import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { PgpBlockView } from '../pgp_block';
-import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { VerifyRes } from '../../../js/common/core/pgp-msg.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
@@ -43,7 +42,7 @@ export class PgpBlockViewSignatureModule {
   /**
    * don't have appropriate pubkey by longid in contacts
    */
-  private renderPgpSignatureCheckMissingPubkeyOptions = async (signerLongid: string, senderEmail: string | undefined): Promise<void> => {
+  private renderPgpSignatureCheckMissingPubkeyOptions = async (signerLongid: string, senderEmail: string): Promise<void> => {
     const render = (note: string, action: () => void) => $('#pgp_signature').addClass('neutral').find('.result').text(note).click(this.view.setHandler(action));
     try {
       if (senderEmail) { // we know who sent it
@@ -51,40 +50,25 @@ export class PgpBlockViewSignatureModule {
         if (senderContactByEmail && senderContactByEmail.pubkey) {
           render(`Fetched the right pubkey ${signerLongid} from keyserver, but will not use it because you have conflicting pubkey ${senderContactByEmail.longid} loaded.`, () => undefined);
           return;
-        } // ---> and user doesn't have pubkey for that email addr
+        }
+        // ---> and user doesn't have pubkey for that email addr
         const { pubkey, pgpClient } = await this.view.pubLookup.lookupEmail(senderEmail);
         if (!pubkey) {
           render(`Missing pubkey ${signerLongid}`, () => undefined);
           return;
-        } // ---> and pubkey found on keyserver by sender email
+        }
+        // ---> and pubkey found on keyserver by sender email
         const { keys: [keyDetails] } = await BrowserMsg.send.bg.await.pgpKeyDetails({ pubkey });
         if (!keyDetails || !keyDetails.ids.map(ids => ids.longid).includes(signerLongid)) {
           render(`Fetched sender's pubkey ${keyDetails.ids[0].longid} but message was signed with a different key: ${signerLongid}, will not verify.`, () => undefined);
           return;
-        } // ---> and longid it matches signature
+        }
+        // ---> and longid it matches signature
         await ContactStore.save(undefined, await ContactStore.obj({ email: senderEmail, pubkey, client: pgpClient })); // <= TOFU auto-import
         render('Fetched pubkey, click to verify', () => window.location.reload());
       } else { // don't know who sent it
-        const { pubkey, pgpClient } = await this.view.pubLookup.lookupLongid(signerLongid);
-        if (!pubkey) { // but can find matching pubkey by longid on keyserver
-          render(`Could not find sender's pubkey anywhere: ${signerLongid}`, () => undefined);
-          return;
-        }
-        const { keys: [keyDetails] } = await BrowserMsg.send.bg.await.pgpKeyDetails({ pubkey });
-        const pubkeyEmail = Str.parseEmail(keyDetails.users[0] || '').email!;
-        if (!pubkeyEmail) {
-          render(`Fetched matching pubkey ${signerLongid} but no valid email address is listed in it.`, () => undefined);
-          return;
-        }
-        const [conflictingContact] = await ContactStore.get(undefined, [pubkeyEmail]);
-        if (conflictingContact && conflictingContact.pubkey) {
-          render(`Fetched matching pubkey ${signerLongid} but conflicting key is in local contacts ${conflictingContact.longid} for email ${pubkeyEmail}, cannot verify.`, () => undefined);
-          return;
-        }
-        render(`Fetched matching pubkey ${signerLongid}. Click to load and use it.`, async () => {
-          await ContactStore.save(undefined, await ContactStore.obj({ email: pubkeyEmail, pubkey, client: pgpClient })); // TOFU manual import
-          window.location.reload();
-        });
+        render('Cannot verify: missing pubkey, missing sender info', () => undefined);
+        // todo - try to fetch pubkey by longid, offer to import it, show warning explaining what it means
       }
     } catch (e) {
       if (ApiErr.isSignificant(e)) {

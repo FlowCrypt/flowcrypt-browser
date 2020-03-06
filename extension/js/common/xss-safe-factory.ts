@@ -51,7 +51,7 @@ export class XssSafeFactory {
    *
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
-  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId?: string, senderEmail?: string, isOutgoing?: boolean) => {
+  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId: string, senderEmail: string, isOutgoing?: boolean) => {
     if (block.type === 'plainText') {
       return Xss.escape(block.content.toString()).replace(/\n/g, '<br>') + '<br><br>';
     } else if (block.type === 'plainHtml') {
@@ -83,7 +83,7 @@ export class XssSafeFactory {
    *
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
-  public static replaceRenderableMsgBlocks = (factory: XssSafeFactory, origText: string, msgId?: string, senderEmail?: string, isOutgoing?: boolean) => {
+  public static replaceRenderableMsgBlocks = (factory: XssSafeFactory, origText: string, msgId: string, senderEmail: string, isOutgoing?: boolean) => {
     const { blocks } = MsgBlockParser.detectBlocks(origText);
     if (blocks.length === 1 && blocks[0].type === 'plainText') {
       return undefined; // only has single block which is plain text - meaning

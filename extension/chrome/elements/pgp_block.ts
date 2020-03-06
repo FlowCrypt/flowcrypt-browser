@@ -28,7 +28,7 @@ export class PgpBlockView extends View {
   public readonly hasChallengePassword: boolean;
   public readonly isOutgoing: boolean;
   public readonly short: string | undefined;
-  public readonly senderEmail: string | undefined;
+  public readonly senderEmail: string;
   public readonly msgId: string | undefined;
   public readonly encryptedMsgUrlParam: Buf | undefined;
   public signature: string | boolean | undefined; // when supplied with "true", decryptModule will replace this with actual signature data
@@ -55,8 +55,8 @@ export class PgpBlockView extends View {
     this.hasChallengePassword = uncheckedUrlParams.hasPassword === true;
     this.isOutgoing = uncheckedUrlParams.isOutgoing === true;
     this.short = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'short');
-    this.senderEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'senderEmail');
-    this.senderEmail = this.senderEmail ? Str.parseEmail(this.senderEmail).email : undefined;
+    const senderEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'senderEmail');
+    this.senderEmail = Str.parseEmail(senderEmail).email || '';
     this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
     this.encryptedMsgUrlParam = uncheckedUrlParams.message ? Buf.fromUtfStr(Assert.urlParamRequire.string(uncheckedUrlParams, 'message')) : undefined;
     this.signature = uncheckedUrlParams.signature === true ? true : (uncheckedUrlParams.signature ? String(uncheckedUrlParams.signature) : undefined);

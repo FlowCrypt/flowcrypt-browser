@@ -174,10 +174,10 @@ View.run(class ContactsView extends View {
         await Ui.modal.warning('Please paste public key(s).');
         return;
       }
-      const normalizedLongid = KeyImportUi.normalizeLongId(value);
+      const normalizedFingerprintOrLongid = KeyImportUi.normalizeFingerprintOrLongId(value);
       let pub: string;
-      if (normalizedLongid) {
-        const data = await this.pubLookup.lookupLongid(normalizedLongid);
+      if (normalizedFingerprintOrLongid) {
+        const data = await this.pubLookup.lookupFingerprint(normalizedFingerprintOrLongid);
         if (data.pubkey) {
           pub = data.pubkey;
         } else {
@@ -197,7 +197,7 @@ View.run(class ContactsView extends View {
         const container = $('#bulk_import #processed');
         for (const block of blocks) {
           if (block.type === 'publicKey') {
-            const replacedHtmlSafe = XssSafeFactory.replaceRenderableMsgBlocks(this.factory!, block.content.toString());
+            const replacedHtmlSafe = XssSafeFactory.replaceRenderableMsgBlocks(this.factory!, block.content.toString(), '', '');
             if (replacedHtmlSafe && replacedHtmlSafe !== value) {
               container.append(replacedHtmlSafe); // xss-safe-factory
             }

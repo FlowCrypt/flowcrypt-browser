@@ -158,7 +158,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   public checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded = async (contact: Contact) => {
     try {
-      if (!contact.pubkey || !contact.longid) {
+      if (!contact.pubkey || !contact.fingerprint) {
         return;
       }
       if (!contact.pubkey_last_sig) {
@@ -167,7 +167,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         await ContactStore.update(undefined, contact.email, { pubkey_last_sig: lastSig });
       }
       if (!contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7)) { // last update > 7 days ago, or never
-        const { pubkey: fetchedPubkey } = await this.view.pubLookup.lookupLongid(contact.longid);
+        const { pubkey: fetchedPubkey } = await this.view.pubLookup.lookupFingerprint(contact.fingerprint);
         if (fetchedPubkey) {
           const fetchedLastSig = await PgpKey.lastSig(await PgpKey.read(fetchedPubkey));
           if (fetchedLastSig > contact.pubkey_last_sig) { // fetched pubkey has newer signature, update

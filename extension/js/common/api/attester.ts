@@ -48,8 +48,8 @@ export class Attester extends Api {
     return results;
   }
 
-  public lookupLongid = async (longid: string) => {
-    return await this.lookupEmail(longid); // the api accepts either email or longid
+  public lookupFingerprint = async (fingerprintOrLongid: string) => {
+    return await this.lookupEmail(fingerprintOrLongid); // the actual api accepts either email, fingerprint or longid
   }
 
   public replacePubkey = async (email: string, pubkey: string): Promise<string> => { // replace key assigned to a certain email with a different one
