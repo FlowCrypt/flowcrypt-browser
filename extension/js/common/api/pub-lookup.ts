@@ -51,20 +51,20 @@ export class PubLookup {
     return await this.attester.lookupEmail(email);
   }
 
-  public lookupLongid = async (longid: string): Promise<PubkeySearchResult> => {
+  public lookupFingerprint = async (fingerprintOrLongid: string): Promise<PubkeySearchResult> => {
     if (this.keyManager) {
-      const res = await this.keyManager.lookupPublicKey(longid);
+      const res = await this.keyManager.lookupPublicKey(fingerprintOrLongid);
       if (res.publicKeys.length) {
         return { pubkey: res.publicKeys[0].publicKey, pgpClient: 'flowcrypt' };
       }
     }
     if (this.internalSks) {
-      const res = await this.internalSks.lookupLongid(longid);
+      const res = await this.internalSks.lookupFingerprint(fingerprintOrLongid);
       if (res.pubkey) {
         return res;
       }
     }
-    return await this.attester.lookupLongid(longid);
+    return await this.attester.lookupFingerprint(fingerprintOrLongid);
   }
 
 }

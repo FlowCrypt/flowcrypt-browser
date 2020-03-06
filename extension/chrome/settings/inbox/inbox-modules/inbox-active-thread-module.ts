@@ -107,13 +107,11 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
           r += '<br><br>';
         }
         if (['encryptedAtt', 'plainAtt'].includes(block.type)) {
-          renderedAtts += XssSafeFactory.renderableMsgBlock(this.view.factory, block, message.id, from,
-            this.view.storage.sendAs && !!this.view.storage.sendAs[from]);
+          renderedAtts += XssSafeFactory.renderableMsgBlock(this.view.factory, block, message.id, from, this.view.storage.sendAs && !!this.view.storage.sendAs[from]);
         } else if (this.view.showOriginal) {
           r += Xss.escape(block.content.toString()).replace(/\n/g, '<br>');
         } else {
-          r += XssSafeFactory.renderableMsgBlock(this.view.factory, block, message.id, from,
-            this.view.storage.sendAs && !!this.view.storage.sendAs[from]);
+          r += XssSafeFactory.renderableMsgBlock(this.view.factory, block, message.id, from, this.view.storage.sendAs && !!this.view.storage.sendAs[from]);
         }
       }
       if (renderedAtts) {
