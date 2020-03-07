@@ -397,9 +397,10 @@ View.run(class SettingsView extends View {
       const escapedEmail = Xss.escape(Str.parseEmail(prv.users[0].userId ? prv.users[0].userId!.userid : '').email || '');
       const escapedLongid = Xss.escape(ki.longid);
       const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=${escapedLongid}">${escapedEmail}</a>`;
+      const fpHtml = `fingerprint:&nbsp;<span class="good">${Xss.escape(Str.spaced(ki.fingerprint))}</span>`;
+      const space = `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
       html += `<div class="row key-content-row key_${Xss.escape(ki.longid)}">`;
-      html += `  <div class="col-sm-12">${escapedLink} from ${Xss.escape(date)}&nbsp;&nbsp;&nbsp;&nbsp;${escapedPrimaryOrRemove}</div>`;
-      html += `  <div class="col-sm-12">Longid: <span class="good">${Xss.escape(Str.spaced(ki.longid))}</span></div>`;
+      html += `  <div class="col-sm-12">${escapedLink} from ${Xss.escape(date)}${space}${fpHtml}${space}${escapedPrimaryOrRemove}</div>`;
       html += `</div>`;
     }
     Xss.sanitizeAppend('.key_list', html);

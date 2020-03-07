@@ -58,11 +58,11 @@ View.run(class PassphraseView extends View {
     if (allPrivateKeys.length > 1) {
       let html: string;
       if (this.myPrivateKeys.length === 1) {
-        html = `For key Longid: <span class="good">${Xss.escape(Str.spaced(this.myPrivateKeys[0].longid || ''))}</span>`;
+        html = `For key Fingerprint: <span class="good">${Xss.escape(Str.spaced(this.myPrivateKeys[0].fingerprint || ''))}</span>`;
       } else {
         html = 'Pass phrase needed for any of the following keys:';
         for (const i of this.myPrivateKeys.keys()) {
-          html += `<div>Longid ${String(i + 1)}: <span class="good">${Xss.escape(Str.spaced(this.myPrivateKeys[i].longid) || '')}</span></div>`;
+          html += `<div>Fingerprint ${String(i + 1)}: <span class="good">${Xss.escape(Str.spaced(this.myPrivateKeys[i].fingerprint) || '')}</span></div>`;
         }
       }
       Xss.sanitizeRender('.which_key', html);
@@ -121,7 +121,9 @@ View.run(class PassphraseView extends View {
         }
       } catch (e) {
         if (e instanceof Error && e.message === 'Unknown s2k type.') {
-          await Ui.modal.error(`One of your keys ${keyinfo.longid} is not supported yet (${String(e)}).\n\nPlease write human@flowcrypt.com with details about how was this key created.`);
+          let msg = `Your key with fingerprint ${keyinfo.fingerprint} is not supported yet (${String(e)}).`;
+          msg += '\n\nPlease write human@flowcrypt.com with details about how was this key created.';
+          await Ui.modal.error(msg);
         } else {
           throw e;
         }
