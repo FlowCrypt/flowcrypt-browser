@@ -1,6 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { Catch } from '../../platform/catch.js';
+import { Str } from '../../core/common.js';
 
 export interface StandardError {
   code: number | null;
@@ -77,21 +78,36 @@ export class AjaxErr extends ApiCallErr {
       // RawAjaxErr with status 200 can happen when it fails to parse response - eg non-json result
       stack += `\n\nresponseText(0, 1000):\n${responseText.substr(0, 1000)}\n\npayload(0, 1000):\n${Catch.stringify(req.data).substr(0, 1000)}`;
     }
-    const errMsg = AjaxErr.parseErrMsg(responseText, 'JSON[error][message]');
+    const errMsg = AjaxErr.parseErrMsg(responseText, 'JSON[error][message] || JSON[message]');
     const message = `${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallErr.describeApiAction(req)} -> ${errMsg}`;
     return new AjaxErr(message, stack, status, Catch.censoredUrl(req.url), responseText, xhr.statusText || '(no status text)', errMsg);
   }
 
-  private static parseErrMsg = (responseText: string, format: 'JSON[error][message]') => {
+  private static parseErrMsg = (responseText: string, format: 'JSON[error][message] || JSON[message]'): string | undefined => {
+    if (format !== 'JSON[error][message] || JSON[message]') {
+      return undefined;
+    }
+    let parsedRes: unknown;
     try {
-      if (format === 'JSON[error][message]') {
-        const errMsg = ((JSON.parse(responseText) as any).error as any).message as string; // catching all errs below
-        if (typeof errMsg === 'string') {
-          return errMsg;
-        }
-      }
+      parsedRes = JSON.parse(responseText);
     } catch (e) {
       return undefined;
+    }
+    try { // JSON[error][message]
+      const errMsg = ((parsedRes as any).error as any).message as string; // catching all errs below
+      if (typeof errMsg === 'string') {
+        return Str.truncate(errMsg, 300);
+      }
+    } catch (e) {
+      // skip
+    }
+    try { // JSON[message]
+      const errMsg = (parsedRes as any).message as string; // catching all errs below
+      if (typeof errMsg === 'string') {
+        return Str.truncate(errMsg, 300);
+      }
+    } catch (e) {
+      // skip
     }
     return undefined;
   }

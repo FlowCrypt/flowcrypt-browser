@@ -62,6 +62,10 @@ export class Str {
     return longidOrFingerprint.replace(/(.{4})/g, '$1 ').trim();
   }
 
+  public static truncate = (text: string, length: number): string => {
+    return text.length <= length ? text : text.substring(0, length) + '...';
+  }
+
   public static numberFormat = (number: number) => {
     const nStr: string = number + '';
     const x = nStr.split('.');
