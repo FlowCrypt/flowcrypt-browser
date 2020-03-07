@@ -15,7 +15,7 @@ import { ContactStore } from '../../../../js/common/platform/store/contact-store
 export class SignedMsgMailFormatter extends BaseMailFormatter {
 
   public sendableMsg = async (newMsg: NewMsgData, signingPrv: OpenPGP.key.Key): Promise<SendableMsg> => {
-    this.view.errModule.debug(`SignedMsgMailFormatter.sendableMsg signing with key: ${await PgpKey.longid(signingPrv)}`);
+    this.view.errModule.debug(`SignedMsgMailFormatter.sendableMsg signing with key: ${await PgpKey.fingerprint(signingPrv)}`);
     const atts = this.isDraft ? [] : await this.view.attsModule.attach.collectAtts();
     if (!this.richtext) {
       // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
