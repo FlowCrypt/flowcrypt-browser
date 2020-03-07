@@ -211,6 +211,9 @@ export class PgpKey {
         return undefined;
       }
     } else {
+      if (/^[0-9A-F]{40}$/.test(key)) {
+        return key;
+      }
       try {
         return await PgpKey.fingerprint(await PgpKey.read(key));
       } catch (e) {

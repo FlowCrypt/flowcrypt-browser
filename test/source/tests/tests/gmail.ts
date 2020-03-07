@@ -4,11 +4,9 @@ import * as ava from 'ava';
 
 import { BrowserHandle, ControllablePage } from '../../browser';
 import { TestVariant, Util } from '../../util';
-
 import { AvaContext } from '..';
 import { BrowserRecipe } from '../browser-recipe';
 import { GmailPageRecipe } from '../page-recipe/gmail-page-recipe';
-import { OauthPageRecipe } from '../page-recipe/oauth-page-recipe';
 import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
 import { TestUrls } from '../../browser/test-urls';
 import { TestWithBrowser } from '../../test';
@@ -153,7 +151,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pageHasReplyContainer(t, browser, gmailPage);
       const pubkeyPage = await browser.newPage(t, urls[0]);
       const content = await pubkeyPage.read('body');
-      expect(content).to.contain('Longid: D652 7AD6 65C3 B0DD');
+      expect(content).to.contain('Fingerprint: 7A2E 4FFD 34BC 4AED 0F54 4199 D652 7AD6 65C3 B0DD');
     }));
 
   }

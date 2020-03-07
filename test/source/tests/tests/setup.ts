@@ -211,8 +211,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await myKeyFrame.waitAll('@content-fingerprint');
       const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
       expect(fromKm).to.exist;
-      const fingerprint = await PgpKey.fingerprint(fromKm.fingerprint);
-      expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(fingerprint!));
+      expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(fromKm.fingerprint));
       await SettingsPageRecipe.closeDialog(settingsPage);
       await Util.sleep(2);
       // check that it does not offer any pass phrase options
