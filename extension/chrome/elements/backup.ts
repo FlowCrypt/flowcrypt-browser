@@ -33,17 +33,20 @@ View.run(class BackupView extends View {
     Ui.event.protect();
     await initPassphraseToggle(['pass_phrase']);
     const prvBackup = await PgpKey.read(this.armoredPrvBackup);
-    const longid = await PgpKey.longid(prvBackup) || '';
+    const fingerprint = await PgpKey.fingerprint(prvBackup);
+    if (!fingerprint) {
+      throw new Error('Missing backup key fingerprint');
+    }
     if (prvBackup) {
-      $('.line.longids .longid').text(Str.spaced(await PgpKey.longid(prvBackup) || 'err'));
+      $('.line.fingerprints .fingerprint').text(Str.spaced(fingerprint));
       if (! await prvBackup.getEncryptionKey() && ! await prvBackup.getSigningKey()) {
         $('.line.add_contact').addClass('bad').text('This private key looks correctly formatted, but cannot be used for encryption.');
-        $('.line.longids').css({ display: 'none', visibility: 'hidden' });
+        $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
       }
     } else {
-      $('.line.longids').css({ display: 'none' });
+      $('.line.fingerprints').css({ display: 'none' });
     }
-    [this.storedPrvWithMatchingLongid] = await KeyStore.get(this.acctEmail, [longid]);
+    [this.storedPrvWithMatchingLongid] = await KeyStore.get(this.acctEmail, [(await PgpKey.longid(fingerprint))!]);
     if (this.storedPrvWithMatchingLongid) {
       $('.line .private_key_status').text('This Private Key is already imported.');
     } else {

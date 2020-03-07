@@ -19,6 +19,7 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 
 View.run(class MyKeyUpdateView extends View {
+
   private readonly acctEmail: string;
   private readonly longid: string;
   private readonly showKeyUrl: string;
@@ -43,8 +44,8 @@ View.run(class MyKeyUpdateView extends View {
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     $('.action_show_public_key').attr('href', this.showKeyUrl);
     $('.email').text(this.acctEmail);
-    $('.longid').text(Str.spaced(this.primaryKi.longid)).attr('title', this.primaryKi.longid);
-    this.inputPrivateKey.attr('placeholder', this.inputPrivateKey.attr('placeholder') + ' (' + this.primaryKi.longid + ')');
+    $('.fingerprint').text(Str.spaced(this.primaryKi.fingerprint));
+    this.inputPrivateKey.attr('placeholder', this.inputPrivateKey.attr('placeholder') + ' (' + this.primaryKi.fingerprint + ')');
   }
 
   public setHandlers = () => {
@@ -76,8 +77,8 @@ View.run(class MyKeyUpdateView extends View {
       await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
     } else if (uddatedKey.isPublic()) {
       await Ui.modal.warning('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"');
-    } else if (await PgpKey.longid(uddatedKey) !== await PgpKey.longid(this.primaryKi!.public)) {
-      await Ui.modal.warning(`This key ${Str.spaced(await PgpKey.longid(uddatedKey) || 'err')} does not match your current key ${Str.spaced(this.primaryKi!.longid)}`);
+    } else if (await PgpKey.fingerprint(uddatedKey) !== await PgpKey.fingerprint(this.primaryKi!.public)) {
+      await Ui.modal.warning(`This key ${Str.spaced(await PgpKey.fingerprint(uddatedKey) || 'err')} does not match your current key ${Str.spaced(this.primaryKi!.fingerprint)}`);
     } else if (await PgpKey.decrypt(uddatedKey, uddatedKeyPassphrase) !== true) {
       await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
     } else {
@@ -99,4 +100,5 @@ View.run(class MyKeyUpdateView extends View {
       }
     }
   }
+
 });

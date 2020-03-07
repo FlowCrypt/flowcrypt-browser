@@ -799,8 +799,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   }
 
   private recipientKeyIdText = (contact: Contact) => {
-    if (contact.longid) {
-      return `\n\nRecipient public key longid:\n${Str.spaced(contact.longid)}`;
+    if (contact.fingerprint) {
+      return `\n\nRecipient public key fingerprint:\n${Str.spaced(contact.fingerprint)}`;
     } else {
       return '';
     }

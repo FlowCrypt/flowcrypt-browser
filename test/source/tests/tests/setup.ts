@@ -187,8 +187,8 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       // check imported key
       const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
       await Util.sleep(1);
-      await myKeyFrame.waitAll('@content-longid');
-      expect(await myKeyFrame.read('@content-longid')).to.equal('00B0 1158 0796 9D75');
+      await myKeyFrame.waitAll('@content-fingerprint');
+      expect(await myKeyFrame.read('@content-fingerprint')).to.contain('00B0 1158 0796 9D75');
       await SettingsPageRecipe.closeDialog(settingsPage);
       await Util.sleep(2);
       // check that it does not offer any pass phrase options
@@ -208,11 +208,10 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       // check imported key
       const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
       await Util.sleep(1);
-      await myKeyFrame.waitAll('@content-longid');
+      await myKeyFrame.waitAll('@content-fingerprint');
       const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
       expect(fromKm).to.exist;
-      const longid = await PgpKey.longid(fromKm.fingerprint);
-      expect(await myKeyFrame.read('@content-longid')).to.equal(Str.spaced(longid!));
+      expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(fromKm.fingerprint));
       await SettingsPageRecipe.closeDialog(settingsPage);
       await Util.sleep(2);
       // check that it does not offer any pass phrase options

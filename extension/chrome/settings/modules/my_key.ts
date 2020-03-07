@@ -47,7 +47,7 @@ View.run(class MyKeyView extends View {
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
     $('.action_view_update').attr('href', this.myKeyUpdateUrl);
-    $('.longid').text(Str.spaced(this.keyInfo.longid));
+    $('.fingerprint').text(Str.spaced(this.keyInfo.fingerprint));
     $('.email').text(this.acctEmail);
     await this.setPubkeyContainer();
     await initPassphraseToggle(['input_passphrase']);
@@ -68,7 +68,7 @@ View.run(class MyKeyView extends View {
     try {
       const result = await this.pubLookup.attester.lookupEmail(this.acctEmail);
       const url = Backend.url('pubkey', this.acctEmail);
-      if (result.pubkey && await PgpKey.longid(result.pubkey) === this.keyInfo.longid) {
+      if (result.pubkey && await PgpKey.fingerprint(result.pubkey) === this.keyInfo.fingerprint) {
         $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('display', '');
       } else {
         $('.pubkey_link_container').remove();
