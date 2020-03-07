@@ -75,11 +75,11 @@ export class SettingsPageRecipe extends PageRecipe {
       trigger === 'button' ? '@action-open-pubkey-page' : `@action-show-key-${linkIndex}`, ['my_key.htm', 'placement=settings']);
     await Util.sleep(1);
     const k = Config.key(expectedKeyName);
-    await myKeyFrame.waitAll('@content-longid');
+    await myKeyFrame.waitAll('@content-fingerprint');
     if (!k.longid) {
       throw new Error(`Missing key longid for tests: ${expectedKeyName}`);
     }
-    expect(await myKeyFrame.read('@content-longid')).to.equal(Str.spaced(k.longid));
+    expect(await myKeyFrame.read('@content-fingerprint')).to.contain(Str.spaced(k.longid));
     await SettingsPageRecipe.closeDialog(settingsPage);
     await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
   }

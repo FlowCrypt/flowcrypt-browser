@@ -11,10 +11,12 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
 View.run(class MyKeyUserIdsView extends View {
+
   private readonly acctEmail: string;
   private readonly longid: string;
   private readonly myKeyUrl: string;
   private primaryKi: KeyInfo | undefined;
+
   constructor() {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'longid', 'parentTabId']);
@@ -31,10 +33,11 @@ View.run(class MyKeyUserIdsView extends View {
     const userIds = prv.users.map(u => u.userId).filter(Boolean).map(uid => uid!.userid); // todo - create a common function in settings.js for here and setup.js user_ids
     Xss.sanitizeRender('.user_ids', userIds.map((uid: string) => `<div>${Xss.escape(uid)}</div>`).join(''));
     $('.email').text(this.acctEmail);
-    $('.longid').text(Str.spaced(this.primaryKi.longid));
+    $('.fingerprint').text(Str.spaced(this.primaryKi.fingerprint));
   }
 
   public setHandlers = () => {
     // No need
   }
+
 });
