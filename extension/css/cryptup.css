@@ -1240,6 +1240,7 @@ td {
 }
 
 #pgp_signature {
+  max-width: 300px;
   float: right;
   text-align: right;
   opacity: 0.5;
