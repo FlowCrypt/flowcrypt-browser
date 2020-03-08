@@ -13,7 +13,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { opgp } from '../../../js/common/core/pgp.js';
-import { Rules } from '../../../js/common/rules.js';
+import { OrgRules } from '../../../js/common/org-rules.js';
 import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
@@ -26,7 +26,7 @@ View.run(class MyKeyUpdateView extends View {
   private readonly inputPrivateKey = $('.input_private_key');
   private readonly prvHeaders = PgpArmor.headers('privateKey');
   private primaryKi: KeyInfo | undefined;
-  private rules!: Rules;
+  private orgRules!: OrgRules;
   private pubLookup!: PubLookup;
 
   constructor() {
@@ -38,8 +38,8 @@ View.run(class MyKeyUpdateView extends View {
   }
 
   public render = async () => {
-    this.rules = await Rules.newInstance(this.acctEmail);
-    this.pubLookup = new PubLookup(this.rules);
+    this.orgRules = await OrgRules.newInstance(this.acctEmail);
+    this.pubLookup = new PubLookup(this.orgRules);
     [this.primaryKi] = await KeyStore.get(this.acctEmail, [this.longid]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     $('.action_show_public_key').attr('href', this.showKeyUrl);
@@ -58,7 +58,7 @@ View.run(class MyKeyUpdateView extends View {
     await KeyStore.add(this.acctEmail, updatedPrv.armor());
     await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.longid, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
     await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.longid, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
-    if (this.rules.canSubmitPubToAttester() && await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
+    if (this.orgRules.canSubmitPubToAttester() && await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
       try {
         await Ui.modal.info(await this.pubLookup.attester.updatePubkey(this.primaryKi!.longid, updatedPrv.toPublic().armor()));
       } catch (e) {

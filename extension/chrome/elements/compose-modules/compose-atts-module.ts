@@ -4,7 +4,7 @@
 
 import { AttLimits, AttUI } from '../../../js/common/ui/att-ui.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Rules } from '../../../js/common/rules.js';
+import { OrgRules } from '../../../js/common/org-rules.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
@@ -31,7 +31,7 @@ export class ComposeAttsModule extends ViewModule<ComposeView> {
 
   private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
     const subscription = await AcctStore.getSubscription(this.view.acctEmail);
-    if (!subscription.active && !Rules.isPublicEmailProviderDomain(this.view.senderModule.getSender())) {
+    if (!subscription.active && !OrgRules.isPublicEmailProviderDomain(this.view.senderModule.getSender())) {
       return {
         sizeMb: 5,
         size: 5 * 1024 * 1024,

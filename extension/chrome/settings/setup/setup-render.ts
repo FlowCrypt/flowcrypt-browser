@@ -19,7 +19,7 @@ export class SetupRenderModule {
   }
 
   public renderInitial = async (): Promise<void> => {
-    $('h1').text(this.view.rules.mustAutoImportOrAutogenPrvWithKeyManager() ? 'Setting up FlowCrypt, please wait...' : 'Set Up FlowCrypt');
+    $('h1').text(this.view.orgRules.mustAutoImportOrAutogenPrvWithKeyManager() ? 'Setting up FlowCrypt, please wait...' : 'Set Up FlowCrypt');
     $('.email-address').text(this.view.acctEmail);
     $('.back').css('visibility', 'hidden');
     if (this.view.storage!.email_provider === 'gmail') { // show alternative account addresses in setup form + save them for later
@@ -35,7 +35,7 @@ export class SetupRenderModule {
     if (this.view.storage!.setup_done) {
       if (this.view.action !== 'add_key') {
         await this.renderSetupDone();
-      } else if (this.view.rules.mustAutoImportOrAutogenPrvWithKeyManager()) {
+      } else if (this.view.orgRules.mustAutoImportOrAutogenPrvWithKeyManager()) {
         throw new Error('Manual add_key is not supported when PRV_AUTOIMPORT_OR_AUTOGEN org rule is in use');
       } else {
         await this.view.setupRecoverKey.renderAddKeyFromBackup();
@@ -48,7 +48,7 @@ export class SetupRenderModule {
       }
       await this.view.finalizeSetup({ submit_all: tmp_submit_all, submit_main: tmp_submit_main });
       await this.renderSetupDone();
-    } else if (this.view.rules.mustAutoImportOrAutogenPrvWithKeyManager()) {
+    } else if (this.view.orgRules.mustAutoImportOrAutogenPrvWithKeyManager()) {
       await this.view.setupKeyManagerAutogen.getKeyFromKeyManagerOrAutogenAndStoreItThenRenderSetupDone();
     } else {
       await this.renderSetupDialog();
@@ -100,7 +100,7 @@ export class SetupRenderModule {
     }
     if (keyserverRes.pubkey) {
       this.view.acctEmailAttesterLongid = await PgpKey.longid(keyserverRes.pubkey);
-      if (!this.view.rules.canBackupKeys()) {
+      if (!this.view.orgRules.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         this.displayBlock('step_2b_manual_enter');
       } else if (this.view.storage!.email_provider === 'gmail' && (this.view.scopes!.read || this.view.scopes!.modify)) {
@@ -121,7 +121,7 @@ export class SetupRenderModule {
           // a key has been created, and the user has used cryptup in the past - this suggest they likely have a backup available, but we cannot fetch it. Enter it manually
           this.displayBlock('step_2b_manual_enter');
           Xss.sanitizePrepend('#step_2b_manual_enter', `<div class="line red">${Lang.setup.cannotLocateBackupPasteManually}<br/><br/></div>`);
-        } else if (this.view.rules.canCreateKeys()) {
+        } else if (this.view.orgRules.canCreateKeys()) {
           // has a key registered, key creating allowed on the domain. This may be old key from PKS, let them choose
           this.displayBlock('step_1_easy_or_manual');
         } else {
@@ -130,7 +130,7 @@ export class SetupRenderModule {
         }
       }
     } else { // no indication that the person used pgp before
-      if (this.view.rules.canCreateKeys()) {
+      if (this.view.orgRules.canCreateKeys()) {
         this.displayBlock('step_1_easy_or_manual');
       } else {
         this.displayBlock('step_2b_manual_enter');

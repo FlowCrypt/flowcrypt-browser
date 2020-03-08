@@ -15,7 +15,7 @@ import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { PubLookup } from '../../../js/common/api/pub-lookup.js';
-import { Rules } from '../../../js/common/rules.js';
+import { OrgRules } from '../../../js/common/org-rules.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
@@ -28,7 +28,7 @@ View.run(class MyKeyView extends View {
   private readonly myKeyUserIdsUrl: string;
   private readonly myKeyUpdateUrl: string;
   private keyInfo!: KeyInfo;
-  private rules!: Rules;
+  private orgRules!: OrgRules;
   private pubLookup!: PubLookup;
 
   constructor() {
@@ -41,8 +41,8 @@ View.run(class MyKeyView extends View {
   }
 
   public render = async () => {
-    this.rules = await Rules.newInstance(this.acctEmail);
-    this.pubLookup = new PubLookup(this.rules);
+    this.orgRules = await OrgRules.newInstance(this.acctEmail);
+    this.pubLookup = new PubLookup(this.orgRules);
     [this.keyInfo] = await KeyStore.get(this.acctEmail, [this.longid]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);

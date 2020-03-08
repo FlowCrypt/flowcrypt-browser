@@ -28,7 +28,7 @@ import { ComposeSenderModule } from './compose-modules/compose-sender-module.js'
 import { ComposeSizeModule } from './compose-modules/compose-size-module.js';
 import { ComposeStorageModule } from './compose-modules/compose-storage-module.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Rules } from '../../js/common/rules.js';
+import { OrgRules } from '../../js/common/org-rules.js';
 import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { Scopes, AcctStore } from '../../js/common/platform/store/acct-store.js';
 
@@ -53,7 +53,7 @@ export class ComposeView extends View {
   public factory!: XssSafeFactory;
   public replyParams: ReplyParams | undefined;
   public emailProvider: EmailProviderInterface;
-  public rules!: Rules;
+  public orgRules!: OrgRules;
   public pubLookup!: PubLookup;
 
   public quoteModule!: ComposeQuoteModule;
@@ -141,8 +141,8 @@ export class ComposeView extends View {
 
   public render = async () => {
     const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password', 'drafts_reply']);
-    this.rules = await Rules.newInstance(this.acctEmail);
-    this.pubLookup = new PubLookup(this.rules);
+    this.orgRules = await OrgRules.newInstance(this.acctEmail);
+    this.pubLookup = new PubLookup(this.orgRules);
     this.tabId = await BrowserMsg.requiredTabId();
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.scopes = await AcctStore.getScopes(this.acctEmail);

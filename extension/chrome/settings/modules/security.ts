@@ -16,7 +16,7 @@ import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
-import { Rules } from '../../../js/common/rules.js';
+import { OrgRules } from '../../../js/common/org-rules.js';
 
 View.run(class SecurityView extends View {
 
@@ -24,7 +24,7 @@ View.run(class SecurityView extends View {
   private readonly parentTabId: string;
   private primaryKi: KeyInfo | undefined;
   private authInfo: FcUuidAuth | undefined;
-  private rules!: Rules;
+  private orgRules!: OrgRules;
 
   constructor() {
     super();
@@ -39,12 +39,12 @@ View.run(class SecurityView extends View {
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     this.authInfo = await AcctStore.authInfo(this.acctEmail);
     const storage = await AcctStore.get(this.acctEmail, ['hide_message_password', 'outgoing_language']);
-    this.rules = await Rules.newInstance(this.acctEmail);
+    this.orgRules = await OrgRules.newInstance(this.acctEmail);
     $('#hide_message_password').prop('checked', storage.hide_message_password === true);
     $('.password_message_language').val(storage.outgoing_language || 'EN');
     await this.renderPassPhraseOptionsIfStoredPermanently();
     await this.loadAndRenderPwdEncryptedMsgSettings();
-    if (this.rules.mustAutogenPassPhraseQuietly()) {
+    if (this.orgRules.mustAutogenPassPhraseQuietly()) {
       $('.hide_if_pass_phrase_not_user_configurable').hide();
     }
   }

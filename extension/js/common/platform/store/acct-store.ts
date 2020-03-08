@@ -6,7 +6,7 @@ import { KeyInfo } from '../../core/pgp-key.js';
 import { Dict } from '../../core/common.js';
 import { GmailRes } from '../../api/email-provider/gmail/gmail-parser.js';
 import { SubscriptionInfo, FcUuidAuth } from '../../api/backend.js';
-import { DomainRules } from '../../rules.js';
+import { DomainRulesJson } from '../../org-rules.js';
 import { BrowserMsg, BgNotReadyErr } from '../../browser/browser-msg.js';
 import { Ui } from '../../browser/ui.js';
 import { storageLocalGet, storageLocalSet, storageLocalRemove } from '../../api/chrome.js';
@@ -69,7 +69,7 @@ export type AcctStoreDict = {
   openid?: GmailRes.OpenId;
   subscription?: SubscriptionInfo;
   uuid?: string;
-  rules?: DomainRules;
+  rules?: DomainRulesJson;
   // temporary
   tmp_submit_main?: boolean;
   tmp_submit_all?: boolean;

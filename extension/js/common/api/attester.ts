@@ -6,20 +6,20 @@ import { Api, ReqMethod } from './api.js';
 import { Dict, Str } from '../core/common.js';
 import { PgpClient, PubkeySearchResult } from './pub-lookup.js';
 import { ApiErr } from './error/api-error.js';
-import { Rules } from '../rules.js';
+import { OrgRules } from '../org-rules.js';
 
 type PubCallRes = { responseText: string, getResponseHeader: (n: string) => string | null };
 
 export class Attester extends Api {
 
   constructor(
-    private rules: Rules
+    private orgRules: OrgRules
   ) {
     super();
   }
 
   public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
-    if (!this.rules.canLookupThisRecipientOnAttester(email)) {
+    if (!this.orgRules.canLookupThisRecipientOnAttester(email)) {
       console.info(`Skipping attester lookup of ${email} because attester search on this domain is disabled.`);
       return { pubkey: null, pgpClient: null }; // tslint:disable-line:no-null-keyword
     }
@@ -53,7 +53,7 @@ export class Attester extends Api {
   }
 
   public replacePubkey = async (email: string, pubkey: string): Promise<string> => { // replace key assigned to a certain email with a different one
-    if (!this.rules.canSubmitPubToAttester()) {
+    if (!this.orgRules.canSubmitPubToAttester()) {
       throw new Error('Cannot replace pubkey at attester because your organisation rules forbid it');
     }
     const r = await this.pubCall(`pub/${email}`, 'POST', pubkey);
@@ -61,7 +61,7 @@ export class Attester extends Api {
   }
 
   public updatePubkey = async (longid: string, pubkey: string): Promise<string> => { // update key with a newer version of the same key
-    if (!this.rules.canSubmitPubToAttester()) {
+    if (!this.orgRules.canSubmitPubToAttester()) {
       throw new Error('Cannot update pubkey at attester because your organisation rules forbid it');
     }
     const r = await this.pubCall(`pub/${longid}`, 'PUT', pubkey);
@@ -69,7 +69,7 @@ export class Attester extends Api {
   }
 
   public initialLegacySubmit = async (email: string, pubkey: string): Promise<{ saved: boolean }> => {
-    if (!this.rules.canSubmitPubToAttester()) {
+    if (!this.orgRules.canSubmitPubToAttester()) {
       throw new Error('Cannot submit pubkey to attester because your organisation rules forbid it');
     }
     return await this.jsonCall<{ saved: boolean }>('initial/legacy_submit', { email: Str.parseEmail(email).email, pubkey: pubkey.trim() });

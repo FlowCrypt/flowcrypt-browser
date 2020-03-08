@@ -15,7 +15,7 @@ import { GoogleAuth } from './api/google-auth.js';
 import { Lang } from './lang.js';
 import { PgpKey } from './core/pgp-key.js';
 import { PgpPwd } from './core/pgp-password.js';
-import { Rules } from './rules.js';
+import { OrgRules } from './org-rules.js';
 import { Xss } from './platform/xss.js';
 import { opgp } from './core/pgp.js';
 import { storageLocalGetAll } from './api/chrome.js';
@@ -258,12 +258,12 @@ export class Settings {
     return await retryCb();
   }
 
-  public static forbidAndRefreshPageIfCannot = async (action: 'CREATE_KEYS' | 'BACKUP_KEYS', rules: Rules) => {
-    if (action === 'CREATE_KEYS' && !rules.canCreateKeys()) {
+  public static forbidAndRefreshPageIfCannot = async (action: 'CREATE_KEYS' | 'BACKUP_KEYS', orgRules: OrgRules) => {
+    if (action === 'CREATE_KEYS' && !orgRules.canCreateKeys()) {
       await Ui.modal.error(Lang.setup.creatingKeysNotAllowedPleaseImport);
       window.location.reload();
       throw new Error('creating_keys_not_allowed_please_import');
-    } else if (action === 'BACKUP_KEYS' && !rules.canBackupKeys()) {
+    } else if (action === 'BACKUP_KEYS' && !orgRules.canBackupKeys()) {
       await Ui.modal.error(Lang.setup.keyBackupsNotAllowed);
       window.location.reload();
       throw new Error('key_backups_not_allowed');

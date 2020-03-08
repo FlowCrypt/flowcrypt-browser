@@ -13,7 +13,7 @@ import { Google } from '../../js/common/api/google.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
 import { Lang } from '../../js/common/lang.js';
 import { PgpKey } from '../../js/common/core/pgp-key.js';
-import { Rules } from '../../js/common/rules.js';
+import { OrgRules } from '../../js/common/org-rules.js';
 import { Settings } from '../../js/common/settings.js';
 import { SetupCreateKeyModule } from './setup/setup-create-key.js';
 import { SetupImportKeyModule } from './setup/setup-import-key.js';
@@ -57,7 +57,7 @@ export class SetupView extends View {
   public tabId!: string;
   public scopes!: Scopes;
   public storage!: AcctStoreDict;
-  public rules!: Rules;
+  public orgRules!: OrgRules;
   public pubLookup!: PubLookup;
   public keyManager: KeyManager | undefined; // not set if no url in org rules
 
@@ -104,25 +104,25 @@ export class SetupView extends View {
     this.storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider']);
     this.scopes = await AcctStore.getScopes(this.acctEmail);
     this.storage.email_provider = this.storage.email_provider || 'gmail';
-    this.rules = await Rules.newInstance(this.acctEmail);
-    this.pubLookup = new PubLookup(this.rules);
-    if (this.rules.getKeyManagerUrl() && this.idToken) {
-      this.keyManager = new KeyManager(this.rules.getKeyManagerUrl()!);
+    this.orgRules = await OrgRules.newInstance(this.acctEmail);
+    this.pubLookup = new PubLookup(this.orgRules);
+    if (this.orgRules.getKeyManagerUrl() && this.idToken) {
+      this.keyManager = new KeyManager(this.orgRules.getKeyManagerUrl()!);
     }
-    if (!this.rules.canCreateKeys()) {
+    if (!this.orgRules.canCreateKeys()) {
       const forbidden = `${Lang.setup.creatingKeysNotAllowedPleaseImport} <a href="${Xss.escape(window.location.href)}">Back</a>`;
       Xss.sanitizeRender('#step_2a_manual_create, #step_2_easy_generating', `<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
       $('.back').remove(); // back button would allow users to choose other options (eg create - not allowed)
     }
-    if (this.rules.mustSubmitToAttester() || !this.rules.canSubmitPubToAttester()) {
+    if (this.orgRules.mustSubmitToAttester() || !this.orgRules.canSubmitPubToAttester()) {
       $('.remove_if_pubkey_submitting_not_user_configurable').remove();
     }
-    if (this.rules.rememberPassPhraseByDefault()) {
+    if (this.orgRules.rememberPassPhraseByDefault()) {
       $('#step_2a_manual_create .input_passphrase_save').prop('checked', true);
       $('#step_2b_manual_enter .input_passphrase_save').prop('checked', true);
     }
-    if (this.rules.getEnforcedKeygenAlgo()) {
-      $('.key_type').val(this.rules.getEnforcedKeygenAlgo()!).prop('disabled', true);
+    if (this.orgRules.getEnforcedKeygenAlgo()) {
+      $('.key_type').val(this.orgRules.getEnforcedKeygenAlgo()!).prop('disabled', true);
     }
     this.tabId = await BrowserMsg.requiredTabId();
     await this.setupRender.renderInitial();
@@ -220,13 +220,13 @@ export class SetupView extends View {
   }
 
   public shouldSubmitPubkey = (checkboxSelector: string) => {
-    if (this.rules.mustSubmitToAttester() && !this.rules.canSubmitPubToAttester()) {
+    if (this.orgRules.mustSubmitToAttester() && !this.orgRules.canSubmitPubToAttester()) {
       throw new Error('Organisation rules are misconfigured: ENFORCE_ATTESTER_SUBMIT not compatible with NO_ATTESTER_SUBMIT');
     }
-    if (!this.rules.canSubmitPubToAttester()) {
+    if (!this.orgRules.canSubmitPubToAttester()) {
       return false;
     }
-    if (this.rules.mustSubmitToAttester()) {
+    if (this.orgRules.mustSubmitToAttester()) {
       return true;
     }
     return Boolean($(checkboxSelector).prop('checked'));
@@ -236,7 +236,7 @@ export class SetupView extends View {
     if (!options.submit_main) {
       return;
     }
-    if (!this.rules.canSubmitPubToAttester()) {
+    if (!this.orgRules.canSubmitPubToAttester()) {
       await Ui.modal.error('Not submitting public key to Attester - disabled for your org');
       return;
     }

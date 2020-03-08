@@ -14,7 +14,7 @@ import { Env } from '../../js/common/browser/env.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Lang } from '../../js/common/lang.js';
 import { Notifications } from '../../js/common/notifications.js';
-import { Rules } from '../../js/common/rules.js';
+import { OrgRules } from '../../js/common/org-rules.js';
 import { Settings } from '../../js/common/settings.js';
 import { VERSION } from '../../js/common/core/const.js';
 import { View } from '../../js/common/view.js';
@@ -36,7 +36,7 @@ View.run(class SettingsView extends View {
   private readonly gmail: Gmail | undefined;
   private tabId!: string;
   private notifications!: Notifications;
-  private rules: Rules | undefined;
+  private orgRules: OrgRules | undefined;
 
   constructor() {
     super();
@@ -61,12 +61,12 @@ View.run(class SettingsView extends View {
     this.tabId = await BrowserMsg.requiredTabId();
     this.notifications = new Notifications(this.tabId);
     if (this.acctEmail) {
-      this.rules = await Rules.newInstance(this.acctEmail);
+      this.orgRules = await OrgRules.newInstance(this.acctEmail);
     }
-    if (this.rules && !this.rules.canSubmitPubToAttester()) {
+    if (this.orgRules && !this.orgRules.canSubmitPubToAttester()) {
       $('.public_profile_indicator_container').hide(); // contact page is useless if user cannot submit to attester
     }
-    if (this.rules && this.rules.getKeyManagerUrl()) {
+    if (this.orgRules && this.orgRules.getKeyManagerUrl()) {
       $(".add_key").hide(); // users which a key manager should not be adding keys manually
     }
     $.get('/changelog.txt', data => ($('#status-row #status_v') as any as JQS).featherlight(String(data).replace(/\n/g, '<br>')), 'html');
@@ -186,7 +186,7 @@ View.run(class SettingsView extends View {
       $('.email-address').text(this.acctEmail);
       const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider', 'picture']);
       if (storage.setup_done) {
-        const rules = await Rules.newInstance(this.acctEmail);
+        const rules = await OrgRules.newInstance(this.acctEmail);
         if (!rules.canBackupKeys()) {
           $('.show_settings_page[page="modules/backup.htm"]').parent().remove();
           $('.settings-icons-rows').css({ position: 'relative', left: '64px' }); // lost a button - center it again
@@ -230,7 +230,7 @@ View.run(class SettingsView extends View {
     }).catch(ApiErr.reportIfSignificant);
   }
 
-  private renderNotificationBanners = async (emailProvider: EmailProvider, rules: Rules) => {
+  private renderNotificationBanners = async (emailProvider: EmailProvider, rules: OrgRules) => {
     if (!this.acctEmail) {
       return;
     }

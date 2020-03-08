@@ -15,7 +15,7 @@ import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
 import { Str } from '../../common/core/common.js';
 import { XssSafeFactory } from '../../common/xss-safe-factory.js';
-import { Rules } from '../../common/rules.js';
+import { OrgRules } from '../../common/org-rules.js';
 import { AcctStore } from '../../common/platform/store/acct-store.js';
 
 Catch.try(async () => {
@@ -85,7 +85,7 @@ Catch.try(async () => {
     const start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
       hijackGmailHotkeys();
       const storage = await AcctStore.get(acctEmail, ['sendAs', 'google_token_scopes', 'full_name']);
-      const rules = await Rules.newInstance(acctEmail);
+      const orgRules = await OrgRules.newInstance(acctEmail);
       const scopes = await AcctStore.getScopes(acctEmail);
       if (!storage.sendAs) {
         storage.sendAs = {};
@@ -93,7 +93,7 @@ Catch.try(async () => {
       }
       const canReadEmails = scopes.read || scopes.modify;
       injector.btns();
-      replacer = new GmailElementReplacer(factory, rules, acctEmail, storage.sendAs, canReadEmails, injector, notifications, hostPageInfo.gmailVariant);
+      replacer = new GmailElementReplacer(factory, orgRules, acctEmail, storage.sendAs, canReadEmails, injector, notifications, hostPageInfo.gmailVariant);
       await notifications.showInitial(acctEmail);
       const intervaliFunctions = replacer.getIntervalFunctions();
       for (const intervalFunction of intervaliFunctions) {

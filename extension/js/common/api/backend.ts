@@ -11,7 +11,7 @@ import { Att } from '../core/att.js';
 import { BACKEND_API_HOST } from '../core/const.js';
 import { BackendAuthErr } from './error/api-error-types.js';
 import { Catch } from '../platform/catch.js';
-import { DomainRules } from '../rules.js';
+import { DomainRulesJson } from '../org-rules.js';
 import { AcctStore } from '../platform/store/acct-store.js';
 
 type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
@@ -26,7 +26,7 @@ export namespace BackendRes {
   export type FcHelpFeedback = { sent: boolean };
   export type FcAccountLogin = { registered: boolean, verified: boolean };
   export type FcAccount$info = { alias: string, email: string, intro: string, name: string, photo: string, default_message_expire: number };
-  export type FcAccountGet = { account: FcAccount$info, subscription: SubscriptionInfo, domain_org_rules: DomainRules };
+  export type FcAccountGet = { account: FcAccount$info, subscription: SubscriptionInfo, domain_org_rules: DomainRulesJson };
   export type FcAccountUpdate = { result: FcAccount$info, updated: boolean };
   export type FcAccountSubscribe = { subscription: SubscriptionInfo };
   export type FcAccountCheck = { email: string | null, subscription: SubscriptionInfo | null };

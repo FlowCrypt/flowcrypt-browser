@@ -10,7 +10,7 @@ type DomainRules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'PRV_AUTOIMPORT_OR_A
   'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' |
   'DEFAULT_REMEMBER_PASS_PHRASE';
 
-export type DomainRules = {
+export type DomainRulesJson = {
   flags: DomainRules$flag[],
   custom_keyserver_url?: string,
   key_manager_url?: string,
@@ -22,24 +22,24 @@ export type DomainRules = {
  * Organisational rules, set domain-wide, and delivered from FlowCrypt Backend
  * These either enforce, alter or forbid various behavior to fit customer needs
  */
-export class Rules {
+export class OrgRules {
 
   private static readonly default = { flags: [] };
 
-  public static newInstance = async (acctEmail: string): Promise<Rules> => {
+  public static newInstance = async (acctEmail: string): Promise<OrgRules> => {
     const email = Str.parseEmail(acctEmail).email;
     if (!email) {
       throw new Error(`Not a valid email:${acctEmail}`);
     }
     const storage = await AcctStore.get(email, ['rules']);
-    return new Rules(storage.rules || Rules.default);
+    return new OrgRules(storage.rules || OrgRules.default);
   }
 
   public static isPublicEmailProviderDomain = (emailAddr: string) => {
     return ['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(emailAddr.split('@')[1] || 'NONE');
   }
 
-  protected constructor(private domainRules: DomainRules) { }
+  protected constructor(private domainRules: DomainRulesJson) { }
 
   // optional urls
 

@@ -14,7 +14,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { PubLookup } from '../../../js/common/api/pub-lookup.js';
-import { Rules } from '../../../js/common/rules.js';
+import { OrgRules } from '../../../js/common/org-rules.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
@@ -25,7 +25,7 @@ View.run(class KeyserverView extends View {
   private acctEmail: string;
   private parentTabId: string;
   private pubLookup!: PubLookup;
-  private rules!: Rules;
+  private orgRules!: OrgRules;
 
   constructor() {
     super();
@@ -35,8 +35,8 @@ View.run(class KeyserverView extends View {
   }
 
   public render = async () => {
-    this.rules = await Rules.newInstance(this.acctEmail);
-    this.pubLookup = new PubLookup(this.rules);
+    this.orgRules = await OrgRules.newInstance(this.acctEmail);
+    this.pubLookup = new PubLookup(this.orgRules);
     $('.email-address').text(this.acctEmail);
     Xss.sanitizeRender('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
     (async () => {
@@ -76,7 +76,7 @@ View.run(class KeyserverView extends View {
   // -- PRIVATE
 
   private submitPublicKeyHandler = async (target: HTMLElement) => {
-    if (!this.rules.canSubmitPubToAttester()) {
+    if (!this.orgRules.canSubmitPubToAttester()) {
       return await Ui.modal.error('Disallowed by your organisation rules');
     }
     Xss.sanitizeRender(target, Ui.spinner('white'));
@@ -93,7 +93,7 @@ View.run(class KeyserverView extends View {
   }
 
   private replacePublicKeyHandler = async (target: HTMLElement) => {
-    if (!this.rules.canSubmitPubToAttester()) {
+    if (!this.orgRules.canSubmitPubToAttester()) {
       return await Ui.modal.error('Disallowed by your organisation rules');
     }
     Xss.sanitizeRender(target, Ui.spinner('white'));
