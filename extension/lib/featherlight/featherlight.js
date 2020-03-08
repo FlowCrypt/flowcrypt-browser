@@ -437,7 +437,8 @@
             var val = this.value,
               name = $.camelCase(match[1]);
             if ($.inArray(name, Klass.functionAttributes) >= 0) {  /* jshint -W054 */
-              val = new Function(val);                           /* jshint +W054 */
+              console.error(`featherlight: would have called ${name}:\n${val}`)
+              // val = new Function(val);                           /* jshint +W054 */
             } else {
               try { val = JSON.parse(val); }
               catch (e) { }
