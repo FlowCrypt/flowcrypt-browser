@@ -19,7 +19,7 @@ import { Catch } from '../platform/catch.js';
 import { GmailRes } from './email-provider/gmail/gmail-parser';
 import { GoogleAuthErr } from './error/api-error-types.js';
 import { GoogleAuthWindowResult$result } from '../browser/browser-msg.js';
-import { Rules } from '../rules.js';
+import { OrgRules } from '../org-rules.js';
 import { Ui } from '../browser/ui.js';
 import { AcctStore, AcctStoreDict } from '../platform/store/acct-store.js';
 
@@ -145,7 +145,7 @@ export class GoogleAuth {
       if (!authRes.acctEmail) {
         return { result: 'Error', error: 'Grant was successful but missing acctEmail', acctEmail: authRes.acctEmail, id_token: undefined };
       }
-      if (!Rules.isPublicEmailProviderDomain(authRes.acctEmail)) {
+      if (!OrgRules.isPublicEmailProviderDomain(authRes.acctEmail)) {
         try { // users on @custom-domain.com must check with backend to look for org rules, if any
           const uuid = Api.randomFortyHexChars();
           await Backend.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);

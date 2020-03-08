@@ -15,7 +15,7 @@ import { FetchKeyUI } from '../../../js/common/ui/fetch-key-ui.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
-import { Rules } from '../../../js/common/rules.js';
+import { OrgRules } from '../../../js/common/org-rules.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -29,7 +29,7 @@ View.run(class ContactsView extends View {
   private contacts: Contact[] = [];
   private factory: XssSafeFactory | undefined; // set in render()
   private attUI = new AttUI(() => Promise.resolve({ sizeMb: 5, size: 5 * 1024 * 1024, count: 1 }));
-  private rules!: Rules;
+  private orgRules!: OrgRules;
   private pubLookup!: PubLookup;
   private backBtn = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">back</a>';
   private space = '&nbsp;&nbsp;&nbsp;&nbsp;';
@@ -44,8 +44,8 @@ View.run(class ContactsView extends View {
     const tabId = await BrowserMsg.requiredTabId();
     BrowserMsg.listen(tabId); // set_css
     this.factory = new XssSafeFactory(this.acctEmail, tabId, undefined, undefined, { compact: true });
-    this.rules = await Rules.newInstance(this.acctEmail);
-    this.pubLookup = new PubLookup(this.rules);
+    this.orgRules = await OrgRules.newInstance(this.acctEmail);
+    this.pubLookup = new PubLookup(this.orgRules);
     this.attUI.initAttDialog('fineuploader', 'fineuploader_button', { attAdded: this.fileAddedHandler });
     const fetchKeyUI = new FetchKeyUI();
     fetchKeyUI.handleOnPaste($('.input_pubkey'));
@@ -68,8 +68,8 @@ View.run(class ContactsView extends View {
     this.contacts = await ContactStore.search(undefined, { has_pgp: true });
     let lineActionsHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
       '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;';
-    if (this.rules.getCustomSksPubkeyServer()) {
-      lineActionsHtml += `&nbsp;&nbsp;<br><br><b class="bad">using custom SKS pubkeyserver: ${Xss.escape(this.rules!.getCustomSksPubkeyServer()!)}</b>`;
+    if (this.orgRules.getCustomSksPubkeyServer()) {
+      lineActionsHtml += `&nbsp;&nbsp;<br><br><b class="bad">using custom SKS pubkeyserver: ${Xss.escape(this.orgRules!.getCustomSksPubkeyServer()!)}</b>`;
     } else {
       lineActionsHtml += '&nbsp;&nbsp;<a href="https://flowcrypt.com/docs/technical/keyserver-integration.html" target="_blank">use custom keyserver</a>&nbsp;&nbsp;';
     }

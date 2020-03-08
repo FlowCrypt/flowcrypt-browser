@@ -3,7 +3,7 @@
 'use strict';
 
 import { Attester } from './attester.js';
-import { Rules } from '../rules.js';
+import { OrgRules } from '../org-rules.js';
 import { Sks } from './sks.js';
 import { KeyManager } from './key-manager.js';
 
@@ -22,11 +22,11 @@ export class PubLookup {
   public internalSks: Sks | undefined; // this is an internal company pubkey server that has SKS-like interface
 
   constructor(
-    private rules: Rules
+    private orgRules: OrgRules
   ) {
-    const privateKeyManagerUrl = rules.getKeyManagerUrl();
-    const internalSksUrl = this.rules.getCustomSksPubkeyServer();
-    this.attester = new Attester(rules);
+    const privateKeyManagerUrl = orgRules.getKeyManagerUrl();
+    const internalSksUrl = this.orgRules.getCustomSksPubkeyServer();
+    this.attester = new Attester(orgRules);
     if (privateKeyManagerUrl) {
       this.keyManager = new KeyManager(privateKeyManagerUrl);
     }

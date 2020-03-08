@@ -17,7 +17,7 @@ import { PgpBlockViewSignatureModule } from './pgp_block_modules/pgp-block-signa
 import { Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
 import { PubLookup } from '../../js/common/api/pub-lookup.js';
-import { Rules } from '../../js/common/rules.js';
+import { OrgRules } from '../../js/common/org-rules.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 
 export class PgpBlockView extends View {
@@ -34,7 +34,7 @@ export class PgpBlockView extends View {
   public signature: string | boolean | undefined; // when supplied with "true", decryptModule will replace this with actual signature data
 
   public gmail: Gmail;
-  public rules!: Rules;
+  public orgRules!: OrgRules;
   public pubLookup!: PubLookup;
 
   public readonly attachmentsModule: PgpBlockViewAttachmentsModule;
@@ -73,8 +73,8 @@ export class PgpBlockView extends View {
 
   public render = async () => {
     const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'google_token_scopes']);
-    this.rules = await Rules.newInstance(this.acctEmail);
-    this.pubLookup = new PubLookup(this.rules);
+    this.orgRules = await OrgRules.newInstance(this.acctEmail);
+    this.pubLookup = new PubLookup(this.orgRules);
     const scopes = await AcctStore.getScopes(this.acctEmail);
     this.decryptModule.canReadEmails = scopes.read || scopes.modify;
     if (storage.setup_done) {

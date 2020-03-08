@@ -20,13 +20,13 @@ export class SetupKeyManagerAutogenModule {
   }
 
   public getKeyFromKeyManagerOrAutogenAndStoreItThenRenderSetupDone = async () => {
-    if (!this.view.rules.mustAutogenPassPhraseQuietly()) {
+    if (!this.view.orgRules.mustAutogenPassPhraseQuietly()) {
       const notSupportedErr = 'Combination of org rules not yet supported: PRV_AUTOIMPORT_OR_AUTOGEN cannot yet be used without PASS_PHRASE_QUIET_AUTOGEN.';
       await Ui.modal.error(`${notSupportedErr}\n\nPlease write human@flowcrypt.com to add support.`);
       window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
       return;
     }
-    const keygenAlgo = this.view.rules.getEnforcedKeygenAlgo();
+    const keygenAlgo = this.view.orgRules.getEnforcedKeygenAlgo();
     if (!keygenAlgo) {
       const notSupportedErr = 'Combination of org rules not yet supported: PRV_AUTOIMPORT_OR_AUTOGEN cannot yet be used without enforce_keygen_algo.';
       await Ui.modal.error(`${notSupportedErr}\n\nPlease write human@flowcrypt.com to add support.`);
@@ -68,7 +68,7 @@ export class SetupKeyManagerAutogenModule {
       await this.view.setupRender.renderSetupDone();
     } catch (e) {
       if (ApiErr.isNetErr(e) && await Api.isInternetAccessible()) { // frendly message when key manager is down, helpful during initial infrastructure setup
-        e.message = `FlowCrypt Email Key Manager at ${this.view.rules.getKeyManagerUrl()} is down, please inform your network admin.`;
+        e.message = `FlowCrypt Email Key Manager at ${this.view.orgRules.getKeyManagerUrl()} is down, please inform your network admin.`;
       }
       throw e;
     }

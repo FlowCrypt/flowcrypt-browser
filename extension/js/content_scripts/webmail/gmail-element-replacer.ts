@@ -20,7 +20,7 @@ import { PgpArmor } from '../../common/core/pgp-armor.js';
 import { Ui } from '../../common/browser/ui.js';
 import { WebmailCommon } from "../../common/webmail.js";
 import { Xss } from '../../common/platform/xss.js';
-import { Rules } from '../../common/rules.js';
+import { OrgRules } from '../../common/org-rules.js';
 import { SendAsAlias, AcctStore } from '../../common/platform/store/acct-store.js';
 import { ContactStore } from '../../common/platform/store/contact-store.js';
 import { Buf } from '../../common/core/buf.js';
@@ -33,7 +33,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private recipientHasPgpCache: Dict<boolean> = {};
   private sendAs: Dict<SendAsAlias>;
   private factory: XssSafeFactory;
-  private rules: Rules;
+  private orgRules: OrgRules;
   private pubLookup: PubLookup;
   private acctEmail: string;
   private canReadEmails: boolean;
@@ -61,7 +61,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
   };
 
-  constructor(factory: XssSafeFactory, rules: Rules, acctEmail: string, sendAs: Dict<SendAsAlias>, canReadEmails: boolean,
+  constructor(factory: XssSafeFactory, orgRules: OrgRules, acctEmail: string, sendAs: Dict<SendAsAlias>, canReadEmails: boolean,
     injector: Injector, notifications: Notifications, gmailVariant: WebmailVariantString) {
     this.factory = factory;
     this.acctEmail = acctEmail;
@@ -72,8 +72,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.notifications = notifications;
     this.webmailCommon = new WebmailCommon(acctEmail, injector);
     this.gmail = new Gmail(acctEmail);
-    this.rules = rules;
-    this.pubLookup = new PubLookup(this.rules);
+    this.orgRules = orgRules;
+    this.pubLookup = new PubLookup(this.orgRules);
   }
 
   public getIntervalFunctions = (): Array<IntervalFunction> => {

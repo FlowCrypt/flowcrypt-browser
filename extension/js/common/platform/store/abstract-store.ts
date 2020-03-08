@@ -5,17 +5,17 @@
 import { KeyInfo } from '../../core/pgp-key.js';
 import { Dict } from '../../core/common.js';
 import { SubscriptionInfo } from '../../api/backend.js';
-import { DomainRules } from '../../rules.js';
+import { DomainRulesJson } from '../../org-rules.js';
 import { GmailRes } from '../../api/email-provider/gmail/gmail-parser.js';
 import { AcctStoreDict, AccountIndex, StoredReplyDraftMeta, StoredComposeDraftMeta } from './acct-store.js';
 import { UnreportableError, Catch } from '../catch.js';
 import { StoredAdminCode } from './global-store.js';
 
-type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo | DomainRules;
+type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo | DomainRulesJson;
 export type StorageType = 'session' | 'local';
 export type FlatTypes = null | undefined | number | string | boolean;
 export type Storable = FlatTypes | string[] | KeyInfo[] | Dict<StoredReplyDraftMeta> | Dict<StoredComposeDraftMeta> | Dict<StoredAdminCode>
-  | SubscriptionInfo | GmailRes.OpenId | DomainRules;
+  | SubscriptionInfo | GmailRes.OpenId | DomainRulesJson;
 export type Serializable = SerializableTypes | SerializableTypes[] | Dict<SerializableTypes> | Dict<SerializableTypes>[];
 
 export interface RawStore {
