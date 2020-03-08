@@ -33,6 +33,7 @@ export class Browser {
       if (renderIn) {
         const div = document.createElement('div');
         div.innerText = `Right-click here and choose 'Save Link As' to save encrypted file`;
+        a.innerText = '';
         a.appendChild(div);
         a.className = 'file-download-right-click-link';
         renderIn.html(a.outerHTML); // xss-escaped attachment name above
