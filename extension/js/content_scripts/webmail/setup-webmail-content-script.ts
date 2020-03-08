@@ -192,7 +192,19 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
 
   const notifyMurdered = () => {
     const notifEl = document.getElementsByClassName('webmail_notifications')[0];
-    notifEl.innerHTML = '<div class="webmail_notification">FlowCrypt has updated, please reload the tab.<a href="#" onclick="parentNode.remove()">close</a></div>'; // xss-direct
+    const div = document.createElement('div');
+    div.innerText = 'FlowCrypt has updated, please reload the tab. ';
+    div.classList.add('webmail_notification');
+    const a = document.createElement('a');
+    a.href = '#';
+    a.onclick = function () {
+      const parent = (this as HTMLAnchorElement).parentNode as HTMLElement | undefined;
+      parent?.remove();
+    };
+    a.textContent = 'close';
+    div.appendChild(a);
+    notifEl.textContent = '';
+    notifEl.appendChild(div);
   };
 
   const entrypoint = async () => {

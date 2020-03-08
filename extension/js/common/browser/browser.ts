@@ -31,7 +31,10 @@ export class Browser {
       a.href = window.URL.createObjectURL(blob);
       a.download = Xss.escape(att.name);
       if (renderIn) {
-        a.innerHTML = '<div>Right-click here and choose \'Save Link As\' to save encrypted file</div>'; // xss-direct
+        const div = document.createElement('div');
+        div.innerText = `Right-click here and choose 'Save Link As' to save encrypted file`;
+        a.innerText = '';
+        a.appendChild(div);
         a.className = 'file-download-right-click-link';
         renderIn.html(a.outerHTML); // xss-escaped attachment name above
         renderIn.css('height', 'auto');

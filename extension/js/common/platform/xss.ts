@@ -78,7 +78,7 @@ export class Xss {
           a.innerText = (title || 'show image') + (src.startsWith('data:image/') ? '' : ' (remote)');
           const heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'};max-width:98%;`;
           a.setAttribute('style', `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; ${heightWidth}`);
-          img.outerHTML = a.outerHTML; // xss-safe-value - "a" was build using dom node api
+          Xss.replaceElementDANGEROUSLY(img, a.outerHTML); // xss-safe-value - "a" was build using dom node api
         }
       }
       if ('target' in node) { // open links in new window
@@ -127,6 +127,14 @@ export class Xss {
   public static htmlUnescape = (str: string) => {
     // the &nbsp; at the end is replaced with an actual NBSP character, not a space character. IDE won't show you the difference. Do not change.
     return str.replace(/&nbsp;/g, ' ').replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  }
+
+  public static replaceElementDANGEROUSLY = (el: Element, safeHtml: string) => { // xss-dangerous-function - must pass a sanitized value
+    el.outerHTML = safeHtml; // xss-dangerous-function - must pass a sanitized value
+  }
+
+  public static setElementContentDANGEROUSLY = (el: Element, safeHtml: string) => { // xss-dangerous-function - must pass a sanitized value
+    el.innerHTML = safeHtml; // xss-dangerous-function - must pass a sanitized value
   }
 
   private static throwIfNotSupported = () => {
