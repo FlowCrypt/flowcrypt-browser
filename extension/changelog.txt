@@ -1,5 +1,7 @@
 <div>
 
+version 7.6.5 on Mar 8, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/393?closed=1" target="_blank">PoC prep</a>
+
 version 7.6.4 on Feb 28, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/392?closed=1" target="_blank">Initial Key Manager Integration</a>
 
 version 7.6.3 on Feb 26, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/391?closed=1" target="_blank">Rich text RTL support</a>
