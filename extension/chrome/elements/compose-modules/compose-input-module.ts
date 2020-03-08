@@ -73,7 +73,8 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       const div = document.createElement('div');
       div.appendChild(e.fragment);
       const html = div.innerHTML;
-      div.innerHTML = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP') : Xss.htmlSanitizeAndStripAllTags(html, '<br>'); // xss-sanitized
+      const sanitized = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP') : Xss.htmlSanitizeAndStripAllTags(html, '<br>');
+      Xss.setElementContentDANGEROUSLY(div, sanitized); // xss-sanitized
       e.fragment.appendChild(div);
     });
   }

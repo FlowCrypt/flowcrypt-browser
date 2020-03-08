@@ -140,18 +140,18 @@ export class PgpBlockViewRenderModule {
       const content = this.view.attachmentsModule.includedAtts.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${contentId}>`)[0];
       if (content) {
         img.src = `data:${a.type};base64,${content.getData().toBase64Str()}`;
-        a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
+        Xss.replaceElementDANGEROUSLY(a, img.outerHTML); // xss-safe-value - img.outerHTML was built using dom node api
       } else {
-        a.outerHTML = Xss.escape(`[broken link: ${a.href}]`); // xss-escaped
+        Xss.replaceElementDANGEROUSLY(a, Xss.escape(`[broken link: ${a.href}]`)); // xss-escaped
       }
     } else if (a.href.startsWith('https://') || a.href.startsWith('http://')) { // image referenced as url
       img.src = a.href;
-      a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
+      Xss.replaceElementDANGEROUSLY(a, img.outerHTML); // xss-safe-value - img.outerHTML was built using dom node api
     } else if (a.href.startsWith('data:image/')) { // image directly inlined
       img.src = a.href;
-      a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
+      Xss.replaceElementDANGEROUSLY(a, img.outerHTML); // xss-safe-value - img.outerHTML was built using dom node api
     } else {
-      a.outerHTML = Xss.escape(`[broken link: ${a.href}]`); // xss-escaped
+      Xss.replaceElementDANGEROUSLY(a, Xss.escape(`[broken link: ${a.href}]`)); // xss-escaped
     }
     event.preventDefault();
     event.stopPropagation();
