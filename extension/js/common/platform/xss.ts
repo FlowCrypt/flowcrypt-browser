@@ -129,12 +129,12 @@ export class Xss {
     return str.replace(/&nbsp;/g, ' ').replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
   }
 
-  public static replaceElementDANGEROUSLY = (el: Element, safeHtml: string) => {
-    el.outerHTML = safeHtml;
+  public static replaceElementDANGEROUSLY = (el: Element, safeHtml: string) => { // xss-dangerous-function - must pass a sanitized value
+    el.outerHTML = safeHtml; // xss-dangerous-function - must pass a sanitized value
   }
 
-  public static setElementContentDANGEROUSLY = (el: Element, safeHtml: string) => {
-    el.innerHTML = safeHtml;
+  public static setElementContentDANGEROUSLY = (el: Element, safeHtml: string) => { // xss-dangerous-function - must pass a sanitized value
+    el.innerHTML = safeHtml; // xss-dangerous-function - must pass a sanitized value
   }
 
   private static throwIfNotSupported = () => {
