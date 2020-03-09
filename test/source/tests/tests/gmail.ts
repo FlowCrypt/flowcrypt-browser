@@ -116,6 +116,23 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
     }));
 
+    ava.default('mail.google.com - decrypt message in offline mode', testWithBrowser('compatibility', async (t, browser) => {
+      const gmailPage = await BrowserRecipe.openGmailPage(t, browser);
+      await gmailPage.type('[aria-label="Search mail"]', 'encrypted + signed with gpg');
+      await gmailPage.press('Enter'); // submit search
+      await gmailPage.page.waitFor(1000); // wait for search results
+      await gmailPage.page.setOfflineMode(true); // go offline mode
+      await gmailPage.press('Enter'); // open the message
+      // TODO(@limonte): use the commented line below instead of opening pgp block in a new tab
+      // once https://github.com/puppeteer/puppeteer/issues/2548 is resolved
+      // const pgpBlockPage = await gmailPage.getFrame(['pgp_block.htm']);
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 1 });
+      const pgpBlockPage = await browser.newPage(t);
+      await pgpBlockPage.page.setOfflineMode(true); // go offline mode
+      await pgpBlockPage.page.goto(urls[0]);
+      await pgpBlockPage.waitForContent('@pgp-block-content', 'this was encrypted with gpg');
+    }));
+
     ava.default('mail.google.com - msg.asc message content renders', testWithBrowser('compatibility', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/WhctKJTrdTXcmgcCRgXDpVnfjJNnjjLzSvcMDczxWPMsBTTfPxRDMrKCJClzDHtbXlhnwtV');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
