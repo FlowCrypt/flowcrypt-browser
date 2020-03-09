@@ -34,6 +34,9 @@
   "folders": [
     {
       "path": "."
+    },
+    {
+      "path": "../flowcrypt-script"
     }
   ],
   "extensions": {
