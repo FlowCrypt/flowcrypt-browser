@@ -24,7 +24,7 @@ export class PubLookup {
   constructor(
     private orgRules: OrgRules
   ) {
-    const privateKeyManagerUrl = orgRules.getKeyManagerUrl();
+    const privateKeyManagerUrl = orgRules.getKeyManagerUrlForPublicKeys();
     const internalSksUrl = this.orgRules.getCustomSksPubkeyServer();
     this.attester = new Attester(orgRules);
     if (privateKeyManagerUrl) {

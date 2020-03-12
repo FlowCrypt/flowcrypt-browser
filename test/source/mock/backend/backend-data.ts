@@ -93,6 +93,9 @@ export class BackendData {
         "key_manager_url": "https://localhost:1230/intentionally-wrong",
       };
     }
+    if (domain === 'key-manager-no-pub-lookup.flowcrypt.com') {
+      return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_KEY_MANAGER_PUB_LOOKUP'] };
+    }
     return {
       "flags": []
     };

@@ -66,7 +66,7 @@ View.run(class SettingsView extends View {
     if (this.orgRules && !this.orgRules.canSubmitPubToAttester()) {
       $('.public_profile_indicator_container').hide(); // contact page is useless if user cannot submit to attester
     }
-    if (this.orgRules && this.orgRules.getKeyManagerUrl()) {
+    if (this.orgRules && this.orgRules.usesKeyManager()) {
       $(".add_key").hide(); // users which a key manager should not be adding keys manually
     }
     $.get('/changelog.txt', data => ($('#status-row #status_v') as any as JQS).featherlight(String(data).replace(/\n/g, '<br>')), 'html');
@@ -239,7 +239,7 @@ View.run(class SettingsView extends View {
       $('.auth_denied_warning').removeClass('hidden');
     }
     const globalStorage = await GlobalStore.get(['install_mobile_app_notification_dismissed']);
-    if (!globalStorage.install_mobile_app_notification_dismissed && rules.canBackupKeys() && rules.canCreateKeys() && !rules.getKeyManagerUrl()) {
+    if (!globalStorage.install_mobile_app_notification_dismissed && rules.canBackupKeys() && rules.canCreateKeys() && !rules.usesKeyManager()) {
       // only show this notification if user is allowed to:
       //   - backup keys: when not allowed, company typically has other forms of backup
       //   - create keys: when not allowed, key must have been imported from some other system that already takes care of backups

@@ -7,7 +7,7 @@ import { AcctStore } from './platform/store/acct-store.js';
 import { KeyAlgo } from './core/pgp-key.js';
 
 type DomainRules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'PRV_AUTOIMPORT_OR_AUTOGEN' | 'PASS_PHRASE_QUIET_AUTOGEN' |
-  'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' |
+  'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' | 'NO_KEY_MANAGER_PUB_LOOKUP' |
   'DEFAULT_REMEMBER_PASS_PHRASE';
 
 export type DomainRulesJson = {
@@ -52,9 +52,29 @@ export class OrgRules {
 
   /**
    * an internal org FlowCrypt Email Key Manager instance, can manage both public and private keys
+   * use this method when using for PRV sync
    */
-  public getKeyManagerUrl = (): string | undefined => {
+  public getKeyManagerUrlForPrivateKeys = (): string | undefined => {
     return this.domainRules.key_manager_url;
+  }
+
+  /**
+   * an internal org FlowCrypt Email Key Manager instance, can manage both public and private keys
+   * use this method when using for PUB sync
+   */
+  public getKeyManagerUrlForPublicKeys = (): string | undefined => {
+    if (this.domainRules.flags.includes('NO_KEY_MANAGER_PUB_LOOKUP')) {
+      return undefined;
+    }
+    return this.domainRules.key_manager_url;
+  }
+
+  /**
+   * use when finding out if EKM is in use, to change functionality without actually neededing the EKM
+   *
+   */
+  public usesKeyManager = (): boolean => {
+    return !!this.domainRules.key_manager_url;
   }
 
   // optional vars
@@ -109,7 +129,7 @@ export class OrgRules {
     if (!this.domainRules.flags.includes('PRV_AUTOIMPORT_OR_AUTOGEN')) {
       return false;
     }
-    if (!this.getKeyManagerUrl()) {
+    if (!this.getKeyManagerUrlForPrivateKeys()) {
       throw new Error('Wrong org rules config: using PRV_AUTOIMPORT_OR_AUTOGEN without key_manager_url');
     }
     return true;

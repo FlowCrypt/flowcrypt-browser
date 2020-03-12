@@ -106,8 +106,8 @@ export class SetupView extends View {
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
-    if (this.orgRules.getKeyManagerUrl() && this.idToken) {
-      this.keyManager = new KeyManager(this.orgRules.getKeyManagerUrl()!);
+    if (this.orgRules.usesKeyManager() && this.idToken) {
+      this.keyManager = new KeyManager(this.orgRules.getKeyManagerUrlForPrivateKeys()!);
     }
     if (!this.orgRules.canCreateKeys()) {
       const forbidden = `${Lang.setup.creatingKeysNotAllowedPleaseImport} <a href="${Xss.escape(window.location.href)}">Back</a>`;
