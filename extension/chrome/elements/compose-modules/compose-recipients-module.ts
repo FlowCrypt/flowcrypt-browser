@@ -626,8 +626,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         left: leftOffset,
         top: `${$('#compose > tbody > tr:first').height()! + offset.top}px`, // both are in the template
       });
-    } else {
-      // this.hideContacts();
     }
   }
 
