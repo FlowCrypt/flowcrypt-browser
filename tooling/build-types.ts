@@ -26,5 +26,17 @@ const makeMockBuild = (buildType: string) => {
   edit(`${buildDir(mockBuildType)}/js/content_scripts/webmail_bundle.js`, editor);
 };
 
+const updateEnterpriseBuild = () => {
+  const constFilepath = `${buildDir(CHROME_ENTERPRISE)}/js/common/core/const.js`;
+  edit(constFilepath, (code: string) => {
+    const flavorPattern = /export const FLAVOR = 'consumer';/g;
+    if (flavorPattern.test(code)) {
+      throw new Error(`Expecting to find FLAVOR in ${constFilepath}`);
+    }
+    return code.replace(flavorPattern, `export const FLAVOR = 'enterprise';`);
+  });
+};
+
+updateEnterpriseBuild();
 makeMockBuild(CHROME_CONSUMER);
 makeMockBuild(CHROME_ENTERPRISE);

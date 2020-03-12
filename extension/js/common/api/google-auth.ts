@@ -5,12 +5,9 @@
 // tslint:disable:no-direct-ajax
 // tslint:disable:oneliner-object-literal
 
-const BUILD = 'consumer'; // todo
-
-import { GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST } from '../core/const.js';
+import { GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST, FLAVOR } from '../core/const.js';
 import { Url, Value } from '../core/common.js';
 import { tabsQuery, windowsCreate } from './chrome.js';
-
 import { Api } from './api.js';
 import { ApiErr } from './error/api-error.js';
 import { Backend } from './backend.js';
@@ -60,14 +57,14 @@ export class GoogleAuth {
     if (group === 'openid') {
       return [openid, email, profile];
     } else if (group === 'default') {
-      if (BUILD === 'consumer') {
+      if (FLAVOR === 'consumer') {
         // todo - replace "read" with "modify" when approved by google
         return [openid, email, profile, compose, read]; // consumer may freak out that extension asks for their contacts early on
-      } else if (BUILD === 'enterprise') {
+      } else if (FLAVOR === 'enterprise') {
         // todo - replace "read" with "modify" when approved by google
         return [openid, email, profile, compose, read, readContacts]; // enterprise expects their contact search to work properly
       } else {
-        throw new Error(`Unknown build ${BUILD}`);
+        throw new Error(`Unknown build ${FLAVOR}`);
       }
     } else if (group === 'contacts') {
       // todo - replace "read" with "modify" when approved by google
