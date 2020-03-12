@@ -24,9 +24,10 @@ export class PgpBlockViewAttachmentsModule {
     this.includedAtts = atts;
     for (const i of atts.keys()) {
       const name = (atts[i].name ? Xss.escape(atts[i].name) : 'noname').replace(/\.(pgp|gpg)$/, '');
+      const nameVisible = name.length > 100 ? name.slice(0, 100) + '…' : name;
       const size = Str.numberFormat(Math.ceil(atts[i].length / 1024)) + 'KB';
-      const htmlContent = `<b>${Xss.escape(name)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
-      Xss.sanitizeAppend('#attachments', `<div class="attachment" index="${Number(i)}">${htmlContent}</div>`);
+      const htmlContent = `<b>${nameVisible}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
+      Xss.sanitizeAppend('#attachments', `<div class="attachment" title="${name}" index="${Number(i)}">${htmlContent}</div>`);
     }
     this.view.renderModule.resizePgpBlockFrame();
     $('div.attachment').click(this.view.setHandlerPrevent('double', async target => {
