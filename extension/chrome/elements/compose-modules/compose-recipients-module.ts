@@ -480,6 +480,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     return false;
   }
 
+  /**
+   * todo - contactSearch should be refactored, plus split into a separate module
+   * That way things regarding searching contacts would be separate from more general recipients behavior
+   */
   private searchContacts = async (input: JQuery<HTMLElement>): Promise<void> => {
     try {
       this.contactSearchInProgress = true;
