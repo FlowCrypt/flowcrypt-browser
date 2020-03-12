@@ -24,6 +24,9 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'get.key@key-manager-autogen.flowcrypt.com') {
         return { privateKeys: [{ decryptedPrivateKey: existingPrv }] };
       }
+      if (acctEmail === 'user@key-manager-no-pub-lookup.flowcrypt.com') {
+        return { privateKeys: [{ decryptedPrivateKey: existingPrv }] };
+      }
       if (acctEmail === 'put.key@key-manager-autogen.flowcrypt.com') {
         return { privateKeys: [] };
       }
@@ -72,7 +75,10 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
     if (query.includes('@')) { // search by email
       const email = query.toLowerCase().trim();
       if (email === 'find.public.key@key-manager-autogen.flowcrypt.com') {
-        return { "publicKeys": [{ publicKey }] };
+        return { publicKeys: [{ publicKey }] };
+      }
+      if (email === 'not.suppposed.to.lookup@key-manager-no-pub-lookup.flowcrypt.com') {
+        throw Error(`Not supposed to lookup on EKM based on NO_KEY_MANAGER_PUB_LOOKUP rule: ${email}`);
       }
       return { publicKeys: [] };
     } else { // search by fingerprint
