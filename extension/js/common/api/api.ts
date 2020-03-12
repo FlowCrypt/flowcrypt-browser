@@ -30,7 +30,7 @@ type RawAjaxErr = {
   statusText?: string,
 };
 
-export type ChunkedCb = (r: ProviderContactsResults) => void;
+export type ChunkedCb = (r: ProviderContactsResults) => Promise<void>;
 export type ProgressCb = (percent: number | undefined, loaded: number, total: number) => void;
 export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | null };
 

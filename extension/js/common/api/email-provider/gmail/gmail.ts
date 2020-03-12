@@ -3,7 +3,7 @@
 'use strict';
 
 import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window.js';
-import { ChunkedCb, ProgressCb, ProviderContactsResults } from '../../api.js';
+import { ChunkedCb, ProgressCb } from '../../api.js';
 import { Dict, Str, Value } from '../../../core/common.js';
 import { EmailProviderApi, EmailProviderInterface, Backups } from '../email-provider-api.js';
 import { GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
@@ -398,7 +398,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return uniqueNewValidResults;
   }
 
-  private apiGmailLoopThroughEmailsToCompileContacts = async (query: string, chunkedCb: (r: ProviderContactsResults) => void) => {
+  private apiGmailLoopThroughEmailsToCompileContacts = async (query: string, chunkedCb: ChunkedCb) => {
     const allResults: Contact[] = [];
     const allRawEmails: string[] = [];
     let lastFilteredQuery = '';
@@ -418,9 +418,9 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
         break;
       }
       allResults.push(...uniqueNewValidResults);
-      chunkedCb({ new: uniqueNewValidResults, all: allResults });
+      await chunkedCb({ new: uniqueNewValidResults, all: allResults });
     }
-    chunkedCb({ new: [], all: allResults });
+    await chunkedCb({ new: [], all: allResults });
   }
 
   private extractHeadersFromMsgs = async (msgsIds: GmailRes.GmailMsgList$message[], headerNames: string[], msgLimit: number): Promise<Dict<string[]>> => {

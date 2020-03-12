@@ -452,12 +452,15 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('compose - load contacts through API', testWithBrowser('compose', async (t, browser) => {
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
-      // first search, did not yet receive contacts scope
       await composePage.type('@input-to', 'contact');
-      await expectFirstContactResultEqual(composePage, 'No Contacts Found');
-      // allow contacts scope, and expect that it will find a contact
-      const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.waitAndClick('@action-auth-with-contacts-scope'), 'test.ci.compose@org.flowcrypt.com');
-      await OauthPageRecipe.google(t, oauthPopup, 'test.ci.compose@org.flowcrypt.com', 'approve');
+      if (testVariant === 'CONSUMER-MOCK') {
+        // consumer does not get Contacts scope automatically (may scare users when they install)
+        // first search, did not yet receive contacts scope - should find no contacts
+        await expectFirstContactResultEqual(composePage, 'No Contacts Found');
+        // allow contacts scope, and expect that it will find a contact
+        const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.waitAndClick('@action-auth-with-contacts-scope'), 'test.ci.compose@org.flowcrypt.com');
+        await OauthPageRecipe.google(t, oauthPopup, 'test.ci.compose@org.flowcrypt.com', 'approve');
+      }
       await expectFirstContactResultEqual(composePage, 'contact.test@flowcrypt.com');
       // re-load the compose window, expect that it remembers scope was connected, and remembers the contact
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');

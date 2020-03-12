@@ -480,54 +480,55 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     return false;
   }
 
-  private searchContacts = async (input: JQuery<HTMLElement>, dbOnly = false) => {
+  private searchContacts = async (input: JQuery<HTMLElement>): Promise<void> => {
     try {
+      this.contactSearchInProgress = true;
       this.view.errModule.debug(`searchContacts`);
       const substring = Str.parseEmail(String(input.val()), 'DO-NOT-VALIDATE').email;
       this.view.errModule.debug(`searchContacts.query.substring(${JSON.stringify(substring)})`);
-      if (substring) {
-        const query = { substring };
-        this.view.errModule.debug(`searchContacts substring: ${substring}`);
-        const contacts = await ContactStore.search(undefined, query);
-        this.view.errModule.debug(`searchContacts db count: ${contacts.length}`);
-        const canLoadContactsFromAPI = this.canReadEmails || this.canSearchContacts;
-        if (dbOnly || contacts.length >= this.MAX_CONTACTS_LENGTH || !canLoadContactsFromAPI) {
-          this.view.errModule.debug(`searchContacts 1, count: ${contacts.length}`);
-          this.renderSearchRes(input, contacts, query);
-        } else {
-          this.view.errModule.debug(`searchContacts 2`);
-          this.contactSearchInProgress = true;
-          this.renderSearchRes(input, contacts, query);
-          this.view.errModule.debug(`searchContacts 3`);
-          if (this.canSearchContacts) {
-            this.view.errModule.debug(`searchContacts (Gmail API) 3`);
-            const contactsGmail = await Google.contactsGet(this.view.acctEmail, substring, undefined, this.MAX_CONTACTS_LENGTH);
-            if (contactsGmail) {
-              const newContacts = contactsGmail.filter(cGmail => !contacts.find(c => c.email === cGmail.email));
-              const mappedContactsFromGmail = await Promise.all(newContacts.map(({ email, name }) => ContactStore.obj({ email, name })));
-              await this.renderApiLoadedContactsAndtoDb(input, mappedContactsFromGmail);
-            }
-          } else if (this.canReadEmails) {
-            this.view.errModule.debug(`searchContacts (Gmail Sent Messages) 3`);
-            this.guessContactsFromSentEmails(query.substring, contacts, contacts => this.renderApiLoadedContactsAndtoDb(input, contacts.new));
-          }
-          this.view.errModule.debug(`searchContacts 4`);
-          this.renderSearchResultsLoadingDone();
-          this.contactSearchInProgress = false;
-          this.view.errModule.debug(`searchContacts 5`);
-        }
-      } else {
+      if (!substring) {
+        this.view.errModule.debug(`searchContacts 1`);
         this.hideContacts(); // todo - show suggestions of most contacted ppl etc
-        this.view.errModule.debug(`searchContacts 6`);
+        return;
+      }
+      const contacts: Contact[] = await ContactStore.search(undefined, { substring });
+      this.view.errModule.debug(`searchContacts substring: ${substring}`);
+      this.view.errModule.debug(`searchContacts db count: ${contacts.length}`);
+      this.renderSearchRes(input, contacts, { substring });
+      if (contacts.length >= this.MAX_CONTACTS_LENGTH || !(this.canReadEmails || this.canSearchContacts)) {
+        this.view.errModule.debug(`searchContacts 2, count: ${contacts.length}`);
+        return;
+      }
+      this.renderSearchRes(input, contacts, { substring });
+      this.view.errModule.debug(`searchContacts 3`);
+      const foundOnGoogle = await this.searchContactsOnGoogle(substring, contacts);
+      if (foundOnGoogle.length) {
+        await this.renderApiLoadedContactsAndAddToDb(input, substring, foundOnGoogle);
+      }
+      contacts.push(...foundOnGoogle);
+      this.renderSearchRes(input, contacts, { substring });
+      if (contacts.length >= this.MAX_CONTACTS_LENGTH) {
+        this.view.errModule.debug(`searchContacts 3.b, count: ${contacts.length}`);
+        return;
+      }
+      this.view.errModule.debug(`searchContacts 4`);
+      if (this.canReadEmails && !foundOnGoogle.length) {
+        this.view.errModule.debug(`searchContacts (Gmail Sent Messages) 6.b`);
+        await this.guessContactsFromSentEmails(substring, contacts, found => this.renderApiLoadedContactsAndAddToDb(input, substring, found.new));
       }
     } catch (e) {
       Ui.toast(`Error searching contacts: ${ApiErr.eli5(e)}`, 5).catch(Catch.reportErr);
       throw e;
+    } finally {
+      this.view.errModule.debug('searchContacts 7 - finishing');
+      this.contactSearchInProgress = false;
+      this.renderSearchResultsLoadingDone();
     }
   }
 
-  private guessContactsFromSentEmails = (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => {
-    this.view.emailProvider.guessContactsFromSentEmails(query, knownContacts, multiCb).catch(e => {
+  private guessContactsFromSentEmails = async (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => {
+    this.view.errModule.debug('guessContactsFromSentEmails start');
+    await this.view.emailProvider.guessContactsFromSentEmails(query, knownContacts, multiCb).catch(e => {
       if (ApiErr.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       } else if (ApiErr.isNetErr(e)) {
@@ -539,12 +540,26 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         Ui.toast(`Error searching contacts: ${ApiErr.eli5(e)}`).catch(Catch.reportErr);
       }
     });
+    this.view.errModule.debug('guessContactsFromSentEmails end');
+  }
+
+  private searchContactsOnGoogle = async (query: string, knownContacts: Contact[]): Promise<Contact[]> => {
+    if (this.canSearchContacts) {
+      this.view.errModule.debug(`searchContacts (Google API) 5`);
+      const contactsGoogle = await Google.contactsGet(this.view.acctEmail, query, undefined, this.MAX_CONTACTS_LENGTH);
+      if (contactsGoogle && contactsGoogle.length) {
+        const newContacts = contactsGoogle.filter(cGmail => !knownContacts.find(c => c.email === cGmail.email));
+        return await Promise.all(newContacts.map(({ email, name }) => ContactStore.obj({ email, name })));
+      }
+    }
+    return [];
   }
 
   private renderSearchRes = (input: JQuery<HTMLElement>, contacts: Contact[], query: ProviderContactsQuery) => {
+    this.view.errModule.debug(`renderSearchRes len: ${contacts.length}`);
     const renderableContacts = contacts.slice(0, this.MAX_CONTACTS_LENGTH);
-    renderableContacts.sort((a, b) =>
-      (10 * (b.has_pgp - a.has_pgp)) + ((b.last_use || 0) - (a.last_use || 0) > 0 ? 1 : -1)).slice(8); // have pgp on top, no pgp bottom. Sort each groups by last used
+    // have pgp on top, no pgp bottom. Sort each groups by last used
+    renderableContacts.sort((a, b) => (10 * (b.has_pgp - a.has_pgp)) + ((b.last_use || 0) - (a.last_use || 0) > 0 ? 1 : -1)).slice(8);
     if ((renderableContacts.length > 0 || this.contactSearchInProgress) || !this.canSearchContacts) {
       let ulHtml = '';
       for (const contact of renderableContacts) {
@@ -608,7 +623,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         top: `${$('#compose > tbody > tr:first').height()! + offset.top}px`, // both are in the template
       });
     } else {
-      this.hideContacts();
+      // this.hideContacts();
     }
   }
 
@@ -671,33 +686,39 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     return result;
   }
 
-  private renderApiLoadedContactsAndtoDb = async (input: JQuery<HTMLElement>, contacts: Contact[]) => {
-    if (contacts.length) {
-      const toLookup: Contact[] = [];
-      for (const contact of contacts) {
-        const [storedContact] = await ContactStore.get(undefined, [contact.email]);
-        if (storedContact) {
-          const toUpdate: ContactUpdate = {};
-          if (!storedContact.name && contact.name) {
-            toUpdate.name = contact.name;
-          }
-          if (storedContact.searchable.length !== contact.searchable.length && storedContact.searchable.join(',') !== contact.searchable.join(',')) {
-            toUpdate.searchable = contact.searchable;
-          }
-          if (Object.keys(toUpdate).length) {
-            await ContactStore.update(undefined, contact.email, toUpdate);
-          }
-        } else if (!this.failedLookupEmails.includes(contact.email)) {
-          toLookup.push(contact);
-        }
-      }
-      await Promise.all(toLookup.map(c => this.view.storageModule.ksLookupUnknownContactPubAndSaveToDb(c.email, c.name || undefined).then(lookupRes => {
-        if (lookupRes === 'fail') {
-          this.failedLookupEmails.push(c.email);
-        }
-      })));
-      await this.searchContacts(input, true);
+  private renderApiLoadedContactsAndAddToDb = async (input: JQuery<HTMLElement>, substring: string, newContacts: Contact[]) => {
+    this.view.errModule.debug('renderApiLoadedContactsAndAddToDb 1');
+    if (!newContacts.length) {
+      return;
     }
+    const toLookup: Contact[] = [];
+    for (const contact of newContacts) {
+      const [storedContact] = await ContactStore.get(undefined, [contact.email]);
+      if (storedContact) {
+        const toUpdate: ContactUpdate = {};
+        if (!storedContact.name && contact.name) {
+          toUpdate.name = contact.name;
+        }
+        if (storedContact.searchable.length !== contact.searchable.length && storedContact.searchable.join(',') !== contact.searchable.join(',')) {
+          toUpdate.searchable = contact.searchable;
+        }
+        if (Object.keys(toUpdate).length) {
+          await ContactStore.update(undefined, contact.email, toUpdate);
+        }
+      } else if (!this.failedLookupEmails.includes(contact.email)) {
+        toLookup.push(contact);
+      }
+    }
+    await Promise.all(toLookup.map(c => this.view.storageModule.ksLookupUnknownContactPubAndSaveToDb(c.email, c.name || undefined).then(lookupRes => {
+      if (lookupRes === 'fail') {
+        this.failedLookupEmails.push(c.email);
+      }
+    })));
+    const renderableContacts = await ContactStore.search(undefined, { substring });
+    this.view.errModule.debug(`renderApiLoadedContactsAndAddToDb - renderableContacts len: ${renderableContacts.length}`);
+    this.view.errModule.debug(`renderApiLoadedContactsAndAddToDb -> renderSearchRes start`);
+    this.renderSearchRes(input, renderableContacts, { substring });
+    this.view.errModule.debug(`renderApiLoadedContactsAndAddToDb -> renderSearchRes done`);
   }
 
   private renderSearchResultsLoadingDone = () => {
