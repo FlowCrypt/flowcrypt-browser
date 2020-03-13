@@ -156,7 +156,8 @@ export class Api<REQ, RES> {
     } else if (typeof response === 'string') {
       return Buffer.from(response);
     }
-    return Buffer.from(JSON.stringify(response));
+    const json = JSON.stringify(response);
+    return Buffer.from(json);
   }
 
   protected collectReq = (req: http.IncomingMessage): Promise<Buffer> => {

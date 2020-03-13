@@ -506,9 +506,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.renderSearchRes(input, contacts, { substring });
       this.view.errModule.debug(`searchContacts 3`);
       const foundOnGoogle = await this.searchContactsOnGoogle(substring, contacts);
-      if (foundOnGoogle.length) {
-        await this.renderApiLoadedContactsAndAddToDb(input, substring, foundOnGoogle);
-      }
+      await this.addApiLoadedContactsToDb(foundOnGoogle);
       contacts.push(...foundOnGoogle);
       this.renderSearchRes(input, contacts, { substring });
       if (contacts.length >= this.MAX_CONTACTS_LENGTH) {
@@ -518,7 +516,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.errModule.debug(`searchContacts 4`);
       if (this.canReadEmails && !foundOnGoogle.length) {
         this.view.errModule.debug(`searchContacts (Gmail Sent Messages) 6.b`);
-        await this.guessContactsFromSentEmails(substring, contacts, found => this.renderApiLoadedContactsAndAddToDb(input, substring, found.new));
+        await this.guessContactsFromSentEmails(substring, contacts, async guessed => {
+          await this.addApiLoadedContactsToDb(guessed.new);
+          contacts.push(...guessed.new);
+          this.renderSearchRes(input, contacts, { substring });
+        });
       }
     } catch (e) {
       Ui.toast(`Error searching contacts: ${ApiErr.eli5(e)}`, 5).catch(Catch.reportErr);
@@ -688,8 +690,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     return result;
   }
 
-  private renderApiLoadedContactsAndAddToDb = async (input: JQuery<HTMLElement>, substring: string, newContacts: Contact[]) => {
-    this.view.errModule.debug('renderApiLoadedContactsAndAddToDb 1');
+  private addApiLoadedContactsToDb = async (newContacts: Contact[]) => {
+    this.view.errModule.debug('addApiLoadedContactsToDb 1');
     if (!newContacts.length) {
       return;
     }
@@ -716,11 +718,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         this.failedLookupEmails.push(c.email);
       }
     })));
-    const renderableContacts = await ContactStore.search(undefined, { substring });
-    this.view.errModule.debug(`renderApiLoadedContactsAndAddToDb - renderableContacts len: ${renderableContacts.length}`);
-    this.view.errModule.debug(`renderApiLoadedContactsAndAddToDb -> renderSearchRes start`);
-    this.renderSearchRes(input, renderableContacts, { substring });
-    this.view.errModule.debug(`renderApiLoadedContactsAndAddToDb -> renderSearchRes done`);
   }
 
   private renderSearchResultsLoadingDone = () => {
@@ -731,9 +728,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   }
 
   private authContacts = async (acctEmail: string) => {
-    const lastRecipient = this.addedRecipients[this.addedRecipients.length - 1];
-    this.view.S.cached('input_to').val(lastRecipient.email);
-    this.removeRecipient(lastRecipient.element);
+    const connectToGoogleRecipientLine = this.addedRecipients[this.addedRecipients.length - 1];
+    this.view.S.cached('input_to').val(connectToGoogleRecipientLine.email);
+    this.removeRecipient(connectToGoogleRecipientLine.element);
     const authRes = await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
     if (authRes.result === 'Success') {
       this.canSearchContacts = true;
