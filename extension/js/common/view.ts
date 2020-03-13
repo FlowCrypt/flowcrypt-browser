@@ -32,6 +32,7 @@ export abstract class View {
       <br><br>
       ${Ui.retryLink()}
     `);
+    Ui.setTestState('ready');
   }
 
   public abstract async render(): Promise<void>;

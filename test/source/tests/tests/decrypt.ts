@@ -374,6 +374,14 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.todo('decrypt - by entering secondary pass phrase');
 
+    ava.default(`decrypt - don't allow api path traversal`, testWithBrowser('compatibility', async (t, browser) => {
+      const params = "?frame_id=frame_TWloVRhvZE&message=&has_password=___cu_false___&message_id=../test&senderEmail=sasan.neufeld%40ebnerstolz.de&is_outgoing=___cu_false___&account_email=flowcrypt.compatibility%40gmail.com";
+      const pgpHostPage = await browser.newPage(t, `chrome/dev/ci_pgp_host_page.htm${params}`);
+      const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
+      await pgpBlockPage.waitForSelTestState('ready', 5);
+      await pgpBlockPage.waitForContent('@container-err-text', 'API path traversal forbidden');
+    }));
+
   }
 
 };
