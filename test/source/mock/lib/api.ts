@@ -54,8 +54,12 @@ export class Api<REQ, RES> {
           response.statusCode = e.statusCode;
           e.stack = undefined;
         } else {
-          console.error(`url:${request.method}:${request.url}`, e);
-          response.statusCode = Status.SERVER_ERROR;
+          if (e instanceof Error && e.message.includes('email-key-manager') && e.message.toLowerCase().includes('intentional error')) {
+            // don't log this, intentional error
+          } else {
+            console.error(`url:${request.method}:${request.url}`, e);
+            response.statusCode = Status.SERVER_ERROR;
+          }
         }
         response.setHeader('Access-Control-Allow-Origin', '*');
         response.setHeader('content-type', 'application/json');
@@ -156,7 +160,8 @@ export class Api<REQ, RES> {
     } else if (typeof response === 'string') {
       return Buffer.from(response);
     }
-    return Buffer.from(JSON.stringify(response));
+    const json = JSON.stringify(response);
+    return Buffer.from(json);
   }
 
   protected collectReq = (req: http.IncomingMessage): Promise<Buffer> => {

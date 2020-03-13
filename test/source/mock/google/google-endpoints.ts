@@ -44,18 +44,27 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
-  '/m8/feeds/contacts/default/thin': async (parsedReq, req) => {
-    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
-    if (isGet(req) && acct === 'test.ci.compose@org.flowcrypt.com') {
-      return {
-        feed: {
-          entry: [
-            { gd$email: [{ address: 'contact.test@flowcrypt.com', primary: "true" }] }
-          ]
-        }
-      };
+  '/m8/feeds/contacts/default/thin': async ({ query: { q } }, req) => {
+    if (!isGet(req)) {
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     }
-    throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    const empty = { feed: { entry: [] } };
+    const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
+    if (acct === 'test.ci.compose@org.flowcrypt.com') {
+      if (q === 'contact') {
+        return {
+          feed: {
+            entry: [
+              { gd$email: [{ address: 'contact.test@flowcrypt.com', primary: "true" }] }
+            ]
+          }
+        };
+      } else {
+        return empty;
+      }
+    } else {
+      return empty;
+    }
   },
   '/gmail/v1/users/me/settings/sendAs': async (parsedReq, req) => {
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);

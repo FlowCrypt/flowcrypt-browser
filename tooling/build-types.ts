@@ -17,7 +17,7 @@ const makeMockBuild = (buildType: string) => {
   exec(`cp -r ${buildDir(buildType)} ${buildDir(mockBuildType)}`);
   const editor = (code: string) => {
     return code
-      .replace(/const (GOOGLE_API_HOST|GOOGLE_CONTACTS_API_HOST|GOOGLE_OAUTH_SCREEN_HOST) = [^;]+;/g, `const $1 = '${MOCK_HOST[buildType]}';`)
+      .replace(/const (GOOGLE_API_HOST|GOOGLE_OAUTH_SCREEN_HOST) = [^;]+;/g, `const $1 = '${MOCK_HOST[buildType]}';`)
       .replace(/const (BACKEND_API_HOST) = [^;]+;/g, `const $1 = 'http://localhost:8001/api/';`)
       .replace(/https:\/\/flowcrypt.com\/api\/help\/error/g, 'http://localhost:8001/api/help/error');
   };
@@ -26,5 +26,17 @@ const makeMockBuild = (buildType: string) => {
   edit(`${buildDir(mockBuildType)}/js/content_scripts/webmail_bundle.js`, editor);
 };
 
+const updateEnterpriseBuild = () => {
+  const constFilepath = `${buildDir(CHROME_ENTERPRISE)}/js/common/core/const.js`;
+  edit(constFilepath, (code: string) => {
+    const flavorPattern = /export const FLAVOR = 'consumer';/g;
+    if (!flavorPattern.test(code)) {
+      throw new Error(`Expecting to find FLAVOR in ${constFilepath}`);
+    }
+    return code.replace(flavorPattern, `export const FLAVOR = 'enterprise';`);
+  });
+};
+
+updateEnterpriseBuild();
 makeMockBuild(CHROME_CONSUMER);
 makeMockBuild(CHROME_ENTERPRISE);
