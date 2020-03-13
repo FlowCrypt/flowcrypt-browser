@@ -62,10 +62,8 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       } else {
         return empty;
       }
-    } else if (acct === 'flowcrypt.compatibility@gmail.com') {
-      return empty;
     } else {
-      throw new HttpClientErr(`No Google Contact mock prepared for account ${acct}`);
+      return empty;
     }
   },
   '/gmail/v1/users/me/settings/sendAs': async (parsedReq, req) => {
