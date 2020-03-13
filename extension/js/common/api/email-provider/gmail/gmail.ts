@@ -237,18 +237,20 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
    */
   public guessContactsFromSentEmails = async (userQuery: string, knownContacts: Contact[], chunkedCb: ChunkedCb): Promise<void> => {
     let gmailQuery = `is:sent ${this.GMAIL_USELESS_CONTACTS_FILTER} `;
+    const needles: string[] = [];
     if (userQuery) {
-      const variationsOfTo = userQuery.split(/[ .]/g).filter(v => !['com', 'org', 'net'].includes(v));
-      if (!variationsOfTo.includes(userQuery)) {
-        variationsOfTo.push(userQuery);
+      needles.push(...userQuery.split(/[ .]/g).filter(v => !['com', 'org', 'net'].includes(v)));
+      if (!needles.includes(userQuery)) {
+        needles.push(userQuery);
       }
       gmailQuery += '(';
-      while (variationsOfTo.length) {
-        gmailQuery += `to:${variationsOfTo.pop()}`;
+      const loopNeedles = [...needles];
+      while (needles.length) {
+        gmailQuery += `to:${loopNeedles.pop()}`;
         if (gmailQuery.length > this.GMAIL_SEARCH_QUERY_LENGTH_LIMIT) {
           break;
         }
-        if (variationsOfTo.length > 1) {
+        if (loopNeedles.length > 1) {
           gmailQuery += ' OR ';
         }
       }
@@ -260,7 +262,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       }
       gmailQuery += ` -to:${contact.email}`;
     }
-    await this.apiGmailLoopThroughEmailsToCompileContacts(gmailQuery, chunkedCb);
+    await this.apiGmailLoopThroughEmailsToCompileContacts(needles, gmailQuery, chunkedCb);
   }
 
   /**
@@ -398,13 +400,14 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return uniqueNewValidResults;
   }
 
-  private apiGmailLoopThroughEmailsToCompileContacts = async (query: string, chunkedCb: ChunkedCb) => {
+  private apiGmailLoopThroughEmailsToCompileContacts = async (needles: string[], gmailQuery: string, chunkedCb: ChunkedCb) => {
     const allResults: Contact[] = [];
     const allRawEmails: string[] = [];
+    const allMatchingResults: Contact[] = [];
     let lastFilteredQuery = '';
     let continueSearching = true;
     while (continueSearching) {
-      const filteredQuery = this.apiGmailBuildFilteredQuery(query, allRawEmails);
+      const filteredQuery = this.apiGmailBuildFilteredQuery(gmailQuery, allRawEmails);
       if (filteredQuery === lastFilteredQuery) {
         break;
       }
@@ -418,9 +421,25 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
         break;
       }
       allResults.push(...uniqueNewValidResults);
-      await chunkedCb({ new: uniqueNewValidResults, all: allResults });
+      const uniqueNewValidMatchingResults = uniqueNewValidResults.filter(r => this.doesGmailsContactGuessResultMatchNeedles(needles, r));
+      if (uniqueNewValidMatchingResults.length) {
+        allMatchingResults.push(...uniqueNewValidMatchingResults);
+        await chunkedCb({ new: uniqueNewValidMatchingResults, all: allMatchingResults });
+      }
     }
     await chunkedCb({ new: [], all: allResults });
+  }
+
+  private doesGmailsContactGuessResultMatchNeedles = (needles: string[], contact: Contact): boolean => {
+    if (!needles.length) {
+      return true; // no search query provided, so anything matches
+    }
+    for (const needle of needles) {
+      if (contact.email.includes(needle) || (contact.name || '').includes(needle)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private extractHeadersFromMsgs = async (msgsIds: GmailRes.GmailMsgList$message[], headerNames: string[], msgLimit: number): Promise<Dict<string[]>> => {
