@@ -88,5 +88,6 @@
     "/chrome/elements/verification.htm",
     "/chrome/elements/shared/footer.htm"
   ],
-  "minimum_chrome_version": "61"
+  "minimum_chrome_version": "61",
+  "content_security_policy": "'self'; object-src 'self'; frame-ancestors https://mail.google.com 'self';"
 }
