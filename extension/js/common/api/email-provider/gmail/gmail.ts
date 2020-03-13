@@ -236,6 +236,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
    * This will keep triggering callback with new emails as they are being discovered
    */
   public guessContactsFromSentEmails = async (userQuery: string, knownContacts: Contact[], chunkedCb: ChunkedCb): Promise<void> => {
+    userQuery = userQuery.toLowerCase();
     let gmailQuery = `is:sent ${this.GMAIL_USELESS_CONTACTS_FILTER} `;
     const needles: string[] = [];
     if (userQuery) {
@@ -244,13 +245,13 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
         needles.push(userQuery);
       }
       gmailQuery += '(';
-      const loopNeedles = [...needles]; // todo - just do for/of loop instead
-      while (loopNeedles.length) {
-        gmailQuery += `to:${loopNeedles.pop()}`;
+      for (let i = 0; i < needles.length; i++) {
+        const needle = needles[i];
+        gmailQuery += `to:${needle}`;
         if (gmailQuery.length > this.GMAIL_SEARCH_QUERY_LENGTH_LIMIT) {
           break;
         }
-        if (loopNeedles.length > 1) {
+        if (i < needles.length - 1) {
           gmailQuery += ' OR ';
         }
       }
@@ -434,12 +435,8 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     if (!needles.length) {
       return true; // no search query provided, so anything matches
     }
-    for (const needle of needles) {
-      if (contact.email.includes(needle) || (contact.name || '').includes(needle)) {
-        return true;
-      }
-    }
-    return false;
+    const comparable = `${contact.email}\n${contact.name || ''}`.toLowerCase();
+    return !!needles.find(needle => comparable.includes(needle));
   }
 
   private extractHeadersFromMsgs = async (msgsIds: GmailRes.GmailMsgList$message[], headerNames: string[], msgLimit: number): Promise<Dict<string[]>> => {
