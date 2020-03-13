@@ -198,7 +198,7 @@ export class SetupPageRecipe extends PageRecipe {
       expect(await settingsPage.read('@container-err-title')).to.contain(expectErr.title);
       expect(await settingsPage.read('@container-err-text')).to.contain(expectErr.text);
     } else {
-      await settingsPage.waitAndClick('@action-step4done-account-settings');
+      await settingsPage.waitAndClick('@action-step4done-account-settings', { retryErrs: true });
       await SettingsPageRecipe.ready(settingsPage);
     }
   }
