@@ -194,7 +194,7 @@ export class Api {
   }
 
   /**
-   * Security check, in case attacker modifies parameters enterpring an url
+   * Security check, in case attacker modifies parameters which are then used in an url
    * https://github.com/FlowCrypt/flowcrypt-browser/issues/2646
    */
   private static throwIfApiPathTraversalAttempted = (requestUrl: string) => {
