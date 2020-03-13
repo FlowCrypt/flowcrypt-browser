@@ -201,6 +201,13 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       });
     }));
 
+    ava.default(`decrypt - don't allow api path traversal`, testWithBrowser('compatibility', async (t, browser) => {
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
+        content: ["API path traversal forbidden"],
+        params: "?frame_id=frame_TWloVRhvZE&message=&has_password=___cu_false___&message_id=../test&senderEmail=sasan.neufeld%40ebnerstolz.de&is_outgoing=___cu_false___&account_email=flowcrypt.compatibility%40gmail.com"
+      });
+    }));
+
     ava.default(`decrypt - [gnupg v2] thai text`, testWithBrowser('compatibility', async (t, browser) => {
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         content: ["still can read your message ยังคงอ่านได้อยู่", "This is time I can't read ครั้งนี้อ่านไม่ได้แล้ว"],

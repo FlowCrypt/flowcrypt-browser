@@ -38,6 +38,7 @@ export class Api {
 
   public static download = async (url: string, progress?: ProgressCb): Promise<Buf> => {
     return await new Promise((resolve, reject) => {
+      Api.throwIfApiPathTraversalAttempted(url);
       const request = new XMLHttpRequest();
       request.open('GET', url, true);
       request.responseType = 'arraybuffer';
@@ -65,6 +66,7 @@ export class Api {
     }
     try {
       return await new Promise((resolve, reject) => {
+        Api.throwIfApiPathTraversalAttempted(req.url || '');
         $.ajax({ ...req, dataType: req.dataType === 'xhr' ? undefined : req.dataType }).then((data, s, xhr) => {
           if (req.dataType === 'xhr') {
             // @ts-ignore -> prevent the xhr object from getting further "resolved" and processed by jQuery, below
@@ -189,6 +191,16 @@ export class Api {
 
   private static isRawAjaxErr = (e: any): e is RawAjaxErr => {
     return e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number';
+  }
+
+  /**
+   * Security check, in case attacker modifies parameters enterpring an url
+   * https://github.com/FlowCrypt/flowcrypt-browser/issues/2646
+   */
+  private static throwIfApiPathTraversalAttempted = (requestUrl: string) => {
+    if (requestUrl.includes('../') || requestUrl.includes('/..')) {
+      throw new Error(`API path traversal forbidden: ${requestUrl}`);
+    }
   }
 
 }

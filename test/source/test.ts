@@ -89,7 +89,7 @@ ava.after.always('evaluate Catch.reportErr errors', async t => {
     return;
   }
   const foundExpectedErr = mockBackendData.reportedErrors.find(re => re.message === `intentional error for debugging`);
-  const foundUnwantedErrs = mockBackendData.reportedErrors.filter(re => re.message !== `intentional error for debugging`);
+  const foundUnwantedErrs = mockBackendData.reportedErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
   if (!foundExpectedErr && internalTestState.expectiIntentionalErrReport) {
     t.fail(`Catch.reportErr errors: missing intentional error`);
   } else if (foundUnwantedErrs.length) {
