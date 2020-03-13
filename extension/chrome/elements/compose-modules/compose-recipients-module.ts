@@ -503,7 +503,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         this.view.errModule.debug(`searchContacts 2, count: ${contacts.length}`);
         return;
       }
-      this.renderSearchRes(input, contacts, { substring });
       this.view.errModule.debug(`searchContacts 3`);
       const foundOnGoogle = await this.searchContactsOnGoogle(substring, contacts);
       await this.addApiLoadedContactsToDb(foundOnGoogle);
