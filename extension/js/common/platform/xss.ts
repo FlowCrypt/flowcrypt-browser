@@ -56,7 +56,8 @@ export class Xss {
         return;
       }
       if ('style' in node) {
-        const style = (node as Element).getAttribute('style');
+        // mitigation rather than a fix, which will involve updating CSP, see https://github.com/FlowCrypt/flowcrypt-browser/issues/2648
+        const style = (node as Element).getAttribute('style')?.toLowerCase();
         if (style && (style.includes('url(') || style.includes('@import'))) {
           (node as Element).removeAttribute('style'); // don't want any leaks through css url()
         }
