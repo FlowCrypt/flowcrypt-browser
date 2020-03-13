@@ -245,7 +245,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       }
       gmailQuery += '(';
       const loopNeedles = [...needles];
-      while (needles.length) {
+      while (loopNeedles.length) {
         gmailQuery += `to:${loopNeedles.pop()}`;
         if (gmailQuery.length > this.GMAIL_SEARCH_QUERY_LENGTH_LIMIT) {
           break;
