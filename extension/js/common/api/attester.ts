@@ -7,7 +7,7 @@ import { Dict, Str } from '../core/common.js';
 import { PgpClient, PubkeySearchResult } from './pub-lookup.js';
 import { ApiErr } from './error/api-error.js';
 import { OrgRules } from '../org-rules.js';
-import { BACKEND_API_HOST } from '../core/const.js';
+import { ATTESTER_API_HOST } from '../core/const.js';
 
 type PubCallRes = { responseText: string, getResponseHeader: (n: string) => string | null };
 
@@ -81,11 +81,11 @@ export class Attester extends Api {
   }
 
   private jsonCall = async <RT>(path: string, values?: Dict<any>, method: ReqMethod = 'POST'): Promise<RT> => {
-    return await Api.apiCall(BACKEND_API_HOST, path, values, 'JSON', undefined, { 'api-version': '3' }, 'json', method) as RT;
+    return await Api.apiCall(ATTESTER_API_HOST, path, values, 'JSON', undefined, { 'api-version': '3' }, 'json', method) as RT;
   }
 
   private pubCall = async (resource: string, method: ReqMethod = 'GET', data?: string | undefined): Promise<PubCallRes> => {
-    return await Api.apiCall(BACKEND_API_HOST, resource, data, typeof data === 'string' ? 'TEXT' : undefined, undefined, undefined, 'xhr', method);
+    return await Api.apiCall(ATTESTER_API_HOST, resource, data, typeof data === 'string' ? 'TEXT' : undefined, undefined, undefined, 'xhr', method);
   }
 
 }

@@ -1,6 +1,5 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-
 import { HttpClientErr } from '../lib/api';
 import { Dict } from '../../core/common';
 import { HandlersDefinition } from '../all-apis-mock';
@@ -8,24 +7,30 @@ import { isPost, isGet } from '../lib/mock-util';
 import { oauth } from '../lib/oauth';
 import { expect } from 'chai';
 
-const knownEmails = [
+// tslint:disable:no-blank-lines-func
+
+const knownMockEmails = [
   'flowcrypt.compatibility@gmail.com',
   'human@flowcrypt.com',
+  'flowcrypt.test.key.new.manual@gmail.com',
 ];
 
 export const mockAttesterEndpoints: HandlersDefinition = {
   '/attester/pub/?': async ({ body }, req) => {
     const emailOrLongid = req.url!.split('/').pop()!.toLowerCase().trim();
     if (isGet(req)) {
-      if (knownEmails.includes(emailOrLongid)) {
+      if (knownMockEmails.includes(emailOrLongid)) {
         // the client does not yet check that the pubkey contains the right uids
         // once it starts checking that, we'll have to be more specific with the pubkeys
         return getSomePubkey();
       }
+      if (emailOrLongid === 'expired.on.attester@domain.com') {
+        return getExpiredPubkey();
+      }
       throw new HttpClientErr('Pubkey not found', 404);
     } else if (isPost(req)) {
       const email = oauth.checkAuthorizationHeaderWithIdToken(req.headers.authorization);
-      expect(email).to.be.oneOf(knownEmails);
+      expect(email).to.be.oneOf(knownMockEmails);
       expect(body).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
       return 'Saved'; // 200 OK
     } else {
@@ -72,5 +77,49 @@ A6fEpV8aLaFnAt+zh3cw4A7SNAO9omGAUZeBl4Pz1IlN2lC2grc2zpqoxo8o
 3W49JYTfExeCNVWhlSU74f6bpN6CMdSdrh5phOr+ffQQhEhkNblUgSZe6tKa
 VFI1MhkJ6Xhrug==
 =+de8
+-----END PGP PUBLIC KEY BLOCK-----`;
+};
+
+const getExpiredPubkey = () => {
+  return `-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+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
+wLiixN34mx9HOoCOwcFxC4+X6VVwVWQ=
+=4FOH
 -----END PGP PUBLIC KEY BLOCK-----`;
 };

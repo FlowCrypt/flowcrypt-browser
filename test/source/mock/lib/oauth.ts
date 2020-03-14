@@ -76,7 +76,7 @@ export class OauthMock {
     const accessToken = authorization.replace(/^Bearer /, '');
     const acct = this.acctByAccessToken[accessToken];
     if (!acct) {
-      throw new HttpClientErr('Invalid auth token', Status.UNAUTHORIZED);
+      throw new HttpClientErr('Invalid mock auth token', Status.UNAUTHORIZED);
     }
     this.checkKnownAcct(acct);
     return acct;
