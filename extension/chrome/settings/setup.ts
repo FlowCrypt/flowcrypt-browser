@@ -256,7 +256,11 @@ export class SetupView extends View {
   }
 
   private submitPubkeys = async (addresses: string[], pubkey: string) => {
-    await this.pubLookup.attester.initialLegacySubmit(this.acctEmail, pubkey);
+    if (this.orgRules.useLegacyAttesterSubmit()) {
+      await this.pubLookup.attester.initialLegacySubmit(this.acctEmail, pubkey);
+    } else {
+      await this.pubLookup.attester.submitPrimaryEmailPubkey(this.acctEmail, pubkey, this.idToken!);
+    }
     const aliases = addresses.filter(a => a !== this.acctEmail);
     if (aliases.length) {
       await Promise.all(aliases.map(a => this.pubLookup.attester.initialLegacySubmit(a, pubkey)));
