@@ -197,7 +197,7 @@ export class Api<REQ, RES> {
   protected parseReqBody = (body: Buffer, req: http.IncomingMessage): REQ => {
     let parsedBody: string | undefined;
     if (body.length) {
-      if (req.url!.startsWith('/upload/') || req.url!.startsWith('/api/message/upload')) {
+      if (req.url!.startsWith('/upload/') || req.url!.startsWith('/api/message/upload') || (req.url!.startsWith('/attester/pub/') && req.method === 'POST')) {
         parsedBody = body.toString();
       } else {
         parsedBody = JSON.parse(body.toString());
