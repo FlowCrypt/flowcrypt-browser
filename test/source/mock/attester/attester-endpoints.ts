@@ -15,7 +15,7 @@ const knownEmails = [
 
 export const mockAttesterEndpoints: HandlersDefinition = {
   '/attester/pub/?': async ({ body }, req) => {
-    const emailOrLongid = req.url!.split('/').pop().toLowerCase().trim();
+    const emailOrLongid = req.url!.split('/').pop()!.toLowerCase().trim();
     if (isGet(req)) {
       if (knownEmails.includes(emailOrLongid)) {
         // the client does not yet check that the pubkey contains the right uids
