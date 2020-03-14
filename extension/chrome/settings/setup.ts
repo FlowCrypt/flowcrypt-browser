@@ -257,8 +257,10 @@ export class SetupView extends View {
 
   private submitPubkeys = async (addresses: string[], pubkey: string) => {
     if (this.orgRules.useLegacyAttesterSubmit()) {
+      // this will generally ignore errors if conflicting key already exists, except for certain orgs
       await this.pubLookup.attester.initialLegacySubmit(this.acctEmail, pubkey);
     } else {
+      // this will actually replace the submitted public key if there was a conflict, better ux
       await this.pubLookup.attester.submitPrimaryEmailPubkey(this.acctEmail, pubkey, this.idToken!);
     }
     const aliases = addresses.filter(a => a !== this.acctEmail);
