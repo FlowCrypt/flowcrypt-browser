@@ -15,7 +15,7 @@ export const mockBackendData = new BackendData(oauth);
 
 const fwdToRealBackend = async (parsed: any, req: IncomingMessage): Promise<string> => {
   // we are forwarding this request to backend, but we are not properly authenticated with real backend
-  // better remove authentication, request that we currently forward during tests don't actually require it
+  // better remove authentication: requests that we currently forward during tests don't actually require it
   delete req.headers.host;
   delete req.headers['content-length'];
   const forwarding: any = { headers: req.headers, url: `https://flowcrypt.com${req.url}` };

@@ -19,6 +19,7 @@ const makeMockBuild = (buildType: string) => {
     return code
       .replace(/const (GOOGLE_API_HOST|GOOGLE_OAUTH_SCREEN_HOST) = [^;]+;/g, `const $1 = '${MOCK_HOST[buildType]}';`)
       .replace(/const (BACKEND_API_HOST) = [^;]+;/g, `const $1 = 'http://localhost:8001/api/';`)
+      .replace(/const (ATTESTER_API_HOST) = [^;]+;/g, `const $1 = 'http://localhost:8001/attester/';`)
       .replace(/https:\/\/flowcrypt.com\/api\/help\/error/g, 'http://localhost:8001/api/help/error');
   };
   edit(`${buildDir(mockBuildType)}/js/common/core/const.js`, editor);
