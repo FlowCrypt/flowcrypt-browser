@@ -7,7 +7,7 @@ import { AcctStore } from './platform/store/acct-store.js';
 import { KeyAlgo } from './core/pgp-key.js';
 
 type DomainRules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'PRV_AUTOIMPORT_OR_AUTOGEN' | 'PASS_PHRASE_QUIET_AUTOGEN' |
-  'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' | 'NO_KEY_MANAGER_PUB_LOOKUP' |
+  'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' | 'NO_KEY_MANAGER_PUB_LOOKUP' | 'USE_LEGACY_ATTESTER_SUBMIT' |
   'DEFAULT_REMEMBER_PASS_PHRASE';
 
 export type DomainRulesJson = {
@@ -158,6 +158,15 @@ export class OrgRules {
    */
   public canLookupThisRecipientOnAttester = (emailAddr: string): boolean => {
     return !(this.domainRules.disallow_attester_search_for_domains || []).includes(emailAddr.split('@')[1] || 'NONE');
+  }
+
+  /**
+   * Some orgs use flows that are only implemented in POST /initial/legacy_submit and not in POST /pub/email@corp.co:
+   *  -> enforcing that submitted keys match customer key server
+   * Until the newer endpoint is ready, this flag will point users in those orgs to the original endpoint
+   */
+  public useLegacyAttesterSubmit = (): boolean => {
+    return this.domainRules.flags.includes('USE_LEGACY_ATTESTER_SUBMIT');
   }
 
 }

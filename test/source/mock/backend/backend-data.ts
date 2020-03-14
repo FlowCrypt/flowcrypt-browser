@@ -56,7 +56,8 @@ export class BackendData {
         "flags": [
           "NO_PRV_CREATE",
           "NO_PRV_BACKUP",
-          "ENFORCE_ATTESTER_SUBMIT"
+          "ENFORCE_ATTESTER_SUBMIT",
+          "USE_LEGACY_ATTESTER_SUBMIT",
         ]
       };
     }

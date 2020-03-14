@@ -72,13 +72,11 @@ export class SetupView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'action', 'idToken', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.idToken = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'idToken');
     this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'finalize', undefined]) as 'add_key' | 'finalize' | undefined;
     if (this.action === 'add_key') {
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-    }
-    if (this.action !== 'add_key' && this.action !== 'finalize') {
-      Assert.urlParamRequire.string(uncheckedUrlParams, 'idToken'); // will render error if missing
+    } else {
+      this.idToken = Assert.urlParamRequire.string(uncheckedUrlParams, 'idToken');
     }
     if (this.acctEmail) {
       BrowserMsg.send.bg.updateUninstallUrl();
@@ -256,7 +254,13 @@ export class SetupView extends View {
   }
 
   private submitPubkeys = async (addresses: string[], pubkey: string) => {
-    await this.pubLookup.attester.initialLegacySubmit(this.acctEmail, pubkey);
+    if (this.orgRules.useLegacyAttesterSubmit()) {
+      // this will generally ignore errors if conflicting key already exists, except for certain orgs
+      await this.pubLookup.attester.initialLegacySubmit(this.acctEmail, pubkey);
+    } else {
+      // this will actually replace the submitted public key if there was a conflict, better ux
+      await this.pubLookup.attester.submitPrimaryEmailPubkey(this.acctEmail, pubkey, this.idToken!);
+    }
     const aliases = addresses.filter(a => a !== this.acctEmail);
     if (aliases.length) {
       await Promise.all(aliases.map(a => this.pubLookup.attester.initialLegacySubmit(a, pubkey)));

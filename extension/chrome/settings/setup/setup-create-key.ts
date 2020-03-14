@@ -38,7 +38,7 @@ export class SetupCreateKeyModule {
       await this.createSaveKeyPair(options, keyAlgo);
       await this.view.preFinalizeSetup(options);
       // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
-      window.location.href = Url.create('modules/backup.htm', { action, acctEmail: this.view.acctEmail });
+      window.location.href = Url.create('modules/backup.htm', { action, acctEmail: this.view.acctEmail, idToken: this.view.idToken });
     } catch (e) {
       Catch.reportErr(e);
       await Ui.modal.error(`There was an error, please try again.\n\n(${String(e)})`);

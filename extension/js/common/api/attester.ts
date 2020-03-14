@@ -49,11 +49,31 @@ export class Attester extends Api {
     return results;
   }
 
+  /**
+   * the actual api accepts either email, fingerprint or longid
+   */
   public lookupFingerprint = async (fingerprintOrLongid: string) => {
-    return await this.lookupEmail(fingerprintOrLongid); // the actual api accepts either email, fingerprint or longid
+    return await this.lookupEmail(fingerprintOrLongid);
   }
 
-  public replacePubkey = async (email: string, pubkey: string): Promise<string> => { // replace key assigned to a certain email with a different one
+  /**
+   * Set or replace public key with idToken as an auth mechanism
+   * Used during setup
+   * Can only be used for primary email because idToken does not contain info about aliases
+   */
+  public submitPrimaryEmailPubkey = async (email: string, pubkey: string, idToken: string): Promise<void> => {
+    if (!this.orgRules.canSubmitPubToAttester()) {
+      throw new Error('Cannot replace pubkey at attester because your organisation rules forbid it');
+    }
+    await this.pubCall(`pub/${email}`, 'POST', pubkey, { authorization: `Bearer ${idToken}` });
+  }
+
+  /**
+   * Request to replace pubkey that will be verified by clicking email
+   * Used when user manually chooses to replace key
+   * Can also be used for aliases
+   */
+  public replacePubkey = async (email: string, pubkey: string): Promise<string> => {
     if (!this.orgRules.canSubmitPubToAttester()) {
       throw new Error('Cannot replace pubkey at attester because your organisation rules forbid it');
     }
@@ -61,7 +81,11 @@ export class Attester extends Api {
     return r.responseText;
   }
 
-  public updatePubkey = async (longid: string, pubkey: string): Promise<string> => { // update key with a newer version of the same key
+  /**
+   * Update pubkey with a newer version of the same pubkey
+   * Does not need email verification, fingerprints compared, last signatures compared
+   */
+  public updatePubkey = async (longid: string, pubkey: string): Promise<string> => {
     if (!this.orgRules.canSubmitPubToAttester()) {
       throw new Error('Cannot update pubkey at attester because your organisation rules forbid it');
     }
@@ -69,6 +93,9 @@ export class Attester extends Api {
     return r.responseText;
   }
 
+  /**
+   * Looking to deprecate this, but still used for some customers
+   */
   public initialLegacySubmit = async (email: string, pubkey: string): Promise<{ saved: boolean }> => {
     if (!this.orgRules.canSubmitPubToAttester()) {
       throw new Error('Cannot submit pubkey to attester because your organisation rules forbid it');
@@ -84,8 +111,8 @@ export class Attester extends Api {
     return await Api.apiCall(ATTESTER_API_HOST, path, values, 'JSON', undefined, { 'api-version': '3' }, 'json', method) as RT;
   }
 
-  private pubCall = async (resource: string, method: ReqMethod = 'GET', data?: string | undefined): Promise<PubCallRes> => {
-    return await Api.apiCall(ATTESTER_API_HOST, resource, data, typeof data === 'string' ? 'TEXT' : undefined, undefined, undefined, 'xhr', method);
+  private pubCall = async (resource: string, method: ReqMethod = 'GET', data?: string | undefined, hdrs?: Dict<string>): Promise<PubCallRes> => {
+    return await Api.apiCall(ATTESTER_API_HOST, resource, data, typeof data === 'string' ? 'TEXT' : undefined, undefined, hdrs, 'xhr', method);
   }
 
 }

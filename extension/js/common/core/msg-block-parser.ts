@@ -24,18 +24,18 @@ export class MsgBlockParser {
     const normalized = Str.normalize(origText);
     let startAt = 0;
     while (true) { // eslint-disable-line no-constant-condition
-      const r = MsgBlockParser.detectBlockNext(normalized, startAt);
-      if (r.found) {
-        blocks.push(...r.found);
+      const { found, continueAt } = MsgBlockParser.detectBlockNext(normalized, startAt);
+      if (found) {
+        blocks.push(...found);
       }
-      if (typeof r.continueAt === 'undefined') {
+      if (typeof continueAt === 'undefined') {
         return { blocks, normalized };
       } else {
-        if (r.continueAt <= startAt) {
-          Catch.report(`PgpArmordetect_blocks likely infinite loop: r.continue_at(${r.continueAt}) <= start_at(${startAt})`);
+        if (continueAt <= startAt) {
+          Catch.report(`PgpArmordetect_blocks likely infinite loop: r.continue_at(${continueAt}) <= start_at(${startAt})`);
           return { blocks, normalized }; // prevent infinite loop
         }
-        startAt = r.continueAt;
+        startAt = continueAt;
       }
     }
   }
@@ -132,16 +132,16 @@ export class MsgBlockParser {
   }
 
   private static detectBlockNext = (origText: string, startAt: number) => {
+    const armorHdrTypes = Object.keys(PgpArmor.ARMOR_HEADER_DICT) as ReplaceableMsgBlockType[];
     const result: { found: MsgBlock[], continueAt?: number } = { found: [] as MsgBlock[] };
     const begin = origText.indexOf(PgpArmor.headers('null').begin, startAt);
     if (begin !== -1) { // found
       const potentialBeginHeader = origText.substr(begin, MsgBlockParser.ARMOR_HEADER_MAX_LENGTH);
-      for (const xType of Object.keys(PgpArmor.ARMOR_HEADER_DICT)) {
-        const type = xType as ReplaceableMsgBlockType;
-        const blockHeaderDef = PgpArmor.ARMOR_HEADER_DICT[type];
+      for (const armorHdrType of armorHdrTypes) {
+        const blockHeaderDef = PgpArmor.ARMOR_HEADER_DICT[armorHdrType];
         if (blockHeaderDef.replace) {
           const indexOfConfirmedBegin = potentialBeginHeader.indexOf(blockHeaderDef.begin);
-          if (indexOfConfirmedBegin === 0 || (type === 'encryptedMsgLink' && indexOfConfirmedBegin >= 0 && indexOfConfirmedBegin < 15)) { // identified beginning of a specific block
+          if (indexOfConfirmedBegin === 0 || (armorHdrType === 'encryptedMsgLink' && indexOfConfirmedBegin >= 0 && indexOfConfirmedBegin < 15)) { // identified beginning of a specific block
             if (begin > startAt) {
               const potentialTextBeforeBlockBegun = origText.substring(startAt, begin).trim();
               if (potentialTextBeforeBlockBegun) {
@@ -162,20 +162,20 @@ export class MsgBlockParser {
               }
             }
             if (endIndex !== -1) { // identified end of the same block
-              if (type !== 'encryptedMsgLink') {
-                result.found.push(MsgBlock.fromContent(type, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
+              if (armorHdrType !== 'encryptedMsgLink') {
+                result.found.push(MsgBlock.fromContent(armorHdrType, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
               } else {
                 const pwdMsgFullText = origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim();
                 const pwdMsgShortIdMatch = pwdMsgFullText.match(/[a-zA-Z0-9]{10}$/);
                 if (pwdMsgShortIdMatch) {
-                  result.found.push(MsgBlock.fromContent(type, pwdMsgShortIdMatch[0]));
+                  result.found.push(MsgBlock.fromContent(armorHdrType, pwdMsgShortIdMatch[0]));
                 } else {
                   result.found.push(MsgBlock.fromContent('plainText', pwdMsgFullText));
                 }
               }
               result.continueAt = endIndex + foundBlockEndHeaderLength;
             } else { // corresponding end not found
-              result.found.push(MsgBlock.fromContent(type, origText.substr(begin), true));
+              result.found.push(MsgBlock.fromContent(armorHdrType, origText.substr(begin), true));
             }
             break;
           }
