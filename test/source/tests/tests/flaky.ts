@@ -60,7 +60,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await SetupPageRecipe.createAdvanced(settingsPage, 'flowcrypt.test.key.used.pgp', 'none', { submitPubkey: false, usedPgpBefore: true });
     }));
 
-    ava.default.only('setup - create key - backup as file', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('setup - create key - backup as file', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.new.manual@gmail.com');
       await SetupPageRecipe.createAdvanced(settingsPage, 'flowcrypt.test.key.used.pgp', 'file', { submitPubkey: false, usedPgpBefore: true });
     }));
