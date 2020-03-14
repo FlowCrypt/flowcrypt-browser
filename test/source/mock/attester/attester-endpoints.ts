@@ -53,9 +53,7 @@ export const mockAttesterEndpoints: HandlersDefinition = {
     expect(email).to.contain('@');
     expect(pubkey).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
     if (email === 'no.pub@org-rules-test.flowcrypt.com') {
-      return {
-        error: { code: 400, message: `Could not find LDAP pubkey on a LDAP-only domain for email ${email} on server keys.flowcrypt.com` }
-      };
+      return { error: { code: 400, message: `Could not find LDAP pubkey on a LDAP-only domain for email ${email} on server keys.flowcrypt.com` } };
     }
     return { saved: true };
   },
