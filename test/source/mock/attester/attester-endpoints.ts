@@ -10,9 +10,11 @@ import { expect } from 'chai';
 // tslint:disable:no-blank-lines-func
 
 const knownMockEmails = [
+  'test.ci.compose@org.flowcrypt.com',
   'flowcrypt.compatibility@gmail.com',
   'human@flowcrypt.com',
   'flowcrypt.test.key.new.manual@gmail.com',
+  'flowcrypt.test.key.used.pgp@gmail.com',
 ];
 
 export const mockAttesterEndpoints: HandlersDefinition = {
@@ -22,15 +24,17 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       if (knownMockEmails.includes(emailOrLongid)) {
         // the client does not yet check that the pubkey contains the right uids
         // once it starts checking that, we'll have to be more specific with the pubkeys
-        return getSomePubkey();
+        return somePubkey;
       }
       if (emailOrLongid === 'expired.on.attester@domain.com') {
-        return getExpiredPubkey();
+        return expiredPubkey;
+      }
+      if (emailOrLongid === 'flowcrypt.compatibility@protonmail.com') {
+        return protonMailCompatKey;
       }
       throw new HttpClientErr('Pubkey not found', 404);
     } else if (isPost(req)) {
-      const email = oauth.checkAuthorizationHeaderWithIdToken(req.headers.authorization);
-      expect(email).to.be.oneOf(knownMockEmails);
+      oauth.checkAuthorizationHeaderWithIdToken(req.headers.authorization);
       expect(body).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
       return 'Saved'; // 200 OK
     } else {
@@ -44,6 +48,9 @@ export const mockAttesterEndpoints: HandlersDefinition = {
     const { email, pubkey } = body as Dict<string>;
     expect(email).to.contain('@');
     expect(pubkey).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
+    if (email === 'no.pub@org-rules-test.flowcrypt.com') {
+      throw new HttpClientErr(`Could not find LDAP pubkey on a LDAP-only domain for email ${email} on server keys.flowcrypt.com`);
+    }
     return JSON.stringify({ saved: true });
   },
   '/attester/test/welcome': async ({ body }, req) => {
@@ -57,8 +64,7 @@ export const mockAttesterEndpoints: HandlersDefinition = {
   },
 };
 
-const getSomePubkey = () => {
-  return `-----BEGIN PGP PUBLIC KEY BLOCK-----
+const somePubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: CryptUP 3.2.0 Easy Gmail Encryption https://cryptup.org
 Comment: Seamlessly send, receive and search encrypted email
 
@@ -78,10 +84,8 @@ A6fEpV8aLaFnAt+zh3cw4A7SNAO9omGAUZeBl4Pz1IlN2lC2grc2zpqoxo8o
 VFI1MhkJ6Xhrug==
 =+de8
 -----END PGP PUBLIC KEY BLOCK-----`;
-};
 
-const getExpiredPubkey = () => {
-  return `-----BEGIN PGP PUBLIC KEY BLOCK-----
+const expiredPubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 
 mQGNBF04cLABDADGVUmV8RtjsCIrmg97eO9vmxfc6FeH1cIguCXoFpQxCSk0/Hv8
 NA6njdo2EJeZdYaOi7QVJNkfdR5obhxVh5AI4+18ParS4A99grp0riYoJ7w/hFLk
@@ -122,4 +126,38 @@ Wl33ecOGuq3bsTUXNujVdtWJ5hDf8l9RaeWfow9Af0OhYgkl8DWQ63V8VRXgcZyX
 wLiixN34mx9HOoCOwcFxC4+X6VVwVWQ=
 =4FOH
 -----END PGP PUBLIC KEY BLOCK-----`;
-};
+
+const protonMailCompatKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: OpenPGP.js v3.0.5
+Comment: https://openpgpjs.org
+
+xsBNBFskt/ABCAD0N+Y+ZavNGwRif9vkjcHxmvWkkqBO+pA1KanPUftoi2b/
+zMErfl+4P6xe+KpDS97W/BqBGKP7bzN08XSkqyROhv/lroofXgu1WSJ53znf
+bRGiRmOjIntBX7iSKecSh9zcgjBRK6xnhoaXxUhCwp8ZsxapMRSwQmlXU6WQ
+4XAI4JhtZVpBUtbeUW0/+4KRObmj9Dy+4nnNFFBubBrHV0F7FmkJkvksvkNL
+4awmTFbfPE8vkapoDi1hFzMbWoYvEPLmv/HTRcqjPZASLr7fXG+AOefE8uJA
+L++Zs0jw2ukrk9KHk3q70ii61CUz9zODCXzeoWQMNTUHoZFuhzawCFe1ABEB
+AAHNT2Zsb3djcnlwdC5jb21wYXRpYmlsaXR5QHByb3Rvbm1haWwuY29tIDxm
+bG93Y3J5cHQuY29tcGF0aWJpbGl0eUBwcm90b25tYWlsLmNvbT7CwHUEEAEI
+ACkFAlskt/EGCwkHCAMCCRB+1D156WF2VQQVCAoCAxYCAQIZAQIbAwIeAQAA
+2hYIANsYeRHhz5odpXWbeLc//Ex90llhgWb/kWWW5O5/mQwrOt+4Ct0ZL45J
+GeXCQyirHiYhmA50BoDDfayqULDx17v6easDmfdZ2qkVxczc+TjF0VMI+Y/3
+GrPuVddzBomc7qqYmEOkKEcnz4Q7mX5Ti1ImY8SSVPOchIbOQUFa96VhZJAq
+Xyx+TIzalFQ0F8O1Xmcj2WuklBKAgR4LIX6RrESDcxrozYLZ+ggbFYtf2RBA
+tEhsGyA3cJe0d/34jlhs9yxXpKsXGkfVd6atfHVoS7XlJyvZe8nZgUGtCaDf
+h5kJ+ByNPQwhTIoK9zWIn1p6UXad34o4J2I1EM9LY4OuONvOwE0EWyS38AEI
+ALh5KJNcXr0SSE3qZ7RokjsHl+Oi0YZBiHg0HBZsliIwMBLbR007aSSIAmLa
+fJyZ0cD/BmQxHguluaTomfno3GYrjyM86ETz+C0YJJ441Fcji/0fFr8JexXf
+eX4GEIVxQd4L0tB7VAAKMIGv/VAfLBpKjfY32LbgiVqVvgkxBtNNGXCaLXNa
+3l6l3/xo6hd4/JFIlaVTEb8yI578NF5nZSYG5IlF96xX7kNKj2aKXvdppRDc
+RG+nfmDsH9pN3bK4vmfnkI1FwUciKhbiwuDPjDtzBq6lQC4kP89DvLrdU7PH
+n2PQxiJyxgjqBUB8eziKp63BMTCIUP5EUHfIV+cU0P0AEQEAAcLAXwQYAQgA
+EwUCWyS38QkQftQ9eelhdlUCGwwAAKLKB/94R0jjyKfMGe6QY5hKnlMCNVdD
+NqCl3qr67XXCnTuwnwR50Ideh+d2R4gHuu/+7nPo2juCkakZ6rSZA8bnWNiT
+z6MOL1b54Jokoi1MreuyA7mOqlpjhTGbyJewFhUI8ybGlFWCudajobY2liF6
+AdeK17uMFfR6I1Rid3Qftszqg4FNExTOPHFZIc8CiGgWCye8NKcVqeuVlXKw
+257TmI5YAxZAyzhc7iX/Ngv6ZoR18JwKvLP1TfTJxFCG5APb5OSlQmwG747I
+EexnUn1E1mOjFwiYOZavCLvJRtazGCreO0FkWtrrtoa+5F2fbKUIVNGg44fG
+7aGdFze6mNyI/fMU
+=D34s
+-----END PGP PUBLIC KEY BLOCK-----`;
