@@ -23,16 +23,8 @@ type ManualEnterOpts = {
 
 export class SetupPageRecipe extends PageRecipe {
 
-  // public static setup_create_simple = async (settingsPage: ControllablePage, key_title: string, {used_pgp_before=false}: {used_pgp_before?: boolean}={}) => {
-  //   await PageRecipe.setup_create_begin(settingsPage, key_title, {used_pgp_before});
-  //   await settingsPage.wait_and_click('@input-step2bmanualcreate-create-and-save');
-  //   await settingsPage.wait_and_click('@action-backup-....');
-  //   // todo
-  //   await settingsPage.wait_and_click('@action-step4done-account-settings');
-  // }
-
   // eslint-disable-next-line max-len
-  public static createAdvanced = async (settingsPage: ControllablePage, keyTitle: string, backup: "none" | "email" | "file", { usedPgpBefore = false, submitPubkey = false }: { usedPgpBefore?: boolean, submitPubkey?: boolean } = {}) => {
+  public static createKey = async (settingsPage: ControllablePage, keyTitle: string, backup: "none" | "email" | "file", { usedPgpBefore = false, submitPubkey = false }: { usedPgpBefore?: boolean, submitPubkey?: boolean } = {}) => {
     await SetupPageRecipe.createBegin(settingsPage, keyTitle, { usedPgpBefore });
     await settingsPage.waitAndClick('@input-step2bmanualcreate-backup-inbox'); // uncheck
     if (!submitPubkey) {

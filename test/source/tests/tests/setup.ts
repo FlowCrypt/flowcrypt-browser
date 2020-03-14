@@ -67,12 +67,6 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await SetupPageRecipe.manualEnter(settingsPage, 'missing.self.signatures.invalid.uid', { submitPubkey: false, fixKey: true });
     }));
 
-    ava.todo('setup - create key advanced - do not remember pass phrase');
-
-    ava.todo('setup - create key advanced - backup as a file');
-
-    ava.todo('setup - create key simple');
-
     ava.default('setup - recover with a pass phrase - skip remaining', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', { hasRecoverMore: true, clickRecoverMore: false });

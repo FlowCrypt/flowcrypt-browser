@@ -72,13 +72,11 @@ export class SetupView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'action', 'idToken', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.idToken = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'idToken');
     this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'finalize', undefined]) as 'add_key' | 'finalize' | undefined;
     if (this.action === 'add_key') {
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-    }
-    if (this.action !== 'add_key' && this.action !== 'finalize') {
-      Assert.urlParamRequire.string(uncheckedUrlParams, 'idToken'); // will render error if missing
+    } else {
+      this.idToken = Assert.urlParamRequire.string(uncheckedUrlParams, 'idToken');
     }
     if (this.acctEmail) {
       BrowserMsg.send.bg.updateUninstallUrl();

@@ -17,27 +17,31 @@ import { AcctStore, EmailProvider } from '../../../js/common/platform/store/acct
 
 export class BackupView extends View {
 
+  public readonly acctEmail: string;
+  public readonly idToken: string | undefined;
+  public readonly action: 'setup_automatic' | 'setup_manual' | 'backup_manual' | undefined;
+  public readonly gmail: Gmail;
+  public readonly parentTabId: string | undefined;
+
   public readonly statusModule: BackupStatusModule;
   public readonly manualModule: BackupManualModule;
   public readonly automaticModule: BackupAutomaticModule;
 
-  public readonly acctEmail: string;
   public emailProvider: EmailProvider = 'gmail';
   public orgRules!: OrgRules;
-  public readonly action: 'setup_automatic' | 'setup_manual' | 'backup_manual' | undefined;
-  public readonly gmail: Gmail;
-  public readonly parentTabId: string | undefined;
   public tabId!: string;
 
-  private blocks = ['loading', 'module_status', 'module_manual'];
+  private readonly blocks = ['loading', 'module_status', 'module_manual'];
 
   constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'action']);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'action', 'idToken']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['setup_automatic', 'setup_manual', 'backup_manual', undefined]);
     if (this.action !== 'setup_automatic' && this.action !== 'setup_manual') {
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+    } else {
+      this.idToken = Assert.urlParamRequire.string(uncheckedUrlParams, 'idToken');
     }
     this.gmail = new Gmail(this.acctEmail);
     this.statusModule = new BackupStatusModule(this);
@@ -74,7 +78,7 @@ export class BackupView extends View {
 
   public renderBackupDone = async () => {
     if (this.action === 'setup_automatic' || this.action === 'setup_manual') {
-      window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: this.acctEmail, action: 'finalize' });
+      window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: this.acctEmail, action: 'finalize', idToken: this.idToken });
     } else {
       window.location.reload();
     }
