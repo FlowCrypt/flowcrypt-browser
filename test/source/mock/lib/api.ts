@@ -145,10 +145,14 @@ export class Api<REQ, RES> {
   }
 
   protected fmtHandlerRes = (handlerRes: RES, serverRes: http.ServerResponse): Buffer => {
-    if (String(handlerRes).match(/^<!DOCTYPE HTML><html>/)) {
+    if (typeof handlerRes === 'string' && handlerRes.match(/^<!DOCTYPE HTML><html>/)) {
       serverRes.setHeader('content-type', 'text/html');
-    } else {
+    } else if (typeof handlerRes === 'object' || (typeof handlerRes === 'string' && handlerRes.match(/^\{/) && handlerRes.match(/\}$/))) {
       serverRes.setHeader('content-type', 'application/json');
+    } else if (typeof handlerRes === 'string') {
+      serverRes.setHeader('content-type', 'text/plain');
+    } else {
+      throw new Error(`Don't know how to decide mock response content-type header`);
     }
     serverRes.setHeader('Access-Control-Allow-Origin', '*');
     return this.fmtRes(handlerRes);

@@ -6,6 +6,7 @@ import * as http from 'http';
 
 import { Api, Handlers } from './lib/api';
 
+import { mockAttesterEndpoints } from './attester/attester-endpoints';
 import { mockBackendEndpoints } from './backend/backend-endpoints';
 import { mockGoogleEndpoints } from './google/google-endpoints';
 import { mockKeyManagerEndpoints } from './key-manager/key-manager-endpoints';
@@ -24,6 +25,7 @@ export const startAllApisMock = async (logger: (line: string) => void) => {
   const api = new LoggedApi<{ query: { [k: string]: string }, body?: unknown }, unknown>('google-mock', {
     ...mockGoogleEndpoints,
     ...mockBackendEndpoints,
+    ...mockAttesterEndpoints,
     ...mockKeyManagerEndpoints,
     '/favicon.ico': async () => '',
   });

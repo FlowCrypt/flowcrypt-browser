@@ -30,7 +30,7 @@ const consts = { // higher concurrency can cause 429 google errs when composing
   TIMEOUT_EACH_RETRY: minutes(3),
   TIMEOUT_ALL_RETRIES: minutes(13), // this has to suffer waiting for semaphore between retries, thus almost the same as below
   TIMEOUT_OVERALL: minutes(14),
-  ATTEMPTS: testGroup === 'STANDARD-GROUP' ? oneIfNotPooled(3) : 3, // if it's FLAKY-GROUP, do 3 retries even if not pooled
+  ATTEMPTS: testGroup === 'STANDARD-GROUP' ? oneIfNotPooled(3) : process.argv.includes('--retry=false') ? 1 : 3,
   POOL_SIZE: oneIfNotPooled(isMock ? 12 : 2),
   PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>, // will be set right below
 };
