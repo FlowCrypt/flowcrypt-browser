@@ -63,6 +63,7 @@ export const Lang = { // tslint:disable-line:variable-name
     askSenderRenew: 'Please ask the sender to renew the message if you still need the contents',
     cannotLocate: 'Could not locate this message.',
     brokenLink: 'It seems it contains a broken link.',
+    pwdMsgAskSenderUsePubkey: 'This appears to be a password-protected message. Please ask the sender to encrypt messages for your Public Key instead.',
   },
   compose: {
     abortSending: 'A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?',

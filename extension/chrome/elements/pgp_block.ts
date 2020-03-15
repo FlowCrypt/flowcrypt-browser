@@ -24,7 +24,6 @@ export class PgpBlockView extends View {
   public readonly acctEmail: string;
   public readonly parentTabId: string;
   public readonly frameId: string;
-  public readonly hasChallengePassword: boolean;
   public readonly isOutgoing: boolean;
   public readonly senderEmail: string;
   public readonly msgId: string | undefined;
@@ -45,11 +44,10 @@ export class PgpBlockView extends View {
   constructor() {
     super();
     Ui.event.protect();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'hasPassword', 'signature']);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'signature']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
-    this.hasChallengePassword = uncheckedUrlParams.hasPassword === true;
     this.isOutgoing = uncheckedUrlParams.isOutgoing === true;
     const senderEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'senderEmail');
     this.senderEmail = Str.parseEmail(senderEmail).email || '';

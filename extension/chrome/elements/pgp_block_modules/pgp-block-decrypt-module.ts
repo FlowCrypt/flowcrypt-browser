@@ -105,7 +105,7 @@ export class PgpBlockViewDecryptModule {
         } else if (result.error.type === DecryptErrTypes.keyMismatch) {
           await this.view.errorModule.handlePrivateKeyMismatch(encryptedData, this.isPwdMsgBasedOnMsgSnippet === true);
         } else if (result.error.type === DecryptErrTypes.wrongPwd || result.error.type === DecryptErrTypes.usePassword) {
-          await this.view.errorModule.renderErr("This appears to be a password-protected message. Please ask the sender to encrypt messages for your Public Key instead.", undefined);
+          await this.view.errorModule.renderErr(Lang.pgpBlock.pwdMsgAskSenderUsePubkey, undefined);
         } else if (result.error.type === DecryptErrTypes.noMdc) {
           await this.view.errorModule.renderErr(result.error.message, result.content!.toUtfStr()); // missing mdc - only render the result after user confirmation
         } else if (result.error) {

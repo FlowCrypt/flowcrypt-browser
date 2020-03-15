@@ -3,7 +3,6 @@
 'use strict';
 
 import { VerifyRes } from '../../../js/common/core/pgp-msg.js';
-
 import { Att } from '../../../js/common/core/att.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';

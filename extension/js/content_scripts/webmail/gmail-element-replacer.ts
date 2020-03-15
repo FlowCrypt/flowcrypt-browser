@@ -311,20 +311,20 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
                 nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
               } else if (openpgpType && ['encryptedMsg', 'signedMsg'].includes(openpgpType.type)) {
-                msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg('', msgId, false, senderEmail, false)); // xss-safe-factory
+                msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg('', msgId, false, senderEmail)); // xss-safe-factory
               } else {
                 attSel.show().children('.attachment_loader').text('Unknown OpenPGP format');
                 nRenderedAtts++;
               }
             } else {
-              msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg('', msgId, false, senderEmail, false)); // xss-safe-factory
+              msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg('', msgId, false, senderEmail)); // xss-safe-factory
             }
           } else if (treatAs === 'publicKey') { // todo - pubkey should be fetched in pgp_pubkey.js
             nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
           } else if (treatAs === 'privateKey') {
             nRenderedAtts = await this.renderBackupFromFile(a, attsContainerInner, msgEl, attSel, nRenderedAtts);
           } else if (treatAs === 'signature') {
-            const embeddedSignedMsgXssSafe = this.factory.embeddedMsg('', msgId, false, senderEmail, false, true);
+            const embeddedSignedMsgXssSafe = this.factory.embeddedMsg('', msgId, false, senderEmail, true);
             msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', embeddedSignedMsgXssSafe); // xss-safe-factory
           }
         } else if (treatAs === 'plainFile' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc

@@ -77,12 +77,6 @@ export class BrowserRecipe {
     }
     await pgpBlockPage.waitForSelTestState('ready', 100);
     await Util.sleep(1);
-    if (m.password) {
-      await pgpBlockPage.waitAndType('@input-message-password', m.password);
-      await pgpBlockPage.waitAndClick('@action-decrypt-with-password');
-      await Util.sleep(1);
-      await pgpBlockPage.waitForSelTestState('ready', 30);
-    }
     if (m.quoted) {
       await pgpBlockPage.waitAndClick('@action-show-quoted-content');
       await Util.sleep(1);
