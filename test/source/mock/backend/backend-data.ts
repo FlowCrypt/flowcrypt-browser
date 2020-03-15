@@ -81,7 +81,6 @@ export class BackendData {
         "PRV_AUTOIMPORT_OR_AUTOGEN",
         "PASS_PHRASE_QUIET_AUTOGEN",
         "DEFAULT_REMEMBER_PASS_PHRASE",
-        "NO_KEY_MANAGER_PUB_LOOKUP"
       ],
       "key_manager_url": "http://localhost:8001/flowcrypt-email-key-manager",
       "enforce_keygen_algo": "rsa2048",
