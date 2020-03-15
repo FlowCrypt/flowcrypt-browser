@@ -42,7 +42,7 @@ export let defineUnitTests = (testVariant: TestVariant, testWithBrowser: TestWit
       }`;
       const { blocks, normalized } = MsgBlockParser.detectBlocks(input);
       expect(normalized).to.equal(input);
-      expect(blocks).to.have.property('length').that.equals(4);
+      expect(blocks).to.have.property('length').that.equals(1);
       expect(blocks[0]).to.deep.equal(MsgBlock.fromContent("plainText", input));
       t.pass();
     });
