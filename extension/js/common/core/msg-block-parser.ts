@@ -141,7 +141,7 @@ export class MsgBlockParser {
         const blockHeaderDef = PgpArmor.ARMOR_HEADER_DICT[armorHdrType];
         if (blockHeaderDef.replace) {
           const indexOfConfirmedBegin = potentialBeginHeader.indexOf(blockHeaderDef.begin);
-          if (indexOfConfirmedBegin === 0 || (armorHdrType === 'encryptedMsgLink' && indexOfConfirmedBegin >= 0 && indexOfConfirmedBegin < 15)) { // identified beginning of a specific block
+          if (indexOfConfirmedBegin === 0) {
             if (begin > startAt) {
               const potentialTextBeforeBlockBegun = origText.substring(startAt, begin).trim();
               if (potentialTextBeforeBlockBegun) {
@@ -162,17 +162,7 @@ export class MsgBlockParser {
               }
             }
             if (endIndex !== -1) { // identified end of the same block
-              if (armorHdrType !== 'encryptedMsgLink') {
-                result.found.push(MsgBlock.fromContent(armorHdrType, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
-              } else {
-                const pwdMsgFullText = origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim();
-                const pwdMsgShortIdMatch = pwdMsgFullText.match(/[a-zA-Z0-9]{10}$/);
-                if (pwdMsgShortIdMatch) {
-                  result.found.push(MsgBlock.fromContent(armorHdrType, pwdMsgShortIdMatch[0]));
-                } else {
-                  result.found.push(MsgBlock.fromContent('plainText', pwdMsgFullText));
-                }
-              }
+              result.found.push(MsgBlock.fromContent(armorHdrType, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
               result.continueAt = endIndex + foundBlockEndHeaderLength;
             } else { // corresponding end not found
               result.found.push(MsgBlock.fromContent(armorHdrType, origText.substr(begin), true));

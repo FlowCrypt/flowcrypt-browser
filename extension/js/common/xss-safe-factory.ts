@@ -64,8 +64,6 @@ export class XssSafeFactory {
       return factory.embeddedPubkey(PgpArmor.normalize(block.content.toString(), 'publicKey'), isOutgoing);
     } else if (block.type === 'privateKey') {
       return factory.embeddedBackup(PgpArmor.normalize(block.content.toString(), 'privateKey'));
-    } else if (block.type === 'encryptedMsgLink') {
-      return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, undefined, block.content.toString()); // here block.content is message short id
     } else if (['encryptedAtt', 'plainAtt'].includes(block.type)) {
       return block.attMeta ? factory.embeddedAtta(new Att(block.attMeta), block.type === 'encryptedAtt') : '[missing encrypted attachment details]';
     } else if (block.type === 'signedHtml') {

@@ -9,7 +9,7 @@ import { Buf } from './buf.js';
 import { KeyDetails } from './pgp-key.js';
 
 export type KeyBlockType = 'publicKey' | 'privateKey';
-export type ReplaceableMsgBlockType = KeyBlockType | 'signedMsg' | 'encryptedMsg' | 'encryptedMsgLink';
+export type ReplaceableMsgBlockType = KeyBlockType | 'signedMsg' | 'encryptedMsg';
 export type MsgBlockType = ReplaceableMsgBlockType | 'plainText' | 'decryptedText' | 'plainHtml' | 'decryptedHtml' | 'plainAtt' | 'encryptedAtt'
   | 'decryptedAtt' | 'encryptedAttLink' | 'decryptErr' | 'verifiedMsg' | 'signedHtml';
 
