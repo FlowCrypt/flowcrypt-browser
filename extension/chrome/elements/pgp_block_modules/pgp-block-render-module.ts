@@ -120,9 +120,6 @@ export class PgpBlockViewRenderModule {
     if (renderableAtts.length) {
       this.view.attachmentsModule.renderInnerAtts(renderableAtts);
     }
-    if (this.view.pwdEncryptedMsgModule.passwordMsgLinkRes && this.view.pwdEncryptedMsgModule.passwordMsgLinkRes.expire) {
-      this.view.pwdEncryptedMsgModule.renderFutureExpiration(this.view.pwdEncryptedMsgModule.passwordMsgLinkRes.expire);
-    }
     this.resizePgpBlockFrame();
     if (!this.doNotSetStateAsReadyYet) { // in case async tasks are still being worked at
       Ui.setTestState('ready');
