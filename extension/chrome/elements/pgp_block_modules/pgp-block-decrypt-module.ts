@@ -2,8 +2,6 @@
 
 'use strict';
 
-import { Api } from '../../../js/common/api/api.js';
-import { Backend } from '../../../js/common/api/backend.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { DecryptErrTypes } from '../../../js/common/core/pgp-msg.js';
@@ -43,18 +41,6 @@ export class PgpBlockViewDecryptModule {
       } else if (this.view.encryptedMsgUrlParam && !forcePullMsgFromApi) { // ascii armored message supplied
         this.view.renderModule.renderText(this.view.signature ? 'Verifying..' : 'Decrypting...');
         await this.decryptAndRender(this.view.encryptedMsgUrlParam);
-      } else if (!this.view.encryptedMsgUrlParam && this.view.hasChallengePassword && this.view.short) { // need to fetch the message from FlowCrypt API
-        // todo - remove this Apr 2020
-        this.view.renderModule.renderText('Loading message...');
-        await this.view.pwdEncryptedMsgModule.recoverStoredAdminCodes();
-        const msgLinkRes = await Backend.linkMessage(this.view.short);
-        this.view.pwdEncryptedMsgModule.passwordMsgLinkRes = msgLinkRes;
-        if (msgLinkRes.url) {
-          const downloaded = await Api.download(msgLinkRes.url);
-          await this.decryptAndRender(downloaded);
-        } else {
-          await this.view.pwdEncryptedMsgModule.renderPasswordEncryptedMsgLoadFail(this.view.pwdEncryptedMsgModule.passwordMsgLinkRes);
-        }
       } else {  // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
         if (!this.view.msgId) {
           Xss.sanitizeRender('#pgp_block', `Missing msgId to fetch message in pgp_block. If this happens repeatedly, please report the issue to human@flowcrypt.com`);
@@ -85,13 +71,10 @@ export class PgpBlockViewDecryptModule {
   private decryptAndRender = async (encryptedData: Buf, optionalPwd?: string, plainSubject?: string) => {
     if (typeof this.view.signature !== 'string') {
       const kisWithPp = await KeyStore.getAllWithPp(this.view.acctEmail);
-      const result = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, msgPwd: await this.view.pwdEncryptedMsgModule.getDecryptPwd(optionalPwd) });
+      const result = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData });
       if (typeof result === 'undefined') {
         await this.view.errorModule.renderErr(Lang.general.restartBrowserAndTryAgain, undefined);
       } else if (result.success) {
-        if (this.view.hasChallengePassword && optionalPwd) {
-          this.view.pwdEncryptedMsgModule.userEnteredMsgPassword = optionalPwd;
-        }
         if (result.signature?.contact && !result.signature.match && this.canReadEmails && this.msgFetchedFromApi !== 'raw') {
           console.info(`re-fetching message ${this.view.msgId} from api because failed signature check: ${!this.msgFetchedFromApi ? 'full' : 'raw'}`);
           await this.initialize(true);
@@ -120,18 +103,9 @@ export class PgpBlockViewDecryptModule {
         if (!result.longids.chosen && !primaryKi) {
           await this.view.errorModule.renderErr(Lang.pgpBlock.notProperlySetUp + this.view.errorModule.btnHtml('FlowCrypt settings', 'green settings'), undefined);
         } else if (result.error.type === DecryptErrTypes.keyMismatch) {
-          if (this.view.hasChallengePassword && !optionalPwd) {
-            const pwd = await this.view.pwdEncryptedMsgModule.renderPasswordPromptAndAwaitEntry('first'); // todo - remove around Mar 2020
-            await this.decryptAndRender(encryptedData, pwd);
-          } else {
-            await this.view.errorModule.handlePrivateKeyMismatch(encryptedData, this.isPwdMsgBasedOnMsgSnippet === true);
-          }
-        } else if (result.error.type === DecryptErrTypes.wrongPwd) {
-          const pwd = await this.view.pwdEncryptedMsgModule.renderPasswordPromptAndAwaitEntry('retry'); // todo - remove around Mar 2020
-          await this.decryptAndRender(encryptedData, pwd);
-        } else if (result.error.type === DecryptErrTypes.usePassword) {
-          const pwd = await this.view.pwdEncryptedMsgModule.renderPasswordPromptAndAwaitEntry('first'); // todo - remove around Mar 2020
-          await this.decryptAndRender(encryptedData, pwd);
+          await this.view.errorModule.handlePrivateKeyMismatch(encryptedData, this.isPwdMsgBasedOnMsgSnippet === true);
+        } else if (result.error.type === DecryptErrTypes.wrongPwd || result.error.type === DecryptErrTypes.usePassword) {
+          await this.view.errorModule.renderErr(Lang.pgpBlock.pwdMsgAskSenderUsePubkey, undefined);
         } else if (result.error.type === DecryptErrTypes.noMdc) {
           await this.view.errorModule.renderErr(result.error.message, result.content!.toUtfStr()); // missing mdc - only render the result after user confirmation
         } else if (result.error) {

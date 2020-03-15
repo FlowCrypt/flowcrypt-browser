@@ -80,10 +80,11 @@ export class BackendData {
         "ENFORCE_ATTESTER_SUBMIT",
         "PRV_AUTOIMPORT_OR_AUTOGEN",
         "PASS_PHRASE_QUIET_AUTOGEN",
-        "DEFAULT_REMEMBER_PASS_PHRASE"
+        "DEFAULT_REMEMBER_PASS_PHRASE",
       ],
       "key_manager_url": "http://localhost:8001/flowcrypt-email-key-manager",
       "enforce_keygen_algo": "rsa2048",
+      "disallow_attester_search_for_domains": []
     };
     if (domain === 'key-manager-autogen.flowcrypt.com') {
       return keyManagerAutogenRules;

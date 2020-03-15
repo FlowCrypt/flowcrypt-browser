@@ -100,7 +100,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       let r = '';
       let renderedAtts = '';
       for (const block of blocks) {
-        if (block.type === 'encryptedMsg' || block.type === 'publicKey' || block.type === 'privateKey' || block.type === 'signedMsg' || block.type === 'encryptedMsgLink') {
+        if (block.type === 'encryptedMsg' || block.type === 'publicKey' || block.type === 'privateKey' || block.type === 'signedMsg') {
           this.threadHasPgpBlock = true;
         }
         if (r) {

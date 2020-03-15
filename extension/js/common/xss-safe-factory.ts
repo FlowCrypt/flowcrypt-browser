@@ -5,7 +5,6 @@
 'use strict';
 
 import { Dict, Str, Url, UrlParams } from './core/common.js';
-
 import { Att } from './core/att.js';
 import { Browser } from './browser/browser.js';
 import { Catch } from './platform/catch.js';
@@ -57,19 +56,17 @@ export class XssSafeFactory {
     } else if (block.type === 'plainHtml') {
       return Xss.htmlSanitizeAndStripAllTags(block.content.toString(), '<br>') + '<br><br>';
     } else if (block.type === 'encryptedMsg') {
-      return factory.embeddedMsg(block.complete ? PgpArmor.normalize(block.content.toString(), 'encryptedMsg') : '', msgId, isOutgoing, senderEmail, false);
+      return factory.embeddedMsg(block.complete ? PgpArmor.normalize(block.content.toString(), 'encryptedMsg') : '', msgId, isOutgoing, senderEmail);
     } else if (block.type === 'signedMsg') {
-      return factory.embeddedMsg(block.content.toString(), msgId, isOutgoing, senderEmail, false);
+      return factory.embeddedMsg(block.content.toString(), msgId, isOutgoing, senderEmail);
     } else if (block.type === 'publicKey') {
       return factory.embeddedPubkey(PgpArmor.normalize(block.content.toString(), 'publicKey'), isOutgoing);
     } else if (block.type === 'privateKey') {
       return factory.embeddedBackup(PgpArmor.normalize(block.content.toString(), 'privateKey'));
-    } else if (block.type === 'encryptedMsgLink') {
-      return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, undefined, block.content.toString()); // here block.content is message short id
     } else if (['encryptedAtt', 'plainAtt'].includes(block.type)) {
       return block.attMeta ? factory.embeddedAtta(new Att(block.attMeta), block.type === 'encryptedAtt') : '[missing encrypted attachment details]';
     } else if (block.type === 'signedHtml') {
-      return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, false, true); // empty msg so it re-fetches from api. True at the and for "signature"
+      return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true); // empty msg so it re-fetches from api. True at the and for "signature"
     } else {
       Catch.report(`don't know how to process block type: ${block.type} (not a hard fail)`);
       return '';
@@ -132,8 +129,8 @@ export class XssSafeFactory {
     });
   }
 
-  public srcPgpBlockIframe = (message: string, msgId?: string, isOutgoing?: boolean, senderEmail?: string, hasPassword?: boolean, signature?: string | boolean, short?: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/pgp_block.htm'), { frameId: this.newId(), message, hasPassword, msgId, senderEmail, isOutgoing, signature, short });
+  public srcPgpBlockIframe = (message: string, msgId?: string, isOutgoing?: boolean, senderEmail?: string, signature?: string | boolean) => {
+    return this.frameSrc(this.extUrl('chrome/elements/pgp_block.htm'), { frameId: this.newId(), message, msgId, senderEmail, isOutgoing, signature });
   }
 
   public srcPgpPubkeyIframe = (armoredPubkey: string, isOutgoing?: boolean) => {
@@ -193,8 +190,8 @@ export class XssSafeFactory {
     return Ui.e('span', { class: 'pgp_attachment', html: this.iframe(this.srcPgpAttIframe(meta, isEncrypted)) });
   }
 
-  public embeddedMsg = (armored: string, msgId?: string, isOutgoing?: boolean, sender?: string, hasPassword?: boolean, signature?: string | boolean, short?: string) => {
-    return this.iframe(this.srcPgpBlockIframe(armored, msgId, isOutgoing, sender, hasPassword, signature, short), ['pgp_block']) + this.hideGmailNewMsgInThreadNotification;
+  public embeddedMsg = (armored: string, msgId?: string, isOutgoing?: boolean, sender?: string, signature?: string | boolean) => {
+    return this.iframe(this.srcPgpBlockIframe(armored, msgId, isOutgoing, sender, signature), ['pgp_block']) + this.hideGmailNewMsgInThreadNotification;
   }
 
   public embeddedPubkey = (armoredPubkey: string, isOutgoing?: boolean) => {

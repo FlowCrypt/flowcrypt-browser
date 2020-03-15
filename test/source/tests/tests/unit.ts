@@ -16,17 +16,6 @@ export let defineUnitTests = (testVariant: TestVariant, testWithBrowser: TestWit
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
-    ava.default(`[unit][MsgBlockParser.detectBlocks] will not run into infinite loop with multiple passwordMsg`, async t => {
-      expect(MsgBlockParser.detectBlocks("Office\n---------- Forwarded message ----------\nBlablabla\n\nhttps://flowcrypt.com/IFgvrSVR8b\n\nqwertyuiop\n\n---------- Forwarded message ----------\nblabla2\n\n\n-----BEGIN\nThis message is encrypted: Open Message\n\nAlternatively copy and paste the following link: https://flowcrypt.com/IFgvrSVR8b\n\n")).to.deep.equal({
-        "blocks": [
-          MsgBlock.fromContent("plainText", "Office\n---------- Forwarded message ----------\nBlablabla\n\nhttps://flowcrypt.com/IFgvrSVR8b\n\nqwertyuiop\n\n---------- Forwarded message ----------\nblabla2"),
-          MsgBlock.fromContent("encryptedMsgLink", "IFgvrSVR8b"),
-        ],
-        "normalized": "Office\n---------- Forwarded message ----------\nBlablabla\n\nhttps://flowcrypt.com/IFgvrSVR8b\n\nqwertyuiop\n\n---------- Forwarded message ----------\nblabla2\n\n\n-----BEGIN\nThis message is encrypted: Open Message\n\nAlternatively copy and paste the following link: https://flowcrypt.com/IFgvrSVR8b\n\n"
-      });
-      t.pass();
-    });
-
     ava.default(`[unit][MsgBlockParser.detectBlocks] does not get tripped on non-pgp certs`, async t => {
       expect(MsgBlockParser.detectBlocks("This text breaks email and Gmail web app.\n\n-----BEGIN CERTIFICATE-----\n\nEven though it's not a vaild PGP m\n\nMuhahah")).to.deep.equal({
         "blocks": [

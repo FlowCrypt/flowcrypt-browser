@@ -10,7 +10,6 @@ import { Lang } from '../../js/common/lang.js';
 import { PgpBlockViewAttachmentsModule } from './pgp_block_modules/pgp-block-attachmens-module.js';
 import { PgpBlockViewDecryptModule } from './pgp_block_modules/pgp-block-decrypt-module.js';
 import { PgpBlockViewErrorModule } from './pgp_block_modules/pgp-block-error-module.js';
-import { PgpBlockViewPwdEncryptedMsgModule } from './pgp_block_modules/pgp-block-pwd-encrypted-msg-module.js';
 import { PgpBlockViewQuoteModule } from './pgp_block_modules/pgp-block-quote-module.js';
 import { PgpBlockViewRenderModule } from './pgp_block_modules/pgp-block-render-module.js';
 import { PgpBlockViewSignatureModule } from './pgp_block_modules/pgp-block-signature-module.js';
@@ -25,9 +24,7 @@ export class PgpBlockView extends View {
   public readonly acctEmail: string;
   public readonly parentTabId: string;
   public readonly frameId: string;
-  public readonly hasChallengePassword: boolean;
   public readonly isOutgoing: boolean;
-  public readonly short: string | undefined;
   public readonly senderEmail: string;
   public readonly msgId: string | undefined;
   public readonly encryptedMsgUrlParam: Buf | undefined;
@@ -39,7 +36,6 @@ export class PgpBlockView extends View {
 
   public readonly attachmentsModule: PgpBlockViewAttachmentsModule;
   public readonly signatureModule: PgpBlockViewSignatureModule;
-  public readonly pwdEncryptedMsgModule: PgpBlockViewPwdEncryptedMsgModule;
   public readonly quoteModule: PgpBlockViewQuoteModule;
   public readonly errorModule: PgpBlockViewErrorModule;
   public readonly renderModule: PgpBlockViewRenderModule;
@@ -48,13 +44,11 @@ export class PgpBlockView extends View {
   constructor() {
     super();
     Ui.event.protect();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'hasPassword', 'signature', 'short']);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'signature']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
-    this.hasChallengePassword = uncheckedUrlParams.hasPassword === true;
     this.isOutgoing = uncheckedUrlParams.isOutgoing === true;
-    this.short = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'short');
     const senderEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'senderEmail');
     this.senderEmail = Str.parseEmail(senderEmail).email || '';
     this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
@@ -67,7 +61,6 @@ export class PgpBlockView extends View {
     // modules
     this.attachmentsModule = new PgpBlockViewAttachmentsModule(this);
     this.signatureModule = new PgpBlockViewSignatureModule(this);
-    this.pwdEncryptedMsgModule = new PgpBlockViewPwdEncryptedMsgModule(this);
     this.quoteModule = new PgpBlockViewQuoteModule(this);
     this.errorModule = new PgpBlockViewErrorModule(this);
     this.renderModule = new PgpBlockViewRenderModule(this);
