@@ -143,7 +143,17 @@ export class MsgBlockParser {
           const indexOfConfirmedBegin = potentialBeginHeader.indexOf(blockHeaderDef.begin);
           if (indexOfConfirmedBegin === 0) {
             if (begin > startAt) {
-              const potentialTextBeforeBlockBegun = origText.substring(startAt, begin).trim();
+              let potentialTextBeforeBlockBegun = origText.substring(startAt, begin);
+              if (!potentialTextBeforeBlockBegun.endsWith('\n')) {
+                // only replace blocks if they begin on their own line
+                // contains deliberate block: `-----BEGIN PGP PUBLIC KEY BLOCK-----\n...`
+                // contains deliberate block: `Hello\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n...`
+                // just plaintext (accidental block): `Hello -----BEGIN PGP PUBLIC KEY BLOCK-----\n...`
+                continue; // block treated as plaintext, not on dedicated line - considered accidental
+                // this will actually cause potential deliberate blocks that follow accidental block to be ignored
+                // but if the message already contains accidental (not on dedicated line) blocks, it's probably a good thing to ignore the rest
+              }
+              potentialTextBeforeBlockBegun = potentialTextBeforeBlockBegun.trim();
               if (potentialTextBeforeBlockBegun) {
                 result.found.push(MsgBlock.fromContent('plainText', potentialTextBeforeBlockBegun));
               }
