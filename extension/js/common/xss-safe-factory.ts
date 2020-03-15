@@ -5,7 +5,6 @@
 'use strict';
 
 import { Dict, Str, Url, UrlParams } from './core/common.js';
-
 import { Att } from './core/att.js';
 import { Browser } from './browser/browser.js';
 import { Catch } from './platform/catch.js';
