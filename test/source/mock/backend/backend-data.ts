@@ -83,8 +83,8 @@ export class BackendData {
         "DEFAULT_REMEMBER_PASS_PHRASE",
         "NO_KEY_MANAGER_PUB_LOOKUP"
       ],
-      "key_manager_url": "https://???/",
-      "enforce_keygen_algo": "rsa4096",
+      "key_manager_url": "http://localhost:8001/flowcrypt-email-key-manager",
+      "enforce_keygen_algo": "rsa2048",
       "disallow_attester_search_for_domains": []
     };
     if (domain === 'key-manager-autogen.flowcrypt.com') {
