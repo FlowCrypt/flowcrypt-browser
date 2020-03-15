@@ -32,7 +32,7 @@ export class MsgBlockParser {
         return { blocks, normalized };
       } else {
         if (continueAt <= startAt) {
-          Catch.report(`PgpArmordetect_blocks likely infinite loop: r.continue_at(${continueAt}) <= start_at(${startAt})`);
+          Catch.report(`MsgBlockParser.detectBlocks likely infinite loop: r.continueAt(${continueAt}) <= startAt(${startAt})`);
           return { blocks, normalized }; // prevent infinite loop
         }
         startAt = continueAt;
