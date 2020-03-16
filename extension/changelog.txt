@@ -1,5 +1,7 @@
 <div>
 
+version 7.7.1 on Mar 16, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/397?closed=1" target="_blank">Parsing</a>
+
 version 7.7.0 on Mar 14, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/394?closed=1" target="_blank">Enterprise PoC ready</a>
 
 version 7.6.9 on Mar 8, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/395?closed=1" target="_blank">Security review prep</a>
