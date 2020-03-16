@@ -37,6 +37,13 @@ export class Xss {
     return $(selector as any).replaceWith(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
   }
 
+  /**
+   * Sanitize HTML to protect from nasty content from untrusted sources
+   *
+   * This is the most tolerant sanitisation method we use.
+   * Typically we will only use this method for internally generated content,
+   * content that we already believe is safe but want to have a second layer of defense.
+   */
   public static htmlSanitize = (dirtyHtml: string): string => {
     Xss.throwIfNotSupported();
     return DOMPurify.sanitize(dirtyHtml, { // tslint:disable-line:oneliner-object-literal
@@ -47,6 +54,22 @@ export class Xss {
     });
   }
 
+  /**
+   * Sanitize HTML to protect from nasty user-generated external content, and make it "less rich"
+   *
+   * This method is less tolerant and sanitizes everything we don't belive should be sent as email content.
+   * Used when rendering rich-text emails (from untrusted sources - that is, all sources).
+   *
+   * @property {string} dirtyHtml     - HTML to be sanitized
+   * @property {string} imgHandling   - how should images be treated, with the following options:
+   *   - IMG-DEL: remove images, only leaving text
+   *   - IMG-KEEP: keep images as they are
+   *   - IMG-TO-LINK: transform images to clickable links that display the images inline upon click, as follows:
+   *          from: <img src="there" title="that">
+   *          to:   <a href="data:image/..." title="that" class="image_src_link" target="_blank" style="...">show image</a>
+   *          or:   <a href="https://..." title="that" class="image_src_link" target="_blank" style="...">show image (remote)</a>
+   *          (when rendered, we add event handler to `.image_src_link` that responds to a click and render the image)
+   */
   public static htmlSanitizeKeepBasicTags = (dirtyHtml: string, imgHandling: SanitizeImgHandling): string => {
     Xss.throwIfNotSupported();
     // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
@@ -97,6 +120,12 @@ export class Xss {
     return cleanHtml;
   }
 
+  /**
+   * Convert untrusted rich html to plain text, preserving newlines caused by div/p/h1/pre/br and similar tags,
+   * in a way that is consistent across browsers, unlike `element.textContent`. Maximum two consecutive newlines preserved.
+   *
+   * Will be used when generating a text/plain alternative to outgoing rich text email, or when quoting previous email in a reply.
+   */
   public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string): string => {
     Xss.throwIfNotSupported();
     let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, 'IMG-DEL');
@@ -144,7 +173,10 @@ export class Xss {
     }
   }
 
-  private static sanitizeHrefRegexp = () => { // allow href links that have same origin as our extension + cid + inline image
+  /**
+   * allow href links that have same origin as our extension + cid + inline image
+   */
+  private static sanitizeHrefRegexp = () => {
     if (typeof Xss.HREF_REGEX_CACHE === 'undefined') {
       if (window?.location?.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
         Xss.HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|data:image/|${Str.regexEscape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
