@@ -38,6 +38,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       }
     };
 
+    const pageDoesNotHaveReplyContainer = async (gmailPage: ControllablePage) => {
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });
+      expect(urls.length).to.equal(0);
+    };
+
     const openGmailPage = async (t: AvaContext, browser: BrowserHandle, path: string): Promise<ControllablePage> => {
       const url = TestUrls.gmail(0, path);
       const gmailPage = await browser.newPage(t, url);
@@ -152,6 +157,14 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitAndClick('@secure-reply-button');
       await Util.sleep(10);
       await pageHasReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
+    }));
+
+    ava.default('mail.google.com - plain reply to encrypted message', testWithBrowser('compatibility', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/WhctKJTrdTXcmgcCRgXDpVnfjJNnjjLzSvcMDczxWPMsBTTfPxRDMrKCJClzDHtbXlhnwtV'); // encrypted convo
+      await gmailPage.waitAndClick('[data-tooltip="Reply"]');
+      await Util.sleep(5);
+      await pageDoesNotHaveReplyContainer(gmailPage);
+      await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
     }));
 
     ava.default('mail.google.com - pubkey file gets rendered', testWithBrowser('compatibility', async (t, browser) => {

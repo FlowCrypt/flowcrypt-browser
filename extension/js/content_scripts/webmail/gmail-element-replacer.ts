@@ -45,6 +45,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   max-width: 1px !important; position: absolute !important; z-index: -1000 !important`;
   private currentlyEvaluatingStandardComposeBoxRecipients = false;
   private currentlyReplacingAtts = false;
+  private keepNextStandardReplyBox = false;
 
   private sel = { // gmail_variant=standard|new
     convoRoot: 'div.if',
@@ -168,6 +169,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             $(secureReplyBtn).click();
           }
         });
+        gmailReplyBtn.click(Ui.event.handle(() => { this.keepNextStandardReplyBox = true; }));
       }
     }
     // conversation top-right icon buttons
@@ -522,6 +524,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const alreadyHasEncryptedReplyBox = Boolean(convoRootEl.find('div.reply_message_iframe_container').filter(':visible').length);
       let midConvoDraft = false;
       if (doReplace) {
+        if (this.keepNextStandardReplyBox) {
+          for (const replyBoxEl of newReplyBoxes) {
+            $(replyBoxEl).addClass('reply_message_evaluated');
+          }
+          this.keepNextStandardReplyBox = false;
+          return;
+        }
         for (const replyBoxEl of newReplyBoxes.reverse()) { // looping in reverse
           const replyBox = $(replyBoxEl);
           if (!midConvoDraft && !alreadyHasEncryptedReplyBox) { // either is a draft in the middle, or the convo already had (last) box replaced: should also be useless draft
