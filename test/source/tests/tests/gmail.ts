@@ -40,7 +40,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     const pageDoesNotHaveReplyContainer = async (gmailPage: ControllablePage) => {
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });
-      expect(urls).to.be.empty;
+      expect(urls.length).to.equal(0);
     };
 
     const openGmailPage = async (t: AvaContext, browser: BrowserHandle, path: string): Promise<ControllablePage> => {
@@ -159,7 +159,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pageHasReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
     }));
 
-    ava.default.only('mail.google.com - plain reply to encrypted message', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('mail.google.com - plain reply to encrypted message', testWithBrowser('compatibility', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/WhctKJTrdTXcmgcCRgXDpVnfjJNnjjLzSvcMDczxWPMsBTTfPxRDMrKCJClzDHtbXlhnwtV'); // encrypted convo
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
       await Util.sleep(5);
