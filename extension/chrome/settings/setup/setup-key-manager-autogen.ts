@@ -54,7 +54,9 @@ export class SetupKeyManagerAutogenModule {
         await this.view.saveKeys(keys, opts);
       } else { // generate keys and store them on key manager
         const { full_name } = await AcctStore.get(this.view.acctEmail, ['full_name']);
-        const generated = await PgpKey.create([{ name: full_name || '', email: this.view.acctEmail }], keygenAlgo, passphrase);
+        const expireInMonths = this.view.orgRules.getEnforcedKeygenExpirationMonths();
+        const pgpUids = [{ name: full_name || '', email: this.view.acctEmail }];
+        const generated = await PgpKey.create(pgpUids, keygenAlgo, passphrase, expireInMonths);
         const decryptablePrv = await PgpKey.read(generated.private);
         const generatedKeyFingerprint = await PgpKey.fingerprint(decryptablePrv);
         if (! await PgpKey.decrypt(decryptablePrv, passphrase)) {

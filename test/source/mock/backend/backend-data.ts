@@ -90,13 +90,13 @@ export class BackendData {
       return keyManagerAutogenRules;
     }
     if (domain === 'key-manager-server-offline.flowcrypt.com') {
-      return {
-        ...keyManagerAutogenRules,
-        "key_manager_url": "https://localhost:1230/intentionally-wrong",
-      };
+      return { ...keyManagerAutogenRules, "key_manager_url": "https://localhost:1230/intentionally-wrong", };
     }
     if (domain === 'key-manager-no-pub-lookup.flowcrypt.com') {
       return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_KEY_MANAGER_PUB_LOOKUP'] };
+    }
+    if (domain === 'key-manager-keygen-expiration.flowcrypt.com') {
+      return { ...keyManagerAutogenRules, "enforce_keygen_expire_months": 1 };
     }
     return {
       "flags": []

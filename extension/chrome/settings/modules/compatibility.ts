@@ -117,7 +117,7 @@ View.run(class CompatibilityView extends View {
           this.appendResult(`${sgn} Verified: ${await this.test(async () => sig.verified)}`);
         }
       }
-      this.appendResult(`${kn} internal dateBeforeExpiration: ${await this.test(async () => PgpKey.dateBeforeExpiration(key))}`);
+      this.appendResult(`${kn} internal dateBeforeExpiration: ${await this.test(async () => PgpKey.dateBeforeExpirationIfAlreadyExpired(key))}`);
       this.appendResult(`${kn} internal usableButExpired: ${await this.test(async () => PgpKey.usableButExpired(key))}`);
     }
   }

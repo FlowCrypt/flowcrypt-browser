@@ -16,6 +16,7 @@ export type DomainRulesJson = {
   key_manager_url?: string,
   disallow_attester_search_for_domains?: string[],
   enforce_keygen_algo?: string,
+  enforce_keygen_expire_months?: number,
 };
 
 /**
@@ -84,6 +85,13 @@ export class OrgRules {
    */
   public getEnforcedKeygenAlgo = (): KeyAlgo | undefined => {
     return this.domainRules.enforce_keygen_algo as KeyAlgo | undefined;
+  }
+
+  /**
+   * Some orgs want to have newly generated keys include self-signatures that expire some time in the future.
+   */
+  public getEnforcedKeygenExpirationMonths = (): number | undefined => {
+    return this.domainRules.enforce_keygen_expire_months;
   }
 
   // bools
