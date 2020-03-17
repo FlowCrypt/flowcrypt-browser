@@ -210,6 +210,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
       expect(fromKm).to.exist;
       expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(fromKm.fingerprint));
+      expect(await myKeyFrame.read('@content-key-expiration')).to.equal('Key does not expire');
       await SettingsPageRecipe.closeDialog(settingsPage);
       await Util.sleep(2);
       // check that it does not offer any pass phrase options
@@ -263,6 +264,22 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await ComposePageRecipe.fillMsg(composePage, { to: dontLookupEmail }, 'must skip EKM lookup');
       await composePage.waitForContent('.email_address.no_pgp', dontLookupEmail); // if it tried EKM, this would be err
       await composePage.waitAll('@input-password');
+    }));
+
+    ava.default('expire@key-manager-keygen-expiration.flowcrypt.com - OrgRule enforce_keygen_expire_months: 1', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'expire@key-manager-keygen-expiration.flowcrypt.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoKeygen(settingsPage);
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
+      await Util.sleep(1);
+      await myKeyFrame.waitAll('@content-fingerprint');
+      const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
+      expect(fromKm).to.exist;
+      expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(fromKm.fingerprint));
+      const approxMonth = [29, 30, 31].map(days => Str.datetimeToDate(Str.fromDate(new Date(Date.now() + 1000 * 60 * 60 * 24 * days))));
+      expect(await myKeyFrame.read('@content-key-expiration')).to.be.oneOf(approxMonth);
+      await SettingsPageRecipe.closeDialog(settingsPage);
     }));
 
   }

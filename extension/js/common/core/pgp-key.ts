@@ -66,8 +66,10 @@ export interface KeyDetails {
 export type PrvPacket = (OpenPGP.packet.SecretKey | OpenPGP.packet.SecretSubkey);
 
 export class PgpKey {
-  public static create = async (userIds: { name: string, email: string }[], variant: KeyAlgo, passphrase: string):
-    Promise<{ private: string, public: string }> => {
+
+  public static create = async (
+    userIds: { name: string, email: string }[], variant: KeyAlgo, passphrase: string, expireInMonths: number | undefined
+  ): Promise<{ private: string, public: string }> => {
     const opt: OpenPGP.KeyOptions = { userIds, passphrase };
     if (variant === 'curve25519') {
       opt.curve = 'curve25519';
@@ -75,6 +77,9 @@ export class PgpKey {
       opt.numBits = 2048;
     } else {
       opt.numBits = 4096;
+    }
+    if (expireInMonths) {
+      opt.keyExpirationTime = 60 * 60 * 24 * 30 * expireInMonths; // seconds from now
     }
     const k = await opgp.generateKey(opt);
     return { public: k.publicKeyArmored, private: k.privateKeyArmored };
@@ -285,7 +290,7 @@ export class PgpKey {
     if (await key.getEncryptionKey()) {
       return false; // good key - cannot be expired
     }
-    const oneSecondBeforeExpiration = await PgpKey.dateBeforeExpiration(key);
+    const oneSecondBeforeExpiration = await PgpKey.dateBeforeExpirationIfAlreadyExpired(key);
     if (typeof oneSecondBeforeExpiration === 'undefined') {
       return false; // key does not expire
     }
@@ -293,13 +298,14 @@ export class PgpKey {
     return Boolean(await key.getEncryptionKey(undefined, oneSecondBeforeExpiration));
   }
 
-  public static dateBeforeExpiration = async (key: OpenPGP.key.Key): Promise<Date | undefined> => {
-    const openPgpKey = typeof key === 'string' ? await PgpKey.read(key) : key;
-    const expires = await openPgpKey.getExpirationTime('encrypt');
-    if (expires instanceof Date && expires.getTime() < Date.now()) { // expired
-      return new Date(expires.getTime() - 1000);
-    }
-    return undefined;
+  public static dateBeforeExpirationIfAlreadyExpired = async (key: OpenPGP.key.Key): Promise<Date | undefined> => {
+    const expiration = await PgpKey.expiration(key, 'encrypt');
+    return expiration && await PgpKey.expired(key) ? new Date(expiration.getTime() - 1000) : undefined;
+  }
+
+  public static expiration = async (key: OpenPGP.key.Key, capability: 'encrypt' | 'encrypt_sign' | 'sign' = 'encrypt') => {
+    const expires = await key.getExpirationTime(capability); // returns Date or Infinity
+    return expires instanceof Date ? expires : undefined;
   }
 
   public static parseDetails = async (armored: string): Promise<{ original: string, normalized: string, keys: KeyDetails[] }> => {

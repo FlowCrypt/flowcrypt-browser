@@ -111,7 +111,7 @@ export class ContactStore extends AbstractStore {
       if (!lastSig) {
         lastSig = await PgpKey.lastSig(k);
       }
-      const expiresOnMs = Number(await PgpKey.dateBeforeExpiration(k)) || undefined;
+      const expiresOnMs = Number(await PgpKey.dateBeforeExpirationIfAlreadyExpired(k)) || undefined;
       return {
         email: validEmail,
         name: name || null,

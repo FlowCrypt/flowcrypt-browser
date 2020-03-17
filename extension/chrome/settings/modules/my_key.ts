@@ -28,6 +28,7 @@ View.run(class MyKeyView extends View {
   private readonly myKeyUserIdsUrl: string;
   private readonly myKeyUpdateUrl: string;
   private keyInfo!: KeyInfo;
+  private pubKey!: OpenPGP.key.Key;
   private orgRules!: OrgRules;
   private pubLookup!: PubLookup;
 
@@ -44,12 +45,15 @@ View.run(class MyKeyView extends View {
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
     [this.keyInfo] = await KeyStore.get(this.acctEmail, [this.longid]);
+    this.pubKey = await PgpKey.read(this.keyInfo.public);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
     $('.action_view_update').attr('href', this.myKeyUpdateUrl);
     $('.fingerprint').text(Str.spaced(this.keyInfo.fingerprint));
     $('.email').text(this.acctEmail);
-    await this.setPubkeyContainer();
+    const expiration = await PgpKey.expiration(this.pubKey);
+    $('.key_expiration').text(expiration ? Str.datetimeToDate(Str.fromDate(expiration)) : 'Key does not expire');
+    await this.renderPubkeyShareableLink();
     await initPassphraseToggle(['input_passphrase']);
   }
 
@@ -64,7 +68,7 @@ View.run(class MyKeyView extends View {
     new ClipboardJS('.action_copy_pubkey, .action_copy_prv', clipboardOpts); // tslint:disable-line:no-unused-expression no-unsafe-any
   }
 
-  private setPubkeyContainer = async () => {
+  private renderPubkeyShareableLink = async () => {
     try {
       const result = await this.pubLookup.attester.lookupEmail(this.acctEmail);
       const url = Backend.url('pubkey', this.acctEmail);

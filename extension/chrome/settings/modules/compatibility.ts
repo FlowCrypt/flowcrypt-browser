@@ -63,7 +63,7 @@ View.run(class CompatibilityView extends View {
       }
       this.appendResult(`${kn} Primary User: ${await this.test(async () => {
         const user = await key.getPrimaryUser();
-        return user?.user?.userId || 'No primary user';
+        return user?.user?.userId?.userid || 'No primary user';
       })}`);
       this.appendResult(`${kn} Fingerprint: ${await this.test(async () => Str.spaced(await PgpKey.fingerprint(key) || 'err'))}`);
       this.appendResult(`${kn} Subkeys: ${await this.test(async () => key.subKeys ? key.subKeys.length : key.subKeys)}`);
@@ -117,7 +117,8 @@ View.run(class CompatibilityView extends View {
           this.appendResult(`${sgn} Verified: ${await this.test(async () => sig.verified)}`);
         }
       }
-      this.appendResult(`${kn} internal dateBeforeExpiration: ${await this.test(async () => PgpKey.dateBeforeExpiration(key))}`);
+      this.appendResult(`${kn} expiration: ${await this.test(async () => PgpKey.expiration(key))}`);
+      this.appendResult(`${kn} internal dateBeforeExpiration: ${await this.test(async () => PgpKey.dateBeforeExpirationIfAlreadyExpired(key))}`);
       this.appendResult(`${kn} internal usableButExpired: ${await this.test(async () => PgpKey.usableButExpired(key))}`);
     }
   }

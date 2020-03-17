@@ -126,13 +126,13 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const usableFrom: number[] = [];
     for (const armoredPubkey of pubs) {
       const { keys: [pub] } = await opgp.key.readArmored(armoredPubkey.pubkey);
-      const oneSecondBeforeExpiration = await PgpKey.dateBeforeExpiration(pub);
+      const oneSecondBeforeExpiration = await PgpKey.dateBeforeExpirationIfAlreadyExpired(pub);
       usableFrom.push(pub.getCreationTime().getTime());
-      if (typeof oneSecondBeforeExpiration !== 'undefined') { // key does expire
+      if (typeof oneSecondBeforeExpiration !== 'undefined') { // key is expired
         usableUntil.push(oneSecondBeforeExpiration.getTime());
       }
     }
-    if (!usableUntil.length) { // none of the keys expire
+    if (!usableUntil.length) { // none of the keys are expired
       return undefined;
     }
     if (Math.max(...usableUntil) > Date.now()) { // all keys either don't expire or expire in the future

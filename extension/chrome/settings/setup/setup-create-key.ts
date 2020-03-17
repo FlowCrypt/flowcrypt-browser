@@ -63,8 +63,10 @@ export class SetupCreateKeyModule {
   public createSaveKeyPair = async (options: SetupOptions, keyAlgo: KeyAlgo) => {
     await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.orgRules);
     const { full_name } = await AcctStore.get(this.view.acctEmail, ['full_name']);
+    const pgpUids = [{ name: full_name || '', email: this.view.acctEmail }]; // todo - add all addresses?
+    const expireMonths = this.view.orgRules.getEnforcedKeygenExpirationMonths();
     try {
-      const key = await PgpKey.create([{ name: full_name || '', email: this.view.acctEmail }], keyAlgo, options.passphrase); // todo - add all addresses?
+      const key = await PgpKey.create(pgpUids, keyAlgo, options.passphrase, expireMonths);
       const prv = await PgpKey.read(key.private);
       await this.view.saveKeys([prv], options);
     } catch (e) {
