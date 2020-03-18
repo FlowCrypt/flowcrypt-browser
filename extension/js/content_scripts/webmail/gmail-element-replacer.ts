@@ -535,8 +535,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               $(el).closest('.reply_message_evaluated').removeClass('reply_message_evaluated');
               this.removeNextReplyBoxBorders = true;
             }));
-            notification.append(swithToEncryptedReply);
-            $(replyBoxEl).prepend(notification);
+            notification.append(swithToEncryptedReply); // xss-direct
+            $(replyBoxEl).prepend(notification); // xss-direct
           }
           this.keepNextStandardReplyBox = false;
           return;
