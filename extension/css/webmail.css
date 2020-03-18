@@ -37,6 +37,19 @@ div.webmail_notifications div.webmail_notification a:hover { text-decoration: no
 body.cryptup_inbox div.webmail_notifications { position: fixed; }
 body.cryptup_outlook div.webmail_notifications div.webmail_notification { margin-top: 10px; }
 
+.error_notification {
+  background: #c53929;
+  color: #fff;
+  margin-top: -1px;
+  padding: 12px;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+.error_notification a {
+  color: #fff !important;
+}
+
 /* buttons body.cryptup_inbox */
 body.cryptup_gmail_new .new_message_button::before { background-image: url("/img/logo/logo.svg"); }
 
@@ -203,10 +216,11 @@ iframe.reply_message {
   border: none;
 }
 
-div.remove_borders {
+.remove_borders {
   border: none !important;
   padding: 0 !important;
   margin: 0 !important;
+  box-shadow: none !important;
 }
 
 span.pgp_attachment {

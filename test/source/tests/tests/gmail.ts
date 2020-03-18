@@ -165,6 +165,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await Util.sleep(5);
       await pageDoesNotHaveReplyContainer(gmailPage);
       await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
+      await gmailPage.waitForContent('.reply_message_evaluated .error_notification', 'The last message was encrypted, but you are composing a reply without encryption.');
     }));
 
     ava.default('mail.google.com - pubkey file gets rendered', testWithBrowser('compatibility', async (t, browser) => {

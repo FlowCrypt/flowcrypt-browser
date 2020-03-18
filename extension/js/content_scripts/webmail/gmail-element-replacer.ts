@@ -46,6 +46,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private currentlyEvaluatingStandardComposeBoxRecipients = false;
   private currentlyReplacingAtts = false;
   private keepNextStandardReplyBox = false;
+  private removeNextReplyBoxBorders = false;
 
   private sel = { // gmail_variant=standard|new
     convoRoot: 'div.if',
@@ -527,12 +528,25 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         if (this.keepNextStandardReplyBox) {
           for (const replyBoxEl of newReplyBoxes) {
             $(replyBoxEl).addClass('reply_message_evaluated');
+            const notification = $('<div class="error_notification">The last message was encrypted, but you are composing a reply without encryption. </div>');
+            const swithToEncryptedReply = $('<a href>Switch to encrypted reply</a>');
+            swithToEncryptedReply.click(Ui.event.handle((el, ev: JQuery.Event) => {
+              ev.preventDefault();
+              $(el).closest('.reply_message_evaluated').removeClass('reply_message_evaluated');
+              this.removeNextReplyBoxBorders = true;
+            }));
+            notification.append(swithToEncryptedReply);
+            $(replyBoxEl).prepend(notification);
           }
           this.keepNextStandardReplyBox = false;
           return;
         }
         for (const replyBoxEl of newReplyBoxes.reverse()) { // looping in reverse
           const replyBox = $(replyBoxEl);
+          if (this.removeNextReplyBoxBorders) {
+            replyBox.addClass('remove_borders');
+            this.removeNextReplyBoxBorders = false;
+          }
           if (!midConvoDraft && !alreadyHasEncryptedReplyBox) { // either is a draft in the middle, or the convo already had (last) box replaced: should also be useless draft
             const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embeddedReply(replyParams, editable)}</div>`;
             if (replyBox.hasClass('I5')) { // activated standard reply box: cannot remove because would cause issues / gmail freezing
