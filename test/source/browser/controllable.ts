@@ -151,6 +151,7 @@ abstract class ControllableBase {
   }
 
   public value = async (selector: string): Promise<string> => {
+    await this.waitAll(selector);
     return await this.target.evaluate((s) => {
       const e = document.querySelector(s); // this will get evaluated in the browser
       if (e.tagName === 'SELECT') {

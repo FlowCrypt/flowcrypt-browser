@@ -20,6 +20,7 @@ export const acctsWithoutMockData = [
   'fail@key-manager-server-offline.flowcrypt.com',
   'user@key-manager-no-pub-lookup.flowcrypt.com',
   'expire@key-manager-keygen-expiration.flowcrypt.com',
+  'setup@prv-create-no-prv-backup.flowcrypt.com',
 ];
 
 export const mock = async (logger: (line: string) => void) => {

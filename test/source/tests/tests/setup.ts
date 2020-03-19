@@ -23,6 +23,9 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
+    // note - `SetupPageRecipe.generateKey` tests are in `defineFlakyTests` - running serially
+    // because the keygen CPU spike can cause trouble to other concurrent tests
+
     ava.todo('setup - no connection when pulling backup - retry prompt shows and works');
 
     ava.todo('setup - simple - no connection when making a backup - retry prompt shows');

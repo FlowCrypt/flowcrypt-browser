@@ -98,6 +98,11 @@ export class BackendData {
     if (domain === 'key-manager-keygen-expiration.flowcrypt.com') {
       return { ...keyManagerAutogenRules, "enforce_keygen_expire_months": 1 };
     }
+    if (domain === 'prv-create-no-prv-backup.flowcrypt.com') {
+      // org is allowed to create new keys in the plugin, without EKM, but no backups are allowed
+      // not a sensible choice for production deployments (no backups and no key management), but useful for demos
+      return { "flags": ["NO_PRV_BACKUP"], "enforce_keygen_algo": "rsa2048" };
+    }
     return {
       "flags": []
     };

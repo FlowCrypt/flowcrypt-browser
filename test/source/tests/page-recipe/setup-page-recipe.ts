@@ -21,12 +21,30 @@ type ManualEnterOpts = {
   fillOnly?: boolean,
 };
 
+type CreateKeyOpts = {
+  usedPgpBefore?: boolean,
+  submitPubkey?: boolean,
+  enforcedAlgo?: string | boolean,
+};
+
 export class SetupPageRecipe extends PageRecipe {
 
-  // eslint-disable-next-line max-len
-  public static createKey = async (settingsPage: ControllablePage, keyTitle: string, backup: "none" | "email" | "file", { usedPgpBefore = false, submitPubkey = false }: { usedPgpBefore?: boolean, submitPubkey?: boolean } = {}) => {
+  public static createKey = async (
+    settingsPage: ControllablePage,
+    keyTitle: string,
+    backup: 'none' | 'email' | 'file' | 'disabled',
+    { usedPgpBefore = false, submitPubkey = false, enforcedAlgo = false }: CreateKeyOpts = {}
+  ) => {
     await SetupPageRecipe.createBegin(settingsPage, keyTitle, { usedPgpBefore });
-    await settingsPage.waitAndClick('@input-step2bmanualcreate-backup-inbox'); // uncheck
+    if (enforcedAlgo) {
+      expect(await settingsPage.value('@input-step2bmanualcreate-key-type')).to.equal(enforcedAlgo);
+      expect(await settingsPage.isDisabled('@input-step2bmanualcreate-key-type')).to.equal(true);
+    }
+    if (backup === 'disabled') { // user not given a backup choice due to NO_PRV_BACKUP OrgRule
+      await settingsPage.notPresent('@input-step2bmanualcreate-backup-inbox');
+    } else { // uncheck - because want to choose backup manually
+      await settingsPage.waitAndClick('@input-step2bmanualcreate-backup-inbox');
+    }
     if (!submitPubkey) {
       await settingsPage.waitAndClick('@input-step2bmanualcreate-submit-pubkey'); // uncheck
     }
@@ -39,10 +57,13 @@ export class SetupPageRecipe extends PageRecipe {
       throw new Error('tests.setup_manual_create options.backup=email not implemented');
     } else if (backup === 'file') {
       await settingsPage.waitAndClick('@input-backup-step3manual-file');
+    } else if (backup !== 'disabled') {
+      throw new Error(`Unknown backup method: ${backup}`);
     }
     await settingsPage.waitAndClick('@action-backup-step3manual-continue');
     if (backup === 'file') {
-      await settingsPage.waitAll('@ui-modal-info', { timeout: 60 }); // explicit wait first with longer timeout - creating key can take a while
+      // explicit wait first with longer timeout - creating key can take a while, particularly when other tests run in parallel
+      await settingsPage.waitAll('@ui-modal-info', { timeout: 60 });
       await settingsPage.waitAndRespondToModal('info', 'confirm', 'Downloading private key backup file');
     }
     await settingsPage.waitAll('@action-step4done-account-settings', { timeout: 60 }); // create key timeout
