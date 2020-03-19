@@ -60,11 +60,12 @@ export class SetupPageRecipe extends PageRecipe {
     } else if (backup !== 'disabled') {
       throw new Error(`Unknown backup method: ${backup}`);
     }
-    await settingsPage.waitAndClick('@action-backup-step3manual-continue');
-    if (backup === 'file') {
-      // explicit wait first with longer timeout - creating key can take a while, particularly when other tests run in parallel
-      await settingsPage.waitAll('@ui-modal-info', { timeout: 60 });
-      await settingsPage.waitAndRespondToModal('info', 'confirm', 'Downloading private key backup file');
+    if (backup !== 'disabled') {
+      await settingsPage.waitAndClick('@action-backup-step3manual-continue');
+      if (backup === 'file') { // explicit wait first with longer timeout - keygen can take a while, particularly with other tests in parallel
+        await settingsPage.waitAll('@ui-modal-info', { timeout: 60 });
+        await settingsPage.waitAndRespondToModal('info', 'confirm', 'Downloading private key backup file');
+      }
     }
     await settingsPage.waitAll('@action-step4done-account-settings', { timeout: 60 }); // create key timeout
     await settingsPage.waitAndClick('@action-step4done-account-settings');

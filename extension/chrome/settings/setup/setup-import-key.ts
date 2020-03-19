@@ -30,9 +30,9 @@ export class SetupImportKeyModule {
     try {
       const checked = await this.view.keyImportUi.checkPrv(this.view.acctEmail, String($('#step_2b_manual_enter .input_private_key').val()), options.passphrase);
       Xss.sanitizeRender('#step_2b_manual_enter .action_add_private_key', Ui.spinner('white'));
-      await this.view.saveKeys([checked.encrypted], options);
+      await this.view.saveKeysAndPassPhrase([checked.encrypted], options);
       await this.view.preFinalizeSetup(options);
-      await this.view.finalizeSetup(options);
+      await this.view.submitPublicKeysAndFinalizeSetup(options);
       await this.view.setupRender.renderSetupDone();
     } catch (e) {
       if (e instanceof UserAlert) {
@@ -58,9 +58,9 @@ export class SetupImportKeyModule {
       this.view.setupRender.displayBlock('step_2b_manual_enter');
       return;
     }
-    await this.view.saveKeys([fixedPrv], options);
+    await this.view.saveKeysAndPassPhrase([fixedPrv], options);
     await this.view.preFinalizeSetup(options);
-    await this.view.finalizeSetup(options);
+    await this.view.submitPublicKeysAndFinalizeSetup(options);
     await this.view.setupRender.renderSetupDone();
   }
 }
