@@ -122,6 +122,10 @@ export class SetupView extends View {
     if (this.orgRules.getEnforcedKeygenAlgo()) {
       $('.key_type').val(this.orgRules.getEnforcedKeygenAlgo()!).prop('disabled', true);
     }
+    if (!this.orgRules.canBackupKeys()) {
+      $('.input_backup_inbox').prop('checked', false).prop('disabled', true);
+      $('.remove_if_backup_not_allowed').remove();
+    }
     this.tabId = await BrowserMsg.requiredTabId();
     await this.setupRender.renderInitial();
   }
@@ -180,19 +184,19 @@ export class SetupView extends View {
     await AcctStore.set(this.acctEmail, { tmp_submit_main: options.submit_main, tmp_submit_all: options.submit_all });
   }
 
-  public finalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
+  public submitPublicKeysAndFinalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
     const [primaryKi] = await KeyStore.get(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
       await this.submitPublicKeyIfNeeded(primaryKi.public, { submit_main, submit_all });
     } catch (e) {
-      return await Settings.promptToRetry(e, Lang.setup.failedToSubmitToAttester, () => this.finalizeSetup({ submit_main, submit_all }));
+      return await Settings.promptToRetry(e, Lang.setup.failedToSubmitToAttester, () => this.submitPublicKeysAndFinalizeSetup({ submit_main, submit_all }));
     }
     await AcctStore.set(this.acctEmail, { setup_date: Date.now(), setup_done: true, cryptup_enabled: true });
     await AcctStore.remove(this.acctEmail, ['tmp_submit_main', 'tmp_submit_all']);
   }
 
-  public saveKeys = async (prvs: OpenPGP.key.Key[], options: SetupOptions) => {
+  public saveKeysAndPassPhrase = async (prvs: OpenPGP.key.Key[], options: SetupOptions) => {
     for (const prv of prvs) {
       const longid = await PgpKey.longid(prv);
       if (!longid) {

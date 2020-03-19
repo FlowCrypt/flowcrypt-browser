@@ -46,7 +46,7 @@ export class SetupRenderModule {
         $('#content').text(`Setup session expired. To set up FlowCrypt, please click the FlowCrypt icon on top right.`);
         return;
       }
-      await this.view.finalizeSetup({ submit_all: tmp_submit_all, submit_main: tmp_submit_main });
+      await this.view.submitPublicKeysAndFinalizeSetup({ submit_all: tmp_submit_all, submit_main: tmp_submit_main });
       await this.renderSetupDone();
     } else if (this.view.orgRules.mustAutoImportOrAutogenPrvWithKeyManager()) {
       await this.view.setupKeyManagerAutogen.getKeyFromKeyManagerOrAutogenAndStoreItThenRenderSetupDone();

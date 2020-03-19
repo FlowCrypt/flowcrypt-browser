@@ -3,7 +3,6 @@
 import * as ava from 'ava';
 
 import { TestVariant, Util } from '../../util';
-
 import { BrowserRecipe } from '../browser-recipe';
 import { SetupPageRecipe } from '../page-recipe/setup-page-recipe';
 import { TestWithBrowser } from '../../test';
@@ -12,7 +11,6 @@ import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
 import { ComposePageRecipe } from '../page-recipe/compose-page-recipe';
 import { Str } from '../../core/common';
 import { MOCK_KM_LAST_INSERTED_KEY } from '../../mock/key-manager/key-manager-endpoints';
-import { PgpKey } from '../../core/pgp-key';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -22,6 +20,9 @@ import { PgpKey } from '../../core/pgp-key';
 export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
+
+    // note - `SetupPageRecipe.createKey` tests are in `defineFlakyTests` - running serially
+    // because the keygen CPU spike can cause trouble to other concurrent tests
 
     ava.todo('setup - no connection when pulling backup - retry prompt shows and works');
 

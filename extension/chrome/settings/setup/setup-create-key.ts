@@ -26,7 +26,7 @@ export class SetupCreateKeyModule {
     try {
       $('#step_2a_manual_create input').prop('disabled', true);
       Xss.sanitizeRender('#step_2a_manual_create .action_create_private', Ui.spinner('white') + 'just a minute');
-      const options: SetupOptions = {
+      const opts: SetupOptions = {
         passphrase: String($('#step_2a_manual_create .input_password').val()),
         passphrase_save: Boolean($('#step_2a_manual_create .input_passphrase_save').prop('checked')),
         submit_main: this.view.shouldSubmitPubkey('#step_2a_manual_create .input_submit_key'),
@@ -34,11 +34,16 @@ export class SetupCreateKeyModule {
         recovered: false,
       };
       const keyAlgo = this.view.orgRules.getEnforcedKeygenAlgo() || $('#step_2a_manual_create .key_type').val() as KeyAlgo;
-      const action = $('#step_2a_manual_create .input_backup_inbox').prop('checked') ? 'setup_automatic' : 'setup_manual';
-      await this.createSaveKeyPair(options, keyAlgo);
-      await this.view.preFinalizeSetup(options);
-      // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
-      window.location.href = Url.create('modules/backup.htm', { action, acctEmail: this.view.acctEmail, idToken: this.view.idToken });
+      await this.createSaveKeyPair(opts, keyAlgo);
+      if (this.view.orgRules.canBackupKeys()) {
+        await this.view.preFinalizeSetup(opts);
+        const action = $('#step_2a_manual_create .input_backup_inbox').prop('checked') ? 'setup_automatic' : 'setup_manual';
+        // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
+        window.location.href = Url.create('modules/backup.htm', { action, acctEmail: this.view.acctEmail, idToken: this.view.idToken });
+      } else {
+        await this.view.submitPublicKeysAndFinalizeSetup(opts);
+        await this.view.setupRender.renderSetupDone();
+      }
     } catch (e) {
       Catch.reportErr(e);
       await Ui.modal.error(`There was an error, please try again.\n\n(${String(e)})`);
@@ -68,7 +73,7 @@ export class SetupCreateKeyModule {
     try {
       const key = await PgpKey.create(pgpUids, keyAlgo, options.passphrase, expireMonths);
       const prv = await PgpKey.read(key.private);
-      await this.view.saveKeys([prv], options);
+      await this.view.saveKeysAndPassPhrase([prv], options);
     } catch (e) {
       Catch.reportErr(e);
       Xss.sanitizeRender('#step_2_easy_generating, #step_2a_manual_create', Lang.setup.fcDidntSetUpProperly);

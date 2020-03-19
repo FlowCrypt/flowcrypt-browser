@@ -124,7 +124,7 @@
           Remember Pass Phrase after closing browser
         </label>
       </div>
-      <div class="line left">
+      <div class="line left remove_if_backup_not_allowed">
         <label data-test="input-step2bmanualcreate-backup-inbox">
           <input type="checkbox" class="input_backup_inbox" value="" name="check" checked="" />
           Back up encrypted private key in inbox (recommended)
@@ -148,9 +148,9 @@
       </div>
 
       <div class="line left">
-        <label data-test="input-step2bmanualcreate-key-type">
+        <label>
           Encryption key type:
-          <select class="key_type">
+          <select class="key_type" data-test="input-step2bmanualcreate-key-type">
             <option value="curve25519">ECC Curve25519</option>
             <option value="rsa2048">RSA 2048bit</option>
             <option value="rsa4096">RSA 4096bit</option>

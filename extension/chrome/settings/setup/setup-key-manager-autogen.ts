@@ -51,7 +51,7 @@ export class SetupKeyManagerAutogenModule {
           }
           await PgpKey.encrypt(prv, passphrase);
         }
-        await this.view.saveKeys(keys, opts);
+        await this.view.saveKeysAndPassPhrase(keys, opts);
       } else { // generate keys and store them on key manager
         const { full_name } = await AcctStore.get(this.view.acctEmail, ['full_name']);
         const expireInMonths = this.view.orgRules.getEnforcedKeygenExpirationMonths();
@@ -64,9 +64,9 @@ export class SetupKeyManagerAutogenModule {
         }
         const storePrvOnKm = () => this.view.keyManager!.storePrivateKey(this.view.idToken!, decryptablePrv.armor(), decryptablePrv.toPublic().armor(), generatedKeyFingerprint!);
         await Settings.retryUntilSuccessful(storePrvOnKm, 'Failed to store newly generated key on FlowCrypt Email Key Manager');
-        await this.view.saveKeys([await PgpKey.read(generated.private)], opts); // store encrypted key + pass phrase locally
+        await this.view.saveKeysAndPassPhrase([await PgpKey.read(generated.private)], opts); // store encrypted key + pass phrase locally
       }
-      await this.view.finalizeSetup(opts);
+      await this.view.submitPublicKeysAndFinalizeSetup(opts);
       await this.view.setupRender.renderSetupDone();
     } catch (e) {
       if (ApiErr.isNetErr(e) && await Api.isInternetAccessible()) { // frendly message when key manager is down, helpful during initial infrastructure setup
