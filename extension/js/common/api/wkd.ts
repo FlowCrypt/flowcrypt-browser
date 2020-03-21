@@ -15,6 +15,10 @@ import { PubkeySearchResult } from './pub-lookup.js';
 
 export class Wkd extends Api {
 
+  // https://datatracker.ietf.org/doc/draft-koch-openpgp-webkey-service/?include_text=1
+  // https://www.sektioneins.de/en/blog/18-11-23-gnupg-wkd.html
+  // https://metacode.biz/openpgp/web-key-directory
+
   constructor(private myOwnDomain: string) {
     super();
   }
@@ -26,7 +30,8 @@ export class Wkd extends Api {
     }
     const [user, recipientDomain] = parts;
     const hu = opgp.util.encodeZBase32(await opgp.crypto.hash.digest(opgp.enums.hash.sha1, Buf.fromUtfStr(user)));
-    const url = `https://${recipientDomain}/.well-known/openpgpkey/hu/${hu}`;
+    // todo - could also search on `https://openpgpkey.{domain}/.well-known/openpgpkey/{domain}/hu/{hu}?l={user}`
+    const url = `https://${recipientDomain}/.well-known/openpgpkey/hu/${hu}?l=${encodeURIComponent(user)}`;
     let binary: Buf;
     try {
       binary = await Wkd.download(url, undefined, 4);
@@ -41,7 +46,7 @@ export class Wkd extends Api {
     if (errs.length || !key) {
       return { pubkey: null, pgpClient: null };
     }
-    console.info(`Loaded a public key for ${email} from WKD: ${url}`);
+    console.info(`Loaded Public Key from WKD for ${email}: ${url}`);
     let pubkey: string;
     try {
       pubkey = key.armor();

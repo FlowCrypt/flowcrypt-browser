@@ -106,7 +106,7 @@ export class PgpKey {
   public static readMany = async (fileData: Buf): Promise<{ keys: OpenPGP.key.Key[], errs: Error[] }> => {
     const allKeys: OpenPGP.key.Key[] = [];
     const allErrs: Error[] = [];
-    const { blocks } = MsgBlockParser.detectBlocks(fileData.toUtfStr());
+    const { blocks } = MsgBlockParser.detectBlocks(fileData.toUtfStr('ignore'));
     const armoredPublicKeyBlocks = blocks.filter(block => block.type === 'publicKey' || block.type === 'privateKey');
     const pushKeysAndErrs = async (content: string | Buf, isArmored: boolean) => {
       try {
