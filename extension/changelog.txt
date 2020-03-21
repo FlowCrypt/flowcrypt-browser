@@ -1,5 +1,7 @@
 <div>
 
+version 7.7.4 on Mar 21, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/401?closed=1" target="_blank">WKD Lookup</a>
+
 version 7.7.3 on Mar 19, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/399?closed=1" target="_blank">OrgRules combination fix</a>
 
 version 7.7.2 on Mar 17, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/398?closed=1" target="_blank">Key Expire OrgRule</a>
