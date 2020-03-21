@@ -29,6 +29,13 @@ export class Wkd extends Api {
       return { pubkey: null, pgpClient: null };
     }
     const [user, recipientDomain] = parts;
+    if (!opgp) {
+      // pgp_block.htm does not have openpgp loaded
+      // the particular usecase (auto-loading pubkeys to verify signatures) is not that important,
+      //    the user typically gets the key loaded from composing anyway
+      // the proper fix would be to run encodeZBase32 through background scripts
+      return { pubkey: null, pgpClient: null };
+    }
     const hu = opgp.util.encodeZBase32(await opgp.crypto.hash.digest(opgp.enums.hash.sha1, Buf.fromUtfStr(user)));
     // todo - could also search on `https://openpgpkey.{domain}/.well-known/openpgpkey/{domain}/hu/{hu}?l={user}`
     const url = `https://${recipientDomain}/.well-known/openpgpkey/hu/${hu}?l=${encodeURIComponent(user)}`;
