@@ -33,14 +33,17 @@ export class OrgRules {
       throw new Error(`Not a valid email:${acctEmail}`);
     }
     const storage = await AcctStore.get(email, ['rules']);
-    return new OrgRules(storage.rules || OrgRules.default);
+    return new OrgRules(storage.rules || OrgRules.default, acctEmail.split('@')[1]);
   }
 
   public static isPublicEmailProviderDomain = (emailAddr: string) => {
     return ['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(emailAddr.split('@')[1] || 'NONE');
   }
 
-  protected constructor(private domainRules: DomainRulesJson) { }
+  protected constructor(
+    private domainRules: DomainRulesJson,
+    public domainName: string
+  ) { }
 
   // optional urls
 

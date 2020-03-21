@@ -36,10 +36,13 @@ export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | 
 
 export class Api {
 
-  public static download = async (url: string, progress?: ProgressCb): Promise<Buf> => {
+  public static download = async (url: string, progress?: ProgressCb, timeout?: number): Promise<Buf> => {
     return await new Promise((resolve, reject) => {
       Api.throwIfApiPathTraversalAttempted(url);
       const request = new XMLHttpRequest();
+      if (timeout) {
+        request.timeout = timeout * 1000;
+      }
       request.open('GET', url, true);
       request.responseType = 'arraybuffer';
       if (typeof progress === 'function') {

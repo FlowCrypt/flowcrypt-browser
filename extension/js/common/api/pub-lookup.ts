@@ -6,6 +6,7 @@ import { Attester } from './attester.js';
 import { OrgRules } from '../org-rules.js';
 import { Sks } from './sks.js';
 import { KeyManager } from './key-manager.js';
+import { Wkd } from './wkd.js';
 
 export type PgpClient = 'flowcrypt' | 'pgp-other' | null;
 export type PubkeySearchResult = { pubkey: string | null; pgpClient: PgpClient };
@@ -18,6 +19,7 @@ export type PubkeySearchResult = { pubkey: string | null; pgpClient: PgpClient }
 export class PubLookup {
 
   public attester: Attester; // attester is a publicly available public key server
+  public wkd: Wkd;
   public keyManager: KeyManager | undefined; // key manager is a flowcrypt-provided internal company private and public key server
   public internalSks: Sks | undefined; // this is an internal company pubkey server that has SKS-like interface
 
@@ -27,6 +29,7 @@ export class PubLookup {
     const privateKeyManagerUrl = orgRules.getKeyManagerUrlForPublicKeys();
     const internalSksUrl = this.orgRules.getCustomSksPubkeyServer();
     this.attester = new Attester(orgRules);
+    this.wkd = new Wkd(orgRules.domainName);
     if (privateKeyManagerUrl) {
       this.keyManager = new KeyManager(privateKeyManagerUrl);
     }
@@ -41,6 +44,10 @@ export class PubLookup {
       if (res.publicKeys.length) {
         return { pubkey: res.publicKeys[0].publicKey, pgpClient: 'flowcrypt' };
       }
+    }
+    const wkdRes = await this.wkd.lookupEmail(email);
+    if (wkdRes.pubkey) {
+      return wkdRes;
     }
     if (this.internalSks) {
       const res = await this.internalSks.lookupEmail(email);
