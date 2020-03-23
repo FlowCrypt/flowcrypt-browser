@@ -212,6 +212,8 @@ export class Ui {
           iframe.onload = () => {
             iframe.focus();
           };
+          $(Swal.getContent()).data('test', 'dialog');
+          $(Swal.getCloseButton()).data('test', 'dialog-close');
         },
         onClose: () => {
           const urlWithoutPageParam = Url.removeParamsFromUrl(window.location.href, ['page']);
