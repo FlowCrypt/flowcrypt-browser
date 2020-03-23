@@ -4,7 +4,7 @@
 
 import { ApiErr } from '../api/error/api-error.js';
 import { Catch } from '../platform/catch.js';
-import { Dict } from '../core/common.js';
+import { Dict, Url } from '../core/common.js';
 import Swal from 'sweetalert2';
 import { Xss } from '../platform/xss.js';
 
@@ -205,6 +205,29 @@ export class Ui {
       });
       return typeof dismiss === 'undefined';
     },
+    iframe: async (iframeUrl: string, iframeWidth: number, iframeHeight: number): Promise<void> => {
+      await Swal.fire({
+        onOpen: () => {
+          const iframe = Swal.getContent().querySelector('iframe') as HTMLIFrameElement;
+          iframe.onload = () => {
+            iframe.focus();
+          };
+        },
+        onClose: () => {
+          const urlWithoutPageParam = Url.removeParamsFromUrl(window.location.href, ['page']);
+          window.history.pushState('', '', urlWithoutPageParam);
+        },
+        html: `<iframe src="${Xss.escape(iframeUrl)}" width="${iframeWidth}" height="${iframeHeight}" style="border: 0"></iframe>`,
+        width: 'auto',
+        showCloseButton: true,
+        animation: false,
+        scrollbarPadding: false,
+        showConfirmButton: false,
+        customClass: {
+          popup: 'ui-modal-iframe'
+        }
+      });
+    }
   };
 
   public static testCompatibilityLink = '<a href="/chrome/settings/modules/compatibility.htm" target="_blank">Test your OpenPGP key compatibility</a>';
