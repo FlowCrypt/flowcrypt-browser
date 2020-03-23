@@ -137,10 +137,8 @@ export class Ui {
 
   public static modal = {
     info: async (text: string): Promise<void> => {
-      await Swal.fire({
+      await Ui.swal().fire({
         html: Xss.escape(text).replace(/\n/g, '<br>'),
-        animation: false,
-        scrollbarPadding: false,
         allowOutsideClick: false,
         customClass: {
           popup: 'ui-modal-info',
@@ -149,11 +147,9 @@ export class Ui {
       });
     },
     warning: async (text: string, footer?: string): Promise<void> => {
-      await Swal.fire({
+      await Ui.swal().fire({
         html: `<span class="orange">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
         footer: footer ? Xss.htmlSanitize(footer) : '',
-        animation: false,
-        scrollbarPadding: false,
         allowOutsideClick: false,
         customClass: {
           popup: 'ui-modal-warning',
@@ -163,11 +159,9 @@ export class Ui {
     },
     error: async (text: string, isHTML: boolean = false, footer?: string): Promise<void> => {
       text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
-      await Swal.fire({
+      await Ui.swal().fire({
         html: `<span class="red">${text}</span>`,
         footer: footer ? Xss.htmlSanitize(footer) : '',
-        animation: false,
-        scrollbarPadding: false,
         allowOutsideClick: false,
         customClass: {
           popup: 'ui-modal-error',
@@ -176,10 +170,8 @@ export class Ui {
       });
     },
     confirm: async (text: string): Promise<boolean> => {
-      const { dismiss } = await Swal.fire({
+      const { dismiss } = await Ui.swal().fire({
         html: Xss.escape(text).replace(/\n/g, '<br>'),
-        animation: false,
-        scrollbarPadding: false,
         allowOutsideClick: false,
         showCancelButton: true,
         customClass: {
@@ -191,12 +183,10 @@ export class Ui {
       return typeof dismiss === 'undefined';
     },
     confirmWithCheckbox: async (label: string, html: string = ''): Promise<boolean> => {
-      const { dismiss } = await Swal.fire({
+      const { dismiss } = await Ui.swal().fire({
         html,
         input: 'checkbox',
         inputPlaceholder: label,
-        animation: false,
-        scrollbarPadding: false,
         allowOutsideClick: false,
         customClass: {
           popup: 'ui-modal-confirm-checkbox',
@@ -356,11 +346,10 @@ export class Ui {
   }
 
   public static toast = async (msg: string, seconds = 2): Promise<void> => {
-    await Swal.fire({
+    await Ui.swal().fire({
       toast: true,
       title: msg,
       showConfirmButton: false,
-      animation: false,
       position: 'bottom',
       timer: seconds * 1000,
       customClass: {
@@ -369,4 +358,10 @@ export class Ui {
       }
     });
   }
+
+  private static swal = () => Swal.mixin({
+    showClass: { popup: 'swal2-noanimation', backdrop: 'swal2-noanimation' },
+    hideClass: { popup: '', backdrop: '' },
+    scrollbarPadding: false,
+  })
 }
