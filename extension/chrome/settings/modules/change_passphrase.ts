@@ -42,7 +42,7 @@ View.run(class ChangePassPhraseView extends View {
     const [primaryKi] = await KeyStore.get(this.acctEmail, ['primary']);
     this.primaryKi = primaryKi;
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
-    const storedOrSessionPp = await PassphraseStore.get(this.acctEmail, this.primaryKi.longid);
+    const storedOrSessionPp = await PassphraseStore.get(this.acctEmail, this.primaryKi.fingerprint);
     const key = await PgpKey.read(this.primaryKi.private);
     this.primaryPrv = key;
     if (this.primaryPrv.isFullyDecrypted() || (storedOrSessionPp && await PgpKey.decrypt(this.primaryPrv, storedOrSessionPp))) {
@@ -109,9 +109,9 @@ View.run(class ChangePassPhraseView extends View {
       return;
     }
     await KeyStore.add(this.acctEmail, this.primaryPrv!.armor());
-    const persistentlyStoredPp = await PassphraseStore.get(this.acctEmail, this.primaryKi!.longid, true);
-    await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.longid, typeof persistentlyStoredPp === 'undefined' ? undefined : newPp);
-    await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.longid, typeof persistentlyStoredPp === 'undefined' ? newPp : undefined);
+    const persistentlyStoredPp = await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprint, true);
+    await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.fingerprint, typeof persistentlyStoredPp === 'undefined' ? undefined : newPp);
+    await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.fingerprint, typeof persistentlyStoredPp === 'undefined' ? newPp : undefined);
     await Ui.modal.info('Now that you changed your pass phrase, you should back up your key. New backup will be protected with new passphrase.');
     Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/backup.htm', '&action=backup_manual');
   }

@@ -47,7 +47,7 @@ View.run(class BackupView extends View {
     } else {
       $('.line.fingerprints').css({ display: 'none' });
     }
-    [this.storedPrvWithMatchingLongid] = await KeyStore.get(this.acctEmail, [(await PgpKey.longid(fingerprint))!]);
+    [this.storedPrvWithMatchingLongid] = await KeyStore.get(this.acctEmail, [fingerprint]);
     if (this.storedPrvWithMatchingLongid) {
       $('.line .private_key_status').text('This Private Key is already imported.');
     } else {

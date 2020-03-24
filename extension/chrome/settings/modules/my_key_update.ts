@@ -22,7 +22,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 View.run(class MyKeyUpdateView extends View {
 
   private readonly acctEmail: string;
-  private readonly longid: string;
+  private readonly fingerprint: string;
   private readonly showKeyUrl: string;
   private readonly inputPrivateKey = $('.input_private_key');
   private readonly prvHeaders = PgpArmor.headers('privateKey');
@@ -32,16 +32,16 @@ View.run(class MyKeyUpdateView extends View {
 
   constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'longid', 'parentTabId']);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'fingerprint', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.longid = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
+    this.fingerprint = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'fingerprint') || 'primary';
     this.showKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
   }
 
   public render = async () => {
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
-    [this.primaryKi] = await KeyStore.get(this.acctEmail, [this.longid]);
+    [this.primaryKi] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     $('.action_show_public_key').attr('href', this.showKeyUrl);
     $('.email').text(this.acctEmail);
@@ -55,10 +55,10 @@ View.run(class MyKeyUpdateView extends View {
   }
 
   private storeUpdatedKeyAndPassphrase = async (updatedPrv: OpenPGP.key.Key, updatedPrvPassphrase: string) => {
-    const storedPassphrase = await PassphraseStore.get(this.acctEmail, this.primaryKi!.longid, true);
+    const storedPassphrase = await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprint, true);
     await KeyStore.add(this.acctEmail, updatedPrv.armor());
-    await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.longid, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
-    await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.longid, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
+    await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.fingerprint, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
+    await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.fingerprint, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
     if (this.orgRules.canSubmitPubToAttester() && await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
       try {
         await Ui.modal.info(await this.pubLookup.attester.updatePubkey(this.primaryKi!.longid, updatedPrv.toPublic().armor()));

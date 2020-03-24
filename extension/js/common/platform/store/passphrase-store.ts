@@ -5,13 +5,18 @@ import { AccountIndex, AcctStore, AcctStoreDict } from './acct-store.js';
 import { SessionStore } from './session-store.js';
 import { PromiseCancellation, Dict } from '../../core/common.js';
 import { Ui } from '../../browser/ui.js';
+import { PgpKey } from '../../core/pgp-key.js';
 
 /**
  * Local or session store of pass phrases
  */
 export class PassphraseStore extends AbstractStore {
 
-  public static set = async (storageType: StorageType, acctEmail: string, longid: string, passphrase: string | undefined) => {
+  /**
+   * todo - make it only accept fingerprints
+   */
+  public static set = async (storageType: StorageType, acctEmail: string, fingerprintOrLongid: string, passphrase: string | undefined) => {
+    const longid = (await PgpKey.longid(fingerprintOrLongid))!;
     const storageIndex = PassphraseStore.getIndex(longid);
     if (storageType === 'session') {
       await SessionStore.set(acctEmail, storageIndex, passphrase);
@@ -26,7 +31,11 @@ export class PassphraseStore extends AbstractStore {
     }
   }
 
-  public static get = async (acctEmail: string, longid: string, ignoreSession: boolean = false): Promise<string | undefined> => {
+  /**
+   * todo - make it only accept fingerprints
+   */
+  public static get = async (acctEmail: string, fingerprintOrLongid: string, ignoreSession: boolean = false): Promise<string | undefined> => {
+    const longid = (await PgpKey.longid(fingerprintOrLongid))!;
     const storageIndex = PassphraseStore.getIndex(longid);
     const storage = await AcctStore.get(acctEmail, [storageIndex]);
     const found = storage[storageIndex];
@@ -37,6 +46,9 @@ export class PassphraseStore extends AbstractStore {
     return fromSession && !ignoreSession ? fromSession : undefined;
   }
 
+  /**
+   * todo - make it only accept fingerprints
+   */
   public static waitUntilPassphraseChanged = async (
     acctEmail: string, missingOrWrongPpKeyLongids: string[], interval = 1000, cancellation: PromiseCancellation = { cancel: false }
   ): Promise<boolean> => {

@@ -231,17 +231,19 @@ export class PgpKey {
     }
   }
 
-  public static longid = async (keyOrFingerprintOrBytes: string | OpenPGP.key.Key | undefined): Promise<string | undefined> => {
-    if (!keyOrFingerprintOrBytes) {
+  public static longid = async (keyOrFingerprintOrBytesOrLongid: string | OpenPGP.key.Key | undefined): Promise<string | undefined> => {
+    if (!keyOrFingerprintOrBytesOrLongid) {
       return undefined;
-    } else if (typeof keyOrFingerprintOrBytes === 'string' && keyOrFingerprintOrBytes.length === 8) {
-      return opgp.util.str_to_hex(keyOrFingerprintOrBytes).toUpperCase();
-    } else if (typeof keyOrFingerprintOrBytes === 'string' && keyOrFingerprintOrBytes.length === 40) {
-      return keyOrFingerprintOrBytes.substr(-16);
-    } else if (typeof keyOrFingerprintOrBytes === 'string' && keyOrFingerprintOrBytes.length === 49) {
-      return keyOrFingerprintOrBytes.replace(/ /g, '').substr(-16);
+    } else if (typeof keyOrFingerprintOrBytesOrLongid === 'string' && keyOrFingerprintOrBytesOrLongid.length === 8) {
+      return opgp.util.str_to_hex(keyOrFingerprintOrBytesOrLongid).toUpperCase(); // in binary form
+    } else if (typeof keyOrFingerprintOrBytesOrLongid === 'string' && keyOrFingerprintOrBytesOrLongid.length === 16) {
+      return keyOrFingerprintOrBytesOrLongid.toUpperCase(); // already a longid
+    } else if (typeof keyOrFingerprintOrBytesOrLongid === 'string' && keyOrFingerprintOrBytesOrLongid.length === 40) {
+      return keyOrFingerprintOrBytesOrLongid.substr(-16); // was a fingerprint
+    } else if (typeof keyOrFingerprintOrBytesOrLongid === 'string' && keyOrFingerprintOrBytesOrLongid.length === 49) {
+      return keyOrFingerprintOrBytesOrLongid.replace(/ /g, '').substr(-16); // spaced fingerprint
     }
-    return await PgpKey.longid(await PgpKey.fingerprint(keyOrFingerprintOrBytes));
+    return await PgpKey.longid(await PgpKey.fingerprint(keyOrFingerprintOrBytesOrLongid));
   }
 
   public static longids = async (keyIds: OpenPGP.Keyid[]) => {

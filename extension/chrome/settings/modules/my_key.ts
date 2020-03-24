@@ -24,7 +24,7 @@ declare const ClipboardJS: any;
 View.run(class MyKeyView extends View {
 
   private readonly acctEmail: string;
-  private readonly longid: string;
+  private readonly fingerprint: string;
   private readonly myKeyUserIdsUrl: string;
   private readonly myKeyUpdateUrl: string;
   private keyInfo!: KeyInfo;
@@ -34,9 +34,9 @@ View.run(class MyKeyView extends View {
 
   constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'longid', 'parentTabId']);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'fingerprint', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.longid = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
+    this.fingerprint = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'fingerprint') || 'primary';
     this.myKeyUserIdsUrl = Url.create('my_key_user_ids.htm', uncheckedUrlParams);
     this.myKeyUpdateUrl = Url.create('my_key_update.htm', uncheckedUrlParams);
   }
@@ -44,7 +44,7 @@ View.run(class MyKeyView extends View {
   public render = async () => {
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
-    [this.keyInfo] = await KeyStore.get(this.acctEmail, [this.longid]);
+    [this.keyInfo] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
     this.pubKey = await PgpKey.read(this.keyInfo.public);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
@@ -86,7 +86,7 @@ View.run(class MyKeyView extends View {
   private downloadRevocationCert = async (enteredPP?: string) => {
     const prv = await PgpKey.read(this.keyInfo.private);
     if (!prv.isFullyDecrypted()) {
-      const passphrase = await PassphraseStore.get(this.acctEmail, this.keyInfo.longid) || enteredPP;
+      const passphrase = await PassphraseStore.get(this.acctEmail, this.keyInfo.fingerprint) || enteredPP;
       if (passphrase) {
         if (! await PgpKey.decrypt(prv, passphrase) && enteredPP) {
           await Ui.modal.error('Pass phrase did not match, please try again.');

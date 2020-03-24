@@ -118,9 +118,9 @@ export class Settings {
     const destAccountPrivateKeys = await KeyStore.get(newAcctEmail);
     const destAcctPassPhrases: Dict<string> = {};
     for (const ki of destAccountPrivateKeys) {
-      const pp = await PassphraseStore.get(newAcctEmail, ki.longid, true);
+      const pp = await PassphraseStore.get(newAcctEmail, ki.fingerprint, true);
       if (pp) {
-        destAcctPassPhrases[ki.longid] = pp;
+        destAcctPassPhrases[ki.fingerprint] = pp;
       }
     }
     if (!oldAcctEmailIndexPrefix) {
@@ -145,8 +145,8 @@ export class Settings {
     for (const ki of destAccountPrivateKeys) {
       await KeyStore.add(newAcctEmail, ki.private);
     }
-    for (const longid of Object.keys(destAcctPassPhrases)) {
-      await PassphraseStore.set('local', newAcctEmail, longid, destAcctPassPhrases[longid]);
+    for (const fingerprint of Object.keys(destAcctPassPhrases)) {
+      await PassphraseStore.set('local', newAcctEmail, fingerprint, destAcctPassPhrases[fingerprint]);
     }
     await Settings.acctStorageReset(oldAcctEmail);
     await GlobalStore.acctEmailsRemove(oldAcctEmail);

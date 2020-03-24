@@ -10,19 +10,27 @@ import { AbstractStore } from './abstract-store.js';
  */
 export class KeyStore extends AbstractStore {
 
-  public static get = async (acctEmail: string, longids?: string[]): Promise<KeyInfo[]> => {
+  public static get = async (acctEmail: string, fingerprints?: string[]): Promise<KeyInfo[]> => {
     const stored = await AcctStore.get(acctEmail, ['keys']);
     const keys: KeyInfo[] = stored.keys || [];
-    if (!longids) {
+    if (!fingerprints) {
       return keys;
     }
-    return keys.filter(ki => longids.includes(ki.longid) || (longids.includes('primary') && ki.primary));
+    return keys.filter(ki => {
+      if (fingerprints.includes('primary') && ki.primary) {
+        return true;
+      }
+      if (fingerprints.includes(ki.fingerprint)) {
+        return true;
+      }
+      return false;
+    });
   }
 
   public static getAllWithPp = async (acctEmail: string): Promise<KeyInfo[]> => {
     const keys = await KeyStore.get(acctEmail);
     for (const ki of keys) {
-      ki.passphrase = await PassphraseStore.get(acctEmail, ki.longid);
+      ki.passphrase = await PassphraseStore.get(acctEmail, ki.fingerprint);
     }
     return keys;
   }
@@ -49,17 +57,20 @@ export class KeyStore extends AbstractStore {
     }
   }
 
-  public static remove = async (acctEmail: string, removeLongid: string): Promise<void> => {
+  public static remove = async (acctEmail: string, removeFingerprint: string): Promise<void> => {
     const privateKeys = await KeyStore.get(acctEmail);
-    const filteredPrivateKeys = privateKeys.filter(ki => ki.longid !== removeLongid);
+    const filteredPrivateKeys = privateKeys.filter(ki => ki.fingerprint !== removeFingerprint);
     await AcctStore.set(acctEmail, { keys: filteredPrivateKeys });
   }
 
+  /**
+   * todo - switch to fingerprints
+   */
   public static getLongidsThatCurrentlyHavePassPhraseInSession = async (acctEmail: string): Promise<string[]> => {
     const keys = await KeyStore.get(acctEmail);
     const result: string[] = [];
     for (const key of keys) {
-      if (! await PassphraseStore.get(acctEmail, key.longid, true) && await PassphraseStore.get(acctEmail, key.longid, false)) {
+      if (! await PassphraseStore.get(acctEmail, key.fingerprint, true) && await PassphraseStore.get(acctEmail, key.fingerprint, false)) {
         result.push(key.longid);
       }
     }
