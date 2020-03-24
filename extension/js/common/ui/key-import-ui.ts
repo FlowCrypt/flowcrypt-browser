@@ -280,13 +280,13 @@ export class KeyImportUi {
   }
 
   private checkEncryptionPrvIfSelected = async (k: OpenPGP.key.Key, encrypted: OpenPGP.key.Key) => {
-    if (this.checkEncryption && ! await k.getEncryptionKey()) {
-      if (await k.verifyPrimaryKey() === opgp.enums.keyStatus.no_self_cert) { // known issues - key can be fixed
+    if (this.checkEncryption && await Catch.doesReject(k.getEncryptionKey())) {
+      if (await Catch.doesReject(k.verifyPrimaryKey(), ['No self-certifications'])) {
         throw new KeyCanBeFixed(encrypted);
       } else if (await PgpKey.usableButExpired(k)) {
-        // Maybe would be better to give user 3 abilities:
+        // Currently have 2 options: import or skip. Would be better to give user 3 choices:
         // 1) Confirm importing expired key
-        // 2) Fix expired key
+        // 2) Extend validity of expired key + import
         // 3) Cancel
         const isConfirmed = await Ui.modal.confirm('You are importing a key that is expired. You can still import it to read messages from the past, ' +
           'but you will not be able to send new messages using this key. You can add more keys in the settings later.\n\nProceed with expired key?');
@@ -306,7 +306,7 @@ export class KeyImportUi {
   }
 
   private checkSigningIfSelected = async (k: OpenPGP.key.Key) => {
-    if (this.checkSigning && ! await k.getSigningKey()) {
+    if (this.checkSigning && await Catch.doesReject(k.getSigningKey())) {
       throw new UserAlert('This looks like a valid key but it cannot be used for signing. Please write at human@flowcrypt.com to see why is that.');
     }
   }

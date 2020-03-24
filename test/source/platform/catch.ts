@@ -23,6 +23,18 @@ export class Catch {
     // core reports are not very interesting
   }
 
+  public static doesReject = async (p: Promise<unknown>, errNeedle?: string[]): Promise<boolean> => {
+    try {
+      await p;
+      return false;
+    } catch (e) {
+      if (!errNeedle) { // no needles to check against
+        return true;
+      }
+      return !!errNeedle.find(needle => String(e).includes(needle));
+    }
+  }
+
   public static version = () => {
     return Catch.RUNTIME_VERSION;
   }

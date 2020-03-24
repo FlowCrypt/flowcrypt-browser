@@ -210,7 +210,7 @@ export class Settings {
             Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
             return;
           }
-          if (await reformatted.key.getEncryptionKey()) {
+          if (! await Catch.doesReject(reformatted.key.getEncryptionKey())) {
             resolve(reformatted.key);
           } else {
             await Ui.modal.error('Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\nPlease write us at human@flowcrypt.com.');

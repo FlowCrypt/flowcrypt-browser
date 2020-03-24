@@ -26,7 +26,7 @@
     "fc-node-requests": "git+https://git@github.com/FlowCrypt/node-requests.git",
     "mailparser": "2.7.1",
     "mkdirp": "^1.0.3",
-    "openpgp": "4.5.4",
+    "openpgp": "4.10.1",
     "puppeteer": "1.20.0",
     "speakeasy": "2.0.0",
     "stylelint": "^11.1.1",
