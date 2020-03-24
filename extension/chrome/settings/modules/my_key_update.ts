@@ -71,24 +71,24 @@ View.run(class MyKeyUpdateView extends View {
   }
 
   private updatePrivateKeyHandler = async () => {
-    const { keys: [uddatedKey] } = await opgp.key.readArmored(String(this.inputPrivateKey.val()));
+    const { keys: [updatedKey] } = await opgp.key.readArmored(String(this.inputPrivateKey.val()));
     const { keys: [uddatedKeyEncrypted] } = await opgp.key.readArmored(String(this.inputPrivateKey.val()));
     const uddatedKeyPassphrase = String($('.input_passphrase').val());
-    if (typeof uddatedKey === 'undefined') {
+    if (typeof updatedKey === 'undefined') {
       await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
-    } else if (uddatedKey.isPublic()) {
+    } else if (updatedKey.isPublic()) {
       await Ui.modal.warning('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"');
-    } else if (await PgpKey.fingerprint(uddatedKey) !== await PgpKey.fingerprint(this.primaryKi!.public)) {
-      await Ui.modal.warning(`This key ${Str.spaced(await PgpKey.fingerprint(uddatedKey) || 'err')} does not match your current key ${Str.spaced(this.primaryKi!.fingerprint)}`);
-    } else if (await PgpKey.decrypt(uddatedKey, uddatedKeyPassphrase) !== true) {
+    } else if (await PgpKey.fingerprint(updatedKey) !== await PgpKey.fingerprint(this.primaryKi!.public)) {
+      await Ui.modal.warning(`This key ${Str.spaced(await PgpKey.fingerprint(updatedKey) || 'err')} does not match your current key ${Str.spaced(this.primaryKi!.fingerprint)}`);
+    } else if (await PgpKey.decrypt(updatedKey, uddatedKeyPassphrase) !== true) {
       await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
     } else {
-      if (! await Catch.doesEventuallyReject(uddatedKey.getEncryptionKey())) {
+      if (! await Catch.doesReject(updatedKey.getEncryptionKey())) {
         await this.storeUpdatedKeyAndPassphrase(uddatedKeyEncrypted, uddatedKeyPassphrase);
         return;
       }
       // cannot get a valid encryption key packet
-      if (await Catch.doesEventuallyReject(uddatedKey.verifyPrimaryKey(), ['No self-certifications']) || await PgpKey.usableButExpired(uddatedKey)) { // known issues - key can be fixed
+      if (await Catch.doesReject(updatedKey.verifyPrimaryKey(), ['No self-certifications']) || await PgpKey.usableButExpired(updatedKey)) { // known issues - key can be fixed
         const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
           this.acctEmail, '.compatibility_fix_container', uddatedKeyEncrypted, uddatedKeyPassphrase, this.showKeyUrl
         );

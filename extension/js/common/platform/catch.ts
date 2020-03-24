@@ -265,7 +265,7 @@ export class Catch {
     return window.setTimeout(Catch.try(cb), ms); // error-handled: else setTimeout will silently swallow errors
   }
 
-  public static doesEventuallyReject = async (p: Promise<unknown>, errNeedle?: string[]) => {
+  public static doesReject = async (p: Promise<unknown>, errNeedle?: string[]) => {
     try {
       await p;
       return false;

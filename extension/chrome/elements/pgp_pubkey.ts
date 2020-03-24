@@ -58,7 +58,7 @@ View.run(class PgpPubkeyView extends View {
     }
     if (this.primaryPubKey) {
       const isUsableButExpired = await PgpKey.usableButExpired(this.primaryPubKey);
-      if (!isUsableButExpired && ! await this.primaryPubKey.getEncryptionKey() && ! await this.primaryPubKey.getSigningKey()) {
+      if (!isUsableButExpired && await Catch.doesReject(this.primaryPubKey.getEncryptionKey()) && await Catch.doesReject(this.primaryPubKey.getSigningKey())) {
         this.showKeyNotUsableError();
       } else {
         if (this.compact) {

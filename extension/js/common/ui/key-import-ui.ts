@@ -280,8 +280,8 @@ export class KeyImportUi {
   }
 
   private checkEncryptionPrvIfSelected = async (k: OpenPGP.key.Key, encrypted: OpenPGP.key.Key) => {
-    if (this.checkEncryption && ! await k.getEncryptionKey()) {
-      if (await Catch.doesEventuallyReject(k.verifyPrimaryKey())) { // known issues - key can be fixed
+    if (this.checkEncryption && await Catch.doesReject(k.getEncryptionKey())) {
+      if (await Catch.doesReject(k.verifyPrimaryKey())) { // known issues - key can be fixed
         throw new KeyCanBeFixed(encrypted);
       } else if (await PgpKey.usableButExpired(k)) {
         // Maybe would be better to give user 3 abilities:
@@ -306,7 +306,7 @@ export class KeyImportUi {
   }
 
   private checkSigningIfSelected = async (k: OpenPGP.key.Key) => {
-    if (this.checkSigning && ! await k.getSigningKey()) {
+    if (this.checkSigning && await Catch.doesReject(k.getSigningKey())) {
       throw new UserAlert('This looks like a valid key but it cannot be used for signing. Please write at human@flowcrypt.com to see why is that.');
     }
   }

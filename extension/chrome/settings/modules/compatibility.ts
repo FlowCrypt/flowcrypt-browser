@@ -74,9 +74,8 @@ View.run(class CompatibilityView extends View {
         this.appendResult(`${kn} isFullyEncrypted: ${await this.test(async () => key.isFullyEncrypted())}`);
       }
       this.appendResult(`${kn} Primary key verify: ${await this.test(async () => {
-        const verifyResNum = await key.verifyPrimaryKey();
-        const veryfyResWord = opgp.enums.read(opgp.enums.keyStatus, 1);
-        return `${verifyResNum}: ${veryfyResWord}`;
+        await key.verifyPrimaryKey(); // throws
+        return `valid`;
       })}`);
       this.appendResult(`${kn} Primary key creation? ${await this.test(async () => this.formatDate(await key.getCreationTime()))}`);
       this.appendResult(`${kn} Primary key expiration? ${await this.test(async () => this.formatDate(await key.getExpirationTime()))}`);

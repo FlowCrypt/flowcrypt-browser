@@ -825,13 +825,13 @@ declare namespace OpenPGP {
       public encrypt(passphrase: string | string[]): Promise<void>;
       public getExpirationTime(capability?: 'encrypt' | 'encrypt_sign' | 'sign' | null, keyId?: Keyid | null, userId?: UserId | null): Promise<Date | typeof Infinity | null>; // Returns null if `capabilities` is passed and the key does not have the specified capabilities or is revoked or invalid.
       public getKeyIds(): Keyid[];
-      public getPrimaryUser(): Promise<PrimaryUser | null>;
+      public getPrimaryUser(): Promise<PrimaryUser>; // throws on err
       public getUserIds(): string[];
       public isPrivate(): boolean;
       public isPublic(): boolean;
       public toPublic(): Key;
       public update(key: Key): void;
-      public verifyPrimaryKey(): Promise<enums.keyStatus>;
+      public verifyPrimaryKey(): Promise<void>; // throws on err
       public isRevoked(): Promise<boolean>;
       public revoke(reason: { flag?: enums.reasonForRevocation; string?: string; }, date?: Date): Promise<Key>;
       public getRevocationCertificate(): Promise<Stream<string> | string | undefined>;
