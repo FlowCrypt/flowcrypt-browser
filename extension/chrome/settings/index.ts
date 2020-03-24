@@ -396,14 +396,14 @@ View.run(class SettingsView extends View {
       const ki = privateKeys[i];
       const prv = await PgpKey.read(ki.private);
       const date = Str.monthName(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
-      const escapedPrimaryOrRemove = (ki.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" fingerprint="' + Xss.escape(ki.fingerprint) + '">remove</a>)';
-      const escapedEmail = Xss.escape(Str.parseEmail(prv.users[0].userId ? prv.users[0].userId!.userid : '').email || '');
       const escapedFp = Xss.escape(ki.fingerprint);
+      const escapedPrimaryOrRm = (ki.primary) ? '(primary)' : `(<a href="#" class="action_remove_key" fingerprint="${escapedFp}">remove</a>)`;
+      const escapedEmail = Xss.escape(Str.parseEmail(prv.users[0].userId ? prv.users[0].userId!.userid : '').email || '');
       const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${escapedFp}">${escapedEmail}</a>`;
       const fpHtml = `fingerprint:&nbsp;<span class="good">${Xss.escape(Str.spaced(ki.fingerprint))}</span>`;
       const space = `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
-      html += `<div class="row key-content-row key_${Xss.escape(ki.fingerprint)}">`;
-      html += `  <div class="col-sm-12">${escapedLink} from ${Xss.escape(date)}${space}${fpHtml}${space}${escapedPrimaryOrRemove}</div>`;
+      html += `<div class="row key-content-row key_${escapedFp}">`;
+      html += `  <div class="col-sm-12">${escapedLink} from ${Xss.escape(date)}${space}${fpHtml}${space}${escapedPrimaryOrRm}</div>`;
       html += `</div>`;
     }
     Xss.sanitizeAppend('.key_list', html);
