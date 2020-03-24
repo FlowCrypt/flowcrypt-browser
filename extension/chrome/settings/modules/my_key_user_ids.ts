@@ -13,6 +13,7 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 View.run(class MyKeyUserIdsView extends View {
 
   private readonly acctEmail: string;
+  // todo - use fingerprint
   private readonly longid: string;
   private readonly myKeyUrl: string;
   private primaryKi: KeyInfo | undefined;
@@ -26,7 +27,8 @@ View.run(class MyKeyUserIdsView extends View {
   }
 
   public render = async () => {
-    [this.primaryKi] = await KeyStore.get(this.acctEmail, [this.longid]);
+    // todo - use fingerprint
+    [this.primaryKi] = await KeyStore.get(this.acctEmail, [this.longid], 'ALLOW-LONGID-COMPARE');
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     $('.action_show_public_key').attr('href', this.myKeyUrl);
     const prv = await PgpKey.read(this.primaryKi.private);

@@ -34,6 +34,7 @@ View.run(class MyKeyUpdateView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'longid', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+    // todo - use fingerprint
     this.longid = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
     this.showKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
   }
@@ -41,7 +42,8 @@ View.run(class MyKeyUpdateView extends View {
   public render = async () => {
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
-    [this.primaryKi] = await KeyStore.get(this.acctEmail, [this.longid]);
+    // todo - use fingerprint
+    [this.primaryKi] = await KeyStore.get(this.acctEmail, [this.longid], 'ALLOW-LONGID-COMPARE');
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     $('.action_show_public_key').attr('href', this.showKeyUrl);
     $('.email').text(this.acctEmail);

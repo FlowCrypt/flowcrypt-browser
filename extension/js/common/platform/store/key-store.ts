@@ -10,13 +10,24 @@ import { AbstractStore } from './abstract-store.js';
  */
 export class KeyStore extends AbstractStore {
 
-  public static get = async (acctEmail: string, longids?: string[]): Promise<KeyInfo[]> => {
+  public static get = async (acctEmail: string, longidsOrFingerprints?: string[], flag?: 'ALLOW-LONGID-COMPARE'): Promise<KeyInfo[]> => {
     const stored = await AcctStore.get(acctEmail, ['keys']);
     const keys: KeyInfo[] = stored.keys || [];
-    if (!longids) {
+    if (!longidsOrFingerprints) {
       return keys;
     }
-    return keys.filter(ki => longids.includes(ki.longid) || (longids.includes('primary') && ki.primary));
+    return keys.filter(ki => {
+      if (longidsOrFingerprints.includes('primary') && ki.primary) {
+        return true;
+      }
+      if (longidsOrFingerprints.includes(ki.fingerprint)) {
+        return true;
+      }
+      if (flag === 'ALLOW-LONGID-COMPARE' && longidsOrFingerprints.includes(ki.longid)) {
+        return true;
+      }
+      return false;
+    });
   }
 
   public static getAllWithPp = async (acctEmail: string): Promise<KeyInfo[]> => {
