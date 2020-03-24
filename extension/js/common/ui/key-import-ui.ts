@@ -281,7 +281,9 @@ export class KeyImportUi {
 
   private checkEncryptionPrvIfSelected = async (k: OpenPGP.key.Key, encrypted: OpenPGP.key.Key) => {
     if (this.checkEncryption && await Catch.doesReject(k.getEncryptionKey())) {
-      if (await PgpKey.usableButExpired(k)) {
+      if (await Catch.doesReject(k.verifyPrimaryKey(), ['No self-certifications'])) {
+        throw new KeyCanBeFixed(encrypted);
+      } else if (await PgpKey.usableButExpired(k)) {
         // Currently have 2 options: import or skip. Would be better to give user 3 choices:
         // 1) Confirm importing expired key
         // 2) Extend validity of expired key + import
@@ -291,8 +293,6 @@ export class KeyImportUi {
         if (!isConfirmed) {
           throw new UserAlert('You chose to not import expired key.\n\nPlease import another key, or edit the expired key in another OpenPGP software to extend key validity.');
         }
-      } else if (await Catch.doesReject(k.verifyPrimaryKey())) { // known issues - key can be fixed
-        throw new KeyCanBeFixed(encrypted);
       } else {
         throw new UserAlert('This looks like a valid key but it cannot be used for encryption. Please write at human@flowcrypt.com to see why is that.');
       }
