@@ -23,7 +23,7 @@ export class Catch {
     // core reports are not very interesting
   }
 
-  public static doesReject = async (p: Promise<unknown>, errNeedle?: string[]) => {
+  public static doesReject = async (p: Promise<unknown>, errNeedle?: string[]): Promise<boolean> => {
     try {
       await p;
       return false;

@@ -294,9 +294,9 @@ export class PgpKey {
     if (typeof oneSecondBeforeExpiration === 'undefined') {
       return false; // key does not expire
     }
-    // try to see if the key was usable just before expiration
-    try {
-      return Boolean(await key.getEncryptionKey(undefined, oneSecondBeforeExpiration));
+    try { // try to see if the key was usable just before expiration
+      await key.getEncryptionKey(undefined, oneSecondBeforeExpiration);
+      return true;
     } catch (e) {
       return false;
     }
