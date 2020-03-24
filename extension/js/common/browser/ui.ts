@@ -208,17 +208,14 @@ export class Ui {
     iframe: async (iframeUrl: string, iframeWidth: number, iframeHeight: number): Promise<void> => {
       await Swal.fire({
         onOpen: () => {
-          const iframe = Swal.getContent().querySelector('iframe') as HTMLIFrameElement;
-          iframe.onload = () => {
-            iframe.focus();
-          };
           $(Swal.getContent()).attr('data-test', 'dialog');
-          $(Swal.getCloseButton()).attr('data-test', 'dialog-close');
+          $(Swal.getCloseButton()).attr('data-test', 'dialog-close').blur();
         },
         onClose: () => {
           const urlWithoutPageParam = Url.removeParamsFromUrl(window.location.href, ['page']);
           window.history.pushState('', '', urlWithoutPageParam);
         },
+        keydownListenerCapture: true,
         html: `<iframe src="${Xss.escape(iframeUrl)}" width="${iframeWidth}" height="${iframeHeight}" style="border: 0"></iframe>`,
         width: 'auto',
         showCloseButton: true,
