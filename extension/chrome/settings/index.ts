@@ -396,13 +396,13 @@ View.run(class SettingsView extends View {
       const ki = privateKeys[i];
       const prv = await PgpKey.read(ki.private);
       const date = Str.monthName(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
-      const escapedPrimaryOrRemove = (ki.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + Xss.escape(ki.longid) + '">remove</a>)';
+      const escapedPrimaryOrRemove = (ki.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" fingerprint="' + Xss.escape(ki.fingerprint) + '">remove</a>)';
       const escapedEmail = Xss.escape(Str.parseEmail(prv.users[0].userId ? prv.users[0].userId!.userid : '').email || '');
-      const escapedLongid = Xss.escape(ki.longid);
-      const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=${escapedLongid}">${escapedEmail}</a>`;
+      const escapedFp = Xss.escape(ki.fingerprint);
+      const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${escapedFp}">${escapedEmail}</a>`;
       const fpHtml = `fingerprint:&nbsp;<span class="good">${Xss.escape(Str.spaced(ki.fingerprint))}</span>`;
       const space = `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
-      html += `<div class="row key-content-row key_${Xss.escape(ki.longid)}">`;
+      html += `<div class="row key-content-row key_${Xss.escape(ki.fingerprint)}">`;
       html += `  <div class="col-sm-12">${escapedLink} from ${Xss.escape(date)}${space}${fpHtml}${space}${escapedPrimaryOrRemove}</div>`;
       html += `</div>`;
     }
@@ -413,9 +413,9 @@ View.run(class SettingsView extends View {
     }));
     $('.action_remove_key').click(this.setHandler(async target => {
       // the UI below only gets rendered when account_email is available
-      await KeyStore.remove(this.acctEmail!, $(target).attr('longid')!);
-      await PassphraseStore.set('local', this.acctEmail!, $(target).attr('longid')!, undefined);
-      await PassphraseStore.set('session', this.acctEmail!, $(target).attr('longid')!, undefined);
+      await KeyStore.remove(this.acctEmail!, $(target).attr('fingerprint')!);
+      await PassphraseStore.set('local', this.acctEmail!, $(target).attr('fingerprint')!, undefined);
+      await PassphraseStore.set('session', this.acctEmail!, $(target).attr('fingerprint')!, undefined);
       this.reload(true);
     }));
   }

@@ -112,7 +112,7 @@ View.run(class PassphraseView extends View {
       const { keys: [prv] } = await opgp.key.readArmored(keyinfo.private);
       try {
         if (await PgpKey.decrypt(prv, pass) === true) {
-          await PassphraseStore.set(storageType, this.acctEmail, keyinfo.longid, pass);
+          await PassphraseStore.set(storageType, this.acctEmail, keyinfo.fingerprint, pass);
           atLeastOneMatched = true;
           if (storageType === 'session') {
             // TODO: change to 'broadcast' when issue with 'broadcast' is fixed

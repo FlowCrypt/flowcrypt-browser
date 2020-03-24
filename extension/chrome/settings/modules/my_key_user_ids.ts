@@ -13,22 +13,20 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 View.run(class MyKeyUserIdsView extends View {
 
   private readonly acctEmail: string;
-  // todo - use fingerprint
-  private readonly longid: string;
+  private readonly fingerprint: string;
   private readonly myKeyUrl: string;
   private primaryKi: KeyInfo | undefined;
 
   constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'longid', 'parentTabId']);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'fingerprint', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.longid = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
+    this.fingerprint = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'fingerprint') || 'primary';
     this.myKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
   }
 
   public render = async () => {
-    // todo - use fingerprint
-    [this.primaryKi] = await KeyStore.get(this.acctEmail, [this.longid], 'ALLOW-LONGID-COMPARE');
+    [this.primaryKi] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     $('.action_show_public_key').attr('href', this.myKeyUrl);
     const prv = await PgpKey.read(this.primaryKi.private);

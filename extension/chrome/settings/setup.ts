@@ -199,13 +199,13 @@ export class SetupView extends View {
 
   public saveKeysAndPassPhrase = async (prvs: OpenPGP.key.Key[], options: SetupOptions) => {
     for (const prv of prvs) {
-      const longid = await PgpKey.longid(prv);
-      if (!longid) {
+      const fingerprint = await PgpKey.fingerprint(prv);
+      if (!fingerprint) {
         await Ui.modal.error('Cannot save keys to storage because at least one of them is not valid.');
         return;
       }
       await KeyStore.add(this.acctEmail, prv.armor());
-      await PassphraseStore.set(options.passphrase_save ? 'local' : 'session', this.acctEmail, longid, options.passphrase);
+      await PassphraseStore.set(options.passphrase_save ? 'local' : 'session', this.acctEmail, fingerprint, options.passphrase);
     }
     const myOwnEmailAddrsAsContacts: Contact[] = [];
     const { full_name: name } = await AcctStore.get(this.acctEmail, ['full_name']);

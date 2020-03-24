@@ -33,7 +33,7 @@ export class KeyStore extends AbstractStore {
   public static getAllWithPp = async (acctEmail: string): Promise<KeyInfo[]> => {
     const keys = await KeyStore.get(acctEmail);
     for (const ki of keys) {
-      ki.passphrase = await PassphraseStore.get(acctEmail, ki.longid);
+      ki.passphrase = await PassphraseStore.get(acctEmail, ki.fingerprint);
     }
     return keys;
   }
@@ -60,17 +60,20 @@ export class KeyStore extends AbstractStore {
     }
   }
 
-  public static remove = async (acctEmail: string, removeLongid: string): Promise<void> => {
+  public static remove = async (acctEmail: string, removeFingerprint: string): Promise<void> => {
     const privateKeys = await KeyStore.get(acctEmail);
-    const filteredPrivateKeys = privateKeys.filter(ki => ki.longid !== removeLongid);
+    const filteredPrivateKeys = privateKeys.filter(ki => ki.fingerprint !== removeFingerprint);
     await AcctStore.set(acctEmail, { keys: filteredPrivateKeys });
   }
 
+  /**
+   * todo - switch to fingerprints
+   */
   public static getLongidsThatCurrentlyHavePassPhraseInSession = async (acctEmail: string): Promise<string[]> => {
     const keys = await KeyStore.get(acctEmail);
     const result: string[] = [];
     for (const key of keys) {
-      if (! await PassphraseStore.get(acctEmail, key.longid, true) && await PassphraseStore.get(acctEmail, key.longid, false)) {
+      if (! await PassphraseStore.get(acctEmail, key.fingerprint, true) && await PassphraseStore.get(acctEmail, key.fingerprint, false)) {
         result.push(key.longid);
       }
     }

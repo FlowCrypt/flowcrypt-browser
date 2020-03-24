@@ -76,7 +76,7 @@ View.run(class AddKeyView extends View {
       if (checked) {
         await KeyStore.add(this.acctEmail, checked.normalized); // resulting new_key checked above
         await PassphraseStore.set($('.input_passphrase_save').prop('checked') ? 'local' : 'session', this.acctEmail,
-          checked.longid, checked.passphrase);
+          checked.fingerprint, checked.passphrase);
         BrowserMsg.send.reload(this.parentTabId, { advanced: true });
       }
     } catch (e) {
