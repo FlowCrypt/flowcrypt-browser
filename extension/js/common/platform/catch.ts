@@ -265,6 +265,18 @@ export class Catch {
     return window.setTimeout(Catch.try(cb), ms); // error-handled: else setTimeout will silently swallow errors
   }
 
+  public static doesEventuallyReject = async (p: Promise<unknown>, errNeedle?: string[]) => {
+    try {
+      await p;
+      return false;
+    } catch (e) {
+      if (!errNeedle) { // no needles to check against
+        return true;
+      }
+      return !!errNeedle.find(needle => String(e).includes(needle));
+    }
+  }
+
   private static getErrorLineAndCol = (e: any) => {
     try {
       const callerLine = e.stack!.split('\n')[1]; // tslint:disable-line:no-unsafe-any

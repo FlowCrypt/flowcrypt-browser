@@ -1,3 +1,4 @@
+/*! OpenPGP.js v4.10.1 - 2020-02-27 - this is LGPL licensed code, see LICENSE/our website https://openpgpjs.org/ for more information. */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.openpgp = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 (function (global){
 "use strict";
@@ -2487,8 +2488,7 @@ exports.Hash = Hash;
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.sha1_asm = sha1_asm;
-function sha1_asm(stdlib, foreign, buffer) {
+var sha1_asm = exports.sha1_asm = function sha1_asm(stdlib, foreign, buffer) {
     "use asm";
 
     // SHA256 state
@@ -3375,7 +3375,7 @@ function sha1_asm(stdlib, foreign, buffer) {
         // PBKDF2-HMAC-SHA1
         pbkdf2_generate_block: pbkdf2_generate_block
     };
-}
+};
 
 },{}],11:[function(require,module,exports){
 'use strict';
@@ -3431,8 +3431,7 @@ exports.Sha1 = Sha1;
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.sha256_asm = sha256_asm;
-function sha256_asm(stdlib, foreign, buffer) {
+var sha256_asm = exports.sha256_asm = function sha256_asm(stdlib, foreign, buffer) {
     "use asm";
 
     // SHA256 state
@@ -4240,7 +4239,7 @@ function sha256_asm(stdlib, foreign, buffer) {
         // PBKDF2-HMAC-SHA256
         pbkdf2_generate_block: pbkdf2_generate_block
     };
-}
+};
 
 },{}],13:[function(require,module,exports){
 'use strict';
@@ -8043,8 +8042,7 @@ elliptic.eddsa = require('./elliptic/eddsa');
 'use strict';
 
 var BN = require('bn.js');
-var elliptic = require('../../elliptic');
-var utils = elliptic.utils;
+var utils = require('../utils');
 var getNAF = utils.getNAF;
 var getJSF = utils.getJSF;
 var assert = utils.assert;
@@ -8416,16 +8414,15 @@ BasePoint.prototype.dblp = function dblp(k) {
   return r;
 };
 
-},{"../../elliptic":18,"bn.js":16}],20:[function(require,module,exports){
+},{"../utils":32,"bn.js":16}],20:[function(require,module,exports){
 'use strict';
 
-var curve = require('../curve');
-var elliptic = require('../../elliptic');
+var utils = require('../utils');
 var BN = require('bn.js');
 var inherits = require('inherits');
-var Base = curve.base;
+var Base = require('./base');
 
-var assert = elliptic.utils.assert;
+var assert = utils.assert;
 
 function EdwardsCurve(conf) {
   // NOTE: Important as we are creating point in Base.call()
@@ -8851,7 +8848,7 @@ Point.prototype.eqXToP = function eqXToP(x) {
 Point.prototype.toP = Point.prototype.normalize;
 Point.prototype.mixedAdd = Point.prototype.add;
 
-},{"../../elliptic":18,"../curve":21,"bn.js":16,"inherits":47}],21:[function(require,module,exports){
+},{"../utils":32,"./base":19,"bn.js":16,"inherits":47}],21:[function(require,module,exports){
 'use strict';
 
 var curve = exports;
@@ -8864,13 +8861,11 @@ curve.edwards = require('./edwards');
 },{"./base":19,"./edwards":20,"./mont":22,"./short":23}],22:[function(require,module,exports){
 'use strict';
 
-var curve = require('../curve');
 var BN = require('bn.js');
 var inherits = require('inherits');
-var Base = curve.base;
+var Base = require('./base');
 
-var elliptic = require('../../elliptic');
-var utils = elliptic.utils;
+var utils = require('../utils');
 
 function MontCurve(conf) {
   Base.call(this, 'mont', conf);
@@ -9064,16 +9059,15 @@ Point.prototype.getX = function getX() {
   return this.x.fromRed();
 };
 
-},{"../../elliptic":18,"../curve":21,"bn.js":16,"inherits":47}],23:[function(require,module,exports){
+},{"../utils":32,"./base":19,"bn.js":16,"inherits":47}],23:[function(require,module,exports){
 'use strict';
 
-var curve = require('../curve');
-var elliptic = require('../../elliptic');
+var utils = require('../utils');
 var BN = require('bn.js');
 var inherits = require('inherits');
-var Base = curve.base;
+var Base = require('./base');
 
-var assert = elliptic.utils.assert;
+var assert = utils.assert;
 
 function ShortCurve(conf) {
   Base.call(this, 'short', conf);
@@ -9489,8 +9483,9 @@ Point.prototype.getY = function getY() {
 
 Point.prototype.mul = function mul(k) {
   k = new BN(k, 16);
-
-  if (this._hasDoubles(k))
+  if (this.isInfinity())
+    return this;
+  else if (this._hasDoubles(k))
     return this.curve._fixedNafMul(this, k);
   else if (this.curve.endo)
     return this.curve._endoWnafMulAdd([ this ], [ k ]);
@@ -10003,23 +9998,24 @@ JPoint.prototype.isInfinity = function isInfinity() {
   return this.z.cmpn(0) === 0;
 };
 
-},{"../../elliptic":18,"../curve":21,"bn.js":16,"inherits":47}],24:[function(require,module,exports){
+},{"../utils":32,"./base":19,"bn.js":16,"inherits":47}],24:[function(require,module,exports){
 'use strict';
 
 var curves = exports;
 
 var hash = require('hash.js');
-var elliptic = require('../elliptic');
+var curve = require('./curve');
+var utils = require('./utils');
 
-var assert = elliptic.utils.assert;
+var assert = utils.assert;
 
 function PresetCurve(options) {
   if (options.type === 'short')
-    this.curve = new elliptic.curve.short(options);
+    this.curve = new curve.short(options);
   else if (options.type === 'edwards')
-    this.curve = new elliptic.curve.edwards(options);
+    this.curve = new curve.edwards(options);
   else if (options.type === 'mont')
-    this.curve = new elliptic.curve.mont(options);
+    this.curve = new curve.mont(options);
   else throw new Error('Unknown curve type.');
   this.g = this.curve.g;
   this.n = this.curve.n;
@@ -10274,13 +10270,14 @@ defineCurve('secp256k1', {
   ]
 });
 
-},{"../elliptic":18,"./precomputed/secp256k1":31,"hash.js":34}],25:[function(require,module,exports){
+},{"./curve":21,"./precomputed/secp256k1":31,"./utils":32,"hash.js":34}],25:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
 var HmacDRBG = require('hmac-drbg');
-var elliptic = require('../../elliptic');
-var utils = elliptic.utils;
+var utils = require('../utils');
+var curves = require('../curves');
+var rand = require('brorand');
 var assert = utils.assert;
 
 var KeyPair = require('./key');
@@ -10292,13 +10289,13 @@ function EC(options) {
 
   // Shortcut `elliptic.ec(curve-name)`
   if (typeof options === 'string') {
-    assert(elliptic.curves.hasOwnProperty(options), 'Unknown curve ' + options);
+    assert(curves.hasOwnProperty(options), 'Unknown curve ' + options);
 
-    options = elliptic.curves[options];
+    options = curves[options];
   }
 
   // Shortcut for `elliptic.ec(elliptic.curves.curveName)`
-  if (options instanceof elliptic.curves.PresetCurve)
+  if (options instanceof curves.PresetCurve)
     options = { curve: options };
 
   this.curve = options.curve.curve;
@@ -10336,7 +10333,7 @@ EC.prototype.genKeyPair = function genKeyPair(options) {
     hash: this.hash,
     pers: options.pers,
     persEnc: options.persEnc || 'utf8',
-    entropy: options.entropy || elliptic.rand(this.hash.hmacStrength),
+    entropy: options.entropy || rand(this.hash.hmacStrength),
     entropyEnc: options.entropy && options.entropyEnc || 'utf8',
     nonce: this.n.toArray()
   });
@@ -10359,8 +10356,9 @@ EC.prototype.genKeyPair = function genKeyPair(options) {
   } while (true);
 };
 
-EC.prototype._truncateToN = function truncateToN(msg, truncOnly) {
-  var delta = msg.byteLength() * 8 - this.n.bitLength();
+EC.prototype._truncateToN = function truncateToN(msg, truncOnly, bitSize) {
+  bitSize = bitSize || msg.byteLength() * 8;
+  var delta = bitSize - this.n.bitLength();
   if (delta > 0)
     msg = msg.ushrn(delta);
   if (!truncOnly && msg.cmp(this.n) >= 0)
@@ -10368,6 +10366,21 @@ EC.prototype._truncateToN = function truncateToN(msg, truncOnly) {
   else
     return msg;
 };
+
+EC.prototype.truncateMsg  = function truncateMSG(msg) {
+  // Bit size is only determined correctly for Uint8Arrays and hex strings
+  var bitSize;
+  if (msg instanceof Uint8Array) {
+    bitSize = msg.byteLength * 8;
+    msg = this._truncateToN(new BN(msg, 16), false, bitSize);
+  } else if (typeof msg === 'string') {
+    bitSize = msg.length * 4;
+    msg = this._truncateToN(new BN(msg, 16), false, bitSize);
+  } else {
+    msg = this._truncateToN(new BN(msg, 16));
+  }
+  return msg;
+}
 
 EC.prototype.sign = function sign(msg, key, enc, options) {
   if (typeof enc === 'object') {
@@ -10378,7 +10391,7 @@ EC.prototype.sign = function sign(msg, key, enc, options) {
     options = {};
 
   key = this.keyFromPrivate(key, enc);
-  msg = this._truncateToN(new BN(msg, 16));
+  msg = this.truncateMsg(msg);
 
   // Zero-extend key to provide enough entropy
   var bytes = this.n.byteLength();
@@ -10435,10 +10448,15 @@ EC.prototype.sign = function sign(msg, key, enc, options) {
 };
 
 EC.prototype.verify = function verify(msg, signature, key, enc) {
-  msg = this._truncateToN(new BN(msg, 16));
   key = this.keyFromPublic(key, enc);
   signature = new Signature(signature, 'hex');
+  // Fallback to the old code
+  var ret = this._verify(this.truncateMsg(msg), signature, key) ||
+  this._verify(this._truncateToN(new BN(msg, 16)), signature, key);
+  return ret;
+};
 
+EC.prototype._verify = function _verify(msg, signature, key) {
   // Perform primitive values validation
   var r = signature.r;
   var s = signature.s;
@@ -10522,12 +10540,11 @@ EC.prototype.getKeyRecoveryParam = function(e, signature, Q, enc) {
   throw new Error('Unable to find valid recovery factor');
 };
 
-},{"../../elliptic":18,"./key":26,"./signature":27,"bn.js":16,"hmac-drbg":46}],26:[function(require,module,exports){
+},{"../curves":24,"../utils":32,"./key":26,"./signature":27,"bn.js":16,"brorand":17,"hmac-drbg":46}],26:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
-var elliptic = require('../../elliptic');
-var utils = elliptic.utils;
+var utils = require('../utils');
 var assert = utils.assert;
 
 function KeyPair(ec, options) {
@@ -10646,13 +10663,12 @@ KeyPair.prototype.inspect = function inspect() {
          ' pub: ' + (this.pub && this.pub.inspect()) + ' >';
 };
 
-},{"../../elliptic":18,"bn.js":16}],27:[function(require,module,exports){
+},{"../utils":32,"bn.js":16}],27:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
 
-var elliptic = require('../../elliptic');
-var utils = elliptic.utils;
+var utils = require('../utils');
 var assert = utils.assert;
 
 function Signature(options, enc) {
@@ -10783,13 +10799,14 @@ Signature.prototype.toDER = function toDER(enc) {
   return utils.encode(res, enc);
 };
 
-},{"../../elliptic":18,"bn.js":16}],28:[function(require,module,exports){
+},{"../utils":32,"bn.js":16}],28:[function(require,module,exports){
 'use strict';
 
 var hash = require('hash.js');
 var HmacDRBG = require('hmac-drbg');
-var elliptic = require('../../elliptic');
-var utils = elliptic.utils;
+var rand = require('brorand');
+var curves = require('../curves');
+var utils = require('../utils');
 var assert = utils.assert;
 var parseBytes = utils.parseBytes;
 var KeyPair = require('./key');
@@ -10801,7 +10818,7 @@ function EDDSA(curve) {
   if (!(this instanceof EDDSA))
     return new EDDSA(curve);
 
-  var curve = elliptic.curves[curve].curve;
+  var curve = curves[curve].curve;
   this.curve = curve;
   this.g = curve.g;
   this.g.precompute(curve.n.bitLength() + 1);
@@ -10874,7 +10891,7 @@ EDDSA.prototype.genKeyPair = function genKeyPair(options) {
     hash: this.hash,
     pers: options.pers,
     persEnc: options.persEnc || 'utf8',
-    entropy: options.entropy || elliptic.rand(this.hash.hmacStrength),
+    entropy: options.entropy || rand(this.hash.hmacStrength),
     entropyEnc: options.entropy && options.entropyEnc || 'utf8',
     nonce: this.curve.n.toArray()
   });
@@ -10925,11 +10942,10 @@ EDDSA.prototype.isPoint = function isPoint(val) {
   return val instanceof this.pointClass;
 };
 
-},{"../../elliptic":18,"./key":29,"./signature":30,"hash.js":34,"hmac-drbg":46}],29:[function(require,module,exports){
+},{"../curves":24,"../utils":32,"./key":29,"./signature":30,"brorand":17,"hash.js":34,"hmac-drbg":46}],29:[function(require,module,exports){
 'use strict';
 
-var elliptic = require('../../elliptic');
-var utils = elliptic.utils;
+var utils = require('../utils');
 var assert = utils.assert;
 var parseBytes = utils.parseBytes;
 var cachedProperty = utils.cachedProperty;
@@ -11031,12 +11047,11 @@ KeyPair.prototype.getPublic = function getPublic(enc, compact) {
 
 module.exports = KeyPair;
 
-},{"../../elliptic":18}],30:[function(require,module,exports){
+},{"../utils":32}],30:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
-var elliptic = require('../../elliptic');
-var utils = elliptic.utils;
+var utils = require('../utils');
 var assert = utils.assert;
 var cachedProperty = utils.cachedProperty;
 var parseBytes = utils.parseBytes;
@@ -11099,7 +11114,7 @@ Signature.prototype.toHex = function toHex() {
 
 module.exports = Signature;
 
-},{"../../elliptic":18,"bn.js":16}],31:[function(require,module,exports){
+},{"../utils":32,"bn.js":16}],31:[function(require,module,exports){
 module.exports = {
   doubles: {
     step: 4,
@@ -12007,7 +12022,7 @@ utils.intFromLE = intFromLE;
 "use strict";
 
 // email-addresses.js - RFC 5322 email address parser
-// v 3.0.3
+// v 3.1.0
 //
 // http://tools.ietf.org/html/rfc5322
 //
@@ -12592,7 +12607,8 @@ utils.intFromLE = intFromLE;
 
         // obs-phrase      =   word *(word / "." / CFWS)
         function obsPhrase() {
-            return opts.strict ? null : wrap('obs-phrase', and(word, star(or(word, literal('.'), literal('@'), colwsp(cfws))))());
+            if (opts.strict) return null;
+            return opts.atInDisplayName ? wrap('obs-phrase', and(word, star(or(word, literal('.'), literal('@'), colwsp(cfws))))()) : wrap('obs-phrase', and(word, star(or(word, literal('.'), colwsp(cfws))))());
         }
 
         // 4.2. Obsolete Folding White Space
@@ -12775,6 +12791,7 @@ utils.intFromLE = intFromLE;
         function giveResultMailbox(mailbox) {
             var name = findNode('display-name', mailbox);
             var aspec = findNode('addr-spec', mailbox);
+            var cfws = findAllNodes('cfws', mailbox);
             var comments = findAllNodesNoChildren(['comment'], mailbox);
 
             var local = findNode('local-part', aspec);
@@ -12786,7 +12803,7 @@ utils.intFromLE = intFromLE;
                     address: aspec,
                     local: local,
                     domain: domain,
-                    comments: comments
+                    comments: cfws
                 },
                 type: mailbox.name, // 'mailbox'
                 name: grabSemantic(name),
@@ -12813,9 +12830,9 @@ utils.intFromLE = intFromLE;
         }
 
         function concatComments(comments) {
-            let result = '';
+            var result = '';
             if (comments) {
-                for (let i = 0; i < comments.length; i += 1) {
+                for (var i = 0; i < comments.length; i += 1) {
                     result += grabSemantic(comments[i]);
                 }
             }
@@ -12950,7 +12967,8 @@ utils.intFromLE = intFromLE;
             rfc6532: false,
             simple: false,
             startAt: 'address-list',
-            strict: false
+            strict: false,
+            atInDisplayName: false
         };
 
         for (o in defaults) {
@@ -24881,7 +24899,8 @@ function fromText(text) {
   return new CleartextMessage(text);
 }
 
-},{"./encoding/armor":111,"./enums":113,"./message":120,"./packet":125,"./signature":145,"./util":152}],78:[function(require,module,exports){
+},{"./encoding/armor":111,"./enums":113,"./message":126,"./packet":131,"./signature":151,"./util":158}],78:[function(require,module,exports){
+(function (global){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -25033,7 +25052,7 @@ exports.default = {
    * @memberof module:config
    * @property {String} versionstring A version string to be included in armored messages
    */
-  versionstring: "OpenPGP.js v4.6.0",
+  versionstring: "OpenPGP.js v4.10.1",
   /**
    * @memberof module:config
    * @property {String} commentstring A comment string to be included in armored messages
@@ -25062,7 +25081,37 @@ exports.default = {
    * @memberof module:config
    * @property {Array} known_notations
    */
-  known_notations: ["preferred-email-encoding@pgp.com", "pka-address@gnupg.org"]
+  known_notations: ["preferred-email-encoding@pgp.com", "pka-address@gnupg.org"],
+  /**
+   * @memberof module:config
+   * @property {Boolean} use_indutny_elliptic Whether to use the indutny/elliptic library. When false, certain curves will not be supported.
+   */
+  use_indutny_elliptic: true,
+  /**
+   * @memberof module:config
+   * @property {Boolean} external_indutny_elliptic Whether to lazily load the indutny/elliptic library from an external path on demand.
+   */
+  external_indutny_elliptic: false,
+  /**
+   * @memberof module:config
+   * @property {String} indutny_elliptic_path The path to load the indutny/elliptic library from. Only has an effect if `config.external_indutny_elliptic` is true.
+   */
+  indutny_elliptic_path: './elliptic.min.js',
+  /**
+   * @memberof module:config
+   * @property {Object} indutny_elliptic_fetch_options Options object to pass to `fetch` when loading the indutny/elliptic library. Only has an effect if `config.external_indutny_elliptic` is true.
+   */
+  indutny_elliptic_fetch_options: {},
+  /**
+   * @memberof module:config
+   * @property {Set<Integer>} reject_hash_algorithms Reject insecure hash algorithms {@link module:enums.hash}
+   */
+  reject_hash_algorithms: new global.Set([_enums2.default.hash.md5, _enums2.default.hash.ripemd]),
+  /**
+   * @memberof module:config
+   * @property {Set<Integer>} reject_message_hash_algorithms Reject insecure message hash algorithms {@link module:enums.hash}
+   */
+  reject_message_hash_algorithms: new global.Set([_enums2.default.hash.md5, _enums2.default.hash.ripemd, _enums2.default.hash.sha1])
 }; // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -25085,6 +25134,7 @@ exports.default = {
  * @requires enums
  */
 
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"../enums":113}],79:[function(require,module,exports){
 'use strict';
 
@@ -25273,7 +25323,7 @@ exports.default = {
   unwrap
 };
 
-},{"../util":152,"./cipher":86}],81:[function(require,module,exports){
+},{"../util":158,"./cipher":86}],81:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -25329,8 +25379,25 @@ const webCrypto = _util2.default.getWebCrypto(); // Modified by ProtonTech AG
 const nodeCrypto = _util2.default.getNodeCrypto();
 const Buffer = _util2.default.getNodeBuffer();
 
+const knownAlgos = nodeCrypto ? nodeCrypto.getCiphers() : [];
+const nodeAlgos = {
+  idea: knownAlgos.includes('idea-cfb') ? 'idea-cfb' : undefined, /* Unused, not implemented */
+  '3des': knownAlgos.includes('des-ede3-cfb') ? 'des-ede3-cfb' : undefined,
+  tripledes: knownAlgos.includes('des-ede3-cfb') ? 'des-ede3-cfb' : undefined,
+  cast5: knownAlgos.includes('cast5-cfb') ? 'cast5-cfb' : undefined,
+  blowfish: knownAlgos.includes('bf-cfb') ? 'bf-cfb' : undefined,
+  aes128: knownAlgos.includes('aes-128-cfb') ? 'aes-128-cfb' : undefined,
+  aes192: knownAlgos.includes('aes-192-cfb') ? 'aes-192-cfb' : undefined,
+  aes256: knownAlgos.includes('aes-256-cfb') ? 'aes-256-cfb' : undefined
+  /* twofish is not implemented in OpenSSL */
+};
+
 exports.default = {
   encrypt: function encrypt(algo, key, plaintext, iv) {
+    if (_util2.default.getNodeCrypto() && nodeAlgos[algo]) {
+      // Node crypto library.
+      return nodeEncrypt(algo, key, plaintext, iv);
+    }
     if (algo.substr(0, 3) === 'aes') {
       return aesEncrypt(algo, key, plaintext, iv);
     }
@@ -25338,52 +25405,60 @@ exports.default = {
     const cipherfn = new _cipher2.default[algo](key);
     const block_size = cipherfn.blockSize;
 
-    let blocki = new Uint8Array(block_size);
-    const blockc = iv;
-    let pos = 0;
-    const ciphertext = new Uint8Array(plaintext.length);
-    let i;
-    let j = 0;
-
-    while (plaintext.length > block_size * pos) {
-      const encblock = cipherfn.encrypt(blockc);
-      blocki = plaintext.subarray(pos * block_size, pos * block_size + block_size);
-      for (i = 0; i < blocki.length; i++) {
-        blockc[i] = blocki[i] ^ encblock[i];
-        ciphertext[j++] = blockc[i];
+    const blockc = iv.slice();
+    let pt = new Uint8Array();
+    const process = chunk => {
+      if (chunk) {
+        pt = _util2.default.concatUint8Array([pt, chunk]);
       }
-      pos++;
-    }
-    return ciphertext;
+      const ciphertext = new Uint8Array(pt.length);
+      let i;
+      let j = 0;
+      while (chunk ? pt.length >= block_size : pt.length) {
+        const encblock = cipherfn.encrypt(blockc);
+        for (i = 0; i < block_size; i++) {
+          blockc[i] = pt[i] ^ encblock[i];
+          ciphertext[j++] = blockc[i];
+        }
+        pt = pt.subarray(block_size);
+      }
+      return ciphertext.subarray(0, j);
+    };
+    return _webStreamTools2.default.transform(plaintext, process, process);
   },
 
   decrypt: async function decrypt(algo, key, ciphertext, iv) {
+    if (_util2.default.getNodeCrypto() && nodeAlgos[algo]) {
+      // Node crypto library.
+      return nodeDecrypt(algo, key, ciphertext, iv);
+    }
     if (algo.substr(0, 3) === 'aes') {
       return aesDecrypt(algo, key, ciphertext, iv);
     }
-
-    ciphertext = await _webStreamTools2.default.readToEnd(ciphertext);
 
     const cipherfn = new _cipher2.default[algo](key);
     const block_size = cipherfn.blockSize;
 
     let blockp = iv;
-    let pos = 0;
-    const plaintext = new Uint8Array(ciphertext.length);
-    const offset = 0;
-    let i;
-    let j = 0;
-
-    while (ciphertext.length > block_size * pos) {
-      const decblock = cipherfn.encrypt(blockp);
-      blockp = ciphertext.subarray(pos * block_size + offset, pos * block_size + block_size + offset);
-      for (i = 0; i < blockp.length; i++) {
-        plaintext[j++] = blockp[i] ^ decblock[i];
+    let ct = new Uint8Array();
+    const process = chunk => {
+      if (chunk) {
+        ct = _util2.default.concatUint8Array([ct, chunk]);
       }
-      pos++;
-    }
-
-    return plaintext;
+      const plaintext = new Uint8Array(ct.length);
+      let i;
+      let j = 0;
+      while (chunk ? ct.length >= block_size : ct.length) {
+        const decblock = cipherfn.encrypt(blockp);
+        blockp = ct;
+        for (i = 0; i < block_size; i++) {
+          plaintext[j++] = blockp[i] ^ decblock[i];
+        }
+        ct = ct.subarray(block_size);
+      }
+      return plaintext.subarray(0, j);
+    };
+    return _webStreamTools2.default.transform(ciphertext, process, process);
   }
 };
 
@@ -25395,19 +25470,12 @@ function aesEncrypt(algo, key, pt, iv) {
       // Web Crypto
       return webEncrypt(algo, key, pt, iv);
     }
-  if (nodeCrypto) {
-    // Node crypto library.
-    return nodeEncrypt(algo, key, pt, iv);
-  } // asm.js fallback
+  // asm.js fallback
   const cfb = new _cfb.AES_CFB(key, iv);
   return _webStreamTools2.default.transform(pt, value => cfb.AES_Encrypt_process(value), () => cfb.AES_Encrypt_finish());
 }
 
 function aesDecrypt(algo, key, ct, iv) {
-  if (nodeCrypto) {
-    // Node crypto library.
-    return nodeDecrypt(algo, key, ct, iv);
-  }
   if (_util2.default.isStream(ct)) {
     const cfb = new _cfb.AES_CFB(key, iv);
     return _webStreamTools2.default.transform(ct, value => cfb.AES_Decrypt_process(value), () => cfb.AES_Decrypt_finish());
@@ -25433,20 +25501,20 @@ async function webEncrypt(algo, key, pt, iv) {
 }
 
 function nodeEncrypt(algo, key, pt, iv) {
-  key = new Buffer(key);
-  iv = new Buffer(iv);
-  const cipherObj = new nodeCrypto.createCipheriv('aes-' + algo.substr(3, 3) + '-cfb', key, iv);
-  return _webStreamTools2.default.transform(pt, value => new Uint8Array(cipherObj.update(new Buffer(value))));
+  key = Buffer.from(key);
+  iv = Buffer.from(iv);
+  const cipherObj = new nodeCrypto.createCipheriv(nodeAlgos[algo], key, iv);
+  return _webStreamTools2.default.transform(pt, value => new Uint8Array(cipherObj.update(Buffer.from(value))));
 }
 
 function nodeDecrypt(algo, key, ct, iv) {
-  key = new Buffer(key);
-  iv = new Buffer(iv);
-  const decipherObj = new nodeCrypto.createDecipheriv('aes-' + algo.substr(3, 3) + '-cfb', key, iv);
-  return _webStreamTools2.default.transform(ct, value => new Uint8Array(decipherObj.update(new Buffer(value))));
+  key = Buffer.from(key);
+  iv = Buffer.from(iv);
+  const decipherObj = new nodeCrypto.createDecipheriv(nodeAlgos[algo], key, iv);
+  return _webStreamTools2.default.transform(ct, value => new Uint8Array(decipherObj.update(Buffer.from(value))));
 }
 
-},{"../config":79,"../util":152,"./cipher":86,"asmcrypto.js/dist_es5/aes/cfb":5,"web-stream-tools":75}],82:[function(require,module,exports){
+},{"../config":79,"../util":158,"./cipher":86,"asmcrypto.js/dist_es5/aes/cfb":5,"web-stream-tools":75}],82:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -25695,7 +25763,7 @@ function BF(key) {
 }
 
 BF.keySize = BF.prototype.keySize = 16;
-BF.blockSize = BF.prototype.blockSize = 16;
+BF.blockSize = BF.prototype.blockSize = 8;
 
 exports.default = BF;
 
@@ -26955,9 +27023,9 @@ async function CBC(key) {
   }
   if (_util2.default.getNodeCrypto()) {
     // Node crypto library
-    key = new Buffer(key);
+    key = Buffer.from(key);
     return async function (pt) {
-      pt = new Buffer(pt);
+      pt = Buffer.from(pt);
       const en = new nodeCrypto.createCipheriv('aes-' + key.length * 8 + '-cbc', key, zeroBlock);
       const ct = en.update(pt);
       return new Uint8Array(ct);
@@ -26969,16 +27037,12 @@ async function CBC(key) {
   };
 }
 
-},{"../util":152,"asmcrypto.js/dist_es5/aes/cbc":4}],89:[function(require,module,exports){
+},{"../util":158,"asmcrypto.js/dist_es5/aes/cbc":4}],89:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-
-var _bn = require('bn.js');
-
-var _bn2 = _interopRequireDefault(_bn);
 
 var _public_key = require('./public_key');
 
@@ -27016,9 +27080,24 @@ var _util = require('../util');
 
 var _util2 = _interopRequireDefault(_util);
 
+var _pkcs = require('./pkcs1');
+
+var _pkcs2 = _interopRequireDefault(_pkcs);
+
+var _pkcs3 = require('./pkcs5');
+
+var _pkcs4 = _interopRequireDefault(_pkcs3);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// GPG4Browsers - An OpenPGP implementation in javascript
+function constructParams(types, data) {
+  return types.map(function (type, i) {
+    if (data && data[i]) {
+      return new type(data[i]);
+    }
+    return new type();
+  });
+} // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
 // This library is free software; you can redistribute it and/or
@@ -27040,7 +27119,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 /**
  * @fileoverview Provides functions for asymmetric encryption and decryption as
  * well as key generation and parameter handling for all public-key cryptosystems.
- * @requires bn.js
  * @requires crypto/public_key
  * @requires crypto/cipher
  * @requires crypto/random
@@ -27053,15 +27131,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @module crypto/crypto
  */
 
-function constructParams(types, data) {
-  return types.map(function (type, i) {
-    if (data && data[i]) {
-      return new type(data[i]);
-    }
-    return new type();
-  });
-}
-
 exports.default = {
   /**
    * Encrypts data using specified algorithm and public key parameters.
@@ -27070,7 +27139,7 @@ exports.default = {
    * @param {Array<module:type/mpi|
                    module:type/oid|
                    module:type/kdf_params>} pub_params  Algorithm-specific public key parameters
-   * @param {module:type/mpi}               data        Data to be encrypted as MPI
+   * @param {String}                        data        Data to be encrypted
    * @param {String}                        fingerprint Recipient fingerprint
    * @returns {Array<module:type/mpi|
    *                 module:type/ecdh_symkey>}          encrypted session key parameters
@@ -27082,14 +27151,15 @@ exports.default = {
       case _enums2.default.publicKey.rsa_encrypt:
       case _enums2.default.publicKey.rsa_encrypt_sign:
         {
-          const m = data.toBN();
-          const n = pub_params[0].toBN();
-          const e = pub_params[1].toBN();
-          const res = await _public_key2.default.rsa.encrypt(m, n, e);
+          data = _util2.default.str_to_Uint8Array(data);
+          const n = pub_params[0].toUint8Array();
+          const e = pub_params[1].toUint8Array();
+          const res = await _public_key2.default.rsa.encrypt(data, n, e);
           return constructParams(types, [res]);
         }
       case _enums2.default.publicKey.elgamal:
         {
+          data = new _mpi2.default((await _pkcs2.default.eme.encode(data, pub_params[0].byteLength())));
           const m = data.toBN();
           const p = pub_params[0].toBN();
           const g = pub_params[1].toBN();
@@ -27099,6 +27169,7 @@ exports.default = {
         }
       case _enums2.default.publicKey.ecdh:
         {
+          data = new _mpi2.default(_pkcs4.default.encode(data));
           const oid = pub_params[0];
           const Q = pub_params[1].toUint8Array();
           const kdf_params = pub_params[2];
@@ -27108,7 +27179,7 @@ exports.default = {
           const V = _ref.publicKey,
                 C = _ref.wrappedKey;
 
-          return constructParams(types, [new _bn2.default(V), C]);
+          return constructParams(types, [V, C]);
         }
       default:
         return [];
@@ -27126,7 +27197,7 @@ exports.default = {
                    module:type/ecdh_symkey>}
                                             data_params encrypted session key parameters
    * @param {String}                        fingerprint Recipient fingerprint
-   * @returns {BN}                          A BN containing the decrypted data
+   * @returns {String}                          String containing the decrypted data
    * @async
    */
   publicKeyDecrypt: async function publicKeyDecrypt(algo, key_params, data_params, fingerprint) {
@@ -27134,13 +27205,13 @@ exports.default = {
       case _enums2.default.publicKey.rsa_encrypt_sign:
       case _enums2.default.publicKey.rsa_encrypt:
         {
-          const c = data_params[0].toBN();
-          const n = key_params[0].toBN(); // n = pq
-          const e = key_params[1].toBN();
-          const d = key_params[2].toBN(); // de = 1 mod (p-1)(q-1)
-          const p = key_params[3].toBN();
-          const q = key_params[4].toBN();
-          const u = key_params[5].toBN(); // p^-1 mod q
+          const c = data_params[0].toUint8Array();
+          const n = key_params[0].toUint8Array(); // n = pq
+          const e = key_params[1].toUint8Array();
+          const d = key_params[2].toUint8Array(); // de = 1 mod (p-1)(q-1)
+          const p = key_params[3].toUint8Array();
+          const q = key_params[4].toUint8Array();
+          const u = key_params[5].toUint8Array(); // p^-1 mod q
           return _public_key2.default.rsa.decrypt(c, n, e, d, p, q, u);
         }
       case _enums2.default.publicKey.elgamal:
@@ -27149,7 +27220,8 @@ exports.default = {
           const c2 = data_params[1].toBN();
           const p = key_params[0].toBN();
           const x = key_params[3].toBN();
-          return _public_key2.default.elgamal.decrypt(c1, c2, p, x);
+          const result = new _mpi2.default((await _public_key2.default.elgamal.decrypt(c1, c2, p, x)));
+          return _pkcs2.default.eme.decode(result.toString());
         }
       case _enums2.default.publicKey.ecdh:
         {
@@ -27159,7 +27231,8 @@ exports.default = {
           const C = data_params[1].data;
           const Q = key_params[1].toUint8Array();
           const d = key_params[3].toUint8Array();
-          return _public_key2.default.elliptic.ecdh.decrypt(oid, kdf_params.cipher, kdf_params.hash, V, C, Q, d, fingerprint);
+          const result = new _mpi2.default((await _public_key2.default.elliptic.ecdh.decrypt(oid, kdf_params.cipher, kdf_params.hash, V, C, Q, d, fingerprint)));
+          return _pkcs4.default.decode(result.toString());
         }
       default:
         throw new Error('Invalid public key encryption algorithm.');
@@ -27332,7 +27405,7 @@ exports.default = {
   constructParams: constructParams
 };
 
-},{"../enums":113,"../type/ecdh_symkey":146,"../type/kdf_params":147,"../type/mpi":149,"../type/oid":150,"../util":152,"./cipher":86,"./public_key":106,"./random":109,"bn.js":16}],90:[function(require,module,exports){
+},{"../enums":113,"../type/ecdh_symkey":152,"../type/kdf_params":153,"../type/mpi":155,"../type/oid":156,"../util":158,"./cipher":86,"./pkcs1":96,"./pkcs5":97,"./public_key":106,"./random":109}],90:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -27407,10 +27480,10 @@ async function CTR(key) {
   }
   if (_util2.default.getNodeCrypto()) {
     // Node crypto library
-    key = new Buffer(key);
+    key = Buffer.from(key);
     return async function (pt, iv) {
-      pt = new Buffer(pt);
-      iv = new Buffer(iv);
+      pt = Buffer.from(pt);
+      iv = Buffer.from(iv);
       const en = new nodeCrypto.createCipheriv('aes-' + key.length * 8 + '-ctr', key, iv);
       const ct = Buffer.concat([en.update(pt), en.final()]);
       return new Uint8Array(ct);
@@ -27512,7 +27585,7 @@ EAX.tagLength = tagLength;
 
 exports.default = EAX;
 
-},{"../util":152,"./cmac":88,"asmcrypto.js/dist_es5/aes/ctr":6}],91:[function(require,module,exports){
+},{"../util":158,"./cmac":88,"asmcrypto.js/dist_es5/aes/ctr":6}],91:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -27606,13 +27679,13 @@ async function GCM(cipher, key) {
 
   if (_util2.default.getNodeCrypto()) {
     // Node crypto library
-    key = new Buffer(key);
+    key = Buffer.from(key);
 
     return {
       encrypt: async function encrypt(pt, iv, adata = new Uint8Array()) {
-        pt = new Buffer(pt);
-        iv = new Buffer(iv);
-        adata = new Buffer(adata);
+        pt = Buffer.from(pt);
+        iv = Buffer.from(iv);
+        adata = Buffer.from(adata);
         const en = new nodeCrypto.createCipheriv('aes-' + key.length * 8 + '-gcm', key, iv);
         en.setAAD(adata);
         const ct = Buffer.concat([en.update(pt), en.final(), en.getAuthTag()]); // append auth tag to ciphertext
@@ -27620,9 +27693,9 @@ async function GCM(cipher, key) {
       },
 
       decrypt: async function decrypt(ct, iv, adata = new Uint8Array()) {
-        ct = new Buffer(ct);
-        iv = new Buffer(iv);
-        adata = new Buffer(adata);
+        ct = Buffer.from(ct);
+        iv = Buffer.from(iv);
+        adata = Buffer.from(adata);
         const de = new nodeCrypto.createDecipheriv('aes-' + key.length * 8 + '-gcm', key, iv);
         de.setAAD(adata);
         de.setAuthTag(ct.slice(ct.length - tagLength, ct.length)); // read auth tag at end of ciphertext
@@ -27665,7 +27738,7 @@ GCM.tagLength = tagLength;
 
 exports.default = GCM;
 
-},{"../util":152,"asmcrypto.js/dist_es5/aes/gcm":8}],92:[function(require,module,exports){
+},{"../util":158,"asmcrypto.js/dist_es5/aes/gcm":8}],92:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -27729,7 +27802,7 @@ function node_hash(type) {
   return async function (data) {
     const shasum = nodeCrypto.createHash(type);
     return _webStreamTools2.default.transform(data, value => {
-      shasum.update(new Buffer(value));
+      shasum.update(Buffer.from(value));
     }, () => new Uint8Array(shasum.digest()));
   };
 }
@@ -27869,7 +27942,7 @@ exports.default = {
   }
 };
 
-},{"../../config":79,"../../util":152,"./md5":93,"asmcrypto.js/dist_es5/hash/sha1/sha1":11,"asmcrypto.js/dist_es5/hash/sha256/sha256":13,"hash.js/lib/hash/ripemd":37,"hash.js/lib/hash/sha/224":40,"hash.js/lib/hash/sha/384":42,"hash.js/lib/hash/sha/512":43,"web-stream-tools":75}],93:[function(require,module,exports){
+},{"../../config":79,"../../util":158,"./md5":93,"asmcrypto.js/dist_es5/hash/sha1/sha1":11,"asmcrypto.js/dist_es5/hash/sha256/sha256":13,"hash.js/lib/hash/ripemd":37,"hash.js/lib/hash/sha/224":40,"hash.js/lib/hash/sha/384":42,"hash.js/lib/hash/sha/512":43,"web-stream-tools":75}],93:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -28084,7 +28157,7 @@ function add32(a, b) {
 
 exports.default = md5;
 
-},{"../../util":152}],94:[function(require,module,exports){
+},{"../../util":158}],94:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -28471,7 +28544,7 @@ OCB.tagLength = tagLength;
 
 exports.default = OCB;
 
-},{"../util":152,"./cipher":86}],96:[function(require,module,exports){
+},{"../util":158,"./cipher":86}],96:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -28646,7 +28719,7 @@ emsa.encode = async function (algo, hashed, emLen) {
 
 exports.default = { eme, emsa };
 
-},{"../util":152,"./hash":92,"./random":109}],97:[function(require,module,exports){
+},{"../util":158,"./hash":92,"./random":109}],97:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -28824,7 +28897,7 @@ exports.default = {
    * @param {BN} p
    * @param {BN} q
    * @param {BN} y
-   * @returns BN
+   * @returns {boolean}
    * @async
    */
   verify: async function verify(hash_algo, r, s, hashed, g, p, q, y) {
@@ -28849,7 +28922,7 @@ exports.default = {
   }
 };
 
-},{"../../util":152,"../random":109,"bn.js":16}],99:[function(require,module,exports){
+},{"../../util":158,"../random":109,"bn.js":16}],99:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -28938,17 +29011,15 @@ exports.default = {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getPreferredHashAlgo = exports.generate = exports.nodeCurves = exports.webCurves = exports.curves = undefined;
+exports.privateToJwk = exports.rawPublicToJwk = exports.jwkToRawPublic = exports.getPreferredHashAlgo = exports.generate = exports.nodeCurves = exports.webCurves = exports.curves = undefined;
 
 var _bn = require('bn.js');
 
 var _bn2 = _interopRequireDefault(_bn);
 
-var _elliptic = require('elliptic');
+var _naclFastLight = require('tweetnacl/nacl-fast-light.js');
 
-var _key = require('./key');
-
-var _key2 = _interopRequireDefault(_key);
+var _naclFastLight2 = _interopRequireDefault(_naclFastLight);
 
 var _random = require('../../random');
 
@@ -28965,6 +29036,8 @@ var _util2 = _interopRequireDefault(_util);
 var _oid = require('../../../type/oid');
 
 var _oid2 = _interopRequireDefault(_oid);
+
+var _indutnyKey = require('./indutnyKey');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -28988,12 +29061,13 @@ const webCrypto = _util2.default.getWebCrypto(); // OpenPGP.js - An OpenPGP impl
 /**
  * @fileoverview Wrapper of an instance of an Elliptic Curve
  * @requires bn.js
- * @requires elliptic
+ * @requires tweetnacl
  * @requires crypto/public_key/elliptic/key
  * @requires crypto/random
  * @requires enums
  * @requires util
  * @requires type/oid
+ * @requires config
  * @module crypto/public_key/elliptic/curve
  */
 
@@ -29053,41 +29127,47 @@ const curves = {
     keyType: _enums2.default.publicKey.ecdsa,
     hash: _enums2.default.hash.sha256,
     cipher: _enums2.default.symmetric.aes128,
-    node: nodeCurves.secp256k1
+    node: nodeCurves.secp256k1,
+    payloadSize: 32
   },
   ed25519: {
     oid: [0x06, 0x09, 0x2B, 0x06, 0x01, 0x04, 0x01, 0xDA, 0x47, 0x0F, 0x01],
     keyType: _enums2.default.publicKey.eddsa,
     hash: _enums2.default.hash.sha512,
-    node: false // nodeCurves.ed25519 TODO
+    node: false, // nodeCurves.ed25519 TODO
+    payloadSize: 32
   },
   curve25519: {
     oid: [0x06, 0x0A, 0x2B, 0x06, 0x01, 0x04, 0x01, 0x97, 0x55, 0x01, 0x05, 0x01],
     keyType: _enums2.default.publicKey.ecdsa,
     hash: _enums2.default.hash.sha256,
     cipher: _enums2.default.symmetric.aes128,
-    node: false // nodeCurves.curve25519 TODO
+    node: false, // nodeCurves.curve25519 TODO
+    payloadSize: 32
   },
   brainpoolP256r1: {
     oid: [0x06, 0x09, 0x2B, 0x24, 0x03, 0x03, 0x02, 0x08, 0x01, 0x01, 0x07],
     keyType: _enums2.default.publicKey.ecdsa,
     hash: _enums2.default.hash.sha256,
     cipher: _enums2.default.symmetric.aes128,
-    node: nodeCurves.brainpoolP256r1
+    node: nodeCurves.brainpoolP256r1,
+    payloadSize: 32
   },
   brainpoolP384r1: {
     oid: [0x06, 0x09, 0x2B, 0x24, 0x03, 0x03, 0x02, 0x08, 0x01, 0x01, 0x0B],
     keyType: _enums2.default.publicKey.ecdsa,
     hash: _enums2.default.hash.sha384,
     cipher: _enums2.default.symmetric.aes192,
-    node: nodeCurves.brainpoolP384r1
+    node: nodeCurves.brainpoolP384r1,
+    payloadSize: 48
   },
   brainpoolP512r1: {
     oid: [0x06, 0x09, 0x2B, 0x24, 0x03, 0x03, 0x02, 0x08, 0x01, 0x01, 0x0D],
     keyType: _enums2.default.publicKey.ecdsa,
     hash: _enums2.default.hash.sha512,
     cipher: _enums2.default.symmetric.aes256,
-    node: nodeCurves.brainpoolP512r1
+    node: nodeCurves.brainpoolP512r1,
+    payloadSize: 64
   }
 };
 
@@ -29112,16 +29192,6 @@ function Curve(oid_or_name, params) {
   params = params || curves[this.name];
 
   this.keyType = params.keyType;
-  switch (this.keyType) {
-    case _enums2.default.publicKey.ecdsa:
-      this.curve = new _elliptic.ec(this.name);
-      break;
-    case _enums2.default.publicKey.eddsa:
-      this.curve = new _elliptic.eddsa(this.name);
-      break;
-    default:
-      throw new Error('Unknown elliptic key type;');
-  }
 
   this.oid = params.oid;
   this.hash = params.hash;
@@ -29129,47 +29199,52 @@ function Curve(oid_or_name, params) {
   this.node = params.node && curves[this.name];
   this.web = params.web && curves[this.name];
   this.payloadSize = params.payloadSize;
-}
-
-Curve.prototype.keyFromPrivate = function (priv) {
-  // Not for ed25519
-  return new _key2.default(this, { priv: priv });
-};
-
-Curve.prototype.keyFromPublic = function (pub) {
-  const keyPair = new _key2.default(this, { pub: pub });
-  if (this.keyType === _enums2.default.publicKey.ecdsa && keyPair.keyPair.validate().result !== true) {
-    throw new Error('Invalid elliptic public key');
+  if (this.web && _util2.default.getWebCrypto()) {
+    this.type = 'web';
+  } else if (this.node && _util2.default.getNodeCrypto()) {
+    this.type = 'node';
+  } else if (this.name === 'curve25519') {
+    this.type = 'curve25519';
+  } else if (this.name === 'ed25519') {
+    this.type = 'ed25519';
   }
-  return keyPair;
-};
+}
 
 Curve.prototype.genKeyPair = async function () {
   let keyPair;
-  if (this.web && _util2.default.getWebCrypto()) {
-    // If browser doesn't support a curve, we'll catch it
-    try {
-      keyPair = await webGenKeyPair(this.name);
-    } catch (err) {
-      _util2.default.print_debug("Browser did not support signing: " + err.message);
-    }
-  } else if (this.node && _util2.default.getNodeCrypto()) {
-    keyPair = await nodeGenKeyPair(this.name);
+  switch (this.type) {
+    case 'web':
+      try {
+        return await webGenKeyPair(this.name);
+      } catch (err) {
+        _util2.default.print_debug_error("Browser did not support generating ec key " + err.message);
+        break;
+      }
+    case 'node':
+      return nodeGenKeyPair(this.name);
+    case 'curve25519':
+      {
+        const privateKey = await _random2.default.getRandomBytes(32);
+        privateKey[0] = privateKey[0] & 127 | 64;
+        privateKey[31] &= 248;
+        const secretKey = privateKey.slice().reverse();
+        keyPair = _naclFastLight2.default.box.keyPair.fromSecretKey(secretKey);
+        const publicKey = _util2.default.concatUint8Array([new Uint8Array([0x40]), keyPair.publicKey]);
+        return { publicKey, privateKey };
+      }
+    case 'ed25519':
+      {
+        const privateKey = await _random2.default.getRandomBytes(32);
+        const keyPair = _naclFastLight2.default.sign.keyPair.fromSeed(privateKey);
+        const publicKey = _util2.default.concatUint8Array([new Uint8Array([0x40]), keyPair.publicKey]);
+        return { publicKey, privateKey };
+      }
   }
-
-  if (!keyPair || !keyPair.priv) {
-    // elliptic fallback
-    const r = await this.curve.genKeyPair({
-      entropy: _util2.default.Uint8Array_to_str((await _random2.default.getRandomBytes(32)))
-    });
-    const compact = this.curve.curve.type === 'edwards' || this.curve.curve.type === 'mont';
-    if (this.keyType === _enums2.default.publicKey.eddsa) {
-      keyPair = { secret: r.getSecret() };
-    } else {
-      keyPair = { pub: r.getPublic('array', compact), priv: r.getPrivate().toArray() };
-    }
-  }
-  return new _key2.default(this, keyPair);
+  const indutnyCurve = await (0, _indutnyKey.getIndutnyCurve)(this.name);
+  keyPair = await indutnyCurve.genKeyPair({
+    entropy: _util2.default.Uint8Array_to_str((await _random2.default.getRandomBytes(32)))
+  });
+  return { publicKey: new Uint8Array(keyPair.getPublic('array', false)), privateKey: keyPair.getPrivate().toArrayLike(Uint8Array) };
 };
 
 async function generate(curve) {
@@ -29177,8 +29252,8 @@ async function generate(curve) {
   const keyPair = await curve.genKeyPair();
   return {
     oid: curve.oid,
-    Q: new _bn2.default(keyPair.getPublic()),
-    d: new _bn2.default(keyPair.getPrivate()),
+    Q: new _bn2.default(keyPair.publicKey),
+    d: new _bn2.default(keyPair.privateKey),
     hash: curve.hash,
     cipher: curve.cipher
   };
@@ -29194,6 +29269,9 @@ exports.webCurves = webCurves;
 exports.nodeCurves = nodeCurves;
 exports.generate = generate;
 exports.getPreferredHashAlgo = getPreferredHashAlgo;
+exports.jwkToRawPublic = jwkToRawPublic;
+exports.rawPublicToJwk = rawPublicToJwk;
+exports.privateToJwk = privateToJwk;
 
 //////////////////////////
 //                      //
@@ -29210,11 +29288,8 @@ async function webGenKeyPair(name) {
   const publicKey = await webCrypto.exportKey("jwk", webCryptoKey.publicKey);
 
   return {
-    pub: {
-      x: _util2.default.b64_to_Uint8Array(publicKey.x, true),
-      y: _util2.default.b64_to_Uint8Array(publicKey.y, true)
-    },
-    priv: _util2.default.b64_to_Uint8Array(privateKey.d, true)
+    publicKey: jwkToRawPublic(publicKey),
+    privateKey: _util2.default.b64_to_Uint8Array(privateKey.d, true)
   };
 }
 
@@ -29222,14 +29297,70 @@ async function nodeGenKeyPair(name) {
   // Note: ECDSA and ECDH key generation is structurally equivalent
   const ecdh = nodeCrypto.createECDH(nodeCurves[name]);
   await ecdh.generateKeys();
-
   return {
-    pub: ecdh.getPublicKey().toJSON().data,
-    priv: ecdh.getPrivateKey().toJSON().data
+    publicKey: new Uint8Array(ecdh.getPublicKey()),
+    privateKey: new Uint8Array(ecdh.getPrivateKey())
   };
 }
 
-},{"../../../enums":113,"../../../type/oid":150,"../../../util":152,"../../random":109,"./key":105,"bn.js":16,"elliptic":18}],101:[function(require,module,exports){
+//////////////////////////
+//                      //
+//   Helper functions   //
+//                      //
+//////////////////////////
+
+/**
+ * @param  {JsonWebKey}                jwk  key for conversion
+ *
+ * @returns {Uint8Array}                    raw public key
+ */
+function jwkToRawPublic(jwk) {
+  const bufX = _util2.default.b64_to_Uint8Array(jwk.x);
+  const bufY = _util2.default.b64_to_Uint8Array(jwk.y);
+  const publicKey = new Uint8Array(bufX.length + bufY.length + 1);
+  publicKey[0] = 0x04;
+  publicKey.set(bufX, 1);
+  publicKey.set(bufY, bufX.length + 1);
+  return publicKey;
+}
+
+/**
+ * @param  {Integer}                payloadSize  ec payload size
+ * @param  {String}                 name         curve name
+ * @param  {Uint8Array}             publicKey    public key
+ *
+ * @returns {JsonWebKey}                         public key in jwk format
+ */
+function rawPublicToJwk(payloadSize, name, publicKey) {
+  const len = payloadSize;
+  const bufX = publicKey.slice(1, len + 1);
+  const bufY = publicKey.slice(len + 1, len * 2 + 1);
+  // https://www.rfc-editor.org/rfc/rfc7518.txt
+  const jwk = {
+    kty: "EC",
+    crv: name,
+    x: _util2.default.Uint8Array_to_b64(bufX, true),
+    y: _util2.default.Uint8Array_to_b64(bufY, true),
+    ext: true
+  };
+  return jwk;
+}
+
+/**
+ * @param  {Integer}                payloadSize  ec payload size
+ * @param  {String}                 name         curve name
+ * @param  {Uint8Array}             publicKey    public key
+ * @param  {Uint8Array}             privateKey   private key
+ *
+ * @returns {JsonWebKey}                         private key in jwk format
+ */
+function privateToJwk(payloadSize, name, publicKey, privateKey) {
+  const jwk = rawPublicToJwk(payloadSize, name, publicKey);
+  jwk.d = _util2.default.Uint8Array_to_b64(privateKey, true);
+  return jwk;
+}
+
+},{"../../../enums":113,"../../../type/oid":156,"../../../util":158,"../../random":109,"./indutnyKey":105,"bn.js":16,"tweetnacl/nacl-fast-light.js":72}],101:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -29260,6 +29391,7 @@ var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = [
  * @requires crypto/public_key/elliptic/curve
  * @requires crypto/aes_kw
  * @requires crypto/cipher
+ * @requires crypto/random
  * @requires crypto/hash
  * @requires type/kdf_params
  * @requires enums
@@ -29287,6 +29419,10 @@ var _cipher = require('../../cipher');
 
 var _cipher2 = _interopRequireDefault(_cipher);
 
+var _random = require('../../random');
+
+var _random2 = _interopRequireDefault(_random);
+
 var _hash = require('../../hash');
 
 var _hash2 = _interopRequireDefault(_hash);
@@ -29302,6 +29438,8 @@ var _enums2 = _interopRequireDefault(_enums);
 var _util = require('../../../util');
 
 var _util2 = _interopRequireDefault(_util);
+
+var _indutnyKey = require('./indutnyKey');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -29343,12 +29481,10 @@ async function kdf(hash_algo, X, length, param, stripLeading = false, stripTrail
  * @async
  */
 async function genPublicEphemeralKey(curve, Q) {
-  switch (curve.name) {
+  switch (curve.type) {
     case 'curve25519':
       {
-        var _nacl$box$keyPair = _naclFastLight2.default.box.keyPair();
-
-        const d = _nacl$box$keyPair.secretKey;
+        const d = await _random2.default.getRandomBytes(32);
 
         var _ref = await genPrivateEphemeralKey(curve, Q, null, d);
 
@@ -29362,21 +29498,17 @@ async function genPublicEphemeralKey(curve, Q) {
         publicKey = _util2.default.concatUint8Array([new Uint8Array([0x40]), publicKey]);
         return { publicKey, sharedKey }; // Note: sharedKey is little-endian here, unlike below
       }
-    case 'p256':
-    case 'p384':
-    case 'p521':
-      {
-        if (curve.web && _util2.default.getWebCrypto()) {
-          try {
-            return await webPublicEphemeralKey(curve, Q);
-          } catch (err) {
-            _util2.default.print_debug_error(err);
-          }
+    case 'web':
+      if (curve.web && _util2.default.getWebCrypto()) {
+        try {
+          return await webPublicEphemeralKey(curve, Q);
+        } catch (err) {
+          _util2.default.print_debug_error(err);
         }
       }
-  }
-  if (curve.node && nodeCrypto) {
-    return nodePublicEphemeralKey(curve, Q);
+      break;
+    case 'node':
+      return nodePublicEphemeralKey(curve, Q);
   }
   return ellipticPublicEphemeralKey(curve, Q);
 }
@@ -29419,33 +29551,29 @@ async function encrypt(oid, cipher_algo, hash_algo, m, Q, fingerprint) {
  * @async
  */
 async function genPrivateEphemeralKey(curve, V, Q, d) {
-  switch (curve.name) {
+  if (d.length !== curve.payloadSize) {
+    const privateKey = new Uint8Array(curve.payloadSize);
+    privateKey.set(d, curve.payloadSize - d.length);
+    d = privateKey;
+  }
+  switch (curve.type) {
     case 'curve25519':
       {
-        const one = new _bn2.default(1);
-        const mask = one.ushln(255 - 3).sub(one).ushln(3);
-        let secretKey = new _bn2.default(d);
-        secretKey = secretKey.or(one.ushln(255 - 1));
-        secretKey = secretKey.and(mask);
-        secretKey = secretKey.toArrayLike(Uint8Array, 'le', 32);
+        const secretKey = d.slice().reverse();
         const sharedKey = _naclFastLight2.default.scalarMult(secretKey, V.subarray(1));
         return { secretKey, sharedKey }; // Note: sharedKey is little-endian here, unlike below
       }
-    case 'p256':
-    case 'p384':
-    case 'p521':
-      {
-        if (curve.web && _util2.default.getWebCrypto()) {
-          try {
-            return await webPrivateEphemeralKey(curve, V, Q, d);
-          } catch (err) {
-            _util2.default.print_debug_error(err);
-          }
+    case 'web':
+      if (curve.web && _util2.default.getWebCrypto()) {
+        try {
+          return await webPrivateEphemeralKey(curve, V, Q, d);
+        } catch (err) {
+          _util2.default.print_debug_error(err);
         }
       }
-  }
-  if (curve.node && nodeCrypto) {
-    return nodePrivateEphemeralKey(curve, V, d);
+      break;
+    case 'node':
+      return nodePrivateEphemeralKey(curve, V, d);
   }
   return ellipticPrivateEphemeralKey(curve, V, d);
 }
@@ -29497,12 +29625,12 @@ async function decrypt(oid, cipher_algo, hash_algo, V, C, Q, d, fingerprint) {
  * @async
  */
 async function webPrivateEphemeralKey(curve, V, Q, d) {
-  const recipient = privateToJwk(curve.payloadSize, curve.web.web, d, Q);
+  const recipient = (0, _curves.privateToJwk)(curve.payloadSize, curve.web.web, Q, d);
   let privateKey = webCrypto.importKey("jwk", recipient, {
     name: "ECDH",
     namedCurve: curve.web.web
   }, true, ["deriveKey", "deriveBits"]);
-  const jwk = rawPublicToJwk(curve.payloadSize, curve.web.web, V);
+  const jwk = (0, _curves.rawPublicToJwk)(curve.payloadSize, curve.web.web, V);
   let sender = webCrypto.importKey("jwk", jwk, {
     name: "ECDH",
     namedCurve: curve.web.web
@@ -29543,7 +29671,7 @@ async function webPrivateEphemeralKey(curve, V, Q, d) {
  * @async
  */
 async function webPublicEphemeralKey(curve, Q) {
-  const jwk = rawPublicToJwk(curve.payloadSize, curve.web.web, Q);
+  const jwk = (0, _curves.rawPublicToJwk)(curve.payloadSize, curve.web.web, Q);
   let keyPair = webCrypto.generateKey({
     name: "ECDH",
     namedCurve: curve.web.web
@@ -29575,7 +29703,7 @@ async function webPublicEphemeralKey(curve, Q) {
   p = _ref11[1];
 
   const sharedKey = new Uint8Array(s);
-  const publicKey = new Uint8Array(jwkToRawPublic(p));
+  const publicKey = new Uint8Array((0, _curves.jwkToRawPublic)(p));
   return { publicKey, sharedKey };
 }
 
@@ -29589,11 +29717,12 @@ async function webPublicEphemeralKey(curve, Q) {
  * @async
  */
 async function ellipticPrivateEphemeralKey(curve, V, d) {
-  V = curve.keyFromPublic(V);
-  d = curve.keyFromPrivate(d);
+  const indutnyCurve = await (0, _indutnyKey.getIndutnyCurve)(curve.name);
+  V = (0, _indutnyKey.keyFromPublic)(indutnyCurve, V);
+  d = (0, _indutnyKey.keyFromPrivate)(indutnyCurve, d);
   const secretKey = new Uint8Array(d.getPrivate());
-  const S = d.derive(V);
-  const len = curve.curve.curve.p.byteLength();
+  const S = d.derive(V.getPublic());
+  const len = indutnyCurve.curve.p.byteLength();
   const sharedKey = S.toArrayLike(Uint8Array, 'be', len);
   return { secretKey, sharedKey };
 }
@@ -29607,11 +29736,13 @@ async function ellipticPrivateEphemeralKey(curve, V, d) {
  * @async
  */
 async function ellipticPublicEphemeralKey(curve, Q) {
+  const indutnyCurve = await (0, _indutnyKey.getIndutnyCurve)(curve.name);
   const v = await curve.genKeyPair();
-  Q = curve.keyFromPublic(Q);
-  const publicKey = new Uint8Array(v.getPublic());
-  const S = v.derive(Q);
-  const len = curve.curve.curve.p.byteLength();
+  Q = (0, _indutnyKey.keyFromPublic)(indutnyCurve, Q);
+  const V = (0, _indutnyKey.keyFromPrivate)(indutnyCurve, v.privateKey);
+  const publicKey = v.publicKey;
+  const S = V.derive(Q.getPublic());
+  const len = indutnyCurve.curve.p.byteLength();
   const sharedKey = S.toArrayLike(Uint8Array, 'be', len);
   return { publicKey, sharedKey };
 }
@@ -29649,103 +29780,36 @@ async function nodePublicEphemeralKey(curve, Q) {
   return { publicKey, sharedKey };
 }
 
-/**
- * @param  {Integer}                payloadSize  ec payload size
- * @param  {String}                 name         curve name
- * @param  {Uint8Array}             publicKey    public key
- * @returns {JsonWebKey}                         public key in jwk format
- */
-function rawPublicToJwk(payloadSize, name, publicKey) {
-  const len = payloadSize;
-  const bufX = publicKey.slice(1, len + 1);
-  const bufY = publicKey.slice(len + 1, len * 2 + 1);
-  // https://www.rfc-editor.org/rfc/rfc7518.txt
-  const jwKey = {
-    kty: "EC",
-    crv: name,
-    x: _util2.default.Uint8Array_to_b64(bufX, true),
-    y: _util2.default.Uint8Array_to_b64(bufY, true),
-    ext: true
-  };
-  return jwKey;
-}
-
-/**
- * @param  {Integer}                payloadSize  ec payload size
- * @param  {String}                 name         curve name
- * @param  {Uint8Array}             publicKey    public key
- * @param  {Uint8Array}             privateKey   private key
- * @returns {JsonWebKey}                         private key in jwk format
- */
-function privateToJwk(payloadSize, name, privateKey, publicKey) {
-  const jwk = rawPublicToJwk(payloadSize, name, publicKey);
-  jwk.d = _util2.default.Uint8Array_to_b64(privateKey, true);
-  return jwk;
-}
-
-/**
- * @param  {JsonWebKey}                jwk  key for conversion
- * @returns {Uint8Array}                    raw public key
- */
-function jwkToRawPublic(jwk) {
-  const bufX = _util2.default.b64_to_Uint8Array(jwk.x);
-  const bufY = _util2.default.b64_to_Uint8Array(jwk.y);
-  const publicKey = new Uint8Array(bufX.length + bufY.length + 1);
-  publicKey[0] = 0x04;
-  publicKey.set(bufX, 1);
-  publicKey.set(bufY, bufX.length + 1);
-  return publicKey;
-}
-
 exports.default = { encrypt, decrypt, genPublicEphemeralKey, genPrivateEphemeralKey, buildEcdhParam, kdf, webPublicEphemeralKey, webPrivateEphemeralKey, ellipticPublicEphemeralKey, ellipticPrivateEphemeralKey, nodePublicEphemeralKey, nodePrivateEphemeralKey };
 
-},{"../../../enums":113,"../../../type/kdf_params":147,"../../../util":152,"../../aes_kw":80,"../../cipher":86,"../../hash":92,"./curves":100,"bn.js":16,"tweetnacl/nacl-fast-light.js":72}],102:[function(require,module,exports){
+},{"../../../enums":113,"../../../type/kdf_params":153,"../../../util":158,"../../aes_kw":80,"../../cipher":86,"../../hash":92,"../../random":109,"./curves":100,"./indutnyKey":105,"bn.js":16,"tweetnacl/nacl-fast-light.js":72}],102:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var _bn = require('bn.js');
+
+var _bn2 = _interopRequireDefault(_bn);
+
+var _enums = require('../../../enums');
+
+var _enums2 = _interopRequireDefault(_enums);
+
+var _util = require('../../../util');
+
+var _util2 = _interopRequireDefault(_util);
+
 var _curves = require('./curves');
 
 var _curves2 = _interopRequireDefault(_curves);
 
+var _indutnyKey = require('./indutnyKey');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/**
- * Sign a message using the provided key
- * @param  {module:type/oid}   oid       Elliptic curve object identifier
- * @param  {module:enums.hash} hash_algo Hash algorithm used to sign
- * @param  {Uint8Array}        m         Message to sign
- * @param  {Uint8Array}        d         Private key used to sign the message
- * @param  {Uint8Array}        hashed    The hashed message
- * @returns {{r: Uint8Array,
- *            s: Uint8Array}}            Signature of the message
- * @async
- */
-async function sign(oid, hash_algo, m, d, hashed) {
-  const curve = new _curves2.default(oid);
-  const key = curve.keyFromPrivate(d);
-  const signature = await key.sign(m, hash_algo, hashed);
-  return {
-    r: signature.r.toArrayLike(Uint8Array),
-    s: signature.s.toArrayLike(Uint8Array)
-  };
-}
-
-/**
- * Verifies if a signature is valid for a message
- * @param  {module:type/oid}   oid       Elliptic curve object identifier
- * @param  {module:enums.hash} hash_algo Hash algorithm used in the signature
- * @param  {{r: Uint8Array,
-             s: Uint8Array}}   signature Signature to verify
- * @param  {Uint8Array}        m         Message to verify
- * @param  {Uint8Array}        Q         Public key used to verify the message
- * @param  {Uint8Array}        hashed    The hashed message
- * @returns {Boolean}
- * @async
- */
-// OpenPGP.js - An OpenPGP implementation in javascript
+const webCrypto = _util2.default.getWebCrypto(); // OpenPGP.js - An OpenPGP implementation in javascript
 // Copyright (C) 2015-2016 Decentral
 //
 // This library is free software; you can redistribute it and/or
@@ -29764,19 +29828,216 @@ async function sign(oid, hash_algo, m, d, hashed) {
 
 /**
  * @fileoverview Implementation of ECDSA following RFC6637 for Openpgpjs
- * @requires crypto/public_key/elliptic/curve
+ * @requires bn.js
+ * @requires web-stream-tools
+ * @requires enums
+ * @requires util
+ * @requires crypto/public_key/elliptic/curves
  * @module crypto/public_key/elliptic/ecdsa
  */
 
-async function verify(oid, hash_algo, signature, m, Q, hashed) {
+const nodeCrypto = _util2.default.getNodeCrypto();
+
+/**
+ * Sign a message using the provided key
+ * @param  {module:type/oid}   oid          Elliptic curve object identifier
+ * @param  {module:enums.hash} hash_algo    Hash algorithm used to sign
+ * @param  {Uint8Array}        message      Message to sign
+ * @param  {Uint8Array}        publicKey    Public key
+ * @param  {Uint8Array}        privateKey   Private key used to sign the message
+ * @param  {Uint8Array}        hashed       The hashed message
+ * @returns {{r: Uint8Array,
+ *            s: Uint8Array}}               Signature of the message
+ * @async
+ */
+async function sign(oid, hash_algo, message, publicKey, privateKey, hashed) {
   const curve = new _curves2.default(oid);
-  const key = curve.keyFromPublic(Q);
-  return key.verify(m, signature, hash_algo, hashed);
+  if (message && !_util2.default.isStream(message)) {
+    const keyPair = { publicKey, privateKey };
+    switch (curve.type) {
+      case 'web':
+        {
+          // If browser doesn't support a curve, we'll catch it
+          try {
+            // Need to await to make sure browser succeeds
+            return await webSign(curve, hash_algo, message, keyPair);
+          } catch (err) {
+            _util2.default.print_debug_error("Browser did not support signing: " + err.message);
+          }
+          break;
+        }
+      case 'node':
+        {
+          const signature = await nodeSign(curve, hash_algo, message, keyPair);
+          return {
+            r: signature.r.toArrayLike(Uint8Array),
+            s: signature.s.toArrayLike(Uint8Array)
+          };
+        }
+    }
+  }
+  return ellipticSign(curve, hashed, privateKey);
 }
 
-exports.default = { sign, verify };
+/**
+ * Verifies if a signature is valid for a message
+ * @param  {module:type/oid}   oid       Elliptic curve object identifier
+ * @param  {module:enums.hash} hash_algo Hash algorithm used in the signature
+ * @param  {{r: Uint8Array,
+             s: Uint8Array}}   signature Signature to verify
+ * @param  {Uint8Array}        message   Message to verify
+ * @param  {Uint8Array}        publicKey Public key used to verify the message
+ * @param  {Uint8Array}        hashed    The hashed message
+ * @returns {Boolean}
+ * @async
+ */
+async function verify(oid, hash_algo, signature, message, publicKey, hashed) {
+  const curve = new _curves2.default(oid);
+  if (message && !_util2.default.isStream(message)) {
+    switch (curve.type) {
+      case 'web':
+        try {
+          // Need to await to make sure browser succeeds
+          return await webVerify(curve, hash_algo, signature, message, publicKey);
+        } catch (err) {
+          _util2.default.print_debug_error("Browser did not support verifying: " + err.message);
+        }
+        break;
+      case 'node':
+        return nodeVerify(curve, hash_algo, signature, message, publicKey);
+    }
+  }
+  const digest = typeof hash_algo === 'undefined' ? message : hashed;
+  return ellipticVerify(curve, signature, digest, publicKey);
+}
 
-},{"./curves":100}],103:[function(require,module,exports){
+exports.default = { sign, verify, ellipticVerify, ellipticSign };
+
+//////////////////////////
+//                      //
+//   Helper functions   //
+//                      //
+//////////////////////////
+
+async function ellipticSign(curve, hashed, privateKey) {
+  const indutnyCurve = await (0, _indutnyKey.getIndutnyCurve)(curve.name);
+  const key = (0, _indutnyKey.keyFromPrivate)(indutnyCurve, privateKey);
+  const signature = key.sign(hashed);
+  return {
+    r: signature.r.toArrayLike(Uint8Array),
+    s: signature.s.toArrayLike(Uint8Array)
+  };
+}
+
+async function ellipticVerify(curve, signature, digest, publicKey) {
+  const indutnyCurve = await (0, _indutnyKey.getIndutnyCurve)(curve.name);
+  const key = (0, _indutnyKey.keyFromPublic)(indutnyCurve, publicKey);
+  return key.verify(digest, signature);
+}
+
+async function webSign(curve, hash_algo, message, keyPair) {
+  const len = curve.payloadSize;
+  const jwk = (0, _curves.privateToJwk)(curve.payloadSize, _curves.webCurves[curve.name], keyPair.publicKey, keyPair.privateKey);
+  const key = await webCrypto.importKey("jwk", jwk, {
+    "name": "ECDSA",
+    "namedCurve": _curves.webCurves[curve.name],
+    "hash": { name: _enums2.default.read(_enums2.default.webHash, curve.hash) }
+  }, false, ["sign"]);
+
+  const signature = new Uint8Array((await webCrypto.sign({
+    "name": 'ECDSA',
+    "namedCurve": _curves.webCurves[curve.name],
+    "hash": { name: _enums2.default.read(_enums2.default.webHash, hash_algo) }
+  }, key, message)));
+
+  return {
+    r: signature.slice(0, len),
+    s: signature.slice(len, len << 1)
+  };
+}
+
+async function webVerify(curve, hash_algo, { r, s }, message, publicKey) {
+  const len = curve.payloadSize;
+  const jwk = (0, _curves.rawPublicToJwk)(curve.payloadSize, _curves.webCurves[curve.name], publicKey);
+  const key = await webCrypto.importKey("jwk", jwk, {
+    "name": "ECDSA",
+    "namedCurve": _curves.webCurves[curve.name],
+    "hash": { name: _enums2.default.read(_enums2.default.webHash, curve.hash) }
+  }, false, ["verify"]);
+
+  const signature = _util2.default.concatUint8Array([new Uint8Array(len - r.length), r, new Uint8Array(len - s.length), s]).buffer;
+
+  return webCrypto.verify({
+    "name": 'ECDSA',
+    "namedCurve": _curves.webCurves[curve.name],
+    "hash": { name: _enums2.default.read(_enums2.default.webHash, hash_algo) }
+  }, key, signature, message);
+}
+
+async function nodeSign(curve, hash_algo, message, keyPair) {
+  const sign = nodeCrypto.createSign(_enums2.default.read(_enums2.default.hash, hash_algo));
+  sign.write(message);
+  sign.end();
+  const key = ECPrivateKey.encode({
+    version: 1,
+    parameters: curve.oid,
+    privateKey: Array.from(keyPair.privateKey),
+    publicKey: { unused: 0, data: Array.from(keyPair.publicKey) }
+  }, 'pem', {
+    label: 'EC PRIVATE KEY'
+  });
+
+  return ECDSASignature.decode(sign.sign(key), 'der');
+}
+
+async function nodeVerify(curve, hash_algo, { r, s }, message, publicKey) {
+  const verify = nodeCrypto.createVerify(_enums2.default.read(_enums2.default.hash, hash_algo));
+  verify.write(message);
+  verify.end();
+  const key = SubjectPublicKeyInfo.encode({
+    algorithm: {
+      algorithm: [1, 2, 840, 10045, 2, 1],
+      parameters: curve.oid
+    },
+    subjectPublicKey: { unused: 0, data: Array.from(publicKey) }
+  }, 'pem', {
+    label: 'PUBLIC KEY'
+  });
+  const signature = ECDSASignature.encode({
+    r: new _bn2.default(r), s: new _bn2.default(s)
+  }, 'der');
+
+  try {
+    return verify.verify(key, signature);
+  } catch (err) {
+    return false;
+  }
+}
+
+// Originally written by Owen Smith https://github.com/omsmith
+// Adapted on Feb 2018 from https://github.com/Brightspace/node-jwk-to-pem/
+
+/* eslint-disable no-invalid-this */
+
+const asn1 = nodeCrypto ? require('asn1.js') : undefined;
+
+const ECDSASignature = nodeCrypto ? asn1.define('ECDSASignature', function () {
+  this.seq().obj(this.key('r').int(), this.key('s').int());
+}) : undefined;
+
+const ECPrivateKey = nodeCrypto ? asn1.define('ECPrivateKey', function () {
+  this.seq().obj(this.key('version').int(), this.key('privateKey').octstr(), this.key('parameters').explicit(0).optional().any(), this.key('publicKey').explicit(1).optional().bitstr());
+}) : undefined;
+
+const AlgorithmIdentifier = nodeCrypto ? asn1.define('AlgorithmIdentifier', function () {
+  this.seq().obj(this.key('algorithm').objid(), this.key('parameters').optional().any());
+}) : undefined;
+
+const SubjectPublicKeyInfo = nodeCrypto ? asn1.define('SubjectPublicKeyInfo', function () {
+  this.seq().obj(this.key('algorithm').use(AlgorithmIdentifier), this.key('subjectPublicKey').bitstr());
+}) : undefined;
+
+},{"../../../enums":113,"../../../util":158,"./curves":100,"./indutnyKey":105,"asn1.js":"asn1.js","bn.js":16}],103:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -29801,13 +30062,14 @@ _naclFastLight2.default.hash = bytes => new Uint8Array((0, _2.default)().update(
 
 /**
  * Sign a message using the provided key
- * @param  {module:type/oid}   oid       Elliptic curve object identifier
- * @param  {module:enums.hash} hash_algo Hash algorithm used to sign
- * @param  {Uint8Array}        m         Message to sign
- * @param  {Uint8Array}        d         Private key used to sign
- * @param  {Uint8Array}        hashed    The hashed message
+ * @param  {module:type/oid}   oid          Elliptic curve object identifier
+ * @param  {module:enums.hash} hash_algo    Hash algorithm used to sign
+ * @param  {Uint8Array}        message      Message to sign
+ * @param  {Uint8Array}        publicKey    Public key
+ * @param  {Uint8Array}        privateKey   Private key used to sign the message
+ * @param  {Uint8Array}        hashed       The hashed message
  * @returns {{R: Uint8Array,
- *            S: Uint8Array}}            Signature of the message
+ *            S: Uint8Array}}               Signature of the message
  * @async
  */
 // OpenPGP.js - An OpenPGP implementation in javascript
@@ -29836,11 +30098,8 @@ _naclFastLight2.default.hash = bytes => new Uint8Array((0, _2.default)().update(
  * @module crypto/public_key/elliptic/eddsa
  */
 
-async function sign(oid, hash_algo, m, d, hashed) {
-  var _nacl$sign$keyPair$fr = _naclFastLight2.default.sign.keyPair.fromSeed(d);
-
-  const secretKey = _nacl$sign$keyPair$fr.secretKey;
-
+async function sign(oid, hash_algo, message, publicKey, privateKey, hashed) {
+  const secretKey = _util2.default.concatUint8Array([privateKey, publicKey.subarray(1)]);
   const signature = _naclFastLight2.default.sign.detached(hashed, secretKey);
   // EdDSA signature params are returned in little-endian format
   return {
@@ -29868,7 +30127,7 @@ async function verify(oid, hash_algo, { R, S }, m, publicKey, hashed) {
 
 exports.default = { sign, verify };
 
-},{"../../../util":152,"hash.js/lib/hash/sha/512":43,"tweetnacl/nacl-fast-light.js":72}],104:[function(require,module,exports){
+},{"../../../util":158,"hash.js/lib/hash/sha/512":43,"tweetnacl/nacl-fast-light.js":72}],104:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -29924,33 +30183,32 @@ exports.default = {
 };
 
 },{"./curves":100,"./ecdh":101,"./ecdsa":102,"./eddsa":103}],105:[function(require,module,exports){
+(function (global){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.keyFromPrivate = keyFromPrivate;
+exports.keyFromPublic = keyFromPublic;
+exports.getIndutnyCurve = getIndutnyCurve;
 
-var _bn = require('bn.js');
+var _lightweight_helper = require('../../../lightweight_helper');
 
-var _bn2 = _interopRequireDefault(_bn);
+var _config = require('../../../config');
 
-var _webStreamTools = require('web-stream-tools');
-
-var _webStreamTools2 = _interopRequireDefault(_webStreamTools);
-
-var _curves = require('./curves');
+var _config2 = _interopRequireDefault(_config);
 
 var _util = require('../../../util');
 
 var _util2 = _interopRequireDefault(_util);
 
-var _enums = require('../../../enums');
-
-var _enums2 = _interopRequireDefault(_enums);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const webCrypto = _util2.default.getWebCrypto(); // OpenPGP.js - An OpenPGP implementation in javascript
+function keyFromPrivate(indutnyCurve, priv) {
+  const keyPair = indutnyCurve.keyPair({ priv: priv });
+  return keyPair;
+} // OpenPGP.js - An OpenPGP implementation in javascript
 // Copyright (C) 2015-2016 Decentral
 //
 // This library is free software; you can redistribute it and/or
@@ -29968,214 +30226,67 @@ const webCrypto = _util2.default.getWebCrypto(); // OpenPGP.js - An OpenPGP impl
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 /**
- * @fileoverview Wrapper for a KeyPair of an Elliptic Curve
- * @requires bn.js
- * @requires web-stream-tools
- * @requires crypto/public_key/elliptic/curves
- * @requires util
+ * @fileoverview Wrapper for a KeyPair of an curve from indutny/elliptic library
  * @requires enums
  * @requires asn1.js
- * @module crypto/public_key/elliptic/key
+ * @module crypto/public_key/elliptic/indutnyKey
  */
 
-const nodeCrypto = _util2.default.getNodeCrypto();
+function keyFromPublic(indutnyCurve, pub) {
+  const keyPair = indutnyCurve.keyPair({ pub: pub });
+  if (keyPair.validate().result !== true) {
+    throw new Error('Invalid elliptic public key');
+  }
+  return keyPair;
+}
 
 /**
- * @constructor
+ * Load elliptic on demand to global.openpgp.elliptic
+ * @returns {Promise<elliptic>}
  */
-function KeyPair(curve, options) {
-  this.curve = curve;
-  this.keyType = curve.curve.type === 'edwards' ? _enums2.default.publicKey.eddsa : _enums2.default.publicKey.ecdsa;
-  this.keyPair = this.curve.curve.keyPair(options);
+async function loadEllipticPromise() {
+  const path = _config2.default.indutny_elliptic_path;
+  const options = _config2.default.indutny_elliptic_fetch_options;
+  const ellipticDlPromise = (0, _lightweight_helper.dl)(path, options).catch(() => (0, _lightweight_helper.dl)(path, options));
+  const ellipticContents = await ellipticDlPromise;
+  const mainUrl = URL.createObjectURL(new Blob([ellipticContents], { type: 'text/javascript' }));
+  await (0, _lightweight_helper.loadScript)(mainUrl);
+  URL.revokeObjectURL(mainUrl);
+  if (!global.openpgp.elliptic) {
+    throw new Error('Elliptic library failed to load correctly');
+  }
+  return global.openpgp.elliptic;
 }
 
-KeyPair.prototype.sign = async function (message, hash_algo, hashed) {
-  if (message && !message.locked) {
-    message = await _webStreamTools2.default.readToEnd(message);
-    if (this.curve.web && _util2.default.getWebCrypto()) {
-      // If browser doesn't support a curve, we'll catch it
-      try {
-        // need to await to make sure browser succeeds
-        const signature = await webSign(this.curve, hash_algo, message, this.keyPair);
-        return signature;
-      } catch (err) {
-        _util2.default.print_debug("Browser did not support signing: " + err.message);
-      }
-    } else if (this.curve.node && _util2.default.getNodeCrypto()) {
-      return nodeSign(this.curve, hash_algo, message, this.keyPair);
-    }
+let ellipticPromise;
+
+function loadElliptic() {
+  if (!_config2.default.external_indutny_elliptic) {
+    return require('elliptic');
   }
-  const digest = typeof hash_algo === 'undefined' ? message : hashed;
-  return this.keyPair.sign(digest);
-};
-
-KeyPair.prototype.verify = async function (message, signature, hash_algo, hashed) {
-  if (message && !message.locked) {
-    message = await _webStreamTools2.default.readToEnd(message);
-    if (this.curve.web && _util2.default.getWebCrypto()) {
-      // If browser doesn't support a curve, we'll catch it
-      try {
-        // need to await to make sure browser succeeds
-        const result = await webVerify(this.curve, hash_algo, signature, message, this.keyPair.getPublic());
-        return result;
-      } catch (err) {
-        _util2.default.print_debug("Browser did not support signing: " + err.message);
-      }
-    } else if (this.curve.node && _util2.default.getNodeCrypto()) {
-      return nodeVerify(this.curve, hash_algo, signature, message, this.keyPair.getPublic());
-    }
+  if (_util2.default.detectNode()) {
+    // eslint-disable-next-line
+    return require(_config2.default.indutny_elliptic_path);
   }
-  const digest = typeof hash_algo === 'undefined' ? message : hashed;
-  return this.keyPair.verify(digest, signature);
-};
-
-KeyPair.prototype.derive = function (pub) {
-  if (this.keyType === _enums2.default.publicKey.eddsa) {
-    throw new Error('Key can only be used for EdDSA');
+  if (!ellipticPromise) {
+    ellipticPromise = loadEllipticPromise().catch(e => {
+      ellipticPromise = undefined;
+      throw e;
+    });
   }
-  return this.keyPair.derive(pub.keyPair.getPublic());
-};
-
-KeyPair.prototype.getPublic = function () {
-  const compact = this.curve.curve.curve.type === 'edwards' || this.curve.curve.curve.type === 'mont';
-  return this.keyPair.getPublic('array', compact);
-};
-
-KeyPair.prototype.getPrivate = function () {
-  if (this.curve.keyType === _enums2.default.publicKey.eddsa) {
-    return this.keyPair.getSecret();
-  }
-  return this.keyPair.getPrivate().toArray();
-};
-
-exports.default = KeyPair;
-
-//////////////////////////
-//                      //
-//   Helper functions   //
-//                      //
-//////////////////////////
-
-
-async function webSign(curve, hash_algo, message, keyPair) {
-  const len = curve.payloadSize;
-  const key = await webCrypto.importKey("jwk", {
-    "kty": "EC",
-    "crv": _curves.webCurves[curve.name],
-    "x": _util2.default.Uint8Array_to_b64(new Uint8Array(keyPair.getPublic().getX().toArray('be', len)), true),
-    "y": _util2.default.Uint8Array_to_b64(new Uint8Array(keyPair.getPublic().getY().toArray('be', len)), true),
-    "d": _util2.default.Uint8Array_to_b64(new Uint8Array(keyPair.getPrivate().toArray('be', len)), true),
-    "use": "sig",
-    "kid": "ECDSA Private Key"
-  }, {
-    "name": "ECDSA",
-    "namedCurve": _curves.webCurves[curve.name],
-    "hash": { name: _enums2.default.read(_enums2.default.webHash, curve.hash) }
-  }, false, ["sign"]);
-
-  const signature = new Uint8Array((await webCrypto.sign({
-    "name": 'ECDSA',
-    "namedCurve": _curves.webCurves[curve.name],
-    "hash": { name: _enums2.default.read(_enums2.default.webHash, hash_algo) }
-  }, key, message)));
-
-  return {
-    r: new _bn2.default(signature.slice(0, len)),
-    s: new _bn2.default(signature.slice(len, len << 1))
-  };
+  return ellipticPromise;
 }
 
-async function webVerify(curve, hash_algo, { r, s }, message, publicKey) {
-  const len = curve.payloadSize;
-  const key = await webCrypto.importKey("jwk", {
-    "kty": "EC",
-    "crv": _curves.webCurves[curve.name],
-    "x": _util2.default.Uint8Array_to_b64(new Uint8Array(publicKey.getX().toArray('be', len)), true),
-    "y": _util2.default.Uint8Array_to_b64(new Uint8Array(publicKey.getY().toArray('be', len)), true),
-    "use": "sig",
-    "kid": "ECDSA Public Key"
-  }, {
-    "name": "ECDSA",
-    "namedCurve": _curves.webCurves[curve.name],
-    "hash": { name: _enums2.default.read(_enums2.default.webHash, curve.hash) }
-  }, false, ["verify"]);
-
-  const signature = _util2.default.concatUint8Array([new Uint8Array(len - r.length), r, new Uint8Array(len - s.length), s]).buffer;
-
-  return webCrypto.verify({
-    "name": 'ECDSA',
-    "namedCurve": _curves.webCurves[curve.name],
-    "hash": { name: _enums2.default.read(_enums2.default.webHash, hash_algo) }
-  }, key, signature, message);
-}
-
-async function nodeSign(curve, hash_algo, message, keyPair) {
-  const sign = nodeCrypto.createSign(_enums2.default.read(_enums2.default.hash, hash_algo));
-  sign.write(message);
-  sign.end();
-
-  const key = ECPrivateKey.encode({
-    version: 1,
-    parameters: curve.oid,
-    privateKey: keyPair.getPrivate().toArray(),
-    publicKey: { unused: 0, data: keyPair.getPublic().encode() }
-  }, 'pem', {
-    label: 'EC PRIVATE KEY'
-  });
-
-  return ECDSASignature.decode(sign.sign(key), 'der');
-}
-
-async function nodeVerify(curve, hash_algo, { r, s }, message, publicKey) {
-  const verify = nodeCrypto.createVerify(_enums2.default.read(_enums2.default.hash, hash_algo));
-  verify.write(message);
-  verify.end();
-
-  const key = SubjectPublicKeyInfo.encode({
-    algorithm: {
-      algorithm: [1, 2, 840, 10045, 2, 1],
-      parameters: curve.oid
-    },
-    subjectPublicKey: { unused: 0, data: publicKey.encode() }
-  }, 'pem', {
-    label: 'PUBLIC KEY'
-  });
-
-  const signature = ECDSASignature.encode({
-    r: new _bn2.default(r), s: new _bn2.default(s)
-  }, 'der');
-
-  try {
-    return verify.verify(key, signature);
-  } catch (err) {
-    return false;
+async function getIndutnyCurve(name) {
+  if (!_config2.default.use_indutny_elliptic) {
+    throw new Error('This curve is only supported in the full build of OpenPGP.js');
   }
+  const elliptic = await loadElliptic();
+  return new elliptic.ec(name);
 }
 
-// Originally written by Owen Smith https://github.com/omsmith
-// Adapted on Feb 2018 from https://github.com/Brightspace/node-jwk-to-pem/
-
-/* eslint-disable no-invalid-this */
-
-const asn1 = nodeCrypto ? require('asn1.js') : undefined;
-
-const ECDSASignature = nodeCrypto ? asn1.define('ECDSASignature', function () {
-  this.seq().obj(this.key('r').int(), this.key('s').int());
-}) : undefined;
-
-const ECPrivateKey = nodeCrypto ? asn1.define('ECPrivateKey', function () {
-  this.seq().obj(this.key('version').int(), this.key('privateKey').octstr(), this.key('parameters').explicit(0).optional().any(), this.key('publicKey').explicit(1).optional().bitstr());
-}) : undefined;
-
-const AlgorithmIdentifier = nodeCrypto ? asn1.define('AlgorithmIdentifier', function () {
-  this.seq().obj(this.key('algorithm').objid(), this.key('parameters').optional().any());
-}) : undefined;
-
-const SubjectPublicKeyInfo = nodeCrypto ? asn1.define('SubjectPublicKeyInfo', function () {
-  this.seq().obj(this.key('algorithm').use(AlgorithmIdentifier), this.key('subjectPublicKey').bitstr());
-}) : undefined;
-
-},{"../../../enums":113,"../../../util":152,"./curves":100,"asn1.js":"asn1.js","bn.js":16,"web-stream-tools":75}],106:[function(require,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"../../../config":79,"../../../lightweight_helper":125,"../../../util":158,"elliptic":18}],106:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -30438,6 +30549,7 @@ async function millerRabin(n, k, rand) {
 }
 
 },{"../random":109,"bn.js":16}],108:[function(require,module,exports){
+(function (global){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -30464,23 +30576,21 @@ var _util = require('../../util');
 
 var _util2 = _interopRequireDefault(_util);
 
+var _pkcs = require('../pkcs1');
+
+var _pkcs2 = _interopRequireDefault(_pkcs);
+
+var _enums = require('../../enums');
+
+var _enums2 = _interopRequireDefault(_enums);
+
+var _mpi = require('../../type/mpi');
+
+var _mpi2 = _interopRequireDefault(_mpi);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// Helper for IE11 KeyOperation objects
-function promisifyIE11Op(keyObj, err) {
-  if (typeof keyObj.then !== 'function') {
-    // IE11 KeyOperation
-    return new Promise(function (resolve, reject) {
-      keyObj.onerror = function () {
-        reject(new Error(err));
-      };
-      keyObj.oncomplete = function (e) {
-        resolve(e.target.result);
-      };
-    });
-  }
-  return keyObj;
-} // GPG4Browsers - An OpenPGP implementation in javascript
+// GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
 // This library is free software; you can redistribute it and/or
@@ -30507,103 +30617,142 @@ function promisifyIE11Op(keyObj, err) {
  * @module crypto/public_key/rsa
  */
 
+const webCrypto = _util2.default.getWebCrypto();
+const nodeCrypto = _util2.default.getNodeCrypto();
+const asn1 = nodeCrypto ? require('asn1.js') : undefined;
+
+// Helper for IE11 KeyOperation objects
+function promisifyIE11Op(keyObj, err) {
+  if (typeof keyObj.then !== 'function') {
+    // IE11 KeyOperation
+    return new Promise(function (resolve, reject) {
+      keyObj.onerror = function () {
+        reject(new Error(err));
+      };
+      keyObj.oncomplete = function (e) {
+        resolve(e.target.result);
+      };
+    });
+  }
+  return keyObj;
+}
+
+/* eslint-disable no-invalid-this */
+const RSAPrivateKey = _util2.default.detectNode() ? asn1.define('RSAPrivateKey', function () {
+  this.seq().obj( // used for native NodeJS crypto
+  this.key('version').int(), // 0
+  this.key('modulus').int(), // n
+  this.key('publicExponent').int(), // e
+  this.key('privateExponent').int(), // d
+  this.key('prime1').int(), // p
+  this.key('prime2').int(), // q
+  this.key('exponent1').int(), // dp
+  this.key('exponent2').int(), // dq
+  this.key('coefficient').int() // u
+  );
+}) : undefined;
+
+const RSAPublicKey = _util2.default.detectNode() ? asn1.define('RSAPubliceKey', function () {
+  this.seq().obj( // used for native NodeJS crypto
+  this.key('modulus').int(), // n
+  this.key('publicExponent').int() // e
+  );
+}) : undefined;
+/* eslint-enable no-invalid-this */
+
 exports.default = {
   /** Create signature
-   * @param {BN} m message
-   * @param {BN} n RSA public modulus
-   * @param {BN} e RSA public exponent
-   * @param {BN} d RSA private exponent
-   * @returns {BN} RSA Signature
+   * @param {module:enums.hash} hash_algo Hash algorithm
+   * @param {Uint8Array} data message
+   * @param {Uint8Array} n RSA public modulus
+   * @param {Uint8Array} e RSA public exponent
+   * @param {Uint8Array} d RSA private exponent
+   * @param {Uint8Array} p RSA private prime p
+   * @param {Uint8Array} q RSA private prime q
+   * @param {Uint8Array} u RSA private coefficient
+   * @param {Uint8Array} hashed hashed message
+   * @returns {Uint8Array} RSA Signature
    * @async
    */
-  sign: async function sign(m, n, e, d) {
-    if (n.cmp(m) <= 0) {
-      throw new Error('Message size cannot exceed modulus size');
+  sign: async function sign(hash_algo, data, n, e, d, p, q, u, hashed) {
+    if (data && !_util2.default.isStream(data)) {
+      if (_util2.default.getWebCrypto()) {
+        try {
+          return await this.webSign(_enums2.default.read(_enums2.default.webHash, hash_algo), data, n, e, d, p, q, u);
+        } catch (err) {
+          _util2.default.print_debug_error(err);
+        }
+      } else if (_util2.default.getNodeCrypto()) {
+        return this.nodeSign(hash_algo, data, n, e, d, p, q, u);
+      }
     }
-    const nred = new _bn2.default.red(n);
-    return m.toRed(nred).redPow(d).toArrayLike(Uint8Array, 'be', n.byteLength());
+    return this.bnSign(hash_algo, n, d, hashed);
   },
 
   /**
    * Verify signature
-   * @param {BN} s signature
-   * @param {BN} n RSA public modulus
-   * @param {BN} e RSA public exponent
-   * @returns {BN}
+   * @param {module:enums.hash} hash_algo Hash algorithm
+   * @param {Uint8Array} data message
+   * @param {Uint8Array} s signature
+   * @param {Uint8Array} n RSA public modulus
+   * @param {Uint8Array} e RSA public exponent
+   * @param {Uint8Array} hashed  hashed message
+   * @returns {Boolean}
    * @async
    */
-  verify: async function verify(s, n, e) {
-    if (n.cmp(s) <= 0) {
-      throw new Error('Signature size cannot exceed modulus size');
+  verify: async function verify(hash_algo, data, s, n, e, hashed) {
+    if (data && !_util2.default.isStream(data)) {
+      if (_util2.default.getWebCrypto()) {
+        try {
+          return await this.webVerify(_enums2.default.read(_enums2.default.webHash, hash_algo), data, s, n, e);
+        } catch (err) {
+          _util2.default.print_debug_error(err);
+        }
+      } else if (_util2.default.getNodeCrypto()) {
+        return this.nodeVerify(hash_algo, data, s, n, e);
+      }
     }
-    const nred = new _bn2.default.red(n);
-    return s.toRed(nred).redPow(e).toArrayLike(Uint8Array, 'be', n.byteLength());
+    return this.bnVerify(hash_algo, s, n, e, hashed);
   },
 
   /**
    * Encrypt message
-   * @param {BN} m message
-   * @param {BN} n RSA public modulus
-   * @param {BN} e RSA public exponent
-   * @returns {BN} RSA Ciphertext
+   * @param {Uint8Array} data message
+   * @param {Uint8Array} n RSA public modulus
+   * @param {Uint8Array} e RSA public exponent
+   * @returns {Uint8Array} RSA Ciphertext
    * @async
    */
-  encrypt: async function encrypt(m, n, e) {
-    if (n.cmp(m) <= 0) {
-      throw new Error('Message size cannot exceed modulus size');
+  encrypt: async function encrypt(data, n, e) {
+    if (_util2.default.getNodeCrypto()) {
+      return this.nodeEncrypt(data, n, e);
     }
-    const nred = new _bn2.default.red(n);
-    return m.toRed(nred).redPow(e).toArrayLike(Uint8Array, 'be', n.byteLength());
+    return this.bnEncrypt(data, n, e);
   },
 
   /**
    * Decrypt RSA message
-   * @param {BN} m message
-   * @param {BN} n RSA public modulus
-   * @param {BN} e RSA public exponent
-   * @param {BN} d RSA private exponent
-   * @param {BN} p RSA private prime p
-   * @param {BN} q RSA private prime q
-   * @param {BN} u RSA private inverse of prime q
-   * @returns {BN} RSA Plaintext
+   * @param {Uint8Array} m message
+   * @param {Uint8Array} n RSA public modulus
+   * @param {Uint8Array} e RSA public exponent
+   * @param {Uint8Array} d RSA private exponent
+   * @param {Uint8Array} p RSA private prime p
+   * @param {Uint8Array} q RSA private prime q
+   * @param {Uint8Array} u RSA private coefficient
+   * @returns {String} RSA Plaintext
    * @async
    */
-  decrypt: async function decrypt(m, n, e, d, p, q, u) {
-    if (n.cmp(m) <= 0) {
-      throw new Error('Data too large.');
+  decrypt: async function decrypt(data, n, e, d, p, q, u) {
+    if (_util2.default.getNodeCrypto()) {
+      return this.nodeDecrypt(data, n, e, d, p, q, u);
     }
-    const dq = d.mod(q.subn(1)); // d mod (q-1)
-    const dp = d.mod(p.subn(1)); // d mod (p-1)
-    const pred = new _bn2.default.red(p);
-    const qred = new _bn2.default.red(q);
-    const nred = new _bn2.default.red(n);
-
-    let blinder;
-    let unblinder;
-    if (_config2.default.rsa_blinding) {
-      unblinder = (await _random2.default.getRandomBN(new _bn2.default(2), n)).toRed(nred);
-      blinder = unblinder.redInvm().redPow(e);
-      m = m.toRed(nred).redMul(blinder).fromRed();
-    }
-
-    const mp = m.toRed(pred).redPow(dp);
-    const mq = m.toRed(qred).redPow(dq);
-    const t = mq.redSub(mp.fromRed().toRed(qred));
-    const h = u.toRed(qred).redMul(t).fromRed();
-
-    let result = h.mul(p).add(mp).toRed(nred);
-
-    if (_config2.default.rsa_blinding) {
-      result = result.redMul(unblinder);
-    }
-
-    return result.toArrayLike(Uint8Array, 'be', n.byteLength());
+    return this.bnDecrypt(data, n, e, d, p, q, u);
   },
 
   /**
    * Generate a new random private key B bits long with public exponent E.
    *
-   * When possible, webCrypto is used. Otherwise, primes are generated using
+   * When possible, webCrypto or nodeCrypto is used. Otherwise, primes are generated using
    * 40 rounds of the Miller-Rabin probabilistic random prime generation algorithm.
    * @see module:crypto/public_key/prime
    * @param {Integer} B RSA bit length
@@ -30616,13 +30765,12 @@ exports.default = {
   generate: async function generate(B, E) {
     let key;
     E = new _bn2.default(E, 16);
-    const webCrypto = _util2.default.getWebCryptoAll();
 
     // Native RSA keygen using Web Crypto
-    if (webCrypto) {
+    if (_util2.default.getWebCrypto()) {
       let keyPair;
       let keyGenOpt;
-      if (window.crypto && window.crypto.subtle || window.msCrypto) {
+      if (global.crypto && global.crypto.subtle || global.msCrypto) {
         // current standard spec
         keyGenOpt = {
           name: 'RSASSA-PKCS1-v1_5',
@@ -30634,7 +30782,7 @@ exports.default = {
         };
         keyPair = webCrypto.generateKey(keyGenOpt, true, ['sign', 'verify']);
         keyPair = await promisifyIE11Op(keyPair, 'Error generating RSA key pair.');
-      } else if (window.crypto && window.crypto.webkitSubtle) {
+      } else if (global.crypto && global.crypto.webkitSubtle) {
         // outdated spec implemented by old Webkit
         keyGenOpt = {
           name: 'RSA-OAEP',
@@ -30658,25 +30806,54 @@ exports.default = {
       if (jwk instanceof ArrayBuffer) {
         jwk = JSON.parse(String.fromCharCode.apply(null, new Uint8Array(jwk)));
       }
-
       // map JWK parameters to BN
       key = {};
       key.n = new _bn2.default(_util2.default.b64_to_Uint8Array(jwk.n));
       key.e = E;
       key.d = new _bn2.default(_util2.default.b64_to_Uint8Array(jwk.d));
-      key.p = new _bn2.default(_util2.default.b64_to_Uint8Array(jwk.p));
-      key.q = new _bn2.default(_util2.default.b64_to_Uint8Array(jwk.q));
-      key.u = key.p.invm(key.q);
+      // switch p and q
+      key.p = new _bn2.default(_util2.default.b64_to_Uint8Array(jwk.q));
+      key.q = new _bn2.default(_util2.default.b64_to_Uint8Array(jwk.p));
+      // Since p and q are switched in places, we could keep u
+      key.u = new _bn2.default(_util2.default.b64_to_Uint8Array(jwk.qi));
       return key;
+    } else if (_util2.default.getNodeCrypto() && nodeCrypto.generateKeyPair && RSAPrivateKey) {
+      const opts = {
+        modulusLength: Number(B.toString(10)),
+        publicExponent: Number(E.toString(10)),
+        publicKeyEncoding: { type: 'pkcs1', format: 'der' },
+        privateKeyEncoding: { type: 'pkcs1', format: 'der' }
+      };
+      const prv = await new Promise((resolve, reject) => nodeCrypto.generateKeyPair('rsa', opts, (err, _, der) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(RSAPrivateKey.decode(der, 'der'));
+        }
+      }));
+      /**  PGP spec differs from DER spec, DER: `(inverse of q) mod p`, PGP: `(inverse of p) mod q`.
+       * @link https://tools.ietf.org/html/rfc3447#section-3.2
+       * @link https://tools.ietf.org/html/draft-ietf-openpgp-rfc4880bis-08#section-5.6.1
+       */
+      return {
+        n: prv.modulus,
+        e: prv.publicExponent,
+        d: prv.privateExponent,
+        // switch p and q
+        p: prv.prime2,
+        q: prv.prime1,
+        // Since p and q are switched in places, we could keep u
+        u: prv.coefficient // PGP type of u
+      };
     }
 
     // RSA keygen fallback using 40 iterations of the Miller-Rabin test
     // See https://stackoverflow.com/a/6330138 for justification
     // Also see section C.3 here: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST
-    let p = await _prime2.default.randomProbablePrime(B - (B >> 1), E, 40);
-    let q = await _prime2.default.randomProbablePrime(B >> 1, E, 40);
+    let q = await _prime2.default.randomProbablePrime(B - (B >> 1), E, 40);
+    let p = await _prime2.default.randomProbablePrime(B >> 1, E, 40);
 
-    if (p.cmp(q) < 0) {
+    if (q.cmp(p) < 0) {
       var _ref = [q, p];
       p = _ref[0];
       q = _ref[1];
@@ -30695,10 +30872,273 @@ exports.default = {
     };
   },
 
+  bnSign: async function bnSign(hash_algo, n, d, hashed) {
+    n = new _bn2.default(n);
+    const m = new _bn2.default((await _pkcs2.default.emsa.encode(hash_algo, hashed, n.byteLength())), 16);
+    d = new _bn2.default(d);
+    if (n.cmp(m) <= 0) {
+      throw new Error('Message size cannot exceed modulus size');
+    }
+    const nred = new _bn2.default.red(n);
+    return m.toRed(nred).redPow(d).toArrayLike(Uint8Array, 'be', n.byteLength());
+  },
+
+  webSign: async function webSign(hash_name, data, n, e, d, p, q, u) {
+    /** OpenPGP keys require that p < q, and Safari Web Crypto requires that p > q.
+     * We swap them in privateToJwk, so it usually works out, but nevertheless,
+     * not all OpenPGP keys are compatible with this requirement.
+     * OpenPGP.js used to generate RSA keys the wrong way around (p > q), and still
+     * does if the underlying Web Crypto does so (e.g. old MS Edge 50% of the time).
+     */
+    const jwk = privateToJwk(n, e, d, p, q, u);
+    const algo = {
+      name: "RSASSA-PKCS1-v1_5",
+      hash: { name: hash_name }
+    };
+    const key = await webCrypto.importKey("jwk", jwk, algo, false, ["sign"]);
+    // add hash field for ms edge support
+    return new Uint8Array((await webCrypto.sign({ "name": "RSASSA-PKCS1-v1_5", "hash": hash_name }, key, data)));
+  },
+
+  nodeSign: async function nodeSign(hash_algo, data, n, e, d, p, q, u) {
+    const pBNum = new _bn2.default(p);
+    const qBNum = new _bn2.default(q);
+    const dBNum = new _bn2.default(d);
+    const dq = dBNum.mod(qBNum.subn(1)); // d mod (q-1)
+    const dp = dBNum.mod(pBNum.subn(1)); // d mod (p-1)
+    const sign = nodeCrypto.createSign(_enums2.default.read(_enums2.default.hash, hash_algo));
+    sign.write(data);
+    sign.end();
+    const keyObject = {
+      version: 0,
+      modulus: new _bn2.default(n),
+      publicExponent: new _bn2.default(e),
+      privateExponent: new _bn2.default(d),
+      // switch p and q
+      prime1: new _bn2.default(q),
+      prime2: new _bn2.default(p),
+      // switch dp and dq
+      exponent1: dq,
+      exponent2: dp,
+      coefficient: new _bn2.default(u)
+    };
+    if (typeof nodeCrypto.createPrivateKey !== 'undefined') {
+      //from version 11.6.0 Node supports der encoded key objects
+      const der = RSAPrivateKey.encode(keyObject, 'der');
+      return new Uint8Array(sign.sign({ key: der, format: 'der', type: 'pkcs1' }));
+    }
+    const pem = RSAPrivateKey.encode(keyObject, 'pem', {
+      label: 'RSA PRIVATE KEY'
+    });
+    return new Uint8Array(sign.sign(pem));
+  },
+
+  bnVerify: async function bnVerify(hash_algo, s, n, e, hashed) {
+    n = new _bn2.default(n);
+    s = new _bn2.default(s);
+    e = new _bn2.default(e);
+    if (n.cmp(s) <= 0) {
+      throw new Error('Signature size cannot exceed modulus size');
+    }
+    const nred = new _bn2.default.red(n);
+    const EM1 = s.toRed(nred).redPow(e).toArrayLike(Uint8Array, 'be', n.byteLength());
+    const EM2 = await _pkcs2.default.emsa.encode(hash_algo, hashed, n.byteLength());
+    return _util2.default.Uint8Array_to_hex(EM1) === EM2;
+  },
+
+  webVerify: async function webVerify(hash_name, data, s, n, e) {
+    const jwk = publicToJwk(n, e);
+    const key = await webCrypto.importKey("jwk", jwk, {
+      name: "RSASSA-PKCS1-v1_5",
+      hash: { name: hash_name }
+    }, false, ["verify"]);
+    // add hash field for ms edge support
+    return webCrypto.verify({ "name": "RSASSA-PKCS1-v1_5", "hash": hash_name }, key, s, data);
+  },
+
+  nodeVerify: async function nodeVerify(hash_algo, data, s, n, e) {
+    const verify = nodeCrypto.createVerify(_enums2.default.read(_enums2.default.hash, hash_algo));
+    verify.write(data);
+    verify.end();
+    const keyObject = {
+      modulus: new _bn2.default(n),
+      publicExponent: new _bn2.default(e)
+    };
+    let key;
+    if (typeof nodeCrypto.createPrivateKey !== 'undefined') {
+      //from version 11.6.0 Node supports der encoded key objects
+      const der = RSAPublicKey.encode(keyObject, 'der');
+      key = { key: der, format: 'der', type: 'pkcs1' };
+    } else {
+      key = RSAPublicKey.encode(keyObject, 'pem', {
+        label: 'RSA PUBLIC KEY'
+      });
+    }
+    try {
+      return await verify.verify(key, s);
+    } catch (err) {
+      return false;
+    }
+  },
+
+  nodeEncrypt: async function nodeEncrypt(data, n, e) {
+    const keyObject = {
+      modulus: new _bn2.default(n),
+      publicExponent: new _bn2.default(e)
+    };
+    let key;
+    if (typeof nodeCrypto.createPrivateKey !== 'undefined') {
+      const der = RSAPublicKey.encode(keyObject, 'der');
+      key = { key: der, format: 'der', type: 'pkcs1', padding: nodeCrypto.constants.RSA_PKCS1_PADDING };
+    } else {
+      const pem = RSAPublicKey.encode(keyObject, 'pem', {
+        label: 'RSA PUBLIC KEY'
+      });
+      key = { key: pem, padding: nodeCrypto.constants.RSA_PKCS1_PADDING };
+    }
+    return new Uint8Array(nodeCrypto.publicEncrypt(key, data));
+  },
+
+  bnEncrypt: async function bnEncrypt(data, n, e) {
+    n = new _bn2.default(n);
+    data = new _mpi2.default((await _pkcs2.default.eme.encode(_util2.default.Uint8Array_to_str(data), n.byteLength())));
+    data = data.toBN();
+    e = new _bn2.default(e);
+    if (n.cmp(data) <= 0) {
+      throw new Error('Message size cannot exceed modulus size');
+    }
+    const nred = new _bn2.default.red(n);
+    return data.toRed(nred).redPow(e).toArrayLike(Uint8Array, 'be', n.byteLength());
+  },
+
+  nodeDecrypt: function nodeDecrypt(data, n, e, d, p, q, u) {
+    const pBNum = new _bn2.default(p);
+    const qBNum = new _bn2.default(q);
+    const dBNum = new _bn2.default(d);
+    const dq = dBNum.mod(qBNum.subn(1)); // d mod (q-1)
+    const dp = dBNum.mod(pBNum.subn(1)); // d mod (p-1)
+    const keyObject = {
+      version: 0,
+      modulus: new _bn2.default(n),
+      publicExponent: new _bn2.default(e),
+      privateExponent: new _bn2.default(d),
+      // switch p and q
+      prime1: new _bn2.default(q),
+      prime2: new _bn2.default(p),
+      // switch dp and dq
+      exponent1: dq,
+      exponent2: dp,
+      coefficient: new _bn2.default(u)
+    };
+    let key;
+    if (typeof nodeCrypto.createPrivateKey !== 'undefined') {
+      const der = RSAPrivateKey.encode(keyObject, 'der');
+      key = { key: der, format: 'der', type: 'pkcs1', padding: nodeCrypto.constants.RSA_PKCS1_PADDING };
+    } else {
+      const pem = RSAPrivateKey.encode(keyObject, 'pem', {
+        label: 'RSA PRIVATE KEY'
+      });
+      key = { key: pem, padding: nodeCrypto.constants.RSA_PKCS1_PADDING };
+    }
+    return _util2.default.Uint8Array_to_str(nodeCrypto.privateDecrypt(key, data));
+  },
+
+  bnDecrypt: async function bnDecrypt(data, n, e, d, p, q, u) {
+    data = new _bn2.default(data);
+    n = new _bn2.default(n);
+    e = new _bn2.default(e);
+    d = new _bn2.default(d);
+    p = new _bn2.default(p);
+    q = new _bn2.default(q);
+    u = new _bn2.default(u);
+    if (n.cmp(data) <= 0) {
+      throw new Error('Data too large.');
+    }
+    const dq = d.mod(q.subn(1)); // d mod (q-1)
+    const dp = d.mod(p.subn(1)); // d mod (p-1)
+    const pred = new _bn2.default.red(p);
+    const qred = new _bn2.default.red(q);
+    const nred = new _bn2.default.red(n);
+
+    let blinder;
+    let unblinder;
+    if (_config2.default.rsa_blinding) {
+      unblinder = (await _random2.default.getRandomBN(new _bn2.default(2), n)).toRed(nred);
+      blinder = unblinder.redInvm().redPow(e);
+      data = data.toRed(nred).redMul(blinder).fromRed();
+    }
+
+    const mp = data.toRed(pred).redPow(dp);
+    const mq = data.toRed(qred).redPow(dq);
+    const t = mq.redSub(mp.fromRed().toRed(qred));
+    const h = u.toRed(qred).redMul(t).fromRed();
+
+    let result = h.mul(p).add(mp).toRed(nred);
+
+    if (_config2.default.rsa_blinding) {
+      result = result.redMul(unblinder);
+    }
+
+    return _pkcs2.default.eme.decode(new _mpi2.default(result).toString());
+  },
+
   prime: _prime2.default
 };
 
-},{"../../config":79,"../../util":152,"../random":109,"./prime":107,"bn.js":16}],109:[function(require,module,exports){
+/** Convert Openpgp private key params to jwk key according to
+ * @link https://tools.ietf.org/html/rfc7517
+ * @param {String} hash_algo
+ * @param {Uint8Array} n
+ * @param {Uint8Array} e
+ * @param {Uint8Array} d
+ * @param {Uint8Array} p
+ * @param {Uint8Array} q
+ * @param {Uint8Array} u
+ */
+
+function privateToJwk(n, e, d, p, q, u) {
+  const pBNum = new _bn2.default(p);
+  const qBNum = new _bn2.default(q);
+  const dBNum = new _bn2.default(d);
+
+  let dq = dBNum.mod(qBNum.subn(1)); // d mod (q-1)
+  let dp = dBNum.mod(pBNum.subn(1)); // d mod (p-1)
+  dp = dp.toArrayLike(Uint8Array);
+  dq = dq.toArrayLike(Uint8Array);
+  return {
+    kty: 'RSA',
+    n: _util2.default.Uint8Array_to_b64(n, true),
+    e: _util2.default.Uint8Array_to_b64(e, true),
+    d: _util2.default.Uint8Array_to_b64(d, true),
+    // switch p and q
+    p: _util2.default.Uint8Array_to_b64(q, true),
+    q: _util2.default.Uint8Array_to_b64(p, true),
+    // switch dp and dq
+    dp: _util2.default.Uint8Array_to_b64(dq, true),
+    dq: _util2.default.Uint8Array_to_b64(dp, true),
+    qi: _util2.default.Uint8Array_to_b64(u, true),
+    ext: true
+  };
+}
+
+/** Convert Openpgp key public params to jwk key according to
+ * @link https://tools.ietf.org/html/rfc7517
+ * @param {String} hash_algo
+ * @param {Uint8Array} n
+ * @param {Uint8Array} e
+ */
+function publicToJwk(n, e) {
+  return {
+    kty: 'RSA',
+    n: _util2.default.Uint8Array_to_b64(n, true),
+    e: _util2.default.Uint8Array_to_b64(e, true),
+    ext: true
+  };
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"../../config":79,"../../enums":113,"../../type/mpi":155,"../../util":158,"../pkcs1":96,"../random":109,"./prime":107,"asn1.js":"asn1.js","bn.js":16}],109:[function(require,module,exports){
+(function (global){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -30753,10 +31193,10 @@ exports.default = {
    */
   getRandomBytes: async function getRandomBytes(length) {
     const buf = new Uint8Array(length);
-    if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
-      window.crypto.getRandomValues(buf);
-    } else if (typeof window !== 'undefined' && typeof window.msCrypto === 'object' && typeof window.msCrypto.getRandomValues === 'function') {
-      window.msCrypto.getRandomValues(buf);
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      crypto.getRandomValues(buf);
+    } else if (typeof global !== 'undefined' && typeof global.msCrypto === 'object' && typeof global.msCrypto.getRandomValues === 'function') {
+      global.msCrypto.getRandomValues(buf);
     } else if (nodeCrypto) {
       const bytes = nodeCrypto.randomBytes(buf.length);
       buf.set(bytes);
@@ -30859,16 +31299,13 @@ RandomBuffer.prototype.get = async function (buf) {
   }
 };
 
-},{"../util":152,"bn.js":16,"crypto":"crypto"}],110:[function(require,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"../util":158,"bn.js":16,"crypto":"crypto"}],110:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-
-var _bn = require('bn.js');
-
-var _bn2 = _interopRequireDefault(_bn);
 
 var _crypto = require('./crypto');
 
@@ -30877,10 +31314,6 @@ var _crypto2 = _interopRequireDefault(_crypto);
 var _public_key = require('./public_key');
 
 var _public_key2 = _interopRequireDefault(_public_key);
-
-var _pkcs = require('./pkcs1');
-
-var _pkcs2 = _interopRequireDefault(_pkcs);
 
 var _enums = require('../enums');
 
@@ -30894,10 +31327,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 /**
  * @fileoverview Provides functions for asymmetric signing and signature verification
- * @requires bn.js
  * @requires crypto/crypto
  * @requires crypto/public_key
- * @requires crypto/pkcs1
  * @requires enums
  * @requires util
  * @module crypto/signature
@@ -30928,12 +31359,10 @@ exports.default = {
       case _enums2.default.publicKey.rsa_encrypt:
       case _enums2.default.publicKey.rsa_sign:
         {
-          const m = msg_MPIs[0].toBN();
-          const n = pub_MPIs[0].toBN();
-          const e = pub_MPIs[1].toBN();
-          const EM = await _public_key2.default.rsa.verify(m, n, e);
-          const EM2 = await _pkcs2.default.emsa.encode(hash_algo, hashed, n.byteLength());
-          return _util2.default.Uint8Array_to_hex(EM) === EM2;
+          const n = pub_MPIs[0].toUint8Array();
+          const e = pub_MPIs[1].toUint8Array();
+          const m = msg_MPIs[0].toUint8Array('be', n.length);
+          return _public_key2.default.rsa.verify(hash_algo, data, m, n, e, hashed);
         }
       case _enums2.default.publicKey.dsa:
         {
@@ -30991,11 +31420,13 @@ exports.default = {
       case _enums2.default.publicKey.rsa_encrypt:
       case _enums2.default.publicKey.rsa_sign:
         {
-          const n = key_params[0].toBN();
-          const e = key_params[1].toBN();
-          const d = key_params[2].toBN();
-          const m = new _bn2.default((await _pkcs2.default.emsa.encode(hash_algo, hashed, n.byteLength())), 16);
-          const signature = await _public_key2.default.rsa.sign(m, n, e, d);
+          const n = key_params[0].toUint8Array();
+          const e = key_params[1].toUint8Array();
+          const d = key_params[2].toUint8Array();
+          const p = key_params[3].toUint8Array();
+          const q = key_params[4].toUint8Array();
+          const u = key_params[5].toUint8Array();
+          const signature = await _public_key2.default.rsa.sign(hash_algo, data, n, e, d, p, q, u, hashed);
           return _util2.default.Uint8Array_to_MPI(signature);
         }
       case _enums2.default.publicKey.dsa:
@@ -31014,15 +31445,17 @@ exports.default = {
       case _enums2.default.publicKey.ecdsa:
         {
           const oid = key_params[0];
+          const Q = key_params[1].toUint8Array();
           const d = key_params[2].toUint8Array();
-          const signature = await _public_key2.default.elliptic.ecdsa.sign(oid, hash_algo, data, d, hashed);
+          const signature = await _public_key2.default.elliptic.ecdsa.sign(oid, hash_algo, data, Q, d, hashed);
           return _util2.default.concatUint8Array([_util2.default.Uint8Array_to_MPI(signature.r), _util2.default.Uint8Array_to_MPI(signature.s)]);
         }
       case _enums2.default.publicKey.eddsa:
         {
           const oid = key_params[0];
+          const Q = key_params[1].toUint8Array('be', 33);
           const d = key_params[2].toUint8Array('be', 32);
-          const signature = await _public_key2.default.elliptic.eddsa.sign(oid, hash_algo, data, d, hashed);
+          const signature = await _public_key2.default.elliptic.eddsa.sign(oid, hash_algo, data, Q, d, hashed);
           return _util2.default.concatUint8Array([_util2.default.Uint8Array_to_MPI(signature.R), _util2.default.Uint8Array_to_MPI(signature.S)]);
         }
       default:
@@ -31031,7 +31464,7 @@ exports.default = {
   }
 };
 
-},{"../enums":113,"../util":152,"./crypto":89,"./pkcs1":96,"./public_key":106,"bn.js":16}],111:[function(require,module,exports){
+},{"../enums":113,"../util":158,"./crypto":89,"./public_key":106}],111:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -31181,7 +31614,34 @@ function getCheckSum(data) {
   return _base2.default.encode(crc);
 }
 
-const crc_table = [0x00000000, 0x00864cfb, 0x018ad50d, 0x010c99f6, 0x0393e6e1, 0x0315aa1a, 0x021933ec, 0x029f7f17, 0x07a18139, 0x0727cdc2, 0x062b5434, 0x06ad18cf, 0x043267d8, 0x04b42b23, 0x05b8b2d5, 0x053efe2e, 0x0fc54e89, 0x0f430272, 0x0e4f9b84, 0x0ec9d77f, 0x0c56a868, 0x0cd0e493, 0x0ddc7d65, 0x0d5a319e, 0x0864cfb0, 0x08e2834b, 0x09ee1abd, 0x09685646, 0x0bf72951, 0x0b7165aa, 0x0a7dfc5c, 0x0afbb0a7, 0x1f0cd1e9, 0x1f8a9d12, 0x1e8604e4, 0x1e00481f, 0x1c9f3708, 0x1c197bf3, 0x1d15e205, 0x1d93aefe, 0x18ad50d0, 0x182b1c2b, 0x192785dd, 0x19a1c926, 0x1b3eb631, 0x1bb8faca, 0x1ab4633c, 0x1a322fc7, 0x10c99f60, 0x104fd39b, 0x11434a6d, 0x11c50696, 0x135a7981, 0x13dc357a, 0x12d0ac8c, 0x1256e077, 0x17681e59, 0x17ee52a2, 0x16e2cb54, 0x166487af, 0x14fbf8b8, 0x147db443, 0x15712db5, 0x15f7614e, 0x3e19a3d2, 0x3e9fef29, 0x3f9376df, 0x3f153a24, 0x3d8a4533, 0x3d0c09c8, 0x3c00903e, 0x3c86dcc5, 0x39b822eb, 0x393e6e10, 0x3832f7e6, 0x38b4bb1d, 0x3a2bc40a, 0x3aad88f1, 0x3ba11107, 0x3b275dfc, 0x31dced5b, 0x315aa1a0, 0x30563856, 0x30d074ad, 0x324f0bba, 0x32c94741, 0x33c5deb7, 0x3343924c, 0x367d6c62, 0x36fb2099, 0x37f7b96f, 0x3771f594, 0x35ee8a83, 0x3568c678, 0x34645f8e, 0x34e21375, 0x2115723b, 0x21933ec0, 0x209fa736, 0x2019ebcd, 0x228694da, 0x2200d821, 0x230c41d7, 0x238a0d2c, 0x26b4f302, 0x2632bff9, 0x273e260f, 0x27b86af4, 0x252715e3, 0x25a15918, 0x24adc0ee, 0x242b8c15, 0x2ed03cb2, 0x2e567049, 0x2f5ae9bf, 0x2fdca544, 0x2d43da53, 0x2dc596a8, 0x2cc90f5e, 0x2c4f43a5, 0x2971bd8b, 0x29f7f170, 0x28fb6886, 0x287d247d, 0x2ae25b6a, 0x2a641791, 0x2b688e67, 0x2beec29c, 0x7c3347a4, 0x7cb50b5f, 0x7db992a9, 0x7d3fde52, 0x7fa0a145, 0x7f26edbe, 0x7e2a7448, 0x7eac38b3, 0x7b92c69d, 0x7b148a66, 0x7a181390, 0x7a9e5f6b, 0x7801207c, 0x78876c87, 0x798bf571, 0x790db98a, 0x73f6092d, 0x737045d6, 0x727cdc20, 0x72fa90db, 0x7065efcc, 0x70e3a337, 0x71ef3ac1, 0x7169763a, 0x74578814, 0x74d1c4ef, 0x75dd5d19, 0x755b11e2, 0x77c46ef5, 0x7742220e, 0x764ebbf8, 0x76c8f703, 0x633f964d, 0x63b9dab6, 0x62b54340, 0x62330fbb, 0x60ac70ac, 0x602a3c57, 0x6126a5a1, 0x61a0e95a, 0x649e1774, 0x64185b8f, 0x6514c279, 0x65928e82, 0x670df195, 0x678bbd6e, 0x66872498, 0x66016863, 0x6cfad8c4, 0x6c7c943f, 0x6d700dc9, 0x6df64132, 0x6f693e25, 0x6fef72de, 0x6ee3eb28, 0x6e65a7d3, 0x6b5b59fd, 0x6bdd1506, 0x6ad18cf0, 0x6a57c00b, 0x68c8bf1c, 0x684ef3e7, 0x69426a11, 0x69c426ea, 0x422ae476, 0x42aca88d, 0x43a0317b, 0x43267d80, 0x41b90297, 0x413f4e6c, 0x4033d79a, 0x40b59b61, 0x458b654f, 0x450d29b4, 0x4401b042, 0x4487fcb9, 0x461883ae, 0x469ecf55, 0x479256a3, 0x47141a58, 0x4defaaff, 0x4d69e604, 0x4c657ff2, 0x4ce33309, 0x4e7c4c1e, 0x4efa00e5, 0x4ff69913, 0x4f70d5e8, 0x4a4e2bc6, 0x4ac8673d, 0x4bc4fecb, 0x4b42b230, 0x49ddcd27, 0x495b81dc, 0x4857182a, 0x48d154d1, 0x5d26359f, 0x5da07964, 0x5cace092, 0x5c2aac69, 0x5eb5d37e, 0x5e339f85, 0x5f3f0673, 0x5fb94a88, 0x5a87b4a6, 0x5a01f85d, 0x5b0d61ab, 0x5b8b2d50, 0x59145247, 0x59921ebc, 0x589e874a, 0x5818cbb1, 0x52e37b16, 0x526537ed, 0x5369ae1b, 0x53efe2e0, 0x51709df7, 0x51f6d10c, 0x50fa48fa, 0x507c0401, 0x5542fa2f, 0x55c4b6d4, 0x54c82f22, 0x544e63d9, 0x56d11cce, 0x56575035, 0x575bc9c3, 0x57dd8538];
+// https://create.stephan-brumme.com/crc32/#slicing-by-8-overview
+
+const crc_table = [new Array(0xFF), new Array(0xFF), new Array(0xFF), new Array(0xFF)];
+
+for (let i = 0; i <= 0xFF; i++) {
+  let crc = i << 16;
+  for (let j = 0; j < 8; j++) {
+    crc = crc << 1 ^ ((crc & 0x800000) !== 0 ? 0x864CFB : 0);
+  }
+  crc_table[0][i] = (crc & 0xFF0000) >> 16 | crc & 0x00FF00 | (crc & 0x0000FF) << 16;
+}
+for (let i = 0; i <= 0xFF; i++) {
+  crc_table[1][i] = crc_table[0][i] >> 8 ^ crc_table[0][crc_table[0][i] & 0xFF];
+}
+for (let i = 0; i <= 0xFF; i++) {
+  crc_table[2][i] = crc_table[1][i] >> 8 ^ crc_table[0][crc_table[1][i] & 0xFF];
+}
+for (let i = 0; i <= 0xFF; i++) {
+  crc_table[3][i] = crc_table[2][i] >> 8 ^ crc_table[0][crc_table[2][i] & 0xFF];
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView#Endianness
+const isLittleEndian = function () {
+  const buffer = new ArrayBuffer(2);
+  new DataView(buffer).setInt16(0, 0xFF, true /* littleEndian */);
+  // Int16Array uses the platform's endianness.
+  return new Int16Array(buffer)[0] === 0xFF;
+}();
 
 /**
  * Internal function to calculate a CRC-24 checksum over a given string (data)
@@ -31189,12 +31649,18 @@ const crc_table = [0x00000000, 0x00864cfb, 0x018ad50d, 0x010c99f6, 0x0393e6e1, 0
  * @returns {Uint8Array | ReadableStream<Uint8Array>} The CRC-24 checksum
  */
 function createcrc24(input) {
-  let crc = 0xB704CE;
+  let crc = 0xCE04B7;
   return _webStreamTools2.default.transform(input, value => {
-    for (let index = 0; index < value.length; index++) {
-      crc = crc << 8 ^ crc_table[(crc >> 16 ^ value[index]) & 0xff];
+    const len32 = isLittleEndian ? Math.floor(value.length / 4) : 0;
+    const arr32 = new Uint32Array(value.buffer, value.byteOffset, len32);
+    for (let i = 0; i < len32; i++) {
+      crc ^= arr32[i];
+      crc = crc_table[0][crc >> 24 & 0xFF] ^ crc_table[1][crc >> 16 & 0xFF] ^ crc_table[2][crc >> 8 & 0xFF] ^ crc_table[3][crc >> 0 & 0xFF];
     }
-  }, () => new Uint8Array([crc >> 16, crc >> 8, crc]));
+    for (let i = len32 * 4; i < value.length; i++) {
+      crc = crc >> 8 ^ crc_table[0][crc & 0xFF ^ value[i]];
+    }
+  }, () => new Uint8Array([crc, crc >> 8, crc >> 16]));
 }
 
 /**
@@ -31340,13 +31806,14 @@ function dearmor(input) {
         }
       }));
       data = _webStreamTools2.default.transformPair(data, async (readable, writable) => {
-        const checksumVerified = getCheckSum(_webStreamTools2.default.passiveClone(readable));
+        const checksumVerified = _webStreamTools2.default.readToEnd(getCheckSum(_webStreamTools2.default.passiveClone(readable)));
+        checksumVerified.catch(() => {});
         await _webStreamTools2.default.pipe(readable, writable, {
           preventClose: true
         });
         const writer = _webStreamTools2.default.getWriter(writable);
         try {
-          const checksumVerifiedString = await _webStreamTools2.default.readToEnd(checksumVerified);
+          const checksumVerifiedString = (await checksumVerified).replace('\r\n', '');
           if (checksum !== checksumVerifiedString && (checksum || _config2.default.checksum_required)) {
             throw new Error("Ascii armor integrity check on message failed: '" + checksum + "' should be '" + checksumVerifiedString + "'");
           }
@@ -31387,14 +31854,14 @@ function armor(messagetype, body, partindex, parttotal, customComment) {
       result.push("-----BEGIN PGP MESSAGE, PART " + partindex + "/" + parttotal + "-----\r\n");
       result.push(addheader(customComment));
       result.push(_base2.default.encode(body));
-      result.push("\r\n=", getCheckSum(bodyClone), "\r\n");
+      result.push("=", getCheckSum(bodyClone));
       result.push("-----END PGP MESSAGE, PART " + partindex + "/" + parttotal + "-----\r\n");
       break;
     case _enums2.default.armor.multipart_last:
       result.push("-----BEGIN PGP MESSAGE, PART " + partindex + "-----\r\n");
       result.push(addheader(customComment));
       result.push(_base2.default.encode(body));
-      result.push("\r\n=", getCheckSum(bodyClone), "\r\n");
+      result.push("=", getCheckSum(bodyClone));
       result.push("-----END PGP MESSAGE, PART " + partindex + "-----\r\n");
       break;
     case _enums2.default.armor.signed:
@@ -31404,35 +31871,35 @@ function armor(messagetype, body, partindex, parttotal, customComment) {
       result.push("\r\n-----BEGIN PGP SIGNATURE-----\r\n");
       result.push(addheader(customComment));
       result.push(_base2.default.encode(body));
-      result.push("\r\n=", getCheckSum(bodyClone), "\r\n");
+      result.push("=", getCheckSum(bodyClone));
       result.push("-----END PGP SIGNATURE-----\r\n");
       break;
     case _enums2.default.armor.message:
       result.push("-----BEGIN PGP MESSAGE-----\r\n");
       result.push(addheader(customComment));
       result.push(_base2.default.encode(body));
-      result.push("\r\n=", getCheckSum(bodyClone), "\r\n");
+      result.push("=", getCheckSum(bodyClone));
       result.push("-----END PGP MESSAGE-----\r\n");
       break;
     case _enums2.default.armor.public_key:
       result.push("-----BEGIN PGP PUBLIC KEY BLOCK-----\r\n");
       result.push(addheader(customComment));
       result.push(_base2.default.encode(body));
-      result.push("\r\n=", getCheckSum(bodyClone), "\r\n");
+      result.push("=", getCheckSum(bodyClone));
       result.push("-----END PGP PUBLIC KEY BLOCK-----\r\n");
       break;
     case _enums2.default.armor.private_key:
       result.push("-----BEGIN PGP PRIVATE KEY BLOCK-----\r\n");
       result.push(addheader(customComment));
       result.push(_base2.default.encode(body));
-      result.push("\r\n=", getCheckSum(bodyClone), "\r\n");
+      result.push("=", getCheckSum(bodyClone));
       result.push("-----END PGP PRIVATE KEY BLOCK-----\r\n");
       break;
     case _enums2.default.armor.signature:
       result.push("-----BEGIN PGP SIGNATURE-----\r\n");
       result.push(addheader(customComment));
       result.push(_base2.default.encode(body));
-      result.push("\r\n=", getCheckSum(bodyClone), "\r\n");
+      result.push("=", getCheckSum(bodyClone));
       result.push("-----END PGP SIGNATURE-----\r\n");
       break;
   }
@@ -31445,7 +31912,7 @@ exports.default = {
   decode: dearmor
 };
 
-},{"../config":79,"../enums.js":113,"../util":152,"./base64.js":112,"web-stream-tools":75}],112:[function(require,module,exports){
+},{"../config":79,"../enums.js":113,"../util":158,"./base64.js":112,"web-stream-tools":75}],112:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -31456,9 +31923,12 @@ var _webStreamTools = require('web-stream-tools');
 
 var _webStreamTools2 = _interopRequireDefault(_webStreamTools);
 
+var _util = require('../util');
+
+var _util2 = _interopRequireDefault(_util);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const b64s = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'; // Standard radix-64
 /* OpenPGP radix-64/base64 string encoding/decoding
  * Copyright 2005 Herbert Hanewinkel, www.haneWIN.de
  * version 1.0, check www.haneWIN.de for the latest version
@@ -31474,124 +31944,86 @@ const b64s = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 /**
  * @requires web-stream-tools
+ * @requires util
  * @module encoding/base64
  */
 
-const b64u = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'; // URL-safe radix-64
+const Buffer = _util2.default.getNodeBuffer();
 
-const b64toByte = [];
-for (let i = 0; i < b64s.length; i++) {
-  b64toByte[b64s.charCodeAt(i)] = i;
+let encodeChunk;
+let decodeChunk;
+if (Buffer) {
+  encodeChunk = buf => Buffer.from(buf).toString('base64');
+  decodeChunk = str => {
+    const b = Buffer.from(str, 'base64');
+    return new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
+  };
+} else {
+  encodeChunk = buf => btoa(_util2.default.Uint8Array_to_str(buf));
+  decodeChunk = str => _util2.default.str_to_Uint8Array(atob(str));
 }
-b64toByte[b64u.charCodeAt(62)] = 62;
-b64toByte[b64u.charCodeAt(63)] = 63;
 
 /**
  * Convert binary array to radix-64
- * @param {Uint8Array | ReadableStream<Uint8Array>} t Uint8Array to convert
- * @param {bool} u if true, output is URL-safe
+ * @param {Uint8Array | ReadableStream<Uint8Array>} data Uint8Array to convert
  * @returns {String | ReadableStream<String>} radix-64 version of input string
  * @static
  */
-function s2r(t, u = false) {
-  // TODO check btoa alternative
-  const b64 = u ? b64u : b64s;
-  let a;
-  let c;
-
-  let l = 0;
-  let s = 0;
-
-  return _webStreamTools2.default.transform(t, value => {
+function encode(data) {
+  let buf = new Uint8Array();
+  return _webStreamTools2.default.transform(data, value => {
+    buf = _util2.default.concatUint8Array([buf, value]);
     const r = [];
-    const tl = value.length;
-    for (let n = 0; n < tl; n++) {
-      if (l && l % 60 === 0 && !u) {
-        r.push("\r\n");
-      }
-      c = value[n];
-      if (s === 0) {
-        r.push(b64.charAt(c >> 2 & 63));
-        a = (c & 3) << 4;
-      } else if (s === 1) {
-        r.push(b64.charAt(a | c >> 4 & 15));
-        a = (c & 15) << 2;
-      } else if (s === 2) {
-        r.push(b64.charAt(a | c >> 6 & 3));
-        l += 1;
-        if (l % 60 === 0 && !u) {
-          r.push("\r\n");
-        }
-        r.push(b64.charAt(c & 63));
-      }
-      l += 1;
-      s += 1;
-      if (s === 3) {
-        s = 0;
-      }
+    const bytesPerLine = 45; // 60 chars per line * (3 bytes / 4 chars of base64).
+    const lines = Math.floor(buf.length / bytesPerLine);
+    const bytes = lines * bytesPerLine;
+    const encoded = encodeChunk(buf.subarray(0, bytes));
+    for (let i = 0; i < lines; i++) {
+      r.push(encoded.substr(i * 60, 60));
+      r.push('\r\n');
     }
+    buf = buf.subarray(bytes);
     return r.join('');
-  }, () => {
-    const r = [];
-    if (s > 0) {
-      r.push(b64.charAt(a));
-      l += 1;
-      if (l % 60 === 0 && !u) {
-        r.push("\r\n");
-      }
-      if (!u) {
-        r.push('=');
-        l += 1;
-      }
-    }
-    if (s === 1 && !u) {
-      if (l % 60 === 0 && !u) {
-        r.push("\r\n");
-      }
-      r.push('=');
-    }
-    return r.join('');
-  });
+  }, () => buf.length ? encodeChunk(buf) + '\r\n' : '');
 }
 
 /**
  * Convert radix-64 to binary array
- * @param {String | ReadableStream<String>} t radix-64 string to convert
- * @param {bool} u if true, input is interpreted as URL-safe
+ * @param {String | ReadableStream<String>} data radix-64 string to convert
  * @returns {Uint8Array | ReadableStream<Uint8Array>} binary array version of input string
  * @static
  */
-function r2s(t, u) {
-  // TODO check atob alternative
-  let c;
+function decode(data) {
+  let buf = '';
+  return _webStreamTools2.default.transform(data, value => {
+    buf += value;
 
-  let s = 0;
-  let a = 0;
-
-  return _webStreamTools2.default.transform(t, value => {
-    const tl = value.length;
-    const r = new Uint8Array(Math.ceil(0.75 * tl));
-    let index = 0;
-    for (let n = 0; n < tl; n++) {
-      c = b64toByte[value.charCodeAt(n)];
-      if (c >= 0) {
-        if (s) {
-          r[index++] = a | c >> 6 - s & 255;
-        }
-        s = s + 2 & 7;
-        a = c << s & 255;
+    // Count how many whitespace characters there are in buf
+    let spaces = 0;
+    const spacechars = [' ', '\t', '\r', '\n'];
+    for (let i = 0; i < spacechars.length; i++) {
+      const spacechar = spacechars[i];
+      for (let pos = buf.indexOf(spacechar); pos !== -1; pos = buf.indexOf(spacechar, pos + 1)) {
+        spaces++;
       }
     }
-    return r.subarray(0, index);
-  });
+
+    // Backtrack until we have 4n non-whitespace characters
+    // that we can safely base64-decode
+    let length = buf.length;
+    for (; length > 0 && (length - spaces) % 4 !== 0; length--) {
+      if (spacechars.includes(buf[length])) spaces--;
+    }
+
+    const decoded = decodeChunk(buf.substr(0, length));
+    buf = buf.substr(length);
+    return decoded;
+  }, () => decodeChunk(buf));
 }
 
-exports.default = {
-  encode: s2r,
-  decode: r2s
-};
+exports.default = { encode, decode };
 
-},{"web-stream-tools":75}],113:[function(require,module,exports){
+},{"../util":158,"web-stream-tools":75}],113:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -32001,18 +32433,6 @@ exports.default = {
     shared_private_key: 128
   },
 
-  /** Key status
-   * @enum {Integer}
-   * @readonly
-   */
-  keyStatus: {
-    invalid: 0,
-    expired: 1,
-    revoked: 2,
-    valid: 3,
-    no_self_cert: 4
-  },
-
   /** Armor type
    * @enum {Integer}
    * @readonly
@@ -32091,6 +32511,7 @@ exports.default = {
 };
 
 },{}],114:[function(require,module,exports){
+(function (global){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -32112,7 +32533,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  */
 function HKP(keyServerBaseUrl) {
   this._baseUrl = keyServerBaseUrl || _config2.default.keyserver;
-  this._fetch = typeof window !== 'undefined' ? window.fetch : require('node-fetch');
+  this._fetch = typeof global !== 'undefined' ? global.fetch : require('node-fetch');
 }
 
 /**
@@ -32191,13 +32612,14 @@ HKP.prototype.upload = function (publicKeyArmored) {
 
 exports.default = HKP;
 
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./config":79,"node-fetch":"node-fetch"}],115:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.WKD = exports.HKP = exports.AsyncProxy = exports.Keyring = exports.crypto = exports.config = exports.enums = exports.armor = exports.stream = exports.OID = exports.KDFParams = exports.ECDHSymmetricKey = exports.Keyid = exports.S2K = exports.MPI = exports.packet = exports.util = exports.cleartext = exports.message = exports.signature = exports.key = exports.destroyWorker = exports.getWorker = exports.initWorker = exports.decryptSessionKeys = exports.encryptSessionKey = exports.decryptKey = exports.revokeKey = exports.reformatKey = exports.generateKey = exports.verify = exports.sign = exports.decrypt = exports.encrypt = undefined;
+exports.lightweight = exports.WKD = exports.HKP = exports.AsyncProxy = exports.Keyring = exports.crypto = exports.config = exports.enums = exports.armor = exports.stream = exports.OID = exports.KDFParams = exports.ECDHSymmetricKey = exports.Keyid = exports.S2K = exports.MPI = exports.packet = exports.util = exports.cleartext = exports.message = exports.signature = exports.key = exports.destroyWorker = exports.getWorker = exports.initWorker = exports.decryptSessionKeys = exports.encryptSessionKey = exports.decryptKey = exports.revokeKey = exports.reformatKey = exports.generateKey = exports.verify = exports.sign = exports.decrypt = exports.encrypt = undefined;
 
 var _openpgp = require('./openpgp');
 
@@ -32451,6 +32873,10 @@ var _cleartext = require('./cleartext');
 
 var cleartextMod = _interopRequireWildcard(_cleartext);
 
+var _lightweight_helper = require('./lightweight_helper');
+
+var lightweightMod = _interopRequireWildcard(_lightweight_helper);
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -32505,15 +32931,107 @@ const cleartext = exports.cleartext = cleartextMod;
  * @name module:openpgp.util
  */
 
-},{"./cleartext":77,"./config/config":78,"./crypto":94,"./encoding/armor":111,"./enums":113,"./hkp":114,"./key":116,"./keyring":117,"./message":120,"./openpgp":121,"./packet":125,"./signature":145,"./type/ecdh_symkey":146,"./type/kdf_params":147,"./type/keyid":148,"./type/mpi":149,"./type/oid":150,"./type/s2k":151,"./util":152,"./wkd":153,"./worker/async_proxy":154,"web-stream-tools":75}],116:[function(require,module,exports){
+
+/**
+ * @see module:lightweight
+ */
+const lightweight = exports.lightweight = lightweightMod;
+
+},{"./cleartext":77,"./config/config":78,"./crypto":94,"./encoding/armor":111,"./enums":113,"./hkp":114,"./key":118,"./keyring":122,"./lightweight_helper":125,"./message":126,"./openpgp":127,"./packet":131,"./signature":151,"./type/ecdh_symkey":152,"./type/kdf_params":153,"./type/keyid":154,"./type/mpi":155,"./type/oid":156,"./type/s2k":157,"./util":158,"./wkd":159,"./worker/async_proxy":160,"web-stream-tools":75}],116:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.generate = generate;
+exports.reformat = reformat;
+exports.read = read;
+exports.readArmored = readArmored;
 
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }(); // GPG4Browsers - An OpenPGP implementation in javascript
-// Copyright (C) 2011 Recurity Labs GmbH
+var _packet = require('../packet');
+
+var _packet2 = _interopRequireDefault(_packet);
+
+var _key = require('./key');
+
+var _key2 = _interopRequireDefault(_key);
+
+var _helper = require('./helper');
+
+var helper = _interopRequireWildcard(_helper);
+
+var _enums = require('../enums');
+
+var _enums2 = _interopRequireDefault(_enums);
+
+var _util = require('../util');
+
+var _util2 = _interopRequireDefault(_util);
+
+var _config = require('../config');
+
+var _config2 = _interopRequireDefault(_config);
+
+var _armor = require('../encoding/armor');
+
+var _armor2 = _interopRequireDefault(_armor);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
+ * Generates a new OpenPGP key. Supports RSA and ECC keys.
+ * Primary and subkey will be of same type.
+ * @param {module:enums.publicKey} [options.keyType=module:enums.publicKey.rsa_encrypt_sign]
+ *                             To indicate what type of key to make.
+ *                             RSA is 1. See {@link https://tools.ietf.org/html/rfc4880#section-9.1}
+ * @param {Integer} options.numBits    number of bits for the key creation.
+ * @param {String|Array<String>}  options.userIds
+ *                             Assumes already in form of "User Name <username@email.com>"
+ *                             If array is used, the first userId is set as primary user Id
+ * @param {String}  options.passphrase The passphrase used to encrypt the resulting private key
+ * @param {Number} [options.keyExpirationTime=0]
+ *                             The number of seconds after the key creation time that the key expires
+ * @param  {String} curve            (optional) elliptic curve for ECC keys
+ * @param  {Date} date         Override the creation date of the key and the key signatures
+ * @param  {Array<Object>} subkeys   (optional) options for each subkey, default to main key options. e.g. [{sign: true, passphrase: '123'}]
+ *                                              sign parameter defaults to false, and indicates whether the subkey should sign rather than encrypt
+ * @returns {Promise<module:key.Key>}
+ * @async
+ * @static
+ */
+async function generate(options) {
+  options.sign = true; // primary key is always a signing key
+  options = helper.sanitizeKeyOptions(options);
+  options.subkeys = options.subkeys.map(function (subkey, index) {
+    return helper.sanitizeKeyOptions(options.subkeys[index], options);
+  });
+
+  let promises = [helper.generateSecretKey(options)];
+  promises = promises.concat(options.subkeys.map(helper.generateSecretSubkey));
+  return Promise.all(promises).then(packets => wrapKeyObject(packets[0], packets.slice(1), options));
+}
+
+/**
+ * Reformats and signs an OpenPGP key with a given User ID. Currently only supports RSA keys.
+ * @param {module:key.Key} options.privateKey   The private key to reformat
+ * @param {module:enums.publicKey} [options.keyType=module:enums.publicKey.rsa_encrypt_sign]
+ * @param {String|Array<String>}  options.userIds
+ *                             Assumes already in form of "User Name <username@email.com>"
+ *                             If array is used, the first userId is set as primary user Id
+ * @param {String}  options.passphrase The passphrase used to encrypt the resulting private key
+ * @param {Number} [options.keyExpirationTime=0]
+ *                             The number of seconds after the key creation time that the key expires
+ * @param  {Date} date         Override the creation date of the key and the key signatures
+ * @param  {Array<Object>} subkeys   (optional) options for each subkey, default to main key options. e.g. [{sign: true, passphrase: '123'}]
+ *
+ * @returns {Promise<module:key.Key>}
+ * @async
+ * @static
+ */
+// OpenPGP.js - An OpenPGP implementation in javascript
+// Copyright (C) 2015-2016 Decentral
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -32530,48 +33048,696 @@ var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = [
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 /**
- * @requires encoding/armor
- * @requires crypto
+ * @fileoverview Provides factory methods for key creation
  * @requires packet
- * @requires config
+ * @requires key/Key
+ * @requires key/helper
  * @requires enums
  * @requires util
- * @module key
+ * @requires config
+ * @requires armor
+ * @module key/factory
  */
 
-exports.Key = Key;
-exports.createSignaturePacket = createSignaturePacket;
-exports.read = read;
-exports.readArmored = readArmored;
-exports.generate = generate;
-exports.reformat = reformat;
+async function reformat(options) {
+  options = sanitize(options);
+
+  try {
+    const isDecrypted = options.privateKey.getKeys().every(key => key.isDecrypted());
+    if (!isDecrypted) {
+      await options.privateKey.decrypt();
+    }
+  } catch (err) {
+    throw new Error('Key not decrypted');
+  }
+
+  const packetlist = options.privateKey.toPacketlist();
+  let secretKeyPacket;
+  const secretSubkeyPackets = [];
+  for (let i = 0; i < packetlist.length; i++) {
+    if (packetlist[i].tag === _enums2.default.packet.secretKey) {
+      secretKeyPacket = packetlist[i];
+    } else if (packetlist[i].tag === _enums2.default.packet.secretSubkey) {
+      secretSubkeyPackets.push(packetlist[i]);
+    }
+  }
+  if (!secretKeyPacket) {
+    throw new Error('Key does not contain a secret key packet');
+  }
+
+  if (!options.subkeys) {
+    options.subkeys = await Promise.all(secretSubkeyPackets.map(async secretSubkeyPacket => ({
+      sign: (await options.privateKey.getSigningKey(secretSubkeyPacket.getKeyId(), null).catch(() => {})) && !(await options.privateKey.getEncryptionKey(secretSubkeyPacket.getKeyId(), null).catch(() => {}))
+    })));
+  }
+
+  if (options.subkeys.length !== secretSubkeyPackets.length) {
+    throw new Error('Number of subkey options does not match number of subkeys');
+  }
+
+  options.subkeys = options.subkeys.map(function (subkey, index) {
+    return sanitize(options.subkeys[index], options);
+  });
+
+  return wrapKeyObject(secretKeyPacket, secretSubkeyPackets, options);
+
+  function sanitize(options, subkeyDefaults = {}) {
+    options.keyExpirationTime = options.keyExpirationTime || subkeyDefaults.keyExpirationTime;
+    options.passphrase = _util2.default.isString(options.passphrase) ? options.passphrase : subkeyDefaults.passphrase;
+    options.date = options.date || subkeyDefaults.date;
+
+    return options;
+  }
+}
+
+async function wrapKeyObject(secretKeyPacket, secretSubkeyPackets, options) {
+  // set passphrase protection
+  if (options.passphrase) {
+    await secretKeyPacket.encrypt(options.passphrase);
+  }
+
+  await Promise.all(secretSubkeyPackets.map(async function (secretSubkeyPacket, index) {
+    const subkeyPassphrase = options.subkeys[index].passphrase;
+    if (subkeyPassphrase) {
+      await secretSubkeyPacket.encrypt(subkeyPassphrase);
+    }
+  }));
+
+  const packetlist = new _packet2.default.List();
+
+  packetlist.push(secretKeyPacket);
+
+  await Promise.all(options.userIds.map(async function (userId, index) {
+    function createdPreferredAlgos(algos, configAlgo) {
+      if (configAlgo) {
+        // Not `uncompressed` / `plaintext`
+        const configIndex = algos.indexOf(configAlgo);
+        if (configIndex >= 1) {
+          // If it is included and not in first place,
+          algos.splice(configIndex, 1); // remove it.
+        }
+        if (configIndex !== 0) {
+          // If it was included and not in first place, or wasn't included,
+          algos.unshift(configAlgo); // add it to the front.
+        }
+      }
+      return algos;
+    }
+
+    const userIdPacket = new _packet2.default.Userid();
+    userIdPacket.format(userId);
+
+    const dataToSign = {};
+    dataToSign.userId = userIdPacket;
+    dataToSign.key = secretKeyPacket;
+    const signaturePacket = new _packet2.default.Signature(options.date);
+    signaturePacket.signatureType = _enums2.default.signature.cert_generic;
+    signaturePacket.publicKeyAlgorithm = secretKeyPacket.algorithm;
+    signaturePacket.hashAlgorithm = await helper.getPreferredHashAlgo(null, secretKeyPacket);
+    signaturePacket.keyFlags = [_enums2.default.keyFlags.certify_keys | _enums2.default.keyFlags.sign_data];
+    signaturePacket.preferredSymmetricAlgorithms = createdPreferredAlgos([
+    // prefer aes256, aes128, then aes192 (no WebCrypto support: https://www.chromium.org/blink/webcrypto#TOC-AES-support)
+    _enums2.default.symmetric.aes256, _enums2.default.symmetric.aes128, _enums2.default.symmetric.aes192, _enums2.default.symmetric.cast5, _enums2.default.symmetric.tripledes], _config2.default.encryption_cipher);
+    if (_config2.default.aead_protect) {
+      signaturePacket.preferredAeadAlgorithms = createdPreferredAlgos([_enums2.default.aead.eax, _enums2.default.aead.ocb], _config2.default.aead_mode);
+    }
+    signaturePacket.preferredHashAlgorithms = createdPreferredAlgos([
+    // prefer fast asm.js implementations (SHA-256). SHA-1 will not be secure much longer...move to bottom of list
+    _enums2.default.hash.sha256, _enums2.default.hash.sha512, _enums2.default.hash.sha1], _config2.default.prefer_hash_algorithm);
+    signaturePacket.preferredCompressionAlgorithms = createdPreferredAlgos([_enums2.default.compression.zlib, _enums2.default.compression.zip, _enums2.default.compression.uncompressed], _config2.default.compression);
+    if (index === 0) {
+      signaturePacket.isPrimaryUserID = true;
+    }
+    if (_config2.default.integrity_protect) {
+      signaturePacket.features = [0];
+      signaturePacket.features[0] |= _enums2.default.features.modification_detection;
+    }
+    if (_config2.default.aead_protect) {
+      signaturePacket.features || (signaturePacket.features = [0]);
+      signaturePacket.features[0] |= _enums2.default.features.aead;
+    }
+    if (_config2.default.v5_keys) {
+      signaturePacket.features || (signaturePacket.features = [0]);
+      signaturePacket.features[0] |= _enums2.default.features.v5_keys;
+    }
+    if (options.keyExpirationTime > 0) {
+      signaturePacket.keyExpirationTime = options.keyExpirationTime;
+      signaturePacket.keyNeverExpires = false;
+    }
+    await signaturePacket.sign(secretKeyPacket, dataToSign);
+
+    return { userIdPacket, signaturePacket };
+  })).then(list => {
+    list.forEach(({ userIdPacket, signaturePacket }) => {
+      packetlist.push(userIdPacket);
+      packetlist.push(signaturePacket);
+    });
+  });
+
+  await Promise.all(secretSubkeyPackets.map(async function (secretSubkeyPacket, index) {
+    const subkeyOptions = options.subkeys[index];
+    const subkeySignaturePacket = await helper.createBindingSignature(secretSubkeyPacket, secretKeyPacket, subkeyOptions);
+    return { secretSubkeyPacket, subkeySignaturePacket };
+  })).then(packets => {
+    packets.forEach(({ secretSubkeyPacket, subkeySignaturePacket }) => {
+      packetlist.push(secretSubkeyPacket);
+      packetlist.push(subkeySignaturePacket);
+    });
+  });
+
+  // Add revocation signature packet for creating a revocation certificate.
+  // This packet should be removed before returning the key.
+  const dataToSign = { key: secretKeyPacket };
+  packetlist.push((await helper.createSignaturePacket(dataToSign, null, secretKeyPacket, {
+    signatureType: _enums2.default.signature.key_revocation,
+    reasonForRevocationFlag: _enums2.default.reasonForRevocation.no_reason,
+    reasonForRevocationString: ''
+  }, options.date)));
+
+  // set passphrase protection
+  if (options.passphrase) {
+    secretKeyPacket.clearPrivateParams();
+  }
+
+  await Promise.all(secretSubkeyPackets.map(async function (secretSubkeyPacket, index) {
+    const subkeyPassphrase = options.subkeys[index].passphrase;
+    if (subkeyPassphrase) {
+      secretSubkeyPacket.clearPrivateParams();
+    }
+  }));
+
+  return new _key2.default(packetlist);
+}
+
+/**
+ * Reads an unarmored OpenPGP key list and returns one or multiple key objects
+ * @param {Uint8Array} data to be parsed
+ * @returns {Promise<{keys: Array<module:key.Key>,
+ *            err: (Array<Error>|null)}>} result object with key and error arrays
+ * @async
+ * @static
+ */
+async function read(data) {
+  const result = {};
+  result.keys = [];
+  const err = [];
+  try {
+    const packetlist = new _packet2.default.List();
+    await packetlist.read(data);
+    const keyIndex = packetlist.indexOfTag(_enums2.default.packet.publicKey, _enums2.default.packet.secretKey);
+    if (keyIndex.length === 0) {
+      throw new Error('No key packet found');
+    }
+    for (let i = 0; i < keyIndex.length; i++) {
+      const oneKeyList = packetlist.slice(keyIndex[i], keyIndex[i + 1]);
+      try {
+        const newKey = new _key2.default(oneKeyList);
+        result.keys.push(newKey);
+      } catch (e) {
+        err.push(e);
+      }
+    }
+  } catch (e) {
+    err.push(e);
+  }
+  if (err.length) {
+    result.err = err;
+  }
+  return result;
+}
+
+/**
+ * Reads an OpenPGP armored text and returns one or multiple key objects
+ * @param {String | ReadableStream<String>} armoredText text to be parsed
+ * @returns {Promise<{keys: Array<module:key.Key>,
+ *            err: (Array<Error>|null)}>} result object with key and error arrays
+ * @async
+ * @static
+ */
+async function readArmored(armoredText) {
+  try {
+    const input = await _armor2.default.decode(armoredText);
+    if (!(input.type === _enums2.default.armor.public_key || input.type === _enums2.default.armor.private_key)) {
+      throw new Error('Armored text not of type key');
+    }
+    return read(input.data);
+  } catch (e) {
+    const result = { keys: [], err: [] };
+    result.err.push(e);
+    return result;
+  }
+}
+
+},{"../config":79,"../encoding/armor":111,"../enums":113,"../packet":131,"../util":158,"./helper":117,"./key":119}],117:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }(); /**
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          * @fileoverview Provides helpers methods for key module
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          * @requires packet
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          * @requires enums
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          * @requires config
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          * @requires crypto
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          * @module key/helper
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          */
+
+exports.generateSecretSubkey = generateSecretSubkey;
+exports.generateSecretKey = generateSecretKey;
+exports.getLatestValidSignature = getLatestValidSignature;
+exports.isDataExpired = isDataExpired;
+exports.createBindingSignature = createBindingSignature;
 exports.getPreferredHashAlgo = getPreferredHashAlgo;
 exports.getPreferredAlgo = getPreferredAlgo;
+exports.createSignaturePacket = createSignaturePacket;
+exports.mergeSignatures = mergeSignatures;
+exports.isDataRevoked = isDataRevoked;
+exports.getExpirationTime = getExpirationTime;
 exports.isAeadSupported = isAeadSupported;
+exports.sanitizeKeyOptions = sanitizeKeyOptions;
+exports.isValidSigningKeyPacket = isValidSigningKeyPacket;
+exports.isValidEncryptionKeyPacket = isValidEncryptionKeyPacket;
 
-var _armor = require('./encoding/armor');
-
-var _armor2 = _interopRequireDefault(_armor);
-
-var _crypto = require('./crypto');
-
-var _crypto2 = _interopRequireDefault(_crypto);
-
-var _packet = require('./packet');
+var _packet = require('../packet');
 
 var _packet2 = _interopRequireDefault(_packet);
 
-var _config = require('./config');
-
-var _config2 = _interopRequireDefault(_config);
-
-var _enums = require('./enums');
+var _enums = require('../enums');
 
 var _enums2 = _interopRequireDefault(_enums);
 
-var _util = require('./util');
+var _config = require('../config');
+
+var _config2 = _interopRequireDefault(_config);
+
+var _crypto = require('../crypto');
+
+var _crypto2 = _interopRequireDefault(_crypto);
+
+var _util = require('../util');
 
 var _util2 = _interopRequireDefault(_util);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+async function generateSecretSubkey(options) {
+  const secretSubkeyPacket = new _packet2.default.SecretSubkey(options.date);
+  secretSubkeyPacket.packets = null;
+  secretSubkeyPacket.algorithm = _enums2.default.read(_enums2.default.publicKey, options.algorithm);
+  await secretSubkeyPacket.generate(options.rsaBits, options.curve);
+  return secretSubkeyPacket;
+}
+
+async function generateSecretKey(options) {
+  const secretKeyPacket = new _packet2.default.SecretKey(options.date);
+  secretKeyPacket.packets = null;
+  secretKeyPacket.algorithm = _enums2.default.read(_enums2.default.publicKey, options.algorithm);
+  await secretKeyPacket.generate(options.rsaBits, options.curve);
+  return secretKeyPacket;
+}
+
+/**
+ * Returns the valid and non-expired signature that has the latest creation date, while ignoring signatures created in the future.
+ * @param  {Array<module:packet.Signature>} signatures  List of signatures
+ * @param  {Date}                           date        Use the given date instead of the current time
+ * @returns {Promise<module:packet.Signature>} The latest valid signature
+ * @async
+ */
+async function getLatestValidSignature(signatures, primaryKey, signatureType, dataToVerify, date = new Date()) {
+  let signature;
+  let exception;
+  for (let i = signatures.length - 1; i >= 0; i--) {
+    try {
+      if ((!signature || signatures[i].created >= signature.created) &&
+      // check binding signature is not expired (ie, check for V4 expiration time)
+      !signatures[i].isExpired(date) && (
+      // check binding signature is verified
+      signatures[i].verified || (await signatures[i].verify(primaryKey, signatureType, dataToVerify)))) {
+        signature = signatures[i];
+      }
+    } catch (e) {
+      exception = e;
+    }
+  }
+  if (!signature) {
+    throw _util2.default.wrapError(`Could not find valid ${_enums2.default.read(_enums2.default.signature, signatureType)} signature in key ${primaryKey.getKeyId().toHex()}`.replace('cert_generic ', 'self-').replace('_', ' '), exception);
+  }
+  return signature;
+}
+
+function isDataExpired(keyPacket, signature, date = new Date()) {
+  const normDate = _util2.default.normalizeDate(date);
+  if (normDate !== null) {
+    const expirationTime = getExpirationTime(keyPacket, signature);
+    return !(keyPacket.created <= normDate && normDate <= expirationTime) || signature && signature.isExpired(date);
+  }
+  return false;
+}
+
+/**
+ * Create Binding signature to the key according to the {@link https://tools.ietf.org/html/rfc4880#section-5.2.1}
+ * @param {module:packet.SecretSubkey} subkey Subkey key packet
+ * @param {module:packet.SecretKey} primaryKey Primary key packet
+ * @param {Object} options
+ */
+async function createBindingSignature(subkey, primaryKey, options) {
+  const dataToSign = {};
+  dataToSign.key = primaryKey;
+  dataToSign.bind = subkey;
+  const subkeySignaturePacket = new _packet2.default.Signature(options.date);
+  subkeySignaturePacket.signatureType = _enums2.default.signature.subkey_binding;
+  subkeySignaturePacket.publicKeyAlgorithm = primaryKey.algorithm;
+  subkeySignaturePacket.hashAlgorithm = await getPreferredHashAlgo(null, subkey);
+  if (options.sign) {
+    subkeySignaturePacket.keyFlags = [_enums2.default.keyFlags.sign_data];
+    subkeySignaturePacket.embeddedSignature = await createSignaturePacket(dataToSign, null, subkey, {
+      signatureType: _enums2.default.signature.key_binding
+    }, options.date);
+  } else {
+    subkeySignaturePacket.keyFlags = [_enums2.default.keyFlags.encrypt_communication | _enums2.default.keyFlags.encrypt_storage];
+  }
+  if (options.keyExpirationTime > 0) {
+    subkeySignaturePacket.keyExpirationTime = options.keyExpirationTime;
+    subkeySignaturePacket.keyNeverExpires = false;
+  }
+  await subkeySignaturePacket.sign(primaryKey, dataToSign);
+  return subkeySignaturePacket;
+}
+
+/**
+ * Returns the preferred signature hash algorithm of a key
+ * @param  {module:key.Key} key (optional) the key to get preferences from
+ * @param  {module:packet.SecretKey|module:packet.SecretSubkey} keyPacket key packet used for signing
+ * @param  {Date} date (optional) use the given date for verification instead of the current time
+ * @param  {Object} userId (optional) user ID
+ * @returns {Promise<String>}
+ * @async
+ */
+async function getPreferredHashAlgo(key, keyPacket, date = new Date(), userId = {}) {
+  let hash_algo = _config2.default.prefer_hash_algorithm;
+  let pref_algo = hash_algo;
+  if (key) {
+    const primaryUser = await key.getPrimaryUser(date, userId);
+    if (primaryUser.selfCertification.preferredHashAlgorithms) {
+      var _primaryUser$selfCert = _slicedToArray(primaryUser.selfCertification.preferredHashAlgorithms, 1);
+
+      pref_algo = _primaryUser$selfCert[0];
+
+      hash_algo = _crypto2.default.hash.getHashByteLength(hash_algo) <= _crypto2.default.hash.getHashByteLength(pref_algo) ? pref_algo : hash_algo;
+    }
+  }
+  switch (Object.getPrototypeOf(keyPacket)) {
+    case _packet2.default.SecretKey.prototype:
+    case _packet2.default.PublicKey.prototype:
+    case _packet2.default.SecretSubkey.prototype:
+    case _packet2.default.PublicSubkey.prototype:
+      switch (keyPacket.algorithm) {
+        case 'ecdh':
+        case 'ecdsa':
+        case 'eddsa':
+          pref_algo = _crypto2.default.publicKey.elliptic.getPreferredHashAlgo(keyPacket.params[0]);
+      }
+  }
+  return _crypto2.default.hash.getHashByteLength(hash_algo) <= _crypto2.default.hash.getHashByteLength(pref_algo) ? pref_algo : hash_algo;
+}
+
+/**
+ * Returns the preferred symmetric/aead algorithm for a set of keys
+ * @param  {symmetric|aead} type Type of preference to return
+ * @param  {Array<module:key.Key>} keys Set of keys
+ * @param  {Date} date (optional) use the given date for verification instead of the current time
+ * @param  {Array} userIds (optional) user IDs
+ * @returns {Promise<module:enums.symmetric>}   Preferred symmetric algorithm
+ * @async
+ */
+async function getPreferredAlgo(type, keys, date = new Date(), userIds = []) {
+  const prefProperty = type === 'symmetric' ? 'preferredSymmetricAlgorithms' : 'preferredAeadAlgorithms';
+  const defaultAlgo = type === 'symmetric' ? _enums2.default.symmetric.aes128 : _enums2.default.aead.eax;
+  const prioMap = {};
+  await Promise.all(keys.map(async function (key, i) {
+    const primaryUser = await key.getPrimaryUser(date, userIds[i]);
+    if (!primaryUser.selfCertification[prefProperty]) {
+      return defaultAlgo;
+    }
+    primaryUser.selfCertification[prefProperty].forEach(function (algo, index) {
+      const entry = prioMap[algo] || (prioMap[algo] = { prio: 0, count: 0, algo: algo });
+      entry.prio += 64 >> index;
+      entry.count++;
+    });
+  }));
+  let prefAlgo = { prio: 0, algo: defaultAlgo };
+  Object.values(prioMap).forEach(({ prio, count, algo }) => {
+    try {
+      if (algo !== _enums2.default[type].plaintext && algo !== _enums2.default[type].idea && // not implemented
+      _enums2.default.read(_enums2.default[type], algo) && // known algorithm
+      count === keys.length && // available for all keys
+      prio > prefAlgo.prio) {
+        prefAlgo = prioMap[algo];
+      }
+    } catch (e) {}
+  });
+  return prefAlgo.algo;
+}
+
+/**
+ * Create signature packet
+ * @param  {Object}                          dataToSign Contains packets to be signed
+ * @param  {module:packet.SecretKey|
+ *          module:packet.SecretSubkey}      signingKeyPacket secret key packet for signing
+ * @param  {Object} signatureProperties      (optional) properties to write on the signature packet before signing
+ * @param  {Date} date                       (optional) override the creationtime of the signature
+ * @param  {Object} userId                   (optional) user ID
+ * @param  {Object} detached                 (optional) whether to create a detached signature packet
+ * @param  {Boolean} streaming               (optional) whether to process data as a stream
+ * @returns {module:packet/signature}         signature packet
+ */
+async function createSignaturePacket(dataToSign, privateKey, signingKeyPacket, signatureProperties, date, userId, detached = false, streaming = false) {
+  if (!signingKeyPacket.isDecrypted()) {
+    throw new Error('Private key is not decrypted.');
+  }
+  const signaturePacket = new _packet2.default.Signature(date);
+  Object.assign(signaturePacket, signatureProperties);
+  signaturePacket.publicKeyAlgorithm = signingKeyPacket.algorithm;
+  signaturePacket.hashAlgorithm = await getPreferredHashAlgo(privateKey, signingKeyPacket, date, userId);
+  await signaturePacket.sign(signingKeyPacket, dataToSign, detached, streaming);
+  return signaturePacket;
+}
+
+/**
+ * Merges signatures from source[attr] to dest[attr]
+ * @private
+ * @param  {Object} source
+ * @param  {Object} dest
+ * @param  {String} attr
+ * @param  {Function} checkFn optional, signature only merged if true
+ */
+async function mergeSignatures(source, dest, attr, checkFn) {
+  source = source[attr];
+  if (source) {
+    if (!dest[attr].length) {
+      dest[attr] = source;
+    } else {
+      await Promise.all(source.map(async function (sourceSig) {
+        if (!sourceSig.isExpired() && (!checkFn || (await checkFn(sourceSig))) && !dest[attr].some(function (destSig) {
+          return _util2.default.equalsUint8Array(destSig.signature, sourceSig.signature);
+        })) {
+          dest[attr].push(sourceSig);
+        }
+      }));
+    }
+  }
+}
+
+/**
+ * Checks if a given certificate or binding signature is revoked
+ * @param  {module:packet.SecretKey|
+ *          module:packet.PublicKey}       primaryKey   The primary key packet
+ * @param  {Object}                         dataToVerify The data to check
+ * @param  {Array<module:packet.Signature>} revocations  The revocation signatures to check
+ * @param  {module:packet.Signature}        signature    The certificate or signature to check
+ * @param  {module:packet.PublicSubkey|
+ *          module:packet.SecretSubkey|
+ *          module:packet.PublicKey|
+ *          module:packet.SecretKey} key, optional The key packet to check the signature
+ * @param  {Date}                     date          Use the given date instead of the current time
+ * @returns {Promise<Boolean>}                      True if the signature revokes the data
+ * @async
+ */
+async function isDataRevoked(primaryKey, signatureType, dataToVerify, revocations, signature, key, date = new Date()) {
+  key = key || primaryKey;
+  const normDate = _util2.default.normalizeDate(date);
+  const revocationKeyIds = [];
+  await Promise.all(revocations.map(async function (revocationSignature) {
+    try {
+      if (
+      // Note: a third-party revocation signature could legitimately revoke a
+      // self-signature if the signature has an authorized revocation key.
+      // However, we don't support passing authorized revocation keys, nor
+      // verifying such revocation signatures. Instead, we indicate an error
+      // when parsing a key with an authorized revocation key, and ignore
+      // third-party revocation signatures here. (It could also be revoking a
+      // third-party key certification, which should only affect
+      // `verifyAllCertifications`.)
+      (!signature || revocationSignature.issuerKeyId.equals(signature.issuerKeyId)) && !(_config2.default.revocations_expire && revocationSignature.isExpired(normDate)) && (revocationSignature.verified || (await revocationSignature.verify(key, signatureType, dataToVerify)))) {
+        // TODO get an identifier of the revoked object instead
+        revocationKeyIds.push(revocationSignature.issuerKeyId);
+      }
+    } catch (e) {}
+  }));
+  // TODO further verify that this is the signature that should be revoked
+  if (signature) {
+    signature.revoked = revocationKeyIds.some(keyId => keyId.equals(signature.issuerKeyId)) ? true : signature.revoked || false;
+    return signature.revoked;
+  }
+  return revocationKeyIds.length > 0;
+}
+
+function getExpirationTime(keyPacket, signature) {
+  let expirationTime;
+  // check V4 expiration time
+  if (signature.keyNeverExpires === false) {
+    expirationTime = keyPacket.created.getTime() + signature.keyExpirationTime * 1000;
+  }
+  return expirationTime ? new Date(expirationTime) : Infinity;
+}
+
+/**
+ * Returns whether aead is supported by all keys in the set
+ * @param  {Array<module:key.Key>} keys Set of keys
+ * @param  {Date} date (optional) use the given date for verification instead of the current time
+ * @param  {Array} userIds (optional) user IDs
+ * @returns {Promise<Boolean>}
+ * @async
+ */
+async function isAeadSupported(keys, date = new Date(), userIds = []) {
+  let supported = true;
+  // TODO replace when Promise.some or Promise.any are implemented
+  await Promise.all(keys.map(async function (key, i) {
+    const primaryUser = await key.getPrimaryUser(date, userIds[i]);
+    if (!primaryUser.selfCertification.features || !(primaryUser.selfCertification.features[0] & _enums2.default.features.aead)) {
+      supported = false;
+    }
+  }));
+  return supported;
+}
+
+function sanitizeKeyOptions(options, subkeyDefaults = {}) {
+  options.curve = options.curve || subkeyDefaults.curve;
+  options.rsaBits = options.rsaBits || subkeyDefaults.rsaBits;
+  options.keyExpirationTime = options.keyExpirationTime !== undefined ? options.keyExpirationTime : subkeyDefaults.keyExpirationTime;
+  options.passphrase = _util2.default.isString(options.passphrase) ? options.passphrase : subkeyDefaults.passphrase;
+  options.date = options.date || subkeyDefaults.date;
+
+  options.sign = options.sign || false;
+
+  if (options.curve) {
+    try {
+      options.curve = _enums2.default.write(_enums2.default.curve, options.curve);
+    } catch (e) {
+      throw new Error('Not valid curve.');
+    }
+    if (options.curve === _enums2.default.curve.ed25519 || options.curve === _enums2.default.curve.curve25519) {
+      options.curve = options.sign ? _enums2.default.curve.ed25519 : _enums2.default.curve.curve25519;
+    }
+    if (options.sign) {
+      options.algorithm = options.curve === _enums2.default.curve.ed25519 ? _enums2.default.publicKey.eddsa : _enums2.default.publicKey.ecdsa;
+    } else {
+      options.algorithm = _enums2.default.publicKey.ecdh;
+    }
+  } else if (options.rsaBits) {
+    options.algorithm = _enums2.default.publicKey.rsa_encrypt_sign;
+  } else {
+    throw new Error('Unrecognized key type');
+  }
+  return options;
+}
+
+function isValidSigningKeyPacket(keyPacket, signature) {
+  if (!signature.verified || signature.revoked !== false) {
+    // Sanity check
+    throw new Error('Signature not verified');
+  }
+  return keyPacket.algorithm !== _enums2.default.read(_enums2.default.publicKey, _enums2.default.publicKey.rsa_encrypt) && keyPacket.algorithm !== _enums2.default.read(_enums2.default.publicKey, _enums2.default.publicKey.elgamal) && keyPacket.algorithm !== _enums2.default.read(_enums2.default.publicKey, _enums2.default.publicKey.ecdh) && (!signature.keyFlags || (signature.keyFlags[0] & _enums2.default.keyFlags.sign_data) !== 0);
+}
+
+function isValidEncryptionKeyPacket(keyPacket, signature) {
+  if (!signature.verified || signature.revoked !== false) {
+    // Sanity check
+    throw new Error('Signature not verified');
+  }
+  return keyPacket.algorithm !== _enums2.default.read(_enums2.default.publicKey, _enums2.default.publicKey.dsa) && keyPacket.algorithm !== _enums2.default.read(_enums2.default.publicKey, _enums2.default.publicKey.rsa_sign) && keyPacket.algorithm !== _enums2.default.read(_enums2.default.publicKey, _enums2.default.publicKey.ecdsa) && keyPacket.algorithm !== _enums2.default.read(_enums2.default.publicKey, _enums2.default.publicKey.eddsa) && (!signature.keyFlags || (signature.keyFlags[0] & _enums2.default.keyFlags.encrypt_communication) !== 0 || (signature.keyFlags[0] & _enums2.default.keyFlags.encrypt_storage) !== 0);
+}
+
+},{"../config":79,"../crypto":94,"../enums":113,"../packet":131,"../util":158}],118:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Key = exports.createSignaturePacket = exports.getPreferredHashAlgo = exports.isAeadSupported = exports.getPreferredAlgo = exports.reformat = exports.read = exports.generate = exports.readArmored = undefined;
+
+var _factory = require('./factory');
+
+var _helper = require('./helper');
+
+var _key = require('./key.js');
+
+var _key2 = _interopRequireDefault(_key);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+exports.readArmored = _factory.readArmored;
+exports.generate = _factory.generate;
+exports.read = _factory.read;
+exports.reformat = _factory.reformat;
+exports.getPreferredAlgo = _helper.getPreferredAlgo;
+exports.isAeadSupported = _helper.isAeadSupported;
+exports.getPreferredHashAlgo = _helper.getPreferredHashAlgo;
+exports.createSignaturePacket = _helper.createSignaturePacket;
+exports.Key = _key2.default; /**
+                              * @fileoverview helper, factory methods, constructors dealing with openPGP key object
+                              * @module key
+                              */
+
+},{"./factory":116,"./helper":117,"./key.js":119}],119:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = Key;
+
+var _armor = require('../encoding/armor');
+
+var _armor2 = _interopRequireDefault(_armor);
+
+var _packet = require('../packet');
+
+var _packet2 = _interopRequireDefault(_packet);
+
+var _enums = require('../enums');
+
+var _enums2 = _interopRequireDefault(_enums);
+
+var _util = require('../util');
+
+var _util2 = _interopRequireDefault(_util);
+
+var _user = require('./user');
+
+var _user2 = _interopRequireDefault(_user);
+
+var _subkey = require('./subkey');
+
+var _subkey2 = _interopRequireDefault(_subkey);
+
+var _helper = require('./helper');
+
+var helper = _interopRequireWildcard(_helper);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -32601,7 +33767,32 @@ function Key(packetlist) {
   if (!this.keyPacket || !this.users.length) {
     throw new Error('Invalid key: need at least key and user ID packet');
   }
-}
+} // GPG4Browsers - An OpenPGP implementation in javascript
+// Copyright (C) 2011 Recurity Labs GmbH
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 3.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+/**
+ * @requires encoding/armor
+ * @requires packet
+ * @requires enums
+ * @requires util
+ * @requires key/User
+ * @requires key/Subkey
+ * @module key/Key
+ */
 
 Object.defineProperty(Key.prototype, 'primaryKey', {
   get() {
@@ -32628,13 +33819,13 @@ Key.prototype.packetlist2structure = function (packetlist) {
         break;
       case _enums2.default.packet.userid:
       case _enums2.default.packet.userAttribute:
-        user = new User(packetlist[i]);
+        user = new _user2.default(packetlist[i]);
         this.users.push(user);
         break;
       case _enums2.default.packet.publicSubkey:
       case _enums2.default.packet.secretSubkey:
         user = null;
-        subKey = new SubKey(packetlist[i]);
+        subKey = new _subkey2.default(packetlist[i]);
         this.subKeys.push(subKey);
         break;
       case _enums2.default.packet.signature:
@@ -32648,7 +33839,6 @@ Key.prototype.packetlist2structure = function (packetlist) {
               continue;
             }
             if (packetlist[i].issuerKeyId.equals(primaryKeyId)) {
-              checkRevocationKey(packetlist[i], primaryKeyId);
               user.selfCertifications.push(packetlist[i]);
             } else {
               user.otherCertifications.push(packetlist[i]);
@@ -32662,7 +33852,6 @@ Key.prototype.packetlist2structure = function (packetlist) {
             }
             break;
           case _enums2.default.signature.key:
-            checkRevocationKey(packetlist[i], primaryKeyId);
             this.directSignatures.push(packetlist[i]);
             break;
           case _enums2.default.signature.subkey_binding:
@@ -32670,7 +33859,6 @@ Key.prototype.packetlist2structure = function (packetlist) {
               _util2.default.print_debug('Dropping subkey binding signature without preceding subkey packet');
               continue;
             }
-            checkRevocationKey(packetlist[i], primaryKeyId);
             subKey.bindingSignatures.push(packetlist[i]);
             break;
           case _enums2.default.signature.key_revocation:
@@ -32808,27 +33996,6 @@ Key.prototype.armor = function () {
 };
 
 /**
- * Returns the valid and non-expired signature that has the latest creation date, while ignoring signatures created in the future.
- * @param  {Array<module:packet.Signature>} signatures  List of signatures
- * @param  {Date}                           date        Use the given date instead of the current time
- * @returns {Promise<module:packet.Signature>} The latest valid signature
- * @async
- */
-async function getLatestValidSignature(signatures, primaryKey, signatureType, dataToVerify, date = new Date()) {
-  let signature;
-  for (let i = signatures.length - 1; i >= 0; i--) {
-    if ((!signature || signatures[i].created >= signature.created) &&
-    // check binding signature is not expired (ie, check for V4 expiration time)
-    !signatures[i].isExpired(date) && (
-    // check binding signature is verified
-    signatures[i].verified || (await signatures[i].verify(primaryKey, signatureType, dataToVerify)))) {
-      signature = signatures[i];
-    }
-  }
-  return signature;
-}
-
-/**
  * Returns last created key or key by given keyId that is available for signing and verification
  * @param  {module:type/keyid} keyId, optional
  * @param  {Date} date (optional) use the given date for verification instead of the current time
@@ -32837,34 +34004,29 @@ async function getLatestValidSignature(signatures, primaryKey, signatureType, da
  * @async
  */
 Key.prototype.getSigningKey = async function (keyId = null, date = new Date(), userId = {}) {
+  await this.verifyPrimaryKey(date, userId);
   const primaryKey = this.keyPacket;
-  if ((await this.verifyPrimaryKey(date, userId)) === _enums2.default.keyStatus.valid) {
-    const subKeys = this.subKeys.slice().sort((a, b) => b.keyPacket.created - a.keyPacket.created);
-    for (let i = 0; i < subKeys.length; i++) {
-      if (!keyId || subKeys[i].getKeyId().equals(keyId)) {
-        if ((await subKeys[i].verify(primaryKey, date)) === _enums2.default.keyStatus.valid) {
-          const dataToVerify = { key: primaryKey, bind: subKeys[i].keyPacket };
-          const bindingSignature = await getLatestValidSignature(subKeys[i].bindingSignatures, primaryKey, _enums2.default.signature.subkey_binding, dataToVerify, date);
-          if (bindingSignature && bindingSignature.embeddedSignature && isValidSigningKeyPacket(subKeys[i].keyPacket, bindingSignature) && (await getLatestValidSignature([bindingSignature.embeddedSignature], subKeys[i].keyPacket, _enums2.default.signature.key_binding, dataToVerify, date))) {
-            return subKeys[i];
-          }
+  const subKeys = this.subKeys.slice().sort((a, b) => b.keyPacket.created - a.keyPacket.created);
+  let exception;
+  for (let i = 0; i < subKeys.length; i++) {
+    if (!keyId || subKeys[i].getKeyId().equals(keyId)) {
+      try {
+        await subKeys[i].verify(primaryKey, date);
+        const dataToVerify = { key: primaryKey, bind: subKeys[i].keyPacket };
+        const bindingSignature = await helper.getLatestValidSignature(subKeys[i].bindingSignatures, primaryKey, _enums2.default.signature.subkey_binding, dataToVerify, date);
+        if (bindingSignature && bindingSignature.embeddedSignature && helper.isValidSigningKeyPacket(subKeys[i].keyPacket, bindingSignature) && (await helper.getLatestValidSignature([bindingSignature.embeddedSignature], subKeys[i].keyPacket, _enums2.default.signature.key_binding, dataToVerify, date))) {
+          return subKeys[i];
         }
+      } catch (e) {
+        exception = e;
       }
     }
-    const primaryUser = await this.getPrimaryUser(date, userId);
-    if (primaryUser && (!keyId || primaryKey.getKeyId().equals(keyId)) && isValidSigningKeyPacket(primaryKey, primaryUser.selfCertification)) {
-      return this;
-    }
   }
-  return null;
-
-  function isValidSigningKeyPacket(keyPacket, signature) {
-    if (!signature.verified || signature.revoked !== false) {
-      // Sanity check
-      throw new Error('Signature not verified');
-    }
-    return keyPacket.algorithm !== _enums2.default.read(_enums2.default.publicKey, _enums2.default.publicKey.rsa_encrypt) && keyPacket.algorithm !== _enums2.default.read(_enums2.default.publicKey, _enums2.default.publicKey.elgamal) && keyPacket.algorithm !== _enums2.default.read(_enums2.default.publicKey, _enums2.default.publicKey.ecdh) && (!signature.keyFlags || (signature.keyFlags[0] & _enums2.default.keyFlags.sign_data) !== 0);
+  const primaryUser = await this.getPrimaryUser(date, userId);
+  if ((!keyId || primaryKey.getKeyId().equals(keyId)) && helper.isValidSigningKeyPacket(primaryKey, primaryUser.selfCertification)) {
+    return this;
   }
+  throw _util2.default.wrapError('Could not find valid signing key packet in key ' + this.getKeyId().toHex(), exception);
 };
 
 /**
@@ -32876,36 +34038,31 @@ Key.prototype.getSigningKey = async function (keyId = null, date = new Date(), u
  * @async
  */
 Key.prototype.getEncryptionKey = async function (keyId, date = new Date(), userId = {}) {
+  await this.verifyPrimaryKey(date, userId);
   const primaryKey = this.keyPacket;
-  if ((await this.verifyPrimaryKey(date, userId)) === _enums2.default.keyStatus.valid) {
-    // V4: by convention subkeys are preferred for encryption service
-    const subKeys = this.subKeys.slice().sort((a, b) => b.keyPacket.created - a.keyPacket.created);
-    for (let i = 0; i < subKeys.length; i++) {
-      if (!keyId || subKeys[i].getKeyId().equals(keyId)) {
-        if ((await subKeys[i].verify(primaryKey, date)) === _enums2.default.keyStatus.valid) {
-          const dataToVerify = { key: primaryKey, bind: subKeys[i].keyPacket };
-          const bindingSignature = await getLatestValidSignature(subKeys[i].bindingSignatures, primaryKey, _enums2.default.signature.subkey_binding, dataToVerify, date);
-          if (bindingSignature && isValidEncryptionKeyPacket(subKeys[i].keyPacket, bindingSignature)) {
-            return subKeys[i];
-          }
+  // V4: by convention subkeys are preferred for encryption service
+  const subKeys = this.subKeys.slice().sort((a, b) => b.keyPacket.created - a.keyPacket.created);
+  let exception;
+  for (let i = 0; i < subKeys.length; i++) {
+    if (!keyId || subKeys[i].getKeyId().equals(keyId)) {
+      try {
+        await subKeys[i].verify(primaryKey, date);
+        const dataToVerify = { key: primaryKey, bind: subKeys[i].keyPacket };
+        const bindingSignature = await helper.getLatestValidSignature(subKeys[i].bindingSignatures, primaryKey, _enums2.default.signature.subkey_binding, dataToVerify, date);
+        if (bindingSignature && helper.isValidEncryptionKeyPacket(subKeys[i].keyPacket, bindingSignature)) {
+          return subKeys[i];
         }
+      } catch (e) {
+        exception = e;
       }
     }
-    // if no valid subkey for encryption, evaluate primary key
-    const primaryUser = await this.getPrimaryUser(date, userId);
-    if (primaryUser && (!keyId || primaryKey.getKeyId().equals(keyId)) && isValidEncryptionKeyPacket(primaryKey, primaryUser.selfCertification)) {
-      return this;
-    }
   }
-  return null;
-
-  function isValidEncryptionKeyPacket(keyPacket, signature) {
-    if (!signature.verified || signature.revoked !== false) {
-      // Sanity check
-      throw new Error('Signature not verified');
-    }
-    return keyPacket.algorithm !== _enums2.default.read(_enums2.default.publicKey, _enums2.default.publicKey.dsa) && keyPacket.algorithm !== _enums2.default.read(_enums2.default.publicKey, _enums2.default.publicKey.rsa_sign) && keyPacket.algorithm !== _enums2.default.read(_enums2.default.publicKey, _enums2.default.publicKey.ecdsa) && keyPacket.algorithm !== _enums2.default.read(_enums2.default.publicKey, _enums2.default.publicKey.eddsa) && (!signature.keyFlags || (signature.keyFlags[0] & _enums2.default.keyFlags.encrypt_communication) !== 0 || (signature.keyFlags[0] & _enums2.default.keyFlags.encrypt_storage) !== 0);
+  // if no valid subkey for encryption, evaluate primary key
+  const primaryUser = await this.getPrimaryUser(date, userId);
+  if ((!keyId || primaryKey.getKeyId().equals(keyId)) && helper.isValidEncryptionKeyPacket(primaryKey, primaryUser.selfCertification)) {
+    return this;
   }
+  throw _util2.default.wrapError('Could not find valid encryption key packet in key ' + this.getKeyId().toHex(), exception);
 };
 
 /**
@@ -32968,6 +34125,44 @@ Key.prototype.decrypt = async function (passphrases, keyId = null) {
 };
 
 /**
+ * Check whether the private and public key parameters of the primary key match
+ * @returns {Promise<Boolean>} true if the primary key parameters correspond
+ * @async
+ */
+Key.prototype.validate = async function () {
+  if (!this.isPrivate()) {
+    throw new Error("Can't validate a public key");
+  }
+  const signingKeyPacket = this.primaryKey;
+  if (!signingKeyPacket.isDecrypted()) {
+    throw new Error("Key is not decrypted");
+  }
+  const data = new _packet2.default.Literal();
+  data.setBytes(new Uint8Array(), 'binary');
+  const signature = new _packet2.default.Signature();
+  signature.publicKeyAlgorithm = signingKeyPacket.algorithm;
+  signature.hashAlgorithm = _enums2.default.hash.sha256;
+  const signatureType = _enums2.default.signature.binary;
+  signature.signatureType = signatureType;
+  await signature.sign(signingKeyPacket, data);
+  await signature.verify(signingKeyPacket, signatureType, data);
+};
+
+/**
+ * Clear private key parameters
+ */
+Key.prototype.clearPrivateParams = function () {
+  if (!this.isPrivate()) {
+    throw new Error("Can't clear private parameters of a public key");
+  }
+  this.getKeys().forEach(({ keyPacket }) => {
+    if (keyPacket.isDecrypted()) {
+      keyPacket.clearPrivateParams();
+    }
+  });
+};
+
+/**
  * Checks if a signature on a key is revoked
  * @param  {module:packet.SecretKey|
  * @param  {module:packet.Signature}  signature    The signature to verify
@@ -32980,43 +34175,38 @@ Key.prototype.decrypt = async function (passphrases, keyId = null) {
  * @async
  */
 Key.prototype.isRevoked = async function (signature, key, date = new Date()) {
-  return isDataRevoked(this.keyPacket, _enums2.default.signature.key_revocation, { key: this.keyPacket }, this.revocationSignatures, signature, key, date);
+  return helper.isDataRevoked(this.keyPacket, _enums2.default.signature.key_revocation, { key: this.keyPacket }, this.revocationSignatures, signature, key, date);
 };
 
 /**
  * Verify primary key. Checks for revocation signatures, expiration time
- * and valid self signature
+ * and valid self signature. Throws if the primary key is invalid.
  * @param {Date} date (optional) use the given date for verification instead of the current time
  * @param  {Object} userId (optional) user ID
- * @returns {Promise<module:enums.keyStatus>} The status of the primary key
+ * @returns {Promise<true>} The status of the primary key
  * @async
  */
 Key.prototype.verifyPrimaryKey = async function (date = new Date(), userId = {}) {
   const primaryKey = this.keyPacket;
   // check for key revocation signatures
   if (await this.isRevoked(null, null, date)) {
-    return _enums2.default.keyStatus.revoked;
+    throw new Error('Primary key is revoked');
   }
   // check for at least one self signature. Self signature of user ID not mandatory
   // See {@link https://tools.ietf.org/html/rfc4880#section-11.1}
   if (!this.users.some(user => user.userId && user.selfCertifications.length)) {
-    return _enums2.default.keyStatus.no_self_cert;
+    throw new Error('No self-certifications');
   }
   // check for valid, unrevoked, unexpired self signature
 
-  var _ref = (await this.getPrimaryUser(date, userId)) || {};
+  var _ref = await this.getPrimaryUser(date, userId);
 
-  const user = _ref.user,
-        selfCertification = _ref.selfCertification;
-
-  if (!user) {
-    return _enums2.default.keyStatus.invalid;
-  }
+  const selfCertification = _ref.selfCertification;
   // check for expiration time
-  if (isDataExpired(primaryKey, selfCertification, date)) {
-    return _enums2.default.keyStatus.expired;
+
+  if (helper.isDataExpired(primaryKey, selfCertification, date)) {
+    throw new Error('Primary key is expired');
   }
-  return _enums2.default.keyStatus.valid;
 };
 
 /**
@@ -33032,21 +34222,18 @@ Key.prototype.verifyPrimaryKey = async function (date = new Date(), userId = {})
  */
 Key.prototype.getExpirationTime = async function (capabilities, keyId, userId) {
   const primaryUser = await this.getPrimaryUser(null, userId);
-  if (!primaryUser) {
-    throw new Error('Could not find primary user');
-  }
   const selfCert = primaryUser.selfCertification;
-  const keyExpiry = getExpirationTime(this.keyPacket, selfCert);
+  const keyExpiry = helper.getExpirationTime(this.keyPacket, selfCert);
   const sigExpiry = selfCert.getExpirationTime();
   let expiry = keyExpiry < sigExpiry ? keyExpiry : sigExpiry;
   if (capabilities === 'encrypt' || capabilities === 'encrypt_sign') {
-    const encryptKey = (await this.getEncryptionKey(keyId, expiry, userId)) || (await this.getEncryptionKey(keyId, null, userId));
+    const encryptKey = (await this.getEncryptionKey(keyId, expiry, userId).catch(() => {})) || (await this.getEncryptionKey(keyId, null, userId).catch(() => {}));
     if (!encryptKey) return null;
     const encryptExpiry = await encryptKey.getExpirationTime(this.keyPacket);
     if (encryptExpiry < expiry) expiry = encryptExpiry;
   }
   if (capabilities === 'sign' || capabilities === 'encrypt_sign') {
-    const signKey = (await this.getSigningKey(keyId, expiry, userId)) || (await this.getSigningKey(keyId, null, userId));
+    const signKey = (await this.getSigningKey(keyId, expiry, userId).catch(() => {})) || (await this.getSigningKey(keyId, null, userId).catch(() => {}));
     if (!signKey) return null;
     const signExpiry = await signKey.getExpirationTime(this.keyPacket);
     if (signExpiry < expiry) expiry = signExpiry;
@@ -33067,19 +34254,25 @@ Key.prototype.getExpirationTime = async function (capabilities, keyId, userId) {
 Key.prototype.getPrimaryUser = async function (date = new Date(), userId = {}) {
   const primaryKey = this.keyPacket;
   const users = [];
+  let exception;
   for (let i = 0; i < this.users.length; i++) {
-    const user = this.users[i];
-    if (!user.userId || !((userId.name === undefined || user.userId.name === userId.name) && (userId.email === undefined || user.userId.email === userId.email) && (userId.comment === undefined || user.userId.comment === userId.comment))) continue;
-    const dataToVerify = { userId: user.userId, key: primaryKey };
-    const selfCertification = await getLatestValidSignature(user.selfCertifications, primaryKey, _enums2.default.signature.cert_generic, dataToVerify, date);
-    if (!selfCertification) continue;
-    users.push({ index: i, user, selfCertification });
+    try {
+      const user = this.users[i];
+      if (!user.userId) {
+        continue;
+      }
+      if (userId.name !== undefined && user.userId.name !== userId.name || userId.email !== undefined && user.userId.email !== userId.email || userId.comment !== undefined && user.userId.comment !== userId.comment) {
+        throw new Error('Could not find user that matches that user ID');
+      }
+      const dataToVerify = { userId: user.userId, key: primaryKey };
+      const selfCertification = await helper.getLatestValidSignature(user.selfCertifications, primaryKey, _enums2.default.signature.cert_generic, dataToVerify, date);
+      users.push({ index: i, user, selfCertification });
+    } catch (e) {
+      exception = e;
+    }
   }
   if (!users.length) {
-    if (userId.name !== undefined || userId.email !== undefined || userId.comment !== undefined) {
-      throw new Error('Could not find user that matches that user ID');
-    }
-    return null;
+    throw exception || new Error('Could not find primary user');
   }
   await Promise.all(users.map(async function (a) {
     return a.user.revoked || a.user.isRevoked(primaryKey, a.selfCertification, null, date);
@@ -33094,7 +34287,7 @@ Key.prototype.getPrimaryUser = async function (date = new Date(), userId = {}) {
         cert = primaryUser.selfCertification;
 
   if (cert.revoked || (await user.isRevoked(primaryKey, cert, null, date))) {
-    return null;
+    throw new Error('Primary user is revoked');
   }
   return primaryUser;
 };
@@ -33111,9 +34304,6 @@ Key.prototype.getPrimaryUser = async function (date = new Date(), userId = {}) {
  * @async
  */
 Key.prototype.update = async function (key) {
-  if ((await key.verifyPrimaryKey()) === _enums2.default.keyStatus.invalid) {
-    return;
-  }
   if (!this.hasSameFingerprintAs(key)) {
     throw new Error('Key update method: fingerprints of keys not equal');
   }
@@ -33130,11 +34320,11 @@ Key.prototype.update = async function (key) {
     this.keyPacket = key.keyPacket;
   }
   // revocation signatures
-  await mergeSignatures(key, this, 'revocationSignatures', srcRevSig => {
-    return isDataRevoked(this.keyPacket, _enums2.default.signature.key_revocation, this, [srcRevSig], null, key.keyPacket);
+  await helper.mergeSignatures(key, this, 'revocationSignatures', srcRevSig => {
+    return helper.isDataRevoked(this.keyPacket, _enums2.default.signature.key_revocation, this, [srcRevSig], null, key.keyPacket);
   });
   // direct signatures
-  await mergeSignatures(key, this, 'directSignatures');
+  await helper.mergeSignatures(key, this, 'directSignatures');
   // TODO replace when Promise.some or Promise.any are implemented
   // users
   await Promise.all(key.users.map(async srcUser => {
@@ -33166,31 +34356,6 @@ Key.prototype.update = async function (key) {
 };
 
 /**
- * Merges signatures from source[attr] to dest[attr]
- * @private
- * @param  {Object} source
- * @param  {Object} dest
- * @param  {String} attr
- * @param  {Function} checkFn optional, signature only merged if true
- */
-async function mergeSignatures(source, dest, attr, checkFn) {
-  source = source[attr];
-  if (source) {
-    if (!dest[attr].length) {
-      dest[attr] = source;
-    } else {
-      await Promise.all(source.map(async function (sourceSig) {
-        if (!sourceSig.isExpired() && (!checkFn || (await checkFn(sourceSig))) && !dest[attr].some(function (destSig) {
-          return _util2.default.equalsUint8Array(destSig.signature, sourceSig.signature);
-        })) {
-          dest[attr].push(sourceSig);
-        }
-      }));
-    }
-  }
-}
-
-/**
  * Revokes the key
  * @param  {Object} reasonForRevocation optional, object indicating the reason for revocation
  * @param  {module:enums.reasonForRevocation} reasonForRevocation.flag optional, flag indicating the reason for revocation
@@ -33208,7 +34373,7 @@ Key.prototype.revoke = async function ({
   }
   const dataToSign = { key: this.keyPacket };
   const key = new Key(this.toPacketlist());
-  key.revocationSignatures.push((await createSignaturePacket(dataToSign, null, this.keyPacket, {
+  key.revocationSignatures.push((await helper.createSignaturePacket(dataToSign, null, this.keyPacket, {
     signatureType: _enums2.default.signature.key_revocation,
     reasonForRevocationFlag: _enums2.default.write(_enums2.default.reasonForRevocation, reasonForRevocationFlag),
     reasonForRevocationString
@@ -33219,17 +34384,16 @@ Key.prototype.revoke = async function ({
 /**
  * Get revocation certificate from a revoked key.
  *   (To get a revocation certificate for an unrevoked key, call revoke() first.)
+ * @param  {Date} date Use the given date instead of the current time
  * @returns {Promise<String>} armored revocation certificate
  * @async
  */
-Key.prototype.getRevocationCertificate = async function () {
+Key.prototype.getRevocationCertificate = async function (date = new Date()) {
   const dataToVerify = { key: this.keyPacket };
-  const revocationSignature = await getLatestValidSignature(this.revocationSignatures, this.keyPacket, _enums2.default.signature.key_revocation, dataToVerify);
-  if (revocationSignature) {
-    const packetlist = new _packet2.default.List();
-    packetlist.push(revocationSignature);
-    return _armor2.default.encode(_enums2.default.armor.public_key, packetlist.write(), null, null, 'This is a revocation certificate');
-  }
+  const revocationSignature = await helper.getLatestValidSignature(this.revocationSignatures, this.keyPacket, _enums2.default.signature.key_revocation, dataToVerify, date);
+  const packetlist = new _packet2.default.List();
+  packetlist.push(revocationSignature);
+  return _armor2.default.encode(_enums2.default.armor.public_key, packetlist.write(), null, null, 'This is a revocation certificate');
 };
 
 /**
@@ -33254,8 +34418,10 @@ Key.prototype.applyRevocationCertificate = async function (revocationCertificate
   if (revocationSignature.isExpired()) {
     throw new Error('Revocation signature is expired');
   }
-  if (!(await revocationSignature.verify(this.keyPacket, _enums2.default.signature.key_revocation, { key: this.keyPacket }))) {
-    throw new Error('Could not verify revocation signature');
+  try {
+    await revocationSignature.verify(this.keyPacket, _enums2.default.signature.key_revocation, { key: this.keyPacket });
+  } catch (e) {
+    throw _util2.default.wrapError('Could not verify revocation signature', e);
   }
   const key = new Key(this.toPacketlist());
   key.revocationSignatures.push(revocationSignature);
@@ -33271,14 +34437,11 @@ Key.prototype.applyRevocationCertificate = async function (revocationCertificate
  * @async
  */
 Key.prototype.signPrimaryUser = async function (privateKeys, date, userId) {
-  var _ref2 = (await this.getPrimaryUser(date, userId)) || {};
+  var _ref2 = await this.getPrimaryUser(date, userId);
 
   const index = _ref2.index,
         user = _ref2.user;
 
-  if (!user) {
-    throw new Error('Could not find primary user');
-  }
   const userSign = await user.sign(this.keyPacket, privateKeys);
   const key = new Key(this.toPacketlist());
   key.users[index] = userSign;
@@ -33314,14 +34477,11 @@ Key.prototype.signAllUsers = async function (privateKeys) {
 Key.prototype.verifyPrimaryUser = async function (keys, date, userId) {
   const primaryKey = this.keyPacket;
 
-  var _ref3 = (await this.getPrimaryUser(date, userId)) || {};
+  var _ref3 = await this.getPrimaryUser(date, userId);
 
   const user = _ref3.user;
 
-  if (!user) {
-    throw new Error('Could not find primary user');
-  }
-  const results = keys ? await user.verifyAllCertifications(primaryKey, keys) : [{ keyid: primaryKey.keyid, valid: (await user.verify(primaryKey)) === _enums2.default.keyStatus.valid }];
+  const results = keys ? await user.verifyAllCertifications(primaryKey, keys) : [{ keyid: primaryKey.keyid, valid: await user.verify(primaryKey).catch(() => false) }];
   return results;
 };
 
@@ -33339,7 +34499,7 @@ Key.prototype.verifyAllUsers = async function (keys) {
   const results = [];
   const primaryKey = this.keyPacket;
   await Promise.all(this.users.map(async function (user) {
-    const signatures = keys ? await user.verifyAllCertifications(primaryKey, keys) : [{ keyid: primaryKey.keyid, valid: (await user.verify(primaryKey)) === _enums2.default.keyStatus.valid }];
+    const signatures = keys ? await user.verifyAllCertifications(primaryKey, keys) : [{ keyid: primaryKey.keyid, valid: await user.verify(primaryKey).catch(() => false) }];
     signatures.forEach(signature => {
       results.push({
         userid: user.userId.userid,
@@ -33352,9 +34512,283 @@ Key.prototype.verifyAllUsers = async function (keys) {
 };
 
 /**
+ * Generates a new OpenPGP subkey, and returns a clone of the Key object with the new subkey added.
+ * Supports RSA and ECC keys. Defaults to the algorithm and bit size/curve of the primary key.
+ * @param {Integer} options.rsaBits    number of bits for the key creation.
+ * @param {Number} [options.keyExpirationTime=0]
+ *                             The number of seconds after the key creation time that the key expires
+ * @param {String} curve       (optional) Elliptic curve for ECC keys
+ * @param {Date} date          (optional) Override the creation date of the key and the key signatures
+ * @param {Boolean} sign       (optional) Indicates whether the subkey should sign rather than encrypt. Defaults to false
+ * @returns {Promise<module:key.Key>}
+ * @async
+ */
+Key.prototype.addSubkey = async function (options = {}) {
+  if (!this.isPrivate()) {
+    throw new Error("Cannot add a subkey to a public key");
+  }
+  if (options.passphrase) {
+    throw new Error("Subkey could not be encrypted here, please encrypt whole key");
+  }
+  if (_util2.default.getWebCryptoAll() && options.rsaBits < 2048) {
+    throw new Error('When using webCrypto rsaBits should be 2048 or 4096, found: ' + options.rsaBits);
+  }
+  const secretKeyPacket = this.primaryKey;
+  if (!secretKeyPacket.isDecrypted()) {
+    throw new Error("Key is not decrypted");
+  }
+  const defaultOptions = secretKeyPacket.getAlgorithmInfo();
+  options = helper.sanitizeKeyOptions(options, defaultOptions);
+  const keyPacket = await helper.generateSecretSubkey(options);
+  const bindingSignature = await helper.createBindingSignature(keyPacket, secretKeyPacket, options);
+  const packetList = this.toPacketlist();
+  packetList.push(keyPacket);
+  packetList.push(bindingSignature);
+  return new Key(packetList);
+};
+
+['getKeyId', 'getFingerprint', 'getAlgorithmInfo', 'getCreationTime', 'isDecrypted', 'hasSameFingerprintAs'].forEach(name => {
+  Key.prototype[name] = _subkey2.default.prototype[name];
+});
+
+},{"../encoding/armor":111,"../enums":113,"../packet":131,"../util":158,"./helper":117,"./subkey":120,"./user":121}],120:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = SubKey;
+
+var _enums = require('../enums');
+
+var _enums2 = _interopRequireDefault(_enums);
+
+var _helper = require('./helper');
+
+var helper = _interopRequireWildcard(_helper);
+
+var _packet = require('../packet');
+
+var _packet2 = _interopRequireDefault(_packet);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
+ * @class
+ * @classdesc Class that represents a subkey packet and the relevant signatures.
+ * @borrows module:packet.PublicSubkey#getKeyId as SubKey#getKeyId
+ * @borrows module:packet.PublicSubkey#getFingerprint as SubKey#getFingerprint
+ * @borrows module:packet.PublicSubkey#hasSameFingerprintAs as SubKey#hasSameFingerprintAs
+ * @borrows module:packet.PublicSubkey#getAlgorithmInfo as SubKey#getAlgorithmInfo
+ * @borrows module:packet.PublicSubkey#getCreationTime as SubKey#getCreationTime
+ * @borrows module:packet.PublicSubkey#isDecrypted as SubKey#isDecrypted
+ */
+function SubKey(subKeyPacket) {
+  if (!(this instanceof SubKey)) {
+    return new SubKey(subKeyPacket);
+  }
+  this.keyPacket = subKeyPacket;
+  this.bindingSignatures = [];
+  this.revocationSignatures = [];
+}
+
+/**
+ * Transforms structured subkey data to packetlist
+ * @returns {module:packet.List}
+ */
+/**
+ * @requires enums
+ * @requires key/helper
+ * @requires packet
+ * @module key/SubKey
+ */
+
+SubKey.prototype.toPacketlist = function () {
+  const packetlist = new _packet2.default.List();
+  packetlist.push(this.keyPacket);
+  packetlist.concat(this.revocationSignatures);
+  packetlist.concat(this.bindingSignatures);
+  return packetlist;
+};
+
+/**
+ * Checks if a binding signature of a subkey is revoked
+ * @param  {module:packet.SecretKey|
+ *          module:packet.PublicKey} primaryKey    The primary key packet
+ * @param  {module:packet.Signature}  signature     The binding signature to verify
+ * @param  {module:packet.PublicSubkey|
+ *          module:packet.SecretSubkey|
+ *          module:packet.PublicKey|
+ *          module:packet.SecretKey} key, optional The key to verify the signature
+ * @param  {Date}                     date          Use the given date instead of the current time
+ * @returns {Promise<Boolean>}                      True if the binding signature is revoked
+ * @async
+ */
+SubKey.prototype.isRevoked = async function (primaryKey, signature, key, date = new Date()) {
+  return helper.isDataRevoked(primaryKey, _enums2.default.signature.subkey_revocation, {
+    key: primaryKey,
+    bind: this.keyPacket
+  }, this.revocationSignatures, signature, key, date);
+};
+
+/**
+ * Verify subkey. Checks for revocation signatures, expiration time
+ * and valid binding signature. Throws if the subkey is invalid.
+ * @param  {module:packet.SecretKey|
+ *          module:packet.PublicKey} primaryKey The primary key packet
+ * @param  {Date}                     date       Use the given date instead of the current time
+ * @returns {Promise<true>}                      The status of the subkey
+ * @async
+ */
+SubKey.prototype.verify = async function (primaryKey, date = new Date()) {
+  const dataToVerify = { key: primaryKey, bind: this.keyPacket };
+  // check subkey binding signatures
+  const bindingSignature = await helper.getLatestValidSignature(this.bindingSignatures, primaryKey, _enums2.default.signature.subkey_binding, dataToVerify, date);
+  // check binding signature is not revoked
+  if (bindingSignature.revoked || (await this.isRevoked(primaryKey, bindingSignature, null, date))) {
+    throw new Error('Subkey is revoked');
+  }
+  // check for expiration time
+  if (helper.isDataExpired(this.keyPacket, bindingSignature, date)) {
+    throw new Error('Subkey is expired');
+  }
+};
+
+/**
+ * Returns the expiration time of the subkey or Infinity if key does not expire
+ * Returns null if the subkey is invalid.
+ * @param  {module:packet.SecretKey|
+ *          module:packet.PublicKey} primaryKey  The primary key packet
+ * @param  {Date}                     date       Use the given date instead of the current time
+ * @returns {Promise<Date | Infinity | null>}
+ * @async
+ */
+SubKey.prototype.getExpirationTime = async function (primaryKey, date = new Date()) {
+  const dataToVerify = { key: primaryKey, bind: this.keyPacket };
+  let bindingSignature;
+  try {
+    bindingSignature = await helper.getLatestValidSignature(this.bindingSignatures, primaryKey, _enums2.default.signature.subkey_binding, dataToVerify, date);
+  } catch (e) {
+    return null;
+  }
+  const keyExpiry = helper.getExpirationTime(this.keyPacket, bindingSignature);
+  const sigExpiry = bindingSignature.getExpirationTime();
+  return keyExpiry < sigExpiry ? keyExpiry : sigExpiry;
+};
+
+/**
+ * Update subkey with new components from specified subkey
+ * @param  {module:key~SubKey}           subKey     Source subkey to merge
+ * @param  {module:packet.SecretKey|
+            module:packet.SecretSubkey} primaryKey primary key used for validation
+ * @returns {Promise<undefined>}
+ * @async
+ */
+SubKey.prototype.update = async function (subKey, primaryKey) {
+  if (!this.hasSameFingerprintAs(subKey)) {
+    throw new Error('SubKey update method: fingerprints of subkeys not equal');
+  }
+  // key packet
+  if (this.keyPacket.tag === _enums2.default.packet.publicSubkey && subKey.keyPacket.tag === _enums2.default.packet.secretSubkey) {
+    this.keyPacket = subKey.keyPacket;
+  }
+  // update missing binding signatures
+  const that = this;
+  const dataToVerify = { key: primaryKey, bind: that.keyPacket };
+  await helper.mergeSignatures(subKey, this, 'bindingSignatures', async function (srcBindSig) {
+    for (let i = 0; i < that.bindingSignatures.length; i++) {
+      if (that.bindingSignatures[i].issuerKeyId.equals(srcBindSig.issuerKeyId)) {
+        if (srcBindSig.created > that.bindingSignatures[i].created) {
+          that.bindingSignatures[i] = srcBindSig;
+        }
+        return false;
+      }
+    }
+    try {
+      return srcBindSig.verified || (await srcBindSig.verify(primaryKey, _enums2.default.signature.subkey_binding, dataToVerify));
+    } catch (e) {
+      return false;
+    }
+  });
+  // revocation signatures
+  await helper.mergeSignatures(subKey, this, 'revocationSignatures', function (srcRevSig) {
+    return helper.isDataRevoked(primaryKey, _enums2.default.signature.subkey_revocation, dataToVerify, [srcRevSig]);
+  });
+};
+
+/**
+ * Revokes the subkey
+ * @param  {module:packet.SecretKey} primaryKey decrypted private primary key for revocation
+ * @param  {Object} reasonForRevocation optional, object indicating the reason for revocation
+ * @param  {module:enums.reasonForRevocation} reasonForRevocation.flag optional, flag indicating the reason for revocation
+ * @param  {String} reasonForRevocation.string optional, string explaining the reason for revocation
+ * @param  {Date} date optional, override the creationtime of the revocation signature
+ * @returns {Promise<module:key~SubKey>} new subkey with revocation signature
+ * @async
+ */
+SubKey.prototype.revoke = async function (primaryKey, {
+  flag: reasonForRevocationFlag = _enums2.default.reasonForRevocation.no_reason,
+  string: reasonForRevocationString = ''
+} = {}, date = new Date()) {
+  const dataToSign = { key: primaryKey, bind: this.keyPacket };
+  const subKey = new SubKey(this.keyPacket);
+  subKey.revocationSignatures.push((await helper.createSignaturePacket(dataToSign, null, primaryKey, {
+    signatureType: _enums2.default.signature.subkey_revocation,
+    reasonForRevocationFlag: _enums2.default.write(_enums2.default.reasonForRevocation, reasonForRevocationFlag),
+    reasonForRevocationString
+  }, date)));
+  await subKey.update(this, primaryKey);
+  return subKey;
+};
+
+['getKeyId', 'getFingerprint', 'getAlgorithmInfo', 'getCreationTime', 'isDecrypted'].forEach(name => {
+  SubKey.prototype[name] = function () {
+    return this.keyPacket[name]();
+  };
+});
+
+SubKey.prototype.hasSameFingerprintAs = function (other) {
+  return this.keyPacket.hasSameFingerprintAs(other.keyPacket || other);
+};
+
+},{"../enums":113,"../packet":131,"./helper":117}],121:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = User;
+
+var _enums = require('../enums');
+
+var _enums2 = _interopRequireDefault(_enums);
+
+var _util = require('../util');
+
+var _util2 = _interopRequireDefault(_util);
+
+var _packet = require('../packet');
+
+var _packet2 = _interopRequireDefault(_packet);
+
+var _helper = require('./helper');
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
  * @class
  * @classdesc Class that represents an user ID or attribute packet and the relevant signatures.
  */
+/**
+ * @requires enums
+ * @requires util
+ * @requires packet
+ * @requires key/helper
+ * @module key/User
+ */
+
 function User(userPacket) {
   if (!(this instanceof User)) {
     return new User(userPacket);
@@ -33402,10 +34836,7 @@ User.prototype.sign = async function (primaryKey, privateKeys) {
       throw new Error('Not implemented for self signing');
     }
     const signingKey = await privateKey.getSigningKey();
-    if (!signingKey) {
-      throw new Error('Could not find valid signing key packet in key ' + privateKey.getKeyId().toHex());
-    }
-    return createSignaturePacket(dataToSign, privateKey, signingKey.keyPacket, {
+    return (0, _helper.createSignaturePacket)(dataToSign, privateKey, signingKey.keyPacket, {
       // Most OpenPGP implementations use generic certification (0x10)
       signatureType: _enums2.default.signature.cert_generic,
       keyFlags: [_enums2.default.keyFlags.certify_keys | _enums2.default.keyFlags.sign_data]
@@ -33429,7 +34860,7 @@ User.prototype.sign = async function (primaryKey, privateKeys) {
  * @async
  */
 User.prototype.isRevoked = async function (primaryKey, certificate, key, date = new Date()) {
-  return isDataRevoked(primaryKey, _enums2.default.signature.cert_revocation, {
+  return (0, _helper.isDataRevoked)(primaryKey, _enums2.default.signature.cert_revocation, {
     key: primaryKey,
     userId: this.userId,
     userAttribute: this.userAttribute
@@ -33437,36 +34868,13 @@ User.prototype.isRevoked = async function (primaryKey, certificate, key, date = 
 };
 
 /**
- * Create signature packet
- * @param  {Object}                          dataToSign Contains packets to be signed
- * @param  {module:packet.SecretKey|
- *          module:packet.SecretSubkey}      signingKeyPacket secret key packet for signing
- * @param  {Object} signatureProperties      (optional) properties to write on the signature packet before signing
- * @param  {Date} date                       (optional) override the creationtime of the signature
- * @param  {Object} userId                   (optional) user ID
- * @param  {Object} detached                 (optional) whether to create a detached signature packet
- * @returns {module:packet/signature}         signature packet
- */
-async function createSignaturePacket(dataToSign, privateKey, signingKeyPacket, signatureProperties, date, userId, detached = false) {
-  if (!signingKeyPacket.isDecrypted()) {
-    throw new Error('Private key is not decrypted.');
-  }
-  const signaturePacket = new _packet2.default.Signature(date);
-  Object.assign(signaturePacket, signatureProperties);
-  signaturePacket.publicKeyAlgorithm = signingKeyPacket.algorithm;
-  signaturePacket.hashAlgorithm = await getPreferredHashAlgo(privateKey, signingKeyPacket, date, userId);
-  await signaturePacket.sign(signingKeyPacket, dataToSign, detached);
-  return signaturePacket;
-}
-
-/**
- * Verifies the user certificate
+ * Verifies the user certificate. Throws if the user certificate is invalid.
  * @param  {module:packet.SecretKey|
  *          module:packet.PublicKey} primaryKey  The primary key packet
  * @param  {module:packet.Signature}  certificate A certificate of this user
  * @param  {Array<module:key.Key>}    keys        Array of keys to verify certificate signatures
  * @param  {Date}                     date        Use the given date instead of the current time
- * @returns {Promise<module:enums.keyStatus>}     status of the certificate
+ * @returns {Promise<true>}                       status of the certificate
  * @async
  */
 User.prototype.verifyCertificate = async function (primaryKey, certificate, keys, date = new Date()) {
@@ -33479,21 +34887,23 @@ User.prototype.verifyCertificate = async function (primaryKey, certificate, keys
   };
   const results = await Promise.all(keys.map(async function (key) {
     if (!key.getKeyIds().some(id => id.equals(keyid))) {
-      return;
+      return null;
     }
     const signingKey = await key.getSigningKey(keyid, date);
     if (certificate.revoked || (await that.isRevoked(primaryKey, certificate, signingKey.keyPacket, date))) {
-      return _enums2.default.keyStatus.revoked;
+      throw new Error('User certificate is revoked');
     }
-    if (!(certificate.verified || (await certificate.verify(signingKey.keyPacket, _enums2.default.signature.cert_generic, dataToVerify)))) {
-      return _enums2.default.keyStatus.invalid;
+    try {
+      certificate.verified || (await certificate.verify(signingKey.keyPacket, _enums2.default.signature.cert_generic, dataToVerify));
+    } catch (e) {
+      throw _util2.default.wrapError('User certificate is invalid', e);
     }
     if (certificate.isExpired(date)) {
-      return _enums2.default.keyStatus.expired;
+      throw new Error('User certificate is expired');
     }
-    return _enums2.default.keyStatus.valid;
+    return true;
   }));
-  return results.find(result => result !== undefined);
+  return results.find(result => result !== null) || null;
 };
 
 /**
@@ -33510,26 +34920,25 @@ User.prototype.verifyAllCertifications = async function (primaryKey, keys, date 
   const that = this;
   const certifications = this.selfCertifications.concat(this.otherCertifications);
   return Promise.all(certifications.map(async function (certification) {
-    const status = await that.verifyCertificate(primaryKey, certification, keys, date);
     return {
       keyid: certification.issuerKeyId,
-      valid: status === undefined ? null : status === _enums2.default.keyStatus.valid
+      valid: await that.verifyCertificate(primaryKey, certification, keys, date).catch(() => false)
     };
   }));
 };
 
 /**
  * Verify User. Checks for existence of self signatures, revocation signatures
- * and validity of self signature
+ * and validity of self signature. Throws when there are no valid self signatures.
  * @param  {module:packet.SecretKey|
  *          module:packet.PublicKey} primaryKey The primary key packet
  * @param  {Date}                    date       Use the given date instead of the current time
- * @returns {Promise<module:enums.keyStatus>}    Status of user
+ * @returns {Promise<true>}                     Status of user
  * @async
  */
 User.prototype.verify = async function (primaryKey, date = new Date()) {
   if (!this.selfCertifications.length) {
-    return _enums2.default.keyStatus.no_self_cert;
+    throw new Error('No self-certifications');
   }
   const that = this;
   const dataToVerify = {
@@ -33538,19 +34947,27 @@ User.prototype.verify = async function (primaryKey, date = new Date()) {
     key: primaryKey
   };
   // TODO replace when Promise.some or Promise.any are implemented
-  const results = [_enums2.default.keyStatus.invalid].concat((await Promise.all(this.selfCertifications.map(async function (selfCertification) {
-    if (selfCertification.revoked || (await that.isRevoked(primaryKey, selfCertification, undefined, date))) {
-      return _enums2.default.keyStatus.revoked;
+  let exception;
+  for (let i = this.selfCertifications.length - 1; i >= 0; i--) {
+    try {
+      const selfCertification = this.selfCertifications[i];
+      if (selfCertification.revoked || (await that.isRevoked(primaryKey, selfCertification, undefined, date))) {
+        throw new Error('Self-certification is revoked');
+      }
+      try {
+        selfCertification.verified || (await selfCertification.verify(primaryKey, _enums2.default.signature.cert_generic, dataToVerify));
+      } catch (e) {
+        throw _util2.default.wrapError('Self-certification is invalid', e);
+      }
+      if (selfCertification.isExpired(date)) {
+        throw new Error('Self-certification is expired');
+      }
+      return true;
+    } catch (e) {
+      exception = e;
     }
-    if (!(selfCertification.verified || (await selfCertification.verify(primaryKey, _enums2.default.signature.cert_generic, dataToVerify)))) {
-      return _enums2.default.keyStatus.invalid;
-    }
-    if (selfCertification.isExpired(date)) {
-      return _enums2.default.keyStatus.expired;
-    }
-    return _enums2.default.keyStatus.valid;
-  }))));
-  return results.some(status => status === _enums2.default.keyStatus.valid) ? _enums2.default.keyStatus.valid : results.pop();
+  }
+  throw exception;
 };
 
 /**
@@ -33568,715 +34985,22 @@ User.prototype.update = async function (user, primaryKey) {
     key: primaryKey
   };
   // self signatures
-  await mergeSignatures(user, this, 'selfCertifications', async function (srcSelfSig) {
-    return srcSelfSig.verified || srcSelfSig.verify(primaryKey, _enums2.default.signature.cert_generic, dataToVerify);
-  });
-  // other signatures
-  await mergeSignatures(user, this, 'otherCertifications');
-  // revocation signatures
-  await mergeSignatures(user, this, 'revocationSignatures', function (srcRevSig) {
-    return isDataRevoked(primaryKey, _enums2.default.signature.cert_revocation, dataToVerify, [srcRevSig]);
-  });
-};
-
-/**
- * @class
- * @classdesc Class that represents a subkey packet and the relevant signatures.
- * @borrows module:packet.PublicSubkey#getKeyId as SubKey#getKeyId
- * @borrows module:packet.PublicSubkey#getFingerprint as SubKey#getFingerprint
- * @borrows module:packet.PublicSubkey#hasSameFingerprintAs as SubKey#hasSameFingerprintAs
- * @borrows module:packet.PublicSubkey#getAlgorithmInfo as SubKey#getAlgorithmInfo
- * @borrows module:packet.PublicSubkey#getCreationTime as SubKey#getCreationTime
- * @borrows module:packet.PublicSubkey#isDecrypted as SubKey#isDecrypted
- */
-function SubKey(subKeyPacket) {
-  if (!(this instanceof SubKey)) {
-    return new SubKey(subKeyPacket);
-  }
-  this.keyPacket = subKeyPacket;
-  this.bindingSignatures = [];
-  this.revocationSignatures = [];
-}
-
-/**
- * Transforms structured subkey data to packetlist
- * @returns {module:packet.List}
- */
-SubKey.prototype.toPacketlist = function () {
-  const packetlist = new _packet2.default.List();
-  packetlist.push(this.keyPacket);
-  packetlist.concat(this.revocationSignatures);
-  packetlist.concat(this.bindingSignatures);
-  return packetlist;
-};
-
-/**
- * Checks if a binding signature of a subkey is revoked
- * @param  {module:packet.SecretKey|
- *          module:packet.PublicKey} primaryKey    The primary key packet
- * @param  {module:packet.Signature}  signature     The binding signature to verify
- * @param  {module:packet.PublicSubkey|
- *          module:packet.SecretSubkey|
- *          module:packet.PublicKey|
- *          module:packet.SecretKey} key, optional The key to verify the signature
- * @param  {Date}                     date          Use the given date instead of the current time
- * @returns {Promise<Boolean>}                      True if the binding signature is revoked
- * @async
- */
-SubKey.prototype.isRevoked = async function (primaryKey, signature, key, date = new Date()) {
-  return isDataRevoked(primaryKey, _enums2.default.signature.subkey_revocation, {
-    key: primaryKey,
-    bind: this.keyPacket
-  }, this.revocationSignatures, signature, key, date);
-};
-
-/**
- * Verify subkey. Checks for revocation signatures, expiration time
- * and valid binding signature
- * @param  {module:packet.SecretKey|
- *          module:packet.PublicKey} primaryKey The primary key packet
- * @param  {Date}                     date       Use the given date instead of the current time
- * @returns {Promise<module:enums.keyStatus>}    The status of the subkey
- * @async
- */
-SubKey.prototype.verify = async function (primaryKey, date = new Date()) {
-  const that = this;
-  const dataToVerify = { key: primaryKey, bind: this.keyPacket };
-  // check subkey binding signatures
-  const bindingSignature = await getLatestValidSignature(this.bindingSignatures, primaryKey, _enums2.default.signature.subkey_binding, dataToVerify, date);
-  // check binding signature is verified
-  if (!bindingSignature) {
-    return _enums2.default.keyStatus.invalid;
-  }
-  // check binding signature is not revoked
-  if (bindingSignature.revoked || (await that.isRevoked(primaryKey, bindingSignature, null, date))) {
-    return _enums2.default.keyStatus.revoked;
-  }
-  // check for expiration time
-  if (isDataExpired(this.keyPacket, bindingSignature, date)) {
-    return _enums2.default.keyStatus.expired;
-  }
-  return _enums2.default.keyStatus.valid; // binding signature passed all checks
-};
-
-/**
- * Returns the expiration time of the subkey or Infinity if key does not expire
- * Returns null if the subkey is invalid.
- * @param  {module:packet.SecretKey|
- *          module:packet.PublicKey} primaryKey  The primary key packet
- * @param  {Date}                     date       Use the given date instead of the current time
- * @returns {Promise<Date | Infinity | null>}
- * @async
- */
-SubKey.prototype.getExpirationTime = async function (primaryKey, date = new Date()) {
-  const dataToVerify = { key: primaryKey, bind: this.keyPacket };
-  const bindingSignature = await getLatestValidSignature(this.bindingSignatures, primaryKey, _enums2.default.signature.subkey_binding, dataToVerify, date);
-  if (!bindingSignature) return null;
-  const keyExpiry = getExpirationTime(this.keyPacket, bindingSignature);
-  const sigExpiry = bindingSignature.getExpirationTime();
-  return keyExpiry < sigExpiry ? keyExpiry : sigExpiry;
-};
-
-/**
- * Update subkey with new components from specified subkey
- * @param  {module:key~SubKey}           subKey     Source subkey to merge
- * @param  {module:packet.SecretKey|
-            module:packet.SecretSubkey} primaryKey primary key used for validation
- * @returns {Promise<undefined>}
- * @async
- */
-SubKey.prototype.update = async function (subKey, primaryKey) {
-  if ((await subKey.verify(primaryKey)) === _enums2.default.keyStatus.invalid) {
-    return;
-  }
-  if (!this.hasSameFingerprintAs(subKey)) {
-    throw new Error('SubKey update method: fingerprints of subkeys not equal');
-  }
-  // key packet
-  if (this.keyPacket.tag === _enums2.default.packet.publicSubkey && subKey.keyPacket.tag === _enums2.default.packet.secretSubkey) {
-    this.keyPacket = subKey.keyPacket;
-  }
-  // update missing binding signatures
-  const that = this;
-  const dataToVerify = { key: primaryKey, bind: that.keyPacket };
-  await mergeSignatures(subKey, this, 'bindingSignatures', async function (srcBindSig) {
-    if (!(srcBindSig.verified || (await srcBindSig.verify(primaryKey, _enums2.default.signature.subkey_binding, dataToVerify)))) {
+  await (0, _helper.mergeSignatures)(user, this, 'selfCertifications', async function (srcSelfSig) {
+    try {
+      return srcSelfSig.verified || srcSelfSig.verify(primaryKey, _enums2.default.signature.cert_generic, dataToVerify);
+    } catch (e) {
       return false;
     }
-    for (let i = 0; i < that.bindingSignatures.length; i++) {
-      if (that.bindingSignatures[i].issuerKeyId.equals(srcBindSig.issuerKeyId)) {
-        if (srcBindSig.created > that.bindingSignatures[i].created) {
-          that.bindingSignatures[i] = srcBindSig;
-        }
-        return false;
-      }
-    }
-    return true;
   });
+  // other signatures
+  await (0, _helper.mergeSignatures)(user, this, 'otherCertifications');
   // revocation signatures
-  await mergeSignatures(subKey, this, 'revocationSignatures', function (srcRevSig) {
-    return isDataRevoked(primaryKey, _enums2.default.signature.subkey_revocation, dataToVerify, [srcRevSig]);
+  await (0, _helper.mergeSignatures)(user, this, 'revocationSignatures', function (srcRevSig) {
+    return (0, _helper.isDataRevoked)(primaryKey, _enums2.default.signature.cert_revocation, dataToVerify, [srcRevSig]);
   });
 };
 
-/**
- * Revokes the subkey
- * @param  {module:packet.SecretKey} primaryKey decrypted private primary key for revocation
- * @param  {Object} reasonForRevocation optional, object indicating the reason for revocation
- * @param  {module:enums.reasonForRevocation} reasonForRevocation.flag optional, flag indicating the reason for revocation
- * @param  {String} reasonForRevocation.string optional, string explaining the reason for revocation
- * @param  {Date} date optional, override the creationtime of the revocation signature
- * @returns {Promise<module:key~SubKey>} new subkey with revocation signature
- * @async
- */
-SubKey.prototype.revoke = async function (primaryKey, {
-  flag: reasonForRevocationFlag = _enums2.default.reasonForRevocation.no_reason,
-  string: reasonForRevocationString = ''
-} = {}, date = new Date()) {
-  const dataToSign = { key: primaryKey, bind: this.keyPacket };
-  const subKey = new SubKey(this.keyPacket);
-  subKey.revocationSignatures.push((await createSignaturePacket(dataToSign, null, primaryKey, {
-    signatureType: _enums2.default.signature.subkey_revocation,
-    reasonForRevocationFlag: _enums2.default.write(_enums2.default.reasonForRevocation, reasonForRevocationFlag),
-    reasonForRevocationString
-  }, date)));
-  await subKey.update(this, primaryKey);
-  return subKey;
-};
-
-['getKeyId', 'getFingerprint', 'getAlgorithmInfo', 'getCreationTime', 'isDecrypted'].forEach(name => {
-  Key.prototype[name] = SubKey.prototype[name] = function () {
-    return this.keyPacket[name]();
-  };
-});
-
-Key.prototype.hasSameFingerprintAs = SubKey.prototype.hasSameFingerprintAs = function (other) {
-  return this.keyPacket.hasSameFingerprintAs(other.keyPacket || other);
-};
-
-/**
- * Reads an unarmored OpenPGP key list and returns one or multiple key objects
- * @param {Uint8Array} data to be parsed
- * @returns {Promise<{keys: Array<module:key.Key>,
- *            err: (Array<Error>|null)}>} result object with key and error arrays
- * @async
- * @static
- */
-async function read(data) {
-  const result = {};
-  result.keys = [];
-  const err = [];
-  try {
-    const packetlist = new _packet2.default.List();
-    await packetlist.read(data);
-    const keyIndex = packetlist.indexOfTag(_enums2.default.packet.publicKey, _enums2.default.packet.secretKey);
-    if (keyIndex.length === 0) {
-      throw new Error('No key packet found');
-    }
-    for (let i = 0; i < keyIndex.length; i++) {
-      const oneKeyList = packetlist.slice(keyIndex[i], keyIndex[i + 1]);
-      try {
-        const newKey = new Key(oneKeyList);
-        result.keys.push(newKey);
-      } catch (e) {
-        err.push(e);
-      }
-    }
-  } catch (e) {
-    err.push(e);
-  }
-  if (err.length) {
-    result.err = err;
-  }
-  return result;
-}
-
-/**
- * Reads an OpenPGP armored text and returns one or multiple key objects
- * @param {String | ReadableStream<String>} armoredText text to be parsed
- * @returns {Promise<{keys: Array<module:key.Key>,
- *            err: (Array<Error>|null)}>} result object with key and error arrays
- * @async
- * @static
- */
-async function readArmored(armoredText) {
-  try {
-    const input = await _armor2.default.decode(armoredText);
-    if (!(input.type === _enums2.default.armor.public_key || input.type === _enums2.default.armor.private_key)) {
-      throw new Error('Armored text not of type key');
-    }
-    return read(input.data);
-  } catch (e) {
-    const result = { keys: [], err: [] };
-    result.err.push(e);
-    return result;
-  }
-}
-
-/**
- * Generates a new OpenPGP key. Supports RSA and ECC keys.
- * Primary and subkey will be of same type.
- * @param {module:enums.publicKey} [options.keyType=module:enums.publicKey.rsa_encrypt_sign]
- *                             To indicate what type of key to make.
- *                             RSA is 1. See {@link https://tools.ietf.org/html/rfc4880#section-9.1}
- * @param {Integer} options.numBits    number of bits for the key creation.
- * @param {String|Array<String>}  options.userIds
- *                             Assumes already in form of "User Name <username@email.com>"
- *                             If array is used, the first userId is set as primary user Id
- * @param {String}  options.passphrase The passphrase used to encrypt the resulting private key
- * @param {Number} [options.keyExpirationTime=0]
- *                             The number of seconds after the key creation time that the key expires
- * @param  {String} curve            (optional) elliptic curve for ECC keys
- * @param  {Date} date         Override the creation date of the key and the key signatures
- * @param  {Array<Object>} subkeys   (optional) options for each subkey, default to main key options. e.g. [{sign: true, passphrase: '123'}]
- *                                              sign parameter defaults to false, and indicates whether the subkey should sign rather than encrypt
- * @returns {Promise<module:key.Key>}
- * @async
- * @static
- */
-async function generate(options) {
-  options.sign = true; // primary key is always a signing key
-  options = sanitizeKeyOptions(options);
-  options.subkeys = options.subkeys.map(function (subkey, index) {
-    return sanitizeKeyOptions(options.subkeys[index], options);
-  });
-
-  let promises = [generateSecretKey(options)];
-  promises = promises.concat(options.subkeys.map(generateSecretSubkey));
-  return Promise.all(promises).then(packets => wrapKeyObject(packets[0], packets.slice(1), options));
-
-  function sanitizeKeyOptions(options, subkeyDefaults = {}) {
-    options.curve = options.curve || subkeyDefaults.curve;
-    options.numBits = options.numBits || subkeyDefaults.numBits;
-    options.keyExpirationTime = options.keyExpirationTime !== undefined ? options.keyExpirationTime : subkeyDefaults.keyExpirationTime;
-    options.passphrase = _util2.default.isString(options.passphrase) ? options.passphrase : subkeyDefaults.passphrase;
-    options.date = options.date || subkeyDefaults.date;
-
-    options.sign = options.sign || false;
-
-    if (options.curve) {
-      try {
-        options.curve = _enums2.default.write(_enums2.default.curve, options.curve);
-      } catch (e) {
-        throw new Error('Not valid curve.');
-      }
-      if (options.curve === _enums2.default.curve.ed25519 || options.curve === _enums2.default.curve.curve25519) {
-        if (options.sign) {
-          options.algorithm = _enums2.default.publicKey.eddsa;
-          options.curve = _enums2.default.curve.ed25519;
-        } else {
-          options.algorithm = _enums2.default.publicKey.ecdh;
-          options.curve = _enums2.default.curve.curve25519;
-        }
-      } else {
-        if (options.sign) {
-          options.algorithm = _enums2.default.publicKey.ecdsa;
-        } else {
-          options.algorithm = _enums2.default.publicKey.ecdh;
-        }
-      }
-    } else if (options.numBits) {
-      options.algorithm = _enums2.default.publicKey.rsa_encrypt_sign;
-    } else {
-      throw new Error('Unrecognized key type');
-    }
-    return options;
-  }
-
-  async function generateSecretKey(options) {
-    const secretKeyPacket = new _packet2.default.SecretKey(options.date);
-    secretKeyPacket.packets = null;
-    secretKeyPacket.algorithm = _enums2.default.read(_enums2.default.publicKey, options.algorithm);
-    await secretKeyPacket.generate(options.numBits, options.curve);
-    return secretKeyPacket;
-  }
-
-  async function generateSecretSubkey(options) {
-    const secretSubkeyPacket = new _packet2.default.SecretSubkey(options.date);
-    secretSubkeyPacket.packets = null;
-    secretSubkeyPacket.algorithm = _enums2.default.read(_enums2.default.publicKey, options.algorithm);
-    await secretSubkeyPacket.generate(options.numBits, options.curve);
-    return secretSubkeyPacket;
-  }
-}
-
-/**
- * Reformats and signs an OpenPGP key with a given User ID. Currently only supports RSA keys.
- * @param {module:key.Key} options.privateKey   The private key to reformat
- * @param {module:enums.publicKey} [options.keyType=module:enums.publicKey.rsa_encrypt_sign]
- * @param {String|Array<String>}  options.userIds
- *                             Assumes already in form of "User Name <username@email.com>"
- *                             If array is used, the first userId is set as primary user Id
- * @param {String}  options.passphrase The passphrase used to encrypt the resulting private key
- * @param {Number} [options.keyExpirationTime=0]
- *                             The number of seconds after the key creation time that the key expires
- * @param  {Date} date         Override the creation date of the key and the key signatures
- * @param  {Array<Object>} subkeys   (optional) options for each subkey, default to main key options. e.g. [{sign: true, passphrase: '123'}]
- *
- * @returns {Promise<module:key.Key>}
- * @async
- * @static
- */
-async function reformat(options) {
-  options = sanitizeKeyOptions(options);
-
-  try {
-    const isDecrypted = options.privateKey.getKeys().every(key => key.isDecrypted());
-    if (!isDecrypted) {
-      await options.privateKey.decrypt();
-    }
-  } catch (err) {
-    throw new Error('Key not decrypted');
-  }
-
-  const packetlist = options.privateKey.toPacketlist();
-  let secretKeyPacket;
-  const secretSubkeyPackets = [];
-  for (let i = 0; i < packetlist.length; i++) {
-    if (packetlist[i].tag === _enums2.default.packet.secretKey) {
-      secretKeyPacket = packetlist[i];
-    } else if (packetlist[i].tag === _enums2.default.packet.secretSubkey) {
-      secretSubkeyPackets.push(packetlist[i]);
-    }
-  }
-  if (!secretKeyPacket) {
-    throw new Error('Key does not contain a secret key packet');
-  }
-
-  if (!options.subkeys) {
-    options.subkeys = await Promise.all(secretSubkeyPackets.map(async secretSubkeyPacket => ({
-      sign: (await options.privateKey.getSigningKey(secretSubkeyPacket.getKeyId(), null)) && !(await options.privateKey.getEncryptionKey(secretSubkeyPacket.getKeyId(), null))
-    })));
-  }
-
-  if (options.subkeys.length !== secretSubkeyPackets.length) {
-    throw new Error('Number of subkey options does not match number of subkeys');
-  }
-
-  options.subkeys = options.subkeys.map(function (subkey, index) {
-    return sanitizeKeyOptions(options.subkeys[index], options);
-  });
-
-  return wrapKeyObject(secretKeyPacket, secretSubkeyPackets, options);
-
-  function sanitizeKeyOptions(options, subkeyDefaults = {}) {
-    options.keyExpirationTime = options.keyExpirationTime || subkeyDefaults.keyExpirationTime;
-    options.passphrase = _util2.default.isString(options.passphrase) ? options.passphrase : subkeyDefaults.passphrase;
-    options.date = options.date || subkeyDefaults.date;
-
-    return options;
-  }
-}
-
-async function wrapKeyObject(secretKeyPacket, secretSubkeyPackets, options) {
-  // set passphrase protection
-  if (options.passphrase) {
-    await secretKeyPacket.encrypt(options.passphrase);
-  }
-
-  await Promise.all(secretSubkeyPackets.map(async function (secretSubkeyPacket, index) {
-    const subkeyPassphrase = options.subkeys[index].passphrase;
-    if (subkeyPassphrase) {
-      await secretSubkeyPacket.encrypt(subkeyPassphrase);
-    }
-  }));
-
-  const packetlist = new _packet2.default.List();
-
-  packetlist.push(secretKeyPacket);
-
-  await Promise.all(options.userIds.map(async function (userId, index) {
-    function createdPreferredAlgos(algos, configAlgo) {
-      if (configAlgo) {
-        // Not `uncompressed` / `plaintext`
-        const configIndex = algos.indexOf(configAlgo);
-        if (configIndex >= 1) {
-          // If it is included and not in first place,
-          algos.splice(configIndex, 1); // remove it.
-        }
-        if (configIndex !== 0) {
-          // If it was included and not in first place, or wasn't included,
-          algos.unshift(configAlgo); // add it to the front.
-        }
-      }
-      return algos;
-    }
-
-    const userIdPacket = new _packet2.default.Userid();
-    userIdPacket.format(userId);
-
-    const dataToSign = {};
-    dataToSign.userId = userIdPacket;
-    dataToSign.key = secretKeyPacket;
-    const signaturePacket = new _packet2.default.Signature(options.date);
-    signaturePacket.signatureType = _enums2.default.signature.cert_generic;
-    signaturePacket.publicKeyAlgorithm = secretKeyPacket.algorithm;
-    signaturePacket.hashAlgorithm = await getPreferredHashAlgo(null, secretKeyPacket);
-    signaturePacket.keyFlags = [_enums2.default.keyFlags.certify_keys | _enums2.default.keyFlags.sign_data];
-    signaturePacket.preferredSymmetricAlgorithms = createdPreferredAlgos([
-    // prefer aes256, aes128, then aes192 (no WebCrypto support: https://www.chromium.org/blink/webcrypto#TOC-AES-support)
-    _enums2.default.symmetric.aes256, _enums2.default.symmetric.aes128, _enums2.default.symmetric.aes192, _enums2.default.symmetric.cast5, _enums2.default.symmetric.tripledes], _config2.default.encryption_cipher);
-    if (_config2.default.aead_protect) {
-      signaturePacket.preferredAeadAlgorithms = createdPreferredAlgos([_enums2.default.aead.eax, _enums2.default.aead.ocb], _config2.default.aead_mode);
-    }
-    signaturePacket.preferredHashAlgorithms = createdPreferredAlgos([
-    // prefer fast asm.js implementations (SHA-256). SHA-1 will not be secure much longer...move to bottom of list
-    _enums2.default.hash.sha256, _enums2.default.hash.sha512, _enums2.default.hash.sha1], _config2.default.prefer_hash_algorithm);
-    signaturePacket.preferredCompressionAlgorithms = createdPreferredAlgos([_enums2.default.compression.zlib, _enums2.default.compression.zip], _config2.default.compression);
-    if (index === 0) {
-      signaturePacket.isPrimaryUserID = true;
-    }
-    if (_config2.default.integrity_protect) {
-      signaturePacket.features = [0];
-      signaturePacket.features[0] |= _enums2.default.features.modification_detection;
-    }
-    if (_config2.default.aead_protect) {
-      signaturePacket.features || (signaturePacket.features = [0]);
-      signaturePacket.features[0] |= _enums2.default.features.aead;
-    }
-    if (_config2.default.v5_keys) {
-      signaturePacket.features || (signaturePacket.features = [0]);
-      signaturePacket.features[0] |= _enums2.default.features.v5_keys;
-    }
-    if (options.keyExpirationTime > 0) {
-      signaturePacket.keyExpirationTime = options.keyExpirationTime;
-      signaturePacket.keyNeverExpires = false;
-    }
-    await signaturePacket.sign(secretKeyPacket, dataToSign);
-
-    return { userIdPacket, signaturePacket };
-  })).then(list => {
-    list.forEach(({ userIdPacket, signaturePacket }) => {
-      packetlist.push(userIdPacket);
-      packetlist.push(signaturePacket);
-    });
-  });
-
-  await Promise.all(secretSubkeyPackets.map(async function (secretSubkeyPacket, index) {
-    const subkeyOptions = options.subkeys[index];
-    const dataToSign = {};
-    dataToSign.key = secretKeyPacket;
-    dataToSign.bind = secretSubkeyPacket;
-    const subkeySignaturePacket = new _packet2.default.Signature(subkeyOptions.date);
-    subkeySignaturePacket.signatureType = _enums2.default.signature.subkey_binding;
-    subkeySignaturePacket.publicKeyAlgorithm = secretKeyPacket.algorithm;
-    subkeySignaturePacket.hashAlgorithm = await getPreferredHashAlgo(null, secretSubkeyPacket);
-    if (subkeyOptions.sign) {
-      subkeySignaturePacket.keyFlags = [_enums2.default.keyFlags.sign_data];
-      subkeySignaturePacket.embeddedSignature = await createSignaturePacket(dataToSign, null, secretSubkeyPacket, {
-        signatureType: _enums2.default.signature.key_binding
-      }, subkeyOptions.date);
-    } else {
-      subkeySignaturePacket.keyFlags = [_enums2.default.keyFlags.encrypt_communication | _enums2.default.keyFlags.encrypt_storage];
-    }
-    if (subkeyOptions.keyExpirationTime > 0) {
-      subkeySignaturePacket.keyExpirationTime = subkeyOptions.keyExpirationTime;
-      subkeySignaturePacket.keyNeverExpires = false;
-    }
-    await subkeySignaturePacket.sign(secretKeyPacket, dataToSign);
-
-    return { secretSubkeyPacket, subkeySignaturePacket };
-  })).then(packets => {
-    packets.forEach(({ secretSubkeyPacket, subkeySignaturePacket }) => {
-      packetlist.push(secretSubkeyPacket);
-      packetlist.push(subkeySignaturePacket);
-    });
-  });
-
-  // Add revocation signature packet for creating a revocation certificate.
-  // This packet should be removed before returning the key.
-  const dataToSign = { key: secretKeyPacket };
-  packetlist.push((await createSignaturePacket(dataToSign, null, secretKeyPacket, {
-    signatureType: _enums2.default.signature.key_revocation,
-    reasonForRevocationFlag: _enums2.default.reasonForRevocation.no_reason,
-    reasonForRevocationString: ''
-  }, options.date)));
-
-  // set passphrase protection
-  if (options.passphrase) {
-    secretKeyPacket.clearPrivateParams();
-  }
-
-  await Promise.all(secretSubkeyPackets.map(async function (secretSubkeyPacket, index) {
-    const subkeyPassphrase = options.subkeys[index].passphrase;
-    if (subkeyPassphrase) {
-      secretSubkeyPacket.clearPrivateParams();
-    }
-  }));
-
-  return new Key(packetlist);
-}
-
-/**
- * Checks if a given certificate or binding signature is revoked
- * @param  {module:packet.SecretKey|
- *          module:packet.PublicKey}       primaryKey   The primary key packet
- * @param  {Object}                         dataToVerify The data to check
- * @param  {Array<module:packet.Signature>} revocations  The revocation signatures to check
- * @param  {module:packet.Signature}        signature    The certificate or signature to check
- * @param  {module:packet.PublicSubkey|
- *          module:packet.SecretSubkey|
- *          module:packet.PublicKey|
- *          module:packet.SecretKey} key, optional The key packet to check the signature
- * @param  {Date}                     date          Use the given date instead of the current time
- * @returns {Promise<Boolean>}                      True if the signature revokes the data
- * @async
- */
-async function isDataRevoked(primaryKey, signatureType, dataToVerify, revocations, signature, key, date = new Date()) {
-  key = key || primaryKey;
-  const normDate = _util2.default.normalizeDate(date);
-  const revocationKeyIds = [];
-  await Promise.all(revocations.map(async function (revocationSignature) {
-    if (
-    // Note: a third-party revocation signature could legitimately revoke a
-    // self-signature if the signature has an authorized revocation key.
-    // However, we don't support passing authorized revocation keys, nor
-    // verifying such revocation signatures. Instead, we indicate an error
-    // when parsing a key with an authorized revocation key, and ignore
-    // third-party revocation signatures here. (It could also be revoking a
-    // third-party key certification, which should only affect
-    // `verifyAllCertifications`.)
-    (!signature || revocationSignature.issuerKeyId.equals(signature.issuerKeyId)) && !(_config2.default.revocations_expire && revocationSignature.isExpired(normDate)) && (revocationSignature.verified || (await revocationSignature.verify(key, signatureType, dataToVerify)))) {
-      // TODO get an identifier of the revoked object instead
-      revocationKeyIds.push(revocationSignature.issuerKeyId);
-      return true;
-    }
-    return false;
-  }));
-  // TODO further verify that this is the signature that should be revoked
-  if (signature) {
-    signature.revoked = revocationKeyIds.some(keyId => keyId.equals(signature.issuerKeyId)) ? true : signature.revoked || false;
-    return signature.revoked;
-  }
-  return revocationKeyIds.length > 0;
-}
-
-function isDataExpired(keyPacket, signature, date = new Date()) {
-  const normDate = _util2.default.normalizeDate(date);
-  if (normDate !== null) {
-    const expirationTime = getExpirationTime(keyPacket, signature);
-    return !(keyPacket.created <= normDate && normDate <= expirationTime) || signature && signature.isExpired(date);
-  }
-  return false;
-}
-
-function getExpirationTime(keyPacket, signature) {
-  let expirationTime;
-  // check V4 expiration time
-  if (signature.keyNeverExpires === false) {
-    expirationTime = keyPacket.created.getTime() + signature.keyExpirationTime * 1000;
-  }
-  return expirationTime ? new Date(expirationTime) : Infinity;
-}
-
-/**
- * Check if signature has revocation key sub packet (not supported by OpenPGP.js)
- * and throw error if found
- * @param {module:packet.Signature} signature The certificate or signature to check
- * @param {type/keyid} keyId Check only certificates or signatures from a certain issuer key ID
- */
-function checkRevocationKey(signature, keyId) {
-  if (signature.revocationKeyClass !== null && signature.issuerKeyId.equals(keyId)) {
-    throw new Error('This key is intended to be revoked with an authorized key, which OpenPGP.js does not support.');
-  }
-}
-
-/**
- * Returns the preferred signature hash algorithm of a key
- * @param  {module:key.Key} key (optional) the key to get preferences from
- * @param  {module:packet.SecretKey|module:packet.SecretSubkey} keyPacket key packet used for signing
- * @param  {Date} date (optional) use the given date for verification instead of the current time
- * @param  {Object} userId (optional) user ID
- * @returns {Promise<String>}
- * @async
- */
-async function getPreferredHashAlgo(key, keyPacket, date = new Date(), userId = {}) {
-  let hash_algo = _config2.default.prefer_hash_algorithm;
-  let pref_algo = hash_algo;
-  if (key instanceof Key) {
-    const primaryUser = await key.getPrimaryUser(date, userId);
-    if (primaryUser && primaryUser.selfCertification.preferredHashAlgorithms) {
-      var _primaryUser$selfCert = _slicedToArray(primaryUser.selfCertification.preferredHashAlgorithms, 1);
-
-      pref_algo = _primaryUser$selfCert[0];
-
-      hash_algo = _crypto2.default.hash.getHashByteLength(hash_algo) <= _crypto2.default.hash.getHashByteLength(pref_algo) ? pref_algo : hash_algo;
-    }
-  }
-  switch (Object.getPrototypeOf(keyPacket)) {
-    case _packet2.default.SecretKey.prototype:
-    case _packet2.default.PublicKey.prototype:
-    case _packet2.default.SecretSubkey.prototype:
-    case _packet2.default.PublicSubkey.prototype:
-      switch (keyPacket.algorithm) {
-        case 'ecdh':
-        case 'ecdsa':
-        case 'eddsa':
-          pref_algo = _crypto2.default.publicKey.elliptic.getPreferredHashAlgo(keyPacket.params[0]);
-      }
-  }
-  return _crypto2.default.hash.getHashByteLength(hash_algo) <= _crypto2.default.hash.getHashByteLength(pref_algo) ? pref_algo : hash_algo;
-}
-
-/**
- * Returns the preferred symmetric/aead algorithm for a set of keys
- * @param  {symmetric|aead} type Type of preference to return
- * @param  {Array<module:key.Key>} keys Set of keys
- * @param  {Date} date (optional) use the given date for verification instead of the current time
- * @param  {Array} userIds (optional) user IDs
- * @returns {Promise<module:enums.symmetric>}   Preferred symmetric algorithm
- * @async
- */
-async function getPreferredAlgo(type, keys, date = new Date(), userIds = []) {
-  const prefProperty = type === 'symmetric' ? 'preferredSymmetricAlgorithms' : 'preferredAeadAlgorithms';
-  const defaultAlgo = type === 'symmetric' ? _enums2.default.symmetric.aes128 : _enums2.default.aead.eax;
-  const prioMap = {};
-  await Promise.all(keys.map(async function (key, i) {
-    const primaryUser = await key.getPrimaryUser(date, userIds[i]);
-    if (!primaryUser || !primaryUser.selfCertification[prefProperty]) {
-      return defaultAlgo;
-    }
-    primaryUser.selfCertification[prefProperty].forEach(function (algo, index) {
-      const entry = prioMap[algo] || (prioMap[algo] = { prio: 0, count: 0, algo: algo });
-      entry.prio += 64 >> index;
-      entry.count++;
-    });
-  }));
-  let prefAlgo = { prio: 0, algo: defaultAlgo };
-  Object.values(prioMap).forEach(({ prio, count, algo }) => {
-    try {
-      if (algo !== _enums2.default[type].plaintext && algo !== _enums2.default[type].idea && // not implemented
-      _enums2.default.read(_enums2.default[type], algo) && // known algorithm
-      count === keys.length && // available for all keys
-      prio > prefAlgo.prio) {
-        prefAlgo = prioMap[algo];
-      }
-    } catch (e) {}
-  });
-  return prefAlgo.algo;
-}
-
-/**
- * Returns whether aead is supported by all keys in the set
- * @param  {Array<module:key.Key>} keys Set of keys
- * @param  {Date} date (optional) use the given date for verification instead of the current time
- * @param  {Array} userIds (optional) user IDs
- * @returns {Promise<Boolean>}
- * @async
- */
-async function isAeadSupported(keys, date = new Date(), userIds = []) {
-  let supported = true;
-  // TODO replace when Promise.some or Promise.any are implemented
-  await Promise.all(keys.map(async function (key, i) {
-    const primaryUser = await key.getPrimaryUser(date, userIds[i]);
-    if (!primaryUser || !primaryUser.selfCertification.features || !(primaryUser.selfCertification.features[0] & _enums2.default.features.aead)) {
-      supported = false;
-    }
-  }));
-  return supported;
-}
-
-},{"./config":79,"./crypto":94,"./encoding/armor":111,"./enums":113,"./packet":125,"./util":152}],117:[function(require,module,exports){
+},{"../enums":113,"../packet":131,"../util":158,"./helper":117}],122:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -34303,7 +35027,7 @@ _keyring2.default.localstore = _localstore2.default;
 
 exports.default = _keyring2.default;
 
-},{"./keyring.js":118,"./localstore.js":119}],118:[function(require,module,exports){
+},{"./keyring.js":123,"./localstore.js":124}],123:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -34542,7 +35266,8 @@ KeyArray.prototype.removeForId = function (keyId) {
 
 exports.default = Keyring;
 
-},{"../key":116,"./localstore":119}],119:[function(require,module,exports){
+},{"../key":118,"./localstore":124}],124:[function(require,module,exports){
+(function (global){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -34601,8 +35326,8 @@ function LocalStore(prefix) {
   prefix = prefix || 'openpgp-';
   this.publicKeysItem = prefix + this.publicKeysItem;
   this.privateKeysItem = prefix + this.privateKeysItem;
-  if (typeof window !== 'undefined' && window.localStorage) {
-    this.storage = window.localStorage;
+  if (typeof global !== 'undefined' && global.localStorage) {
+    this.storage = global.localStorage;
   } else {
     this.storage = new (require('node-localstorage').LocalStorage)(_config2.default.node_store);
   }
@@ -34680,7 +35405,41 @@ async function storeKeys(storage, itemname, keys) {
 
 exports.default = LocalStore;
 
-},{"../config":79,"../key":116,"../util":152,"node-localstorage":"node-localstorage","web-stream-tools":75}],120:[function(require,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"../config":79,"../key":118,"../util":158,"node-localstorage":"node-localstorage","web-stream-tools":75}],125:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+/**
+ * Load script from path
+ * @param {String} path
+ */
+const loadScript = exports.loadScript = path => {
+  if (typeof importScripts !== 'undefined') {
+    return importScripts(path);
+  }
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = path;
+    script.onload = () => resolve();
+    script.onerror = e => reject(new Error(e.message));
+    document.head.appendChild(script);
+  });
+};
+
+/**
+ * Download script from path
+ * @param {String} path fetch path
+ * @param {Object} options fetch options
+ */
+const dl = exports.dl = async function dl(path, options) {
+  const response = await fetch(path, options);
+  return response.arrayBuffer();
+};
+
+},{}],126:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -34902,15 +35661,17 @@ Message.prototype.decryptSessionKeys = async function (privateKeys, passwords) {
     }
     await Promise.all(pkESKeyPacketlist.map(async function (keyPacket) {
       await Promise.all(privateKeys.map(async function (privateKey) {
-        const primaryUser = await privateKey.getPrimaryUser(); // TODO: Pass userId from somewhere.
         let algos = [_enums2.default.symmetric.aes256, // Old OpenPGP.js default fallback
         _enums2.default.symmetric.aes128, // RFC4880bis fallback
         _enums2.default.symmetric.tripledes, // RFC4880 fallback
         _enums2.default.symmetric.cast5 // Golang OpenPGP fallback
         ];
-        if (primaryUser && primaryUser.selfCertification.preferredSymmetricAlgorithms) {
-          algos = algos.concat(primaryUser.selfCertification.preferredSymmetricAlgorithms);
-        }
+        try {
+          const primaryUser = await privateKey.getPrimaryUser(); // TODO: Pass userId from somewhere.
+          if (primaryUser.selfCertification.preferredSymmetricAlgorithms) {
+            algos = algos.concat(primaryUser.selfCertification.preferredSymmetricAlgorithms);
+          }
+        } catch (e) {}
 
         const privateKeyPackets = privateKey.getKeys(keyPacket.publicKeyId).map(key => key.keyPacket);
         await Promise.all(privateKeyPackets.map(async function (privateKeyPacket) {
@@ -35076,9 +35837,6 @@ async function encryptSessionKey(sessionKey, symAlgo, aeadAlgo, publicKeys, pass
   if (publicKeys) {
     const results = await Promise.all(publicKeys.map(async function (publicKey) {
       const encryptionKey = await publicKey.getEncryptionKey(undefined, date, userIds);
-      if (!encryptionKey) {
-        throw new Error('Could not find valid key packet for encryption in key ' + publicKey.getKeyId().toHex());
-      }
       const pkESKeyPacket = new _packet2.default.PublicKeyEncryptedSessionKey();
       pkESKeyPacket.publicKeyId = wildcard ? _keyid2.default.wildcard() : encryptionKey.getKeyId();
       pkESKeyPacket.publicKeyAlgorithm = encryptionKey.keyPacket.algorithm;
@@ -35135,10 +35893,11 @@ async function encryptSessionKey(sessionKey, symAlgo, aeadAlgo, publicKeys, pass
  * @param  {Signature} signature          (optional) any existing detached signature to add to the message
  * @param  {Date} date                    (optional) override the creation time of the signature
  * @param  {Array} userIds                (optional) user IDs to sign with, e.g. [{ name:'Steve Sender', email:'steve@openpgp.org' }]
+ * @param  {Boolean} streaming            (optional) whether to process data as a stream
  * @returns {Promise<Message>}             new message with signed content
  * @async
  */
-Message.prototype.sign = async function (privateKeys = [], signature = null, date = new Date(), userIds = []) {
+Message.prototype.sign = async function (privateKeys = [], signature = null, date = new Date(), userIds = [], streaming = false) {
   const packetlist = new _packet2.default.List();
 
   const literalDataPacket = this.packets.findPacket(_enums2.default.packet.literal);
@@ -35172,9 +35931,6 @@ Message.prototype.sign = async function (privateKeys = [], signature = null, dat
       throw new Error('Need private key for signing');
     }
     const signingKey = await privateKey.getSigningKey(undefined, date, userIds);
-    if (!signingKey) {
-      throw new Error('Could not find valid key packet for signing in key ' + privateKey.getKeyId().toHex());
-    }
     const onePassSig = new _packet2.default.OnePassSignature();
     onePassSig.signatureType = signatureType;
     onePassSig.hashAlgorithm = await (0, _key.getPreferredHashAlgo)(privateKey, signingKey.keyPacket, date, userIds);
@@ -35189,7 +35945,7 @@ Message.prototype.sign = async function (privateKeys = [], signature = null, dat
   });
 
   packetlist.push(literalDataPacket);
-  packetlist.concat((await createSignaturePackets(literalDataPacket, privateKeys, signature, date, false)));
+  packetlist.concat((await createSignaturePackets(literalDataPacket, privateKeys, signature, date, userIds, false, streaming)));
 
   return new Message(packetlist);
 };
@@ -35220,15 +35976,16 @@ Message.prototype.compress = function (compression) {
  * @param  {Signature} signature                 (optional) any existing detached signature
  * @param  {Date} date                           (optional) override the creation time of the signature
  * @param  {Array} userIds                       (optional) user IDs to sign with, e.g. [{ name:'Steve Sender', email:'steve@openpgp.org' }]
+ * @param  {Boolean} streaming                   (optional) whether to process data as a stream
  * @returns {Promise<module:signature.Signature>} new detached signature of message content
  * @async
  */
-Message.prototype.signDetached = async function (privateKeys = [], signature = null, date = new Date(), userIds = []) {
+Message.prototype.signDetached = async function (privateKeys = [], signature = null, date = new Date(), userIds = [], streaming = false) {
   const literalDataPacket = this.packets.findPacket(_enums2.default.packet.literal);
   if (!literalDataPacket) {
     throw new Error('No literal data packet to sign.');
   }
-  return new _signature.Signature((await createSignaturePackets(literalDataPacket, privateKeys, signature, date, userIds, true)));
+  return new _signature.Signature((await createSignaturePackets(literalDataPacket, privateKeys, signature, date, userIds, true, streaming)));
 };
 
 /**
@@ -35239,10 +35996,11 @@ Message.prototype.signDetached = async function (privateKeys = [], signature = n
  * @param  {Date} date                         (optional) override the creationtime of the signature
  * @param  {Array} userIds                     (optional) user IDs to sign with, e.g. [{ name:'Steve Sender', email:'steve@openpgp.org' }]
  * @param  {Boolean} detached                  (optional) whether to create detached signature packets
+ * @param  {Boolean} streaming                 (optional) whether to process data as a stream
  * @returns {Promise<module:packet.List>} list of signature packets
  * @async
  */
-async function createSignaturePackets(literalDataPacket, privateKeys, signature = null, date = new Date(), userIds = [], detached = false) {
+async function createSignaturePackets(literalDataPacket, privateKeys, signature = null, date = new Date(), userIds = [], detached = false, streaming = false) {
   const packetlist = new _packet2.default.List();
 
   // If data packet was created from Uint8Array, use binary, otherwise use text
@@ -35254,10 +36012,7 @@ async function createSignaturePackets(literalDataPacket, privateKeys, signature 
       throw new Error('Need private key for signing');
     }
     const signingKey = await privateKey.getSigningKey(undefined, date, userId);
-    if (!signingKey) {
-      throw new Error(`Could not find valid signing key packet in key ${privateKey.getKeyId().toHex()}`);
-    }
-    return (0, _key.createSignaturePacket)(literalDataPacket, privateKey, signingKey.keyPacket, { signatureType }, date, userId, detached);
+    return (0, _key.createSignaturePacket)(literalDataPacket, privateKey, signingKey.keyPacket, { signatureType }, date, userId, detached, streaming);
   })).then(signatureList => {
     signatureList.forEach(signaturePacket => packetlist.push(signaturePacket));
   });
@@ -35283,16 +36038,20 @@ Message.prototype.verify = async function (keys, date = new Date(), streaming) {
   if (literalDataList.length !== 1) {
     throw new Error('Can only verify message with one literal data packet.');
   }
+  if (!streaming) {
+    msg.packets.concat((await _webStreamTools2.default.readToEnd(msg.packets.stream, _ => _)));
+  }
   const onePassSigList = msg.packets.filterByTag(_enums2.default.packet.onePassSignature).reverse();
   const signatureList = msg.packets.filterByTag(_enums2.default.packet.signature);
-  if (onePassSigList.length && !signatureList.length && msg.packets.stream) {
+  if (streaming && onePassSigList.length && !signatureList.length && msg.packets.stream) {
     await Promise.all(onePassSigList.map(async onePassSig => {
       onePassSig.correspondingSig = new Promise((resolve, reject) => {
         onePassSig.correspondingSigResolve = resolve;
         onePassSig.correspondingSigReject = reject;
       });
       onePassSig.signatureData = _webStreamTools2.default.fromAsync(async () => (await onePassSig.correspondingSig).signatureData);
-      onePassSig.hashed = await onePassSig.hash(onePassSig.signatureType, literalDataList[0], undefined, false, streaming);
+      onePassSig.hashed = _webStreamTools2.default.readToEnd((await onePassSig.hash(onePassSig.signatureType, literalDataList[0], undefined, false, streaming)));
+      onePassSig.hashed.catch(() => {});
     }));
     msg.packets.stream = _webStreamTools2.default.transformPair(msg.packets.stream, async (readable, writable) => {
       const reader = _webStreamTools2.default.getReader(readable);
@@ -35315,9 +36074,9 @@ Message.prototype.verify = async function (keys, date = new Date(), streaming) {
         await writer.abort(e);
       }
     });
-    return createVerificationObjects(onePassSigList, literalDataList, keys, date, false);
+    return createVerificationObjects(onePassSigList, literalDataList, keys, date, false, streaming);
   }
-  return createVerificationObjects(signatureList, literalDataList, keys, date, false);
+  return createVerificationObjects(signatureList, literalDataList, keys, date, false, streaming);
 };
 
 /**
@@ -35350,16 +36109,15 @@ Message.prototype.verifyDetached = function (signature, keys, date = new Date())
  *                          valid: Boolean}>>} list of signer's keyid and validity of signature
  * @async
  */
-async function createVerificationObject(signature, literalDataList, keys, date = new Date(), detached = false) {
+async function createVerificationObject(signature, literalDataList, keys, date = new Date(), detached = false, streaming = false) {
   let primaryKey = null;
   let signingKey = null;
   await Promise.all(keys.map(async function (key) {
     // Look for the unique key that matches issuerKeyId of signature
-    const result = await key.getSigningKey(signature.issuerKeyId, null);
-    if (result) {
+    try {
+      signingKey = await key.getSigningKey(signature.issuerKeyId, null);
       primaryKey = key;
-      signingKey = result;
-    }
+    } catch (e) {}
   }));
 
   const signaturePacket = signature.correspondingSig || signature;
@@ -35369,10 +36127,10 @@ async function createVerificationObject(signature, literalDataList, keys, date =
       if (!signingKey) {
         return null;
       }
-      const verified = await signature.verify(signingKey.keyPacket, signature.signatureType, literalDataList[0], detached);
+      const verified = await signature.verify(signingKey.keyPacket, signature.signatureType, literalDataList[0], detached, streaming);
       const sig = await signaturePacket;
       if (sig.isExpired(date) || !(sig.created >= signingKey.getCreationTime() && sig.created < (await (signingKey === primaryKey ? signingKey.getExpirationTime() : signingKey.getExpirationTime(primaryKey, date))))) {
-        return null;
+        throw new Error('Signature is expired');
       }
       return verified;
     })(),
@@ -35406,11 +36164,11 @@ async function createVerificationObject(signature, literalDataList, keys, date =
  *                          valid: Boolean}>>} list of signer's keyid and validity of signature
  * @async
  */
-async function createVerificationObjects(signatureList, literalDataList, keys, date = new Date(), detached = false) {
+async function createVerificationObjects(signatureList, literalDataList, keys, date = new Date(), detached = false, streaming = false) {
   return Promise.all(signatureList.filter(function (signature) {
     return ['text', 'binary'].includes(_enums2.default.read(_enums2.default.signature, signature.signatureType));
   }).map(async function (signature) {
-    return createVerificationObject(signature, literalDataList, keys, date, detached);
+    return createVerificationObject(signature, literalDataList, keys, date, detached, streaming);
   }));
 }
 
@@ -35537,7 +36295,8 @@ function fromBinary(bytes, filename, date = new Date(), type = 'binary') {
   return message;
 }
 
-},{"./config":79,"./crypto":94,"./encoding/armor":111,"./enums":113,"./key":116,"./packet":125,"./signature":145,"./type/keyid":148,"./util":152,"web-stream-tools":75}],121:[function(require,module,exports){
+},{"./config":79,"./crypto":94,"./encoding/armor":111,"./enums":113,"./key":118,"./packet":131,"./signature":151,"./type/keyid":154,"./util":158,"web-stream-tools":75}],127:[function(require,module,exports){
+(function (global){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -35651,7 +36410,7 @@ let asyncProxy; // instance of the asyncproxy
  */
 
 async function initWorker({ path = 'openpgp.worker.js', n = 1, workers = [] } = {}) {
-  if (workers.length || typeof window !== 'undefined' && window.Worker && window.MessageChannel) {
+  if (workers.length || typeof global !== 'undefined' && global.Worker && global.MessageChannel) {
     const proxy = new _async_proxy2.default({ path, n, workers, config: _config2.default });
     const loaded = await proxy.loaded();
     if (loaded) {
@@ -35673,8 +36432,13 @@ function getWorker() {
 /**
  * Cleanup the current instance of the web worker.
  */
-function destroyWorker() {
+async function destroyWorker() {
+  const proxy = asyncProxy;
   asyncProxy = undefined;
+  if (proxy) {
+    await proxy.clearKeyCache();
+    proxy.terminate();
+  }
 }
 
 //////////////////////
@@ -35688,7 +36452,7 @@ function destroyWorker() {
  * Generates a new OpenPGP key pair. Supports RSA and ECC keys. Primary and subkey will be of same type.
  * @param  {Array<Object>} userIds   array of user IDs e.g. [{ name:'Phil Zimmermann', email:'phil@openpgp.org' }]
  * @param  {String} passphrase       (optional) The passphrase used to encrypt the resulting private key
- * @param  {Number} numBits          (optional) number of bits for RSA keys: 2048 or 4096.
+ * @param  {Number} rsaBits          (optional) number of bits for RSA keys: 2048 or 4096.
  * @param  {Number} keyExpirationTime (optional) The number of seconds after the key creation time that the key expires
  * @param  {String} curve            (optional) elliptic curve for ECC keys:
  *                                              curve25519, p256, p384, p521, secp256k1,
@@ -35702,11 +36466,11 @@ function destroyWorker() {
  * @static
  */
 
-function generateKey({ userIds = [], passphrase = "", numBits = 2048, keyExpirationTime = 0, curve = "", date = new Date(), subkeys = [{}] }) {
+function generateKey({ userIds = [], passphrase = "", numBits = 2048, rsaBits = numBits, keyExpirationTime = 0, curve = "", date = new Date(), subkeys = [{}] }) {
   userIds = toArray(userIds);
-  const options = { userIds, passphrase, numBits, keyExpirationTime, curve, date, subkeys };
-  if (_util2.default.getWebCryptoAll() && numBits < 2048) {
-    throw new Error('numBits should be 2048 or 4096, found: ' + numBits);
+  const options = { userIds, passphrase, rsaBits, keyExpirationTime, curve, date, subkeys };
+  if (_util2.default.getWebCryptoAll() && rsaBits < 2048) {
+    throw new Error('rsaBits should be 2048 or 4096, found: ' + rsaBits);
   }
 
   if (!_util2.default.getWebCryptoAll() && asyncProxy) {
@@ -35715,7 +36479,7 @@ function generateKey({ userIds = [], passphrase = "", numBits = 2048, keyExpirat
   }
 
   return (0, _key.generate)(options).then(async key => {
-    const revocationCertificate = await key.getRevocationCertificate();
+    const revocationCertificate = await key.getRevocationCertificate(date);
     key.revocationSignatures = [];
 
     return convertStreams({
@@ -35735,23 +36499,20 @@ function generateKey({ userIds = [], passphrase = "", numBits = 2048, keyExpirat
  * @param  {Array<Object>} userIds   array of user IDs e.g. [{ name:'Phil Zimmermann', email:'phil@openpgp.org' }]
  * @param  {String} passphrase       (optional) The passphrase used to encrypt the resulting private key
  * @param  {Number} keyExpirationTime (optional) The number of seconds after the key creation time that the key expires
- * @param  {Boolean} revocationCertificate (optional) Whether the returned object should include a revocation certificate to revoke the public key
  * @returns {Promise<Object>}         The generated key object in the form:
  *                                     { key:Key, privateKeyArmored:String, publicKeyArmored:String, revocationCertificate:String }
  * @async
  * @static
  */
-function reformatKey({ privateKey, userIds = [], passphrase = "", keyExpirationTime = 0, date, revocationCertificate = true }) {
+function reformatKey({ privateKey, userIds = [], passphrase = "", keyExpirationTime = 0, date }) {
   userIds = toArray(userIds);
-  const options = { privateKey, userIds, passphrase, keyExpirationTime, date, revocationCertificate };
+  const options = { privateKey, userIds, passphrase, keyExpirationTime, date };
   if (asyncProxy) {
     return asyncProxy.delegate('reformatKey', options);
   }
 
-  options.revoked = options.revocationCertificate;
-
   return (0, _key.reformat)(options).then(async key => {
-    const revocationCertificate = await key.getRevocationCertificate();
+    const revocationCertificate = await key.getRevocationCertificate(date);
     key.revocationSignatures = [];
 
     return convertStreams({
@@ -35910,10 +36671,10 @@ function encrypt({ message, publicKeys, privateKeys, passwords, sessionKey, comp
     if (privateKeys.length || signature) {
       // sign the message only if private keys or signature is specified
       if (detached) {
-        const detachedSignature = await message.signDetached(privateKeys, signature, date, fromUserIds);
+        const detachedSignature = await message.signDetached(privateKeys, signature, date, fromUserIds, message.fromStream);
         result.signature = armor ? detachedSignature.armor() : detachedSignature;
       } else {
-        message = await message.sign(privateKeys, signature, date, fromUserIds);
+        message = await message.sign(privateKeys, signature, date, fromUserIds, message.fromStream);
       }
     }
     message = message.compress(compression);
@@ -36019,7 +36780,6 @@ function decrypt({ message, privateKeys, passwords, sessionKeys, publicKeys, for
 function sign({ message, privateKeys, armor = true, streaming = message && message.fromStream, detached = false, date = new Date(), fromUserIds = [] }) {
   checkCleartextOrMessage(message);
   privateKeys = toArray(privateKeys);fromUserIds = toArray(fromUserIds);
-
   if (asyncProxy) {
     // use web worker if available
     return asyncProxy.delegate('sign', {
@@ -36030,7 +36790,7 @@ function sign({ message, privateKeys, armor = true, streaming = message && messa
   const result = {};
   return Promise.resolve().then(async function () {
     if (detached) {
-      const signature = await message.signDetached(privateKeys, undefined, date, fromUserIds);
+      const signature = await message.signDetached(privateKeys, undefined, date, fromUserIds, message.fromStream);
       result.signature = armor ? signature.armor() : signature;
       if (message.packets) {
         result.signature = _webStreamTools2.default.transformPair(message.packets.write(), async (readable, writable) => {
@@ -36038,7 +36798,7 @@ function sign({ message, privateKeys, armor = true, streaming = message && messa
         });
       }
     } else {
-      message = await message.sign(privateKeys, undefined, date, fromUserIds);
+      message = await message.sign(privateKeys, undefined, date, fromUserIds, message.fromStream);
       if (armor) {
         result.data = message.armor();
       } else {
@@ -36264,7 +37024,7 @@ async function prepareSignatures(signatures) {
     try {
       signature.valid = await signature.verified;
     } catch (e) {
-      signature.valid = null;
+      signature.valid = false;
       signature.error = e;
       _util2.default.print_debug_error(e);
     }
@@ -36299,7 +37059,8 @@ function nativeAEAD() {
   return _config2.default.aead_protect && (_config2.default.aead_mode === _enums2.default.aead.eax || _config2.default.aead_mode === _enums2.default.aead.experimental_gcm) && _util2.default.getWebCrypto();
 }
 
-},{"./cleartext":77,"./config/config":78,"./enums":113,"./key":116,"./message":120,"./polyfills":144,"./util":152,"./worker/async_proxy":154,"web-stream-tools":75}],122:[function(require,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./cleartext":77,"./config/config":78,"./enums":113,"./key":118,"./message":126,"./polyfills":150,"./util":158,"./worker/async_proxy":160,"web-stream-tools":75}],128:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -36513,7 +37274,7 @@ function packetClassFromTagName(tag) {
   return tag.substr(0, 1).toUpperCase() + tag.substr(1);
 }
 
-},{"../enums.js":113,"./all_packets.js":122,"./compressed.js":124,"./literal.js":126,"./marker.js":127,"./one_pass_signature.js":128,"./public_key.js":131,"./public_key_encrypted_session_key.js":132,"./public_subkey.js":133,"./secret_key.js":134,"./secret_subkey.js":135,"./signature.js":136,"./sym_encrypted_aead_protected.js":137,"./sym_encrypted_integrity_protected.js":138,"./sym_encrypted_session_key.js":139,"./symmetrically_encrypted.js":140,"./trust.js":141,"./user_attribute.js":142,"./userid.js":143}],123:[function(require,module,exports){
+},{"../enums.js":113,"./all_packets.js":128,"./compressed.js":130,"./literal.js":132,"./marker.js":133,"./one_pass_signature.js":134,"./public_key.js":137,"./public_key_encrypted_session_key.js":138,"./public_subkey.js":139,"./secret_key.js":140,"./secret_subkey.js":141,"./signature.js":142,"./sym_encrypted_aead_protected.js":143,"./sym_encrypted_integrity_protected.js":144,"./sym_encrypted_session_key.js":145,"./symmetrically_encrypted.js":146,"./trust.js":147,"./user_attribute.js":148,"./userid.js":149}],129:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -36591,6 +37352,9 @@ function clonePackets(options) {
   if (options.privateKeys) {
     options.privateKeys = options.privateKeys.map(key => key.toPacketlist());
   }
+  if (options.publicKey) {
+    options.publicKey = options.publicKey.toPacketlist();
+  }
   if (options.privateKey) {
     options.privateKey = options.privateKey.toPacketlist();
   }
@@ -36623,8 +37387,11 @@ function verificationObjectToClone(verObject) {
       const packets = (await signature).packets;
       try {
         await verified;
-        delete packets[0].signature;
       } catch (e) {}
+      if (packets && packets[0]) {
+        delete packets[0].signature;
+        delete packets[0].hashed;
+      }
       return packets;
     });
   } else {
@@ -36655,6 +37422,9 @@ function parseClonedPackets(options) {
   }
   if (options.privateKeys) {
     options.privateKeys = options.privateKeys.map(packetlistCloneToKey);
+  }
+  if (options.publicKey) {
+    options.publicKey = packetlistCloneToKey(options.publicKey);
   }
   if (options.privateKey) {
     options.privateKey = packetlistCloneToKey(options.privateKey);
@@ -36717,7 +37487,7 @@ function packetlistCloneToSignature(clone) {
   return new _signature.Signature(packetlist);
 }
 
-},{"../cleartext":77,"../key":116,"../message":120,"../signature":145,"../type/keyid":148,"../util":152,"./packetlist":130,"web-stream-tools":75}],124:[function(require,module,exports){
+},{"../cleartext":77,"../key":118,"../message":126,"../signature":151,"../type/keyid":154,"../util":158,"./packetlist":136,"web-stream-tools":75}],130:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -36932,7 +37702,7 @@ if (nodeZlib) {
   };
 }
 
-},{"../config":79,"../enums":113,"../util":152,"pako":50,"seek-bzip":69,"web-stream-tools":75}],125:[function(require,module,exports){
+},{"../config":79,"../enums":113,"../util":158,"pako":50,"seek-bzip":69,"web-stream-tools":75}],131:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -36970,7 +37740,7 @@ Object.assign(mod, packets);
 
 exports.default = mod;
 
-},{"./all_packets":122,"./clone":123,"./packetlist":130}],126:[function(require,module,exports){
+},{"./all_packets":128,"./clone":129,"./packetlist":136}],132:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -37153,7 +37923,7 @@ Literal.prototype.write = function () {
 
 exports.default = Literal;
 
-},{"../enums":113,"../util":152,"web-stream-tools":75}],127:[function(require,module,exports){
+},{"../enums":113,"../util":158,"web-stream-tools":75}],133:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -37228,7 +37998,7 @@ Marker.prototype.read = function (bytes) {
 
 exports.default = Marker;
 
-},{"../enums":113}],128:[function(require,module,exports){
+},{"../enums":113}],134:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -37384,7 +38154,7 @@ OnePassSignature.prototype.hash = _signature2.default.prototype.hash;
 OnePassSignature.prototype.toHash = _signature2.default.prototype.toHash;
 OnePassSignature.prototype.toSign = _signature2.default.prototype.toSign;
 OnePassSignature.prototype.calculateTrailer = function (...args) {
-  return _webStreamTools2.default.fromAsync(async () => (await this.correspondingSig).calculateTrailer(...args));
+  return _webStreamTools2.default.fromAsync(async () => _signature2.default.prototype.calculateTrailer.apply((await this.correspondingSig), args));
 };
 
 OnePassSignature.prototype.verify = async function () {
@@ -37401,7 +38171,7 @@ OnePassSignature.prototype.verify = async function () {
 
 exports.default = OnePassSignature;
 
-},{"../enums":113,"../type/keyid":148,"../util":152,"./signature":136,"web-stream-tools":75}],129:[function(require,module,exports){
+},{"../enums":113,"../type/keyid":154,"../util":158,"./signature":142,"web-stream-tools":75}],135:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -37718,7 +38488,7 @@ exports.default = {
   }
 };
 
-},{"../enums":113,"../util":152,"web-stream-tools":75}],130:[function(require,module,exports){
+},{"../enums":113,"../util":158,"web-stream-tools":75}],136:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -37983,7 +38753,7 @@ List.fromStructuredClone = function (packetlistClone) {
 
 exports.default = List;
 
-},{"../config":79,"../enums":113,"../util":152,"./all_packets":122,"./packet":129,"web-stream-tools":75}],131:[function(require,module,exports){
+},{"../config":79,"../enums":113,"../util":158,"./all_packets":128,"./packet":135,"web-stream-tools":75}],137:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -38261,13 +39031,14 @@ PublicKey.prototype.hasSameFingerprintAs = function (other) {
 
 /**
  * Returns algorithm information
- * @returns {Object} An object of the form {algorithm: String, bits:int, curve:String}
+ * @returns {Object} An object of the form {algorithm: String, rsaBits:int, curve:String}
  */
 PublicKey.prototype.getAlgorithmInfo = function () {
   const result = {};
   result.algorithm = this.algorithm;
   if (this.params[0] instanceof _mpi2.default) {
-    result.bits = this.params[0].byteLength() * 8;
+    result.rsaBits = this.params[0].byteLength() * 8;
+    result.bits = result.rsaBits; // Deprecated.
   } else {
     result.curve = this.params[0].getName();
   }
@@ -38291,7 +39062,7 @@ PublicKey.prototype.postCloneTypeFix = function () {
 
 exports.default = PublicKey;
 
-},{"../config":79,"../crypto":94,"../enums":113,"../type/keyid":148,"../type/mpi":149,"../util":152,"asmcrypto.js/dist_es5/hash/sha1/sha1":11,"asmcrypto.js/dist_es5/hash/sha256/sha256":13}],132:[function(require,module,exports){
+},{"../config":79,"../crypto":94,"../enums":113,"../type/keyid":154,"../type/mpi":155,"../util":158,"asmcrypto.js/dist_es5/hash/sha1/sha1":11,"asmcrypto.js/dist_es5/hash/sha256/sha256":13}],138:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -38301,10 +39072,6 @@ Object.defineProperty(exports, "__esModule", {
 var _keyid = require('../type/keyid');
 
 var _keyid2 = _interopRequireDefault(_keyid);
-
-var _mpi = require('../type/mpi');
-
-var _mpi2 = _interopRequireDefault(_mpi);
 
 var _crypto = require('../crypto');
 
@@ -38338,29 +39105,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @memberof module:packet
  * @constructor
  */
-function PublicKeyEncryptedSessionKey() {
-  this.tag = _enums2.default.packet.publicKeyEncryptedSessionKey;
-  this.version = 3;
-
-  this.publicKeyId = new _keyid2.default();
-  this.publicKeyAlgorithm = null;
-
-  this.sessionKey = null;
-  this.sessionKeyAlgorithm = null;
-
-  /** @type {Array<module:type/mpi>} */
-  this.encrypted = [];
-}
-
-/**
- * Parsing function for a publickey encrypted session key packet (tag 1).
- *
- * @param {Uint8Array} input Payload of a tag 1 packet
- * @param {Integer} position Position to start reading from the input string
- * @param {Integer} len Length of the packet or the remaining length of
- *            input at position
- * @returns {module:packet.PublicKeyEncryptedSessionKey} Object representation
- */
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -38386,6 +39130,29 @@ function PublicKeyEncryptedSessionKey() {
  * @requires util
  */
 
+function PublicKeyEncryptedSessionKey() {
+  this.tag = _enums2.default.packet.publicKeyEncryptedSessionKey;
+  this.version = 3;
+
+  this.publicKeyId = new _keyid2.default();
+  this.publicKeyAlgorithm = null;
+
+  this.sessionKey = null;
+  this.sessionKeyAlgorithm = null;
+
+  /** @type {Array<module:type/mpi>} */
+  this.encrypted = [];
+}
+
+/**
+ * Parsing function for a publickey encrypted session key packet (tag 1).
+ *
+ * @param {Uint8Array} input Payload of a tag 1 packet
+ * @param {Integer} position Position to start reading from the input string
+ * @param {Integer} len Length of the packet or the remaining length of
+ *            input at position
+ * @returns {module:packet.PublicKeyEncryptedSessionKey} Object representation
+ */
 PublicKeyEncryptedSessionKey.prototype.read = function (bytes) {
   this.version = bytes[0];
   this.publicKeyId.read(bytes.subarray(1, bytes.length));
@@ -38428,16 +39195,8 @@ PublicKeyEncryptedSessionKey.prototype.encrypt = async function (key) {
 
   data += _util2.default.Uint8Array_to_str(this.sessionKey);
   data += _util2.default.Uint8Array_to_str(_util2.default.write_checksum(this.sessionKey));
-
-  let toEncrypt;
   const algo = _enums2.default.write(_enums2.default.publicKey, this.publicKeyAlgorithm);
-  if (algo === _enums2.default.publicKey.ecdh) {
-    toEncrypt = new _mpi2.default(_crypto2.default.pkcs5.encode(data));
-  } else {
-    toEncrypt = new _mpi2.default((await _crypto2.default.pkcs1.eme.encode(data, key.params[0].byteLength())));
-  }
-
-  this.encrypted = await _crypto2.default.publicKeyEncrypt(algo, key.params, toEncrypt, key.getFingerprintBytes());
+  this.encrypted = await _crypto2.default.publicKeyEncrypt(algo, key.params, data, key.getFingerprintBytes());
   return true;
 };
 
@@ -38452,18 +39211,8 @@ PublicKeyEncryptedSessionKey.prototype.encrypt = async function (key) {
  */
 PublicKeyEncryptedSessionKey.prototype.decrypt = async function (key) {
   const algo = _enums2.default.write(_enums2.default.publicKey, this.publicKeyAlgorithm);
-  const result = new _mpi2.default((await _crypto2.default.publicKeyDecrypt(algo, key.params, this.encrypted, key.getFingerprintBytes())));
-
-  let checksum;
-  let decoded;
-  if (algo === _enums2.default.publicKey.ecdh) {
-    decoded = _crypto2.default.pkcs5.decode(result.toString());
-    checksum = _util2.default.str_to_Uint8Array(decoded.substr(decoded.length - 2));
-  } else {
-    decoded = _crypto2.default.pkcs1.eme.decode(result.toString());
-    checksum = result.toUint8Array().slice(result.byteLength() - 2);
-  }
-
+  const decoded = await _crypto2.default.publicKeyDecrypt(algo, key.params, this.encrypted, key.getFingerprintBytes());
+  const checksum = _util2.default.str_to_Uint8Array(decoded.substr(decoded.length - 2));
   key = _util2.default.str_to_Uint8Array(decoded.substring(1, decoded.length - 2));
 
   if (!_util2.default.equalsUint8Array(checksum, _util2.default.write_checksum(key))) {
@@ -38489,7 +39238,7 @@ PublicKeyEncryptedSessionKey.prototype.postCloneTypeFix = function () {
 
 exports.default = PublicKeyEncryptedSessionKey;
 
-},{"../crypto":94,"../enums":113,"../type/keyid":148,"../type/mpi":149,"../util":152}],133:[function(require,module,exports){
+},{"../crypto":94,"../enums":113,"../type/keyid":154,"../util":158}],139:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -38548,7 +39297,7 @@ PublicSubkey.prototype.constructor = PublicSubkey;
 
 exports.default = PublicSubkey;
 
-},{"../enums":113,"./public_key":131}],134:[function(require,module,exports){
+},{"../enums":113,"./public_key":137}],140:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -38644,12 +39393,12 @@ function SecretKey(date = new Date()) {
    * Symmetric algorithm
    * @type {String}
    */
-  this.symmetric = 'aes256';
+  this.symmetric = null;
   /**
    * AEAD algorithm
    * @type {String}
    */
-  this.aead = 'eax';
+  this.aead = null;
 }
 
 SecretKey.prototype = new _public_key2.default();
@@ -38842,6 +39591,10 @@ SecretKey.prototype.encrypt = async function (passphrase) {
     return false;
   }
 
+  if (!this.isDecrypted()) {
+    throw new Error('Key packet is already encrypted');
+  }
+
   if (this.isDecrypted() && !passphrase) {
     this.s2k_usage = 0;
     return false;
@@ -38852,18 +39605,20 @@ SecretKey.prototype.encrypt = async function (passphrase) {
   this.s2k = new _s2k2.default();
   this.s2k.salt = await _crypto2.default.random.getRandomBytes(8);
   const cleartext = write_cleartext_params(this.params, this.algorithm);
+  this.symmetric = 'aes256';
   const key = await produceEncryptionKey(this.s2k, passphrase, this.symmetric);
   const blockLen = _crypto2.default.cipher[this.symmetric].blockSize;
   this.iv = await _crypto2.default.random.getRandomBytes(blockLen);
 
   if (this.version === 5) {
     this.s2k_usage = 253;
+    this.aead = 'eax';
     const mode = _crypto2.default[this.aead];
     const modeInstance = await mode(this.symmetric, key);
     this.keyMaterial = await modeInstance.encrypt(cleartext, this.iv.subarray(0, mode.ivLength), new Uint8Array());
   } else {
     this.s2k_usage = 254;
-    this.keyMaterial = _crypto2.default.cfb.encrypt(this.symmetric, key, _util2.default.concatUint8Array([cleartext, await _crypto2.default.hash.sha1(cleartext)]), this.iv);
+    this.keyMaterial = await _crypto2.default.cfb.encrypt(this.symmetric, key, _util2.default.concatUint8Array([cleartext, await _crypto2.default.hash.sha1(cleartext)]), this.iv);
   }
   return true;
 };
@@ -38881,7 +39636,7 @@ async function produceEncryptionKey(s2k, passphrase, algorithm) {
  * @async
  */
 SecretKey.prototype.decrypt = async function (passphrase) {
-  if (this.s2k.type === 'gnu-dummy') {
+  if (this.s2k && this.s2k.type === 'gnu-dummy') {
     this.isEncrypted = false;
     return false;
   }
@@ -38891,10 +39646,12 @@ SecretKey.prototype.decrypt = async function (passphrase) {
   }
 
   let key;
-  if (this.s2k_usage === 255 || this.s2k_usage === 254 || this.s2k_usage === 253) {
+  if (this.s2k_usage === 254 || this.s2k_usage === 253) {
     key = await produceEncryptionKey(this.s2k, passphrase, this.symmetric);
+  } else if (this.s2k_usage === 255) {
+    throw new Error('Encrypted private key is authenticated using an insecure two-byte hash');
   } else {
-    key = await _crypto2.default.hash.md5(passphrase);
+    throw new Error('Private key is encrypted using an insecure S2K function: unsalted MD5');
   }
 
   let cleartext;
@@ -38912,19 +39669,10 @@ SecretKey.prototype.decrypt = async function (passphrase) {
   } else {
     const cleartextWithHash = await _crypto2.default.cfb.decrypt(this.symmetric, key, this.keyMaterial, this.iv);
 
-    let hash;
-    let hashlen;
-    if (this.s2k_usage === 255) {
-      hashlen = 2;
-      cleartext = cleartextWithHash.subarray(0, -hashlen);
-      hash = _util2.default.write_checksum(cleartext);
-    } else {
-      hashlen = 20;
-      cleartext = cleartextWithHash.subarray(0, -hashlen);
-      hash = await _crypto2.default.hash.sha1(cleartext);
-    }
+    cleartext = cleartextWithHash.subarray(0, -20);
+    const hash = await _crypto2.default.hash.sha1(cleartext);
 
-    if (!_util2.default.equalsUint8Array(hash, cleartextWithHash.subarray(-hashlen))) {
+    if (!_util2.default.equalsUint8Array(hash, cleartextWithHash.subarray(-20))) {
       throw new Error('Incorrect key passphrase');
     }
   }
@@ -38945,7 +39693,7 @@ SecretKey.prototype.generate = async function (bits, curve) {
 };
 
 /**
- * Clear private params, return to initial state
+ * Clear private key parameters
  */
 SecretKey.prototype.clearPrivateParams = function () {
   if (this.s2k && this.s2k.type === 'gnu-dummy') {
@@ -38953,11 +39701,12 @@ SecretKey.prototype.clearPrivateParams = function () {
     return;
   }
 
-  if (!this.keyMaterial) {
-    throw new Error('If secret key is not encrypted, clearing private params is irreversible.');
-  }
   const algo = _enums2.default.write(_enums2.default.publicKey, this.algorithm);
-  this.params = this.params.slice(0, _crypto2.default.getPubKeyParamTypes(algo).length);
+  const publicParamCount = _crypto2.default.getPubKeyParamTypes(algo).length;
+  this.params.slice(publicParamCount).forEach(param => {
+    param.data.fill(0);
+  });
+  this.params.length = publicParamCount;
   this.isEncrypted = true;
 };
 
@@ -38974,11 +39723,14 @@ SecretKey.prototype.postCloneTypeFix = function () {
   if (this.keyid) {
     this.keyid = _keyid2.default.fromClone(this.keyid);
   }
+  if (this.s2k) {
+    this.s2k = _s2k2.default.fromClone(this.s2k);
+  }
 };
 
 exports.default = SecretKey;
 
-},{"../crypto":94,"../enums":113,"../type/keyid.js":148,"../type/s2k":151,"../util":152,"./public_key":131}],135:[function(require,module,exports){
+},{"../crypto":94,"../enums":113,"../type/keyid.js":154,"../type/s2k":157,"../util":158,"./public_key":137}],141:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -39034,7 +39786,7 @@ SecretSubkey.prototype.constructor = SecretSubkey;
 
 exports.default = SecretSubkey;
 
-},{"../enums":113,"./secret_key":134}],136:[function(require,module,exports){
+},{"../enums":113,"./secret_key":140}],142:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -39217,10 +39969,11 @@ Signature.prototype.write = function () {
  * @param {module:packet.SecretKey} key private key used to sign the message.
  * @param {Object} data Contains packets to be signed.
  * @param {Boolean} detached (optional) whether to create a detached signature
+ * @param {Boolean} streaming (optional) whether to process data as a stream
  * @returns {Promise<Boolean>}
  * @async
  */
-Signature.prototype.sign = async function (key, data, detached = false) {
+Signature.prototype.sign = async function (key, data, detached = false, streaming = false) {
   const signatureType = _enums2.default.write(_enums2.default.signature, this.signatureType);
   const publicKeyAlgorithm = _enums2.default.write(_enums2.default.publicKey, this.publicKeyAlgorithm);
   const hashAlgorithm = _enums2.default.write(_enums2.default.hash, this.hashAlgorithm);
@@ -39248,15 +40001,19 @@ Signature.prototype.sign = async function (key, data, detached = false) {
   const hash = await this.hash(signatureType, data, toHash, detached);
 
   this.signedHashValue = _webStreamTools2.default.slice(_webStreamTools2.default.clone(hash), 0, 2);
-
   const params = key.params;
-  this.signature = _webStreamTools2.default.fromAsync(async () => _crypto2.default.signature.sign(publicKeyAlgorithm, hashAlgorithm, params, toHash, (await _webStreamTools2.default.readToEnd(hash))));
+  const signed = async () => _crypto2.default.signature.sign(publicKeyAlgorithm, hashAlgorithm, params, toHash, (await _webStreamTools2.default.readToEnd(hash)));
+  if (streaming) {
+    this.signature = _webStreamTools2.default.fromAsync(signed);
+  } else {
+    this.signature = await signed();
 
-  // Store the fact that this signature is valid, e.g. for when we call `await
-  // getLatestValidSignature(this.revocationSignatures, key, data)` later. Note
-  // that this only holds up if the key and data passed to verify are the same
-  // as the ones passed to sign.
-  this.verified = true;
+    // Store the fact that this signature is valid, e.g. for when we call `await
+    // getLatestValidSignature(this.revocationSignatures, key, data)` later.
+    // Note that this only holds up if the key and data passed to verify are the
+    // same as the ones passed to sign.
+    this.verified = true;
+  }
   return true;
 };
 
@@ -39633,7 +40390,7 @@ Signature.prototype.toSign = function (type, data) {
   switch (type) {
     case t.binary:
       if (data.text !== null) {
-        return _util2.default.str_to_Uint8Array(data.getText(true));
+        return _util2.default.encode_utf8(data.getText(true));
       }
       return data.getBytes(true);
 
@@ -39735,7 +40492,7 @@ Signature.prototype.hash = async function (signatureType, data, toHash, detached
 };
 
 /**
- * verifys the signature packet. Note: not signature types are implemented
+ * verifies the signature packet. Note: not all signature types are implemented
  * @param {module:packet.PublicSubkey|module:packet.PublicKey|
  *         module:packet.SecretSubkey|module:packet.SecretKey} key the public key to verify the signature
  * @param {module:enums.signature} signatureType expected signature type
@@ -39744,7 +40501,7 @@ Signature.prototype.hash = async function (signatureType, data, toHash, detached
  * @returns {Promise<Boolean>} True if message is verified, else false.
  * @async
  */
-Signature.prototype.verify = async function (key, signatureType, data, detached = false) {
+Signature.prototype.verify = async function (key, signatureType, data, detached = false, streaming = false) {
   const publicKeyAlgorithm = _enums2.default.write(_enums2.default.publicKey, this.publicKeyAlgorithm);
   const hashAlgorithm = _enums2.default.write(_enums2.default.hash, this.hashAlgorithm);
 
@@ -39755,43 +40512,55 @@ Signature.prototype.verify = async function (key, signatureType, data, detached 
   let toHash;
   let hash;
   if (this.hashed) {
-    hash = this.hashed;
+    hash = await this.hashed;
   } else {
     toHash = this.toHash(signatureType, data, detached);
+    if (!streaming) toHash = await _webStreamTools2.default.readToEnd(toHash);
     hash = await this.hash(signatureType, data, toHash);
   }
   hash = await _webStreamTools2.default.readToEnd(hash);
-
   if (this.signedHashValue[0] !== hash[0] || this.signedHashValue[1] !== hash[1]) {
-    this.verified = false;
-  } else {
-    let mpicount = 0;
-    // Algorithm-Specific Fields for RSA signatures:
-    //      - multiprecision number (MPI) of RSA signature value m**d mod n.
-    if (publicKeyAlgorithm > 0 && publicKeyAlgorithm < 4) {
-      mpicount = 1;
-
-      //    Algorithm-Specific Fields for DSA, ECDSA, and EdDSA signatures:
-      //      - MPI of DSA value r.
-      //      - MPI of DSA value s.
-    } else if (publicKeyAlgorithm === _enums2.default.publicKey.dsa || publicKeyAlgorithm === _enums2.default.publicKey.ecdsa || publicKeyAlgorithm === _enums2.default.publicKey.eddsa) {
-      mpicount = 2;
-    }
-
-    // EdDSA signature parameters are encoded in little-endian format
-    // https://tools.ietf.org/html/rfc8032#section-5.1.2
-    const endian = publicKeyAlgorithm === _enums2.default.publicKey.eddsa ? 'le' : 'be';
-    const mpi = [];
-    let i = 0;
-    this.signature = await _webStreamTools2.default.readToEnd(this.signature);
-    for (let j = 0; j < mpicount; j++) {
-      mpi[j] = new _mpi2.default();
-      i += mpi[j].read(this.signature.subarray(i, this.signature.length), endian);
-    }
-
-    this.verified = await _crypto2.default.signature.verify(publicKeyAlgorithm, hashAlgorithm, mpi, key.params, toHash, hash);
+    throw new Error('Message digest did not match');
   }
-  return this.verified;
+
+  let mpicount = 0;
+  // Algorithm-Specific Fields for RSA signatures:
+  //      - multiprecision number (MPI) of RSA signature value m**d mod n.
+  if (publicKeyAlgorithm > 0 && publicKeyAlgorithm < 4) {
+    mpicount = 1;
+
+    //    Algorithm-Specific Fields for DSA, ECDSA, and EdDSA signatures:
+    //      - MPI of DSA value r.
+    //      - MPI of DSA value s.
+  } else if (publicKeyAlgorithm === _enums2.default.publicKey.dsa || publicKeyAlgorithm === _enums2.default.publicKey.ecdsa || publicKeyAlgorithm === _enums2.default.publicKey.eddsa) {
+    mpicount = 2;
+  }
+
+  // EdDSA signature parameters are encoded in little-endian format
+  // https://tools.ietf.org/html/rfc8032#section-5.1.2
+  const endian = publicKeyAlgorithm === _enums2.default.publicKey.eddsa ? 'le' : 'be';
+  const mpi = [];
+  let i = 0;
+  this.signature = await _webStreamTools2.default.readToEnd(this.signature);
+  for (let j = 0; j < mpicount; j++) {
+    mpi[j] = new _mpi2.default();
+    i += mpi[j].read(this.signature.subarray(i, this.signature.length), endian);
+  }
+  const verified = await _crypto2.default.signature.verify(publicKeyAlgorithm, hashAlgorithm, mpi, key.params, toHash, hash);
+  if (!verified) {
+    throw new Error('Signature verification failed');
+  }
+  if (_config2.default.reject_hash_algorithms.has(hashAlgorithm)) {
+    throw new Error('Insecure hash algorithm: ' + _enums2.default.read(_enums2.default.hash, hashAlgorithm).toUpperCase());
+  }
+  if (_config2.default.reject_message_hash_algorithms.has(hashAlgorithm) && [_enums2.default.signature.binary, _enums2.default.signature.text].includes(this.signatureType)) {
+    throw new Error('Insecure message hash algorithm: ' + _enums2.default.read(_enums2.default.hash, hashAlgorithm).toUpperCase());
+  }
+  if (this.revocationKeyClass !== null) {
+    throw new Error('This key is intended to be revoked with an authorized key, which OpenPGP.js does not support.');
+  }
+  this.verified = true;
+  return true;
 };
 
 /**
@@ -39825,7 +40594,7 @@ Signature.prototype.postCloneTypeFix = function () {
 
 exports.default = Signature;
 
-},{"../config":79,"../crypto":94,"../enums":113,"../type/keyid.js":148,"../type/mpi.js":149,"../util":152,"./packet":129,"web-stream-tools":75}],137:[function(require,module,exports){
+},{"../config":79,"../crypto":94,"../enums":113,"../type/keyid.js":154,"../type/mpi.js":155,"../util":158,"./packet":135,"web-stream-tools":75}],143:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -39976,6 +40745,7 @@ SymEncryptedAEADProtected.prototype.crypt = async function (fn, key, data, strea
   const mode = _crypto2.default[_enums2.default.read(_enums2.default.aead, this.aeadAlgo)];
   const modeInstance = await mode(cipher, key);
   const tagLengthIfDecrypting = fn === 'decrypt' ? mode.tagLength : 0;
+  const tagLengthIfEncrypting = fn === 'encrypt' ? mode.tagLength : 0;
   const chunkSize = 2 ** (this.chunkSizeByte + 6) + tagLengthIfDecrypting; // ((uint64_t)1 << (c + 6))
   const adataBuffer = new ArrayBuffer(21);
   const adataArray = new Uint8Array(adataBuffer, 0, 13);
@@ -39991,7 +40761,7 @@ SymEncryptedAEADProtected.prototype.crypt = async function (fn, key, data, strea
   return _webStreamTools2.default.transformPair(data, async (readable, writable) => {
     const reader = _webStreamTools2.default.getReader(readable);
     const buffer = new TransformStream({}, {
-      highWaterMark: streaming ? _util2.default.getHardwareConcurrency() * 2 ** (_config2.default.aead_chunk_size_byte + 6) : Infinity,
+      highWaterMark: streaming ? _util2.default.getHardwareConcurrency() * 2 ** (this.chunkSizeByte + 6) : Infinity,
       size: array => array.length
     });
     _webStreamTools2.default.pipe(buffer.readable, writable);
@@ -40006,21 +40776,22 @@ SymEncryptedAEADProtected.prototype.crypt = async function (fn, key, data, strea
         if (!chunkIndex || chunk.length) {
           reader.unshift(finalChunk);
           cryptedPromise = modeInstance[fn](chunk, mode.getNonce(iv, chunkIndexArray), adataArray);
+          queuedBytes += chunk.length - tagLengthIfDecrypting + tagLengthIfEncrypting;
         } else {
           // After the last chunk, we either encrypt a final, empty
           // data chunk to get the final authentication tag or
           // validate that final authentication tag.
           adataView.setInt32(13 + 4, cryptedBytes); // Should be setInt64(13, ...)
           cryptedPromise = modeInstance[fn](finalChunk, mode.getNonce(iv, chunkIndexArray), adataTagArray);
+          queuedBytes += tagLengthIfEncrypting;
           done = true;
         }
         cryptedBytes += chunk.length - tagLengthIfDecrypting;
-        queuedBytes += chunk.length - tagLengthIfDecrypting;
         // eslint-disable-next-line no-loop-func
         latestPromise = latestPromise.then(() => cryptedPromise).then(async crypted => {
           await writer.ready;
           await writer.write(crypted);
-          queuedBytes -= chunk.length;
+          queuedBytes -= crypted.length;
         }).catch(err => writer.abort(err));
         if (done || queuedBytes > writer.desiredSize) {
           await latestPromise; // Respect backpressure
@@ -40038,7 +40809,7 @@ SymEncryptedAEADProtected.prototype.crypt = async function (fn, key, data, strea
   });
 };
 
-},{"../config":79,"../crypto":94,"../enums":113,"../util":152,"web-stream-tools":75}],138:[function(require,module,exports){
+},{"../config":79,"../crypto":94,"../enums":113,"../util":158,"web-stream-tools":75}],144:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -40198,7 +40969,7 @@ SymEncryptedIntegrityProtected.prototype.decrypt = async function (sessionKeyAlg
 
 exports.default = SymEncryptedIntegrityProtected;
 
-},{"../config":79,"../crypto":94,"../enums":113,"../util":152,"web-stream-tools":75}],139:[function(require,module,exports){
+},{"../config":79,"../crypto":94,"../enums":113,"../util":158,"web-stream-tools":75}],145:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -40420,7 +41191,7 @@ SymEncryptedSessionKey.prototype.postCloneTypeFix = function () {
 
 exports.default = SymEncryptedSessionKey;
 
-},{"../config":79,"../crypto":94,"../enums":113,"../type/s2k":151,"../util":152}],140:[function(require,module,exports){
+},{"../config":79,"../crypto":94,"../enums":113,"../type/s2k":157,"../util":158}],146:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -40557,7 +41328,7 @@ SymmetricallyEncrypted.prototype.encrypt = async function (algo, key) {
 
 exports.default = SymmetricallyEncrypted;
 
-},{"../config":79,"../crypto":94,"../enums":113,"../util":152,"web-stream-tools":75}],141:[function(require,module,exports){
+},{"../config":79,"../crypto":94,"../enums":113,"../util":158,"web-stream-tools":75}],147:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -40604,7 +41375,7 @@ Trust.prototype.read = function () {}; // TODO
 
 exports.default = Trust;
 
-},{"../enums":113}],142:[function(require,module,exports){
+},{"../enums":113}],148:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -40716,7 +41487,7 @@ UserAttribute.prototype.equals = function (usrAttr) {
 
 exports.default = UserAttribute;
 
-},{"../enums":113,"../util":152,"./packet":129}],143:[function(require,module,exports){
+},{"../enums":113,"../util":158,"./packet":135}],149:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -40818,7 +41589,7 @@ Userid.prototype.format = function (userid) {
 
 exports.default = Userid;
 
-},{"../enums":113,"../util":152}],144:[function(require,module,exports){
+},{"../enums":113,"../util":158}],150:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -40828,14 +41599,14 @@ var _util2 = _interopRequireDefault(_util);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-if (typeof window !== 'undefined') {
+if (typeof global !== 'undefined') {
   /********************************************************************
    * NOTE: This list is duplicated in Gruntfile.js,                   *
    * so that these polyfills are only included in the compat bundle.  *
    ********************************************************************/
 
   try {
-    if (typeof window.fetch === 'undefined') {
+    if (typeof global.fetch === 'undefined') {
       require('whatwg-fetch');
     }
     if (typeof Array.prototype.fill === 'undefined') {
@@ -40890,7 +41661,7 @@ if (typeof TextEncoder === 'undefined') {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./util":152,"@mattiasbuelens/web-streams-polyfill/es6":1,"core-js/fn/array/fill":"core-js/fn/array/fill","core-js/fn/array/find":"core-js/fn/array/find","core-js/fn/array/from":"core-js/fn/array/from","core-js/fn/array/includes":"core-js/fn/array/includes","core-js/fn/object/assign":"core-js/fn/object/assign","core-js/fn/promise":"core-js/fn/promise","core-js/fn/string/repeat":"core-js/fn/string/repeat","core-js/fn/symbol":"core-js/fn/symbol","core-js/fn/typed/uint8-array":"core-js/fn/typed/uint8-array","text-encoding-utf-8":71,"whatwg-fetch":"whatwg-fetch"}],145:[function(require,module,exports){
+},{"./util":158,"@mattiasbuelens/web-streams-polyfill/es6":1,"core-js/fn/array/fill":"core-js/fn/array/fill","core-js/fn/array/find":"core-js/fn/array/find","core-js/fn/array/from":"core-js/fn/array/from","core-js/fn/array/includes":"core-js/fn/array/includes","core-js/fn/object/assign":"core-js/fn/object/assign","core-js/fn/promise":"core-js/fn/promise","core-js/fn/string/repeat":"core-js/fn/string/repeat","core-js/fn/symbol":"core-js/fn/symbol","core-js/fn/typed/uint8-array":"core-js/fn/typed/uint8-array","text-encoding-utf-8":71,"whatwg-fetch":"whatwg-fetch"}],151:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -40983,7 +41754,7 @@ async function read(input) {
   return new Signature(packetlist);
 }
 
-},{"./encoding/armor":111,"./enums":113,"./packet":125}],146:[function(require,module,exports){
+},{"./encoding/armor":111,"./enums":113,"./packet":131}],152:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -41064,7 +41835,7 @@ ECDHSymmetricKey.fromClone = function (clone) {
 
 exports.default = ECDHSymmetricKey;
 
-},{"../util":152}],147:[function(require,module,exports){
+},{"../util":158}],153:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -41149,7 +41920,7 @@ KDFParams.fromClone = function (clone) {
 
 exports.default = KDFParams;
 
-},{"../enums.js":113}],148:[function(require,module,exports){
+},{"../enums.js":113}],154:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -41256,7 +42027,7 @@ Keyid.wildcard = function () {
 
 exports.default = Keyid;
 
-},{"../util.js":152}],149:[function(require,module,exports){
+},{"../util.js":158}],155:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -41414,7 +42185,7 @@ MPI.fromClone = function (clone) {
 
 exports.default = MPI;
 
-},{"../util":152,"bn.js":16}],150:[function(require,module,exports){
+},{"../util":158,"bn.js":16}],156:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -41539,7 +42310,7 @@ OID.fromClone = function (clone) {
 
 exports.default = OID;
 
-},{"../enums":113,"../util":152}],151:[function(require,module,exports){
+},{"../enums":113,"../util":158}],157:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -41711,51 +42482,42 @@ S2K.prototype.write = function () {
  */
 S2K.prototype.produce_key = async function (passphrase, numBytes) {
   passphrase = _util2.default.encode_utf8(passphrase);
-
-  async function round(prefix, s2k) {
-    const algorithm = _enums2.default.write(_enums2.default.hash, s2k.algorithm);
-
-    switch (s2k.type) {
-      case 'simple':
-        return _crypto2.default.hash.digest(algorithm, _util2.default.concatUint8Array([prefix, passphrase]));
-
-      case 'salted':
-        return _crypto2.default.hash.digest(algorithm, _util2.default.concatUint8Array([prefix, s2k.salt, passphrase]));
-
-      case 'iterated':
-        {
-          const count = s2k.get_count();
-          const data = _util2.default.concatUint8Array([s2k.salt, passphrase]);
-          const datalen = data.length;
-          const isp = new Uint8Array(prefix.length + count + datalen);
-          isp.set(prefix);
-          for (let pos = prefix.length; pos < count; pos += datalen) {
-            isp.set(data, pos);
-          }
-          return _crypto2.default.hash.digest(algorithm, isp.subarray(0, prefix.length + count));
-        }
-      case 'gnu':
-        throw new Error("GNU s2k type not supported.");
-
-      default:
-        throw new Error("Unknown s2k type.");
-    }
-  }
+  const algorithm = _enums2.default.write(_enums2.default.hash, this.algorithm);
 
   const arr = [];
   let rlength = 0;
-  const prefix = new Uint8Array(numBytes);
 
-  for (let i = 0; i < numBytes; i++) {
-    prefix[i] = 0;
-  }
-
-  let i = 0;
+  let prefixlen = 0;
   while (rlength < numBytes) {
-    const result = await round(prefix.subarray(0, i), this);
+    let toHash;
+    switch (this.type) {
+      case 'simple':
+        toHash = _util2.default.concatUint8Array([new Uint8Array(prefixlen), passphrase]);
+        break;
+      case 'salted':
+        toHash = _util2.default.concatUint8Array([new Uint8Array(prefixlen), this.salt, passphrase]);
+        break;
+      case 'iterated':
+        {
+          const data = _util2.default.concatUint8Array([this.salt, passphrase]);
+          let datalen = data.length;
+          const count = Math.max(this.get_count(), datalen);
+          toHash = new Uint8Array(prefixlen + count);
+          toHash.set(data, prefixlen);
+          for (let pos = prefixlen + datalen; pos < count; pos += datalen, datalen *= 2) {
+            toHash.copyWithin(pos, prefixlen, pos);
+          }
+          break;
+        }
+      case 'gnu':
+        throw new Error("GNU s2k type not supported.");
+      default:
+        throw new Error("Unknown s2k type.");
+    }
+    const result = await _crypto2.default.hash.digest(algorithm, toHash);
     arr.push(result);
     rlength += result.length;
-    i++;
+    prefixlen++;
   }
 
   return _util2.default.concatUint8Array(arr).subarray(0, numBytes);
@@ -41772,7 +42534,7 @@ S2K.fromClone = function (clone) {
 
 exports.default = S2K;
 
-},{"../config":79,"../crypto":94,"../enums.js":113,"../util.js":152}],152:[function(require,module,exports){
+},{"../config":79,"../crypto":94,"../enums.js":113,"../util.js":158}],158:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -42030,7 +42792,11 @@ exports.default = {
    * @returns {String}          Base-64 encoded string
    */
   Uint8Array_to_b64: function Uint8Array_to_b64(bytes, url) {
-    return _base2.default.encode(bytes, url).replace(/(\n)/g, '');
+    let encoded = _base2.default.encode(bytes).replace(/[\r\n]/g, '');
+    if (url) {
+      encoded = encoded.replace(/[+]/g, '-').replace(/[/]/g, '_').replace(/[=]/g, '');
+    }
+    return encoded;
   },
 
   /**
@@ -42326,7 +43092,7 @@ exports.default = {
       return;
     }
 
-    return typeof window !== 'undefined' && window.crypto && window.crypto.subtle;
+    return typeof global !== 'undefined' && global.crypto && global.crypto.subtle;
   },
 
   /**
@@ -42341,12 +43107,12 @@ exports.default = {
       return;
     }
 
-    if (typeof window !== 'undefined') {
-      if (window.crypto) {
-        return window.crypto.subtle || window.crypto.webkitSubtle;
+    if (typeof global !== 'undefined') {
+      if (global.crypto) {
+        return global.crypto.subtle || global.crypto.webkitSubtle;
       }
-      if (window.msCrypto) {
-        return window.msCrypto.subtle;
+      if (global.msCrypto) {
+        return global.msCrypto.subtle;
       }
     }
   },
@@ -42454,7 +43220,7 @@ exports.default = {
       throw new Error('User id string is too long');
     }
     try {
-      var _emailAddresses$parse = _emailAddresses2.default.parseOneAddress(userid);
+      var _emailAddresses$parse = _emailAddresses2.default.parseOneAddress({ input: userid, atInDisplayName: true });
 
       const name = _emailAddresses$parse.name,
             email = _emailAddresses$parse.address,
@@ -42535,6 +43301,19 @@ exports.default = {
       result += ALPHABET[MASK & buffer >> bitsLeft];
     }
     return result;
+  },
+
+  wrapError: function wrapError(message, error) {
+    if (!error) {
+      return new Error(message);
+    }
+
+    // update error message
+    try {
+      error.message = message + ': ' + error.message;
+    } catch (e) {}
+
+    return error;
   }
 }; // re-import module to access util functions
 // GPG4Browsers - An OpenPGP implementation in javascript
@@ -42566,7 +43345,8 @@ exports.default = {
  */
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./config":79,"./encoding/base64":112,"./util":152,"email-addresses":33,"web-stream-tools":75}],153:[function(require,module,exports){
+},{"./config":79,"./encoding/base64":112,"./util":158,"email-addresses":33,"web-stream-tools":75}],159:[function(require,module,exports){
+(function (global){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -42618,7 +43398,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @constructor
  */
 function WKD() {
-  this._fetch = typeof window !== 'undefined' ? window.fetch : require('node-fetch');
+  this._fetch = typeof global !== 'undefined' ? global.fetch : require('node-fetch');
 }
 
 /**
@@ -42668,7 +43448,8 @@ WKD.prototype.lookup = async function (options) {
 
 exports.default = WKD;
 
-},{"./crypto":94,"./key":116,"./util":152,"node-fetch":"node-fetch"}],154:[function(require,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./crypto":94,"./key":118,"./util":158,"node-fetch":"node-fetch"}],160:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -42823,6 +43604,20 @@ AsyncProxy.prototype.seedRandom = async function (workerId, size) {
 };
 
 /**
+ * Clear key caches
+ * @async
+ */
+AsyncProxy.prototype.clearKeyCache = async function () {
+  await Promise.all(this.workers.map(worker => new Promise((resolve, reject) => {
+    const id = this.getID();
+
+    worker.postMessage({ id, event: 'clear-key-cache' });
+
+    this.tasks[id] = { resolve, reject };
+  })));
+};
+
+/**
  * Terminates the workers
  */
 AsyncProxy.prototype.terminate = function () {
@@ -42862,5 +43657,5 @@ AsyncProxy.prototype.delegate = function (method, options) {
 
 exports.default = AsyncProxy;
 
-},{"../config":79,"../crypto":94,"../packet":125,"../util.js":152}]},{},[115])(115)
+},{"../config":79,"../crypto":94,"../packet":131,"../util.js":158}]},{},[115])(115)
 });

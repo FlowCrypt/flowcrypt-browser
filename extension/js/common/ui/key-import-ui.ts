@@ -281,7 +281,7 @@ export class KeyImportUi {
 
   private checkEncryptionPrvIfSelected = async (k: OpenPGP.key.Key, encrypted: OpenPGP.key.Key) => {
     if (this.checkEncryption && ! await k.getEncryptionKey()) {
-      if (await k.verifyPrimaryKey() === opgp.enums.keyStatus.no_self_cert) { // known issues - key can be fixed
+      if (await Catch.doesEventuallyReject(k.verifyPrimaryKey())) { // known issues - key can be fixed
         throw new KeyCanBeFixed(encrypted);
       } else if (await PgpKey.usableButExpired(k)) {
         // Maybe would be better to give user 3 abilities:

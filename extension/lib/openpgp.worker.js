@@ -1,4 +1,6 @@
+/*! OpenPGP.js v4.10.1 - 2020-02-27 - this is LGPL licensed code, see LICENSE/our website https://openpgpjs.org/ for more information. */
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+(function (global){
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -29,10 +31,8 @@
  * @module worker/worker
  */
 
-self.window = self; // to make UMD bundles work
-
 importScripts('openpgp.js');
-var openpgp = window.openpgp;
+var openpgp = global.openpgp;
 
 var randomQueue = [];
 var MAX_SIZE_RANDOM_BUFFER = 60000;
@@ -93,7 +93,7 @@ function configure(config) {
 }
 
 /**
- * Seed the library with entropy gathered window.crypto.getRandomValues
+ * Seed the library with entropy gathered global.crypto.getRandomValues
  * as this api is only avalible in the main window.
  * @param  {ArrayBuffer} buffer   Some random bytes
  */
@@ -104,12 +104,32 @@ function seedRandom(buffer) {
   openpgp.crypto.random.randomBuffer.set(buffer);
 }
 
+const keyCache = new Map();
+function getCachedKey(key) {
+  const armor = key.armor();
+  if (keyCache.has(armor)) {
+    return keyCache.get(armor);
+  }
+  keyCache.set(armor, key);
+  return key;
+}
+
 /**
  * Generic proxy function that handles all commands from the public api.
  * @param  {String} method    The public api function to be delegated to the worker thread
  * @param  {Object} options   The api function's options
  */
 function delegate(id, method, options) {
+  if (method === 'clear-key-cache') {
+    Array.from(keyCache.values()).forEach(key => {
+      if (key.isPrivate()) {
+        key.clearPrivateParams();
+      }
+    });
+    keyCache.clear();
+    response({ id, event: 'method-return' });
+    return;
+  }
   if (typeof openpgp[method] !== 'function') {
     response({ id:id, event:'method-return', err:'Unknown Worker Event' });
     return;
@@ -118,6 +138,13 @@ function delegate(id, method, options) {
   openpgp.util.restoreStreams(options);
   // parse cloned packets
   options = openpgp.packet.clone.parseClonedPackets(options, method);
+  // cache keys by armor, so that we don't have to repeatedly verify self-signatures
+  if (options.publicKeys) {
+    options.publicKeys = options.publicKeys.map(getCachedKey);
+  }
+  if (options.privateKeys) {
+    options.privateKeys = options.privateKeys.map(getCachedKey);
+  }
   openpgp[method](options).then(function(data) {
     // clone packets (for web worker structured cloning algorithm)
     response({ id:id, event:'method-return', data:openpgp.packet.clone.clonePackets(data) });
@@ -142,4 +169,5 @@ function response(event) {
  */
 postMessage({ event: 'loaded' });
 
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}]},{},[1]);

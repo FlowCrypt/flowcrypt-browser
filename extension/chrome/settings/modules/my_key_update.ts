@@ -17,6 +17,7 @@ import { OrgRules } from '../../../js/common/org-rules.js';
 import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 
 View.run(class MyKeyUpdateView extends View {
 
@@ -82,21 +83,22 @@ View.run(class MyKeyUpdateView extends View {
     } else if (await PgpKey.decrypt(uddatedKey, uddatedKeyPassphrase) !== true) {
       await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
     } else {
-      if (await uddatedKey.getEncryptionKey()) {
+      if (! await Catch.doesEventuallyReject(uddatedKey.getEncryptionKey())) {
         await this.storeUpdatedKeyAndPassphrase(uddatedKeyEncrypted, uddatedKeyPassphrase);
-      } else { // cannot get a valid encryption key packet
-        if ((await uddatedKey.verifyPrimaryKey() === opgp.enums.keyStatus.no_self_cert) || await PgpKey.usableButExpired(uddatedKey)) { // known issues - key can be fixed
-          const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
-            this.acctEmail, '.compatibility_fix_container', uddatedKeyEncrypted, uddatedKeyPassphrase, this.showKeyUrl
-          );
-          await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, uddatedKeyPassphrase);
-        } else {
-          await Ui.modal.warning(
-            'Key update: This looks like a valid key but it cannot be used for encryption. Email human@flowcrypt.com to see why is that. We\'re prompt to respond.',
-            Ui.testCompatibilityLink
-          );
-          window.location.href = this.showKeyUrl;
-        }
+        return;
+      }
+      // cannot get a valid encryption key packet
+      if (await Catch.doesEventuallyReject(uddatedKey.verifyPrimaryKey(), ['No self-certifications']) || await PgpKey.usableButExpired(uddatedKey)) { // known issues - key can be fixed
+        const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
+          this.acctEmail, '.compatibility_fix_container', uddatedKeyEncrypted, uddatedKeyPassphrase, this.showKeyUrl
+        );
+        await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, uddatedKeyPassphrase);
+      } else {
+        await Ui.modal.warning(
+          'Key update: This looks like a valid key but it cannot be used for encryption. Email human@flowcrypt.com to see why is that. We\'re prompt to respond.',
+          Ui.testCompatibilityLink
+        );
+        window.location.href = this.showKeyUrl;
       }
     }
   }
