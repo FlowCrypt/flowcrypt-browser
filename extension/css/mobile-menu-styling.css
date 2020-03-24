@@ -3,9 +3,11 @@
     overflow-x: hidden;
   }
 
-  .featherlight .featherlight-content {
+  .featherlight .featherlight-content,
+  .swal2-popup.ui-modal-iframe {
     margin: 0 auto;
-    width: 90%;
+    width: 90% !important;
+    padding: 0 !important;
   }
 
   .profile-img {

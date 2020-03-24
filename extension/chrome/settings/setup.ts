@@ -30,6 +30,7 @@ import { PassphraseStore } from '../../js/common/platform/store/passphrase-store
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 import { KeyManager } from '../../js/common/api/key-manager.js';
 import { SetupKeyManagerAutogenModule } from './setup/setup-key-manager-autogen.js';
+import Swal from 'sweetalert2';
 
 export interface SetupOptions {
   passphrase: string;
@@ -131,11 +132,11 @@ export class SetupView extends View {
   }
 
   public setHandlers = () => {
-    BrowserMsg.addListener('close_page', async () => { $('.featherlight-close').click(); });
+    BrowserMsg.addListener('close_page', async () => { $('.featherlight-close').click(); Swal.close(); });
     BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => { await Ui.modal.info(notification); });
     BrowserMsg.listen(this.tabId);
     $('.action_send').attr('href', Google.webmailUrl(this.acctEmail));
-    $('.action_show_help').click(this.setHandler(() => Settings.renderSubPage(this.acctEmail, this.tabId!, '/chrome/settings/modules/help.htm')));
+    $('.action_show_help').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail, this.tabId!, '/chrome/settings/modules/help.htm')));
     $('.back').off().click(this.setHandler(() => this.actionBackHandler()));
     $('#step_2_recovery .action_recover_account').click(this.setHandlerPrevent('double', () => this.setupRecoverKey.actionRecoverAccountHandler()));
     $('#step_4_more_to_recover .action_recover_remaining').click(this.setHandler(() => this.setupRecoverKey.actionRecoverRemainingKeysHandler()));

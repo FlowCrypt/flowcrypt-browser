@@ -40,7 +40,7 @@ export class Assert {
       const { setup_done } = await AcctStore.get(acctEmail, ['setup_done']);
       if (setup_done && primaryKi && !(await PgpKey.read(primaryKi.private)).isFullyEncrypted()) {
         if (window.location.pathname === '/chrome/settings/index.htm') {
-          Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
+          await Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
         } else {
           const msg = `Protect your key with a pass phrase to finish setup.`;
           const r = await Ui.renderOverlayPromptAwaitUserChoice({ finishSetup: {}, later: { color: 'gray' } }, msg);

@@ -24,6 +24,7 @@ import { AcctStore, EmailProvider } from '../../js/common/platform/store/acct-st
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { GlobalStore } from '../../js/common/platform/store/global-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
+import Swal from 'sweetalert2';
 
 View.run(class SettingsView extends View {
 
@@ -73,7 +74,7 @@ View.run(class SettingsView extends View {
     await this.initialize();
     await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail, this.tabId);
     if (this.page) {
-      Settings.renderSubPage(this.acctEmail, this.tabId, this.page, this.pageUrlParams);
+      await Settings.renderSubPage(this.acctEmail, this.tabId, this.page, this.pageUrlParams);
     }
     await Settings.populateAccountsMenu('index.htm');
     Ui.setTestState('ready');
@@ -81,16 +82,18 @@ View.run(class SettingsView extends View {
 
   public setHandlers = () => {
     BrowserMsg.addListener('open_page', async ({ page, addUrlText }: Bm.OpenPage) => {
-      Settings.renderSubPage(this.acctEmail, this.tabId, page, addUrlText);
+      await Settings.renderSubPage(this.acctEmail, this.tabId, page, addUrlText);
     });
     BrowserMsg.addListener('redirect', async ({ location }: Bm.Redirect) => {
       window.location.href = location;
     });
     BrowserMsg.addListener('close_page', async () => {
       $('.featherlight-close').click();
+      Swal.close();
     });
     BrowserMsg.addListener('reload', async ({ advanced }: Bm.Reload) => {
       $('.featherlight-close').click();
+      Swal.close();
       this.reload(advanced);
     });
     BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
@@ -136,7 +139,7 @@ View.run(class SettingsView extends View {
     $('.show_settings_page').click(this.setHandler(async target => {
       const page = $(target).attr('page');
       if (page) {
-        Settings.renderSubPage(this.acctEmail!, this.tabId, page, $(target).attr('addurltext') || '');
+        await Settings.renderSubPage(this.acctEmail!, this.tabId, page, $(target).attr('addurltext') || '');
       } else {
         Catch.report(`Unknown target page in element: ${target.outerHTML}`);
       }
@@ -144,7 +147,7 @@ View.run(class SettingsView extends View {
     $('.action_show_encrypted_inbox').click(this.setHandler(target => {
       window.location.href = Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: this.acctEmail! });
     }));
-    $('.action_go_auth_denied').click(this.setHandler(() => Settings.renderSubPage(this.acctEmail!, this.tabId, '/chrome/settings/modules/auth_denied.htm')));
+    $('.action_go_auth_denied').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, '/chrome/settings/modules/auth_denied.htm')));
     $('.action_add_account').click(this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId)));
     $('.action_google_auth').click(this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail)));
     // $('.action_microsoft_auth').click(this.setHandlerPrevent('double', function() {
@@ -164,8 +167,8 @@ View.run(class SettingsView extends View {
       $(".ion-ios-arrow-down").toggleClass("up");
       $(".add-account").toggleClass("hidden");
     }));
-    $('#status-row #status_google').click(this.setHandler(() => Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'google_account' })));
-    $('#status-row #status_local_store').click(this.setHandler(() => Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'local_store' })));
+    $('#status-row #status_google').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'google_account' })));
+    $('#status-row #status_local_store').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'local_store' })));
   }
 
   private displayOrig = (selector: string) => {
@@ -364,7 +367,7 @@ View.run(class SettingsView extends View {
     const subscription = await AcctStore.getSubscription(acctEmail);
     $('#status-row #status_subscription').text(`s:${liveness}:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
     if (subscription.active) {
-      const showAcct = () => Settings.renderSubPage(acctEmail, this.tabId, '/chrome/settings/modules/account.htm');
+      const showAcct = async () => await Settings.renderSubPage(acctEmail, this.tabId, '/chrome/settings/modules/account.htm');
       $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(this.setHandler(showAcct)).css('cursor', 'pointer');
       if (subscription.method === 'trial') {
         $('.logo-row .subscription .expire').text(subscription.expire ? ('trial ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
@@ -404,9 +407,9 @@ View.run(class SettingsView extends View {
       html += `</div>`;
     }
     Xss.sanitizeAppend('.key_list', html);
-    $('.action_show_key').click(this.setHandler(target => {
+    $('.action_show_key').click(this.setHandler(async target => {
       // the UI below only gets rendered when account_email is available
-      Settings.renderSubPage(this.acctEmail!, this.tabId, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
+      await Settings.renderSubPage(this.acctEmail!, this.tabId, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
     }));
     $('.action_remove_key').click(this.setHandler(async target => {
       // the UI below only gets rendered when account_email is available

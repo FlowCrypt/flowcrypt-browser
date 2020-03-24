@@ -3,7 +3,7 @@
 'use strict';
 
 import { Dict, Str, Url, UrlParams } from './core/common.js';
-import { JQS, Ui } from './browser/ui.js';
+import { Ui } from './browser/ui.js';
 import { Api } from './api/api.js';
 import { ApiErr } from './api/error/api-error.js';
 import { ApiErrResponse } from './api/error/api-error-types.js';
@@ -33,17 +33,12 @@ export class Settings {
     return PgpPwd.estimateStrength(zxcvbn(passphrase, PgpPwd.weakWords()).guesses, type); // tslint:disable-line:no-unsafe-any
   }
 
-  public static renderSubPage = (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
-    ($ as JQS).featherlight({
-      beforeClose: () => {
-        const urlWithoutPageParam = Url.removeParamsFromUrl(window.location.href, ['page']);
-        window.history.pushState('', '', urlWithoutPageParam);
-      },
-      closeOnClick: 'background',
-      iframe: Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams),
-      iframeWidth: Math.min(800, $('body').width()! - 200),
-      iframeHeight: $('body').height()! - ($('body').height()! > 800 ? 150 : 75),
-    });
+  public static renderSubPage = async (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
+    await Ui.modal.iframe(
+      Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams),
+      Math.min(800, $('body').width()! - 200),
+      $('body').height()! - ($('body').height()! > 800 ? 150 : 75)
+    );
   }
 
   public static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
@@ -285,7 +280,7 @@ export class Settings {
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
         if (settingsTabId) {
-          Settings.renderSubPage(acctEmail, settingsTabId, '/chrome/settings/modules/auth_denied.htm');
+          await Settings.renderSubPage(acctEmail, settingsTabId, '/chrome/settings/modules/auth_denied.htm');
         }
       } else {
         Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);

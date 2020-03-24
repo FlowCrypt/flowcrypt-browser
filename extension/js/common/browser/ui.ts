@@ -4,7 +4,7 @@
 
 import { ApiErr } from '../api/error/api-error.js';
 import { Catch } from '../platform/catch.js';
-import { Dict } from '../core/common.js';
+import { Dict, Url } from '../core/common.js';
 import Swal from 'sweetalert2';
 import { Xss } from '../platform/xss.js';
 
@@ -137,10 +137,8 @@ export class Ui {
 
   public static modal = {
     info: async (text: string): Promise<void> => {
-      await Swal.fire({
+      await Ui.swal().fire({
         html: Xss.escape(text).replace(/\n/g, '<br>'),
-        animation: false,
-        scrollbarPadding: false,
         allowOutsideClick: false,
         customClass: {
           popup: 'ui-modal-info',
@@ -149,11 +147,9 @@ export class Ui {
       });
     },
     warning: async (text: string, footer?: string): Promise<void> => {
-      await Swal.fire({
+      await Ui.swal().fire({
         html: `<span class="orange">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
         footer: footer ? Xss.htmlSanitize(footer) : '',
-        animation: false,
-        scrollbarPadding: false,
         allowOutsideClick: false,
         customClass: {
           popup: 'ui-modal-warning',
@@ -163,11 +159,9 @@ export class Ui {
     },
     error: async (text: string, isHTML: boolean = false, footer?: string): Promise<void> => {
       text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
-      await Swal.fire({
+      await Ui.swal().fire({
         html: `<span class="red">${text}</span>`,
         footer: footer ? Xss.htmlSanitize(footer) : '',
-        animation: false,
-        scrollbarPadding: false,
         allowOutsideClick: false,
         customClass: {
           popup: 'ui-modal-error',
@@ -176,10 +170,8 @@ export class Ui {
       });
     },
     confirm: async (text: string): Promise<boolean> => {
-      const { dismiss } = await Swal.fire({
+      const { dismiss } = await Ui.swal().fire({
         html: Xss.escape(text).replace(/\n/g, '<br>'),
-        animation: false,
-        scrollbarPadding: false,
         allowOutsideClick: false,
         showCancelButton: true,
         customClass: {
@@ -191,12 +183,10 @@ export class Ui {
       return typeof dismiss === 'undefined';
     },
     confirmWithCheckbox: async (label: string, html: string = ''): Promise<boolean> => {
-      const { dismiss } = await Swal.fire({
+      const { dismiss } = await Ui.swal().fire({
         html,
         input: 'checkbox',
         inputPlaceholder: label,
-        animation: false,
-        scrollbarPadding: false,
         allowOutsideClick: false,
         customClass: {
           popup: 'ui-modal-confirm-checkbox',
@@ -215,6 +205,28 @@ export class Ui {
       });
       return typeof dismiss === 'undefined';
     },
+    iframe: async (iframeUrl: string, iframeWidth: number, iframeHeight: number): Promise<void> => {
+      await Swal.fire({
+        onOpen: () => {
+          $(Swal.getContent()).attr('data-test', 'dialog');
+          $(Swal.getCloseButton()).attr('data-test', 'dialog-close').blur();
+        },
+        onClose: () => {
+          const urlWithoutPageParam = Url.removeParamsFromUrl(window.location.href, ['page']);
+          window.history.pushState('', '', urlWithoutPageParam);
+        },
+        keydownListenerCapture: true,
+        html: `<iframe src="${Xss.escape(iframeUrl)}" width="${iframeWidth}" height="${iframeHeight}" style="border: 0"></iframe>`,
+        width: 'auto',
+        showCloseButton: true,
+        animation: false,
+        scrollbarPadding: false,
+        showConfirmButton: false,
+        customClass: {
+          popup: 'ui-modal-iframe'
+        }
+      });
+    }
   };
 
   public static testCompatibilityLink = '<a href="/chrome/settings/modules/compatibility.htm" target="_blank">Test your OpenPGP key compatibility</a>';
@@ -356,11 +368,10 @@ export class Ui {
   }
 
   public static toast = async (msg: string, seconds = 2): Promise<void> => {
-    await Swal.fire({
+    await Ui.swal().fire({
       toast: true,
       title: msg,
       showConfirmButton: false,
-      animation: false,
       position: 'bottom',
       timer: seconds * 1000,
       customClass: {
@@ -369,4 +380,10 @@ export class Ui {
       }
     });
   }
+
+  private static swal = () => Swal.mixin({
+    showClass: { popup: 'swal2-noanimation', backdrop: 'swal2-noanimation' },
+    hideClass: { popup: '', backdrop: '' },
+    scrollbarPadding: false,
+  })
 }
