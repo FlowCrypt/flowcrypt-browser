@@ -289,17 +289,13 @@ export class PgpKey {
     if (!key) {
       return false;
     }
-    console.log('x1');
     if (! await Catch.doesReject(key.getEncryptionKey())) {
       return false; // good key - cannot be expired
     }
-    console.log('x2');
     const oneSecondBeforeExpiration = await PgpKey.dateBeforeExpirationIfAlreadyExpired(key);
-    console.log('x3', oneSecondBeforeExpiration);
     if (typeof oneSecondBeforeExpiration === 'undefined') {
       return false; // key does not expire
     }
-    console.log('x4', oneSecondBeforeExpiration);
     try { // try to see if the key was usable just before expiration
       await key.getEncryptionKey(undefined, oneSecondBeforeExpiration);
       return true;
