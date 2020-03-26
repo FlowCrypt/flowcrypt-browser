@@ -14,6 +14,7 @@ import { Str } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
+import { AjaxErrMsgs } from '../../../js/common/api/error/api-error-types.js';
 
 export class ComposerUserError extends Error { }
 export class ComposerNotReadyError extends ComposerUserError { }
@@ -74,7 +75,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     } else if (ApiErr.isReqTooLarge(e)) {
       await Ui.modal.error(`Could not send: message or attachments too large.`);
     } else if (ApiErr.isBadReq(e)) {
-      if (e.parsedErrMsg === e.STD_ERR_MSGS.GOOGLE_INVALID_TO_HEADER || e.parsedErrMsg === e.STD_ERR_MSGS.GOOGLE_RECIPIENT_ADDRESS_REQUIRED) {
+      if (e.parsedErrMsg === AjaxErrMsgs.GOOGLE_INVALID_TO_HEADER || e.parsedErrMsg === AjaxErrMsgs.GOOGLE_RECIPIENT_ADDRESS_REQUIRED) {
         await Ui.modal.error('Error from google: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.');
       } else {
         if (await Ui.modal.confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
