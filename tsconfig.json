@@ -60,6 +60,10 @@
       "featherlight": [
         "lib/featherlight/featherlight.js",
         "COMMENT"
+      ],
+      "node-forge": [
+        "lib/forge.js",
+        "COMMENT"
       ]
     },
     "typeRoots": [
