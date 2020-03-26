@@ -678,6 +678,15 @@ declare module "node-forge" {
         }
 
         function createSignedData(): PkcsSignedData;
+
+        interface PkcsEnvelopedData {
+            content?: string | util.ByteBuffer;
+            addRecipient(certificate: pki.Certificate): void;
+            encrypt(): void;
+            toAsn1(): asn1.Asn1;
+        }
+
+        function createEnvelopedData(): PkcsEnvelopedData;
     }
 
     namespace pkcs5 {

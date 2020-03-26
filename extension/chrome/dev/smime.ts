@@ -18,8 +18,7 @@ Catch.try(async () => {
   }
 
   function encrypt() {
-    // sadly forge typings are not accurrate: missing "createEnvelopedData"
-    var p7 = (forge.pkcs7 as any).createEnvelopedData();
+    var p7 = forge.pkcs7.createEnvelopedData();
     var cert = forge.pki.certificateFromPem(String($('#cert').val()));
     p7.addRecipient(cert);
 
