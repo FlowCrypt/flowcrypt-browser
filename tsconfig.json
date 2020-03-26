@@ -62,7 +62,7 @@
         "COMMENT"
       ],
       "node-forge": [
-        "lib/forge.min.js",
+        "lib/forge.js",
         "COMMENT"
       ]
     },
