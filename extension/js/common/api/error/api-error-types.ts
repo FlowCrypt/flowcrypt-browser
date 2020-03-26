@@ -62,13 +62,12 @@ export class ApiErrResponse extends ApiCallErr {
 
 }
 
-export class AjaxErr extends ApiCallErr {
+export class AjaxErrMsgs {
+  public static GOOGLE_INVALID_TO_HEADER = 'Invalid to header';
+  public static GOOGLE_RECIPIENT_ADDRESS_REQUIRED = 'Recipient address required';
+}
 
-  // todo - move these out of the class, they get weirdly serialized in err reports
-  public STD_ERR_MSGS = { // tslint:disable-line:oneliner-object-literal
-    GOOGLE_INVALID_TO_HEADER: 'Invalid to header',
-    GOOGLE_RECIPIENT_ADDRESS_REQUIRED: 'Recipient address required',
-  };
+export class AjaxErr extends ApiCallErr { // no static props, else will get serialised into err reports. Static methods ok
 
   public static fromXhr = (xhr: RawAjaxErr, req: JQueryAjaxSettings, stack: string) => {
     const responseText = xhr.responseText || '';
