@@ -87,12 +87,12 @@ export class ContactStore extends AbstractStore {
       }
       if (!pubkey) {
         return {
-          email,
+          email: validEmail,
           name: name || null,
           pending_lookup: (pendingLookup ? 1 : 0),
           pubkey: null,
           has_pgp: 0, // number because we use it for sorting
-          searchable: ContactStore.dbCreateSearchIndexList(email, name || null, false),
+          searchable: ContactStore.dbCreateSearchIndexList(validEmail, name || null, false),
           client: null,
           fingerprint: null,
           longid: null,
@@ -105,7 +105,7 @@ export class ContactStore extends AbstractStore {
       }
       const k = await PgpKey.read(pubkey);
       if (!k) {
-        throw new Error(`Could not read pubkey as valid OpenPGP key for: ${email}`);
+        throw new Error(`Could not read pubkey as valid OpenPGP key for: ${validEmail}`);
       }
       const keyDetails = await PgpKey.details(k);
       if (!lastSig) {
@@ -117,7 +117,7 @@ export class ContactStore extends AbstractStore {
         name: name || null,
         pubkey: keyDetails.public,
         has_pgp: 1, // number because we use it for sorting
-        searchable: ContactStore.dbCreateSearchIndexList(email, name || null, true),
+        searchable: ContactStore.dbCreateSearchIndexList(validEmail, name || null, true),
         client: ContactStore.storablePgpClient(client || 'pgp'),
         fingerprint: keyDetails.ids[0].fingerprint,
         longid: keyDetails.ids[0].longid,
