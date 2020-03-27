@@ -191,6 +191,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private actionActivateSecureReplyHandler = async (btn: HTMLElement, event: JQuery.Event) => {
     event.stopImmediatePropagation();
+    if ($('#switch_to_encrypted_reply').length) {
+      $('#switch_to_encrypted_reply').click();
+      return;
+    }
     const messageContainer = $(btn.closest('.h7') as HTMLElement);
     if (messageContainer.is(':last-child')) {
       if (this.isEncrypted()) {
