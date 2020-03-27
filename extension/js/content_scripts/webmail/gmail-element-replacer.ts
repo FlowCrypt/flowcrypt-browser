@@ -170,7 +170,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             $(secureReplyBtn).click();
           }
         });
-        gmailReplyBtn.click(Ui.event.handle(() => { this.keepNextStandardReplyBox = true; }));
+        gmailReplyBtn.click(Ui.event.handle(() => {
+          if (!$('#switch_to_encrypted_reply').length) {
+            this.keepNextStandardReplyBox = true;
+          }
+        }));
       }
     }
     // conversation top-right icon buttons
@@ -529,7 +533,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           for (const replyBoxEl of newReplyBoxes) {
             $(replyBoxEl).addClass('reply_message_evaluated');
             const notification = $('<div class="error_notification">The last message was encrypted, but you are composing a reply without encryption. </div>');
-            const swithToEncryptedReply = $('<a href>Switch to encrypted reply</a>');
+            const swithToEncryptedReply = $('<a href id="switch_to_encrypted_reply">Switch to encrypted reply</a>');
             swithToEncryptedReply.click(Ui.event.handle((el, ev: JQuery.Event) => {
               ev.preventDefault();
               $(el).closest('.reply_message_evaluated').removeClass('reply_message_evaluated');
