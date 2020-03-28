@@ -212,7 +212,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         if (ApiErr.isAuthErr(e)) {
           Settings.offerToLoginWithPopupShowModalOnErr(
             this.view.acctEmail,
-            (() => this.refreshAccountAndSubscriptionIfLoggedIn().catch(ApiErr.reportIfSignificant)), // retry this after re-auth
+            () => this.refreshAccountAndSubscriptionIfLoggedIn().catch(ApiErr.reportIfSignificant), // retry this after re-auth
             `Could not get account information from backend.\n`
           );
           return;
