@@ -271,9 +271,9 @@ View.run(class SettingsView extends View {
         }
       } catch (e) {
         if (ApiErr.isAuthErr(e)) {
-          const actionReauth = this.setHandler(() => Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail!));
-          Xss.sanitizeRender(statusContainer, '<a class="bad" href="#">Auth Needed</a>').find('a').click(actionReauth);
-          $('#status-row #status_flowcrypt').text(`fc:auth`).addClass('bad').addClass('link').click(actionReauth);
+          Xss.sanitizeRender(statusContainer, '<a class="bad" href="#">Auth Needed</a>');
+          $('#status-row #status_flowcrypt').text(`fc:auth`).addClass('bad');
+          Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail!, () => window.location.reload());
         } else if (ApiErr.isNetErr(e)) {
           Xss.sanitizeRender(statusContainer, '<a href="#">Network Error - Retry</a>')
             .find('a').one('click', this.setHandler(() => this.checkFcAcctAndSubscriptionAndContactPage()));
