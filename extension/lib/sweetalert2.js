@@ -1,5 +1,5 @@
 /*!
-* sweetalert2 v9.10.5
+* sweetalert2 v9.10.7
 * Released under the MIT License.
 */
 (function (global, factory) {
@@ -417,6 +417,18 @@
   var states = {
     previousBodyPadding: null
   };
+  var setInnerHtml = function setInnerHtml(elem, html) {
+    // #1926
+    elem.textContent = '';
+
+    if (html) {
+      var parser = new DOMParser();
+      var parsed = parser.parseFromString(html, "text/html");
+      toArray(parsed.querySelector('body').childNodes).forEach(function (child) {
+        elem.appendChild(child);
+      });
+    }
+  };
   var hasClass = function hasClass(elem, className) {
     if (!className) {
       return false;
@@ -587,7 +599,7 @@
 
   // Detect Node env
   var isNodeEnv = function isNodeEnv() {
-    return typeof global !== 'undefined' && {}.toString.call(global) === '[object global]';
+    return typeof window === 'undefined' || typeof document === 'undefined';
   };
 
   var sweetHTML = "\n <div aria-labelledby=\"".concat(swalClasses.title, "\" aria-describedby=\"").concat(swalClasses.content, "\" class=\"").concat(swalClasses.popup, "\" tabindex=\"-1\">\n   <div class=\"").concat(swalClasses.header, "\">\n     <ul class=\"").concat(swalClasses['progress-steps'], "\"></ul>\n     <div class=\"").concat(swalClasses.icon, " ").concat(iconTypes.error, "\"></div>\n     <div class=\"").concat(swalClasses.icon, " ").concat(iconTypes.question, "\"></div>\n     <div class=\"").concat(swalClasses.icon, " ").concat(iconTypes.warning, "\"></div>\n     <div class=\"").concat(swalClasses.icon, " ").concat(iconTypes.info, "\"></div>\n     <div class=\"").concat(swalClasses.icon, " ").concat(iconTypes.success, "\"></div>\n     <img class=\"").concat(swalClasses.image, "\" />\n     <h2 class=\"").concat(swalClasses.title, "\" id=\"").concat(swalClasses.title, "\"></h2>\n     <button type=\"button\" class=\"").concat(swalClasses.close, "\"></button>\n   </div>\n   <div class=\"").concat(swalClasses.content, "\">\n     <div id=\"").concat(swalClasses.content, "\" class=\"").concat(swalClasses['html-container'], "\"></div>\n     <input class=\"").concat(swalClasses.input, "\" />\n     <input type=\"file\" class=\"").concat(swalClasses.file, "\" />\n     <div class=\"").concat(swalClasses.range, "\">\n       <input type=\"range\" />\n       <output></output>\n     </div>\n     <select class=\"").concat(swalClasses.select, "\"></select>\n     <div class=\"").concat(swalClasses.radio, "\"></div>\n     <label for=\"").concat(swalClasses.checkbox, "\" class=\"").concat(swalClasses.checkbox, "\">\n       <input type=\"checkbox\" />\n       <span class=\"").concat(swalClasses.label, "\"></span>\n     </label>\n     <textarea class=\"").concat(swalClasses.textarea, "\"></textarea>\n     <div class=\"").concat(swalClasses['validation-message'], "\" id=\"").concat(swalClasses['validation-message'], "\"></div>\n   </div>\n   <div class=\"").concat(swalClasses.actions, "\">\n     <button type=\"button\" class=\"").concat(swalClasses.confirm, "\">OK</button>\n     <button type=\"button\" class=\"").concat(swalClasses.cancel, "\">Cancel</button>\n   </div>\n   <div class=\"").concat(swalClasses.footer, "\"></div>\n   <div class=\"").concat(swalClasses['timer-progress-bar-container'], "\">\n     <div class=\"").concat(swalClasses['timer-progress-bar'], "\"></div>\n   </div>\n </div>\n").replace(/(^|\n)\s*/g, '');
@@ -681,7 +693,7 @@
       addClass(container, swalClasses['no-transition']);
     }
 
-    container.innerHTML = sweetHTML;
+    setInnerHtml(container, sweetHTML);
     var targetElement = getTarget(params.target);
     targetElement.appendChild(container);
     setupAccessibility(params);
@@ -696,7 +708,7 @@
     } else if (_typeof(param) === 'object') {
       handleObject(param, target); // Plain string
     } else if (param) {
-      target.innerHTML = param;
+      setInnerHtml(target, param);
     }
   };
 
@@ -705,12 +717,12 @@
     if (param.jquery) {
       handleJqueryElem(target, param); // For other objects use their string representation
     } else {
-      target.innerHTML = param.toString();
+      setInnerHtml(target, param.toString());
     }
   };
 
   var handleJqueryElem = function handleJqueryElem(target, elem) {
-    target.innerHTML = '';
+    target.textContent = '';
 
     if (0 in elem) {
       for (var i = 0; i in elem; i++) {
@@ -804,7 +816,7 @@
 
   function renderButton(button, buttonType, params) {
     toggle(button, params["show".concat(capitalizeFirstLetter(buttonType), "Button")], 'inline-block');
-    button.innerHTML = params["".concat(buttonType, "ButtonText")]; // Set caption text
+    setInnerHtml(button, params["".concat(buttonType, "ButtonText")]); // Set caption text
 
     button.setAttribute('aria-label', params["".concat(buttonType, "ButtonAriaLabel")]); // ARIA label
     // Add buttons custom classes
@@ -1002,11 +1014,11 @@
   };
 
   renderInputType.select = function (select, params) {
-    select.innerHTML = '';
+    select.textContent = '';
 
     if (params.inputPlaceholder) {
       var placeholder = document.createElement('option');
-      placeholder.innerHTML = params.inputPlaceholder;
+      setInnerHtml(placeholder, params.inputPlaceholder);
       placeholder.value = '';
       placeholder.disabled = true;
       placeholder.selected = true;
@@ -1017,7 +1029,7 @@
   };
 
   renderInputType.radio = function (radio) {
-    radio.innerHTML = '';
+    radio.textContent = '';
     return radio;
   };
 
@@ -1027,7 +1039,7 @@
     checkbox.id = swalClasses.checkbox;
     checkbox.checked = Boolean(params.inputValue);
     var label = checkboxContainer.querySelector('span');
-    label.innerHTML = params.inputPlaceholder;
+    setInnerHtml(label, params.inputPlaceholder);
     return checkboxContainer;
   };
 
@@ -1091,7 +1103,7 @@
 
   var renderCloseButton = function renderCloseButton(instance, params) {
     var closeButton = getCloseButton();
-    closeButton.innerHTML = params.closeButtonHtml; // Custom class
+    setInnerHtml(closeButton, params.closeButtonHtml); // Custom class
 
     applyCustomClass(closeButton, params, 'closeButton');
     toggle(closeButton, params.showCloseButton);
@@ -1147,21 +1159,21 @@
   };
 
   var setContent = function setContent(icon, params) {
-    icon.innerHTML = '';
+    icon.textContent = '';
 
     if (params.iconHtml) {
-      icon.innerHTML = iconContent(params.iconHtml);
+      setInnerHtml(icon, iconContent(params.iconHtml));
     } else if (params.icon === 'success') {
-      icon.innerHTML = "\n      <div class=\"swal2-success-circular-line-left\"></div>\n      <span class=\"swal2-success-line-tip\"></span> <span class=\"swal2-success-line-long\"></span>\n      <div class=\"swal2-success-ring\"></div> <div class=\"swal2-success-fix\"></div>\n      <div class=\"swal2-success-circular-line-right\"></div>\n    ";
+      setInnerHtml(icon, "\n      <div class=\"swal2-success-circular-line-left\"></div>\n      <span class=\"swal2-success-line-tip\"></span> <span class=\"swal2-success-line-long\"></span>\n      <div class=\"swal2-success-ring\"></div> <div class=\"swal2-success-fix\"></div>\n      <div class=\"swal2-success-circular-line-right\"></div>\n    ");
     } else if (params.icon === 'error') {
-      icon.innerHTML = "\n      <span class=\"swal2-x-mark\">\n        <span class=\"swal2-x-mark-line-left\"></span>\n        <span class=\"swal2-x-mark-line-right\"></span>\n      </span>\n    ";
+      setInnerHtml(icon, "\n      <span class=\"swal2-x-mark\">\n        <span class=\"swal2-x-mark-line-left\"></span>\n        <span class=\"swal2-x-mark-line-right\"></span>\n      </span>\n    ");
     } else {
       var defaultIconHtml = {
         question: '?',
         warning: '!',
         info: 'i'
       };
-      icon.innerHTML = iconContent(defaultIconHtml[params.icon]);
+      setInnerHtml(icon, iconContent(defaultIconHtml[params.icon]));
     }
   };
 
@@ -1256,7 +1268,7 @@
   var createStepElement = function createStepElement(step) {
     var stepEl = document.createElement('li');
     addClass(stepEl, swalClasses['progress-step']);
-    stepEl.innerHTML = step;
+    setInnerHtml(stepEl, step);
     return stepEl;
   };
 
@@ -1279,7 +1291,7 @@
     }
 
     show(progressStepsContainer);
-    progressStepsContainer.innerHTML = '';
+    progressStepsContainer.textContent = '';
     var currentProgressStep = parseInt(params.currentProgressStep === undefined ? getQueueStep() : params.currentProgressStep);
 
     if (currentProgressStep >= params.progressSteps.length) {
@@ -2070,7 +2082,7 @@
 
   function showValidationMessage(error) {
     var domCache = privateProps.domCache.get(this);
-    domCache.validationMessage.innerHTML = error;
+    setInnerHtml(domCache.validationMessage, error);
     var popupComputedStyle = window.getComputedStyle(domCache.popup);
     domCache.validationMessage.style.marginLeft = "-".concat(popupComputedStyle.getPropertyValue('padding-left'));
     domCache.validationMessage.style.marginRight = "-".concat(popupComputedStyle.getPropertyValue('padding-right'));
@@ -2401,7 +2413,7 @@
         var optionLabel = inputOption[1];
         var option = document.createElement('option');
         option.value = optionValue;
-        option.innerHTML = optionLabel;
+        setInnerHtml(option, optionLabel);
 
         if (params.inputValue.toString() === optionValue.toString()) {
           option.selected = true;
@@ -2427,7 +2439,7 @@
         }
 
         var label = document.createElement('span');
-        label.innerHTML = radioLabel;
+        setInnerHtml(label, radioLabel);
         label.className = swalClasses.label;
         radioLabelElement.appendChild(radioInput);
         radioLabelElement.appendChild(label);
@@ -3039,7 +3051,7 @@
     };
   });
   SweetAlert.DismissReason = DismissReason;
-  SweetAlert.version = '9.10.5';
+  SweetAlert.version = '9.10.7';
 
   var Swal = SweetAlert;
   Swal["default"] = Swal;
