@@ -16,7 +16,6 @@ import { Catch } from '../platform/catch.js';
 import { GmailRes } from './email-provider/gmail/gmail-parser';
 import { GoogleAuthErr } from './error/api-error-types.js';
 import { GoogleAuthWindowResult$result } from '../browser/browser-msg.js';
-import { OrgRules } from '../org-rules.js';
 import { Ui } from '../browser/ui.js';
 import { AcctStore, AcctStoreDict } from '../platform/store/acct-store.js';
 
@@ -142,14 +141,12 @@ export class GoogleAuth {
       if (!authRes.acctEmail) {
         return { result: 'Error', error: 'Grant was successful but missing acctEmail', acctEmail: authRes.acctEmail, id_token: undefined };
       }
-      if (!OrgRules.isPublicEmailProviderDomain(authRes.acctEmail)) {
-        try { // users on @custom-domain.com must check with backend to look for org rules, if any
-          const uuid = Api.randomFortyHexChars();
-          await Backend.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
-          await Backend.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // will store org rules and subscription
-        } catch (e) {
-          return { result: 'Error', error: `Grant successful but error accessing fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
-        }
+      try {
+        const uuid = Api.randomFortyHexChars();
+        await Backend.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
+        await Backend.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // will store org rules and subscription
+      } catch (e) {
+        return { result: 'Error', error: `Grant successful but error accessing fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
       }
     }
     return authRes;

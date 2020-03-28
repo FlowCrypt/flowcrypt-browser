@@ -17,6 +17,7 @@ import { View } from '../../../js/common/view.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
+import { Api } from '../../../js/common/api/api.js';
 
 View.run(class ExperimentalView extends View {
 
@@ -45,7 +46,8 @@ View.run(class ExperimentalView extends View {
     $('.action_throw_err').click(this.setHandler(async () => Catch.test('error')));
     $('.action_throw_obj').click(this.setHandler(async () => Catch.test('object')));
     $('.action_reset_account').click(this.setHandlerPrevent('double', this.acctResetHandler));
-    $('.action_reset_managing_auth').click(this.setHandler(el => this.resetManagingAuthHandler()));
+    $('.action_reset_fc_auth').click(this.setHandler(el => this.resetFlowCryptAuthHandler()));
+    $('.action_regenerate_uuid').click(this.setHandler(el => this.regenerateUuidHandler()));
     $('.action_make_google_auth_token_unusable').click(this.setHandler(el => this.makeGoogleAuthTokenUnusableHandler()));
     $('.action_make_google_refresh_token_unusable').click(this.setHandler(el => this.makeGoogleRefreshTokenUnusableHandler()));
     $('.action_account_email_changed').click(this.setHandler(el => this.acctEmailChangedHandler()));
@@ -93,7 +95,12 @@ View.run(class ExperimentalView extends View {
     BrowserMsg.send.reload(this.parentTabId, {});
   }
 
-  private resetManagingAuthHandler = async () => {
+  private regenerateUuidHandler = async () => {
+    await AcctStore.set(this.acctEmail, { uuid: Api.randomFortyHexChars() });
+    BrowserMsg.send.reload(this.parentTabId, {});
+  }
+
+  private resetFlowCryptAuthHandler = async () => {
     await AcctStore.set(this.acctEmail, { subscription: undefined, uuid: undefined });
     BrowserMsg.send.reload(this.parentTabId, {});
   }

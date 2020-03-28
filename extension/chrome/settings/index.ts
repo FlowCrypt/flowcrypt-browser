@@ -25,6 +25,7 @@ import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { GlobalStore } from '../../js/common/platform/store/global-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import Swal from 'sweetalert2';
+import { Subscription } from '../../js/common/subscription.js';
 
 View.run(class SettingsView extends View {
 
@@ -257,11 +258,6 @@ View.run(class SettingsView extends View {
 
   private checkFcAcctAndSubscriptionAndContactPage = async () => {
     const statusContainer = $('.public_profile_indicator_container');
-    try {
-      await this.renderSubscriptionStatusHeader(this.acctEmail!);
-    } catch (e) {
-      Catch.reportErr(e);
-    }
     const authInfo = await AcctStore.authInfo(this.acctEmail!);
     if (authInfo.uuid) { // have auth email set
       try {
@@ -275,9 +271,9 @@ View.run(class SettingsView extends View {
         }
       } catch (e) {
         if (ApiErr.isAuthErr(e)) {
-          const actionReauth = this.setHandler(() => Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail!));
-          Xss.sanitizeRender(statusContainer, '<a class="bad" href="#">Auth Needed</a>').find('a').click(actionReauth);
-          $('#status-row #status_flowcrypt').text(`fc:auth`).addClass('bad').addClass('link').click(actionReauth);
+          Xss.sanitizeRender(statusContainer, '<a class="bad" href="#">Auth Needed</a>');
+          $('#status-row #status_flowcrypt').text(`fc:auth`).addClass('bad');
+          Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail!, () => window.location.reload());
         } else if (ApiErr.isNetErr(e)) {
           Xss.sanitizeRender(statusContainer, '<a href="#">Network Error - Retry</a>')
             .find('a').one('click', this.setHandler(() => this.checkFcAcctAndSubscriptionAndContactPage()));
@@ -292,6 +288,7 @@ View.run(class SettingsView extends View {
       statusContainer.find('.status-indicator').addClass('inactive');
       $('#status-row #status_flowcrypt').text(`fc:none`);
     }
+    this.renderSubscriptionStatusHeader(await AcctStore.getSubscription(this.acctEmail!));
     statusContainer.css('visibility', 'visible');
   }
 
@@ -351,29 +348,16 @@ View.run(class SettingsView extends View {
     }
   }
 
-  private renderSubscriptionStatusHeader = async (acctEmail: string) => {
-    let liveness = '';
-    try {
-      await Backend.getSubscriptionWithoutLogin(acctEmail);
-      liveness = 'live';
-    } catch (e) {
-      if (!ApiErr.isNetErr(e)) {
-        Catch.reportErr(e);
-        liveness = 'err';
-      } else {
-        liveness = 'offline';
-      }
-    }
-    const subscription = await AcctStore.getSubscription(acctEmail);
-    $('#status-row #status_subscription').text(`s:${liveness}:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
+  private renderSubscriptionStatusHeader = (subscription: Subscription) => {
+    $('#status-row #status_subscription').text(`s:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
     if (subscription.active) {
-      const showAcct = async () => await Settings.renderSubPage(acctEmail, this.tabId, '/chrome/settings/modules/account.htm');
+      const showAcct = async () => await Settings.renderSubPage(this.acctEmail, this.tabId, '/chrome/settings/modules/account.htm');
       $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(this.setHandler(showAcct)).css('cursor', 'pointer');
       if (subscription.method === 'trial') {
         $('.logo-row .subscription .expire').text(subscription.expire ? ('trial ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
         $('.logo-row .subscription .upgrade').css('display', 'inline-block');
       } else if (subscription.method === 'group') {
-        $('#status-row #status_google').text(`s:${liveness}:active:group`);
+        $('#status-row #status_google').text(`s:active:group`);
         $('.logo-row .subscription .expire').text('group billing').css('display', 'inline-block');
       }
     } else {

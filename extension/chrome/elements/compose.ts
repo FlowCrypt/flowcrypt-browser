@@ -5,7 +5,6 @@
 import { EmailProviderInterface, ReplyParams } from '../../js/common/api/email-provider/email-provider-api.js';
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { Assert } from '../../js/common/assert.js';
-import { Backend } from '../../js/common/api/backend.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Ui } from '../../js/common/browser/ui.js';
@@ -135,7 +134,6 @@ export class ComposeView extends View {
     this.replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
     this.isReplyBox = !!this.replyMsgId;
     this.emailProvider = new Gmail(this.acctEmail);
-    Backend.getSubscriptionWithoutLogin(this.acctEmail).catch(ApiErr.reportIfSignificant); // updates storage
     opgp.initWorker({ path: '/lib/openpgp.worker.js' });
   }
 
@@ -163,6 +161,7 @@ export class ComposeView extends View {
     if (!this.isReplyBox) {
       await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail);
     }
+    this.storageModule.refreshAccountAndSubscriptionIfLoggedIn().catch(ApiErr.reportIfSignificant);
     if (this.replyMsgId) {
       await this.renderModule.fetchReplyMeta(Object.keys(storage.sendAs!));
     }

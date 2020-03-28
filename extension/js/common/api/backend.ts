@@ -96,14 +96,6 @@ export class Backend extends Api {
     await AcctStore.set(acctEmail, { uuid });
   }
 
-  public static getSubscriptionWithoutLogin = async (acctEmail: string) => {
-    const r = await Backend.request<BackendRes.FcAccountCheck>('account/check', {
-      emails: [acctEmail],
-    });
-    await AcctStore.set(acctEmail, { subscription: r.subscription || undefined });
-    return r;
-  }
-
   public static accountUpdate = async (fcAuth: FcUuidAuth, profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {
     Backend.throwIfMissingUuid(fcAuth);
     return await Backend.request<BackendRes.FcAccountUpdate>('account/update', {

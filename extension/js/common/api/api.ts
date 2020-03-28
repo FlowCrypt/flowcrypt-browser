@@ -138,7 +138,7 @@ export class Api {
     };
   }
 
-  public static randomFortyHexChars = (): string => { // 40-character hex
+  public static randomFortyHexChars = (): string => {
     const bytes = Array.from(secureRandomBytes(20));
     return bytes.map(b => ('0' + (b & 0xFF).toString(16)).slice(-2)).join('');
   }
