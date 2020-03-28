@@ -60,13 +60,6 @@ export const mockBackendEndpoints: HandlersDefinition = {
       domain_org_rules: mockBackendData.getOrgRules(parsed.account),
     });
   },
-  '/api/account/check': async ({ body }, req) => { // todo - this backend call should eventually be deprecated
-    const parsed = body as Dict<any>;
-    const acct = parsed.emails.pop();
-    return JSON.stringify({
-      subscription: mockBackendData.getSubscription(acct),
-    });
-  },
   '/api/account/update': async ({ body }, req) => {
     const parsed = throwIfNotPostWithAuth(body, req);
     throw new Error(`${req.url} mock not implemented`);
