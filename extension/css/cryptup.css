@@ -146,7 +146,9 @@ span.gray { color: #b7b7b7; }
   border-radius: 0;
 }
 
+.swal2-popup.ui-modal-iframe .swal2-close { color: #666; }
 .swal2-popup.ui-modal-iframe iframe { max-width: 100%; }
+.swal2-container.ui-modal-page { background: rgba(0, 0, 0, 0.6) !important; }
 
 .button.gray2 {
   background-color: #d9d9d9;
@@ -2556,7 +2558,14 @@ div#cryptup_dialog iframe.tall {
   -webkit-animation: fadeIn 0.5s ease;
   animation: fadeIn 0.5s ease;
 }
-.lightboxed { width: 700px; }
+
+.lightboxed {
+  width: 700px;
+  max-width: 90%;
+  margin: 2em auto;
+  text-align: left;
+  font-size: 0.9em;
+}
 
 .lightboxed pre {
   padding-top: 0;
