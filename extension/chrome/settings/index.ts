@@ -170,6 +170,9 @@ View.run(class SettingsView extends View {
     }));
     $('#status-row #status_google').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'google_account' })));
     $('#status-row #status_local_store').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'local_store' })));
+    $('[data-swal-page]').click(this.setHandler(async (target) => {
+      await Ui.modal.page($(target).data('swal-page') as string);
+    }));
   }
 
   private displayOrig = (selector: string) => {

@@ -205,8 +205,25 @@ export class Ui {
       });
       return typeof dismiss === 'undefined';
     },
+    page: async (htmlUrl: string): Promise<void> => {
+      const html = await (await fetch(htmlUrl)).text();
+      await Ui.swal().fire({
+        onOpen: () => {
+          Swal.getCloseButton().blur();
+        },
+        html: Xss.htmlSanitize(html),
+        width: 750,
+        showCloseButton: true,
+        scrollbarPadding: true,
+        showConfirmButton: false,
+        customClass: {
+          container: 'ui-modal-page',
+          popup: 'ui-modal-iframe'
+        }
+      });
+    },
     iframe: async (iframeUrl: string, iframeWidth: number, iframeHeight: number): Promise<void> => {
-      await Swal.fire({
+      await Ui.swal().fire({
         onOpen: () => {
           $(Swal.getContent()).attr('data-test', 'dialog');
           $(Swal.getCloseButton()).attr('data-test', 'dialog-close').blur();
@@ -219,8 +236,7 @@ export class Ui {
         html: `<iframe src="${Xss.escape(iframeUrl)}" width="${iframeWidth}" height="${iframeHeight}" style="border: 0"></iframe>`,
         width: 'auto',
         showCloseButton: true,
-        animation: false,
-        scrollbarPadding: false,
+        scrollbarPadding: true,
         showConfirmButton: false,
         customClass: {
           popup: 'ui-modal-iframe'
