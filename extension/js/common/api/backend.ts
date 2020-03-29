@@ -79,9 +79,6 @@ export class Backend extends Api {
       uuid,
       token: null, // tslint:disable-line:no-null-keyword
     }, undefined, { Authorization: `Bearer ${idToken}` });
-    if (response.registered !== true) {
-      throw new Error('account_login with id_token did not result in successful registration');
-    }
     if (response.verified !== true) {
       throw new Error('account_login with id_token did not result in successful verificaion');
     }
