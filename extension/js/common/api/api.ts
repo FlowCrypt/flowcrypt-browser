@@ -48,7 +48,7 @@ export class Api {
       if (typeof progress === 'function') {
         request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total);
       }
-      request.onerror = progressEvent => {
+      const errHandler = (progressEvent: ProgressEvent<EventTarget>) => {
         if (!progressEvent.target) {
           reject(new Error(`Api.download(${url}) failed with a null progressEvent.target`));
         } else {
@@ -56,6 +56,8 @@ export class Api {
           reject(AjaxErr.fromXhr({ readyState, status, statusText }, { url, method: 'GET' }, Catch.stackTrace()));
         }
       };
+      request.onerror = errHandler;
+      request.ontimeout = errHandler;
       request.onload = e => resolve(new Buf(request.response as ArrayBuffer));
       request.send();
     });
