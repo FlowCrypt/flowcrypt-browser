@@ -57,10 +57,6 @@
         "lib/emailjs/emailjs-mime-builder.js",
         "COMMENT"
       ],
-      "featherlight": [
-        "lib/featherlight/featherlight.js",
-        "COMMENT"
-      ],
       "node-forge": [
         "lib/forge.js",
         "COMMENT"

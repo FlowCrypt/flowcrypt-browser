@@ -3,7 +3,6 @@
     overflow-x: hidden;
   }
 
-  .featherlight .featherlight-content,
   .swal2-popup.ui-modal-iframe {
     margin: 0 auto;
     width: 90% !important;
@@ -28,10 +27,6 @@
 
   body#settings #view_contact pre {
     white-space: normal;
-  }
-
-  .featherlight-inner {
-    width: 100%;
   }
 
   .settings-icons-rows {
@@ -169,11 +164,6 @@
     margin-bottom: 0;
   }
 
-  .featherlight-inner {
-    width: 100%;
-    padding: 0;
-  }
-
   #compose {
     width: 100%;
   }
@@ -220,18 +210,6 @@
     width: 90%;
   }
 
-  .new_message_featherlight .featherlight-content {
-    padding-top: 0;
-  }
-
-  .mt-mobile {
-    margin-top: 30px;
-  }
-
-  .featherlight::before {
-    margin-right: 0;
-  }
-
   div.line,
   .key-content-row {
     font-size: 13px;
@@ -249,8 +227,7 @@
   #content p.line,
   .input_email,
   #settings .email-address,
-  body#settings > div#content p.line,
-  .featherlight-inner p {
+  body#settings > div#content p.line {
     font-size: 13px;
     font-weight: 300;
     line-height: 1.75;
@@ -272,19 +249,9 @@
     text-align: center;
   }
 
-  #settings-row .line a,
-  .featherlight-content b a {
+  #settings-row .line a {
     font-weight: 500;
     text-decoration: underline;
-  }
-
-  .featherlight-content b,
-  .featherlight-inner {
-    font-size: 13px;
-    font-family: "Open Sans", sans-serif;
-    font-weight: 400;
-    line-height: 1.75;
-    letter-spacing: 0.05;
   }
 
   #footer-row a {

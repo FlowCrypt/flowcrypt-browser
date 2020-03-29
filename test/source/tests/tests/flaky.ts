@@ -78,7 +78,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await addPrvPage.waitAndClick('#toggle_input_passphrase');
       await addPrvPage.waitAndType('#input_passphrase', key.passphrase!);
       await addPrvPage.waitAndClick('.action_add_private_key', { delay: 1 });
-      await addPrvPage.waitTillGone('.featherlight.featherlight-iframe'); // dialog closed
+      await addPrvPage.waitTillGone('.swal2-container'); // dialog closed
       await Util.sleep(1);
       await addPrvPage.close();
       await Util.sleep(1);

@@ -1,4 +1,4 @@
-<div>
+<div class="lightboxed">
 
 version 7.7.6 on Mar 29, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/403?closed=1" target="_blank">WKD Timeout</a>
 
