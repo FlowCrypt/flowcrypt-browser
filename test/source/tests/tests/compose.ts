@@ -626,6 +626,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('92C4 E784 1B3A FF74');
     }));
 
+    ava.default('timeouts when searching WKD - used to never time out', testWithBrowser('compose', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'somewhere@mac.com' }, 'should show no pubkey within a few seconds');
+      await composePage.waitForContent('.email_address.no_pgp', 'somewhere@mac.com');
+      await composePage.waitAll('@input-password');
+    }));
+
     ava.todo('compose - reply - new gmail threadId fmt');
 
     ava.todo('compose - reply - skip click prompt');
