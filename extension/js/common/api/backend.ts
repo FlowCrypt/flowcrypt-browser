@@ -60,14 +60,6 @@ export class Backend extends Api {
     });
   }
 
-  public static helpUninstall = async (email: string, client: string): Promise<unknown> => {
-    return await Backend.request('help/uninstall', {
-      email,
-      client,
-      metrics: null,
-    });
-  }
-
   // public static loginWithVerificationEmail = async (account: string, uuid: string, token: string): Promise<{ verified: boolean, subscription: SubscriptionInfo }> => {
   //   const response = await Backend.request('account/login', {
   //     account,
