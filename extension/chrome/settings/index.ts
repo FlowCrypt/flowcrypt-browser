@@ -3,7 +3,7 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
-import { JQS, Ui } from '../../js/common/browser/ui.js';
+import { Ui } from '../../js/common/browser/ui.js';
 import { KeyInfo, PgpKey } from '../../js/common/core/pgp-key.js';
 import { Str, Url, UrlParams } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/error/api-error.js';
@@ -56,7 +56,7 @@ View.run(class SettingsView extends View {
   }
 
   public render = async () => {
-    $('#status-row #status_v').text(`v:${VERSION}`);
+    $('#status-row #status_version').text(`v:${VERSION}`);
     for (const webmailLName of await Env.webmails()) {
       $('.signin_button.' + webmailLName).css('display', 'inline-block');
     }
@@ -71,7 +71,9 @@ View.run(class SettingsView extends View {
     if (this.orgRules && this.orgRules.usesKeyManager()) {
       $(".add_key").hide(); // users which a key manager should not be adding keys manually
     }
-    $.get('/changelog.txt', data => ($('#status-row #status_v') as any as JQS).featherlight(String(data).replace(/\n/g, '<br>')), 'html');
+    $('#status-row #status_version').click(this.setHandler(async () => {
+      await Ui.modal.page('/changelog.txt', true);
+    }));
     await this.initialize();
     await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail, this.tabId);
     if (this.page) {
@@ -89,11 +91,9 @@ View.run(class SettingsView extends View {
       window.location.href = location;
     });
     BrowserMsg.addListener('close_page', async () => {
-      $('.featherlight-close').click();
       Swal.close();
     });
     BrowserMsg.addListener('reload', async ({ advanced }: Bm.Reload) => {
-      $('.featherlight-close').click();
       Swal.close();
       this.reload(advanced);
     });
@@ -121,7 +121,6 @@ View.run(class SettingsView extends View {
       $('.webmail_notifications').one('click', clear);
     });
     BrowserMsg.addListener('open_google_auth_dialog', async ({ acctEmail, scopes }: Bm.OpenGoogleAuthDialog) => {
-      $('.featherlight-close').click();
       await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, acctEmail, scopes);
     });
     BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {

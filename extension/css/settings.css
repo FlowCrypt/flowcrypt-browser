@@ -8,10 +8,6 @@ html {
   width: auto;
 }
 
-.new_message_featherlight .featherlight-content,
-.new_message_featherlight .featherlight-content iframe { overflow: hidden !important; }
-.new_message_featherlight .featherlight-content .featherlight-close-icon { display: none; }
-
 #header-row { margin-top: 20px; }
 
 #header-row .logo-row img.cryptup-logo {

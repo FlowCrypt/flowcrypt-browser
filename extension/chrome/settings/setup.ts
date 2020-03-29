@@ -132,7 +132,7 @@ export class SetupView extends View {
   }
 
   public setHandlers = () => {
-    BrowserMsg.addListener('close_page', async () => { $('.featherlight-close').click(); Swal.close(); });
+    BrowserMsg.addListener('close_page', async () => { Swal.close(); });
     BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => { await Ui.modal.info(notification); });
     BrowserMsg.listen(this.tabId);
     $('.action_send').attr('href', Google.webmailUrl(this.acctEmail));

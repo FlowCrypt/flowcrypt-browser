@@ -12,7 +12,6 @@ type NamedSels = Dict<JQuery<HTMLElement>>;
 type ProvidedEventHandler = (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>;
 
 export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
-export interface JQS extends JQueryStatic { featherlight: (contentOrSettings: string | Object) => void; } // tslint:disable-line:ban-types
 export type PreventableEventName = 'double' | 'parallel' | 'spree' | 'slowspree' | 'veryslowspree';
 export type BrowserEventErrHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: any) => Promise<void> };
 
@@ -205,13 +204,17 @@ export class Ui {
       });
       return typeof dismiss === 'undefined';
     },
-    page: async (htmlUrl: string): Promise<void> => {
-      const html = await (await fetch(htmlUrl)).text();
+    page: async (htmlUrl: string, replaceNewlines = false): Promise<void> => {
+      let html = await (await fetch(htmlUrl)).text();
+      html = Xss.htmlSanitize(html);
+      if (replaceNewlines) {
+        html = html.replace(/\n/g, '<br>');
+      }
       await Ui.swal().fire({
         onOpen: () => {
           Swal.getCloseButton().blur();
         },
-        html: Xss.htmlSanitize(html),
+        html,
         width: 750,
         showCloseButton: true,
         scrollbarPadding: true,
@@ -242,7 +245,20 @@ export class Ui {
           popup: 'ui-modal-iframe'
         }
       });
-    }
+    },
+    fullscreen: async (html: string): Promise<void> => {
+      await Ui.swal().fire({
+        onOpen: () => {
+          $(Swal.getContent()).attr('data-test', 'dialog');
+        },
+        html: Xss.htmlSanitize(html),
+        grow: 'fullscreen',
+        showConfirmButton: false,
+        customClass: {
+          container: 'ui-modal-fullscreen'
+        }
+      });
+    },
   };
 
   public static testCompatibilityLink = '<a href="/chrome/settings/modules/compatibility.htm" target="_blank">Test your OpenPGP key compatibility</a>';
@@ -271,27 +287,26 @@ export class Ui {
       const formattedBtns = Object.keys(btns).map(formatBtn).join('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
       if (details) {
         const a = `<a href="#" class="action-show-overlay-details" data-test="action-show-overlay-details" style="display:block;text-align:center;">Show technical details</a>`;
-        details = `${a}<pre style="font-size:10px;width:900px;overflow-x: scroll;" class="display_none" data-test="container-overlay-details">${details.replace(/\n/g, '<br>')}</pre>`;
+        details = `${a}<pre style="font-size:10px;width:900px;overflow-x:scroll;margin:0 auto;" class="display_none" data-test="container-overlay-details">
+          ${details.replace(/\n/g, '<br>')}
+        </pre>`;
       }
-      Xss.sanitizeAppend('body', `
-        <div class="featherlight white prompt_overlay" style="display: block;">
-          <div class="featherlight-content" data-test="dialog">
-            <div class="line" data-test="container-overlay-prompt-text">${prompt.replace(/\n/g, '<br>')}</div>
-            <div class="line">${formattedBtns}</div>
-            <div class="line">&nbsp;</div>
-            <div style="font-size:12px;">${details || ''}</div>
-            <div class="line">&nbsp;</div>
-            <div class="line">Email human@flowcrypt.com if you need assistance.</div>
-          </div>
-        </div>
+      // tslint:disable-next-line:no-floating-promises
+      Ui.modal.fullscreen(`
+        <div class="line" data-test="container-overlay-prompt-text">${prompt.replace(/\n/g, '<br>')}</div>
+        <div class="line">${formattedBtns}</div>
+        <div class="line">&nbsp;</div>
+        <div style="font-size:12px;">${details || ''}</div>
+        <div class="line">&nbsp;</div>
+        <div class="line">Email human@flowcrypt.com if you need assistance.</div>
       `);
-      const overlay = $('.prompt_overlay');
+      const overlay = $(Swal.getContent());
       overlay.find('.action-show-overlay-details').one('click', Ui.event.handle(target => {
         $(target).hide().siblings('pre').show();
       }));
       for (const id of Object.keys(btns)) {
         overlay.find(`.overlay_action_${id}`).one('click', Ui.event.handle(() => {
-          overlay.remove();
+          Swal.close();
           resolve(id);
         }));
       }

@@ -174,7 +174,6 @@ export class ComposeView extends View {
   }
 
   public setHandlers = () => {
-    BrowserMsg.addListener('close_dialog', async () => { $('.featherlight.featherlight-iframe').remove(); });
     this.S.cached('icon_help').click(this.setHandler(() => this.renderModule.renderSettingsWithDialog('help'), this.errModule.handle(`help dialog`)));
     this.attsModule.setHandlers();
     this.inputModule.setHandlers();

@@ -150,6 +150,9 @@ span.gray { color: #b7b7b7; }
 .swal2-popup.ui-modal-iframe iframe { max-width: 100%; }
 .swal2-container.ui-modal-page { background: rgba(0, 0, 0, 0.6) !important; }
 
+.swal2-container.ui-modal-fullscreen { padding: 0; }
+.swal2-container.ui-modal-fullscreen .swal2-popup { border-radius: 0; }
+
 .button.gray2 {
   background-color: #d9d9d9;
   background-image: -webkit-linear-gradient(top, #e9e9e9, #dfdfdf);
@@ -2528,35 +2531,6 @@ div#cryptup_dialog iframe.medium {
 div#cryptup_dialog iframe.tall {
   height: 780px;
   margin-top: -390px;
-}
-
-.featherlight { z-index: 8 !important; }
-
-.featherlight .featherlight-close-icon {
-  background: none !important;
-  border: none !important;
-  width: 30px !important;
-  font-size: 24px !important;
-  opacity: 0.5 !important;
-  line-height: 36px !important;
-  right: 12px !important;
-  top: 15px !important;
-}
-.featherlight.new_message_featherlight .featherlight-content { background: none !important; }
-
-.featherlight .featherlight-content > .line {
-  color: white;
-  text-align: center;
-  font-weight: 200;
-  letter-spacing: 0.25px;
-}
-.featherlight.white .featherlight-content > .line { color: black; }
-.featherlight.white:last-of-type { background: white; }
-
-.featherlight.prompt_overlay .featherlight-content {
-  margin-bottom: 20%;
-  -webkit-animation: fadeIn 0.5s ease;
-  animation: fadeIn 0.5s ease;
 }
 
 .lightboxed {
