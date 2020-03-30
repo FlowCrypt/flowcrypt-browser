@@ -209,7 +209,7 @@ export class KeyImportUi {
     const headers = PgpArmor.headers(type);
     const { keys: [k] } = await opgp.key.readArmored(normalized);
     if (typeof k === 'undefined') {
-      throw new UserAlert(`${type === 'privateKey' ? 'Private' : 'Public'} key is not correctly formated. Please insert complete key, including "${headers.begin}" and "${headers.end}"`);
+      throw new UserAlert(`${type === 'privateKey' ? 'Private' : 'Public'} key is not correctly formatted. Please insert complete key, including "${headers.begin}" and "${headers.end}"`);
     }
     return k;
   }
