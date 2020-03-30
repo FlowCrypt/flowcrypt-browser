@@ -214,6 +214,19 @@ export class Mime {
     return rootNode.build(); // tslint:disable-line:no-unsafe-any
   }
 
+  public static encodePlain = async (body: Uint8Array, headers: RichHeaders): Promise<string> => {
+    const rootContentType = 'application/pkcs7-mime; name="smime.p7m"; smime-type=enveloped-data';
+    const rootNode = new MimeBuilder(rootContentType, { includeBccInHeader: true }); // tslint:disable-line:no-unsafe-any
+    for (const key of Object.keys(headers)) {
+      rootNode.addHeader(key, headers[key]); // tslint:disable-line:no-unsafe-any
+    }
+    rootNode.setContent(body);
+    rootNode.addHeader('Content-Transfer-Encoding', 'base64'); // tslint:disable-line:no-unsafe-any
+    rootNode.addHeader('Content-Disposition', 'attachment; filename="smime.p7m"');
+    rootNode.addHeader('Content-Description', 'S/MIME Encrypted Message');
+    return rootNode.build(); // tslint:disable-line:no-unsafe-any
+  }
+
   public static subjectWithoutPrefixes = (subject: string): string => {
     return subject.replace(/^((Re|Fwd): ?)+/g, '').trim();
   }

@@ -66,7 +66,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: OpenPGP.key.Key) => {
     const atts = this.isDraft ? [] : await this.view.attsModule.attach.collectEncryptAtts(pubs.map(p => p.pubkey));
     const encrypted = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
-    const encryptedBody = { 'text/plain': encrypted.toString() };
+    const encryptedBody = encrypted instanceof Buf ? { 'text/plain': encrypted.toString() } : encrypted;
     return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: encryptedBody, atts, isDraft: this.isDraft });
   }
 
@@ -86,9 +86,9 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   }
 
   private encryptDataArmor = async (data: Buf, pwd: string | undefined, pubs: PubkeyResult[], signingPrv?: OpenPGP.key.Key): Promise<Uint8Array> => {
-    const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(pubs);
+    const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal([]);
     const r = await PgpMsg.encrypt({ pubkeys: pubs.map(p => p.pubkey), signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
-    return Buf.fromUtfStr(r.data);
+    return typeof r.data === 'string' ? Buf.fromUtfStr(r.data) : r.data;
   }
 
   private getPwdMsgSendableBodyWithOnlineReplyMsgToken = async (authInfo: FcUuidAuth, newMsgData: NewMsgData): Promise<SendableMsgBody> => {

@@ -146,6 +146,10 @@ export class KeyImportUi {
   }
 
   public checkPub = async (armored: string): Promise<string> => {
+    // For X.509 keys assume they're good if they start with the marker string
+    if (armored.startsWith('-----BEGIN CERTIFICATE-----')) {
+      return armored;
+    }
     const { normalized } = await this.normalize('publicKey', armored);
     const parsed = await this.read('publicKey', normalized);
     await this.longid(parsed);

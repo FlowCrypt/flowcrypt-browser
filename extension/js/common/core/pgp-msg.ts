@@ -2,6 +2,7 @@
 
 'use strict';
 
+import * as forge from 'node-forge';
 import { Contact, KeyInfo, PgpKey, PrvKeyInfo } from './pgp-key.js';
 import { MsgBlockType, ReplaceableMsgBlockType } from './msg-block.js';
 import { Value } from './common.js';
@@ -25,7 +26,8 @@ export namespace PgpMsgMethod {
   export type VerifyDetached = (arg: Arg.VerifyDetached) => Promise<VerifyRes>;
   export type Decrypt = (arg: Arg.Decrypt) => Promise<DecryptSuccess | DecryptError>;
   export type Type = (arg: Arg.Type) => Promise<PgpMsgTypeResult>;
-  export type Encrypt = (arg: Arg.Encrypt) => Promise<OpenPGP.EncryptResult>;
+  export type X509EncryptResult = { data: Uint8Array };
+  export type Encrypt = (arg: Arg.Encrypt) => Promise<OpenPGP.EncryptResult | X509EncryptResult>;
 }
 
 type SortedKeysForDecrypt = {
@@ -211,6 +213,38 @@ export class PgpMsg {
   }
 
   public static encrypt: PgpMsgMethod.Encrypt = async ({ pubkeys, signingPrv, pwd, data, filename, armor, date }) => {
+    // slice(1) filters first key that is always own OpenPGP key
+    // in result if X.509 encryption is selected the e-mail author
+    // cannot decrypt e-mails that they have sent
+    const keyTypes = new Set(pubkeys.slice(1).map(PgpMsg.getKeyType));
+    if (keyTypes.size > 1) {
+      throw new Error('Mixed key types are not allowed: ' + [...keyTypes]);
+    }
+    const keyType = keyTypes.keys().next().value;
+    if (keyType === 'x509') {
+      const p7 = forge.pkcs7.createEnvelopedData();
+
+      for (const pubkey of pubkeys.slice(1)) {
+        p7.addRecipient(forge.pki.certificateFromPem(pubkey));
+      }
+
+      const headers = `Subject: test`;
+
+      p7.content = forge.util.createBuffer(headers + '\r\n\r\n' + data);
+
+      p7.encrypt();
+
+      const derBuffer = forge.asn1.toDer(p7.toAsn1()).getBytes();
+
+      const arr = [];
+      for (let i = 0, j = derBuffer.length; i < j; ++i) {
+        arr.push(derBuffer.charCodeAt(i));
+      }
+
+      return {
+        data: new Uint8Array(arr)
+      };
+    }
     const message = opgp.message.fromBinary(data, filename, date);
     const options: OpenPGP.EncryptOptions = { armor, message, date };
     let usedChallenge = false;
@@ -251,6 +285,16 @@ export class PgpMsg {
       }
     }
     return diagnosis;
+  }
+
+  private static getKeyType(pubkey: string): 'openpgp' | 'x509' {
+    if (pubkey.startsWith('-----BEGIN CERTIFICATE-----')) {
+      return 'x509';
+    } else if (pubkey.startsWith('-----BEGIN PGP PUBLIC KEY BLOCK-----')) {
+      return 'openpgp';
+    } else {
+      throw new Error('Unknown key type: ' + pubkey);
+    }
   }
 
   private static cryptoMsgGetSignedBy = async (msg: OpenpgpMsgOrCleartext, keys: SortedKeysForDecrypt) => {

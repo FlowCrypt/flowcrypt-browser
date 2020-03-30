@@ -16,7 +16,7 @@ type SendableMsgDefinition = {
   from: string;
   recipients: Recipients;
   subject: string;
-  body: SendableMsgBody;
+  body: SendableMsgBody | Uint8Array;
   atts: Att[];
   thread?: string;
   type?: MimeEncodeType,
@@ -51,7 +51,7 @@ export class SendableMsg {
     public from: string,
     public recipients: Recipients,
     public subject: string,
-    public body: SendableMsgBody,
+    public body: SendableMsgBody | Uint8Array,
     public atts: Att[],
     public thread: string | undefined,
     public type: MimeEncodeType,
@@ -83,7 +83,9 @@ export class SendableMsg {
       }
     }
     this.headers.Subject = this.subject;
-    if (this.type === 'pgpMimeSigned' && this.sign) {
+    if (this.body instanceof Uint8Array) {
+      return await Mime.encodePlain(this.body, this.headers);
+    } else if (this.type === 'pgpMimeSigned' && this.sign) {
       return await Mime.encodePgpMimeSigned(this.body, this.headers, this.atts, this.sign);
     } else {
       return await Mime.encode(this.body, this.headers, this.atts, this.type);
