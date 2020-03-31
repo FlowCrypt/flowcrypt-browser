@@ -35,7 +35,7 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
   }
 
   if (!storage.settings_seen) {
-    await BgUtils.openSettingsPage('initial.htm'); // called after the very first installation of the plugin
+    await chrome.tabs.create({ url: chrome.runtime.getURL('chrome/settings/initial.htm') }); // called after the very first installation of the plugin
     await GlobalStore.set({ settings_seen: true });
   }
 

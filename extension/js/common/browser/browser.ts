@@ -12,7 +12,7 @@ import { GlobalStore } from '../platform/store/global-store.js';
 import { Ui } from './ui.js';
 import { Xss } from '../platform/xss.js';
 
-declare type SettingsPage = 'index.htm' | 'fatal.htm';
+declare type SettingsPage = 'index.htm' | 'initial.htm' | 'fatal.htm';
 
 export class Browser {
 
