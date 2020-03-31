@@ -31,7 +31,6 @@ export namespace Bm {
 
   export type SetCss = { css: Dict<string>, traverseUp?: number, selector: string; };
   export type AddOrRemoveClass = { class: string, selector: string; };
-  export type Settings = { path?: string, page?: string, acctEmail?: string, pageUrlParams?: UrlParams, addNewAcct?: boolean };
   export type PassphraseDialog = { type: PassphraseDialogType, longids: string[] };
   export type ScrollToElement = { selector: string };
   export type NotificationShow = { notification: string, callbacks?: Dict<() => void> };
@@ -55,7 +54,6 @@ export namespace Bm {
   export type StoreGlobalSet = { values: GlobalStoreDict; };
   export type StoreAcctGet = { acctEmail: string, keys: AccountIndex[]; };
   export type StoreAcctSet = { acctEmail: string, values: AcctStoreDict; };
-  export type Inbox = { acctEmail?: string };
   export type ReconnectAcctAuthPopup = { acctEmail: string, scopes?: string[] };
   export type PgpKeyDetails = { pubkey: string };
   export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
@@ -94,7 +92,7 @@ export namespace Bm {
 
   export type AnyRequest = PassphraseEntry | StripeResult | OpenPage | OpenGoogleAuthDialog | Redirect | Reload |
     AddPubkeyDialog | ReinsertReplyBox | CloseReplyMessage | ScrollToElement | SubscribeDialog | RenderPublicKeys | NotificationShowAuthPopupNeeded |
-    NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass | ReconnectAcctAuthPopup |
+    NotificationShow | PassphraseDialog | PassphraseDialog | SetCss | AddOrRemoveClass | ReconnectAcctAuthPopup |
     PgpKeyDetails | Db | StoreSessionSet | StoreSessionGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
     PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | PgpMsgType | Ajax | FocusFrame;
 
@@ -121,9 +119,7 @@ export class BrowserMsg {
 
   public static send = { // todo - may want to organise this differently, seems to always confuse me when sending a message
     bg: {
-      settings: (bm: Bm.Settings) => BrowserMsg.sendCatch(undefined, 'settings', bm),
       updateUninstallUrl: () => BrowserMsg.sendCatch(undefined, 'update_uninstall_url', {}),
-      inbox: (bm: Bm.Inbox) => BrowserMsg.sendCatch(undefined, 'inbox', bm),
       await: {
         reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) => BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm, true) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
         getActiveTabInfo: () => BrowserMsg.sendAwait(undefined, 'get_active_tab_info', undefined, true) as Promise<Bm.Res.GetActiveTabInfo>,

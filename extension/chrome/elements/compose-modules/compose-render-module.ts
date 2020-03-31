@@ -3,6 +3,7 @@
 'use strict';
 
 import { Att } from '../../../js/common/core/att.js';
+import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
@@ -55,7 +56,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>
       `);
       this.view.S.cached('prompt').attr('style', 'border:none !important');
-      $('.auth_settings').click(() => BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' }));
+      $('.auth_settings').click(() => Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/auth_denied.htm'));
       $('.new_message_button').click(() => BrowserMsg.send.openNewMessage(this.view.parentTabId));
     }
     this.view.sizeModule.resizeComposeBox();
@@ -101,8 +102,8 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     }
   }
 
-  public renderSettingsWithDialog = (settingsModule: string) => {
-    BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page: `/chrome/settings/modules/${settingsModule}.htm` });
+  public openSettingsWithDialog = async (settingsModule: string) => {
+    await Browser.openSettingsPage('index.htm', this.view.acctEmail, `/chrome/settings/modules/${settingsModule}.htm`);
   }
 
   public initComposeBox = async () => {

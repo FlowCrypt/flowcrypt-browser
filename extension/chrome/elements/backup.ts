@@ -3,6 +3,7 @@
 'use strict';
 
 import { Assert } from '../../js/common/assert.js';
+import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { KeyInfo } from '../../js/common/core/pgp-key.js';
 import { PgpKey } from '../../js/common/core/pgp-key.js';
@@ -60,7 +61,7 @@ View.run(class BackupView extends View {
 
   public setHandlers = () => {
     if (!this.storedPrvWithMatchingLongid) {
-      $("#action_import_key").click(this.setHandler(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/add_key.htm' })));
+      $("#action_import_key").click(this.setHandler(() => Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/add_key.htm')));
     }
     $('.action_test_pass').click(this.setHandler(async () => this.testPassphraseHandler()));
     $('#pass_phrase').keydown(this.setEnterHandlerThatClicks('.action_test_pass'));

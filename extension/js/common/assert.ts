@@ -4,7 +4,7 @@
 
 import { Catch, UnreportableError } from './platform/catch.js';
 import { Dict, UrlParam, UrlParams } from './core/common.js';
-import { BrowserMsg } from './browser/browser-msg.js';
+import { Browser } from './browser/browser.js';
 import { KeyInfo } from './core/pgp-key.js';
 import { PgpKey } from './core/pgp-key.js';
 import { Settings } from './settings.js';
@@ -45,7 +45,7 @@ export class Assert {
           const msg = `Protect your key with a pass phrase to finish setup.`;
           const r = await Ui.renderOverlayPromptAwaitUserChoice({ finishSetup: {}, later: { color: 'gray' } }, msg);
           if (r === 'finish_setup') {
-            BrowserMsg.send.bg.settings({ acctEmail });
+            await Browser.openSettingsPage('index.htm', acctEmail);
           }
         }
       }

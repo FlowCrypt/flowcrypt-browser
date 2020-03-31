@@ -6,6 +6,7 @@ import { KeyImportUi, UserAlert, } from '../../js/common/ui/key-import-ui.js';
 
 import { Assert } from '../../js/common/assert.js';
 import { AttUI } from '../../js/common/ui/att-ui.js';
+import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { FetchKeyUI } from '../../js/common/ui/fetch-key-ui.js';
@@ -40,7 +41,7 @@ View.run(class AddPubkeyView extends View {
       Xss.sanitizeAppend('select.copy_from_email', `<option value="${Xss.escape(contact.email)}">${Xss.escape(contact.email)}</option>`);
     }
     this.fetchKeyUi.handleOnPaste($('.pubkey'));
-    $('.action_settings').click(this.setHandler(() => BrowserMsg.send.bg.settings({ path: 'index.htm', page: '/chrome/settings/modules/contacts.htm', acctEmail: this.acctEmail })));
+    $('.action_settings').click(this.setHandler(() => Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/contacts.htm')));
   }
 
   public setHandlers = () => {

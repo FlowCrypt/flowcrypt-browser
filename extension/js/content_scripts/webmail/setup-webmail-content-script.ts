@@ -5,6 +5,7 @@
 import { Bm, BrowserMsg, TabIdRequiredError } from '../../common/browser/browser-msg.js';
 import { Env, WebMailName } from '../../common/browser/env.js';
 import { WebmailVariantString, XssSafeFactory } from '../../common/xss-safe-factory.js';
+import { Browser } from '../../common/browser/browser.js';
 import { BrowserMsgCommonHandlers } from '../../common/browser/browser-msg-common-handlers.js';
 import { Catch } from '../../common/platform/catch.js';
 import { ContentScriptWindow } from '../../common/browser/browser-window.js';
@@ -92,7 +93,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       } else if (!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && showSetupNeededNotificationIfSetupNotDone && storage.cryptup_enabled !== false) {
         notifications.show(setUpNotification, {
           notification_setup_needed_dismiss: () => AcctStore.set(acctEmail, { notification_setup_needed_dismissed: true }).then(() => notifications.clear()).catch(Catch.reportErr),
-          action_open_settings: () => BrowserMsg.send.bg.settings({ acctEmail }),
+          action_open_settings: () => Browser.openSettingsPage('index.htm', acctEmail),
           close: () => {
             showSetupNeededNotificationIfSetupNotDone = false;
           },

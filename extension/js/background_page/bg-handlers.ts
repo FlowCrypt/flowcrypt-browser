@@ -3,22 +3,12 @@
 'use strict';
 
 import { Api } from '../common/api/api.js';
-import { BgUtils } from './bgutils.js';
 import { Bm } from '../common/browser/browser-msg.js';
 import { Gmail } from '../common/api/email-provider/gmail/gmail.js';
-import { Url } from '../common/core/common.js';
 import { GlobalStore } from '../common/platform/store/global-store.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
 
 export class BgHandlers {
-
-  public static openSettingsPageHandler: Bm.AsyncResponselessHandler = async ({ page, path, pageUrlParams, addNewAcct, acctEmail }: Bm.Settings) => {
-    await BgUtils.openSettingsPage(path, acctEmail, page, pageUrlParams, addNewAcct === true);
-  }
-
-  public static openInboxPageHandler: Bm.AsyncResponselessHandler = async (message: { acctEmail: string, threadId?: string, folder?: string }) => {
-    await BgUtils.openExtensionTab(Url.create(chrome.runtime.getURL(`chrome/settings/inbox/inbox.htm`), message));
-  }
 
   public static dbOperationHandler = async (db: IDBDatabase, request: Bm.Db): Promise<Bm.Res.Db> => {
     if (!db) {

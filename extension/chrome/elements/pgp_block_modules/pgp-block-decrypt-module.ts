@@ -2,6 +2,7 @@
 
 'use strict';
 
+import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { DecryptErrTypes } from '../../../js/common/core/pgp-msg.js';
@@ -60,7 +61,7 @@ export class PgpBlockViewDecryptModule {
             <button class="button green auth_settings">Add missing permission</button>`;
           Xss.sanitizeRender('#pgp_block', `This encrypted message is very large (possibly containing an attachment). ${readAccess}`);
           this.view.renderModule.resizePgpBlockFrame();
-          $('.auth_settings').click(this.view.setHandler(() => BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' })));
+          $('.auth_settings').click(this.view.setHandler(() => Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/auth_denied.htm')));
         }
       }
     } catch (e) {

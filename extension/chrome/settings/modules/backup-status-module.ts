@@ -7,6 +7,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { BackupView } from './backup.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Backups } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { KeyInfo } from '../../../js/common/core/pgp-key.js';
@@ -85,8 +86,8 @@ export class BackupStatusModule extends ViewModule<BackupView> {
     $('h1').text('Back up your private key');
   }
 
-  private goTo = (page: string) => {
-    BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page: `/chrome/settings/modules/${page}` });
+  private goTo = async (page: string) => {
+    await Browser.openSettingsPage('index.htm', this.view.acctEmail, `/chrome/settings/modules/${page}`);
   }
 
 }

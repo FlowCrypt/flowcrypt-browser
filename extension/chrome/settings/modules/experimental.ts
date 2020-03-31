@@ -66,7 +66,7 @@ View.run(class ExperimentalView extends View {
             try {
               await Settings.acctStorageChangeEmail(this.acctEmail, response.acctEmail);
               await Ui.modal.info(`Email address changed to ${response.acctEmail}. You should now check that your public key is properly submitted.`);
-              BrowserMsg.send.bg.settings({ path: 'index.htm', page: '/chrome/settings/modules/keyserver.htm', acctEmail: response.acctEmail });
+              await Browser.openSettingsPage('index.htm', response.acctEmail, '/chrome/settings/modules/keyserver.htm');
             } catch (e) {
               Catch.reportErr(e);
               await Ui.modal.error('There was an error changing google account, please write human@flowcrypt.com');

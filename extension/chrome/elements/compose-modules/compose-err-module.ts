@@ -2,6 +2,7 @@
 
 'use strict';
 
+import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserEventErrHandler, Ui } from '../../../js/common/browser/ui.js';
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
 import { NewMsgData, SendBtnTexts } from './compose-types.js';
@@ -81,7 +82,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
         if (await Ui.modal.confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
           const page = '/chrome/settings/modules/help.htm';
           const pageUrlParams = { bugReport: BrowserExtension.prepareBugReport(`composer: send: bad request (errMsg: ${e.parsedErrMsg})`, {}, e) };
-          BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page, pageUrlParams });
+          await Browser.openSettingsPage('index.htm', this.view.acctEmail, page, pageUrlParams);
         }
       }
     } else if (e instanceof ComposerUserError) {
