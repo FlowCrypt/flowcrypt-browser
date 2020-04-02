@@ -13,6 +13,7 @@
     "outDir": "../build/test"
   },
   "files": [
+    "../extension/types/node-forge.d.ts",
     "../test/source/test.ts",
     "../test/source/patterns.ts",
     "../test/source/async-stack.ts",
