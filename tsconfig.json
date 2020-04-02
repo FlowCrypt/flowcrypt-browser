@@ -30,7 +30,7 @@
       ],
       "dompurify": [
         "types/purify.d.ts",
-        "lib/purify.min.js",
+        "lib/purify.js",
         "COMMENT"
       ],
       "fine-uploader": [

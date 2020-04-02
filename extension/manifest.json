@@ -47,7 +47,7 @@
         "/css/webmail.css"
       ],
       "js": [
-        "/lib/purify.min.js",
+        "/lib/purify.js",
         "/lib/jquery.min.js",
         "/js/content_scripts/webmail_bundle.js"
       ]
@@ -57,7 +57,7 @@
         "https://flowcrypt.com/stripe*"
       ],
       "js": [
-        "/lib/purify.min.js",
+        "/lib/purify.js",
         "/lib/jquery.min.js",
         "/js/content_scripts/stripe_bundle.js"
       ],
