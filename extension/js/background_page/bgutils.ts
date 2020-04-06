@@ -5,8 +5,33 @@
 import { Catch, UnreportableError } from '../common/platform/catch.js';
 import { Url } from '../common/core/common.js';
 import { StoreCorruptedError, StoreDeniedError, StoreFailedError } from '../common/platform/store/abstract-store.js';
+import { Browser } from '../common/browser/browser.js';
 
 export class BgUtils {
+
+  public static openExtensionTab = async (url: string) => {
+    const openedTab = await BgUtils.getFcSettingsTabIdIfOpen();
+    if (!openedTab) {
+      chrome.tabs.create({ url });
+    } else {
+      chrome.tabs.update(openedTab, { url, active: true });
+    }
+  }
+
+  public static getFcSettingsTabIdIfOpen = async (): Promise<number | undefined> => {
+    return await new Promise(resolve => {
+      chrome.tabs.query({ currentWindow: true }, tabs => {
+        const extensionUrl = chrome.runtime.getURL('/');
+        for (const tab of tabs) {
+          if (tab.url && tab.url.includes(extensionUrl)) {
+            resolve(tab.id);
+            return;
+          }
+        }
+        resolve(undefined);
+      });
+    });
+  }
 
   public static handleStoreErr = async (e: any, reason?: 'storage_undefined' | 'db_corrupted' | 'db_denied' | 'db_failed') => {
     if (!reason) {
@@ -21,7 +46,7 @@ export class BgUtils {
         reason = 'db_failed';
       }
     }
-    await chrome.tabs.create({ url: Url.create('fatal.htm', { reason, stack: e instanceof Error ? e.stack : Catch.stackTrace() }) });
+    await Browser.openExtensionTab(Url.create('fatal.htm', { reason, stack: e instanceof Error ? e.stack : Catch.stackTrace() }));
     throw new UnreportableError();
   }
 

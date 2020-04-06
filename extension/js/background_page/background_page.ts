@@ -15,6 +15,7 @@ import { GlobalStoreDict, GlobalStore } from '../common/platform/store/global-st
 import { ContactStore } from '../common/platform/store/contact-store.js';
 import { SessionStore } from '../common/platform/store/session-store.js';
 import { AcctStore } from '../common/platform/store/acct-store.js';
+import { Browser } from '../common/browser/browser.js';
 
 console.info('background_process.js starting');
 
@@ -34,8 +35,9 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
     return;
   }
 
+  await Browser.openExtensionTab(chrome.runtime.getURL('chrome/settings/initial.htm')); // called after the very first installation of the plugin
   if (!storage.settings_seen) {
-    await chrome.tabs.create({ url: chrome.runtime.getURL('chrome/settings/initial.htm') }); // called after the very first installation of the plugin
+    await Browser.openExtensionTab(chrome.runtime.getURL('chrome/settings/initial.htm')); // called after the very first installation of the plugin
     await GlobalStore.set({ settings_seen: true });
   }
 
@@ -59,6 +61,7 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
 
   BrowserMsg.bgAddListener('ajax', BgHandlers.ajaxHandler);
   BrowserMsg.bgAddListener('ajaxGmailAttGetChunk', BgHandlers.ajaxGmailAttGetChunkHandler);
+  BrowserMsg.bgAddListener('extensionTab', BgHandlers.openExtensionTabHandler);
   BrowserMsg.bgAddListener('update_uninstall_url', BgHandlers.updateUninstallUrl);
   BrowserMsg.bgAddListener('get_active_tab_info', BgHandlers.getActiveTabInfo);
   BrowserMsg.bgAddListener('reconnect_acct_auth_popup', (r: Bm.ReconnectAcctAuthPopup) => GoogleAuth.newAuthPopup(r));
