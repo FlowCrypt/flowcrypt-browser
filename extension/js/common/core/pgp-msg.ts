@@ -254,11 +254,12 @@ export class PgpMsg {
     if (signingPrv && typeof signingPrv.isPrivate !== 'undefined' && signingPrv.isPrivate()) { // tslint:disable-line:no-unbound-method - only testing if exists
       options.privateKeys = [signingPrv];
     }
-    const result = await opgp.encrypt(options);
+    const result: OpenPGP.EncryptBinaryResult | OpenPGP.EncryptArmorResult = await opgp.encrypt(options);
     if (typeof result.data === 'string') {
       return { data: Buf.fromUtfStr(result.data), signature: result.signature, type: 'openpgp' };
+    } else {
+      return result as unknown as OpenPGP.EncryptBinaryResult;
     }
-    return result;
   }
 
   public static diagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = async ({ privateKis, message }) => {
