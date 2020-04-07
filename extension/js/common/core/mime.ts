@@ -34,9 +34,14 @@ export type MimeContent = {
   bcc: string[];
 };
 
-export type MimeEncodeType = 'pgpMimeEncrypted' | 'pgpMimeSigned' | undefined;
+export type MimeEncodeType = 'pgpMimeEncrypted' | 'pgpMimeSigned' | 'smimePlain' | undefined;
 export type RichHeaders = Dict<string | string[]>;
-export type SendableMsgBody = { [key: string]: string | undefined; 'text/plain'?: string; 'text/html'?: string; };
+export type SendableMsgBody = {
+  [key: string]: string | Uint8Array | undefined;
+  'text/plain'?: string;
+  'text/html'?: string;
+  'encrypted/buf'?: Uint8Array;
+};
 export type MimeProccesedMsg = {
   rawSignedContent: string | undefined,
   headers: Dict<MimeContentHeader>,
@@ -203,7 +208,7 @@ export class Mime {
       } else {
         contentNode = new MimeBuilder('multipart/alternative'); // tslint:disable-line:no-unsafe-any
         for (const type of Object.keys(body)) {
-          contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!)); // already present, that's why part of for loop
+          contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, String(body[type]!))); // already present, that's why part of for loop
         }
       }
       rootNode.appendChild(contentNode); // tslint:disable-line:no-unsafe-any
@@ -239,7 +244,7 @@ export class Mime {
     }
     const bodyNodes = new MimeBuilder('multipart/alternative'); // tslint:disable-line:no-unsafe-any
     for (const type of Object.keys(body)) {
-      bodyNodes.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!)); // tslint:disable-line:no-unsafe-any
+      bodyNodes.appendChild(Mime.newContentNode(MimeBuilder, type, String(body[type]!))); // tslint:disable-line:no-unsafe-any
     }
     const signedContentNode = new MimeBuilder('multipart/mixed'); // tslint:disable-line:no-unsafe-any
     signedContentNode.appendChild(bodyNodes); // tslint:disable-line:no-unsafe-any

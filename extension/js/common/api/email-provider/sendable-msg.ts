@@ -16,7 +16,7 @@ type SendableMsgDefinition = {
   from: string;
   recipients: Recipients;
   subject: string;
-  body: SendableMsgBody | Uint8Array;
+  body: SendableMsgBody;
   atts: Att[];
   thread?: string;
   type?: MimeEncodeType,
@@ -51,7 +51,7 @@ export class SendableMsg {
     public from: string,
     public recipients: Recipients,
     public subject: string,
-    public body: SendableMsgBody | Uint8Array,
+    public body: SendableMsgBody,
     public atts: Att[],
     public thread: string | undefined,
     public type: MimeEncodeType,
@@ -83,11 +83,16 @@ export class SendableMsg {
       }
     }
     this.headers.Subject = this.subject;
-    if (this.body instanceof Uint8Array) {
-      return await Mime.encodePlain(this.body, this.headers);
+    if (this.type === 'smimePlain' && this.body['encrypted/buf']) {
+      return await Mime.encodePlain(this.body['encrypted/buf'], this.headers);
     } else if (this.type === 'pgpMimeSigned' && this.sign) {
       return await Mime.encodePgpMimeSigned(this.body, this.headers, this.atts, this.sign);
     } else {
+      // encrypted/buf is a Buf instance that is converted to one part text/plain
+      // message
+      if (this.body['encrypted/buf']) {
+        this.body = { 'text/plain': this.body['encrypted/buf'].toString() };
+      }
       return await Mime.encode(this.body, this.headers, this.atts, this.type);
     }
   }

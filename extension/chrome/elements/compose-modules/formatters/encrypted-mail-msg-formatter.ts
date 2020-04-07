@@ -14,7 +14,7 @@ import { Buf } from '../../../../js/common/core/buf.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { Lang } from '../../../../js/common/lang.js';
 import { PgpKey } from '../../../../js/common/core/pgp-key.js';
-import { PgpMsg } from '../../../../js/common/core/pgp-msg.js';
+import { PgpMsg, PgpMsgMethod } from '../../../../js/common/core/pgp-msg.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { Settings } from '../../../../js/common/settings.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
@@ -22,6 +22,8 @@ import { Xss } from '../../../../js/common/platform/xss.js';
 import { opgp } from '../../../../js/common/core/pgp.js';
 import { ContactStore } from '../../../../js/common/platform/store/contact-store.js';
 import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
+
+type DataArmorResult = PgpMsgMethod.OpenPGPEncryptArmorResult | PgpMsgMethod.X509EncryptResult;
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
@@ -43,7 +45,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const authInfo = await AcctStore.authInfo(this.acctEmail);
     const msgBodyWithReplyToken = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(authInfo, newMsg);
     const pgpMimeWithAtts = await Mime.encode(msgBodyWithReplyToken, { Subject: newMsg.subject }, await this.view.attsModule.attach.collectAtts());
-    const pwdEncryptedWithAtts = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAtts), newMsg.pwd, []); // encrypted only for pwd, not signed
+    const { data: pwdEncryptedWithAtts } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAtts), newMsg.pwd, []); // encrypted only for pwd, not signed
     const { short, admin_code } = await Backend.messageUpload(
       authInfo.uuid ? authInfo : undefined,
       pwdEncryptedWithAtts,
@@ -57,7 +59,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     // encoded as: PGP/MIME-like structure but with attachments as external files due to email size limit (encrypted for pubkeys only)
     const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
     const pgpMimeNoAtts = await Mime.encode(msgBody, { Subject: newMsg.subject }, []); // no atts, attached to email separately
-    const pubEncryptedNoAtts = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeNoAtts), undefined, pubs, signingPrv); // encrypted only for pubs
+    const { data: pubEncryptedNoAtts } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeNoAtts), undefined, pubs, signingPrv); // encrypted only for pubs
     const atts = this.createPgpMimeAtts(pubEncryptedNoAtts).concat(await this.view.attsModule.attach.collectEncryptAtts(pubs.map(p => p.pubkey))); // encrypted only for pubs
     const emailIntroAndLinkBody = await this.formatPwdEncryptedMsgBodyLink(short);
     return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: emailIntroAndLinkBody, atts, isDraft: this.isDraft });
@@ -65,15 +67,15 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
   private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: OpenPGP.key.Key) => {
     const atts = this.isDraft ? [] : await this.view.attsModule.attach.collectEncryptAtts(pubs.map(p => p.pubkey));
-    const encrypted = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
-    const encryptedBody = encrypted instanceof Buf ? { 'text/plain': encrypted.toString() } : encrypted;
-    return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: encryptedBody, atts, isDraft: this.isDraft });
+    const { data: encryptedBody, type } = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
+    const mimeType = type === 'smime' ? 'smimePlain' : undefined;
+    return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: { "encrypted/buf": encryptedBody }, type: mimeType, atts, isDraft: this.isDraft });
   }
 
   private sendableRichTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: OpenPGP.key.Key) => {
     const plainAtts = this.isDraft ? [] : await this.view.attsModule.attach.collectAtts();
     const pgpMimeToEncrypt = await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject }, plainAtts);
-    const encrypted = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubs, signingPrv);
+    const { data: encrypted } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubs, signingPrv);
     const atts = this.createPgpMimeAtts(encrypted);
     return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: {}, atts, type: 'pgpMimeEncrypted', isDraft: this.isDraft });
   }
@@ -85,10 +87,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     return atts;
   }
 
-  private encryptDataArmor = async (data: Buf, pwd: string | undefined, pubs: PubkeyResult[], signingPrv?: OpenPGP.key.Key): Promise<Uint8Array> => {
-    const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal([]);
-    const r = await PgpMsg.encrypt({ pubkeys: pubs.map(p => p.pubkey), signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
-    return typeof r.data === 'string' ? Buf.fromUtfStr(r.data) : r.data;
+  private encryptDataArmor = async (data: Buf, pwd: string | undefined, pubs: PubkeyResult[], signingPrv?: OpenPGP.key.Key): Promise<DataArmorResult> => {
+    const pgpPubs = pubs.filter(pub => PgpKey.getKeyType(pub.pubkey) === 'openpgp');
+    const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(pgpPubs);
+    return (await PgpMsg.encrypt({ pubkeys: pubs.map(p => p.pubkey), signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as DataArmorResult);
   }
 
   private getPwdMsgSendableBodyWithOnlineReplyMsgToken = async (authInfo: FcUuidAuth, newMsgData: NewMsgData): Promise<SendableMsgBody> => {
