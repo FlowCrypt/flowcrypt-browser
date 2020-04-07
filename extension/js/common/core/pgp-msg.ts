@@ -255,7 +255,10 @@ export class PgpMsg {
       options.privateKeys = [signingPrv];
     }
     const result = await opgp.encrypt(options);
-    return { data: Buf.fromUtfStr(result.data), signature: result.signature, type: 'openpgp' };
+    if (typeof result.data === 'string') {
+      return { data: Buf.fromUtfStr(result.data), signature: result.signature, type: 'openpgp' };
+    }
+    return result;
   }
 
   public static diagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = async ({ privateKis, message }) => {
