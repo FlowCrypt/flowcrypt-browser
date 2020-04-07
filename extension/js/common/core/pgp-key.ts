@@ -385,4 +385,14 @@ export class PgpKey {
       return await opgp.stream.readToEnd(certificate);
     }
   }
+
+  public static getKeyType(pubkey: string): 'openpgp' | 'x509' | 'unknown' {
+    if (pubkey.startsWith('-----BEGIN CERTIFICATE-----')) {
+      return 'x509';
+    } else if (pubkey.startsWith('-----BEGIN PGP PUBLIC KEY BLOCK-----')) {
+      return 'openpgp';
+    } else {
+      return 'unknown';
+    }
+  }
 }

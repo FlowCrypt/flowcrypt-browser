@@ -216,7 +216,7 @@ export class PgpMsg {
     // slice(1) filters first key that is always own OpenPGP key
     // in result if X.509 encryption is selected the e-mail author
     // cannot decrypt e-mails that they have sent
-    const keyTypes = new Set(pubkeys.slice(1).map(PgpMsg.getKeyType));
+    const keyTypes = new Set(pubkeys.slice(1).map(PgpKey.getKeyType));
     if (keyTypes.size > 1) {
       throw new Error('Mixed key types are not allowed: ' + [...keyTypes]);
     }
@@ -285,16 +285,6 @@ export class PgpMsg {
       }
     }
     return diagnosis;
-  }
-
-  private static getKeyType(pubkey: string): 'openpgp' | 'x509' {
-    if (pubkey.startsWith('-----BEGIN CERTIFICATE-----')) {
-      return 'x509';
-    } else if (pubkey.startsWith('-----BEGIN PGP PUBLIC KEY BLOCK-----')) {
-      return 'openpgp';
-    } else {
-      throw new Error('Unknown key type: ' + pubkey);
-    }
   }
 
   private static cryptoMsgGetSignedBy = async (msg: OpenpgpMsgOrCleartext, keys: SortedKeysForDecrypt) => {

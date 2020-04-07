@@ -104,7 +104,7 @@ export class ContactStore extends AbstractStore {
         };
       }
       // X.509 certificate
-      if (pubkey.startsWith('-----BEGIN CERTIFICATE-----')) {
+      if (PgpKey.getKeyType(pubkey) === 'x509') {
         // FIXME: For now we return random data.
         // Later we'll return serial ID from the certificate.
         const longid = Math.random() + '';
