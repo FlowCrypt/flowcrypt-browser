@@ -386,7 +386,7 @@ export class PgpKey {
     }
   }
 
-  public static getKeyType(pubkey: string): 'openpgp' | 'x509' | 'unknown' {
+  public static getKeyType = (pubkey: string): 'openpgp' | 'x509' | 'unknown' => {
     if (pubkey.startsWith('-----BEGIN CERTIFICATE-----')) {
       return 'x509';
     } else if (pubkey.startsWith('-----BEGIN PGP PUBLIC KEY BLOCK-----')) {
