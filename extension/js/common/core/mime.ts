@@ -225,10 +225,10 @@ export class Mime {
     for (const key of Object.keys(headers)) {
       rootNode.addHeader(key, headers[key]); // tslint:disable-line:no-unsafe-any
     }
-    rootNode.setContent(body);
+    rootNode.setContent(body); // tslint:disable-line:no-unsafe-any
     rootNode.addHeader('Content-Transfer-Encoding', 'base64'); // tslint:disable-line:no-unsafe-any
-    rootNode.addHeader('Content-Disposition', 'attachment; filename="smime.p7m"');
-    rootNode.addHeader('Content-Description', 'S/MIME Encrypted Message');
+    rootNode.addHeader('Content-Disposition', 'attachment; filename="smime.p7m"'); // tslint:disable-line:no-unsafe-any
+    rootNode.addHeader('Content-Description', 'S/MIME Encrypted Message'); // tslint:disable-line:no-unsafe-any
     return rootNode.build(); // tslint:disable-line:no-unsafe-any
   }
 
