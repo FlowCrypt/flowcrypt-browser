@@ -31,7 +31,6 @@ export namespace Bm {
 
   export type SetCss = { css: Dict<string>, traverseUp?: number, selector: string; };
   export type AddOrRemoveClass = { class: string, selector: string; };
-  export type ExtensionTab = { url: string };
   export type PassphraseDialog = { type: PassphraseDialogType, longids: string[] };
   export type ScrollToElement = { selector: string };
   export type NotificationShow = { notification: string, callbacks?: Dict<() => void> };
@@ -93,7 +92,7 @@ export namespace Bm {
 
   export type AnyRequest = PassphraseEntry | StripeResult | OpenPage | OpenGoogleAuthDialog | Redirect | Reload |
     AddPubkeyDialog | ReinsertReplyBox | CloseReplyMessage | ScrollToElement | SubscribeDialog | RenderPublicKeys | NotificationShowAuthPopupNeeded |
-    NotificationShow | PassphraseDialog | PassphraseDialog | ExtensionTab | SetCss | AddOrRemoveClass | ReconnectAcctAuthPopup |
+    NotificationShow | PassphraseDialog | PassphraseDialog | SetCss | AddOrRemoveClass | ReconnectAcctAuthPopup |
     PgpKeyDetails | Db | StoreSessionSet | StoreSessionGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
     PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | PgpMsgType | Ajax | FocusFrame;
 
@@ -120,7 +119,6 @@ export class BrowserMsg {
 
   public static send = { // todo - may want to organise this differently, seems to always confuse me when sending a message
     bg: {
-      extensionTab: (bm: Bm.ExtensionTab) => BrowserMsg.sendCatch(undefined, 'extensionTab', bm),
       updateUninstallUrl: () => BrowserMsg.sendCatch(undefined, 'update_uninstall_url', {}),
       await: {
         reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) => BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm, true) as Promise<Bm.Res.ReconnectAcctAuthPopup>,

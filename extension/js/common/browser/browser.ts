@@ -6,7 +6,6 @@
 
 import { Api } from '../api/api.js';
 import { Att } from '../core/att.js';
-import { BrowserMsg } from './browser-msg.js';
 import { Catch } from '../platform/catch.js';
 import { Dict, Url, UrlParam } from '../core/common.js';
 import { GlobalStore } from '../platform/store/global-store.js';
@@ -95,16 +94,7 @@ export class Browser {
   }
 
   public static openExtensionTab = async (url: string) => {
-    // TODO(@limonte): revisit, Firefox 74 doesn't work properly with window.open()
-    // - the 2nd parameter `target` will be ignored by it and each window.open() will open a new tab
-    // - the returning value of window.open() will be null, not Window, therefore it's impossible
-    //   to manage the previously opened tabs
-    if (Catch.browser().name === 'firefox') {
-      console.log('@', url);
-      await BrowserMsg.send.bg.extensionTab({ url });
-    } else {
-      window.open(url, 'flowcrypt');
-    }
+    window.open(url, 'flowcrypt');
   }
 
 }
