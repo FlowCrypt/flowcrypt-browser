@@ -41,7 +41,7 @@ View.run(class AddPubkeyView extends View {
       Xss.sanitizeAppend('select.copy_from_email', `<option value="${Xss.escape(contact.email)}">${Xss.escape(contact.email)}</option>`);
     }
     this.fetchKeyUi.handleOnPaste($('.pubkey'));
-    $('.action_settings').click(this.setHandler(() => Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/contacts.htm')));
+    $('.action_settings').click(this.setHandler(async () => await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/contacts.htm')));
   }
 
   public setHandlers = () => {

@@ -30,6 +30,7 @@ export class BgUtils {
       chrome.tabs.update(openedTab, { url, active: true });
     }
   }
+
   public static getFcSettingsTabIdIfOpen = async (): Promise<number | undefined> => {
     return await new Promise(resolve => {
       chrome.tabs.query({ currentWindow: true }, tabs => {

@@ -61,7 +61,7 @@ View.run(class BackupView extends View {
 
   public setHandlers = () => {
     if (!this.storedPrvWithMatchingLongid) {
-      $("#action_import_key").click(this.setHandler(() => Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/add_key.htm')));
+      $("#action_import_key").click(this.setHandler(async () => await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/add_key.htm')));
     }
     $('.action_test_pass').click(this.setHandler(async () => this.testPassphraseHandler()));
     $('#pass_phrase').keydown(this.setEnterHandlerThatClicks('.action_test_pass'));

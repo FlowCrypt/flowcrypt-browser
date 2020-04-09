@@ -56,7 +56,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>
       `);
       this.view.S.cached('prompt').attr('style', 'border:none !important');
-      $('.auth_settings').click(() => Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/auth_denied.htm'));
+      $('.auth_settings').click(async () => await Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/auth_denied.htm'));
       $('.new_message_button').click(() => BrowserMsg.send.openNewMessage(this.view.parentTabId));
     }
     this.view.sizeModule.resizeComposeBox();

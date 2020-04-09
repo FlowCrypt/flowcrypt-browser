@@ -17,8 +17,8 @@ export class BackupStatusModule extends ViewModule<BackupView> {
 
   public setHandlers = () => { // is run after checkAndRenderBackupStatus, which renders (some of) these fields first
     $('#module_status .action_go_manual').click(this.view.setHandler(el => this.actionShowManualBackupHandler()));
-    $('#module_status .action_go_auth_denied').click(this.view.setHandler(() => this.goTo('auth_denied.htm')));
-    $('#module_status .action_go_add_key').click(this.view.setHandler(() => this.goTo('add_key.htm')));
+    $('#module_status .action_go_auth_denied').click(this.view.setHandler(async () => await this.goTo('auth_denied.htm')));
+    $('#module_status .action_go_add_key').click(this.view.setHandler(async () => await this.goTo('add_key.htm')));
   }
 
   public checkAndRenderBackupStatus = async () => {

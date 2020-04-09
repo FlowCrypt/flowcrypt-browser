@@ -643,7 +643,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const settingsBtnContainer = $(this.sel.settingsBtnContainer);
       if (settingsBtnContainer.length && !settingsBtnContainer.find('#fc_settings_btn').length) {
         settingsBtnContainer.children().last().before(this.factory.btnSettings('gmail')); // xss-safe-factory
-        settingsBtnContainer.find('#fc_settings_btn').click(Ui.event.handle(() => Browser.openSettingsPage('index.htm', this.acctEmail)));
+        settingsBtnContainer.find('#fc_settings_btn').click(Ui.event.handle(async () => await Browser.openSettingsPage('index.htm', this.acctEmail)));
       }
     }
   }
