@@ -174,7 +174,7 @@ export class ComposeView extends View {
   }
 
   public setHandlers = () => {
-    this.S.cached('icon_help').click(this.setHandler(() => this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`)));
+    this.S.cached('icon_help').click(this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`)));
     this.attsModule.setHandlers();
     this.inputModule.setHandlers();
     this.myPubkeyModule.setHandlers();

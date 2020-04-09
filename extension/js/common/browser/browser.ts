@@ -12,8 +12,6 @@ import { GlobalStore } from '../platform/store/global-store.js';
 import { Ui } from './ui.js';
 import { Xss } from '../platform/xss.js';
 
-declare type SettingsPage = 'index.htm' | 'initial.htm' | 'fatal.htm';
-
 export class Browser {
 
   public static objUrlCreate = (content: Uint8Array | string) => {
@@ -80,7 +78,7 @@ export class Browser {
     return array;
   }
 
-  public static openSettingsPage = async (path: SettingsPage = 'index.htm', acctEmail?: string, page: string = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
+  public static openSettingsPage = async (path: string = 'index.htm', acctEmail?: string, page: string = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
     const basePath = chrome.runtime.getURL(`chrome/settings/${path}`);
     const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : undefined;
     if (acctEmail || path === 'fatal.htm') {
@@ -93,7 +91,7 @@ export class Browser {
     }
   }
 
-  public static openExtensionTab = async (url: string) => {
+  private static openExtensionTab = async (url: string) => {
     window.open(url, 'flowcrypt');
   }
 

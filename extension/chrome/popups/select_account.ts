@@ -47,14 +47,12 @@ View.run(class SelectAcctPopupView extends View {
 
   private actionChooseAcctHandler = async (clickedElement: HTMLElement) => {
     if (this.action === 'inbox') {
-      await Browser.openExtensionTab((Url.create(chrome.runtime.getURL(`chrome/settings/inbox/inbox.htm`), { acctEmail: $(clickedElement).attr('email') })));
-      await Ui.time.sleep(100);
-      window.close();
+      await Browser.openSettingsPage('inbox/inbox.htm', $(clickedElement).attr('email'));
     } else {
       await Browser.openSettingsPage('index.htm', $(clickedElement).attr('email'));
-      await Ui.time.sleep(100);
-      window.close();
     }
+    await Ui.time.sleep(100);
+    window.close();
   }
 
   private actionRedirectToAddAcctPageHandler = async () => {

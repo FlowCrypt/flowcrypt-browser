@@ -9,7 +9,6 @@ import { Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { GlobalStore } from '../../js/common/platform/store/global-store.js';
-import { Url } from '../../js/common/core/common.js';
 
 View.run(class DefaultPopupView extends View {
 
@@ -68,7 +67,7 @@ View.run(class DefaultPopupView extends View {
     }));
     $('.action_open_encrypted_inbox').click(this.setHandler(async () => {
       if (activeAcctEmail) {
-        await Browser.openExtensionTab((Url.create(chrome.runtime.getURL(`chrome/settings/inbox/inbox.htm`), { acctEmail: activeAcctEmail })));
+        await Browser.openSettingsPage('inbox/inbox.htm', activeAcctEmail);
         await Ui.time.sleep(100);
         window.close();
       } else {
