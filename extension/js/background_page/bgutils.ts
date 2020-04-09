@@ -58,7 +58,7 @@ export class BgUtils {
         reason = 'db_failed';
       }
     }
-    await chrome.tabs.create({ url: Url.create('fatal.htm', { reason, stack: e instanceof Error ? e.stack : Catch.stackTrace() }) });
+    await BgUtils.openSettingsPage(Url.create('fatal.htm', { reason, stack: e instanceof Error ? e.stack : Catch.stackTrace() }));
     throw new UnreportableError();
   }
 
