@@ -364,6 +364,22 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(content).to.include('-----BEGIN PGP MESSAGE-----Version: FlowCrypt 7.4.2 Gmail\nEncryptionComment: Seamlessly send and receive encrypted\nemailwcFMA0taL/zmLZUBAQ/+Kj48OQND');
     }));
 
+    ava.default('decrypt - inbox - PGP signature RTL', testWithBrowser('compatibility', async (t, browser) => {
+      const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility%40gmail.com&threadId=1716b22480de3040');
+      await inboxPage.waitAll('iframe.pgp_block');
+      const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+      await pgpBlock.waitForSelTestState('ready');
+      expect(await pgpBlock.hasClass('@pgp-signature', 'rtl')).to.be.true;
+    }));
+
+    ava.default('decrypt - inbox - PGP signature LTR', testWithBrowser('compatibility', async (t, browser) => {
+      const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility%40gmail.com&threadId=1716acdf4a6e996b');
+      await inboxPage.waitAll('iframe.pgp_block');
+      const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+      await pgpBlock.waitForSelTestState('ready');
+      expect(await pgpBlock.hasClass('@pgp-signature', 'rtl')).to.be.false;
+    }));
+
     ava.todo('decrypt - by entering secondary pass phrase');
 
     ava.default(`decrypt - don't allow api path traversal`, testWithBrowser('compatibility', async (t, browser) => {
