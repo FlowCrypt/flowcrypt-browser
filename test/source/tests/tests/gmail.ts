@@ -171,6 +171,20 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pageHasReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
     }));
 
+    ava.default('mail.google.com - plain reply draft', testWithBrowser('compatibility', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/CllgCJTGnFpCNKgMrsvvbpdFsLFMxHHrfLtjZZHwbXccPDdNPvcmQGCDvfQCLBBkvlRngZzhJhL'); // encrypted convo
+      await Util.sleep(3); // TODO(@limonte): this is the clue for #2683, remove this line in the corresponding PR
+      await gmailPage.waitAndClick('[data-tooltip="Reply"]');
+      await Util.sleep(5);
+      await gmailPage.type('div[aria-label="Message Body"]', 'plain reply', true);
+      await gmailPage.goto(TestUrls.gmail(0, '')); // go to Inbox
+      await Util.sleep(1);
+      await gmailPage.goto(TestUrls.gmail(0, '/CllgCJTGnFpCNKgMrsvvbpdFsLFMxHHrfLtjZZHwbXccPDdNPvcmQGCDvfQCLBBkvlRngZzhJhL')); // go back to convo with plain reply
+      await pageDoesNotHaveReplyContainer(gmailPage);
+      await gmailPage.waitForContent('div[aria-label="Message Body"]', 'plain reply');
+      await gmailPage.click('[aria-label^="Discard draft"]');
+    }));
+
     ava.default('mail.google.com - pubkey file gets rendered', testWithBrowser('compatibility', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/WhctKJTrSJzzjsZVrGcLhhcDLKCJKVrrHNMDLqTMbSjRZZftfDQWbjDWWDsmrpJVHWDblwg');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
