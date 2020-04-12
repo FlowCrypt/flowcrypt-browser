@@ -144,6 +144,12 @@ export class Str {
     return date.toISOString().replace(/T/, ' ').replace(/:[^:]+$/, '');
   }
 
+  public static mostlyRTL = (string: string): boolean => {
+    const rtlCount = string.match(new RegExp('[' + Str.rtlChars + ']', 'g'))?.length || 0;
+    const lrtCount = string.match(new RegExp('[' + Str.ltrChars + ']', 'g'))?.length || 0;
+    return rtlCount > lrtCount;
+  }
+
   private static base64urlUtfEncode = (str: string) => {
     // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
     if (typeof str === 'undefined') {

@@ -170,6 +170,11 @@ abstract class ControllableBase {
     return await this.target.evaluate((s) => document.querySelector(s).checked, this.selector(selector));
   }
 
+  public hasClass = async (selector: string, className: string): Promise<boolean> => {
+    const classList = await this.target.evaluate((s) => document.querySelector(s).classList, this.selector(selector));
+    return Object.values(classList).includes(className);
+  }
+
   // Get the current computed outer height (including padding, border)
   public getOuterHeight = async (selector: string): Promise<string> => {
     return await this.target.evaluate((s) => {

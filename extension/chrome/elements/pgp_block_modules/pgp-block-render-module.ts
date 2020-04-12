@@ -110,7 +110,7 @@ export class PgpBlockViewRenderModule {
       }
     }
     await this.view.quoteModule.separateQuotedContentAndRenderText(decryptedContent, isHtml);
-    if (decryptedContent.match(new RegExp('[' + Str.rtlChars + ']'))) {
+    if (Str.mostlyRTL(Xss.htmlSanitizeAndStripAllTags(decryptedContent, '\n'))) {
       $('#pgp_signature').addClass('rtl');
     }
     if (publicKeys.length) {
