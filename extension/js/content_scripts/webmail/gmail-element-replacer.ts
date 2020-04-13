@@ -54,6 +54,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     subject: 'h2.hP',
     msgOuter: 'div.adn',
     msgInner: 'div.a3s:not(.undefined), .message_inner_body',
+    msgInnerText: 'table.cf.An',
     msgInnerContainingPgp: "div.a3s:not(.undefined):contains('" + PgpArmor.headers('null').begin + "')",
     attsContainerOuter: 'div.hq.gt',
     attsContainerInner: 'div.aQH',
@@ -551,6 +552,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         }
         for (const replyBoxEl of newReplyBoxes.reverse()) { // looping in reverse
           const replyBox = $(replyBoxEl);
+          const replyBoxInnerText = replyBox.find(this.sel.msgInnerText).text().trim();
+          // plain reply
+          if (replyBoxInnerText) {
+            replyBox.addClass('reply_message_evaluated');
+            continue;
+          }
           if (this.removeNextReplyBoxBorders) {
             replyBox.addClass('remove_borders');
             this.removeNextReplyBoxBorders = false;
