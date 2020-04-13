@@ -163,8 +163,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const gmailPage = await openGmailPage(t, browser, '/WhctKJVjMccKbJcxpHPNZKwzZdwqJlWBFKchGNPBQRWLtvvpxmWbPZnpDncWTKhKRfTHWmB'); // plain convo
       await Util.sleep(1);
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
-      gmailPage.goto(TestUrls.gmail(0, '/CllgCJTGnFpCNKgMrsvvbpdFsLFMxHHrfLtjZZHwbXccPDdNPvcmQGCDvfQCLBBkvlRngZzhJhL')); // encrypted convo
-      await Util.sleep(1);
+      await gmailPage.goto(TestUrls.gmail(0, '/CllgCJTGnFpCNKgMrsvvbpdFsLFMxHHrfLtjZZHwbXccPDdNPvcmQGCDvfQCLBBkvlRngZzhJhL')); // encrypted convo
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
       await Util.sleep(5);
       await pageDoesNotHaveReplyContainer(gmailPage);
