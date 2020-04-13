@@ -172,7 +172,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           }
         });
         gmailReplyBtn.click(Ui.event.handle(() => {
-          if (!$('#switch_to_encrypted_reply').length) {
+          const replyContainerIframe = $('.reply_message_iframe_container > iframe').last();
+          if (replyContainerIframe.length && !$('#switch_to_encrypted_reply').length) {
             this.keepNextStandardReplyBox = true;
           }
         }));
