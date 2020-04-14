@@ -164,6 +164,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await Util.sleep(1);
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
       await gmailPage.goto(TestUrls.gmail(0, '/CllgCJTGnFpCNKgMrsvvbpdFsLFMxHHrfLtjZZHwbXccPDdNPvcmQGCDvfQCLBBkvlRngZzhJhL')); // encrypted convo
+      await Util.sleep(1);
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
       await Util.sleep(5);
       await pageDoesNotHaveReplyContainer(gmailPage);
