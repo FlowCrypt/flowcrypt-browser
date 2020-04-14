@@ -160,7 +160,10 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     }));
 
     ava.default('mail.google.com - plain reply to encrypted message', testWithBrowser('compatibility', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/WhctKJTrdTXcmgcCRgXDpVnfjJNnjjLzSvcMDczxWPMsBTTfPxRDMrKCJClzDHtbXlhnwtV'); // encrypted convo
+      const gmailPage = await openGmailPage(t, browser, '/WhctKJVjMccKbJcxpHPNZKwzZdwqJlWBFKchGNPBQRWLtvvpxmWbPZnpDncWTKhKRfTHWmB'); // plain convo
+      await Util.sleep(1);
+      await gmailPage.waitAndClick('[data-tooltip="Reply"]');
+      await gmailPage.goto(TestUrls.gmail(0, '/CllgCJTGnFpCNKgMrsvvbpdFsLFMxHHrfLtjZZHwbXccPDdNPvcmQGCDvfQCLBBkvlRngZzhJhL')); // encrypted convo
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
       await Util.sleep(5);
       await pageDoesNotHaveReplyContainer(gmailPage);
@@ -173,7 +176,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.default('mail.google.com - plain reply draft', testWithBrowser('compatibility', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/CllgCJTGnFpCNKgMrsvvbpdFsLFMxHHrfLtjZZHwbXccPDdNPvcmQGCDvfQCLBBkvlRngZzhJhL'); // encrypted convo
-      await Util.sleep(3); // TODO(@limonte): this is the clue for #2683, remove this line in the corresponding PR
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
       await Util.sleep(5);
       await gmailPage.type('div[aria-label="Message Body"]', 'plain reply', true);
