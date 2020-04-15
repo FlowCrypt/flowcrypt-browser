@@ -1,5 +1,7 @@
 <div class="lightboxed">
 
+version 7.7.8 on Apr 15, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/405?closed=1" target="_blank">Fix plain reply warning</a>
+
 version 7.7.7 on Apr 2, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/400?closed=1" target="_blank">Code maintenance</a>
 
 version 7.7.6 on Mar 29, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/403?closed=1" target="_blank">WKD Timeout</a>
