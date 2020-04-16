@@ -69,6 +69,7 @@ export class ComposePageRecipe extends PageRecipe {
     }
     const body = subject?.match(/RTL/) ? 'مرحبا' : `This is an automated puppeteer test: ${subject || '(no-subject)'}`;
     await composePageOrFrame.type('@input-body', body);
+
     return { subject, body };
   }
 
@@ -100,10 +101,8 @@ export class ComposePageRecipe extends PageRecipe {
         await Util.sleep(1);
       }
     }
-    if (composePageOrFrame instanceof ControllablePage) {
-      await composePageOrFrame.page.evaluate(() => { $('#input_text').focus(); });
-      await Util.sleep(1);
-    }
+    await composePageOrFrame.target.evaluate(() => { $('#input_text').focus(); });
+    await Util.sleep(1);
   }
 
   public static waitWhenDraftIsSaved = async (composePageOrFrame: Controllable) => {

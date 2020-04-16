@@ -14,7 +14,7 @@ type DraftSaveModel = { message: { raw: string, threadId: string } };
 
 const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', 'human+manualcopypgp@flowcrypt.com',
   'censored@email.com', 'test@email.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com', 'expired.on.attester@domain.com',
-  'test.ci.compose@org.flowcrypt.com'];
+  'test.ci.compose@org.flowcrypt.com', 'smime1@recipient.com', 'smime2@recipient.com', 'smime@recipient.com', 'smime.att@recipient.com'];
 
 export const mockGoogleEndpoints: HandlersDefinition = {
   '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, redirect_uri, scope, login_hint, result } }, req) => {
@@ -164,7 +164,8 @@ export const mockGoogleEndpoints: HandlersDefinition = {
           await testingStrategyContext.test(parseResult.mimeMsg, parseResult.base64);
         } catch (e) {
           if (!(e instanceof UnsuportableStrategyError)) { // No such strategy for test
-            throw e;
+            throw e; // todo - should start throwing unsupported test strategies too, else changing subject will cause incomplete testing
+            // todo - should stop calling it "strategy", better just "SentMessageTest" or similar
           }
         }
         return { id: 'fakesendid', labelIds: ['SENT'], threadId: parseResult.threadId };

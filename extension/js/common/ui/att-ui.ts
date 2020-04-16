@@ -3,7 +3,7 @@
 'use strict';
 
 import { Att } from '../core/att.js';
-import { Catch } from '../platform/catch.js';
+import { Catch, UnreportableError } from '../platform/catch.js';
 import { Dict } from '../core/common.js';
 import { PgpMsg } from '../core/pgp-msg.js';
 import { Ui } from '../browser/ui.js';
@@ -87,6 +87,9 @@ export class AttUI {
       const file = this.attachedFiles[uploadFileId];
       const data = await this.readAttDataAsUint8(uploadFileId);
       const pubsForEncryption = PgpKey.choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport(pubs);
+      if (pubs.find(pub => PgpKey.getKeyType(pub.pubkey) === 'x509')) {
+        throw new UnreportableError('Attachments are not yet supported when sending to recipients using S/MIME x509 certificates.');
+      }
       const encrypted = await PgpMsg.encrypt({ pubkeys: pubsForEncryption, data, filename: file.name, armor: false }) as OpenPGP.EncryptBinaryResult;
       atts.push(new Att({ name: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', type: file.type, data: encrypted.message.packets.write() }));
     }
