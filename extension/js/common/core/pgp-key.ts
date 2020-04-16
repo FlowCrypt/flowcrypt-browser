@@ -8,7 +8,8 @@ import { MsgBlockParser } from './msg-block-parser.js';
 import { PgpArmor } from './pgp-armor.js';
 import { opgp } from './pgp.js';
 import { KeyCache } from '../platform/key-cache.js';
-import { PubkeyResult } from '../../../chrome/elements/compose-modules/compose-types.js';
+
+export type PubkeyResult = { pubkey: string, email: string, isMine: boolean };
 
 export type Contact = {
   email: string;

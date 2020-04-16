@@ -7,8 +7,7 @@ import { Catch } from '../platform/catch.js';
 import { Dict } from '../core/common.js';
 import { PgpMsg } from '../core/pgp-msg.js';
 import { Ui } from '../browser/ui.js';
-import { PubkeyResult } from '../../../chrome/elements/compose-modules/compose-types.js';
-import { PgpKey } from '../core/pgp-key.js';
+import { PgpKey, PubkeyResult } from '../core/pgp-key.js';
 
 declare const qq: any;
 

@@ -5,6 +5,7 @@
 const VERSION = 'B.1.0';
 
 export type ObjWithStack = { stack: string };
+export class UnreportableError extends Error { }
 
 export class Catch {
 

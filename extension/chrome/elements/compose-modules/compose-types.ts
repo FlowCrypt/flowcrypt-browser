@@ -4,6 +4,7 @@
 
 import { RecipientType } from '../../../js/common/api/api.js';
 import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
+import { PubkeyResult } from '../../../js/common/core/pgp-key.js';
 
 export type RecipientStatus = 0 | 1 | 2 | 3 | 4 | 5;
 
@@ -37,7 +38,6 @@ export type MessageToReplyOrForward = {
   decryptedFiles: File[]
 };
 
-export type PubkeyResult = { pubkey: string, email: string, isMine: boolean };
 export type CollectPubkeysResult = { armoredPubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] };
 
 export type PopoverOpt = 'encrypt' | 'sign' | 'richtext';
