@@ -3,11 +3,12 @@
 'use strict';
 
 import { Buf } from './buf.js';
-import { Catch } from '../platform/catch.js';
+import { Catch, UnreportableError } from '../platform/catch.js';
 import { MsgBlockParser } from './msg-block-parser.js';
 import { PgpArmor } from './pgp-armor.js';
 import { opgp } from './pgp.js';
 import { KeyCache } from '../platform/key-cache.js';
+import { PubkeyResult } from '../../../chrome/elements/compose-modules/compose-types.js';
 
 export type Contact = {
   email: string;
@@ -394,4 +395,23 @@ export class PgpKey {
       return 'unknown';
     }
   }
+
+  public static choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport = (pubs: PubkeyResult[]): string[] => {
+    const myPubs = pubs.filter(pub => pub.isMine); // currently this must be openpgp pub
+    const otherPgpPubs = pubs.filter(pub => !pub.isMine && PgpKey.getKeyType(pub.pubkey) === 'openpgp');
+    const otherSmimePubs = pubs.filter(pub => !pub.isMine && PgpKey.getKeyType(pub.pubkey) === 'x509');
+    if (otherPgpPubs.length && otherSmimePubs.length) {
+      let err = `Cannot use mixed OpenPGP (${otherPgpPubs.map(p => p.email).join(', ')}) and S/MIME (${otherSmimePubs.map(p => p.email).join(', ')}) public keys yet.`;
+      err += 'If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.';
+      throw new UnreportableError(err);
+    }
+    if (otherPgpPubs.length) {
+      return myPubs.concat(...otherPgpPubs).map(p => p.pubkey);
+    }
+    if (otherSmimePubs.length) { // todo - currently skipping my own pgp keys when encrypting message for S/MIME
+      return otherSmimePubs.map(pub => pub.pubkey);
+    }
+    return myPubs.map(p => p.pubkey);
+  }
+
 }

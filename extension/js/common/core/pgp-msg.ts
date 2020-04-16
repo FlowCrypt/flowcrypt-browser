@@ -222,19 +222,14 @@ export class PgpMsg {
   }
 
   public static encrypt: PgpMsgMethod.Encrypt = async ({ pubkeys, signingPrv, pwd, data, filename, armor, date }) => {
-    // slice(1) filters first key that is always own OpenPGP key
-    // in result if X.509 encryption is selected the e-mail author
-    // cannot decrypt e-mails that they have sent
-    const otherKeys = pubkeys.slice(1);
-    // tslint:disable-next-line: no-unbound-method
-    const keyTypes = new Set(otherKeys.map(PgpKey.getKeyType));
-    if (keyTypes.size > 1) {
+    const keyTypes = new Set(pubkeys.map(k => PgpKey.getKeyType(k)));
+    if (keyTypes.has('openpgp') && keyTypes.has('x509')) {
       throw new Error('Mixed key types are not allowed: ' + [...keyTypes]);
     }
-    const keyType = keyTypes.keys().next().value;
-    if (keyType === 'x509') {
-      return smimeEncrypt(otherKeys, data);
+    if (keyTypes.has('x509')) {
+      return smimeEncrypt(pubkeys, data);
     }
+    // todo - move above lines to an abstract method
     const message = opgp.message.fromBinary(data, filename, date);
     const options: OpenPGP.EncryptOptions = { armor, message, date };
     let usedChallenge = false;
