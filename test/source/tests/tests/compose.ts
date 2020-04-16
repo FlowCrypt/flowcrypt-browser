@@ -643,7 +643,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default('send with single S/MIME cert', testWithBrowser('compose', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('test.ci.compose@org.flowcrypt.com'));
-      let composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title);
       await pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com', smimeCert);
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
@@ -652,7 +652,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default('send with several S/MIME certs', testWithBrowser('compose', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('test.ci.compose@org.flowcrypt.com'));
-      let composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime1@recipient.com', cc: 'smime2@recipient.com' }, t.title);
       await pastePublicKeyManually(composeFrame, inboxPage, 'smime1@recipient.com', smimeCert);
       await pastePublicKeyManually(composeFrame, inboxPage, 'smime2@recipient.com', smimeCert);
@@ -663,7 +663,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('send with S/MIME attachment', testWithBrowser('compose', async (t, browser) => {
       // todo - this is not yet looking for actual attachment in the result, just checks that it's s/mime message
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('test.ci.compose@org.flowcrypt.com'));
-      let composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime.att@recipient.com' }, t.title);
       await pastePublicKeyManually(composeFrame, inboxPage, 'smime.att@recipient.com', smimeCert);
       const fileInput = await composeFrame.target.$('input[type=file]');
@@ -677,7 +677,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default('send with mixed S/MIME and PGP recipients - should show err', testWithBrowser('compose', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('test.ci.compose@org.flowcrypt.com'));
-      let composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com', cc: 'human@flowcrypt.com' }, t.title);
       await pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com', smimeCert);
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
@@ -689,7 +689,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default('send with broken S/MIME cert - err', testWithBrowser('compose', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('test.ci.compose@org.flowcrypt.com'));
-      let composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title);
       const brokenCert = smimeCert.split('\n');
       brokenCert.splice(5, 5); // remove 5th to 10th line from cert - make it useless

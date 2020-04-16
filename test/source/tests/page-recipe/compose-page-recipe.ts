@@ -69,7 +69,6 @@ export class ComposePageRecipe extends PageRecipe {
     }
     const body = subject?.match(/RTL/) ? 'مرحبا' : `This is an automated puppeteer test: ${subject || '(no-subject)'}`;
     await composePageOrFrame.type('@input-body', body);
-
     return { subject, body };
   }
 
