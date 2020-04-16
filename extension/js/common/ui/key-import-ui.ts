@@ -147,7 +147,7 @@ export class KeyImportUi {
 
   public checkPub = async (armored: string): Promise<string> => {
     if (PgpKey.getKeyType(armored) === 'x509') {
-      return armored;
+      return armored; // todo - check the key parameters, else it may throw later or cause other trouble
     }
     const { normalized } = await this.normalize('publicKey', armored);
     const parsed = await this.read('publicKey', normalized);

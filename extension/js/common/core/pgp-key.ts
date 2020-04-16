@@ -352,9 +352,8 @@ export class PgpKey {
    * This is used to figure out how recently was key updated, and if one key is newer than other.
    */
   public static lastSig = async (key: OpenPGP.key.Key): Promise<number> => {
-    // key is undefined only for X.509 keys
-    if (!key) {
-      return Date.now();
+    if (!key) { // key is undefined only for X.509 keys
+      return Date.now(); // todo - this definitely needs to be refactored soon #2731
     }
     await key.getExpirationTime(); // will force all sigs to be verified
     const allSignatures: OpenPGP.packet.Signature[] = [];
