@@ -23,8 +23,6 @@ import { opgp } from '../../../../js/common/core/pgp.js';
 import { ContactStore } from '../../../../js/common/platform/store/contact-store.js';
 import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
 
-type DataArmorResult = PgpMsgMethod.OpenPGPEncryptArmorResult | PgpMsgMethod.X509EncryptResult;
-
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
   public sendableMsg = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> => {
@@ -87,10 +85,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     return atts;
   }
 
-  private encryptDataArmor = async (data: Buf, pwd: string | undefined, pubs: PubkeyResult[], signingPrv?: OpenPGP.key.Key): Promise<DataArmorResult> => {
+  private encryptDataArmor = async (data: Buf, pwd: string | undefined, pubs: PubkeyResult[], signingPrv?: OpenPGP.key.Key): Promise<PgpMsgMethod.EncryptAnyArmorResult> => {
     const pgpPubs = pubs.filter(pub => PgpKey.getKeyType(pub.pubkey) === 'openpgp');
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(pgpPubs);
-    return (await PgpMsg.encrypt({ pubkeys: pubs.map(p => p.pubkey), signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as DataArmorResult);
+    return await PgpMsg.encrypt({ pubkeys: pubs.map(p => p.pubkey), signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as PgpMsgMethod.EncryptAnyArmorResult;
   }
 
   private getPwdMsgSendableBodyWithOnlineReplyMsgToken = async (authInfo: FcUuidAuth, newMsgData: NewMsgData): Promise<SendableMsgBody> => {

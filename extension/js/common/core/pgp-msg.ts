@@ -25,14 +25,15 @@ export namespace PgpMsgMethod {
   export type VerifyDetached = (arg: Arg.VerifyDetached) => Promise<VerifyRes>;
   export type Decrypt = (arg: Arg.Decrypt) => Promise<DecryptSuccess | DecryptError>;
   export type Type = (arg: Arg.Type) => Promise<PgpMsgTypeResult>;
-  export type Encrypt = (arg: Arg.Encrypt) => Promise<OpenPGPEncryptResult | X509EncryptResult>;
-  export type OpenPGPEncryptResult = OpenPGPEncryptArmorResult | OpenPGP.EncryptBinaryResult;
-  export interface OpenPGPEncryptArmorResult {
+  export type Encrypt = (arg: Arg.Encrypt) => Promise<EncryptPgpResult | EncryptX509Result>;
+  export type EncryptPgpResult = EncryptPgpArmorResult | OpenPGP.EncryptBinaryResult;
+  export type EncryptAnyArmorResult = PgpMsgMethod.EncryptPgpArmorResult | EncryptX509Result;
+  export interface EncryptPgpArmorResult {
     data: Uint8Array;
     signature?: string;
     type: 'openpgp';
   }
-  export type X509EncryptResult = {
+  export type EncryptX509Result = {
     data: Uint8Array;
     type: 'smime';
   };
