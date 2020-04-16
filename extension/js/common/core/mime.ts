@@ -208,7 +208,7 @@ export class Mime {
       } else {
         contentNode = new MimeBuilder('multipart/alternative'); // tslint:disable-line:no-unsafe-any
         for (const type of Object.keys(body)) {
-          contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, String(body[type]!))); // already present, that's why part of for loop
+          contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!.toString())); // already present, that's why part of for loop
         }
       }
       rootNode.appendChild(contentNode); // tslint:disable-line:no-unsafe-any
