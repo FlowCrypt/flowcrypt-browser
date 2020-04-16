@@ -279,7 +279,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     if (format === 'full') {
       const bodies = GmailParser.findBodies(gmailMsg);
       const atts = GmailParser.findAtts(gmailMsg);
-      const fromTextBody = PgpArmor.clip(Buf.fromBase64UrlStr(bodies['text/plain']?.toString() || '').toUtfStr());
+      const fromTextBody = PgpArmor.clip(Buf.fromBase64UrlStr(bodies['text/plain'] || '').toUtfStr());
       if (fromTextBody) {
         return { armored: fromTextBody, subject, isPwdMsg };
       }
