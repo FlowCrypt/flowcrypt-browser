@@ -37,10 +37,10 @@ export type MimeContent = {
 export type MimeEncodeType = 'pgpMimeEncrypted' | 'pgpMimeSigned' | 'smimeEncrypted' | undefined;
 export type RichHeaders = Dict<string | string[]>;
 export type SendableMsgBody = {
-  [key: string]: string | Uint8Array | undefined;
+  [key: string]: string | Buf | undefined;
   'text/plain'?: string;
   'text/html'?: string;
-  'encrypted/buf'?: Uint8Array;
+  'encrypted/buf'?: Buf;
 };
 export type MimeProccesedMsg = {
   rawSignedContent: string | undefined,
@@ -244,7 +244,7 @@ export class Mime {
     }
     const bodyNodes = new MimeBuilder('multipart/alternative'); // tslint:disable-line:no-unsafe-any
     for (const type of Object.keys(body)) {
-      bodyNodes.appendChild(Mime.newContentNode(MimeBuilder, type, String(body[type]!))); // tslint:disable-line:no-unsafe-any
+      bodyNodes.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!.toString())); // tslint:disable-line:no-unsafe-any
     }
     const signedContentNode = new MimeBuilder('multipart/mixed'); // tslint:disable-line:no-unsafe-any
     signedContentNode.appendChild(bodyNodes); // tslint:disable-line:no-unsafe-any
