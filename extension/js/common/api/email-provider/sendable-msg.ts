@@ -83,8 +83,8 @@ export class SendableMsg {
       }
     }
     this.headers.Subject = this.subject;
-    if (this.type === 'smimePlain' && this.body['encrypted/buf']) {
-      return await Mime.encodePlain(this.body['encrypted/buf'], this.headers);
+    if (this.type === 'smimeEncrypted' && this.body['encrypted/buf']) {
+      return await Mime.encodeSmime(this.body['encrypted/buf'], this.headers);
     } else if (this.type === 'pgpMimeSigned' && this.sign) {
       return await Mime.encodePgpMimeSigned(this.body, this.headers, this.atts, this.sign);
     } else {

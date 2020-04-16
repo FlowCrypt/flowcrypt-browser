@@ -66,7 +66,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: OpenPGP.key.Key) => {
     const atts = this.isDraft ? [] : await this.view.attsModule.attach.collectEncryptAtts(pubs.map(p => p.pubkey));
     const { data: encryptedBody, type } = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
-    const mimeType = type === 'smime' ? 'smimePlain' : undefined;
+    const mimeType = type === 'smime' ? 'smimeEncrypted' : undefined;
     return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: { "encrypted/buf": encryptedBody }, type: mimeType, atts, isDraft: this.isDraft });
   }
 

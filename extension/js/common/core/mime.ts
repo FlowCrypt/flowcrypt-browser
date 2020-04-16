@@ -34,7 +34,7 @@ export type MimeContent = {
   bcc: string[];
 };
 
-export type MimeEncodeType = 'pgpMimeEncrypted' | 'pgpMimeSigned' | 'smimePlain' | undefined;
+export type MimeEncodeType = 'pgpMimeEncrypted' | 'pgpMimeSigned' | 'smimeEncrypted' | undefined;
 export type RichHeaders = Dict<string | string[]>;
 export type SendableMsgBody = {
   [key: string]: string | Uint8Array | undefined;
@@ -219,7 +219,7 @@ export class Mime {
     return rootNode.build(); // tslint:disable-line:no-unsafe-any
   }
 
-  public static encodePlain = async (body: Uint8Array, headers: RichHeaders): Promise<string> => {
+  public static encodeSmime = async (body: Uint8Array, headers: RichHeaders): Promise<string> => {
     const rootContentType = 'application/pkcs7-mime; name="smime.p7m"; smime-type=enveloped-data';
     const rootNode = new MimeBuilder(rootContentType, { includeBccInHeader: true }); // tslint:disable-line:no-unsafe-any
     for (const key of Object.keys(headers)) {
