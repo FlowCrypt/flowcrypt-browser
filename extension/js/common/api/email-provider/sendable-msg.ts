@@ -83,9 +83,14 @@ export class SendableMsg {
       }
     }
     this.headers.Subject = this.subject;
-    if (this.type === 'pgpMimeSigned' && this.sign) {
+    if (this.type === 'smimeEncrypted' && this.body['encrypted/buf']) {
+      return await Mime.encodeSmime(this.body['encrypted/buf'], this.headers);
+    } else if (this.type === 'pgpMimeSigned' && this.sign) {
       return await Mime.encodePgpMimeSigned(this.body, this.headers, this.atts, this.sign);
-    } else {
+    } else { // encrypted/buf is a Buf instance that is converted to single-part plain/text message
+      if (this.body['encrypted/buf']) {
+        this.body = { 'text/plain': this.body['encrypted/buf'].toString() };
+      }
       return await Mime.encode(this.body, this.headers, this.atts, this.type);
     }
   }

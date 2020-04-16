@@ -100,10 +100,8 @@ export class ComposePageRecipe extends PageRecipe {
         await Util.sleep(1);
       }
     }
-    if (composePageOrFrame instanceof ControllablePage) {
-      await composePageOrFrame.page.evaluate(() => { $('#input_text').focus(); });
-      await Util.sleep(1);
-    }
+    await composePageOrFrame.target.evaluate(() => { $('#input_text').focus(); });
+    await Util.sleep(1);
   }
 
   public static waitWhenDraftIsSaved = async (composePageOrFrame: Controllable) => {

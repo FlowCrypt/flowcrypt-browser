@@ -136,6 +136,10 @@ export class Catch {
       if (e.hasOwnProperty('workerStack')) { // https://github.com/openpgpjs/openpgpjs/issues/656#event-1498323188
         e.stack += Catch.formattedStackBlock('openpgp.js worker stack', String((e as any).workerStack));
       }
+      if (e instanceof UnreportableError) {
+        console.error('Not reporting UnreportableError:', e);
+        return;
+      }
     }
     Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
   }

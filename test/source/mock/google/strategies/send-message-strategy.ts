@@ -1,10 +1,10 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { AddressObject, ParsedMail } from 'mailparser';
+import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
 import { ITestMsgStrategy, UnsuportableStrategyError } from './strategy-base.js';
-
 import { Buf } from '../../../core/buf';
 import { Config } from '../../../util';
+import { expect } from 'chai';
 import { GoogleData } from '../google-data';
 import { HttpClientErr } from '../../lib/api';
 import { PgpMsg } from '../../../core/pgp-msg';
@@ -119,6 +119,22 @@ class NewMessageCCAndBCCTestStrategy implements ITestMsgStrategy {
   }
 }
 
+class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
+  public test = async (mimeMsg: ParsedMail) => {
+    expect((mimeMsg.headers.get('content-type') as StructuredHeader).value).to.equal('application/pkcs7-mime');
+    expect((mimeMsg.headers.get('content-type') as StructuredHeader).params.name).to.equal('smime.p7m');
+    expect((mimeMsg.headers.get('content-type') as StructuredHeader).params['smime-type']).to.equal('enveloped-data');
+    expect(mimeMsg.headers.get('content-transfer-encoding')).to.equal('base64');
+    expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).value).to.equal('attachment');
+    expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).params.filename).to.equal('smime.p7m');
+    expect(mimeMsg.headers.get('content-description')).to.equal('S/MIME Encrypted Message');
+    expect(mimeMsg.attachments!.length).to.equal(1);
+    expect(mimeMsg.attachments![0].contentType).to.equal('application/pkcs7-mime');
+    expect(mimeMsg.attachments![0].filename).to.equal('smime.p7m');
+    expect(mimeMsg.attachments![0].size).to.be.greaterThan(300);
+  }
+}
+
 export class TestBySubjectStrategyContext {
   private strategy: ITestMsgStrategy;
 
@@ -137,6 +153,12 @@ export class TestBySubjectStrategyContext {
       this.strategy = new PwdEncryptedMessageTestStrategy();
     } else if (subject.includes('Message With Image')) {
       this.strategy = new SaveMessageInStorageStrategy();
+    } else if (subject.includes('send with single S/MIME cert')) {
+      this.strategy = new SmimeEncryptedMessageStrategy();
+    } else if (subject.includes('send with several S/MIME certs')) {
+      this.strategy = new SmimeEncryptedMessageStrategy();
+    } else if (subject.includes('send with S/MIME attachment')) {
+      this.strategy = new SmimeEncryptedMessageStrategy();
     } else {
       throw new UnsuportableStrategyError(`There isn't any strategy for this subject: ${subject}`);
     }

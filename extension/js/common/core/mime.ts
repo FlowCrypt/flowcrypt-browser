@@ -34,9 +34,14 @@ export type MimeContent = {
   bcc: string[];
 };
 
-export type MimeEncodeType = 'pgpMimeEncrypted' | 'pgpMimeSigned' | undefined;
+export type MimeEncodeType = 'pgpMimeEncrypted' | 'pgpMimeSigned' | 'smimeEncrypted' | undefined;
 export type RichHeaders = Dict<string | string[]>;
-export type SendableMsgBody = { [key: string]: string | undefined; 'text/plain'?: string; 'text/html'?: string; };
+export type SendableMsgBody = {
+  [key: string]: string | Buf | undefined;
+  'text/plain'?: string;
+  'text/html'?: string;
+  'encrypted/buf'?: Buf;
+};
 export type MimeProccesedMsg = {
   rawSignedContent: string | undefined,
   headers: Dict<MimeContentHeader>,
@@ -203,7 +208,7 @@ export class Mime {
       } else {
         contentNode = new MimeBuilder('multipart/alternative'); // tslint:disable-line:no-unsafe-any
         for (const type of Object.keys(body)) {
-          contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!)); // already present, that's why part of for loop
+          contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!.toString())); // already present, that's why part of for loop
         }
       }
       rootNode.appendChild(contentNode); // tslint:disable-line:no-unsafe-any
@@ -211,6 +216,19 @@ export class Mime {
     for (const att of atts) {
       rootNode.appendChild(Mime.createAttNode(att)); // tslint:disable-line:no-unsafe-any
     }
+    return rootNode.build(); // tslint:disable-line:no-unsafe-any
+  }
+
+  public static encodeSmime = async (body: Uint8Array, headers: RichHeaders): Promise<string> => {
+    const rootContentType = 'application/pkcs7-mime; name="smime.p7m"; smime-type=enveloped-data';
+    const rootNode = new MimeBuilder(rootContentType, { includeBccInHeader: true }); // tslint:disable-line:no-unsafe-any
+    for (const key of Object.keys(headers)) {
+      rootNode.addHeader(key, headers[key]); // tslint:disable-line:no-unsafe-any
+    }
+    rootNode.setContent(body); // tslint:disable-line:no-unsafe-any
+    rootNode.addHeader('Content-Transfer-Encoding', 'base64'); // tslint:disable-line:no-unsafe-any
+    rootNode.addHeader('Content-Disposition', 'attachment; filename="smime.p7m"'); // tslint:disable-line:no-unsafe-any
+    rootNode.addHeader('Content-Description', 'S/MIME Encrypted Message'); // tslint:disable-line:no-unsafe-any
     return rootNode.build(); // tslint:disable-line:no-unsafe-any
   }
 
@@ -226,7 +244,7 @@ export class Mime {
     }
     const bodyNodes = new MimeBuilder('multipart/alternative'); // tslint:disable-line:no-unsafe-any
     for (const type of Object.keys(body)) {
-      bodyNodes.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!)); // tslint:disable-line:no-unsafe-any
+      bodyNodes.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!.toString())); // tslint:disable-line:no-unsafe-any
     }
     const signedContentNode = new MimeBuilder('multipart/mixed'); // tslint:disable-line:no-unsafe-any
     signedContentNode.appendChild(bodyNodes); // tslint:disable-line:no-unsafe-any

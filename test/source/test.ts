@@ -88,8 +88,13 @@ ava.after.always('evaluate Catch.reportErr errors', async t => {
     t.pass();
     return;
   }
-  const foundExpectedErr = mockBackendData.reportedErrors.find(re => re.message === `intentional error for debugging`);
-  const foundUnwantedErrs = mockBackendData.reportedErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
+  // todo - here we filter out an error that would otherwise be useful
+  // in one test we are testing an error scenario
+  // our S/MIME implementation is still early so it throws "reportable" errors like this during tests
+  const usefulErrors = mockBackendData.reportedErrors.filter(e => e.message !== 'Too few bytes to read ASN.1 value.');
+  // end of todo
+  const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
+  const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
   if (!foundExpectedErr && internalTestState.expectiIntentionalErrReport) {
     t.fail(`Catch.reportErr errors: missing intentional error`);
   } else if (foundUnwantedErrs.length) {

@@ -1,7 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
-
 import { Contact, KeyInfo, PgpKey, PrvKeyInfo } from './pgp-key.js';
 import { MsgBlockType, ReplaceableMsgBlockType } from './msg-block.js';
 import { Value } from './common.js';
@@ -12,6 +11,7 @@ import { PgpHash } from './pgp-hash.js';
 import { opgp } from './pgp.js';
 import { KeyCache } from '../platform/key-cache.js';
 import { ContactStore } from '../platform/store/contact-store.js';
+import { encrypt as smimeEncrypt } from './smime.js';
 
 export namespace PgpMsgMethod {
   export namespace Arg {
@@ -25,7 +25,18 @@ export namespace PgpMsgMethod {
   export type VerifyDetached = (arg: Arg.VerifyDetached) => Promise<VerifyRes>;
   export type Decrypt = (arg: Arg.Decrypt) => Promise<DecryptSuccess | DecryptError>;
   export type Type = (arg: Arg.Type) => Promise<PgpMsgTypeResult>;
-  export type Encrypt = (arg: Arg.Encrypt) => Promise<OpenPGP.EncryptResult>;
+  export type Encrypt = (arg: Arg.Encrypt) => Promise<EncryptPgpResult | EncryptX509Result>;
+  export type EncryptPgpResult = EncryptPgpArmorResult | OpenPGP.EncryptBinaryResult;
+  export type EncryptAnyArmorResult = PgpMsgMethod.EncryptPgpArmorResult | EncryptX509Result;
+  export interface EncryptPgpArmorResult {
+    data: Uint8Array;
+    signature?: string;
+    type: 'openpgp';
+  }
+  export type EncryptX509Result = {
+    data: Uint8Array;
+    type: 'smime';
+  };
 }
 
 type SortedKeysForDecrypt = {
@@ -211,6 +222,14 @@ export class PgpMsg {
   }
 
   public static encrypt: PgpMsgMethod.Encrypt = async ({ pubkeys, signingPrv, pwd, data, filename, armor, date }) => {
+    const keyTypes = new Set(pubkeys.map(k => PgpKey.getKeyType(k)));
+    if (keyTypes.has('openpgp') && keyTypes.has('x509')) {
+      throw new Error('Mixed key types are not allowed: ' + [...keyTypes]);
+    }
+    if (keyTypes.has('x509')) {
+      return smimeEncrypt(pubkeys, data);
+    }
+    // todo - move above lines to an abstract method
     const message = opgp.message.fromBinary(data, filename, date);
     const options: OpenPGP.EncryptOptions = { armor, message, date };
     let usedChallenge = false;
@@ -231,7 +250,12 @@ export class PgpMsg {
     if (signingPrv && typeof signingPrv.isPrivate !== 'undefined' && signingPrv.isPrivate()) { // tslint:disable-line:no-unbound-method - only testing if exists
       options.privateKeys = [signingPrv];
     }
-    return await opgp.encrypt(options);
+    const result = await opgp.encrypt(options);
+    if (typeof result.data === 'string') {
+      return { data: Buf.fromUtfStr(result.data), signature: result.signature, type: 'openpgp' };
+    } else {
+      return result as unknown as OpenPGP.EncryptBinaryResult;
+    }
   }
 
   public static diagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = async ({ privateKis, message }) => {

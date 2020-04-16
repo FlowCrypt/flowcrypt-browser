@@ -103,6 +103,28 @@ export class ContactStore extends AbstractStore {
           expiresOn: null
         };
       }
+      // X.509 certificate
+      if (PgpKey.getKeyType(pubkey) === 'x509') {
+        // FIXME: For now we return random data.
+        // Later we'll return serial ID from the certificate.
+        const longid = Math.random() + '';
+        return {
+          email: validEmail,
+          name: name || null,
+          pubkey,
+          has_pgp: 1, // number because we use it for sorting
+          searchable: ContactStore.dbCreateSearchIndexList(validEmail, name || null, true),
+          client: ContactStore.storablePgpClient(client || 'pgp'),
+          fingerprint: Math.random() + '',
+          longid,
+          longids: [longid],
+          pending_lookup: 0,
+          last_use: lastUse || null,
+          pubkey_last_sig: lastSig || null,
+          pubkey_last_check: lastCheck || null,
+          expiresOn: null
+        };
+      }
       const k = await PgpKey.read(pubkey);
       if (!k) {
         throw new Error(`Could not read pubkey as valid OpenPGP key for: ${validEmail}`);
