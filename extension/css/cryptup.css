@@ -134,7 +134,7 @@ span.gray { color: #b7b7b7; }
   color: white;
 }
 
-.swal2-popup.ui-toast {
+.swal2-popup.swal2-toast.ui-toast {
   margin-bottom: 50px;
   background-color: #000;
   opacity: 0.8;
@@ -417,7 +417,6 @@ body#settings > div#content .chevron-left {
   height: 20px;
   color: #999;
   cursor: pointer;
-  -webkit-animation: fadeInRight 1s;
   opacity: 0.4;
   animation: fadeInRight 1s;
 }
@@ -563,24 +562,20 @@ body#settings > div#content.contacts iframe.pgp_block {
 body#settings > div#content.setup [id^="step_"] { animation: fadeIn 0.7s; }
 
 body#settings > div#content.setup h1 {
-  -webkit-animation: fadeIn 0.7s;
   animation: fadeIn 0.7s;
 }
 
 body#settings > div#content.setup div#step_0_found_key {
   display: none;
-  -webkit-animation: fadeIn 0.7s;
   animation: fadeIn 0.7s;
 }
 
 body#settings > div#content.setup div#step_1_easy_or_manual {
   display: none;
-  -webkit-animation: fadeIn 0.7s;
   animation: fadeIn 0.7s;
 }
 
 body#settings > div#content.setup div#step_1_easy_or_manual .circle-i {
-  -webkit-animation: fadeInUp 0.5s;
   animation: fadeInUp 0.5s;
   margin-bottom: 35px;
 }
@@ -633,7 +628,6 @@ body#settings > div#content.setup div#step_2_easy_generating {
   font-size: 16px;
   font-weight: normal;
   color: #666;
-  -webkit-animation: fadeIn 0.7s;
   animation: fadeIn 0.7s;
 }
 
@@ -732,7 +726,6 @@ body#settings > div#content.setup div.manual #addresses { color: #888; }
 
 body#settings > div#content.setup div#step_2_recovery {
   display: none;
-  -webkit-animation: fadeIn 0.7s;
   animation: fadeIn 0.7s;
 }
 body#settings > div#content.setup div#step_2_recovery div#error_text_container { display: none; }
@@ -740,7 +733,6 @@ body#settings > div#content.setup div#step_2_recovery div#error_text_container {
 body#settings > div#content.setup div#step_2_recovery div#error_text {
   line-height: 1.5;
   color: #d14836;
-  -webkit-animation: fadeInDown 0.7s;
   animation: fadeInDown 0.7s;
 }
 
@@ -834,7 +826,6 @@ body#settings > div#content.setup div.manual .password_feedback {
   left: 0;
   right: 0;
   margin-top: -8px;
-  -webkit-animation: fadeIn 0.7s;
   animation: fadeIn 0.7s;
   height: 20px;
   padding: 0;
@@ -913,7 +904,6 @@ body#settings > div#content h2 {
   padding-bottom: 0;
   margin-bottom: 0;
   font-family: 'Open Sans', sans-serif;
-  -webkit-animation: fadeIn 0.7s;
   animation: fadeIn 0.7s;
 }
 
@@ -1878,7 +1868,6 @@ table#compose td.text .action_add_intro {
   user-select: none;
   background-color: #31a217;
   color: white;
-  -webkit-animation: fadeInRight 1s;
   animation: fadeInRight 1s;
 }
 table#compose .intro_container { display: none; }
@@ -1904,7 +1893,6 @@ table#compose .intro_container > td > .input_intro {
 }
 
 .qq-upload-drop-area-active {
-  -webkit-animation: fadeIn 0.5s ease;
   animation: fadeIn 0.5s ease;
 }
 
@@ -2073,7 +2061,6 @@ table#compose tr#password_or_pubkey_container .password_input_container .line.pa
 table#compose tr#password_or_pubkey_container td {
   height: 66px;
   padding: 5px 14px;
-  -webkit-animation: fadeInUp 1s;
   animation: fadeInUp 1s;
   border-top: 1px solid #cfcfcf;
   line-height: 1.5;
@@ -2104,7 +2091,6 @@ table#compose tr#password_or_pubkey_container td .label_password {
   text-transform: uppercase;
   color: #777;
   display: none;
-  -webkit-animation: fadeInDown 0.5s;
   animation: fadeInDown 0.5s;
 }
 
@@ -2243,7 +2229,6 @@ table#compose #error_container_reply_message {
   right: 0;
   padding: 10px 0;
   z-index: 10;
-  -webkit-animation: fadeInUp 0.7s;
   animation: fadeInUp 0.7s;
   text-indent: 10px;
   color: #d14836;
@@ -2260,7 +2245,6 @@ table#compose #error_container_reply_message #error_text_reply_message {
 }
 
 .loading_copy {
-  -webkit-animation: fadeIn 1s;
   animation: fadeIn 1s;
   text-align: center;
   font-size: 19px;
@@ -2272,7 +2256,6 @@ table#compose #error_container_reply_message #error_text_reply_message {
   text-align: center;
   padding-left: 0;
   margin-left: 0;
-  -webkit-animation: fadeInUp 1s;
   animation: fadeInUp 1s;
 }
 
@@ -2427,7 +2410,6 @@ body#select_account #title {
 body#select_account ul.emails {
   margin-top: 0;
   margin-bottom: 0;
-  -webkit-animation: fadeIn 0.5s;
   animation: fadeIn 0.5s;
 }
 
@@ -2477,7 +2459,6 @@ body#select_account .action_add_account {
   margin-top: 0;
   font-size: 13px;
   text-decoration: none;
-  -webkit-animation: fadeIn 0.5s;
   animation: fadeIn 0.5s;
   margin-left: 4px;
   font-weight: 600;
