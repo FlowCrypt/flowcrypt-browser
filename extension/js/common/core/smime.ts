@@ -16,3 +16,8 @@ export const encrypt = (pubkeys: string[], data: Uint8Array): { data: Uint8Array
   }
   return { data: new Uint8Array(arr), type: 'smime' };
 };
+
+export const getSerialNumber = (pubkey: string) => {
+  const certificate = forge.pki.certificateFromPem(pubkey);
+  return certificate.serialNumber;
+};

@@ -8,6 +8,7 @@ import { BrowserMsg } from '../../browser/browser-msg.js';
 import { Str } from '../../core/common.js';
 import { PgpKey, Contact } from '../../core/pgp-key.js';
 import { PgpArmor } from '../../core/pgp-armor.js';
+import * as smime from '../../core/smime.js';
 
 // tslint:disable:no-null-keyword
 
@@ -105,9 +106,8 @@ export class ContactStore extends AbstractStore {
       }
       // X.509 certificate
       if (PgpKey.getKeyType(pubkey) === 'x509') {
-        // FIXME: For now we return random data.
-        // Later we'll return serial ID from the certificate.
-        const longid = Math.random() + '';
+        const fingerprint = smime.getSerialNumber(pubkey);
+        const longid = fingerprint.substring(fingerprint.length / 2);
         return {
           email: validEmail,
           name: name || null,
@@ -115,7 +115,7 @@ export class ContactStore extends AbstractStore {
           has_pgp: 1, // number because we use it for sorting
           searchable: ContactStore.dbCreateSearchIndexList(validEmail, name || null, true),
           client: ContactStore.storablePgpClient(client || 'pgp'),
-          fingerprint: Math.random() + '',
+          fingerprint,
           longid,
           longids: [longid],
           pending_lookup: 0,
