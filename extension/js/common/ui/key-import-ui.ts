@@ -15,6 +15,7 @@ import { Ui } from '../browser/ui.js';
 import { Url, Str } from '../core/common.js';
 import { opgp } from '../core/pgp.js';
 import { KeyStore } from '../platform/store/key-store.js';
+import * as smime from '../core/smime.js';
 
 type KeyImportUiCheckResult = {
   normalized: string; longid: string; passphrase: string; fingerprint: string; decrypted: OpenPGP.key.Key;
@@ -146,7 +147,7 @@ export class KeyImportUi {
   }
 
   public checkPub = async (armored: string): Promise<string> => {
-    if (PgpKey.getKeyType(armored) === 'x509') {
+    if (PgpKey.getKeyType(armored) === 'x509' && smime.isEmailCertificate(armored)) {
       return armored; // todo - check the key parameters, else it may throw later or cause other trouble
     }
     const { normalized } = await this.normalize('publicKey', armored);

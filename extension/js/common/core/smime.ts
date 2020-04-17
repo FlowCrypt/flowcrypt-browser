@@ -30,3 +30,12 @@ export const getExpirationTime = (pubkey: string) => {
   }
   return;
 };
+
+export const isEmailCertificate = (pubkey: string) => {
+  const certificate = forge.pki.certificateFromPem(pubkey);
+  const eku = certificate.getExtension('extKeyUsage');
+  if (!eku) {
+    return false;
+  }
+  return !!(eku as { emailProtection: boolean }).emailProtection;
+};
