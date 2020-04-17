@@ -172,7 +172,6 @@ a.gray_link {
   position: relative;
   font-size: 13px;
   text-decoration: none;
-  -webkit-animation: fadeIn 0.5s;
   animation: fadeIn 0.5s;
   margin-left: 4px;
   margin-top: 10px;
@@ -468,7 +467,6 @@ a.gray_link {
   right: 0;
   left: 0;
   font-weight: 600;
-  -webkit-animation: fadeInUp 0.4s;
   animation: fadeInUp 0.4s;
   background: white;
   border-top: 1px solid #f3f3f3;
