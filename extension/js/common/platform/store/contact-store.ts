@@ -122,7 +122,7 @@ export class ContactStore extends AbstractStore {
           last_use: lastUse || null,
           pubkey_last_sig: lastSig || null,
           pubkey_last_check: lastCheck || null,
-          expiresOn: null
+          expiresOn: smime.getExpirationTime(pubkey) || null
         };
       }
       const k = await PgpKey.read(pubkey);

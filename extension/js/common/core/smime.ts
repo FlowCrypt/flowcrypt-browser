@@ -21,3 +21,12 @@ export const getSerialNumber = (pubkey: string) => {
   const certificate = forge.pki.certificateFromPem(pubkey);
   return certificate.serialNumber;
 };
+
+export const getExpirationTime = (pubkey: string) => {
+  const certificate = forge.pki.certificateFromPem(pubkey);
+  const expiration = certificate.validity.notAfter;
+  if (expiration) {
+    return expiration.getTime();
+  }
+  return;
+};
