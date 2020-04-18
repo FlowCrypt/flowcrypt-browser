@@ -693,9 +693,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title);
       const brokenCert = smimeCert.split('\n');
       brokenCert.splice(5, 5); // remove 5th to 10th line from cert - make it useless
-      await pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com', brokenCert.join('\n'));
-      await composeFrame.waitAndClick('@action-send', { delay: 2 });
-      await PageRecipe.waitForModalAndRespond(composeFrame, 'error', { contentToCheck: 'Too few bytes to read ASN.1 value.', timeout: 40 });
+      await pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com', brokenCert.join('\n'), 'Too few bytes to read ASN.1 value.');
     }));
 
     // todo - unexpectedly works
@@ -713,7 +711,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
 };
 
-const pastePublicKeyManually = async (composeFrame: ControllableFrame, inboxPage: ControllablePage, recipient: string, pub: string) => {
+const pastePublicKeyManually = async (composeFrame: ControllableFrame, inboxPage: ControllablePage, recipient: string, pub: string, expectModalErr?: string) => {
   await Util.sleep(1); // todo: should wait until recipient actually loaded
   await composeFrame.waitForContent('.email_address.no_pgp', recipient);
   await composeFrame.waitAndClick('@action-open-add-pubkey-dialog', { delay: 1 });
@@ -722,7 +720,11 @@ const pastePublicKeyManually = async (composeFrame: ControllableFrame, inboxPage
   await addPubkeyDialog.waitAndType('@input-pubkey', pub);
   await Util.sleep(1);
   await addPubkeyDialog.waitAndClick('@action-add-pubkey');
-  await inboxPage.waitTillGone('@dialog-add-pubkey');
+  if (expectModalErr) {
+    await PageRecipe.waitForModalAndRespond(addPubkeyDialog, 'error', { contentToCheck: expectModalErr, timeout: 40, clickOn: 'confirm' });
+  } else {
+    await inboxPage.waitTillGone('@dialog-add-pubkey');
+  }
 };
 
 const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserHandle, sendingType: 'encrypt' | 'sign') => {
