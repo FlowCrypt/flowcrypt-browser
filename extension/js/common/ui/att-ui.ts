@@ -87,7 +87,7 @@ export class AttUI {
       const file = this.attachedFiles[uploadFileId];
       const data = await this.readAttDataAsUint8(uploadFileId);
       const pubsForEncryption = PgpKey.choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport(pubs);
-      if (pubs.find(pub => PgpKey.getKeyType(pub.pubkey) === 'x509')) {
+      if (pubs.find(pub => pub.pubkey.type === 'x509')) {
         throw new UnreportableError('Attachments are not yet supported when sending to recipients using S/MIME x509 certificates.');
       }
       const encrypted = await PgpMsg.encrypt({ pubkeys: pubsForEncryption, data, filename: file.name, armor: false }) as OpenPGP.EncryptBinaryResult;

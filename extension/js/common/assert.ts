@@ -38,7 +38,7 @@ export class Assert {
     if (acctEmail) {
       const [primaryKi] = await KeyStore.get(acctEmail, ['primary']);
       const { setup_done } = await AcctStore.get(acctEmail, ['setup_done']);
-      if (setup_done && primaryKi && !(await PgpKey.read(primaryKi.private)).isFullyEncrypted()) {
+      if (setup_done && primaryKi && !(await PgpKey.readAsOpenPGP(primaryKi.private)).isFullyEncrypted()) {
         if (window.location.pathname === '/chrome/settings/index.htm') {
           await Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
         } else {

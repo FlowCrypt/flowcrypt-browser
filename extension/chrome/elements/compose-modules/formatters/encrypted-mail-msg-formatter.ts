@@ -86,7 +86,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   }
 
   private encryptDataArmor = async (data: Buf, pwd: string | undefined, pubs: PubkeyResult[], signingPrv?: OpenPGP.key.Key): Promise<PgpMsgMethod.EncryptAnyArmorResult> => {
-    const pgpPubs = pubs.filter(pub => PgpKey.getKeyType(pub.pubkey) === 'openpgp');
+    const pgpPubs = pubs.filter(pub => pub.pubkey.type === 'openpgp');
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(pgpPubs);
     const pubsForEncryption = PgpKey.choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport(pubs);
     return await PgpMsg.encrypt({ pubkeys: pubsForEncryption, signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as PgpMsgMethod.EncryptAnyArmorResult;
@@ -126,7 +126,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const usableUntil: number[] = [];
     const usableFrom: number[] = [];
     for (const armoredPubkey of pubs) {
-      const { keys: [pub] } = await opgp.key.readArmored(armoredPubkey.pubkey);
+      const { keys: [pub] } = await opgp.key.readArmored(armoredPubkey.pubkey.unparsed);
       const oneSecondBeforeExpiration = await PgpKey.dateBeforeExpirationIfAlreadyExpired(pub);
       usableFrom.push(pub.getCreationTime().getTime());
       if (typeof oneSecondBeforeExpiration !== 'undefined') { // key is expired
@@ -140,7 +140,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       return undefined;
     }
     for (const myKey of pubs.filter(ap => ap.isMine)) {
-      if (await PgpKey.usableButExpired(await PgpKey.read(myKey.pubkey))) {
+      if (await PgpKey.usableButExpired(myKey.pubkey)) {
         const path = chrome.runtime.getURL(`chrome/settings/index.htm?acctEmail=${encodeURIComponent(myKey.email)}&page=%2Fchrome%2Fsettings%2Fmodules%2Fmy_key_update.htm`);
         const errModalLines = [
           'This message could not be encrypted because your own Private Key is expired.',

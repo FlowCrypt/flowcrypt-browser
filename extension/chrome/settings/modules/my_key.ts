@@ -45,7 +45,7 @@ View.run(class MyKeyView extends View {
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
     [this.keyInfo] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
-    this.pubKey = await PgpKey.read(this.keyInfo.public);
+    this.pubKey = await PgpKey.readAsOpenPGP(this.keyInfo.public);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
     $('.action_view_update').attr('href', this.myKeyUpdateUrl);
@@ -84,7 +84,7 @@ View.run(class MyKeyView extends View {
   }
 
   private downloadRevocationCert = async (enteredPP?: string) => {
-    const prv = await PgpKey.read(this.keyInfo.private);
+    const prv = await PgpKey.readAsOpenPGP(this.keyInfo.private);
     if (!prv.isFullyDecrypted()) {
       const passphrase = await PassphraseStore.get(this.acctEmail, this.keyInfo.fingerprint) || enteredPP;
       if (passphrase) {

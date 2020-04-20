@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
-import { Contact, KeyInfo, PgpKey, PrvKeyInfo } from './pgp-key.js';
+import { Contact, KeyInfo, PgpKey, Pubkey, PrvKeyInfo } from './pgp-key.js';
 import { MsgBlockType, ReplaceableMsgBlockType } from './msg-block.js';
 import { Value } from './common.js';
 import { Buf } from './buf.js';
@@ -15,7 +15,7 @@ import { encrypt as smimeEncrypt } from './smime.js';
 
 export namespace PgpMsgMethod {
   export namespace Arg {
-    export type Encrypt = { pubkeys: string[], signingPrv?: OpenPGP.key.Key, pwd?: string, data: Uint8Array, filename?: string, armor: boolean, date?: Date };
+    export type Encrypt = { pubkeys: Pubkey[], signingPrv?: OpenPGP.key.Key, pwd?: string, data: Uint8Array, filename?: string, armor: boolean, date?: Date };
     export type Type = { data: Uint8Array | string };
     export type Decrypt = { kisWithPp: PrvKeyInfo[], encryptedData: Uint8Array, msgPwd?: string };
     export type DiagnosePubkeys = { privateKis: KeyInfo[], message: Uint8Array };
@@ -222,7 +222,7 @@ export class PgpMsg {
   }
 
   public static encrypt: PgpMsgMethod.Encrypt = async ({ pubkeys, signingPrv, pwd, data, filename, armor, date }) => {
-    const keyTypes = new Set(pubkeys.map(k => PgpKey.getKeyType(k)));
+    const keyTypes = new Set(pubkeys.map(k => k.type));
     if (keyTypes.has('openpgp') && keyTypes.has('x509')) {
       throw new Error('Mixed key types are not allowed: ' + [...keyTypes]);
     }
@@ -236,7 +236,7 @@ export class PgpMsg {
     if (pubkeys) {
       options.publicKeys = [];
       for (const armoredPubkey of pubkeys) {
-        const { keys: publicKeys } = await opgp.key.readArmored(armoredPubkey);
+        const { keys: publicKeys } = await opgp.key.readArmored(armoredPubkey.unparsed);
         options.publicKeys.push(...publicKeys);
       }
     }
@@ -262,7 +262,7 @@ export class PgpMsg {
     const m = await opgp.message.readArmored(Buf.fromUint8(message).toUtfStr());
     const msgKeyIds = m.getEncryptionKeyIds ? m.getEncryptionKeyIds() : [];
     const localKeyIds: OpenPGP.Keyid[] = [];
-    for (const k of await Promise.all(privateKis.map(ki => PgpKey.read(ki.public)))) {
+    for (const k of await Promise.all(privateKis.map(ki => PgpKey.readAsOpenPGP(ki.public)))) {
       localKeyIds.push(...k.getKeyIds());
     }
     const diagnosis = { found_match: false, receivers: msgKeyIds.length };
@@ -284,7 +284,7 @@ export class PgpMsg {
       keys.verificationContacts = verificationContacts.filter(contact => contact && contact.pubkey) as Contact[];
       keys.forVerification = [];
       for (const contact of keys.verificationContacts) {
-        const { keys: keysForVerification } = await opgp.key.readArmored(contact.pubkey!);
+        const { keys: keysForVerification } = await opgp.key.readArmored(contact.pubkey?.unparsed!);
         keys.forVerification.push(...keysForVerification);
       }
     }
@@ -306,7 +306,7 @@ export class PgpMsg {
     await PgpMsg.cryptoMsgGetSignedBy(msg, keys);
     if (keys.encryptedFor.length) {
       for (const ki of kiWithPp) {
-        ki.parsed = await PgpKey.read(ki.private); // todo
+        ki.parsed = await PgpKey.readAsOpenPGP(ki.private); // todo
         // this is inefficient because we are doing unnecessary parsing of all keys here
         // better would be to compare to already stored KeyInfo, however KeyInfo currently only holds primary longid, not longids of subkeys
         // while messages are typically encrypted for subkeys, thus we have to parse the key to get the info

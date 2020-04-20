@@ -8,6 +8,7 @@ import { PgpClient, PubkeySearchResult } from './pub-lookup.js';
 import { ApiErr } from './error/api-error.js';
 import { OrgRules } from '../org-rules.js';
 import { ATTESTER_API_HOST } from '../core/const.js';
+import { PgpKey } from '../core/pgp-key.js';
 
 type PubCallRes = { responseText: string, getResponseHeader: (n: string) => string | null };
 
@@ -30,9 +31,9 @@ export class Attester extends Api {
       // because it had to go through background scripts, and objects are serialized when this happens
       // the proper fix would be to send back headers from bg along with response text, and parse it here
       if (!r.getResponseHeader) {
-        return { pubkey: r.responseText, pgpClient: null }; // tslint:disable-line:no-null-keyword
+        return { pubkey: await PgpKey.parse(r.responseText), pgpClient: null }; // tslint:disable-line:no-null-keyword
       }
-      return { pubkey: r.responseText, pgpClient: r.getResponseHeader('pgp-client') as PgpClient };
+      return { pubkey: await PgpKey.parse(r.responseText), pgpClient: r.getResponseHeader('pgp-client') as PgpClient };
     } catch (e) {
       if (ApiErr.isNotFound(e)) {
         return { pubkey: null, pgpClient: null }; // tslint:disable-line:no-null-keyword

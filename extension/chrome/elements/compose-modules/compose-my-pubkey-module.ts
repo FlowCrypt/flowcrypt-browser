@@ -34,7 +34,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
 
   public chooseMyPublicKeyBySenderEmail = async (keys: KeyInfo[], email: string) => {
     for (const key of keys) {
-      const parsedkey = await PgpKey.read(key.public);
+      const parsedkey = await PgpKey.readAsOpenPGP(key.public);
       if (parsedkey.users.find(u => !!u.userId && u.userId.userid.toLowerCase().includes(email.toLowerCase()))) {
         return key;
       }

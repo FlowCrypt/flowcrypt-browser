@@ -85,7 +85,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   public collectAllAvailablePublicKeys = async (senderEmail: string, senderKi: KeyInfo, recipients: string[]): Promise<CollectPubkeysResult> => {
     const contacts = await ContactStore.get(undefined, recipients);
-    const armoredPubkeys = [{ pubkey: senderKi.public, email: senderEmail, isMine: true }];
+    const armoredPubkeys = [{ pubkey: await PgpKey.parse(senderKi.public), email: senderEmail, isMine: true }];
     const emailsWithoutPubkeys = [];
     for (const i of contacts.keys()) {
       const contact = contacts[i];
@@ -124,14 +124,14 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     try {
       const lookupResult = await this.view.pubLookup.lookupEmail(email);
       if (lookupResult && email) {
-        if (lookupResult.pubkey) {
-          const parsed = await opgp.key.readArmored(lookupResult.pubkey);
+        if (lookupResult.pubkey && lookupResult.pubkey.type === 'openpgp') {
+          const parsed = await opgp.key.readArmored(lookupResult.pubkey.unparsed);
           const key = parsed.keys[0];
           if (!key) {
             console.info('Dropping found but incompatible public key', { for: email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : undefined });
             lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
           } else if (! await PgpKey.usableForEncryption(lookupResult.pubkey) && ! await PgpKey.expired(key)) { // Not to skip expired keys
-            console.info('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: await PgpKey.fingerprint(parsed.keys[0]) });
+            console.info('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: parsed.keys[0].getFingerprint().toUpperCase() });
             lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
           }
         }
@@ -164,14 +164,14 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         return;
       }
       if (!contact.pubkey_last_sig) {
-        const lastSig = await PgpKey.lastSig(await PgpKey.read(contact.pubkey));
+        const lastSig = await PgpKey.lastSig(contact.pubkey);
         contact.pubkey_last_sig = lastSig;
         await ContactStore.update(undefined, contact.email, { pubkey_last_sig: lastSig });
       }
       if (!contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7)) { // last update > 7 days ago, or never
         const { pubkey: fetchedPubkey } = await this.view.pubLookup.lookupFingerprint(contact.fingerprint);
         if (fetchedPubkey) {
-          const fetchedLastSig = await PgpKey.lastSig(await PgpKey.read(fetchedPubkey));
+          const fetchedLastSig = await PgpKey.lastSig(fetchedPubkey);
           if (fetchedLastSig > contact.pubkey_last_sig) { // fetched pubkey has newer signature, update
             console.info(`Updating key ${contact.longid} for ${contact.email}: newer signature found: ${new Date(fetchedLastSig)} (old ${new Date(contact.pubkey_last_sig)})`);
             await ContactStore.update(undefined, contact.email, { pubkey: fetchedPubkey, pubkey_last_sig: fetchedLastSig, pubkey_last_check: Date.now() });

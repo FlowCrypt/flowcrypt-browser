@@ -57,7 +57,7 @@ View.run(class PgpPubkeyView extends View {
       $('.line.fingerprints').css({ display: 'none' });
     }
     if (this.primaryPubKey) {
-      const isUsableButExpired = await PgpKey.usableButExpired(this.primaryPubKey);
+      const isUsableButExpired = await PgpKey.usableButExpiredOpenPGP(this.primaryPubKey);
       if (!isUsableButExpired && await Catch.doesReject(this.primaryPubKey.getEncryptionKey()) && await Catch.doesReject(this.primaryPubKey.getSigningKey())) {
         this.showKeyNotUsableError();
       } else {
@@ -136,9 +136,9 @@ View.run(class PgpPubkeyView extends View {
           contacts.push(await ContactStore.obj({
             email,
             client: 'pgp',
-            pubkey: pubkey.armor(),
+            pubkey: await PgpKey.parse(pubkey.armor()),
             lastUse: Date.now(),
-            lastSig: await PgpKey.lastSig(pubkey),
+            lastSig: await PgpKey.lastSigOpenPGP(pubkey),
           }));
         }
       }
@@ -151,9 +151,9 @@ View.run(class PgpPubkeyView extends View {
         const contact = await ContactStore.obj({
           email: String($('.input_email').val()),
           client: 'pgp',
-          pubkey: this.publicKeys![0].armor(),
+          pubkey: await PgpKey.parse(this.publicKeys![0].armor()),
           lastUse: Date.now(),
-          lastSig: await PgpKey.lastSig(this.publicKeys![0])
+          lastSig: await PgpKey.lastSigOpenPGP(this.publicKeys![0])
         });
         await ContactStore.save(undefined, contact);
         BrowserMsg.send.addToContacts(this.parentTabId);

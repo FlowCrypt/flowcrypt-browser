@@ -137,7 +137,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private isPassPhraseStrongEnough = async (ki: KeyInfo, passphrase: string) => {
-    const prv = await PgpKey.read(ki.private);
+    const prv = await PgpKey.readAsOpenPGP(ki.private);
     if (!prv.isFullyEncrypted()) {
       return false;
     }
@@ -160,7 +160,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private isPrivateKeyEncrypted = async (ki: KeyInfo) => {
-    const prv = await PgpKey.read(ki.private);
+    const prv = await PgpKey.readAsOpenPGP(ki.private);
     if (await PgpKey.decrypt(prv, '', undefined, 'OK-IF-ALREADY-DECRYPTED') === true) {
       return false;
     }

@@ -127,7 +127,7 @@ View.run(class KeyserverView extends View {
           diagnosis.hasPubkeyMismatch = true;
           match = false;
         }
-        diagnosis.results[email] = { pubkey: pubkeySearchResult.pubkey, match };
+        diagnosis.results[email] = { pubkey: pubkeySearchResult.pubkey.unparsed, match };
       }
     }
     return diagnosis;

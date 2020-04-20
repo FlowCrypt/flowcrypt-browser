@@ -286,7 +286,7 @@ export class KeyImportUi {
     if (this.checkEncryption && await Catch.doesReject(k.getEncryptionKey())) {
       if (await Catch.doesReject(k.verifyPrimaryKey(), ['No self-certifications'])) {
         throw new KeyCanBeFixed(encrypted);
-      } else if (await PgpKey.usableButExpired(k)) {
+      } else if (await PgpKey.usableButExpiredOpenPGP(k)) {
         // Currently have 2 options: import or skip. Would be better to give user 3 choices:
         // 1) Confirm importing expired key
         // 2) Extend validity of expired key + import
@@ -303,7 +303,8 @@ export class KeyImportUi {
   }
 
   private checkEncryptionPubIfSelected = async (normalized: string) => {
-    if (this.checkEncryption && ! await PgpKey.usableForEncryption(normalized)) {
+    const key = await PgpKey.parse(normalized);
+    if (this.checkEncryption && ! await PgpKey.usableForEncryption(key)) {
       throw new UserAlert('This public key looks correctly formatted, but cannot be used for encryption. Please write at human@flowcrypt.com. We\'ll see if there is a way to fix it.');
     }
   }

@@ -32,12 +32,12 @@ export class SetupRecoverKeyModule {
       }
       let matchedPreviouslyRecoveredKey = false;
       for (const fetchedKey of this.view.fetchedKeyBackups) {
-        if (await PgpKey.decrypt(await PgpKey.read(fetchedKey.private), passphrase) === true) {
+        if (await PgpKey.decrypt(await PgpKey.readAsOpenPGP(fetchedKey.private), passphrase) === true) {
           if (!this.view.mathingPassphrases.includes(passphrase)) {
             this.view.mathingPassphrases.push(passphrase);
           }
           if (!this.view.importedKeysUniqueLongids.includes(fetchedKey.longid)) {
-            const prv = await PgpKey.read(fetchedKey.private);
+            const prv = await PgpKey.readAsOpenPGP(fetchedKey.private);
             newlyMatchingKeys.push(prv);
             this.view.importedKeysUniqueLongids.push(fetchedKey.longid);
           } else {

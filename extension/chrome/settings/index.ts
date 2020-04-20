@@ -380,7 +380,7 @@ View.run(class SettingsView extends View {
     let html = '';
     for (let i = 0; i < privateKeys.length; i++) {
       const ki = privateKeys[i];
-      const prv = await PgpKey.read(ki.private);
+      const prv = await PgpKey.readAsOpenPGP(ki.private);
       const date = Str.monthName(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
       const escapedFp = Xss.escape(ki.fingerprint);
       const escapedPrimaryOrRm = (ki.primary) ? '(primary)' : `(<a href="#" class="action_remove_key" fingerprint="${escapedFp}">remove</a>)`;

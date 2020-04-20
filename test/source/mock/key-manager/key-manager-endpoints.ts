@@ -45,7 +45,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       const { decryptedPrivateKey, publicKey, fingerprint } = body as Dict<string>;
       if (acctEmail === 'put.key@key-manager-autogen.flowcrypt.com') {
         const prvDetails = await PgpKey.parseDetails(decryptedPrivateKey);
-        const prv = await PgpKey.read(prvDetails.keys[0].private!);
+        const prv = await PgpKey.readAsOpenPGP(prvDetails.keys[0].private!);
         expect(prvDetails.keys).to.have.length(1);
         expect(prvDetails.keys[0].algo.bits).to.equal(2048);
         expect(prvDetails.keys[0].ids[0].fingerprint).to.equal(fingerprint);
@@ -71,7 +71,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       }
       if (acctEmail === 'expire@key-manager-keygen-expiration.flowcrypt.com') {
         const prvDetails = await PgpKey.parseDetails(decryptedPrivateKey);
-        const prv = await PgpKey.read(prvDetails.keys[0].private!);
+        const prv = await PgpKey.readAsOpenPGP(prvDetails.keys[0].private!);
         expect(prvDetails.keys).to.have.length(1);
         expect(prvDetails.keys[0].algo.bits).to.equal(2048);
         expect(prvDetails.keys[0].ids[0].fingerprint).to.equal(fingerprint);
@@ -101,7 +101,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       throw new Error(`keys/public: expecting GET, got ${req.method}`);
     }
     const query = req.url!.split('/').pop()!;
-    const publicKey = (await PgpKey.read(existingPrv)).toPublic().armor();
+    const publicKey = (await PgpKey.readAsOpenPGP(existingPrv)).toPublic().armor();
     if (query.includes('@')) { // search by email
       const email = query.toLowerCase().trim();
       if (email === 'find.public.key@key-manager-autogen.flowcrypt.com') {

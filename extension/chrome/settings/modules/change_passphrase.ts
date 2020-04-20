@@ -43,7 +43,7 @@ View.run(class ChangePassPhraseView extends View {
     this.primaryKi = primaryKi;
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     const storedOrSessionPp = await PassphraseStore.get(this.acctEmail, this.primaryKi.fingerprint);
-    const key = await PgpKey.read(this.primaryKi.private);
+    const key = await PgpKey.readAsOpenPGP(this.primaryKi.private);
     this.primaryPrv = key;
     if (this.primaryPrv.isFullyDecrypted() || (storedOrSessionPp && await PgpKey.decrypt(this.primaryPrv, storedOrSessionPp))) {
       this.displayBlock('step_1_enter_new'); // current pp is already known
@@ -66,7 +66,7 @@ View.run(class ChangePassPhraseView extends View {
   }
 
   private actionTestCurrentPassPhraseHandler = async () => {
-    const prv = await PgpKey.read(this.primaryKi!.private);
+    const prv = await PgpKey.readAsOpenPGP(this.primaryKi!.private);
     if (await PgpKey.decrypt(prv, String($('#current_pass_phrase').val())) === true) {
       this.primaryPrv = prv;
       this.displayBlock('step_1_enter_new');

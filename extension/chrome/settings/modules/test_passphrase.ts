@@ -30,7 +30,7 @@ View.run(class TestPassphrase extends View {
     const [keyInfo] = await KeyStore.get(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(keyInfo);
     await initPassphraseToggle(['password']);
-    this.primaryKey = await PgpKey.read(keyInfo.private);
+    this.primaryKey = await PgpKey.readAsOpenPGP(keyInfo.private);
     if (!this.primaryKey.isFullyEncrypted()) {
       const setUpPpUrl = Url.create('change_passphrase.htm', { acctEmail: this.acctEmail, parentTabId: this.parentTabId });
       Xss.sanitizeRender('#content', `<div class="line">No pass phrase set up yet: <a href="${setUpPpUrl}">set up pass phrase</a></div>`);

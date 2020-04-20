@@ -169,7 +169,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   }
 
   private decryptSenderKey = async (senderKi: KeyInfo): Promise<OpenPGP.key.Key | undefined> => {
-    const prv = await PgpKey.read(senderKi.private);
+    const prv = await PgpKey.readAsOpenPGP(senderKi.private);
     const passphrase = await this.view.storageModule.passphraseGet(senderKi);
     if (typeof passphrase === 'undefined' && !prv.isFullyDecrypted()) {
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'sign', longids: [senderKi.longid] });

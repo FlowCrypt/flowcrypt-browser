@@ -6,7 +6,7 @@ import { Catch } from '../catch.js';
 import { opgp } from '../../core/pgp.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { Str } from '../../core/common.js';
-import { PgpKey, Contact } from '../../core/pgp-key.js';
+import { PgpKey, Pubkey, Contact } from '../../core/pgp-key.js';
 import { PgpArmor } from '../../core/pgp-armor.js';
 
 // tslint:disable:no-null-keyword
@@ -15,7 +15,7 @@ export type DbContactObjArg = {
   email: string,
   name?: string | null,
   client?: 'pgp' | 'cryptup' | PgpClient | null,
-  pubkey?: string | null,
+  pubkey?: Pubkey | null,
   pendingLookup?: boolean | number | null,
   lastUse?: number | null, // when was this contact last used to send an email
   lastSig?: number | null, // last pubkey signature (when was pubkey last updated by owner)
@@ -25,7 +25,7 @@ export type DbContactObjArg = {
 export type ContactUpdate = {
   email?: string;
   name?: string | null;
-  pubkey?: string;
+  pubkey?: Pubkey;
   has_pgp?: 0 | 1;
   searchable?: string[];
   client?: string | null;
@@ -104,7 +104,7 @@ export class ContactStore extends AbstractStore {
         };
       }
       // X.509 certificate
-      if (PgpKey.getKeyType(pubkey) === 'x509') {
+      if (pubkey.type === 'x509') {
         // FIXME: For now we return random data.
         // Later we'll return serial ID from the certificate.
         const longid = Math.random() + '';
@@ -125,13 +125,13 @@ export class ContactStore extends AbstractStore {
           expiresOn: null
         };
       }
-      const k = await PgpKey.read(pubkey);
+      const k = await PgpKey.readAsOpenPGP(pubkey.unparsed); // only pubkey.type === 'openpgp' at this point
       if (!k) {
         throw new Error(`Could not read pubkey as valid OpenPGP key for: ${validEmail}`);
       }
       const keyDetails = await PgpKey.details(k);
       if (!lastSig) {
-        lastSig = await PgpKey.lastSig(k);
+        lastSig = await PgpKey.lastSig(pubkey);
       }
       const expiresOnMs = Number(await PgpKey.dateBeforeExpirationIfAlreadyExpired(k)) || undefined;
       return {
@@ -194,10 +194,10 @@ export class ContactStore extends AbstractStore {
         throw new Error('contact not found right after inserting it');
       }
     }
-    if (update.pubkey && update.pubkey.includes(PgpArmor.headers('privateKey').begin)) { // wrongly saving prv instead of pub
+    if (update.pubkey && update.pubkey.unparsed.includes(PgpArmor.headers('privateKey').begin)) { // wrongly saving prv instead of pub
       Catch.report('Wrongly saving prv as contact - converting to pubkey');
-      const key = await PgpKey.read(update.pubkey);
-      update.pubkey = key.toPublic().armor();
+      const key = await PgpKey.readAsOpenPGP(update.pubkey.unparsed);
+      update.pubkey.unparsed = key.toPublic().armor();
     }
     if (!update.searchable && (update.name !== existing.name || update.has_pgp !== existing.has_pgp)) { // update searchable index based on new name or new has_pgp
       const newHasPgp = Boolean(typeof update.has_pgp !== 'undefined' && update.has_pgp !== null ? update.has_pgp : existing.has_pgp);
@@ -207,6 +207,15 @@ export class ContactStore extends AbstractStore {
     for (const k of Object.keys(update)) {
       // @ts-ignore - may be saving any of the provided values - could do this one by one while ensuring proper types
       existing[k] = update[k];
+    }
+    for (const k of Object.keys(existing)) {
+      // @ts-ignore - may be saving any of the provided values - could do this one by one while ensuring proper types
+      const object = existing[k];
+      // tslint:disable-next-line: no-unsafe-any
+      if (object && typeof object.pubkey === 'object') {
+        // tslint:disable-next-line: no-unsafe-any
+        object.pubkey = object.pubkey.unparsed;
+      }
     }
     return await new Promise((resolve, reject) => {
       const tx = db.transaction('contacts', 'readwrite');
@@ -279,12 +288,15 @@ export class ContactStore extends AbstractStore {
         }
       }
       const found: Contact[] = [];
-      search.onsuccess = Catch.try(() => {
+      search.onsuccess = Catch.try(async () => {
         const cursor = search!.result; // checked it above
         if (!cursor || found.length === query.limit) {
           resolve(found);
         } else {
-          found.push(cursor.value); // tslint:disable-line:no-unsafe-any
+          const contact = await ContactStore.deserialize(cursor.value); // tslint:disable-line:no-unsafe-any
+          if (contact) {
+            found.push(contact);
+          }
           cursor.continue(); // tslint:disable-line:no-unsafe-any
         }
       });
@@ -345,9 +357,19 @@ export class ContactStore extends AbstractStore {
       } else { // search primary longid
         tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(emailOrLongid);
       }
-      tx.onsuccess = Catch.try(() => resolve(tx.result || undefined)); // tslint:disable-line:no-unsafe-any
+      tx.onsuccess = Catch.try(() => resolve(ContactStore.deserialize(tx.result)));
       tx.onerror = () => reject(ContactStore.errCategorize(tx.error || new Error('Unknown db error')));
     });
+  }
+
+  private static deserialize = async (result: any): Promise<Contact | undefined> => {
+    if (!result) {
+      return;
+    }
+    if (typeof result.pubkey === 'object') { // tslint:disable-line:no-unsafe-any
+      return result; // tslint:disable-line:no-unsafe-any
+    }
+    return { ...result, pubkey: await PgpKey.parse(result.pubkey) }; // tslint:disable-line:no-unsafe-any
   }
 
 }

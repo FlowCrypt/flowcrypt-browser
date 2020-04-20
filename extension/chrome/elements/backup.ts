@@ -33,7 +33,7 @@ View.run(class BackupView extends View {
   public render = async () => {
     Ui.event.protect();
     await initPassphraseToggle(['pass_phrase']);
-    const prvBackup = await PgpKey.read(this.armoredPrvBackup);
+    const prvBackup = await PgpKey.readAsOpenPGP(this.armoredPrvBackup);
     const fingerprint = await PgpKey.fingerprint(prvBackup);
     if (!fingerprint) {
       throw new Error('Missing backup key fingerprint');
@@ -72,7 +72,7 @@ View.run(class BackupView extends View {
   }
 
   private testPassphraseHandler = async () => {
-    if (await PgpKey.decrypt(await PgpKey.read(this.armoredPrvBackup), String($('#pass_phrase').val())) === true) {
+    if (await PgpKey.decrypt(await PgpKey.readAsOpenPGP(this.armoredPrvBackup), String($('#pass_phrase').val())) === true) {
       await Ui.modal.info('Success - your pass phrase matches this backup!');
     } else {
       await Ui.modal.warning('Pass phrase did not match. Please try again. If you forgot your pass phrase, please change it, so that you don\'t get' +

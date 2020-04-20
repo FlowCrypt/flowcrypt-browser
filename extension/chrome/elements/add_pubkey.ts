@@ -72,7 +72,7 @@ View.run(class AddPubkeyView extends View {
     if ($(fromSelect).val()) {
       const [contact] = await ContactStore.get(undefined, [String($(fromSelect).val())]);
       if (contact?.pubkey) {
-        $('.pubkey').val(contact.pubkey).prop('disabled', true);
+        $('.pubkey').val(contact.pubkey.unparsed).prop('disabled', true);
       } else {
         Catch.report('Contact unexpectedly not found when copying pubkey by email in add_pubkey.htm');
         await Ui.modal.error('Contact not found.');
@@ -89,7 +89,7 @@ View.run(class AddPubkeyView extends View {
       await ContactStore.save(undefined, await ContactStore.obj({
         email: String($('select.email').val()),
         client: 'pgp',
-        pubkey: normalized,
+        pubkey: await PgpKey.parse(normalized),
         lastUse: Date.now(),
       }));
       this.closeDialog();

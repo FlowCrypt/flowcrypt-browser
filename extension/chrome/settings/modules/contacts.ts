@@ -107,7 +107,7 @@ View.run(class ContactsView extends View {
   }
 
   private actionExportAllKeysHandler = () => {
-    const allArmoredPublicKeys = this.contacts.map(c => (c.pubkey || '').trim()).join('\n');
+    const allArmoredPublicKeys = this.contacts.map(c => (c.pubkey?.unparsed || '').trim()).join('\n');
     const exportFile = new Att({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: Buf.fromUtfStr(allArmoredPublicKeys) });
     Browser.saveToDownloads(exportFile);
   }
@@ -121,7 +121,7 @@ View.run(class ContactsView extends View {
     } else {
       Xss.sanitizeAppend('h1', '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
     }
-    $('#view_contact .key_dump').text(contact!.pubkey!); // should exist - from list of contacts && should have pgp - filtered
+    $('#view_contact .key_dump').text(contact!.pubkey!.unparsed); // should exist - from list of contacts && should have pgp - filtered
     $('#view_contact .key_fingerprint').text(Str.spaced(contact!.fingerprint!)); // should exist - from list of contacts && should have pgp - filtered
     $('#view_contact').css('display', 'block');
     $('#page_back_button').click(this.setHandler(el => this.loadAndRenderContactList()));
@@ -141,8 +141,8 @@ View.run(class ContactsView extends View {
     const email = $('#edit_contact .input_pubkey').attr('email');
     if (!armoredPubkey || !email) {
       await Ui.modal.warning('No public key entered');
-    } else if (await PgpKey.fingerprint(armoredPubkey)) {
-      await ContactStore.save(undefined, await ContactStore.obj({ email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now() }));
+    } else if (await PgpKey.fingerprint(await PgpKey.parse(armoredPubkey))) {
+      await ContactStore.save(undefined, await ContactStore.obj({ email, client: 'pgp', pubkey: await PgpKey.parse(armoredPubkey), lastUse: Date.now() }));
       await this.loadAndRenderContactList();
     } else {
       await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let us know at human@flowcrypt.com if you need help.');
@@ -179,7 +179,7 @@ View.run(class ContactsView extends View {
       if (normalizedFingerprintOrLongid) {
         const data = await this.pubLookup.lookupFingerprint(normalizedFingerprintOrLongid);
         if (data.pubkey) {
-          pub = data.pubkey;
+          pub = data.pubkey.unparsed;
         } else {
           await Ui.modal.warning('Could not find any Public Key in our public records that matches this fingerprint or longid');
           return;

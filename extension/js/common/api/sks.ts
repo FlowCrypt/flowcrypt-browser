@@ -6,6 +6,7 @@ import { Api } from './api.js';
 import { ApiErr } from './error/api-error.js';
 import { PgpArmor } from '../core/pgp-armor.js';
 import { PubkeySearchResult } from './pub-lookup.js';
+import { PgpKey } from '../core/pgp-key.js';
 
 export class Sks extends Api {
 
@@ -61,7 +62,7 @@ export class Sks extends Api {
     if (!pubkey || !pubkey.includes(String(PgpArmor.headers('publicKey').end))) {
       return { pubkey: null, pgpClient: null }; // tslint:disable-line:no-null-keyword
     }
-    return { pubkey, pgpClient: 'pgp-other' };
+    return { pubkey: await PgpKey.parse(pubkey), pgpClient: 'pgp-other' };
   }
 
   private get = async (path: string): Promise<string | undefined> => {

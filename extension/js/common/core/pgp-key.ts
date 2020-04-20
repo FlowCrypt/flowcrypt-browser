@@ -9,12 +9,19 @@ import { PgpArmor } from './pgp-armor.js';
 import { opgp } from './pgp.js';
 import { KeyCache } from '../platform/key-cache.js';
 
-export type PubkeyResult = { pubkey: string, email: string, isMine: boolean };
+export interface Pubkey {
+  type: 'openpgp' | 'x509';
+  // This is a fingerprint for OpenPGP keys and Serial Number for X.509 keys.
+  id: string;
+  unparsed: string;
+}
+
+export type PubkeyResult = { pubkey: Pubkey, email: string, isMine: boolean };
 
 export type Contact = {
   email: string;
   name: string | null;
-  pubkey: string | null;
+  pubkey: Pubkey | null;
   has_pgp: 0 | 1;
   searchable: string[];
   client: string | null;
@@ -39,6 +46,7 @@ export interface PrvKeyInfo {
 export type KeyAlgo = 'curve25519' | 'rsa2048' | 'rsa4096';
 
 export interface KeyInfo extends PrvKeyInfo {
+  // this cannot be Pubkey has it's being passed to localstorage
   public: string;
   fingerprint: string;
   primary: boolean;
@@ -52,7 +60,7 @@ type KeyDetails$ids = {
 
 export interface KeyDetails {
   private?: string;
-  public: string;
+  public: Pubkey;
   isFullyEncrypted: boolean | undefined;
   isFullyDecrypted: boolean | undefined;
   ids: KeyDetails$ids[];
@@ -90,11 +98,26 @@ export class PgpKey {
   /**
    * used only for keys that we ourselves parsed / formatted before, eg from local storage, because no err handling
    */
-  public static read = async (armoredKey: string) => { // should be renamed to readOne
+  public static read = async (pubkey: Pubkey) => { // should be renamed to readOne
+    if (pubkey.type !== 'openpgp') {
+      throw new Error('Cannot read to OpenPGP key of type: ' + pubkey.type);
+    }
+    const armoredKey = pubkey.unparsed;
     const fromCache = KeyCache.getArmored(armoredKey);
     if (fromCache) {
       return fromCache;
     }
+    const { keys: [key] } = await opgp.key.readArmored(armoredKey);
+    if (key?.isPrivate()) {
+      KeyCache.setArmored(armoredKey, key);
+    }
+    return key;
+  }
+
+  /**
+   * used only for keys that we ourselves parsed / formatted before, eg from local storage, because no err handling
+   */
+  public static readAsOpenPGP = async (armoredKey: string) => { // should be renamed to readOne
     const { keys: [key] } = await opgp.key.readArmored(armoredKey);
     if (key?.isPrivate()) {
       KeyCache.setArmored(armoredKey, key);
@@ -204,36 +227,24 @@ export class PgpKey {
     }
   }
 
-  public static fingerprint = async (key: OpenPGP.key.Key | string): Promise<string | undefined> => {
-    if (!key) {
-      return undefined;
-    } else if (key instanceof opgp.key.Key) {
-      if (!key.primaryKey.getFingerprintBytes()) {
-        return undefined;
-      }
-      try {
-        return key.primaryKey.getFingerprint().toUpperCase();
-      } catch (e) {
-        console.error(e);
-        return undefined;
-      }
-    } else {
-      if (/^[0-9A-F]{40}$/.test(key)) {
-        return key;
-      }
-      try {
-        return await PgpKey.fingerprint(await PgpKey.read(key));
-      } catch (e) {
-        if (e instanceof Error && e.message === 'openpgp is not defined') {
-          Catch.reportErr(e);
-        }
-        console.error(e);
-        return undefined;
-      }
+  public static parse = async (text: string): Promise<Pubkey> => {
+    const keyType = PgpKey.getKeyType(text);
+    if (keyType === 'openpgp') {
+      return { type: 'openpgp', id: (await opgp.key.readArmored(text)).keys[0].getFingerprint().toUpperCase(), unparsed: text };
+    } else if (keyType === 'x509') {
+      return { type: 'x509', id: '' + Math.random(), unparsed: text };  // TODO: Replace with: smime.getSerialNumber()
     }
+    throw new Error('Unsupported key type: ' + keyType);
   }
 
-  public static longid = async (keyOrFingerprintOrBytesOrLongid: string | OpenPGP.key.Key | undefined): Promise<string | undefined> => {
+  public static fingerprint = async (key: Pubkey | OpenPGP.key.Key): Promise<string | undefined> => {
+    if ('id' in key) {
+      return key.id;
+    }
+    return key.getFingerprint().toUpperCase();
+  }
+
+  public static longid = async (keyOrFingerprintOrBytesOrLongid: string | Pubkey | undefined | OpenPGP.key.Key): Promise<string | undefined> => {
     if (!keyOrFingerprintOrBytesOrLongid) {
       return undefined;
     } else if (typeof keyOrFingerprintOrBytesOrLongid === 'string' && keyOrFingerprintOrBytesOrLongid.length === 8) {
@@ -244,8 +255,12 @@ export class PgpKey {
       return keyOrFingerprintOrBytesOrLongid.substr(-16); // was a fingerprint
     } else if (typeof keyOrFingerprintOrBytesOrLongid === 'string' && keyOrFingerprintOrBytesOrLongid.length === 49) {
       return keyOrFingerprintOrBytesOrLongid.replace(/ /g, '').substr(-16); // spaced fingerprint
+    } else if (typeof keyOrFingerprintOrBytesOrLongid === 'string') {
+      return await PgpKey.longid(await PgpKey.parse(keyOrFingerprintOrBytesOrLongid));
+    } else if ('getFingerprint' in keyOrFingerprintOrBytesOrLongid) {
+      return await PgpKey.longid(keyOrFingerprintOrBytesOrLongid.getFingerprint());
     }
-    return await PgpKey.longid(await PgpKey.fingerprint(keyOrFingerprintOrBytesOrLongid));
+    return await PgpKey.longid(keyOrFingerprintOrBytesOrLongid.id);
   }
 
   public static longids = async (keyIds: OpenPGP.Keyid[]) => {
@@ -259,7 +274,11 @@ export class PgpKey {
     return longids;
   }
 
-  public static usableForEncryption = async (armored: string) => { // is pubkey usable for encrytion?
+  public static usableForEncryption = async (key: Pubkey) => { // is pubkey usable for encrytion?
+    if (key.type === 'x509') {
+      return true; // todo: implement proper check if this key can be used for encryption
+    }
+    const armored = key.unparsed;
     if (! await PgpKey.longid(armored)) {
       return false;
     }
@@ -270,7 +289,7 @@ export class PgpKey {
     if (! await Catch.doesReject(pubkey.getEncryptionKey())) {
       return true; // good key - cannot be expired
     }
-    return await PgpKey.usableButExpired(pubkey);
+    return await PgpKey.usableButExpiredOpenPGP(pubkey);
   }
 
   public static expired = async (key: OpenPGP.key.Key): Promise<boolean> => {
@@ -287,7 +306,15 @@ export class PgpKey {
     throw new Error(`Got unexpected value for expiration: ${exp}`); // exp must be either null, Infinity or a Date
   }
 
-  public static usableButExpired = async (key: OpenPGP.key.Key): Promise<boolean> => {
+  public static usableButExpired = async (key: Pubkey): Promise<boolean> => {
+    if (key.type === 'openpgp') {
+      return await PgpKey.usableButExpiredOpenPGP(await PgpKey.readAsOpenPGP(key.unparsed));
+    }
+    // TODO: Check usability for S/MIME keys
+    return true;
+  }
+
+  public static usableButExpiredOpenPGP = async (key: OpenPGP.key.Key): Promise<boolean> => {
     if (!key) {
       return false;
     }
@@ -341,7 +368,11 @@ export class PgpKey {
       private: k.isPrivate() ? k.armor() : undefined,
       isFullyDecrypted: k.isPrivate() ? k.isFullyDecrypted() : undefined,
       isFullyEncrypted: k.isPrivate() ? k.isFullyEncrypted() : undefined,
-      public: k.toPublic().armor(),
+      public: {
+        type: 'openpgp',
+        id: ids[0].fingerprint,
+        unparsed: k.toPublic().armor()
+      },
       users: k.getUserIds(),
       ids,
       algo,
@@ -353,10 +384,18 @@ export class PgpKey {
    * Get latest self-signature date, in utc millis.
    * This is used to figure out how recently was key updated, and if one key is newer than other.
    */
-  public static lastSig = async (key: OpenPGP.key.Key): Promise<number> => {
-    if (!key) { // key is undefined only for X.509 keys
+  public static lastSig = async (pubkey: Pubkey): Promise<number> => {
+    if (pubkey.type === 'x509') { // key is undefined only for X.509 keys
       return Date.now(); // todo - this definitely needs to be refactored soon #2731
     }
+    return await PgpKey.lastSigOpenPGP(await PgpKey.readAsOpenPGP(pubkey.unparsed));
+  }
+
+  /**
+   * Get latest self-signature date, in utc millis.
+   * This is used to figure out how recently was key updated, and if one key is newer than other.
+   */
+  public static lastSigOpenPGP = async (key: OpenPGP.key.Key): Promise<number> => {
     await key.getExpirationTime(); // will force all sigs to be verified
     const allSignatures: OpenPGP.packet.Signature[] = [];
     for (const user of key.users) {
@@ -390,17 +429,18 @@ export class PgpKey {
   public static getKeyType = (pubkey: string): 'openpgp' | 'x509' | 'unknown' => {
     if (pubkey.startsWith('-----BEGIN CERTIFICATE-----')) {
       return 'x509';
-    } else if (pubkey.startsWith('-----BEGIN PGP PUBLIC KEY BLOCK-----')) {
+    } else if (pubkey.startsWith('-----BEGIN PGP ')) {
+      // both public and private keys will be considered as 'openpgp'
       return 'openpgp';
     } else {
       return 'unknown';
     }
   }
 
-  public static choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport = (pubs: PubkeyResult[]): string[] => {
+  public static choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport = (pubs: PubkeyResult[]): Pubkey[] => {
     const myPubs = pubs.filter(pub => pub.isMine); // currently this must be openpgp pub
-    const otherPgpPubs = pubs.filter(pub => !pub.isMine && PgpKey.getKeyType(pub.pubkey) === 'openpgp');
-    const otherSmimePubs = pubs.filter(pub => !pub.isMine && PgpKey.getKeyType(pub.pubkey) === 'x509');
+    const otherPgpPubs = pubs.filter(pub => !pub.isMine && pub.pubkey.type === 'openpgp');
+    const otherSmimePubs = pubs.filter(pub => !pub.isMine && pub.pubkey.type === 'x509');
     if (otherPgpPubs.length && otherSmimePubs.length) {
       let err = `Cannot use mixed OpenPGP (${otherPgpPubs.map(p => p.email).join(', ')}) and S/MIME (${otherSmimePubs.map(p => p.email).join(', ')}) public keys yet.`;
       err += 'If you need to email S/MIME recipient, do not add any OpenPGP recipient at the same time.';

@@ -7,9 +7,10 @@ import { OrgRules } from '../org-rules.js';
 import { Sks } from './sks.js';
 import { KeyManager } from './key-manager.js';
 import { Wkd } from './wkd.js';
+import { PgpKey, Pubkey } from '../core/pgp-key.js';
 
 export type PgpClient = 'flowcrypt' | 'pgp-other' | null;
-export type PubkeySearchResult = { pubkey: string | null; pgpClient: PgpClient };
+export type PubkeySearchResult = { pubkey: Pubkey | null; pgpClient: PgpClient };
 
 /**
  * Look up public keys.
@@ -42,7 +43,7 @@ export class PubLookup {
     if (this.keyManager) {
       const res = await this.keyManager.lookupPublicKey(email);
       if (res.publicKeys.length) {
-        return { pubkey: res.publicKeys[0].publicKey, pgpClient: 'flowcrypt' };
+        return { pubkey: await PgpKey.parse(res.publicKeys[0].publicKey), pgpClient: 'flowcrypt' };
       }
     }
     const wkdRes = await this.wkd.lookupEmail(email);
@@ -62,7 +63,7 @@ export class PubLookup {
     if (this.keyManager) {
       const res = await this.keyManager.lookupPublicKey(fingerprintOrLongid);
       if (res.publicKeys.length) {
-        return { pubkey: res.publicKeys[0].publicKey, pgpClient: 'flowcrypt' };
+        return { pubkey: await PgpKey.parse(res.publicKeys[0].publicKey), pgpClient: 'flowcrypt' };
       }
     }
     if (this.internalSks) {

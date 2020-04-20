@@ -38,11 +38,11 @@ export class KeyStore extends AbstractStore {
   public static add = async (acctEmail: string, newKeyArmored: string) => {
     const keyinfos = await KeyStore.get(acctEmail);
     let updated = false;
-    const prv = await PgpKey.read(newKeyArmored);
+    const prv = await PgpKey.readAsOpenPGP(newKeyArmored);
     if (!prv.isFullyEncrypted()) {
       throw new Error('Canot import plain, unprotected key.');
     }
-    const newKeyLongid = await PgpKey.longid(prv);
+    const newKeyLongid = await PgpKey.longid(await PgpKey.parse(newKeyArmored));
     if (newKeyLongid) {
       for (const i in keyinfos) {
         if (newKeyLongid === keyinfos[i].longid) { // replacing a key

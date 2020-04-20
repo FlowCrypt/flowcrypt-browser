@@ -214,9 +214,9 @@ export class SetupView extends View {
         email,
         name,
         client: 'cryptup',
-        pubkey: prvs[0].toPublic().armor(),
+        pubkey: await PgpKey.parse(prvs[0].toPublic().armor()),
         lastUse: Date.now(),
-        lastSig: await PgpKey.lastSig(prvs[0].toPublic())
+        lastSig: await PgpKey.lastSigOpenPGP(prvs[0].toPublic())
       }));
     }
     await ContactStore.save(undefined, myOwnEmailAddrsAsContacts);

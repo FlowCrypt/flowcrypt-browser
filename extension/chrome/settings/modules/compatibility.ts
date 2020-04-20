@@ -118,7 +118,7 @@ View.run(class CompatibilityView extends View {
       }
       this.appendResult(`${kn} expiration: ${await this.test(async () => PgpKey.expiration(key))}`);
       this.appendResult(`${kn} internal dateBeforeExpiration: ${await this.test(async () => PgpKey.dateBeforeExpirationIfAlreadyExpired(key))}`);
-      this.appendResult(`${kn} internal usableButExpired: ${await this.test(async () => PgpKey.usableButExpired(key))}`);
+      this.appendResult(`${kn} internal usableButExpired: ${await this.test(async () => PgpKey.usableButExpiredOpenPGP(key))}`);
     }
   }
 

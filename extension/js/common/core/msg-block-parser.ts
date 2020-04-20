@@ -195,7 +195,7 @@ export class MsgBlockParser {
     for (const armoredPubkey of armoredPubkeys) {
       const { keys } = await PgpKey.parseDetails(armoredPubkey);
       for (const keyDetails of keys) {
-        blocks.push(MsgBlock.fromKeyDetails('publicKey', keyDetails.public, keyDetails));
+        blocks.push(MsgBlock.fromKeyDetails('publicKey', keyDetails.public.unparsed, keyDetails));
       }
     }
   }
