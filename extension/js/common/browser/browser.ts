@@ -79,20 +79,51 @@ export class Browser {
   }
 
   public static openSettingsPage = async (path: string = 'index.htm', acctEmail?: string, page: string = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
+    await Browser.openExtensionTab(await Browser.getExtensionTabUrl(path, acctEmail, page, rawPageUrlParams, addNewAcct), false);
+  }
+
+  public static openSettingsPageWithChromeTabs = async (path: string = 'index.htm', acctEmail?: string, page: string = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
+    await Browser.openExtensionTab(await Browser.getExtensionTabUrl(path, acctEmail, page, rawPageUrlParams, addNewAcct), true);
+  }
+
+  private static getExtensionTabUrl = async (path: string = 'index.htm', acctEmail?: string, page: string = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false): Promise<string> => {
     const basePath = chrome.runtime.getURL(`chrome/settings/${path}`);
     const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : undefined;
     if (acctEmail || path === 'fatal.htm') {
-      await Browser.openExtensionTab(Url.create(basePath, { acctEmail, page, pageUrlParams }));
+      return Url.create(basePath, { acctEmail, page, pageUrlParams });
     } else if (addNewAcct) {
-      await Browser.openExtensionTab(Url.create(basePath, { addNewAcct }));
+      return Url.create(basePath, { addNewAcct });
     } else {
       const acctEmails = await GlobalStore.acctEmailsGet();
-      await Browser.openExtensionTab(Url.create(basePath, { acctEmail: acctEmails[0], page, pageUrlParams }));
+      return Url.create(basePath, { acctEmail: acctEmails[0], page, pageUrlParams });
     }
   }
 
-  private static openExtensionTab = async (url: string) => {
-    window.open(url, 'flowcrypt');
+  private static openExtensionTab = async (url: string, useChromeTabs: boolean) => {
+    if (useChromeTabs) {
+      const openedTab = await Browser.getFcSettingsTabIdIfOpen();
+      if (!openedTab) {
+        chrome.tabs.create({ url });
+      } else {
+        chrome.tabs.update(openedTab, { url, active: true });
+      }
+    } else {
+      window.open(url, 'flowcrypt');
+    }
   }
 
+  private static getFcSettingsTabIdIfOpen = async (): Promise<number | undefined> => {
+    return await new Promise(resolve => {
+      chrome.tabs.query({ currentWindow: true }, tabs => {
+        const extensionUrl = chrome.runtime.getURL('/');
+        for (const tab of tabs) {
+          if (tab.url && tab.url.includes(extensionUrl)) {
+            resolve(tab.id);
+            return;
+          }
+        }
+        resolve(undefined);
+      });
+    });
+  }
 }

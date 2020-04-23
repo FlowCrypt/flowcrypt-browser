@@ -5,6 +5,7 @@
 import { Bm, BrowserMsg } from '../common/browser/browser-msg.js';
 import { BgHandlers } from './bg-handlers.js';
 import { BgUtils } from './bgutils.js';
+import { Browser } from '../common/browser/browser.js';
 import { Catch } from '../common/platform/catch.js';
 import { GoogleAuth } from '../common/api/google-auth.js';
 import { VERSION } from '../common/core/const.js';
@@ -34,8 +35,9 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
     return;
   }
 
+  await Browser.openSettingsPageWithChromeTabs('initial.htm'); // called after the very first installation of the plugin
   if (!storage.settings_seen) {
-    await BgUtils.openSettingsPage('initial.htm'); // called after the very first installation of the plugin
+    await Browser.openSettingsPageWithChromeTabs('initial.htm'); // called after the very first installation of the plugin
     await GlobalStore.set({ settings_seen: true });
   }
 
@@ -59,7 +61,6 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
 
   BrowserMsg.bgAddListener('ajax', BgHandlers.ajaxHandler);
   BrowserMsg.bgAddListener('ajaxGmailAttGetChunk', BgHandlers.ajaxGmailAttGetChunkHandler);
-  BrowserMsg.bgAddListener('settings', BgHandlers.openSettingsPageHandler);
   BrowserMsg.bgAddListener('update_uninstall_url', BgHandlers.updateUninstallUrl);
   BrowserMsg.bgAddListener('get_active_tab_info', BgHandlers.getActiveTabInfo);
   BrowserMsg.bgAddListener('reconnect_acct_auth_popup', (r: Bm.ReconnectAcctAuthPopup) => GoogleAuth.newAuthPopup(r));
