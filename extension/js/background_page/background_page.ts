@@ -35,7 +35,6 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
     return;
   }
 
-  await Browser.openSettingsPageWithChromeTabs('initial.htm'); // called after the very first installation of the plugin
   if (!storage.settings_seen) {
     await Browser.openSettingsPageWithChromeTabs('initial.htm'); // called after the very first installation of the plugin
     await GlobalStore.set({ settings_seen: true });
