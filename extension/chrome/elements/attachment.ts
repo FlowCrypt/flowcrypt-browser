@@ -91,12 +91,16 @@ View.run(class AttachmentDownloadView extends View {
       this.button.click(this.setHandlerPrevent('double', () => this.downloadButtonClickedHandler()));
     }
     $('.attachment').mouseenter(this.setHandler((el) => {
-      $('#header').hide();
-      this.button.show();
+      if (!this.downloadInProgress) {
+        $('#header').hide();
+        this.button.show();
+      }
     }));
     $('.attachment').mouseleave(this.setHandler((el) => {
-      $('#header').show();
-      this.button.hide();
+      if (!this.downloadInProgress) {
+        $('#header').show();
+        this.button.hide();
+      }
     }));
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
       if (!entered) {
