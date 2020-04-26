@@ -339,7 +339,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           } else if (treatAs === 'privateKey') {
             nRenderedAtts = await this.renderBackupFromFile(a, attsContainerInner, msgEl, attSel, nRenderedAtts);
           } else if (treatAs === 'signature') {
-            const embeddedSignedMsgXssSafe = this.factory.embeddedMsg('signature', '', msgId, false, senderEmail, true);
+            const embeddedSignedMsgXssSafe = this.factory.embeddedMsg('signedMsg', '', msgId, false, senderEmail, true);
             msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', embeddedSignedMsgXssSafe); // xss-safe-factory
           }
         } else if (treatAs === 'plainFile' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc

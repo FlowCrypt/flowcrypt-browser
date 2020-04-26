@@ -8,7 +8,7 @@ import { Dict, Str, Url, UrlParams } from './core/common.js';
 import { Att } from './core/att.js';
 import { Browser } from './browser/browser.js';
 import { Catch } from './platform/catch.js';
-import { MsgBlock } from './core/msg-block.js';
+import { MsgBlock, MsgBlockType } from './core/msg-block.js';
 import { MsgBlockParser } from './core/msg-block-parser.js';
 import { PgpArmor } from './core/pgp-armor.js';
 import { Ui } from './browser/ui.js';
@@ -190,7 +190,7 @@ export class XssSafeFactory {
     return Ui.e('span', { class: 'pgp_attachment', html: this.iframe(this.srcPgpAttIframe(meta, isEncrypted)) });
   }
 
-  public embeddedMsg = (type: string, armored: string, msgId?: string, isOutgoing?: boolean, sender?: string, signature?: string | boolean) => {
+  public embeddedMsg = (type: MsgBlockType, armored: string, msgId?: string, isOutgoing?: boolean, sender?: string, signature?: string | boolean) => {
     return this.iframe(this.srcPgpBlockIframe(armored, msgId, isOutgoing, sender, signature), ['pgp_block', type]) + this.hideGmailNewMsgInThreadNotification;
   }
 
