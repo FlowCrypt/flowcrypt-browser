@@ -22,7 +22,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
   if (testVariant === 'CONSUMER-LIVE-GMAIL') {
 
-    const pageHasReplyContainer = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, { isReplyPromptAccepted }: { isReplyPromptAccepted?: boolean } = {}) => {
+    const pageHasSecureReplyContainer = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, { isReplyPromptAccepted }: { isReplyPromptAccepted?: boolean } = {}) => {
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });
       expect(urls.length).to.equal(1);
       if (typeof isReplyPromptAccepted !== 'undefined') {
@@ -38,7 +38,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       }
     };
 
-    const pageDoesNotHaveReplyContainer = async (gmailPage: ControllablePage) => {
+    const pageDoesNotHaveSecureReplyContainer = async (gmailPage: ControllablePage) => {
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });
       expect(urls.length).to.equal(0);
     };
@@ -147,19 +147,19 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         params,
         content: ['This is a test, as requested by the Flowcrypt team', 'mutt + gnupg']
       });
-      await pageHasReplyContainer(t, browser, gmailPage);
+      await pageHasSecureReplyContainer(t, browser, gmailPage);
     }));
 
     ava.default('mail.google.com - secure reply btn accepts reply prompt', testWithBrowser('compatibility', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/WhctKJTrdTXcmgcCRgXDpVnfjJNnjjLzSvcMDczxWPMsBTTfPxRDMrKCJClzDHtbXlhnwtV'); // encrypted convo
       await Util.sleep(5);
-      await pageHasReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
+      await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
       await gmailPage.waitAndClick('@secure-reply-button');
       await Util.sleep(10);
-      await pageHasReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
+      await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
     }));
 
-    ava.default('mail.google.com - plain reply to encrypted message', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('mail.google.com - plain reply to encrypted and signed messages', testWithBrowser('compatibility', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/WhctKJVjMccKbJcxpHPNZKwzZdwqJlWBFKchGNPBQRWLtvvpxmWbPZnpDncWTKhKRfTHWmB'); // plain convo
       await Util.sleep(1);
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
@@ -167,12 +167,17 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await Util.sleep(1);
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
       await Util.sleep(5);
-      await pageDoesNotHaveReplyContainer(gmailPage);
+      await pageDoesNotHaveSecureReplyContainer(gmailPage);
       await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
       await gmailPage.waitForContent('.reply_message_evaluated .error_notification', 'The last message was encrypted, but you are composing a reply without encryption.');
       await gmailPage.waitAndClick('[data-tooltip="Secure Reply"]'); // Switch to encrypted reply
       await Util.sleep(5);
-      await pageHasReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
+      await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
+      await gmailPage.goto(TestUrls.gmail(0, '/WhctKJVjMckdhJhtDvSHkwnkHFHNXwddhKFlFlZVwtlsGRCMgtLdxvxHrvwjrfZtFRsGMmg')); // signed convo
+      await Util.sleep(1);
+      await gmailPage.waitAndClick('[data-tooltip="Reply"]');
+      await pageDoesNotHaveSecureReplyContainer(gmailPage);
+      await gmailPage.notPresent('.reply_message_evaluated .error_notification'); // should not show the warning about switching to encrypted reply
     }));
 
     ava.default('mail.google.com - plain reply draft', testWithBrowser('compatibility', async (t, browser) => {
@@ -183,7 +188,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.goto(TestUrls.gmail(0, '')); // go to Inbox
       await Util.sleep(1);
       await gmailPage.goto(TestUrls.gmail(0, '/CllgCJTGnFpCNKgMrsvvbpdFsLFMxHHrfLtjZZHwbXccPDdNPvcmQGCDvfQCLBBkvlRngZzhJhL')); // go back to convo with plain reply
-      await pageDoesNotHaveReplyContainer(gmailPage);
+      await pageDoesNotHaveSecureReplyContainer(gmailPage);
       await gmailPage.waitForContent('div[aria-label="Message Body"]', 'plain reply');
       await gmailPage.click('[aria-label^="Discard draft"]');
     }));
@@ -192,14 +197,14 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const gmailPage = await openGmailPage(t, browser, '/WhctKJTrSJzzjsZVrGcLhhcDLKCJKVrrHNMDLqTMbSjRZZftfDQWbjDWWDsmrpJVHWDblwg');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
       expect(urls.length).to.equal(1);
-      await pageHasReplyContainer(t, browser, gmailPage);
+      await pageHasSecureReplyContainer(t, browser, gmailPage);
     }));
 
     ava.default('mail.google.com - pubkey gets rendered when using quoted-printable mime', testWithBrowser('compatibility', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/WhctKJVRFztXGwvSbwcrbDshGTnLWMFvhwJmhqllRWwvpKnlpblQMXVZLTsKfWdPWKhPFBV');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
       expect(urls.length).to.equal(1);
-      await pageHasReplyContainer(t, browser, gmailPage);
+      await pageHasSecureReplyContainer(t, browser, gmailPage);
       const pubkeyPage = await browser.newPage(t, urls[0]);
       const content = await pubkeyPage.read('body');
       expect(content).to.contain('Fingerprint: 7A2E 4FFD 34BC 4AED 0F54 4199 D652 7AD6 65C3 B0DD');
