@@ -46,6 +46,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private currentlyEvaluatingStandardComposeBoxRecipients = false;
   private currentlyReplacingAtts = false;
   private keepNextStandardReplyBox = false;
+  private showSwithToEncryptedReplyWarning = false;
   private removeNextReplyBoxBorders = false;
 
   private sel = { // gmail_variant=standard|new
@@ -175,6 +176,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           const replyContainerIframe = $('.reply_message_iframe_container > iframe').last();
           if (replyContainerIframe.length && !$('#switch_to_encrypted_reply').length) {
             this.keepNextStandardReplyBox = true;
+            this.showSwithToEncryptedReplyWarning = gmailReplyBtn.closest(this.sel.msgOuter).find('iframe.pgp_block').hasClass('encryptedMsg');
           }
         }));
       }
@@ -324,20 +326,20 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
                 nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
               } else if (openpgpType && ['encryptedMsg', 'signedMsg'].includes(openpgpType.type)) {
-                msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg('', msgId, false, senderEmail)); // xss-safe-factory
+                msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg(openpgpType.type, '', msgId, false, senderEmail)); // xss-safe-factory
               } else {
                 attSel.show().children('.attachment_loader').text('Unknown OpenPGP format');
                 nRenderedAtts++;
               }
             } else {
-              msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg('', msgId, false, senderEmail)); // xss-safe-factory
+              msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg('encryptedMsg', '', msgId, false, senderEmail)); // xss-safe-factory
             }
           } else if (treatAs === 'publicKey') { // todo - pubkey should be fetched in pgp_pubkey.js
             nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
           } else if (treatAs === 'privateKey') {
             nRenderedAtts = await this.renderBackupFromFile(a, attsContainerInner, msgEl, attSel, nRenderedAtts);
           } else if (treatAs === 'signature') {
-            const embeddedSignedMsgXssSafe = this.factory.embeddedMsg('', msgId, false, senderEmail, true);
+            const embeddedSignedMsgXssSafe = this.factory.embeddedMsg('signature', '', msgId, false, senderEmail, true);
             msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', embeddedSignedMsgXssSafe); // xss-safe-factory
           }
         } else if (treatAs === 'plainFile' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
@@ -538,17 +540,20 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         if (this.keepNextStandardReplyBox) {
           for (const replyBoxEl of newReplyBoxes) {
             $(replyBoxEl).addClass('reply_message_evaluated');
-            const notification = $('<div class="error_notification">The last message was encrypted, but you are composing a reply without encryption. </div>');
-            const swithToEncryptedReply = $('<a href id="switch_to_encrypted_reply">Switch to encrypted reply</a>');
-            swithToEncryptedReply.click(Ui.event.handle((el, ev: JQuery.Event) => {
-              ev.preventDefault();
-              $(el).closest('.reply_message_evaluated').removeClass('reply_message_evaluated');
-              this.removeNextReplyBoxBorders = true;
-            }));
-            notification.append(swithToEncryptedReply); // xss-direct
-            $(replyBoxEl).prepend(notification); // xss-direct
+            if (this.showSwithToEncryptedReplyWarning) {
+              const notification = $('<div class="error_notification">The last message was encrypted, but you are composing a reply without encryption. </div>');
+              const swithToEncryptedReply = $('<a href id="switch_to_encrypted_reply">Switch to encrypted reply</a>');
+              swithToEncryptedReply.click(Ui.event.handle((el, ev: JQuery.Event) => {
+                ev.preventDefault();
+                $(el).closest('.reply_message_evaluated').removeClass('reply_message_evaluated');
+                this.removeNextReplyBoxBorders = true;
+              }));
+              notification.append(swithToEncryptedReply); // xss-direct
+              $(replyBoxEl).prepend(notification); // xss-direct
+            }
           }
           this.keepNextStandardReplyBox = false;
+          this.showSwithToEncryptedReplyWarning = false;
           return;
         }
         for (const replyBoxEl of newReplyBoxes.reverse()) { // looping in reverse
