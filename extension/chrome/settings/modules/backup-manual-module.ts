@@ -133,7 +133,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private backupRefused = async (ki: KeyInfo) => {
-    BrowserMsg.send.closePage(this.view.parentTabId as string);
+    await this.view.renderBackupDone(false);
   }
 
   private isPassPhraseStrongEnough = async (ki: KeyInfo, passphrase: string) => {

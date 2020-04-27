@@ -77,12 +77,14 @@ export class BackupView extends View {
     }
   }
 
-  public renderBackupDone = async () => {
+  public renderBackupDone = async (backedUp = true) => {
     if (this.action === 'setup_automatic' || this.action === 'setup_manual') {
       window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: this.acctEmail, action: 'finalize', idToken: this.idToken });
-    } else {
+    } else if (backedUp) {
       await Ui.modal.info('Your private key has been successfully backed up');
       BrowserMsg.send.closePage(this.parentTabId as string);
+    } else {
+      window.location.href = Url.create('/chrome/settings/modules/backup.htm', { acctEmail: this.acctEmail, parentTabId: this.parentTabId as string });
     }
   }
 
