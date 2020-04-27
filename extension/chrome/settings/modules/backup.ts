@@ -7,6 +7,7 @@ import { Url } from '../../../js/common/core/common.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Gmail } from '../../../js/common/api/email-provider/gmail/gmail.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { BackupStatusModule } from './backup-status-module.js';
@@ -80,7 +81,8 @@ export class BackupView extends View {
     if (this.action === 'setup_automatic' || this.action === 'setup_manual') {
       window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: this.acctEmail, action: 'finalize', idToken: this.idToken });
     } else {
-      window.location.reload();
+      await Ui.modal.info('Your private key has been successfully backed up');
+      BrowserMsg.send.closePage(this.parentTabId as string);
     }
   }
 

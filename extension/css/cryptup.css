@@ -147,7 +147,7 @@ span.gray { color: #b7b7b7; }
 }
 
 .swal2-popup.ui-modal-iframe .swal2-close { color: #666; }
-.swal2-popup.ui-modal-iframe iframe { max-width: 100%; }
+.swal2-popup.ui-modal-iframe iframe { width: 100%; }
 .swal2-container.ui-modal-page { background: rgba(0, 0, 0, 0.6) !important; }
 
 .swal2-container.ui-modal-fullscreen { padding: 0; }
@@ -195,7 +195,7 @@ span.gray { color: #b7b7b7; }
 i.small_spinner {
   display: inline-block;
   width: 40px;
-  height: 18px;
+  height: 26px;
   text-align: center;
   position: relative;
 }
