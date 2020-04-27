@@ -238,6 +238,7 @@ export class Ui {
         keydownListenerCapture: true,
         html: `<iframe src="${Xss.escape(iframeUrl)}" width="${iframeWidth}" height="${iframeHeight}" style="border: 0"></iframe>`,
         width: 'auto',
+        backdrop: 'rgba(0, 0, 0, 0.6)',
         showCloseButton: true,
         scrollbarPadding: true,
         showConfirmButton: false,
