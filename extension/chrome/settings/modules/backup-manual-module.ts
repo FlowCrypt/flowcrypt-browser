@@ -133,7 +133,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private backupRefused = async (ki: KeyInfo) => {
-    await this.view.renderBackupDone();
+    await this.view.renderBackupDone(false);
   }
 
   private isPassPhraseStrongEnough = async (ki: KeyInfo, passphrase: string) => {

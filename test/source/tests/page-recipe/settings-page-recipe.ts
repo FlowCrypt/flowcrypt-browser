@@ -55,8 +55,10 @@ export class SettingsPageRecipe extends PageRecipe {
     await securityFrame.waitAndClick('@action-confirm-new-pp', { delay: 1 });
     await securityFrame.waitAndRespondToModal('info', 'confirm', 'Now that you changed your pass phrase, you should back up your key');
     await securityFrame.waitAll('@container-backup-dialog'); // offers a new backup
-    await Util.sleep(3);
-    await SettingsPageRecipe.closeDialog(settingsPage);
+    await securityFrame.waitAndClick('@input-backup-step3manual-file');
+    await securityFrame.waitAndClick('@action-backup-step3manual-continue');
+    await securityFrame.waitAndRespondToModal('info', 'confirm', 'Downloading private key backup file');
+    await securityFrame.waitAndRespondToModal('info', 'confirm', 'Your private key has been successfully backed up');
   }
 
   public static forgetAllPassPhrasesInStorage = async (settingsPage: ControllablePage, passphrase: string) => {
