@@ -7,6 +7,8 @@
 import { Api } from '../api/api.js';
 import { Att } from '../core/att.js';
 import { Catch } from '../platform/catch.js';
+import { Dict, Url, UrlParam } from '../core/common.js';
+import { GlobalStore } from '../platform/store/global-store.js';
 import { Ui } from './ui.js';
 import { Xss } from '../platform/xss.js';
 
@@ -74,6 +76,23 @@ export class Browser {
       array[i] = obj[i];
     }
     return array;
+  }
+
+  public static openSettingsPage = async (path: string = 'index.htm', acctEmail?: string, page: string = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
+    const basePath = chrome.runtime.getURL(`chrome/settings/${path}`);
+    const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : undefined;
+    if (acctEmail || path === 'fatal.htm') {
+      await Browser.openExtensionTab(Url.create(basePath, { acctEmail, page, pageUrlParams }));
+    } else if (addNewAcct) {
+      await Browser.openExtensionTab(Url.create(basePath, { addNewAcct }));
+    } else {
+      const acctEmails = await GlobalStore.acctEmailsGet();
+      await Browser.openExtensionTab(Url.create(basePath, { acctEmail: acctEmails[0], page, pageUrlParams }));
+    }
+  }
+
+  private static openExtensionTab = async (url: string) => {
+    window.open(url, 'flowcrypt');
   }
 
 }

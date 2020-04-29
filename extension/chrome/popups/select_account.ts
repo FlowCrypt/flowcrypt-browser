@@ -3,7 +3,7 @@
 'use strict';
 
 import { Assert } from '../../js/common/assert.js';
-import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
+import { Browser } from '../../js/common/browser/browser.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
@@ -47,18 +47,16 @@ View.run(class SelectAcctPopupView extends View {
 
   private actionChooseAcctHandler = async (clickedElement: HTMLElement) => {
     if (this.action === 'inbox') {
-      BrowserMsg.send.bg.inbox({ acctEmail: $(clickedElement).attr('email') });
-      await Ui.time.sleep(100);
-      window.close();
+      await Browser.openSettingsPage('inbox/inbox.htm', $(clickedElement).attr('email'));
     } else {
-      BrowserMsg.send.bg.settings({ acctEmail: $(clickedElement).attr('email') });
-      await Ui.time.sleep(100);
-      window.close();
+      await Browser.openSettingsPage('index.htm', $(clickedElement).attr('email'));
     }
+    await Ui.time.sleep(100);
+    window.close();
   }
 
   private actionRedirectToAddAcctPageHandler = async () => {
-    BrowserMsg.send.bg.settings({ addNewAcct: true });
+    await Browser.openSettingsPage('index.htm', undefined, undefined, undefined, true);
     await Ui.time.sleep(100);
     window.close();
   }

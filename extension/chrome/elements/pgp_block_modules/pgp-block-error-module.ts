@@ -3,6 +3,7 @@
 'use strict';
 
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { FormatError } from '../../../js/common/core/pgp-msg.js';
@@ -24,9 +25,9 @@ export class PgpBlockViewErrorModule {
     $('.action_show_raw_pgp_block').click(this.view.setHandler(async () => { // this may contain content missing MDC
       Xss.sanitizeAppend('#pgp_block', `<div class="raw_pgp_block">${Xss.escape(renderRawMsg!)}</div>`); // therefore the .escape is crucial
     }));
-    $('.button.settings_keyserver').click(this.view.setHandler(() => BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page: '/chrome/settings/modules/keyserver.htm' })));
-    $('.button.settings').click(this.view.setHandler(() => BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail })));
-    $('.button.settings_add_key').click(this.view.setHandler(() => BrowserMsg.send.bg.settings({ acctEmail: this.view.acctEmail, page: '/chrome/settings/modules/add_key.htm' })));
+    $('.button.settings_keyserver').click(this.view.setHandler(async () => await Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/keyserver.htm')));
+    $('.button.settings').click(this.view.setHandler(async () => await Browser.openSettingsPage('index.htm', this.view.acctEmail)));
+    $('.button.settings_add_key').click(this.view.setHandler(async () => await Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/add_key.htm')));
     $('.button.reply_pubkey_mismatch').click(this.view.setHandler(() => BrowserMsg.send.replyPubkeyMismatch(this.view.parentTabId)));
     Ui.setTestState('ready');
   }
