@@ -258,7 +258,7 @@ export class PgpKey {
     } else if (typeof keyOrFingerprintOrBytesOrLongid === 'string') {
       return await PgpKey.longid(await PgpKey.parse(keyOrFingerprintOrBytesOrLongid));
     } else if ('getFingerprint' in keyOrFingerprintOrBytesOrLongid) {
-      return await PgpKey.longid(keyOrFingerprintOrBytesOrLongid.getFingerprint());
+      return await PgpKey.longid(keyOrFingerprintOrBytesOrLongid.getFingerprint().toUpperCase());
     }
     return await PgpKey.longid(keyOrFingerprintOrBytesOrLongid.id);
   }
