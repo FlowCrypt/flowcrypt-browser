@@ -63,7 +63,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       });
     }));
 
-    ava.default.only(`decrypt - [gpg] signed fully armored message`, testWithBrowser('compatibility', async (t, browser) => {
+    ava.default(`decrypt - [gpg] signed fully armored message`, testWithBrowser('compatibility', async (t, browser) => {
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         content: [
           "this was encrypted with gpg",
