@@ -151,6 +151,12 @@ export class PgpMsg {
           (msgOrVerResults as unknown as { data: Uint8Array }).data = await opgp.stream.readToEnd(data);
         }
       }
+      if ('getText' in msgOrVerResults) {
+        const data = msgOrVerResults.getText();
+        if (data) {
+          (msgOrVerResults as unknown as { data: string }).data = await opgp.stream.readToEnd(data);
+        }
+      }
       console.log(msgOrVerResults);
       for (const verifyRes of verifyResults) {
         // todo - a valid signature is a valid signature, and should be surfaced. Currently, if any of the signatures are not valid, it's showing all as invalid
