@@ -145,6 +145,13 @@ export class PgpMsg {
       // While this looks like bad method API design, it's here to ensure execution order when 1) reading data, 2) verifying, 3) processing signatures
       // Else it will hang trying to read a stream: https://github.com/openpgpjs/openpgpjs/issues/916#issuecomment-510620625
       const verifyResults = Array.isArray(msgOrVerResults) ? msgOrVerResults : await msgOrVerResults.verify(pubs);
+      if ('getLiteralData' in msgOrVerResults) {
+        const data = msgOrVerResults.getLiteralData();
+        if (data) {
+          (msgOrVerResults as unknown as { data: Uint8Array }).data = await opgp.stream.readToEnd(data);
+        }
+      }
+      console.log(msgOrVerResults);
       for (const verifyRes of verifyResults) {
         // todo - a valid signature is a valid signature, and should be surfaced. Currently, if any of the signatures are not valid, it's showing all as invalid
         // .. as it is now this could allow an attacker to append bogus signatures to validly signed messages, making otherwise correct messages seem incorrect
