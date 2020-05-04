@@ -150,7 +150,7 @@ export class PgpMsg {
         // .. as it is now this could allow an attacker to append bogus signatures to validly signed messages, making otherwise correct messages seem incorrect
         // .. which is not really an issue - an attacker that can append signatures could have also just slightly changed the message, causing the same experience
         // .. so for now #wontfix unless a reasonable usecase surfaces
-        sig.match = true; // (sig.match === true || sig.match === null) && await verifyRes.verified;
+        sig.match = (sig.match === true || sig.match === null) && await verifyRes.verified;
         if (!sig.signer) {
           // todo - currently only the first signer will be reported. Should we be showing all signers? How common is that?
           sig.signer = await PgpKey.longid(verifyRes.keyid.bytes);
