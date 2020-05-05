@@ -140,7 +140,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       return undefined;
     }
     for (const myKey of pubs.filter(ap => ap.isMine)) {
-      if (await PgpKey.usableButExpired(myKey.pubkey)) {
+      if (await myKey.pubkey.usableButExpired) {
         const path = chrome.runtime.getURL(`chrome/settings/index.htm?acctEmail=${encodeURIComponent(myKey.email)}&page=%2Fchrome%2Fsettings%2Fmodules%2Fmy_key_update.htm`);
         const errModalLines = [
           'This message could not be encrypted because your own Private Key is expired.',

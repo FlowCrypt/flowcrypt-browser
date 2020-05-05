@@ -14,6 +14,9 @@ export interface Pubkey {
   // This is a fingerprint for OpenPGP keys and Serial Number for X.509 keys.
   id: string;
   unparsed: string;
+  usableForEncryption: boolean;
+  usableButExpired: boolean;
+  expired(): boolean;
 }
 
 export type PubkeyResult = { pubkey: Pubkey, email: string, isMine: boolean };
@@ -230,9 +233,33 @@ export class PgpKey {
   public static parse = async (text: string): Promise<Pubkey> => {
     const keyType = PgpKey.getKeyType(text);
     if (keyType === 'openpgp') {
-      return { type: 'openpgp', id: (await opgp.key.readArmored(text)).keys[0].getFingerprint().toUpperCase(), unparsed: text };
+      const pubkey = (await opgp.key.readArmored(text)).keys[0];
+      const usableButExpired = await PgpKey.usableButExpiredOpenPGP(pubkey);
+      let usableForEncryption = false;
+      if (! await Catch.doesReject(pubkey.getEncryptionKey())) {
+        usableForEncryption = true; // good key - cannot be expired
+      } else {
+        usableForEncryption = usableButExpired;
+      }
+      const exp = await pubkey.getExpirationTime('encrypt');
+      const expired = () => {
+        if (exp === Infinity || !exp) {
+          return false;
+        }
+        if (exp instanceof Date) {
+          return Date.now() > exp.getTime();
+        }
+        throw new Error(`Got unexpected value for expiration: ${exp}`);
+      };
+      return { type: 'openpgp', id: pubkey.getFingerprint().toUpperCase(), unparsed: text, usableForEncryption, expired, usableButExpired };
     } else if (keyType === 'x509') {
-      return { type: 'x509', id: '' + Math.random(), unparsed: text };  // TODO: Replace with: smime.getSerialNumber()
+      return {
+        type: 'x509',
+        id: '' + Math.random(),  // TODO: Replace with: smime.getSerialNumber()
+        unparsed: text,
+        usableForEncryption: true, // TODO: Replace with smime code checking encryption flag
+        expired: () => false, usableButExpired: false
+      };
     }
     throw new Error('Unsupported key type: ' + keyType);
   }
@@ -274,24 +301,6 @@ export class PgpKey {
     return longids;
   }
 
-  public static usableForEncryption = async (key: Pubkey) => { // is pubkey usable for encrytion?
-    if (key.type === 'x509') {
-      return true; // todo: implement proper check if this key can be used for encryption
-    }
-    const armored = key.unparsed;
-    if (! await PgpKey.longid(armored)) {
-      return false;
-    }
-    const { keys: [pubkey] } = await opgp.key.readArmored(armored);
-    if (!pubkey) {
-      return false;
-    }
-    if (! await Catch.doesReject(pubkey.getEncryptionKey())) {
-      return true; // good key - cannot be expired
-    }
-    return await PgpKey.usableButExpiredOpenPGP(pubkey);
-  }
-
   public static expired = async (key: OpenPGP.key.Key): Promise<boolean> => {
     if (!key) {
       return false;
@@ -304,14 +313,6 @@ export class PgpKey {
       return Date.now() > exp.getTime();
     }
     throw new Error(`Got unexpected value for expiration: ${exp}`); // exp must be either null, Infinity or a Date
-  }
-
-  public static usableButExpired = async (key: Pubkey): Promise<boolean> => {
-    if (key.type === 'openpgp') {
-      return await PgpKey.usableButExpiredOpenPGP(await PgpKey.readAsOpenPGP(key.unparsed));
-    }
-    // TODO: Check usability for S/MIME keys
-    return true;
   }
 
   public static usableButExpiredOpenPGP = async (key: OpenPGP.key.Key): Promise<boolean> => {
@@ -368,11 +369,8 @@ export class PgpKey {
       private: k.isPrivate() ? k.armor() : undefined,
       isFullyDecrypted: k.isPrivate() ? k.isFullyDecrypted() : undefined,
       isFullyEncrypted: k.isPrivate() ? k.isFullyEncrypted() : undefined,
-      public: {
-        type: 'openpgp',
-        id: ids[0].fingerprint,
-        unparsed: k.toPublic().armor()
-      },
+      // TODO this is not yet optimal as it armors and then parses the key again
+      public: await PgpKey.parse(k.toPublic().armor()),
       users: k.getUserIds(),
       ids,
       algo,

@@ -11,7 +11,6 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { CollectPubkeysResult } from './compose-types.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from './compose-err-module.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
-import { opgp } from '../../../js/common/core/pgp.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
@@ -124,14 +123,10 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     try {
       const lookupResult = await this.view.pubLookup.lookupEmail(email);
       if (lookupResult && email) {
-        if (lookupResult.pubkey && lookupResult.pubkey.type === 'openpgp') {
-          const parsed = await opgp.key.readArmored(lookupResult.pubkey.unparsed);
-          const key = parsed.keys[0];
-          if (!key) {
-            console.info('Dropping found but incompatible public key', { for: email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : undefined });
-            lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
-          } else if (! await PgpKey.usableForEncryption(lookupResult.pubkey) && ! await PgpKey.expired(key)) { // Not to skip expired keys
-            console.info('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: parsed.keys[0].getFingerprint().toUpperCase() });
+        if (lookupResult.pubkey) {
+          const key = lookupResult.pubkey;
+          if (!key.usableForEncryption && !key.expired()) { // Not to skip expired keys
+            console.info('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: key.id });
             lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
           }
         }
