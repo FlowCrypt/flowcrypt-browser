@@ -15,6 +15,7 @@ export interface Pubkey {
   id: string;
   unparsed: string;
   usableForEncryption: boolean;
+  usableForSigning: boolean;
   usableButExpired: boolean;
   expired(): boolean;
 }
@@ -251,13 +252,14 @@ export class PgpKey {
         }
         throw new Error(`Got unexpected value for expiration: ${exp}`);
       };
-      return { type: 'openpgp', id: pubkey.getFingerprint().toUpperCase(), unparsed: text, usableForEncryption, expired, usableButExpired };
+      return { type: 'openpgp', id: pubkey.getFingerprint().toUpperCase(), unparsed: text, usableForEncryption, expired, usableButExpired, usableForSigning: await Catch.doesReject(pubkey.getSigningKey()) };
     } else if (keyType === 'x509') {
       return {
         type: 'x509',
         id: '' + Math.random(),  // TODO: Replace with: smime.getSerialNumber()
         unparsed: text,
         usableForEncryption: true, // TODO: Replace with smime code checking encryption flag
+        usableForSigning: true, // TODO:Replace with real checks
         expired: () => false, usableButExpired: false
       };
     }

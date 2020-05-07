@@ -11,7 +11,6 @@ import { Url, Str } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
-import { Catch } from '../../js/common/platform/catch.js';
 
 View.run(class BackupView extends View {
 
@@ -33,14 +32,14 @@ View.run(class BackupView extends View {
   public render = async () => {
     Ui.event.protect();
     await initPassphraseToggle(['pass_phrase']);
-    const prvBackup = await PgpKey.readAsOpenPGP(this.armoredPrvBackup);
-    const fingerprint = await PgpKey.fingerprint(prvBackup);
+    const prvBackup = await PgpKey.parse(this.armoredPrvBackup);
+    const fingerprint = prvBackup.id;
     if (!fingerprint) {
       throw new Error('Missing backup key fingerprint');
     }
     if (prvBackup) {
       $('.line.fingerprints .fingerprint').text(Str.spaced(fingerprint));
-      if (await Catch.doesReject(prvBackup.getEncryptionKey()) && await Catch.doesReject(prvBackup.getSigningKey())) {
+      if (prvBackup.usableForEncryption && prvBackup.usableForSigning) {
         $('.line.add_contact').addClass('bad').text('This private key looks correctly formatted, but cannot be used for encryption.');
         $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
       }
