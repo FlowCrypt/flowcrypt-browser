@@ -14,12 +14,14 @@ export interface Pubkey {
   // This is a fingerprint for OpenPGP keys and Serial Number for X.509 keys.
   id: string;
   created: Date;
+  expiration: Date | undefined;
   unparsed: string;
   usableForEncryption: boolean;
   usableForSigning: boolean;
   usableButExpired: boolean;
   emails: string[];
   expired(): boolean;
+  checkPassword(password: string): Promise<boolean>;
 }
 
 export type PubkeyResult = { pubkey: Pubkey, email: string, isMine: boolean };
@@ -269,7 +271,9 @@ export class PgpKey {
         usableButExpired,
         usableForSigning: await Catch.doesReject(pubkey.getSigningKey()),
         emails,
+        expiration: exp instanceof Date ? exp : undefined,
         created: pubkey.primaryKey.created,
+        checkPassword: passphrase => PgpKey.decrypt(pubkey, passphrase)
       };
     } else if (keyType === 'x509') {
       return {
@@ -280,7 +284,9 @@ export class PgpKey {
         usableForSigning: true, // TODO:Replace with real checks
         expired: () => false, usableButExpired: false,
         emails: [], // TODO: add parsing CN from the e-mail
-        created: new Date(0)
+        created: new Date(0),
+        expiration: undefined,
+        checkPassword: _ => { throw new Error('Not implemented yet.'); }
       };
     }
     throw new Error('Unsupported key type: ' + keyType);

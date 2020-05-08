@@ -32,7 +32,7 @@ export class SetupRecoverKeyModule {
       }
       let matchedPreviouslyRecoveredKey = false;
       for (const fetchedKey of this.view.fetchedKeyBackups) {
-        if (await PgpKey.decrypt(await PgpKey.readAsOpenPGP(fetchedKey.private), passphrase) === true) {
+        if (await (await PgpKey.parse(fetchedKey.private)).checkPassword(passphrase) === true) {
           if (!this.view.mathingPassphrases.includes(passphrase)) {
             this.view.mathingPassphrases.push(passphrase);
           }

@@ -8,7 +8,7 @@ import { Att } from '../../../js/common/core/att.js';
 import { Backend } from '../../../js/common/api/backend.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { KeyInfo } from '../../../js/common/core/pgp-key.js';
+import { KeyInfo, Pubkey } from '../../../js/common/core/pgp-key.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url, Str } from '../../../js/common/core/common.js';
@@ -28,7 +28,7 @@ View.run(class MyKeyView extends View {
   private readonly myKeyUserIdsUrl: string;
   private readonly myKeyUpdateUrl: string;
   private keyInfo!: KeyInfo;
-  private pubKey!: OpenPGP.key.Key;
+  private pubKey!: Pubkey;
   private orgRules!: OrgRules;
   private pubLookup!: PubLookup;
 
@@ -45,13 +45,13 @@ View.run(class MyKeyView extends View {
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
     [this.keyInfo] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
-    this.pubKey = await PgpKey.readAsOpenPGP(this.keyInfo.public);
+    this.pubKey = await PgpKey.parse(this.keyInfo.public);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
     $('.action_view_update').attr('href', this.myKeyUpdateUrl);
     $('.fingerprint').text(Str.spaced(this.keyInfo.fingerprint));
     $('.email').text(this.acctEmail);
-    const expiration = await PgpKey.expiration(this.pubKey);
+    const expiration = this.pubKey.expiration;
     $('.key_expiration').text(expiration ? Str.datetimeToDate(Str.fromDate(expiration)) : 'Key does not expire');
     await this.renderPubkeyShareableLink();
     await initPassphraseToggle(['input_passphrase']);
