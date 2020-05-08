@@ -13,10 +13,12 @@ export interface Pubkey {
   type: 'openpgp' | 'x509';
   // This is a fingerprint for OpenPGP keys and Serial Number for X.509 keys.
   id: string;
+  created: Date;
   unparsed: string;
   usableForEncryption: boolean;
   usableForSigning: boolean;
   usableButExpired: boolean;
+  emails: string[];
   expired(): boolean;
 }
 
@@ -252,7 +254,23 @@ export class PgpKey {
         }
         throw new Error(`Got unexpected value for expiration: ${exp}`);
       };
-      return { type: 'openpgp', id: pubkey.getFingerprint().toUpperCase(), unparsed: text, usableForEncryption, expired, usableButExpired, usableForSigning: await Catch.doesReject(pubkey.getSigningKey()) };
+      const emails = pubkey.users
+        .map(user => user.userId)
+        .filter(userId => userId !== null)
+        .map((userId: OpenPGP.packet.Userid) => opgp.util.parseUserId(userId.userid).email || '')
+        .filter(email => email)
+        .map(email => email.toLowerCase());
+      return {
+        type: 'openpgp',
+        id: pubkey.getFingerprint().toUpperCase(),
+        unparsed: text,
+        usableForEncryption,
+        expired,
+        usableButExpired,
+        usableForSigning: await Catch.doesReject(pubkey.getSigningKey()),
+        emails,
+        created: pubkey.primaryKey.created,
+      };
     } else if (keyType === 'x509') {
       return {
         type: 'x509',
@@ -260,7 +278,9 @@ export class PgpKey {
         unparsed: text,
         usableForEncryption: true, // TODO: Replace with smime code checking encryption flag
         usableForSigning: true, // TODO:Replace with real checks
-        expired: () => false, usableButExpired: false
+        expired: () => false, usableButExpired: false,
+        emails: [], // TODO: add parsing CN from the e-mail
+        created: new Date(0)
       };
     }
     throw new Error('Unsupported key type: ' + keyType);
