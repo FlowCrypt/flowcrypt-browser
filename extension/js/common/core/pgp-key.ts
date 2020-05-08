@@ -14,6 +14,7 @@ export interface Pubkey {
   // This is a fingerprint for OpenPGP keys and Serial Number for X.509 keys.
   id: string;
   created: Date;
+  lastModified: Date;
   expiration: Date | undefined;
   unparsed: string;
   usableForEncryption: boolean;
@@ -271,6 +272,7 @@ export class PgpKey {
         usableButExpired,
         usableForSigning: await Catch.doesReject(pubkey.getSigningKey()),
         emails,
+        lastModified: new Date(await PgpKey.lastSigOpenPGP(pubkey)),
         expiration: exp instanceof Date ? exp : undefined,
         created: pubkey.primaryKey.created,
         checkPassword: passphrase => PgpKey.decrypt(pubkey, passphrase)
@@ -285,6 +287,7 @@ export class PgpKey {
         expired: () => false, usableButExpired: false,
         emails: [], // TODO: add parsing CN from the e-mail
         created: new Date(0),
+        lastModified: new Date(0),
         expiration: undefined,
         checkPassword: _ => { throw new Error('Not implemented yet.'); }
       };
@@ -404,17 +407,6 @@ export class PgpKey {
       algo,
       created,
     };
-  }
-
-  /**
-   * Get latest self-signature date, in utc millis.
-   * This is used to figure out how recently was key updated, and if one key is newer than other.
-   */
-  public static lastSig = async (pubkey: Pubkey): Promise<number> => {
-    if (pubkey.type === 'x509') { // key is undefined only for X.509 keys
-      return Date.now(); // todo - this definitely needs to be refactored soon #2731
-    }
-    return await PgpKey.lastSigOpenPGP(await PgpKey.readAsOpenPGP(pubkey.unparsed));
   }
 
   /**
