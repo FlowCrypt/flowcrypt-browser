@@ -107,25 +107,6 @@ export class PgpKey {
   /**
    * used only for keys that we ourselves parsed / formatted before, eg from local storage, because no err handling
    */
-  public static read = async (pubkey: Pubkey) => { // should be renamed to readOne
-    if (pubkey.type !== 'openpgp') {
-      throw new Error('Cannot read to OpenPGP key of type: ' + pubkey.type);
-    }
-    const armoredKey = pubkey.unparsed;
-    const fromCache = KeyCache.getArmored(armoredKey);
-    if (fromCache) {
-      return fromCache;
-    }
-    const { keys: [key] } = await opgp.key.readArmored(armoredKey);
-    if (key?.isPrivate()) {
-      KeyCache.setArmored(armoredKey, key);
-    }
-    return key;
-  }
-
-  /**
-   * used only for keys that we ourselves parsed / formatted before, eg from local storage, because no err handling
-   */
   public static readAsOpenPGP = async (armoredKey: string) => { // should be renamed to readOne
     const { keys: [key] } = await opgp.key.readArmored(armoredKey);
     if (key?.isPrivate()) {

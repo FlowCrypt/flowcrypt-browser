@@ -8,7 +8,7 @@ import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Lang } from '../../../js/common/lang.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { PgpKey, Pubkey } from '../../../js/common/core/pgp-key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
@@ -18,7 +18,7 @@ import { OrgRules } from '../../../js/common/org-rules.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
-type AttesterKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: string, match: boolean }> };
+type AttesterKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: Pubkey, match: boolean }> };
 
 View.run(class KeyserverView extends View {
 
@@ -127,7 +127,7 @@ View.run(class KeyserverView extends View {
           diagnosis.hasPubkeyMismatch = true;
           match = false;
         }
-        diagnosis.results[email] = { pubkey: pubkeySearchResult.pubkey.unparsed, match };
+        diagnosis.results[email] = { pubkey: pubkeySearchResult.pubkey, match };
       }
     }
     return diagnosis;
