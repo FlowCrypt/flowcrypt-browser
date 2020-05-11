@@ -334,7 +334,8 @@ export class PgpKey {
     if (! await Catch.doesReject(key.getEncryptionKey())) {
       return false; // good key - cannot be expired
     }
-    const oneSecondBeforeExpiration = await PgpKey.dateBeforeExpirationIfAlreadyExpired(key);
+    const pubKey = await PgpKey.parse(key.armor());
+    const oneSecondBeforeExpiration = await PgpKey.dateBeforeExpirationIfAlreadyExpired(pubKey);
     if (typeof oneSecondBeforeExpiration === 'undefined') {
       return false; // key does not expire
     }
@@ -346,9 +347,9 @@ export class PgpKey {
     }
   }
 
-  public static dateBeforeExpirationIfAlreadyExpired = async (key: OpenPGP.key.Key): Promise<Date | undefined> => {
-    const expiration = await PgpKey.expiration(key, 'encrypt');
-    return expiration && await PgpKey.expired(key) ? new Date(expiration.getTime() - 1000) : undefined;
+  public static dateBeforeExpirationIfAlreadyExpired = (key: Pubkey): Date | undefined => {
+    const expiration = key.expiration;
+    return expiration && key.expired() ? new Date(expiration.getTime() - 1000) : undefined;
   }
 
   public static expiration = async (key: OpenPGP.key.Key, capability: 'encrypt' | 'encrypt_sign' | 'sign' = 'encrypt') => {

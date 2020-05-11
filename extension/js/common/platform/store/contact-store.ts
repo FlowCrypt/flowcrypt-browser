@@ -130,7 +130,7 @@ export class ContactStore extends AbstractStore {
         throw new Error(`Could not read pubkey as valid OpenPGP key for: ${validEmail}`);
       }
       const keyDetails = await PgpKey.details(k);
-      const expiresOnMs = Number(await PgpKey.dateBeforeExpirationIfAlreadyExpired(k)) || undefined;
+      const expiresOnMs = Number(pubkey.expiration) || undefined;
       return {
         email: validEmail,
         name: name || null,

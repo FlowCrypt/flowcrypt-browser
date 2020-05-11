@@ -55,7 +55,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         expect(prvDetails.keys[0].isFullyDecrypted).to.be.true;
         expect(await PgpKey.expiration(prv)).to.not.exist;
         const pubDetails = await PgpKey.parseDetails(publicKey);
-        const pub = await PgpKey.read(pubDetails.keys[0].public);
+        const pub = await PgpKey.readAsOpenPGP(pubDetails.keys[0].public.unparsed);
         expect(pubDetails.keys).to.have.length(1);
         expect(pubDetails.keys[0].algo.bits).to.equal(2048);
         expect(pubDetails.keys[0].ids[0].fingerprint).to.equal(fingerprint);
@@ -81,7 +81,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         expect(prvDetails.keys[0].isFullyDecrypted).to.be.true;
         expect(await PgpKey.expiration(prv)).to.exist;
         const pubDetails = await PgpKey.parseDetails(publicKey);
-        const pub = await PgpKey.read(pubDetails.keys[0].public);
+        const pub = await PgpKey.readAsOpenPGP(pubDetails.keys[0].public.unparsed);
         expect(pubDetails.keys).to.have.length(1);
         expect(pubDetails.keys[0].algo.bits).to.equal(2048);
         expect(pubDetails.keys[0].ids[0].fingerprint).to.equal(fingerprint);

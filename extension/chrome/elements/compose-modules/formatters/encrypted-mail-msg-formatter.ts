@@ -19,7 +19,6 @@ import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-m
 import { Settings } from '../../../../js/common/settings.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
-import { opgp } from '../../../../js/common/core/pgp.js';
 import { ContactStore } from '../../../../js/common/platform/store/contact-store.js';
 import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
 
@@ -126,9 +125,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const usableUntil: number[] = [];
     const usableFrom: number[] = [];
     for (const armoredPubkey of pubs) {
-      const { keys: [pub] } = await opgp.key.readArmored(armoredPubkey.pubkey.unparsed);
-      const oneSecondBeforeExpiration = await PgpKey.dateBeforeExpirationIfAlreadyExpired(pub);
-      usableFrom.push(pub.getCreationTime().getTime());
+      const oneSecondBeforeExpiration = PgpKey.dateBeforeExpirationIfAlreadyExpired(armoredPubkey.pubkey);
+      usableFrom.push(armoredPubkey.pubkey.created.getTime());
       if (typeof oneSecondBeforeExpiration !== 'undefined') { // key is expired
         usableUntil.push(oneSecondBeforeExpiration.getTime());
       }
