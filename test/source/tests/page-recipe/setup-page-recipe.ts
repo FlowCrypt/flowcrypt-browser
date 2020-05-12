@@ -97,7 +97,7 @@ export class SetupPageRecipe extends PageRecipe {
         await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-enter', { retryErrs: true });
       }
     }
-    await settingsPage.waitAndClick('@input-step2bmanualenter-source-paste');
+    await settingsPage.waitAndClick('@input-step2bmanualenter-source-paste', { retryErrs: true });
     await settingsPage.waitAndType('@input-step2bmanualenter-ascii-key', k.armored || '');
     await settingsPage.waitAndClick('@input-step2bmanualenter-passphrase'); // blur ascii key input
     if (noPrvCreateOrgRule) { // NO_PRV_CREATE cannot use the back button, so that they cannot select another setup method
