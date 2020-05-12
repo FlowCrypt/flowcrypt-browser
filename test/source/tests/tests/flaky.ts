@@ -1,6 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import * as ava from 'ava';
+import { expect } from 'chai';
 
 import { Config, TestVariant, Util } from '../../util';
 
@@ -11,6 +12,7 @@ import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
 import { SetupPageRecipe } from '../page-recipe/setup-page-recipe';
 import { TestWithBrowser } from '../../test';
 import { TestUrls } from '../../browser/test-urls';
+import { GoogleData } from '../../mock/google/google-data';
 
 // tslint:disable:no-blank-lines-func
 
@@ -107,6 +109,28 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await fileInput!.uploadFile('test/samples/large.jpg');
       await Util.sleep(2);
       await ComposePageRecipe.sendAndClose(composePage);
+    }));
+
+    ava.default('compose - send pwd encrypted msg & check on flowcrypt site', testWithBrowser('compatibility', async (t, browser) => {
+      const msgPwd = 'super hard password for the message';
+      const subject = 'PWD encrypted message with attachment';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
+      const fileInput = await composePage.target.$('input[type=file]');
+      await fileInput!.uploadFile('test/samples/small.txt');
+      await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
+      const msg = new GoogleData('flowcrypt.compatibility@gmail.com').getMessageBySubject(subject)!;
+      const webDecryptUrl = msg.payload.body!.data!.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]+/g)![0];
+      // while this test runs on a mock, it forwards the message/upload call to real backend - see `fwdToRealBackend`
+      // that's why we are able to test the message on real flowcrypt.com/api and web
+      const webDecryptPage = await browser.newPage(t, webDecryptUrl);
+      await webDecryptPage.waitAndType('@input-msg-pwd', msgPwd);
+      await webDecryptPage.waitAndClick('@action-decrypt');
+      await webDecryptPage.waitForContent('@container-pgp-decrypted-content', subject);
+      await webDecryptPage.waitForContent('@container-pgp-decrypted-content', 'flowcrypt.compatibility test footer with an img');
+      await webDecryptPage.waitAll('@container-att-name(small.txt)');
+      const fileText = await webDecryptPage.awaitDownloadTriggeredByClicking('@container-att-name(small.txt)');
+      expect(fileText.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
     }));
 
   }

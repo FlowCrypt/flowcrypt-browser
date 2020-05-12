@@ -500,26 +500,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default('compose - send pwd encrypted msg & check on flowcrypt site', testWithBrowser('compatibility', async (t, browser) => {
-      const msgPwd = 'super hard password for the message';
-      const subject = 'PWD encrypted message with attachment';
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
-      const fileInput = await composePage.target.$('input[type=file]');
-      await fileInput!.uploadFile('test/samples/small.txt');
-      await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
-      const msg = new GoogleData('flowcrypt.compatibility@gmail.com').getMessageBySubject(subject)!;
-      const webDecryptUrl = msg.payload.body!.data!.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]+/g)![0];
-      const webDecryptPage = await browser.newPage(t, webDecryptUrl);
-      await webDecryptPage.waitAndType('@input-msg-pwd', msgPwd);
-      await webDecryptPage.waitAndClick('@action-decrypt');
-      await webDecryptPage.waitForContent('@container-pgp-decrypted-content', subject);
-      await webDecryptPage.waitForContent('@container-pgp-decrypted-content', 'flowcrypt.compatibility test footer with an img');
-      await webDecryptPage.waitAll('@container-att-name(small.txt)');
-      const fileText = await webDecryptPage.awaitDownloadTriggeredByClicking('@container-att-name(small.txt)');
-      expect(fileText.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
-    }));
-
     ava.default('compose - loading drafts - test tags in draft', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'draftId=draft-0';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
