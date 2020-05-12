@@ -4,7 +4,6 @@ import * as ava from 'ava';
 
 import { TestVariant } from '../../util';
 import { TestWithBrowser } from '../../test';
-import { expect } from 'chai';
 
 // tslint:disable:no-blank-lines-func
 
@@ -18,8 +17,8 @@ export let defineElementTests = (testVariant: TestVariant, testWithBrowser: Test
       // eslint-disable-next-line max-len
       const url = `chrome/elements/pgp_pubkey.htm?frame_id=frame_sqpdwqmqtu&armored_pubkey=${pub}&minimized=___cu_false___&account_email=flowcrypt.compatibility%40gmail.com&parent_tab_id=9%3A0`;
       const page = await browser.newPage(t, url);
-      await page.waitForContent('body', 'cryptup.tester@gmail.com');
-      await page.waitForContent('body', '06CA 553E C245 5D70');
+      await page.waitForContent('@container-pgp-pubkey', 'cryptup.tester@gmail.com');
+      await page.waitForContent('@container-pgp-pubkey', '06CA 553E C245 5D70');
     }));
 
     ava.todo('elements/pgp_pubkey shows graceful error when pubkey not usable');
