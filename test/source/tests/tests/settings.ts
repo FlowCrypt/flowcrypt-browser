@@ -37,9 +37,8 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await attesterFrame.waitAll('@page-attester');
       await Util.sleep(1);
       await attesterFrame.waitTillGone('@spinner');
-      await Util.sleep(1);
-      expect(await attesterFrame.read('@page-attester')).to.contain('flowcrypt.compatibility@gmail.com');
-      expect(await attesterFrame.read('@page-attester')).to.contain('flowcryptcompatibility@gmail.com');
+      await attesterFrame.waitForContent('@page-attester', 'flowcrypt.compatibility@gmail.com');
+      await attesterFrame.waitForContent('@page-attester', 'flowcryptcompatibility@gmail.com');
       await SettingsPageRecipe.closeDialog(settingsPage);
       await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
     }));
