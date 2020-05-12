@@ -125,7 +125,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       if (lookupResult && email) {
         if (lookupResult.pubkey) {
           const key = lookupResult.pubkey;
-          if (!key.usableForEncryption && !key.expired()) { // Not to skip expired keys
+          if (!key.usableForEncryption && !PgpKey.expired(key)) { // Not to skip expired keys
             console.info('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: key.id });
             lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
           }

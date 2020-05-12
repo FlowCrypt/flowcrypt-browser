@@ -22,7 +22,6 @@ export interface Pubkey {
   usableForSigning: boolean;
   usableButExpired: boolean;
   emails: string[];
-  expired(): boolean;
   checkPassword(password: string): Promise<boolean>;
 }
 
@@ -221,7 +220,7 @@ export class PgpKey {
   public static parse = async (text: string): Promise<Pubkey> => {
     const keyType = PgpKey.getKeyType(text);
     if (keyType === 'openpgp') {
-      return OpenPGPKey.parse(text);
+      return await OpenPGPKey.parse(text);
     } else if (keyType === 'x509') {
       return {
         type: 'x509',
@@ -229,7 +228,7 @@ export class PgpKey {
         unparsed: text,
         usableForEncryption: true, // TODO: Replace with smime code checking encryption flag
         usableForSigning: true, // TODO:Replace with real checks
-        expired: () => false, usableButExpired: false,
+        usableButExpired: false,
         emails: [], // TODO: add parsing CN from the e-mail
         created: new Date(0),
         lastModified: new Date(0),
@@ -277,23 +276,20 @@ export class PgpKey {
     return longids;
   }
 
-  public static expired = async (key: OpenPGP.key.Key): Promise<boolean> => {
-    if (!key) {
-      return false;
-    }
-    const exp = await key.getExpirationTime('encrypt');
-    if (exp === Infinity || !exp) {
+  public static expired = (key: Pubkey): boolean => {
+    const exp = key.expiration;
+    if (!exp) {
       return false;
     }
     if (exp instanceof Date) {
       return Date.now() > exp.getTime();
     }
-    throw new Error(`Got unexpected value for expiration: ${exp}`); // exp must be either null, Infinity or a Date
+    throw new Error(`Got unexpected value for expiration: ${exp}`);
   }
 
   public static dateBeforeExpirationIfAlreadyExpired = (key: Pubkey): Date | undefined => {
     const expiration = key.expiration;
-    return expiration && key.expired() ? new Date(expiration.getTime() - 1000) : undefined;
+    return expiration && PgpKey.expired(key) ? new Date(expiration.getTime() - 1000) : undefined;
   }
 
   public static expiration = async (key: OpenPGP.key.Key, capability: 'encrypt' | 'encrypt_sign' | 'sign' = 'encrypt') => {

@@ -43,7 +43,8 @@ View.run(class PgpPubkeyView extends View {
     Ui.event.protect();
     this.publicKeys = (await opgp.key.readArmored(this.armoredPubkey)).keys;
     this.primaryPubKey = this.publicKeys[0];
-    this.isExpired = await PgpKey.expired(this.primaryPubKey);
+    const pubKey = await PgpKey.parse(this.armoredPubkey);
+    this.isExpired = PgpKey.expired(pubKey);
     $('.pubkey').text(this.armoredPubkey);
     if (this.compact) {
       $('.hide_if_compact').remove();
