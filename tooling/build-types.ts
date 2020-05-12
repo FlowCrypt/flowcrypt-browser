@@ -4,7 +4,7 @@ import { execSync as exec } from 'child_process';
 
 const CHROME_CONSUMER = 'chrome-consumer';
 const CHROME_ENTERPRISE = 'chrome-enterprise';
-const MOCK_HOST: { [buildType: string]: string } = { 'chrome-consumer': 'http://localhost:8001', 'chrome-enterprise': 'http://google.mock.flowcrypt.com:8001' };
+const MOCK_HOST: { [buildType: string]: string } = { 'chrome-consumer': 'http://localhost:8001', 'chrome-enterprise': 'http://google.mock.flowcryptlocal.com:8001' };
 
 const buildDir = (buildType: string) => `./build/${buildType}`;
 
