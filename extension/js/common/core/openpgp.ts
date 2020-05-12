@@ -2,6 +2,7 @@
 import { Pubkey, PgpKey } from './pgp-key.js';
 import { opgp } from './pgp.js';
 import { Catch } from '../platform/catch.js';
+import { PgpArmor } from './pgp-armor.js';
 
 export class OpenPGPKey {
 
@@ -47,6 +48,18 @@ export class OpenPGPKey {
       created: pubkey.getCreationTime(),
       checkPassword: passphrase => PgpKey.decrypt(pubkey, passphrase)
     };
+  }
+
+  public static asPublicKey = async (pubkey: Pubkey): Promise<Pubkey> => {
+    if (pubkey.type !== 'openpgp') {
+      throw new Error('Unsupported key type: ' + pubkey.type);
+    }
+    if (pubkey.unparsed.includes(PgpArmor.headers('privateKey').begin)) { // wrongly saving prv instead of pub
+      Catch.report('Wrongly saving prv as contact - converting to pubkey');
+      const key = await PgpKey.readAsOpenPGP(pubkey.unparsed);
+      pubkey.unparsed = key.toPublic().armor();
+    }
+    return pubkey;
   }
 
   private static usableButExpired = async (key: OpenPGP.key.Key, exp: Date | number | null, expired: () => boolean): Promise<boolean> => {

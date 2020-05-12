@@ -239,6 +239,18 @@ export class PgpKey {
     throw new Error('Unsupported key type: ' + keyType);
   }
 
+  public static serializeToString = (pubkey: Pubkey): string => {
+    return pubkey.unparsed;
+  }
+
+  public static asPublicKey = async (pubkey: Pubkey): Promise<Pubkey> => {
+    if (pubkey.type === 'openpgp') {
+      return await OpenPGPKey.asPublicKey(pubkey);
+    }
+    // TODO: Assuming S/MIME keys are already public: this should be fixed.
+    return pubkey;
+  }
+
   public static fingerprint = async (key: Pubkey | OpenPGP.key.Key): Promise<string | undefined> => {
     if ('id' in key) {
       return key.id;

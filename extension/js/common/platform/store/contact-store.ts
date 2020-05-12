@@ -7,7 +7,6 @@ import { opgp } from '../../core/pgp.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { Str } from '../../core/common.js';
 import { PgpKey, Pubkey, Contact } from '../../core/pgp-key.js';
-import { PgpArmor } from '../../core/pgp-armor.js';
 
 // tslint:disable:no-null-keyword
 
@@ -125,7 +124,7 @@ export class ContactStore extends AbstractStore {
           expiresOn: null
         };
       }
-      const k = await PgpKey.readAsOpenPGP(pubkey.unparsed); // only pubkey.type === 'openpgp' at this point
+      const k = await PgpKey.readAsOpenPGP(PgpKey.serializeToString(pubkey)); // only pubkey.type === 'openpgp' at this point
       if (!k) {
         throw new Error(`Could not read pubkey as valid OpenPGP key for: ${validEmail}`);
       }
@@ -191,10 +190,8 @@ export class ContactStore extends AbstractStore {
         throw new Error('contact not found right after inserting it');
       }
     }
-    if (update.pubkey && update.pubkey.unparsed.includes(PgpArmor.headers('privateKey').begin)) { // wrongly saving prv instead of pub
-      Catch.report('Wrongly saving prv as contact - converting to pubkey');
-      const key = await PgpKey.readAsOpenPGP(update.pubkey.unparsed);
-      update.pubkey.unparsed = key.toPublic().armor();
+    if (update.pubkey) {
+      update.pubkey = await PgpKey.asPublicKey(update.pubkey);
     }
     if (!update.searchable && (update.name !== existing.name || update.has_pgp !== existing.has_pgp)) { // update searchable index based on new name or new has_pgp
       const newHasPgp = Boolean(typeof update.has_pgp !== 'undefined' && update.has_pgp !== null ? update.has_pgp : existing.has_pgp);
@@ -211,7 +208,7 @@ export class ContactStore extends AbstractStore {
       // tslint:disable-next-line: no-unsafe-any
       if (object && typeof object.pubkey === 'object') {
         // tslint:disable-next-line: no-unsafe-any
-        object.pubkey = object.pubkey.unparsed;
+        object.pubkey = PgpKey.serializeToString(object.pubkey);
       }
     }
     return await new Promise((resolve, reject) => {

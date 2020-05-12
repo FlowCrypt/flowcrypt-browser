@@ -236,7 +236,7 @@ export class PgpMsg {
     if (pubkeys) {
       options.publicKeys = [];
       for (const armoredPubkey of pubkeys) {
-        const { keys: publicKeys } = await opgp.key.readArmored(armoredPubkey.unparsed);
+        const { keys: publicKeys } = await opgp.key.readArmored(PgpKey.serializeToString(armoredPubkey));
         options.publicKeys.push(...publicKeys);
       }
     }
@@ -284,7 +284,7 @@ export class PgpMsg {
       keys.verificationContacts = verificationContacts.filter(contact => contact && contact.pubkey) as Contact[];
       keys.forVerification = [];
       for (const contact of keys.verificationContacts) {
-        const { keys: keysForVerification } = await opgp.key.readArmored(contact.pubkey?.unparsed!);
+        const { keys: keysForVerification } = await opgp.key.readArmored(PgpKey.serializeToString(contact.pubkey!));
         keys.forVerification.push(...keysForVerification);
       }
     }

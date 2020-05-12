@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Contact, PgpKey } from '../../../js/common/core/pgp-key.js';
+import { Contact, PgpKey, Pubkey } from '../../../js/common/core/pgp-key.js';
 import { Str, Url } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
@@ -107,7 +107,7 @@ View.run(class ContactsView extends View {
   }
 
   private actionExportAllKeysHandler = () => {
-    const allArmoredPublicKeys = this.contacts.map(c => (c.pubkey?.unparsed || '').trim()).join('\n');
+    const allArmoredPublicKeys = this.contacts.map(c => c.pubkey).filter(Boolean).map((c: Pubkey) => (PgpKey.serializeToString(c)).trim()).join('\n');
     const exportFile = new Att({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: Buf.fromUtfStr(allArmoredPublicKeys) });
     Browser.saveToDownloads(exportFile);
   }
@@ -121,7 +121,7 @@ View.run(class ContactsView extends View {
     } else {
       Xss.sanitizeAppend('h1', '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
     }
-    $('#view_contact .key_dump').text(contact!.pubkey!.unparsed); // should exist - from list of contacts && should have pgp - filtered
+    $('#view_contact .key_dump').text(PgpKey.serializeToString(contact!.pubkey!)); // should exist - from list of contacts && should have pgp - filtered
     $('#view_contact .key_fingerprint').text(Str.spaced(contact!.fingerprint!)); // should exist - from list of contacts && should have pgp - filtered
     $('#view_contact').css('display', 'block');
     $('#page_back_button').click(this.setHandler(el => this.loadAndRenderContactList()));
@@ -179,7 +179,7 @@ View.run(class ContactsView extends View {
       if (normalizedFingerprintOrLongid) {
         const data = await this.pubLookup.lookupFingerprint(normalizedFingerprintOrLongid);
         if (data.pubkey) {
-          pub = data.pubkey.unparsed;
+          pub = PgpKey.serializeToString(data.pubkey);
         } else {
           await Ui.modal.warning('Could not find any Public Key in our public records that matches this fingerprint or longid');
           return;
