@@ -88,7 +88,8 @@ View.run(class MyKeyUpdateView extends View {
         return;
       }
       // cannot get a valid encryption key packet
-      if (await Catch.doesReject(updatedKey.verifyPrimaryKey(), ['No self-certifications']) || await PgpKey.usableButExpiredOpenPGP(updatedKey)) { // known issues - key can be fixed
+      const pubKey = await PgpKey.parse(updatedKey.armor());
+      if (await Catch.doesReject(updatedKey.verifyPrimaryKey(), ['No self-certifications']) || pubKey.usableButExpired) { // known issues - key can be fixed
         const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
           this.acctEmail, '.compatibility_fix_container', uddatedKeyEncrypted, uddatedKeyPassphrase, this.showKeyUrl
         );

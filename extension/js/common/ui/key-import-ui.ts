@@ -286,7 +286,7 @@ export class KeyImportUi {
     if (this.checkEncryption && await Catch.doesReject(k.getEncryptionKey())) {
       if (await Catch.doesReject(k.verifyPrimaryKey(), ['No self-certifications'])) {
         throw new KeyCanBeFixed(encrypted);
-      } else if (await PgpKey.usableButExpiredOpenPGP(k)) {
+      } else if ((await PgpKey.parse(k.armor())).usableButExpired) {
         // Currently have 2 options: import or skip. Would be better to give user 3 choices:
         // 1) Confirm importing expired key
         // 2) Extend validity of expired key + import

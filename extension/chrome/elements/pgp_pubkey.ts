@@ -57,7 +57,8 @@ View.run(class PgpPubkeyView extends View {
       $('.line.fingerprints').css({ display: 'none' });
     }
     if (this.primaryPubKey) {
-      const isUsableButExpired = await PgpKey.usableButExpiredOpenPGP(this.primaryPubKey);
+      const pubKey = await PgpKey.parse(this.primaryPubKey.armor());
+      const isUsableButExpired = pubKey.usableButExpired;
       if (!isUsableButExpired && await Catch.doesReject(this.primaryPubKey.getEncryptionKey()) && await Catch.doesReject(this.primaryPubKey.getSigningKey())) {
         this.showKeyNotUsableError();
       } else {

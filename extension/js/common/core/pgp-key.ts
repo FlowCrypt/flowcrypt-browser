@@ -217,17 +217,33 @@ export class PgpKey {
     }
   }
 
+  private static usableButExpiredForOpenPGP = async (key: OpenPGP.key.Key, exp: Date | number | null, expired: () => boolean): Promise<boolean> => {
+    if (!key) {
+      return false;
+    }
+    if (!await Catch.doesReject(key.getEncryptionKey())) {
+      return false;
+    }
+    if (exp === null || typeof exp === 'number') {
+      // If key does not expire (exp == Infinity) the encryption key should be available.
+      return false;
+    }
+    const oneSecondBeforeExpiration = exp && expired() ? new Date(exp.getTime() - 1000) : undefined;
+    if (typeof oneSecondBeforeExpiration === 'undefined') {
+      return false;
+    }
+    try {
+      await key.getEncryptionKey(undefined, oneSecondBeforeExpiration);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   public static parse = async (text: string): Promise<Pubkey> => {
     const keyType = PgpKey.getKeyType(text);
     if (keyType === 'openpgp') {
       const pubkey = (await opgp.key.readArmored(text)).keys[0];
-      const usableButExpired = await PgpKey.usableButExpiredOpenPGP(pubkey);
-      let usableForEncryption = false;
-      if (! await Catch.doesReject(pubkey.getEncryptionKey())) {
-        usableForEncryption = true; // good key - cannot be expired
-      } else {
-        usableForEncryption = usableButExpired;
-      }
       const exp = await pubkey.getExpirationTime('encrypt');
       const expired = () => {
         if (exp === Infinity || !exp) {
@@ -238,6 +254,13 @@ export class PgpKey {
         }
         throw new Error(`Got unexpected value for expiration: ${exp}`);
       };
+      const usableButExpired = await PgpKey.usableButExpiredForOpenPGP(pubkey, exp, expired);
+      let usableForEncryption = false;
+      if (! await Catch.doesReject(pubkey.getEncryptionKey())) {
+        usableForEncryption = true; // good key - cannot be expired
+      } else {
+        usableForEncryption = usableButExpired;
+      }
       const emails = pubkey.users
         .map(user => user.userId)
         .filter(userId => userId !== null)
@@ -325,26 +348,6 @@ export class PgpKey {
       return Date.now() > exp.getTime();
     }
     throw new Error(`Got unexpected value for expiration: ${exp}`); // exp must be either null, Infinity or a Date
-  }
-
-  public static usableButExpiredOpenPGP = async (key: OpenPGP.key.Key): Promise<boolean> => {
-    if (!key) {
-      return false;
-    }
-    if (! await Catch.doesReject(key.getEncryptionKey())) {
-      return false; // good key - cannot be expired
-    }
-    const pubKey = await PgpKey.parse(key.armor());
-    const oneSecondBeforeExpiration = await PgpKey.dateBeforeExpirationIfAlreadyExpired(pubKey);
-    if (typeof oneSecondBeforeExpiration === 'undefined') {
-      return false; // key does not expire
-    }
-    try { // try to see if the key was usable just before expiration
-      await key.getEncryptionKey(undefined, oneSecondBeforeExpiration);
-      return true;
-    } catch (e) {
-      return false;
-    }
   }
 
   public static dateBeforeExpirationIfAlreadyExpired = (key: Pubkey): Date | undefined => {
