@@ -369,7 +369,7 @@ export class ContactStore extends AbstractStore {
     return { ...result, pubkey: await PgpKey.parse(result.pubkey) }; // tslint:disable-line:no-unsafe-any
   }
 
-  private static recreateDates(contacts: (Contact | undefined)[]) {
+  private static recreateDates = (contacts: (Contact | undefined)[]) => {
     for (const contact of contacts) {
       if (contact) {
         if (typeof contact?.pubkey?.created === 'string') {
