@@ -225,7 +225,7 @@ export class ContactStore extends AbstractStore {
 
   public static get = async (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
     if (!db) { // relay op through background process
-      return await BrowserMsg.send.bg.await.db({ f: 'get', args: [emailOrLongid] }) as (Contact | undefined)[];
+      return ContactStore.recreateDates(await BrowserMsg.send.bg.await.db({ f: 'get', args: [emailOrLongid] }) as (Contact | undefined)[]);
     }
     if (emailOrLongid.length === 1) {
       // contacts imported before August 2019 may have only primary longid recorded, in index_longid (string)
@@ -236,11 +236,11 @@ export class ContactStore extends AbstractStore {
       if (contact || !/^[A-F0-9]{16}$/.test(emailOrLongid[0])) {
         // if we found something, return it
         // or if we were searching by email, return found contact or nothing
-        return [contact];
+        return ContactStore.recreateDates([contact]);
       } else {
         // not found any key by primary longid, and searching by longid -> search by any subkey longid
         // it may not find pubkeys imported before August 2019, re-importing such pubkeys will make them findable
-        return [await ContactStore.dbContactInternalGetOne(db, emailOrLongid[0], true)];
+        return ContactStore.recreateDates([await ContactStore.dbContactInternalGetOne(db, emailOrLongid[0], true)]);
       }
     } else {
       const results: (Contact | undefined)[] = [];
@@ -248,7 +248,7 @@ export class ContactStore extends AbstractStore {
         const [contact] = await ContactStore.get(db, [singleEmailOrLongid]);
         results.push(contact);
       }
-      return results;
+      return ContactStore.recreateDates(results);
     }
   }
 
@@ -367,6 +367,23 @@ export class ContactStore extends AbstractStore {
       return result; // tslint:disable-line:no-unsafe-any
     }
     return { ...result, pubkey: await PgpKey.parse(result.pubkey) }; // tslint:disable-line:no-unsafe-any
+  }
+
+  private static recreateDates(contacts: (Contact | undefined)[]) {
+    for (const contact of contacts) {
+      if (contact) {
+        if (typeof contact?.pubkey?.created === 'string') {
+          contact.pubkey.created = new Date(contact.pubkey.created);
+        }
+        if (typeof contact?.pubkey?.expiration === 'string') {
+          contact.pubkey.expiration = new Date(contact.pubkey.expiration);
+        }
+        if (typeof contact?.pubkey?.lastModified === 'string') {
+          contact.pubkey.lastModified = new Date(contact.pubkey.lastModified);
+        }
+      }
+    }
+    return contacts;
   }
 
 }
