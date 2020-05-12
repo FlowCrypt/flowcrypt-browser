@@ -43,8 +43,12 @@ View.run(class PgpPubkeyView extends View {
     Ui.event.protect();
     this.publicKeys = (await opgp.key.readArmored(this.armoredPubkey)).keys;
     this.primaryPubKey = this.publicKeys[0];
-    const pubKey = await PgpKey.parse(this.armoredPubkey);
-    this.isExpired = PgpKey.expired(pubKey);
+    try {
+      const pubKey = await PgpKey.parse(this.armoredPubkey);
+      this.isExpired = PgpKey.expired(pubKey);
+    } catch (e) {
+      console.error('Unusable key: ' + e);
+    }
     $('.pubkey').text(this.armoredPubkey);
     if (this.compact) {
       $('.hide_if_compact').remove();
@@ -58,8 +62,13 @@ View.run(class PgpPubkeyView extends View {
       $('.line.fingerprints').css({ display: 'none' });
     }
     if (this.primaryPubKey) {
-      const pubKey = await PgpKey.parse(this.primaryPubKey.armor());
-      const isUsableButExpired = pubKey.usableButExpired;
+      let isUsableButExpired = false;
+      try {
+        const pubKey = await PgpKey.parse(this.primaryPubKey.armor());
+        isUsableButExpired = pubKey.usableButExpired;
+      } catch (e) {
+        console.error('Unusable key: ' + e);
+      }
       if (!isUsableButExpired && await Catch.doesReject(this.primaryPubKey.getEncryptionKey()) && await Catch.doesReject(this.primaryPubKey.getSigningKey())) {
         this.showKeyNotUsableError();
       } else {

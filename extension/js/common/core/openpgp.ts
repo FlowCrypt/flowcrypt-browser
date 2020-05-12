@@ -6,7 +6,11 @@ import { Catch } from '../platform/catch.js';
 export class OpenPGPKey {
 
   public static parse = async (text: string): Promise<Pubkey> => {
-    const pubkey = (await opgp.key.readArmored(text)).keys[0];
+    const result = await opgp.key.readArmored(text);
+    if (result.err) {
+      throw new Error('Cannot parse OpenPGP key: ' + result.err + ' for: ' + text);
+    }
+    const pubkey = result.keys[0];
     const exp = await pubkey.getExpirationTime('encrypt');
     const expired = () => {
       if (exp === Infinity || !exp) {
