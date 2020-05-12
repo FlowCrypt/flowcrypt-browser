@@ -8,6 +8,7 @@ import { MsgBlockParser } from './msg-block-parser.js';
 import { PgpArmor } from './pgp-armor.js';
 import { opgp } from './pgp.js';
 import { KeyCache } from '../platform/key-cache.js';
+import { OpenPGPKey } from './openpgp.js';
 
 export interface Pubkey {
   type: 'openpgp' | 'x509';
@@ -217,70 +218,10 @@ export class PgpKey {
     }
   }
 
-  private static usableButExpiredForOpenPGP = async (key: OpenPGP.key.Key, exp: Date | number | null, expired: () => boolean): Promise<boolean> => {
-    if (!key) {
-      return false;
-    }
-    if (!await Catch.doesReject(key.getEncryptionKey())) {
-      return false;
-    }
-    if (exp === null || typeof exp === 'number') {
-      // If key does not expire (exp == Infinity) the encryption key should be available.
-      return false;
-    }
-    const oneSecondBeforeExpiration = exp && expired() ? new Date(exp.getTime() - 1000) : undefined;
-    if (typeof oneSecondBeforeExpiration === 'undefined') {
-      return false;
-    }
-    try {
-      await key.getEncryptionKey(undefined, oneSecondBeforeExpiration);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
   public static parse = async (text: string): Promise<Pubkey> => {
     const keyType = PgpKey.getKeyType(text);
     if (keyType === 'openpgp') {
-      const pubkey = (await opgp.key.readArmored(text)).keys[0];
-      const exp = await pubkey.getExpirationTime('encrypt');
-      const expired = () => {
-        if (exp === Infinity || !exp) {
-          return false;
-        }
-        if (exp instanceof Date) {
-          return Date.now() > exp.getTime();
-        }
-        throw new Error(`Got unexpected value for expiration: ${exp}`);
-      };
-      const usableButExpired = await PgpKey.usableButExpiredForOpenPGP(pubkey, exp, expired);
-      let usableForEncryption = false;
-      if (! await Catch.doesReject(pubkey.getEncryptionKey())) {
-        usableForEncryption = true; // good key - cannot be expired
-      } else {
-        usableForEncryption = usableButExpired;
-      }
-      const emails = pubkey.users
-        .map(user => user.userId)
-        .filter(userId => userId !== null)
-        .map((userId: OpenPGP.packet.Userid) => opgp.util.parseUserId(userId.userid).email || '')
-        .filter(email => email)
-        .map(email => email.toLowerCase());
-      return {
-        type: 'openpgp',
-        id: pubkey.getFingerprint().toUpperCase(),
-        unparsed: text,
-        usableForEncryption,
-        expired,
-        usableButExpired,
-        usableForSigning: await Catch.doesReject(pubkey.getSigningKey()),
-        emails,
-        lastModified: new Date(await PgpKey.lastSigOpenPGP(pubkey)),
-        expiration: exp instanceof Date ? exp : undefined,
-        created: pubkey.primaryKey.created,
-        checkPassword: passphrase => PgpKey.decrypt(pubkey, passphrase)
-      };
+      return OpenPGPKey.parse(text);
     } else if (keyType === 'x509') {
       return {
         type: 'x509',
