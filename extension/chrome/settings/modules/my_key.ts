@@ -72,7 +72,7 @@ View.run(class MyKeyView extends View {
     try {
       const result = await this.pubLookup.attester.lookupEmail(this.acctEmail);
       const url = Backend.url('pubkey', this.acctEmail);
-      if (result.pubkey && await PgpKey.fingerprint(result.pubkey) === this.keyInfo.fingerprint) {
+      if (result.pubkey && (await PgpKey.parse(result.pubkey)).id === this.keyInfo.fingerprint) {
         $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('display', '');
       } else {
         $('.pubkey_link_container').remove();

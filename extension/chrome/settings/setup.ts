@@ -214,7 +214,7 @@ export class SetupView extends View {
         email,
         name,
         client: 'cryptup',
-        pubkey: await PgpKey.parse(prvs[0].toPublic().armor()),
+        pubkey: prvs[0].toPublic().armor(),
         lastUse: Date.now(),
         lastSig: await PgpKey.lastSigOpenPGP(prvs[0].toPublic())
       }));

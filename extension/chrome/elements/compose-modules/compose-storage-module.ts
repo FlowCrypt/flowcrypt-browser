@@ -91,7 +91,9 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       if (contact && contact.has_pgp && contact.pubkey) {
         armoredPubkeys.push({ pubkey: contact.pubkey, email: contact.email, isMine: false });
       } else if (contact && this.ksLookupsByEmail[contact.email] && this.ksLookupsByEmail[contact.email].pubkey) {
-        armoredPubkeys.push({ pubkey: this.ksLookupsByEmail[contact.email].pubkey!, email: contact.email, isMine: false }); // checked !null right above. Null evaluates to false.
+        const pubkey = this.ksLookupsByEmail[contact.email].pubkey!;
+        const key = typeof pubkey === 'string' ? await PgpKey.parse(pubkey) : pubkey;
+        armoredPubkeys.push({ pubkey: key, email: contact.email, isMine: false }); // checked !null right above. Null evaluates to false.
       } else {
         emailsWithoutPubkeys.push(recipients[i]);
       }
@@ -124,7 +126,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       const lookupResult = await this.view.pubLookup.lookupEmail(email);
       if (lookupResult && email) {
         if (lookupResult.pubkey) {
-          const key = lookupResult.pubkey;
+          const key = await PgpKey.parse(lookupResult.pubkey);
           if (!key.usableForEncryption && !PgpKey.expired(key)) { // Not to skip expired keys
             console.info('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: key.id });
             lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
@@ -166,10 +168,11 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       if (!contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7)) { // last update > 7 days ago, or never
         const { pubkey: fetchedPubkey } = await this.view.pubLookup.lookupFingerprint(contact.fingerprint);
         if (fetchedPubkey) {
-          const fetchedLastSig = +fetchedPubkey.lastModified;
+          const pubkey = await PgpKey.parse(fetchedPubkey);
+          const fetchedLastSig = Number(pubkey.lastModified);
           if (fetchedLastSig > contact.pubkey_last_sig) { // fetched pubkey has newer signature, update
             console.info(`Updating key ${contact.longid} for ${contact.email}: newer signature found: ${new Date(fetchedLastSig)} (old ${new Date(contact.pubkey_last_sig)})`);
-            await ContactStore.update(undefined, contact.email, { pubkey: fetchedPubkey, pubkey_last_sig: fetchedLastSig, pubkey_last_check: Date.now() });
+            await ContactStore.update(undefined, contact.email, { pubkey, pubkey_last_sig: fetchedLastSig, pubkey_last_check: Date.now() });
             return;
           }
         }

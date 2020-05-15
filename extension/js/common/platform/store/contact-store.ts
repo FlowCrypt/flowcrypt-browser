@@ -14,7 +14,7 @@ export type DbContactObjArg = {
   email: string,
   name?: string | null,
   client?: 'pgp' | 'cryptup' | PgpClient | null,
-  pubkey?: Pubkey | null,
+  pubkey?: string | null,
   pendingLookup?: boolean | number | null,
   lastUse?: number | null, // when was this contact last used to send an email
   lastSig?: number | null, // last pubkey signature (when was pubkey last updated by owner)
@@ -102,15 +102,16 @@ export class ContactStore extends AbstractStore {
           expiresOn: null
         };
       }
+      const pk = await PgpKey.parse(pubkey);
       // X.509 certificate
-      if (pubkey.type === 'x509') {
+      if (pk.type === 'x509') {
         // FIXME: For now we return random data.
         // Later we'll return serial ID from the certificate.
         const longid = Math.random() + '';
         return {
           email: validEmail,
           name: name || null,
-          pubkey,
+          pubkey: pk,
           has_pgp: 1, // number because we use it for sorting
           searchable: ContactStore.dbCreateSearchIndexList(validEmail, name || null, true),
           client: ContactStore.storablePgpClient(client || 'pgp'),
@@ -124,12 +125,12 @@ export class ContactStore extends AbstractStore {
           expiresOn: null
         };
       }
-      const k = await PgpKey.readAsOpenPGP(PgpKey.serializeToString(pubkey)); // only pubkey.type === 'openpgp' at this point
+      const k = await PgpKey.readAsOpenPGP(pubkey); // only pubkey.type === 'openpgp' at this point
       if (!k) {
         throw new Error(`Could not read pubkey as valid OpenPGP key for: ${validEmail}`);
       }
       const keyDetails = await PgpKey.details(k);
-      const expiresOnMs = Number(pubkey.expiration) || undefined;
+      const expiresOnMs = Number(pk.expiration) || undefined;
       return {
         email: validEmail,
         name: name || null,
@@ -142,7 +143,7 @@ export class ContactStore extends AbstractStore {
         longids: keyDetails.ids.map(id => id.longid),
         pending_lookup: 0,
         last_use: lastUse || null,
-        pubkey_last_sig: +pubkey.lastModified || null,
+        pubkey_last_sig: Number(pk.lastModified) || null,
         pubkey_last_check: lastCheck || null,
         expiresOn: expiresOnMs || null
       };

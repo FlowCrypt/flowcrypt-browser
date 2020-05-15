@@ -89,7 +89,7 @@ View.run(class AddPubkeyView extends View {
       await ContactStore.save(undefined, await ContactStore.obj({
         email: String($('select.email').val()),
         client: 'pgp',
-        pubkey: await PgpKey.parse(normalized),
+        pubkey: normalized,
         lastUse: Date.now(),
       }));
       this.closeDialog();

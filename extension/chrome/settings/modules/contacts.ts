@@ -142,7 +142,7 @@ View.run(class ContactsView extends View {
     if (!armoredPubkey || !email) {
       await Ui.modal.warning('No public key entered');
     } else if (await PgpKey.fingerprint(await PgpKey.parse(armoredPubkey))) {
-      await ContactStore.save(undefined, await ContactStore.obj({ email, client: 'pgp', pubkey: await PgpKey.parse(armoredPubkey), lastUse: Date.now() }));
+      await ContactStore.save(undefined, await ContactStore.obj({ email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now() }));
       await this.loadAndRenderContactList();
     } else {
       await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let us know at human@flowcrypt.com if you need help.');
@@ -179,7 +179,7 @@ View.run(class ContactsView extends View {
       if (normalizedFingerprintOrLongid) {
         const data = await this.pubLookup.lookupFingerprint(normalizedFingerprintOrLongid);
         if (data.pubkey) {
-          pub = PgpKey.serializeToString(data.pubkey);
+          pub = data.pubkey;
         } else {
           await Ui.modal.warning('Could not find any Public Key in our public records that matches this fingerprint or longid');
           return;

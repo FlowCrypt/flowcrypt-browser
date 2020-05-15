@@ -292,7 +292,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
             email: keyUser.email,
             name: keyUser.name,
             client: 'pgp',
-            pubkey: await PgpKey.parse(normalizedPub),
+            pubkey: normalizedPub,
             lastCheck: Date.now(),
           }));
         }

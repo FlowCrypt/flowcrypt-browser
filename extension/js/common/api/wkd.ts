@@ -62,7 +62,7 @@ export class Wkd extends Api {
     }
     // if recipient uses same domain, we assume they use flowcrypt
     const pgpClient = this.myOwnDomain === recipientDomain ? 'flowcrypt' : 'pgp-other';
-    return { pubkey: await PgpKey.parse(pubkey), pgpClient };
+    return { pubkey, pgpClient };
   }
 
 }
