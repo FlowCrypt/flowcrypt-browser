@@ -8,7 +8,7 @@ import { MsgBlockParser } from './msg-block-parser.js';
 import { PgpArmor } from './pgp-armor.js';
 import { opgp } from './pgp.js';
 import { KeyCache } from '../platform/key-cache.js';
-import { OpenPGPKey } from './openpgp.js';
+import { OpenPGPKey } from './openpgp-key.js';
 
 export interface Pubkey {
   type: 'openpgp' | 'x509';
