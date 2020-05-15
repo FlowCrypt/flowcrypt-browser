@@ -9,7 +9,7 @@ const MOCK_HOST: { [buildType: string]: string } = { 'chrome-consumer': 'http://
 const buildDir = (buildType: string) => `./build/${buildType}`;
 
 const edit = (filepath: string, editor: (content: string) => string) => {
-  writeFileSync(filepath, editor(readFileSync(filepath, { encoding: 'UTF-8' })));
+  writeFileSync(filepath, editor(readFileSync(filepath, { encoding: 'utf-8' })));
 };
 
 const makeMockBuild = (buildType: string) => {
