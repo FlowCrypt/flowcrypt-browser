@@ -3,6 +3,9 @@ import { Pubkey, PgpKey } from './pgp-key.js';
 import { opgp } from './pgp.js';
 import { Catch } from '../platform/catch.js';
 import { PgpArmor } from './pgp-armor.js';
+import { Str } from './common.js';
+
+const internal = Symbol('internal public key');
 
 export class OpenPGPKey {
 
@@ -11,7 +14,37 @@ export class OpenPGPKey {
     if (result.err) {
       throw new Error('Cannot parse OpenPGP key: ' + result.err + ' for: ' + text);
     }
-    const pubkey = result.keys[0];
+    return await OpenPGPKey.wrap(result.keys[0], text);
+  }
+
+  public static isPacketDecrypted = (pubkey: Pubkey, keyid: string) => {
+    return OpenPGPKey.unwrap(pubkey).isPacketDecrypted({ bytes: keyid });
+  }
+
+  public static asPublicKey = async (pubkey: Pubkey): Promise<Pubkey> => {
+    if (pubkey.type !== 'openpgp') {
+      throw new Error('Unsupported key type: ' + pubkey.type);
+    }
+    if (pubkey.unparsed.includes(PgpArmor.headers('privateKey').begin)) { // wrongly saving prv instead of pub
+      Catch.report('Wrongly saving prv as contact - converting to pubkey');
+      const key = await PgpKey.readAsOpenPGP(pubkey.unparsed);
+      pubkey.unparsed = key.toPublic().armor();
+    }
+    return pubkey;
+  }
+
+  public static decrypt = async (message: OpenPGP.message.Message, privateKeys: Pubkey[], passwords?: string[]) => {
+    return await message.decrypt(privateKeys.map(key => OpenPGPKey.unwrap(key)), passwords, undefined, false);
+  }
+
+  public static reformatKey = async (privateKey: Pubkey, passphrase: string, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
+    const origPrv = OpenPGPKey.unwrap(privateKey);
+    const keyPair = await opgp.reformatKey({ privateKey: origPrv, passphrase, userIds, keyExpirationTime: expireSeconds });
+    return await OpenPGPKey.wrap(keyPair.key);
+  }
+
+  // TODO: should be private, will change when readMany is rewritten
+  public static wrap = async (pubkey: OpenPGP.key.Key, armored?: string): Promise<Pubkey> => {
     const exp = await pubkey.getExpirationTime('encrypt');
     const expired = () => {
       if (exp === Infinity || !exp) {
@@ -35,31 +68,36 @@ export class OpenPGPKey {
       .map((userId: OpenPGP.packet.Userid) => opgp.util.parseUserId(userId.userid).email || '')
       .filter(email => email)
       .map(email => email.toLowerCase());
-    return {
+    const pkey: Pubkey = {
       type: 'openpgp',
       id: pubkey.getFingerprint().toUpperCase(),
-      unparsed: text,
+      ids: (await Promise.all(pubkey.getKeyIds().map(({ bytes }) => PgpKey.longid(bytes)))).filter(Boolean) as string[],
+      unparsed: armored || pubkey.armor(),
       usableForEncryption,
       usableButExpired,
       usableForSigning: await Catch.doesReject(pubkey.getSigningKey()),
       emails,
+      // tslint:disable-next-line: no-unsafe-any
+      identities: pubkey.users.map(u => u.userId).filter(u => !!u && u.userid && Str.parseEmail(u.userid).email).map(u => u!.userid).filter(Boolean) as string[],
       lastModified: new Date(await PgpKey.lastSigOpenPGP(pubkey)),
       expiration: exp instanceof Date ? exp : undefined,
       created: pubkey.getCreationTime(),
-      checkPassword: passphrase => PgpKey.decrypt(pubkey, passphrase)
+      checkPassword: _text => Promise.resolve(false),
+      fullyDecrypted: pubkey.isFullyDecrypted(),
+      fullyEncrypted: pubkey.isFullyEncrypted(),
+      isPublic: pubkey.isPublic(),
+      isPrivate: pubkey.isPrivate(),
     };
+    pkey.checkPassword = passphrase => PgpKey.decrypt(pkey, passphrase);
+    (pkey as any)[internal] = pubkey;
+    return pkey;
   }
 
-  public static asPublicKey = async (pubkey: Pubkey): Promise<Pubkey> => {
+  private static unwrap = (pubkey: Pubkey) => {
     if (pubkey.type !== 'openpgp') {
       throw new Error('Unsupported key type: ' + pubkey.type);
     }
-    if (pubkey.unparsed.includes(PgpArmor.headers('privateKey').begin)) { // wrongly saving prv instead of pub
-      Catch.report('Wrongly saving prv as contact - converting to pubkey');
-      const key = await PgpKey.readAsOpenPGP(pubkey.unparsed);
-      pubkey.unparsed = key.toPublic().armor();
-    }
-    return pubkey;
+    return ((pubkey as any)[internal] as OpenPGP.key.Key);
   }
 
   private static usableButExpired = async (key: OpenPGP.key.Key, exp: Date | number | null, expired: () => boolean): Promise<boolean> => {

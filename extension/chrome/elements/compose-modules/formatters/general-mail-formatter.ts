@@ -3,7 +3,7 @@
 'use strict';
 
 import { EncryptedMsgMailFormatter } from './encrypted-mail-msg-formatter.js';
-import { KeyInfo } from "../../../../js/common/core/pgp-key.js";
+import { KeyInfo, Pubkey } from "../../../../js/common/core/pgp-key.js";
 import { NewMsgData } from "../compose-types.js";
 import { PlainMsgMailFormatter } from './plain-mail-msg-formatter.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
@@ -12,7 +12,7 @@ import { ComposeView } from '../../compose.js';
 
 export class GeneralMailFormatter {
 
-  public static processNewMsg = async (view: ComposeView, newMsgData: NewMsgData, senderKi: KeyInfo, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> => {
+  public static processNewMsg = async (view: ComposeView, newMsgData: NewMsgData, senderKi: KeyInfo, signingPrv?: Pubkey): Promise<SendableMsg> => {
     const choices = view.sendBtnModule.popover.choices;
     const recipientsEmails = Array.prototype.concat.apply([], Object.values(newMsgData.recipients).filter(arr => !!arr)) as string[];
     if (!choices.encrypt && !choices.sign) { // plain

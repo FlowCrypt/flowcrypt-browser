@@ -43,10 +43,10 @@ export class SetupKeyManagerAutogenModule {
           throw new Error(`Could not parse any valid keys from Key Manager response for user ${this.view.acctEmail}`);
         }
         for (const prv of keys) {
-          if (!prv.isPrivate()) {
+          if (!prv.isPrivate) {
             throw new Error(`Key ${await PgpKey.longid(prv)} for user ${this.view.acctEmail} is not a private key`);
           }
-          if (!prv.isFullyDecrypted()) {
+          if (!prv.fullyDecrypted) {
             throw new Error(`Key ${await PgpKey.longid(prv)} for user ${this.view.acctEmail} from FlowCrypt Email Key Manager is not fully decrypted`);
           }
           await PgpKey.encrypt(prv, passphrase);
@@ -57,14 +57,15 @@ export class SetupKeyManagerAutogenModule {
         const expireInMonths = this.view.orgRules.getEnforcedKeygenExpirationMonths();
         const pgpUids = [{ name: full_name || '', email: this.view.acctEmail }];
         const generated = await PgpKey.create(pgpUids, keygenAlgo, passphrase, expireInMonths);
-        const decryptablePrv = await PgpKey.readAsOpenPGP(generated.private);
+        const decryptablePrv = await PgpKey.parse(generated.private);
         const generatedKeyFingerprint = await PgpKey.fingerprint(decryptablePrv);
         if (! await PgpKey.decrypt(decryptablePrv, passphrase)) {
           throw new Error('Unexpectedly cannot decrypt newly generated key');
         }
-        const storePrvOnKm = () => this.view.keyManager!.storePrivateKey(this.view.idToken!, decryptablePrv.armor(), decryptablePrv.toPublic().armor(), generatedKeyFingerprint!);
+        const pubArmor = PgpKey.serializeToString(await PgpKey.asPublicKey(decryptablePrv));
+        const storePrvOnKm = async () => this.view.keyManager!.storePrivateKey(this.view.idToken!, PgpKey.serializeToString(decryptablePrv), pubArmor, generatedKeyFingerprint!);
         await Settings.retryUntilSuccessful(storePrvOnKm, 'Failed to store newly generated key on FlowCrypt Email Key Manager');
-        await this.view.saveKeysAndPassPhrase([await PgpKey.readAsOpenPGP(generated.private)], opts); // store encrypted key + pass phrase locally
+        await this.view.saveKeysAndPassPhrase([await PgpKey.parse(generated.private)], opts); // store encrypted key + pass phrase locally
       }
       await this.view.submitPublicKeysAndFinalizeSetup(opts);
       await this.view.setupRender.renderSetupDone();

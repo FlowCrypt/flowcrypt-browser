@@ -6,7 +6,7 @@ import { SetupOptions, SetupView } from '../setup.js';
 
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Lang } from '../../../js/common/lang.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { PgpKey, Pubkey } from '../../../js/common/core/pgp-key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -21,7 +21,7 @@ export class SetupRecoverKeyModule {
   public actionRecoverAccountHandler = async () => {
     try {
       const passphrase = String($('#recovery_pasword').val());
-      const newlyMatchingKeys: OpenPGP.key.Key[] = [];
+      const newlyMatchingKeys: Pubkey[] = [];
       if (passphrase && this.view.mathingPassphrases.includes(passphrase)) {
         await Ui.modal.warning(Lang.setup.tryDifferentPassPhraseForRemainingBackups);
         return;
@@ -37,7 +37,7 @@ export class SetupRecoverKeyModule {
             this.view.mathingPassphrases.push(passphrase);
           }
           if (!this.view.importedKeysUniqueLongids.includes(fetchedKey.longid)) {
-            const prv = await PgpKey.readAsOpenPGP(fetchedKey.private);
+            const prv = await PgpKey.parse(fetchedKey.private);
             newlyMatchingKeys.push(prv);
             this.view.importedKeysUniqueLongids.push(fetchedKey.longid);
           } else {

@@ -137,8 +137,8 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private isPassPhraseStrongEnough = async (ki: KeyInfo, passphrase: string) => {
-    const prv = await PgpKey.readAsOpenPGP(ki.private);
-    if (!prv.isFullyEncrypted()) {
+    const prv = await PgpKey.parse(ki.private);
+    if (!prv.fullyEncrypted) {
       return false;
     }
     if (!passphrase) {
@@ -160,11 +160,11 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private isPrivateKeyEncrypted = async (ki: KeyInfo) => {
-    const prv = await PgpKey.readAsOpenPGP(ki.private);
+    const prv = await PgpKey.parse(ki.private);
     if (await PgpKey.decrypt(prv, '', undefined, 'OK-IF-ALREADY-DECRYPTED') === true) {
       return false;
     }
-    return prv.isFullyEncrypted();
+    return prv.fullyEncrypted;
   }
 
   private actionSelectBackupMethodHandler = (target: HTMLElement) => {

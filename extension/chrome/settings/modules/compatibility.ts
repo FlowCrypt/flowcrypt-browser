@@ -37,7 +37,7 @@ View.run(class CompatibilityView extends View {
       for (const err of errs) {
         this.appendResult(`Error parsing input: ${String(err)}`);
       }
-      await this.outputKeyResults(keys);
+      await this.outputKeyResults(await Promise.all(keys.map(key => PgpKey.readAsOpenPGP(key.unparsed))));
     } catch (err) {
       this.appendResult(`Exception: ${String(err)}`);
     }
@@ -69,7 +69,8 @@ View.run(class CompatibilityView extends View {
       this.appendResult(`${kn} Subkeys: ${await this.test(async () => key.subKeys ? key.subKeys.length : key.subKeys)}`);
       this.appendResult(`${kn} Primary key algo: ${await this.test(async () => key.primaryKey.algorithm)}`);
       if (key.isPrivate()) {
-        this.appendResult(`${kn} key decrypt: ${await this.test(async () => PgpKey.decrypt(key, String($('.input_passphrase').val())))}`);
+        const pubkey = await PgpKey.parse(key.armor());
+        this.appendResult(`${kn} key decrypt: ${await this.test(async () => PgpKey.decrypt(pubkey, String($('.input_passphrase').val())))}`);
         this.appendResult(`${kn} isFullyDecrypted: ${await this.test(async () => key.isFullyDecrypted())}`);
         this.appendResult(`${kn} isFullyEncrypted: ${await this.test(async () => key.isFullyEncrypted())}`);
       }

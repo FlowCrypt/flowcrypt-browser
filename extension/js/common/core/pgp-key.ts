@@ -7,13 +7,13 @@ import { Catch, UnreportableError } from '../platform/catch.js';
 import { MsgBlockParser } from './msg-block-parser.js';
 import { PgpArmor } from './pgp-armor.js';
 import { opgp } from './pgp.js';
-import { KeyCache } from '../platform/key-cache.js';
 import { OpenPGPKey } from './openpgp-key.js';
 
 export interface Pubkey {
   type: 'openpgp' | 'x509';
   // This is a fingerprint for OpenPGP keys and Serial Number for X.509 keys.
   id: string;
+  ids: string[];
   created: Date;
   lastModified: Date;
   expiration: Date | undefined;
@@ -22,6 +22,12 @@ export interface Pubkey {
   usableForSigning: boolean;
   usableButExpired: boolean;
   emails: string[];
+  identities: string[];
+  fullyDecrypted: boolean;
+  fullyEncrypted: boolean;
+  // TODO: Aren't isPublic and isPrivate mutually exclusive?
+  isPublic: boolean;
+  isPrivate: boolean;
   checkPassword(password: string): Promise<boolean>;
 }
 
@@ -48,8 +54,8 @@ export interface PrvKeyInfo {
   private: string;
   longid: string;
   passphrase?: string;
-  decrypted?: OpenPGP.key.Key;  // only for internal use in this file
-  parsed?: OpenPGP.key.Key;     // only for internal use in this file
+  decrypted?: Pubkey;  // only for internal use in this file
+  parsed?: Pubkey;     // only for internal use in this file
 }
 
 export type KeyAlgo = 'curve25519' | 'rsa2048' | 'rsa4096';
@@ -110,7 +116,7 @@ export class PgpKey {
   public static readAsOpenPGP = async (armoredKey: string) => { // should be renamed to readOne
     const { keys: [key] } = await opgp.key.readArmored(armoredKey);
     if (key?.isPrivate()) {
-      KeyCache.setArmored(armoredKey, key);
+      // KeyCache.setArmored(armoredKey, key); TODO: FIXME: cache doesn't work
     }
     return key;
   }
@@ -118,7 +124,7 @@ export class PgpKey {
   /**
    * Read many keys, could be armored or binary, in single armor or separately, useful for importing keychains of various formats
    */
-  public static readMany = async (fileData: Buf): Promise<{ keys: OpenPGP.key.Key[], errs: Error[] }> => {
+  public static readMany = async (fileData: Buf): Promise<{ keys: Pubkey[], errs: Error[] }> => {
     const allKeys: OpenPGP.key.Key[] = [];
     const allErrs: Error[] = [];
     const { blocks } = MsgBlockParser.detectBlocks(fileData.toUtfStr('ignore'));
@@ -141,18 +147,22 @@ export class PgpKey {
     } else {
       await pushKeysAndErrs(fileData, false);
     }
-    return { keys: allKeys, errs: allErrs };
+    return { keys: await Promise.all(allKeys.map(key => OpenPGPKey.wrap(key))), errs: allErrs };
   }
 
   public static isPacketPrivate = (p: OpenPGP.packet.AnyKeyPacket): p is PrvPacket => {
     return p.tag === opgp.enums.packet.secretKey || p.tag === opgp.enums.packet.secretSubkey;
   }
 
-  public static decrypt = async (prv: OpenPGP.key.Key, passphrase: string, optionalKeyid?: OpenPGP.Keyid, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
+  public static decrypt = async (key: Pubkey, passphrase: string, optionalKeyid?: string, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
+    if (key.type !== 'openpgp') {
+      throw new Error('Unsupported key type: ' + key.type);
+    }
+    const prv = await PgpKey.readAsOpenPGP(key.unparsed);
     if (!prv.isPrivate()) {
       throw new Error("Nothing to decrypt in a public key");
     }
-    const chosenPrvPackets = prv.getKeys(optionalKeyid).map(k => k.keyPacket).filter(PgpKey.isPacketPrivate) as PrvPacket[];
+    const chosenPrvPackets = prv.getKeys(optionalKeyid ? { bytes: optionalKeyid } : undefined).map(k => k.keyPacket).filter(PgpKey.isPacketPrivate) as PrvPacket[];
     if (!chosenPrvPackets.length) {
       throw new Error(`No private key packets selected of ${prv.getKeys().map(k => k.keyPacket).filter(PgpKey.isPacketPrivate).length} prv packets available`);
     }
@@ -176,7 +186,11 @@ export class PgpKey {
     return true;
   }
 
-  public static encrypt = async (prv: OpenPGP.key.Key, passphrase: string) => {
+  public static encrypt = async (key: Pubkey, passphrase: string) => {
+    if (key.type !== 'openpgp') {
+      throw new Error('Unsupported key type: ' + key.type);
+    }
+    const prv = await PgpKey.readAsOpenPGP(key.unparsed);
     if (!passphrase || passphrase === 'undefined' || passphrase === 'null') {
       throw new Error(`Encryption passphrase should not be empty:${typeof passphrase}:${passphrase}`);
     }
@@ -192,6 +206,14 @@ export class PgpKey {
     if (!prv.isFullyEncrypted()) {
       throw new Error('Expected key to be fully encrypted after prv.encrypt');
     }
+  }
+
+  public static isWithoutSelfCertifications = async (key: Pubkey) => {
+    if (key.type !== 'openpgp') {
+      throw new Error('Unsupported key type: ' + key.type);
+    }
+    const k = await PgpKey.readAsOpenPGP(key.unparsed);
+    return await Catch.doesReject(k.verifyPrimaryKey(), ['No self-certifications']);
   }
 
   public static normalize = async (armored: string): Promise<{ normalized: string, keys: OpenPGP.key.Key[] }> => {
@@ -225,18 +247,32 @@ export class PgpKey {
       return {
         type: 'x509',
         id: '' + Math.random(),  // TODO: Replace with: smime.getSerialNumber()
+        ids: [],
         unparsed: text,
         usableForEncryption: true, // TODO: Replace with smime code checking encryption flag
         usableForSigning: true, // TODO:Replace with real checks
         usableButExpired: false,
         emails: [], // TODO: add parsing CN from the e-mail
+        identities: [],
         created: new Date(0),
         lastModified: new Date(0),
         expiration: undefined,
-        checkPassword: _ => { throw new Error('Not implemented yet.'); }
+        checkPassword: _ => { throw new Error('Not implemented yet.'); },
+        fullyDecrypted: false,
+        fullyEncrypted: false,
+        isPublic: true,
+        isPrivate: true,
       };
     }
     throw new Error('Unsupported key type: ' + keyType);
+  }
+
+  public static reformatKey = async (privateKey: Pubkey, passphrase: string, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
+    return await OpenPGPKey.reformatKey(privateKey, passphrase, userIds, expireSeconds);
+  }
+
+  public static isPacketDecrypted = (pubkey: Pubkey, keyId: string) => {
+    return OpenPGPKey.isPacketDecrypted(pubkey, keyId);
   }
 
   public static serializeToString = (pubkey: Pubkey): string => {
@@ -277,10 +313,10 @@ export class PgpKey {
     return await PgpKey.longid(keyOrFingerprintOrBytesOrLongid.id);
   }
 
-  public static longids = async (keyIds: OpenPGP.Keyid[]) => {
+  public static longids = async (keyIds: string[]) => {
     const longids: string[] = [];
     for (const id of keyIds) {
-      const longid = await PgpKey.longid(id.bytes);
+      const longid = await PgpKey.longid(id);
       if (longid) {
         longids.push(longid);
       }
@@ -364,11 +400,15 @@ export class PgpKey {
     throw new Error('No valid signature found in key');
   }
 
-  public static revoke = async (key: OpenPGP.key.Key): Promise<string | undefined> => {
-    if (! await key.isRevoked()) {
-      key = await key.revoke({});
+  public static revoke = async (key: Pubkey): Promise<string | undefined> => {
+    if (key.type !== 'openpgp') {
+      throw new Error('Unsupported key type: ' + key.type);
     }
-    const certificate = await key.getRevocationCertificate();
+    let prv = await PgpKey.readAsOpenPGP(key.unparsed);
+    if (! await prv.isRevoked()) {
+      prv = await prv.revoke({});
+    }
+    const certificate = await prv.getRevocationCertificate();
     if (!certificate) {
       return undefined;
     } else if (typeof certificate === 'string') {

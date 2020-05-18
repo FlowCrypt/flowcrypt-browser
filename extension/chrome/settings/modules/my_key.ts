@@ -84,8 +84,8 @@ View.run(class MyKeyView extends View {
   }
 
   private downloadRevocationCert = async (enteredPP?: string) => {
-    const prv = await PgpKey.readAsOpenPGP(this.keyInfo.private);
-    if (!prv.isFullyDecrypted()) {
+    const prv = await PgpKey.parse(this.keyInfo.private);
+    if (!prv.fullyDecrypted) {
       const passphrase = await PassphraseStore.get(this.acctEmail, this.keyInfo.fingerprint) || enteredPP;
       if (passphrase) {
         if (! await PgpKey.decrypt(prv, passphrase) && enteredPP) {

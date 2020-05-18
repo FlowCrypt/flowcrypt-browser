@@ -13,7 +13,6 @@ import { Url, Str } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
-import { opgp } from '../../js/common/core/pgp.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 
@@ -109,7 +108,7 @@ View.run(class PassphraseView extends View {
     const storageType: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
     let atLeastOneMatched = false;
     for (const keyinfo of this.myPrivateKeys!) { // if passphrase matches more keys, it will save the pass phrase for all keys
-      const { keys: [prv] } = await opgp.key.readArmored(keyinfo.private);
+      const prv = await PgpKey.parse(keyinfo.private);
       try {
         if (await PgpKey.decrypt(prv, pass) === true) {
           await PassphraseStore.set(storageType, this.acctEmail, keyinfo.fingerprint, pass);

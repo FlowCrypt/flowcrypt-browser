@@ -7,7 +7,7 @@ import { Url } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Contact, KeyInfo } from '../../js/common/core/pgp-key.js';
+import { Contact, KeyInfo, Pubkey } from '../../js/common/core/pgp-key.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/google.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
@@ -197,14 +197,14 @@ export class SetupView extends View {
     await AcctStore.remove(this.acctEmail, ['tmp_submit_main', 'tmp_submit_all']);
   }
 
-  public saveKeysAndPassPhrase = async (prvs: OpenPGP.key.Key[], options: SetupOptions) => {
+  public saveKeysAndPassPhrase = async (prvs: Pubkey[], options: SetupOptions) => {
     for (const prv of prvs) {
       const fingerprint = await PgpKey.fingerprint(prv);
       if (!fingerprint) {
         await Ui.modal.error('Cannot save keys to storage because at least one of them is not valid.');
         return;
       }
-      await KeyStore.add(this.acctEmail, prv.armor());
+      await KeyStore.add(this.acctEmail, PgpKey.serializeToString(prv));
       await PassphraseStore.set(options.passphrase_save ? 'local' : 'session', this.acctEmail, fingerprint, options.passphrase);
     }
     const myOwnEmailAddrsAsContacts: Contact[] = [];
@@ -214,9 +214,9 @@ export class SetupView extends View {
         email,
         name,
         client: 'cryptup',
-        pubkey: prvs[0].toPublic().armor(),
+        pubkey: PgpKey.serializeToString(await PgpKey.asPublicKey(prvs[0])),
         lastUse: Date.now(),
-        lastSig: await PgpKey.lastSigOpenPGP(prvs[0].toPublic())
+        lastSig: prvs[0].lastModified.getDate()
       }));
     }
     await ContactStore.save(undefined, myOwnEmailAddrsAsContacts);

@@ -98,7 +98,7 @@ View.run(class ContactsView extends View {
       if (errs.length) {
         await Ui.modal.warning(`some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
       }
-      $('#bulk_import .input_pubkey').val(keys.map(key => key.armor()).join('\n\n'));
+      $('#bulk_import .input_pubkey').val(keys.map(key => PgpKey.serializeToString(key)).join('\n\n'));
       $('#bulk_import .action_process').trigger('click');
       $('#file_import').hide();
     } else if (errs.length) {

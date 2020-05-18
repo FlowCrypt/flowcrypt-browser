@@ -52,7 +52,7 @@ View.run(class AddPubkeyView extends View {
           if (errs.length) {
             await Ui.modal.warning(`some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
           }
-          $('.pubkey').val(String(keys[0].armor()));
+          $('.pubkey').val(String(PgpKey.serializeToString(keys[0])));
           $('.action_ok').trigger('click');
         } else if (errs.length) {
           await Ui.modal.error(`error processing public keys:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);

@@ -9,6 +9,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { Pubkey } from '../../../js/common/core/pgp-key.js';
 
 export class SetupImportKeyModule {
 
@@ -46,7 +47,7 @@ export class SetupImportKeyModule {
     }
   }
 
-  public renderCompatibilityFixBlockAndFinalizeSetup = async (origPrv: OpenPGP.key.Key, options: SetupOptions) => {
+  public renderCompatibilityFixBlockAndFinalizeSetup = async (origPrv: Pubkey, options: SetupOptions) => {
     this.view.setupRender.displayBlock('step_3_compatibility_fix');
     let fixedPrv;
     try {

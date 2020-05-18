@@ -72,7 +72,7 @@ export class SetupCreateKeyModule {
     const expireMonths = this.view.orgRules.getEnforcedKeygenExpirationMonths();
     try {
       const key = await PgpKey.create(pgpUids, keyAlgo, options.passphrase, expireMonths);
-      const prv = await PgpKey.readAsOpenPGP(key.private);
+      const prv = await PgpKey.parse(key.private);
       await this.view.saveKeysAndPassPhrase([prv], options);
     } catch (e) {
       Catch.reportErr(e);

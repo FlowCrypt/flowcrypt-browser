@@ -9,7 +9,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposeSendBtnPopoverModule } from './compose-send-btn-popover-module.js';
 import { GeneralMailFormatter } from './formatters/general-mail-formatter.js';
 import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { KeyInfo } from '../../../js/common/core/pgp-key.js';
+import { KeyInfo, Pubkey } from '../../../js/common/core/pgp-key.js';
 import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { SendBtnTexts } from './compose-types.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
@@ -106,7 +106,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       const newMsgData = this.view.inputModule.extractAll();
       await this.view.errModule.throwIfFormValsInvalid(newMsgData);
       const senderKi = await this.view.storageModule.getKey(this.view.senderModule.getSender());
-      let signingPrv: OpenPGP.key.Key | undefined;
+      let signingPrv: Pubkey | undefined;
       if (this.popover.choices.sign) {
         signingPrv = await this.decryptSenderKey(senderKi);
         if (!signingPrv) {
@@ -168,10 +168,10 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     }
   }
 
-  private decryptSenderKey = async (senderKi: KeyInfo): Promise<OpenPGP.key.Key | undefined> => {
-    const prv = await PgpKey.readAsOpenPGP(senderKi.private);
+  private decryptSenderKey = async (senderKi: KeyInfo): Promise<Pubkey | undefined> => {
+    const prv = await PgpKey.parse(senderKi.private);
     const passphrase = await this.view.storageModule.passphraseGet(senderKi);
-    if (typeof passphrase === 'undefined' && !prv.isFullyDecrypted()) {
+    if (typeof passphrase === 'undefined' && !prv.fullyDecrypted) {
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'sign', longids: [senderKi.longid] });
       if ((typeof await this.view.storageModule.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
         return await this.decryptSenderKey(senderKi);
@@ -180,7 +180,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         return undefined;
       }
     } else {
-      if (!prv.isFullyDecrypted()) {
+      if (!prv.fullyDecrypted) {
         await PgpKey.decrypt(prv, passphrase!); // checked !== undefined above
       }
       return prv;

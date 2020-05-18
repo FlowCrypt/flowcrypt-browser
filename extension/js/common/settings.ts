@@ -13,11 +13,10 @@ import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { GoogleAuth } from './api/google-auth.js';
 import { Lang } from './lang.js';
-import { PgpKey } from './core/pgp-key.js';
+import { PgpKey, Pubkey } from './core/pgp-key.js';
 import { PgpPwd } from './core/pgp-password.js';
 import { OrgRules } from './org-rules.js';
 import { Xss } from './platform/xss.js';
-import { opgp } from './core/pgp.js';
 import { storageLocalGetAll } from './api/chrome.js';
 import { AcctStore, SendAsAlias } from './platform/store/acct-store.js';
 import { GlobalStore } from './platform/store/global-store.js';
@@ -153,9 +152,9 @@ export class Settings {
   }
 
   public static renderPrvCompatFixUiAndWaitTilSubmittedByUser = async (
-    acctEmail: string, containerStr: string | JQuery<HTMLElement>, origPrv: OpenPGP.key.Key, passphrase: string, backUrl: string
-  ): Promise<OpenPGP.key.Key> => {
-    const uids = origPrv.users.map(u => u.userId).filter(u => !!u && u.userid && Str.parseEmail(u.userid).email).map(u => u!.userid).filter(Boolean) as string[];
+    acctEmail: string, containerStr: string | JQuery<HTMLElement>, origPrv: Pubkey, passphrase: string, backUrl: string
+  ): Promise<Pubkey> => {
+    const uids = origPrv.identities;
     if (!uids.length) {
       uids.push(acctEmail);
     }
@@ -194,24 +193,24 @@ export class Settings {
         } else {
           $(target).off();
           Xss.sanitizeRender(target, Ui.spinner('white'));
-          const expireSeconds = (expireYears === 'never') ? 0 : Math.floor((Date.now() - origPrv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expireYears));
+          const expireSeconds = (expireYears === 'never') ? 0 : Math.floor((Date.now() - origPrv.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expireYears));
           await PgpKey.decrypt(origPrv, passphrase);
           let reformatted;
           const userIds = uids.map(uid => Str.parseEmail(uid)).map(u => ({ email: u.email, name: u.name || '' }));
           try {
-            reformatted = await opgp.reformatKey({ privateKey: origPrv, passphrase, userIds, keyExpirationTime: expireSeconds }) as { key: OpenPGP.key.Key };
+            reformatted = await PgpKey.reformatKey(origPrv, passphrase, userIds, expireSeconds);
           } catch (e) {
             reject(e);
             return;
           }
-          if (!reformatted.key.isFullyEncrypted()) { // this is a security precaution, in case OpenPGP.js library changes in the future
-            Catch.report(`Key update: Key not fully encrypted after update`, { isFullyEncrypted: reformatted.key.isFullyEncrypted(), isFullyDecrypted: reformatted.key.isFullyDecrypted() });
+          if (!reformatted.fullyEncrypted) { // this is a security precaution, in case OpenPGP.js library changes in the future
+            Catch.report(`Key update: Key not fully encrypted after update`, { isFullyEncrypted: reformatted.fullyEncrypted, isFullyDecrypted: reformatted.fullyDecrypted });
             await Ui.modal.error('Key update:Key not fully encrypted after update. Please contact human@flowcrypt.com');
             Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
             return;
           }
-          if (! await Catch.doesReject(reformatted.key.getEncryptionKey())) {
-            resolve(reformatted.key);
+          if (reformatted.usableForEncryption) {
+            resolve(reformatted);
           } else {
             await Ui.modal.error('Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\nPlease write us at human@flowcrypt.com.');
             Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
