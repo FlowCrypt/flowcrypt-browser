@@ -2,7 +2,6 @@
 import { Pubkey, PgpKey, PrvPacket } from './pgp-key.js';
 import { opgp } from './pgp.js';
 import { Catch } from '../platform/catch.js';
-import { PgpArmor } from './pgp-armor.js';
 import { Str } from './common.js';
 
 const internal = Symbol('internal public key');
@@ -25,12 +24,8 @@ export class OpenPGPKey {
     if (pubkey.type !== 'openpgp') {
       throw new Error('Unsupported key type: ' + pubkey.type);
     }
-    if (pubkey.unparsed.includes(PgpArmor.headers('privateKey').begin)) { // wrongly saving prv instead of pub
-      Catch.report('Wrongly saving prv as contact - converting to pubkey');
-      const key = await PgpKey.readAsOpenPGP(pubkey.unparsed);
-      const publicKey = key.toPublic();
-      pubkey.unparsed = publicKey.armor();
-      (pubkey as any)[internal] = publicKey;
+    if (pubkey.isPrivate) {
+      return await OpenPGPKey.wrap(OpenPGPKey.unwrap(pubkey).toPublic());
     }
     return pubkey;
   }
@@ -62,6 +57,25 @@ export class OpenPGPKey {
       }
     }
     return true;
+  }
+
+  public static encryptKey = async (key: Pubkey, passphrase: string) => {
+    const prv = await OpenPGPKey.unwrap(key);
+    if (!passphrase || passphrase === 'undefined' || passphrase === 'null') {
+      throw new Error(`Encryption passphrase should not be empty:${typeof passphrase}:${passphrase}`);
+    }
+    const secretPackets = prv.getKeys().map(k => k.keyPacket).filter(PgpKey.isPacketPrivate);
+    const encryptedPacketCount = secretPackets.filter(p => !p.isDecrypted()).length;
+    if (!secretPackets.length) {
+      throw new Error(`No private key packets in key to encrypt. Is this a private key?`);
+    }
+    if (encryptedPacketCount) {
+      throw new Error(`Cannot encrypt a key that has ${encryptedPacketCount} of ${secretPackets.length} private packets still encrypted`);
+    }
+    await prv.encrypt(passphrase);
+    if (!prv.isFullyEncrypted()) {
+      throw new Error('Expected key to be fully encrypted after prv.encrypt');
+    }
   }
 
   public static decrypt = async (message: OpenPGP.message.Message, privateKeys: Pubkey[], passwords?: string[]) => {

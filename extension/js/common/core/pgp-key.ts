@@ -159,25 +159,7 @@ export class PgpKey {
   }
 
   public static encrypt = async (key: Pubkey, passphrase: string) => {
-    if (key.type !== 'openpgp') {
-      throw new Error('Unsupported key type: ' + key.type);
-    }
-    const prv = await PgpKey.readAsOpenPGP(key.unparsed);
-    if (!passphrase || passphrase === 'undefined' || passphrase === 'null') {
-      throw new Error(`Encryption passphrase should not be empty:${typeof passphrase}:${passphrase}`);
-    }
-    const secretPackets = prv.getKeys().map(k => k.keyPacket).filter(PgpKey.isPacketPrivate);
-    const encryptedPacketCount = secretPackets.filter(p => !p.isDecrypted()).length;
-    if (!secretPackets.length) {
-      throw new Error(`No private key packets in key to encrypt. Is this a private key?`);
-    }
-    if (encryptedPacketCount) {
-      throw new Error(`Cannot encrypt a key that has ${encryptedPacketCount} of ${secretPackets.length} private packets still encrypted`);
-    }
-    await prv.encrypt(passphrase);
-    if (!prv.isFullyEncrypted()) {
-      throw new Error('Expected key to be fully encrypted after prv.encrypt');
-    }
+    return await OpenPGPKey.encryptKey(key, passphrase);
   }
 
   public static isWithoutSelfCertifications = async (key: Pubkey) => {
