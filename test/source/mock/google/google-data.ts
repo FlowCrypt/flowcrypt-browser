@@ -110,7 +110,7 @@ export class GoogleData {
       if (acctsWithoutMockData.includes(acct)) {
         DATA[acct] = { drafts: [], messages: [], attachments: {}, labels: [] };
       } else {
-        DATA[acct] = JSON.parse(readFileSync(`./test/samples/${acct.replace(/[^a-z0-9]+/g, '')}.json`, { encoding: 'utf-8' })) as AcctDataFile;
+        DATA[acct] = JSON.parse(readFileSync(`./test/samples/${acct.replace(/[^a-z0-9]+/g, '')}.json`, 'utf-8')) as AcctDataFile;
       }
       if (UserMessages[acct]) {
         DATA[acct].drafts = UserMessages[acct].drafts;
