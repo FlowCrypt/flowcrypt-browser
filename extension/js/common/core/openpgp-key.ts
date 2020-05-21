@@ -13,7 +13,7 @@ export class OpenPGPKey {
     if (result.err) {
       throw new Error('Cannot parse OpenPGP key: ' + result.err + ' for: ' + text);
     }
-    return await OpenPGPKey.wrap(result.keys[0], text);
+    return await OpenPGPKey.wrap(result.keys[0], {} as Pubkey, text);
   }
 
   public static isPacketDecrypted = (pubkey: Pubkey, keyid: string) => {
@@ -25,7 +25,7 @@ export class OpenPGPKey {
       throw new Error('Unsupported key type: ' + pubkey.type);
     }
     if (pubkey.isPrivate) {
-      return await OpenPGPKey.wrap(OpenPGPKey.unwrap(pubkey).toPublic());
+      return await OpenPGPKey.wrap(OpenPGPKey.unwrap(pubkey).toPublic(), {} as Pubkey);
     }
     return pubkey;
   }
@@ -56,6 +56,7 @@ export class OpenPGPKey {
         throw e;
       }
     }
+    await OpenPGPKey.wrap(prv, key);
     return true;
   }
 
@@ -76,6 +77,7 @@ export class OpenPGPKey {
     if (!prv.isFullyEncrypted()) {
       throw new Error('Expected key to be fully encrypted after prv.encrypt');
     }
+    await OpenPGPKey.wrap(prv, key);
   }
 
   public static decrypt = async (message: OpenPGP.message.Message, privateKeys: Pubkey[], passwords?: string[]) => {
@@ -85,11 +87,11 @@ export class OpenPGPKey {
   public static reformatKey = async (privateKey: Pubkey, passphrase: string, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
     const origPrv = OpenPGPKey.unwrap(privateKey);
     const keyPair = await opgp.reformatKey({ privateKey: origPrv, passphrase, userIds, keyExpirationTime: expireSeconds });
-    return await OpenPGPKey.wrap(keyPair.key);
+    return await OpenPGPKey.wrap(keyPair.key, {} as Pubkey);
   }
 
   // TODO: should be private, will change when readMany is rewritten
-  public static wrap = async (pubkey: OpenPGP.key.Key, armored?: string): Promise<Pubkey> => {
+  public static wrap = async (pubkey: OpenPGP.key.Key, pkey: Pubkey, armored?: string): Promise<Pubkey> => {
     // tslint:disable-next-line: no-null-keyword
     let exp: null | Date | number = null;
     try {
@@ -125,7 +127,7 @@ export class OpenPGPKey {
     } catch (e) {
       //
     }
-    const pkey: Pubkey = {
+    Object.assign(pkey, {
       type: 'openpgp',
       id: pubkey.getFingerprint().toUpperCase(),
       ids: (await Promise.all(pubkey.getKeyIds().map(({ bytes }) => PgpKey.longid(bytes)))).filter(Boolean) as string[],
@@ -144,8 +146,8 @@ export class OpenPGPKey {
       fullyEncrypted: pubkey.isPublic() ? false /* public keys are never encrypted */ : pubkey.isFullyEncrypted(),
       isPublic: pubkey.isPublic(),
       isPrivate: pubkey.isPrivate(),
-    };
-    pkey.checkPassword = passphrase => PgpKey.decrypt(pkey, passphrase);
+    } as Pubkey);
+    pkey.checkPassword = async passphrase => PgpKey.decrypt(await OpenPGPKey.parse(pkey.unparsed), passphrase);
     (pkey as any)[internal] = pubkey;
     return pkey;
   }

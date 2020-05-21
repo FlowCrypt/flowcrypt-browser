@@ -147,7 +147,7 @@ export class PgpKey {
     } else {
       await pushKeysAndErrs(fileData, false);
     }
-    return { keys: await Promise.all(allKeys.map(key => OpenPGPKey.wrap(key))), errs: allErrs };
+    return { keys: await Promise.all(allKeys.map(key => OpenPGPKey.wrap(key, {} as Pubkey))), errs: allErrs };
   }
 
   public static isPacketPrivate = (p: OpenPGP.packet.AnyKeyPacket): p is PrvPacket => {

@@ -40,7 +40,7 @@ export class KeyStore extends AbstractStore {
     let updated = false;
     const prv = await PgpKey.parse(newKeyArmored);
     if (!prv.fullyEncrypted) {
-      throw new Error('Canot import plain, unprotected key.');
+      throw new Error('Cannot import plain, unprotected key.');
     }
     const newKeyLongid = await PgpKey.longid(await PgpKey.parse(newKeyArmored));
     if (newKeyLongid) {
