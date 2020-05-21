@@ -216,7 +216,7 @@ export class SetupView extends View {
         client: 'cryptup',
         pubkey: PgpKey.serializeToString(await PgpKey.asPublicKey(prvs[0])),
         lastUse: Date.now(),
-        lastSig: prvs[0].lastModified.getDate()
+        lastSig: Number(prvs[0].lastModified)
       }));
     }
     await ContactStore.save(undefined, myOwnEmailAddrsAsContacts);

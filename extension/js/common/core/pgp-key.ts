@@ -15,7 +15,7 @@ export interface Pubkey {
   id: string;
   ids: string[];
   created: Date;
-  lastModified: Date;
+  lastModified: Date | undefined;
   expiration: Date | undefined;
   unparsed: string;
   usableForEncryption: boolean;
@@ -155,35 +155,7 @@ export class PgpKey {
   }
 
   public static decrypt = async (key: Pubkey, passphrase: string, optionalKeyid?: string, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
-    if (key.type !== 'openpgp') {
-      throw new Error('Unsupported key type: ' + key.type);
-    }
-    const prv = await PgpKey.readAsOpenPGP(key.unparsed);
-    if (!prv.isPrivate()) {
-      throw new Error("Nothing to decrypt in a public key");
-    }
-    const chosenPrvPackets = prv.getKeys(optionalKeyid ? { bytes: optionalKeyid } : undefined).map(k => k.keyPacket).filter(PgpKey.isPacketPrivate) as PrvPacket[];
-    if (!chosenPrvPackets.length) {
-      throw new Error(`No private key packets selected of ${prv.getKeys().map(k => k.keyPacket).filter(PgpKey.isPacketPrivate).length} prv packets available`);
-    }
-    for (const prvPacket of chosenPrvPackets) {
-      if (prvPacket.isDecrypted()) {
-        if (optionalBehaviorFlag === 'OK-IF-ALREADY-DECRYPTED') {
-          continue;
-        } else {
-          throw new Error("Decryption failed - key packet was already decrypted");
-        }
-      }
-      try {
-        await prvPacket.decrypt(passphrase); // throws on password mismatch
-      } catch (e) {
-        if (e instanceof Error && e.message.toLowerCase().includes('incorrect key passphrase')) {
-          return false;
-        }
-        throw e;
-      }
-    }
-    return true;
+    return await OpenPGPKey.decryptKey(key, passphrase, optionalKeyid, optionalBehaviorFlag);
   }
 
   public static encrypt = async (key: Pubkey, passphrase: string) => {

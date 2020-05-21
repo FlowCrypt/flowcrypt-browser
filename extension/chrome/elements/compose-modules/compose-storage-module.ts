@@ -161,7 +161,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         return;
       }
       if (!contact.pubkey_last_sig) {
-        const lastSig = +contact.pubkey.lastModified;
+        const lastSig = Number(contact.pubkey.lastModified);
         contact.pubkey_last_sig = lastSig;
         await ContactStore.update(undefined, contact.email, { pubkey_last_sig: lastSig });
       }

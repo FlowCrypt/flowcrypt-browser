@@ -1,5 +1,5 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
-import { Pubkey, PgpKey } from './pgp-key.js';
+import { Pubkey, PgpKey, PrvPacket } from './pgp-key.js';
 import { opgp } from './pgp.js';
 import { Catch } from '../platform/catch.js';
 import { PgpArmor } from './pgp-armor.js';
@@ -28,9 +28,40 @@ export class OpenPGPKey {
     if (pubkey.unparsed.includes(PgpArmor.headers('privateKey').begin)) { // wrongly saving prv instead of pub
       Catch.report('Wrongly saving prv as contact - converting to pubkey');
       const key = await PgpKey.readAsOpenPGP(pubkey.unparsed);
-      pubkey.unparsed = key.toPublic().armor();
+      const publicKey = key.toPublic();
+      pubkey.unparsed = publicKey.armor();
+      (pubkey as any)[internal] = publicKey;
     }
     return pubkey;
+  }
+
+  public static decryptKey = async (key: Pubkey, passphrase: string, optionalKeyid?: string, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
+    const prv = OpenPGPKey.unwrap(key);
+    if (!prv.isPrivate()) {
+      throw new Error("Nothing to decrypt in a public key");
+    }
+    const chosenPrvPackets = prv.getKeys(optionalKeyid ? { bytes: optionalKeyid } : undefined).map(k => k.keyPacket).filter(PgpKey.isPacketPrivate) as PrvPacket[];
+    if (!chosenPrvPackets.length) {
+      throw new Error(`No private key packets selected of ${prv.getKeys().map(k => k.keyPacket).filter(PgpKey.isPacketPrivate).length} prv packets available`);
+    }
+    for (const prvPacket of chosenPrvPackets) {
+      if (prvPacket.isDecrypted()) {
+        if (optionalBehaviorFlag === 'OK-IF-ALREADY-DECRYPTED') {
+          continue;
+        } else {
+          throw new Error("Decryption failed - key packet was already decrypted");
+        }
+      }
+      try {
+        await prvPacket.decrypt(passphrase); // throws on password mismatch
+      } catch (e) {
+        if (e instanceof Error && e.message.toLowerCase().includes('incorrect key passphrase')) {
+          return false;
+        }
+        throw e;
+      }
+    }
+    return true;
   }
 
   public static decrypt = async (message: OpenPGP.message.Message, privateKeys: Pubkey[], passwords?: string[]) => {
@@ -45,7 +76,13 @@ export class OpenPGPKey {
 
   // TODO: should be private, will change when readMany is rewritten
   public static wrap = async (pubkey: OpenPGP.key.Key, armored?: string): Promise<Pubkey> => {
-    const exp = await pubkey.getExpirationTime('encrypt');
+    // tslint:disable-next-line: no-null-keyword
+    let exp: null | Date | number = null;
+    try {
+      exp = await pubkey.getExpirationTime('encrypt');
+    } catch (e) {
+      //
+    }
     const expired = () => {
       if (exp === Infinity || !exp) {
         return false;
@@ -68,6 +105,12 @@ export class OpenPGPKey {
       .map((userId: OpenPGP.packet.Userid) => opgp.util.parseUserId(userId.userid).email || '')
       .filter(email => email)
       .map(email => email.toLowerCase());
+    let lastModified: undefined | Date;
+    try {
+      lastModified = new Date(await PgpKey.lastSigOpenPGP(pubkey));
+    } catch (e) {
+      //
+    }
     const pkey: Pubkey = {
       type: 'openpgp',
       id: pubkey.getFingerprint().toUpperCase(),
@@ -79,12 +122,12 @@ export class OpenPGPKey {
       emails,
       // tslint:disable-next-line: no-unsafe-any
       identities: pubkey.users.map(u => u.userId).filter(u => !!u && u.userid && Str.parseEmail(u.userid).email).map(u => u!.userid).filter(Boolean) as string[],
-      lastModified: new Date(await PgpKey.lastSigOpenPGP(pubkey)),
+      lastModified,
       expiration: exp instanceof Date ? exp : undefined,
       created: pubkey.getCreationTime(),
       checkPassword: _text => Promise.resolve(false),
-      fullyDecrypted: pubkey.isFullyDecrypted(),
-      fullyEncrypted: pubkey.isFullyEncrypted(),
+      fullyDecrypted: pubkey.isPublic() ? true /* public keys are always decrypted */ : pubkey.isFullyDecrypted(),
+      fullyEncrypted: pubkey.isPublic() ? false /* public keys are never encrypted */ : pubkey.isFullyEncrypted(),
       isPublic: pubkey.isPublic(),
       isPrivate: pubkey.isPrivate(),
     };
