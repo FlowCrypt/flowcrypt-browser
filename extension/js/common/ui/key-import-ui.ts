@@ -284,7 +284,7 @@ export class KeyImportUi {
 
   private checkEncryptionPrvIfSelected = async (k: Pubkey, encrypted: Pubkey) => {
     if (this.checkEncryption && !k.usableForEncryption) {
-      if (PgpKey.isWithoutSelfCertifications(k)) {
+      if (await PgpKey.isWithoutSelfCertifications(k)) {
         throw new KeyCanBeFixed(encrypted);
       } else if (k.usableButExpired) {
         // Currently have 2 options: import or skip. Would be better to give user 3 choices:

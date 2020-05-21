@@ -86,7 +86,7 @@ View.run(class MyKeyUpdateView extends View {
         return;
       }
       // cannot get a valid encryption key packet
-      if (PgpKey.isWithoutSelfCertifications(updatedKey) || updatedKey.usableButExpired) { // known issues - key can be fixed
+      if (await PgpKey.isWithoutSelfCertifications(updatedKey) || updatedKey.usableButExpired) { // known issues - key can be fixed
         const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
           this.acctEmail, '.compatibility_fix_container', updatedKeyEncrypted, uddatedKeyPassphrase, this.showKeyUrl
         );
