@@ -118,7 +118,14 @@ export class OpenPGPKey {
     const emails = pubkey.users
       .map(user => user.userId)
       .filter(userId => userId !== null)
-      .map((userId: OpenPGP.packet.Userid) => opgp.util.parseUserId(userId.userid).email || '')
+      .map((userId: OpenPGP.packet.Userid) => {
+        try {
+          return opgp.util.parseUserId(userId.userid).email || '';
+        } catch (e) {
+          // ignore bad user IDs
+        }
+        return '';
+      })
       .filter(email => email)
       .map(email => email.toLowerCase());
     let lastModified: undefined | Date;
