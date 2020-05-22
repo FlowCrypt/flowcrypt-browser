@@ -92,12 +92,12 @@ export class OpenPGPKey {
 
   // TODO: should be private, will change when readMany is rewritten
   public static wrap = async (pubkey: OpenPGP.key.Key, pkey: Pubkey, armored?: string): Promise<Pubkey> => {
-    // tslint:disable-next-line: no-null-keyword
-    let exp: null | Date | number = null;
+    let exp: null | Date | number;
     try {
       exp = await pubkey.getExpirationTime('encrypt');
     } catch (e) {
-      //
+      // tslint:disable-next-line: no-null-keyword
+      exp = null;
     }
     const expired = () => {
       if (exp === Infinity || !exp) {
@@ -108,13 +108,6 @@ export class OpenPGPKey {
       }
       throw new Error(`Got unexpected value for expiration: ${exp}`);
     };
-    const usableButExpired = await OpenPGPKey.usableButExpired(pubkey, exp, expired);
-    let usableForEncryption = false;
-    if (! await Catch.doesReject(pubkey.getEncryptionKey())) {
-      usableForEncryption = true; // good key - cannot be expired
-    } else {
-      usableForEncryption = false;
-    }
     const emails = pubkey.users
       .map(user => user.userId)
       .filter(userId => userId !== null)
@@ -139,8 +132,8 @@ export class OpenPGPKey {
       id: pubkey.getFingerprint().toUpperCase(),
       ids: (await Promise.all(pubkey.getKeyIds().map(({ bytes }) => PgpKey.longid(bytes)))).filter(Boolean) as string[],
       unparsed: armored || pubkey.armor(),
-      usableForEncryption,
-      usableButExpired,
+      usableForEncryption: ! await Catch.doesReject(pubkey.getEncryptionKey()),
+      usableButExpired: await OpenPGPKey.usableButExpired(pubkey, exp, expired),
       usableForSigning: await Catch.doesReject(pubkey.getSigningKey()),
       emails,
       // tslint:disable-next-line: no-unsafe-any
