@@ -36,7 +36,7 @@ blocks:
 
       prologue:
         commands:
-          - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts" && sudo sh -c "echo '127.0.0.1 google.mock.flowcrypt.com' >> /etc/hosts"
+          - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts" && sudo sh -c "echo '127.0.0.1 google.mock.flowcryptlocal.com' >> /etc/hosts"
           - cache restore sources-$SEMAPHORE_PIPELINE_ID
           - cd ~/git/flowcrypt-browser
           - cache restore node-modules-$SEMAPHORE_GIT_BRANCH-$(cat package.json.sum)
@@ -45,6 +45,8 @@ blocks:
 
         - name: code quality
           commands:
+            - nvm install 10.19.0
+            - nvm alias default 10.19.0
             - npm run-script test_tslint
             - npm run-script test_eslint
             - npm run-script test_stylelint
