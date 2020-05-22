@@ -113,7 +113,7 @@ export class OpenPGPKey {
     if (! await Catch.doesReject(pubkey.getEncryptionKey())) {
       usableForEncryption = true; // good key - cannot be expired
     } else {
-      usableForEncryption = usableButExpired;
+      usableForEncryption = false;
     }
     const emails = pubkey.users
       .map(user => user.userId)

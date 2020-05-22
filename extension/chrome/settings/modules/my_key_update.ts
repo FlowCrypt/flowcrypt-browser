@@ -81,7 +81,7 @@ View.run(class MyKeyUpdateView extends View {
     } else if (await PgpKey.decrypt(updatedKey, uddatedKeyPassphrase) !== true) {
       await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
     } else {
-      if (updatedKeyEncrypted.usableForEncryption) {
+      if (updatedKey.usableForEncryption) {
         await this.storeUpdatedKeyAndPassphrase(updatedKeyEncrypted, uddatedKeyPassphrase);
         return;
       }
