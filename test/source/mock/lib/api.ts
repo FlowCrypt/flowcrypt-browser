@@ -39,8 +39,8 @@ export class Api<REQ, RES> {
   constructor(apiName: string, protected handlers: Handlers<REQ, RES>, protected urlPrefix = '') {
     this.apiName = apiName;
     const options = {
-      key: fs.readFileSync(`${homedir()}/git/flowcrypt-browser/test/mock_cert/key.pem`),
-      cert: fs.readFileSync(`${homedir()}/git/flowcrypt-browser/test/mock_cert/cert.pem`)
+      key: fs.readFileSync(`${homedir()}/git/flowcrypt-browser/test/mock_cert/key.pem.mock`),
+      cert: fs.readFileSync(`${homedir()}/git/flowcrypt-browser/test/mock_cert/cert.pem.mock`)
     };
     this.server = https.createServer(options, (request, response) => {
       this.handleReq(request, response).then(data => this.throttledResponse(response, data)).then(() => {
