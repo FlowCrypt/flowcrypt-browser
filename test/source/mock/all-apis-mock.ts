@@ -2,8 +2,6 @@
 
 'use strict';
 
-import * as http from 'http';
-
 import { Api, Handlers } from './lib/api';
 
 import { mockAttesterEndpoints } from './attester/attester-endpoints';
@@ -16,7 +14,7 @@ export type HandlersDefinition = Handlers<{ query: { [k: string]: string; }; bod
 export const startAllApisMock = async (logger: (line: string) => void) => {
   class LoggedApi<REQ, RES> extends Api<REQ, RES> {
     protected throttleChunkMs = 50;
-    protected log = (req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => {
+    protected log = (req: any, res: any, errRes?: Buffer) => {
       if (req.url !== '/favicon.ico') {
         logger(`${res.statusCode} ${req.method} ${req.url} | ${errRes ? errRes : ''}`);
       }
