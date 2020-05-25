@@ -38,7 +38,7 @@ export class Api<REQ, RES> {
 
   constructor(apiName: string, protected handlers: Handlers<REQ, RES>, protected urlPrefix = '') {
     this.apiName = apiName;
-    let options = {
+    const options = {
       key: fs.readFileSync(`${homedir()}/git/flowcrypt-browser/test/mock_cert/key.pem`),
       cert: fs.readFileSync(`${homedir()}/git/flowcrypt-browser/test/mock_cert/cert.pem`)
     };
