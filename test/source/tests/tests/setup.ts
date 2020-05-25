@@ -58,7 +58,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.todo('setup - import key - naked - do not supply pass phrase gets error');
 
-    ava.default.only('setup - import key - fix key self signatures', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('setup - import key - fix key self signatures', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
       await SetupPageRecipe.manualEnter(settingsPage, 'missing.self.signatures', { submitPubkey: false, fixKey: true });
     }));
