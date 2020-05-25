@@ -82,7 +82,7 @@ export class BackendData {
         "PASS_PHRASE_QUIET_AUTOGEN",
         "DEFAULT_REMEMBER_PASS_PHRASE",
       ],
-      "key_manager_url": "http://localhost:8001/flowcrypt-email-key-manager",
+      "key_manager_url": "https://localhost:8001/flowcrypt-email-key-manager",
       "enforce_keygen_algo": "rsa2048",
       "disallow_attester_search_for_domains": []
     };

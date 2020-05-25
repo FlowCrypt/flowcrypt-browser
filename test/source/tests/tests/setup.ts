@@ -227,7 +227,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await SetupPageRecipe.autoKeygen(settingsPage, {
         expectErr: {
           title: 'Server responded with an unexpected error.',
-          text: '500 when GET-ing http://localhost:8001/flowcrypt-email-key-manager/keys/private (no body): -> Intentional error for get.error to test client behavior',
+          text: '500 when GET-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private (no body): -> Intentional error for get.error to test client behavior',
         }
       });
     }));
@@ -241,7 +241,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await settingsPage.click('@action-show-overlay-details');
       await settingsPage.waitAll('@container-overlay-details');
       await Util.sleep(0.5);
-      expect(await settingsPage.read('@container-overlay-details')).to.contain('500 when PUT-ing http://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedPrivateKey,publicKey,fingerprint -> Intentional error for put.error user to test client behavior');
+      expect(await settingsPage.read('@container-overlay-details')).to.contain('500 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedPrivateKey,publicKey,fingerprint -> Intentional error for put.error user to test client behavior');
     }));
 
     ava.default('fail@key-manager-server-offline.flowcrypt.com - shows friendly KM not reachable error', testWithBrowser(undefined, async (t, browser) => {
