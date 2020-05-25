@@ -33,6 +33,7 @@ export class BrowserPool {
       '--no-sandbox', // make it work in travis-ci
       '--disable-setuid-sandbox',
       '--disable-features=site-per-process',
+      '--ignore-certificate-errors',
       `--disable-extensions-except=${this.extensionBuildDir}`,
       `--load-extension=${this.extensionBuildDir}`,
       `--window-size=${this.width + 10},${this.height + 132}`,
@@ -40,7 +41,7 @@ export class BrowserPool {
     if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
       args.push(`--proxy-server=${Config.secrets.proxy.server}`);
     }
-    const browser = await launch({ args, headless: false, slowMo: isMock ? undefined : 60, devtools: false });
+    const browser = await launch({ args, ignoreHTTPSErrors: true, headless: false, slowMo: isMock ? undefined : 60, devtools: false });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {
       try {
