@@ -6,6 +6,7 @@ import { SelCache, Ui } from '../../../js/common/browser/ui.js';
 import { Url, UrlParams } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
+import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Gmail } from '../../../js/common/api/email-provider/gmail/gmail.js';
@@ -91,7 +92,7 @@ export class InboxView extends View {
     // BrowserMsg.addPgpListeners(); // todo - re-allow when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
     BrowserMsg.listen(this.tabId);
     Catch.setHandledInterval(this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded, 30000);
-    $('.action_open_settings').click(this.setHandler(self => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail })));
+    $('.action_open_settings').click(this.setHandler(async () => await Browser.openSettingsPage('index.htm', this.acctEmail)));
     $(".action-toggle-accounts-menu").click(this.setHandler((target, event) => {
       event.stopPropagation();
       $("#alt-accounts").toggleClass("active");

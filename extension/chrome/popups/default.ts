@@ -2,6 +2,7 @@
 
 'use strict';
 
+import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Ui } from '../../js/common/browser/ui.js';
@@ -50,7 +51,7 @@ View.run(class DefaultPopupView extends View {
   }
 
   private redirectToInitSetup = async (acctEmail?: string) => {
-    BrowserMsg.send.bg.settings({ acctEmail: acctEmail || undefined });
+    await Browser.openSettingsPage('index.htm', acctEmail || undefined);
     await Ui.time.sleep(100);
     window.close();
   }
@@ -66,7 +67,7 @@ View.run(class DefaultPopupView extends View {
     }));
     $('.action_open_encrypted_inbox').click(this.setHandler(async () => {
       if (activeAcctEmail) {
-        BrowserMsg.send.bg.inbox({ acctEmail: activeAcctEmail });
+        await Browser.openSettingsPage('inbox/inbox.htm', activeAcctEmail);
         await Ui.time.sleep(100);
         window.close();
       } else {

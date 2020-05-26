@@ -55,7 +55,6 @@ export namespace Bm {
   export type StoreGlobalSet = { values: GlobalStoreDict; };
   export type StoreAcctGet = { acctEmail: string, keys: AccountIndex[]; };
   export type StoreAcctSet = { acctEmail: string, values: AcctStoreDict; };
-  export type Inbox = { acctEmail?: string };
   export type ReconnectAcctAuthPopup = { acctEmail: string, scopes?: string[] };
   export type PgpKeyDetails = { pubkey: string };
   export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
@@ -123,7 +122,6 @@ export class BrowserMsg {
     bg: {
       settings: (bm: Bm.Settings) => BrowserMsg.sendCatch(undefined, 'settings', bm),
       updateUninstallUrl: () => BrowserMsg.sendCatch(undefined, 'update_uninstall_url', {}),
-      inbox: (bm: Bm.Inbox) => BrowserMsg.sendCatch(undefined, 'inbox', bm),
       await: {
         reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) => BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm, true) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
         getActiveTabInfo: () => BrowserMsg.sendAwait(undefined, 'get_active_tab_info', undefined, true) as Promise<Bm.Res.GetActiveTabInfo>,
