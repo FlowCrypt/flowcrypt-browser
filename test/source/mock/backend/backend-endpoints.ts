@@ -7,12 +7,13 @@ import { HttpAuthErr, HttpClientErr } from '../lib/api';
 import { BackendData } from './backend-data';
 import { Dict } from '../../core/common';
 import { HandlersDefinition } from '../all-apis-mock';
+import { IncomingMessage } from 'http';
 import { isPost } from '../lib/mock-util';
 import { oauth } from '../lib/oauth';
 
 export const mockBackendData = new BackendData(oauth);
 
-const fwdToRealBackend = async (parsed: any, req: any): Promise<string> => {
+const fwdToRealBackend = async (parsed: any, req: IncomingMessage): Promise<string> => {
   // we are forwarding this request to backend, but we are not properly authenticated with real backend
   // better remove authentication: requests that we currently forward during tests don't actually require it
   delete req.headers.host;
@@ -83,7 +84,7 @@ export const mockBackendEndpoints: HandlersDefinition = {
   '/api/link/me': fwdToRealBackend,
 };
 
-const throwIfNotPostWithAuth = (body: unknown, req: any) => {
+const throwIfNotPostWithAuth = (body: unknown, req: IncomingMessage) => {
   const parsed = body as Dict<any>;
   if (!isPost(req)) {
     throw new HttpClientErr('Backend mock calls must use POST method');
