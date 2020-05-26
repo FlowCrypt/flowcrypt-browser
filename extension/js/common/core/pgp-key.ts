@@ -155,10 +155,12 @@ export class PgpKey {
   }
 
   public static decrypt = async (key: Pubkey, passphrase: string, optionalKeyid?: string, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
+    // TODO: Delegate to appropriate key type
     return await OpenPGPKey.decryptKey(key, passphrase, optionalKeyid, optionalBehaviorFlag);
   }
 
   public static encrypt = async (key: Pubkey, passphrase: string) => {
+    // TODO: Delegate to appropriate key type
     return await OpenPGPKey.encryptKey(key, passphrase);
   }
 
@@ -222,10 +224,12 @@ export class PgpKey {
   }
 
   public static reformatKey = async (privateKey: Pubkey, passphrase: string, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
+    // TODO: Delegate to appropriate key type
     return await OpenPGPKey.reformatKey(privateKey, passphrase, userIds, expireSeconds);
   }
 
   public static isPacketDecrypted = (pubkey: Pubkey, keyId: string) => {
+    // TODO: Delegate to appropriate key type
     return OpenPGPKey.isPacketDecrypted(pubkey, keyId);
   }
 
@@ -234,6 +238,7 @@ export class PgpKey {
   }
 
   public static asPublicKey = async (pubkey: Pubkey): Promise<Pubkey> => {
+    // TODO: Delegate to appropriate key type
     if (pubkey.type === 'openpgp') {
       return await OpenPGPKey.asPublicKey(pubkey);
     }
@@ -355,21 +360,8 @@ export class PgpKey {
   }
 
   public static revoke = async (key: Pubkey): Promise<string | undefined> => {
-    if (key.type !== 'openpgp') {
-      throw new Error('Unsupported key type: ' + key.type);
-    }
-    let prv = await PgpKey.readAsOpenPGP(key.unparsed);
-    if (! await prv.isRevoked()) {
-      prv = await prv.revoke({});
-    }
-    const certificate = await prv.getRevocationCertificate();
-    if (!certificate) {
-      return undefined;
-    } else if (typeof certificate === 'string') {
-      return certificate;
-    } else {
-      return await opgp.stream.readToEnd(certificate);
-    }
+    // TODO: Delegate to appropriate key type
+    return await OpenPGPKey.revoke(key);
   }
 
   public static getKeyType = (pubkey: string): 'openpgp' | 'x509' | 'unknown' => {

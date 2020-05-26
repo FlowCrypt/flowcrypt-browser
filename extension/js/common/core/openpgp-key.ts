@@ -159,6 +159,21 @@ export class OpenPGPKey {
     return ((pubkey as any)[internal] as OpenPGP.key.Key);
   }
 
+  public static revoke = async (key: Pubkey): Promise<string | undefined> => {
+    let prv = OpenPGPKey.unwrap(key);
+    if (! await prv.isRevoked()) {
+      prv = await prv.revoke({});
+    }
+    const certificate = await prv.getRevocationCertificate();
+    if (!certificate) {
+      return undefined;
+    } else if (typeof certificate === 'string') {
+      return certificate;
+    } else {
+      return await opgp.stream.readToEnd(certificate);
+    }
+  }
+
   private static usableButExpired = async (key: OpenPGP.key.Key, exp: Date | number | null, expired: () => boolean): Promise<boolean> => {
     if (!key) {
       return false;
