@@ -7,7 +7,6 @@ import { Value } from './common.js';
 import { Buf } from './buf.js';
 import { Catch } from '../platform/catch.js';
 import { PgpArmor, PreparedForDecrypt } from './pgp-armor.js';
-import { PgpHash } from './pgp-hash.js';
 import { opgp } from './pgp.js';
 import { KeyCache } from '../platform/key-cache.js';
 import { ContactStore } from '../platform/store/contact-store.js';
@@ -223,36 +222,7 @@ export class PgpMsg {
     if (keyTypes.has('x509')) {
       return smimeEncrypt(pubkeys, data);
     }
-    // todo - move above lines to an abstract method
-    const message = opgp.message.fromBinary(data, filename, date);
-    const options: OpenPGP.EncryptOptions = { armor, message, date };
-    let usedChallenge = false;
-    if (pubkeys) {
-      options.publicKeys = [];
-      for (const armoredPubkey of pubkeys) {
-        const { keys: publicKeys } = await opgp.key.readArmored(PgpKey.serializeToString(armoredPubkey));
-        options.publicKeys.push(...publicKeys);
-      }
-    }
-    if (pwd) {
-      options.passwords = [await PgpHash.challengeAnswer(pwd)];
-      usedChallenge = true;
-    }
-    if (!pubkeys && !usedChallenge) {
-      throw new Error('no-pubkeys-no-challenge');
-    }
-    if (signingPrv) {
-      const openPgpPrv = await PgpKey.readAsOpenPGP(signingPrv?.unparsed);
-      if (typeof openPgpPrv.isPrivate !== 'undefined' && openPgpPrv.isPrivate()) { // tslint:disable-line:no-unbound-method - only testing if exists
-        options.privateKeys = [openPgpPrv];
-      }
-    }
-    const result = await opgp.encrypt(options);
-    if (typeof result.data === 'string') {
-      return { data: Buf.fromUtfStr(result.data), signature: result.signature, type: 'openpgp' };
-    } else {
-      return result as unknown as OpenPGP.EncryptBinaryResult;
-    }
+    return await OpenPGPKey.encrypt({ pubkeys, signingPrv, pwd, data, filename, armor, date });
   }
 
   public static diagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = async ({ privateKis, message }) => {

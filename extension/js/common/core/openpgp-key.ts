@@ -3,6 +3,9 @@ import { Pubkey, PgpKey, PrvPacket } from './pgp-key.js';
 import { opgp } from './pgp.js';
 import { Catch } from '../platform/catch.js';
 import { Str } from './common.js';
+import { PgpHash } from './pgp-hash.js';
+import { Buf } from './buf.js';
+import { PgpMsgMethod } from './pgp-msg.js';
 
 const internal = Symbol('internal public key');
 
@@ -82,6 +85,37 @@ export class OpenPGPKey {
 
   public static decrypt = async (message: OpenPGP.message.Message, privateKeys: Pubkey[], passwords?: string[]) => {
     return await message.decrypt(privateKeys.map(key => OpenPGPKey.unwrap(key)), passwords, undefined, false);
+  }
+
+  public static encrypt: PgpMsgMethod.Encrypt = async ({ pubkeys, signingPrv, pwd, data, filename, armor, date }) => {
+    const message = opgp.message.fromBinary(data, filename, date);
+    const options: OpenPGP.EncryptOptions = { armor, message, date };
+    let usedChallenge = false;
+    if (pubkeys) {
+      options.publicKeys = [];
+      for (const pubkey of pubkeys) {
+        options.publicKeys.push(OpenPGPKey.unwrap(pubkey));
+      }
+    }
+    if (pwd) {
+      options.passwords = [await PgpHash.challengeAnswer(pwd)];
+      usedChallenge = true;
+    }
+    if (!pubkeys && !usedChallenge) {
+      throw new Error('no-pubkeys-no-challenge');
+    }
+    if (signingPrv) {
+      const openPgpPrv = OpenPGPKey.unwrap(signingPrv);
+      if (typeof openPgpPrv.isPrivate !== 'undefined' && openPgpPrv.isPrivate()) { // tslint:disable-line:no-unbound-method - only testing if exists
+        options.privateKeys = [openPgpPrv];
+      }
+    }
+    const result = await opgp.encrypt(options);
+    if (typeof result.data === 'string') {
+      return { data: Buf.fromUtfStr(result.data), signature: result.signature, type: 'openpgp' };
+    } else {
+      return result as unknown as OpenPGP.EncryptBinaryResult;
+    }
   }
 
   public static reformatKey = async (privateKey: Pubkey, passphrase: string, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
