@@ -165,11 +165,8 @@ export class PgpKey {
   }
 
   public static isWithoutSelfCertifications = async (key: Pubkey) => {
-    if (key.type !== 'openpgp') {
-      throw new Error('Unsupported key type: ' + key.type);
-    }
-    const k = await PgpKey.readAsOpenPGP(key.unparsed);
-    return await Catch.doesReject(k.verifyPrimaryKey(), ['No self-certifications']);
+    // TODO: Delegate to appropriate key type
+    return await OpenPGPKey.isWithoutSelfCertifications(key);
   }
 
   public static normalize = async (armored: string): Promise<{ normalized: string, keys: OpenPGP.key.Key[] }> => {

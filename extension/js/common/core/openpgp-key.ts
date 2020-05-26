@@ -118,6 +118,11 @@ export class OpenPGPKey {
     }
   }
 
+  public static isWithoutSelfCertifications = async (key: Pubkey) => {
+    const k = OpenPGPKey.unwrap(key);
+    return await Catch.doesReject(k.verifyPrimaryKey(), ['No self-certifications']);
+  }
+
   public static reformatKey = async (privateKey: Pubkey, passphrase: string, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
     const origPrv = OpenPGPKey.unwrap(privateKey);
     const keyPair = await opgp.reformatKey({ privateKey: origPrv, passphrase, userIds, keyExpirationTime: expireSeconds });
