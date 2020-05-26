@@ -228,14 +228,14 @@ export class PgpMsg {
   public static diagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = async ({ privateKis, message }) => {
     const m = await opgp.message.readArmored(Buf.fromUint8(message).toUtfStr());
     const msgKeyIds = m.getEncryptionKeyIds ? m.getEncryptionKeyIds() : [];
-    const localKeyIds: OpenPGP.Keyid[] = [];
-    for (const k of await Promise.all(privateKis.map(ki => PgpKey.readAsOpenPGP(ki.public)))) {
-      localKeyIds.push(...k.getKeyIds());
+    const localKeyIds: string[] = [];
+    for (const k of await Promise.all(privateKis.map(ki => PgpKey.parse(ki.public)))) {
+      localKeyIds.push(...k.ids);
     }
     const diagnosis = { found_match: false, receivers: msgKeyIds.length };
     for (const msgKeyId of msgKeyIds) {
       for (const localKeyId of localKeyIds) {
-        if (msgKeyId.bytes === localKeyId.bytes) {
+        if (msgKeyId.bytes === localKeyId) {
           diagnosis.found_match = true;
           return diagnosis;
         }
