@@ -64,7 +64,7 @@ export class OpenPGPKey {
   }
 
   public static encryptKey = async (key: Pubkey, passphrase: string) => {
-    const prv = await OpenPGPKey.unwrap(key);
+    const prv = OpenPGPKey.unwrap(key);
     if (!passphrase || passphrase === 'undefined' || passphrase === 'null') {
       throw new Error(`Encryption passphrase should not be empty:${typeof passphrase}:${passphrase}`);
     }
@@ -94,7 +94,11 @@ export class OpenPGPKey {
     if (pubkeys) {
       options.publicKeys = [];
       for (const pubkey of pubkeys) {
-        options.publicKeys.push(OpenPGPKey.unwrap(pubkey));
+        const { keys: publicKeys } = await opgp.key.readArmored(PgpKey.serializeToString(pubkey));
+        options.publicKeys.push(...publicKeys);
+        // TODO: Investigate why unwrapping doesn't work - probably the object
+        // came from the background page so it wasn't properly deserialized
+        // options.publicKeys.push(OpenPGPKey.unwrap(pubkey));
       }
     }
     if (pwd) {
