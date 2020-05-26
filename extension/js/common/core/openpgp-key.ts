@@ -152,13 +152,6 @@ export class OpenPGPKey {
     return pkey;
   }
 
-  private static unwrap = (pubkey: Pubkey) => {
-    if (pubkey.type !== 'openpgp') {
-      throw new Error('Unsupported key type: ' + pubkey.type);
-    }
-    return ((pubkey as any)[internal] as OpenPGP.key.Key);
-  }
-
   /**
    * Returns signed data if detached=false, armored
    * Returns signature if detached=true, armored
@@ -189,6 +182,13 @@ export class OpenPGPKey {
     } else {
       return await opgp.stream.readToEnd(certificate);
     }
+  }
+
+  private static unwrap = (pubkey: Pubkey) => {
+    if (pubkey.type !== 'openpgp') {
+      throw new Error('Unsupported key type: ' + pubkey.type);
+    }
+    return ((pubkey as any)[internal] as OpenPGP.key.Key);
   }
 
   private static usableButExpired = async (key: OpenPGP.key.Key, exp: Date | number | null, expired: () => boolean): Promise<boolean> => {
