@@ -159,6 +159,23 @@ export class OpenPGPKey {
     return ((pubkey as any)[internal] as OpenPGP.key.Key);
   }
 
+  /**
+   * Returns signed data if detached=false, armored
+   * Returns signature if detached=true, armored
+   */
+  public static sign = async (signingPrivate: Pubkey, data: string, detached = false): Promise<string> => {
+    const signingPrv = OpenPGPKey.unwrap(signingPrivate);
+    const message = opgp.cleartext.fromText(data);
+    const signRes = await opgp.sign({ message, armor: true, privateKeys: [signingPrv], detached });
+    if (detached) {
+      if (typeof signRes.signature !== 'string') {
+        throw new Error('signRes.signature unexpectedly not a string when creating detached signature');
+      }
+      return signRes.signature;
+    }
+    return await opgp.stream.readToEnd((signRes as OpenPGP.SignArmorResult).data);
+  }
+
   public static revoke = async (key: Pubkey): Promise<string | undefined> => {
     let prv = OpenPGPKey.unwrap(key);
     if (! await prv.isRevoked()) {

@@ -129,19 +129,8 @@ export class PgpMsg {
    * Returns signature if detached=true, armored
    */
   public static sign = async (signingPrivate: Pubkey, data: string, detached = false): Promise<string> => {
-    if (signingPrivate.type !== 'openpgp') {
-      throw new Error('Unsupported key type: ' + signingPrivate);
-    }
-    const signingPrv = await PgpKey.readAsOpenPGP(signingPrivate.unparsed);
-    const message = opgp.cleartext.fromText(data);
-    const signRes = await opgp.sign({ message, armor: true, privateKeys: [signingPrv], detached });
-    if (detached) {
-      if (typeof signRes.signature !== 'string') {
-        throw new Error('signRes.signature unexpectedly not a string when creating detached signature');
-      }
-      return signRes.signature;
-    }
-    return await opgp.stream.readToEnd((signRes as OpenPGP.SignArmorResult).data);
+    // TODO: Delegate to appropriate key type
+    return await OpenPGPKey.sign(signingPrivate, data, detached);
   }
 
   public static verify = async (msgOrVerResults: OpenpgpMsgOrCleartext | OpenPGP.message.Verification[], pubs: OpenPGP.key.Key[], contact?: Contact): Promise<VerifyRes> => {
