@@ -16,7 +16,7 @@ export class OpenPGPKey {
     if (result.err) {
       throw new Error('Cannot parse OpenPGP key: ' + result.err + ' for: ' + text);
     }
-    return await OpenPGPKey.wrap(result.keys[0], { raw: text } as unknown as Pubkey);
+    return await OpenPGPKey.wrap(result.keys[0], {} as Pubkey, text);
   }
 
   public static isPacketDecrypted = (pubkey: Pubkey, keyid: string) => {
@@ -134,7 +134,7 @@ export class OpenPGPKey {
   }
 
   // TODO: should be private, will change when readMany is rewritten
-  public static wrap = async (pubkey: OpenPGP.key.Key, pkey: Pubkey): Promise<Pubkey> => {
+  public static wrap = async (pubkey: OpenPGP.key.Key, pkey: Pubkey, raw?: string): Promise<Pubkey> => {
     let exp: null | Date | number;
     try {
       exp = await pubkey.getExpirationTime('encrypt');
@@ -192,9 +192,7 @@ export class OpenPGPKey {
     pkey.checkPassword = async passphrase => PgpKey.decrypt(await OpenPGPKey.parse(OpenPGPKey.armor(pkey)), passphrase);
     const extensions = pkey as unknown as { raw: string, [internal]: OpenPGP.key.Key };
     extensions[internal] = pubkey;
-    if (typeof extensions.raw === 'undefined') {
-      extensions.raw = pubkey.armor();
-    }
+    extensions.raw = raw || pubkey.armor();
     return pkey;
   }
 
