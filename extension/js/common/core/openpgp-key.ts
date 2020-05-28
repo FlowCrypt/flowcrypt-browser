@@ -16,7 +16,7 @@ export class OpenPGPKey {
     if (result.err) {
       throw new Error('Cannot parse OpenPGP key: ' + result.err + ' for: ' + text);
     }
-    return await OpenPGPKey.wrap(result.keys[0], {} as Pubkey, text);
+    return await OpenPGPKey.wrap(result.keys[0], {} as Pubkey);
   }
 
   public static isPacketDecrypted = (pubkey: Pubkey, keyid: string) => {
@@ -134,7 +134,7 @@ export class OpenPGPKey {
   }
 
   // TODO: should be private, will change when readMany is rewritten
-  public static wrap = async (pubkey: OpenPGP.key.Key, pkey: Pubkey, armored?: string): Promise<Pubkey> => {
+  public static wrap = async (pubkey: OpenPGP.key.Key, pkey: Pubkey): Promise<Pubkey> => {
     let exp: null | Date | number;
     try {
       exp = await pubkey.getExpirationTime('encrypt');
@@ -174,7 +174,6 @@ export class OpenPGPKey {
       type: 'openpgp',
       id: pubkey.getFingerprint().toUpperCase(),
       ids: (await Promise.all(pubkey.getKeyIds().map(({ bytes }) => PgpKey.longid(bytes)))).filter(Boolean) as string[],
-      unparsed: armored || pubkey.armor(),
       usableForEncryption: ! await Catch.doesReject(pubkey.getEncryptionKey()),
       usableButExpired: await OpenPGPKey.usableButExpired(pubkey, exp, expired),
       usableForSigning: await Catch.doesReject(pubkey.getSigningKey()),
@@ -190,7 +189,7 @@ export class OpenPGPKey {
       isPublic: pubkey.isPublic(),
       isPrivate: pubkey.isPrivate(),
     } as Pubkey);
-    pkey.checkPassword = async passphrase => PgpKey.decrypt(await OpenPGPKey.parse(pkey.unparsed), passphrase);
+    pkey.checkPassword = async passphrase => PgpKey.decrypt(await OpenPGPKey.parse(OpenPGPKey.armor(pkey)), passphrase);
     (pkey as any)[internal] = pubkey;
     return pkey;
   }
@@ -225,6 +224,10 @@ export class OpenPGPKey {
     } else {
       return await opgp.stream.readToEnd(certificate);
     }
+  }
+
+  public static armor = (key: Pubkey): string => {
+    return OpenPGPKey.unwrap(key).armor();
   }
 
   private static unwrap = (pubkey: Pubkey) => {

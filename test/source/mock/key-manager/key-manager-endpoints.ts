@@ -61,7 +61,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         expect(pubDetails.keys[0].users).to.have.length(1);
         expect(pubDetails.keys[0].users[0]).to.equal('First Last <put.key@key-manager-autogen.flowcrypt.com>');
         expect(pubDetails.keys[0].private).to.not.exist;
-        const pub = await PgpKey.parse(pubDetails.keys[0].public.unparsed);
+        const pub = pubDetails.keys[0].public;
         expect(pub.expiration).to.not.exist;
         MOCK_KM_LAST_INSERTED_KEY[acctEmail] = { decryptedPrivateKey, publicKey, fingerprint };
         return {};
@@ -87,7 +87,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         expect(pubDetails.keys[0].users).to.have.length(1);
         expect(pubDetails.keys[0].users[0]).to.equal('First Last <expire@key-manager-keygen-expiration.flowcrypt.com>');
         expect(pubDetails.keys[0].private).to.not.exist;
-        const pub = await PgpKey.parse(pubDetails.keys[0].public.unparsed);
+        const pub = pubDetails.keys[0].public;
         expect(pub.expiration).to.exist;
         MOCK_KM_LAST_INSERTED_KEY[acctEmail] = { decryptedPrivateKey, publicKey, fingerprint };
         return {};

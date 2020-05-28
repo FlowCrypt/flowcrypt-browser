@@ -37,7 +37,7 @@ View.run(class CompatibilityView extends View {
       for (const err of errs) {
         this.appendResult(`Error parsing input: ${String(err)}`);
       }
-      await this.outputKeyResults(await Promise.all(keys.map(key => PgpKey.readAsOpenPGP(key.unparsed))));
+      await this.outputKeyResults(await Promise.all(keys.map(key => PgpKey.readAsOpenPGP(PgpKey.serializeToString(key)))));
     } catch (err) {
       this.appendResult(`Exception: ${String(err)}`);
     }

@@ -17,7 +17,6 @@ export interface Pubkey {
   created: Date;
   lastModified: Date | undefined;
   expiration: Date | undefined;
-  unparsed: string;
   usableForEncryption: boolean;
   usableForSigning: boolean;
   usableButExpired: boolean;
@@ -201,7 +200,6 @@ export class PgpKey {
         type: 'x509',
         id: '' + Math.random(),  // TODO: Replace with: smime.getSerialNumber()
         ids: [],
-        unparsed: text,
         usableForEncryption: true, // TODO: Replace with smime code checking encryption flag
         usableForSigning: true, // TODO:Replace with real checks
         usableButExpired: false,
@@ -231,7 +229,8 @@ export class PgpKey {
   }
 
   public static serializeToString = (pubkey: Pubkey): string => {
-    return pubkey.unparsed;
+    // TODO: Delegate to appropriate key type
+    return OpenPGPKey.armor(pubkey);
   }
 
   public static asPublicKey = async (pubkey: Pubkey): Promise<Pubkey> => {
