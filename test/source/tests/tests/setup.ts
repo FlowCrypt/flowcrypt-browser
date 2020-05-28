@@ -46,7 +46,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: true, usedPgpBefore: true });
     }));
 
-    ava.default('setup - import key - naked - choose my own pass phrase', testWithBrowser(undefined, async (t, browser) => {
+    ava.default.only('setup - import key - naked - choose my own pass phrase', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.import.naked@gmail.com');
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.naked', { submitPubkey: false, usedPgpBefore: false, naked: true });
     }));

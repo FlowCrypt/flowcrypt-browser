@@ -185,7 +185,7 @@ export class PgpKey {
     if (keyType === 'openpgp') {
       return await OpenPGPKey.parse(text);
     } else if (keyType === 'x509') {
-      return {
+      const key = {
         type: 'x509',
         id: '' + Math.random(),  // TODO: Replace with: smime.getSerialNumber()
         ids: [],
@@ -202,7 +202,9 @@ export class PgpKey {
         fullyEncrypted: false,
         isPublic: true,
         isPrivate: true,
-      };
+      } as Pubkey;
+      (key as unknown as { raw: string }).raw = text;
+      return key;
     }
     throw new Error('Unsupported key type: ' + keyType);
   }
@@ -218,8 +220,13 @@ export class PgpKey {
   }
 
   public static serializeToString = (pubkey: Pubkey): string => {
-    // TODO: Delegate to appropriate key type
-    return OpenPGPKey.armor(pubkey);
+    if (pubkey.type === 'openpgp') {
+      return OpenPGPKey.armor(pubkey);
+    } else if (pubkey.type === 'x509') {
+      return (pubkey as unknown as { raw: string }).raw;
+    } else {
+      throw new Error('Unknown pubkey type: ' + pubkey.type);
+    }
   }
 
   public static asPublicKey = async (pubkey: Pubkey): Promise<Pubkey> => {

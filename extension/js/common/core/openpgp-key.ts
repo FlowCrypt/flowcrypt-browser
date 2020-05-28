@@ -16,7 +16,7 @@ export class OpenPGPKey {
     if (result.err) {
       throw new Error('Cannot parse OpenPGP key: ' + result.err + ' for: ' + text);
     }
-    return await OpenPGPKey.wrap(result.keys[0], {} as Pubkey);
+    return await OpenPGPKey.wrap(result.keys[0], { raw: text } as unknown as Pubkey);
   }
 
   public static isPacketDecrypted = (pubkey: Pubkey, keyid: string) => {
@@ -190,7 +190,11 @@ export class OpenPGPKey {
       isPrivate: pubkey.isPrivate(),
     } as Pubkey);
     pkey.checkPassword = async passphrase => PgpKey.decrypt(await OpenPGPKey.parse(OpenPGPKey.armor(pkey)), passphrase);
-    (pkey as any)[internal] = pubkey;
+    const extensions = pkey as unknown as { raw: string, [internal]: OpenPGP.key.Key };
+    extensions[internal] = pubkey;
+    if (typeof extensions.raw === 'undefined') {
+      extensions.raw = pubkey.armor();
+    }
     return pkey;
   }
 
@@ -226,15 +230,22 @@ export class OpenPGPKey {
     }
   }
 
-  public static armor = (key: Pubkey): string => {
-    return OpenPGPKey.unwrap(key).armor();
+  public static armor = (pubkey: Pubkey): string => {
+    if (pubkey.type !== 'openpgp') {
+      throw new Error('Unsupported key type: ' + pubkey.type);
+    }
+    const extensions = pubkey as unknown as { raw: string };
+    if (!extensions.raw) {
+      throw new Error('Object has type == "openpgp" but no raw key.');
+    }
+    return extensions.raw;
   }
 
   private static unwrap = (pubkey: Pubkey) => {
     if (pubkey.type !== 'openpgp') {
       throw new Error('Unsupported key type: ' + pubkey.type);
     }
-    const raw = (pubkey as any)[internal] as OpenPGP.key.Key;
+    const raw = (pubkey as unknown as { [internal]: OpenPGP.key.Key })[internal];
     if (!raw) {
       throw new Error('Object has type == "openpgp" but no internal key.');
     }
