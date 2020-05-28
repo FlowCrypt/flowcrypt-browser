@@ -110,17 +110,6 @@ export class PgpKey {
   }
 
   /**
-   * used only for keys that we ourselves parsed / formatted before, eg from local storage, because no err handling
-   */
-  public static readAsOpenPGP = async (armoredKey: string) => { // should be renamed to readOne
-    const { keys: [key] } = await opgp.key.readArmored(armoredKey);
-    if (key?.isPrivate()) {
-      // KeyCache.setArmored(armoredKey, key); TODO: FIXME: cache doesn't work
-    }
-    return key;
-  }
-
-  /**
    * Read many keys, could be armored or binary, in single armor or separately, useful for importing keychains of various formats
    */
   public static readMany = async (fileData: Buf): Promise<{ keys: Pubkey[], errs: Error[] }> => {
