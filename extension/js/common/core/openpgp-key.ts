@@ -231,7 +231,11 @@ export class OpenPGPKey {
     if (pubkey.type !== 'openpgp') {
       throw new Error('Unsupported key type: ' + pubkey.type);
     }
-    return ((pubkey as any)[internal] as OpenPGP.key.Key);
+    const raw = (pubkey as any)[internal] as OpenPGP.key.Key;
+    if (!raw) {
+      throw new Error('Object has type == "openpgp" but no internal key.');
+    }
+    return raw;
   }
 
   private static usableButExpired = async (key: OpenPGP.key.Key, exp: Date | number | null, expired: () => boolean): Promise<boolean> => {
