@@ -45,7 +45,6 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       const { decryptedPrivateKey, publicKey, fingerprint } = body as Dict<string>;
       if (acctEmail === 'put.key@key-manager-autogen.flowcrypt.com') {
         const prvDetails = await PgpKey.parseDetails(decryptedPrivateKey);
-        const prv = await PgpKey.readAsOpenPGP(prvDetails.keys[0].private!);
         expect(prvDetails.keys).to.have.length(1);
         expect(prvDetails.keys[0].algo.bits).to.equal(2048);
         expect(prvDetails.keys[0].ids[0].fingerprint).to.equal(fingerprint);
@@ -53,16 +52,17 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         expect(prvDetails.keys[0].users[0]).to.equal('First Last <put.key@key-manager-autogen.flowcrypt.com>');
         expect(prvDetails.keys[0].private).to.exist;
         expect(prvDetails.keys[0].isFullyDecrypted).to.be.true;
-        expect(await PgpKey.expiration(prv)).to.not.exist;
+        const prv = await PgpKey.parse(prvDetails.keys[0].private!);
+        expect(prv.expiration).to.not.exist;
         const pubDetails = await PgpKey.parseDetails(publicKey);
-        const pub = await PgpKey.readAsOpenPGP(pubDetails.keys[0].public.unparsed);
         expect(pubDetails.keys).to.have.length(1);
         expect(pubDetails.keys[0].algo.bits).to.equal(2048);
         expect(pubDetails.keys[0].ids[0].fingerprint).to.equal(fingerprint);
         expect(pubDetails.keys[0].users).to.have.length(1);
         expect(pubDetails.keys[0].users[0]).to.equal('First Last <put.key@key-manager-autogen.flowcrypt.com>');
         expect(pubDetails.keys[0].private).to.not.exist;
-        expect(await PgpKey.expiration(pub)).to.not.exist;
+        const pub = await PgpKey.parse(pubDetails.keys[0].public.unparsed);
+        expect(pub.expiration).to.not.exist;
         MOCK_KM_LAST_INSERTED_KEY[acctEmail] = { decryptedPrivateKey, publicKey, fingerprint };
         return {};
       }
@@ -71,7 +71,6 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       }
       if (acctEmail === 'expire@key-manager-keygen-expiration.flowcrypt.com') {
         const prvDetails = await PgpKey.parseDetails(decryptedPrivateKey);
-        const prv = await PgpKey.readAsOpenPGP(prvDetails.keys[0].private!);
         expect(prvDetails.keys).to.have.length(1);
         expect(prvDetails.keys[0].algo.bits).to.equal(2048);
         expect(prvDetails.keys[0].ids[0].fingerprint).to.equal(fingerprint);
@@ -79,16 +78,17 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         expect(prvDetails.keys[0].users[0]).to.equal('First Last <expire@key-manager-keygen-expiration.flowcrypt.com>');
         expect(prvDetails.keys[0].private).to.exist;
         expect(prvDetails.keys[0].isFullyDecrypted).to.be.true;
-        expect(await PgpKey.expiration(prv)).to.exist;
+        const prv = await PgpKey.parse(prvDetails.keys[0].private!);
+        expect(prv.expiration).to.exist;
         const pubDetails = await PgpKey.parseDetails(publicKey);
-        const pub = await PgpKey.readAsOpenPGP(pubDetails.keys[0].public.unparsed);
         expect(pubDetails.keys).to.have.length(1);
         expect(pubDetails.keys[0].algo.bits).to.equal(2048);
         expect(pubDetails.keys[0].ids[0].fingerprint).to.equal(fingerprint);
         expect(pubDetails.keys[0].users).to.have.length(1);
         expect(pubDetails.keys[0].users[0]).to.equal('First Last <expire@key-manager-keygen-expiration.flowcrypt.com>');
         expect(pubDetails.keys[0].private).to.not.exist;
-        expect(await PgpKey.expiration(pub)).to.exist;
+        const pub = await PgpKey.parse(pubDetails.keys[0].public.unparsed);
+        expect(pub.expiration).to.exist;
         MOCK_KM_LAST_INSERTED_KEY[acctEmail] = { decryptedPrivateKey, publicKey, fingerprint };
         return {};
       }
@@ -101,7 +101,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       throw new Error(`keys/public: expecting GET, got ${req.method}`);
     }
     const query = req.url!.split('/').pop()!;
-    const publicKey = (await PgpKey.readAsOpenPGP(existingPrv)).toPublic().armor();
+    const publicKey = PgpKey.serializeToString(await PgpKey.asPublicKey(await PgpKey.parse(existingPrv)));
     if (query.includes('@')) { // search by email
       const email = query.toLowerCase().trim();
       if (email === 'find.public.key@key-manager-autogen.flowcrypt.com') {
