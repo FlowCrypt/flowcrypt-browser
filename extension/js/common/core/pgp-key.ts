@@ -296,11 +296,6 @@ export class PgpKey {
     return expiration && PgpKey.expired(key) ? new Date(expiration.getTime() - 1000) : undefined;
   }
 
-  public static expiration = async (key: OpenPGP.key.Key, capability: 'encrypt' | 'encrypt_sign' | 'sign' = 'encrypt') => {
-    const expires = await key.getExpirationTime(capability); // returns Date or Infinity
-    return expires instanceof Date ? expires : undefined;
-  }
-
   public static parseDetails = async (armored: string): Promise<{ original: string, normalized: string, keys: KeyDetails[] }> => {
     const { normalized, keys } = await PgpKey.normalize(armored);
     return { original: armored, normalized, keys: await Promise.all(keys.map(PgpKey.details)) };
