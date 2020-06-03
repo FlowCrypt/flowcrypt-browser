@@ -5,7 +5,7 @@
 import { Assert } from '../../js/common/assert.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Contact } from '../../js/common/core/pgp-key.js';
+import { Contact, Pubkey } from '../../js/common/core/pgp-key.js';
 import { PgpArmor } from '../../js/common/core/pgp-armor.js';
 import { PgpKey } from '../../js/common/core/pgp-key.js';
 import { Str } from '../../js/common/core/common.js';
@@ -13,7 +13,6 @@ import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
-import { opgp } from '../../js/common/core/pgp.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 
 // todo - this should use KeyImportUI for consistency.
@@ -24,8 +23,8 @@ View.run(class PgpPubkeyView extends View {
   private readonly frameId: string;
   private readonly compact: boolean; // means the details take up very little space.
   private readonly minimized: boolean; // means I have to click to see details.
-  private publicKeys: OpenPGP.key.Key[] | undefined;
-  private primaryPubKey: OpenPGP.key.Key | undefined;
+  private publicKeys: Pubkey[] | undefined;
+  private primaryPubKey: Pubkey | undefined;
   private isExpired: boolean | undefined;
 
   constructor() {
@@ -41,8 +40,13 @@ View.run(class PgpPubkeyView extends View {
 
   public render = async () => {
     Ui.event.protect();
-    this.publicKeys = (await opgp.key.readArmored(this.armoredPubkey)).keys;
-    this.primaryPubKey = this.publicKeys[0];
+    try {
+      this.publicKeys = [await PgpKey.parse(this.armoredPubkey)];
+    } catch (e) {
+      console.error('Unusable key: ' + e);
+      this.publicKeys = [];
+    }
+    this.primaryPubKey = this.publicKeys ? this.publicKeys[0] : undefined;
     try {
       const pubKey = await PgpKey.parse(this.armoredPubkey);
       this.isExpired = PgpKey.expired(pubKey);
@@ -57,19 +61,13 @@ View.run(class PgpPubkeyView extends View {
     }
     $('.line.fingerprints, .line.add_contact').css('display', this.minimized ? 'none' : 'block');
     if (this.publicKeys.length === 1) {
-      $('.line.fingerprints .fingerprint').text(Str.spaced(await PgpKey.fingerprint(this.primaryPubKey) || 'err'));
+      $('.line.fingerprints .fingerprint').text(Str.spaced(this.primaryPubKey?.id || 'err'));
     } else {
       $('.line.fingerprints').css({ display: 'none' });
     }
     if (this.primaryPubKey) {
-      let isUsableButExpired = false;
-      try {
-        const pubKey = await PgpKey.parse(this.primaryPubKey.armor());
-        isUsableButExpired = pubKey.usableButExpired;
-      } catch (e) {
-        console.error('Unusable key: ' + e);
-      }
-      if (!isUsableButExpired && await Catch.doesReject(this.primaryPubKey.getEncryptionKey()) && await Catch.doesReject(this.primaryPubKey.getSigningKey())) {
+      const isUsableButExpired = this.primaryPubKey.usableButExpired;
+      if (!isUsableButExpired && await !this.primaryPubKey.usableForEncryption && !this.primaryPubKey.usableForSigning) {
         this.showKeyNotUsableError();
       } else {
         if (this.compact) {
@@ -77,7 +75,7 @@ View.run(class PgpPubkeyView extends View {
         }
         let emailText = '';
         if (this.publicKeys.length === 1) {
-          const email = Str.parseEmail(this.primaryPubKey.users[0].userId?.userid || '').email;
+          const email = this.primaryPubKey.emails[0];
           if (email) {
             emailText = email;
             $('.input_email').val(email); // checked above
@@ -85,8 +83,7 @@ View.run(class PgpPubkeyView extends View {
         } else {
           emailText = 'more than one person';
           $('.input_email').css({ display: 'none' });
-          const pubToEmail = (pubkey: OpenPGP.key.Key) => Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
-          Xss.sanitizeAppend('.add_contact', Xss.escape(' for ' + this.publicKeys.map(pubToEmail).filter(e => !!e).join(', ')));
+          Xss.sanitizeAppend('.add_contact', Xss.escape(' for ' + this.publicKeys.map(pub => pub.emails[0]).filter(e => !!e).join(', ')));
         }
         Xss.sanitizePrepend('#pgp_block.pgp_pubkey .result', `<span>This message includes a Public Key for <span class= "email">${Xss.escape(emailText)}</span>.</span>`);
         $('.pubkey').addClass('good');
@@ -142,14 +139,14 @@ View.run(class PgpPubkeyView extends View {
     if (this.publicKeys!.length > 1) {
       const contacts: Contact[] = [];
       for (const pubkey of this.publicKeys!) {
-        const email = Str.parseEmail(pubkey.users[0].userId?.userid || '').email;
+        const email = pubkey.emails[0];
         if (email) {
           contacts.push(await ContactStore.obj({
             email,
             client: 'pgp',
-            pubkey: pubkey.armor(),
+            pubkey: PgpKey.serializeToString(pubkey),
             lastUse: Date.now(),
-            lastSig: await PgpKey.lastSigOpenPGP(pubkey),
+            lastSig: Number(pubkey.lastModified)
           }));
         }
       }
@@ -162,9 +159,9 @@ View.run(class PgpPubkeyView extends View {
         const contact = await ContactStore.obj({
           email: String($('.input_email').val()),
           client: 'pgp',
-          pubkey: this.publicKeys![0].armor(),
+          pubkey: PgpKey.serializeToString(this.publicKeys![0]),
           lastUse: Date.now(),
-          lastSig: await PgpKey.lastSigOpenPGP(this.publicKeys![0])
+          lastSig: Number(this.publicKeys![0].lastModified)
         });
         await ContactStore.save(undefined, contact);
         BrowserMsg.send.addToContacts(this.parentTabId);
