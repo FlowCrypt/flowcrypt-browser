@@ -234,6 +234,13 @@ export class XssSafeFactory {
     </div>`;
   }
 
+  public btnDownloadAttachment = (url: string, filename: string) => {
+    return `<a href="${url}" download="${filename}" class="download-attachment">
+      Right-click here and choose 'Save Link As' to save encrypted file
+      <img src="${this.srcImg('svgs/download-link.png')}">
+    </a>`;
+  }
+
   public btnEndPPSession = (webmailName: string) => {
     return `<div class="action_finish_session zo" ${webmailName === 'gmail' ? 'data-tooltip' : 'title'}="End Pass Phrase Session" data-test="action-finish-session">
                 <a class="gb_se t6" ${webmailName === 'gmail' ? 'style="text-align: center; width: 18px;"' : ''}>

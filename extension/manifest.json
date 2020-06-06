@@ -44,7 +44,8 @@
         "https://mail.google.com/*"
       ],
       "css": [
-        "/css/webmail.css"
+        "/css/webmail.css",
+        "/css/sweetalert2.css"
       ],
       "js": [
         "/lib/purify.js",
@@ -72,6 +73,7 @@
     "/css/webmail.css",
     "/img/logo/logo.svg",
     "/img/svgs/reply-icon.svg",
+    "/img/svgs/download-link.png",
     "/img/svgs/spinner-white-small.svg",
     "/img/svgs/spinner-green-small.svg",
     "/img/svgs/unlock.svg",

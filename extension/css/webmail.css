@@ -309,3 +309,34 @@ div#cryptup_dialog iframe.tall {
   height: 780px;
   margin-top: -390px;
 }
+
+.swal2-container.ui-modal-attachment {
+  padding: 0;
+  background: rgba(0, 0, 0, 0.85);
+}
+.swal2-container.ui-modal-attachment .swal2-popup { background: transparent; }
+.swal2-container.ui-modal-attachment .swal2-content { margin-top: 48px; }
+.swal2-container.ui-modal-attachment .attachment-img { max-height: calc(100vh - 52px); }
+
+.swal2-container.ui-modal-attachment .attachment-txt {
+  background: white;
+  padding: 40px;
+  overflow: auto;
+  max-height: calc(100vh - 52px - 80px);
+  text-align: initial;
+}
+
+.swal2-container.ui-modal-attachment .download-attachment {
+  position: absolute;
+  top: 0;
+  display: flex;
+  align-items: center;
+  height: 48px;
+  color: #b4b4b4;
+  text-decoration: none;
+}
+
+.swal2-container.ui-modal-attachment .download-attachment img {
+  width: 18px;
+  margin: 0 0.6em;
+}

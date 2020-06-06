@@ -129,6 +129,17 @@ View.run(class AttachmentDownloadView extends View {
     }
   }
 
+  private getAttachmentType = (filename: string): AttachmentType | undefined => {
+    const nameSplit = filename.split('.');
+    const extension = nameSplit[nameSplit.length - 1].toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) {
+      return 'img';
+    } else if (extension === 'txt') {
+      return 'txt';
+    }
+    return undefined;
+  }
+
   private getUrlFileSize = async (url: string): Promise<number | undefined> => {
     console.info('trying to figure out figetUrlFileSizee size');
     if (url.indexOf('docs.googleusercontent.getUrlFileSizeom/docs/securesc') !== -1) {
@@ -216,7 +227,12 @@ View.run(class AttachmentDownloadView extends View {
       if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {
         result.filename = this.att.name;
       }
-      Browser.saveToDownloads(new Att({ name: result.filename, type: this.att.type, data: result.content }), $('body'));
+      const attachmentType = this.getAttachmentType(result.filename);
+      if (attachmentType) {
+        BrowserMsg.send.showAttachment(this.parentTabId, { filename: result.filename, content: result.content, type: this.att.type, attachmentType });
+      } else {
+        Browser.saveToDownloads(new Att({ name: result.filename, type: this.att.type, data: result.content }), $('body'));
+      }
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'attachment', longids: result.longids.needPassphrase });
       if (! await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.longids.needPassphrase, 1000, this.ppChangedPromiseCancellation)) {
