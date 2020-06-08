@@ -143,7 +143,8 @@ export class Buf extends Uint8Array {
           bytesLeftInChar--;
         }
         if (binaryChar && !bytesLeftInChar) {
-          utf8string += String.fromCharCode(parseInt(binaryChar, 2));
+          const codePoint = parseInt(binaryChar, 2);
+          utf8string += codePoint >= 0x10000 ? String.fromCodePoint(codePoint) : String.fromCharCode(codePoint);
           binaryChar = '';
         }
       }
