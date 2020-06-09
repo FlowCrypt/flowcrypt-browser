@@ -36,7 +36,7 @@ export class SmimeKey {
     return key;
   }
 
-  public static encrypt = (pubkeys: Pubkey[], data: Uint8Array): { data: Uint8Array, type: 'smime' } => {
+  public static encrypt = async ({ pubkeys, data }: { pubkeys: Pubkey[], data: Uint8Array }): Promise<{ data: Uint8Array, type: 'smime' }> => {
     const p7 = forge.pkcs7.createEnvelopedData();
     for (const pubkey of pubkeys) {
       p7.addRecipient(forge.pki.certificateFromPem(PgpKey.armor(pubkey)));
