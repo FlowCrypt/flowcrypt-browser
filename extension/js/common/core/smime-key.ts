@@ -13,6 +13,7 @@ const isEmailCertificate = (certificate: forge.pki.Certificate) => {
 export class SmimeKey {
   public static parse = async (text: string): Promise<Pubkey> => {
     const certificate = forge.pki.certificateFromPem(text);
+    const email = certificate.subject.getField('CN').value;
     const key = {
       type: 'x509',
       id: certificate.serialNumber,
@@ -20,8 +21,8 @@ export class SmimeKey {
       usableForEncryption: isEmailCertificate(certificate),
       usableForSigning: isEmailCertificate(certificate),
       usableButExpired: false,
-      emails: [], // TODO: add parsing CN from the e-mail
-      identities: [],
+      emails: [email],
+      identities: [email],
       created: certificate.validity.notBefore,
       lastModified: certificate.validity.notBefore,
       expiration: certificate.validity.notAfter,
