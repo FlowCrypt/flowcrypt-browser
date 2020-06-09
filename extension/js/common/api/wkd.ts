@@ -56,7 +56,7 @@ export class Wkd extends Api {
     console.info(`Loaded Public Key from WKD for ${email}: ${url}`);
     let pubkey: string;
     try {
-      pubkey = PgpKey.serializeToString(key);
+      pubkey = PgpKey.armor(key);
     } catch (e) {
       return { pubkey: null, pgpClient: null };
     }

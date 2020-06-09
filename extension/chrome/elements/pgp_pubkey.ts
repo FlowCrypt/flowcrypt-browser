@@ -144,7 +144,7 @@ View.run(class PgpPubkeyView extends View {
           contacts.push(await ContactStore.obj({
             email,
             client: 'pgp',
-            pubkey: PgpKey.serializeToString(pubkey),
+            pubkey: PgpKey.armor(pubkey),
             lastUse: Date.now(),
             lastSig: Number(pubkey.lastModified)
           }));
@@ -159,7 +159,7 @@ View.run(class PgpPubkeyView extends View {
         const contact = await ContactStore.obj({
           email: String($('.input_email').val()),
           client: 'pgp',
-          pubkey: PgpKey.serializeToString(this.publicKeys![0]),
+          pubkey: PgpKey.armor(this.publicKeys![0]),
           lastUse: Date.now(),
           lastSig: Number(this.publicKeys![0].lastModified)
         });

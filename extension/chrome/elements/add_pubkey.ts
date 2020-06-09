@@ -53,7 +53,7 @@ View.run(class AddPubkeyView extends View {
           if (errs.length) {
             await Ui.modal.warning(`some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
           }
-          $('.pubkey').val(String(PgpKey.serializeToString(keys[0])));
+          $('.pubkey').val(String(PgpKey.armor(keys[0])));
           $('.action_ok').trigger('click');
         } else if (errs.length) {
           await Ui.modal.error(`error processing public keys:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
@@ -73,7 +73,7 @@ View.run(class AddPubkeyView extends View {
     if ($(fromSelect).val()) {
       const [contact] = await ContactStore.get(undefined, [String($(fromSelect).val())]);
       if (contact?.pubkey) {
-        $('.pubkey').val(PgpKey.serializeToString(contact.pubkey)).prop('disabled', true);
+        $('.pubkey').val(PgpKey.armor(contact.pubkey)).prop('disabled', true);
       } else {
         Catch.report('Contact unexpectedly not found when copying pubkey by email in add_pubkey.htm');
         await Ui.modal.error('Contact not found.');

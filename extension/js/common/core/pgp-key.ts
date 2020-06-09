@@ -219,7 +219,7 @@ export class PgpKey {
     return OpenPGPKey.isPacketDecrypted(pubkey, keyId);
   }
 
-  public static serializeToString = (pubkey: Pubkey): string => {
+  public static armor = (pubkey: Pubkey): string => {
     if (pubkey.type === 'openpgp') {
       return OpenPGPKey.armor(pubkey);
     } else if (pubkey.type === 'x509') {

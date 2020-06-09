@@ -182,7 +182,7 @@ export class ContactStore extends AbstractStore {
       // tslint:disable-next-line: no-unsafe-any
       if (object && typeof object.pubkey === 'object') {
         // tslint:disable-next-line: no-unsafe-any
-        object.pubkey = PgpKey.serializeToString(object.pubkey);
+        object.pubkey = PgpKey.armor(object.pubkey);
       }
     }
     return await new Promise((resolve, reject) => {

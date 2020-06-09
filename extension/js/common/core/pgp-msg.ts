@@ -251,7 +251,7 @@ export class PgpMsg {
       keys.verificationContacts = verificationContacts.filter(contact => contact && contact.pubkey) as Contact[];
       keys.forVerification = [];
       for (const contact of keys.verificationContacts) {
-        const { keys: keysForVerification } = await opgp.key.readArmored(PgpKey.serializeToString(contact.pubkey!));
+        const { keys: keysForVerification } = await opgp.key.readArmored(PgpKey.armor(contact.pubkey!));
         keys.forVerification.push(...keysForVerification);
       }
     }

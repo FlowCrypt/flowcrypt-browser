@@ -94,7 +94,7 @@ export class OpenPGPKey {
     if (pubkeys) {
       options.publicKeys = [];
       for (const pubkey of pubkeys) {
-        const { keys: publicKeys } = await opgp.key.readArmored(PgpKey.serializeToString(pubkey));
+        const { keys: publicKeys } = await opgp.key.readArmored(PgpKey.armor(pubkey));
         options.publicKeys.push(...publicKeys);
         // TODO: Investigate why unwrapping doesn't work - probably the object
         // came from the background page so it wasn't properly deserialized

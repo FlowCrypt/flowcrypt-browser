@@ -98,7 +98,7 @@ View.run(class ContactsView extends View {
       if (errs.length) {
         await Ui.modal.warning(`some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
       }
-      $('#bulk_import .input_pubkey').val(keys.map(key => PgpKey.serializeToString(key)).join('\n\n'));
+      $('#bulk_import .input_pubkey').val(keys.map(key => PgpKey.armor(key)).join('\n\n'));
       $('#bulk_import .action_process').trigger('click');
       $('#file_import').hide();
     } else if (errs.length) {
@@ -107,7 +107,7 @@ View.run(class ContactsView extends View {
   }
 
   private actionExportAllKeysHandler = () => {
-    const allArmoredPublicKeys = this.contacts.map(c => c.pubkey).filter(Boolean).map((c: Pubkey) => (PgpKey.serializeToString(c)).trim()).join('\n');
+    const allArmoredPublicKeys = this.contacts.map(c => c.pubkey).filter(Boolean).map((c: Pubkey) => (PgpKey.armor(c)).trim()).join('\n');
     const exportFile = new Att({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: Buf.fromUtfStr(allArmoredPublicKeys) });
     Browser.saveToDownloads(exportFile);
   }
@@ -121,7 +121,7 @@ View.run(class ContactsView extends View {
     } else {
       Xss.sanitizeAppend('h1', '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
     }
-    $('#view_contact .key_dump').text(PgpKey.serializeToString(contact!.pubkey!)); // should exist - from list of contacts && should have pgp - filtered
+    $('#view_contact .key_dump').text(PgpKey.armor(contact!.pubkey!)); // should exist - from list of contacts && should have pgp - filtered
     $('#view_contact .key_fingerprint').text(Str.spaced(contact!.fingerprint!)); // should exist - from list of contacts && should have pgp - filtered
     $('#view_contact').css('display', 'block');
     $('#page_back_button').click(this.setHandler(el => this.loadAndRenderContactList()));

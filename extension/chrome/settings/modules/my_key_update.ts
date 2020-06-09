@@ -54,12 +54,12 @@ View.run(class MyKeyUpdateView extends View {
 
   private storeUpdatedKeyAndPassphrase = async (updatedPrv: Pubkey, updatedPrvPassphrase: string) => {
     const storedPassphrase = await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprint, true);
-    await KeyStore.add(this.acctEmail, PgpKey.serializeToString(updatedPrv));
+    await KeyStore.add(this.acctEmail, PgpKey.armor(updatedPrv));
     await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.fingerprint, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
     await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.fingerprint, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
     if (this.orgRules.canSubmitPubToAttester() && await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
       try {
-        await Ui.modal.info(await this.pubLookup.attester.updatePubkey(this.primaryKi!.longid, PgpKey.serializeToString(await PgpKey.asPublicKey(updatedPrv))));
+        await Ui.modal.info(await this.pubLookup.attester.updatePubkey(this.primaryKi!.longid, PgpKey.armor(await PgpKey.asPublicKey(updatedPrv))));
       } catch (e) {
         ApiErr.reportIfSignificant(e);
         await Ui.modal.error(`Error updating public records:\n\n${ApiErr.eli5(e)}\n\n(but local update was successful)`);

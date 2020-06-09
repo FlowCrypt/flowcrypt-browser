@@ -101,7 +101,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       throw new Error(`keys/public: expecting GET, got ${req.method}`);
     }
     const query = req.url!.split('/').pop()!;
-    const publicKey = PgpKey.serializeToString(await PgpKey.asPublicKey(await PgpKey.parse(existingPrv)));
+    const publicKey = PgpKey.armor(await PgpKey.asPublicKey(await PgpKey.parse(existingPrv)));
     if (query.includes('@')) { // search by email
       const email = query.toLowerCase().trim();
       if (email === 'find.public.key@key-manager-autogen.flowcrypt.com') {

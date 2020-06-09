@@ -204,7 +204,7 @@ export class SetupView extends View {
         await Ui.modal.error('Cannot save keys to storage because at least one of them is not valid.');
         return;
       }
-      await KeyStore.add(this.acctEmail, PgpKey.serializeToString(prv));
+      await KeyStore.add(this.acctEmail, PgpKey.armor(prv));
       await PassphraseStore.set(options.passphrase_save ? 'local' : 'session', this.acctEmail, fingerprint, options.passphrase);
     }
     const myOwnEmailAddrsAsContacts: Contact[] = [];
@@ -214,7 +214,7 @@ export class SetupView extends View {
         email,
         name,
         client: 'cryptup',
-        pubkey: PgpKey.serializeToString(await PgpKey.asPublicKey(prvs[0])),
+        pubkey: PgpKey.armor(await PgpKey.asPublicKey(prvs[0])),
         lastUse: Date.now(),
         lastSig: Number(prvs[0].lastModified)
       }));
