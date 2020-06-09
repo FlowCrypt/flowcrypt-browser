@@ -13,7 +13,7 @@ const isEmailCertificate = (certificate: forge.pki.Certificate) => {
 export class SmimeKey {
   public static parse = async (text: string): Promise<Pubkey> => {
     const certificate = forge.pki.certificateFromPem(text);
-    const email = certificate.subject.getField('CN').value;
+    const email = (certificate.subject.getField('CN') as { value: string }).value;
     const key = {
       type: 'x509',
       id: certificate.serialNumber,
