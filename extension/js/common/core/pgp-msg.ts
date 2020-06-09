@@ -10,7 +10,7 @@ import { PgpArmor, PreparedForDecrypt } from './pgp-armor.js';
 import { opgp } from './pgp.js';
 import { KeyCache } from '../platform/key-cache.js';
 import { ContactStore } from '../platform/store/contact-store.js';
-import { encrypt as smimeEncrypt } from './smime.js';
+import { SmimeKey } from './smime-key.js';
 import { OpenPGPKey } from './openpgp-key.js';
 
 export namespace PgpMsgMethod {
@@ -220,7 +220,7 @@ export class PgpMsg {
       throw new Error('Mixed key types are not allowed: ' + [...keyTypes]);
     }
     if (keyTypes.has('x509')) {
-      return smimeEncrypt(pubkeys, data);
+      return SmimeKey.encrypt(pubkeys, data);
     }
     return await OpenPGPKey.encrypt({ pubkeys, signingPrv, pwd, data, filename, armor, date });
   }

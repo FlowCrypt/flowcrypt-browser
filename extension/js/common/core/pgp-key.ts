@@ -8,6 +8,7 @@ import { MsgBlockParser } from './msg-block-parser.js';
 import { PgpArmor } from './pgp-armor.js';
 import { opgp } from './pgp.js';
 import { OpenPGPKey } from './openpgp-key.js';
+import { SmimeKey } from './smime-key.js';
 
 export interface Pubkey {
   type: 'openpgp' | 'x509';
@@ -185,26 +186,7 @@ export class PgpKey {
     if (keyType === 'openpgp') {
       return await OpenPGPKey.parse(text);
     } else if (keyType === 'x509') {
-      const key = {
-        type: 'x509',
-        id: '' + Math.random(),  // TODO: Replace with: smime.getSerialNumber()
-        ids: [],
-        usableForEncryption: true, // TODO: Replace with smime code checking encryption flag
-        usableForSigning: true, // TODO:Replace with real checks
-        usableButExpired: false,
-        emails: [], // TODO: add parsing CN from the e-mail
-        identities: [],
-        created: new Date(0),
-        lastModified: new Date(0),
-        expiration: undefined,
-        checkPassword: _ => { throw new Error('Not implemented yet.'); },
-        fullyDecrypted: false,
-        fullyEncrypted: false,
-        isPublic: true,
-        isPrivate: true,
-      } as Pubkey;
-      (key as unknown as { raw: string }).raw = text;
-      return key;
+      return await SmimeKey.parse(text);
     }
     throw new Error('Unsupported key type: ' + keyType);
   }
