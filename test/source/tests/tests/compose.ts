@@ -673,9 +673,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, t.title);
       const brokenCert = smimeCert.split('\n');
       brokenCert.splice(5, 5); // remove 5th to 10th line from cert - make it useless
-      await pastePublicKeyManually(composeFrame, inboxPage, 'smime@recipient.com', brokenCert.join('\n'));
-      await composeFrame.waitAndClick('@action-send', { delay: 2 });
-      await PageRecipe.waitForModalAndRespond(composeFrame, 'error', { contentToCheck: 'Too few bytes to read ASN.1 value.', timeout: 40 });
+
+      const addPubkeyDialog = await pastePublicKeyManuallyNoClose(composeFrame, inboxPage, 'smime@recipient.com', brokenCert.join('\n'));
+
+      const modalContainer = await addPubkeyDialog.waitAny(`.ui-modal-error`, { timeout: 40 });
+      const contentElement = await modalContainer.$('#swal2-content');
+
+      expect(await PageRecipe.getElementPropertyJson(contentElement!, 'textContent')).to.include('Too few bytes to read ASN.1 value.');
     }));
 
     // todo - unexpectedly works
@@ -693,7 +697,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
 };
 
-const pastePublicKeyManually = async (composeFrame: ControllableFrame, inboxPage: ControllablePage, recipient: string, pub: string) => {
+const pastePublicKeyManuallyNoClose = async (composeFrame: ControllableFrame, inboxPage: ControllablePage, recipient: string, pub: string) => {
   await Util.sleep(1); // todo: should wait until recipient actually loaded
   await composeFrame.waitForContent('.email_address.no_pgp', recipient);
   await composeFrame.waitAndClick('@action-open-add-pubkey-dialog', { delay: 1 });
@@ -702,6 +706,11 @@ const pastePublicKeyManually = async (composeFrame: ControllableFrame, inboxPage
   await addPubkeyDialog.waitAndType('@input-pubkey', pub);
   await Util.sleep(1);
   await addPubkeyDialog.waitAndClick('@action-add-pubkey');
+  return addPubkeyDialog;
+};
+
+const pastePublicKeyManually = async (composeFrame: ControllableFrame, inboxPage: ControllablePage, recipient: string, pub: string) => {
+  await pastePublicKeyManuallyNoClose(composeFrame, inboxPage, recipient, pub);
   await inboxPage.waitTillGone('@dialog-add-pubkey');
 };
 
