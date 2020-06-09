@@ -2,20 +2,29 @@
 import * as forge from 'node-forge';
 import { Pubkey, PgpKey } from './pgp-key.js';
 
+const isEmailCertificate = (certificate: forge.pki.Certificate) => {
+  const eku = certificate.getExtension('extKeyUsage');
+  if (!eku) {
+    return false;
+  }
+  return !!(eku as { emailProtection: boolean }).emailProtection;
+};
+
 export class SmimeKey {
   public static parse = async (text: string): Promise<Pubkey> => {
+    const certificate = forge.pki.certificateFromPem(text);
     const key = {
       type: 'x509',
-      id: '' + Math.random(),  // TODO: Replace with: smime.getSerialNumber()
-      ids: [],
-      usableForEncryption: true, // TODO: Replace with smime code checking encryption flag
-      usableForSigning: true, // TODO:Replace with real checks
+      id: certificate.serialNumber,
+      ids: [certificate.serialNumber],
+      usableForEncryption: isEmailCertificate(certificate),
+      usableForSigning: isEmailCertificate(certificate),
       usableButExpired: false,
       emails: [], // TODO: add parsing CN from the e-mail
       identities: [],
-      created: new Date(0),
-      lastModified: new Date(0),
-      expiration: undefined,
+      created: certificate.validity.notBefore,
+      lastModified: certificate.validity.notBefore,
+      expiration: certificate.validity.notAfter,
       checkPassword: _ => { throw new Error('Not implemented yet.'); },
       fullyDecrypted: false,
       fullyEncrypted: false,
