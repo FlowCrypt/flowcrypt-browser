@@ -154,7 +154,11 @@ export class PgpKey {
   }
 
   public static isWithoutSelfCertifications = async (key: Pubkey) => {
-    // TODO: Delegate to appropriate key type
+    // all non-OpenPGP keys are automatically considered to be not
+    // "without self certifications"
+    if (key.type !== 'openpgp') {
+      return false;
+    }
     return await OpenPGPKey.isWithoutSelfCertifications(key);
   }
 
@@ -234,8 +238,10 @@ export class PgpKey {
       return opgp.util.str_to_hex(keyOrFingerprintOrBytesOrLongid).toUpperCase(); // in binary form
     } else if (typeof keyOrFingerprintOrBytesOrLongid === 'string' && keyOrFingerprintOrBytesOrLongid.length === 16) {
       return keyOrFingerprintOrBytesOrLongid.toUpperCase(); // already a longid
-    } else if (typeof keyOrFingerprintOrBytesOrLongid === 'string' && keyOrFingerprintOrBytesOrLongid.length === 40) {
-      return keyOrFingerprintOrBytesOrLongid.substr(-16); // was a fingerprint
+    } else if (typeof keyOrFingerprintOrBytesOrLongid === 'string' && /^[a-fA-F0-9]+$/.test(keyOrFingerprintOrBytesOrLongid)) {
+      // this case catches all hexadecimal strings and shortens them to 16 characters
+      // it's used for both OpenPGP fingerprints and S/MIME serial numbers that can vary in length
+      return keyOrFingerprintOrBytesOrLongid.substr(-16).toUpperCase(); // was a fingerprint
     } else if (typeof keyOrFingerprintOrBytesOrLongid === 'string' && keyOrFingerprintOrBytesOrLongid.length === 49) {
       return keyOrFingerprintOrBytesOrLongid.replace(/ /g, '').substr(-16); // spaced fingerprint
     } else if (typeof keyOrFingerprintOrBytesOrLongid === 'string') {

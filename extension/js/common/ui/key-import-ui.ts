@@ -146,9 +146,6 @@ export class KeyImportUi {
   }
 
   public checkPub = async (armored: string): Promise<string> => {
-    if (PgpKey.getKeyType(armored) === 'x509') {
-      return armored; // todo - check the key parameters, else it may throw later or cause other trouble
-    }
     const { normalized } = await this.normalize('publicKey', armored);
     const parsed = await this.read('publicKey', normalized);
     await this.longid(parsed);
@@ -199,7 +196,13 @@ export class KeyImportUi {
     return { ...validationElements, removeValidationElements };
   }
 
-  private normalize = async (type: KeyBlockType, armored: string) => {
+  private normalize = async (type: KeyBlockType, armored: string): Promise<{ normalized: string }> => {
+    // non-OpenPGP keys are considered to be always normalized
+    // TODO: PgpKey.normalize depends on OpenPGP.key.Key objects, when this is resolved
+    // this check for key type should be moved to PgpKey.normalize function.
+    if (PgpKey.getKeyType(armored) !== 'openpgp') {
+      return { normalized: armored };
+    }
     const headers = PgpArmor.headers(type);
     const normalized = await PgpKey.normalize(armored);
     if (!normalized) {
