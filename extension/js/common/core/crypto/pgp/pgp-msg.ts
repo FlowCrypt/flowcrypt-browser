@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
-import { Contact, KeyInfo, PgpKey, Pubkey, PrvKeyInfo } from '../pubkey.js';
+import { Contact, KeyInfo, PgpKey, Pubkey, PrvKeyInfo } from '../key.js';
 import { MsgBlockType, ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Value } from '../../common.js';
 import { Buf } from '../../buf.js';

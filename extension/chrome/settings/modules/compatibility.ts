@@ -3,7 +3,7 @@
 'use strict';
 
 import { Buf } from '../../../js/common/core/buf.js';
-import { PgpKey } from '../../../js/common/core/crypto/pubkey.js';
+import { PgpKey } from '../../../js/common/core/crypto/key.js';
 import { PgpMsg } from '../../../js/common/core/crypto/pgp/pgp-msg.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';

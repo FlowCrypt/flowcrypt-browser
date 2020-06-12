@@ -4,7 +4,7 @@
 
 import { SetupOptions, SetupView } from '../setup.js';
 
-import { PgpKey } from '../../../js/common/core/crypto/pubkey.js';
+import { PgpKey } from '../../../js/common/core/crypto/key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';

@@ -5,7 +5,7 @@
 import { SetupOptions, SetupView } from '../setup.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Lang } from '../../../js/common/lang.js';
-import { PgpKey, KeyAlgo } from '../../../js/common/core/crypto/pubkey.js';
+import { PgpKey, KeyAlgo } from '../../../js/common/core/crypto/key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';

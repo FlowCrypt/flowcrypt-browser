@@ -13,7 +13,7 @@ import { Att } from '../../../../js/common/core/att.js';
 import { Buf } from '../../../../js/common/core/buf.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { Lang } from '../../../../js/common/lang.js';
-import { PgpKey, PubkeyResult, Pubkey } from '../../../../js/common/core/crypto/pubkey.js';
+import { PgpKey, PubkeyResult, Pubkey } from '../../../../js/common/core/crypto/key.js';
 import { PgpMsg, PgpMsgMethod } from '../../../../js/common/core/crypto/pgp/pgp-msg.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { Settings } from '../../../../js/common/settings.js';

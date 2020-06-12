@@ -18,7 +18,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { PgpKey } from '../../../js/common/core/crypto/pubkey.js';
+import { PgpKey } from '../../../js/common/core/crypto/key.js';
 
 export class ComposeDraftModule extends ViewModule<ComposeView> {
 

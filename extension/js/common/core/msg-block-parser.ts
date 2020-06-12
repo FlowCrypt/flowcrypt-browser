@@ -9,7 +9,7 @@ import { Buf } from './buf.js';
 import { Catch } from '../platform/catch.js';
 import { Mime } from './mime.js';
 import { PgpArmor } from './crypto/pgp/pgp-armor.js';
-import { PgpKey } from './crypto/pubkey.js';
+import { PgpKey } from './crypto/key.js';
 import { Str } from './common.js';
 import { FcAttLinkData } from './att.js';
 

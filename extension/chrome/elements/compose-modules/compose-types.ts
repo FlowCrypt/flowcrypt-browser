@@ -4,7 +4,7 @@
 
 import { RecipientType } from '../../../js/common/api/api.js';
 import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
-import { PubkeyResult } from '../../../js/common/core/crypto/pubkey.js';
+import { PubkeyResult } from '../../../js/common/core/crypto/key.js';
 
 export type RecipientStatus = 0 | 1 | 2 | 3 | 4 | 5;
 

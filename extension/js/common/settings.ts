@@ -13,7 +13,7 @@ import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { GoogleAuth } from './api/google-auth.js';
 import { Lang } from './lang.js';
-import { PgpKey, Pubkey } from './core/crypto/pubkey.js';
+import { PgpKey, Pubkey } from './core/crypto/key.js';
 import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
 import { OrgRules } from './org-rules.js';
 import { Xss } from './platform/xss.js';

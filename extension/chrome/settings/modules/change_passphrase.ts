@@ -5,8 +5,8 @@
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
-import { KeyInfo, Pubkey } from '../../../js/common/core/crypto/pubkey.js';
-import { PgpKey } from '../../../js/common/core/crypto/pubkey.js';
+import { KeyInfo, Pubkey } from '../../../js/common/core/crypto/key.js';
+import { PgpKey } from '../../../js/common/core/crypto/key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';

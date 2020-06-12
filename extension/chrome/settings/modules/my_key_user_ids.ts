@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { KeyInfo, PgpKey } from '../../../js/common/core/crypto/pubkey.js';
+import { KeyInfo, PgpKey } from '../../../js/common/core/crypto/key.js';
 
 import { Assert } from '../../../js/common/assert.js';
 import { Url, Str } from '../../../js/common/core/common.js';

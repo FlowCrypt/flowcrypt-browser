@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 import * as forge from 'node-forge';
-import { Pubkey, PgpKey } from '../pubkey.js';
+import { Pubkey, PgpKey } from '../key.js';
 
 const isEmailCertificate = (certificate: forge.pki.Certificate) => {
   const eku = certificate.getExtension('extKeyUsage');

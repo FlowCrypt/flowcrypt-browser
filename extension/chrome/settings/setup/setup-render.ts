@@ -4,7 +4,7 @@
 
 import { Value } from '../../../js/common/core/common.js';
 import { Lang } from '../../../js/common/lang.js';
-import { PgpKey } from '../../../js/common/core/crypto/pubkey.js';
+import { PgpKey } from '../../../js/common/core/crypto/key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { SetupView } from '../setup.js';
 import { Xss } from '../../../js/common/platform/xss.js';

@@ -5,8 +5,8 @@
 import { Catch, UnreportableError } from './platform/catch.js';
 import { Dict, UrlParam, UrlParams } from './core/common.js';
 import { Browser } from './browser/browser.js';
-import { KeyInfo } from './core/crypto/pubkey.js';
-import { PgpKey } from './core/crypto/pubkey.js';
+import { KeyInfo } from './core/crypto/key.js';
+import { PgpKey } from './core/crypto/key.js';
 import { Settings } from './settings.js';
 import { Ui } from './browser/ui.js';
 import { Xss } from './platform/xss.js';

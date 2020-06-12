@@ -6,7 +6,7 @@ import { DecryptError, VerifyRes } from './crypto/pgp/pgp-msg.js';
 
 import { AttMeta } from './att.js';
 import { Buf } from './buf.js';
-import { KeyDetails } from './crypto/pubkey.js';
+import { KeyDetails } from './crypto/key.js';
 
 export type KeyBlockType = 'publicKey' | 'privateKey';
 export type ReplaceableMsgBlockType = KeyBlockType | 'signedMsg' | 'encryptedMsg';

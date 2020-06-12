@@ -7,7 +7,7 @@ import { Catch, UnreportableError } from '../platform/catch.js';
 import { Dict } from '../core/common.js';
 import { PgpMsg } from '../core/crypto/pgp/pgp-msg.js';
 import { Ui } from '../browser/ui.js';
-import { PgpKey, PubkeyResult } from '../core/crypto/pubkey.js';
+import { PgpKey, PubkeyResult } from '../core/crypto/key.js';
 
 declare const qq: any;
 

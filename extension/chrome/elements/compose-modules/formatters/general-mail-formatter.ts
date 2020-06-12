@@ -3,7 +3,7 @@
 'use strict';
 
 import { EncryptedMsgMailFormatter } from './encrypted-mail-msg-formatter.js';
-import { KeyInfo, Pubkey } from "../../../../js/common/core/crypto/pubkey.js";
+import { KeyInfo, Pubkey } from "../../../../js/common/core/crypto/key.js";
 import { NewMsgData } from "../compose-types.js";
 import { PlainMsgMailFormatter } from './plain-mail-msg-formatter.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
