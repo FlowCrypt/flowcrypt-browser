@@ -2,6 +2,7 @@
 import * as forge from 'node-forge';
 import { Key, KeyUtil } from '../key.js';
 import { Str } from '../../common.js';
+import { UnreportableError } from '../../../platform/catch.js';
 
 export class SmimeKey {
 
@@ -10,7 +11,7 @@ export class SmimeKey {
     const email = (certificate.subject.getField('CN') as { value: string }).value;
     const normalizedEmail = Str.parseEmail(email).email;
     if (!normalizedEmail) {
-      throw new Error(`This S/MIME x.509 certificate has an invalid recipient email: ${email}`);
+      throw new UnreportableError(`This S/MIME x.509 certificate has an invalid recipient email: ${email}`);
     }
     const key = {
       type: 'x509',
