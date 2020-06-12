@@ -4,7 +4,7 @@
 
 import { Api } from './api.js';
 import { ApiErr } from './error/api-error.js';
-import { opgp } from '../core/crypto/pgp/pgp.js';
+import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
 import { Buf } from '../core/buf.js';
 import { Catch } from '../platform/catch.js';
 import { PgpKey } from '../core/crypto/pgp/pgp-key.js';

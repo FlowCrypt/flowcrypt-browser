@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 import { Pubkey, PgpKey, PrvPacket } from './pgp-key.js';
-import { opgp } from './pgp.js';
+import { opgp } from './openpgpjs-custom.js';
 import { Catch } from '../../../platform/catch.js';
 import { Str } from '../../common.js';
 import { PgpHash } from './pgp-hash.js';

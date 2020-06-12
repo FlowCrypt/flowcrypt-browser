@@ -5,7 +5,7 @@
 import { Buf } from '../../buf.js';
 import { ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Str } from '../../common.js';
-import { opgp } from './pgp.js';
+import { opgp } from './openpgpjs-custom.js';
 
 export type PreparedForDecrypt = { isArmored: boolean, isCleartext: true, message: OpenPGP.cleartext.CleartextMessage | OpenPGP.message.Message }
   | { isArmored: boolean, isCleartext: false, message: OpenPGP.message.Message };

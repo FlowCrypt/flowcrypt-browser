@@ -3,7 +3,7 @@
 'use strict';
 
 import { Buf } from '../../buf.js';
-import { opgp } from './pgp.js';
+import { opgp } from './openpgpjs-custom.js';
 
 export class PgpHash {
 

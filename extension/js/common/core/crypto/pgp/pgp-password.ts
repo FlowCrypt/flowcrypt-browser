@@ -4,7 +4,7 @@
 
 import { base64encode, secureRandomBytes } from '../../../platform/util.js';
 
-import { opgp } from './pgp.js';
+import { opgp } from './openpgpjs-custom.js';
 
 interface PwdStrengthResult {
   word: {

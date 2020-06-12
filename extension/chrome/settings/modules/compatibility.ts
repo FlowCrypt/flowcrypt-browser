@@ -8,7 +8,7 @@ import { PgpMsg } from '../../../js/common/core/crypto/pgp/pgp-msg.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { opgp } from '../../../js/common/core/crypto/pgp/pgp.js';
+import { opgp } from '../../../js/common/core/crypto/pgp/openpgpjs-custom.js';
 import { Str } from '../../../js/common/core/common.js';
 
 View.run(class CompatibilityView extends View {
