@@ -9,6 +9,8 @@ import { PgpMsgMethod } from './pgp-msg.js';
 
 const internal = Symbol('internal public key');
 
+// todo - OpenPGPKey and PgpKey should be merged into one
+
 export class OpenPGPKey {
 
   public static parse = async (text: string): Promise<Key> => {
