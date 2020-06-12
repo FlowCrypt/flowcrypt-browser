@@ -5,8 +5,7 @@
 import { Catch, UnreportableError } from './platform/catch.js';
 import { Dict, UrlParam, UrlParams } from './core/common.js';
 import { Browser } from './browser/browser.js';
-import { KeyInfo } from './core/crypto/key.js';
-import { PgpKey } from './core/crypto/key.js';
+import { KeyInfo, KeyUtil } from './core/crypto/key.js';
 import { Settings } from './settings.js';
 import { Ui } from './browser/ui.js';
 import { Xss } from './platform/xss.js';
@@ -38,7 +37,7 @@ export class Assert {
     if (acctEmail) {
       const [primaryKi] = await KeyStore.get(acctEmail, ['primary']);
       const { setup_done } = await AcctStore.get(acctEmail, ['setup_done']);
-      if (setup_done && primaryKi && !(await PgpKey.parse(primaryKi.private)).fullyEncrypted) {
+      if (setup_done && primaryKi && !(await KeyUtil.parse(primaryKi.private)).fullyEncrypted) {
         if (window.location.pathname === '/chrome/settings/index.htm') {
           await Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
         } else {

@@ -7,7 +7,7 @@ import { Config } from '../../../util';
 import { expect } from 'chai';
 import { GoogleData } from '../google-data';
 import { HttpClientErr } from '../../lib/api';
-import { PgpMsg } from '../../../core/pgp-msg';
+import { PgpMsg } from '../../../core/crypto/pgp/pgp-msg';
 
 // TODO: Make a better structure of ITestMsgStrategy. Because this class doesn't test anything, it only saves message in the Mock
 class SaveMessageInStorageStrategy implements ITestMsgStrategy {

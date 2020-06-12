@@ -1,9 +1,10 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { KeyInfo, PgpKey, Key } from '../../core/crypto/key.js';
+import { KeyInfo, Key, KeyUtil } from '../../core/crypto/key.js';
 import { AcctStore } from './acct-store.js';
 import { PassphraseStore } from './passphrase-store.js';
 import { AbstractStore } from './abstract-store.js';
+import { PgpKey } from '../../core/crypto/pgp/openpgp-key.js';
 
 /**
  * Local store of account private keys
@@ -38,11 +39,11 @@ export class KeyStore extends AbstractStore {
   public static add = async (acctEmail: string, newKeyArmored: string) => {
     const keyinfos = await KeyStore.get(acctEmail);
     let updated = false;
-    const prv = await PgpKey.parse(newKeyArmored);
+    const prv = await KeyUtil.parse(newKeyArmored);
     if (!prv.fullyEncrypted) {
       throw new Error('Cannot import plain, unprotected key.');
     }
-    const newKeyLongid = await PgpKey.longid(await PgpKey.parse(newKeyArmored));
+    const newKeyLongid = await PgpKey.longid(await KeyUtil.parse(newKeyArmored));
     if (newKeyLongid) {
       for (const i in keyinfos) {
         if (newKeyLongid === keyinfos[i].longid) { // replacing a key
@@ -83,8 +84,8 @@ export class KeyStore extends AbstractStore {
       throw new Error('Store.keysObj: unexpectedly no longid');
     }
     const fingerprint = await PgpKey.fingerprint(prv);
-    const pubArmor = PgpKey.armor(await PgpKey.asPublicKey(prv));
-    return { private: PgpKey.armor(prv), public: pubArmor, primary, longid, fingerprint: fingerprint! };
+    const pubArmor = KeyUtil.armor(await KeyUtil.asPublicKey(prv));
+    return { private: KeyUtil.armor(prv), public: pubArmor, primary, longid, fingerprint: fingerprint! };
   }
 
 }

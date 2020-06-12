@@ -9,8 +9,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposeSendBtnPopoverModule } from './compose-send-btn-popover-module.js';
 import { GeneralMailFormatter } from './formatters/general-mail-formatter.js';
 import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { KeyInfo, Key } from '../../../js/common/core/crypto/key.js';
-import { PgpKey } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { SendBtnTexts } from './compose-types.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { Str } from '../../../js/common/core/common.js';
@@ -20,6 +19,7 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
+import { PgpKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 export class ComposeSendBtnModule extends ViewModule<ComposeView> {
 
@@ -169,7 +169,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   }
 
   private decryptSenderKey = async (senderKi: KeyInfo): Promise<Key | undefined> => {
-    const prv = await PgpKey.parse(senderKi.private);
+    const prv = await KeyUtil.parse(senderKi.private);
     const passphrase = await this.view.storageModule.passphraseGet(senderKi);
     if (typeof passphrase === 'undefined' && !prv.fullyDecrypted) {
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'sign', longids: [senderKi.longid] });

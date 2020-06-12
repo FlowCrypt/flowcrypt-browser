@@ -6,7 +6,7 @@ import { SetupOptions, SetupView } from '../setup.js';
 
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Lang } from '../../../js/common/lang.js';
-import { PgpKey, Key } from '../../../js/common/core/crypto/key.js';
+import { Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -32,12 +32,12 @@ export class SetupRecoverKeyModule {
       }
       let matchedPreviouslyRecoveredKey = false;
       for (const fetchedKey of this.view.fetchedKeyBackups) {
-        if (await (await PgpKey.parse(fetchedKey.private)).checkPassword(passphrase) === true) {
+        if (await (await KeyUtil.parse(fetchedKey.private)).checkPassword(passphrase) === true) {
           if (!this.view.mathingPassphrases.includes(passphrase)) {
             this.view.mathingPassphrases.push(passphrase);
           }
           if (!this.view.importedKeysUniqueLongids.includes(fetchedKey.longid)) {
-            const prv = await PgpKey.parse(fetchedKey.private);
+            const prv = await KeyUtil.parse(fetchedKey.private);
             newlyMatchingKeys.push(prv);
             this.view.importedKeysUniqueLongids.push(fetchedKey.longid);
           } else {

@@ -3,13 +3,14 @@
 'use strict';
 
 import { Buf } from '../../../js/common/core/buf.js';
-import { PgpKey } from '../../../js/common/core/crypto/key.js';
 import { PgpMsg } from '../../../js/common/core/crypto/pgp/pgp-msg.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { opgp } from '../../../js/common/core/crypto/pgp/openpgpjs-custom.js';
 import { Str } from '../../../js/common/core/common.js';
+import { KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { PgpKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 View.run(class CompatibilityView extends View {
 
@@ -33,11 +34,11 @@ View.run(class CompatibilityView extends View {
     $('pre').text('').css('display', 'block');
     try {
       this.testIndex = 1;
-      const { keys, errs } = await PgpKey.readMany(Buf.fromUtfStr(keyString));
+      const { keys, errs } = await KeyUtil.readMany(Buf.fromUtfStr(keyString));
       for (const err of errs) {
         this.appendResult(`Error parsing input: ${String(err)}`);
       }
-      await this.outputKeyResults(await Promise.all(keys.map(key => opgp.key.readArmored(PgpKey.armor(key)).then(result => result.keys[0]))));
+      await this.outputKeyResults(await Promise.all(keys.map(key => opgp.key.readArmored(KeyUtil.armor(key)).then(result => result.keys[0]))));
     } catch (err) {
       this.appendResult(`Exception: ${String(err)}`);
     }
@@ -69,7 +70,7 @@ View.run(class CompatibilityView extends View {
       this.appendResult(`${kn} Subkeys: ${await this.test(async () => key.subKeys ? key.subKeys.length : key.subKeys)}`);
       this.appendResult(`${kn} Primary key algo: ${await this.test(async () => key.primaryKey.algorithm)}`);
       if (key.isPrivate()) {
-        const pubkey = await PgpKey.parse(key.armor());
+        const pubkey = await KeyUtil.parse(key.armor());
         this.appendResult(`${kn} key decrypt: ${await this.test(async () => PgpKey.decrypt(pubkey, String($('.input_passphrase').val())))}`);
         this.appendResult(`${kn} isFullyDecrypted: ${await this.test(async () => key.isFullyDecrypted())}`);
         this.appendResult(`${kn} isFullyEncrypted: ${await this.test(async () => key.isFullyEncrypted())}`);
@@ -117,9 +118,9 @@ View.run(class CompatibilityView extends View {
           this.appendResult(`${sgn} Verified: ${await this.test(async () => sig.verified)}`);
         }
       }
-      const pubKey = await PgpKey.parse(key.armor());
+      const pubKey = await KeyUtil.parse(key.armor());
       this.appendResult(`${kn} expiration: ${await this.test(async () => pubKey.expiration)}`);
-      this.appendResult(`${kn} internal dateBeforeExpiration: ${await this.test(async () => PgpKey.dateBeforeExpirationIfAlreadyExpired(pubKey))}`);
+      this.appendResult(`${kn} internal dateBeforeExpiration: ${await this.test(async () => KeyUtil.dateBeforeExpirationIfAlreadyExpired(pubKey))}`);
       this.appendResult(`${kn} internal usableButExpired: ${await this.test(async () => pubKey.usableButExpired)}`);
     }
   }

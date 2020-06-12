@@ -6,7 +6,7 @@ import { Catch } from '../catch.js';
 import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { Str } from '../../core/common.js';
-import { PgpKey, Key, Contact } from '../../core/crypto/key.js';
+import { Key, Contact, KeyUtil } from '../../core/crypto/key.js';
 
 // tslint:disable:no-null-keyword
 
@@ -102,7 +102,7 @@ export class ContactStore extends AbstractStore {
           expiresOn: null
         };
       }
-      const pk = await PgpKey.parse(pubkey);
+      const pk = await KeyUtil.parse(pubkey);
       const expiresOnMs = Number(pk.expiration) || undefined;
       return {
         email: validEmail,
@@ -165,7 +165,7 @@ export class ContactStore extends AbstractStore {
       }
     }
     if (update.pubkey) {
-      update.pubkey = await PgpKey.asPublicKey(update.pubkey);
+      update.pubkey = await KeyUtil.asPublicKey(update.pubkey);
     }
     if (!update.searchable && (update.name !== existing.name || update.has_pgp !== existing.has_pgp)) { // update searchable index based on new name or new has_pgp
       const newHasPgp = Boolean(typeof update.has_pgp !== 'undefined' && update.has_pgp !== null ? update.has_pgp : existing.has_pgp);
@@ -182,7 +182,7 @@ export class ContactStore extends AbstractStore {
       // tslint:disable-next-line: no-unsafe-any
       if (object && typeof object.pubkey === 'object') {
         // tslint:disable-next-line: no-unsafe-any
-        object.pubkey = PgpKey.armor(object.pubkey);
+        object.pubkey = KeyUtil.armor(object.pubkey);
       }
     }
     return await new Promise((resolve, reject) => {
@@ -337,7 +337,7 @@ export class ContactStore extends AbstractStore {
     if (typeof result.pubkey === 'object') { // tslint:disable-line:no-unsafe-any
       return result; // tslint:disable-line:no-unsafe-any
     }
-    return { ...result, pubkey: await PgpKey.parse(result.pubkey) }; // tslint:disable-line:no-unsafe-any
+    return { ...result, pubkey: await KeyUtil.parse(result.pubkey) }; // tslint:disable-line:no-unsafe-any
   }
 
   private static recreateDates = (contacts: (Contact | undefined)[]) => {

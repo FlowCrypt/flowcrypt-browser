@@ -9,7 +9,7 @@ import { Assert } from '../../../js/common/assert.js';
 import { Att } from '../../../js/common/core/att.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
-import { PgpKey, KeyInfo } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
@@ -20,6 +20,7 @@ import { Settings } from '../../../js/common/settings.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { PgpKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 export class BackupManualActionModule extends ViewModule<BackupView> {
 
@@ -137,7 +138,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private isPassPhraseStrongEnough = async (ki: KeyInfo, passphrase: string) => {
-    const prv = await PgpKey.parse(ki.private);
+    const prv = await KeyUtil.parse(ki.private);
     if (!prv.fullyEncrypted) {
       return false;
     }
@@ -160,7 +161,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private isPrivateKeyEncrypted = async (ki: KeyInfo) => {
-    const prv = await PgpKey.parse(ki.private);
+    const prv = await KeyUtil.parse(ki.private);
     if (await PgpKey.decrypt(prv, '', undefined, 'OK-IF-ALREADY-DECRYPTED') === true) {
       return false;
     }

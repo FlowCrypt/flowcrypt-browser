@@ -6,11 +6,12 @@ import { BaseMailFormatter } from './base-mail-formatter.js';
 import { BrowserWindow } from '../../../../js/common/browser/browser-window.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { NewMsgData } from '../compose-types.js';
-import { PgpKey, Key } from '../../../../js/common/core/crypto/key.js';
+import { Key } from '../../../../js/common/core/crypto/key.js';
 import { PgpMsg } from '../../../../js/common/core/crypto/pgp/pgp-msg.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { ContactStore } from '../../../../js/common/platform/store/contact-store.js';
+import { PgpKey } from '../../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 export class SignedMsgMailFormatter extends BaseMailFormatter {
 

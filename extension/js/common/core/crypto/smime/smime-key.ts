@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 import * as forge from 'node-forge';
-import { Key, PgpKey } from '../key.js';
+import { Key, KeyUtil } from '../key.js';
 
 export class SmimeKey {
 
@@ -32,7 +32,7 @@ export class SmimeKey {
   public static encrypt = async ({ pubkeys, data }: { pubkeys: Key[], data: Uint8Array }): Promise<{ data: Uint8Array, type: 'smime' }> => {
     const p7 = forge.pkcs7.createEnvelopedData();
     for (const pubkey of pubkeys) {
-      p7.addRecipient(forge.pki.certificateFromPem(PgpKey.armor(pubkey)));
+      p7.addRecipient(forge.pki.certificateFromPem(KeyUtil.armor(pubkey)));
     }
     const headers = `Content-Type: text/plain`;
     p7.content = forge.util.createBuffer(headers + '\r\n\r\n' + data);

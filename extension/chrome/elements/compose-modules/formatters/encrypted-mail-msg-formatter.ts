@@ -13,7 +13,7 @@ import { Att } from '../../../../js/common/core/att.js';
 import { Buf } from '../../../../js/common/core/buf.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { Lang } from '../../../../js/common/lang.js';
-import { PgpKey, PubkeyResult, Key } from '../../../../js/common/core/crypto/key.js';
+import { PubkeyResult, Key, KeyUtil } from '../../../../js/common/core/crypto/key.js';
 import { PgpMsg, PgpMsgMethod } from '../../../../js/common/core/crypto/pgp/pgp-msg.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { Settings } from '../../../../js/common/settings.js';
@@ -87,7 +87,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   private encryptDataArmor = async (data: Buf, pwd: string | undefined, pubs: PubkeyResult[], signingPrv?: Key): Promise<PgpMsgMethod.EncryptAnyArmorResult> => {
     const pgpPubs = pubs.filter(pub => pub.pubkey.type === 'openpgp');
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(pgpPubs);
-    const pubsForEncryption = PgpKey.choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport(pubs);
+    const pubsForEncryption = KeyUtil.choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport(pubs);
     return await PgpMsg.encrypt({ pubkeys: pubsForEncryption, signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as PgpMsgMethod.EncryptAnyArmorResult;
   }
 
@@ -125,7 +125,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const usableUntil: number[] = [];
     const usableFrom: number[] = [];
     for (const armoredPubkey of pubs) {
-      const oneSecondBeforeExpiration = PgpKey.dateBeforeExpirationIfAlreadyExpired(armoredPubkey.pubkey);
+      const oneSecondBeforeExpiration = KeyUtil.dateBeforeExpirationIfAlreadyExpired(armoredPubkey.pubkey);
       usableFrom.push(armoredPubkey.pubkey.created.getTime());
       if (typeof oneSecondBeforeExpiration !== 'undefined') { // key is expired
         usableUntil.push(oneSecondBeforeExpiration.getTime());

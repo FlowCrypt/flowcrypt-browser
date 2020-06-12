@@ -5,9 +5,8 @@
 import { Assert } from '../../js/common/assert.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Contact, Key } from '../../js/common/core/crypto/key.js';
+import { Contact, Key, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { PgpArmor } from '../../js/common/core/crypto/pgp/pgp-armor.js';
-import { PgpKey } from '../../js/common/core/crypto/key.js';
 import { Str } from '../../js/common/core/common.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
@@ -41,15 +40,15 @@ View.run(class PgpPubkeyView extends View {
   public render = async () => {
     Ui.event.protect();
     try {
-      this.publicKeys = [await PgpKey.parse(this.armoredPubkey)];
+      this.publicKeys = [await KeyUtil.parse(this.armoredPubkey)];
     } catch (e) {
       console.error('Unusable key: ' + e);
       this.publicKeys = [];
     }
     this.primaryPubKey = this.publicKeys ? this.publicKeys[0] : undefined;
     try {
-      const pubKey = await PgpKey.parse(this.armoredPubkey);
-      this.isExpired = PgpKey.expired(pubKey);
+      const pubKey = await KeyUtil.parse(this.armoredPubkey);
+      this.isExpired = KeyUtil.expired(pubKey);
     } catch (e) {
       console.error('Unusable key: ' + e);
     }
@@ -144,7 +143,7 @@ View.run(class PgpPubkeyView extends View {
           contacts.push(await ContactStore.obj({
             email,
             client: 'pgp',
-            pubkey: PgpKey.armor(pubkey),
+            pubkey: KeyUtil.armor(pubkey),
             lastUse: Date.now(),
             lastSig: Number(pubkey.lastModified)
           }));
@@ -159,7 +158,7 @@ View.run(class PgpPubkeyView extends View {
         const contact = await ContactStore.obj({
           email: String($('.input_email').val()),
           client: 'pgp',
-          pubkey: PgpKey.armor(this.publicKeys![0]),
+          pubkey: KeyUtil.armor(this.publicKeys![0]),
           lastUse: Date.now(),
           lastSig: Number(this.publicKeys![0].lastModified)
         });

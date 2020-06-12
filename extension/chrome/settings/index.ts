@@ -4,7 +4,7 @@
 
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Ui } from '../../js/common/browser/ui.js';
-import { KeyInfo, PgpKey } from '../../js/common/core/crypto/key.js';
+import { KeyInfo, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { Str, Url, UrlParams } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { Assert } from '../../js/common/assert.js';
@@ -380,7 +380,7 @@ View.run(class SettingsView extends View {
     let html = '';
     for (let i = 0; i < privateKeys.length; i++) {
       const ki = privateKeys[i];
-      const prv = await PgpKey.parse(ki.private);
+      const prv = await KeyUtil.parse(ki.private);
       const date = Str.monthName(prv.created.getMonth()) + ' ' + prv.created.getDate() + ', ' + prv.created.getFullYear();
       const escapedFp = Xss.escape(ki.fingerprint);
       const escapedPrimaryOrRm = (ki.primary) ? '(primary)' : `(<a href="#" class="action_remove_key" fingerprint="${escapedFp}">remove</a>)`;

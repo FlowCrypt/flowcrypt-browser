@@ -13,7 +13,7 @@ import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { GoogleAuth } from './api/google-auth.js';
 import { Lang } from './lang.js';
-import { PgpKey, Key } from './core/crypto/key.js';
+import { Key } from './core/crypto/key.js';
 import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
 import { OrgRules } from './org-rules.js';
 import { Xss } from './platform/xss.js';
@@ -23,6 +23,7 @@ import { GlobalStore } from './platform/store/global-store.js';
 import { AbstractStore } from './platform/store/abstract-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
+import { PgpKey } from './core/crypto/pgp/openpgp-key.js';
 
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
 

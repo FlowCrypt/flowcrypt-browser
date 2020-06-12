@@ -2,9 +2,8 @@
 
 'use strict';
 
-import { KeyInfo, PgpKey } from '../../js/common/core/crypto/key.js';
+import { KeyInfo, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { StorageType } from '../../js/common/platform/store/abstract-store.js';
-
 import { Assert } from '../../js/common/assert.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
@@ -15,6 +14,7 @@ import { Xss } from '../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
+import { PgpKey } from '../../js/common/core/crypto/pgp/openpgp-key.js';
 
 View.run(class PassphraseView extends View {
   private readonly acctEmail: string;
@@ -108,7 +108,7 @@ View.run(class PassphraseView extends View {
     const storageType: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
     let atLeastOneMatched = false;
     for (const keyinfo of this.myPrivateKeys!) { // if passphrase matches more keys, it will save the pass phrase for all keys
-      const prv = await PgpKey.parse(keyinfo.private);
+      const prv = await KeyUtil.parse(keyinfo.private);
       try {
         if (await PgpKey.decrypt(prv, pass) === true) {
           await PassphraseStore.set(storageType, this.acctEmail, keyinfo.fingerprint, pass);

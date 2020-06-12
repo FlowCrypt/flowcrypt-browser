@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
-import { Contact, KeyInfo, PgpKey, Key, PrvKeyInfo } from '../key.js';
+import { Contact, KeyInfo, Key, PrvKeyInfo, KeyUtil } from '../key.js';
 import { MsgBlockType, ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Value } from '../../common.js';
 import { Buf } from '../../buf.js';
@@ -11,7 +11,7 @@ import { opgp } from './openpgpjs-custom.js';
 import { KeyCache } from '../../../platform/key-cache.js';
 import { ContactStore } from '../../../platform/store/contact-store.js';
 import { SmimeKey } from '../smime/smime-key.js';
-import { OpenPGPKey } from './openpgp-key.js';
+import { OpenPGPKey, PgpKey } from './openpgp-key.js';
 
 export namespace PgpMsgMethod {
   export namespace Arg {
@@ -230,7 +230,7 @@ export class PgpMsg {
     const m = await opgp.message.readArmored(Buf.fromUint8(message).toUtfStr());
     const msgKeyIds = m.getEncryptionKeyIds ? m.getEncryptionKeyIds() : [];
     const localKeyIds: string[] = [];
-    for (const k of await Promise.all(privateKis.map(ki => PgpKey.parse(ki.public)))) {
+    for (const k of await Promise.all(privateKis.map(ki => KeyUtil.parse(ki.public)))) {
       localKeyIds.push(...k.ids);
     }
     const diagnosis = { found_match: false, receivers: msgKeyIds.length };
@@ -252,7 +252,7 @@ export class PgpMsg {
       keys.verificationContacts = verificationContacts.filter(contact => contact && contact.pubkey) as Contact[];
       keys.forVerification = [];
       for (const contact of keys.verificationContacts) {
-        const { keys: keysForVerification } = await opgp.key.readArmored(PgpKey.armor(contact.pubkey!));
+        const { keys: keysForVerification } = await opgp.key.readArmored(KeyUtil.armor(contact.pubkey!));
         keys.forVerification.push(...keysForVerification);
       }
     }
@@ -274,7 +274,7 @@ export class PgpMsg {
     await PgpMsg.cryptoMsgGetSignedBy(msg, keys);
     if (keys.encryptedFor.length) {
       for (const ki of kiWithPp) {
-        ki.parsed = await PgpKey.parse(ki.private); // todo
+        ki.parsed = await KeyUtil.parse(ki.private); // todo
         // this is inefficient because we are doing unnecessary parsing of all keys here
         // better would be to compare to already stored KeyInfo, however KeyInfo currently only holds primary longid, not longids of subkeys
         // while messages are typically encrypted for subkeys, thus we have to parse the key to get the info

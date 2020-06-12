@@ -8,13 +8,14 @@ import { KeyBlockType } from '../core/msg-block.js';
 import { Lang } from '../lang.js';
 import { MsgBlockParser } from '../core/msg-block-parser.js';
 import { PgpArmor } from '../core/crypto/pgp/pgp-armor.js';
-import { PgpKey, Key } from '../core/crypto/key.js';
+import { Key, KeyUtil } from '../core/crypto/key.js';
 import { PgpPwd } from '../core/crypto/pgp/pgp-password.js';
 import { Settings } from '../settings.js';
 import { Ui } from '../browser/ui.js';
 import { Url, Str } from '../core/common.js';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
 import { KeyStore } from '../platform/store/key-store.js';
+import { PgpKey } from '../core/crypto/pgp/openpgp-key.js';
 
 type KeyImportUiCheckResult = {
   normalized: string; longid: string; passphrase: string; fingerprint: string; decrypted: Key;
@@ -200,11 +201,11 @@ export class KeyImportUi {
     // non-OpenPGP keys are considered to be always normalized
     // TODO: PgpKey.normalize depends on OpenPGP.key.Key objects, when this is resolved
     // this check for key type should be moved to PgpKey.normalize function.
-    if (PgpKey.getKeyType(armored) !== 'openpgp') {
+    if (KeyUtil.getKeyType(armored) !== 'openpgp') {
       return { normalized: armored };
     }
     const headers = PgpArmor.headers(type);
-    const normalized = await PgpKey.normalize(armored);
+    const normalized = await KeyUtil.normalize(armored);
     if (!normalized) {
       throw new UserAlert('There was an error processing this key, possibly due to bad formatting.\nPlease insert complete key, including "' + headers.begin + '" and "' + headers.end + '"');
     }
@@ -213,7 +214,7 @@ export class KeyImportUi {
 
   private read = async (type: KeyBlockType, normalized: string) => {
     const headers = PgpArmor.headers(type);
-    const k = await PgpKey.parse(normalized);
+    const k = await KeyUtil.parse(normalized);
     if (typeof k === 'undefined') {
       throw new UserAlert(`${type === 'privateKey' ? 'Private' : 'Public'} key is not correctly formatted. Please insert complete key, including "${headers.begin}" and "${headers.end}"`);
     }
@@ -287,7 +288,7 @@ export class KeyImportUi {
 
   private checkEncryptionPrvIfSelected = async (k: Key, encrypted: Key) => {
     if (this.checkEncryption && !k.usableForEncryption) {
-      if (await PgpKey.isWithoutSelfCertifications(k)) {
+      if (await KeyUtil.isWithoutSelfCertifications(k)) {
         throw new KeyCanBeFixed(encrypted);
       } else if (k.usableButExpired) {
         // Currently have 2 options: import or skip. Would be better to give user 3 choices:
@@ -306,7 +307,7 @@ export class KeyImportUi {
   }
 
   private checkEncryptionPubIfSelected = async (normalized: string) => {
-    const key = await PgpKey.parse(normalized);
+    const key = await KeyUtil.parse(normalized);
     if (this.checkEncryption && !key.usableForEncryption) {
       throw new UserAlert('This public key looks correctly formatted, but cannot be used for encryption. Please write at human@flowcrypt.com. We\'ll see if there is a way to fix it.');
     }

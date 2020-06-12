@@ -5,13 +5,14 @@
 import { SetupOptions, SetupView } from '../setup.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Lang } from '../../../js/common/lang.js';
-import { PgpKey, KeyAlgo } from '../../../js/common/core/crypto/key.js';
+import { KeyAlgo, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { shouldPassPhraseBeHidden } from '../../../js/common/ui/passphrase-ui.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { PgpKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 export class SetupCreateKeyModule {
 
@@ -72,7 +73,7 @@ export class SetupCreateKeyModule {
     const expireMonths = this.view.orgRules.getEnforcedKeygenExpirationMonths();
     try {
       const key = await PgpKey.create(pgpUids, keyAlgo, options.passphrase, expireMonths);
-      const prv = await PgpKey.parse(key.private);
+      const prv = await KeyUtil.parse(key.private);
       await this.view.saveKeysAndPassPhrase([prv], options);
     } catch (e) {
       Catch.reportErr(e);

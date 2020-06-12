@@ -8,8 +8,7 @@ import { Att } from '../../../js/common/core/att.js';
 import { Backend } from '../../../js/common/api/backend.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { KeyInfo, Key } from '../../../js/common/core/crypto/key.js';
-import { PgpKey } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
@@ -18,6 +17,7 @@ import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { PgpKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 declare const ClipboardJS: any;
 
@@ -45,7 +45,7 @@ View.run(class MyKeyView extends View {
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
     [this.keyInfo] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
-    this.pubKey = await PgpKey.parse(this.keyInfo.public);
+    this.pubKey = await KeyUtil.parse(this.keyInfo.public);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
     $('.action_view_update').attr('href', this.myKeyUpdateUrl);
@@ -72,7 +72,7 @@ View.run(class MyKeyView extends View {
     try {
       const result = await this.pubLookup.attester.lookupEmail(this.acctEmail);
       const url = Backend.url('pubkey', this.acctEmail);
-      if (result.pubkey && (await PgpKey.parse(result.pubkey)).id === this.keyInfo.fingerprint) {
+      if (result.pubkey && (await KeyUtil.parse(result.pubkey)).id === this.keyInfo.fingerprint) {
         $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('display', '');
       } else {
         $('.pubkey_link_container').remove();
@@ -84,7 +84,7 @@ View.run(class MyKeyView extends View {
   }
 
   private downloadRevocationCert = async (enteredPP?: string) => {
-    const prv = await PgpKey.parse(this.keyInfo.private);
+    const prv = await KeyUtil.parse(this.keyInfo.private);
     if (!prv.fullyDecrypted) {
       const passphrase = await PassphraseStore.get(this.acctEmail, this.keyInfo.fingerprint) || enteredPP;
       if (passphrase) {

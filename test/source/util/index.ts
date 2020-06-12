@@ -2,7 +2,7 @@
 
 import * as fs from 'fs';
 
-import { KeyInfo } from '../core/pgp-key.js';
+import { KeyInfo } from '../core/crypto/key.js';
 
 export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL';
 

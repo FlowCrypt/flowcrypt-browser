@@ -4,9 +4,8 @@
 
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { KeyInfo } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Lang } from '../../../js/common/lang.js';
-import { PgpKey } from '../../../js/common/core/crypto/key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
@@ -34,7 +33,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
 
   public chooseMyPublicKeyBySenderEmail = async (keys: KeyInfo[], email: string) => {
     for (const key of keys) {
-      const parsedkey = await PgpKey.parse(key.public);
+      const parsedkey = await KeyUtil.parse(key.public);
       if (parsedkey.emails.includes(email.toLowerCase())) {
         return key;
       }

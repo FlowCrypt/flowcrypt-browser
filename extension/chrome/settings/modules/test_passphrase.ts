@@ -5,7 +5,7 @@
 import { Assert } from '../../../js/common/assert.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Lang } from '../../../js/common/lang.js';
-import { PgpKey, Key } from '../../../js/common/core/crypto/key.js';
+import { Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
@@ -13,6 +13,7 @@ import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { PgpKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 View.run(class TestPassphrase extends View {
   private readonly acctEmail: string;
@@ -30,7 +31,7 @@ View.run(class TestPassphrase extends View {
     const [keyInfo] = await KeyStore.get(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(keyInfo);
     await initPassphraseToggle(['password']);
-    this.primaryKey = await PgpKey.parse(keyInfo.private);
+    this.primaryKey = await KeyUtil.parse(keyInfo.private);
     if (!this.primaryKey.fullyEncrypted) {
       const setUpPpUrl = Url.create('change_passphrase.htm', { acctEmail: this.acctEmail, parentTabId: this.parentTabId });
       Xss.sanitizeRender('#content', `<div class="line">No pass phrase set up yet: <a href="${setUpPpUrl}">set up pass phrase</a></div>`);

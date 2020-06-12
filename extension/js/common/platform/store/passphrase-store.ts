@@ -5,7 +5,7 @@ import { AccountIndex, AcctStore, AcctStoreDict } from './acct-store.js';
 import { SessionStore } from './session-store.js';
 import { PromiseCancellation, Dict } from '../../core/common.js';
 import { Ui } from '../../browser/ui.js';
-import { PgpKey } from '../../core/crypto/key.js';
+import { PgpKey } from '../../core/crypto/pgp/openpgp-key.js';
 
 /**
  * Local or session store of pass phrases

@@ -8,7 +8,6 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Lang } from '../../../js/common/lang.js';
-import { PgpKey } from '../../../js/common/core/crypto/key.js';
 import { RecipientType } from '../../../js/common/api/api.js';
 import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
@@ -21,6 +20,7 @@ import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { GmailParser } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
+import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 
 export class ComposeRenderModule extends ViewModule<ComposeView> {
 
@@ -282,7 +282,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       } catch (e) {
         return; // key is invalid
       }
-      const { keys: [key] } = await PgpKey.parseDetails(normalizedPub);
+      const { keys: [key] } = await KeyUtil.parseDetails(normalizedPub);
       if (!key.users.length) { // there can be no users
         return;
       }
