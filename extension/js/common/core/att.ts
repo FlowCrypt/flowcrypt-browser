@@ -28,7 +28,7 @@ export class Att {
   public cid: string | undefined;
   public contentDescription: string | undefined;
 
-  public bytes: Uint8Array | undefined;
+  private bytes: Uint8Array | undefined;
   private treatAsValue: Att$treatAs | undefined;
 
   public static keyinfoAsPubkeyAtt = (ki: { public: string, longid: string }) => {

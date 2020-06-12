@@ -12,9 +12,22 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
+export type AttachmentType = 'img' | 'txt';
+
 export class PgpBlockViewAttachmentsModule {
 
   public includedAtts: Att[] = [];
+
+  public static getAttachmentType = (filename: string): AttachmentType | undefined => {
+    const nameSplit = filename.split('.');
+    const extension = nameSplit[nameSplit.length - 1].toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) {
+      return 'img';
+    } else if (extension === 'txt') {
+      return 'txt';
+    }
+    return undefined;
+  }
 
   constructor(private view: PgpBlockView) {
   }

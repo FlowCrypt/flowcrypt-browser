@@ -260,16 +260,13 @@ export class Ui {
         }
       });
     },
-    attachment: async (filename: string, url: string, html: string, downloadBtn: string): Promise<void> => {
+    attachment: async (iframeUrl: string): Promise<void> => {
       await Ui.swal().fire({
         onOpen: () => {
           $(Swal.getContent()).attr('data-test', 'attachment-dialog');
           $(Swal.getCloseButton()).attr('data-test', 'dialog-close').blur();
-          const downloadBtnEl = $(downloadBtn);
-          downloadBtnEl.on('click', e => e.preventDefault());
-          $(Swal.getCloseButton()).before(downloadBtnEl);
         },
-        html,
+        html: `<iframe src="${Xss.escape(iframeUrl)}" style="border: 0"></iframe>`,
         showConfirmButton: false,
         showCloseButton: true,
         grow: 'fullscreen',

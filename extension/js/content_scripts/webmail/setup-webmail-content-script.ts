@@ -14,7 +14,6 @@ import { Ui } from '../../common/browser/ui.js';
 import { VERSION } from '../../common/core/const.js';
 import { AcctStore } from '../../common/platform/store/acct-store.js';
 import { GlobalStore } from '../../common/platform/store/global-store.js';
-import { Xss } from '../../common/platform/xss.js';
 
 export type WebmailVariantObject = { newDataLayer: undefined | boolean, newUi: undefined | boolean, email: undefined | string, gmailVariant: WebmailVariantString };
 export type IntervalFunction = { interval: number, handler: () => void };
@@ -169,17 +168,9 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     });
     BrowserMsg.addListener('reply_pubkey_mismatch', BrowserMsgCommonHandlers.replyPubkeyMismatch);
     BrowserMsg.addListener('add_end_session_btn', () => inject.insertEndSessionBtn(acctEmail));
-    BrowserMsg.addListener('show_attachment', async ({ filename, content, type, attachmentType }: Bm.ShowAttachment) => {
-      const blob = new Blob([content], { type });
-      const url = window.URL.createObjectURL(blob);
-      let attHtml = '';
-      if (attachmentType === 'img') {
-        attHtml = `<img src="${url}" class="attachment-img" alt="${filename}">`;
-      } else if (attachmentType === 'txt') {
-        attHtml = `<div class="attachment-txt">${Xss.escape(content.toString()).replace(/\n/g, '<br>')}</div>`;
-      }
-      const downloadBtn = (new XssSafeFactory(acctEmail, tabId)).btnDownloadAttachment(url, filename);
-      await Ui.modal.attachment(filename, url, attHtml, downloadBtn);
+    BrowserMsg.addListener('show_attachment', async ({ att, isEncrypted }: Bm.ShowAttachment) => {
+      const iframeUrl = factory.srcPgpAttIframe(att, isEncrypted, 'chrome/elements/attachment_preview.htm');
+      await Ui.modal.attachment(iframeUrl);
     });
 
     BrowserMsg.listen(tabId);
