@@ -30,7 +30,7 @@ export interface Key {
   // TODO: Aren't isPublic and isPrivate mutually exclusive?
   isPublic: boolean;
   isPrivate: boolean;
-  checkPassword(password: string): Promise<boolean>;
+  checkPassPhrase(password: string): Promise<boolean>;
 }
 
 export type PubkeyResult = { pubkey: Key, email: string, isMine: boolean };

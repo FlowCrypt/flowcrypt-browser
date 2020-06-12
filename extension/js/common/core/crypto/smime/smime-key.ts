@@ -19,7 +19,7 @@ export class SmimeKey {
       created: certificate.validity.notBefore,
       lastModified: certificate.validity.notBefore,
       expiration: certificate.validity.notAfter,
-      checkPassword: _ => { throw new Error('Not implemented yet.'); },
+      checkPassPhrase: _ => { throw new Error('Not implemented yet.'); },
       fullyDecrypted: false,
       fullyEncrypted: false,
       isPublic: true,
