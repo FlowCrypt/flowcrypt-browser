@@ -5,7 +5,7 @@
 import { Assert } from '../../../js/common/assert.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Lang } from '../../../js/common/lang.js';
-import { PgpKey, Pubkey } from '../../../js/common/core/pgp-key.js';
+import { PgpKey, Pubkey } from '../../../js/common/core/crypto/pgp/pgp-key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';

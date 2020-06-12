@@ -3,7 +3,7 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { FormatError, PgpMsg, DecryptErrTypes } from '../../../js/common/core/pgp-msg.js';
+import { FormatError, PgpMsg, DecryptErrTypes } from '../../../js/common/core/crypto/pgp/pgp-msg.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';

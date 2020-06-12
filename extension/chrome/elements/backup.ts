@@ -5,8 +5,8 @@
 import { Assert } from '../../js/common/assert.js';
 import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
-import { KeyInfo } from '../../js/common/core/pgp-key.js';
-import { PgpKey } from '../../js/common/core/pgp-key.js';
+import { KeyInfo } from '../../js/common/core/crypto/pgp/pgp-key.js';
+import { PgpKey } from '../../js/common/core/crypto/pgp/pgp-key.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url, Str } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';

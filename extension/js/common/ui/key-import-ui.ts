@@ -7,13 +7,13 @@ import { Catch } from '../platform/catch.js';
 import { KeyBlockType } from '../core/msg-block.js';
 import { Lang } from '../lang.js';
 import { MsgBlockParser } from '../core/msg-block-parser.js';
-import { PgpArmor } from '../core/pgp-armor.js';
-import { PgpKey, Pubkey } from '../core/pgp-key.js';
-import { PgpPwd } from '../core/pgp-password.js';
+import { PgpArmor } from '../core/crypto/pgp/pgp-armor.js';
+import { PgpKey, Pubkey } from '../core/crypto/pgp/pgp-key.js';
+import { PgpPwd } from '../core/crypto/pgp/pgp-password.js';
 import { Settings } from '../settings.js';
 import { Ui } from '../browser/ui.js';
 import { Url, Str } from '../core/common.js';
-import { opgp } from '../core/pgp.js';
+import { opgp } from '../core/crypto/pgp/pgp.js';
 import { KeyStore } from '../platform/store/key-store.js';
 
 type KeyImportUiCheckResult = {

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { base64encode, secureRandomBytes } from '../platform/util.js';
+import { base64encode, secureRandomBytes } from '../../../platform/util.js';
 
 import { opgp } from './pgp.js';
 

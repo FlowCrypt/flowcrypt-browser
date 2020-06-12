@@ -1,10 +1,10 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 import { Pubkey, PgpKey, PrvPacket } from './pgp-key.js';
 import { opgp } from './pgp.js';
-import { Catch } from '../platform/catch.js';
-import { Str } from './common.js';
+import { Catch } from '../../../platform/catch.js';
+import { Str } from '../../common.js';
 import { PgpHash } from './pgp-hash.js';
-import { Buf } from './buf.js';
+import { Buf } from '../../buf.js';
 import { PgpMsgMethod } from './pgp-msg.js';
 
 const internal = Symbol('internal public key');

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { KeyInfo } from '../../core/pgp-key.js';
+import { KeyInfo } from '../../core/crypto/pgp/pgp-key.js';
 import { Dict } from '../../core/common.js';
 import { SubscriptionInfo } from '../../api/backend.js';
 import { DomainRulesJson } from '../../org-rules.js';

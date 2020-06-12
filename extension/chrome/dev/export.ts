@@ -13,7 +13,7 @@ import { Catch } from '../../js/common/platform/catch.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
-import { opgp } from '../../js/common/core/pgp.js';
+import { opgp } from '../../js/common/core/crypto/pgp/pgp.js';
 
 Catch.try(async () => {
 

@@ -3,7 +3,7 @@
 'use strict';
 
 import { Catch } from './catch.js';
-import { Pubkey } from '../core/pgp-key.js';
+import { Pubkey } from '../core/crypto/pgp/pgp-key.js';
 
 let KEY_CACHE: { [longidOrArmoredKey: string]: Pubkey } = {};
 let KEY_CACHE_WIPE_TIMEOUT: number;

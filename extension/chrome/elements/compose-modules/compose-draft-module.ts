@@ -11,14 +11,14 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { EncryptedMsgMailFormatter } from './formatters/encrypted-mail-msg-formatter.js';
 import { Env } from '../../../js/common/browser/env.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
-import { PgpMsg } from '../../../js/common/core/pgp-msg.js';
+import { PgpMsg } from '../../../js/common/core/crypto/pgp/pgp-msg.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { PgpKey } from '../../../js/common/core/crypto/pgp/pgp-key.js';
 
 export class ComposeDraftModule extends ViewModule<ComposeView> {
 

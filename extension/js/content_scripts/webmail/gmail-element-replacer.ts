@@ -16,7 +16,7 @@ import { Gmail } from '../../common/api/email-provider/gmail/gmail.js';
 import { Injector } from '../../common/inject.js';
 import { PubLookup } from '../../common/api/pub-lookup.js';
 import { Notifications } from '../../common/notifications.js';
-import { PgpArmor } from '../../common/core/pgp-armor.js';
+import { PgpArmor } from '../../common/core/crypto/pgp/pgp-armor.js';
 import { Ui } from '../../common/browser/ui.js';
 import { WebmailCommon } from "../../common/webmail.js";
 import { Xss } from '../../common/platform/xss.js';

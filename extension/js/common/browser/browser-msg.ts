@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, VerifyRes, PgpMsgTypeResult } from '../core/pgp-msg.js';
+import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, VerifyRes, PgpMsgTypeResult } from '../core/crypto/pgp/pgp-msg.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
 import { AjaxErr } from '../api/error/api-error-types.js';
 import { AuthRes } from '../api/google-auth.js';
@@ -11,11 +11,11 @@ import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
 import { Buf } from '../core/buf.js';
 import { Catch } from '../platform/catch.js';
 import { Env } from './env.js';
-import { KeyDetails } from '../core/pgp-key.js';
+import { KeyDetails } from '../core/crypto/pgp/pgp-key.js';
 import { PassphraseDialogType } from '../xss-safe-factory.js';
-import { PgpHash } from '../core/pgp-hash.js';
-import { PgpKey } from '../core/pgp-key.js';
-import { PgpMsg } from '../core/pgp-msg.js';
+import { PgpHash } from '../core/crypto/pgp/pgp-hash.js';
+import { PgpKey } from '../core/crypto/pgp/pgp-key.js';
+import { PgpMsg } from '../core/crypto/pgp/pgp-msg.js';
 import { Ui } from './ui.js';
 import { GlobalStoreDict, GlobalIndex } from '../platform/store/global-store.js';
 import { AcctStoreDict, AccountIndex } from '../platform/store/acct-store.js';

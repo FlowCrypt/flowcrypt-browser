@@ -7,7 +7,7 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { PgpBlockView } from '../pgp_block';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { VerifyRes } from '../../../js/common/core/pgp-msg.js';
+import { VerifyRes } from '../../../js/common/core/crypto/pgp/pgp-msg.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 
 export class PgpBlockViewSignatureModule {

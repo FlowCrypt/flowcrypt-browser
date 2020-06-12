@@ -10,7 +10,7 @@ import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Backups } from '../../../js/common/api/email-provider/email-provider-api.js';
-import { KeyInfo } from '../../../js/common/core/pgp-key.js';
+import { KeyInfo } from '../../../js/common/core/crypto/pgp/pgp-key.js';
 import { Str } from '../../../js/common/core/common.js';
 
 export class BackupStatusModule extends ViewModule<BackupView> {

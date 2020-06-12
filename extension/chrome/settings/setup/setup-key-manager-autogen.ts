@@ -4,12 +4,12 @@
 
 import { SetupOptions, SetupView } from '../setup.js';
 
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { PgpKey } from '../../../js/common/core/crypto/pgp/pgp-key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { PgpPwd } from '../../../js/common/core/pgp-password.js';
+import { PgpPwd } from '../../../js/common/core/crypto/pgp/pgp-password.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Settings } from '../../../js/common/settings.js';

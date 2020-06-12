@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { DecryptErrTypes, PgpMsg } from '../../../js/common/core/pgp-msg.js';
+import { DecryptErrTypes, PgpMsg } from '../../../js/common/core/crypto/pgp/pgp-msg.js';
 
 import { Assert } from '../../../js/common/assert.js';
 import { Att } from '../../../js/common/core/att.js';

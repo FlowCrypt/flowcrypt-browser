@@ -3,12 +3,12 @@
 'use strict';
 
 import { Buf } from '../../../js/common/core/buf.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
-import { PgpMsg } from '../../../js/common/core/pgp-msg.js';
+import { PgpKey } from '../../../js/common/core/crypto/pgp/pgp-key.js';
+import { PgpMsg } from '../../../js/common/core/crypto/pgp/pgp-msg.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { opgp } from '../../../js/common/core/pgp.js';
+import { opgp } from '../../../js/common/core/crypto/pgp/pgp.js';
 import { Str } from '../../../js/common/core/common.js';
 
 View.run(class CompatibilityView extends View {

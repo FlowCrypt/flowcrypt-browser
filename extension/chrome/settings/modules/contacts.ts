@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Contact, PgpKey, Pubkey } from '../../../js/common/core/pgp-key.js';
+import { Contact, PgpKey, Pubkey } from '../../../js/common/core/crypto/pgp/pgp-key.js';
 import { Str, Url } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';

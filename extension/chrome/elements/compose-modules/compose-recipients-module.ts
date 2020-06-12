@@ -3,7 +3,7 @@
 'use strict';
 
 import { ChunkedCb, RecipientType } from '../../../js/common/api/api.js';
-import { Contact } from '../../../js/common/core/pgp-key.js';
+import { Contact } from '../../../js/common/core/crypto/pgp/pgp-key.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './compose-err-module.js';
 import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { RecipientElement, RecipientStatus, RecipientStatuses } from './compose-types.js';

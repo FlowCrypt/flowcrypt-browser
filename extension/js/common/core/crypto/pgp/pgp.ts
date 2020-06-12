@@ -4,8 +4,8 @@
 
 import { PgpKey, PrvPacket } from './pgp-key.js';
 
-import { VERSION } from './const.js';
-import { requireOpenpgp } from '../platform/require.js';
+import { VERSION } from '../../const.js';
+import { requireOpenpgp } from '../../../platform/require.js';
 
 export const opgp = requireOpenpgp();
 

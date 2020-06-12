@@ -2,18 +2,20 @@
 
 'use strict';
 
-import { Buf } from './buf.js';
-import { Catch, UnreportableError } from '../platform/catch.js';
-import { MsgBlockParser } from './msg-block-parser.js';
+import { Buf } from '../../buf.js';
+import { Catch, UnreportableError } from '../../../platform/catch.js';
+import { MsgBlockParser } from '../../msg-block-parser.js';
 import { PgpArmor } from './pgp-armor.js';
 import { opgp } from './pgp.js';
 import { OpenPGPKey } from './openpgp-key.js';
-import { SmimeKey } from './smime-key.js';
+import { SmimeKey } from '../smime/smime-key.js';
 
+/**
+ * This is a common Pubkey interface for both pgp and x509 keys
+ */
 export interface Pubkey {
   type: 'openpgp' | 'x509';
-  // This is a fingerprint for OpenPGP keys and Serial Number for X.509 keys.
-  id: string;
+  id: string; // This is a fingerprint for OpenPGP keys and Serial Number for X.509 keys.
   ids: string[];
   created: Date;
   lastModified: Date | undefined;

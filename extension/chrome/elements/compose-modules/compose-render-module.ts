@@ -8,7 +8,7 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Lang } from '../../../js/common/lang.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { PgpKey } from '../../../js/common/core/crypto/pgp/pgp-key.js';
 import { RecipientType } from '../../../js/common/api/api.js';
 import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';

@@ -8,8 +8,8 @@ import { SanitizeImgHandling, Xss } from '../platform/xss.js';
 import { Buf } from './buf.js';
 import { Catch } from '../platform/catch.js';
 import { Mime } from './mime.js';
-import { PgpArmor } from './pgp-armor.js';
-import { PgpKey } from './pgp-key.js';
+import { PgpArmor } from './crypto/pgp/pgp-armor.js';
+import { PgpKey } from './crypto/pgp/pgp-key.js';
 import { Str } from './common.js';
 import { FcAttLinkData } from './att.js';
 

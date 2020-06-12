@@ -9,7 +9,7 @@ import { Assert } from '../../../js/common/assert.js';
 import { Att } from '../../../js/common/core/att.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
-import { PgpKey, KeyInfo } from '../../../js/common/core/pgp-key.js';
+import { PgpKey, KeyInfo } from '../../../js/common/core/crypto/pgp/pgp-key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';

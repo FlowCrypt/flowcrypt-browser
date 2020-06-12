@@ -5,9 +5,9 @@
 import { Att } from '../core/att.js';
 import { Catch, UnreportableError } from '../platform/catch.js';
 import { Dict } from '../core/common.js';
-import { PgpMsg } from '../core/pgp-msg.js';
+import { PgpMsg } from '../core/crypto/pgp/pgp-msg.js';
 import { Ui } from '../browser/ui.js';
-import { PgpKey, PubkeyResult } from '../core/pgp-key.js';
+import { PgpKey, PubkeyResult } from '../core/crypto/pgp/pgp-key.js';
 
 declare const qq: any;
 

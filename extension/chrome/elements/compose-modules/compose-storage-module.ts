@@ -3,14 +3,14 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Contact, KeyInfo } from '../../../js/common/core/pgp-key.js';
+import { Contact, KeyInfo } from '../../../js/common/core/crypto/pgp/pgp-key.js';
 import { PubkeySearchResult } from '../../../js/common/api/pub-lookup.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { CollectPubkeysResult } from './compose-types.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from './compose-err-module.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { PgpKey } from '../../../js/common/core/crypto/pgp/pgp-key.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';

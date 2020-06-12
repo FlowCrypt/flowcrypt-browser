@@ -3,10 +3,10 @@
 import { PgpClient } from '../../api/pub-lookup.js';
 import { AbstractStore } from './abstract-store.js';
 import { Catch } from '../catch.js';
-import { opgp } from '../../core/pgp.js';
+import { opgp } from '../../core/crypto/pgp/pgp.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { Str } from '../../core/common.js';
-import { PgpKey, Pubkey, Contact } from '../../core/pgp-key.js';
+import { PgpKey, Pubkey, Contact } from '../../core/crypto/pgp/pgp-key.js';
 
 // tslint:disable:no-null-keyword
 

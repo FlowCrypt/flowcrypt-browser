@@ -2,15 +2,15 @@
 
 'use strict';
 import { Contact, KeyInfo, PgpKey, Pubkey, PrvKeyInfo } from './pgp-key.js';
-import { MsgBlockType, ReplaceableMsgBlockType } from './msg-block.js';
-import { Value } from './common.js';
-import { Buf } from './buf.js';
-import { Catch } from '../platform/catch.js';
+import { MsgBlockType, ReplaceableMsgBlockType } from '../../msg-block.js';
+import { Value } from '../../common.js';
+import { Buf } from '../../buf.js';
+import { Catch } from '../../../platform/catch.js';
 import { PgpArmor, PreparedForDecrypt } from './pgp-armor.js';
 import { opgp } from './pgp.js';
-import { KeyCache } from '../platform/key-cache.js';
-import { ContactStore } from '../platform/store/contact-store.js';
-import { SmimeKey } from './smime-key.js';
+import { KeyCache } from '../../../platform/key-cache.js';
+import { ContactStore } from '../../../platform/store/contact-store.js';
+import { SmimeKey } from '../smime/smime-key.js';
 import { OpenPGPKey } from './openpgp-key.js';
 
 export namespace PgpMsgMethod {

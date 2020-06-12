@@ -11,7 +11,7 @@ import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
-import { opgp } from '../../js/common/core/pgp.js';
+import { opgp } from '../../js/common/core/crypto/pgp/pgp.js';
 import { ComposeAttsModule } from './compose-modules/compose-atts-module.js';
 import { ComposeDraftModule } from './compose-modules/compose-draft-module.js';
 import { ComposeErrModule } from './compose-modules/compose-err-module.js';
