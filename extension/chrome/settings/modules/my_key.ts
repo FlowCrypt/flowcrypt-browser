@@ -8,7 +8,7 @@ import { Att } from '../../../js/common/core/att.js';
 import { Backend } from '../../../js/common/api/backend.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { KeyInfo, Pubkey } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo, Key } from '../../../js/common/core/crypto/key.js';
 import { PgpKey } from '../../../js/common/core/crypto/key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url, Str } from '../../../js/common/core/common.js';
@@ -28,7 +28,7 @@ View.run(class MyKeyView extends View {
   private readonly myKeyUserIdsUrl: string;
   private readonly myKeyUpdateUrl: string;
   private keyInfo!: KeyInfo;
-  private pubKey!: Pubkey;
+  private pubKey!: Key;
   private orgRules!: OrgRules;
   private pubLookup!: PubLookup;
 

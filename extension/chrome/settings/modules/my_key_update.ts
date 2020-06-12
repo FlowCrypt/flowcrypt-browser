@@ -4,7 +4,7 @@
 
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { KeyInfo, Pubkey } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo, Key } from '../../../js/common/core/crypto/key.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpArmor } from '../../../js/common/core/crypto/pgp/pgp-armor.js';
 import { PgpKey } from '../../../js/common/core/crypto/key.js';
@@ -52,7 +52,7 @@ View.run(class MyKeyUpdateView extends View {
     $('.input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_update_private_key'));
   }
 
-  private storeUpdatedKeyAndPassphrase = async (updatedPrv: Pubkey, updatedPrvPassphrase: string) => {
+  private storeUpdatedKeyAndPassphrase = async (updatedPrv: Key, updatedPrvPassphrase: string) => {
     const storedPassphrase = await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprint, true);
     await KeyStore.add(this.acctEmail, PgpKey.armor(updatedPrv));
     await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.fingerprint, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);

@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
-import { Contact, KeyInfo, PgpKey, Pubkey, PrvKeyInfo } from '../key.js';
+import { Contact, KeyInfo, PgpKey, Key, PrvKeyInfo } from '../key.js';
 import { MsgBlockType, ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Value } from '../../common.js';
 import { Buf } from '../../buf.js';
@@ -15,7 +15,7 @@ import { OpenPGPKey } from './openpgp-key.js';
 
 export namespace PgpMsgMethod {
   export namespace Arg {
-    export type Encrypt = { pubkeys: Pubkey[], signingPrv?: Pubkey, pwd?: string, data: Uint8Array, filename?: string, armor: boolean, date?: Date };
+    export type Encrypt = { pubkeys: Key[], signingPrv?: Key, pwd?: string, data: Uint8Array, filename?: string, armor: boolean, date?: Date };
     export type Type = { data: Uint8Array | string };
     export type Decrypt = { kisWithPp: PrvKeyInfo[], encryptedData: Uint8Array, msgPwd?: string };
     export type DiagnosePubkeys = { privateKis: KeyInfo[], message: Uint8Array };
@@ -127,7 +127,7 @@ export class PgpMsg {
    * Returns signed data if detached=false, armored
    * Returns signature if detached=true, armored
    */
-  public static sign = async (signingPrivate: Pubkey, data: string, detached = false): Promise<string> => {
+  public static sign = async (signingPrivate: Key, data: string, detached = false): Promise<string> => {
     // TODO: Delegate to appropriate key type
     return await OpenPGPKey.sign(signingPrivate, data, detached);
   }
@@ -307,11 +307,11 @@ export class PgpMsg {
     return keys;
   }
 
-  private static matchingKeyids = (key: Pubkey, encryptedFor: string[]): string[] => {
+  private static matchingKeyids = (key: Key, encryptedFor: string[]): string[] => {
     return key.ids.filter(kid => encryptedFor.includes(kid));
   }
 
-  private static decryptKeyFor = async (prv: Pubkey, passphrase: string, matchingKeyIds: string[]): Promise<boolean> => {
+  private static decryptKeyFor = async (prv: Key, passphrase: string, matchingKeyIds: string[]): Promise<boolean> => {
     if (!matchingKeyIds.length) { // we don't know which keyids match, decrypt all key packets
       return await PgpKey.decrypt(prv, passphrase, undefined, 'OK-IF-ALREADY-DECRYPTED');
     }
@@ -323,7 +323,7 @@ export class PgpMsg {
     return true;
   }
 
-  private static isKeyDecryptedFor = (prv: Pubkey, msgKeyIds: string[]): boolean => {
+  private static isKeyDecryptedFor = (prv: Key, msgKeyIds: string[]): boolean => {
     if (prv.fullyDecrypted) {
       return true; // primary k + all subkeys decrypted, therefore it must be decrypted for any/every particular keyid
     }

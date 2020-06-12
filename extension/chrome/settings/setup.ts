@@ -7,7 +7,7 @@ import { Url } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Contact, KeyInfo, Pubkey } from '../../js/common/core/crypto/key.js';
+import { Contact, KeyInfo, Key } from '../../js/common/core/crypto/key.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/google.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
@@ -197,7 +197,7 @@ export class SetupView extends View {
     await AcctStore.remove(this.acctEmail, ['tmp_submit_main', 'tmp_submit_all']);
   }
 
-  public saveKeysAndPassPhrase = async (prvs: Pubkey[], options: SetupOptions) => {
+  public saveKeysAndPassPhrase = async (prvs: Key[], options: SetupOptions) => {
     for (const prv of prvs) {
       const fingerprint = await PgpKey.fingerprint(prv);
       if (!fingerprint) {

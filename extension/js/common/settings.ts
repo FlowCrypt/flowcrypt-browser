@@ -13,7 +13,7 @@ import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { GoogleAuth } from './api/google-auth.js';
 import { Lang } from './lang.js';
-import { PgpKey, Pubkey } from './core/crypto/key.js';
+import { PgpKey, Key } from './core/crypto/key.js';
 import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
 import { OrgRules } from './org-rules.js';
 import { Xss } from './platform/xss.js';
@@ -152,8 +152,8 @@ export class Settings {
   }
 
   public static renderPrvCompatFixUiAndWaitTilSubmittedByUser = async (
-    acctEmail: string, containerStr: string | JQuery<HTMLElement>, origPrv: Pubkey, passphrase: string, backUrl: string
-  ): Promise<Pubkey> => {
+    acctEmail: string, containerStr: string | JQuery<HTMLElement>, origPrv: Key, passphrase: string, backUrl: string
+  ): Promise<Key> => {
     const uids = origPrv.identities;
     if (!uids.length) {
       uids.push(acctEmail);

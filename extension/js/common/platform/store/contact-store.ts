@@ -6,7 +6,7 @@ import { Catch } from '../catch.js';
 import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { Str } from '../../core/common.js';
-import { PgpKey, Pubkey, Contact } from '../../core/crypto/key.js';
+import { PgpKey, Key, Contact } from '../../core/crypto/key.js';
 
 // tslint:disable:no-null-keyword
 
@@ -24,7 +24,7 @@ export type DbContactObjArg = {
 export type ContactUpdate = {
   email?: string;
   name?: string | null;
-  pubkey?: Pubkey;
+  pubkey?: Key;
   has_pgp?: 0 | 1;
   searchable?: string[];
   client?: string | null;

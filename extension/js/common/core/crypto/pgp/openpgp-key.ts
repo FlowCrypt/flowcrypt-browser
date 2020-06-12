@@ -1,5 +1,5 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
-import { Pubkey, PgpKey, PrvPacket } from '../key.js';
+import { Key, PgpKey, PrvPacket } from '../key.js';
 import { opgp } from './openpgpjs-custom.js';
 import { Catch } from '../../../platform/catch.js';
 import { Str } from '../../common.js';
@@ -11,29 +11,29 @@ const internal = Symbol('internal public key');
 
 export class OpenPGPKey {
 
-  public static parse = async (text: string): Promise<Pubkey> => {
+  public static parse = async (text: string): Promise<Key> => {
     const result = await opgp.key.readArmored(text);
     if (result.err) {
       throw new Error('Cannot parse OpenPGP key: ' + result.err + ' for: ' + text);
     }
-    return await OpenPGPKey.wrap(result.keys[0], {} as Pubkey, text);
+    return await OpenPGPKey.wrap(result.keys[0], {} as Key, text);
   }
 
-  public static isPacketDecrypted = (pubkey: Pubkey, keyid: string) => {
+  public static isPacketDecrypted = (pubkey: Key, keyid: string) => {
     return OpenPGPKey.unwrap(pubkey).isPacketDecrypted({ bytes: keyid });
   }
 
-  public static asPublicKey = async (pubkey: Pubkey): Promise<Pubkey> => {
+  public static asPublicKey = async (pubkey: Key): Promise<Key> => {
     if (pubkey.type !== 'openpgp') {
       throw new Error('Unsupported key type: ' + pubkey.type);
     }
     if (pubkey.isPrivate) {
-      return await OpenPGPKey.wrap(OpenPGPKey.unwrap(pubkey).toPublic(), {} as Pubkey);
+      return await OpenPGPKey.wrap(OpenPGPKey.unwrap(pubkey).toPublic(), {} as Key);
     }
     return pubkey;
   }
 
-  public static decryptKey = async (key: Pubkey, passphrase: string, optionalKeyid?: string, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
+  public static decryptKey = async (key: Key, passphrase: string, optionalKeyid?: string, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
     const prv = OpenPGPKey.unwrap(key);
     if (!prv.isPrivate()) {
       throw new Error("Nothing to decrypt in a public key");
@@ -63,7 +63,7 @@ export class OpenPGPKey {
     return true;
   }
 
-  public static encryptKey = async (key: Pubkey, passphrase: string) => {
+  public static encryptKey = async (key: Key, passphrase: string) => {
     const prv = OpenPGPKey.unwrap(key);
     if (!passphrase || passphrase === 'undefined' || passphrase === 'null') {
       throw new Error(`Encryption passphrase should not be empty:${typeof passphrase}:${passphrase}`);
@@ -83,7 +83,7 @@ export class OpenPGPKey {
     await OpenPGPKey.wrap(prv, key);
   }
 
-  public static decrypt = async (message: OpenPGP.message.Message, privateKeys: Pubkey[], passwords?: string[]) => {
+  public static decrypt = async (message: OpenPGP.message.Message, privateKeys: Key[], passwords?: string[]) => {
     return await message.decrypt(privateKeys.map(key => OpenPGPKey.unwrap(key)), passwords, undefined, false);
   }
 
@@ -122,19 +122,19 @@ export class OpenPGPKey {
     }
   }
 
-  public static isWithoutSelfCertifications = async (key: Pubkey) => {
+  public static isWithoutSelfCertifications = async (key: Key) => {
     const k = OpenPGPKey.unwrap(key);
     return await Catch.doesReject(k.verifyPrimaryKey(), ['No self-certifications']);
   }
 
-  public static reformatKey = async (privateKey: Pubkey, passphrase: string, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
+  public static reformatKey = async (privateKey: Key, passphrase: string, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
     const origPrv = OpenPGPKey.unwrap(privateKey);
     const keyPair = await opgp.reformatKey({ privateKey: origPrv, passphrase, userIds, keyExpirationTime: expireSeconds });
-    return await OpenPGPKey.wrap(keyPair.key, {} as Pubkey);
+    return await OpenPGPKey.wrap(keyPair.key, {} as Key);
   }
 
   // TODO: should be private, will change when readMany is rewritten
-  public static wrap = async (pubkey: OpenPGP.key.Key, pkey: Pubkey, raw?: string): Promise<Pubkey> => {
+  public static wrap = async (pubkey: OpenPGP.key.Key, pkey: Key, raw?: string): Promise<Key> => {
     let exp: null | Date | number;
     try {
       exp = await pubkey.getExpirationTime('encrypt');
@@ -188,7 +188,7 @@ export class OpenPGPKey {
       fullyEncrypted: pubkey.isPublic() ? false /* public keys are never encrypted */ : pubkey.isFullyEncrypted(),
       isPublic: pubkey.isPublic(),
       isPrivate: pubkey.isPrivate(),
-    } as Pubkey);
+    } as Key);
     pkey.checkPassword = async passphrase => PgpKey.decrypt(await OpenPGPKey.parse(OpenPGPKey.armor(pkey)), passphrase);
     const extensions = pkey as unknown as { raw: string, [internal]: OpenPGP.key.Key };
     extensions[internal] = pubkey;
@@ -200,7 +200,7 @@ export class OpenPGPKey {
    * Returns signed data if detached=false, armored
    * Returns signature if detached=true, armored
    */
-  public static sign = async (signingPrivate: Pubkey, data: string, detached = false): Promise<string> => {
+  public static sign = async (signingPrivate: Key, data: string, detached = false): Promise<string> => {
     const signingPrv = OpenPGPKey.unwrap(signingPrivate);
     const message = opgp.cleartext.fromText(data);
     const signRes = await opgp.sign({ message, armor: true, privateKeys: [signingPrv], detached });
@@ -213,7 +213,7 @@ export class OpenPGPKey {
     return await opgp.stream.readToEnd((signRes as OpenPGP.SignArmorResult).data);
   }
 
-  public static revoke = async (key: Pubkey): Promise<string | undefined> => {
+  public static revoke = async (key: Key): Promise<string | undefined> => {
     let prv = OpenPGPKey.unwrap(key);
     if (! await prv.isRevoked()) {
       prv = await prv.revoke({});
@@ -228,7 +228,7 @@ export class OpenPGPKey {
     }
   }
 
-  public static armor = (pubkey: Pubkey): string => {
+  public static armor = (pubkey: Key): string => {
     if (pubkey.type !== 'openpgp') {
       throw new Error('Unsupported key type: ' + pubkey.type);
     }
@@ -239,7 +239,7 @@ export class OpenPGPKey {
     return extensions.raw;
   }
 
-  private static unwrap = (pubkey: Pubkey) => {
+  private static unwrap = (pubkey: Key) => {
     if (pubkey.type !== 'openpgp') {
       throw new Error('Unsupported key type: ' + pubkey.type);
     }

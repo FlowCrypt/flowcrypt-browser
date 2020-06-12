@@ -5,7 +5,7 @@
 import { Assert } from '../../js/common/assert.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Contact, Pubkey } from '../../js/common/core/crypto/key.js';
+import { Contact, Key } from '../../js/common/core/crypto/key.js';
 import { PgpArmor } from '../../js/common/core/crypto/pgp/pgp-armor.js';
 import { PgpKey } from '../../js/common/core/crypto/key.js';
 import { Str } from '../../js/common/core/common.js';
@@ -23,8 +23,8 @@ View.run(class PgpPubkeyView extends View {
   private readonly frameId: string;
   private readonly compact: boolean; // means the details take up very little space.
   private readonly minimized: boolean; // means I have to click to see details.
-  private publicKeys: Pubkey[] | undefined;
-  private primaryPubKey: Pubkey | undefined;
+  private publicKeys: Key[] | undefined;
+  private primaryPubKey: Key | undefined;
   private isExpired: boolean | undefined;
 
   constructor() {

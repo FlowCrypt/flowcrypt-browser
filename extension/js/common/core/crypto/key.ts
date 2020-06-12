@@ -13,7 +13,7 @@ import { SmimeKey } from './smime/smime-key.js';
 /**
  * This is a common Pubkey interface for both pgp and x509 keys
  */
-export interface Pubkey {
+export interface Key {
   type: 'openpgp' | 'x509';
   id: string; // This is a fingerprint for OpenPGP keys and Serial Number for X.509 keys.
   ids: string[];
@@ -33,12 +33,12 @@ export interface Pubkey {
   checkPassword(password: string): Promise<boolean>;
 }
 
-export type PubkeyResult = { pubkey: Pubkey, email: string, isMine: boolean };
+export type PubkeyResult = { pubkey: Key, email: string, isMine: boolean };
 
 export type Contact = {
   email: string;
   name: string | null;
-  pubkey: Pubkey | null;
+  pubkey: Key | null;
   has_pgp: 0 | 1;
   searchable: string[];
   client: string | null;
@@ -56,8 +56,8 @@ export interface PrvKeyInfo {
   private: string;
   longid: string;
   passphrase?: string;
-  decrypted?: Pubkey;  // only for internal use in this file
-  parsed?: Pubkey;     // only for internal use in this file
+  decrypted?: Key;  // only for internal use in this file
+  parsed?: Key;     // only for internal use in this file
 }
 
 export type KeyAlgo = 'curve25519' | 'rsa2048' | 'rsa4096';
@@ -77,7 +77,7 @@ type KeyDetails$ids = {
 
 export interface KeyDetails {
   private?: string;
-  public: Pubkey;
+  public: Key;
   isFullyEncrypted: boolean | undefined;
   isFullyDecrypted: boolean | undefined;
   ids: KeyDetails$ids[];
@@ -115,7 +115,7 @@ export class PgpKey {
   /**
    * Read many keys, could be armored or binary, in single armor or separately, useful for importing keychains of various formats
    */
-  public static readMany = async (fileData: Buf): Promise<{ keys: Pubkey[], errs: Error[] }> => {
+  public static readMany = async (fileData: Buf): Promise<{ keys: Key[], errs: Error[] }> => {
     const allKeys: OpenPGP.key.Key[] = [];
     const allErrs: Error[] = [];
     const { blocks } = MsgBlockParser.detectBlocks(fileData.toUtfStr('ignore'));
@@ -138,24 +138,24 @@ export class PgpKey {
     } else {
       await pushKeysAndErrs(fileData, false);
     }
-    return { keys: await Promise.all(allKeys.map(key => OpenPGPKey.wrap(key, {} as Pubkey))), errs: allErrs };
+    return { keys: await Promise.all(allKeys.map(key => OpenPGPKey.wrap(key, {} as Key))), errs: allErrs };
   }
 
   public static isPacketPrivate = (p: OpenPGP.packet.AnyKeyPacket): p is PrvPacket => {
     return p.tag === opgp.enums.packet.secretKey || p.tag === opgp.enums.packet.secretSubkey;
   }
 
-  public static decrypt = async (key: Pubkey, passphrase: string, optionalKeyid?: string, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
+  public static decrypt = async (key: Key, passphrase: string, optionalKeyid?: string, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
     // TODO: Delegate to appropriate key type
     return await OpenPGPKey.decryptKey(key, passphrase, optionalKeyid, optionalBehaviorFlag);
   }
 
-  public static encrypt = async (key: Pubkey, passphrase: string) => {
+  public static encrypt = async (key: Key, passphrase: string) => {
     // TODO: Delegate to appropriate key type
     return await OpenPGPKey.encryptKey(key, passphrase);
   }
 
-  public static isWithoutSelfCertifications = async (key: Pubkey) => {
+  public static isWithoutSelfCertifications = async (key: Key) => {
     // all non-OpenPGP keys are automatically considered to be not
     // "without self certifications"
     if (key.type !== 'openpgp') {
@@ -187,7 +187,7 @@ export class PgpKey {
     }
   }
 
-  public static parse = async (text: string): Promise<Pubkey> => {
+  public static parse = async (text: string): Promise<Key> => {
     const keyType = PgpKey.getKeyType(text);
     if (keyType === 'openpgp') {
       return await OpenPGPKey.parse(text);
@@ -197,17 +197,17 @@ export class PgpKey {
     throw new Error('Unsupported key type: ' + keyType);
   }
 
-  public static reformatKey = async (privateKey: Pubkey, passphrase: string, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
+  public static reformatKey = async (privateKey: Key, passphrase: string, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
     // TODO: Delegate to appropriate key type
     return await OpenPGPKey.reformatKey(privateKey, passphrase, userIds, expireSeconds);
   }
 
-  public static isPacketDecrypted = (pubkey: Pubkey, keyId: string) => {
+  public static isPacketDecrypted = (pubkey: Key, keyId: string) => {
     // TODO: Delegate to appropriate key type
     return OpenPGPKey.isPacketDecrypted(pubkey, keyId);
   }
 
-  public static armor = (pubkey: Pubkey): string => {
+  public static armor = (pubkey: Key): string => {
     if (pubkey.type === 'openpgp') {
       return OpenPGPKey.armor(pubkey);
     } else if (pubkey.type === 'x509') {
@@ -217,7 +217,7 @@ export class PgpKey {
     }
   }
 
-  public static asPublicKey = async (pubkey: Pubkey): Promise<Pubkey> => {
+  public static asPublicKey = async (pubkey: Key): Promise<Key> => {
     // TODO: Delegate to appropriate key type
     if (pubkey.type === 'openpgp') {
       return await OpenPGPKey.asPublicKey(pubkey);
@@ -226,14 +226,14 @@ export class PgpKey {
     return pubkey;
   }
 
-  public static fingerprint = async (key: Pubkey | OpenPGP.key.Key): Promise<string | undefined> => {
+  public static fingerprint = async (key: Key | OpenPGP.key.Key): Promise<string | undefined> => {
     if ('id' in key) {
       return key.id;
     }
     return key.getFingerprint().toUpperCase();
   }
 
-  public static longid = async (keyOrFingerprintOrBytesOrLongid: string | Pubkey | undefined | OpenPGP.key.Key): Promise<string | undefined> => {
+  public static longid = async (keyOrFingerprintOrBytesOrLongid: string | Key | undefined | OpenPGP.key.Key): Promise<string | undefined> => {
     if (!keyOrFingerprintOrBytesOrLongid) {
       return undefined;
     } else if (typeof keyOrFingerprintOrBytesOrLongid === 'string' && keyOrFingerprintOrBytesOrLongid.length === 8) {
@@ -265,7 +265,7 @@ export class PgpKey {
     return longids;
   }
 
-  public static expired = (key: Pubkey): boolean => {
+  public static expired = (key: Key): boolean => {
     const exp = key.expiration;
     if (!exp) {
       return false;
@@ -276,7 +276,7 @@ export class PgpKey {
     throw new Error(`Got unexpected value for expiration: ${exp}`);
   }
 
-  public static dateBeforeExpirationIfAlreadyExpired = (key: Pubkey): Date | undefined => {
+  public static dateBeforeExpirationIfAlreadyExpired = (key: Key): Date | undefined => {
     const expiration = key.expiration;
     return expiration && PgpKey.expired(key) ? new Date(expiration.getTime() - 1000) : undefined;
   }
@@ -336,7 +336,7 @@ export class PgpKey {
     throw new Error('No valid signature found in key');
   }
 
-  public static revoke = async (key: Pubkey): Promise<string | undefined> => {
+  public static revoke = async (key: Key): Promise<string | undefined> => {
     // TODO: Delegate to appropriate key type
     return await OpenPGPKey.revoke(key);
   }
@@ -352,7 +352,7 @@ export class PgpKey {
     }
   }
 
-  public static choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport = (pubs: PubkeyResult[]): Pubkey[] => {
+  public static choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport = (pubs: PubkeyResult[]): Key[] => {
     const myPubs = pubs.filter(pub => pub.isMine); // currently this must be openpgp pub
     const otherPgpPubs = pubs.filter(pub => !pub.isMine && pub.pubkey.type === 'openpgp');
     const otherSmimePubs = pubs.filter(pub => !pub.isMine && pub.pubkey.type === 'x509');

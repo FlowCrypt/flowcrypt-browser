@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Contact, PgpKey, Pubkey } from '../../../js/common/core/crypto/key.js';
+import { Contact, PgpKey, Key } from '../../../js/common/core/crypto/key.js';
 import { Str, Url } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
@@ -107,7 +107,7 @@ View.run(class ContactsView extends View {
   }
 
   private actionExportAllKeysHandler = () => {
-    const allArmoredPublicKeys = this.contacts.map(c => c.pubkey).filter(Boolean).map((c: Pubkey) => (PgpKey.armor(c)).trim()).join('\n');
+    const allArmoredPublicKeys = this.contacts.map(c => c.pubkey).filter(Boolean).map((c: Key) => (PgpKey.armor(c)).trim()).join('\n');
     const exportFile = new Att({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: Buf.fromUtfStr(allArmoredPublicKeys) });
     Browser.saveToDownloads(exportFile);
   }

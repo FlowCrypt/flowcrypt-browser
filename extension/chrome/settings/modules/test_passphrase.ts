@@ -5,7 +5,7 @@
 import { Assert } from '../../../js/common/assert.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Lang } from '../../../js/common/lang.js';
-import { PgpKey, Pubkey } from '../../../js/common/core/crypto/key.js';
+import { PgpKey, Key } from '../../../js/common/core/crypto/key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
@@ -17,7 +17,7 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 View.run(class TestPassphrase extends View {
   private readonly acctEmail: string;
   private readonly parentTabId: string;
-  private primaryKey: Pubkey | undefined;
+  private primaryKey: Key | undefined;
 
   constructor() {
     super();

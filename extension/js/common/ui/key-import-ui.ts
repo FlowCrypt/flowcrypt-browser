@@ -8,7 +8,7 @@ import { KeyBlockType } from '../core/msg-block.js';
 import { Lang } from '../lang.js';
 import { MsgBlockParser } from '../core/msg-block-parser.js';
 import { PgpArmor } from '../core/crypto/pgp/pgp-armor.js';
-import { PgpKey, Pubkey } from '../core/crypto/key.js';
+import { PgpKey, Key } from '../core/crypto/key.js';
 import { PgpPwd } from '../core/crypto/pgp/pgp-password.js';
 import { Settings } from '../settings.js';
 import { Ui } from '../browser/ui.js';
@@ -17,13 +17,13 @@ import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
 import { KeyStore } from '../platform/store/key-store.js';
 
 type KeyImportUiCheckResult = {
-  normalized: string; longid: string; passphrase: string; fingerprint: string; decrypted: Pubkey;
-  encrypted: Pubkey;
+  normalized: string; longid: string; passphrase: string; fingerprint: string; decrypted: Key;
+  encrypted: Key;
 };
 
 export class KeyCanBeFixed extends Error {
-  public encrypted: Pubkey;
-  constructor(encrypted: Pubkey) {
+  public encrypted: Key;
+  constructor(encrypted: Key) {
     super();
     this.encrypted = encrypted;
   }
@@ -220,7 +220,7 @@ export class KeyImportUi {
     return k;
   }
 
-  private longid = async (k: Pubkey) => {
+  private longid = async (k: Key) => {
     const longid = await PgpKey.longid(k);
     if (!longid) {
       throw new UserAlert('This key may not be compatible. Email human@flowcrypt.com and const us know which software created this key.\n\n(error: cannot get long_id)');
@@ -228,7 +228,7 @@ export class KeyImportUi {
     return longid;
   }
 
-  private rejectIfNot = (type: KeyBlockType, k: Pubkey) => {
+  private rejectIfNot = (type: KeyBlockType, k: Key) => {
     const headers = PgpArmor.headers(type);
     if (type === 'privateKey' && k.isPublic) {
       throw new UserAlert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + headers.begin + '"');
@@ -238,7 +238,7 @@ export class KeyImportUi {
     }
   }
 
-  private rejectKnownIfSelected = async (acctEmail: string, k: Pubkey) => {
+  private rejectKnownIfSelected = async (acctEmail: string, k: Key) => {
     if (this.rejectKnown) {
       const keyinfos = await KeyStore.get(acctEmail);
       const privateKeysLongids = keyinfos.map(ki => ki.longid);
@@ -254,7 +254,7 @@ export class KeyImportUi {
     }
   }
 
-  private decryptAndEncryptAsNeeded = async (toDecrypt: Pubkey, toEncrypt: Pubkey, passphrase: string): Promise<void> => {
+  private decryptAndEncryptAsNeeded = async (toDecrypt: Key, toEncrypt: Key, passphrase: string): Promise<void> => {
     if (!passphrase) {
       throw new UserAlert('Please enter a pass phrase to use with this key');
     }
@@ -285,7 +285,7 @@ export class KeyImportUi {
     }
   }
 
-  private checkEncryptionPrvIfSelected = async (k: Pubkey, encrypted: Pubkey) => {
+  private checkEncryptionPrvIfSelected = async (k: Key, encrypted: Key) => {
     if (this.checkEncryption && !k.usableForEncryption) {
       if (await PgpKey.isWithoutSelfCertifications(k)) {
         throw new KeyCanBeFixed(encrypted);
@@ -312,7 +312,7 @@ export class KeyImportUi {
     }
   }
 
-  private checkSigningIfSelected = async (k: Pubkey) => {
+  private checkSigningIfSelected = async (k: Key) => {
     if (this.checkSigning && !k.usableForSigning) {
       throw new UserAlert('This looks like a valid key but it cannot be used for signing. Please write at human@flowcrypt.com to see why is that.');
     }

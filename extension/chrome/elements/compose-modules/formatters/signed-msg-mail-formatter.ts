@@ -6,7 +6,7 @@ import { BaseMailFormatter } from './base-mail-formatter.js';
 import { BrowserWindow } from '../../../../js/common/browser/browser-window.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { NewMsgData } from '../compose-types.js';
-import { PgpKey, Pubkey } from '../../../../js/common/core/crypto/key.js';
+import { PgpKey, Key } from '../../../../js/common/core/crypto/key.js';
 import { PgpMsg } from '../../../../js/common/core/crypto/pgp/pgp-msg.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { SendableMsgBody } from '../../../../js/common/core/mime.js';
@@ -14,7 +14,7 @@ import { ContactStore } from '../../../../js/common/platform/store/contact-store
 
 export class SignedMsgMailFormatter extends BaseMailFormatter {
 
-  public sendableMsg = async (newMsg: NewMsgData, signingPrv: Pubkey): Promise<SendableMsg> => {
+  public sendableMsg = async (newMsg: NewMsgData, signingPrv: Key): Promise<SendableMsg> => {
     this.view.errModule.debug(`SignedMsgMailFormatter.sendableMsg signing with key: ${await PgpKey.fingerprint(signingPrv)}`);
     const atts = this.isDraft ? [] : await this.view.attsModule.attach.collectAtts();
     if (!this.richtext) {

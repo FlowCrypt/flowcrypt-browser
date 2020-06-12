@@ -6,7 +6,7 @@ import { SetupOptions, SetupView } from '../setup.js';
 
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Lang } from '../../../js/common/lang.js';
-import { PgpKey, Pubkey } from '../../../js/common/core/crypto/key.js';
+import { PgpKey, Key } from '../../../js/common/core/crypto/key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -21,7 +21,7 @@ export class SetupRecoverKeyModule {
   public actionRecoverAccountHandler = async () => {
     try {
       const passphrase = String($('#recovery_pasword').val());
-      const newlyMatchingKeys: Pubkey[] = [];
+      const newlyMatchingKeys: Key[] = [];
       if (passphrase && this.view.mathingPassphrases.includes(passphrase)) {
         await Ui.modal.warning(Lang.setup.tryDifferentPassPhraseForRemainingBackups);
         return;

@@ -13,7 +13,7 @@ import { Att } from '../../../../js/common/core/att.js';
 import { Buf } from '../../../../js/common/core/buf.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { Lang } from '../../../../js/common/lang.js';
-import { PgpKey, PubkeyResult, Pubkey } from '../../../../js/common/core/crypto/key.js';
+import { PgpKey, PubkeyResult, Key } from '../../../../js/common/core/crypto/key.js';
 import { PgpMsg, PgpMsgMethod } from '../../../../js/common/core/crypto/pgp/pgp-msg.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { Settings } from '../../../../js/common/settings.js';
@@ -24,7 +24,7 @@ import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
-  public sendableMsg = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingPrv?: Pubkey): Promise<SendableMsg> => {
+  public sendableMsg = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {
     await ContactStore.update(undefined, Array.prototype.concat.apply([], Object.values(newMsg.recipients)), { last_use: Date.now() });
     if (newMsg.pwd && !this.isDraft) { // password-protected message, temporarily uploaded (encrypted) to FlowCrypt servers, to be served to recipient through web
       const short = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
@@ -52,7 +52,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     return short;
   }
 
-  private sendablePwdMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], short: string, signingPrv?: Pubkey) => {
+  private sendablePwdMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], short: string, signingPrv?: Key) => {
     // encoded as: PGP/MIME-like structure but with attachments as external files due to email size limit (encrypted for pubkeys only)
     const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
     const pgpMimeNoAtts = await Mime.encode(msgBody, { Subject: newMsg.subject }, []); // no atts, attached to email separately
@@ -62,14 +62,14 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: emailIntroAndLinkBody, atts, isDraft: this.isDraft });
   }
 
-  private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Pubkey) => {
+  private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key) => {
     const atts = this.isDraft ? [] : await this.view.attsModule.attach.collectEncryptAtts(pubs);
     const { data: encryptedBody, type } = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
     const mimeType = type === 'smime' ? 'smimeEncrypted' : undefined;
     return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: { "encrypted/buf": Buf.fromUint8(encryptedBody) }, type: mimeType, atts, isDraft: this.isDraft });
   }
 
-  private sendableRichTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Pubkey) => {
+  private sendableRichTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key) => {
     const plainAtts = this.isDraft ? [] : await this.view.attsModule.attach.collectAtts();
     const pgpMimeToEncrypt = await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject }, plainAtts);
     const { data: encrypted } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubs, signingPrv);
@@ -84,7 +84,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     return atts;
   }
 
-  private encryptDataArmor = async (data: Buf, pwd: string | undefined, pubs: PubkeyResult[], signingPrv?: Pubkey): Promise<PgpMsgMethod.EncryptAnyArmorResult> => {
+  private encryptDataArmor = async (data: Buf, pwd: string | undefined, pubs: PubkeyResult[], signingPrv?: Key): Promise<PgpMsgMethod.EncryptAnyArmorResult> => {
     const pgpPubs = pubs.filter(pub => pub.pubkey.type === 'openpgp');
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(pgpPubs);
     const pubsForEncryption = PgpKey.choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport(pubs);

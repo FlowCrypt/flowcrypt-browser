@@ -5,7 +5,7 @@
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
-import { KeyInfo, Pubkey } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo, Key } from '../../../js/common/core/crypto/key.js';
 import { PgpKey } from '../../../js/common/core/crypto/key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -22,7 +22,7 @@ View.run(class ChangePassPhraseView extends View {
   private readonly keyImportUi = new KeyImportUi({});
 
   private primaryKi: KeyInfo | undefined;
-  private primaryPrv: Pubkey | undefined;
+  private primaryPrv: Key | undefined;
 
   constructor() {
     super();

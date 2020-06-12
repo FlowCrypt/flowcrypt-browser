@@ -3,31 +3,31 @@
 'use strict';
 
 import { Catch } from './catch.js';
-import { Pubkey } from '../core/crypto/key.js';
+import { Key } from '../core/crypto/key.js';
 
-let KEY_CACHE: { [longidOrArmoredKey: string]: Pubkey } = {};
+let KEY_CACHE: { [longidOrArmoredKey: string]: Key } = {};
 let KEY_CACHE_WIPE_TIMEOUT: number;
 
 export class KeyCache {
 
-  public static setDecrypted = (k: Pubkey) => {
+  public static setDecrypted = (k: Key) => {
     // todo - not yet used in browser extension, but planned to be enabled soon
     // Store.extendExpiry();
     // KEY_CACHE[keyLongid(k)] = k;
   }
 
-  public static getDecrypted = (longid: string): Pubkey | undefined => {
+  public static getDecrypted = (longid: string): Key | undefined => {
     KeyCache.extendExpiry();
     return KEY_CACHE[longid];
   }
 
-  public static setArmored = (armored: string, k: Pubkey) => {
+  public static setArmored = (armored: string, k: Key) => {
     // todo - not yet used in browser extension, but planned to be enabled soon
     // Store.extendExpiry();
     // KEY_CACHE[armored] = k;
   }
 
-  public static getArmored = (armored: string): Pubkey | undefined => {
+  public static getArmored = (armored: string): Key | undefined => {
     KeyCache.extendExpiry();
     return KEY_CACHE[armored];
   }
