@@ -243,7 +243,7 @@ export class ContactStore extends AbstractStore {
         return resultsWithPgp.concat(resultsWithoutPgp);
       }
     }
-    return await new Promise((resolve, reject) => {
+    const toDeserialize: unknown[] = await new Promise((resolve, reject) => {
       const contacts = db.transaction('contacts', 'readonly').objectStore('contacts');
       let search: IDBRequest;
       if (typeof query.has_pgp === 'undefined') { // any query.has_pgp value
@@ -255,21 +255,20 @@ export class ContactStore extends AbstractStore {
           search = contacts.index('index_has_pgp').openCursor(IDBKeyRange.only(Number(query.has_pgp)));
         }
       }
-      const found: Contact[] = [];
-      search.onsuccess = Catch.try(async () => {
-        const cursor = search!.result; // checked it above
+      const found: unknown[] = [];
+      search.onsuccess = Catch.try(() => {
+        const cursor = search.result as IDBCursorWithValue | undefined;
         if (!cursor || found.length === query.limit) {
           resolve(found);
         } else {
-          const contact = await ContactStore.deserialize(cursor.value); // tslint:disable-line:no-unsafe-any
-          if (contact) {
-            found.push(contact);
-          }
-          cursor.continue(); // tslint:disable-line:no-unsafe-any
+          found.push(cursor.value);
+          cursor.continue();
         }
       });
       search.onerror = () => reject(ContactStore.errCategorize(search!.error!)); // todo - added ! after ts3 upgrade - investigate
     });
+    const deserialized = await Promise.all(toDeserialize.map(ContactStore.deserialize));
+    return deserialized.filter(contact => !!contact) as Contact[];
   }
 
   private static normalizeString = (str: string) => {
