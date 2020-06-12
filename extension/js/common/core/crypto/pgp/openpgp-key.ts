@@ -164,6 +164,7 @@ export class OpenPGPKey {
         }
         return '';
       })
+      .map(email => email.trim())
       .filter(email => email)
       .map(email => email.toLowerCase());
     let lastModified: undefined | Date;
@@ -179,7 +180,9 @@ export class OpenPGPKey {
       usableForEncryption: ! await Catch.doesReject(pubkey.getEncryptionKey()),
       usableButExpired: await OpenPGPKey.usableButExpired(pubkey, exp, expired),
       usableForSigning: await Catch.doesReject(pubkey.getSigningKey()),
+      // valid emails extracted from uids
       emails,
+      // full uids that have valid emails in them
       // tslint:disable-next-line: no-unsafe-any
       identities: pubkey.users.map(u => u.userId).filter(u => !!u && u.userid && Str.parseEmail(u.userid).email).map(u => u!.userid).filter(Boolean) as string[],
       lastModified,

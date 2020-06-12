@@ -1,12 +1,17 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 import * as forge from 'node-forge';
 import { Key, KeyUtil } from '../key.js';
+import { Str } from '../../common.js';
 
 export class SmimeKey {
 
   public static parse = async (text: string): Promise<Key> => {
     const certificate = forge.pki.certificateFromPem(text);
     const email = (certificate.subject.getField('CN') as { value: string }).value;
+    const normalizedEmail = Str.parseEmail(email).email;
+    if (!normalizedEmail) {
+      throw new Error(`This S/MIME x.509 certificate has an invalid recipient email: ${email}`);
+    }
     const key = {
       type: 'x509',
       id: certificate.serialNumber,
@@ -14,8 +19,8 @@ export class SmimeKey {
       usableForEncryption: SmimeKey.isEmailCertificate(certificate),
       usableForSigning: SmimeKey.isEmailCertificate(certificate),
       usableButExpired: false,
-      emails: [email],
-      identities: [email],
+      emails: [normalizedEmail],
+      identities: [normalizedEmail],
       created: certificate.validity.notBefore,
       lastModified: certificate.validity.notBefore,
       expiration: certificate.validity.notAfter,

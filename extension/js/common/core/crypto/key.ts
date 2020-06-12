@@ -209,8 +209,9 @@ export class KeyUtil {
   public static getKeyType = (pubkey: string): 'openpgp' | 'x509' | 'unknown' => {
     if (pubkey.startsWith('-----BEGIN CERTIFICATE-----')) {
       return 'x509';
-    } else if (pubkey.startsWith('-----BEGIN PGP ')) {
-      // both public and private keys will be considered as 'openpgp'
+    } else if (pubkey.startsWith(PgpArmor.headers('publicKey').begin)) {
+      return 'openpgp';
+    } else if (pubkey.startsWith(PgpArmor.headers('privateKey').begin)) {
       return 'openpgp';
     } else {
       return 'unknown';
