@@ -10,7 +10,7 @@ import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { FetchKeyUI } from '../../js/common/ui/fetch-key-ui.js';
-import { PgpKey } from '../../js/common/core/crypto/pgp/pgp-key.js';
+import { PgpKey } from '../../js/common/core/crypto/pubkey.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';

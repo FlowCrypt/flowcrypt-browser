@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { KeyInfo, PgpKey, Pubkey } from '../../core/crypto/pgp/pgp-key.js';
+import { KeyInfo, PgpKey, Pubkey } from '../../core/crypto/pubkey.js';
 import { AcctStore } from './acct-store.js';
 import { PassphraseStore } from './passphrase-store.js';
 import { AbstractStore } from './abstract-store.js';

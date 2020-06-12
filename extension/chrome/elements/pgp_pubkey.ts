@@ -5,9 +5,9 @@
 import { Assert } from '../../js/common/assert.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Contact, Pubkey } from '../../js/common/core/crypto/pgp/pgp-key.js';
+import { Contact, Pubkey } from '../../js/common/core/crypto/pubkey.js';
 import { PgpArmor } from '../../js/common/core/crypto/pgp/pgp-armor.js';
-import { PgpKey } from '../../js/common/core/crypto/pgp/pgp-key.js';
+import { PgpKey } from '../../js/common/core/crypto/pubkey.js';
 import { Str } from '../../js/common/core/common.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';

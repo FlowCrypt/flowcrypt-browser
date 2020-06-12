@@ -6,7 +6,7 @@
 
 import { Api, ChunkedCb, ProgressCb } from '../api.js';
 
-import { Contact, KeyInfo } from '../../core/crypto/pgp/pgp-key.js';
+import { Contact, KeyInfo } from '../../core/crypto/pubkey.js';
 import { GmailRes } from './gmail/gmail-parser.js';
 import { GmailResponseFormat } from './gmail/gmail.js';
 import { SendableMsg } from './sendable-msg.js';

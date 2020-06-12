@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { PgpKey, PrvPacket } from './pgp-key.js';
+import { PgpKey, PrvPacket } from '../pubkey.js';
 
 import { VERSION } from '../../const.js';
 import { requireOpenpgp } from '../../../platform/require.js';

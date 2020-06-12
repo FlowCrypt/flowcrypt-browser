@@ -6,7 +6,7 @@ import { Catch } from '../catch.js';
 import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { Str } from '../../core/common.js';
-import { PgpKey, Pubkey, Contact } from '../../core/crypto/pgp/pgp-key.js';
+import { PgpKey, Pubkey, Contact } from '../../core/crypto/pubkey.js';
 
 // tslint:disable:no-null-keyword
 

@@ -9,7 +9,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { Pubkey } from '../../../js/common/core/crypto/pgp/pgp-key.js';
+import { Pubkey } from '../../../js/common/core/crypto/pubkey.js';
 
 export class SetupImportKeyModule {
 

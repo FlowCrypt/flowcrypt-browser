@@ -4,10 +4,10 @@
 
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { KeyInfo, Pubkey } from '../../../js/common/core/crypto/pgp/pgp-key.js';
+import { KeyInfo, Pubkey } from '../../../js/common/core/crypto/pubkey.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpArmor } from '../../../js/common/core/crypto/pgp/pgp-armor.js';
-import { PgpKey } from '../../../js/common/core/crypto/pgp/pgp-key.js';
+import { PgpKey } from '../../../js/common/core/crypto/pubkey.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url, Str } from '../../../js/common/core/common.js';

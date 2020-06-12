@@ -2,13 +2,13 @@
 
 'use strict';
 
-import { Buf } from '../../buf.js';
-import { Catch, UnreportableError } from '../../../platform/catch.js';
-import { MsgBlockParser } from '../../msg-block-parser.js';
-import { PgpArmor } from './pgp-armor.js';
-import { opgp } from './openpgpjs-custom.js';
-import { OpenPGPKey } from './openpgp-key.js';
-import { SmimeKey } from '../smime/smime-key.js';
+import { Buf } from '../buf.js';
+import { Catch, UnreportableError } from '../../platform/catch.js';
+import { MsgBlockParser } from '../msg-block-parser.js';
+import { PgpArmor } from './pgp/pgp-armor.js';
+import { opgp } from './pgp/openpgpjs-custom.js';
+import { OpenPGPKey } from './pgp/openpgp-key.js';
+import { SmimeKey } from './smime/smime-key.js';
 
 /**
  * This is a common Pubkey interface for both pgp and x509 keys

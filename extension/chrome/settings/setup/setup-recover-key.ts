@@ -6,7 +6,7 @@ import { SetupOptions, SetupView } from '../setup.js';
 
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Lang } from '../../../js/common/lang.js';
-import { PgpKey, Pubkey } from '../../../js/common/core/crypto/pgp/pgp-key.js';
+import { PgpKey, Pubkey } from '../../../js/common/core/crypto/pubkey.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';

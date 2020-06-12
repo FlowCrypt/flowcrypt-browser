@@ -2,7 +2,7 @@
 
 import { Env } from '../../browser/env.js';
 import { GoogleAuth } from '../../api/google-auth.js';
-import { KeyInfo } from '../../core/crypto/pgp/pgp-key.js';
+import { KeyInfo } from '../../core/crypto/pubkey.js';
 import { Dict } from '../../core/common.js';
 import { GmailRes } from '../../api/email-provider/gmail/gmail-parser.js';
 import { SubscriptionInfo, FcUuidAuth } from '../../api/backend.js';

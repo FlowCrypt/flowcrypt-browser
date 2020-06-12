@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { KeyInfo, PgpKey } from '../../js/common/core/crypto/pgp/pgp-key.js';
+import { KeyInfo, PgpKey } from '../../js/common/core/crypto/pubkey.js';
 import { StorageType } from '../../js/common/platform/store/abstract-store.js';
 
 import { Assert } from '../../js/common/assert.js';

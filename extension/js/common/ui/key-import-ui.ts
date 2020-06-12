@@ -8,7 +8,7 @@ import { KeyBlockType } from '../core/msg-block.js';
 import { Lang } from '../lang.js';
 import { MsgBlockParser } from '../core/msg-block-parser.js';
 import { PgpArmor } from '../core/crypto/pgp/pgp-armor.js';
-import { PgpKey, Pubkey } from '../core/crypto/pgp/pgp-key.js';
+import { PgpKey, Pubkey } from '../core/crypto/pubkey.js';
 import { PgpPwd } from '../core/crypto/pgp/pgp-password.js';
 import { Settings } from '../settings.js';
 import { Ui } from '../browser/ui.js';
