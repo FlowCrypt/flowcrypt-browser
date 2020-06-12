@@ -3,8 +3,7 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Contact, KeyInfo, KeyUtil } from '../../../js/common/core/crypto/key.js';
-import { PubkeySearchResult } from '../../../js/common/api/pub-lookup.js';
+import { Contact, KeyInfo, KeyUtil, Key } from '../../../js/common/core/crypto/key.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -23,7 +22,7 @@ import { Settings } from '../../../js/common/settings.js';
 export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   private passphraseInterval: number | undefined;
-  private ksLookupsByEmail: { [key: string]: PubkeySearchResult | Contact } = {};
+  private ksLookupsByEmail: { [key: string]: Key } = {};
 
   public setHandlers = () => {
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
@@ -89,10 +88,8 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       const contact = contacts[i];
       if (contact && contact.has_pgp && contact.pubkey) {
         armoredPubkeys.push({ pubkey: contact.pubkey, email: contact.email, isMine: false });
-      } else if (contact && this.ksLookupsByEmail[contact.email] && this.ksLookupsByEmail[contact.email].pubkey) {
-        const pubkey = this.ksLookupsByEmail[contact.email].pubkey!;
-        const key = typeof pubkey === 'string' ? await KeyUtil.parse(pubkey) : pubkey;
-        armoredPubkeys.push({ pubkey: key, email: contact.email, isMine: false }); // checked !null right above. Null evaluates to false.
+      } else if (contact && this.ksLookupsByEmail[contact.email]) {
+        armoredPubkeys.push({ pubkey: this.ksLookupsByEmail[contact.email], email: contact.email, isMine: false });
       } else {
         emailsWithoutPubkeys.push(recipients[i]);
       }
@@ -140,7 +137,9 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           lastUse: Date.now(),
           lastCheck: Date.now(),
         });
-        this.ksLookupsByEmail[email] = ksContact;
+        if (ksContact.pubkey) {
+          this.ksLookupsByEmail[email] = ksContact.pubkey;
+        }
         await ContactStore.save(undefined, ksContact);
         return ksContact;
       } else {
