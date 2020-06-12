@@ -176,14 +176,8 @@ export class ContactStore extends AbstractStore {
       // @ts-ignore - may be saving any of the provided values - could do this one by one while ensuring proper types
       existing[k] = update[k];
     }
-    for (const k of Object.keys(existing)) {
-      // @ts-ignore - may be saving any of the provided values - could do this one by one while ensuring proper types
-      const object = existing[k];
-      // tslint:disable-next-line: no-unsafe-any
-      if (object && typeof object.pubkey === 'object') {
-        // tslint:disable-next-line: no-unsafe-any
-        object.pubkey = KeyUtil.armor(object.pubkey);
-      }
+    if (existing.pubkey && typeof existing.pubkey === 'object') {
+      existing.pubkey = KeyUtil.armor(existing.pubkey) as any as Key; // serializing for storage
     }
     return await new Promise((resolve, reject) => {
       const tx = db.transaction('contacts', 'readwrite');
