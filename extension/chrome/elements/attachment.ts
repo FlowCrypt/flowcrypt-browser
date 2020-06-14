@@ -94,7 +94,7 @@ export class AttachmentDownloadView extends View {
       this.downloadButton.click(this.setHandlerPrevent('double', () => this.downloadButtonClickedHandler()));
       this.downloadButton.click((e) => e.stopPropagation());
       $('body').click(this.setHandlerPrevent('double', async () => {
-        if (!$('body').hasClass('right-click-link')) {
+        if ($('body').attr('id') !== 'attachment-preview' && !$('body').hasClass('right-click-link')) {
           await this.previewAttachmentClickedHandler();
         }
       }));
@@ -223,7 +223,7 @@ export class AttachmentDownloadView extends View {
   }
 
   private previewAttachmentClickedHandler = async () => {
-    BrowserMsg.send.showAttachment(this.parentTabId, { att: this.att, isEncrypted: this.isEncrypted });
+    BrowserMsg.send.showAttachment(this.parentTabId, { att: this.att, isEncrypted: this.isEncrypted, size: this.size });
   }
 
   private decryptAndSaveAttToDownloads = async () => {

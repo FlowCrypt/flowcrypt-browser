@@ -64,7 +64,7 @@ export namespace Bm {
   export type PgpMsgType = PgpMsgMethod.Arg.Type;
   export type Ajax = { req: JQueryAjaxSettings, stack: string };
   export type AjaxGmailAttGetChunk = { acctEmail: string, msgId: string, attId: string };
-  export type ShowAttachment = { att: Att, isEncrypted: boolean };
+  export type ShowAttachment = { att: Att, isEncrypted: boolean, size: number | undefined };
 
   export namespace Res {
     export type GetActiveTabInfo = { provider: 'gmail' | undefined, acctEmail: string | undefined, sameWorld: boolean | undefined };

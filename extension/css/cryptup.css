@@ -2420,6 +2420,12 @@ body.attachment .file-download-right-click-link {
   margin: auto;
 }
 
+#attachment-preview-container .download_progress {
+  position: absolute;
+  color: white;
+  font-weight: bold;
+}
+
 #attachment-preview-container .attachment-preview-txt {
   background: white;
   padding: 40px;

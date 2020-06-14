@@ -3,24 +3,28 @@
 'use strict';
 
 import { Att } from '../../js/common/core/att.js';
+import { AttachmentDownloadView } from './attachment.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PgpMsg } from '../../js/common/core/pgp-msg.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
-import { AttachmentDownloadView } from './attachment.js';
+import { Ui } from '../../js/common/browser/ui.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 
 type AttachmentType = 'img' | 'txt';
 
 View.run(class AttachmentPreviewView extends AttachmentDownloadView {
+  private attachmentPreviewContainer = $('#attachment-preview-container');
+
   constructor() {
     super();
   }
 
   public render = async () => {
     try {
+      Xss.sanitizeRender(this.attachmentPreviewContainer, `${Ui.spinner('green', 'large_spinner')}<span class="download_progress"></span>`);
       this.att = new Att({ name: this.origNameBasedOnFilename, type: this.type, msgId: this.msgId, id: this.id, url: this.url });
       await this.downloadDataIfNeeded();
       const result = this.isEncrypted ? await this.decrypt() : this.att.getData();
@@ -29,9 +33,9 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
         const url = window.URL.createObjectURL(blob);
         const attachmentType = this.getAttachmentType(this.origNameBasedOnFilename);
         if (attachmentType === 'img') {
-          $('#attachment-preview-container').html(`<img src="${url}" class="attachment-preview-img" alt="${this.name}">`);
+          this.attachmentPreviewContainer.html(`<img src="${url}" class="attachment-preview-img" alt="${this.name}">`);
         } else if (attachmentType === 'txt') {
-          $('#attachment-preview-container').html(`<div class="attachment-preview-txt">${Xss.escape(result.toString()).replace(/\n/g, '<br>')}</div>`);
+          this.attachmentPreviewContainer.html(`<div class="attachment-preview-txt">${Xss.escape(result.toString()).replace(/\n/g, '<br>')}</div>`);
         }
         const downloadBtn = (new XssSafeFactory(this.acctEmail, this.tabId)).btnDownloadAttachment(url, this.origNameBasedOnFilename);
         const downloadBtnEl = $(downloadBtn);
