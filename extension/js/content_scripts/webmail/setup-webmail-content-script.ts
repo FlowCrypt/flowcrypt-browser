@@ -10,6 +10,7 @@ import { Catch } from '../../common/platform/catch.js';
 import { ContentScriptWindow } from '../../common/browser/browser-window.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
+import Swal from 'sweetalert2';
 import { Ui } from '../../common/browser/ui.js';
 import { VERSION } from '../../common/core/const.js';
 import { AcctStore } from '../../common/platform/store/acct-store.js';
@@ -137,6 +138,9 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     });
     BrowserMsg.addListener('close_dialog', async () => {
       $('#cryptup_dialog').remove();
+    });
+    BrowserMsg.addListener('close_swal', async () => {
+      Swal.close();
     });
     BrowserMsg.addListener('scroll_to_element', async ({ selector }: Bm.ScrollToElement) => {
       webmailSpecific.getReplacer().scrollToElement(selector);

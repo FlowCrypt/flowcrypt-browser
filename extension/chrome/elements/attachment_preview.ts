@@ -3,6 +3,7 @@
 'use strict';
 
 import { Att } from '../../js/common/core/att.js';
+import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PgpBlockViewAttachmentsModule } from './pgp_block_modules/pgp-block-attachmens-module.js';
@@ -35,6 +36,11 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
         const downloadBtnEl = $(downloadBtn);
         downloadBtnEl.on('click', e => e.preventDefault());
         $('#attachment-preview-download').empty().append(downloadBtnEl);
+        $('body').on('click', (e) => {
+          if (e.target === document.body || $('body').children().toArray().indexOf(e.target) !== -1) {
+            BrowserMsg.send.closeSwal(this.parentTabId);
+          }
+        });
       }
     } catch (e) {
       Catch.reportErr(e);

@@ -264,7 +264,7 @@ export class Ui {
       await Ui.swal().fire({
         onOpen: () => {
           $(Swal.getContent()).attr('data-test', 'attachment-dialog');
-          $(Swal.getCloseButton()).attr('data-test', 'dialog-close').blur();
+          $(Swal.getCloseButton()).attr('data-test', 'dialog-close');
         },
         html: `<iframe src="${Xss.escape(iframeUrl)}" style="border: 0"></iframe>`,
         showConfirmButton: false,
