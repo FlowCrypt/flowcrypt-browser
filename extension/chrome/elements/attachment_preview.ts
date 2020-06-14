@@ -6,12 +6,13 @@ import { Att } from '../../js/common/core/att.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
-import { PgpBlockViewAttachmentsModule } from './pgp_block_modules/pgp-block-attachmens-module.js';
 import { PgpMsg } from '../../js/common/core/pgp-msg.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { AttachmentDownloadView } from './attachment.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
+
+type AttachmentType = 'img' | 'txt';
 
 View.run(class AttachmentPreviewView extends AttachmentDownloadView {
   constructor() {
@@ -26,7 +27,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
       if (result) {
         const blob = new Blob([result], { type: this.type });
         const url = window.URL.createObjectURL(blob);
-        const attachmentType = PgpBlockViewAttachmentsModule.getAttachmentType(this.origNameBasedOnFilename);
+        const attachmentType = this.getAttachmentType(this.origNameBasedOnFilename);
         if (attachmentType === 'img') {
           $('#attachment-preview-container').html(`<img src="${url}" class="attachment-preview-img" alt="${this.name}">`);
         } else if (attachmentType === 'txt') {
@@ -47,6 +48,17 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
       $('body.attachment').text(`Error processing params: ${String(e)}. Contact human@flowcrypt.com`);
       return;
     }
+  }
+
+  private getAttachmentType = (filename: string): AttachmentType | undefined => {
+    const nameSplit = filename.split('.');
+    const extension = nameSplit[nameSplit.length - 1].toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) {
+      return 'img';
+    } else if (extension === 'txt') {
+      return 'txt';
+    }
+    return undefined;
   }
 
   private decrypt = async () => {

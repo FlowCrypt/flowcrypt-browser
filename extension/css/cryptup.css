@@ -2283,65 +2283,55 @@ body.attachment {
   height: 118px;
   width: 178px;
   overflow: hidden;
+  cursor: pointer;
 }
+body.attachment.right-click-link { height: auto; }
 body.attachment:hover { border-color: #eaeaea; }
 
 body.attachment #download {
+  display: flex;
+  visibility: hidden;
   position: absolute;
-  width: 100px;
+  width: 32px;
+  height: 32px;
+  right: 10px;
+  bottom: 30px;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 3px;
   z-index: 1;
-  height: 80px;
-  left: 68px;
-  opacity: 1;
-  color: #444;
-  display: none;
 }
 
-body.attachment #download:hover,
 body.attachment:hover #download {
   visibility: visible;
-  cursor: pointer;
-}
-body.attachment #download.visible { visibility: visible; }
-
-body.attachment #download .large_spinner {
-  margin-top: 7px;
-  margin-left: 20px;
 }
 
-body.attachment #download .download-icon {
-  margin-top: 15px;
-  margin-bottom: 8px;
+body.attachment #download:hover {
+  background-color: rgba(0, 0, 0, 0.6);
 }
 
-body.attachment #download .download-prompt {
-  margin-top: 1px;
-  font-size: 14px;
-}
-
-body.attachment #download .download_progress {
+body.attachment .download_progress {
   position: absolute;
-  top: 39px;
-  margin-left: -5px;
+  top: 50%;
+  margin-top: -6px;
   font-weight: bold;
+  line-height: 1;
 }
 
 body.attachment #header {
-  margin-top: 10px;
-  padding-bottom: 0;
+  height: 90px;
   font-weight: 400;
   font-size: 14px;
   width: 100px;
   text-align: left;
   position: absolute;
-  left: 75px;
+  left: 65px;
   line-height: 1.5;
-  top: 15px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 45px;
 }
 
 body.attachment #type {
@@ -2360,6 +2350,7 @@ body.attachment #name {
   top: 92px;
   width: 154px;
   left: 0;
+  height: 12px;
 }
 
 body.attachment .file-format-holder {

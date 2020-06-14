@@ -17,7 +17,6 @@ import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
-import { PgpBlockViewAttachmentsModule } from './pgp_block_modules/pgp-block-attachmens-module.js';
 
 export class AttachmentDownloadView extends View {
   protected readonly acctEmail: string;
@@ -35,7 +34,8 @@ export class AttachmentDownloadView extends View {
   protected att!: Att;
   protected size: number | undefined;
   protected tabId!: string;
-  private button = $('#download');
+  private downloadButton = $('#download');
+  private header = $('#header');
   private originalButtonHTML: string | undefined;
   private canClickOnAtt: boolean = false;
   private downloadInProgress = false;
@@ -70,7 +70,7 @@ export class AttachmentDownloadView extends View {
     }
     $('#type').text(this.type || 'unknown type');
     $('#name').text(this.name || 'noname');
-    $('#header > span').text(`${this.isEncrypted ? 'ENCRYPTED\n' : 'PLAIN\n'} FILE`);
+    this.header.find('span').text(`${this.isEncrypted ? 'ENCRYPTED\n' : 'PLAIN\n'} FILE`);
     $('#name').attr('title', this.name || '');
     $('img#file-format').attr('src', this.getFileIconSrc());
     if (!this.size && this.url) { // download url of a file that has an unknown size
@@ -90,23 +90,18 @@ export class AttachmentDownloadView extends View {
   public setHandlers = () => {
     Ui.event.protect();
     if (this.canClickOnAtt) {
-      this.button.click(this.setHandlerPrevent('double', () => this.downloadButtonClickedHandler()));
+      this.downloadButton.click(this.setHandlerPrevent('double', () => this.downloadButtonClickedHandler()));
+      this.downloadButton.click((e) => e.stopPropagation());
+      $('body').click(this.setHandlerPrevent('double', async () => {
+        if (!$('body').hasClass('right-click-link')) {
+          await this.previewAttachmentClickedHandler();
+        }
+      }));
     }
-    $('.attachment').mouseenter(this.setHandler((el) => {
-      if (!this.downloadInProgress) {
-        $('#header').hide();
-        this.button.show();
-      }
-    }));
-    $('.attachment').mouseleave(this.setHandler((el) => {
-      if (!this.downloadInProgress) {
-        $('#header').show();
-        this.button.hide();
-      }
-    }));
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
       if (!entered) {
         this.downloadInProgress = false;
+        this.downloadButton.show();
         this.ppChangedPromiseCancellation.cancel = true; // update original object which is monitored by a promise
         this.ppChangedPromiseCancellation = { cancel: false }; // set to a new, not yet used object
       }
@@ -207,14 +202,14 @@ export class AttachmentDownloadView extends View {
       return;
     }
     this.downloadInProgress = true;
+    this.downloadButton.hide();
     try {
-      this.originalButtonHTML = this.button.html();
-      this.button.addClass('visible');
-      Xss.sanitizeRender(this.button, `${Ui.spinner('green', 'large_spinner')}<span class="download_progress"></span>`);
+      this.originalButtonHTML = this.downloadButton.html();
+      Xss.sanitizeRender(this.header, `${Ui.spinner('green', 'large_spinner')}<span class="download_progress"></span>`);
       await this.recoverMissingAttIdIfNeeded();
       await this.downloadDataIfNeeded();
       if (!this.isEncrypted) {
-        this.showAttachmentOrSaveToDownloads(this.att, false);
+        Browser.saveToDownloads(this.att, $('body'));
       } else {
         await this.decryptAndSaveAttToDownloads();
       }
@@ -222,17 +217,22 @@ export class AttachmentDownloadView extends View {
       this.renderErr(e);
     } finally {
       this.downloadInProgress = false;
+      this.downloadButton.show();
     }
+  }
+
+  private previewAttachmentClickedHandler = async () => {
+    BrowserMsg.send.showAttachment(this.parentTabId, { att: this.att, isEncrypted: this.isEncrypted });
   }
 
   private decryptAndSaveAttToDownloads = async () => {
     const result = await PgpMsg.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: this.att.getData() });
-    Xss.sanitizeRender(this.button, this.originalButtonHTML || '').removeClass('visible');
+    Xss.sanitizeRender(this.downloadButton, this.originalButtonHTML || '');
     if (result.success) {
       if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {
         result.filename = this.att.name;
       }
-      this.showAttachmentOrSaveToDownloads(new Att({ name: result.filename, type: this.att.type, data: result.content }), true);
+      Browser.saveToDownloads(new Att({ name: result.filename, type: this.att.type, data: result.content }), $('body'));
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'attachment', longids: result.longids.needPassphrase });
       if (! await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.longids.needPassphrase, 1000, this.ppChangedPromiseCancellation)) {
@@ -247,22 +247,14 @@ export class AttachmentDownloadView extends View {
     }
   }
 
-  private showAttachmentOrSaveToDownloads = (att: Att, isEncrypted: boolean) => {
-    const attachmentType = PgpBlockViewAttachmentsModule.getAttachmentType(this.origNameBasedOnFilename);
-    if (attachmentType) {
-      BrowserMsg.send.showAttachment(this.parentTabId, { att: this.att, isEncrypted });
-    } else {
-      Browser.saveToDownloads(att, $('body'));
-    }
-  }
-
   private renderProgress = (percent: number, received: number, fileSize: number) => {
     this.size = fileSize || this.size;
     const progressEl = $('.download_progress');
+    if (!percent && this.size) {
+      percent = Math.floor(((received * 0.75) / this.size) * 100);
+    }
     if (percent) {
-      progressEl.text(`${percent}%`);
-    } else if (this.size) {
-      progressEl.text(`${Math.floor(((received * 0.75) / this.size) * 100)}%`);
+      progressEl.text(`${Math.min(100, percent)}%`);
     }
   }
 
