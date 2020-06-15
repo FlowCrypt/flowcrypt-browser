@@ -33,7 +33,7 @@ class MessageWithFooterTestStrategy implements ITestMsgStrategy {
 
   public test = async (mimeMsg: ParsedMail) => {
     const keyInfo = Config.secrets.keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
-    const decrypted = await PgpMsg.decrypt({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
+    const decrypted = await PgpMsg.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: can't decrypt message`);
     }
@@ -50,7 +50,7 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
 
   public test = async (mimeMsg: ParsedMail) => {
     const keyInfo = Config.secrets.keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
-    const decrypted = await PgpMsg.decrypt({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
+    const decrypted = await PgpMsg.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: Could not successfully verify signed message`);
     }
@@ -93,7 +93,7 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
 
   public test = async (mimeMsg: ParsedMail) => {
     const keyInfo = Config.secrets.keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
-    const decrypted = await PgpMsg.decrypt({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
+    const decrypted = await PgpMsg.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: can't decrypt message`);
     }
