@@ -173,9 +173,13 @@ export class OpenPGPKey {
     } catch (e) {
       //
     }
+    const fingerprint = pubkey.getFingerprint();
+    if (!fingerprint) {
+      throw new Error('Key does not have a fingerprint and cannot be parsed.');
+    }
     Object.assign(pkey, {
       type: 'openpgp',
-      id: pubkey.getFingerprint().toUpperCase(),
+      id: fingerprint.toUpperCase(),
       ids: (await Promise.all(pubkey.getKeyIds().map(({ bytes }) => PgpKey.longid(bytes)))).filter(Boolean) as string[],
       usableForEncryption: ! await Catch.doesReject(pubkey.getEncryptionKey()),
       usableButExpired: await OpenPGPKey.usableButExpired(pubkey, exp, expired),
