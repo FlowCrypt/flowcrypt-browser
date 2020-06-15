@@ -18,6 +18,7 @@
     "../test/source/patterns.ts",
     "../test/source/async-stack.ts",
     "../test/source/buf.ts",
+    "../test/source/smime-parse.ts",
     "../test/source/ci-initialize.ts",
     "../test/source/mock.ts"
   ]
