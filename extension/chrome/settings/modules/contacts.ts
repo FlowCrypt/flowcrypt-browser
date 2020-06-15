@@ -142,12 +142,16 @@ View.run(class ContactsView extends View {
     const email = $('#edit_contact .input_pubkey').attr('email');
     if (!armoredPubkey || !email) {
       await Ui.modal.warning('No public key entered');
-    } else if (await PgpKey.fingerprint(await KeyUtil.parse(armoredPubkey))) {
-      await ContactStore.save(undefined, await ContactStore.obj({ email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now() }));
-      await this.loadAndRenderContactList();
     } else {
-      await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let us know at human@flowcrypt.com if you need help.');
-      $('#edit_contact .input_pubkey').val('').focus();
+      try {
+        // parse will throw if the key is not recognized
+        await KeyUtil.parse(armoredPubkey);
+        await ContactStore.save(undefined, await ContactStore.obj({ email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now() }));
+        await this.loadAndRenderContactList();
+      } catch (e) {
+        await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let us know at human@flowcrypt.com if you need help.');
+        $('#edit_contact .input_pubkey').val('').focus();
+      }
     }
   }
 
