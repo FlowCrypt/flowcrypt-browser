@@ -11,7 +11,6 @@ import { PgpMsg } from '../../js/common/core/pgp-msg.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Ui } from '../../js/common/browser/ui.js';
-import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 
 type AttachmentType = 'img' | 'txt';
 
@@ -32,15 +31,22 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
         const blob = new Blob([result], { type: this.type });
         const url = window.URL.createObjectURL(blob);
         const attachmentType = this.getAttachmentType(this.origNameBasedOnFilename);
-        if (attachmentType === 'img') {
-          this.attachmentPreviewContainer.html(`<img src="${url}" class="attachment-preview-img" alt="${this.name}">`);
-        } else if (attachmentType === 'txt') {
-          this.attachmentPreviewContainer.html(`<div class="attachment-preview-txt">${Xss.escape(result.toString()).replace(/\n/g, '<br>')}</div>`);
+        const downloadBtn = $(`<a href="${url}" download="${this.origNameBasedOnFilename}" class="download-attachment">
+          Right-click here and choose 'Save Link As' to save encrypted file
+          <img src="/img/svgs/download-link.png">
+        </a>`);
+        downloadBtn.on('click', e => e.preventDefault());
+        if (attachmentType) {
+          if (attachmentType === 'img') { // image
+            this.attachmentPreviewContainer.html(`<img src="${url}" class="attachment-preview-img" alt="${this.name}">`);
+          } else if (attachmentType === 'txt') { // text
+            this.attachmentPreviewContainer.html(`<div class="attachment-preview-txt">${Xss.escape(result.toString()).replace(/\n/g, '<br>')}</div>`);
+          }
+          $('#attachment-preview-download').append(downloadBtn);
+        } else { // no preview available, download button
+          this.attachmentPreviewContainer.html('<div class="attachment-preview-unavailable">No preview available</div>');
+          $('.attachment-preview-unavailable').append(downloadBtn);
         }
-        const downloadBtn = (new XssSafeFactory(this.acctEmail, this.tabId)).btnDownloadAttachment(url, this.origNameBasedOnFilename);
-        const downloadBtnEl = $(downloadBtn);
-        downloadBtnEl.on('click', e => e.preventDefault());
-        $('#attachment-preview-download').empty().append(downloadBtnEl);
         $('body').on('click', (e) => {
           if (e.target === document.body || $('body').children().toArray().indexOf(e.target) !== -1) {
             BrowserMsg.send.closeSwal(this.parentTabId);

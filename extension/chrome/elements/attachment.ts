@@ -36,7 +36,6 @@ export class AttachmentDownloadView extends View {
   protected tabId!: string;
   private downloadButton = $('#download');
   private header = $('#header');
-  private headerTitle = $('#header > span');
   private originalButtonHTML: string | undefined;
   private canClickOnAtt: boolean = false;
   private downloadInProgress = false;
@@ -71,7 +70,7 @@ export class AttachmentDownloadView extends View {
     }
     $('#type').text(this.type || 'unknown type');
     $('#name').text(this.name || 'noname');
-    this.headerTitle.text(`${this.isEncrypted ? 'ENCRYPTED\n' : 'PLAIN\n'} FILE`);
+    $('#header > span').text(`${this.isEncrypted ? 'ENCRYPTED\n' : 'PLAIN\n'} FILE`);
     $('#name').attr('title', this.name || '');
     $('img#file-format').attr('src', this.getFileIconSrc());
     if (!this.size && this.url) { // download url of a file that has an unknown size

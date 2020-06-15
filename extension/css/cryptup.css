@@ -2396,14 +2396,16 @@ body.attachment .file-download-right-click-link {
   text-decoration: none;
 }
 
-#attachment-preview-download a {
+.download-attachment {
   display: flex;
+  align-items: center;
+  font-size: 18px;
   color: #b4b4b4 !important;
 }
 
-#attachment-preview-download img {
+.download-attachment img {
   width: 18px;
-  margin: 0 0.6em;
+  margin: 0.4em;
 }
 
 #attachment-preview-container {
@@ -2415,7 +2417,7 @@ body.attachment .file-download-right-click-link {
   overflow-y: auto;
 }
 
-#attachment-preview-container * {
+#attachment-preview-container > * {
   max-width: 100%;
   margin: auto;
 }
@@ -2429,6 +2431,25 @@ body.attachment .file-download-right-click-link {
 #attachment-preview-container .attachment-preview-txt {
   background: white;
   padding: 40px;
+}
+
+#attachment-preview-container .attachment-preview-unavailable {
+  display: flex;
+  flex-direction: column;
+  width: 340px;
+  font-size: 26px;
+  color: white;
+  align-items: center;
+  background: #4c494c;
+  box-shadow: 0 10px 12px 5px rgba(0, 0, 0, 0.2);
+  padding: 30px;
+  border-radius: 15px;
+}
+
+#attachment-preview-container .attachment-preview-unavailable .download-attachment {
+  flex-direction: column;
+  margin-top: 20px;
+  text-align: center;
 }
 
 /* Select Account */
