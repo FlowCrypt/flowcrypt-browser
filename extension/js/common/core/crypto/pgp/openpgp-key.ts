@@ -85,11 +85,11 @@ export class OpenPGPKey {
     await OpenPGPKey.wrap(prv, key);
   }
 
-  public static decrypt = async (message: OpenPGP.message.Message, privateKeys: Key[], passwords?: string[]) => {
+  public static decryptMessage = async (message: OpenPGP.message.Message, privateKeys: Key[], passwords?: string[]) => {
     return await message.decrypt(privateKeys.map(key => OpenPGPKey.unwrap(key)), passwords, undefined, false);
   }
 
-  public static encrypt: PgpMsgMethod.Encrypt = async ({ pubkeys, signingPrv, pwd, data, filename, armor, date }) => {
+  public static encryptMessage: PgpMsgMethod.Encrypt = async ({ pubkeys, signingPrv, pwd, data, filename, armor, date }) => {
     const message = opgp.message.fromBinary(data, filename, date);
     const options: OpenPGP.EncryptOptions = { armor, message, date };
     let usedChallenge = false;

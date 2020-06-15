@@ -55,7 +55,7 @@ View.run(class ManualDecryptView extends View {
   }
 
   private decryptAndDownload = async (encrypted: Att) => { // todo - this is more or less copy-pasted from att.js, should use common function
-    const result = await PgpMsg.decrypt({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: encrypted.getData() });
+    const result = await PgpMsg.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: encrypted.getData() });
     if (result.success) {
       const attachment = new Att({ name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content });
       Browser.saveToDownloads(attachment);

@@ -172,7 +172,7 @@ View.run(class AttachmentDownloadView extends View {
   private processAsPublicKeyAndHideAttIfAppropriate = async () => {
     if (this.att.msgId && this.att.id && this.att.treatAs() === 'publicKey') { // this is encrypted public key - download && decrypt & parse & render
       const { data } = await this.gmail.attGet(this.att.msgId, this.att.id);
-      const decrRes = await PgpMsg.decrypt({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: data });
+      const decrRes = await PgpMsg.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: data });
       if (decrRes.success && decrRes.content) {
         const openpgpType = await PgpMsg.type({ data: decrRes.content });
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // 'openpgpType.armored': could potentially process unarmored pubkey files, maybe later
@@ -210,7 +210,7 @@ View.run(class AttachmentDownloadView extends View {
   }
 
   private decryptAndSaveAttToDownloads = async () => {
-    const result = await PgpMsg.decrypt({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: this.att.getData() });
+    const result = await PgpMsg.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: this.att.getData() });
     Xss.sanitizeRender(this.button, this.originalButtonHTML || '').removeClass('visible');
     if (result.success) {
       if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {

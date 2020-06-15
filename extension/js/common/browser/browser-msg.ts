@@ -229,7 +229,7 @@ export class BrowserMsg {
   public static addPgpListeners = () => {
     BrowserMsg.bgAddListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await PgpHash.challengeAnswer(r.answer) }));
     BrowserMsg.bgAddListener('pgpMsgDiagnosePubkeys', PgpMsg.diagnosePubkeys);
-    BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decrypt);
+    BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decryptMessage);
     BrowserMsg.bgAddListener('pgpMsgVerifyDetached', PgpMsg.verifyDetached);
     BrowserMsg.bgAddListener('pgpKeyDetails', async ({ pubkey }: Bm.PgpKeyDetails): Promise<Bm.Res.PgpKeyDetails> => await KeyUtil.parseDetails(pubkey));
     BrowserMsg.bgAddListener('pgpMsgType', PgpMsg.type);

@@ -168,7 +168,7 @@ export class PgpMsg {
     return await PgpMsg.verify(message, keys.forVerification, keys.verificationContacts[0]);
   }
 
-  public static decrypt: PgpMsgMethod.Decrypt = async ({ kisWithPp, encryptedData, msgPwd }) => {
+  public static decryptMessage: PgpMsgMethod.Decrypt = async ({ kisWithPp, encryptedData, msgPwd }) => {
     const longids: DecryptError$longids = { message: [], matching: [], chosen: [], needPassphrase: [] };
     let prepared: PreparedForDecrypt;
     try {
@@ -199,7 +199,7 @@ export class PgpMsg {
       }
       const passwords = msgPwd ? [msgPwd] : undefined;
       const privateKeys = keys.prvForDecryptDecrypted.map(ki => ki.decrypted!);
-      const decrypted = await OpenPGPKey.decrypt(prepared.message as OpenPGP.message.Message, privateKeys, passwords);
+      const decrypted = await OpenPGPKey.decryptMessage(prepared.message as OpenPGP.message.Message, privateKeys, passwords);
       await PgpMsg.cryptoMsgGetSignedBy(decrypted, keys); // we can only figure out who signed the msg once it's decrypted
       const verifyResults = keys.signedBy.length ? await decrypted.verify(keys.forVerification) : undefined; // verify first to prevent stream hang
       const content = new Buf(await opgp.stream.readToEnd(decrypted.getLiteralData()!)); // read content second to prevent stream hang
@@ -214,16 +214,16 @@ export class PgpMsg {
     }
   }
 
-  public static encrypt: PgpMsgMethod.Encrypt = async ({ pubkeys, signingPrv, pwd, data, filename, armor, date }) => {
+  public static encryptMessage: PgpMsgMethod.Encrypt = async ({ pubkeys, signingPrv, pwd, data, filename, armor, date }) => {
     const keyTypes = new Set(pubkeys.map(k => k.type));
     if (keyTypes.has('openpgp') && keyTypes.has('x509')) {
       throw new Error('Mixed key types are not allowed: ' + [...keyTypes]);
     }
     const input = { pubkeys, signingPrv, pwd, data, filename, armor, date };
     if (keyTypes.has('x509')) {
-      return await SmimeKey.encrypt(input);
+      return await SmimeKey.encryptMessage(input);
     }
-    return await OpenPGPKey.encrypt(input);
+    return await OpenPGPKey.encryptMessage(input);
   }
 
   public static diagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = async ({ privateKis, message }) => {
