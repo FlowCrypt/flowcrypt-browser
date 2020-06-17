@@ -3,10 +3,12 @@
 'use strict';
 
 import { ApiErr } from '../api/error/api-error.js';
+import { Att } from '../core/att.js';
 import { Catch } from '../platform/catch.js';
 import { Dict, Url } from '../core/common.js';
 import Swal from 'sweetalert2';
 import { Xss } from '../platform/xss.js';
+import { XssSafeFactory } from '../xss-safe-factory.js';
 
 type NamedSels = Dict<JQuery<HTMLElement>>;
 type ProvidedEventHandler = (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>;
@@ -260,7 +262,11 @@ export class Ui {
         }
       });
     },
-    attachment: async (iframeUrl: string): Promise<void> => {
+    attachmentPreview: async (att: Att, isEncrypted: boolean, size: number | undefined, factory: XssSafeFactory): Promise<void> => {
+      if (size) {
+        att.length = size;
+      }
+      const iframeUrl = factory.srcPgpAttIframe(att, isEncrypted, 'chrome/elements/attachment_preview.htm');
       await Ui.swal().fire({
         onOpen: () => {
           $(Swal.getContent()).attr('data-test', 'attachment-dialog');

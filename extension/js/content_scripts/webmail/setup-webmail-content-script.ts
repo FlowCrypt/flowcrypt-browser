@@ -173,11 +173,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('reply_pubkey_mismatch', BrowserMsgCommonHandlers.replyPubkeyMismatch);
     BrowserMsg.addListener('add_end_session_btn', () => inject.insertEndSessionBtn(acctEmail));
     BrowserMsg.addListener('show_attachment_preview', async ({ att, isEncrypted, size }: Bm.ShowAttachmentPreview) => {
-      if (size) {
-        att.length = size;
-      }
-      const iframeUrl = factory.srcPgpAttIframe(att, isEncrypted, 'chrome/elements/attachment_preview.htm');
-      await Ui.modal.attachment(iframeUrl);
+      await Ui.modal.attachmentPreview(att, isEncrypted, size, factory);
     });
 
     BrowserMsg.listen(tabId);

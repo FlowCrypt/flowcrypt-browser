@@ -16,6 +16,7 @@ import { InboxMenuModule } from './inbox-modules/inbox-menu-module.js';
 import { InboxNotificationModule } from './inbox-modules/inbox-notification-module.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Settings } from '../../../js/common/settings.js';
+import Swal from 'sweetalert2';
 import { View } from '../../../js/common/view.js';
 import { WebmailCommon } from "../../../js/common/webmail.js";
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -141,6 +142,12 @@ export class InboxView extends View {
     });
     BrowserMsg.addListener('close_dialog', async () => {
       $('#cryptup_dialog').remove();
+    });
+    BrowserMsg.addListener('close_swal', async () => {
+      Swal.close();
+    });
+    BrowserMsg.addListener('show_attachment_preview', async ({ att, isEncrypted, size }: Bm.ShowAttachmentPreview) => {
+      await Ui.modal.attachmentPreview(att, isEncrypted, size, this.factory);
     });
   }
 
