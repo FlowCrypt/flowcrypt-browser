@@ -2401,7 +2401,7 @@ body.attachment .file-download-right-click-link {
   display: flex;
   align-items: center;
   font-size: 18px;
-  color: #b4b4b4 !important;
+  color: white !important;
 }
 
 .download-attachment img {
@@ -2411,7 +2411,7 @@ body.attachment .file-download-right-click-link {
 
 #attachment-preview-container {
   flex-grow: 1;
-  margin: 5px 50px 20px;
+  margin: 40px 50px 20px;
   display: flex;
   justify-content: center;
   align-items: center;
