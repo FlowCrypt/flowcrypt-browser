@@ -272,7 +272,7 @@ export class Ui {
           $(Swal.getContent()).attr('data-test', 'attachment-dialog');
           $(Swal.getCloseButton()).attr('data-test', 'dialog-close');
         },
-        html: `<iframe src="${Xss.escape(iframeUrl)}" style="border: 0"></iframe>`,
+        html: `<iframe src="${Xss.escape(iframeUrl)}" style="border: 0" sandbox></iframe>`,
         showConfirmButton: false,
         showCloseButton: true,
         grow: 'fullscreen',

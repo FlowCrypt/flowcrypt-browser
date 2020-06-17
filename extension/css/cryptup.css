@@ -2381,6 +2381,7 @@ body.attachment .file-download-right-click-link {
   color: #31a217;
 }
 
+/* Attachment Preview */
 #attachment-preview {
   display: flex;
   flex-direction: column;

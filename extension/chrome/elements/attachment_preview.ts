@@ -34,7 +34,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
         const downloadBtn = $(`<a href="${url}" download="${Xss.escape(this.origNameBasedOnFilename)}" class="download-attachment">
           Right-click here and choose 'Save Link As' to save encrypted file
           <img src="/img/svgs/download-link.png">
-        </a>`); // xss-escaped
+        </a>`);
         downloadBtn.click((e) => e.preventDefault());
         if (attachmentType) {
           if (attachmentType === 'img') { // image
@@ -42,10 +42,10 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
           } else if (attachmentType === 'txt') { // text
             this.attachmentPreviewContainer.html(`<div class="attachment-preview-txt">${Xss.escape(result.toString()).replace(/\n/g, '<br>')}</div>`); // xss-escaped
           }
-          $('#attachment-preview-download').append(downloadBtn);
+          $('#attachment-preview-download').append(downloadBtn); // xss-escaped
         } else { // no preview available, download button
           this.attachmentPreviewContainer.html('<div class="attachment-preview-unavailable">No preview available</div>'); // xss-escaped
-          $('.attachment-preview-unavailable').append(downloadBtn);
+          $('.attachment-preview-unavailable').append(downloadBtn); // xss-escaped
         }
         $('body').click((e) => {
           if (e.target === document.body || $('body').children().toArray().indexOf(e.target) !== -1) {

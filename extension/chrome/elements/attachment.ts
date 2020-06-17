@@ -30,16 +30,16 @@ export class AttachmentDownloadView extends View {
   protected readonly name: string | undefined;
   protected readonly url: string | undefined;
   protected readonly gmail: Gmail;
-
   protected att!: Att;
-  protected size: number | undefined;
-  protected tabId!: string;
+
+  private size: number | undefined;
   private downloadButton = $('#download');
   private header = $('#header');
   private originalButtonHTML: string | undefined;
   private canClickOnAtt: boolean = false;
   private downloadInProgress = false;
   private ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
+  private tabId!: string;
 
   constructor() {
     super();
