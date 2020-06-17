@@ -142,6 +142,28 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       internalTestState.expectiIntentionalErrReport = true;
     }));
 
+    ava.default('settings - attachment previews are rendered according to their types', testWithBrowser('compatibility', async (t, browser) => {
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=1729eee9493eb76a`));
+      // image
+      const attachmentImage = await inboxPage.getFrame(['attachment.htm', 'name=tiny-face.png']);
+      await attachmentImage.click('body');
+      const attachmentPreviewImage = await inboxPage.getFrame(['attachment_preview.htm']);
+      await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
+      await inboxPage.press('Escape');
+      // text
+      const attachmentText = await inboxPage.getFrame(['attachment.htm', 'name=small.txt']);
+      await attachmentText.click('body');
+      const attachmentPreviewText = await inboxPage.getFrame(['attachment_preview.htm']);
+      await attachmentPreviewText.waitForContent('#attachment-preview-container .attachment-preview-txt', 'small text file');
+      await inboxPage.press('Escape');
+      // no preview
+      const attachmentOther = await inboxPage.getFrame(['attachment.htm', 'name=small.pdf']);
+      await attachmentOther.click('body');
+      const attachmentPreviewOther = await inboxPage.getFrame(['attachment_preview.htm']);
+      await attachmentPreviewOther.waitForContent('#attachment-preview-container .attachment-preview-unavailable', 'No preview available');
+      await attachmentPreviewOther.waitAll('#attachment-preview-container .attachment-preview-unavailable a.download-attachment');
+    }));
+
     ava.todo('settings - change passphrase - mismatch curent pp');
 
     ava.todo('settings - change passphrase - mismatch new pp');
