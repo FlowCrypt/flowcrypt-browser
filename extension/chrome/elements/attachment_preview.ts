@@ -35,7 +35,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
           Right-click here and choose 'Save Link As' to save encrypted file
           <img src="/img/svgs/download-link.png">
         </a>`); // xss-escaped
-        downloadBtn.on('click', e => e.preventDefault());
+        downloadBtn.click((e) => e.preventDefault());
         if (attachmentType) {
           if (attachmentType === 'img') { // image
             this.attachmentPreviewContainer.html(`<img src="${url}" class="attachment-preview-img" alt="${Xss.escape(this.origNameBasedOnFilename)}">`); // xss-escaped
@@ -47,7 +47,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
           this.attachmentPreviewContainer.html('<div class="attachment-preview-unavailable">No preview available</div>'); // xss-escaped
           $('.attachment-preview-unavailable').append(downloadBtn);
         }
-        $('body').on('click', (e) => {
+        $('body').click((e) => {
           if (e.target === document.body || $('body').children().toArray().indexOf(e.target) !== -1) {
             BrowserMsg.send.closeSwal(this.parentTabId);
           }
