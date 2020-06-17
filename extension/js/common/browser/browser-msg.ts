@@ -64,7 +64,7 @@ export namespace Bm {
   export type PgpMsgType = PgpMsgMethod.Arg.Type;
   export type Ajax = { req: JQueryAjaxSettings, stack: string };
   export type AjaxGmailAttGetChunk = { acctEmail: string, msgId: string, attId: string };
-  export type ShowAttachment = { att: Att, isEncrypted: boolean, size: number | undefined };
+  export type ShowAttachmentPreview = { att: Att, isEncrypted: boolean, size: number | undefined };
 
   export namespace Res {
     export type GetActiveTabInfo = { provider: 'gmail' | undefined, acctEmail: string | undefined, sameWorld: boolean | undefined };
@@ -97,7 +97,7 @@ export namespace Bm {
     NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass | ReconnectAcctAuthPopup |
     PgpKeyDetails | Db | StoreSessionSet | StoreSessionGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
     PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | PgpMsgType | Ajax | FocusFrame |
-    ShowAttachment;
+    ShowAttachmentPreview;
 
   // export type RawResponselessHandler = (req: AnyRequest) => Promise<void>;
   // export type RawRespoHandler = (req: AnyRequest) => Promise<void>;
@@ -172,7 +172,7 @@ export class BrowserMsg {
     redirect: (dest: Bm.Dest, bm: Bm.Redirect) => BrowserMsg.sendCatch(dest, 'redirect', bm),
     openGoogleAuthDialog: (dest: Bm.Dest, bm: Bm.OpenGoogleAuthDialog) => BrowserMsg.sendCatch(dest, 'open_google_auth_dialog', bm),
     addToContacts: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'addToContacts', {}),
-    showAttachment: (dest: Bm.Dest, bm: Bm.ShowAttachment) => BrowserMsg.sendCatch(dest, 'show_attachment', bm),
+    showAttachmentPreview: (dest: Bm.Dest, bm: Bm.ShowAttachmentPreview) => BrowserMsg.sendCatch(dest, 'show_attachment_preview', bm),
   };
   private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};
   private static HANDLERS_REGISTERED_FRAME: Handlers = {

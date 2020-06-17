@@ -222,7 +222,7 @@ export class AttachmentDownloadView extends View {
   }
 
   private previewAttachmentClickedHandler = async () => {
-    BrowserMsg.send.showAttachment(this.parentTabId, { att: this.att, isEncrypted: this.isEncrypted, size: this.size });
+    BrowserMsg.send.showAttachmentPreview(this.parentTabId, { att: this.att, isEncrypted: this.isEncrypted, size: this.size });
   }
 
   private decryptAndSaveAttToDownloads = async () => {

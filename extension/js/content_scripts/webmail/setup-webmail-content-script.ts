@@ -172,7 +172,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     });
     BrowserMsg.addListener('reply_pubkey_mismatch', BrowserMsgCommonHandlers.replyPubkeyMismatch);
     BrowserMsg.addListener('add_end_session_btn', () => inject.insertEndSessionBtn(acctEmail));
-    BrowserMsg.addListener('show_attachment', async ({ att, isEncrypted, size }: Bm.ShowAttachment) => {
+    BrowserMsg.addListener('show_attachment_preview', async ({ att, isEncrypted, size }: Bm.ShowAttachmentPreview) => {
       if (size) {
         att.length = size;
       }
