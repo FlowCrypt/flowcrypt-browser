@@ -121,7 +121,7 @@ yPLCqVTFJQWaCR5ZTekRQPTDZkjxjxbs
 
     ava.default('[unit][KeyUtil.parse] S/MIME key parsing works', async t => {
       const key = await KeyUtil.parse(smimeCert);
-      expect(key.id).to.equal('63f7025e700f3945301fb2fba5674f84');
+      expect(key.id).to.equal('63F7025E700F3945301FB2FBA5674F84');
       t.pass();
     });
   }
