@@ -71,7 +71,6 @@ const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, brows
 
 export type TestWithBrowser = typeof testWithBrowser;
 
-
 if (testGroup !== 'UNIT-TESTS') {
   ava.after.always('close browsers', async t => {
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);

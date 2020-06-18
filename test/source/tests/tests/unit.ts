@@ -124,15 +124,15 @@ yPLCqVTFJQWaCR5ZTekRQPTDZkjxjxbs
       const key = await KeyUtil.parse(smimeCert);
       expect(key.id).to.equal('63F7025E700F3945301FB2FBA5674F84');
       expect(key.type).to.equal('x509');
-      expect(key.usableForEncryption).to.be.true;
-      expect(key.usableForSigning).to.be.true;
-      expect(key.usableButExpired).to.be.false;
+      expect(key.usableForEncryption).to.equal(true);
+      expect(key.usableForSigning).to.equal(true);
+      expect(key.usableButExpired).to.equal(false);
       expect(key.emails.length).to.equal(1);
       expect(key.emails[0]).to.equal('actalis@meta.33mail.com');
       expect(key.identities.length).to.equal(1);
       expect(key.identities[0]).to.equal('actalis@meta.33mail.com');
-      expect(key.isPublic).to.be.true;
-      expect(key.isPrivate).to.be.true;
+      expect(key.isPublic).to.equal(true);
+      expect(key.isPrivate).to.equal(true);
       t.pass();
     });
 
@@ -252,15 +252,15 @@ sOLAw7KgpiL2+0v777saxSO5vtufJCKk4OOEaVDufeijlejKTM+H7twVer4iGqiW
       expect(key.ids[0]).to.equal('62CB4E6F9ECA6FA1');
       expect(key.ids[1]).to.equal('B30FE36B3AEC2F8F');
       expect(key.type).to.equal('openpgp');
-      expect(key.usableForEncryption).to.be.false;
-      expect(key.usableForSigning).to.be.false;
-      expect(key.usableButExpired).to.be.true;
+      expect(key.usableForEncryption).equal(false);
+      expect(key.usableForSigning).equal(false);
+      expect(key.usableButExpired).equal(true);
       expect(key.emails.length).to.equal(1);
       expect(key.emails[0]).to.equal('flowcrypt@metacode.biz');
       expect(key.identities.length).to.equal(1);
       expect(key.identities[0]).to.equal('Testing <flowcrypt@metacode.biz>');
-      expect(key.isPublic).to.be.false;
-      expect(key.isPrivate).to.be.true;
+      expect(key.isPublic).equal(false);
+      expect(key.isPrivate).equal(true);
       t.pass();
     });
 
@@ -331,15 +331,15 @@ KwoTyPGP6prXobe5lmo+4Ji3bE+OFqD20SgDyM6ER7KsrjsKi/Gmh7Q0
       expect(key.ids[0]).to.equal('62CB4E6F9ECA6FA1');
       expect(key.ids[1]).to.equal('B30FE36B3AEC2F8F');
       expect(key.type).to.equal('openpgp');
-      expect(key.usableForEncryption).to.be.true;
-      expect(key.usableForSigning).to.be.true;
-      expect(key.usableButExpired).to.be.false;
+      expect(key.usableForEncryption).equal(true);
+      expect(key.usableForSigning).equal(true);
+      expect(key.usableButExpired).equal(false);
       expect(key.emails.length).to.equal(1);
       expect(key.emails[0]).to.equal('flowcrypt@metacode.biz');
       expect(key.identities.length).to.equal(1);
       expect(key.identities[0]).to.equal('Testing <flowcrypt@metacode.biz>');
-      expect(key.isPublic).to.be.false;
-      expect(key.isPrivate).to.be.true;
+      expect(key.isPublic).equal(false);
+      expect(key.isPrivate).equal(true);
       t.pass();
     });
 

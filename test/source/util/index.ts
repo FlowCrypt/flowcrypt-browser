@@ -19,7 +19,9 @@ export const getParsedCliParams = () => {
   } else {
     throw new Error('Unknown test type: specify CONSUMER-MOCK or ENTERPRISE-MOCK CONSUMER-LIVE-GMAIL');
   }
-  const testGroup = (process.argv.includes('UNIT-TESTS') ? 'UNIT-TESTS' : process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP') as 'FLAKY-GROUP' | 'STANDARD-GROUP' | 'UNIT-TESTS';
+  const testGroup = (process.argv.includes('UNIT-TESTS') ? 'UNIT-TESTS'
+    : process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP') as
+    'FLAKY-GROUP' | 'STANDARD-GROUP' | 'UNIT-TESTS';
   const buildDir = `build/chrome-${(testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : testVariant).toLowerCase()}`;
   const poolSizeOne = process.argv.includes('--pool-size=1') || testGroup === 'FLAKY-GROUP';
   const oneIfNotPooled = (suggestedPoolSize: number) => poolSizeOne ? Math.min(1, suggestedPoolSize) : suggestedPoolSize;
