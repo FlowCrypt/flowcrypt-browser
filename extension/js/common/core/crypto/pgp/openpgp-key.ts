@@ -183,7 +183,7 @@ export class OpenPGPKey {
       ids: (await Promise.all(pubkey.getKeyIds().map(({ bytes }) => PgpKey.longid(bytes)))).filter(Boolean) as string[],
       usableForEncryption: ! await Catch.doesReject(pubkey.getEncryptionKey()),
       usableButExpired: await OpenPGPKey.usableButExpired(pubkey, exp, expired),
-      usableForSigning: await Catch.doesReject(pubkey.getSigningKey()),
+      usableForSigning: ! await Catch.doesReject(pubkey.getSigningKey()),
       // valid emails extracted from uids
       emails,
       // full uids that have valid emails in them
