@@ -122,6 +122,16 @@ yPLCqVTFJQWaCR5ZTekRQPTDZkjxjxbs
     ava.default('[unit][KeyUtil.parse] S/MIME key parsing works', async t => {
       const key = await KeyUtil.parse(smimeCert);
       expect(key.id).to.equal('63F7025E700F3945301FB2FBA5674F84');
+      expect(key.type).to.equal('x509');
+      expect(key.usableForEncryption).to.be.true;
+      expect(key.usableForSigning).to.be.true;
+      expect(key.usableButExpired).to.be.false;
+      expect(key.emails.length).to.equal(1);
+      expect(key.emails[0]).to.equal('actalis@meta.33mail.com');
+      expect(key.identities.length).to.equal(1);
+      expect(key.identities[0]).to.equal('actalis@meta.33mail.com');
+      expect(key.isPublic).to.be.true;
+      expect(key.isPrivate).to.be.true;
       t.pass();
     });
   }
