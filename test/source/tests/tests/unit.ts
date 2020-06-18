@@ -181,6 +181,10 @@ WeNYP84Yjw6OFSHdi2W0VojRGhxm7PZCMqswN/XaBg==
       await t.throwsAsync(() => KeyUtil.parse(httpsCert), UnreportableError);
     });
 
+    ava.default('[unit][KeyUtil.parse] Unknown key type parsing fails', async t => {
+      await t.throwsAsync(() => KeyUtil.parse('dummy string for unknown key'), Error);
+    });
+
     const expiredPgp = `-----BEGIN PGP PRIVATE KEY BLOCK-----
 
 lQPGBAAAB+EBCADX2Ii2BPS7Uxl/iLZOKYNI5RT/b1o2p8KGZ515fJsvpv1kPlK4
