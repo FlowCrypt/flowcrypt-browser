@@ -93,9 +93,8 @@ View.run(class CompatibilityView extends View {
         this.appendResult(`${skn} Created: ${await this.test(async () => this.formatDate(subKey.keyPacket.created))}`);
         this.appendResult(`${skn} Algo: ${await this.test(async () => `${subKey.getAlgorithmInfo().algorithm}`)}`);
         this.appendResult(`${skn} Verify: ${await this.test(async () => {
-          const verifyResNum = await subKey.verify(key.primaryKey);
-          const veryfyResWord = opgp.enums.read(opgp.enums.keyStatus, 1);
-          return `${verifyResNum}: ${veryfyResWord}`;
+          await subKey.verify(key.primaryKey);
+          return 'OK';
         })}`);
         this.appendResult(`${skn} Subkey tag: ${await this.test(async () => subKey.keyPacket.tag)}`);
         this.appendResult(`${skn} Subkey getBitSize: ${await this.test(async () => subKey.getAlgorithmInfo().bits)}`);       // No longer exists on object
