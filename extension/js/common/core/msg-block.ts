@@ -8,7 +8,7 @@ import { AttMeta } from './att.js';
 import { Buf } from './buf.js';
 import { KeyDetails } from './crypto/key.js';
 
-export type KeyBlockType = 'publicKey' | 'privateKey';
+export type KeyBlockType = 'publicKey' | 'privateKey' | 'certificate';
 export type ReplaceableMsgBlockType = KeyBlockType | 'signedMsg' | 'encryptedMsg';
 export type MsgBlockType = ReplaceableMsgBlockType | 'plainText' | 'decryptedText' | 'plainHtml' | 'decryptedHtml' | 'plainAtt' | 'encryptedAtt'
   | 'decryptedAtt' | 'encryptedAttLink' | 'decryptErr' | 'verifiedMsg' | 'signedHtml';

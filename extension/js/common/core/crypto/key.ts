@@ -9,6 +9,7 @@ import { PgpArmor } from './pgp/pgp-armor.js';
 import { opgp } from './pgp/openpgpjs-custom.js';
 import { OpenPGPKey, PgpKey } from './pgp/openpgp-key.js';
 import { SmimeKey } from './smime/smime-key.js';
+import { MsgBlock } from '../msg-block.js';
 
 /**
  * This is a common Pubkey interface for both pgp and x509 keys
@@ -107,17 +108,20 @@ export class KeyUtil {
    * Read many keys, could be armored or binary, in single armor or separately, useful for importing keychains of various formats
    */
   public static readMany = async (fileData: Buf): Promise<{ keys: Key[], errs: Error[] }> => {
-    const allKeys: OpenPGP.key.Key[] = [];
+    const allKeys: Key[] = [];
     const allErrs: Error[] = [];
     const { blocks } = MsgBlockParser.detectBlocks(fileData.toUtfStr('ignore'));
-    const armoredPublicKeyBlocks = blocks.filter(block => block.type === 'publicKey' || block.type === 'privateKey');
+    const isImportable = (block: MsgBlock) => block.type === 'publicKey' || block.type === 'privateKey' || block.type === 'certificate';
+    const armoredPublicKeyBlocks = blocks.filter(isImportable);
     const pushKeysAndErrs = async (content: string | Buf, isArmored: boolean) => {
       try {
-        const { err, keys } = isArmored
-          ? await opgp.key.readArmored(content.toString())
-          : await opgp.key.read(typeof content === 'string' ? Buf.fromUtfStr(content) : content);
-        allErrs.push(...(err || []));
-        allKeys.push(...keys);
+        if (isArmored) {
+          allKeys.push(...await KeyUtil.parseMany(content.toString()));
+        } else {
+          const { err, keys } = await opgp.key.read(typeof content === 'string' ? Buf.fromUtfStr(content) : content);
+          allErrs.push(...(err || []));
+          allKeys.push(...await Promise.all(keys.map(key => OpenPGPKey.wrap(key, {} as Key))));
+        }
       } catch (e) {
         allErrs.push(e instanceof Error ? e : new Error(String(e)));
       }
@@ -129,15 +133,20 @@ export class KeyUtil {
     } else {
       await pushKeysAndErrs(fileData, false);
     }
-    return { keys: await Promise.all(allKeys.map(key => OpenPGPKey.wrap(key, {} as Key))), errs: allErrs };
+    return { keys: allKeys, errs: allErrs };
   }
 
   public static parse = async (text: string): Promise<Key> => {
+    return (await KeyUtil.parseMany(text))[0];
+  }
+
+  public static parseMany = async (text: string): Promise<Key[]> => {
     const keyType = KeyUtil.getKeyType(text);
     if (keyType === 'openpgp') {
-      return await OpenPGPKey.parse(text);
+      return await OpenPGPKey.parseMany(text);
     } else if (keyType === 'x509') {
-      return await SmimeKey.parse(text);
+      // TODO: No support for parsing multiple S/MIME keys for now
+      return [await SmimeKey.parse(text)];
     }
     throw new Error('Unsupported key type: ' + keyType);
   }

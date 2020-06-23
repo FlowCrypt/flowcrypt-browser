@@ -14,11 +14,20 @@ const internal = Symbol('internal public key');
 export class OpenPGPKey {
 
   public static parse = async (text: string): Promise<Key> => {
+    // TODO: Should we throw if more keys are in the armor?
+    return (await OpenPGPKey.parseMany(text))[0];
+  }
+
+  public static parseMany = async (text: string): Promise<Key[]> => {
     const result = await opgp.key.readArmored(text);
     if (result.err) {
       throw new Error('Cannot parse OpenPGP key: ' + result.err + ' for: ' + text);
     }
-    return await OpenPGPKey.wrap(result.keys[0], {} as Key, text);
+    const keys = [];
+    for (const key of result.keys) {
+      keys.push(await OpenPGPKey.wrap(key, {} as Key));
+    }
+    return keys;
   }
 
   public static isPacketDecrypted = (pubkey: Key, keyid: string) => {

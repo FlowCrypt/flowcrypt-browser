@@ -10,6 +10,7 @@ import { TestWithBrowser } from '../../test';
 import { expect } from 'chai';
 import { KeyUtil } from '../../core/crypto/key';
 import { UnreportableError } from '../../platform/catch.js';
+import { Buf } from '../../core/buf';
 
 // tslint:disable:no-blank-lines-func
 /* eslint-disable max-len */
@@ -340,6 +341,166 @@ KwoTyPGP6prXobe5lmo+4Ji3bE+OFqD20SgDyM6ER7KsrjsKi/Gmh7Q0
       expect(key.identities[0]).to.equal('Testing <flowcrypt@metacode.biz>');
       expect(key.isPublic).equal(false);
       expect(key.isPrivate).equal(true);
+      t.pass();
+    });
+
+    const pgpArmoredTwoKeys = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+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
+zZFGf6poIjKUC8V2Zww6
+=Hjpw
+-----END PGP PUBLIC KEY BLOCK-----`;
+
+    ava.default('[unit][KeyUtil.readMany] Parsing two OpenPGP armored together keys', async t => {
+      const { keys, errs } = await KeyUtil.readMany(Buf.fromUtfStr(pgpArmoredTwoKeys));
+      expect(keys.length).to.equal(2);
+      expect(errs.length).to.equal(0);
+      expect(keys.some(key => key.id === '5A5F75AEA28751C3EE8CFFC3AC5F0CE1BB2B99DD')).to.equal(true);
+      expect(keys.some(key => key.id === 'BBC75684E46EF0948D31359992C4E7841B3AFF74')).to.equal(true);
+      expect(keys.every(key => key.type === 'openpgp')).to.equal(true);
+      t.pass();
+    });
+
+    const pgpArmoredSeparate = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mQENBFzYItQBCAD1FmP71FRRC3nkaIltLH2oZklMY+SAbnses8o5e3wj3DKQk3P4
+ZTxALAl9g5GtYqYE5vA2SOSRiuiVD+ibYDOAAEjBBKYlfaFy1UCFAK5gibhP1o04
+eEuRuAJt9JJO0aFTj+cwWx/wII+ledavdiWHg1T80JEoHV+EMlvNB51ydZGnSjPs
+ntQTO4tQzp1knA9hS20O6g6gLakaNlEc1m3G445d8tWj7V3plLR+FegYWoCJkQ4F
+3W6jLSM4ErfLQpj6Ew6bk65wRC8XSNFJAImfVGd40tAtYcHFf/HE3D3NLH3OhFc3
+EUnaQtCEqrWqBD/HFdGvqmbVYL3KWusJCXafABEBAAG0IFRlc3QgV0tEIDx0ZXN0
+LXdrZEBtZXRhY29kZS5iaXo+iQFUBBMBCAA+FiEEWl91rqKHUcPujP/DrF8M4bsr
+md0FAlzYItQCGwMFCQPCZwAFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AACgkQrF8M
+4bsrmd3Ftwf+OhNoF3bq1o7QFJVt6bfIEN1Uqf2+h11pO60ZGJNjLm45rdy2Jt4r
+Q86h/XUONGDfV28Pj/Gwz7/ruB4YcFL83HwuGHHh/QZsbHvmopycSS7DQp6yiiSk
+M0sLBfbG5jxQpgahrsVqPDhWhvuNCGrWFqEPAmLWyz7CyvtVbglL4cB9V7W9eHFz
+FsLSITLR9LJybqqIIRXerpc/cj4ZI0ll/nZbMuFsY/CWbfdxk6CsFTAQ7gegXs/c
+QaKQuQJFtl46CFCjUMJJN3SSsaihOu5V3zVWJdW1GJXQWpe2Rir2MqzhSuW0Uw8g
+/nd2sNwmriQRfQd7d46YOLcBqVksGiWCb7kBDQRc2CLUAQgA10E6Da2YSXL/6VKJ
+YaFNgBi9p7pko6KzrSD8AGxjpDo7BV11jBNImZxP3WrmjPfFYuIET+Lt05St/fdn
+tkiHkkPimKNSmH46E0lRnULO3Tmo7Eiu/CMPI5Oj9KZr8fQBvFOh2qFr+dgflIHr
+WGO94tIeRq2jdZblGEtOY8kfqf7/WbzaVhIJM/zaYyeQFLv+CNkc2AMIDpsBmKPL
+7wrQzGi1JK4Xn7JdRgMoEVFJJFsDkByvp6mvwjRgXkG/UKnDf75vOJzCP1i/6ESb
+fu0+pz/gsiwPIcEnS+1F2LWmV2EQTf4FPz75J31bGixP2qIa+Macr+AepreugpFq
+gdUQjwARAQABiQE8BBgBCAAmFiEEWl91rqKHUcPujP/DrF8M4bsrmd0FAlzYItQC
+GwwFCQPCZwAACgkQrF8M4bsrmd3GZQf+OLkOd0ddebGvLgcQrUANuKASTbke+PUD
+laTTpdJlhufLqXHAL3ydZjnmFXEOYQPzWr1DgaUEiEtiw4MO3lWKXj3+J200jPpg
++XEFNXneXrZEJoG/q4h2hB0icP/1k1q+FsSgc3I6kVsGBmnMasJ+j9FhUJ/JECJS
+gQwP7QeE0O0oa8zQU+INc6viBkV1F3FP5PvIfVjfmw8yqlhZgeCSSavo/kEgyTlg
+cItxVc8FURPk2BkmWYjZ+N0uNOYrI7FGOHdoW4j9rmuOhtYHGLRC0mAcADIRcv7p
+ZlBF2eTk0HMhizTvGmOWcv5htkCqxpCSNnjHLsM6YCl+CcW6a8U7/g==
+=46pe
+-----END PGP PUBLIC KEY BLOCK-----
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mQENBF4pefQBCADjcgq0Wi7ZCDiTCnMnG5PTnTU5nWW7eg9ofEjV9SbDDiHV2SkJ
+ZBynFzGgAaWs/x3FINwNffnE/Yc4iokd1wk3tlhcfvzLUMZW9ZrTPAGOioSKa621
+nQjTKkln2kuU60oeG5CJocIiLroLHay9N9kVvlidH4dVbC9+jyvdcjieq3RUnXVC
+zpF3vZN/aTgbjecyfQY4oeiMglpBImTdPw/7k3Xz6L7D2o8wIuVyS7KxTrIsmR1F
+uTkfAWzfhI4rZHxyzWmCWZnC+N+rLVdLOo4V7op6SZE1x3Hhy2BXChBzjIZbJ1/J
+eIQLMk8WaszkGc0uXFXsF/fB+g9woa7cRjT5ABEBAAG0FXRlc3Qtd2tkQG1ldGFj
+b2RlLmJpeokBVAQTAQgAPhYhBLvHVoTkbvCUjTE1mZLE54QbOv90BQJeKXn0AhsD
+BQkDwmcABQsJCAcCBhUKCQgLAgQWAgMBAh4BAheAAAoJEJLE54QbOv908+YH+gM4
+kpkNL7IWUjRJqmuSybWT23BKtFq4/P1HhGyUKmIq/ZqjBIzR+rgmfM5qw/HYWO+l
+FGPoCeusooMauWWHZ5rbNrP05cwRlRvCg+0GXJ3Yw2tzOayXq5SL3QLa//P2z4yt
+Wa9pl5EXIzAWNKlGiuTmZ19tDIrNg3tJQKhdd9MNRite4ZyMvkMB9l/d8PSIIa9J
+bbOaQZa0WH6lg417DHAhWIzcI8PLW9hXoeGkOy5z7ah9H7+rZJAcz/Z2Qfo0zu4+
+vQnzefA9vzd+d9CRr3ExZMNxpSykH4l4PbYjMpKfLRpdsLvvLnV2H06KZEcxBsn0
+czaln5Xm/0wga57IgFW5AQ0EXil59AEIAMW00JciIzastXINdy0Lx15ikpkwQe/o
+BO0zxifSRwsvpgh3KdvKV2DfrEagvVXpjv3GV0li5bvdn9mKwDkpVttHddV4u4Sy
+ATEN733x9EjhcZf8CQRbqDnJKjpDLI2xpUf9R5coI1je9agNeyOsppXnVs371O4L
+aVYzdXLUtZ6LqMN/F0xVbDEEZsFzBI+0Z0f1b0tHuExF3xvBg6bodS7Tnel3LP0x
+ZGb1EiwNMo+9GbLkpr64YkUrXvY/L7jm0eQSYmxUTD5o+EDKhizxDCD7adqCzhhK
+XtpDsXH1M1N15SzJlchzbXBVY+cNC+6OCmsKFjbhGtFaEFSE/kdBMZMAEQEAAYkB
+NgQYAQgAIBYhBLvHVoTkbvCUjTE1mZLE54QbOv90BQJeKXn0AhsMAAoJEJLE54Qb
+Ov900VcH/RGkjO1VfyKPgm17PttvC6PtvSAERvEhSRTy3i2ds4s3DXtG3Y1N6NU/
+YqolPFrY6PtFX0tTSeN4Zw1x9WckD0hI6qWsj0gcdwK05MmUn8TW0gKK2DwghLZt
+3vtn25PuQtzIz/ahwMkOYM5vfJLH3ZoWt7yF/zrvuul9t4bM6ZaNA8uGJf+bYObx
+CnSPBUoy8XAfrMg9YDF8djFjhGktbTMWY3feKbzPUHBfT6kii+D+Hmj/C2eb8gYx
+XPk9f8zmQi8NqUMzsOQokj9iq+UB1cC3korAsuCVmC3El6cJbQvWEAMEVOFdY3pA
+vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
+=lQQh
+-----END PGP PUBLIC KEY BLOCK-----`;
+
+    ava.default('[unit][KeyUtil.readMany] Parsing two OpenPGP armored separate keys', async t => {
+      const { keys, errs } = await KeyUtil.readMany(Buf.fromUtfStr(pgpArmoredSeparate));
+      expect(keys.length).to.equal(2);
+      expect(errs.length).to.equal(0);
+      expect(keys.some(key => key.id === '5A5F75AEA28751C3EE8CFFC3AC5F0CE1BB2B99DD')).to.equal(true);
+      expect(keys.some(key => key.id === 'BBC75684E46EF0948D31359992C4E7841B3AFF74')).to.equal(true);
+      expect(keys.every(key => key.type === 'openpgp')).to.equal(true);
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.readMany] Parsing one S/MIME key', async t => {
+      const { keys, errs } = await KeyUtil.readMany(Buf.fromUtfStr(smimeCert));
+      expect(keys.length).to.equal(1);
+      expect(errs.length).to.equal(0);
+      expect(keys[0].id).to.equal('63F7025E700F3945301FB2FBA5674F84');
+      expect(keys[0].type).to.equal('x509');
+      t.pass();
+    });
+
+    const smimeAndPgp = smimeCert + '\r\n' + expiredPgp;
+
+    ava.default('[unit][KeyUtil.readMany] Parsing one S/MIME and one OpenPGP armored keys', async t => {
+      const { keys, errs } = await KeyUtil.readMany(Buf.fromUtfStr(smimeAndPgp));
+      expect(keys.length).to.equal(2);
+      expect(errs.length).to.equal(0);
+      expect(keys.some(key => key.id === '63F7025E700F3945301FB2FBA5674F84')).to.equal(true);
+      expect(keys.some(key => key.id === '3449178FCAAF758E24CB68BE62CB4E6F9ECA6FA1')).to.equal(true);
+      expect(keys.some(key => key.type === 'openpgp')).to.equal(true);
+      expect(keys.some(key => key.type === 'x509')).to.equal(true);
       t.pass();
     });
 
