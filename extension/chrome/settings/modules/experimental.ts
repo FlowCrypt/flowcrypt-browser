@@ -41,16 +41,16 @@ View.run(class ExperimentalView extends View {
   public setHandlers = () => {
     $('.action_open_compatibility').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/compatibility.htm')));
     $('.action_open_decrypt').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/decrypt.htm')));
-    $('.action_backup').click(this.setHandlerPrevent('double', () => this.collectInfoAndDownloadBackupFile().catch(Catch.reportErr)));
-    $('.action_throw_unchecked').click(() => Catch.test('error'));
-    $('.action_throw_err').click(this.setHandler(async () => Catch.test('error')));
-    $('.action_throw_obj').click(this.setHandler(async () => Catch.test('object')));
-    $('.action_reset_account').click(this.setHandlerPrevent('double', this.acctResetHandler));
-    $('.action_reset_fc_auth').click(this.setHandler(el => this.resetFlowCryptAuthHandler()));
-    $('.action_regenerate_uuid').click(this.setHandler(el => this.regenerateUuidHandler()));
-    $('.action_make_google_auth_token_unusable').click(this.setHandler(el => this.makeGoogleAuthTokenUnusableHandler()));
-    $('.action_make_google_refresh_token_unusable').click(this.setHandler(el => this.makeGoogleRefreshTokenUnusableHandler()));
-    $('.action_account_email_changed').click(this.setHandler(el => this.acctEmailChangedHandler()));
+    $('.action_backup').click(this.setHandler((el, e) => { e.preventDefault(); this.collectInfoAndDownloadBackupFile().catch(Catch.reportErr); }));
+    $('.action_throw_unchecked').click((e) => { e.preventDefault(); Catch.test('error'); });
+    $('.action_throw_err').click(this.setHandler((el, e) => { e.preventDefault(); Catch.test('error'); }));
+    $('.action_throw_obj').click(this.setHandler((el, e) => { e.preventDefault(); Catch.test('object'); }));
+    $('.action_reset_account').click(this.setHandler(async (el, e) => { e.preventDefault(); await this.acctResetHandler(); }));
+    $('.action_reset_fc_auth').click(this.setHandler(async (el, e) => { e.preventDefault(); await this.resetFlowCryptAuthHandler(); }));
+    $('.action_regenerate_uuid').click(this.setHandler(async (el, e) => { e.preventDefault(); await this.regenerateUuidHandler(); }));
+    $('.action_make_google_auth_token_unusable').click(this.setHandler(async (el, e) => { e.preventDefault(); await this.makeGoogleAuthTokenUnusableHandler(); }));
+    $('.action_make_google_refresh_token_unusable').click(this.setHandler(async (el, e) => { e.preventDefault(); await this.makeGoogleRefreshTokenUnusableHandler(); }));
+    $('.action_account_email_changed').click(this.setHandler(async (el, e) => { e.preventDefault(); await this.acctEmailChangedHandler(); }));
   }
 
   // -- PRIVATE
