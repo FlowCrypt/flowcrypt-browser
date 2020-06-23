@@ -57,7 +57,7 @@ export class Browser {
         }
         if (Catch.browser().name === 'firefox') {
           try {
-            document.body.removeChild(a);
+            a.remove();
           } catch (err) {
             if (!(err instanceof Error && err.message === 'Node was not found')) {
               throw err;
