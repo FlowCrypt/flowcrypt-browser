@@ -161,6 +161,16 @@ export class KeyUtil {
     }
   }
 
+  public static diagnose = async (pubkey: Key, appendResult: (text: string, f?: () => Promise<unknown>) => Promise<void>) => {
+    await appendResult(`Key type`, async () => pubkey.type);
+    if (pubkey.type === 'openpgp') {
+      await OpenPGPKey.diagnose(pubkey, appendResult);
+    }
+    await appendResult(`expiration`, async () => pubkey.expiration);
+    await appendResult(`internal dateBeforeExpiration`, async () => KeyUtil.dateBeforeExpirationIfAlreadyExpired(pubkey));
+    await appendResult(`internal usableButExpired`, async () => pubkey.usableButExpired);
+  }
+
   public static asPublicKey = async (pubkey: Key): Promise<Key> => {
     // TODO: Delegate to appropriate key type
     if (pubkey.type === 'openpgp') {

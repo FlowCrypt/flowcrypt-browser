@@ -5,13 +5,15 @@ import { Catch } from '../../../platform/catch.js';
 import { Str } from '../../common.js';
 import { PgpHash } from './pgp-hash.js';
 import { Buf } from '../../buf.js';
-import { PgpMsgMethod } from './pgp-msg.js';
+import { PgpMsgMethod, PgpMsg } from './pgp-msg.js';
 
 const internal = Symbol('internal public key');
 
 // todo - OpenPGPKey and PgpKey should be merged into one
 
 export class OpenPGPKey {
+
+  private static readonly encryptionText = 'This is the text we are encrypting!';
 
   public static parse = async (text: string): Promise<Key> => {
     // TODO: Should we throw if more keys are in the armor?
@@ -257,6 +259,73 @@ export class OpenPGPKey {
     return extensions.raw;
   }
 
+  public static diagnose = async (pubkey: Key, appendResult: (text: string, f?: () => Promise<unknown>) => Promise<void>) => {
+    const key = OpenPGPKey.unwrap(pubkey);
+    if (!key.isPrivate() && !key.isPublic()) {
+      await appendResult(`key is neither public or private!!`);
+      return;
+    }
+    await appendResult(`Is Private?`, async () => key.isPrivate());
+    for (let i = 0; i < key.users.length; i++) {
+      await appendResult(`User id ${i}`, async () => key.users[i].userId!.userid);
+    }
+    await appendResult(`Primary User`, async () => {
+      const user = await key.getPrimaryUser();
+      return user?.user?.userId?.userid || 'No primary user';
+    });
+    await appendResult(`Fingerprint`, async () => Str.spaced(key.getFingerprint().toUpperCase() || 'err'));
+    await appendResult(`Subkeys`, async () => key.subKeys ? key.subKeys.length : key.subKeys);
+    await appendResult(`Primary key algo`, async () => key.primaryKey.algorithm);
+    if (key.isPrivate()) {
+      const pubkey = await KeyUtil.parse(key.armor());
+      await appendResult(`key decrypt`, async () => PgpKey.decrypt(pubkey, String($('.input_passphrase').val())));
+      await appendResult(`isFullyDecrypted`, async () => key.isFullyDecrypted());
+      await appendResult(`isFullyEncrypted`, async () => key.isFullyEncrypted());
+    }
+    await appendResult(`Primary key verify`, async () => {
+      await key.verifyPrimaryKey(); // throws
+      return `valid`;
+    });
+    await appendResult(`Primary key creation?`, async () => OpenPGPKey.formatDate(await key.getCreationTime()));
+    await appendResult(`Primary key expiration?`, async () => OpenPGPKey.formatDate(await key.getExpirationTime()));
+    const encryptResult = await OpenPGPKey.testEncryptDecrypt(key);
+    await Promise.all(encryptResult.map(msg => appendResult(`Encrypt/Decrypt test: ${msg}`)));
+    if (key.isPrivate()) {
+      await appendResult(`Sign/Verify test`, async () => await OpenPGPKey.testSignVerify(key));
+    }
+    for (let subKeyIndex = 0; subKeyIndex < key.subKeys.length; subKeyIndex++) {
+      const subKey = key.subKeys[subKeyIndex];
+      const skn = `SK ${subKeyIndex} >`;
+      await appendResult(`${skn} LongId`, async () => PgpKey.longid(subKey.getKeyId().bytes));
+      await appendResult(`${skn} Created`, async () => OpenPGPKey.formatDate(subKey.keyPacket.created));
+      await appendResult(`${skn} Algo`, async () => `${subKey.getAlgorithmInfo().algorithm}`);
+      await appendResult(`${skn} Verify`, async () => {
+        await subKey.verify(key.primaryKey);
+        return 'OK';
+      });
+      await appendResult(`${skn} Subkey tag`, async () => subKey.keyPacket.tag);
+      await appendResult(`${skn} Subkey getBitSize`, async () => subKey.getAlgorithmInfo().bits);       // No longer exists on object
+      await appendResult(`${skn} Subkey decrypted`, async () => subKey.isDecrypted());
+      await appendResult(`${skn} Binding signature length`, async () => subKey.bindingSignatures.length);
+      for (let sigIndex = 0; sigIndex < subKey.bindingSignatures.length; sigIndex++) {
+        const sig = subKey.bindingSignatures[sigIndex];
+        const sgn = `${skn} SIG ${sigIndex} >`;
+        await appendResult(`${sgn} Key flags`, async () => sig.keyFlags);
+        await appendResult(`${sgn} Tag`, async () => sig.tag);
+        await appendResult(`${sgn} Version`, async () => sig.version);
+        await appendResult(`${sgn} Public key algorithm`, async () => sig.publicKeyAlgorithm);
+        await appendResult(`${sgn} Sig creation time`, async () => OpenPGPKey.formatDate(sig.created));
+        await appendResult(`${sgn} Sig expiration time`, async () => {
+          if (!subKey.keyPacket.created) {
+            return 'unknown key creation time';
+          }
+          return OpenPGPKey.formatDate(subKey.keyPacket.created, sig.keyExpirationTime);
+        });
+        await appendResult(`${sgn} Verified`, async () => sig.verified);
+      }
+    }
+  }
+
   private static unwrap = (pubkey: Key) => {
     if (pubkey.type !== 'openpgp') {
       throw new Error('Unsupported key type: ' + pubkey.type);
@@ -289,6 +358,67 @@ export class OpenPGPKey {
     } catch (e) {
       return false;
     }
+  }
+
+  private static testEncryptDecrypt = async (key: OpenPGP.key.Key): Promise<string[]> => {
+    const output: string[] = [];
+    try {
+      const encryptedMsg = await opgp.encrypt({ message: opgp.message.fromText(OpenPGPKey.encryptionText), publicKeys: key.toPublic(), armor: true });
+      output.push(`Encryption with key was successful`);
+      if (key.isPrivate() && key.isFullyDecrypted()) {
+        const decryptedMsg = await opgp.decrypt({ message: await opgp.message.readArmored(encryptedMsg.data), privateKeys: key });
+        output.push(`Decryption with key ${decryptedMsg.data === OpenPGPKey.encryptionText ? 'succeeded' : 'failed!'}`);
+      } else {
+        output.push(`Skipping decryption because isPrivate:${key.isPrivate()} isFullyDecrypted:${key.isFullyDecrypted()}`);
+      }
+    } catch (err) {
+      output.push(`Got error performing encryption/decryption test: ${err}`);
+    }
+    return output;
+  }
+
+  private static testSignVerify = async (key: OpenPGP.key.Key): Promise<string> => {
+    const output: string[] = [];
+    try {
+      if (!key.isFullyDecrypted()) {
+        return 'skiped, not fully decrypted';
+      }
+      const signedMessage = await opgp.message.fromText(OpenPGPKey.encryptionText).sign([key]);
+      output.push('sign msg ok');
+      const verifyResult = await PgpMsg.verify(signedMessage, [key]);
+      if (verifyResult.error !== null && typeof verifyResult.error !== 'undefined') {
+        output.push(`verify failed: ${verifyResult.error}`);
+      } else {
+        if (verifyResult.match && verifyResult.signer === (await PgpKey.longid(key))) {
+          output.push('verify ok');
+        } else {
+          output.push(`verify mismatch: match[${verifyResult.match}] signer[${verifyResult.signer}]`);
+        }
+      }
+    } catch (e) {
+      output.push(`Exception: ${String(e)}`);
+    }
+    return output.join('|');
+  }
+
+  private static formatDate = (date: Date | number | null, expiresInSecondsFromDate?: number | null) => {
+    if (date === Infinity) {
+      return '-';
+    }
+    if (typeof date === 'number') {
+      return `UNEXPECTED FORMAT: ${date}`;
+    }
+    if (date === null) {
+      return `null (not applicable)`;
+    }
+    if (typeof expiresInSecondsFromDate === 'undefined') {
+      return `${date.getTime() / 1000} or ${date.toISOString()}`;
+    }
+    if (expiresInSecondsFromDate === null) {
+      return '-'; // no expiration
+    }
+    const expDate = new Date(date.getTime() + (expiresInSecondsFromDate * 1000));
+    return `${date.getTime() / 1000} + ${expiresInSecondsFromDate} seconds, which is: ${expDate.getTime() / 1000} or ${expDate.toISOString()}`;
   }
 }
 
