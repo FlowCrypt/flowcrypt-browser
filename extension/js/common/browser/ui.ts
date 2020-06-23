@@ -262,10 +262,7 @@ export class Ui {
         }
       });
     },
-    attachmentPreview: async (att: Att, isEncrypted: boolean, size: number | undefined, factory: XssSafeFactory): Promise<void> => {
-      if (size) {
-        att.length = size;
-      }
+    attachmentPreview: async (att: Att, isEncrypted: boolean, factory: XssSafeFactory): Promise<void> => {
       const iframeUrl = factory.srcPgpAttIframe(att, isEncrypted, 'chrome/elements/attachment_preview.htm');
       await Ui.swal().fire({
         onOpen: () => {
