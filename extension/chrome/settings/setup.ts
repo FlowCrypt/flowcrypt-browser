@@ -199,7 +199,7 @@ export class SetupView extends View {
 
   public saveKeysAndPassPhrase = async (prvs: Key[], options: SetupOptions) => {
     for (const prv of prvs) {
-      const fingerprint = await PgpKey.fingerprint(prv);
+      const fingerprint = prv.id;
       if (!fingerprint) {
         await Ui.modal.error('Cannot save keys to storage because at least one of them is not valid.');
         return;

@@ -83,7 +83,7 @@ export class KeyStore extends AbstractStore {
     if (!longid) {
       throw new Error('Store.keysObj: unexpectedly no longid');
     }
-    const fingerprint = await PgpKey.fingerprint(prv);
+    const fingerprint = prv.id;
     const pubArmor = KeyUtil.armor(await KeyUtil.asPublicKey(prv));
     return { private: KeyUtil.armor(prv), public: pubArmor, primary, longid, fingerprint: fingerprint! };
   }

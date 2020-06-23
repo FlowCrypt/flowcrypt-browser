@@ -336,13 +336,6 @@ export class PgpKey {
     return OpenPGPKey.isPacketDecrypted(pubkey, keyId);
   }
 
-  public static fingerprint = async (key: Key | OpenPGP.key.Key): Promise<string | undefined> => {
-    if ('id' in key) {
-      return key.id;
-    }
-    return key.getFingerprint().toUpperCase();
-  }
-
   public static longid = async (keyOrFingerprintOrBytesOrLongid: string | Key | undefined | OpenPGP.key.Key): Promise<string | undefined> => {
     if (!keyOrFingerprintOrBytesOrLongid) {
       return undefined;

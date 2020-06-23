@@ -66,7 +66,7 @@ View.run(class CompatibilityView extends View {
         const user = await key.getPrimaryUser();
         return user?.user?.userId?.userid || 'No primary user';
       })}`);
-      this.appendResult(`${kn} Fingerprint: ${await this.test(async () => Str.spaced(await PgpKey.fingerprint(key) || 'err'))}`);
+      this.appendResult(`${kn} Fingerprint: ${await this.test(async () => Str.spaced(key.getFingerprint().toUpperCase() || 'err'))}`);
       this.appendResult(`${kn} Subkeys: ${await this.test(async () => key.subKeys ? key.subKeys.length : key.subKeys)}`);
       this.appendResult(`${kn} Primary key algo: ${await this.test(async () => key.primaryKey.algorithm)}`);
       if (key.isPrivate()) {

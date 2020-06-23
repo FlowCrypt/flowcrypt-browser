@@ -11,12 +11,11 @@ import { PgpMsg } from '../../../../js/common/core/crypto/pgp/pgp-msg.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { ContactStore } from '../../../../js/common/platform/store/contact-store.js';
-import { PgpKey } from '../../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 export class SignedMsgMailFormatter extends BaseMailFormatter {
 
   public sendableMsg = async (newMsg: NewMsgData, signingPrv: Key): Promise<SendableMsg> => {
-    this.view.errModule.debug(`SignedMsgMailFormatter.sendableMsg signing with key: ${await PgpKey.fingerprint(signingPrv)}`);
+    this.view.errModule.debug(`SignedMsgMailFormatter.sendableMsg signing with key: ${signingPrv.id}`);
     const atts = this.isDraft ? [] : await this.view.attsModule.attach.collectAtts();
     if (!this.richtext) {
       // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used

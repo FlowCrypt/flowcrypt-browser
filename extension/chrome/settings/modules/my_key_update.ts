@@ -76,8 +76,8 @@ View.run(class MyKeyUpdateView extends View {
       await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
     } else if (updatedKey.isPublic) {
       await Ui.modal.warning('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"');
-    } else if (await PgpKey.fingerprint(updatedKey) !== await PgpKey.fingerprint(await KeyUtil.parse(this.primaryKi!.public))) {
-      await Ui.modal.warning(`This key ${Str.spaced(await PgpKey.fingerprint(updatedKey) || 'err')} does not match your current key ${Str.spaced(this.primaryKi!.fingerprint)}`);
+    } else if (updatedKey.id !== (await KeyUtil.parse(this.primaryKi!.public)).id) {
+      await Ui.modal.warning(`This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(this.primaryKi!.fingerprint)}`);
     } else if (await PgpKey.decrypt(updatedKey, uddatedKeyPassphrase) !== true) {
       await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
     } else {

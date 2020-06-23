@@ -58,7 +58,7 @@ export class SetupKeyManagerAutogenModule {
         const pgpUids = [{ name: full_name || '', email: this.view.acctEmail }];
         const generated = await PgpKey.create(pgpUids, keygenAlgo, passphrase, expireInMonths);
         const decryptablePrv = await KeyUtil.parse(generated.private);
-        const generatedKeyFingerprint = await PgpKey.fingerprint(decryptablePrv);
+        const generatedKeyFingerprint = decryptablePrv.id;
         if (! await PgpKey.decrypt(decryptablePrv, passphrase)) {
           throw new Error('Unexpectedly cannot decrypt newly generated key');
         }

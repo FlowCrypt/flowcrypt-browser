@@ -143,7 +143,7 @@ export class KeyImportUi {
     await this.decryptAndEncryptAsNeeded(decrypted, encrypted, passphrase);
     await this.checkEncryptionPrvIfSelected(decrypted, encrypted);
     await this.checkSigningIfSelected(decrypted);
-    return { normalized, longid, passphrase, fingerprint: (await PgpKey.fingerprint(decrypted))!, decrypted, encrypted }; // will have fp if had longid
+    return { normalized, longid, passphrase, fingerprint: decrypted.id, decrypted, encrypted }; // will have fp if had longid
   }
 
   public checkPub = async (armored: string): Promise<string> => {
