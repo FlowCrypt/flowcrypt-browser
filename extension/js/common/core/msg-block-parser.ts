@@ -8,10 +8,10 @@ import { SanitizeImgHandling, Xss } from '../platform/xss.js';
 import { Buf } from './buf.js';
 import { Catch } from '../platform/catch.js';
 import { Mime } from './mime.js';
-import { PgpArmor } from './pgp-armor.js';
-import { PgpKey } from './pgp-key.js';
+import { PgpArmor } from './crypto/pgp/pgp-armor.js';
 import { Str } from './common.js';
 import { FcAttLinkData } from './att.js';
+import { KeyUtil } from './crypto/key.js';
 
 type SanitizedBlocks = { blocks: MsgBlock[], subject: string | undefined, isRichText: boolean, webReplyToken: any | undefined };
 
@@ -193,9 +193,9 @@ export class MsgBlockParser {
 
   private static pushArmoredPubkeysToBlocks = async (armoredPubkeys: string[], blocks: MsgBlock[]): Promise<void> => {
     for (const armoredPubkey of armoredPubkeys) {
-      const { keys } = await PgpKey.parseDetails(armoredPubkey);
+      const { keys } = await KeyUtil.parseDetails(armoredPubkey);
       for (const keyDetails of keys) {
-        blocks.push(MsgBlock.fromKeyDetails('publicKey', keyDetails.public, keyDetails));
+        blocks.push(MsgBlock.fromKeyDetails('publicKey', KeyUtil.armor(keyDetails.public), keyDetails));
       }
     }
   }

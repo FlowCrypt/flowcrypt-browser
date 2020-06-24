@@ -11,13 +11,14 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { EncryptedMsgMailFormatter } from './formatters/encrypted-mail-msg-formatter.js';
 import { Env } from '../../../js/common/browser/env.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
-import { PgpMsg } from '../../../js/common/core/pgp-msg.js';
+import { PgpMsg } from '../../../js/common/core/crypto/pgp/pgp-msg.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 
 export class ComposeDraftModule extends ViewModule<ComposeView> {
 
@@ -100,7 +101,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       try {
         const msgData = this.view.inputModule.extractAll();
         const primaryKi = await this.view.storageModule.getKey(msgData.from);
-        const pubkeys = [{ isMine: true, email: msgData.from, pubkey: primaryKi.public }];
+        const pubkeys = [{ isMine: true, email: msgData.from, pubkey: await KeyUtil.parse(primaryKi.public) }];
         msgData.pwd = undefined; // not needed for drafts
         const sendable = await new EncryptedMsgMailFormatter(this.view, true).sendableMsg(msgData, pubkeys);
         this.view.S.cached('send_btn_note').text('Saving');
@@ -177,7 +178,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     const encryptedData = rawBlock.content instanceof Buf ? rawBlock.content : Buf.fromUtfStr(rawBlock.content);
     const passphrase = await this.view.storageModule.passphraseGet();
     if (typeof passphrase !== 'undefined') {
-      const decrypted = await PgpMsg.decrypt({ kisWithPp: await KeyStore.getAllWithPp(this.view.acctEmail), encryptedData });
+      const decrypted = await PgpMsg.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.view.acctEmail), encryptedData });
       if (!decrypted.success) {
         return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!decrypted.success');
       }

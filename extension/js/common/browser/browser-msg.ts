@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, VerifyRes, PgpMsgTypeResult } from '../core/pgp-msg.js';
+import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, VerifyRes, PgpMsgTypeResult } from '../core/crypto/pgp/pgp-msg.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
 import { AjaxErr } from '../api/error/api-error-types.js';
 import { AuthRes } from '../api/google-auth.js';
@@ -11,11 +11,10 @@ import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
 import { Buf } from '../core/buf.js';
 import { Catch } from '../platform/catch.js';
 import { Env } from './env.js';
-import { KeyDetails } from '../core/pgp-key.js';
+import { KeyDetails, KeyUtil } from '../core/crypto/key.js';
 import { PassphraseDialogType } from '../xss-safe-factory.js';
-import { PgpHash } from '../core/pgp-hash.js';
-import { PgpKey } from '../core/pgp-key.js';
-import { PgpMsg } from '../core/pgp-msg.js';
+import { PgpHash } from '../core/crypto/pgp/pgp-hash.js';
+import { PgpMsg } from '../core/crypto/pgp/pgp-msg.js';
 import { Ui } from './ui.js';
 import { GlobalStoreDict, GlobalIndex } from '../platform/store/global-store.js';
 import { AcctStoreDict, AccountIndex } from '../platform/store/acct-store.js';
@@ -230,9 +229,9 @@ export class BrowserMsg {
   public static addPgpListeners = () => {
     BrowserMsg.bgAddListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await PgpHash.challengeAnswer(r.answer) }));
     BrowserMsg.bgAddListener('pgpMsgDiagnosePubkeys', PgpMsg.diagnosePubkeys);
-    BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decrypt);
+    BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decryptMessage);
     BrowserMsg.bgAddListener('pgpMsgVerifyDetached', PgpMsg.verifyDetached);
-    BrowserMsg.bgAddListener('pgpKeyDetails', async ({ pubkey }: Bm.PgpKeyDetails): Promise<Bm.Res.PgpKeyDetails> => await PgpKey.parseDetails(pubkey));
+    BrowserMsg.bgAddListener('pgpKeyDetails', async ({ pubkey }: Bm.PgpKeyDetails): Promise<Bm.Res.PgpKeyDetails> => await KeyUtil.parseDetails(pubkey));
     BrowserMsg.bgAddListener('pgpMsgType', PgpMsg.type);
   }
 

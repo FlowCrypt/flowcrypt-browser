@@ -10,7 +10,7 @@ import { Browser } from './browser/browser.js';
 import { Catch } from './platform/catch.js';
 import { MsgBlock, MsgBlockType } from './core/msg-block.js';
 import { MsgBlockParser } from './core/msg-block-parser.js';
-import { PgpArmor } from './core/pgp-armor.js';
+import { PgpArmor } from './core/crypto/pgp/pgp-armor.js';
 import { Ui } from './browser/ui.js';
 import { WebMailName } from './browser/env.js';
 import { Xss } from './platform/xss.js';

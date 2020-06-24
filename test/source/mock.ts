@@ -4,7 +4,7 @@ import * as request from 'fc-node-requests';
 
 import { existsSync, writeFileSync } from 'fs';
 import { Config } from './util';
-import { opgp } from './core/pgp';
+import { opgp } from './core/crypto/pgp/openpgpjs-custom';
 import { startAllApisMock } from './mock/all-apis-mock';
 
 export const acctsWithoutMockData = [

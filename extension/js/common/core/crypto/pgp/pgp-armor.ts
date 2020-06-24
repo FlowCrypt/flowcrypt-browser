@@ -2,10 +2,10 @@
 
 'use strict';
 
-import { Buf } from './buf.js';
-import { ReplaceableMsgBlockType } from './msg-block.js';
-import { Str } from './common.js';
-import { opgp } from './pgp.js';
+import { Buf } from '../../buf.js';
+import { ReplaceableMsgBlockType } from '../../msg-block.js';
+import { Str } from '../../common.js';
+import { opgp } from './openpgpjs-custom.js';
 
 export type PreparedForDecrypt = { isArmored: boolean, isCleartext: true, message: OpenPGP.cleartext.CleartextMessage | OpenPGP.message.Message }
   | { isArmored: boolean, isCleartext: false, message: OpenPGP.message.Message };
@@ -19,6 +19,7 @@ export class PgpArmor {
     null: { begin: '-----BEGIN', end: '-----END', replace: false },
     publicKey: { begin: '-----BEGIN PGP PUBLIC KEY BLOCK-----', end: '-----END PGP PUBLIC KEY BLOCK-----', replace: true },
     privateKey: { begin: '-----BEGIN PGP PRIVATE KEY BLOCK-----', end: '-----END PGP PRIVATE KEY BLOCK-----', replace: true },
+    certificate: { begin: '-----BEGIN CERTIFICATE-----', end: '-----END CERTIFICATE-----', replace: true },
     signedMsg: { begin: '-----BEGIN PGP SIGNED MESSAGE-----', middle: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: true },
     signature: { begin: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: false },
     encryptedMsg: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----', replace: true },

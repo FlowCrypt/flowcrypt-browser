@@ -6,16 +6,16 @@ import { BaseMailFormatter } from './base-mail-formatter.js';
 import { BrowserWindow } from '../../../../js/common/browser/browser-window.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { NewMsgData } from '../compose-types.js';
-import { PgpKey } from '../../../../js/common/core/pgp-key.js';
-import { PgpMsg } from '../../../../js/common/core/pgp-msg.js';
+import { Key } from '../../../../js/common/core/crypto/key.js';
+import { PgpMsg } from '../../../../js/common/core/crypto/pgp/pgp-msg.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { ContactStore } from '../../../../js/common/platform/store/contact-store.js';
 
 export class SignedMsgMailFormatter extends BaseMailFormatter {
 
-  public sendableMsg = async (newMsg: NewMsgData, signingPrv: OpenPGP.key.Key): Promise<SendableMsg> => {
-    this.view.errModule.debug(`SignedMsgMailFormatter.sendableMsg signing with key: ${await PgpKey.fingerprint(signingPrv)}`);
+  public sendableMsg = async (newMsg: NewMsgData, signingPrv: Key): Promise<SendableMsg> => {
+    this.view.errModule.debug(`SignedMsgMailFormatter.sendableMsg signing with key: ${signingPrv.id}`);
     const atts = this.isDraft ? [] : await this.view.attsModule.attach.collectAtts();
     if (!this.richtext) {
       // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used

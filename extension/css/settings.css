@@ -795,3 +795,7 @@ body#settings .settings-border .key_list {
   float: right;
   margin-top: 20px;
 }
+
+.input_private_key {
+  font-family: monospace;
+}

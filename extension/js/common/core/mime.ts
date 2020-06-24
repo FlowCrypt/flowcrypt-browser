@@ -11,7 +11,7 @@ import { Catch } from '../platform/catch.js';
 import { MimeParserNode } from './types/emailjs';
 import { MsgBlock } from './msg-block.js';
 import { MsgBlockParser } from './msg-block-parser.js';
-import { PgpArmor } from './pgp-armor.js';
+import { PgpArmor } from './crypto/pgp/pgp-armor.js';
 import { iso2022jpToUtf } from '../platform/util.js';
 
 const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name

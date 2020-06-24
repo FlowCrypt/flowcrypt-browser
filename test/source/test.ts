@@ -44,16 +44,18 @@ const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false, buil
 let closeMockApi: () => Promise<void>;
 const mockApiLogs: string[] = [];
 
-ava.before('set config and mock api', async t => {
-  standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY, t.title);
-  Config.extensionId = await browserPool.getExtensionId(t);
-  console.info(`Extension url: chrome-extension://${Config.extensionId}`);
-  if (isMock) {
-    const mockApi = await mock(line => mockApiLogs.push(line));
-    closeMockApi = mockApi.close;
-  }
-  t.pass();
-});
+if (testGroup !== 'UNIT-TESTS') {
+  ava.before('set config and mock api', async t => {
+    standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY, t.title);
+    Config.extensionId = await browserPool.getExtensionId(t);
+    console.info(`Extension url: chrome-extension://${Config.extensionId}`);
+    if (isMock) {
+      const mockApi = await mock(line => mockApiLogs.push(line));
+      closeMockApi = mockApi.close;
+    }
+    t.pass();
+  });
+}
 
 const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>): ava.Implementation<{}> => {
   return async (t: AvaContext) => {
@@ -69,63 +71,67 @@ const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, brows
 
 export type TestWithBrowser = typeof testWithBrowser;
 
-ava.after.always('close browsers', async t => {
-  standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
-  await browserPool.close();
-  t.pass();
-});
-
-if (isMock) {
-  ava.after.always('close mock api', async t => {
+if (testGroup !== 'UNIT-TESTS') {
+  ava.after.always('close browsers', async t => {
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
-    closeMockApi().catch(t.log);
+    await browserPool.close();
+    t.pass();
+  });
+
+  if (isMock) {
+    ava.after.always('close mock api', async t => {
+      standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
+      closeMockApi().catch(t.log);
+      t.pass();
+    });
+  }
+
+  ava.after.always('evaluate Catch.reportErr errors', async t => {
+    if (!isMock || testGroup !== 'STANDARD-GROUP') { // can only collect reported errs when running with a mocked api
+      t.pass();
+      return;
+    }
+    // todo - here we filter out an error that would otherwise be useful
+    // in one test we are testing an error scenario
+    // our S/MIME implementation is still early so it throws "reportable" errors like this during tests
+    const usefulErrors = mockBackendData.reportedErrors.filter(e => e.message !== 'Too few bytes to read ASN.1 value.');
+    // end of todo
+    const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
+    const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
+    if (!foundExpectedErr && internalTestState.expectiIntentionalErrReport) {
+      t.fail(`Catch.reportErr errors: missing intentional error`);
+    } else if (foundUnwantedErrs.length) {
+      for (const e of foundUnwantedErrs) {
+        console.info(`----- mockBackendData Catch.reportErr -----\nname: ${e.name}\nmessage: ${e.message}\nurl: ${e.url}\ntrace: ${e.trace}`);
+      }
+      t.fail(`Catch.reportErr errors: ${foundUnwantedErrs.length}`);
+    } else {
+      t.pass();
+    }
+  });
+
+  ava.after.always('send debug info if any', async t => {
+    console.info('send debug info - deciding');
+    const failRnd = Util.lousyRandom();
+    const testId = `FlowCrypt Browser Extension ${testVariant} ${failRnd}`;
+    const debugHtmlAttachments = getDebugHtmlAtts(testId, mockApiLogs);
+    if (debugHtmlAttachments.length) {
+      console.info(`FAIL ID ${testId}`);
+      standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
+      for (let i = 0; i < debugHtmlAttachments.length; i++) {
+        const subject = `${testId} ${i + 1}/${debugHtmlAttachments.length}`;
+        await FlowCryptApi.hookCiDebugEmail(subject, debugHtmlAttachments[i]);
+      }
+    } else {
+      console.info(`no fails to debug`);
+    }
     t.pass();
   });
 }
 
-ava.after.always('evaluate Catch.reportErr errors', async t => {
-  if (!isMock || testGroup !== 'STANDARD-GROUP') { // can only collect reported errs when running with a mocked api
-    t.pass();
-    return;
-  }
-  // todo - here we filter out an error that would otherwise be useful
-  // in one test we are testing an error scenario
-  // our S/MIME implementation is still early so it throws "reportable" errors like this during tests
-  const usefulErrors = mockBackendData.reportedErrors.filter(e => e.message !== 'Too few bytes to read ASN.1 value.');
-  // end of todo
-  const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
-  const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
-  if (!foundExpectedErr && internalTestState.expectiIntentionalErrReport) {
-    t.fail(`Catch.reportErr errors: missing intentional error`);
-  } else if (foundUnwantedErrs.length) {
-    for (const e of foundUnwantedErrs) {
-      console.info(`----- mockBackendData Catch.reportErr -----\nname: ${e.name}\nmessage: ${e.message}\nurl: ${e.url}\ntrace: ${e.trace}`);
-    }
-    t.fail(`Catch.reportErr errors: ${foundUnwantedErrs.length}`);
-  } else {
-    t.pass();
-  }
-});
-
-ava.after.always('send debug info if any', async t => {
-  console.info('send debug info - deciding');
-  const failRnd = Util.lousyRandom();
-  const testId = `FlowCrypt Browser Extension ${testVariant} ${failRnd}`;
-  const debugHtmlAttachments = getDebugHtmlAtts(testId, mockApiLogs);
-  if (debugHtmlAttachments.length) {
-    console.info(`FAIL ID ${testId}`);
-    standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
-    for (let i = 0; i < debugHtmlAttachments.length; i++) {
-      const subject = `${testId} ${i + 1}/${debugHtmlAttachments.length}`;
-      await FlowCryptApi.hookCiDebugEmail(subject, debugHtmlAttachments[i]);
-    }
-  } else {
-    console.info(`no fails to debug`);
-  }
-  t.pass();
-});
-
-if (testGroup === 'FLAKY-GROUP') {
+if (testGroup === 'UNIT-TESTS') {
+  defineUnitTests(testVariant, testWithBrowser);
+} else if (testGroup === 'FLAKY-GROUP') {
   defineFlakyTests(testVariant, testWithBrowser);
 } else {
   defineSetupTests(testVariant, testWithBrowser);

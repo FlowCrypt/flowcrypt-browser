@@ -5,8 +5,7 @@
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
-import { KeyInfo } from '../../../js/common/core/pgp-key.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { KeyInfo, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
@@ -14,6 +13,7 @@ import { View } from '../../../js/common/view.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { PgpKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 View.run(class ChangePassPhraseView extends View {
 
@@ -22,7 +22,7 @@ View.run(class ChangePassPhraseView extends View {
   private readonly keyImportUi = new KeyImportUi({});
 
   private primaryKi: KeyInfo | undefined;
-  private primaryPrv: OpenPGP.key.Key | undefined;
+  private primaryPrv: Key | undefined;
 
   constructor() {
     super();
@@ -43,9 +43,9 @@ View.run(class ChangePassPhraseView extends View {
     this.primaryKi = primaryKi;
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     const storedOrSessionPp = await PassphraseStore.get(this.acctEmail, this.primaryKi.fingerprint);
-    const key = await PgpKey.read(this.primaryKi.private);
+    const key = await KeyUtil.parse(this.primaryKi.private);
     this.primaryPrv = key;
-    if (this.primaryPrv.isFullyDecrypted() || (storedOrSessionPp && await PgpKey.decrypt(this.primaryPrv, storedOrSessionPp))) {
+    if (this.primaryPrv.fullyDecrypted || (storedOrSessionPp && await PgpKey.decrypt(this.primaryPrv, storedOrSessionPp))) {
       this.displayBlock('step_1_enter_new'); // current pp is already known
       $('#new_pass_phrase').focus();
     } else {
@@ -66,7 +66,7 @@ View.run(class ChangePassPhraseView extends View {
   }
 
   private actionTestCurrentPassPhraseHandler = async () => {
-    const prv = await PgpKey.read(this.primaryKi!.private);
+    const prv = await KeyUtil.parse(this.primaryKi!.private);
     if (await PgpKey.decrypt(prv, String($('#current_pass_phrase').val())) === true) {
       this.primaryPrv = prv;
       this.displayBlock('step_1_enter_new');
@@ -108,7 +108,7 @@ View.run(class ChangePassPhraseView extends View {
       await Ui.modal.error(`There was an unexpected error. Please ask for help at human@flowcrypt.com:\n\n${e instanceof Error ? e.stack : String(e)}`);
       return;
     }
-    await KeyStore.add(this.acctEmail, this.primaryPrv!.armor());
+    await KeyStore.add(this.acctEmail, KeyUtil.armor(this.primaryPrv!));
     const persistentlyStoredPp = await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprint, true);
     await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.fingerprint, typeof persistentlyStoredPp === 'undefined' ? undefined : newPp);
     await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.fingerprint, typeof persistentlyStoredPp === 'undefined' ? newPp : undefined);

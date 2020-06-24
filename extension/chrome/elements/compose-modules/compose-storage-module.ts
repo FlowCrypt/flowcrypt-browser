@@ -3,15 +3,12 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Contact, KeyInfo } from '../../../js/common/core/pgp-key.js';
-import { PubkeySearchResult } from '../../../js/common/api/pub-lookup.js';
+import { Contact, KeyInfo, KeyUtil, Key } from '../../../js/common/core/crypto/key.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { CollectPubkeysResult } from './compose-types.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from './compose-err-module.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
-import { opgp } from '../../../js/common/core/pgp.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
@@ -25,7 +22,7 @@ import { Settings } from '../../../js/common/settings.js';
 export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   private passphraseInterval: number | undefined;
-  private ksLookupsByEmail: { [key: string]: PubkeySearchResult | Contact } = {};
+  private ksLookupsByEmail: { [key: string]: Key } = {};
 
   public setHandlers = () => {
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
@@ -85,14 +82,14 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   public collectAllAvailablePublicKeys = async (senderEmail: string, senderKi: KeyInfo, recipients: string[]): Promise<CollectPubkeysResult> => {
     const contacts = await ContactStore.get(undefined, recipients);
-    const armoredPubkeys = [{ pubkey: senderKi.public, email: senderEmail, isMine: true }];
+    const armoredPubkeys = [{ pubkey: await KeyUtil.parse(senderKi.public), email: senderEmail, isMine: true }];
     const emailsWithoutPubkeys = [];
     for (const i of contacts.keys()) {
       const contact = contacts[i];
       if (contact && contact.has_pgp && contact.pubkey) {
         armoredPubkeys.push({ pubkey: contact.pubkey, email: contact.email, isMine: false });
-      } else if (contact && this.ksLookupsByEmail[contact.email] && this.ksLookupsByEmail[contact.email].pubkey) {
-        armoredPubkeys.push({ pubkey: this.ksLookupsByEmail[contact.email].pubkey!, email: contact.email, isMine: false }); // checked !null right above. Null evaluates to false.
+      } else if (contact && this.ksLookupsByEmail[contact.email]) {
+        armoredPubkeys.push({ pubkey: this.ksLookupsByEmail[contact.email], email: contact.email, isMine: false });
       } else {
         emailsWithoutPubkeys.push(recipients[i]);
       }
@@ -125,13 +122,9 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       const lookupResult = await this.view.pubLookup.lookupEmail(email);
       if (lookupResult && email) {
         if (lookupResult.pubkey) {
-          const parsed = await opgp.key.readArmored(lookupResult.pubkey);
-          const key = parsed.keys[0];
-          if (!key) {
-            console.info('Dropping found but incompatible public key', { for: email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : undefined });
-            lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
-          } else if (! await PgpKey.usableForEncryption(lookupResult.pubkey) && ! await PgpKey.expired(key)) { // Not to skip expired keys
-            console.info('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: await PgpKey.fingerprint(parsed.keys[0]) });
+          const key = await KeyUtil.parse(lookupResult.pubkey);
+          if (!key.usableForEncryption && !KeyUtil.expired(key)) { // Not to skip expired keys
+            console.info('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: key.id });
             lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
           }
         }
@@ -144,7 +137,9 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           lastUse: Date.now(),
           lastCheck: Date.now(),
         });
-        this.ksLookupsByEmail[email] = ksContact;
+        if (ksContact.pubkey) {
+          this.ksLookupsByEmail[email] = ksContact.pubkey;
+        }
         await ContactStore.save(undefined, ksContact);
         return ksContact;
       } else {
@@ -164,17 +159,18 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         return;
       }
       if (!contact.pubkey_last_sig) {
-        const lastSig = await PgpKey.lastSig(await PgpKey.read(contact.pubkey));
+        const lastSig = Number(contact.pubkey.lastModified);
         contact.pubkey_last_sig = lastSig;
         await ContactStore.update(undefined, contact.email, { pubkey_last_sig: lastSig });
       }
       if (!contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7)) { // last update > 7 days ago, or never
         const { pubkey: fetchedPubkey } = await this.view.pubLookup.lookupFingerprint(contact.fingerprint);
         if (fetchedPubkey) {
-          const fetchedLastSig = await PgpKey.lastSig(await PgpKey.read(fetchedPubkey));
+          const pubkey = await KeyUtil.parse(fetchedPubkey);
+          const fetchedLastSig = Number(pubkey.lastModified);
           if (fetchedLastSig > contact.pubkey_last_sig) { // fetched pubkey has newer signature, update
             console.info(`Updating key ${contact.longid} for ${contact.email}: newer signature found: ${new Date(fetchedLastSig)} (old ${new Date(contact.pubkey_last_sig)})`);
-            await ContactStore.update(undefined, contact.email, { pubkey: fetchedPubkey, pubkey_last_sig: fetchedLastSig, pubkey_last_check: Date.now() });
+            await ContactStore.update(undefined, contact.email, { pubkey, pubkey_last_sig: fetchedLastSig, pubkey_last_check: Date.now() });
             return;
           }
         }

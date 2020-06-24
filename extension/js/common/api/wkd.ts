@@ -4,11 +4,11 @@
 
 import { Api } from './api.js';
 import { ApiErr } from './error/api-error.js';
-import { opgp } from '../core/pgp.js';
+import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
 import { Buf } from '../core/buf.js';
 import { Catch } from '../platform/catch.js';
-import { PgpKey } from '../core/pgp-key.js';
 import { PubkeySearchResult } from './pub-lookup.js';
+import { KeyUtil } from '../core/crypto/key.js';
 
 // tslint:disable:no-null-keyword
 // tslint:disable:no-direct-ajax
@@ -49,14 +49,14 @@ export class Wkd extends Api {
       Catch.report(`Wkd.lookupEmail err: ${String(e)}`);
       return { pubkey: null, pgpClient: null };
     }
-    const { keys: [key], errs } = await PgpKey.readMany(binary);
+    const { keys: [key], errs } = await KeyUtil.readMany(binary);
     if (errs.length || !key) {
       return { pubkey: null, pgpClient: null };
     }
     console.info(`Loaded Public Key from WKD for ${email}: ${url}`);
     let pubkey: string;
     try {
-      pubkey = key.armor();
+      pubkey = KeyUtil.armor(key);
     } catch (e) {
       return { pubkey: null, pgpClient: null };
     }

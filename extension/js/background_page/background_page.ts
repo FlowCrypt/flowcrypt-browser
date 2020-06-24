@@ -10,7 +10,7 @@ import { GoogleAuth } from '../common/api/google-auth.js';
 import { VERSION } from '../common/core/const.js';
 import { injectFcIntoWebmail } from './inject.js';
 import { migrateGlobal } from './migrations.js';
-import { opgp } from '../common/core/pgp.js';
+import { opgp } from '../common/core/crypto/pgp/openpgpjs-custom.js';
 import { GlobalStoreDict, GlobalStore } from '../common/platform/store/global-store.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
 import { SessionStore } from '../common/platform/store/session-store.js';

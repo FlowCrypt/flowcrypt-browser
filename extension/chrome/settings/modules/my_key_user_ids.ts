@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { KeyInfo, PgpKey } from '../../../js/common/core/pgp-key.js';
+import { KeyInfo, KeyUtil } from '../../../js/common/core/crypto/key.js';
 
 import { Assert } from '../../../js/common/assert.js';
 import { Url, Str } from '../../../js/common/core/common.js';
@@ -29,9 +29,8 @@ View.run(class MyKeyUserIdsView extends View {
     [this.primaryKi] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     $('.action_show_public_key').attr('href', this.myKeyUrl);
-    const prv = await PgpKey.read(this.primaryKi.private);
-    const userIds = prv.users.map(u => u.userId).filter(Boolean).map(uid => uid!.userid); // todo - create a common function in settings.js for here and setup.js user_ids
-    Xss.sanitizeRender('.user_ids', userIds.map((uid: string) => `<div>${Xss.escape(uid)}</div>`).join(''));
+    const prv = await KeyUtil.parse(this.primaryKi.private);
+    Xss.sanitizeRender('.user_ids', prv.identities.map((uid: string) => `<div>${Xss.escape(uid)}</div>`).join(''));
     $('.email').text(this.acctEmail);
     $('.fingerprint').text(Str.spaced(this.primaryKi.fingerprint));
   }
