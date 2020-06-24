@@ -72,3 +72,7 @@ blocks:
           commands:
             - npm run-script test_async_stack
             - npm run-script test_buf
+
+        - name: Live Gmail tests
+          commands:
+            - npm run-script test_ci_chrome_consumer_live_gmail
