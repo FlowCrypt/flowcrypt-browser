@@ -2435,6 +2435,11 @@ body.attachment .file-download-right-click-link {
   box-sizing: border-box;
 }
 
+#attachment-preview-container .attachment-preview-error {
+  color: #ccc;
+  text-align: center;
+}
+
 #attachment-preview-container .attachment-preview-unavailable {
   display: flex;
   flex-direction: column;

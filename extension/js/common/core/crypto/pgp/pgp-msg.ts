@@ -50,7 +50,7 @@ type SortedKeysForDecrypt = {
   prvForDecryptWithoutPassphrases: PrvKeyInfo[];
 };
 
-type DecryptSuccess = { success: true; signature?: VerifyRes; isEncrypted?: boolean, filename?: string, content: Buf };
+export type DecryptSuccess = { success: true; signature?: VerifyRes; isEncrypted?: boolean, filename?: string, content: Buf };
 type DecryptError$error = { type: DecryptErrTypes; message: string; };
 type DecryptError$longids = { message: string[]; matching: string[]; chosen: string[]; needPassphrase: string[]; };
 export type DecryptError = {

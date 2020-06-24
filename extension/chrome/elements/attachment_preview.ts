@@ -7,7 +7,7 @@ import { AttachmentDownloadView } from './attachment.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
-import { PgpMsg } from '../../js/common/core/crypto/pgp/pgp-msg.js';
+import { PgpMsg, DecryptError, DecryptSuccess } from '../../js/common/core/crypto/pgp/pgp-msg.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Ui } from '../../js/common/browser/ui.js';
@@ -55,7 +55,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
       }
     } catch (e) {
       Catch.reportErr(e);
-      $('body.attachment').text(`Error processing params: ${String(e)}. Contact human@flowcrypt.com`);
+      this.attachmentPreviewContainer.html(`<span class="attachment-preview-error">${Xss.escape(String(e))}.<br><br> Contact human@flowcrypt.com</span>`); // xss-escaped
       return;
     }
   }
@@ -73,6 +73,9 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
 
   private decrypt = async () => {
     const result = await PgpMsg.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: this.att.getData() });
-    return result.content;
+    if ((result as DecryptSuccess).content) {
+      return result.content;
+    }
+    throw new Error((result as DecryptError).error.message);
   }
 });

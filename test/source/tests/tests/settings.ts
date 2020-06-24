@@ -142,7 +142,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       internalTestState.expectiIntentionalErrReport = true;
     }));
 
-    ava.default('settings - attachment previews are rendered according to their types', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default.only('settings - attachment previews are rendered according to their types', testWithBrowser('compatibility', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=1729eee9493eb76a`));
       // image
       const attachmentImage = await inboxPage.getFrame(['attachment.htm', 'name=tiny-face.png']);
