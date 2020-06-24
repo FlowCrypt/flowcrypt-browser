@@ -19,12 +19,12 @@ export let defineUnitTests = (testVariant: TestVariant, testWithBrowser: TestWit
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
-    ava.default(`[unit][MsgBlockParser.detectBlocks] does not get tripped on non-pgp certs`, async t => {
-      expect(MsgBlockParser.detectBlocks("This text breaks email and Gmail web app.\n\n-----BEGIN CERTIFICATE-----\n\nEven though it's not a vaild PGP m\n\nMuhahah")).to.deep.equal({
+    ava.default(`[unit][MsgBlockParser.detectBlocks] does not get tripped on blocks with unknown headers`, async t => {
+      expect(MsgBlockParser.detectBlocks("This text breaks email and Gmail web app.\n\n-----BEGIN FOO-----\n\nEven though it's not a vaild PGP m\n\nMuhahah")).to.deep.equal({
         "blocks": [
-          MsgBlock.fromContent("plainText", "This text breaks email and Gmail web app.\n\n-----BEGIN CERTIFICATE-----\n\nEven though it's not a vaild PGP m\n\nMuhahah"),
+          MsgBlock.fromContent("plainText", "This text breaks email and Gmail web app.\n\n-----BEGIN FOO-----\n\nEven though it's not a vaild PGP m\n\nMuhahah"),
         ],
-        "normalized": "This text breaks email and Gmail web app.\n\n-----BEGIN CERTIFICATE-----\n\nEven though it's not a vaild PGP m\n\nMuhahah"
+        "normalized": "This text breaks email and Gmail web app.\n\n-----BEGIN FOO-----\n\nEven though it's not a vaild PGP m\n\nMuhahah"
       });
       t.pass();
     });
