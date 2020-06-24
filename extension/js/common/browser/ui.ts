@@ -416,6 +416,5 @@ export class Ui {
   private static swal = () => Swal.mixin({
     showClass: { popup: 'swal2-noanimation', backdrop: 'swal2-noanimation' },
     hideClass: { popup: '', backdrop: '' },
-    scrollbarPadding: false,
   })
 }
