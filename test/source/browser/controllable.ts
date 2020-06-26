@@ -9,7 +9,6 @@ import { expect } from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as mkdirp from 'mkdirp';
-import { time } from 'speakeasy';
 
 declare const jQuery: any;
 
