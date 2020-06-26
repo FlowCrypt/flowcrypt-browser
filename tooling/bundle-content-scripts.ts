@@ -45,7 +45,6 @@ buildContentScript(([] as string[]).concat(
   getFilesInDir(`${sourceDir}/common/browser`, /\.js$/, false),
   getFilesInDir(`${sourceDir}/common`, /\.js$/, false),
   getFilesInDir(`${sourceDir}/content_scripts/webmail`, /\.js$/),
-  './extension/lib/sweetalert2.js',
 ), 'webmail_bundle.js');
 
 // checkout

@@ -50,6 +50,7 @@
       "js": [
         "/lib/purify.js",
         "/lib/jquery.min.js",
+        "/lib/sweetalert2.js",
         "/js/content_scripts/webmail_bundle.js"
       ]
     },
