@@ -85,6 +85,7 @@ export class AttachmentDownloadView extends View {
     } catch (e) {
       this.renderErr(e);
     }
+    Ui.setTestState('ready');
   }
 
   public setHandlers = () => {

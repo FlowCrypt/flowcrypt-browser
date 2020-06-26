@@ -53,11 +53,9 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
           }
         });
       }
-      Ui.setTestState('ready');
     } catch (e) {
       Catch.reportErr(e);
       this.attachmentPreviewContainer.html(`<span class="attachment-preview-error">${Xss.escape(String(e))}.<br><br> Contact human@flowcrypt.com</span>`); // xss-escaped
-      Ui.setTestState('ready');
       return;
     }
   }

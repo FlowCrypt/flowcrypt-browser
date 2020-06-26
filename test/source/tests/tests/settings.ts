@@ -153,14 +153,14 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await inboxPage.press('Escape');
       // text
       const attachmentText = await inboxPage.getFrame(['attachment.htm', 'name=small.txt']);
-      await attachmentImage.waitForSelTestState('ready');
+      await attachmentText.waitForSelTestState('ready');
       await attachmentText.click('body');
       const attachmentPreviewText = await inboxPage.getFrame(['attachment_preview.htm']);
       await attachmentPreviewText.waitForContent('#attachment-preview-container .attachment-preview-txt', 'small text file');
       await inboxPage.press('Escape');
       // no preview
       const attachmentOther = await inboxPage.getFrame(['attachment.htm', 'name=small.pdf']);
-      await attachmentImage.waitForSelTestState('ready');
+      await attachmentOther.waitForSelTestState('ready');
       await attachmentOther.click('body');
       const attachmentPreviewOther = await inboxPage.getFrame(['attachment_preview.htm']);
       await attachmentPreviewOther.waitForContent('#attachment-preview-container .attachment-preview-unavailable', 'No preview available');
