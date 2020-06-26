@@ -5,7 +5,6 @@
 import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, VerifyRes, PgpMsgTypeResult } from '../core/crypto/pgp/pgp-msg.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
 import { AjaxErr } from '../api/error/api-error-types.js';
-import { Att } from '../core/att.js';
 import { AuthRes } from '../api/google-auth.js';
 import { Browser } from './browser.js';
 import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
@@ -64,7 +63,7 @@ export namespace Bm {
   export type PgpMsgType = PgpMsgMethod.Arg.Type;
   export type Ajax = { req: JQueryAjaxSettings, stack: string };
   export type AjaxGmailAttGetChunk = { acctEmail: string, msgId: string, attId: string };
-  export type ShowAttachmentPreview = { att: Att, isEncrypted: boolean };
+  export type ShowAttachmentPreview = { iframeUrl: string };
 
   export namespace Res {
     export type GetActiveTabInfo = { provider: 'gmail' | undefined, acctEmail: string | undefined, sameWorld: boolean | undefined };

@@ -17,6 +17,7 @@ import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
+import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 
 export class AttachmentDownloadView extends View {
   protected readonly acctEmail: string;
@@ -226,7 +227,9 @@ export class AttachmentDownloadView extends View {
     if (!this.att.length) {
       this.att.length = this.size!;
     }
-    BrowserMsg.send.showAttachmentPreview(this.parentTabId, { att: this.att, isEncrypted: this.isEncrypted });
+    const factory = new XssSafeFactory(this.acctEmail, this.tabId);
+    const iframeUrl = factory.srcPgpAttIframe(this.att, this.isEncrypted, 'chrome/elements/attachment_preview.htm');
+    BrowserMsg.send.showAttachmentPreview(this.parentTabId, { iframeUrl });
   }
 
   private decryptAndSaveAttToDownloads = async () => {

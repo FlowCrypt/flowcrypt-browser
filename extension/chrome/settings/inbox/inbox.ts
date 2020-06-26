@@ -146,8 +146,8 @@ export class InboxView extends View {
     BrowserMsg.addListener('close_swal', async () => {
       Swal.close();
     });
-    BrowserMsg.addListener('show_attachment_preview', async ({ att, isEncrypted }: Bm.ShowAttachmentPreview) => {
-      await Ui.modal.attachmentPreview(att, isEncrypted, this.factory);
+    BrowserMsg.addListener('show_attachment_preview', async ({ iframeUrl }: Bm.ShowAttachmentPreview) => {
+      await Ui.modal.attachmentPreview(iframeUrl);
     });
   }
 
