@@ -128,7 +128,9 @@ export class ContactStore extends AbstractStore {
    */
   public static save = async (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => {
     if (!db) { // relay op through background process
-      await BrowserMsg.send.bg.await.db({ f: 'save', args: [contact] });
+      // JSON.parse(JSON.stringify()) is here to prevent the "DataCloneError: The object can not be cloned" exception in Firefox
+      // https://stackoverflow.com/a/42376465
+      await BrowserMsg.send.bg.await.db({ f: 'save', args: [JSON.parse(JSON.stringify(contact))] });
       return;
     }
     if (Array.isArray(contact)) {
