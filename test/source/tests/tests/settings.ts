@@ -146,18 +146,21 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=1729eee9493eb76a`));
       // image
       const attachmentImage = await inboxPage.getFrame(['attachment.htm', 'name=tiny-face.png']);
+      await attachmentImage.waitForSelTestState('ready');
       await attachmentImage.click('body');
       const attachmentPreviewImage = await inboxPage.getFrame(['attachment_preview.htm']);
       await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
       await inboxPage.press('Escape');
       // text
       const attachmentText = await inboxPage.getFrame(['attachment.htm', 'name=small.txt']);
+      await attachmentImage.waitForSelTestState('ready');
       await attachmentText.click('body');
       const attachmentPreviewText = await inboxPage.getFrame(['attachment_preview.htm']);
       await attachmentPreviewText.waitForContent('#attachment-preview-container .attachment-preview-txt', 'small text file');
       await inboxPage.press('Escape');
       // no preview
       const attachmentOther = await inboxPage.getFrame(['attachment.htm', 'name=small.pdf']);
+      await attachmentImage.waitForSelTestState('ready');
       await attachmentOther.click('body');
       const attachmentPreviewOther = await inboxPage.getFrame(['attachment_preview.htm']);
       await attachmentPreviewOther.waitForContent('#attachment-preview-container .attachment-preview-unavailable', 'No preview available');
