@@ -2389,7 +2389,7 @@ body.attachment .file-download-right-click-link {
 }
 
 #attachment-preview-download {
-  height: 48px;
+  height: 80px;
   display: flex;
   flex-shrink: 0;
   align-items: center;
@@ -2411,7 +2411,7 @@ body.attachment .file-download-right-click-link {
 
 #attachment-preview-container {
   flex-grow: 1;
-  margin: 40px 50px 20px;
+  margin: 0 50px 20px;
   display: flex;
   justify-content: center;
   align-items: center;
