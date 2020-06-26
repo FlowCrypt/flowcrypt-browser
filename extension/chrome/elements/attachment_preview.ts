@@ -4,6 +4,7 @@
 
 import { Att } from '../../js/common/core/att.js';
 import { AttachmentDownloadView } from './attachment.js';
+import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
@@ -31,21 +32,18 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
         const blob = new Blob([result], { type: this.type });
         const url = window.URL.createObjectURL(blob);
         const attachmentType = this.getAttachmentType(this.origNameBasedOnFilename);
-        const downloadBtn = $(`<a href="${url}" download="${Xss.escape(this.origNameBasedOnFilename)}" class="download-attachment">
-          Right-click here and choose 'Save Link As' to save encrypted file
-          <img src="/img/svgs/download-link.png">
-        </a>`);
-        downloadBtn.click((e) => e.preventDefault());
+        const attForSave = new Att({ name: this.origNameBasedOnFilename, type: this.type, data: result });
         if (attachmentType) {
           if (attachmentType === 'img') { // image
             this.attachmentPreviewContainer.html(`<img src="${url}" class="attachment-preview-img" alt="${Xss.escape(this.origNameBasedOnFilename)}">`); // xss-escaped
           } else if (attachmentType === 'txt') { // text
             this.attachmentPreviewContainer.html(`<div class="attachment-preview-txt">${Xss.escape(result.toString()).replace(/\n/g, '<br>')}</div>`); // xss-escaped
           }
-          $('#attachment-preview-download').append(downloadBtn); // xss-escaped
+          Browser.saveToDownloads(attForSave, $('#attachment-preview-download'));
         } else { // no preview available, download button
-          this.attachmentPreviewContainer.html('<div class="attachment-preview-unavailable">No preview available</div>'); // xss-escaped
-          $('.attachment-preview-unavailable').append(downloadBtn); // xss-escaped
+          this.attachmentPreviewContainer.html('<div class="attachment-preview-unavailable"></div>'); // xss-escaped
+          Browser.saveToDownloads(attForSave, $('.attachment-preview-unavailable'));
+          $('.attachment-preview-unavailable').prepend('No preview available'); // xss-escaped
         }
         $('body').click((e) => {
           if (e.target === document.body || $('body').children().toArray().indexOf(e.target) !== -1) {

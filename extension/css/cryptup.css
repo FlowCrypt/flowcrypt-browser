@@ -2385,7 +2385,8 @@ body.attachment .file-download-right-click-link {
 #attachment-preview {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100vh !important;
+  overflow-y: hidden;
 }
 
 #attachment-preview-download {
@@ -2397,16 +2398,11 @@ body.attachment .file-download-right-click-link {
   text-decoration: none;
 }
 
-.download-attachment {
+.file-download-right-click-link {
   display: flex;
   align-items: center;
   font-size: 18px;
   color: white !important;
-}
-
-.download-attachment img {
-  width: 18px;
-  margin: 0.4em;
 }
 
 #attachment-preview-container {
@@ -2453,10 +2449,11 @@ body.attachment .file-download-right-click-link {
   border-radius: 15px;
 }
 
-#attachment-preview-container .attachment-preview-unavailable .download-attachment {
+#attachment-preview-container .attachment-preview-unavailable .file-download-right-click-link {
   flex-direction: column;
   margin-top: 20px;
   text-align: center;
+  line-height: 1.5;
 }
 
 /* Select Account */
