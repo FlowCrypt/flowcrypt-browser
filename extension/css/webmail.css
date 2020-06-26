@@ -312,7 +312,8 @@ div#cryptup_dialog iframe.tall {
 
 .swal2-container.ui-modal-attachment {
   padding: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.85) !important;
+  overflow-y: hidden !important;
 }
 
 .swal2-container.ui-modal-attachment .swal2-popup {
