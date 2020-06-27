@@ -164,7 +164,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await attachmentOther.click('body');
       const attachmentPreviewOther = await inboxPage.getFrame(['attachment_preview.htm']);
       await attachmentPreviewOther.waitForContent('#attachment-preview-container .attachment-preview-unavailable', 'No preview available');
-      await attachmentPreviewOther.waitAll('#attachment-preview-container .attachment-preview-unavailable a.download-attachment');
+      await attachmentPreviewOther.waitAll('#attachment-preview-container .attachment-preview-unavailable a.file-download-right-click-link');
     }));
 
     ava.todo('settings - change passphrase - mismatch curent pp');
