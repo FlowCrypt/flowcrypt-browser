@@ -309,3 +309,25 @@ div#cryptup_dialog iframe.tall {
   height: 780px;
   margin-top: -390px;
 }
+
+.swal2-container.ui-modal-attachment {
+  padding: 0;
+  background: rgba(0, 0, 0, 0.85) !important;
+  overflow-y: hidden !important;
+}
+
+.swal2-container.ui-modal-attachment .swal2-popup {
+  padding: 0;
+  background: transparent;
+}
+
+.swal2-container.ui-modal-attachment .swal2-content {
+  height: 100%;
+}
+
+.swal2-container.ui-modal-attachment #swal2-content { height: 100%; }
+
+.swal2-container.ui-modal-attachment iframe {
+  width: 100%;
+  height: 100%;
+}

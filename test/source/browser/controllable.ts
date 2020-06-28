@@ -320,30 +320,34 @@ abstract class ControllableBase {
     throw new Error(`Could not find any frame in ${appearIn}s that matches ${urlMatchables.join(' ')}`);
   }
 
-  public getFrame = async (urlMatchables: string[], { sleep = 1 } = { sleep: 1 }): Promise<ControllableFrame> => {
+  public getFrame = async (urlMatchables: string[], { sleep = 1, timeout = 10 } = { sleep: 1, timeout: 10 }): Promise<ControllableFrame> => {
     if (sleep) {
       await Util.sleep(sleep);
     }
-    let frames: Frame[];
-    if (this.target.constructor.name === 'Page') {
-      frames = await (this.target as Page).frames();
-    } else if (this.target.constructor.name === 'Frame') {
-      frames = await (this.target as Frame).childFrames();
-    } else {
-      throw Error(`Unknown this.target.constructor.name: ${this.target.constructor.name}`);
-    }
-    const frame = frames.find(frame => {
-      for (const fragment of urlMatchables) {
-        if (frame.url().indexOf(fragment) === -1) {
-          return false;
-        }
+    let passes = Math.max(2, Math.round(timeout)); // 1 second per pass, 2 pass minimum
+    while (passes--) {
+      let frames: Frame[];
+      if (this.target.constructor.name === 'Page') {
+        frames = await (this.target as Page).frames();
+      } else if (this.target.constructor.name === 'Frame') {
+        frames = await (this.target as Frame).childFrames();
+      } else {
+        throw Error(`Unknown this.target.constructor.name: ${this.target.constructor.name}`);
       }
-      return true;
-    });
-    if (frame) {
-      return new ControllableFrame(frame);
+      const frame = frames.find(frame => {
+        for (const fragment of urlMatchables) {
+          if (frame.url().indexOf(fragment) === -1) {
+            return false;
+          }
+        }
+        return true;
+      });
+      if (frame) {
+        return new ControllableFrame(frame);
+      }
+      await Util.sleep(1);
     }
-    throw Error(`Frame not found: ${urlMatchables.join(',')}`);
+    throw Error(`Frame not found within ${timeout}s: ${urlMatchables.join(',')}`);
   }
 
   public awaitDownloadTriggeredByClicking = async (selector: string): Promise<Buffer> => {

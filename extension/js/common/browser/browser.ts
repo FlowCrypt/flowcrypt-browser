@@ -39,7 +39,8 @@ export class Browser {
         a.appendChild(div);
         a.className = 'file-download-right-click-link';
         renderIn.html(a.outerHTML); // xss-escaped attachment name above
-        renderIn.css('height', 'auto');
+        renderIn.addClass('right-click-link');
+        renderIn.removeAttr('title');
         renderIn.find('a').click(e => {
           Ui.modal.warning('Please use right-click and select Save Link As').catch(Catch.reportErr);
           e.preventDefault();

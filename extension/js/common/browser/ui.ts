@@ -260,6 +260,21 @@ export class Ui {
         }
       });
     },
+    attachmentPreview: async (iframeUrl: string): Promise<void> => {
+      await Ui.swal().fire({
+        onOpen: () => {
+          $(Swal.getContent()).attr('data-test', 'attachment-dialog');
+          $(Swal.getCloseButton()).attr('data-test', 'dialog-close');
+        },
+        html: `<iframe src="${Xss.escape(iframeUrl)}" style="border: 0" sandbox="allow-scripts allow-same-origin"></iframe>`,
+        showConfirmButton: false,
+        showCloseButton: true,
+        grow: 'fullscreen',
+        customClass: {
+          container: 'ui-modal-attachment'
+        }
+      });
+    },
   };
 
   public static testCompatibilityLink = '<a href="/chrome/settings/modules/compatibility.htm" target="_blank">Test your OpenPGP key compatibility</a>';

@@ -44,11 +44,13 @@
         "https://mail.google.com/*"
       ],
       "css": [
-        "/css/webmail.css"
+        "/css/webmail.css",
+        "/css/sweetalert2.css"
       ],
       "js": [
         "/lib/purify.js",
         "/lib/jquery.min.js",
+        "/lib/sweetalert2.js",
         "/js/content_scripts/webmail_bundle.js"
       ]
     },
@@ -80,6 +82,7 @@
     "/chrome/elements/pgp_block.htm",
     "/chrome/elements/setup_dialog.htm",
     "/chrome/elements/attachment.htm",
+    "/chrome/elements/attachment_preview.htm",
     "/chrome/elements/passphrase.htm",
     "/chrome/elements/add_pubkey.htm",
     "/chrome/elements/pgp_pubkey.htm",

@@ -2283,65 +2283,55 @@ body.attachment {
   height: 118px;
   width: 178px;
   overflow: hidden;
+  cursor: pointer;
 }
+body.attachment.right-click-link { height: auto; }
 body.attachment:hover { border-color: #eaeaea; }
 
 body.attachment #download {
+  display: flex;
+  visibility: hidden;
   position: absolute;
-  width: 100px;
+  width: 32px;
+  height: 32px;
+  right: 10px;
+  bottom: 30px;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 3px;
   z-index: 1;
-  height: 80px;
-  left: 68px;
-  opacity: 1;
-  color: #444;
-  display: none;
 }
 
-body.attachment #download:hover,
 body.attachment:hover #download {
   visibility: visible;
-  cursor: pointer;
-}
-body.attachment #download.visible { visibility: visible; }
-
-body.attachment #download .large_spinner {
-  margin-top: 7px;
-  margin-left: 20px;
 }
 
-body.attachment #download .download-icon {
-  margin-top: 15px;
-  margin-bottom: 8px;
+body.attachment #download:hover {
+  background-color: rgba(0, 0, 0, 0.6);
 }
 
-body.attachment #download .download-prompt {
-  margin-top: 1px;
-  font-size: 14px;
-}
-
-body.attachment #download .download_progress {
+body.attachment .download_progress {
   position: absolute;
-  top: 39px;
-  margin-left: -5px;
+  top: 50%;
+  margin-top: -6px;
   font-weight: bold;
+  line-height: 1;
 }
 
 body.attachment #header {
-  margin-top: 10px;
-  padding-bottom: 0;
+  height: 90px;
   font-weight: 400;
   font-size: 14px;
   width: 100px;
   text-align: left;
   position: absolute;
-  left: 75px;
+  left: 65px;
   line-height: 1.5;
-  top: 15px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 45px;
 }
 
 body.attachment #type {
@@ -2360,6 +2350,7 @@ body.attachment #name {
   top: 92px;
   width: 154px;
   left: 0;
+  height: 12px;
 }
 
 body.attachment .file-format-holder {
@@ -2388,6 +2379,81 @@ body.attachment .file-download-right-click-link {
   width: 100%;
   text-decoration: none;
   color: #31a217;
+}
+
+/* Attachment Preview */
+#attachment-preview {
+  display: flex;
+  flex-direction: column;
+  height: 100vh !important;
+  overflow-y: hidden;
+}
+
+#attachment-preview-download {
+  height: 80px;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.file-download-right-click-link {
+  display: flex;
+  align-items: center;
+  font-size: 18px;
+  color: white !important;
+}
+
+#attachment-preview-container {
+  flex-grow: 1;
+  margin: 0 50px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+}
+
+#attachment-preview-container > * {
+  max-width: 100%;
+  margin: auto;
+}
+
+#attachment-preview-container .download_progress {
+  position: absolute;
+  color: white;
+  font-weight: bold;
+}
+
+#attachment-preview-container .attachment-preview-txt {
+  background: white;
+  padding: 40px;
+  box-sizing: border-box;
+}
+
+#attachment-preview-container .attachment-preview-error {
+  color: #ccc;
+  text-align: center;
+}
+
+#attachment-preview-container .attachment-preview-unavailable {
+  display: flex;
+  flex-direction: column;
+  width: 340px;
+  font-size: 26px;
+  color: white;
+  align-items: center;
+  background: #4c494c;
+  box-shadow: 0 10px 12px 5px rgba(0, 0, 0, 0.2);
+  padding: 30px;
+  border-radius: 15px;
+}
+
+#attachment-preview-container .attachment-preview-unavailable .file-download-right-click-link {
+  flex-direction: column;
+  margin-top: 20px;
+  text-align: center;
+  line-height: 1.5;
 }
 
 /* Select Account */

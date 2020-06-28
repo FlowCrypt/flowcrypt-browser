@@ -120,11 +120,11 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/add_pubkey.htm'), { emails, placement });
   }
 
-  public srcPgpAttIframe = (a: Att, isEncrypted: boolean) => {
+  public srcPgpAttIframe = (a: Att, isEncrypted: boolean, iframeUrl = 'chrome/elements/attachment.htm') => {
     if (!a.id && !a.url && a.hasData()) { // data provided directly, pass as object url
       a.url = Browser.objUrlCreate(a.getData());
     }
-    return this.frameSrc(this.extUrl('chrome/elements/attachment.htm'), {
+    return this.frameSrc(this.extUrl(iframeUrl), {
       frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attId: a.id, url: a.url, isEncrypted
     });
   }
