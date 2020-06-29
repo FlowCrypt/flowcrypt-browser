@@ -203,13 +203,11 @@ export class OpenPGPKey {
       lastModified,
       expiration: exp instanceof Date ? exp : undefined,
       created: pubkey.getCreationTime(),
-      checkPassPhrase: _text => Promise.resolve(false), // this is assigned right below
       fullyDecrypted: pubkey.isPublic() ? true /* public keys are always decrypted */ : pubkey.isFullyDecrypted(),
       fullyEncrypted: pubkey.isPublic() ? false /* public keys are never encrypted */ : pubkey.isFullyEncrypted(),
       isPublic: pubkey.isPublic(),
       isPrivate: pubkey.isPrivate(),
     } as Key);
-    pkey.checkPassPhrase = async passphrase => PgpKey.decrypt(await OpenPGPKey.parse(OpenPGPKey.armor(pkey)), passphrase);
     const extensions = pkey as unknown as { raw: string, [internal]: OpenPGP.key.Key };
     extensions[internal] = pubkey;
     extensions.raw = raw || pubkey.armor();

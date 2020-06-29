@@ -31,7 +31,6 @@ export interface Key {
   // TODO: Aren't isPublic and isPrivate mutually exclusive?
   isPublic: boolean;
   isPrivate: boolean;
-  checkPassPhrase(password: string): Promise<boolean>;
 }
 
 export type PubkeyResult = { pubkey: Key, email: string, isMine: boolean };
@@ -223,6 +222,16 @@ export class KeyUtil {
       Catch.reportErr(error);
       return { normalized: '', keys: [] };
     }
+  }
+
+  public static checkPassPhrase = async (pkey: string, passphrase: string): Promise<boolean> => {
+    // decrypt will change the key in place so it's important to parse the key here
+    // because passing an object from the caller could have unexpected consequences
+    const key = await KeyUtil.parse(pkey);
+    if (key.type !== 'openpgp') {
+      throw new Error('Checking password for this key type is not implemented: ' + key.type);
+    }
+    return await PgpKey.decrypt(key, passphrase);
   }
 
   public static getKeyType = (pubkey: string): 'openpgp' | 'x509' | 'unknown' => {
