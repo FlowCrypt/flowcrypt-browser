@@ -184,8 +184,8 @@ export class KeyUtil {
     if (!exp) {
       return false;
     }
-    // exp instanceof Date does not work if the date objects
-    // are from another realm (e.g. iframe)
+    // exp instanceof Date does not work if the date objects, are from another realm (e.g. iframe)
+    // see https://github.com/FlowCrypt/flowcrypt-browser/pull/2816/files
     if (typeof exp.getTime === 'function') {
       return Date.now() > exp.getTime();
     }
