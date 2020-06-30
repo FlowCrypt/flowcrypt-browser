@@ -159,10 +159,13 @@ export class OpenPGPKey {
       if (exp === Infinity || !exp) {
         return false;
       }
-      if (typeof exp !== 'number') {
-        return Date.now() > exp.getTime();
+      // According to the documentation expiration is either undefined, Infinity
+      // (typeof number) or a Date object. So in this case `exp` should never
+      // be of type number.
+      if (typeof exp === 'number') {
+        throw new Error(`Got unexpected value for expiration: ${exp}`);
       }
-      throw new Error(`Got unexpected value for expiration: ${exp}`);
+      return Date.now() > exp.getTime();
     };
     const emails = pubkey.users
       .map(user => user.userId)

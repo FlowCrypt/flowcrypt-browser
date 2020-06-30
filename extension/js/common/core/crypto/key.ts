@@ -184,12 +184,7 @@ export class KeyUtil {
     if (!exp) {
       return false;
     }
-    // exp instanceof Date does not work if the date objects, are from another realm (e.g. iframe)
-    // see https://github.com/FlowCrypt/flowcrypt-browser/pull/2816
-    if (typeof exp.getTime === 'function') {
-      return Date.now() > exp.getTime();
-    }
-    throw new Error(`Got unexpected value for expiration: ${exp}`);
+    return Date.now() > exp.getTime();
   }
 
   public static dateBeforeExpirationIfAlreadyExpired = (key: Key): Date | undefined => {
