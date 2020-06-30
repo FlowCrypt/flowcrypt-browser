@@ -184,7 +184,9 @@ export class KeyUtil {
     if (!exp) {
       return false;
     }
-    if (exp instanceof Date) {
+    // exp instanceof Date does not work if the date objects
+    // are from another realm (e.g. iframe)
+    if (typeof exp.getTime === 'function') {
       return Date.now() > exp.getTime();
     }
     throw new Error(`Got unexpected value for expiration: ${exp}`);

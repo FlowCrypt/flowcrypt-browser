@@ -159,7 +159,7 @@ export class OpenPGPKey {
       if (exp === Infinity || !exp) {
         return false;
       }
-      if (exp instanceof Date) {
+      if (typeof exp !== 'number') {
         return Date.now() > exp.getTime();
       }
       throw new Error(`Got unexpected value for expiration: ${exp}`);
