@@ -96,6 +96,9 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   }
 
   private extractProcessSendMsg = async () => {
+    if (this.view.S.cached('reply_msg_successful').is(':visible')) {
+      return;
+    }
     this.view.sendBtnModule.disableBtn();
     this.view.S.cached('toggle_send_options').hide();
     try {
