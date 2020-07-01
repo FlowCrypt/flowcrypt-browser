@@ -184,10 +184,7 @@ export class KeyUtil {
     if (!exp) {
       return false;
     }
-    if (exp instanceof Date) {
-      return Date.now() > exp.getTime();
-    }
-    throw new Error(`Got unexpected value for expiration: ${exp}`);
+    return Date.now() > exp.getTime();
   }
 
   public static dateBeforeExpirationIfAlreadyExpired = (key: Key): Date | undefined => {
