@@ -69,7 +69,10 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   public renderReplySuccess = (msg: SendableMsg, msgId: string) => {
     this.view.renderModule.renderReinsertReplyBox(msgId);
     if (!this.view.sendBtnModule.popover.choices.encrypt) {
-      this.view.S.cached('replied_body').addClass('pgp_neutral').removeClass('pgp_secure');
+      this.view.S.cached('replied_body').removeClass('pgp_secure');
+      if (this.view.sendBtnModule.popover.choices.sign) {
+        this.view.S.cached('replied_body').addClass('pgp_neutral');
+      }
     }
     this.view.S.cached('replied_body').css('width', ($('table#compose').width() || 500) - 30);
     this.view.S.cached('compose_table').css('display', 'none');
