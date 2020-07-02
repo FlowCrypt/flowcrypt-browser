@@ -34,7 +34,7 @@ export class Browser {
       a.download = Xss.escape(att.name);
       if (renderIn) {
         const div = document.createElement('div');
-        div.innerText = `Right-click here and choose 'Save Link As' to save encrypted file`;
+        div.innerText = `Right-click here and choose 'Save Link As…' to save encrypted file`;
         a.innerText = '';
         a.appendChild(div);
         a.className = 'file-download-right-click-link';
@@ -42,7 +42,7 @@ export class Browser {
         renderIn.addClass('right-click-link');
         renderIn.removeAttr('title');
         renderIn.find('a').click(e => {
-          Ui.modal.warning('Please use right-click and select Save Link As').catch(Catch.reportErr);
+          Ui.modal.warning(`Please use right-click and select 'Save Link As…'`).catch(Catch.reportErr);
           e.preventDefault();
           e.stopPropagation();
           return false;
