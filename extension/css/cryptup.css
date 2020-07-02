@@ -2290,7 +2290,7 @@ body.attachment:hover { border-color: #eaeaea; }
 
 body.attachment #download {
   display: flex;
-  visibility: hidden;
+  opacity: 0;
   position: absolute;
   width: 32px;
   height: 32px;
@@ -2301,14 +2301,18 @@ body.attachment #download {
   background-color: rgba(0, 0, 0, 0.8);
   border-radius: 3px;
   z-index: 1;
+  cursor: pointer;
+  border: 0;
 }
 
+body.attachment:focus-within #download,
 body.attachment:hover #download {
-  visibility: visible;
+  opacity: 1;
 }
 
-body.attachment #download:hover {
-  background-color: rgba(0, 0, 0, 0.6);
+body.attachment #download:focus {
+  box-shadow: 0 0 5px #31a217;
+  outline: none;
 }
 
 body.attachment .download_progress {
@@ -2381,6 +2385,10 @@ body.attachment .file-download-right-click-link {
   color: #31a217;
 }
 
+body.attachment .file-download-right-click-link:focus {
+  box-shadow: inset 0 0 5px currentColor;
+}
+
 /* Attachment Preview */
 #attachment-preview {
   display: flex;
@@ -2398,7 +2406,7 @@ body.attachment .file-download-right-click-link {
   text-decoration: none;
 }
 
-.file-download-right-click-link {
+#attachment-preview-download .file-download-right-click-link {
   display: flex;
   align-items: center;
   font-size: 18px;

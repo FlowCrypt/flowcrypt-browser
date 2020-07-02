@@ -215,6 +215,7 @@ export class AttachmentDownloadView extends View {
       } else {
         await this.decryptAndSaveAttToDownloads();
       }
+      $('.file-download-right-click-link').focus();
     } catch (e) {
       this.renderErr(e);
     } finally {
