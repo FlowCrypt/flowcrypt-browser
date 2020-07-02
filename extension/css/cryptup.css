@@ -2383,6 +2383,8 @@ body.attachment .file-download-right-click-link {
   width: 100%;
   text-decoration: none;
   color: #31a217;
+  padding: 0.4em;
+  box-sizing: border-box;
 }
 
 body.attachment .file-download-right-click-link:focus {
