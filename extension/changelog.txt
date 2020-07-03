@@ -1,5 +1,7 @@
 <div class="lightboxed">
 
+version 7.8.2 on Jul 3, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/410?closed=1" target="_blank">Bugfixes</a>
+
 version 7.8.1 on Jul 1, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/409?closed=1" target="_blank">Expiring key bugfix</a>
 
 version 7.8.0 on Jun 29, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/408?closed=1" target="_blank">Preview attachments + S/MIME</a>
