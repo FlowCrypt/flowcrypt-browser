@@ -84,6 +84,8 @@ View.run(class AddKeyView extends View {
         return await Ui.modal.warning(e.message, Ui.testCompatibilityLink);
       } else if (e instanceof KeyCanBeFixed) {
         return await Ui.modal.error(`This type of key cannot be set as non-primary yet. Please write human@flowcrypt.com`, false, Ui.testCompatibilityLink);
+      } else if (e instanceof Error && e.message === 'Unsupported key type: unknown') {
+        return await Ui.modal.warning(`Pasted content does not appear to be a validly formatted OpenPGP key.\n\n(Unsupported key type: unknown)`);
       } else {
         Catch.reportErr(e);
         return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`, false, Ui.testCompatibilityLink);
