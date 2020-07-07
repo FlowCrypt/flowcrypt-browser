@@ -15,6 +15,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { UnexpectedKeyTypeError } from '../../../js/common/core/crypto/key.js';
 
 View.run(class AddKeyView extends View {
 
@@ -84,6 +85,8 @@ View.run(class AddKeyView extends View {
         return await Ui.modal.warning(e.message, Ui.testCompatibilityLink);
       } else if (e instanceof KeyCanBeFixed) {
         return await Ui.modal.error(`This type of key cannot be set as non-primary yet. Please write human@flowcrypt.com`, false, Ui.testCompatibilityLink);
+      } else if (e instanceof UnexpectedKeyTypeError) {
+        return await Ui.modal.warning(`This does not appear to be a validly formatted key.\n\n${e.message}`);
       } else {
         Catch.reportErr(e);
         return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`, false, Ui.testCompatibilityLink);
