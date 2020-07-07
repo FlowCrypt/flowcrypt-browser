@@ -1,5 +1,5 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
-import { Key, PrvPacket, KeyAlgo, KeyUtil, KeyDetails$ids, KeyDetails } from '../key.js';
+import { Key, PrvPacket, KeyAlgo, KeyUtil, KeyDetails$ids, KeyDetails, UnexpectedKeyTypeError } from '../key.js';
 import { opgp } from './openpgpjs-custom.js';
 import { Catch } from '../../../platform/catch.js';
 import { Str } from '../../common.js';
@@ -38,7 +38,7 @@ export class OpenPGPKey {
 
   public static asPublicKey = async (pubkey: Key): Promise<Key> => {
     if (pubkey.type !== 'openpgp') {
-      throw new Error('Unsupported key type: ' + pubkey.type);
+      throw new UnexpectedKeyTypeError(`Key type is ${pubkey.type}, expecting OpenPGP`);
     }
     if (pubkey.isPrivate) {
       return await OpenPGPKey.wrap(OpenPGPKey.unwrap(pubkey).toPublic(), {} as Key);
@@ -251,7 +251,7 @@ export class OpenPGPKey {
 
   public static armor = (pubkey: Key): string => {
     if (pubkey.type !== 'openpgp') {
-      throw new Error('Unsupported key type: ' + pubkey.type);
+      throw new UnexpectedKeyTypeError(`Key type is ${pubkey.type}, expecting OpenPGP`);
     }
     const extensions = pubkey as unknown as { raw: string };
     if (!extensions.raw) {
@@ -329,7 +329,7 @@ export class OpenPGPKey {
 
   private static unwrap = (pubkey: Key) => {
     if (pubkey.type !== 'openpgp') {
-      throw new Error('Unsupported key type: ' + pubkey.type);
+      throw new UnexpectedKeyTypeError(`Key type is ${pubkey.type}, expecting OpenPGP`);
     }
     const raw = (pubkey as unknown as { [internal]: OpenPGP.key.Key })[internal];
     if (!raw) {

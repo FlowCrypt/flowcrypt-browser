@@ -9,7 +9,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { Key } from '../../../js/common/core/crypto/key.js';
+import { Key, UnexpectedKeyTypeError } from '../../../js/common/core/crypto/key.js';
 
 export class SetupImportKeyModule {
 
@@ -40,8 +40,8 @@ export class SetupImportKeyModule {
         return await Ui.modal.warning(e.message, Ui.testCompatibilityLink);
       } else if (e instanceof KeyCanBeFixed) {
         return await this.renderCompatibilityFixBlockAndFinalizeSetup(e.encrypted, options);
-      } else if (e instanceof Error && e.message === 'Unsupported key type: unknown') {
-        return await Ui.modal.warning(`Pasted content does not appear to be a validly formatted OpenPGP key.\n\n(Unsupported key type: unknown)`);
+      } else if (e instanceof UnexpectedKeyTypeError) {
+        return await Ui.modal.warning(`This does not appear to be a validly formatted key.\n\n${e.message}`);
       } else {
         Catch.reportErr(e);
         return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`, false, Ui.testCompatibilityLink);

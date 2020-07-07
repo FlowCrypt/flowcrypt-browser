@@ -92,6 +92,8 @@ export interface KeyDetails {
 }
 export type PrvPacket = (OpenPGP.packet.SecretKey | OpenPGP.packet.SecretSubkey);
 
+export class UnexpectedKeyTypeError extends Error { }
+
 export class KeyUtil {
 
   public static isWithoutSelfCertifications = async (key: Key) => {
@@ -147,7 +149,7 @@ export class KeyUtil {
       // TODO: No support for parsing multiple S/MIME keys for now
       return [await SmimeKey.parse(text)];
     }
-    throw new Error('Unsupported key type: ' + keyType);
+    throw new UnexpectedKeyTypeError(`Key type is ${keyType}, expecting OpenPGP or x509 S/MIME`);
   }
 
   public static armor = (pubkey: Key): string => {
