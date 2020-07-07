@@ -1193,9 +1193,12 @@ td {
   padding: 8px 8px;
   width: 232px;
 }
-#pgp_block #attachments { margin-top: 8px; }
 
-#pgp_block #attachments .attachment {
+#pgp_block #attachments,
+.replied_body #attachments { margin-top: 8px; }
+
+#pgp_block #attachments .attachment,
+.replied_body #attachments .attachment {
   background: #f8f8f8;
   border: 1px solid #ccc;
   margin-bottom: 8px;

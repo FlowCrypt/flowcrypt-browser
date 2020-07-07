@@ -79,12 +79,18 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.S.cached('reply_msg_successful').find('div.replied_from').text(this.view.senderModule.getSender());
     this.view.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
     const repliedBodyEl = this.view.S.cached('reply_msg_successful').find('div.replied_body');
-    Xss.sanitizeRender(repliedBodyEl, Str.escapeTextAsRenderableHtml(this.view.inputModule.extract('text', 'input_text', 'SKIP-ADDONS')));
+    if (this.view.inputModule.isRichText()) {
+      const sanitized = Xss.htmlSanitizeKeepBasicTags(this.view.inputModule.extract('html', 'input_text', 'SKIP-ADDONS'), 'IMG-KEEP');
+      Xss.setElementContentDANGEROUSLY(repliedBodyEl.get(0), sanitized); // xss-sanitized
+      this.renderReplySuccessMimeAtts(this.view.inputModule.extractAttachments());
+    } else {
+      Xss.sanitizeRender(repliedBodyEl, Str.escapeTextAsRenderableHtml(this.view.inputModule.extract('text', 'input_text', 'SKIP-ADDONS')));
+      this.renderReplySuccessAtts(msg.atts, msgId);
+    }
     const t = new Date();
     const time = ((t.getHours() !== 12) ? (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
     this.view.S.cached('reply_msg_successful').find('div.replied_time').text(time);
     this.view.S.cached('reply_msg_successful').css('display', 'block');
-    this.renderReplySuccessAtts(msg.atts, msgId);
     this.view.sizeModule.resizeComposeBox();
   }
 
@@ -343,4 +349,14 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     }
   }
 
+  private renderReplySuccessMimeAtts = (attachmentsFilenames: string[]) => {
+    const attachments = $('<div id="attachments"></div>');
+    for (const index in attachmentsFilenames) {
+      if (attachmentsFilenames.hasOwnProperty(index)) {
+        const filename = Xss.escape(attachmentsFilenames[index]);
+        attachments.append(`<div class="attachment" index="${index}" title="${filename}"><b>${filename}</b></div>`); // xss-escaped
+      }
+    }
+    this.view.S.cached('replied_body').append(attachments); // xss-escaped
+  }
 }
