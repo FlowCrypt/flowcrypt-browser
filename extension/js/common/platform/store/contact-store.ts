@@ -164,8 +164,8 @@ export class ContactStore extends AbstractStore {
         throw new Error('contact not found right after inserting it');
       }
     }
-    if (update.pubkey) {
-      Catch.report('Wrongly saving prv as contact - converting to pubkey');
+    if (update.pubkey?.isPrivate) {
+      Catch.report('Wrongly updating prv as contact - converting to pubkey');
       update.pubkey = await KeyUtil.asPublicKey(update.pubkey);
     }
     if (!update.searchable && (update.name !== existing.name || update.has_pgp !== existing.has_pgp)) { // update searchable index based on new name or new has_pgp
