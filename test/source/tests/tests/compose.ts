@@ -593,6 +593,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitForContent('.qq-upload-file-selector', 'small.png');
     }));
 
+    ava.default('rendered reply - can preview attachment', testWithBrowser('compose', async (t, browser) => {
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('flowcrypt.compatibility@gmail.com'));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      const fileInput = await composeFrame.target.$('input[type=file]');
+      await fileInput!.uploadFile('test/samples/small.png');
+      await composeFrame.waitAndClick('@action-send', { delay: 2 });
+      const replyFrame = await inboxPage.getFrame(['compose.htm']);
+      const attachment = await replyFrame.getFrame(['attachment.htm', 'name=small.png']);
+      await attachment.waitForSelTestState('ready');
+      await attachment.click('body');
+      await attachment.waitAll('#attachment-preview-container img.attachment-preview-img');
+    }));
+
     ava.default('can lookup public key from FlowCrypt Email Key Manager', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'get.key@key-manager-autogen.flowcrypt.com';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
