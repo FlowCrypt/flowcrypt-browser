@@ -11,7 +11,7 @@ import { PgpKey } from './openpgp-key.js';
 export const opgp = requireOpenpgp();
 
 if (typeof opgp !== 'undefined') { // in certain environments, eg pgp_block.htm, openpgp is not included
-  opgp.config.versionstring = `FlowCrypt ${VERSION} Gmail Encryption`;
+  opgp.config.versionstring = `FlowCrypt Email Encryption ${VERSION}`;
   opgp.config.commentstring = 'Seamlessly send and receive encrypted email';
   opgp.config.ignore_mdc_error = true; // we manually check for missing MDC and show loud warning to user (no auto-decrypt)
   // openpgp.config.require_uid_self_cert = false;
