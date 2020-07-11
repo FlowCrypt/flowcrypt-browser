@@ -597,8 +597,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('test.ci.compose@org.flowcrypt.com'));
       await inboxPage.waitAndClick('.threads .line');
       const replyFrame = await inboxPage.getFrame(['compose.htm']);
-      replyFrame.waitAndClick('@encrypted-reply');
-      replyFrame.waitAll('input[type=file]');
+      await replyFrame.waitAndClick('@encrypted-reply');
       const fileInput = await replyFrame.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.png');
       await replyFrame.waitAndClick('@action-send');
