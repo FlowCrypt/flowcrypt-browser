@@ -595,16 +595,18 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default('rendered reply - can preview attachment', testWithBrowser('compose', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('test.ci.compose@org.flowcrypt.com'));
-      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'message with attachment');
-      const fileInput = await composeFrame.target.$('input[type=file]');
-      await fileInput!.uploadFile('test/samples/small.png');
-      await composeFrame.waitAndClick('@action-send');
+      await inboxPage.waitAndClick('.threads .line');
       const replyFrame = await inboxPage.getFrame(['compose.htm']);
+      replyFrame.waitAndClick('@encrypted-reply');
+      replyFrame.waitAll('input[type=file]');
+      const fileInput = await replyFrame.target.$('input[type=file]');
+      await fileInput!.uploadFile('test/samples/small.png');
+      await replyFrame.waitAndClick('@action-send');
       const attachment = await replyFrame.getFrame(['attachment.htm', 'name=small.png']);
       await attachment.waitForSelTestState('ready');
       await attachment.click('body');
-      await attachment.waitAll('#attachment-preview-container img.attachment-preview-img');
+      const attachmentPreviewImage = await inboxPage.getFrame(['attachment_preview.htm']);
+      await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
     }));
 
     ava.default('can lookup public key from FlowCrypt Email Key Manager', testWithBrowser(undefined, async (t, browser) => {
