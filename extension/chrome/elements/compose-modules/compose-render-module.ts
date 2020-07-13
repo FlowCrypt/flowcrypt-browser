@@ -344,7 +344,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     if (renderableAtts.length) {
       this.view.S.cached('replied_attachments').html(renderableAtts.map(att => { // xss-safe-factory
         att.msgId = msgId;
-        return this.view.factory!.embeddedAtta(att, true);
+        return this.view.factory!.embeddedAtta(att, true, this.view.parentTabId);
       }).join('')).css('display', 'block');
     }
   }

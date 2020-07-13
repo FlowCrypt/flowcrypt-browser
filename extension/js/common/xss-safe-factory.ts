@@ -120,13 +120,13 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/add_pubkey.htm'), { emails, placement });
   }
 
-  public srcPgpAttIframe = (a: Att, isEncrypted: boolean, iframeUrl = 'chrome/elements/attachment.htm') => {
+  public srcPgpAttIframe = (a: Att, isEncrypted: boolean, parentTabId?: string, iframeUrl = 'chrome/elements/attachment.htm') => {
     if (!a.id && !a.url && a.hasData()) { // data provided directly, pass as object url
       a.url = Browser.objUrlCreate(a.getData());
     }
     return this.frameSrc(this.extUrl(iframeUrl), {
       frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attId: a.id, url: a.url, isEncrypted
-    });
+    }, parentTabId);
   }
 
   public srcPgpBlockIframe = (message: string, msgId?: string, isOutgoing?: boolean, senderEmail?: string, signature?: string | boolean) => {
@@ -186,8 +186,8 @@ export class XssSafeFactory {
     return this.iframe(this.srcSubscribeDialog('embedded', isAuthErr), ['short', 'embedded'], { scrolling: 'no' });
   }
 
-  public embeddedAtta = (meta: Att, isEncrypted: boolean) => {
-    return Ui.e('span', { class: 'pgp_attachment', html: this.iframe(this.srcPgpAttIframe(meta, isEncrypted)) });
+  public embeddedAtta = (meta: Att, isEncrypted: boolean, parentTabId?: string) => {
+    return Ui.e('span', { class: 'pgp_attachment', html: this.iframe(this.srcPgpAttIframe(meta, isEncrypted, parentTabId)) });
   }
 
   public embeddedMsg = (type: MsgBlockType, armored: string, msgId?: string, isOutgoing?: boolean, sender?: string, signature?: string | boolean) => {
@@ -269,9 +269,12 @@ export class XssSafeFactory {
     }
   }
 
-  private frameSrc = (path: string, params: UrlParams = {}) => {
+  private frameSrc = (path: string, params: UrlParams = {}, parentTabId?: string) => {
     for (const k of Object.keys(this.setParams)) {
       params[k] = this.setParams[k];
+    }
+    if (parentTabId) {
+      params.parentTabId = parentTabId;
     }
     return Url.create(path, params);
   }

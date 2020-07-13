@@ -229,7 +229,7 @@ export class AttachmentDownloadView extends View {
       this.att.length = this.size!;
     }
     const factory = new XssSafeFactory(this.acctEmail, this.parentTabId);
-    const iframeUrl = factory.srcPgpAttIframe(this.att, this.isEncrypted, 'chrome/elements/attachment_preview.htm');
+    const iframeUrl = factory.srcPgpAttIframe(this.att, this.isEncrypted, undefined, 'chrome/elements/attachment_preview.htm');
     BrowserMsg.send.showAttachmentPreview(this.parentTabId, { iframeUrl });
   }
 
