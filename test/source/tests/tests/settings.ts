@@ -73,7 +73,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
       await contactsFrame.waitAll('@page-contacts');
       await Util.sleep(1);
-      await contactsFrame.waitAndClick('@action-show-pubkey', { confirmGone: true });
+      await contactsFrame.waitAndClick('@action-show-pubkey-flowcryptcompatibilitygmailcom', { confirmGone: true });
       await Util.sleep(1);
       expect(await contactsFrame.read('@page-contacts')).to.contain('flowcrypt.compatibility@gmail.com');
       expect(await contactsFrame.read('@page-contacts')).to.contain('7FDE 6855 48AE A788');

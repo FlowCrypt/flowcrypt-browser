@@ -19,7 +19,7 @@ export interface Key {
   id: string; // This is a fingerprint for OpenPGP keys and Serial Number for X.509 keys.
   ids: string[];
   created: Date;
-  lastModified: Date | undefined;
+  lastModified: Date | undefined; // date of last signature
   expiration: Date | undefined;
   usableForEncryption: boolean;
   usableForSigning: boolean;

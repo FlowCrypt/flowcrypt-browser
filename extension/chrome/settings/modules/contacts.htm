@@ -49,16 +49,17 @@
       <div id="processed"></div>
       <div class="line">
         <textarea class="input_pubkey"
+          data-test="input-bulk-public-keys"
           placeholder="Enter one or more ASCII Armored Public Keys&#10;(including -----BEGIN PGP PUBLIC KEY BLOCK-----)&#10;&#10;You can alternatively enter the Public Key fingerprint or longid,&#10;e.g. 7FDE685548AEA788 or 0x7fde685548aea788"></textarea>
       </div>
       <div class="line">
-        <button class="button green action_process long">show contents</button>
+        <button class="button green action_process long" data-test="action-show-parsed-public-keys">show contents</button>
       </div>
     </div>
 
 
     <div id="view_contact" style="display: none;">
-      <div class="line">Pubkey Fingerprint: <span class="key_fingerprint good"></span></div>
+      <div class="line"><pre id="container-pubkey-details" data-test="container-pubkey-details"></pre></div>
       <div class="line">
         <pre class="key_dump good"></pre>
       </div>

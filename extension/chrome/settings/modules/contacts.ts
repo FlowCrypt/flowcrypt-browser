@@ -67,7 +67,7 @@ View.run(class ContactsView extends View {
   private loadAndRenderContactList = async () => {
     this.contacts = await ContactStore.search(undefined, { has_pgp: true }, false);
     let lineActionsHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
-      '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;';
+      '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import" data-test="action-show-import-public-keys-form">import public keys</a>&nbsp;&nbsp;';
     if (this.orgRules.getCustomSksPubkeyServer()) {
       lineActionsHtml += `&nbsp;&nbsp;<br><br><b class="bad">using custom SKS pubkeyserver: ${Xss.escape(this.orgRules!.getCustomSksPubkeyServer()!)}</b>`;
     } else {
@@ -82,9 +82,9 @@ View.run(class ContactsView extends View {
     let tableContents = '';
     for (const contact of this.contacts) {
       const e = Xss.escape(contact.email);
-      const show = `<a href="#" class="action_show" data-test="action-show-pubkey"></a>`;
-      const change = `<a href="#" class="action_change" data-test="action-change-pubkey"></a>`;
-      const remove = `<a href="#" class="action_remove" data-test="action-remove-pubkey"></a>`;
+      const show = `<a href="#" class="action_show" data-test="action-show-pubkey-${e.replace(/[^a-z0-9]+/g, '')}"></a>`;
+      const change = `<a href="#" class="action_change" data-test="action-change-pubkey-${e.replace(/[^a-z0-9]+/g, '')}"></a>`;
+      const remove = `<a href="#" class="action_remove" data-test="action-remove-pubkey-${e.replace(/[^a-z0-9]+/g, '')}"></a>`;
       tableContents += `<tr email="${e}"><td>${e}</td><td>${show}</td><td>${change}</td><td>${remove}</td></tr>`;
     }
     Xss.sanitizeReplace('table#emails', `<table id="emails" class="hide_when_rendering_subpage">${tableContents}</table>`);
@@ -122,7 +122,17 @@ View.run(class ContactsView extends View {
       Xss.sanitizeAppend('h1', '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
     }
     $('#view_contact .key_dump').text(KeyUtil.armor(contact!.pubkey!)); // should exist - from list of contacts && should have pgp - filtered
-    $('#view_contact .key_fingerprint').text(Str.spaced(contact!.fingerprint!)); // should exist - from list of contacts && should have pgp - filtered
+    $('#view_contact #container-pubkey-details').text([
+      `Type: ${contact?.pubkey?.type}`,
+      `Fingerprint: ${Str.spaced(contact?.fingerprint || 'none')}`,
+      `Users: ${contact?.pubkey?.emails?.join(', ')}`,
+      `Created on: ${contact?.pubkey?.created}`,
+      `Expiration: ${contact?.pubkey?.expiration || 'Does not expire'}`,
+      `Last signature: ${contact?.pubkey?.lastModified}`,
+      `Expired: ${contact?.pubkey?.expiration && contact?.pubkey?.expiration.getTime() < Date.now() ? 'yes' : 'no'}`,
+      `Usable for encryption: ${contact?.pubkey?.usableForEncryption}`,
+      `Usable for signing: ${contact?.pubkey?.usableForSigning}`,
+    ].join('\n'));
     $('#view_contact').css('display', 'block');
     $('#page_back_button').click(this.setHandler(el => this.loadAndRenderContactList()));
   }
@@ -144,8 +154,8 @@ View.run(class ContactsView extends View {
     } else {
       try {
         // parse will throw if the key is not recognized
-        await KeyUtil.parse(armoredPubkey);
-        await ContactStore.save(undefined, await ContactStore.obj({ email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now() }));
+        const pubkey = await KeyUtil.parse(armoredPubkey);
+        await ContactStore.update(undefined, email, { pubkey, last_use: Date.now() });
         await this.loadAndRenderContactList();
       } catch (e) {
         await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let us know at human@flowcrypt.com if you need help.');

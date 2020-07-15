@@ -33,6 +33,7 @@ const consts = { // higher concurrency can cause 429 google errs when composing
   ATTEMPTS: testGroup === 'STANDARD-GROUP' ? oneIfNotPooled(3) : process.argv.includes('--retry=false') ? 1 : 3,
   POOL_SIZE: oneIfNotPooled(isMock ? 12 : 2),
   PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>, // will be set right below
+  IS_LOCAL_DEBUG: process.argv.includes('--debug') ? true : false, // run locally by developer, not in ci
 };
 console.info('consts: ', JSON.stringify(consts), '\n');
 consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) => setTimeout(() => reject(new Error(`TIMEOUT_OVERALL`)), consts.TIMEOUT_OVERALL));
@@ -40,7 +41,7 @@ consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) => setTimeout(() 
 export type Consts = typeof consts;
 export type CommonAcct = 'compatibility' | 'compose';
 
-const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false, buildDir);
+const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false, buildDir, undefined, undefined, consts.IS_LOCAL_DEBUG);
 let closeMockApi: () => Promise<void>;
 const mockApiLogs: string[] = [];
 

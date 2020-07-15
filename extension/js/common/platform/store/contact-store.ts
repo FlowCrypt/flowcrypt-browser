@@ -7,6 +7,7 @@ import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { Str } from '../../core/common.js';
 import { Key, Contact, KeyUtil } from '../../core/crypto/key.js';
+import { PgpKey } from '../../core/crypto/pgp/openpgp-key.js';
 
 // tslint:disable:no-null-keyword
 
@@ -34,6 +35,7 @@ export type ContactUpdate = {
   last_use?: number | null;
   pubkey_last_sig?: number | null;
   pubkey_last_check?: number | null;
+  expiresOn?: number | null;
 };
 
 export type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number };
@@ -139,7 +141,7 @@ export class ContactStore extends AbstractStore {
       const tx = db.transaction('contacts', 'readwrite');
       const contactsTable = tx.objectStore('contacts');
       contactsTable.put(contact);
-      tx.oncomplete = () => resolve();
+      tx.oncomplete = Catch.try(resolve);
       tx.onabort = () => reject(ContactStore.errCategorize(tx.error));
     });
   }
@@ -173,17 +175,23 @@ export class ContactStore extends AbstractStore {
       const newName = typeof update.name !== 'undefined' && update.name !== null ? update.name : existing.name;
       update.searchable = ContactStore.dbCreateSearchIndexList(existing.email, newName, newHasPgp);
     }
-    for (const k of Object.keys(update)) {
-      // @ts-ignore - may be saving any of the provided values - could do this one by one while ensuring proper types
-      existing[k] = update[k];
+    const updated = existing;
+    if (update.pubkey) {
+      const key = typeof update.pubkey === 'string' ? await KeyUtil.parse(update.pubkey) : update.pubkey;
+      update.fingerprint = key.id;
+      update.longid = await PgpKey.longid(key.id);
+      update.pubkey_last_sig = key.lastModified ? Number(key.lastModified) : null;
+      update.expiresOn = key.expiration ? Number(key.expiration) : null;
+      update.pubkey = KeyUtil.armor(key) as unknown as Key; // serialising for storage
     }
-    if (existing.pubkey && typeof existing.pubkey === 'object') {
-      existing.pubkey = KeyUtil.armor(existing.pubkey) as any as Key; // serializing for storage
+    for (const k of Object.keys(update)) {
+      // @ts-ignore
+      updated[k] = update[k];
     }
     return await new Promise((resolve, reject) => {
       const tx = db.transaction('contacts', 'readwrite');
       const contactsTable = tx.objectStore('contacts');
-      contactsTable.put(existing);
+      contactsTable.put(updated);
       tx.oncomplete = Catch.try(resolve);
       tx.onabort = () => reject(ContactStore.errCategorize(tx.error));
     });

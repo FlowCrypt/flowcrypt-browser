@@ -22,6 +22,10 @@ import { ComposeView } from '../compose.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { ContactStore, ContactUpdate } from '../../../js/common/platform/store/contact-store.js';
 
+/**
+ * todo - this class is getting too big
+ * split into ComposeRecipientsModule and ComposeContactSearchModule
+ */
 export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private readonly failedLookupEmails: string[] = [];
@@ -323,6 +327,15 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         Catch.reportErr(e);
       }
       return undefined;
+    }
+  }
+
+  public reRenderRecipientFor = async (contact: Contact): Promise<void> => {
+    for (const recipient of this.addedRecipients.filter(r => r.email === contact.email)) {
+      this.view.errModule.debug(`re-rendering recipient: ${contact.email}`);
+      await this.renderPubkeyResult(recipient, contact);
+      this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
+      await this.view.recipientsModule.setEmailsPreview(this.getRecipients());
     }
   }
 
@@ -766,6 +779,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     Xss.sanitizeAppend(el, contentHtml)
       .find('img.close-icon')
       .click(this.view.setHandler(target => this.removeRecipient(target.parentElement!), this.view.errModule.handle('remove recipient')));
+    $(el).removeClass(['failed', 'wrong', 'has_pgp', 'no_pgp', 'expired']);
     if (contact === PUBKEY_LOOKUP_RESULT_FAIL) {
       recipient.status = RecipientStatuses.FAILED;
       $(el).attr('title', 'Failed to load, click to retry');

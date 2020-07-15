@@ -554,14 +554,20 @@ export class ControllablePage extends ControllableBase {
     return await Promise.race([this.page.content(), newTimeoutPromise('html content', 10)]);
   }
 
-  public console = async (): Promise<string> => {
+  public console = async (alsoLogDirectly: boolean): Promise<string> => {
     await this.dismissActiveAlerts();
     let html = '';
     for (const msg of this.consoleMsgs) {
       if (msg instanceof ConsoleEvent) {
         html += `<font class="c-${Util.htmlEscape(msg.type)}">${Util.htmlEscape(msg.type)}: ${Util.htmlEscape(msg.text)}</font>\n`;
+        if (alsoLogDirectly) {
+          console.log(`console-${msg.type}: ${msg.text}`);
+        }
       } else {
         html += `<font class="c-${Util.htmlEscape(msg.type())}">${Util.htmlEscape(msg.type())}: ${Util.htmlEscape(msg.text())}`;
+        if (alsoLogDirectly) {
+          console.log(`console-${msg.type()}: ${msg.text()}`);
+        }
         const args: string[] = [];
         for (const arg of msg.args()) {
           try {

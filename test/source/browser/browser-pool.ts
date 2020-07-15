@@ -21,7 +21,8 @@ export class BrowserPool {
     private reuse: boolean,
     private extensionBuildDir: string,
     private width = 1280,
-    private height = 850
+    private height = 850,
+    private debug = false
   ) {
     this.semaphore = new Semaphore(poolSize, name);
   }
@@ -172,7 +173,7 @@ export class BrowserPool {
     <div class="attempt">
       <div style="display:none;">
         <pre title="err.stack">${Util.htmlEscape((err instanceof Error ? err.stack : String(err)) || String(err))}</pre>
-        ${await browser.debugPagesHtml()}
+        ${await browser.debugPagesHtml(this.debug)}
       </div>
       <a href="#" onclick="this.style.display='none';this.parentNode.firstElementChild.style = '';">${String(err)}</a>
     </div>
