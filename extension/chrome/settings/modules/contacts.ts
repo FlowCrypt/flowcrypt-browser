@@ -65,7 +65,7 @@ View.run(class ContactsView extends View {
   // --- PRIVATE
 
   private loadAndRenderContactList = async () => {
-    this.contacts = await ContactStore.search(undefined, { has_pgp: true });
+    this.contacts = await ContactStore.search(undefined, { has_pgp: true }, false);
     let lineActionsHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
       '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;';
     if (this.orgRules.getCustomSksPubkeyServer()) {

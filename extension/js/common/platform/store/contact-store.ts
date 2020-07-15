@@ -218,7 +218,10 @@ export class ContactStore extends AbstractStore {
     }
   }
 
-  public static search = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<Contact[]> => {
+  /**
+   * "deserialize" means to parse the returned keys into objects - which is expensive, particularly when parsing many keys
+   */
+  public static search = async (db: IDBDatabase | undefined, query: DbContactFilter, deserialize: boolean = true): Promise<Contact[]> => {
     if (!db) { // relay op through background process
       return await BrowserMsg.send.bg.await.db({ f: 'search', args: [query] }) as Contact[];
     }
@@ -262,8 +265,11 @@ export class ContactStore extends AbstractStore {
       });
       search.onerror = () => reject(ContactStore.errCategorize(search!.error!)); // todo - added ! after ts3 upgrade - investigate
     });
-    const deserialized = await Promise.all(toDeserialize.map(ContactStore.deserialize));
-    return deserialized.filter(contact => !!contact) as Contact[];
+    if (deserialize) { // performance is not an issue, eg loading only a few keys
+      const deserialized = await Promise.all(toDeserialize.map(ContactStore.deserialize));
+      return deserialized.filter(contact => !!contact) as Contact[];
+    }
+    return toDeserialize as Contact[]; // it will miss the "pubkey" field, otherwise it's indeed a Contact[]. much faster.
   }
 
   private static normalizeString = (str: string) => {
