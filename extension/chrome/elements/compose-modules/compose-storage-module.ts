@@ -163,20 +163,19 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         contact.pubkey_last_sig = lastSig;
         await ContactStore.update(undefined, contact.email, { pubkey_last_sig: lastSig });
       }
-      if (!contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7)) { // last update > 7 days ago, or never
-        const { pubkey: fetchedPubkey } = await this.view.pubLookup.lookupFingerprint(contact.fingerprint);
-        if (fetchedPubkey) {
-          const pubkey = await KeyUtil.parse(fetchedPubkey);
-          const fetchedLastSig = Number(pubkey.lastModified);
-          if (fetchedLastSig > contact.pubkey_last_sig) { // fetched pubkey has newer signature, update
-            console.info(`Updating key ${contact.longid} for ${contact.email}: newer signature found: ${new Date(fetchedLastSig)} (old ${new Date(contact.pubkey_last_sig)})`);
-            await ContactStore.update(undefined, contact.email, { pubkey, pubkey_last_sig: fetchedLastSig, pubkey_last_check: Date.now() });
-            return;
-          }
+      const lastUpdateOverWeekAgoOrNever = !contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7);
+      const isExpired = contact.expiresOn && contact.expiresOn < Date.now();
+      if (lastUpdateOverWeekAgoOrNever || isExpired) {
+        const { pubkey: fetchedPubkeyArmored } = await this.view.pubLookup.lookupFingerprint(contact.fingerprint);
+        if (fetchedPubkeyArmored) {
+          const fetchedPubkey = await KeyUtil.parse(fetchedPubkeyArmored);
+          const fetchedLastSig = Number(fetchedPubkey.lastModified);
+          await ContactStore.update(undefined, contact.email, { pubkey: fetchedPubkey, last_use: Date.now(), pubkey_last_sig: fetchedLastSig, pubkey_last_check: Date.now() });
+          return;
         }
-        // we checked for newer key and it did not result in updating the key, don't check again for another week
-        await ContactStore.update(undefined, contact.email, { pubkey_last_check: Date.now() });
       }
+      await ContactStore.update(undefined, contact.email, { pubkey_last_check: Date.now() });
+      // we checked for newer key and it did not result in updating the key, don't check again for another week
     } catch (e) {
       ApiErr.reportIfSignificant(e);
     }

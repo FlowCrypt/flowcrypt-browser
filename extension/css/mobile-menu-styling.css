@@ -25,10 +25,6 @@
     text-align: center;
   }
 
-  body#settings #view_contact pre {
-    white-space: normal;
-  }
-
   .settings-icons-rows {
     margin: 0 auto;
     width: 60%;
