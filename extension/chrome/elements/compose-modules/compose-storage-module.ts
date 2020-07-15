@@ -169,8 +169,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         const { pubkey: fetchedPubkeyArmored } = await this.view.pubLookup.lookupFingerprint(contact.fingerprint);
         if (fetchedPubkeyArmored) {
           const fetchedPubkey = await KeyUtil.parse(fetchedPubkeyArmored);
-          const fetchedLastSig = Number(fetchedPubkey.lastModified);
-          await ContactStore.update(undefined, contact.email, { pubkey: fetchedPubkey, last_use: Date.now(), pubkey_last_sig: fetchedLastSig, pubkey_last_check: Date.now() });
+          await ContactStore.update(undefined, contact.email, { pubkey: fetchedPubkey, last_use: Date.now(), pubkey_last_check: Date.now() });
           const [updatedPubkey] = await ContactStore.get(undefined, [contact.email]);
           if (!updatedPubkey) {
             throw new Error("Cannot retrieve Contact right after updating it");
