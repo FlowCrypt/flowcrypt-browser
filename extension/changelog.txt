@@ -1,5 +1,7 @@
 <div class="lightboxed">
 
+version 7.8.5 on Jul 15, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/413?closed=1" target="_blank">Key auto-update fix</a>
+
 version 7.8.4 on Jul 15, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/412?closed=1" target="_blank">Bugfixes</a>
 
 version 7.8.3 on Jul 7, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/411?closed=1" target="_blank">Bugfixes</a>
