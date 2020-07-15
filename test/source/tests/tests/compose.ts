@@ -728,10 +728,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await contactsFrame.waitForContent('@container-pubkey-details', 'Usable for encryption: false');
       await contactsFrame.waitForContent('@container-pubkey-details', 'Usable for signing: false');
       // now we want to see that compose page auto-fetches an updated one
-      let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: recipientEmail }, t.title);
-      let expandContainer = await composePage.waitAny('@action-show-container-cc-bcc-buttons');
-      let recipient = await expandContainer.$('.email_preview span');
+      const expandContainer = await composePage.waitAny('@action-show-container-cc-bcc-buttons');
+      const recipient = await expandContainer.$('.email_preview span');
       expect(await PageRecipe.getElementPropertyJson(recipient!, 'className')).to.not.include('expired'); // because auto-reloaded
       // todo - send the email
       await composePage.close();

@@ -209,7 +209,6 @@ D+QpnsOtKCqDWiq6s1l0UasWPk7xv6awH29H
 =EpXD
 -----END PGP PUBLIC KEY BLOCK-----`;
 
-
 const newerVersionOfExpiredPubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: FlowCrypt Email Encryption 7.8.4
 Comment: Seamlessly send and receive encrypted email
