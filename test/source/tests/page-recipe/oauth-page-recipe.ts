@@ -7,7 +7,6 @@ import { ControllablePage } from '../../browser';
 import { FlowCryptApi } from '../api';
 import { PageRecipe } from './abstract-page-recipe';
 import { totp as produce2faToken } from 'speakeasy';
-import { expect } from 'chai';
 
 export class OauthPageRecipe extends PageRecipe {
 
@@ -20,7 +19,9 @@ export class OauthPageRecipe extends PageRecipe {
     const selectors = {
       approve_button: '#submit_approve_access',
       pwd_input: 'input[type="password"]', // pwd_input: '.zHQkBf',
-      pwd_confirm_btn: '.CwaK9',
+      pwd_confirm_btn: '#passwordNext',
+      email_input: '#identifierId',
+      email_confirm_btn: '#identifierNext',
       secret_2fa: '#totpPin',
     };
     const enterPwdAndConfirm = async () => {
@@ -41,10 +42,10 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitForNavigationIfAny();
         await oauthPage.waitAndClick('#signIn', { delay: isMock ? 0 : 1 });
         await oauthPage.waitForNavigationIfAny();
-      } else if (await oauthPage.target.$('#identifierId') !== null) { // 2017-style login
-        await oauthPage.waitAll('#identifierId', { timeout: OauthPageRecipe.longTimeout });
-        await oauthPage.waitAndType('#identifierId', auth.email, { delay: isMock ? 0 : 2 });
-        await oauthPage.waitAndClick('.zZhnYe', { delay: isMock ? 0 : 2 });  // confirm email
+      } else if (await oauthPage.target.$(selectors.email_input) !== null) { // 2017-style login
+        await oauthPage.waitAll(selectors.email_input, { timeout: OauthPageRecipe.longTimeout });
+        await oauthPage.waitAndType(selectors.email_input, auth.email, { delay: isMock ? 0 : 2 });
+        await oauthPage.waitAndClick(selectors.email_confirm_btn, { delay: isMock ? 0 : 2 });  // confirm email
         await oauthPage.waitForNavigationIfAny();
         await enterPwdAndConfirm();
       } else if (await oauthPage.target.$(`#profileIdentifier[data-email="${auth.email}"]`) !== null) { // already logged in - just choose an account
