@@ -563,7 +563,6 @@ export class ControllablePage extends ControllableBase {
         if (alsoLogDirectly) {
           console.log(`console-${msg.type}: ${msg.text}`);
         }
-
       } else {
         html += `<font class="c-${Util.htmlEscape(msg.type())}">${Util.htmlEscape(msg.type())}: ${Util.htmlEscape(msg.text())}`;
         if (alsoLogDirectly) {
