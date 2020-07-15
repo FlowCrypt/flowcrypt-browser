@@ -163,9 +163,9 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         contact.pubkey_last_sig = lastSig;
         await ContactStore.update(undefined, contact.email, { pubkey_last_sig: lastSig });
       }
-      const lastUpdateOverWeekAgoOrNever = !contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7);
+      const lastCheckOverWeekAgoOrNever = !contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7);
       const isExpired = contact.expiresOn && contact.expiresOn < Date.now();
-      if (lastUpdateOverWeekAgoOrNever || isExpired) {
+      if (lastCheckOverWeekAgoOrNever || isExpired) {
         const { pubkey: fetchedPubkeyArmored } = await this.view.pubLookup.lookupFingerprint(contact.fingerprint);
         if (fetchedPubkeyArmored) {
           const fetchedPubkey = await KeyUtil.parse(fetchedPubkeyArmored);
