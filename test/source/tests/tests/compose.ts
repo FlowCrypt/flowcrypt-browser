@@ -733,8 +733,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const expandContainer = await composePage.waitAny('@action-show-container-cc-bcc-buttons');
       const recipient = await expandContainer.$('.email_preview span');
       expect(await PageRecipe.getElementPropertyJson(recipient!, 'className')).to.not.include('expired'); // because auto-reloaded
-      // todo - send the email
-      await composePage.close();
+      await ComposePageRecipe.sendAndClose(composePage);
       // make sure that the contact itself got updated
       await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
       await contactsFrame.waitAndClick(`@action-show-pubkey-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`, { confirmGone: true });

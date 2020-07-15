@@ -14,7 +14,8 @@ type DraftSaveModel = { message: { raw: string, threadId: string } };
 
 const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', 'human+manualcopypgp@flowcrypt.com',
   'censored@email.com', 'test@email.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com', 'expired.on.attester@domain.com',
-  'test.ci.compose@org.flowcrypt.com', 'smime1@recipient.com', 'smime2@recipient.com', 'smime@recipient.com', 'smime.att@recipient.com'];
+  'test.ci.compose@org.flowcrypt.com', 'smime1@recipient.com', 'smime2@recipient.com', 'smime@recipient.com',
+  'smime.att@recipient.com', 'auto.refresh.expired.key@recipient.com'];
 
 export const mockGoogleEndpoints: HandlersDefinition = {
   '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, redirect_uri, scope, login_hint, result } }, req) => {
