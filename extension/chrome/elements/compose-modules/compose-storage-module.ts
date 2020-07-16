@@ -169,13 +169,18 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         const { pubkey: fetchedPubkeyArmored } = await this.view.pubLookup.lookupFingerprint(contact.fingerprint);
         if (fetchedPubkeyArmored) {
           const fetchedPubkey = await KeyUtil.parse(fetchedPubkeyArmored);
-          await ContactStore.update(undefined, contact.email, { pubkey: fetchedPubkey, last_use: Date.now(), pubkey_last_check: Date.now() });
-          const [updatedPubkey] = await ContactStore.get(undefined, [contact.email]);
-          if (!updatedPubkey) {
-            throw new Error("Cannot retrieve Contact right after updating it");
+          if (fetchedPubkey.lastModified && (!contact.pubkey.lastModified || fetchedPubkey.lastModified >= contact.pubkey.lastModified)) {
+            // the fetched pubkey has at least the same or newer signature
+            // the "same or newer" was due to a bug we encountered earlier where keys were badly recorded in db
+            // sometime in Oct 2020 we could turn the ">=" back to ">" above
+            await ContactStore.update(undefined, contact.email, { pubkey: fetchedPubkey, last_use: Date.now(), pubkey_last_check: Date.now() });
+            const [updatedPubkey] = await ContactStore.get(undefined, [contact.email]);
+            if (!updatedPubkey) {
+              throw new Error("Cannot retrieve Contact right after updating it");
+            }
+            await this.view.recipientsModule.reRenderRecipientFor(updatedPubkey);
+            return;
           }
-          await this.view.recipientsModule.reRenderRecipientFor(updatedPubkey);
-          return;
         }
       }
       await ContactStore.update(undefined, contact.email, { pubkey_last_check: Date.now() });
