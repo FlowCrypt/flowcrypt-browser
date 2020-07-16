@@ -183,6 +183,7 @@ export class ContactStore extends AbstractStore {
       update.pubkey_last_sig = key.lastModified ? Number(key.lastModified) : null;
       update.expiresOn = key.expiration ? Number(key.expiration) : null;
       update.pubkey = KeyUtil.armor(key) as unknown as Key; // serialising for storage
+      update.has_pgp = 1;
     }
     for (const k of Object.keys(update)) {
       // @ts-ignore
