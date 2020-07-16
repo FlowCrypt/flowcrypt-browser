@@ -342,7 +342,7 @@ export class OpenPGPKey {
     if (!key) {
       return false;
     }
-    if (!await Catch.doesReject(key.getEncryptionKey())) {
+    if (! await Catch.doesReject(key.getEncryptionKey())) {
       return false;
     }
     if (exp === null || typeof exp === 'number') {
