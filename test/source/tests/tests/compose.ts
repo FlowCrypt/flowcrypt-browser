@@ -702,7 +702,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('cannot import expired key in secure compose', testWithBrowser('compose', async (t, browser) => {
-      // actually this could eventually be allowed. Currently possible to do in settings.
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('test.ci.compose@org.flowcrypt.com'));
       const to = 'nopgp@recipient.com';
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
