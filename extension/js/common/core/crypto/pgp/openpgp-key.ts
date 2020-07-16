@@ -185,7 +185,7 @@ export class OpenPGPKey {
     try {
       lastModified = new Date(await PgpKey.lastSigOpenPGP(pubkey));
     } catch (e) {
-      //
+      // never had any valid signature
     }
     const fingerprint = pubkey.getFingerprint();
     if (!fingerprint) {
