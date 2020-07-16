@@ -105,7 +105,7 @@ export class ComposeView extends View {
     reply_msg_successful: '#reply_message_successful_container',
     replied_body: '.replied_body',
     replied_attachments: '#attachments',
-    att_list: '#att_list',
+    fineuploader: '#fineuploader',
     recipients: 'span.recipients',
     contacts: '#contacts',
     input_addresses_container_outer: '#input_addresses_container',

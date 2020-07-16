@@ -57,7 +57,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   }
 
   public extractAttachments = () => {
-    return this.view.S.cached('att_list').find('.qq-upload-file').toArray().map((el) => $(el).text().trim());
+    return this.view.S.cached('fineuploader').find('.qq-upload-file').toArray().map((el) => $(el).text().trim());
   }
 
   public extractAll = (): NewMsgData => {
