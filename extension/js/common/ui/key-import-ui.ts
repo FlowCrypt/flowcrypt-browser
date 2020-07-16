@@ -309,7 +309,14 @@ export class KeyImportUi {
   private checkEncryptionPubIfSelected = async (normalized: string) => {
     const key = await KeyUtil.parse(normalized);
     if (this.checkEncryption && !key.usableForEncryption) {
-      throw new UserAlert('This public key looks correctly formatted, but cannot be used for encryption. Please write at human@flowcrypt.com. We\'ll see if there is a way to fix it.');
+      let msg = 'This public key is correctly formatted, but it cannot be used for encryption';
+      if (key.expiration && key.expiration.getTime() < Date.now()) {
+        msg += ` because it expired on ${Str.fromDate(key.expiration)}.\n\nAsk the recipient to provide you with an updated Public Key.`;
+        msg += '\n\nIf you need to use this particular expired key, click the "SETTINGS" button below and import it there.';
+      } else {
+        msg += '.';
+      }
+      throw new UserAlert(msg);
     }
   }
 
