@@ -23,6 +23,7 @@ export class OauthPageRecipe extends PageRecipe {
       email_input: '#identifierId',
       email_confirm_btn: '#identifierNext',
       secret_2fa: '#totpPin',
+      choose_2fa_opt: 'div[data-challengetype="6"]', // choose Google Authenticator option
     };
     const enterPwdAndConfirm = async () => {
       await Util.sleep(isMock ? 0 : OauthPageRecipe.oauthPwdDelay);
@@ -70,13 +71,16 @@ export class OauthPageRecipe extends PageRecipe {
         }
         throw new Error('Oauth page didnt close after login. Should increase timeout or await close event');
       }
-      await oauthPage.waitAny([selectors.approve_button, selectors.pwd_input, selectors.secret_2fa]);
+      await oauthPage.waitAny([selectors.approve_button, selectors.pwd_input, selectors.secret_2fa, selectors.choose_2fa_opt]);
       await Util.sleep(isMock ? 0 : 1);
       if (await oauthPage.isElementPresent(selectors.pwd_input)) {
         await enterPwdAndConfirm(); // unsure why it requires a password second time, but sometimes happens
-      } else if (await oauthPage.isElementPresent(selectors.secret_2fa)) {
+      } else if (await oauthPage.isElementPresent(selectors.secret_2fa) || await oauthPage.isElementPresent(selectors.choose_2fa_opt)) {
         if (!auth.secret_2fa) {
           throw Error(`Google account ${auth.email} requires a 2fa but missing 2fa secret`);
+        }
+        if (await oauthPage.isElementPresent(selectors.choose_2fa_opt)) {
+          await oauthPage.waitAndClick(selectors.choose_2fa_opt, { confirmGone: true });
         }
         const token = produce2faToken({ secret: auth.secret_2fa, encoding: 'base32' });
         await oauthPage.waitAndType(selectors.secret_2fa, token);
