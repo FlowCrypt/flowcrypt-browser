@@ -51,7 +51,7 @@ View.run(class DefaultPopupView extends View {
   }
 
   private redirectToInitSetup = async (acctEmail?: string) => {
-    await Browser.openSettingsPage('index.htm', acctEmail || undefined);
+    BrowserMsg.send.bg.settings({ acctEmail: acctEmail || undefined });
     await Ui.time.sleep(100);
     window.close();
   }
