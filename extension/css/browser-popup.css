@@ -3,7 +3,7 @@
 html,
 body {
   height: 64px;
-  font-family: 'Open Sans';
+  font-family: 'Open Sans', sans-serif;
   overflow: hidden;
   margin: 0;
   padding: 0;
@@ -22,7 +22,8 @@ body {
 }
 
 .menu-row {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 300px;
   background: #31a217;
   position: relative;
@@ -38,10 +39,6 @@ body {
   width: 250px;
   color: white;
   padding-left: 20px;
-}
-
-.menu-row span:first-child {
-  width: 250px;
 }
 
 .menu-row span:nth-child(2) {
