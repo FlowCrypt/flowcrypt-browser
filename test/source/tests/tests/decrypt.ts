@@ -189,7 +189,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default(`decrypt - [symantec] base64 german umlauts`, testWithBrowser('compatibility', async (t, browser) => {
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         content: ["verspätet die gewünschte", "Grüße", "ä, ü, ö or ß"],
-        params: "?frame_id=frame_TWloVRhvZE&message=&message_id=166117c082a73905&senderEmail=sasan.neufeld%40ebnerstolz.de&is_outgoing=___cu_false___&account_email=flowcrypt.compatibility%40gmail.com"
+        params: "?frame_id=frame_TWloVRhvZE&message=&message_id=166117c082a73905&senderEmail=sender%40email.com&is_outgoing=___cu_false___&account_email=flowcrypt.compatibility%40gmail.com"
       });
     }));
 
@@ -381,11 +381,26 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.todo('decrypt - by entering secondary pass phrase');
 
     ava.default(`decrypt - don't allow api path traversal`, testWithBrowser('compatibility', async (t, browser) => {
-      const params = "?frame_id=frame_TWloVRhvZE&message=&message_id=../test&senderEmail=sasan.neufeld%40ebnerstolz.de&is_outgoing=___cu_false___&account_email=flowcrypt.compatibility%40gmail.com";
+      const params = "?frame_id=frame_TWloVRhvZE&message=&message_id=../test&senderEmail=sender%40email.com&is_outgoing=___cu_false___&account_email=flowcrypt.compatibility%40gmail.com";
       const pgpHostPage = await browser.newPage(t, `chrome/dev/ci_pgp_host_page.htm${params}`);
       const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
       await pgpBlockPage.waitForSelTestState('ready', 5);
       await pgpBlockPage.waitForContent('@container-err-text', 'API path traversal forbidden');
+    }));
+
+    ava.default(`verify - sha1 shows error`, testWithBrowser('compatibility', async (t, browser) => {
+      const msg = '-----BEGIN PGP MESSAGE-----\nVersion: GnuPG v1\n\nowGbwMvMyMT4oOW7S46CznTG01El3MUFicmpxbolqcUlUTev14K5Vgq8XGCGQmJe\nikJJYpKVAicvV16+QklRYmZOZl66AliWl0sBqBAkzQmmwKohBnAqdMxhYWRkYmBj\nZQIZy8DFKQCztusM8z+Vt/svG80IS/etn90utv/T16jquk69zPvp6t9F16ryrwpb\nkfVlS5Xl38KnVYxWvIor0nao6WUczA4vvZX9TXPWnnW3tt1vbZoiqWUjYjjjhuKG\n4DtmMTuL3TW6/zNzVfWp/Q11+71O8RGnXMsBvWM6mSqX75uLiPo6HRaUDHnvrfCP\nyYDnCgA=\n=15ki\n-----END PGP MESSAGE-----';
+      const params = `?frame_id=frame_TWloVRhvZE&message=${encodeURIComponent(msg)}&message_id=none&senderEmail=sha1%40sign.com&is_outgoing=___cu_false___&account_email=flowcrypt.compatibility%40gmail.com`;
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
+        params,
+        content: ['no trailing space', 'space:', 'space and tab:'],
+        signature: ["Fetched pubkey, click to verify", "Sha1@Sign.Com"]
+      });
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
+        params,
+        content: ['no trailing space', 'space:', 'space and tab:'],
+        signature: ["Insecure message hash algorithm: SHA1", "Sha1@Sign.Com"]
+      });
     }));
 
   }

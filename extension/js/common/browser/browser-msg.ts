@@ -472,12 +472,16 @@ export class BrowserMsg {
   }
 
   private static sendRawResponse = (handlerPromise: Promise<Bm.Res.Any>, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
-    handlerPromise.then(result => {
-      const objUrls = BrowserMsg.replaceBufWithObjUrlInplace(result); // this actually changes the result object
-      rawRespond({ result, exception: undefined, objUrls });
-    }).catch(e => {
+    try {
+      handlerPromise.then(result => {
+        const objUrls = BrowserMsg.replaceBufWithObjUrlInplace(result); // this actually changes the result object
+        rawRespond({ result, exception: undefined, objUrls });
+      }).catch(e => {
+        rawRespond({ result: undefined, exception: BrowserMsg.errToJson(e), objUrls: {} });
+      });
+    } catch (e) {
       rawRespond({ result: undefined, exception: BrowserMsg.errToJson(e), objUrls: {} });
-    });
+    }
   }
 
   private static browserMsgDestParse = (destString: string | null) => {
