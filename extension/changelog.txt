@@ -1,5 +1,7 @@
 <div class="lightboxed">
 
+version 7.8.8 on Jul 23, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/416?closed=1" target="_blank">Verification Errors</a>
+
 version 7.8.7 on Jul 22, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/415?closed=1" target="_blank">Fix Firefox setup</a>
 
 version 7.8.6 on Jul 16, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/414?closed=1" target="_blank">Key expiration parse fix</a>
