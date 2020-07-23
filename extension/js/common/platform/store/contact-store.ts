@@ -265,11 +265,15 @@ export class ContactStore extends AbstractStore {
       const found: unknown[] = [];
       search.onsuccess = Catch.try(() => {
         const cursor = search.result as IDBCursorWithValue | undefined;
-        if (!cursor || found.length === query.limit) {
+        if (!cursor) {
           resolve(found);
         } else {
           found.push(cursor.value);
-          cursor.continue();
+          if (query.limit && found.length >= query.limit) {
+            resolve(found);
+          } else {
+            cursor.continue();
+          }
         }
       });
       search.onerror = () => reject(ContactStore.errCategorize(search!.error!)); // todo - added ! after ts3 upgrade - investigate

@@ -522,7 +522,7 @@ body#settings > div#content.contacts table#emails td {
 }
 
 body#settings > div#content.contacts table#emails {
-  margin: 50px auto;
+  margin: 0 auto;
   color: #666;
   min-width: 100%;
 }
