@@ -27,6 +27,10 @@ export class PgpBlockViewSignatureModule {
           $('#pgp_block').css('min-height', '100px'); // signature fail can have a lot of text in it to render
           this.view.renderModule.resizePgpBlockFrame();
         }).catch(Catch.reportErr);
+      } else if (signature.error) {
+        $('#pgp_signature').addClass('bad');
+        $('#pgp_signature > .result').text(signature.error);
+        this.view.renderModule.setFrameColor('red');
       } else if (signature.match && signature.signer && signature.contact) {
         $('#pgp_signature').addClass('good');
         $('#pgp_signature > .result').text('matching signature');

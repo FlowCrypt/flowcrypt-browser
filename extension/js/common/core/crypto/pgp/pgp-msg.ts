@@ -60,7 +60,7 @@ export type DecryptError = {
 
 type OpenpgpMsgOrCleartext = OpenPGP.message.Message | OpenPGP.cleartext.CleartextMessage;
 
-export type VerifyRes = { signer?: string; contact?: Contact; match: boolean | null; error?: string; };
+export type VerifyRes = { signer?: string; contact?: Contact; match: boolean | null; error?: string; isErrFatal?: boolean, content?: Buf };
 export type PgpMsgTypeResult = { armored: boolean, type: MsgBlockType } | undefined;
 export type DecryptResult = DecryptSuccess | DecryptError;
 export type DiagnoseMsgPubkeysResult = { found_match: boolean, receivers: number, };
@@ -132,33 +132,48 @@ export class PgpMsg {
     return await OpenPGPKey.sign(signingPrivate, data, detached);
   }
 
-  public static verify = async (msgOrVerResults: OpenpgpMsgOrCleartext | OpenPGP.message.Verification[], pubs: OpenPGP.key.Key[], contact?: Contact): Promise<VerifyRes> => {
-    const sig: VerifyRes = { contact, match: null }; // tslint:disable-line:no-null-keyword
+  public static verify = async (msg: OpenpgpMsgOrCleartext, pubs: OpenPGP.key.Key[], contact?: Contact): Promise<VerifyRes> => {
+    const verifyRes: VerifyRes = { contact, match: null }; // tslint:disable-line:no-null-keyword
     try {
-      // While this looks like bad method API design, it's here to ensure execution order when 1) reading data, 2) verifying, 3) processing signatures
+      // this is here to ensure execution order when 1) verify, 2) read data, 3) processing signatures
       // Else it will hang trying to read a stream: https://github.com/openpgpjs/openpgpjs/issues/916#issuecomment-510620625
-      const verifyResults = Array.isArray(msgOrVerResults) ? msgOrVerResults : await msgOrVerResults.verify(pubs);
-      for (const verifyRes of verifyResults) {
+      const verifications = await msg.verify(pubs); // first step
+      const stream = msg instanceof opgp.message.Message ? msg.getLiteralData() : msg.getText();
+      if (stream) { // encrypted message
+        const data = await opgp.stream.readToEnd(stream); // second step
+        verifyRes.content = data instanceof Uint8Array ? new Buf(data) : Buf.fromUtfStr(data);
+      }
+      // third step below
+      for (const verification of verifications) {
         // todo - a valid signature is a valid signature, and should be surfaced. Currently, if any of the signatures are not valid, it's showing all as invalid
         // .. as it is now this could allow an attacker to append bogus signatures to validly signed messages, making otherwise correct messages seem incorrect
         // .. which is not really an issue - an attacker that can append signatures could have also just slightly changed the message, causing the same experience
         // .. so for now #wontfix unless a reasonable usecase surfaces
-        sig.match = (sig.match === true || sig.match === null) && await verifyRes.verified;
-        if (!sig.signer) {
+        verifyRes.match = (verifyRes.match === true || verifyRes.match === null) && await verification.verified;
+        if (!verifyRes.signer) {
           // todo - currently only the first signer will be reported. Should we be showing all signers? How common is that?
-          sig.signer = await PgpKey.longid(verifyRes.keyid.bytes);
+          verifyRes.signer = await PgpKey.longid(verification.keyid.bytes);
         }
       }
     } catch (verifyErr) {
-      sig.match = null; // tslint:disable-line:no-null-keyword
+      verifyRes.match = null; // tslint:disable-line:no-null-keyword
       if (verifyErr instanceof Error && verifyErr.message === 'Can only verify message with one literal data packet.') {
-        sig.error = 'FlowCrypt is not equipped to verify this message (err 101)';
+        verifyRes.error = 'FlowCrypt is not equipped to verify this message';
+        verifyRes.isErrFatal = true; // don't try to re-fetch the message from API
+      } else if (verifyErr instanceof Error && verifyErr.message.startsWith('Insecure message hash algorithm:')) {
+        verifyRes.error = `Could not verify message: ${verifyErr.message}. Sender is using old, insecure OpenPGP software.`;
+        verifyRes.isErrFatal = true; // don't try to re-fetch the message from API
+      } else if (verifyErr instanceof Error && verifyErr.message === 'Signature is expired') {
+        verifyRes.error = verifyErr.message;
+        verifyRes.isErrFatal = true; // don't try to re-fetch the message from API
+      } else if (verifyErr instanceof Error && verifyErr.message === 'Message digest did not match') {
+        verifyRes.error = verifyErr.message;
       } else {
-        sig.error = `FlowCrypt had trouble verifying this message (${String(verifyErr)})`;
+        verifyRes.error = `Error verifying this message: ${String(verifyErr)}`;
         Catch.reportErr(verifyErr);
       }
     }
-    return sig;
+    return verifyRes;
   }
 
   public static verifyDetached: PgpMsgMethod.VerifyDetached = async ({ plaintext, sigText }) => {
@@ -184,8 +199,9 @@ export class PgpMsg {
     const isEncrypted = !prepared.isCleartext;
     if (!isEncrypted) {
       const signature = await PgpMsg.verify(prepared.message, keys.forVerification, keys.verificationContacts[0]);
-      const text = await opgp.stream.readToEnd(prepared.message.getText()!);
-      return { success: true, content: Buf.fromUtfStr(text), isEncrypted, signature };
+      const content = signature.content || Buf.fromUtfStr('no content');
+      signature.content = undefined; // no need to duplicate data
+      return { success: true, content, isEncrypted, signature };
     }
     if (!keys.prvForDecryptDecrypted.length && !msgPwd) {
       return { success: false, error: { type: DecryptErrTypes.needPassphrase, message: 'Missing pass phrase' }, message: prepared.message, longids, isEncrypted };
@@ -201,9 +217,11 @@ export class PgpMsg {
       const privateKeys = keys.prvForDecryptDecrypted.map(ki => ki.decrypted!);
       const decrypted = await OpenPGPKey.decryptMessage(prepared.message as OpenPGP.message.Message, privateKeys, passwords);
       await PgpMsg.cryptoMsgGetSignedBy(decrypted, keys); // we can only figure out who signed the msg once it's decrypted
-      const verifyResults = keys.signedBy.length ? await decrypted.verify(keys.forVerification) : undefined; // verify first to prevent stream hang
-      const content = new Buf(await opgp.stream.readToEnd(decrypted.getLiteralData()!)); // read content second to prevent stream hang
-      const signature = verifyResults ? await PgpMsg.verify(verifyResults, [], keys.verificationContacts[0]) : undefined; // evaluate verify results third to prevent stream hang
+      const signature = keys.signedBy.length ? await PgpMsg.verify(decrypted, keys.forVerification, keys.verificationContacts[0]) : undefined;
+      const content = signature?.content || new Buf(await opgp.stream.readToEnd(decrypted.getLiteralData()!));
+      if (signature?.content) {
+        signature.content = undefined; // already passed as "content" on the response object, don't need it duplicated
+      }
       if (!prepared.isCleartext && (prepared.message as OpenPGP.message.Message).packets.filterByTag(opgp.enums.packet.symmetricallyEncrypted).length) {
         const noMdc = 'Security threat!\n\nMessage is missing integrity checks (MDC). The sender should update their outdated software.\n\nDisplay the message at your own risk.';
         return { success: false, content, error: { type: DecryptErrTypes.noMdc, message: noMdc }, message: prepared.message, longids, isEncrypted };
