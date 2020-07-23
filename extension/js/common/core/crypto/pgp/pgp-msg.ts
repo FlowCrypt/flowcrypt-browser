@@ -166,8 +166,10 @@ export class PgpMsg {
       } else if (verifyErr instanceof Error && verifyErr.message === 'Signature is expired') {
         verifyRes.error = verifyErr.message;
         verifyRes.isErrFatal = true; // don't try to re-fetch the message from API
+      } else if (verifyErr instanceof Error && verifyErr.message === 'Message digest did not match') {
+        verifyRes.error = verifyErr.message;
       } else {
-        verifyRes.error = `FlowCrypt had trouble verifying this message (${String(verifyErr)})`;
+        verifyRes.error = `Error verifying this message: ${String(verifyErr)}`;
         Catch.reportErr(verifyErr);
       }
     }
