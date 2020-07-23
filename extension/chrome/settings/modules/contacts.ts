@@ -60,12 +60,13 @@ View.run(class ContactsView extends View {
     $('a.action_remove').off().click(this.setHandlerPrevent('double', this.actionRemovePublicKey));
     $('.action_export_all').off().click(this.setHandlerPrevent('double', this.actionExportAllKeysHandler));
     $('.action_view_bulk_import').off().click(this.setHandlerPrevent('double', this.actionRenderBulkImportPageHandler));
+    $('.input-search-contacts').off().keyup(this.setHandlerPrevent('double', this.loadAndRenderContactList));
   }
 
   // --- PRIVATE
 
   private loadAndRenderContactList = async () => {
-    this.contacts = await ContactStore.search(undefined, { has_pgp: true }, false);
+    this.contacts = await ContactStore.search(undefined, { has_pgp: true, limit: 500, substring: String($('.input-search-contacts').val()) }, false);
     let lineActionsHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
       '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import" data-test="action-show-import-public-keys-form">import public keys</a>&nbsp;&nbsp;';
     if (this.orgRules.getCustomSksPubkeyServer()) {
@@ -88,6 +89,7 @@ View.run(class ContactsView extends View {
       tableContents += `<tr email="${e}"><td>${e}</td><td>${show}</td><td>${change}</td><td>${remove}</td></tr>`;
     }
     Xss.sanitizeReplace('table#emails', `<table id="emails" class="hide_when_rendering_subpage">${tableContents}</table>`);
+    $('.container-table-note').text(this.contacts.length >= 500 ? '(showing first 500 results)' : '');
     this.setHandlers();
   }
 
