@@ -163,6 +163,9 @@ export class PgpMsg {
       } else if (verifyErr instanceof Error && verifyErr.message.startsWith('Insecure message hash algorithm:')) {
         verifyRes.error = `Could not verify message: ${verifyErr.message}. Sender is using old, insecure OpenPGP software.`;
         verifyRes.isErrFatal = true; // don't try to re-fetch the message from API
+      } else if (verifyErr instanceof Error && verifyErr.message === 'Signature is expired') {
+        verifyRes.error = verifyErr.message;
+        verifyRes.isErrFatal = true; // don't try to re-fetch the message from API
       } else {
         verifyRes.error = `FlowCrypt had trouble verifying this message (${String(verifyErr)})`;
         Catch.reportErr(verifyErr);
