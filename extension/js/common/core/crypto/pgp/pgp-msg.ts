@@ -138,8 +138,11 @@ export class PgpMsg {
       // this is here to ensure execution order when 1) verify, 2) read data, 3) processing signatures
       // Else it will hang trying to read a stream: https://github.com/openpgpjs/openpgpjs/issues/916#issuecomment-510620625
       const verifications = await msg.verify(pubs); // first step
-      const data = await opgp.stream.readToEnd(msg instanceof opgp.message.Message ? msg.getLiteralData()! : msg.getText()!); // second step
-      verifyRes.content = data instanceof Uint8Array ? new Buf(data) : Buf.fromUtfStr(data);
+      const stream = msg instanceof opgp.message.Message ? msg.getLiteralData() : msg.getText();
+      if (stream) { // encrypted message
+        const data = await opgp.stream.readToEnd(stream); // second step
+        verifyRes.content = data instanceof Uint8Array ? new Buf(data) : Buf.fromUtfStr(data);
+      }
       // third step below
       for (const verification of verifications) {
         // todo - a valid signature is a valid signature, and should be surfaced. Currently, if any of the signatures are not valid, it's showing all as invalid
