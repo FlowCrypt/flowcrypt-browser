@@ -46,19 +46,21 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     this.view.recipientsModule.onRecipientAdded(async () => await this.draftSave(true));
   }
 
-  public initialDraftLoad = async (draftId: string): Promise<void> => {
+  public initialDraftLoad = async (draftId: string): Promise<boolean> => {
     if (this.view.isReplyBox) {
       Xss.sanitizeRender(this.view.S.cached('prompt'), `Loading draft.. ${Ui.spinner('green')}`);
     }
     try {
       const draftGetRes = this.isLocalDraftId(draftId) ? await this.localDraftGet(draftId) : await this.view.emailProvider.draftGet(draftId, 'raw');
       if (!draftGetRes) {
-        return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!draftGetRes');
+        await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!draftGetRes');
+        return false;
       }
       const decoded = await Mime.decode(Buf.fromBase64UrlStr(draftGetRes.message.raw!));
       const processed = Mime.processDecoded(decoded);
       await this.fillAndRenderDraftHeaders(decoded);
       await this.decryptAndRenderDraft(processed);
+      return true;
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender('body', `Failed to load draft. ${Ui.retryLink()}`);
@@ -77,6 +79,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('exception');
       }
     }
+    return false;
   }
 
   public draftDelete = async () => {
