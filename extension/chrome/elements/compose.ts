@@ -167,12 +167,14 @@ export class ComposeView extends View {
     if (this.replyMsgId) {
       await this.renderModule.fetchReplyMeta(Object.keys(storage.sendAs!));
     }
-    if (this.isReplyBox) {
+    if (this.isReplyBox) { // reply
       if (this.threadId && !this.ignoreDraft && storage.drafts_reply && storage.drafts_reply[this.threadId]) {
         this.draftId = storage.drafts_reply[this.threadId]; // there may be a draft we want to load
       }
-    } else {
-      this.draftId = this.draftModule.localDraftPrefix;
+    } else { // compose
+      if (!this.draftId) {
+        this.draftId = this.draftModule.localDraftPrefix;
+      }
     }
     BrowserMsg.listen(this.tabId!);
     await this.renderModule.initComposeBox();

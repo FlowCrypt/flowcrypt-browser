@@ -174,7 +174,9 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     }
   }
 
-  private isLocalDraftId = (draftId: string) => !!draftId.match(this.localDraftPrefix);
+  private isLocalDraftId = (draftId: string) => {
+    return !!draftId.match(this.localDraftPrefix);
+  }
 
   private localDraftCreate = async (mimeMsg: string, threadId: string, recipients: string[], subject: string) => {
     const draftId = `${this.localDraftPrefix}${threadId}`;
