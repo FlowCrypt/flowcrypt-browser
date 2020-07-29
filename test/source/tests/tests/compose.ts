@@ -546,11 +546,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await (composePage.target as Page).setOfflineMode(true); // go offline mode
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'offline test', {});
+      expect(await composePage.read('@action-send')).to.eq('Re-enter recipient..'); // ensure offline mode
       await composePage.type('@input-body', `This is a test of saving a draft when offline`);
       await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
       await composePage.close();
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      await composePage.waitForContent('@input-subject', 'offline test');
+      expect(await composePage.value('@input-subject')).to.match(/offline test/);
       await composePage.waitForContent('@input-body', 'This is a test of saving a draft when offline');
     }));
 
