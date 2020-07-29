@@ -9,7 +9,8 @@
       "program": "${workspaceFolder}/node_modules/ava/profile.js",
       "args": [
         "build/test/test/source/test.js",
-        "CONSUMER-MOCK"
+        "CONSUMER-MOCK",
+        "--pool-size=1"
       ],
       "skipFiles": [
         "<node_internals>/**/*.js"
