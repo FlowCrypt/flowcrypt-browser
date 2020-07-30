@@ -46,6 +46,9 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     this.view.recipientsModule.onRecipientAdded(async () => await this.draftSave(true));
   }
 
+  /**
+   * Returns true when a draft was loaded
+   */
   public initialDraftLoad = async (draftId: string): Promise<boolean> => {
     if (this.view.isReplyBox) {
       Xss.sanitizeRender(this.view.S.cached('prompt'), `Loading draft.. ${Ui.spinner('green')}`);
