@@ -173,7 +173,7 @@ export class ComposeView extends View {
       }
     } else { // compose
       if (!this.draftId) {
-        this.draftId = this.draftModule.localDraftPrefix;
+        this.draftId = this.draftModule.localNewMessageDraftId;
       }
     }
     BrowserMsg.listen(this.tabId!);

@@ -13,6 +13,7 @@ import { EncryptedMsgMailFormatter } from './formatters/encrypted-mail-msg-forma
 import { Env } from '../../../js/common/browser/env.js';
 import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
+import { NewMsgData } from './compose-types.js';
 import { PgpMsg } from '../../../js/common/core/crypto/pgp/pgp-msg.js';
 import { storageLocalGet, storageLocalSet, storageLocalRemove } from '../../../js/common/api/chrome.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -26,13 +27,14 @@ import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 export class ComposeDraftModule extends ViewModule<ComposeView> {
 
   public wasMsgLoadedFromDraft = false;
-  public localDraftPrefix = 'local-draft-';
+  public localNewMessageDraftId = 'local-draft-';
 
   private currentlySavingDraft = false;
   private saveDraftInterval?: number;
   private lastDraftBody?: string;
   private lastDraftSubject = '';
   private SAVE_DRAFT_FREQUENCY = 3000;
+  private localDraftPrefix = 'local-draft-';
 
   constructor(composer: ComposeView) {
     super(composer);
@@ -121,21 +123,16 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
           sendable.body['text/plain'] = `[cryptup:link:draft_compose:${this.view.draftId}]\n\n${sendable.body['text/plain'] || ''}`;
         }
         const mimeMsg = await sendable.toMime();
+        // If a draft was loaded from the local storage, once a user is back online, the local draft will be moved to the email provider
         if (!this.view.draftId || this.isLocalDraftId(this.view.draftId)) {
-          let draftId: string;
-          try {
-            ({ id: draftId } = await this.view.emailProvider.draftCreate(mimeMsg, this.view.threadId));
+          const draftId = await this.doUploadDraftWithLocalStorageFallback(mimeMsg, msgData, async () => {
+            const { id } = await this.view.emailProvider.draftCreate(mimeMsg, this.view.threadId);
             if (this.isLocalDraftId(this.view.draftId)) { // delete local draft if there is one
               await storageLocalRemove([this.view.draftId]);
             }
-          } catch (e) {
-            if (ApiErr.isNetErr(e)) {
-              draftId = await this.localDraftCreate(mimeMsg, this.view.threadId, msgData.recipients.to || [], msgData.subject);
-            } else {
-              throw e;
-            }
-          }
-          this.view.S.cached('send_btn_note').text('Saved');
+            this.view.S.cached('send_btn_note').text('Saved');
+            return id;
+          });
           this.view.draftId = draftId;
           await this.view.storageModule.draftMetaSet(draftId, this.view.threadId, msgData.recipients.to || [], msgData.subject);
           // recursing one more time, because we need the draftId we get from this reply in the message itself
@@ -145,16 +142,11 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
             await this.draftSave(true); // forceSave = true
           }
         } else {
-          try {
+          await this.doUploadDraftWithLocalStorageFallback(mimeMsg, msgData, async () => {
             await this.view.emailProvider.draftUpdate(this.view.draftId, mimeMsg);
-          } catch (e) {
-            if (ApiErr.isNetErr(e)) {
-              this.view.draftId = await this.localDraftCreate(mimeMsg, this.view.threadId, msgData.recipients.to || [], msgData.subject);
-            } else {
-              throw e;
-            }
-          }
-          this.view.S.cached('send_btn_note').text('Saved');
+            this.view.S.cached('send_btn_note').text('Saved');
+            return this.view.draftId;
+          });
         }
       } catch (e) {
         if (ApiErr.isAuthPopupNeeded(e)) {
@@ -178,6 +170,21 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       }
       this.currentlySavingDraft = false;
     }
+  }
+
+  private doUploadDraftWithLocalStorageFallback = async (mimeMsg: string, msgData: NewMsgData, callback: () => Promise<string>) => {
+    let draftId: string;
+    try {
+      draftId = await callback();
+    } catch (e) {
+      if (ApiErr.isNetErr(e)) {
+        draftId = await this.localDraftCreate(mimeMsg, this.view.threadId, msgData.recipients.to || [], msgData.subject);
+        this.view.S.cached('send_btn_note').text('Draft saved locally (offline)');
+      } else {
+        throw e;
+      }
+    }
+    return draftId;
   }
 
   private isLocalDraftId = (draftId: string) => {

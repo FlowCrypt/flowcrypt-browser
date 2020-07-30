@@ -108,6 +108,10 @@ export class ComposePageRecipe extends PageRecipe {
     await composePageOrFrame.verifyContentIsPresentContinuously('@send-btn-note', 'Saved');
   }
 
+  public static waitWhenDraftIsSavedLocally = async (composePageOrFrame: Controllable) => {
+    await composePageOrFrame.verifyContentIsPresentContinuously('@send-btn-note', 'Draft saved locally (offline)');
+  }
+
   public static sendAndClose = async (
     composePage: ControllablePage,
     { password, timeout, expectProgress }: { password?: string, timeout?: number, expectProgress?: boolean } = { timeout: 60 }
