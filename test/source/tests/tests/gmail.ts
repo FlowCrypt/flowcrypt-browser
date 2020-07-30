@@ -3,6 +3,7 @@
 import * as ava from 'ava';
 
 import { BrowserHandle, ControllablePage } from '../../browser';
+import { ComposePageRecipe } from '../page-recipe/compose-page-recipe';
 import { TestVariant, Util } from '../../util';
 import { AvaContext } from '..';
 import { BrowserRecipe } from '../browser-recipe';
@@ -191,6 +192,20 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pageDoesNotHaveSecureReplyContainer(gmailPage);
       await gmailPage.waitForContent('div[aria-label="Message Body"]', 'plain reply');
       await gmailPage.click('[aria-label^="Discard draft"]');
+    }));
+
+    ava.default.only('mail.google.com - new message (compose) draft', testWithBrowser('compatibility', async (t, browser) => {
+      const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
+      const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
+      await composePage.waitAll('@input-body');
+      await composePage.type('@input-body', 'hello world');
+      await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
+      await composePage.close();
+      await gmailPage.click('[data-tooltip="Drafts"]');
+      await composePage.press('Enter');
+      await gmailPage.click('[class^=open_draft_]');
+      const composeFrame = await gmailPage.getFrame(['compose.htm']);
+      await composeFrame.waitForContent('@input-body', 'hello world');
     }));
 
     ava.default('mail.google.com - pubkey file gets rendered', testWithBrowser('compatibility', async (t, browser) => {
