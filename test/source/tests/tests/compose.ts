@@ -507,6 +507,17 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await composePage.read('@input-body')).to.include('hello<draft>here');
     }));
 
+    ava.default('compose - saving drafts - should contain the cryptup:link: prefix', testWithBrowser('compatibility', async (t, browser) => {
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('flowcrypt.compatibility@gmail.com'));
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await composeFrame.waitAll('@input-body');
+      await composeFrame.type('@input-body', 'hello world', true);
+      await ComposePageRecipe.waitWhenDraftIsSaved(composeFrame);
+      await inboxPage.click('.label_DRAFT');
+      await inboxPage.waitAndClick('[id^=list_thread_id]');
+      await inboxPage.waitForContent('[id^=message_id_]', 'cryptup:link:draft_compose');
+    }));
+
     ava.default('compose - compose - test minimizing/maximizing', testWithBrowser('compose', async (t, browser) => {
       const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=test.ci.compose%40org.flowcrypt.com');
       await inboxPage.waitAndClick('@action-open-secure-compose-window');
