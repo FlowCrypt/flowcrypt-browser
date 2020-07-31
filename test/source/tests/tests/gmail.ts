@@ -198,7 +198,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
       const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
       await composePage.waitAll('@input-body');
-      await composePage.type('@input-body', 'hello world');
+      await composePage.type('@input-body', 'hello world', true);
       await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
       await composePage.close();
       await gmailPage.click('[data-tooltip="Drafts"]');
