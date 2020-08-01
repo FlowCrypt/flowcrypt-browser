@@ -118,8 +118,10 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   public initComposeBox = async () => {
     this.initComposeBoxStyles();
     if (this.view.draftId) {
-      this.view.S.cached('triple_dot').remove(); // if it's draft, footer and quote should already be included in the draft
-      await this.view.draftModule.initialDraftLoad(this.view.draftId);
+      const draftLoaded = await this.view.draftModule.initialDraftLoad(this.view.draftId);
+      if (draftLoaded) {
+        this.view.S.cached('triple_dot').remove(); // if it's draft, footer and quote should already be included in the draft
+      }
       if (this.view.isReplyBox) {
         await this.view.renderModule.renderReplyMsgComposeTable();
       }

@@ -550,7 +550,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       if (ApiErr.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       } else if (ApiErr.isNetErr(e)) {
-        Ui.toast(`Network erroc - cannot search contacts`).catch(Catch.reportErr);
+        Ui.toast(`Network error - cannot search contacts`).catch(Catch.reportErr);
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         Ui.toast(`Cannot search contacts - account disabled or forbidden by admin policy`).catch(Catch.reportErr);
       } else {
