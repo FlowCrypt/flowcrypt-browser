@@ -131,7 +131,7 @@ View.run(class ContactsView extends View {
       `Created on: ${contact?.pubkey?.created}`,
       `Expiration: ${contact?.pubkey?.expiration || 'Does not expire'}`,
       `Last signature: ${contact?.pubkey?.lastModified}`,
-      `Expired: ${contact?.pubkey?.expiration && contact?.pubkey?.expiration.getTime() < Date.now() ? 'yes' : 'no'}`,
+      `Expired: ${contact?.pubkey?.expiration && contact?.pubkey?.expiration < Date.now() ? 'yes' : 'no'}`,
       `Usable for encryption: ${contact?.pubkey?.usableForEncryption}`,
       `Usable for signing: ${contact?.pubkey?.usableForSigning}`,
     ].join('\n'));

@@ -356,14 +356,16 @@ export class ContactStore extends AbstractStore {
   private static recreateDates = (contacts: (Contact | undefined)[]) => {
     for (const contact of contacts) {
       if (contact) {
+        // string dates were created by JSON serializing Date objects
+        // convert any previously saved string-dates into numbers
         if (typeof contact?.pubkey?.created === 'string') {
-          contact.pubkey.created = new Date(contact.pubkey.created);
+          contact.pubkey.created = new Date(contact.pubkey.created).getTime();
         }
         if (typeof contact?.pubkey?.expiration === 'string') {
-          contact.pubkey.expiration = new Date(contact.pubkey.expiration);
+          contact.pubkey.expiration = new Date(contact.pubkey.expiration).getTime();
         }
         if (typeof contact?.pubkey?.lastModified === 'string') {
-          contact.pubkey.lastModified = new Date(contact.pubkey.lastModified);
+          contact.pubkey.lastModified = new Date(contact.pubkey.lastModified).getTime();
         }
       }
     }

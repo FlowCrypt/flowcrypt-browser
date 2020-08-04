@@ -22,9 +22,9 @@ export class SmimeKey {
       usableButExpired: false,
       emails: [normalizedEmail],
       identities: [normalizedEmail],
-      created: certificate.validity.notBefore,
-      lastModified: certificate.validity.notBefore,
-      expiration: certificate.validity.notAfter,
+      created: SmimeKey.dateToNumber(certificate.validity.notBefore),
+      lastModified: SmimeKey.dateToNumber(certificate.validity.notBefore),
+      expiration: SmimeKey.dateToNumber(certificate.validity.notAfter),
       fullyDecrypted: false,
       fullyEncrypted: false,
       isPublic: true,
@@ -56,6 +56,13 @@ export class SmimeKey {
       return false;
     }
     return !!(eku as { emailProtection: boolean }).emailProtection;
+  }
+
+  private static dateToNumber = (date: Date): undefined | number => {
+    if (!date) {
+      return;
+    }
+    return date.getTime();
   }
 
 }

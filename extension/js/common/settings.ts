@@ -194,7 +194,7 @@ export class Settings {
         } else {
           $(target).off();
           Xss.sanitizeRender(target, Ui.spinner('white'));
-          const expireSeconds = (expireYears === 'never') ? 0 : Math.floor((Date.now() - origPrv.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expireYears));
+          const expireSeconds = (expireYears === 'never') ? 0 : Math.floor((Date.now() - origPrv.created) / 1000) + (60 * 60 * 24 * 365 * Number(expireYears));
           await PgpKey.decrypt(origPrv, passphrase);
           let reformatted;
           const userIds = uids.map(uid => Str.parseEmail(uid)).map(u => ({ email: u.email, name: u.name || '' }));
