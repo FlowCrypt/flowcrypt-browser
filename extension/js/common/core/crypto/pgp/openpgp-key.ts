@@ -181,9 +181,9 @@ export class OpenPGPKey {
       .map(email => email.trim())
       .filter(email => email)
       .map(email => email.toLowerCase());
-    let lastModified: undefined | Date;
+    let lastModified: undefined | number;
     try {
-      lastModified = new Date(await PgpKey.lastSigOpenPGP(pubkey));
+      lastModified = await PgpKey.lastSigOpenPGP(pubkey);
     } catch (e) {
       // never had any valid signature
     }
@@ -204,8 +204,8 @@ export class OpenPGPKey {
       // tslint:disable-next-line: no-unsafe-any
       identities: pubkey.users.map(u => u.userId).filter(u => !!u && u.userid && Str.parseEmail(u.userid).email).map(u => u!.userid).filter(Boolean) as string[],
       lastModified,
-      expiration: exp instanceof Date ? exp : undefined,
-      created: pubkey.getCreationTime(),
+      expiration: exp instanceof Date ? exp.getTime() : undefined,
+      created: pubkey.getCreationTime().getTime(),
       fullyDecrypted: pubkey.isPublic() ? true /* public keys are always decrypted */ : pubkey.isFullyDecrypted(),
       fullyEncrypted: pubkey.isPublic() ? false /* public keys are never encrypted */ : pubkey.isFullyEncrypted(),
       isPublic: pubkey.isPublic(),

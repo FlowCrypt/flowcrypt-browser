@@ -381,7 +381,8 @@ View.run(class SettingsView extends View {
     for (let i = 0; i < privateKeys.length; i++) {
       const ki = privateKeys[i];
       const prv = await KeyUtil.parse(ki.private);
-      const date = Str.monthName(prv.created.getMonth()) + ' ' + prv.created.getDate() + ', ' + prv.created.getFullYear();
+      const created = new Date(prv.created);
+      const date = Str.monthName(created.getMonth()) + ' ' + created.getDate() + ', ' + created.getFullYear();
       const escapedFp = Xss.escape(ki.fingerprint);
       const escapedPrimaryOrRm = (ki.primary) ? '(primary)' : `(<a href="#" class="action_remove_key" fingerprint="${escapedFp}">remove</a>)`;
       const escapedEmail = Xss.escape(prv.emails[0] || '');

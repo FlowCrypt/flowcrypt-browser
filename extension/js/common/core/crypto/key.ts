@@ -12,15 +12,19 @@ import { SmimeKey } from './smime/smime-key.js';
 import { MsgBlock } from '../msg-block.js';
 
 /**
- * This is a common Pubkey interface for both pgp and x509 keys
+ * This is a common Key interface for both OpenPGP and X.509 keys.
+ *
+ * Since Key objects are frequently JSON serialized (e.g. via message passing)
+ * all dates are expressed as number of milliseconds since Unix Epoch.
+ * This is what `Date.now()` returns and `new Date(x)` accepts.
  */
 export interface Key {
   type: 'openpgp' | 'x509';
   id: string; // This is a fingerprint for OpenPGP keys and Serial Number for X.509 keys.
   ids: string[];
-  created: Date;
-  lastModified: Date | undefined; // date of last signature, or undefined if never had valid signature
-  expiration: Date | undefined;
+  created: number;
+  lastModified: number | undefined; // date of last signature, or undefined if never had valid signature
+  expiration: number | undefined; // number of millis of expiration or undefined if never expires
   usableForEncryption: boolean;
   usableForSigning: boolean;
   usableButExpired: boolean;
@@ -186,12 +190,12 @@ export class KeyUtil {
     if (!exp) {
       return false;
     }
-    return Date.now() > exp.getTime();
+    return Date.now() > exp;
   }
 
   public static dateBeforeExpirationIfAlreadyExpired = (key: Key): Date | undefined => {
     const expiration = key.expiration;
-    return expiration && KeyUtil.expired(key) ? new Date(expiration.getTime() - 1000) : undefined;
+    return expiration && KeyUtil.expired(key) ? new Date(expiration - 1000) : undefined;
   }
 
   public static parseDetails = async (armored: string): Promise<{ original: string, normalized: string, keys: KeyDetails[] }> => {

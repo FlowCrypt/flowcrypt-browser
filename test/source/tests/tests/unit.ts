@@ -134,6 +134,7 @@ yPLCqVTFJQWaCR5ZTekRQPTDZkjxjxbs
       expect(key.identities[0]).to.equal('actalis@meta.33mail.com');
       expect(key.isPublic).to.equal(true);
       expect(key.isPrivate).to.equal(true);
+      expect(key.expiration).to.not.equal(undefined);
       t.pass();
     });
 
@@ -262,6 +263,7 @@ sOLAw7KgpiL2+0v777saxSO5vtufJCKk4OOEaVDufeijlejKTM+H7twVer4iGqiW
       expect(key.identities[0]).to.equal('Testing <flowcrypt@metacode.biz>');
       expect(key.isPublic).equal(false);
       expect(key.isPrivate).equal(true);
+      expect(key.expiration).to.not.equal(undefined);
       t.pass();
     });
 
@@ -341,6 +343,28 @@ KwoTyPGP6prXobe5lmo+4Ji3bE+OFqD20SgDyM6ER7KsrjsKi/Gmh7Q0
       expect(key.identities[0]).to.equal('Testing <flowcrypt@metacode.biz>');
       expect(key.isPublic).equal(false);
       expect(key.isPrivate).equal(true);
+      expect(key.expiration).to.not.equal(undefined);
+      t.pass();
+    });
+
+    const nonExpiringKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mDMEXylIoBYJKwYBBAHaRw8BAQdAMgtGtZnSa/oq2FHZ7Ow7rnCpRDJ5+WlojNXt
+6r74RdW0DE5vdCBFeHBpcmluZ4iQBBMWCAA4FiEEjdc3wIbaszE+t21fSpIVLfL9
+bb0FAl8pSKACGwMFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AACgkQSpIVLfL9bb1J
+/QD8CDQrGNP3ZvSQUoA7kTQURLO9qkctY6Yn1+GsJR6M3zQA/ievQawWchCZVzgT
+SBC9rHNi6GbYSn3Tm+PnsUOe9g8NuDgEXylIoBIKKwYBBAGXVQEFAQEHQLU+tO+s
+CpD7n1C0Mg9Yzghr9pMps9UaexwMuxxVeWZcAwEIB4h4BBgWCAAgFiEEjdc3wIba
+szE+t21fSpIVLfL9bb0FAl8pSKACGwwACgkQSpIVLfL9bb39XgD6A91LwqK+CEzl
+McqZHXuttXHc2wZ2nvjjtbzWSEzxvpAA/jdWwCNBg65Wh93Df5/6Ec05W8AgFwJH
+/NBHfzBA90AM
+=E46c
+-----END PGP PUBLIC KEY BLOCK-----`;
+
+    ava.default('[unit][KeyUtil.parse] OpenPGP parsing of never expiring key', async t => {
+      const key = await KeyUtil.parse(nonExpiringKey);
+      expect(key.id).to.equal('8DD737C086DAB3313EB76D5F4A92152DF2FD6DBD');
+      expect(key.expiration).to.equal(undefined);
       t.pass();
     });
 
@@ -508,7 +532,7 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       const expiredPubKey = '-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: FlowCrypt Email Encryption 7.8.4\r\nComment: Seamlessly send and receive encrypted email\r\n\r\nxsBNBF8QF1cBCADFQRM0S6kJ1LxL+Y2hqz+w2PIbAKnNpV4gr1D0jEX9ygMY\r\nYxyjGP7QcK2umeBrioWBUET/5yu+KkSVFOxGwXw2m1MqJXZH6fPumgDBEAYg\r\n8afLXI/5Rh7Lp2Z3eBDog6W0I9EOHAB6iFHQgc5m+PUlehMZ23VUKxDpb4kW\r\nsIts1b8Zm0sSimUf15bz0nGxCf00bYf5lCuxBfgAQGK+FgpIAdc03a7VI4zJ\r\nc/A18PR4mlMeDfIj2yWKaL4ka8lr8d+qAP2Cu0I6GcNgBUl5yCWc/6S20J52\r\nKjoa48w1vdAYzK1hjTE7INLrB6WKOCPLoY0jRuqE+ksarw6JtNsAhNrFABEB\r\nAAHNKTxoYXMub2xkZXIua2V5Lm9uLmF0dGVzdGVyQHJlY2lwaWVudC5jb20+\r\nwsCTBBABCAAmBQJfEBpQBQkAAAACBgsJBwgDAgQVCAoCBBYCAQACGQECGwMC\r\nHgEAIQkQ0CoIfv1WLLMWIQQoKZEjISHFGWNfjmPQKgh+/VYss4EFB/9apXb/\r\nRYrf/FwK3NEeAuVAjq4sQFOC+e2sOO1Y1i74Hm5Q3YpL5FPWxg1zzQR3cKlw\r\ngwGiTBH9Re86KuB6XIIhropA94c0c5RGXf4Syb66hsp+xyb5laoazW274M26\r\nLhNou77CFgJ4UTOYPqNoDADcGPCoYzlU/tkp8q+vuIEBuizNkO+vOdFdrG9x\r\nON2n7aPVBWTHTy7PXVQr6wYfbj2c3cmH9ju5bZKoKoZ7niR3jQi+NUAHf09Z\r\nkwWGoYwD37iTtPWrn/nnMqp7nqJxpChsJvtfousgKHWUA1IsCXoSeExZuXYU\r\nVpJduSYQx5H6dy4QwmK8bzRfra/l5O6sRTbNzsBNBF8QF1cBCADL0rwgqVw3\r\nsQ6JD7j9eOkbcc0iNrxLqYWnBCu71opLWVQ0b8mw9DqT3WuXtvOVmEBkqDig\r\nq9Q78BbD2EfQhFNuvcE5GL38BvyUkpgZBC+vi9UrisQTStmLS5bSsT7aipwM\r\nGy3tXFIoHX8XQk8swbKa20fCYd5KKZr3wFBZ6mtXN3O1qgelZ4HEl/bCFz6c\r\nuvZUFLvLaMksXh7um2/bjnB6E9uktn/ts34rbYIuHxVTLs6bq4VbPiUilurz\r\n8uzAsU2HMw2QTQTaJzycJyYzdDxAIXrSmtFah2/wqSYC82r65sA17y3gtbHq\r\neP0pzbzbMQitPCV2poxIHJuiMYh4iWV9ABEBAAHCwHwEGAEIAA8FAl8QGlAF\r\nCQAAAAICGwwAIQkQ0CoIfv1WLLMWIQQoKZEjISHFGWNfjmPQKgh+/VYsswOo\r\nCAC2gkz5f7RLboxFxgbjleY/SWttf9j5pJGCfcaPzLGo8wCbnEUdhs+FqAml\r\nGDF1yZAexCQLBukVhil1yEnknaX1emeHB7d4g6cQFoKtSHeVZ0C9mmM+OJMn\r\nZoGVylTsOLMmVXM/CXyp9JUAlo/oZm1Zpb9RK5rvNJukH1f0DajQjWlC09Y9\r\nVLVDBxlJccsEdas1yojMDHMqNOMiNaAlA33mrY3ucAiKb4q3uP9IuDRuD83M\r\ncoDahY5p8xl6IbKQhnxoWtBgGJWrlwBZro83z9HzW4LmP99pPZqfLZQAevUL\r\n+oQiPqyh512p6O5usc1GkEoN9cn9b/qnvnRu5RMxC/vI\r\n=NveA\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n';
       const parsed = await KeyUtil.parse(expiredPubKey);
       expect(parsed?.usableForEncryption).to.equal(false);
-      expect(parsed?.expiration?.getTime()).to.equal(1594890073000);
+      expect(parsed?.expiration).to.equal(1594890073000);
       expect(parsed?.usableButExpired).to.equal(false); // because last signature was created as already expired, no intersection
       t.pass();
     });
