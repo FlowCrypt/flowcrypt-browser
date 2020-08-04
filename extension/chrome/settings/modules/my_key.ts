@@ -52,7 +52,7 @@ View.run(class MyKeyView extends View {
     $('.fingerprint').text(Str.spaced(this.keyInfo.fingerprint));
     $('.email').text(this.acctEmail);
     const expiration = this.pubKey.expiration;
-    $('.key_expiration').text(expiration ? Str.datetimeToDate(Str.fromDate(new Date(expiration))) : 'Key does not expire');
+    $('.key_expiration').text(expiration && expiration !== Infinity ? Str.datetimeToDate(Str.fromDate(new Date(expiration))) : 'Key does not expire');
     await this.renderPubkeyShareableLink();
     await initPassphraseToggle(['input_passphrase']);
   }
