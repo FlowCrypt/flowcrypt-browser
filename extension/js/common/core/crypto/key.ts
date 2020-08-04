@@ -24,7 +24,7 @@ export interface Key {
   ids: string[];
   created: number;
   lastModified: number | undefined; // date of last signature, or undefined if never had valid signature
-  expiration: number | undefined;
+  expiration: number | undefined; // number of millis of expiration or undefined if never expires
   usableForEncryption: boolean;
   usableForSigning: boolean;
   usableButExpired: boolean;

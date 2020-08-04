@@ -134,6 +134,7 @@ yPLCqVTFJQWaCR5ZTekRQPTDZkjxjxbs
       expect(key.identities[0]).to.equal('actalis@meta.33mail.com');
       expect(key.isPublic).to.equal(true);
       expect(key.isPrivate).to.equal(true);
+      expect(key.expiration).to.not.equal(undefined);
       t.pass();
     });
 
@@ -262,6 +263,7 @@ sOLAw7KgpiL2+0v777saxSO5vtufJCKk4OOEaVDufeijlejKTM+H7twVer4iGqiW
       expect(key.identities[0]).to.equal('Testing <flowcrypt@metacode.biz>');
       expect(key.isPublic).equal(false);
       expect(key.isPrivate).equal(true);
+      expect(key.expiration).to.not.equal(undefined);
       t.pass();
     });
 
@@ -341,6 +343,28 @@ KwoTyPGP6prXobe5lmo+4Ji3bE+OFqD20SgDyM6ER7KsrjsKi/Gmh7Q0
       expect(key.identities[0]).to.equal('Testing <flowcrypt@metacode.biz>');
       expect(key.isPublic).equal(false);
       expect(key.isPrivate).equal(true);
+      expect(key.expiration).to.not.equal(undefined);
+      t.pass();
+    });
+
+    const nonExpiringKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mDMEXylIoBYJKwYBBAHaRw8BAQdAMgtGtZnSa/oq2FHZ7Ow7rnCpRDJ5+WlojNXt
+6r74RdW0DE5vdCBFeHBpcmluZ4iQBBMWCAA4FiEEjdc3wIbaszE+t21fSpIVLfL9
+bb0FAl8pSKACGwMFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AACgkQSpIVLfL9bb1J
+/QD8CDQrGNP3ZvSQUoA7kTQURLO9qkctY6Yn1+GsJR6M3zQA/ievQawWchCZVzgT
+SBC9rHNi6GbYSn3Tm+PnsUOe9g8NuDgEXylIoBIKKwYBBAGXVQEFAQEHQLU+tO+s
+CpD7n1C0Mg9Yzghr9pMps9UaexwMuxxVeWZcAwEIB4h4BBgWCAAgFiEEjdc3wIba
+szE+t21fSpIVLfL9bb0FAl8pSKACGwwACgkQSpIVLfL9bb39XgD6A91LwqK+CEzl
+McqZHXuttXHc2wZ2nvjjtbzWSEzxvpAA/jdWwCNBg65Wh93Df5/6Ec05W8AgFwJH
+/NBHfzBA90AM
+=E46c
+-----END PGP PUBLIC KEY BLOCK-----`;
+
+    ava.default('[unit][KeyUtil.parse] OpenPGP parsing of never expiring key', async t => {
+      const key = await KeyUtil.parse(nonExpiringKey);
+      expect(key.id).to.equal('8DD737C086DAB3313EB76D5F4A92152DF2FD6DBD');
+      expect(key.expiration).to.equal(undefined);
       t.pass();
     });
 

@@ -204,7 +204,7 @@ export class OpenPGPKey {
       // tslint:disable-next-line: no-unsafe-any
       identities: pubkey.users.map(u => u.userId).filter(u => !!u && u.userid && Str.parseEmail(u.userid).email).map(u => u!.userid).filter(Boolean) as string[],
       lastModified,
-      expiration: exp instanceof Date ? exp.getTime() : exp,
+      expiration: exp instanceof Date ? exp.getTime() : undefined,
       created: pubkey.getCreationTime().getTime(),
       fullyDecrypted: pubkey.isPublic() ? true /* public keys are always decrypted */ : pubkey.isFullyDecrypted(),
       fullyEncrypted: pubkey.isPublic() ? false /* public keys are never encrypted */ : pubkey.isFullyEncrypted(),
