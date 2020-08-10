@@ -809,6 +809,62 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await contactsFrame.waitForContent('@container-pubkey-details', 'Expired: yes');
     }));
 
+    ava.default('import S/MIME cert', testWithBrowser('compose', async (t, browser) => {
+      const smimeCert = `-----BEGIN CERTIFICATE-----
+MIIE9DCCA9ygAwIBAgIQY/cCXnAPOUUwH7L7pWdPhDANBgkqhkiG9w0BAQsFADCB
+jTELMAkGA1UEBhMCSVQxEDAOBgNVBAgMB0JlcmdhbW8xGTAXBgNVBAcMEFBvbnRl
+IFNhbiBQaWV0cm8xIzAhBgNVBAoMGkFjdGFsaXMgUy5wLkEuLzAzMzU4NTIwOTY3
+MSwwKgYDVQQDDCNBY3RhbGlzIENsaWVudCBBdXRoZW50aWNhdGlvbiBDQSBHMjAe
+Fw0yMDAzMjMxMzU2NDZaFw0yMTAzMjMxMzU2NDZaMCIxIDAeBgNVBAMMF2FjdGFs
+aXNAbWV0YS4zM21haWwuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKC
+AQEArVVpXBkzGvcqib8rDwqHCaKm2EiPslQ8I0G1ZDxrs6Ke2QXNm3yGVwOzkVvK
+eEnuzE5M4BBeh+GwcfvoyS/xI6m44WWnqj65cJoSLA1ypE4D4urv/pzG783y2Vdy
+Q96izBdFyevsil89Z2AxZxrFh1RC2XvgXad4yyD4yvVpHskfPexnhLliHl7cpXjw
+5D2n1hBGR8CSDbQAgO58PB7Y2ldrTi+rWBu2Akuk/YyWOOiGA8pdfLBIkOFJTeQc
+m7+vWP2JTN6Xp+JkGvXQBRaqwyGVg8fSc4e7uGCXZaH5/Na2FXY2OL+tYDDb27zS
+3cBrzEbGVjA6raYxcrFWV4PkdwIDAQABo4IBuDCCAbQwDAYDVR0TAQH/BAIwADAf
+BgNVHSMEGDAWgBRr8o2eaMElBB9RNFf2FlyU6k1pGjB+BggrBgEFBQcBAQRyMHAw
+OwYIKwYBBQUHMAKGL2h0dHA6Ly9jYWNlcnQuYWN0YWxpcy5pdC9jZXJ0cy9hY3Rh
+bGlzLWF1dGNsaWcyMDEGCCsGAQUFBzABhiVodHRwOi8vb2NzcDA5LmFjdGFsaXMu
+aXQvVkEvQVVUSENMLUcyMCIGA1UdEQQbMBmBF2FjdGFsaXNAbWV0YS4zM21haWwu
+Y29tMEcGA1UdIARAMD4wPAYGK4EfARgBMDIwMAYIKwYBBQUHAgEWJGh0dHBzOi8v
+d3d3LmFjdGFsaXMuaXQvYXJlYS1kb3dubG9hZDAdBgNVHSUEFjAUBggrBgEFBQcD
+AgYIKwYBBQUHAwQwSAYDVR0fBEEwPzA9oDugOYY3aHR0cDovL2NybDA5LmFjdGFs
+aXMuaXQvUmVwb3NpdG9yeS9BVVRIQ0wtRzIvZ2V0TGFzdENSTDAdBgNVHQ4EFgQU
+FrtAdAOjrcVeHg5K+T7sj7GHySMwDgYDVR0PAQH/BAQDAgWgMA0GCSqGSIb3DQEB
+CwUAA4IBAQAa9lXKDmV9874ojmIZEBL1S8mKaSNBWP+n0vp5FO0Yh5oL9lspYTPs
+8s6alWUSpVHV8if4uZ2EfcNpNkm9dAajj2n/F/Jyfkp8URu4uvBfm1QColl/zM/D
+x4B7FaD2dw0jTF/k5ulDmzUOc4k+j3LtZNbDOZMF/2g05hSKde/he1njlY3oKa9g
+VW8ftc2NwiSMthxyEIM+ALbNQVML2oN50gArBn5GeI22/aIBZxjtbEdmSTZIf82H
+sOwAnhJ+pD5iIPaF2oa0yN3PvI6IGxLpEv16tQO1N6e5bdP6ZDwqTQJyK+oNTNda
+yPLCqVTFJQWaCR5ZTekRQPTDZkjxjxbs
+-----END CERTIFICATE-----`;
+      const recipientEmail = 'actalis@meta.33mail.com';
+      // add S/MIME key manually
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('test.ci.compose@org.flowcrypt.com'));
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+      await contactsFrame.waitAll('@page-contacts');
+      await contactsFrame.waitAndClick('@action-show-import-public-keys-form', { confirmGone: true });
+      await contactsFrame.waitAndType('@input-bulk-public-keys', smimeCert);
+      await contactsFrame.waitAndClick('@action-show-parsed-public-keys', { confirmGone: true });
+      await contactsFrame.waitAll('iframe');
+      const pubkeyFrame = await contactsFrame.getFrame(['pgp_pubkey.htm']);
+      await pubkeyFrame.waitForContent('@action-add-contact', 'IMPORT KEY');
+      await pubkeyFrame.waitAndClick('@action-add-contact');
+      await pubkeyFrame.waitForContent('@container-pgp-pubkey', `${recipientEmail} added`);
+      await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
+      await contactsFrame.waitAndClick(`@action-show-pubkey-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`, { confirmGone: true });
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Type: x509');
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Fingerprint: 63F7 025E 700F 3945 301F B2FB A567 4F84');
+      await contactsFrame.waitForContent('@container-pubkey-details', `Users: ${recipientEmail}`);
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Created on: Mon Mar 23 2020');
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Expiration: Tue Mar 23 2021');
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Expired: no');
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Usable for encryption: true');
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Usable for signing: true');
+    }));
+
   }
 
 };
