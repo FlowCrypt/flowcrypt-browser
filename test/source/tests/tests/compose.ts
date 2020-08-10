@@ -858,8 +858,8 @@ yPLCqVTFJQWaCR5ZTekRQPTDZkjxjxbs
       await contactsFrame.waitForContent('@container-pubkey-details', 'Type: x509');
       await contactsFrame.waitForContent('@container-pubkey-details', 'Fingerprint: 63F7 025E 700F 3945 301F B2FB A567 4F84');
       await contactsFrame.waitForContent('@container-pubkey-details', `Users: ${recipientEmail}`);
-      await contactsFrame.waitForContent('@container-pubkey-details', 'Created on: Mon Mar 23 2020 14:56:46');
-      await contactsFrame.waitForContent('@container-pubkey-details', 'Expiration: Tue Mar 23 2021 14:56:46');
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Created on: Mon Mar 23 2020');
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Expiration: Tue Mar 23 2021');
       await contactsFrame.waitForContent('@container-pubkey-details', 'Expired: no');
       await contactsFrame.waitForContent('@container-pubkey-details', 'Usable for encryption: true');
       await contactsFrame.waitForContent('@container-pubkey-details', 'Usable for signing: true');
