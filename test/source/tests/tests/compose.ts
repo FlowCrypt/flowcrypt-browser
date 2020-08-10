@@ -809,7 +809,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await contactsFrame.waitForContent('@container-pubkey-details', 'Expired: yes');
     }));
 
-
     ava.default('import S/MIME cert', testWithBrowser('compose', async (t, browser) => {
       const smimeCert = `-----BEGIN CERTIFICATE-----
 MIIE9DCCA9ygAwIBAgIQY/cCXnAPOUUwH7L7pWdPhDANBgkqhkiG9w0BAQsFADCB
