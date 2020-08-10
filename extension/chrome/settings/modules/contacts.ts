@@ -212,7 +212,7 @@ View.run(class ContactsView extends View {
       } else { // Render Results
         const container = $('#bulk_import #processed');
         for (const block of blocks) {
-          if (block.type === 'publicKey') {
+          if (block.type === 'publicKey' || block.type === 'certificate') {
             const replacedHtmlSafe = XssSafeFactory.replaceRenderableMsgBlocks(this.factory!, block.content.toString(), '', '');
             if (replacedHtmlSafe && replacedHtmlSafe !== value) {
               container.append(replacedHtmlSafe); // xss-safe-factory
