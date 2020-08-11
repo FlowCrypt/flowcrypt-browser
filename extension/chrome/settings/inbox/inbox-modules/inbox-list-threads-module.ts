@@ -15,7 +15,7 @@ import { Xss } from '../../../../js/common/platform/xss.js';
 export class InboxListThreadsModule extends ViewModule<InboxView> {
 
   public render = async (labelId: string) => {
-    this.view.displayBlock('inbox', `Messages in ${Xss.htmlEscape(this.view.inboxMenuModule.getLabelName(labelId))}`);
+    this.view.displayBlock('inbox', `Messages in ${Xss.escape(this.view.inboxMenuModule.getLabelName(labelId))}`);
     try {
       const { threads } = await this.view.gmail.threadList(labelId);
       if (threads?.length) {
