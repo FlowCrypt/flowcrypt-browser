@@ -37,6 +37,15 @@ export class Xss {
     return $(selector as any).replaceWith(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
   }
 
+  public static htmlEscape = (str: string) => {
+    return str.replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\//g, '&#x2F;');
+  }
+
   /**
    * Sanitize HTML to protect from nasty content from untrusted sources
    *
