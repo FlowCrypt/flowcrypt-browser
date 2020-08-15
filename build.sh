@@ -52,7 +52,6 @@ cp node_modules/openpgp/dist/openpgp.js $OUTDIR/lib/openpgp.js
 cp node_modules/openpgp/dist/openpgp.worker.js $OUTDIR/lib/openpgp.worker.js
 cp node_modules/sweetalert2/dist/sweetalert2.js $OUTDIR/lib/sweetalert2.js
 cp node_modules/sweetalert2/dist/sweetalert2.css $OUTDIR/css/sweetalert2.css
-cp node_modules/node-forge/dist/forge.min.js $OUTDIR/lib/forge.js  # todo - don't want minified
 cp node_modules/iso-8859-2/iso-8859-2.js $OUTDIR/lib/iso-8859-2.js
 cp node_modules/zxcvbn/dist/zxcvbn.js $OUTDIR/lib/zxcvbn.js
 cp node_modules/squire-rte/build/squire-raw.js $OUTDIR/lib/squire-raw.js
@@ -62,9 +61,7 @@ mkdir -p $OUTDIR/lib/bootstrap
 cp node_modules/bootstrap/dist/js/bootstrap.min.js $OUTDIR/lib/bootstrap/bootstrap.min.js
 cp node_modules/bootstrap/dist/css/bootstrap.min.css $OUTDIR/lib/bootstrap/bootstrap.min.css
 
-
-
-# build sequentially
+# remaining build steps sequentially
 ( cd $SRCDIR && cp -r --parents ./**/*.{js,htm,css,ttf,woff2,png,svg,txt} ./{.web-extension-id,manifest.json} ../$OUTDIR )
 node ./build/tooling/resolve-modules
 node ./build/tooling/fill-values
