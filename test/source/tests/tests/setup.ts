@@ -241,7 +241,10 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await settingsPage.click('@action-show-overlay-details');
       await settingsPage.waitAll('@container-overlay-details');
       await Util.sleep(0.5);
-      expect(await settingsPage.read('@container-overlay-details')).to.contain('500 when PUT-ing http://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedPrivateKey,publicKey,fingerprint -> Intentional error for put.error user to test client behavior');
+      const details = await settingsPage.read('@container-overlay-details');
+      expect(details).to.contain('500 when PUT-ing http://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedPrivateKey,publicKey,fingerprint -> Intentional error for put.error user to test client behavior');
+      expect(details).to.not.contain('PRIVATE KEY');
+      expect(details).to.not.contain('<REDACTED:');
     }));
 
     ava.default('fail@key-manager-server-offline.flowcrypt.com - shows friendly KM not reachable error', testWithBrowser(undefined, async (t, browser) => {
@@ -281,6 +284,21 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       const approxMonth = [29, 30, 31].map(days => Str.datetimeToDate(Str.fromDate(new Date(Date.now() + 1000 * 60 * 60 * 24 * days))));
       expect(await myKeyFrame.read('@content-key-expiration')).to.be.oneOf(approxMonth);
       await SettingsPageRecipe.closeDialog(settingsPage);
+    }));
+
+    ava.default('reject.client.keypair@key-manager-autogen.flowcrypt.com - does not leak sensitive info on err 400', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'reject.client.keypair@key-manager-autogen.flowcrypt.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await settingsPage.waitAll(['@action-overlay-retry', '@container-overlay-prompt-text', '@action-show-overlay-details']);
+      await Util.sleep(0.5);
+      expect(await settingsPage.read('@container-overlay-prompt-text')).to.contain('Server says this was a bad request');
+      await settingsPage.click('@action-show-overlay-details');
+      await settingsPage.waitAll('@container-overlay-details');
+      await Util.sleep(0.5);
+      const details = await settingsPage.read('@container-overlay-details');
+      expect(details).to.contain('400 when PUT-ing http://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedPrivateKey,publicKey,fingerprint -> No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.com yet');
+      expect(details).to.not.contain('PRIVATE KEY');
+      expect(details).to.contain('<REDACTED:PRV>');
     }));
 
   }

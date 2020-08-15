@@ -33,6 +33,9 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'put.error@key-manager-autogen.flowcrypt.com') {
         return { privateKeys: [] };
       }
+      if (acctEmail === 'reject.client.keypair@key-manager-autogen.flowcrypt.com') {
+        return { privateKeys: [] };
+      }
       if (acctEmail === 'expire@key-manager-keygen-expiration.flowcrypt.com') {
         return { privateKeys: [] };
       }
@@ -68,6 +71,9 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       }
       if (acctEmail === 'put.error@key-manager-autogen.flowcrypt.com') {
         throw new Error('Intentional error for put.error user to test client behavior');
+      }
+      if (acctEmail === 'reject.client.keypair@key-manager-autogen.flowcrypt.com') {
+        throw new HttpClientErr(`No key has been generated for ${acctEmail} yet. Please ask your administrator.`);
       }
       if (acctEmail === 'expire@key-manager-keygen-expiration.flowcrypt.com') {
         const prvDetails = await KeyUtil.parseDetails(decryptedPrivateKey);
