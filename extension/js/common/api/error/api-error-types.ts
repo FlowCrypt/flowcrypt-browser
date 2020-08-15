@@ -75,7 +75,9 @@ export class AjaxErr extends ApiCallErr { // no static props, else will get seri
     stack += `\n\nprovided ajax call stack:\n${stack}`;
     if (status === 400 || status === 403 || (status === 200 && responseText && responseText[0] !== '{')) {
       // RawAjaxErr with status 200 can happen when it fails to parse response - eg non-json result
-      stack += `\n\nresponseText(0, 1000):\n${responseText.substr(0, 1000)}\n\npayload(0, 1000):\n${Catch.stringify(req.data).substr(0, 1000)}`;
+      const redactedRes = AjaxErr.redactSensitiveData(responseText.substr(0, 1000));
+      const redactedPayload = AjaxErr.redactSensitiveData(Catch.stringify(req.data).substr(0, 1000));
+      stack += `\n\nresponseText(0, 1000):\n${redactedRes}\n\npayload(0, 1000):\n${redactedPayload}`;
     }
     const errMsg = AjaxErr.parseErrMsg(responseText, 'JSON[error][message] || JSON[message]');
     const message = `${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallErr.describeApiAction(req)} -> ${errMsg}`;
@@ -109,6 +111,17 @@ export class AjaxErr extends ApiCallErr { // no static props, else will get seri
       // skip
     }
     return undefined;
+  }
+
+  private static redactSensitiveData(str: string): string {
+    const lowered = str.toLowerCase();
+    if (lowered.includes('private key') || lowered.includes('privatekey')) {
+      return '<REDACTED:PRV>';
+    }
+    if (lowered.includes('idtoken') || lowered.includes('id_token')) {
+      return '<REDACTED:IDTOKEN>';
+    }
+    return str;
   }
 
   constructor(
