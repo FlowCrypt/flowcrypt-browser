@@ -36,6 +36,9 @@
     "typescript": "3.7.5",
     "web-ext": "4.3.0"
   },
+  "dependencies": {
+    "dompurify": "2.0.12"
+  },
   "scripts": {
     "build": "./build.sh",
     "build-incremental": "./build.sh --incremental",

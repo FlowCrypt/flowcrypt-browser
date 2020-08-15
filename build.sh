@@ -43,6 +43,8 @@ else
 
 fi
 
+# copy dependencies
+cp node_modules/dompurify/dist/purify.js $OUTDIR/lib/purify.js
 
 # build sequentially
 ( cd $SRCDIR && cp -r --parents ./**/*.{js,htm,css,ttf,woff2,png,svg,txt} ./{.web-extension-id,manifest.json} ../$OUTDIR )
