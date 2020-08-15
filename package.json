@@ -36,6 +36,19 @@
     "typescript": "3.7.5",
     "web-ext": "4.3.0"
   },
+  "dependencies": {
+    "dompurify": "2.0.12",
+    "jquery": "3.5.1",
+    "openpgp": "4.10.7",
+    "sweetalert2": "9.17.1",
+    "node-forge": "0.9.1",
+    "iso-8859-2": "1.0.0",
+    "zxcvbn": "4.4.2",
+    "squire-rte": "1.10.2",
+    "clipboard": "2.0.6",
+    "fine-uploader": "5.16.2",
+    "bootstrap": "3.4.1"
+  },
   "scripts": {
     "build": "./build.sh",
     "build-incremental": "./build.sh --incremental",
