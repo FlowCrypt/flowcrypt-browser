@@ -40,7 +40,8 @@
     "dompurify": "2.0.12",
     "jquery": "3.5.1",
     "openpgp": "4.10.7",
-    "sweetalert2": "9.17.1"
+    "sweetalert2": "9.17.1",
+    "node-forge": "0.9.1"
   },
   "scripts": {
     "build": "./build.sh",
