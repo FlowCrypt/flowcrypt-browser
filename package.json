@@ -38,7 +38,8 @@
   },
   "dependencies": {
     "dompurify": "2.0.12",
-    "jquery": "3.5.1"
+    "jquery": "3.5.1",
+    "openpgp": "4.10.7"
   },
   "scripts": {
     "build": "./build.sh",
