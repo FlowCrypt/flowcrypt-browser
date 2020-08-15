@@ -113,7 +113,7 @@ export class AjaxErr extends ApiCallErr { // no static props, else will get seri
     return undefined;
   }
 
-  private static redactSensitiveData(str: string): string {
+  private static redactSensitiveData = (str: string): string => {
     const lowered = str.toLowerCase();
     if (lowered.includes('private key') || lowered.includes('privatekey')) {
       return '<REDACTED:PRV>';
