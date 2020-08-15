@@ -45,6 +45,7 @@ fi
 
 # copy dependencies
 cp node_modules/dompurify/dist/purify.js $OUTDIR/lib/purify.js
+cp node_modules/jquery/dist/jquery.min.js $OUTDIR/lib/jquery.min.js
 
 # build sequentially
 ( cd $SRCDIR && cp -r --parents ./**/*.{js,htm,css,ttf,woff2,png,svg,txt} ./{.web-extension-id,manifest.json} ../$OUTDIR )

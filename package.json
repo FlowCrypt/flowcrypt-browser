@@ -37,7 +37,8 @@
     "web-ext": "4.3.0"
   },
   "dependencies": {
-    "dompurify": "2.0.12"
+    "dompurify": "2.0.12",
+    "jquery": "3.5.1"
   },
   "scripts": {
     "build": "./build.sh",
