@@ -178,10 +178,13 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     if (isPost(req)) {
       const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
       const body = parsedReq.body as DraftSaveModel;
-      if (body && body.message && body.message.raw
-        && typeof body.message.raw === 'string') {
+      if (body && body.message && body.message.raw && typeof body.message.raw === 'string') {
         if (body.message.threadId && !new GoogleData(acct).getThreads().find(t => t.id === body.message.threadId)) {
           throw new HttpClientErr('The thread you are replying to not found', 404);
+        }
+        const decoded = await Parse.convertBase64ToMimeMsg(body.message.raw);
+        if (!decoded.text.startsWith('[flowcrypt:') && !decoded.text.startsWith('(saving of this draft was interrupted - to decrypt it, send it to yourself)')) {
+          throw new Error(`The "flowcrypt" draft prefix was not found in the draft. Instead starts with: ${decoded.text.substr(0, 100)}`);
         }
         return {
           id: 'mockfakedraftsave', message: {

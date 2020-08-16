@@ -40,7 +40,14 @@ export class GmailMsg {
     const dateHeader = msg.mimeMsg.headers.get('date')! as Date;
     const messageIdHeader = msg.mimeMsg.headers.get('message-id')! as string;
     const mimeVersionHeader = msg.mimeMsg.headers.get('mime-version')! as string;
-    const textBase64 = Buffer.from(msg.mimeMsg.text, 'utf-8').toString('base64');
+    let body;
+    if (msg.mimeMsg.text) {
+      const textBase64 = Buffer.from(msg.mimeMsg.text, 'utf-8').toString('base64');
+      body = { attachmentId: '', size: textBase64.length, data: textBase64 };
+    } else if (typeof msg.mimeMsg.html === 'string') {
+      const htmlBase64 = Buffer.from(msg.mimeMsg.html, 'utf-8').toString('base64');
+      body = { attachmentId: '', size: htmlBase64.length, data: htmlBase64 };
+    }
     this.payload = {
       mimeType: contentTypeHeader.value,
       headers: [
@@ -48,11 +55,7 @@ export class GmailMsg {
         { name: "Message-Id", value: messageIdHeader },
         { name: "Mime-Version", value: mimeVersionHeader }
       ],
-      body: {
-        attachmentId: '',
-        size: textBase64.length,
-        data: textBase64
-      }
+      body
     };
     if (toHeader) {
       this.payload.headers!.push({ name: 'To', value: toHeader.value.map(a => a.address).join(',') });
