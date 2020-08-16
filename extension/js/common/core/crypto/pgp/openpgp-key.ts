@@ -9,8 +9,6 @@ import { PgpMsgMethod, PgpMsg } from './pgp-msg.js';
 
 const internal = Symbol('internal public key');
 
-// todo - OpenPGPKey and PgpKey should be merged into one
-
 export class OpenPGPKey {
 
   private static readonly encryptionText = 'This is the text we are encrypting!';
