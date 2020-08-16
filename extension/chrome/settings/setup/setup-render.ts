@@ -9,7 +9,7 @@ import { SetupView } from '../setup.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { PgpKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
+import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 
 export class SetupRenderModule {
 
@@ -99,7 +99,8 @@ export class SetupRenderModule {
       return await Settings.promptToRetry(e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => this.renderSetupDialog());
     }
     if (keyserverRes.pubkey) {
-      this.view.acctEmailAttesterLongid = await PgpKey.longid(keyserverRes.pubkey);
+      const pub = await KeyUtil.parse(keyserverRes.pubkey);
+      this.view.acctEmailAttesterPubId = pub.id;
       if (!this.view.orgRules.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         this.displayBlock('step_2b_manual_enter');

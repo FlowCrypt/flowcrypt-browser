@@ -16,7 +16,7 @@ import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { PgpKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
+import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 
 type AttesterKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: string, match: boolean }> };
 
@@ -114,7 +114,7 @@ View.run(class KeyserverView extends View {
     const diagnosis: AttesterKeyserverDiagnosis = { hasPubkeyMissing: false, hasPubkeyMismatch: false, results: {} };
     const { sendAs } = await AcctStore.get(this.acctEmail, ['sendAs']);
     const storedKeys = await KeyStore.get(this.acctEmail);
-    const storedKeysLongids = storedKeys.map(ki => ki.longid);
+    const storedKeysIds = storedKeys.map(ki => ki.fingerprint);
     const results = await this.pubLookup.attester.lookupEmails(sendAs ? Object.keys(sendAs) : [this.acctEmail]);
     for (const email of Object.keys(results)) {
       const pubkeySearchResult = results[email];
@@ -122,8 +122,9 @@ View.run(class KeyserverView extends View {
         diagnosis.hasPubkeyMissing = true;
         diagnosis.results[email] = { pubkey: undefined, match: false };
       } else {
+        const pub = await KeyUtil.parse(pubkeySearchResult.pubkey);
         let match = true;
-        if (!storedKeysLongids.includes(String(await PgpKey.longid(pubkeySearchResult.pubkey)))) {
+        if (!storedKeysIds.includes(pub.id)) {
           diagnosis.hasPubkeyMismatch = true;
           match = false;
         }

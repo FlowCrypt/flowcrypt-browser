@@ -30,7 +30,6 @@ import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 import { KeyManager } from '../../js/common/api/key-manager.js';
 import { SetupKeyManagerAutogenModule } from './setup/setup-key-manager-autogen.js';
 import Swal from 'sweetalert2';
-import { PgpKey } from '../../js/common/core/crypto/pgp/openpgp-key.js';
 
 export interface SetupOptions {
   passphrase: string;
@@ -62,7 +61,7 @@ export class SetupView extends View {
   public pubLookup!: PubLookup;
   public keyManager: KeyManager | undefined; // not set if no url in org rules
 
-  public acctEmailAttesterLongid: string | undefined;
+  public acctEmailAttesterPubId: string | undefined;
   public fetchedKeyBackups: KeyInfo[] = [];
   public fetchedKeyBackupsUniqueLongids: string[] = [];
   public importedKeysUniqueLongids: string[] = [];
@@ -250,7 +249,8 @@ export class SetupView extends View {
     } else {
       addresses = [this.acctEmail];
     }
-    if (this.acctEmailAttesterLongid && this.acctEmailAttesterLongid !== await PgpKey.longid(armoredPubkey)) {
+    const pub = await KeyUtil.parse(armoredPubkey);
+    if (this.acctEmailAttesterPubId && this.acctEmailAttesterPubId !== pub.id) {
       // already submitted another pubkey for this email
       // todo - offer user to fix it up
       return;
