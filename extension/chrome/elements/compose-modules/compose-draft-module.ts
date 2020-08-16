@@ -167,7 +167,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
           await this.draftSave(true); // forceSave=true to not skip
         } else {
           Catch.reportErr(e);
-          this.view.S.cached('send_btn_note').text('Not saved (error)');
+          this.view.S.cached('send_btn_note').text(`Not saved (${e})`);
         }
       }
       this.currentlySavingDraft = false;
