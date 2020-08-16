@@ -47,24 +47,23 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
     if (isPut(req)) {
       const { decryptedPrivateKey, publicKey, fingerprint } = body as Dict<string>;
       if (acctEmail === 'put.key@key-manager-autogen.flowcrypt.com') {
-        const prvs = await KeyUtil.parseMany(decryptedPrivateKey);
-        expect(prvs).to.have.length(1);
-        expect(prvs[0].).to.equal(2048);
-        expect(prvs[0].ids[0].fingerprint).to.equal(fingerprint);
-        expect(prvs[0].users).to.have.length(1);
-        expect(prvs[0].users[0]).to.equal('First Last <put.key@key-manager-autogen.flowcrypt.com>');
-        expect(prvs[0].private).to.exist;
-        expect(prvs[0].isFullyDecrypted).to.be.true;
-        expect(prv.expiration).to.not.exist;
-        const pubDetails = await KeyUtil.parseDetails(publicKey);
-        expect(pubDetails.keys).to.have.length(1);
-        expect(pubDetails.keys[0].algo.bits).to.equal(2048);
-        expect(pubDetails.keys[0].ids[0].fingerprint).to.equal(fingerprint);
-        expect(pubDetails.keys[0].users).to.have.length(1);
-        expect(pubDetails.keys[0].users[0]).to.equal('First Last <put.key@key-manager-autogen.flowcrypt.com>');
-        expect(pubDetails.keys[0].private).to.not.exist;
-        const pub = pubDetails.keys[0].public;
-        expect(pub.expiration).to.not.exist;
+        const prv = await KeyUtil.parseMany(decryptedPrivateKey);
+        expect(prv).to.have.length(1);
+        expect(prv[0].algo.bits).to.equal(2048);
+        expect(prv[0].id).to.equal(fingerprint);
+        expect(prv[0].identities).to.have.length(1);
+        expect(prv[0].identities[0]).to.equal('First Last <put.key@key-manager-autogen.flowcrypt.com>');
+        expect(prv[0].isPrivate).to.be.true;
+        expect(prv[0].fullyDecrypted).to.be.true;
+        expect(prv[0].expiration).to.not.exist;
+        const pub = await KeyUtil.parseMany(publicKey);
+        expect(pub).to.have.length(1);
+        expect(pub[0].algo.bits).to.equal(2048);
+        expect(pub[0].id).to.equal(fingerprint);
+        expect(pub[0].identities).to.have.length(1);
+        expect(pub[0].identities[0]).to.equal('First Last <put.key@key-manager-autogen.flowcrypt.com>');
+        expect(pub[0].isPrivate).to.equal(false);
+        expect(pub[0].expiration).to.not.exist;
         MOCK_KM_LAST_INSERTED_KEY[acctEmail] = { decryptedPrivateKey, publicKey, fingerprint };
         return {};
       }
@@ -75,25 +74,23 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         throw new HttpClientErr(`No key has been generated for ${acctEmail} yet. Please ask your administrator.`);
       }
       if (acctEmail === 'expire@key-manager-keygen-expiration.flowcrypt.com') {
-        const prvDetails = await KeyUtil.parseDetails(decryptedPrivateKey);
-        expect(prvDetails.keys).to.have.length(1);
-        expect(prvDetails.keys[0].algo.bits).to.equal(2048);
-        expect(prvDetails.keys[0].ids[0].fingerprint).to.equal(fingerprint);
-        expect(prvDetails.keys[0].users).to.have.length(1);
-        expect(prvDetails.keys[0].users[0]).to.equal('First Last <expire@key-manager-keygen-expiration.flowcrypt.com>');
-        expect(prvDetails.keys[0].private).to.exist;
-        expect(prvDetails.keys[0].isFullyDecrypted).to.be.true;
-        const prv = await KeyUtil.parse(prvDetails.keys[0].private!);
-        expect(prv.expiration).to.exist;
-        const pubDetails = await KeyUtil.parseDetails(publicKey);
-        expect(pubDetails.keys).to.have.length(1);
-        expect(pubDetails.keys[0].algo.bits).to.equal(2048);
-        expect(pubDetails.keys[0].ids[0].fingerprint).to.equal(fingerprint);
-        expect(pubDetails.keys[0].users).to.have.length(1);
-        expect(pubDetails.keys[0].users[0]).to.equal('First Last <expire@key-manager-keygen-expiration.flowcrypt.com>');
-        expect(pubDetails.keys[0].private).to.not.exist;
-        const pub = pubDetails.keys[0].public;
-        expect(pub.expiration).to.exist;
+        const prv = await KeyUtil.parseMany(decryptedPrivateKey);
+        expect(prv).to.have.length(1);
+        expect(prv[0].algo.bits).to.equal(2048);
+        expect(prv[0].id).to.equal(fingerprint);
+        expect(prv[0].identities).to.have.length(1);
+        expect(prv[0].identities[0]).to.equal('First Last <expire@key-manager-keygen-expiration.flowcrypt.com>');
+        expect(prv[0].isPrivate).to.be.true;
+        expect(prv[0].fullyDecrypted).to.be.true;
+        expect(prv[0].expiration).to.exist;
+        const pub = await KeyUtil.parseMany(publicKey);
+        expect(pub).to.have.length(1);
+        expect(pub[0].algo.bits).to.equal(2048);
+        expect(pub[0].id).to.equal(fingerprint);
+        expect(pub[0].identities).to.have.length(1);
+        expect(pub[0].identities[0]).to.equal('First Last <expire@key-manager-keygen-expiration.flowcrypt.com>');
+        expect(pub[0].isPrivate).to.be.false;
+        expect(pub[0].expiration).to.exist;
         MOCK_KM_LAST_INSERTED_KEY[acctEmail] = { decryptedPrivateKey, publicKey, fingerprint };
         return {};
       }
