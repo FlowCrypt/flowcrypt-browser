@@ -143,10 +143,10 @@ export class OpenPGPKey {
   }
 
   // TODO: should be private, will change when readMany is rewritten
-  public static wrap = async (pubkey: OpenPGP.key.Key, pkey: Key, raw?: string): Promise<Key> => {
+  public static wrap = async (opgpKey: OpenPGP.key.Key, pkey: Key, raw?: string): Promise<Key> => {
     let exp: null | Date | number;
     try {
-      exp = await pubkey.getExpirationTime('encrypt');
+      exp = await opgpKey.getExpirationTime('encrypt');
     } catch (e) {
       // tslint:disable-next-line: no-null-keyword
       exp = null;
@@ -163,7 +163,7 @@ export class OpenPGPKey {
       }
       return Date.now() > exp.getTime();
     };
-    const emails = pubkey.users
+    const emails = opgpKey.users
       .map(user => user.userId)
       .filter(userId => userId !== null)
       .map((userId: OpenPGP.packet.Userid) => {
@@ -179,37 +179,44 @@ export class OpenPGPKey {
       .map(email => email.toLowerCase());
     let lastModified: undefined | number;
     try {
-      lastModified = await OpenPGPKey.getLastSigTime(pubkey);
+      lastModified = await OpenPGPKey.getLastSigTime(opgpKey);
     } catch (e) {
       // never had any valid signature
     }
-    const fingerprint = pubkey.getFingerprint();
+    const fingerprint = opgpKey.getFingerprint();
     if (!fingerprint) {
       throw new Error('Key does not have a fingerprint and cannot be parsed.');
     }
+    const algoInfo = opgpKey.primaryKey.getAlgorithmInfo();
     Object.assign(pkey, {
       type: 'openpgp',
       id: fingerprint.toUpperCase(),
-      ids: pubkey.getKeyIds().map(id => OpenPGPKey.bytesToLongid(id.bytes)), // todo - longids should not be called just ids
-      usableForEncryption: ! await Catch.doesReject(pubkey.getEncryptionKey()),
-      usableButExpired: await OpenPGPKey.usableButExpired(pubkey, exp, expired),
-      usableForSigning: ! await Catch.doesReject(pubkey.getSigningKey()),
+      ids: opgpKey.getKeyIds().map(id => OpenPGPKey.bytesToLongid(id.bytes)), // todo - longids should not be called just ids
+      usableForEncryption: ! await Catch.doesReject(opgpKey.getEncryptionKey()),
+      usableButExpired: await OpenPGPKey.usableButExpired(opgpKey, exp, expired),
+      usableForSigning: ! await Catch.doesReject(opgpKey.getSigningKey()),
       // valid emails extracted from uids
       emails,
       // full uids that have valid emails in them
       // tslint:disable-next-line: no-unsafe-any
-      identities: pubkey.users.map(u => u.userId).filter(u => !!u && u.userid && Str.parseEmail(u.userid).email).map(u => u!.userid).filter(Boolean) as string[],
+      identities: opgpKey.users.map(u => u.userId).filter(u => !!u && u.userid && Str.parseEmail(u.userid).email).map(u => u!.userid).filter(Boolean) as string[],
       lastModified,
       expiration: exp instanceof Date ? exp.getTime() : undefined,
-      created: pubkey.getCreationTime().getTime(),
-      fullyDecrypted: pubkey.isPublic() ? true /* public keys are always decrypted */ : pubkey.isFullyDecrypted(),
-      fullyEncrypted: pubkey.isPublic() ? false /* public keys are never encrypted */ : pubkey.isFullyEncrypted(),
-      isPublic: pubkey.isPublic(),
-      isPrivate: pubkey.isPrivate(),
+      created: opgpKey.getCreationTime().getTime(),
+      fullyDecrypted: opgpKey.isPublic() ? true /* public keys are always decrypted */ : opgpKey.isFullyDecrypted(),
+      fullyEncrypted: opgpKey.isPublic() ? false /* public keys are never encrypted */ : opgpKey.isFullyEncrypted(),
+      isPublic: opgpKey.isPublic(),
+      isPrivate: opgpKey.isPrivate(),
+      algo: {
+        algorithm: algoInfo.algorithm,
+        bits: algoInfo.bits,
+        curve: (algoInfo as any).curve as string | undefined,
+        algorithmId: opgp.enums.publicKey[algoInfo.algorithm]
+      },
     } as Key);
     const extensions = pkey as unknown as { raw: string, [internal]: OpenPGP.key.Key };
-    extensions[internal] = pubkey;
-    extensions.raw = raw || pubkey.armor();
+    extensions[internal] = opgpKey;
+    extensions.raw = raw || opgpKey.armor();
     return pkey;
   }
 

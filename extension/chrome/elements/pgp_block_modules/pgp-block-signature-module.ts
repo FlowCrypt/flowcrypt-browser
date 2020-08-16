@@ -62,9 +62,9 @@ export class PgpBlockViewSignatureModule {
           return;
         }
         // ---> and pubkey found on keyserver by sender email
-        const { keys: [keyDetails] } = await BrowserMsg.send.bg.await.pgpKeyDetails({ pubkey });
-        if (!keyDetails || !keyDetails.ids.map(ids => ids.longid).includes(signerLongid)) {
-          render(`Fetched sender's pubkey ${keyDetails.ids[0].longid} but message was signed with a different key: ${signerLongid}, will not verify.`, () => undefined);
+        const { key } = await BrowserMsg.send.bg.await.keyParse({ armored: pubkey });
+        if (!key.ids.includes(signerLongid)) {
+          render(`Fetched sender's pubkey ${key.ids[0]} but message was signed with a different key: ${signerLongid}, will not verify.`, () => undefined);
           return;
         }
         // ---> and longid it matches signature

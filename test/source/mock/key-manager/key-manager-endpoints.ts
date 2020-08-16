@@ -6,7 +6,7 @@ import { isPut, isGet } from '../lib/mock-util';
 import { oauth } from '../lib/oauth';
 import { Dict } from '../../core/common';
 import { expect } from 'chai';
-import { KeyUtil } from '../../core/crypto/key';
+import { KeyUtil, Key } from '../../core/crypto/key';
 
 // tslint:disable:max-line-length
 /* eslint-disable max-len */
@@ -47,15 +47,14 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
     if (isPut(req)) {
       const { decryptedPrivateKey, publicKey, fingerprint } = body as Dict<string>;
       if (acctEmail === 'put.key@key-manager-autogen.flowcrypt.com') {
-        const prvDetails = await KeyUtil.parseDetails(decryptedPrivateKey);
-        expect(prvDetails.keys).to.have.length(1);
-        expect(prvDetails.keys[0].algo.bits).to.equal(2048);
-        expect(prvDetails.keys[0].ids[0].fingerprint).to.equal(fingerprint);
-        expect(prvDetails.keys[0].users).to.have.length(1);
-        expect(prvDetails.keys[0].users[0]).to.equal('First Last <put.key@key-manager-autogen.flowcrypt.com>');
-        expect(prvDetails.keys[0].private).to.exist;
-        expect(prvDetails.keys[0].isFullyDecrypted).to.be.true;
-        const prv = await KeyUtil.parse(prvDetails.keys[0].private!);
+        const prvs = await KeyUtil.parseMany(decryptedPrivateKey);
+        expect(prvs).to.have.length(1);
+        expect(prvs[0].).to.equal(2048);
+        expect(prvs[0].ids[0].fingerprint).to.equal(fingerprint);
+        expect(prvs[0].users).to.have.length(1);
+        expect(prvs[0].users[0]).to.equal('First Last <put.key@key-manager-autogen.flowcrypt.com>');
+        expect(prvs[0].private).to.exist;
+        expect(prvs[0].isFullyDecrypted).to.be.true;
         expect(prv.expiration).to.not.exist;
         const pubDetails = await KeyUtil.parseDetails(publicKey);
         expect(pubDetails.keys).to.have.length(1);

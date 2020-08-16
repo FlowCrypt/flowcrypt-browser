@@ -35,6 +35,12 @@ export interface Key {
   // TODO: Aren't isPublic and isPrivate mutually exclusive?
   isPublic: boolean;
   isPrivate: boolean;
+  algo: {
+    algorithm: string,
+    curve?: string,
+    bits?: number,
+    algorithmId: number
+  };
 }
 
 export type PubkeyResult = { pubkey: Key, email: string, isMine: boolean };
@@ -73,26 +79,6 @@ export interface KeyInfo extends PrvKeyInfo {
   primary: boolean;
 }
 
-export type KeyDetails$ids = {
-  longid: string;
-  fingerprint: string;
-};
-
-export interface KeyDetails {
-  private?: string;
-  public: Key;
-  isFullyEncrypted: boolean | undefined;
-  isFullyDecrypted: boolean | undefined;
-  ids: KeyDetails$ids[];
-  users: string[];
-  created: number;
-  algo: { // same as OpenPGP.key.AlgorithmInfo
-    algorithm: string;
-    algorithmId: number;
-    bits?: number;
-    curve?: string;
-  };
-}
 export type PrvPacket = (OpenPGP.packet.SecretKey | OpenPGP.packet.SecretSubkey);
 
 export class UnexpectedKeyTypeError extends Error { }

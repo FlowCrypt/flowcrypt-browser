@@ -11,13 +11,13 @@ import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
 import { Buf } from '../core/buf.js';
 import { Catch } from '../platform/catch.js';
 import { Env } from './env.js';
-import { KeyDetails } from '../core/crypto/key.js';
 import { PassphraseDialogType } from '../xss-safe-factory.js';
 import { PgpHash } from '../core/crypto/pgp/pgp-hash.js';
 import { PgpMsg } from '../core/crypto/pgp/pgp-msg.js';
 import { Ui } from './ui.js';
 import { GlobalStoreDict, GlobalIndex } from '../platform/store/global-store.js';
 import { AcctStoreDict, AccountIndex } from '../platform/store/acct-store.js';
+import { Key, KeyUtil } from '../core/crypto/key.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -55,12 +55,12 @@ export namespace Bm {
   export type StoreAcctGet = { acctEmail: string, keys: AccountIndex[]; };
   export type StoreAcctSet = { acctEmail: string, values: AcctStoreDict; };
   export type ReconnectAcctAuthPopup = { acctEmail: string, scopes?: string[] };
-  export type PgpKeyDetails = { pubkey: string };
   export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
   export type PgpMsgDiagnoseMsgPubkeys = PgpMsgMethod.Arg.DiagnosePubkeys;
   export type PgpMsgVerifyDetached = PgpMsgMethod.Arg.VerifyDetached;
   export type PgpHashChallengeAnswer = { answer: string };
   export type PgpMsgType = PgpMsgMethod.Arg.Type;
+  export type KeyParse = { armored: string };
   export type Ajax = { req: JQueryAjaxSettings, stack: string };
   export type AjaxGmailAttGetChunk = { acctEmail: string, msgId: string, attId: string };
   export type ShowAttachmentPreview = { iframeUrl: string };
@@ -74,19 +74,19 @@ export namespace Bm {
     export type StoreAcctGet = AcctStoreDict;
     export type StoreAcctSet = void;
     export type ReconnectAcctAuthPopup = AuthRes;
-    export type PgpKeyDetails = { original: string, normalized: string, keys: KeyDetails[] };
     export type PgpMsgDecrypt = DecryptResult;
     export type PgpMsgDiagnoseMsgPubkeys = DiagnoseMsgPubkeysResult;
     export type PgpMsgVerify = VerifyRes;
     export type PgpMsgType = PgpMsgTypeResult;
     export type PgpHashChallengeAnswer = { hashed: string };
+    export type KeyParse = { key: Key };
     export type AjaxGmailAttGetChunk = { chunk: Buf };
     export type _tab_ = { tabId: string | null | undefined };
     export type Db = any; // not included in Any below
     export type Ajax = any; // not included in Any below
 
-    export type Any = GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup | PgpKeyDetails
-      | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer | PgpMsgType
+    export type Any = GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup
+      | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer | PgpMsgType | KeyParse
       | StoreSessionGet | StoreSessionSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet
       | AjaxGmailAttGetChunk;
   }
@@ -94,7 +94,7 @@ export namespace Bm {
   export type AnyRequest = PassphraseEntry | StripeResult | OpenPage | OpenGoogleAuthDialog | Redirect | Reload |
     AddPubkeyDialog | ReinsertReplyBox | CloseReplyMessage | ScrollToElement | SubscribeDialog | RenderPublicKeys | NotificationShowAuthPopupNeeded |
     NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass | ReconnectAcctAuthPopup |
-    PgpKeyDetails | Db | StoreSessionSet | StoreSessionGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
+    Db | StoreSessionSet | StoreSessionGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet | KeyParse |
     PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | PgpMsgType | Ajax | FocusFrame |
     ShowAttachmentPreview;
 
@@ -140,7 +140,7 @@ export class BrowserMsg {
         pgpHashChallengeAnswer: (bm: Bm.PgpHashChallengeAnswer) => BrowserMsg.sendAwait(undefined, 'pgpHashChallengeAnswer', bm, true) as Promise<Bm.Res.PgpHashChallengeAnswer>,
         pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
         pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
-        pgpKeyDetails: (bm: Bm.PgpKeyDetails) => BrowserMsg.sendAwait(undefined, 'pgpKeyDetails', bm, true) as Promise<Bm.Res.PgpKeyDetails>,
+        keyParse: (bm: Bm.KeyParse) => BrowserMsg.sendAwait(undefined, 'pgpKeyParse', bm, true) as Promise<Bm.Res.KeyParse>,
         pgpMsgType: (bm: Bm.PgpMsgType) => BrowserMsg.sendAwait(undefined, 'pgpMsgType', bm, true) as Promise<Bm.Res.PgpMsgType>,
       },
     },
@@ -237,6 +237,7 @@ export class BrowserMsg {
     BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decryptMessage);
     BrowserMsg.bgAddListener('pgpMsgVerifyDetached', PgpMsg.verifyDetached);
     BrowserMsg.bgAddListener('pgpMsgType', PgpMsg.type);
+    BrowserMsg.bgAddListener('keyParse', async (r: Bm.KeyParse) => ({ key: await KeyUtil.parse(r.armored) }));
   }
 
   public static addListener = (name: string, handler: Handler) => {
