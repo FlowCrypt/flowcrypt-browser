@@ -88,7 +88,7 @@ const data: UserMessages = {
       "id": "draft-3",
       "threadId": "16cfb0e25821733b",
       "labelIds": ["DRAFT"],
-      "snippet": "[flowcrypt:link:draft_reply:16cfa9001baaac0a] -----BEGIN PGP MESSAGE----- Version: FlowCrypt 6.9.9 Gmail Encryption Comment: Seamlessly send and receive encrypted email wcFMA0taL/zmLZUBAQ/",
+      "snippet": "[cryptup:link:draft_reply:16cfa9001baaac0a] -----BEGIN PGP MESSAGE----- Version: FlowCrypt 6.9.9 Gmail Encryption Comment: Seamlessly send and receive encrypted email wcFMA0taL/zmLZUBAQ/",
       "historyId": "1044100",
       "internalDate": "1567580104000",
       "payload": {
