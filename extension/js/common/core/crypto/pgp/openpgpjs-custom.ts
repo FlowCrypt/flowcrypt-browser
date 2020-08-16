@@ -6,7 +6,7 @@ import { PrvPacket } from '../key.js';
 
 import { VERSION } from '../../const.js';
 import { requireOpenpgp } from '../../../platform/require.js';
-import { PgpKey } from './openpgp-key.js';
+import { OpenPGPKey } from './openpgp-key.js';
 
 export const opgp = requireOpenpgp();
 
@@ -19,7 +19,7 @@ if (typeof opgp !== 'undefined') { // in certain environments, eg pgp_block.htm,
     if (!k.isPrivate()) {
       throw new Error("Cannot check encryption status of secret keys in a Public Key");
     }
-    const prvPackets = k.getKeys().map(k => k.keyPacket).filter(PgpKey.isPacketPrivate) as PrvPacket[];
+    const prvPackets = k.getKeys().map(k => k.keyPacket).filter(OpenPGPKey.isPacketPrivate) as PrvPacket[];
     if (!prvPackets.length) {
       throw new Error("This key has no private packets. Is it a Private Key?");
     }

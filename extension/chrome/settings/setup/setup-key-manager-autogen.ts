@@ -12,7 +12,7 @@ import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Settings } from '../../../js/common/settings.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
-import { PgpKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
+import { PgpKey, OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 export class SetupKeyManagerAutogenModule {
 
@@ -56,7 +56,7 @@ export class SetupKeyManagerAutogenModule {
         const { full_name } = await AcctStore.get(this.view.acctEmail, ['full_name']);
         const expireInMonths = this.view.orgRules.getEnforcedKeygenExpirationMonths();
         const pgpUids = [{ name: full_name || '', email: this.view.acctEmail }];
-        const generated = await PgpKey.create(pgpUids, keygenAlgo, passphrase, expireInMonths);
+        const generated = await OpenPGPKey.create(pgpUids, keygenAlgo, passphrase, expireInMonths);
         const decryptablePrv = await KeyUtil.parse(generated.private);
         const generatedKeyFingerprint = decryptablePrv.id;
         if (! await PgpKey.decrypt(decryptablePrv, passphrase)) {

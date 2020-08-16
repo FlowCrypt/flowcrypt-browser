@@ -51,9 +51,9 @@ export class OpenPGPKey {
     if (!prv.isPrivate()) {
       throw new Error("Nothing to decrypt in a public key");
     }
-    const chosenPrvPackets = prv.getKeys(optionalKeyid ? { bytes: optionalKeyid } : undefined).map(k => k.keyPacket).filter(PgpKey.isPacketPrivate) as PrvPacket[];
+    const chosenPrvPackets = prv.getKeys(optionalKeyid ? { bytes: optionalKeyid } : undefined).map(k => k.keyPacket).filter(OpenPGPKey.isPacketPrivate) as PrvPacket[];
     if (!chosenPrvPackets.length) {
-      throw new Error(`No private key packets selected of ${prv.getKeys().map(k => k.keyPacket).filter(PgpKey.isPacketPrivate).length} prv packets available`);
+      throw new Error(`No private key packets selected of ${prv.getKeys().map(k => k.keyPacket).filter(OpenPGPKey.isPacketPrivate).length} prv packets available`);
     }
     for (const prvPacket of chosenPrvPackets) {
       if (prvPacket.isDecrypted()) {
@@ -81,7 +81,7 @@ export class OpenPGPKey {
     if (!passphrase || passphrase === 'undefined' || passphrase === 'null') {
       throw new Error(`Encryption passphrase should not be empty:${typeof passphrase}:${passphrase}`);
     }
-    const secretPackets = prv.getKeys().map(k => k.keyPacket).filter(PgpKey.isPacketPrivate);
+    const secretPackets = prv.getKeys().map(k => k.keyPacket).filter(OpenPGPKey.isPacketPrivate);
     const encryptedPacketCount = secretPackets.filter(p => !p.isDecrypted()).length;
     if (!secretPackets.length) {
       throw new Error(`No private key packets in key to encrypt. Is this a private key?`);
@@ -183,7 +183,7 @@ export class OpenPGPKey {
       .map(email => email.toLowerCase());
     let lastModified: undefined | number;
     try {
-      lastModified = await PgpKey.lastSigOpenPGP(pubkey);
+      lastModified = await OpenPGPKey.getLastSigTime(pubkey);
     } catch (e) {
       // never had any valid signature
     }
@@ -338,6 +338,52 @@ export class OpenPGPKey {
     return fingerprint.substr(-16).toUpperCase();
   }
 
+  /**
+   * todo - could return a Key
+   */
+  public static create = async (
+    userIds: { name: string, email: string }[], variant: KeyAlgo, passphrase: string, expireInMonths: number | undefined
+  ): Promise<{ private: string, public: string }> => {
+    const opt: OpenPGP.KeyOptions = { userIds, passphrase };
+    if (variant === 'curve25519') {
+      opt.curve = 'curve25519';
+    } else if (variant === 'rsa2048') {
+      opt.numBits = 2048;
+    } else {
+      opt.numBits = 4096;
+    }
+    if (expireInMonths) {
+      opt.keyExpirationTime = 60 * 60 * 24 * 30 * expireInMonths; // seconds from now
+    }
+    const k = await opgp.generateKey(opt);
+    return { public: k.publicKeyArmored, private: k.privateKeyArmored };
+  }
+
+  public static isPacketPrivate = (p: OpenPGP.packet.AnyKeyPacket): p is PrvPacket => {
+    return p.tag === opgp.enums.packet.secretKey || p.tag === opgp.enums.packet.secretSubkey;
+  }
+
+  /**
+   * Get latest self-signature date, in utc millis.
+   * This is used to figure out how recently was key updated, and if one key is newer than other.
+   */
+  private static getLastSigTime = async (key: OpenPGP.key.Key): Promise<number> => {
+    await key.getExpirationTime(); // will force all sigs to be verified
+    const allSignatures: OpenPGP.packet.Signature[] = [];
+    for (const user of key.users) {
+      allSignatures.push(...user.selfCertifications);
+    }
+    for (const subKey of key.subKeys) {
+      allSignatures.push(...subKey.bindingSignatures);
+    }
+    allSignatures.sort((a, b) => b.created.getTime() - a.created.getTime());
+    const newestSig = allSignatures.find(sig => sig.verified === true);
+    if (newestSig) {
+      return newestSig.created.getTime();
+    }
+    throw new Error('No valid signature found in key');
+  }
+
   private static unwrap = (pubkey: Key) => {
     if (pubkey.type !== 'openpgp') {
       throw new UnexpectedKeyTypeError(`Key type is ${pubkey.type}, expecting OpenPGP`);
@@ -432,31 +478,10 @@ export class OpenPGPKey {
     const expDate = new Date(date.getTime() + (expiresInSecondsFromDate * 1000));
     return `${date.getTime() / 1000} + ${expiresInSecondsFromDate} seconds, which is: ${expDate.getTime() / 1000} or ${expDate.toISOString()}`;
   }
+
 }
 
 export class PgpKey {
-
-  public static create = async (
-    userIds: { name: string, email: string }[], variant: KeyAlgo, passphrase: string, expireInMonths: number | undefined
-  ): Promise<{ private: string, public: string }> => {
-    const opt: OpenPGP.KeyOptions = { userIds, passphrase };
-    if (variant === 'curve25519') {
-      opt.curve = 'curve25519';
-    } else if (variant === 'rsa2048') {
-      opt.numBits = 2048;
-    } else {
-      opt.numBits = 4096;
-    }
-    if (expireInMonths) {
-      opt.keyExpirationTime = 60 * 60 * 24 * 30 * expireInMonths; // seconds from now
-    }
-    const k = await opgp.generateKey(opt);
-    return { public: k.publicKeyArmored, private: k.privateKeyArmored };
-  }
-
-  public static isPacketPrivate = (p: OpenPGP.packet.AnyKeyPacket): p is PrvPacket => {
-    return p.tag === opgp.enums.packet.secretKey || p.tag === opgp.enums.packet.secretSubkey;
-  }
 
   public static decrypt = async (key: Key, passphrase: string, optionalKeyid?: string, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
     // TODO: Delegate to appropriate key type
@@ -476,27 +501,6 @@ export class PgpKey {
   public static isPacketDecrypted = (pubkey: Key, keyId: string) => {
     // TODO: Delegate to appropriate key type
     return OpenPGPKey.isPacketDecrypted(pubkey, keyId);
-  }
-
-  /**
-   * Get latest self-signature date, in utc millis.
-   * This is used to figure out how recently was key updated, and if one key is newer than other.
-   */
-  public static lastSigOpenPGP = async (key: OpenPGP.key.Key): Promise<number> => {
-    await key.getExpirationTime(); // will force all sigs to be verified
-    const allSignatures: OpenPGP.packet.Signature[] = [];
-    for (const user of key.users) {
-      allSignatures.push(...user.selfCertifications);
-    }
-    for (const subKey of key.subKeys) {
-      allSignatures.push(...subKey.bindingSignatures);
-    }
-    allSignatures.sort((a, b) => b.created.getTime() - a.created.getTime());
-    const newestSig = allSignatures.find(sig => sig.verified === true);
-    if (newestSig) {
-      return newestSig.created.getTime();
-    }
-    throw new Error('No valid signature found in key');
   }
 
   public static revoke = async (key: Key): Promise<string | undefined> => {

@@ -12,7 +12,7 @@ import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { shouldPassPhraseBeHidden } from '../../../js/common/ui/passphrase-ui.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { PgpKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
+import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 export class SetupCreateKeyModule {
 
@@ -72,7 +72,7 @@ export class SetupCreateKeyModule {
     const pgpUids = [{ name: full_name || '', email: this.view.acctEmail }]; // todo - add all addresses?
     const expireMonths = this.view.orgRules.getEnforcedKeygenExpirationMonths();
     try {
-      const key = await PgpKey.create(pgpUids, keyAlgo, options.passphrase, expireMonths);
+      const key = await OpenPGPKey.create(pgpUids, keyAlgo, options.passphrase, expireMonths);
       const prv = await KeyUtil.parse(key.private);
       await this.view.saveKeysAndPassPhrase([prv], options);
     } catch (e) {
