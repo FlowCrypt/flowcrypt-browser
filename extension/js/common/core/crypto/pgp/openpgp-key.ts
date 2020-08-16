@@ -142,9 +142,11 @@ export class OpenPGPKey {
 
   /**
    * TODO: should be private, will change when readMany is rewritten
-   * @param keyToUpdate - an existing Key object to update, optional
+   * @param opgpKey - original OpenPGP.js key
+   * @param keyToUpdate - an existing Key object to update, optional. Useful in encryptKey and decryptKey, because the operation
+   *    is done on the original supplied object.
    */
-  public static convertExternalLibraryObjToKey = async (opgpKey: OpenPGP.key.Key, keyToUpdate?: Key, raw?: string): Promise<Key> => {
+  public static convertExternalLibraryObjToKey = async (opgpKey: OpenPGP.key.Key, keyToUpdate?: Key): Promise<Key> => {
     let exp: null | Date | number;
     try {
       exp = await opgpKey.getExpirationTime('encrypt');
@@ -217,7 +219,7 @@ export class OpenPGPKey {
       },
     } as Key);
     (key as any)[internal] = opgpKey;
-    (key as any).raw = raw || opgpKey.armor();
+    (key as any).raw = opgpKey.armor();
     return key;
   }
 
