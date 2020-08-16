@@ -183,6 +183,9 @@ export const mockGoogleEndpoints: HandlersDefinition = {
         if (body.message.threadId && !new GoogleData(acct).getThreads().find(t => t.id === body.message.threadId)) {
           throw new HttpClientErr('The thread you are replying to not found', 404);
         }
+        if (!body.message.raw.match(/^\[cryptup:/)) {
+          throw new Error('The [cryptup: prefix was not found in the draft');
+        }
         return {
           id: 'mockfakedraftsave', message: {
             id: 'mockfakedmessageraftsave',
