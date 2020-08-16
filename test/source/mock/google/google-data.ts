@@ -43,18 +43,10 @@ export class GmailMsg {
     let body;
     if (msg.mimeMsg.text) {
       const textBase64 = Buffer.from(msg.mimeMsg.text, 'utf-8').toString('base64');
-      body = {
-        attachmentId: '',
-        size: textBase64.length,
-        data: textBase64
-      };
+      body = { attachmentId: '', size: textBase64.length, data: textBase64 };
     } else if (typeof msg.mimeMsg.html === 'string') {
       const htmlBase64 = Buffer.from(msg.mimeMsg.html, 'utf-8').toString('base64');
-      body = {
-        attachmentId: '',
-        size: htmlBase64.length,
-        data: htmlBase64
-      };
+      body = { attachmentId: '', size: htmlBase64.length, data: htmlBase64 };
     }
     this.payload = {
       mimeType: contentTypeHeader.value,
