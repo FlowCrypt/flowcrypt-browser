@@ -23,6 +23,7 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 
 export class ComposeDraftModule extends ViewModule<ComposeView> {
 
@@ -117,13 +118,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         msgData.pwd = undefined; // not needed for drafts
         const sendable = await new EncryptedMsgMailFormatter(this.view, true).sendableMsg(msgData, pubkeys);
         this.view.S.cached('send_btn_note').text('Saving');
-        if (this.view.threadId) { // reply draft
-          sendable.body['text/plain'] = `[flowcrypt:link:draft_reply:${this.view.threadId}]\n\n${sendable.body['text/plain'] || ''}`;
-        } else if (this.view.draftId) { // new message compose draft with known draftId
-          sendable.body['text/plain'] = `[flowcrypt:link:draft_compose:${this.view.draftId}]\n\n${sendable.body['text/plain'] || ''}`;
-        } else {
-          sendable.body['text/plain'] = `[flowcrypt:link:draft_compose:unknown-draft-id]\n\n${sendable.body['text/plain'] || ''}`;
-        }
+        this.draftSetPrefixIntoBody(sendable);
         const mimeMsg = await sendable.toMime();
         // If a draft was loaded from the local storage, once a user is back online, the local draft will be moved to the email provider
         if (!this.view.draftId || this.isLocalDraftId(this.view.draftId)) {
@@ -172,6 +167,23 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         }
       }
       this.currentlySavingDraft = false;
+    }
+  }
+
+  private draftSetPrefixIntoBody = (sendable: SendableMsg) => {
+    let prefix: string;
+    if (this.view.threadId) { // reply draft
+      prefix = `[flowcrypt:link:draft_reply:${this.view.threadId}]\n\n`;
+    } else if (this.view.draftId) { // new message compose draft with known draftId
+      prefix = `[flowcrypt:link:draft_compose:${this.view.draftId}]\n\n`;
+    } else {
+      prefix = `(saving of this draft was interrupted - to decrypt it, send it to yourself)\n\n`;
+    }
+    if (sendable.body['encrypted/buf']) {
+      sendable.body['encrypted/buf'] = Buf.concat([Buf.fromUtfStr(prefix), sendable.body['encrypted/buf']]);
+    }
+    if (sendable.body['text/plain']) {
+      sendable.body['text/plain'] = `${prefix}${sendable.body['text/plain'] || ''}`;
     }
   }
 

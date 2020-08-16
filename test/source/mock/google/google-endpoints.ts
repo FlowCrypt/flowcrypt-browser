@@ -183,7 +183,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
         if (body.message.threadId && !new GoogleData(acct).getThreads().find(t => t.id === body.message.threadId)) {
           throw new HttpClientErr('The thread you are replying to not found', 404);
         }
-        if (!body.message.raw.match(/^\[flowcrypt:/)) {
+        if (!body.message.raw.match(/^\[flowcrypt:/) && !body.message.raw.includes('(saving of this draft was interrupted - to decrypt it, send it to yourself)')) {
           throw new Error('The [flowcrypt: prefix was not found in the draft');
         }
         return {
