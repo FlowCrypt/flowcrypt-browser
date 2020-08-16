@@ -140,7 +140,7 @@ export class BrowserMsg {
         pgpHashChallengeAnswer: (bm: Bm.PgpHashChallengeAnswer) => BrowserMsg.sendAwait(undefined, 'pgpHashChallengeAnswer', bm, true) as Promise<Bm.Res.PgpHashChallengeAnswer>,
         pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
         pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
-        keyParse: (bm: Bm.KeyParse) => BrowserMsg.sendAwait(undefined, 'pgpKeyParse', bm, true) as Promise<Bm.Res.KeyParse>,
+        keyParse: (bm: Bm.KeyParse) => BrowserMsg.sendAwait(undefined, 'keyParse', bm, true) as Promise<Bm.Res.KeyParse>,
         pgpMsgType: (bm: Bm.PgpMsgType) => BrowserMsg.sendAwait(undefined, 'pgpMsgType', bm, true) as Promise<Bm.Res.PgpMsgType>,
       },
     },
