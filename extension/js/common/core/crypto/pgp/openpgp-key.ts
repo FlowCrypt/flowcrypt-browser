@@ -7,7 +7,7 @@ import { PgpHash } from './pgp-hash.js';
 import { Buf } from '../../buf.js';
 import { PgpMsgMethod, PgpMsg } from './pgp-msg.js';
 
-const internal = Symbol('internal public key');
+const internal = Symbol('internal openpgpjs library format key');
 
 export class OpenPGPKey {
 
@@ -25,7 +25,7 @@ export class OpenPGPKey {
     }
     const keys = [];
     for (const key of result.keys) {
-      keys.push(await OpenPGPKey.wrap(key, {} as Key));
+      keys.push(await OpenPGPKey.convertExternalLibraryObjToKey(key, {} as Key));
     }
     return keys;
   }
@@ -35,13 +35,13 @@ export class OpenPGPKey {
       throw new UnexpectedKeyTypeError(`Key type is ${pubkey.type}, expecting OpenPGP`);
     }
     if (pubkey.isPrivate) {
-      return await OpenPGPKey.wrap(OpenPGPKey.unwrap(pubkey).toPublic(), {} as Key);
+      return await OpenPGPKey.convertExternalLibraryObjToKey(OpenPGPKey.convertKeyToExternalLibraryObj(pubkey).toPublic(), {} as Key);
     }
     return pubkey;
   }
 
   public static decryptKey = async (key: Key, passphrase: string, optionalKeyid?: OpenPGP.Keyid, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
-    const prv = OpenPGPKey.unwrap(key);
+    const prv = OpenPGPKey.convertKeyToExternalLibraryObj(key);
     if (!prv.isPrivate()) {
       throw new Error("Nothing to decrypt in a public key");
     }
@@ -66,12 +66,12 @@ export class OpenPGPKey {
         throw e;
       }
     }
-    await OpenPGPKey.wrap(prv, key);
+    await OpenPGPKey.convertExternalLibraryObjToKey(prv, key);
     return true;
   }
 
   public static encryptKey = async (key: Key, passphrase: string) => {
-    const prv = OpenPGPKey.unwrap(key);
+    const prv = OpenPGPKey.convertKeyToExternalLibraryObj(key);
     if (!passphrase || passphrase === 'undefined' || passphrase === 'null') {
       throw new Error(`Encryption passphrase should not be empty:${typeof passphrase}:${passphrase}`);
     }
@@ -87,11 +87,11 @@ export class OpenPGPKey {
     if (!prv.isFullyEncrypted()) {
       throw new Error('Expected key to be fully encrypted after prv.encrypt');
     }
-    await OpenPGPKey.wrap(prv, key);
+    await OpenPGPKey.convertExternalLibraryObjToKey(prv, key);
   }
 
   public static decryptMessage = async (message: OpenPGP.message.Message, privateKeys: Key[], passwords?: string[]) => {
-    return await message.decrypt(privateKeys.map(key => OpenPGPKey.unwrap(key)), passwords, undefined, false);
+    return await message.decrypt(privateKeys.map(key => OpenPGPKey.convertKeyToExternalLibraryObj(key)), passwords, undefined, false);
   }
 
   public static encryptMessage: PgpMsgMethod.Encrypt = async ({ pubkeys, signingPrv, pwd, data, filename, armor, date }) => {
@@ -116,7 +116,7 @@ export class OpenPGPKey {
       throw new Error('no-pubkeys-no-challenge');
     }
     if (signingPrv) {
-      const openPgpPrv = OpenPGPKey.unwrap(signingPrv);
+      const openPgpPrv = OpenPGPKey.convertKeyToExternalLibraryObj(signingPrv);
       if (typeof openPgpPrv.isPrivate !== 'undefined' && openPgpPrv.isPrivate()) { // tslint:disable-line:no-unbound-method - only testing if exists
         options.privateKeys = [openPgpPrv];
       }
@@ -130,18 +130,18 @@ export class OpenPGPKey {
   }
 
   public static isWithoutSelfCertifications = async (key: Key) => {
-    const k = OpenPGPKey.unwrap(key);
-    return await Catch.doesReject(k.verifyPrimaryKey(), ['No self-certifications']);
+    const opgpPrv = OpenPGPKey.convertKeyToExternalLibraryObj(key);
+    return await Catch.doesReject(opgpPrv.verifyPrimaryKey(), ['No self-certifications']);
   }
 
   public static reformatKey = async (privateKey: Key, passphrase: string, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
-    const origPrv = OpenPGPKey.unwrap(privateKey);
-    const keyPair = await opgp.reformatKey({ privateKey: origPrv, passphrase, userIds, keyExpirationTime: expireSeconds });
-    return await OpenPGPKey.wrap(keyPair.key, {} as Key);
+    const opgpPrv = OpenPGPKey.convertKeyToExternalLibraryObj(privateKey);
+    const keyPair = await opgp.reformatKey({ privateKey: opgpPrv, passphrase, userIds, keyExpirationTime: expireSeconds });
+    return await OpenPGPKey.convertExternalLibraryObjToKey(keyPair.key, {} as Key);
   }
 
   // TODO: should be private, will change when readMany is rewritten
-  public static wrap = async (opgpKey: OpenPGP.key.Key, pkey: Key, raw?: string): Promise<Key> => {
+  public static convertExternalLibraryObjToKey = async (opgpKey: OpenPGP.key.Key, pkey: Key, raw?: string): Promise<Key> => {
     let exp: null | Date | number;
     try {
       exp = await opgpKey.getExpirationTime('encrypt');
@@ -212,9 +212,8 @@ export class OpenPGPKey {
         algorithmId: opgp.enums.publicKey[algoInfo.algorithm]
       },
     } as Key);
-    const extensions = pkey as unknown as { raw: string, [internal]: OpenPGP.key.Key };
-    extensions[internal] = opgpKey;
-    extensions.raw = raw || opgpKey.armor();
+    (pkey as any)[internal] = opgpKey;
+    (pkey as any).raw = raw || opgpKey.armor();
     return pkey;
   }
 
@@ -223,7 +222,7 @@ export class OpenPGPKey {
    * Returns signature if detached=true, armored
    */
   public static sign = async (signingPrivate: Key, data: string, detached = false): Promise<string> => {
-    const signingPrv = OpenPGPKey.unwrap(signingPrivate);
+    const signingPrv = OpenPGPKey.convertKeyToExternalLibraryObj(signingPrivate);
     const message = opgp.cleartext.fromText(data);
     const signRes = await opgp.sign({ message, armor: true, privateKeys: [signingPrv], detached });
     if (detached) {
@@ -236,7 +235,7 @@ export class OpenPGPKey {
   }
 
   public static revoke = async (key: Key): Promise<string | undefined> => {
-    let prv = OpenPGPKey.unwrap(key);
+    let prv = OpenPGPKey.convertKeyToExternalLibraryObj(key);
     if (! await prv.isRevoked()) {
       prv = await prv.revoke({});
     }
@@ -262,7 +261,7 @@ export class OpenPGPKey {
   }
 
   public static diagnose = async (pubkey: Key, appendResult: (text: string, f?: () => Promise<unknown>) => Promise<void>) => {
-    const key = OpenPGPKey.unwrap(pubkey);
+    const key = OpenPGPKey.convertKeyToExternalLibraryObj(pubkey);
     if (!key.isPrivate() && !key.isPublic()) {
       await appendResult(`key is neither public or private!!`);
       return;
@@ -371,7 +370,7 @@ export class OpenPGPKey {
   }
 
   public static isPacketDecrypted = (pubkey: Key, keyid: OpenPGP.Keyid) => {
-    return OpenPGPKey.unwrap(pubkey).isPacketDecrypted(keyid);
+    return OpenPGPKey.convertKeyToExternalLibraryObj(pubkey).isPacketDecrypted(keyid);
   }
 
   /**
@@ -395,7 +394,7 @@ export class OpenPGPKey {
     throw new Error('No valid signature found in key');
   }
 
-  private static unwrap = (pubkey: Key) => {
+  private static convertKeyToExternalLibraryObj = (pubkey: Key) => {
     if (pubkey.type !== 'openpgp') {
       throw new UnexpectedKeyTypeError(`Key type is ${pubkey.type}, expecting OpenPGP`);
     }
