@@ -287,7 +287,8 @@ export class PgpMsg {
       prvForDecryptDecrypted: [],
       prvForDecryptWithoutPassphrases: [],
     };
-    keys.encryptedFor = msg instanceof opgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds().map(kid => OpenPGPKey.bytesToLongid(kid.bytes)) : [];
+    const encryptionKeyids = msg instanceof opgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds() : [];
+    keys.encryptedFor = encryptionKeyids.map(kid => OpenPGPKey.bytesToLongid(kid.bytes));
     await PgpMsg.cryptoMsgGetSignedBy(msg, keys);
     if (keys.encryptedFor.length) {
       for (const ki of kiWithPp) {
@@ -308,7 +309,7 @@ export class PgpMsg {
       keys.prvForDecrypt = [];
     }
     for (const ki of keys.prvForDecrypt) {
-      const matchingKeyids = PgpMsg.matchingKeyids(ki.parsed!, keys.encryptedFor);
+      const matchingKeyids = PgpMsg.matchingKeyids(ki.parsed!, encryptionKeyids);
       const cachedKey = KeyCache.getDecrypted(ki.longid);
       if (cachedKey && PgpMsg.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
         ki.decrypted = cachedKey;
@@ -324,11 +325,11 @@ export class PgpMsg {
     return keys;
   }
 
-  private static matchingKeyids = (key: Key, encryptedFor: string[]): string[] => {
-    return key.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)).filter(longid => encryptedFor.includes(longid));
+  private static matchingKeyids = (key: Key, encryptedForKeyids: OpenPGP.Keyid[]): OpenPGP.Keyid[] => {
+    return encryptedForKeyids.filter(kid => key.allIds.includes(OpenPGPKey.bytesToLongid(kid.bytes)));
   }
 
-  private static decryptKeyFor = async (prv: Key, passphrase: string, matchingKeyIds: string[]): Promise<boolean> => {
+  private static decryptKeyFor = async (prv: Key, passphrase: string, matchingKeyIds: OpenPGP.Keyid[]): Promise<boolean> => {
     if (!matchingKeyIds.length) { // we don't know which keyids match, decrypt all key packets
       return await KeyUtil.decrypt(prv, passphrase, undefined, 'OK-IF-ALREADY-DECRYPTED');
     }
@@ -340,7 +341,7 @@ export class PgpMsg {
     return true;
   }
 
-  private static isKeyDecryptedFor = (prv: Key, msgKeyIds: string[]): boolean => {
+  private static isKeyDecryptedFor = (prv: Key, msgKeyIds: OpenPGP.Keyid[]): boolean => {
     if (prv.fullyDecrypted) {
       return true; // primary k + all subkeys decrypted, therefore it must be decrypted for any/every particular keyid
     }

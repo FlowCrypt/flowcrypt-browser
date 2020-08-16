@@ -42,12 +42,12 @@ export class OpenPGPKey {
     return pubkey;
   }
 
-  public static decryptKey = async (key: Key, passphrase: string, optionalKeyid?: string, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
+  public static decryptKey = async (key: Key, passphrase: string, optionalKeyid?: OpenPGP.Keyid, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
     const prv = OpenPGPKey.unwrap(key);
     if (!prv.isPrivate()) {
       throw new Error("Nothing to decrypt in a public key");
     }
-    const chosenPrvPackets = prv.getKeys(optionalKeyid ? { bytes: optionalKeyid } : undefined).map(k => k.keyPacket).filter(OpenPGPKey.isPacketPrivate) as PrvPacket[];
+    const chosenPrvPackets = prv.getKeys(optionalKeyid).map(k => k.keyPacket).filter(OpenPGPKey.isPacketPrivate) as PrvPacket[];
     if (!chosenPrvPackets.length) {
       throw new Error(`No private key packets selected of ${prv.getKeys().map(k => k.keyPacket).filter(OpenPGPKey.isPacketPrivate).length} prv packets available`);
     }
@@ -331,6 +331,9 @@ export class OpenPGPKey {
   }
 
   public static bytesToLongid = (binaryString: string) => {
+    if (binaryString.length !== 8) {
+      throw new Error(`Unexpected keyid bytes format (len: ${binaryString.length}): "${binaryString}"`);
+    }
     return opgp.util.str_to_hex(binaryString).toUpperCase();
   }
 
@@ -366,8 +369,8 @@ export class OpenPGPKey {
     return p.tag === opgp.enums.packet.secretKey || p.tag === opgp.enums.packet.secretSubkey;
   }
 
-  public static isPacketDecrypted = (pubkey: Key, keyidBytes: string) => {
-    return OpenPGPKey.unwrap(pubkey).isPacketDecrypted({ bytes: keyidBytes });
+  public static isPacketDecrypted = (pubkey: Key, keyid: OpenPGP.Keyid) => {
+    return OpenPGPKey.unwrap(pubkey).isPacketDecrypted(keyid);
   }
 
   /**
