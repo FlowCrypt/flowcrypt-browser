@@ -119,10 +119,10 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         this.view.S.cached('send_btn_note').text('Saving');
         if (this.view.threadId) { // reply draft
           sendable.body['text/plain'] = `[cryptup:link:draft_reply:${this.view.threadId}]\n\n${sendable.body['text/plain'] || ''}`;
-          delete sendable.body['encrypted/buf'];
+          // delete sendable.body['encrypted/buf'];
         } else if (this.view.draftId) { // new message compose draft with known draftid
           sendable.body['text/plain'] = `[cryptup:link:draft_compose:${this.view.draftId}]\n\n${sendable.body['text/plain'] || ''}`;
-          delete sendable.body['encrypted/buf'];
+          // delete sendable.body['encrypted/buf'];
         }
         const mimeMsg = await sendable.toMime();
         // If a draft was loaded from the local storage, once a user is back online, the local draft will be moved to the email provider
