@@ -13,7 +13,6 @@ import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { PgpKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 View.run(class TestPassphrase extends View {
   private readonly acctEmail: string;
@@ -46,7 +45,7 @@ View.run(class TestPassphrase extends View {
   }
 
   private verifyHandler = async () => {
-    if (await PgpKey.decrypt(this.primaryKey!, String($('#password').val())) === true) {
+    if (await KeyUtil.decrypt(this.primaryKey!, String($('#password').val())) === true) {
       Xss.sanitizeRender('#content', `
         <div class="line">${Lang.setup.ppMatchAllSet}</div>
         <div class="line"><button class="button green close" data-test="action-test-passphrase-successful-close">close</button></div>

@@ -17,7 +17,6 @@ import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { PgpKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 declare const ClipboardJS: any;
 
@@ -88,7 +87,7 @@ View.run(class MyKeyView extends View {
     if (!prv.fullyDecrypted) {
       const passphrase = await PassphraseStore.get(this.acctEmail, this.keyInfo.fingerprint) || enteredPP;
       if (passphrase) {
-        if (! await PgpKey.decrypt(prv, passphrase) && enteredPP) {
+        if (! await KeyUtil.decrypt(prv, passphrase) && enteredPP) {
           await Ui.modal.error('Pass phrase did not match, please try again.');
           return;
         }
@@ -105,7 +104,7 @@ View.run(class MyKeyView extends View {
     if (! await Ui.modal.confirm(revokeConfirmMsg)) {
       return;
     }
-    const revokedArmored = await PgpKey.revoke(prv);
+    const revokedArmored = await KeyUtil.revoke(prv);
     if (!revokedArmored) {
       await Ui.modal.error(`Could not produce revocation cert (empty)`);
       return;

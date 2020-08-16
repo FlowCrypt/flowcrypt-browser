@@ -15,12 +15,8 @@ import { Ui } from '../browser/ui.js';
 import { Url, Str } from '../core/common.js';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
 import { KeyStore } from '../platform/store/key-store.js';
-import { PgpKey } from '../core/crypto/pgp/openpgp-key.js';
 
-type KeyImportUiCheckResult = {
-  normalized: string; longid: string; passphrase: string; fingerprint: string; decrypted: Key;
-  encrypted: Key;
-};
+type KeyImportUiCheckResult = { normalized: string; passphrase: string; fingerprint: string; decrypted: Key; encrypted: Key; };
 
 export class KeyCanBeFixed extends Error {
   public encrypted: Key;
@@ -56,8 +52,7 @@ export class KeyImportUi {
     return;
   }
 
-  constructor(o: { expectLongid?: string, rejectKnown?: boolean, checkEncryption?: boolean, checkSigning?: boolean }) {
-    this.expectedLongid = o.expectLongid;
+  constructor(o: { rejectKnown?: boolean, checkEncryption?: boolean, checkSigning?: boolean }) {
     this.rejectKnown = o.rejectKnown === true;
     this.checkEncryption = o.checkEncryption === true;
     this.checkSigning = o.checkSigning === true;
@@ -136,20 +131,17 @@ export class KeyImportUi {
     const { normalized } = await this.normalize('privateKey', armored);
     const decrypted = await this.read('privateKey', normalized);
     const encrypted = await this.read('privateKey', normalized);
-    const longid = await this.longid(decrypted);
     this.rejectIfNot('privateKey', decrypted);
     await this.rejectKnownIfSelected(acctEmail, decrypted);
-    this.rejectIfDifferentFromSelectedLongid(longid);
     await this.decryptAndEncryptAsNeeded(decrypted, encrypted, passphrase);
     await this.checkEncryptionPrvIfSelected(decrypted, encrypted);
     await this.checkSigningIfSelected(decrypted);
-    return { normalized, longid, passphrase, fingerprint: decrypted.id, decrypted, encrypted }; // will have fp if had longid
+    return { normalized, passphrase, fingerprint: decrypted.id, decrypted, encrypted }; // will have fp if had longid
   }
 
   public checkPub = async (armored: string): Promise<string> => {
     const { normalized } = await this.normalize('publicKey', armored);
-    const parsed = await this.read('publicKey', normalized);
-    await this.longid(parsed);
+    await this.read('publicKey', normalized); // throws on err
     await this.checkEncryptionPubIfSelected(normalized);
     return normalized;
   }
@@ -221,14 +213,6 @@ export class KeyImportUi {
     return k;
   }
 
-  private longid = async (k: Key) => {
-    const longid = await PgpKey.longid(k);
-    if (!longid) {
-      throw new UserAlert('This key may not be compatible. Email human@flowcrypt.com and const us know which software created this key.\n\n(error: cannot get long_id)');
-    }
-    return longid;
-  }
-
   private rejectIfNot = (type: KeyBlockType, k: Key) => {
     const headers = PgpArmor.headers(type);
     if (type === 'privateKey' && k.isPublic) {
@@ -242,16 +226,10 @@ export class KeyImportUi {
   private rejectKnownIfSelected = async (acctEmail: string, k: Key) => {
     if (this.rejectKnown) {
       const keyinfos = await KeyStore.get(acctEmail);
-      const privateKeysLongids = keyinfos.map(ki => ki.longid);
-      if (privateKeysLongids.includes(String(await PgpKey.longid(k)))) {
+      const privateKeysIds = keyinfos.map(ki => ki.fingerprint);
+      if (privateKeysIds.includes(k.id)) {
         throw new UserAlert('This is one of your current keys, try another one.');
       }
-    }
-  }
-
-  private rejectIfDifferentFromSelectedLongid = (longid: string) => {
-    if (this.expectedLongid && longid !== this.expectedLongid) {
-      throw new UserAlert(`Key does not match. Looking for key with Longid ${Str.spaced(this.expectedLongid)}`);
     }
   }
 
@@ -261,12 +239,12 @@ export class KeyImportUi {
     }
     try {
       if (toEncrypt.fullyDecrypted) {
-        await PgpKey.encrypt(toEncrypt, passphrase);
+        await KeyUtil.encrypt(toEncrypt, passphrase);
       } else if (!toEncrypt.fullyEncrypted) {
         throw new UserAlert(Lang.setup.partiallyEncryptedKeyUnsupported);
       }
       if (toDecrypt.fullyEncrypted) {
-        if (! await PgpKey.decrypt(toDecrypt, passphrase)) {
+        if (! await KeyUtil.decrypt(toDecrypt, passphrase)) {
           this.onBadPassphrase();
           if (this.expectedLongid) { // todo - double check this line, should it not say `this.expectedLongid === PgpKey.longid() ? Or is that checked elsewhere beforehand?
             throw new UserAlert(`This is the right key! However, the pass phrase does not match. Please try a different pass phrase.

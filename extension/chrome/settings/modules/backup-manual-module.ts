@@ -20,7 +20,6 @@ import { Settings } from '../../../js/common/settings.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { PgpKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 export class BackupManualActionModule extends ViewModule<BackupView> {
 
@@ -147,7 +146,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
       if (!pp) {
         return false;
       }
-      if (await PgpKey.decrypt(prv, pp) !== true) {
+      if (await KeyUtil.decrypt(prv, pp) !== true) {
         await Ui.modal.warning('Pass phrase did not match, please try again.');
         return false;
       }
@@ -162,7 +161,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
 
   private isPrivateKeyEncrypted = async (ki: KeyInfo) => {
     const prv = await KeyUtil.parse(ki.private);
-    if (await PgpKey.decrypt(prv, '', undefined, 'OK-IF-ALREADY-DECRYPTED') === true) {
+    if (await KeyUtil.decrypt(prv, '', undefined, 'OK-IF-ALREADY-DECRYPTED') === true) {
       return false;
     }
     return prv.fullyEncrypted;

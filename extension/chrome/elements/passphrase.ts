@@ -14,7 +14,6 @@ import { Xss } from '../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
-import { PgpKey } from '../../js/common/core/crypto/pgp/openpgp-key.js';
 
 View.run(class PassphraseView extends View {
   private readonly acctEmail: string;
@@ -110,7 +109,7 @@ View.run(class PassphraseView extends View {
     for (const keyinfo of this.myPrivateKeys!) { // if passphrase matches more keys, it will save the pass phrase for all keys
       const prv = await KeyUtil.parse(keyinfo.private);
       try {
-        if (await PgpKey.decrypt(prv, pass) === true) {
+        if (await KeyUtil.decrypt(prv, pass) === true) {
           await PassphraseStore.set(storageType, this.acctEmail, keyinfo.fingerprint, pass);
           atLeastOneMatched = true;
           if (storageType === 'session') {

@@ -7,7 +7,7 @@ import { Catch, UnreportableError } from '../../platform/catch.js';
 import { MsgBlockParser } from '../msg-block-parser.js';
 import { PgpArmor } from './pgp/pgp-armor.js';
 import { opgp } from './pgp/openpgpjs-custom.js';
-import { OpenPGPKey, PgpKey } from './pgp/openpgp-key.js';
+import { OpenPGPKey } from './pgp/openpgp-key.js';
 import { SmimeKey } from './smime/smime-key.js';
 import { MsgBlock } from '../msg-block.js';
 
@@ -21,7 +21,7 @@ import { MsgBlock } from '../msg-block.js';
 export interface Key {
   type: 'openpgp' | 'x509';
   id: string; // This is a fingerprint for OpenPGP keys and Serial Number for X.509 keys.
-  ids: string[];
+  allIds: string[]; // a list of fingerprints for OpenPGP key or a Serial Number for X.509 keys.
   created: number;
   lastModified: number | undefined; // date of last signature, or undefined if never had valid signature
   expiration: number | undefined; // number of millis of expiration or undefined if never expires
@@ -35,6 +35,12 @@ export interface Key {
   // TODO: Aren't isPublic and isPrivate mutually exclusive?
   isPublic: boolean;
   isPrivate: boolean;
+  algo: {
+    algorithm: string,
+    curve?: string,
+    bits?: number,
+    algorithmId: number
+  };
 }
 
 export type PubkeyResult = { pubkey: Key, email: string, isMine: boolean };
@@ -73,27 +79,6 @@ export interface KeyInfo extends PrvKeyInfo {
   primary: boolean;
 }
 
-export type KeyDetails$ids = {
-  shortid: string;
-  longid: string;
-  fingerprint: string;
-};
-
-export interface KeyDetails {
-  private?: string;
-  public: Key;
-  isFullyEncrypted: boolean | undefined;
-  isFullyDecrypted: boolean | undefined;
-  ids: KeyDetails$ids[];
-  users: string[];
-  created: number;
-  algo: { // same as OpenPGP.key.AlgorithmInfo
-    algorithm: string;
-    algorithmId: number;
-    bits?: number;
-    curve?: string;
-  };
-}
 export type PrvPacket = (OpenPGP.packet.SecretKey | OpenPGP.packet.SecretSubkey);
 
 export class UnexpectedKeyTypeError extends Error { }
@@ -198,11 +183,6 @@ export class KeyUtil {
     return expiration && KeyUtil.expired(key) ? new Date(expiration - 1000) : undefined;
   }
 
-  public static parseDetails = async (armored: string): Promise<{ original: string, normalized: string, keys: KeyDetails[] }> => {
-    const { normalized, keys } = await KeyUtil.normalize(armored);
-    return { original: armored, normalized, keys: await Promise.all(keys.map(PgpKey.details)) };
-  }
-
   // todo - this should be made to tolerate smime keys
   public static normalize = async (armored: string): Promise<{ normalized: string, keys: OpenPGP.key.Key[] }> => {
     try {
@@ -234,7 +214,7 @@ export class KeyUtil {
     if (key.type !== 'openpgp') {
       throw new Error('Checking password for this key type is not implemented: ' + key.type);
     }
-    return await PgpKey.decrypt(key, passphrase);
+    return await KeyUtil.decrypt(key, passphrase);
   }
 
   public static getKeyType = (pubkey: string): 'openpgp' | 'x509' | 'unknown' => {
@@ -265,6 +245,38 @@ export class KeyUtil {
       return otherSmimePubs.map(pub => pub.pubkey);
     }
     return myPubs.map(p => p.pubkey);
+  }
+
+  public static decrypt = async (key: Key, passphrase: string, optionalKeyid?: OpenPGP.Keyid, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
+    if (key.type === 'openpgp') {
+      return await OpenPGPKey.decryptKey(key, passphrase, optionalKeyid, optionalBehaviorFlag);
+    } else {
+      throw new Error(`KeyUtil.decrypt does not support key type ${key.type}`);
+    }
+  }
+
+  public static encrypt = async (key: Key, passphrase: string) => {
+    if (key.type === 'openpgp') {
+      return await OpenPGPKey.encryptKey(key, passphrase);
+    } else {
+      throw new Error(`KeyUtil.encrypt does not support key type ${key.type}`);
+    }
+  }
+
+  public static reformatKey = async (privateKey: Key, passphrase: string, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
+    if (privateKey.type === 'openpgp') {
+      return await OpenPGPKey.reformatKey(privateKey, passphrase, userIds, expireSeconds);
+    } else {
+      throw new Error(`KeyUtil.reformatKey does not support key type ${privateKey.type}`);
+    }
+  }
+
+  public static revoke = async (key: Key): Promise<string | undefined> => {
+    if (key.type === 'openpgp') {
+      return await OpenPGPKey.revoke(key);
+    } else {
+      throw new Error(`KeyUtil.revoke does not support key type ${key.type}`);
+    }
   }
 
 }

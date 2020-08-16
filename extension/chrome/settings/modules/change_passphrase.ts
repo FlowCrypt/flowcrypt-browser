@@ -13,7 +13,6 @@ import { View } from '../../../js/common/view.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { PgpKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 View.run(class ChangePassPhraseView extends View {
 
@@ -45,7 +44,7 @@ View.run(class ChangePassPhraseView extends View {
     const storedOrSessionPp = await PassphraseStore.get(this.acctEmail, this.primaryKi.fingerprint);
     const key = await KeyUtil.parse(this.primaryKi.private);
     this.primaryPrv = key;
-    if (this.primaryPrv.fullyDecrypted || (storedOrSessionPp && await PgpKey.decrypt(this.primaryPrv, storedOrSessionPp))) {
+    if (this.primaryPrv.fullyDecrypted || (storedOrSessionPp && await KeyUtil.decrypt(this.primaryPrv, storedOrSessionPp))) {
       this.displayBlock('step_1_enter_new'); // current pp is already known
       $('#new_pass_phrase').focus();
     } else {
@@ -67,7 +66,7 @@ View.run(class ChangePassPhraseView extends View {
 
   private actionTestCurrentPassPhraseHandler = async () => {
     const prv = await KeyUtil.parse(this.primaryKi!.private);
-    if (await PgpKey.decrypt(prv, String($('#current_pass_phrase').val())) === true) {
+    if (await KeyUtil.decrypt(prv, String($('#current_pass_phrase').val())) === true) {
       this.primaryPrv = prv;
       this.displayBlock('step_1_enter_new');
       $('#new_pass_phrase').focus();
@@ -102,7 +101,7 @@ View.run(class ChangePassPhraseView extends View {
       return;
     }
     try {
-      await PgpKey.encrypt(this.primaryPrv!, newPp);
+      await KeyUtil.encrypt(this.primaryPrv!, newPp);
     } catch (e) {
       Catch.reportErr(e);
       await Ui.modal.error(`There was an unexpected error. Please ask for help at human@flowcrypt.com:\n\n${e instanceof Error ? e.stack : String(e)}`);

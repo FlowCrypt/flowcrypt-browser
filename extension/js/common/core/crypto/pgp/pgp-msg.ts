@@ -11,7 +11,7 @@ import { opgp } from './openpgpjs-custom.js';
 import { KeyCache } from '../../../platform/key-cache.js';
 import { ContactStore } from '../../../platform/store/contact-store.js';
 import { SmimeKey } from '../smime/smime-key.js';
-import { OpenPGPKey, PgpKey } from './openpgp-key.js';
+import { OpenPGPKey } from './openpgp-key.js';
 
 export namespace PgpMsgMethod {
   export namespace Arg {
@@ -152,7 +152,7 @@ export class PgpMsg {
         verifyRes.match = (verifyRes.match === true || verifyRes.match === null) && await verification.verified;
         if (!verifyRes.signer) {
           // todo - currently only the first signer will be reported. Should we be showing all signers? How common is that?
-          verifyRes.signer = await PgpKey.longid(verification.keyid.bytes);
+          verifyRes.signer = OpenPGPKey.bytesToLongid(verification.keyid.bytes);
         }
       }
     } catch (verifyErr) {
@@ -249,7 +249,7 @@ export class PgpMsg {
     const msgKeyIds = m.getEncryptionKeyIds ? m.getEncryptionKeyIds() : [];
     const localKeyIds: string[] = [];
     for (const k of await Promise.all(privateKis.map(ki => KeyUtil.parse(ki.public)))) {
-      localKeyIds.push(...k.ids);
+      localKeyIds.push(...k.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)));
     }
     const diagnosis = { found_match: false, receivers: msgKeyIds.length };
     for (const msgKeyId of msgKeyIds) {
@@ -264,7 +264,7 @@ export class PgpMsg {
   }
 
   private static cryptoMsgGetSignedBy = async (msg: OpenpgpMsgOrCleartext, keys: SortedKeysForDecrypt) => {
-    keys.signedBy = Value.arr.unique(await PgpKey.longids(msg.getSigningKeyIds ? msg.getSigningKeyIds().map(kid => kid.bytes) : []));
+    keys.signedBy = Value.arr.unique(msg.getSigningKeyIds ? msg.getSigningKeyIds().map(kid => OpenPGPKey.bytesToLongid(kid.bytes)) : []);
     if (keys.signedBy.length && typeof ContactStore.get === 'function') {
       const verificationContacts = await ContactStore.get(undefined, keys.signedBy);
       keys.verificationContacts = verificationContacts.filter(contact => contact && contact.pubkey) as Contact[];
@@ -287,18 +287,18 @@ export class PgpMsg {
       prvForDecryptDecrypted: [],
       prvForDecryptWithoutPassphrases: [],
     };
-    const encryptedForKeyids = msg instanceof opgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds().map(kid => kid.bytes) : [];
-    keys.encryptedFor = await PgpKey.longids(encryptedForKeyids);
+    const encryptionKeyids = msg instanceof opgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds() : [];
+    keys.encryptedFor = encryptionKeyids.map(kid => OpenPGPKey.bytesToLongid(kid.bytes));
     await PgpMsg.cryptoMsgGetSignedBy(msg, keys);
     if (keys.encryptedFor.length) {
       for (const ki of kiWithPp) {
         ki.parsed = await KeyUtil.parse(ki.private); // todo
         // this is inefficient because we are doing unnecessary parsing of all keys here
-        // better would be to compare to already stored KeyInfo, however KeyInfo currently only holds primary longid, not longids of subkeys
+        // better would be to compare to already stored KeyInfo, however KeyInfo currently only holds primary id, not ids of subkeys
         // while messages are typically encrypted for subkeys, thus we have to parse the key to get the info
         // we are filtering here to avoid a significant performance issue of having to attempt decrypting with all keys simultaneously
-        for (const longid of ki.parsed.ids) {
-          if (keys.encryptedFor.includes(longid!)) {
+        for (const id of ki.parsed.allIds) {
+          if (keys.encryptedFor.includes(OpenPGPKey.fingerprintToLongid(id))) {
             keys.prvMatching.push(ki);
             break;
           }
@@ -309,7 +309,7 @@ export class PgpMsg {
       keys.prvForDecrypt = [];
     }
     for (const ki of keys.prvForDecrypt) {
-      const matchingKeyids = PgpMsg.matchingKeyids(ki.parsed!, encryptedForKeyids);
+      const matchingKeyids = PgpMsg.matchingKeyids(ki.parsed!, encryptionKeyids);
       const cachedKey = KeyCache.getDecrypted(ki.longid);
       if (cachedKey && PgpMsg.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
         ki.decrypted = cachedKey;
@@ -325,23 +325,24 @@ export class PgpMsg {
     return keys;
   }
 
-  private static matchingKeyids = (key: Key, encryptedFor: string[]): string[] => {
-    return key.ids.filter(kid => encryptedFor.includes(kid));
+  private static matchingKeyids = (key: Key, encryptedForKeyids: OpenPGP.Keyid[]): OpenPGP.Keyid[] => {
+    const allKeyLongids = key.allIds.map(id => OpenPGPKey.fingerprintToLongid(id));
+    return encryptedForKeyids.filter(kid => allKeyLongids.includes(OpenPGPKey.bytesToLongid(kid.bytes)));
   }
 
-  private static decryptKeyFor = async (prv: Key, passphrase: string, matchingKeyIds: string[]): Promise<boolean> => {
+  private static decryptKeyFor = async (prv: Key, passphrase: string, matchingKeyIds: OpenPGP.Keyid[]): Promise<boolean> => {
     if (!matchingKeyIds.length) { // we don't know which keyids match, decrypt all key packets
-      return await PgpKey.decrypt(prv, passphrase, undefined, 'OK-IF-ALREADY-DECRYPTED');
+      return await KeyUtil.decrypt(prv, passphrase, undefined, 'OK-IF-ALREADY-DECRYPTED');
     }
     for (const matchingKeyId of matchingKeyIds) { // we know which keyids match, decrypt only matching key packets
-      if (! await PgpKey.decrypt(prv, passphrase, matchingKeyId, 'OK-IF-ALREADY-DECRYPTED')) {
+      if (! await KeyUtil.decrypt(prv, passphrase, matchingKeyId, 'OK-IF-ALREADY-DECRYPTED')) {
         return false; // failed to decrypt a particular needed key packet
       }
     }
     return true;
   }
 
-  private static isKeyDecryptedFor = (prv: Key, msgKeyIds: string[]): boolean => {
+  private static isKeyDecryptedFor = (prv: Key, msgKeyIds: OpenPGP.Keyid[]): boolean => {
     if (prv.fullyDecrypted) {
       return true; // primary k + all subkeys decrypted, therefore it must be decrypted for any/every particular keyid
     }
@@ -351,7 +352,7 @@ export class PgpMsg {
     if (!msgKeyIds.length) {
       return false; // we don't know which keyId to decrypt - must decrypt all (but key is only partially decrypted)
     }
-    return msgKeyIds.filter(kid => PgpKey.isPacketDecrypted(prv, kid)).length === msgKeyIds.length; // test if all needed key packets are decrypted
+    return msgKeyIds.filter(kid => OpenPGPKey.isPacketDecrypted(prv, kid)).length === msgKeyIds.length; // test if all needed key packets are decrypted
   }
 
   private static cryptoMsgDecryptCategorizeErr = (decryptErr: any, msgPwd?: string): DecryptError$error => {
