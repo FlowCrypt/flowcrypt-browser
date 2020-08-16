@@ -250,9 +250,9 @@ sOLAw7KgpiL2+0v777saxSO5vtufJCKk4OOEaVDufeijlejKTM+H7twVer4iGqiW
     ava.default('[unit][KeyUtil.parse] OpenPGP parsing of expired key', async t => {
       const key = await KeyUtil.parse(expiredPgp);
       expect(key.id).to.equal('3449178FCAAF758E24CB68BE62CB4E6F9ECA6FA1');
-      expect(key.ids.length).to.equal(2);
-      expect(key.ids[0]).to.equal('62CB4E6F9ECA6FA1');
-      expect(key.ids[1]).to.equal('B30FE36B3AEC2F8F');
+      expect(key.allIds.length).to.equal(2);
+      expect(key.allIds[0]).to.equal('3449178FCAAF758E24CB68BE62CB4E6F9ECA6FA1');
+      expect(key.allIds[1]).to.equal('2D3391762FAC9394F7D5E9EDB30FE36B3AEC2F8F');
       expect(key.type).to.equal('openpgp');
       expect(key.usableForEncryption).equal(false);
       expect(key.usableForSigning).equal(false);
@@ -330,9 +330,9 @@ KwoTyPGP6prXobe5lmo+4Ji3bE+OFqD20SgDyM6ER7KsrjsKi/Gmh7Q0
     ava.default('[unit][KeyUtil.parse] OpenPGP parsing of not-expired key', async t => {
       const key = await KeyUtil.parse(notExpiredPgp);
       expect(key.id).to.equal('3449178FCAAF758E24CB68BE62CB4E6F9ECA6FA1');
-      expect(key.ids.length).to.equal(2);
-      expect(key.ids[0]).to.equal('62CB4E6F9ECA6FA1');
-      expect(key.ids[1]).to.equal('B30FE36B3AEC2F8F');
+      expect(key.allIds.length).to.equal(2);
+      expect(key.allIds[0]).to.equal('3449178FCAAF758E24CB68BE62CB4E6F9ECA6FA1');
+      expect(key.allIds[1]).to.equal('2D3391762FAC9394F7D5E9EDB30FE36B3AEC2F8F');
       expect(key.type).to.equal('openpgp');
       expect(key.usableForEncryption).equal(true);
       expect(key.usableForSigning).equal(true);

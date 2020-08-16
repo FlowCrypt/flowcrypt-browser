@@ -249,7 +249,7 @@ export class PgpMsg {
     const msgKeyIds = m.getEncryptionKeyIds ? m.getEncryptionKeyIds() : [];
     const localKeyIds: string[] = [];
     for (const k of await Promise.all(privateKis.map(ki => KeyUtil.parse(ki.public)))) {
-      localKeyIds.push(...k.ids);
+      localKeyIds.push(...k.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)));
     }
     const diagnosis = { found_match: false, receivers: msgKeyIds.length };
     for (const msgKeyId of msgKeyIds) {
@@ -293,11 +293,11 @@ export class PgpMsg {
       for (const ki of kiWithPp) {
         ki.parsed = await KeyUtil.parse(ki.private); // todo
         // this is inefficient because we are doing unnecessary parsing of all keys here
-        // better would be to compare to already stored KeyInfo, however KeyInfo currently only holds primary longid, not longids of subkeys
+        // better would be to compare to already stored KeyInfo, however KeyInfo currently only holds primary id, not ids of subkeys
         // while messages are typically encrypted for subkeys, thus we have to parse the key to get the info
         // we are filtering here to avoid a significant performance issue of having to attempt decrypting with all keys simultaneously
-        for (const longid of ki.parsed.ids) {
-          if (keys.encryptedFor.includes(longid!)) {
+        for (const id of ki.parsed.allIds) {
+          if (keys.encryptedFor.includes(OpenPGPKey.fingerprintToLongid(id))) {
             keys.prvMatching.push(ki);
             break;
           }
@@ -325,7 +325,7 @@ export class PgpMsg {
   }
 
   private static matchingKeyids = (key: Key, encryptedFor: string[]): string[] => {
-    return key.ids.filter(kid => encryptedFor.includes(kid));
+    return key.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)).filter(longid => encryptedFor.includes(longid));
   }
 
   private static decryptKeyFor = async (prv: Key, passphrase: string, matchingKeyIds: string[]): Promise<boolean> => {

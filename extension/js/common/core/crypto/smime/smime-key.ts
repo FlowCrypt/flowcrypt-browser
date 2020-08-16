@@ -16,7 +16,7 @@ export class SmimeKey {
     const key = {
       type: 'x509',
       id: certificate.serialNumber.toUpperCase(),
-      ids: [certificate.serialNumber.toUpperCase()],
+      allIds: [certificate.serialNumber.toUpperCase()],
       usableForEncryption: SmimeKey.isEmailCertificate(certificate),
       usableForSigning: SmimeKey.isEmailCertificate(certificate),
       usableButExpired: false,

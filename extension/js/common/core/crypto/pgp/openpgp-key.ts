@@ -191,7 +191,7 @@ export class OpenPGPKey {
     Object.assign(pkey, {
       type: 'openpgp',
       id: fingerprint.toUpperCase(),
-      ids: opgpKey.getKeyIds().map(id => OpenPGPKey.bytesToLongid(id.bytes)), // todo - longids should not be called just ids
+      allIds: opgpKey.getKeys().map(k => k.getFingerprint().toUpperCase()),
       usableForEncryption: ! await Catch.doesReject(opgpKey.getEncryptionKey()),
       usableButExpired: await OpenPGPKey.usableButExpired(opgpKey, exp, expired),
       usableForSigning: ! await Catch.doesReject(opgpKey.getSigningKey()),

@@ -9,6 +9,7 @@ import { PgpBlockView } from '../pgp_block';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { VerifyRes } from '../../../js/common/core/crypto/pgp/pgp-msg.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
+import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 export class PgpBlockViewSignatureModule {
 
@@ -63,8 +64,8 @@ export class PgpBlockViewSignatureModule {
         }
         // ---> and pubkey found on keyserver by sender email
         const { key } = await BrowserMsg.send.bg.await.keyParse({ armored: pubkey });
-        if (!key.ids.includes(signerLongid)) {
-          render(`Fetched sender's pubkey ${key.ids[0]} but message was signed with a different key: ${signerLongid}, will not verify.`, () => undefined);
+        if (!key.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)).includes(signerLongid)) {
+          render(`Fetched sender's pubkey ${OpenPGPKey.fingerprintToLongid(key.id)} but message was signed with a different key: ${signerLongid}, will not verify.`, () => undefined);
           return;
         }
         // ---> and longid it matches signature
