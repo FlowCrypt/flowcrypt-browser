@@ -9,7 +9,7 @@ import { Api, ProgressCb, ProgressCbs, ReqFmt } from './api.js';
 import { Dict } from '../core/common.js';
 import { Att } from '../core/att.js';
 import { BACKEND_API_HOST } from '../core/const.js';
-import { BackendAuthErr } from './error/api-error-types.js';
+import { BackendAuthErr } from './error/api-error.js';
 import { Catch } from '../platform/catch.js';
 import { DomainRulesJson } from '../org-rules.js';
 import { AcctStore } from '../platform/store/acct-store.js';

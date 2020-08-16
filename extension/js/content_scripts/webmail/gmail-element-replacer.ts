@@ -6,7 +6,7 @@ import { Dict, Str } from '../../common/core/common.js';
 import { FactoryReplyParams, WebmailVariantString, XssSafeFactory } from '../../common/xss-safe-factory.js';
 import { GmailParser, GmailRes } from '../../common/api/email-provider/gmail/gmail-parser.js';
 import { IntervalFunction, WebmailElementReplacer } from './setup-webmail-content-script.js';
-import { AjaxErr } from '../../common/api/error/api-error-types.js';
+import { AjaxErr } from '../../common/api/error/api-error.js';
 import { ApiErr } from '../../common/api/error/api-error.js';
 import { Att } from '../../common/core/att.js';
 import { Browser } from '../../common/browser/browser.js';

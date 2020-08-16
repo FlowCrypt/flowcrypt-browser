@@ -14,7 +14,7 @@ import { Backend } from './backend.js';
 import { Buf } from '../core/buf.js';
 import { Catch } from '../platform/catch.js';
 import { GmailRes } from './email-provider/gmail/gmail-parser';
-import { GoogleAuthErr } from './error/api-error-types.js';
+import { GoogleAuthErr } from './error/api-error.js';
 import { GoogleAuthWindowResult$result } from '../browser/browser-msg.js';
 import { Ui } from '../browser/ui.js';
 import { AcctStore, AcctStoreDict } from '../platform/store/acct-store.js';
