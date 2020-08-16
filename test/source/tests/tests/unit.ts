@@ -8,9 +8,12 @@ import { PgpHash } from '../../core/crypto/pgp/pgp-hash';
 import { TestVariant } from '../../util';
 import { TestWithBrowser } from '../../test';
 import { expect } from 'chai';
-import { KeyUtil } from '../../core/crypto/key';
+import { KeyUtil, PrvKeyInfo } from '../../core/crypto/key';
 import { UnreportableError } from '../../platform/catch.js';
 import { Buf } from '../../core/buf';
+import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key';
+import { PgpMsg, PgpMsgMethod } from '../../core/crypto/pgp/pgp-msg';
+import { opgp } from '../../core/crypto/pgp/openpgpjs-custom';
 
 // tslint:disable:no-blank-lines-func
 /* eslint-disable max-len */
@@ -534,6 +537,41 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       expect(parsed?.usableForEncryption).to.equal(false);
       expect(parsed?.expiration).to.equal(1594890073000);
       expect(parsed?.usableButExpired).to.equal(false); // because last signature was created as already expired, no intersection
+      t.pass();
+    });
+
+    ava.default('[unit][PgpMsg.getSortedKeys,matchingKeyids] must be able to find matching keys', async t => {
+      const pp = 'some pass for testing';
+      const key1 = await OpenPGPKey.create([{ name: 'Key1', email: 'key1@test.com' }], 'curve25519', pp, 0);
+      const key2 = await OpenPGPKey.create([{ name: 'Key2', email: 'key2@test.com' }], 'curve25519', pp, 0);
+      const pub1 = await KeyUtil.parse(key1.public);
+      const pub2 = await KeyUtil.parse(key2.public);
+      // only encrypt with pub1
+      const { data } = await PgpMsg.encryptMessage({ pubkeys: [pub1], data: Buf.fromUtfStr('anything'), armor: true }) as PgpMsgMethod.EncryptPgpArmorResult;
+      const m = await opgp.message.readArmored(Buf.fromUint8(data).toUtfStr());
+      const kisWithPp: PrvKeyInfo[] = [ // supply both pub1 and pub2 for decrypt
+        { private: key1.private, longid: OpenPGPKey.fingerprintToLongid(pub1.id), passphrase: pp },
+        { private: key2.private, longid: OpenPGPKey.fingerprintToLongid(pub2.id), passphrase: pp }
+      ];
+      // we are testing a private method here because the outcome of this method is not directly testable from the
+      //   public method that uses it. It only makes the public method faster, which is hard to test.
+      // @ts-ignore - accessing private method
+      const sortedKeys = await PgpMsg.getSortedKeys(kisWithPp, m);
+      // point is that only one of the private keys should be used for decrypting, not two
+      expect(sortedKeys.prvMatching.length).to.equal(1);
+      expect(sortedKeys.signedBy.length).to.equal(0);
+      expect(sortedKeys.encryptedFor.length).to.equal(1);
+      expect(sortedKeys.prvForDecrypt.length).to.equal(1);
+      expect(sortedKeys.prvForDecryptDecrypted.length).to.equal(1);
+      // specifically the pub1
+      expect(sortedKeys.prvForDecryptDecrypted[0].longid).to.equal(OpenPGPKey.fingerprintToLongid(pub1.id));
+      // also test PgpMsg.matchingKeyids
+      // @ts-ignore
+      const matching1 = await PgpMsg.matchingKeyids(pub1, m.getEncryptionKeyIds());
+      expect(matching1.length).to.equal(1);
+      // @ts-ignore
+      const matching2 = await PgpMsg.matchingKeyids(pub2, m.getEncryptionKeyIds());
+      expect(matching2.length).to.equal(0);
       t.pass();
     });
 

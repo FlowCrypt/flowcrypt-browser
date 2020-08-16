@@ -326,7 +326,8 @@ export class PgpMsg {
   }
 
   private static matchingKeyids = (key: Key, encryptedForKeyids: OpenPGP.Keyid[]): OpenPGP.Keyid[] => {
-    return encryptedForKeyids.filter(kid => key.allIds.includes(OpenPGPKey.bytesToLongid(kid.bytes)));
+    const allKeyLongids = key.allIds.map(id => OpenPGPKey.fingerprintToLongid(id));
+    return encryptedForKeyids.filter(kid => allKeyLongids.includes(OpenPGPKey.bytesToLongid(kid.bytes)));
   }
 
   private static decryptKeyFor = async (prv: Key, passphrase: string, matchingKeyIds: OpenPGP.Keyid[]): Promise<boolean> => {
