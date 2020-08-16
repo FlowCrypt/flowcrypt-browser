@@ -152,7 +152,7 @@ export class PgpMsg {
         verifyRes.match = (verifyRes.match === true || verifyRes.match === null) && await verification.verified;
         if (!verifyRes.signer) {
           // todo - currently only the first signer will be reported. Should we be showing all signers? How common is that?
-          verifyRes.signer = await PgpKey.longid(verification.keyid.bytes);
+          verifyRes.signer = OpenPGPKey.bytesToLongid(verification.keyid.bytes);
         }
       }
     } catch (verifyErr) {
@@ -264,7 +264,7 @@ export class PgpMsg {
   }
 
   private static cryptoMsgGetSignedBy = async (msg: OpenpgpMsgOrCleartext, keys: SortedKeysForDecrypt) => {
-    keys.signedBy = Value.arr.unique(await PgpKey.longids(msg.getSigningKeyIds ? msg.getSigningKeyIds().map(kid => kid.bytes) : []));
+    keys.signedBy = Value.arr.unique(msg.getSigningKeyIds ? msg.getSigningKeyIds().map(kid => OpenPGPKey.bytesToLongid(kid.bytes)) : []);
     if (keys.signedBy.length && typeof ContactStore.get === 'function') {
       const verificationContacts = await ContactStore.get(undefined, keys.signedBy);
       keys.verificationContacts = verificationContacts.filter(contact => contact && contact.pubkey) as Contact[];
@@ -287,8 +287,7 @@ export class PgpMsg {
       prvForDecryptDecrypted: [],
       prvForDecryptWithoutPassphrases: [],
     };
-    const encryptedForKeyids = msg instanceof opgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds().map(kid => kid.bytes) : [];
-    keys.encryptedFor = await PgpKey.longids(encryptedForKeyids);
+    keys.encryptedFor = msg instanceof opgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds().map(kid => OpenPGPKey.bytesToLongid(kid.bytes)) : [];
     await PgpMsg.cryptoMsgGetSignedBy(msg, keys);
     if (keys.encryptedFor.length) {
       for (const ki of kiWithPp) {
@@ -309,7 +308,7 @@ export class PgpMsg {
       keys.prvForDecrypt = [];
     }
     for (const ki of keys.prvForDecrypt) {
-      const matchingKeyids = PgpMsg.matchingKeyids(ki.parsed!, encryptedForKeyids);
+      const matchingKeyids = PgpMsg.matchingKeyids(ki.parsed!, keys.encryptedFor);
       const cachedKey = KeyCache.getDecrypted(ki.longid);
       if (cachedKey && PgpMsg.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
         ki.decrypted = cachedKey;

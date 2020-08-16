@@ -4,7 +4,7 @@ import { KeyInfo, Key, KeyUtil } from '../../core/crypto/key.js';
 import { AcctStore } from './acct-store.js';
 import { PassphraseStore } from './passphrase-store.js';
 import { AbstractStore } from './abstract-store.js';
-import { PgpKey } from '../../core/crypto/pgp/openpgp-key.js';
+import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key.js';
 
 /**
  * Local store of account private keys
@@ -43,19 +43,16 @@ export class KeyStore extends AbstractStore {
     if (!prv.fullyEncrypted) {
       throw new Error('Cannot import plain, unprotected key.');
     }
-    const newKeyLongid = await PgpKey.longid(await KeyUtil.parse(newKeyArmored));
-    if (newKeyLongid) {
-      for (const i in keyinfos) {
-        if (newKeyLongid === keyinfos[i].longid) { // replacing a key
-          keyinfos[i] = await KeyStore.keyInfoObj(prv, keyinfos[i].primary);
-          updated = true;
-        }
+    for (const i in keyinfos) {
+      if (prv.id === keyinfos[i].fingerprint) { // replacing a key
+        keyinfos[i] = await KeyStore.keyInfoObj(prv, keyinfos[i].primary);
+        updated = true;
       }
-      if (!updated) {
-        keyinfos.push(await KeyStore.keyInfoObj(prv, keyinfos.length === 0));
-      }
-      await AcctStore.set(acctEmail, { keys: keyinfos });
     }
+    if (!updated) {
+      keyinfos.push(await KeyStore.keyInfoObj(prv, keyinfos.length === 0));
+    }
+    await AcctStore.set(acctEmail, { keys: keyinfos });
   }
 
   public static remove = async (acctEmail: string, removeFingerprint: string): Promise<void> => {
@@ -79,13 +76,9 @@ export class KeyStore extends AbstractStore {
   }
 
   public static keyInfoObj = async (prv: Key, primary = false): Promise<KeyInfo> => {
-    const longid = await PgpKey.longid(prv);
-    if (!longid) {
-      throw new Error('Store.keysObj: unexpectedly no longid');
-    }
-    const fingerprint = prv.id;
     const pubArmor = KeyUtil.armor(await KeyUtil.asPublicKey(prv));
-    return { private: KeyUtil.armor(prv), public: pubArmor, primary, longid, fingerprint: fingerprint! };
+    const longid = OpenPGPKey.fingerprintToLongid(prv.id);
+    return { private: KeyUtil.armor(prv), public: pubArmor, primary, longid, fingerprint: prv.id };
   }
 
 }

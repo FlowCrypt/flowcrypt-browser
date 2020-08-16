@@ -44,10 +44,10 @@ export class SetupKeyManagerAutogenModule {
         }
         for (const prv of keys) {
           if (!prv.isPrivate) {
-            throw new Error(`Key ${await PgpKey.longid(prv)} for user ${this.view.acctEmail} is not a private key`);
+            throw new Error(`Key ${prv.id} for user ${this.view.acctEmail} is not a private key`);
           }
           if (!prv.fullyDecrypted) {
-            throw new Error(`Key ${await PgpKey.longid(prv)} for user ${this.view.acctEmail} from FlowCrypt Email Key Manager is not fully decrypted`);
+            throw new Error(`Key ${prv.id} for user ${this.view.acctEmail} from FlowCrypt Email Key Manager is not fully decrypted`);
           }
           await PgpKey.encrypt(prv, passphrase);
         }

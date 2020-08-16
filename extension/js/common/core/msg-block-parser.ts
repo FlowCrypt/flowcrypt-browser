@@ -193,9 +193,10 @@ export class MsgBlockParser {
 
   private static pushArmoredPubkeysToBlocks = async (armoredPubkeys: string[], blocks: MsgBlock[]): Promise<void> => {
     for (const armoredPubkey of armoredPubkeys) {
-      const { keys } = await KeyUtil.parseDetails(armoredPubkey);
-      for (const keyDetails of keys) {
-        blocks.push(MsgBlock.fromKeyDetails('publicKey', KeyUtil.armor(keyDetails.public), keyDetails));
+      const keys = await KeyUtil.parseMany(armoredPubkey);
+      for (const key of keys) {
+        const pub = await KeyUtil.asPublicKey(key);
+        blocks.push(MsgBlock.fromContent('publicKey', KeyUtil.armor(pub)));
       }
     }
   }

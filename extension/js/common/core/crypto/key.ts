@@ -74,7 +74,6 @@ export interface KeyInfo extends PrvKeyInfo {
 }
 
 export type KeyDetails$ids = {
-  shortid: string;
   longid: string;
   fingerprint: string;
 };
@@ -196,11 +195,6 @@ export class KeyUtil {
   public static dateBeforeExpirationIfAlreadyExpired = (key: Key): Date | undefined => {
     const expiration = key.expiration;
     return expiration && KeyUtil.expired(key) ? new Date(expiration - 1000) : undefined;
-  }
-
-  public static parseDetails = async (armored: string): Promise<{ original: string, normalized: string, keys: KeyDetails[] }> => {
-    const { normalized, keys } = await KeyUtil.normalize(armored);
-    return { original: armored, normalized, keys: await Promise.all(keys.map(PgpKey.details)) };
   }
 
   // todo - this should be made to tolerate smime keys

@@ -1,5 +1,5 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
-import { Key, PrvPacket, KeyAlgo, KeyUtil, KeyDetails$ids, KeyDetails, UnexpectedKeyTypeError } from '../key.js';
+import { Key, PrvPacket, KeyAlgo, KeyUtil, UnexpectedKeyTypeError } from '../key.js';
 import { opgp } from './openpgpjs-custom.js';
 import { Catch } from '../../../platform/catch.js';
 import { Str } from '../../common.js';
@@ -194,7 +194,7 @@ export class OpenPGPKey {
     Object.assign(pkey, {
       type: 'openpgp',
       id: fingerprint.toUpperCase(),
-      ids: (await Promise.all(pubkey.getKeyIds().map(({ bytes }) => PgpKey.longid(bytes)))).filter(Boolean) as string[],
+      ids: pubkey.getKeyIds().map(id => OpenPGPKey.bytesToLongid(id.bytes)), // todo - longids should not be called just ids
       usableForEncryption: ! await Catch.doesReject(pubkey.getEncryptionKey()),
       usableButExpired: await OpenPGPKey.usableButExpired(pubkey, exp, expired),
       usableForSigning: ! await Catch.doesReject(pubkey.getSigningKey()),
@@ -297,7 +297,7 @@ export class OpenPGPKey {
     for (let subKeyIndex = 0; subKeyIndex < key.subKeys.length; subKeyIndex++) {
       const subKey = key.subKeys[subKeyIndex];
       const skn = `SK ${subKeyIndex} >`;
-      await appendResult(`${skn} LongId`, async () => PgpKey.longid(subKey.getKeyId().bytes));
+      await appendResult(`${skn} LongId`, async () => OpenPGPKey.bytesToLongid(subKey.getKeyId().bytes));
       await appendResult(`${skn} Created`, async () => OpenPGPKey.formatDate(subKey.keyPacket.created));
       await appendResult(`${skn} Algo`, async () => `${subKey.getAlgorithmInfo().algorithm}`);
       await appendResult(`${skn} Verify`, async () => {
@@ -325,6 +325,17 @@ export class OpenPGPKey {
         await appendResult(`${sgn} Verified`, async () => sig.verified);
       }
     }
+  }
+
+  public static bytesToLongid = (binaryString: string) => {
+    return opgp.util.str_to_hex(binaryString).toUpperCase();
+  }
+
+  public static fingerprintToLongid = (fingerprint: string) => {
+    if (fingerprint.length !== 40) {
+      throw new Error(`Unexpected fingerprint format (len: ${fingerprint.length}): "${fingerprint}"`);
+    }
+    return fingerprint.substr(-16).toUpperCase();
   }
 
   private static unwrap = (pubkey: Key) => {
@@ -390,7 +401,7 @@ export class OpenPGPKey {
       if (verifyResult.error !== null && typeof verifyResult.error !== 'undefined') {
         output.push(`verify failed: ${verifyResult.error}`);
       } else {
-        if (verifyResult.match && verifyResult.signer === (await PgpKey.longid(key))) {
+        if (verifyResult.match && verifyResult.signer === OpenPGPKey.bytesToLongid(key.getKeyId().bytes)) {
           output.push('verify ok');
         } else {
           output.push(`verify mismatch: match[${verifyResult.match}] signer[${verifyResult.signer}]`);
@@ -465,67 +476,6 @@ export class PgpKey {
   public static isPacketDecrypted = (pubkey: Key, keyId: string) => {
     // TODO: Delegate to appropriate key type
     return OpenPGPKey.isPacketDecrypted(pubkey, keyId);
-  }
-
-  public static longid = async (keyOrFingerprintOrBytesOrLongid: string | Key | undefined | OpenPGP.key.Key): Promise<string | undefined> => {
-    if (!keyOrFingerprintOrBytesOrLongid) {
-      return undefined;
-    } else if (typeof keyOrFingerprintOrBytesOrLongid === 'string' && keyOrFingerprintOrBytesOrLongid.length === 8) {
-      return opgp.util.str_to_hex(keyOrFingerprintOrBytesOrLongid).toUpperCase(); // in binary form
-    } else if (typeof keyOrFingerprintOrBytesOrLongid === 'string' && keyOrFingerprintOrBytesOrLongid.length === 16) {
-      return keyOrFingerprintOrBytesOrLongid.toUpperCase(); // already a longid
-    } else if (typeof keyOrFingerprintOrBytesOrLongid === 'string' && /^[a-fA-F0-9]+$/.test(keyOrFingerprintOrBytesOrLongid)) {
-      // this case catches all hexadecimal strings and shortens them to 16 characters
-      // it's used for both OpenPGP fingerprints and S/MIME serial numbers that can vary in length
-      return keyOrFingerprintOrBytesOrLongid.substr(-16).toUpperCase(); // was a fingerprint
-    } else if (typeof keyOrFingerprintOrBytesOrLongid === 'string' && keyOrFingerprintOrBytesOrLongid.length === 49) {
-      return keyOrFingerprintOrBytesOrLongid.replace(/ /g, '').substr(-16); // spaced fingerprint
-    } else if (typeof keyOrFingerprintOrBytesOrLongid === 'string') {
-      return await PgpKey.longid(await KeyUtil.parse(keyOrFingerprintOrBytesOrLongid));
-    } else if ('getFingerprint' in keyOrFingerprintOrBytesOrLongid) {
-      return await PgpKey.longid(keyOrFingerprintOrBytesOrLongid.getFingerprint().toUpperCase());
-    }
-    return await PgpKey.longid(keyOrFingerprintOrBytesOrLongid.id);
-  }
-
-  public static longids = async (keyIds: string[]) => {
-    const longids: string[] = [];
-    for (const id of keyIds) {
-      const longid = await PgpKey.longid(id);
-      if (longid) {
-        longids.push(longid);
-      }
-    }
-    return longids;
-  }
-
-  public static details = async (k: OpenPGP.key.Key): Promise<KeyDetails> => {
-    const keys = k.getKeys();
-    const algoInfo = k.primaryKey.getAlgorithmInfo();
-    const algo = { algorithm: algoInfo.algorithm, bits: algoInfo.bits, curve: (algoInfo as any).curve, algorithmId: opgp.enums.publicKey[algoInfo.algorithm] };
-    const created = k.primaryKey.created.getTime() / 1000;
-    const ids: KeyDetails$ids[] = [];
-    for (const key of keys) {
-      const fingerprint = key.getFingerprint().toUpperCase();
-      if (fingerprint) {
-        const longid = await PgpKey.longid(fingerprint);
-        if (longid) {
-          const shortid = longid.substr(-8);
-          ids.push({ fingerprint, longid, shortid });
-        }
-      }
-    }
-    return {
-      private: k.isPrivate() ? k.armor() : undefined,
-      isFullyDecrypted: k.isPrivate() ? k.isFullyDecrypted() : undefined,
-      isFullyEncrypted: k.isPrivate() ? k.isFullyEncrypted() : undefined,
-      // TODO this is not yet optimal as it armors and then parses the key again
-      public: await KeyUtil.parse(k.toPublic().armor()),
-      users: k.getUserIds(),
-      ids,
-      algo,
-      created,
-    };
   }
 
   /**

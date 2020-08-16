@@ -7,7 +7,7 @@ import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { Str } from '../../core/common.js';
 import { Key, Contact, KeyUtil } from '../../core/crypto/key.js';
-import { PgpKey } from '../../core/crypto/pgp/openpgp-key.js';
+import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key.js';
 
 // tslint:disable:no-null-keyword
 
@@ -179,7 +179,7 @@ export class ContactStore extends AbstractStore {
     if (update.pubkey) {
       const key = typeof update.pubkey === 'string' ? await KeyUtil.parse(update.pubkey) : update.pubkey;
       update.fingerprint = key.id;
-      update.longid = await PgpKey.longid(key.id);
+      update.longid = OpenPGPKey.fingerprintToLongid(key.id);
       update.pubkey_last_sig = key.lastModified ? Number(key.lastModified) : null;
       update.expiresOn = key.expiration ? Number(key.expiration) : null;
       update.pubkey = KeyUtil.armor(key) as unknown as Key; // serialising for storage

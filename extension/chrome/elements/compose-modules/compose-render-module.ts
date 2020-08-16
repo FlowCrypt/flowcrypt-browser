@@ -293,26 +293,22 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       } catch (e) {
         return; // key is invalid
       }
-      const { keys: [key] } = await KeyUtil.parseDetails(normalizedPub);
-      if (!key.users.length) { // there can be no users
+      const key = await KeyUtil.parse(normalizedPub);
+      if (!key.emails.length) { // no users is not desired
+        await Ui.modal.warning(`There are no email addresses listed in this Public Key - don't know who this key belongs to.`);
         return;
       }
-      const keyUser = Str.parseEmail(key.users[0]);
-      if (keyUser.email) {
-        if (! await ContactStore.get(undefined, [keyUser.email])) {
-          await ContactStore.save(undefined, await ContactStore.obj({
-            email: keyUser.email,
-            name: keyUser.name,
-            client: 'pgp',
-            pubkey: normalizedPub,
-            lastCheck: Date.now(),
-          }));
-        }
-        this.view.S.cached('input_to').val(keyUser.email);
-        await this.view.recipientsModule.parseRenderRecipients(this.view.S.cached('input_to'));
-      } else {
-        await Ui.modal.warning(`The email listed in this public key does not seem valid: ${keyUser}`);
+      if (! await ContactStore.get(undefined, [key.emails[0]])) {
+        await ContactStore.save(undefined, await ContactStore.obj({
+          email: key.emails[0],
+          name: Str.parseEmail(key.identities[0]).name,
+          client: 'pgp',
+          pubkey: normalizedPub,
+          lastCheck: Date.now(),
+        }));
       }
+      this.view.S.cached('input_to').val(key.emails[0]);
+      await this.view.recipientsModule.parseRenderRecipients(this.view.S.cached('input_to'));
     }
   }
 

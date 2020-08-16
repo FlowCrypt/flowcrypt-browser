@@ -11,7 +11,7 @@ import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
 import { Buf } from '../core/buf.js';
 import { Catch } from '../platform/catch.js';
 import { Env } from './env.js';
-import { KeyDetails, KeyUtil } from '../core/crypto/key.js';
+import { KeyDetails } from '../core/crypto/key.js';
 import { PassphraseDialogType } from '../xss-safe-factory.js';
 import { PgpHash } from '../core/crypto/pgp/pgp-hash.js';
 import { PgpMsg } from '../core/crypto/pgp/pgp-msg.js';
@@ -236,7 +236,6 @@ export class BrowserMsg {
     BrowserMsg.bgAddListener('pgpMsgDiagnosePubkeys', PgpMsg.diagnosePubkeys);
     BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decryptMessage);
     BrowserMsg.bgAddListener('pgpMsgVerifyDetached', PgpMsg.verifyDetached);
-    BrowserMsg.bgAddListener('pgpKeyDetails', async ({ pubkey }: Bm.PgpKeyDetails): Promise<Bm.Res.PgpKeyDetails> => await KeyUtil.parseDetails(pubkey));
     BrowserMsg.bgAddListener('pgpMsgType', PgpMsg.type);
   }
 
