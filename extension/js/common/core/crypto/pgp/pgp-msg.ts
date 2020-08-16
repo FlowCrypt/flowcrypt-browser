@@ -11,7 +11,7 @@ import { opgp } from './openpgpjs-custom.js';
 import { KeyCache } from '../../../platform/key-cache.js';
 import { ContactStore } from '../../../platform/store/contact-store.js';
 import { SmimeKey } from '../smime/smime-key.js';
-import { OpenPGPKey, PgpKey } from './openpgp-key.js';
+import { OpenPGPKey } from './openpgp-key.js';
 
 export namespace PgpMsgMethod {
   export namespace Arg {
@@ -330,10 +330,10 @@ export class PgpMsg {
 
   private static decryptKeyFor = async (prv: Key, passphrase: string, matchingKeyIds: string[]): Promise<boolean> => {
     if (!matchingKeyIds.length) { // we don't know which keyids match, decrypt all key packets
-      return await PgpKey.decrypt(prv, passphrase, undefined, 'OK-IF-ALREADY-DECRYPTED');
+      return await KeyUtil.decrypt(prv, passphrase, undefined, 'OK-IF-ALREADY-DECRYPTED');
     }
     for (const matchingKeyId of matchingKeyIds) { // we know which keyids match, decrypt only matching key packets
-      if (! await PgpKey.decrypt(prv, passphrase, matchingKeyId, 'OK-IF-ALREADY-DECRYPTED')) {
+      if (! await KeyUtil.decrypt(prv, passphrase, matchingKeyId, 'OK-IF-ALREADY-DECRYPTED')) {
         return false; // failed to decrypt a particular needed key packet
       }
     }
@@ -350,7 +350,7 @@ export class PgpMsg {
     if (!msgKeyIds.length) {
       return false; // we don't know which keyId to decrypt - must decrypt all (but key is only partially decrypted)
     }
-    return msgKeyIds.filter(kid => PgpKey.isPacketDecrypted(prv, kid)).length === msgKeyIds.length; // test if all needed key packets are decrypted
+    return msgKeyIds.filter(kid => OpenPGPKey.isPacketDecrypted(prv, kid)).length === msgKeyIds.length; // test if all needed key packets are decrypted
   }
 
   private static cryptoMsgDecryptCategorizeErr = (decryptErr: any, msgPwd?: string): DecryptError$error => {

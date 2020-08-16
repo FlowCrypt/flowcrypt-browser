@@ -12,7 +12,7 @@ import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Settings } from '../../../js/common/settings.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
-import { PgpKey, OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
+import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 export class SetupKeyManagerAutogenModule {
 
@@ -49,7 +49,7 @@ export class SetupKeyManagerAutogenModule {
           if (!prv.fullyDecrypted) {
             throw new Error(`Key ${prv.id} for user ${this.view.acctEmail} from FlowCrypt Email Key Manager is not fully decrypted`);
           }
-          await PgpKey.encrypt(prv, passphrase);
+          await KeyUtil.encrypt(prv, passphrase);
         }
         await this.view.saveKeysAndPassPhrase(keys, opts);
       } else { // generate keys and store them on key manager
@@ -59,7 +59,7 @@ export class SetupKeyManagerAutogenModule {
         const generated = await OpenPGPKey.create(pgpUids, keygenAlgo, passphrase, expireInMonths);
         const decryptablePrv = await KeyUtil.parse(generated.private);
         const generatedKeyFingerprint = decryptablePrv.id;
-        if (! await PgpKey.decrypt(decryptablePrv, passphrase)) {
+        if (! await KeyUtil.decrypt(decryptablePrv, passphrase)) {
           throw new Error('Unexpectedly cannot decrypt newly generated key');
         }
         const pubArmor = KeyUtil.armor(await KeyUtil.asPublicKey(decryptablePrv));

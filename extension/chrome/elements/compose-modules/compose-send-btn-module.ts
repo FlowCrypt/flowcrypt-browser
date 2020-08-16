@@ -19,7 +19,6 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
-import { PgpKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 export class ComposeSendBtnModule extends ViewModule<ComposeView> {
 
@@ -185,7 +184,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       }
     } else {
       if (!prv.fullyDecrypted) {
-        await PgpKey.decrypt(prv, passphrase!); // checked !== undefined above
+        await KeyUtil.decrypt(prv, passphrase!); // checked !== undefined above
       }
       return prv;
     }

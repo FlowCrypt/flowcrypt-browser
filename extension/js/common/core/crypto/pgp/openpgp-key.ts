@@ -32,10 +32,6 @@ export class OpenPGPKey {
     return keys;
   }
 
-  public static isPacketDecrypted = (pubkey: Key, keyid: string) => {
-    return OpenPGPKey.unwrap(pubkey).isPacketDecrypted({ bytes: keyid });
-  }
-
   public static asPublicKey = async (pubkey: Key): Promise<Key> => {
     if (pubkey.type !== 'openpgp') {
       throw new UnexpectedKeyTypeError(`Key type is ${pubkey.type}, expecting OpenPGP`);
@@ -279,7 +275,7 @@ export class OpenPGPKey {
     await appendResult(`Primary key algo`, async () => key.primaryKey.algorithm);
     if (key.isPrivate()) {
       const pubkey = await KeyUtil.parse(key.armor());
-      await appendResult(`key decrypt`, async () => PgpKey.decrypt(pubkey, String($('.input_passphrase').val())));
+      await appendResult(`key decrypt`, async () => KeyUtil.decrypt(pubkey, String($('.input_passphrase').val())));
       await appendResult(`isFullyDecrypted`, async () => key.isFullyDecrypted());
       await appendResult(`isFullyEncrypted`, async () => key.isFullyEncrypted());
     }
@@ -361,6 +357,10 @@ export class OpenPGPKey {
 
   public static isPacketPrivate = (p: OpenPGP.packet.AnyKeyPacket): p is PrvPacket => {
     return p.tag === opgp.enums.packet.secretKey || p.tag === opgp.enums.packet.secretSubkey;
+  }
+
+  public static isPacketDecrypted = (pubkey: Key, keyidBytes: string) => {
+    return OpenPGPKey.unwrap(pubkey).isPacketDecrypted({ bytes: keyidBytes });
   }
 
   /**
@@ -477,35 +477,6 @@ export class OpenPGPKey {
     }
     const expDate = new Date(date.getTime() + (expiresInSecondsFromDate * 1000));
     return `${date.getTime() / 1000} + ${expiresInSecondsFromDate} seconds, which is: ${expDate.getTime() / 1000} or ${expDate.toISOString()}`;
-  }
-
-}
-
-export class PgpKey {
-
-  public static decrypt = async (key: Key, passphrase: string, optionalKeyid?: string, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
-    // TODO: Delegate to appropriate key type
-    return await OpenPGPKey.decryptKey(key, passphrase, optionalKeyid, optionalBehaviorFlag);
-  }
-
-  public static encrypt = async (key: Key, passphrase: string) => {
-    // TODO: Delegate to appropriate key type
-    return await OpenPGPKey.encryptKey(key, passphrase);
-  }
-
-  public static reformatKey = async (privateKey: Key, passphrase: string, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
-    // TODO: Delegate to appropriate key type
-    return await OpenPGPKey.reformatKey(privateKey, passphrase, userIds, expireSeconds);
-  }
-
-  public static isPacketDecrypted = (pubkey: Key, keyId: string) => {
-    // TODO: Delegate to appropriate key type
-    return OpenPGPKey.isPacketDecrypted(pubkey, keyId);
-  }
-
-  public static revoke = async (key: Key): Promise<string | undefined> => {
-    // TODO: Delegate to appropriate key type
-    return await OpenPGPKey.revoke(key);
   }
 
 }

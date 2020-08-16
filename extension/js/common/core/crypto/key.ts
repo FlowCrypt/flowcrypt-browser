@@ -7,7 +7,7 @@ import { Catch, UnreportableError } from '../../platform/catch.js';
 import { MsgBlockParser } from '../msg-block-parser.js';
 import { PgpArmor } from './pgp/pgp-armor.js';
 import { opgp } from './pgp/openpgpjs-custom.js';
-import { OpenPGPKey, PgpKey } from './pgp/openpgp-key.js';
+import { OpenPGPKey } from './pgp/openpgp-key.js';
 import { SmimeKey } from './smime/smime-key.js';
 import { MsgBlock } from '../msg-block.js';
 
@@ -228,7 +228,7 @@ export class KeyUtil {
     if (key.type !== 'openpgp') {
       throw new Error('Checking password for this key type is not implemented: ' + key.type);
     }
-    return await PgpKey.decrypt(key, passphrase);
+    return await KeyUtil.decrypt(key, passphrase);
   }
 
   public static getKeyType = (pubkey: string): 'openpgp' | 'x509' | 'unknown' => {
@@ -259,6 +259,38 @@ export class KeyUtil {
       return otherSmimePubs.map(pub => pub.pubkey);
     }
     return myPubs.map(p => p.pubkey);
+  }
+
+  public static decrypt = async (key: Key, passphrase: string, optionalKeyid?: string, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
+    if (key.type === 'openpgp') {
+      return await OpenPGPKey.decryptKey(key, passphrase, optionalKeyid, optionalBehaviorFlag);
+    } else {
+      throw new Error(`KeyUtil.decrypt does not support key type ${key.type}`);
+    }
+  }
+
+  public static encrypt = async (key: Key, passphrase: string) => {
+    if (key.type === 'openpgp') {
+      return await OpenPGPKey.encryptKey(key, passphrase);
+    } else {
+      throw new Error(`KeyUtil.encrypt does not support key type ${key.type}`);
+    }
+  }
+
+  public static reformatKey = async (privateKey: Key, passphrase: string, userIds: { email: string | undefined; name: string }[], expireSeconds: number) => {
+    if (privateKey.type === 'openpgp') {
+      return await OpenPGPKey.reformatKey(privateKey, passphrase, userIds, expireSeconds);
+    } else {
+      throw new Error(`KeyUtil.reformatKey does not support key type ${privateKey.type}`);
+    }
+  }
+
+  public static revoke = async (key: Key): Promise<string | undefined> => {
+    if (key.type === 'openpgp') {
+      return await OpenPGPKey.revoke(key);
+    } else {
+      throw new Error(`KeyUtil.revoke does not support key type ${key.type}`);
+    }
   }
 
 }

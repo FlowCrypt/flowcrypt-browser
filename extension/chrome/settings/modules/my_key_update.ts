@@ -15,7 +15,6 @@ import { OrgRules } from '../../../js/common/org-rules.js';
 import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
-import { PgpKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 View.run(class MyKeyUpdateView extends View {
 
@@ -78,7 +77,7 @@ View.run(class MyKeyUpdateView extends View {
       await Ui.modal.warning('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"');
     } else if (updatedKey.id !== (await KeyUtil.parse(this.primaryKi!.public)).id) {
       await Ui.modal.warning(`This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(this.primaryKi!.fingerprint)}`);
-    } else if (await PgpKey.decrypt(updatedKey, uddatedKeyPassphrase) !== true) {
+    } else if (await KeyUtil.decrypt(updatedKey, uddatedKeyPassphrase) !== true) {
       await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
     } else {
       if (updatedKey.usableForEncryption) {
