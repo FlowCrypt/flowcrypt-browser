@@ -16,7 +16,7 @@ const data: UserMessages = {
       "id": "draft-0",
       "threadId": "16eec6ebc087faa7",
       "labelIds": ["DRAFT"],
-      "snippet": "[cryptup:link:draft_compose:r304765387393056602] -----BEGIN PGP MESSAGE----- Version: FlowCrypt 7.3.6 Gmail Encryption Comment: Seamlessly send and receive encrypted email wcFMA0taL/zmLZUBAQ//",
+      "snippet": "[flowcrypt:link:draft_compose:r304765387393056602] -----BEGIN PGP MESSAGE----- Version: FlowCrypt 7.3.6 Gmail Encryption Comment: Seamlessly send and receive encrypted email wcFMA0taL/zmLZUBAQ//",
       "historyId": "1105694",
       "internalDate": "1575924710000",
       "payload": {
@@ -62,7 +62,7 @@ const data: UserMessages = {
       "id": "draft-1",
       "threadId": "16d6cbeb73bd2a9b",
       "labelIds": ["DRAFT"],
-      "snippet": "[cryptup:link:draft_compose:r-8909860425873898730] -----BEGIN PGP MESSAGE----- Version: FlowCrypt 7.0.2 Gmail Encryption Comment: Seamlessly send and receive encrypted email wcFMA0taL/",
+      "snippet": "[flowcrypt:link:draft_compose:r-8909860425873898730] -----BEGIN PGP MESSAGE----- Version: FlowCrypt 7.0.2 Gmail Encryption Comment: Seamlessly send and receive encrypted email wcFMA0taL/",
       "historyId": "1058042",
       "internalDate": "1569487501000",
       "payload": {
@@ -88,7 +88,7 @@ const data: UserMessages = {
       "id": "draft-3",
       "threadId": "16cfb0e25821733b",
       "labelIds": ["DRAFT"],
-      "snippet": "[cryptup:link:draft_reply:16cfa9001baaac0a] -----BEGIN PGP MESSAGE----- Version: FlowCrypt 6.9.9 Gmail Encryption Comment: Seamlessly send and receive encrypted email wcFMA0taL/zmLZUBAQ/",
+      "snippet": "[flowcrypt:link:draft_reply:16cfa9001baaac0a] -----BEGIN PGP MESSAGE----- Version: FlowCrypt 6.9.9 Gmail Encryption Comment: Seamlessly send and receive encrypted email wcFMA0taL/zmLZUBAQ/",
       "historyId": "1044100",
       "internalDate": "1567580104000",
       "payload": {
