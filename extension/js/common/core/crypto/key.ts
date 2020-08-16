@@ -110,7 +110,7 @@ export class KeyUtil {
         } else {
           const { err, keys } = await opgp.key.read(typeof content === 'string' ? Buf.fromUtfStr(content) : content);
           allErrs.push(...(err || []));
-          allKeys.push(...await Promise.all(keys.map(key => OpenPGPKey.wrap(key, {} as Key))));
+          allKeys.push(...await Promise.all(keys.map(key => OpenPGPKey.convertExternalLibraryObjToKey(key))));
         }
       } catch (e) {
         allErrs.push(e instanceof Error ? e : new Error(String(e)));
