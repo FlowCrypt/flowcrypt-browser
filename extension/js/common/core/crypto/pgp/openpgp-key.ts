@@ -336,10 +336,13 @@ export class OpenPGPKey {
   }
 
   public static fingerprintToLongid = (fingerprint: string) => {
-    if (fingerprint.length !== 40) {
-      throw new Error(`Unexpected fingerprint format (len: ${fingerprint.length}): "${fingerprint}"`);
+    if (fingerprint.length === 32) { // s/mime keys
+      return fingerprint; // leave as is - s/mime has no concept of longids
     }
-    return fingerprint.substr(-16).toUpperCase();
+    if (fingerprint.length === 40) { // pgp keys
+      return fingerprint.substr(-16).toUpperCase();
+    }
+    throw new Error(`Unexpected fingerprint format (len: ${fingerprint.length}): "${fingerprint}"`);
   }
 
   /**
