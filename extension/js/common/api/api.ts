@@ -4,8 +4,6 @@
 
 // tslint:disable:no-direct-ajax
 
-import { AjaxErr, ApiErrResponse, StandardErrRes } from './error/api-error-types.js';
-
 import { Att } from '../core/att.js';
 import { BrowserMsg } from '../browser/browser-msg.js';
 import { Buf } from '../core/buf.js';
@@ -14,7 +12,7 @@ import { Contact } from '../core/crypto/key.js';
 import { Dict } from '../core/common.js';
 import { Env } from '../browser/env.js';
 import { secureRandomBytes } from '../platform/util.js';
-import { ApiErr } from './error/api-error.js';
+import { ApiErr, AjaxErr } from './error/api-error.js';
 
 export type ReqFmt = 'JSON' | 'FORM' | 'TEXT';
 export type RecipientType = 'to' | 'cc' | 'bcc';
@@ -188,9 +186,6 @@ export class Api {
       timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000, // substituted with {} above
     };
     const res = await Api.ajax(req, Catch.stackTrace());
-    if (res && typeof res === 'object' && typeof (res as StandardErrRes).error === 'object' && (res as StandardErrRes).error.message) {
-      throw new ApiErrResponse(res as StandardErrRes, req);
-    }
     return res as RT;
   }
 

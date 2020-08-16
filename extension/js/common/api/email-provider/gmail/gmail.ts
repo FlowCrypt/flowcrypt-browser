@@ -8,7 +8,7 @@ import { Dict, Str, Value } from '../../../core/common.js';
 import { EmailProviderApi, EmailProviderInterface, Backups } from '../email-provider-api.js';
 import { GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
 import { GmailParser, GmailRes } from './gmail-parser.js';
-import { AjaxErr } from '../../error/api-error-types.js';
+import { AjaxErr } from '../../error/api-error.js';
 import { Att } from '../../../core/att.js';
 import { BrowserMsg } from '../../../browser/browser-msg.js';
 import { Buf } from '../../../core/buf.js';

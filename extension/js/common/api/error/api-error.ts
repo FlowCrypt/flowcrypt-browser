@@ -1,11 +1,146 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { AjaxErr, ApiErrResponse, AuthErr, GoogleAuthErr, StandardErrRes, StandardError } from './api-error-types.js';
-
 import { BgNotReadyErr } from '../../browser/browser-msg.js';
 import { Catch } from '../../platform/catch.js';
 import { Xss } from '../../platform/xss.js';
 import { StoreFailedError } from '../../platform/store/abstract-store.js';
+import { Str } from '../../core/common.js';
+
+interface StandardErrRes { error: StandardError; }
+interface StandardError { code: number | null; message: string; internal: string | null; data?: string; stack?: string; }
+
+export interface RawAjaxErr {
+  readyState: number;
+  responseText?: string;
+  status?: number;
+  statusText?: string;
+}
+
+export abstract class AuthErr extends Error { }
+export class GoogleAuthErr extends AuthErr { }
+export class BackendAuthErr extends AuthErr { }
+
+abstract class ApiCallErr extends Error {
+
+  protected static describeApiAction = (req: JQueryAjaxSettings) => {
+    const describeBody = typeof req.data === 'undefined' ? '(no body)' : typeof req.data;
+    return `${req.method || 'GET'}-ing ${Catch.censoredUrl(req.url)} ${describeBody}: ${ApiCallErr.getPayloadStructure(req)}`;
+  }
+
+  private static getPayloadStructure = (req: JQueryAjaxSettings): string => {
+    if (typeof req.data === 'string') {
+      try {
+        return Object.keys(JSON.parse(req.data) as any).join(',');
+      } catch (e) {
+        return 'not-a-json';
+      }
+    } else if (req.data && typeof req.data === 'object') {
+      return Object.keys(req.data).join(',');
+    }
+    return '';
+  }
+
+}
+
+export class AjaxErrMsgs {
+  public static GOOGLE_INVALID_TO_HEADER = 'Invalid to header';
+  public static GOOGLE_RECIPIENT_ADDRESS_REQUIRED = 'Recipient address required';
+}
+
+export class AjaxErr extends ApiCallErr { // no static props, else will get serialised into err reports. Static methods ok
+
+  public static fromXhr = (xhr: RawAjaxErr, req: JQueryAjaxSettings, stack: string) => {
+    const responseText = xhr.responseText || '';
+    stack += `\n\nprovided ajax call stack:\n${stack}`;
+    const { resMsg, resDetails, resCode } = AjaxErr.parseResErr(responseText);
+    const status = resCode || (typeof xhr.status === 'number' ? xhr.status : -1);
+    if (status === 400 || status === 403 || (status === 200 && responseText && responseText[0] !== '{')) {
+      // RawAjaxErr with status 200 can happen when it fails to parse response - eg non-json result
+      const redactedRes = AjaxErr.redactSensitiveData(responseText.substr(0, 1000));
+      const redactedPayload = AjaxErr.redactSensitiveData(Catch.stringify(req.data).substr(0, 1000));
+      stack += `\n\nresponseText(0, 1000):\n${redactedRes}\n\npayload(0, 1000):\n${redactedPayload}`;
+    }
+    const message = `${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallErr.describeApiAction(req)} -> ${resMsg || '(no standard err msg)'}`;
+    return new AjaxErr(
+      message,
+      stack,
+      status,
+      Catch.censoredUrl(req.url),
+      responseText,
+      xhr.statusText || '(no status text)',
+      resMsg,
+      resDetails
+    );
+  }
+
+  private static parseResErr = (responseText: string): { resMsg?: string, resDetails?: string, resCode?: number } => {
+    const returnable: { resMsg?: string, resDetails?: string, resCode?: number } = {};
+    let parsedRes: unknown;
+    try {
+      parsedRes = JSON.parse(responseText);
+    } catch (e) {
+      return {};
+    }
+    try { // JSON[error][message,code,internal]
+      const resMsg = ((parsedRes as any).error as any).message as string; // catching all errs below
+      if (typeof resMsg === 'string') {
+        returnable.resMsg = Str.truncate(resMsg, 300);
+      }
+      const resDetails = ((parsedRes as any).error as any).internal as string; // catching all errs below
+      if (typeof resDetails === 'string') {
+        returnable.resDetails = Str.truncate(resDetails, 300);
+      }
+      const resCode = ((parsedRes as any).error as any).code as number; // catching all errs below
+      if (typeof resCode === 'number') {
+        returnable.resCode = resCode;
+      }
+    } catch (e) {
+      // skip
+    }
+    try { // JSON[message,code,details]
+      const resMsg = (parsedRes as any).message as string; // catching all errs below
+      if (typeof resMsg === 'string') {
+        returnable.resMsg = Str.truncate(resMsg, 300);
+      }
+      const resDetails = (parsedRes as any).details as string; // catching all errs below
+      if (typeof resDetails === 'string') {
+        returnable.resDetails = Str.truncate(resDetails, 300);
+      }
+      const resCode = (parsedRes as any).code as number; // catching all errs below
+      if (typeof resCode === 'number') {
+        returnable.resCode = resCode;
+      }
+    } catch (e) {
+      // skip
+    }
+    return returnable;
+  }
+
+  private static redactSensitiveData = (str: string): string => {
+    const lowered = str.toLowerCase();
+    if (lowered.includes('private key') || lowered.includes('privatekey')) {
+      return '<REDACTED:PRV>';
+    }
+    if (lowered.includes('idtoken') || lowered.includes('id_token')) {
+      return '<REDACTED:IDTOKEN>';
+    }
+    return str;
+  }
+
+  constructor(
+    message: string,
+    public stack: string,
+    public status: number,
+    public url: string,
+    public responseText: string,
+    public statusText: string,
+    public resMsg: string | undefined,
+    public resDetails: string | undefined,
+  ) {
+    super(message);
+  }
+
+}
 
 export class ApiErr {
   public static eli5 = (e: any): string => { // "explain like I'm five"
@@ -44,7 +179,7 @@ export class ApiErr {
     if (!e || !(typeof e === 'object')) {
       return false;
     }
-    if (e instanceof ApiErrResponse && typeof e.res === 'object' && typeof e.res.error === 'object' && e.res.error.internal === internalType) {
+    if (e instanceof AjaxErr && e.resDetails === internalType) {
       return true;
     }
     if ((e as StandardError).hasOwnProperty('internal') && !!((e as StandardError).message) && (e as StandardError).internal === internalType) {

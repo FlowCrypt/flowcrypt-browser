@@ -5,8 +5,7 @@
 import { Dict, Str, Url, UrlParams } from './core/common.js';
 import { Ui } from './browser/ui.js';
 import { Api } from './api/api.js';
-import { ApiErr } from './api/error/api-error.js';
-import { ApiErrResponse } from './api/error/api-error-types.js';
+import { ApiErr, AjaxErr } from './api/error/api-error.js';
 import { Backend } from './api/backend.js';
 import { Catch } from './platform/catch.js';
 import { Env } from './browser/env.js';
@@ -234,8 +233,8 @@ export class Settings {
    */
   public static promptToRetry = async (lastErr: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
     let userErrMsg = `${userMsg} ${ApiErr.eli5(lastErr)}`;
-    if (lastErr instanceof ApiErrResponse && lastErr.res.error.code === 400) {
-      userErrMsg = `${userMsg}, ${lastErr.res.error.message}`; // this will make reason for err 400 obvious to user, very important for our main customer
+    if (lastErr instanceof AjaxErr && lastErr.status === 400) {
+      userErrMsg = `${userMsg}, ${lastErr.resMsg}`; // this will make reason for err 400 obvious to user, very important for enterprise customers
     }
     while (await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, userErrMsg, ApiErr.detailsAsHtmlWithNewlines(lastErr)) === 'retry') {
       try {

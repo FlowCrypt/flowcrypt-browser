@@ -286,12 +286,13 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await SettingsPageRecipe.closeDialog(settingsPage);
     }));
 
-    ava.default('reject.client.keypair@key-manager-autogen.flowcrypt.com - does not leak sensitive info on err 400', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('reject.client.keypair@key-manager-autogen.flowcrypt.com - does not leak sensitive info on err 400, shows informative err', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'reject.client.keypair@key-manager-autogen.flowcrypt.com';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await settingsPage.waitAll(['@action-overlay-retry', '@container-overlay-prompt-text', '@action-show-overlay-details']);
       await Util.sleep(0.5);
-      expect(await settingsPage.read('@container-overlay-prompt-text')).to.contain('Server says this was a bad request');
+      const title = await settingsPage.read('@container-overlay-prompt-text');
+      expect(title).to.contain('Failed to store newly generated key on FlowCrypt Email Key Manager, No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.com yet. Please ask your administrator.');
       await settingsPage.click('@action-show-overlay-details');
       await settingsPage.waitAll('@container-overlay-details');
       await Util.sleep(0.5);

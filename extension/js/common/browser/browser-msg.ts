@@ -4,7 +4,7 @@
 
 import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, VerifyRes, PgpMsgTypeResult } from '../core/crypto/pgp/pgp-msg.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
-import { AjaxErr } from '../api/error/api-error-types.js';
+import { AjaxErr } from '../api/error/api-error.js';
 import { AuthRes } from '../api/google-auth.js';
 import { Browser } from './browser.js';
 import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
@@ -104,9 +104,10 @@ export namespace Bm {
   export type AsyncRespondingHandler = (req: AnyRequest, sender: Sender) => Promise<Res.Any>;
   export type AsyncResponselessHandler = (req: AnyRequest, sender: Sender) => Promise<void>;
 
-  export type ErrAsJson =
-    { stack?: string; message: string, errorConstructor: 'Error' } |
-    { stack?: string; message: string, errorConstructor: 'AjaxErr', ajaxErrorDetails: { status: number, url: string, responseText: string, statusText: string, parsedErrMsg?: string } };
+  type StandardErrAsJson = { stack?: string; message: string, errorConstructor: 'Error' };
+  type AjaxErrDetails = { status: number, url: string, responseText: string, statusText: string, resMsg?: string, resDetails?: string };
+  type AjaxErrAsJson = { stack?: string; message: string, errorConstructor: 'AjaxErr', ajaxErrorDetails: AjaxErrDetails };
+  export type ErrAsJson = StandardErrAsJson | AjaxErrAsJson;
 }
 
 type Handler = Bm.AsyncRespondingHandler | Bm.AsyncResponselessHandler;
@@ -453,8 +454,8 @@ export class BrowserMsg {
 
   private static errToJson = (e: any): Bm.ErrAsJson => {
     if (e instanceof AjaxErr) {
-      const { message, stack, status, url, responseText, statusText, parsedErrMsg } = e;
-      return { stack, message, errorConstructor: 'AjaxErr', ajaxErrorDetails: { status, url, responseText, statusText, parsedErrMsg } };
+      const { message, stack, status, url, responseText, statusText, resMsg, resDetails } = e;
+      return { stack, message, errorConstructor: 'AjaxErr', ajaxErrorDetails: { status, url, responseText, statusText, resMsg, resDetails } };
     }
     const { stack, message } = Catch.rewrapErr(e, 'sendRawResponse');
     return { stack, message, errorConstructor: 'Error' };
@@ -463,8 +464,8 @@ export class BrowserMsg {
   private static jsonToErr = (errAsJson: Bm.ErrAsJson, msg: Bm.Raw) => {
     const stackInfo = `\n\n[callerStack]\n${msg.stack}\n[/callerStack]\n\n[responderStack]\n${errAsJson.stack}\n[/responderStack]\n`;
     if (errAsJson.errorConstructor === 'AjaxErr') {
-      const { status, url, responseText, statusText, parsedErrMsg } = errAsJson.ajaxErrorDetails;
-      return new AjaxErr(`BrowserMsg(${name}) ${errAsJson.message}`, stackInfo, status, url, responseText, statusText, parsedErrMsg);
+      const { status, url, responseText, statusText, resMsg, resDetails } = errAsJson.ajaxErrorDetails;
+      return new AjaxErr(`BrowserMsg(${name}) ${errAsJson.message}`, stackInfo, status, url, responseText, statusText, resMsg, resDetails);
     }
     const e = new Error(`BrowserMsg(${name}) ${errAsJson.message}`);
     e.stack += stackInfo;
