@@ -39,7 +39,7 @@ console.info('consts: ', JSON.stringify(consts), '\n');
 consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) => setTimeout(() => reject(new Error(`TIMEOUT_OVERALL`)), consts.TIMEOUT_OVERALL));
 
 export type Consts = typeof consts;
-export type CommonAcct = 'compatibility' | 'compose';
+export type CommonAcct = 'compatibility' | 'compose' | 'ci.tests.gmail';
 
 const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false, buildDir, undefined, undefined, consts.IS_LOCAL_DEBUG);
 let closeMockApi: () => Promise<void>;

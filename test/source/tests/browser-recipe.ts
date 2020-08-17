@@ -47,11 +47,15 @@ export class BrowserRecipe {
     return gmailPage;
   }
 
-  public static setUpCommonAcct = async (t: AvaContext, browser: BrowserHandle, group: 'compatibility' | 'compose') => {
-    if (group === 'compatibility') {
+  public static setUpCommonAcct = async (t: AvaContext, browser: BrowserHandle, acct: 'compatibility' | 'compose' | 'ci.tests.gmail') => {
+    if (acct === 'compatibility') {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', { hasRecoverMore: true, clickRecoverMore: true });
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1');
+      await settingsPage.close();
+    } else if (acct === 'ci.tests.gmail') {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
+      await SetupPageRecipe.recover(settingsPage, 'ci.tests.gmail');
       await settingsPage.close();
     } else {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'test.ci.compose@org.flowcrypt.com');
