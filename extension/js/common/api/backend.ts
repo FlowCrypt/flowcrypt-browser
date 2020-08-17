@@ -13,6 +13,7 @@ import { BackendAuthErr } from './error/api-error.js';
 import { Catch } from '../platform/catch.js';
 import { DomainRulesJson } from '../org-rules.js';
 import { AcctStore } from '../platform/store/acct-store.js';
+import { Browser } from '../browser/browser.js';
 
 type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
 
@@ -138,7 +139,18 @@ export class Backend extends Api {
   }
 
   public static retrieveBlogPosts = async (): Promise<BackendRes.FcBlogPost[]> => {
-    return await Api.ajax({ url: 'https://flowcrypt.com/feed', dataType: 'json' }, Catch.stackTrace()) as BackendRes.FcBlogPost[]; // tslint:disable-line:no-direct-ajax
+    const xml = await Api.ajax({ url: 'https://flowcrypt.com/blog/feed.xml', dataType: 'xml' }, Catch.stackTrace()) as XMLDocument; // tslint:disable-line:no-direct-ajax
+    const posts: BackendRes.FcBlogPost[] = [];
+    for (const post of Browser.arrFromDomNodeList(xml.querySelectorAll('entry'))) {
+      const children = Browser.arrFromDomNodeList(post.childNodes);
+      const title = children.find(n => n.nodeName.toLowerCase() === 'title')?.textContent;
+      const date = children.find(n => n.nodeName.toLowerCase() === 'published')?.textContent?.substr(0, 10);
+      const url = (children.find(n => n.nodeName.toLowerCase() === 'link') as HTMLAnchorElement).getAttribute('href');
+      if (title && date && url) {
+        posts.push({ title, date, url });
+      }
+    }
+    return posts.slice(0, 5);
   }
 
   private static request = async <RT>(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}, progressCbs?: ProgressCbs): Promise<RT> => {
