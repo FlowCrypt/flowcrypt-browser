@@ -144,10 +144,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
       expect(urls.length).to.equal(1);
       const params = urls[0].split('/chrome/elements/pgp_block.htm')[1];
-      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-        params,
-        content: ['test that content from msg.asc renders']
-      });
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params, content: ['test that content from msg.asc renders'] });
       await pageHasSecureReplyContainer(t, browser, gmailPage);
     }));
 
