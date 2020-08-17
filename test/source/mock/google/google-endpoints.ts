@@ -219,7 +219,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       }
       if ((mimeMsg.subject || '').includes('RTL')) {
         const data = new GoogleData(acct);
-        data.addDraft('draft_with_rtl_text', raw, mimeMsg);
+        data.addDraft(`draft_with_rtl_text_${mimeMsg.subject?.includes('rich text') ? 'rich' : 'plain'}`, raw, mimeMsg);
       }
       return {};
     } else if (isDelete(req)) {
