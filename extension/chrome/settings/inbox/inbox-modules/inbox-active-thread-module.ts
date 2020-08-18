@@ -17,11 +17,14 @@ import { Mime } from '../../../../js/common/core/mime.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
+import { Browser } from '../../../../js/common/browser/browser.js';
+import { Att } from '../../../../js/common/core/att.js';
 
 export class InboxActiveThreadModule extends ViewModule<InboxView> {
 
   private threadId: string | undefined;
   private threadHasPgpBlock: boolean = false;
+  private debugEmails = ['flowcrypt.compatibility@gmail.com']; // adds debugging ui, useful for creating automated tests
 
   public render = async (threadId: string, thread?: GmailRes.GmailThread) => {
     this.threadId = threadId;
@@ -117,8 +120,12 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       if (renderedAtts) {
         r += `<div class="attachments">${renderedAtts}</div>`;
       }
-      r = `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(from)} <span style="float:right;">${headers.date}</p>` + r;
+      const exportBtn = this.debugEmails.includes(this.view.acctEmail) ? '<a href="#" class="action-export">download api export</a>' : '';
+      r = `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(from)} <span style="float:right;">${headers.date} ${exportBtn}</p>` + r;
       $('.thread').append(this.wrapMsg(htmlId, r)); // xss-safe-factory
+      if (exportBtn) {
+        $('.action-export').click(this.view.setHandler(() => this.exportMsgForDebug(message.id)));
+      }
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         Xss.sanitizeAppend('.thread', this.wrapMsg(htmlId, `Failed to load a message (network error), skipping. ${Ui.retryLink()}`));
@@ -131,6 +138,44 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
         const printable = Xss.escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
         Xss.sanitizeAppend('.thread', this.wrapMsg(htmlId, `Failed to load a message due to the following error: <pre>${printable}</pre>`));
       }
+    }
+  }
+
+  private exportMsgForDebug = async (msgId: string) => {
+    const full = await this.view.gmail.msgGet(msgId, 'full');
+    const raw = await this.view.gmail.msgGet(msgId, 'raw');
+    const atts = GmailParser.findAtts(full);
+    await this.view.gmail.fetchAtts(atts);
+    this.redactExportMsgHeaders(full);
+    this.redactExportMsgHeaders(raw);
+    const attachments: { [id: string]: { data: string, size: number } } = {};
+    for (const att of atts) {
+      attachments[att.id!] = { data: att.getData().toBase64UrlStr(), size: att.getData().length };
+    }
+    const combined = { acctEmail: this.view.acctEmail, full, attachments, raw };
+    const json = JSON.stringify(combined, undefined, 2);
+    Browser.saveToDownloads(new Att({ data: Buf.fromUtfStr(json), type: 'application/json', name: `message-export-${msgId}.json` }));
+  }
+
+  private redactExportMsgHeaders = (msg: GmailRes.GmailMsg) => {
+    const exclude = ['received', 'dkim', 'authentication', 'feedback', 'ip', 'mailgun', 'unsubscribe', 'return',
+      'arc', 'google', 'delivered', 'precedence', 'message-id'];
+    if (msg.payload) {
+      msg.payload.headers = msg.payload.headers?.filter(h => {
+        const hn = h.name.toLowerCase();
+        for (const excludable of exclude) {
+          if (hn.includes(excludable)) {
+            return false;
+          }
+        }
+        if (hn === 'to') {
+          h.value = 'flowcrypt.compatibility@gmail.com'; // you can edit this manually in the export if you need a specific value
+        }
+        if (hn === 'sender' || hn === 'from') {
+          h.value = 'sender@domain.com'; // you can edit this manually in the export if you need a specific value
+        }
+        return true;
+      });
     }
   }
 
