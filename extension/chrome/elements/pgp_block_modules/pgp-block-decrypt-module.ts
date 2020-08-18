@@ -116,8 +116,10 @@ export class PgpBlockViewDecryptModule {
           await this.view.errorModule.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.writeMe + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"', encryptedData.toUtfStr());
         }
       }
-    } else {
-      const signatureResult = await BrowserMsg.send.bg.await.pgpMsgVerifyDetached({ plaintext: encryptedData, sigText: Buf.fromUtfStr(this.view.signature) });
+    } else { // this.view.signature is string
+      // sometimes signatures come wrongly percent-encoded. Here we check for typical "=3Dabcd" at the end
+      const sigText = Buf.fromUtfStr(this.view.signature.replace('\n=3D', '\n='));
+      const signatureResult = await BrowserMsg.send.bg.await.pgpMsgVerifyDetached({ plaintext: encryptedData, sigText });
       await this.view.renderModule.decideDecryptedContentFormattingAndRender(encryptedData, false, signatureResult);
     }
   }

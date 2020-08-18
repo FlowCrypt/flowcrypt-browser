@@ -403,6 +403,16 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       });
     }));
 
+    ava.default('verify - Kraken - urldecode signature', testWithBrowser('compatibility', async (t, browser) => {
+      const params = `?frameId=frame_ZRxshLEFdc&message=&msgId=171d138c8750863b&senderEmail=Kraken%20%3Ccensored%40email.com%3E&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=12%3A0`;
+      const expectedContent = 'Kraken clients can now begin converting popular currencies';
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
+        params,
+        content: [expectedContent],
+        signature: ['Missing pubkey A38042F607D623DA', 'Censored@Email.Com']
+      });
+    }));
+
   }
 
 };
