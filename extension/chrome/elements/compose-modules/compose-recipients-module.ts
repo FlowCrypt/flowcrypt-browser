@@ -817,9 +817,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private removeRecipient = (element: HTMLElement) => {
     this.recipientsMissingMyKey = Value.arr.withoutVal(this.recipientsMissingMyKey, $(element).parent().text());
     const index = this.addedRecipients.findIndex(r => r.element.isEqualNode(element));
-    const container = element.parentElement!.parentElement!; // Get Container, e.g. '.input-container-cc'
     this.addedRecipients[index].element.remove();
-    this.view.sizeModule.resizeInput($(container).find('input'));
+    const container = element.parentElement?.parentElement; // Get Container, e.g. '.input-container-cc'
+    if (container) {
+      this.view.sizeModule.resizeInput($(container).find('input'));
+    }
     this.view.S.cached('input_addresses_container_outer').find(`#input-container-${this.addedRecipients[index].sendingType} input`).focus();
     this.addedRecipients.splice(index, 1);
     this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn();
