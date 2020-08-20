@@ -94,6 +94,10 @@ export class KeyUtil {
     return await OpenPGPKey.isWithoutSelfCertifications(key);
   }
 
+  public static isWithoutIdentities = async (key: Key) => {
+    return key.identities.length === 0;
+  }
+
   /**
    * Read many keys, could be armored or binary, in single armor or separately, useful for importing keychains of various formats
    */

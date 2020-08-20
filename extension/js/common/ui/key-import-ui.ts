@@ -136,6 +136,9 @@ export class KeyImportUi {
     await this.decryptAndEncryptAsNeeded(decrypted, encrypted, passphrase);
     await this.checkEncryptionPrvIfSelected(decrypted, encrypted);
     await this.checkSigningIfSelected(decrypted);
+    if (await KeyUtil.isWithoutIdentities(encrypted)) {
+      throw new KeyCanBeFixed(encrypted);
+    }
     return { normalized, passphrase, fingerprint: decrypted.id, decrypted, encrypted }; // will have fp if had longid
   }
 
