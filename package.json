@@ -35,6 +35,7 @@
     "web-ext": "4.3.0"
   },
   "dependencies": {
+    "@flowcrypt/fine-uploader": "5.16.4",
     "dompurify": "2.0.12",
     "jquery": "3.5.1",
     "openpgp": "4.10.7",
@@ -44,7 +45,6 @@
     "zxcvbn": "4.4.2",
     "squire-rte": "1.10.2",
     "clipboard": "2.0.6",
-    "fine-uploader": "5.16.2",
     "bootstrap": "3.4.1"
   },
   "scripts": {

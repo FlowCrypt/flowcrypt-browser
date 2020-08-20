@@ -56,7 +56,7 @@ cp node_modules/iso-8859-2/iso-8859-2.js $OUTDIR/lib/iso-8859-2.js
 cp node_modules/zxcvbn/dist/zxcvbn.js $OUTDIR/lib/zxcvbn.js
 cp node_modules/squire-rte/build/squire-raw.js $OUTDIR/lib/squire-raw.js
 cp node_modules/clipboard/dist/clipboard.js $OUTDIR/lib/clipboard.js
-cp node_modules/fine-uploader/fine-uploader/fine-uploader.js $OUTDIR/lib/fine-uploader.js
+cp node_modules/@flowcrypt/fine-uploader/fine-uploader/fine-uploader.js $OUTDIR/lib/fine-uploader.js
 mkdir -p $OUTDIR/lib/bootstrap
 cp node_modules/bootstrap/dist/js/bootstrap.min.js $OUTDIR/lib/bootstrap/bootstrap.min.js
 cp node_modules/bootstrap/dist/css/bootstrap.min.css $OUTDIR/lib/bootstrap/bootstrap.min.css
