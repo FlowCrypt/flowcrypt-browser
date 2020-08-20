@@ -107,7 +107,7 @@ export class Xss {
       }
       if ('target' in node) { // open links in new window 
         (node as Element).setAttribute('target','_blank');
-        // prevent https://www.owasp.org/index.php/Reverse_Tabnabbing
+        // prevents https://www.owasp.org/index.php/Reverse_Tabnabbing
         (node as Element).setAttribute('rel', 'noopener noreferrer');
       }
     });
