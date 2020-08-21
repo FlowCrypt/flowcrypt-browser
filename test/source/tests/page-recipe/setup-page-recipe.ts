@@ -88,7 +88,7 @@ export class SetupPageRecipe extends PageRecipe {
       enforceAttesterSubmitOrgRule = false,
       fillOnly = false,
       noPubSubmitRule = false,
-      key = undefined,
+      key,
     }: ManualEnterOpts = {}
   ) {
     const k = key || Config.key(keyTitle);
