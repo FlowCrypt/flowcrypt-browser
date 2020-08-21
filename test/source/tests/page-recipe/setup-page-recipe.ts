@@ -19,6 +19,7 @@ type ManualEnterOpts = {
   enforceAttesterSubmitOrgRule?: boolean,
   noPubSubmitRule?: boolean,
   fillOnly?: boolean,
+  key?: { title: string, passphrase: string, armored: string | null, longid: string | null }
 };
 
 type CreateKeyOpts = {
@@ -87,9 +88,10 @@ export class SetupPageRecipe extends PageRecipe {
       enforceAttesterSubmitOrgRule = false,
       fillOnly = false,
       noPubSubmitRule = false,
+      key,
     }: ManualEnterOpts = {}
   ) {
-    const k = Config.key(keyTitle);
+    const k = key || Config.key(keyTitle);
     if (!noPrvCreateOrgRule) {
       if (usedPgpBefore) {
         await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-enter', { retryErrs: true });
