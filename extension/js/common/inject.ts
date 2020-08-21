@@ -31,7 +31,7 @@ export class Injector {
       'settings': '#does_not_have',
     },
     finishSesionBtnSel: {
-      gmail: 'div.gb_Xd',
+      gmail: 'div.gb_Je',
       outlook: '#does_not_have',
       settings: '#settings > div.header'
     }
@@ -78,17 +78,14 @@ export class Injector {
     if ($('.action_finish_session').length) {
       return;
     }
-    let prependToElem = $(this.container.finishSesionBtnSel[this.webmailName]).first();
-    if (this.webmailName === 'gmail') {
-      prependToElem = prependToElem.children().last(); // todo: ideally we would not have to have special logic here for Gmail
-    }
+    const prependToElem = $(this.container.finishSesionBtnSel[this.webmailName]).first();
     if (!prependToElem.length) {
       if (!this.missingElSelectorReported[this.container.finishSesionBtnSel[this.webmailName]]) {
         Catch.report(`Selector for locking session container not found: '${this.container.finishSesionBtnSel[this.webmailName]}' (add .children().last() if Gmail)`);
         this.missingElSelectorReported[this.container.finishSesionBtnSel[this.webmailName]] = true;
       }
     }
-    prependToElem.append(this.factory.btnEndPPSession(this.webmailName)) // xss-safe-factory
+    prependToElem.prepend(this.factory.btnEndPPSession(this.webmailName)) // xss-safe-factory
       .find('.action_finish_session').click(Ui.event.prevent('double', async el => {
         for (const longid of await KeyStore.getLongidsThatCurrentlyHavePassPhraseInSession(acctEmail)) {
           await PassphraseStore.set('session', acctEmail, longid, undefined);
