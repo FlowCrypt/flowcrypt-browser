@@ -136,7 +136,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default(`decrypt - [enigmail] encrypted+signed+file pgp/mime + load from gmail`, testWithBrowser('compatibility', async (t, browser) => {
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-        content: ["Message encrypted and signed as a whole using PGP/MIME.", "cape-town-central.jpg", "182KB"],
+        content: ["Message encrypted and signed as a whole using PGP/MIME.", "cape-town-central.jpg", "181.34 KB"],
         params: "?account_email=flowcrypt.compatibility%40gmail.com&frame_id=frame_ZFnrtBtiit&message=&message_id=15f7fd7fe45fc026&senderEmail=henry.electrum%40gmail.com&is_outgoing=___cu_false___"
       });
     }));

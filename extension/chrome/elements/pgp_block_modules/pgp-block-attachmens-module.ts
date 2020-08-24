@@ -7,10 +7,11 @@ import { Att } from '../../../js/common/core/att.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { PgpBlockView } from '../pgp_block';
-import { Str } from '../../../js/common/core/common.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+
+declare const filesize: Function; // tslint:disable-line:ban-types
 
 export class PgpBlockViewAttachmentsModule {
 
@@ -25,7 +26,7 @@ export class PgpBlockViewAttachmentsModule {
     for (const i of atts.keys()) {
       const name = (atts[i].name ? atts[i].name : 'noname').replace(/\.(pgp|gpg)$/, '');
       const nameVisible = name.length > 100 ? name.slice(0, 100) + '…' : name;
-      const size = Str.numberFormat(Math.ceil(atts[i].length / 1024)) + 'KB';
+      const size = filesize(atts[i].length);
       const htmlContent = `<b>${Xss.escape(nameVisible)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
       Xss.sanitizeAppend('#attachments', `<div class="attachment" title="${Xss.escape(name)}" index="${Number(i)}">${htmlContent}</div>`);
     }
