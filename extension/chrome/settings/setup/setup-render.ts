@@ -87,6 +87,7 @@ export class SetupRenderModule {
       $('.back').css('visibility', ['step_2b_manual_enter', 'step_2a_manual_create'].includes(name) ? 'visible' : 'hidden');
       if (name === 'step_2_recovery') {
         $('.backups_count_words').text(this.view.fetchedKeyBackupsUniqueLongids.length > 1 ? `${this.view.fetchedKeyBackupsUniqueLongids.length} backups` : 'a backup');
+        $('#step_2_recovery input').focus();
       }
     }
   }
