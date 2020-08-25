@@ -66,18 +66,6 @@ export class Str {
     return text.length <= length ? text : text.substring(0, length) + '...';
   }
 
-  public static numberFormat = (number: number) => {
-    const nStr: string = number + '';
-    const x = nStr.split('.');
-    let x1 = x[0];
-    const x2 = x.length > 1 ? '.' + x[1] : '';
-    const rgx = /(\d+)(\d{3})/;
-    while (rgx.test(x1)) {
-      x1 = x1.replace(rgx, '$1' + ',' + '$2');
-    }
-    return x1 + x2;
-  }
-
   public static isEmailValid = (email: string) => {
     if (email.indexOf(' ') !== -1) {
       return false;
