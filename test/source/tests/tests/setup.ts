@@ -139,6 +139,92 @@ CciXuhqnLwoVF5/uXMYffVtfl/OU+w==
       });
     }));
 
+    ava.default('setup - import key - two e-mails on the screen', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
+      await SetupPageRecipe.manualEnter(settingsPage, 'unused', {
+        submitPubkey: false,
+        key: {
+          title: '2 UIDs key',
+          armored: `-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+lQPGBF9HpUYBCADNrMPZe227jDZEjhod76wCyjjXFV4FMiCoO5WAkyzWym7MWM8i
+9DbHOauawFswUjE+HPLe709oTLS4BQHBO58ZOkDzZSgCpDm6M+YQ3IAhOzB65CrE
+copwL0tIIHM2RZq8PzL3OTHrftvf3sw+UpgkoYktYCLraNt6QD9y1GzZjlaHem3Z
+Ahna1fJh+A5/D2NNzGIX71eJ4ol3WQM5f7Nqs6irSg+ZCAyu3rdyHLsGgBPC/pRM
+blooR1fKr9rbB9X7+clV1KVe8BZVtnO/wYVOyGvUXlIEGPdP+IvYKxp1ncrYwVqa
+2A7F2h9cWxcsXovCWmjYsI3/DiQstfRPaUaXABEBAAH+BwMCGLeqEvm19kvuPAEw
+eZioeH2rNf2hZXPzlDyqC2zxOjEMDBwLEBLiF3moOARcpZTr6jGZQhbSH7Xz4D7P
+BwiW/F5534eE1knlp8lAsJiq3hzsvLnZ9FNoYHtmtXre/22JF3/rMXNllBVOQ3eH
+Z/KQkqxUEmC8WX6TIxIkSeubBCkGD/Sju14N0Ki5isSOAuKTQQrnYfXox4uyVpH5
+tMzYkEiXZbrI90AOp7TyifMjU7EMiDPQma9fvqbUwSie/0xfJNqFdXF5zDw4bp7D
+TeqPPfXnUdf1NouYrIg29LQJdm2OsdHwukYxAoL82TwuIlUDM5I/Dicetc1hRFSL
+n1PQTaJp3vpR73XKDVFY2F0GGe4oEvlbYHwTPXCitOa4e7kDbnd1fUI7nu667JEc
+/zMUHlk0wSWnGAFIUqBvnJLQVT8ajIksWbUfacWvO+9p1QopB/DoIMnafvmZCvRT
+ZtMqg8p4QtflUI+c+oplrF3fC3Xjg62PI8Je6TFT8OhOMEX/dpSR3qwjNQ5KQNUQ
+P5XTiusxAA3QCtQqh5Fxlk4Ma6JmEPDPZXyuqZyuDgy+oKKoawS5ybCjp77sC1KT
+2vp8SmetEswHYOQse7BZOmM+53HvZbH9SWU9jw5O+2FrNWONq04tuRB9vZ1392As
+5z2ha05dOOoC3oPByEnPm4S04oMOZ4hFj2PaaQVwHKRXt3lkeujE+ztIvO7cBBOh
+ojtbcVUK9UPLKluNMcU/AxQBoCHTzg+ckOWIm3LVRncAEvT18351z/D12zqi/hzU
+T2zZCpT0rbq0FmBtzI1cRMeTvQ8wXtZ+g8DE/8OuVOEA8qhg8bAhCDUKT68a4Vv9
+ciHPvjxKBJVwN4dmelpt1nNbKtBsi8WqCetD3Tbdk1FIjADCoE/sB4xr41Voqwiq
+TO2wS/z+YzqgtBdUZXN0IDx0ZXN0QGV4YW1wbGUuY29tPokBVAQTAQgAPhYhBBD0
+4K3xymvLgd9JT2HoxgNnzbDrBQJfR6VGAhsDBQkDwmcABQsJCAcCBhUKCQgLAgQW
+AgMBAh4BAheAAAoJEGHoxgNnzbDrNmEH/jK2Y4opwrwpxlMxsDJI1B6sp0mgpVHU
+qM6ymDxgwe6k1tngLKQ4odReVP2SntrZfm2tQVUJnSzu6QuCMIoDLGJ2FaGcThKH
+68IROotqaCZvIxjjdKC3X1rLdHzL0YZDHzE4fNlC0xuBfAcS7xlOYvm8ohKrhFpD
+V/FQUHBBg8+9XDlNRt1Zi2cKVgGpXc2q0fF6VrF8nQXPYI3Ap+6jzCgAoSIUyK+N
+6dNNt2DypPRVNMj62kJVln6Jdzq/gW671NZsk6JV8/tV++7vYynUqrW6A1zlcTt2
+RBBDfGtBin0OsKVEdddH/H5+K18BzFKvlfazNkOiKG959e4aoACtcEK0H1Rlc3Qg
+MiA8dGVzdC1hbGlhc0BleGFtcGxlLmNvbT6JAVQEEwEIAD4WIQQQ9OCt8cpry4Hf
+SU9h6MYDZ82w6wUCX0elagIbAwUJA8JnAAULCQgHAgYVCgkICwIEFgIDAQIeAQIX
+gAAKCRBh6MYDZ82w65Q6B/4gBaRUpQ+J0TNe+V3y8mdy8QmmhCOWKz+rACHKeaVv
+tP7TSlzX1rUMr7pLIIgpDOMscTB2is5GMTSllo0UUeDo9bLhCmo2wFMX2uh9e8P+
+cEVQ8+7tvUV6FOiIZnDoiGmStHl+TR1+l7/eroBpHi4UUbUEDuGgFFN/kS525b7V
+yuKQodq8/T7i1bv8uDJUDUbcHva7n9T+Ym4itzh7wum6bjJcr+rmWJcjterlMC/y
+W6rtktJF2tv8jd/hiEqNcxyD+jOnyYuLGFi8j+D1/bKJk1AbZ7aBMEOLEKWHe20i
+RrDhcUDrDWhjtnwVcwod6vg/gInFjrRa1T7axcKE5/LMnQPGBF9HpUYBCADrTPfo
+aPbuWM5D2PuVW/yhcQw2deook+alidMb6Z77qunyLVYr1p33Piq57BDh120c6T0e
+iPPg8nfd3qdzmTCpNItUikA13yvygEI0RvvrQo8/jo5RAVkHuuajnU/sk5ZODrML
+/8qrrbk5AA7C+B4hrtNk3rOK4oEHU+QXvn4FEWkT9dJVI+OKIOLM0MAU6jMhQpvr
+9RQ+Izn/4w0WRnfc6fBRvRrxksH5YDHEIjQmF85nKZqHauapmkfTzGf9dvwvO62r
+YJ6ZZzaa77LKE4va5g/oZhIY1SLn9smkECrB00aBPmY5fH3sKUPDDMMY63fKsy8z
+69X0YzC5aOK06cdpABEBAAH+BwMC1Y7uuNuBYxLuRtMvcR8UbzOWLB5eiXnWbmW3
+7LIyQUx4hheSExnppuChRyiFAlo2JRnKxzK1rZc6rLyJ/rvLypjoOXbL2GqMGQYr
++m0UIpYJcHHG+1BY2giI1Kfe66bMQTN7jw+bNpdozRj61XniubOAKOX6BZdINfXV
+V0qR1rxyEMYo/6G1mNFEUJ4L/Fr14aHWmUQhVIsn8Vd03QcrLKCJ16SUa5qJbES7
+DYzVgUYVGaYKMUiV5FNXq2dqtVuBMcGrH4xn4Q/YhwCFrnwhkykagBNMY55isXT5
+soYKVgeoaYj95CZxfw9AXuREsML2SxFycAb8Y84kFgk72mOLFgj3vW0/zG3jNZLF
+IgI9aD2g3H2wkRY18WGS/SRwQvkNTu4lkYTnvcjb0008i093kL3mVF8c2w6QaagP
+qqJBHfviFoj+jJz642zTXeS85vzk65JMzX/L0vQwHptbzMLKlxJ+AAuJ6FYqEpoo
++GohfF/FJVpAksWehInp3fIQTaSSt+LT7P+IyuGSPEjHFO+GzZ8irAkN68uwxnGl
+toZ+Dwqj8KQMhsH1dAwNFdfuOPgoFuD/rNLD9qdz+u0ZNaLAH3PBALt6zUTf6AsH
+QQMwnr3ETzezZUvYTbpV5zCn+WGd6iHMJ+qSK9GJPraXQXYQmU6FhyyPHYTdD7tQ
+DhjxxwQOJeKIpeBN6rhap1x3860N9bO0a1qL8Yh1bRo+OFNH7uwoE4Maid232yYp
+P3PFbacjvAJk/TAtZ1m2BZjrgb6VT/oC1W0o5XZOYbeqmeuoXjX+42HYgSa1FA8r
+KvehF1vIdcuRjvWn5q3jSW4EVrgRt7dLcWDr5hQIr9SDDVucYrQhpb/5/u2R0kJH
+bGxaXoWA2zmQ8ByVoStu0e9SikfQqgrmgx/PWVg8h+zgthQns3idYIsqiQE8BBgB
+CAAmFiEEEPTgrfHKa8uB30lPYejGA2fNsOsFAl9HpUYCGwwFCQPCZwAACgkQYejG
+A2fNsOs7Pgf/dlzBC28tWlfULp77RfnaOJ+n3U2pAvTPTxtbRw7tjrWI9X462uN2
+whBlr7WRmLCF1by9WTyG8I6SyUIh3iHvYYXKQBUFXB/zURwkiG7ZQPhIOwhnTDMH
+F+O0uRREzTbruY4ficghH0VB4hDlLcjb1uA0XAuyVY+lJrlCQDPtlZZx3iy8Wrui
+8ON71eVMAcMjHucYX5OTTrH0kHuDqoKsINsQw9J+x0uhMSxiuWKcAaHMJ7TZ65Ca
+RRNf9s5O42nsZ9pviu5BaTi5LaxVgwiewvlBo+3uvj5d3Q+EvgIHp4wA85Jxl1jD
+AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
+=aK4l
+-----END PGP PRIVATE KEY BLOCK-----`,
+          passphrase: 'correct horse battery staple',
+          longid: '123',
+        }
+      });
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
+      await Util.sleep(1);
+      await myKeyFrame.waitAll('@content-fingerprint');
+      expect(await myKeyFrame.read('@content-fingerprint')).to.contain('61E8 C603 67CD B0EB');
+      expect(await myKeyFrame.read('@content-emails')).to.contain('test@example.com');
+      expect(await myKeyFrame.read('@content-emails')).to.contain('test-alias@example.com');
+    }));
+
     ava.default('setup - recover with a pass phrase - skip remaining', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', { hasRecoverMore: true, clickRecoverMore: false });
