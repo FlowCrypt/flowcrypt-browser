@@ -70,6 +70,11 @@ a.gray_link {
 }
 #public-profile-indicator a { color: #337ab7; }
 
+#public-profile-indicator:focus-within {
+  border-color: #31a217;
+  box-shadow: 0 0 2px #31a217;
+}
+
 #public-profile-indicator .status-indicator {
   position: absolute;
   left: 7px;
