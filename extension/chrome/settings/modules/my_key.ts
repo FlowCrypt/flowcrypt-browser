@@ -17,6 +17,7 @@ import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 declare const ClipboardJS: any;
 
@@ -49,7 +50,7 @@ View.run(class MyKeyView extends View {
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
     $('.action_view_update').attr('href', this.myKeyUpdateUrl);
     $('.fingerprint').text(Str.spaced(this.keyInfo.fingerprint));
-    $('.email').text(this.acctEmail);
+    Xss.sanitizeRender('.email', this.pubKey.emails.map(email => `<span>${Xss.escape(email)}</span>`).join(', '));
     const expiration = this.pubKey.expiration;
     $('.key_expiration').text(expiration && expiration !== Infinity ? Str.datetimeToDate(Str.fromDate(new Date(expiration))) : 'Key does not expire');
     await this.renderPubkeyShareableLink();
