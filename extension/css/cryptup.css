@@ -2682,3 +2682,18 @@ body#settings div.webmail_notifications div.webmail_notification a:hover { text-
     text-align: center;
   }
 }
+
+/* short frames */
+@media (max-height: 120px) {
+  .swal2-popup {
+    padding: 0.75em 0 0.55em !important;
+  }
+
+  .swal2-actions {
+    margin: 0.45em auto 0 !important;
+  }
+
+  .swal2-styled {
+    padding: 0.325em 2em !important;
+  }
+}
