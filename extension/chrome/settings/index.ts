@@ -176,7 +176,7 @@ View.run(class SettingsView extends View {
       $(".ion-ios-arrow-down").toggleClass("up");
       $(".add-account").toggleClass("hidden");
       preventAccountsMenuMouseenter = true; // prevent mouse events when menu is animated with fadeInDown
-      setTimeout(() => {
+      Catch.setHandledTimeout(() => {
         preventAccountsMenuMouseenter = false;
       }, 500);
     }));
