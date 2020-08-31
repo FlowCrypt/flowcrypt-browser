@@ -40,6 +40,8 @@ View.run(class SettingsView extends View {
   private notifications!: Notifications;
   private orgRules: OrgRules | undefined;
 
+  private altAccounts: JQuery<HTMLElement>;
+
   constructor() {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
@@ -53,6 +55,7 @@ View.run(class SettingsView extends View {
       this.acctEmail = this.acctEmail.toLowerCase().trim();
       this.gmail = new Gmail(this.acctEmail);
     }
+    this.altAccounts = $('#alt-accounts');
   }
 
   public render = async () => {
@@ -154,24 +157,63 @@ View.run(class SettingsView extends View {
     //   new_microsoft_account_authentication_prompt(account_email);
     // }));
     $('body').click(this.setHandler(() => {
-      $("#alt-accounts").removeClass("active");
+      this.altAccounts.removeClass('visible');
       $(".ion-ios-arrow-down").removeClass("up");
       $(".add-account").removeClass("hidden");
     }));
     $(".toggle-settings").click(this.setHandler(() => {
       $("#settings").toggleClass("advanced");
     }));
+    let preventAccountsMenuMouseenter = false;
     $(".action-toggle-accounts-menu").click(this.setHandler((target, event) => {
       event.stopPropagation();
-      $("#alt-accounts").toggleClass("active");
+      if (this.altAccounts.hasClass('visible')) {
+        this.altAccounts.removeClass('visible');
+      } else {
+        this.altAccounts.addClass('visible');
+        this.altAccounts.find('a').first().focus();
+      }
       $(".ion-ios-arrow-down").toggleClass("up");
       $(".add-account").toggleClass("hidden");
+      preventAccountsMenuMouseenter = true; // prevent mouse events when menu is animated with fadeInDown
+      Catch.setHandledTimeout(() => {
+        preventAccountsMenuMouseenter = false;
+      }, 500);
+    }));
+    this.altAccounts.keydown(this.setHandler((el, ev) => this.accountsMenuKeydownHandler(ev)));
+    this.altAccounts.find('a').on('mouseenter', Ui.event.handle((target, event) => {
+      if (!preventAccountsMenuMouseenter) {
+        $(target).focus();
+      }
     }));
     $('#status-row #status_google').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'google_account' })));
     $('#status-row #status_local_store').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'local_store' })));
     $('[data-swal-page]').click(this.setHandler(async (target) => {
       await Ui.modal.page($(target).data('swal-page') as string);
     }));
+  }
+
+  private accountsMenuKeydownHandler = (e: JQuery.Event<HTMLElement, null>): void => {
+    const currentActive = this.altAccounts.find(':focus');
+    const accounts = this.altAccounts.find('a');
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      this.altAccounts.removeClass('visible');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      let prev = currentActive.prev();
+      if (!prev.length) {
+        prev = accounts.last();
+      }
+      prev.focus();
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      let next = currentActive.next();
+      if (!next.length) {
+        next = accounts.first();
+      }
+      next.focus();
+    }
   }
 
   private displayOrig = (selector: string) => {
