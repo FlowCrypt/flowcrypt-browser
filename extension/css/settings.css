@@ -153,15 +153,15 @@ a.gray_link {
   font-size: 14px;
 }
 
-#alt-accounts.accounts-row.active {
+#alt-accounts.accounts-row.visible {
   display: block;
   animation: fadeInDown 0.4s;
 }
 
 #alt-accounts.accounts-row .row.alt-accounts {
+  display: block;
   margin: 0;
   padding: 20px 0;
-  padding-left: 65px;
   cursor: pointer;
   height: auto;
   border: 1px solid #f3f3f3;
@@ -173,17 +173,17 @@ a.gray_link {
 #alt-accounts.accounts-row .row.alt-accounts .contains_email {
   color: #337ab7;
   font-weight: 600;
+  margin-left: 50px;
 }
 
 #alt-accounts .action_add_account {
   display: block;
-  padding: 20px 0;
-  text-indent: 61px;
+  padding: 20px 0 !important;
+  text-indent: 65px;
   position: relative;
   font-size: 13px;
   text-decoration: none;
   animation: fadeIn 0.5s;
-  margin-left: 4px;
   margin-top: 10px;
 }
 
@@ -203,8 +203,12 @@ a.gray_link {
   left: 19px;
   top: 13px;
 }
-.row.alt-accounts:hover { background: rgba(0, 0, 0, 0.019); }
-#alt-accounts .action_add_account.action_add_account--settings::before { top: 17px; }
+.row.alt-accounts:focus { background: rgba(0, 0, 0, 0.019) !important; }
+
+#alt-accounts .action_add_account.action_add_account--settings::before {
+  left: 22px;
+  top: 17px;
+}
 
 .accounts-options-row {
   margin: 0 auto !important;

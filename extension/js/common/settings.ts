@@ -303,12 +303,12 @@ export class Settings {
   public static populateAccountsMenu = async (page: 'index.htm' | 'inbox.htm') => {
     const menuAcctHtml = (email: string, picture = '/img/svgs/profile-icon.svg', isHeaderRow: boolean) => {
       return [
-        `<div ${isHeaderRow && 'id = "header-row"'} class="row alt-accounts action_select_account">`,
+        `<a href="#" ${isHeaderRow && 'id = "header-row"'} class="row alt-accounts action_select_account">`,
         '  <div class="col-sm-10">',
         `    <div class="row contains_email" data-test="action-switch-to-account">${Xss.escape(email)}</div>`,
         '  </div>',
         `  <div><img class="profile-img" src="${Xss.escape(picture)}" alt=""></div>`,
-        '</div>',
+        '</a>',
       ].join('');
     };
     const acctEmails = await GlobalStore.acctEmailsGet();
@@ -319,7 +319,8 @@ export class Settings {
     $('#alt-accounts img.profile-img').on('error', Ui.event.handle(self => {
       $(self).off().attr('src', '/img/svgs/profile-icon.svg');
     }));
-    $('.action_select_account').click(Ui.event.handle(target => {
+    $('.action_select_account').click(Ui.event.handle((target, event) => {
+      event.preventDefault();
       const acctEmail = $(target).find('.contains_email').text();
       const acctStorage = acctStorages[acctEmail];
       window.location.href = acctStorage.setup_done
