@@ -8,7 +8,7 @@ html {
   width: auto;
 }
 
-#header-row { margin-top: 20px; }
+#header-row { padding-top: 20px; }
 
 #header-row .logo-row img.cryptup-logo {
   height: auto;
