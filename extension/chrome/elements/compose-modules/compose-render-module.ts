@@ -352,7 +352,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     for (const index in attachmentsFilenames) {
       if (attachmentsFilenames.hasOwnProperty(index)) {
         const filename = Xss.escape(attachmentsFilenames[index]);
-        attachments.append(`<div class="attachment" index="${index}" title="${filename}"><b>${filename}</b></div>`); // xss-escaped
+        attachments.append(`<button class="attachment" index="${index}" title="${filename}"><b>${filename}</b></button>`); // xss-escaped
       }
     }
     this.view.S.cached('replied_body').append(attachments); // xss-escaped

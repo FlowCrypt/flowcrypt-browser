@@ -1202,6 +1202,8 @@ td {
 .replied_body #attachments .attachment {
   background: #f8f8f8;
   border: 1px solid #ccc;
+  font-family: inherit;
+  font-size: inherit;
   margin-bottom: 8px;
   cursor: pointer;
   padding: 8px 8px;
@@ -1210,12 +1212,6 @@ td {
   display: inline-block;
 }
 
-#pgp_block #attachments .attachment .file-download-right-click-link {
-  font-weight: bold;
-  display: flex;
-  text-decoration: none;
-  color: #31a217;
-}
 #pgp_block > .block_pubkey_full { display: none; }
 
 #pgp_block > .block_pubkey_outgoing {
@@ -2294,7 +2290,6 @@ body.attachment {
   overflow: hidden;
   cursor: pointer;
 }
-body.attachment.right-click-link { height: auto; }
 body.attachment:hover { border-color: #eaeaea; }
 
 body.attachment #download {
@@ -2304,7 +2299,7 @@ body.attachment #download {
   width: 32px;
   height: 32px;
   right: 10px;
-  bottom: 30px;
+  bottom: 32px;
   align-items: center;
   justify-content: center;
   background-color: rgba(0, 0, 0, 0.8);
@@ -2383,23 +2378,6 @@ body.attachment .file-format-holder img#file-format {
   margin-left: 10px;
 }
 
-body.attachment .file-download-right-click-link {
-  font-size: 14px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  height: 100%;
-  width: 100%;
-  text-decoration: none;
-  color: #31a217;
-  padding: 0.4em;
-  box-sizing: border-box;
-}
-
-body.attachment .file-download-right-click-link:focus {
-  box-shadow: inset 0 0 5px currentColor;
-}
-
 /* Attachment Preview */
 #attachment-preview {
   display: flex;
@@ -2410,18 +2388,29 @@ body.attachment .file-download-right-click-link:focus {
 
 #attachment-preview-download {
   height: 80px;
-  display: flex;
+  display: none;
   flex-shrink: 0;
+  margin: 0 auto;
+  padding: 0 50px;
   align-items: center;
   justify-content: center;
+  font-size: 18px;
+  color: white;
+  background: transparent;
   text-decoration: none;
+  cursor: pointer;
+  border: 0;
+  opacity: 0.7;
+  transition: all 0.15s ease-in;
 }
 
-#attachment-preview-download .file-download-right-click-link {
-  display: flex;
-  align-items: center;
-  font-size: 18px;
-  color: white !important;
+#attachment-preview-download:focus,
+#attachment-preview-download:hover {
+  opacity: 1;
+}
+
+#attachment-preview-download img {
+  margin-right: 10px;
 }
 
 #attachment-preview-container {
@@ -2468,11 +2457,8 @@ body.attachment .file-download-right-click-link:focus {
   border-radius: 15px;
 }
 
-#attachment-preview-container .attachment-preview-unavailable .file-download-right-click-link {
-  flex-direction: column;
-  margin-top: 20px;
-  text-align: center;
-  line-height: 1.5;
+#attachment-preview-container .attachment-preview-unavailable #attachment-preview-download {
+  margin-top: 25px;
 }
 
 /* Select Account */
@@ -2680,20 +2666,5 @@ body#settings div.webmail_notifications div.webmail_notification a:hover { text-
 
   body#settings .settings-banner .settings-banner-text {
     text-align: center;
-  }
-}
-
-/* short frames */
-@media (max-height: 120px) {
-  .swal2-popup {
-    padding: 0.75em 0 0.55em !important;
-  }
-
-  .swal2-actions {
-    margin: 0.45em auto 0 !important;
-  }
-
-  .swal2-styled {
-    padding: 0.325em 2em !important;
   }
 }

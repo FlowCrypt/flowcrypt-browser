@@ -39,16 +39,19 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
           } else if (attachmentType === 'txt') { // text
             this.attachmentPreviewContainer.html(`<div class="attachment-preview-txt">${Xss.escape(result.toString()).replace(/\n/g, '<br>')}</div>`); // xss-escaped
           }
-          Browser.saveToDownloads(attForSave, $('#attachment-preview-download'));
         } else { // no preview available, download button
           this.attachmentPreviewContainer.html('<div class="attachment-preview-unavailable"></div>'); // xss-escaped
-          Browser.saveToDownloads(attForSave, $('.attachment-preview-unavailable'));
           $('.attachment-preview-unavailable').prepend('No preview available'); // xss-escaped
+          $('#attachment-preview-download').appendTo('.attachment-preview-unavailable');
         }
         $('body').click((e) => {
           if (e.target === document.body || $('body').children().toArray().indexOf(e.target) !== -1) {
             BrowserMsg.send.closeSwal(this.parentTabId);
           }
+        });
+        $('#attachment-preview-download').css('display', 'flex').click((e) => {
+          e.stopPropagation();
+          Browser.saveToDownloads(attForSave);
         });
       }
     } catch (e) {
