@@ -28,36 +28,36 @@ export class PgpBlockViewAttachmentsModule {
       const nameVisible = name.length > 100 ? name.slice(0, 100) + '…' : name;
       const size = filesize(atts[i].length);
       const htmlContent = `<b>${Xss.escape(nameVisible)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
-      Xss.sanitizeAppend('#attachments', `<div class="attachment" title="${Xss.escape(name)}" index="${Number(i)}">${htmlContent}</div>`);
+      Xss.sanitizeAppend('#attachments', `<button class="attachment" title="${Xss.escape(name)}" index="${Number(i)}">${htmlContent}</button>`);
     }
     this.view.renderModule.resizePgpBlockFrame();
-    $('div.attachment').click(this.view.setHandlerPrevent('double', async target => {
+    $('#attachments .attachment').click(this.view.setHandlerPrevent('double', async target => {
       const att = this.includedAtts[Number($(target).attr('index'))];
       if (att.hasData()) {
-        Browser.saveToDownloads(att, $(target));
+        Browser.saveToDownloads(att);
         this.view.renderModule.resizePgpBlockFrame();
       } else {
         Xss.sanitizePrepend($(target).find('.progress'), Ui.spinner('green'));
         att.setData(await Api.download(att.url!, (perc, load, total) => this.renderProgress($(target).find('.progress .percent'), perc, load, total || att.length)));
         await Ui.delay(100); // give browser time to render
         $(target).find('.progress').text('');
-        await this.decryptAndSaveAttToDownloads(att, $(target));
+        await this.decryptAndSaveAttToDownloads(att);
       }
     }));
   }
 
-  private decryptAndSaveAttToDownloads = async (encrypted: Att, renderIn: JQuery<HTMLElement>) => {
+  private decryptAndSaveAttToDownloads = async (encrypted: Att) => {
     const kisWithPp = await KeyStore.getAllWithPp(this.view.acctEmail);
     const decrypted = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData: encrypted.getData() });
     if (decrypted.success) {
       const att = new Att({ name: encrypted.name.replace(/\.(pgp|gpg)$/, ''), type: encrypted.type, data: decrypted.content });
-      Browser.saveToDownloads(att, renderIn);
+      Browser.saveToDownloads(att);
       this.view.renderModule.resizePgpBlockFrame();
     } else {
       delete decrypted.message;
       console.info(decrypted);
       await Ui.modal.error(`There was a problem decrypting this file (${decrypted.error.type}: ${decrypted.error.message}). Downloading encrypted original.`);
-      Browser.saveToDownloads(encrypted, renderIn);
+      Browser.saveToDownloads(encrypted);
       this.view.renderModule.resizePgpBlockFrame();
     }
   }
