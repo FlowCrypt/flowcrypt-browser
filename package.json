@@ -40,7 +40,7 @@
     "jquery": "3.5.1",
     "openpgp": "4.10.7",
     "sweetalert2": "9.17.1",
-    "node-forge": "0.9.1",
+    "node-forge": "0.10.0",
     "iso-8859-2": "1.0.0",
     "zxcvbn": "4.4.2",
     "squire-rte": "1.10.2",
