@@ -20,7 +20,7 @@ export class OauthPageRecipe extends PageRecipe {
       email_confirm_btn: '#identifierNext',
       auth0_username: '#username',
       auth0_password: '#password',
-      auth0_login_btn: '._button-login',
+      auth0_login_btn: 'button', // old: ._button-login
     };
     try {
       await oauthPage.waitAny('#Email, #submit_approve_access, #identifierId, .w6VTHd, #profileIdentifier', { timeout: 45 });
