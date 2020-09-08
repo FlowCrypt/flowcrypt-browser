@@ -20,7 +20,7 @@ export class OauthPageRecipe extends PageRecipe {
       email_confirm_btn: '#identifierNext',
       auth0_username: '#username',
       auth0_password: '#password',
-      auth0_login_btn: '._button-login',
+      auth0_login_btn: 'button', // old: ._button-login
     };
     try {
       await oauthPage.waitAny('#Email, #submit_approve_access, #identifierId, .w6VTHd, #profileIdentifier', { timeout: 45 });
@@ -47,9 +47,10 @@ export class OauthPageRecipe extends PageRecipe {
         }
         throw new Error('Oauth page didnt close after login. Should increase timeout or await close event');
       }
-      await oauthPage.waitAny([selectors.approve_button, selectors.auth0_login_btn]);
-      if (await oauthPage.isElementPresent(selectors.auth0_login_btn)) {
+      await oauthPage.waitAny([selectors.approve_button, selectors.auth0_username]);
+      if (await oauthPage.isElementPresent(selectors.auth0_username)) {
         await oauthPage.waitAndType(selectors.auth0_username, auth.email);
+        console.log(oauthPage.target.url());
         await oauthPage.waitAndType(selectors.auth0_password, auth.password!);
         await oauthPage.waitAndClick(selectors.auth0_login_btn);
         await oauthPage.waitForNavigationIfAny();
