@@ -13,12 +13,11 @@
     "outDir": "../build/tooling"
   },
   "files": [
-    "../tooling/build-manifests.ts",
+    "../tooling/build-types-and-manifests.ts",
     "../tooling/resolve-modules.ts",
     "../tooling/bundle-content-scripts.ts",
     "../tooling/fill-values.ts",
-    "../tooling/tsc-compiler.ts",
-    "../tooling/build-types.ts"
+    "../tooling/tsc-compiler.ts"
   ],
   "include": [
     "../tooling/tslint-rules/*.ts"

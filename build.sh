@@ -75,5 +75,4 @@ node ./build/tooling/bundle-content-scripts
 cp -r $OUTDIR ./build/chrome-enterprise
 cp -r $OUTDIR ./build/chrome-consumer
 cp -r $OUTDIR ./build/firefox-consumer
-node ./build/tooling/build-manifests
-node ./build/tooling/build-types
+node ./build/tooling/build-types-and-manifests
