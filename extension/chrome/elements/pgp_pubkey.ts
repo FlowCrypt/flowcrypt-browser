@@ -152,6 +152,9 @@ View.run(class PgpPubkeyView extends View {
       await ContactStore.save(undefined, contacts);
       Xss.sanitizeReplace(addContactBtn, '<span class="good">added public keys</span>');
       BrowserMsg.send.addToContacts(this.parentTabId);
+      for (const contact of contacts) {
+        BrowserMsg.send.reRenderRecipient('broadcast', { contact });
+      }
       $('.input_email').remove();
     } else if (this.publicKeys!.length) {
       if (Str.isEmailValid(String($('.input_email').val()))) {
@@ -166,6 +169,7 @@ View.run(class PgpPubkeyView extends View {
         BrowserMsg.send.addToContacts(this.parentTabId);
         Xss.sanitizeReplace(addContactBtn, `<span class="good">${Xss.escape(String($('.input_email').val()))} added</span>`);
         $('.input_email').remove();
+        BrowserMsg.send.reRenderRecipient('broadcast', { contact });
       } else {
         await Ui.modal.error('This email is invalid, please check for typos. Not added.');
         $('.input_email').focus();
