@@ -328,8 +328,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'normally has pubkey but should show none');
-      await composePage.waitForContent('.email_address.no_pgp', 'human@flowcrypt.com');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@flowcrypt.com,mock.only.pubkey@other.com' }, 'flowcrypt domain should not be found');
+      await composePage.waitForContent('.email_address.no_pgp', 'mock.only.pubkey@flowcrypt.com');
+      await composePage.waitForContent('.email_address.has_pgp', 'mock.only.pubkey@other.com');
       await composePage.waitAll('@input-password');
     }));
 

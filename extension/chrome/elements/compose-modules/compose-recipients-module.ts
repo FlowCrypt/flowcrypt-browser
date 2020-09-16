@@ -9,7 +9,7 @@ import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email-
 import { RecipientElement, RecipientStatus, RecipientStatuses } from './compose-types.js';
 import { Str, Value } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/error/api-error.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Google } from '../../../js/common/api/google.js';
 import { GoogleAuth } from '../../../js/common/api/google-auth.js';
@@ -86,6 +86,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.cached('compose_table').click(this.view.setHandler(() => this.hideContacts(), this.view.errModule.handle(`hide contact box`)));
     this.view.S.cached('add_their_pubkey').click(this.view.setHandler(() => this.addTheirPubkeyClickHandler(), this.view.errModule.handle('add pubkey')));
     BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
+    BrowserMsg.addListener('reRenderRecipient', async ({ contact }: Bm.ReRenderRecipient) => await this.reRenderRecipientFor(contact));
     BrowserMsg.listen(this.view.parentTabId);
   }
 

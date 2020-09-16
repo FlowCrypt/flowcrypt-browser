@@ -27,6 +27,12 @@ export const mockAttesterEndpoints: HandlersDefinition = {
         // once it starts checking that, we'll have to be more specific with the pubkeys
         return somePubkey;
       }
+      if (emailOrLongid === 'mock.only.pubkey@flowcrypt.com') {
+        return somePubkey;
+      }
+      if (emailOrLongid === 'mock.only.pubkey@other.com') {
+        return somePubkey;
+      }
       if (emailOrLongid === 'expired.on.attester@domain.com') {
         return expiredPubkey;
       }
@@ -77,7 +83,7 @@ export const mockAttesterEndpoints: HandlersDefinition = {
   },
 };
 
-const somePubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+export const somePubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: CryptUP 3.2.0 Easy Gmail Encryption https://cryptup.org
 Comment: Seamlessly send, receive and search encrypted email
 
