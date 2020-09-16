@@ -83,7 +83,7 @@ export const mockAttesterEndpoints: HandlersDefinition = {
   },
 };
 
-const somePubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+export const somePubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: CryptUP 3.2.0 Easy Gmail Encryption https://cryptup.org
 Comment: Seamlessly send, receive and search encrypted email
 

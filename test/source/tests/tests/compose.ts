@@ -14,6 +14,7 @@ import { InboxPageRecipe } from '../page-recipe/inbox-page-recipe';
 import { OauthPageRecipe } from '../page-recipe/oauth-page-recipe';
 import { PageRecipe } from '../page-recipe/abstract-page-recipe';
 import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
+import { somePubkey } from '../../mock/attester/attester-endpoints';
 import { TestUrls } from '../../browser/test-urls';
 import { TestVariant } from '../../util';
 import { TestWithBrowser } from '../../test';
@@ -764,6 +765,23 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await contactsFrame.waitForContent('@container-pubkey-details', 'Expired: no');
       await contactsFrame.waitForContent('@container-pubkey-details', 'Usable for encryption: true');
       await contactsFrame.waitForContent('@container-pubkey-details', 'Expiration: Does not expire');
+    }));
+
+    ava.default('expired key will turn green when manually updated in different window', testWithBrowser('compose', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      const recipientEmail = 'expired.on.attester@domain.com';
+      await ComposePageRecipe.fillMsg(composePage, { to: recipientEmail }, t.title);
+      await composePage.waitForContent('.email_address.expired', recipientEmail);
+      // now open a pubkey frame and update the pubkey
+      const pubkeyFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(somePubkey)}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
+      const pubkeyFrame = await browser.newPage(t, pubkeyFrameUrl);
+      await pubkeyFrame.waitAndType('.input_email', recipientEmail);
+      await pubkeyFrame.waitForContent('@action-add-contact', 'UPDATE KEY');
+      await pubkeyFrame.waitAndClick('@action-add-contact');
+      await pubkeyFrame.waitForContent('@container-pgp-pubkey', `${recipientEmail} added`);
+      await Util.sleep(1);
+      await pubkeyFrame.close();
+      await composePage.waitForContent('.email_address.has_pgp:not(.expired)', recipientEmail);
     }));
 
     ava.default('do not auto-refresh key if older version of the same key available on attester', testWithBrowser('compose', async (t, browser) => {
