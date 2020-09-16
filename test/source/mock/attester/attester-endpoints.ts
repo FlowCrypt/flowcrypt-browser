@@ -27,6 +27,12 @@ export const mockAttesterEndpoints: HandlersDefinition = {
         // once it starts checking that, we'll have to be more specific with the pubkeys
         return somePubkey;
       }
+      if (emailOrLongid === 'mock.only.pubkey@flowcrypt.com') {
+        return somePubkey;
+      }
+      if (emailOrLongid === 'mock.only.pubkey@other.com') {
+        return somePubkey;
+      }
       if (emailOrLongid === 'expired.on.attester@domain.com') {
         return expiredPubkey;
       }

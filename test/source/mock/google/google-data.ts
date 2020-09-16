@@ -157,6 +157,9 @@ export class GoogleData {
       }
       for (const filename of readdirSync(this.exportedMsgsPath)) {
         const json = JSON.parse(Buf.fromUint8(readFileSync(this.exportedMsgsPath + filename)).toUtfStr()) as ExportedMsg;
+        if (!DATA[json.acctEmail]) {
+          DATA[json.acctEmail] = { drafts: [], messages: [], attachments: {}, labels: [] };
+        }
         Object.assign(DATA[json.acctEmail].attachments, json.attachments);
         json.full.raw = json.raw.raw;
         DATA[json.acctEmail].messages.push(json.full);
