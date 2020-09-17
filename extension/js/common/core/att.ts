@@ -15,7 +15,7 @@ export type FcAttLinkData = { name: string, type: string, size: number };
 
 export class Att {
 
-  public static readonly webmailNamePattern = /^(((cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|())$/gm;
+  public static readonly webmailNamePattern = /^(((cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|())$/m;
   public static readonly encryptedMsgNames = ['message', 'msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp', 'openpgp-encrypted-message.asc'];
 
   public length: number = NaN;
