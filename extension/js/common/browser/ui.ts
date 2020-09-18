@@ -67,7 +67,10 @@ export class Ui {
       }
     },
     prevent: <THIS extends HTMLElement | void>(
-      evName: PreventableEventName, cb: (el: HTMLElement, resetTimer: () => void) => void | Promise<void>, errHandler?: BrowserEventErrHandler, originalThis?: unknown
+      evName: PreventableEventName,
+      cb: (el: HTMLElement, event: Event | undefined, resetTimer: () => void) => void | Promise<void>,
+      errHandler?: BrowserEventErrHandler,
+      originalThis?: unknown
     ) => {
       let eventTimer: number | undefined;
       let eventFiredOn: number | undefined;
@@ -77,7 +80,7 @@ export class Ui {
       };
       const cbWithErrsHandled = (el: HTMLElement) => {
         try {
-          const r = cb.bind(originalThis)(el, cbResetTimer) as void | Promise<void>; // tslint:disable-line:no-unsafe-any
+          const r = cb.bind(originalThis)(el, event, cbResetTimer) as void | Promise<void>; // tslint:disable-line:no-unsafe-any
           if (typeof r === 'object' && typeof r.catch === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
             r.catch(e => Ui.event._dispatchErr(e, errHandler));
           }

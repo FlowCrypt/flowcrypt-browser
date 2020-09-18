@@ -1198,18 +1198,44 @@ td {
 #pgp_block #attachments,
 .replied_body #attachments { margin-top: 8px; }
 
-#pgp_block #attachments .attachment,
+#pgp_block #attachments a.preview-attachment,
+#pgp_block #attachments a.download-attachment,
 .replied_body #attachments .attachment {
+  display: inline-flex;
+  color: #333 !important;
+  align-items: center;
+  height: 36px;
   background: #f8f8f8;
   border: 1px solid #ccc;
   font-family: inherit;
   font-size: inherit;
   margin-bottom: 8px;
   cursor: pointer;
-  padding: 8px 8px;
-  border-left: 4px solid #31a217;
   margin-right: 12px;
-  display: inline-block;
+  padding-left: 8px;
+  text-decoration: none;
+}
+
+#pgp_block #attachments a.preview-attachment {
+  border-left: 4px solid #31a217;
+}
+
+#pgp_block #attachments a.download-attachment {
+  border-left: 4px solid #989898;
+  padding-right: 8px;
+}
+
+#pgp_block #attachments a.preview-attachment .download-attachment {
+  width: 36px;
+  cursor: pointer;
+  margin-left: 6px;
+  border: 0;
+  background: none;
+  align-self: stretch;
+}
+
+#pgp_block #attachments a.preview-attachment .download-attachment img {
+  width: 20px;
 }
 
 #pgp_block > .block_pubkey_full { display: none; }

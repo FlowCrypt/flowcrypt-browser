@@ -10,6 +10,7 @@ import { PgpBlockView } from '../pgp_block';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 
 declare const filesize: Function; // tslint:disable-line:ban-types
 
@@ -20,7 +21,7 @@ export class PgpBlockViewAttachmentsModule {
   constructor(private view: PgpBlockView) {
   }
 
-  public renderInnerAtts = (atts: Att[]) => {
+  public renderInnerAtts = (atts: Att[], isEncrypted: boolean) => {
     Xss.sanitizeAppend('#pgp_block', '<div id="attachments"></div>');
     this.includedAtts = atts;
     for (const i of atts.keys()) {
@@ -28,10 +29,24 @@ export class PgpBlockViewAttachmentsModule {
       const nameVisible = name.length > 100 ? name.slice(0, 100) + '…' : name;
       const size = filesize(atts[i].length);
       const htmlContent = `<b>${Xss.escape(nameVisible)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
-      Xss.sanitizeAppend('#attachments', `<button class="attachment" title="${Xss.escape(name)}" index="${Number(i)}">${htmlContent}</button>`);
+      const attachment = $(`<a href="#" index="${Number(i)}">`);
+      attachment.attr('title', name);
+      Xss.sanitizeAppend(attachment, htmlContent);
+      if (isEncrypted) {
+        attachment.addClass('preview-attachment');
+        attachment.append(`<button class="download-attachment" index="${Number(i)}" title="DOWNLOAD"><img src="/img/svgs/download-link-green.svg"></button>`);
+      } else {
+        attachment.addClass('download-attachment');
+      }
+      $('#attachments').append(attachment);
     }
     this.view.renderModule.resizePgpBlockFrame();
-    $('#attachments .attachment').click(this.view.setHandlerPrevent('double', async target => {
+    $('#attachments .preview-attachment').click(this.view.setHandlerPrevent('double', async (target) => {
+      const att = this.includedAtts[Number($(target).attr('index'))];
+      await this.previewAttachmentClickedHandler(att);
+    }));
+    $('#attachments .download-attachment').click(this.view.setHandlerPrevent('double', async (target, event) => {
+      event.stopPropagation();
       const att = this.includedAtts[Number($(target).attr('index'))];
       if (att.hasData()) {
         Browser.saveToDownloads(att);
@@ -44,6 +59,12 @@ export class PgpBlockViewAttachmentsModule {
         await this.decryptAndSaveAttToDownloads(att);
       }
     }));
+  }
+
+  private previewAttachmentClickedHandler = async (att: Att) => {
+    const factory = new XssSafeFactory(this.view.acctEmail, this.view.parentTabId);
+    const iframeUrl = factory.srcPgpAttIframe(att, false, undefined, 'chrome/elements/attachment_preview.htm');
+    BrowserMsg.send.showAttachmentPreview(this.view.parentTabId, { iframeUrl });
   }
 
   private decryptAndSaveAttToDownloads = async (encrypted: Att) => {
