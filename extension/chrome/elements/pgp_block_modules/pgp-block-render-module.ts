@@ -117,7 +117,7 @@ export class PgpBlockViewRenderModule {
       BrowserMsg.send.renderPublicKeys(this.view.parentTabId, { afterFrameId: this.view.frameId, publicKeys });
     }
     if (renderableAtts.length) {
-      this.view.attachmentsModule.renderInnerAtts(renderableAtts);
+      this.view.attachmentsModule.renderInnerAtts(renderableAtts, isEncrypted);
     }
     this.resizePgpBlockFrame();
     if (!this.doNotSetStateAsReadyYet) { // in case async tasks are still being worked at

@@ -167,6 +167,17 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await attachmentPreviewOther.waitAll('#attachment-preview-container .attachment-preview-unavailable #attachment-preview-download');
     }));
 
+    ava.default('settings - pgp/mime preview and download attachment', testWithBrowser('compatibility', async (t, browser) => {
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16e8b01f136c3d28`));
+      const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
+      // check if download is awailable
+      await pgpBlockFrame.waitAll('.download-attachment');
+      // and preview
+      await pgpBlockFrame.waitAndClick('.preview-attachment');
+      const attachmentPreviewImage = await inboxPage.getFrame(['attachment_preview.htm']);
+      await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
+    }));
+
     ava.todo('settings - change passphrase - mismatch curent pp');
 
     ava.todo('settings - change passphrase - mismatch new pp');
