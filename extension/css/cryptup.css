@@ -1232,6 +1232,11 @@ td {
   border: 0;
   background: none;
   align-self: stretch;
+  opacity: 0.8;
+}
+
+#pgp_block #attachments a.preview-attachment .download-attachment:hover {
+  opacity: 1;
 }
 
 #pgp_block #attachments a.preview-attachment .download-attachment img {
