@@ -1216,12 +1216,18 @@ td {
   text-decoration: none;
 }
 
-#pgp_block #attachments a.preview-attachment {
+#pgp_block #attachments a.preview-attachment,
+.replied_body #attachments .attachment {
   border-left: 4px solid #31a217;
 }
 
 #pgp_block #attachments a.download-attachment {
   border-left: 4px solid #989898;
+  padding-right: 8px;
+}
+
+.replied_body #attachments .attachment {
+  border-left: 4px solid #31a217;
   padding-right: 8px;
 }
 
