@@ -34,11 +34,11 @@ export class PgpBlockViewAttachmentsModule {
       Xss.sanitizeAppend(attachment, htmlContent);
       if (isEncrypted) {
         attachment.addClass('preview-attachment');
-        attachment.append(`<button class="download-attachment" index="${Number(i)}" title="DOWNLOAD"><img src="/img/svgs/download-link-green.svg"></button>`);
+        attachment.append(`<button class="download-attachment" index="${Number(i)}" title="DOWNLOAD"><img src="/img/svgs/download-link-green.svg"></button>`); // xss-escaped
       } else {
         attachment.addClass('download-attachment');
       }
-      $('#attachments').append(attachment);
+      $('#attachments').append(attachment); // xss-escaped
     }
     this.view.renderModule.resizePgpBlockFrame();
     $('#attachments .preview-attachment').click(this.view.setHandlerPrevent('double', async (target) => {
