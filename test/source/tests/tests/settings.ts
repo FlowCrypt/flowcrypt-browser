@@ -170,6 +170,8 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
     }));
 
     ava.default('settings - pgp/mime preview and download attachment', testWithBrowser('compatibility', async (t, browser) => {
+      const downloadedAttachmentFilename = `${__dirname}/7 years.jpeg`;
+      fs.unlink(downloadedAttachmentFilename, () => { });
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16e8b01f136c3d28`));
       const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
       // check if download is awailable
@@ -182,7 +184,8 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await (inboxPage.target as Page)._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: __dirname });
       await attachmentPreviewImage.waitAndClick('@attachment-preview-download');
       await Util.sleep(1);
-      expect(fs.existsSync(`${__dirname}/7 years.jpeg`)).to.be.true; // tslint:disable-line:no-unused-expression
+      expect(fs.existsSync(downloadedAttachmentFilename)).to.be.true; // tslint:disable-line:no-unused-expression
+      fs.unlink(downloadedAttachmentFilename, () => { });
     }));
 
     ava.todo('settings - change passphrase - mismatch curent pp');
