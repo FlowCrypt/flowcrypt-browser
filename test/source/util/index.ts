@@ -99,7 +99,7 @@ export class Util {
   }
 
   public static deleteFileIfExists = (filename: string) => {
-    fs.unlink(filename, () => { }); // tslint:disable-line:no-empty-interface
+    fs.unlink(filename, () => { }); // tslint:disable-line:no-empty
   }
 
 }
