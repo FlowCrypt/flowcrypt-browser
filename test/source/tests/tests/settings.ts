@@ -1,6 +1,8 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+import * as fs from 'fs';
 import * as ava from 'ava';
+import { Page } from 'puppeteer';
 
 import { Config, Util } from '../../util';
 import { TestWithBrowser, internalTestState } from '../../test';
@@ -176,6 +178,11 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await pgpBlockFrame.waitAndClick('.preview-attachment');
       const attachmentPreviewImage = await inboxPage.getFrame(['attachment_preview.htm']);
       await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
+      // @ts-ignore
+      await (inboxPage.target as Page)._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: __dirname });
+      await attachmentPreviewImage.waitAndClick('@attachment-preview-download');
+      await Util.sleep(1);
+      expect(fs.existsSync(`${__dirname}/7 years.jpeg`)).to.be.true;
     }));
 
     ava.todo('settings - change passphrase - mismatch curent pp');
