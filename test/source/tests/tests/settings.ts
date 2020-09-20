@@ -182,7 +182,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await (inboxPage.target as Page)._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: __dirname });
       await attachmentPreviewImage.waitAndClick('@attachment-preview-download');
       await Util.sleep(1);
-      expect(fs.existsSync(`${__dirname}/7 years.jpeg`)).to.be.true;
+      expect(fs.existsSync(`${__dirname}/7 years.jpeg`)).to.be.true; // tslint:disable-line:no-unused-expression
     }));
 
     ava.todo('settings - change passphrase - mismatch curent pp');
