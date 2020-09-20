@@ -2476,6 +2476,15 @@ body.attachment .file-format-holder img#file-format {
   box-sizing: border-box;
 }
 
+#attachment-preview-container .attachment-preview-pdf {
+  display: flex;
+  flex-direction: column;
+}
+
+#attachment-preview-container .attachment-preview-pdf .attachment-preview-pdf-page {
+  margin: 15px 0;
+}
+
 #attachment-preview-container .attachment-preview-error {
   color: #ccc;
   text-align: center;
