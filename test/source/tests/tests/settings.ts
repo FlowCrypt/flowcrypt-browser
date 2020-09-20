@@ -143,7 +143,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
     }));
 
     ava.default('settings - attachment previews are rendered according to their types', testWithBrowser('compatibility', async (t, browser) => {
-      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=1729eee9493eb76a`));
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=174ab0ba9643b4fa`));
       // image
       const attachmentImage = await inboxPage.getFrame(['attachment.htm', 'name=tiny-face.png']);
       await attachmentImage.waitForSelTestState('ready');
@@ -158,8 +158,14 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       const attachmentPreviewText = await inboxPage.getFrame(['attachment_preview.htm']);
       await attachmentPreviewText.waitForContent('#attachment-preview-container .attachment-preview-txt', 'small text file');
       await inboxPage.press('Escape');
+      // pdf
+      const attachmentPdf = await inboxPage.getFrame(['attachment.htm', 'name=small.pdf']);
+      await attachmentPdf.waitForSelTestState('ready');
+      await attachmentPdf.click('body');
+      const attachmentPreviewPdf = await inboxPage.getFrame(['attachment_preview.htm']);
+      await attachmentPreviewPdf.waitAll('#attachment-preview-container .attachment-preview-pdf .attachment-preview-pdf-page');
       // no preview
-      const attachmentOther = await inboxPage.getFrame(['attachment.htm', 'name=small.pdf']);
+      const attachmentOther = await inboxPage.getFrame(['attachment.htm', 'name=unknown']);
       await attachmentOther.waitForSelTestState('ready');
       await attachmentOther.click('body');
       const attachmentPreviewOther = await inboxPage.getFrame(['attachment_preview.htm']);
