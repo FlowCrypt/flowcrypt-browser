@@ -8,11 +8,11 @@ import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
+import { PDFDocumentProxy } from '../../types/pdf.js';
 import { PgpMsg, DecryptError, DecryptSuccess } from '../../js/common/core/crypto/pgp/pgp-msg.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Ui } from '../../js/common/browser/ui.js';
-import { PDFDocumentProxy } from '../../types/pdf.js';
 
 type AttachmentType = 'img' | 'txt' | 'pdf';
 
@@ -56,7 +56,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
               this.attachmentPreviewContainer.empty().append(attachmentPreviewPdf); // xss-escaped
               for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
                 const canvas = $('<canvas class="attachment-preview-pdf-page"></canvas>');
-                attachmentPreviewPdf.append(canvas);
+                attachmentPreviewPdf.append(canvas); // xss-escaped
                 renderPdfPage(pdf, pageNumber, canvas.get(0) as HTMLCanvasElement);
               }
             };
