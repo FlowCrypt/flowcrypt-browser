@@ -164,6 +164,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await attachmentPdf.click('body');
       const attachmentPreviewPdf = await inboxPage.getFrame(['attachment_preview.htm']);
       await attachmentPreviewPdf.waitAll('#attachment-preview-container .attachment-preview-pdf .attachment-preview-pdf-page');
+      await inboxPage.press('Escape');
       // no preview
       const attachmentOther = await inboxPage.getFrame(['attachment.htm', 'name=unknown']);
       await attachmentOther.waitForSelTestState('ready');
