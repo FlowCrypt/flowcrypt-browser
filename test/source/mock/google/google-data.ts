@@ -90,7 +90,7 @@ export class GoogleData {
   /**
    * This is the proper way to add messages to mock api for testing:
    *   1) log into flowcrypt.compatibility@gmail.com
-   *   2) go to Encrypted Inbox and find your message
+   *   2) go to Settings -> Inbox and find your message
    *   3) click "download api export"
    *   4) save the json file to exported-messages folder
    */

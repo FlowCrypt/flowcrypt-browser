@@ -8,12 +8,15 @@ import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
+import { PDFDocumentProxy } from '../../types/pdf.js';
 import { PgpMsg, DecryptError, DecryptSuccess } from '../../js/common/core/crypto/pgp/pgp-msg.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Ui } from '../../js/common/browser/ui.js';
 
-type AttachmentType = 'img' | 'txt';
+type AttachmentType = 'img' | 'txt' | 'pdf';
+
+declare const pdfjsLib: any; // tslint:disable-line:ban-types
 
 View.run(class AttachmentPreviewView extends AttachmentDownloadView {
   private attachmentPreviewContainer = $('#attachment-preview-container');
@@ -38,6 +41,26 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
             this.attachmentPreviewContainer.html(`<img src="${url}" class="attachment-preview-img" alt="${Xss.escape(this.origNameBasedOnFilename)}">`); // xss-escaped
           } else if (attachmentType === 'txt') { // text
             this.attachmentPreviewContainer.html(`<div class="attachment-preview-txt">${Xss.escape(result.toString()).replace(/\n/g, '<br>')}</div>`); // xss-escaped
+          } else if (attachmentType === 'pdf') { // PDF
+            const renderPdfPage = (pdf: PDFDocumentProxy, pageNumber: number, canvas: HTMLCanvasElement) => {
+              const scale = 1;
+              pdf.getPage(pageNumber).then((page) => {
+                const viewport = page.getViewport({ scale });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                page.render({ canvasContext: canvas.getContext('2d') as CanvasRenderingContext2D, viewport });
+              });
+            };
+            const renderPdf = (pdf: PDFDocumentProxy) => {
+              const attachmentPreviewPdf = $('<div class="attachment-preview-pdf"></div>');
+              this.attachmentPreviewContainer.empty().append(attachmentPreviewPdf); // xss-escaped
+              for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+                const canvas = $('<canvas class="attachment-preview-pdf-page"></canvas>');
+                attachmentPreviewPdf.append(canvas); // xss-escaped
+                renderPdfPage(pdf, pageNumber, canvas.get(0) as HTMLCanvasElement);
+              }
+            };
+            pdfjsLib.getDocument({ data: result }).promise.then(renderPdf); // tslint:disable-line:no-unsafe-any
           }
         } else { // no preview available, download button
           this.attachmentPreviewContainer.html('<div class="attachment-preview-unavailable"></div>'); // xss-escaped
@@ -68,6 +91,8 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
       return 'img';
     } else if (extension === 'txt') {
       return 'txt';
+    } else if (extension === 'pdf') {
+      return 'pdf';
     }
     return undefined;
   }

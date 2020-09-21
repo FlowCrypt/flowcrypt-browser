@@ -5,7 +5,7 @@
       "type": "node",
       "request": "launch",
       "name": "Debug chrome_consumer_mock",
-      "preLaunchTask": "npm: pretest",
+      "preLaunchTask": "npm: pretest-incremental",
       "program": "${workspaceFolder}/node_modules/ava/profile.js",
       "args": [
         "build/test/test/source/test.js",
@@ -20,7 +20,7 @@
       "type": "node",
       "request": "launch",
       "name": "Debug chrome_consumer_live_gmail",
-      "preLaunchTask": "npm: pretest",
+      "preLaunchTask": "npm: pretest-incremental",
       "program": "${workspaceFolder}/node_modules/ava/profile.js",
       "args": [
         "build/test/test/source/test.js",
