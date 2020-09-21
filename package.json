@@ -54,6 +54,7 @@
     "build-incremental": "./build.sh --incremental",
     "build-assets-only": "./build.sh --assets-only",
     "pretest": "npm run-script build --silent && cd conf && node ../build/tooling/tsc-compiler --project tsconfig.test.json",
+    "pretest-incremental": "npm run-script build-incremental --silent && cd conf && node ../build/tooling/tsc-compiler --project tsconfig.test.json",
     "test": "npm run-script test_buf && npm run-script test_tslint && npm run-script test_patterns && npm run-script test_async_stack && npm run-script test_ci_chrome_consumer -- -- --pool-size=1",
     "test_local_chrome_consumer_mock": "npm run-script pretest && npm run-script test_ci_chrome_consumer -- -- --pool-size=1 --debug",
     "test_local_chrome_enterprise_mock": "npm run-script pretest && npm run-script test_ci_chrome_enterprise -- -- --pool-size=1 --debug",
