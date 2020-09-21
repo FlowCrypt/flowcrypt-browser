@@ -99,7 +99,11 @@ export class Util {
   }
 
   public static deleteFileIfExists = (filename: string) => {
-    fs.unlinkSync(filename);
+    try {
+      fs.unlinkSync(filename);
+    } catch(e) {
+      // file didn't exist
+    }
   }
 
 }
