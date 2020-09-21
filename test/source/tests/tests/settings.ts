@@ -1,6 +1,8 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+import * as fs from 'fs';
 import * as ava from 'ava';
+import { Page } from 'puppeteer';
 
 import { Config, Util } from '../../util';
 import { TestWithBrowser, internalTestState } from '../../test';
@@ -168,6 +170,8 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
     }));
 
     ava.default('settings - pgp/mime preview and download attachment', testWithBrowser('compatibility', async (t, browser) => {
+      const downloadedAttachmentFilename = `${__dirname}/7 years.jpeg`;
+      Util.deleteFileIfExists(downloadedAttachmentFilename);
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16e8b01f136c3d28`));
       const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
       // check if download is awailable
@@ -176,6 +180,12 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await pgpBlockFrame.waitAndClick('.preview-attachment');
       const attachmentPreviewImage = await inboxPage.getFrame(['attachment_preview.htm']);
       await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
+      // @ts-ignore
+      await (inboxPage.target as Page)._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: __dirname });
+      await attachmentPreviewImage.waitAndClick('@attachment-preview-download');
+      await Util.sleep(1);
+      expect(fs.existsSync(downloadedAttachmentFilename)).to.be.true; // tslint:disable-line:no-unused-expression
+      Util.deleteFileIfExists(downloadedAttachmentFilename);
     }));
 
     ava.todo('settings - change passphrase - mismatch curent pp');
