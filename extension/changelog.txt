@@ -1,5 +1,7 @@
 <div class="lightboxed">
 
+version 7.9.2 on Sep 22, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/421?closed=1" target="_blank">Preview PDF</a>
+
 version 7.9.1 on Sep 8, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/420?closed=1" target="_blank">Bugfixes</a>
 
 version 7.9.0 on Aug 18, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/419?closed=1" target="_blank">Maintenance</a>
