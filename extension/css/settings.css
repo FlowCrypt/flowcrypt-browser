@@ -818,3 +818,8 @@ body#settings .settings-border .key_list {
 .swal2-popup {
   font-size: 1.6rem !important;
 }
+
+/* https://github.com/FlowCrypt/flowcrypt-browser/issues/2926 */
+.swal2-checkbox input[type="checkbox"] {
+  margin: 0 0.4em !important;
+}
