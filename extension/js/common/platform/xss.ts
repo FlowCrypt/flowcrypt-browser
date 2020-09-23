@@ -47,7 +47,6 @@ export class Xss {
   public static htmlSanitize = (dirtyHtml: string): string => {
     Xss.throwIfNotSupported();
     return DOMPurify.sanitize(dirtyHtml, { // tslint:disable-line:oneliner-object-literal
-      SAFE_FOR_JQUERY: true,
       ADD_ATTR: Xss.ADD_ATTR,
       FORBID_ATTR: Xss.FORBID_ATTR,
       ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
@@ -112,7 +111,6 @@ export class Xss {
       }
     });
     const cleanHtml = DOMPurify.sanitize(dirtyHtml, {
-      SAFE_FOR_JQUERY: true,
       ADD_ATTR: Xss.ADD_ATTR,
       FORBID_ATTR: Xss.FORBID_ATTR,
       ALLOWED_TAGS: Xss.ALLOWED_HTML_TAGS,
@@ -144,7 +142,7 @@ export class Xss {
     let text = html.split(br).join('\n').split(blockStart).filter(v => !!v).join('\n').split(blockEnd).filter(v => !!v).join('\n');
     text = text.replace(/\n{2,}/g, '\n\n');
     // not all tags were removed above. Remove all remaining tags
-    text = DOMPurify.sanitize(text, { SAFE_FOR_JQUERY: true, ALLOWED_TAGS: [] });
+    text = DOMPurify.sanitize(text, { ALLOWED_TAGS: [] });
     text = text.trim();
     if (outputNl !== '\n') {
       text = text.replace(/\n/g, outputNl);
