@@ -23,16 +23,17 @@
     "eslint-plugin-header": "^3.0.0",
     "eslint-plugin-no-only-tests": "^2.4.0",
     "fc-node-requests": "git+https://git@github.com/FlowCrypt/node-requests.git",
-    "mailparser": "2.7.1",
+    "mailparser": "3.0.0",
     "mkdirp": "^1.0.3",
     "openpgp": "4.10.8",
     "pdfjs-dist": "2.5.207",
     "puppeteer": "1.20.0",
     "stylelint": "^13.0.0",
     "stylelint-config-standard": "^20.0.0",
+    "sweetalert2": "10.3.3",
     "tslint": "5.20.1",
     "typescript": "3.7.5",
-    "web-ext": "4.3.0"
+    "web-ext": "5.1.0"
   },
   "dependencies": {
     "@flowcrypt/fine-uploader": "5.16.4",
