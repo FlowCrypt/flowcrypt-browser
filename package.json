@@ -33,7 +33,7 @@
     "sweetalert2": "9.15.2",
     "tslint": "5.20.1",
     "typescript": "3.7.5",
-    "web-ext": "4.3.0"
+    "web-ext": "5.1.0"
   },
   "dependencies": {
     "@flowcrypt/fine-uploader": "5.16.4",
