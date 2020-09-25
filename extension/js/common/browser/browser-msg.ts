@@ -467,9 +467,9 @@ export class BrowserMsg {
     const stackInfo = `\n\n[callerStack]\n${msg.stack}\n[/callerStack]\n\n[responderStack]\n${errAsJson.stack}\n[/responderStack]\n`;
     if (errAsJson.errorConstructor === 'AjaxErr') {
       const { status, url, responseText, statusText, resMsg, resDetails } = errAsJson.ajaxErrorDetails;
-      return new AjaxErr(`BrowserMsg(${name}) ${errAsJson.message}`, stackInfo, status, url, responseText, statusText, resMsg, resDetails);
+      return new AjaxErr(`BrowserMsg(${msg.name}) ${errAsJson.message}`, stackInfo, status, url, responseText, statusText, resMsg, resDetails);
     }
-    const e = new Error(`BrowserMsg(${name}) ${errAsJson.message}`);
+    const e = new Error(`BrowserMsg(${msg.name}) ${errAsJson.message}`);
     e.stack += stackInfo;
     return e;
   }
