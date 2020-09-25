@@ -58,10 +58,10 @@ const preserveAsyncStackTracesTransformerFactory = () => {
             const catchClause = ts.createCatchClause('t', ts.createBlock(createStackTracePreservingCatchBlockStatements(node), true));
             if ((node.body as ts.FunctionBody).statements && (node.body as ts.FunctionBody).statements.length) {
               const origFuncContent = ts.createBlock((node.body as ts.FunctionBody).statements, true);
-              (node.body as ts.FunctionBody).statements = ts.createNodeArray([ts.createTry(origFuncContent, catchClause, undefined)]);
+              (node.body as any).statements = ts.createNodeArray([ts.createTry(origFuncContent, catchClause, undefined)]);
             } else if (ts.isCallExpression(node.body) || ts.isAwaitExpression(node.body)) { // eg: `x.click(async () => whatever())` or `x.click(async () => await whatever())`
               const origFuncContent = ts.createBlock([ts.createReturn(node.body)], true);
-              node.body = ts.createBlock([ts.createTry(origFuncContent, catchClause, undefined)], true);
+              (node.body as any) = ts.createBlock([ts.createTry(origFuncContent, catchClause, undefined)], true);
             }
           }
         }
