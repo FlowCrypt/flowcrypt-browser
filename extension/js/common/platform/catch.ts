@@ -192,8 +192,6 @@ export class Catch {
       env = 'ex:prod';
     } else if (url.indexOf('gjdhkacdgd') !== -1 || url.indexOf('gggocmadhd') !== -1) {
       env = 'ex:dev';
-    } else if (url.indexOf('gjdhkacdgd') !== -1) { // in case it differs in the future
-      env = 'ex:test';
     } else if (url.indexOf('mefaeofbcc') !== -1) {
       env = 'ex:stable';
     } else if (/chrome-extension:\/\/[a-z]{32}\/.+/.test(url)) {
