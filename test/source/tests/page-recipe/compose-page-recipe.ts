@@ -85,9 +85,6 @@ export class ComposePageRecipe extends PageRecipe {
   }
 
   public static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients, windowType: 'new' | 'reply') => {
-    if (windowType === 'reply') { // new messages should already have cc/bcc buttons visible, because they should have recipients in focus
-      await composePageOrFrame.waitAndClick('@action-show-container-cc-bcc-buttons');
-    }
     await composePageOrFrame.waitAll('@container-cc-bcc-buttons');
     for (const key of Object.keys(recipients)) {
       const sendingType = key as RecipientType;
