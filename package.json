@@ -18,7 +18,7 @@
     "@typescript-eslint/parser": "^4.2.0",
     "ava": "1.4.1",
     "chai": "4.2.0",
-    "del": "3.0.0",
+    "del": "6.0.0",
     "eslint": "^7.9.0",
     "eslint-plugin-header": "^3.0.0",
     "eslint-plugin-no-only-tests": "^2.4.0",
