@@ -338,7 +338,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const appendUrl = 'threadId=15f7fc2919788f03&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=15f7fc2919788f03';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-forward');
-      await ComposePageRecipe.fillRecipients(composePage, { to: 'human@flowcrypt.com' }, 'reply');
+      await ComposePageRecipe.fillRecipients(composePage, { to: 'human@flowcrypt.com' }, 'forward');
       expect(await composePage.read('@input-body')).to.include('> This message will contain a separately attached file + signature.');
       await composePage.waitAny('.qq-file-id-0');
     }));
