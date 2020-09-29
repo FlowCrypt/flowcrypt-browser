@@ -2485,6 +2485,66 @@ body.attachment .file-format-holder img#file-format {
   margin: 15px 0;
 }
 
+#pdf-preview-controls {
+  position: absolute;
+  width: 300px;
+  height: 44px;
+  bottom: 30px;
+  left: 50%;
+  margin-left: -150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.75);
+  border-radius: 4px;
+  color: #fff;
+}
+
+#pdf-preview-page {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+}
+
+#pdf-preview-page-slash {
+  flex-grow: 0;
+}
+
+#pdf-preview-current-page-number,
+#pdf-preview-total-pages-number {
+  margin: 0 10px;
+}
+
+#pdf-preview-zoom {
+  display: flex;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#pdf-preview-reset-zoom {
+  display: none;
+}
+
+#pdf-preview-controls button {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+}
+
+#pdf-preview-controls button:not([disabled]):hover,
+#pdf-preview-controls button:not([disabled]):focus {
+  background: rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+}
+
+#pdf-preview-controls button[disabled] {
+  opacity: 0.3;
+}
+
 #attachment-preview-container .attachment-preview-error {
   color: #ccc;
   text-align: center;
