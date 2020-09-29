@@ -2482,7 +2482,7 @@ body.attachment .file-format-holder img#file-format {
 }
 
 #attachment-preview-container .attachment-preview-pdf .attachment-preview-pdf-page {
-  margin: 15px 0;
+  margin: 1% 0;
 }
 
 #pdf-preview-controls {

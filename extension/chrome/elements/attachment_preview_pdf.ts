@@ -13,6 +13,7 @@ export const renderPdf = (attachmentPreviewContainer: JQuery<HTMLElement>, pdf: 
     renderPdfPage(pdf, pageNumber, canvas.get(0) as HTMLCanvasElement);
   }
   renderControls(attachmentPreviewPdf, pdf.numPages);
+  renderCurrentPage(attachmentPreviewContainer);
 };
 
 const renderPdfPage = (pdf: PDFDocumentProxy, pageNumber: number, canvas: HTMLCanvasElement) => {
@@ -43,4 +44,12 @@ const renderControls = (container: JQuery<HTMLElement>, numPages: number) => {
     </div>
   `);
   container.append(controls); // xss-escaped
+};
+
+const renderCurrentPage = (container: JQuery<HTMLElement>) => {
+  container.on('scroll', () => {
+    const pageHeight = container.find('canvas').outerHeight(true) as number;
+    const currentPage = Math.round(container[0].scrollTop / pageHeight) + 1;
+    container.find('#pdf-preview-current-page-number').text(currentPage);
+  });
 };
