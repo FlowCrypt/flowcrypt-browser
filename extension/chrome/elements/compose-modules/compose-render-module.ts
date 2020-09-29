@@ -24,18 +24,20 @@ import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 
 export class ComposeRenderModule extends ViewModule<ComposeView> {
 
-  public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
+  private responseMethod!: 'reply' | 'forward';
+
+  public renderReplyMsgComposeTable = async (): Promise<void> => {
     this.view.S.cached('prompt').css({ display: 'none' });
     this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
     await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
     await this.renderComposeTable();
     if (this.view.scopes.read || this.view.scopes.modify) {
       if (this.view.replyParams) {
-        this.view.replyParams.subject = `${(method === 'reply' ? 'Re' : 'Fwd')}: ${this.view.replyParams.subject}`;
+        this.view.replyParams.subject = `${(this.responseMethod === 'reply' ? 'Re' : 'Fwd')}: ${this.view.replyParams.subject}`;
       }
       if (!this.view.draftModule.wasMsgLoadedFromDraft) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
         (async () => { // not awaited because can take a long time & blocks rendering
-          await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, method);
+          await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, this.responseMethod);
           if (this.view.quoteModule.messageToReplyOrForward) {
             const msgId = this.view.quoteModule.messageToReplyOrForward.headers['message-id'];
             this.view.sendBtnModule.additionalMsgHeaders['In-Reply-To'] = msgId;
@@ -60,7 +62,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       $('.new_message_button').click(() => BrowserMsg.send.openNewMessage(this.view.parentTabId));
     }
     this.view.sizeModule.resizeComposeBox();
-    if (method === 'forward') {
+    if (this.responseMethod === 'forward') {
       this.view.S.cached('recipients_placeholder').click();
     }
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToElement(this.view.parentTabId, { selector: `#${this.view.frameId}` }), 300);
@@ -186,11 +188,11 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   }
 
   private actionActivateReplyBoxHandler = async (target: HTMLElement) => {
-    let method: 'reply' | 'forward' = 'reply';
+    this.responseMethod = 'reply';
     const typesToDelete: RecipientType[] = [];
     switch ($(target).attr('id')) {
       case 'a_forward':
-        method = 'forward';
+        this.responseMethod = 'forward';
         typesToDelete.push('to');
       case 'reply_click_area':
       case 'a_reply':
@@ -199,7 +201,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         break;
     }
     this.view.recipientsModule.deleteRecipientsBySendingType(typesToDelete);
-    await this.renderReplyMsgComposeTable(method);
+    await this.renderReplyMsgComposeTable();
   }
 
   private renderReplyMsgAsReplyPubkeyMismatch = async () => {
@@ -246,7 +248,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     // Firefox needs an iframe to be focused before focusing its content
     BrowserMsg.send.focusFrame(this.view.parentTabId, { frameId: this.view.frameId });
     Catch.setHandledTimeout(() => { // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
-      this.view.S.cached(this.view.isReplyBox && this.view.replyParams?.to.length ? 'input_text' : 'input_to').focus();
+      this.view.S.cached(this.view.isReplyBox && this.responseMethod === 'reply' && this.view.replyParams?.to.length ? 'input_text' : 'input_to').focus();
       // document.getElementById('input_text')!.focus(); // #input_text is in the template
     }, 100);
     this.view.sizeModule.onComposeTableRender();

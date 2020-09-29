@@ -94,6 +94,17 @@ abstract class ControllableBase {
     return await this.waitTillGone(selector, { timeout: 0 });
   }
 
+  public ensureFocused = async (selector: string) => {
+    const e = await this.element(selector) as ElementHandle;
+    const activeElement = await this.target.evaluateHandle(() => document.activeElement) as ElementHandle;
+    expect(await this.getProperty(activeElement, 'outerHTML')).to.eq(await this.getProperty(e, 'outerHTML'));
+  }
+
+
+  public getProperty = async (element: ElementHandle, property: string) => {
+    return await (await element.getProperty(property)).jsonValue();
+  }
+
   public click = async (selector: string) => {
     this.log(`click:1:${selector}`);
     const e = await this.element(selector);

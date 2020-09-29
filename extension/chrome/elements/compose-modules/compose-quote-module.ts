@@ -196,7 +196,6 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     $(el).remove();
     Xss.sanitizeAppend(this.view.S.cached('input_text'), this.getTripleDotSanitizedFormattedHtmlContent());
     this.tripleDotSanitizedHtmlContent = undefined;
-    this.view.inputModule.squire.focus();
     this.view.sizeModule.resizeComposeBox();
   }
 

@@ -84,7 +84,7 @@ export class ComposePageRecipe extends PageRecipe {
     await composePageOrFrame.waitTillGone('@container-sending-options');
   }
 
-  public static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients, windowType: 'new' | 'reply') => {
+  public static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients, windowType: 'new' | 'reply' | 'forward') => {
     if (windowType === 'reply') { // new messages should already have cc/bcc buttons visible, because they should have recipients in focus
       await composePageOrFrame.waitAndClick('@action-show-container-cc-bcc-buttons');
     }

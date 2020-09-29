@@ -338,7 +338,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const appendUrl = 'threadId=15f7fc2919788f03&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=15f7fc2919788f03';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-forward');
-      await ComposePageRecipe.fillRecipients(composePage, { to: 'human@flowcrypt.com' }, 'reply');
+      await ComposePageRecipe.fillRecipients(composePage, { to: 'human@flowcrypt.com' }, 'forward');
       expect(await composePage.read('@input-body')).to.include('> This message will contain a separately attached file + signature.');
       await composePage.waitAny('.qq-file-id-0');
     }));
@@ -372,7 +372,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const appendUrl = 'threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16ce2c965c75e5a6';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-forward', { delay: 2 });
-      await composePage.waitAny('@input-to'); // if this element is present then the elemenent should be focused
+      await composePage.waitAny('@input-to');
+      await composePage.ensureFocused('@input-to');
       await expectRecipientElements(composePage, { to: [], cc: [], bcc: [] });
     }));
 
