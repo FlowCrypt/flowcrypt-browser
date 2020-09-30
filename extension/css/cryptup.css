@@ -2470,19 +2470,20 @@ body.attachment .file-format-holder img#file-format {
   font-weight: bold;
 }
 
-#attachment-preview-container .attachment-preview-txt {
+#attachment-preview-container.attachment-preview-txt {
   background: white;
   padding: 40px;
   box-sizing: border-box;
 }
 
-#attachment-preview-container .attachment-preview-pdf {
-  display: flex;
-  flex-direction: column;
+#attachment-preview-container.attachment-preview-pdf {
+  display: block;
 }
 
-#attachment-preview-container .attachment-preview-pdf .attachment-preview-pdf-page {
-  margin: 1% 0;
+#attachment-preview-container.attachment-preview-pdf .attachment-preview-pdf-page {
+  display: block;
+  max-width: initial;
+  margin: 1% auto;
 }
 
 #pdf-preview-controls {
@@ -2520,29 +2521,22 @@ body.attachment .file-format-holder img#file-format {
   border-left: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-#pdf-preview-reset-zoom {
-  display: none;
-}
-
 #pdf-preview-controls button {
   width: 44px;
   height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   border: 0;
   border-radius: 4px;
   background: transparent;
+  cursor: pointer;
 }
 
-#pdf-preview-controls button:not([disabled]):hover,
-#pdf-preview-controls button:not([disabled]):focus {
+#pdf-preview-controls button:not([disabled]):hover {
   background: rgba(255, 255, 255, 0.25);
-  cursor: pointer;
 }
 
 #pdf-preview-controls button[disabled] {
   opacity: 0.3;
+  cursor: default;
 }
 
 #attachment-preview-container .attachment-preview-error {

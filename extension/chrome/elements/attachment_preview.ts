@@ -4,13 +4,13 @@
 
 import { Att } from '../../js/common/core/att.js';
 import { AttachmentDownloadView } from './attachment.js';
+import { AttachmentPreviewPdf } from './attachment_preview_pdf.js';
 import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PDFDocumentProxy } from '../../types/pdf.js';
 import { PgpMsg, DecryptError, DecryptSuccess } from '../../js/common/core/crypto/pgp/pgp-msg.js';
-import { renderPdf } from './attachment_preview_pdf.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Ui } from '../../js/common/browser/ui.js';
@@ -44,7 +44,8 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
             this.attachmentPreviewContainer.html(`<div class="attachment-preview-txt">${Xss.escape(result.toString()).replace(/\n/g, '<br>')}</div>`); // xss-escaped
           } else if (attachmentType === 'pdf') { // PDF
             pdfjsLib.getDocument({ data: result }).promise.then((pdf: PDFDocumentProxy) => { // tslint:disable-line:no-unsafe-any
-              renderPdf(this.attachmentPreviewContainer, pdf);
+              const previewPdf = new AttachmentPreviewPdf(this.attachmentPreviewContainer, pdf);
+              previewPdf.render();
             });
           }
         } else { // no preview available, download button
