@@ -27,7 +27,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
       Xss.sanitizeRender(this.attachmentPreviewContainer, `${Ui.spinner('green', 'large_spinner')}<span class="download_progress"></span>`);
       this.att = new Att({ name: this.origNameBasedOnFilename, type: this.type, msgId: this.msgId, id: this.id, url: this.url });
       await this.downloadDataIfNeeded();
-      const result = this.isEncrypted ? await this.decrypt() : this.att.getData();
+      const result = (this.isEncrypted && this.type === "application/octet-stream")? await this.decrypt() : this.att.getData();
       if (result) {
         const blob = new Blob([result], { type: this.type });
         const url = window.URL.createObjectURL(blob);
