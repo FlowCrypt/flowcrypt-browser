@@ -43,9 +43,9 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
           } else if (attachmentType === 'txt') { // text
             this.attachmentPreviewContainer.html(`<div class="attachment-preview-txt">${Xss.escape(result.toString()).replace(/\n/g, '<br>')}</div>`); // xss-escaped
           } else if (attachmentType === 'pdf') { // PDF
-            pdfjsLib.getDocument({ data: result }).promise.then((pdf: PDFDocumentProxy) => { // tslint:disable-line:no-unsafe-any
+            pdfjsLib.getDocument({ data: result }).promise.then(async (pdf: PDFDocumentProxy) => { // tslint:disable-line:no-unsafe-any
               const previewPdf = new AttachmentPreviewPdf(this.attachmentPreviewContainer, pdf);
-              previewPdf.render();
+              await previewPdf.render();
             });
           }
         } else { // no preview available, download button
