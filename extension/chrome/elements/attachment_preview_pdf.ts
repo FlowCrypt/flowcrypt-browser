@@ -30,7 +30,6 @@ export class AttachmentPreviewPdf {
   }
 
   private renderPdf = async (zoomLevelDiff?: number) => {
-    console.log('render', this.currentZoomLevel);
     const container = this.attachmentPreviewContainer;
     for (let pageNumber = 1; pageNumber <= this.pdf.numPages; pageNumber++) {
       let pageCanvas;
