@@ -154,7 +154,7 @@ export class AttachmentPreviewPdf {
   // borrowed from https://github.com/twbs/bootstrap/blob/master/js/src/modal.js
   private getScrollbarWidth = (): number => {
     const scrollDiv = $('<div class="scrollbar-measure"></div>');
-    $('body').append(scrollDiv);
+    $('body').append(scrollDiv); // xss-escaped
     const scrollbarWidth = scrollDiv[0].getBoundingClientRect().width - scrollDiv[0].clientWidth;
     scrollDiv.remove();
     return scrollbarWidth;
