@@ -41,9 +41,17 @@ export class AttachmentPreviewPdf {
         pageCanvas = $(`<canvas class="attachment-preview-pdf-page" data-page-number="${pageNumber}"></canvas>`);
         container.append(pageCanvas); // xss-escaped
       }
+      // remove margins from first and last pages
+      if (pageNumber === 1) {
+        pageCanvas.css('margin-top', 0);
+      }
+      if (pageNumber === this.pdf.numPages) {
+        pageCanvas.css('margin-bottom', 0);
+      }
+      // render PDF page
       await this.renderPage(this.pdf, pageNumber, pageCanvas.get(0) as HTMLCanvasElement);
+      // adjust horizontal scrollings to keep the document center
       if (pageNumber === 1 && zoomLevelDiff) {
-        // adjust horizontal scrollings to keep the document center
         container[0].scrollLeft += (container[0].scrollLeft + container[0].clientWidth / 2) * zoomLevelDiff;
       }
     }
