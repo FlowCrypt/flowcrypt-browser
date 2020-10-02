@@ -2,6 +2,7 @@
 
 'use strict';
 
+import { Catch } from '../platform/catch.js';
 import { PDFDocumentProxy } from '../../../types/pdf.js';
 
 export class AttachmentPreviewPdf {
@@ -113,7 +114,11 @@ export class AttachmentPreviewPdf {
     // fit to width
     container.find('#pdf-preview-fit-to-width').on('click', async () => {
       if (!this.fitToWidthZoomLevelDetected) {
-        this.fitToWidthZoomLevel = (container.width() as number) / (container.find('.attachment-preview-pdf-page').width() as number);
+        let containerWidth = container.width() as number;
+        if (Catch.browser().name === 'firefox') {
+          containerWidth -= this.getScrollbarWidth();
+        }
+        this.fitToWidthZoomLevel = containerWidth / (container.find('.attachment-preview-pdf-page').width() as number);
         this.zoomLevels.push(this.fitToWidthZoomLevel);
         this.zoomLevels = this.zoomLevels.sort();
         this.fitToWidthZoomLevelDetected = true;
@@ -136,6 +141,15 @@ export class AttachmentPreviewPdf {
     if (this.currentZoomLevel < 5) {
       container.find('#pdf-preview-zoom-in').prop('disabled', false);
     }
+  }
+
+  // borrowed from https://github.com/twbs/bootstrap/blob/master/js/src/modal.js
+  private getScrollbarWidth = (): number => {
+    const scrollDiv = $('<div class="scrollbar-measure"></div>');
+    $('body').append(scrollDiv);
+    const scrollbarWidth = scrollDiv[0].getBoundingClientRect().width - scrollDiv[0].clientWidth;
+    scrollDiv.remove();
+    return scrollbarWidth;
   }
 
 }
