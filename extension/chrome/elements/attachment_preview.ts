@@ -4,7 +4,7 @@
 
 import { Att } from '../../js/common/core/att.js';
 import { AttachmentDownloadView } from './attachment.js';
-import { AttachmentPreviewPdf } from './attachment_preview_pdf.js';
+import { AttachmentPreviewPdf } from '../../js/common/ui/attachment_preview_pdf.js';
 import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';

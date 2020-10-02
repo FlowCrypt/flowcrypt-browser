@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { PDFDocumentProxy } from '../../types/pdf.js';
+import { PDFDocumentProxy } from '../../../types/pdf.js';
 
 export class AttachmentPreviewPdf {
 
