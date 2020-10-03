@@ -95,7 +95,7 @@ export class AttachmentDownloadView extends View {
       this.downloadButton.click(this.setHandlerPrevent('double', () => this.downloadButtonClickedHandler()));
       this.downloadButton.click((e) => e.stopPropagation());
       $('body').click(this.setHandlerPrevent('double', async () => {
-        if ($('body').attr('id') !== 'attachment-preview') {
+        if ($('body').attr('id') !== 'attachment-preview' && !$('body').hasClass('download-error')) {
           await this.previewAttachmentClickedHandler();
         }
       }));
@@ -185,6 +185,7 @@ export class AttachmentDownloadView extends View {
       Catch.reportErr(e);
       Xss.sanitizeRender('body.attachment', `Error downloading file - ${String(e)}. ${Ui.retryLink()}`);
     }
+    $('body.attachment').addClass('download-error').attr('title', '');
   }
 
   private processAsPublicKeyAndHideAttIfAppropriate = async () => {
