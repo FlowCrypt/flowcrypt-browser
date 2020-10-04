@@ -2480,19 +2480,73 @@ body.attachment .file-format-holder img#file-format {
   font-weight: bold;
 }
 
-#attachment-preview-container .attachment-preview-txt {
+#attachment-preview-container.attachment-preview-txt {
   background: white;
   padding: 40px;
   box-sizing: border-box;
 }
 
-#attachment-preview-container .attachment-preview-pdf {
-  display: flex;
-  flex-direction: column;
+#attachment-preview-container.attachment-preview-pdf {
+  display: block;
 }
 
-#attachment-preview-container .attachment-preview-pdf .attachment-preview-pdf-page {
-  margin: 15px 0;
+#attachment-preview-container.attachment-preview-pdf .attachment-preview-pdf-page {
+  display: block;
+  max-width: initial;
+  margin: 1% auto;
+}
+
+#pdf-preview-controls {
+  position: absolute;
+  width: 300px;
+  height: 44px;
+  bottom: 30px;
+  left: 50%;
+  margin-left: -150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.75);
+  border-radius: 4px;
+  color: #fff;
+}
+
+#pdf-preview-page {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+}
+
+#pdf-preview-page-slash {
+  flex-grow: 0;
+}
+
+#pdf-preview-current-page-number,
+#pdf-preview-total-pages-number {
+  margin: 0 10px;
+}
+
+#pdf-preview-zoom {
+  display: flex;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#pdf-preview-controls button {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+#pdf-preview-controls button:not([disabled]):hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+#pdf-preview-controls button[disabled] {
+  opacity: 0.3;
+  cursor: default;
 }
 
 #attachment-preview-container .attachment-preview-error {
@@ -2657,6 +2711,14 @@ div#cryptup_dialog iframe.tall {
 .mt-40 { margin-top: 40px; }
 
 .display_none { display: none; }
+
+.scrollbar-measure {
+  position: absolute;
+  top: -9999px;
+  width: 50px;
+  height: 50px;
+  overflow: scroll;
+}
 
 /* notifications */
 body#settings div.webmail_notifications {
