@@ -2329,6 +2329,16 @@ body.attachment {
 }
 body.attachment:hover { border-color: #eaeaea; }
 
+body.attachment.download-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  font-size: 14px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
 body.attachment #download {
   display: flex;
   opacity: 0;
