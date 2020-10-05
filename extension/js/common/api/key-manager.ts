@@ -13,11 +13,13 @@ type LoadPubRes = { publicKeys: { publicKey: string }[] };
 
 export class KeyManager extends Api {
 
+  private url: string;
+
   constructor(
-    private url: string
+    url: string
   ) {
     super();
-    this.url = this.url.replace(/\/$/, ''); // remove trailing space
+    this.url = url.replace(/\/$/, ''); // remove trailing space
   }
 
   public getPrivateKeys = async (idToken: string): Promise<LoadPrvRes> => {

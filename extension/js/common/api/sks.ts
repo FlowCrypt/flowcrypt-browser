@@ -10,11 +10,13 @@ import { PubkeySearchResult } from './pub-lookup.js';
 export class Sks extends Api {
 
   private static MR_VERSION_1 = 'info:1:';
+  private url: string;
 
   constructor(
-    private serverUrl: string
+    url: string
   ) {
     super();
+    this.url = url.replace(/\/$/, ''); // remove trailing space
   }
 
   /**
@@ -66,7 +68,7 @@ export class Sks extends Api {
 
   private get = async (path: string): Promise<string | undefined> => {
     try {
-      const { responseText } = await Api.apiCall(this.serverUrl, path, undefined, undefined, undefined, undefined, 'xhr', 'GET') as XMLHttpRequest;
+      const { responseText } = await Api.apiCall(this.url, path, undefined, undefined, undefined, undefined, 'xhr', 'GET') as XMLHttpRequest;
       return responseText;
     } catch (e) {
       if (ApiErr.isNotFound(e)) {
