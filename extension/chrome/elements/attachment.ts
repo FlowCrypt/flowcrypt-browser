@@ -125,6 +125,19 @@ export class AttachmentDownloadView extends View {
     }
   }
 
+  protected renderErr = (e: any) => {
+    if (ApiErr.isAuthPopupNeeded(e)) {
+      BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
+      Xss.sanitizeRender('body', `Error downloading file - google auth needed. ${Ui.retryLink()}`);
+    } else if (ApiErr.isNetErr(e)) {
+      Xss.sanitizeRender('body', `Error downloading file - no internet. ${Ui.retryLink()}`);
+    } else {
+      Catch.reportErr(e);
+      Xss.sanitizeRender('body', `Error downloading file - ${String(e)}. ${Ui.retryLink()}`);
+    }
+    $('body').addClass('download-error').attr('title', '');
+  }
+
   private renderHeader = () => {
     const span = $(`<span>${this.isEncrypted ? 'ENCRYPTED\n' : 'PLAIN\n'} FILE</span>`);
     this.header.empty().append(span); // xss-escaped
@@ -173,19 +186,6 @@ export class AttachmentDownloadView extends View {
       };
       xhr.send();
     });
-  }
-
-  private renderErr = (e: any) => {
-    if (ApiErr.isAuthPopupNeeded(e)) {
-      BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
-      Xss.sanitizeRender('body.attachment', `Error downloading file - google auth needed. ${Ui.retryLink()}`);
-    } else if (ApiErr.isNetErr(e)) {
-      Xss.sanitizeRender('body.attachment', `Error downloading file - no internet. ${Ui.retryLink()}`);
-    } else {
-      Catch.reportErr(e);
-      Xss.sanitizeRender('body.attachment', `Error downloading file - ${String(e)}. ${Ui.retryLink()}`);
-    }
-    $('body.attachment').addClass('download-error').attr('title', '');
   }
 
   private processAsPublicKeyAndHideAttIfAppropriate = async () => {

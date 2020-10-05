@@ -7,7 +7,6 @@ import { AttachmentDownloadView } from './attachment.js';
 import { AttachmentPreviewPdf } from '../../js/common/ui/attachment_preview_pdf.js';
 import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
-import { Catch } from '../../js/common/platform/catch.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PDFDocumentProxy } from '../../types/pdf.js';
 import { PgpMsg, DecryptError, DecryptSuccess } from '../../js/common/core/crypto/pgp/pgp-msg.js';
@@ -64,9 +63,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
         });
       }
     } catch (e) {
-      Catch.reportErr(e);
-      this.attachmentPreviewContainer.html(`<span class="attachment-preview-error">${Xss.escape(String(e))}.<br><br> Contact human@flowcrypt.com</span>`); // xss-escaped
-      return;
+      this.renderErr(e);
     }
   }
 

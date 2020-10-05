@@ -2433,6 +2433,14 @@ body.attachment .file-format-holder img#file-format {
   overflow-y: hidden;
 }
 
+#attachment-preview.download-error {
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: white;
+  line-height: 2;
+}
+
 #attachment-preview-download {
   height: 80px;
   display: none;
