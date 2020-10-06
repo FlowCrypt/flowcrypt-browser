@@ -94,6 +94,15 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await SettingsPageRecipe.verifyMyKeyPage(settingsPage, 'flowcrypt.compatibility.2pp1', 'link', 1);
     }));
 
+    ava.default('settings - my key page - remove key', testWithBrowser('compatibility', async (t, browser) => {
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+      await SettingsPageRecipe.ready(settingsPage);
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      await settingsPage.waitAndClick('@action-remove-key');
+      await settingsPage.page.waitForNavigation({ waitUntil: 'networkidle0' });
+      await settingsPage.notPresent('@action-remove-key');
+    }));
+
     ava.todo('settings - edit contact public key');
 
     ava.default('settings - change passphrase - current in local storage', testWithBrowser(undefined, async (t, browser) => {
