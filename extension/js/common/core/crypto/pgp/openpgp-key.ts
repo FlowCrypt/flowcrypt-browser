@@ -455,7 +455,7 @@ export class OpenPGPKey {
     const output: string[] = [];
     try {
       if (!key.isFullyDecrypted()) {
-        return 'skiped, not fully decrypted';
+        return 'skipped, not fully decrypted';
       }
       const signedMessage = await opgp.message.fromText(OpenPGPKey.encryptionText).sign([key]);
       output.push('sign msg ok');
