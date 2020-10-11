@@ -1,5 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+const { FLAVOR } = require('../../core/const');
+
 /**
  * This test uses JavaScript instead of TypeScript to avoid dealing with types in this cross-environment setup.
  * (tests are injected from NodeJS through puppeteer into a browser environment)
@@ -20,9 +22,20 @@
 BROWSER_UNIT_TEST_NAME(`test@nowhere.com does not return any fesUrl`);
 (async () => {
   const wellKnownHostMeta = new WellKnownHostMeta('test@nowhere.com');
-  const fesUrl = await wellKnownHostMeta.fetchAndCacheFesUrl();
-  if (typeof fesUrl !== 'undefined') {
-    throw Error(`fesUrl unexpectedly ${fesUrl}, expecting undefined`);
+  if (FLAVOR === 'consumer') {
+    const fesUrl = await wellKnownHostMeta.fetchAndCacheFesUrl();
+    if (typeof fesUrl !== 'undefined') {
+      throw Error(`fesUrl unexpectedly ${fesUrl}, expecting undefined`);
+    }
+    return 'pass'; // consumer tolerates a net err because the server may not be set up
+  } else { // enterprise
+    try {
+      await wellKnownHostMeta.fetchAndCacheFesUrl();
+    } catch (e) {
+      if (ApiErr.isNetErr(e)) {
+        return 'pass'; // enterprise does not tolerate a net err - since it may simply mean offline
+      }
+      throw e;
+    }
   }
-  return 'pass';
 })();

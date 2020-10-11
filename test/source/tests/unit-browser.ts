@@ -32,6 +32,7 @@ export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: 
         testCode = testCode.trim();
         const testCodeLines = testCode.split('\n');
         const thisUnitTestTitle = testCodeLines.shift()!.replace(/`\);$/, '').trim();
+        testCode = testCodeLines.join('\n'); // without the title, just code
         const title = `browser unit test ${filename}: ${thisUnitTestTitle}`;
         // define the test
         ava.default(title, testWithBrowser(undefined, async (t, browser) => {
@@ -39,8 +40,20 @@ export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: 
           // update host page title
           await hostPage.target.evaluate((title) => { window.document.getElementsByTagName('h1')[0].textContent = title; }, title);
           // load and run the unit test
-          const r = await hostPage.target.evaluate(testCodeLines.join('\n'));
-          expect(await r).to.equal('pass');
+          const runThisCodeInBrowser = `
+            (async () => {
+              try {
+                return await ${testCode}
+              } catch (e) {
+                return "unit test threw something:" + String(e) + "\\n\\n" + e.stack;
+              }
+            })();
+          `;
+          const r = await hostPage.target.evaluate(runThisCodeInBrowser);
+          if (r !== 'pass') {
+            t.log(r);
+            throw Error(String(r).split('\n')[0]);
+          }
         }));
       }
     }
