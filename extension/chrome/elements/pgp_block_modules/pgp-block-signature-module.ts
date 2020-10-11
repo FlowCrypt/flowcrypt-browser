@@ -7,7 +7,7 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { PgpBlockView } from '../pgp_block';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { VerifyRes } from '../../../js/common/core/crypto/pgp/pgp-msg-util.js';
+import { VerifyRes } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 

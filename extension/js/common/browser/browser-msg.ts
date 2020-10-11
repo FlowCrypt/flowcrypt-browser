@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, VerifyRes, PgpMsgTypeResult } from '../core/crypto/pgp/pgp-msg-util.js';
+import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, VerifyRes, PgpMsgTypeResult } from '../core/crypto/pgp/msg-util.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
 import { AjaxErr } from '../api/error/api-error.js';
 import { AuthRes } from '../api/google-auth.js';
@@ -13,7 +13,7 @@ import { Catch } from '../platform/catch.js';
 import { Env } from './env.js';
 import { PassphraseDialogType } from '../xss-safe-factory.js';
 import { PgpHash } from '../core/crypto/pgp/pgp-hash.js';
-import { PgpMsgUtil } from '../core/crypto/pgp/pgp-msg-util.js';
+import { MsgUtil } from '../core/crypto/pgp/msg-util.js';
 import { Ui } from './ui.js';
 import { GlobalStoreDict, GlobalIndex } from '../platform/store/global-store.js';
 import { AcctStoreDict, AccountIndex } from '../platform/store/acct-store.js';
@@ -235,10 +235,10 @@ export class BrowserMsg {
 
   public static addPgpListeners = () => {
     BrowserMsg.bgAddListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await PgpHash.challengeAnswer(r.answer) }));
-    BrowserMsg.bgAddListener('pgpMsgDiagnosePubkeys', PgpMsgUtil.diagnosePubkeys);
-    BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsgUtil.decryptMessage);
-    BrowserMsg.bgAddListener('pgpMsgVerifyDetached', PgpMsgUtil.verifyDetached);
-    BrowserMsg.bgAddListener('pgpMsgType', PgpMsgUtil.type);
+    BrowserMsg.bgAddListener('pgpMsgDiagnosePubkeys', MsgUtil.diagnosePubkeys);
+    BrowserMsg.bgAddListener('pgpMsgDecrypt', MsgUtil.decryptMessage);
+    BrowserMsg.bgAddListener('pgpMsgVerifyDetached', MsgUtil.verifyDetached);
+    BrowserMsg.bgAddListener('pgpMsgType', MsgUtil.type);
     BrowserMsg.bgAddListener('keyParse', async (r: Bm.KeyParse) => ({ key: await KeyUtil.parse(r.armored) }));
   }
 

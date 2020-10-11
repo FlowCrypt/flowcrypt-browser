@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { DecryptError, VerifyRes } from './crypto/pgp/pgp-msg-util.js';
+import { DecryptError, VerifyRes } from './crypto/pgp/msg-util.js';
 
 import { AttMeta } from './att.js';
 import { Buf } from './buf.js';

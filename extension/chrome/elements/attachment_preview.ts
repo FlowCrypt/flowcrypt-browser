@@ -9,7 +9,7 @@ import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PDFDocumentProxy } from '../../types/pdf.js';
-import { PgpMsgUtil, DecryptError, DecryptSuccess } from '../../js/common/core/crypto/pgp/pgp-msg-util.js';
+import { MsgUtil, DecryptError, DecryptSuccess } from '../../js/common/core/crypto/pgp/msg-util.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Ui } from '../../js/common/browser/ui.js';
@@ -81,7 +81,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
   }
 
   private decrypt = async () => {
-    const result = await PgpMsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: this.att.getData() });
+    const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: this.att.getData() });
     if ((result as DecryptSuccess).content) {
       return result.content;
     }
