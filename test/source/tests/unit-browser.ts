@@ -25,6 +25,9 @@ export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: 
       if (!header.startsWith('/* ©️ 2016')) {
         throw Error(`Expecting ${browserUnitTestsFolder}/${filename} to start with '/* ©️ 2016'`);
       }
+      if (header.includes('require(')) { // do not import anything. Add deps to ci_unit_test.ts
+        throw Error(`Unexpected import statement found in ${browserUnitTestsFolder}/${filename}`);
+      }
       for (let testCode of testCodes) {
         if (testCode.includes('/*')) { // just to make sure we don't parse something wrongly. Block comment only allowed in header.
           throw Error(`Block comments such as /* are not allowed in test definitions. Use line comments eg //`);

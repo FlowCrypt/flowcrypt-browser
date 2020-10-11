@@ -1,7 +1,5 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-const { FLAVOR } = require('../../core/const');
-
 /**
  * This test uses JavaScript instead of TypeScript to avoid dealing with types in this cross-environment setup.
  * (tests are injected from NodeJS through puppeteer into a browser environment)
