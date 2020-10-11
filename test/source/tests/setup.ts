@@ -2,15 +2,15 @@
 
 import * as ava from 'ava';
 
-import { TestVariant, Util } from '../../util';
-import { BrowserRecipe } from '../browser-recipe';
-import { SetupPageRecipe } from '../page-recipe/setup-page-recipe';
-import { TestWithBrowser } from '../../test';
+import { TestVariant, Util } from './../util';
+import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
+import { TestWithBrowser } from './../test';
 import { expect } from 'chai';
-import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
-import { ComposePageRecipe } from '../page-recipe/compose-page-recipe';
-import { Str } from '../../core/common';
-import { MOCK_KM_LAST_INSERTED_KEY } from '../../mock/key-manager/key-manager-endpoints';
+import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
+import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
+import { Str } from './../core/common';
+import { MOCK_KM_LAST_INSERTED_KEY } from './../mock/key-manager/key-manager-endpoints';
+import { BrowserRecipe } from './tooling/browser-recipe';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression

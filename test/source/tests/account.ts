@@ -8,8 +8,8 @@ import * as ava from 'ava';
 // import { GmailPageRecipe } from '../page-recipe/gmail-page-recipe';
 // import { PageRecipe } from '../page-recipe/abstract-page-recipe';
 // import { SetupPageRecipe } from '../page-recipe/setup-page-recipe';
-import { TestVariant } from '../../util';
-import { TestWithBrowser } from '../../test';
+import { TestVariant } from '../util';
+import { TestWithBrowser } from '../test';
 // import { Util } from '../../util';
 
 // tslint:disable:no-blank-lines-func

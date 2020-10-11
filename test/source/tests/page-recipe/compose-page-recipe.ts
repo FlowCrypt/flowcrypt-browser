@@ -2,7 +2,7 @@
 
 import { BrowserHandle, Controllable, ControllableFrame, ControllablePage } from '../../browser';
 
-import { AvaContext } from '..';
+import { AvaContext } from '../tooling/';
 import { CommonAcct } from '../../test';
 import { EvaluateFn } from 'puppeteer';
 import { PageRecipe } from './abstract-page-recipe';

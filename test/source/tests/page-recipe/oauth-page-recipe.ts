@@ -1,10 +1,9 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { Config, Util } from '../../util';
-
-import { AvaContext } from '..';
+import { AvaContext } from '../tooling/';
 import { ControllablePage } from '../../browser';
-import { FlowCryptApi } from '../api';
+import { FlowCryptApi } from '../tooling/api';
 import { PageRecipe } from './abstract-page-recipe';
 
 export class OauthPageRecipe extends PageRecipe {

@@ -2,23 +2,23 @@
 
 import * as ava from 'ava';
 
-import { MsgBlock } from '../../core/msg-block';
-import { MsgBlockParser } from '../../core/msg-block-parser';
-import { PgpHash } from '../../core/crypto/pgp/pgp-hash';
-import { TestVariant } from '../../util';
-import { TestWithBrowser } from '../../test';
+import { MsgBlock } from '../core/msg-block';
+import { MsgBlockParser } from '../core/msg-block-parser';
+import { PgpHash } from '../core/crypto/pgp/pgp-hash';
+import { TestVariant } from '../util';
+import { TestWithBrowser } from '../test';
 import { expect } from 'chai';
-import { KeyUtil, PrvKeyInfo } from '../../core/crypto/key';
-import { UnreportableError } from '../../platform/catch.js';
-import { Buf } from '../../core/buf';
-import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key';
-import { MsgUtil, PgpMsgMethod } from '../../core/crypto/pgp/msg-util';
-import { opgp } from '../../core/crypto/pgp/openpgpjs-custom';
+import { KeyUtil, PrvKeyInfo } from '../core/crypto/key';
+import { UnreportableError } from '../platform/catch.js';
+import { Buf } from '../core/buf';
+import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
+import { MsgUtil, PgpMsgMethod } from '../core/crypto/pgp/msg-util';
+import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
 
 // tslint:disable:no-blank-lines-func
 /* eslint-disable max-len */
 
-export let defineUnitTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
+export let defineUnitNodeTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 

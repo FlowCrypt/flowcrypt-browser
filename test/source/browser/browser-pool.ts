@@ -1,12 +1,12 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { AvaContext, addDebugHtml, newWithTimeoutsFunc } from '../tests';
 import { Config, Util } from "../util";
 
 import { BrowserHandle } from './browser-handle';
 import { Consts } from '../test';
 import { TIMEOUT_DESTROY_UNEXPECTED_ALERT } from '.';
 import { launch } from "puppeteer";
+import { addDebugHtml, AvaContext, newWithTimeoutsFunc } from '../tests/tooling';
 
 class TimeoutError extends Error { }
 
