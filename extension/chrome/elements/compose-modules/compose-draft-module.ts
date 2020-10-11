@@ -14,7 +14,7 @@ import { Env } from '../../../js/common/browser/env.js';
 import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 import { NewMsgData } from './compose-types.js';
-import { PgpMsg } from '../../../js/common/core/crypto/pgp/pgp-msg.js';
+import { PgpUtil } from '../../../js/common/core/crypto/pgp/pgp-msg.js';
 import { storageLocalGet, storageLocalSet, storageLocalRemove } from '../../../js/common/api/chrome.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
@@ -262,7 +262,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     const encryptedData = rawBlock.content instanceof Buf ? rawBlock.content : Buf.fromUtfStr(rawBlock.content);
     const passphrase = await this.view.storageModule.passphraseGet();
     if (typeof passphrase !== 'undefined') {
-      const decrypted = await PgpMsg.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.view.acctEmail), encryptedData });
+      const decrypted = await PgpUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.view.acctEmail), encryptedData });
       if (!decrypted.success) {
         return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!decrypted.success');
       }

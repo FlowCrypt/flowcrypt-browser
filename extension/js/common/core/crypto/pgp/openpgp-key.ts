@@ -5,7 +5,7 @@ import { Catch } from '../../../platform/catch.js';
 import { Str } from '../../common.js';
 import { PgpHash } from './pgp-hash.js';
 import { Buf } from '../../buf.js';
-import { PgpMsgMethod, PgpMsg } from './pgp-msg.js';
+import { PgpMsgMethod, PgpUtil } from './pgp-msg.js';
 
 const internal = Symbol('internal openpgpjs library format key');
 
@@ -459,7 +459,7 @@ export class OpenPGPKey {
       }
       const signedMessage = await opgp.message.fromText(OpenPGPKey.encryptionText).sign([key]);
       output.push('sign msg ok');
-      const verifyResult = await PgpMsg.verify(signedMessage, [key]);
+      const verifyResult = await PgpUtil.verify(signedMessage, [key]);
       if (verifyResult.error !== null && typeof verifyResult.error !== 'undefined') {
         output.push(`verify failed: ${verifyResult.error}`);
       } else {
