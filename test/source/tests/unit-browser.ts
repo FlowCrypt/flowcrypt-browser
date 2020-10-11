@@ -12,7 +12,6 @@ import { expect } from 'chai';
 // tslint:disable:no-blank-lines-func
 /* eslint-disable max-len */
 
-
 export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -35,7 +34,7 @@ export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: 
         const thisUnitTestTitle = testCodeLines.shift()!.replace(/`\);$/, '').trim();
         const title = `browser unit test ${filename}: ${thisUnitTestTitle}`;
         // define the test
-        ava.default.only(title, testWithBrowser(undefined, async (t, browser) => {
+        ava.default(title, testWithBrowser(undefined, async (t, browser) => {
           const hostPage = await browser.newPage(t, TestUrls.extension(`chrome/dev/ci_unit_test.htm`));
           // update host page title
           await hostPage.target.evaluate((title) => { window.document.getElementsByTagName('h1')[0].textContent = title; }, title);
