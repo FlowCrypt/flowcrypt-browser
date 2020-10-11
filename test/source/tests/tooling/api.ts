@@ -2,7 +2,7 @@
 
 import * as request from 'fc-node-requests';
 
-import { Config } from '../util';
+import { Config } from '../../util';
 import { Cookie } from 'puppeteer';
 import { Response } from 'request';
 

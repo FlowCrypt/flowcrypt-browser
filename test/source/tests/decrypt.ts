@@ -2,13 +2,13 @@
 
 import * as ava from 'ava';
 
-import { Config, TestVariant, Util } from '../../util';
-import { protonCompatPub, expiredPub, unusableKey } from '../consts';
-import { BrowserRecipe } from '../browser-recipe';
-import { InboxPageRecipe } from '../page-recipe/inbox-page-recipe';
-import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
-import { TestUrls } from '../../browser/test-urls';
-import { TestWithBrowser } from '../../test';
+import { Config, TestVariant, Util } from './../util';
+import { protonCompatPub, expiredPub, unusableKey } from './tooling/consts';
+import { BrowserRecipe } from './tooling/browser-recipe';
+import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
+import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
+import { TestUrls } from './../browser/test-urls';
+import { TestWithBrowser } from './../test';
 import { expect } from "chai";
 
 // tslint:disable:no-blank-lines-func

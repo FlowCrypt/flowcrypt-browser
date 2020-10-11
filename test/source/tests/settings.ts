@@ -4,14 +4,14 @@ import * as fs from 'fs';
 import * as ava from 'ava';
 import { Page } from 'puppeteer';
 
-import { Config, Util } from '../../util';
-import { TestWithBrowser, internalTestState } from '../../test';
+import { Config, Util } from './../util';
+import { TestWithBrowser, internalTestState } from './../test';
 
-import { BrowserRecipe } from '../browser-recipe';
-import { InboxPageRecipe } from '../page-recipe/inbox-page-recipe';
-import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
-import { TestUrls } from '../../browser/test-urls';
-import { TestVariant } from '../../util';
+import { BrowserRecipe } from './tooling/browser-recipe';
+import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
+import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
+import { TestUrls } from './../browser/test-urls';
+import { TestVariant } from './../util';
 import { expect } from 'chai';
 
 // tslint:disable:no-blank-lines-func

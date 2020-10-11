@@ -1,13 +1,13 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { Config, Util, TestMessage } from '../util';
+import { Config, Util, TestMessage } from '../../util';
 
 import { AvaContext } from '.';
-import { BrowserHandle } from '../browser';
-import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
-import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
-import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
-import { TestUrls } from '../browser/test-urls';
+import { BrowserHandle } from '../../browser';
+import { OauthPageRecipe } from './../page-recipe/oauth-page-recipe';
+import { SettingsPageRecipe } from './../page-recipe/settings-page-recipe';
+import { SetupPageRecipe } from './../page-recipe/setup-page-recipe';
+import { TestUrls } from '../../browser/test-urls';
 
 export class BrowserRecipe {
 

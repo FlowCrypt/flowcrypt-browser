@@ -2,7 +2,7 @@
 
 import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
 
-import { AvaContext } from '..';
+import { AvaContext } from '../tooling/';
 import { ElementHandle } from 'puppeteer';
 import { expect } from 'chai';
 

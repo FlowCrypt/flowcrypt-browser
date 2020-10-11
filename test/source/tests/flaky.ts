@@ -3,16 +3,16 @@
 import * as ava from 'ava';
 import { expect } from 'chai';
 
-import { Config, TestVariant, Util } from '../../util';
+import { Config, TestVariant, Util } from './../util';
 
-import { BrowserRecipe } from '../browser-recipe';
-import { ComposePageRecipe } from '../page-recipe/compose-page-recipe';
-import { PageRecipe } from '../page-recipe/abstract-page-recipe';
-import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
-import { SetupPageRecipe } from '../page-recipe/setup-page-recipe';
-import { TestWithBrowser } from '../../test';
-import { TestUrls } from '../../browser/test-urls';
-import { GoogleData } from '../../mock/google/google-data';
+import { BrowserRecipe } from './tooling/browser-recipe';
+import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
+import { PageRecipe } from './page-recipe/abstract-page-recipe';
+import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
+import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
+import { TestWithBrowser } from './../test';
+import { TestUrls } from './../browser/test-urls';
+import { GoogleData } from './../mock/google/google-data';
 
 // tslint:disable:no-blank-lines-func
 

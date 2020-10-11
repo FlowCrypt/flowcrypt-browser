@@ -76,3 +76,11 @@ blocks:
         - name: Live Gmail tests
           commands:
             - npm run-script test_ci_chrome_consumer_live_gmail
+
+        - name: consumer mock - unit tests
+          commands:
+            - npm run-script test_local_unit_consumer
+
+        - name: enterprise mock - unit tests
+          commands:
+            - npm run-script test_local_unit_enterprise

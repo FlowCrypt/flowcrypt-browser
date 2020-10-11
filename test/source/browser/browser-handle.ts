@@ -3,11 +3,11 @@
 import { Browser, EvaluateFn, Page, Target } from 'puppeteer';
 import { Config, Util } from '../util';
 
-import { AvaContext } from '../tests';
 import { ControllablePage } from './controllable';
-import { FlowCryptApi } from '../tests/api';
 import { Semaphore } from './browser-pool';
 import { TIMEOUT_ELEMENT_APPEAR } from '.';
+import { AvaContext } from '../tests/tooling';
+import { FlowCryptApi } from '../tests/tooling/api';
 
 export class BrowserHandle {
 

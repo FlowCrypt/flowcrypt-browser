@@ -2,16 +2,16 @@
 
 import * as ava from 'ava';
 
-import { BrowserHandle, ControllablePage } from '../../browser';
-import { TestVariant, Util } from '../../util';
-import { AvaContext } from '..';
-import { BrowserRecipe } from '../browser-recipe';
-import { GmailPageRecipe } from '../page-recipe/gmail-page-recipe';
-import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
-import { TestUrls } from '../../browser/test-urls';
-import { TestWithBrowser } from '../../test';
+import { BrowserHandle, ControllablePage } from './../browser';
+import { TestVariant, Util } from './../util';
+import { AvaContext } from './tooling';
+import { BrowserRecipe } from './tooling/browser-recipe';
+import { GmailPageRecipe } from './page-recipe/gmail-page-recipe';
+import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
+import { TestUrls } from './../browser/test-urls';
+import { TestWithBrowser } from './../test';
 import { expect } from 'chai';
-import { OauthPageRecipe } from '../page-recipe/oauth-page-recipe';
+import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 
 /**
  * All tests that use mail.google.com or have to operate without a Gmail API mock should go here

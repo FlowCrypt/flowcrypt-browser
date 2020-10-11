@@ -36,8 +36,8 @@ export class OrgRules {
     return new OrgRules(storage.rules || OrgRules.default, acctEmail.split('@')[1]);
   }
 
-  public static isPublicEmailProviderDomain = (emailAddr: string) => {
-    return ['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(emailAddr.split('@')[1] || 'NONE');
+  public static isPublicEmailProviderDomain = (emailAddrOrDomain: string) => {
+    return ['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(emailAddrOrDomain.split('@').pop() || 'NONE');
   }
 
   protected constructor(

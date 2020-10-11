@@ -17,7 +17,7 @@ import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
 import { OrgRules } from './org-rules.js';
 import { Xss } from './platform/xss.js';
 import { storageLocalGetAll } from './api/chrome.js';
-import { AcctStore, SendAsAlias } from './platform/store/acct-store.js';
+import { AccountIndex, AcctStore, SendAsAlias } from './platform/store/acct-store.js';
 import { GlobalStore } from './platform/store/global-store.js';
 import { AbstractStore } from './platform/store/abstract-store.js';
 import { KeyStore } from './platform/store/key-store.js';
@@ -74,7 +74,7 @@ export class Settings {
     if (!acctEmails.includes(acctEmail)) {
       throw new Error(`"${acctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
     }
-    const storageIndexesToRemove: string[] = [];
+    const storageIndexesToRemove: AccountIndex[] = [];
     const filter = AbstractStore.singleScopeRawIndex(acctEmail, '');
     if (!filter) {
       throw new Error('Filter is empty for account_email"' + acctEmail + '"');
@@ -84,7 +84,7 @@ export class Settings {
         try {
           for (const storageIndex of Object.keys(storage)) {
             if (storageIndex.indexOf(filter) === 0) {
-              storageIndexesToRemove.push(storageIndex.replace(filter, ''));
+              storageIndexesToRemove.push(storageIndex.replace(filter, '') as AccountIndex);
             }
           }
           await AcctStore.remove(acctEmail, storageIndexesToRemove);

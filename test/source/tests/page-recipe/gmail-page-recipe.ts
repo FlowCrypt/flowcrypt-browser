@@ -2,7 +2,7 @@
 
 import { BrowserHandle, ControllablePage } from '../../browser';
 
-import { AvaContext } from '..';
+import { AvaContext } from '../tooling/';
 import { PageRecipe } from './abstract-page-recipe';
 import { expect } from 'chai';
 

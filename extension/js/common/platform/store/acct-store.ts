@@ -34,7 +34,8 @@ export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'ema
   'google_token_refresh' | 'hide_message_password' | 'sendAs' | 'drafts_reply' | 'drafts_compose' |
   'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' |
   'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
-  'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all' | 'subscription' | 'uuid' | 'use_rich_text' | 'rules';
+  'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all' | 'subscription' | 'uuid' | 'use_rich_text' | 'rules' |
+  'fesUrl';
 
 export type SendAsAlias = {
   isPrimary: boolean;
@@ -70,6 +71,7 @@ export type AcctStoreDict = {
   subscription?: SubscriptionInfo;
   uuid?: string;
   rules?: DomainRulesJson;
+  fesUrl?: string; // url where FlowCrypt Enterprise Server is deployed
   // temporary
   tmp_submit_main?: boolean;
   tmp_submit_all?: boolean;
@@ -144,7 +146,7 @@ export class AcctStore extends AbstractStore {
     return new Subscription(subscription);
   }
 
-  public static remove = async (acctEmail: string, keys: string[]) => {
+  public static remove = async (acctEmail: string, keys: AccountIndex[]) => {
     await storageLocalRemove(AcctStore.singleScopeRawIndexArr(acctEmail, keys));
   }
 

@@ -2,8 +2,8 @@
 
 import * as ava from 'ava';
 
-import { TestVariant } from '../../util';
-import { TestWithBrowser } from '../../test';
+import { TestVariant } from '../util';
+import { TestWithBrowser } from '../test';
 
 // tslint:disable:no-blank-lines-func
 

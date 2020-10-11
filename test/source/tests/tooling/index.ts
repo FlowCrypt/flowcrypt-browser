@@ -2,7 +2,7 @@
 
 import * as ava from 'ava';
 
-import { Consts } from '../test';
+import { Consts } from '../../test';
 
 export type AvaContext = ava.ExecutionContext<{}> & { retry?: true, attemptNumber?: number, totalAttempts?: number, attemptText?: string };
 

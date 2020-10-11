@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { Config } from './util';
-import { FlowCryptApi } from './tests/api';
+import { FlowCryptApi } from './tests/tooling/api';
 
 (async () => { // disabled in ci settings
   for (const { email, password } of Config.secrets.auth.google) {

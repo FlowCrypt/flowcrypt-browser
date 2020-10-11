@@ -3,24 +3,24 @@
 import * as ava from 'ava';
 import { Page } from 'puppeteer';
 
-import { BrowserHandle, Controllable, ControllablePage, ControllableFrame } from '../../browser';
-import { Config, Util } from '../../util';
+import { BrowserHandle, Controllable, ControllablePage, ControllableFrame } from './../browser';
+import { Config, Util } from './../util';
 
-import { AvaContext } from '..';
-import { ComposePageRecipe } from '../page-recipe/compose-page-recipe';
-import { Dict } from '../../core/common';
-import { GoogleData } from '../../mock/google/google-data';
-import { InboxPageRecipe } from '../page-recipe/inbox-page-recipe';
-import { OauthPageRecipe } from '../page-recipe/oauth-page-recipe';
-import { PageRecipe } from '../page-recipe/abstract-page-recipe';
-import { SettingsPageRecipe } from '../page-recipe/settings-page-recipe';
-import { somePubkey } from '../../mock/attester/attester-endpoints';
-import { TestUrls } from '../../browser/test-urls';
-import { TestVariant } from '../../util';
-import { TestWithBrowser } from '../../test';
+import { AvaContext } from './tooling';
+import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
+import { Dict } from './../core/common';
+import { GoogleData } from './../mock/google/google-data';
+import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
+import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
+import { PageRecipe } from './page-recipe/abstract-page-recipe';
+import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
+import { somePubkey } from './../mock/attester/attester-endpoints';
+import { TestUrls } from './../browser/test-urls';
+import { TestVariant } from './../util';
+import { TestWithBrowser } from './../test';
 import { expect } from "chai";
-import { BrowserRecipe } from '../browser-recipe';
-import { SetupPageRecipe } from '../page-recipe/setup-page-recipe';
+import { BrowserRecipe } from './tooling/browser-recipe';
+import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
