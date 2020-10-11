@@ -60,7 +60,15 @@ export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: 
         }
         code = code.trim();
         const testCodeLines = code.split('\n');
-        const thisUnitTestTitle = testCodeLines.shift()!.replace(/`\);$/, '').trim();
+        let thisUnitTestTitle = testCodeLines.shift()!.trim();
+        console.log(thisUnitTestTitle, testVariant);
+        if (thisUnitTestTitle.includes('`).enterprise') && testVariant === 'CONSUMER-MOCK') {
+          continue;
+        }
+        if (thisUnitTestTitle.includes('`).consumer') && testVariant === 'ENTERPRISE-MOCK') {
+          continue;
+        }
+        thisUnitTestTitle = thisUnitTestTitle.replace(/`.+$/, '');
         code = testCodeLines.join('\n'); // without the title, just code
         const title = `browser unit test ${filename}: ${thisUnitTestTitle}`;
         unitTests.push({ title, code });
