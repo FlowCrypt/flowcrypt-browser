@@ -7,7 +7,6 @@ import { TestWithBrowser } from '../test';
 import { TestUrls } from '../browser/test-urls';
 import { readdirSync, readFileSync } from 'fs';
 import { Buf } from '../core/buf';
-import { expect } from 'chai';
 
 // tslint:disable:no-blank-lines-func
 /* eslint-disable max-len */
@@ -25,7 +24,7 @@ export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: 
       if (!header.startsWith('/* ©️ 2016')) {
         throw Error(`Expecting ${browserUnitTestsFolder}/${filename} to start with '/* ©️ 2016'`);
       }
-      if (header.includes('require(')) { // do not import anything. Add deps to ci_unit_test.ts
+      if (header.includes('require(') || header.includes('import')) { // do not import anything. Add deps to ci_unit_test.ts
         throw Error(`Unexpected import statement found in ${browserUnitTestsFolder}/${filename}`);
       }
       for (let testCode of testCodes) {
