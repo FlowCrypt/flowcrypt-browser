@@ -3,7 +3,7 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
-import { DecryptErrTypes, PgpUtil } from '../../js/common/core/crypto/pgp/pgp-msg.js';
+import { DecryptErrTypes, PgpMsgUtil } from '../../js/common/core/crypto/pgp/pgp-msg-util.js';
 import { PromiseCancellation, Url } from '../../js/common/core/common.js';
 import { Api } from '../../js/common/api/api.js';
 import { ApiErr } from '../../js/common/api/error/api-error.js';
@@ -191,9 +191,9 @@ export class AttachmentDownloadView extends View {
   private processAsPublicKeyAndHideAttIfAppropriate = async () => {
     if (this.att.msgId && this.att.id && this.att.treatAs() === 'publicKey') { // this is encrypted public key - download && decrypt & parse & render
       const { data } = await this.gmail.attGet(this.att.msgId, this.att.id);
-      const decrRes = await PgpUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: data });
+      const decrRes = await PgpMsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: data });
       if (decrRes.success && decrRes.content) {
-        const openpgpType = await PgpUtil.type({ data: decrRes.content });
+        const openpgpType = await PgpMsgUtil.type({ data: decrRes.content });
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // 'openpgpType.armored': could potentially process unarmored pubkey files, maybe later
           BrowserMsg.send.renderPublicKeys(this.parentTabId, { afterFrameId: this.frameId, traverseUp: 2, publicKeys: [decrRes.content.toUtfStr()] }); // render pubkey
           BrowserMsg.send.setCss(this.parentTabId, { selector: `#${this.frameId}`, traverseUp: 1, css: { display: 'none' } }); // hide attachment
@@ -240,7 +240,7 @@ export class AttachmentDownloadView extends View {
   }
 
   private decryptAndSaveAttToDownloads = async () => {
-    const result = await PgpUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: this.att.getData() });
+    const result = await PgpMsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: this.att.getData() });
     Xss.sanitizeRender(this.downloadButton, this.originalButtonHTML || '');
     if (result.success) {
       if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {

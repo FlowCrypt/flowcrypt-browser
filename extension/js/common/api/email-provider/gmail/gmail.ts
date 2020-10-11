@@ -15,7 +15,7 @@ import { Buf } from '../../../core/buf.js';
 import { Catch } from '../../../platform/catch.js';
 import { Contact, KeyUtil } from '../../../core/crypto/key.js';
 import { Env } from '../../../browser/env.js';
-import { FormatError } from '../../../core/crypto/pgp/pgp-msg.js';
+import { FormatError } from '../../../core/crypto/pgp/pgp-msg-util.js';
 import { Google } from '../../google.js';
 import { GoogleAuth } from '../../google-auth.js';
 import { Mime } from '../../../core/mime.js';
