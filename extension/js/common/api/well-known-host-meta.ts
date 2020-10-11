@@ -97,7 +97,7 @@ export class WellKnownHostMeta extends Api {
     }
   }
 
-  private isHostMetaResponse(obj: any): obj is HostMetaResponse {
+  private isHostMetaResponse = (obj: any): obj is HostMetaResponse => {
     if (!obj || typeof obj !== 'object') {
       return false;
     }

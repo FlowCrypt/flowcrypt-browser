@@ -39,7 +39,7 @@ export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: 
           const hostPage = await browser.newPage(t, TestUrls.extension(`chrome/dev/ci_unit_test.htm`));
           // update host page title
           await hostPage.target.evaluate((title) => { window.document.getElementsByTagName('h1')[0].textContent = title; }, title);
-          // load and run the unit test
+          // prepare code to run
           const runThisCodeInBrowser = `
             (async () => {
               try {
@@ -49,6 +49,7 @@ export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: 
               }
             })();
           `;
+          // load and run the unit test
           const r = await hostPage.target.evaluate(runThisCodeInBrowser);
           if (r !== 'pass') {
             t.log(r);
