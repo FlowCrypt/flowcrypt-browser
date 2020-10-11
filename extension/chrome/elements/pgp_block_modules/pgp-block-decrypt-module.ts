@@ -5,7 +5,7 @@
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { DecryptErrTypes } from '../../../js/common/core/crypto/pgp/pgp-msg.js';
+import { DecryptErrTypes } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { GmailResponseFormat } from '../../../js/common/api/email-provider/gmail/gmail.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Mime } from '../../../js/common/core/mime.js';

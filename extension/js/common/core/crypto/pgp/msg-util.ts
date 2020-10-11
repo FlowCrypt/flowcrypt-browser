@@ -83,7 +83,7 @@ export class FormatError extends Error {
   }
 }
 
-export class PgpMsg {
+export class MsgUtil {
 
   public static type: PgpMsgMethod.Type = async ({ data }) => { // promisified because used through bg script
     if (!data || !data.length) {
@@ -179,8 +179,8 @@ export class PgpMsg {
   public static verifyDetached: PgpMsgMethod.VerifyDetached = async ({ plaintext, sigText }) => {
     const message = opgp.message.fromText(Buf.fromUint8(plaintext).toUtfStr());
     await message.appendSignature(Buf.fromUint8(sigText).toUtfStr());
-    const keys = await PgpMsg.getSortedKeys([], message);
-    return await PgpMsg.verify(message, keys.forVerification, keys.verificationContacts[0]);
+    const keys = await MsgUtil.getSortedKeys([], message);
+    return await MsgUtil.verify(message, keys.forVerification, keys.verificationContacts[0]);
   }
 
   public static decryptMessage: PgpMsgMethod.Decrypt = async ({ kisWithPp, encryptedData, msgPwd }) => {
@@ -191,14 +191,14 @@ export class PgpMsg {
     } catch (formatErr) {
       return { success: false, error: { type: DecryptErrTypes.format, message: String(formatErr) }, longids };
     }
-    const keys = await PgpMsg.getSortedKeys(kisWithPp, prepared.message);
+    const keys = await MsgUtil.getSortedKeys(kisWithPp, prepared.message);
     longids.message = keys.encryptedFor;
     longids.matching = keys.prvForDecrypt.map(ki => ki.longid);
     longids.chosen = keys.prvForDecryptDecrypted.map(ki => ki.longid);
     longids.needPassphrase = keys.prvForDecryptWithoutPassphrases.map(ki => ki.longid);
     const isEncrypted = !prepared.isCleartext;
     if (!isEncrypted) {
-      const signature = await PgpMsg.verify(prepared.message, keys.forVerification, keys.verificationContacts[0]);
+      const signature = await MsgUtil.verify(prepared.message, keys.forVerification, keys.verificationContacts[0]);
       const content = signature.content || Buf.fromUtfStr('no content');
       signature.content = undefined; // no need to duplicate data
       return { success: true, content, isEncrypted, signature };
@@ -216,8 +216,8 @@ export class PgpMsg {
       const passwords = msgPwd ? [msgPwd] : undefined;
       const privateKeys = keys.prvForDecryptDecrypted.map(ki => ki.decrypted!);
       const decrypted = await OpenPGPKey.decryptMessage(prepared.message as OpenPGP.message.Message, privateKeys, passwords);
-      await PgpMsg.cryptoMsgGetSignedBy(decrypted, keys); // we can only figure out who signed the msg once it's decrypted
-      const signature = keys.signedBy.length ? await PgpMsg.verify(decrypted, keys.forVerification, keys.verificationContacts[0]) : undefined;
+      await MsgUtil.cryptoMsgGetSignedBy(decrypted, keys); // we can only figure out who signed the msg once it's decrypted
+      const signature = keys.signedBy.length ? await MsgUtil.verify(decrypted, keys.forVerification, keys.verificationContacts[0]) : undefined;
       const content = signature?.content || new Buf(await opgp.stream.readToEnd(decrypted.getLiteralData()!));
       if (signature?.content) {
         signature.content = undefined; // already passed as "content" on the response object, don't need it duplicated
@@ -228,7 +228,7 @@ export class PgpMsg {
       }
       return { success: true, content, isEncrypted, filename: decrypted.getFilename() || undefined, signature };
     } catch (e) {
-      return { success: false, error: PgpMsg.cryptoMsgDecryptCategorizeErr(e, msgPwd), message: prepared.message, longids, isEncrypted };
+      return { success: false, error: MsgUtil.cryptoMsgDecryptCategorizeErr(e, msgPwd), message: prepared.message, longids, isEncrypted };
     }
   }
 
@@ -289,7 +289,7 @@ export class PgpMsg {
     };
     const encryptionKeyids = msg instanceof opgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds() : [];
     keys.encryptedFor = encryptionKeyids.map(kid => OpenPGPKey.bytesToLongid(kid.bytes));
-    await PgpMsg.cryptoMsgGetSignedBy(msg, keys);
+    await MsgUtil.cryptoMsgGetSignedBy(msg, keys);
     if (keys.encryptedFor.length) {
       for (const ki of kiWithPp) {
         ki.parsed = await KeyUtil.parse(ki.private); // todo
@@ -309,12 +309,12 @@ export class PgpMsg {
       keys.prvForDecrypt = [];
     }
     for (const ki of keys.prvForDecrypt) {
-      const matchingKeyids = PgpMsg.matchingKeyids(ki.parsed!, encryptionKeyids);
+      const matchingKeyids = MsgUtil.matchingKeyids(ki.parsed!, encryptionKeyids);
       const cachedKey = KeyCache.getDecrypted(ki.longid);
-      if (cachedKey && PgpMsg.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
+      if (cachedKey && MsgUtil.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
         ki.decrypted = cachedKey;
         keys.prvForDecryptDecrypted.push(ki);
-      } else if (PgpMsg.isKeyDecryptedFor(ki.parsed!, matchingKeyids) || await PgpMsg.decryptKeyFor(ki.parsed!, ki.passphrase!, matchingKeyids) === true) {
+      } else if (MsgUtil.isKeyDecryptedFor(ki.parsed!, matchingKeyids) || await MsgUtil.decryptKeyFor(ki.parsed!, ki.passphrase!, matchingKeyids) === true) {
         KeyCache.setDecrypted(ki.parsed!);
         ki.decrypted = ki.parsed!;
         keys.prvForDecryptDecrypted.push(ki);

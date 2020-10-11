@@ -6,7 +6,7 @@ import { ApiErr } from '../../../js/common/api/error/api-error.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { FormatError } from '../../../js/common/core/crypto/pgp/pgp-msg.js';
+import { FormatError } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpBlockView } from '../pgp_block.js';
 import { Ui } from '../../../js/common/browser/ui.js';

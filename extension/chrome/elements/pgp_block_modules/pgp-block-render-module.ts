@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { VerifyRes } from '../../../js/common/core/crypto/pgp/pgp-msg.js';
+import { VerifyRes } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { Att } from '../../../js/common/core/att.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
