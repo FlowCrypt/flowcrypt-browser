@@ -65,7 +65,6 @@ export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: 
         }
         const testCodeLines = code.split('\n');
         let thisUnitTestTitle = testCodeLines.shift()!.trim();
-        console.log(thisUnitTestTitle, testVariant);
         if (thisUnitTestTitle.includes('`).enterprise') && testVariant === 'CONSUMER-MOCK') {
           continue;
         }

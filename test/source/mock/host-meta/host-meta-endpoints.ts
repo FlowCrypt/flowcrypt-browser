@@ -10,4 +10,7 @@ export const mockWellKnownHostMetaEndpoints: HandlersDefinition = {
   '/.well-known/host-meta.json?local=status404': async () => {
     throw new HttpClientErr(`Not Found`, 404);
   },
+  '/.well-known/host-meta.json?local=not.json': async () => {
+    return '<body>nothing</body>';
+  },
 };
