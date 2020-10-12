@@ -35,7 +35,7 @@ export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'ema
   'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' |
   'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
   'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all' | 'subscription' | 'uuid' | 'use_rich_text' | 'rules' |
-  'fesUrl';
+  'fesUrl' | 'fesAccessToken';
 
 export type SendAsAlias = {
   isPrimary: boolean;
@@ -72,6 +72,7 @@ export type AcctStoreDict = {
   uuid?: string;
   rules?: DomainRulesJson;
   fesUrl?: string; // url where FlowCrypt Enterprise Server is deployed
+  fesAccessToken?: string;
   // temporary
   tmp_submit_main?: boolean;
   tmp_submit_all?: boolean;

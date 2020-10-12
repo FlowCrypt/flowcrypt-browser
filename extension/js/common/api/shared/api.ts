@@ -144,7 +144,14 @@ export class Api {
   }
 
   protected static apiCall = async <RT>(
-    url: string, path: string, fields?: Dict<any> | string, fmt?: ReqFmt, progress?: ProgressCbs, headers?: Dict<string>, resFmt: ResFmt = 'json', method: ReqMethod = 'POST'
+    url: string,
+    path: string,
+    fields?: Dict<any> | string,
+    fmt?: ReqFmt,
+    progress?: ProgressCbs,
+    headers?: Dict<string>,
+    resFmt: ResFmt = 'json',
+    method: ReqMethod = 'POST'
   ): Promise<RT> => {
     progress = progress || {} as ProgressCbs;
     let formattedData: FormData | string | undefined;
