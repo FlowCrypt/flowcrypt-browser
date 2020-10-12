@@ -3,7 +3,7 @@
 'use strict';
 
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
-import { WellKnownHostMeta } from '../../js/common/api/well-known-host-meta.js';
+import { WellKnownHostMeta } from '../../js/common/api/account-server/well-known-host-meta.js';
 
 /**
  * importing all libs that are tested in ci tests

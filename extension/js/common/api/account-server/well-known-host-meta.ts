@@ -2,13 +2,13 @@
 
 'use strict';
 
-import { Buf } from '../core/buf.js';
-import { FLAVOR } from '../core/const.js';
-import { OrgRules } from '../org-rules.js';
-import { Catch } from '../platform/catch.js';
-import { AcctStore } from '../platform/store/acct-store.js';
-import { Api } from './shared/api.js';
-import { ApiErr } from './shared/api-error.js';
+import { Buf } from '../../core/buf.js';
+import { FLAVOR } from '../../core/const.js';
+import { OrgRules } from '../../org-rules.js';
+import { Catch } from '../../platform/catch.js';
+import { AcctStore } from '../../platform/store/acct-store.js';
+import { Api } from '../shared/api.js';
+import { ApiErr } from '../shared/api-error.js';
 
 type HostMetaResponse = { links?: { rel?: string, href?: string }[] }
 
