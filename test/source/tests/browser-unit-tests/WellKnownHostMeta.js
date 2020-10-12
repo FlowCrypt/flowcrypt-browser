@@ -81,15 +81,15 @@ BROWSER_UNIT_TEST_NAME(`status500 does not return any fesUrl`).consumer;
   return 'pass'; // consumer tolerates a net err because the server may not be expecting to serve these
 })();
 
-BROWSER_UNIT_TEST_NAME(`not.json throws when server cannot be reached`).enterprise;
+BROWSER_UNIT_TEST_NAME(`not.json throws when response not a json`).enterprise;
 (async () => {
   const mockHost = '127.0.0.1:8001';
   const wellKnownHostMeta = new WellKnownHostMeta(`not.json@${mockHost}`, 'http');
   try {
     await wellKnownHostMeta.fetchAndCacheFesUrl();
   } catch (e) {
-    if (e.message === 'Unexpected token < in JSON at position 0') {
-      return 'pass'; // enterprise does not tolerate a server err - since it may simply mean offline
+    if (e.message.includes('Enterprise host meta file at http://127.0.0.1:8001/.well-known/host-meta.json?local=not.json not returning json')) {
+      return 'pass'; // enterprise does not tolerate a server wrong response
     }
     throw e;
   }
@@ -106,3 +106,27 @@ BROWSER_UNIT_TEST_NAME(`not.json does not return any fesUrl`).consumer;
   return 'pass'; // consumer tolerates a format err because the server may not be expecting to serve these
 })();
 
+BROWSER_UNIT_TEST_NAME(`wrong.format when json has wrong structure`).enterprise;
+(async () => {
+  const mockHost = '127.0.0.1:8001';
+  const wellKnownHostMeta = new WellKnownHostMeta(`wrong.format@${mockHost}`, 'http');
+  try {
+    await wellKnownHostMeta.fetchAndCacheFesUrl();
+  } catch (e) {
+    if (e.message === 'Enterprise host meta file at http://127.0.0.1:8001/.well-known/host-meta.json?local=wrong.format is badly structured') {
+      return 'pass'; // enterprise does not tolerate a server err - since it may simply mean offline
+    }
+    throw e;
+  }
+})();
+
+BROWSER_UNIT_TEST_NAME(`wrong.format does not return any fesUrl`).consumer;
+(async () => {
+  const mockHost = '127.0.0.1:8001';
+  const wellKnownHostMeta = new WellKnownHostMeta(`wrong.format@${mockHost}`, 'http');
+  const fesUrl = await wellKnownHostMeta.fetchAndCacheFesUrl();
+  if (typeof fesUrl !== 'undefined') {
+    throw Error(`fesUrl unexpectedly ${fesUrl}, expecting undefined`);
+  }
+  return 'pass'; // consumer tolerates a format err because the server may not be expecting to serve these
+})();

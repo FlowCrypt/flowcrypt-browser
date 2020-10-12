@@ -62,14 +62,14 @@ export class WellKnownHostMeta extends Api {
         return parsed;
       } else {
         if (FLAVOR === 'enterprise') {
-          throw Error(`Enterprise host meta file at ${this.hostMetaUrl} is badly structured`);
+          throw Error(`Enterprise host meta json file at ${this.hostMetaUrl} is badly structured`);
         } else {
           return undefined;
         }
       }
     } catch (e) {
       if (FLAVOR === 'enterprise') {
-        throw e; // stricter processing - enterprises have no business NOT returning a json on a status 200 response
+        throw Catch.rewrapErr(e, `Enterprise host meta file at ${this.hostMetaUrl} not returning json`);
       } else { // consumer
         return undefined;
       }

@@ -13,4 +13,7 @@ export const mockWellKnownHostMetaEndpoints: HandlersDefinition = {
   '/.well-known/host-meta.json?local=not.json': async () => {
     return '<body>nothing</body>';
   },
+  '/.well-known/host-meta.json?local=wrong.format': async () => {
+    return { links: "unexpected string" };
+  },
 };
