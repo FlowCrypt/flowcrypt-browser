@@ -5,8 +5,8 @@
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { DecryptErrTypes, MsgUtil } from '../../js/common/core/crypto/pgp/msg-util.js';
 import { PromiseCancellation, Url } from '../../js/common/core/common.js';
-import { Api } from '../../js/common/api/api.js';
-import { ApiErr } from '../../js/common/api/error/api-error.js';
+import { Api } from '../../js/common/api/shared/api.js';
+import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Att } from '../../js/common/core/att.js';
 import { Browser } from '../../js/common/browser/browser.js';

@@ -6,9 +6,9 @@ import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { KeyInfo, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { Str, Url, UrlParams } from '../../js/common/core/common.js';
-import { ApiErr } from '../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
-import { Backend } from '../../js/common/api/backend.js';
+
 import { Catch } from '../../js/common/platform/catch.js';
 import { Env } from '../../js/common/browser/env.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
@@ -26,6 +26,8 @@ import { GlobalStore } from '../../js/common/platform/store/global-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import Swal from 'sweetalert2';
 import { Subscription } from '../../js/common/subscription.js';
+import { FlowCryptWebsite } from '../../js/common/api/flowcrypt-website.js';
+import { AccountServer } from '../../js/common/api/account-server.js';
 
 View.run(class SettingsView extends View {
 
@@ -270,7 +272,7 @@ View.run(class SettingsView extends View {
         $('.hide_if_setup_not_done').css('display', 'none');
       }
     }
-    Backend.retrieveBlogPosts().then(posts => { // do not await because may take a while
+    FlowCryptWebsite.retrieveBlogPosts().then(posts => { // do not await because may take a while
       for (const post of posts) {
         const html = `<div class="line"><a href="https://flowcrypt.com${Xss.escape(post.url)}" target="_blank">${Xss.escape(post.title.trim())}</a> ${Xss.escape(post.date.trim())}</div>`;
         Xss.sanitizeAppend('.blog_post_list', html);
@@ -305,7 +307,7 @@ View.run(class SettingsView extends View {
     const authInfo = await AcctStore.authInfo(this.acctEmail!);
     if (authInfo.uuid) { // have auth email set
       try {
-        const response = await Backend.accountGetAndUpdateLocalStore(authInfo);
+        const response = await AccountServer.accountGetAndUpdateLocalStore(authInfo);
         $('#status-row #status_flowcrypt').text(`fc:ok`);
         if (response?.account?.alias) {
           statusContainer.find('.status-indicator-text').css('display', 'none');

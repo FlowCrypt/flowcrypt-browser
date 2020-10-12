@@ -8,7 +8,7 @@ import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { GoogleAuth } from '../../../js/common/api/google-auth.js';
+import { GoogleAuth } from '../../../js/common/api/email-provider/gmail/google-auth.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -17,7 +17,7 @@ import { View } from '../../../js/common/view.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
-import { Api } from '../../../js/common/api/api.js';
+import { Api } from '../../../js/common/api/shared/api.js';
 
 View.run(class ExperimentalView extends View {
 

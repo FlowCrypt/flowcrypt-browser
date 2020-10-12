@@ -4,7 +4,7 @@ import { BrowserMsg } from '../../browser/browser-msg.js';
 import { Env } from '../../browser/env.js';
 import { RawStore, AbstractStore } from './abstract-store.js';
 import { Dict, Value } from '../../core/common.js';
-import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../../api/chrome.js';
+import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../../browser/chrome.js';
 import { Catch } from '../catch.js';
 
 export type StoredAdminCode = { date: number, codes: string[] };

@@ -7,7 +7,7 @@ import { Str, Value } from '../../../core/common.js';
 
 import { Att } from '../../../core/att.js';
 import { Buf } from '../../../core/buf.js';
-import { RecipientType } from '../../api.js';
+import { RecipientType } from '../../shared/api.js';
 import { ReplyParams } from '../email-provider-api.js';
 
 export namespace GmailRes { // responses

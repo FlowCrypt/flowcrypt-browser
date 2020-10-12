@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Api } from '../common/api/api.js';
+import { Api } from '../common/api/shared/api.js';
 import { BgUtils } from './bgutils.js';
 import { Bm } from '../common/browser/browser-msg.js';
 import { Gmail } from '../common/api/email-provider/gmail/gmail.js';

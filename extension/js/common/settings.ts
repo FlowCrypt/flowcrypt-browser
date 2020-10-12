@@ -4,19 +4,18 @@
 
 import { Dict, Str, Url, UrlParams } from './core/common.js';
 import { Ui } from './browser/ui.js';
-import { Api } from './api/api.js';
-import { ApiErr, AjaxErr } from './api/error/api-error.js';
-import { Backend } from './api/backend.js';
+import { ApiErr, AjaxErr } from './api/shared/api-error.js';
+
 import { Catch } from './platform/catch.js';
 import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
-import { GoogleAuth } from './api/google-auth.js';
+import { GoogleAuth } from './api/email-provider/gmail/google-auth.js';
 import { Lang } from './lang.js';
 import { Key, KeyUtil } from './core/crypto/key.js';
 import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
 import { OrgRules } from './org-rules.js';
 import { Xss } from './platform/xss.js';
-import { storageLocalGetAll } from './api/chrome.js';
+import { storageLocalGetAll } from './browser/chrome.js';
 import { AccountIndex, AcctStore, SendAsAlias } from './platform/store/acct-store.js';
 import { GlobalStore } from './platform/store/global-store.js';
 import { AbstractStore } from './platform/store/abstract-store.js';
@@ -334,14 +333,7 @@ export class Settings {
       if (await Ui.modal.confirm(`${prepend}Please log in with FlowCrypt to continue.`)) {
         const authRes = await GoogleAuth.newOpenidAuthPopup({ acctEmail });
         if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
-          const uuid = Api.randomFortyHexChars();
-          try {
-            await Backend.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
-            await Backend.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid });
-            then();
-          } catch (e) {
-            await Ui.modal.error(`Could not log in with FlowCrypt:\n\n${ApiErr.eli5(e)}\n\n${String(e)}`);
-          }
+          then();
         } else {
           await Ui.modal.warning(`Could not log in:\n\n${authRes.error || authRes.result}`);
         }

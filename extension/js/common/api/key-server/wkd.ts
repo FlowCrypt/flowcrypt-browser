@@ -2,13 +2,13 @@
 
 'use strict';
 
-import { Api } from './api.js';
-import { ApiErr } from './error/api-error.js';
-import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
-import { Buf } from '../core/buf.js';
-import { Catch } from '../platform/catch.js';
-import { PubkeySearchResult } from './pub-lookup.js';
-import { KeyUtil } from '../core/crypto/key.js';
+import { Api } from './../shared/api.js';
+import { ApiErr } from '../shared/api-error.js';
+import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
+import { Buf } from '../../core/buf.js';
+import { Catch } from '../../platform/catch.js';
+import { PubkeySearchResult } from './../pub-lookup.js';
+import { KeyUtil } from '../../core/crypto/key.js';
 
 // tslint:disable:no-null-keyword
 // tslint:disable:no-direct-ajax

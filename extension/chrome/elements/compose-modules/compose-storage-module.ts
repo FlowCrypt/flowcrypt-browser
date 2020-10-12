@@ -4,7 +4,7 @@
 
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Contact, KeyInfo, KeyUtil, Key } from '../../../js/common/core/crypto/key.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { CollectPubkeysResult } from './compose-types.js';
@@ -16,8 +16,9 @@ import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
-import { Backend } from '../../../js/common/api/backend.js';
+
 import { Settings } from '../../../js/common/settings.js';
+import { AccountServer } from '../../../js/common/api/account-server.js';
 
 export class ComposeStorageModule extends ViewModule<ComposeView> {
 
@@ -211,7 +212,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     const auth = await AcctStore.authInfo(this.view.acctEmail);
     if (auth.uuid) {
       try {
-        await Backend.accountGetAndUpdateLocalStore(auth); // updates storage
+        await AccountServer.accountGetAndUpdateLocalStore(auth); // updates storage
       } catch (e) {
         if (ApiErr.isAuthErr(e)) {
           Settings.offerToLoginWithPopupShowModalOnErr(

@@ -6,7 +6,7 @@ import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserEventErrHandler, Ui } from '../../../js/common/browser/ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { NewMsgData, SendBtnTexts } from './compose-types.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserExtension } from '../../../js/common/browser/browser-extension.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { KeyInfo } from '../../../js/common/core/crypto/key.js';
@@ -15,7 +15,7 @@ import { Str } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
-import { AjaxErrMsgs } from '../../../js/common/api/error/api-error.js';
+import { AjaxErrMsgs } from '../../../js/common/api/shared/api-error.js';
 
 export class ComposerUserError extends Error { }
 export class ComposerNotReadyError extends ComposerUserError { }

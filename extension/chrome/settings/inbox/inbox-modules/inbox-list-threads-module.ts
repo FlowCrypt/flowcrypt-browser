@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { ApiErr } from '../../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../../js/common/api/shared/api-error.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { GmailParser } from '../../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { InboxView } from '../inbox.js';

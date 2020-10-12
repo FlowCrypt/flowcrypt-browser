@@ -7,7 +7,7 @@ import { FactoryReplyParams, XssSafeFactory } from '../../../../js/common/xss-sa
 import { GmailParser, GmailRes } from '../../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { Url, UrlParams } from '../../../../js/common/core/common.js';
 
-import { ApiErr } from '../../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../../js/common/api/shared/api-error.js';
 import { BrowserMsgCommonHandlers } from '../../../../js/common/browser/browser-msg-common-handlers.js';
 import { Buf } from '../../../../js/common/core/buf.js';
 import { Catch } from '../../../../js/common/platform/catch.js';

@@ -5,19 +5,21 @@
 // tslint:disable:no-direct-ajax
 // tslint:disable:oneliner-object-literal
 
-import { GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST, FLAVOR } from '../core/const.js';
-import { Url, Value } from '../core/common.js';
-import { tabsQuery, windowsCreate } from './chrome.js';
-import { Api } from './api.js';
-import { ApiErr } from './error/api-error.js';
-import { Backend } from './backend.js';
-import { Buf } from '../core/buf.js';
-import { Catch } from '../platform/catch.js';
-import { GmailRes } from './email-provider/gmail/gmail-parser';
-import { GoogleAuthErr } from './error/api-error.js';
-import { GoogleAuthWindowResult$result } from '../browser/browser-msg.js';
-import { Ui } from '../browser/ui.js';
-import { AcctStore, AcctStoreDict } from '../platform/store/acct-store.js';
+import { GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST, FLAVOR } from '../../../core/const.js';
+import { Url, Value } from '../../../core/common.js';
+import { tabsQuery, windowsCreate } from '../../../browser/chrome.js';
+import { Api } from './../../shared/api.js';
+import { ApiErr } from '../../shared/api-error.js';
+
+import { Buf } from '../../../core/buf.js';
+import { Catch } from '../../../platform/catch.js';
+import { GmailRes } from './gmail-parser';
+import { GoogleAuthErr } from '../../shared/api-error.js';
+import { GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
+import { Ui } from '../../../browser/ui.js';
+import { AcctStore, AcctStoreDict } from '../../../platform/store/acct-store.js';
+import { AccountServer } from '../../account-server.js';
+import { WellKnownHostMeta } from '../../account-servers/well-known-host-meta.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
@@ -143,8 +145,15 @@ export class GoogleAuth {
       }
       try {
         const uuid = Api.randomFortyHexChars();
-        await Backend.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
-        await Backend.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // will store org rules and subscription
+        await AccountServer.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
+        await AccountServer.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // will store org rules and subscription
+        try {
+          // this is here currently for debugging only, to test effect of this new mechanism on customer installations
+          const wellKnownHostMeta = new WellKnownHostMeta(authRes.acctEmail);
+          await wellKnownHostMeta.fetchAndCacheFesUrl();
+        } catch (e) {
+          Catch.reportErr(Catch.rewrapErr(e, `WellKnownHostMeta on ${FLAVOR}`));
+        }
       } catch (e) {
         return { result: 'Error', error: `Grant successful but error accessing fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
       }

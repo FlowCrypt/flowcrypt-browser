@@ -2,10 +2,10 @@
 
 'use strict';
 
-import { Api } from './api.js';
-import { ApiErr } from './error/api-error.js';
-import { PgpArmor } from '../core/crypto/pgp/pgp-armor.js';
-import { PubkeySearchResult } from './pub-lookup.js';
+import { Api } from './../shared/api.js';
+import { ApiErr } from '../shared/api-error.js';
+import { PgpArmor } from '../../core/crypto/pgp/pgp-armor.js';
+import { PubkeySearchResult } from './../pub-lookup.js';
 
 export class Sks extends Api {
 

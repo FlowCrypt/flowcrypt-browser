@@ -4,7 +4,7 @@
 
 import { BrowserEventErrHandler, PreventableEventName, Ui } from './browser/ui.js';
 
-import { ApiErr } from './api/error/api-error.js';
+import { ApiErr } from './api/shared/api-error.js';
 import { Xss } from './platform/xss.js';
 
 export abstract class View {

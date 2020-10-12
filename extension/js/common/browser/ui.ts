@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { ApiErr } from '../api/error/api-error.js';
+import { ApiErr } from '../api/shared/api-error.js';
 import { Catch } from '../platform/catch.js';
 import { Dict, Url } from '../core/common.js';
 import Swal from 'sweetalert2';

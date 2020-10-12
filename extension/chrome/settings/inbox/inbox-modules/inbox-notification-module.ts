@@ -5,7 +5,7 @@
 import { Bm, BrowserMsg } from '../../../../js/common/browser/browser-msg.js';
 
 import { Dict } from '../../../../js/common/core/common.js';
-import { GoogleAuth } from '../../../../js/common/api/google-auth.js';
+import { GoogleAuth } from '../../../../js/common/api/email-provider/gmail/google-auth.js';
 import { InboxView } from '../inbox.js';
 import { Notifications } from '../../../../js/common/notifications.js';
 import { ViewModule } from '../../../../js/common/view-module.js';

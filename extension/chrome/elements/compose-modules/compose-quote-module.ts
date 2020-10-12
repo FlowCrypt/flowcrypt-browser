@@ -4,7 +4,7 @@
 
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { FormatError, MsgUtil, DecryptErrTypes } from '../../../js/common/core/crypto/pgp/msg-util.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Mime } from '../../../js/common/core/mime.js';
