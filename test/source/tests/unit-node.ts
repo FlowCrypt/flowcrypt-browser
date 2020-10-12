@@ -586,7 +586,7 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       t.pass();
     });
 
-    ava.only('[Att.sanitizeName] utf characters preserved', async t => {
+    ava.default('[Att.sanitizeName] utf characters preserved', async t => {
       const cyrillicName = '\u0410\u0411\u0412';
       const result = Att.sanitizeName(cyrillicName);
       expect(result).to.equal(cyrillicName);

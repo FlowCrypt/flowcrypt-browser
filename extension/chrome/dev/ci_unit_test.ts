@@ -4,6 +4,9 @@
 
 import { ApiErr } from '../../js/common/api/error/api-error.js';
 import { WellKnownHostMeta } from '../../js/common/api/well-known-host-meta.js';
+import { Buf } from '../../js/common/core/buf.js';
+import { KeyUtil } from '../../js/common/core/crypto/key.js';
+import { AttUI } from '../../js/common/ui/att-ui.js';
 
 /**
  * importing all libs that are tested in ci tests
@@ -11,7 +14,10 @@ import { WellKnownHostMeta } from '../../js/common/api/well-known-host-meta.js';
  */
 const libs: any[] = [
   WellKnownHostMeta,
-  ApiErr
+  ApiErr,
+  AttUI,
+  Buf,
+  KeyUtil
 ];
 
 // add them to global scope so ci can use them
