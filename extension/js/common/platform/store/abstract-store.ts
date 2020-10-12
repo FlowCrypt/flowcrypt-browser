@@ -4,7 +4,7 @@
 
 import { KeyInfo } from '../../core/crypto/key.js';
 import { Dict } from '../../core/common.js';
-import { SubscriptionInfo } from '../../api/backend.js';
+import { SubscriptionInfo } from '../../api/flowcrypt-com-api.js';
 import { DomainRulesJson } from '../../org-rules.js';
 import { GmailRes } from '../../api/email-provider/gmail/gmail-parser.js';
 import { AcctStoreDict, AccountIndex, StoredReplyDraftMeta, StoredComposeDraftMeta } from './acct-store.js';

@@ -16,7 +16,7 @@ import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
-import { FlowCryptComApi } from '../../../js/common/api/backend.js';
+import { FlowCryptComApi } from '../../../js/common/api/flowcrypt-com-api.js';
 import { Settings } from '../../../js/common/settings.js';
 
 export class ComposeStorageModule extends ViewModule<ComposeView> {

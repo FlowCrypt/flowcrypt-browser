@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { FlowCryptComApi } from '../../../js/common/api/backend.js';
+import { FlowCryptComApi } from '../../../js/common/api/flowcrypt-com-api.js';
 import { RecipientStatuses, SendBtnTexts } from './compose-types.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';

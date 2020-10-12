@@ -10,7 +10,7 @@ import { Url, Value } from '../../../core/common.js';
 import { tabsQuery, windowsCreate } from '../../../browser/chrome.js';
 import { Api } from './../../shared/api.js';
 import { ApiErr } from '../../shared/api-error.js';
-import { FlowCryptComApi } from './../../backend.js';
+import { FlowCryptComApi } from '../../flowcrypt-com-api.js';
 import { Buf } from '../../../core/buf.js';
 import { Catch } from '../../../platform/catch.js';
 import { GmailRes } from './gmail-parser';

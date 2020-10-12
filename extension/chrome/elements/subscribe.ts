@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { FlowCryptComApi, FcUuidAuth, PaymentMethod, SubscriptionLevel } from '../../js/common/api/backend.js';
+import { FlowCryptComApi, FcUuidAuth, PaymentMethod, SubscriptionLevel } from '../../js/common/api/flowcrypt-com-api.js';
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Str, Url } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';

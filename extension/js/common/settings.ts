@@ -6,7 +6,7 @@ import { Dict, Str, Url, UrlParams } from './core/common.js';
 import { Ui } from './browser/ui.js';
 import { Api } from './api/shared/api.js';
 import { ApiErr, AjaxErr } from './api/shared/api-error.js';
-import { FlowCryptComApi } from './api/backend.js';
+import { FlowCryptComApi } from './api/flowcrypt-com-api.js';
 import { Catch } from './platform/catch.js';
 import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';

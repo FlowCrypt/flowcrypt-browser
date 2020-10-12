@@ -8,7 +8,7 @@ import { KeyInfo, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { Str, Url, UrlParams } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
-import { FlowCryptComApi } from '../../js/common/api/backend.js';
+import { FlowCryptComApi } from '../../js/common/api/flowcrypt-com-api.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Env } from '../../js/common/browser/env.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';

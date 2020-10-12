@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { FlowCryptComApi, FcUuidAuth } from '../../../js/common/api/backend.js';
+import { FlowCryptComApi, FcUuidAuth } from '../../../js/common/api/flowcrypt-com-api.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';

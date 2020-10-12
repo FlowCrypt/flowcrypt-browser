@@ -4,7 +4,7 @@
 
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { FlowCryptComApi } from '../../../js/common/api/backend.js';
+import { FlowCryptComApi } from '../../../js/common/api/flowcrypt-com-api.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';

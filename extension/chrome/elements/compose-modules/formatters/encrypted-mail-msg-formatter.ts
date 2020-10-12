@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { FlowCryptComApi, FcUuidAuth } from '../../../../js/common/api/backend.js';
+import { FlowCryptComApi, FcUuidAuth } from '../../../../js/common/api/flowcrypt-com-api.js';
 import { BaseMailFormatter } from './base-mail-formatter.js';
 import { ComposerResetBtnTrigger } from '../compose-err-module.js';
 import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';

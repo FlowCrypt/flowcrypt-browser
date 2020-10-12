@@ -5,7 +5,7 @@ import { GoogleAuth } from '../../api/email-provider/gmail/google-auth.js';
 import { KeyInfo } from '../../core/crypto/key.js';
 import { Dict } from '../../core/common.js';
 import { GmailRes } from '../../api/email-provider/gmail/gmail-parser.js';
-import { SubscriptionInfo, FcUuidAuth } from '../../api/backend.js';
+import { SubscriptionInfo, FcUuidAuth } from '../../api/flowcrypt-com-api.js';
 import { DomainRulesJson } from '../../org-rules.js';
 import { BrowserMsg, BgNotReadyErr } from '../../browser/browser-msg.js';
 import { Ui } from '../../browser/ui.js';
