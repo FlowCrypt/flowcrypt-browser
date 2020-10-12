@@ -3,12 +3,12 @@
 'use strict';
 
 import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window.js';
-import { ChunkedCb, ProgressCb } from '../../api.js';
+import { ChunkedCb, ProgressCb } from '../../shared/api.js';
 import { Dict, Str, Value } from '../../../core/common.js';
 import { EmailProviderApi, EmailProviderInterface, Backups } from '../email-provider-api.js';
 import { GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
 import { GmailParser, GmailRes } from './gmail-parser.js';
-import { AjaxErr } from '../../error/api-error.js';
+import { AjaxErr } from '../../shared/api-error.js';
 import { Att } from '../../../core/att.js';
 import { BrowserMsg } from '../../../browser/browser-msg.js';
 import { Buf } from '../../../core/buf.js';
@@ -16,8 +16,8 @@ import { Catch } from '../../../platform/catch.js';
 import { Contact, KeyUtil } from '../../../core/crypto/key.js';
 import { Env } from '../../../browser/env.js';
 import { FormatError } from '../../../core/crypto/pgp/msg-util.js';
-import { Google } from '../../google.js';
-import { GoogleAuth } from '../../google-auth.js';
+import { Google } from './google.js';
+import { GoogleAuth } from './google-auth.js';
 import { Mime } from '../../../core/mime.js';
 import { PgpArmor } from '../../../core/crypto/pgp/pgp-armor.js';
 import { SendableMsg } from '../sendable-msg.js';

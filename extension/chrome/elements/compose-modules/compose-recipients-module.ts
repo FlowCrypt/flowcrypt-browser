@@ -2,17 +2,17 @@
 
 'use strict';
 
-import { ChunkedCb, RecipientType } from '../../../js/common/api/api.js';
+import { ChunkedCb, RecipientType } from '../../../js/common/api/shared/api.js';
 import { Contact } from '../../../js/common/core/crypto/key.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './compose-err-module.js';
 import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { RecipientElement, RecipientStatus, RecipientStatuses } from './compose-types.js';
 import { Str, Value } from '../../../js/common/core/common.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { Google } from '../../../js/common/api/google.js';
-import { GoogleAuth } from '../../../js/common/api/google-auth.js';
+import { Google } from '../../../js/common/api/email-provider/gmail/google.js';
+import { GoogleAuth } from '../../../js/common/api/email-provider/gmail/google-auth.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';

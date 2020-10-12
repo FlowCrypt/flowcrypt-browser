@@ -4,15 +4,15 @@
 
 import { Str, Url } from '../../../js/common/core/common.js';
 
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { Backend } from '../../../js/common/api/backend.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { VERSION } from '../../../js/common/core/const.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { FlowCryptWebsite } from '../../../js/common/api/flowcrypt-website.js';
 
 View.run(class HelpView extends View {
 
@@ -62,7 +62,7 @@ View.run(class HelpView extends View {
     Xss.sanitizeRender(target, Ui.spinner('white'));
     await Ui.delay(50); // give spinner time to load
     try {
-      const { sent } = await Backend.helpFeedback(emailVal, `${textVal}\n\n\nFlowCrypt ${Catch.browser().name} ${VERSION}`);
+      const { sent } = await FlowCryptWebsite.helpFeedback(emailVal, `${textVal}\n\n\nFlowCrypt ${Catch.browser().name} ${VERSION}`);
       if (sent) {
         $(target).text('sent!');
         await Ui.modal.info(`Message sent! You will find your response in ${emailVal}, check your email later.`);

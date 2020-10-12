@@ -4,7 +4,7 @@
 
 'use strict';
 
-import { Api, ChunkedCb, ProgressCb } from '../api.js';
+import { Api, ChunkedCb, ProgressCb } from '../shared/api.js';
 
 import { Contact, KeyInfo } from '../../core/crypto/key.js';
 import { GmailRes } from './gmail/gmail-parser.js';

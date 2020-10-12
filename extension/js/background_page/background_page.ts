@@ -6,7 +6,7 @@ import { Bm, BrowserMsg } from '../common/browser/browser-msg.js';
 import { BgHandlers } from './bg-handlers.js';
 import { BgUtils } from './bgutils.js';
 import { Catch } from '../common/platform/catch.js';
-import { GoogleAuth } from '../common/api/google-auth.js';
+import { GoogleAuth } from '../common/api/email-provider/gmail/google-auth.js';
 import { VERSION } from '../common/core/const.js';
 import { injectFcIntoWebmail } from './inject.js';
 import { migrateGlobal } from './migrations.js';

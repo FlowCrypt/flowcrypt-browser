@@ -1,18 +1,18 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { Env } from '../../browser/env.js';
-import { GoogleAuth } from '../../api/google-auth.js';
+import { GoogleAuth } from '../../api/email-provider/gmail/google-auth.js';
 import { KeyInfo } from '../../core/crypto/key.js';
 import { Dict } from '../../core/common.js';
 import { GmailRes } from '../../api/email-provider/gmail/gmail-parser.js';
-import { SubscriptionInfo, FcUuidAuth } from '../../api/backend.js';
 import { DomainRulesJson } from '../../org-rules.js';
 import { BrowserMsg, BgNotReadyErr } from '../../browser/browser-msg.js';
 import { Ui } from '../../browser/ui.js';
-import { storageLocalGet, storageLocalSet, storageLocalRemove } from '../../api/chrome.js';
+import { storageLocalGet, storageLocalSet, storageLocalRemove } from '../../browser/chrome.js';
 import { AbstractStore } from './abstract-store.js';
 import { RawStore } from './abstract-store.js';
 import { Subscription } from '../../subscription.js';
+import { FcUuidAuth, SubscriptionInfo } from '../../api/account-servers/flowcrypt-com-api.js';
 
 export type StoredReplyDraftMeta = string; // draftId
 export type StoredComposeDraftMeta = { recipients: string[], subject: string, date: number };
@@ -35,7 +35,7 @@ export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'ema
   'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' |
   'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
   'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all' | 'subscription' | 'uuid' | 'use_rich_text' | 'rules' |
-  'fesUrl';
+  'fesUrl' | 'fesAccessToken';
 
 export type SendAsAlias = {
   isPrimary: boolean;
@@ -72,6 +72,7 @@ export type AcctStoreDict = {
   uuid?: string;
   rules?: DomainRulesJson;
   fesUrl?: string; // url where FlowCrypt Enterprise Server is deployed
+  fesAccessToken?: string;
   // temporary
   tmp_submit_main?: boolean;
   tmp_submit_all?: boolean;
