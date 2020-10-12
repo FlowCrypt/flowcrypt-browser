@@ -19,6 +19,7 @@ import { GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
 import { Ui } from '../../../browser/ui.js';
 import { AcctStore, AcctStoreDict } from '../../../platform/store/acct-store.js';
 import { AccountServer } from '../../account-server.js';
+import { WellKnownHostMeta } from '../../account-servers/well-known-host-meta.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
@@ -146,6 +147,13 @@ export class GoogleAuth {
         const uuid = Api.randomFortyHexChars();
         await AccountServer.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
         await AccountServer.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // will store org rules and subscription
+        try {
+          // this is here currently for debugging only, to test effect of this new mechanism on customer installations
+          const wellKnownHostMeta = new WellKnownHostMeta(authRes.acctEmail);
+          await wellKnownHostMeta.fetchAndCacheFesUrl();
+        } catch (e) {
+          Catch.reportErr(Catch.rewrapErr(`WellKnownHostMeta on ${FLAVOR}`, e));
+        }
       } catch (e) {
         return { result: 'Error', error: `Grant successful but error accessing fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
       }

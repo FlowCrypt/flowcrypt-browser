@@ -4,7 +4,6 @@
 
 import { Dict, Str, Url, UrlParams } from './core/common.js';
 import { Ui } from './browser/ui.js';
-import { Api } from './api/shared/api.js';
 import { ApiErr, AjaxErr } from './api/shared/api-error.js';
 
 import { Catch } from './platform/catch.js';
@@ -22,7 +21,6 @@ import { GlobalStore } from './platform/store/global-store.js';
 import { AbstractStore } from './platform/store/abstract-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
-import { AccountServer } from './api/account-server.js';
 
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
 
@@ -335,14 +333,7 @@ export class Settings {
       if (await Ui.modal.confirm(`${prepend}Please log in with FlowCrypt to continue.`)) {
         const authRes = await GoogleAuth.newOpenidAuthPopup({ acctEmail });
         if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
-          const uuid = Api.randomFortyHexChars();
-          try {
-            await AccountServer.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
-            await AccountServer.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid });
-            then();
-          } catch (e) {
-            await Ui.modal.error(`Could not log in with FlowCrypt:\n\n${ApiErr.eli5(e)}\n\n${String(e)}`);
-          }
+          then();
         } else {
           await Ui.modal.warning(`Could not log in:\n\n${authRes.error || authRes.result}`);
         }

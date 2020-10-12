@@ -22,7 +22,7 @@ export namespace FesRes {
  * This gives them more control. All OrgRules, log collectors, etc (as implemented) would then be handled by the FES.
  * Once fully integrated, this will allow customers to be fully independent of flowcrypt.com/api
  *
- * WIP
+ * WIP - currently unused, unfinished
  */
 export class EnterpriseServer extends Api {
 
@@ -38,7 +38,7 @@ export class EnterpriseServer extends Api {
     await AcctStore.set(this.acctEmail, { fesAccessToken: response.accessToken });
   }
 
-  public reportException = async (e: any): Promise<void> => {
+  public reportException = async (/* e: any */): Promise<void> => {
     throw Error('EnterpriseServer.reportException not implemented');
     // const formattedException = Catch.formatExceptionForReport(...)
     // await this.request<void>('POST', '/api/log-collector/exception', await this.authHdr());
