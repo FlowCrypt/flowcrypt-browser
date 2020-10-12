@@ -53,6 +53,8 @@ export class Config {
 
   public static extensionId = '';
 
+  private static _secrets: TestSecretsInterface;
+
   public static secrets = (): TestSecretsInterface => {
     if (!Config._secrets) {
       try {
@@ -68,8 +70,6 @@ export class Config {
   public static key = (title: string) => {
     return Config.secrets().keys.filter(k => k.title === title)[0];
   }
-
-  private static _secrets: TestSecretsInterface;
 
 }
 
