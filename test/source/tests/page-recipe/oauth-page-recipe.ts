@@ -12,7 +12,7 @@ export class OauthPageRecipe extends PageRecipe {
 
   public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve" | 'login'): Promise<void> => {
     const isMock = oauthPage.target.url().includes('localhost');
-    const auth = Config.secrets.auth.google.find(a => a.email === acctEmail)!;
+    const auth = Config.secrets().auth.google.find(a => a.email === acctEmail)!;
     const selectors = {
       approve_button: '#submit_approve_access',
       email_input: '#identifierId',

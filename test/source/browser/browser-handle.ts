@@ -24,8 +24,8 @@ export class BrowserHandle {
 
   public newPage = async (t: AvaContext, url?: string, initialScript?: EvaluateFn): Promise<ControllablePage> => {
     const page = await this.browser.newPage();
-    if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
-      await page.authenticate(Config.secrets.proxy.auth);
+    if (Config.secrets().proxy?.enabled) {
+      await page.authenticate(Config.secrets().proxy!.auth);
     }
     await page.setViewport(this.viewport);
     const controllablePage = new ControllablePage(t, page);
@@ -48,8 +48,8 @@ export class BrowserHandle {
       // reloading the page after setting cookies fixes it
       await page.reload();
     }
-    if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
-      await page.authenticate(Config.secrets.proxy.auth);
+    if (Config.secrets().proxy?.enabled) {
+      await page.authenticate(Config.secrets().proxy!.auth);
     }
     await page.setViewport(this.viewport);
     const controllablePage = new ControllablePage(t, page);
