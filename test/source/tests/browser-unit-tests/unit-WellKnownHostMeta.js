@@ -9,10 +9,15 @@
  * 
  * Each test must return "pass" to pass. To reject, throw an Error.
  * 
- * Each test must start with one of (depending on which flavors you want it to run): 
+ * Each test must start with one of (depending on which flavors you want it to run):
  *  - BROWSER_UNIT_TEST_NAME(`some test name`);
  *  - BROWSER_UNIT_TEST_NAME(`some test name`).enterprise;
  *  - BROWSER_UNIT_TEST_NAME(`some test name`).consumer;
+ * 
+ * To run only one test (remove before pushing to git):
+ *  - BROWSER_UNIT_TEST_NAME(`some test name`).only;
+ *  - BROWSER_UNIT_TEST_NAME(`some test name`).enterprise.only;
+ *  - BROWSER_UNIT_TEST_NAME(`some test name`).consumer.only;
  * 
  * This is not a JavaScript file. It's a text file that gets parsed, split into chunks, and
  *    parts of it executed as javascript. The structure is very rigid. The only flexible place is inside
