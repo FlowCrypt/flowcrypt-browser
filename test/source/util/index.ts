@@ -51,8 +51,6 @@ interface TestSecretsInterface {
 
 export class Config {
 
-  private static _secrets: TestSecretsInterface;
-
   public static extensionId = '';
 
   public static secrets = (): TestSecretsInterface => {
@@ -70,6 +68,8 @@ export class Config {
   public static key = (title: string) => {
     return Config.secrets().keys.filter(k => k.title === title)[0];
   }
+
+  private static _secrets: TestSecretsInterface;
 
 }
 
