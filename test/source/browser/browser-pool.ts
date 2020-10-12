@@ -173,7 +173,7 @@ export class BrowserPool {
     <div class="attempt">
       <div style="display:none;">
         <pre title="err.stack">${Util.htmlEscape((err instanceof Error ? err.stack : String(err)) || String(err))}</pre>
-        ${await browser.debugPagesHtml(this.debug)}
+        ${await browser.debugPagesHtml(t, this.debug)}
       </div>
       <a href="#" onclick="this.style.display='none';this.parentNode.firstElementChild.style = '';">${String(err)}</a>
     </div>

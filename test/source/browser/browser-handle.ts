@@ -75,12 +75,12 @@ export class BrowserHandle {
     this.semaphore.release();
   }
 
-  public debugPagesHtml = async (alsoLogToConsole: boolean) => {
+  public debugPagesHtml = async (t: AvaContext, alsoLogToConsole: boolean) => {
     let html = '';
     for (let i = 0; i < this.pages.length; i++) {
       const cPage = this.pages[i];
       const url = await Promise.race([cPage.page.url(), new Promise(resolve => setTimeout(() => resolve('(url get timeout)'), 10 * 1000)) as Promise<string>]);
-      const consoleMsgs = await cPage.console(alsoLogToConsole);
+      const consoleMsgs = await cPage.console(t, alsoLogToConsole);
       const alerts = cPage.alerts.map(a => `${a.active ? `<b class="c-error">ACTIVE ${a.target.type()}</b>` : a.target.type()}: ${a.target.message()}`).join('\n');
       html += '<div class="page">';
       html += `<pre title="url">Page ${i} (${cPage.page.isClosed() ? 'closed' : 'active'}) ${Util.htmlEscape(url)}</pre>`;

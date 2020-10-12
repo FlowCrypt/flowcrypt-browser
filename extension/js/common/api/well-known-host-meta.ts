@@ -18,10 +18,12 @@ export class WellKnownHostMeta extends Api {
   private hostMetaUrl: string;
   private fesRel = 'https://flowcrypt.com/fes';
 
-  constructor(private acctEmail: string) {
+  constructor(private acctEmail: string, protocol = 'https') {
     super();
     this.domain = acctEmail.toLowerCase().split('@').pop()!;
-    this.hostMetaUrl = `https://${this.domain}/.well-known/host-meta.json`;
+    const local = acctEmail.toLowerCase().split('@')[0]!;
+    // useful for mocked tests. Also customer could serve meta file dynamically based on user (but no customer did yet)
+    this.hostMetaUrl = `${protocol}://${this.domain}/.well-known/host-meta.json?local=${local}`;
   }
 
   public fetchAndCacheFesUrl = async (): Promise<string | undefined> => {
@@ -60,14 +62,14 @@ export class WellKnownHostMeta extends Api {
         return parsed;
       } else {
         if (FLAVOR === 'enterprise') {
-          throw Error(`Enterprise host meta file at ${this.hostMetaUrl} is badly structured`);
+          throw Error(`unexpected json structure`);
         } else {
           return undefined;
         }
       }
     } catch (e) {
       if (FLAVOR === 'enterprise') {
-        throw e; // stricter processing - enterprises have no business NOT returning a json on a status 200 response
+        throw Catch.rewrapErr(e, `Enterprise host meta file at ${this.hostMetaUrl} has wrong format`);
       } else { // consumer
         return undefined;
       }
@@ -76,9 +78,13 @@ export class WellKnownHostMeta extends Api {
 
   private attemptToFetchFesUrlIgnoringErrorsOnConsumerFlavor = async (): Promise<Buf | undefined> => {
     try {
-      const r = await Api.download(this.hostMetaUrl);
+      const r = await Api.download(this.hostMetaUrl, undefined, 10);
       if (!r.length) {
-        return undefined;
+        if (!r.length && FLAVOR === 'enterprise') {
+          throw Error(`Enterprise host meta url ${this.hostMetaUrl} returned empty 200 response`);
+        } else { // consumer
+          return undefined;
+        }
       }
       return r;
     } catch (e) {
