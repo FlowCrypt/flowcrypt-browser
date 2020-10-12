@@ -45,9 +45,10 @@ BROWSER_UNIT_TEST_NAME(`test@nowhere.com does not return any fesUrl`).consumer;
   return 'pass'; // consumer tolerates a net err because the server may not be set up
 })();
 
-BROWSER_UNIT_TEST_NAME(`status404@127.0.0.1 does not return any fesUrl`);
+BROWSER_UNIT_TEST_NAME(`status404 does not return any fesUrl`);
 (async () => {
-  const wellKnownHostMeta = new WellKnownHostMeta('status404@127.0.0.1', 'http');
+  const mockHost = '127.0.0.1:8001';
+  const wellKnownHostMeta = new WellKnownHostMeta(`status404@${mockHost}`, 'http');
   const fesUrl = await wellKnownHostMeta.fetchAndCacheFesUrl();
   if (typeof fesUrl !== 'undefined') {
     throw Error(`fesUrl unexpectedly ${fesUrl}, expecting undefined`);

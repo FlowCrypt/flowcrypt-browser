@@ -59,6 +59,10 @@ export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: 
           throw Error(`Block comments such as /* are not allowed in test definitions. Use line comments eg //`);
         }
         code = code.trim();
+        if (!code.endsWith('})();')) {
+          console.error(code);
+          throw Error(`Test case does not end with '})();'. Did you put code outside of the async functions? (forbidden)`);
+        }
         const testCodeLines = code.split('\n');
         let thisUnitTestTitle = testCodeLines.shift()!.trim();
         console.log(thisUnitTestTitle, testVariant);
