@@ -4,7 +4,7 @@
 
 import { SetupOptions, SetupView } from '../setup.js';
 
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Ui } from '../../../js/common/browser/ui.js';

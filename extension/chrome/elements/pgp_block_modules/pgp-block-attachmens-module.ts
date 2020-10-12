@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Api } from '../../../js/common/api/api.js';
+import { Api } from '../../../js/common/api/shared/api.js';
 import { Att } from '../../../js/common/core/att.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';

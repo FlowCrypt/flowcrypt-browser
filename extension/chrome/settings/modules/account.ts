@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Backend } from '../../../js/common/api/backend.js';
 import { Settings } from '../../../js/common/settings.js';

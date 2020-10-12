@@ -4,7 +4,7 @@
 
 'use strict';
 
-import { Api } from '../api/api.js';
+import { Api } from '../api/shared/api.js';
 import { Att } from '../core/att.js';
 import { Catch } from '../platform/catch.js';
 import { Dict, Url, UrlParam } from '../core/common.js';

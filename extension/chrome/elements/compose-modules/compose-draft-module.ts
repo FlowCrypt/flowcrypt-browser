@@ -4,8 +4,8 @@
 
 import { Mime, MimeContent, MimeProccesedMsg } from '../../../js/common/core/mime.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { AjaxErr } from '../../../js/common/api/error/api-error.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { AjaxErr } from '../../../js/common/api/shared/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';

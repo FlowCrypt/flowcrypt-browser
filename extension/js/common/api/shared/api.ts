@@ -4,15 +4,15 @@
 
 // tslint:disable:no-direct-ajax
 
-import { Att } from '../core/att.js';
-import { BrowserMsg } from '../browser/browser-msg.js';
-import { Buf } from '../core/buf.js';
-import { Catch } from '../platform/catch.js';
-import { Contact } from '../core/crypto/key.js';
-import { Dict } from '../core/common.js';
-import { Env } from '../browser/env.js';
-import { secureRandomBytes } from '../platform/util.js';
-import { ApiErr, AjaxErr } from './error/api-error.js';
+import { Att } from '../../core/att.js';
+import { BrowserMsg } from '../../browser/browser-msg.js';
+import { Buf } from '../../core/buf.js';
+import { Catch } from '../../platform/catch.js';
+import { Contact } from '../../core/crypto/key.js';
+import { Dict } from '../../core/common.js';
+import { Env } from '../../browser/env.js';
+import { secureRandomBytes } from '../../platform/util.js';
+import { ApiErr, AjaxErr } from './api-error.js';
 
 export type ReqFmt = 'JSON' | 'FORM' | 'TEXT';
 export type RecipientType = 'to' | 'cc' | 'bcc';

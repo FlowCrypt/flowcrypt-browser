@@ -5,7 +5,7 @@
 
 'use strict';
 
-import { Api, ProgressCbs, ReqFmt } from './api.js';
+import { Api, ProgressCbs, ReqFmt } from './shared/api.js';
 import { Dict } from '../core/common.js';
 import { BACKEND_API_HOST } from '../core/const.js';
 import { Catch } from '../platform/catch.js';

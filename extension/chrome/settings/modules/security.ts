@@ -3,7 +3,7 @@
 'use strict';
 
 import { Backend, FcUuidAuth } from '../../../js/common/api/backend.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { KeyInfo } from '../../../js/common/core/crypto/key.js';

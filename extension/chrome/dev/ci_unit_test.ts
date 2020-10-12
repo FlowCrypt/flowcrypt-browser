@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { ApiErr } from '../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { WellKnownHostMeta } from '../../js/common/api/well-known-host-meta.js';
 
 /**

@@ -5,7 +5,7 @@
 
 'use strict';
 
-import { Api, ReqMethod } from './../api.js';
+import { Api, ReqMethod } from './../shared/api.js';
 import { Dict } from '../../core/common.js';
 
 type LoadPrvRes = { privateKeys: { decryptedPrivateKey: string }[] };

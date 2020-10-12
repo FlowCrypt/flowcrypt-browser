@@ -17,7 +17,7 @@ import { View } from '../../../js/common/view.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
-import { Api } from '../../../js/common/api/api.js';
+import { Api } from '../../../js/common/api/shared/api.js';
 
 View.run(class ExperimentalView extends View {
 

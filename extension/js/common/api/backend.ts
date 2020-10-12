@@ -5,11 +5,11 @@
 
 'use strict';
 
-import { Api, ProgressCb, ProgressCbs, ReqFmt } from './api.js';
+import { Api, ProgressCb, ProgressCbs, ReqFmt } from './shared/api.js';
 import { Dict } from '../core/common.js';
 import { Att } from '../core/att.js';
 import { BACKEND_API_HOST } from '../core/const.js';
-import { BackendAuthErr } from './error/api-error.js';
+import { BackendAuthErr } from './shared/api-error.js';
 import { DomainRulesJson } from '../org-rules.js';
 import { AcctStore } from '../platform/store/acct-store.js';
 

@@ -8,7 +8,7 @@ import { ComposerResetBtnTrigger } from '../compose-err-module.js';
 import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { NewMsgData } from '../compose-types.js';
 import { Str, Value } from '../../../../js/common/core/common.js';
-import { ApiErr } from '../../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../../js/common/api/shared/api-error.js';
 import { Att } from '../../../../js/common/core/att.js';
 import { Buf } from '../../../../js/common/core/buf.js';
 import { Catch } from '../../../../js/common/platform/catch.js';

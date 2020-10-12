@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { Api } from './../api.js';
-import { ApiErr } from './../error/api-error.js';
+import { Api } from './../shared/api.js';
+import { ApiErr } from '../shared/api-error.js';
 import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { Buf } from '../../core/buf.js';
 import { Catch } from '../../platform/catch.js';

@@ -4,7 +4,7 @@
 
 import { SelCache, Ui } from '../../../js/common/browser/ui.js';
 import { Url, UrlParams } from '../../../js/common/core/common.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';

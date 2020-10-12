@@ -4,8 +4,8 @@
 
 import { Dict, Str, Url, UrlParams } from './core/common.js';
 import { Ui } from './browser/ui.js';
-import { Api } from './api/api.js';
-import { ApiErr, AjaxErr } from './api/error/api-error.js';
+import { Api } from './api/shared/api.js';
+import { ApiErr, AjaxErr } from './api/shared/api-error.js';
 import { Backend } from './api/backend.js';
 import { Catch } from './platform/catch.js';
 import { Env } from './browser/env.js';

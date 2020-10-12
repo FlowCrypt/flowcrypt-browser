@@ -4,7 +4,7 @@
 
 // tslint:disable:no-direct-ajax
 
-import { Api, ProgressCbs, ReqMethod } from '../../api.js';
+import { Api, ProgressCbs, ReqMethod } from '../../shared/api.js';
 import { Dict, Str } from '../../../core/common.js';
 
 import { GOOGLE_API_HOST } from '../../../core/const.js';

@@ -5,7 +5,7 @@
 import { Backend, FcUuidAuth, PaymentMethod, SubscriptionLevel } from '../../js/common/api/backend.js';
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Str, Url } from '../../js/common/core/common.js';
-import { ApiErr } from '../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Lang } from '../../js/common/lang.js';

@@ -8,13 +8,13 @@
 import { GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST, FLAVOR } from '../../../core/const.js';
 import { Url, Value } from '../../../core/common.js';
 import { tabsQuery, windowsCreate } from '../../../browser/chrome.js';
-import { Api } from './../../api.js';
-import { ApiErr } from './../../error/api-error.js';
+import { Api } from './../../shared/api.js';
+import { ApiErr } from '../../shared/api-error.js';
 import { Backend } from './../../backend.js';
 import { Buf } from '../../../core/buf.js';
 import { Catch } from '../../../platform/catch.js';
 import { GmailRes } from './gmail-parser';
-import { GoogleAuthErr } from './../../error/api-error.js';
+import { GoogleAuthErr } from '../../shared/api-error.js';
 import { GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
 import { Ui } from '../../../browser/ui.js';
 import { AcctStore, AcctStoreDict } from '../../../platform/store/acct-store.js';

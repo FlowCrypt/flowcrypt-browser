@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { RecipientType } from '../../../js/common/api/api.js';
+import { RecipientType } from '../../../js/common/api/shared/api.js';
 import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { PubkeyResult } from '../../../js/common/core/crypto/key.js';
 
