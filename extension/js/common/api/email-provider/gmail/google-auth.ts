@@ -152,7 +152,7 @@ export class GoogleAuth {
           const wellKnownHostMeta = new WellKnownHostMeta(authRes.acctEmail);
           await wellKnownHostMeta.fetchAndCacheFesUrl();
         } catch (e) {
-          Catch.reportErr(Catch.rewrapErr(`WellKnownHostMeta on ${FLAVOR}`, e));
+          Catch.reportErr(Catch.rewrapErr(e, `WellKnownHostMeta on ${FLAVOR}`));
         }
       } catch (e) {
         return { result: 'Error', error: `Grant successful but error accessing fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
