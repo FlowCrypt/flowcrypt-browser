@@ -73,7 +73,7 @@ export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: 
         }
         thisUnitTestTitle = thisUnitTestTitle.replace(/`.+$/, '');
         code = testCodeLines.join('\n'); // without the title, just code
-        const title = `browser unit test ${filename}: ${thisUnitTestTitle}`;
+        const title = `[${filename}] ${thisUnitTestTitle}`;
         unitTests.push({ title, code });
       }
       return unitTests;
