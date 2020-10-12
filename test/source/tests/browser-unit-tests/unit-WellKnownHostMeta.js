@@ -176,3 +176,42 @@ BROWSER_UNIT_TEST_NAME(`empty200 ignored`).consumer;
   }
   return 'pass'; // consumer tolerates a format err because the server may not be expecting to serve these
 })();
+
+BROWSER_UNIT_TEST_NAME(`get empty cache, then fetch ok, then get filled cache`);
+(async () => {
+  const mockHost = '127.0.0.1:8001';
+  const expecting = 'https://targer.customer.com/fes/';
+  const wellKnownHostMeta = new WellKnownHostMeta(`has.fes.rel@${mockHost}`, 'http');
+  const fesUrlFromCache = await wellKnownHostMeta.getFesUrlFromCache();
+  if (typeof fesUrlFromCache !== 'undefined') {
+    throw Error(`fesUrlFromCache unexpectedly ${fesUrl}, expecting undefined`);
+  }
+  const fesUrl = await wellKnownHostMeta.fetchAndCacheFesUrl();
+  if (fesUrl !== expecting) {
+    throw Error(`fesUrl unexpectedly ${fesUrl}, expecting ${expecting}`);
+  }
+  const fesUrlFromCacheAgain = await wellKnownHostMeta.fetchAndCacheFesUrl();
+  if (fesUrlFromCacheAgain !== expecting) {
+    throw Error(`fesUrlFromCacheAgain unexpectedly ${fesUrlFromCacheAgain}, expecting ${expecting}`);
+  }
+  return 'pass'; // consumer tolerates a format err because the server may not be expecting to serve these
+})();
+
+BROWSER_UNIT_TEST_NAME(`get empty cache, then fetch none, then get empty cache`);
+(async () => {
+  const mockHost = '127.0.0.1:8001';
+  const wellKnownHostMeta = new WellKnownHostMeta(`no.fes.rel@${mockHost}`, 'http');
+  const fesUrlFromCache = await wellKnownHostMeta.getFesUrlFromCache();
+  if (typeof fesUrlFromCache !== 'undefined') {
+    throw Error(`fesUrlFromCache unexpectedly ${fesUrl}, expecting undefined`);
+  }
+  const fesUrl = await wellKnownHostMeta.fetchAndCacheFesUrl();
+  if (typeof fesUrl !== 'undefined') {
+    throw Error(`fesUrl unexpectedly ${fesUrl}, expecting undefined`);
+  }
+  const fesUrlFromCacheAgain = await wellKnownHostMeta.fetchAndCacheFesUrl();
+  if (typeof fesUrlFromCacheAgain !== 'undefined') {
+    throw Error(`fesUrlFromCacheAgain unexpectedly ${fesUrlFromCacheAgain}, expecting undefined`);
+  }
+  return 'pass'; // consumer tolerates a format err because the server may not be expecting to serve these
+})();
