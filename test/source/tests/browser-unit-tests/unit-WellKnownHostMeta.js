@@ -151,3 +151,28 @@ BROWSER_UNIT_TEST_NAME(`has.fes.rel returns fesUrl`);
   }
   throw Error(`fesUrl unexpectedly ${fesUrl}, expecting ${expecting}`);
 })();
+
+BROWSER_UNIT_TEST_NAME(`empty200 should be an error`).enterprise;
+(async () => {
+  const mockHost = '127.0.0.1:8001';
+  const wellKnownHostMeta = new WellKnownHostMeta(`empty200@${mockHost}`, 'http');
+  try {
+    await wellKnownHostMeta.fetchAndCacheFesUrl();
+  } catch (e) {
+    if (e.message === 'Enterprise host meta url http://127.0.0.1:8001/.well-known/host-meta.json?local=empty200 returned empty 200 response') {
+      return 'pass'; // enterprise does not tolerate a server err - since it may simply mean offline
+    }
+    throw e;
+  }
+})();
+
+BROWSER_UNIT_TEST_NAME(`empty200 ignored`).consumer;
+(async () => {
+  const mockHost = '127.0.0.1:8001';
+  const wellKnownHostMeta = new WellKnownHostMeta(`empty200@${mockHost}`, 'http');
+  const fesUrl = await wellKnownHostMeta.fetchAndCacheFesUrl();
+  if (typeof fesUrl !== 'undefined') {
+    throw Error(`fesUrl unexpectedly ${fesUrl}, expecting undefined`);
+  }
+  return 'pass'; // consumer tolerates a format err because the server may not be expecting to serve these
+})();
