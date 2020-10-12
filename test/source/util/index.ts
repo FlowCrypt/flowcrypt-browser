@@ -44,7 +44,6 @@ interface TestSecretsInterface {
   ci_admin_token: string;
   ci_dev_account: string;
   data_encryption_password: string;
-  proxy?: { enabled: boolean, server: string, auth: { username: string, password: string } };
   auth: { google: { email: string, password?: string, secret_2fa?: string }[], };
   keys: { title: string, passphrase: string, armored: string | null, longid: string | null }[];
   keyInfo: Array<{ email: string, key: KeyInfo[] }>;
@@ -52,9 +51,9 @@ interface TestSecretsInterface {
 
 export class Config {
 
-  private static _secrets: TestSecretsInterface;
-
   public static extensionId = '';
+
+  private static _secrets: TestSecretsInterface;
 
   public static secrets = (): TestSecretsInterface => {
     if (!Config._secrets) {

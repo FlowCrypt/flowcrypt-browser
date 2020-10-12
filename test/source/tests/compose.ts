@@ -465,7 +465,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         // first search, did not yet receive contacts scope - should find no contacts
         await expectFirstContactResultEqual(composePage, 'No Contacts Found');
         // allow contacts scope, and expect that it will find a contact
-        const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.waitAndClick('@action-auth-with-contacts-scope'), 'test.ci.compose@org.flowcrypt.com');
+        const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.waitAndClick('@action-auth-with-contacts-scope'));
         await OauthPageRecipe.google(t, oauthPopup, 'test.ci.compose@org.flowcrypt.com', 'approve');
       }
       await expectFirstContactResultEqual(composePage, 'contact.test@flowcrypt.com');
