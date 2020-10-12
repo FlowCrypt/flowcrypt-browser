@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { FlowCryptComApi, FcUuidAuth } from '../../../../js/common/api/flowcrypt-com-api.js';
+
 import { BaseMailFormatter } from './base-mail-formatter.js';
 import { ComposerResetBtnTrigger } from '../compose-err-module.js';
 import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
@@ -22,6 +22,8 @@ import { Xss } from '../../../../js/common/platform/xss.js';
 import { ContactStore } from '../../../../js/common/platform/store/contact-store.js';
 import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
 import { FlowCryptWebsite } from '../../../../js/common/api/flowcrypt-website.js';
+import { AccountServer } from '../../../../js/common/api/account-server.js';
+import { FcUuidAuth } from '../../../../js/common/api/account-servers/flowcrypt-com-api.js';
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
@@ -44,7 +46,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const msgBodyWithReplyToken = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(authInfo, newMsg);
     const pgpMimeWithAtts = await Mime.encode(msgBodyWithReplyToken, { Subject: newMsg.subject }, await this.view.attsModule.attach.collectAtts());
     const { data: pwdEncryptedWithAtts } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAtts), newMsg.pwd, []); // encrypted only for pwd, not signed
-    const { short, admin_code } = await FlowCryptComApi.messageUpload(
+    const { short, admin_code } = await AccountServer.messageUpload(
       authInfo.uuid ? authInfo : undefined,
       pwdEncryptedWithAtts,
       (p) => this.view.sendBtnModule.renderUploadProgress(p, 'FIRST-HALF'), // still need to upload to Gmail later, this request represents first half of progress
@@ -98,7 +100,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     }
     const recipients = Array.prototype.concat.apply([], Object.values(newMsgData.recipients));
     try {
-      const response = await FlowCryptComApi.messageToken(authInfo);
+      const response = await AccountServer.messageToken(authInfo);
       const infoDiv = Ui.e('div', {
         'style': 'display: none;',
         'class': 'cryptup_reply',

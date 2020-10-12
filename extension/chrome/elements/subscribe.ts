@@ -2,7 +2,6 @@
 
 'use strict';
 
-import { FlowCryptComApi, FcUuidAuth, PaymentMethod, SubscriptionLevel } from '../../js/common/api/flowcrypt-com-api.js';
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Str, Url } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
@@ -15,6 +14,8 @@ import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
+import { FcUuidAuth, FlowCryptComApi, PaymentMethod, SubscriptionLevel } from '../../js/common/api/account-servers/flowcrypt-com-api.js';
+import { AccountServer } from '../../js/common/api/account-server.js';
 
 // todo - this page should be removed, link from settings should point to flowcrypt.com/account once available
 
@@ -73,7 +74,7 @@ View.run(class SubscribeView extends View {
   private renderSubscriptionDetails = async () => {
     this.authInfo = await AcctStore.authInfo(this.acctEmail);
     try {
-      await FlowCryptComApi.accountGetAndUpdateLocalStore(this.authInfo);
+      await AccountServer.accountGetAndUpdateLocalStore(this.authInfo);
     } catch (e) {
       if (ApiErr.isAuthErr(e)) {
         Xss.sanitizeRender('#content', `Not logged in. ${Ui.retryLink()}`);

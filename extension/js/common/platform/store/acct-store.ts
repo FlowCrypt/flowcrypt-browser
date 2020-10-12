@@ -5,7 +5,6 @@ import { GoogleAuth } from '../../api/email-provider/gmail/google-auth.js';
 import { KeyInfo } from '../../core/crypto/key.js';
 import { Dict } from '../../core/common.js';
 import { GmailRes } from '../../api/email-provider/gmail/gmail-parser.js';
-import { SubscriptionInfo, FcUuidAuth } from '../../api/flowcrypt-com-api.js';
 import { DomainRulesJson } from '../../org-rules.js';
 import { BrowserMsg, BgNotReadyErr } from '../../browser/browser-msg.js';
 import { Ui } from '../../browser/ui.js';
@@ -13,6 +12,7 @@ import { storageLocalGet, storageLocalSet, storageLocalRemove } from '../../brow
 import { AbstractStore } from './abstract-store.js';
 import { RawStore } from './abstract-store.js';
 import { Subscription } from '../../subscription.js';
+import { FcUuidAuth, SubscriptionInfo } from '../../api/account-servers/flowcrypt-com-api.js';
 
 export type StoredReplyDraftMeta = string; // draftId
 export type StoredComposeDraftMeta = { recipients: string[], subject: string, date: number };

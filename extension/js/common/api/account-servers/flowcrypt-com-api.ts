@@ -5,16 +5,15 @@
 
 'use strict';
 
-import { Api, ProgressCb, ProgressCbs, ReqFmt } from './shared/api.js';
-import { Dict } from '../core/common.js';
-import { Att } from '../core/att.js';
-import { BackendAuthErr } from './shared/api-error.js';
-import { DomainRulesJson } from '../org-rules.js';
-import { AcctStore } from '../platform/store/acct-store.js';
-import { FlowCryptWebsite } from './flowcrypt-website.js';
+import { Api, ProgressCb, ProgressCbs, ReqFmt } from '../shared/api.js';
+import { Dict } from '../../core/common.js';
+import { Att } from '../../core/att.js';
+import { BackendAuthErr } from '../shared/api-error.js';
+import { DomainRulesJson } from '../../org-rules.js';
+import { AcctStore } from '../../platform/store/acct-store.js';
+import { FlowCryptWebsite } from '../flowcrypt-website.js';
 
-type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
-
+export type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
 export type SubscriptionLevel = 'pro' | null;
 export type FcUuidAuth = { account: string, uuid: string | undefined };
 export type PaymentMethod = 'stripe' | 'group' | 'trial';

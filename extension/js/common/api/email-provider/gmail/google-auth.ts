@@ -10,7 +10,7 @@ import { Url, Value } from '../../../core/common.js';
 import { tabsQuery, windowsCreate } from '../../../browser/chrome.js';
 import { Api } from './../../shared/api.js';
 import { ApiErr } from '../../shared/api-error.js';
-import { FlowCryptComApi } from '../../flowcrypt-com-api.js';
+
 import { Buf } from '../../../core/buf.js';
 import { Catch } from '../../../platform/catch.js';
 import { GmailRes } from './gmail-parser';
@@ -18,6 +18,7 @@ import { GoogleAuthErr } from '../../shared/api-error.js';
 import { GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
 import { Ui } from '../../../browser/ui.js';
 import { AcctStore, AcctStoreDict } from '../../../platform/store/acct-store.js';
+import { AccountServer } from '../../account-server.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
@@ -143,8 +144,8 @@ export class GoogleAuth {
       }
       try {
         const uuid = Api.randomFortyHexChars();
-        await FlowCryptComApi.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
-        await FlowCryptComApi.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // will store org rules and subscription
+        await AccountServer.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
+        await AccountServer.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // will store org rules and subscription
       } catch (e) {
         return { result: 'Error', error: `Grant successful but error accessing fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
       }

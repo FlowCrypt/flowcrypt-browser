@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { SubscriptionInfo, PaymentMethod, SubscriptionLevel } from './api/flowcrypt-com-api.js';
+import { PaymentMethod, SubscriptionInfo, SubscriptionLevel } from './api/account-servers/flowcrypt-com-api';
 
 export class Subscription implements SubscriptionInfo {
 

@@ -4,7 +4,7 @@
 
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { FlowCryptComApi } from '../../../js/common/api/flowcrypt-com-api.js';
+
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
@@ -12,6 +12,7 @@ import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { Subscription } from '../../../js/common/subscription.js';
+import { AccountServer } from '../../../js/common/api/account-server.js';
 
 // todo - this this page should be removed, link from settings should point to flowcrypt.com/account once available
 
@@ -32,7 +33,7 @@ View.run(class AccountView extends View {
     const authInfo = await AcctStore.authInfo(this.acctEmail);
     let subscription = await AcctStore.getSubscription(this.acctEmail);
     try {
-      const r = await FlowCryptComApi.accountGetAndUpdateLocalStore(authInfo);
+      const r = await AccountServer.accountGetAndUpdateLocalStore(authInfo);
       subscription = new Subscription(r.subscription);
     } catch (e) {
       if (ApiErr.isAuthErr(e) && subscription.level) {
