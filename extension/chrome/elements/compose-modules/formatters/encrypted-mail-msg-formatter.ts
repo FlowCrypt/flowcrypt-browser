@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Backend, FcUuidAuth } from '../../../../js/common/api/backend.js';
+import { FlowCryptComApi, FcUuidAuth } from '../../../../js/common/api/backend.js';
 import { BaseMailFormatter } from './base-mail-formatter.js';
 import { ComposerResetBtnTrigger } from '../compose-err-module.js';
 import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
@@ -21,6 +21,7 @@ import { Ui } from '../../../../js/common/browser/ui.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 import { ContactStore } from '../../../../js/common/platform/store/contact-store.js';
 import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
+import { FlowCryptWebsite } from '../../../../js/common/api/flowcrypt-website.js';
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
@@ -43,7 +44,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const msgBodyWithReplyToken = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(authInfo, newMsg);
     const pgpMimeWithAtts = await Mime.encode(msgBodyWithReplyToken, { Subject: newMsg.subject }, await this.view.attsModule.attach.collectAtts());
     const { data: pwdEncryptedWithAtts } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAtts), newMsg.pwd, []); // encrypted only for pwd, not signed
-    const { short, admin_code } = await Backend.messageUpload(
+    const { short, admin_code } = await FlowCryptComApi.messageUpload(
       authInfo.uuid ? authInfo : undefined,
       pwdEncryptedWithAtts,
       (p) => this.view.sendBtnModule.renderUploadProgress(p, 'FIRST-HALF'), // still need to upload to Gmail later, this request represents first half of progress
@@ -97,7 +98,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     }
     const recipients = Array.prototype.concat.apply([], Object.values(newMsgData.recipients));
     try {
-      const response = await Backend.messageToken(authInfo);
+      const response = await FlowCryptComApi.messageToken(authInfo);
       const infoDiv = Ui.e('div', {
         'style': 'display: none;',
         'class': 'cryptup_reply',
@@ -165,7 +166,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   private formatPwdEncryptedMsgBodyLink = async (short: string): Promise<SendableMsgBody> => {
     const storage = await AcctStore.get(this.acctEmail, ['outgoing_language']);
     const lang = storage.outgoing_language || 'EN';
-    const msgUrl = Backend.url('decrypt', short);
+    const msgUrl = FlowCryptWebsite.url('decrypt', short);
     const aStyle = `padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;`;
     const a = `<a href="${Xss.escape(msgUrl)}" style="${aStyle}">${Lang.compose.openMsg[lang]}</a>`;
     const intro = this.view.S.cached('input_intro').length ? this.view.inputModule.extract('text', 'input_intro') : undefined;

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Backend, FcUuidAuth } from '../../../js/common/api/backend.js';
+import { FlowCryptComApi, FcUuidAuth } from '../../../js/common/api/backend.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -87,7 +87,7 @@ View.run(class SecurityView extends View {
     if (subscription.active) {
       Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
       try {
-        const response = await Backend.accountGetAndUpdateLocalStore(this.authInfo!);
+        const response = await FlowCryptComApi.accountGetAndUpdateLocalStore(this.authInfo!);
         $('.select_loader_container').text('');
         $('.default_message_expire').val(Number(response.account.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
         $('.default_message_expire').change(this.setHandler(() => this.onDefaultExpireUserChange()));
@@ -111,7 +111,7 @@ View.run(class SecurityView extends View {
   private onDefaultExpireUserChange = async () => {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
-    await Backend.accountUpdate(this.authInfo!, { default_message_expire: Number($('.default_message_expire').val()) });
+    await FlowCryptComApi.accountUpdate(this.authInfo!, { default_message_expire: Number($('.default_message_expire').val()) });
     window.location.reload();
   }
 

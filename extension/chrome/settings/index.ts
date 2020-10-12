@@ -8,7 +8,7 @@ import { KeyInfo, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { Str, Url, UrlParams } from '../../js/common/core/common.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
-import { Backend } from '../../js/common/api/backend.js';
+import { FlowCryptComApi } from '../../js/common/api/backend.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Env } from '../../js/common/browser/env.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
@@ -306,7 +306,7 @@ View.run(class SettingsView extends View {
     const authInfo = await AcctStore.authInfo(this.acctEmail!);
     if (authInfo.uuid) { // have auth email set
       try {
-        const response = await Backend.accountGetAndUpdateLocalStore(authInfo);
+        const response = await FlowCryptComApi.accountGetAndUpdateLocalStore(authInfo);
         $('#status-row #status_flowcrypt').text(`fc:ok`);
         if (response?.account?.alias) {
           statusContainer.find('.status-indicator-text').css('display', 'none');

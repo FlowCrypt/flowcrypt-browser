@@ -5,7 +5,6 @@
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Backend } from '../../../js/common/api/backend.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { KeyInfo, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
@@ -18,6 +17,7 @@ import { OrgRules } from '../../../js/common/org-rules.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { FlowCryptWebsite } from '../../../js/common/api/flowcrypt-website.js';
 
 declare const ClipboardJS: any;
 
@@ -71,7 +71,7 @@ View.run(class MyKeyView extends View {
   private renderPubkeyShareableLink = async () => {
     try {
       const result = await this.pubLookup.attester.lookupEmail(this.acctEmail);
-      const url = Backend.url('pubkey', this.acctEmail);
+      const url = FlowCryptWebsite.url('pubkey', this.acctEmail);
       if (result.pubkey && (await KeyUtil.parse(result.pubkey)).id === this.keyInfo.fingerprint) {
         $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('display', '');
       } else {

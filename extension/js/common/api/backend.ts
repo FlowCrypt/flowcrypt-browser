@@ -38,10 +38,10 @@ export namespace BackendRes {
   export type ApirFcMsgExpiration = { updated: boolean };
 }
 
-export class Backend extends Api {
+export class FlowCryptComApi extends Api {
 
   public static loginWithOpenid = async (acctEmail: string, uuid: string, idToken: string): Promise<void> => {
-    const response = await Backend.request<BackendRes.FcAccountLogin>('account/login', {
+    const response = await FlowCryptComApi.request<BackendRes.FcAccountLogin>('account/login', {
       account: acctEmail,
       uuid,
       token: null, // tslint:disable-line:no-null-keyword
@@ -53,23 +53,23 @@ export class Backend extends Api {
   }
 
   public static accountUpdate = async (fcAuth: FcUuidAuth, profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {
-    Backend.throwIfMissingUuid(fcAuth);
-    return await Backend.request<BackendRes.FcAccountUpdate>('account/update', {
+    FlowCryptComApi.throwIfMissingUuid(fcAuth);
+    return await FlowCryptComApi.request<BackendRes.FcAccountUpdate>('account/update', {
       ...fcAuth,
       ...profileUpdate
     });
   }
 
   public static accountGetAndUpdateLocalStore = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcAccountGet> => {
-    Backend.throwIfMissingUuid(fcAuth);
-    const r = await Backend.request<BackendRes.FcAccountGet>('account/get', fcAuth);
+    FlowCryptComApi.throwIfMissingUuid(fcAuth);
+    const r = await FlowCryptComApi.request<BackendRes.FcAccountGet>('account/get', fcAuth);
     await AcctStore.set(fcAuth.account, { rules: r.domain_org_rules, subscription: r.subscription });
     return r;
   }
 
   public static accountSubscribe = async (fcAuth: FcUuidAuth, product: string, method: string, paymentSourceToken?: string): Promise<BackendRes.FcAccountSubscribe> => {
-    Backend.throwIfMissingUuid(fcAuth);
-    const response = await Backend.request<BackendRes.FcAccountSubscribe>('account/subscribe', {
+    FlowCryptComApi.throwIfMissingUuid(fcAuth);
+    const response = await FlowCryptComApi.request<BackendRes.FcAccountSubscribe>('account/subscribe', {
       ...fcAuth,
       method,
       source: paymentSourceToken || null, // tslint:disable-line:no-null-keyword
@@ -81,17 +81,17 @@ export class Backend extends Api {
 
   public static messageUpload = async (fcAuth: FcUuidAuth | undefined, encryptedDataBinary: Uint8Array, progressCb: ProgressCb): Promise<BackendRes.FcMsgUpload> => {
     const content = new Att({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encryptedDataBinary });
-    return await Backend.request<BackendRes.FcMsgUpload>('message/upload', { content, ...(fcAuth || {}) }, 'FORM', undefined, { upload: progressCb });
+    return await FlowCryptComApi.request<BackendRes.FcMsgUpload>('message/upload', { content, ...(fcAuth || {}) }, 'FORM', undefined, { upload: progressCb });
   }
 
   public static messageToken = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcMsgToken> => {
-    Backend.throwIfMissingUuid(fcAuth);
-    return await Backend.request<BackendRes.FcMsgToken>('message/token', { ...fcAuth });
+    FlowCryptComApi.throwIfMissingUuid(fcAuth);
+    return await FlowCryptComApi.request<BackendRes.FcMsgToken>('message/token', { ...fcAuth });
   }
 
   public static messageExpiration = async (fcAuth: FcUuidAuth, adminCodes: string[], addDays?: number): Promise<BackendRes.ApirFcMsgExpiration> => {
-    Backend.throwIfMissingUuid(fcAuth);
-    return await Backend.request<BackendRes.ApirFcMsgExpiration>('message/expiration', {
+    FlowCryptComApi.throwIfMissingUuid(fcAuth);
+    return await FlowCryptComApi.request<BackendRes.ApirFcMsgExpiration>('message/expiration', {
       ...fcAuth,
       admin_codes: adminCodes,
       add_days: addDays || null, // tslint:disable-line:no-null-keyword
@@ -99,13 +99,13 @@ export class Backend extends Api {
   }
 
   public static linkMessage = async (short: string): Promise<BackendRes.FcLinkMsg> => {
-    return await Backend.request<BackendRes.FcLinkMsg>('link/message', {
+    return await FlowCryptComApi.request<BackendRes.FcLinkMsg>('link/message', {
       short,
     });
   }
 
   private static request = async <RT>(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}, progressCbs?: ProgressCbs): Promise<RT> => {
-    return await Backend.apiCall(FlowCryptWebsite.url('api'), path, vals, fmt, progressCbs, { 'api-version': '3', ...addHeaders });
+    return await FlowCryptComApi.apiCall(FlowCryptWebsite.url('api'), path, vals, fmt, progressCbs, { 'api-version': '3', ...addHeaders });
   }
 
   private static throwIfMissingUuid = (fcAuth: FcUuidAuth) => {

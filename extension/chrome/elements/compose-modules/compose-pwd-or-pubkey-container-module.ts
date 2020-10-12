@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Backend } from '../../../js/common/api/backend.js';
+import { FlowCryptComApi } from '../../../js/common/api/backend.js';
 import { RecipientStatuses, SendBtnTexts } from './compose-types.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -90,7 +90,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
         expirationTextEl.text(Str.pluralize(this.MSG_EXPIRE_DAYS_DEFAULT, 'day'));
       } else {
         try {
-          const response = await Backend.accountGetAndUpdateLocalStore(authInfo);
+          const response = await FlowCryptComApi.accountGetAndUpdateLocalStore(authInfo);
           expirationTextEl.text(Str.pluralize(response.account.default_message_expire, 'day'));
         } catch (e) {
           ApiErr.reportIfSignificant(e);

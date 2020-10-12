@@ -40,7 +40,7 @@ buildContentScript(([] as string[]).concat(
   getFilesInDir(`${sourceDir}/common/core/crypto/smime`, /\.js$/, false),
   getFilesInDir(`${sourceDir}/common/api/shared`, /\.js$/, false),
   getFilesInDir(`${sourceDir}/common/api/key-server`, /\.js$/, false),
-  getFilesInDir(`${sourceDir}/common/api/account-server`, /\.js$/, false),
+  // getFilesInDir(`${sourceDir}/common/api/account-server`, /\.js$/, false), // not used by content scripts yet
   getFilesInDir(`${sourceDir}/common/api/email-provider`, /\.js$/, false),
   getFilesInDir(`${sourceDir}/common/api/email-provider/gmail`, /\.js$/, false),
   getFilesInDir(`${sourceDir}/common/api`, /\.js$/, false),

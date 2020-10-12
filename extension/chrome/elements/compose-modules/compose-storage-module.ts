@@ -16,7 +16,7 @@ import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
-import { Backend } from '../../../js/common/api/backend.js';
+import { FlowCryptComApi } from '../../../js/common/api/backend.js';
 import { Settings } from '../../../js/common/settings.js';
 
 export class ComposeStorageModule extends ViewModule<ComposeView> {
@@ -211,7 +211,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     const auth = await AcctStore.authInfo(this.view.acctEmail);
     if (auth.uuid) {
       try {
-        await Backend.accountGetAndUpdateLocalStore(auth); // updates storage
+        await FlowCryptComApi.accountGetAndUpdateLocalStore(auth); // updates storage
       } catch (e) {
         if (ApiErr.isAuthErr(e)) {
           Settings.offerToLoginWithPopupShowModalOnErr(

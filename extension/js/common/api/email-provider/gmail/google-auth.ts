@@ -10,7 +10,7 @@ import { Url, Value } from '../../../core/common.js';
 import { tabsQuery, windowsCreate } from '../../../browser/chrome.js';
 import { Api } from './../../shared/api.js';
 import { ApiErr } from '../../shared/api-error.js';
-import { Backend } from './../../backend.js';
+import { FlowCryptComApi } from './../../backend.js';
 import { Buf } from '../../../core/buf.js';
 import { Catch } from '../../../platform/catch.js';
 import { GmailRes } from './gmail-parser';
@@ -143,8 +143,8 @@ export class GoogleAuth {
       }
       try {
         const uuid = Api.randomFortyHexChars();
-        await Backend.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
-        await Backend.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // will store org rules and subscription
+        await FlowCryptComApi.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
+        await FlowCryptComApi.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // will store org rules and subscription
       } catch (e) {
         return { result: 'Error', error: `Grant successful but error accessing fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
       }
