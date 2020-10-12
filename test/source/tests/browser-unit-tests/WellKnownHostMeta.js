@@ -55,3 +55,28 @@ BROWSER_UNIT_TEST_NAME(`status404 does not return any fesUrl`);
   }
   return 'pass'; // consumer tolerates a net err because the server may not be set up
 })();
+
+BROWSER_UNIT_TEST_NAME(`test@nowhere.com throws when server cannot be reached`).enterprise;
+(async () => {
+  const mockHost = '127.0.0.1:8001';
+  const wellKnownHostMeta = new WellKnownHostMeta(`status500@${mockHost}`, 'http');
+  try {
+    await wellKnownHostMeta.fetchAndCacheFesUrl();
+  } catch (e) {
+    if (ApiErr.isServerErr(e)) {
+      return 'pass'; // enterprise does not tolerate a server err - since it may simply mean offline
+    }
+    throw e;
+  }
+})();
+
+BROWSER_UNIT_TEST_NAME(`test@nowhere.com does not return any fesUrl`).consumer;
+(async () => {
+  const mockHost = '127.0.0.1:8001';
+  const wellKnownHostMeta = new WellKnownHostMeta(`status500@${mockHost}`, 'http');
+  const fesUrl = await wellKnownHostMeta.fetchAndCacheFesUrl();
+  if (typeof fesUrl !== 'undefined') {
+    throw Error(`fesUrl unexpectedly ${fesUrl}, expecting undefined`);
+  }
+  return 'pass'; // consumer tolerates a net err because the server may not be expecting to serve these
+})();
