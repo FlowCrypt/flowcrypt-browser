@@ -22,4 +22,7 @@ export const mockWellKnownHostMetaEndpoints: HandlersDefinition = {
   '/.well-known/host-meta.json?local=has.fes.rel': async () => {
     return { links: [{ rel: 'https://flowcrypt.com/fes', href: "https://targer.customer.com/fes/" }] };
   },
+  '/.well-known/host-meta.json?local=empty200': async () => {
+    return '';
+  },
 };
