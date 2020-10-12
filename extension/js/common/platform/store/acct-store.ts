@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { Env } from '../../browser/env.js';
-import { GoogleAuth } from '../../api/google-auth.js';
+import { GoogleAuth } from '../../api/email-provider/gmail/google-auth.js';
 import { KeyInfo } from '../../core/crypto/key.js';
 import { Dict } from '../../core/common.js';
 import { GmailRes } from '../../api/email-provider/gmail/gmail-parser.js';

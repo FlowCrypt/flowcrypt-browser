@@ -9,7 +9,7 @@ import { Assert } from '../../js/common/assert.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Contact, KeyInfo, Key, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
-import { Google } from '../../js/common/api/google.js';
+import { Google } from '../../js/common/api/email-provider/gmail/google.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
 import { Lang } from '../../js/common/lang.js';
 import { OrgRules } from '../../js/common/org-rules.js';

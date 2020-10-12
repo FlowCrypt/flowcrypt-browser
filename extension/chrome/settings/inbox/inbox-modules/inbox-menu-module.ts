@@ -5,7 +5,7 @@
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { Dict } from '../../../../js/common/core/common.js';
 import { GmailRes } from '../../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { Google } from '../../../../js/common/api/google.js';
+import { Google } from '../../../../js/common/api/email-provider/gmail/google.js';
 import { InboxView } from '../inbox.js';
 import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';

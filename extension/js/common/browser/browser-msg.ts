@@ -5,7 +5,7 @@
 import { DecryptResult, DiagnoseMsgPubkeysResult, PgpMsgMethod, VerifyRes, PgpMsgTypeResult } from '../core/crypto/pgp/msg-util.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
 import { AjaxErr } from '../api/error/api-error.js';
-import { AuthRes } from '../api/google-auth.js';
+import { AuthRes } from '../api/email-provider/gmail/google-auth.js';
 import { Browser } from './browser.js';
 import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
 import { Buf } from '../core/buf.js';
