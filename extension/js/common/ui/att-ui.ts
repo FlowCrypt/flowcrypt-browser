@@ -91,7 +91,7 @@ export class AttUI {
         throw new UnreportableError('Attachments are not yet supported when sending to recipients using S/MIME x509 certificates.');
       }
       const encrypted = await MsgUtil.encryptMessage({ pubkeys: pubsForEncryption, data, filename: file.name, armor: false }) as OpenPGP.EncryptBinaryResult;
-      atts.push(new Att({ name: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', type: file.type, data: encrypted.message.packets.write() }));
+      atts.push(new Att({ name: Att.sanitizeName(file.name) + '.pgp', type: file.type, data: encrypted.message.packets.write() }));
     }
     return atts;
   }

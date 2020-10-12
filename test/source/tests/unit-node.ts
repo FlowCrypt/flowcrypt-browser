@@ -14,6 +14,7 @@ import { Buf } from '../core/buf';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
 import { MsgUtil, PgpMsgMethod } from '../core/crypto/pgp/msg-util';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
+import { Att } from '../core/att.js';
 
 // tslint:disable:no-blank-lines-func
 /* eslint-disable max-len */
@@ -585,5 +586,11 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       t.pass();
     });
 
+    ava.only('[Att.sanitizeName] ', async t => {
+      const cyrillicName = '\u0410\u0411\u0412';
+      const result = Att.sanitizeName(cyrillicName);
+      expect(result).to.equal(cyrillicName);
+      t.pass();
+    });
   }
 };
