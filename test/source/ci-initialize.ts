@@ -4,7 +4,7 @@ import { Config } from './util';
 import { FlowCryptApi } from './tests/tooling/api';
 
 (async () => { // disabled in ci settings
-  for (const { email, password } of Config.secrets.auth.google) {
+  for (const { email, password } of Config.secrets().auth.google) {
     if (email && password) {
       const e = email.replace(/gmail|flowcrypt|test|com|@|\.|org/g, '');
       try {

@@ -27,7 +27,7 @@ export const acctsWithoutMockData = [
 
 export const mock = async (logger: (line: string) => void) => {
   const start = Date.now();
-  await Promise.all(Config.secrets.auth.google.map(a => a.email).map(async email => { // load and decrypt mock data if missing
+  await Promise.all(Config.secrets().auth.google.map(a => a.email).map(async email => { // load and decrypt mock data if missing
     if (acctsWithoutMockData.includes(email)) {
       return; // missing mock data, not yet used
     }
@@ -40,7 +40,7 @@ export const mock = async (logger: (line: string) => void) => {
         throw new Error(`Missing gmail mock data at ${url}`);
       }
       const message = await opgp.message.read(body as Buffer);
-      const msg = await opgp.decrypt({ message, passwords: [Config.secrets.data_encryption_password], format: 'binary' });
+      const msg = await opgp.decrypt({ message, passwords: [Config.secrets().data_encryption_password], format: 'binary' });
       writeFileSync(filepath, msg.data);
       console.info(`downloaded mock data to ${filepath}`);
     }

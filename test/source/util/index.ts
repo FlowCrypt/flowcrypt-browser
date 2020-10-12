@@ -52,17 +52,29 @@ interface TestSecretsInterface {
 
 export class Config {
 
+  private static _secrets: TestSecretsInterface;
+
   public static extensionId = '';
 
-  public static secrets = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8')) as TestSecretsInterface;
+  public static secrets = (): TestSecretsInterface => {
+    if (!Config._secrets) {
+      try {
+        Config._secrets = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8'));
+      } catch (e) {
+        console.error(`skipping loading test secrets because ${e}`);
+        Config._secrets = { auth: { google: [] }, keys: [], keyInfo: [] } as any as TestSecretsInterface;
+      }
+    }
+    return Config._secrets;
+  }
 
   public static key = (title: string) => {
-    return Config.secrets.keys.filter(k => k.title === title)[0];
+    return Config.secrets().keys.filter(k => k.title === title)[0];
   }
 
 }
 
-Config.secrets.auth.google.push( // these don't contain any secrets, so not worth syncing through secrets file
+Config.secrets().auth.google.push( // these don't contain any secrets, so not worth syncing through secrets file
   { "email": "flowcrypt.test.key.used.pgp@gmail.com" },
   { "email": "flowcrypt.test.key.imported@gmail.com" },
   { "email": "flowcrypt.test.key.import.naked@gmail.com" },
@@ -101,7 +113,7 @@ export class Util {
   public static deleteFileIfExists = (filename: string) => {
     try {
       fs.unlinkSync(filename);
-    } catch(e) {
+    } catch (e) {
       // file didn't exist
     }
   }
