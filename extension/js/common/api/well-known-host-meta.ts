@@ -62,14 +62,14 @@ export class WellKnownHostMeta extends Api {
         return parsed;
       } else {
         if (FLAVOR === 'enterprise') {
-          throw Error(`Enterprise host meta json file at ${this.hostMetaUrl} is badly structured`);
+          throw Error(`unexpected json structure`);
         } else {
           return undefined;
         }
       }
     } catch (e) {
       if (FLAVOR === 'enterprise') {
-        throw Catch.rewrapErr(e, `Enterprise host meta file at ${this.hostMetaUrl} not returning json`);
+        throw Catch.rewrapErr(e, `Enterprise host meta file at ${this.hostMetaUrl} has wrong format`);
       } else { // consumer
         return undefined;
       }
@@ -78,9 +78,13 @@ export class WellKnownHostMeta extends Api {
 
   private attemptToFetchFesUrlIgnoringErrorsOnConsumerFlavor = async (): Promise<Buf | undefined> => {
     try {
-      const r = await Api.download(this.hostMetaUrl);
+      const r = await Api.download(this.hostMetaUrl, undefined, 10);
       if (!r.length) {
-        return undefined;
+        if (!r.length && FLAVOR === 'enterprise') {
+          throw Error(`Enterprise host meta url ${this.hostMetaUrl} returned empty 200 response`);
+        } else { // consumer
+          return undefined;
+        }
       }
       return r;
     } catch (e) {

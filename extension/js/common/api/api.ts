@@ -56,7 +56,7 @@ export class Api {
       };
       request.onerror = errHandler;
       request.ontimeout = errHandler;
-      request.onload = e => resolve(new Buf(request.response as ArrayBuffer));
+      request.onload = e => request.status <= 299 ? resolve(new Buf(request.response as ArrayBuffer)) : errHandler(e);
       request.send();
     });
   }
