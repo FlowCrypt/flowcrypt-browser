@@ -130,3 +130,15 @@ BROWSER_UNIT_TEST_NAME(`wrong.format does not return any fesUrl`).consumer;
   }
   return 'pass'; // consumer tolerates a format err because the server may not be expecting to serve these
 })();
+
+BROWSER_UNIT_TEST_NAME(`no.fes.rel does not return any fesUrl`);
+(async () => {
+  const mockHost = '127.0.0.1:8001';
+  const wellKnownHostMeta = new WellKnownHostMeta(`no.fes.rel@${mockHost}`, 'http');
+  const fesUrl = await wellKnownHostMeta.fetchAndCacheFesUrl();
+  if (typeof fesUrl !== 'undefined') {
+    throw Error(`fesUrl unexpectedly ${fesUrl}, expecting undefined`);
+  }
+  return 'pass'; // consumer tolerates a format err because the server may not be expecting to serve these
+})();
+

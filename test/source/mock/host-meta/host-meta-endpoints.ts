@@ -16,4 +16,7 @@ export const mockWellKnownHostMetaEndpoints: HandlersDefinition = {
   '/.well-known/host-meta.json?local=wrong.format': async () => {
     return { links: "unexpected string" };
   },
+  '/.well-known/host-meta.json?local=no.fes.rel': async () => {
+    return { links: { rel: "another", href: "ignore this" } };
+  },
 };
