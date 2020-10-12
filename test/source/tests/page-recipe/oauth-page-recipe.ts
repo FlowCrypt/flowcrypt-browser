@@ -3,7 +3,6 @@
 import { Config, Util } from '../../util';
 import { AvaContext } from '../tooling/';
 import { ControllablePage } from '../../browser';
-import { FlowCryptApi } from '../tooling/api';
 import { PageRecipe } from './abstract-page-recipe';
 
 export class OauthPageRecipe extends PageRecipe {
@@ -12,7 +11,7 @@ export class OauthPageRecipe extends PageRecipe {
 
   public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve" | 'login'): Promise<void> => {
     const isMock = oauthPage.target.url().includes('localhost');
-    const auth = Config.secrets.auth.google.find(a => a.email === acctEmail)!;
+    const auth = Config.secrets().auth.google.find(a => a.email === acctEmail)!;
     const selectors = {
       approve_button: '#submit_approve_access',
       email_input: '#identifierId',
@@ -58,7 +57,6 @@ export class OauthPageRecipe extends PageRecipe {
       await oauthPage.waitAll(selectors.approve_button); // if succeeds, we are logged in and presented with approve/deny choice
       // since we are successfully logged in, we may save cookies to keep them fresh
       // no need to await the API call because it's not crucial to always save it, can mostly skip errors
-      FlowCryptApi.hookCiCookiesSet(auth.email, await oauthPage.page.cookies()).catch(e => console.error(String(e)));
       if (action === 'close') {
         await oauthPage.close();
       } else if (action === 'deny') {

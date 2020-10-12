@@ -6,7 +6,7 @@ import { Config } from '../../util';
 import { Cookie } from 'puppeteer';
 import { Response } from 'request';
 
-const ci_admin_token = Config.secrets.ci_admin_token;
+const ci_admin_token = Config.secrets().ci_admin_token;
 
 class ApiErrResponse extends Error {
   public response: Response;
@@ -17,8 +17,6 @@ class ApiErrResponse extends Error {
 }
 
 export class FlowCryptApi {
-
-  private static COOKIE_CACHE: { [acct: string]: Cookie[] } = {};
 
   public static hookCiAcctDelete = async (email: string) => {
     try {
@@ -42,33 +40,6 @@ export class FlowCryptApi {
     console.info(`hookCiDebugEmail - calling with length: ${debug_html_content.length}`);
     const r = await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_debug_email', { ci_admin_token, debug_title, debug_html_content });
     console.info('hookCiDebugEmail-response', r.body, r.statusCode);
-  }
-
-  public static hookCiCookiesGet = async (acct: string): Promise<Cookie[] | undefined> => {
-    if (!FlowCryptApi.COOKIE_CACHE[acct]) {
-      const { body: { cookies } } = await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_cookies_get', { ci_admin_token, acct });
-      FlowCryptApi.COOKIE_CACHE[acct] = cookies ? JSON.parse(cookies) : undefined;
-    }
-    return FlowCryptApi.COOKIE_CACHE[acct];
-  }
-
-  public static hookCiCookiesSet = async (acct: string, cookies: Cookie[]) => {
-    FlowCryptApi.COOKIE_CACHE[acct] = cookies;
-    await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_cookies_set', { ci_admin_token, acct, cookies: JSON.stringify(cookies) });
-  }
-
-  public static ciInitialize = async (acct: string, pwd: string, backup: string) => {
-    const r = await FlowCryptApi.call('https://cron.flowcrypt.com/ci_initialize', { ci_admin_token, acct, pwd, backup });
-    if (!r.body.success) {
-      if (r.body.errHtml) {
-        try {
-          await FlowCryptApi.hookCiDebugEmail('ci_browser: ci_initialize', r.body.errHtml);
-        } catch (e) {
-          console.error('error calling ciInitialize', r.body);
-          console.error('error calling hookDebugEmail about it:', String(e));
-        }
-      }
-    }
   }
 
   private static call = async (url: string, values: { [k: string]: any }) => {

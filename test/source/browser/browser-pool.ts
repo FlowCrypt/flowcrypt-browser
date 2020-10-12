@@ -1,7 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { Config, Util } from "../util";
-
+import { Util } from "../util";
 import { BrowserHandle } from './browser-handle';
 import { Consts } from '../test';
 import { TIMEOUT_DESTROY_UNEXPECTED_ALERT } from '.';
@@ -38,9 +37,6 @@ export class BrowserPool {
       `--load-extension=${this.extensionBuildDir}`,
       `--window-size=${this.width + 10},${this.height + 132}`,
     ];
-    if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
-      args.push(`--proxy-server=${Config.secrets.proxy.server}`);
-    }
     const browser = await launch({ args, headless: false, slowMo: isMock ? undefined : 60, devtools: false });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {

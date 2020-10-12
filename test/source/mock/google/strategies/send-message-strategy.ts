@@ -32,7 +32,7 @@ class MessageWithFooterTestStrategy implements ITestMsgStrategy {
   private readonly footer = 'flowcrypt.compatibility test footer with an img';
 
   public test = async (mimeMsg: ParsedMail) => {
-    const keyInfo = Config.secrets.keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
+    const keyInfo = Config.secrets().keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
     const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: can't decrypt message`);
@@ -49,7 +49,7 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
   private readonly signedBy = 'B6BE3C4293DDCF66'; // could potentially grab this from test-secrets.json file
 
   public test = async (mimeMsg: ParsedMail) => {
-    const keyInfo = Config.secrets.keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
+    const keyInfo = Config.secrets().keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
     const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: Could not successfully verify signed message`);
@@ -92,7 +92,7 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
   ].join('\n');
 
   public test = async (mimeMsg: ParsedMail) => {
-    const keyInfo = Config.secrets.keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
+    const keyInfo = Config.secrets().keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
     const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: can't decrypt message`);

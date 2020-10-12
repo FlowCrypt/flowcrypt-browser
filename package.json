@@ -69,7 +69,6 @@
     "test_patterns": "node build/test/test/source/patterns.js",
     "test_async_stack": "node build/test/test/source/async-stack.js",
     "test_buf": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/buf.js",
-    "test_ci_initialize": "node build/test/test/source/ci-initialize.js",
     "test_ci_chrome_consumer_live_gmail": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js -- CONSUMER-LIVE-GMAIL STANDARD-GROUP",
     "test_ci_chrome_consumer": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js -- CONSUMER-MOCK STANDARD-GROUP",
     "test_ci_chrome_enterprise": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js -- ENTERPRISE-MOCK STANDARD-GROUP",

@@ -1,13 +1,12 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { Browser, EvaluateFn, Page, Target } from 'puppeteer';
-import { Config, Util } from '../util';
+import { Util } from '../util';
 
 import { ControllablePage } from './controllable';
 import { Semaphore } from './browser-pool';
 import { TIMEOUT_ELEMENT_APPEAR } from '.';
 import { AvaContext } from '../tests/tooling';
-import { FlowCryptApi } from '../tests/tooling/api';
 
 export class BrowserHandle {
 
@@ -24,9 +23,6 @@ export class BrowserHandle {
 
   public newPage = async (t: AvaContext, url?: string, initialScript?: EvaluateFn): Promise<ControllablePage> => {
     const page = await this.browser.newPage();
-    if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
-      await page.authenticate(Config.secrets.proxy.auth);
-    }
     await page.setViewport(this.viewport);
     const controllablePage = new ControllablePage(t, page);
     if (url) {
@@ -39,18 +35,8 @@ export class BrowserHandle {
     return controllablePage;
   }
 
-  public newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>, cookieAcct?: string): Promise<ControllablePage> => {
-    const cookies = cookieAcct ? await FlowCryptApi.hookCiCookiesGet(cookieAcct) : undefined;
+  public newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>): Promise<ControllablePage> => {
     const page = await this.doAwaitTriggeredPage(triggeringAction);
-    if (cookies) {
-      await page.setCookie(...cookies);
-      // we don't have a reliable way to set cookies before previous url starts loading
-      // reloading the page after setting cookies fixes it
-      await page.reload();
-    }
-    if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
-      await page.authenticate(Config.secrets.proxy.auth);
-    }
     await page.setViewport(this.viewport);
     const controllablePage = new ControllablePage(t, page);
     this.pages.push(controllablePage);
