@@ -94,7 +94,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitAll(['@webmail-notification', '@action-reconnect-account']);
       await Util.sleep(1);
       expect(await gmailPage.read('@webmail-notification')).to.contain('Please reconnect FlowCrypt to your Gmail Account.');
-      const oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@action-reconnect-account'), acct);
+      const oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@action-reconnect-account'));
       await OauthPageRecipe.google(t, oauthPopup, acct, 'approve');
       await gmailPage.waitAll(['@webmail-notification']);
       await Util.sleep(1);
