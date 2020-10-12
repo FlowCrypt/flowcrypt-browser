@@ -11,7 +11,7 @@ import { Buf } from '../core/buf';
 // tslint:disable:no-blank-lines-func
 /* eslint-disable max-len */
 
-type UnitTest = { title: string, code: string };
+type UnitTest = { title: string, code: string, only: boolean };
 
 export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
@@ -19,8 +19,9 @@ export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: 
 
     const browserUnitTestsFolder = './test/source/tests/browser-unit-tests/';
 
-    const defineAvaTest = (title: string, testCode: string) => {
-      ava.default(title, testWithBrowser(undefined, async (t, browser) => {
+    const defineAvaTest = (title: string, testCode: string, flag?: 'only') => {
+      // eslint-disable-next-line no-only-tests/no-only-tests
+      (flag !== 'only' ? ava.default : ava.default.only)(title, testWithBrowser(undefined, async (t, browser) => {
         const hostPage = await browser.newPage(t, TestUrls.extension(`chrome/dev/ci_unit_test.htm`));
         // update host page title
         await hostPage.target.evaluate((title) => { window.document.getElementsByTagName('h1')[0].textContent = title; }, title);
@@ -45,8 +46,8 @@ export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: 
 
     const parseTestFile = (filename: string): UnitTest[] => {
       const unitTestCodes = Buf.fromUint8(readFileSync(browserUnitTestsFolder + filename)).toUtfStr().trim();
-      const testCodes = unitTestCodes.split('\nBROWSER_UNIT_TEST_NAME(`');
-      const header = testCodes.shift()!;
+      const testCasesInFile = unitTestCodes.split('\nBROWSER_UNIT_TEST_NAME(`');
+      const header = testCasesInFile.shift()!;
       if (!header.startsWith('/* ©️ 2016')) {
         throw Error(`Expecting ${browserUnitTestsFolder}/${filename} to start with '/* ©️ 2016'`);
       }
@@ -54,7 +55,7 @@ export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: 
         throw Error(`Unexpected import statement found in ${browserUnitTestsFolder}/${filename}`);
       }
       const unitTests = [];
-      for (let code of testCodes) {
+      for (let code of testCasesInFile) {
         if (code.includes('/*')) { // just to make sure we don't parse something wrongly. Block comment only allowed in header.
           throw Error(`Block comments such as /* are not allowed in test definitions. Use line comments eg //`);
         }
@@ -71,19 +72,32 @@ export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: 
         if (thisUnitTestTitle.includes('`).consumer') && testVariant === 'ENTERPRISE-MOCK') {
           continue;
         }
+        const only = thisUnitTestTitle.endsWith('.only;');
         thisUnitTestTitle = thisUnitTestTitle.replace(/`.+$/, '');
         code = testCodeLines.join('\n'); // without the title, just code
         const title = `[${filename}] ${thisUnitTestTitle}`;
-        unitTests.push({ title, code });
+        unitTests.push({ title, code, only });
       }
       return unitTests;
     };
 
+    const allUnitTests: UnitTest[] = [];
     for (const filename of readdirSync(browserUnitTestsFolder)) {
-      const unitTests = parseTestFile(filename);
-      for (const unitTest of unitTests) {
+      allUnitTests.push(...parseTestFile(filename));
+    }
+    const markedAsOnly: UnitTest[] = allUnitTests.filter(unitTest => unitTest.only);
+    if (!markedAsOnly.length) { // no tests marked as only - run all
+      for (const unitTest of allUnitTests) {
         defineAvaTest(unitTest.title, unitTest.code);
       }
+    } else { // some tests marked as only - only run those + run one test that always fails
+      for (const unitTest of markedAsOnly) {
+        defineAvaTest(unitTest.title, unitTest.code, 'only');
+      }
+      // eslint-disable-next-line no-only-tests/no-only-tests
+      ava.default.only('reminder to remove .only', async t => {
+        t.fail(`some tests marked as .only, preventing other tests from running`);
+      });
     }
 
   }
