@@ -8,10 +8,10 @@
 import { Api, ProgressCb, ProgressCbs, ReqFmt } from './shared/api.js';
 import { Dict } from '../core/common.js';
 import { Att } from '../core/att.js';
-import { BACKEND_API_HOST } from '../core/const.js';
 import { BackendAuthErr } from './shared/api-error.js';
 import { DomainRulesJson } from '../org-rules.js';
 import { AcctStore } from '../platform/store/acct-store.js';
+import { FlowCryptWebsite } from './flowcrypt-website.js';
 
 type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
 
@@ -39,29 +39,6 @@ export namespace BackendRes {
 }
 
 export class Backend extends Api {
-
-  public static url = (type: 'api' | 'me' | 'pubkey' | 'decrypt' | 'web', resource = '') => {
-    return ({
-      api: BACKEND_API_HOST,
-      me: `https://flowcrypt.com/me/${resource}`,
-      pubkey: `https://flowcrypt.com/pub/${resource}`,
-      decrypt: `https://flowcrypt.com/${resource}`,
-      web: 'https://flowcrypt.com/',
-    } as Dict<string>)[type];
-  }
-
-  // public static loginWithVerificationEmail = async (account: string, uuid: string, token: string): Promise<{ verified: boolean, subscription: SubscriptionInfo }> => {
-  //   const response = await Backend.request('account/login', {
-  //     account,
-  //     uuid,
-  //     token: token || null, // tslint:disable-line:no-null-keyword
-  //   }, undefined) as BackendRes.FcAccountLogin;
-  //   if (response.registered !== true) {
-  //     throw new Error('account_login did not result in successful registration');
-  //   }
-  //   await AcctStore.set(account, { uuid, subscription: response.subscription });
-  //   return { verified: response.verified === true, subscription: response.subscription };
-  // }
 
   public static loginWithOpenid = async (acctEmail: string, uuid: string, idToken: string): Promise<void> => {
     const response = await Backend.request<BackendRes.FcAccountLogin>('account/login', {
@@ -128,7 +105,7 @@ export class Backend extends Api {
   }
 
   private static request = async <RT>(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}, progressCbs?: ProgressCbs): Promise<RT> => {
-    return await Backend.apiCall(Backend.url('api'), path, vals, fmt, progressCbs, { 'api-version': '3', ...addHeaders });
+    return await Backend.apiCall(FlowCryptWebsite.url('api'), path, vals, fmt, progressCbs, { 'api-version': '3', ...addHeaders });
   }
 
   private static throwIfMissingUuid = (fcAuth: FcUuidAuth) => {

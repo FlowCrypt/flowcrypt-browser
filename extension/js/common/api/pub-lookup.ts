@@ -14,7 +14,8 @@ export type PubkeySearchResult = { pubkey: string | null; pgpClient: PgpClient }
 /**
  * Look up public keys.
  *
- * Some orgs may have a preference to use their own keyserver. In such cases, results from their own keyserver will be preferred.
+ * Some orgs may have a preference to use their own keyserver.
+ * In such cases, results from their own keyserver will be preferred.
  */
 export class PubLookup {
 
