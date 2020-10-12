@@ -2,11 +2,11 @@
 
 'use strict';
 
-import { Attester } from './attester.js';
+import { Attester } from './key-server/attester.js';
+import { KeyManager } from './key-server/key-manager.js';
+import { Sks } from './key-server/sks.js';
+import { Wkd } from './key-server/wkd.js';
 import { OrgRules } from '../org-rules.js';
-import { Sks } from './sks.js';
-import { KeyManager } from './key-manager.js';
-import { Wkd } from './wkd.js';
 
 export type PgpClient = 'flowcrypt' | 'pgp-other' | null;
 export type PubkeySearchResult = { pubkey: string | null; pgpClient: PgpClient };

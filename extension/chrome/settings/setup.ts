@@ -27,7 +27,7 @@ import { Scopes, AcctStoreDict, AcctStore } from '../../js/common/platform/store
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
-import { KeyManager } from '../../js/common/api/key-manager.js';
+import { KeyManager } from '../../js/common/api/key-server/key-manager.js';
 import { SetupKeyManagerAutogenModule } from './setup/setup-key-manager-autogen.js';
 import Swal from 'sweetalert2';
 

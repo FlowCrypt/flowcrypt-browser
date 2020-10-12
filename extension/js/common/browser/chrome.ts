@@ -3,9 +3,9 @@
 'use strict';
 
 import { Catch } from '../platform/catch.js';
-import { ContentScriptWindow } from '../browser/browser-window.js';
-import { Env } from '../browser/env.js';
-import { Ui } from '../browser/ui.js';
+import { ContentScriptWindow } from './browser-window.js';
+import { Env } from './env.js';
+import { Ui } from './ui.js';
 import { Url, Dict } from '../core/common.js';
 import { AbstractStore } from '../platform/store/abstract-store.js';
 

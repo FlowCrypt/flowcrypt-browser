@@ -7,7 +7,7 @@
 
 import { GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST, FLAVOR } from '../core/const.js';
 import { Url, Value } from '../core/common.js';
-import { tabsQuery, windowsCreate } from './chrome.js';
+import { tabsQuery, windowsCreate } from '../browser/chrome.js';
 import { Api } from './api.js';
 import { ApiErr } from './error/api-error.js';
 import { Backend } from './backend.js';

@@ -26,6 +26,7 @@ import { GlobalStore } from '../../js/common/platform/store/global-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import Swal from 'sweetalert2';
 import { Subscription } from '../../js/common/subscription.js';
+import { FlowCryptWebsite } from '../../js/common/api/flowcrypt-website.js';
 
 View.run(class SettingsView extends View {
 
@@ -270,7 +271,7 @@ View.run(class SettingsView extends View {
         $('.hide_if_setup_not_done').css('display', 'none');
       }
     }
-    Backend.retrieveBlogPosts().then(posts => { // do not await because may take a while
+    FlowCryptWebsite.retrieveBlogPosts().then(posts => { // do not await because may take a while
       for (const post of posts) {
         const html = `<div class="line"><a href="https://flowcrypt.com${Xss.escape(post.url)}" target="_blank">${Xss.escape(post.title.trim())}</a> ${Xss.escape(post.date.trim())}</div>`;
         Xss.sanitizeAppend('.blog_post_list', html);

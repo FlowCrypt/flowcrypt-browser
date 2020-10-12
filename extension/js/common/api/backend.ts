@@ -10,10 +10,8 @@ import { Dict } from '../core/common.js';
 import { Att } from '../core/att.js';
 import { BACKEND_API_HOST } from '../core/const.js';
 import { BackendAuthErr } from './error/api-error.js';
-import { Catch } from '../platform/catch.js';
 import { DomainRulesJson } from '../org-rules.js';
 import { AcctStore } from '../platform/store/acct-store.js';
-import { Browser } from '../browser/browser.js';
 
 type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
 
@@ -24,14 +22,12 @@ export type SubscriptionInfo = { active?: boolean | null; method?: PaymentMethod
 export type AwsS3UploadItem = { baseUrl: string, fields: { key: string; file?: Att }, att: Att };
 
 export namespace BackendRes {
-  export type FcHelpFeedback = { sent: boolean };
   export type FcAccountLogin = { registered: boolean, verified: boolean };
   export type FcAccount$info = { alias: string, email: string, intro: string, name: string, photo: string, default_message_expire: number };
   export type FcAccountGet = { account: FcAccount$info, subscription: SubscriptionInfo, domain_org_rules: DomainRulesJson };
   export type FcAccountUpdate = { result: FcAccount$info, updated: boolean };
   export type FcAccountSubscribe = { subscription: SubscriptionInfo };
   export type FcAccountCheck = { email: string | null, subscription: SubscriptionInfo | null };
-  export type FcBlogPost = { title: string, date: string, url: string };
   export type FcMsgToken = { token: string };
   export type FcMsgUpload = { short: string, admin_code: string };
   export type FcLinkMsg = { expire: string, deleted: boolean, url: string, expired: boolean };
@@ -52,13 +48,6 @@ export class Backend extends Api {
       decrypt: `https://flowcrypt.com/${resource}`,
       web: 'https://flowcrypt.com/',
     } as Dict<string>)[type];
-  }
-
-  public static helpFeedback = async (acctEmail: string, message: string): Promise<BackendRes.FcHelpFeedback> => {
-    return await Backend.request<BackendRes.FcHelpFeedback>('help/feedback', {
-      email: acctEmail,
-      message,
-    });
   }
 
   // public static loginWithVerificationEmail = async (account: string, uuid: string, token: string): Promise<{ verified: boolean, subscription: SubscriptionInfo }> => {
@@ -136,21 +125,6 @@ export class Backend extends Api {
     return await Backend.request<BackendRes.FcLinkMsg>('link/message', {
       short,
     });
-  }
-
-  public static retrieveBlogPosts = async (): Promise<BackendRes.FcBlogPost[]> => {
-    const xml = await Api.ajax({ url: 'https://flowcrypt.com/blog/feed.xml', dataType: 'xml' }, Catch.stackTrace()) as XMLDocument; // tslint:disable-line:no-direct-ajax
-    const posts: BackendRes.FcBlogPost[] = [];
-    for (const post of Browser.arrFromDomNodeList(xml.querySelectorAll('entry'))) {
-      const children = Browser.arrFromDomNodeList(post.childNodes);
-      const title = children.find(n => n.nodeName.toLowerCase() === 'title')?.textContent;
-      const date = children.find(n => n.nodeName.toLowerCase() === 'published')?.textContent?.substr(0, 10);
-      const url = (children.find(n => n.nodeName.toLowerCase() === 'link') as HTMLAnchorElement).getAttribute('href');
-      if (title && date && url) {
-        posts.push({ title, date, url });
-      }
-    }
-    return posts.slice(0, 5);
   }
 
   private static request = async <RT>(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}, progressCbs?: ProgressCbs): Promise<RT> => {

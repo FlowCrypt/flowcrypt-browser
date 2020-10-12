@@ -16,7 +16,7 @@ import { Key, KeyUtil } from './core/crypto/key.js';
 import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
 import { OrgRules } from './org-rules.js';
 import { Xss } from './platform/xss.js';
-import { storageLocalGetAll } from './api/chrome.js';
+import { storageLocalGetAll } from './browser/chrome.js';
 import { AccountIndex, AcctStore, SendAsAlias } from './platform/store/acct-store.js';
 import { GlobalStore } from './platform/store/global-store.js';
 import { AbstractStore } from './platform/store/abstract-store.js';

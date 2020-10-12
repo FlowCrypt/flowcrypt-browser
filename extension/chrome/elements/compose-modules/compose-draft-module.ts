@@ -15,7 +15,7 @@ import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-pars
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 import { NewMsgData } from './compose-types.js';
 import { MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
-import { storageLocalGet, storageLocalSet, storageLocalRemove } from '../../../js/common/api/chrome.js';
+import { storageLocalGet, storageLocalSet, storageLocalRemove } from '../../../js/common/browser/chrome.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';

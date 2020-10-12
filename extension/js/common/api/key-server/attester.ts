@@ -2,12 +2,12 @@
 
 'use strict';
 
-import { Api, ReqMethod } from './api.js';
-import { Dict, Str } from '../core/common.js';
-import { PgpClient, PubkeySearchResult } from './pub-lookup.js';
-import { ApiErr } from './error/api-error.js';
-import { OrgRules } from '../org-rules.js';
-import { ATTESTER_API_HOST } from '../core/const.js';
+import { Api, ReqMethod } from './../api.js';
+import { Dict, Str } from '../../core/common.js';
+import { PgpClient, PubkeySearchResult } from './../pub-lookup.js';
+import { ApiErr } from './../error/api-error.js';
+import { OrgRules } from '../../org-rules.js';
+import { ATTESTER_API_HOST } from '../../core/const.js';
 
 type PubCallRes = { responseText: string, getResponseHeader: (n: string) => string | null };
 

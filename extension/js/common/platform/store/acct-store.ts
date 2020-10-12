@@ -9,7 +9,7 @@ import { SubscriptionInfo, FcUuidAuth } from '../../api/backend.js';
 import { DomainRulesJson } from '../../org-rules.js';
 import { BrowserMsg, BgNotReadyErr } from '../../browser/browser-msg.js';
 import { Ui } from '../../browser/ui.js';
-import { storageLocalGet, storageLocalSet, storageLocalRemove } from '../../api/chrome.js';
+import { storageLocalGet, storageLocalSet, storageLocalRemove } from '../../browser/chrome.js';
 import { AbstractStore } from './abstract-store.js';
 import { RawStore } from './abstract-store.js';
 import { Subscription } from '../../subscription.js';
