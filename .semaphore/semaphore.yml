@@ -28,6 +28,13 @@ blocks:
             - echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"
             - npm run-script pretest
             - rm -rf node_modules && cd ~ && cache store sources-$SEMAPHORE_PIPELINE_ID ./git
+            # install and set up nvm
+            - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
+            - export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+            - \[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+            - nvm install 12
+            - nvm use 12
+            - nvm alias default 12
 
   - name: Tests
     execution_time_limit:
@@ -59,7 +66,7 @@ blocks:
         - name: consumer mock - standard test group
           commands:
             - npm -v
-            - nodejs -v
+            - node -v
             - npm run-script test_ci_chrome_consumer
 
         - name: enterprise mock - standard test group
