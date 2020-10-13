@@ -26,10 +26,10 @@ blocks:
             - npm install
             - cache store node-modules-$SEMAPHORE_GIT_BRANCH-$(cat package.json.sum) node_modules
             - echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"
-            - npm run-script pretest
-            - rm -rf node_modules && cd ~ && cache store sources-$SEMAPHORE_PIPELINE_ID ./git
             - nvm use 12
             - nvm alias default 12
+            - npm run-script pretest
+            - rm -rf node_modules && cd ~ && cache store sources-$SEMAPHORE_PIPELINE_ID ./git
 
   - name: Tests
     execution_time_limit:
@@ -42,6 +42,8 @@ blocks:
           - cache restore sources-$SEMAPHORE_PIPELINE_ID
           - cd ~/git/flowcrypt-browser
           - cache restore node-modules-$SEMAPHORE_GIT_BRANCH-$(cat package.json.sum)
+          - nvm use 12
+          - nvm alias default 12
 
       jobs:
 
