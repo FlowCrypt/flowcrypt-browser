@@ -19,7 +19,7 @@ blocks:
       jobs:
         - name: Install + Build + Pretest
           commands:
-            - npm install -g npm@6.8.0 && mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
+            - npm install -g npm@6.14.6 && mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
             - cd ~/git/flowcrypt-browser
             - checksum package.json > package.json.sum
             - cache restore node-modules-$SEMAPHORE_GIT_BRANCH-$(cat package.json.sum),node-modules-master-$(cat package.json.sum)
@@ -58,6 +58,8 @@ blocks:
 
         - name: consumer mock - standard test group
           commands:
+            - npm -v
+            - nodejs -v
             - npm run-script test_ci_chrome_consumer
 
         - name: enterprise mock - standard test group
