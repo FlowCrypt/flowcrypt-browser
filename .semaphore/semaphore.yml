@@ -19,6 +19,8 @@ blocks:
       jobs:
         - name: Install + Build + Pretest
           commands:
+            - nvm use 12
+            - nvm alias default 12
             - npm install -g npm@6.14.6 && mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
             - cd ~/git/flowcrypt-browser
             - checksum package.json > package.json.sum
@@ -26,8 +28,6 @@ blocks:
             - npm install
             - cache store node-modules-$SEMAPHORE_GIT_BRANCH-$(cat package.json.sum) node_modules
             - echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"
-            - nvm use 12
-            - nvm alias default 12
             - npm run-script pretest
             - rm -rf node_modules && cd ~ && cache store sources-$SEMAPHORE_PIPELINE_ID ./git
 
