@@ -22,19 +22,10 @@ blocks:
           - nvm alias default 12
           - npm install -g npm@6.14.6 && mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
           - cd ~/git/flowcrypt-browser
-          # - checksum package.json > package.json.sum
-          # - cache restore node-modules-$SEMAPHORE_GIT_BRANCH-$(cat package.json.sum),node-modules-master-$(cat package.json.sum)
           - npm install
-          # - cache store node-modules-$SEMAPHORE_GIT_BRANCH-$(cat package.json.sum) node_modules
           - echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"
           - npm run-script pretest
-          # - cd ~ && cache store sources-$SEMAPHORE_PIPELINE_ID ./git
           - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts" && sudo sh -c "echo '127.0.0.1 google.mock.flowcryptlocal.com' >> /etc/hosts"
-          # - cache restore sources-$SEMAPHORE_PIPELINE_ID
-          # - cd ~/git/flowcrypt-browser
-          # - cache restore node-modules-$SEMAPHORE_GIT_BRANCH-$(cat package.json.sum)
-          # - nvm use 12
-          # - nvm alias default 12
 
       jobs:
 
