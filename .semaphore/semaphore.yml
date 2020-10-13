@@ -25,12 +25,11 @@ blocks:
             - cd ~/git/flowcrypt-browser
             - checksum package.json > package.json.sum
             - cache restore node-modules-$SEMAPHORE_GIT_BRANCH-$(cat package.json.sum),node-modules-master-$(cat package.json.sum)
-            - rm -rf node_modules # temporary
             - npm install
             - cache store node-modules-$SEMAPHORE_GIT_BRANCH-$(cat package.json.sum) node_modules
             - echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"
             - npm run-script pretest
-            - rm -rf node_modules && cd ~ && cache store sources-$SEMAPHORE_PIPELINE_ID ./git
+            - cd ~ && cache store sources-$SEMAPHORE_PIPELINE_ID ./git
 
   - name: Tests
     execution_time_limit:
