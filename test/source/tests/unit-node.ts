@@ -586,10 +586,22 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       t.pass();
     });
 
-    ava.default('[Att.sanitizeName] utf characters preserved', async t => {
+    ava.default('[Att.sanitizeName] for special and unicode characters', async t => {
+      // slash
+      expect(Att.sanitizeName('abc/def')).to.equal('abc_def');
+      // backslash
+      expect(Att.sanitizeName('abc\\def')).to.equal('abc_def');
+      // combinations of slashes and backslashes
+      expect(Att.sanitizeName('abc\\/def')).to.equal('abc_def');
+      expect(Att.sanitizeName('abc/\\def')).to.equal('abc_def');
+      // trimming
+      expect(Att.sanitizeName('  1  ')).to.equal('1');
+      expect(Att.sanitizeName('    ')).to.equal('_');
+      // empty
+      expect(Att.sanitizeName('')).to.equal('_');
+      // cyrillic
       const cyrillicName = '\u0410\u0411\u0412';
-      const result = Att.sanitizeName(cyrillicName);
-      expect(result).to.equal(cyrillicName);
+      expect(Att.sanitizeName(cyrillicName)).to.equal(cyrillicName);
       t.pass();
     });
   }
