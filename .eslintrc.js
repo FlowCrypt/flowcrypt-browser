@@ -33,6 +33,7 @@ module.exports = {
     'no-empty-pattern': 0,
     'no-fallthrough': 0,
     'no-undef': 0,
+    'no-control-regex': 0,
     'sort-imports': ['off', {
       "ignoreCase": false,
       "ignoreDeclarationSort": false,
@@ -48,4 +49,4 @@ module.exports = {
       }
     }
   ]
-}
+};
