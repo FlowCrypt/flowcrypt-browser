@@ -35,6 +35,14 @@ export class Att {
     return new Att({ data: Buf.fromUtfStr(ki.public), type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
   }
 
+  public static sanitizeName = (name: string): string => {
+    const trimmed = name.trim();
+    if (trimmed === '') {
+      return '_';
+    }
+    return trimmed.replace(/[\u0000\u002f\u005c]/g, '_').replace(/__+/g, '_');
+  }
+
   constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid, contentDescription }: AttMeta) {
     if (typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {
       throw new Error('Att: one of data|url|id has to be set');
