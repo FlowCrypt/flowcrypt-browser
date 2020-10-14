@@ -183,11 +183,11 @@ WeNYP84Yjw6OFSHdi2W0VojRGhxm7PZCMqswN/XaBg==
     ava.default('[unit][KeyUtil.parse] S/MIME key parsing of HTTPS cert', async t => {
       // parsing throws because the domain name doesn't look like an e-mail
       // address
-      await t.throwsAsync(() => KeyUtil.parse(httpsCert), UnreportableError);
+      await t.throwsAsync(() => KeyUtil.parse(httpsCert), { instanceOf: UnreportableError, message: 'This S/MIME x.509 certificate has an invalid recipient email: news.ycombinator.com' });
     });
 
     ava.default('[unit][KeyUtil.parse] Unknown key type parsing fails', async t => {
-      await t.throwsAsync(() => KeyUtil.parse('dummy string for unknown key'), Error);
+      await t.throwsAsync(() => KeyUtil.parse('dummy string for unknown key'), { instanceOf: Error, message: 'Key type is unknown, expecting OpenPGP or x509 S/MIME' });
     });
 
     const expiredPgp = `-----BEGIN PGP PRIVATE KEY BLOCK-----
