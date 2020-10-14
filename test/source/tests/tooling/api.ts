@@ -38,6 +38,7 @@ export class FlowCryptApi {
 
   public static hookCiDebugEmail = async (debug_title: string, debug_html_content: string) => { // tslint:disable-line:variable-name
     if (!ci_admin_token) {
+      console.error('hookCiDebugEmail: nor reporting because missing ci_admin_token');
       return;
     }
     console.info(`hookCiDebugEmail - calling with length: ${debug_html_content.length}`);
