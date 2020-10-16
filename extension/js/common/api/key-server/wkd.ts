@@ -19,12 +19,16 @@ export class Wkd extends Api {
   // https://www.sektioneins.de/en/blog/18-11-23-gnupg-wkd.html
   // https://metacode.biz/openpgp/web-key-directory
 
-  constructor(private myOwnDomain: string) {
+  public port: number | undefined;
+  private protocol: string;
+
+  constructor(private myOwnDomain: string, protocol = 'https') {
     super();
+    this.protocol = protocol;
   }
 
   public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
-    const parts = email.toLowerCase().split('@');
+    const parts = email.split('@');
     if (parts.length > 2) {
       return { pubkey: null, pgpClient: null };
     }
@@ -36,24 +40,41 @@ export class Wkd extends Api {
       // the proper fix would be to run encodeZBase32 through background scripts
       return { pubkey: null, pgpClient: null };
     }
-    const hu = opgp.util.encodeZBase32(await opgp.crypto.hash.digest(opgp.enums.hash.sha1, Buf.fromUtfStr(user)));
-    // todo - could also search on `https://openpgpkey.{domain}/.well-known/openpgpkey/{domain}/hu/{hu}?l={user}`
-    const url = `https://${recipientDomain}/.well-known/openpgpkey/hu/${hu}?l=${encodeURIComponent(user)}`;
+    const directDomain = recipientDomain.toLowerCase();
+    const advancedDomainPrefix = (directDomain === 'localhost') ? '' : 'openpgpkey.';
+    const hu = opgp.util.encodeZBase32(await opgp.crypto.hash.digest(opgp.enums.hash.sha1, Buf.fromUtfStr(user.toLowerCase())));
+    const directHost = (typeof this.port === 'undefined') ? directDomain : `${directDomain}:${this.port}`;
+    const advancedHost = `${advancedDomainPrefix}${directHost}`;
+    const userPart = `hu/${hu}?l=${encodeURIComponent(user)}`;
+    const advancedUrl = `${this.protocol}://${advancedHost}/.well-known/openpgpkey/${directDomain}`;
+    const directUrl = `${this.protocol}://${directHost}/.well-known/openpgpkey`;
     let binary: Buf;
-    try {
-      binary = await Wkd.download(url, undefined, 4);
-    } catch (e) {
-      if (ApiErr.isNotFound(e) || ApiErr.isNetErr(e)) {
+    let validUrl: string;
+    for (const url of [advancedUrl, directUrl]) {
+      try {
+        await Wkd.download(`${url}/policy`, undefined, 4);
+        console.info(`Policy found: ${url}/policy`);
+        validUrl = url;
+        break;
+      } catch (e) {
+        if (ApiErr.isNotFound(e) || ApiErr.isNetErr(e)) {
+          continue;
+        }
+        Catch.report(`Wkd.lookupEmail error retrieving policy file ${url}/policy: ${String(e)}`);
         return { pubkey: null, pgpClient: null };
       }
-      Catch.report(`Wkd.lookupEmail err: ${String(e)}`);
+    }
+    try {
+      binary = await Wkd.download(`${validUrl!}/${userPart}`, undefined, 4);
+    } catch (e) {
+      Catch.report(`Wkd.lookupEmail error retrieving key ${validUrl!}/${userPart}: ${String(e)}`);
       return { pubkey: null, pgpClient: null };
     }
-    const { keys: [key], errs } = await KeyUtil.readMany(binary);
-    if (errs.length || !key) {
+    const { keys: [key], errs } = await KeyUtil.readMany(binary!);
+    if (errs.length || !key || !key.emails.some(x => x.toLowerCase() === email.toLowerCase())) {
       return { pubkey: null, pgpClient: null };
     }
-    console.info(`Loaded Public Key from WKD for ${email}: ${url}`);
+    console.info(`Loaded Public Key from WKD for ${email}: ${validUrl!}`);
     let pubkey: string;
     try {
       pubkey = KeyUtil.armor(key);
