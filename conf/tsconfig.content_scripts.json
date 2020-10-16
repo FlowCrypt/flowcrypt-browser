@@ -27,10 +27,10 @@
   },
   "include": [
     "../extension/types/*.ts",
-    "../extension/js/content_scripts/**/*.ts"
+    "../extension/js/content_scripts/**/*.ts",
+    "../node_modules/sweetalert2/sweetalert2.d.ts"
   ],
   "exclude": [
-    "**/build/**",
-    "**/node_modules/**"
+    "**/build/**"
   ]
 }
