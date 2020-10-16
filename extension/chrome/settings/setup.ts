@@ -110,7 +110,7 @@ export class SetupView extends View {
     if (!this.orgRules.canCreateKeys()) {
       const forbidden = `${Lang.setup.creatingKeysNotAllowedPleaseImport} <a href="${Xss.escape(window.location.href)}">Back</a>`;
       Xss.sanitizeRender('#step_2a_manual_create, #step_2_easy_generating', `<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
-      $('.back').remove(); // back button would allow users to choose other options (eg create - not allowed)
+      $('#button-go-back').remove(); // back button would allow users to choose other options (eg create - not allowed)
     }
     if (this.orgRules.mustSubmitToAttester() || !this.orgRules.canSubmitPubToAttester()) {
       $('.remove_if_pubkey_submitting_not_user_configurable').remove();
@@ -136,7 +136,7 @@ export class SetupView extends View {
     BrowserMsg.listen(this.tabId);
     $('.action_send').attr('href', Google.webmailUrl(this.acctEmail));
     $('.action_show_help').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail, this.tabId!, '/chrome/settings/modules/help.htm')));
-    $('.back').off().click(this.setHandler(() => this.actionBackHandler()));
+    $('#button-go-back').off().click(this.setHandler(() => this.actionBackHandler()));
     $('#step_2_recovery .action_recover_account').click(this.setHandlerPrevent('double', () => this.setupRecoverKey.actionRecoverAccountHandler()));
     $('#step_4_more_to_recover .action_recover_remaining').click(this.setHandler(() => this.setupRecoverKey.actionRecoverRemainingKeysHandler()));
     $('.action_skip_recovery').click(this.setHandler(() => this.setupRecoverKey.actionSkipRecoveryHandler()));

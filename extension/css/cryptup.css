@@ -410,16 +410,21 @@ body#settings > div.profile-row .profile-img {
   vertical-align: middle;
 }
 
-body#settings > div#content .chevron-left {
+body#settings > div#content #button-go-back {
   position: absolute;
   left: 20px;
-  top: 43px;
-  width: 35px;
-  height: 20px;
-  color: #999;
+  top: 33px;
+  width: 42px;
+  height: 42px;
   cursor: pointer;
   opacity: 0.4;
   animation: fadeInRight 1s;
+  border: 0;
+  background: none;
+}
+
+body#settings > div#content #button-go-back img {
+  height: 20px;
 }
 
 body#settings > div.profile-row > .email-address {
