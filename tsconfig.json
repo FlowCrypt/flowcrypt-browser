@@ -72,11 +72,11 @@
     ]
   },
   "include": [
-    "./extension/**/*.ts"
+    "./extension/**/*.ts",
+    "./node_modules/sweetalert2/sweetalert2.d.ts"
   ],
   "exclude": [
     "./extension/js/content_scripts/**/*",
-    "**/build/**",
-    "**/node_modules/**"
+    "**/build/**"
   ]
 }
