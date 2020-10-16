@@ -586,7 +586,9 @@ body#settings > div#content.setup div#step_1_easy_or_manual .circle-i {
   margin-bottom: 35px;
 }
 body#settings > div#content.setup div#step_1_easy_or_manual > .col { opacity: 0.7; }
-body#settings > div#content.setup div#step_1_easy_or_manual > .col:hover { opacity: 1; }
+
+body#settings > div#content.setup div#step_1_easy_or_manual > .col:hover,
+body#settings > div#content.setup div#step_1_easy_or_manual > .col:focus-within { opacity: 1; }
 
 body#settings .signin_button {
   width: 220px;
