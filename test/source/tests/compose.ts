@@ -634,6 +634,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('00B0 1158 0796 9D75');
     }));
 
+    /**
+     * Waiting for wkd /policy file to have CORS
+     * Until then, for testing it would be possible to create a mock domain with custom OrgRules,
+     * which forbid lookup on Attester. Then we can switch test to human@flowcrypt.com knowing
+     * that the key must be retrieved from WKD.
+     */
     ava.default.failing('can lookup public key from WKD directly', testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'test-wkd@metacode.biz' }, 'should find pubkey from WKD directly');
