@@ -73,3 +73,13 @@ BROWSER_UNIT_TEST_NAME(`Wkd incorrect UID should fail`);
   }
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`Wkd should extract key for test-wkd@metacode.biz`);
+(async () => {
+  const wkd = new Wkd('flowcrypt.com');
+  const email = 'test-wkd@metacode.biz';
+  if (!(await wkd.lookupEmail(email)).pubkey) {
+    throw Error(`Wkd for ${email} didn't return a pubkey`);
+  }
+  return 'pass';
+})();
