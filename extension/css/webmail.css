@@ -135,8 +135,34 @@ body.cryptup_gmail.cryptup_gmail_new div.ade.appended span.cryptup_convo_button 
   zoom: 1.2;
 }
 
-/* buttons top navbar Gmail */
-body.cryptup_gmail div.action_finish_session img { padding: 0; }
+/* The 'End Pass Phrase Session' button */
+body.cryptup_gmail .action_finish_session {
+  position: fixed;
+  bottom: 3px;
+  left: 50%;
+  width: 300px;
+  margin-left: -30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  text-decoration: none;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 6px 0;
+  cursor: pointer;
+  z-index: 1;
+  border-radius: 3px;
+  opacity: 0.9;
+}
+
+body.cryptup_gmail .action_finish_session:hover {
+  opacity: 1;
+}
+
+body.cryptup_gmail .action_finish_session img {
+  height: 24px;
+  margin: 0 15px 0 -15px;
+}
 
 /* buttons body.cryptup_outlook */
 body.cryptup_outlook .cryptup_compose_button_container {
