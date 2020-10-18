@@ -645,7 +645,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.fillMsg(composePage, { to: 'test-wkd@metacode.biz' }, 'should find pubkey from WKD directly');
       await composePage.waitForContent('.email_address.has_pgp', 'test-wkd@metacode.biz');
       expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('92C4 E784 1B3A FF74');
-    }));
+    }, 'FAILING'));
 
     ava.default('timeouts when searching WKD - used to never time out', testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');

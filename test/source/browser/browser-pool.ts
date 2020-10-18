@@ -124,10 +124,10 @@ export class BrowserPool {
     });
   }
 
-  public withNewBrowserTimeoutAndRetry = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext, consts: Consts) => {
+  public withNewBrowserTimeoutAndRetry = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext, consts: Consts, attempts: number) => {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const attemptDebugHtmls: string[] = [];
-    t.totalAttempts = consts.ATTEMPTS;
+    t.totalAttempts = attempts;
     for (let attemptNumber = 1; attemptNumber <= consts.ATTEMPTS; attemptNumber++) {
       t.attemptNumber = attemptNumber;
       t.attemptText = `(attempt ${t.attemptNumber} of ${t.totalAttempts})`;
