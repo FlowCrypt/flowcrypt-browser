@@ -60,14 +60,15 @@ export class Wkd extends Api {
         if (ApiErr.isNotFound(e) || ApiErr.isNetErr(e)) {
           continue;
         }
-        Catch.report(`Wkd.lookupEmail error retrieving policy file ${url}/policy: ${String(e)}`);
         return { pubkey: null, pgpClient: null };
       }
     }
     try {
       binary = await Wkd.download(`${validUrl!}/${userPart}`, undefined, 4);
     } catch (e) {
-      Catch.report(`Wkd.lookupEmail error retrieving key ${validUrl!}/${userPart}: ${String(e)}`);
+      if (!ApiErr.isNotFound(e)) {
+        Catch.report(`Wkd.lookupEmail error retrieving key ${validUrl!}/${userPart}: ${String(e)}`);
+      }
       return { pubkey: null, pgpClient: null };
     }
     const { keys: [key], errs } = await KeyUtil.readMany(binary!);
