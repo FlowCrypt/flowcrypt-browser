@@ -781,14 +781,13 @@ body#settings .settings-border .key_list {
 }
 #settings.client > #banner > img.action_open_settings { cursor: pointer; }
 
-#settings.client > #banner > div.action_finish_session {
+#settings.client > #banner > .action_finish_session {
   height: 32px;
   margin-top: -6px;
   float: right;
   margin-left: 20px;
   cursor: pointer;
 }
-#settings.client > #banner > div.action_finish_session img { height: 32px; }
 #settings.client .attachments { margin-top: 12px; }
 
 #settings.client .attachments span.pgp_attachment {

@@ -31,7 +31,7 @@ export class Injector {
       'settings': '#does_not_have',
     },
     finishSesionBtnSel: {
-      gmail: 'div.gb_Je',
+      gmail: 'body',
       outlook: '#does_not_have',
       settings: '#settings > div.header'
     }
@@ -86,7 +86,8 @@ export class Injector {
       }
     }
     prependToElem.prepend(this.factory.btnEndPPSession(this.webmailName)) // xss-safe-factory
-      .find('.action_finish_session').click(Ui.event.prevent('double', async el => {
+      .find('.action_finish_session').click(Ui.event.prevent('double', async (el, event) => {
+        event?.preventDefault();
         for (const longid of await KeyStore.getLongidsThatCurrentlyHavePassPhraseInSession(acctEmail)) {
           await PassphraseStore.set('session', acctEmail, longid, undefined);
         }
