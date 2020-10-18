@@ -128,7 +128,7 @@ export class BrowserPool {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const attemptDebugHtmls: string[] = [];
     t.totalAttempts = attempts;
-    for (let attemptNumber = 1; attemptNumber <= consts.ATTEMPTS; attemptNumber++) {
+    for (let attemptNumber = 1; attemptNumber <= attempts; attemptNumber++) {
       t.attemptNumber = attemptNumber;
       t.attemptText = `(attempt ${t.attemptNumber} of ${t.totalAttempts})`;
       try {
