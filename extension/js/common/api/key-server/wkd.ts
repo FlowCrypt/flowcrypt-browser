@@ -51,43 +51,39 @@ export class Wkd extends Api {
     const userPart = `hu/${hu}?l=${encodeURIComponent(user)}`;
     const advancedUrl = `${this.protocol}://${advancedHost}/.well-known/openpgpkey/${directDomain}`;
     const directUrl = `${this.protocol}://${directHost}/.well-known/openpgpkey`;
-    let binary: Buf;
-    let validUrl: string;
-    for (const url of [advancedUrl, directUrl]) {
-      try {
-        await Wkd.download(`${url}/policy`, undefined, 4);
-        console.info(`Policy found: ${url}/policy`);
-        validUrl = url;
-        break;
-      } catch (e) {
-        if (ApiErr.isNotFound(e) || ApiErr.isNetErr(e)) {
-          continue;
-        }
-        return { pubkey: null, pgpClient: null };
-      }
-    }
-    try {
-      binary = await Wkd.download(`${validUrl!}/${userPart}`, undefined, 4);
-    } catch (e) {
-      if (!ApiErr.isNotFound(e)) {
-        Catch.report(`Wkd.lookupEmail error retrieving key ${validUrl!}/${userPart}: ${String(e)}`);
-      }
-      return { pubkey: null, pgpClient: null };
-    }
+    const binary = await this.urlLookup(advancedUrl, userPart) || await this.urlLookup(directUrl, userPart);
     const { keys: [key], errs } = await KeyUtil.readMany(binary!);
     if (errs.length || !key || !key.emails.some(x => x.toLowerCase() === email.toLowerCase())) {
       return { pubkey: null, pgpClient: null };
     }
-    console.info(`Loaded Public Key from WKD for ${email}: ${validUrl!}`);
-    let pubkey: string;
+    // if recipient uses same domain, we assume they use flowcrypt
+    const pgpClient = this.myOwnDomain === recipientDomain ? 'flowcrypt' : 'pgp-other';
     try {
-      pubkey = KeyUtil.armor(key);
+      const pubkey = KeyUtil.armor(key);
+      return { pubkey, pgpClient };
     } catch (e) {
       return { pubkey: null, pgpClient: null };
     }
-    // if recipient uses same domain, we assume they use flowcrypt
-    const pgpClient = this.myOwnDomain === recipientDomain ? 'flowcrypt' : 'pgp-other';
-    return { pubkey, pgpClient };
+  }
+
+  private urlLookup = async (methodUrlBase: string, userPart: string): Promise<Buf | undefined> => {
+    try {
+      await Wkd.download(`${methodUrlBase}/policy`, undefined, 4);
+    } catch (e) {
+      return;
+    }
+    try {
+      const r = await Wkd.download(`${methodUrlBase}/${userPart}`, undefined, 4);
+      if (r.length) {
+        console.info(`Loaded WKD url ${methodUrlBase}/${userPart} and will try to extract Public Keys`);
+      }
+      return r;
+    } catch (e) {
+      if (!ApiErr.isNotFound(e)) {
+        Catch.report(`Wkd.lookupEmail error retrieving key ${methodUrlBase}/${userPart}: ${String(e)}`);
+      }
+      return;
+    }
   }
 
 }
