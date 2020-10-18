@@ -124,11 +124,11 @@ export class BrowserPool {
     });
   }
 
-  public withNewBrowserTimeoutAndRetry = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext, consts: Consts, attempts: number) => {
+  public withNewBrowserTimeoutAndRetry = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext, consts: Consts, flag?: 'FAILING') => {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const attemptDebugHtmls: string[] = [];
-    t.totalAttempts = attempts;
-    for (let attemptNumber = 1; attemptNumber <= attempts; attemptNumber++) {
+    t.totalAttempts = flag === 'FAILING' ? 1 : consts.ATTEMPTS;
+    for (let attemptNumber = 1; attemptNumber <= t.totalAttempts; attemptNumber++) {
       t.attemptNumber = attemptNumber;
       t.attemptText = `(attempt ${t.attemptNumber} of ${t.totalAttempts})`;
       try {
@@ -148,17 +148,19 @@ export class BrowserPool {
           await browser.close();
         }
       } catch (err) {
-        this.processTestError(err, t, attemptDebugHtmls);
+        this.processTestError(err, t, attemptDebugHtmls, flag);
       }
     }
   }
 
-  private processTestError = (err: any, t: AvaContext, attemptHtmls: string[]) => {
+  private processTestError = (err: any, t: AvaContext, attemptHtmls: string[], flag?: 'FAILING') => {
     t.retry = undefined;
     if (t.attemptNumber! < t.totalAttempts!) {
       t.log(`${t.attemptText} Retrying: ${String(err)}`);
     } else {
-      addDebugHtml(`<h1>Test: ${Util.htmlEscape(t.title)}</h1>${attemptHtmls.join('')}`);
+      if (flag === 'FAILING') { // don't debug known failures
+        addDebugHtml(`<h1>Test: ${Util.htmlEscape(t.title)}</h1>${attemptHtmls.join('')}`);
+      }
       t.log(`${t.attemptText} Failed:   ${err instanceof Error ? err.stack : String(err)}`);
       t.fail(`[ALL RETRIES FAILED for ${t.title}]`);
     }

@@ -59,13 +59,12 @@ ava.before('set config and mock api', async t => {
 
 const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>, flag?: 'FAILING'): ava.Implementation<{}> => {
   return async (t: AvaContext) => {
-    const attempts = flag === 'FAILING' ? 1 : consts.ATTEMPTS; // don't retry tests we know are failing
     await browserPool.withNewBrowserTimeoutAndRetry(async (t, browser) => {
       if (acct) {
         await BrowserRecipe.setUpCommonAcct(t, browser, acct);
       }
       await cb(t, browser);
-    }, t, consts, attempts);
+    }, t, consts, flag);
     t.pass();
   };
 };
