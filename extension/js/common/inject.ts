@@ -68,7 +68,7 @@ export class Injector {
       (window as unknown as ContentScriptWindow).TrySetDestroyableTimeout(() => this.btns(), 300);
     } else {
       if (this.S.now('compose_button').length === 0) {
-        const container = this.S.now('compose_button_container').prepend(this.factory.btnCompose(this.webmailName)); // xss-safe-factory
+        const container = this.S.now('compose_button_container').first().prepend(this.factory.btnCompose(this.webmailName)); // xss-safe-factory
         container.find(this.S.sel('compose_button')).click(Ui.event.handle(() => this.openComposeWin()));
       }
     }

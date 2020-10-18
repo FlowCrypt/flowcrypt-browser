@@ -51,7 +51,7 @@ body.cryptup_outlook div.webmail_notifications div.webmail_notification { margin
 }
 
 /* buttons body.cryptup_inbox */
-body.cryptup_gmail_new .new_message_button::before { background-image: url("/img/logo/logo.svg"); }
+body.cryptup_gmail_new .new_message_button::before { background-image: url("/img/logo/logo.svg") !important; }
 
 body.cryptup_inbox div.new_message_button {
   position: relative;

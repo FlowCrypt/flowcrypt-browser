@@ -137,7 +137,7 @@ CciXuhqnLwoVF5/uXMYffVtfl/OU+w==
           longid: '123',
         }
       });
-    }));
+    }, 'FAILING'));
 
     ava.default('setup - import key - two e-mails on the screen', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
