@@ -51,8 +51,17 @@ export class Wkd extends Api {
     const userPart = `hu/${hu}?l=${encodeURIComponent(user)}`;
     const advancedUrl = `${this.protocol}://${advancedHost}/.well-known/openpgpkey/${directDomain}`;
     const directUrl = `${this.protocol}://${directHost}/.well-known/openpgpkey`;
-    const binary = await this.urlLookup(advancedUrl, userPart) || await this.urlLookup(directUrl, userPart);
-    const { keys: [key], errs } = await KeyUtil.readMany(binary!);
+    let response = await this.urlLookup(advancedUrl, userPart);
+    if (!response.buf && response.hasPolicy) {
+      return { pubkey: null, pgpClient: null }; // do not retry direct if advanced had a policy file
+    }
+    if (!response.buf) {
+      response = await this.urlLookup(directUrl, userPart);
+    }
+    if (!response.buf) {
+      return { pubkey: null, pgpClient: null }; // do not retry direct if advanced had a policy file
+    }
+    const { keys: [key], errs } = await KeyUtil.readMany(response.buf);
     if (errs.length || !key || !key.emails.some(x => x.toLowerCase() === email.toLowerCase())) {
       return { pubkey: null, pgpClient: null };
     }
@@ -66,23 +75,23 @@ export class Wkd extends Api {
     }
   }
 
-  private urlLookup = async (methodUrlBase: string, userPart: string): Promise<Buf | undefined> => {
+  private urlLookup = async (methodUrlBase: string, userPart: string): Promise<{ hasPolicy: boolean, buf?: Buf }> => {
     try {
       await Wkd.download(`${methodUrlBase}/policy`, undefined, 4);
     } catch (e) {
-      return;
+      return { hasPolicy: false };
     }
     try {
-      const r = await Wkd.download(`${methodUrlBase}/${userPart}`, undefined, 4);
-      if (r.length) {
+      const buf = await Wkd.download(`${methodUrlBase}/${userPart}`, undefined, 4);
+      if (buf.length) {
         console.info(`Loaded WKD url ${methodUrlBase}/${userPart} and will try to extract Public Keys`);
       }
-      return r;
+      return { hasPolicy: true, buf };
     } catch (e) {
       if (!ApiErr.isNotFound(e)) {
         Catch.report(`Wkd.lookupEmail error retrieving key ${methodUrlBase}/${userPart}: ${String(e)}`);
       }
-      return;
+      return { hasPolicy: true };
     }
   }
 
