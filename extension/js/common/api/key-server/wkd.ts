@@ -29,10 +29,13 @@ export class Wkd extends Api {
 
   public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
     const parts = email.split('@');
-    if (parts.length > 2) {
+    if (parts.length !== 2) {
       return { pubkey: null, pgpClient: null };
     }
     const [user, recipientDomain] = parts;
+    if (!user || !recipientDomain) {
+      return { pubkey: null, pgpClient: null };
+    }
     if (!opgp) {
       // pgp_block.htm does not have openpgp loaded
       // the particular usecase (auto-loading pubkeys to verify signatures) is not that important,
