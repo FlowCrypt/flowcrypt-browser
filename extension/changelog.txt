@@ -1,5 +1,7 @@
 <div class="lightboxed">
 
+version 7.9.6 on Oct 19, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/425?closed=1" target="_blank">Preview attachments pass phrase</a>
+
 version 7.9.5 on Oct 19, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/424?closed=1" target="_blank">Wkd Advanced Lookup, UTF files</a>
 
 version 7.9.4 on Oct 11, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/423?closed=1" target="_blank">PDF Preview controls</a>
