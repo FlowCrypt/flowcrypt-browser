@@ -2495,7 +2495,7 @@ body.attachment .file-format-holder img#file-format {
   font-weight: bold;
 }
 
-#attachment-preview-container.attachment-preview-txt {
+#attachment-preview-container .attachment-preview-txt {
   background: white;
   padding: 40px;
   box-sizing: border-box;
