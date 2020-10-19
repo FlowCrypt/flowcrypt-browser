@@ -10,6 +10,7 @@ import { WellKnownHostMeta } from '../../js/common/api/account-servers/well-know
 import { Mime } from '../../js/common/core/mime.js';
 import { Att } from '../../js/common/core/att.js';
 import { Wkd } from '../../js/common/api/key-server/wkd.js';
+import { MsgUtil } from '../../js/common/core/crypto/pgp/msg-util.js';
 
 /**
  * importing all libs that are tested in ci tests
@@ -23,7 +24,8 @@ const libs: any[] = [
   Buf,
   KeyUtil,
   Mime,
-  Wkd
+  Wkd,
+  MsgUtil
 ];
 
 // add them to global scope so ci can use them
