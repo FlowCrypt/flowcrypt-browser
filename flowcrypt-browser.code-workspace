@@ -43,7 +43,8 @@
     "recommendations": [
       "dbaeumer.vscode-eslint",
       "hex-ci.stylelint-plus",
-      "ms-vscode.vscode-typescript-tslint-plugin"
+      "ms-vscode.vscode-typescript-tslint-plugin",
+      "philhindle.errorlens"
     ]
   }
 }
