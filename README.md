@@ -54,6 +54,17 @@ $ npm run-script build
 
 Now you can find your built project in `build/chrome-consumer` and `build/firefox-consumer`
 
-[FlowCrypt Project Structure and Overview](https://github.com/FlowCrypt/flowcrypt-browser/wiki/FlowCrypt-Project-Structure-and-Overview)
+### Note for Mac OS users
 
-[FlowCrypt TypeScript Style Guide](https://github.com/FlowCrypt/flowcrypt-browser/wiki/FlowCrypt-TypeScript-Style-Guide)
+In order for `npm run-script build` to work you have to:
+
+1) Upgrade `bash` and make the new version default: https://www.shell-tips.com/mac/upgrade-bash/
+
+2) Install GNU `cp` util and make it default: https://stackoverflow.com/a/40431200/3049064
+
+
+## Other guides:
+
+- [FlowCrypt Project Structure and Overview](https://github.com/FlowCrypt/flowcrypt-browser/wiki/FlowCrypt-Project-Structure-and-Overview)
+
+- [FlowCrypt TypeScript Style Guide](https://github.com/FlowCrypt/flowcrypt-browser/wiki/FlowCrypt-TypeScript-Style-Guide)
