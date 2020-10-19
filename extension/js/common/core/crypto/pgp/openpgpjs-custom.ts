@@ -14,6 +14,7 @@ if (typeof opgp !== 'undefined') { // in certain environments, eg pgp_block.htm,
   opgp.config.versionstring = `FlowCrypt Email Encryption ${VERSION}`;
   opgp.config.commentstring = 'Seamlessly send and receive encrypted email';
   opgp.config.ignore_mdc_error = true; // we manually check for missing MDC and show loud warning to user (no auto-decrypt)
+  opgp.config.allow_insecure_decryption_with_signing_keys = false; // may get later over-written using OrgRules for some clients
   // openpgp.config.require_uid_self_cert = false;
   const getPrvPackets = (k: OpenPGP.key.Key) => {
     if (!k.isPrivate()) {

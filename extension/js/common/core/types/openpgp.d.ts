@@ -578,6 +578,7 @@ declare namespace OpenPGP {
     let commentstring: string;
     let keyserver: string;
     let node_store: string;
+    let allow_insecure_decryption_with_signing_keys: boolean;
   }
 
   export namespace crypto {
