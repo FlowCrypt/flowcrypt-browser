@@ -242,14 +242,16 @@ export class SetupView extends View {
       await Ui.modal.error('Not submitting public key to Attester - disabled for your org');
       return;
     }
-    this.pubLookup.attester.testWelcome(this.acctEmail, armoredPubkey).catch(ApiErr.reportIfSignificant);
+    const pub = await KeyUtil.parse(armoredPubkey);
+    if (pub.usableForEncryption) {
+      this.pubLookup.attester.testWelcome(this.acctEmail, armoredPubkey).catch(ApiErr.reportIfSignificant);
+    }
     let addresses;
     if (this.submitKeyForAddrs.length && options.submit_all) {
       addresses = [...this.submitKeyForAddrs];
     } else {
       addresses = [this.acctEmail];
     }
-    const pub = await KeyUtil.parse(armoredPubkey);
     if (this.acctEmailAttesterPubId && this.acctEmailAttesterPubId !== pub.id) {
       // already submitted another pubkey for this email
       // todo - offer user to fix it up
