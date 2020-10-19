@@ -62,9 +62,7 @@ In order for `npm run-script build` to work you have to:
 
 2) Install GNU `cp` util and make it default: https://stackoverflow.com/a/40431200/3049064
 
-
-## Other guides:
+## Other guides
 
 - [FlowCrypt Project Structure and Overview](https://github.com/FlowCrypt/flowcrypt-browser/wiki/FlowCrypt-Project-Structure-and-Overview)
-
 - [FlowCrypt TypeScript Style Guide](https://github.com/FlowCrypt/flowcrypt-browser/wiki/FlowCrypt-TypeScript-Style-Guide)
