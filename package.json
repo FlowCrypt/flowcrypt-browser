@@ -7,7 +7,7 @@
   },
   "devDependencies": {
     "@types/chai": "4.2.13",
-    "@types/chrome": "0.0.124",
+    "@types/chrome": "0.0.125",
     "@types/dompurify": "2.0.4",
     "@types/jquery": "3.5.3",
     "@types/mailparser": "2.4.0",
