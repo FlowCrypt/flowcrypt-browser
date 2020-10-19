@@ -86,8 +86,7 @@ export class Injector {
       }
     }
     prependToElem.prepend(this.factory.btnEndPPSession(this.webmailName)) // xss-safe-factory
-      .find('.action_finish_session').click(Ui.event.prevent('double', async (el, event) => {
-        event?.preventDefault();
+      .find('.action_finish_session').click(Ui.event.prevent('double', async (el) => {
         for (const longid of await KeyStore.getLongidsThatCurrentlyHavePassPhraseInSession(acctEmail)) {
           await PassphraseStore.set('session', acctEmail, longid, undefined);
         }
