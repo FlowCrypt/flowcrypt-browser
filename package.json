@@ -6,8 +6,8 @@
     "graceful-fs": "4.1.13"
   },
   "devDependencies": {
-    "@types/chai": "4.2.13",
     "@types/chrome": "0.0.125",
+    "@types/chai": "4.2.14",
     "@types/dompurify": "2.0.4",
     "@types/jquery": "3.5.3",
     "@types/mailparser": "2.4.0",
