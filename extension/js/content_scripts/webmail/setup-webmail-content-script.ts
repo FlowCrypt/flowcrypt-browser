@@ -149,6 +149,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       if (!$('#cryptup_dialog').length) {
         $('body').append(factory.dialogPassphrase(longids, type)) // xss-safe-factory;
           .click(Ui.event.handle(e => { // click on the area outside the iframe
+            BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
             $('#cryptup_dialog').remove();
           }));
       }
