@@ -87,7 +87,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       this.renderReplySuccessMimeAtts(this.view.inputModule.extractAttachments());
     } else {
       Xss.sanitizeRender(repliedBodyEl, Str.escapeTextAsRenderableHtml(this.view.inputModule.extract('text', 'input_text', 'SKIP-ADDONS')));
-      this.renderReplySuccessAtts(msg.atts, msgId);
+      this.renderReplySuccessAtts(msg.atts, msgId, this.view.sendBtnModule.popover.choices.encrypt);
     }
     const t = new Date();
     const time = ((t.getHours() !== 12) ? (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
@@ -338,13 +338,13 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
 
-  private renderReplySuccessAtts = (atts: Att[], msgId: string) => {
+  private renderReplySuccessAtts = (atts: Att[], msgId: string, isEncrypted: boolean) => {
     const hideAttTypes = this.view.sendBtnModule.popover.choices.richtext ? ['hidden', 'encryptedMsg', 'signature', 'publicKey'] : ['publicKey'];
     const renderableAtts = atts.filter(att => !hideAttTypes.includes(att.treatAs()));
     if (renderableAtts.length) {
       this.view.S.cached('replied_attachments').html(renderableAtts.map(att => { // xss-safe-factory
         att.msgId = msgId;
-        return this.view.factory!.embeddedAtta(att, true, this.view.parentTabId);
+        return this.view.factory!.embeddedAtta(att, isEncrypted, this.view.parentTabId);
       }).join('')).css('display', 'block');
     }
   }

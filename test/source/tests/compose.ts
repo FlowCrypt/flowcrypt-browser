@@ -447,6 +447,21 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
+    ava.default('compose - send signed only message with attachment and make sure it can be previewed', testWithBrowser('compose', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Testing signed only message with attachment',
+        { richtext: false, sign: true, encrypt: false });
+      const fileInput = await composePage.target.$('input[type=file]');
+      await fileInput!.uploadFile('test/samples/small.png');
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      const attachment = await composePage.getFrame(['attachment.htm', 'name=small.png']);
+      await attachment.waitForSelTestState('ready');
+      await attachment.click('body');
+      const attachmentPreviewImage = await composePage.getFrame(['attachment_preview.htm']);
+      await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
+      await composePage.close();
+    }));
+
     ava.default('compose - send btn should be disabled while encrypting/sending', testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, '');
