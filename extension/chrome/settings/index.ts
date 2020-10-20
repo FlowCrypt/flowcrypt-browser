@@ -258,7 +258,11 @@ View.run(class SettingsView extends View {
         if (privateKeys.length > 4) {
           $('.key_list').css('overflow-y', 'scroll');
         }
-        await this.addKeyRowsHtml(privateKeys);
+        try {
+          await this.addKeyRowsHtml(privateKeys);
+        } catch (e) {
+          console.error(e)
+        }
       } else {
         this.displayOrig('.show_if_setup_not_done');
         $('.hide_if_setup_not_done').css('display', 'none');
