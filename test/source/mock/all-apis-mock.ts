@@ -12,6 +12,7 @@ import { mockGoogleEndpoints } from './google/google-endpoints';
 import { mockKeyManagerEndpoints } from './key-manager/key-manager-endpoints';
 import { mockWellKnownHostMetaEndpoints } from './host-meta/host-meta-endpoints';
 import { mockWkdEndpoints } from './wkd/wkd-endpoints';
+import { mockSksEndpoints } from './sks/sks-endpoints';
 
 export type HandlersDefinition = Handlers<{ query: { [k: string]: string; }; body?: unknown; }, unknown>;
 
@@ -31,6 +32,7 @@ export const startAllApisMock = async (logger: (line: string) => void) => {
     ...mockKeyManagerEndpoints,
     ...mockWellKnownHostMetaEndpoints,
     ...mockWkdEndpoints,
+    ...mockSksEndpoints,
     '/favicon.ico': async () => '',
   });
   await api.listen(8001);
