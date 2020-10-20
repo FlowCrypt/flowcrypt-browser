@@ -384,6 +384,7 @@ View.run(class SettingsView extends View {
     } catch (e) {
       if (ApiErr.isAuthPopupNeeded(e) || ApiErr.isAuthErr(e)) {
         $('#status-row #status_google').text(`g:?:auth`).addClass('bad');
+        console.log('reconect confirm')
         if (await Ui.modal.confirm(`FlowCrypt must be re-connected to your Google account.`)) {
           await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail);
         }
