@@ -138,6 +138,16 @@ export class Ui {
   };
 
   public static modal = {
+    html: async (html: string): Promise<void> => {
+      await Ui.swal().fire({
+        html: Xss.htmlSanitize(html),
+        allowOutsideClick: false,
+        customClass: {
+          popup: 'ui-modal-info',
+          confirmButton: 'ui-modal-info-confirm',
+        },
+      });
+    },
     info: async (text: string): Promise<void> => {
       await Ui.swal().fire({
         html: Xss.escape(text).replace(/\n/g, '<br>'),
