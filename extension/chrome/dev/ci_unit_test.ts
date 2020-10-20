@@ -11,6 +11,8 @@ import { Mime } from '../../js/common/core/mime.js';
 import { Att } from '../../js/common/core/att.js';
 import { Wkd } from '../../js/common/api/key-server/wkd.js';
 import { MsgUtil } from '../../js/common/core/crypto/pgp/msg-util.js';
+import { Sks } from '../../js/common/api/key-server/sks.js';
+import { Ui } from '../../js/common/browser/ui.js';
 
 /**
  * importing all libs that are tested in ci tests
@@ -25,7 +27,9 @@ const libs: any[] = [
   KeyUtil,
   Mime,
   Wkd,
-  MsgUtil
+  Sks,
+  MsgUtil,
+  Ui
 ];
 
 // add them to global scope so ci can use them
