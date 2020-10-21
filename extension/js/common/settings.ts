@@ -277,8 +277,15 @@ export class Settings {
           window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: response.acctEmail, idToken: response.id_token });
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
-        const html = await Api.ajax({ url: '/chrome/settings/modules/auth_denied.htm' }, Catch.stackTrace()) as string; // tslint:disable-line:no-direct-ajax
-        await Ui.modal.html(html);
+        const authDeniedHtml = await Api.ajax({ url: '/chrome/settings/modules/auth_denied.htm' }, Catch.stackTrace()) as string; // tslint:disable-line:no-direct-ajax
+        const html = `
+            ${authDeniedHtml}
+            <h3>Would you like to proceed to the permissions screen again?</h3>
+          `;
+        const userResponse = await Ui.modal.confirm(html, true);
+        if (userResponse) {
+          await GoogleAuth.newAuthPopup({ acctEmail, scopes });
+        }
       } else {
         Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
         await Ui.modal.error(`Failed to connect to Gmail(new). If this happens repeatedly, please write us at human@flowcrypt.com to fix it.\n\n[${response.result}] ${response.error}`);

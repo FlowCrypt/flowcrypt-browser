@@ -138,16 +138,6 @@ export class Ui {
   };
 
   public static modal = {
-    html: async (html: string): Promise<void> => {
-      await Ui.swal().fire({
-        html: Xss.htmlSanitize(html),
-        allowOutsideClick: false,
-        customClass: {
-          popup: 'ui-modal-info',
-          confirmButton: 'ui-modal-info-confirm',
-        },
-      });
-    },
     info: async (text: string): Promise<void> => {
       await Ui.swal().fire({
         html: Xss.escape(text).replace(/\n/g, '<br>'),
@@ -181,9 +171,11 @@ export class Ui {
         },
       });
     },
-    confirm: async (text: string): Promise<boolean> => {
+    confirm: async (text: string, isHTML: boolean = false, footer?: string): Promise<boolean> => {
+      const html = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
       const { dismiss } = await Ui.swal().fire({
-        html: Xss.escape(text).replace(/\n/g, '<br>'),
+        html,
+        footer: footer ? Xss.htmlSanitize(footer) : '',
         allowOutsideClick: false,
         showCancelButton: true,
         customClass: {
