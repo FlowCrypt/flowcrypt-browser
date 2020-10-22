@@ -95,6 +95,8 @@ nmusEeYtrrMytL4oUohBVZk=
 -----END PGP PUBLIC KEY BLOCK-----
 `;
 
+// todo - add a not found test with: throw new HttpClientErr('Pubkey not found', 404);
+
 export const mockWkdEndpoints: HandlersDefinition = {
   '/.well-known/openpgpkey/hu/ihyath4noz8dsckzjbuyqnh4kbup6h4i?l=john.doe': async () => {
     return johnDoe1; // direct for john.doe@127.0.0.1

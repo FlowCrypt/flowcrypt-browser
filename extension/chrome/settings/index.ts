@@ -395,8 +395,7 @@ View.run(class SettingsView extends View {
   private renderSubscriptionStatusHeader = (subscription: Subscription) => {
     $('#status-row #status_subscription').text(`s:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
     if (subscription.active) {
-      const showAcct = async () => await Settings.renderSubPage(this.acctEmail, this.tabId, '/chrome/settings/modules/account.htm');
-      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(this.setHandler(showAcct)).css('cursor', 'pointer');
+      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block');
       if (subscription.method === 'trial') {
         $('.logo-row .subscription .expire').text(subscription.expire ? ('trial ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
         $('.logo-row .subscription .upgrade').css('display', 'inline-block');
