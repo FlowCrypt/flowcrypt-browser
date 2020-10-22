@@ -447,6 +447,29 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
+    ava.default('compose - reply - signed message with attachment - can be downloaded after send', testWithBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=15f7f5face7101db&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=15f7f5face7101db';
+      const attachmentFilename = 'small.txt';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
+      await composePage.waitAll('@action-send');
+      await Util.sleep(0.5);
+      expect(await composePage.read('@action-send')).to.eq('Sign and Send');
+      await composePage.waitAndClick('@action-show-options-popover');
+      await composePage.waitAll(['@action-toggle-sign', '@action-toggle-encrypt', '@icon-toggle-sign-tick']);
+      await composePage.notPresent(['@icon-toggle-encrypt-tick']); // response to signed message should not be auto-encrypted
+      const fileInput = await composePage.target.$('input[type=file]');
+      await fileInput!.uploadFile(`test/samples/${attachmentFilename}`);
+      await composePage.waitAndClick('@action-send', { delay: 1 });
+      const attachment = await composePage.getFrame(['attachment.htm', `name=${attachmentFilename}`]);
+      await attachment.waitForSelTestState('ready');
+      const fileText = await composePage.awaitDownloadTriggeredByClicking(async () => {
+        await attachment.click('#download');
+      });
+      expect(fileText.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
+      await composePage.close();
+    }));
+
     ava.default('compose - send btn should be disabled while encrypting/sending', testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, '');

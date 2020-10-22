@@ -361,12 +361,16 @@ abstract class ControllableBase {
     throw Error(`Frame not found within ${timeout}s: ${urlMatchables.join(',')}`);
   }
 
-  public awaitDownloadTriggeredByClicking = async (selector: string): Promise<Buffer> => {
+  public awaitDownloadTriggeredByClicking = async (selector: string | (() => Promise<void>)): Promise<Buffer> => {
     const resolvePromise: Promise<Buffer> = (async () => {
       const downloadPath = path.resolve(__dirname, 'download', Util.lousyRandom());
       mkdirp.sync(downloadPath);
       await (this.target as any)._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
-      await this.waitAndClick(selector);
+      if (typeof selector === 'string') {
+        await this.waitAndClick(selector);
+      } else {
+        await selector();
+      }
       const filename = await this.waitForFileToDownload(downloadPath);
       return fs.readFileSync(path.resolve(downloadPath, filename));
     })();
