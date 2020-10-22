@@ -19,8 +19,7 @@ export class OpenPGPKey {
   }
 
   public static parseMany = async (text: string): Promise<Key[]> => {
-    const result = await opgp?.key?.readArmored(text);
-    if (!result) return []
+    const result = await opgp.key.readArmored(text);
     if (result.err) {
       throw new Error('Cannot parse OpenPGP key: ' + result.err + ' for: ' + text);
     }
