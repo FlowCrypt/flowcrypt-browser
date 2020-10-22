@@ -447,8 +447,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default('compose - reply - signed message with attachment - can be previewed after send', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('compose - reply - signed message with attachment - can be downloaded after send', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=15f7f5face7101db&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=15f7f5face7101db';
+      const attachmentFilename = 'small.txt';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
       await composePage.waitAll('@action-send');
@@ -458,13 +459,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitAll(['@action-toggle-sign', '@action-toggle-encrypt', '@icon-toggle-sign-tick']);
       await composePage.notPresent(['@icon-toggle-encrypt-tick']); // response to signed message should not be auto-encrypted
       const fileInput = await composePage.target.$('input[type=file]');
-      await fileInput!.uploadFile('test/samples/small.png');
+      await fileInput!.uploadFile(`test/samples/${attachmentFilename}`);
       await composePage.waitAndClick('@action-send', { delay: 1 });
-      const attachment = await composePage.getFrame(['attachment.htm', 'name=small.png']);
+      const attachment = await composePage.getFrame(['attachment.htm', `name=${attachmentFilename}`]);
       await attachment.waitForSelTestState('ready');
-      await attachment.click('body');
-      const attachmentPreviewImage = await composePage.getFrame(['attachment_preview.htm']);
-      await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
+      const fileText = await composePage.awaitDownloadTriggeredByClicking(async () => {
+        await attachment.click('#download');
+      });
+      expect(fileText.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
       await composePage.close();
     }));
 
