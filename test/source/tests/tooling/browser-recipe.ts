@@ -13,10 +13,9 @@ export class BrowserRecipe {
 
   public static openSettingsLoginButCloseOauthWindowBeforeGrantingPermission = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
     const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
-    const oauthPopup0 = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
-    await OauthPageRecipe.google(t, oauthPopup0, acctEmail, 'close');
-    // dialog shows up with permission explanation
-    await SettingsPageRecipe.closeDialog(settingsPage);
+    const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
+    await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'close');
+    await settingsPage.waitAndRespondToModal('confirm', 'cancel', 'Explaining FlowCrypt webmail permissions');
     return settingsPage;
   }
 

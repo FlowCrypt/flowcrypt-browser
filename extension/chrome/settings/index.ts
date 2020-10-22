@@ -190,9 +190,7 @@ View.run(class SettingsView extends View {
     }));
     $('#status-row #status_google').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'google_account' })));
     $('#status-row #status_local_store').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'local_store' })));
-    $('[data-swal-page]').click(this.setHandler(async (target) => {
-      await Ui.modal.page($(target).data('swal-page') as string);
-    }));
+    Ui.activateModalPageLinkTags();
   }
 
   private accountsMenuKeydownHandler = (e: JQuery.Event<HTMLElement, null>): void => {
@@ -258,11 +256,7 @@ View.run(class SettingsView extends View {
         if (privateKeys.length > 4) {
           $('.key_list').css('overflow-y', 'scroll');
         }
-        try {
-          await this.addKeyRowsHtml(privateKeys);
-        } catch (e) {
-          console.error(e)
-        }
+        await this.addKeyRowsHtml(privateKeys);
       } else {
         this.displayOrig('.show_if_setup_not_done');
         $('.hide_if_setup_not_done').css('display', 'none');

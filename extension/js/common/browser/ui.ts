@@ -147,6 +147,7 @@ export class Ui {
           confirmButton: 'ui-modal-info-confirm',
         },
       });
+      Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
     },
     warning: async (text: string, footer?: string): Promise<void> => {
       await Ui.swal().fire({
@@ -158,6 +159,7 @@ export class Ui {
           confirmButton: 'ui-modal-warning-confirm',
         },
       });
+      Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
     },
     error: async (text: string, isHTML: boolean = false, footer?: string): Promise<void> => {
       text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
@@ -170,10 +172,15 @@ export class Ui {
           confirmButton: 'ui-modal-error-confirm',
         },
       });
+      Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
     },
+    /**
+     * Presents a modal where user can respond with confirm or cancel.
+     * Awaiting this will give you the users choice as a boolean.
+     */
     confirm: async (text: string, isHTML: boolean = false, footer?: string): Promise<boolean> => {
       const html = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
-      const { dismiss } = await Ui.swal().fire({
+      const userResponsePromise = Ui.swal().fire({
         html,
         footer: footer ? Xss.htmlSanitize(footer) : '',
         allowOutsideClick: false,
@@ -184,10 +191,12 @@ export class Ui {
           cancelButton: 'ui-modal-confirm-cancel',
         },
       });
+      Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
+      const { dismiss } = await userResponsePromise;
       return typeof dismiss === 'undefined';
     },
     confirmWithCheckbox: async (label: string, html: string = ''): Promise<boolean> => {
-      const { dismiss } = await Ui.swal().fire({
+      const userResponsePromise = Ui.swal().fire({
         html,
         input: 'checkbox',
         inputPlaceholder: label,
@@ -207,6 +216,8 @@ export class Ui {
           });
         }
       });
+      Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
+      const { dismiss } = await userResponsePromise;
       return typeof dismiss === 'undefined';
     },
     page: async (htmlUrl: string, replaceNewlines = false): Promise<void> => {
@@ -229,6 +240,7 @@ export class Ui {
           popup: 'ui-modal-iframe'
         }
       });
+      Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
     },
     iframe: async (iframeUrl: string, iframeWidth: number, iframeHeight: number): Promise<void> => {
       await Ui.swal().fire({
@@ -282,7 +294,14 @@ export class Ui {
     },
   };
 
+
   public static testCompatibilityLink = '<a href="/chrome/settings/modules/compatibility.htm" target="_blank">Test your OpenPGP key compatibility</a>';
+
+  public static activateModalPageLinkTags = () => {
+    $('[data-swal-page]').click(Ui.event.handle(async (target) => {
+      await Ui.modal.page($(target).data('swal-page') as string);
+    }));
+  }
 
   public static retryLink = (caption: string = 'retry') => {
     return `<a href="${Xss.escape(window.location.href)}" data-test="action-retry-by-reloading">${Xss.escape(caption)}</a>`;
