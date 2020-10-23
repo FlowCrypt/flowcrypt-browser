@@ -17,6 +17,7 @@ export const acctsWithoutMockData = [
   'put.key@key-manager-autogen.flowcrypt.com',
   'get.error@key-manager-autogen.flowcrypt.com',
   'put.error@key-manager-autogen.flowcrypt.com',
+  'two.keys@key-manager-autogen.flowcrypt.com',
   'reject.client.keypair@key-manager-autogen.flowcrypt.com',
   'fail@key-manager-server-offline.flowcrypt.com',
   'user@key-manager-no-pub-lookup.flowcrypt.com',

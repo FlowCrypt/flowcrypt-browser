@@ -13,6 +13,7 @@ import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { TestUrls } from './../browser/test-urls';
 import { TestVariant } from './../util';
 import { expect } from 'chai';
+import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 
 // tslint:disable:no-blank-lines-func
 
@@ -103,6 +104,18 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await settingsPage.page.waitForNavigation({ waitUntil: 'networkidle0' });
       await Util.sleep(1);
       await settingsPage.waitAll('@action-open-add-key-page');
+      await settingsPage.notPresent('@action-remove-key');
+    }));
+
+    ava.default('settings - my key page - remove button should be hidden when using key manager', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'two.keys@key-manager-autogen.flowcrypt.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoKeygen(settingsPage);
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      // check imported key at index 1
+      const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-1`, ['my_key.htm', 'placement=settings']);
+      await Util.sleep(1);
+      await myKeyFrame.waitAll('@content-fingerprint');
       await settingsPage.notPresent('@action-remove-key');
     }));
 

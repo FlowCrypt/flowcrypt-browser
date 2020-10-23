@@ -419,13 +419,19 @@ View.run(class SettingsView extends View {
 
   private addKeyRowsHtml = async (privateKeys: KeyInfo[]) => {
     let html = '';
+    const canRemoveKey = !this.orgRules || !this.orgRules.usesKeyManager();
     for (let i = 0; i < privateKeys.length; i++) {
       const ki = privateKeys[i];
       const prv = await KeyUtil.parse(ki.private);
       const created = new Date(prv.created);
       const date = Str.monthName(created.getMonth()) + ' ' + created.getDate() + ', ' + created.getFullYear();
       const escapedFp = Xss.escape(ki.fingerprint);
-      const escapedPrimaryOrRm = (ki.primary) ? '(primary)' : `(<a href="#" class="action_remove_key" data-test="action-remove-key" fingerprint="${escapedFp}">remove</a>)`;
+      let escapedPrimaryOrRm = '';
+      if (ki.primary) {
+        escapedPrimaryOrRm = '(primary)';
+      } else if (canRemoveKey) {
+        escapedPrimaryOrRm = `(<a href="#" class="action_remove_key" data-test="action-remove-key" fingerprint="${escapedFp}">remove</a>)`;
+      }
       const escapedEmail = Xss.escape(prv.emails[0] || '');
       const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${escapedFp}">${escapedEmail}</a>`;
       const fpHtml = `fingerprint:&nbsp;<span class="good">${Str.spaced(escapedFp)}</span>`;
@@ -439,13 +445,15 @@ View.run(class SettingsView extends View {
       // the UI below only gets rendered when account_email is available
       await Settings.renderSubPage(this.acctEmail!, this.tabId, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
     }));
-    $('.action_remove_key').click(this.setHandler(async target => {
-      // the UI below only gets rendered when account_email is available
-      await KeyStore.remove(this.acctEmail!, $(target).attr('fingerprint')!);
-      await PassphraseStore.set('local', this.acctEmail!, $(target).attr('fingerprint')!, undefined);
-      await PassphraseStore.set('session', this.acctEmail!, $(target).attr('fingerprint')!, undefined);
-      this.reload(true);
-    }));
+    if (canRemoveKey) {
+      $('.action_remove_key').click(this.setHandler(async target => {
+        // the UI below only gets rendered when account_email is available
+        await KeyStore.remove(this.acctEmail!, $(target).attr('fingerprint')!);
+        await PassphraseStore.set('local', this.acctEmail!, $(target).attr('fingerprint')!, undefined);
+        await PassphraseStore.set('session', this.acctEmail!, $(target).attr('fingerprint')!, undefined);
+        this.reload(true);
+      }));
+    }
   }
 
   private reload = (advanced = false) => {
