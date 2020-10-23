@@ -278,8 +278,7 @@ export class Settings {
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
         const authDeniedHtml = await Api.ajax({ url: '/chrome/settings/modules/auth_denied.htm' }, Catch.stackTrace()) as string; // tslint:disable-line:no-direct-ajax
-        const html = `${authDeniedHtml}<div class="line">Would you like to proceed to the permissions screen again?</div>`;
-        if (await Ui.modal.confirm(html, true)) {
+        if (await Ui.modal.confirm(authDeniedHtml, true)) {
           await GoogleAuth.newAuthPopup({ acctEmail, scopes });
         }
       } else {
