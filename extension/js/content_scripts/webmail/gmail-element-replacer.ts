@@ -36,7 +36,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private orgRules: OrgRules;
   private pubLookup: PubLookup;
   private acctEmail: string;
-  private canReadEmails: boolean;
   private injector: Injector;
   private notifications: Notifications;
   private gmailVariant: WebmailVariantString;
@@ -65,12 +64,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
   };
 
-  constructor(factory: XssSafeFactory, orgRules: OrgRules, acctEmail: string, sendAs: Dict<SendAsAlias>, canReadEmails: boolean,
+  constructor(factory: XssSafeFactory, orgRules: OrgRules, acctEmail: string, sendAs: Dict<SendAsAlias>,
     injector: Injector, notifications: Notifications, gmailVariant: WebmailVariantString) {
     this.factory = factory;
     this.acctEmail = acctEmail;
     this.sendAs = sendAs;
-    this.canReadEmails = canReadEmails;
     this.injector = injector;
     this.gmailVariant = gmailVariant;
     this.notifications = notifications;
@@ -265,29 +263,22 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         if (newPgpAtts.length) {
           const msgId = this.determineMsgId(attsContainer);
           if (msgId) {
-            if (this.canReadEmails) {
-              Xss.sanitizePrepend(newPgpAtts, this.factory.embeddedAttaStatus('Getting file info..' + Ui.spinner('green')));
-              try {
-                const msg = await this.gmail.msgGet(msgId, 'full');
-                await this.processAtts(msgId, GmailParser.findAtts(msg), attsContainer, false, newPgpAttsNames);
-              } catch (e) {
-                if (ApiErr.isAuthPopupNeeded(e)) {
-                  this.notifications.showAuthPopupNeeded(this.acctEmail);
-                  $(newPgpAtts).find('.attachment_loader').text('Auth needed');
-                } else if (ApiErr.isNetErr(e)) {
-                  $(newPgpAtts).find('.attachment_loader').text('Network error');
-                } else {
-                  if (!ApiErr.isServerErr(e) && !ApiErr.isMailOrAcctDisabledOrPolicy(e) && !ApiErr.isNotFound(e)) {
-                    Catch.reportErr(e);
-                  }
-                  $(newPgpAtts).find('.attachment_loader').text('Failed to load');
+            Xss.sanitizePrepend(newPgpAtts, this.factory.embeddedAttaStatus('Getting file info..' + Ui.spinner('green')));
+            try {
+              const msg = await this.gmail.msgGet(msgId, 'full');
+              await this.processAtts(msgId, GmailParser.findAtts(msg), attsContainer, false, newPgpAttsNames);
+            } catch (e) {
+              if (ApiErr.isAuthPopupNeeded(e)) {
+                this.notifications.showAuthPopupNeeded(this.acctEmail);
+                $(newPgpAtts).find('.attachment_loader').text('Auth needed');
+              } else if (ApiErr.isNetErr(e)) {
+                $(newPgpAtts).find('.attachment_loader').text('Network error');
+              } else {
+                if (!ApiErr.isServerErr(e) && !ApiErr.isMailOrAcctDisabledOrPolicy(e) && !ApiErr.isNotFound(e)) {
+                  Catch.reportErr(e);
                 }
+                $(newPgpAtts).find('.attachment_loader').text('Failed to load');
               }
-            } else {
-              const statusMsg = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
-              $(newPgpAtts).prepend(this.factory.embeddedAttaStatus(statusMsg)).children('a.auth_settings').click(Ui.event.handle(() => { // xss-safe-factory
-                BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' });
-              }));
             }
           } else {
             $(newPgpAtts).prepend(this.factory.embeddedAttaStatus('Unknown message id')); // xss-safe-factory
