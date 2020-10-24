@@ -80,7 +80,7 @@ export class InboxView extends View {
       }
     } catch (e) {
       ApiErr.reportIfSignificant(e);
-      if (ApiErr.isAuthErr(e) || ApiErr.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthErr(e) || ApiErr.isAuthErr(e)) {
         await Ui.modal.warning(`FlowCrypt must be re-connected to your Google account.`);
         await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail);
       } else {

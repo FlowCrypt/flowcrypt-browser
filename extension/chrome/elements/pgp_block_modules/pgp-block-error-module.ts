@@ -47,7 +47,7 @@ export class PgpBlockViewErrorModule {
   public handleInitializeErr = async (e: any) => {
     if (ApiErr.isNetErr(e)) {
       await this.renderErr(`Could not load message due to network error. ${Ui.retryLink()}`, undefined);
-    } else if (ApiErr.isAuthPopupNeeded(e)) {
+    } else if (ApiErr.isAuthErr(e)) {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       await this.renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`, undefined);
     } else if (e instanceof FormatError) {

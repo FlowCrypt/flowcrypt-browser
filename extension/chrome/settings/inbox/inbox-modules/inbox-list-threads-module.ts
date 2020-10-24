@@ -26,7 +26,7 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         this.view.inboxNotificationModule.showNotification(`Connection error trying to get list of messages ${Ui.retryLink()}`);
-      } else if (ApiErr.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthErr(e)) {
         this.view.inboxNotificationModule.renderAndHandleAuthPopupNotification();
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy);
@@ -66,7 +66,7 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender(threadItem.find('.loading'), 'Failed to load (network) <a href="#">retry</a>').find('a').click(this.view.setHandler(() => this.renderInboxItem(threadId)));
-      } else if (ApiErr.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthErr(e)) {
         this.view.inboxNotificationModule.renderAndHandleAuthPopupNotification();
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy);

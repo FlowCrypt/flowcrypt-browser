@@ -148,7 +148,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       this.view.replyParams = GmailParser.determineReplyMeta(this.view.acctEmail, aliases, gmailMsg);
       this.view.threadId = gmailMsg.threadId || '';
     } catch (e) {
-      if (ApiErr.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       }
       if (e instanceof Error) {

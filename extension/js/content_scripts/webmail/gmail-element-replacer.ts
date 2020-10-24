@@ -268,7 +268,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               const msg = await this.gmail.msgGet(msgId, 'full');
               await this.processAtts(msgId, GmailParser.findAtts(msg), attsContainer, false, newPgpAttsNames);
             } catch (e) {
-              if (ApiErr.isAuthPopupNeeded(e)) {
+              if (ApiErr.isAuthErr(e)) {
                 this.notifications.showAuthPopupNeeded(this.acctEmail);
                 $(newPgpAtts).find('.attachment_loader').text('Auth needed');
               } else if (ApiErr.isNetErr(e)) {

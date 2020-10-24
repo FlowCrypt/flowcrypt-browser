@@ -59,7 +59,7 @@ View.run(class AddKeyView extends View {
         $('#source_backup').prop('disabled', true);
       }
     } catch (e) {
-      if (ApiErr.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
       }
       $('label[for=source_backup]').text('Load from backup (error checking backups)').css('color', '#AAA');
