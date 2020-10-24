@@ -64,7 +64,7 @@ export class GmailMsg {
       this.payload.headers!.push({ name: 'To', value: toHeader.value.map(a => a.address).join(',') });
     }
     if (fromHeader) {
-      this.payload.headers!.push({ name: 'From', value: fromHeader.value[0].address });
+      this.payload.headers!.push({ name: 'From', value: fromHeader.value[0].address! });
     }
     if (subjectHeader) {
       this.payload.headers!.push({ name: 'Subject', value: subjectHeader });
@@ -190,7 +190,7 @@ export class GoogleData {
       historyId: '',
       labelIds: ['SENT' as GmailMsg$labelId],
       payload: {
-        headers: [{ name: 'Subject', value: parsedMail.subject }],
+        headers: [{ name: 'Subject', value: parsedMail.subject || '' }],
         body
       },
       raw: base64Msg
