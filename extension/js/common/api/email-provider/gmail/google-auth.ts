@@ -185,7 +185,7 @@ export class GoogleAuth {
     try {
       authReq = GoogleAuth.apiGoogleAuthStateUnpack(String(params.state));
     } catch (e) {
-      return { result: 'Error', error: `Wrong oauth state response: ${e}|${title}` };
+      return { result: 'Error', error: `Wrong oauth state response: ${e}` };
     }
     if (!['Success', 'Denied', 'Error'].includes(result)) {
       return { result: 'Error', error: `Unknown google auth result '${result}'` };
@@ -252,7 +252,7 @@ export class GoogleAuth {
 
   private static apiGoogleAuthStateUnpack = (state: string): AuthReq => {
     if (!state.startsWith(GoogleAuth.OAUTH.state_header)) {
-      throw new Error(`Missing oauth state header:${state}`);
+      throw new Error(`Missing oauth state header`);
     }
     return JSON.parse(state.replace(GoogleAuth.OAUTH.state_header, '')) as AuthReq;
   }
