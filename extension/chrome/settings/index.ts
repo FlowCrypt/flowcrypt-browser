@@ -375,7 +375,7 @@ View.run(class SettingsView extends View {
         }
       }
     } catch (e) {
-      if (ApiErr.isAuthErr(e) || ApiErr.isAuthErr(e)) {
+      if (ApiErr.isAuthErr(e)) {
         $('#status-row #status_google').text(`g:?:auth`).addClass('bad');
         if (await Ui.modal.confirm(`FlowCrypt must be re-connected to your Google account.`)) {
           await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail);
