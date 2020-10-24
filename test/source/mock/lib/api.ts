@@ -3,8 +3,7 @@
 import * as https from 'https';
 import * as http from 'http';
 import { Util } from '../../util';
-import * as fs from 'fs';
-import { homedir } from 'os';
+import { readFileSync } from 'fs';
 // tslint:disable:await-returned-promise
 
 export class HttpAuthErr extends Error { }
@@ -39,11 +38,8 @@ export class Api<REQ, RES> {
 
   constructor(apiName: string, protected handlers: Handlers<REQ, RES>, protected urlPrefix = '') {
     this.apiName = apiName;
-    const options = { // todo - should use relative path
-      key: fs.readFileSync(`${homedir()}/git/flowcrypt-browser/test/mock_cert/key.pem.mock`),
-      cert: fs.readFileSync(`${homedir()}/git/flowcrypt-browser/test/mock_cert/cert.pem.mock`)
-    };
-    this.server = https.createServer(options, (request, response) => {
+    const opt = { key: readFileSync(`./test/mock_cert/key.pem.mock`), cert: readFileSync(`./test/mock_cert/cert.pem.mock`) };
+    this.server = https.createServer(opt, (request, response) => {
       this.handleReq(request, response).then(data => this.throttledResponse(response, data)).then(() => {
         try {
           this.log(request, response);
