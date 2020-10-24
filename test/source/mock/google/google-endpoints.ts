@@ -183,8 +183,8 @@ export const mockGoogleEndpoints: HandlersDefinition = {
           throw new HttpClientErr('The thread you are replying to not found', 404);
         }
         const decoded = await Parse.convertBase64ToMimeMsg(body.message.raw);
-        if (!decoded.text.startsWith('[flowcrypt:') && !decoded.text.startsWith('(saving of this draft was interrupted - to decrypt it, send it to yourself)')) {
-          throw new Error(`The "flowcrypt" draft prefix was not found in the draft. Instead starts with: ${decoded.text.substr(0, 100)}`);
+        if (!decoded.text?.startsWith('[flowcrypt:') && !decoded.text?.startsWith('(saving of this draft was interrupted - to decrypt it, send it to yourself)')) {
+          throw new Error(`The "flowcrypt" draft prefix was not found in the draft. Instead starts with: ${decoded.text?.substr(0, 100)}`);
         }
         return {
           id: 'mockfakedraftsave', message: {
@@ -270,28 +270,28 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
   if (!mimeMsg.subject) {
     throw new HttpClientErr('Error: Subject line is required', 400);
   } else {
-    if (['Re: ', 'Fwd: '].some(e => mimeMsg.subject.startsWith(e)) && (!threadId || !inReplyToMessageId)) {
+    if (['Re: ', 'Fwd: '].some(e => mimeMsg.subject?.startsWith(e)) && (!threadId || !inReplyToMessageId)) {
       throw new HttpClientErr(`Error: Incorrect subject. Subject can't start from 'Re:' or 'Fwd:'. Current subject is '${mimeMsg.subject}'`, 400);
-    } else if ((threadId || inReplyToMessageId) && !['Re: ', 'Fwd: '].some(e => mimeMsg.subject.startsWith(e))) {
+    } else if ((threadId || inReplyToMessageId) && !['Re: ', 'Fwd: '].some(e => mimeMsg.subject?.startsWith(e))) {
       throw new HttpClientErr("Error: Incorrect subject. Subject must start from 'Re:' or 'Fwd:' " +
         `if the message has threaId or 'In-Reply-To' header. Current subject is '${mimeMsg.subject}'`, 400);
     }
     // Special check for 'from alias' test
-    if (mimeMsg.subject.endsWith('from alias') && mimeMsg.from.value[0].address !== 'flowcryptcompatibility@gmail.com') {
-      throw new HttpClientErr(`Error: Incorrect Email Alias. Should be 'flowcryptcompatibility@gmail.com'. Current '${mimeMsg.from.value[0].address}'`);
+    if (mimeMsg.subject.endsWith('from alias') && mimeMsg.from?.value[0].address !== 'flowcryptcompatibility@gmail.com') {
+      throw new HttpClientErr(`Error: Incorrect Email Alias. Should be 'flowcryptcompatibility@gmail.com'. Current '${mimeMsg.from?.value[0].address}'`);
     }
   }
   if (!mimeMsg.text && !mimeMsg.attachments?.length) {
     throw new HttpClientErr('Error: Message body cannot be empty', 400);
   }
-  if (!mimeMsg.to.value.length || mimeMsg.to.value.find(em => !allowedRecipients.includes(em.address))) {
+  if (!mimeMsg.to?.value.length || mimeMsg.to?.value.find(em => !allowedRecipients.includes(em.address!))) {
     throw new HttpClientErr('Error: You can\'t send a message to unexisting email address(es)');
   }
   const aliases = [acct];
   if (acct === 'flowcrypt.compatibility@gmail.com') {
     aliases.push('flowcryptcompatibility@gmail.com');
   }
-  if (!mimeMsg.from.value.length || mimeMsg.from.value.find(em => !aliases.includes(em.address))) {
+  if (!mimeMsg.from?.value.length || mimeMsg.from?.value.find(em => !aliases.includes(em.address!))) {
     throw new HttpClientErr('You can\'t send a message from unexisting email address(es)');
   }
 };
