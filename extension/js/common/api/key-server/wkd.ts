@@ -87,7 +87,7 @@ export class Wkd extends Api {
       return { hasPolicy: true, buf };
     } catch (e) {
       if (!ApiErr.isNotFound(e)) {
-        Catch.report(`Wkd.lookupEmail error retrieving key ${methodUrlBase}/${userPart}: ${String(e)}`);
+        Catch.report(`Wkd.lookupEmail error retrieving key: ${String(e)}`);
       }
       return { hasPolicy: true };
     }
