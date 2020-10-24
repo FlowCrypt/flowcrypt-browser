@@ -23,7 +23,7 @@
 BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - trailing slash`);
 (async () => {
   const email = 'john.doe@example.com';
-  const sks = new Sks('http://localhost:8001/');
+  const sks = new Sks('https://localhost:8001/');
   const { pubkey, pgpClient } = await sks.lookupEmail(email);
   if (pgpClient !== 'pgp-other') {
     throw Error(`expected pgpClient=pgp-other but got ${pgpClient}`);
@@ -38,7 +38,7 @@ BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - trailing slash`);
 BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - no trailing slash`);
 (async () => {
   const email = 'john.doe@example.com';
-  const sks = new Sks('http://localhost:8001');
+  const sks = new Sks('https://localhost:8001');
   const { pubkey, pgpClient } = await sks.lookupEmail(email);
   if (pgpClient !== 'pgp-other') {
     throw Error(`expected pgpClient=pgp-other but got ${pgpClient}`);
@@ -53,22 +53,7 @@ BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - no trailing slash`);
 BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - server down`);
 (async () => {
   const email = 'john.doe@example.com';
-  const sks = new Sks('http://localhost:3456');
-  try {
-    await sks.lookupEmail(email);
-  } catch (e) {
-    if (ApiErr.isNetErr(e)) {
-      return 'pass';
-    }
-    throw e;
-  }
-  throw new Error('Lookup wrongly didnt throw');
-})();
-
-BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - SSL error`);
-(async () => {
-  const email = 'john.doe@example.com';
-  const sks = new Sks('https://localhost:8001');
+  const sks = new Sks('https://localhost:3456');
   try {
     await sks.lookupEmail(email);
   } catch (e) {
@@ -83,7 +68,7 @@ BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - SSL error`);
 BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - not found`);
 (async () => {
   const email = 'nobody@example.com';
-  const sks = new Sks('http://localhost:8001/');
+  const sks = new Sks('https://localhost:8001/');
   const { pubkey, pgpClient } = await sks.lookupEmail(email);
   if (pgpClient !== null) {
     throw Error(`expected pgpClient=null but got ${pgpClient}`);

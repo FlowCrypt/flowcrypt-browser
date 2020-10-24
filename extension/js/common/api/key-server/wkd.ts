@@ -20,11 +20,9 @@ export class Wkd extends Api {
   // https://metacode.biz/openpgp/web-key-directory
 
   public port: number | undefined;
-  private protocol: string;
 
-  constructor(private myOwnDomain: string, protocol = 'https') {
+  constructor(private myOwnDomain: string) {
     super();
-    this.protocol = protocol;
   }
 
   public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
@@ -49,8 +47,8 @@ export class Wkd extends Api {
     const directHost = (typeof this.port === 'undefined') ? directDomain : `${directDomain}:${this.port}`;
     const advancedHost = `${advancedDomainPrefix}${directHost}`;
     const userPart = `hu/${hu}?l=${encodeURIComponent(user)}`;
-    const advancedUrl = `${this.protocol}://${advancedHost}/.well-known/openpgpkey/${directDomain}`;
-    const directUrl = `${this.protocol}://${directHost}/.well-known/openpgpkey`;
+    const advancedUrl = `https://${advancedHost}/.well-known/openpgpkey/${directDomain}`;
+    const directUrl = `https://${directHost}/.well-known/openpgpkey`;
     let response = await this.urlLookup(advancedUrl, userPart);
     if (!response.buf && response.hasPolicy) {
       return { pubkey: null, pgpClient: null }; // do not retry direct if advanced had a policy file
