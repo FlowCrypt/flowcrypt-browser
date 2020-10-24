@@ -79,7 +79,6 @@ export interface KeyInfo extends PrvKeyInfo {
   primary: boolean;
 }
 
-
 export type PrvPacket = (OpenPGP.packet.SecretKey | OpenPGP.packet.SecretSubkey);
 
 export class UnexpectedKeyTypeError extends Error { }
