@@ -38,7 +38,7 @@ export class Api<REQ, RES> {
 
   constructor(apiName: string, protected handlers: Handlers<REQ, RES>, protected urlPrefix = '') {
     this.apiName = apiName;
-    const options = {
+    const options = { // todo - should use relative path
       key: fs.readFileSync(`${homedir()}/git/flowcrypt-browser/test/mock_cert/key.pem.mock`),
       cert: fs.readFileSync(`${homedir()}/git/flowcrypt-browser/test/mock_cert/cert.pem.mock`)
     };

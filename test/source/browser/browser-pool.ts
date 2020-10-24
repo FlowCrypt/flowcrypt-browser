@@ -19,14 +19,15 @@ export class BrowserPool {
     public name: string,
     private reuse: boolean,
     private extensionBuildDir: string,
+    private isMock: boolean,
     private width = 1280,
     private height = 850,
-    private debug = false
+    private debug = false,
   ) {
     this.semaphore = new Semaphore(poolSize, name);
   }
 
-  public newBrowserHandle = async (t: AvaContext, closeInitialPage = true, isMock = false) => {
+  public newBrowserHandle = async (t: AvaContext, closeInitialPage = true) => {
     await this.semaphore.acquire();
     // ext frames in gmail: https://github.com/GoogleChrome/puppeteer/issues/2506 https://github.com/GoogleChrome/puppeteer/issues/2548
     const args = [
@@ -37,10 +38,16 @@ export class BrowserPool {
       `--load-extension=${this.extensionBuildDir}`,
       `--window-size=${this.width + 10},${this.height + 132}`,
     ];
-    if (isMock) {
+    if (this.isMock) {
       args.push('--ignore-certificate-errors');
+      args.push('--allow-insecure-localhost');
     }
-    const browser = await launch({ args, ignoreHTTPSErrors: isMock, headless: false, slowMo: isMock ? undefined : 60, devtools: false });
+    const browser = await launch({
+      args,
+      ignoreHTTPSErrors: this.isMock,
+      headless: false,
+      devtools: false
+    });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {
       try {
