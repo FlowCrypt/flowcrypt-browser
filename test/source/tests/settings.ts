@@ -13,6 +13,7 @@ import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { TestUrls } from './../browser/test-urls';
 import { TestVariant } from './../util';
 import { expect } from 'chai';
+import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 
 // tslint:disable:no-blank-lines-func
 
@@ -106,6 +107,18 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await settingsPage.notPresent('@action-remove-key');
     }));
 
+    ava.default('settings - my key page - remove button should be hidden when using key manager', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'two.keys@key-manager-autogen.flowcrypt.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoKeygen(settingsPage);
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      // check imported key at index 1
+      const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-1`, ['my_key.htm', 'placement=settings']);
+      await Util.sleep(1);
+      await myKeyFrame.waitAll('@content-fingerprint');
+      await settingsPage.notPresent('@action-remove-key');
+    }));
+
     ava.todo('settings - edit contact public key');
 
     ava.default('settings - change passphrase - current in local storage', testWithBrowser(undefined, async (t, browser) => {
@@ -186,6 +199,24 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       const attachmentPreviewOther = await inboxPage.getFrame(['attachment_preview.htm']);
       await attachmentPreviewOther.waitForContent('#attachment-preview-container .attachment-preview-unavailable', 'No preview available');
       await attachmentPreviewOther.waitAll('#attachment-preview-container .attachment-preview-unavailable #attachment-preview-download');
+    }));
+
+    ava.default('settings - attachment previews with entering pass phrase', testWithBrowser('compatibility', async (t, browser) => {
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+      const k = Config.key('flowcrypt.compatibility.1pp1');
+      await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=174ab0ba9643b4fa`));
+      const attachmentImage = await inboxPage.getFrame(['attachment.htm', 'name=tiny-face.png']);
+      await attachmentImage.waitForSelTestState('ready');
+      await attachmentImage.click('body');
+      await (inboxPage.target as Page).mouse.click(1, 1); // test closing the passphrase dialog by clicking its backdrop
+      await inboxPage.notPresent('@dialog-passphrase');
+      await attachmentImage.click('body');
+      const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
+      await passphraseDialog.waitAndType('@input-pass-phrase', k.passphrase);
+      await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
+      const attachmentPreviewImage = await inboxPage.getFrame(['attachment_preview.htm']);
+      await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
     }));
 
     ava.default('settings - pgp/mime preview and download attachment', testWithBrowser('compatibility', async (t, browser) => {

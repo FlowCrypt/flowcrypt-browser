@@ -129,7 +129,7 @@ export class OauthMock {
       exp: this.expiresIn,
       iat: 123, sub: 'sub',
       aud: 'aud', azp: 'azp',
-      iss: "http://localhost:8001",
+      iss: "https://localhost:8001",
       name: 'First Last',
       picture: 'picture',
       locale: 'en',

@@ -42,7 +42,7 @@ consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) => setTimeout(() 
 export type Consts = typeof consts;
 export type CommonAcct = 'compatibility' | 'compose' | 'ci.tests.gmail';
 
-const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false, buildDir, undefined, undefined, consts.IS_LOCAL_DEBUG);
+const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false, buildDir, isMock, undefined, undefined, consts.IS_LOCAL_DEBUG);
 let closeMockApi: () => Promise<void>;
 const mockApiLogs: string[] = [];
 
@@ -57,14 +57,14 @@ ava.before('set config and mock api', async t => {
   t.pass();
 });
 
-const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>): ava.Implementation<{}> => {
+const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>, flag?: 'FAILING'): ava.Implementation<{}> => {
   return async (t: AvaContext) => {
     await browserPool.withNewBrowserTimeoutAndRetry(async (t, browser) => {
       if (acct) {
         await BrowserRecipe.setUpCommonAcct(t, browser, acct);
       }
       await cb(t, browser);
-    }, t, consts);
+    }, t, consts, flag);
     t.pass();
   };
 };
@@ -95,7 +95,10 @@ ava.after.always('evaluate Catch.reportErr errors', async t => {
   // our S/MIME implementation is still early so it throws "reportable" errors like this during tests
   const usefulErrors = mockBackendData.reportedErrors
     .filter(e => e.message !== 'Too few bytes to read ASN.1 value.')
-    .filter(e => !(testVariant === 'ENTERPRISE-MOCK' && e.message.includes('.well-known/host-meta.json'))); // on enterprise, these report errs
+    // on enterprise, these report errs
+    .filter(e => !(testVariant === 'ENTERPRISE-MOCK' && e.message.includes('.well-known/host-meta.json')))
+    // todo - ideally mock tests would never call this. But we do tests with human@flowcrypt.com so it's calling here
+    .filter(e => !e.trace.includes('-1 when GET-ing https://openpgpkey.flowcrypt.com'));
   // end of todo
   const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
   const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));

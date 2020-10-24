@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
-import { Contact, KeyInfo, Key, PrvKeyInfo, KeyUtil } from '../key.js';
+import { Contact, Key, PrvKeyInfo, KeyUtil } from '../key.js';
 import { MsgBlockType, ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Value } from '../../common.js';
 import { Buf } from '../../buf.js';
@@ -18,7 +18,7 @@ export namespace PgpMsgMethod {
     export type Encrypt = { pubkeys: Key[], signingPrv?: Key, pwd?: string, data: Uint8Array, filename?: string, armor: boolean, date?: Date };
     export type Type = { data: Uint8Array | string };
     export type Decrypt = { kisWithPp: PrvKeyInfo[], encryptedData: Uint8Array, msgPwd?: string };
-    export type DiagnosePubkeys = { privateKis: KeyInfo[], message: Uint8Array };
+    export type DiagnosePubkeys = { armoredPubs: string[], message: Uint8Array };
     export type VerifyDetached = { plaintext: Uint8Array, sigText: Uint8Array };
   }
   export type DiagnosePubkeys = (arg: Arg.DiagnosePubkeys) => Promise<DiagnoseMsgPubkeysResult>;
@@ -244,11 +244,11 @@ export class MsgUtil {
     return await OpenPGPKey.encryptMessage(input);
   }
 
-  public static diagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = async ({ privateKis, message }) => {
+  public static diagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = async ({ armoredPubs, message }) => {
     const m = await opgp.message.readArmored(Buf.fromUint8(message).toUtfStr());
     const msgKeyIds = m.getEncryptionKeyIds ? m.getEncryptionKeyIds() : [];
     const localKeyIds: string[] = [];
-    for (const k of await Promise.all(privateKis.map(ki => KeyUtil.parse(ki.public)))) {
+    for (const k of await Promise.all(armoredPubs.map(pub => KeyUtil.parse(pub)))) {
       localKeyIds.push(...k.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)));
     }
     const diagnosis = { found_match: false, receivers: msgKeyIds.length };

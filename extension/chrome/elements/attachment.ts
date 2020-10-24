@@ -32,6 +32,7 @@ export class AttachmentDownloadView extends View {
   protected readonly url: string | undefined;
   protected readonly gmail: Gmail;
   protected att!: Att;
+  protected ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
 
   private size: number | undefined;
   private downloadButton = $('#download');
@@ -39,7 +40,6 @@ export class AttachmentDownloadView extends View {
   private originalButtonHTML: string | undefined;
   private canClickOnAtt: boolean = false;
   private downloadInProgress = false;
-  private ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
   private tabId!: string;
 
   constructor() {
@@ -106,6 +106,7 @@ export class AttachmentDownloadView extends View {
         this.downloadButton.show();
         this.ppChangedPromiseCancellation.cancel = true; // update original object which is monitored by a promise
         this.ppChangedPromiseCancellation = { cancel: false }; // set to a new, not yet used object
+        BrowserMsg.send.closeSwal(this.parentTabId); // attachment preview
       }
     });
     BrowserMsg.listen(this.tabId);
@@ -126,7 +127,7 @@ export class AttachmentDownloadView extends View {
   }
 
   protected renderErr = (e: any) => {
-    if (ApiErr.isAuthPopupNeeded(e)) {
+    if (ApiErr.isAuthErr(e)) {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
       Xss.sanitizeRender('body', `Error downloading file - google auth needed. ${Ui.retryLink()}`);
     } else if (ApiErr.isNetErr(e)) {

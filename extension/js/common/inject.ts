@@ -31,7 +31,7 @@ export class Injector {
       'settings': '#does_not_have',
     },
     finishSesionBtnSel: {
-      gmail: 'div.gb_Je',
+      gmail: 'body',
       outlook: '#does_not_have',
       settings: '#settings > div.header'
     }
@@ -68,7 +68,7 @@ export class Injector {
       (window as unknown as ContentScriptWindow).TrySetDestroyableTimeout(() => this.btns(), 300);
     } else {
       if (this.S.now('compose_button').length === 0) {
-        const container = this.S.now('compose_button_container').prepend(this.factory.btnCompose(this.webmailName)); // xss-safe-factory
+        const container = this.S.now('compose_button_container').first().prepend(this.factory.btnCompose(this.webmailName)); // xss-safe-factory
         container.find(this.S.sel('compose_button')).click(Ui.event.handle(() => this.openComposeWin()));
       }
     }
@@ -86,7 +86,7 @@ export class Injector {
       }
     }
     prependToElem.prepend(this.factory.btnEndPPSession(this.webmailName)) // xss-safe-factory
-      .find('.action_finish_session').click(Ui.event.prevent('double', async el => {
+      .find('.action_finish_session').click(Ui.event.prevent('double', async (el) => {
         for (const longid of await KeyStore.getLongidsThatCurrentlyHavePassPhraseInSession(acctEmail)) {
           await PassphraseStore.set('session', acctEmail, longid, undefined);
         }

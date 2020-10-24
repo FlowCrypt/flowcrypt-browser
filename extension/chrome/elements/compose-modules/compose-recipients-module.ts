@@ -322,7 +322,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         return false;
       }
     } catch (e) {
-      if (ApiErr.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       } else if (!ApiErr.isNetErr(e)) {
         Catch.reportErr(e);
@@ -548,7 +548,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private guessContactsFromSentEmails = async (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => {
     this.view.errModule.debug('guessContactsFromSentEmails start');
     await this.view.emailProvider.guessContactsFromSentEmails(query, knownContacts, multiCb).catch(e => {
-      if (ApiErr.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       } else if (ApiErr.isNetErr(e)) {
         Ui.toast(`Network error - cannot search contacts`).catch(Catch.reportErr);

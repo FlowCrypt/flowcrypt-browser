@@ -2,7 +2,6 @@
 
 'use strict';
 
-import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { DecryptErrTypes } from '../../../js/common/core/crypto/pgp/msg-util.js';
@@ -46,7 +45,7 @@ export class PgpBlockViewDecryptModule {
         if (!this.view.msgId) {
           Xss.sanitizeRender('#pgp_block', `Missing msgId to fetch message in pgp_block. If this happens repeatedly, please report the issue to human@flowcrypt.com`);
           this.view.renderModule.resizePgpBlockFrame();
-        } else if (this.canReadEmails) {
+        } else {
           this.view.renderModule.renderText('Retrieving message...');
           const format: GmailResponseFormat = (!this.msgFetchedFromApi) ? 'full' : 'raw';
           const { armored, subject, isPwdMsg } = await this.view.gmail.extractArmoredBlock(this.view.msgId, format, (progress) => {
@@ -56,12 +55,6 @@ export class PgpBlockViewDecryptModule {
           this.view.renderModule.renderText('Decrypting...');
           this.msgFetchedFromApi = format;
           await this.decryptAndRender(Buf.fromUtfStr(armored), undefined, subject);
-        } else { // gmail message read auth not allowed
-          const readAccess = `Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/>
-            <button class="button green auth_settings">Add missing permission</button>`;
-          Xss.sanitizeRender('#pgp_block', `This encrypted message is very large (possibly containing an attachment). ${readAccess}`);
-          this.view.renderModule.resizePgpBlockFrame();
-          $('.auth_settings').click(this.view.setHandler(async () => await Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/auth_denied.htm')));
         }
       }
     } catch (e) {
@@ -104,7 +97,7 @@ export class PgpBlockViewDecryptModule {
         if (!result.longids.chosen && !primaryKi) {
           await this.view.errorModule.renderErr(Lang.pgpBlock.notProperlySetUp + this.view.errorModule.btnHtml('FlowCrypt settings', 'green settings'), undefined);
         } else if (result.error.type === DecryptErrTypes.keyMismatch) {
-          await this.view.errorModule.handlePrivateKeyMismatch(encryptedData, this.isPwdMsgBasedOnMsgSnippet === true);
+          await this.view.errorModule.handlePrivateKeyMismatch(kisWithPp.map(ki => ki.public), encryptedData, this.isPwdMsgBasedOnMsgSnippet === true);
         } else if (result.error.type === DecryptErrTypes.wrongPwd || result.error.type === DecryptErrTypes.usePassword) {
           await this.view.errorModule.renderErr(Lang.pgpBlock.pwdMsgAskSenderUsePubkey, undefined);
         } else if (result.error.type === DecryptErrTypes.noMdc) {

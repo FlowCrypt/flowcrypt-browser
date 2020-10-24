@@ -1,5 +1,11 @@
 <div class="lightboxed">
 
+version 7.9.7 on Oct 20, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/426?closed=1" target="_blank">Custom SKS fix</a>
+
+version 7.9.6 on Oct 19, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/425?closed=1" target="_blank">Preview attachments pass phrase</a>
+
+version 7.9.5 on Oct 19, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/424?closed=1" target="_blank">Wkd Advanced Lookup, UTF files</a>
+
 version 7.9.4 on Oct 11, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/423?closed=1" target="_blank">PDF Preview controls</a>
 
 version 7.9.3 on Sep 26, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/422?closed=1" target="_blank">New splash screen</a>

@@ -152,7 +152,6 @@ View.run(class SettingsView extends View {
     $('.action_show_encrypted_inbox').click(this.setHandler(target => {
       window.location.href = Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: this.acctEmail! });
     }));
-    $('.action_go_auth_denied').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, '/chrome/settings/modules/auth_denied.htm')));
     $('.action_add_account').click(this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId)));
     $('.action_google_auth').click(this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail)));
     // $('.action_microsoft_auth').click(this.setHandlerPrevent('double', function() {
@@ -190,9 +189,7 @@ View.run(class SettingsView extends View {
     }));
     $('#status-row #status_google').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'google_account' })));
     $('#status-row #status_local_store').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'local_store' })));
-    $('[data-swal-page]').click(this.setHandler(async (target) => {
-      await Ui.modal.page($(target).data('swal-page') as string);
-    }));
+    Ui.activateModalPageLinkTags();
   }
 
   private accountsMenuKeydownHandler = (e: JQuery.Event<HTMLElement, null>): void => {
@@ -349,7 +346,7 @@ View.run(class SettingsView extends View {
         await Ui.modal.error('There was a network error, please try again.');
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         await Ui.modal.error(Lang.account.googleAcctDisabledOrPolicy);
-      } else if (ApiErr.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthErr(e)) {
         await Ui.modal.warning('New authorization needed. Please try Additional Settings -> Experimental -> Force Google Account email change');
       } else {
         Catch.reportErr(e);
@@ -378,7 +375,7 @@ View.run(class SettingsView extends View {
         }
       }
     } catch (e) {
-      if (ApiErr.isAuthPopupNeeded(e) || ApiErr.isAuthErr(e)) {
+      if (ApiErr.isAuthErr(e)) {
         $('#status-row #status_google').text(`g:?:auth`).addClass('bad');
         if (await Ui.modal.confirm(`FlowCrypt must be re-connected to your Google account.`)) {
           await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail);
@@ -397,8 +394,7 @@ View.run(class SettingsView extends View {
   private renderSubscriptionStatusHeader = (subscription: Subscription) => {
     $('#status-row #status_subscription').text(`s:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
     if (subscription.active) {
-      const showAcct = async () => await Settings.renderSubPage(this.acctEmail, this.tabId, '/chrome/settings/modules/account.htm');
-      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(this.setHandler(showAcct)).css('cursor', 'pointer');
+      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block');
       if (subscription.method === 'trial') {
         $('.logo-row .subscription .expire').text(subscription.expire ? ('trial ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
         $('.logo-row .subscription .upgrade').css('display', 'inline-block');
@@ -422,13 +418,19 @@ View.run(class SettingsView extends View {
 
   private addKeyRowsHtml = async (privateKeys: KeyInfo[]) => {
     let html = '';
+    const canRemoveKey = !this.orgRules || !this.orgRules.usesKeyManager();
     for (let i = 0; i < privateKeys.length; i++) {
       const ki = privateKeys[i];
       const prv = await KeyUtil.parse(ki.private);
       const created = new Date(prv.created);
       const date = Str.monthName(created.getMonth()) + ' ' + created.getDate() + ', ' + created.getFullYear();
       const escapedFp = Xss.escape(ki.fingerprint);
-      const escapedPrimaryOrRm = (ki.primary) ? '(primary)' : `(<a href="#" class="action_remove_key" data-test="action-remove-key" fingerprint="${escapedFp}">remove</a>)`;
+      let escapedPrimaryOrRm = '';
+      if (ki.primary) {
+        escapedPrimaryOrRm = '(primary)';
+      } else if (canRemoveKey) {
+        escapedPrimaryOrRm = `(<a href="#" class="action_remove_key" data-test="action-remove-key" fingerprint="${escapedFp}">remove</a>)`;
+      }
       const escapedEmail = Xss.escape(prv.emails[0] || '');
       const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${escapedFp}">${escapedEmail}</a>`;
       const fpHtml = `fingerprint:&nbsp;<span class="good">${Str.spaced(escapedFp)}</span>`;
@@ -442,13 +444,15 @@ View.run(class SettingsView extends View {
       // the UI below only gets rendered when account_email is available
       await Settings.renderSubPage(this.acctEmail!, this.tabId, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
     }));
-    $('.action_remove_key').click(this.setHandler(async target => {
-      // the UI below only gets rendered when account_email is available
-      await KeyStore.remove(this.acctEmail!, $(target).attr('fingerprint')!);
-      await PassphraseStore.set('local', this.acctEmail!, $(target).attr('fingerprint')!, undefined);
-      await PassphraseStore.set('session', this.acctEmail!, $(target).attr('fingerprint')!, undefined);
-      this.reload(true);
-    }));
+    if (canRemoveKey) {
+      $('.action_remove_key').click(this.setHandler(async target => {
+        // the UI below only gets rendered when account_email is available
+        await KeyStore.remove(this.acctEmail!, $(target).attr('fingerprint')!);
+        await PassphraseStore.set('local', this.acctEmail!, $(target).attr('fingerprint')!, undefined);
+        await PassphraseStore.set('session', this.acctEmail!, $(target).attr('fingerprint')!, undefined);
+        this.reload(true);
+      }));
+    }
   }
 
   private reload = (advanced = false) => {

@@ -116,6 +116,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       if (ApiErr.isAuthErr(msgTokenErr)) {
         Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail);
         throw new ComposerResetBtnTrigger();
+      } else if (ApiErr.isNetErr(msgTokenErr)) {
+        throw msgTokenErr;
       }
       throw Catch.rewrapErr(msgTokenErr, 'There was a token error sending this message. Please try again. Let us know at human@flowcrypt.com if this happens repeatedly.');
     }

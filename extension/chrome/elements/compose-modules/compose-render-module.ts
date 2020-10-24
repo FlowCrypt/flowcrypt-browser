@@ -31,35 +31,24 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
     await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
     await this.renderComposeTable();
-    if (this.view.scopes.read || this.view.scopes.modify) {
-      if (this.view.replyParams) {
-        this.view.replyParams.subject = `${(this.responseMethod === 'reply' ? 'Re' : 'Fwd')}: ${this.view.replyParams.subject}`;
-      }
-      if (!this.view.draftModule.wasMsgLoadedFromDraft) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
-        (async () => { // not awaited because can take a long time & blocks rendering
-          await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, this.responseMethod);
-          if (this.view.quoteModule.messageToReplyOrForward) {
-            const msgId = this.view.quoteModule.messageToReplyOrForward.headers['message-id'];
-            this.view.sendBtnModule.additionalMsgHeaders['In-Reply-To'] = msgId;
-            this.view.sendBtnModule.additionalMsgHeaders.References = this.view.quoteModule.messageToReplyOrForward.headers.references + ' ' + msgId;
-            if (this.view.replyPubkeyMismatch) {
-              await this.renderReplyMsgAsReplyPubkeyMismatch();
-            } else if (this.view.quoteModule.messageToReplyOrForward.isOnlySigned) {
-              this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
-              this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-sign-sending-option'), 'sign', true); // do sign
-            }
+    if (this.view.replyParams) {
+      this.view.replyParams.subject = `${(this.responseMethod === 'reply' ? 'Re' : 'Fwd')}: ${this.view.replyParams.subject}`;
+    }
+    if (!this.view.draftModule.wasMsgLoadedFromDraft) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
+      (async () => { // not awaited because can take a long time & blocks rendering
+        await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, this.responseMethod);
+        if (this.view.quoteModule.messageToReplyOrForward) {
+          const msgId = this.view.quoteModule.messageToReplyOrForward.headers['message-id'];
+          this.view.sendBtnModule.additionalMsgHeaders['In-Reply-To'] = msgId;
+          this.view.sendBtnModule.additionalMsgHeaders.References = this.view.quoteModule.messageToReplyOrForward.headers.references + ' ' + msgId;
+          if (this.view.replyPubkeyMismatch) {
+            await this.renderReplyMsgAsReplyPubkeyMismatch();
+          } else if (this.view.quoteModule.messageToReplyOrForward.isOnlySigned) {
+            this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
+            this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-sign-sending-option'), 'sign', true); // do sign
           }
-        })().catch(Catch.reportErr);
-      }
-    } else {
-      Xss.sanitizeRender(this.view.S.cached('prompt'),
-        `${Lang.compose.needReadAccessToReply}<br/><br/><br/>
-        <button class="button green auth_settings">${Lang.compose.addMissingPermission}</button><br/><br/>
-        Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>
-      `);
-      this.view.S.cached('prompt').attr('style', 'border:none !important');
-      $('.auth_settings').click(async () => await Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/auth_denied.htm'));
-      $('.new_message_button').click(() => BrowserMsg.send.openNewMessage(this.view.parentTabId));
+        }
+      })().catch(Catch.reportErr);
     }
     this.view.sizeModule.resizeComposeBox();
     if (this.responseMethod === 'forward') {
@@ -87,7 +76,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       this.renderReplySuccessMimeAtts(this.view.inputModule.extractAttachments());
     } else {
       Xss.sanitizeRender(repliedBodyEl, Str.escapeTextAsRenderableHtml(this.view.inputModule.extract('text', 'input_text', 'SKIP-ADDONS')));
-      this.renderReplySuccessAtts(msg.atts, msgId);
+      this.renderReplySuccessAtts(msg.atts, msgId, this.view.sendBtnModule.popover.choices.encrypt);
     }
     const t = new Date();
     const time = ((t.getHours() !== 12) ? (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
@@ -159,7 +148,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       this.view.replyParams = GmailParser.determineReplyMeta(this.view.acctEmail, aliases, gmailMsg);
       this.view.threadId = gmailMsg.threadId || '';
     } catch (e) {
-      if (ApiErr.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       }
       if (e instanceof Error) {
@@ -338,13 +327,13 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
 
-  private renderReplySuccessAtts = (atts: Att[], msgId: string) => {
+  private renderReplySuccessAtts = (atts: Att[], msgId: string, isEncrypted: boolean) => {
     const hideAttTypes = this.view.sendBtnModule.popover.choices.richtext ? ['hidden', 'encryptedMsg', 'signature', 'publicKey'] : ['publicKey'];
     const renderableAtts = atts.filter(att => !hideAttTypes.includes(att.treatAs()));
     if (renderableAtts.length) {
       this.view.S.cached('replied_attachments').html(renderableAtts.map(att => { // xss-safe-factory
         att.msgId = msgId;
-        return this.view.factory!.embeddedAtta(att, true, this.view.parentTabId);
+        return this.view.factory!.embeddedAtta(att, isEncrypted, this.view.parentTabId);
       }).join('')).css('display', 'block');
     }
   }

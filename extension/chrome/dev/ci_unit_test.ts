@@ -9,6 +9,10 @@ import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { WellKnownHostMeta } from '../../js/common/api/account-servers/well-known-host-meta.js';
 import { Mime } from '../../js/common/core/mime.js';
 import { Att } from '../../js/common/core/att.js';
+import { Wkd } from '../../js/common/api/key-server/wkd.js';
+import { MsgUtil } from '../../js/common/core/crypto/pgp/msg-util.js';
+import { Sks } from '../../js/common/api/key-server/sks.js';
+import { Ui } from '../../js/common/browser/ui.js';
 
 /**
  * importing all libs that are tested in ci tests
@@ -21,7 +25,11 @@ const libs: any[] = [
   AttUI,
   Buf,
   KeyUtil,
-  Mime
+  Mime,
+  Wkd,
+  Sks,
+  MsgUtil,
+  Ui
 ];
 
 // add them to global scope so ci can use them

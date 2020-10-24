@@ -47,11 +47,7 @@ export class FlowCryptApi {
   }
 
   private static call = async (url: string, values: { [k: string]: any }) => {
-    const r = await request.post({ url, json: values, headers: { 'api-version': 3 } });
-    if (r.body.error) {
-      throw new ApiErrResponse(`FlowCryptApi ${url} returned an error: ${r.body.error.message}`, r);
-    }
-    return r;
+    return await request.post({ url, json: values, headers: { 'api-version': 3 } });
   }
 
 }

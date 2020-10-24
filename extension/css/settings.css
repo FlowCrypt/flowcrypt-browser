@@ -781,14 +781,13 @@ body#settings .settings-border .key_list {
 }
 #settings.client > #banner > img.action_open_settings { cursor: pointer; }
 
-#settings.client > #banner > div.action_finish_session {
+#settings.client > #banner > .action_finish_session {
   height: 32px;
   margin-top: -6px;
   float: right;
   margin-left: 20px;
   cursor: pointer;
 }
-#settings.client > #banner > div.action_finish_session img { height: 32px; }
 #settings.client .attachments { margin-top: 12px; }
 
 #settings.client .attachments span.pgp_attachment {
@@ -816,7 +815,7 @@ body#settings .settings-border .key_list {
 
 /* https://github.com/sweetalert2/sweetalert2/issues/834#issuecomment-359237178 */
 .swal2-popup {
-  font-size: 1.6rem !important;
+  font-size: 15px !important;
 }
 
 /* https://github.com/FlowCrypt/flowcrypt-browser/issues/2926 */

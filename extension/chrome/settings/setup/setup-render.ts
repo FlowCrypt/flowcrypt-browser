@@ -21,7 +21,7 @@ export class SetupRenderModule {
   public renderInitial = async (): Promise<void> => {
     $('h1').text(this.view.orgRules.mustAutoImportOrAutogenPrvWithKeyManager() ? 'Setting up FlowCrypt, please wait...' : 'Set Up FlowCrypt');
     $('.email-address').text(this.view.acctEmail);
-    $('.back').css('visibility', 'hidden');
+    $('#button-go-back').css('visibility', 'hidden');
     if (this.view.storage!.email_provider === 'gmail') { // show alternative account addresses in setup form + save them for later
       try {
         await Settings.refreshSendAs(this.view.acctEmail);
@@ -84,7 +84,7 @@ export class SetupRenderModule {
     if (name) {
       $('#' + blocks.join(', #')).css('display', 'none');
       $('#' + name).css('display', 'block');
-      $('.back').css('visibility', ['step_2b_manual_enter', 'step_2a_manual_create'].includes(name) ? 'visible' : 'hidden');
+      $('#button-go-back').css('visibility', ['step_2b_manual_enter', 'step_2a_manual_create'].includes(name) ? 'visible' : 'hidden');
       if (name === 'step_2_recovery') {
         $('.backups_count_words').text(this.view.fetchedKeyBackupsUniqueLongids.length > 1 ? `${this.view.fetchedKeyBackupsUniqueLongids.length} backups` : 'a backup');
         $('#step_2_recovery input').focus();

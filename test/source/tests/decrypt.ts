@@ -63,6 +63,17 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       });
     }));
 
+    ava.default(`decrypt - [gpg] signed fully armored message`, testWithBrowser('compatibility', async (t, browser) => {
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
+        content: [
+          "this was encrypted with gpg",
+          "gpg --sign --armor -r flowcrypt.compatibility@gmail.com ./text.txt"
+        ],
+        quoted: false,
+        "params": "?frameId=none&message=-----BEGIN%20PGP%20MESSAGE-----%0A%0AowGbwMvMwMVYfy8j1GPd8g7GNXlJHCWpFSV6JRUlcSH3akoyMosVyhOLFVLzkosq%0AC0pSUxTKM0syFNIL0rm4gISCrm5xZnoekEosys0vUtAtUkjLyS8Hq9VLzs8tSCzJ%0ATMrMySypdEjPTczMAYkp6OnDrODqZDJmYWDkYpAVU2QJVTh1Tmeb3HLhpxtYYQ5i%0AZQK5goGLUwAmYl8mwDC3yqJ3RqXeax2n108b42sc%2BI29zE1fLvdgq1Tz3ZL0a2Z5%0AXSTDobXyoiGnj748k%2F8iX7dJYc5C%2BTTmPMXtPmYJKmd7V7v2x6675BfR%2Bm25ednr%0APfEB9k%2B47iQ9yNsgu9TG8NC%2FhhccalMkT1UUcv7V07mW2ZRbfvSop1ZSU%2FbXm3c%2F%0A8nd%2BZShfmrHQYMMfe3Xmildmbhs2f7S6I8G%2ByamhrH1XsnXKlc%2Fca63S53TU7u5e%0A%2BX7vil97zTc3cDgtP%2Fuw6GB6mmTo8mqlb20GytG1LuYzZftP55XYL7XyO5M8Rzx2%0AZcLBPTsfzs8o6bgxt0fBucIlds7nzLOyKld%2BG2u%2BuSqzuj9wgpeOSX149f%2B8y7N%2F%0Ahl5nbXIo3qL3QXaWwsXvh7fITVp155%2FbxSXKX65fuLmh%2BET24Z9C7V8iGf9M7v76%0AtI%2BjSNRu7cnAttxlX4tOGHhtuMH%2BTU8nNv1cPEc1X%2FH1VRv95mWabl3lP%2BHVmou%2F%0ArkyN1%2FsWl7tS%2FfZP3vVlp3MSPvqy%2FP6T3VKhXSYdWFzhyblB6KhqzAbBuuVf%2F2bY%0AKRx1239v9uZrM3yEZOc0JtzNz7Lh7xb6e89tIne4blx81aRT7b86YroUHGfe0PF4%0AsHjRnQWdmeU2kgcmH%2BLUEdxd4bJgx%2FSQwPrb%2B6zieQ0mLbDsvZm7gHFPeq5ZW%2B%2Fe%0ABU8%2FcNc2bd49KWrdT8%2FzKpJ9KmvV9uz4AQA%3D%0A%3Dr8So%0A-----END%20PGP%20MESSAGE-----&hasPassword=___cu_false___&msgId=1707b9c96c5d7893&senderEmail=flowcrypt.compatibility%40gmail.com&isOutgoing=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com"
+      });
+    }));
+
     ava.default(`decrypt - [flowcrypt] encrypted hello`, testWithBrowser('compatibility', async (t, browser) => {
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         content: ["hello"],

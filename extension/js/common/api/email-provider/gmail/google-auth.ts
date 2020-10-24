@@ -196,8 +196,10 @@ export class GoogleAuth {
   /**
    * Is the title actually just url of the page? (means real title not loaded yet)
    */
-  private static isAuthUrl = (title: string) => {
-    return title.match(/^(?:https?:\/\/)?accounts\.google\.com/) !== null || title.startsWith(GOOGLE_OAUTH_SCREEN_HOST.replace(/^https?:\/\//, ''));
+  private static isUrl = (title: string) => {
+    return title.match(/^(?:https?:\/\/)?accounts\.google\.com/) !== null
+      || title.startsWith(GOOGLE_OAUTH_SCREEN_HOST.replace(/^https?:\/\//, ''))
+      || title.startsWith(GOOGLE_OAUTH_SCREEN_HOST);
   }
 
   private static isForwarding = (title: string) => {
@@ -207,7 +209,7 @@ export class GoogleAuth {
   private static waitForAndProcessOauthWindowResult = async (windowId: number, acctEmail: string | undefined, scopes: string[], csrfToken: string, save: boolean): Promise<AuthRes> => {
     while (true) {
       const [oauth] = await tabsQuery({ windowId });
-      if (oauth?.title && oauth.title.includes(GoogleAuth.OAUTH.state_header) && !GoogleAuth.isAuthUrl(oauth.title) && !GoogleAuth.isForwarding(oauth.title)) {
+      if (oauth?.title && oauth.title.includes(GoogleAuth.OAUTH.state_header) && !GoogleAuth.isUrl(oauth.title) && !GoogleAuth.isForwarding(oauth.title)) {
         const { result, error, code, csrf } = GoogleAuth.processOauthResTitle(oauth.title);
         if (error === 'access_denied') {
           return { acctEmail, result: 'Denied', error, id_token: undefined }; // sometimes it was coming in as {"result":"Error","error":"access_denied"}
@@ -250,7 +252,7 @@ export class GoogleAuth {
 
   private static apiGoogleAuthStateUnpack = (state: string): AuthReq => {
     if (!state.startsWith(GoogleAuth.OAUTH.state_header)) {
-      throw new Error('Missing oauth state header');
+      throw new Error(`Missing oauth state header`);
     }
     return JSON.parse(state.replace(GoogleAuth.OAUTH.state_header, '')) as AuthReq;
   }
