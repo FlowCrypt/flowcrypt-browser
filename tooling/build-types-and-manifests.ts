@@ -53,7 +53,7 @@ addManifest('chrome-enterprise', manifest => {
 
 const CHROME_CONSUMER = 'chrome-consumer';
 const CHROME_ENTERPRISE = 'chrome-enterprise';
-const MOCK_HOST: { [buildType: string]: string } = { 'chrome-consumer': 'https://localhost:8001', 'chrome-enterprise': 'http://google.mock.flowcryptlocal.com:8001' };
+const MOCK_HOST: { [buildType: string]: string } = { 'chrome-consumer': 'https://localhost:8001', 'chrome-enterprise': 'https://google.mock.flowcryptlocal.com:8001' };
 
 const buildDir = (buildType: string) => `./build/${buildType}`;
 
