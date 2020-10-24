@@ -35,7 +35,7 @@ View.run(class PassphraseView extends View {
     Ui.event.protect();
     await initPassphraseToggle(['passphrase']);
     const allPrivateKeys = await KeyStore.get(this.acctEmail);
-    this.myPrivateKeys = allPrivateKeys.filter(ki => this.longids.includes(ki.longid) || (ki.primary && this.longids.includes('primary')));
+    this.myPrivateKeys = allPrivateKeys.filter(ki => this.longids.includes(ki.longid));
     if (this.type === 'embedded') {
       $('h1').parent().css('display', 'none');
       $('div.separator').css('display', 'none');

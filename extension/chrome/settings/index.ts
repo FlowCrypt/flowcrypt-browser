@@ -425,18 +425,16 @@ View.run(class SettingsView extends View {
       const created = new Date(prv.created);
       const date = Str.monthName(created.getMonth()) + ' ' + created.getDate() + ', ' + created.getFullYear();
       const escapedFp = Xss.escape(ki.fingerprint);
-      let escapedPrimaryOrRm = '';
-      if (ki.primary) {
-        escapedPrimaryOrRm = '(primary)';
-      } else if (canRemoveKey) {
-        escapedPrimaryOrRm = `(<a href="#" class="action_remove_key" data-test="action-remove-key" fingerprint="${escapedFp}">remove</a>)`;
+      let removeKeyBtn = '';
+      if (canRemoveKey) {
+        removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key" fingerprint="${escapedFp}">remove</a>)`;
       }
       const escapedEmail = Xss.escape(prv.emails[0] || '');
       const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${escapedFp}">${escapedEmail}</a>`;
       const fpHtml = `fingerprint:&nbsp;<span class="good">${Str.spaced(escapedFp)}</span>`;
       const space = `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
       html += `<div class="row key-content-row key_${escapedFp}">`;
-      html += `  <div class="col-sm-12">${escapedLink} from ${Xss.escape(date)}${space}${fpHtml}${space}${escapedPrimaryOrRm}</div>`;
+      html += `  <div class="col-sm-12">${escapedLink} from ${Xss.escape(date)}${space}${fpHtml}${space}${removeKeyBtn}</div>`;
       html += `</div>`;
     }
     Xss.sanitizeAppend('.key_list', html);

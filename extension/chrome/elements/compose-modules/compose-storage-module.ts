@@ -39,7 +39,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     let result = await this.view.myPubkeyModule.chooseMyPublicKeyBySenderEmail(keys, senderEmail);
     if (!result) {
       this.view.errModule.debug(`ComposerStorage.getKey: could not find key based on senderEmail: ${senderEmail}, using primary instead`);
-      result = keys.find(ki => ki.primary);
+      result = keys[0];
       Assert.abortAndRenderErrorIfKeyinfoEmpty(result);
     } else {
       this.view.errModule.debug(`ComposerStorage.getKey: found key based on senderEmail: ${senderEmail}`);
