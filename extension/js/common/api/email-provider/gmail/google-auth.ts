@@ -250,7 +250,7 @@ export class GoogleAuth {
 
   private static apiGoogleAuthStateUnpack = (state: string): AuthReq => {
     if (!state.startsWith(GoogleAuth.OAUTH.state_header)) {
-      throw new Error('Missing oauth state header');
+      throw new Error(`Missing oauth state header:${state}`);
     }
     return JSON.parse(state.replace(GoogleAuth.OAUTH.state_header, '')) as AuthReq;
   }
