@@ -108,7 +108,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         return await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
-      } else if (ApiErr.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
         return await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
       } else {

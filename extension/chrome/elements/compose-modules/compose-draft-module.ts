@@ -70,7 +70,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender('body', `Failed to load draft. ${Ui.retryLink()}`);
-      } else if (ApiErr.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
         Xss.sanitizeRender('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retryLink()}`);
       } else if (this.view.isReplyBox && ApiErr.isNotFound(e)) {
@@ -97,7 +97,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         this.isLocalDraftId(this.view.draftId) ? await storageLocalRemove([this.view.draftId]) : await this.view.emailProvider.draftDelete(this.view.draftId);
         this.view.draftId = '';
       } catch (e) {
-        if (ApiErr.isAuthPopupNeeded(e)) {
+        if (ApiErr.isAuthErr(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
         } else if (ApiErr.isNotFound(e)) {
           console.info(`draftDelete: ${e.message}`);
@@ -146,7 +146,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
           });
         }
       } catch (e) {
-        if (ApiErr.isAuthPopupNeeded(e)) {
+        if (ApiErr.isAuthErr(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
           this.view.S.cached('send_btn_note').text('Not saved (reconnect)');
         } else if (e instanceof Error && e.message.indexOf('Could not find valid key packet for encryption in key') !== -1) {

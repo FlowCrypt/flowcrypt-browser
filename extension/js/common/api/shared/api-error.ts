@@ -146,14 +146,12 @@ export class ApiErr {
   public static eli5 = (e: any): string => { // "explain like I'm five"
     if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
       return 'Email account is disabled, or access has been blocked by admin policy. Contact your email administrator.';
-    } else if (ApiErr.isAuthPopupNeeded(e)) {
-      return 'Browser needs to be re-connected to email account before proceeding.';
+    } else if (ApiErr.isAuthErr(e)) {
+      return 'Browser needs to be re-connected to your account before proceeding.';
     } else if (ApiErr.isInsufficientPermission(e)) {
       return 'Server says user has insufficient permissions for this action.';
     } else if (ApiErr.isBlockedByProxy(e)) {
       return 'It seems that a company proxy or firewall is blocking internet traffic from this device.';
-    } else if (ApiErr.isAuthErr(e)) {
-      return 'Server says this request was unauthorized, possibly caused by missing or wrong login.';
     } else if (ApiErr.isReqTooLarge(e)) {
       return 'Server says this request is too large.';
     } else if (ApiErr.isNotFound(e)) {
@@ -192,22 +190,13 @@ export class ApiErr {
   }
 
   public static isAuthErr = (e: any): boolean => {
-    if (e instanceof AuthErr) {
+    if (e instanceof AuthErr || e instanceof GoogleAuthErr) {
       return true;
     }
-    if (e && typeof e === 'object') {
-      if (ApiErr.isStandardErr(e, 'auth')) {
-        return true; // API auth error response
-      }
-      if (e instanceof AjaxErr && e.status === 401) {
-        return true;
-      }
+    if (ApiErr.isStandardErr(e, 'auth')) {
+      return true; // API auth error response
     }
-    return false;
-  }
-
-  public static isAuthPopupNeeded = (e: any): boolean => {
-    if (e instanceof GoogleAuthErr) {
+    if (e instanceof AjaxErr && e.status === 401) {
       return true;
     }
     if (e instanceof AjaxErr && e.status === 400 && typeof e.responseText === 'string') {
@@ -269,7 +258,7 @@ export class ApiErr {
 
   public static isSignificant = (e: any): boolean => {
     return !ApiErr.isNetErr(e) && !ApiErr.isServerErr(e) && !ApiErr.isNotFound(e) && !ApiErr.isMailOrAcctDisabledOrPolicy(e)
-      && !ApiErr.isAuthErr(e) && !ApiErr.isBlockedByProxy(e) && !ApiErr.isAuthPopupNeeded(e);
+      && !ApiErr.isAuthErr(e) && !ApiErr.isBlockedByProxy(e);
   }
 
   public static isBadReq = (e: any): e is AjaxErr => {

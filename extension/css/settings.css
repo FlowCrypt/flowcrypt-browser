@@ -815,7 +815,7 @@ body#settings .settings-border .key_list {
 
 /* https://github.com/sweetalert2/sweetalert2/issues/834#issuecomment-359237178 */
 .swal2-popup {
-  font-size: 1.6rem !important;
+  font-size: 15px !important;
 }
 
 /* https://github.com/FlowCrypt/flowcrypt-browser/issues/2926 */

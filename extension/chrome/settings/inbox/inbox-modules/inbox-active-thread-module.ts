@@ -52,7 +52,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender('.thread', `<br>Failed to load thread - network error. ${Ui.retryLink()}`);
-      } else if (ApiErr.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthErr(e)) {
         this.view.inboxNotificationModule.renderAndHandleAuthPopupNotification();
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy);
@@ -129,7 +129,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         Xss.sanitizeAppend('.thread', this.wrapMsg(htmlId, `Failed to load a message (network error), skipping. ${Ui.retryLink()}`));
-      } else if (ApiErr.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthErr(e)) {
         this.view.inboxNotificationModule.renderAndHandleAuthPopupNotification();
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy);

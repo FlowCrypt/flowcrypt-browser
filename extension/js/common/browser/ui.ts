@@ -58,8 +58,6 @@ export class Ui {
         errHandlers.network().catch(Catch.reportErr);
       } else if (ApiErr.isAuthErr(e) && errHandlers && errHandlers.auth) {
         errHandlers.auth().catch(Catch.reportErr);
-      } else if (ApiErr.isAuthPopupNeeded(e) && errHandlers && errHandlers.authPopup) {
-        errHandlers.authPopup().catch(Catch.reportErr);
       } else if (errHandlers && errHandlers.other) {
         errHandlers.other(e).catch(Catch.reportErr);
       } else {
