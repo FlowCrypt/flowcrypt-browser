@@ -99,7 +99,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'with files');
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf', 'test/samples/large.jpg');
-      await ComposePageRecipe.sendAndClose(composePage, { expectProgress: true });
+      await ComposePageRecipe.sendAndClose(composePage, { expectProgress: true, timeout: 60 });
     }));
 
     ava.default('compose > large file > public domain account (should not prompt to upgrade)', testWithBrowser('compatibility', async (t, browser) => {
@@ -108,7 +108,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/large.jpg');
       await Util.sleep(2);
-      await ComposePageRecipe.sendAndClose(composePage);
+      await ComposePageRecipe.sendAndClose(composePage, { timeout: 60, expectProgress: true });
     }));
 
     ava.default('compose - send pwd encrypted msg & check on flowcrypt site', testWithBrowser('compatibility', async (t, browser) => {
