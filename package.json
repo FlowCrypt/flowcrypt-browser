@@ -10,7 +10,7 @@
     "@types/chai": "4.2.14",
     "@types/dompurify": "2.0.4",
     "@types/jquery": "3.5.3",
-    "@types/mailparser": "2.4.0",
+    "@types/mailparser": "2.7.4",
     "@types/puppeteer": "3.0.2",
     "@types/mkdirp": "^1.0.1",
     "@types/request": "2.48.5",
