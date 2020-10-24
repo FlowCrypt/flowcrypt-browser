@@ -1,6 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import * as https from 'https';
+import * as http from 'http';
 import { Util } from '../../util';
 import * as fs from 'fs';
 import { homedir } from 'os';
@@ -25,7 +26,7 @@ export enum Status {
   NOT_IMPLEMENTED = 501,
 }
 
-export type RequestHandler<REQ, RES> = (parsedReqBody: REQ, req: any) => Promise<RES>;
+export type RequestHandler<REQ, RES> = (parsedReqBody: REQ, req: http.IncomingMessage) => Promise<RES>;
 export type Handlers<REQ, RES> = { [request: string]: RequestHandler<REQ, RES> };
 
 export class Api<REQ, RES> {
@@ -97,11 +98,11 @@ export class Api<REQ, RES> {
     return new Promise((resolve, reject) => this.server.close((err: any) => err ? reject(err) : resolve()));
   }
 
-  protected log = (req: any, res: any, errRes?: Buffer) => {
+  protected log = (req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => {
     return undefined as void;
   }
 
-  protected handleReq = async (req: any, res: any): Promise<Buffer> => {
+  protected handleReq = async (req: http.IncomingMessage, res: http.ServerResponse): Promise<Buffer> => {
     if (req.method === 'OPTIONS') {
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Headers', '*');
@@ -123,7 +124,7 @@ export class Api<REQ, RES> {
     throw new HttpClientErr(`unknown MOCK path ${req.url}`);
   }
 
-  protected chooseHandler = (req: any): RequestHandler<REQ, RES> | undefined => {
+  protected chooseHandler = (req: http.IncomingMessage): RequestHandler<REQ, RES> | undefined => {
     if (!req.url) {
       throw new Error('no url');
     }
@@ -149,7 +150,7 @@ export class Api<REQ, RES> {
     return Buffer.from(JSON.stringify({ "error": { "message": e instanceof Error ? e.message : String(e), stack: e instanceof Error ? e.stack : '' } }));
   }
 
-  protected fmtHandlerRes = (handlerRes: RES, serverRes: any): Buffer => {
+  protected fmtHandlerRes = (handlerRes: RES, serverRes: http.ServerResponse): Buffer => {
     if (typeof handlerRes === 'string' && handlerRes.match(/^<!DOCTYPE HTML><html>/)) {
       serverRes.setHeader('content-type', 'text/html');
     } else if (typeof handlerRes === 'object' || (typeof handlerRes === 'string' && handlerRes.match(/^\{/) && handlerRes.match(/\}$/))) {
@@ -173,7 +174,7 @@ export class Api<REQ, RES> {
     return Buffer.from(json);
   }
 
-  protected collectReq = (req: any): Promise<Buffer> => {
+  protected collectReq = (req: http.IncomingMessage): Promise<Buffer> => {
     return new Promise((resolve, reject) => {
       const body: Buffer[] = [];
       let byteLength = 0;
@@ -199,7 +200,7 @@ export class Api<REQ, RES> {
     });
   }
 
-  protected parseReqBody = (body: Buffer, req: any): REQ => {
+  protected parseReqBody = (body: Buffer, req: http.IncomingMessage): REQ => {
     let parsedBody: string | undefined;
     if (body.length) {
       if (req.url!.startsWith('/upload/') || req.url!.startsWith('/api/message/upload') || (req.url!.startsWith('/attester/pub/') && req.method === 'POST')) {
@@ -211,7 +212,7 @@ export class Api<REQ, RES> {
     return { query: this.parseUrlQuery(req.url!), body: parsedBody } as unknown as REQ;
   }
 
-  private throttledResponse = async (response: any, data: Buffer) => {
+  private throttledResponse = async (response: http.ServerResponse, data: Buffer) => {
     const chunkSize = 100 * 1024;
     for (let i = 0; i < data.length; i += chunkSize) {
       const chunk = data.slice(i, i + chunkSize);
