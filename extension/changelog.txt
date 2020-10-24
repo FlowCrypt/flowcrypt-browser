@@ -1,5 +1,43 @@
 <div class="lightboxed">
 
+version 7.9.7 on Oct 20, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/426?closed=1" target="_blank">Custom SKS fix</a>
+
+version 7.9.6 on Oct 19, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/425?closed=1" target="_blank">Preview attachments pass phrase</a>
+
+version 7.9.5 on Oct 19, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/424?closed=1" target="_blank">Wkd Advanced Lookup, UTF files</a>
+
+version 7.9.4 on Oct 11, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/423?closed=1" target="_blank">PDF Preview controls</a>
+
+version 7.9.3 on Sep 26, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/422?closed=1" target="_blank">New splash screen</a>
+
+version 7.9.2 on Sep 22, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/421?closed=1" target="_blank">Preview PDF</a>
+
+version 7.9.1 on Sep 8, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/420?closed=1" target="_blank">Bugfixes</a>
+
+version 7.9.0 on Aug 18, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/419?closed=1" target="_blank">Maintenance</a>
+
+version 7.8.9 on Aug 14, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/417?closed=1" target="_blank">Offline drafts</a>
+
+version 7.8.8 on Jul 23, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/416?closed=1" target="_blank">Verification Errors</a>
+
+version 7.8.7 on Jul 22, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/415?closed=1" target="_blank">Fix Firefox setup</a>
+
+version 7.8.6 on Jul 16, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/414?closed=1" target="_blank">Key expiration parse fix</a>
+
+version 7.8.5 on Jul 15, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/413?closed=1" target="_blank">Key auto-update fix</a>
+
+version 7.8.4 on Jul 15, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/412?closed=1" target="_blank">Bugfixes</a>
+
+version 7.8.3 on Jul 7, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/411?closed=1" target="_blank">Bugfixes</a>
+
+version 7.8.2 on Jul 3, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/410?closed=1" target="_blank">Bugfixes</a>
+
+version 7.8.1 on Jul 1, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/409?closed=1" target="_blank">Expiring key bugfix</a>
+
+version 7.8.0 on Jun 29, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/408?closed=1" target="_blank">Preview attachments + S/MIME</a>
+
+version 7.7.9 on Jun 8, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/406?closed=1" target="_blank">S/MIME PoC</a>
+
 version 7.7.8 on Apr 15, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/405?closed=1" target="_blank">Fix plain reply warning</a>
 
 version 7.7.7 on Apr 2, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/400?closed=1" target="_blank">Code maintenance</a>

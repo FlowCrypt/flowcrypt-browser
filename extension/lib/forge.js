@@ -7,7 +7,7 @@
 		exports["forge"] = factory();
 	else
 		root["forge"] = factory();
-})(typeof self !== 'undefined' ? self : this, function() {
+})(window, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -46,12 +46,32 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// define getter function for harmony exports
 /******/ 	__webpack_require__.d = function(exports, name, getter) {
 /******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, {
-/******/ 				configurable: false,
-/******/ 				enumerable: true,
-/******/ 				get: getter
-/******/ 			});
+/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
 /******/ 		}
+/******/ 	};
+/******/
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
+/******/
+/******/ 	// create a fake namespace object
+/******/ 	// mode & 1: value is a module id, require it
+/******/ 	// mode & 2: merge all properties of value into the ns
+/******/ 	// mode & 4: return value when already ns object
+/******/ 	// mode & 8|1: behave like require
+/******/ 	__webpack_require__.t = function(value, mode) {
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 		var ns = Object.create(null);
+/******/ 		__webpack_require__.r(ns);
+/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 		return ns;
 /******/ 	};
 /******/
 /******/ 	// getDefaultExport function for compatibility with non-harmony modules
@@ -68,6 +88,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/
 /******/ 	// __webpack_public_path__
 /******/ 	__webpack_require__.p = "";
+/******/
 /******/
 /******/ 	// Load entry module and return exports
 /******/ 	return __webpack_require__(__webpack_require__.s = 34);
@@ -2612,99 +2633,6 @@ util.makeLink = function(path, query, fragment) {
 };
 
 /**
- * Follows a path of keys deep into an object hierarchy and set a value.
- * If a key does not exist or it's value is not an object, create an
- * object in it's place. This can be destructive to a object tree if
- * leaf nodes are given as non-final path keys.
- * Used to avoid exceptions from missing parts of the path.
- *
- * @param object the starting object.
- * @param keys an array of string keys.
- * @param value the value to set.
- */
-util.setPath = function(object, keys, value) {
-  // need to start at an object
-  if(typeof(object) === 'object' && object !== null) {
-    var i = 0;
-    var len = keys.length;
-    while(i < len) {
-      var next = keys[i++];
-      if(i == len) {
-        // last
-        object[next] = value;
-      } else {
-        // more
-        var hasNext = (next in object);
-        if(!hasNext ||
-          (hasNext && typeof(object[next]) !== 'object') ||
-          (hasNext && object[next] === null)) {
-          object[next] = {};
-        }
-        object = object[next];
-      }
-    }
-  }
-};
-
-/**
- * Follows a path of keys deep into an object hierarchy and return a value.
- * If a key does not exist, create an object in it's place.
- * Used to avoid exceptions from missing parts of the path.
- *
- * @param object the starting object.
- * @param keys an array of string keys.
- * @param _default value to return if path not found.
- *
- * @return the value at the path if found, else default if given, else
- *         undefined.
- */
-util.getPath = function(object, keys, _default) {
-  var i = 0;
-  var len = keys.length;
-  var hasNext = true;
-  while(hasNext && i < len &&
-    typeof(object) === 'object' && object !== null) {
-    var next = keys[i++];
-    hasNext = next in object;
-    if(hasNext) {
-      object = object[next];
-    }
-  }
-  return (hasNext ? object : _default);
-};
-
-/**
- * Follow a path of keys deep into an object hierarchy and delete the
- * last one. If a key does not exist, do nothing.
- * Used to avoid exceptions from missing parts of the path.
- *
- * @param object the starting object.
- * @param keys an array of string keys.
- */
-util.deletePath = function(object, keys) {
-  // need to start at an object
-  if(typeof(object) === 'object' && object !== null) {
-    var i = 0;
-    var len = keys.length;
-    while(i < len) {
-      var next = keys[i++];
-      if(i == len) {
-        // last
-        delete object[next];
-      } else {
-        // more
-        if(!(next in object) ||
-          (typeof(object[next]) !== 'object') ||
-          (object[next] === null)) {
-           break;
-        }
-        object = object[next];
-      }
-    }
-  }
-};
-
-/**
  * Check if an object is empty.
  *
  * Taken from:
@@ -3097,7 +3025,7 @@ util.estimateCores = function(options, callback) {
   }
 };
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(36)))
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(36)))
 
 /***/ }),
 /* 2 */
@@ -25211,7 +25139,7 @@ forge.log.prepareFull = function(message) {
   if(!('full' in message)) {
     // copy args and insert message at the front
     var args = [message.message];
-    args = args.concat([] || message['arguments']);
+    args = args.concat([] || false);
     // format the message
     message.full = forge.util.format.apply(this, args);
   }
@@ -25471,11 +25399,10 @@ g = (function() {
 
 try {
 	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1,eval)("this");
-} catch(e) {
+	g = g || new Function("return this")();
+} catch (e) {
 	// This works if the window reference is available
-	if(typeof window === "object")
-		g = window;
+	if (typeof window === "object") g = window;
 }
 
 // g can still be undefined, but nothing to do about it...

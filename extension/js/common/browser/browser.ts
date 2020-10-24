@@ -4,12 +4,11 @@
 
 'use strict';
 
-import { Api } from '../api/api.js';
+import { Api } from '../api/shared/api.js';
 import { Att } from '../core/att.js';
 import { Catch } from '../platform/catch.js';
 import { Dict, Url, UrlParam } from '../core/common.js';
 import { GlobalStore } from '../platform/store/global-store.js';
-import { Ui } from './ui.js';
 import { Xss } from '../platform/xss.js';
 
 export class Browser {
@@ -24,7 +23,7 @@ export class Browser {
     return buf;
   }
 
-  public static saveToDownloads = (att: Att, renderIn?: JQuery<HTMLElement>) => {
+  public static saveToDownloads = (att: Att) => {
     const blob = new Blob([att.getData()], { type: att.type });
     if (window.navigator && window.navigator.msSaveOrOpenBlob) {
       window.navigator.msSaveBlob(blob, att.name);
@@ -32,40 +31,24 @@ export class Browser {
       const a = window.document.createElement('a');
       a.href = window.URL.createObjectURL(blob);
       a.download = Xss.escape(att.name);
-      if (renderIn) {
-        const div = document.createElement('div');
-        div.innerText = `Right-click here and choose 'Save Link As' to save encrypted file`;
-        a.innerText = '';
-        a.appendChild(div);
-        a.className = 'file-download-right-click-link';
-        renderIn.html(a.outerHTML); // xss-escaped attachment name above
-        renderIn.css('height', 'auto');
-        renderIn.find('a').click(e => {
-          Ui.modal.warning('Please use right-click and select Save Link As').catch(Catch.reportErr);
-          e.preventDefault();
-          e.stopPropagation();
-          return false;
-        });
-      } else {
-        if (typeof a.click === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
-          a.click();
-        } else { // safari
-          const ev = document.createEvent('MouseEvents');
-          // @ts-ignore - safari only. expected 15 arguments, but works well with 4
-          ev.initMouseEvent('click', true, true, window);
-          a.dispatchEvent(ev);
-        }
-        if (Catch.browser().name === 'firefox') {
-          try {
-            document.body.removeChild(a);
-          } catch (err) {
-            if (!(err instanceof Error && err.message === 'Node was not found')) {
-              throw err;
-            }
+      if (typeof a.click === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
+        a.click();
+      } else { // safari
+        const ev = document.createEvent('MouseEvents');
+        // @ts-ignore - safari only. expected 15 arguments, but works well with 4
+        ev.initMouseEvent('click', true, true, window);
+        a.dispatchEvent(ev);
+      }
+      if (Catch.browser().name === 'firefox') {
+        try {
+          a.remove();
+        } catch (err) {
+          if (!(err instanceof Error && err.message === 'Node was not found')) {
+            throw err;
           }
         }
-        Catch.setHandledTimeout(() => window.URL.revokeObjectURL(a.href), 0);
       }
+      Catch.setHandledTimeout(() => window.URL.revokeObjectURL(a.href), 0);
     }
   }
 

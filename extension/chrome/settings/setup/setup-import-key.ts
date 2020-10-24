@@ -9,6 +9,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { Key, UnexpectedKeyTypeError } from '../../../js/common/core/crypto/key.js';
 
 export class SetupImportKeyModule {
 
@@ -39,6 +40,8 @@ export class SetupImportKeyModule {
         return await Ui.modal.warning(e.message, Ui.testCompatibilityLink);
       } else if (e instanceof KeyCanBeFixed) {
         return await this.renderCompatibilityFixBlockAndFinalizeSetup(e.encrypted, options);
+      } else if (e instanceof UnexpectedKeyTypeError) {
+        return await Ui.modal.warning(`This does not appear to be a validly formatted key.\n\n${e.message}`);
       } else {
         Catch.reportErr(e);
         return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`, false, Ui.testCompatibilityLink);
@@ -46,7 +49,7 @@ export class SetupImportKeyModule {
     }
   }
 
-  public renderCompatibilityFixBlockAndFinalizeSetup = async (origPrv: OpenPGP.key.Key, options: SetupOptions) => {
+  public renderCompatibilityFixBlockAndFinalizeSetup = async (origPrv: Key, options: SetupOptions) => {
     this.view.setupRender.displayBlock('step_3_compatibility_fix');
     let fixedPrv;
     try {

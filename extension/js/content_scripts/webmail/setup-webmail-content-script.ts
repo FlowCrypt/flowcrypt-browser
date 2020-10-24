@@ -10,6 +10,7 @@ import { Catch } from '../../common/platform/catch.js';
 import { ContentScriptWindow } from '../../common/browser/browser-window.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
+import Swal from 'sweetalert2';
 import { Ui } from '../../common/browser/ui.js';
 import { VERSION } from '../../common/core/const.js';
 import { AcctStore } from '../../common/platform/store/acct-store.js';
@@ -138,6 +139,9 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('close_dialog', async () => {
       $('#cryptup_dialog').remove();
     });
+    BrowserMsg.addListener('close_swal', async () => {
+      Swal.close();
+    });
     BrowserMsg.addListener('scroll_to_element', async ({ selector }: Bm.ScrollToElement) => {
       webmailSpecific.getReplacer().scrollToElement(selector);
     });
@@ -145,6 +149,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       if (!$('#cryptup_dialog').length) {
         $('body').append(factory.dialogPassphrase(longids, type)) // xss-safe-factory;
           .click(Ui.event.handle(e => { // click on the area outside the iframe
+            BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
             $('#cryptup_dialog').remove();
           }));
       }
@@ -168,6 +173,10 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     });
     BrowserMsg.addListener('reply_pubkey_mismatch', BrowserMsgCommonHandlers.replyPubkeyMismatch);
     BrowserMsg.addListener('add_end_session_btn', () => inject.insertEndSessionBtn(acctEmail));
+    BrowserMsg.addListener('show_attachment_preview', async ({ iframeUrl }: Bm.ShowAttachmentPreview) => {
+      await Ui.modal.attachmentPreview(iframeUrl);
+    });
+
     BrowserMsg.listen(tabId);
   };
 

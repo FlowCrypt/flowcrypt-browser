@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { ApiErr } from '../api/error/api-error.js';
+import { ApiErr } from '../api/shared/api-error.js';
 import { Catch } from '../platform/catch.js';
 import { Dict, Url } from '../core/common.js';
 import Swal from 'sweetalert2';
@@ -58,8 +58,6 @@ export class Ui {
         errHandlers.network().catch(Catch.reportErr);
       } else if (ApiErr.isAuthErr(e) && errHandlers && errHandlers.auth) {
         errHandlers.auth().catch(Catch.reportErr);
-      } else if (ApiErr.isAuthPopupNeeded(e) && errHandlers && errHandlers.authPopup) {
-        errHandlers.authPopup().catch(Catch.reportErr);
       } else if (errHandlers && errHandlers.other) {
         errHandlers.other(e).catch(Catch.reportErr);
       } else {
@@ -67,7 +65,10 @@ export class Ui {
       }
     },
     prevent: <THIS extends HTMLElement | void>(
-      evName: PreventableEventName, cb: (el: HTMLElement, resetTimer: () => void) => void | Promise<void>, errHandler?: BrowserEventErrHandler, originalThis?: unknown
+      evName: PreventableEventName,
+      cb: (el: HTMLElement, event: Event | undefined, resetTimer: () => void) => void | Promise<void>,
+      errHandler?: BrowserEventErrHandler,
+      originalThis?: unknown
     ) => {
       let eventTimer: number | undefined;
       let eventFiredOn: number | undefined;
@@ -77,7 +78,7 @@ export class Ui {
       };
       const cbWithErrsHandled = (el: HTMLElement) => {
         try {
-          const r = cb.bind(originalThis)(el, cbResetTimer) as void | Promise<void>; // tslint:disable-line:no-unsafe-any
+          const r = cb.bind(originalThis)(el, event, cbResetTimer) as void | Promise<void>; // tslint:disable-line:no-unsafe-any
           if (typeof r === 'object' && typeof r.catch === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
             r.catch(e => Ui.event._dispatchErr(e, errHandler));
           }
@@ -144,6 +145,7 @@ export class Ui {
           confirmButton: 'ui-modal-info-confirm',
         },
       });
+      Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
     },
     warning: async (text: string, footer?: string): Promise<void> => {
       await Ui.swal().fire({
@@ -155,6 +157,7 @@ export class Ui {
           confirmButton: 'ui-modal-warning-confirm',
         },
       });
+      Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
     },
     error: async (text: string, isHTML: boolean = false, footer?: string): Promise<void> => {
       text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
@@ -167,10 +170,17 @@ export class Ui {
           confirmButton: 'ui-modal-error-confirm',
         },
       });
+      Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
     },
-    confirm: async (text: string): Promise<boolean> => {
-      const { dismiss } = await Ui.swal().fire({
-        html: Xss.escape(text).replace(/\n/g, '<br>'),
+    /**
+     * Presents a modal where user can respond with confirm or cancel.
+     * Awaiting this will give you the users choice as a boolean.
+     */
+    confirm: async (text: string, isHTML: boolean = false, footer?: string): Promise<boolean> => {
+      const html = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
+      const userResponsePromise = Ui.swal().fire({
+        html,
+        footer: footer ? Xss.htmlSanitize(footer) : '',
         allowOutsideClick: false,
         showCancelButton: true,
         customClass: {
@@ -179,10 +189,12 @@ export class Ui {
           cancelButton: 'ui-modal-confirm-cancel',
         },
       });
+      Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
+      const { dismiss } = await userResponsePromise;
       return typeof dismiss === 'undefined';
     },
     confirmWithCheckbox: async (label: string, html: string = ''): Promise<boolean> => {
-      const { dismiss } = await Ui.swal().fire({
+      const userResponsePromise = Ui.swal().fire({
         html,
         input: 'checkbox',
         inputPlaceholder: label,
@@ -193,15 +205,17 @@ export class Ui {
           cancelButton: 'ui-modal-confirm-checkbox-cancel',
           input: 'ui-modal-confirm-checkbox-input',
         },
-        onOpen: () => {
-          const input = Swal.getInput();
-          const confirmButton = Swal.getConfirmButton();
+        didOpen: () => {
+          const input = Swal.getInput()!;
+          const confirmButton = Swal.getConfirmButton()!;
           $(confirmButton).prop('disabled', true);
           $(input).on('change', () => {
             $(confirmButton).prop('disabled', !input.checked);
           });
         }
       });
+      Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
+      const { dismiss } = await userResponsePromise;
       return typeof dismiss === 'undefined';
     },
     page: async (htmlUrl: string, replaceNewlines = false): Promise<void> => {
@@ -211,8 +225,8 @@ export class Ui {
         html = html.replace(/\n/g, '<br>');
       }
       await Ui.swal().fire({
-        onOpen: () => {
-          Swal.getCloseButton().blur();
+        didOpen: () => {
+          Swal.getCloseButton()!.blur();
         },
         html,
         width: 750,
@@ -224,12 +238,13 @@ export class Ui {
           popup: 'ui-modal-iframe'
         }
       });
+      Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
     },
     iframe: async (iframeUrl: string, iframeWidth: number, iframeHeight: number): Promise<void> => {
       await Ui.swal().fire({
-        onOpen: () => {
-          $(Swal.getContent()).attr('data-test', 'dialog');
-          $(Swal.getCloseButton()).attr('data-test', 'dialog-close').blur();
+        didOpen: () => {
+          $(Swal.getContent()!).attr('data-test', 'dialog');
+          $(Swal.getCloseButton()!).attr('data-test', 'dialog-close').blur();
         },
         onClose: () => {
           const urlWithoutPageParam = Url.removeParamsFromUrl(window.location.href, ['page']);
@@ -249,8 +264,8 @@ export class Ui {
     },
     fullscreen: async (html: string): Promise<void> => {
       await Ui.swal().fire({
-        onOpen: () => {
-          $(Swal.getContent()).attr('data-test', 'dialog');
+        didOpen: () => {
+          $(Swal.getContent()!).attr('data-test', 'dialog');
         },
         html: Xss.htmlSanitize(html),
         grow: 'fullscreen',
@@ -260,9 +275,31 @@ export class Ui {
         }
       });
     },
+    attachmentPreview: async (iframeUrl: string): Promise<void> => {
+      await Ui.swal().fire({
+        didOpen: () => {
+          $(Swal.getContent()!).attr('data-test', 'attachment-dialog');
+          $(Swal.getCloseButton()!).attr('data-test', 'dialog-close');
+        },
+        html: `<iframe src="${Xss.escape(iframeUrl)}" style="border: 0" sandbox="allow-scripts allow-same-origin allow-downloads"></iframe>`,
+        showConfirmButton: false,
+        showCloseButton: true,
+        grow: 'fullscreen',
+        customClass: {
+          container: 'ui-modal-attachment'
+        }
+      });
+    },
   };
 
+
   public static testCompatibilityLink = '<a href="/chrome/settings/modules/compatibility.htm" target="_blank">Test your OpenPGP key compatibility</a>';
+
+  public static activateModalPageLinkTags = () => {
+    $('[data-swal-page]').click(Ui.event.handle(async (target) => {
+      await Ui.modal.page($(target).data('swal-page') as string);
+    }));
+  }
 
   public static retryLink = (caption: string = 'retry') => {
     return `<a href="${Xss.escape(window.location.href)}" data-test="action-retry-by-reloading">${Xss.escape(caption)}</a>`;
@@ -301,7 +338,7 @@ export class Ui {
         <div class="line">&nbsp;</div>
         <div class="line">Email human@flowcrypt.com if you need assistance.</div>
       `);
-      const overlay = $(Swal.getContent());
+      const overlay = $(Swal.getContent()!);
       overlay.find('.action-show-overlay-details').one('click', Ui.event.handle(target => {
         $(target).hide().siblings('pre').show();
       }));
@@ -416,6 +453,5 @@ export class Ui {
   private static swal = () => Swal.mixin({
     showClass: { popup: 'swal2-noanimation', backdrop: 'swal2-noanimation' },
     hideClass: { popup: '', backdrop: '' },
-    scrollbarPadding: false,
   })
 }

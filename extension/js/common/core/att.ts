@@ -15,7 +15,7 @@ export type FcAttLinkData = { name: string, type: string, size: number };
 
 export class Att {
 
-  public static readonly webmailNamePattern = /^(((cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|())$/gm;
+  public static readonly webmailNamePattern = /^(((cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|())$/m;
   public static readonly encryptedMsgNames = ['message', 'msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp', 'openpgp-encrypted-message.asc'];
 
   public length: number = NaN;
@@ -33,6 +33,14 @@ export class Att {
 
   public static keyinfoAsPubkeyAtt = (ki: { public: string, longid: string }) => {
     return new Att({ data: Buf.fromUtfStr(ki.public), type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
+  }
+
+  public static sanitizeName = (name: string): string => {
+    const trimmed = name.trim();
+    if (trimmed === '') {
+      return '_';
+    }
+    return trimmed.replace(/[\u0000\u002f\u005c]/g, '_').replace(/__+/g, '_');
   }
 
   constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid, contentDescription }: AttMeta) {

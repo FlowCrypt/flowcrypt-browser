@@ -6,16 +6,16 @@ import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserEventErrHandler, Ui } from '../../../js/common/browser/ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { NewMsgData, SendBtnTexts } from './compose-types.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserExtension } from '../../../js/common/browser/browser-extension.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { KeyInfo } from '../../../js/common/core/pgp-key.js';
+import { KeyInfo } from '../../../js/common/core/crypto/key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
-import { AjaxErrMsgs } from '../../../js/common/api/error/api-error-types.js';
+import { AjaxErrMsgs } from '../../../js/common/api/shared/api-error.js';
 
 export class ComposerUserError extends Error { }
 export class ComposerNotReadyError extends ComposerUserError { }
@@ -31,10 +31,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
   public handle = (couldNotDoWhat: string): BrowserEventErrHandler => {
     return {
       network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
-      authPopup: async () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail }),
-      auth: async () => {
-        Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail, undefined, `Could not ${couldNotDoWhat}.\n`);
-      },
+      auth: async () => Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail, undefined, `Could not ${couldNotDoWhat}.\n`),
       other: async (e: any) => {
         if (e instanceof Error) {
           e.stack = (e.stack || '') + `\n\n[compose action: ${couldNotDoWhat}]`;
@@ -68,20 +65,18 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
   public handleSendErr = async (e: any) => {
     if (ApiErr.isNetErr(e)) {
       await Ui.modal.error('Could not send message due to network error. Please check your internet connection and try again.');
-    } else if (ApiErr.isAuthPopupNeeded(e)) {
-      BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
-      await Ui.modal.error('Could not send message because FlowCrypt needs to be re-connected to google account.');
     } else if (ApiErr.isAuthErr(e)) {
+      BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail);
     } else if (ApiErr.isReqTooLarge(e)) {
       await Ui.modal.error(`Could not send: message or attachments too large.`);
     } else if (ApiErr.isBadReq(e)) {
-      if (e.parsedErrMsg === AjaxErrMsgs.GOOGLE_INVALID_TO_HEADER || e.parsedErrMsg === AjaxErrMsgs.GOOGLE_RECIPIENT_ADDRESS_REQUIRED) {
+      if (e.resMsg === AjaxErrMsgs.GOOGLE_INVALID_TO_HEADER || e.resMsg === AjaxErrMsgs.GOOGLE_RECIPIENT_ADDRESS_REQUIRED) {
         await Ui.modal.error('Error from google: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.');
       } else {
         if (await Ui.modal.confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
           const page = '/chrome/settings/modules/help.htm';
-          const pageUrlParams = { bugReport: BrowserExtension.prepareBugReport(`composer: send: bad request (errMsg: ${e.parsedErrMsg})`, {}, e) };
+          const pageUrlParams = { bugReport: BrowserExtension.prepareBugReport(`composer: send: bad request (errMsg: ${e.resMsg})`, {}, e) };
           await Browser.openSettingsPage('index.htm', this.view.acctEmail, page, pageUrlParams);
         }
       }

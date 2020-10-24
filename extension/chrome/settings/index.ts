@@ -4,11 +4,11 @@
 
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Ui } from '../../js/common/browser/ui.js';
-import { KeyInfo, PgpKey } from '../../js/common/core/pgp-key.js';
+import { KeyInfo, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { Str, Url, UrlParams } from '../../js/common/core/common.js';
-import { ApiErr } from '../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
-import { Backend } from '../../js/common/api/backend.js';
+
 import { Catch } from '../../js/common/platform/catch.js';
 import { Env } from '../../js/common/browser/env.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
@@ -26,6 +26,8 @@ import { GlobalStore } from '../../js/common/platform/store/global-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import Swal from 'sweetalert2';
 import { Subscription } from '../../js/common/subscription.js';
+import { FlowCryptWebsite } from '../../js/common/api/flowcrypt-website.js';
+import { AccountServer } from '../../js/common/api/account-server.js';
 
 View.run(class SettingsView extends View {
 
@@ -40,6 +42,8 @@ View.run(class SettingsView extends View {
   private notifications!: Notifications;
   private orgRules: OrgRules | undefined;
 
+  private altAccounts: JQuery<HTMLElement>;
+
   constructor() {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
@@ -53,6 +57,7 @@ View.run(class SettingsView extends View {
       this.acctEmail = this.acctEmail.toLowerCase().trim();
       this.gmail = new Gmail(this.acctEmail);
     }
+    this.altAccounts = $('#alt-accounts');
   }
 
   public render = async () => {
@@ -147,31 +152,67 @@ View.run(class SettingsView extends View {
     $('.action_show_encrypted_inbox').click(this.setHandler(target => {
       window.location.href = Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: this.acctEmail! });
     }));
-    $('.action_go_auth_denied').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, '/chrome/settings/modules/auth_denied.htm')));
     $('.action_add_account').click(this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId)));
     $('.action_google_auth').click(this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail)));
     // $('.action_microsoft_auth').click(this.setHandlerPrevent('double', function() {
     //   new_microsoft_account_authentication_prompt(account_email);
     // }));
     $('body').click(this.setHandler(() => {
-      $("#alt-accounts").removeClass("active");
+      this.altAccounts.removeClass('visible');
       $(".ion-ios-arrow-down").removeClass("up");
       $(".add-account").removeClass("hidden");
     }));
     $(".toggle-settings").click(this.setHandler(() => {
       $("#settings").toggleClass("advanced");
     }));
+    let preventAccountsMenuMouseenter = false;
     $(".action-toggle-accounts-menu").click(this.setHandler((target, event) => {
       event.stopPropagation();
-      $("#alt-accounts").toggleClass("active");
+      if (this.altAccounts.hasClass('visible')) {
+        this.altAccounts.removeClass('visible');
+      } else {
+        this.altAccounts.addClass('visible');
+        this.altAccounts.find('a').first().focus();
+      }
       $(".ion-ios-arrow-down").toggleClass("up");
       $(".add-account").toggleClass("hidden");
+      preventAccountsMenuMouseenter = true; // prevent mouse events when menu is animated with fadeInDown
+      Catch.setHandledTimeout(() => {
+        preventAccountsMenuMouseenter = false;
+      }, 500);
+    }));
+    this.altAccounts.keydown(this.setHandler((el, ev) => this.accountsMenuKeydownHandler(ev)));
+    this.altAccounts.find('a').on('mouseenter', Ui.event.handle((target, event) => {
+      if (!preventAccountsMenuMouseenter) {
+        $(target).focus();
+      }
     }));
     $('#status-row #status_google').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'google_account' })));
     $('#status-row #status_local_store').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'local_store' })));
-    $('[data-swal-page]').click(this.setHandler(async (target) => {
-      await Ui.modal.page($(target).data('swal-page') as string);
-    }));
+    Ui.activateModalPageLinkTags();
+  }
+
+  private accountsMenuKeydownHandler = (e: JQuery.Event<HTMLElement, null>): void => {
+    const currentActive = this.altAccounts.find(':focus');
+    const accounts = this.altAccounts.find('a');
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      this.altAccounts.removeClass('visible');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      let prev = currentActive.prev();
+      if (!prev.length) {
+        prev = accounts.last();
+      }
+      prev.focus();
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      let next = currentActive.next();
+      if (!next.length) {
+        next = accounts.first();
+      }
+      next.focus();
+    }
   }
 
   private displayOrig = (selector: string) => {
@@ -228,7 +269,7 @@ View.run(class SettingsView extends View {
         $('.hide_if_setup_not_done').css('display', 'none');
       }
     }
-    Backend.retrieveBlogPosts().then(posts => { // do not await because may take a while
+    FlowCryptWebsite.retrieveBlogPosts().then(posts => { // do not await because may take a while
       for (const post of posts) {
         const html = `<div class="line"><a href="https://flowcrypt.com${Xss.escape(post.url)}" target="_blank">${Xss.escape(post.title.trim())}</a> ${Xss.escape(post.date.trim())}</div>`;
         Xss.sanitizeAppend('.blog_post_list', html);
@@ -263,7 +304,7 @@ View.run(class SettingsView extends View {
     const authInfo = await AcctStore.authInfo(this.acctEmail!);
     if (authInfo.uuid) { // have auth email set
       try {
-        const response = await Backend.accountGetAndUpdateLocalStore(authInfo);
+        const response = await AccountServer.accountGetAndUpdateLocalStore(authInfo);
         $('#status-row #status_flowcrypt').text(`fc:ok`);
         if (response?.account?.alias) {
           statusContainer.find('.status-indicator-text').css('display', 'none');
@@ -305,7 +346,7 @@ View.run(class SettingsView extends View {
         await Ui.modal.error('There was a network error, please try again.');
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         await Ui.modal.error(Lang.account.googleAcctDisabledOrPolicy);
-      } else if (ApiErr.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthErr(e)) {
         await Ui.modal.warning('New authorization needed. Please try Additional Settings -> Experimental -> Force Google Account email change');
       } else {
         Catch.reportErr(e);
@@ -334,7 +375,7 @@ View.run(class SettingsView extends View {
         }
       }
     } catch (e) {
-      if (ApiErr.isAuthPopupNeeded(e) || ApiErr.isAuthErr(e)) {
+      if (ApiErr.isAuthErr(e)) {
         $('#status-row #status_google').text(`g:?:auth`).addClass('bad');
         if (await Ui.modal.confirm(`FlowCrypt must be re-connected to your Google account.`)) {
           await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail);
@@ -353,8 +394,7 @@ View.run(class SettingsView extends View {
   private renderSubscriptionStatusHeader = (subscription: Subscription) => {
     $('#status-row #status_subscription').text(`s:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
     if (subscription.active) {
-      const showAcct = async () => await Settings.renderSubPage(this.acctEmail, this.tabId, '/chrome/settings/modules/account.htm');
-      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(this.setHandler(showAcct)).css('cursor', 'pointer');
+      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block');
       if (subscription.method === 'trial') {
         $('.logo-row .subscription .expire').text(subscription.expire ? ('trial ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
         $('.logo-row .subscription .upgrade').css('display', 'inline-block');
@@ -378,13 +418,20 @@ View.run(class SettingsView extends View {
 
   private addKeyRowsHtml = async (privateKeys: KeyInfo[]) => {
     let html = '';
+    const canRemoveKey = !this.orgRules || !this.orgRules.usesKeyManager();
     for (let i = 0; i < privateKeys.length; i++) {
       const ki = privateKeys[i];
-      const prv = await PgpKey.read(ki.private);
-      const date = Str.monthName(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
+      const prv = await KeyUtil.parse(ki.private);
+      const created = new Date(prv.created);
+      const date = Str.monthName(created.getMonth()) + ' ' + created.getDate() + ', ' + created.getFullYear();
       const escapedFp = Xss.escape(ki.fingerprint);
-      const escapedPrimaryOrRm = (ki.primary) ? '(primary)' : `(<a href="#" class="action_remove_key" fingerprint="${escapedFp}">remove</a>)`;
-      const escapedEmail = Xss.escape(Str.parseEmail(prv.users[0].userId ? prv.users[0].userId!.userid : '').email || '');
+      let escapedPrimaryOrRm = '';
+      if (ki.primary) {
+        escapedPrimaryOrRm = '(primary)';
+      } else if (canRemoveKey) {
+        escapedPrimaryOrRm = `(<a href="#" class="action_remove_key" data-test="action-remove-key" fingerprint="${escapedFp}">remove</a>)`;
+      }
+      const escapedEmail = Xss.escape(prv.emails[0] || '');
       const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${escapedFp}">${escapedEmail}</a>`;
       const fpHtml = `fingerprint:&nbsp;<span class="good">${Str.spaced(escapedFp)}</span>`;
       const space = `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
@@ -397,13 +444,15 @@ View.run(class SettingsView extends View {
       // the UI below only gets rendered when account_email is available
       await Settings.renderSubPage(this.acctEmail!, this.tabId, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
     }));
-    $('.action_remove_key').click(this.setHandler(async target => {
-      // the UI below only gets rendered when account_email is available
-      await KeyStore.remove(this.acctEmail!, $(target).attr('fingerprint')!);
-      await PassphraseStore.set('local', this.acctEmail!, $(target).attr('fingerprint')!, undefined);
-      await PassphraseStore.set('session', this.acctEmail!, $(target).attr('fingerprint')!, undefined);
-      this.reload(true);
-    }));
+    if (canRemoveKey) {
+      $('.action_remove_key').click(this.setHandler(async target => {
+        // the UI below only gets rendered when account_email is available
+        await KeyStore.remove(this.acctEmail!, $(target).attr('fingerprint')!);
+        await PassphraseStore.set('local', this.acctEmail!, $(target).attr('fingerprint')!, undefined);
+        await PassphraseStore.set('session', this.acctEmail!, $(target).attr('fingerprint')!, undefined);
+        this.reload(true);
+      }));
+    }
   }
 
   private reload = (advanced = false) => {

@@ -4,7 +4,7 @@
 
 import { GmailParser, GmailRes } from '../../js/common/api/email-provider/gmail/gmail-parser.js';
 
-import { ApiErr } from '../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Att } from '../../js/common/core/att.js';
 import { Browser } from '../../js/common/browser/browser.js';
@@ -13,7 +13,7 @@ import { Catch } from '../../js/common/platform/catch.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
-import { opgp } from '../../js/common/core/pgp.js';
+import { opgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
 
 Catch.try(async () => {
 

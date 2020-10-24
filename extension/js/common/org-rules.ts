@@ -4,7 +4,7 @@
 
 import { Str } from './core/common.js';
 import { AcctStore } from './platform/store/acct-store.js';
-import { KeyAlgo } from './core/pgp-key.js';
+import { KeyAlgo } from './core/crypto/key.js';
 
 type DomainRules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'PRV_AUTOIMPORT_OR_AUTOGEN' | 'PASS_PHRASE_QUIET_AUTOGEN' |
   'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' | 'NO_KEY_MANAGER_PUB_LOOKUP' | 'USE_LEGACY_ATTESTER_SUBMIT' |
@@ -30,14 +30,14 @@ export class OrgRules {
   public static newInstance = async (acctEmail: string): Promise<OrgRules> => {
     const email = Str.parseEmail(acctEmail).email;
     if (!email) {
-      throw new Error(`Not a valid email:${acctEmail}`);
+      throw new Error(`Not a valid email`);
     }
     const storage = await AcctStore.get(email, ['rules']);
     return new OrgRules(storage.rules || OrgRules.default, acctEmail.split('@')[1]);
   }
 
-  public static isPublicEmailProviderDomain = (emailAddr: string) => {
-    return ['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(emailAddr.split('@')[1] || 'NONE');
+  public static isPublicEmailProviderDomain = (emailAddrOrDomain: string) => {
+    return ['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(emailAddrOrDomain.split('@').pop() || 'NONE');
   }
 
   protected constructor(

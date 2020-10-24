@@ -2,15 +2,14 @@
 
 'use strict';
 
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Att } from '../../../js/common/core/att.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposeSendBtnPopoverModule } from './compose-send-btn-popover-module.js';
 import { GeneralMailFormatter } from './formatters/general-mail-formatter.js';
 import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { KeyInfo } from '../../../js/common/core/pgp-key.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { KeyInfo, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { SendBtnTexts } from './compose-types.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { Str } from '../../../js/common/core/common.js';
@@ -35,7 +34,8 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   }
 
   public setHandlers = (): void => {
-    this.view.S.cached('body').keypress(Ui.ctrlEnter(() => !this.view.sizeModule.composeWindowIsMinimized && this.extractProcessSendMsg()));
+    const ctrlEnterHandler = Ui.ctrlEnter(() => !this.view.sizeModule.composeWindowIsMinimized && this.extractProcessSendMsg());
+    this.view.S.cached('subject').add(this.view.S.cached('compose')).keypress(ctrlEnterHandler);
     this.view.S.cached('send_btn').click(this.view.setHandlerPrevent('double', () => this.extractProcessSendMsg()));
     this.popover.setHandlers();
   }
@@ -96,6 +96,9 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   }
 
   private extractProcessSendMsg = async () => {
+    if (this.view.S.cached('reply_msg_successful').is(':visible')) {
+      return;
+    }
     this.view.sendBtnModule.disableBtn();
     this.view.S.cached('toggle_send_options').hide();
     try {
@@ -106,7 +109,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       const newMsgData = this.view.inputModule.extractAll();
       await this.view.errModule.throwIfFormValsInvalid(newMsgData);
       const senderKi = await this.view.storageModule.getKey(this.view.senderModule.getSender());
-      let signingPrv: OpenPGP.key.Key | undefined;
+      let signingPrv: Key | undefined;
       if (this.popover.choices.sign) {
         signingPrv = await this.decryptSenderKey(senderKi);
         if (!signingPrv) {
@@ -168,10 +171,10 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     }
   }
 
-  private decryptSenderKey = async (senderKi: KeyInfo): Promise<OpenPGP.key.Key | undefined> => {
-    const prv = await PgpKey.read(senderKi.private);
+  private decryptSenderKey = async (senderKi: KeyInfo): Promise<Key | undefined> => {
+    const prv = await KeyUtil.parse(senderKi.private);
     const passphrase = await this.view.storageModule.passphraseGet(senderKi);
-    if (typeof passphrase === 'undefined' && !prv.isFullyDecrypted()) {
+    if (typeof passphrase === 'undefined' && !prv.fullyDecrypted) {
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'sign', longids: [senderKi.longid] });
       if ((typeof await this.view.storageModule.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
         return await this.decryptSenderKey(senderKi);
@@ -180,8 +183,8 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         return undefined;
       }
     } else {
-      if (!prv.isFullyDecrypted()) {
-        await PgpKey.decrypt(prv, passphrase!); // checked !== undefined above
+      if (!prv.fullyDecrypted) {
+        await KeyUtil.decrypt(prv, passphrase!); // checked !== undefined above
       }
       return prv;
     }

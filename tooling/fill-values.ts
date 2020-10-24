@@ -10,7 +10,7 @@ const { compilerOptions: { outDir: targetDirExtension } } = JSON.parse(readFileS
 const { compilerOptions: { outDir: targetDirContentScripts } } = JSON.parse(readFileSync('./conf/tsconfig.content_scripts.json').toString());
 const { version } = JSON.parse(readFileSync(`./package.json`).toString());
 
-// mock values for a consumer-mock or enterprise-mock test builds are regex-replaced later in `build-types.ts`
+// mock values for a consumer-mock or enterprise-mock test builds are regex-replaced later in `build-types-and-manifests.ts`
 const replaceables: { needle: RegExp, val: string }[] = [
   { needle: /\[BUILD_REPLACEABLE_VERSION\]/g, val: version },
   { needle: /\[BUILD_REPLACEABLE_FLAVOR\]/g, val: 'consumer' },

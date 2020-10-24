@@ -4,15 +4,14 @@
 
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Url } from '../../js/common/core/common.js';
-import { ApiErr } from '../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Contact, KeyInfo } from '../../js/common/core/pgp-key.js';
+import { Contact, KeyInfo, Key, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
-import { Google } from '../../js/common/api/google.js';
+import { Google } from '../../js/common/api/email-provider/gmail/google.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
 import { Lang } from '../../js/common/lang.js';
-import { PgpKey } from '../../js/common/core/pgp-key.js';
 import { OrgRules } from '../../js/common/org-rules.js';
 import { Settings } from '../../js/common/settings.js';
 import { SetupCreateKeyModule } from './setup/setup-create-key.js';
@@ -28,7 +27,7 @@ import { Scopes, AcctStoreDict, AcctStore } from '../../js/common/platform/store
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
-import { KeyManager } from '../../js/common/api/key-manager.js';
+import { KeyManager } from '../../js/common/api/key-server/key-manager.js';
 import { SetupKeyManagerAutogenModule } from './setup/setup-key-manager-autogen.js';
 import Swal from 'sweetalert2';
 
@@ -62,7 +61,7 @@ export class SetupView extends View {
   public pubLookup!: PubLookup;
   public keyManager: KeyManager | undefined; // not set if no url in org rules
 
-  public acctEmailAttesterLongid: string | undefined;
+  public acctEmailAttesterPubId: string | undefined;
   public fetchedKeyBackups: KeyInfo[] = [];
   public fetchedKeyBackupsUniqueLongids: string[] = [];
   public importedKeysUniqueLongids: string[] = [];
@@ -111,7 +110,7 @@ export class SetupView extends View {
     if (!this.orgRules.canCreateKeys()) {
       const forbidden = `${Lang.setup.creatingKeysNotAllowedPleaseImport} <a href="${Xss.escape(window.location.href)}">Back</a>`;
       Xss.sanitizeRender('#step_2a_manual_create, #step_2_easy_generating', `<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
-      $('.back').remove(); // back button would allow users to choose other options (eg create - not allowed)
+      $('#button-go-back').remove(); // back button would allow users to choose other options (eg create - not allowed)
     }
     if (this.orgRules.mustSubmitToAttester() || !this.orgRules.canSubmitPubToAttester()) {
       $('.remove_if_pubkey_submitting_not_user_configurable').remove();
@@ -137,13 +136,11 @@ export class SetupView extends View {
     BrowserMsg.listen(this.tabId);
     $('.action_send').attr('href', Google.webmailUrl(this.acctEmail));
     $('.action_show_help').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail, this.tabId!, '/chrome/settings/modules/help.htm')));
-    $('.back').off().click(this.setHandler(() => this.actionBackHandler()));
+    $('#button-go-back').off().click(this.setHandler(() => this.actionBackHandler()));
     $('#step_2_recovery .action_recover_account').click(this.setHandlerPrevent('double', () => this.setupRecoverKey.actionRecoverAccountHandler()));
     $('#step_4_more_to_recover .action_recover_remaining').click(this.setHandler(() => this.setupRecoverKey.actionRecoverRemainingKeysHandler()));
     $('.action_skip_recovery').click(this.setHandler(() => this.setupRecoverKey.actionSkipRecoveryHandler()));
     $('.action_account_settings').click(this.setHandler(() => { window.location.href = Url.create('index.htm', { acctEmail: this.acctEmail }); }));
-    const authDeniedPage = '/chrome/settings/modules/auth_denied.htm';
-    $('.action_go_auth_denied').click(this.setHandler(() => { window.location.href = Url.create('index.htm', { acctEmail: this.acctEmail, page: authDeniedPage }); }));
     $('.input_submit_key').click(this.setHandler(el => this.actionSubmitPublicKeyToggleHandler(el)));
     $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(this.setHandler(() => this.setupRender.displayBlock('step_2a_manual_create')));
     $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(this.setHandler(() => this.setupRender.displayBlock('step_2b_manual_enter')));
@@ -197,14 +194,14 @@ export class SetupView extends View {
     await AcctStore.remove(this.acctEmail, ['tmp_submit_main', 'tmp_submit_all']);
   }
 
-  public saveKeysAndPassPhrase = async (prvs: OpenPGP.key.Key[], options: SetupOptions) => {
+  public saveKeysAndPassPhrase = async (prvs: Key[], options: SetupOptions) => {
     for (const prv of prvs) {
-      const fingerprint = await PgpKey.fingerprint(prv);
+      const fingerprint = prv.id;
       if (!fingerprint) {
         await Ui.modal.error('Cannot save keys to storage because at least one of them is not valid.');
         return;
       }
-      await KeyStore.add(this.acctEmail, prv.armor());
+      await KeyStore.add(this.acctEmail, KeyUtil.armor(prv));
       await PassphraseStore.set(options.passphrase_save ? 'local' : 'session', this.acctEmail, fingerprint, options.passphrase);
     }
     const myOwnEmailAddrsAsContacts: Contact[] = [];
@@ -214,9 +211,9 @@ export class SetupView extends View {
         email,
         name,
         client: 'cryptup',
-        pubkey: prvs[0].toPublic().armor(),
+        pubkey: KeyUtil.armor(await KeyUtil.asPublicKey(prvs[0])),
         lastUse: Date.now(),
-        lastSig: await PgpKey.lastSig(prvs[0].toPublic())
+        lastSig: Number(prvs[0].lastModified)
       }));
     }
     await ContactStore.save(undefined, myOwnEmailAddrsAsContacts);
@@ -243,14 +240,17 @@ export class SetupView extends View {
       await Ui.modal.error('Not submitting public key to Attester - disabled for your org');
       return;
     }
-    this.pubLookup.attester.testWelcome(this.acctEmail, armoredPubkey).catch(ApiErr.reportIfSignificant);
+    const pub = await KeyUtil.parse(armoredPubkey);
+    if (pub.usableForEncryption) {
+      this.pubLookup.attester.testWelcome(this.acctEmail, armoredPubkey).catch(ApiErr.reportIfSignificant);
+    }
     let addresses;
     if (this.submitKeyForAddrs.length && options.submit_all) {
       addresses = [...this.submitKeyForAddrs];
     } else {
       addresses = [this.acctEmail];
     }
-    if (this.acctEmailAttesterLongid && this.acctEmailAttesterLongid !== await PgpKey.longid(armoredPubkey)) {
+    if (this.acctEmailAttesterPubId && this.acctEmailAttesterPubId !== pub.id) {
       // already submitted another pubkey for this email
       // todo - offer user to fix it up
       return;

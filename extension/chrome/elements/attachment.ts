@@ -3,10 +3,10 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
-import { DecryptErrTypes, PgpMsg } from '../../js/common/core/pgp-msg.js';
+import { DecryptErrTypes, MsgUtil } from '../../js/common/core/crypto/pgp/msg-util.js';
 import { PromiseCancellation, Url } from '../../js/common/core/common.js';
-import { Api } from '../../js/common/api/api.js';
-import { ApiErr } from '../../js/common/api/error/api-error.js';
+import { Api } from '../../js/common/api/shared/api.js';
+import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { Att } from '../../js/common/core/att.js';
 import { Browser } from '../../js/common/browser/browser.js';
@@ -17,27 +17,29 @@ import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
+import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 
-View.run(class AttachmentDownloadView extends View {
-  private readonly acctEmail: string;
-  private readonly parentTabId: string;
-  private readonly frameId: string;
-  private readonly origNameBasedOnFilename: string;
-  private readonly isEncrypted: boolean;
-  private readonly type: string | undefined;
-  private readonly msgId: string | undefined;
-  private readonly id: string | undefined;
-  private readonly name: string | undefined;
-  private readonly url: string | undefined;
-  private readonly gmail: Gmail;
+export class AttachmentDownloadView extends View {
+  protected readonly acctEmail: string;
+  protected readonly parentTabId: string;
+  protected readonly frameId: string;
+  protected readonly origNameBasedOnFilename: string;
+  protected readonly isEncrypted: boolean;
+  protected readonly type: string | undefined;
+  protected readonly msgId: string | undefined;
+  protected readonly id: string | undefined;
+  protected readonly name: string | undefined;
+  protected readonly url: string | undefined;
+  protected readonly gmail: Gmail;
+  protected att!: Att;
+  protected ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
 
   private size: number | undefined;
-  private att!: Att;
-  private button = $('#download');
+  private downloadButton = $('#download');
+  private header = $('#header');
   private originalButtonHTML: string | undefined;
   private canClickOnAtt: boolean = false;
   private downloadInProgress = false;
-  private ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
   private tabId!: string;
 
   constructor() {
@@ -49,6 +51,7 @@ View.run(class AttachmentDownloadView extends View {
     this.origNameBasedOnFilename = uncheckedUrlParams.name ? String(uncheckedUrlParams.name).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
     this.isEncrypted = uncheckedUrlParams.isEncrypted === true;
     this.size = uncheckedUrlParams.size ? parseInt(String(uncheckedUrlParams.size)) : undefined;
+    this.type = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'type');
     this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
     this.id = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'attId');
     this.name = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'name');
@@ -68,7 +71,7 @@ View.run(class AttachmentDownloadView extends View {
     }
     $('#type').text(this.type || 'unknown type');
     $('#name').text(this.name || 'noname');
-    $('#header > span').text(`${this.isEncrypted ? 'ENCRYPTED\n' : 'PLAIN\n'} FILE`);
+    this.renderHeader();
     $('#name').attr('title', this.name || '');
     $('img#file-format').attr('src', this.getFileIconSrc());
     if (!this.size && this.url) { // download url of a file that has an unknown size
@@ -83,33 +86,62 @@ View.run(class AttachmentDownloadView extends View {
     } catch (e) {
       this.renderErr(e);
     }
+    Ui.setTestState('ready');
   }
 
   public setHandlers = () => {
     Ui.event.protect();
     if (this.canClickOnAtt) {
-      this.button.click(this.setHandlerPrevent('double', () => this.downloadButtonClickedHandler()));
+      this.downloadButton.click(this.setHandlerPrevent('double', () => this.downloadButtonClickedHandler()));
+      this.downloadButton.click((e) => e.stopPropagation());
+      $('body').click(this.setHandlerPrevent('double', async () => {
+        if ($('body').attr('id') !== 'attachment-preview' && !$('body').hasClass('download-error')) {
+          await this.previewAttachmentClickedHandler();
+        }
+      }));
     }
-    $('.attachment').mouseenter(this.setHandler((el) => {
-      if (!this.downloadInProgress) {
-        $('#header').hide();
-        this.button.show();
-      }
-    }));
-    $('.attachment').mouseleave(this.setHandler((el) => {
-      if (!this.downloadInProgress) {
-        $('#header').show();
-        this.button.hide();
-      }
-    }));
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
       if (!entered) {
         this.downloadInProgress = false;
+        this.downloadButton.show();
         this.ppChangedPromiseCancellation.cancel = true; // update original object which is monitored by a promise
         this.ppChangedPromiseCancellation = { cancel: false }; // set to a new, not yet used object
+        BrowserMsg.send.closeSwal(this.parentTabId); // attachment preview
       }
     });
     BrowserMsg.listen(this.tabId);
+  }
+
+  protected downloadDataIfNeeded = async () => {
+    if (this.att.hasData()) {
+      return;
+    }
+    if (this.att.url) { // when content was downloaded and decrypted
+      this.att.setData(await Api.download(this.att.url, this.renderProgress));
+    } else if (this.att.id && this.att.msgId) { // gmail attId
+      const { data } = await this.gmail.attGet(this.att.msgId, this.att.id, this.renderProgress);
+      this.att.setData(data);
+    } else {
+      throw new Error('File is missing both id and url - this should be fixed');
+    }
+  }
+
+  protected renderErr = (e: any) => {
+    if (ApiErr.isAuthErr(e)) {
+      BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
+      Xss.sanitizeRender('body', `Error downloading file - google auth needed. ${Ui.retryLink()}`);
+    } else if (ApiErr.isNetErr(e)) {
+      Xss.sanitizeRender('body', `Error downloading file - no internet. ${Ui.retryLink()}`);
+    } else {
+      Catch.reportErr(e);
+      Xss.sanitizeRender('body', `Error downloading file - ${String(e)}. ${Ui.retryLink()}`);
+    }
+    $('body').addClass('download-error').attr('title', '');
+  }
+
+  private renderHeader = () => {
+    const span = $(`<span>${this.isEncrypted ? 'ENCRYPTED\n' : 'PLAIN\n'} FILE</span>`);
+    this.header.empty().append(span); // xss-escaped
   }
 
   private getFileIconSrc = () => {
@@ -157,24 +189,12 @@ View.run(class AttachmentDownloadView extends View {
     });
   }
 
-  private renderErr = (e: any) => {
-    if (ApiErr.isAuthPopupNeeded(e)) {
-      BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
-      Xss.sanitizeRender('body.attachment', `Error downloading file - google auth needed. ${Ui.retryLink()}`);
-    } else if (ApiErr.isNetErr(e)) {
-      Xss.sanitizeRender('body.attachment', `Error downloading file - no internet. ${Ui.retryLink()}`);
-    } else {
-      Catch.reportErr(e);
-      Xss.sanitizeRender('body.attachment', `Error downloading file - ${String(e)}. ${Ui.retryLink()}`);
-    }
-  }
-
   private processAsPublicKeyAndHideAttIfAppropriate = async () => {
     if (this.att.msgId && this.att.id && this.att.treatAs() === 'publicKey') { // this is encrypted public key - download && decrypt & parse & render
       const { data } = await this.gmail.attGet(this.att.msgId, this.att.id);
-      const decrRes = await PgpMsg.decrypt({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: data });
+      const decrRes = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: data });
       if (decrRes.success && decrRes.content) {
-        const openpgpType = await PgpMsg.type({ data: decrRes.content });
+        const openpgpType = await MsgUtil.type({ data: decrRes.content });
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // 'openpgpType.armored': could potentially process unarmored pubkey files, maybe later
           BrowserMsg.send.renderPublicKeys(this.parentTabId, { afterFrameId: this.frameId, traverseUp: 2, publicKeys: [decrRes.content.toUtfStr()] }); // render pubkey
           BrowserMsg.send.setCss(this.parentTabId, { selector: `#${this.frameId}`, traverseUp: 1, css: { display: 'none' } }); // hide attachment
@@ -191,32 +211,43 @@ View.run(class AttachmentDownloadView extends View {
       return;
     }
     this.downloadInProgress = true;
+    this.downloadButton.hide();
     try {
-      this.originalButtonHTML = this.button.html();
-      this.button.addClass('visible');
-      Xss.sanitizeRender(this.button, `${Ui.spinner('green', 'large_spinner')}<span class="download_progress"></span>`);
+      this.originalButtonHTML = this.downloadButton.html();
+      Xss.sanitizeRender(this.header, `${Ui.spinner('green', 'large_spinner')}<span class="download_progress"></span>`);
       await this.recoverMissingAttIdIfNeeded();
       await this.downloadDataIfNeeded();
       if (!this.isEncrypted) {
-        Browser.saveToDownloads(this.att, $('body'));
+        Browser.saveToDownloads(this.att);
       } else {
         await this.decryptAndSaveAttToDownloads();
       }
+      this.renderHeader();
     } catch (e) {
       this.renderErr(e);
     } finally {
       this.downloadInProgress = false;
+      this.downloadButton.show();
     }
   }
 
+  private previewAttachmentClickedHandler = async () => {
+    if (!this.att.length) {
+      this.att.length = this.size!;
+    }
+    const factory = new XssSafeFactory(this.acctEmail, this.parentTabId);
+    const iframeUrl = factory.srcPgpAttIframe(this.att, this.isEncrypted, undefined, 'chrome/elements/attachment_preview.htm');
+    BrowserMsg.send.showAttachmentPreview(this.parentTabId, { iframeUrl });
+  }
+
   private decryptAndSaveAttToDownloads = async () => {
-    const result = await PgpMsg.decrypt({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: this.att.getData() });
-    Xss.sanitizeRender(this.button, this.originalButtonHTML || '').removeClass('visible');
+    const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: this.att.getData() });
+    Xss.sanitizeRender(this.downloadButton, this.originalButtonHTML || '');
     if (result.success) {
       if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {
         result.filename = this.att.name;
       }
-      Browser.saveToDownloads(new Att({ name: result.filename, type: this.att.type, data: result.content }), $('body'));
+      Browser.saveToDownloads(new Att({ name: result.filename, type: this.att.type, data: result.content }));
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'attachment', longids: result.longids.needPassphrase });
       if (! await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.longids.needPassphrase, 1000, this.ppChangedPromiseCancellation)) {
@@ -231,27 +262,14 @@ View.run(class AttachmentDownloadView extends View {
     }
   }
 
-  private downloadDataIfNeeded = async () => {
-    if (this.att.hasData()) {
-      return;
-    }
-    if (this.att.url) { // when content was downloaded and decrypted
-      this.att.setData(await Api.download(this.att.url, this.renderProgress));
-    } else if (this.att.id && this.att.msgId) { // gmail attId
-      const { data } = await this.gmail.attGet(this.att.msgId, this.att.id, this.renderProgress);
-      this.att.setData(data);
-    } else {
-      throw new Error('File is missing both id and url - this should be fixed');
-    }
-  }
-
   private renderProgress = (percent: number, received: number, fileSize: number) => {
     this.size = fileSize || this.size;
     const progressEl = $('.download_progress');
+    if (!percent && this.size) {
+      percent = Math.floor(((received * 0.75) / this.size) * 100);
+    }
     if (percent) {
-      progressEl.text(`${percent}%`);
-    } else if (this.size) {
-      progressEl.text(`${Math.floor(((received * 0.75) / this.size) * 100)}%`);
+      progressEl.text(`${Math.min(100, percent)}%`);
     }
   }
 
@@ -271,4 +289,6 @@ View.run(class AttachmentDownloadView extends View {
     }
   }
 
-});
+}
+
+View.run(AttachmentDownloadView);

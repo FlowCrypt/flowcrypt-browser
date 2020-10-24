@@ -1,13 +1,12 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { Browser, EvaluateFn, Page, Target } from 'puppeteer';
-import { Config, Util } from '../util';
+import { Util } from '../util';
 
-import { AvaContext } from '../tests';
 import { ControllablePage } from './controllable';
-import { FlowCryptApi } from '../tests/api';
 import { Semaphore } from './browser-pool';
 import { TIMEOUT_ELEMENT_APPEAR } from '.';
+import { AvaContext } from '../tests/tooling';
 
 export class BrowserHandle {
 
@@ -24,9 +23,6 @@ export class BrowserHandle {
 
   public newPage = async (t: AvaContext, url?: string, initialScript?: EvaluateFn): Promise<ControllablePage> => {
     const page = await this.browser.newPage();
-    if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
-      await page.authenticate(Config.secrets.proxy.auth);
-    }
     await page.setViewport(this.viewport);
     const controllablePage = new ControllablePage(t, page);
     if (url) {
@@ -39,18 +35,8 @@ export class BrowserHandle {
     return controllablePage;
   }
 
-  public newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>, cookieAcct?: string): Promise<ControllablePage> => {
-    const cookies = cookieAcct ? await FlowCryptApi.hookCiCookiesGet(cookieAcct) : undefined;
+  public newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>): Promise<ControllablePage> => {
     const page = await this.doAwaitTriggeredPage(triggeringAction);
-    if (cookies) {
-      await page.setCookie(...cookies);
-      // we don't have a reliable way to set cookies before previous url starts loading
-      // reloading the page after setting cookies fixes it
-      await page.reload();
-    }
-    if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
-      await page.authenticate(Config.secrets.proxy.auth);
-    }
     await page.setViewport(this.viewport);
     const controllablePage = new ControllablePage(t, page);
     this.pages.push(controllablePage);
@@ -75,12 +61,12 @@ export class BrowserHandle {
     this.semaphore.release();
   }
 
-  public debugPagesHtml = async () => {
+  public debugPagesHtml = async (t: AvaContext, alsoLogToConsole: boolean) => {
     let html = '';
     for (let i = 0; i < this.pages.length; i++) {
       const cPage = this.pages[i];
       const url = await Promise.race([cPage.page.url(), new Promise(resolve => setTimeout(() => resolve('(url get timeout)'), 10 * 1000)) as Promise<string>]);
-      const consoleMsgs = await cPage.console();
+      const consoleMsgs = await cPage.console(t, alsoLogToConsole);
       const alerts = cPage.alerts.map(a => `${a.active ? `<b class="c-error">ACTIVE ${a.target.type()}</b>` : a.target.type()}: ${a.target.message()}`).join('\n');
       html += '<div class="page">';
       html += `<pre title="url">Page ${i} (${cPage.page.isClosed() ? 'closed' : 'active'}) ${Util.htmlEscape(url)}</pre>`;

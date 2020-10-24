@@ -10,12 +10,12 @@ import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { FetchKeyUI } from '../../js/common/ui/fetch-key-ui.js';
-import { PgpKey } from '../../js/common/core/pgp-key.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
+import { KeyUtil } from '../../js/common/core/crypto/key.js';
 
 View.run(class AddPubkeyView extends View {
   private readonly acctEmail: string;
@@ -48,12 +48,12 @@ View.run(class AddPubkeyView extends View {
     this.attUI.initAttDialog('fineuploader', 'fineuploader_button', {
       attAdded: async (file) => {
         this.attUI.clearAllAtts();
-        const { keys, errs } = await PgpKey.readMany(file.getData());
+        const { keys, errs } = await KeyUtil.readMany(file.getData());
         if (keys.length) {
           if (errs.length) {
             await Ui.modal.warning(`some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
           }
-          $('.pubkey').val(String(keys[0].armor()));
+          $('.pubkey').val(String(KeyUtil.armor(keys[0])));
           $('.action_ok').trigger('click');
         } else if (errs.length) {
           await Ui.modal.error(`error processing public keys:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
@@ -73,7 +73,7 @@ View.run(class AddPubkeyView extends View {
     if ($(fromSelect).val()) {
       const [contact] = await ContactStore.get(undefined, [String($(fromSelect).val())]);
       if (contact?.pubkey) {
-        $('.pubkey').val(contact.pubkey).prop('disabled', true);
+        $('.pubkey').val(KeyUtil.armor(contact.pubkey)).prop('disabled', true);
       } else {
         Catch.report('Contact unexpectedly not found when copying pubkey by email in add_pubkey.htm');
         await Ui.modal.error('Contact not found.');

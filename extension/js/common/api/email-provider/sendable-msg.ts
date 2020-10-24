@@ -5,7 +5,7 @@
 import { Dict, Str } from '../../core/common.js';
 import { Mime, MimeEncodeType, SendableMsgBody } from '../../core/mime.js';
 import { Att } from '../../core/att.js';
-import { RecipientType } from '../api.js';
+import { RecipientType } from '../shared/api.js';
 import { KeyStore } from '../../platform/store/key-store.js';
 
 export type Recipients = { to?: string[], cc?: string[], bcc?: string[] };

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { VerifyRes } from '../../../js/common/core/pgp-msg.js';
+import { VerifyRes } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { Att } from '../../../js/common/core/att.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
@@ -117,7 +117,7 @@ export class PgpBlockViewRenderModule {
       BrowserMsg.send.renderPublicKeys(this.view.parentTabId, { afterFrameId: this.view.frameId, publicKeys });
     }
     if (renderableAtts.length) {
-      this.view.attachmentsModule.renderInnerAtts(renderableAtts);
+      this.view.attachmentsModule.renderInnerAtts(renderableAtts, isEncrypted);
     }
     this.resizePgpBlockFrame();
     if (!this.doNotSetStateAsReadyYet) { // in case async tasks are still being worked at

@@ -1,12 +1,11 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { AvaContext, addDebugHtml, newWithTimeoutsFunc } from '../tests';
-import { Config, Util } from "../util";
-
+import { Util } from "../util";
 import { BrowserHandle } from './browser-handle';
 import { Consts } from '../test';
 import { TIMEOUT_DESTROY_UNEXPECTED_ALERT } from '.';
 import { launch } from "puppeteer";
+import { addDebugHtml, AvaContext, newWithTimeoutsFunc } from '../tests/tooling';
 
 class TimeoutError extends Error { }
 
@@ -21,7 +20,8 @@ export class BrowserPool {
     private reuse: boolean,
     private extensionBuildDir: string,
     private width = 1280,
-    private height = 850
+    private height = 850,
+    private debug = false
   ) {
     this.semaphore = new Semaphore(poolSize, name);
   }
@@ -37,9 +37,6 @@ export class BrowserPool {
       `--load-extension=${this.extensionBuildDir}`,
       `--window-size=${this.width + 10},${this.height + 132}`,
     ];
-    if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
-      args.push(`--proxy-server=${Config.secrets.proxy.server}`);
-    }
     const browser = await launch({ args, headless: false, slowMo: isMock ? undefined : 60, devtools: false });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {
@@ -127,11 +124,11 @@ export class BrowserPool {
     });
   }
 
-  public withNewBrowserTimeoutAndRetry = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext, consts: Consts) => {
+  public withNewBrowserTimeoutAndRetry = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext, consts: Consts, flag?: 'FAILING') => {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const attemptDebugHtmls: string[] = [];
-    t.totalAttempts = consts.ATTEMPTS;
-    for (let attemptNumber = 1; attemptNumber <= consts.ATTEMPTS; attemptNumber++) {
+    t.totalAttempts = flag === 'FAILING' ? 1 : consts.ATTEMPTS;
+    for (let attemptNumber = 1; attemptNumber <= t.totalAttempts; attemptNumber++) {
       t.attemptNumber = attemptNumber;
       t.attemptText = `(attempt ${t.attemptNumber} of ${t.totalAttempts})`;
       try {
@@ -139,7 +136,7 @@ export class BrowserPool {
         try {
           await withTimeouts(this.cbWithTimeout(async () => await cb(t, browser), consts.TIMEOUT_EACH_RETRY));
           await this.throwOnRetryFlagAndReset(t);
-          if (attemptDebugHtmls.length) {
+          if (attemptDebugHtmls.length && flag !== 'FAILING') { // don't debug known failures
             addDebugHtml(`<h1>Test (later succeeded): ${Util.htmlEscape(t.title)}</h1>${attemptDebugHtmls.join('')}`);
           }
           return;
@@ -151,17 +148,19 @@ export class BrowserPool {
           await browser.close();
         }
       } catch (err) {
-        this.processTestError(err, t, attemptDebugHtmls);
+        this.processTestError(err, t, attemptDebugHtmls, flag);
       }
     }
   }
 
-  private processTestError = (err: any, t: AvaContext, attemptHtmls: string[]) => {
+  private processTestError = (err: any, t: AvaContext, attemptHtmls: string[], flag?: 'FAILING') => {
     t.retry = undefined;
     if (t.attemptNumber! < t.totalAttempts!) {
       t.log(`${t.attemptText} Retrying: ${String(err)}`);
     } else {
-      addDebugHtml(`<h1>Test: ${Util.htmlEscape(t.title)}</h1>${attemptHtmls.join('')}`);
+      if (flag !== 'FAILING') { // don't debug known failures
+        addDebugHtml(`<h1>Test: ${Util.htmlEscape(t.title)}</h1>${attemptHtmls.join('')}`);
+      }
       t.log(`${t.attemptText} Failed:   ${err instanceof Error ? err.stack : String(err)}`);
       t.fail(`[ALL RETRIES FAILED for ${t.title}]`);
     }
@@ -172,7 +171,7 @@ export class BrowserPool {
     <div class="attempt">
       <div style="display:none;">
         <pre title="err.stack">${Util.htmlEscape((err instanceof Error ? err.stack : String(err)) || String(err))}</pre>
-        ${await browser.debugPagesHtml()}
+        ${await browser.debugPagesHtml(t, this.debug)}
       </div>
       <a href="#" onclick="this.style.display='none';this.parentNode.firstElementChild.style = '';">${String(err)}</a>
     </div>

@@ -7,7 +7,7 @@ import { Config } from '../../../util';
 import { expect } from 'chai';
 import { GoogleData } from '../google-data';
 import { HttpClientErr } from '../../lib/api';
-import { PgpMsg } from '../../../core/pgp-msg';
+import { MsgUtil } from '../../../core/crypto/pgp/msg-util';
 
 // TODO: Make a better structure of ITestMsgStrategy. Because this class doesn't test anything, it only saves message in the Mock
 class SaveMessageInStorageStrategy implements ITestMsgStrategy {
@@ -32,8 +32,8 @@ class MessageWithFooterTestStrategy implements ITestMsgStrategy {
   private readonly footer = 'flowcrypt.compatibility test footer with an img';
 
   public test = async (mimeMsg: ParsedMail) => {
-    const keyInfo = Config.secrets.keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
-    const decrypted = await PgpMsg.decrypt({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
+    const keyInfo = Config.secrets().keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
+    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: can't decrypt message`);
     }
@@ -49,8 +49,8 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
   private readonly signedBy = 'B6BE3C4293DDCF66'; // could potentially grab this from test-secrets.json file
 
   public test = async (mimeMsg: ParsedMail) => {
-    const keyInfo = Config.secrets.keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
-    const decrypted = await PgpMsg.decrypt({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
+    const keyInfo = Config.secrets().keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
+    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: Could not successfully verify signed message`);
     }
@@ -92,8 +92,8 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
   ].join('\n');
 
   public test = async (mimeMsg: ParsedMail) => {
-    const keyInfo = Config.secrets.keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
-    const decrypted = await PgpMsg.decrypt({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
+    const keyInfo = Config.secrets().keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
+    const decrypted = await MsgUtil.decryptMessage({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: can't decrypt message`);
     }

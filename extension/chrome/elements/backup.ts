@@ -5,14 +5,12 @@
 import { Assert } from '../../js/common/assert.js';
 import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
-import { KeyInfo } from '../../js/common/core/pgp-key.js';
-import { PgpKey } from '../../js/common/core/pgp-key.js';
+import { KeyInfo, KeyUtil } from '../../js/common/core/crypto/key.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url, Str } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
-import { Catch } from '../../js/common/platform/catch.js';
 
 View.run(class BackupView extends View {
 
@@ -34,14 +32,14 @@ View.run(class BackupView extends View {
   public render = async () => {
     Ui.event.protect();
     await initPassphraseToggle(['pass_phrase']);
-    const prvBackup = await PgpKey.read(this.armoredPrvBackup);
-    const fingerprint = await PgpKey.fingerprint(prvBackup);
+    const prvBackup = await KeyUtil.parse(this.armoredPrvBackup);
+    const fingerprint = prvBackup.id;
     if (!fingerprint) {
       throw new Error('Missing backup key fingerprint');
     }
     if (prvBackup) {
       $('.line.fingerprints .fingerprint').text(Str.spaced(fingerprint));
-      if (await Catch.doesReject(prvBackup.getEncryptionKey()) && await Catch.doesReject(prvBackup.getSigningKey())) {
+      if (prvBackup.usableForEncryption && prvBackup.usableForSigning) {
         $('.line.add_contact').addClass('bad').text('This private key looks correctly formatted, but cannot be used for encryption.');
         $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
       }
@@ -73,7 +71,7 @@ View.run(class BackupView extends View {
   }
 
   private testPassphraseHandler = async () => {
-    if (await PgpKey.decrypt(await PgpKey.read(this.armoredPrvBackup), String($('#pass_phrase').val())) === true) {
+    if (await KeyUtil.checkPassPhrase(this.armoredPrvBackup, String($('#pass_phrase').val())) === true) {
       await Ui.modal.info('Success - your pass phrase matches this backup!');
     } else {
       await Ui.modal.warning('Pass phrase did not match. Please try again. If you forgot your pass phrase, please change it, so that you don\'t get' +

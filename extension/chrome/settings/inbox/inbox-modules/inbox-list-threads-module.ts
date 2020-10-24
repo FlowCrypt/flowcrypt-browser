@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { ApiErr } from '../../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../../js/common/api/shared/api-error.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { GmailParser } from '../../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { InboxView } from '../inbox.js';
@@ -15,7 +15,7 @@ import { Xss } from '../../../../js/common/platform/xss.js';
 export class InboxListThreadsModule extends ViewModule<InboxView> {
 
   public render = async (labelId: string) => {
-    this.view.displayBlock('inbox', `Messages in ${this.view.inboxMenuModule.getLabelName(labelId)}`);
+    this.view.displayBlock('inbox', `Messages in ${Xss.escape(this.view.inboxMenuModule.getLabelName(labelId))}`);
     try {
       const { threads } = await this.view.gmail.threadList(labelId);
       if (threads?.length) {
@@ -26,7 +26,7 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         this.view.inboxNotificationModule.showNotification(`Connection error trying to get list of messages ${Ui.retryLink()}`);
-      } else if (ApiErr.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthErr(e)) {
         this.view.inboxNotificationModule.renderAndHandleAuthPopupNotification();
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy);
@@ -66,7 +66,7 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender(threadItem.find('.loading'), 'Failed to load (network) <a href="#">retry</a>').find('a').click(this.view.setHandler(() => this.renderInboxItem(threadId)));
-      } else if (ApiErr.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthErr(e)) {
         this.view.inboxNotificationModule.renderAndHandleAuthPopupNotification();
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         this.view.inboxNotificationModule.showNotification(Lang.account.googleAcctDisabledOrPolicy);

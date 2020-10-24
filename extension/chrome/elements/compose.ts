@@ -3,7 +3,7 @@
 'use strict';
 
 import { EmailProviderInterface, ReplyParams } from '../../js/common/api/email-provider/email-provider-api.js';
-import { ApiErr } from '../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
@@ -11,7 +11,7 @@ import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
-import { opgp } from '../../js/common/core/pgp.js';
+import { opgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
 import { ComposeAttsModule } from './compose-modules/compose-atts-module.js';
 import { ComposeDraftModule } from './compose-modules/compose-draft-module.js';
 import { ComposeErrModule } from './compose-modules/compose-err-module.js';
@@ -75,6 +75,7 @@ export class ComposeView extends View {
     compose_table: 'table#compose',
     header: '#section_header',
     subject: '#section_subject',
+    compose: '#section_compose',
     footer: '#section_footer',
     title: '#header_title',
     input_text: 'div#input_text',
@@ -104,6 +105,7 @@ export class ComposeView extends View {
     reply_msg_successful: '#reply_message_successful_container',
     replied_body: '.replied_body',
     replied_attachments: '#attachments',
+    fineuploader: '#fineuploader',
     recipients: 'span.recipients',
     contacts: '#contacts',
     input_addresses_container_outer: '#input_addresses_container',
@@ -165,8 +167,14 @@ export class ComposeView extends View {
     if (this.replyMsgId) {
       await this.renderModule.fetchReplyMeta(Object.keys(storage.sendAs!));
     }
-    if (this.isReplyBox && this.threadId && !this.ignoreDraft && storage.drafts_reply && storage.drafts_reply[this.threadId]) {
-      this.draftId = storage.drafts_reply[this.threadId]; // there may be a draft we want to load
+    if (this.isReplyBox) { // reply
+      if (this.threadId && !this.ignoreDraft && storage.drafts_reply && storage.drafts_reply[this.threadId]) {
+        this.draftId = storage.drafts_reply[this.threadId]; // there may be a draft we want to load
+      }
+    } else { // compose
+      if (!this.draftId) {
+        this.draftId = this.draftModule.localNewMessageDraftId;
+      }
     }
     BrowserMsg.listen(this.tabId!);
     await this.renderModule.initComposeBox();

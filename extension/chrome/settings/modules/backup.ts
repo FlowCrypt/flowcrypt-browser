@@ -60,10 +60,10 @@ export class BackupView extends View {
       return;
     }
     if (this.action === 'setup_automatic') {
-      $('.back').css('display', 'none');
+      $('#button-go-back').css('display', 'none');
       await this.automaticModule.simpleSetupAutoBackupRetryUntilSuccessful();
     } else if (this.action === 'setup_manual') {
-      $('.back').css('display', 'none');
+      $('#button-go-back').css('display', 'none');
       this.displayBlock('module_manual');
       $('h1').text('Back up your private key');
     } else if (this.action === 'backup_manual') {

@@ -3,8 +3,8 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { FormatError, PgpMsg, DecryptErrTypes } from '../../../js/common/core/pgp-msg.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { FormatError, MsgUtil, DecryptErrTypes } from '../../../js/common/core/crypto/pgp/msg-util.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Mime } from '../../../js/common/core/mime.js';
@@ -123,7 +123,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
             let attMeta: { content: Buf, filename?: string } | undefined;
             if (block.type === 'encryptedAtt') {
               this.setQuoteLoaderProgress('decrypting...');
-              const result = await PgpMsg.decrypt({ kisWithPp: await KeyStore.getAllWithPp(this.view.acctEmail), encryptedData: block.attMeta.data });
+              const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.view.acctEmail), encryptedData: block.attMeta.data });
               if (result.success) {
                 attMeta = { content: result.content, filename: result.filename };
               }
@@ -150,7 +150,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
         Xss.sanitizeAppend(this.view.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.escape(e.data)}`);
       } else if (ApiErr.isNetErr(e)) {
         // todo: retry
-      } else if (ApiErr.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       } else {
         Catch.reportErr(e);
@@ -160,7 +160,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
   }
 
   private decryptMessage = async (encryptedData: Buf): Promise<string> => {
-    const decryptRes = await PgpMsg.decrypt({ kisWithPp: await KeyStore.getAllWithPp(this.view.acctEmail), encryptedData });
+    const decryptRes = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.view.acctEmail), encryptedData });
     if (decryptRes.success) {
       return decryptRes.content.toUtfStr();
     } else if (decryptRes.error && decryptRes.error.type === DecryptErrTypes.needPassphrase) {
@@ -196,7 +196,6 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     $(el).remove();
     Xss.sanitizeAppend(this.view.S.cached('input_text'), this.getTripleDotSanitizedFormattedHtmlContent());
     this.tripleDotSanitizedHtmlContent = undefined;
-    this.view.inputModule.squire.focus();
     this.view.sizeModule.resizeComposeBox();
   }
 

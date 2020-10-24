@@ -5,7 +5,7 @@
 import { Assert } from '../../../js/common/assert.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Lang } from '../../../js/common/lang.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
@@ -17,7 +17,7 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 View.run(class TestPassphrase extends View {
   private readonly acctEmail: string;
   private readonly parentTabId: string;
-  private primaryKey: OpenPGP.key.Key | undefined;
+  private primaryKey: Key | undefined;
 
   constructor() {
     super();
@@ -30,8 +30,8 @@ View.run(class TestPassphrase extends View {
     const [keyInfo] = await KeyStore.get(this.acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(keyInfo);
     await initPassphraseToggle(['password']);
-    this.primaryKey = await PgpKey.read(keyInfo.private);
-    if (!this.primaryKey.isFullyEncrypted()) {
+    this.primaryKey = await KeyUtil.parse(keyInfo.private);
+    if (!this.primaryKey.fullyEncrypted) {
       const setUpPpUrl = Url.create('change_passphrase.htm', { acctEmail: this.acctEmail, parentTabId: this.parentTabId });
       Xss.sanitizeRender('#content', `<div class="line">No pass phrase set up yet: <a href="${setUpPpUrl}">set up pass phrase</a></div>`);
       return;
@@ -45,7 +45,7 @@ View.run(class TestPassphrase extends View {
   }
 
   private verifyHandler = async () => {
-    if (await PgpKey.decrypt(this.primaryKey!, String($('#password').val())) === true) {
+    if (await KeyUtil.decrypt(this.primaryKey!, String($('#password').val())) === true) {
       Xss.sanitizeRender('#content', `
         <div class="line">${Lang.setup.ppMatchAllSet}</div>
         <div class="line"><button class="button green close" data-test="action-test-passphrase-successful-close">close</button></div>

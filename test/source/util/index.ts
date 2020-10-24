@@ -2,9 +2,9 @@
 
 import * as fs from 'fs';
 
-import { KeyInfo } from '../core/pgp-key.js';
+import { KeyInfo } from '../core/crypto/key.js';
 
-export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL';
+export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL' | 'UNIT-TESTS';
 
 export const getParsedCliParams = () => {
   let testVariant: TestVariant;
@@ -14,10 +14,14 @@ export const getParsedCliParams = () => {
     testVariant = 'ENTERPRISE-MOCK';
   } else if (process.argv.includes('CONSUMER-LIVE-GMAIL')) {
     testVariant = 'CONSUMER-LIVE-GMAIL';
+  } else if (process.argv.includes('UNIT-TESTS')) {
+    testVariant = 'UNIT-TESTS';
   } else {
     throw new Error('Unknown test type: specify CONSUMER-MOCK or ENTERPRISE-MOCK CONSUMER-LIVE-GMAIL');
   }
-  const testGroup = (process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP') as 'FLAKY-GROUP' | 'STANDARD-GROUP';
+  const testGroup = (process.argv.includes('UNIT-TESTS') ? 'UNIT-TESTS'
+    : process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP') as
+    'FLAKY-GROUP' | 'STANDARD-GROUP' | 'UNIT-TESTS';
   const buildDir = `build/chrome-${(testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : testVariant).toLowerCase()}`;
   const poolSizeOne = process.argv.includes('--pool-size=1') || testGroup === 'FLAKY-GROUP';
   const oneIfNotPooled = (suggestedPoolSize: number) => poolSizeOne ? Math.min(1, suggestedPoolSize) : suggestedPoolSize;
@@ -40,7 +44,6 @@ interface TestSecretsInterface {
   ci_admin_token: string;
   ci_dev_account: string;
   data_encryption_password: string;
-  proxy?: { enabled: boolean, server: string, auth: { username: string, password: string } };
   auth: { google: { email: string, password?: string, secret_2fa?: string }[], };
   keys: { title: string, passphrase: string, armored: string | null, longid: string | null }[];
   keyInfo: Array<{ email: string, key: KeyInfo[] }>;
@@ -50,15 +53,27 @@ export class Config {
 
   public static extensionId = '';
 
-  public static secrets = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8')) as TestSecretsInterface;
+  private static _secrets: TestSecretsInterface;
+
+  public static secrets = (): TestSecretsInterface => {
+    if (!Config._secrets) {
+      try {
+        Config._secrets = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8'));
+      } catch (e) {
+        console.error(`skipping loading test secrets because ${e}`);
+        Config._secrets = { auth: { google: [] }, keys: [], keyInfo: [] } as any as TestSecretsInterface;
+      }
+    }
+    return Config._secrets;
+  }
 
   public static key = (title: string) => {
-    return Config.secrets.keys.filter(k => k.title === title)[0];
+    return Config.secrets().keys.filter(k => k.title === title)[0];
   }
 
 }
 
-Config.secrets.auth.google.push( // these don't contain any secrets, so not worth syncing through secrets file
+Config.secrets().auth.google.push( // these don't contain any secrets, so not worth syncing through secrets file
   { "email": "flowcrypt.test.key.used.pgp@gmail.com" },
   { "email": "flowcrypt.test.key.imported@gmail.com" },
   { "email": "flowcrypt.test.key.import.naked@gmail.com" },
@@ -73,6 +88,8 @@ Config.secrets.auth.google.push( // these don't contain any secrets, so not wort
   { "email": "put.key@key-manager-autogen.flowcrypt.com" },
   { "email": "get.error@key-manager-autogen.flowcrypt.com" },
   { "email": "put.error@key-manager-autogen.flowcrypt.com" },
+  { "email": "two.keys@key-manager-autogen.flowcrypt.com" },
+  { "email": "reject.client.keypair@key-manager-autogen.flowcrypt.com" },
   { "email": "fail@key-manager-server-offline.flowcrypt.com" },
   { "email": "user@key-manager-no-pub-lookup.flowcrypt.com" },
   { "email": "expire@key-manager-keygen-expiration.flowcrypt.com" },
@@ -91,6 +108,14 @@ export class Util {
 
   public static htmlEscape = (str: string) => {
     return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
+  }
+
+  public static deleteFileIfExists = (filename: string) => {
+    try {
+      fs.unlinkSync(filename);
+    } catch (e) {
+      // file didn't exist
+    }
   }
 
 }

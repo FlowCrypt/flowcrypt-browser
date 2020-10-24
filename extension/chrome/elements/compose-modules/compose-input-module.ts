@@ -56,6 +56,10 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(html, '\n')).trim();
   }
 
+  public extractAttachments = () => {
+    return this.view.S.cached('fineuploader').find('.qq-upload-file').toArray().map((el) => $(el).text().trim());
+  }
+
   public extractAll = (): NewMsgData => {
     const recipientElements = this.view.recipientsModule.getRecipients();
     const recipients = this.mapRecipients(recipientElements);
@@ -66,6 +70,10 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     const pwd = typeof password === 'string' && password ? password : undefined;
     const from = this.view.senderModule.getSender();
     return { recipients, subject, plaintext, plainhtml, pwd, from };
+  }
+
+  public isRichText = () => {
+    return this.view.sendBtnModule.popover.choices.richtext;
   }
 
   private handlePaste = () => {
@@ -224,9 +232,5 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       this.squire.insertImage(String($(input).val()), {});
       await this.view.draftModule.draftSave();
     }));
-  }
-
-  private isRichText = () => {
-    return this.view.sendBtnModule.popover.choices.richtext;
   }
 }

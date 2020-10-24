@@ -43,8 +43,33 @@ else
 
 fi
 
+# copy dependencies from npm
+mkdir -p $OUTDIR/lib/
+mkdir -p $OUTDIR/css/
+cp node_modules/dompurify/dist/purify.js $OUTDIR/lib/purify.js
+cp node_modules/jquery/dist/jquery.min.js $OUTDIR/lib/jquery.min.js
+cp node_modules/openpgp/dist/openpgp.js $OUTDIR/lib/openpgp.js
+cp node_modules/openpgp/dist/openpgp.worker.js $OUTDIR/lib/openpgp.worker.js
+cp node_modules/sweetalert2/dist/sweetalert2.js $OUTDIR/lib/sweetalert2.js
+cp node_modules/sweetalert2/dist/sweetalert2.css $OUTDIR/css/sweetalert2.css
+cp node_modules/iso-8859-2/iso-8859-2.js $OUTDIR/lib/iso-8859-2.js
+cp node_modules/zxcvbn/dist/zxcvbn.js $OUTDIR/lib/zxcvbn.js
+cp node_modules/squire-rte/build/squire-raw.js $OUTDIR/lib/squire-raw.js
+cp node_modules/clipboard/dist/clipboard.js $OUTDIR/lib/clipboard.js
+cp node_modules/@flowcrypt/fine-uploader/fine-uploader/fine-uploader.js $OUTDIR/lib/fine-uploader.js
+cp node_modules/filesize/lib/filesize.js $OUTDIR/lib/filesize.js
+cp node_modules/pdfjs-dist/build/pdf.js $OUTDIR/lib/pdf.js
+cp node_modules/pdfjs-dist/build/pdf.worker.js $OUTDIR/lib/pdf.worker.js
+mkdir -p $OUTDIR/lib/bootstrap
+cp node_modules/bootstrap/dist/js/bootstrap.min.js $OUTDIR/lib/bootstrap/bootstrap.min.js
+cp node_modules/bootstrap/dist/css/bootstrap.min.css $OUTDIR/lib/bootstrap/bootstrap.min.css
 
-# build sequentially
+# to update node-forge library, which is missing the non-minified version in dist, we have to build it manually
+# cd ~/git && rm -rf ./forge && git clone https://github.com/digitalbazaar/forge.git && cd ./forge && npm install && npm run-script build
+# cp dist/forge.js ../flowcrypt-browser/extension/lib/forge.js
+# WARN: the steps above are not working as of forge 0.10.0 due to eval/CSP mentioned here: https://github.com/digitalbazaar/forge/issues/814
+
+# remaining build steps sequentially
 ( cd $SRCDIR && cp -r --parents ./**/*.{js,htm,css,ttf,woff2,png,svg,txt} ./{.web-extension-id,manifest.json} ../$OUTDIR )
 node ./build/tooling/resolve-modules
 node ./build/tooling/fill-values
@@ -52,5 +77,4 @@ node ./build/tooling/bundle-content-scripts
 cp -r $OUTDIR ./build/chrome-enterprise
 cp -r $OUTDIR ./build/chrome-consumer
 cp -r $OUTDIR ./build/firefox-consumer
-node ./build/tooling/build-manifests
-node ./build/tooling/build-types
+node ./build/tooling/build-types-and-manifests

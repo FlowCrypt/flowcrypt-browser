@@ -2,15 +2,16 @@
 
 'use strict';
 
-import { Backend } from '../../../js/common/api/backend.js';
+
 import { RecipientStatuses, SendBtnTexts } from './compose-types.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Str } from '../../../js/common/core/common.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { AccountServer } from '../../../js/common/api/account-server.js';
 
 export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
 
@@ -90,7 +91,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
         expirationTextEl.text(Str.pluralize(this.MSG_EXPIRE_DAYS_DEFAULT, 'day'));
       } else {
         try {
-          const response = await Backend.accountGetAndUpdateLocalStore(authInfo);
+          const response = await AccountServer.accountGetAndUpdateLocalStore(authInfo);
           expirationTextEl.text(Str.pluralize(response.account.default_message_expire, 'day'));
         } catch (e) {
           ApiErr.reportIfSignificant(e);

@@ -4,7 +4,7 @@
 
 import { SelCache, Ui } from '../../../js/common/browser/ui.js';
 import { Url, UrlParams } from '../../../js/common/core/common.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg, Bm } from '../../../js/common/browser/browser-msg.js';
@@ -16,6 +16,7 @@ import { InboxMenuModule } from './inbox-modules/inbox-menu-module.js';
 import { InboxNotificationModule } from './inbox-modules/inbox-notification-module.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Settings } from '../../../js/common/settings.js';
+import Swal from 'sweetalert2';
 import { View } from '../../../js/common/view.js';
 import { WebmailCommon } from "../../../js/common/webmail.js";
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -79,7 +80,7 @@ export class InboxView extends View {
       }
     } catch (e) {
       ApiErr.reportIfSignificant(e);
-      if (ApiErr.isAuthErr(e) || ApiErr.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthErr(e)) {
         await Ui.modal.warning(`FlowCrypt must be re-connected to your Google account.`);
         await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail);
       } else {
@@ -125,6 +126,7 @@ export class InboxView extends View {
       if (!$('#cryptup_dialog').length) {
         $('body').append(this.factory.dialogPassphrase(longids, type))  // xss-safe-factory;
           .click(this.setHandler(e => { // click on the area outside the iframe
+            BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
             $('#cryptup_dialog').remove();
           }));
       }
@@ -141,6 +143,12 @@ export class InboxView extends View {
     });
     BrowserMsg.addListener('close_dialog', async () => {
       $('#cryptup_dialog').remove();
+    });
+    BrowserMsg.addListener('close_swal', async () => {
+      Swal.close();
+    });
+    BrowserMsg.addListener('show_attachment_preview', async ({ iframeUrl }: Bm.ShowAttachmentPreview) => {
+      await Ui.modal.attachmentPreview(iframeUrl);
     });
   }
 

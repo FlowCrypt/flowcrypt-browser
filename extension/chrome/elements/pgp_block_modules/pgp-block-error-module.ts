@@ -2,16 +2,15 @@
 
 'use strict';
 
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { FormatError } from '../../../js/common/core/pgp-msg.js';
+import { FormatError } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpBlockView } from '../pgp_block.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
 export class PgpBlockViewErrorModule {
 
@@ -32,8 +31,8 @@ export class PgpBlockViewErrorModule {
     Ui.setTestState('ready');
   }
 
-  public handlePrivateKeyMismatch = async (message: Uint8Array, isPwdMsg: boolean) => { // todo - make it work for multiple stored keys
-    const msgDiagnosis = await BrowserMsg.send.bg.await.pgpMsgDiagnosePubkeys({ privateKis: await KeyStore.get(this.view.acctEmail), message });
+  public handlePrivateKeyMismatch = async (armoredPubs: string[], message: Uint8Array, isPwdMsg: boolean) => { // todo - make it work for multiple stored keys
+    const msgDiagnosis = await BrowserMsg.send.bg.await.pgpMsgDiagnosePubkeys({ armoredPubs, message });
     if (msgDiagnosis.found_match) {
       await this.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.encryptedCorrectlyFileBug, undefined);
     } else if (isPwdMsg) {
@@ -48,7 +47,7 @@ export class PgpBlockViewErrorModule {
   public handleInitializeErr = async (e: any) => {
     if (ApiErr.isNetErr(e)) {
       await this.renderErr(`Could not load message due to network error. ${Ui.retryLink()}`, undefined);
-    } else if (ApiErr.isAuthPopupNeeded(e)) {
+    } else if (ApiErr.isAuthErr(e)) {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       await this.renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`, undefined);
     } else if (e instanceof FormatError) {
@@ -57,7 +56,7 @@ export class PgpBlockViewErrorModule {
       await this.renderErr(`FlowCrypt does not work in a Firefox Private Window (or when Firefox Containers are used). Please try in a standard window.`, undefined);
     } else {
       Catch.reportErr(e);
-      await this.renderErr(String(e), this.view.encryptedMsgUrlParam ? this.view.encryptedMsgUrlParam.toUtfStr() : undefined);
+      await this.renderErr(Xss.escape(String(e)), this.view.encryptedMsgUrlParam ? this.view.encryptedMsgUrlParam.toUtfStr() : undefined);
     }
   }
 

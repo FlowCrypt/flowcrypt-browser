@@ -6,8 +6,8 @@ import { Dict, Str } from '../../common/core/common.js';
 import { FactoryReplyParams, WebmailVariantString, XssSafeFactory } from '../../common/xss-safe-factory.js';
 import { GmailParser, GmailRes } from '../../common/api/email-provider/gmail/gmail-parser.js';
 import { IntervalFunction, WebmailElementReplacer } from './setup-webmail-content-script.js';
-import { AjaxErr } from '../../common/api/error/api-error-types.js';
-import { ApiErr } from '../../common/api/error/api-error.js';
+import { AjaxErr } from '../../common/api/shared/api-error.js';
+import { ApiErr } from '../../common/api/shared/api-error.js';
 import { Att } from '../../common/core/att.js';
 import { Browser } from '../../common/browser/browser.js';
 import { BrowserMsg } from '../../common/browser/browser-msg.js';
@@ -16,7 +16,7 @@ import { Gmail } from '../../common/api/email-provider/gmail/gmail.js';
 import { Injector } from '../../common/inject.js';
 import { PubLookup } from '../../common/api/pub-lookup.js';
 import { Notifications } from '../../common/notifications.js';
-import { PgpArmor } from '../../common/core/pgp-armor.js';
+import { PgpArmor } from '../../common/core/crypto/pgp/pgp-armor.js';
 import { Ui } from '../../common/browser/ui.js';
 import { WebmailCommon } from "../../common/webmail.js";
 import { Xss } from '../../common/platform/xss.js';
@@ -36,7 +36,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private orgRules: OrgRules;
   private pubLookup: PubLookup;
   private acctEmail: string;
-  private canReadEmails: boolean;
   private injector: Injector;
   private notifications: Notifications;
   private gmailVariant: WebmailVariantString;
@@ -65,12 +64,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
   };
 
-  constructor(factory: XssSafeFactory, orgRules: OrgRules, acctEmail: string, sendAs: Dict<SendAsAlias>, canReadEmails: boolean,
+  constructor(factory: XssSafeFactory, orgRules: OrgRules, acctEmail: string, sendAs: Dict<SendAsAlias>,
     injector: Injector, notifications: Notifications, gmailVariant: WebmailVariantString) {
     this.factory = factory;
     this.acctEmail = acctEmail;
     this.sendAs = sendAs;
-    this.canReadEmails = canReadEmails;
     this.injector = injector;
     this.gmailVariant = gmailVariant;
     this.notifications = notifications;
@@ -215,10 +213,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const allContenteditableEls = $("div[contenteditable='true']").not('.evaluated').addClass('evaluated');
     for (const contenteditableEl of allContenteditableEls) {
       const contenteditable = $(contenteditableEl);
-      const fcLinkMatch = contenteditable.html().substr(0, 1000).match(/\[cryptup:link:([a-z_]+):([0-9a-fr\-]+)]/);
+      const fcLinkMatch = contenteditable.html().substr(0, 1000).match(/\[(flowcrypt|cryptup):link:([a-z_]+):([0-9a-fr\-]+)]/);
       if (fcLinkMatch) {
         let button: string | undefined;
-        const [, name, buttonHrefId] = fcLinkMatch;
+        const [, , name, buttonHrefId] = fcLinkMatch;
         if (name === 'draft_compose') {
           button = `<a href="#" class="open_draft_${Xss.escape(buttonHrefId)}">Open draft</a>`;
         } else if (name === 'draft_reply') {
@@ -265,29 +263,22 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         if (newPgpAtts.length) {
           const msgId = this.determineMsgId(attsContainer);
           if (msgId) {
-            if (this.canReadEmails) {
-              Xss.sanitizePrepend(newPgpAtts, this.factory.embeddedAttaStatus('Getting file info..' + Ui.spinner('green')));
-              try {
-                const msg = await this.gmail.msgGet(msgId, 'full');
-                await this.processAtts(msgId, GmailParser.findAtts(msg), attsContainer, false, newPgpAttsNames);
-              } catch (e) {
-                if (ApiErr.isAuthPopupNeeded(e)) {
-                  this.notifications.showAuthPopupNeeded(this.acctEmail);
-                  $(newPgpAtts).find('.attachment_loader').text('Auth needed');
-                } else if (ApiErr.isNetErr(e)) {
-                  $(newPgpAtts).find('.attachment_loader').text('Network error');
-                } else {
-                  if (!ApiErr.isServerErr(e) && !ApiErr.isMailOrAcctDisabledOrPolicy(e) && !ApiErr.isNotFound(e)) {
-                    Catch.reportErr(e);
-                  }
-                  $(newPgpAtts).find('.attachment_loader').text('Failed to load');
+            Xss.sanitizePrepend(newPgpAtts, this.factory.embeddedAttaStatus('Getting file info..' + Ui.spinner('green')));
+            try {
+              const msg = await this.gmail.msgGet(msgId, 'full');
+              await this.processAtts(msgId, GmailParser.findAtts(msg), attsContainer, false, newPgpAttsNames);
+            } catch (e) {
+              if (ApiErr.isAuthErr(e)) {
+                this.notifications.showAuthPopupNeeded(this.acctEmail);
+                $(newPgpAtts).find('.attachment_loader').text('Auth needed');
+              } else if (ApiErr.isNetErr(e)) {
+                $(newPgpAtts).find('.attachment_loader').text('Network error');
+              } else {
+                if (!ApiErr.isServerErr(e) && !ApiErr.isMailOrAcctDisabledOrPolicy(e) && !ApiErr.isNotFound(e)) {
+                  Catch.reportErr(e);
                 }
+                $(newPgpAtts).find('.attachment_loader').text('Failed to load');
               }
-            } else {
-              const statusMsg = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
-              $(newPgpAtts).prepend(this.factory.embeddedAttaStatus(statusMsg)).children('a.auth_settings').click(Ui.event.handle(() => { // xss-safe-factory
-                BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' });
-              }));
             }
           } else {
             $(newPgpAtts).prepend(this.factory.embeddedAttaStatus('Unknown message id')); // xss-safe-factory
