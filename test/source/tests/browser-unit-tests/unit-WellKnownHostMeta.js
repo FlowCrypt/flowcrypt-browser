@@ -50,7 +50,7 @@ BROWSER_UNIT_TEST_NAME(`test@nowhere.com does not return any fesUrl`).consumer;
 
 BROWSER_UNIT_TEST_NAME(`status404 does not return any fesUrl`);
 (async () => {
-  const mockHost = '127.0.0.1:8001';
+  const mockHost = 'localhost:8001';
   const wellKnownHostMeta = new WellKnownHostMeta(`status404@${mockHost}`, 'http');
   const fesUrl = await wellKnownHostMeta.fetchAndCacheFesUrl();
   if (typeof fesUrl !== 'undefined') {
@@ -61,7 +61,7 @@ BROWSER_UNIT_TEST_NAME(`status404 does not return any fesUrl`);
 
 BROWSER_UNIT_TEST_NAME(`status500 throws when server cannot be reached`).enterprise;
 (async () => {
-  const mockHost = '127.0.0.1:8001';
+  const mockHost = 'localhost:8001';
   const wellKnownHostMeta = new WellKnownHostMeta(`status500@${mockHost}`, 'http');
   try {
     await wellKnownHostMeta.fetchAndCacheFesUrl();
@@ -75,7 +75,7 @@ BROWSER_UNIT_TEST_NAME(`status500 throws when server cannot be reached`).enterpr
 
 BROWSER_UNIT_TEST_NAME(`status500 does not return any fesUrl`).consumer;
 (async () => {
-  const mockHost = '127.0.0.1:8001';
+  const mockHost = 'localhost:8001';
   const wellKnownHostMeta = new WellKnownHostMeta(`status500@${mockHost}`, 'http');
   const fesUrl = await wellKnownHostMeta.fetchAndCacheFesUrl();
   if (typeof fesUrl !== 'undefined') {
@@ -86,12 +86,12 @@ BROWSER_UNIT_TEST_NAME(`status500 does not return any fesUrl`).consumer;
 
 BROWSER_UNIT_TEST_NAME(`not.json throws when response not a json`).enterprise;
 (async () => {
-  const mockHost = '127.0.0.1:8001';
+  const mockHost = 'localhost:8001';
   const wellKnownHostMeta = new WellKnownHostMeta(`not.json@${mockHost}`, 'http');
   try {
     await wellKnownHostMeta.fetchAndCacheFesUrl();
   } catch (e) {
-    if (e.message.includes('Enterprise host meta file at http://127.0.0.1:8001/.well-known/host-meta.json?local=not.json has wrong format::SyntaxError: Unexpected token < in JSON')) {
+    if (e.message.includes('Enterprise host meta file at http://localhost:8001/.well-known/host-meta.json?local=not.json has wrong format::SyntaxError: Unexpected token < in JSON')) {
       return 'pass'; // enterprise does not tolerate a server wrong response
     }
     throw e;
@@ -100,7 +100,7 @@ BROWSER_UNIT_TEST_NAME(`not.json throws when response not a json`).enterprise;
 
 BROWSER_UNIT_TEST_NAME(`not.json does not return any fesUrl`).consumer;
 (async () => {
-  const mockHost = '127.0.0.1:8001';
+  const mockHost = 'localhost:8001';
   const wellKnownHostMeta = new WellKnownHostMeta(`not.json@${mockHost}`, 'http');
   const fesUrl = await wellKnownHostMeta.fetchAndCacheFesUrl();
   if (typeof fesUrl !== 'undefined') {
@@ -111,12 +111,12 @@ BROWSER_UNIT_TEST_NAME(`not.json does not return any fesUrl`).consumer;
 
 BROWSER_UNIT_TEST_NAME(`wrong.format when json has wrong structure`).enterprise;
 (async () => {
-  const mockHost = '127.0.0.1:8001';
+  const mockHost = 'localhost:8001';
   const wellKnownHostMeta = new WellKnownHostMeta(`wrong.format@${mockHost}`, 'http');
   try {
     await wellKnownHostMeta.fetchAndCacheFesUrl();
   } catch (e) {
-    if (e.message === 'Enterprise host meta file at http://127.0.0.1:8001/.well-known/host-meta.json?local=wrong.format has wrong format::Error: unexpected json structure') {
+    if (e.message === 'Enterprise host meta file at http://localhost:8001/.well-known/host-meta.json?local=wrong.format has wrong format::Error: unexpected json structure') {
       return 'pass'; // enterprise does not tolerate a server err - since it may simply mean offline
     }
     throw e;
@@ -125,7 +125,7 @@ BROWSER_UNIT_TEST_NAME(`wrong.format when json has wrong structure`).enterprise;
 
 BROWSER_UNIT_TEST_NAME(`wrong.format does not return any fesUrl`).consumer;
 (async () => {
-  const mockHost = '127.0.0.1:8001';
+  const mockHost = 'localhost:8001';
   const wellKnownHostMeta = new WellKnownHostMeta(`wrong.format@${mockHost}`, 'http');
   const fesUrl = await wellKnownHostMeta.fetchAndCacheFesUrl();
   if (typeof fesUrl !== 'undefined') {
@@ -136,7 +136,7 @@ BROWSER_UNIT_TEST_NAME(`wrong.format does not return any fesUrl`).consumer;
 
 BROWSER_UNIT_TEST_NAME(`no.fes.rel does not return any fesUrl`);
 (async () => {
-  const mockHost = '127.0.0.1:8001';
+  const mockHost = 'localhost:8001';
   const wellKnownHostMeta = new WellKnownHostMeta(`no.fes.rel@${mockHost}`, 'http');
   const fesUrl = await wellKnownHostMeta.fetchAndCacheFesUrl();
   if (typeof fesUrl !== 'undefined') {
@@ -147,7 +147,7 @@ BROWSER_UNIT_TEST_NAME(`no.fes.rel does not return any fesUrl`);
 
 BROWSER_UNIT_TEST_NAME(`has.fes.rel returns fesUrl`);
 (async () => {
-  const mockHost = '127.0.0.1:8001';
+  const mockHost = 'localhost:8001';
   const expecting = 'https://targer.customer.com/fes/';
   const wellKnownHostMeta = new WellKnownHostMeta(`has.fes.rel@${mockHost}`, 'http');
   const fesUrl = await wellKnownHostMeta.fetchAndCacheFesUrl();
@@ -159,12 +159,12 @@ BROWSER_UNIT_TEST_NAME(`has.fes.rel returns fesUrl`);
 
 BROWSER_UNIT_TEST_NAME(`empty200 should be an error`).enterprise;
 (async () => {
-  const mockHost = '127.0.0.1:8001';
+  const mockHost = 'localhost:8001';
   const wellKnownHostMeta = new WellKnownHostMeta(`empty200@${mockHost}`, 'http');
   try {
     await wellKnownHostMeta.fetchAndCacheFesUrl();
   } catch (e) {
-    if (e.message === 'Enterprise host meta url http://127.0.0.1:8001/.well-known/host-meta.json?local=empty200 returned empty 200 response') {
+    if (e.message === 'Enterprise host meta url http://localhost:8001/.well-known/host-meta.json?local=empty200 returned empty 200 response') {
       return 'pass'; // enterprise does not tolerate a server err - since it may simply mean offline
     }
     throw e;
@@ -173,7 +173,7 @@ BROWSER_UNIT_TEST_NAME(`empty200 should be an error`).enterprise;
 
 BROWSER_UNIT_TEST_NAME(`empty200 ignored`).consumer;
 (async () => {
-  const mockHost = '127.0.0.1:8001';
+  const mockHost = 'localhost:8001';
   const wellKnownHostMeta = new WellKnownHostMeta(`empty200@${mockHost}`, 'http');
   const fesUrl = await wellKnownHostMeta.fetchAndCacheFesUrl();
   if (typeof fesUrl !== 'undefined') {
@@ -184,7 +184,7 @@ BROWSER_UNIT_TEST_NAME(`empty200 ignored`).consumer;
 
 BROWSER_UNIT_TEST_NAME(`get empty cache, then fetch ok, then get filled cache`);
 (async () => {
-  const mockHost = '127.0.0.1:8001';
+  const mockHost = 'localhost:8001';
   const expecting = 'https://targer.customer.com/fes/';
   const wellKnownHostMeta = new WellKnownHostMeta(`has.fes.rel@${mockHost}`, 'http');
   const fesUrlFromCache = await wellKnownHostMeta.getFesUrlFromCache();
@@ -204,7 +204,7 @@ BROWSER_UNIT_TEST_NAME(`get empty cache, then fetch ok, then get filled cache`);
 
 BROWSER_UNIT_TEST_NAME(`get empty cache, then fetch none, then get empty cache`);
 (async () => {
-  const mockHost = '127.0.0.1:8001';
+  const mockHost = 'localhost:8001';
   const wellKnownHostMeta = new WellKnownHostMeta(`no.fes.rel@${mockHost}`, 'http');
   const fesUrlFromCache = await wellKnownHostMeta.getFesUrlFromCache();
   if (typeof fesUrlFromCache !== 'undefined') {
