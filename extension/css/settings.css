@@ -8,7 +8,7 @@ html {
   width: auto;
 }
 
-#header-row { margin-top: 20px; }
+#header-row { padding-top: 20px; }
 
 #header-row .logo-row img.cryptup-logo {
   height: auto;
@@ -20,9 +20,16 @@ html {
 #header-row .logo-row { margin-top: 10px; }
 #header-row .logo-row .subscription { font-size: 14px; }
 
-#header-row .logo-row .subscription > span {
+#header-row .logo-row .subscription > span,
+#header-row .logo-row .subscription > button {
   display: inline-block;
   margin-left: 4px;
+  border: 1px solid #31a217;
+}
+
+#header-row .logo-row .subscription > button:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 1px #fff;
 }
 
 #header-row .logo-row .subscription .level,
@@ -30,10 +37,8 @@ html {
 #header-row .logo-row .subscription .expire { display: none; }
 
 #header-row .logo-row .subscription .upgrade {
-  opacity: 0.7;
   cursor: pointer;
 }
-#header-row .logo-row .subscription .upgrade:hover { opacity: 1; }
 #header-row .logo-row a.cryptup-logo-row { text-decoration: none; }
 
 #header-row .logo-row .cryptup-logo-row span {
@@ -69,6 +74,11 @@ a.gray_link {
   animation-fill-mode: forwards;
 }
 #public-profile-indicator a { color: #337ab7; }
+
+#public-profile-indicator:focus-within {
+  border-color: #31a217;
+  box-shadow: 0 0 2px #31a217;
+}
 
 #public-profile-indicator .status-indicator {
   position: absolute;
@@ -143,15 +153,15 @@ a.gray_link {
   font-size: 14px;
 }
 
-#alt-accounts.accounts-row.active {
+#alt-accounts.accounts-row.visible {
   display: block;
   animation: fadeInDown 0.4s;
 }
 
 #alt-accounts.accounts-row .row.alt-accounts {
+  display: block;
   margin: 0;
   padding: 20px 0;
-  padding-left: 65px;
   cursor: pointer;
   height: auto;
   border: 1px solid #f3f3f3;
@@ -163,17 +173,17 @@ a.gray_link {
 #alt-accounts.accounts-row .row.alt-accounts .contains_email {
   color: #337ab7;
   font-weight: 600;
+  margin-left: 50px;
 }
 
 #alt-accounts .action_add_account {
   display: block;
-  padding: 20px 0;
-  text-indent: 61px;
+  padding: 20px 0 !important;
+  text-indent: 65px;
   position: relative;
   font-size: 13px;
   text-decoration: none;
   animation: fadeIn 0.5s;
-  margin-left: 4px;
   margin-top: 10px;
 }
 
@@ -193,8 +203,12 @@ a.gray_link {
   left: 19px;
   top: 13px;
 }
-.row.alt-accounts:hover { background: rgba(0, 0, 0, 0.019); }
-#alt-accounts .action_add_account.action_add_account--settings::before { top: 17px; }
+.row.alt-accounts:focus { background: rgba(0, 0, 0, 0.019) !important; }
+
+#alt-accounts .action_add_account.action_add_account--settings::before {
+  left: 22px;
+  top: 17px;
+}
 
 .accounts-options-row {
   margin: 0 auto !important;
@@ -360,7 +374,7 @@ a.gray_link {
 }
 
 #settings-row {
-  padding: 73px 0;
+  padding: 36px 0;
 }
 
 #settings-row .box {
@@ -767,14 +781,13 @@ body#settings .settings-border .key_list {
 }
 #settings.client > #banner > img.action_open_settings { cursor: pointer; }
 
-#settings.client > #banner > div.action_finish_session {
+#settings.client > #banner > .action_finish_session {
   height: 32px;
   margin-top: -6px;
   float: right;
   margin-left: 20px;
   cursor: pointer;
 }
-#settings.client > #banner > div.action_finish_session img { height: 32px; }
 #settings.client .attachments { margin-top: 12px; }
 
 #settings.client .attachments span.pgp_attachment {
@@ -794,4 +807,18 @@ body#settings .settings-border .key_list {
   cursor: pointer;
   float: right;
   margin-top: 20px;
+}
+
+.input_private_key {
+  font-family: monospace;
+}
+
+/* https://github.com/sweetalert2/sweetalert2/issues/834#issuecomment-359237178 */
+.swal2-popup {
+  font-size: 15px !important;
+}
+
+/* https://github.com/FlowCrypt/flowcrypt-browser/issues/2926 */
+.swal2-checkbox input[type="checkbox"] {
+  margin: 0 0.4em !important;
 }

@@ -2,13 +2,14 @@
 
 'use strict';
 
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { PgpBlockView } from '../pgp_block';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { VerifyRes } from '../../../js/common/core/pgp-msg.js';
+import { VerifyRes } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
+import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 export class PgpBlockViewSignatureModule {
 
@@ -27,6 +28,10 @@ export class PgpBlockViewSignatureModule {
           $('#pgp_block').css('min-height', '100px'); // signature fail can have a lot of text in it to render
           this.view.renderModule.resizePgpBlockFrame();
         }).catch(Catch.reportErr);
+      } else if (signature.error) {
+        $('#pgp_signature').addClass('bad');
+        $('#pgp_signature > .result').text(signature.error);
+        this.view.renderModule.setFrameColor('red');
       } else if (signature.match && signature.signer && signature.contact) {
         $('#pgp_signature').addClass('good');
         $('#pgp_signature > .result').text('matching signature');
@@ -58,9 +63,9 @@ export class PgpBlockViewSignatureModule {
           return;
         }
         // ---> and pubkey found on keyserver by sender email
-        const { keys: [keyDetails] } = await BrowserMsg.send.bg.await.pgpKeyDetails({ pubkey });
-        if (!keyDetails || !keyDetails.ids.map(ids => ids.longid).includes(signerLongid)) {
-          render(`Fetched sender's pubkey ${keyDetails.ids[0].longid} but message was signed with a different key: ${signerLongid}, will not verify.`, () => undefined);
+        const { key } = await BrowserMsg.send.bg.await.keyParse({ armored: pubkey });
+        if (!key.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)).includes(signerLongid)) {
+          render(`Fetched sender's pubkey ${OpenPGPKey.fingerprintToLongid(key.id)} but message was signed with a different key: ${signerLongid}, will not verify.`, () => undefined);
           return;
         }
         // ---> and longid it matches signature

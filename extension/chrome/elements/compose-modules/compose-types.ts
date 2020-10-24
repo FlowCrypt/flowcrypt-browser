@@ -2,9 +2,9 @@
 
 'use strict';
 
-import { RecipientType } from '../../../js/common/api/api.js';
+import { RecipientType } from '../../../js/common/api/shared/api.js';
 import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
-import { PubkeyResult } from '../../../js/common/core/pgp-key.js';
+import { PubkeyResult } from '../../../js/common/core/crypto/key.js';
 
 export type RecipientStatus = 0 | 1 | 2 | 3 | 4 | 5;
 

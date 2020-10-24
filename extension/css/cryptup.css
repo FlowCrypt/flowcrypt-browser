@@ -147,6 +147,7 @@ span.gray { color: #b7b7b7; }
 }
 
 .swal2-popup.ui-modal-iframe .swal2-close { color: #666; }
+.swal2-popup.ui-modal-iframe .swal2-content { padding: 0; }
 .swal2-popup.ui-modal-iframe iframe { max-width: 100%; }
 .swal2-container.ui-modal-page { background: rgba(0, 0, 0, 0.6) !important; }
 
@@ -409,16 +410,21 @@ body#settings > div.profile-row .profile-img {
   vertical-align: middle;
 }
 
-body#settings > div#content .chevron-left {
+body#settings > div#content #button-go-back {
   position: absolute;
   left: 20px;
-  top: 43px;
-  width: 35px;
-  height: 20px;
-  color: #999;
+  top: 33px;
+  width: 42px;
+  height: 42px;
   cursor: pointer;
   opacity: 0.4;
   animation: fadeInRight 1s;
+  border: 0;
+  background: none;
+}
+
+body#settings > div#content #button-go-back img {
+  height: 20px;
 }
 
 body#settings > div.profile-row > .email-address {
@@ -522,7 +528,7 @@ body#settings > div#content.contacts table#emails td {
 }
 
 body#settings > div#content.contacts table#emails {
-  margin: 50px auto;
+  margin: 0 auto;
   color: #666;
   min-width: 100%;
 }
@@ -580,7 +586,9 @@ body#settings > div#content.setup div#step_1_easy_or_manual .circle-i {
   margin-bottom: 35px;
 }
 body#settings > div#content.setup div#step_1_easy_or_manual > .col { opacity: 0.7; }
-body#settings > div#content.setup div#step_1_easy_or_manual > .col:hover { opacity: 1; }
+
+body#settings > div#content.setup div#step_1_easy_or_manual > .col:hover,
+body#settings > div#content.setup div#step_1_easy_or_manual > .col:focus-within { opacity: 1; }
 
 body#settings .signin_button {
   width: 220px;
@@ -1193,25 +1201,61 @@ td {
   padding: 8px 8px;
   width: 232px;
 }
-#pgp_block #attachments { margin-top: 8px; }
 
-#pgp_block #attachments .attachment {
+#pgp_block #attachments,
+.replied_body #attachments { margin-top: 8px; }
+
+#pgp_block #attachments a.preview-attachment,
+#pgp_block #attachments a.download-attachment,
+.replied_body #attachments .attachment {
+  display: inline-flex;
+  color: #333 !important;
+  align-items: center;
+  height: 36px;
   background: #f8f8f8;
   border: 1px solid #ccc;
+  font-family: inherit;
+  font-size: inherit;
   margin-bottom: 8px;
   cursor: pointer;
-  padding: 8px 8px;
-  border-left: 4px solid #31a217;
   margin-right: 12px;
-  display: inline-block;
+  padding-left: 8px;
+  text-decoration: none;
 }
 
-#pgp_block #attachments .attachment .file-download-right-click-link {
-  font-weight: bold;
-  display: flex;
-  text-decoration: none;
-  color: #31a217;
+#pgp_block #attachments a.preview-attachment,
+.replied_body #attachments .attachment {
+  border-left: 4px solid #31a217;
 }
+
+#pgp_block #attachments a.download-attachment {
+  border-left: 4px solid #989898;
+  padding-right: 8px;
+}
+
+.replied_body #attachments .attachment {
+  border-left: 4px solid #31a217;
+  padding-right: 8px;
+}
+
+#pgp_block #attachments a.preview-attachment .download-attachment {
+  width: 36px;
+  cursor: pointer;
+  margin-left: 6px;
+  border: 0;
+  background: none;
+  align-self: stretch;
+  opacity: 0.8;
+}
+
+#pgp_block #attachments a.preview-attachment .download-attachment:hover {
+  opacity: 1;
+}
+
+#pgp_block #attachments a.preview-attachment .download-attachment img {
+  width: 20px;
+}
+
 #pgp_block > .block_pubkey_full { display: none; }
 
 #pgp_block > .block_pubkey_outgoing {
@@ -2145,6 +2189,11 @@ body#new_message.popup table#compose tr td {
 
 body#new_message { overflow-y: hidden; }
 
+body#new_message #loader {
+  display: flex;
+  align-items: center;
+}
+
 body#new_message.full_window {
   background-color: rgba(0, 0, 0, 0.5);
   padding: 20px 150px;
@@ -2283,65 +2332,68 @@ body.attachment {
   height: 118px;
   width: 178px;
   overflow: hidden;
+  cursor: pointer;
 }
 body.attachment:hover { border-color: #eaeaea; }
 
-body.attachment #download {
-  position: absolute;
-  width: 100px;
-  z-index: 1;
-  height: 80px;
-  left: 68px;
-  opacity: 1;
-  color: #444;
-  display: none;
-}
-
-body.attachment #download:hover,
-body.attachment:hover #download {
-  visibility: visible;
-  cursor: pointer;
-}
-body.attachment #download.visible { visibility: visible; }
-
-body.attachment #download .large_spinner {
-  margin-top: 7px;
-  margin-left: 20px;
-}
-
-body.attachment #download .download-icon {
-  margin-top: 15px;
-  margin-bottom: 8px;
-}
-
-body.attachment #download .download-prompt {
-  margin-top: 1px;
+body.attachment.download-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
   font-size: 14px;
+  padding: 10px;
+  box-sizing: border-box;
 }
 
-body.attachment #download .download_progress {
+body.attachment #download {
+  display: flex;
+  opacity: 0;
   position: absolute;
-  top: 39px;
-  margin-left: -5px;
+  width: 32px;
+  height: 32px;
+  right: 10px;
+  bottom: 32px;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 3px;
+  z-index: 1;
+  cursor: pointer;
+  border: 0;
+}
+
+body.attachment:focus-within #download,
+body.attachment:hover #download {
+  opacity: 1;
+}
+
+body.attachment #download:focus {
+  box-shadow: 0 0 5px #31a217;
+  outline: none;
+}
+
+body.attachment .download_progress {
+  position: absolute;
+  top: 50%;
+  margin-top: -6px;
   font-weight: bold;
+  line-height: 1;
 }
 
 body.attachment #header {
-  margin-top: 10px;
-  padding-bottom: 0;
+  height: 90px;
   font-weight: 400;
   font-size: 14px;
   width: 100px;
   text-align: left;
   position: absolute;
-  left: 75px;
+  left: 65px;
   line-height: 1.5;
-  top: 15px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 45px;
 }
 
 body.attachment #type {
@@ -2360,6 +2412,7 @@ body.attachment #name {
   top: 92px;
   width: 154px;
   left: 0;
+  height: 12px;
 }
 
 body.attachment .file-format-holder {
@@ -2379,15 +2432,158 @@ body.attachment .file-format-holder img#file-format {
   margin-left: 10px;
 }
 
-body.attachment .file-download-right-click-link {
-  font-size: 14px;
+/* Attachment Preview */
+#attachment-preview {
+  display: flex;
+  flex-direction: column;
+  height: 100vh !important;
+  overflow-y: hidden;
+}
+
+#attachment-preview.download-error {
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: white;
+  line-height: 2;
+}
+
+#attachment-preview-download {
+  height: 80px;
+  display: none;
+  flex-shrink: 0;
+  margin: 0 auto;
+  padding: 0 50px;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: white;
+  background: transparent;
+  text-decoration: none;
+  cursor: pointer;
+  border: 0;
+  opacity: 0.7;
+  transition: all 0.15s ease-in;
+}
+
+#attachment-preview-download:focus,
+#attachment-preview-download:hover {
+  opacity: 1;
+}
+
+#attachment-preview-download img {
+  margin-right: 10px;
+}
+
+#attachment-preview-container {
+  flex-grow: 1;
+  margin: 0 50px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+}
+
+#attachment-preview-container > * {
+  max-width: 100%;
+  margin: auto;
+}
+
+#attachment-preview-container .download_progress {
+  position: absolute;
+  color: white;
   font-weight: bold;
+}
+
+#attachment-preview-container .attachment-preview-txt {
+  background: white;
+  padding: 40px;
+  box-sizing: border-box;
+}
+
+#attachment-preview-container.attachment-preview-pdf {
+  display: block;
+}
+
+#attachment-preview-container.attachment-preview-pdf .attachment-preview-pdf-page {
+  display: block;
+  max-width: initial;
+  margin: 1% auto;
+}
+
+#pdf-preview-controls {
+  position: absolute;
+  width: 300px;
+  height: 44px;
+  bottom: 30px;
+  left: 50%;
+  margin-left: -150px;
   display: flex;
   align-items: center;
-  height: 100%;
-  width: 100%;
-  text-decoration: none;
-  color: #31a217;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.75);
+  border-radius: 4px;
+  color: #fff;
+}
+
+#pdf-preview-page {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+}
+
+#pdf-preview-page-slash {
+  flex-grow: 0;
+}
+
+#pdf-preview-current-page-number,
+#pdf-preview-total-pages-number {
+  margin: 0 10px;
+}
+
+#pdf-preview-zoom {
+  display: flex;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#pdf-preview-controls button {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+#pdf-preview-controls button:not([disabled]):hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+#pdf-preview-controls button[disabled] {
+  opacity: 0.3;
+  cursor: default;
+}
+
+#attachment-preview-container .attachment-preview-error {
+  color: #ccc;
+  text-align: center;
+}
+
+#attachment-preview-container .attachment-preview-unavailable {
+  display: flex;
+  flex-direction: column;
+  width: 340px;
+  font-size: 26px;
+  color: white;
+  align-items: center;
+  background: #4c494c;
+  box-shadow: 0 10px 12px 5px rgba(0, 0, 0, 0.2);
+  padding: 30px;
+  border-radius: 15px;
+}
+
+#attachment-preview-container .attachment-preview-unavailable #attachment-preview-download {
+  margin-top: 25px;
 }
 
 /* Select Account */
@@ -2482,7 +2678,7 @@ div#cryptup_dialog {
   width: 100%;
   height: 100%;
   margin: 0 auto;
-  z-index: 10;
+  z-index: 1100;
   background-color: rgba(255, 255, 255, 0.85);
 }
 
@@ -2530,6 +2726,14 @@ div#cryptup_dialog iframe.tall {
 .mt-40 { margin-top: 40px; }
 
 .display_none { display: none; }
+
+.scrollbar-measure {
+  position: absolute;
+  top: -9999px;
+  width: 50px;
+  height: 50px;
+  overflow: scroll;
+}
 
 /* notifications */
 body#settings div.webmail_notifications {

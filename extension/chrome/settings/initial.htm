@@ -5,7 +5,7 @@
 <head>
   <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>FlowCrypt</title>
+  <title>FlowCrypt is installed!</title>
   <link rel="stylesheet" href="/css/cryptup.css" />
   <link rel="stylesheet" href="/css/sweetalert2.css" />
   <link rel="stylesheet" href="/css/open-sans.css" />
@@ -20,9 +20,17 @@
       <table style="width: 100%;">
         <tr>
           <td style="text-align: right; font-size: 60px; font-weight: 100; padding-top: 40px; line-height: 100px; color: #444;">
-            <b>To start using FlowCrypt</b>
-            <br /> click <img src="/img/logo/flowcrypt-logo-64-64.png" style="filter: grayscale(0.75); position: relative; top: 10px;" />
-            button in the corner
+            <b>To start using FlowCrypt</b><br>
+            <div style="display: inline-block; text-align: left; font-size: 46px;">
+              <div id="chrome-steps" style="display: none;">
+                1. Click the <img src="/img/svgs/puzzle.svg" width="36"> button in the corner<br>
+                2. Click the <img src="/img/logo/flowcrypt-logo-64-64.png" style="position: relative; top: 15px;"> button<br>
+                <img src="/img/screens/chrome-setup.png" width="332" height="232" alt="FlowCrypt installation steps in Chrome" style="margin: 20px 0 0 50px;">
+              </div>
+              <div id="firefox-steps" style="display: none;">
+                Click the <img src="/img/logo/flowcrypt-logo-64-64.png" style="filter: grayscale(0.75); position: relative; top: 15px;"> button in the corner<br>
+              </div>
+            </div>
           </td>
           <td width="350" style="text-align: center; padding-right: 50px; padding-top: 25px;">
             <img src="/img/fa/fa-location-arrow.png" />
@@ -32,6 +40,7 @@
     </div>
   </div>
 
+  <script src="/lib/jquery.min.js"></script>
   <script src="initial.js" type="module"></script>
 
 </body>

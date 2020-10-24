@@ -86,14 +86,12 @@ Catch.try(async () => {
       hijackGmailHotkeys();
       const storage = await AcctStore.get(acctEmail, ['sendAs', 'google_token_scopes', 'full_name']);
       const orgRules = await OrgRules.newInstance(acctEmail);
-      const scopes = await AcctStore.getScopes(acctEmail);
       if (!storage.sendAs) {
         storage.sendAs = {};
         storage.sendAs[acctEmail] = { name: storage.full_name, isPrimary: true };
       }
-      const canReadEmails = scopes.read || scopes.modify;
       injector.btns();
-      replacer = new GmailElementReplacer(factory, orgRules, acctEmail, storage.sendAs, canReadEmails, injector, notifications, hostPageInfo.gmailVariant);
+      replacer = new GmailElementReplacer(factory, orgRules, acctEmail, storage.sendAs, injector, notifications, hostPageInfo.gmailVariant);
       await notifications.showInitial(acctEmail);
       const intervaliFunctions = replacer.getIntervalFunctions();
       for (const intervalFunction of intervaliFunctions) {

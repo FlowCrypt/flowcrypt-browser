@@ -2,22 +2,19 @@
 
 'use strict';
 
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { KeyInfo } from '../../../js/common/core/pgp-key.js';
+import { KeyInfo, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Lang } from '../../../js/common/lang.js';
-import { PgpArmor } from '../../../js/common/core/pgp-armor.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { PgpArmor } from '../../../js/common/core/crypto/pgp/pgp-armor.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
-import { opgp } from '../../../js/common/core/pgp.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
-import { Catch } from '../../../js/common/platform/catch.js';
 
 View.run(class MyKeyUpdateView extends View {
 
@@ -54,14 +51,14 @@ View.run(class MyKeyUpdateView extends View {
     $('.input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_update_private_key'));
   }
 
-  private storeUpdatedKeyAndPassphrase = async (updatedPrv: OpenPGP.key.Key, updatedPrvPassphrase: string) => {
+  private storeUpdatedKeyAndPassphrase = async (updatedPrv: Key, updatedPrvPassphrase: string) => {
     const storedPassphrase = await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprint, true);
-    await KeyStore.add(this.acctEmail, updatedPrv.armor());
+    await KeyStore.add(this.acctEmail, KeyUtil.armor(updatedPrv));
     await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.fingerprint, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
     await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.fingerprint, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
     if (this.orgRules.canSubmitPubToAttester() && await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
       try {
-        await Ui.modal.info(await this.pubLookup.attester.updatePubkey(this.primaryKi!.longid, updatedPrv.toPublic().armor()));
+        await Ui.modal.info(await this.pubLookup.attester.updatePubkey(this.primaryKi!.longid, KeyUtil.armor(await KeyUtil.asPublicKey(updatedPrv))));
       } catch (e) {
         ApiErr.reportIfSignificant(e);
         await Ui.modal.error(`Error updating public records:\n\n${ApiErr.eli5(e)}\n\n(but local update was successful)`);
@@ -71,26 +68,26 @@ View.run(class MyKeyUpdateView extends View {
   }
 
   private updatePrivateKeyHandler = async () => {
-    const { keys: [updatedKey] } = await opgp.key.readArmored(String(this.inputPrivateKey.val()));
-    const { keys: [uddatedKeyEncrypted] } = await opgp.key.readArmored(String(this.inputPrivateKey.val()));
+    const updatedKey = await KeyUtil.parse(String(this.inputPrivateKey.val()));
+    const updatedKeyEncrypted = await KeyUtil.parse(String(this.inputPrivateKey.val()));
     const uddatedKeyPassphrase = String($('.input_passphrase').val());
     if (typeof updatedKey === 'undefined') {
       await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
-    } else if (updatedKey.isPublic()) {
+    } else if (updatedKey.isPublic) {
       await Ui.modal.warning('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"');
-    } else if (await PgpKey.fingerprint(updatedKey) !== await PgpKey.fingerprint(this.primaryKi!.public)) {
-      await Ui.modal.warning(`This key ${Str.spaced(await PgpKey.fingerprint(updatedKey) || 'err')} does not match your current key ${Str.spaced(this.primaryKi!.fingerprint)}`);
-    } else if (await PgpKey.decrypt(updatedKey, uddatedKeyPassphrase) !== true) {
+    } else if (updatedKey.id !== (await KeyUtil.parse(this.primaryKi!.public)).id) {
+      await Ui.modal.warning(`This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(this.primaryKi!.fingerprint)}`);
+    } else if (await KeyUtil.decrypt(updatedKey, uddatedKeyPassphrase) !== true) {
       await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
     } else {
-      if (! await Catch.doesReject(updatedKey.getEncryptionKey())) {
-        await this.storeUpdatedKeyAndPassphrase(uddatedKeyEncrypted, uddatedKeyPassphrase);
+      if (updatedKey.usableForEncryption) {
+        await this.storeUpdatedKeyAndPassphrase(updatedKeyEncrypted, uddatedKeyPassphrase);
         return;
       }
       // cannot get a valid encryption key packet
-      if (await Catch.doesReject(updatedKey.verifyPrimaryKey(), ['No self-certifications']) || await PgpKey.usableButExpired(updatedKey)) { // known issues - key can be fixed
+      if (await KeyUtil.isWithoutSelfCertifications(updatedKey) || updatedKey.usableButExpired) { // known issues - key can be fixed
         const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
-          this.acctEmail, '.compatibility_fix_container', uddatedKeyEncrypted, uddatedKeyPassphrase, this.showKeyUrl
+          this.acctEmail, '.compatibility_fix_container', updatedKeyEncrypted, uddatedKeyPassphrase, this.showKeyUrl
         );
         await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, uddatedKeyPassphrase);
       } else {

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -51,7 +51,7 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
         }
       }
     } catch (e) {
-      if (ApiErr.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       }
       ApiErr.reportIfSignificant(e);

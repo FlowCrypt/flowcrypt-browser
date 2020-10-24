@@ -8,8 +8,7 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Lang } from '../../../js/common/lang.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
-import { RecipientType } from '../../../js/common/api/api.js';
+import { RecipientType } from '../../../js/common/api/shared/api.js';
 import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { Str } from '../../../js/common/core/common.js';
@@ -17,50 +16,42 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { GmailParser } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
+import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 
 export class ComposeRenderModule extends ViewModule<ComposeView> {
 
-  public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
+  private responseMethod!: 'reply' | 'forward';
+
+  public renderReplyMsgComposeTable = async (): Promise<void> => {
     this.view.S.cached('prompt').css({ display: 'none' });
     this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
     await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
     await this.renderComposeTable();
-    if (this.view.scopes.read || this.view.scopes.modify) {
-      if (this.view.replyParams) {
-        this.view.replyParams.subject = `${(method === 'reply' ? 'Re' : 'Fwd')}: ${this.view.replyParams.subject}`;
-      }
-      if (!this.view.draftModule.wasMsgLoadedFromDraft) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
-        (async () => { // not awaited because can take a long time & blocks rendering
-          await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, method);
-          if (this.view.quoteModule.messageToReplyOrForward) {
-            const msgId = this.view.quoteModule.messageToReplyOrForward.headers['message-id'];
-            this.view.sendBtnModule.additionalMsgHeaders['In-Reply-To'] = msgId;
-            this.view.sendBtnModule.additionalMsgHeaders.References = this.view.quoteModule.messageToReplyOrForward.headers.references + ' ' + msgId;
-            if (this.view.replyPubkeyMismatch) {
-              await this.renderReplyMsgAsReplyPubkeyMismatch();
-            } else if (this.view.quoteModule.messageToReplyOrForward.isOnlySigned) {
-              this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
-              this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-sign-sending-option'), 'sign', true); // do sign
-            }
+    if (this.view.replyParams) {
+      this.view.replyParams.subject = `${(this.responseMethod === 'reply' ? 'Re' : 'Fwd')}: ${this.view.replyParams.subject}`;
+    }
+    if (!this.view.draftModule.wasMsgLoadedFromDraft) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
+      (async () => { // not awaited because can take a long time & blocks rendering
+        await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, this.responseMethod);
+        if (this.view.quoteModule.messageToReplyOrForward) {
+          const msgId = this.view.quoteModule.messageToReplyOrForward.headers['message-id'];
+          this.view.sendBtnModule.additionalMsgHeaders['In-Reply-To'] = msgId;
+          this.view.sendBtnModule.additionalMsgHeaders.References = this.view.quoteModule.messageToReplyOrForward.headers.references + ' ' + msgId;
+          if (this.view.replyPubkeyMismatch) {
+            await this.renderReplyMsgAsReplyPubkeyMismatch();
+          } else if (this.view.quoteModule.messageToReplyOrForward.isOnlySigned) {
+            this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
+            this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-sign-sending-option'), 'sign', true); // do sign
           }
-        })().catch(Catch.reportErr);
-      }
-    } else {
-      Xss.sanitizeRender(this.view.S.cached('prompt'),
-        `${Lang.compose.needReadAccessToReply}<br/><br/><br/>
-        <button class="button green auth_settings">${Lang.compose.addMissingPermission}</button><br/><br/>
-        Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>
-      `);
-      this.view.S.cached('prompt').attr('style', 'border:none !important');
-      $('.auth_settings').click(async () => await Browser.openSettingsPage('index.htm', this.view.acctEmail, '/chrome/settings/modules/auth_denied.htm'));
-      $('.new_message_button').click(() => BrowserMsg.send.openNewMessage(this.view.parentTabId));
+        }
+      })().catch(Catch.reportErr);
     }
     this.view.sizeModule.resizeComposeBox();
-    if (method === 'forward') {
+    if (this.responseMethod === 'forward') {
       this.view.S.cached('recipients_placeholder').click();
     }
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToElement(this.view.parentTabId, { selector: `#${this.view.frameId}` }), 300);
@@ -69,19 +60,28 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   public renderReplySuccess = (msg: SendableMsg, msgId: string) => {
     this.view.renderModule.renderReinsertReplyBox(msgId);
     if (!this.view.sendBtnModule.popover.choices.encrypt) {
-      this.view.S.cached('replied_body').addClass('pgp_neutral').removeClass('pgp_secure');
+      this.view.S.cached('replied_body').removeClass('pgp_secure');
+      if (this.view.sendBtnModule.popover.choices.sign) {
+        this.view.S.cached('replied_body').addClass('pgp_neutral');
+      }
     }
     this.view.S.cached('replied_body').css('width', ($('table#compose').width() || 500) - 30);
     this.view.S.cached('compose_table').css('display', 'none');
     this.view.S.cached('reply_msg_successful').find('div.replied_from').text(this.view.senderModule.getSender());
     this.view.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
     const repliedBodyEl = this.view.S.cached('reply_msg_successful').find('div.replied_body');
-    Xss.sanitizeRender(repliedBodyEl, Str.escapeTextAsRenderableHtml(this.view.inputModule.extract('text', 'input_text', 'SKIP-ADDONS')));
+    if (this.view.inputModule.isRichText()) {
+      const sanitized = Xss.htmlSanitizeKeepBasicTags(this.view.inputModule.extract('html', 'input_text', 'SKIP-ADDONS'), 'IMG-KEEP');
+      Xss.setElementContentDANGEROUSLY(repliedBodyEl.get(0), sanitized); // xss-sanitized
+      this.renderReplySuccessMimeAtts(this.view.inputModule.extractAttachments());
+    } else {
+      Xss.sanitizeRender(repliedBodyEl, Str.escapeTextAsRenderableHtml(this.view.inputModule.extract('text', 'input_text', 'SKIP-ADDONS')));
+      this.renderReplySuccessAtts(msg.atts, msgId, this.view.sendBtnModule.popover.choices.encrypt);
+    }
     const t = new Date();
     const time = ((t.getHours() !== 12) ? (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
     this.view.S.cached('reply_msg_successful').find('div.replied_time').text(time);
     this.view.S.cached('reply_msg_successful').css('display', 'block');
-    this.renderReplySuccessAtts(msg.atts, msgId);
     this.view.sizeModule.resizeComposeBox();
   }
 
@@ -109,8 +109,10 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   public initComposeBox = async () => {
     this.initComposeBoxStyles();
     if (this.view.draftId) {
-      this.view.S.cached('triple_dot').remove(); // if it's draft, footer and quote should already be included in the draft
-      await this.view.draftModule.initialDraftLoad(this.view.draftId);
+      const draftLoaded = await this.view.draftModule.initialDraftLoad(this.view.draftId);
+      if (draftLoaded) {
+        this.view.S.cached('triple_dot').remove(); // if it's draft, footer and quote should already be included in the draft
+      }
       if (this.view.isReplyBox) {
         await this.view.renderModule.renderReplyMsgComposeTable();
       }
@@ -146,7 +148,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       this.view.replyParams = GmailParser.determineReplyMeta(this.view.acctEmail, aliases, gmailMsg);
       this.view.threadId = gmailMsg.threadId || '';
     } catch (e) {
-      if (ApiErr.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       }
       if (e instanceof Error) {
@@ -175,11 +177,11 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   }
 
   private actionActivateReplyBoxHandler = async (target: HTMLElement) => {
-    let method: 'reply' | 'forward' = 'reply';
+    this.responseMethod = 'reply';
     const typesToDelete: RecipientType[] = [];
     switch ($(target).attr('id')) {
       case 'a_forward':
-        method = 'forward';
+        this.responseMethod = 'forward';
         typesToDelete.push('to');
       case 'reply_click_area':
       case 'a_reply':
@@ -188,7 +190,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         break;
     }
     this.view.recipientsModule.deleteRecipientsBySendingType(typesToDelete);
-    await this.renderReplyMsgComposeTable(method);
+    await this.renderReplyMsgComposeTable();
   }
 
   private renderReplyMsgAsReplyPubkeyMismatch = async () => {
@@ -235,7 +237,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     // Firefox needs an iframe to be focused before focusing its content
     BrowserMsg.send.focusFrame(this.view.parentTabId, { frameId: this.view.frameId });
     Catch.setHandledTimeout(() => { // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
-      this.view.S.cached(this.view.isReplyBox && this.view.replyParams?.to.length ? 'input_text' : 'input_to').focus();
+      this.view.S.cached(this.view.isReplyBox && this.responseMethod === 'reply' && this.view.replyParams?.to.length ? 'input_text' : 'input_to').focus();
       // document.getElementById('input_text')!.focus(); // #input_text is in the template
     }, 100);
     this.view.sizeModule.onComposeTableRender();
@@ -282,26 +284,22 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       } catch (e) {
         return; // key is invalid
       }
-      const { keys: [key] } = await PgpKey.parseDetails(normalizedPub);
-      if (!key.users.length) { // there can be no users
+      const key = await KeyUtil.parse(normalizedPub);
+      if (!key.emails.length) { // no users is not desired
+        await Ui.modal.warning(`There are no email addresses listed in this Public Key - don't know who this key belongs to.`);
         return;
       }
-      const keyUser = Str.parseEmail(key.users[0]);
-      if (keyUser.email) {
-        if (! await ContactStore.get(undefined, [keyUser.email])) {
-          await ContactStore.save(undefined, await ContactStore.obj({
-            email: keyUser.email,
-            name: keyUser.name,
-            client: 'pgp',
-            pubkey: normalizedPub,
-            lastCheck: Date.now(),
-          }));
-        }
-        this.view.S.cached('input_to').val(keyUser.email);
-        await this.view.recipientsModule.parseRenderRecipients(this.view.S.cached('input_to'));
-      } else {
-        await Ui.modal.warning(`The email listed in this public key does not seem valid: ${keyUser}`);
+      if (! await ContactStore.get(undefined, [key.emails[0]])) {
+        await ContactStore.save(undefined, await ContactStore.obj({
+          email: key.emails[0],
+          name: Str.parseEmail(key.identities[0]).name,
+          client: 'pgp',
+          pubkey: normalizedPub,
+          lastCheck: Date.now(),
+        }));
       }
+      this.view.S.cached('input_to').val(key.emails[0]);
+      await this.view.recipientsModule.parseRenderRecipients(this.view.S.cached('input_to'));
     }
   }
 
@@ -329,15 +327,25 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
 
-  private renderReplySuccessAtts = (atts: Att[], msgId: string) => {
+  private renderReplySuccessAtts = (atts: Att[], msgId: string, isEncrypted: boolean) => {
     const hideAttTypes = this.view.sendBtnModule.popover.choices.richtext ? ['hidden', 'encryptedMsg', 'signature', 'publicKey'] : ['publicKey'];
     const renderableAtts = atts.filter(att => !hideAttTypes.includes(att.treatAs()));
     if (renderableAtts.length) {
       this.view.S.cached('replied_attachments').html(renderableAtts.map(att => { // xss-safe-factory
         att.msgId = msgId;
-        return this.view.factory!.embeddedAtta(att, true);
+        return this.view.factory!.embeddedAtta(att, isEncrypted, this.view.parentTabId);
       }).join('')).css('display', 'block');
     }
   }
 
+  private renderReplySuccessMimeAtts = (attachmentsFilenames: string[]) => {
+    const attachments = $('<div id="attachments"></div>');
+    for (const index in attachmentsFilenames) {
+      if (attachmentsFilenames.hasOwnProperty(index)) {
+        const filename = Xss.escape(attachmentsFilenames[index]);
+        attachments.append(`<button class="attachment" index="${index}" title="${filename}"><b>${filename}</b></button>`); // xss-escaped
+      }
+    }
+    this.view.S.cached('replied_body').append(attachments); // xss-escaped
+  }
 }

@@ -2,30 +2,32 @@
 
 'use strict';
 
-import { Backend, FcUuidAuth } from '../../../../js/common/api/backend.js';
+
 import { BaseMailFormatter } from './base-mail-formatter.js';
 import { ComposerResetBtnTrigger } from '../compose-err-module.js';
 import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { NewMsgData } from '../compose-types.js';
 import { Str, Value } from '../../../../js/common/core/common.js';
-import { ApiErr } from '../../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../../js/common/api/shared/api-error.js';
 import { Att } from '../../../../js/common/core/att.js';
 import { Buf } from '../../../../js/common/core/buf.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { Lang } from '../../../../js/common/lang.js';
-import { PgpKey, PubkeyResult } from '../../../../js/common/core/pgp-key.js';
-import { PgpMsg, PgpMsgMethod } from '../../../../js/common/core/pgp-msg.js';
+import { PubkeyResult, Key, KeyUtil } from '../../../../js/common/core/crypto/key.js';
+import { MsgUtil, PgpMsgMethod } from '../../../../js/common/core/crypto/pgp/msg-util.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
 import { Settings } from '../../../../js/common/settings.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
-import { opgp } from '../../../../js/common/core/pgp.js';
 import { ContactStore } from '../../../../js/common/platform/store/contact-store.js';
 import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
+import { FlowCryptWebsite } from '../../../../js/common/api/flowcrypt-website.js';
+import { AccountServer } from '../../../../js/common/api/account-server.js';
+import { FcUuidAuth } from '../../../../js/common/api/account-servers/flowcrypt-com-api.js';
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
-  public sendableMsg = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> => {
+  public sendableMsg = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {
     await ContactStore.update(undefined, Array.prototype.concat.apply([], Object.values(newMsg.recipients)), { last_use: Date.now() });
     if (newMsg.pwd && !this.isDraft) { // password-protected message, temporarily uploaded (encrypted) to FlowCrypt servers, to be served to recipient through web
       const short = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
@@ -44,7 +46,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const msgBodyWithReplyToken = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(authInfo, newMsg);
     const pgpMimeWithAtts = await Mime.encode(msgBodyWithReplyToken, { Subject: newMsg.subject }, await this.view.attsModule.attach.collectAtts());
     const { data: pwdEncryptedWithAtts } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAtts), newMsg.pwd, []); // encrypted only for pwd, not signed
-    const { short, admin_code } = await Backend.messageUpload(
+    const { short, admin_code } = await AccountServer.messageUpload(
       authInfo.uuid ? authInfo : undefined,
       pwdEncryptedWithAtts,
       (p) => this.view.sendBtnModule.renderUploadProgress(p, 'FIRST-HALF'), // still need to upload to Gmail later, this request represents first half of progress
@@ -53,7 +55,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     return short;
   }
 
-  private sendablePwdMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], short: string, signingPrv?: OpenPGP.key.Key) => {
+  private sendablePwdMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], short: string, signingPrv?: Key) => {
     // encoded as: PGP/MIME-like structure but with attachments as external files due to email size limit (encrypted for pubkeys only)
     const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
     const pgpMimeNoAtts = await Mime.encode(msgBody, { Subject: newMsg.subject }, []); // no atts, attached to email separately
@@ -63,14 +65,14 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: emailIntroAndLinkBody, atts, isDraft: this.isDraft });
   }
 
-  private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: OpenPGP.key.Key) => {
+  private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key) => {
     const atts = this.isDraft ? [] : await this.view.attsModule.attach.collectEncryptAtts(pubs);
     const { data: encryptedBody, type } = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
     const mimeType = type === 'smime' ? 'smimeEncrypted' : undefined;
     return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: { "encrypted/buf": Buf.fromUint8(encryptedBody) }, type: mimeType, atts, isDraft: this.isDraft });
   }
 
-  private sendableRichTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: OpenPGP.key.Key) => {
+  private sendableRichTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key) => {
     const plainAtts = this.isDraft ? [] : await this.view.attsModule.attach.collectAtts();
     const pgpMimeToEncrypt = await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject }, plainAtts);
     const { data: encrypted } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubs, signingPrv);
@@ -85,11 +87,11 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     return atts;
   }
 
-  private encryptDataArmor = async (data: Buf, pwd: string | undefined, pubs: PubkeyResult[], signingPrv?: OpenPGP.key.Key): Promise<PgpMsgMethod.EncryptAnyArmorResult> => {
-    const pgpPubs = pubs.filter(pub => PgpKey.getKeyType(pub.pubkey) === 'openpgp');
+  private encryptDataArmor = async (data: Buf, pwd: string | undefined, pubs: PubkeyResult[], signingPrv?: Key): Promise<PgpMsgMethod.EncryptAnyArmorResult> => {
+    const pgpPubs = pubs.filter(pub => pub.pubkey.type === 'openpgp');
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(pgpPubs);
-    const pubsForEncryption = PgpKey.choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport(pubs);
-    return await PgpMsg.encrypt({ pubkeys: pubsForEncryption, signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as PgpMsgMethod.EncryptAnyArmorResult;
+    const pubsForEncryption = KeyUtil.choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport(pubs);
+    return await MsgUtil.encryptMessage({ pubkeys: pubsForEncryption, signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as PgpMsgMethod.EncryptAnyArmorResult;
   }
 
   private getPwdMsgSendableBodyWithOnlineReplyMsgToken = async (authInfo: FcUuidAuth, newMsgData: NewMsgData): Promise<SendableMsgBody> => {
@@ -98,7 +100,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     }
     const recipients = Array.prototype.concat.apply([], Object.values(newMsgData.recipients));
     try {
-      const response = await Backend.messageToken(authInfo);
+      const response = await AccountServer.messageToken(authInfo);
       const infoDiv = Ui.e('div', {
         'style': 'display: none;',
         'class': 'cryptup_reply',
@@ -114,6 +116,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       if (ApiErr.isAuthErr(msgTokenErr)) {
         Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail);
         throw new ComposerResetBtnTrigger();
+      } else if (ApiErr.isNetErr(msgTokenErr)) {
+        throw msgTokenErr;
       }
       throw Catch.rewrapErr(msgTokenErr, 'There was a token error sending this message. Please try again. Let us know at human@flowcrypt.com if this happens repeatedly.');
     }
@@ -126,9 +130,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const usableUntil: number[] = [];
     const usableFrom: number[] = [];
     for (const armoredPubkey of pubs) {
-      const { keys: [pub] } = await opgp.key.readArmored(armoredPubkey.pubkey);
-      const oneSecondBeforeExpiration = await PgpKey.dateBeforeExpirationIfAlreadyExpired(pub);
-      usableFrom.push(pub.getCreationTime().getTime());
+      const oneSecondBeforeExpiration = KeyUtil.dateBeforeExpirationIfAlreadyExpired(armoredPubkey.pubkey);
+      usableFrom.push(armoredPubkey.pubkey.created);
       if (typeof oneSecondBeforeExpiration !== 'undefined') { // key is expired
         usableUntil.push(oneSecondBeforeExpiration.getTime());
       }
@@ -140,7 +143,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       return undefined;
     }
     for (const myKey of pubs.filter(ap => ap.isMine)) {
-      if (await PgpKey.usableButExpired(await PgpKey.read(myKey.pubkey))) {
+      if (await myKey.pubkey.usableButExpired) {
         const path = chrome.runtime.getURL(`chrome/settings/index.htm?acctEmail=${encodeURIComponent(myKey.email)}&page=%2Fchrome%2Fsettings%2Fmodules%2Fmy_key_update.htm`);
         const errModalLines = [
           'This message could not be encrypted because your own Private Key is expired.',
@@ -167,7 +170,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   private formatPwdEncryptedMsgBodyLink = async (short: string): Promise<SendableMsgBody> => {
     const storage = await AcctStore.get(this.acctEmail, ['outgoing_language']);
     const lang = storage.outgoing_language || 'EN';
-    const msgUrl = Backend.url('decrypt', short);
+    const msgUrl = FlowCryptWebsite.url('decrypt', short);
     const aStyle = `padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;`;
     const a = `<a href="${Xss.escape(msgUrl)}" style="${aStyle}">${Lang.compose.openMsg[lang]}</a>`;
     const intro = this.view.S.cached('input_intro').length ? this.view.inputModule.extract('text', 'input_intro') : undefined;

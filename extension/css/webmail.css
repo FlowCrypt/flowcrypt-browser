@@ -51,7 +51,7 @@ body.cryptup_outlook div.webmail_notifications div.webmail_notification { margin
 }
 
 /* buttons body.cryptup_inbox */
-body.cryptup_gmail_new .new_message_button::before { background-image: url("/img/logo/logo.svg"); }
+body.cryptup_gmail_new .new_message_button::before { background-image: url("/img/logo/logo.svg") !important; }
 
 body.cryptup_inbox div.new_message_button {
   position: relative;
@@ -135,8 +135,34 @@ body.cryptup_gmail.cryptup_gmail_new div.ade.appended span.cryptup_convo_button 
   zoom: 1.2;
 }
 
-/* buttons top navbar Gmail */
-body.cryptup_gmail div.action_finish_session img { padding: 0; }
+/* The 'End Pass Phrase Session' button */
+body.cryptup_gmail .action_finish_session {
+  position: fixed;
+  bottom: 3px;
+  left: 50%;
+  width: 300px;
+  margin-left: -30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  text-decoration: none;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 6px 0;
+  cursor: pointer;
+  z-index: 1;
+  border-radius: 3px;
+  opacity: 0.9;
+}
+
+body.cryptup_gmail .action_finish_session:hover {
+  opacity: 1;
+}
+
+body.cryptup_gmail .action_finish_session img {
+  height: 24px;
+  margin: 0 15px 0 -15px;
+}
 
 /* buttons body.cryptup_outlook */
 body.cryptup_outlook .cryptup_compose_button_container {
@@ -273,7 +299,7 @@ div#cryptup_dialog {
   width: 100%;
   height: 100%;
   margin: 0 auto;
-  z-index: 10;
+  z-index: 1100;
   background-color: rgba(255, 255, 255, 0.85);
 }
 
@@ -308,4 +334,27 @@ div#cryptup_dialog iframe.mediumtall {
 div#cryptup_dialog iframe.tall {
   height: 780px;
   margin-top: -390px;
+}
+
+.swal2-container.ui-modal-attachment {
+  padding: 0;
+  background: rgba(0, 0, 0, 0.85) !important;
+  overflow-y: hidden !important;
+}
+
+.swal2-container.ui-modal-attachment .swal2-popup {
+  padding: 0;
+  background: transparent;
+}
+
+.swal2-container.ui-modal-attachment .swal2-content {
+  height: 100%;
+  padding: 0;
+}
+
+.swal2-container.ui-modal-attachment #swal2-content { height: 100%; }
+
+.swal2-container.ui-modal-attachment iframe {
+  width: 100%;
+  height: 100%;
 }

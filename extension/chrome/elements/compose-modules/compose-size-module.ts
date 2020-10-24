@@ -84,7 +84,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       if (updateRefBodyHeight || !this.refBodyHeight) {
         this.refBodyHeight = this.view.S.cached('body').height() || 605;
       }
-      const attListHeight = $("#att_list").height() || 0;
+      const attListHeight = this.view.S.cached('fineuploader').height() || 0;
       const inputTextVerticalPadding = parseInt(this.view.S.cached('input_text').css('padding-top')) + parseInt(this.view.S.cached('input_text').css('padding-bottom'));
       const iconShowPrevMsgHeight = this.view.S.cached('triple_dot').outerHeight(true) || 0;
       this.view.S.cached('input_text').css('height', this.refBodyHeight - cellHeightExceptText - attListHeight - inputTextVerticalPadding - iconShowPrevMsgHeight);

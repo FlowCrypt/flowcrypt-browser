@@ -1,6 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { ParsedMail, simpleParser } from "mailparser";
+import { Buf } from '../core/buf';
 
 type ThreadIdObject = {
   threadId: string;
@@ -31,8 +32,7 @@ const strictParse = async (source: string): Promise<ParseMsgResult> => {
 };
 
 const convertBase64ToMimeMsg = async (base64: string) => {
-  const base64Buffer = Buffer.from(base64, 'base64');
-  return await simpleParser(base64Buffer.toString());
+  return await simpleParser(new Buffer(Buf.fromBase64Str(base64)));
 };
 
 export default { strictParse, convertBase64ToMimeMsg };

@@ -10,7 +10,7 @@ import { Browser } from './browser/browser.js';
 import { Catch } from './platform/catch.js';
 import { MsgBlock, MsgBlockType } from './core/msg-block.js';
 import { MsgBlockParser } from './core/msg-block-parser.js';
-import { PgpArmor } from './core/pgp-armor.js';
+import { PgpArmor } from './core/crypto/pgp/pgp-armor.js';
 import { Ui } from './browser/ui.js';
 import { WebMailName } from './browser/env.js';
 import { Xss } from './platform/xss.js';
@@ -63,6 +63,8 @@ export class XssSafeFactory {
       return factory.embeddedPubkey(PgpArmor.normalize(block.content.toString(), 'publicKey'), isOutgoing);
     } else if (block.type === 'privateKey') {
       return factory.embeddedBackup(PgpArmor.normalize(block.content.toString(), 'privateKey'));
+    } else if (block.type === 'certificate') {
+      return factory.embeddedPubkey(block.content.toString());
     } else if (['encryptedAtt', 'plainAtt'].includes(block.type)) {
       return block.attMeta ? factory.embeddedAtta(new Att(block.attMeta), block.type === 'encryptedAtt') : '[missing encrypted attachment details]';
     } else if (block.type === 'signedHtml') {
@@ -120,13 +122,13 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/add_pubkey.htm'), { emails, placement });
   }
 
-  public srcPgpAttIframe = (a: Att, isEncrypted: boolean) => {
+  public srcPgpAttIframe = (a: Att, isEncrypted: boolean, parentTabId?: string, iframeUrl = 'chrome/elements/attachment.htm') => {
     if (!a.id && !a.url && a.hasData()) { // data provided directly, pass as object url
       a.url = Browser.objUrlCreate(a.getData());
     }
-    return this.frameSrc(this.extUrl('chrome/elements/attachment.htm'), {
+    return this.frameSrc(this.extUrl(iframeUrl), {
       frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attId: a.id, url: a.url, isEncrypted
-    });
+    }, parentTabId);
   }
 
   public srcPgpBlockIframe = (message: string, msgId?: string, isOutgoing?: boolean, senderEmail?: string, signature?: string | boolean) => {
@@ -186,8 +188,8 @@ export class XssSafeFactory {
     return this.iframe(this.srcSubscribeDialog('embedded', isAuthErr), ['short', 'embedded'], { scrolling: 'no' });
   }
 
-  public embeddedAtta = (meta: Att, isEncrypted: boolean) => {
-    return Ui.e('span', { class: 'pgp_attachment', html: this.iframe(this.srcPgpAttIframe(meta, isEncrypted)) });
+  public embeddedAtta = (meta: Att, isEncrypted: boolean, parentTabId?: string) => {
+    return Ui.e('span', { class: 'pgp_attachment', html: this.iframe(this.srcPgpAttIframe(meta, isEncrypted, parentTabId)) });
   }
 
   public embeddedMsg = (type: MsgBlockType, armored: string, msgId?: string, isOutgoing?: boolean, sender?: string, signature?: string | boolean) => {
@@ -235,11 +237,10 @@ export class XssSafeFactory {
   }
 
   public btnEndPPSession = (webmailName: string) => {
-    return `<div class="action_finish_session zo" ${webmailName === 'gmail' ? 'data-tooltip' : 'title'}="End Pass Phrase Session" data-test="action-finish-session">
-                <a class="gb_se t6" ${webmailName === 'gmail' ? 'style="text-align: center; width: 18px;"' : ''}>
-                  <img src="${this.srcImg('svgs/unlock.svg')}"  ${webmailName === 'gmail' ? 'style="width: 18px;"' : ''} />
-                </a>
-              </div>`;
+    return `<a href="#" class="action_finish_session" title="End Pass Phrase Session" data-test="action-finish-session">
+              <img src="${this.srcImg('svgs/unlock.svg')}" height="32">
+              ${webmailName === 'gmail' ? 'End Pass Phrase Session' : ''}
+            </a>`;
   }
 
   public btnWithoutFc = () => {
@@ -269,9 +270,12 @@ export class XssSafeFactory {
     }
   }
 
-  private frameSrc = (path: string, params: UrlParams = {}) => {
+  private frameSrc = (path: string, params: UrlParams = {}, parentTabId?: string) => {
     for (const k of Object.keys(this.setParams)) {
       params[k] = this.setParams[k];
+    }
+    if (parentTabId) {
+      params.parentTabId = parentTabId;
     }
     return Url.create(path, params);
   }

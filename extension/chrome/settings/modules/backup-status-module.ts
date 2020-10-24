@@ -6,18 +6,17 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { BackupView } from './backup.js';
 import { Ui } from '../../../js/common/browser/ui.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Backups } from '../../../js/common/api/email-provider/email-provider-api.js';
-import { KeyInfo } from '../../../js/common/core/pgp-key.js';
+import { KeyInfo } from '../../../js/common/core/crypto/key.js';
 import { Str } from '../../../js/common/core/common.js';
 
 export class BackupStatusModule extends ViewModule<BackupView> {
 
   public setHandlers = () => { // is run after checkAndRenderBackupStatus, which renders (some of) these fields first
     $('#module_status .action_go_manual').click(this.view.setHandler(el => this.actionShowManualBackupHandler()));
-    $('#module_status .action_go_auth_denied').click(this.view.setHandler(async () => await this.goTo('auth_denied.htm')));
     $('#module_status .action_go_add_key').click(this.view.setHandler(async () => await this.goTo('add_key.htm')));
   }
 
@@ -30,7 +29,7 @@ export class BackupStatusModule extends ViewModule<BackupView> {
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender('#content', `Could not check for backups: no internet. ${Ui.retryLink()}`);
-      } else if (ApiErr.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthErr(e)) {
         if (this.view.parentTabId) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
         }

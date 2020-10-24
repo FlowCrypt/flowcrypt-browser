@@ -29,7 +29,7 @@
         <div class="col-sm-6 text-right">
           <div class="profile-row ">
             <div class="public-profile-container hide_if_setup_not_done public_profile_indicator_container" style="visibility: hidden;"></div>
-            <span class="email-address action-toggle-accounts-menu" data-test="action-toggle-accounts-menu"></span>
+            <a href="#" class="email-address action-toggle-accounts-menu" data-test="action-toggle-accounts-menu"></a>
             <span id="toggle-accounts-profile-img" class="action-toggle-accounts-menu">
               <img src="/img/svgs/profile-icon.svg" class="profile-img main-profile-img" alt="Profile Image">
             </span>
@@ -48,7 +48,9 @@
 
   <div id="content" class="setup">
     <div class="wide line">
-      <img src="/img/svgs/chevron-left.svg" class="chevron-left back" alt="Go back" data-test="action-setup-go-back">
+      <button id="button-go-back" data-test="action-setup-go-back" title="Go back">
+        <img src="/img/svgs/chevron-left.svg">
+      </button>
       <a href="#" class="action_show_help" page="modules/help.htm">
         <img src="/img/svgs/question-icon.svg" alt="Help icon">
       </a>
@@ -185,7 +187,7 @@
         <div class="source_paste_container setup_page display_none">
           <div class="line left">
             <textarea class="input_private_key" placeholder="ASCII Armored Private Key"
-              data-test="input-step2bmanualenter-ascii-key"></textarea>
+              data-test="input-step2bmanualenter-ascii-key" spellcheck="false"></textarea>
           </div>
           <div class="line display_none unprotected_key_create_pass_phrase">
             This key is unprotected. Create a pass phrase or <a href="#" class="action_use_random_pass_phrase"
@@ -275,9 +277,6 @@
         <br />
         <br /><b class="red">Following features are disabled for <span class="email-address"></span>:</b> encrypted
         attachments, encrypted replies, alternative "From" email addresses and more.
-        <br />
-        <br />
-        <button class="button longer green action_go_auth_denied">revise permissions</button>
       </div>
     </div>
 
@@ -305,9 +304,6 @@
         <br />
         <br /><b class="red">Following features are disabled for <span class="email-address"></span>:</b> encrypted
         attachments, encrypted replies, alternative "From" email addresses and more.
-        <br />
-        <br />
-        <button class="button longer green action_go_auth_denied">revise permissions</button>
       </div>
     </div>
 

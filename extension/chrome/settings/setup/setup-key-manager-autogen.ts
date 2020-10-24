@@ -3,16 +3,16 @@
 'use strict';
 
 import { SetupOptions, SetupView } from '../setup.js';
-
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { PgpPwd } from '../../../js/common/core/pgp-password.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
-import { Api } from '../../../js/common/api/api.js';
+import { PgpPwd } from '../../../js/common/core/crypto/pgp/pgp-password.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
+import { Api } from '../../../js/common/api/shared/api.js';
 import { Settings } from '../../../js/common/settings.js';
+import { KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 export class SetupKeyManagerAutogenModule {
 
@@ -38,33 +38,34 @@ export class SetupKeyManagerAutogenModule {
     try {
       const { privateKeys } = await this.view.keyManager!.getPrivateKeys(this.view.idToken!);
       if (privateKeys.length) { // keys already exist on keyserver, auto-import
-        const { keys } = await PgpKey.readMany(Buf.fromUtfStr(privateKeys.map(pk => pk.decryptedPrivateKey).join('\n')));
+        const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(privateKeys.map(pk => pk.decryptedPrivateKey).join('\n')));
         if (!keys.length) {
           throw new Error(`Could not parse any valid keys from Key Manager response for user ${this.view.acctEmail}`);
         }
         for (const prv of keys) {
-          if (!prv.isPrivate()) {
-            throw new Error(`Key ${await PgpKey.longid(prv)} for user ${this.view.acctEmail} is not a private key`);
+          if (!prv.isPrivate) {
+            throw new Error(`Key ${prv.id} for user ${this.view.acctEmail} is not a private key`);
           }
-          if (!prv.isFullyDecrypted()) {
-            throw new Error(`Key ${await PgpKey.longid(prv)} for user ${this.view.acctEmail} from FlowCrypt Email Key Manager is not fully decrypted`);
+          if (!prv.fullyDecrypted) {
+            throw new Error(`Key ${prv.id} for user ${this.view.acctEmail} from FlowCrypt Email Key Manager is not fully decrypted`);
           }
-          await PgpKey.encrypt(prv, passphrase);
+          await KeyUtil.encrypt(prv, passphrase);
         }
         await this.view.saveKeysAndPassPhrase(keys, opts);
       } else { // generate keys and store them on key manager
         const { full_name } = await AcctStore.get(this.view.acctEmail, ['full_name']);
         const expireInMonths = this.view.orgRules.getEnforcedKeygenExpirationMonths();
         const pgpUids = [{ name: full_name || '', email: this.view.acctEmail }];
-        const generated = await PgpKey.create(pgpUids, keygenAlgo, passphrase, expireInMonths);
-        const decryptablePrv = await PgpKey.read(generated.private);
-        const generatedKeyFingerprint = await PgpKey.fingerprint(decryptablePrv);
-        if (! await PgpKey.decrypt(decryptablePrv, passphrase)) {
+        const generated = await OpenPGPKey.create(pgpUids, keygenAlgo, passphrase, expireInMonths);
+        const decryptablePrv = await KeyUtil.parse(generated.private);
+        const generatedKeyFingerprint = decryptablePrv.id;
+        if (! await KeyUtil.decrypt(decryptablePrv, passphrase)) {
           throw new Error('Unexpectedly cannot decrypt newly generated key');
         }
-        const storePrvOnKm = () => this.view.keyManager!.storePrivateKey(this.view.idToken!, decryptablePrv.armor(), decryptablePrv.toPublic().armor(), generatedKeyFingerprint!);
+        const pubArmor = KeyUtil.armor(await KeyUtil.asPublicKey(decryptablePrv));
+        const storePrvOnKm = async () => this.view.keyManager!.storePrivateKey(this.view.idToken!, KeyUtil.armor(decryptablePrv), pubArmor, generatedKeyFingerprint!);
         await Settings.retryUntilSuccessful(storePrvOnKm, 'Failed to store newly generated key on FlowCrypt Email Key Manager');
-        await this.view.saveKeysAndPassPhrase([await PgpKey.read(generated.private)], opts); // store encrypted key + pass phrase locally
+        await this.view.saveKeysAndPassPhrase([await KeyUtil.parse(generated.private)], opts); // store encrypted key + pass phrase locally
       }
       await this.view.submitPublicKeysAndFinalizeSetup(opts);
       await this.view.setupRender.renderSetupDone();

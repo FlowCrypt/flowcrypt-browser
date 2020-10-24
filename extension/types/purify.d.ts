@@ -40,7 +40,6 @@ interface Config {
     RETURN_DOM?: boolean;
     RETURN_DOM_FRAGMENT?: boolean;
     RETURN_DOM_IMPORT?: boolean;
-    SAFE_FOR_JQUERY?: boolean;
     SANITIZE_DOM?: boolean;
     WHOLE_DOCUMENT?: boolean;
     ALLOWED_URI_REGEXP?: RegExp;

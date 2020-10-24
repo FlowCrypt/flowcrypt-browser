@@ -2,9 +2,9 @@
 
 'use strict';
 
-import { Contact, PgpKey } from '../../../js/common/core/pgp-key.js';
+import { Contact, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Str, Url } from '../../../js/common/core/common.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Att } from '../../../js/common/core/att.js';
 import { AttUI } from '../../../js/common/ui/att-ui.js';
@@ -60,14 +60,15 @@ View.run(class ContactsView extends View {
     $('a.action_remove').off().click(this.setHandlerPrevent('double', this.actionRemovePublicKey));
     $('.action_export_all').off().click(this.setHandlerPrevent('double', this.actionExportAllKeysHandler));
     $('.action_view_bulk_import').off().click(this.setHandlerPrevent('double', this.actionRenderBulkImportPageHandler));
+    $('.input-search-contacts').off().keyup(this.setHandlerPrevent('double', this.loadAndRenderContactList));
   }
 
   // --- PRIVATE
 
   private loadAndRenderContactList = async () => {
-    this.contacts = await ContactStore.search(undefined, { has_pgp: true });
+    this.contacts = await ContactStore.search(undefined, { has_pgp: true, limit: 500, substring: String($('.input-search-contacts').val()) }, false);
     let lineActionsHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
-      '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;';
+      '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import" data-test="action-show-import-public-keys-form">import public keys</a>&nbsp;&nbsp;';
     if (this.orgRules.getCustomSksPubkeyServer()) {
       lineActionsHtml += `&nbsp;&nbsp;<br><br><b class="bad">using custom SKS pubkeyserver: ${Xss.escape(this.orgRules!.getCustomSksPubkeyServer()!)}</b>`;
     } else {
@@ -82,23 +83,24 @@ View.run(class ContactsView extends View {
     let tableContents = '';
     for (const contact of this.contacts) {
       const e = Xss.escape(contact.email);
-      const show = `<a href="#" class="action_show" data-test="action-show-pubkey"></a>`;
-      const change = `<a href="#" class="action_change" data-test="action-change-pubkey"></a>`;
-      const remove = `<a href="#" class="action_remove" data-test="action-remove-pubkey"></a>`;
+      const show = `<a href="#" class="action_show" data-test="action-show-pubkey-${e.replace(/[^a-z0-9]+/g, '')}"></a>`;
+      const change = `<a href="#" class="action_change" data-test="action-change-pubkey-${e.replace(/[^a-z0-9]+/g, '')}"></a>`;
+      const remove = `<a href="#" class="action_remove" data-test="action-remove-pubkey-${e.replace(/[^a-z0-9]+/g, '')}"></a>`;
       tableContents += `<tr email="${e}"><td>${e}</td><td>${show}</td><td>${change}</td><td>${remove}</td></tr>`;
     }
     Xss.sanitizeReplace('table#emails', `<table id="emails" class="hide_when_rendering_subpage">${tableContents}</table>`);
+    $('.container-table-note').text(this.contacts.length >= 500 ? '(showing first 500 results)' : '');
     this.setHandlers();
   }
 
   private fileAddedHandler = async (file: Att) => {
     this.attUI.clearAllAtts();
-    const { keys, errs } = await PgpKey.readMany(file.getData());
+    const { keys, errs } = await KeyUtil.readMany(file.getData());
     if (keys.length) {
       if (errs.length) {
         await Ui.modal.warning(`some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
       }
-      $('#bulk_import .input_pubkey').val(keys.map(key => key.armor()).join('\n\n'));
+      $('#bulk_import .input_pubkey').val(keys.map(key => KeyUtil.armor(key)).join('\n\n'));
       $('#bulk_import .action_process').trigger('click');
       $('#file_import').hide();
     } else if (errs.length) {
@@ -107,7 +109,7 @@ View.run(class ContactsView extends View {
   }
 
   private actionExportAllKeysHandler = () => {
-    const allArmoredPublicKeys = this.contacts.map(c => (c.pubkey || '').trim()).join('\n');
+    const allArmoredPublicKeys = this.contacts.map(c => c.pubkey).filter(Boolean).map((c: Key) => (KeyUtil.armor(c)).trim()).join('\n');
     const exportFile = new Att({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: Buf.fromUtfStr(allArmoredPublicKeys) });
     Browser.saveToDownloads(exportFile);
   }
@@ -121,8 +123,18 @@ View.run(class ContactsView extends View {
     } else {
       Xss.sanitizeAppend('h1', '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
     }
-    $('#view_contact .key_dump').text(contact!.pubkey!); // should exist - from list of contacts && should have pgp - filtered
-    $('#view_contact .key_fingerprint').text(Str.spaced(contact!.fingerprint!)); // should exist - from list of contacts && should have pgp - filtered
+    $('#view_contact .key_dump').text(KeyUtil.armor(contact!.pubkey!)); // should exist - from list of contacts && should have pgp - filtered
+    $('#view_contact #container-pubkey-details').text([
+      `Type: ${contact?.pubkey?.type}`,
+      `Fingerprint: ${Str.spaced(contact?.fingerprint || 'none')}`,
+      `Users: ${contact?.pubkey?.emails?.join(', ')}`,
+      `Created on: ${contact?.pubkey?.created ? new Date(contact?.pubkey?.created) : ''}`,
+      `Expiration: ${contact?.pubkey?.expiration ? new Date(contact?.pubkey?.expiration) : 'Does not expire'}`,
+      `Last signature: ${contact?.pubkey?.lastModified ? new Date(contact?.pubkey?.lastModified) : ''}`,
+      `Expired: ${contact?.pubkey?.expiration && contact?.pubkey?.expiration < Date.now() ? 'yes' : 'no'}`,
+      `Usable for encryption: ${contact?.pubkey?.usableForEncryption}`,
+      `Usable for signing: ${contact?.pubkey?.usableForSigning}`,
+    ].join('\n'));
     $('#view_contact').css('display', 'block');
     $('#page_back_button').click(this.setHandler(el => this.loadAndRenderContactList()));
   }
@@ -141,12 +153,16 @@ View.run(class ContactsView extends View {
     const email = $('#edit_contact .input_pubkey').attr('email');
     if (!armoredPubkey || !email) {
       await Ui.modal.warning('No public key entered');
-    } else if (await PgpKey.fingerprint(armoredPubkey)) {
-      await ContactStore.save(undefined, await ContactStore.obj({ email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now() }));
-      await this.loadAndRenderContactList();
     } else {
-      await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let us know at human@flowcrypt.com if you need help.');
-      $('#edit_contact .input_pubkey').val('').focus();
+      try {
+        // parse will throw if the key is not recognized
+        const pubkey = await KeyUtil.parse(armoredPubkey);
+        await ContactStore.update(undefined, email, { pubkey, last_use: Date.now() });
+        await this.loadAndRenderContactList();
+      } catch (e) {
+        await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let us know at human@flowcrypt.com if you need help.');
+        $('#edit_contact .input_pubkey').val('').focus();
+      }
     }
   }
 
@@ -196,7 +212,7 @@ View.run(class ContactsView extends View {
       } else { // Render Results
         const container = $('#bulk_import #processed');
         for (const block of blocks) {
-          if (block.type === 'publicKey') {
+          if (block.type === 'publicKey' || block.type === 'certificate') {
             const replacedHtmlSafe = XssSafeFactory.replaceRenderableMsgBlocks(this.factory!, block.content.toString(), '', '');
             if (replacedHtmlSafe && replacedHtmlSafe !== value) {
               container.append(replacedHtmlSafe); // xss-safe-factory

@@ -41,6 +41,10 @@
         "lib/clipboard.js",
         "COMMENT"
       ],
+      "filesize": [
+        "lib/filesize.js",
+        "COMMENT"
+      ],
       "iso-8859-2": [
         "lib/iso-8859-2.js",
         "COMMENT"
@@ -68,11 +72,11 @@
     ]
   },
   "include": [
-    "./extension/**/*.ts"
+    "./extension/**/*.ts",
+    "./node_modules/sweetalert2/sweetalert2.d.ts"
   ],
   "exclude": [
     "./extension/js/content_scripts/**/*",
-    "**/build/**",
-    "**/node_modules/**"
+    "**/build/**"
   ]
 }

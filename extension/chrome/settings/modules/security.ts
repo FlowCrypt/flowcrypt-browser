@@ -2,11 +2,11 @@
 
 'use strict';
 
-import { Backend, FcUuidAuth } from '../../../js/common/api/backend.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { KeyInfo } from '../../../js/common/core/pgp-key.js';
+import { KeyInfo } from '../../../js/common/core/crypto/key.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
@@ -17,6 +17,8 @@ import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
+import { AccountServer } from '../../../js/common/api/account-server.js';
+import { FcUuidAuth } from '../../../js/common/api/account-servers/flowcrypt-com-api.js';
 
 View.run(class SecurityView extends View {
 
@@ -87,7 +89,7 @@ View.run(class SecurityView extends View {
     if (subscription.active) {
       Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
       try {
-        const response = await Backend.accountGetAndUpdateLocalStore(this.authInfo!);
+        const response = await AccountServer.accountGetAndUpdateLocalStore(this.authInfo!);
         $('.select_loader_container').text('');
         $('.default_message_expire').val(Number(response.account.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
         $('.default_message_expire').change(this.setHandler(() => this.onDefaultExpireUserChange()));
@@ -111,7 +113,7 @@ View.run(class SecurityView extends View {
   private onDefaultExpireUserChange = async () => {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
-    await Backend.accountUpdate(this.authInfo!, { default_message_expire: Number($('.default_message_expire').val()) });
+    await AccountServer.accountUpdate(this.authInfo!, { default_message_expire: Number($('.default_message_expire').val()) });
     window.location.reload();
   }
 

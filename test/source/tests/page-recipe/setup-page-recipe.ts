@@ -19,6 +19,7 @@ type ManualEnterOpts = {
   enforceAttesterSubmitOrgRule?: boolean,
   noPubSubmitRule?: boolean,
   fillOnly?: boolean,
+  key?: { title: string, passphrase: string, armored: string | null, longid: string | null }
 };
 
 type CreateKeyOpts = {
@@ -87,9 +88,10 @@ export class SetupPageRecipe extends PageRecipe {
       enforceAttesterSubmitOrgRule = false,
       fillOnly = false,
       noPubSubmitRule = false,
+      key,
     }: ManualEnterOpts = {}
   ) {
-    const k = Config.key(keyTitle);
+    const k = key || Config.key(keyTitle);
     if (!noPrvCreateOrgRule) {
       if (usedPgpBefore) {
         await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-enter', { retryErrs: true });
@@ -97,7 +99,7 @@ export class SetupPageRecipe extends PageRecipe {
         await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-enter', { retryErrs: true });
       }
     }
-    await settingsPage.waitAndClick('@input-step2bmanualenter-source-paste');
+    await settingsPage.waitAndClick('@input-step2bmanualenter-source-paste', { retryErrs: true });
     await settingsPage.waitAndType('@input-step2bmanualenter-ascii-key', k.armored || '');
     await settingsPage.waitAndClick('@input-step2bmanualenter-passphrase'); // blur ascii key input
     if (noPrvCreateOrgRule) { // NO_PRV_CREATE cannot use the back button, so that they cannot select another setup method

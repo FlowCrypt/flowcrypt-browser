@@ -3,11 +3,11 @@
 import { PgpClient } from '../../api/pub-lookup.js';
 import { AbstractStore } from './abstract-store.js';
 import { Catch } from '../catch.js';
-import { opgp } from '../../core/pgp.js';
+import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { Str } from '../../core/common.js';
-import { PgpKey, Contact } from '../../core/pgp-key.js';
-import { PgpArmor } from '../../core/pgp-armor.js';
+import { Key, Contact, KeyUtil } from '../../core/crypto/key.js';
+import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key.js';
 
 // tslint:disable:no-null-keyword
 
@@ -25,7 +25,7 @@ export type DbContactObjArg = {
 export type ContactUpdate = {
   email?: string;
   name?: string | null;
-  pubkey?: string;
+  pubkey?: Key;
   has_pgp?: 0 | 1;
   searchable?: string[];
   client?: string | null;
@@ -35,6 +35,7 @@ export type ContactUpdate = {
   last_use?: number | null;
   pubkey_last_sig?: number | null;
   pubkey_last_check?: number | null;
+  expiresOn?: number | null;
 };
 
 export type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number };
@@ -103,50 +104,21 @@ export class ContactStore extends AbstractStore {
           expiresOn: null
         };
       }
-      // X.509 certificate
-      if (PgpKey.getKeyType(pubkey) === 'x509') {
-        // FIXME: For now we return random data.
-        // Later we'll return serial ID from the certificate.
-        const longid = Math.random() + '';
-        return {
-          email: validEmail,
-          name: name || null,
-          pubkey,
-          has_pgp: 1, // number because we use it for sorting
-          searchable: ContactStore.dbCreateSearchIndexList(validEmail, name || null, true),
-          client: ContactStore.storablePgpClient(client || 'pgp'),
-          fingerprint: Math.random() + '',
-          longid,
-          longids: [longid],
-          pending_lookup: 0,
-          last_use: lastUse || null,
-          pubkey_last_sig: lastSig || null,
-          pubkey_last_check: lastCheck || null,
-          expiresOn: null
-        };
-      }
-      const k = await PgpKey.read(pubkey);
-      if (!k) {
-        throw new Error(`Could not read pubkey as valid OpenPGP key for: ${validEmail}`);
-      }
-      const keyDetails = await PgpKey.details(k);
-      if (!lastSig) {
-        lastSig = await PgpKey.lastSig(k);
-      }
-      const expiresOnMs = Number(await PgpKey.dateBeforeExpirationIfAlreadyExpired(k)) || undefined;
+      const pk = await KeyUtil.parse(pubkey);
+      const expiresOnMs = Number(pk.expiration) || undefined;
       return {
         email: validEmail,
         name: name || null,
-        pubkey: keyDetails.public,
+        pubkey: pk,
         has_pgp: 1, // number because we use it for sorting
         searchable: ContactStore.dbCreateSearchIndexList(validEmail, name || null, true),
         client: ContactStore.storablePgpClient(client || 'pgp'),
-        fingerprint: keyDetails.ids[0].fingerprint,
-        longid: keyDetails.ids[0].longid,
-        longids: keyDetails.ids.map(id => id.longid),
+        fingerprint: pk.id,
+        longid: OpenPGPKey.fingerprintToLongid(pk.id),
+        longids: pk.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)),
         pending_lookup: 0,
         last_use: lastUse || null,
-        pubkey_last_sig: lastSig || null,
+        pubkey_last_sig: Number(pk.lastModified) || null,
         pubkey_last_check: lastCheck || null,
         expiresOn: expiresOnMs || null
       };
@@ -169,7 +141,7 @@ export class ContactStore extends AbstractStore {
       const tx = db.transaction('contacts', 'readwrite');
       const contactsTable = tx.objectStore('contacts');
       contactsTable.put(contact);
-      tx.oncomplete = () => resolve();
+      tx.oncomplete = Catch.try(resolve);
       tx.onabort = () => reject(ContactStore.errCategorize(tx.error));
     });
   }
@@ -194,24 +166,33 @@ export class ContactStore extends AbstractStore {
         throw new Error('contact not found right after inserting it');
       }
     }
-    if (update.pubkey && update.pubkey.includes(PgpArmor.headers('privateKey').begin)) { // wrongly saving prv instead of pub
-      Catch.report('Wrongly saving prv as contact - converting to pubkey');
-      const key = await PgpKey.read(update.pubkey);
-      update.pubkey = key.toPublic().armor();
+    if (update.pubkey?.isPrivate) {
+      Catch.report('Wrongly updating prv as contact - converting to pubkey');
+      update.pubkey = await KeyUtil.asPublicKey(update.pubkey);
     }
     if (!update.searchable && (update.name !== existing.name || update.has_pgp !== existing.has_pgp)) { // update searchable index based on new name or new has_pgp
       const newHasPgp = Boolean(typeof update.has_pgp !== 'undefined' && update.has_pgp !== null ? update.has_pgp : existing.has_pgp);
       const newName = typeof update.name !== 'undefined' && update.name !== null ? update.name : existing.name;
       update.searchable = ContactStore.dbCreateSearchIndexList(existing.email, newName, newHasPgp);
     }
+    const updated = existing;
+    if (update.pubkey) {
+      const key = typeof update.pubkey === 'string' ? await KeyUtil.parse(update.pubkey) : update.pubkey;
+      update.fingerprint = key.id;
+      update.longid = OpenPGPKey.fingerprintToLongid(key.id);
+      update.pubkey_last_sig = key.lastModified ? Number(key.lastModified) : null;
+      update.expiresOn = key.expiration ? Number(key.expiration) : null;
+      update.pubkey = KeyUtil.armor(key) as unknown as Key; // serialising for storage
+      update.has_pgp = 1;
+    }
     for (const k of Object.keys(update)) {
-      // @ts-ignore - may be saving any of the provided values - could do this one by one while ensuring proper types
-      existing[k] = update[k];
+      // @ts-ignore
+      updated[k] = update[k];
     }
     return await new Promise((resolve, reject) => {
       const tx = db.transaction('contacts', 'readwrite');
       const contactsTable = tx.objectStore('contacts');
-      contactsTable.put(existing);
+      contactsTable.put(updated);
       tx.oncomplete = Catch.try(resolve);
       tx.onabort = () => reject(ContactStore.errCategorize(tx.error));
     });
@@ -219,7 +200,7 @@ export class ContactStore extends AbstractStore {
 
   public static get = async (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
     if (!db) { // relay op through background process
-      return await BrowserMsg.send.bg.await.db({ f: 'get', args: [emailOrLongid] }) as (Contact | undefined)[];
+      return ContactStore.recreateDates(await BrowserMsg.send.bg.await.db({ f: 'get', args: [emailOrLongid] }) as (Contact | undefined)[]);
     }
     if (emailOrLongid.length === 1) {
       // contacts imported before August 2019 may have only primary longid recorded, in index_longid (string)
@@ -230,11 +211,11 @@ export class ContactStore extends AbstractStore {
       if (contact || !/^[A-F0-9]{16}$/.test(emailOrLongid[0])) {
         // if we found something, return it
         // or if we were searching by email, return found contact or nothing
-        return [contact];
+        return ContactStore.recreateDates([contact]);
       } else {
         // not found any key by primary longid, and searching by longid -> search by any subkey longid
         // it may not find pubkeys imported before August 2019, re-importing such pubkeys will make them findable
-        return [await ContactStore.dbContactInternalGetOne(db, emailOrLongid[0], true)];
+        return ContactStore.recreateDates([await ContactStore.dbContactInternalGetOne(db, emailOrLongid[0], true)]);
       }
     } else {
       const results: (Contact | undefined)[] = [];
@@ -242,11 +223,14 @@ export class ContactStore extends AbstractStore {
         const [contact] = await ContactStore.get(db, [singleEmailOrLongid]);
         results.push(contact);
       }
-      return results;
+      return ContactStore.recreateDates(results);
     }
   }
 
-  public static search = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<Contact[]> => {
+  /**
+   * "deserialize" means to parse the returned keys into objects - which is expensive, particularly when parsing many keys
+   */
+  public static search = async (db: IDBDatabase | undefined, query: DbContactFilter, deserialize: boolean = true): Promise<Contact[]> => {
     if (!db) { // relay op through background process
       return await BrowserMsg.send.bg.await.db({ f: 'search', args: [query] }) as Contact[];
     }
@@ -266,7 +250,7 @@ export class ContactStore extends AbstractStore {
         return resultsWithPgp.concat(resultsWithoutPgp);
       }
     }
-    return await new Promise((resolve, reject) => {
+    const toDeserialize: unknown[] = await new Promise((resolve, reject) => {
       const contacts = db.transaction('contacts', 'readonly').objectStore('contacts');
       let search: IDBRequest;
       if (typeof query.has_pgp === 'undefined') { // any query.has_pgp value
@@ -278,18 +262,27 @@ export class ContactStore extends AbstractStore {
           search = contacts.index('index_has_pgp').openCursor(IDBKeyRange.only(Number(query.has_pgp)));
         }
       }
-      const found: Contact[] = [];
+      const found: unknown[] = [];
       search.onsuccess = Catch.try(() => {
-        const cursor = search!.result; // checked it above
-        if (!cursor || found.length === query.limit) {
+        const cursor = search.result as IDBCursorWithValue | undefined;
+        if (!cursor) {
           resolve(found);
         } else {
-          found.push(cursor.value); // tslint:disable-line:no-unsafe-any
-          cursor.continue(); // tslint:disable-line:no-unsafe-any
+          found.push(cursor.value);
+          if (query.limit && found.length >= query.limit) {
+            resolve(found);
+          } else {
+            cursor.continue();
+          }
         }
       });
       search.onerror = () => reject(ContactStore.errCategorize(search!.error!)); // todo - added ! after ts3 upgrade - investigate
     });
+    if (deserialize) { // performance is not an issue, eg loading only a few keys
+      const deserialized = await Promise.all(toDeserialize.map(ContactStore.deserialize));
+      return deserialized.filter(contact => !!contact) as Contact[];
+    }
+    return toDeserialize as Contact[]; // it will miss the "pubkey" field, otherwise it's indeed a Contact[]. much faster.
   }
 
   private static normalizeString = (str: string) => {
@@ -345,9 +338,38 @@ export class ContactStore extends AbstractStore {
       } else { // search primary longid
         tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(emailOrLongid);
       }
-      tx.onsuccess = Catch.try(() => resolve(tx.result || undefined)); // tslint:disable-line:no-unsafe-any
+      tx.onsuccess = Catch.try(() => resolve(ContactStore.deserialize(tx.result)));
       tx.onerror = () => reject(ContactStore.errCategorize(tx.error || new Error('Unknown db error')));
     });
+  }
+
+  private static deserialize = async (result: any): Promise<Contact | undefined> => {
+    if (!result) {
+      return;
+    }
+    if (typeof result.pubkey === 'object') { // tslint:disable-line:no-unsafe-any
+      return result; // tslint:disable-line:no-unsafe-any
+    }
+    return { ...result, pubkey: await KeyUtil.parse(result.pubkey) }; // tslint:disable-line:no-unsafe-any
+  }
+
+  private static recreateDates = (contacts: (Contact | undefined)[]) => {
+    for (const contact of contacts) {
+      if (contact) {
+        // string dates were created by JSON serializing Date objects
+        // convert any previously saved string-dates into numbers
+        if (typeof contact?.pubkey?.created === 'string') {
+          contact.pubkey.created = new Date(contact.pubkey.created).getTime();
+        }
+        if (typeof contact?.pubkey?.expiration === 'string') {
+          contact.pubkey.expiration = new Date(contact.pubkey.expiration).getTime();
+        }
+        if (typeof contact?.pubkey?.lastModified === 'string') {
+          contact.pubkey.lastModified = new Date(contact.pubkey.lastModified).getTime();
+        }
+      }
+    }
+    return contacts;
   }
 
 }

@@ -5,9 +5,9 @@
 import { Att } from '../core/att.js';
 import { Catch, UnreportableError } from '../platform/catch.js';
 import { Dict } from '../core/common.js';
-import { PgpMsg } from '../core/pgp-msg.js';
+import { MsgUtil } from '../core/crypto/pgp/msg-util.js';
 import { Ui } from '../browser/ui.js';
-import { PgpKey, PubkeyResult } from '../core/pgp-key.js';
+import { PubkeyResult, KeyUtil } from '../core/crypto/key.js';
 
 declare const qq: any;
 
@@ -86,12 +86,12 @@ export class AttUI {
     for (const uploadFileId of Object.keys(this.attachedFiles)) {
       const file = this.attachedFiles[uploadFileId];
       const data = await this.readAttDataAsUint8(uploadFileId);
-      const pubsForEncryption = PgpKey.choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport(pubs);
-      if (pubs.find(pub => PgpKey.getKeyType(pub.pubkey) === 'x509')) {
+      const pubsForEncryption = KeyUtil.choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport(pubs);
+      if (pubs.find(pub => pub.pubkey.type === 'x509')) {
         throw new UnreportableError('Attachments are not yet supported when sending to recipients using S/MIME x509 certificates.');
       }
-      const encrypted = await PgpMsg.encrypt({ pubkeys: pubsForEncryption, data, filename: file.name, armor: false }) as OpenPGP.EncryptBinaryResult;
-      atts.push(new Att({ name: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', type: file.type, data: encrypted.message.packets.write() }));
+      const encrypted = await MsgUtil.encryptMessage({ pubkeys: pubsForEncryption, data, filename: file.name, armor: false }) as OpenPGP.EncryptBinaryResult;
+      atts.push(new Att({ name: Att.sanitizeName(file.name) + '.pgp', type: file.type, data: encrypted.message.packets.write() }));
     }
     return atts;
   }

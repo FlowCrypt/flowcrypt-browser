@@ -7,14 +7,14 @@ import { Str, Value } from '../../../core/common.js';
 
 import { Att } from '../../../core/att.js';
 import { Buf } from '../../../core/buf.js';
-import { RecipientType } from '../../api.js';
+import { RecipientType } from '../../shared/api.js';
 import { ReplyParams } from '../email-provider-api.js';
 
 export namespace GmailRes { // responses
 
   export type GmailMsg$header = { name: string, value: string };
   export type GmailMsg$payload$body = { attachmentId: string, size: number, data?: string };
-  export type GmailMsg$payload$part = { body?: GmailMsg$payload$body, filename?: string, mimeType?: string, headers?: GmailMsg$header[] };
+  export type GmailMsg$payload$part = { partId?: string, body?: GmailMsg$payload$body, filename?: string, mimeType?: string, headers?: GmailMsg$header[], parts?: GmailMsg$payload$part[] };
   export type GmailMsg$payload = { parts?: GmailMsg$payload$part[], headers?: GmailMsg$header[], mimeType?: string, body?: GmailMsg$payload$body };
   export type GmailMsg$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES' | 'TRASH';
   export type GmailMsg = {

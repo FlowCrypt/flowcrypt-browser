@@ -4,22 +4,20 @@
 
 import { Dict, Str, Url, UrlParams } from './core/common.js';
 import { Ui } from './browser/ui.js';
-import { Api } from './api/api.js';
-import { ApiErr } from './api/error/api-error.js';
-import { ApiErrResponse } from './api/error/api-error-types.js';
-import { Backend } from './api/backend.js';
+import { Api } from './api/shared/api.js';
+import { ApiErr, AjaxErr } from './api/shared/api-error.js';
+
 import { Catch } from './platform/catch.js';
 import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
-import { GoogleAuth } from './api/google-auth.js';
+import { GoogleAuth } from './api/email-provider/gmail/google-auth.js';
 import { Lang } from './lang.js';
-import { PgpKey } from './core/pgp-key.js';
-import { PgpPwd } from './core/pgp-password.js';
+import { Key, KeyUtil } from './core/crypto/key.js';
+import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
 import { OrgRules } from './org-rules.js';
 import { Xss } from './platform/xss.js';
-import { opgp } from './core/pgp.js';
-import { storageLocalGetAll } from './api/chrome.js';
-import { AcctStore, SendAsAlias } from './platform/store/acct-store.js';
+import { storageLocalGetAll } from './browser/chrome.js';
+import { AccountIndex, AcctStore, SendAsAlias } from './platform/store/acct-store.js';
 import { GlobalStore } from './platform/store/global-store.js';
 import { AbstractStore } from './platform/store/abstract-store.js';
 import { KeyStore } from './platform/store/key-store.js';
@@ -76,7 +74,7 @@ export class Settings {
     if (!acctEmails.includes(acctEmail)) {
       throw new Error(`"${acctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
     }
-    const storageIndexesToRemove: string[] = [];
+    const storageIndexesToRemove: AccountIndex[] = [];
     const filter = AbstractStore.singleScopeRawIndex(acctEmail, '');
     if (!filter) {
       throw new Error('Filter is empty for account_email"' + acctEmail + '"');
@@ -86,7 +84,7 @@ export class Settings {
         try {
           for (const storageIndex of Object.keys(storage)) {
             if (storageIndex.indexOf(filter) === 0) {
-              storageIndexesToRemove.push(storageIndex.replace(filter, ''));
+              storageIndexesToRemove.push(storageIndex.replace(filter, '') as AccountIndex);
             }
           }
           await AcctStore.remove(acctEmail, storageIndexesToRemove);
@@ -153,9 +151,9 @@ export class Settings {
   }
 
   public static renderPrvCompatFixUiAndWaitTilSubmittedByUser = async (
-    acctEmail: string, containerStr: string | JQuery<HTMLElement>, origPrv: OpenPGP.key.Key, passphrase: string, backUrl: string
-  ): Promise<OpenPGP.key.Key> => {
-    const uids = origPrv.users.map(u => u.userId).filter(u => !!u && u.userid && Str.parseEmail(u.userid).email).map(u => u!.userid).filter(Boolean) as string[];
+    acctEmail: string, containerStr: string | JQuery<HTMLElement>, origPrv: Key, passphrase: string, backUrl: string
+  ): Promise<Key> => {
+    const uids = origPrv.identities;
     if (!uids.length) {
       uids.push(acctEmail);
     }
@@ -194,24 +192,24 @@ export class Settings {
         } else {
           $(target).off();
           Xss.sanitizeRender(target, Ui.spinner('white'));
-          const expireSeconds = (expireYears === 'never') ? 0 : Math.floor((Date.now() - origPrv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expireYears));
-          await PgpKey.decrypt(origPrv, passphrase);
+          const expireSeconds = (expireYears === 'never') ? 0 : Math.floor((Date.now() - origPrv.created) / 1000) + (60 * 60 * 24 * 365 * Number(expireYears));
+          await KeyUtil.decrypt(origPrv, passphrase);
           let reformatted;
           const userIds = uids.map(uid => Str.parseEmail(uid)).map(u => ({ email: u.email, name: u.name || '' }));
           try {
-            reformatted = await opgp.reformatKey({ privateKey: origPrv, passphrase, userIds, keyExpirationTime: expireSeconds }) as { key: OpenPGP.key.Key };
+            reformatted = await KeyUtil.reformatKey(origPrv, passphrase, userIds, expireSeconds);
           } catch (e) {
             reject(e);
             return;
           }
-          if (!reformatted.key.isFullyEncrypted()) { // this is a security precaution, in case OpenPGP.js library changes in the future
-            Catch.report(`Key update: Key not fully encrypted after update`, { isFullyEncrypted: reformatted.key.isFullyEncrypted(), isFullyDecrypted: reformatted.key.isFullyDecrypted() });
+          if (!reformatted.fullyEncrypted) { // this is a security precaution, in case OpenPGP.js library changes in the future
+            Catch.report(`Key update: Key not fully encrypted after update`, { isFullyEncrypted: reformatted.fullyEncrypted, isFullyDecrypted: reformatted.fullyDecrypted });
             await Ui.modal.error('Key update:Key not fully encrypted after update. Please contact human@flowcrypt.com');
             Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
             return;
           }
-          if (! await Catch.doesReject(reformatted.key.getEncryptionKey())) {
-            resolve(reformatted.key);
+          if (reformatted.usableForEncryption) {
+            resolve(reformatted);
           } else {
             await Ui.modal.error('Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\nPlease write us at human@flowcrypt.com.');
             Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
@@ -234,8 +232,8 @@ export class Settings {
    */
   public static promptToRetry = async (lastErr: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
     let userErrMsg = `${userMsg} ${ApiErr.eli5(lastErr)}`;
-    if (lastErr instanceof ApiErrResponse && lastErr.res.error.code === 400) {
-      userErrMsg = `${userMsg}, ${lastErr.res.error.message}`; // this will make reason for err 400 obvious to user, very important for our main customer
+    if (lastErr instanceof AjaxErr && lastErr.status === 400) {
+      userErrMsg = `${userMsg}, ${lastErr.resMsg}`; // this will make reason for err 400 obvious to user, very important for enterprise customers
     }
     while (await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, userErrMsg, ApiErr.detailsAsHtmlWithNewlines(lastErr)) === 'retry') {
       try {
@@ -279,8 +277,9 @@ export class Settings {
           window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: response.acctEmail, idToken: response.id_token });
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
-        if (settingsTabId) {
-          await Settings.renderSubPage(acctEmail, settingsTabId, '/chrome/settings/modules/auth_denied.htm');
+        const authDeniedHtml = await Api.ajax({ url: '/chrome/settings/modules/auth_denied.htm' }, Catch.stackTrace()) as string; // tslint:disable-line:no-direct-ajax
+        if (await Ui.modal.confirm(authDeniedHtml, true)) {
+          await GoogleAuth.newAuthPopup({ acctEmail, scopes });
         }
       } else {
         Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
@@ -305,12 +304,12 @@ export class Settings {
   public static populateAccountsMenu = async (page: 'index.htm' | 'inbox.htm') => {
     const menuAcctHtml = (email: string, picture = '/img/svgs/profile-icon.svg', isHeaderRow: boolean) => {
       return [
-        `<div ${isHeaderRow && 'id = "header-row"'} class="row alt-accounts action_select_account">`,
+        `<a href="#" ${isHeaderRow && 'id = "header-row"'} class="row alt-accounts action_select_account">`,
         '  <div class="col-sm-10">',
         `    <div class="row contains_email" data-test="action-switch-to-account">${Xss.escape(email)}</div>`,
         '  </div>',
         `  <div><img class="profile-img" src="${Xss.escape(picture)}" alt=""></div>`,
-        '</div>',
+        '</a>',
       ].join('');
     };
     const acctEmails = await GlobalStore.acctEmailsGet();
@@ -321,7 +320,8 @@ export class Settings {
     $('#alt-accounts img.profile-img').on('error', Ui.event.handle(self => {
       $(self).off().attr('src', '/img/svgs/profile-icon.svg');
     }));
-    $('.action_select_account').click(Ui.event.handle(target => {
+    $('.action_select_account').click(Ui.event.handle((target, event) => {
+      event.preventDefault();
       const acctEmail = $(target).find('.contains_email').text();
       const acctStorage = acctStorages[acctEmail];
       window.location.href = acctStorage.setup_done
@@ -335,14 +335,7 @@ export class Settings {
       if (await Ui.modal.confirm(`${prepend}Please log in with FlowCrypt to continue.`)) {
         const authRes = await GoogleAuth.newOpenidAuthPopup({ acctEmail });
         if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
-          const uuid = Api.randomFortyHexChars();
-          try {
-            await Backend.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
-            await Backend.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid });
-            then();
-          } catch (e) {
-            await Ui.modal.error(`Could not log in with FlowCrypt:\n\n${ApiErr.eli5(e)}\n\n${String(e)}`);
-          }
+          then();
         } else {
           await Ui.modal.warning(`Could not log in:\n\n${authRes.error || authRes.result}`);
         }

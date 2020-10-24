@@ -5,7 +5,7 @@ import { AccountIndex, AcctStore, AcctStoreDict } from './acct-store.js';
 import { SessionStore } from './session-store.js';
 import { PromiseCancellation, Dict } from '../../core/common.js';
 import { Ui } from '../../browser/ui.js';
-import { PgpKey } from '../../core/pgp-key.js';
+import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key.js';
 
 /**
  * Local or session store of pass phrases
@@ -16,7 +16,7 @@ export class PassphraseStore extends AbstractStore {
    * todo - make it only accept fingerprints
    */
   public static set = async (storageType: StorageType, acctEmail: string, fingerprintOrLongid: string, passphrase: string | undefined) => {
-    const longid = (await PgpKey.longid(fingerprintOrLongid))!;
+    const longid = fingerprintOrLongid.length === 40 ? OpenPGPKey.fingerprintToLongid(fingerprintOrLongid) : fingerprintOrLongid;
     const storageIndex = PassphraseStore.getIndex(longid);
     if (storageType === 'session') {
       await SessionStore.set(acctEmail, storageIndex, passphrase);
@@ -35,7 +35,7 @@ export class PassphraseStore extends AbstractStore {
    * todo - make it only accept fingerprints
    */
   public static get = async (acctEmail: string, fingerprintOrLongid: string, ignoreSession: boolean = false): Promise<string | undefined> => {
-    const longid = (await PgpKey.longid(fingerprintOrLongid))!;
+    const longid = fingerprintOrLongid.length === 40 ? OpenPGPKey.fingerprintToLongid(fingerprintOrLongid) : fingerprintOrLongid;
     const storageIndex = PassphraseStore.getIndex(longid);
     const storage = await AcctStore.get(acctEmail, [storageIndex]);
     const found = storage[storageIndex];

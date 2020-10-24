@@ -3,31 +3,39 @@
 'use strict';
 
 import { Mime, MimeContent, MimeProccesedMsg } from '../../../js/common/core/mime.js';
-import { AjaxErr } from '../../../js/common/api/error/api-error-types.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { AjaxErr } from '../../../js/common/api/shared/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { EncryptedMsgMailFormatter } from './formatters/encrypted-mail-msg-formatter.js';
 import { Env } from '../../../js/common/browser/env.js';
+import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
-import { PgpMsg } from '../../../js/common/core/pgp-msg.js';
+import { NewMsgData } from './compose-types.js';
+import { MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
+import { storageLocalGet, storageLocalSet, storageLocalRemove } from '../../../js/common/browser/chrome.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 
 export class ComposeDraftModule extends ViewModule<ComposeView> {
 
   public wasMsgLoadedFromDraft = false;
+  public localNewMessageDraftId = 'local-draft-';
 
   private currentlySavingDraft = false;
   private saveDraftInterval?: number;
   private lastDraftBody?: string;
   private lastDraftSubject = '';
   private SAVE_DRAFT_FREQUENCY = 3000;
+  private localDraftPrefix = 'local-draft-';
 
   constructor(composer: ComposeView) {
     super(composer);
@@ -41,23 +49,28 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     this.view.recipientsModule.onRecipientAdded(async () => await this.draftSave(true));
   }
 
-  public initialDraftLoad = async (draftId: string): Promise<void> => {
+  /**
+   * Returns true when a draft was loaded
+   */
+  public initialDraftLoad = async (draftId: string): Promise<boolean> => {
     if (this.view.isReplyBox) {
       Xss.sanitizeRender(this.view.S.cached('prompt'), `Loading draft.. ${Ui.spinner('green')}`);
     }
     try {
-      const draftGetRes = await this.view.emailProvider.draftGet(draftId, 'raw');
+      const draftGetRes = this.isLocalDraftId(draftId) ? await this.localDraftGet(draftId) : await this.view.emailProvider.draftGet(draftId, 'raw');
       if (!draftGetRes) {
-        return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!draftGetRes');
+        await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!draftGetRes');
+        return false;
       }
       const decoded = await Mime.decode(Buf.fromBase64UrlStr(draftGetRes.message.raw!));
       const processed = Mime.processDecoded(decoded);
       await this.fillAndRenderDraftHeaders(decoded);
       await this.decryptAndRenderDraft(processed);
+      return true;
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender('body', `Failed to load draft. ${Ui.retryLink()}`);
-      } else if (ApiErr.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
         Xss.sanitizeRender('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retryLink()}`);
       } else if (this.view.isReplyBox && ApiErr.isNotFound(e)) {
@@ -72,6 +85,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('exception');
       }
     }
+    return false;
   }
 
   public draftDelete = async () => {
@@ -80,10 +94,10 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     if (this.view.draftId) {
       await this.view.storageModule.draftMetaDelete(this.view.draftId, this.view.threadId);
       try {
-        await this.view.emailProvider.draftDelete(this.view.draftId);
+        this.isLocalDraftId(this.view.draftId) ? await storageLocalRemove([this.view.draftId]) : await this.view.emailProvider.draftDelete(this.view.draftId);
         this.view.draftId = '';
       } catch (e) {
-        if (ApiErr.isAuthPopupNeeded(e)) {
+        if (ApiErr.isAuthErr(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
         } else if (ApiErr.isNotFound(e)) {
           console.info(`draftDelete: ${e.message}`);
@@ -100,33 +114,39 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       try {
         const msgData = this.view.inputModule.extractAll();
         const primaryKi = await this.view.storageModule.getKey(msgData.from);
-        const pubkeys = [{ isMine: true, email: msgData.from, pubkey: primaryKi.public }];
+        const pubkeys = [{ isMine: true, email: msgData.from, pubkey: await KeyUtil.parse(primaryKi.public) }];
         msgData.pwd = undefined; // not needed for drafts
         const sendable = await new EncryptedMsgMailFormatter(this.view, true).sendableMsg(msgData, pubkeys);
         this.view.S.cached('send_btn_note').text('Saving');
-        if (this.view.threadId) { // reply draft
-          sendable.body['text/plain'] = `[cryptup:link:draft_reply:${this.view.threadId}]\n\n${sendable.body['text/plain'] || ''}`;
-        } else if (this.view.draftId) { // new message compose draft with known draftid
-          sendable.body['text/plain'] = `[cryptup:link:draft_compose:${this.view.draftId}]\n\n${sendable.body['text/plain'] || ''}`;
-        }
+        this.draftSetPrefixIntoBody(sendable);
         const mimeMsg = await sendable.toMime();
-        if (!this.view.draftId) {
-          const { id } = await this.view.emailProvider.draftCreate(mimeMsg, this.view.threadId);
-          this.view.S.cached('send_btn_note').text('Saved');
-          this.view.draftId = id;
-          await this.view.storageModule.draftMetaSet(id, this.view.threadId, msgData.recipients.to || [], String(this.view.S.cached('input_subject').val()));
+        // If a draft was loaded from the local storage, once a user is back online, the local draft will be moved to the email provider
+        if (!this.view.draftId || this.isLocalDraftId(this.view.draftId)) {
+          const draftId = await this.doUploadDraftWithLocalStorageFallback(mimeMsg, msgData, async () => {
+            const { id } = await this.view.emailProvider.draftCreate(mimeMsg, this.view.threadId);
+            if (this.isLocalDraftId(this.view.draftId)) { // delete local draft if there is one
+              await storageLocalRemove([this.view.draftId]);
+            }
+            this.view.S.cached('send_btn_note').text('Saved');
+            return id;
+          });
+          this.view.draftId = draftId;
+          await this.view.storageModule.draftMetaSet(draftId, this.view.threadId, msgData.recipients.to || [], msgData.subject);
           // recursing one more time, because we need the draftId we get from this reply in the message itself
           // essentially everytime we save draft for the first time, we have to save it twice
           // currentlySavingDraft will remain true for now
-          await this.draftSave(true); // forceSave = true
+          if (!this.isLocalDraftId(this.view.draftId)) {
+            await this.draftSave(true); // forceSave = true
+          }
         } else {
-          await this.view.emailProvider.draftUpdate(this.view.draftId, mimeMsg);
-          this.view.S.cached('send_btn_note').text('Saved');
+          await this.doUploadDraftWithLocalStorageFallback(mimeMsg, msgData, async () => {
+            await this.view.emailProvider.draftUpdate(this.view.draftId, mimeMsg);
+            this.view.S.cached('send_btn_note').text('Saved');
+            return this.view.draftId;
+          });
         }
       } catch (e) {
-        if (ApiErr.isNetErr(e)) {
-          this.view.S.cached('send_btn_note').text('Not saved (network)');
-        } else if (ApiErr.isAuthPopupNeeded(e)) {
+        if (ApiErr.isAuthErr(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
           this.view.S.cached('send_btn_note').text('Not saved (reconnect)');
         } else if (e instanceof Error && e.message.indexOf('Could not find valid key packet for encryption in key') !== -1) {
@@ -143,10 +163,75 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         } else {
           Catch.reportErr(e);
           this.view.S.cached('send_btn_note').text('Not saved (error)');
+          await Ui.toast(`Draft not saved: ${e}`, 5);
         }
       }
       this.currentlySavingDraft = false;
     }
+  }
+
+  private draftSetPrefixIntoBody = (sendable: SendableMsg) => {
+    let prefix: string;
+    if (this.view.threadId) { // reply draft
+      prefix = `[flowcrypt:link:draft_reply:${this.view.threadId}]\n\n`;
+    } else if (this.view.draftId) { // new message compose draft with known draftId
+      prefix = `[flowcrypt:link:draft_compose:${this.view.draftId}]\n\n`;
+    } else {
+      prefix = `(saving of this draft was interrupted - to decrypt it, send it to yourself)\n\n`;
+    }
+    if (sendable.body['encrypted/buf']) {
+      sendable.body['encrypted/buf'] = Buf.concat([Buf.fromUtfStr(prefix), sendable.body['encrypted/buf']]);
+    }
+    if (sendable.body['text/plain']) {
+      sendable.body['text/plain'] = `${prefix}${sendable.body['text/plain'] || ''}`;
+    }
+  }
+
+  private doUploadDraftWithLocalStorageFallback = async (mimeMsg: string, msgData: NewMsgData, callback: () => Promise<string>) => {
+    let draftId: string;
+    try {
+      draftId = await callback();
+    } catch (e) {
+      if (ApiErr.isNetErr(e)) {
+        draftId = await this.localDraftCreate(mimeMsg, this.view.threadId, msgData.recipients.to || [], msgData.subject);
+        this.view.S.cached('send_btn_note').text('Draft saved locally (offline)');
+      } else {
+        throw e;
+      }
+    }
+    return draftId;
+  }
+
+  private isLocalDraftId = (draftId: string) => {
+    return !!draftId.match(this.localDraftPrefix);
+  }
+
+  private localDraftCreate = async (mimeMsg: string, threadId: string, recipients: string[], subject: string) => {
+    const draftId = `${this.localDraftPrefix}${threadId}`;
+    const draftStorage = await AcctStore.get(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
+    if (threadId) { // it's a reply
+      const drafts = draftStorage.drafts_reply || {};
+      drafts[threadId] = draftId;
+      await AcctStore.set(this.view.acctEmail, { drafts_reply: drafts });
+    } else { // it's a new message
+      const drafts = draftStorage.drafts_compose || {};
+      drafts[draftId] = { recipients, subject, date: new Date().getTime() };
+      await AcctStore.set(this.view.acctEmail, { drafts_compose: drafts });
+    }
+    await storageLocalSet({ [draftId]: { message: { raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId } } });
+    return draftId;
+  }
+
+  private localDraftGet = async (draftId: string) => {
+    const { [draftId]: localDraft } = await storageLocalGet([draftId]);
+    if (this.isValidLocalDraft(localDraft)) {
+      return localDraft;
+    }
+    return undefined;
+  }
+
+  private isValidLocalDraft = (localDraft: unknown): localDraft is GmailRes.GmailDraftGet => {
+    return localDraft && typeof (localDraft as GmailRes.GmailDraftGet).message === 'object';
   }
 
   private deleteDraftClickHandler = async () => {
@@ -177,7 +262,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     const encryptedData = rawBlock.content instanceof Buf ? rawBlock.content : Buf.fromUtfStr(rawBlock.content);
     const passphrase = await this.view.storageModule.passphraseGet();
     if (typeof passphrase !== 'undefined') {
-      const decrypted = await PgpMsg.decrypt({ kisWithPp: await KeyStore.getAllWithPp(this.view.acctEmail), encryptedData });
+      const decrypted = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.view.acctEmail), encryptedData });
       if (!decrypted.success) {
         return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!decrypted.success');
       }

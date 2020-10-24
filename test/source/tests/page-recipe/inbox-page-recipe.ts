@@ -2,7 +2,7 @@
 
 import { BrowserHandle, ControllableFrame, ControllablePage } from '../../browser';
 
-import { AvaContext } from '..';
+import { AvaContext } from '../tooling/';
 import { PageRecipe } from './abstract-page-recipe';
 import { TestUrls } from '../../browser/test-urls';
 import { Util } from '../../util';

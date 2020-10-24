@@ -30,13 +30,13 @@ export class Catch {
     'ResizeObserver loop limit exceeded',
   ];
 
-  public static rewrapErr = (e: any, message: string) => {
+  public static rewrapErr = (e: any, message: string): Error => {
     const newErr = new Error(`${message}::${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`);
     newErr.stack += `\n\n${Catch.stringify(e)}`;
     return newErr;
   }
 
-  public static stringify = (e: any) => {
+  public static stringify = (e: any): string => {
     if (e instanceof Error) {
       return `[typeof:Error:${e.name}] ${e.message}\n\n${e.stack}`;
     }
@@ -192,8 +192,6 @@ export class Catch {
       env = 'ex:prod';
     } else if (url.indexOf('gjdhkacdgd') !== -1 || url.indexOf('gggocmadhd') !== -1) {
       env = 'ex:dev';
-    } else if (url.indexOf('gjdhkacdgd') !== -1) { // in case it differs in the future
-      env = 'ex:test';
     } else if (url.indexOf('mefaeofbcc') !== -1) {
       env = 'ex:stable';
     } else if (/chrome-extension:\/\/[a-z]{32}\/.+/.test(url)) {

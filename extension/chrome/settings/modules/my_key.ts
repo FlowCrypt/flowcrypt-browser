@@ -2,14 +2,12 @@
 
 'use strict';
 
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Backend } from '../../../js/common/api/backend.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { KeyInfo } from '../../../js/common/core/pgp-key.js';
-import { PgpKey } from '../../../js/common/core/pgp-key.js';
+import { KeyInfo, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
@@ -18,6 +16,8 @@ import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { FlowCryptWebsite } from '../../../js/common/api/flowcrypt-website.js';
 
 declare const ClipboardJS: any;
 
@@ -28,7 +28,7 @@ View.run(class MyKeyView extends View {
   private readonly myKeyUserIdsUrl: string;
   private readonly myKeyUpdateUrl: string;
   private keyInfo!: KeyInfo;
-  private pubKey!: OpenPGP.key.Key;
+  private pubKey!: Key;
   private orgRules!: OrgRules;
   private pubLookup!: PubLookup;
 
@@ -45,14 +45,14 @@ View.run(class MyKeyView extends View {
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
     [this.keyInfo] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
-    this.pubKey = await PgpKey.read(this.keyInfo.public);
+    this.pubKey = await KeyUtil.parse(this.keyInfo.public);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
     $('.action_view_update').attr('href', this.myKeyUpdateUrl);
     $('.fingerprint').text(Str.spaced(this.keyInfo.fingerprint));
-    $('.email').text(this.acctEmail);
-    const expiration = await PgpKey.expiration(this.pubKey);
-    $('.key_expiration').text(expiration ? Str.datetimeToDate(Str.fromDate(expiration)) : 'Key does not expire');
+    Xss.sanitizeRender('.email', this.pubKey.emails.map(email => `<span>${Xss.escape(email)}</span>`).join(', '));
+    const expiration = this.pubKey.expiration;
+    $('.key_expiration').text(expiration && expiration !== Infinity ? Str.datetimeToDate(Str.fromDate(new Date(expiration))) : 'Key does not expire');
     await this.renderPubkeyShareableLink();
     await initPassphraseToggle(['input_passphrase']);
   }
@@ -71,8 +71,8 @@ View.run(class MyKeyView extends View {
   private renderPubkeyShareableLink = async () => {
     try {
       const result = await this.pubLookup.attester.lookupEmail(this.acctEmail);
-      const url = Backend.url('pubkey', this.acctEmail);
-      if (result.pubkey && await PgpKey.fingerprint(result.pubkey) === this.keyInfo.fingerprint) {
+      const url = FlowCryptWebsite.url('pubkey', this.acctEmail);
+      if (result.pubkey && (await KeyUtil.parse(result.pubkey)).id === this.keyInfo.fingerprint) {
         $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('display', '');
       } else {
         $('.pubkey_link_container').remove();
@@ -84,11 +84,11 @@ View.run(class MyKeyView extends View {
   }
 
   private downloadRevocationCert = async (enteredPP?: string) => {
-    const prv = await PgpKey.read(this.keyInfo.private);
-    if (!prv.isFullyDecrypted()) {
+    const prv = await KeyUtil.parse(this.keyInfo.private);
+    if (!prv.fullyDecrypted) {
       const passphrase = await PassphraseStore.get(this.acctEmail, this.keyInfo.fingerprint) || enteredPP;
       if (passphrase) {
-        if (! await PgpKey.decrypt(prv, passphrase) && enteredPP) {
+        if (! await KeyUtil.decrypt(prv, passphrase) && enteredPP) {
           await Ui.modal.error('Pass phrase did not match, please try again.');
           return;
         }
@@ -105,7 +105,7 @@ View.run(class MyKeyView extends View {
     if (! await Ui.modal.confirm(revokeConfirmMsg)) {
       return;
     }
-    const revokedArmored = await PgpKey.revoke(prv);
+    const revokedArmored = await KeyUtil.revoke(prv);
     if (!revokedArmored) {
       await Ui.modal.error(`Could not produce revocation cert (empty)`);
       return;

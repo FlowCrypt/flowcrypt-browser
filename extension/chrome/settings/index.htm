@@ -25,9 +25,9 @@
         <div class="col-sm-6 text-left logo-row">
           <img class="cryptup-logo" src="/img/logo/full-logo.svg" alt="FlowCrypt Logo">
           <span class="subscription">
-            <span class="level green_label short">free forever</span>
+            <a class="level green_label short" href="https://flowcrypt.com/account">free forever</a>
             <span class="expire"></span>
-            <span class="upgrade green_label short show_settings_page" page="/chrome/elements/subscribe.htm" addurltext="&placement=settings">upgrade</span>
+            <button class="upgrade green_label short show_settings_page" page="/chrome/elements/subscribe.htm" addurltext="&placement=settings">upgrade</button>
           </span>
         </div>
 
@@ -43,7 +43,7 @@
                 </a>
               </div>
             </div>
-            <span class="email-address action-toggle-accounts-menu" data-test="action-toggle-accounts-menu"></span>
+            <a href="#" class="email-address action-toggle-accounts-menu" data-test="action-toggle-accounts-menu"></a>
             <span id="toggle-accounts-profile-img" class="action-toggle-accounts-menu">
               <img src="/img/svgs/profile-icon.svg" class="profile-img main-profile-img" alt="Profile Image">
             </span>
@@ -51,9 +51,7 @@
               Add account</a>
           </div>
           <div id="alt-accounts" class="accounts-row">
-            <div class="row alt-accounts accounts-options-row text-center">
-              <a href="#" class="action_add_account action_add_account--settings">Add Account</a>
-            </div>
+            <a href="#" class="row alt-accounts accounts-options-row text-center action_add_account action_add_account--settings">Add Account</a>
           </div>
         </div>
       </div>
@@ -68,7 +66,6 @@
             <b class="red">Following features are disabled for <span class="email-address"></span>:</b>
             encrypted attachments, encrypted replies, alternative "From" email addresses and more.
           </div>
-          <button class="button green action_go_auth_denied">revise permissions</button>
         </div>
         <div class="settings-banner install_app_notification hidden">
           <div class="settings-banner-text">

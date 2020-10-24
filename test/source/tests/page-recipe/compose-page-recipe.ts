@@ -2,7 +2,7 @@
 
 import { BrowserHandle, Controllable, ControllableFrame, ControllablePage } from '../../browser';
 
-import { AvaContext } from '..';
+import { AvaContext } from '../tooling/';
 import { CommonAcct } from '../../test';
 import { EvaluateFn } from 'puppeteer';
 import { PageRecipe } from './abstract-page-recipe';
@@ -84,7 +84,7 @@ export class ComposePageRecipe extends PageRecipe {
     await composePageOrFrame.waitTillGone('@container-sending-options');
   }
 
-  public static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients, windowType: 'new' | 'reply') => {
+  public static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients, windowType: 'new' | 'reply' | 'forward') => {
     if (windowType === 'reply') { // new messages should already have cc/bcc buttons visible, because they should have recipients in focus
       await composePageOrFrame.waitAndClick('@action-show-container-cc-bcc-buttons');
     }
@@ -106,6 +106,10 @@ export class ComposePageRecipe extends PageRecipe {
 
   public static waitWhenDraftIsSaved = async (composePageOrFrame: Controllable) => {
     await composePageOrFrame.verifyContentIsPresentContinuously('@send-btn-note', 'Saved');
+  }
+
+  public static waitWhenDraftIsSavedLocally = async (composePageOrFrame: Controllable) => {
+    await composePageOrFrame.verifyContentIsPresentContinuously('@send-btn-note', 'Draft saved locally (offline)');
   }
 
   public static sendAndClose = async (

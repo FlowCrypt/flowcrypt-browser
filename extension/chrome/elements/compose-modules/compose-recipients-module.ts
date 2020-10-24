@@ -2,17 +2,17 @@
 
 'use strict';
 
-import { ChunkedCb, RecipientType } from '../../../js/common/api/api.js';
-import { Contact, PgpKey } from '../../../js/common/core/pgp-key.js';
+import { ChunkedCb, RecipientType } from '../../../js/common/api/shared/api.js';
+import { Contact } from '../../../js/common/core/crypto/key.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './compose-err-module.js';
 import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { RecipientElement, RecipientStatus, RecipientStatuses } from './compose-types.js';
 import { Str, Value } from '../../../js/common/core/common.js';
-import { ApiErr } from '../../../js/common/api/error/api-error.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
+import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { Google } from '../../../js/common/api/google.js';
-import { GoogleAuth } from '../../../js/common/api/google-auth.js';
+import { Google } from '../../../js/common/api/email-provider/gmail/google.js';
+import { GoogleAuth } from '../../../js/common/api/email-provider/gmail/google-auth.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -22,6 +22,10 @@ import { ComposeView } from '../compose.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { ContactStore, ContactUpdate } from '../../../js/common/platform/store/contact-store.js';
 
+/**
+ * todo - this class is getting too big
+ * split into ComposeRecipientsModule and ComposeContactSearchModule
+ */
 export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private readonly failedLookupEmails: string[] = [];
@@ -82,6 +86,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.cached('compose_table').click(this.view.setHandler(() => this.hideContacts(), this.view.errModule.handle(`hide contact box`)));
     this.view.S.cached('add_their_pubkey').click(this.view.setHandler(() => this.addTheirPubkeyClickHandler(), this.view.errModule.handle('add pubkey')));
     BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
+    BrowserMsg.addListener('reRenderRecipient', async ({ contact }: Bm.ReRenderRecipient) => await this.reRenderRecipientFor(contact));
     BrowserMsg.listen(this.view.parentTabId);
   }
 
@@ -317,12 +322,21 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         return false;
       }
     } catch (e) {
-      if (ApiErr.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       } else if (!ApiErr.isNetErr(e)) {
         Catch.reportErr(e);
       }
       return undefined;
+    }
+  }
+
+  public reRenderRecipientFor = async (contact: Contact): Promise<void> => {
+    for (const recipient of this.addedRecipients.filter(r => r.email === contact.email)) {
+      this.view.errModule.debug(`re-rendering recipient: ${contact.email}`);
+      await this.renderPubkeyResult(recipient, contact);
+      this.view.recipientsModule.showHideCcAndBccInputsIfNeeded();
+      await this.view.recipientsModule.setEmailsPreview(this.getRecipients());
     }
   }
 
@@ -534,10 +548,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private guessContactsFromSentEmails = async (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => {
     this.view.errModule.debug('guessContactsFromSentEmails start');
     await this.view.emailProvider.guessContactsFromSentEmails(query, knownContacts, multiCb).catch(e => {
-      if (ApiErr.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       } else if (ApiErr.isNetErr(e)) {
-        Ui.toast(`Network erroc - cannot search contacts`).catch(Catch.reportErr);
+        Ui.toast(`Network error - cannot search contacts`).catch(Catch.reportErr);
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         Ui.toast(`Cannot search contacts - account disabled or forbidden by admin policy`).catch(Catch.reportErr);
       } else {
@@ -766,6 +780,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     Xss.sanitizeAppend(el, contentHtml)
       .find('img.close-icon')
       .click(this.view.setHandler(target => this.removeRecipient(target.parentElement!), this.view.errModule.handle('remove recipient')));
+    $(el).removeClass(['failed', 'wrong', 'has_pgp', 'no_pgp', 'expired']);
     if (contact === PUBKEY_LOOKUP_RESULT_FAIL) {
       recipient.status = RecipientStatuses.FAILED;
       $(el).attr('title', 'Failed to load, click to retry');
@@ -779,7 +794,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.errModule.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${recipient.email}`);
       $(el).attr('title', 'This email address looks misspelled. Please try again.');
       $(el).addClass("wrong");
-    } else if (contact.pubkey && ((contact.expiresOn || Infinity) <= Date.now() || await PgpKey.usableButExpired(await PgpKey.read(contact.pubkey)))) {
+    } else if (contact.pubkey && ((contact.expiresOn || Infinity) <= Date.now() || contact.pubkey.usableButExpired)) {
       recipient.status = RecipientStatuses.EXPIRED;
       $(el).addClass("expired");
       Xss.sanitizePrepend(el, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
@@ -803,9 +818,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private removeRecipient = (element: HTMLElement) => {
     this.recipientsMissingMyKey = Value.arr.withoutVal(this.recipientsMissingMyKey, $(element).parent().text());
     const index = this.addedRecipients.findIndex(r => r.element.isEqualNode(element));
-    const container = element.parentElement!.parentElement!; // Get Container, e.g. '.input-container-cc'
     this.addedRecipients[index].element.remove();
-    this.view.sizeModule.resizeInput($(container).find('input'));
+    const container = element.parentElement?.parentElement; // Get Container, e.g. '.input-container-cc'
+    if (container) {
+      this.view.sizeModule.resizeInput($(container).find('input'));
+    }
     this.view.S.cached('input_addresses_container_outer').find(`#input-container-${this.addedRecipients[index].sendingType} input`).focus();
     this.addedRecipients.splice(index, 1);
     this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn();

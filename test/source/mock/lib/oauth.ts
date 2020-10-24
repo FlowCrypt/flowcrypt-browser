@@ -22,7 +22,7 @@ export class OauthMock {
   private issuedIdTokensByAcct: { [acct: string]: string[] } = {};
 
   public consentChooseAccountPage = (url: string) => {
-    return this.htmlPage('oauth mock choose acct', '<h1>Choose mock oauth email</h1>' + Config.secrets.auth.google.map(({ email }) => {
+    return this.htmlPage('oauth mock choose acct', '<h1>Choose mock oauth email</h1>' + Config.secrets().auth.google.map(({ email }) => {
       return `<a href="${url + '&login_hint=' + email}" id="profileIdentifier" data-email="${email}">${email}</a><br>`;
     }).join('<br>'));
   }
@@ -118,7 +118,7 @@ export class OauthMock {
   }
 
   private checkKnownAcct = (acct: string) => {
-    if (!Config.secrets.auth.google.map(a => a.email).includes(acct)) {
+    if (!Config.secrets().auth.google.map(a => a.email).includes(acct)) {
       throw new HttpClientErr(`Unknown test account: ${acct}`);
     }
   }

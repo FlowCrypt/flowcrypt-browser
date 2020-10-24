@@ -1,11 +1,10 @@
-
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
 import { BrowserEventErrHandler, PreventableEventName, Ui } from './browser/ui.js';
 
-import { ApiErr } from './api/error/api-error.js';
+import { ApiErr } from './api/shared/api-error.js';
 import { Xss } from './platform/xss.js';
 
 export abstract class View {
@@ -44,7 +43,7 @@ export abstract class View {
   }
 
   public setHandlerPrevent = <THIS extends HTMLElement | void>(
-    evName: PreventableEventName, cb: (el: HTMLElement, resetTimer: () => void) => void | Promise<void>, errHandlers?: BrowserEventErrHandler
+    evName: PreventableEventName, cb: (el: HTMLElement, event: Event, resetTimer: () => void) => void | Promise<void>, errHandlers?: BrowserEventErrHandler
   ) => {
     return Ui.event.prevent(evName, cb, errHandlers, this);
   }

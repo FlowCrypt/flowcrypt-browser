@@ -14,7 +14,8 @@ type DraftSaveModel = { message: { raw: string, threadId: string } };
 
 const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', 'human+manualcopypgp@flowcrypt.com',
   'censored@email.com', 'test@email.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com', 'expired.on.attester@domain.com',
-  'test.ci.compose@org.flowcrypt.com', 'smime1@recipient.com', 'smime2@recipient.com', 'smime@recipient.com', 'smime.att@recipient.com'];
+  'test.ci.compose@org.flowcrypt.com', 'smime1@recipient.com', 'smime2@recipient.com', 'smime@recipient.com',
+  'smime.att@recipient.com', 'auto.refresh.expired.key@recipient.com'];
 
 export const mockGoogleEndpoints: HandlersDefinition = {
   '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, redirect_uri, scope, login_hint, result } }, req) => {
@@ -177,10 +178,13 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     if (isPost(req)) {
       const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
       const body = parsedReq.body as DraftSaveModel;
-      if (body && body.message && body.message.raw
-        && typeof body.message.raw === 'string') {
+      if (body && body.message && body.message.raw && typeof body.message.raw === 'string') {
         if (body.message.threadId && !new GoogleData(acct).getThreads().find(t => t.id === body.message.threadId)) {
           throw new HttpClientErr('The thread you are replying to not found', 404);
+        }
+        const decoded = await Parse.convertBase64ToMimeMsg(body.message.raw);
+        if (!decoded.text.startsWith('[flowcrypt:') && !decoded.text.startsWith('(saving of this draft was interrupted - to decrypt it, send it to yourself)')) {
+          throw new Error(`The "flowcrypt" draft prefix was not found in the draft. Instead starts with: ${decoded.text.substr(0, 100)}`);
         }
         return {
           id: 'mockfakedraftsave', message: {
@@ -215,7 +219,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       }
       if ((mimeMsg.subject || '').includes('RTL')) {
         const data = new GoogleData(acct);
-        data.addDraft('draft_with_rtl_text', raw, mimeMsg);
+        data.addDraft(`draft_with_rtl_text_${mimeMsg.subject?.includes('rich text') ? 'rich' : 'plain'}`, raw, mimeMsg);
       }
       return {};
     } else if (isDelete(req)) {

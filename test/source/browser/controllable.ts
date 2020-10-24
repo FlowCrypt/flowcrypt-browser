@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { AvaContext, newTimeoutPromise } from '../tests';
+import { AvaContext, newTimeoutPromise } from '../tests/tooling';
 import { ConsoleMessage, Dialog, ElementHandle, Frame, Page } from 'puppeteer';
 import { TIMEOUT_DESTROY_UNEXPECTED_ALERT, TIMEOUT_ELEMENT_APPEAR, TIMEOUT_ELEMENT_GONE, TIMEOUT_PAGE_LOAD, TIMEOUT_TEST_STATE_SATISFY } from '.';
 import { TestUrls } from './test-urls';
@@ -92,6 +92,17 @@ abstract class ControllableBase {
 
   public notPresent = async (selector: string | string[]) => {
     return await this.waitTillGone(selector, { timeout: 0 });
+  }
+
+  public ensureFocused = async (selector: string) => {
+    const e = await this.element(selector) as ElementHandle;
+    const activeElement = await this.target.evaluateHandle(() => document.activeElement) as ElementHandle;
+    expect(await this.getProperty(activeElement, 'outerHTML')).to.eq(await this.getProperty(e, 'outerHTML'));
+  }
+
+
+  public getProperty = async (element: ElementHandle, property: string) => {
+    return await (await element.getProperty(property)).jsonValue();
   }
 
   public click = async (selector: string) => {
@@ -265,18 +276,18 @@ abstract class ControllableBase {
     this.log(`wait_and_click:10:${selector}`);
   }
 
-  public waitForContent = async (selector: string, needle: string | RegExp, timeoutSec = 20, testLoopLengthMs = 100) => {
+  public waitForContent = async (selector: string, regExpNeedle: string | RegExp, timeoutSec = 20, testLoopLengthMs = 100) => {
     await this.waitAll(selector);
     const start = Date.now();
     let text = '';
     while (Date.now() - start < timeoutSec * 1000) {
       text = await this.read(selector, true);
-      if (text.match(needle)) {
+      if (text.match(regExpNeedle)) {
         return;
       }
       await Util.sleep(testLoopLengthMs / 1000);
     }
-    throw new Error(`Selector ${selector} was found but did not contain text "${needle}" whithin ${timeoutSec}s. Last content: "${text}"`);
+    throw new Error(`Selector ${selector} was found but did not match "${regExpNeedle}" within ${timeoutSec}s. Last content: "${text}"`);
   }
 
   public verifyContentIsPresentContinuously = async (selector: string, expectedText: string, expectPresentForMs: number = 3000, timeoutSec = 20) => {
@@ -320,38 +331,46 @@ abstract class ControllableBase {
     throw new Error(`Could not find any frame in ${appearIn}s that matches ${urlMatchables.join(' ')}`);
   }
 
-  public getFrame = async (urlMatchables: string[], { sleep = 1 } = { sleep: 1 }): Promise<ControllableFrame> => {
+  public getFrame = async (urlMatchables: string[], { sleep = 1, timeout = 10 } = { sleep: 1, timeout: 10 }): Promise<ControllableFrame> => {
     if (sleep) {
       await Util.sleep(sleep);
     }
-    let frames: Frame[];
-    if (this.target.constructor.name === 'Page') {
-      frames = await (this.target as Page).frames();
-    } else if (this.target.constructor.name === 'Frame') {
-      frames = await (this.target as Frame).childFrames();
-    } else {
-      throw Error(`Unknown this.target.constructor.name: ${this.target.constructor.name}`);
-    }
-    const frame = frames.find(frame => {
-      for (const fragment of urlMatchables) {
-        if (frame.url().indexOf(fragment) === -1) {
-          return false;
-        }
+    let passes = Math.max(2, Math.round(timeout)); // 1 second per pass, 2 pass minimum
+    while (passes--) {
+      let frames: Frame[];
+      if (this.target.constructor.name === 'Page') {
+        frames = await (this.target as Page).frames();
+      } else if (this.target.constructor.name === 'Frame') {
+        frames = await (this.target as Frame).childFrames();
+      } else {
+        throw Error(`Unknown this.target.constructor.name: ${this.target.constructor.name}`);
       }
-      return true;
-    });
-    if (frame) {
-      return new ControllableFrame(frame);
+      const frame = frames.find(frame => {
+        for (const fragment of urlMatchables) {
+          if (frame.url().indexOf(fragment) === -1) {
+            return false;
+          }
+        }
+        return true;
+      });
+      if (frame) {
+        return new ControllableFrame(frame);
+      }
+      await Util.sleep(1);
     }
-    throw Error(`Frame not found: ${urlMatchables.join(',')}`);
+    throw Error(`Frame not found within ${timeout}s: ${urlMatchables.join(',')}`);
   }
 
-  public awaitDownloadTriggeredByClicking = async (selector: string): Promise<Buffer> => {
+  public awaitDownloadTriggeredByClicking = async (selector: string | (() => Promise<void>)): Promise<Buffer> => {
     const resolvePromise: Promise<Buffer> = (async () => {
       const downloadPath = path.resolve(__dirname, 'download', Util.lousyRandom());
       mkdirp.sync(downloadPath);
       await (this.target as any)._client.send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
-      await this.waitAndClick(selector);
+      if (typeof selector === 'string') {
+        await this.waitAndClick(selector);
+      } else {
+        await selector();
+      }
       const filename = await this.waitForFileToDownload(downloadPath);
       return fs.readFileSync(path.resolve(downloadPath, filename));
     })();
@@ -550,14 +569,20 @@ export class ControllablePage extends ControllableBase {
     return await Promise.race([this.page.content(), newTimeoutPromise('html content', 10)]);
   }
 
-  public console = async (): Promise<string> => {
+  public console = async (t: AvaContext, alsoLogDirectly: boolean): Promise<string> => {
     await this.dismissActiveAlerts();
     let html = '';
     for (const msg of this.consoleMsgs) {
       if (msg instanceof ConsoleEvent) {
         html += `<font class="c-${Util.htmlEscape(msg.type)}">${Util.htmlEscape(msg.type)}: ${Util.htmlEscape(msg.text)}</font>\n`;
+        if (alsoLogDirectly) {
+          console.log(`[${t.title}] console-${msg.type}: ${msg.text}`);
+        }
       } else {
         html += `<font class="c-${Util.htmlEscape(msg.type())}">${Util.htmlEscape(msg.type())}: ${Util.htmlEscape(msg.text())}`;
+        if (alsoLogDirectly) {
+          console.log(`[${t.title}] console-${msg.type()}: ${msg.text()}`);
+        }
         const args: string[] = [];
         for (const arg of msg.args()) {
           try {
