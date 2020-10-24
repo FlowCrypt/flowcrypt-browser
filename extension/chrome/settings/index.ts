@@ -152,7 +152,6 @@ View.run(class SettingsView extends View {
     $('.action_show_encrypted_inbox').click(this.setHandler(target => {
       window.location.href = Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: this.acctEmail! });
     }));
-    $('.action_go_auth_denied').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail!, this.tabId, '/chrome/settings/modules/auth_denied.htm')));
     $('.action_add_account').click(this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId)));
     $('.action_google_auth').click(this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail)));
     // $('.action_microsoft_auth').click(this.setHandlerPrevent('double', function() {
