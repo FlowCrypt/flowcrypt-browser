@@ -5,6 +5,7 @@ import { AcctStore } from './acct-store.js';
 import { PassphraseStore } from './passphrase-store.js';
 import { AbstractStore } from './abstract-store.js';
 import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key.js';
+import { Assert } from '../../../common/assert.js';
 
 /**
  * Local store of account private keys
@@ -28,7 +29,9 @@ export class KeyStore extends AbstractStore {
   public static getFirst = async (acctEmail: string): Promise<KeyInfo> => {
     const stored = await AcctStore.get(acctEmail, ['keys']);
     const keys: KeyInfo[] = stored.keys || [];
-    return keys[0];
+    const firstKey = keys[0];
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(firstKey);
+    return firstKey;
   }
 
   public static getAllWithPp = async (acctEmail: string): Promise<KeyInfo[]> => {
