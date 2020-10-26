@@ -18,12 +18,7 @@ export class KeyStore extends AbstractStore {
     if (!fingerprints) {
       return keys;
     }
-    return keys.filter(ki => {
-      if (fingerprints.includes(ki.fingerprint)) {
-        return true;
-      }
-      return false;
-    });
+    return keys.filter(ki => fingerprints.includes(ki.fingerprint));
   }
 
   public static getFirst = async (acctEmail: string): Promise<KeyInfo> => {
