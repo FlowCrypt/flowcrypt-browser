@@ -20,7 +20,7 @@ View.run(class PassphraseView extends View {
   private readonly parentTabId: string;
   private readonly longids: string[];
   private readonly type: string;
-  private myPrivateKeys: KeyInfo[] | undefined;
+  private keysWeNeedPassPhraseFor: KeyInfo[] | undefined;
 
   constructor() {
     super();
@@ -35,7 +35,7 @@ View.run(class PassphraseView extends View {
     Ui.event.protect();
     await initPassphraseToggle(['passphrase']);
     const allPrivateKeys = await KeyStore.get(this.acctEmail);
-    this.myPrivateKeys = allPrivateKeys.filter(ki => this.longids.includes(ki.longid));
+    this.keysWeNeedPassPhraseFor = allPrivateKeys.filter(ki => this.longids.includes(ki.longid));
     if (this.type === 'embedded') {
       $('h1').parent().css('display', 'none');
       $('div.separator').css('display', 'none');
@@ -55,12 +55,12 @@ View.run(class PassphraseView extends View {
     $('#passphrase').focus();
     if (allPrivateKeys.length > 1) {
       let html: string;
-      if (this.myPrivateKeys.length === 1) {
-        html = `For key Fingerprint: <span class="good">${Xss.escape(Str.spaced(this.myPrivateKeys[0].fingerprint || ''))}</span>`;
+      if (this.keysWeNeedPassPhraseFor.length === 1) {
+        html = `For key Fingerprint: <span class="good">${Xss.escape(Str.spaced(this.keysWeNeedPassPhraseFor[0].fingerprint || ''))}</span>`;
       } else {
         html = 'Pass phrase needed for any of the following keys:';
-        for (const i of this.myPrivateKeys.keys()) {
-          html += `<div>Fingerprint ${String(i + 1)}: <span class="good">${Xss.escape(Str.spaced(this.myPrivateKeys[i].fingerprint) || '')}</span></div>`;
+        for (const i of this.keysWeNeedPassPhraseFor.keys()) {
+          html += `<div>Fingerprint ${String(i + 1)}: <span class="good">${Xss.escape(Str.spaced(this.keysWeNeedPassPhraseFor[i].fingerprint) || '')}</span></div>`;
         }
       }
       Xss.sanitizeRender('.which_key', html);
@@ -106,7 +106,7 @@ View.run(class PassphraseView extends View {
     const pass = String($('#passphrase').val());
     const storageType: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
     let atLeastOneMatched = false;
-    for (const keyinfo of this.myPrivateKeys!) { // if passphrase matches more keys, it will save the pass phrase for all keys
+    for (const keyinfo of this.keysWeNeedPassPhraseFor!) { // if passphrase matches more keys, it will save the pass phrase for all keys
       const prv = await KeyUtil.parse(keyinfo.private);
       try {
         if (await KeyUtil.decrypt(prv, pass) === true) {
