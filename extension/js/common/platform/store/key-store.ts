@@ -25,6 +25,12 @@ export class KeyStore extends AbstractStore {
     });
   }
 
+  public static getFirst = async (acctEmail: string): Promise<KeyInfo> => {
+    const stored = await AcctStore.get(acctEmail, ['keys']);
+    const keys: KeyInfo[] = stored.keys || [];
+    return keys[0];
+  }
+
   public static getAllWithPp = async (acctEmail: string): Promise<KeyInfo[]> => {
     const keys = await KeyStore.get(acctEmail);
     for (const ki of keys) {
