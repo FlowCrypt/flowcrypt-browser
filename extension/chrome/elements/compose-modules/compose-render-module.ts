@@ -198,7 +198,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       <br><br>I was not able to read your encrypted message because it was encrypted for a wrong key.
       <br><br>My current public key is attached below. Please update your records and send me a new encrypted message.
       <br><br>Thank you</div>`);
-    const primaryKi = await KeyStore.getFirst(this.view.acctEmail);
+    const primaryKi = await KeyStore.getFirstOrRenderError(this.view.acctEmail);
     const att = Att.keyinfoAsPubkeyAtt(primaryKi);
     this.view.attsModule.attach.addFile(new File([att.getData()], att.name));
     this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt

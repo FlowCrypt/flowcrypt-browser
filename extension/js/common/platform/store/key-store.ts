@@ -21,7 +21,7 @@ export class KeyStore extends AbstractStore {
     return keys.filter(ki => fingerprints.includes(ki.fingerprint));
   }
 
-  public static getFirst = async (acctEmail: string): Promise<KeyInfo> => {
+  public static getFirstOrRenderError = async (acctEmail: string): Promise<KeyInfo> => {
     const stored = await AcctStore.get(acctEmail, ['keys']);
     const keys: KeyInfo[] = stored.keys || [];
     const firstKey = keys[0];

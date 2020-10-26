@@ -28,7 +28,7 @@ export class SendableMsg {
   public sign?: (signable: string) => Promise<string>;
 
   public static create = async (acctEmail: string, { from, recipients, subject, body, atts, thread, type, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
-    const primaryKi = await KeyStore.getFirst(acctEmail);
+    const primaryKi = await KeyStore.getFirstOrRenderError(acctEmail);
     const headers: Dict<string> = primaryKi ? { OpenPGP: `id=${primaryKi.longid}` } : {}; // todo - use autocrypt format
     return new SendableMsg(
       acctEmail,

@@ -316,7 +316,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       Xss.sanitizeRender(this.view.S.cached('prompt'), `${promptText}<br><br><a href="#" class="action_close">close</a>`).css({ display: 'block', height: '100%' });
     }
     this.view.S.cached('prompt').find('a.action_open_passphrase_dialog').click(this.view.setHandler(async () => {
-      const primaryKi = await KeyStore.getFirst(this.view.acctEmail);
+      const primaryKi = await KeyStore.getFirstOrRenderError(this.view.acctEmail);
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'draft', longids: [primaryKi.longid] });
     }));
     this.view.S.cached('prompt').find('a.action_close').click(this.view.setHandler(() => this.view.renderModule.closeMsg()));
