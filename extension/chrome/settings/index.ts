@@ -426,7 +426,7 @@ View.run(class SettingsView extends View {
       const date = Str.monthName(created.getMonth()) + ' ' + created.getDate() + ', ' + created.getFullYear();
       const escapedFp = Xss.escape(ki.fingerprint);
       let removeKeyBtn = '';
-      if (canRemoveKey) {
+      if (canRemoveKey && privateKeys.length > 1) {
         removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key" fingerprint="${escapedFp}">remove</a>)`;
       }
       const escapedEmail = Xss.escape(prv.emails[0] || '');
