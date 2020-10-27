@@ -619,6 +619,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await sendImgAndVerifyPresentInSentMsg(t, browser, 'sign');
     }));
 
+    ava.default('compose - sending and rendering message with U+10000 code points', testWithBrowser('compatibility', async (t, browser) => {
+      const rainbow = '\ud83c\udf08';
+      await sendTextAndVerifyPresentInSentMsg(t, browser, rainbow, { sign: true, encrypt: false });
+      await sendTextAndVerifyPresentInSentMsg(t, browser, rainbow, { sign: false, encrypt: true });
+      await sendTextAndVerifyPresentInSentMsg(t, browser, rainbow, { sign: true, encrypt: true });
+    }));
+
     ava.default('oversize attachment does not get errorneously added', testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       // big file will get canceled
@@ -959,6 +966,27 @@ const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserH
   await pgpBlockPage.waitTillGone('.image_src_link');
   const img = await pgpBlockPage.waitAny('body img');
   expect(await PageRecipe.getElementPropertyJson(img, 'src')).to.eq(imgBase64);
+};
+
+const sendTextAndVerifyPresentInSentMsg = async (t: AvaContext,
+  browser: BrowserHandle,
+  text: string,
+  sendingOpt: { encrypt?: boolean, sign?: boolean, richtext?: boolean } = {}
+) => {
+  const subject = `Test Sending ${sendingOpt.sign ? 'Signed' : ''} ${sendingOpt.encrypt ? 'Encrypted' : ''} Message With Test Text ${text} ${Util.lousyRandom()}`;
+  const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+  await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, sendingOpt);
+  await composePage.waitAndType('@input-body', text, { delay: 1 });
+  expect(await composePage.read('@input-body')).to.include(text);
+  await ComposePageRecipe.sendAndClose(composePage);
+  // get sent msg from mock
+  const sentMsg = new GoogleData('flowcrypt.compatibility@gmail.com').getMessageBySubject(subject)!;
+  const message = encodeURIComponent(sentMsg.payload!.body!.data!);
+  await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
+    content: [text],
+    unexpectedContent: [],
+    params: `?frameId=none&msgId=${encodeURIComponent(sentMsg.id)}&senderEmail=flowcrypt.compatibility%40gmail.com&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com&message=${message}`
+  });
 };
 
 const setRequirePassPhraseAndOpenRepliedMessage = async (t: AvaContext, browser: BrowserHandle, passpharase: string) => {
