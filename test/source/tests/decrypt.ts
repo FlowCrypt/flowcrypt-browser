@@ -163,7 +163,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         content: ["Your current key cannot open this message."],
         params: "?account_email=flowcrypt.compatibility%40gmail.com&frame_id=frame_yVMKFLRDiY&message=&message_id=162275c819bcbf9b&senderEmail=human%40flowcrypt.com&is_outgoing=___cu_false___",
-        "expectPercentageProgress": true
+        expectPercentageProgress: true,
       });
     }));
 

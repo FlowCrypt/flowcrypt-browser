@@ -16,7 +16,8 @@ export type HandlersDefinition = Handlers<{ query: { [k: string]: string; }; bod
 
 export const startAllApisMock = async (logger: (line: string) => void) => {
   class LoggedApi<REQ, RES> extends Api<REQ, RES> {
-    protected throttleChunkMs = 20;
+    protected throttleChunkMsUpload = 15;
+    protected throttleChunkMsDownload = 50;
     protected log = (req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => {
       if (req.url !== '/favicon.ico') {
         logger(`${res.statusCode} ${req.method} ${req.url} | ${errRes ? errRes : ''}`);

@@ -34,7 +34,8 @@ export class Api<REQ, RES> {
   protected apiName: string;
   protected maxRequestSizeMb = 0;
   protected maxRequestSizeBytes = 0;
-  protected throttleChunkMs = 0;
+  protected throttleChunkMsUpload = 0;
+  protected throttleChunkMsDownload = 0;
 
   constructor(apiName: string, protected handlers: Handlers<REQ, RES>, protected urlPrefix = '') {
     this.apiName = apiName;
@@ -181,9 +182,9 @@ export class Api<REQ, RES> {
         } else {
           body.push(chunk);
         }
-        if (this.throttleChunkMs) {
+        if (this.throttleChunkMsUpload) {
           req.pause(); // slow down accepting data by a certain amount of ms per chunk
-          setTimeout(() => req.resume(), this.throttleChunkMs);
+          setTimeout(() => req.resume(), this.throttleChunkMsUpload);
         }
       });
       req.on('end', () => {
@@ -213,7 +214,7 @@ export class Api<REQ, RES> {
     for (let i = 0; i < data.length; i += chunkSize) {
       const chunk = data.slice(i, i + chunkSize);
       response.write(chunk);
-      await Util.sleep(this.throttleChunkMs / 1000);
+      await Util.sleep(this.throttleChunkMsDownload / 1000);
     }
     response.end();
   }
