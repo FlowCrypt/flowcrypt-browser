@@ -75,7 +75,7 @@ export class BrowserRecipe {
     const pgpHostPage = await browser.newPage(t, `chrome/dev/ci_pgp_host_page.htm${m.params}`);
     const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
     if (m.expectPercentageProgress) {
-      await pgpBlockPage.waitForContent('@pgp-block-content', /Retrieving message... \d+%/, 20, 20);
+      await pgpBlockPage.waitForContent('@pgp-block-content', /Retrieving message... \d+%/, 20, 10);
     }
     await pgpBlockPage.waitForSelTestState('ready', 100);
     await Util.sleep(1);
