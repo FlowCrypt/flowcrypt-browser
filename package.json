@@ -1,15 +1,15 @@
 {
   "name": "flowcrypt-browser",
-  "version": "7.9.7",
+  "version": "7.9.8",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "resolutions": {
     "graceful-fs": "4.1.13"
   },
   "devDependencies": {
-    "@types/chrome": "0.0.125",
+    "@types/chrome": "0.0.126",
     "@types/chai": "4.2.14",
     "@types/dompurify": "2.0.4",
-    "@types/jquery": "3.5.3",
+    "@types/jquery": "3.5.4",
     "@types/mailparser": "2.7.4",
     "@types/puppeteer": "3.0.2",
     "@types/mkdirp": "^1.0.1",

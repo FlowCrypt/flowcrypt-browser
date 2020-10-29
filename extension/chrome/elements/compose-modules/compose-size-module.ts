@@ -138,9 +138,9 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
     }
     this.addOrRemoveFullScreenStyles(!this.composeWindowIsMaximized);
     if (!this.composeWindowIsMaximized) {
-      this.view.S.cached('icon_popout').attr('src', '/img/svgs/minimize.svg');
+      this.view.S.cached('icon_popout').attr('src', '/img/svgs/exit-full-screen.svg').attr('title', 'Exit full screen');
     } else {
-      this.view.S.cached('icon_popout').attr('src', '/img/svgs/maximize.svg');
+      this.view.S.cached('icon_popout').attr('src', '/img/svgs/maximize.svg').attr('title', 'Full screen');
     }
     if (this.view.S.cached('recipients_placeholder').is(':visible')) {
       await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
