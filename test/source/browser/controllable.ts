@@ -528,7 +528,8 @@ export class ControllablePage extends ControllableBase {
     try {
       await this.page.waitForNavigation({ timeout: seconds * 1000 });
     } catch (e) {
-      if (e.message.indexOf('Navigation Timeout Exceeded') === 0) {
+      // can be "Navigation Timeout Exceeded" or "Navigation timeout of 5000 ms exceeded"
+      if (new RegExp('^Navigation timeout .*xceeded$').test(e.message)) {
         return;
       }
       throw e;

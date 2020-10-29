@@ -472,8 +472,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     } else if (method === 'append') {
       if (replace) {
         const parent = msgBody.parent();
-        msgBody.replaceWith(this.wrapMsgBodyEl(msgBody.html() + newHtmlContent_MUST_BE_XSS_SAFE)); // xss-reinsert // xss-safe-value
-        this.ensureHasParentNode(msgBody); // Gmail is using msgBody.parentNode (#2271)
+        const wrapper = msgBody.wrap(this.wrapMsgBodyEl(''));
+        wrapper.append(newHtmlContent_MUST_BE_XSS_SAFE); // xss-reinsert // xss-safe-value
+        this.ensureHasParentNode(wrapper); // Gmail is using msgBody.parentNode (#2271)
         return parent.find('.message_inner_body'); // need to return new selector - old element was replaced
       } else {
         return msgBody.append(newHtmlContent_MUST_BE_XSS_SAFE); // xss-safe-value
