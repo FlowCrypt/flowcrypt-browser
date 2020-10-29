@@ -148,6 +148,16 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pageHasSecureReplyContainer(t, browser, gmailPage);
     }));
 
+    ava.default('mail.google.com - Thunderbird signature is recognized', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/FMfcgxwKjBRGVhcgRwklplhBCCKgSdfk');
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
+      expect(urls.length).to.equal(1);
+      const url = urls[0].split('/chrome/elements/pgp_block.htm')[1];
+      const signature = ['Dhartley@Verdoncollege.School.Nz', 'matching signature'];
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: url, content: ['1234'], signature });
+      await pageHasSecureReplyContainer(t, browser, gmailPage);
+    }));
+
     ava.default('mail.google.com - secure reply btn accepts reply prompt', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/FMfcgxwJXVGtMJwQTZmBDlspVWDvsnnL'); // encrypted convo
       await Util.sleep(5);
