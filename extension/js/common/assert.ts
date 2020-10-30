@@ -35,7 +35,7 @@ export class Assert {
 
   public static abortAndRenderErrOnUnprotectedKey = async (acctEmail?: string, tabId?: string) => {
     if (acctEmail) {
-      const primaryKi = await KeyStore.getFirstOrRenderError(acctEmail);
+      const primaryKi = await KeyStore.getFirst(acctEmail);
       const { setup_done } = await AcctStore.get(acctEmail, ['setup_done']);
       if (setup_done && primaryKi && !(await KeyUtil.parse(primaryKi.private)).fullyEncrypted) {
         if (window.location.pathname === '/chrome/settings/index.htm') {

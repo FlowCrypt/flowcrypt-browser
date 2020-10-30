@@ -100,7 +100,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   public passphraseGet = async (senderKi?: KeyInfo) => {
     if (!senderKi) {
-      senderKi = await KeyStore.getFirstOrRenderError(this.view.acctEmail);
+      senderKi = await KeyStore.getFirst(this.view.acctEmail);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(senderKi);
     }
     return await PassphraseStore.get(this.view.acctEmail, senderKi.fingerprint);

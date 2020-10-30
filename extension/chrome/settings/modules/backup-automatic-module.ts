@@ -25,7 +25,7 @@ export class BackupAutomaticModule extends ViewModule<BackupView> {
   }
 
   private setupCreateSimpleAutomaticInboxBackup = async () => {
-    const primaryKi = await KeyStore.getFirstOrRenderError(this.view.acctEmail);
+    const primaryKi = await KeyStore.getFirst(this.view.acctEmail);
     if (!(await KeyUtil.parse(primaryKi.private)).fullyEncrypted) {
       await Ui.modal.warning('Key not protected with a pass phrase, skipping');
       throw new UnreportableError('Key not protected with a pass phrase, skipping');

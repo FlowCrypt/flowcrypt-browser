@@ -38,7 +38,7 @@ View.run(class ChangePassPhraseView extends View {
       $('#step_0_enter_current #current_pass_phrase').attr('placeholder', 'Current primary key pass phrase');
       $('#step_1_enter_new #new_pass_phrase').attr('placeholder', 'Enter a new primary key pass phrase');
     }
-    const primaryKi = await KeyStore.getFirstOrRenderError(this.acctEmail);
+    const primaryKi = await KeyStore.getFirst(this.acctEmail);
     this.primaryKi = primaryKi;
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     const storedOrSessionPp = await PassphraseStore.get(this.acctEmail, this.primaryKi.fingerprint);

@@ -5,7 +5,6 @@ import { AcctStore } from './acct-store.js';
 import { PassphraseStore } from './passphrase-store.js';
 import { AbstractStore } from './abstract-store.js';
 import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key.js';
-import { Assert } from '../../../common/assert.js';
 
 /**
  * Local store of account private keys
@@ -21,12 +20,10 @@ export class KeyStore extends AbstractStore {
     return keys.filter(ki => fingerprints.includes(ki.fingerprint));
   }
 
-  public static getFirstOrRenderError = async (acctEmail: string): Promise<KeyInfo> => {
+  public static getFirst = async (acctEmail: string): Promise<KeyInfo> => {
     const stored = await AcctStore.get(acctEmail, ['keys']);
     const keys: KeyInfo[] = stored.keys || [];
-    const firstKey = keys[0];
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(firstKey);
-    return firstKey;
+    return keys[0];
   }
 
   public static getAllWithPp = async (acctEmail: string): Promise<KeyInfo[]> => {

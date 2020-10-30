@@ -183,7 +183,7 @@ export class SetupView extends View {
   }
 
   public submitPublicKeysAndFinalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
-    const primaryKi = await KeyStore.getFirstOrRenderError(this.acctEmail);
+    const primaryKi = await KeyStore.getFirst(this.acctEmail);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
       await this.submitPublicKeyIfNeeded(primaryKi.public, { submit_main, submit_all });

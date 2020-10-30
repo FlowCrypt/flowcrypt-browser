@@ -93,7 +93,7 @@ export class PgpBlockViewDecryptModule {
         this.view.renderModule.renderText('Decrypting...');
         await this.decryptAndRender(encryptedData, optionalPwd);
       } else {
-        const primaryKi = await KeyStore.getFirstOrRenderError(this.view.acctEmail);
+        const primaryKi = await KeyStore.getFirst(this.view.acctEmail);
         if (!result.longids.chosen && !primaryKi) {
           await this.view.errorModule.renderErr(Lang.pgpBlock.notProperlySetUp + this.view.errorModule.btnHtml('FlowCrypt settings', 'green settings'), undefined);
         } else if (result.error.type === DecryptErrTypes.keyMismatch) {
