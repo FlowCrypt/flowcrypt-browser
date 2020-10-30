@@ -51,7 +51,7 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
         }
       }
     } catch (e) {
-      if (ApiErr.isAuthPopupNeeded(e)) {
+      if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       }
       ApiErr.reportIfSignificant(e);

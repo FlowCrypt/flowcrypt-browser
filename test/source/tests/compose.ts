@@ -619,6 +619,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await sendImgAndVerifyPresentInSentMsg(t, browser, 'sign');
     }));
 
+    ava.default('compose - sending and rendering message with U+10000 code points', testWithBrowser('compatibility', async (t, browser) => {
+      const rainbow = '\ud83c\udf08';
+      await sendTextAndVerifyPresentInSentMsg(t, browser, rainbow, { sign: true, encrypt: false });
+      await sendTextAndVerifyPresentInSentMsg(t, browser, rainbow, { sign: false, encrypt: true });
+      await sendTextAndVerifyPresentInSentMsg(t, browser, rainbow, { sign: true, encrypt: true });
+    }));
+
     ava.default('oversize attachment does not get errorneously added', testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       // big file will get canceled
@@ -657,18 +664,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('00B0 1158 0796 9D75');
     }));
 
-    /**
-     * Waiting for wkd /policy file to have CORS
-     * Until then, for testing it would be possible to create a mock domain with custom OrgRules,
-     * which forbid lookup on Attester. Then we can switch test to human@flowcrypt.com knowing
-     * that the key must be retrieved from WKD.
-     */
-    ava.default.failing('can lookup public key from WKD directly', testWithBrowser('compose', async (t, browser) => {
+    ava.default('can lookup public key from WKD directly', testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'test-wkd@metacode.biz' }, 'should find pubkey from WKD directly');
       await composePage.waitForContent('.email_address.has_pgp', 'test-wkd@metacode.biz');
       expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('92C4 E784 1B3A FF74');
-    }, 'FAILING'));
+    }));
 
     ava.default('timeouts when searching WKD - used to never time out', testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -959,6 +960,27 @@ const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserH
   await pgpBlockPage.waitTillGone('.image_src_link');
   const img = await pgpBlockPage.waitAny('body img');
   expect(await PageRecipe.getElementPropertyJson(img, 'src')).to.eq(imgBase64);
+};
+
+const sendTextAndVerifyPresentInSentMsg = async (t: AvaContext,
+  browser: BrowserHandle,
+  text: string,
+  sendingOpt: { encrypt?: boolean, sign?: boolean, richtext?: boolean } = {}
+) => {
+  const subject = `Test Sending ${sendingOpt.sign ? 'Signed' : ''} ${sendingOpt.encrypt ? 'Encrypted' : ''} Message With Test Text ${text} ${Util.lousyRandom()}`;
+  const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+  await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, sendingOpt);
+  await composePage.waitAndType('@input-body', text, { delay: 1 });
+  expect(await composePage.read('@input-body')).to.include(text);
+  await ComposePageRecipe.sendAndClose(composePage);
+  // get sent msg from mock
+  const sentMsg = new GoogleData('flowcrypt.compatibility@gmail.com').getMessageBySubject(subject)!;
+  const message = encodeURIComponent(sentMsg.payload!.body!.data!);
+  await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
+    content: [text],
+    unexpectedContent: [],
+    params: `?frameId=none&msgId=${encodeURIComponent(sentMsg.id)}&senderEmail=flowcrypt.compatibility%40gmail.com&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com&message=${message}`
+  });
 };
 
 const setRequirePassPhraseAndOpenRepliedMessage = async (t: AvaContext, browser: BrowserHandle, passpharase: string) => {

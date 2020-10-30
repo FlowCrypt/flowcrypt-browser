@@ -346,7 +346,7 @@ View.run(class SettingsView extends View {
         await Ui.modal.error('There was a network error, please try again.');
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
         await Ui.modal.error(Lang.account.googleAcctDisabledOrPolicy);
-      } else if (ApiErr.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthErr(e)) {
         await Ui.modal.warning('New authorization needed. Please try Additional Settings -> Experimental -> Force Google Account email change');
       } else {
         Catch.reportErr(e);
@@ -375,7 +375,7 @@ View.run(class SettingsView extends View {
         }
       }
     } catch (e) {
-      if (ApiErr.isAuthPopupNeeded(e) || ApiErr.isAuthErr(e)) {
+      if (ApiErr.isAuthErr(e)) {
         $('#status-row #status_google').text(`g:?:auth`).addClass('bad');
         if (await Ui.modal.confirm(`FlowCrypt must be re-connected to your Google account.`)) {
           await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail);

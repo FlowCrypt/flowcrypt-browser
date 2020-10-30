@@ -99,19 +99,13 @@ nmusEeYtrrMytL4oUohBVZk=
 
 export const mockWkdEndpoints: HandlersDefinition = {
   '/.well-known/openpgpkey/hu/ihyath4noz8dsckzjbuyqnh4kbup6h4i?l=john.doe': async () => {
-    return johnDoe1; // direct for john.doe@127.0.0.1
+    return johnDoe1; // direct for john.doe@localhost
   },
   '/.well-known/openpgpkey/hu/ihyath4noz8dsckzjbuyqnh4kbup6h4i?l=John.Doe': async () => {
-    return johnDoe1; // direct for John.Doe@127.0.0.1
+    return johnDoe1; // direct for John.Doe@localhost
   },
   '/.well-known/openpgpkey/hu/cb53pfqmbzc8mm3ecbjxyen65fdxos56?l=jack.advanced': async () => {
     return jackAdvanced; // direct for jack.advanced@localhost
-  },
-  '/.well-known/openpgpkey/127.0.0.1/hu/ihyath4noz8dsckzjbuyqnh4kbup6h4i?l=john.doe': async () => {
-    return alice; // shouldn't be returned
-  },
-  '/.well-known/openpgpkey/127.0.0.1/hu/ihyath4noz8dsckzjbuyqnh4kbup6h4i?l=John.Doe': async () => {
-    return alice; // shouldn't be returned
   },
   '/.well-known/openpgpkey/localhost/hu/ihyath4noz8dsckzjbuyqnh4kbup6h4i?l=john.doe': async () => {
     return johnDoe; // advanced for john.doe@localhost
@@ -126,6 +120,6 @@ export const mockWkdEndpoints: HandlersDefinition = {
     return ''; // allow advanced for localhost
   },
   '/.well-known/openpgpkey/policy': async () => {
-    return ''; // allow direct for 127.0.0.1
+    return ''; // allow direct for localhost
   },
 };

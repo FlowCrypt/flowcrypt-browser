@@ -150,7 +150,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
         Xss.sanitizeAppend(this.view.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.escape(e.data)}`);
       } else if (ApiErr.isNetErr(e)) {
         // todo: retry
-      } else if (ApiErr.isAuthPopupNeeded(e)) {
+      } else if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       } else {
         Catch.reportErr(e);

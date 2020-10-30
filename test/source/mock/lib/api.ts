@@ -1,8 +1,9 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+import * as https from 'https';
 import * as http from 'http';
 import { Util } from '../../util';
-
+import { readFileSync } from 'fs';
 // tslint:disable:await-returned-promise
 
 export class HttpAuthErr extends Error { }
@@ -29,15 +30,17 @@ export type Handlers<REQ, RES> = { [request: string]: RequestHandler<REQ, RES> }
 
 export class Api<REQ, RES> {
 
-  public server: http.Server;
+  public server: https.Server;
   protected apiName: string;
   protected maxRequestSizeMb = 0;
   protected maxRequestSizeBytes = 0;
-  protected throttleChunkMs = 0;
+  protected throttleChunkMsUpload = 0;
+  protected throttleChunkMsDownload = 0;
 
   constructor(apiName: string, protected handlers: Handlers<REQ, RES>, protected urlPrefix = '') {
     this.apiName = apiName;
-    this.server = http.createServer((request, response) => {
+    const opt = { key: readFileSync(`./test/mock_cert/key.pem.mock`), cert: readFileSync(`./test/mock_cert/cert.pem.mock`) };
+    this.server = https.createServer(opt, (request, response) => {
       this.handleReq(request, response).then(data => this.throttledResponse(response, data)).then(() => {
         try {
           this.log(request, response);
@@ -179,9 +182,9 @@ export class Api<REQ, RES> {
         } else {
           body.push(chunk);
         }
-        if (this.throttleChunkMs) {
+        if (this.throttleChunkMsUpload) {
           req.pause(); // slow down accepting data by a certain amount of ms per chunk
-          setTimeout(() => req.resume(), this.throttleChunkMs);
+          setTimeout(() => req.resume(), this.throttleChunkMsUpload);
         }
       });
       req.on('end', () => {
@@ -211,7 +214,7 @@ export class Api<REQ, RES> {
     for (let i = 0; i < data.length; i += chunkSize) {
       const chunk = data.slice(i, i + chunkSize);
       response.write(chunk);
-      await Util.sleep(this.throttleChunkMs / 1000);
+      await Util.sleep(this.throttleChunkMsDownload / 1000);
     }
     response.end();
   }

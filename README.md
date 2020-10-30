@@ -58,7 +58,7 @@ Now you can find your built project in `build/chrome-consumer` and `build/firefo
 
 In order for `npm run-script build` to work you have to:
 
-1) Upgrade `bash` and make the new version default: https://www.shell-tips.com/mac/upgrade-bash/
+1) Upgrade `bash` to v4 or higher and make the new version default: https://www.shell-tips.com/mac/upgrade-bash/
 
 2) Install GNU `cp` util and make it default: https://stackoverflow.com/a/40431200/3049064
 

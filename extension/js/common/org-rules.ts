@@ -30,7 +30,7 @@ export class OrgRules {
   public static newInstance = async (acctEmail: string): Promise<OrgRules> => {
     const email = Str.parseEmail(acctEmail).email;
     if (!email) {
-      throw new Error(`Not a valid email:${acctEmail}`);
+      throw new Error(`Not a valid email`);
     }
     const storage = await AcctStore.get(email, ['rules']);
     return new OrgRules(storage.rules || OrgRules.default, acctEmail.split('@')[1]);
