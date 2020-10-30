@@ -24,6 +24,7 @@ declare const ClipboardJS: any;
 View.run(class MyKeyView extends View {
 
   private readonly acctEmail: string;
+  private readonly fingerprint: string | undefined;
   private readonly myKeyUserIdsUrl: string;
   private readonly myKeyUpdateUrl: string;
   private keyInfo!: KeyInfo;
@@ -35,6 +36,7 @@ View.run(class MyKeyView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'fingerprint', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+    this.fingerprint = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'fingerprint');
     this.myKeyUserIdsUrl = Url.create('my_key_user_ids.htm', uncheckedUrlParams);
     this.myKeyUpdateUrl = Url.create('my_key_update.htm', uncheckedUrlParams);
   }
@@ -42,7 +44,7 @@ View.run(class MyKeyView extends View {
   public render = async () => {
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
-    this.keyInfo = await KeyStore.getFirst(this.acctEmail);
+    [this.keyInfo] = await KeyStore.get(this.acctEmail, [this.fingerprint || await (await KeyStore.getFirst(this.acctEmail)).fingerprint]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo);
     this.pubKey = await KeyUtil.parse(this.keyInfo.public);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
