@@ -149,6 +149,16 @@ View.run(class SettingsView extends View {
         Catch.report(`Unknown target page in element: ${target.outerHTML}`);
       }
     }));
+    $('.action_open_public_key_page').click(this.setHandler(async target => {
+      const page = $(target).attr('page');
+      if (page) {
+        const ki = await KeyStore.getFirst(this.acctEmail!);
+        const escapedFp = Xss.escape(ki.fingerprint);
+        await Settings.renderSubPage(this.acctEmail!, this.tabId, page, `&fingerprint=${escapedFp}`);
+      } else {
+        Catch.report(`Unknown target page in element: ${target.outerHTML}`);
+      }
+    }));
     $('.action_show_encrypted_inbox').click(this.setHandler(target => {
       window.location.href = Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: this.acctEmail! });
     }));
