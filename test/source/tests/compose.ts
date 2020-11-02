@@ -183,10 +183,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await composeFrame.read('@action-send')).to.eq('Sign and Send');
     }));
 
-    ava.default.only('compose - keyboard - Attaching file using keyboard', testWithBrowser('compose', async (t, browser) => {
+    ava.default('compose - keyboard - Attaching file using keyboard', testWithBrowser('compose', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('test.ci.compose@org.flowcrypt.com'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await composeFrame.waitAndFocus('@action-attach-files');
+      // workaround for https://github.com/puppeteer/puppeteer/issues/6040
       await (inboxPage.page as any)._client.send('Page.setInterceptFileChooserDialog', { enabled: true });
       await Promise.all([
         inboxPage.page.waitForFileChooser(), // must be called before the file chooser is launched
