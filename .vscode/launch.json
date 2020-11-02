@@ -10,7 +10,8 @@
       "args": [
         "build/test/test/source/test.js",
         "CONSUMER-MOCK",
-        "--pool-size=1"
+        "--pool-size=1",
+        "--debug"
       ],
       "skipFiles": [
         "<node_internals>/**/*.js"
@@ -24,7 +25,8 @@
       "program": "${workspaceFolder}/node_modules/ava/profile.js",
       "args": [
         "build/test/test/source/test.js",
-        "CONSUMER-LIVE-GMAIL"
+        "CONSUMER-LIVE-GMAIL",
+        "--debug"
       ],
       "skipFiles": [
         "<node_internals>/**/*.js"
