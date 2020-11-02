@@ -36,7 +36,7 @@ View.run(class MyKeyView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'fingerprint', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.fingerprint = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'fingerprint') || 'primary';
+    this.fingerprint = Assert.urlParamRequire.string(uncheckedUrlParams, 'fingerprint');
     this.myKeyUserIdsUrl = Url.create('my_key_user_ids.htm', uncheckedUrlParams);
     this.myKeyUpdateUrl = Url.create('my_key_update.htm', uncheckedUrlParams);
   }
@@ -45,8 +45,8 @@ View.run(class MyKeyView extends View {
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
     [this.keyInfo] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
-    this.pubKey = await KeyUtil.parse(this.keyInfo.public);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo);
+    this.pubKey = await KeyUtil.parse(this.keyInfo.public);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
     $('.action_view_update').attr('href', this.myKeyUpdateUrl);
     $('.fingerprint').text(Str.spaced(this.keyInfo.fingerprint));
