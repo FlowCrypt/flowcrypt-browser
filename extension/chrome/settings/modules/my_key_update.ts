@@ -19,6 +19,7 @@ import { PassphraseStore } from '../../../js/common/platform/store/passphrase-st
 View.run(class MyKeyUpdateView extends View {
 
   private readonly acctEmail: string;
+  private readonly fingerprint: string;
   private readonly showKeyUrl: string;
   private readonly inputPrivateKey = $('.input_private_key');
   private readonly prvHeaders = PgpArmor.headers('privateKey');
@@ -30,13 +31,14 @@ View.run(class MyKeyUpdateView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'fingerprint', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+    this.fingerprint = Assert.urlParamRequire.string(uncheckedUrlParams, 'fingerprint');
     this.showKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
   }
 
   public render = async () => {
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
-    this.primaryKi = await KeyStore.getFirst(this.acctEmail);
+    [this.primaryKi] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     $('.action_show_public_key').attr('href', this.showKeyUrl);
     $('.email').text(this.acctEmail);
