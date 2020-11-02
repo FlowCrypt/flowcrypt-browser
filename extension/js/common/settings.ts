@@ -305,10 +305,10 @@ export class Settings {
     const menuAcctHtml = (email: string, picture = '/img/svgs/profile-icon.svg', isHeaderRow: boolean) => {
       return [
         `<a href="#" ${isHeaderRow && 'id = "header-row"'} class="row alt-accounts action_select_account">`,
-        '  <div class="col-sm-10">',
-        `    <div class="row contains_email" data-test="action-switch-to-account">${Xss.escape(email)}</div>`,
+        `  <div class="col-2"><img class="profile-img" src="${Xss.escape(picture)}" alt=""></div>`,
+        '  <div class="col-10 text-left">',
+        `    <div class="contains_email" data-test="action-switch-to-account">${Xss.escape(email)}</div>`,
         '  </div>',
-        `  <div><img class="profile-img" src="${Xss.escape(picture)}" alt=""></div>`,
         '</a>',
       ].join('');
     };
