@@ -242,7 +242,6 @@ View.run(class SettingsView extends View {
         const rules = await OrgRules.newInstance(this.acctEmail);
         if (!rules.canBackupKeys()) {
           $('.show_settings_page[page="modules/backup.htm"]').parent().remove();
-          $('.settings-icons-rows').css({ position: 'relative', left: '64px' }); // lost a button - center it again
         }
         this.checkGoogleAcct().catch(Catch.reportErr);
         this.checkFcAcctAndSubscriptionAndContactPage().catch(Catch.reportErr);
