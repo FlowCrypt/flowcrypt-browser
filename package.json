@@ -11,10 +11,10 @@
     "@types/dompurify": "2.0.4",
     "@types/jquery": "3.5.4",
     "@types/mailparser": "2.7.4",
-    "@types/puppeteer": "3.0.4",
+    "@types/puppeteer": "5.4.0",
     "@types/mkdirp": "^1.0.1",
     "@types/request": "2.48.5",
-    "@typescript-eslint/parser": "^4.6.0",
+    "@typescript-eslint/parser": "^4.6.1",
     "@typescript-eslint/eslint-plugin": "^4.6.0",
     "ava": "1.4.1",
     "chai": "4.2.0",
@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@flowcrypt/fine-uploader": "5.16.4",
-    "dompurify": "2.2.0",
+    "dompurify": "2.2.2",
     "jquery": "3.5.1",
     "openpgp": "4.10.8",
     "sweetalert2": "10.9.0",
@@ -45,7 +45,7 @@
     "zxcvbn": "4.4.2",
     "squire-rte": "1.10.2",
     "clipboard": "2.0.6",
-    "bootstrap": "4.5.2",
+    "bootstrap": "4.5.3",
     "filesize": "6.1.0"
   },
   "scripts": {
