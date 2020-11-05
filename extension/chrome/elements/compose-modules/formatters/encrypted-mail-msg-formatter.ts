@@ -24,6 +24,7 @@ import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
 import { FlowCryptWebsite } from '../../../../js/common/api/flowcrypt-website.js';
 import { AccountServer } from '../../../../js/common/api/account-server.js';
 import { FcUuidAuth } from '../../../../js/common/api/account-servers/flowcrypt-com-api.js';
+import { SmimeKey } from '../../../../js/common/core/crypto/smime/smime-key.js';
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
@@ -65,8 +66,20 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: emailIntroAndLinkBody, atts, isDraft: this.isDraft });
   }
 
-  private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key) => {
-    const atts = this.isDraft ? [] : await this.view.attsModule.attach.collectEncryptAtts(pubs);
+  private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {
+    // todo - choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport is called later inside encryptDataArmor, could be refactored
+    const pubsForEncryption = KeyUtil.choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport(pubs);
+    const x509certs = pubsForEncryption.filter(pub => pub.type === 'x509');
+    if (x509certs.length) { // s/mime
+      const atts: Att[] = this.isDraft ? [] : await this.view.attsModule.attach.collectAtts(); // collects attachments
+      const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
+      const mimeEncodedPlainMessage = await Mime.encode(msgBody, { Subject: newMsg.subject }, atts);
+      const encryptedMessage = await SmimeKey.encryptMessage({ pubkeys: x509certs, data: Buf.fromUtfStr(mimeEncodedPlainMessage) });
+      const body = { "encrypted/buf": Buf.fromUint8(encryptedMessage.data) };
+      return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body, type: 'smimeEncrypted', atts: [], isDraft: this.isDraft });
+    }
+    // openpgp
+    const atts: Att[] = this.isDraft ? [] : await this.view.attsModule.attach.collectEncryptAtts(pubs);
     const { data: encryptedBody, type } = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
     const mimeType = type === 'smime' ? 'smimeEncrypted' : undefined;
     return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: { "encrypted/buf": Buf.fromUint8(encryptedBody) }, type: mimeType, atts, isDraft: this.isDraft });
