@@ -24,6 +24,7 @@ import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
 import { FlowCryptWebsite } from '../../../../js/common/api/flowcrypt-website.js';
 import { AccountServer } from '../../../../js/common/api/account-server.js';
 import { FcUuidAuth } from '../../../../js/common/api/account-servers/flowcrypt-com-api.js';
+import { SmimeKey } from '../../../../js/common/core/crypto/smime/smime-key.js';
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
@@ -36,6 +37,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     } else if (this.richtext) { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
       return await this.sendableRichTextMsg(newMsg, pubkeys, signingPrv);
     } else { // simple text: PGP/Inline with attachments in separate files
+      console.log('--- inside sendableMsg ---');
       return await this.sendableSimpleTextMsg(newMsg, pubkeys, signingPrv);
     }
   }
@@ -56,6 +58,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   }
 
   private sendablePwdMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], short: string, signingPrv?: Key) => {
+    console.log('-- Inside sendablePwdMsg --');
     // encoded as: PGP/MIME-like structure but with attachments as external files due to email size limit (encrypted for pubkeys only)
     const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
     const pgpMimeNoAtts = await Mime.encode(msgBody, { Subject: newMsg.subject }, []); // no atts, attached to email separately
@@ -65,11 +68,36 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: emailIntroAndLinkBody, atts, isDraft: this.isDraft });
   }
 
-  private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key) => {
-    const atts = this.isDraft ? [] : await this.view.attsModule.attach.collectEncryptAtts(pubs);
-    const { data: encryptedBody, type } = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
-    const mimeType = type === 'smime' ? 'smimeEncrypted' : undefined;
-    return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: { "encrypted/buf": Buf.fromUint8(encryptedBody) }, type: mimeType, atts, isDraft: this.isDraft });
+  private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {
+    console.log('-- Inside sendableSimpleTextMsg --');
+    const x509Pubs = pubs.filter(pub => pub.pubkey.type === 'x509').map(pub => pub.pubkey);
+    if (x509Pubs) {
+      // smime case
+      const atts: Att[] = this.isDraft ? [] : await this.view.attsModule.attach.collectAtts(); // collects attachments
+      const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
+      const mimeEncodedPlainMessage = await Mime.encode(msgBody, { Subject: newMsg.subject }, atts);
+      const encryptedMessage = await SmimeKey.encryptMessage({ pubkeys: x509Pubs, data: Buf.fromUtfStr(mimeEncodedPlainMessage) });
+      console.log('-- End sendableSimpleTextMsg --');
+      /*
+            rootNode.setContent(body); // tslint:disable-line:no-unsafe-any
+            rootNode.addHeader('Content-Transfer-Encoding', 'base64'); // tslint:disable-line:no-unsafe-any
+            rootNode.addHeader('Content-Disposition', 'attachment; filename="smime.p7m"'); // tslint:disable-line:no-unsafe-any
+            rootNode.addHeader('Content-Description', 'S/MIME Encrypted Message'); // tslint:disable-line:no-unsafe-any
+      */
+      //const att = new Att({ data: Buf.fromUint8(encryptedMessage.data), name: 'smime.p7m', contentDescription: 'S/MIME Encrypted Message' });
+      return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: { "encrypted/buf": Buf.fromUint8(encryptedMessage.data) }, type: 'smimeEncrypted', atts: [], isDraft: this.isDraft });
+      //const att = new Att({ data: Buf.fromUint8(encryptedMessage.data), name: 'smime.p7m', contentDescription: 'S/MIME Encrypted Message' });
+      //return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: {}, type: 'smimeEncrypted', atts: [att], isDraft: this.isDraft });
+    } else {
+      // pgp case
+      const atts: any = this.isDraft ? [] : await this.view.attsModule.attach.collectEncryptAtts(pubs);
+      const { data: encryptedBody, type } = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
+      const mimeType = type === 'smime' ? 'smimeEncrypted' : undefined;
+      const msg = await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: { "encrypted/buf": Buf.fromUint8(encryptedBody) }, type: mimeType, atts, isDraft: this.isDraft });
+      console.log(JSON.stringify(msg));
+      console.log('-- End sendableSimpleTextMsg --');
+      return msg;
+    }
   }
 
   private sendableRichTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key) => {
