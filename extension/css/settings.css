@@ -159,32 +159,30 @@ a.gray_link {
 }
 
 #alt-accounts.accounts-row .row.alt-accounts {
-  display: block;
+  align-items: center;
   margin: 0;
-  padding: 20px 0;
+  padding: 12px 0;
   cursor: pointer;
   height: auto;
   border: 1px solid #f3f3f3;
-  position: relative;
-  text-align: left;
   letter-spacing: 0.35;
 }
 
 #alt-accounts.accounts-row .row.alt-accounts .contains_email {
   color: #337ab7;
   font-weight: 600;
-  margin-left: 50px;
 }
 
 #alt-accounts .action_add_account {
   display: block;
   padding: 20px 0 !important;
-  text-indent: 65px;
+  text-indent: 82px;
   position: relative;
   font-size: 13px;
   text-decoration: none;
   animation: fadeIn 0.5s;
   margin-top: 10px;
+  text-align: left !important;
 }
 
 #alt-accounts .action_add_account.action_add_account--settings {
@@ -238,14 +236,12 @@ a.gray_link {
 }
 
 .settings-icons-rows {
-  max-width: 800px;
-  display: block;
+  max-width: 900px;
   margin: 0 auto !important;
 }
 
-.settings-icons-rows > .col-sm-2 {
-  padding-left: 0;
-  padding-right: 0;
+.settings-icons-rows > div {
+  min-width: 145px;
 }
 
 .accounts-options-row .btn a {
@@ -281,10 +277,7 @@ a.gray_link {
 }
 
 .accounts-row .alt-accounts .profile-img {
-  left: 0;
-  margin-top: 0 !important;
-  position: absolute;
-  top: 12px;
+  margin: 0 0 5px !important;
 }
 
 .accounts-row .alt-accounts {
@@ -370,6 +363,7 @@ a.gray_link {
 #settings-row h1 {
   font-size: 25px;
   font-weight: 500;
+  margin-top: 20px;
   margin-bottom: 10px;
 }
 
@@ -511,6 +505,10 @@ a.gray_link {
   cursor: pointer;
 }
 
+#footer-row .toggle-settings {
+  white-space: nowrap;
+}
+
 input#passphrase-to-open-email {
   margin-left: 15px;
   margin-right: 5px;
@@ -534,8 +532,8 @@ body#settings.advanced .advanced {
   animation-fill-mode: forwards;
 }
 
-body#settings.advanced a.advanced {
-  display: inline-block;
+body#settings.advanced .toggle-settings {
+  display: block;
 }
 
 body#settings.advanced .basic {
@@ -556,6 +554,10 @@ body#settings .settings-border {
   height: 220px;
   text-align: left;
   padding: 0 15px;
+}
+
+body#settings .row {
+  justify-content: center;
 }
 
 body#settings .settings-border .row {
@@ -614,20 +616,10 @@ body#settings .settings-border .key_list {
   top: 28px;
 }
 
-@media (max-width: 1200px) {
-  #public-profile-indicator {
-    left: -70px;
-  }
-}
-
 @media (max-width: 991px) {
   .my-keys-row .settings-border {
     margin: 35px auto !important;
     width: 100% !important;
-  }
-
-  #public-profile-indicator {
-    left: -170px;
   }
 }
 
@@ -813,12 +805,7 @@ body#settings .settings-border .key_list {
   font-family: monospace;
 }
 
-/* https://github.com/sweetalert2/sweetalert2/issues/834#issuecomment-359237178 */
-.swal2-popup {
-  font-size: 15px !important;
-}
-
-/* https://github.com/FlowCrypt/flowcrypt-browser/issues/2926 */
-.swal2-checkbox input[type="checkbox"] {
-  margin: 0 0.4em !important;
+body:not(.initialized) .show_if_setup_not_done,
+body:not(.initialized) .hide_if_setup_not_done {
+  display: none !important;
 }

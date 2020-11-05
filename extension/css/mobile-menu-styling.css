@@ -1,3 +1,17 @@
+@media (max-width: 992px) {
+  .show_settings_page {
+    display: block;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .toggle-settings {
+    display: block;
+    margin-top: 20px;
+    text-align: center;
+  }
+}
+
 @media (max-width: 767px) {
   body {
     overflow-x: hidden;
@@ -26,18 +40,11 @@
   }
 
   .settings-icons-rows {
-    margin: 0 auto;
-    width: 60%;
+    width: 80%;
   }
 
   .box + p {
     padding-bottom: 15px;
-  }
-
-  .show_settings_page {
-    display: block;
-    margin-bottom: 20px;
-    text-align: center;
   }
 
   .toggle-settings,
@@ -75,8 +82,11 @@
   }
 
   .settings-icons-rows {
-    margin: 0 auto;
     width: 90%;
+  }
+
+  .settings-icons-rows > div {
+    min-width: 136px;
   }
 
   #settings-row .box {
@@ -295,10 +305,6 @@
 
   table#compose td.bottom {
     padding-bottom: 10px;
-  }
-
-  body#settings .colored_label {
-    margin: 3px 0;
   }
 
   div#module_manual .backup_action_buttons_container {

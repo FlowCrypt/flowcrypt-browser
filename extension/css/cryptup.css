@@ -91,7 +91,7 @@ span.gray { color: #b7b7b7; }
 .gray_label.short { min-width: 0; }
 
 .green_label {
-  color: white;
+  color: white !important;
   background-color: #31a217;
 }
 
@@ -165,6 +165,8 @@ span.gray { color: #b7b7b7; }
   margin-top: 0;
 }
 .button_secure.green { background: #31a217; }
+
+.hidden { display: none !important; }
 
 .toggle_show_hide_pass_phrase {
   user-select: none;

@@ -149,6 +149,11 @@ View.run(class SettingsView extends View {
         Catch.report(`Unknown target page in element: ${target.outerHTML}`);
       }
     }));
+    $('.action_open_public_key_page').click(this.setHandler(async target => {
+      const ki = await KeyStore.getFirst(this.acctEmail!);
+      const escapedFp = Xss.escape(ki.fingerprint);
+      await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/my_key.htm', `&fingerprint=${escapedFp}`);
+    }));
     $('.action_show_encrypted_inbox').click(this.setHandler(target => {
       window.location.href = Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: this.acctEmail! });
     }));
@@ -221,7 +226,8 @@ View.run(class SettingsView extends View {
     filterable.filter('table').css('display', 'table');
     filterable.filter('tr').css('display', 'table-row');
     filterable.filter('td').css('display', 'table-cell');
-    filterable.not('a, b, i, img, span, input, label, select, table, tr, td').css('display', 'block');
+    filterable.filter('.row').css('display', 'flex');
+    filterable.not('a, b, i, img, span, input, label, select, table, tr, td, .row').css('display', 'block');
   }
 
   private initialize = async () => {
@@ -236,7 +242,6 @@ View.run(class SettingsView extends View {
         const rules = await OrgRules.newInstance(this.acctEmail);
         if (!rules.canBackupKeys()) {
           $('.show_settings_page[page="modules/backup.htm"]').parent().remove();
-          $('.settings-icons-rows').css({ position: 'relative', left: '64px' }); // lost a button - center it again
         }
         this.checkGoogleAcct().catch(Catch.reportErr);
         this.checkFcAcctAndSubscriptionAndContactPage().catch(Catch.reportErr);
@@ -269,6 +274,7 @@ View.run(class SettingsView extends View {
         $('.hide_if_setup_not_done').css('display', 'none');
       }
     }
+    $('body').addClass('initialized');
     FlowCryptWebsite.retrieveBlogPosts().then(posts => { // do not await because may take a while
       for (const post of posts) {
         const html = `<div class="line"><a href="https://flowcrypt.com${Xss.escape(post.url)}" target="_blank">${Xss.escape(post.title.trim())}</a> ${Xss.escape(post.date.trim())}</div>`;
@@ -425,18 +431,16 @@ View.run(class SettingsView extends View {
       const created = new Date(prv.created);
       const date = Str.monthName(created.getMonth()) + ' ' + created.getDate() + ', ' + created.getFullYear();
       const escapedFp = Xss.escape(ki.fingerprint);
-      let escapedPrimaryOrRm = '';
-      if (ki.primary) {
-        escapedPrimaryOrRm = '(primary)';
-      } else if (canRemoveKey) {
-        escapedPrimaryOrRm = `(<a href="#" class="action_remove_key" data-test="action-remove-key" fingerprint="${escapedFp}">remove</a>)`;
+      let removeKeyBtn = '';
+      if (canRemoveKey && privateKeys.length > 1) {
+        removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key" fingerprint="${escapedFp}">remove</a>)`;
       }
       const escapedEmail = Xss.escape(prv.emails[0] || '');
       const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${escapedFp}">${escapedEmail}</a>`;
       const fpHtml = `fingerprint:&nbsp;<span class="good">${Str.spaced(escapedFp)}</span>`;
       const space = `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
       html += `<div class="row key-content-row key_${escapedFp}">`;
-      html += `  <div class="col-sm-12">${escapedLink} from ${Xss.escape(date)}${space}${fpHtml}${space}${escapedPrimaryOrRm}</div>`;
+      html += `  <div class="col-12">${escapedLink} from ${Xss.escape(date)}${space}${fpHtml}${space}${removeKeyBtn}</div>`;
       html += `</div>`;
     }
     Xss.sanitizeAppend('.key_list', html);

@@ -7,7 +7,7 @@ import { BaseMailFormatter } from './base-mail-formatter.js';
 import { ComposerResetBtnTrigger } from '../compose-err-module.js';
 import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { NewMsgData } from '../compose-types.js';
-import { Str, Value } from '../../../../js/common/core/common.js';
+import { Str, Url, Value } from '../../../../js/common/core/common.js';
 import { ApiErr } from '../../../../js/common/api/shared/api-error.js';
 import { Att } from '../../../../js/common/core/att.js';
 import { Buf } from '../../../../js/common/core/buf.js';
@@ -156,8 +156,12 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       return undefined;
     }
     for (const myKey of pubs.filter(ap => ap.isMine)) {
-      if (await myKey.pubkey.usableButExpired) {
-        const path = chrome.runtime.getURL(`chrome/settings/index.htm?acctEmail=${encodeURIComponent(myKey.email)}&page=%2Fchrome%2Fsettings%2Fmodules%2Fmy_key_update.htm`);
+      if (myKey.pubkey.usableButExpired) {
+        const path = Url.create(chrome.runtime.getURL('chrome/settings/index.htm'), {
+          acctEmail: myKey.email,
+          page: '/chrome/settings/modules/my_key_update.htm',
+          pageUrlParams: JSON.stringify({ fingerprint: myKey.pubkey.id }),
+        });
         const errModalLines = [
           'This message could not be encrypted because your own Private Key is expired.',
           '',

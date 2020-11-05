@@ -187,6 +187,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('test.ci.compose@org.flowcrypt.com'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await composeFrame.waitAndFocus('@action-attach-files');
+      // workaround for https://github.com/puppeteer/puppeteer/issues/6040
+      await (inboxPage.page as any)._client.send('Page.setInterceptFileChooserDialog', { enabled: true });
       await Promise.all([
         inboxPage.page.waitForFileChooser(), // must be called before the file chooser is launched
         inboxPage.press('Enter')
@@ -668,7 +670,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'test-wkd@metacode.biz' }, 'should find pubkey from WKD directly');
       await composePage.waitForContent('.email_address.has_pgp', 'test-wkd@metacode.biz');
-      expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('92C4 E784 1B3A FF74');
+      expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('5B7A BE66 0D5C 62A6 07FE 2448 716B 1776 4E3F CACA');
     }));
 
     ava.default('timeouts when searching WKD - used to never time out', testWithBrowser('compose', async (t, browser) => {
