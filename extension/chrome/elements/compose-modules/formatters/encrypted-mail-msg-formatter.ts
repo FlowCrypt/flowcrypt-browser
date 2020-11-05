@@ -67,7 +67,9 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   }
 
   private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {
-    const x509certs = pubs.filter(pub => pub.pubkey.type === 'x509').map(pub => pub.pubkey);
+    // todo - choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport is called later inside encryptDataArmor, could be refactored
+    const pubsForEncryption = KeyUtil.choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport(pubs);
+    const x509certs = pubsForEncryption.filter(pub => pub.type === 'x509');
     if (x509certs.length) { // s/mime
       const atts: Att[] = this.isDraft ? [] : await this.view.attsModule.attach.collectAtts(); // collects attachments
       const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
