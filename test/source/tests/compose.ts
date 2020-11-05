@@ -710,10 +710,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const fileInput = await composeFrame.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
       await composeFrame.waitAndClick('@action-send', { delay: 2 });
-      await PageRecipe.waitForModalAndRespond(composeFrame, 'error', {
-        contentToCheck: 'Attachments are not yet supported when sending to recipients using S/MIME x509 certificates.',
-        timeout: 40
-      });
+      await inboxPage.waitTillGone('@container-new-message');
     }));
 
     ava.default('send with mixed S/MIME and PGP recipients - should show err', testWithBrowser('compose', async (t, browser) => {
