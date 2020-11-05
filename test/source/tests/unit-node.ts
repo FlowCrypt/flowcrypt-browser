@@ -15,6 +15,7 @@ import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
 import { DecryptError, MsgUtil, PgpMsgMethod } from '../core/crypto/pgp/msg-util';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
 import { Att } from '../core/att.js';
+import { ContactStore } from '../platform/store/contact-store.js'
 
 // tslint:disable:no-blank-lines-func
 /* eslint-disable max-len */
@@ -538,6 +539,152 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       expect(parsed?.usableForEncryption).to.equal(false);
       expect(parsed?.expiration).to.equal(1594890073000);
       expect(parsed?.usableButExpired).to.equal(false); // because last signature was created as already expired, no intersection
+      t.pass();
+    });
+
+    ava.default('[unit][MsgUtil.verifyDetached] verifies Thunderbird html signed message', async t => {
+      const plaintext = `Content-Type: multipart/mixed; boundary="vv8xtFOOk2SxbnIpwvxkobfET7PglPfc3";
+ protected-headers="v1"
+From: Dave Hartley <dhartley@verdoncollege.school.nz>
+To: flowcrypt.compatibility@gmail.com
+Message-ID: <4a694f09-0ea9-461d-f352-db93f7381f29@verdoncollege.school.nz>
+Subject: sig from new Thunderbird v78 not recognized, html
+
+--vv8xtFOOk2SxbnIpwvxkobfET7PglPfc3
+Content-Type: multipart/mixed;
+ boundary="------------F36435F7FA51E9E42E13F8F3"
+Content-Language: en-NZ
+
+This is a multi-part message in MIME format.
+--------------F36435F7FA51E9E42E13F8F3
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+  <head>
+
+    <meta http-equiv=3D"content-type" content=3D"text/html; charset=3DUTF=
+-8">
+  </head>
+  <body>
+    1234
+  </body>
+</html>
+
+--------------F36435F7FA51E9E42E13F8F3
+Content-Type: application/pgp-keys;
+ name="OpenPGP_0x1C7E6D3C5563A941.asc"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: attachment;
+ filename="OpenPGP_0x1C7E6D3C5563A941.asc"
+
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+xsDNBF1wPuQBDAChI2DAh6K/bmwH5hfCJwkxewFUfWaAxzAIWyXe/w5wjFJBpu74MJvqO+8TW=
+kyV
+MVXQqOm5dH36YkMCVcNqoGgC0mp/JZUmVIdPqKH1QYK988rRKP2HIl3CNgbyiHLjyKVf+RW4O=
+Kxe
+QLM1MJpQ/39V5ymWftPszz1j+LO2FKpfAsUapAImZNwhXSKZcrxvUEnoayQg17HA9ThXadQ/U=
+U8F
+DlibKQoBUvhfyig7Gf4s/Ol3p76a57M/ZClgS5hPoM77oPaC8n8QVYA/t5BuYSd1n3CE67EU6=
+IzJ
+r3A83c34EZO/wHu6gwCCllouWNtU7fDvKJEbcgbTfb0o7qo224lAUwDqVB2zCVQTEKXV20h/q=
+vuj
+NnLxo2DjcBg+Fbd7GrZEEqK5+psc3U3ljD9mToJoM4lG7Ixy1Ev2Sx8xfUFtL9PIktl8OwA6U=
+/1X
+ZvauoH5upBain8bc+0ai8axXL2/O0rAKX2DlPfHD9LOim74PNqliLUtTr4TlByMZ5IuYCjMAE=
+QEA
+Ac0vRGF2ZSBIYXJ0bGV5IDxkaGFydGxleUB2ZXJkb25jb2xsZWdlLnNjaG9vbC5uej7CwRQEE=
+wEI
+AD4CGwMFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AWIQTcJkVK+3HRjqu61z0cfm08VWOpQQUCX=
+4eC
+vAUJBdmq2AAKCRAcfm08VWOpQcRiC/sFhdZhFB5gQbHcs8F9+aPi8gfwu3atUFwadN6AShSa6=
+K3p
+nd7V1xYlDFwRPKrAEWBBYeX9dsAWl9gxPNuCo5utRkgPR8ZSO4ceXR4ZgKTvF3k6UzzGx8HFC=
++MJ
+CvdiTTPnMayUOOX/f4+79uWt+fRKSBtckwud7+Dt/88ux8j8TpvBZMhciJ8Zwr9ouVWXfgg2/=
+RMz
+ZNTophQHKdUOhPQ/DBzVaLxVf3QEqKPs3lhrS08ZOMpubV938KdCLgqeqeaClEtURUZEs/5Ix=
+g7l
+b+SbbOo12K/lRnYu4U1pWcHVueccqkTxDZxgCDBtqN4sBMnmKtSuYAcbyy4SyWGA6Z0KIP87F=
+xMi
+5Yf+04R+hEG9KWD3fuk1JIIUeNVoiAn4aERjrIUN5q4NJAyY0d6KXmpyJxOK2Dj3ZyQglNrvX=
+itc
+hXJJqMfdGexB03lzDYxyHSlu+WBp2exaSOyQIKSniQ1BhAHyp4VQBkLKKVAEV+fVeTdFxarxV=
+H5H
+s8tP7YagJSTCwRQEEwEIAD4WIQTcJkVK+3HRjqu61z0cfm08VWOpQQUCXXA+5QIbAwUJAeEzg=
+AUL
+CQgHAgYVCgkICwIEFgIDAQIeAQIXgAAKCRAcfm08VWOpQQ32C/4p3hsjfTeAzQR0aHoWGKTRc=
+FoY
+nc9IdYjO78fnafehJIt5LLoLfd+MSGPz6785hmNgryj6XtE1eIMN6pvkK/By6N7V6ON19jzKx=
+vAq
+/3f/rQcieTJl5tttQRGWsuFX+Ddv+iwflG+9ZSM3E9lZL2po3Ew6KhmiwH+i++CRF7utRRrPj=
++Dr
+mMBgXj0yYyhRmheUmkPj7o6KfM+cn/rQPVSIWWHrBImAlEgkNl9fI9/SMhogNv6ZsmKX7aeNJ=
+9xx
+Xe6qAW276rjdK/3eh0rbxwckIY2BZYReO73fLfFzXrF1kH0gI/Vq+Aaah9/c56ZBM+VSEPa+z=
+oxP
+dyyc3zul7Q16VLWAgnU3PIBycEq/gilKBzR3GGL2VjLUjU4wAxQ7JwWc07onKm/WSRrfcig4G=
+Clx
+PMopOKQp5gx0GOIECMaqDqoWzTAjK+PSGJKeLuy3rthr7OkKrHsfaWPPgDpg5NJS40nvUQxgz=
+pBr
+aQgjSKAcSSdVZ8nnVVz3BGafmZOAD/zOwM0EXXA+5QEMAOoo+4IBfjaiZjEe4azMFDrVwvVke=
+Ew3
+soMrBjAOjlySQCpE/q0qDId5k0eSAAhttans3Us166xKW2QMfd2ojFBTLi06Zpha1jDo5Aj2k=
+WDE
+GT5y+0HBRVY0NmPtvBA1igRfF1ZSUsqIhO/dSqirdnSh08z5bZnEEyIWObBhC8leE2BAdXWgG=
+1Wk
+0/02DkrA9N16lZ1/wVGtYU09rnZBJpeDOFM0dCh7uhfA5LGzmxKzn25/rDSFUrUcmYfawAn13=
+OS0
+2COIlstl6lUgVJ6xtBxOaT4NLka4hkqyzpamCF6okeZQI6tHEmlm5FXuhCb/Lz/n9k9Pk793I=
+or0
+PP+xMPO8gbWlFvPfl/MRKc3Hy2SIZw9RQ7A/33V/ozXVzg1A4drrXKkKec8JznNTkoRI6fSx/=
+TGV
+pNh1+5SOHFGgKtZ+RA1BD1vmsMz/5xmdoWGisoR0/hEtdjudxpK1Zm0r1nvNpFZmKRZB26Imf=
+MC4
+kbRVXXX5LxE6yIyJ3urFn2+6PwARAQABwsD8BBgBCAAmAhsMFiEE3CZFSvtx0Y6rutc9HH5tP=
+FVj
+qUEFAl+Hgr0FCQXZqtgACgkQHH5tPFVjqUEnEwv9Ea+syu+U72SeNc3BQ3Gm6llARyQm7gz2G=
+ZBa
+k/epzD+3TFNKFLLh9AyBOM+wWRpGfKh1X+s9GLdSQISEA06bsW4d1KfHqEg0HTRw4p9SRwOWH=
+vy1
+L6maA1VHRQCW0/FN/7kYDrUH3bigISTkJJpmq8j4YOH66HVEbFqBO31ycYUGGt/Bazhe7rOhA=
+xZu
+GYzcVJQdSE020vjbqM5l34HfiDubuUNRhHMIaWa5IYYIyq33STbZu5Fln/5zoGN8+Ae4wNNzz=
+fOy
+WCKUzqybgbDxPWCnX2tgDEDlCt0X5X3PcItVeUpQCecDRut4eGEzOkkdNo2EM9UpBjGfei+GD=
+8vr
+z9apxvQ+nKYIOi4FM8GkXrsag7gvIdEcGzWcokhmdaFqWqweQALMUhhA86TckOwaouKkwk3Cw=
+nHt
+qdWryXmpvkbJxWRVrZOGgSfG+/QIku0oNY5XKRbdXURp1dPshT490JLUzFbM+OcF++HyMZ70q=
+j/k
+64f6idz5w6TvK0TCKe/M
+=3Dj9z0
+-----END PGP PUBLIC KEY BLOCK-----
+
+--------------F36435F7FA51E9E42E13F8F3--
+
+--vv8xtFOOk2SxbnIpwvxkobfET7PglPfc3--
+`.replace(/\r?\n/g, '\r\n');
+      const sigText = Buf.fromUtfStr(`-----BEGIN PGP SIGNATURE-----
+
+wsD5BAABCAAjFiEE3CZFSvtx0Y6rutc9HH5tPFVjqUEFAl+QoxIFAwAAAAAACgkQHH5tPFVjqUHe
+8Qv/UFw2djSj0JMuTc8kvtI/2Bd/OESVSemRoOI6EIs6wSZUU7TT+Aw23frniwqrMXBGx8swznfa
+lpWoFm4VElVCy9ShORIcJ+3ANEAeJ5k+g76YR4P1YBeEIOxssvnte4L6mlmaBNaUu3eFGJ5gltdB
+Ai5vkOMme3/mi3KiOIlrqtg/do+e039oP5JRGTGdeeO44lHuINW/V9riaLJi/fcWHliHv4IKHlPZ
+J+TPjQAk84xgwvJsfpDhMMUzomt14yr2GPLNRJ+M7UtGGD3LudTqSp6r60jtV/CYz9I8v0MiNvZo
+bqkP7xuQBIGKiZUuinL+aMD/whpYkq+yt7VNDeeTIkJo5TeYqBja72iU6nCk1RSTu+Igw3KfhJiq
+f+Lnc8gCutouCFDkEisw2mGw4tocQ7vDF8TxjZrdT64yOvhFGK4zNUqSPgASRZpwJqK/nS4SnxW3
+tnirmzwTEPWi/jgO+MkJ4z1M7peMnslBhytWvM4jXzE6m2dZ9n2/Kx8OO1mH
+=pRyv
+-----END PGP SIGNATURE-----`.replace(/\r?\n/g, '\r\n'));
+      const pubkey = plaintext!
+        .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
+        .replace(/=\r\n/g, '').replace(/=3D/g, '=');
+      const contact = await ContactStore.obj({ email: 'dhartley@verdoncollege.school.nz', pubkey, client: 'pgp' });
+      await ContactStore.save(undefined, contact);
+      const result = await MsgUtil.verifyDetached({ plaintext: Buf.fromUtfStr(plaintext), sigText });
+      expect(result.match).to.be.true;
       t.pass();
     });
 
