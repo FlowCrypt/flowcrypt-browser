@@ -288,7 +288,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       const threadId = '1754cfd1b2f1d6e5';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
-      await inboxPage.waitAll('iframe', { timeout: 10000 });
+      await inboxPage.waitAll('iframe');
       const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
       await pgpBlock.waitForSelTestState('ready');
       const urls = await inboxPage.getFramesUrls(['pgp_pubkey.htm'], { sleep: 3 });
