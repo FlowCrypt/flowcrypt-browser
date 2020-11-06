@@ -158,6 +158,16 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pageHasSecureReplyContainer(t, browser, gmailPage);
     }));
 
+    ava.default('mail.google.com - pubkey gets rendered on new Thunderbird signature [html]', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/FMfcgxwKjBRGVhcgRwklplhBCCKgSdfk');
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
+      expect(urls.length).to.equal(1);
+      await pageHasSecureReplyContainer(t, browser, gmailPage);
+      const pubkeyPage = await browser.newPage(t, urls[0]);
+      const content = await pubkeyPage.read('body');
+      expect(content).to.contain('Fingerprint: DC26 454A FB71 D18E ABBA D73D 1C7E 6D3C 5563 A941');
+    }));
+
     ava.default('mail.google.com - Thunderbird signature [plain] is recognized', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/FMfcgxwKjBTWTbDjXSJVjDjKlWJGbWQd');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
@@ -166,6 +176,16 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const signature = ['Dhartley@Verdoncollege.School.Nz', 'matching signature'];
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: url, content: ['1234'], signature });
       await pageHasSecureReplyContainer(t, browser, gmailPage);
+    }));
+
+    ava.default('mail.google.com - pubkey gets rendered on new Thunderbird signature [plain]', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/FMfcgxwKjBTWTbDjXSJVjDjKlWJGbWQd');
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
+      expect(urls.length).to.equal(1);
+      await pageHasSecureReplyContainer(t, browser, gmailPage);
+      const pubkeyPage = await browser.newPage(t, urls[0]);
+      const content = await pubkeyPage.read('body');
+      expect(content).to.contain('Fingerprint: DC26 454A FB71 D18E ABBA D73D 1C7E 6D3C 5563 A941');
     }));
 
     ava.default('mail.google.com - secure reply btn accepts reply prompt', testWithBrowser('ci.tests.gmail', async (t, browser) => {
