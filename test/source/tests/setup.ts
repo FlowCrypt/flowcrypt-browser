@@ -33,7 +33,8 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.todo('setup - no connection when submitting public key - retry prompt shows and works');
 
     ava.default('settings > login > close oauth window > close popup', testWithBrowser(undefined, async (t, browser) => {
-      await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'flowcrypt.test.key.imported@gmail.com');
+      const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'flowcrypt.test.key.imported@gmail.com');
+      await settingsPage.notPresent('.settings-banner');
     }));
 
     ava.default('setup - import key - do not submit - did not use before', testWithBrowser(undefined, async (t, browser) => {
