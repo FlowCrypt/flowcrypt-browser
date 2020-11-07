@@ -92,5 +92,5 @@
     "/chrome/elements/shared/footer.htm"
   ],
   "minimum_chrome_version": "61",
-  "content_security_policy": "upgrade-insecure-requests; script-src 'self'; frame-ancestors https://mail.google.com 'self';"
+  "content_security_policy": "upgrade-insecure-requests; script-src 'self'; frame-ancestors https://mail.google.com 'self'; form-action 'none'; media-src 'none'; font-src 'none'; manifest-src 'none'; worker-src 'none';"
 }
