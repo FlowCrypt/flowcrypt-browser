@@ -164,8 +164,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       expect(urls.length).to.equal(1);
       await pageHasSecureReplyContainer(t, browser, gmailPage);
       const pubkeyPage = await browser.newPage(t, urls[0]);
-      const content = await pubkeyPage.read('body');
-      expect(content).to.contain('Fingerprint: DC26 454A FB71 D18E ABBA D73D 1C7E 6D3C 5563 A941');
+      await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: DC26 454A FB71 D18E ABBA D73D 1C7E 6D3C 5563 A941');
     }));
 
     ava.default('mail.google.com - Thunderbird signature [plain] is recognized', testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -184,8 +183,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       expect(urls.length).to.equal(1);
       await pageHasSecureReplyContainer(t, browser, gmailPage);
       const pubkeyPage = await browser.newPage(t, urls[0]);
-      const content = await pubkeyPage.read('body');
-      expect(content).to.contain('Fingerprint: DC26 454A FB71 D18E ABBA D73D 1C7E 6D3C 5563 A941');
+      await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: DC26 454A FB71 D18E ABBA D73D 1C7E 6D3C 5563 A941');
     }));
 
     ava.default('mail.google.com - secure reply btn accepts reply prompt', testWithBrowser('ci.tests.gmail', async (t, browser) => {
