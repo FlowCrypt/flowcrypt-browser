@@ -15,7 +15,7 @@ import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
 import { DecryptError, MsgUtil, PgpMsgMethod } from '../core/crypto/pgp/msg-util';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
 import { Att } from '../core/att.js';
-import { ContactStore } from '../platform/store/contact-store.js'
+import { ContactStore } from '../platform/store/contact-store.js';
 import { GoogleData, GmailParser, GmailMsg } from '../mock/google/google-data';
 
 // tslint:disable:no-blank-lines-func
@@ -554,7 +554,28 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
         .replace(/=\r\n/g, '').replace(/=3D/g, '=');
       const plaintext = msgText
         .match(/Content\-Type: multipart\/mixed; boundary="vv8xtFOOk2SxbnIpwvxkobfET7PglPfc3".*\-\-vv8xtFOOk2SxbnIpwvxkobfET7PglPfc3\-\-\r?\n/s)![0]
-        .replace(/\r?\n/g, '\r\n')!
+        .replace(/\r?\n/g, '\r\n')!;
+      const pubkey = plaintext
+        .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
+        .replace(/=\r\n/g, '').replace(/=3D/g, '=');
+      const from = GmailParser.findHeader(msg, "from");
+      const contact = await ContactStore.obj({ email: from, pubkey, client: 'pgp' });
+      await ContactStore.save(undefined, contact);
+      const result = await MsgUtil.verifyDetached({ plaintext: Buf.fromUtfStr(plaintext), sigText: Buf.fromUtfStr(sigText) });
+      expect(result.match).to.be.true;
+      t.pass();
+    });
+
+    ava.default('[unit][MsgUtil.verifyDetached] verifies Thunderbird text signed message', async t => {
+      const data = new GoogleData('flowcrypt.compatibility@gmail.com');
+      const msg: GmailMsg = data.getMessage('1754cfc37886899e')!;
+      const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
+      const sigText = msgText
+        .match(/\-\-\-\-\-BEGIN PGP SIGNATURE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0]
+        .replace(/=\r\n/g, '').replace(/=3D/g, '=');
+      const plaintext = msgText
+        .match(/Content\-Type: multipart\/mixed; boundary="XWwnusC4nxhk2LRvLCC6Skcb8YiKQ4Lu0".*\-\-XWwnusC4nxhk2LRvLCC6Skcb8YiKQ4Lu0\-\-\r?\n/s)![0]
+        .replace(/\r?\n/g, '\r\n')!;
       const pubkey = plaintext
         .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
         .replace(/=\r\n/g, '').replace(/=3D/g, '=');
