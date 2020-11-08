@@ -187,12 +187,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('test.ci.compose@org.flowcrypt.com'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await composeFrame.waitAndFocus('@action-attach-files');
-      // workaround for https://github.com/puppeteer/puppeteer/issues/6040
-      await (inboxPage.page as any)._client.send('Page.setInterceptFileChooserDialog', { enabled: true });
-      await Promise.all([
-        inboxPage.page.waitForFileChooser(), // must be called before the file chooser is launched
-        inboxPage.press('Enter')
-      ]);
+      // Set up the Promise *before* the file chooser is launched
+      const fileChooser = inboxPage.page.waitForFileChooser();
+      await Util.sleep(0.5); // waitForFileChooser() is flaky without this timeout, #3051
+      await inboxPage.press('Enter');
+      await fileChooser;
     }));
 
     ava.default('compose - reply - old gmail threadId fmt', testWithBrowser('compatibility', async (t, browser) => {
