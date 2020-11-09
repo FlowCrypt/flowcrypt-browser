@@ -6,15 +6,13 @@ import { RecipientType } from '../../../js/common/api/shared/api.js';
 import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { PubkeyResult } from '../../../js/common/core/crypto/key.js';
 
-export type RecipientStatus = 0 | 1 | 2 | 3 | 4 | 5;
-
-export class RecipientStatuses {
-  public static EVALUATING: RecipientStatus = 0;
-  public static HAS_PGP: RecipientStatus = 1;
-  public static NO_PGP: RecipientStatus = 2;
-  public static EXPIRED: RecipientStatus = 3;
-  public static WRONG: RecipientStatus = 4;
-  public static FAILED: RecipientStatus = 5;
+export enum RecipientStatus {
+  EVALUATING,
+  HAS_PGP,
+  NO_PGP,
+  EXPIRED,
+  WRONG,
+  FAILED
 }
 
 export interface RecipientElement {
