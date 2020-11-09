@@ -1451,6 +1451,12 @@ table#compose.not-encrypted td.input .collapsed .email_preview .email_address {
 }
 table#compose td.recipients-inputs { vertical-align: middle; }
 
+table#compose td.recipients-inputs .small_spinner,
+table#compose td.recipients-inputs .small_spinner img {
+  width: 16px;
+  height: 16px;
+}
+
 table#compose td.recipients-inputs > div#input_addresses_container.invisible {
   height: 0;
   overflow: hidden;
