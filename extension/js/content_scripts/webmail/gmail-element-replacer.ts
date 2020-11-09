@@ -394,8 +394,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
     const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ data: Buf.fromUint8(downloadedAtt.data.subarray(0, 1000)).toBase64Str() }); // base64 for FF, see #2587
     if (openpgpType && openpgpType.type === 'publicKey') {
-      this.updateMsgBodyEl_DANGEROUSLY(attSel.show(), 'set', this.factory.embeddedPubkey(downloadedAtt.data.toUtfStr(), isOutgoing)); // xss-safe-factory
-      nRenderedAtts++;
+      this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'after', this.factory.embeddedPubkey(downloadedAtt.data.toUtfStr(), isOutgoing)); // xss-safe-factory
     } else {
       attSel.show().addClass('attachment_processed').children('.attachment_loader').text('Unknown Public Key Format');
       nRenderedAtts++;
@@ -454,7 +453,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
    *
    * new_html_content must be XSS safe
    */ // tslint:disable-next-line:variable-name
-  private updateMsgBodyEl_DANGEROUSLY(el: HTMLElement | JQueryEl, method: 'set' | 'append', newHtmlContent_MUST_BE_XSS_SAFE: string) {  // xss-dangerous-function
+  private updateMsgBodyEl_DANGEROUSLY(el: HTMLElement | JQueryEl, method: 'set' | 'append' | 'after', newHtmlContent_MUST_BE_XSS_SAFE: string): JQueryEl {  // xss-dangerous-function
     // Messages in Gmail UI have to be replaced in a very particular way
     // The first time we update element, it should be completely replaced so that Gmail JS will lose reference to the original element and stop re-rendering it
     // Gmail message re-rendering causes the PGP message to flash back and forth, confusing the user and wasting cpu time
@@ -480,6 +479,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       } else {
         return msgBody.append(newHtmlContent_MUST_BE_XSS_SAFE); // xss-safe-value
       }
+    } else if (method === 'after') {
+      msgBody.after(newHtmlContent_MUST_BE_XSS_SAFE);
+      return msgBody;
     } else {
       throw new Error('Unknown update_message_body_element method:' + method);
     }
