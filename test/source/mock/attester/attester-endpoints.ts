@@ -10,7 +10,7 @@ import { expect } from 'chai';
 // tslint:disable:no-blank-lines-func
 
 const knownMockEmails = [
-  'test.ci.compose@org.flowcrypt.com',
+  'ci.tests.gmail@flowcrypt.dev',
   'flowcrypt.compatibility@gmail.com',
   'human@flowcrypt.com',
   'flowcrypt.test.key.new.manual@gmail.com',

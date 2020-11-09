@@ -117,7 +117,7 @@ const data: UserMessages = {
     }],
     messages: []
   },
-  "test.ci.compose@org.flowcrypt.com": {
+  "ci.tests.gmail@flowcrypt.dev": {
     "drafts": [],
     "messages": [{
       "id": "msg-0",
