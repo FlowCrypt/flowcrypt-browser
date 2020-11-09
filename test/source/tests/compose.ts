@@ -109,7 +109,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default(`compose - recipients are properly ordered`, testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      composePage.page.setViewport({ width: 540, height: 606 });
+      await composePage.page.setViewport({ width: 540, height: 606 });
       await ComposePageRecipe.fillMsg(composePage, { to: 'recip1@corp.co', cc: 'сс1@corp.co', bcc: 'bсс1@corp.co' }, 'recipients are properly ordered');
       await composePage.waitAndType(`@input-to`, 'recip2@corp.co');
       await composePage.waitAndType(`@input-bcc`, 'bcc2@corp.co');
