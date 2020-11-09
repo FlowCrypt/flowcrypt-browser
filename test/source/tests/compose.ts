@@ -107,6 +107,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
+    ava.default(`compose - recipients are properly ordered`, testWithBrowser('compose', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await composePage.page.setViewport({ width: 540, height: 606 });
+      await ComposePageRecipe.fillMsg(composePage, { to: 'recip1@corp.co', cc: 'сс1@corp.co', bcc: 'bсс1@corp.co' }, 'recipients are properly ordered');
+      await composePage.waitAndType(`@input-to`, 'recip2@corp.co');
+      await composePage.waitAndType(`@input-bcc`, 'bcc2@corp.co');
+      await composePage.waitAndFocus('@input-body');
+      await composePage.waitTillGone('@spinner');
+      const emailPreview = await composePage.waitAny('@recipients-preview');
+      const recipients = await PageRecipe.getElementPropertyJson(emailPreview, 'textContent');
+      expect(recipients).to.eq(['recip1@corp.co', 'recip2@corp.co', 'сс1@corp.co', 'bсс1@corp.co', '1 more'].join(''));
+    }));
+
     ava.default(`compose - freshly loaded pubkey`, testWithBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'freshly loaded pubkey');

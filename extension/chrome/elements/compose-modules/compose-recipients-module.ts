@@ -222,7 +222,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   * @param recipients - Recipients that should be previewed
   */
   public setEmailsPreview = async (recipients: RecipientElement[]): Promise<void> => {
-    if (recipients.length) {
+    const orderedRecipients = recipients.sort(this.orderRecipientsBySendingType);
+    if (orderedRecipients.length) {
       this.view.S.cached('recipients_placeholder').find('.placeholder').css('display', 'none');
     } else {
       this.view.S.cached('recipients_placeholder').find('.placeholder').css('display', 'block');
@@ -230,17 +231,17 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       return;
     }
     const container = this.view.S.cached('recipients_placeholder').find('.email_preview');
-    if (recipients.find(r => r.status === RecipientStatuses.EVALUATING)) {
+    if (orderedRecipients.find(r => r.status === RecipientStatuses.EVALUATING)) {
       container.append(`<span id="r_loader">Loading Reciepients ${Ui.spinner('green')}</span>`); // xss-direct
-      await Promise.all(recipients.filter(r => r.evaluating).map(r => r.evaluating!));
+      await Promise.all(orderedRecipients.filter(r => r.evaluating).map(r => r.evaluating!));
       container.find('r_loader').remove();
     }
     Xss.sanitizeRender(container, '<span class="rest"><span id="rest_number"></span> more</span>');
     const maxWidth = container.parent().width()!;
     const rest = container.find('.rest');
     let processed = 0;
-    while (container.width()! <= maxWidth && recipients.length >= processed + 1) {
-      const recipient = recipients[processed];
+    while (container.width()! <= maxWidth && orderedRecipients.length >= processed + 1) {
+      const recipient = orderedRecipients[processed];
       const escapedTitle = Xss.escape(recipient.element.getAttribute('title') || '');
       const emailHtml = `<span class="email_address ${recipient.element.className}" title="${escapedTitle}">${Xss.escape(recipient.email)}</span>`;
       $(emailHtml).insertBefore(rest); // xss-escaped
@@ -248,7 +249,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
     if (container.width()! > maxWidth) {
       container.find('.email_address').last().remove();
-      const restRecipients = recipients.slice(processed - 1);
+      const restRecipients = orderedRecipients.slice(processed - 1);
       rest.find('#rest_number').text(restRecipients.length);
       const orderedByStatus = restRecipients.sort((a: RecipientElement, b: RecipientElement) => {
         return a.status - b.status;
@@ -279,7 +280,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.cached('input_addresses_container_outer').children(`:not([style="display: none;"])`).last().append(this.view.S.cached('container_cc_bcc_buttons')); // xss-reinsert
   }
 
-  public collapseIpnutsIfNeeded = async (relatedTarget?: HTMLElement | null) => { // TODO: fix issue when loading no-pgp email and user starts typing
+  public collapseInputsIfNeeded = async (relatedTarget?: HTMLElement | null) => { // TODO: fix issue when loading no-pgp email and user starts typing
     if (!relatedTarget || (!this.view.S.cached('input_addresses_container_outer')[0].contains(relatedTarget)
       && !this.view.S.cached('contacts')[0].contains(relatedTarget))) {
       await Promise.all(this.addedRecipients.map(r => r.evaluating)); // Wait untill all recipients loaded.
@@ -348,7 +349,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     await this.parseRenderRecipients($(target));
     // If thereis no related target or related target isn't in recipients functionality
     // then we need to collapse inputs
-    await this.collapseIpnutsIfNeeded(e.relatedTarget);
+    await this.collapseInputsIfNeeded(e.relatedTarget);
     this.view.errModule.debug(`input_to.blur -> parseRenderRecipients done`);
   }
 
@@ -691,7 +692,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       if (element) { // if element wasn't created this means that Composer is used by another component
         $(element).on('blur', this.view.setHandler(async (elem, event) => {
           if (!this.dragged) {
-            await this.collapseIpnutsIfNeeded(event.relatedTarget);
+            await this.collapseInputsIfNeeded(event.relatedTarget);
           }
         }));
         this.addDraggableEvents(element);
@@ -738,6 +739,19 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (!this.view.S.cached('contacts').find('ul li').length) {
       this.hideContacts();
     }
+  }
+
+  private orderRecipientsBySendingType = (a: RecipientElement, b: RecipientElement) => {
+    if (a.sendingType === b.sendingType) {
+      return 0;
+    }
+    if (a.sendingType === 'to' && b.sendingType !== 'to') {
+      return -1;
+    }
+    if (a.sendingType === 'cc' && b.sendingType === 'bcc') {
+      return -1;
+    }
+    return 1;
   }
 
   private authContacts = async (acctEmail: string) => {
