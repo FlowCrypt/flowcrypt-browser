@@ -286,14 +286,10 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.test.key.recovered');
     }));
 
-    // ava.default.failing('setup - import key - submit - offline - retry', testWithBrowser(undefined, async (t, browser) => {
-    //   // puppeteer seems to ignore `.setOfflineMode(true)` for localhost
-    //   // don't want to start using non-localhost local host to avoid setup complications and keep tests straight forward
-    //   // so for now disabling, hopefully future versions will fix this, in which case this failing test should start failing CI (because it will start passing)
-    //   // an alternative solution could be to be able to dynamically switch mock settings to start/stop responding to a request (instead of setting puppeteer off/on line)
-    //   const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.used.pgp@gmail.com');
-    //   await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: true, usedPgpBefore: true, simulateRetryOffline: true });
-    // }));
+    ava.default('setup - import key - submit - offline - retry', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.used.pgp@gmail.com');
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: true, usedPgpBefore: true, simulateRetryOffline: true });
+    }));
 
     ava.default('has.pub@org-rules-test - no backup, no keygen', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'has.pub@org-rules-test.flowcrypt.com');
