@@ -16,8 +16,8 @@ type SendableMsgDefinition = {
   from: string;
   recipients: Recipients;
   subject: string;
-  body: SendableMsgBody;
-  atts: Att[];
+  body?: SendableMsgBody;
+  atts?: Att[];
   thread?: string;
   type?: MimeEncodeType,
   isDraft?: boolean
@@ -27,7 +27,48 @@ export class SendableMsg {
 
   public sign?: (signable: string) => Promise<string>;
 
-  public static create = async (acctEmail: string, { from, recipients, subject, body, atts, thread, type, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
+  //  return await SendableMsg.create(this.acctEmail, { this.headers(newMsg), body, type: 'smimeEncrypted', atts: [], isDraft: this.isDraft });
+  public static createSMime = async (acctEmail: string, { from, recipients, subject, thread, body, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
+    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, atts: [], type: 'smimeEncrypted', isDraft });
+  }
+
+  // return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: { "encrypted/buf": Buf.fromUint8(encryptedBody) }, type: mimeType, atts, isDraft: this.isDraft });
+  public static createSMimeOrOpenPGP = async (acctEmail: string, { from, recipients, subject, thread, body, atts, type, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
+    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, atts, type, isDraft });
+  }
+
+  // return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: emailIntroAndLinkBody, atts, isDraft: this.isDraft });
+  public static createOpenPGP = async (acctEmail: string, { from, recipients, subject, thread, body, atts, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
+    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, atts, type: undefined, isDraft });
+  }
+
+  // return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: {}, atts, type: 'pgpMimeEncrypted', isDraft: this.isDraft });
+  public static createOpenPGPWithNoBody = async (acctEmail: string, { from, recipients, subject, thread, atts, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
+    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body: {}, atts, type: 'pgpMimeEncrypted', isDraft });
+  }
+
+  //return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body, atts });
+  public static createOpenPGPNoDraft = async (acctEmail: string, { from, recipients, subject, thread, body, atts }: SendableMsgDefinition): Promise<SendableMsg> => {
+    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, atts, type: undefined, isDraft: undefined });
+  }
+
+  // await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body, atts, type: 'pgpMimeSigned' });
+  public static createOpenPGPSigned = async (acctEmail: string, { from, recipients, subject, thread, body, atts }: SendableMsgDefinition): Promise<SendableMsg> => {
+    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, atts, type: 'pgpMimeSigned', isDraft: undefined });
+  }
+
+  /* const msg = await SendableMsg.create(this.view.acctEmail, {
+      from: this.view.acctEmail,
+      recipients: { to: [this.view.acctEmail] },
+      subject: GMAIL_RECOVERY_EMAIL_SUBJECTS[0],
+      body: { 'text/html': emailMsg },
+      atts: emailAtts
+    }); */
+  public static createOpenPGPNoDraftAndNoThread = async (acctEmail: string, { from, recipients, subject, body, atts }: SendableMsgDefinition): Promise<SendableMsg> => {
+    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread: undefined, body, atts, type: undefined, isDraft: undefined });
+  }
+
+  public static create = async (acctEmail: string, { from, recipients, subject, thread, body, atts, type, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
     const primaryKi = await KeyStore.getFirst(acctEmail);
     const headers: Dict<string> = primaryKi ? { OpenPGP: `id=${primaryKi.longid}` } : {}; // todo - use autocrypt format
     return new SendableMsg(
@@ -37,7 +78,7 @@ export class SendableMsg {
       from,
       recipients,
       subject,
-      body,
+      body || {},
       atts || [],
       thread,
       type
