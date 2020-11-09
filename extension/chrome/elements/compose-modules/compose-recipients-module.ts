@@ -222,7 +222,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   * @param recipients - Recipients that should be previewed
   */
   public setEmailsPreview = async (recipients: RecipientElement[]): Promise<void> => {
-    const orderedRecipients = recipients.sort(this.orderRecipients);
+    const orderedRecipients = recipients.sort(this.orderRecipientsBySendingType);
     if (orderedRecipients.length) {
       this.view.S.cached('recipients_placeholder').find('.placeholder').css('display', 'none');
     } else {
@@ -741,7 +741,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
   }
 
-  private orderRecipients = (a: RecipientElement, b: RecipientElement) => {
+  private orderRecipientsBySendingType = (a: RecipientElement, b: RecipientElement) => {
     if (a.sendingType === b.sendingType) {
       return 0;
     }
