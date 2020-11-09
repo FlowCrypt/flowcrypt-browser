@@ -286,7 +286,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.test.key.recovered');
     }));
 
-    ava.default.only('setup - import key - submit - offline - retry', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('setup - import key - submit - offline - retry', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.used.pgp@gmail.com');
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: true, usedPgpBefore: true, simulateRetryOffline: true });
     }));
