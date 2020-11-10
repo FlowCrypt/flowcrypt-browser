@@ -107,6 +107,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
+    ava.default(`compose - recipients are properly ordered`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await composePage.page.setViewport({ width: 540, height: 606 });
+      await ComposePageRecipe.fillMsg(composePage, { to: 'recip1@corp.co', cc: 'сс1@corp.co', bcc: 'bсс1@corp.co' }, 'recipients are properly ordered');
+      await composePage.waitAndType(`@input-to`, 'recip2@corp.co');
+      await composePage.waitAndType(`@input-bcc`, 'bcc2@corp.co');
+      await composePage.waitAndFocus('@input-body');
+      await composePage.waitTillGone('@spinner');
+      const emailPreview = await composePage.waitAny('@recipients-preview');
+      const recipients = await PageRecipe.getElementPropertyJson(emailPreview, 'textContent');
+      expect(recipients).to.eq(['recip1@corp.co', 'recip2@corp.co', 'сс1@corp.co', 'bсс1@corp.co', '1 more'].join(''));
+    }));
+
     ava.default(`compose - freshly loaded pubkey`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'freshly loaded pubkey');
@@ -187,12 +200,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.dev'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await composeFrame.waitAndFocus('@action-attach-files');
-      // workaround for https://github.com/puppeteer/puppeteer/issues/6040
-      await (inboxPage.page as any)._client.send('Page.setInterceptFileChooserDialog', { enabled: true });
-      await Promise.all([
-        inboxPage.page.waitForFileChooser(), // must be called before the file chooser is launched
-        inboxPage.press('Enter')
-      ]);
+      // Set up the Promise *before* the file chooser is launched
+      const fileChooser = inboxPage.page.waitForFileChooser();
+      await Util.sleep(0.5); // waitForFileChooser() is flaky without this timeout, #3051
+      await inboxPage.press('Enter');
+      await fileChooser;
     }));
 
     ava.default('compose - reply - old gmail threadId fmt', testWithBrowser('compatibility', async (t, browser) => {

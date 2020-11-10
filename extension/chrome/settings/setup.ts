@@ -250,11 +250,6 @@ export class SetupView extends View {
     } else {
       addresses = [this.acctEmail];
     }
-    if (this.acctEmailAttesterPubId && this.acctEmailAttesterPubId !== pub.id) {
-      // already submitted another pubkey for this email
-      // todo - offer user to fix it up
-      return;
-    }
     await this.submitPubkeys(addresses, armoredPubkey);
   }
 

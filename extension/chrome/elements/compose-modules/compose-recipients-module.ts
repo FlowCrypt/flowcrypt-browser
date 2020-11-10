@@ -6,7 +6,7 @@ import { ChunkedCb, RecipientType } from '../../../js/common/api/shared/api.js';
 import { Contact } from '../../../js/common/core/crypto/key.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './compose-err-module.js';
 import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
-import { RecipientElement, RecipientStatus, RecipientStatuses } from './compose-types.js';
+import { RecipientElement, RecipientStatus } from './compose-types.js';
 import { Str, Value } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
@@ -121,13 +121,13 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       const container = input.parent();
       if (validationResult.valid.length) {
         this.view.errModule.debug(`parseRenderRecipients(force: ${force}) - valid emails(${validationResult.valid.join(',')})`);
-        recipientsToEvaluate = this.createRecipientsElements(container, validationResult.valid, sendingType, RecipientStatuses.EVALUATING);
+        recipientsToEvaluate = this.createRecipientsElements(container, validationResult.valid, sendingType, RecipientStatus.EVALUATING);
       }
       const invalidEmails = validationResult.invalid.filter(em => !!em); // remove empty strings
       this.view.errModule.debug(`parseRenderRecipients(force: ${force}) - invalid emails(${validationResult.invalid.join(',')})`);
       if (force && invalidEmails.length) {
         this.view.errModule.debug(`parseRenderRecipients(force: ${force}) - force add invalid recipients`);
-        recipientsToEvaluate = [...recipientsToEvaluate, ...this.createRecipientsElements(container, invalidEmails, sendingType, RecipientStatuses.WRONG)];
+        recipientsToEvaluate = [...recipientsToEvaluate, ...this.createRecipientsElements(container, invalidEmails, sendingType, RecipientStatus.WRONG)];
         input.val('');
       } else {
         this.view.errModule.debug(`parseRenderRecipients(force: ${force}) - setting inputTo with invalid emails`);
@@ -151,7 +151,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         const sendingType = key as RecipientType;
         if (recipients[sendingType] && recipients[sendingType]!.length) {
           const recipientsContainer = this.view.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`);
-          newRecipients = newRecipients.concat(this.createRecipientsElements(recipientsContainer, recipients[sendingType]!, sendingType, RecipientStatuses.EVALUATING));
+          newRecipients = newRecipients.concat(this.createRecipientsElements(recipientsContainer, recipients[sendingType]!, sendingType, RecipientStatus.EVALUATING));
           this.view.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`).css('display', '');
           this.view.sizeModule.resizeInput(this.view.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType} input`));
         }
@@ -194,7 +194,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
       recipient.evaluating = (async () => {
         let pubkeyLookupRes: Contact | 'fail' | 'wrong';
-        if (recipient.status !== RecipientStatuses.WRONG) {
+        if (recipient.status !== RecipientStatus.WRONG) {
           pubkeyLookupRes = await this.view.storageModule.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(recipient.email, undefined);
         } else {
           pubkeyLookupRes = 'wrong';
@@ -222,7 +222,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   * @param recipients - Recipients that should be previewed
   */
   public setEmailsPreview = async (recipients: RecipientElement[]): Promise<void> => {
-    if (recipients.length) {
+    const orderedRecipients = recipients.sort(this.orderRecipientsBySendingType);
+    if (orderedRecipients.length) {
       this.view.S.cached('recipients_placeholder').find('.placeholder').css('display', 'none');
     } else {
       this.view.S.cached('recipients_placeholder').find('.placeholder').css('display', 'block');
@@ -230,17 +231,17 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       return;
     }
     const container = this.view.S.cached('recipients_placeholder').find('.email_preview');
-    if (recipients.find(r => r.status === RecipientStatuses.EVALUATING)) {
+    if (orderedRecipients.find(r => r.status === RecipientStatus.EVALUATING)) {
       container.append(`<span id="r_loader">Loading Reciepients ${Ui.spinner('green')}</span>`); // xss-direct
-      await Promise.all(recipients.filter(r => r.evaluating).map(r => r.evaluating!));
+      await Promise.all(orderedRecipients.filter(r => r.evaluating).map(r => r.evaluating!));
       container.find('r_loader').remove();
     }
     Xss.sanitizeRender(container, '<span class="rest"><span id="rest_number"></span> more</span>');
     const maxWidth = container.parent().width()!;
     const rest = container.find('.rest');
     let processed = 0;
-    while (container.width()! <= maxWidth && recipients.length >= processed + 1) {
-      const recipient = recipients[processed];
+    while (container.width()! <= maxWidth && orderedRecipients.length >= processed + 1) {
+      const recipient = orderedRecipients[processed];
       const escapedTitle = Xss.escape(recipient.element.getAttribute('title') || '');
       const emailHtml = `<span class="email_address ${recipient.element.className}" title="${escapedTitle}">${Xss.escape(recipient.email)}</span>`;
       $(emailHtml).insertBefore(rest); // xss-escaped
@@ -248,7 +249,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
     if (container.width()! > maxWidth) {
       container.find('.email_address').last().remove();
-      const restRecipients = recipients.slice(processed - 1);
+      const restRecipients = orderedRecipients.slice(processed - 1);
       rest.find('#rest_number').text(restRecipients.length);
       const orderedByStatus = restRecipients.sort((a: RecipientElement, b: RecipientElement) => {
         return a.status - b.status;
@@ -279,7 +280,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.cached('input_addresses_container_outer').children(`:not([style="display: none;"])`).last().append(this.view.S.cached('container_cc_bcc_buttons')); // xss-reinsert
   }
 
-  public collapseIpnutsIfNeeded = async (relatedTarget?: HTMLElement | null) => { // TODO: fix issue when loading no-pgp email and user starts typing
+  public collapseInputsIfNeeded = async (relatedTarget?: HTMLElement | null) => { // TODO: fix issue when loading no-pgp email and user starts typing
     if (!relatedTarget || (!this.view.S.cached('input_addresses_container_outer')[0].contains(relatedTarget)
       && !this.view.S.cached('contacts')[0].contains(relatedTarget))) {
       await Promise.all(this.addedRecipients.map(r => r.evaluating)); // Wait untill all recipients loaded.
@@ -348,7 +349,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     await this.parseRenderRecipients($(target));
     // If thereis no related target or related target isn't in recipients functionality
     // then we need to collapse inputs
-    await this.collapseIpnutsIfNeeded(e.relatedTarget);
+    await this.collapseInputsIfNeeded(e.relatedTarget);
     this.view.errModule.debug(`input_to.blur -> parseRenderRecipients done`);
   }
 
@@ -691,11 +692,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       if (element) { // if element wasn't created this means that Composer is used by another component
         $(element).on('blur', this.view.setHandler(async (elem, event) => {
           if (!this.dragged) {
-            await this.collapseIpnutsIfNeeded(event.relatedTarget);
+            await this.collapseInputsIfNeeded(event.relatedTarget);
           }
         }));
         this.addDraggableEvents(element);
-        const recipient = { email: email || rawEmail, element, id: recipientId, sendingType, status: email ? status : RecipientStatuses.WRONG };
+        const recipient = { email: email || rawEmail, element, id: recipientId, sendingType, status: email ? status : RecipientStatus.WRONG };
         this.addedRecipients.push(recipient);
         result.push(recipient);
       }
@@ -740,6 +741,19 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
   }
 
+  private orderRecipientsBySendingType = (a: RecipientElement, b: RecipientElement) => {
+    if (a.sendingType === b.sendingType) {
+      return 0;
+    }
+    if (a.sendingType === 'to' && b.sendingType !== 'to') {
+      return -1;
+    }
+    if (a.sendingType === 'cc' && b.sendingType === 'bcc') {
+      return -1;
+    }
+    return 1;
+  }
+
   private authContacts = async (acctEmail: string) => {
     const connectToGoogleRecipientLine = this.addedRecipients[this.addedRecipients.length - 1];
     this.view.S.cached('input_to').val(connectToGoogleRecipientLine.email);
@@ -782,7 +796,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       .click(this.view.setHandler(target => this.removeRecipient(target.parentElement!), this.view.errModule.handle('remove recipient')));
     $(el).removeClass(['failed', 'wrong', 'has_pgp', 'no_pgp', 'expired']);
     if (contact === PUBKEY_LOOKUP_RESULT_FAIL) {
-      recipient.status = RecipientStatuses.FAILED;
+      recipient.status = RecipientStatus.FAILED;
       $(el).attr('title', 'Failed to load, click to retry');
       $(el).addClass("failed");
       Xss.sanitizeReplace($(el).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">' +
@@ -790,23 +804,23 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       $(el).find('.action_retry_pubkey_fetch').click(this.view.setHandler(async () => await this.refreshRecipients(), this.view.errModule.handle('refresh recipient')));
       $(el).find('.remove-reciepient').click(this.view.setHandler(element => this.removeRecipient(element.parentElement!), this.view.errModule.handle('remove recipient')));
     } else if (contact === PUBKEY_LOOKUP_RESULT_WRONG) {
-      recipient.status = RecipientStatuses.WRONG;
+      recipient.status = RecipientStatus.WRONG;
       this.view.errModule.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${recipient.email}`);
       $(el).attr('title', 'This email address looks misspelled. Please try again.');
       $(el).addClass("wrong");
     } else if (contact.pubkey && ((contact.expiresOn || Infinity) <= Date.now() || contact.pubkey.usableButExpired)) {
-      recipient.status = RecipientStatuses.EXPIRED;
+      recipient.status = RecipientStatus.EXPIRED;
       $(el).addClass("expired");
       Xss.sanitizePrepend(el, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
       $(el).attr('title', 'Does use encryption but their public key is expired. You should ask them to send ' +
         'you an updated public key.' + this.recipientKeyIdText(contact));
     } else if (contact.pubkey) {
-      recipient.status = RecipientStatuses.HAS_PGP;
+      recipient.status = RecipientStatus.HAS_PGP;
       $(el).addClass("has_pgp");
       Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
       $(el).attr('title', 'Does use encryption' + this.recipientKeyIdText(contact));
     } else {
-      recipient.status = RecipientStatuses.NO_PGP;
+      recipient.status = RecipientStatus.NO_PGP;
       $(el).addClass("no_pgp");
       Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
       $(el).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');

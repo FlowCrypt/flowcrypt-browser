@@ -3,7 +3,7 @@
 'use strict';
 
 
-import { RecipientStatuses, SendBtnTexts } from './compose-types.js';
+import { RecipientStatus, SendBtnTexts } from './compose-types.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Str } from '../../../js/common/core/common.js';
@@ -59,9 +59,9 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     if (!this.view.recipientsModule.getRecipients().length || !this.view.sendBtnModule.popover.choices.encrypt) {
       this.hideMsgPwdUi(); // Hide 'Add Pasword' prompt if there are no recipients or message is not encrypted
       this.view.sendBtnModule.enableBtn();
-    } else if (this.view.recipientsModule.getRecipients().find(r => r.status === RecipientStatuses.NO_PGP)) {
+    } else if (this.view.recipientsModule.getRecipients().find(r => r.status === RecipientStatus.NO_PGP)) {
       this.showMsgPwdUiAndColorBtn().catch(Catch.reportErr);
-    } else if (this.view.recipientsModule.getRecipients().find(r => [RecipientStatuses.FAILED, RecipientStatuses.WRONG].includes(r.status))) {
+    } else if (this.view.recipientsModule.getRecipients().find(r => [RecipientStatus.FAILED, RecipientStatus.WRONG].includes(r.status))) {
       this.view.S.now('send_btn_text').text(SendBtnTexts.BTN_WRONG_ENTRY);
       this.view.S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
       this.view.sendBtnModule.disableBtn();
