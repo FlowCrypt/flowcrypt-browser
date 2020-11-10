@@ -35,13 +35,14 @@ export class SignedMsgMailFormatter extends BaseMailFormatter {
       ContactStore.update(undefined, allContacts, { last_use: Date.now() }).catch(Catch.reportErr);
       const body = { 'text/plain': signedData };
       //return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body, atts });
-      return await SendableMsg.createOpenPGPNoDraft(this.acctEmail, { ...this.headers(newMsg), body, atts });
+      return await SendableMsg.createPgpInline(this.acctEmail, this.headers(newMsg), body, atts);
     }
     // pgp/mime detached signature - it must be signed later, while being mime-encoded
     // prepare a sign function first, which will be used by Mime.encodePgpMimeSigned later
     const body: SendableMsgBody = { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml };
     //const sendable = await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body, atts, type: 'pgpMimeSigned' });
-    const sendable = await SendableMsg.createOpenPGPSigned(this.acctEmail, { ...this.headers(newMsg), body, atts });
+    //const sendable = await SendableMsg.createOpenPGPSigned(this.acctEmail, { ...this.headers(newMsg), body, atts });
+    const sendable = await SendableMsg.createPgpMimeSigned(this.acctEmail, this.headers(newMsg), body, atts);
     sendable.setSignMethod((signable: string) => MsgUtil.sign(signingPrv, signable, true));
     return sendable;
   }

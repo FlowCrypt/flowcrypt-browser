@@ -55,10 +55,9 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     const msg = await SendableMsg.createOpenPGPNoDraftAndNoThread(this.view.acctEmail, {
       from: this.view.acctEmail,
       recipients: { to: [this.view.acctEmail] },
-      subject: GMAIL_RECOVERY_EMAIL_SUBJECTS[0],
-      body: { 'text/html': emailMsg },
-      atts: emailAtts
-    });
+      subject: GMAIL_RECOVERY_EMAIL_SUBJECTS[0] },
+      { 'text/html': emailMsg },
+      emailAtts);
     if (this.view.emailProvider === 'gmail') {
       return await this.view.gmail.msgSend(msg);
     } else {

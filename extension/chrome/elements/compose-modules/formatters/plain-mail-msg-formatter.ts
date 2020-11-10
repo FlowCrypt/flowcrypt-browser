@@ -17,7 +17,7 @@ export class PlainMsgMailFormatter extends BaseMailFormatter {
       body['text/html'] = newMsg.plainhtml;
     }
     //return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body, atts });
-    return await SendableMsg.createOpenPGPNoDraft(this.acctEmail, { ...this.headers(newMsg), body, atts });
+    return await SendableMsg.createPgpMime(this.acctEmail, this.headers(newMsg), body, atts);
   }
 
 }

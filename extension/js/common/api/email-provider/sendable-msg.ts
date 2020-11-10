@@ -23,38 +23,59 @@ type SendableMsgDefinition = {
   isDraft?: boolean
 };
 
+type SendableMsgHeaders = {
+  headers?: Dict<string>;
+  from: string;
+  recipients: Recipients;
+  subject: string;
+  thread?: string;
+};
+
+type SendableMsgOptions = {
+  type?: MimeEncodeType,
+  isDraft?: boolean;
+};
+
 export class SendableMsg {
 
   public sign?: (signable: string) => Promise<string>;
 
   //  return await SendableMsg.create(this.acctEmail, { this.headers(newMsg), body, type: 'smimeEncrypted', atts: [], isDraft: this.isDraft });
-  public static createSMime = async (acctEmail: string, { from, recipients, subject, thread, body, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
-    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, atts: [], type: 'smimeEncrypted', isDraft });
+  //public static createSMime = async (acctEmail: string, { from, recipients, subject, thread, body, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
+  public static createSMime = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, options: SendableMsgOptions): Promise<SendableMsg> => {       
+    //return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, atts: [], type: 'smimeEncrypted', isDraft });
+    return await SendableMsg.createSendableMsg(acctEmail, headers, body, [], { type: 'smimeEncrypted', isDraft: options.isDraft });
   }
 
   // return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: { "encrypted/buf": Buf.fromUint8(encryptedBody) }, type: mimeType, atts, isDraft: this.isDraft });
-  public static createSMimeOrOpenPGP = async (acctEmail: string, { from, recipients, subject, thread, body, atts, type, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
-    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, atts, type, isDraft });
+  //public static createPgpInline = async (acctEmail: string, { from, recipients, subject, thread, body, atts, type, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
+  public static createPgpInline = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[], options?: SendableMsgOptions): Promise<SendableMsg> => {     
+    //return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, atts, type, isDraft });
+    return await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, options ? options : { type: undefined, isDraft: undefined });
   }
 
   // return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: emailIntroAndLinkBody, atts, isDraft: this.isDraft });
-  public static createOpenPGP = async (acctEmail: string, { from, recipients, subject, thread, body, atts, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
-    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, atts, type: undefined, isDraft });
+  // public static createOpenPGP = async (acctEmail: string, { from, recipients, subject, thread, body, atts, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
+  //public static createPwdMsg = async (acctEmail: string, { from, recipients, subject, thread, body, atts, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
+  public static createPwdMsg = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[], options: SendableMsgOptions): Promise<SendableMsg> => {    
+    //return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, atts, type: undefined, isDraft });
+    return await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, { type: undefined, isDraft: options.isDraft });
   }
 
   // return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: {}, atts, type: 'pgpMimeEncrypted', isDraft: this.isDraft });
-  public static createOpenPGPWithNoBody = async (acctEmail: string, { from, recipients, subject, thread, atts, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
-    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body: {}, atts, type: 'pgpMimeEncrypted', isDraft });
-  }
-
-  //return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body, atts });
-  public static createOpenPGPNoDraft = async (acctEmail: string, { from, recipients, subject, thread, body, atts }: SendableMsgDefinition): Promise<SendableMsg> => {
-    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, atts, type: undefined, isDraft: undefined });
+  //public static createOpenPGPWithNoBody = async (acctEmail: string, { from, recipients, subject, thread, atts, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
+  //public static createPgpMime = async (acctEmail: string, { from, recipients, subject, thread, atts, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
+  public static createPgpMime = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[], options?: SendableMsgOptions): Promise<SendableMsg> => {    
+    //return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body: {}, atts, type: 'pgpMimeEncrypted', isDraft });
+    return await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, { type: (options ? 'pgpMimeEncrypted' : undefined), isDraft: (options ? options.isDraft : undefined) });
   }
 
   // await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body, atts, type: 'pgpMimeSigned' });
-  public static createOpenPGPSigned = async (acctEmail: string, { from, recipients, subject, thread, body, atts }: SendableMsgDefinition): Promise<SendableMsg> => {
-    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, atts, type: 'pgpMimeSigned', isDraft: undefined });
+  //public static createOpenPGPSigned = async (acctEmail: string, { from, recipients, subject, thread, body, atts }: SendableMsgDefinition): Promise<SendableMsg> => {
+  //public static createPgpMimeSigned = async (acctEmail: string, { from, recipients, subject, thread, body, atts }: SendableMsgDefinition): Promise<SendableMsg> => {  
+  public static createPgpMimeSigned = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[]): Promise<SendableMsg> => {  
+    //return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, atts, type: 'pgpMimeSigned', isDraft: undefined });
+    return await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, { type: 'pgpMimeSigned', isDraft: undefined });
   }
 
   /* const msg = await SendableMsg.create(this.view.acctEmail, {
@@ -64,11 +85,19 @@ export class SendableMsg {
       body: { 'text/html': emailMsg },
       atts: emailAtts
     }); */
-  public static createOpenPGPNoDraftAndNoThread = async (acctEmail: string, { from, recipients, subject, body, atts }: SendableMsgDefinition): Promise<SendableMsg> => {
-    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread: undefined, body, atts, type: undefined, isDraft: undefined });
+  //public static createOpenPGPNoDraftAndNoThread = async (acctEmail: string, { from, recipients, subject, body, atts }: SendableMsgDefinition): Promise<SendableMsg> => {
+  public static createOpenPGPNoDraftAndNoThread = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[]): Promise<SendableMsg> => {   
+    //return await SendableMsg.create(acctEmail, { from, recipients, subject, thread: undefined, body, atts, type: undefined, isDraft: undefined });
+    return await SendableMsg.createSendableMsg(acctEmail, { from: headers.from, recipients: headers.recipients, subject: headers.subject, thread: undefined }, body, attachments, { type: undefined, isDraft: undefined });
   }
 
-  public static create = async (acctEmail: string, { from, recipients, subject, thread, body, atts, type, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
+  private static createSendableMsg = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[], options: SendableMsgOptions): Promise<SendableMsg> => {
+    const { from, recipients, subject, thread } = headers;
+    const { type, isDraft } = options;
+    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, atts: attachments, type, isDraft});
+  }
+    
+  private static create = async (acctEmail: string, { from, recipients, subject, thread, body, atts, type, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
     const primaryKi = await KeyStore.getFirst(acctEmail);
     const headers: Dict<string> = primaryKi ? { OpenPGP: `id=${primaryKi.longid}` } : {}; // todo - use autocrypt format
     return new SendableMsg(
