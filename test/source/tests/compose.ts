@@ -654,8 +654,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('rendered reply - can preview attachment', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.dev'));
-      await inboxPage.waitAndClick('.threads .line');
+      const threadId = '173fd7dbe2fec90c';
+      const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+      await inboxPage.waitAll('iframe');
       const replyFrame = await inboxPage.getFrame(['compose.htm']);
       await replyFrame.waitAndClick('@encrypted-reply');
       const fileInput = await replyFrame.target.$('input[type=file]');
