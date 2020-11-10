@@ -11,18 +11,6 @@ import { KeyStore } from '../../platform/store/key-store.js';
 export type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
 export type ProviderContactsQuery = { substring: string };
 
-type SendableMsgDefinition = {
-  headers?: Dict<string>;
-  from: string;
-  recipients: Recipients;
-  subject: string;
-  body?: SendableMsgBody;
-  atts?: Att[];
-  thread?: string;
-  type?: MimeEncodeType,
-  isDraft?: boolean
-};
-
 type SendableMsgHeaders = {
   headers?: Dict<string>;
   from: string;
@@ -35,6 +23,13 @@ type SendableMsgOptions = {
   type?: MimeEncodeType,
   isDraft?: boolean;
 };
+
+type SendableMsgDefinition = SendableMsgHeaders 
+  & SendableMsgOptions 
+  & {
+    body?: SendableMsgBody;
+    atts?: Att[];
+  };
 
 export class SendableMsg {
 
