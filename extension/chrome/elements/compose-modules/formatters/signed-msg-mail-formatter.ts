@@ -42,8 +42,9 @@ export class SignedMsgMailFormatter extends BaseMailFormatter {
     const body: SendableMsgBody = { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml };
     //const sendable = await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body, atts, type: 'pgpMimeSigned' });
     //const sendable = await SendableMsg.createOpenPGPSigned(this.acctEmail, { ...this.headers(newMsg), body, atts });
-    const sendable = await SendableMsg.createPgpMimeSigned(this.acctEmail, this.headers(newMsg), body, atts);
-    sendable.setSignMethod((signable: string) => MsgUtil.sign(signingPrv, signable, true));
+    const signMethod = (signable: string) => MsgUtil.sign(signingPrv, signable, true);
+    const sendable = await SendableMsg.createPgpMimeSigned(this.acctEmail, this.headers(newMsg), body, atts, signMethod);
+    //sendable.setSignMethod((signable: string) => MsgUtil.sign(signingPrv, signable, true));
     return sendable;
   }
 
