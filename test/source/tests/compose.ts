@@ -49,7 +49,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('compose - signed with entered pass phrase + will remember pass phrase in session', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const k = Config.key('test.ci.compose');
+      const k = Config.key('ci.tests.gmail');
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.dev'));
       await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.dev'));
