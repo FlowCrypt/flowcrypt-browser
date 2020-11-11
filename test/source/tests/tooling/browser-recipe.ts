@@ -56,7 +56,7 @@ export class BrowserRecipe {
       await SetupPageRecipe.recover(settingsPage, 'ci.tests.gmail');
       await settingsPage.close();
     } else {
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'test.ci.compose@org.flowcrypt.com');
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
       await SetupPageRecipe.recover(settingsPage, 'test.ci.compose');
       await settingsPage.close();
     }

@@ -284,6 +284,39 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await InboxPageRecipe.checkFinishingSession(t, browser, acctEmail, threadId);
     }));
 
+    ava.default('decrypt - thunderbird - signedHtml verifyDetached doesn\'t duplicate PGP key section', testWithBrowser('compatibility', async (t, browser) => {
+      const threadId = '1754cfd1b2f1d6e5';
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+      await inboxPage.waitAll('iframe');
+      const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+      await pgpBlock.waitForSelTestState('ready');
+      const urls = await inboxPage.getFramesUrls(['pgp_pubkey.htm'], { sleep: 3 });
+      expect(urls.length).to.be.lessThan(2);
+    }));
+
+    ava.default('decrypt - thunderbird - signedMsg verifyDetached doesn\'t duplicate PGP key section', testWithBrowser('compatibility', async (t, browser) => {
+      const threadId = '1754cfc37886899e';
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+      await inboxPage.waitAll('iframe');
+      const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+      await pgpBlock.waitForSelTestState('ready');
+      const urls = await inboxPage.getFramesUrls(['pgp_pubkey.htm'], { sleep: 3 });
+      expect(urls.length).to.be.equal(1);
+    }));
+
+    ava.default('decrypt - thunderbird - signing key is rendered in signed and encrypted message', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const threadId = '175adb163ac0d69b';
+      const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+      await inboxPage.waitAll('iframe');
+      const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+      await pgpBlock.waitForSelTestState('ready');
+      const urls = await inboxPage.getFramesUrls(['pgp_pubkey.htm'], { sleep: 3 });
+      expect(urls.length).to.be.equal(1);
+    }));
+
     ava.default('decrypt - protonmail - load pubkey into contact + verify detached msg', testWithBrowser('compatibility', async (t, browser) => {
       const textParams = `?frameId=none&message=&msgId=16a9c109bc51687d&` +
         `senderEmail=mismatch%40mail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com`;

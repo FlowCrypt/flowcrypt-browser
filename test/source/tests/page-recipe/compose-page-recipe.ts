@@ -24,7 +24,7 @@ export class ComposePageRecipe extends PageRecipe {
     if (group === 'compatibility') { // More common accounts
       group = 'flowcrypt.compatibility@gmail.com';
     } else if (group === 'compose') {
-      group = 'test.ci.compose@org.flowcrypt.com';
+      group = 'ci.tests.gmail@flowcrypt.dev';
     }
     const email = encodeURIComponent(group);
     const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${options.appendUrl || ''}`,
