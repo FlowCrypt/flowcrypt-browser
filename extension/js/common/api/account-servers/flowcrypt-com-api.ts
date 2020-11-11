@@ -18,7 +18,6 @@ export type SubscriptionLevel = 'pro' | null;
 export type FcUuidAuth = { account: string, uuid: string | undefined };
 export type PaymentMethod = 'stripe' | 'group' | 'trial';
 export type SubscriptionInfo = { active?: boolean | null; method?: PaymentMethod | null; level?: SubscriptionLevel; expire?: string | null; expired?: boolean };
-export type AwsS3UploadItem = { baseUrl: string, fields: { key: string; file?: Att }, att: Att };
 
 export namespace BackendRes {
   export type FcAccountLogin = { registered: boolean, verified: boolean };

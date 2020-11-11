@@ -9,7 +9,7 @@ import { Ui } from './ui.js';
 import { Url, Dict } from '../core/common.js';
 import { AbstractStore } from '../platform/store/abstract-store.js';
 
-export const handleFatalErr = (reason: 'storage_undefined', error: Error) => {
+const handleFatalErr = (reason: 'storage_undefined', error: Error) => {
   try {
     if (Env.isBackgroundPage()) {
       throw error;

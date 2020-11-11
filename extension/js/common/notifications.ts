@@ -10,8 +10,6 @@ import { Ui } from './browser/ui.js';
 import { Xss } from './platform/xss.js';
 import { AcctStore } from './platform/store/acct-store.js';
 
-export type NotificationWithHandlers = { notification: string, callbacks: Dict<() => void> };
-
 export class Notifications {
 
   private tabId: string;

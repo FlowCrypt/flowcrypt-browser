@@ -11,9 +11,9 @@ import { FlowCryptComApi } from './flowcrypt-com-api.js';
 import { Dict } from '../../core/common.js';
 
 // todo - decide which tags to use
-export type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
+type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
 
-export namespace FesRes {
+namespace FesRes {
   export type AccessToken = { accessToken: string };
 }
 
@@ -24,6 +24,7 @@ export namespace FesRes {
  *
  * WIP - currently unused, unfinished
  */
+// ts-prune-ignore-next
 export class EnterpriseServer extends Api {
 
   private fesUrl: string
