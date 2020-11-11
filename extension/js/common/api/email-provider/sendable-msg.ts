@@ -25,6 +25,8 @@ type SendableMsgOptions = {
   isDraft?: boolean;
 };
 
+type SignMethod = (signable: string) => Promise<string>;
+
 type SendableMsgDefinition = SendableMsgHeaders
   & SendableMsgOptions
   & {
@@ -56,20 +58,16 @@ export class SendableMsg {
     return await SendableMsg.createSendableMsg(acctEmail, headers, {}, attachments, { type: (options ? 'pgpMimeEncrypted' : undefined), isDraft: (options ? options.isDraft : undefined) });
   }
 
-  public static createPgpMimeSigned = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[], signMethod: (signable: string) => Promise<string>): Promise<SendableMsg> => {
+  public static createPgpMimeSigned = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[], signMethod: SignMethod): Promise<SendableMsg> => {
     const sendableMsg = await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, { type: 'pgpMimeSigned', isDraft: undefined });
     sendableMsg.sign = signMethod;
     return sendableMsg;
   }
 
-  public static createOpenPGPNoDraftAndNoThread = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[]): Promise<SendableMsg> => {
-    return await SendableMsg.createSendableMsg(acctEmail, { from: headers.from, recipients: headers.recipients, subject: headers.subject, thread: undefined }, body, attachments, { type: undefined, isDraft: undefined });
-  }
-
   private static createSendableMsg = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[], options: SendableMsgOptions): Promise<SendableMsg> => {
     const { from, recipients, subject, thread } = headers;
     const { type, isDraft } = options;
-    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, atts: attachments, type, isDraft});
+    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, atts: attachments, type, isDraft });
   }
 
   private static create = async (acctEmail: string, { from, recipients, subject, thread, body, atts, type, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
