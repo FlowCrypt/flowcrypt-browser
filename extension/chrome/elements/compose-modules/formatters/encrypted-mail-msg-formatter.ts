@@ -63,8 +63,6 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const { data: pubEncryptedNoAtts } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeNoAtts), undefined, pubs, signingPrv); // encrypted only for pubs
     const atts = this.createPgpMimeAtts(pubEncryptedNoAtts).concat(await this.view.attsModule.attach.collectEncryptAtts(pubs)); // encrypted only for pubs
     const emailIntroAndLinkBody = await this.formatPwdEncryptedMsgBodyLink(short);
-    //return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: emailIntroAndLinkBody, atts, isDraft: this.isDraft });
-    //return await SendableMsg.createOpenPGP(this.acctEmail, { ...this.headers(newMsg), body: emailIntroAndLinkBody, atts, isDraft: this.isDraft });
     return await SendableMsg.createPwdMsg(this.acctEmail, this.headers(newMsg), emailIntroAndLinkBody, atts, { isDraft: this.isDraft });
   }
 
@@ -77,17 +75,13 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
       const mimeEncodedPlainMessage = await Mime.encode(msgBody, { Subject: newMsg.subject }, atts);
       const encryptedMessage = await SmimeKey.encryptMessage({ pubkeys: x509certs, data: Buf.fromUtfStr(mimeEncodedPlainMessage) });
-      const data = encryptedMessage.data;
-      //return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body, type: 'smimeEncrypted', atts: [], isDraft: this.isDraft });   
+      const data = encryptedMessage.data; 
       return await SendableMsg.createSMime(this.acctEmail, this.headers(newMsg), data, { isDraft: this.isDraft });
     }
     // openpgp
     const atts: Att[] = this.isDraft ? [] : await this.view.attsModule.attach.collectEncryptAtts(pubs);
-    const { data: encryptedBody, type } = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
-    const mimeType = type === 'smime' ? 'smimeEncrypted' : undefined;
-    //return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: { "encrypted/buf": Buf.fromUint8(encryptedBody) }, type: mimeType, atts, isDraft: this.isDraft });
-    //return await SendableMsg.createSMimeOrOpenPGP(this.acctEmail, { ...this.headers(newMsg), body: { "encrypted/buf": Buf.fromUint8(encryptedBody) }, type: mimeType, atts, isDraft: this.isDraft });
-    return await SendableMsg.createPgpInline(this.acctEmail, this.headers(newMsg), { "encrypted/buf": Buf.fromUint8(encryptedBody) }, atts, { type: mimeType, isDraft: this.isDraft });
+    const { data: encryptedBody } = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
+    return await SendableMsg.createPgpInline(this.acctEmail, this.headers(newMsg), { "encrypted/buf": Buf.fromUint8(encryptedBody) }, atts, { isDraft: this.isDraft });
   }
 
   private sendableRichTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key) => {
@@ -95,7 +89,6 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const pgpMimeToEncrypt = await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject }, plainAtts);
     const { data: encrypted } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubs, signingPrv);
     const atts = this.createPgpMimeAtts(encrypted);
-    //return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: {}, atts, type: 'pgpMimeEncrypted', isDraft: this.isDraft });
     return await SendableMsg.createPgpMime(this.acctEmail, this.headers(newMsg), atts, { isDraft: this.isDraft });
   }
 
