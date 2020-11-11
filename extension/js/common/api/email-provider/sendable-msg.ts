@@ -46,8 +46,8 @@ export class SendableMsg {
     return await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, { type: undefined, isDraft: undefined });
   }
 
-  public static createPgpInline = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[], options?: SendableMsgOptions): Promise<SendableMsg> => {
-    return await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, options ? options : { type: undefined, isDraft: undefined });
+  public static createPgpInline = async (acctEmail: string, headers: SendableMsgHeaders, body: string, attachments: Att[], options?: SendableMsgOptions): Promise<SendableMsg> => {
+    return await SendableMsg.createSendableMsg(acctEmail, headers, { "text/plain": body }, attachments, options ? options : { type: undefined, isDraft: undefined });
   }
 
   public static createPwdMsg = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[], options: SendableMsgOptions): Promise<SendableMsg> => {
