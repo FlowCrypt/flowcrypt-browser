@@ -75,7 +75,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
       const mimeEncodedPlainMessage = await Mime.encode(msgBody, { Subject: newMsg.subject }, atts);
       const encryptedMessage = await SmimeKey.encryptMessage({ pubkeys: x509certs, data: Buf.fromUtfStr(mimeEncodedPlainMessage) });
-      const data = encryptedMessage.data; 
+      const data = encryptedMessage.data;
       return await SendableMsg.createSMime(this.acctEmail, this.headers(newMsg), data, { isDraft: this.isDraft });
     }
     // openpgp
