@@ -112,9 +112,10 @@ export namespace Bm {
 }
 
 type Handler = Bm.AsyncRespondingHandler | Bm.AsyncResponselessHandler;
-export type Handlers = Dict<Handler>;
+type Handlers = Dict<Handler>;
 
 export class BgNotReadyErr extends Error { }
+// ts-prune-ignore-next
 export class TabIdRequiredError extends Error { }
 
 export class BrowserMsg {

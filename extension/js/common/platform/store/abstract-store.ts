@@ -14,7 +14,7 @@ import { SubscriptionInfo } from '../../api/account-servers/flowcrypt-com-api.js
 type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo | DomainRulesJson;
 export type StorageType = 'session' | 'local';
 export type FlatTypes = null | undefined | number | string | boolean;
-export type Storable = FlatTypes | string[] | KeyInfo[] | Dict<StoredReplyDraftMeta> | Dict<StoredComposeDraftMeta> | Dict<StoredAdminCode>
+type Storable = FlatTypes | string[] | KeyInfo[] | Dict<StoredReplyDraftMeta> | Dict<StoredComposeDraftMeta> | Dict<StoredAdminCode>
   | SubscriptionInfo | GmailRes.OpenId | DomainRulesJson;
 export type Serializable = SerializableTypes | SerializableTypes[] | Dict<SerializableTypes> | Dict<SerializableTypes>[];
 

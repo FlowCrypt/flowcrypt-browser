@@ -31,7 +31,7 @@ export const injectFcIntoWebmail = () => {
   }
 };
 
-export const injectContentScriptIntoTabIfNeeded = (tabId: number, files: string[]) => {
+const injectContentScriptIntoTabIfNeeded = (tabId: number, files: string[]) => {
   isContentScriptInjectionNeeded(tabId, (alreadyInjected) => {
     if (!alreadyInjected) {
       console.info("Injecting FlowCrypt into tab " + tabId);

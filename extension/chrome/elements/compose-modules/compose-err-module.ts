@@ -17,8 +17,8 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AjaxErrMsgs } from '../../../js/common/api/shared/api-error.js';
 
-export class ComposerUserError extends Error { }
-export class ComposerNotReadyError extends ComposerUserError { }
+class ComposerUserError extends Error { }
+class ComposerNotReadyError extends ComposerUserError { }
 export class ComposerResetBtnTrigger extends Error { }
 
 export const PUBKEY_LOOKUP_RESULT_FAIL: 'fail' = 'fail';

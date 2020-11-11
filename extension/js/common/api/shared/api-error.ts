@@ -9,14 +9,14 @@ import { Str } from '../../core/common.js';
 interface StandardErrRes { error: StandardError; }
 interface StandardError { code: number | null; message: string; internal: string | null; data?: string; stack?: string; }
 
-export interface RawAjaxErr {
+interface RawAjaxErr {
   readyState: number;
   responseText?: string;
   status?: number;
   statusText?: string;
 }
 
-export abstract class AuthErr extends Error { }
+abstract class AuthErr extends Error { }
 export class GoogleAuthErr extends AuthErr { }
 export class BackendAuthErr extends AuthErr { }
 

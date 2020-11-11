@@ -26,7 +26,7 @@ type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refr
 type AuthResultSuccess = { result: 'Success', acctEmail: string, id_token: string, error?: undefined };
 type AuthResultError = { result: GoogleAuthWindowResult$result, acctEmail?: string, error?: string, id_token: undefined };
 
-export type AuthReq = { acctEmail?: string, scopes: string[], messageId?: string, csrfToken: string };
+type AuthReq = { acctEmail?: string, scopes: string[], messageId?: string, csrfToken: string };
 export type AuthRes = AuthResultSuccess | AuthResultError;
 
 export class GoogleAuth {

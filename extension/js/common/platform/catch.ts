@@ -5,7 +5,7 @@
 import { VERSION } from '../core/const.js';
 
 export class UnreportableError extends Error { }
-export type ObjWithStack = { stack: string };
+type ObjWithStack = { stack: string };
 
 export class Catch {
 

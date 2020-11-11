@@ -9,8 +9,7 @@ import { Buf } from '../../core/buf.js';
 import { RecipientType } from '../shared/api.js';
 import { KeyStore } from '../../platform/store/key-store.js';
 
-export type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
-export type ProviderContactsQuery = { substring: string };
+type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
 
 type SendableMsgHeaders = {
   headers?: Dict<string>;

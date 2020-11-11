@@ -11,7 +11,7 @@ import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key.js';
 
 // tslint:disable:no-null-keyword
 
-export type DbContactObjArg = {
+type DbContactObjArg = {
   email: string,
   name?: string | null,
   client?: 'pgp' | 'cryptup' | PgpClient | null,
@@ -38,7 +38,7 @@ export type ContactUpdate = {
   expiresOn?: number | null;
 };
 
-export type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number };
+type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number };
 
 /**
  * Store of contacts and their public keys
