@@ -64,7 +64,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
 
   public handleSendErr = async (e: any) => {
     if (ApiErr.isNetErr(e)) {
-      const netErrMsg = 'Could not send message due to network error. Please check your internet connection and try again.\n';
+      let netErrMsg = 'Could not send message due to network error. Please check your internet connection and try again.\n';
       netErrMsg += '(This may also be caused by <a href="https://flowcrypt.com/docs/help/compatibility.html">missing extension permissions</a>.)';
       await Ui.modal.error(netErrMsg);
     } else if (ApiErr.isAuthErr(e)) {
