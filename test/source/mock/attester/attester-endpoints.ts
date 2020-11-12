@@ -34,7 +34,7 @@ const getDC26454AFB71D18EABBAD73D1C7E6D3C5563A941 = () => {
     .replace(/=\r\n/g, '').replace(/=3D/g, '=');
 
   return dhartleyPubkey;
-}
+};
 
 export const mockAttesterEndpoints: HandlersDefinition = {
   '/attester/pub/?': async ({ body }, req) => {
