@@ -92,14 +92,14 @@ export class Mime {
     if (decoded.signature) {
       for (const block of blocks) {
         if (block.type === 'plainText') {
-          block.type = 'signedMsg';
+          block.type = 'signedText';
           block.signature = decoded.signature;
         } else if (block.type === 'plainHtml') {
           block.type = 'signedHtml';
           block.signature = decoded.signature;
         }
       }
-      if (!blocks.find(block => block.type === 'plainText' || block.type === 'plainHtml' || block.type === 'signedMsg' || block.type === 'signedHtml')) { // signed an empty message
+      if (!blocks.find(block => ['plainText', 'plainHtml', 'signedMsg', 'signedHtml', 'signedText'].includes(block.type))) { // signed an empty message
         blocks.push(new MsgBlock("signedMsg", "", true, decoded.signature));
       }
     }
