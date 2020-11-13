@@ -4,7 +4,7 @@ import * as ava from 'ava';
 
 import { Consts } from '../../test';
 
-export type AvaContext = ava.ExecutionContext<{}> & { retry?: true, attemptNumber?: number, totalAttempts?: number, attemptText?: string };
+export type AvaContext = ava.ExecutionContext<unknown> & { retry?: true, attemptNumber?: number, totalAttempts?: number, attemptText?: string };
 
 const MAX_ATT_SIZE = 5 * 1024 * 1024;
 
