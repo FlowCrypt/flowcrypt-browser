@@ -47,7 +47,6 @@ let closeMockApi: () => Promise<void>;
 const mockApiLogs: string[] = [];
 
 ava.before('set config and mock api', async t => {
-  t.timeout(consts.TIMEOUT_OVERALL);
   standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY, t.title);
   Config.extensionId = await browserPool.getExtensionId(t);
   console.info(`Extension url: chrome-extension://${Config.extensionId}`);
@@ -60,7 +59,6 @@ ava.before('set config and mock api', async t => {
 
 const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>, flag?: 'FAILING'): ava.Implementation<{}> => {
   return async (t: AvaContext) => {
-    t.timeout(consts.TIMEOUT_OVERALL);
     await browserPool.withNewBrowserTimeoutAndRetry(async (t, browser) => {
       if (acct) {
         await BrowserRecipe.setUpCommonAcct(t, browser, acct);
@@ -74,7 +72,6 @@ const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, brows
 export type TestWithBrowser = typeof testWithBrowser;
 
 ava.after.always('close browsers', async t => {
-  t.timeout(consts.TIMEOUT_OVERALL);
   standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
   await browserPool.close();
   t.pass();
@@ -82,7 +79,6 @@ ava.after.always('close browsers', async t => {
 
 if (isMock) {
   ava.after.always('close mock api', async t => {
-    t.timeout(consts.TIMEOUT_OVERALL);
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
     closeMockApi().catch(t.log);
     t.pass();
@@ -90,7 +86,6 @@ if (isMock) {
 }
 
 ava.after.always('evaluate Catch.reportErr errors', async t => {
-  t.timeout(consts.TIMEOUT_OVERALL);
   if (!isMock || testGroup !== 'STANDARD-GROUP') { // can only collect reported errs when running with a mocked api
     t.pass();
     return;
@@ -120,7 +115,6 @@ ava.after.always('evaluate Catch.reportErr errors', async t => {
 });
 
 ava.after.always('send debug info if any', async t => {
-  t.timeout(consts.TIMEOUT_OVERALL);
   console.info('send debug info - deciding');
   const failRnd = Util.lousyRandom();
   const testId = `FlowCrypt Browser Extension ${testVariant} ${failRnd}`;
