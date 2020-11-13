@@ -13,7 +13,7 @@ export class ContactStore {
     return result;
   }
 
-  public static obj = async ({ email, name, client, pubkey }: any): Promise<Contact> => {
+  public static obj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig }: any): Promise<Contact> => {
     const pk = await KeyUtil.parse(pubkey);
     const contact = {
       email,
@@ -22,7 +22,11 @@ export class ContactStore {
       pubkey: pk,
       fingerprint: pk.id,
       longid: OpenPGPKey.fingerprintToLongid(pk.id),
-      longids: pk.allIds.map(id => OpenPGPKey.fingerprintToLongid(id))
+      longids: pk.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)),
+      pending_lookup: pendingLookup,
+      last_use: lastUse,
+      pubkey_last_check: lastCheck,
+      pubkey_last_sig: lastSig
     } as Contact;
     return contact;
   }
