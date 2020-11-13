@@ -9,7 +9,7 @@ import { Buf } from './buf.js';
 
 export type KeyBlockType = 'publicKey' | 'privateKey' | 'certificate';
 export type ReplaceableMsgBlockType = KeyBlockType | 'signedMsg' | 'encryptedMsg';
-export type MsgBlockType = ReplaceableMsgBlockType | 'plainText' | 'decryptedText' | 'plainHtml' | 'decryptedHtml' | 'plainAtt' | 'encryptedAtt'
+export type MsgBlockType = ReplaceableMsgBlockType | 'plainText' | 'signedText' | 'plainHtml' | 'decryptedHtml' | 'plainAtt' | 'encryptedAtt'
   | 'decryptedAtt' | 'encryptedAttLink' | 'decryptErr' | 'verifiedMsg' | 'signedHtml';
 
 export class MsgBlock {

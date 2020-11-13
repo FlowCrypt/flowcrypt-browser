@@ -6,6 +6,8 @@ import { HandlersDefinition } from '../all-apis-mock';
 import { isPost, isGet } from '../lib/mock-util';
 import { oauth } from '../lib/oauth';
 import { expect } from 'chai';
+import { GoogleData } from '../google/google-data';
+import { Buf } from '../../core/buf';
 
 // tslint:disable:no-blank-lines-func
 
@@ -17,6 +19,22 @@ const knownMockEmails = [
   'flowcrypt.test.key.used.pgp@gmail.com',
   'flowcrypt.test.key.recovered@gmail.com',
 ];
+
+let data: GoogleData;
+
+const getDC26454AFB71D18EABBAD73D1C7E6D3C5563A941 = () => {
+  if (!data) {
+    data = new GoogleData('flowcrypt.compatibility@gmail.com');
+  }
+
+  const msg = data.getMessage('1754cfc37886899e')!;
+  const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
+  const dhartleyPubkey = msgText
+    .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
+    .replace(/=\r\n/g, '').replace(/=3D/g, '=');
+
+  return dhartleyPubkey;
+};
 
 export const mockAttesterEndpoints: HandlersDefinition = {
   '/attester/pub/?': async ({ body }, req) => {
@@ -38,6 +56,9 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       }
       if (emailOrLongid === 'flowcrypt.compatibility@protonmail.com') {
         return protonMailCompatKey;
+      }
+      if (['dhartley@verdoncollege.school.nz', 'DC26454AFB71D18EABBAD73D1C7E6D3C5563A941'.toLowerCase()].includes(emailOrLongid)) {
+        return getDC26454AFB71D18EABBAD73D1C7E6D3C5563A941();
       }
       if (emailOrLongid.startsWith('martin@p')) {
         return mpVerificationKey;

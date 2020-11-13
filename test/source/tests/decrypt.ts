@@ -317,6 +317,18 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(urls.length).to.be.equal(1);
     }));
 
+    ava.default('decrypt - thunderbird - signed text is recognized', testWithBrowser('compatibility', async (t, browser) => {
+      const threadId = '1754cfc37886899e';
+      const acctEmail = 'flowcrypt.compatibility@gmail.com';
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+      await inboxPage.waitAll('iframe', { timeout: 1000000 });
+      const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
+      expect(urls.length).to.equal(1);
+      const url = urls[0].split('/chrome/elements/pgp_block.htm')[1];
+      const signature = ['Dhartley@Verdoncollege.School.Nz', 'matching signature'];
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: url, content: ['1234'], signature });
+    }));
+
     ava.default('decrypt - protonmail - load pubkey into contact + verify detached msg', testWithBrowser('compatibility', async (t, browser) => {
       const textParams = `?frameId=none&message=&msgId=16a9c109bc51687d&` +
         `senderEmail=mismatch%40mail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com`;
