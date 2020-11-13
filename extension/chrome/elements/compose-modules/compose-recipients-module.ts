@@ -65,7 +65,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       preventSearchContacts = this.recipientInputKeydownHandler(e);
     }));
     inputs.on('blur', this.view.setHandler((target, e) => this.inputsBlurHandler(target, e)));
-    inputs.on('dragenter', this.view.setHandler((target, e) => this.inputsDragEnterHandler(target)));
+    inputs.on('dragenter', this.view.setHandler((target) => this.inputsDragEnterHandler(target)));
     inputs.on('dragleave', this.view.setHandler((target) => this.inputsDragLeaveHandler(target)));
     inputs.on('dragover', (e) => e.preventDefault());
     inputs.on('drop', this.view.setHandler((target) => this.inputsDropHandler(target)));
@@ -77,7 +77,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       const newContainer = this.view.S.cached('input_addresses_container_outer').find(`#input-container-bcc`);
       this.copyCcBccActionsClickHandler(target, newContainer);
     }));
-    this.view.S.cached('recipients_placeholder').click(this.view.setHandler((target) => {
+    this.view.S.cached('recipients_placeholder').click(this.view.setHandler(() => {
       this.view.S.cached('input_to').focus();
     }));
     this.view.S.cached('input_to').focus(this.view.setHandler(() => this.focusRecipients()));

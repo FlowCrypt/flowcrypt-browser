@@ -21,6 +21,7 @@ module.exports = {
     'header'
   ],
   rules: {
+    '@typescript-eslint/no-unused-vars': ['error'],
     'indent': ['error', 2, { SwitchCase: 1 }],
     'max-len': ['error', { code: 190 }],
     'semi': 'error',

@@ -13,7 +13,7 @@ export class ContactStore {
     return result;
   }
 
-  public static obj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig }: any): Promise<Contact> => {
+  public static obj = async ({ email, name, client, pubkey }: any): Promise<Contact> => {
     const pk = await KeyUtil.parse(pubkey);
     const contact = {
       email,

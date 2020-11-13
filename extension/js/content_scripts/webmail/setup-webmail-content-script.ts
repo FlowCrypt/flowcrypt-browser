@@ -148,7 +148,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
       if (!$('#cryptup_dialog').length) {
         $('body').append(factory.dialogPassphrase(longids, type)) // xss-safe-factory;
-          .click(Ui.event.handle(e => { // click on the area outside the iframe
+          .click(Ui.event.handle(() => { // click on the area outside the iframe
             BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
             $('#cryptup_dialog').remove();
           }));
