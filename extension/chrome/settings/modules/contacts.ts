@@ -136,7 +136,7 @@ View.run(class ContactsView extends View {
       `Usable for signing: ${contact?.pubkey?.usableForSigning}`,
     ].join('\n'));
     $('#view_contact').css('display', 'block');
-    $('#page_back_button').click(this.setHandler(el => this.loadAndRenderContactList()));
+    $('#page_back_button').click(this.setHandler(() => this.loadAndRenderContactList()));
   }
 
   private actionRenderChangePublicKeyHandler = (changePubkeyButton: HTMLElement) => {
@@ -145,7 +145,7 @@ View.run(class ContactsView extends View {
     Xss.sanitizeRender('h1', `${this.backBtn}${this.space}${Xss.escape(email)}${this.space}(edit)`);
     $('#edit_contact').css('display', 'block');
     $('#edit_contact .input_pubkey').val('').attr('email', email);
-    $('#page_back_button').click(this.setHandler(el => this.loadAndRenderContactList()));
+    $('#page_back_button').click(this.setHandler(() => this.loadAndRenderContactList()));
   }
 
   private actionSaveEditedPublicKeyHandler = async () => {
@@ -180,7 +180,7 @@ View.run(class ContactsView extends View {
     $('#bulk_import #processed').text('').css('display', 'none');
     $('#file_import').show();
     $('#file_import #fineuploader_button').css('display', 'inline-block');
-    $('#page_back_button').click(this.setHandler(el => this.loadAndRenderContactList()));
+    $('#page_back_button').click(this.setHandler(() => this.loadAndRenderContactList()));
   }
 
   private actionProcessBulkImportTextInput = async () => {

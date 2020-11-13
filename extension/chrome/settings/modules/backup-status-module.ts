@@ -16,7 +16,7 @@ import { Str } from '../../../js/common/core/common.js';
 export class BackupStatusModule extends ViewModule<BackupView> {
 
   public setHandlers = () => { // is run after checkAndRenderBackupStatus, which renders (some of) these fields first
-    $('#module_status .action_go_manual').click(this.view.setHandler(el => this.actionShowManualBackupHandler()));
+    $('#module_status .action_go_manual').click(this.view.setHandler(() => this.actionShowManualBackupHandler()));
     $('#module_status .action_go_add_key').click(this.view.setHandler(async () => await this.goTo('add_key.htm')));
   }
 

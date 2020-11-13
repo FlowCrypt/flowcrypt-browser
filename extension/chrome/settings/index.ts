@@ -149,12 +149,12 @@ View.run(class SettingsView extends View {
         Catch.report(`Unknown target page in element: ${target.outerHTML}`);
       }
     }));
-    $('.action_open_public_key_page').click(this.setHandler(async target => {
+    $('.action_open_public_key_page').click(this.setHandler(async () => {
       const ki = await KeyStore.getFirst(this.acctEmail!);
       const escapedFp = Xss.escape(ki.fingerprint);
       await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/my_key.htm', `&fingerprint=${escapedFp}`);
     }));
-    $('.action_show_encrypted_inbox').click(this.setHandler(target => {
+    $('.action_show_encrypted_inbox').click(this.setHandler(() => {
       window.location.href = Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: this.acctEmail! });
     }));
     $('.action_add_account').click(this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId)));
@@ -187,7 +187,7 @@ View.run(class SettingsView extends View {
       }, 500);
     }));
     this.altAccounts.keydown(this.setHandler((el, ev) => this.accountsMenuKeydownHandler(ev)));
-    this.altAccounts.find('a').on('mouseenter', Ui.event.handle((target, event) => {
+    this.altAccounts.find('a').on('mouseenter', Ui.event.handle((target) => {
       if (!preventAccountsMenuMouseenter) {
         $(target).focus();
       }

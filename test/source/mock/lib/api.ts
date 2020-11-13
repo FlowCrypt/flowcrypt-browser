@@ -78,7 +78,7 @@ export class Api<REQ, RES> {
   }
 
   public listen = (port: number, host = '127.0.0.1', maxMb = 100) => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       this.maxRequestSizeMb = maxMb;
       this.maxRequestSizeBytes = maxMb * 1024 * 1024;
       this.server.listen(port, host);
@@ -95,7 +95,7 @@ export class Api<REQ, RES> {
     return new Promise((resolve, reject) => this.server.close((err: any) => err ? reject(err) : resolve()));
   }
 
-  protected log = (req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => {
+  protected log = (req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     return undefined as void;
   }
 

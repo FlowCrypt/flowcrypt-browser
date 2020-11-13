@@ -6,7 +6,7 @@
 
   const wait = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 100));
 
-  const acceptCb = (cb: () => Promise<number | void>) => {
+  const acceptCb = (cb: () => Promise<number | void>) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     // nothing
   };
 

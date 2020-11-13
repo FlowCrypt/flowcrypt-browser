@@ -60,19 +60,16 @@ export const mockBackendEndpoints: HandlersDefinition = {
       domain_org_rules: mockBackendData.getOrgRules(parsed.account),
     });
   },
-  '/api/account/update': async ({ body }, req) => {
-    const parsed = throwIfNotPostWithAuth(body, req);
+  '/api/account/update': async ({ }, req) => {
     throw new Error(`${req.url} mock not implemented`);
   },
-  '/api/account/subscribe': async ({ body }, req) => {
-    const parsed = throwIfNotPostWithAuth(body, req);
+  '/api/account/subscribe': async ({ }, req) => {
     throw new Error(`${req.url} mock not implemented`);
   },
-  '/api/message/token': async ({ body }, req) => {
-    const parsed = throwIfNotPostWithAuth(body, req);
+  '/api/message/token': async () => {
     return { token: 'MT_xMOCKTOKEN' };
   },
-  '/api/help/error': async ({ body }, req) => {
+  '/api/help/error': async ({ body }) => {
     mockBackendData.reportedErrors.push(body as any);
     return { saved: true };
   },

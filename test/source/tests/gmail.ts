@@ -119,7 +119,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.default('mail.google.com - compose window opens', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
-      const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
+      await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
     }));
 
     ava.default('mail.google.com - decrypt message in offline mode', testWithBrowser('ci.tests.gmail', async (t, browser) => {

@@ -125,7 +125,7 @@ export class InboxView extends View {
     BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
       if (!$('#cryptup_dialog').length) {
         $('body').append(this.factory.dialogPassphrase(longids, type))  // xss-safe-factory;
-          .click(this.setHandler(e => { // click on the area outside the iframe
+          .click(this.setHandler(() => { // click on the area outside the iframe
             BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
             $('#cryptup_dialog').remove();
           }));

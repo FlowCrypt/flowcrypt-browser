@@ -134,17 +134,17 @@ ava.after.always('send debug info if any', async t => {
 
 
 if (testGroup === 'UNIT-TESTS') {
-  defineUnitNodeTests(testVariant, testWithBrowser);
+  defineUnitNodeTests(testVariant);
   defineUnitBrowserTests(testVariant, testWithBrowser);
 } else if (testGroup === 'FLAKY-GROUP') {
   defineFlakyTests(testVariant, testWithBrowser);
 } else {
   defineSetupTests(testVariant, testWithBrowser);
-  defineUnitNodeTests(testVariant, testWithBrowser);
+  defineUnitNodeTests(testVariant);
   defineComposeTests(testVariant, testWithBrowser);
   defineDecryptTests(testVariant, testWithBrowser);
   defineGmailTests(testVariant, testWithBrowser);
   defineSettingsTests(testVariant, testWithBrowser);
   defineElementTests(testVariant, testWithBrowser);
-  defineAcctTests(testVariant, testWithBrowser);
+  defineAcctTests(testVariant);
 }

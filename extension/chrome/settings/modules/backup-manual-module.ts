@@ -39,7 +39,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
 
   public setHandlers = () => {
     $('#module_manual input[name=input_backup_choice]').click(this.view.setHandler(el => this.actionSelectBackupMethodHandler(el)));
-    this.proceedBtn.click(this.view.setHandlerPrevent('double', el => this.actionManualBackupHandler()));
+    this.proceedBtn.click(this.view.setHandlerPrevent('double', () => this.actionManualBackupHandler()));
   }
 
   public doBackupOnEmailProvider = async (armoredKey: string) => {
@@ -67,9 +67,9 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     } else if (selected === 'file') {
       await this.backupAsFile(primaryKi);
     } else if (selected === 'print') {
-      await this.backupByBrint(primaryKi);
+      await this.backupByBrint();
     } else {
-      await this.backupRefused(primaryKi);
+      await this.backupRefused();
     }
   }
 
@@ -123,11 +123,11 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
     await this.view.renderBackupDone();
   }
 
-  private backupByBrint = async (primaryKi: KeyInfo) => { // todo - implement + add a non-encrypted print option
+  private backupByBrint = async () => { // todo - implement + add a non-encrypted print option
     throw new Error('not implemented');
   }
 
-  private backupRefused = async (ki: KeyInfo) => {
+  private backupRefused = async () => {
     await this.view.renderBackupDone(false);
   }
 

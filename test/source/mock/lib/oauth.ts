@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { HttpAuthErr, HttpClientErr, Status } from './api';
+import { HttpClientErr, Status } from './api';
 
 import { Buf } from '../../core/buf';
 import { Config } from '../../util';
@@ -99,7 +99,7 @@ export class OauthMock {
   }
 
   public isIdTokenValid = (idToken: string) => { // we verify mock idToken by checking if we ever issued it
-    const [header, data, sig] = idToken.split('.');
+    const [, data,] = idToken.split('.');
     const claims = JSON.parse(Buf.fromBase64UrlStr(data).toUtfStr());
     return (this.issuedIdTokensByAcct[claims.email] || []).includes(idToken);
   }

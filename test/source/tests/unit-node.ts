@@ -6,7 +6,6 @@ import { MsgBlock } from '../core/msg-block';
 import { MsgBlockParser } from '../core/msg-block-parser';
 import { PgpHash } from '../core/crypto/pgp/pgp-hash';
 import { TestVariant } from '../util';
-import { TestWithBrowser } from '../test';
 import { expect } from 'chai';
 import { KeyUtil, PrvKeyInfo } from '../core/crypto/key';
 import { UnreportableError } from '../platform/catch.js';
@@ -23,7 +22,7 @@ import { GoogleData, GmailParser, GmailMsg } from '../mock/google/google-data';
 // tslint:disable:no-unused-expression
 /* eslint-disable no-unused-expressions */
 
-export let defineUnitNodeTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
+export let defineUnitNodeTests = (testVariant: TestVariant) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 

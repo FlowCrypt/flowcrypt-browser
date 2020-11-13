@@ -57,7 +57,7 @@ View.run(class ChangePassPhraseView extends View {
   public setHandlers = () => {
     $('#step_0_enter_current .action_test_current_passphrase').click(this.setHandler(() => this.actionTestCurrentPassPhraseHandler()));
     $('#step_1_enter_new .action_set_pass_phrase').click(this.setHandler(el => this.actionSetPassPhraseHandler(el)));
-    $('#step_2_confirm_new .action_use_another').click(this.setHandler(el => this.actionUseAnotherPassPhraseHandler()));
+    $('#step_2_confirm_new .action_use_another').click(this.setHandler(() => this.actionUseAnotherPassPhraseHandler()));
     $('#step_2_confirm_new .action_change').click(this.setHandlerPrevent('double', () => this.actionDoChangePassPhraseHandler()));
     $('#current_pass_phrase').on('keydown', this.setEnterHandlerThatClicks('#step_0_enter_current .action_test_current_passphrase'));
     $('#new_pass_phrase').on('keydown', this.setEnterHandlerThatClicks('#step_1_enter_new .action_set_pass_phrase'));

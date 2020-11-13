@@ -10,7 +10,7 @@ let KEY_CACHE_WIPE_TIMEOUT: number;
 
 export class KeyCache {
 
-  public static setDecrypted = (k: Key) => {
+  public static setDecrypted = (k: Key) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     // todo - not yet used in browser extension, but planned to be enabled soon
     // Store.extendExpiry();
     // KEY_CACHE[keyLongid(k)] = k;
@@ -21,7 +21,7 @@ export class KeyCache {
     return KEY_CACHE[longid];
   }
 
-  public static setArmored = (armored: string, k: Key) => {
+  public static setArmored = (armored: string, k: Key) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     // todo - not yet used in browser extension, but planned to be enabled soon
     // Store.extendExpiry();
     // KEY_CACHE[armored] = k;

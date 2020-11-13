@@ -9,7 +9,6 @@ import { IntervalFunction, WebmailElementReplacer } from './setup-webmail-conten
 import { AjaxErr } from '../../common/api/shared/api-error.js';
 import { ApiErr } from '../../common/api/shared/api-error.js';
 import { Att } from '../../common/core/att.js';
-import { Browser } from '../../common/browser/browser.js';
 import { BrowserMsg } from '../../common/browser/browser-msg.js';
 import { Catch } from '../../common/platform/catch.js';
 import { Gmail } from '../../common/api/email-provider/gmail/gmail.js';
@@ -259,14 +258,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       for (const attsContainerEl of $(this.sel.attsContainerInner)) {
         const attsContainer = $(attsContainerEl);
         const newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.webmailNamePattern).addClass('evaluated');
-        const newPgpAttsNames = Browser.arrFromDomNodeList(newPgpAtts.find('.aV3')).map(x => $.trim($(x).text()));
         if (newPgpAtts.length) {
           const msgId = this.determineMsgId(attsContainer);
           if (msgId) {
             Xss.sanitizePrepend(newPgpAtts, this.factory.embeddedAttaStatus('Getting file info..' + Ui.spinner('green')));
             try {
               const msg = await this.gmail.msgGet(msgId, 'full');
-              await this.processAtts(msgId, GmailParser.findAtts(msg), attsContainer, false, newPgpAttsNames);
+              await this.processAtts(msgId, GmailParser.findAtts(msg), attsContainer, false);
             } catch (e) {
               if (ApiErr.isAuthErr(e)) {
                 this.notifications.showAuthPopupNeeded(this.acctEmail);
@@ -290,7 +288,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private processAtts = async (msgId: string, attMetas: Att[], attsContainerInner: JQueryEl | HTMLElement, skipGoogleDrive: boolean, newPgpAttsNames: string[] = []) => {
+  private processAtts = async (msgId: string, attMetas: Att[], attsContainerInner: JQueryEl | HTMLElement, skipGoogleDrive: boolean) => {
     let msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
     const senderEmail = this.getSenderEmail(msgEl);
     const isOutgoing = !!this.sendAs[senderEmail];
