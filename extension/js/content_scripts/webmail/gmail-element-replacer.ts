@@ -9,7 +9,6 @@ import { IntervalFunction, WebmailElementReplacer } from './setup-webmail-conten
 import { AjaxErr } from '../../common/api/shared/api-error.js';
 import { ApiErr } from '../../common/api/shared/api-error.js';
 import { Att } from '../../common/core/att.js';
-import { Browser } from '../../common/browser/browser.js';
 import { BrowserMsg } from '../../common/browser/browser-msg.js';
 import { Catch } from '../../common/platform/catch.js';
 import { Gmail } from '../../common/api/email-provider/gmail/gmail.js';
@@ -259,14 +258,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       for (const attsContainerEl of $(this.sel.attsContainerInner)) {
         const attsContainer = $(attsContainerEl);
         const newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.webmailNamePattern).addClass('evaluated');
-        const newPgpAttsNames = Browser.arrFromDomNodeList(newPgpAtts.find('.aV3')).map(x => $.trim($(x).text()));
         if (newPgpAtts.length) {
           const msgId = this.determineMsgId(attsContainer);
           if (msgId) {
             Xss.sanitizePrepend(newPgpAtts, this.factory.embeddedAttaStatus('Getting file info..' + Ui.spinner('green')));
             try {
               const msg = await this.gmail.msgGet(msgId, 'full');
-              await this.processAtts(msgId, GmailParser.findAtts(msg), attsContainer, false, newPgpAttsNames);
+              await this.processAtts(msgId, GmailParser.findAtts(msg), attsContainer, false);
             } catch (e) {
               if (ApiErr.isAuthErr(e)) {
                 this.notifications.showAuthPopupNeeded(this.acctEmail);
@@ -290,7 +288,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private processAtts = async (msgId: string, attMetas: Att[], attsContainerInner: JQueryEl | HTMLElement, skipGoogleDrive: boolean, newPgpAttsNames: string[] = []) => {
+  private processAtts = async (msgId: string, attMetas: Att[], attsContainerInner: JQueryEl | HTMLElement, skipGoogleDrive: boolean) => {
     let msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
     const senderEmail = this.getSenderEmail(msgEl);
     const isOutgoing = !!this.sendAs[senderEmail];
@@ -394,7 +392,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
     const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ data: Buf.fromUint8(downloadedAtt.data.subarray(0, 1000)).toBase64Str() }); // base64 for FF, see #2587
     if (openpgpType && openpgpType.type === 'publicKey') {
-      this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedPubkey(downloadedAtt.data.toUtfStr(), isOutgoing)); // xss-safe-factory
+      this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'after', this.factory.embeddedPubkey(downloadedAtt.data.toUtfStr(), isOutgoing)); // xss-safe-factory
     } else {
       attSel.show().addClass('attachment_processed').children('.attachment_loader').text('Unknown Public Key Format');
       nRenderedAtts++;
@@ -453,7 +451,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
    *
    * new_html_content must be XSS safe
    */ // tslint:disable-next-line:variable-name
-  private updateMsgBodyEl_DANGEROUSLY(el: HTMLElement | JQueryEl, method: 'set' | 'append', newHtmlContent_MUST_BE_XSS_SAFE: string) {  // xss-dangerous-function
+  private updateMsgBodyEl_DANGEROUSLY(el: HTMLElement | JQueryEl, method: 'set' | 'append' | 'after', newHtmlContent_MUST_BE_XSS_SAFE: string): JQueryEl {  // xss-dangerous-function
     // Messages in Gmail UI have to be replaced in a very particular way
     // The first time we update element, it should be completely replaced so that Gmail JS will lose reference to the original element and stop re-rendering it
     // Gmail message re-rendering causes the PGP message to flash back and forth, confusing the user and wasting cpu time
@@ -472,12 +470,16 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     } else if (method === 'append') {
       if (replace) {
         const parent = msgBody.parent();
-        msgBody.replaceWith(this.wrapMsgBodyEl(msgBody.html() + newHtmlContent_MUST_BE_XSS_SAFE)); // xss-reinsert // xss-safe-value
-        this.ensureHasParentNode(msgBody); // Gmail is using msgBody.parentNode (#2271)
+        const wrapper = msgBody.wrap(this.wrapMsgBodyEl(''));
+        wrapper.append(newHtmlContent_MUST_BE_XSS_SAFE); // xss-reinsert // xss-safe-value
+        this.ensureHasParentNode(wrapper); // Gmail is using msgBody.parentNode (#2271)
         return parent.find('.message_inner_body'); // need to return new selector - old element was replaced
       } else {
         return msgBody.append(newHtmlContent_MUST_BE_XSS_SAFE); // xss-safe-value
       }
+    } else if (method === 'after') {
+      msgBody.after(newHtmlContent_MUST_BE_XSS_SAFE);
+      return msgBody;
     } else {
       throw new Error('Unknown update_message_body_element method:' + method);
     }

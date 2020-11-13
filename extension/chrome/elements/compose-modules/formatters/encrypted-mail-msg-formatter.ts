@@ -7,7 +7,7 @@ import { BaseMailFormatter } from './base-mail-formatter.js';
 import { ComposerResetBtnTrigger } from '../compose-err-module.js';
 import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
 import { NewMsgData } from '../compose-types.js';
-import { Str, Value } from '../../../../js/common/core/common.js';
+import { Str, Url, Value } from '../../../../js/common/core/common.js';
 import { ApiErr } from '../../../../js/common/api/shared/api-error.js';
 import { Att } from '../../../../js/common/core/att.js';
 import { Buf } from '../../../../js/common/core/buf.js';
@@ -24,6 +24,7 @@ import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
 import { FlowCryptWebsite } from '../../../../js/common/api/flowcrypt-website.js';
 import { AccountServer } from '../../../../js/common/api/account-server.js';
 import { FcUuidAuth } from '../../../../js/common/api/account-servers/flowcrypt-com-api.js';
+import { SmimeKey } from '../../../../js/common/core/crypto/smime/smime-key.js';
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
@@ -62,14 +63,25 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const { data: pubEncryptedNoAtts } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeNoAtts), undefined, pubs, signingPrv); // encrypted only for pubs
     const atts = this.createPgpMimeAtts(pubEncryptedNoAtts).concat(await this.view.attsModule.attach.collectEncryptAtts(pubs)); // encrypted only for pubs
     const emailIntroAndLinkBody = await this.formatPwdEncryptedMsgBodyLink(short);
-    return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: emailIntroAndLinkBody, atts, isDraft: this.isDraft });
+    return await SendableMsg.createPwdMsg(this.acctEmail, this.headers(newMsg), emailIntroAndLinkBody, atts, { isDraft: this.isDraft });
   }
 
-  private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key) => {
-    const atts = this.isDraft ? [] : await this.view.attsModule.attach.collectEncryptAtts(pubs);
-    const { data: encryptedBody, type } = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
-    const mimeType = type === 'smime' ? 'smimeEncrypted' : undefined;
-    return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: { "encrypted/buf": Buf.fromUint8(encryptedBody) }, type: mimeType, atts, isDraft: this.isDraft });
+  private sendableSimpleTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {
+    // todo - choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport is called later inside encryptDataArmor, could be refactored
+    const pubsForEncryption = KeyUtil.choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport(pubs);
+    const x509certs = pubsForEncryption.filter(pub => pub.type === 'x509');
+    if (x509certs.length) { // s/mime
+      const atts: Att[] = this.isDraft ? [] : await this.view.attsModule.attach.collectAtts(); // collects attachments
+      const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
+      const mimeEncodedPlainMessage = await Mime.encode(msgBody, { Subject: newMsg.subject }, atts);
+      const encryptedMessage = await SmimeKey.encryptMessage({ pubkeys: x509certs, data: Buf.fromUtfStr(mimeEncodedPlainMessage) });
+      const data = encryptedMessage.data;
+      return await SendableMsg.createSMime(this.acctEmail, this.headers(newMsg), data, { isDraft: this.isDraft });
+    } else { // openpgp
+      const atts: Att[] = this.isDraft ? [] : await this.view.attsModule.attach.collectEncryptAtts(pubs);
+      const encrypted = await this.encryptDataArmor(Buf.fromUtfStr(newMsg.plaintext), undefined, pubs, signingPrv);
+      return await SendableMsg.createPgpInline(this.acctEmail, this.headers(newMsg), Buf.fromUint8(encrypted.data).toUtfStr(), atts, { isDraft: this.isDraft });
+    }
   }
 
   private sendableRichTextMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], signingPrv?: Key) => {
@@ -77,7 +89,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const pgpMimeToEncrypt = await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject }, plainAtts);
     const { data: encrypted } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubs, signingPrv);
     const atts = this.createPgpMimeAtts(encrypted);
-    return await SendableMsg.create(this.acctEmail, { ...this.headers(newMsg), body: {}, atts, type: 'pgpMimeEncrypted', isDraft: this.isDraft });
+    return await SendableMsg.createPgpMime(this.acctEmail, this.headers(newMsg), atts, { isDraft: this.isDraft });
   }
 
   private createPgpMimeAtts = (data: Uint8Array) => {
@@ -143,8 +155,12 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       return undefined;
     }
     for (const myKey of pubs.filter(ap => ap.isMine)) {
-      if (await myKey.pubkey.usableButExpired) {
-        const path = chrome.runtime.getURL(`chrome/settings/index.htm?acctEmail=${encodeURIComponent(myKey.email)}&page=%2Fchrome%2Fsettings%2Fmodules%2Fmy_key_update.htm`);
+      if (myKey.pubkey.usableButExpired) {
+        const path = Url.create(chrome.runtime.getURL('chrome/settings/index.htm'), {
+          acctEmail: myKey.email,
+          page: '/chrome/settings/modules/my_key_update.htm',
+          pageUrlParams: JSON.stringify({ fingerprint: myKey.pubkey.id }),
+        });
         const errModalLines = [
           'This message could not be encrypted because your own Private Key is expired.',
           '',

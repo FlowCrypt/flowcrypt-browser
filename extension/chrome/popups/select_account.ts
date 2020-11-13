@@ -42,7 +42,7 @@ View.run(class SelectAcctPopupView extends View {
 
   public setHandlers = () => {
     $('ul.emails a').click(this.setHandler(el => this.actionChooseAcctHandler(el)));
-    $('.action_add_account').click(this.setHandler(el => this.actionRedirectToAddAcctPageHandler()));
+    $('.action_add_account').click(this.setHandler(() => this.actionRedirectToAddAcctPageHandler()));
   }
 
   private actionChooseAcctHandler = async (clickedElement: HTMLElement) => {

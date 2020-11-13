@@ -17,15 +17,13 @@ export class KeyStore extends AbstractStore {
     if (!fingerprints) {
       return keys;
     }
-    return keys.filter(ki => {
-      if (fingerprints.includes('primary') && ki.primary) {
-        return true;
-      }
-      if (fingerprints.includes(ki.fingerprint)) {
-        return true;
-      }
-      return false;
-    });
+    return keys.filter(ki => fingerprints.includes(ki.fingerprint));
+  }
+
+  public static getFirst = async (acctEmail: string): Promise<KeyInfo> => {
+    const stored = await AcctStore.get(acctEmail, ['keys']);
+    const keys: KeyInfo[] = stored.keys || [];
+    return keys[0];
   }
 
   public static getAllWithPp = async (acctEmail: string): Promise<KeyInfo[]> => {
@@ -45,12 +43,12 @@ export class KeyStore extends AbstractStore {
     }
     for (const i in keyinfos) {
       if (prv.id === keyinfos[i].fingerprint) { // replacing a key
-        keyinfos[i] = await KeyStore.keyInfoObj(prv, keyinfos[i].primary);
+        keyinfos[i] = await KeyStore.keyInfoObj(prv);
         updated = true;
       }
     }
     if (!updated) {
-      keyinfos.push(await KeyStore.keyInfoObj(prv, keyinfos.length === 0));
+      keyinfos.push(await KeyStore.keyInfoObj(prv));
     }
     await AcctStore.set(acctEmail, { keys: keyinfos });
   }
@@ -75,10 +73,10 @@ export class KeyStore extends AbstractStore {
     return result;
   }
 
-  public static keyInfoObj = async (prv: Key, primary = false): Promise<KeyInfo> => {
+  public static keyInfoObj = async (prv: Key): Promise<KeyInfo> => {
     const pubArmor = KeyUtil.armor(await KeyUtil.asPublicKey(prv));
     const longid = OpenPGPKey.fingerprintToLongid(prv.id);
-    return { private: KeyUtil.armor(prv), public: pubArmor, primary, longid, fingerprint: prv.id };
+    return { private: KeyUtil.armor(prv), public: pubArmor, longid, fingerprint: prv.id };
   }
 
 }

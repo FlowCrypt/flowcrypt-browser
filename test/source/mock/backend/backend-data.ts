@@ -45,7 +45,7 @@ export class BackendData {
     };
   }
 
-  public getSubscription = (acct: string) => {
+  public getSubscription = (acct: string) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     return { level: null, expire: null, method: null, expired: null };
   }
 

@@ -91,7 +91,7 @@ span.gray { color: #b7b7b7; }
 .gray_label.short { min-width: 0; }
 
 .green_label {
-  color: white;
+  color: white !important;
   background-color: #31a217;
 }
 
@@ -165,6 +165,8 @@ span.gray { color: #b7b7b7; }
   margin-top: 0;
 }
 .button_secure.green { background: #31a217; }
+
+.hidden { display: none !important; }
 
 .toggle_show_hide_pass_phrase {
   user-select: none;
@@ -1449,6 +1451,12 @@ table#compose.not-encrypted td.input .collapsed .email_preview .email_address {
 }
 table#compose td.recipients-inputs { vertical-align: middle; }
 
+table#compose td.recipients-inputs .small_spinner,
+table#compose td.recipients-inputs .small_spinner img {
+  width: 16px;
+  height: 16px;
+}
+
 table#compose td.recipients-inputs > div#input_addresses_container.invisible {
   height: 0;
   overflow: hidden;
@@ -1558,7 +1566,7 @@ table#compose td.recipients-inputs > div#input_addresses_container div .recipien
 table#compose td.recipients-inputs > div#input_addresses_container div span.container-cc-bcc-buttons {
   position: absolute;
   right: 8px;
-  bottom: 8px;
+  bottom: 6px;
   white-space: nowrap;
   color: #636c72;
 }
@@ -1569,6 +1577,13 @@ table#compose td.recipients-inputs > div#input_addresses_container div span.cont
   background: none;
   cursor: pointer;
   border: 0;
+  height: 24px;
+  outline: none;
+  box-shadow: 0 0 0 3px transparent;
+}
+
+table#compose td.recipients-inputs > div#input_addresses_container div span.container-cc-bcc-buttons button:focus {
+  box-shadow: 0 0 0 3px rgba(49, 162, 23, 0.4);
 }
 
 table#compose td.recipients-inputs > div#input_addresses_container div span.container-cc-bcc-buttons img {
@@ -1620,19 +1635,15 @@ table#compose th div.header > div.actions_container span img {
 }
 
 table#compose th div.header > div.actions_container span {
-  display: inline-block;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  margin-right: 10px;
   opacity: 0.7;
 }
 
-table#compose th div.header > div.actions_container span.minimize_new_message {
-  width: 10px;
-  border-bottom: 3px solid #fff;
-  box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  -webkit-box-sizing: border-box;
-}
 table#compose th div.header > div.actions_container span:hover { opacity: 1; }
 
 table#compose td {
@@ -1656,13 +1667,22 @@ table#compose td input {
 table#compose td.input.show_send_from select#input_from {
   border: none;
   background: none;
-  margin: -3px 4px 9px 4px;
+  height: 24px;
+  margin: 0 3px 3px;
+  padding: 0 3px;
   font-size: 1em;
   cursor: pointer;
   width: -moz-available;
   width: -webkit-fill-available;
   -moz-appearance: none;
+  outline: none;
+  box-shadow: 0 0 0 3px transparent;
 }
+
+table#compose td.input.show_send_from select#input_from:focus {
+  box-shadow: 0 0 0 3px rgba(49, 162, 23, 0.4);
+}
+
 .reply_box table#compose td.input.show_send_from select#input_from { margin-right: 4px; }
 
 table#compose td.input.show_send_from #input_from_settings {

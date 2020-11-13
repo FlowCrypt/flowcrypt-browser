@@ -34,13 +34,15 @@ export class SmimeKey {
     return key;
   }
 
+  /**
+   * @param data: an already encoded plain mime message
+   */
   public static encryptMessage = async ({ pubkeys, data }: { pubkeys: Key[], data: Uint8Array }): Promise<{ data: Uint8Array, type: 'smime' }> => {
     const p7 = forge.pkcs7.createEnvelopedData();
     for (const pubkey of pubkeys) {
       p7.addRecipient(forge.pki.certificateFromPem(KeyUtil.armor(pubkey)));
     }
-    const headers = `Content-Type: text/plain`;
-    p7.content = forge.util.createBuffer(headers + '\r\n\r\n' + data);
+    p7.content = forge.util.createBuffer(data);
     p7.encrypt();
     const derBuffer = forge.asn1.toDer(p7.toAsn1()).getBytes();
     const arr = [];

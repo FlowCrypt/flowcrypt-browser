@@ -277,17 +277,18 @@ abstract class ControllableBase {
   }
 
   public waitForContent = async (selector: string, regExpNeedle: string | RegExp, timeoutSec = 20, testLoopLengthMs = 100) => {
-    await this.waitAll(selector);
+    await this.waitAny(selector);
     const start = Date.now();
-    let text = '';
+    const texts: string[] = [];
     while (Date.now() - start < timeoutSec * 1000) {
-      text = await this.read(selector, true);
+      const text = await this.read(selector, true);
       if (text.match(regExpNeedle)) {
         return;
       }
+      texts.push(text);
       await Util.sleep(testLoopLengthMs / 1000);
     }
-    throw new Error(`Selector ${selector} was found but did not match "${regExpNeedle}" within ${timeoutSec}s. Last content: "${text}"`);
+    throw new Error(`Selector ${selector} was found but did not match "${regExpNeedle}" within ${timeoutSec}s. Last content: "${JSON.stringify(texts, undefined, 2)}"`);
   }
 
   public verifyContentIsPresentContinuously = async (selector: string, expectedText: string, expectPresentForMs: number = 3000, timeoutSec = 20) => {
@@ -527,7 +528,8 @@ export class ControllablePage extends ControllableBase {
     try {
       await this.page.waitForNavigation({ timeout: seconds * 1000 });
     } catch (e) {
-      if (e.message.indexOf('Navigation Timeout Exceeded') === 0) {
+      // can be "Navigation Timeout Exceeded" or "Navigation timeout of 5000 ms exceeded"
+      if (new RegExp('^Navigation timeout .*xceeded$').test(e.message)) {
         return;
       }
       throw e;

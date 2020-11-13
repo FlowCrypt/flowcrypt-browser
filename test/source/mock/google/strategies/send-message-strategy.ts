@@ -153,6 +153,8 @@ export class TestBySubjectStrategyContext {
       this.strategy = new PwdEncryptedMessageTestStrategy();
     } else if (subject.includes('Message With Image')) {
       this.strategy = new SaveMessageInStorageStrategy();
+    } else if (subject.includes('Message With Test Text')) {
+      this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('send with single S/MIME cert')) {
       this.strategy = new SmimeEncryptedMessageStrategy();
     } else if (subject.includes('send with several S/MIME certs')) {

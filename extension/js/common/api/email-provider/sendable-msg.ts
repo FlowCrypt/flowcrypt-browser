@@ -5,30 +5,72 @@
 import { Dict, Str } from '../../core/common.js';
 import { Mime, MimeEncodeType, SendableMsgBody } from '../../core/mime.js';
 import { Att } from '../../core/att.js';
+import { Buf } from '../../core/buf.js';
 import { RecipientType } from '../shared/api.js';
 import { KeyStore } from '../../platform/store/key-store.js';
 
-export type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
-export type ProviderContactsQuery = { substring: string };
+type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
 
-type SendableMsgDefinition = {
+type SendableMsgHeaders = {
   headers?: Dict<string>;
   from: string;
   recipients: Recipients;
   subject: string;
-  body: SendableMsgBody;
-  atts: Att[];
   thread?: string;
-  type?: MimeEncodeType,
-  isDraft?: boolean
 };
+
+type SendableMsgOptions = {
+  type?: MimeEncodeType,
+  isDraft?: boolean;
+};
+
+type SignMethod = (signable: string) => Promise<string>;
+
+type SendableMsgDefinition = SendableMsgHeaders
+  & SendableMsgOptions
+  & {
+    body?: SendableMsgBody;
+    atts?: Att[];
+  };
 
 export class SendableMsg {
 
   public sign?: (signable: string) => Promise<string>;
 
-  public static create = async (acctEmail: string, { from, recipients, subject, body, atts, thread, type, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
-    const [primaryKi] = await KeyStore.get(acctEmail, ['primary']);
+  public static createSMime = async (acctEmail: string, headers: SendableMsgHeaders, data: Uint8Array, options: SendableMsgOptions): Promise<SendableMsg> => {
+    return await SendableMsg.createSendableMsg(acctEmail, headers, { "encrypted/buf": Buf.fromUint8(data) }, [], { type: 'smimeEncrypted', isDraft: options.isDraft });
+  }
+
+  public static createPlain = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[]): Promise<SendableMsg> => {
+    return await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, { type: undefined, isDraft: undefined });
+  }
+
+  public static createPgpInline = async (acctEmail: string, headers: SendableMsgHeaders, body: string, attachments: Att[], options?: SendableMsgOptions): Promise<SendableMsg> => {
+    return await SendableMsg.createSendableMsg(acctEmail, headers, { "text/plain": body }, attachments, options ? options : { type: undefined, isDraft: undefined });
+  }
+
+  public static createPwdMsg = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[], options: SendableMsgOptions): Promise<SendableMsg> => {
+    return await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, { type: undefined, isDraft: options.isDraft });
+  }
+
+  public static createPgpMime = async (acctEmail: string, headers: SendableMsgHeaders, attachments: Att[], options?: SendableMsgOptions): Promise<SendableMsg> => {
+    return await SendableMsg.createSendableMsg(acctEmail, headers, {}, attachments, { type: (options ? 'pgpMimeEncrypted' : undefined), isDraft: (options ? options.isDraft : undefined) });
+  }
+
+  public static createPgpMimeSigned = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[], signMethod: SignMethod): Promise<SendableMsg> => {
+    const sendableMsg = await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, { type: 'pgpMimeSigned', isDraft: undefined });
+    sendableMsg.sign = signMethod;
+    return sendableMsg;
+  }
+
+  private static createSendableMsg = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[], options: SendableMsgOptions): Promise<SendableMsg> => {
+    const { from, recipients, subject, thread } = headers;
+    const { type, isDraft } = options;
+    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, atts: attachments, type, isDraft });
+  }
+
+  private static create = async (acctEmail: string, { from, recipients, subject, thread, body, atts, type, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
+    const primaryKi = await KeyStore.getFirst(acctEmail);
     const headers: Dict<string> = primaryKi ? { OpenPGP: `id=${primaryKi.longid}` } : {}; // todo - use autocrypt format
     return new SendableMsg(
       acctEmail,
@@ -37,7 +79,7 @@ export class SendableMsg {
       from,
       recipients,
       subject,
-      body,
+      body || {},
       atts || [],
       thread,
       type
@@ -64,13 +106,6 @@ export class SendableMsg {
     if (invalidEmails.length) {
       throw new Error(`The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`);
     }
-  }
-
-  public setSignMethod = (methodThatSignsData: (signable: string) => Promise<string>) => {
-    if (this.type !== 'pgpMimeSigned') {
-      throw new Error('Signing method may only be set on pgpMimeSigned type');
-    }
-    this.sign = methodThatSignsData;
   }
 
   public toMime = async () => {

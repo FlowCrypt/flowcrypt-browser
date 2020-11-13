@@ -6,7 +6,7 @@ import { isPut, isGet } from '../lib/mock-util';
 import { oauth } from '../lib/oauth';
 import { Dict } from '../../core/common';
 import { expect } from 'chai';
-import { KeyUtil, Key } from '../../core/crypto/key';
+import { KeyUtil } from '../../core/crypto/key';
 
 // tslint:disable:max-line-length
 /* eslint-disable max-len */
@@ -222,7 +222,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr(`Unknown method: ${req.method}`);
   },
-  '/flowcrypt-email-key-manager/keys/public/?': async ({ body }, req) => {
+  '/flowcrypt-email-key-manager/keys/public/?': async ({ }, req) => {
     if (!isGet(req)) {
       throw new Error(`keys/public: expecting GET, got ${req.method}`);
     }

@@ -1,0 +1,88 @@
+{
+  "acctEmail": "ci.tests.gmail@flowcrypt.dev",
+  "full": {
+    "id": "175b7fbc5a7f9575",
+    "threadId": "175b7fbc5a7f9575",
+    "labelIds": [
+      "DRAFT",
+      "INBOX"
+    ],
+    "snippet": "[flowcrypt:link:draft_compose:r-1145701417842669694] -----BEGIN PGP MESSAGE----- Version: FlowCrypt Email Encryption 7.9.8 Comment: Seamlessly send and receive encrypted email",
+    "payload": {
+      "partId": "",
+      "mimeType": "multipart/mixed",
+      "filename": "",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "multipart/mixed; boundary=\"----sinikael-?=_1-16051095331560.5346087056105024\""
+        },
+        {
+          "name": "Openpgp",
+          "value": "id=07481C8ACF9D49FE"
+        },
+        {
+          "name": "From",
+          "value": "ci.tests.gmail@flowcrypt.dev"
+        },
+        {
+          "name": "To",
+          "value": "human@flowcrypt.com"
+        },
+        {
+          "name": "Subject",
+          "value": "Test email to remember the contact"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 11 Nov 2020 07:45:31 -0800"
+        },
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        }
+      ],
+      "body": {
+        "size": 0
+      },
+      "parts": [
+        {
+          "partId": "0",
+          "mimeType": "text/plain",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "text/plain"
+            },
+            {
+              "name": "Content-Transfer-Encoding",
+              "value": "quoted-printable"
+            }
+          ],
+          "body": {
+            "size": 438,
+            "data": "W2Zsb3djcnlwdDpsaW5rOmRyYWZ0X2NvbXBvc2U6ci0xMTQ1NzAxNDE3ODQyNjY5Njk0XQ0KDQotLS0tLUJFR0lOIFBHUCBNRVNTQUdFLS0tLS0NClZlcnNpb246IEZsb3dDcnlwdCBFbWFpbCBFbmNyeXB0aW9uIDcuOS44DQpDb21tZW50OiBTZWFtbGVzc2x5IHNlbmQgYW5kIHJlY2VpdmUgZW5jcnlwdGVkIGVtYWlsDQoNCndWNERlV2ZnQ3RWdGRub1NBUWRBa3UwMFB5aXlPaGtqQnNzRFFvNWt2VGozOUlEZEZxcWEwSkE3R1dGeg0KQ2tZd2tNS1g1R3pTMUNxa2Y2SlJPS2N0am01YXFsanNxdkxPSGliRmpJSnBpeHBRV3dFSHYvNDFoZVJhDQoyc2huczZnaTBqd0JyNEZSeGpLVzF5NUFDMkNzM3lLSE9YT2FBakxZWWtHUm53U01RSjBQWHBvazlHNUsNClBvbkZxczdETEpER2ZoclBIY25JN2RRT1RMUWYwVW89DQo9cHU3Rg0KLS0tLS1FTkQgUEdQIE1FU1NBR0UtLS0tLQ0K"
+          }
+        }
+      ]
+    },
+    "sizeEstimate": 1119,
+    "historyId": "37547",
+    "internalDate": "1605109531000"
+  },
+  "attachments": {},
+  "raw": {
+    "id": "175b7fbc5a7f9575",
+    "threadId": "175b7fbc5a7f9575",
+    "labelIds": [
+      "DRAFT",
+      "INBOX"
+    ],
+    "snippet": "[flowcrypt:link:draft_compose:r-1145701417842669694] -----BEGIN PGP MESSAGE----- Version: FlowCrypt Email Encryption 7.9.8 Comment: Seamlessly send and receive encrypted email",
+    "sizeEstimate": 1119,
+    "raw": "UmVjZWl2ZWQ6IGZyb20gNzE3Mjg0NzMwMjQ0DQoJbmFtZWQgdW5rbm93bg0KCWJ5IGdtYWlsYXBpLmdvb2dsZS5jb20NCgl3aXRoIEhUVFBSRVNUOw0KCVdlZCwgMTEgTm92IDIwMjAgMDc6NDU6MzEgLTA4MDANCkNvbnRlbnQtVHlwZTogbXVsdGlwYXJ0L21peGVkOw0KIGJvdW5kYXJ5PSItLS0tc2luaWthZWwtPz1fMS0xNjA1MTA5NTMzMTU2MC41MzQ2MDg3MDU2MTA1MDI0Ig0KT3BlbnBncDogaWQ9MDc0ODFDOEFDRjlENDlGRQ0KRnJvbTogY2kudGVzdHMuZ21haWxAZmxvd2NyeXB0LmRldg0KVG86IGh1bWFuQGZsb3djcnlwdC5jb20NClN1YmplY3Q6IFRlc3QgZW1haWwgdG8gcmVtZW1iZXIgdGhlIGNvbnRhY3QNCkRhdGU6IFdlZCwgMTEgTm92IDIwMjAgMDc6NDU6MzEgLTA4MDANCk1lc3NhZ2UtSWQ6IDxDQU85Rlk5dmkwTHFQUWlvR3k2TmpxeTQ5WW9BSnhTRjQ1ZWdTeXlOWGhCY1VSa3lfdmdAbWFpbC5nbWFpbC5jb20-DQpNSU1FLVZlcnNpb246IDEuMA0KDQotLS0tLS1zaW5pa2FlbC0_PV8xLTE2MDUxMDk1MzMxNTYwLjUzNDYwODcwNTYxMDUwMjQNCkNvbnRlbnQtVHlwZTogdGV4dC9wbGFpbg0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogcXVvdGVkLXByaW50YWJsZQ0KDQpbZmxvd2NyeXB0Omxpbms6ZHJhZnRfY29tcG9zZTpyLTExNDU3MDE0MTc4NDI2Njk2OTRdDQoNCi0tLS0tQkVHSU4gUEdQIE1FU1NBR0UtLS0tLQ0KVmVyc2lvbjogRmxvd0NyeXB0IEVtYWlsIEVuY3J5cHRpb24gNy45LjgNCkNvbW1lbnQ6IFNlYW1sZXNzbHkgc2VuZCBhbmQgcmVjZWl2ZSBlbmNyeXB0ZWQgZW1haWwNCg0Kd1Y0RGVXZmdDdFZ0ZG5vU0FRZEFrdTAwUHlpeU9oa2pCc3NEUW81a3ZUajM5SURkRnFxYTBKQTdHV0Z6DQpDa1l3a01LWDVHelMxQ3FrZjZKUk9LY3RqbTVhcWxqc3F2TE9IaWJGaklKcGl4cFFXd0VIdi80MWhlUmENCjJzaG5zNmdpMGp3QnI0RlJ4aktXMXk1QUMyQ3MzeUtIT1hPYUFqTFlZa0dSbndTTVFKMFBYcG9rOUc1Sw0KUG9uRnFzN0RMSkRHZmhyUEhjbkk3ZFFPVExRZjBVbz0zRA0KPTNEcHU3Rg0KLS0tLS1FTkQgUEdQIE1FU1NBR0UtLS0tLQ0KDQotLS0tLS1zaW5pa2FlbC0_PV8xLTE2MDUxMDk1MzMxNTYwLjUzNDYwODcwNTYxMDUwMjQtLQ0K",
+    "historyId": "37547",
+    "internalDate": "1605109531000"
+  }
+}

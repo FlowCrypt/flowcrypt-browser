@@ -1,0 +1,93 @@
+{
+  "acctEmail": "ci.tests.gmail@flowcrypt.dev",
+  "full": {
+    "id": "175b8a4e2f40eccf",
+    "threadId": "175b8a48ad8809c0",
+    "labelIds": [
+      "DRAFT"
+    ],
+    "snippet": "1234",
+    "payload": {
+      "partId": "",
+      "mimeType": "multipart/alternative",
+      "filename": "",
+      "headers": [
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 11 Nov 2020 21:50:14 +0300"
+        },
+        {
+          "name": "Subject",
+          "value": "Hello, I don't know if you exist"
+        },
+        {
+          "name": "From",
+          "value": "ci.tests.gmail@flowcrypt.dev"
+        },
+        {
+          "name": "To",
+          "value": "FirstName <therecipient@theirdomain.com>"
+        },
+        {
+          "name": "Content-Type",
+          "value": "multipart/alternative; boundary=\"0000000000001a87cd05b3d9445c\""
+        }
+      ],
+      "body": {
+        "size": 0
+      },
+      "parts": [
+        {
+          "partId": "0",
+          "mimeType": "text/plain",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "text/plain; charset=\"UTF-8\""
+            }
+          ],
+          "body": {
+            "size": 6,
+            "data": "MTIzNA0K"
+          }
+        },
+        {
+          "partId": "1",
+          "mimeType": "text/html",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "text/html; charset=\"UTF-8\""
+            }
+          ],
+          "body": {
+            "size": 27,
+            "data": "PGRpdiBkaXI9Imx0ciI-MTIzNDwvZGl2Pg0K"
+          }
+        }
+      ]
+    },
+    "sizeEstimate": 583,
+    "historyId": "37601",
+    "internalDate": "1605120614000"
+  },
+  "attachments": {},
+  "raw": {
+    "id": "175b8a4e2f40eccf",
+    "threadId": "175b8a48ad8809c0",
+    "labelIds": [
+      "DRAFT"
+    ],
+    "snippet": "1234",
+    "sizeEstimate": 583,
+    "raw": "TUlNRS1WZXJzaW9uOiAxLjANCkRhdGU6IFdlZCwgMTEgTm92IDIwMjAgMjE6NTA6MTQgKzAzMDANCk1lc3NhZ2UtSUQ6IDxDQU85Rlk5c1VNcnNRTEVMNXFtaDhkMDRZNk13ekw4UitxZSs1QTdqM1IzSFR2NVlUPVFAbWFpbC5nbWFpbC5jb20-DQpTdWJqZWN0OiBIZWxsbywgSSBkb24ndCBrbm93IGlmIHlvdSBleGlzdA0KRnJvbTogR21haWwgQ0kgVGVzdCA8Y2kudGVzdHMuZ21haWxAZmxvd2NyeXB0LmRldj4NClRvOiBGaXJzdE5hbWUgPHRoZXJlY2lwaWVudEB0aGVpcmRvbWFpbi5jb20-DQpDb250ZW50LVR5cGU6IG11bHRpcGFydC9hbHRlcm5hdGl2ZTsgYm91bmRhcnk9IjAwMDAwMDAwMDAwMDFhODdjZDA1YjNkOTQ0NWMiDQoNCi0tMDAwMDAwMDAwMDAwMWE4N2NkMDViM2Q5NDQ1Yw0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PSJVVEYtOCINCg0KMTIzNA0KDQotLTAwMDAwMDAwMDAwMDFhODdjZDA1YjNkOTQ0NWMNCkNvbnRlbnQtVHlwZTogdGV4dC9odG1sOyBjaGFyc2V0PSJVVEYtOCINCg0KPGRpdiBkaXI9Imx0ciI-MTIzNDwvZGl2Pg0KDQotLTAwMDAwMDAwMDAwMDFhODdjZDA1YjNkOTQ0NWMtLQ==",
+    "historyId": "37601",
+    "internalDate": "1605120614000"
+  }
+}

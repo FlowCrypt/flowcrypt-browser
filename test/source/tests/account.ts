@@ -9,12 +9,11 @@ import * as ava from 'ava';
 // import { PageRecipe } from '../page-recipe/abstract-page-recipe';
 // import { SetupPageRecipe } from '../page-recipe/setup-page-recipe';
 import { TestVariant } from '../util';
-import { TestWithBrowser } from '../test';
 // import { Util } from '../../util';
 
 // tslint:disable:no-blank-lines-func
 
-export const defineConsumerAcctTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
+export const defineConsumerAcctTests = (testVariant: TestVariant) => {
 
   if (testVariant === 'CONSUMER-LIVE-GMAIL') {
 

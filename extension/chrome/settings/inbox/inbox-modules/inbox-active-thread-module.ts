@@ -24,7 +24,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
 
   private threadId: string | undefined;
   private threadHasPgpBlock: boolean = false;
-  private debugEmails = ['flowcrypt.compatibility@gmail.com']; // adds debugging ui, useful for creating automated tests
+  private debugEmails = ['flowcrypt.compatibility@gmail.com', 'ci.tests.gmail@flowcrypt.dev']; // adds debugging ui, useful for creating automated tests
 
   public render = async (threadId: string, thread?: GmailRes.GmailThread) => {
     this.threadId = threadId;

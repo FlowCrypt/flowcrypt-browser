@@ -183,7 +183,7 @@ export class SetupView extends View {
   }
 
   public submitPublicKeysAndFinalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
-    const [primaryKi] = await KeyStore.get(this.acctEmail, ['primary']);
+    const primaryKi = await KeyStore.getFirst(this.acctEmail);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
       await this.submitPublicKeyIfNeeded(primaryKi.public, { submit_main, submit_all });
@@ -249,11 +249,6 @@ export class SetupView extends View {
       addresses = [...this.submitKeyForAddrs];
     } else {
       addresses = [this.acctEmail];
-    }
-    if (this.acctEmailAttesterPubId && this.acctEmailAttesterPubId !== pub.id) {
-      // already submitted another pubkey for this email
-      // todo - offer user to fix it up
-      return;
     }
     await this.submitPubkeys(addresses, armoredPubkey);
   }

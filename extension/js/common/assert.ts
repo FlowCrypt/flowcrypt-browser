@@ -35,7 +35,7 @@ export class Assert {
 
   public static abortAndRenderErrOnUnprotectedKey = async (acctEmail?: string, tabId?: string) => {
     if (acctEmail) {
-      const [primaryKi] = await KeyStore.get(acctEmail, ['primary']);
+      const primaryKi = await KeyStore.getFirst(acctEmail);
       const { setup_done } = await AcctStore.get(acctEmail, ['setup_done']);
       if (setup_done && primaryKi && !(await KeyUtil.parse(primaryKi.private)).fullyEncrypted) {
         if (window.location.pathname === '/chrome/settings/index.htm') {
@@ -73,7 +73,7 @@ export class Assert {
     const msg = `Cannot render page (expected ${Xss.escape(name)} to be of type ${Xss.escape(expectedType)} but got ${Xss.escape(actualType)})`;
     const renderMsg = `${msg}<br><br><button class="button green long action_report_issue">report issue</button>`;
     Xss.sanitizeRender('body', renderMsg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
-    $('.action_report_issue').click(Ui.event.handle(async target => {
+    $('.action_report_issue').click(Ui.event.handle(async () => {
       Catch.report(msg, { currentUrl: window.location.href, params: values });
       $('body').text('Thank you. Feel free to reach out to human@flowcrypt.com in you need assistance.');
     }));

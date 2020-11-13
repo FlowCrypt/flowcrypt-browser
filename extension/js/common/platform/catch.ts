@@ -5,7 +5,7 @@
 import { VERSION } from '../core/const.js';
 
 export class UnreportableError extends Error { }
-export type ObjWithStack = { stack: string };
+type ObjWithStack = { stack: string };
 
 export class Catch {
 
@@ -118,7 +118,7 @@ export class Catch {
             console.error('%cFlowCrypt EXCEPTION:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
           }
         },
-        error: (req, status, error) => {
+        error: () => {
           console.error('%cFlowCrypt FAILED:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
         },
       });
@@ -290,7 +290,7 @@ export class Catch {
   }
 
   private static formattedStackBlock = (name: string, text: string) => {
-    return `\n\n### ${name} ###\n# ${Catch.stackTrace().split('\n').join('\n# ')}\n######################\n`;
+    return `\n\n### ${name} ###\n# ${text.split('\n').join('\n# ')}\n######################\n`;
   }
 
   private static nameAndDetailsAsException = (name: string, details: any): Error => {

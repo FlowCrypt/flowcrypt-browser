@@ -17,6 +17,6 @@ export const base64decode = (b64tr: string): string => {
   return Buffer.from(b64tr, 'base64').toString('binary');
 };
 
-export const iso2022jpToUtf = (content: Buf) => {
+export const iso2022jpToUtf = (content: Buf) => { // eslint-disable-line @typescript-eslint/no-unused-vars
   throw new Error('iso2022jpToUtf not implemented on node');
 };

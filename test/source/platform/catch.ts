@@ -12,15 +12,15 @@ export class Catch {
   public static RUNTIME_VERSION = VERSION;
   public static RUNTIME_ENVIRONMENT = 'undetermined';
 
-  public static handleErr = (e: any) => {
+  public static handleErr = (e: any) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     // core errs that are not rethrown are not very interesting
   }
 
-  public static reportErr = (err: any) => {
+  public static reportErr = (err: any) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     // core reports are not very interesting
   }
 
-  public static report = (name: string) => {
+  public static report = (name: string) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     // core reports are not very interesting
   }
 

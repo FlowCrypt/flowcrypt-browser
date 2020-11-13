@@ -3,7 +3,6 @@
 import * as request from 'fc-node-requests';
 
 import { Config } from '../../util';
-import { Cookie } from 'puppeteer';
 import { Response } from 'request';
 
 const ci_admin_token = Config.secrets().ci_admin_token;

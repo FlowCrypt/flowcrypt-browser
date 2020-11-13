@@ -22,7 +22,7 @@
   <section id="header-row">
     <div class="container">
       <div class="row ">
-        <div class="col-sm-6 text-left logo-row">
+        <div class="col-12 col-lg-6 text-left logo-row">
           <img class="cryptup-logo" src="/img/logo/full-logo.svg" alt="FlowCrypt Logo">
           <span class="subscription">
             <a class="level green_label short" href="https://flowcrypt.com/account">free forever</a>
@@ -31,7 +31,7 @@
           </span>
         </div>
 
-        <div class="col-sm-6 text-right">
+        <div class="col-12 col-lg-6 text-right">
           <div class="profile-row">
             <div class="public-profile-container hide_if_setup_not_done public_profile_indicator_container" style="visibility: hidden;">
               <div id="public-profile-indicator">
@@ -79,12 +79,12 @@
         </div>
       </div>
 
-      <div class="row hide_if_setup_not_done">
+      <div class="hide_if_setup_not_done">
         <h1 class="text-center">FlowCrypt Settings</h1>
         <div class="separator" style="background: none;"></div>
       </div>
 
-      <div class="row show_if_setup_not_done">
+      <div class="show_if_setup_not_done">
         <h1 class="text-center">Set up FlowCrypt</h1>
         <div class="separator"></div>
       </div>
@@ -106,7 +106,7 @@
 
       <div class="row settings-icons-rows hide_if_setup_not_done">
 
-        <div class="col-sm-2 col-sm-offset-2 col-xs-6">
+        <div class="col-6 col-md-2">
           <a href="#" class="action_show_encrypted_inbox" data-test="action-show-encrypted-inbox">
             <span class="box">
               <img src="/img/svgs/new-email-icon.svg" class="new-email-icon" alt="Open FlowCrypt Encrypted Inbox">
@@ -115,7 +115,7 @@
           </a>
         </div>
 
-        <div class="col-sm-2 col-xs-6">
+        <div class="col-6 col-md-2">
           <a href="#" class="show_settings_page" page="modules/security.htm" data-test="action-open-security-page">
             <span class="box">
               <img src="/img/svgs/security-icon.svg" class="security-icon" alt="FlowCrypt Security and Settings">
@@ -126,7 +126,7 @@
           </a>
         </div>
 
-        <div class="col-sm-2 col-xs-6">
+        <div class="col-6 col-md-2">
           <a href="#" class="show_settings_page" page="modules/backup.htm" data-test="action-open-backup-page">
             <span class="box">
               <img src="/img/svgs/keys-icon.svg" class="keys-icon" alt="FlowCrypt, set up and backup your Keys">
@@ -137,7 +137,7 @@
           </a>
         </div>
 
-        <div class="col-sm-2 col-xs-6">
+        <div class="col-6 col-md-2">
           <a href="#" class="show_settings_page" page="modules/help.htm" data-test="action-open-help-page">
             <span class="box">
               <img src="/img/svgs/feedback-icon.svg" class="feedback-icon" alt="Leave Feedback on FlowCrypt">
@@ -152,14 +152,14 @@
     </div>
 
     <div class="container-fluid advanced">
-      <div class="row">
+      <div>
         <h1 class="text-center">FlowCrypt Settings</h1>
         <div class="separator" style="background: none;"></div>
       </div>
 
       <div class="row settings-icons-rows">
-        <div class="col-sm-2 col-xs-6">
-          <a href="#" class="show_settings_page" page="modules/my_key.htm" data-test="action-open-pubkey-page">
+        <div class="col-6 col-md-2">
+          <a href="#" class="action_open_public_key_page" data-test="action-open-pubkey-page">
             <span class="box">
               <img src="/img/svgs/pub-key-icon.svg" class="pub-key-icon" alt="Your Public Keys">
             </span>
@@ -167,7 +167,7 @@
           </a>
         </div>
 
-        <div class="col-sm-2 col-xs-6">
+        <div class="col-6 col-md-2">
           <a href="#" class="show_settings_page" page="modules/contacts.htm" data-test="action-open-contacts-page">
             <span class="box">
               <img src="/img/svgs/contacts-icon.svg" class="contacts-icon" alt="Your Contacts and their public keys">
@@ -178,7 +178,7 @@
           </a>
         </div>
 
-        <div class="col-sm-2 col-xs-6">
+        <div class="col-6 col-md-2">
           <a href="#" class="show_settings_page" page="modules/keyserver.htm" data-test="action-open-attester-page">
             <span class="box">
               <img src="/img/svgs/servers-icon.svg" class="servers-icon" alt="Let others encrypt for you easier">
@@ -189,7 +189,7 @@
           </a>
         </div>
 
-        <div class="col-sm-2 col-xs-6">
+        <div class="col-6 col-md-2">
           <a href="#" class="show_settings_page" page="modules/security.htm" data-test="action-open-security-page">
             <span class="box">
               <img src="/img/svgs/security-icon.svg" class="security-icon" alt="FlowCrypt Security and Settings">
@@ -200,7 +200,7 @@
           </a>
         </div>
 
-        <div class="col-sm-2 col-xs-6">
+        <div class="col-6 col-md-2">
           <a href="#" class="show_settings_page" page="modules/backup.htm">
             <span class="box">
               <img src="/img/svgs/keys-icon.svg" class="keys-icon" alt="FlowCrypt, set up and backup your Keys">
@@ -211,7 +211,7 @@
           </a>
         </div>
 
-        <div class="col-sm-2 col-xs-6">
+        <div class="col-6 col-md-2">
           <a href="#" class="show_settings_page" page="modules/help.htm">
             <span class="box">
               <img src="/img/svgs/feedback-icon.svg" class="feedback-icon" alt="Leave Feedback on FlowCrypt">
@@ -228,7 +228,7 @@
       <div class="row my-keys-row" data-test="container-settings-keys-list">
         <div class="settings-border">
           <div class="row abs-row">
-            <div class="col-sm-12" style="padding-left: 0;">
+            <div class="col-12" style="padding-left: 0;">
               <img src="/img/svgs/key-icon.svg" class="key-icon" alt="key icon">
               <span class="my-keys-copy">My Keys</span>
               <span class="text-right keys-link-top-right-container">
@@ -245,11 +245,11 @@
   <section id="footer-row">
     <div class="container">
       <div class="row">
-        <div class="col-md-2 col-sm-2 col-xs-12 text-left">
+        <div class="col-12 col-lg-2">
           <a href="#" class="show_settings_page" page="modules/help.htm" data-test="action-open-modules-help">Need
             Help?</a>
         </div>
-        <div class="col-md-8 col-sm-8 col-xs-12">
+        <div class="col-12 col-lg-8 row">
           <a href="https://flowcrypt.com/terms" target="_blank" class="gray_link">Terms</a>
           <a href="https://flowcrypt.com/privacy" target="_blank" class="gray_link">Privacy</a>
           <a href="https://github.com/FlowCrypt/flowcrypt-browser" target="_blank" class="gray_link advanced">Source</a>
@@ -257,7 +257,7 @@
             <a href="#" class="show_settings_page gray_link advanced" page="modules/experimental.htm" data-test="action-open-module-experimental">Experimental</a>
           </span>
         </div>
-        <div class="col-md-2 col-sm-2 col-xs-12 text-right hide_if_setup_not_done">
+        <div class="col-12 col-lg-2 text-right hide_if_setup_not_done">
           <a class="toggle-settings advanced" href="#" data-test="action-toggle-screen-basic">Basic Settings</a><a class="toggle-settings basic" href="#"
             data-test="action-toggle-screen-additional">Additional Settings</a>
         </div>

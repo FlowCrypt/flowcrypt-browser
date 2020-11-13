@@ -75,6 +75,22 @@ export class GmailMsg {
   }
 }
 
+export class GmailParser {
+
+  public static findHeader = (apiGmailMsgObj: GmailMsg | GmailMsg$payload, headerName: string) => {
+    const node: GmailMsg$payload = apiGmailMsgObj.hasOwnProperty('payload') ? (apiGmailMsgObj as GmailMsg).payload! : apiGmailMsgObj as GmailMsg$payload;
+    if (typeof node.headers !== 'undefined') {
+      for (const header of node.headers) {
+        if (header.name.toLowerCase() === headerName.toLowerCase()) {
+          return header.value;
+        }
+      }
+    }
+    return undefined;
+  }
+
+}
+
 const DATA: { [acct: string]: AcctDataFile } = {};
 
 /**

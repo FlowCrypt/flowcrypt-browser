@@ -99,7 +99,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'with files');
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf', 'test/samples/large.jpg');
-      await ComposePageRecipe.sendAndClose(composePage, { expectProgress: true, timeout: 60 });
+      await ComposePageRecipe.sendAndClose(composePage, { expectProgress: true, timeout: 120 });
     }));
 
     ava.default('compose > large file > public domain account (should not prompt to upgrade)', testWithBrowser('compatibility', async (t, browser) => {

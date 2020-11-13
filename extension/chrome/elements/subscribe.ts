@@ -19,8 +19,8 @@ import { AccountServer } from '../../js/common/api/account-server.js';
 
 // todo - this page should be removed, link from settings should point to flowcrypt.com/account once available
 
-export type Product = { id: null | string, method: null | PaymentMethod, name: null | string, level: SubscriptionLevel };
-export type ProductName = 'null' | 'trial' | 'advancedMonthly';
+type Product = { id: null | string, method: null | PaymentMethod, name: null | string, level: SubscriptionLevel };
+type ProductName = 'null' | 'trial' | 'advancedMonthly';
 
 View.run(class SubscribeView extends View {
 

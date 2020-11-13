@@ -144,7 +144,6 @@ View.run(class ExperimentalView extends View {
     for (const keyinfo of keyinfos) {
       text.push('');
       text.push('key_longid: ' + keyinfo.longid);
-      text.push('key_primary: ' + keyinfo.primary);
       text.push(keyinfo.private);
     }
     text.push('');

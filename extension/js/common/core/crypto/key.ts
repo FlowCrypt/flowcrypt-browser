@@ -76,7 +76,6 @@ export interface KeyInfo extends PrvKeyInfo {
   // this cannot be Pubkey has it's being passed to localstorage
   public: string;
   fingerprint: string;
-  primary: boolean;
 }
 
 export type PrvPacket = (OpenPGP.packet.SecretKey | OpenPGP.packet.SecretSubkey);

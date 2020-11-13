@@ -11,7 +11,7 @@ import { BACKEND_API_HOST } from '../core/const.js';
 import { Catch } from '../platform/catch.js';
 import { Browser } from '../browser/browser.js';
 
-export namespace FlowCryptWebsiteRes {
+namespace FlowCryptWebsiteRes {
   export type FcHelpFeedback = { sent: boolean };
   export type FcBlogPost = { title: string, date: string, url: string };
 }

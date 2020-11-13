@@ -215,7 +215,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     const loadedAr: Array<number> = [];
     // 1.33 is approximate ratio of downloaded data to what we expected, likely due to encoding
     const total = atts.map(x => x.length).reduce((a, b) => a + b) * 1.33;
-    const responses = await Promise.all(atts.map((a, index) => this.attGet(a.msgId!, a.id!, (_, loaded, s) => {
+    const responses = await Promise.all(atts.map((a, index) => this.attGet(a.msgId!, a.id!, (_, loaded) => {
       if (progressCb) {
         loadedAr[index] = loaded || 0;
         const totalLoaded = loadedAr.reduce((a, b) => a + b);

@@ -113,7 +113,7 @@ export class PgpBlockViewRenderModule {
     if (Str.mostlyRTL(Xss.htmlSanitizeAndStripAllTags(decryptedContent, '\n'))) {
       $('#pgp_signature').addClass('rtl');
     }
-    if (publicKeys.length) {
+    if (isEncrypted && publicKeys.length) {
       BrowserMsg.send.renderPublicKeys(this.view.parentTabId, { afterFrameId: this.view.frameId, publicKeys });
     }
     if (renderableAtts.length) {

@@ -56,7 +56,7 @@ export class BrowserRecipe {
       await SetupPageRecipe.recover(settingsPage, 'ci.tests.gmail');
       await settingsPage.close();
     } else {
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'test.ci.compose@org.flowcrypt.com');
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
       await SetupPageRecipe.recover(settingsPage, 'test.ci.compose');
       await settingsPage.close();
     }
@@ -75,7 +75,7 @@ export class BrowserRecipe {
     const pgpHostPage = await browser.newPage(t, `chrome/dev/ci_pgp_host_page.htm${m.params}`);
     const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
     if (m.expectPercentageProgress) {
-      await pgpBlockPage.waitForContent('@pgp-block-content', /Retrieving message... \d+%/);
+      await pgpBlockPage.waitForContent('@pgp-block-content', /Retrieving message... \d+%/, 20, 10);
     }
     await pgpBlockPage.waitForSelTestState('ready', 100);
     await Util.sleep(1);

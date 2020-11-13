@@ -17,7 +17,7 @@ import { FcUuidAuth, SubscriptionInfo } from '../../api/account-servers/flowcryp
 export type StoredReplyDraftMeta = string; // draftId
 export type StoredComposeDraftMeta = { recipients: string[], subject: string, date: number };
 export type EmailProvider = 'gmail';
-export type GoogleAuthScopesNames = [keyof typeof GoogleAuth.OAUTH.scopes, keyof typeof GoogleAuth.OAUTH.legacy_scopes][number];
+type GoogleAuthScopesNames = [keyof typeof GoogleAuth.OAUTH.scopes, keyof typeof GoogleAuth.OAUTH.legacy_scopes][number];
 
 export type Scopes = {
   openid: boolean;
