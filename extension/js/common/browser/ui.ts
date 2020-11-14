@@ -385,7 +385,10 @@ export class Ui {
 
   public static ctrlEnter = (callback: () => void) => {
     return (e: JQuery.Event<HTMLElement, null>) => { // returns a function
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      if (
+        (e.metaKey || e.ctrlKey) &&
+        (e.key === 'Enter' || e.keyCode === 10) // https://bugs.chromium.org/p/chromium/issues/detail?id=79407
+      ) {
         callback();
       }
     };
