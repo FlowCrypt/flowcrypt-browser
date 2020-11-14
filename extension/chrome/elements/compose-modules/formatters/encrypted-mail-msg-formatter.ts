@@ -19,7 +19,6 @@ import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-m
 import { Settings } from '../../../../js/common/settings.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
-import { ContactStore } from '../../../../js/common/platform/store/contact-store.js';
 import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
 import { FlowCryptWebsite } from '../../../../js/common/api/flowcrypt-website.js';
 import { AccountServer } from '../../../../js/common/api/account-server.js';
@@ -29,7 +28,6 @@ import { SmimeKey } from '../../../../js/common/core/crypto/smime/smime-key.js';
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
   public sendableMsg = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {
-    await ContactStore.update(undefined, Array.prototype.concat.apply([], Object.values(newMsg.recipients)), { last_use: Date.now() });
     if (newMsg.pwd && !this.isDraft) { // password-protected message, temporarily uploaded (encrypted) to FlowCrypt servers, to be served to recipient through web
       const short = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
       newMsg.pwd = undefined;

@@ -135,7 +135,6 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           name,
           pubkey: lookupResult.pubkey,
           client: lookupResult.pubkey ? client : undefined,
-          lastUse: Date.now(),
           lastCheck: Date.now(),
         });
         if (ksContact.pubkey) {

@@ -514,7 +514,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.notPresent('@action-auth-with-contacts-scope');
     }));
 
-    ava.default.only('compose - load contacts - contacts should be properly ordered', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('compose - load contacts - contacts should be properly ordered', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.dev'));
       let composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await composeFrame.type('@input-to', 'testsearchorder');
@@ -535,20 +535,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       ]);
       await composeFrame.waitAndClick('@action-close-new-message');
       await inboxPage.waitTillGone('@container-new-message');
-      /// !!!! TEMP BLOCK START
-      composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await composeFrame.type('@input-to', 'testsearchorder');
-      await expectContactsResultEqual(composeFrame, [
-        'testsearchorder1@flowcrypt.com',
-        'testsearchorder2@flowcrypt.com',
-        'testsearchorder3@flowcrypt.com',
-        'testsearchorder4@flowcrypt.com',
-        'testsearchorder5@flowcrypt.com',
-        'testsearchorder6@flowcrypt.com',
-        'testsearchorder7@flowcrypt.com',
-        'testsearchorder8@flowcrypt.com',
-      ]);
-      /// !!!! TEMP BLOCK END
       // add key + send
       composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'testsearchorder3@flowcrypt.com' }, t.title);
