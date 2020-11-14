@@ -500,17 +500,31 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       if (testVariant === 'CONSUMER-MOCK') {
         // consumer does not get Contacts scope automatically (may scare users when they install)
         // first search, did not yet receive contacts scope - should find no contacts
-        await expectFirstContactResultEqual(composePage, 'No Contacts Found');
+        await expectContactsResultEqual(composePage, ['No Contacts Found']);
         // allow contacts scope, and expect that it will find a contact
         const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.waitAndClick('@action-auth-with-contacts-scope'));
         await OauthPageRecipe.google(t, oauthPopup, 'ci.tests.gmail@flowcrypt.dev', 'approve');
       }
-      await expectFirstContactResultEqual(composePage, 'contact.test@flowcrypt.com');
+      await expectContactsResultEqual(composePage, ['contact.test@flowcrypt.com']);
+      // test that contacts are ordered properly
+      await composePage.press('Escape');
+      await composePage.notPresent('@container-contacts');
+      await composePage.type('@input-to', 'testsearchorder');
+      await expectContactsResultEqual(composePage, [
+        'testsearchorder1@flowcrypt.com',
+        'testsearchorder2@flowcrypt.com',
+        'testsearchorder3@flowcrypt.com',
+        'testsearchorder4@flowcrypt.com',
+        'testsearchorder5@flowcrypt.com',
+        'testsearchorder6@flowcrypt.com',
+        'testsearchorder7@flowcrypt.com',
+        'testsearchorder8@flowcrypt.com',
+      ]);
       // re-load the compose window, expect that it remembers scope was connected, and remembers the contact
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
       await composePage.type('@input-to', 'contact');
-      await expectFirstContactResultEqual(composePage, 'contact.test@flowcrypt.com');
+      await expectContactsResultEqual(composePage, ['contact.test@flowcrypt.com']);
       await composePage.notPresent('@action-auth-with-contacts-scope');
     }));
 
@@ -1033,11 +1047,14 @@ const expectRecipientElements = async (controllable: ControllablePage, expected:
   }
 };
 
-const expectFirstContactResultEqual = async (composePage: ControllablePage, string: string) => {
+const expectContactsResultEqual = async (composePage: ControllablePage, emails: string[]) => {
   await composePage.waitAny('@container-contacts');
   await Util.sleep(0.5);
   await composePage.waitTillGone('@container-contacts-loading');
   await Util.sleep(0.5);
   const contacts = await composePage.waitAny('@container-contacts');
-  expect(await PageRecipe.getElementPropertyJson((await contacts.$('ul li:first-child'))!, 'textContent')).to.eq(string);
+  const contactsList = await contacts.$$('li');
+  for (const index in contactsList) {
+    expect(await PageRecipe.getElementPropertyJson(contactsList[index], 'textContent')).to.equal(emails[index]);
+  }
 };
