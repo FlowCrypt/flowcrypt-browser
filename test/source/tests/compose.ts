@@ -560,7 +560,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       // check that contacts are ordered according to has_pgp and last_use
       composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await composeFrame.type('@input-to', 'testsearchorder');
-      debugger;
       await expectContactsResultEqual(composeFrame, [
         'testsearchorder3@flowcrypt.com', // has_pgp + last_use
         'testsearchorder9@flowcrypt.com', // has_pgp
