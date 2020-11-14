@@ -577,8 +577,23 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private renderSearchRes = (input: JQuery<HTMLElement>, contacts: Contact[], query: ProviderContactsQuery) => {
     this.view.errModule.debug(`renderSearchRes len: ${contacts.length}`);
-    // have pgp on top, no pgp bottom. Sort each groups by last used
-    const renderableContacts = contacts.sort((a, b) => (10 * (b.has_pgp - a.has_pgp)) + ((b.last_use || 0) - (a.last_use || 0) > 0 ? 1 : -1)).slice(0, this.MAX_CONTACTS_LENGTH);
+    // have pgp on top, no pgp bottom. Sort each groups by last use
+    const sortedContacts = contacts.sort((a: Contact, b: Contact) => {
+      if (a.has_pgp && !b.has_pgp) {
+        return -1;
+      }
+      if (!a.has_pgp && b.has_pgp) {
+        return 1;
+      }
+      if ((a.last_use || 0) > (b.last_use || 0)) {
+        return -1;
+      }
+      if ((a.last_use || 0) < (b.last_use || 0)) {
+        return 1;
+      }
+      return 0;
+    });
+    const renderableContacts = sortedContacts.slice(0, this.MAX_CONTACTS_LENGTH);
     if ((renderableContacts.length > 0 || this.contactSearchInProgress) || !this.canSearchContacts) {
       let ulHtml = '';
       for (const contact of renderableContacts) {
