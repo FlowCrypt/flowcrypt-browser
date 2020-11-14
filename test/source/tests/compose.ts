@@ -1054,7 +1054,7 @@ const expectContactsResultEqual = async (composePage: ControllablePage, emails: 
   await Util.sleep(0.5);
   const contacts = await composePage.waitAny('@container-contacts');
   const contactsList = await contacts.$$('li');
-  for (const index in contactsList) {
+  for (const index in contactsList) { // tslint:disable-line:forin
     expect(await PageRecipe.getElementPropertyJson(contactsList[index], 'textContent')).to.equal(emails[index]);
   }
 };
