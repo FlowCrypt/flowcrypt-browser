@@ -60,6 +60,22 @@ export const mockGoogleEndpoints: HandlersDefinition = {
             ]
           }
         };
+      } else if (q === 'testsearchorder') {
+        return {
+          feed: {
+            entry: [
+              { gd$email: [{ address: 'testsearchorder1@flowcrypt.com', primary: "true" }] },
+              { gd$email: [{ address: 'testsearchorder2@flowcrypt.com', primary: "true" }] },
+              { gd$email: [{ address: 'testsearchorder3@flowcrypt.com', primary: "true" }] },
+              { gd$email: [{ address: 'testsearchorder4@flowcrypt.com', primary: "true" }] },
+              { gd$email: [{ address: 'testsearchorder5@flowcrypt.com', primary: "true" }] },
+              { gd$email: [{ address: 'testsearchorder6@flowcrypt.com', primary: "true" }] },
+              { gd$email: [{ address: 'testsearchorder7@flowcrypt.com', primary: "true" }] },
+              { gd$email: [{ address: 'testsearchorder8@flowcrypt.com', primary: "true" }] },
+              { gd$email: [{ address: 'testsearchorder9@flowcrypt.com', primary: "true" }] },
+            ]
+          }
+        };
       } else {
         return empty;
       }

@@ -212,7 +212,6 @@ export class SetupView extends View {
         name,
         client: 'cryptup',
         pubkey: KeyUtil.armor(await KeyUtil.asPublicKey(prvs[0])),
-        lastUse: Date.now(),
         lastSig: Number(prvs[0].lastModified)
       }));
     }
