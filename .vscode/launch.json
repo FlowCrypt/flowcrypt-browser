@@ -4,15 +4,87 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug chrome_consumer_mock",
+      "name": "Debug unit_consumer",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava",
       "preLaunchTask": "npm: pretest-incremental",
-      "program": "${workspaceFolder}/node_modules/ava/profile.js",
-      "args": [
+      "runtimeArgs": [
         "build/test/test/source/test.js",
+        "--verbose",
+        "--concurrency=1",
+        "--",
         "CONSUMER-MOCK",
+        "UNIT-TESTS",
+        "--retry=false",
+        "--debug",
         "--pool-size=1",
-        "--debug"
       ],
+      "outputCapture": "std",
+      "skipFiles": [
+        "<node_internals>/**/*.js"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug unit_enterprise",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava",
+      "preLaunchTask": "npm: pretest-incremental",
+      "runtimeArgs": [
+        "build/test/test/source/test.js",
+        "--verbose",
+        "--concurrency=1",
+        "--",
+        "ENTERPRISE-MOCK",
+        "UNIT-TESTS",
+        "--retry=false",
+        "--debug",
+        "--pool-size=1",
+      ],
+      "outputCapture": "std",
+      "skipFiles": [
+        "<node_internals>/**/*.js"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug chrome_consumer_mock",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava",
+      "preLaunchTask": "npm: pretest-incremental",
+      "runtimeArgs": [
+        "build/test/test/source/test.js",
+        "--verbose",
+        "--concurrency=1",
+        "--",
+        "CONSUMER-MOCK",
+        "STANDARD-GROUP",
+        "--retry=false",
+        "--debug",
+        "--pool-size=1",
+      ],
+      "outputCapture": "std",
+      "skipFiles": [
+        "<node_internals>/**/*.js"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug chrome_consumer_mock_flaky",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava",
+      "preLaunchTask": "npm: pretest-incremental",
+      "runtimeArgs": [
+        "build/test/test/source/test.js",
+        "--verbose",
+        "--concurrency=1",
+        "--",
+        "CONSUMER-MOCK",
+        "FLAKY-GROUP",
+        "--retry=false",
+        "--debug",
+        "--pool-size=1",
+      ],
+      "outputCapture": "std",
       "skipFiles": [
         "<node_internals>/**/*.js"
       ]
@@ -21,16 +93,23 @@
       "type": "node",
       "request": "launch",
       "name": "Debug chrome_consumer_live_gmail",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava",
       "preLaunchTask": "npm: pretest-incremental",
-      "program": "${workspaceFolder}/node_modules/ava/profile.js",
-      "args": [
+      "runtimeArgs": [
         "build/test/test/source/test.js",
+        "--verbose",
+        "--concurrency=1",
+        "--",
         "CONSUMER-LIVE-GMAIL",
-        "--debug"
+        "STANDARD-GROUP",
+        "--retry=false",
+        "--debug",
+        "--pool-size=1",
       ],
+      "outputCapture": "std",
       "skipFiles": [
         "<node_internals>/**/*.js"
       ]
-    }
+    },
   ]
 }
