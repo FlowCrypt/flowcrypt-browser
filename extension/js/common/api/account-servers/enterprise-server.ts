@@ -36,12 +36,12 @@ export class EnterpriseServer extends Api {
     this.fesUrl = fesUrl.replace(/\/$/, '');
   }
 
-  public getAccessToken = async (idToken: string): Promise<void> => {
+  public getAccessTokenAndUpdateLocalStore = async (idToken: string): Promise<void> => {
     const response = await this.request<FesRes.AccessToken>('GET', `/api/${this.apiVersion}/account/access-token`, { Authorization: `Bearer ${idToken}` });
     await AcctStore.set(this.acctEmail, { fesAccessToken: response.accessToken });
   }
 
-  public accountGetAndUpdateLocalStore = async (): Promise<BackendRes.FcAccountGet> => {
+  public getAccountAndUpdateLocalStore = async (): Promise<BackendRes.FcAccountGet> => {
     const r = await this.request<BackendRes.FcAccountGet>('GET', `/api/${this.apiVersion}/account/`, await this.authHdr());
     await AcctStore.set(this.acctEmail, { rules: r.domain_org_rules, subscription: r.subscription });
     return r;
