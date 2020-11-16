@@ -9,7 +9,7 @@ import { Catch } from '../../platform/catch.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
 import { Api } from '../shared/api.js';
 import { ApiErr } from '../shared/api-error.js';
-import { EnterpriseServer, FesRes } from './enterprise-server.js';
+import { FesRes } from './enterprise-server.js';
 
 type HostMetaResponse = { links?: { rel?: string, href?: string }[] }
 
@@ -18,7 +18,7 @@ export class WellKnownHostMeta extends Api {
   private domain: string;
   private hostMetaUrl: string;
   private fesRel = 'https://flowcrypt.com/fes';
-  private laxCheck = ['dmFsZW8uY29t'];
+  // private laxCheck = ['dmFsZW8uY29t'];
 
   constructor(private acctEmail: string) {
     super();
@@ -56,18 +56,20 @@ export class WellKnownHostMeta extends Api {
   }
 
   private tryCallingFesDirectlyIgnoringErrorsOnConsumerFlavor = async (fesUrl: string): Promise<FesRes.ServiceInfo | undefined> => {
-    const fes = new EnterpriseServer(fesUrl, this.acctEmail);
-    try {
-      return await fes.getServiceInfo();
-    } catch (e) {
-      if (FLAVOR === 'consumer' || ApiErr.isNotFound(e)) {
-        return;
-      } else if (this.laxCheck.includes(btoa(this.domain)) && ApiErr.isNetErr(e)) {
-        return undefined; // cannot reach server for enterprises where we don't expect to find it
-      } else {
-        throw e; // strict enterprise
-      }
-    }
+    console.log(fesUrl);
+    return undefined;
+    // const fes = new EnterpriseServer(fesUrl, this.acctEmail);
+    // try {
+    //   return await fes.getServiceInfo();
+    // } catch (e) {
+    //   if (FLAVOR === 'consumer' || ApiErr.isNotFound(e)) {
+    //     return;
+    //   } else if (this.laxCheck.includes(btoa(this.domain)) && ApiErr.isNetErr(e)) {
+    //     return undefined; // cannot reach server for enterprises where we don't expect to find it
+    //   } else {
+    //     throw e; // strict enterprise
+    //   }
+    // }
   }
 
   private setFesUrlToCache = async (fesUrl: string | undefined): Promise<void> => {

@@ -71,7 +71,7 @@ export class EnterpriseServer extends Api {
   }
 
   private request = async <RT>(method: ReqMethod, path: string, headers: Dict<string> = {}, vals?: Dict<any>): Promise<RT> => {
-    return await FlowCryptComApi.apiCall(this.fesUrl, path, vals, 'JSON', undefined, headers, 'json', method);
+    return await FlowCryptComApi.apiCall(this.fesUrl, path, vals, method === 'GET' ? undefined : 'JSON', undefined, headers, 'json', method);
   }
 
 }
