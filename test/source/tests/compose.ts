@@ -698,7 +698,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await sendTextAndVerifyPresentInSentMsg(t, browser, rainbow, { sign: true, encrypt: true });
     }));
 
-    ava.default('oversize attachment does not get errorneously added', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('oversize attachment does not get errorneously added', testWithBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       // big file will get canceled
       const fileInput = await composePage.target.$('input[type=file]');
