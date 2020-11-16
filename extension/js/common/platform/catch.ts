@@ -6,6 +6,16 @@ import { VERSION } from '../core/const.js';
 
 export class UnreportableError extends Error { }
 type ObjWithStack = { stack: string };
+export type ErrorReport = {
+  name: string;
+  message: string;
+  url: string;
+  line: number;
+  col: number;
+  trace: string;
+  version: string;
+  environment: string;
+}
 
 export class Catch {
 
@@ -55,27 +65,8 @@ export class Catch {
   }
 
   public static onErrorInternalHandler = (errMsg: string | undefined, url: string, line: number, col: number, originalErr: any, isManuallyCalled: boolean) => {
-    if (errMsg && Catch.IGNORE_ERR_MSG.indexOf(errMsg) !== -1) {
-      return;
-    }
-    let exception: Error;
-    if (typeof originalErr !== 'object') {
-      exception = new Error(`THROWN_NON_OBJECT[${typeof originalErr}]: ${String(originalErr)}`);
-    } else if (errMsg && url && typeof line !== 'undefined' && !col && !originalErr && !isManuallyCalled) {
-      exception = new Error(`LIMITED_ERROR: ${errMsg}`);
-    } else if (originalErr instanceof Error) {
-      exception = originalErr;
-      if (originalErr.hasOwnProperty('thrown')) { // this is created by custom async stack reporting in tooling/tsc-compiler.ts
-        exception.stack += `\n\ne.thrown:\n${Catch.stringify((originalErr as any).thrown)}`;
-      }
-    } else {
-      exception = new Error(`THROWN_OBJECT: ${errMsg}`);
-      if (Catch.hasStack(originalErr)) {
-        exception.stack += `\n\nORIGINAL_THROWN_OBJECT_STACK:\n${originalErr.stack}\n\n`;
-      }
-      exception.stack += `\n\nORIGINAL_ERR:\n${Catch.stringify(originalErr)}`;
-    }
-    if (Catch.IGNORE_ERR_MSG.indexOf(exception.message) !== -1) {
+    const exception = Catch.formExceptionFromThrown(originalErr, errMsg, url, line, col, isManuallyCalled);
+    if ((Catch.IGNORE_ERR_MSG.indexOf(exception.message) !== -1) || (errMsg && Catch.IGNORE_ERR_MSG.indexOf(errMsg) !== -1)) {
       return;
     }
     console.error(originalErr);
@@ -88,59 +79,20 @@ export class Catch {
       Catch.ORIG_ONERROR.apply(undefined, arguments); // Call any previously assigned handler
     }
     if (exception instanceof UnreportableError) {
+      console.error('Not reporting UnreportableError above');
       return;
     }
     if ((exception.stack || '').indexOf('PRIVATE') !== -1) {
       exception.stack = '~censored:PRIVATE';
     }
-    try {
-      $.ajax({ // tslint:disable-line:no-direct-ajax
-        url: 'https://flowcrypt.com/api/help/error',
-        method: 'POST',
-        data: JSON.stringify({
-          name: exception.name.substring(0, 50),
-          message: exception.message.substring(0, 200),
-          url: (url || '').substring(0, 100),
-          line: line || 0,
-          col: col || 0,
-          trace: exception.stack || '',
-          version: VERSION,
-          environment: Catch.RUNTIME_ENVIRONMENT,
-        }),
-        dataType: 'json',
-        crossDomain: true,
-        contentType: 'application/json; charset=UTF-8',
-        async: true,
-        success: (response: { saved: boolean }) => {
-          if (response && typeof response === 'object' && response.saved === true) {
-            console.log('%cFlowCrypt ERROR:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
-          } else {
-            console.error('%cFlowCrypt EXCEPTION:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
-          }
-        },
-        error: () => {
-          console.error('%cFlowCrypt FAILED:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
-        },
-      });
-    } catch (ajaxErr) {
-      console.error(ajaxErr);
-      console.error('%cFlowCrypt ISSUE:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
-    }
+    const formatted = Catch.formatExceptionForReport(exception, line, col);
+    // todo - here would have to make a decision if we are sending it to flowcrypt.com or enterprise FES
+    Catch.doSendErrorToFlowCryptComBackend(formatted);
     return true;
   }
 
   public static reportErr = (e: any) => {
     const { line, col } = Catch.getErrorLineAndCol(e);
-    if (e instanceof Error) { // reporting stack may differ from the stack of the actual error, both may be interesting
-      e.stack += Catch.formattedStackBlock('Catch.reportErr calling stack', Catch.stackTrace());
-      if (e.hasOwnProperty('workerStack')) { // https://github.com/openpgpjs/openpgpjs/issues/656#event-1498323188
-        e.stack += Catch.formattedStackBlock('openpgp.js worker stack', String((e as any).workerStack));
-      }
-      if (e instanceof UnreportableError) {
-        console.error('Not reporting UnreportableError:', e);
-        return;
-      }
-    }
     Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
   }
 
@@ -277,6 +229,79 @@ export class Catch {
       }
       return !!errNeedle.find(needle => String(e).includes(needle));
     }
+  }
+
+  private static formatExceptionForReport = (thrown: any, line?: number, col?: number): ErrorReport => {
+    if (!line || !col) {
+      const { line: parsedLine, col: parsedCol } = Catch.getErrorLineAndCol(thrown);
+      line = parsedLine;
+      col = parsedCol;
+    }
+    if (thrown instanceof Error) { // reporting stack may differ from the stack of the actual error, both may be interesting
+      thrown.stack += Catch.formattedStackBlock('Catch.reportErr calling stack', Catch.stackTrace());
+      if (thrown.hasOwnProperty('workerStack')) { // https://github.com/openpgpjs/openpgpjs/issues/656#event-1498323188
+        thrown.stack += Catch.formattedStackBlock('openpgp.js worker stack', String((thrown as any).workerStack));
+      }
+    }
+    const exception = Catch.formExceptionFromThrown(thrown);
+    return {
+      name: exception.name.substring(0, 50),
+      message: exception.message.substring(0, 200),
+      url: window.location.href.substring(0, 100),
+      line: line || 0,
+      col: col || 0,
+      trace: exception.stack || '',
+      version: VERSION,
+      environment: Catch.RUNTIME_ENVIRONMENT,
+    };
+  }
+
+  private static doSendErrorToFlowCryptComBackend = (errorReport: ErrorReport) => {
+    try {
+      $.ajax({ // tslint:disable-line:no-direct-ajax
+        url: 'https://flowcrypt.com/api/help/error',
+        method: 'POST',
+        data: JSON.stringify(errorReport),
+        dataType: 'json',
+        crossDomain: true,
+        contentType: 'application/json; charset=UTF-8',
+        async: true,
+        success: (response: { saved: boolean }) => {
+          if (response && typeof response === 'object' && response.saved === true) {
+            console.log('%cFlowCrypt ERROR:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
+          } else {
+            console.error('%cFlowCrypt EXCEPTION:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
+          }
+        },
+        error: () => {
+          console.error('%cFlowCrypt FAILED:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
+        },
+      });
+    } catch (ajaxErr) {
+      console.error(ajaxErr);
+      console.error('%cFlowCrypt ISSUE:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
+    }
+  }
+
+  private static formExceptionFromThrown = (thrown: any, errMsg?: string, url?: string, line?: number, col?: number, isManuallyCalled?: boolean): Error => {
+    let exception: Error;
+    if (typeof thrown !== 'object') {
+      exception = new Error(`THROWN_NON_OBJECT[${typeof thrown}]: ${String(thrown)}`);
+    } else if (errMsg && url && typeof line !== 'undefined' && !col && !thrown && !isManuallyCalled) {
+      exception = new Error(`LIMITED_ERROR: ${errMsg}`);
+    } else if (thrown instanceof Error) {
+      exception = thrown;
+      if (thrown.hasOwnProperty('thrown')) { // this is created by custom async stack reporting in tooling/tsc-compiler.ts
+        exception.stack += `\n\ne.thrown:\n${Catch.stringify((thrown as any).thrown)}`;
+      }
+    } else {
+      exception = new Error(`THROWN_OBJECT: ${errMsg}`);
+      if (Catch.hasStack(thrown)) {
+        exception.stack += `\n\nORIGINAL_THROWN_OBJECT_STACK:\n${thrown.stack}\n\n`;
+      }
+      exception.stack += `\n\nORIGINAL_ERR:\n${Catch.stringify(thrown)}`;
+    }
+    return exception;
   }
 
   private static getErrorLineAndCol = (e: any) => {
