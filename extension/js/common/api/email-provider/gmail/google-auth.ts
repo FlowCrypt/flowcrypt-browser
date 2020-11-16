@@ -144,16 +144,11 @@ export class GoogleAuth {
         return { result: 'Error', error: 'Grant was successful but missing acctEmail', acctEmail: authRes.acctEmail, id_token: undefined };
       }
       try {
-        const uuid = Api.randomFortyHexChars();
-        await AccountServer.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
-        await AccountServer.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // will store org rules and subscription
-        try {
-          // this is here currently for debugging only, to test effect of this new mechanism on customer installations
-          const wellKnownHostMeta = new WellKnownHostMeta(authRes.acctEmail);
-          await wellKnownHostMeta.fetchAndCacheFesUrl();
-        } catch (e) {
-          Catch.reportErr(Catch.rewrapErr(e, `WellKnownHostMeta on ${FLAVOR}`));
-        }
+        const uuid = Api.randomFortyHexChars(); // for flowcrypt.com, if used. When FES is used, the access token is given to client.
+        await new WellKnownHostMeta(authRes.acctEmail).fetchAndCacheFesUrl(); // stores fesUrl if any
+        const acctServer = new AccountServer(authRes.acctEmail);
+        await acctServer.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token); // may be calling flowcrypt.com or FES
+        await acctServer.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // stores OrgRules and subscription
       } catch (e) {
         return { result: 'Error', error: `Grant successful but error accessing fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
       }

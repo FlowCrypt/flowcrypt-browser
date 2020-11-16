@@ -37,7 +37,7 @@ export const mockFesEndpoints: HandlersDefinition = {
         account: {
           default_message_expire: 30
         },
-        subscription: { level: 'pro', expire: null, method: 'group', expired: 'false' },
+        subscription: { level: 'pro', expire: null, method: 'group', expired: 'false' }, // tslint:disable-line:no-null-keyword
         domain_org_rules: { disallow_attester_search_for_domains: ['got.this@fromfes.com'] },
       };
     }

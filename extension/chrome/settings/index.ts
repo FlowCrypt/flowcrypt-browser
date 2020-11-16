@@ -41,6 +41,7 @@ View.run(class SettingsView extends View {
   private tabId!: string;
   private notifications!: Notifications;
   private orgRules: OrgRules | undefined;
+  private acctServer: AccountServer | undefined;
 
   private altAccounts: JQuery<HTMLElement>;
 
@@ -56,6 +57,7 @@ View.run(class SettingsView extends View {
     if (this.acctEmail) {
       this.acctEmail = this.acctEmail.toLowerCase().trim();
       this.gmail = new Gmail(this.acctEmail);
+      this.acctServer = new AccountServer(this.acctEmail);
     }
     this.altAccounts = $('#alt-accounts');
   }
@@ -310,7 +312,7 @@ View.run(class SettingsView extends View {
     const authInfo = await AcctStore.authInfo(this.acctEmail!);
     if (authInfo.uuid) { // have auth email set
       try {
-        const response = await AccountServer.accountGetAndUpdateLocalStore(authInfo);
+        const response = await this.acctServer!.accountGetAndUpdateLocalStore(authInfo);
         $('#status-row #status_flowcrypt').text(`fc:ok`);
         if (response?.account?.alias) {
           statusContainer.find('.status-indicator-text').css('display', 'none');

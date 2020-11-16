@@ -11,7 +11,6 @@ import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { AccountServer } from '../../../js/common/api/account-server.js';
 
 export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
 
@@ -91,7 +90,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
         expirationTextEl.text(Str.pluralize(this.MSG_EXPIRE_DAYS_DEFAULT, 'day'));
       } else {
         try {
-          const response = await AccountServer.accountGetAndUpdateLocalStore(authInfo);
+          const response = await this.view.acctServer.accountGetAndUpdateLocalStore(authInfo);
           expirationTextEl.text(Str.pluralize(response.account.default_message_expire, 'day'));
         } catch (e) {
           ApiErr.reportIfSignificant(e);

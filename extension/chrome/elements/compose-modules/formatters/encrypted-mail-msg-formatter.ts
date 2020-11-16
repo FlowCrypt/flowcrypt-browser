@@ -21,7 +21,6 @@ import { Ui } from '../../../../js/common/browser/ui.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
 import { FlowCryptWebsite } from '../../../../js/common/api/flowcrypt-website.js';
-import { AccountServer } from '../../../../js/common/api/account-server.js';
 import { FcUuidAuth } from '../../../../js/common/api/account-servers/flowcrypt-com-api.js';
 import { SmimeKey } from '../../../../js/common/core/crypto/smime/smime-key.js';
 
@@ -45,7 +44,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const msgBodyWithReplyToken = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(authInfo, newMsg);
     const pgpMimeWithAtts = await Mime.encode(msgBodyWithReplyToken, { Subject: newMsg.subject }, await this.view.attsModule.attach.collectAtts());
     const { data: pwdEncryptedWithAtts } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAtts), newMsg.pwd, []); // encrypted only for pwd, not signed
-    const { short, admin_code } = await AccountServer.messageUpload(
+    const { short, admin_code } = await this.view.acctServer.messageUpload(
       authInfo.uuid ? authInfo : undefined,
       pwdEncryptedWithAtts,
       (p) => this.view.sendBtnModule.renderUploadProgress(p, 'FIRST-HALF'), // still need to upload to Gmail later, this request represents first half of progress
@@ -110,7 +109,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     }
     const recipients = Array.prototype.concat.apply([], Object.values(newMsgData.recipients));
     try {
-      const response = await AccountServer.messageToken(authInfo);
+      const response = await this.view.acctServer.messageToken(authInfo);
       const infoDiv = Ui.e('div', {
         'style': 'display: none;',
         'class': 'cryptup_reply',

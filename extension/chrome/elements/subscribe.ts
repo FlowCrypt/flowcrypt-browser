@@ -29,6 +29,7 @@ View.run(class SubscribeView extends View {
   private readonly placement: string | undefined;
   private authInfo: FcUuidAuth | undefined;
   private tabId: string | undefined;
+  private acctServer: AccountServer;
 
   private readonly PRODUCTS: { [productName in ProductName]: Product } = {
     null: { id: null, method: null, name: null, level: null }, // tslint:disable-line:no-null-keyword
@@ -42,6 +43,7 @@ View.run(class SubscribeView extends View {
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.placement = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'placement', ['settings', 'settings_compose', 'default', 'dialog', 'gmail', 'compose', undefined]);
+    this.acctServer = new AccountServer(this.acctEmail);
   }
 
   public render = async () => {
@@ -74,7 +76,7 @@ View.run(class SubscribeView extends View {
   private renderSubscriptionDetails = async () => {
     this.authInfo = await AcctStore.authInfo(this.acctEmail);
     try {
-      await AccountServer.accountGetAndUpdateLocalStore(this.authInfo);
+      await this.acctServer.accountGetAndUpdateLocalStore(this.authInfo);
     } catch (e) {
       if (ApiErr.isAuthErr(e)) {
         Xss.sanitizeRender('#content', `Not logged in. ${Ui.retryLink()}`);
