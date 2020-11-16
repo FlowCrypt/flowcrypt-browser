@@ -14,8 +14,9 @@ import { ErrorReport, UnreportableError } from '../../platform/catch.js';
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
 
-namespace FesRes {
+export namespace FesRes {
   export type AccessToken = { accessToken: string };
+  export type ServiceInfo = { vendor: string, service: string, orgId: string, version: string, apiVersion: string }
 }
 
 /**
@@ -34,6 +35,10 @@ export class EnterpriseServer extends Api {
   constructor(fesUrl: string, private acctEmail: string) {
     super();
     this.fesUrl = fesUrl.replace(/\/$/, '');
+  }
+
+  public getServiceInfo = async (): Promise<FesRes.ServiceInfo> => {
+    return await this.request<FesRes.ServiceInfo>('GET', `/api/`);
   }
 
   public getAccessTokenAndUpdateLocalStore = async (idToken: string): Promise<void> => {
