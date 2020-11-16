@@ -29,6 +29,13 @@ blocks:
           - sudo sh -c "echo '127.0.0.1 google.mock.flowcryptlocal.com' >> /etc/hosts"
           - sudo sh -c "echo '127.0.0.1 fes.standardsubdomainfes.com' >> /etc/hosts"
           - sudo sh -c "echo '127.0.0.1 wellknownfes.com' >> /etc/hosts"
+          - sudo sh -c "echo '127.0.0.1 fes.org-rules-test.flowcrypt.com' >> /etc/hosts"
+          - sudo sh -c "echo '127.0.0.1 fes.no-search-domains-org-rule.flowcrypt.com' >> /etc/hosts"
+          - sudo sh -c "echo '127.0.0.1 fes.key-manager-autogen.flowcrypt.com' >> /etc/hosts"
+          - sudo sh -c "echo '127.0.0.1 fes.key-manager-server-offline.flowcrypt.com' >> /etc/hosts"
+          - sudo sh -c "echo '127.0.0.1 fes.key-manager-no-pub-lookup.flowcrypt.com' >> /etc/hosts"
+          - sudo sh -c "echo '127.0.0.1 fes.key-manager-keygen-expiration.flowcrypt.com' >> /etc/hosts"
+          - sudo sh -c "echo '127.0.0.1 fes.no-submit-org-rule.flowcrypt.com' >> /etc/hosts"
 
       jobs:
 

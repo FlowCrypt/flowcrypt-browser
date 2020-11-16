@@ -20,7 +20,12 @@ export const mockFesEndpoints: HandlersDefinition = {
         "apiVersion": 'v1',
       };
     }
-    throw new HttpClientErr('Not Found', 404);
+    if (req.headers.host.startsWith('https://fes.') && req.method === 'GET') {
+      // enterprise flavor expects fes to be configured. If it could not reach it, it would fail
+      // the only way to make it not fail is to return a 404 at https://fes.domain.com/api/
+      throw new HttpClientErr('Not Found', 404);
+    }
+    throw new HttpClientErr(`Not running any FES here: ${req.headers.host}`, 400);
   },
   '/api/v1/account/access-token': async ({ }, req) => {
     if (req.headers.host === standardFesUrl && req.method === 'GET') {
