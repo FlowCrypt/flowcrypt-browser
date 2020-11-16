@@ -26,6 +26,7 @@ export const acctsWithoutMockData = [
   'setup@prv-create-no-prv-backup.flowcrypt.com',
   'ci.tests.gmail@flowcrypt.dev',
   'user@standardsubdomainfes.com:8001',
+  'user@wellknownfes.com:8001',
 ];
 
 export const mock = async (logger: (line: string) => void) => {
