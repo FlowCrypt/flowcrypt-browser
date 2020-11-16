@@ -7,8 +7,9 @@
 
 import { Api, ReqMethod } from '../shared/api.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
-import { FlowCryptComApi } from './flowcrypt-com-api.js';
+import { BackendRes, FlowCryptComApi, ProfileUpdate } from './flowcrypt-com-api.js';
 import { Dict } from '../../core/common.js';
+import { ErrorReport, UnreportableError } from '../../platform/catch.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
@@ -22,43 +23,42 @@ namespace FesRes {
  * This gives them more control. All OrgRules, log collectors, etc (as implemented) would then be handled by the FES.
  * Once fully integrated, this will allow customers to be fully independent of flowcrypt.com/api
  *
- * WIP - currently unused, unfinished
+ * WIP - currently unused
  */
 // ts-prune-ignore-next
 export class EnterpriseServer extends Api {
 
   private fesUrl: string
+  private apiVersion = 'v1';
 
   constructor(fesUrl: string, private acctEmail: string) {
     super();
     this.fesUrl = fesUrl.replace(/\/$/, '');
   }
 
-  public loginWithOpenid = async (idToken: string): Promise<void> => {
-    const response = await this.request<FesRes.AccessToken>('GET', '/api/account/access-token', { Authorization: `Bearer ${idToken}` });
+  public getAccessTokenAndUpdateLocalStore = async (idToken: string): Promise<void> => {
+    const response = await this.request<FesRes.AccessToken>('GET', `/api/${this.apiVersion}/account/access-token`, { Authorization: `Bearer ${idToken}` });
     await AcctStore.set(this.acctEmail, { fesAccessToken: response.accessToken });
   }
 
-  public reportException = async (/* e: any */): Promise<void> => {
-    throw Error('EnterpriseServer.reportException not implemented');
-    // const formattedException = Catch.formatExceptionForReport(...)
-    // await this.request<void>('POST', '/api/log-collector/exception', await this.authHdr());
+  public getAccountAndUpdateLocalStore = async (): Promise<BackendRes.FcAccountGet> => {
+    const r = await this.request<BackendRes.FcAccountGet>('GET', `/api/${this.apiVersion}/account/`, await this.authHdr());
+    await AcctStore.set(this.acctEmail, { rules: r.domain_org_rules, subscription: r.subscription });
+    return r;
+  }
+
+  public reportException = async (errorReport: ErrorReport): Promise<void> => {
+    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, await this.authHdr(), errorReport);
   }
 
   public reportEvent = async (tags: EventTag[], message: string, details?: string): Promise<void> => {
-    await this.request<void>('POST', '/api/log-collector/exception', await this.authHdr(), { tags, message, details });
+    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, await this.authHdr(), { tags, message, details });
   }
 
-  // public accountUpdate = async (fcAuth: FcUuidAuth, profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {
-  //   // noop
-  // }
-
-  // public accountGetAndUpdateLocalStore = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcAccountGet> => {
-  //   FlowCryptComApi.throwIfMissingUuid(fcAuth);
-  //   const r = await FlowCryptComApi.request<BackendRes.FcAccountGet>('account/get', fcAuth);
-  //   await AcctStore.set(fcAuth.account, { rules: r.domain_org_rules, subscription: r.subscription });
-  //   return r;
-  // }
+  public accountUpdate = async (profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {
+    console.log('profile update ignored', profileUpdate);
+    throw new UnreportableError('Account update not implemented when using FlowCrypt Enterprise Server');
+  }
 
   private authHdr = async (): Promise<Dict<string>> => {
     const { fesAccessToken } = await AcctStore.get(this.acctEmail, ['fesAccessToken']);
