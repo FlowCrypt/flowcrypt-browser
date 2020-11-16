@@ -291,10 +291,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: true, usedPgpBefore: true, simulateRetryOffline: true });
     }));
 
-    /**
-     * You need the following line in /etc/hosts:
-     * 127.0.0.1 fes.org-rules-test.flowcrypt.com
-     */
     ava.default('has.pub@org-rules-test - no backup, no keygen', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'has.pub@org-rules-test.flowcrypt.com');
       await SetupPageRecipe.manualEnter(settingsPage, 'has.pub.orgrulestest', { noPrvCreateOrgRule: true, enforceAttesterSubmitOrgRule: true });
@@ -303,10 +299,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await settingsPage.notPresent(['@action-open-backup-page']);
     }));
 
-    /**
-     * You need the following line in /etc/hosts:
-     * 127.0.0.1 fes.org-rules-test.flowcrypt.com
-     */
     ava.default('no.pub@org-rules-test - no backup, no keygen, enforce attester submit with submit err', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'no.pub@org-rules-test.flowcrypt.com');
       await SetupPageRecipe.manualEnter(settingsPage, 'no.pub.orgrulestest', { noPrvCreateOrgRule: true, enforceAttesterSubmitOrgRule: true, fillOnly: true });
@@ -317,10 +309,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       expect(renderedErr).to.contain(`Could not find LDAP pubkey on a LDAP-only domain for email no.pub@org-rules-test.flowcrypt.com on server keys.flowcrypt.com`);
     }));
 
-    /**
-     * You need the following line in /etc/hosts:
-     * 127.0.0.1 fes.no-submit-org-rule.flowcrypt.com
-     */
     ava.default('user@no-submit-org-rule.flowcrypt.com - do not submit to attester', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-org-rule.flowcrypt.com');
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { noPubSubmitRule: true });
@@ -330,10 +318,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await attesterFrame.waitAndRespondToModal('error', 'confirm', 'Disallowed by your organisation rules');
     }));
 
-    /**
-     * You need the following line in /etc/hosts:
-     * 127.0.0.1 fes.no-search-domains-org-rule.flowcrypt.com
-     */
     ava.default('user@no-search-domains-org-rule.flowcrypt.com - do not search attester for recipients on particular domains', testWithBrowser(undefined, async (t, browser) => {
       // disallowed searching attester for pubkeys on "flowcrypt.com" domain
       // below we search for human@flowcrypt.com which normally has pubkey on attester, but none should be found due to the rule
@@ -347,10 +331,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await composePage.waitAll('@input-password');
     }));
 
-    /**
-     * You need the following line in /etc/hosts:
-     * 127.0.0.1 fes.key-manager-autogen.flowcrypt.com
-     */
     ava.default('get.key@key-manager-autogen.flowcrypt.com - automatic setup with key found on key manager', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'get.key@key-manager-autogen.flowcrypt.com';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -372,10 +352,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await securityFrame.notPresent(['@action-change-passphrase-begin', '@action-test-passphrase-begin', '@action-forget-pp']);
     }));
 
-    /**
-     * You need the following line in /etc/hosts:
-     * 127.0.0.1 fes.key-manager-autogen.flowcrypt.com
-     */
     ava.default('put.key@key-manager-autogen.flowcrypt.com - automatic setup with key not found on key manager, then generated', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'put.key@key-manager-autogen.flowcrypt.com';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -400,10 +376,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await securityFrame.notPresent(['@action-change-passphrase-begin', '@action-test-passphrase-begin', '@action-forget-pp']);
     }));
 
-    /**
-     * You need the following line in /etc/hosts:
-     * 127.0.0.1 fes.key-manager-autogen.flowcrypt.com
-     */
     ava.default('get.error@key-manager-autogen.flowcrypt.com - handles error during KM key GET', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'get.error@key-manager-autogen.flowcrypt.com';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -415,10 +387,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       });
     }));
 
-    /**
-     * You need the following line in /etc/hosts:
-     * 127.0.0.1 fes.key-manager-autogen.flowcrypt.com
-     */
     ava.default('put.error@key-manager-autogen.flowcrypt.com - handles error during KM key PUT', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'put.error@key-manager-autogen.flowcrypt.com';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -434,10 +402,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       expect(details).to.not.contain('<REDACTED:');
     }));
 
-    /**
-     * You need the following line in /etc/hosts:
-     * 127.0.0.1 fes.key-manager-server-offline.flowcrypt.com
-     */
     ava.default('fail@key-manager-server-offline.flowcrypt.com - shows friendly KM not reachable error', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'fail@key-manager-server-offline.flowcrypt.com';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
