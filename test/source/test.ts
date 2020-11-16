@@ -21,7 +21,7 @@ import { defineUnitBrowserTests } from './tests/unit-browser';
 import { mock } from './mock';
 import { mockBackendData } from './mock/backend/backend-endpoints';
 
-const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
+export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectiIntentionalErrReport: false }; // updated when a particular test that causes an error is run
 
 process.setMaxListeners(60);

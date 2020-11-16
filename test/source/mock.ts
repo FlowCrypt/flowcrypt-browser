@@ -27,6 +27,7 @@ export const acctsWithoutMockData = [
   'ci.tests.gmail@flowcrypt.dev',
   'user@standardsubdomainfes.com:8001',
   'user@wellknownfes.com:8001',
+  'no.fes@example.com',
 ];
 
 export const mock = async (logger: (line: string) => void) => {

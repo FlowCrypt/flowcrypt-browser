@@ -150,10 +150,29 @@ export class GoogleAuth {
         await acctServer.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token); // may be calling flowcrypt.com or FES
         await acctServer.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // stores OrgRules and subscription
       } catch (e) {
+        if (GoogleAuth.isFesUnreachableErr(e, authRes.acctEmail)) {
+          const error = `Cannot reach your company's FlowCrypt Enterprise Server (FES). Contact human@flowcrypt.com when unsure.`;
+          return { result: 'Error', error, acctEmail: authRes.acctEmail, id_token: undefined };
+        }
         return { result: 'Error', error: `Grant successful but error accessing fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
       }
     }
     return authRes;
+  }
+
+  /**
+   * Happens on enterprise builds
+   */
+  public static isFesUnreachableErr = (e: any, email: string): boolean => {
+    const domain = email.split('@')[1].toLowerCase();
+    const errString = String(e);
+    if (errString.includes(`-1 when GET-ing https://${domain}/.well-known/host-meta.json`)) {
+      return true; // err trying to get FES url from .well-known
+    }
+    if (errString.includes(`-1 when GET-ing https://fes.${domain}/api/`)) {
+      return true; // err trying to reach FES itself at a predictable URL
+    }
+    return false;
   }
 
   public static newOpenidAuthPopup = async ({ acctEmail }: { acctEmail?: string }): Promise<AuthRes> => {
