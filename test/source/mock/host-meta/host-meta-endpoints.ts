@@ -9,6 +9,7 @@ export const mockWellKnownHostMetaEndpoints: HandlersDefinition = {
     if (req.headers.host === 'wellknownfes.com:8001') {
       return { links: [{ rel: 'https://flowcrypt.com/fes', href: 'https://localhost:8001/custom-fes-based-on-well-known/' }] };
     }
+    throw new HttpClientErr(`Host meta for ${req.headers.host} not set up`, 404);
   },
   // below for unit tests
   '/.well-known/host-meta.json?local=status500': async () => {

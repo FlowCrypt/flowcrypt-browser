@@ -458,7 +458,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     }));
 
     /**
-     * You need the following line in /etc/hosts:
+     * You need the following lines in /etc/hosts:
+     * 127.0.0.1    standardsubdomainfes.com
      * 127.0.0.1    fes.standardsubdomainfes.com
      */
     ava.default('user@standardsubdomainfes.com:8001 - uses FES on standard domain', testWithBrowser(undefined, async (t, browser) => {

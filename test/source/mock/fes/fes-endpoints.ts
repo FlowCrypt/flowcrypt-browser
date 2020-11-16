@@ -23,6 +23,7 @@ export const mockFesEndpoints: HandlersDefinition = {
     if (req.headers.host === 'fes.localhost:8001') { // test `status404 does not return any fesUrl` uses this
       throw new HttpClientErr(`Not found`, 404); // this makes enterprise version tolerate missing FES - explicit 404
     }
+    console.log('host', req.headers.host);
     throw new HttpClientErr(`Not running any FES here: ${req.headers.host}`, 400);
   },
   '/api/v1/account/access-token': async ({ }, req) => {
