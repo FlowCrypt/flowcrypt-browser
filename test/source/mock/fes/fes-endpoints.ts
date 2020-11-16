@@ -5,7 +5,7 @@ import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr } from '../lib/api';
 import { MockJwt } from '../lib/oauth';
 
-const expectedStandardSubdomainFes = 'fes.standardsubdomainfes.com';
+const expectedStandardSubdomainFes = 'fes.standardsubdomainfes.com:8001';
 const issuedAccessTokens: string[] = [];
 
 export const mockFesEndpoints: HandlersDefinition = {

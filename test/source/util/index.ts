@@ -94,6 +94,7 @@ Config.secrets().auth.google.push( // these don't contain any secrets, so not wo
   { "email": "user@key-manager-no-pub-lookup.flowcrypt.com" },
   { "email": "expire@key-manager-keygen-expiration.flowcrypt.com" },
   { "email": "setup@prv-create-no-prv-backup.flowcrypt.com" },
+  { "email": "user@standardsubdomainfes.com:8001" },
 );
 
 export class Util {

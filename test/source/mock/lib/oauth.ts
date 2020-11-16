@@ -159,7 +159,7 @@ export class MockJwt {
   }
 
   public static parseEmail = (jwt: string): string => {
-    const email = JSON.parse(jwt.split('.')[1]).email;
+    const email = JSON.parse(Buf.fromBase64Str(jwt.split('.')[1]).toUtfStr()).email;
     if (!email) {
       throw new Error(`Missing email in MockJwt ${jwt}`);
     }

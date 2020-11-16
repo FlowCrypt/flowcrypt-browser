@@ -457,6 +457,19 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       expect(details).to.contain('<REDACTED:PRV>');
     }));
 
+    /**
+     * You need the following line in /etc/hosts:
+     * 127.0.0.1    fes.standardsubdomainfes.com
+     */
+    ava.default('user@standardsubdomainfes.com:8001 - uses FES on standard domain', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'user@standardsubdomainfes.com:8001'; // added port to trick extension into calling the mock
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false });
+      const debugFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-show-local-store-contents', ['debug_api.htm']);
+      await debugFrame.waitForContent('@container-pre', 'fes.standardsubdomainfes.com:8001'); // FES url
+      await debugFrame.waitForContent('@container-pre', 'got.this@fromfes.com'); // org rules from FES
+    }));
+
   }
 
 };

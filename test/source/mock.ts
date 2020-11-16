@@ -8,6 +8,7 @@ import { opgp } from './core/crypto/pgp/openpgpjs-custom';
 import { startAllApisMock } from './mock/all-apis-mock';
 
 export const acctsWithoutMockData = [
+  // todo - throw this list away and check for Config.secrets().auth.google instead
   'flowcrypt.test.key.multibackup@gmail.com',
   'has.pub@org-rules-test.flowcrypt.com',
   'no.pub@org-rules-test.flowcrypt.com',
@@ -24,6 +25,7 @@ export const acctsWithoutMockData = [
   'expire@key-manager-keygen-expiration.flowcrypt.com',
   'setup@prv-create-no-prv-backup.flowcrypt.com',
   'ci.tests.gmail@flowcrypt.dev',
+  'user@standardsubdomainfes.com:8001',
 ];
 
 export const mock = async (logger: (line: string) => void) => {

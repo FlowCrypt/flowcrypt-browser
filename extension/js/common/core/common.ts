@@ -70,6 +70,9 @@ export class Str {
     if (email.indexOf(' ') !== -1) {
       return false;
     }
+    // for MOCK tests, we need emails like me@domain.com:8001 to pass
+    // this then makes the extension call fes.domain.com:8001 which is where the appropriate mock runs
+    email = email.replace(/\:8001$/, '');
     return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(email);
   }
 

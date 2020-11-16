@@ -41,7 +41,7 @@ View.run(class DebugApiView extends View {
         'notification_setup_needed_dismissed', 'email_provider', 'google_token_scopes', 'hide_message_password', 'sendAs', 'outgoing_language',
         'full_name', 'cryptup_enabled', 'setup_done',
         'successfully_received_at_leat_one_message', 'notification_setup_done_seen', 'openid',
-        'rules', 'subscription', 'use_rich_text',
+        'rules', 'subscription', 'use_rich_text', 'fesUrl'
       ]);
       this.renderCallRes('Local account storage', { acctEmail: this.acctEmail }, storage);
     } else {
@@ -54,7 +54,7 @@ View.run(class DebugApiView extends View {
   }
 
   private renderCallRes = (api: string, variables: Dict<any>, result: any, error?: any) => {
-    const r = `<b>${api} ${JSON.stringify(variables)}</b><pre>${JSON.stringify(result, undefined, 2)} (${error ? JSON.stringify(error) : 'no err'})</pre>`;
+    const r = `<b>${api} ${JSON.stringify(variables)}</b><pre data-test="container-pre">${JSON.stringify(result, undefined, 2)} (${error ? JSON.stringify(error) : 'no err'})</pre>`;
     Xss.sanitizeAppend('#content', r);
   }
 
