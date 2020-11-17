@@ -151,7 +151,7 @@ export class GoogleAuth {
         await acctServer.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // stores OrgRules and subscription
       } catch (e) {
         if (GoogleAuth.isFesUnreachableErr(e, authRes.acctEmail)) {
-          const error = `Cannot reach your company's FlowCrypt Enterprise Server (FES). Contact human@flowcrypt.com when unsure.`;
+          const error = `Cannot reach your company's FlowCrypt Enterprise Server (FES). Contact human@flowcrypt.com when unsure. (${String(e)})`;
           return { result: 'Error', error, acctEmail: authRes.acctEmail, id_token: undefined };
         }
         return { result: 'Error', error: `Grant successful but error accessing fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
@@ -169,7 +169,7 @@ export class GoogleAuth {
     if (errString.includes(`-1 when GET-ing https://${domain}/.well-known/host-meta.json`)) {
       return true; // err trying to get FES url from .well-known
     }
-    if (errString.includes(`-1 when GET-ing https://fes.${domain}/api/`)) {
+    if (errString.includes(`-1 when GET-ing https://fes.${domain}/api/ `)) { // the space is important to match the full url
       return true; // err trying to reach FES itself at a predictable URL
     }
     return false;
