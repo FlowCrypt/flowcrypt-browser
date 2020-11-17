@@ -4,6 +4,14 @@ import { HttpClientErr } from '../lib/api';
 import { HandlersDefinition } from '../all-apis-mock';
 
 export const mockWellKnownHostMetaEndpoints: HandlersDefinition = {
+  // below for ui tests
+  '/.well-known/host-meta.json': async ({ }, req) => {
+    if (req.headers.host === 'wellknownfes.com:8001') {
+      return { links: [{ rel: 'https://flowcrypt.com/fes', href: 'https://localhost:8001/custom-fes-based-on-well-known/' }] };
+    }
+    throw new HttpClientErr(`Host meta for ${req.headers.host} not set up`, 404);
+  },
+  // below for unit tests
   '/.well-known/host-meta.json?local=status500': async () => {
     throw new Error(`Intentional error host meta 500 - ignored on consumer but noticed by enterprise`);
   },

@@ -18,7 +18,6 @@ import { ContactStore } from '../../../js/common/platform/store/contact-store.js
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 
 import { Settings } from '../../../js/common/settings.js';
-import { AccountServer } from '../../../js/common/api/account-server.js';
 
 export class ComposeStorageModule extends ViewModule<ComposeView> {
 
@@ -211,7 +210,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     const auth = await AcctStore.authInfo(this.view.acctEmail);
     if (auth.uuid) {
       try {
-        await AccountServer.accountGetAndUpdateLocalStore(auth); // updates storage
+        await this.view.acctServer.accountGetAndUpdateLocalStore(auth); // updates storage
       } catch (e) {
         if (ApiErr.isAuthErr(e)) {
           Settings.offerToLoginWithPopupShowModalOnErr(

@@ -144,21 +144,35 @@ export class GoogleAuth {
         return { result: 'Error', error: 'Grant was successful but missing acctEmail', acctEmail: authRes.acctEmail, id_token: undefined };
       }
       try {
-        const uuid = Api.randomFortyHexChars();
-        await AccountServer.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
-        await AccountServer.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // will store org rules and subscription
-        try {
-          // this is here currently for debugging only, to test effect of this new mechanism on customer installations
-          const wellKnownHostMeta = new WellKnownHostMeta(authRes.acctEmail);
-          await wellKnownHostMeta.fetchAndCacheFesUrl();
-        } catch (e) {
-          Catch.reportErr(Catch.rewrapErr(e, `WellKnownHostMeta on ${FLAVOR}`));
-        }
+        const uuid = Api.randomFortyHexChars(); // for flowcrypt.com, if used. When FES is used, the access token is given to client.
+        await new WellKnownHostMeta(authRes.acctEmail).fetchAndCacheFesUrl(); // stores fesUrl if any
+        const acctServer = new AccountServer(authRes.acctEmail);
+        await acctServer.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token); // may be calling flowcrypt.com or FES
+        await acctServer.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // stores OrgRules and subscription
       } catch (e) {
+        if (GoogleAuth.isFesUnreachableErr(e, authRes.acctEmail)) {
+          const error = `Cannot reach your company's FlowCrypt Enterprise Server (FES). Contact human@flowcrypt.com when unsure. (${String(e)})`;
+          return { result: 'Error', error, acctEmail: authRes.acctEmail, id_token: undefined };
+        }
         return { result: 'Error', error: `Grant successful but error accessing fc account: ${String(e)}`, acctEmail: authRes.acctEmail, id_token: undefined };
       }
     }
     return authRes;
+  }
+
+  /**
+   * Happens on enterprise builds
+   */
+  public static isFesUnreachableErr = (e: any, email: string): boolean => {
+    const domain = email.split('@')[1].toLowerCase();
+    const errString = String(e);
+    if (errString.includes(`-1 when GET-ing https://${domain}/.well-known/host-meta.json`)) {
+      return true; // err trying to get FES url from .well-known
+    }
+    if (errString.includes(`-1 when GET-ing https://fes.${domain}/api/ `)) { // the space is important to match the full url
+      return true; // err trying to reach FES itself at a predictable URL
+    }
+    return false;
   }
 
   public static newOpenidAuthPopup = async ({ acctEmail }: { acctEmail?: string }): Promise<AuthRes> => {

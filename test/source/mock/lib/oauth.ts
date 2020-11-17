@@ -106,6 +106,16 @@ export class OauthMock {
 
   // -- private
 
+  private generateIdToken = (email: string): string => {
+    const newIdToken = MockJwt.new(email, this.expiresIn);
+    if (!this.issuedIdTokensByAcct[email]) {
+      this.issuedIdTokensByAcct[email] = [];
+    }
+    this.issuedIdTokensByAcct[email].push(newIdToken);
+    this.acctByIdToken[newIdToken] = email;
+    return newIdToken;
+  }
+
   private getAccessToken(refreshToken: string): string {
     if (this.accessTokenByRefreshToken[refreshToken]) {
       return this.accessTokenByRefreshToken[refreshToken];
@@ -123,12 +133,18 @@ export class OauthMock {
     }
   }
 
-  private generateIdToken = (email: string): string => {
+}
+
+export class MockJwt {
+
+  public static new = (email: string, expiresIn = 1 * 60 * 60): string => {
     const data = {
       at_hash: 'at_hash',
-      exp: this.expiresIn,
-      iat: 123, sub: 'sub',
-      aud: 'aud', azp: 'azp',
+      exp: expiresIn,
+      iat: 123,
+      sub: 'sub',
+      aud: 'aud',
+      azp: 'azp',
       iss: "https://localhost:8001",
       name: 'First Last',
       picture: 'picture',
@@ -139,12 +155,15 @@ export class OauthMock {
       email_verified: true,
     };
     const newIdToken = `fakeheader.${Buf.fromUtfStr(JSON.stringify(data)).toBase64UrlStr()}.${Str.sloppyRandom(30)}`;
-    if (!this.issuedIdTokensByAcct[email]) {
-      this.issuedIdTokensByAcct[email] = [];
-    }
-    this.issuedIdTokensByAcct[email].push(newIdToken);
-    this.acctByIdToken[newIdToken] = email;
     return newIdToken;
+  }
+
+  public static parseEmail = (jwt: string): string => {
+    const email = JSON.parse(Buf.fromBase64Str(jwt.split('.')[1]).toUtfStr()).email;
+    if (!email) {
+      throw new Error(`Missing email in MockJwt ${jwt}`);
+    }
+    return email;
   }
 
 }

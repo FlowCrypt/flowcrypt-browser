@@ -6,7 +6,6 @@ import { Api } from './../shared/api.js';
 import { ApiErr } from '../shared/api-error.js';
 import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { Buf } from '../../core/buf.js';
-import { Catch } from '../../platform/catch.js';
 import { PubkeySearchResult } from './../pub-lookup.js';
 import { KeyUtil } from '../../core/crypto/key.js';
 
@@ -87,7 +86,7 @@ export class Wkd extends Api {
       return { hasPolicy: true, buf };
     } catch (e) {
       if (!ApiErr.isNotFound(e)) {
-        Catch.report(`Wkd.lookupEmail error retrieving key: ${String(e)}`);
+        console.info(`Wkd.lookupEmail error retrieving key: ${String(e)}`);
       }
       return { hasPolicy: true };
     }

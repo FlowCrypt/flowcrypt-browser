@@ -21,7 +21,7 @@ import { defineUnitBrowserTests } from './tests/unit-browser';
 import { mock } from './mock';
 import { mockBackendData } from './mock/backend/backend-endpoints';
 
-const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
+export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectiIntentionalErrReport: false }; // updated when a particular test that causes an error is run
 
 process.setMaxListeners(60);
@@ -96,7 +96,7 @@ ava.after.always('evaluate Catch.reportErr errors', async t => {
   const usefulErrors = mockBackendData.reportedErrors
     .filter(e => e.message !== 'Too few bytes to read ASN.1 value.')
     // on enterprise, these report errs
-    .filter(e => !(testVariant === 'ENTERPRISE-MOCK' && e.message.includes('.well-known/host-meta.json')))
+    .filter(e => !(testVariant === 'ENTERPRISE-MOCK' && e.trace.includes('.well-known/host-meta.json')))
     // todo - ideally mock tests would never call this. But we do tests with human@flowcrypt.com so it's calling here
     .filter(e => !e.trace.includes('-1 when GET-ing https://openpgpkey.flowcrypt.com'));
   // end of todo

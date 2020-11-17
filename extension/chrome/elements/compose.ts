@@ -30,6 +30,7 @@ import { Catch } from '../../js/common/platform/catch.js';
 import { OrgRules } from '../../js/common/org-rules.js';
 import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { Scopes, AcctStore } from '../../js/common/platform/store/acct-store.js';
+import { AccountServer } from '../../js/common/api/account-server.js';
 
 export class ComposeView extends View {
 
@@ -54,6 +55,7 @@ export class ComposeView extends View {
   public emailProvider: EmailProviderInterface;
   public orgRules!: OrgRules;
   public pubLookup!: PubLookup;
+  public acctServer: AccountServer;
 
   public quoteModule!: ComposeQuoteModule;
   public sendBtnModule!: ComposeSendBtnModule;
@@ -136,6 +138,7 @@ export class ComposeView extends View {
     this.replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
     this.isReplyBox = !!this.replyMsgId;
     this.emailProvider = new Gmail(this.acctEmail);
+    this.acctServer = new AccountServer(this.acctEmail);
     opgp.initWorker({ path: '/lib/openpgp.worker.js' });
   }
 

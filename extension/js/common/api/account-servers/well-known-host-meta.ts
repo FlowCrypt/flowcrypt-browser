@@ -9,6 +9,7 @@ import { Catch } from '../../platform/catch.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
 import { Api } from '../shared/api.js';
 import { ApiErr } from '../shared/api-error.js';
+import { FesRes, EnterpriseServer } from './enterprise-server.js';
 
 type HostMetaResponse = { links?: { rel?: string, href?: string }[] }
 
@@ -17,6 +18,7 @@ export class WellKnownHostMeta extends Api {
   private domain: string;
   private hostMetaUrl: string;
   private fesRel = 'https://flowcrypt.com/fes';
+  private laxCheck = ['dmFsZW8uY29t'];
 
   constructor(private acctEmail: string) {
     super();
@@ -32,19 +34,40 @@ export class WellKnownHostMeta extends Api {
       return undefined;
     }
     const responseBuf = await this.attemptToFetchFesUrlIgnoringErrorsOnConsumerFlavor();
-    if (!responseBuf) {
-      await this.setFesUrlToCache(undefined);
-      return undefined;
+    if (responseBuf) {
+      const hostMetaResponse = this.parseBufAsHostMetaResponseIgnoringErrorsOnConsumerFlavor(responseBuf);
+      const fesUrl = hostMetaResponse?.links?.find(link => link.rel === this.fesRel)?.href;
+      await this.setFesUrlToCache(fesUrl);
+      return fesUrl;
     }
-    const hostMetaResponse = this.parseBufAsHostMetaResponseIgnoringErrorsOnConsumerFlavor(responseBuf);
-    const fesUrl = hostMetaResponse?.links?.find(link => link.rel === this.fesRel)?.href;
-    await this.setFesUrlToCache(fesUrl);
-    return fesUrl;
+    const standardFesUrl = `https://fes.${this.domain}`;
+    const fesServiceInfo = await this.tryCallingFesDirectlyIgnoringErrorsOnConsumerFlavor(standardFesUrl);
+    if (fesServiceInfo && fesServiceInfo.service === 'enterprise-server') {
+      await this.setFesUrlToCache(standardFesUrl);
+      return standardFesUrl;
+    }
+    await this.setFesUrlToCache(undefined);
+    return undefined;
   }
 
   public getFesUrlFromCache = async (): Promise<string | undefined> => {
     const { fesUrl } = await AcctStore.get(this.acctEmail, ['fesUrl']);
     return fesUrl;
+  }
+
+  private tryCallingFesDirectlyIgnoringErrorsOnConsumerFlavor = async (fesUrl: string): Promise<FesRes.ServiceInfo | undefined> => {
+    const fes = new EnterpriseServer(fesUrl, this.acctEmail);
+    try {
+      return await fes.getServiceInfo();
+    } catch (e) {
+      if (FLAVOR === 'consumer' || ApiErr.isNotFound(e)) {
+        return;
+      } else if (this.laxCheck.includes(btoa(this.domain)) && ApiErr.isNetErr(e)) {
+        return undefined; // cannot reach server for enterprises where we don't expect to find it
+      } else {
+        throw e; // strict enterprise
+      }
+    }
   }
 
   private setFesUrlToCache = async (fesUrl: string | undefined): Promise<void> => {

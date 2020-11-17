@@ -457,6 +457,50 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       expect(details).to.contain('<REDACTED:PRV>');
     }));
 
+    /**
+     * You need the following lines in /etc/hosts:
+     * 127.0.0.1    standardsubdomainfes.com
+     * 127.0.0.1    fes.standardsubdomainfes.com
+     */
+    ava.default('user@standardsubdomainfes.com:8001 - uses FES on standard domain', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'user@standardsubdomainfes.com:8001'; // added port to trick extension into calling the mock
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false });
+      const debugFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-show-local-store-contents', ['debug_api.htm']);
+      await debugFrame.waitForContent('@container-pre', 'fes.standardsubdomainfes.com:8001'); // FES url on standard subdomain
+      await debugFrame.waitForContent('@container-pre', 'got.this@fromstandardfes.com'); // org rules from FES
+    }));
+
+    /**
+     * You need the following line in /etc/hosts:
+     * 127.0.0.1    wellknownfes.com
+     */
+    ava.default('user@wellknownfes.com:8001 - uses FES based on .well-known', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'user@wellknownfes.com:8001'; // added port to trick extension into calling the mock
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false });
+      const debugFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-show-local-store-contents', ['debug_api.htm']);
+      await debugFrame.waitForContent('@container-pre', 'https://localhost:8001/custom-fes-based-on-well-known/'); // FES url grabbed from .well-known
+      await debugFrame.waitForContent('@container-pre', 'got.this@fromwellknownfes.com'); // org rules from FES
+    }));
+
+    /**
+     * enterprise - expects FES to be set up. when it's not, show nice error
+     * consumer - tolerates the missing FES and and sets up without it
+     */
+    ava.default('no.fes@example.com - skip FES on consumer, show friendly message on enterprise', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'no.fes@example.com';
+      if (testVariant === 'ENTERPRISE-MOCK') { // shows err on enterprise
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        await settingsPage.waitAndRespondToModal('error', 'confirm', "Cannot reach your company's FlowCrypt Enterprise Server (FES). Contact human@flowcrypt.com when unsure.");
+      } else if (testVariant === 'CONSUMER-MOCK') { // allows to set up on consumer
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false });
+      } else {
+        throw new Error(`Unexpected test variant ${testVariant}`);
+      }
+    }));
+
   }
 
 };

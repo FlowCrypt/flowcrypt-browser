@@ -27,12 +27,14 @@ View.run(class SecurityView extends View {
   private primaryKi: KeyInfo | undefined;
   private authInfo: FcUuidAuth | undefined;
   private orgRules!: OrgRules;
+  private acctServer: AccountServer;
 
   constructor() {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+    this.acctServer = new AccountServer(this.acctEmail);
   }
 
   public render = async () => {
@@ -89,7 +91,7 @@ View.run(class SecurityView extends View {
     if (subscription.active) {
       Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
       try {
-        const response = await AccountServer.accountGetAndUpdateLocalStore(this.authInfo!);
+        const response = await this.acctServer.accountGetAndUpdateLocalStore(this.authInfo!);
         $('.select_loader_container').text('');
         $('.default_message_expire').val(Number(response.account.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
         $('.default_message_expire').change(this.setHandler(() => this.onDefaultExpireUserChange()));
@@ -113,7 +115,7 @@ View.run(class SecurityView extends View {
   private onDefaultExpireUserChange = async () => {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
-    await AccountServer.accountUpdate(this.authInfo!, { default_message_expire: Number($('.default_message_expire').val()) });
+    await this.acctServer.accountUpdate(this.authInfo!, { default_message_expire: Number($('.default_message_expire').val()) });
     window.location.reload();
   }
 
