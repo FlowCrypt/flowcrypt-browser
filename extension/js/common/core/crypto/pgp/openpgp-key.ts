@@ -429,6 +429,7 @@ export class OpenPGPKey {
           signature = signatures[i];
         }
       } catch (e) {
+        // skip signature with failed verification
       }
     }
     return signature;
