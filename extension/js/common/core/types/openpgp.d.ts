@@ -251,6 +251,7 @@ declare namespace OpenPGP {
       public revoked: null | boolean;
       public sign(key: SecretKey | SecretSubkey, data: Uint8Array): true;
       public isExpired(date?: Date): boolean;
+      public verify(key: PublicKey | SecretKey, signatureType: OpenPGP.enums.signature, data: any, detached?: boolean, streaming?: boolean): Promise<boolean>;
       public getExpirationTime(): Date | typeof Infinity;
     }
 
@@ -695,6 +696,7 @@ declare namespace OpenPGP {
     function read(type: typeof symmetric, e: symmetric): symmetricNames | string | any;
     function read(type: typeof keyStatus, e: keyStatus): keyStatusNames | string | any;
     function read(type: typeof keyFlags, e: keyFlags): keyFlagsNames | string | any;
+    function read(type: typeof signature, e: signature): signatureNames | string | any;
 
     export type armorNames = 'multipart_section' | 'multipart_last' | 'signed' | 'message' | 'public_key' | 'private_key';
     enum armor {
@@ -756,6 +758,25 @@ declare namespace OpenPGP {
       symEncryptedIntegrityProtected = 18,
       modificationDetectionCode = 19,
       symEncryptedAEADProtected = 20,
+    }
+
+    export type signatureNames = 'subkey_binding' | 'key_binding';
+    enum signature {
+      binary = 0,
+      text = 1,
+      standalone = 2,
+      cert_generic = 16,
+      cert_persona = 17,
+      cert_casual = 18,
+      cert_positive = 19,
+      cert_revocation = 48,
+      subkey_binding = 24,
+      key_binding = 25,
+      key = 31,
+      key_revocation = 32,
+      subkey_revocation = 40,
+      timestamp = 64,
+      third_party = 80
     }
 
     export type publicKeyNames = 'rsa_encrypt_sign' | 'rsa_encrypt' | 'rsa_sign' | 'elgamal' | 'dsa' | 'ecdh' | 'ecdsa' | 'eddsa' | 'aedh' | 'aedsa';
@@ -874,6 +895,7 @@ declare namespace OpenPGP {
     export interface PrimaryUser {
       index: number;
       user: User;
+      selfCertification: packet.Signature;
     }
 
     interface KeyResult {
@@ -1139,5 +1161,4 @@ declare namespace OpenPGP {
     // webToNode
     // nodeToWeb
   }
-
 }
