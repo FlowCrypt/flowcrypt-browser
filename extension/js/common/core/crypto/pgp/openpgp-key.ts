@@ -13,7 +13,6 @@ export class OpenPGPKey {
 
   private static readonly encryptionText = 'This is the text we are encrypting!';
 
-
   public static parse = async (text: string): Promise<Key> => {
     // TODO: Should we throw if more keys are in the armor?
     return (await OpenPGPKey.parseMany(text))[0];
