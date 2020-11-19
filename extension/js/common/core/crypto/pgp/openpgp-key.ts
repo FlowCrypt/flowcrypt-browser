@@ -269,22 +269,19 @@ export class OpenPGPKey {
 
   public static keyFlagsToString = (flags: OpenPGP.enums.keyFlags): string => {
     const strs: string[] = [];
-    if (flags & opgp.enums.keyFlags.sign_data) {
-      strs.push('sign_data');
-    }
-    if (flags & opgp.enums.keyFlags.certify_keys) {
-      strs.push('certify_keys');
-    }
     if (flags & opgp.enums.keyFlags.encrypt_communication) {
       strs.push('encrypt_communication');
     }
     if (flags & opgp.enums.keyFlags.encrypt_storage) {
       strs.push('encrypt_storage');
     }
-    if (strs.length === 0) {
-      return '[none]';
+    if (flags & opgp.enums.keyFlags.sign_data) {
+      strs.push('sign_data');
     }
-    return strs.join(', ');
+    if (flags & opgp.enums.keyFlags.certify_keys) {
+      strs.push('certify_keys');
+    }
+    return '[' + strs.join(', ') + ']';
   }
 
   public static diagnose = async (pubkey: Key, appendResult: (text: string, f?: () => Promise<unknown>) => Promise<void>) => {
@@ -304,7 +301,7 @@ export class OpenPGPKey {
     await appendResult(`Fingerprint`, async () => Str.spaced(key.getFingerprint().toUpperCase() || 'err'));
     await appendResult(`Subkeys`, async () => key.subKeys ? key.subKeys.length : key.subKeys);
     await appendResult(`Primary key algo`, async () => key.primaryKey.algorithm);
-    await appendResult(`Usage`, async () => {
+    await appendResult(`Usage flags`, async () => {
       const flags = await OpenPGPKey.getPrimaryKeyFlags(key);
       return OpenPGPKey.keyFlagsToString(flags);
     });
@@ -331,14 +328,14 @@ export class OpenPGPKey {
       await appendResult(`${skn} LongId`, async () => OpenPGPKey.bytesToLongid(subKey.getKeyId().bytes));
       await appendResult(`${skn} Created`, async () => OpenPGPKey.formatDate(subKey.keyPacket.created));
       await appendResult(`${skn} Algo`, async () => `${subKey.getAlgorithmInfo().algorithm}`);
-      await appendResult(`${skn} Verify`, async () => {
-        await subKey.verify(key.primaryKey);
-        return 'OK';
-      });
-      await appendResult(`${skn} Usage`, async () => {
+      await appendResult(`${skn} Usage flags`, async () => {
         const flags = await OpenPGPKey.getSubKeySigningFlags(key, subKey) |
           await OpenPGPKey.getSubKeyEncryptionFlags(key, subKey);
         return OpenPGPKey.keyFlagsToString(flags);
+      });
+      await appendResult(`${skn} Verify`, async () => {
+        await subKey.verify(key.primaryKey);
+        return 'OK';
       });
       await appendResult(`${skn} Subkey tag`, async () => subKey.keyPacket.tag);
       await appendResult(`${skn} Subkey getBitSize`, async () => subKey.getAlgorithmInfo().bits);       // No longer exists on object

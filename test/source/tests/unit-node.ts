@@ -704,14 +704,16 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       const dump2str = async (text: string, f?: () => Promise<unknown>) => {
         str += `${kn} ${text}: ${f ? await test(f) : ''}\n`;
       };
+      const pk0Regex = /PK 0 > Usage flags: \[\-\] \[(.*)\]/m
+      const sk0Regex = /PK 0 > SK 0 > Usage flags: \[\-\] \[(.*)\]/m
       await KeyUtil.diagnose(await KeyUtil.parse(pubEncryptForPrimaryIsFine), dump2str);
       {
-        const pk0Usage = str.match(/PK 0 > Usage: \[\-\] .*/m)![0].split('[-] ')[1].split(', ');
+        const pk0Usage = str.match(pk0Regex)![1].split(', ');
         expect(pk0Usage).to.include('certify_keys');
         expect(pk0Usage).to.include('sign_data');
         expect(pk0Usage).to.include('encrypt_storage');
         expect(pk0Usage).to.include('encrypt_communication');
-        const sk0Usage = str.match(/PK 0 > SK 0 > Usage: \[\-\] .*/m)![0].split('[-] ')[1].split(', ');
+        const sk0Usage = str.match(sk0Regex)![1].split(', ');
         expect(sk0Usage).to.not.include('certify_keys');
         expect(sk0Usage).to.not.include('sign_data');
         expect(sk0Usage).to.include('encrypt_storage');
@@ -720,12 +722,12 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       str = '';
       await KeyUtil.diagnose(await KeyUtil.parse(prvEncryptForSubkeyOnly), dump2str);
       {
-        const pk0Usage = str.match(/PK 0 > Usage: \[\-\] .*/m)![0].split('[-] ')[1].split(', ');
+        const pk0Usage = str.match(pk0Regex)![1].split(', ');
         expect(pk0Usage).to.include('certify_keys');
         expect(pk0Usage).to.include('sign_data');
         expect(pk0Usage).to.not.include('encrypt_storage');
         expect(pk0Usage).to.not.include('encrypt_communication');
-        const sk0Usage = str.match(/PK 0 > SK 0 > Usage: \[\-\] .*/m)![0].split('[-] ')[1].split(', ');
+        const sk0Usage = str.match(sk0Regex)![1].split(', ');
         expect(sk0Usage).to.not.include('certify_keys');
         expect(sk0Usage).to.not.include('sign_data');
         expect(sk0Usage).to.include('encrypt_storage');
