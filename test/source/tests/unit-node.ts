@@ -704,8 +704,8 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       const dump2str = async (text: string, f?: () => Promise<unknown>) => {
         str += `${kn} ${text}: ${f ? await test(f) : ''}\n`;
       };
-      const pk0Regex = /PK 0 > Usage flags: \[\-\] \[(.*)\]/m
-      const sk0Regex = /PK 0 > SK 0 > Usage flags: \[\-\] \[(.*)\]/m
+      const pk0Regex = /PK 0 > Usage flags: \[\-\] \[(.*)\]/m;
+      const sk0Regex = /PK 0 > SK 0 > Usage flags: \[\-\] \[(.*)\]/m;
       await KeyUtil.diagnose(await KeyUtil.parse(pubEncryptForPrimaryIsFine), dump2str);
       {
         const pk0Usage = str.match(pk0Regex)![1].split(', ');
