@@ -760,7 +760,7 @@ declare namespace OpenPGP {
       symEncryptedAEADProtected = 20,
     }
 
-    export type signatureNames = 'subkey_binding' | 'key_binding';
+    export type signatureNames = 'binary' | 'text' | 'standalone' | 'cert_generic' | 'cert_persona' | 'cert_casual' | 'cert_positive' | 'cert_revocation' | 'subkey_binding' | 'key_binding' | 'key' | 'key_revocation' | 'subkey_revocation' | 'timestamp' | 'third_party';
     enum signature {
       binary = 0,
       text = 1,
