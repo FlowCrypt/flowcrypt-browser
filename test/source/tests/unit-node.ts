@@ -660,7 +660,7 @@ eg==
         });
         await ContactStore.save(undefined, contact);
       }
-      const result = await MsgUtil.verifyDetached({ plaintext: Buf.fromUtfStr(plaintext), sigText: sigText });
+      const result = await MsgUtil.verifyDetached({ plaintext: Buf.fromUtfStr(plaintext), sigText });
       expect(result.match).to.be.true;
       t.pass();
     });
