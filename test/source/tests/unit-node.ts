@@ -586,6 +586,85 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       t.pass();
     });
 
+    ava.default('[unit][MsgUtil.verifyDetached] verifies Firefox rich text signed message', async t => {
+      const data = new GoogleData('flowcrypt.compatibility@gmail.com');
+      const msg: GmailMsg = data.getMessage('175ccd8755eab85f')!;
+      const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
+      const sigBase64 = msgText
+        .match(/Content\-Type: application\/pgp\-signature;.*\r\n\r\n(.*)\r\n\-\-/s)![1];
+      const sigText = Buf.fromBase64Str(sigBase64);
+      const plaintext = msgText
+        .match(/Content\-Type: multipart\/mixed;\r?\n? boundary="\-\-\-\-sinikael\-\?=_2\-16054595384320\.6487848448108896".*\-\-\-\-\-\-sinikael\-\?=_2\-16054595384320\.6487848448108896\-\-\r?\n/s)![0]
+        .replace(/\r?\n/g, '\r\n')!;
+      if ((await ContactStore.get(undefined, ['7FDE685548AEA788'])).length === 0) {
+        const contact = await ContactStore.obj({
+          email: 'flowcrypt.compatibility@gmail.com',
+          pubkey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: FlowCrypt Email Encryption 7.9.9
+Comment: Seamlessly send and receive encrypted email
+
+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
+eg==
+=CvEL
+-----END PGP PUBLIC KEY BLOCK-----`,
+          client: 'pgp'
+        });
+        await ContactStore.save(undefined, contact);
+      }
+      const result = await MsgUtil.verifyDetached({ plaintext: Buf.fromUtfStr(plaintext), sigText });
+      expect(result.match).to.be.true;
+      t.pass();
+    });
+
     ava.default('[unit][MsgUtil.getSortedKeys,matchingKeyids] must be able to find matching keys', async t => {
       const pp = 'some pass for testing';
       const key1 = await OpenPGPKey.create([{ name: 'Key1', email: 'key1@test.com' }], 'curve25519', pp, 0);
