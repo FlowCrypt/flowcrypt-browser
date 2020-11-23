@@ -572,6 +572,27 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       ]);
     }));
 
+    ava.default('compose - delete recipients with keyboard', testWithBrowser('compatibility', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+      await ComposePageRecipe.fillRecipients(composePage, { to: 'human1@flowcrypt.com' }, 'new');
+      await composePage.waitAndType(`@input-to`, 'human2@flowcrypt.com');
+      await composePage.press('Enter');
+      await composePage.waitAndType(`@input-to`, 'human3@flowcrypt.com');
+      await composePage.press('Enter');
+      await expectRecipientElements(composePage, { to: ['human1@flowcrypt.com', 'human2@flowcrypt.com', 'human3@flowcrypt.com'] });
+      // delete recipient with Backspace when #input_to is focued
+      await composePage.press('Backspace');
+      await expectRecipientElements(composePage, { to: ['human1@flowcrypt.com', 'human2@flowcrypt.com'] });
+      // delete recipient with Delete when it's focused
+      await composePage.waitAndFocus('@recipient_0');
+      await composePage.press('Delete');
+      await expectRecipientElements(composePage, { to: ['human2@flowcrypt.com'] });
+      // delete recipient with Backspace when it's focused
+      await composePage.waitAndFocus('@recipient_1');
+      await composePage.press('Backspace');
+      await expectRecipientElements(composePage, { to: [] });
+    }));
+
     ava.default('compose - new message, open footer', testWithBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await ComposePageRecipe.fillRecipients(composePage, { to: 'human@flowcrypt.com' }, 'new');
