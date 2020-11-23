@@ -700,7 +700,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     for (const rawEmail of emails) {
       const { email } = Str.parseEmail(rawEmail);
       const recipientId = this.generateRecipientId();
-      const recipientsHtml = `<span tabindex="0" id="${recipientId}"><span>${Xss.escape(email || rawEmail)}</span> ${Ui.spinner('green')}</span>`;
+      const recipientsHtml = `<span tabindex="0" id="${recipientId}" data-test="${recipientId}"><span>${Xss.escape(email || rawEmail)}</span> ${Ui.spinner('green')}</span>`;
       Xss.sanitizeAppend(container.find('.recipients'), recipientsHtml);
       const element = document.getElementById(recipientId);
       if (element) { // if element wasn't created this means that Composer is used by another component
@@ -709,6 +709,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
             await this.collapseInputsIfNeeded(event.relatedTarget);
           }
         }));
+        $(element).on('keydown', this.view.setHandler((el, ev) => {
+          if (ev.key === 'Delete' || ev.key === 'Backspace') {
+            this.removeRecipient(element);
+          }
+        }, this.view.errModule.handle('remove recipient with keyboard')));
         this.addDraggableEvents(element);
         const recipient = { email: email || rawEmail, element, id: recipientId, sendingType, status: email ? status : RecipientStatus.WRONG };
         this.addedRecipients.push(recipient);
