@@ -576,6 +576,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   }
 
   private renderSearchRes = (input: JQuery<HTMLElement>, contacts: Contact[], query: ProviderContactsQuery) => {
+    if (input.val() !== query.substring) { // the input value has changed meanwhile
+      return;
+    }
     this.view.errModule.debug(`renderSearchRes len: ${contacts.length}`);
     // have pgp on top, no pgp bottom. Sort each groups by last use
     const sortedContacts = contacts.sort((a: Contact, b: Contact) => {
