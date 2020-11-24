@@ -687,10 +687,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (possiblyBogusAddr && q && (possiblyBogusAddr === q || possiblyBogusAddr.includes(q))) {
       possiblyBogusRecipient.remove();
     }
-    if (!this.addedRecipients.find(r => r.email === email)) {
-      this.view.errModule.debug(`selectContact -> parseRenderRecipients start`);
-      this.parseRenderRecipients(input, false, [email]).catch(Catch.reportErr);
-    }
+    this.view.errModule.debug(`selectContact -> parseRenderRecipients start`);
+    this.parseRenderRecipients(input, false, [email]).catch(Catch.reportErr);
     input.focus();
     this.hideContacts();
   }
