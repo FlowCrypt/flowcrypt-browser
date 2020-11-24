@@ -576,7 +576,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   }
 
   private renderSearchRes = (input: JQuery<HTMLElement>, contacts: Contact[], query: ProviderContactsQuery) => {
-    if (input.val() !== query.substring) { // the input value has changed meanwhile
+    if ((input.val() as string).toLowerCase() !== query.substring.toLowerCase()) { // the input value has changed meanwhile
       return;
     }
     this.view.errModule.debug(`renderSearchRes len: ${contacts.length}`);
