@@ -163,7 +163,7 @@ export class KeyUtil {
     return result;
   }
 
-  public static async formatResultAsync(f: () => Promise<unknown>): Promise<string> {
+  public static formatResultAsync = async (f: () => Promise<unknown>): Promise<string> => {
     try {
       return KeyUtil.formatResult(await f());
     } catch (e) {
@@ -171,7 +171,7 @@ export class KeyUtil {
     }
   }
 
-  public static formatResult(value: unknown): string {
+  public static formatResult = (value: unknown): string => {
     return `[-] ${String(value)}`;
   }
 
