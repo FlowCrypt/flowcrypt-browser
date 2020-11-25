@@ -150,14 +150,29 @@ export class KeyUtil {
     }
   }
 
-  public static diagnose = async (pubkey: Key, appendResult: (text: string, f?: () => Promise<unknown>) => Promise<void>) => {
-    await appendResult(`Key type`, async () => pubkey.type);
-    if (pubkey.type === 'openpgp') {
-      await OpenPGPKey.diagnose(pubkey, appendResult);
+  public static diagnose = async (key: Key, passphrase: string): Promise<Map<string, string>> => {
+    let result = new Map<string, string>();
+    result.set(`Key type`, key.type);
+    if (key.type === 'openpgp') {
+      const opgpresult = await OpenPGPKey.diagnose(key, passphrase);
+      result = new Map<string, string>([...result, ...opgpresult]);
     }
-    await appendResult(`expiration`, async () => pubkey.expiration);
-    await appendResult(`internal dateBeforeExpiration`, async () => KeyUtil.dateBeforeExpirationIfAlreadyExpired(pubkey));
-    await appendResult(`internal usableButExpired`, async () => pubkey.usableButExpired);
+    result.set(`expiration`, KeyUtil.formatResult(key.expiration));
+    result.set(`internal dateBeforeExpiration`, await KeyUtil.formatResultAsync(async () => KeyUtil.dateBeforeExpirationIfAlreadyExpired(key)));
+    result.set(`internal usableButExpired`, KeyUtil.formatResult(key.usableButExpired));
+    return result;
+  }
+
+  public static async formatResultAsync(f: () => Promise<unknown>): Promise<string> {
+    try {
+      return KeyUtil.formatResult(await f());
+    } catch (e) {
+      return `[${String(e)}]`;
+    }
+  }
+
+  public static formatResult(value: unknown): string {
+    return `[-] ${String(value)}`;
   }
 
   public static asPublicKey = async (pubkey: Key): Promise<Key> => {

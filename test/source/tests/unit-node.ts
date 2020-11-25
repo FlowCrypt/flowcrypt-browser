@@ -771,5 +771,265 @@ eg==
       t.pass();
     });
 
+    const primaryKeyAndSubkeyBothHavePrivateKey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+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
+=/3Ew
+-----END PGP PRIVATE KEY BLOCK-----`;
+
+    ava.default('[KeyUtil.diagnose] handles incorrect passphrase', async t => {
+      const result = await KeyUtil.diagnose(await KeyUtil.parse(primaryKeyAndSubkeyBothHavePrivateKey), '4321');
+      expect(result.get('Is Private?')).to.equal('[-] true');
+      expect(result.get('User id 0')).to.equal('Test1 (rsa) <flowcrypt.test.key.imported@gmail.com>');
+      expect(result.get('Primary User')).to.equal('Test1 (rsa) <flowcrypt.test.key.imported@gmail.com>');
+      expect(result.get('Fingerprint')).to.equal('6628 5F84 B985 71BD 01C0 18EE 8B3B B9CF C476 EE16');
+      expect(result.get('Subkeys')).to.equal('[-] 1');
+      expect(result.get('Primary key algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('key decrypt')).to.equal('[-] false');
+      expect(result.get('isFullyDecrypted')).to.equal('[-] false');
+      expect(result.get('isFullyEncrypted')).to.equal('[-] true');
+      expect(result.get('Primary key verify')).to.equal('[-] valid');
+      expect(result.get('Primary key creation?')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
+      expect(result.get('Primary key expiration?')).to.equal('[-] -');
+      expect(result.has('Encrypt/Decrypt test: Encryption with key was successful')).to.be.true;
+      expect(result.has('Encrypt/Decrypt test: Skipping decryption because isPrivate:true isFullyDecrypted:false')).to.be.true;
+      expect(result.get('Sign/Verify test')).to.equal('[-] skipped, not fully decrypted');
+      expect(result.get('SK 0 > LongId')).to.equal('[-] 0485D618EAA64B05');
+      expect(result.get('SK 0 > Created')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
+      expect(result.get('SK 0 > Algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('SK 0 > Verify')).to.equal('[-] OK');
+      expect(result.get('SK 0 > Subkey tag')).to.equal('[-] 7');
+      expect(result.get('SK 0 > Subkey getBitSize')).to.equal('[-] 3072');
+      expect(result.get('SK 0 > Subkey decrypted')).to.equal('[-] false');
+      expect(result.get('SK 0 > Binding signature length')).to.equal('[-] 1');
+      expect(result.get('SK 0 > SIG 0 > Key flags')).to.equal('[-] 12');
+      expect(result.get('SK 0 > SIG 0 > Tag')).to.equal('[-] 2');
+      expect(result.get('SK 0 > SIG 0 > Version')).to.equal('[-] 4');
+      expect(result.get('SK 0 > SIG 0 > Public key algorithm')).to.equal('[-] 1');
+      expect(result.get('SK 0 > SIG 0 > Sig creation time')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
+      expect(result.get('SK 0 > SIG 0 > Sig expiration time')).to.equal('[-] -');
+      expect(result.get('SK 0 > SIG 0 > Verified')).to.equal('[-] true');
+      expect(result.get('expiration')).to.equal('[-] undefined');
+      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
+      expect(result.get('internal usableButExpired')).to.equal('[-] false');
+      t.pass();
+    });
+
+    ava.default('[KeyUtil.diagnose] decrypts and successfully tests PK sign and SK encrypt', async t => {
+      const result = await KeyUtil.diagnose(await KeyUtil.parse(primaryKeyAndSubkeyBothHavePrivateKey), '1234');
+      expect(result.get('Is Private?')).to.equal('[-] true');
+      expect(result.get('User id 0')).to.equal('Test1 (rsa) <flowcrypt.test.key.imported@gmail.com>');
+      expect(result.get('Primary User')).to.equal('Test1 (rsa) <flowcrypt.test.key.imported@gmail.com>');
+      expect(result.get('Fingerprint')).to.equal('6628 5F84 B985 71BD 01C0 18EE 8B3B B9CF C476 EE16');
+      expect(result.get('Subkeys')).to.equal('[-] 1');
+      expect(result.get('Primary key algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('key decrypt')).to.equal('[-] true');
+      expect(result.get('isFullyDecrypted')).to.equal('[-] true');
+      expect(result.get('isFullyEncrypted')).to.equal('[-] false');
+      expect(result.get('Primary key verify')).to.equal('[-] valid');
+      expect(result.get('Primary key creation?')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
+      expect(result.get('Primary key expiration?')).to.equal('[-] -');
+      expect(result.has('Encrypt/Decrypt test: Encryption with key was successful')).to.be.true;
+      expect(result.has('Encrypt/Decrypt test: Decryption with key succeeded')).to.be.true;
+      expect(result.get('Sign/Verify test')).to.equal('[-] sign msg ok|verify ok');
+      expect(result.get('SK 0 > LongId')).to.equal('[-] 0485D618EAA64B05');
+      expect(result.get('SK 0 > Created')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
+      expect(result.get('SK 0 > Algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('SK 0 > Verify')).to.equal('[-] OK');
+      expect(result.get('SK 0 > Subkey tag')).to.equal('[-] 7');
+      expect(result.get('SK 0 > Subkey getBitSize')).to.equal('[-] 3072');
+      expect(result.get('SK 0 > Subkey decrypted')).to.equal('[-] true');
+      expect(result.get('SK 0 > Binding signature length')).to.equal('[-] 1');
+      expect(result.get('SK 0 > SIG 0 > Key flags')).to.equal('[-] 12');
+      expect(result.get('SK 0 > SIG 0 > Tag')).to.equal('[-] 2');
+      expect(result.get('SK 0 > SIG 0 > Version')).to.equal('[-] 4');
+      expect(result.get('SK 0 > SIG 0 > Public key algorithm')).to.equal('[-] 1');
+      expect(result.get('SK 0 > SIG 0 > Sig creation time')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
+      expect(result.get('SK 0 > SIG 0 > Sig expiration time')).to.equal('[-] -');
+      expect(result.get('SK 0 > SIG 0 > Verified')).to.equal('[-] true');
+      expect(result.get('expiration')).to.equal('[-] undefined');
+      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
+      expect(result.get('internal usableButExpired')).to.equal('[-] false');
+      t.pass();
+    });
+
+    const primaryKeyIsMissingPrivateKey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+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
+=OeNi
+-----END PGP PRIVATE KEY BLOCK-----`;
+
+    ava.default('[KeyUtil.diagnose] decrypts and tests PK missing private key and SK with private key', async t => {
+      const result = await KeyUtil.diagnose(await KeyUtil.parse(primaryKeyIsMissingPrivateKey), '1234');
+      expect(result.get('Is Private?')).to.equal('[-] true');
+      expect(result.get('User id 0')).to.equal('Test1 (rsa) <flowcrypt.test.key.imported@gmail.com>');
+      expect(result.get('Primary User')).to.equal('Test1 (rsa) <flowcrypt.test.key.imported@gmail.com>');
+      expect(result.get('Fingerprint')).to.equal('6628 5F84 B985 71BD 01C0 18EE 8B3B B9CF C476 EE16');
+      expect(result.get('Subkeys')).to.equal('[-] 1');
+      expect(result.get('Primary key algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('key decrypt')).to.equal('[-] true');
+      expect(result.get('isFullyDecrypted')).to.equal('[-] true');
+      expect(result.get('isFullyEncrypted')).to.equal('[-] false');
+      expect(result.get('Primary key verify')).to.equal('[-] valid');
+      expect(result.get('Primary key creation?')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
+      expect(result.get('Primary key expiration?')).to.equal('[-] -');
+      expect(result.has('Encrypt/Decrypt test: Encryption with key was successful')).to.be.true;
+      expect(result.has('Encrypt/Decrypt test: Decryption with key succeeded')).to.be.true;
+      expect(result.get('Sign/Verify test')).to.equal('[-] Exception: Error: Missing private key parameters');
+      expect(result.get('SK 0 > LongId')).to.equal('[-] 0485D618EAA64B05');
+      expect(result.get('SK 0 > Created')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
+      expect(result.get('SK 0 > Algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('SK 0 > Verify')).to.equal('[-] OK');
+      expect(result.get('SK 0 > Subkey tag')).to.equal('[-] 7');
+      expect(result.get('SK 0 > Subkey getBitSize')).to.equal('[-] 3072');
+      expect(result.get('SK 0 > Subkey decrypted')).to.equal('[-] true');
+      expect(result.get('SK 0 > Binding signature length')).to.equal('[-] 1');
+      expect(result.get('SK 0 > SIG 0 > Key flags')).to.equal('[-] 12');
+      expect(result.get('SK 0 > SIG 0 > Tag')).to.equal('[-] 2');
+      expect(result.get('SK 0 > SIG 0 > Version')).to.equal('[-] 4');
+      expect(result.get('SK 0 > SIG 0 > Public key algorithm')).to.equal('[-] 1');
+      expect(result.get('SK 0 > SIG 0 > Sig creation time')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
+      expect(result.get('SK 0 > SIG 0 > Sig expiration time')).to.equal('[-] -');
+      expect(result.get('SK 0 > SIG 0 > Verified')).to.equal('[-] true');
+      expect(result.get('expiration')).to.equal('[-] undefined');
+      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
+      expect(result.get('internal usableButExpired')).to.equal('[-] false');
+      t.pass();
+    });
   }
 };
