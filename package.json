@@ -39,7 +39,7 @@
     "dompurify": "2.2.2",
     "jquery": "3.5.1",
     "openpgp": "4.10.8",
-    "sweetalert2": "10.10.1",
+    "sweetalert2": "10.10.2",
     "node-forge": "0.10.0",
     "iso-8859-2": "1.0.0",
     "zxcvbn": "4.4.2",
