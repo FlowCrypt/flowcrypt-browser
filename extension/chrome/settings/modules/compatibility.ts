@@ -51,7 +51,7 @@ View.run(class CompatibilityView extends View {
       const results = await KeyUtil.diagnose(key, String($('.input_passphrase').val()));
       for (const entry of results) {
         this.appendResult(`${kn} ${entry[0]}: ${entry[1]}`);
-      };
+      }
     }
   }
 
