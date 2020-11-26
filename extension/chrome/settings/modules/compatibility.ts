@@ -48,17 +48,10 @@ View.run(class CompatibilityView extends View {
       this.appendResult(`----- Testing key ${keyIndex} -----`);
       const key = keys[keyIndex];
       const kn = `PK ${keyIndex} >`;
-      await KeyUtil.diagnose(key, async (text: string, f?: () => Promise<unknown>) => {
-        this.appendResult(`${kn} ${text}: ${f ? await this.test(f) : ''}`);
-      });
-    }
-  }
-
-  private test = async (f: () => Promise<unknown>) => {
-    try {
-      return `[-] ${String(await f())}`;
-    } catch (e) {
-      return `[${String(e)}]`;
+      const results = await KeyUtil.diagnose(key, String($('.input_passphrase').val()));
+      for (const entry of results) {
+        this.appendResult(`${kn} ${entry[0]}: ${entry[1]}`);
+      }
     }
   }
 
