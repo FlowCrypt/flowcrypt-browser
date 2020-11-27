@@ -28,7 +28,7 @@ BROWSER_UNIT_TEST_NAME(`Mime attachment file names`);
   filenames = filenames.concat([...Array(223).keys()].map(i => String.fromCharCode(i + 33)));
   // capital Cyrillic
   filenames.push('\u0401' + String.fromCharCode(...[...Array(32).keys()].map(i => i + 0x410)));
-  const atts = filenames.map(name => new Att({ name: name, type: 'text/plain', data: new Uint8Array([80, 81]) }));
+  const atts = filenames.map(name => new Attachment({ name: name, type: 'text/plain', data: new Uint8Array([80, 81]) }));
   const encoded = await Mime.encode({ 'text/plain': 'text' }, { Subject: 'subject' }, atts);
   const decoded = await Mime.decode(encoded);
   for (var i = 0; i < filenames.length; i++) {
