@@ -28,6 +28,8 @@ export interface Key {
   usableForEncryption: boolean;
   usableForSigning: boolean;
   usableButExpired: boolean;
+  missingPrivateKeyForSigning: boolean;
+  missingPrivateKeyForDecryption: boolean;
   emails: string[];
   identities: string[];
   fullyDecrypted: boolean;
