@@ -128,8 +128,8 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await webDecryptPage.waitAndClick('@action-decrypt');
       await webDecryptPage.waitForContent('@container-pgp-decrypted-content', subject);
       await webDecryptPage.waitForContent('@container-pgp-decrypted-content', 'flowcrypt.compatibility test footer with an img');
-      await webDecryptPage.waitAll('@container-attachment-name(small.txt)');
-      const fileText = await webDecryptPage.awaitDownloadTriggeredByClicking('@container-attachment-name(small.txt)');
+      await webDecryptPage.waitAll('@container-att-name(small.txt)');
+      const fileText = await webDecryptPage.awaitDownloadTriggeredByClicking('@container-att-name(small.txt)');
       expect(fileText.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
     }));
 
