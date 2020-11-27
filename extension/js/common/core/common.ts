@@ -288,7 +288,7 @@ export class Url {
     rawParamNameDict[urlParamName] = urlParamName;
     rawParamNameDict[Url.snakeCaseToCamelCase(urlParamName)] = urlParamName;
     rawParamNameDict[Url.camelCaseToSnakeCase(urlParamName)] = urlParamName;
-    const shortened = urlParamName.replace('account', 'acct').replace('message', 'msg').replace('attachment', 'att');
+    const shortened = urlParamName.replace('account', 'acct').replace('message', 'msg').replace('attachment', 'attachment');
     rawParamNameDict[Url.snakeCaseToCamelCase(shortened)] = urlParamName;
     rawParamNameDict[Url.camelCaseToSnakeCase(shortened)] = urlParamName;
   }

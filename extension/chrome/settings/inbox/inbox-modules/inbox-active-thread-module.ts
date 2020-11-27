@@ -18,7 +18,7 @@ import { Ui } from '../../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 import { Browser } from '../../../../js/common/browser/browser.js';
-import { Att } from '../../../../js/common/core/att.js';
+import { Attachment } from '../../../../js/common/core/attachment.js';
 
 export class InboxActiveThreadModule extends ViewModule<InboxView> {
 
@@ -144,17 +144,17 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
   private exportMsgForDebug = async (msgId: string) => {
     const full = await this.view.gmail.msgGet(msgId, 'full');
     const raw = await this.view.gmail.msgGet(msgId, 'raw');
-    const atts = GmailParser.findAtts(full);
-    await this.view.gmail.fetchAtts(atts);
+    const existingAttachments = GmailParser.findAttachments(full);
+    await this.view.gmail.fetchAttachments(existingAttachments);
     this.redactExportMsgHeaders(full);
     this.redactExportMsgHeaders(raw);
     const attachments: { [id: string]: { data: string, size: number } } = {};
-    for (const att of atts) {
-      attachments[att.id!] = { data: att.getData().toBase64UrlStr(), size: att.getData().length };
+    for (const attachment of existingAttachments) {
+      attachments[attachment.id!] = { data: attachment.getData().toBase64UrlStr(), size: attachment.getData().length };
     }
     const combined = { acctEmail: this.view.acctEmail, full, attachments, raw };
     const json = JSON.stringify(combined, undefined, 2);
-    Browser.saveToDownloads(new Att({ data: Buf.fromUtfStr(json), type: 'application/json', name: `message-export-${msgId}.json` }));
+    Browser.saveToDownloads(new Attachment({ data: Buf.fromUtfStr(json), type: 'application/json', name: `message-export-${msgId}.json` }));
   }
 
   private redactExportMsgHeaders = (msg: GmailRes.GmailMsg) => {

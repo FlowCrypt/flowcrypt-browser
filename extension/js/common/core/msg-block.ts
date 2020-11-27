@@ -4,7 +4,7 @@
 
 import { DecryptError, VerifyRes } from './crypto/pgp/msg-util.js';
 
-import { AttMeta } from './att.js';
+import { AttMeta } from './attachment.js';
 import { Buf } from './buf.js';
 
 export type KeyBlockType = 'publicKey' | 'privateKey' | 'certificate';

@@ -3,7 +3,7 @@
 'use strict';
 
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
-import { Att } from '../../../js/common/core/att.js';
+import { Attachment } from '../../../js/common/core/attachment.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposeSendBtnPopoverModule } from './compose-send-btn-popover-module.js';
@@ -134,12 +134,12 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       msg.headers[k] = this.additionalMsgHeaders[k];
     }
     if (choices.encrypt && !choices.richtext) {
-      for (const a of msg.atts) {
+      for (const a of msg.attachments) {
         a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
       }
     }
     if (this.view.myPubkeyModule.shouldAttach()) {
-      msg.atts.push(Att.keyinfoAsPubkeyAtt(senderKi));
+      msg.attachments.push(Attachment.keyinfoAsPubkeyAtt(senderKi));
     }
     await this.addNamesToMsg(msg);
   }

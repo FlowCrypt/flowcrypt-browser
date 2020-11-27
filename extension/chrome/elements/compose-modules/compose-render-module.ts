@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Att } from '../../../js/common/core/att.js';
+import { Attachment } from '../../../js/common/core/attachment.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -76,7 +76,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       this.renderReplySuccessMimeAtts(this.view.inputModule.extractAttachments());
     } else {
       Xss.sanitizeRender(repliedBodyEl, Str.escapeTextAsRenderableHtml(this.view.inputModule.extract('text', 'input_text', 'SKIP-ADDONS')));
-      this.renderReplySuccessAtts(msg.atts, msgId, this.view.sendBtnModule.popover.choices.encrypt);
+      this.renderReplySuccessAtts(msg.attachments, msgId, this.view.sendBtnModule.popover.choices.encrypt);
     }
     const t = new Date();
     const time = ((t.getHours() !== 12) ? (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
@@ -199,8 +199,8 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       <br><br>My current public key is attached below. Please update your records and send me a new encrypted message.
       <br><br>Thank you</div>`);
     const primaryKi = await KeyStore.getFirst(this.view.acctEmail);
-    const att = Att.keyinfoAsPubkeyAtt(primaryKi);
-    this.view.attsModule.attach.addFile(new File([att.getData()], att.name));
+    const attachment = Attachment.keyinfoAsPubkeyAtt(primaryKi);
+    this.view.attsModule.attach.addFile(new File([attachment.getData()], attachment.name));
     this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
     this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-sign-sending-option'), 'sign', false); // don't sign
   }
@@ -327,13 +327,13 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
 
-  private renderReplySuccessAtts = (atts: Att[], msgId: string, isEncrypted: boolean) => {
+  private renderReplySuccessAtts = (attachments: Attachment[], msgId: string, isEncrypted: boolean) => {
     const hideAttTypes = this.view.sendBtnModule.popover.choices.richtext ? ['hidden', 'encryptedMsg', 'signature', 'publicKey'] : ['publicKey'];
-    const renderableAtts = atts.filter(att => !hideAttTypes.includes(att.treatAs()));
+    const renderableAtts = attachments.filter(attachment => !hideAttTypes.includes(attachment.treatAs()));
     if (renderableAtts.length) {
-      this.view.S.cached('replied_attachments').html(renderableAtts.map(att => { // xss-safe-factory
-        att.msgId = msgId;
-        return this.view.factory!.embeddedAtta(att, isEncrypted, this.view.parentTabId);
+      this.view.S.cached('replied_attachments').html(renderableAtts.map(attachment => { // xss-safe-factory
+        attachment.msgId = msgId;
+        return this.view.factory!.embeddedAtta(attachment, isEncrypted, this.view.parentTabId);
       }).join('')).css('display', 'block');
     }
   }

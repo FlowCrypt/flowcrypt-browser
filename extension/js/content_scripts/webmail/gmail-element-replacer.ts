@@ -8,7 +8,7 @@ import { GmailParser, GmailRes } from '../../common/api/email-provider/gmail/gma
 import { IntervalFunction, WebmailElementReplacer } from './setup-webmail-content-script.js';
 import { AjaxErr } from '../../common/api/shared/api-error.js';
 import { ApiErr } from '../../common/api/shared/api-error.js';
-import { Att } from '../../common/core/att.js';
+import { Attachment } from '../../common/core/attachment.js';
 import { BrowserMsg } from '../../common/browser/browser-msg.js';
 import { Catch } from '../../common/platform/catch.js';
 import { Gmail } from '../../common/api/email-provider/gmail/gmail.js';
@@ -257,14 +257,14 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       this.currentlyReplacingAtts = true;
       for (const attsContainerEl of $(this.sel.attsContainerInner)) {
         const attsContainer = $(attsContainerEl);
-        const newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.webmailNamePattern).addClass('evaluated');
+        const newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Attachment.webmailNamePattern).addClass('evaluated');
         if (newPgpAtts.length) {
           const msgId = this.determineMsgId(attsContainer);
           if (msgId) {
             Xss.sanitizePrepend(newPgpAtts, this.factory.embeddedAttaStatus('Getting file info..' + Ui.spinner('green')));
             try {
               const msg = await this.gmail.msgGet(msgId, 'full');
-              await this.processAtts(msgId, GmailParser.findAtts(msg), attsContainer, false);
+              await this.processAtts(msgId, GmailParser.findAttachments(msg), attsContainer, false);
             } catch (e) {
               if (ApiErr.isAuthErr(e)) {
                 this.notifications.showAuthPopupNeeded(this.acctEmail);
@@ -288,7 +288,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private processAtts = async (msgId: string, attMetas: Att[], attsContainerInner: JQueryEl | HTMLElement, skipGoogleDrive: boolean) => {
+  private processAtts = async (msgId: string, attMetas: Attachment[], attsContainerInner: JQueryEl | HTMLElement, skipGoogleDrive: boolean) => {
     let msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
     const senderEmail = this.getSenderEmail(msgEl);
     const isOutgoing = !!this.sendAs[senderEmail];
@@ -307,7 +307,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             attsContainerInner.prepend(this.factory.embeddedAtta(a, true)); // xss-safe-factory
             nRenderedAtts++;
           } else if (treatAs === 'encryptedMsg') {
-            const isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !Att.encryptedMsgNames.includes(a.name); // ambiguous .asc name
+            const isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !Attachment.encryptedMsgNames.includes(a.name); // ambiguous .asc name
             const isAmbiguousNonameFile = !a.name || a.name === 'noname'; // may not even be OpenPGP related
             if (isAmbiguousAscFile || isAmbiguousNonameFile) { // Inspect a chunk
               const data = await this.gmail.attGetChunk(msgId, a.id!); // .id is present when fetched from api
@@ -367,12 +367,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const notProcessedAttsLoaders = attsContainerInner.find('.attachment_loader');
     if (notProcessedAttsLoaders.length && msgEl.find('.gmail_drive_chip, a[href^="https://drive.google.com/file"]').length) {
       // replace google drive attachments - they do not get returned by Gmail API thus did not get replaced above
-      const googleDriveAtts: Att[] = [];
+      const googleDriveAtts: Attachment[] = [];
       for (const attLoaderEl of notProcessedAttsLoaders) {
         const downloadUrl = $(attLoaderEl).parent().attr('download_url');
         if (downloadUrl) {
           const meta = downloadUrl.split(':');
-          googleDriveAtts.push(new Att({ msgId, name: meta[1], type: meta[0], url: `${meta[2]}:${meta[3]}`, treatAs: 'encryptedFile' }));
+          googleDriveAtts.push(new Attachment({ msgId, name: meta[1], type: meta[0], url: `${meta[2]}:${meta[3]}`, treatAs: 'encryptedFile' }));
         } else {
           console.info('Missing Google Drive attachments download_url');
         }
@@ -381,7 +381,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private renderPublicKeyFromFile = async (attMeta: Att, attsContainerInner: JQueryEl, msgEl: JQueryEl, isOutgoing: boolean, attSel: JQueryEl, nRenderedAtts: number) => {
+  private renderPublicKeyFromFile = async (attMeta: Attachment, attsContainerInner: JQueryEl, msgEl: JQueryEl, isOutgoing: boolean, attSel: JQueryEl, nRenderedAtts: number) => {
     let downloadedAtt: GmailRes.GmailAtt;
     try {
       downloadedAtt = await this.gmail.attGet(attMeta.msgId!, attMeta.id!); // .id! is present when fetched from api
@@ -400,7 +400,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return nRenderedAtts;
   }
 
-  private renderBackupFromFile = async (attMeta: Att, attsContainerInner: JQueryEl, msgEl: JQueryEl, attSel: JQueryEl, nRenderedAtts: number) => {
+  private renderBackupFromFile = async (attMeta: Attachment, attsContainerInner: JQueryEl, msgEl: JQueryEl, attSel: JQueryEl, nRenderedAtts: number) => {
     let downloadedAtt: GmailRes.GmailAtt;
     try {
       downloadedAtt = await this.gmail.attGet(attMeta.msgId!, attMeta.id!); // .id! is present when fetched from api

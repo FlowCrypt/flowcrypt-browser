@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Att } from '../core/att.js';
+import { Attachment } from '../core/attachment.js';
 import { Catch, UnreportableError } from '../platform/catch.js';
 import { Dict } from '../core/common.js';
 import { MsgUtil } from '../core/crypto/pgp/msg-util.js';
@@ -13,13 +13,13 @@ declare const qq: any;
 
 export type AttLimits = { count?: number, size?: number, sizeMb?: number, oversize?: (newFileSize: number) => Promise<void> };
 type AttUICallbacks = {
-  attAdded?: (r: Att) => Promise<void>,
+  attAdded?: (r: Attachment) => Promise<void>,
   uiChanged?: () => void,
 };
 
 class CancelAttSubmit extends Error { }
 
-export class AttUI {
+export class AttachmentUI {
 
   private templatePath = '/chrome/elements/shared/attach.template.htm';
   private getLimits: () => Promise<AttLimits>;
@@ -70,19 +70,19 @@ export class AttUI {
 
   public collectAtt = async (uploadFileId: string) => {
     const fileData = await this.readAttDataAsUint8(uploadFileId);
-    return new Att({ name: this.attachedFiles[uploadFileId].name, type: this.attachedFiles[uploadFileId].type, data: fileData });
+    return new Attachment({ name: this.attachedFiles[uploadFileId].name, type: this.attachedFiles[uploadFileId].type, data: fileData });
   }
 
   public collectAtts = async () => {
-    const atts: Att[] = [];
+    const attachments: Attachment[] = [];
     for (const uploadFileId of Object.keys(this.attachedFiles)) {
-      atts.push(await this.collectAtt(uploadFileId));
+      attachments.push(await this.collectAtt(uploadFileId));
     }
-    return atts;
+    return attachments;
   }
 
-  public collectEncryptAtts = async (pubs: PubkeyResult[]): Promise<Att[]> => {
-    const atts: Att[] = [];
+  public collectEncryptAtts = async (pubs: PubkeyResult[]): Promise<Attachment[]> => {
+    const attachments: Attachment[] = [];
     for (const uploadFileId of Object.keys(this.attachedFiles)) {
       const file = this.attachedFiles[uploadFileId];
       const data = await this.readAttDataAsUint8(uploadFileId);
@@ -91,9 +91,9 @@ export class AttUI {
         throw new UnreportableError('Attachments are not yet supported when sending to recipients using S/MIME x509 certificates.');
       }
       const encrypted = await MsgUtil.encryptMessage({ pubkeys: pubsForEncryption, data, filename: file.name, armor: false }) as OpenPGP.EncryptBinaryResult;
-      atts.push(new Att({ name: Att.sanitizeName(file.name) + '.pgp', type: file.type, data: encrypted.message.packets.write() }));
+      attachments.push(new Attachment({ name: Attachment.sanitizeName(file.name) + '.pgp', type: file.type, data: encrypted.message.packets.write() }));
     }
-    return atts;
+    return attachments;
   }
 
   public clearAllAtts = () => {

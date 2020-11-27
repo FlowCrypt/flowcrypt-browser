@@ -5,7 +5,7 @@
 import { Dict, Str } from './common.js';
 import { requireIso88592, requireMimeBuilder, requireMimeParser } from '../platform/require.js';
 
-import { Att } from './att.js';
+import { Attachment } from './attachment.js';
 import { Buf } from './buf.js';
 import { Catch } from '../platform/catch.js';
 import { MimeParserNode } from './types/emailjs';
@@ -22,7 +22,7 @@ type AddressHeader = { address: string; name: string; };
 type MimeContentHeader = string | AddressHeader[];
 export type MimeContent = {
   headers: Dict<MimeContentHeader>;
-  atts: Att[];
+  attachments: Attachment[];
   signature?: string;
   rawSignedContent?: string;
   subject?: string;
@@ -68,7 +68,7 @@ export class Mime {
     } else if (decoded.html) {
       blocks.push(MsgBlock.fromContent('plainHtml', decoded.html));
     }
-    for (const file of decoded.atts) {
+    for (const file of decoded.attachments) {
       const treatAs = file.treatAs();
       if (treatAs === 'encryptedMsg') {
         const armored = PgpArmor.clip(file.getData().toUtfStr());
@@ -144,7 +144,7 @@ export class Mime {
   }
 
   public static decode = async (mimeMsg: Uint8Array): Promise<MimeContent> => {
-    let mimeContent: MimeContent = { atts: [], headers: {}, subject: undefined, text: undefined, html: undefined, signature: undefined, from: undefined, to: [], cc: [], bcc: [] };
+    let mimeContent: MimeContent = { attachments: [], headers: {}, subject: undefined, text: undefined, html: undefined, signature: undefined, from: undefined, to: [], cc: [], bcc: [] };
     const parser = new MimeParser();
     const leafNodes: { [key: string]: MimeParserNode } = {};
     parser.onbody = (node: MimeParserNode) => {
@@ -175,7 +175,7 @@ export class Mime {
                   mimeContent.subject = node._parentNode.headers.subject[0].value;
                 }
               } else {
-                mimeContent.atts.push(Mime.getNodeAsAtt(node));
+                mimeContent.attachments.push(Mime.getNodeAsAtt(node));
               }
             }
             const headers = Mime.headerGetAddress(mimeContent, ['from', 'to', 'cc', 'bcc']);
@@ -195,7 +195,7 @@ export class Mime {
     });
   }
 
-  public static encode = async (body: SendableMsgBody, headers: RichHeaders, atts: Att[] = [], type?: MimeEncodeType): Promise<string> => {
+  public static encode = async (body: SendableMsgBody, headers: RichHeaders, attachments: Attachment[] = [], type?: MimeEncodeType): Promise<string> => {
     const rootContentType = type !== 'pgpMimeEncrypted' ? 'multipart/mixed' : `multipart/encrypted; protocol="application/pgp-encrypted";`;
     const rootNode = new MimeBuilder(rootContentType, { includeBccInHeader: true }); // tslint:disable-line:no-unsafe-any
     for (const key of Object.keys(headers)) {
@@ -213,8 +213,8 @@ export class Mime {
       }
       rootNode.appendChild(contentNode); // tslint:disable-line:no-unsafe-any
     }
-    for (const att of atts) {
-      rootNode.appendChild(Mime.createAttNode(att)); // tslint:disable-line:no-unsafe-any
+    for (const attachment of attachments) {
+      rootNode.appendChild(Mime.createAttNode(attachment)); // tslint:disable-line:no-unsafe-any
     }
     return rootNode.build(); // tslint:disable-line:no-unsafe-any
   }
@@ -236,7 +236,7 @@ export class Mime {
     return subject.replace(/^((Re|Fwd): ?)+/g, '').trim();
   }
 
-  public static encodePgpMimeSigned = async (body: SendableMsgBody, headers: RichHeaders, atts: Att[] = [], sign: (data: string) => Promise<string>): Promise<string> => {
+  public static encodePgpMimeSigned = async (body: SendableMsgBody, headers: RichHeaders, attachments: Attachment[] = [], sign: (data: string) => Promise<string>): Promise<string> => {
     const sigPlaceholder = `SIG_PLACEHOLDER_${Str.sloppyRandom(10)}`;
     const rootNode = new MimeBuilder(`multipart/signed; protocol="application/pgp-signature";`, { includeBccInHeader: true }); // tslint:disable-line:no-unsafe-any
     for (const key of Object.keys(headers)) {
@@ -248,10 +248,10 @@ export class Mime {
     }
     const signedContentNode = new MimeBuilder('multipart/mixed'); // tslint:disable-line:no-unsafe-any
     signedContentNode.appendChild(bodyNodes); // tslint:disable-line:no-unsafe-any
-    for (const att of atts) {
-      signedContentNode.appendChild(Mime.createAttNode(att)); // tslint:disable-line:no-unsafe-any
+    for (const attachment of attachments) {
+      signedContentNode.appendChild(Mime.createAttNode(attachment)); // tslint:disable-line:no-unsafe-any
     }
-    const sigAttPlaceholder = new Att({ data: Buf.fromUtfStr(sigPlaceholder), type: 'application/pgp-signature', name: 'signature.asc' });
+    const sigAttPlaceholder = new Attachment({ data: Buf.fromUtfStr(sigPlaceholder), type: 'application/pgp-signature', name: 'signature.asc' });
     const sigAttPlaceholderNode = Mime.createAttNode(sigAttPlaceholder); // tslint:disable-line:no-unsafe-any
     // https://tools.ietf.org/html/rfc3156#section-5 - signed content first, signature after
     rootNode.appendChild(signedContentNode); // tslint:disable-line:no-unsafe-any
@@ -310,18 +310,18 @@ export class Mime {
     return undefined;
   }
 
-  private static createAttNode = (att: Att): any => { // todo: MimeBuilder types
-    const type = `${att.type}; name="${att.name}"`;
+  private static createAttNode = (attachment: Attachment): any => { // todo: MimeBuilder types
+    const type = `${attachment.type}; name="${attachment.name}"`;
     const id = `f_${Str.sloppyRandom(30)}@flowcrypt`;
     const header: Dict<string> = {};
-    if (att.contentDescription) {
-      header['Content-Description'] = att.contentDescription;
+    if (attachment.contentDescription) {
+      header['Content-Description'] = attachment.contentDescription;
     }
-    header['Content-Disposition'] = att.inline ? 'inline' : 'attachment';
+    header['Content-Disposition'] = attachment.inline ? 'inline' : 'attachment';
     header['X-Attachment-Id'] = id;
     header['Content-ID'] = `<${id}>`;
     header['Content-Transfer-Encoding'] = 'base64';
-    return new MimeBuilder(type, { filename: att.name }).setHeader(header).setContent(att.getData()); // tslint:disable-line:no-unsafe-any
+    return new MimeBuilder(type, { filename: attachment.name }).setHeader(header).setContent(attachment.getData()); // tslint:disable-line:no-unsafe-any
   }
 
   private static getNodeType = (node: MimeParserNode, type: 'value' | 'initial' = 'value') => {
@@ -366,8 +366,8 @@ export class Mime {
     }));
   }
 
-  private static getNodeAsAtt = (node: MimeParserNode): Att => {
-    return new Att({
+  private static getNodeAsAtt = (node: MimeParserNode): Attachment => {
+    return new Attachment({
       name: Mime.getNodeFilename(node),
       type: Mime.getNodeType(node),
       data: node.contentTransferEncoding.value === 'quoted-printable' ? Mime.fromEqualSignNotationAsBuf(node.rawContent!) : node.content,

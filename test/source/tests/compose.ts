@@ -802,8 +802,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       // todo - this is not yet looking for actual attachment in the result, just checks that it's s/mime message
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.dev'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime.att@recipient.com' }, t.title);
-      await pastePublicKeyManually(composeFrame, inboxPage, 'smime.att@recipient.com', smimeCert);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime.attachment@recipient.com' }, t.title);
+      await pastePublicKeyManually(composeFrame, inboxPage, 'smime.attachment@recipient.com', smimeCert);
       const fileInput = await composeFrame.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
       await composeFrame.waitAndClick('@action-send', { delay: 2 });

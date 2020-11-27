@@ -4,7 +4,7 @@
 
 // tslint:disable:no-direct-ajax
 
-import { Att } from '../../core/att.js';
+import { Attachment } from '../../core/attachment.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { Buf } from '../../core/buf.js';
 import { Catch } from '../../platform/catch.js';
@@ -165,8 +165,8 @@ export class Api {
     } else if (fmt === 'FORM' && fields && typeof fields !== 'string') {
       formattedData = new FormData();
       for (const formFieldName of Object.keys(fields)) {
-        const a: Att | string = fields[formFieldName]; // tslint:disable-line:no-unsafe-any
-        if (a instanceof Att) {
+        const a: Attachment | string = fields[formFieldName]; // tslint:disable-line:no-unsafe-any
+        if (a instanceof Attachment) {
           formattedData.append(formFieldName, new Blob([a.getData()], { type: a.type }), a.name); // xss-none
         } else {
           formattedData.append(formFieldName, a); // xss-none

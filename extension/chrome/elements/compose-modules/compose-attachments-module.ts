@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { AttLimits, AttUI } from '../../../js/common/ui/att-ui.js';
+import { AttLimits, AttachmentUI } from '../../../js/common/ui/attachment-ui.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -12,11 +12,11 @@ import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 export class ComposeAttsModule extends ViewModule<ComposeView> {
 
-  public attach: AttUI;
+  public attach: AttachmentUI;
 
   constructor(view: ComposeView) {
     super(view);
-    this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice());
+    this.attach = new AttachmentUI(() => this.getMaxAttSizeAndOversizeNotice());
   }
 
   public setHandlers = () => {

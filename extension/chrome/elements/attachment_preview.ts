@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Att } from '../../js/common/core/att.js';
+import { Attachment } from '../../js/common/core/attachment.js';
 import { AttachmentDownloadView } from './attachment.js';
 import { AttachmentPreviewPdf } from '../../js/common/ui/attachment_preview_pdf.js';
 import { Browser } from '../../js/common/browser/browser.js';
@@ -29,14 +29,14 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
   public render = async () => {
     try {
       Xss.sanitizeRender(this.attachmentPreviewContainer, `${Ui.spinner('green', 'large_spinner')}<span class="download_progress"></span>`);
-      this.att = new Att({ name: this.origNameBasedOnFilename, type: this.type, msgId: this.msgId, id: this.id, url: this.url });
+      this.attachment = new Attachment({ name: this.origNameBasedOnFilename, type: this.type, msgId: this.msgId, id: this.id, url: this.url });
       await this.downloadDataIfNeeded();
-      const result = this.isEncrypted ? await this.decrypt() : this.att.getData();
+      const result = this.isEncrypted ? await this.decrypt() : this.attachment.getData();
       if (result) {
         const blob = new Blob([result], { type: this.type });
         const url = window.URL.createObjectURL(blob);
         const attachmentType = this.getAttachmentType(this.origNameBasedOnFilename);
-        const attForSave = new Att({ name: this.origNameBasedOnFilename, type: this.type, data: result });
+        const attForSave = new Attachment({ name: this.origNameBasedOnFilename, type: this.type, data: result });
         if (attachmentType) {
           if (attachmentType === 'img') { // image
             this.attachmentPreviewContainer.html(`<img src="${url}" class="attachment-preview-img" alt="${Xss.escape(this.origNameBasedOnFilename)}">`); // xss-escaped
@@ -82,7 +82,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
   }
 
   private decrypt = async () => {
-    const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: this.att.getData() });
+    const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: this.attachment.getData() });
     if ((result as DecryptSuccess).content) {
       return result.content;
     } else if ((result as DecryptError).error.type === DecryptErrTypes.needPassphrase) {

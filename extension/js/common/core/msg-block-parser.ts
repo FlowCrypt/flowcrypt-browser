@@ -10,7 +10,7 @@ import { Catch } from '../platform/catch.js';
 import { Mime } from './mime.js';
 import { PgpArmor } from './crypto/pgp/pgp-armor.js';
 import { Str } from './common.js';
-import { FcAttLinkData } from './att.js';
+import { FcAttLinkData } from './attachment.js';
 import { KeyUtil } from './crypto/key.js';
 
 type SanitizedBlocks = { blocks: MsgBlock[], subject: string | undefined, isRichText: boolean, webReplyToken: any | undefined };
@@ -74,11 +74,11 @@ export class MsgBlockParser {
     } else {
       blocks.push(MsgBlock.fromContent('decryptedHtml', Str.escapeTextAsRenderableHtml(Buf.with(decryptedContent).toUtfStr()))); // escaped mime text as html
     }
-    for (const att of decoded.atts) {
-      if (att.treatAs() === 'publicKey') {
-        await MsgBlockParser.pushArmoredPubkeysToBlocks([att.getData().toUtfStr()], blocks);
+    for (const attachment of decoded.attachments) {
+      if (attachment.treatAs() === 'publicKey') {
+        await MsgBlockParser.pushArmoredPubkeysToBlocks([attachment.getData().toUtfStr()], blocks);
       } else {
-        blocks.push(MsgBlock.fromAtt('decryptedAtt', '', { name: att.name, data: att.getData(), length: att.length, type: att.type }));
+        blocks.push(MsgBlock.fromAtt('decryptedAtt', '', { name: attachment.name, data: attachment.getData(), length: attachment.length, type: attachment.type }));
       }
     }
     return { blocks, subject: decoded.subject, isRichText, webReplyToken };
@@ -86,7 +86,7 @@ export class MsgBlockParser {
 
   public static extractFcAtts = (decryptedContent: string, blocks: MsgBlock[]) => {
     // these tags were created by FlowCrypt exclusively, so the structure is rigid (not arbitrary html)
-    // `<a href="${att.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`
+    // `<a href="${attachment.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`
     // thus we use RegEx so that it works on both browser and node
     if (decryptedContent.includes('class="cryptup_file"')) {
       decryptedContent = decryptedContent.replace(/<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm, (_, url, fcData) => {

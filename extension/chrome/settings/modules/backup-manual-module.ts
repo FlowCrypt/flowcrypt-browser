@@ -6,7 +6,7 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { BackupView } from './backup.js';
 import { Assert } from '../../../js/common/assert.js';
-import { Att } from '../../../js/common/core/att.js';
+import { Attachment } from '../../../js/common/core/attachment.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
 import { KeyInfo, KeyUtil } from '../../../js/common/core/crypto/key.js';
@@ -74,7 +74,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private asBackupFile = (armoredKey: string) => {
-    return new Att({ name: `flowcrypt-backup-${this.view.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'application/pgp-keys', data: Buf.fromUtfStr(armoredKey) });
+    return new Attachment({ name: `flowcrypt-backup-${this.view.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'application/pgp-keys', data: Buf.fromUtfStr(armoredKey) });
   }
 
   private backupOnEmailProviderAndUpdateUi = async (primaryKi: KeyInfo) => {

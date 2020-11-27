@@ -184,11 +184,11 @@ export class GoogleData {
 
   public storeSentMessage = (parsedMail: ParsedMail, base64Msg: string): string => {
     let bodyContentAtt: { data: string; size: number; filename?: string; id: string } | undefined;
-    for (const att of parsedMail.attachments || []) {
+    for (const attachment of parsedMail.attachments || []) {
       const attId = Util.lousyRandom();
-      const gmailAtt = { data: att.content.toString('base64'), size: att.size, filename: att.filename, id: attId };
+      const gmailAtt = { data: attachment.content.toString('base64'), size: attachment.size, filename: attachment.filename, id: attId };
       DATA[this.acct].attachments[attId] = gmailAtt;
-      if (att.filename === 'encrypted.asc') {
+      if (attachment.filename === 'encrypted.asc') {
         bodyContentAtt = gmailAtt;
       }
     }
