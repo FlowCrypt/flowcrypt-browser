@@ -192,13 +192,21 @@ export class OpenPGPKey {
     }
     const algoInfo = opgpKey.primaryKey.getAlgorithmInfo();
     const key = keyToUpdate || {} as Key; // if no key to update, use empty object, will get props assigned below
+    const encryptionKey = await Catch.undefinedOnException(opgpKey.getEncryptionKey());
+    const signingKey = await Catch.undefinedOnException(opgpKey.getSigningKey());
+    const missingPrivateKeyForSigning = signingKey?.keyPacket?.params?.length === 2
+      && !signingKey.keyPacket.isEncrypted; // isDecrypted() returns false when isEncrypted is null
+    const missingPrivateKeyForDecryption = encryptionKey?.keyPacket?.params?.length === 2
+      && !encryptionKey.keyPacket.isEncrypted; // isDecrypted() returns false when isEncrypted is null
     Object.assign(key, {
       type: 'openpgp',
       id: fingerprint.toUpperCase(),
       allIds: opgpKey.getKeys().map(k => k.getFingerprint().toUpperCase()),
-      usableForEncryption: ! await Catch.doesReject(opgpKey.getEncryptionKey()),
+      usableForEncryption: encryptionKey ? true : false,
       usableButExpired: await OpenPGPKey.usableButExpired(opgpKey, exp, expired),
-      usableForSigning: ! await Catch.doesReject(opgpKey.getSigningKey()),
+      usableForSigning: (signingKey && !missingPrivateKeyForSigning) ? true : false,
+      missingPrivateKeyForSigning: missingPrivateKeyForSigning,
+      missingPrivateKeyForDecryption: missingPrivateKeyForDecryption,
       // valid emails extracted from uids
       emails,
       // full uids that have valid emails in them

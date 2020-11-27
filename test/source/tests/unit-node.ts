@@ -1031,5 +1031,61 @@ ZAvn6PBX7vsaReOVa2zsnuY5g70xCxvzHIwR94POu5cENwRtCkrppFnISALpQ1kA
       expect(result.get('internal usableButExpired')).to.equal('[-] false');
       t.pass();
     });
+
+    ava.default('[unit][KeyUtil.parse] correctly handles signing/encryption detection for PKSK with private keys', async t => {
+      // testing encrypted key
+      const encryptedKey = await KeyUtil.parse(primaryKeyAndSubkeyBothHavePrivateKey);
+      expect(encryptedKey.usableForSigning).to.be.true;
+      expect(encryptedKey.missingPrivateKeyForSigning).to.be.false;
+      expect(encryptedKey.usableForEncryption).to.be.true;
+      expect(encryptedKey.missingPrivateKeyForDecryption).to.be.false;
+      expect(await KeyUtil.decrypt(encryptedKey, '1234')).to.be.true;
+      const armoredKey = KeyUtil.armor(encryptedKey);
+      // testing decrypted key
+      const key = await KeyUtil.parse(armoredKey);
+      expect(key.usableForSigning).to.be.true;
+      expect(key.missingPrivateKeyForSigning).to.be.false;
+      expect(key.usableForEncryption).to.be.true;
+      expect(key.missingPrivateKeyForDecryption).to.be.false;
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.decrypt] correctly handles signing/encryption detection for PKSK with private keys', async t => {
+      const key = await KeyUtil.parse(primaryKeyAndSubkeyBothHavePrivateKey);
+      expect(await KeyUtil.decrypt(key, '1234')).to.be.true;
+      expect(key.usableForSigning).to.be.true;
+      expect(key.missingPrivateKeyForSigning).to.be.false;
+      expect(key.usableForEncryption).to.be.true;
+      expect(key.missingPrivateKeyForDecryption).to.be.false;
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.parse] determines PK missing private key for signing', async t => {
+      // testing encrypted key
+      const encryptedKey = await KeyUtil.parse(primaryKeyIsMissingPrivateKey);
+      expect(encryptedKey.usableForSigning).to.be.false;
+      expect(encryptedKey.missingPrivateKeyForSigning).to.be.true;
+      expect(encryptedKey.usableForEncryption).to.be.true;
+      expect(encryptedKey.missingPrivateKeyForDecryption).to.be.false;
+      expect(await KeyUtil.decrypt(encryptedKey, '1234')).to.be.true;
+      const armoredKey = KeyUtil.armor(encryptedKey);
+      // testing decrypted key
+      const key = await KeyUtil.parse(armoredKey);
+      expect(key.usableForSigning).to.be.false;
+      expect(key.missingPrivateKeyForSigning).to.be.true;
+      expect(key.usableForEncryption).to.be.true;
+      expect(key.missingPrivateKeyForDecryption).to.be.false;
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.decrypt] determines PK missing private key for signing', async t => {
+      const key = await KeyUtil.parse(primaryKeyIsMissingPrivateKey);
+      expect(await KeyUtil.decrypt(key, '1234')).to.be.true;
+      expect(key.usableForSigning).to.be.false;
+      expect(key.missingPrivateKeyForSigning).to.be.true;
+      expect(key.usableForEncryption).to.be.true;
+      expect(key.missingPrivateKeyForDecryption).to.be.false;
+      t.pass();
+    });
   }
 };

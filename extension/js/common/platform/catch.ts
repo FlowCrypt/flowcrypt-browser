@@ -231,6 +231,14 @@ export class Catch {
     }
   }
 
+  public static undefinedOnException = async <T>(p: Promise<T>): Promise<T | undefined> => {
+    try {
+      return await p;
+    } catch (e) {
+      return undefined;
+    }
+  }
+
   private static formatExceptionForReport = (thrown: any, line?: number, col?: number): ErrorReport => {
     if (!line || !col) {
       const { line: parsedLine, col: parsedCol } = Catch.getErrorLineAndCol(thrown);
