@@ -836,7 +836,7 @@ declare namespace OpenPGP {
       public revoke(reason: { flag?: enums.reasonForRevocation; string?: string; }, date?: Date): Promise<Key>;
       public getRevocationCertificate(): Promise<Stream<string> | string | undefined>;
       public getEncryptionKey(keyid?: Keyid | null, date?: Date, userId?: UserId | null): Promise<key.Key | key.SubKey | null>;
-      public getSigningKey(): Promise<key.Key | key.SubKey | null>;
+      public getSigningKey(keyid?: Keyid | null, date?: Date, userId?: UserId | null): Promise<key.Key | key.SubKey | null>;
       public getKeys(keyId?: Keyid): (Key | SubKey)[];
       public isDecrypted(): boolean;
       public isFullyEncrypted(): boolean;

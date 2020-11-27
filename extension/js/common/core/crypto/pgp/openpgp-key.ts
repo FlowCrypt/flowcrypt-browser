@@ -193,17 +193,19 @@ export class OpenPGPKey {
     const algoInfo = opgpKey.primaryKey.getAlgorithmInfo();
     const key = keyToUpdate || {} as Key; // if no key to update, use empty object, will get props assigned below
     const encryptionKey = await Catch.undefinedOnException(opgpKey.getEncryptionKey());
+    const encryptionKeyIgnoringExpiration = encryptionKey ? encryptionKey : await OpenPGPKey.getExpiredKey(opgpKey.getEncryptionKey.bind(opgpKey), exp, expired);
     const signingKey = await Catch.undefinedOnException(opgpKey.getSigningKey());
-    const missingPrivateKeyForSigning = signingKey?.keyPacket?.params?.length === 2
-      && !signingKey.keyPacket.isEncrypted; // isDecrypted() returns false when isEncrypted is null
-    const missingPrivateKeyForDecryption = encryptionKey?.keyPacket?.params?.length === 2
-      && !encryptionKey.keyPacket.isEncrypted; // isDecrypted() returns false when isEncrypted is null
+    const signingKeyIgnoringExpiration = signingKey ? signingKey : await OpenPGPKey.getExpiredKey(opgpKey.getSigningKey.bind(opgpKey), exp, expired);
+    const missingPrivateKeyForSigning = signingKeyIgnoringExpiration?.keyPacket?.params?.length === 2
+      && !signingKeyIgnoringExpiration.keyPacket.isEncrypted; // isDecrypted() returns false when isEncrypted is null
+    const missingPrivateKeyForDecryption = encryptionKeyIgnoringExpiration?.keyPacket?.params?.length === 2
+      && !encryptionKeyIgnoringExpiration.keyPacket.isEncrypted; // isDecrypted() returns false when isEncrypted is null
     Object.assign(key, {
       type: 'openpgp',
       id: fingerprint.toUpperCase(),
       allIds: opgpKey.getKeys().map(k => k.getFingerprint().toUpperCase()),
       usableForEncryption: encryptionKey ? true : false,
-      usableButExpired: await OpenPGPKey.usableButExpired(opgpKey, exp, expired),
+      usableButExpired: !encryptionKey && !!encryptionKeyIgnoringExpiration,
       usableForSigning: (signingKey && !missingPrivateKeyForSigning) ? true : false,
       missingPrivateKeyForSigning,
       missingPrivateKeyForDecryption,
@@ -429,27 +431,24 @@ export class OpenPGPKey {
     return raw;
   }
 
-  private static usableButExpired = async (key: OpenPGP.key.Key, exp: Date | number | null, expired: () => boolean): Promise<boolean> => {
-    if (!key) {
-      return false;
-    }
-    if (! await Catch.doesReject(key.getEncryptionKey())) {
-      return false;
+  private static getExpiredKey = async (
+    getter: (keyid?: OpenPGP.Keyid | null, date?: Date, userId?: OpenPGP.UserId | null) => Promise<OpenPGP.key.Key | OpenPGP.key.SubKey | null>,
+    exp: Date | number | null,
+    expired: () => boolean): Promise<OpenPGP.key.Key | OpenPGP.key.SubKey | null> => {
+    const firstTry = await Catch.undefinedOnException(getter());
+    if (firstTry) {
+      return firstTry;
     }
     if (exp === null || typeof exp === 'number') {
       // If key does not expire (exp == Infinity) the encryption key should be available.
-      return false;
+      return null;
     }
     const oneSecondBeforeExpiration = exp && expired() ? new Date(exp.getTime() - 1000) : undefined;
     if (typeof oneSecondBeforeExpiration === 'undefined') {
-      return false;
+      return null;
     }
-    try {
-      await key.getEncryptionKey(undefined, oneSecondBeforeExpiration);
-      return true;
-    } catch (e) {
-      return false;
-    }
+    const secondTry = await Catch.undefinedOnException(getter(undefined, oneSecondBeforeExpiration));
+    return secondTry ? secondTry : null;
   }
 
   private static testEncryptDecrypt = async (key: OpenPGP.key.Key): Promise<string[]> => {
