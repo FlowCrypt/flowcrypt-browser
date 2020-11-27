@@ -205,8 +205,8 @@ export class OpenPGPKey {
       usableForEncryption: encryptionKey ? true : false,
       usableButExpired: await OpenPGPKey.usableButExpired(opgpKey, exp, expired),
       usableForSigning: (signingKey && !missingPrivateKeyForSigning) ? true : false,
-      missingPrivateKeyForSigning: missingPrivateKeyForSigning,
-      missingPrivateKeyForDecryption: missingPrivateKeyForDecryption,
+      missingPrivateKeyForSigning,
+      missingPrivateKeyForDecryption,
       // valid emails extracted from uids
       emails,
       // full uids that have valid emails in them
