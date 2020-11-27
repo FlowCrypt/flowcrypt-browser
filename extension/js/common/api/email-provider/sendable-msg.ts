@@ -49,7 +49,13 @@ export class SendableMsg {
     return await SendableMsg.createSendableMsg(acctEmail, headers, { "text/plain": body }, attachments, options ? options : { type: undefined, isDraft: undefined });
   }
 
-  public static createPwdMsg = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Attachment[], options: SendableMsgOptions): Promise<SendableMsg> => {
+  public static createPwdMsg = async (
+    acctEmail: string,
+    headers: SendableMsgHeaders,
+    body: SendableMsgBody,
+    attachments: Attachment[],
+    options: SendableMsgOptions
+  ): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, { type: undefined, isDraft: options.isDraft });
   }
 
@@ -57,16 +63,28 @@ export class SendableMsg {
     return await SendableMsg.createSendableMsg(acctEmail, headers, {}, attachments, { type: (options ? 'pgpMimeEncrypted' : undefined), isDraft: (options ? options.isDraft : undefined) });
   }
 
-  public static createPgpMimeSigned = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Attachment[], signMethod: SignMethod): Promise<SendableMsg> => {
+  public static createPgpMimeSigned = async (
+    acctEmail: string,
+    headers: SendableMsgHeaders,
+    body: SendableMsgBody,
+    attachments: Attachment[],
+    signMethod: SignMethod
+  ): Promise<SendableMsg> => {
     const sendableMsg = await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, { type: 'pgpMimeSigned', isDraft: undefined });
     sendableMsg.sign = signMethod;
     return sendableMsg;
   }
 
-  private static createSendableMsg = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Attachment[], options: SendableMsgOptions): Promise<SendableMsg> => {
+  private static createSendableMsg = async (
+    acctEmail: string,
+    headers: SendableMsgHeaders,
+    body: SendableMsgBody,
+    attachments: Attachment[],
+    options: SendableMsgOptions
+  ): Promise<SendableMsg> => {
     const { from, recipients, subject, thread } = headers;
     const { type, isDraft } = options;
-    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, attachments: attachments, type, isDraft });
+    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, attachments, type, isDraft });
   }
 
   private static create = async (acctEmail: string, { from, recipients, subject, thread, body, attachments, type, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
