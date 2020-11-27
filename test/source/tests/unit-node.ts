@@ -13,7 +13,7 @@ import { Buf } from '../core/buf';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
 import { DecryptError, MsgUtil, PgpMsgMethod } from '../core/crypto/pgp/msg-util';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
-import { Att } from '../core/att.js';
+import { Attachment } from '../core/attachment.js';
 import { ContactStore } from '../platform/store/contact-store.js';
 import { GoogleData, GmailParser, GmailMsg } from '../mock/google/google-data';
 
@@ -710,22 +710,22 @@ eg==
       t.pass();
     });
 
-    ava.default('[Att.sanitizeName] for special and unicode characters', async t => {
+    ava.default('[Attachment.sanitizeName] for special and unicode characters', async t => {
       // slash
-      expect(Att.sanitizeName('abc/def')).to.equal('abc_def');
+      expect(Attachment.sanitizeName('abc/def')).to.equal('abc_def');
       // backslash
-      expect(Att.sanitizeName('abc\\def')).to.equal('abc_def');
+      expect(Attachment.sanitizeName('abc\\def')).to.equal('abc_def');
       // combinations of slashes and backslashes
-      expect(Att.sanitizeName('abc\\/def')).to.equal('abc_def');
-      expect(Att.sanitizeName('abc/\\def')).to.equal('abc_def');
+      expect(Attachment.sanitizeName('abc\\/def')).to.equal('abc_def');
+      expect(Attachment.sanitizeName('abc/\\def')).to.equal('abc_def');
       // trimming
-      expect(Att.sanitizeName('  1  ')).to.equal('1');
-      expect(Att.sanitizeName('    ')).to.equal('_');
+      expect(Attachment.sanitizeName('  1  ')).to.equal('1');
+      expect(Attachment.sanitizeName('    ')).to.equal('_');
       // empty
-      expect(Att.sanitizeName('')).to.equal('_');
+      expect(Attachment.sanitizeName('')).to.equal('_');
       // cyrillic
       const cyrillicName = '\u0410\u0411\u0412';
-      expect(Att.sanitizeName(cyrillicName)).to.equal(cyrillicName);
+      expect(Attachment.sanitizeName(cyrillicName)).to.equal(cyrillicName);
       t.pass();
     });
 

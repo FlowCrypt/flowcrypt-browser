@@ -3,7 +3,7 @@
 'use strict';
 
 import { Assert } from '../../../js/common/assert.js';
-import { Att } from '../../../js/common/core/att.js';
+import { Attachment } from '../../../js/common/core/attachment.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
@@ -118,7 +118,7 @@ View.run(class ExperimentalView extends View {
   private collectInfoAndDownloadBackupFile = async () => {
     const name = `FlowCrypt_BACKUP_FILE_${this.acctEmail.replace(/[^a-z0-9]+/, '')}.txt`;
     const backupText = await this.collectInfoForAccountBackup();
-    Browser.saveToDownloads(new Att({ name, type: 'text/plain', data: Buf.fromUtfStr(backupText) }));
+    Browser.saveToDownloads(new Attachment({ name, type: 'text/plain', data: Buf.fromUtfStr(backupText) }));
     await Ui.delay(1000);
   }
 

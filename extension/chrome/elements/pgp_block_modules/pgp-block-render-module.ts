@@ -3,7 +3,7 @@
 'use strict';
 
 import { VerifyRes } from '../../../js/common/core/crypto/pgp/msg-util.js';
-import { Att } from '../../../js/common/core/att.js';
+import { Attachment } from '../../../js/common/core/attachment.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -74,7 +74,7 @@ export class PgpBlockViewRenderModule {
     this.setFrameColor(isEncrypted ? 'green' : 'gray');
     this.view.signatureModule.renderPgpSignatureCheckResult(sigResult);
     const publicKeys: string[] = [];
-    let renderableAtts: Att[] = [];
+    let renderableAtts: Attachment[] = [];
     let decryptedContent = decryptedBytes.toUtfStr();
     let isHtml: boolean = false;
     // todo - replace with MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks, then the extract/strip methods could be private?
@@ -84,7 +84,7 @@ export class PgpBlockViewRenderModule {
       decryptedContent = MsgBlockParser.stripFcTeplyToken(decryptedContent);
       decryptedContent = MsgBlockParser.stripPublicKeys(decryptedContent, publicKeys);
       if (fcAttBlocks.length) {
-        renderableAtts = fcAttBlocks.map(attBlock => new Att(attBlock.attMeta!));
+        renderableAtts = fcAttBlocks.map(attBlock => new Attachment(attBlock.attMeta!));
       }
     } else {
       this.renderText('Formatting...');
@@ -101,11 +101,11 @@ export class PgpBlockViewRenderModule {
         // there is an encrypted subject + (either there is no plain subject or the plain subject does not contain what's in the encrypted subject)
         decryptedContent = this.getEncryptedSubjectText(decoded.subject, isHtml) + decryptedContent; // render encrypted subject in message
       }
-      for (const att of decoded.atts) {
-        if (att.treatAs() !== 'publicKey') {
-          renderableAtts.push(att);
+      for (const attachment of decoded.attachments) {
+        if (attachment.treatAs() !== 'publicKey') {
+          renderableAtts.push(attachment);
         } else {
-          publicKeys.push(att.getData().toUtfStr());
+          publicKeys.push(attachment.getData().toUtfStr());
         }
       }
     }

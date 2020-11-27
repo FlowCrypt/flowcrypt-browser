@@ -6,8 +6,8 @@ import { Contact, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Str, Url } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { Att } from '../../../js/common/core/att.js';
-import { AttUI } from '../../../js/common/ui/att-ui.js';
+import { Attachment } from '../../../js/common/core/attachment.js';
+import { AttachmentUI } from '../../../js/common/ui/attachment-ui.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
@@ -28,7 +28,7 @@ View.run(class ContactsView extends View {
 
   private contacts: Contact[] = [];
   private factory: XssSafeFactory | undefined; // set in render()
-  private attUI = new AttUI(() => Promise.resolve({ sizeMb: 5, size: 5 * 1024 * 1024, count: 1 }));
+  private attUI = new AttachmentUI(() => Promise.resolve({ sizeMb: 5, size: 5 * 1024 * 1024, count: 1 }));
   private orgRules!: OrgRules;
   private pubLookup!: PubLookup;
   private backBtn = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">back</a>';
@@ -93,7 +93,7 @@ View.run(class ContactsView extends View {
     this.setHandlers();
   }
 
-  private fileAddedHandler = async (file: Att) => {
+  private fileAddedHandler = async (file: Attachment) => {
     this.attUI.clearAllAtts();
     const { keys, errs } = await KeyUtil.readMany(file.getData());
     if (keys.length) {
@@ -110,7 +110,7 @@ View.run(class ContactsView extends View {
 
   private actionExportAllKeysHandler = () => {
     const allArmoredPublicKeys = this.contacts.map(c => c.pubkey).filter(Boolean).map((c: Key) => (KeyUtil.armor(c)).trim()).join('\n');
-    const exportFile = new Att({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: Buf.fromUtfStr(allArmoredPublicKeys) });
+    const exportFile = new Attachment({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: Buf.fromUtfStr(allArmoredPublicKeys) });
     Browser.saveToDownloads(exportFile);
   }
 

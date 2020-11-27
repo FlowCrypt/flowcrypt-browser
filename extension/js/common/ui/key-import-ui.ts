@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { AttUI } from './att-ui.js';
+import { AttachmentUI } from './attachment-ui.js';
 import { Catch } from '../platform/catch.js';
 import { KeyBlockType } from '../core/msg-block.js';
 import { Lang } from '../lang.js';
@@ -102,7 +102,7 @@ export class KeyImportUi {
         $('.line.unprotected_key_create_pass_phrase').hide();
       }
     }));
-    const attach = new AttUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
+    const attach = new AttachmentUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
     attach.initAttDialog('fineuploader', 'fineuploader_button', {
       attAdded: async file => {
         let prv: OpenPGP.key.Key | undefined;

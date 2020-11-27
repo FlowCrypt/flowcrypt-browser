@@ -6,7 +6,7 @@ import { GmailParser, GmailRes } from '../../js/common/api/email-provider/gmail/
 
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
-import { Att } from '../../js/common/core/att.js';
+import { Attachment } from '../../js/common/core/attachment.js';
 import { Browser } from '../../js/common/browser/browser.js';
 import { Buf } from '../../js/common/core/buf.js';
 import { Catch } from '../../js/common/platform/catch.js';
@@ -40,7 +40,7 @@ Catch.try(async () => {
   };
 
   const save = (data: Uint8Array) => {
-    Browser.saveToDownloads(new Att({ data, name: `${acctEmail.replace(/[^a-z0-9+]/g, '')}.json`, type: 'application/pgp-encrypted' }));
+    Browser.saveToDownloads(new Attachment({ data, name: `${acctEmail.replace(/[^a-z0-9+]/g, '')}.json`, type: 'application/pgp-encrypted' }));
   };
 
   try {
@@ -83,23 +83,23 @@ Catch.try(async () => {
     print('labels done. waiting 5s..');
     await Ui.time.sleep(5000);
     print('waiting done. Downloading attachments..');
-    const fetchableAtts: Att[] = [];
-    const skippedAtts: Att[] = [];
+    const fetchableAttachments: Attachment[] = [];
+    const skippedAttachments: Attachment[] = [];
     for (const msg of messages) {
-      for (const att of GmailParser.findAtts(msg)) {
-        if (att.length > 1024 * 1024 * 7) { // over 7 mb - attachment too big
-          skippedAtts.push(new Att({ data: Buf.fromUtfStr(`MOCK: ATTACHMENT STRIPPED - ORIGINAL SIZE ${att.length}`), id: att.id, msgId: msg.id }));
+      for (const attachment of GmailParser.findAttachments(msg)) {
+        if (attachment.length > 1024 * 1024 * 7) { // over 7 mb - attachment too big
+          skippedAttachments.push(new Attachment({ data: Buf.fromUtfStr(`MOCK: ATTACHMENT STRIPPED - ORIGINAL SIZE ${attachment.length}`), id: attachment.id, msgId: msg.id }));
         } else {
-          fetchableAtts.push(att);
+          fetchableAttachments.push(attachment);
         }
       }
     }
-    await gmail.fetchAtts(fetchableAtts, percent => print(`Percent atts done: ${percent}`));
+    await gmail.fetchAttachments(fetchableAttachments, percent => print(`Percent attachments done: ${percent}`));
     const attachments: { [id: string]: { data: string, size: number } } = {};
-    for (const att of fetchableAtts.concat(skippedAtts)) {
-      attachments[att.id!] = { data: att.getData().toBase64UrlStr(), size: att.getData().length };
+    for (const attachment of fetchableAttachments.concat(skippedAttachments)) {
+      attachments[attachment.id!] = { data: attachment.getData().toBase64UrlStr(), size: attachment.getData().length };
     }
-    print(`done. found ${messages.length} messages, ${fetchableAtts.length} downloaded and ${skippedAtts.length} skipped atts, ${labels.length} labels`);
+    print(`done. found ${messages.length} messages, ${fetchableAttachments.length} downloaded and ${skippedAttachments.length} skipped attachments, ${labels.length} labels`);
     print('censoring..');
     for (const msg of messages) {
       for (const h of msg.payload!.headers!) {

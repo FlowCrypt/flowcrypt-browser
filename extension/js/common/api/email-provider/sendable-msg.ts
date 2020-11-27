@@ -4,7 +4,7 @@
 
 import { Dict, Str } from '../../core/common.js';
 import { Mime, MimeEncodeType, SendableMsgBody } from '../../core/mime.js';
-import { Att } from '../../core/att.js';
+import { Attachment } from '../../core/attachment.js';
 import { Buf } from '../../core/buf.js';
 import { RecipientType } from '../shared/api.js';
 import { KeyStore } from '../../platform/store/key-store.js';
@@ -30,7 +30,7 @@ type SendableMsgDefinition = SendableMsgHeaders
   & SendableMsgOptions
   & {
     body?: SendableMsgBody;
-    atts?: Att[];
+    attachments?: Attachment[];
   };
 
 export class SendableMsg {
@@ -41,35 +41,53 @@ export class SendableMsg {
     return await SendableMsg.createSendableMsg(acctEmail, headers, { "encrypted/buf": Buf.fromUint8(data) }, [], { type: 'smimeEncrypted', isDraft: options.isDraft });
   }
 
-  public static createPlain = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[]): Promise<SendableMsg> => {
+  public static createPlain = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Attachment[]): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, { type: undefined, isDraft: undefined });
   }
 
-  public static createPgpInline = async (acctEmail: string, headers: SendableMsgHeaders, body: string, attachments: Att[], options?: SendableMsgOptions): Promise<SendableMsg> => {
+  public static createPgpInline = async (acctEmail: string, headers: SendableMsgHeaders, body: string, attachments: Attachment[], options?: SendableMsgOptions): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, { "text/plain": body }, attachments, options ? options : { type: undefined, isDraft: undefined });
   }
 
-  public static createPwdMsg = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[], options: SendableMsgOptions): Promise<SendableMsg> => {
+  public static createPwdMsg = async (
+    acctEmail: string,
+    headers: SendableMsgHeaders,
+    body: SendableMsgBody,
+    attachments: Attachment[],
+    options: SendableMsgOptions
+  ): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, { type: undefined, isDraft: options.isDraft });
   }
 
-  public static createPgpMime = async (acctEmail: string, headers: SendableMsgHeaders, attachments: Att[], options?: SendableMsgOptions): Promise<SendableMsg> => {
+  public static createPgpMime = async (acctEmail: string, headers: SendableMsgHeaders, attachments: Attachment[], options?: SendableMsgOptions): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, {}, attachments, { type: (options ? 'pgpMimeEncrypted' : undefined), isDraft: (options ? options.isDraft : undefined) });
   }
 
-  public static createPgpMimeSigned = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[], signMethod: SignMethod): Promise<SendableMsg> => {
+  public static createPgpMimeSigned = async (
+    acctEmail: string,
+    headers: SendableMsgHeaders,
+    body: SendableMsgBody,
+    attachments: Attachment[],
+    signMethod: SignMethod
+  ): Promise<SendableMsg> => {
     const sendableMsg = await SendableMsg.createSendableMsg(acctEmail, headers, body, attachments, { type: 'pgpMimeSigned', isDraft: undefined });
     sendableMsg.sign = signMethod;
     return sendableMsg;
   }
 
-  private static createSendableMsg = async (acctEmail: string, headers: SendableMsgHeaders, body: SendableMsgBody, attachments: Att[], options: SendableMsgOptions): Promise<SendableMsg> => {
+  private static createSendableMsg = async (
+    acctEmail: string,
+    headers: SendableMsgHeaders,
+    body: SendableMsgBody,
+    attachments: Attachment[],
+    options: SendableMsgOptions
+  ): Promise<SendableMsg> => {
     const { from, recipients, subject, thread } = headers;
     const { type, isDraft } = options;
-    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, atts: attachments, type, isDraft });
+    return await SendableMsg.create(acctEmail, { from, recipients, subject, thread, body, attachments, type, isDraft });
   }
 
-  private static create = async (acctEmail: string, { from, recipients, subject, thread, body, atts, type, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
+  private static create = async (acctEmail: string, { from, recipients, subject, thread, body, attachments, type, isDraft }: SendableMsgDefinition): Promise<SendableMsg> => {
     const primaryKi = await KeyStore.getFirst(acctEmail);
     const headers: Dict<string> = primaryKi ? { OpenPGP: `id=${primaryKi.longid}` } : {}; // todo - use autocrypt format
     return new SendableMsg(
@@ -80,7 +98,7 @@ export class SendableMsg {
       recipients,
       subject,
       body || {},
-      atts || [],
+      attachments || [],
       thread,
       type
     );
@@ -94,7 +112,7 @@ export class SendableMsg {
     public recipients: Recipients,
     public subject: string,
     public body: SendableMsgBody,
-    public atts: Att[],
+    public attachments: Attachment[],
     public thread: string | undefined,
     public type: MimeEncodeType,
   ) {
@@ -121,12 +139,12 @@ export class SendableMsg {
     if (this.type === 'smimeEncrypted' && this.body['encrypted/buf']) {
       return await Mime.encodeSmime(this.body['encrypted/buf'], this.headers);
     } else if (this.type === 'pgpMimeSigned' && this.sign) {
-      return await Mime.encodePgpMimeSigned(this.body, this.headers, this.atts, this.sign);
+      return await Mime.encodePgpMimeSigned(this.body, this.headers, this.attachments, this.sign);
     } else { // encrypted/buf is a Buf instance that is converted to single-part plain/text message
       if (this.body['encrypted/buf']) {
         this.body = { 'text/plain': this.body['encrypted/buf'].toString() };
       }
-      return await Mime.encode(this.body, this.headers, this.atts, this.type);
+      return await Mime.encode(this.body, this.headers, this.attachments, this.type);
     }
   }
 

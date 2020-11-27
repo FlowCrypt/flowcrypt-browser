@@ -5,7 +5,7 @@
 'use strict';
 
 import { Dict, Str, Url, UrlParams } from './core/common.js';
-import { Att } from './core/att.js';
+import { Attachment } from './core/attachment.js';
 import { Browser } from './browser/browser.js';
 import { Catch } from './platform/catch.js';
 import { MsgBlock, MsgBlockType } from './core/msg-block.js';
@@ -66,7 +66,7 @@ export class XssSafeFactory {
     } else if (block.type === 'certificate') {
       return factory.embeddedPubkey(block.content.toString());
     } else if (['encryptedAtt', 'plainAtt'].includes(block.type)) {
-      return block.attMeta ? factory.embeddedAtta(new Att(block.attMeta), block.type === 'encryptedAtt') : '[missing encrypted attachment details]';
+      return block.attMeta ? factory.embeddedAtta(new Attachment(block.attMeta), block.type === 'encryptedAtt') : '[missing encrypted attachment details]';
     } else if (block.type === 'signedHtml') {
       return factory.embeddedMsg('signedHtml', '', msgId, isOutgoing, senderEmail, true); // empty msg so it re-fetches from api. True at the and for "signature"
     } else if (block.type === 'signedText') {
@@ -124,7 +124,7 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/add_pubkey.htm'), { emails, placement });
   }
 
-  public srcPgpAttIframe = (a: Att, isEncrypted: boolean, parentTabId?: string, iframeUrl = 'chrome/elements/attachment.htm') => {
+  public srcPgpAttIframe = (a: Attachment, isEncrypted: boolean, parentTabId?: string, iframeUrl = 'chrome/elements/attachment.htm') => {
     if (!a.id && !a.url && a.hasData()) { // data provided directly, pass as object url
       a.url = Browser.objUrlCreate(a.getData());
     }
@@ -190,7 +190,7 @@ export class XssSafeFactory {
     return this.iframe(this.srcSubscribeDialog('embedded', isAuthErr), ['short', 'embedded'], { scrolling: 'no' });
   }
 
-  public embeddedAtta = (meta: Att, isEncrypted: boolean, parentTabId?: string) => {
+  public embeddedAtta = (meta: Attachment, isEncrypted: boolean, parentTabId?: string) => {
     return Ui.e('span', { class: 'pgp_attachment', html: this.iframe(this.srcPgpAttIframe(meta, isEncrypted, parentTabId)) });
   }
 

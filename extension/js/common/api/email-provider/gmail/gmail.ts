@@ -9,7 +9,7 @@ import { EmailProviderApi, EmailProviderInterface, Backups } from '../email-prov
 import { GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
 import { GmailParser, GmailRes } from './gmail-parser.js';
 import { AjaxErr } from '../../shared/api-error.js';
-import { Att } from '../../../core/att.js';
+import { Attachment } from '../../../core/attachment.js';
 import { BrowserMsg } from '../../../browser/browser-msg.js';
 import { Buf } from '../../../core/buf.js';
 import { Catch } from '../../../platform/catch.js';
@@ -207,15 +207,15 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     });
   }
 
-  public fetchAtts = async (atts: Att[], progressCb?: ProgressCb) => {
-    if (!atts.length) {
+  public fetchAttachments = async (attachments: Attachment[], progressCb?: ProgressCb) => {
+    if (!attachments.length) {
       return;
     }
     let lastProgressPercent = -1;
     const loadedAr: Array<number> = [];
     // 1.33 is approximate ratio of downloaded data to what we expected, likely due to encoding
-    const total = atts.map(x => x.length).reduce((a, b) => a + b) * 1.33;
-    const responses = await Promise.all(atts.map((a, index) => this.attGet(a.msgId!, a.id!, (_, loaded) => {
+    const total = attachments.map(x => x.length).reduce((a, b) => a + b) * 1.33;
+    const responses = await Promise.all(attachments.map((a, index) => this.attGet(a.msgId!, a.id!, (_, loaded) => {
       if (progressCb) {
         loadedAr[index] = loaded || 0;
         const totalLoaded = loadedAr.reduce((a, b) => a + b);
@@ -227,7 +227,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       }
     })));
     for (const i of responses.keys()) {
-      atts[i].setData(responses[i].data);
+      attachments[i].setData(responses[i].data);
     }
   }
 
@@ -277,7 +277,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     const subject = gmailMsg.payload ? GmailParser.findHeader(gmailMsg.payload, 'subject') : undefined;
     if (format === 'full') {
       const bodies = GmailParser.findBodies(gmailMsg);
-      const atts = GmailParser.findAtts(gmailMsg);
+      const attachments = GmailParser.findAttachments(gmailMsg);
       const fromTextBody = PgpArmor.clip(Buf.fromBase64UrlStr(bodies['text/plain'] || '').toUtfStr());
       if (fromTextBody) {
         return { armored: fromTextBody, subject, isPwdMsg };
@@ -286,13 +286,13 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       if (fromHtmlBody) {
         return { armored: fromHtmlBody, subject, isPwdMsg };
       }
-      if (atts.length) {
-        for (const att of atts) {
-          if (att.treatAs() === 'encryptedMsg') {
-            await this.fetchAtts([att], progressCb);
-            const armoredMsg = PgpArmor.clip(att.getData().toUtfStr());
+      if (attachments.length) {
+        for (const attachment of attachments) {
+          if (attachment.treatAs() === 'encryptedMsg') {
+            await this.fetchAttachments([attachment], progressCb);
+            const armoredMsg = PgpArmor.clip(attachment.getData().toUtfStr());
             if (!armoredMsg) {
-              throw new FormatError('Problem extracting armored message', att.getData().toUtfStr());
+              throw new FormatError('Problem extracting armored message', attachment.getData().toUtfStr());
             }
             return { armored: armoredMsg, subject, isPwdMsg };
           }
@@ -334,12 +334,12 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     const res = await this.msgList(gmailBackupSearchQuery(this.acctEmail), true);
     const msgIds = (res.messages || []).map(m => m.id);
     const msgs = await this.msgsGet(msgIds, 'full');
-    const atts: Att[] = [];
+    const attachments: Attachment[] = [];
     for (const msg of msgs) {
-      atts.push(...GmailParser.findAtts(msg));
+      attachments.push(...GmailParser.findAttachments(msg));
     }
-    await this.fetchAtts(atts);
-    const { keys: foundBackupKeys } = await KeyUtil.readMany(Buf.fromUtfStr(atts.map(a => a.getData().toUtfStr()).join('\n')));
+    await this.fetchAttachments(attachments);
+    const { keys: foundBackupKeys } = await KeyUtil.readMany(Buf.fromUtfStr(attachments.map(a => a.getData().toUtfStr()).join('\n')));
     const backups = await Promise.all(foundBackupKeys.map(k => KeyStore.keyInfoObj(k)));
     const imported = await KeyStore.get(this.acctEmail);
     const importedLongids = imported.map(ki => ki.longid);

@@ -4,7 +4,7 @@
 
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { Att } from '../../../js/common/core/att.js';
+import { Attachment } from '../../../js/common/core/attachment.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { KeyInfo, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
@@ -111,17 +111,17 @@ View.run(class MyKeyView extends View {
       return;
     }
     const name = `${this.acctEmail.replace(/[^a-z0-9]+/g, '')}-0x${this.keyInfo.longid}.revocation-cert.asc`;
-    const prvKeyAtt = new Att({ data: Buf.fromUtfStr(revokedArmored), type: 'application/pgp-keys', name });
+    const prvKeyAtt = new Attachment({ data: Buf.fromUtfStr(revokedArmored), type: 'application/pgp-keys', name });
     Browser.saveToDownloads(prvKeyAtt);
   }
 
   private downloadPubKeyHandler = () => {
-    Browser.saveToDownloads(Att.keyinfoAsPubkeyAtt(this.keyInfo));
+    Browser.saveToDownloads(Attachment.keyinfoAsPubkeyAtt(this.keyInfo));
   }
 
   private downloadPrvKeyHandler = () => {
     const name = `flowcrypt-backup-${this.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}-0x${this.keyInfo.longid}.asc`;
-    const prvKeyAtt = new Att({ data: Buf.fromUtfStr(this.keyInfo.private), type: 'application/pgp-keys', name });
+    const prvKeyAtt = new Attachment({ data: Buf.fromUtfStr(this.keyInfo.private), type: 'application/pgp-keys', name });
     Browser.saveToDownloads(prvKeyAtt);
   }
 

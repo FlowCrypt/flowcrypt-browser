@@ -5,7 +5,7 @@
 import { Mime, SendableMsgBody } from '../../../core/mime.js';
 import { Str, Value } from '../../../core/common.js';
 
-import { Att } from '../../../core/att.js';
+import { Attachment } from '../../../core/attachment.js';
 import { Buf } from '../../../core/buf.js';
 import { RecipientType } from '../../shared/api.js';
 import { ReplyParams } from '../email-provider-api.js';
@@ -83,18 +83,22 @@ export class GmailParser {
     return undefined;
   }
 
-  public static findAtts = (msgOrPayloadOrPart: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part, internalResults: Att[] = [], internalMsgId?: string) => {
+  public static findAttachments = (
+    msgOrPayloadOrPart: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part,
+    internalResults: Attachment[] = [],
+    internalMsgId?: string
+  ) => {
     if (msgOrPayloadOrPart.hasOwnProperty('payload')) {
       internalMsgId = (msgOrPayloadOrPart as GmailRes.GmailMsg).id;
-      GmailParser.findAtts((msgOrPayloadOrPart as GmailRes.GmailMsg).payload!, internalResults, internalMsgId);
+      GmailParser.findAttachments((msgOrPayloadOrPart as GmailRes.GmailMsg).payload!, internalResults, internalMsgId);
     }
     if (msgOrPayloadOrPart.hasOwnProperty('parts')) {
       for (const part of (msgOrPayloadOrPart as GmailRes.GmailMsg$payload).parts!) {
-        GmailParser.findAtts(part, internalResults, internalMsgId);
+        GmailParser.findAttachments(part, internalResults, internalMsgId);
       }
     }
     if (msgOrPayloadOrPart.hasOwnProperty('body') && (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).body!.hasOwnProperty('attachmentId')) {
-      internalResults.push(new Att({
+      internalResults.push(new Attachment({
         msgId: internalMsgId,
         id: (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).body!.attachmentId,
         length: (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).body!.size,

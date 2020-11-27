@@ -5,7 +5,7 @@
 'use strict';
 
 import { Api } from '../api/shared/api.js';
-import { Att } from '../core/att.js';
+import { Attachment } from '../core/attachment.js';
 import { Catch } from '../platform/catch.js';
 import { Dict, Url, UrlParam } from '../core/common.js';
 import { GlobalStore } from '../platform/store/global-store.js';
@@ -23,14 +23,14 @@ export class Browser {
     return buf;
   }
 
-  public static saveToDownloads = (att: Att) => {
-    const blob = new Blob([att.getData()], { type: att.type });
+  public static saveToDownloads = (attachment: Attachment) => {
+    const blob = new Blob([attachment.getData()], { type: attachment.type });
     if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-      window.navigator.msSaveBlob(blob, att.name);
+      window.navigator.msSaveBlob(blob, attachment.name);
     } else {
       const a = window.document.createElement('a');
       a.href = window.URL.createObjectURL(blob);
-      a.download = Xss.escape(att.name);
+      a.download = Xss.escape(attachment.name);
       if (typeof a.click === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
         a.click();
       } else { // safari
