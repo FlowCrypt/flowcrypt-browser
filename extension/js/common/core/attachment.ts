@@ -5,7 +5,7 @@
 import { Buf } from './buf.js';
 
 type Attachment$treatAs = "publicKey" | 'privateKey' | "encryptedMsg" | "hidden" | "signature" | "encryptedFile" | "plainFile";
-export type AttMeta = {
+export type AttachmentMeta = {
   data?: Uint8Array; type?: string; name?: string; length?: number; url?: string;
   inline?: boolean; id?: string; msgId?: string; treatAs?: Attachment$treatAs; cid?: string;
   contentDescription?: string,
@@ -43,7 +43,7 @@ export class Attachment {
     return trimmed.replace(/[\u0000\u002f\u005c]/g, '_').replace(/__+/g, '_');
   }
 
-  constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid, contentDescription }: AttMeta) {
+  constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid, contentDescription }: AttachmentMeta) {
     if (typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {
       throw new Error('Attachment: one of data|url|id has to be set');
     }

@@ -4,7 +4,7 @@
 
 import { DecryptError, VerifyRes } from './crypto/pgp/msg-util.js';
 
-import { AttMeta } from './attachment.js';
+import { AttachmentMeta } from './attachment.js';
 import { Buf } from './buf.js';
 
 export type KeyBlockType = 'publicKey' | 'privateKey' | 'certificate';
@@ -18,7 +18,7 @@ export class MsgBlock {
     return new MsgBlock(type, content, !missingEnd);
   }
 
-  public static fromAtt = (type: MsgBlockType, content: string, attMeta: AttMeta): MsgBlock => {
+  public static fromAtt = (type: MsgBlockType, content: string, attMeta: AttachmentMeta): MsgBlock => {
     return new MsgBlock(type, content, true, undefined, attMeta);
   }
 
@@ -27,7 +27,7 @@ export class MsgBlock {
     public content: string | Buf,
     public complete: boolean,
     public signature?: string,
-    public attMeta?: AttMeta, // only in plainAtt, encryptedAtt, decryptedAtt, encryptedAttLink (not sure if always)
+    public attMeta?: AttachmentMeta, // only in plainAtt, encryptedAtt, decryptedAtt, encryptedAttLink (not sure if always)
     public decryptErr?: DecryptError, // only in decryptErr block, always
     public verifyRes?: VerifyRes,
   ) {
