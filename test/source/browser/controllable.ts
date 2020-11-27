@@ -576,12 +576,12 @@ export class ControllablePage extends ControllableBase {
     let html = '';
     for (const msg of this.consoleMsgs) {
       if (msg instanceof ConsoleEvent) {
-        html += `<font class="c-${Util.htmlEscape(msg.type)}">${Util.htmlEscape(msg.type)}: ${Util.htmlEscape(msg.text)}</font>\n`;
+        html += `<span class="c-${Util.htmlEscape(msg.type)}">${Util.htmlEscape(msg.type)}: ${Util.htmlEscape(msg.text)}</span>\n`;
         if (alsoLogDirectly) {
           console.log(`[${t.title}] console-${msg.type}: ${msg.text}`);
         }
       } else {
-        html += `<font class="c-${Util.htmlEscape(msg.type())}">${Util.htmlEscape(msg.type())}: ${Util.htmlEscape(msg.text())}`;
+        html += `<div class="c-${Util.htmlEscape(msg.type())}">${Util.htmlEscape(msg.type())}: ${Util.htmlEscape(msg.text())}`;
         if (alsoLogDirectly) {
           console.log(`[${t.title}] console-${msg.type()}: ${msg.text()}`);
         }
@@ -599,7 +599,7 @@ export class ControllablePage extends ControllableBase {
         if (args.length) {
           html += `<ul>${args.map(arg => `<li>${Util.htmlEscape(arg)}</li>`)}</ul>`;
         }
-        html += `</font>\n`;
+        html += `</div>\n`;
       }
     }
     return html;
