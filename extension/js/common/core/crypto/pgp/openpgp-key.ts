@@ -455,14 +455,14 @@ export class OpenPGPKey {
     }
     if (exp === null || typeof exp === 'number') {
       // If key does not expire (exp == Infinity) the encryption key should be available.
-      return null;
+      return null; // tslint:disable-line:no-null-keyword
     }
     const oneSecondBeforeExpiration = exp && expired() ? new Date(exp.getTime() - 1000) : undefined;
     if (typeof oneSecondBeforeExpiration === 'undefined') {
-      return null;
+      return null; // tslint:disable-line:no-null-keyword
     }
     const secondTry = await Catch.undefinedOnException(getter(undefined, oneSecondBeforeExpiration));
-    return secondTry ? secondTry : null;
+    return secondTry ? secondTry : null; // tslint:disable-line:no-null-keyword
   }
 
   private static testEncryptDecrypt = async (key: OpenPGP.key.Key): Promise<string[]> => {
