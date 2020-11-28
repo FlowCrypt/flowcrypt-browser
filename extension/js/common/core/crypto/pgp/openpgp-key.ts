@@ -196,10 +196,24 @@ export class OpenPGPKey {
     const encryptionKeyIgnoringExpiration = encryptionKey ? encryptionKey : await OpenPGPKey.getExpiredKey(opgpKey.getEncryptionKey.bind(opgpKey), exp, expired);
     const signingKey = await Catch.undefinedOnException(opgpKey.getSigningKey());
     const signingKeyIgnoringExpiration = signingKey ? signingKey : await OpenPGPKey.getExpiredKey(opgpKey.getSigningKey.bind(opgpKey), exp, expired);
-    const missingPrivateKeyForSigning = signingKeyIgnoringExpiration?.keyPacket?.params?.length === 2
-      && !signingKeyIgnoringExpiration.keyPacket.isEncrypted; // isDecrypted() returns false when isEncrypted is null
-    const missingPrivateKeyForDecryption = encryptionKeyIgnoringExpiration?.keyPacket?.params?.length === 2
-      && !encryptionKeyIgnoringExpiration.keyPacket.isEncrypted; // isDecrypted() returns false when isEncrypted is null
+    const paramCountByAlgo = {
+      [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.rsa_encrypt)]: 6,
+      [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.rsa_encrypt_sign)]: 6,
+      [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.rsa_sign)]: 6,
+      [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.dsa)]: 5,
+      [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.elgamal)]: 4,
+      [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.ecdsa)]: 2,
+      [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.ecdh)]: 3,
+      [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.eddsa)]: 3,
+    };
+    const missingPrivateKeyForSigning = signingKeyIgnoringExpiration?.keyPacket
+      && !signingKeyIgnoringExpiration.keyPacket.isEncrypted // isDecrypted() returns false when isEncrypted is null
+      && paramCountByAlgo[signingKeyIgnoringExpiration.keyPacket.algorithm]
+      && paramCountByAlgo[signingKeyIgnoringExpiration.keyPacket.algorithm] !== signingKeyIgnoringExpiration.keyPacket.params?.length;
+    const missingPrivateKeyForDecryption = encryptionKeyIgnoringExpiration?.keyPacket
+      && !encryptionKeyIgnoringExpiration.keyPacket.isEncrypted // isDecrypted() returns false when isEncrypted is null
+      && paramCountByAlgo[encryptionKeyIgnoringExpiration.keyPacket.algorithm]
+      && paramCountByAlgo[encryptionKeyIgnoringExpiration.keyPacket.algorithm] !== encryptionKeyIgnoringExpiration.keyPacket.params?.length;
     Object.assign(key, {
       type: 'openpgp',
       id: fingerprint.toUpperCase(),
