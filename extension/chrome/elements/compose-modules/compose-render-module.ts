@@ -59,8 +59,11 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
 
   public renderPrompt = () => {
     this.view.S.cached('prompt').css('display', 'block');
-    if (this.view.replyParams && this.view.replyParams.to.length > 1) {
-      $('#a_reply_all').css('display', 'inline-flex');
+    if (this.view.replyParams) {
+      const recipientsNumber = this.view.replyParams.to.length + this.view.replyParams.cc.length + this.view.replyParams.bcc.length;
+      if (recipientsNumber > 1) {
+        $('#a_reply_all').css('display', 'inline-flex');
+      }
     }
   }
 
