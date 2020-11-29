@@ -17,12 +17,18 @@
 <body id="new_message">
   <div class="container">
     <div id="initial_prompt" class="display_none" data-test="action-accept-reply-prompt">
-      <p id="reply_links">
-        Secure <a href="#" id="a_reply" data-test="encrypted-reply">Reply</a>, <a href="#" id="a_reply_all"
-          data-test="action-accept-reply-all-prompt">Reply to All</a>, or <a href="#" id="a_forward"
-          data-test="action-forward">Forward</a>
-        <div id="reply_click_area"></div>
-      </p>
+      <a href="#" id="a_reply_all" data-test="action-accept-reply-all-prompt">
+        <img src="/img/reply-all-icon.png" alt="">
+        Secure Reply to All
+      </a>
+      <a href="#" id="a_reply" data-test="encrypted-reply">
+        <img src="/img/reply-icon.png" alt="">
+        Secure Reply
+      </a>
+      <a href="#" id="a_forward" data-test="action-forward">
+        <img src="/img/forward-icon.png" alt="">
+        Secure Forward
+      </a>
     </div>
     <div id="contacts" data-test="container-contacts" tabindex="0">
       <ul></ul>

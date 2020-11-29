@@ -57,6 +57,13 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToElement(this.view.parentTabId, { selector: `#${this.view.frameId}` }), 300);
   }
 
+  public renderPrompt = () => {
+    this.view.S.cached('prompt').css('display', 'block');
+    if (this.view.replyParams && this.view.replyParams.to.length > 1) {
+      $('#a_reply_all').css('display', 'inline-flex');
+    }
+  }
+
   public renderReplySuccess = (msg: SendableMsg, msgId: string) => {
     this.view.renderModule.renderReinsertReplyBox(msgId);
     if (!this.view.sendBtnModule.popover.choices.encrypt) {
@@ -124,7 +131,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         if (this.view.skipClickPrompt) { // TODO: fix issue when loading recipients
           await this.renderReplyMsgComposeTable();
         } else {
-          $('#reply_click_area,#a_reply,#a_reply_all,#a_forward')
+          $('#a_reply,#a_reply_all,#a_forward')
             .click(this.view.setHandler((el) => this.actionActivateReplyBoxHandler(el), this.view.errModule.handle(`activate repply box`)));
         }
       }
@@ -169,7 +176,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       this.view.S.cached('compose_table').css({ 'border-bottom': '1px solid #cfcfcf', 'border-top': '1px solid #cfcfcf' });
       this.view.S.cached('input_text').css('overflow-y', 'hidden');
       if (!this.view.skipClickPrompt && !this.view.draftId) {
-        this.view.S.cached('prompt').css('display', 'block');
+        this.renderPrompt();
       }
     } else {
       this.view.S.cached('compose_table').css({ 'height': '100%' });
@@ -183,7 +190,6 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       case 'a_forward':
         this.responseMethod = 'forward';
         typesToDelete.push('to');
-      case 'reply_click_area':
       case 'a_reply':
         typesToDelete.push('cc');
         typesToDelete.push('bcc');

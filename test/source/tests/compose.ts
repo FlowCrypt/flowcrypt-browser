@@ -226,7 +226,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('compose - quote - can load quote from encrypted/text email', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=16b584ed95837510&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16b584ed95837510';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
-      await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 5 });
+      await composePage.waitAndClick('@encrypted-reply', { delay: 5 });
       await clickTripleDotAndExpectQuoteToLoad(composePage, [
         'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
         '> This is some message',
@@ -246,7 +246,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const appendUrl = 'threadId=16402d6dc4342e7f&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
         '&replyMsgId=16402d6dc4342e7f';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
-      await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
+      await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
       await clickTripleDotAndExpectQuoteToLoad(composePage, [
         'On 2018-06-15 at 09:46, info@nvimp.com wrote:',
         '> cropping all except for the image below'
@@ -257,7 +257,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const appendUrl = 'threadId=16b36861a890bb26&skipClickPrompt=___cu_false___' +
         '&ignoreDraft=___cu_false___&replyMsgId=16b36861a890bb26';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
-      await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
+      await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
       expect(await composePage.read('@input-body')).to.not.include('flowcrypt.compatibility test footer with an img');
       await clickTripleDotAndExpectQuoteToLoad(composePage, [
         'On 2019-06-08 at 09:57, human@flowcrypt.com wrote:',
@@ -274,7 +274,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('compose - reply - can load quote from encrypted/html email', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=1663a65bbd73ce1a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=1663a65bbd73ce1a';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
-      await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
+      await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
       await clickTripleDotAndExpectQuoteToLoad(composePage, [
         'On 2018-10-03 at 14:47, henry.electrum@gmail.com wrote:',
         '> The following text is bold: this is bold',
@@ -334,10 +334,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       }));
     }
 
-    ava.default('compose - reply - signed message', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default.only('compose - reply - signed message', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=15f7f5face7101db&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=15f7f5face7101db';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
-      await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
+      await composePage.notPresent('@action-accept-reply-all-prompt');
+      await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
       await composePage.waitAll('@action-send');
       await Util.sleep(0.5);
       expect(await composePage.read('@action-send')).to.eq('Sign and Send');
@@ -465,7 +466,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const appendUrl = 'threadId=15f7f5face7101db&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=15f7f5face7101db';
       const attachmentFilename = 'small.txt';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
-      await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
+      await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
       await composePage.waitAll('@action-send');
       await Util.sleep(0.5);
       expect(await composePage.read('@action-send')).to.eq('Sign and Send');
@@ -1085,7 +1086,7 @@ const setRequirePassPhraseAndOpenRepliedMessage = async (t: AvaContext, browser:
   await inboxPage.waitAll('iframe');
   // Get Reply Window (Composer) and click on reply button.
   const replyFrame = await inboxPage.getFrame(['compose.htm']);
-  await replyFrame.waitAndClick('@action-accept-reply-prompt');
+  await replyFrame.waitAndClick('@encrypted-reply');
 
   return { inboxPage, replyFrame };
 };
