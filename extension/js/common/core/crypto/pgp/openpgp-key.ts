@@ -143,25 +143,6 @@ export class OpenPGPKey {
     return await OpenPGPKey.convertExternalLibraryObjToKey(keyPair.key);
   }
 
-  private static arePrivateParamsMissing = (packet: OpenPGP.packet.BaseKeyPacket): boolean => {
-    // detection of missing private params to solve #2887
-    if (!OpenPGPKey.paramCountByAlgo) {
-      OpenPGPKey.paramCountByAlgo = {
-        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.rsa_encrypt)]: 6,
-        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.rsa_encrypt_sign)]: 6,
-        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.rsa_sign)]: 6,
-        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.dsa)]: 5,
-        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.elgamal)]: 4,
-        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.ecdsa)]: 2,
-        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.ecdh)]: 3,
-        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.eddsa)]: 3,
-      };
-    }
-    return packet.algorithm
-      && !packet.isEncrypted // isDecrypted() returns false when isEncrypted is null
-      && OpenPGPKey.paramCountByAlgo[packet.algorithm] > packet.params?.length;
-  }
-
   /**
    * TODO: should be private, will change when readMany is rewritten
    * @param opgpKey - original OpenPGP.js key
@@ -471,6 +452,25 @@ export class OpenPGPKey {
     }
     const secondTry = await Catch.undefinedOnException(getter(undefined, oneSecondBeforeExpiration));
     return secondTry ? secondTry : null; // tslint:disable-line:no-null-keyword
+  }
+
+  private static arePrivateParamsMissing = (packet: OpenPGP.packet.BaseKeyPacket): boolean => {
+    // detection of missing private params to solve #2887
+    if (!OpenPGPKey.paramCountByAlgo) {
+      OpenPGPKey.paramCountByAlgo = {
+        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.rsa_encrypt)]: 6,
+        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.rsa_encrypt_sign)]: 6,
+        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.rsa_sign)]: 6,
+        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.dsa)]: 5,
+        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.elgamal)]: 4,
+        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.ecdsa)]: 2,
+        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.ecdh)]: 3,
+        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.eddsa)]: 3,
+      };
+    }
+    return packet.algorithm
+      && !packet.isEncrypted // isDecrypted() returns false when isEncrypted is null
+      && OpenPGPKey.paramCountByAlgo[packet.algorithm] > packet.params?.length;
   }
 
   private static testEncryptDecrypt = async (key: OpenPGP.key.Key): Promise<string[]> => {
