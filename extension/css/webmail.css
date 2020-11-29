@@ -16,6 +16,7 @@ div.webmail_notifications div.webmail_notification {
   border-radius: 2px;
   box-shadow: rgba(0, 0, 0, 0.2) 0 2px 4px 0;
   color: rgb(34, 34, 34);
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 12.8px;
   font-weight: bold;
   line-height: 16px;
