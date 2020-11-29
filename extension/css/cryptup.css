@@ -1126,7 +1126,7 @@ body#settings > div#content.account .expire {
 }
 
 body {
-  font-family: arial, sans-serif;
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 0.9rem;
   padding: 0;
   margin: 0;
@@ -2221,21 +2221,38 @@ body#new_message.full_window {
 body#new_message.full_window table#compose { box-shadow: 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12), 0 5px 5px -3px rgba(0, 0, 0, 0.2); }
 div#reply_message_table_container { display: none; }
 
-div#initial_prompt {
-  border: 1px solid #d9d9d9 !important;
-  border-top: 1px solid #c0c0c0 !important;
-  background-color: #fff;
-  min-height: 72px;
-  padding: 8px 0 0 8px;
+div#initial_prompt a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: rgb(79, 79, 79);
+  font-weight: 600;
+  height: 36px;
+  padding: 0 16px;
+  box-shadow: inset 0 0 0 1px #dadce0;
+  margin: 0 12px 6px 0;
+  text-decoration: none;
+  outline: none;
 }
 
-div#initial_prompt #reply_click_area {
-  width: 95%;
-  height: 50px;
-  margin-top: 3px;
-  position: absolute;
+div#initial_prompt a:focus {
+  background: rgba(32, 33, 36, 0.122);
+  box-shadow: inset 0 0 0 1px #bdc1c6;
 }
-p#reply_links { margin: 0; }
+
+div#initial_prompt a:hover {
+  background: rgba(32, 33, 36, 0.059);
+}
+
+div#initial_prompt #a_reply_all {
+  display: none;
+}
+
+div#initial_prompt a img {
+  height: 30px;
+  margin-right: 6px;
+}
 
 div#reply_message_table_container table#compose {
   border-top: 1px solid #cfcfcf;
@@ -2771,7 +2788,7 @@ body#settings div.webmail_notifications div.webmail_notification {
   border-radius: 2px;
   box-shadow: rgba(0, 0, 0, 0.2) 0 2px 4px 0;
   color: rgb(34, 34, 34);
-  font-family: arial, sans-serif;
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 12.8px;
   font-weight: bold;
   line-height: 16px;
