@@ -334,7 +334,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       }));
     }
 
-    ava.default.only('compose - reply - signed message', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('compose - reply - signed message', testWithBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=15f7f5face7101db&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=15f7f5face7101db';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.notPresent('@action-accept-reply-all-prompt');
