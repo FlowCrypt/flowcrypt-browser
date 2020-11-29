@@ -13,6 +13,9 @@ export class OpenPGPKey {
 
   private static readonly encryptionText = 'This is the text we are encrypting!';
 
+  // mapping of algo names to required param count, lazy initialized
+  private static paramCountByAlgo: { [key: string]: number };
+
   public static parse = async (text: string): Promise<Key> => {
     // TODO: Should we throw if more keys are in the armor?
     return (await OpenPGPKey.parseMany(text))[0];
@@ -140,6 +143,25 @@ export class OpenPGPKey {
     return await OpenPGPKey.convertExternalLibraryObjToKey(keyPair.key);
   }
 
+  private static arePrivateParamsMissing = (packet: OpenPGP.packet.BaseKeyPacket): boolean => {
+    // detection of missing private params to solve #2887
+    if (!OpenPGPKey.paramCountByAlgo) {
+      OpenPGPKey.paramCountByAlgo = {
+        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.rsa_encrypt)]: 6,
+        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.rsa_encrypt_sign)]: 6,
+        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.rsa_sign)]: 6,
+        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.dsa)]: 5,
+        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.elgamal)]: 4,
+        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.ecdsa)]: 2,
+        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.ecdh)]: 3,
+        [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.eddsa)]: 3,
+      };
+    }
+    return packet.algorithm
+      && !packet.isEncrypted // isDecrypted() returns false when isEncrypted is null
+      && OpenPGPKey.paramCountByAlgo[packet.algorithm] > packet.params?.length;
+  }
+
   /**
    * TODO: should be private, will change when readMany is rewritten
    * @param opgpKey - original OpenPGP.js key
@@ -193,27 +215,13 @@ export class OpenPGPKey {
     const algoInfo = opgpKey.primaryKey.getAlgorithmInfo();
     const key = keyToUpdate || {} as Key; // if no key to update, use empty object, will get props assigned below
     const encryptionKey = await Catch.undefinedOnException(opgpKey.getEncryptionKey());
-    const encryptionKeyIgnoringExpiration = encryptionKey ? encryptionKey : await OpenPGPKey.getExpiredKey(opgpKey.getEncryptionKey.bind(opgpKey), exp, expired);
+    const getEncryptionKey = opgpKey.getEncryptionKey.bind(opgpKey) as (keyid?: OpenPGP.Keyid | null, date?: Date, userId?: OpenPGP.UserId | null) => Promise<OpenPGP.key.Key | OpenPGP.key.SubKey | null>;
+    const encryptionKeyIgnoringExpiration = encryptionKey ? encryptionKey : await OpenPGPKey.getKeyIgnoringExpiration(getEncryptionKey, exp, expired);
     const signingKey = await Catch.undefinedOnException(opgpKey.getSigningKey());
-    const signingKeyIgnoringExpiration = signingKey ? signingKey : await OpenPGPKey.getExpiredKey(opgpKey.getSigningKey.bind(opgpKey), exp, expired);
-    const paramCountByAlgo = {
-      [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.rsa_encrypt)]: 6,
-      [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.rsa_encrypt_sign)]: 6,
-      [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.rsa_sign)]: 6,
-      [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.dsa)]: 5,
-      [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.elgamal)]: 4,
-      [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.ecdsa)]: 2,
-      [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.ecdh)]: 3,
-      [opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.eddsa)]: 3,
-    };
-    const missingPrivateKeyForSigning = signingKeyIgnoringExpiration?.keyPacket
-      && !signingKeyIgnoringExpiration.keyPacket.isEncrypted // isDecrypted() returns false when isEncrypted is null
-      && paramCountByAlgo[signingKeyIgnoringExpiration.keyPacket.algorithm]
-      && paramCountByAlgo[signingKeyIgnoringExpiration.keyPacket.algorithm] !== signingKeyIgnoringExpiration.keyPacket.params?.length;
-    const missingPrivateKeyForDecryption = encryptionKeyIgnoringExpiration?.keyPacket
-      && !encryptionKeyIgnoringExpiration.keyPacket.isEncrypted // isDecrypted() returns false when isEncrypted is null
-      && paramCountByAlgo[encryptionKeyIgnoringExpiration.keyPacket.algorithm]
-      && paramCountByAlgo[encryptionKeyIgnoringExpiration.keyPacket.algorithm] !== encryptionKeyIgnoringExpiration.keyPacket.params?.length;
+    const getSigningKey = opgpKey.getSigningKey.bind(opgpKey) as (keyid?: OpenPGP.Keyid | null, date?: Date, userId?: OpenPGP.UserId | null) => Promise<OpenPGP.key.Key | OpenPGP.key.SubKey | null>;
+    const signingKeyIgnoringExpiration = signingKey ? signingKey : await OpenPGPKey.getKeyIgnoringExpiration(getSigningKey, exp, expired);
+    const missingPrivateKeyForSigning = signingKeyIgnoringExpiration?.keyPacket ? OpenPGPKey.arePrivateParamsMissing(signingKeyIgnoringExpiration.keyPacket) : false;
+    const missingPrivateKeyForDecryption = encryptionKeyIgnoringExpiration?.keyPacket ? OpenPGPKey.arePrivateParamsMissing(encryptionKeyIgnoringExpiration.keyPacket) : false;
     Object.assign(key, {
       type: 'openpgp',
       id: fingerprint.toUpperCase(),
@@ -445,7 +453,7 @@ export class OpenPGPKey {
     return raw;
   }
 
-  private static getExpiredKey = async (
+  private static getKeyIgnoringExpiration = async (
     getter: (keyid?: OpenPGP.Keyid | null, date?: Date, userId?: OpenPGP.UserId | null) => Promise<OpenPGP.key.Key | OpenPGP.key.SubKey | null>,
     exp: Date | number | null,
     expired: () => boolean): Promise<OpenPGP.key.Key | OpenPGP.key.SubKey | null> => {
