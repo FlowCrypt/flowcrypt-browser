@@ -75,7 +75,10 @@ export class Browser {
   }
 
   private static openExtensionTab = async (url: string) => {
-    window.open(url, 'flowcrypt');
+    const tab = window.open(url, 'flowcrypt');
+    if (tab) {
+      tab.focus();
+    }
   }
 
 }
