@@ -51,6 +51,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     convoRoot: 'div.if',
     convoRootScrollable: '.Tm.aeJ',
     subject: 'h2.hP',
+    autoReplies: 'div.brb',
     msgOuter: 'div.adn',
     msgInner: 'div.a3s:not(.undefined), .message_inner_body',
     msgInnerText: 'table.cf.An',
@@ -149,6 +150,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     // reply buttons
     const visibleReplyBtns = $('td.acX:visible');
     if (visibleReplyBtns.not('.replaced, .inserted').length) { // last reply button in convo gets replaced
+      $(this.sel.autoReplies).remove();
       const convoReplyBtnsToReplace = visibleReplyBtns.not('.replaced, .inserted');
       const convoReplyBtnsArr = convoReplyBtnsToReplace.get();
       // only replace the last one FlowCrypt reply button if does not have any buttons replaced yet, and only replace the last one
