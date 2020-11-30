@@ -139,6 +139,19 @@ export class KeyImportUi {
     if (encrypted.identities.length === 0) {
       throw new KeyCanBeFixed(encrypted);
     }
+    // mandatory checks have passed, now display warnings
+    if (decrypted.missingPrivateKeyForDecryption || decrypted.missingPrivateKeyForSigning) {
+      const missing: string[] = [];
+      if (decrypted.missingPrivateKeyForSigning) {
+        missing.push('signing');
+      }
+      if (decrypted.missingPrivateKeyForDecryption) {
+        missing.push('decryption');
+      }
+      await Ui.modal.warning('Looks like this key was exported with --export-secret-subkeys option and missing private key parameters.\n\n' +
+        'Please export the key with --export-secret-key option if you plan to use it for ' +
+        missing.join(' and ') + '.');
+    }
     return { normalized, passphrase, fingerprint: decrypted.id, decrypted, encrypted }; // will have fp if had longid
   }
 
@@ -268,8 +281,11 @@ export class KeyImportUi {
   }
 
   private checkEncryptionPrvIfSelected = async (k: Key, encrypted: Key) => {
-    if (this.checkEncryption && !k.usableForEncryption) {
-      if (await KeyUtil.isWithoutSelfCertifications(k)) {
+    if (this.checkEncryption && (!k.usableForEncryption || k.missingPrivateKeyForDecryption)) {
+      if (k.missingPrivateKeyForDecryption) {
+        throw new UserAlert('Looks like this key was exported with --export-secret-subkeys option and missing private key parameters.\n\n' +
+          'Please export the key with --export-secret-key option.');
+      } else if (await KeyUtil.isWithoutSelfCertifications(k)) {
         throw new KeyCanBeFixed(encrypted);
       } else if (k.usableButExpired) {
         // Currently have 2 options: import or skip. Would be better to give user 3 choices:
@@ -302,8 +318,13 @@ export class KeyImportUi {
   }
 
   private checkSigningIfSelected = async (k: Key) => {
-    if (this.checkSigning && !k.usableForSigning) {
-      throw new UserAlert('This looks like a valid key but it cannot be used for signing. Please write at human@flowcrypt.com to see why is that.');
+    if (this.checkSigning) {
+      if (k.missingPrivateKeyForSigning) {
+        throw new UserAlert('Looks like this key was exported with --export-secret-subkeys option and missing private key parameters.\n\n' +
+          'Please export the key with --export-secret-key option.');
+      } else if (!k.usableForSigning) {
+        throw new UserAlert('This looks like a valid key but it cannot be used for signing. Please write at human@flowcrypt.com to see why is that.');
+      }
     }
   }
 
