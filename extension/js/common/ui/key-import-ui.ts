@@ -318,11 +318,11 @@ export class KeyImportUi {
   }
 
   private checkSigningIfSelected = async (k: Key) => {
-    if (this.checkSigning) {
-      if (!k.usableForSigning && k.missingPrivateKeyForSigning) {
+    if (this.checkSigning && !k.usableForSigning) {
+      if (k.missingPrivateKeyForSigning) {
         throw new UserAlert('Looks like this key was exported with --export-secret-subkeys option and missing private key parameters.\n\n' +
           'Please export the key with --export-secret-key option.');
-      } else if (!k.usableForSigning) {
+      } else {
         throw new UserAlert('This looks like a valid key but it cannot be used for signing. Please write at human@flowcrypt.com to see why is that.');
       }
     }
