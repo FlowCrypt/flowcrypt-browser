@@ -319,7 +319,7 @@ export class KeyImportUi {
 
   private checkSigningIfSelected = async (k: Key) => {
     if (this.checkSigning) {
-      if (k.missingPrivateKeyForSigning) {
+      if (!k.usableForSigning && k.missingPrivateKeyForSigning) {
         throw new UserAlert('Looks like this key was exported with --export-secret-subkeys option and missing private key parameters.\n\n' +
           'Please export the key with --export-secret-key option.');
       } else if (!k.usableForSigning) {

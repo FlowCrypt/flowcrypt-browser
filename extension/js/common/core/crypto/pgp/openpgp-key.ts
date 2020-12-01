@@ -196,14 +196,14 @@ export class OpenPGPKey {
     const algoInfo = opgpKey.primaryKey.getAlgorithmInfo();
     const key = keyToUpdate || {} as Key; // if no key to update, use empty object, will get props assigned below
     const encryptionKey = await Catch.undefinedOnException(opgpKey.getEncryptionKey());
-    const getEncryptionKey = opgpKey.getEncryptionKey.bind(opgpKey) as
-      (keyid?: OpenPGP.Keyid | null, date?: Date, userId?: OpenPGP.UserId | null) => Promise<OpenPGP.key.Key | OpenPGP.key.SubKey | null>;
+    const getEncryptionKey = (keyid?: OpenPGP.Keyid | null, date?: Date, userId?: OpenPGP.UserId | null) =>
+      opgpKey.getEncryptionKey(keyid, date, userId);
     const encryptionKeyIgnoringExpiration = encryptionKey ? encryptionKey : await OpenPGPKey.getKeyIgnoringExpiration(getEncryptionKey, exp, expired);
     const signingKey = await Catch.undefinedOnException(opgpKey.getSigningKey());
     /* Searching for expired signing keys isn't necessary as the key can't be used for signing
      and missingPrivateKeyForSigning flag would be misleading
-    const getSigningKey = opgpKey.getSigningKey.bind(opgpKey) as
-      (keyid?: OpenPGP.Keyid | null, date?: Date, userId?: OpenPGP.UserId | null) => Promise<OpenPGP.key.Key | OpenPGP.key.SubKey | null>;
+    const getSigningKey = (keyid?: OpenPGP.Keyid | null, date?: Date, userId?: OpenPGP.UserId | null) =>
+      opgpKey.getSigningKey(keyid, date, userId);
     const signingKeyIgnoringExpiration = signingKey ? signingKey : await OpenPGPKey.getKeyIgnoringExpiration(getSigningKey, exp, expired);
     */
     const missingPrivateKeyForSigning = signingKey?.keyPacket ? OpenPGPKey.arePrivateParamsMissing(signingKey.keyPacket) : false;
@@ -213,7 +213,7 @@ export class OpenPGPKey {
       id: fingerprint.toUpperCase(),
       allIds: opgpKey.getKeys().map(k => k.getFingerprint().toUpperCase()),
       usableForEncryption: encryptionKey ? true : false,
-      usableButExpired: !encryptionKey && !!encryptionKeyIgnoringExpiration && !missingPrivateKeyForDecryption,
+      usableButExpired: !encryptionKey && !!encryptionKeyIgnoringExpiration,
       usableForSigning: (signingKey && !missingPrivateKeyForSigning) ? true : false,
       missingPrivateKeyForSigning,
       missingPrivateKeyForDecryption,

@@ -215,7 +215,8 @@ ZAvn6PBX7vsaReOVa2zsnuY5g70xCxvzHIwR94POu5cENwRtCkrppFnISALpQ1kA
         }
       });
       await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
-      await settingsPage.waitAndRespondToModal('warning', 'cancel', 'Please export the key with --export-secret-key option if you plan to use it for signing.');
+      await Util.sleep(1);
+      await settingsPage.waitAndRespondToModal('warning', 'confirm', 'Please export the key with --export-secret-key option if you plan to use it for signing.');
     }));
 
     ava.default('setup - import key - two e-mails on the screen', testWithBrowser(undefined, async (t, browser) => {
