@@ -27,7 +27,10 @@ export interface Key {
   expiration: number | undefined; // number of millis of expiration or undefined if never expires
   usableForEncryption: boolean;
   usableForSigning: boolean;
-  usableButExpired: boolean;
+  usableForEncryptionButExpired: boolean;
+  usableForSigningButExpired: boolean;
+  missingPrivateKeyForSigning: boolean;
+  missingPrivateKeyForDecryption: boolean;
   emails: string[];
   identities: string[];
   fullyDecrypted: boolean;
@@ -159,7 +162,8 @@ export class KeyUtil {
     }
     result.set(`expiration`, KeyUtil.formatResult(key.expiration));
     result.set(`internal dateBeforeExpiration`, await KeyUtil.formatResultAsync(async () => KeyUtil.dateBeforeExpirationIfAlreadyExpired(key)));
-    result.set(`internal usableButExpired`, KeyUtil.formatResult(key.usableButExpired));
+    result.set(`internal usableForEncryptionButExpired`, KeyUtil.formatResult(key.usableForEncryptionButExpired));
+    result.set(`internal usableForSigningButExpired`, KeyUtil.formatResult(key.usableForSigningButExpired));
     return result;
   }
 
