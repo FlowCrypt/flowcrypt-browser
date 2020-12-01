@@ -200,21 +200,19 @@ export class OpenPGPKey {
       opgpKey.getEncryptionKey(keyid, date, userId);
     const encryptionKeyIgnoringExpiration = encryptionKey ? encryptionKey : await OpenPGPKey.getKeyIgnoringExpiration(getEncryptionKey, exp, expired);
     const signingKey = await Catch.undefinedOnException(opgpKey.getSigningKey());
-    /* Searching for expired signing keys isn't necessary as the key can't be used for signing
-     and missingPrivateKeyForSigning flag would be misleading
     const getSigningKey = (keyid?: OpenPGP.Keyid | null, date?: Date, userId?: OpenPGP.UserId | null) =>
       opgpKey.getSigningKey(keyid, date, userId);
     const signingKeyIgnoringExpiration = signingKey ? signingKey : await OpenPGPKey.getKeyIgnoringExpiration(getSigningKey, exp, expired);
-    */
-    const missingPrivateKeyForSigning = signingKey?.keyPacket ? OpenPGPKey.arePrivateParamsMissing(signingKey.keyPacket) : false;
+    const missingPrivateKeyForSigning = signingKeyIgnoringExpiration?.keyPacket ? OpenPGPKey.arePrivateParamsMissing(signingKeyIgnoringExpiration.keyPacket) : false;
     const missingPrivateKeyForDecryption = encryptionKeyIgnoringExpiration?.keyPacket ? OpenPGPKey.arePrivateParamsMissing(encryptionKeyIgnoringExpiration.keyPacket) : false;
     Object.assign(key, {
       type: 'openpgp',
       id: fingerprint.toUpperCase(),
       allIds: opgpKey.getKeys().map(k => k.getFingerprint().toUpperCase()),
       usableForEncryption: encryptionKey ? true : false,
-      usableButExpired: !encryptionKey && !!encryptionKeyIgnoringExpiration,
-      usableForSigning: (signingKey && !missingPrivateKeyForSigning) ? true : false,
+      usableForEncryptionButExpired: !encryptionKey && !!encryptionKeyIgnoringExpiration,
+      usableForSigning: signingKey ? true : false,
+      usableForSigningButExpired: !signingKey && !!signingKeyIgnoringExpiration,
       missingPrivateKeyForSigning,
       missingPrivateKeyForDecryption,
       // valid emails extracted from uids

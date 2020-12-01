@@ -152,7 +152,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       return undefined;
     }
     for (const myKey of pubs.filter(ap => ap.isMine)) {
-      if (myKey.pubkey.usableButExpired) {
+      if (myKey.pubkey.usableForEncryptionButExpired) {
         const path = Url.create(chrome.runtime.getURL('chrome/settings/index.htm'), {
           acctEmail: myKey.email,
           page: '/chrome/settings/modules/my_key_update.htm',

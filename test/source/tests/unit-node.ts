@@ -91,10 +91,10 @@ export let defineUnitNodeTests = (testVariant: TestVariant) => {
       t.pass();
     });
 
-    ava.default(`[unit][PgpKey.usableButExpired] recognizes usable expired key`, async t => {
+    ava.default(`[unit][PgpKey.usableForEncryptionButExpired] recognizes usable expired key`, async t => {
       const armored = "-----BEGIN PGP PRIVATE KEY BLOCK-----\nVersion: FlowCrypt 7.0.1 Gmail Encryption\nComment: Seamlessly send and receive encrypted email\n\n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\n+gib+vSxHvLhC6oDBA==\n=RIPF\n-----END PGP PRIVATE KEY BLOCK-----"; // eslint-disable-line max-len
       const expiredKey = await KeyUtil.parse(armored);
-      expect(expiredKey.usableButExpired).to.equal(true);
+      expect(expiredKey.usableForEncryptionButExpired).to.equal(true);
       t.pass();
     });
 
@@ -134,7 +134,8 @@ yPLCqVTFJQWaCR5ZTekRQPTDZkjxjxbs
       expect(key.type).to.equal('x509');
       expect(key.usableForEncryption).to.equal(true);
       expect(key.usableForSigning).to.equal(true);
-      expect(key.usableButExpired).to.equal(false);
+      expect(key.usableForEncryptionButExpired).to.equal(false);
+      expect(key.usableForSigningButExpired).to.equal(false);
       expect(key.emails.length).to.equal(1);
       expect(key.emails[0]).to.equal('actalis@meta.33mail.com');
       expect(key.identities.length).to.equal(1);
@@ -263,7 +264,7 @@ sOLAw7KgpiL2+0v777saxSO5vtufJCKk4OOEaVDufeijlejKTM+H7twVer4iGqiW
       expect(key.type).to.equal('openpgp');
       expect(key.usableForEncryption).equal(false);
       expect(key.usableForSigning).equal(false);
-      expect(key.usableButExpired).equal(true);
+      expect(key.usableForEncryptionButExpired).equal(true);
       expect(key.emails.length).to.equal(1);
       expect(key.emails[0]).to.equal('flowcrypt@metacode.biz');
       expect(key.identities.length).to.equal(1);
@@ -343,7 +344,8 @@ KwoTyPGP6prXobe5lmo+4Ji3bE+OFqD20SgDyM6ER7KsrjsKi/Gmh7Q0
       expect(key.type).to.equal('openpgp');
       expect(key.usableForEncryption).equal(true);
       expect(key.usableForSigning).equal(true);
-      expect(key.usableButExpired).equal(false);
+      expect(key.usableForEncryptionButExpired).equal(false);
+      expect(key.usableForSigningButExpired).equal(false);
       expect(key.emails.length).to.equal(1);
       expect(key.emails[0]).to.equal('flowcrypt@metacode.biz');
       expect(key.identities.length).to.equal(1);
@@ -540,7 +542,7 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       const parsed = await KeyUtil.parse(expiredPubKey);
       expect(parsed?.usableForEncryption).to.equal(false);
       expect(parsed?.expiration).to.equal(1594890073000);
-      expect(parsed?.usableButExpired).to.equal(false); // because last signature was created as already expired, no intersection
+      expect(parsed?.usableForEncryptionButExpired).to.equal(false); // because last signature was created as already expired, no intersection
       t.pass();
     });
 
@@ -933,7 +935,8 @@ ZAvn6PBX7vsaReOVa2zsnuY5g70xCxvzHIwR94POu5cENwRtCkrppFnISALpQ1kA
       expect(result.get('SK 0 > SIG 0 > Verified')).to.equal('[-] true');
       expect(result.get('expiration')).to.equal('[-] undefined');
       expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
-      expect(result.get('internal usableButExpired')).to.equal('[-] false');
+      expect(result.get('internal usableForEncryptionButExpired')).to.equal('[-] false');
+      expect(result.get('internal usableForSigningButExpired')).to.equal('[-] false');
       t.pass();
     });
 
@@ -971,7 +974,8 @@ ZAvn6PBX7vsaReOVa2zsnuY5g70xCxvzHIwR94POu5cENwRtCkrppFnISALpQ1kA
       expect(result.get('SK 0 > SIG 0 > Verified')).to.equal('[-] true');
       expect(result.get('expiration')).to.equal('[-] undefined');
       expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
-      expect(result.get('internal usableButExpired')).to.equal('[-] false');
+      expect(result.get('internal usableForEncryptionButExpired')).to.equal('[-] false');
+      expect(result.get('internal usableForSigningButExpired')).to.equal('[-] false');
       t.pass();
     });
 
@@ -1278,7 +1282,8 @@ jA==
       expect(result.get('SK 0 > SIG 0 > Verified')).to.equal('[-] true');
       expect(result.get('expiration')).to.equal('[-] undefined');
       expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
-      expect(result.get('internal usableButExpired')).to.equal('[-] false');
+      expect(result.get('internal usableForEncryptionButExpired')).to.equal('[-] false');
+      expect(result.get('internal usableForSigningButExpired')).to.equal('[-] false');
       t.pass();
     });
 
@@ -1319,7 +1324,7 @@ jA==
     ava.default('[unit][KeyUtil.parse] determines PK missing private key for signing', async t => {
       // testing encrypted key
       const encryptedKey = await KeyUtil.parse(rsaPrimaryKeyIsMissingPrivateKey);
-      expect(encryptedKey.usableForSigning).to.be.false;
+      expect(encryptedKey.usableForSigning).to.be.true;
       expect(encryptedKey.missingPrivateKeyForSigning).to.be.true;
       expect(encryptedKey.usableForEncryption).to.be.true;
       expect(encryptedKey.missingPrivateKeyForDecryption).to.be.false;
@@ -1327,7 +1332,7 @@ jA==
       const armoredKey = KeyUtil.armor(encryptedKey);
       // testing decrypted key
       const key = await KeyUtil.parse(armoredKey);
-      expect(key.usableForSigning).to.be.false;
+      expect(key.usableForSigning).to.be.true;
       expect(key.missingPrivateKeyForSigning).to.be.true;
       expect(key.usableForEncryption).to.be.true;
       expect(key.missingPrivateKeyForDecryption).to.be.false;
@@ -1337,13 +1342,13 @@ jA==
     ava.default('[unit][KeyUtil.decrypt] determines PK missing private key for signing', async t => {
       const dsakey = await KeyUtil.parse(dsaPrimaryKeyIsMissingPrivateKey);
       expect(await KeyUtil.decrypt(dsakey, '1234')).to.be.true;
-      expect(dsakey.usableForSigning).to.be.false;
+      expect(dsakey.usableForSigning).to.be.true;
       expect(dsakey.missingPrivateKeyForSigning).to.be.true;
       expect(dsakey.usableForEncryption).to.be.true;
       expect(dsakey.missingPrivateKeyForDecryption).to.be.false;
       const rsakey = await KeyUtil.parse(rsaPrimaryKeyIsMissingPrivateKey);
       expect(await KeyUtil.decrypt(rsakey, '1234')).to.be.true;
-      expect(rsakey.usableForSigning).to.be.false;
+      expect(rsakey.usableForSigning).to.be.true;
       expect(rsakey.missingPrivateKeyForSigning).to.be.true;
       expect(rsakey.usableForEncryption).to.be.true;
       expect(rsakey.missingPrivateKeyForDecryption).to.be.false;
@@ -1352,16 +1357,18 @@ jA==
 
     ava.default('[unit][KeyUtil.parse] determines missing private key for encryption in expired key', async t => {
       const dsakey = await KeyUtil.parse(dsaExpiredPubkeysOnly);
-      expect(dsakey.usableButExpired).to.be.false;
+      expect(dsakey.usableForEncryptionButExpired).to.be.true;
+      expect(dsakey.usableForSigningButExpired).to.be.true;
       expect(dsakey.usableForSigning).to.be.false;
       expect(dsakey.usableForEncryption).to.be.false;
-      // expect(dsakey.missingPrivateKeyForSigning).to.be.true;
+      expect(dsakey.missingPrivateKeyForSigning).to.be.true;
       expect(dsakey.missingPrivateKeyForDecryption).to.be.true;
       const rsakey = await KeyUtil.parse(rsaExpiredPubkeysOnly);
-      expect(rsakey.usableButExpired).to.be.false;
+      expect(rsakey.usableForEncryptionButExpired).to.be.true;
+      expect(rsakey.usableForSigningButExpired).to.be.true;
       expect(rsakey.usableForSigning).to.be.false;
       expect(rsakey.usableForEncryption).to.be.false;
-      // expect(rsakey.missingPrivateKeyForSigning).to.be.true;
+      expect(rsakey.missingPrivateKeyForSigning).to.be.true;
       expect(rsakey.missingPrivateKeyForDecryption).to.be.true;
       t.pass();
     });
@@ -1369,17 +1376,19 @@ jA==
     ava.default('[unit][KeyUtil.decrypt] handles PK missing private key for signing in expired key', async t => {
       const dsakey = await KeyUtil.parse(dsaExpiredPrimaryKeyIsMissingPrivateKey);
       expect(await KeyUtil.decrypt(dsakey, '1234')).to.be.true;
-      expect(dsakey.usableButExpired).to.be.true;
+      expect(dsakey.usableForEncryptionButExpired).to.be.true;
+      expect(dsakey.usableForSigningButExpired).to.be.true;
       expect(dsakey.usableForSigning).to.be.false;
       expect(dsakey.usableForEncryption).to.be.false;
-      // expect(dsakey.missingPrivateKeyForSigning).to.be.true;
+      expect(dsakey.missingPrivateKeyForSigning).to.be.true;
       expect(dsakey.missingPrivateKeyForDecryption).to.be.false;
       const rsakey = await KeyUtil.parse(rsaExpiredPrimaryKeyIsMissingPrivateKey);
       expect(await KeyUtil.decrypt(rsakey, '1234')).to.be.true;
-      expect(rsakey.usableButExpired).to.be.true;
+      expect(rsakey.usableForEncryptionButExpired).to.be.true;
+      expect(rsakey.usableForSigningButExpired).to.be.true;
       expect(rsakey.usableForSigning).to.be.false;
       expect(rsakey.usableForEncryption).to.be.false;
-      // expect(rsakey.missingPrivateKeyForSigning).to.be.true;
+      expect(rsakey.missingPrivateKeyForSigning).to.be.true;
       expect(rsakey.missingPrivateKeyForDecryption).to.be.false;
       t.pass();
     });

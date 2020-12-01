@@ -287,7 +287,7 @@ export class KeyImportUi {
           'Please export the key with --export-secret-key option.');
       } else if (await KeyUtil.isWithoutSelfCertifications(k)) {
         throw new KeyCanBeFixed(encrypted);
-      } else if (k.usableButExpired) {
+      } else if (k.usableForEncryptionButExpired) {
         // Currently have 2 options: import or skip. Would be better to give user 3 choices:
         // 1) Confirm importing expired key
         // 2) Extend validity of expired key + import
@@ -318,8 +318,8 @@ export class KeyImportUi {
   }
 
   private checkSigningIfSelected = async (k: Key) => {
-    if (this.checkSigning && !k.usableForSigning) {
-      if (k.missingPrivateKeyForSigning) {
+    if (this.checkSigning && (!k.usableForSigning || k.missingPrivateKeyForSigning)) {
+      if (k.missingPrivateKeyForSigning && !k.usableForSigningButExpired) {
         throw new UserAlert('Looks like this key was exported with --export-secret-subkeys option and missing private key parameters.\n\n' +
           'Please export the key with --export-secret-key option.');
       } else {

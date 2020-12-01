@@ -828,7 +828,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.errModule.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${recipient.email}`);
       $(el).attr('title', 'This email address looks misspelled. Please try again.');
       $(el).addClass("wrong");
-    } else if (contact.pubkey && ((contact.expiresOn || Infinity) <= Date.now() || contact.pubkey.usableButExpired)) {
+    } else if (contact.pubkey && ((contact.expiresOn || Infinity) <= Date.now() || contact.pubkey.usableForEncryptionButExpired)) {
       recipient.status = RecipientStatus.EXPIRED;
       $(el).addClass("expired");
       Xss.sanitizePrepend(el, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
