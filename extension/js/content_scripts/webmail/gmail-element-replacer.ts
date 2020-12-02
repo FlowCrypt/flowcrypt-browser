@@ -122,8 +122,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private replaceArmoredBlocks = () => {
-    const emailsEontainingPgpBlock = $(this.sel.msgOuter).find(this.sel.msgInnerContainingPgp).not('.evaluated');
-    for (const emailContainer of emailsEontainingPgpBlock) {
+    const emailsContainingPgpBlock = $(this.sel.msgOuter).find(this.sel.msgInnerContainingPgp).not('.evaluated');
+    for (const emailContainer of emailsContainingPgpBlock) {
       $(emailContainer).addClass('evaluated');
       const senderEmail = this.getSenderEmail(emailContainer);
       const isOutgoing = !!this.sendAs[senderEmail];
@@ -239,17 +239,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   /**
-   * The tricky part here is that we are checking attachments in intervals (1s)
-   * In the exact moment we check, only some of the attachments of a message may be loaded into the DOM, while others won't
-   * This is not fully handled (I don't yet know how to tell if attachment container already contains all attachments)
-   * It may create unexpected behavior, such as removing the attachment but not rendering any message (sometimes noticeable for attached public keys)
-   * Best would be, instead of checking every 1 second, to be able to listen to a certain element being inserted into the dom, and only respond then
-   * --
-   * Further complication is that certain elements may persist navigating away and back from conversation (but in a changed form)
-   * --
    * Related bugs (fixed):
    * https://github.com/FlowCrypt/flowcrypt-browser/issues/1870
    * https://github.com/FlowCrypt/flowcrypt-browser/issues/2309
+   * https://github.com/FlowCrypt/flowcrypt-browser/issues/3180
    */
   private replaceAtts = async () => {
     if (this.currentlyReplacingAtts) {
@@ -257,36 +250,54 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
     try {
       this.currentlyReplacingAtts = true;
-      for (const attsContainerEl of $(this.sel.attsContainerInner)) {
+      for (const attsContainerEl of $(this.sel.attsContainerInner).not('.evaluated')) {
         const attsContainer = $(attsContainerEl);
-        const newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Attachment.webmailNamePattern).addClass('evaluated');
-        if (newPgpAtts.length) {
-          const msgId = this.determineMsgId(attsContainer);
-          if (msgId) {
-            Xss.sanitizePrepend(newPgpAtts, this.factory.embeddedAttaStatus('Getting file info..' + Ui.spinner('green')));
-            try {
-              const msg = await this.gmail.msgGet(msgId, 'full');
-              await this.processAtts(msgId, GmailParser.findAttachments(msg), attsContainer, false);
-            } catch (e) {
-              if (ApiErr.isAuthErr(e)) {
-                this.notifications.showAuthPopupNeeded(this.acctEmail);
-                $(newPgpAtts).find('.attachment_loader').text('Auth needed');
-              } else if (ApiErr.isNetErr(e)) {
-                $(newPgpAtts).find('.attachment_loader').text('Network error');
-              } else {
-                if (!ApiErr.isServerErr(e) && !ApiErr.isMailOrAcctDisabledOrPolicy(e) && !ApiErr.isNotFound(e)) {
-                  Catch.reportErr(e);
-                }
-                $(newPgpAtts).find('.attachment_loader').text('Failed to load');
+        attsContainer.addClass('evaluated');
+        // In the exact moment we check, only some of the attachments of a message may be loaded into the DOM, while others won't
+        // Because of that we need to listen to new attachments being inserted into the DOM
+        const attsContainerObserver = new MutationObserver(async (mutationsList) => {
+          for (const mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+              for (const addedNode of mutation.addedNodes) {
+                await this.processNewPgpAtts($(addedNode as HTMLElement), attsContainer);
               }
             }
-          } else {
-            $(newPgpAtts).prepend(this.factory.embeddedAttaStatus('Unknown message id')); // xss-safe-factory
           }
-        }
+        });
+        attsContainerObserver.observe(attsContainerEl, { subtree: true, childList: true });
+        await this.processNewPgpAtts(attsContainer.children().not('.evaluated'), attsContainer);
       }
     } finally {
       this.currentlyReplacingAtts = false;
+    }
+  }
+
+  private processNewPgpAtts = async (pgpAtts: JQuery<HTMLElement>, attsContainer: JQuery<HTMLElement>) => {
+    const newPgpAtts = this.filterAtts(pgpAtts, Attachment.webmailNamePattern);
+    newPgpAtts.addClass('evaluated');
+    if (newPgpAtts.length) {
+      const msgId = this.determineMsgId(attsContainer);
+      if (msgId) {
+        Xss.sanitizePrepend(newPgpAtts, this.factory.embeddedAttaStatus('Getting file info..' + Ui.spinner('green')));
+        try {
+          const msg = await this.gmail.msgGet(msgId, 'full');
+          await this.processAtts(msgId, GmailParser.findAttachments(msg), attsContainer, false);
+        } catch (e) {
+          if (ApiErr.isAuthErr(e)) {
+            this.notifications.showAuthPopupNeeded(this.acctEmail);
+            $(newPgpAtts).find('.attachment_loader').text('Auth needed');
+          } else if (ApiErr.isNetErr(e)) {
+            $(newPgpAtts).find('.attachment_loader').text('Network error');
+          } else {
+            if (!ApiErr.isServerErr(e) && !ApiErr.isMailOrAcctDisabledOrPolicy(e) && !ApiErr.isNotFound(e)) {
+              Catch.reportErr(e);
+            }
+            $(newPgpAtts).find('.attachment_loader').text('Failed to load');
+          }
+        }
+      } else {
+        $(newPgpAtts).prepend(this.factory.embeddedAttaStatus('Unknown message id')); // xss-safe-factory
+      }
     }
   }
 
