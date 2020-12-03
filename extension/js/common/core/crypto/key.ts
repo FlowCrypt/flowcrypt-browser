@@ -298,9 +298,9 @@ export class KeyUtil {
     }
   }
 
-  public static keyInfoObj = async (prv: Key): Promise<KeyInfo> => {
+  public static keyInfoObj = async (prv: Key, passphrase?: string): Promise<KeyInfo> => {
     const pubArmor = KeyUtil.armor(await KeyUtil.asPublicKey(prv));
-    const keyInfo = await KeyUtil.prvKeyInfoObj(prv) as KeyInfo;
+    const keyInfo = await KeyUtil.prvKeyInfoObj(prv, passphrase) as KeyInfo;
     keyInfo.fingerprint = prv.id;
     keyInfo.public = pubArmor;
     return keyInfo;

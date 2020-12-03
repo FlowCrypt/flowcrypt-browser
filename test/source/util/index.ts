@@ -2,7 +2,7 @@
 
 import * as fs from 'fs';
 
-import { KeyInfo } from '../core/crypto/key.js';
+import { KeyInfo, KeyUtil } from '../core/crypto/key.js';
 
 export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL' | 'UNIT-TESTS';
 
@@ -69,6 +69,17 @@ export class Config {
 
   public static key = (title: string) => {
     return Config.secrets().keys.filter(k => k.title === title)[0];
+  }
+
+  public static setupSecrets = async (): Promise<void> => {
+    await Config.fixKeyInfo(Config._secrets);
+  }
+
+  public static fixKeyInfo = async (secrets: TestSecretsInterface): Promise<void> => {
+    secrets.keyInfo = await Promise.all(secrets.keyInfo.map(async x => {
+      x.key = await Promise.all(x.key.map(async ki => KeyUtil.keyInfoObj(await KeyUtil.parse(ki.private), ki.passphrase)));
+      return x;
+    }));
   }
 
 }
