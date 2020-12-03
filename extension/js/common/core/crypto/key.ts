@@ -72,7 +72,6 @@ export interface PrvKeyInfo {
   emails?: string[];
   passphrase?: string;
   decrypted?: Key;  // only for internal use in this file
-  parsed?: Key;     // only for internal use in this file
 }
 
 export type KeyAlgo = 'curve25519' | 'rsa2048' | 'rsa4096';
@@ -307,13 +306,14 @@ export class KeyUtil {
     return keyInfo;
   }
 
-  public static prvKeyInfoObj = async (prv: Key): Promise<PrvKeyInfo> => {
+  public static prvKeyInfoObj = async (prv: Key, passphrase?: string): Promise<PrvKeyInfo> => {
     // tslint:disable-next-line: oneliner-object-literal
     return {
       private: KeyUtil.armor(prv),
       longid: OpenPGPKey.fingerprintToLongid(prv.id),
       emails: prv.emails,
-      fingerprints: prv.allIds
+      fingerprints: prv.allIds,
+      passphrase
     };
   }
 }

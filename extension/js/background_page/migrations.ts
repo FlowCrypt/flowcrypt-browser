@@ -19,7 +19,7 @@ const addKeyInfoFingerprints = async () => {
     }
     await KeyStore.set(acctEmail, output);
   }
-}
+};
 
 export const migrateGlobal = async () => {
   const globalStore = await GlobalStore.get(['key_info_store_fingerprints_added']);

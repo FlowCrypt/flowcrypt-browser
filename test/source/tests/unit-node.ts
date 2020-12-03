@@ -676,9 +676,9 @@ eg==
       // only encrypt with pub1
       const { data } = await MsgUtil.encryptMessage({ pubkeys: [pub1], data: Buf.fromUtfStr('anything'), armor: true }) as PgpMsgMethod.EncryptPgpArmorResult;
       const m = await opgp.message.readArmored(Buf.fromUint8(data).toUtfStr());
-      const kisWithPp: PrvKeyInfo[] = [ // supply both pub1 and pub2 for decrypt
-        { private: key1.private, longid: OpenPGPKey.fingerprintToLongid(pub1.id), passphrase: pp },
-        { private: key2.private, longid: OpenPGPKey.fingerprintToLongid(pub2.id), passphrase: pp }
+      const kisWithPp: PrvKeyInfo[] = [ // supply both key1 and key2 for decrypt
+        await KeyUtil.prvKeyInfoObj(await KeyUtil.parse(key1.private), pp),
+        await KeyUtil.prvKeyInfoObj(await KeyUtil.parse(key2.private), pp),
       ];
       // we are testing a private method here because the outcome of this method is not directly testable from the
       //   public method that uses it. It only makes the public method faster, which is hard to test.
@@ -694,10 +694,10 @@ eg==
       expect(sortedKeys.prvForDecryptDecrypted[0].longid).to.equal(OpenPGPKey.fingerprintToLongid(pub1.id));
       // also test MsgUtil.matchingKeyids
       // @ts-ignore
-      const matching1 = await MsgUtil.matchingKeyids(pub1, m.getEncryptionKeyIds());
+      const matching1 = await MsgUtil.matchingKeyids(pub1.allIds, m.getEncryptionKeyIds());
       expect(matching1.length).to.equal(1);
       // @ts-ignore
-      const matching2 = await MsgUtil.matchingKeyids(pub2, m.getEncryptionKeyIds());
+      const matching2 = await MsgUtil.matchingKeyids(pub2.allIds, m.getEncryptionKeyIds());
       expect(matching2.length).to.equal(0);
       t.pass();
     });
