@@ -1,15 +1,16 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { KeyInfo, Key, KeyUtil } from '../../core/crypto/key.js';
+import { KeyInfo, KeyUtil } from '../../core/crypto/key.js';
 import { AcctStore } from './acct-store.js';
 import { PassphraseStore } from './passphrase-store.js';
 import { AbstractStore } from './abstract-store.js';
-import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key.js';
 
 /**
  * Local store of account private keys
  */
 export class KeyStore extends AbstractStore {
+
+  public static keyInfoObj = KeyUtil.keyInfoObj;
 
   public static get = async (acctEmail: string, fingerprints?: string[]): Promise<KeyInfo[]> => {
     const stored = await AcctStore.get(acctEmail, ['keys']);
@@ -21,8 +22,7 @@ export class KeyStore extends AbstractStore {
   }
 
   public static getFirst = async (acctEmail: string): Promise<KeyInfo> => {
-    const stored = await AcctStore.get(acctEmail, ['keys']);
-    const keys: KeyInfo[] = stored.keys || [];
+    const keys = await KeyStore.get(acctEmail);
     return keys[0];
   }
 
@@ -50,13 +50,17 @@ export class KeyStore extends AbstractStore {
     if (!updated) {
       keyinfos.push(await KeyStore.keyInfoObj(prv));
     }
+    await KeyStore.set(acctEmail, keyinfos);
+  }
+
+  public static set = async (acctEmail: string, keyinfos: KeyInfo[]) => {
     await AcctStore.set(acctEmail, { keys: keyinfos });
   }
 
   public static remove = async (acctEmail: string, removeFingerprint: string): Promise<void> => {
     const privateKeys = await KeyStore.get(acctEmail);
     const filteredPrivateKeys = privateKeys.filter(ki => ki.fingerprint !== removeFingerprint);
-    await AcctStore.set(acctEmail, { keys: filteredPrivateKeys });
+    await KeyStore.set(acctEmail, filteredPrivateKeys);
   }
 
   /**
@@ -72,11 +76,4 @@ export class KeyStore extends AbstractStore {
     }
     return result;
   }
-
-  public static keyInfoObj = async (prv: Key): Promise<KeyInfo> => {
-    const pubArmor = KeyUtil.armor(await KeyUtil.asPublicKey(prv));
-    const longid = OpenPGPKey.fingerprintToLongid(prv.id);
-    return { private: KeyUtil.armor(prv), public: pubArmor, longid, fingerprint: prv.id };
-  }
-
 }

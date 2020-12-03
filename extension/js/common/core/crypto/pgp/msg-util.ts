@@ -291,19 +291,8 @@ export class MsgUtil {
     keys.encryptedFor = encryptionKeyids.map(kid => OpenPGPKey.bytesToLongid(kid.bytes));
     await MsgUtil.cryptoMsgGetSignedBy(msg, keys);
     if (keys.encryptedFor.length) {
-      for (const ki of kiWithPp) {
-        ki.parsed = await KeyUtil.parse(ki.private); // todo
-        // this is inefficient because we are doing unnecessary parsing of all keys here
-        // better would be to compare to already stored KeyInfo, however KeyInfo currently only holds primary id, not ids of subkeys
-        // while messages are typically encrypted for subkeys, thus we have to parse the key to get the info
-        // we are filtering here to avoid a significant performance issue of having to attempt decrypting with all keys simultaneously
-        for (const id of ki.parsed.allIds) {
-          if (keys.encryptedFor.includes(OpenPGPKey.fingerprintToLongid(id))) {
-            keys.prvMatching.push(ki);
-            break;
-          }
-        }
-      }
+      keys.prvMatching = kiWithPp.filter(ki => ki.fingerprints!.some(
+        fp => keys.encryptedFor.includes(OpenPGPKey.fingerprintToLongid(fp))));
       keys.prvForDecrypt = keys.prvMatching.length ? keys.prvMatching : kiWithPp;
     } else { // prvs not needed for signed msgs
       keys.prvForDecrypt = [];

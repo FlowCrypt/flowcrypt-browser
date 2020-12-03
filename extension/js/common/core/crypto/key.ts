@@ -68,6 +68,8 @@ export type Contact = {
 export interface PrvKeyInfo {
   private: string;
   longid: string;
+  fingerprints?: string[];
+  emails?: string[];
   passphrase?: string;
   decrypted?: Key;  // only for internal use in this file
   parsed?: Key;     // only for internal use in this file
@@ -297,4 +299,21 @@ export class KeyUtil {
     }
   }
 
+  public static keyInfoObj = async (prv: Key): Promise<KeyInfo> => {
+    const pubArmor = KeyUtil.armor(await KeyUtil.asPublicKey(prv));
+    const keyInfo = await KeyUtil.prvKeyInfoObj(prv) as KeyInfo;
+    keyInfo.fingerprint = prv.id;
+    keyInfo.public = pubArmor;
+    return keyInfo;
+  }
+
+  public static prvKeyInfoObj = async (prv: Key): Promise<PrvKeyInfo> => {
+    // tslint:disable-next-line: oneliner-object-literal
+    return {
+      private: KeyUtil.armor(prv),
+      longid: OpenPGPKey.fingerprintToLongid(prv.id),
+      emails: prv.emails,
+      fingerprints: prv.allIds
+    };
+  }
 }
