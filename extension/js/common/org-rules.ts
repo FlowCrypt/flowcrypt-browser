@@ -89,7 +89,7 @@ export class OrgRules {
   // optional vars
 
   /**
-   * Enforce a key algo for keygen, eg rsa2048,rsa4096,ecc25519
+   * Enforce a key algo for keygen, eg rsa2048,rsa4096,curve25519
    */
   public getEnforcedKeygenAlgo = (): KeyAlgo | undefined => {
     return this.domainRules.enforce_keygen_algo as KeyAlgo | undefined;
