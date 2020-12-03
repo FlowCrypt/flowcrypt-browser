@@ -763,7 +763,7 @@ eg==
       const justPrimaryPub = tmpPub.armor();
       const pubkeys = [await KeyUtil.parse(justPrimaryPub)];
       const encrypted = await MsgUtil.encryptMessage({ pubkeys, data, armor: true }) as PgpMsgMethod.EncryptPgpArmorResult;
-      const kisWithPp: PrvKeyInfo[] = [{ private: prvEncryptForSubkeyOnlyProtected, longid: 'F90C76AE611AFDEE', passphrase }];
+      const kisWithPp: PrvKeyInfo[] = [await KeyUtil.prvKeyInfoObj(await KeyUtil.parse(prvEncryptForSubkeyOnlyProtected), passphrase)];
       const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData: encrypted.data });
       // todo - later we'll have an org rule for ignoring this, and then it will be expected to pass as follows:
       // expect(decrypted.success).to.equal(true);
