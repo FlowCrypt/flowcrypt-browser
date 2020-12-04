@@ -152,7 +152,7 @@ View.run(class SettingsView extends View {
       }
     }));
     $('.action_open_public_key_page').click(this.setHandler(async () => {
-      const ki = await KeyStore.getFirst(this.acctEmail!);
+      const ki = await KeyStore.getFirstRequired(this.acctEmail!);
       const escapedFp = Xss.escape(ki.fingerprint);
       await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/my_key.htm', `&fingerprint=${escapedFp}`);
     }));
