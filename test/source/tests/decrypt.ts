@@ -10,7 +10,6 @@ import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { TestUrls } from './../browser/test-urls';
 import { TestWithBrowser } from './../test';
 import { expect } from "chai";
-import { Controllable } from '../browser';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:max-line-length
@@ -422,7 +421,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('decrypt - inbox - check for rel="noopener noreferrer" attribute in PGP/MIME links', testWithBrowser('compatibility', async (t, browser) => {
-      const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility%40gmail.com&threadId=174124764bcc0494');
+      const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility%40gmail.com&threadId=1762c9a49bedbf6f');
       await inboxPage.waitAll('iframe.pgp_block');
       const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
       await pgpBlock.waitForSelTestState('ready');
@@ -431,15 +430,15 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('decrypt - inbox - Verify null window.opener object after opening PGP/MIME links', testWithBrowser('compatibility', async (t, browser) => {
-      const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility%40gmail.com&threadId=1762b9f597fd37a2');
+      const inboxPage = await browser.newPage(t, 'chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility%40gmail.com&threadId=1762c9a49bedbf6f');
       await inboxPage.waitAll('iframe.pgp_block');
       const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
       await pgpBlock.waitForSelTestState('ready');
       await pgpBlock.click('a');
       await Util.sleep(5);
       const flowcryptTab = (await browser.browser.pages()).find(p => p.url() === 'https://flowcrypt.com/');
-      // Add temporary console log to show Tom problematic result
-      flowcryptTab!.on('console', msg => {console.log((msg as any)._text); expect((msg as any)._text).to.equal('Opener: null')});
+      await flowcryptTab!.waitFor("body");
+      flowcryptTab!.on('console', msg => expect((msg as any)._text).to.equal('Opener: null'));
       await Util.sleep(5);
       await flowcryptTab!.evaluate(() => console.log(`Opener: ${JSON.stringify(window.opener)}`));
       await Util.sleep(5);
