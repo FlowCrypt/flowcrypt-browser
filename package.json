@@ -11,7 +11,7 @@
     "@types/dompurify": "2.0.4",
     "@types/jquery": "3.5.4",
     "@types/mailparser": "3.0.0",
-    "@types/puppeteer": "5.4.0",
+    "@types/puppeteer": "5.4.1",
     "@types/mkdirp": "^1.0.1",
     "@typescript-eslint/eslint-plugin": "^4.8.2",
     "@types/request": "2.48.5",
