@@ -143,6 +143,14 @@ export class KeyUtil {
     throw new UnexpectedKeyTypeError(`Key type is ${keyType}, expecting OpenPGP or x509 S/MIME`);
   }
 
+  public static parseBinary = async (key: Uint8Array): Promise<Key[]> => {
+    const { keys, err } = (await opgp.key.read(key));
+    if (keys.length > 0) {
+      return await Promise.all(keys.map(key => OpenPGPKey.convertExternalLibraryObjToKey(key)));
+    }
+    throw new Error(err ? err[0].message : 'Should not happen: no keys and no errors.');
+  }
+
   public static armor = (pubkey: Key): string => {
     if (pubkey.type === 'openpgp') {
       return OpenPGPKey.armor(pubkey);

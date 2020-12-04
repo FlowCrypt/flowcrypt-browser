@@ -105,18 +105,18 @@ export class KeyImportUi {
     const attach = new AttachmentUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
     attach.initAttDialog('fineuploader', 'fineuploader_button', {
       attAdded: async file => {
-        let prv: OpenPGP.key.Key | undefined;
+        let prv: Key | undefined;
         const utf = file.getData().toUtfStr();
         if (utf.includes(PgpArmor.headers('privateKey').begin)) {
           const firstPrv = MsgBlockParser.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
           if (firstPrv) { // filter out all content except for the first encountered private key (GPGKeychain compatibility)
-            prv = (await opgp.key.readArmored(firstPrv.content.toString())).keys[0];
+            prv = (await KeyUtil.parse(firstPrv.content.toString()));
           }
         } else {
-          prv = (await opgp.key.read(file.getData())).keys[0];
+          prv = (await KeyUtil.parseBinary(file.getData()))[0];
         }
         if (typeof prv !== 'undefined') {
-          $('.input_private_key').val(prv.armor()).change().prop('disabled', true);
+          $('.input_private_key').val(KeyUtil.armor(prv)).change().prop('disabled', true);
           $('.source_paste_container').css('display', 'block');
         } else {
           $('.input_private_key').val('').change().prop('disabled', false);
