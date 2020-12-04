@@ -289,10 +289,6 @@ View.run(class SettingsView extends View {
     if (!this.acctEmail) {
       return;
     }
-    const scopes = await AcctStore.getScopes(this.acctEmail);
-    if (!(scopes.read || scopes.modify) && emailProvider === 'gmail') {
-      $('.auth_denied_warning').removeClass('hidden');
-    }
     const globalStorage = await GlobalStore.get(['install_mobile_app_notification_dismissed']);
     if (!globalStorage.install_mobile_app_notification_dismissed && rules.canBackupKeys() && rules.canCreateKeys() && !rules.usesKeyManager()) {
       // only show this notification if user is allowed to:
