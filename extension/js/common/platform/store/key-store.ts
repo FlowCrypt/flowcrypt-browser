@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { KeyInfo, KeyUtil } from '../../core/crypto/key.js';
+import { Key, KeyInfo, KeyUtil } from '../../core/crypto/key.js';
 import { AcctStore } from './acct-store.js';
 import { PassphraseStore } from './passphrase-store.js';
 import { AbstractStore } from './abstract-store.js';
@@ -10,7 +10,7 @@ import { AbstractStore } from './abstract-store.js';
  */
 export class KeyStore extends AbstractStore {
 
-  public static keyInfoObj = KeyUtil.keyInfoObj;
+  public static keyInfoObj = (prv: Key): Promise<KeyInfo> => KeyUtil.keyInfoObj(prv);
 
   public static get = async (acctEmail: string, fingerprints?: string[]): Promise<KeyInfo[]> => {
     const stored = await AcctStore.get(acctEmail, ['keys']);
