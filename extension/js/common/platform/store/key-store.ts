@@ -10,7 +10,7 @@ import { AbstractStore } from './abstract-store.js';
  */
 export class KeyStore extends AbstractStore {
 
-  public static keyInfoObj = (prv: Key): Promise<KeyInfo> => KeyUtil.keyInfoObj(prv);
+  public static keyInfoObj = async (prv: Key): Promise<KeyInfo> => { return await KeyUtil.keyInfoObj(prv); }
 
   public static get = async (acctEmail: string, fingerprints?: string[]): Promise<KeyInfo[]> => {
     const stored = await AcctStore.get(acctEmail, ['keys']);
