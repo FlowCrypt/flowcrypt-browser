@@ -71,7 +71,6 @@ export interface PrvKeyInfo {
   fingerprints?: string[];
   emails?: string[];
   passphrase?: string;
-  decrypted?: Key;  // only for internal use in this file
 }
 
 export type KeyAlgo = 'curve25519' | 'rsa2048' | 'rsa4096';

@@ -46,7 +46,7 @@ type SortedKeysForDecrypt = {
   signedBy: string[];
   prvMatching: PrvKeyInfo[];
   prvForDecrypt: PrvKeyInfo[];
-  prvForDecryptDecrypted: PrvKeyInfo[];
+  prvForDecryptDecrypted: { ki: PrvKeyInfo, decrypted: Key }[];
   prvForDecryptWithoutPassphrases: PrvKeyInfo[];
 };
 
@@ -194,7 +194,7 @@ export class MsgUtil {
     const keys = await MsgUtil.getSortedKeys(kisWithPp, prepared.message);
     longids.message = keys.encryptedFor;
     longids.matching = keys.prvForDecrypt.map(ki => ki.longid);
-    longids.chosen = keys.prvForDecryptDecrypted.map(ki => ki.longid);
+    longids.chosen = keys.prvForDecryptDecrypted.map(decrypted => decrypted.ki.longid);
     longids.needPassphrase = keys.prvForDecryptWithoutPassphrases.map(ki => ki.longid);
     const isEncrypted = !prepared.isCleartext;
     if (!isEncrypted) {
@@ -214,7 +214,7 @@ export class MsgUtil {
         return { success: false, error: { type: DecryptErrTypes.usePassword, message: 'Use message password' }, longids, isEncrypted };
       }
       const passwords = msgPwd ? [msgPwd] : undefined;
-      const privateKeys = keys.prvForDecryptDecrypted.map(ki => ki.decrypted!);
+      const privateKeys = keys.prvForDecryptDecrypted.map(decrypted => decrypted.decrypted!);
       const decrypted = await OpenPGPKey.decryptMessage(prepared.message as OpenPGP.message.Message, privateKeys, passwords);
       await MsgUtil.cryptoMsgGetSignedBy(decrypted, keys); // we can only figure out who signed the msg once it's decrypted
       const signature = keys.signedBy.length ? await MsgUtil.verify(decrypted, keys.forVerification, keys.verificationContacts[0]) : undefined;
@@ -301,15 +301,13 @@ export class MsgUtil {
       const matchingKeyids = MsgUtil.matchingKeyids(ki.fingerprints!, encryptionKeyids);
       const cachedKey = KeyCache.getDecrypted(ki.longid);
       if (cachedKey && MsgUtil.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
-        ki.decrypted = cachedKey;
-        keys.prvForDecryptDecrypted.push(ki);
+        keys.prvForDecryptDecrypted.push({ ki, decrypted: cachedKey });
         continue;
       }
       const parsed = await KeyUtil.parse(ki.private);
       if (MsgUtil.isKeyDecryptedFor(parsed, matchingKeyids) || await MsgUtil.decryptKeyFor(parsed, ki.passphrase!, matchingKeyids) === true) {
         KeyCache.setDecrypted(parsed);
-        ki.decrypted = parsed;
-        keys.prvForDecryptDecrypted.push(ki);
+        keys.prvForDecryptDecrypted.push({ ki, decrypted: parsed });
       } else {
         keys.prvForDecryptWithoutPassphrases.push(ki);
       }

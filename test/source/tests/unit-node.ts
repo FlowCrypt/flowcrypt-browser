@@ -691,7 +691,7 @@ eg==
       expect(sortedKeys.prvForDecrypt.length).to.equal(1);
       expect(sortedKeys.prvForDecryptDecrypted.length).to.equal(1);
       // specifically the pub1
-      expect(sortedKeys.prvForDecryptDecrypted[0].longid).to.equal(OpenPGPKey.fingerprintToLongid(pub1.id));
+      expect(sortedKeys.prvForDecryptDecrypted[0].ki.longid).to.equal(OpenPGPKey.fingerprintToLongid(pub1.id));
       // also test MsgUtil.matchingKeyids
       // @ts-ignore
       const matching1 = await MsgUtil.matchingKeyids(pub1.allIds, m.getEncryptionKeyIds());
