@@ -76,6 +76,9 @@ export class Config {
   }
 
   public static fixKeyInfo = async (secrets: TestSecretsInterface): Promise<void> => {
+    // The keys in test secrets file used to have different structure,
+    // this does a migration so that we can continue using the file as is
+    // without distributing an updated secrets file to everyone
     secrets.keyInfo = await Promise.all(secrets.keyInfo.map(async x => {
       x.key = await Promise.all(x.key.map(async ki => KeyUtil.keyInfoObj(await KeyUtil.parse(ki.private), ki.passphrase)));
       return x;

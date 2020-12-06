@@ -214,7 +214,7 @@ export class MsgUtil {
         return { success: false, error: { type: DecryptErrTypes.usePassword, message: 'Use message password' }, longids, isEncrypted };
       }
       const passwords = msgPwd ? [msgPwd] : undefined;
-      const privateKeys = keys.prvForDecryptDecrypted.map(decrypted => decrypted.decrypted!);
+      const privateKeys = keys.prvForDecryptDecrypted.map(decrypted => decrypted.decrypted);
       const decrypted = await OpenPGPKey.decryptMessage(prepared.message as OpenPGP.message.Message, privateKeys, passwords);
       await MsgUtil.cryptoMsgGetSignedBy(decrypted, keys); // we can only figure out who signed the msg once it's decrypted
       const signature = keys.signedBy.length ? await MsgUtil.verify(decrypted, keys.forVerification, keys.verificationContacts[0]) : undefined;
@@ -291,14 +291,14 @@ export class MsgUtil {
     keys.encryptedFor = encryptionKeyids.map(kid => OpenPGPKey.bytesToLongid(kid.bytes));
     await MsgUtil.cryptoMsgGetSignedBy(msg, keys);
     if (keys.encryptedFor.length) {
-      keys.prvMatching = kiWithPp.filter(ki => ki.fingerprints!.some(
+      keys.prvMatching = kiWithPp.filter(ki => ki.fingerprints.some(
         fp => keys.encryptedFor.includes(OpenPGPKey.fingerprintToLongid(fp))));
       keys.prvForDecrypt = keys.prvMatching.length ? keys.prvMatching : kiWithPp;
     } else { // prvs not needed for signed msgs
       keys.prvForDecrypt = [];
     }
     for (const ki of keys.prvForDecrypt) {
-      const matchingKeyids = MsgUtil.matchingKeyids(ki.fingerprints!, encryptionKeyids);
+      const matchingKeyids = MsgUtil.matchingKeyids(ki.fingerprints, encryptionKeyids);
       const cachedKey = KeyCache.getDecrypted(ki.longid);
       if (cachedKey && MsgUtil.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
         keys.prvForDecryptDecrypted.push({ ki, decrypted: cachedKey });

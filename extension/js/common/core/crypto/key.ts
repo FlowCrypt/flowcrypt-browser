@@ -68,8 +68,8 @@ export type Contact = {
 export interface PrvKeyInfo {
   private: string;
   longid: string;
-  fingerprints?: string[];
-  emails?: string[];
+  fingerprints: string[];
+  emails: string[];
   passphrase?: string;
 }
 
