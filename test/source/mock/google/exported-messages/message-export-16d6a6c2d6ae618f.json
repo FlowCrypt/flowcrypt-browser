@@ -1,0 +1,135 @@
+{
+  "acctEmail": "flowcrypt.compatibility@gmail.com",
+  "full": {
+    "id": "16d6a6c2d6ae618f",
+    "threadId": "16d6a6c2d6ae618f",
+    "labelIds": [
+      "Label_2",
+      "STARRED",
+      "Label_3",
+      "SENT"
+    ],
+    "snippet": "-----BEGIN This message is encrypted: Open Message Alternatively copy and paste the following link: https://flowcrypt.com/uQDT3DmcFs",
+    "payload": {
+      "partId": "",
+      "mimeType": "multipart/mixed",
+      "filename": "",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "multipart/mixed; boundary=\"----sinikael-?=_1-15694485366720.3339172612401238\""
+        },
+        {
+          "name": "Openpgp",
+          "value": "id=E8F0517BA6D7DAB6081C96E4ADAC279C95093207"
+        },
+        {
+          "name": "From",
+          "value": "sender@domain.com"
+        },
+        {
+          "name": "To",
+          "value": "flowcrypt.compatibility@gmail.com"
+        },
+        {
+          "name": "Cc",
+          "value": "email.4@flowcrypt.com, email.5@flowcrypt.com"
+        },
+        {
+          "name": "Bcc",
+          "value": "email.5@flowcrypt.com, email.6@flowcrypt.com"
+        },
+        {
+          "name": "Subject",
+          "value": "Test Multiple TO/CC/BCC"
+        },
+        {
+          "name": "Date",
+          "value": "Wed, 25 Sep 2019 18:55:37 -0300"
+        },
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        }
+      ],
+      "body": {
+        "size": 0
+      },
+      "parts": [
+        {
+          "partId": "0",
+          "mimeType": "multipart/alternative",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "multipart/alternative; boundary=\"----sinikael-?=_2-15694485366720.3339172612401238\""
+            }
+          ],
+          "body": {
+            "size": 0
+          },
+          "parts": [
+            {
+              "partId": "0.0",
+              "mimeType": "text/plain",
+              "filename": "",
+              "headers": [
+                {
+                  "name": "Content-Type",
+                  "value": "text/plain"
+                },
+                {
+                  "name": "Content-Transfer-Encoding",
+                  "value": "quoted-printable"
+                }
+              ],
+              "body": {
+                "size": 90,
+                "data": "VGhpcyBtZXNzYWdlIGlzIGVuY3J5cHRlZC4gRm9sbG93IHRoaXMgbGluayB0byBvcGVuIGl0OiBodHRwczovL2Zsb3djcnlwdC5jb20vdVFEVDNEbWNGcw0K"
+              }
+            },
+            {
+              "partId": "0.1",
+              "mimeType": "text/html",
+              "filename": "",
+              "headers": [
+                {
+                  "name": "Content-Type",
+                  "value": "text/html; format=flowed"
+                },
+                {
+                  "name": "Content-Transfer-Encoding",
+                  "value": "7bit"
+                }
+              ],
+              "body": {
+                "size": 452,
+                "data": "PGRpdiBjbGFzcz0iY3J5cHR1cF9lbmNyeXB0ZWRfbWVzc2FnZV9yZXBsYWNlYWJsZSI-DQo8ZGl2IHN0eWxlPSJvcGFjaXR5OiAwOyI-LS0tLS1CRUdJTjwvZGl2Pg0KVGhpcyZuYnNwO21lc3NhZ2UmbmJzcDtpcyZuYnNwO2VuY3J5cHRlZDogPGEgDQpocmVmPSJodHRwczomI3gyRjsmI3gyRjtmbG93Y3J5cHQuY29tJiN4MkY7dVFEVDNEbWNGcyIgc3R5bGU9InBhZGRpbmc6IDJweCANCjZweDsgYmFja2dyb3VuZDogIzIxOTllODsgY29sb3I6ICNmZmY7IGRpc3BsYXk6IGlubGluZS1ibG9jazsgDQp0ZXh0LWRlY29yYXRpb246IG5vbmU7Ij5PcGVuIE1lc3NhZ2U8L2E-PGJyPjxicj4NCkFsdGVybmF0aXZlbHkgY29weSBhbmQgcGFzdGUgdGhlIGZvbGxvd2luZyBsaW5rOiANCmh0dHBzOiYjeDJGOyYjeDJGO2Zsb3djcnlwdC5jb20mI3gyRjt1UURUM0RtY0ZzPGJyPjxicj48YnI-DQo8L2Rpdj4="
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "sizeEstimate": 1735,
+    "historyId": "1214408",
+    "internalDate": "1569448537000"
+  },
+  "attachments": {},
+  "raw": {
+    "id": "16d6a6c2d6ae618f",
+    "threadId": "16d6a6c2d6ae618f",
+    "labelIds": [
+      "Label_2",
+      "STARRED",
+      "Label_3",
+      "SENT"
+    ],
+    "snippet": "-----BEGIN This message is encrypted: Open Message Alternatively copy and paste the following link: https://flowcrypt.com/uQDT3DmcFs",
+    "sizeEstimate": 1735,
+    "raw": "UmVjZWl2ZWQ6IGZyb20gNzE3Mjg0NzMwMjQ0DQoJbmFtZWQgdW5rbm93bg0KCWJ5IGdtYWlsYXBpLmdvb2dsZS5jb20NCgl3aXRoIEhUVFBSRVNUOw0KCVdlZCwgMjUgU2VwIDIwMTkgMTg6NTU6MzcgLTAzMDANCkNvbnRlbnQtVHlwZTogbXVsdGlwYXJ0L21peGVkOw0KIGJvdW5kYXJ5PSItLS0tc2luaWthZWwtPz1fMS0xNTY5NDQ4NTM2NjcyMC4zMzM5MTcyNjEyNDAxMjM4Ig0KT3BlbnBncDogaWQ9RThGMDUxN0JBNkQ3REFCNjA4MUM5NkU0QURBQzI3OUM5NTA5MzIwNw0KRnJvbTogRmxvd0NyeXB0IENvbXBhdGliaWxpdHkgPGZsb3djcnlwdC5jb21wYXRpYmlsaXR5QGdtYWlsLmNvbT4NClRvOiBlbWFpbC4yQGZsb3djcnlwdC5jb20sIGVtYWlsLjFAZmxvd2NyeXB0LmNvbQ0KQ2M6IGVtYWlsLjRAZmxvd2NyeXB0LmNvbSwgZW1haWwuNUBmbG93Y3J5cHQuY29tDQpCY2M6IGVtYWlsLjVAZmxvd2NyeXB0LmNvbSwgZW1haWwuNkBmbG93Y3J5cHQuY29tDQpTdWJqZWN0OiBUZXN0IE11bHRpcGxlIFRPL0NDL0JDQw0KRGF0ZTogV2VkLCAyNSBTZXAgMjAxOSAxODo1NTozNyAtMDMwMA0KTWVzc2FnZS1JZDogPENBS2J1TFRwTm9LOVUweWFqRWY2SHZiaS1FRj1fcjZ5N0RnQ2s1cXVtY2JtQ1F4MnJQd0BtYWlsLmdtYWlsLmNvbT4NCk1JTUUtVmVyc2lvbjogMS4wDQoNCi0tLS0tLXNpbmlrYWVsLT89XzEtMTU2OTQ0ODUzNjY3MjAuMzMzOTE3MjYxMjQwMTIzOA0KQ29udGVudC1UeXBlOiBtdWx0aXBhcnQvYWx0ZXJuYXRpdmU7DQogYm91bmRhcnk9Ii0tLS1zaW5pa2FlbC0_PV8yLTE1Njk0NDg1MzY2NzIwLjMzMzkxNzI2MTI0MDEyMzgiDQoNCi0tLS0tLXNpbmlrYWVsLT89XzItMTU2OTQ0ODUzNjY3MjAuMzMzOTE3MjYxMjQwMTIzOA0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluDQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBxdW90ZWQtcHJpbnRhYmxlDQoNClRoaXMgbWVzc2FnZSBpcyBlbmNyeXB0ZWQuIEZvbGxvdyB0aGlzIGxpbmsgdG8gb3BlbiBpdDogaHR0cHM6Ly9mbG93Y3J5cHQuPQ0KY29tL3VRRFQzRG1jRnMNCg0KLS0tLS0tc2luaWthZWwtPz1fMi0xNTY5NDQ4NTM2NjcyMC4zMzM5MTcyNjEyNDAxMjM4DQpDb250ZW50LVR5cGU6IHRleHQvaHRtbDsgZm9ybWF0PWZsb3dlZA0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogN2JpdA0KDQo8ZGl2IGNsYXNzPSJjcnlwdHVwX2VuY3J5cHRlZF9tZXNzYWdlX3JlcGxhY2VhYmxlIj4NCjxkaXYgc3R5bGU9Im9wYWNpdHk6IDA7Ij4tLS0tLUJFR0lOPC9kaXY-DQpUaGlzJm5ic3A7bWVzc2FnZSZuYnNwO2lzJm5ic3A7ZW5jcnlwdGVkOiA8YSANCmhyZWY9Imh0dHBzOiYjeDJGOyYjeDJGO2Zsb3djcnlwdC5jb20mI3gyRjt1UURUM0RtY0ZzIiBzdHlsZT0icGFkZGluZzogMnB4IA0KNnB4OyBiYWNrZ3JvdW5kOiAjMjE5OWU4OyBjb2xvcjogI2ZmZjsgZGlzcGxheTogaW5saW5lLWJsb2NrOyANCnRleHQtZGVjb3JhdGlvbjogbm9uZTsiPk9wZW4gTWVzc2FnZTwvYT48YnI-PGJyPg0KQWx0ZXJuYXRpdmVseSBjb3B5IGFuZCBwYXN0ZSB0aGUgZm9sbG93aW5nIGxpbms6IA0KaHR0cHM6JiN4MkY7JiN4MkY7Zmxvd2NyeXB0LmNvbSYjeDJGO3VRRFQzRG1jRnM8YnI-PGJyPjxicj4NCjwvZGl2Pg0KLS0tLS0tc2luaWthZWwtPz1fMi0xNTY5NDQ4NTM2NjcyMC4zMzM5MTcyNjEyNDAxMjM4LS0NCg0KLS0tLS0tc2luaWthZWwtPz1fMS0xNTY5NDQ4NTM2NjcyMC4zMzM5MTcyNjEyNDAxMjM4LS0NCg==",
+    "historyId": "1214408",
+    "internalDate": "1569448537000"
+  }
+}
