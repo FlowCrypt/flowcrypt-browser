@@ -11,7 +11,7 @@ const addKeyInfoFingerprints = async () => {
     const keyinfos = await KeyStore.get(acctEmail);
     const output: KeyInfo[] = [];
     for (const keyinfo of keyinfos) {
-      const processed = await KeyUtil.prvKeyInfoObj(await KeyUtil.parse(keyinfo.private));
+      const processed = await KeyUtil.keyInfoObj(await KeyUtil.parse(keyinfo.private));
       if (processed) {
         output.push(processed);
       }

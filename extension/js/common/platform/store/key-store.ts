@@ -43,12 +43,12 @@ export class KeyStore extends AbstractStore {
     }
     for (const i in keyinfos) {
       if (prv.id === keyinfos[i].fingerprints[0]) { // replacing a key
-        keyinfos[i] = await KeyUtil.prvKeyInfoObj(prv);
+        keyinfos[i] = await KeyUtil.keyInfoObj(prv);
         updated = true;
       }
     }
     if (!updated) {
-      keyinfos.push(await KeyUtil.prvKeyInfoObj(prv));
+      keyinfos.push(await KeyUtil.keyInfoObj(prv));
     }
     await KeyStore.set(acctEmail, keyinfos);
   }

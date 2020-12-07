@@ -292,7 +292,7 @@ export class KeyUtil {
     }
   }
 
-  public static prvKeyInfoObj = async (prv: Key, passphrase?: string): Promise<KeyInfo> => {
+  public static keyInfoObj = async (prv: Key, passphrase?: string): Promise<KeyInfo> => {
     return {
       private: KeyUtil.armor(prv),
       public: KeyUtil.armor(await KeyUtil.asPublicKey(prv)),
