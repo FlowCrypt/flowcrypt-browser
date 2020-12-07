@@ -73,7 +73,7 @@ export interface KeyInfo {
   emails: string[];
 }
 
-export interface KeyInfoWithPp extends KeyInfo {
+export interface KeyInfoWithOptionalPp extends KeyInfo {
   passphrase?: string;
 }
 
@@ -305,7 +305,7 @@ export class KeyUtil {
     };
   }
 
-  // public static keyInfoWithPpObj = (ki: KeyInfo, passphrase: string): KeyInfoWithPp => {
+  // public static keyInfoWithPpObj = (ki: KeyInfo, passphrase: string): KeyInfoWithOptionalPp => {
   //   return { ...ki, passphrase };
   // }
 
