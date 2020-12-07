@@ -242,7 +242,7 @@ export class KeyImportUi {
   private rejectKnownIfSelected = async (acctEmail: string, k: Key) => {
     if (this.rejectKnown) {
       const keyinfos = await KeyStore.get(acctEmail);
-      const privateKeysIds = keyinfos.map(ki => ki.fingerprint);
+      const privateKeysIds = keyinfos.map(ki => ki.fingerprints[0]);
       if (privateKeysIds.includes(k.id)) {
         throw new UserAlert('This is one of your current keys, try another one.');
       }

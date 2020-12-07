@@ -55,7 +55,7 @@ View.run(class ManualDecryptView extends View {
   }
 
   private decryptAndDownload = async (encrypted: Attachment) => { // todo - this is more or less copy-pasted from attachment.js, should use common function
-    const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: encrypted.getData() });
+    const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail), encryptedData: encrypted.getData() });
     if (result.success) {
       const attachment = new Attachment({ name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content });
       Browser.saveToDownloads(attachment);

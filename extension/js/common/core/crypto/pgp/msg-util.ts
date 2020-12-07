@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
-import { Contact, Key, PrvKeyInfo, KeyUtil } from '../key.js';
+import { Contact, Key, KeyInfo, KeyInfoWithOptionalPp, KeyUtil } from '../key.js';
 import { MsgBlockType, ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Value } from '../../common.js';
 import { Buf } from '../../buf.js';
@@ -17,7 +17,7 @@ export namespace PgpMsgMethod {
   export namespace Arg {
     export type Encrypt = { pubkeys: Key[], signingPrv?: Key, pwd?: string, data: Uint8Array, filename?: string, armor: boolean, date?: Date };
     export type Type = { data: Uint8Array | string };
-    export type Decrypt = { kisWithPp: PrvKeyInfo[], encryptedData: Uint8Array, msgPwd?: string };
+    export type Decrypt = { kisWithPp: KeyInfoWithOptionalPp[], encryptedData: Uint8Array, msgPwd?: string };
     export type DiagnosePubkeys = { armoredPubs: string[], message: Uint8Array };
     export type VerifyDetached = { plaintext: Uint8Array, sigText: Uint8Array };
   }
@@ -44,10 +44,10 @@ type SortedKeysForDecrypt = {
   forVerification: OpenPGP.key.Key[];
   encryptedFor: string[];
   signedBy: string[];
-  prvMatching: PrvKeyInfo[];
-  prvForDecrypt: PrvKeyInfo[];
-  prvForDecryptDecrypted: PrvKeyInfo[];
-  prvForDecryptWithoutPassphrases: PrvKeyInfo[];
+  prvMatching: KeyInfoWithOptionalPp[];
+  prvForDecrypt: KeyInfoWithOptionalPp[];
+  prvForDecryptDecrypted: { ki: KeyInfoWithOptionalPp, decrypted: Key }[];
+  prvForDecryptWithoutPassphrases: KeyInfo[];
 };
 
 export type DecryptSuccess = { success: true; signature?: VerifyRes; isEncrypted?: boolean, filename?: string, content: Buf };
@@ -194,7 +194,7 @@ export class MsgUtil {
     const keys = await MsgUtil.getSortedKeys(kisWithPp, prepared.message);
     longids.message = keys.encryptedFor;
     longids.matching = keys.prvForDecrypt.map(ki => ki.longid);
-    longids.chosen = keys.prvForDecryptDecrypted.map(ki => ki.longid);
+    longids.chosen = keys.prvForDecryptDecrypted.map(decrypted => decrypted.ki.longid);
     longids.needPassphrase = keys.prvForDecryptWithoutPassphrases.map(ki => ki.longid);
     const isEncrypted = !prepared.isCleartext;
     if (!isEncrypted) {
@@ -214,7 +214,7 @@ export class MsgUtil {
         return { success: false, error: { type: DecryptErrTypes.usePassword, message: 'Use message password' }, longids, isEncrypted };
       }
       const passwords = msgPwd ? [msgPwd] : undefined;
-      const privateKeys = keys.prvForDecryptDecrypted.map(ki => ki.decrypted!);
+      const privateKeys = keys.prvForDecryptDecrypted.map(decrypted => decrypted.decrypted);
       const decrypted = await OpenPGPKey.decryptMessage(prepared.message as OpenPGP.message.Message, privateKeys, passwords);
       await MsgUtil.cryptoMsgGetSignedBy(decrypted, keys); // we can only figure out who signed the msg once it's decrypted
       const signature = keys.signedBy.length ? await MsgUtil.verify(decrypted, keys.forVerification, keys.verificationContacts[0]) : undefined;
@@ -276,7 +276,7 @@ export class MsgUtil {
     }
   }
 
-  private static getSortedKeys = async (kiWithPp: PrvKeyInfo[], msg: OpenpgpMsgOrCleartext): Promise<SortedKeysForDecrypt> => {
+  private static getSortedKeys = async (kiWithPp: KeyInfoWithOptionalPp[], msg: OpenpgpMsgOrCleartext): Promise<SortedKeysForDecrypt> => {
     const keys: SortedKeysForDecrypt = {
       verificationContacts: [],
       forVerification: [],
@@ -291,33 +291,26 @@ export class MsgUtil {
     keys.encryptedFor = encryptionKeyids.map(kid => OpenPGPKey.bytesToLongid(kid.bytes));
     await MsgUtil.cryptoMsgGetSignedBy(msg, keys);
     if (keys.encryptedFor.length) {
-      for (const ki of kiWithPp) {
-        ki.parsed = await KeyUtil.parse(ki.private); // todo
-        // this is inefficient because we are doing unnecessary parsing of all keys here
-        // better would be to compare to already stored KeyInfo, however KeyInfo currently only holds primary id, not ids of subkeys
-        // while messages are typically encrypted for subkeys, thus we have to parse the key to get the info
-        // we are filtering here to avoid a significant performance issue of having to attempt decrypting with all keys simultaneously
-        for (const id of ki.parsed.allIds) {
-          if (keys.encryptedFor.includes(OpenPGPKey.fingerprintToLongid(id))) {
-            keys.prvMatching.push(ki);
-            break;
-          }
-        }
-      }
+      keys.prvMatching = kiWithPp.filter(ki => ki.fingerprints.some(
+        fp => keys.encryptedFor.includes(OpenPGPKey.fingerprintToLongid(fp))));
       keys.prvForDecrypt = keys.prvMatching.length ? keys.prvMatching : kiWithPp;
     } else { // prvs not needed for signed msgs
       keys.prvForDecrypt = [];
     }
     for (const ki of keys.prvForDecrypt) {
-      const matchingKeyids = MsgUtil.matchingKeyids(ki.parsed!, encryptionKeyids);
+      const matchingKeyids = MsgUtil.matchingKeyids(ki.fingerprints, encryptionKeyids);
       const cachedKey = KeyCache.getDecrypted(ki.longid);
       if (cachedKey && MsgUtil.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
-        ki.decrypted = cachedKey;
-        keys.prvForDecryptDecrypted.push(ki);
-      } else if (MsgUtil.isKeyDecryptedFor(ki.parsed!, matchingKeyids) || await MsgUtil.decryptKeyFor(ki.parsed!, ki.passphrase!, matchingKeyids) === true) {
-        KeyCache.setDecrypted(ki.parsed!);
-        ki.decrypted = ki.parsed!;
-        keys.prvForDecryptDecrypted.push(ki);
+        keys.prvForDecryptDecrypted.push({ ki, decrypted: cachedKey });
+        continue;
+      }
+      const parsed = await KeyUtil.parse(ki.private);
+      // todo - the `ki.passphrase || ''` used to be `ki.passphrase!` which could have actually allowed an undefined to be passed
+      // as fixed currently it appears better, but it may be best to instead check `ki.passphrase && await MsgUtil.decryptKeyFor(...)`
+      // but that is a larger change that would require separate PR and testing
+      if (MsgUtil.isKeyDecryptedFor(parsed, matchingKeyids) || await MsgUtil.decryptKeyFor(parsed, ki.passphrase || '', matchingKeyids) === true) {
+        KeyCache.setDecrypted(parsed);
+        keys.prvForDecryptDecrypted.push({ ki, decrypted: parsed });
       } else {
         keys.prvForDecryptWithoutPassphrases.push(ki);
       }
@@ -325,8 +318,8 @@ export class MsgUtil {
     return keys;
   }
 
-  private static matchingKeyids = (key: Key, encryptedForKeyids: OpenPGP.Keyid[]): OpenPGP.Keyid[] => {
-    const allKeyLongids = key.allIds.map(id => OpenPGPKey.fingerprintToLongid(id));
+  private static matchingKeyids = (fingerprints: string[], encryptedForKeyids: OpenPGP.Keyid[]): OpenPGP.Keyid[] => {
+    const allKeyLongids = fingerprints.map(fp => OpenPGPKey.fingerprintToLongid(fp));
     return encryptedForKeyids.filter(kid => allKeyLongids.includes(OpenPGPKey.bytesToLongid(kid.bytes)));
   }
 

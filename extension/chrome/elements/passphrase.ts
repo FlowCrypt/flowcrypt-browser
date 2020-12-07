@@ -56,11 +56,11 @@ View.run(class PassphraseView extends View {
     if (allPrivateKeys.length > 1) {
       let html: string;
       if (this.keysWeNeedPassPhraseFor.length === 1) {
-        html = `For key Fingerprint: <span class="good">${Xss.escape(Str.spaced(this.keysWeNeedPassPhraseFor[0].fingerprint || ''))}</span>`;
+        html = `For key Fingerprint: <span class="good">${Xss.escape(Str.spaced(this.keysWeNeedPassPhraseFor[0].fingerprints[0] || ''))}</span>`;
       } else {
         html = 'Pass phrase needed for any of the following keys:';
         for (const i of this.keysWeNeedPassPhraseFor.keys()) {
-          html += `<div>Fingerprint ${String(i + 1)}: <span class="good">${Xss.escape(Str.spaced(this.keysWeNeedPassPhraseFor[i].fingerprint) || '')}</span></div>`;
+          html += `<div>Fingerprint ${String(i + 1)}: <span class="good">${Xss.escape(Str.spaced(this.keysWeNeedPassPhraseFor[i].fingerprints[0]) || '')}</span></div>`;
         }
       }
       Xss.sanitizeRender('.which_key', html);
@@ -110,7 +110,7 @@ View.run(class PassphraseView extends View {
       const prv = await KeyUtil.parse(keyinfo.private);
       try {
         if (await KeyUtil.decrypt(prv, pass) === true) {
-          await PassphraseStore.set(storageType, this.acctEmail, keyinfo.fingerprint, pass);
+          await PassphraseStore.set(storageType, this.acctEmail, keyinfo.fingerprints[0], pass);
           atLeastOneMatched = true;
           if (storageType === 'session') {
             // TODO: change to 'broadcast' when issue with 'broadcast' is fixed
@@ -119,7 +119,7 @@ View.run(class PassphraseView extends View {
         }
       } catch (e) {
         if (e instanceof Error && e.message === 'Unknown s2k type.') {
-          let msg = `Your key with fingerprint ${keyinfo.fingerprint} is not supported yet (${String(e)}).`;
+          let msg = `Your key with fingerprint ${keyinfo.fingerprints[0]} is not supported yet (${String(e)}).`;
           msg += '\n\nPlease write human@flowcrypt.com with details about how was this key created.';
           await Ui.modal.error(msg);
         } else {

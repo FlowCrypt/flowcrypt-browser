@@ -49,6 +49,7 @@ const mockApiLogs: string[] = [];
 ava.before('set config and mock api', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY, t.title);
   Config.extensionId = await browserPool.getExtensionId(t);
+  await Config.setupSecrets();
   console.info(`Extension url: chrome-extension://${Config.extensionId}`);
   if (isMock) {
     const mockApi = await mock(line => mockApiLogs.push(line));
