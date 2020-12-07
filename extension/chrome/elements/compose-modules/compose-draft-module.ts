@@ -262,7 +262,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     const encryptedData = rawBlock.content instanceof Buf ? rawBlock.content : Buf.fromUtfStr(rawBlock.content);
     const passphrase = await this.view.storageModule.passphraseGet();
     if (typeof passphrase !== 'undefined') {
-      const decrypted = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.view.acctEmail), encryptedData });
+      const decrypted = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail), encryptedData });
       if (!decrypted.success) {
         return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!decrypted.success');
       }

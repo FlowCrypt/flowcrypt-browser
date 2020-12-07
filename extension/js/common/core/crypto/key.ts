@@ -71,6 +71,9 @@ export interface KeyInfo {
   longid: string;
   fingerprints: string[];
   emails: string[];
+}
+
+export interface KeyInfoWithPp extends KeyInfo {
   passphrase?: string;
 }
 
@@ -292,14 +295,18 @@ export class KeyUtil {
     }
   }
 
-  public static keyInfoObj = async (prv: Key, passphrase?: string): Promise<KeyInfo> => {
+  public static keyInfoObj = async (prv: Key): Promise<KeyInfo> => {
     return {
       private: KeyUtil.armor(prv),
       public: KeyUtil.armor(await KeyUtil.asPublicKey(prv)),
       longid: OpenPGPKey.fingerprintToLongid(prv.id),
       emails: prv.emails,
       fingerprints: prv.allIds,
-      passphrase
     };
   }
+
+  // public static keyInfoWithPpObj = (ki: KeyInfo, passphrase: string): KeyInfoWithPp => {
+  //   return { ...ki, passphrase };
+  // }
+
 }
