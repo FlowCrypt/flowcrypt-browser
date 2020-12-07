@@ -2,7 +2,7 @@
 
 import * as fs from 'fs';
 
-import { KeyInfo, KeyUtil } from '../core/crypto/key.js';
+import { KeyInfoWithOptionalPp, KeyUtil } from '../core/crypto/key.js';
 
 export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL' | 'UNIT-TESTS';
 
@@ -46,7 +46,7 @@ interface TestSecretsInterface {
   data_encryption_password: string;
   auth: { google: { email: string, password?: string, secret_2fa?: string }[], };
   keys: { title: string, passphrase: string, armored: string | null, longid: string | null }[];
-  keyInfo: Array<{ email: string, key: KeyInfo[] }>;
+  keyInfo: Array<{ email: string, key: KeyInfoWithOptionalPp[] }>;
 }
 
 export class Config {
@@ -79,9 +79,13 @@ export class Config {
     // The keys in test secrets file used to have different structure,
     // this does a migration so that we can continue using the file as is
     // without distributing an updated secrets file to everyone
-    secrets.keyInfo = await Promise.all(secrets.keyInfo.map(async x => {
-      x.key = await Promise.all(x.key.map(async ki => KeyUtil.keyInfoObj(await KeyUtil.parse(ki.private), ki.passphrase)));
-      return x;
+    secrets.keyInfo = await Promise.all(secrets.keyInfo.map(async original => {
+      const kisWithPp: KeyInfoWithOptionalPp[] = [];
+      for (const ki of original.key) {
+        const reParsed = await KeyUtil.keyInfoObj(await KeyUtil.parse(ki.private));
+        kisWithPp.push({ ...reParsed, passphrase: ki.passphrase });
+      }
+      return { email: original.email, key: kisWithPp };
     }));
   }
 

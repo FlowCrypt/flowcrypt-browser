@@ -7,7 +7,7 @@ import { MsgBlockParser } from '../core/msg-block-parser';
 import { PgpHash } from '../core/crypto/pgp/pgp-hash';
 import { TestVariant } from '../util';
 import { expect } from 'chai';
-import { KeyUtil, PrvKeyInfo } from '../core/crypto/key';
+import { KeyUtil, KeyInfoWithOptionalPp } from '../core/crypto/key';
 import { UnreportableError } from '../platform/catch.js';
 import { Buf } from '../core/buf';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
@@ -668,17 +668,17 @@ eg==
     });
 
     ava.default('[unit][MsgUtil.getSortedKeys,matchingKeyids] must be able to find matching keys', async t => {
-      const pp = 'some pass for testing';
-      const key1 = await OpenPGPKey.create([{ name: 'Key1', email: 'key1@test.com' }], 'curve25519', pp, 0);
-      const key2 = await OpenPGPKey.create([{ name: 'Key2', email: 'key2@test.com' }], 'curve25519', pp, 0);
+      const passphrase = 'some pass for testing';
+      const key1 = await OpenPGPKey.create([{ name: 'Key1', email: 'key1@test.com' }], 'curve25519', passphrase, 0);
+      const key2 = await OpenPGPKey.create([{ name: 'Key2', email: 'key2@test.com' }], 'curve25519', passphrase, 0);
       const pub1 = await KeyUtil.parse(key1.public);
       const pub2 = await KeyUtil.parse(key2.public);
       // only encrypt with pub1
       const { data } = await MsgUtil.encryptMessage({ pubkeys: [pub1], data: Buf.fromUtfStr('anything'), armor: true }) as PgpMsgMethod.EncryptPgpArmorResult;
       const m = await opgp.message.readArmored(Buf.fromUint8(data).toUtfStr());
-      const kisWithPp: PrvKeyInfo[] = [ // supply both key1 and key2 for decrypt
-        await KeyUtil.prvKeyInfoObj(await KeyUtil.parse(key1.private), pp),
-        await KeyUtil.prvKeyInfoObj(await KeyUtil.parse(key2.private), pp),
+      const kisWithPp: KeyInfoWithOptionalPp[] = [ // supply both key1 and key2 for decrypt
+        { ... await KeyUtil.keyInfoObj(await KeyUtil.parse(key1.private)), passphrase },
+        { ... await KeyUtil.keyInfoObj(await KeyUtil.parse(key2.private)), passphrase },
       ];
       // we are testing a private method here because the outcome of this method is not directly testable from the
       //   public method that uses it. It only makes the public method faster, which is hard to test.
@@ -763,7 +763,7 @@ eg==
       const justPrimaryPub = tmpPub.armor();
       const pubkeys = [await KeyUtil.parse(justPrimaryPub)];
       const encrypted = await MsgUtil.encryptMessage({ pubkeys, data, armor: true }) as PgpMsgMethod.EncryptPgpArmorResult;
-      const kisWithPp: PrvKeyInfo[] = [await KeyUtil.prvKeyInfoObj(await KeyUtil.parse(prvEncryptForSubkeyOnlyProtected), passphrase)];
+      const kisWithPp: KeyInfoWithOptionalPp[] = [{ ... await KeyUtil.keyInfoObj(await KeyUtil.parse(prvEncryptForSubkeyOnlyProtected)), passphrase }];
       const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData: encrypted.data });
       // todo - later we'll have an org rule for ignoring this, and then it will be expected to pass as follows:
       // expect(decrypted.success).to.equal(true);
