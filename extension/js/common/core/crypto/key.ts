@@ -305,8 +305,4 @@ export class KeyUtil {
     };
   }
 
-  // public static keyInfoWithPpObj = (ki: KeyInfo, passphrase: string): KeyInfoWithOptionalPp => {
-  //   return { ...ki, passphrase };
-  // }
-
 }

@@ -45,7 +45,7 @@ type SortedKeysForDecrypt = {
   encryptedFor: string[];
   signedBy: string[];
   prvMatching: KeyInfoWithOptionalPp[];
-  prvForDecryptWithPassphrases: KeyInfoWithOptionalPp[];
+  prvForDecrypt: KeyInfoWithOptionalPp[];
   prvForDecryptDecrypted: { ki: KeyInfoWithOptionalPp, decrypted: Key }[];
   prvForDecryptWithoutPassphrases: KeyInfo[];
 };
@@ -193,7 +193,7 @@ export class MsgUtil {
     }
     const keys = await MsgUtil.getSortedKeys(kisWithPp, prepared.message);
     longids.message = keys.encryptedFor;
-    longids.matching = keys.prvForDecryptWithPassphrases.map(ki => ki.longid);
+    longids.matching = keys.prvForDecrypt.map(ki => ki.longid);
     longids.chosen = keys.prvForDecryptDecrypted.map(decrypted => decrypted.ki.longid);
     longids.needPassphrase = keys.prvForDecryptWithoutPassphrases.map(ki => ki.longid);
     const isEncrypted = !prepared.isCleartext;
@@ -283,7 +283,7 @@ export class MsgUtil {
       encryptedFor: [],
       signedBy: [],
       prvMatching: [],
-      prvForDecryptWithPassphrases: [],
+      prvForDecrypt: [],
       prvForDecryptDecrypted: [],
       prvForDecryptWithoutPassphrases: [],
     };
@@ -293,11 +293,11 @@ export class MsgUtil {
     if (keys.encryptedFor.length) {
       keys.prvMatching = kiWithPp.filter(ki => ki.fingerprints.some(
         fp => keys.encryptedFor.includes(OpenPGPKey.fingerprintToLongid(fp))));
-      keys.prvForDecryptWithPassphrases = keys.prvMatching.length ? keys.prvMatching : kiWithPp;
+      keys.prvForDecrypt = keys.prvMatching.length ? keys.prvMatching : kiWithPp;
     } else { // prvs not needed for signed msgs
-      keys.prvForDecryptWithPassphrases = [];
+      keys.prvForDecrypt = [];
     }
-    for (const ki of keys.prvForDecryptWithPassphrases) {
+    for (const ki of keys.prvForDecrypt) {
       const matchingKeyids = MsgUtil.matchingKeyids(ki.fingerprints, encryptionKeyids);
       const cachedKey = KeyCache.getDecrypted(ki.longid);
       if (cachedKey && MsgUtil.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
@@ -305,7 +305,10 @@ export class MsgUtil {
         continue;
       }
       const parsed = await KeyUtil.parse(ki.private);
-      if (MsgUtil.isKeyDecryptedFor(parsed, matchingKeyids) || await MsgUtil.decryptKeyFor(parsed, ki.passphrase!, matchingKeyids) === true) {
+      // todo - the `ki.passphrase || ''` used to be `ki.passphrase!` which could have actually allowed an undefined to be passed
+      // as fixed currently it appears better, but it may be best to instead check `ki.passphrase && await MsgUtil.decryptKeyFor(...)`
+      // but that is a larger change that would require separate PR and testing
+      if (MsgUtil.isKeyDecryptedFor(parsed, matchingKeyids) || await MsgUtil.decryptKeyFor(parsed, ki.passphrase || '', matchingKeyids) === true) {
         KeyCache.setDecrypted(parsed);
         keys.prvForDecryptDecrypted.push({ ki, decrypted: parsed });
       } else {
