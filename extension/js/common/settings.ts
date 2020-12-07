@@ -116,9 +116,9 @@ export class Settings {
     const destAccountPrivateKeys = await KeyStore.get(newAcctEmail);
     const destAcctPassPhrases: Dict<string> = {};
     for (const ki of destAccountPrivateKeys) {
-      const pp = await PassphraseStore.get(newAcctEmail, ki.fingerprint, true);
+      const pp = await PassphraseStore.get(newAcctEmail, ki.fingerprints[0], true);
       if (pp) {
-        destAcctPassPhrases[ki.fingerprint] = pp;
+        destAcctPassPhrases[ki.fingerprints[0]] = pp;
       }
     }
     if (!oldAcctEmailIndexPrefix) {

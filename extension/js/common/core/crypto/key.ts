@@ -65,8 +65,9 @@ export type Contact = {
   expiresOn: number | null;
 };
 
-export interface PrvKeyInfo {
+export interface KeyInfo {
   private: string;
+  public: string; // this cannot be Pubkey has it's being passed to localstorage
   longid: string;
   fingerprints: string[];
   emails: string[];
@@ -74,12 +75,6 @@ export interface PrvKeyInfo {
 }
 
 export type KeyAlgo = 'curve25519' | 'rsa2048' | 'rsa4096';
-
-export interface KeyInfo extends PrvKeyInfo {
-  // this cannot be Pubkey has it's being passed to localstorage
-  public: string;
-  fingerprint: string;
-}
 
 export type PrvPacket = (OpenPGP.packet.SecretKey | OpenPGP.packet.SecretSubkey);
 
@@ -297,18 +292,10 @@ export class KeyUtil {
     }
   }
 
-  public static keyInfoObj = async (prv: Key, passphrase?: string): Promise<KeyInfo> => {
-    const pubArmor = KeyUtil.armor(await KeyUtil.asPublicKey(prv));
-    const keyInfo = await KeyUtil.prvKeyInfoObj(prv, passphrase) as KeyInfo;
-    keyInfo.fingerprint = prv.id;
-    keyInfo.public = pubArmor;
-    return keyInfo;
-  }
-
-  public static prvKeyInfoObj = async (prv: Key, passphrase?: string): Promise<PrvKeyInfo> => {
-    // tslint:disable-next-line: oneliner-object-literal
+  public static prvKeyInfoObj = async (prv: Key, passphrase?: string): Promise<KeyInfo> => {
     return {
       private: KeyUtil.armor(prv),
+      public: KeyUtil.armor(await KeyUtil.asPublicKey(prv)),
       longid: OpenPGPKey.fingerprintToLongid(prv.id),
       emails: prv.emails,
       fingerprints: prv.allIds,

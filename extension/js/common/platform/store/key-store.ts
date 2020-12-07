@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { Key, KeyInfo, KeyUtil } from '../../core/crypto/key.js';
+import { KeyInfo, KeyUtil } from '../../core/crypto/key.js';
 import { AcctStore } from './acct-store.js';
 import { PassphraseStore } from './passphrase-store.js';
 import { AbstractStore } from './abstract-store.js';
@@ -10,15 +10,15 @@ import { AbstractStore } from './abstract-store.js';
  */
 export class KeyStore extends AbstractStore {
 
-  public static keyInfoObj = async (prv: Key): Promise<KeyInfo> => { return await KeyUtil.keyInfoObj(prv); }
-
   public static get = async (acctEmail: string, fingerprints?: string[]): Promise<KeyInfo[]> => {
     const stored = await AcctStore.get(acctEmail, ['keys']);
     const keys: KeyInfo[] = stored.keys || [];
     if (!fingerprints) {
       return keys;
     }
-    return keys.filter(ki => fingerprints.includes(ki.fingerprint));
+    // filters by primary fingerprint - subkey fingerprints are ignored
+    // todo - could consider also filtering by subkey fingerprints, but need to think about impact
+    return keys.filter(ki => fingerprints.includes(ki.fingerprints[0]));
   }
 
   public static getFirst = async (acctEmail: string): Promise<KeyInfo> => {
@@ -29,7 +29,7 @@ export class KeyStore extends AbstractStore {
   public static getAllWithPp = async (acctEmail: string): Promise<KeyInfo[]> => {
     const keys = await KeyStore.get(acctEmail);
     for (const ki of keys) {
-      ki.passphrase = await PassphraseStore.get(acctEmail, ki.fingerprint);
+      ki.passphrase = await PassphraseStore.get(acctEmail, ki.fingerprints[0]);
     }
     return keys;
   }
@@ -42,13 +42,13 @@ export class KeyStore extends AbstractStore {
       throw new Error('Cannot import plain, unprotected key.');
     }
     for (const i in keyinfos) {
-      if (prv.id === keyinfos[i].fingerprint) { // replacing a key
-        keyinfos[i] = await KeyStore.keyInfoObj(prv);
+      if (prv.id === keyinfos[i].fingerprints[0]) { // replacing a key
+        keyinfos[i] = await KeyUtil.prvKeyInfoObj(prv);
         updated = true;
       }
     }
     if (!updated) {
-      keyinfos.push(await KeyStore.keyInfoObj(prv));
+      keyinfos.push(await KeyUtil.prvKeyInfoObj(prv));
     }
     await KeyStore.set(acctEmail, keyinfos);
   }
@@ -59,7 +59,7 @@ export class KeyStore extends AbstractStore {
 
   public static remove = async (acctEmail: string, removeFingerprint: string): Promise<void> => {
     const privateKeys = await KeyStore.get(acctEmail);
-    const filteredPrivateKeys = privateKeys.filter(ki => ki.fingerprint !== removeFingerprint);
+    const filteredPrivateKeys = privateKeys.filter(ki => ki.fingerprints[0] !== removeFingerprint);
     await KeyStore.set(acctEmail, filteredPrivateKeys);
   }
 
@@ -70,7 +70,7 @@ export class KeyStore extends AbstractStore {
     const keys = await KeyStore.get(acctEmail);
     const result: string[] = [];
     for (const key of keys) {
-      if (! await PassphraseStore.get(acctEmail, key.fingerprint, true) && await PassphraseStore.get(acctEmail, key.fingerprint, false)) {
+      if (! await PassphraseStore.get(acctEmail, key.fingerprints[0], true) && await PassphraseStore.get(acctEmail, key.fingerprints[0], false)) {
         result.push(key.longid);
       }
     }
