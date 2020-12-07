@@ -8,15 +8,12 @@ import { KeyStore } from '../common/platform/store/key-store.js';
 
 const addKeyInfoFingerprints = async () => {
   for (const acctEmail of await GlobalStore.acctEmailsGet()) {
-    const keyinfos = await KeyStore.get(acctEmail);
-    const output: KeyInfo[] = [];
-    for (const keyinfo of keyinfos) {
-      const processed = await KeyUtil.keyInfoObj(await KeyUtil.parse(keyinfo.private));
-      if (processed) {
-        output.push(processed);
-      }
+    const originalKis = await KeyStore.get(acctEmail);
+    const updated: KeyInfo[] = [];
+    for (const originalKi of originalKis) {
+      updated.push(await KeyUtil.keyInfoObj(await KeyUtil.parse(originalKi.private)));
     }
-    await KeyStore.set(acctEmail, output);
+    await KeyStore.set(acctEmail, updated);
   }
 };
 
