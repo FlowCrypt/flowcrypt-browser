@@ -296,6 +296,9 @@ export class KeyUtil {
   }
 
   public static keyInfoObj = async (prv: Key): Promise<KeyInfo> => {
+    if (!prv.isPrivate) {
+      throw new Error('Key passed into KeyUtil.keyInfoObj must be a Private Key');
+    }
     return {
       private: KeyUtil.armor(prv),
       public: KeyUtil.armor(await KeyUtil.asPublicKey(prv)),

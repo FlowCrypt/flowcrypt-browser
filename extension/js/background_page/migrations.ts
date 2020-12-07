@@ -23,7 +23,9 @@ const addKeyInfoFingerprints = async () => {
 export const migrateGlobal = async () => {
   const globalStore = await GlobalStore.get(['key_info_store_fingerprints_added']);
   if (!globalStore.key_info_store_fingerprints_added) {
+    console.info('migrating KeyStorage to add fingerprints and emails of each key...');
     await addKeyInfoFingerprints();
     await GlobalStore.set({ key_info_store_fingerprints_added: true });
+    console.info('done migrating');
   }
 };
