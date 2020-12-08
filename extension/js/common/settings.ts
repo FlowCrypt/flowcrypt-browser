@@ -278,7 +278,7 @@ export class Settings {
       } else if (response.result === 'Denied' || response.result === 'Closed') {
         const authDeniedHtml = await Api.ajax({ url: '/chrome/settings/modules/auth_denied.htm' }, Catch.stackTrace()) as string; // tslint:disable-line:no-direct-ajax
         if (await Ui.modal.confirm(authDeniedHtml, true)) {
-          await GoogleAuth.newAuthPopup({ acctEmail, scopes });
+          Settings.newGoogleAcctAuthPromptThenAlertOrForward(settingsTabId, acctEmail, scopes)
         }
       } else {
         Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
