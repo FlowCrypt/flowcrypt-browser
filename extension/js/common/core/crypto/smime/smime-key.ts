@@ -35,6 +35,48 @@ export class SmimeKey {
     return key;
   }
 
+  public static parseBinary = async (buffer: Uint8Array, password: string): Promise<Key> => {
+    const p12Asn1 = forge.asn1.fromDer(String.fromCharCode.apply(null, new Uint8Array(buffer) as unknown as number[]));
+    const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, password);
+    const bags = p12.getBags({ bagType: forge.pki.oids.certBag });
+    if (!bags) {
+      throw new Error('No user certificate found.');
+    }
+    const bag = bags[forge.pki.oids.certBag];
+    if (!bag) {
+      throw new Error('No user certificate found.');
+    }
+    const certificate = bag[0]?.cert;
+    if (!certificate) {
+      throw new Error('No user certificate found.');
+    }
+    const email = (certificate.subject.getField('CN') as { value: string }).value;
+    const normalizedEmail = Str.parseEmail(email).email;
+    if (!normalizedEmail) {
+      throw new UnreportableError(`This S/MIME x.509 certificate has an invalid recipient email: ${email}`);
+    }
+    const key = {
+      type: 'x509',
+      id: certificate.serialNumber.toUpperCase(),
+      allIds: [certificate.serialNumber.toUpperCase()],
+      usableForEncryption: SmimeKey.isEmailCertificate(certificate),
+      usableForSigning: SmimeKey.isEmailCertificate(certificate),
+      usableForEncryptionButExpired: false,
+      usableForSigningButExpired: false,
+      emails: [normalizedEmail],
+      identities: [normalizedEmail],
+      created: SmimeKey.dateToNumber(certificate.validity.notBefore),
+      lastModified: SmimeKey.dateToNumber(certificate.validity.notBefore),
+      expiration: SmimeKey.dateToNumber(certificate.validity.notAfter),
+      fullyDecrypted: false,
+      fullyEncrypted: false,
+      isPublic: true,
+      isPrivate: true,
+    } as Key;
+    //(key as unknown as { raw: string }).raw = text;
+    return key;
+  }
+
   /**
    * @param data: an already encoded plain mime message
    */

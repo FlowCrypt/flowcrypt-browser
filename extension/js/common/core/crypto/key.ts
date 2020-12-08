@@ -143,12 +143,28 @@ export class KeyUtil {
     throw new UnexpectedKeyTypeError(`Key type is ${keyType}, expecting OpenPGP or x509 S/MIME`);
   }
 
-  public static parseBinary = async (key: Uint8Array): Promise<Key[]> => {
-    const { keys, err } = (await opgp.key.read(key));
-    if (keys.length > 0) {
-      return await Promise.all(keys.map(key => OpenPGPKey.convertExternalLibraryObjToKey(key)));
+  public static parseBinary = async (key: Uint8Array, passphrase: string): Promise<Key[]> => {
+    const allKeys: Key[] = [], allErr: Error[] = [];
+    try {
+      const { keys, err } = await opgp.key.read(key);
+      if (keys.length > 0) {
+        allKeys.push(...await Promise.all(keys.map(key => OpenPGPKey.convertExternalLibraryObjToKey(key))));
+      }
+      if (err) {
+        allErr.push(...err);
+      }
+    } catch (e) {
+      allErr.push(e);
     }
-    throw new Error(err ? err[0].message : 'Should not happen: no keys and no errors.');
+    try {
+      allKeys.push(await SmimeKey.parseBinary(key, passphrase));
+    } catch (e) {
+      allErr.push(e);
+    }
+    if (allKeys.length > 0) {
+      return allKeys;
+    }
+    throw new Error(allErr ? allErr.map((err, i) => (i + 1) + '. ' + err.message).join('\n') : 'Should not happen: no keys and no errors.');
   }
 
   public static armor = (pubkey: Key): string => {
