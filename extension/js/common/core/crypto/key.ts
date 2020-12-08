@@ -154,12 +154,12 @@ export class KeyUtil {
         allErr.push(...err);
       }
     } catch (e) {
-      allErr.push(e);
+      allErr.push(e as Error);
     }
     try {
       allKeys.push(await SmimeKey.parseBinary(key, passphrase));
     } catch (e) {
-      allErr.push(e);
+      allErr.push(e as Error);
     }
     if (allKeys.length > 0) {
       return allKeys;

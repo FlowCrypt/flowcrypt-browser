@@ -36,7 +36,8 @@ export class SmimeKey {
   }
 
   public static parseBinary = async (buffer: Uint8Array, password: string): Promise<Key> => {
-    const p12Asn1 = forge.asn1.fromDer(String.fromCharCode.apply(null, new Uint8Array(buffer) as unknown as number[]));
+    const bytes = String.fromCharCode.apply(undefined, new Uint8Array(buffer) as unknown as number[]) as string;
+    const p12Asn1 = forge.asn1.fromDer(bytes);
     const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, password);
     const bags = p12.getBags({ bagType: forge.pki.oids.certBag });
     if (!bags) {
@@ -73,7 +74,9 @@ export class SmimeKey {
       isPublic: true,
       isPrivate: true,
     } as Key;
-    //(key as unknown as { raw: string }).raw = text;
+    (key as unknown as { raw: string }).raw = `------- BEGIN PRIVATE ENCRYPTED PKCS#12 FILE -------
+${forge.util.encode64(bytes)}
+------- END PRIVATE ENCRYPTED PKCS#12 FILE -------` as string;
     return key;
   }
 
