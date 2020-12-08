@@ -9,7 +9,7 @@
     "@types/chrome": "0.0.126",
     "@types/chai": "4.2.14",
     "@types/dompurify": "2.0.4",
-    "@types/jquery": "3.5.4",
+    "@types/jquery": "3.5.5",
     "@types/mailparser": "3.0.0",
     "@types/puppeteer": "5.4.1",
     "@types/mkdirp": "^1.0.1",
