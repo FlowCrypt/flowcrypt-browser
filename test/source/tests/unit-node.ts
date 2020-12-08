@@ -1392,5 +1392,16 @@ jA==
       expect(rsakey.missingPrivateKeyForDecryption).to.be.false;
       t.pass();
     });
+
+    ava.default('[unit][KeyUtil.parseBinary] handles OpenPGP binary key', async t => {
+      const key = Buffer.from('mDMEX7JGnBYJKwYBBAHaRw8BAQdA8L8ZDEHJ3N8fojA1P0n9Tc2E0BTCl6AXq/b2ZoS5Evy0BlRl' +
+        'c3QgMYiQBBMWCAA4FiEExOEH3ZJIrCG1lTnB5pbLkt3W1hMFAl+yRpwCGwMFCwkIBwIGFQoJCAsC' +
+        'BBYCAwECHgECF4AACgkQ5pbLkt3W1hOHzAEAj3hiPLsaCeRGjLaYNvKNTetdfGLVSu2+cGMsHh8r' +
+        '+pgBANNxQyqE5+3LjHhecVVNErbgr1n6vTurE5Jhc1Go3x8F', 'base64');
+      const parsed = await KeyUtil.parseBinary(key);
+      expect(parsed.length).to.be.equal(1);
+      expect(parsed[0].id).to.be.equal('C4E107DD9248AC21B59539C1E696CB92DDD6D613');
+      t.pass();
+    });
   }
 };
