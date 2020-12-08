@@ -1,0 +1,234 @@
+{
+  "acctEmail": "flowcrypt.compatibility@gmail.com",
+  "full": {
+    "id": "1622eaa286f90737",
+    "threadId": "1622eaa286f90737",
+    "labelIds": [
+      "Label_8568454118125118654",
+      "IMPORTANT",
+      "Label_7",
+      "Label_33",
+      "Label_8",
+      "Label_3",
+      "CATEGORY_PERSONAL",
+      "Label_5",
+      "INBOX"
+    ],
+    "snippet": "armored: yes mime: yes",
+    "payload": {
+      "partId": "",
+      "mimeType": "multipart/mixed",
+      "filename": "",
+      "headers": [
+        {
+          "name": "Delivered-To",
+          "value": "flowcrypt.compatibility@gmail.com"
+        },
+        {
+          "name": "Received",
+          "value": "by 1.1.1.1 with SMTP id y13csp428352ocj;        Fri, 16 Mar 2018 04:55:27 -0700 (PDT)"
+        },
+        {
+          "name": "X-Received",
+          "value": "by 1.1.1.1 with SMTP id m65mr1391545ioa.236.1521201327046;        Fri, 16 Mar 2018 04:55:27 -0700 (PDT)"
+        },
+        {
+          "name": "ARC-Seal",
+          "value": "i=1; a=rsa-sha256; t=1521201326; cv=none;        d=google.com; s=arc-20160816;        b=DbF3xUVCTGT0wdDHhC4QeB7ZLO09JRuFeWzx3OtrPwWuN0L51crzwUYDGdwTLbms65         F3ffKWHjSczdk1aMXWbt4auZ3SE71AQvmeyHKCIe3qgoWx9c7qJCymsC/lfeWaR7WIDI         mjrbUp3es2Eubto77mU5Fz95Cv+nu4U2bao/t+ShNlgBHE4qINI5c9QvD8JK4dZUv4y4         DG2lLmNCjIZJQciXdfdtX1j0BYwsFPbvZgADFpA/nbVjBrtMM3nFb89qI3G7VD2Yfq1e         VRj+eKAy0n/t/6OT3MrVvR431xaxGiIZ/DMaOHOIjryDm9B4NC5o89aExaL4k45QlWp+         ZgIA=="
+        },
+        {
+          "name": "ARC-Message-Signature",
+          "value": "i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;        h=to:subject:message-id:date:from:mime-version:dkim-signature         :arc-authentication-results;        bh=wdFk+YsIofpIG0mkEXjROrKeyQZxpJupn+1pleAfVF0=;        b=RWpvOf8xCyq0TxnJbUIk2aS8iWUM0Ff5OVmQvXAj+6Kvj5iaz3ZCoyZuzwbNRSOwK0         Leez24DHVQGaGQ8ppQBhhrhKBZ6qWwGu6HemjdtoRDCgkC9HrPZ0Ep8xdhSSAeNPzMld         KkjjCHmtrR1GaV+sDVc6sr1ouVNhtpBcy1m5mm54k0zp6TTP9z+hHutbdLXQBXc1jz9G         7/Bl67U9Jz6b11vYNmaQDy5DlBH7ZAhHj3FOHdsQKiRe6otW6QvLztugqfueZggyp3iU         4u/k76pePuu4UsTwokt5/2XjIYfMimQGd7o0H9vv6iiM0l7ZrK3UZ1Jj1an3JmDyGZAO         3d5w=="
+        },
+        {
+          "name": "ARC-Authentication-Results",
+          "value": "i=1; mx.google.com;       dkim=pass header.i=@flowcrypt-com.20150623.gappssmtp.com header.s=20150623 header.b=yycWsRjL;       spf=neutral (google.com: 1.1.1.1 is neither permitted nor denied by best guess record for domain of censored@email.com) smtp.mailfrom=censored@email.com"
+        },
+        {
+          "name": "Return-Path",
+          "value": "<censored@email.com>"
+        },
+        {
+          "name": "Received",
+          "value": "from mail-sor-f41.google.com (mail-sor-f41.google.com. [1.1.1.1])        by mx.google.com with SMTPS id t95sor2742790ioi.1.1.1.1.04.55.26        for <flowcrypt.compatibility@gmail.com>        (Google Transport Security);        Fri, 16 Mar 2018 04:55:26 -0700 (PDT)"
+        },
+        {
+          "name": "Received-SPF",
+          "value": "neutral (google.com: 1.1.1.1 is neither permitted nor denied by best guess record for domain of censored@email.com) client-ip=1.1.1.1;"
+        },
+        {
+          "name": "Authentication-Results",
+          "value": "mx.google.com;       dkim=pass header.i=@flowcrypt-com.20150623.gappssmtp.com header.s=20150623 header.b=yycWsRjL;       spf=neutral (google.com: 1.1.1.1 is neither permitted nor denied by best guess record for domain of censored@email.com) smtp.mailfrom=censored@email.com"
+        },
+        {
+          "name": "DKIM-Signature",
+          "value": "v=1; a=rsa-sha256; c=relaxed/relaxed;        d=flowcrypt-com.20150623.gappssmtp.com; s=20150623;        h=mime-version:from:date:message-id:subject:to;        bh=wdFk+YsIofpIG0mkEXjROrKeyQZxpJupn+1pleAfVF0=;        b=yycWsRjLQYJ1rgmvmFaWX0qoDOrQjMN58hlNsOZb/0Q8rVt9QjFNNcV3DquSa5uEnC         1hu5taWyfuxBVags8fFw8vJsmrT2vZ/2LH7zy+4RoIdM83Oiv0Xi2X077KAHV0Uyv4JS         pSNYs7qwIi9avupJgq3Qdoov/UTQkrBV2GAHxkoHYvMu+SeDqDX/GKHrZLeEwkrtpC1D         X2MkfazCd3YiY3C+g2dcSJJH59Y+AV53x3e71+tyLjTCjNxNGm3m1seL4FFHvDSlAfei         +SANoHARPqtDd4VN7tZmUla1COT5vleMZF7lFFdHXDi/iwNOPyJ9c8EldxhezcJOjq9x         hyHA=="
+        },
+        {
+          "name": "X-Google-DKIM-Signature",
+          "value": "v=1; a=rsa-sha256; c=relaxed/relaxed;        d=1e100.net; s=20161025;        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;        bh=wdFk+YsIofpIG0mkEXjROrKeyQZxpJupn+1pleAfVF0=;        b=L/obtRr55UmoFplXwPhoHei+UR3ilgABMbtg9gRgM1PSwr1SlOjxItpRkSYQZpoaFg         I/tZqm2MNt4jl4xLIodGjW1byl2gqpJQI7hblek8RUf2W1uRiL44HFgQmHDmnFISCam1         F+1K+kX5G4DuM0C6ORFyA4Wl/6IwaEZXlFjcaKLg49jqTRoW44WcHLdfsYQJw1Rr+lIv         kMfPItmBGILXsZ/innaAUrzBLTZzY9pS4tIRTrV4OLujpkk47E6JINUrSF0JvhE0hUmG         lL6nKq42G/n6hefTn0Yc0iNvQVlXi4TKiDN2SD8Ae2B7jCbDE3hVyRhAS8yGPb6De04L         aObw=="
+        },
+        {
+          "name": "X-Gm-Message-State",
+          "value": "AElRT7Ejb6oulD+tHVzEhun/md2EjVfmlXvf3CYxfSzMz4rMuRC0Klzp aKFIFdUsjZ69wJ3LLCkFhjOm5/3PN5M="
+        },
+        {
+          "name": "X-Google-Smtp-Source",
+          "value": "AG47ELs/d0L4lmcgbZB1MwgV9m1+sT59/rv/otc8dRbIQHS8K76wKilMgWHLO8aAqWc8QYKqjIObQQ=="
+        },
+        {
+          "name": "X-Received",
+          "value": "by 1.1.1.1 with SMTP id t14mr1450247ioa.281.1521201325226;        Fri, 16 Mar 2018 04:55:25 -0700 (PDT)"
+        },
+        {
+          "name": "Return-Path",
+          "value": "<censored@email.com>"
+        },
+        {
+          "name": "Received",
+          "value": "from mail-io0-f171.google.com (mail-io0-f171.google.com. [1.1.1.1])        by smtp.gmail.com with ESMTPSA id d135sm5099052ioe.1.1.1.1.04.55.21        for <flowcrypt.compatibility@gmail.com>        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);        Fri, 16 Mar 2018 04:55:21 -0700 (PDT)"
+        },
+        {
+          "name": "Received",
+          "value": "by mail-io0-f171.google.com with SMTP id d21so12354391ioc.5        for <flowcrypt.compatibility@gmail.com>; Fri, 16 Mar 2018 04:55:21 -0700 (PDT)"
+        },
+        {
+          "name": "X-Received",
+          "value": "by 1.1.1.1 with SMTP id v189mr1374063iod.282.1521201320359; Fri, 16 Mar 2018 04:55:20 -0700 (PDT)"
+        },
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        },
+        {
+          "name": "Received",
+          "value": "by 1.1.1.1 with HTTP; Fri, 16 Mar 2018 04:55:18 -0700 (PDT)"
+        },
+        {
+          "name": "From",
+          "value": "Human at FlowCrypt <human@flowcrypt.com>"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 16 Mar 2018 19:55:18 +0800"
+        },
+        {
+          "name": "X-Gmail-Original-Message-ID",
+          "value": "<CAOWYkBvJV=4NxCTxUmMvNuepxJnGLzdQCjiOa93LvoBcFiFOEcensored@email.com>"
+        },
+        {
+          "name": "Message-ID",
+          "value": "<CAOWYkBvJV=4NxCTxUmMvNuepxJnGLzdQCjiOa93LvoBcFiFOEcensored@email.com>"
+        },
+        {
+          "name": "Subject",
+          "value": "large armored mime message as an attachment"
+        },
+        {
+          "name": "To",
+          "value": "flowcrypt.compatibility@gmail.com"
+        },
+        {
+          "name": "Content-Type",
+          "value": "multipart/mixed; boundary=\"94eb2c0560a856e612056786483f\""
+        }
+      ],
+      "body": {
+        "size": 0
+      },
+      "parts": [
+        {
+          "partId": "0",
+          "mimeType": "multipart/alternative",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "multipart/alternative; boundary=\"94eb2c0560a856e60f056786483d\""
+            }
+          ],
+          "body": {
+            "size": 0
+          },
+          "parts": [
+            {
+              "partId": "0.0",
+              "mimeType": "text/plain",
+              "filename": "",
+              "headers": [
+                {
+                  "name": "Content-Type",
+                  "value": "text/plain; charset=\"UTF-8\""
+                }
+              ],
+              "body": {
+                "size": 25,
+                "data": "YXJtb3JlZDogeWVzDQptaW1lOiB5ZXMNCg=="
+              }
+            },
+            {
+              "partId": "0.1",
+              "mimeType": "text/html",
+              "filename": "",
+              "headers": [
+                {
+                  "name": "Content-Type",
+                  "value": "text/html; charset=\"UTF-8\""
+                }
+              ],
+              "body": {
+                "size": 168,
+                "data": "PGRpdiBkaXI9Imx0ciI-PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9zaWduYXR1cmUiIGRhdGEtc21hcnRtYWlsPSJnbWFpbF9zaWduYXR1cmUiPjxkaXYgZGlyPSJsdHIiPjxkaXY-YXJtb3JlZDogeWVzPC9kaXY-PGRpdj5taW1lOiB5ZXM8L2Rpdj48L2Rpdj48L2Rpdj48L2Rpdj4NCjwvZGl2Pg0K"
+              }
+            }
+          ]
+        },
+        {
+          "partId": "1",
+          "mimeType": "text/plain",
+          "filename": "message.asc",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "text/plain; charset=\"US-ASCII\"; name=\"message.asc\""
+            },
+            {
+              "name": "Content-Disposition",
+              "value": "attachment; filename=\"message.asc\""
+            },
+            {
+              "name": "Content-Transfer-Encoding",
+              "value": "base64"
+            },
+            {
+              "name": "X-Attachment-Id",
+              "value": "f_jetvz6oi0"
+            }
+          ],
+          "body": {
+            "attachmentId": "ANGjdJ_MdqceB8AYCQKFEO1mpjcK5veo7iH5JCUDPEJno5VvnAMC6AUU2JZig2rkI7v9s7jcyT62FU1xZ3tDwYHSUN043M2p2hIyPhgPCDFLtOfNeUVZvXfk9mAlZnNaKV7B2k235agyzu4wKyggn-hpq4w73zrt17LQabVcpb2HUm_gKfBJkdfTFnXvJSrOEK0lNCEGmwXpZYm_ysiAObtftVSSQXgS5HXo-ON3L4wOgPV34teLTYSu7Wm44xrQQufZQxqK8HkTJJYNxw5z3auefQHerHWjuFoVTwbAxiAhk4CbXYb0E8QblLeMQlGzYs2EeGFblXaqjQUcU1nkmenoaf3QsLurYmp3N0VDobNkj8ml35KsohPi1JWCxSSfNG0Pad8urNh653ed0pfu",
+            "size": 6070631
+          }
+        }
+      ]
+    },
+    "sizeEstimate": 8313289,
+    "historyId": "1112206",
+    "internalDate": "1521201318000"
+  },
+  "raw": {
+    "id": "1622eaa286f90737",
+    "threadId": "1622eaa286f90737",
+    "labelIds": [
+      "Label_8568454118125118654",
+      "IMPORTANT",
+      "Label_7",
+      "Label_33",
+      "Label_8",
+      "Label_3",
+      "CATEGORY_PERSONAL",
+      "Label_5",
+      "INBOX"
+    ]
+  }
+}

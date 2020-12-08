@@ -1,0 +1,127 @@
+{
+  "acctEmail": "flowcrypt.compatibility@gmail.com",
+  "full": {
+    "id": "1622ea42f3654ddc",
+    "threadId": "1622ea42f3654ddc",
+    "labelIds": [
+      "Label_8568454118125118654",
+      "Label_17",
+      "IMPORTANT",
+      "Label_3",
+      "SENT",
+      "Label_5",
+      "INBOX"
+    ],
+    "snippet": "",
+    "payload": {
+      "partId": "",
+      "mimeType": "multipart/encrypted",
+      "filename": "",
+      "headers": [
+        {
+          "name": "Return-Path",
+          "value": "<flowcrypt.compatibility@gmail.com>"
+        },
+        {
+          "name": "Received",
+          "value": "from [1.1.1.1] ([1.1.1.1])        by smtp.gmail.com with ESMTPSA id o189sm2672936iof.1.1.1.1.04.48.18        for <flowcrypt.compatibility@gmail.com>        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);        Fri, 16 Mar 2018 04:48:54 -0700 (PDT)"
+        },
+        {
+          "name": "To",
+          "value": "flowcrypt.compatibility@gmail.com"
+        },
+        {
+          "name": "From",
+          "value": "FlowCrypt Compatibility <flowcrypt.compatibility@gmail.com>"
+        },
+        {
+          "name": "Subject",
+          "value": "standard enigmail pgp/mime with 4MB attachment"
+        },
+        {
+          "name": "Message-ID",
+          "value": "<censored@email.com>"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 16 Mar 2018 19:47:59 +0800"
+        },
+        {
+          "name": "User-Agent",
+          "value": "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Thunderbird/52.6.0"
+        },
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        },
+        {
+          "name": "Content-Type",
+          "value": "multipart/encrypted; protocol=\"application/pgp-encrypted\"; boundary=\"imoiDBvv6bwFMDmPqevNT4TqoClrO3pjb\""
+        }
+      ],
+      "body": {
+        "size": 0
+      },
+      "parts": [
+        {
+          "partId": "0",
+          "mimeType": "application/pgp-encrypted",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/pgp-encrypted"
+            },
+            {
+              "name": "Content-Description",
+              "value": "PGP/MIME version identification"
+            }
+          ],
+          "body": {
+            "attachmentId": "ANGjdJ-q7CkHvMF9hpWUtRG8wQyItEeVLp7deoKLvCLtcvXtzLedsR_gYNzP8Dn31R_Ih-ZN46IJtE-CJlTgsJq2H_JrR2psywBjfAb9NFcTIE6h_eMsyRkqcW40sUoZj2RCq4R9y_dxS2oP_YGb_oqaol9IyUDIXmD-A8dYF79G7Sg1poA2LaEanx4ANOA-fo6nc81EzgFsZbi5Jb9tIHFY9xajmAN7ntMFGQGXhcU9hx398qy0kt6SXTq-trxDH0L0QP89vJeLwjVjaIqiiVNNsq8YyC2cvlM-FF8WYRMyvJtoVSgeODsTD58y07bgoqN0qyoRMuOPTr4uNuNTuOK1c8D-qK5k_NodNTg48NoE1AprzEC4L640GgMHPg0",
+            "size": 12
+          }
+        },
+        {
+          "partId": "1",
+          "mimeType": "application/octet-stream",
+          "filename": "encrypted.asc",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/octet-stream; name=\"encrypted.asc\""
+            },
+            {
+              "name": "Content-Description",
+              "value": "OpenPGP encrypted message"
+            },
+            {
+              "name": "Content-Disposition",
+              "value": "inline; filename=\"encrypted.asc\""
+            }
+          ],
+          "body": {
+            "attachmentId": "ANGjdJ8YdgvL3F8zkLGZsSd2CaPeeUolVHLuBWkgoEt4at7b9s9NLk-SRzTD3fmwHGkdPHACJt0IEEQplTY-ftZZPM-tl1nv1DI36m1WyaJg9qn3Ri9fU6mXkZgGkBopWklWEKgAeC65tM8w41DXrKZkfrkj4J8PG7OcYRpNcvdfQmQN7WDKwwPmUyMRPosBfuncFGIbK8fHBRcB6D7OAzXxbAn4irkKnxji4d5amCV8BI9xBdQjdzSo_TQU_IW8bhzNmPryG9tRJspfoqbpc3AMD68vo5BnlKSZf7dxPgHBIEtM3w6UQyu7kHIoX3htKa9H9BrK4Rn_lVLcH9uxVBPtfQwVlSIQYmiE142GWoUVL2WafhQzqN8SD8IgbKU",
+            "size": 6164029
+          }
+        }
+      ]
+    },
+    "sizeEstimate": 6165339,
+    "historyId": "1112199",
+    "internalDate": "1521200879000"
+  },
+  "raw": {
+    "id": "1622ea42f3654ddc",
+    "threadId": "1622ea42f3654ddc",
+    "labelIds": [
+      "Label_8568454118125118654",
+      "Label_17",
+      "IMPORTANT",
+      "Label_3",
+      "SENT",
+      "Label_5",
+      "INBOX"
+    ]
+  }
+}
