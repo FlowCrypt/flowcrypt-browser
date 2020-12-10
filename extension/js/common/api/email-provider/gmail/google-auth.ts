@@ -129,14 +129,8 @@ export class GoogleAuth {
       GoogleAuth.waitForAndProcessOauthWindowResult(oauthWin.id, acctEmail, scopes, authRequest.csrfToken, save),
       GoogleAuth.waitForOauthWindowClosed(oauthWin.id, acctEmail),
     ]);
-    try {
-      chrome.windows.remove(oauthWin.id);
-    } catch (e) {
-      if (String(e).indexOf('No window with id') === -1) {
-        Catch.reportErr(e);
-      }
-    }
     if (authRes.result === 'Success') {
+      chrome.windows.remove(oauthWin.id); // The prompt windows is removed when the user is authorized.
       if (!authRes.id_token) {
         return { result: 'Error', error: 'Grant was successful but missing id_token', acctEmail: authRes.acctEmail, id_token: undefined };
       }

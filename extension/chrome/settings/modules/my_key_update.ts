@@ -42,8 +42,8 @@ View.run(class MyKeyUpdateView extends View {
     Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
     $('.action_show_public_key').attr('href', this.showKeyUrl);
     $('.email').text(this.acctEmail);
-    $('.fingerprint').text(Str.spaced(this.primaryKi.fingerprint));
-    this.inputPrivateKey.attr('placeholder', this.inputPrivateKey.attr('placeholder') + ' (' + this.primaryKi.fingerprint + ')');
+    $('.fingerprint').text(Str.spaced(this.primaryKi.fingerprints[0]));
+    this.inputPrivateKey.attr('placeholder', this.inputPrivateKey.attr('placeholder') + ' (' + this.primaryKi.fingerprints[0] + ')');
   }
 
   public setHandlers = () => {
@@ -52,10 +52,10 @@ View.run(class MyKeyUpdateView extends View {
   }
 
   private storeUpdatedKeyAndPassphrase = async (updatedPrv: Key, updatedPrvPassphrase: string) => {
-    const storedPassphrase = await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprint, true);
+    const storedPassphrase = await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprints[0], true);
     await KeyStore.add(this.acctEmail, KeyUtil.armor(updatedPrv));
-    await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.fingerprint, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
-    await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.fingerprint, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
+    await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.fingerprints[0], typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
+    await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.fingerprints[0], typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
     if (this.orgRules.canSubmitPubToAttester() && await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
       try {
         await Ui.modal.info(await this.pubLookup.attester.updatePubkey(this.primaryKi!.longid, KeyUtil.armor(await KeyUtil.asPublicKey(updatedPrv))));
@@ -76,7 +76,7 @@ View.run(class MyKeyUpdateView extends View {
     } else if (updatedKey.isPublic) {
       await Ui.modal.warning('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"');
     } else if (updatedKey.id !== (await KeyUtil.parse(this.primaryKi!.public)).id) {
-      await Ui.modal.warning(`This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(this.primaryKi!.fingerprint)}`);
+      await Ui.modal.warning(`This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(this.primaryKi!.fingerprints[0])}`);
     } else if (await KeyUtil.decrypt(updatedKey, uddatedKeyPassphrase) !== true) {
       await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
     } else {

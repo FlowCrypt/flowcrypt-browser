@@ -6,7 +6,6 @@ import { Dict, Str, Url, UrlParams } from './core/common.js';
 import { Ui } from './browser/ui.js';
 import { Api } from './api/shared/api.js';
 import { ApiErr, AjaxErr } from './api/shared/api-error.js';
-
 import { Catch } from './platform/catch.js';
 import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
@@ -116,9 +115,9 @@ export class Settings {
     const destAccountPrivateKeys = await KeyStore.get(newAcctEmail);
     const destAcctPassPhrases: Dict<string> = {};
     for (const ki of destAccountPrivateKeys) {
-      const pp = await PassphraseStore.get(newAcctEmail, ki.fingerprint, true);
+      const pp = await PassphraseStore.get(newAcctEmail, ki.fingerprints[0], true);
       if (pp) {
-        destAcctPassPhrases[ki.fingerprint] = pp;
+        destAcctPassPhrases[ki.fingerprints[0]] = pp;
       }
     }
     if (!oldAcctEmailIndexPrefix) {
@@ -279,7 +278,7 @@ export class Settings {
       } else if (response.result === 'Denied' || response.result === 'Closed') {
         const authDeniedHtml = await Api.ajax({ url: '/chrome/settings/modules/auth_denied.htm' }, Catch.stackTrace()) as string; // tslint:disable-line:no-direct-ajax
         if (await Ui.modal.confirm(authDeniedHtml, true)) {
-          await GoogleAuth.newAuthPopup({ acctEmail, scopes });
+          await Settings.newGoogleAcctAuthPromptThenAlertOrForward(settingsTabId, acctEmail, scopes);
         }
       } else {
         Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);

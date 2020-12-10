@@ -112,7 +112,7 @@ View.run(class KeyserverView extends View {
     const diagnosis: AttesterKeyserverDiagnosis = { hasPubkeyMissing: false, hasPubkeyMismatch: false, results: {} };
     const { sendAs } = await AcctStore.get(this.acctEmail, ['sendAs']);
     const storedKeys = await KeyStore.get(this.acctEmail);
-    const storedKeysIds = storedKeys.map(ki => ki.fingerprint);
+    const storedKeysIds = storedKeys.map(ki => ki.fingerprints[0]);
     const results = await this.pubLookup.attester.lookupEmails(sendAs ? Object.keys(sendAs) : [this.acctEmail]);
     for (const email of Object.keys(results)) {
       const pubkeySearchResult = results[email];

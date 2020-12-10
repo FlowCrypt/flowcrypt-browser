@@ -101,7 +101,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     if (!senderKi) {
       senderKi = await KeyStore.getFirstRequired(this.view.acctEmail);
     }
-    return await PassphraseStore.get(this.view.acctEmail, senderKi.fingerprint);
+    return await PassphraseStore.get(this.view.acctEmail, senderKi.fingerprints[0]);
   }
 
   public lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string, name: string | undefined): Promise<Contact | "fail"> => {

@@ -64,7 +64,7 @@ export class PgpBlockViewDecryptModule {
 
   private decryptAndRender = async (encryptedData: Buf, optionalPwd?: string, plainSubject?: string) => {
     if (typeof this.view.signature !== 'string') {
-      const kisWithPp = await KeyStore.getAllWithPp(this.view.acctEmail);
+      const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
       const result = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData });
       if (typeof result === 'undefined') {
         await this.view.errorModule.renderErr(Lang.general.restartBrowserAndTryAgain, undefined);

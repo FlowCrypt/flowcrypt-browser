@@ -49,7 +49,7 @@ View.run(class MyKeyView extends View {
     this.pubKey = await KeyUtil.parse(this.keyInfo.public);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
     $('.action_view_update').attr('href', this.myKeyUpdateUrl);
-    $('.fingerprint').text(Str.spaced(this.keyInfo.fingerprint));
+    $('.fingerprint').text(Str.spaced(this.keyInfo.fingerprints[0]));
     Xss.sanitizeRender('.email', this.pubKey.emails.map(email => `<span>${Xss.escape(email)}</span>`).join(', '));
     const expiration = this.pubKey.expiration;
     $('.key_expiration').text(expiration && expiration !== Infinity ? Str.datetimeToDate(Str.fromDate(new Date(expiration))) : 'Key does not expire');
@@ -72,7 +72,7 @@ View.run(class MyKeyView extends View {
     try {
       const result = await this.pubLookup.attester.lookupEmail(this.acctEmail);
       const url = FlowCryptWebsite.url('pubkey', this.acctEmail);
-      if (result.pubkey && (await KeyUtil.parse(result.pubkey)).id === this.keyInfo.fingerprint) {
+      if (result.pubkey && (await KeyUtil.parse(result.pubkey)).id === this.keyInfo.fingerprints[0]) {
         $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('display', '');
       } else {
         $('.pubkey_link_container').remove();
@@ -86,7 +86,7 @@ View.run(class MyKeyView extends View {
   private downloadRevocationCert = async (enteredPP?: string) => {
     const prv = await KeyUtil.parse(this.keyInfo.private);
     if (!prv.fullyDecrypted) {
-      const passphrase = await PassphraseStore.get(this.acctEmail, this.keyInfo.fingerprint) || enteredPP;
+      const passphrase = await PassphraseStore.get(this.acctEmail, this.keyInfo.fingerprints[0]) || enteredPP;
       if (passphrase) {
         if (! await KeyUtil.decrypt(prv, passphrase) && enteredPP) {
           await Ui.modal.error('Pass phrase did not match, please try again.');

@@ -153,7 +153,7 @@ View.run(class SettingsView extends View {
     }));
     $('.action_open_public_key_page').click(this.setHandler(async () => {
       const ki = await KeyStore.getFirstRequired(this.acctEmail!);
-      const escapedFp = Xss.escape(ki.fingerprint);
+      const escapedFp = Xss.escape(ki.fingerprints[0]);
       await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/my_key.htm', `&fingerprint=${escapedFp}`);
     }));
     $('.action_show_encrypted_inbox').click(this.setHandler(() => {
@@ -288,10 +288,6 @@ View.run(class SettingsView extends View {
   private renderNotificationBanners = async (emailProvider: EmailProvider, rules: OrgRules) => {
     if (!this.acctEmail) {
       return;
-    }
-    const scopes = await AcctStore.getScopes(this.acctEmail);
-    if (!(scopes.read || scopes.modify) && emailProvider === 'gmail') {
-      $('.auth_denied_warning').removeClass('hidden');
     }
     const globalStorage = await GlobalStore.get(['install_mobile_app_notification_dismissed']);
     if (!globalStorage.install_mobile_app_notification_dismissed && rules.canBackupKeys() && rules.canCreateKeys() && !rules.usesKeyManager()) {
@@ -432,7 +428,7 @@ View.run(class SettingsView extends View {
       const prv = await KeyUtil.parse(ki.private);
       const created = new Date(prv.created);
       const date = Str.monthName(created.getMonth()) + ' ' + created.getDate() + ', ' + created.getFullYear();
-      const escapedFp = Xss.escape(ki.fingerprint);
+      const escapedFp = Xss.escape(ki.fingerprints[0]);
       let removeKeyBtn = '';
       if (canRemoveKey && privateKeys.length > 1) {
         removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key" fingerprint="${escapedFp}">remove</a>)`;
