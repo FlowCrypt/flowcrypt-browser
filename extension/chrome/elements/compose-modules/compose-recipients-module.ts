@@ -345,6 +345,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (this.dragged) { // blur while drag&drop
       return;
     }
+    if (e.relatedTarget === this.view.S.cached('contacts').get(0)) { // user selected contact in #contacts list, do nothing here
+      return;
+    }
     this.view.errModule.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
     await this.parseRenderRecipients($(target));
     // If thereis no related target or related target isn't in recipients functionality
