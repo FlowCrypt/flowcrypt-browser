@@ -2,10 +2,8 @@
 
 import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
 
-import UserMessages from '../../../samples/mock-data';
 import { Util } from '../../util/index';
 import { readFileSync, readdirSync } from 'fs';
-import { acctsWithoutMockData } from '../../mock';
 import { Buf } from '../../core/buf';
 
 type GmailMsg$header = { name: string, value: string };
@@ -160,23 +158,17 @@ export class GoogleData {
 
   constructor(private acct: string) {
     if (!DATA[acct]) {
-      if (acctsWithoutMockData.includes(acct)) {
-        DATA[acct] = { drafts: [], messages: [], attachments: {}, labels: [] };
-      } else {
-        const bulkExport = JSON.parse(readFileSync(`./test/samples/${acct.replace(/[^a-z0-9]+/g, '')}.json`, { encoding: 'utf-8' })) as AcctDataFile;
-        bulkExport.messages = bulkExport.messages.filter(m => !this.skipBulkImportMessages.includes(m.id));
-        DATA[acct] = bulkExport;
-      }
-      if (UserMessages[acct]) { // todo - remove this part, and move messages to use the "exported" messages functionality below
-        DATA[acct].drafts = UserMessages[acct].drafts;
-        DATA[acct].messages.push(...UserMessages[acct].messages);
-      }
+      DATA[acct] = { drafts: [], messages: [], attachments: {}, labels: [] };
       for (const filename of readdirSync(this.exportedMsgsPath)) {
         const json = JSON.parse(Buf.fromUint8(readFileSync(this.exportedMsgsPath + filename)).toUtfStr()) as ExportedMsg;
         if (json.acctEmail === acct) {
           Object.assign(DATA[json.acctEmail].attachments, json.attachments);
           json.full.raw = json.raw.raw;
-          DATA[json.acctEmail].messages.push(json.full);
+          if (json.full.labelIds && json.full.labelIds.includes('DRAFT')) {
+            DATA[json.acctEmail].drafts.push(json.full);
+          } else {
+            DATA[json.acctEmail].messages.push(json.full);
+          }
         }
       }
     }
