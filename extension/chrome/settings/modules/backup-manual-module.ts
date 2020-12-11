@@ -5,7 +5,6 @@
 import { ViewModule } from '../../../js/common/view-module.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { BackupView } from './backup.js';
-import { Assert } from '../../../js/common/assert.js';
 import { Attachment } from '../../../js/common/core/attachment.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
@@ -56,8 +55,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
 
   private actionManualBackupHandler = async () => {
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
-    const primaryKi = await KeyStore.getFirst(this.view.acctEmail);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    const primaryKi = await KeyStore.getFirstRequired(this.view.acctEmail);
     if (! await this.isPrivateKeyEncrypted(primaryKi)) {
       await Ui.modal.error('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
       return;

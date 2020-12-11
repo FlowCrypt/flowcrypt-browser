@@ -39,8 +39,7 @@ View.run(class SecurityView extends View {
 
   public render = async () => {
     await initPassphraseToggle(['passphrase_entry']);
-    this.primaryKi = await KeyStore.getFirst(this.acctEmail);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
+    this.primaryKi = await KeyStore.getFirstRequired(this.acctEmail);
     this.authInfo = await AcctStore.authInfo(this.acctEmail);
     const storage = await AcctStore.get(this.acctEmail, ['hide_message_password', 'outgoing_language']);
     this.orgRules = await OrgRules.newInstance(this.acctEmail);

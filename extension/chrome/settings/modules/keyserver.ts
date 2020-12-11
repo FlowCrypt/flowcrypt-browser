@@ -80,8 +80,7 @@ View.run(class KeyserverView extends View {
       return await Ui.modal.error('Disallowed by your organisation rules');
     }
     Xss.sanitizeRender(target, Ui.spinner('white'));
-    const primaryKi = await KeyStore.getFirst(this.acctEmail);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    const primaryKi = await KeyStore.getFirstRequired(this.acctEmail);
     try {
       await this.pubLookup.attester.initialLegacySubmit(String($(target).attr('email')), primaryKi.public);
     } catch (e) {
@@ -97,8 +96,7 @@ View.run(class KeyserverView extends View {
       return await Ui.modal.error('Disallowed by your organisation rules');
     }
     Xss.sanitizeRender(target, Ui.spinner('white'));
-    const primaryKi = await KeyStore.getFirst(this.acctEmail);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    const primaryKi = await KeyStore.getFirstRequired(this.acctEmail);
     try {
       const responseText = await this.pubLookup.attester.replacePubkey(String($(target).attr('email')), primaryKi.public);
       await Ui.modal.info(responseText);

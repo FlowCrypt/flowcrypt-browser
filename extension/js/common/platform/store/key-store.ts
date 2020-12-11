@@ -4,6 +4,7 @@ import { KeyInfo, KeyInfoWithOptionalPp, KeyUtil } from '../../core/crypto/key.j
 import { AcctStore } from './acct-store.js';
 import { PassphraseStore } from './passphrase-store.js';
 import { AbstractStore } from './abstract-store.js';
+import { Assert } from '../../assert.js';
 
 /**
  * Local store of account private keys
@@ -21,9 +22,16 @@ export class KeyStore extends AbstractStore {
     return keys.filter(ki => fingerprints.includes(ki.fingerprints[0]));
   }
 
-  public static getFirst = async (acctEmail: string): Promise<KeyInfo> => {
-    const keys = await KeyStore.get(acctEmail);
+  public static getFirstOptional = async (acctEmail: string): Promise<KeyInfo | undefined> => {
+    const stored = await AcctStore.get(acctEmail, ['keys']);
+    const keys: KeyInfo[] = stored.keys || [];
     return keys[0];
+  }
+
+  public static getFirstRequired = async (acctEmail: string): Promise<KeyInfo> => {
+    const key = await KeyStore.getFirstOptional(acctEmail);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(key);
+    return key as KeyInfo;
   }
 
   public static getAllWithOptionalPassPhrase = async (acctEmail: string): Promise<KeyInfoWithOptionalPp[]> => {
