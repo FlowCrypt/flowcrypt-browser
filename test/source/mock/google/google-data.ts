@@ -2,7 +2,6 @@
 
 import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
 
-import UserMessages from '../../../samples/mock-data';
 import { Util } from '../../util/index';
 import { readFileSync, readdirSync } from 'fs';
 import { Buf } from '../../core/buf';
@@ -160,10 +159,6 @@ export class GoogleData {
   constructor(private acct: string) {
     if (!DATA[acct]) {
       DATA[acct] = { drafts: [], messages: [], attachments: {}, labels: [] };
-      if (UserMessages[acct]) { // todo - remove this part, and move messages to use the "exported" messages functionality below
-        DATA[acct].drafts = UserMessages[acct].drafts;
-        DATA[acct].messages.push(...UserMessages[acct].messages);
-      }
       for (const filename of readdirSync(this.exportedMsgsPath)) {
         const json = JSON.parse(Buf.fromUint8(readFileSync(this.exportedMsgsPath + filename)).toUtfStr()) as ExportedMsg;
         if (json.acctEmail === acct) {
