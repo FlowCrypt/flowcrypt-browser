@@ -164,7 +164,11 @@ export class GoogleData {
         if (json.acctEmail === acct) {
           Object.assign(DATA[json.acctEmail].attachments, json.attachments);
           json.full.raw = json.raw.raw;
-          DATA[json.acctEmail].messages.push(json.full);
+          if (json.full.labelIds && json.full.labelIds.includes('DRAFT')) {
+            DATA[json.acctEmail].drafts.push(json.full);
+          } else {
+            DATA[json.acctEmail].messages.push(json.full);
+          }
         }
       }
     }
