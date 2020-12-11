@@ -25,11 +25,11 @@
         },
         {
           "name": "From",
-          "value": "censored@email.com"
+          "value": "email.1@flowcrypt.com"
         },
         {
           "name": "To",
-          "value": "email.2@flowcrypt.com, email.1@flowcrypt.com"
+          "value": "email.1@flowcrypt.com, email.2@flowcrypt.com"
         },
         {
           "name": "Cc",
