@@ -73,7 +73,6 @@ View.run(class ChangePassPhraseView extends View {
       await Ui.modal.error('Pass phrase did not match, please try again.');
       $('#current_pass_phrase').val('').focus();
     }
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
   }
 
   private actionSetPassPhraseHandler = async (target: HTMLElement) => {
