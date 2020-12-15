@@ -300,7 +300,8 @@ export class ContactStore extends AbstractStore {
     email = email.toLowerCase();
     name = name ? name.toLowerCase() : '';
     const parts = [email, name];
-    parts.push(...email.split(/[^a-z0-9]/));
+    const domain: string = email.split('@').pop() || '';
+    parts.push(domain, ...email.split(/[^a-z0-9]/));
     parts.push(...name.split(/[^a-z0-9]/));
     const index: string[] = [];
     for (const part of parts) {
