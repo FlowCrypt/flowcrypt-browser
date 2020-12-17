@@ -2,6 +2,8 @@
 
 'use strict';
 
+import * as DOMPurify from 'dompurify';
+
 import { Dict, Str } from './common.js';
 import { requireIso88592, requireMimeBuilder, requireMimeParser } from '../platform/require.js';
 
@@ -208,7 +210,11 @@ export class Mime {
       } else {
         contentNode = new MimeBuilder('multipart/alternative'); // tslint:disable-line:no-unsafe-any
         for (const type of Object.keys(body)) {
-          contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!.toString())); // already present, that's why part of for loop
+          let content = body[type]!.toString();
+          if (type === 'text/html') {
+            content = Mime.extractInlineImagesToAttachments(content, rootNode);
+          }
+          contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, content)); // already present, that's why part of for loop
         }
       }
       rootNode.appendChild(contentNode); // tslint:disable-line:no-unsafe-any
@@ -403,4 +409,36 @@ export class Mime {
     return node;
   }
 
+  private static extractInlineImagesToAttachments = (html: string, rootNode: any) => {
+    const imgAttNodes: any[] = [];
+    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+      if (!node) {
+        return;
+      }
+      if ('src' in node) {
+        const img: Element = node;
+        const src = img.getAttribute('src') as string;
+        const { mimeType, data } = Mime.parseInlineImageSrc(src);
+        const imgAttachment = new Attachment({ name: img.getAttribute('name') || '', type: mimeType, data: Buf.fromBase64Str(data), inline: true });
+        const imgAttNode = Mime.createAttNode(imgAttachment);
+        rootNode.appendChild(imgAttNode); // tslint:disable-line:no-unsafe-any
+        const imgAttachmentId: string = imgAttNode._headers.find((header: Dict<string>) => header.key === 'X-Attachment-Id').value;
+        img.setAttribute('src', `cid:${imgAttachmentId}`);
+        imgAttNodes.push(imgAttNode);
+      }
+    });
+    const htmlWithInlineImages = DOMPurify.sanitize(html);
+    DOMPurify.removeAllHooks();
+    return htmlWithInlineImages;
+  }
+
+  private static parseInlineImageSrc = (src: string) => {
+    let mimeType;
+    let data = '';
+    const matches = src.match(/data:(image\/\w+);base64,(.*)/);
+    if (matches) {
+      [, mimeType, data] = matches;
+    }
+    return { mimeType, data };
+  }
 }
