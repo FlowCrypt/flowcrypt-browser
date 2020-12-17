@@ -277,20 +277,6 @@ export class Mime {
     return pgpMimeSigned;
   }
 
-  public static createAttNode = (attachment: Attachment): any => { // todo: MimeBuilder types
-    const type = `${attachment.type}; name="${attachment.name}"`;
-    const id = `f_${Str.sloppyRandom(30)}@flowcrypt`;
-    const header: Dict<string> = {};
-    if (attachment.contentDescription) {
-      header['Content-Description'] = attachment.contentDescription;
-    }
-    header['Content-Disposition'] = attachment.inline ? 'inline' : 'attachment';
-    header['X-Attachment-Id'] = id;
-    header['Content-ID'] = `<${id}>`;
-    header['Content-Transfer-Encoding'] = 'base64';
-    return new MimeBuilder(type, { filename: attachment.name }).setHeader(header).setContent(attachment.getData()); // tslint:disable-line:no-unsafe-any
-  }
-
   private static headerGetAddress = (parsedMimeMsg: MimeContent, headersNames: Array<SendingType | 'from'>) => {
     const result: { to: string[], cc: string[], bcc: string[] } = { to: [], cc: [], bcc: [] };
     let from: string | undefined;
@@ -328,6 +314,20 @@ export class Mime {
       return Mime.retrieveRawSignedContent(node._childNodes);
     }
     return undefined;
+  }
+
+  private static createAttNode = (attachment: Attachment): any => { // todo: MimeBuilder types
+    const type = `${attachment.type}; name="${attachment.name}"`;
+    const id = `f_${Str.sloppyRandom(30)}@flowcrypt`;
+    const header: Dict<string> = {};
+    if (attachment.contentDescription) {
+      header['Content-Description'] = attachment.contentDescription;
+    }
+    header['Content-Disposition'] = attachment.inline ? 'inline' : 'attachment';
+    header['X-Attachment-Id'] = id;
+    header['Content-ID'] = `<${id}>`;
+    header['Content-Transfer-Encoding'] = 'base64';
+    return new MimeBuilder(type, { filename: attachment.name }).setHeader(header).setContent(attachment.getData()); // tslint:disable-line:no-unsafe-any
   }
 
   private static getNodeType = (node: MimeParserNode, type: 'value' | 'initial' = 'value') => {
