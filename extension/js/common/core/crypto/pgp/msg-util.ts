@@ -155,7 +155,7 @@ export class MsgUtil {
           verifyRes.signer = {
             longid: OpenPGPKey.bytesToLongid(verification.keyid.bytes),
             primaryUserId: await OpenPGPKey.getPrimaryUserId(pubs, verification.keyid)
-          }
+          };
         }
       }
     } catch (verifyErr) {
