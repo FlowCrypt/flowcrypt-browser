@@ -135,7 +135,7 @@ export class PgpBlockViewRenderModule {
       const contentId = a.href.replace(/^cid:/g, '');
       const content = this.view.attachmentsModule.includedAtts.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${contentId}>`)[0];
       if (content) {
-        img.src = `data:${a.type};base64,${content.getData().toBase64Str()}`;
+        img.src = `data:${content.type};base64,${content.getData().toBase64Str()}`;
         Xss.replaceElementDANGEROUSLY(a, img.outerHTML); // xss-safe-value - img.outerHTML was built using dom node api
       } else {
         Xss.replaceElementDANGEROUSLY(a, Xss.escape(`[broken link: ${a.href}]`)); // xss-escaped

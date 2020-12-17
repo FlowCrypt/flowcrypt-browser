@@ -98,14 +98,14 @@ export class Xss {
           a.href = src;
           a.className = 'image_src_link';
           a.target = '_blank';
-          a.innerText = (title || 'show image') + (src.startsWith('data:image/') ? '' : ' (remote)');
+          a.innerText = (title || 'show image') + (src.startsWith('data:image/') || src.startsWith('cid:') ? '' : ' (remote)');
           const heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'};max-width:98%;`;
           a.setAttribute('style', `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; ${heightWidth}`);
           Xss.replaceElementDANGEROUSLY(img, a.outerHTML); // xss-safe-value - "a" was build using dom node api
         }
       }
       if ('target' in node) { // open links in new window
-        (node as Element).setAttribute('target','_blank');
+        (node as Element).setAttribute('target', '_blank');
         // prevents https://www.owasp.org/index.php/Reverse_Tabnabbing
         (node as Element).setAttribute('rel', 'noopener noreferrer');
       }
