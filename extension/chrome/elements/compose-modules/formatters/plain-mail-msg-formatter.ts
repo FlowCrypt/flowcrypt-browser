@@ -18,4 +18,5 @@ export class PlainMsgMailFormatter extends BaseMailFormatter {
     }
     return await SendableMsg.createPlain(this.acctEmail, this.headers(newMsg), body, attachments);
   }
+
 }

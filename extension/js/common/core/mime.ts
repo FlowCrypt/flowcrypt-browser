@@ -422,7 +422,7 @@ export class Mime {
         const imgAttachment = new Attachment({ name: img.getAttribute('name') || '', type: mimeType, data: Buf.fromBase64Str(data), inline: true });
         const imgAttNode = Mime.createAttNode(imgAttachment);
         rootNode.appendChild(imgAttNode); // tslint:disable-line:no-unsafe-any
-        const imgAttachmentId: string = imgAttNode._headers.find((header: Dict<string>) => header.key === 'X-Attachment-Id').value;
+        const imgAttachmentId = imgAttNode.getHeader('X-Attachment-Id'); // tslint:disable-line:no-unsafe-any
         img.setAttribute('src', `cid:${imgAttachmentId}`);
         imgAttNodes.push(imgAttNode);
       }
