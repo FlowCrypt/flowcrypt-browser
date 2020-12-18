@@ -340,6 +340,11 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params: url,
         content: ['How is my message signed?'],
+        signature: ["Fetched pubkey, click to verify"]
+      });
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
+        params: url,
+        content: ['How is my message signed?'],
         signature: ['Sams50sams50sept@Gmail.Com', 'matching signature']
       });
     }));
@@ -350,7 +355,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params: textParams,
         content: ["1234"],
-        signature: ["Missing pubkey", "Mismatch@Mail.Com"]
+        signature: ["Missing pubkey"]
       });
       const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(protonCompatPub)}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
       const pubFrame = await browser.newPage(t, pubFrameUrl);
@@ -377,7 +382,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: ["1234"],
-        signature: ["Fetched pubkey, click to verify", "Flowcrypt.Compatibility@Protonmail.Com"]
+        signature: ["Fetched pubkey, click to verify"]
       });
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
@@ -391,7 +396,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: ['4) signed + encrypted email if supported'],
-        signature: ["Fetched pubkey, click to verify", "Martin@Politick.Ca"]
+        signature: ["Fetched pubkey, click to verify"]
       });
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
@@ -489,7 +494,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: ['no trailing space', 'space:', 'space and tab:'],
-        signature: ["Fetched pubkey, click to verify", "Sha1@Sign.Com"]
+        signature: ["Fetched pubkey, click to verify"]
       });
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
@@ -504,7 +509,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: [expectedContent],
-        signature: ['Missing pubkey A38042F607D623DA', 'Censored@Email.Com']
+        signature: ['Missing pubkey A38042F607D623DA']
       });
     }));
 
