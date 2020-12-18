@@ -1,5 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+// tslint:disable:no-null-keyword
+
 import { Contact, Key, KeyUtil } from '../../core/crypto/key';
 import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key.js';
 
@@ -46,8 +48,8 @@ export class ContactStore {
       const key = typeof update.pubkey === 'string' ? await KeyUtil.parse(update.pubkey) : update.pubkey;
       update.fingerprint = key.id;
       update.longid = OpenPGPKey.fingerprintToLongid(key.id);
-      update.pubkey_last_sig = key.lastModified ? Number(key.lastModified) : null; // tslint:disable-line:no-null-keyword
-      update.expiresOn = key.expiration ? Number(key.expiration) : null; // tslint:disable-line:no-null-keyword
+      update.pubkey_last_sig = key.lastModified ? Number(key.lastModified) : null;
+      update.expiresOn = key.expiration ? Number(key.expiration) : null;
       update.pubkey = key;
       update.has_pgp = 1;
     }
