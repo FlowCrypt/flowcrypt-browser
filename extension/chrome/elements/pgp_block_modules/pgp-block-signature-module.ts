@@ -19,7 +19,7 @@ export class PgpBlockViewSignatureModule {
 
   public renderPgpSignatureCheckResult = (signature: VerifyRes | undefined) => {
     if (signature) {
-      const signerEmail = signature.signer?.primaryUserId ? Str.parseEmail(signature.signer.primaryUserId).email || this.view.senderEmail : this.view.senderEmail;
+      const signerEmail = signature.signer?.primaryUserId ? Str.parseEmail(signature.signer.primaryUserId).email : undefined;
       $('#pgp_signature > .cursive > span').text(signerEmail || 'Unknown Signer');
       if (signature.signer && !signature.contact) {
         this.view.renderModule.doNotSetStateAsReadyYet = true; // so that body state is not marked as ready too soon - automated tests need to know when to check results
