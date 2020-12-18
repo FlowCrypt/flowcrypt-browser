@@ -16,6 +16,7 @@ import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
 import { Attachment } from '../core/attachment.js';
 import { ContactStore } from '../platform/store/contact-store.js';
 import { GoogleData, GmailParser, GmailMsg } from '../mock/google/google-data';
+import { pubkey2864E326A5BE488A } from './tooling/consts';
 
 // tslint:disable:no-blank-lines-func
 /* eslint-disable max-len */
@@ -552,6 +553,8 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       const enc = Buf.fromBase64Str(msg!.raw!).toUtfStr()
         .match(/\-\-\-\-\-BEGIN PGP SIGNED MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0];
       const encryptedData = Buf.fromUtfStr(enc);
+      const pubkey = await KeyUtil.parse(pubkey2864E326A5BE488A);
+      await ContactStore.update(undefined, 'president@forged.com', { name: 'President', pubkey, client: 'pgp' });
       const decrypted = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData });
       expect(decrypted.success).to.equal(true);
       const verifyRes = (decrypted as DecryptSuccess).signature!;

@@ -20,8 +20,6 @@ import { defineUnitNodeTests } from './tests/unit-node';
 import { defineUnitBrowserTests } from './tests/unit-browser';
 import { mock } from './mock';
 import { mockBackendData } from './mock/backend/backend-endpoints';
-import { pubkey2864E326A5BE488A } from './tests/tooling/consts';
-import { ContactStore } from './platform/store/contact-store';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectiIntentionalErrReport: false }; // updated when a particular test that causes an error is run
@@ -57,9 +55,6 @@ ava.before('set config and mock api', async t => {
     const mockApi = await mock(line => mockApiLogs.push(line));
     closeMockApi = mockApi.close;
   }
-  const pubkey = pubkey2864E326A5BE488A;
-  const contact = await ContactStore.obj({ email: 'sams50sams50sept@gmail.com', name: 'Mr Sam', pubkey, client: 'pgp' });
-  await ContactStore.save(undefined, contact);
   t.pass();
 });
 
