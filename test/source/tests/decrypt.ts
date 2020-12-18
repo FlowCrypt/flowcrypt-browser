@@ -347,11 +347,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('decrypt - protonmail - load pubkey into contact + verify detached msg', testWithBrowser('compatibility', async (t, browser) => {
       const textParams = `?frameId=none&message=&msgId=16a9c109bc51687d&` +
         `senderEmail=mismatch%40mail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com`;
-      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-        params: textParams,
-        content: ["1234"],
-        signature: ["Missing pubkey"]
-      });
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: textParams, content: ["1234"], signature: ["Missing pubkey"] });
       const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(protonCompatPub)}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
       const pubFrame = await browser.newPage(t, pubFrameUrl);
       await pubFrame.waitAndClick('@action-add-contact');
@@ -494,7 +490,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: ['no trailing space', 'space:', 'space and tab:'],
-        signature: ["Insecure message hash algorithm: SHA1", "Test@Example.Com"]
+        signature: ["Insecure message hash algorithm: SHA1"]
       });
     }));
 
