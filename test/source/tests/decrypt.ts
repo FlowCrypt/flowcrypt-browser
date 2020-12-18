@@ -340,11 +340,6 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params: url,
         content: ['How is my message signed?'],
-        signature: ["Fetched pubkey, click to verify"]
-      });
-      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-        params: url,
-        content: ['How is my message signed?'],
         signature: ['Sams50sams50sept@Gmail.Com', 'matching signature']
       });
     }));
@@ -499,7 +494,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: ['no trailing space', 'space:', 'space and tab:'],
-        signature: ["Insecure message hash algorithm: SHA1", "Sha1@Sign.Com"]
+        signature: ["Insecure message hash algorithm: SHA1", "Test@Example.Com"]
       });
     }));
 
