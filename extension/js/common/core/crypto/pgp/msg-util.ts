@@ -60,7 +60,7 @@ export type DecryptError = {
 
 type OpenpgpMsgOrCleartext = OpenPGP.message.Message | OpenPGP.cleartext.CleartextMessage;
 
-export type VerifyRes = { signer?: string; contact?: Contact; match: boolean | null; error?: string; isErrFatal?: boolean, content?: Buf };
+export type VerifyRes = { signer?: { primaryUserId: string | undefined, longid: string }; contact?: Contact; match: boolean | null; error?: string; isErrFatal?: boolean, content?: Buf };
 export type PgpMsgTypeResult = { armored: boolean, type: MsgBlockType } | undefined;
 export type DecryptResult = DecryptSuccess | DecryptError;
 export type DiagnoseMsgPubkeysResult = { found_match: boolean, receivers: number, };
@@ -152,7 +152,10 @@ export class MsgUtil {
         verifyRes.match = (verifyRes.match === true || verifyRes.match === null) && await verification.verified;
         if (!verifyRes.signer) {
           // todo - currently only the first signer will be reported. Should we be showing all signers? How common is that?
-          verifyRes.signer = OpenPGPKey.bytesToLongid(verification.keyid.bytes);
+          verifyRes.signer = {
+            longid: OpenPGPKey.bytesToLongid(verification.keyid.bytes),
+            primaryUserId: await OpenPGPKey.getPrimaryUserId(pubs, verification.keyid)
+          };
         }
       }
     } catch (verifyErr) {
