@@ -705,15 +705,15 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا<br></div>');
     }));
 
-    ava.default('compose - sending and rendering encrypted message with image ', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('compose - sending and rendering encrypted message with image', testWithBrowser('compatibility', async (t, browser) => {
       await sendImgAndVerifyPresentInSentMsg(t, browser, 'encrypt');
     }));
 
-    ava.default('compose - sending and rendering signed message with image ', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('compose - sending and rendering signed message with image', testWithBrowser('compatibility', async (t, browser) => {
       await sendImgAndVerifyPresentInSentMsg(t, browser, 'sign');
     }));
 
-    ava.default('compose - sending and rendering plain message with image ', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('compose - sending and rendering plain message with image', testWithBrowser('compatibility', async (t, browser) => {
       await sendImgAndVerifyPresentInSentMsg(t, browser, 'plain');
     }));
 
