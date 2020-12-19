@@ -144,7 +144,7 @@ export class SendableMsg {
       if (this.body['encrypted/buf']) {
         this.body = { 'text/plain': this.body['encrypted/buf'].toString() };
       }
-      return await Mime.encode(this.body, this.headers, this.attachments, this.type);
+      return await Mime.encode(this.body, this.headers, this.attachments, this.type, true);
     }
   }
 

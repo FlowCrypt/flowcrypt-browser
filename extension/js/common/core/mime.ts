@@ -197,7 +197,13 @@ export class Mime {
     });
   }
 
-  public static encode = async (body: SendableMsgBody, headers: RichHeaders, attachments: Attachment[] = [], type?: MimeEncodeType): Promise<string> => {
+  public static encode = async (
+    body: SendableMsgBody,
+    headers: RichHeaders,
+    attachments: Attachment[] = [],
+    type?: MimeEncodeType,
+    extractInlineImagesToAttachments?: boolean
+  ): Promise<string> => {
     const rootContentType = type !== 'pgpMimeEncrypted' ? 'multipart/mixed' : `multipart/encrypted; protocol="application/pgp-encrypted";`;
     const rootNode = new MimeBuilder(rootContentType, { includeBccInHeader: true }); // tslint:disable-line:no-unsafe-any
     for (const key of Object.keys(headers)) {
@@ -210,11 +216,11 @@ export class Mime {
       } else {
         contentNode = new MimeBuilder('multipart/alternative'); // tslint:disable-line:no-unsafe-any
         for (const type of Object.keys(body)) {
-          let content = body[type]!.toString();
-          if (type === 'text/html') {
+          let content = body[type]!.toString(); // already present, that's why part of for loop
+          if (extractInlineImagesToAttachments && type === 'text/html') {
             content = Mime.extractInlineImagesToAttachments(content, rootNode);
           }
-          contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, content)); // already present, that's why part of for loop
+          contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, content));
         }
       }
       rootNode.appendChild(contentNode); // tslint:disable-line:no-unsafe-any
