@@ -441,9 +441,10 @@ export class Mime {
   private static parseInlineImageSrc = (src: string) => {
     let mimeType;
     let data = '';
-    const matches = src.match(/data:(image\/\w+);base64,(.*)/);
-    if (matches) {
-      [, mimeType, data] = matches;
+    const parts = src.split(/[:;,]/);
+    if (parts.length === 4 && parts[0] === 'data' && parts[1].match(/^image\/\w+/) && parts[2] === 'base64') {
+      mimeType = parts[1];
+      data = parts[3];
     }
     return { mimeType, data };
   }
