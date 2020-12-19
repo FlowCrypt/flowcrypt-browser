@@ -713,6 +713,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await sendImgAndVerifyPresentInSentMsg(t, browser, 'sign');
     }));
 
+    ava.default('compose - sending and rendering plain message with image ', testWithBrowser('compatibility', async (t, browser) => {
+      await sendImgAndVerifyPresentInSentMsg(t, browser, 'plain');
+    }));
+
     ava.default('compose - sending and rendering message with U+10000 code points', testWithBrowser('compatibility', async (t, browser) => {
       const rainbow = '\ud83c\udf08';
       await sendTextAndVerifyPresentInSentMsg(t, browser, rainbow, { sign: true, encrypt: false });
@@ -1030,10 +1034,11 @@ const pastePublicKeyManually = async (composeFrame: ControllableFrame, inboxPage
   await inboxPage.waitTillGone('@dialog-add-pubkey');
 };
 
-const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserHandle, sendingType: 'encrypt' | 'sign') => {
+const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserHandle, sendingType: 'encrypt' | 'sign' | 'plain') => {
   // send a message with image in it
   const imgBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAnElEQVR42u3RAQ0AAAgDIE1u9FvDOahAVzLFGS1ECEKEIEQIQoQgRIgQIQgRghAhCBGCECEIQYgQhAhBiBCECEEIQoQgRAhChCBECEIQIgQhQhAiBCFCEIIQIQgRghAhCBGCEIQIQYgQhAhBiBCEIEQIQoQgRAhChCAEIUIQIgQhQhAiBCEIEYIQIQgRghAhCBEiRAhChCBECEK+W3uw+TnWoJc/AAAAAElFTkSuQmCC';
-  const subject = `Test Sending ${sendingType === 'sign' ? 'Signed' : 'Encrypted'} Message With Image ${Util.lousyRandom()}`;
+  const sendingTypeForHumans = sendingType === 'encrypt' ? 'Encrypted' : (sendingType === 'sign' ? 'Signed' : 'Plain');
+  const subject = `Test Sending ${sendingTypeForHumans} Message With Image ${Util.lousyRandom()}`;
   const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
   await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, { richtext: true, sign: sendingType === 'sign', encrypt: sendingType === 'encrypt' });
   // the following is a temporary hack - currently not able to directly paste an image with puppeteer
@@ -1042,6 +1047,10 @@ const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserH
   await ComposePageRecipe.sendAndClose(composePage);
   // get sent msg id from mock
   const sentMsg = new GoogleData('flowcrypt.compatibility@gmail.com').getMessageBySubject(subject)!;
+  if (sendingType === 'plain') {
+    expect(sentMsg.payload?.body?.data).to.match(/<img src="cid:(.+)@flowcrypt">This is an automated puppeteer test: Test Sending Plain Message With Image/);
+    return;
+  }
   let url = `chrome/dev/ci_pgp_host_page.htm?frameId=none&msgId=${encodeURIComponent(sentMsg.id)}&senderEmail=flowcrypt.compatibility%40gmail.com&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com`;
   if (sendingType === 'sign') {
     url += '&signature=___cu_true___';
