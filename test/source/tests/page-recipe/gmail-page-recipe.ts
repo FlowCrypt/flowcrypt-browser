@@ -13,7 +13,7 @@ export class GmailPageRecipe extends PageRecipe {
     await gmailPage.waitAll('@container-new-message');
     const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
     expect(urls.length).to.equal(1);
-    return await browser.newPage(t, urls[0]);
+    return await browser.newPage(t, `${urls[0]}&debug=___cu_true___`);
   }
 
   public static getSubscribeDialog = async (t: AvaContext, gmailPage: ControllablePage, browser: BrowserHandle): Promise<ControllablePage> => {

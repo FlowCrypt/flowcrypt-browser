@@ -6,6 +6,7 @@ import { BrowserHandle, ControllablePage } from './../browser';
 import { TestVariant, Util } from './../util';
 import { AvaContext } from './tooling';
 import { BrowserRecipe } from './tooling/browser-recipe';
+import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { GmailPageRecipe } from './page-recipe/gmail-page-recipe';
 import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { TestUrls } from './../browser/test-urls';
@@ -117,9 +118,18 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.notPresent(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
     }));
 
-    ava.default('mail.google.com - compose window opens', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default.only('mail.google.com - send rich-text encrypted message', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
-      await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
+      const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'ci.tests.gmail@flowcrypt.dev' }, 'New Rich Text Message', { richtext: true });
+      await ComposePageRecipe.sendAndClose(composePage);
+      await gmailPage.waitAndClick('[aria-label^="Inbox"]');
+      await gmailPage.waitAndClick('[role="row"]'); // click the first message
+      const emailWrapper = await gmailPage.waitAny('.nH.if');
+      expect(await emailWrapper.$eval('h2', el => el.innerHTML)).to.eq('Automated puppeteer test: New Rich Text Message');
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 1 });
+      expect(urls.length).to.eq(1);
+      await gmailPage.waitAndClick('[aria-label="Delete"]');
     }));
 
     ava.default('mail.google.com - decrypt message in offline mode', testWithBrowser('ci.tests.gmail', async (t, browser) => {
