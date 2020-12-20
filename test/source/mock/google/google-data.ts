@@ -110,23 +110,6 @@ export class GoogleData {
    */
   private exportedMsgsPath = './test/source/mock/google/exported-messages/';
 
-  /**
-   * The original way was to export whole account at once, encrypt it and download it later.
-   * There are several problems with this approach:
-   *  - need to re-export whole inbox each time we want to add a message
-   *  - many messages are included that are not needed for testing
-   *  - lack of visibility or ability to easily edit messages
-   *  - messages may contain sensitive information, so we cannot freely include them
-   *      in the repo - they are encrypted and new developers cannot run tests without
-   *      a test-secrets.json file, which is inconvenient
-   *  This list of message ids will be skipped when importing the bulk import, instead
-   *    they will be imported from the newer mechanism - exported-messages folder.
-   *  We will be transferring used messages to this mechanism one by one, until there
-   *    are no more messages in the bulk import, at which point we can remove this prop
-   *    as well as all functionality that relates to it.
-   */
-  private skipBulkImportMessages = ['171d138c8750863b'];
-
   public static fmtMsg = (m: GmailMsg, format: 'raw' | 'full' | 'metadata' | string) => {
     format = format || 'full';
     if (!['raw', 'full', 'metadata'].includes(format)) {
