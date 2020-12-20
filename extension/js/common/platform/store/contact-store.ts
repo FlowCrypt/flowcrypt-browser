@@ -351,9 +351,12 @@ export class ContactStore extends AbstractStore {
     if (!result) {
       return;
     }
-    const armoredPubkey = (typeof result.pubkey === 'string') ? result.pubkey : KeyUtil.armor(result.pubkey as Key);
+    // tslint:disable-next-line:no-unsafe-any
+    const armoredPubkey = (typeof result.pubkey === 'object') ? KeyUtil.armor(result.pubkey as Key) : result.pubkey as string;
     // parse again to re-calculate expiration-related fields etc.
-    return { ...result, pubkey: await KeyUtil.parse(armoredPubkey) }; // tslint:disable-line:no-unsafe-any
+    // tslint:disable-next-line:no-null-keyword
+    const pubkey = armoredPubkey ? await KeyUtil.parse(armoredPubkey) : null;
+    return { ...result, pubkey }; // tslint:disable-line:no-unsafe-any
   }
 
   private static recreateDates = (contacts: (Contact | undefined)[]) => {
