@@ -137,10 +137,8 @@ export class ContactStore extends AbstractStore {
       await Promise.all(contact.map(oneContact => ContactStore.save(db, oneContact)));
       return;
     }
-    const prepared = contact.pubkey ? {
-      ...contact,
-      pubkey: KeyUtil.armor(contact.pubkey) as unknown as Key // serialising for storage
-    } : contact;
+    // serializing for storage
+    const prepared = contact.pubkey ? { ...contact, pubkey: KeyUtil.armor(contact.pubkey) as unknown as Key } : contact;
     return await new Promise((resolve, reject) => {
       const tx = db.transaction('contacts', 'readwrite');
       const contactsTable = tx.objectStore('contacts');
@@ -352,7 +350,7 @@ export class ContactStore extends AbstractStore {
       return;
     }
     // tslint:disable-next-line:no-unsafe-any
-    const armoredPubkey = (typeof result.pubkey === 'object') ? KeyUtil.armor(result.pubkey as Key) : result.pubkey as string;
+    const armoredPubkey = (result.pubkey && typeof result.pubkey === 'object') ? KeyUtil.armor(result.pubkey as Key) : result.pubkey as string;
     // parse again to re-calculate expiration-related fields etc.
     // tslint:disable-next-line:no-null-keyword
     const pubkey = armoredPubkey ? await KeyUtil.parse(armoredPubkey) : null;
