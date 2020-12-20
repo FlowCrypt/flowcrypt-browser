@@ -185,9 +185,9 @@ export class GoogleData {
       }
     }
     let body: GmailMsg$payload$body;
-    if (parsedMail.text) {
-      const data = parsedMail.html || parsedMail.text;
-      body = { data, size: data.length };
+    const htmlOrText = parsedMail.html || parsedMail.text;
+    if (htmlOrText) {
+      body = { data: htmlOrText, size: htmlOrText.length };
     } else if (bodyContentAtt) {
       body = { attachmentId: bodyContentAtt.id, size: bodyContentAtt.size };
     } else {
