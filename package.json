@@ -13,7 +13,7 @@
     "@types/mailparser": "3.0.0",
     "@types/puppeteer": "5.4.2",
     "@types/mkdirp": "^1.0.1",
-    "@typescript-eslint/eslint-plugin": "^4.10.0",
+    "@typescript-eslint/eslint-plugin": "^4.11.0",
     "@types/request": "2.48.5",
     "ava": "3.14.0",
     "@typescript-eslint/parser": "^4.10.0",
