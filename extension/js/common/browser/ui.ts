@@ -447,6 +447,7 @@ export class Ui {
       position: 'bottom',
       timer: seconds * 1000,
       customClass: {
+        container: 'ui-toast-container',
         popup: 'ui-toast',
         title: 'ui-toast-title'
       }

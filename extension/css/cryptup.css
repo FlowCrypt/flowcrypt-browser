@@ -134,6 +134,10 @@ span.gray { color: #b7b7b7; }
   color: white;
 }
 
+.swal2-container.ui-toast-container {
+  width: 77%;
+}
+
 .swal2-popup.swal2-toast.ui-toast {
   margin-bottom: 50px;
   background-color: #000;
