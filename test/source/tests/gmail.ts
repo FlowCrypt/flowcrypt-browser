@@ -128,7 +128,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const emailWrapper = await gmailPage.waitAny('.nH.if');
       expect(await emailWrapper.$eval('h2', el => el.innerHTML)).to.eq('Automated puppeteer test: New Rich Text Message');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 1 });
-      await gmailPage.waitAndClick('[aria-label^="Delete"]');
+      // await gmailPage.waitAndClick('[aria-label^="Delete"]');
       expect(urls.length).to.eq(1);
     }));
 
