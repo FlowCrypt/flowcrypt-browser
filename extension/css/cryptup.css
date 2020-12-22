@@ -1873,6 +1873,10 @@ table#compose td.text div#input_text {
   min-height: 140px;
 }
 
+table#compose td.text div#input_text img {
+  max-width: 100%;
+}
+
 table#compose td.text div.text_container {
   display: flex;
   flex-direction: column;
