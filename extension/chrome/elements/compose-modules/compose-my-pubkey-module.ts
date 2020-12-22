@@ -23,7 +23,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
   public iconPubkeyClickHandler = (target: HTMLElement) => {
     this.toggledManually = true;
     const includePub = !$(target).is('.active'); // evaluating what the state of the icon was BEFORE clicking
-    Ui.toast(`${includePub ? 'Attaching' : 'Removing'} your Public Key`).catch(Catch.reportErr);
+    Ui.toast(`${includePub ? 'Attaching' : 'Removing'} your Public Key`);
     this.setAttachPreference(includePub);
   }
 
