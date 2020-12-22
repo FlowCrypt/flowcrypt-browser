@@ -124,6 +124,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           const key = await KeyUtil.parse(lookupResult.pubkey);
           if (!key.usableForEncryption && !KeyUtil.expired(key)) { // Not to skip expired keys
             console.info('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: key.id });
+            // tslint:disable-next-line:no-floating-promises
             Ui.toast(`Public Key retrieved for email ${email} with id ${key.id} was ignored because it's not usable for encryption.`, 5);
             lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
           }

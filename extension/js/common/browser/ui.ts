@@ -446,10 +446,15 @@ export class Ui {
       showConfirmButton: false,
       position: 'bottom',
       timer: seconds * 1000,
+      timerProgressBar: true,
       customClass: {
         container: 'ui-toast-container',
         popup: 'ui-toast',
         title: 'ui-toast-title'
+      },
+      didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
       }
     });
   }
