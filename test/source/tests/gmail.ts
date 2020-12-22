@@ -121,14 +121,14 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default('mail.google.com - send rich-text encrypted message', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
       const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
-      await ComposePageRecipe.fillMsg(composePage, { to: 'ci.tests.gmail@flowcrypt.dev' }, 'New Rich Text Message', { richtext: true });
+      const subject = `New Rich Text Message ${Util.lousyRandom()}`;
+      await ComposePageRecipe.fillMsg(composePage, { to: 'ci.tests.gmail@flowcrypt.dev' }, subject, { richtext: true });
       await ComposePageRecipe.sendAndClose(composePage);
       await gmailPage.waitAndClick('[aria-label^="Inbox"]');
       await gmailPage.waitAndClick('[role="row"]'); // click the first message
-      const emailWrapper = await gmailPage.waitAny('.nH.if');
-      expect(await emailWrapper.$eval('h2', el => el.innerHTML)).to.eq('Automated puppeteer test: New Rich Text Message');
+      await gmailPage.waitForContent('.nH.if h2', `Automated puppeteer test: ${subject}`);
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 1 });
-      // await gmailPage.waitAndClick('[aria-label^="Delete"]');
+      await GmailPageRecipe.deleteMessage(gmailPage);
       expect(urls.length).to.eq(1);
     }));
 

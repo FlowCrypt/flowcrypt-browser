@@ -27,4 +27,14 @@ export class GmailPageRecipe extends PageRecipe {
     await gmailPage.waitAndClick('@notification-successfully-setup-action-close');
   }
 
+  public static deleteMessage = async (gmailPage: ControllablePage) => {
+    // the toolbar needs to be focused in order for Delete button to work
+    gmailPage.page.keyboard.down('Shift');
+    for (let i = 0; i < 5; i++) {
+      gmailPage.press('Tab');
+    }
+    gmailPage.page.keyboard.up('Shift');
+    await gmailPage.waitAndClick('[aria-label="Delete"]');
+  }
+
 }
