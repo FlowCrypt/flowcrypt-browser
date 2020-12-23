@@ -162,9 +162,14 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         const img: Element = node;
         const src = img.getAttribute('src') as string;
         const { mimeType, data } = this.parseInlineImageSrc(src);
-        const imgAttachment = new Attachment({ name: img.getAttribute('name') || '', type: mimeType, data: Buf.fromBase64Str(data), inline: true });
-        imgAttachment.id = Attachment.attachmentId();
-        img.setAttribute('src', `cid:${imgAttachment.id}`);
+        const imgAttachment = new Attachment({
+          cid: Attachment.attachmentId(),
+          name: img.getAttribute('name') || '',
+          type: mimeType,
+          data: Buf.fromBase64Str(data),
+          inline: true
+        });
+        img.setAttribute('src', `cid:${imgAttachment.cid}`);
         imgAttachments.push(imgAttachment);
       }
     });

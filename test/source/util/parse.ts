@@ -32,7 +32,9 @@ const strictParse = async (source: string): Promise<ParseMsgResult> => {
 };
 
 const convertBase64ToMimeMsg = async (base64: string) => {
-  return await simpleParser(new Buffer(Buf.fromBase64Str(base64)));
+  return await simpleParser(new Buffer(Buf.fromBase64Str(base64)), {
+    keepCidLinks: true // #3256
+  });
 };
 
 export default { strictParse, convertBase64ToMimeMsg };
