@@ -142,8 +142,8 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       }
     }
     if (choices.richtext && !choices.encrypt && !choices.sign) { // extract inline images of plain rich-text messages (#3256)
-      const { htmlWithInlineImages, imgAttachments } = this.extractInlineImagesToAttachments(msg.body['text/html'] as string);
-      msg.body['text/html'] = htmlWithInlineImages;
+      const { htmlWithCidImages, imgAttachments } = this.extractInlineImagesToAttachments(msg.body['text/html'] as string);
+      msg.body['text/html'] = htmlWithCidImages;
       msg.attachments.push(...imgAttachments);
     }
     if (this.view.myPubkeyModule.shouldAttach()) {
@@ -173,9 +173,9 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         imgAttachments.push(imgAttachment);
       }
     });
-    const htmlWithInlineImages = DOMPurify.sanitize(html);
+    const htmlWithCidImages = DOMPurify.sanitize(html);
     DOMPurify.removeAllHooks();
-    return { htmlWithInlineImages, imgAttachments };
+    return { htmlWithCidImages, imgAttachments };
   }
 
   private parseInlineImageSrc = (src: string) => {
