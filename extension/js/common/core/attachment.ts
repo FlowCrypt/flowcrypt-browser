@@ -3,6 +3,7 @@
 'use strict';
 
 import { Buf } from './buf.js';
+import { Str } from './common.js';
 
 type Attachment$treatAs = "publicKey" | 'privateKey' | "encryptedMsg" | "hidden" | "signature" | "encryptedFile" | "plainFile";
 export type AttachmentMeta = {
@@ -41,6 +42,10 @@ export class Attachment {
       return '_';
     }
     return trimmed.replace(/[\u0000\u002f\u005c]/g, '_').replace(/__+/g, '_');
+  }
+
+  public static attachmentId = (): string => {
+    return `f_${Str.sloppyRandom(30)}@flowcrypt`;
   }
 
   constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid, contentDescription }: AttachmentMeta) {

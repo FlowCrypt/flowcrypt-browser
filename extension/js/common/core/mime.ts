@@ -2,8 +2,6 @@
 
 'use strict';
 
-import * as DOMPurify from 'dompurify';
-
 import { Dict, Str } from './common.js';
 import { requireIso88592, requireMimeBuilder, requireMimeParser } from '../platform/require.js';
 
@@ -197,13 +195,7 @@ export class Mime {
     });
   }
 
-  public static encode = async (
-    body: SendableMsgBody,
-    headers: RichHeaders,
-    attachments: Attachment[] = [],
-    type?: MimeEncodeType,
-    extractInlineImagesToAttachments?: boolean
-  ): Promise<string> => {
+  public static encode = async (body: SendableMsgBody, headers: RichHeaders, attachments: Attachment[] = [], type?: MimeEncodeType): Promise<string> => {
     const rootContentType = type !== 'pgpMimeEncrypted' ? 'multipart/mixed' : `multipart/encrypted; protocol="application/pgp-encrypted";`;
     const rootNode = new MimeBuilder(rootContentType, { includeBccInHeader: true }); // tslint:disable-line:no-unsafe-any
     for (const key of Object.keys(headers)) {
@@ -216,11 +208,7 @@ export class Mime {
       } else {
         contentNode = new MimeBuilder('multipart/alternative'); // tslint:disable-line:no-unsafe-any
         for (const type of Object.keys(body)) {
-          let content = body[type]!.toString(); // already present, that's why part of for loop
-          if (extractInlineImagesToAttachments && type === 'text/html') {
-            content = Mime.extractInlineImagesToAttachments(content, rootNode);
-          }
-          contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, content));
+          contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!.toString())); // already present, that's why part of for loop
         }
       }
       rootNode.appendChild(contentNode); // tslint:disable-line:no-unsafe-any
@@ -324,7 +312,7 @@ export class Mime {
 
   private static createAttNode = (attachment: Attachment): any => { // todo: MimeBuilder types
     const type = `${attachment.type}; name="${attachment.name}"`;
-    const id = `f_${Str.sloppyRandom(30)}@flowcrypt`;
+    const id = attachment.id || Attachment.attachmentId();
     const header: Dict<string> = {};
     if (attachment.contentDescription) {
       header['Content-Description'] = attachment.contentDescription;
@@ -413,39 +401,5 @@ export class Mime {
       node.addHeader('Content-Transfer-Encoding', 'quoted-printable'); // tslint:disable-line:no-unsafe-any
     }
     return node;
-  }
-
-  private static extractInlineImagesToAttachments = (html: string, rootNode: any) => {
-    const imgAttNodes: any[] = [];
-    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
-      if (!node) {
-        return;
-      }
-      if ('src' in node) {
-        const img: Element = node;
-        const src = img.getAttribute('src') as string;
-        const { mimeType, data } = Mime.parseInlineImageSrc(src);
-        const imgAttachment = new Attachment({ name: img.getAttribute('name') || '', type: mimeType, data: Buf.fromBase64Str(data), inline: true });
-        const imgAttNode = Mime.createAttNode(imgAttachment);
-        rootNode.appendChild(imgAttNode); // tslint:disable-line:no-unsafe-any
-        const imgAttachmentId = imgAttNode.getHeader('X-Attachment-Id'); // tslint:disable-line:no-unsafe-any
-        img.setAttribute('src', `cid:${imgAttachmentId}`);
-        imgAttNodes.push(imgAttNode);
-      }
-    });
-    const htmlWithInlineImages = DOMPurify.sanitize(html);
-    DOMPurify.removeAllHooks();
-    return htmlWithInlineImages;
-  }
-
-  private static parseInlineImageSrc = (src: string) => {
-    let mimeType;
-    let data = '';
-    const parts = src.split(/[:;,]/);
-    if (parts.length === 4 && parts[0] === 'data' && parts[1].match(/^image\/\w+/) && parts[2] === 'base64') {
-      mimeType = parts[1];
-      data = parts[3];
-    }
-    return { mimeType, data };
   }
 }

@@ -2,9 +2,12 @@
 
 'use strict';
 
+import * as DOMPurify from 'dompurify';
+
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Attachment } from '../../../js/common/core/attachment.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { ComposeSendBtnPopoverModule } from './compose-send-btn-popover-module.js';
 import { GeneralMailFormatter } from './formatters/general-mail-formatter.js';
@@ -138,11 +141,49 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
       }
     }
+    if (choices.richtext && !choices.encrypt && !choices.sign) { // extract inline images of plain rich-text messages (#3256)
+      const { htmlWithInlineImages, imgAttachments } = this.extractInlineImagesToAttachments(msg.body['text/html'] as string);
+      msg.body['text/html'] = htmlWithInlineImages;
+      msg.attachments.push(...imgAttachments);
+    }
     if (this.view.myPubkeyModule.shouldAttach()) {
       msg.attachments.push(Attachment.keyinfoAsPubkeyAtt(senderKi));
     }
     await this.addNamesToMsg(msg);
   }
+
+  private extractInlineImagesToAttachments = (html: string) => {
+    const imgAttachments: Attachment[] = [];
+    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+      if (!node) {
+        return;
+      }
+      if ('src' in node) {
+        const img: Element = node;
+        const src = img.getAttribute('src') as string;
+        const { mimeType, data } = this.parseInlineImageSrc(src);
+        const imgAttachment = new Attachment({ name: img.getAttribute('name') || '', type: mimeType, data: Buf.fromBase64Str(data), inline: true });
+        imgAttachment.id = Attachment.attachmentId();
+        img.setAttribute('src', `cid:${imgAttachment.id}`);
+        imgAttachments.push(imgAttachment);
+      }
+    });
+    const htmlWithInlineImages = DOMPurify.sanitize(html);
+    DOMPurify.removeAllHooks();
+    return { htmlWithInlineImages, imgAttachments };
+  }
+
+  private parseInlineImageSrc = (src: string) => {
+    let mimeType;
+    let data = '';
+    const parts = src.split(/[:;,]/);
+    if (parts.length === 4 && parts[0] === 'data' && parts[1].match(/^image\/\w+/) && parts[2] === 'base64') {
+      mimeType = parts[1];
+      data = parts[3];
+    }
+    return { mimeType, data };
+  }
+
 
   private doSendMsg = async (msg: SendableMsg) => {
     // if this is a password-encrypted message, then we've already shown progress for uploading to backend
