@@ -13,7 +13,7 @@ export class GmailPageRecipe extends PageRecipe {
     await gmailPage.waitAll('@container-new-message');
     const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
     expect(urls.length).to.equal(1);
-    return await browser.newPage(t, urls[0]);
+    return await browser.newPage(t, `${urls[0]}&debug=___cu_true___`);
   }
 
   public static getSubscribeDialog = async (t: AvaContext, gmailPage: ControllablePage, browser: BrowserHandle): Promise<ControllablePage> => {
@@ -25,6 +25,16 @@ export class GmailPageRecipe extends PageRecipe {
 
   public static closeInitialSetupNotif = async (gmailPage: ControllablePage) => {
     await gmailPage.waitAndClick('@notification-successfully-setup-action-close');
+  }
+
+  public static deleteMessage = async (gmailPage: ControllablePage) => {
+    // the toolbar needs to be focused in order for Delete button to work
+    await gmailPage.page.keyboard.down('Shift');
+    for (let i = 0; i < 5; i++) {
+      await gmailPage.press('Tab');
+    }
+    await gmailPage.page.keyboard.up('Shift');
+    await gmailPage.waitAndClick('[aria-label="Delete"]');
   }
 
 }
