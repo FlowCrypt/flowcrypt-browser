@@ -540,7 +540,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         });
       }
     } catch (e) {
-      Ui.toast(`Error searching contacts: ${ApiErr.eli5(e)}`, 5).catch(Catch.reportErr);
+      Ui.toast(`Error searching contacts: ${ApiErr.eli5(e)}`, 5);
       throw e;
     } finally {
       this.view.errModule.debug('searchContacts 7 - finishing');
@@ -555,12 +555,12 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       } else if (ApiErr.isNetErr(e)) {
-        Ui.toast(`Network error - cannot search contacts`).catch(Catch.reportErr);
+        Ui.toast(`Network error - cannot search contacts`);
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
-        Ui.toast(`Cannot search contacts - account disabled or forbidden by admin policy`).catch(Catch.reportErr);
+        Ui.toast(`Cannot search contacts - account disabled or forbidden by admin policy`);
       } else {
         Catch.reportErr(e);
-        Ui.toast(`Error searching contacts: ${ApiErr.eli5(e)}`).catch(Catch.reportErr);
+        Ui.toast(`Error searching contacts: ${ApiErr.eli5(e)}`);
       }
     });
     this.view.errModule.debug('guessContactsFromSentEmails end');

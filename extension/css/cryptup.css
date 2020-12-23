@@ -134,12 +134,22 @@ span.gray { color: #b7b7b7; }
   color: white;
 }
 
+.swal2-container.ui-toast-container {
+  width: 77%;
+}
+
 .swal2-popup.swal2-toast.ui-toast {
   margin-bottom: 50px;
   background-color: #000;
   opacity: 0.8;
 }
-.swal2-title.ui-toast-title { color: #fff; }
+
+.swal2-popup.swal2-toast .swal2-title.ui-toast-title {
+  color: #fff;
+  margin: 0 0.6em 0.3em;
+}
+
+.swal2-popup.swal2-toast.ui-toast .swal2-timer-progress-bar { background: rgba(255, 255, 255, 0.5); }
 
 .swal2-popup.ui-modal-iframe {
   padding: 0;
