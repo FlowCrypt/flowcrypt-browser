@@ -76,7 +76,6 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       } else if (this.view.isReplyBox && ApiErr.isNotFound(e)) {
         console.info('about to reload reply_message automatically: get draft 404', this.view.acctEmail);
         await Ui.time.sleep(500);
-        await this.view.storageModule.draftMetaDelete(this.view.draftId, this.view.threadId);
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
         this.view.draftId = '';
         window.location.href = Url.create(Env.getUrlNoParams(), this.urlParams());
@@ -92,7 +91,6 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     clearInterval(this.saveDraftInterval);
     await Ui.time.wait(() => !this.currentlySavingDraft ? true : undefined);
     if (this.view.draftId) {
-      await this.view.storageModule.draftMetaDelete(this.view.draftId, this.view.threadId);
       try {
         this.isLocalDraftId(this.view.draftId) ? await storageLocalRemove([this.view.draftId]) : await this.view.emailProvider.draftDelete(this.view.draftId);
         this.view.draftId = '';
@@ -131,7 +129,6 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
             return id;
           });
           this.view.draftId = draftId;
-          await this.view.storageModule.draftMetaSet(draftId, this.view.threadId, msgData.recipients.to || [], msgData.subject);
           // recursing one more time, because we need the draftId we get from this reply in the message itself
           // essentially everytime we save draft for the first time, we have to save it twice
           // currentlySavingDraft will remain true for now
