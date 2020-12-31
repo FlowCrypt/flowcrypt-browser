@@ -141,8 +141,10 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
       }
     }
-    if (choices.richtext && !choices.encrypt && !choices.sign) { // extract inline images of plain rich-text messages (#3256)
-      const { htmlWithCidImages, imgAttachments } = this.extractInlineImagesToAttachments(msg.body['text/html'] as string);
+    if (choices.richtext && !choices.encrypt && !choices.sign && msg.body['text/html']) {
+      // extract inline images of plain rich-text messages (#3256)
+      // todo - also apply to rich text signed-only messages
+      const { htmlWithCidImages, imgAttachments } = this.extractInlineImagesToAttachments(msg.body['text/html']);
       msg.body['text/html'] = htmlWithCidImages;
       msg.attachments.push(...imgAttachments);
     }
