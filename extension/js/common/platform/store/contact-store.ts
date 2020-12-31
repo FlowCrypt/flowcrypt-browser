@@ -137,10 +137,12 @@ export class ContactStore extends AbstractStore {
       await Promise.all(contact.map(oneContact => ContactStore.save(db, oneContact)));
       return;
     }
+    // serializing for storage
+    const prepared = contact.pubkey ? { ...contact, pubkey: KeyUtil.armor(contact.pubkey) as unknown as Key } : contact;
     return await new Promise((resolve, reject) => {
       const tx = db.transaction('contacts', 'readwrite');
       const contactsTable = tx.objectStore('contacts');
-      contactsTable.put(contact);
+      contactsTable.put(prepared);
       tx.oncomplete = Catch.try(resolve);
       tx.onabort = () => reject(ContactStore.errCategorize(tx.error));
     });
@@ -347,10 +349,12 @@ export class ContactStore extends AbstractStore {
     if (!result) {
       return;
     }
-    if (typeof result.pubkey === 'object') { // tslint:disable-line:no-unsafe-any
-      return result; // tslint:disable-line:no-unsafe-any
-    }
-    return { ...result, pubkey: await KeyUtil.parse(result.pubkey) }; // tslint:disable-line:no-unsafe-any
+    // tslint:disable-next-line:no-unsafe-any
+    const armoredPubkey = (result.pubkey && typeof result.pubkey === 'object') ? KeyUtil.armor(result.pubkey as Key) : result.pubkey as string;
+    // parse again to re-calculate expiration-related fields etc.
+    // tslint:disable-next-line:no-null-keyword
+    const pubkey = armoredPubkey ? await KeyUtil.parse(armoredPubkey) : null;
+    return { ...result, pubkey }; // tslint:disable-line:no-unsafe-any
   }
 
   private static recreateDates = (contacts: (Contact | undefined)[]) => {
