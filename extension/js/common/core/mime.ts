@@ -312,7 +312,7 @@ export class Mime {
 
   private static createAttNode = (attachment: Attachment): any => { // todo: MimeBuilder types
     const type = `${attachment.type}; name="${attachment.name}"`;
-    const id = `f_${Str.sloppyRandom(30)}@flowcrypt`;
+    const id = attachment.cid || Attachment.attachmentId();
     const header: Dict<string> = {};
     if (attachment.contentDescription) {
       header['Content-Description'] = attachment.contentDescription;
