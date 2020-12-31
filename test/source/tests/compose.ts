@@ -1050,6 +1050,8 @@ const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserH
   if (sendingType === 'plain') {
     expect(sentMsg.payload?.body?.data).to.match(/<img src="cid:(.+)@flowcrypt">This is an automated puppeteer test: Test Sending Plain Message With Image/);
     return;
+    // todo - this test case is a stop-gap. We need to implement rendering of such messages below,
+    //   then let test plain messages with images in them (referenced by cid) just like other types of messages below
   }
   let url = `chrome/dev/ci_pgp_host_page.htm?frameId=none&msgId=${encodeURIComponent(sentMsg.id)}&senderEmail=flowcrypt.compatibility%40gmail.com&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com`;
   if (sendingType === 'sign') {
