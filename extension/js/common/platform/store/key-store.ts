@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { KeyInfo, KeyInfoWithOptionalPp, KeyUtil } from '../../core/crypto/key.js';
+import { KeyInfo, KeyInfoWithOptionalPp, KeyUtil, Key } from '../../core/crypto/key.js';
 import { AcctStore } from './acct-store.js';
 import { PassphraseStore } from './passphrase-store.js';
 import { AbstractStore } from './abstract-store.js';
@@ -43,10 +43,10 @@ export class KeyStore extends AbstractStore {
     return withPp;
   }
 
-  public static add = async (acctEmail: string, newKeyArmored: string) => {
+  public static add = async (acctEmail: string, newKey: string | Key) => {
     const keyinfos = await KeyStore.get(acctEmail);
     let updated = false;
-    const prv = await KeyUtil.parse(newKeyArmored);
+    const prv: Key = (typeof newKey === 'string') ? await KeyUtil.parse(newKey) : newKey;
     if (!prv.fullyEncrypted) {
       throw new Error('Cannot import plain, unprotected key.');
     }
