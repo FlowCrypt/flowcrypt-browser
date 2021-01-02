@@ -22,6 +22,14 @@ type DbContactObjArg = {
   lastCheck?: number | null; // when was the local copy of the pubkey last updated (or checked against Attester)
 };
 
+export type ContactPreview = {
+  email: string;
+  armoredPubkey: string | null;
+  name: string | null;
+  has_pgp: 0 | 1;
+  last_use: number | null;
+};
+
 export type ContactUpdate = {
   email?: string;
   name?: string | null;
@@ -76,6 +84,20 @@ export class ContactStore extends AbstractStore {
       openDbReq.onblocked = () => reject(ContactStore.errCategorize(openDbReq.error));
       openDbReq.onerror = () => reject(ContactStore.errCategorize(openDbReq.error));
     });
+  }
+
+  public static previewObj = ({ email, name }: { email: string, name?: string | null }): ContactPreview => {
+    const validEmail = Str.parseEmail(email).email;
+    if (!validEmail) {
+      throw new Error(`Cannot handle the contact because email is not valid: ${email}`);
+    }
+    return {
+      email: validEmail,
+      name: name || null,
+      armoredPubkey: null,
+      has_pgp: 0, // number because we use it for sorting
+      last_use: null,
+    };
   }
 
   public static obj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig }: DbContactObjArg): Promise<Contact> => {
@@ -229,12 +251,9 @@ export class ContactStore extends AbstractStore {
     }
   }
 
-  /**
-   * "deserialize" means to parse the returned keys into objects - which is expensive, particularly when parsing many keys
-   */
-  public static search = async (db: IDBDatabase | undefined, query: DbContactFilter, deserialize: boolean = true): Promise<Contact[]> => {
+  public static search = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<ContactPreview[]> => {
     if (!db) { // relay op through background process
-      return await BrowserMsg.send.bg.await.db({ f: 'search', args: [query] }) as Contact[];
+      return await BrowserMsg.send.bg.await.db({ f: 'search', args: [query] }) as ContactPreview[];
     }
     for (const key of Object.keys(query)) {
       if (!ContactStore.dbQueryKeys.includes(key)) {
@@ -280,11 +299,7 @@ export class ContactStore extends AbstractStore {
       });
       search.onerror = () => reject(ContactStore.errCategorize(search!.error!)); // todo - added ! after ts3 upgrade - investigate
     });
-    if (deserialize) { // performance is not an issue, eg loading only a few keys
-      const deserialized = await Promise.all(toDeserialize.map(ContactStore.deserialize));
-      return deserialized.filter(contact => !!contact) as Contact[];
-    }
-    return toDeserialize as Contact[]; // it will miss the "pubkey" field, otherwise it's indeed a Contact[]. much faster.
+    return toDeserialize.filter(Boolean).map(ContactStore.toContactPreview);
   }
 
   private static normalizeString = (str: string) => {
@@ -340,21 +355,39 @@ export class ContactStore extends AbstractStore {
       } else { // search primary longid
         tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(emailOrLongid);
       }
-      tx.onsuccess = Catch.try(() => resolve(ContactStore.deserialize(tx.result)));
+      tx.onsuccess = Catch.try(() => resolve(ContactStore.toContact(tx.result)));
       tx.onerror = () => reject(ContactStore.errCategorize(tx.error || new Error('Unknown db error')));
     });
   }
 
-  private static deserialize = async (result: any): Promise<Contact | undefined> => {
+  private static getArmoredPubkey = (pubkey: Key | string): string => {
+    // tslint:disable-next-line:no-unsafe-any
+    return (pubkey && typeof pubkey === 'object') ? KeyUtil.armor(pubkey as Key) : pubkey as string;
+  }
+
+  private static toContact = async (result: any): Promise<Contact | undefined> => {
     if (!result) {
       return;
     }
     // tslint:disable-next-line:no-unsafe-any
-    const armoredPubkey = (result.pubkey && typeof result.pubkey === 'object') ? KeyUtil.armor(result.pubkey as Key) : result.pubkey as string;
+    const armoredPubkey = ContactStore.getArmoredPubkey(result.pubkey);
     // parse again to re-calculate expiration-related fields etc.
     // tslint:disable-next-line:no-null-keyword
     const pubkey = armoredPubkey ? await KeyUtil.parse(armoredPubkey) : null;
     return { ...result, pubkey }; // tslint:disable-line:no-unsafe-any
+  }
+
+  private static toContactPreview = (result: any): ContactPreview => {
+    // tslint:disable-next-line:no-unsafe-any
+    const armoredPubkey = ContactStore.getArmoredPubkey(result.pubkey);
+    // tslint:disable-next-line:no-unsafe-any
+    return {
+      email: result.email,
+      armoredPubkey: armoredPubkey,
+      name: result.name,
+      has_pgp: result.has_pgp,
+      last_use: result.last_use,
+    };
   }
 
   private static recreateDates = (contacts: (Contact | undefined)[]) => {

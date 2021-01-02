@@ -3,7 +3,7 @@
 'use strict';
 
 import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window.js';
-import { ChunkedCb, ProgressCb } from '../../shared/api.js';
+import { ChunkedCb, ProgressCb, EmailProviderContact } from '../../shared/api.js';
 import { Dict, Str, Value } from '../../../core/common.js';
 import { EmailProviderApi, EmailProviderInterface, Backups } from '../email-provider-api.js';
 import { GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
@@ -13,7 +13,7 @@ import { Attachment } from '../../../core/attachment.js';
 import { BrowserMsg } from '../../../browser/browser-msg.js';
 import { Buf } from '../../../core/buf.js';
 import { Catch } from '../../../platform/catch.js';
-import { Contact, KeyUtil } from '../../../core/crypto/key.js';
+import { KeyUtil } from '../../../core/crypto/key.js';
 import { Env } from '../../../browser/env.js';
 import { FormatError } from '../../../core/crypto/pgp/msg-util.js';
 import { Google } from './google.js';
@@ -23,7 +23,6 @@ import { PgpArmor } from '../../../core/crypto/pgp/pgp-armor.js';
 import { SendableMsg } from '../sendable-msg.js';
 import { Xss } from '../../../platform/xss.js';
 import { KeyStore } from '../../../platform/store/key-store.js';
-import { ContactStore } from '../../../platform/store/contact-store.js';
 
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 
@@ -234,7 +233,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   /**
    * This will keep triggering callback with new emails as they are being discovered
    */
-  public guessContactsFromSentEmails = async (userQuery: string, knownContacts: Contact[], chunkedCb: ChunkedCb): Promise<void> => {
+  public guessContactsFromSentEmails = async (userQuery: string, knownEmails: string[], chunkedCb: ChunkedCb): Promise<void> => {
     userQuery = userQuery.toLowerCase();
     let gmailQuery = `is:sent ${this.GMAIL_USELESS_CONTACTS_FILTER} `;
     const needles: string[] = [];
@@ -256,11 +255,11 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       }
       gmailQuery += ')';
     }
-    for (const contact of knownContacts.filter(c => Str.isEmailValid(c.email))) {
+    for (const email of knownEmails) {
       if (gmailQuery.length > this.GMAIL_SEARCH_QUERY_LENGTH_LIMIT) {
         break;
       }
-      gmailQuery += ` -to:${contact.email}`;
+      gmailQuery += ` -to:${email}`;
     }
     await this.apiGmailLoopThroughEmailsToCompileContacts(needles, gmailQuery, chunkedCb);
   }
@@ -370,7 +369,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return filteredQuery;
   }
 
-  private apiGmailGetNewUniqueRecipientsFromHeaders = async (toHeaders: string[], allResults: Contact[], allRawEmails: string[]): Promise<Contact[]> => {
+  private apiGmailGetNewUniqueRecipientsFromHeaders = async (toHeaders: string[], allResults: EmailProviderContact[], allRawEmails: string[]): Promise<EmailProviderContact[]> => {
     if (!toHeaders.length) {
       return [];
     }
@@ -385,8 +384,8 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       }
     }
     const rawValidEmails = rawParsedResults.filter(r => r.address && Str.isEmailValid(r.address));
-    const newValidResults = await Promise.all(rawValidEmails.map(({ address, name }) => ContactStore.obj({ email: address!, name })));
-    const uniqueNewValidResults: Contact[] = [];
+    const newValidResults: EmailProviderContact[] = await Promise.all(rawValidEmails.map((a) => { return { email: a.address!, name: a.name } as EmailProviderContact }));
+    const uniqueNewValidResults: EmailProviderContact[] = [];
     for (const newValidRes of newValidResults) {
       if (allResults.map(c => c.email).indexOf(newValidRes.email) === -1) {
         const foundIndex = uniqueNewValidResults.map(c => c.email).indexOf(newValidRes.email);
@@ -401,9 +400,9 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   }
 
   private apiGmailLoopThroughEmailsToCompileContacts = async (needles: string[], gmailQuery: string, chunkedCb: ChunkedCb) => {
-    const allResults: Contact[] = [];
+    const allResults: EmailProviderContact[] = [];
     const allRawEmails: string[] = [];
-    const allMatchingResults: Contact[] = [];
+    const allMatchingResults: EmailProviderContact[] = [];
     let lastFilteredQuery = '';
     let continueSearching = true;
     while (continueSearching) {
@@ -430,7 +429,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     await chunkedCb({ new: [], all: allResults });
   }
 
-  private doesGmailsContactGuessResultMatchNeedles = (needles: string[], contact: Contact): boolean => {
+  private doesGmailsContactGuessResultMatchNeedles = (needles: string[], contact: EmailProviderContact): boolean => {
     if (!needles.length) {
       return true; // no search query provided, so anything matches
     }

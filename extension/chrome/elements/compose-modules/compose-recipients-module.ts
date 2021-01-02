@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { ChunkedCb, RecipientType } from '../../../js/common/api/shared/api.js';
+import { ChunkedCb, EmailProviderContact, RecipientType } from '../../../js/common/api/shared/api.js';
 import { Contact } from '../../../js/common/core/crypto/key.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './compose-err-module.js';
 import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
@@ -20,7 +20,7 @@ import { moveElementInArray } from '../../../js/common/platform/util.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { ContactStore, ContactUpdate } from '../../../js/common/platform/store/contact-store.js';
+import { ContactPreview, ContactStore, ContactUpdate } from '../../../js/common/platform/store/contact-store.js';
 
 /**
  * todo - this class is getting too big
@@ -513,7 +513,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         this.hideContacts(); // todo - show suggestions of most contacted ppl etc
         return;
       }
-      const contacts: Contact[] = await ContactStore.search(undefined, { substring });
+      const contacts: ContactPreview[] = await ContactStore.search(undefined, { substring });
       this.view.errModule.debug(`searchContacts substring: ${substring}`);
       this.view.errModule.debug(`searchContacts db count: ${contacts.length}`);
       this.renderSearchRes(input, contacts, { substring });
@@ -524,7 +524,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.errModule.debug(`searchContacts 3`);
       const foundOnGoogle = await this.searchContactsOnGoogle(substring, contacts);
       await this.addApiLoadedContactsToDb(foundOnGoogle);
-      contacts.push(...foundOnGoogle);
+      contacts.push(...foundOnGoogle.map(c => ContactStore.previewObj({ email: c.email, name: c.name })));
       this.renderSearchRes(input, contacts, { substring });
       if (contacts.length >= this.MAX_CONTACTS_LENGTH) {
         this.view.errModule.debug(`searchContacts 3.b, count: ${contacts.length}`);
@@ -535,7 +535,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         this.view.errModule.debug(`searchContacts (Gmail Sent Messages) 6.b`);
         await this.guessContactsFromSentEmails(substring, contacts, async guessed => {
           await this.addApiLoadedContactsToDb(guessed.new);
-          contacts.push(...guessed.new);
+          contacts.push(...guessed.new.map(c => ContactStore.previewObj({ email: c.email, name: c.name })));
           this.renderSearchRes(input, contacts, { substring });
         });
       }
@@ -549,9 +549,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
   }
 
-  private guessContactsFromSentEmails = async (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => {
+  private guessContactsFromSentEmails = async (query: string, knownContacts: ContactPreview[], multiCb: ChunkedCb) => {
     this.view.errModule.debug('guessContactsFromSentEmails start');
-    await this.view.emailProvider.guessContactsFromSentEmails(query, knownContacts, multiCb).catch(e => {
+    await this.view.emailProvider.guessContactsFromSentEmails(query, knownContacts.map(c => c.email).filter(e => Str.isEmailValid(e)), multiCb).catch(e => {
       if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       } else if (ApiErr.isNetErr(e)) {
@@ -566,25 +566,24 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.errModule.debug('guessContactsFromSentEmails end');
   }
 
-  private searchContactsOnGoogle = async (query: string, knownContacts: Contact[]): Promise<Contact[]> => {
+  private searchContactsOnGoogle = async (query: string, knownContacts: ContactPreview[]): Promise<EmailProviderContact[]> => {
     if (this.canSearchContacts) {
       this.view.errModule.debug(`searchContacts (Google API) 5`);
       const contactsGoogle = await Google.contactsGet(this.view.acctEmail, query, undefined, this.MAX_CONTACTS_LENGTH);
       if (contactsGoogle && contactsGoogle.length) {
-        const newContacts = contactsGoogle.filter(cGmail => !knownContacts.find(c => c.email === cGmail.email));
-        return await Promise.all(newContacts.map(({ email, name }) => ContactStore.obj({ email, name })));
+        return contactsGoogle.filter(cGmail => !knownContacts.find(c => c.email === cGmail.email));
       }
     }
     return [];
   }
 
-  private renderSearchRes = (input: JQuery<HTMLElement>, contacts: Contact[], query: ProviderContactsQuery) => {
+  private renderSearchRes = (input: JQuery<HTMLElement>, contacts: ContactPreview[], query: ProviderContactsQuery) => {
     if ((input.val() as string).toLowerCase() !== query.substring.toLowerCase()) { // the input value has changed meanwhile
       return;
     }
     this.view.errModule.debug(`renderSearchRes len: ${contacts.length}`);
     // have pgp on top, no pgp bottom. Sort each groups by last use
-    const sortedContacts = contacts.sort((a: Contact, b: Contact) => {
+    const sortedContacts = contacts.sort((a: ContactPreview, b: ContactPreview) => {
       if (a.has_pgp && !b.has_pgp) {
         return -1;
       }
@@ -727,13 +726,14 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     return result;
   }
 
-  private addApiLoadedContactsToDb = async (newContacts: Contact[]) => {
+  private addApiLoadedContactsToDb = async (newContacts: EmailProviderContact[]) => {
     this.view.errModule.debug('addApiLoadedContactsToDb 1');
     if (!newContacts.length) {
       return;
     }
     const toLookup: Contact[] = [];
-    for (const contact of newContacts) {
+    for (const input of newContacts) {
+      const contact = await ContactStore.obj({ email: input.email, name: input.name });
       const [storedContact] = await ContactStore.get(undefined, [contact.email]);
       if (storedContact) {
         const toUpdate: ContactUpdate = {};
