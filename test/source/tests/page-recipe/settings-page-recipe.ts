@@ -1,11 +1,15 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { Config, Util } from '../../util';
-import { ControllableFrame, ControllablePage } from '../../browser';
+import { BrowserHandle, ControllableFrame, ControllablePage } from '../../browser';
 
 import { PageRecipe } from './abstract-page-recipe';
 import { expect } from 'chai';
 import { Str } from '../../core/common';
+import { AvaContext } from '../tooling';
+import { TestUrls } from '../../browser/test-urls';
+import { Xss } from '../../platform/xss';
+import { KeyUtil } from '../../core/crypto/key';
 
 export class SettingsPageRecipe extends PageRecipe {
 
@@ -101,4 +105,22 @@ export class SettingsPageRecipe extends PageRecipe {
     await settingsPage.waitTillGone('@dialog');
   }
 
+  public static addKeyTest = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, armoredPrvKey: string, passphrase: string) => {
+    const addPrvPage = await browser.newPage(t, `/chrome/settings/modules/add_key.htm?acctEmail=${Xss.escape(acctEmail)}&parent_tab_id=0`);
+    await addPrvPage.waitAndClick('#source_paste');
+    await addPrvPage.waitAndType('.input_private_key', armoredPrvKey);
+    await addPrvPage.waitAndClick('#toggle_input_passphrase');
+    await addPrvPage.waitAndType('#input_passphrase', passphrase);
+    await addPrvPage.waitAndClick('.action_add_private_key', { delay: 1 });
+    await addPrvPage.waitTillGone('.swal2-container'); // dialog closed
+    await Util.sleep(1);
+    await addPrvPage.close();
+    await Util.sleep(1);
+    const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
+    await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+    const key = await KeyUtil.parse(armoredPrvKey);
+    const fp = Str.spaced(Xss.escape(key.id));
+    await settingsPage.waitForContent('@container-settings-keys-list', fp); // confirm key successfully loaded
+    await settingsPage.close();
+  }
 }
