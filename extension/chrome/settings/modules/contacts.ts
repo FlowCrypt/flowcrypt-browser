@@ -108,8 +108,8 @@ View.run(class ContactsView extends View {
     }
   }
 
-  private actionExportAllKeysHandler = () => {
-    const allArmoredPublicKeys = this.contacts.map(c => c.armoredPubkey).filter(Boolean).map(a => a!.trim()).join('\n');
+  private actionExportAllKeysHandler = async () => {
+    const allArmoredPublicKeys = (await ContactStore.searchPubkeys(undefined, { has_pgp: true, limit: 500, substring: String($('.input-search-contacts').val()) })).map(a => a!.trim()).join('\n');
     const exportFile = new Attachment({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: Buf.fromUtfStr(allArmoredPublicKeys) });
     Browser.saveToDownloads(exportFile);
   }

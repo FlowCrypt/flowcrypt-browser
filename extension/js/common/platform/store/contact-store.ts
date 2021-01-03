@@ -24,7 +24,6 @@ type DbContactObjArg = {
 
 export type ContactPreview = {
   email: string;
-  armoredPubkey: string | null;
   name: string | null;
   has_pgp: 0 | 1;
   last_use: number | null;
@@ -91,7 +90,7 @@ export class ContactStore extends AbstractStore {
     if (!validEmail) {
       throw new Error(`Cannot handle the contact because email is not valid: ${email}`);
     }
-    return { email: validEmail, name: name || null, armoredPubkey: null, has_pgp: 0, last_use: null };
+    return { email: validEmail, name: name || null, has_pgp: 0, last_use: null };
   }
 
   public static obj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig }: DbContactObjArg): Promise<Contact> => {
@@ -246,12 +245,20 @@ export class ContactStore extends AbstractStore {
   }
 
   public static search = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<ContactPreview[]> => {
+    return (await ContactStore.rawSearch(db, query)).filter(Boolean).map(ContactStore.toContactPreview);
+  }
+
+  public static searchPubkeys = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<string[]> => {
+    return (await ContactStore.rawSearch(db, query)).filter(Boolean).map(ContactStore.toArmoredPubkey).filter(Boolean);
+  }
+
+  private static rawSearch = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<unknown[]> => {
     if (!db) { // relay op through background process
-      return await BrowserMsg.send.bg.await.db({ f: 'search', args: [query] }) as ContactPreview[];
+      return await BrowserMsg.send.bg.await.db({ f: 'rawSearch', args: [query] }) as ContactPreview[];
     }
     for (const key of Object.keys(query)) {
       if (!ContactStore.dbQueryKeys.includes(key)) {
-        throw new Error('ContactStore.search: unknown key: ' + key);
+        throw new Error('ContactStore.rawSearch: unknown key: ' + key);
       }
     }
     query.substring = ContactStore.normalizeString(query.substring || '');
@@ -265,7 +272,7 @@ export class ContactStore extends AbstractStore {
         return resultsWithPgp.concat(resultsWithoutPgp);
       }
     }
-    const toDeserialize: unknown[] = await new Promise((resolve, reject) => {
+    const raw: unknown[] = await new Promise((resolve, reject) => {
       const contacts = db.transaction('contacts', 'readonly').objectStore('contacts');
       let search: IDBRequest;
       if (typeof query.has_pgp === 'undefined') { // any query.has_pgp value
@@ -293,7 +300,7 @@ export class ContactStore extends AbstractStore {
       });
       search.onerror = () => reject(ContactStore.errCategorize(search!.error!)); // todo - added ! after ts3 upgrade - investigate
     });
-    return toDeserialize.filter(Boolean).map(ContactStore.toContactPreview);
+    return raw;
   }
 
   private static normalizeString = (str: string) => {
@@ -373,9 +380,12 @@ export class ContactStore extends AbstractStore {
 
   private static toContactPreview = (result: any): ContactPreview => {
     // tslint:disable-next-line:no-unsafe-any
-    const armoredPubkey = ContactStore.getArmoredPubkey(result.pubkey);
+    return { email: result.email, name: result.name, has_pgp: result.has_pgp, last_use: result.last_use };
+  }
+
+  private static toArmoredPubkey = (result: any): string => {
     // tslint:disable-next-line:no-unsafe-any
-    return { email: result.email, armoredPubkey, name: result.name, has_pgp: result.has_pgp, last_use: result.last_use };
+    return ContactStore.getArmoredPubkey(result.pubkey);
   }
 
   private static recreateDates = (contacts: (Contact | undefined)[]) => {
