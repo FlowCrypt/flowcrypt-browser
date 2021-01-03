@@ -384,7 +384,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       }
     }
     const rawValidEmails = rawParsedResults.filter(r => r.address && Str.isEmailValid(r.address));
-    const newValidResults: EmailProviderContact[] = await Promise.all(rawValidEmails.map((a) => { return { email: a.address!, name: a.name } as EmailProviderContact }));
+    const newValidResults: EmailProviderContact[] = await Promise.all(rawValidEmails.map((a) => { return { email: a.address!, name: a.name } as EmailProviderContact; }));
     const uniqueNewValidResults: EmailProviderContact[] = [];
     for (const newValidRes of newValidResults) {
       if (allResults.map(c => c.email).indexOf(newValidRes.email) === -1) {
