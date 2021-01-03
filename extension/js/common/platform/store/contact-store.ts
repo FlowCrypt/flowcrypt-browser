@@ -297,7 +297,7 @@ export class ContactStore extends AbstractStore {
             cursor.continue();
           }
         }
-      });
+      }, reject);
       search.onerror = () => reject(ContactStore.errCategorize(search!.error!)); // todo - added ! after ts3 upgrade - investigate
     });
     return raw;
