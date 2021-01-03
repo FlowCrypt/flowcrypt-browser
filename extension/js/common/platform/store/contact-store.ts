@@ -254,7 +254,7 @@ export class ContactStore extends AbstractStore {
 
   private static rawSearch = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<unknown[]> => {
     if (!db) { // relay op through background process
-      return await BrowserMsg.send.bg.await.db({ f: 'rawSearch', args: [query] }) as ContactPreview[];
+      return await BrowserMsg.send.bg.await.db({ f: 'rawSearch', args: [query] }) as unknown[];
     }
     for (const key of Object.keys(query)) {
       if (!ContactStore.dbQueryKeys.includes(key)) {
@@ -263,12 +263,12 @@ export class ContactStore extends AbstractStore {
     }
     query.substring = ContactStore.normalizeString(query.substring || '');
     if (typeof query.has_pgp === 'undefined' && query.substring) {
-      const resultsWithPgp = await ContactStore.search(db, { substring: query.substring, limit: query.limit, has_pgp: true });
+      const resultsWithPgp = await ContactStore.rawSearch(db, { substring: query.substring, limit: query.limit, has_pgp: true });
       if (query.limit && resultsWithPgp.length === query.limit) {
         return resultsWithPgp;
       } else {
         const limit = query.limit ? query.limit - resultsWithPgp.length : undefined;
-        const resultsWithoutPgp = await ContactStore.search(db, { substring: query.substring, limit, has_pgp: false });
+        const resultsWithoutPgp = await ContactStore.rawSearch(db, { substring: query.substring, limit, has_pgp: false });
         return resultsWithPgp.concat(resultsWithoutPgp);
       }
     }
