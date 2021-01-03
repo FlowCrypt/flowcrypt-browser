@@ -14,6 +14,7 @@ import { TestUrls } from './../browser/test-urls';
 import { TestVariant } from './../util';
 import { expect } from 'chai';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
+import { unprotectedPrvKey } from './tooling/consts';
 
 // tslint:disable:no-blank-lines-func
 
@@ -236,6 +237,10 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await Util.sleep(1);
       expect(fs.existsSync(downloadedAttachmentFilename)).to.be.true; // tslint:disable-line:no-unused-expression
       Util.deleteFileIfExists(downloadedAttachmentFilename);
+    }));
+
+    ava.default('settings - add unprotected key', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      await SettingsPageRecipe.addKeyTest(t, browser, 'ci.tests.gmail@flowcrypt.dev', unprotectedPrvKey, 'this is a new passphrase to protect previously unprotected key');
     }));
 
     ava.todo('settings - change passphrase - mismatch curent pp');

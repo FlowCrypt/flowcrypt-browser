@@ -4,7 +4,6 @@ import * as ava from 'ava';
 import { expect } from 'chai';
 
 import { Config, TestVariant, Util } from './../util';
-import { unprotectedPrvKey } from './tooling/consts';
 
 import { BrowserRecipe } from './tooling/browser-recipe';
 import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
@@ -79,10 +78,6 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await composePage.selectOption('@input-from', 'flowcryptcompatibility@gmail.com');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Signed Message (Mock Test)', { encrypt: false });
       await ComposePageRecipe.sendAndClose(composePage);
-    }));
-
-    ava.default('settings - add unprotected key', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      await SettingsPageRecipe.addKeyTest(t, browser, 'ci.tests.gmail@flowcrypt.dev', unprotectedPrvKey, 'this is a new passphrase to protect previously unprotected key');
     }));
 
     ava.default('with attachments + shows progress %', testWithBrowser('compatibility', async (t, browser) => {
