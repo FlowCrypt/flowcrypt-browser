@@ -91,13 +91,7 @@ export class ContactStore extends AbstractStore {
     if (!validEmail) {
       throw new Error(`Cannot handle the contact because email is not valid: ${email}`);
     }
-    return {
-      email: validEmail,
-      name: name || null,
-      armoredPubkey: null,
-      has_pgp: 0, // number because we use it for sorting
-      last_use: null,
-    };
+    return { email: validEmail, name: name || null, armoredPubkey: null, has_pgp: 0, last_use: null };
   }
 
   public static obj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig }: DbContactObjArg): Promise<Contact> => {
@@ -381,13 +375,7 @@ export class ContactStore extends AbstractStore {
     // tslint:disable-next-line:no-unsafe-any
     const armoredPubkey = ContactStore.getArmoredPubkey(result.pubkey);
     // tslint:disable-next-line:no-unsafe-any
-    return {
-      email: result.email,
-      armoredPubkey: armoredPubkey,
-      name: result.name,
-      has_pgp: result.has_pgp,
-      last_use: result.last_use,
-    };
+    return { email: result.email, armoredPubkey, name: result.name, has_pgp: result.has_pgp, last_use: result.last_use };
   }
 
   private static recreateDates = (contacts: (Contact | undefined)[]) => {
