@@ -91,10 +91,7 @@ export class Catch {
     return true;
   }
 
-  public static reportErr = (e: any, reject?: (reason?: any) => void) => {
-    if (reject) {
-      reject(e);
-    }
+  public static reportErr = (e: any) => {
     const { line, col } = Catch.getErrorLineAndCol(e);
     Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
   }
@@ -109,15 +106,15 @@ export class Catch {
       && typeof (v as Promise<any>).catch === 'function'; // tslint:disable-line:no-unbound-method - only testing if exists
   }
 
-  public static try = (code: () => void | Promise<void>, reject?: (reason?: any) => void) => {
+  public static try = (code: () => void | Promise<void>) => {
     return () => { // returns a function
       try {
         const r = code();
         if (Catch.isPromise(r)) {
-          r.catch(codeErr => Catch.reportErr(codeErr, reject));
+          r.catch(Catch.reportErr);
         }
       } catch (codeErr) {
-        Catch.reportErr(codeErr, reject);
+        Catch.reportErr(codeErr);
       }
     };
   }

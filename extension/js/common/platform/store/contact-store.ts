@@ -285,19 +285,24 @@ export class ContactStore extends AbstractStore {
         }
       }
       const found: unknown[] = [];
-      search.onsuccess = Catch.try(() => {
-        const cursor = search.result as IDBCursorWithValue | undefined;
-        if (!cursor) {
-          resolve(found);
-        } else {
-          found.push(cursor.value);
-          if (query.limit && found.length >= query.limit) {
+      search.onsuccess = () => {
+        try {
+          const cursor = search.result as IDBCursorWithValue | undefined;
+          if (!cursor) {
             resolve(found);
           } else {
-            cursor.continue();
+            found.push(cursor.value);
+            if (query.limit && found.length >= query.limit) {
+              resolve(found);
+            } else {
+              cursor.continue();
+            }
           }
+        } catch (codeErr) {
+          reject(codeErr);
+          Catch.reportErr(codeErr);
         }
-      }, reject);
+      };
       search.onerror = () => reject(ContactStore.errCategorize(search!.error!)); // todo - added ! after ts3 upgrade - investigate
     });
     return raw;
