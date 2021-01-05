@@ -40,6 +40,17 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       }
     };
 
+    const pageHasSecureDraft = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, expectedContent?: string) => {
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
+      expect(urls.length).to.equal(1);
+      const replyBox = await browser.newPage(t, urls[0]);
+      if (expectedContent) {
+        await replyBox.waitForContent('@input-body', expectedContent);
+      } else {
+        await replyBox.waitAll('@input-body');
+      }
+    };
+
     const pageDoesNotHaveSecureReplyContainer = async (gmailPage: ControllablePage) => {
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });
       expect(urls.length).to.equal(0);
@@ -212,6 +223,10 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitAndClick('@secure-reply-button');
       await Util.sleep(10);
       await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
+      await gmailPage.page.keyboard.type('hey there');
+      await Util.sleep(5);
+      await gmailPage.page.reload();
+      await pageHasSecureDraft(t, browser, gmailPage, 'hey there');
     }));
 
     ava.default('mail.google.com - plain reply to encrypted and signed messages', testWithBrowser('ci.tests.gmail', async (t, browser) => {
