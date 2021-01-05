@@ -158,7 +158,7 @@ export class ContactStore extends AbstractStore {
       const tx = db.transaction('contacts', 'readwrite');
       const contactsTable = tx.objectStore('contacts');
       contactsTable.put(prepared);
-      tx.oncomplete = Catch.try(resolve);
+      tx.oncomplete = () => resolve();
       tx.onabort = () => reject(ContactStore.errCategorize(tx.error));
     });
   }
@@ -210,7 +210,7 @@ export class ContactStore extends AbstractStore {
       const tx = db.transaction('contacts', 'readwrite');
       const contactsTable = tx.objectStore('contacts');
       contactsTable.put(updated);
-      tx.oncomplete = Catch.try(resolve);
+      tx.oncomplete = () => resolve();
       tx.onabort = () => reject(ContactStore.errCategorize(tx.error));
     });
   }
@@ -361,7 +361,14 @@ export class ContactStore extends AbstractStore {
       } else { // search primary longid
         tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(emailOrLongid);
       }
-      tx.onsuccess = Catch.try(() => resolve(ContactStore.toContact(tx.result)));
+      tx.onsuccess = () => {
+        try {
+          resolve(ContactStore.toContact(tx.result));
+        } catch (codeErr) {
+          reject(codeErr);
+          Catch.reportErr(codeErr);
+        }
+      };
       tx.onerror = () => reject(ContactStore.errCategorize(tx.error || new Error('Unknown db error')));
     });
   }
