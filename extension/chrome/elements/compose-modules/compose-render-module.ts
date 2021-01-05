@@ -246,7 +246,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     // Firefox needs an iframe to be focused before focusing its content
     BrowserMsg.send.focusFrame(this.view.parentTabId, { frameId: this.view.frameId });
     Catch.setHandledTimeout(() => { // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
-      this.view.S.cached(this.view.isReplyBox && this.responseMethod === 'reply' && this.view.replyParams?.to.length ? 'input_text' : 'input_to').focus();
+      this.view.S.cached(this.view.isReplyBox && this.responseMethod !== 'forward' && this.view.replyParams?.to.length ? 'input_text' : 'input_to').focus();
       // document.getElementById('input_text')!.focus(); // #input_text is in the template
     }, 100);
     this.view.sizeModule.onComposeTableRender();
