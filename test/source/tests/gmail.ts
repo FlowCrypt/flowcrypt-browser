@@ -147,7 +147,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const gmailPage = await BrowserRecipe.openGmailPage(t, browser);
       await gmailPage.type('[aria-label="Search mail"]', 'encrypted email for offline decrypt');
       await gmailPage.press('Enter'); // submit search
-      await gmailPage.page.waitFor(2000); // wait for search results
+      await Util.sleep(2); // wait for search results
       await gmailPage.page.setOfflineMode(true); // go offline mode
       await gmailPage.press('Enter'); // open the message
       // TODO(@limonte): use the commented line below instead of opening pgp block in a new tab

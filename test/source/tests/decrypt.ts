@@ -448,7 +448,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await pgpBlock.click('a');
       await Util.sleep(5);
       const flowcryptTab = (await browser.browser.pages()).find(p => p.url() === 'https://flowcrypt.com/');
-      await flowcryptTab!.waitFor("body");
+      await flowcryptTab!.waitForSelector("body");
       flowcryptTab!.on('console', msg => expect((msg as any)._text).to.equal('Opener: null'));
       await Util.sleep(5);
       await flowcryptTab!.evaluate(() => console.log(`Opener: ${JSON.stringify(window.opener)}`));
