@@ -197,26 +197,39 @@ export class Mime {
 
   public static encode = async (body: SendableMsgBody, headers: RichHeaders, attachments: Attachment[] = [], type?: MimeEncodeType): Promise<string> => {
     const rootContentType = type !== 'pgpMimeEncrypted' ? 'multipart/mixed' : `multipart/encrypted; protocol="application/pgp-encrypted";`;
-    const rootNode = new MimeBuilder(rootContentType, { includeBccInHeader: true }); // tslint:disable-line:no-unsafe-any
+    const rootNode: MimeParserNode = new MimeBuilder(rootContentType, { includeBccInHeader: true });
+    let wrapper: MimeParserNode | undefined = undefined;
     for (const key of Object.keys(headers)) {
-      rootNode.addHeader(key, headers[key]); // tslint:disable-line:no-unsafe-any
+      rootNode.addHeader(key, headers[key]);
     }
     if (Object.keys(body).length) {
       let contentNode: MimeParserNode;
-      if (Object.keys(body).length === 1) {
+      const wrap = type === 'pgpMimeEncrypted';
+      if (!wrap && Object.keys(body).length === 1) {
         contentNode = Mime.newContentNode(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0] as "text/plain" | "text/html"] || '');
       } else {
-        contentNode = new MimeBuilder('multipart/alternative'); // tslint:disable-line:no-unsafe-any
+        contentNode = new MimeBuilder('multipart/alternative', wrap ? { includeBccInHeader: true } : undefined); // tslint:disable-line:no-unsafe-any
         for (const type of Object.keys(body)) {
           contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!.toString())); // already present, that's why part of for loop
         }
       }
-      rootNode.appendChild(contentNode); // tslint:disable-line:no-unsafe-any
+      if (wrap) {
+        contentNode.appendChild(rootNode);
+        wrapper = contentNode;
+      } else {
+        rootNode.appendChild(contentNode);
+      }
     }
     for (const attachment of attachments) {
       rootNode.appendChild(Mime.createAttNode(attachment)); // tslint:disable-line:no-unsafe-any
     }
-    return rootNode.build(); // tslint:disable-line:no-unsafe-any
+    if (wrapper) {
+      for (const key of Object.keys(headers)) {
+        wrapper.addHeader(key, headers[key]);
+      }
+      return wrapper.build();
+    }
+    return rootNode.build();
   }
 
   public static encodeSmime = async (body: Uint8Array, headers: RichHeaders): Promise<string> => {

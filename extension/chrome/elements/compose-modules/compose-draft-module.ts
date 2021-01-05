@@ -182,7 +182,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     if (sendable.body['encrypted/buf']) {
       sendable.body['encrypted/buf'] = Buf.concat([Buf.fromUtfStr(prefix), sendable.body['encrypted/buf']]);
     }
-    if (sendable.body['text/plain']) {
+    if (Object.keys(sendable.body).includes('text/plain')) {
       sendable.body['text/plain'] = `${prefix}${sendable.body['text/plain'] || ''}`;
     }
   }

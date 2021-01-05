@@ -60,7 +60,7 @@ export class SendableMsg {
   }
 
   public static createPgpMime = async (acctEmail: string, headers: SendableMsgHeaders, attachments: Attachment[], options?: SendableMsgOptions): Promise<SendableMsg> => {
-    return await SendableMsg.createSendableMsg(acctEmail, headers, {}, attachments, { type: (options ? 'pgpMimeEncrypted' : undefined), isDraft: (options ? options.isDraft : undefined) });
+    return await SendableMsg.createSendableMsg(acctEmail, headers, { 'text/plain': '' }, attachments, { type: (options ? 'pgpMimeEncrypted' : undefined), isDraft: (options ? options.isDraft : undefined) });
   }
 
   public static createPgpMimeSigned = async (
