@@ -197,8 +197,9 @@ export class Mime {
 
   public static encode = async (body: SendableMsgBody, headers: RichHeaders, attachments: Attachment[] = [], type?: MimeEncodeType): Promise<string> => {
     const rootContentType = type !== 'pgpMimeEncrypted' ? 'multipart/mixed' : `multipart/encrypted; protocol="application/pgp-encrypted";`;
+    // tslint:disable-next-line:no-unsafe-any
     const rootNode: MimeParserNode = new MimeBuilder(rootContentType, { includeBccInHeader: true });
-    let wrapper: MimeParserNode | undefined = undefined;
+    let wrapper: MimeParserNode | undefined;
     for (const key of Object.keys(headers)) {
       rootNode.addHeader(key, headers[key]);
     }
