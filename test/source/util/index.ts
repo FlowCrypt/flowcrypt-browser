@@ -97,7 +97,7 @@ Config.secrets().auth.google.push( // these don't contain any secrets, so not wo
   { "email": "flowcrypt.test.key.import.naked@gmail.com" },
   { "email": "flowcrypt.test.key.recovered@gmail.com" },
   { "email": "flowcrypt.test.key.new.manual@gmail.com" },
-  { "email": "flowcrypt.test.key.multibackup@gmail.com" },
+  { "email": "flowcrypt.test.key.multiple@gmail.com" },
   { "email": "has.pub@org-rules-test.flowcrypt.com" },
   { "email": "no.pub@org-rules-test.flowcrypt.com" },
   { "email": "user@no-submit-org-rule.flowcrypt.com" },
