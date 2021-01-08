@@ -134,12 +134,22 @@ span.gray { color: #b7b7b7; }
   color: white;
 }
 
+.swal2-container.ui-toast-container {
+  width: 77%;
+}
+
 .swal2-popup.swal2-toast.ui-toast {
   margin-bottom: 50px;
   background-color: #000;
   opacity: 0.8;
 }
-.swal2-title.ui-toast-title { color: #fff; }
+
+.swal2-popup.swal2-toast .swal2-title.ui-toast-title {
+  color: #fff;
+  margin: 0 0.6em 0.3em;
+}
+
+.swal2-popup.swal2-toast.ui-toast .swal2-timer-progress-bar { background: rgba(255, 255, 255, 0.5); }
 
 .swal2-popup.ui-modal-iframe {
   padding: 0;
@@ -1873,6 +1883,10 @@ table#compose td.text div#input_text {
   min-height: 140px;
 }
 
+table#compose td.text div#input_text img {
+  max-width: 100%;
+}
+
 table#compose td.text div.text_container {
   display: flex;
   flex-direction: column;
@@ -2227,7 +2241,6 @@ div#initial_prompt a {
   justify-content: center;
   border-radius: 4px;
   color: rgb(79, 79, 79);
-  font-weight: 600;
   height: 36px;
   padding: 0 16px;
   box-shadow: inset 0 0 0 1px #dadce0;

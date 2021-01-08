@@ -231,8 +231,9 @@ export class Settings {
    */
   public static promptToRetry = async (lastErr: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
     let userErrMsg = `${userMsg} ${ApiErr.eli5(lastErr)}`;
-    if (lastErr instanceof AjaxErr && lastErr.status === 400) {
-      userErrMsg = `${userMsg}, ${lastErr.resMsg}`; // this will make reason for err 400 obvious to user, very important for enterprise customers
+    if (lastErr instanceof AjaxErr && (lastErr.status === 400 || lastErr.status === 405)) {
+      // this will make reason for err 400 obvious to user - eg on EKM 405 error
+      userErrMsg = `${userMsg}, ${lastErr.resMsg}`;
     }
     while (await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, userErrMsg, ApiErr.detailsAsHtmlWithNewlines(lastErr)) === 'retry') {
       try {

@@ -11,11 +11,12 @@ import { KeyUtil, KeyInfoWithOptionalPp } from '../core/crypto/key';
 import { UnreportableError } from '../platform/catch.js';
 import { Buf } from '../core/buf';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
-import { DecryptError, MsgUtil, PgpMsgMethod } from '../core/crypto/pgp/msg-util';
+import { DecryptError, DecryptSuccess, MsgUtil, PgpMsgMethod } from '../core/crypto/pgp/msg-util';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
 import { Attachment } from '../core/attachment.js';
 import { ContactStore } from '../platform/store/contact-store.js';
 import { GoogleData, GmailParser, GmailMsg } from '../mock/google/google-data';
+import { pubkey2864E326A5BE488A } from './tooling/consts';
 
 // tslint:disable:no-blank-lines-func
 /* eslint-disable max-len */
@@ -543,6 +544,22 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       expect(parsed?.usableForEncryption).to.equal(false);
       expect(parsed?.expiration).to.equal(1594890073000);
       expect(parsed?.usableForEncryptionButExpired).to.equal(false); // because last signature was created as already expired, no intersection
+      t.pass();
+    });
+
+    ava.default('[unit][MsgUtil.decryptMessage] extracts Primary User ID from key', async t => {
+      const data = new GoogleData('ci.tests.gmail@flowcrypt.dev');
+      const msg: GmailMsg = data.getMessage('1766644f13510f58')!;
+      const enc = Buf.fromBase64Str(msg!.raw!).toUtfStr()
+        .match(/\-\-\-\-\-BEGIN PGP SIGNED MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0];
+      const encryptedData = Buf.fromUtfStr(enc);
+      const pubkey = await KeyUtil.parse(pubkey2864E326A5BE488A);
+      await ContactStore.update(undefined, 'president@forged.com', { name: 'President', pubkey, client: 'pgp' });
+      const decrypted = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData });
+      expect(decrypted.success).to.equal(true);
+      const verifyRes = (decrypted as DecryptSuccess).signature!;
+      expect(verifyRes.match).to.be.true;
+      expect(verifyRes.signer?.primaryUserId).to.equal('A50 Sam <sams50sams50sept@gmail.com>');
       t.pass();
     });
 

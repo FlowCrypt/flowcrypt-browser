@@ -200,7 +200,7 @@ export class SetupView extends View {
         await Ui.modal.error('Cannot save keys to storage because at least one of them is not valid.');
         return;
       }
-      await KeyStore.add(this.acctEmail, KeyUtil.armor(prv));
+      await KeyStore.add(this.acctEmail, prv);
       await PassphraseStore.set(options.passphrase_save ? 'local' : 'session', this.acctEmail, fingerprint, options.passphrase);
     }
     const myOwnEmailAddrsAsContacts: Contact[] = [];

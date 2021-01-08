@@ -8,6 +8,7 @@ import { oauth } from '../lib/oauth';
 import { expect } from 'chai';
 import { GoogleData } from '../google/google-data';
 import { Buf } from '../../core/buf';
+import { pubkey2864E326A5BE488A } from '../../tests/tooling/consts';
 
 // tslint:disable:no-blank-lines-func
 
@@ -57,8 +58,11 @@ export const mockAttesterEndpoints: HandlersDefinition = {
       if (emailOrLongid === 'flowcrypt.compatibility@protonmail.com') {
         return protonMailCompatKey;
       }
-      if (['dhartley@verdoncollege.school.nz', 'DC26454AFB71D18EABBAD73D1C7E6D3C5563A941'.toLowerCase()].includes(emailOrLongid)) {
+      if (['dhartley@verdoncollege.school.nz', '1C7E6D3C5563A941'.toLowerCase()].includes(emailOrLongid)) {
         return getDC26454AFB71D18EABBAD73D1C7E6D3C5563A941();
+      }
+      if (['sams50sams50sept@gmail.com', 'president@forged.com', '2864E326A5BE488A'.toLowerCase()].includes(emailOrLongid)) {
+        return pubkey2864E326A5BE488A;
       }
       if (emailOrLongid.startsWith('martin@p')) {
         return mpVerificationKey;

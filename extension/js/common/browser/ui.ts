@@ -439,16 +439,23 @@ export class Ui {
     return $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
   }
 
-  public static toast = async (msg: string, seconds = 2): Promise<void> => {
-    await Ui.swal().fire({
+  public static toast = (msg: string, seconds = 2) => {
+    // tslint:disable-next-line:no-floating-promises
+    Ui.swal().fire({
       toast: true,
       title: msg,
       showConfirmButton: false,
       position: 'bottom',
       timer: seconds * 1000,
+      timerProgressBar: true,
       customClass: {
+        container: 'ui-toast-container',
         popup: 'ui-toast',
         title: 'ui-toast-title'
+      },
+      didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
       }
     });
   }

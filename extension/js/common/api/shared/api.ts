@@ -8,7 +8,6 @@ import { Attachment } from '../../core/attachment.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { Buf } from '../../core/buf.js';
 import { Catch } from '../../platform/catch.js';
-import { Contact } from '../../core/crypto/key.js';
 import { Dict } from '../../core/common.js';
 import { Env } from '../../browser/env.js';
 import { secureRandomBytes } from '../../platform/util.js';
@@ -18,7 +17,11 @@ export type ReqFmt = 'JSON' | 'FORM' | 'TEXT';
 export type RecipientType = 'to' | 'cc' | 'bcc';
 type ResFmt = 'json' | 'xhr';
 export type ReqMethod = 'POST' | 'GET' | 'DELETE' | 'PUT';
-type ProviderContactsResults = { new: Contact[], all: Contact[] };
+export type EmailProviderContact = {
+  email: string;
+  name?: string | null;
+}
+type ProviderContactsResults = { new: EmailProviderContact[], all: EmailProviderContact[] };
 type RawAjaxErr = {
   // getAllResponseHeaders?: () => any,
   // getResponseHeader?: (e: string) => any,

@@ -106,7 +106,7 @@ View.run(class ChangePassPhraseView extends View {
       await Ui.modal.error(`There was an unexpected error. Please ask for help at human@flowcrypt.com:\n\n${e instanceof Error ? e.stack : String(e)}`);
       return;
     }
-    await KeyStore.add(this.acctEmail, KeyUtil.armor(this.primaryPrv!));
+    await KeyStore.add(this.acctEmail, this.primaryPrv!);
     const persistentlyStoredPp = await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprints[0], true);
     await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.fingerprints[0], typeof persistentlyStoredPp === 'undefined' ? undefined : newPp);
     await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.fingerprints[0], typeof persistentlyStoredPp === 'undefined' ? newPp : undefined);

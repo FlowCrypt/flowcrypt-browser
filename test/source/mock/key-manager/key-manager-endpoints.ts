@@ -195,7 +195,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         throw new Error('Intentional error for put.error user to test client behavior');
       }
       if (acctEmail === 'reject.client.keypair@key-manager-autogen.flowcrypt.com') {
-        throw new HttpClientErr(`No key has been generated for ${acctEmail} yet. Please ask your administrator.`);
+        throw new HttpClientErr(`No key has been generated for ${acctEmail} yet. Please ask your administrator.`, 405);
       }
       if (acctEmail === 'expire@key-manager-keygen-expiration.flowcrypt.com') {
         const prv = await KeyUtil.parseMany(decryptedPrivateKey);

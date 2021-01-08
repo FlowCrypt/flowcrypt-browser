@@ -3,7 +3,6 @@
 'use strict';
 
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
-import { Catch } from '../../../js/common/platform/catch.js';
 import { KeyInfo } from '../../../js/common/core/crypto/key.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -23,7 +22,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
   public iconPubkeyClickHandler = (target: HTMLElement) => {
     this.toggledManually = true;
     const includePub = !$(target).is('.active'); // evaluating what the state of the icon was BEFORE clicking
-    Ui.toast(`${includePub ? 'Attaching' : 'Removing'} your Public Key`).catch(Catch.reportErr);
+    Ui.toast(`${includePub ? 'Attaching' : 'Removing'} your Public Key`);
     this.setAttachPreference(includePub);
   }
 

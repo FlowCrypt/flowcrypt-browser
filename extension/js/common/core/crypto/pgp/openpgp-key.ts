@@ -405,6 +405,17 @@ export class OpenPGPKey {
     return OpenPGPKey.extractExternalLibraryObjFromKey(pubkey).isPacketDecrypted(keyid);
   }
 
+  public static getPrimaryUserId = async (pubs: OpenPGP.key.Key[], keyid: OpenPGP.Keyid): Promise<string | undefined> => {
+    for (const opgpkey of pubs) {
+      const matchingKeys = await opgpkey.getKeys(keyid);
+      if (matchingKeys.length > 0) {
+        const primaryUser = await opgpkey.getPrimaryUser();
+        return primaryUser?.user?.userId?.userid;
+      }
+    }
+    return undefined;
+  }
+
   /**
    * Get latest self-signature date, in utc millis.
    * This is used to figure out how recently was key updated, and if one key is newer than other.
@@ -505,10 +516,10 @@ export class OpenPGPKey {
       if (verifyResult.error !== null && typeof verifyResult.error !== 'undefined') {
         output.push(`verify failed: ${verifyResult.error}`);
       } else {
-        if (verifyResult.match && verifyResult.signer === OpenPGPKey.bytesToLongid(key.getKeyId().bytes)) {
+        if (verifyResult.match && verifyResult.signer?.longid === OpenPGPKey.bytesToLongid(key.getKeyId().bytes)) {
           output.push('verify ok');
         } else {
-          output.push(`verify mismatch: match[${verifyResult.match}] signer[${verifyResult.signer}]`);
+          output.push(`verify mismatch: match[${verifyResult.match}] signer.uid[${verifyResult.signer?.primaryUserId}] signer.longid[${verifyResult.signer?.longid}]`);
         }
       }
     } catch (e) {
