@@ -267,7 +267,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-1`, ['my_key.htm', 'placement=settings']);
       await Util.sleep(1);
       await myKeyFrame.waitAll('@content-fingerprint');
-      await myKeyFrame.waitAndClick('#action_update_prv');
+      await myKeyFrame.waitAndClick('@action-update-prv');
       await myKeyFrame.waitAndType('@input-prv-key', testKeyMultiple98acfa1eadab5b92);
       await myKeyFrame.type('@input-passphrase', '1234');
       await myKeyFrame.waitAndClick('@action-update-key');
