@@ -323,18 +323,17 @@ export class ContactStore extends AbstractStore {
     email = email.toLowerCase();
     name = name ? name.toLowerCase() : '';
     const parts = [email, name];
-    parts.push(...email.split(/[^a-z0-9]/));
+    const domain: string = email.split('@').pop() || '';
+    parts.push(domain, ...email.split(/[^a-z0-9]/));
     parts.push(...name.split(/[^a-z0-9]/));
     const index: string[] = [];
-    for (const part of parts) {
-      if (part) {
-        let substring = '';
-        for (const letter of part.split('')) {
-          substring += letter;
-          const normalized = ContactStore.normalizeString(substring);
-          if (!index.includes(normalized)) {
-            index.push(ContactStore.dbIndex(hasPgp, normalized));
-          }
+    for (const part of parts.filter(p => !!p)) {
+      let substring = '';
+      for (const letter of part.split('')) {
+        substring += letter;
+        const normalized = ContactStore.normalizeString(substring);
+        if (!index.includes(normalized)) {
+          index.push(ContactStore.dbIndex(hasPgp, normalized));
         }
       }
     }
