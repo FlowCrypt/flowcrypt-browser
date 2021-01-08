@@ -15,7 +15,6 @@ import { TestVariant } from './../util';
 import { expect } from 'chai';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { testKeyMultiple1b383d0334e38b28, testKeyMultiple98acfa1eadab5b92, unprotectedPrvKey } from './tooling/consts';
-import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 
 // tslint:disable:no-blank-lines-func
