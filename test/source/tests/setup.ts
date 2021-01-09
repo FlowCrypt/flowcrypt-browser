@@ -397,6 +397,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await attesterFrame.waitAndRespondToModal('error', 'confirm', 'Disallowed by your organisation rules');
     }));
 
+    ava.default('user@no-submit-org-rule.flowcrypt.com - do not submit to attester on key generation', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-org-rule.flowcrypt.com');
+      await SetupPageRecipe.autoKeygen(settingsPage);
+      await Util.sleep(10);
+      await settingsPage.notPresent('.swal2-container');
+      await settingsPage.close();
+    }));
+
     ava.default('user@no-search-domains-org-rule.flowcrypt.com - do not search attester for recipients on particular domains', testWithBrowser(undefined, async (t, browser) => {
       // disallowed searching attester for pubkeys on "flowcrypt.com" domain
       // below we search for human@flowcrypt.com which normally has pubkey on attester, but none should be found due to the rule
