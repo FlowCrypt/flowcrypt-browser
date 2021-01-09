@@ -283,7 +283,8 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
       await experimentalFrame.waitAndClick('@action-regenerate-uuid');
       await Util.sleep(2);
-      const oauthPopup = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(settingsPage, 'confirm', { contentToCheck: 'Please log in with FlowCrypt to continue', clickOn: 'confirm' }));
+      const oauthPopup = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(settingsPage, 'confirm',
+        { contentToCheck: 'Please log in with FlowCrypt to continue', clickOn: 'confirm' }));
       await OauthPageRecipe.google(t, oauthPopup, acct, 'approve');
       await Util.sleep(5);
       await settingsPage.close();

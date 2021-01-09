@@ -13,7 +13,6 @@ import { TestUrls } from './../browser/test-urls';
 import { TestWithBrowser } from './../test';
 import { expect } from 'chai';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
-import { PageRecipe } from './page-recipe/abstract-page-recipe';
 
 /**
  * All tests that use mail.google.com or have to operate without a Gmail API mock should go here
@@ -271,22 +270,23 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pageHasSecureReplyContainer(t, browser, gmailPage);
     }));
 
-    ava.default('mail.google.com - reauth after uuid change', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const acct = 'ci.tests.gmail@flowcrypt.dev';
-      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
-      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-      const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
-      await experimentalFrame.waitAndClick('@action-regenerate-uuid');
-      await Util.sleep(2);
-      const oauthPopup = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(settingsPage, 'confirm', { contentToCheck: 'Please log in with FlowCrypt to continue', clickOn: 'confirm' }));
-      await OauthPageRecipe.google(t, oauthPopup, acct, 'login');
-      await settingsPage.close();
-      // load gmail and test that it has no notifications
-      const gmailPage = await BrowserRecipe.openGmailPage(t, browser);
-      await gmailPage.waitAndClick('@action-secure-compose');
-      await Util.sleep(10);
-      await gmailPage.notPresent(['@webmail-notification']);
-    }));
+    // ava.default('mail.google.com - reauth after uuid change', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    //   const acct = 'ci.tests.gmail@flowcrypt.dev';
+    //   const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
+    //   await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+    //   const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
+    //   await experimentalFrame.waitAndClick('@action-regenerate-uuid');
+    //   await Util.sleep(2);
+    //   const oauthPopup = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(settingsPage, 'confirm',
+    //     { contentToCheck: 'Please log in with FlowCrypt to continue', clickOn: 'confirm' }));
+    //   await OauthPageRecipe.google(t, oauthPopup, acct, 'login');
+    //   await settingsPage.close();
+    //   // load gmail and test that it has no notifications
+    //   const gmailPage = await BrowserRecipe.openGmailPage(t, browser);
+    //   await gmailPage.waitAndClick('@action-secure-compose');
+    //   await Util.sleep(10);
+    //   await gmailPage.notPresent(['@webmail-notification']);
+    // }));
 
     // todo - missing equivalent sample at ci.tests.gmail
     // ava.default('mail.google.com - pubkey gets rendered when using quoted-printable mime', testWithBrowser('compatibility', async (t, browser) => {
