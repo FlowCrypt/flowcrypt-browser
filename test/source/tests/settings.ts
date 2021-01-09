@@ -16,6 +16,7 @@ import { expect } from 'chai';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { testKeyMultiple1b383d0334e38b28, testKeyMultiple98acfa1eadab5b92, unprotectedPrvKey } from './tooling/consts';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
+import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 
 // tslint:disable:no-blank-lines-func
 
@@ -273,6 +274,25 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await myKeyFrame.waitAndClick('@action-update-key');
       await PageRecipe.waitForModalAndRespond(myKeyFrame, 'confirm', { contentToCheck: 'Public and private key updated locally', clickOn: 'cancel' });
       await settingsPage.close();
+    }));
+
+    ava.default('settings - reauth after uuid change', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const acct = 'ci.tests.gmail@flowcrypt.dev';
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
+      await experimentalFrame.waitAndClick('@action-regenerate-uuid');
+      await Util.sleep(2);
+      const oauthPopup = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(settingsPage, 'confirm',
+        { contentToCheck: 'Please log in with FlowCrypt to continue', clickOn: 'confirm' }));
+      await OauthPageRecipe.google(t, oauthPopup, acct, 'approve');
+      await Util.sleep(5);
+      await settingsPage.close();
+
+      const settingsPage1 = await browser.newPage(t, TestUrls.extensionSettings(acct));
+      await Util.sleep(10);
+      await settingsPage1.notPresent('.swal2-container');
+      await settingsPage1.close();
     }));
 
     ava.todo('settings - change passphrase - mismatch curent pp');
