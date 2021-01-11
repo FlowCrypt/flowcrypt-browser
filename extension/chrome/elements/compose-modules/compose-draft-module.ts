@@ -140,7 +140,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
           }
         } else {
           await this.doUploadDraftWithLocalStorageFallback(mimeMsg, msgData, async () => {
-            await this.view.emailProvider.draftUpdate(this.view.draftId, mimeMsg);
+            await this.view.emailProvider.draftUpdate(this.view.draftId, mimeMsg, this.view.threadId);
             this.view.S.cached('send_btn_note').text('Saved');
             return this.view.draftId;
           });
@@ -231,7 +231,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   }
 
   private isValidLocalDraft = (localDraft: unknown): localDraft is GmailRes.GmailDraftGet => {
-    return localDraft && typeof (localDraft as GmailRes.GmailDraftGet).message === 'object';
+    return !!localDraft && typeof (localDraft as GmailRes.GmailDraftGet).message === 'object';
   }
 
   private deleteDraftClickHandler = async () => {
