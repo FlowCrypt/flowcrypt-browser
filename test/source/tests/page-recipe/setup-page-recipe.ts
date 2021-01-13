@@ -23,6 +23,7 @@ type ManualEnterOpts = {
 };
 
 type CreateKeyOpts = {
+  key?: { passphrase: string },
   usedPgpBefore?: boolean,
   submitPubkey?: boolean,
   enforcedAlgo?: string | boolean,
@@ -34,9 +35,9 @@ export class SetupPageRecipe extends PageRecipe {
     settingsPage: ControllablePage,
     keyTitle: string,
     backup: 'none' | 'email' | 'file' | 'disabled',
-    { usedPgpBefore = false, submitPubkey = false, enforcedAlgo = false }: CreateKeyOpts = {}
+    { usedPgpBefore = false, submitPubkey = false, enforcedAlgo = false, key = undefined }: CreateKeyOpts = {}
   ) => {
-    await SetupPageRecipe.createBegin(settingsPage, keyTitle, { usedPgpBefore });
+    await SetupPageRecipe.createBegin(settingsPage, keyTitle, { key, usedPgpBefore });
     if (enforcedAlgo) {
       expect(await settingsPage.value('@input-step2bmanualcreate-key-type')).to.equal(enforcedAlgo);
       expect(await settingsPage.isDisabled('@input-step2bmanualcreate-key-type')).to.equal(true);
@@ -46,7 +47,7 @@ export class SetupPageRecipe extends PageRecipe {
     } else { // uncheck - because want to choose backup manually
       await settingsPage.waitAndClick('@input-step2bmanualcreate-backup-inbox');
     }
-    if (!submitPubkey) {
+    if (!submitPubkey && await settingsPage.isElementPresent('@input-step2bmanualcreate-submit-pubkey')) {
       await settingsPage.waitAndClick('@input-step2bmanualcreate-submit-pubkey'); // uncheck
     }
     await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
@@ -219,8 +220,8 @@ export class SetupPageRecipe extends PageRecipe {
     }
   }
 
-  private static createBegin = async (settingsPage: ControllablePage, keyTitle: string, { usedPgpBefore = false }: { usedPgpBefore?: boolean } = {}) => {
-    const k = Config.key(keyTitle);
+  private static createBegin = async (settingsPage: ControllablePage, keyTitle: string, { key, usedPgpBefore = false }: { key?: { passphrase: string }, usedPgpBefore?: boolean } = {}) => {
+    const k = key || Config.key(keyTitle);
     if (usedPgpBefore) {
       await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-create');
     } else {

@@ -399,8 +399,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
 
     ava.default('user@no-submit-org-rule.flowcrypt.com - do not submit to attester on key generation', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-org-rule.flowcrypt.com');
-      await SetupPageRecipe.autoKeygen(settingsPage);
-      await Util.sleep(10);
+      await Util.sleep(5);
+      await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase: 'long enough to suit requirements' }, usedPgpBefore: false });
       await settingsPage.notPresent('.swal2-container');
       await settingsPage.close();
     }));
