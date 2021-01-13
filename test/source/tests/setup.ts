@@ -443,6 +443,15 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const acct = 'get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.com';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.autoKeygen(settingsPage);
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      // check no "add key"
+      await settingsPage.notPresent('@action-open-add-key-page');
+      // check imported key
+      const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
+      await Util.sleep(1);
+      await myKeyFrame.waitAll('@content-fingerprint');
+      expect(await myKeyFrame.read('@content-fingerprint')).to.contain('9C64 3D82 783E 291A 2AD2 611B 499E 84DB 185F 0359');
+      await SettingsPageRecipe.closeDialog(settingsPage);
     }));
 
     ava.default('put.key@key-manager-autogen.flowcrypt.com - automatic setup with key not found on key manager, then generated', testWithBrowser(undefined, async (t, browser) => {
