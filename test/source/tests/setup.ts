@@ -439,6 +439,12 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await securityFrame.notPresent(['@action-change-passphrase-begin', '@action-test-passphrase-begin', '@action-forget-pp']);
     }));
 
+    ava.default('get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.com - automatic setup with key found on key manager and no submit rule', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoKeygen(settingsPage);
+    }));
+
     ava.default('put.key@key-manager-autogen.flowcrypt.com - automatic setup with key not found on key manager, then generated', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'put.key@key-manager-autogen.flowcrypt.com';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);

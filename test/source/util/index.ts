@@ -103,6 +103,7 @@ Config.secrets().auth.google.push( // these don't contain any secrets, so not wo
   { "email": "user@no-submit-org-rule.flowcrypt.com" },
   { "email": "user@no-search-domains-org-rule.flowcrypt.com" },
   { "email": "get.key@key-manager-autogen.flowcrypt.com" },
+  { "email": "get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.com" },
   { "email": "put.key@key-manager-autogen.flowcrypt.com" },
   { "email": "get.error@key-manager-autogen.flowcrypt.com" },
   { "email": "put.error@key-manager-autogen.flowcrypt.com" },
