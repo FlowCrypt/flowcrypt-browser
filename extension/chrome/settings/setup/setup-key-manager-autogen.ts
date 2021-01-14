@@ -34,7 +34,7 @@ export class SetupKeyManagerAutogenModule {
       return;
     }
     const passphrase = PgpPwd.random(); // mustAutogenPassPhraseQuietly
-    const opts: SetupOptions = { passphrase_save: true, submit_main: true, submit_all: false, passphrase };
+    const opts: SetupOptions = { passphrase_save: true, submit_main: this.view.orgRules.canSubmitPubToAttester(), submit_all: false, passphrase };
     try {
       const { privateKeys } = await this.view.keyManager!.getPrivateKeys(this.view.idToken!);
       if (privateKeys.length) { // keys already exist on keyserver, auto-import
