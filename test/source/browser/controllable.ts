@@ -276,19 +276,25 @@ abstract class ControllableBase {
     this.log(`wait_and_click:10:${selector}`);
   }
 
-  public waitForContent = async (selector: string, regExpNeedle: string | RegExp, timeoutSec = 20, testLoopLengthMs = 100) => {
+  public waitForContent = async (selector: string, needle: string | RegExp, timeoutSec = 20, testLoopLengthMs = 100) => {
     await this.waitAny(selector);
     const start = Date.now();
     const texts: string[] = [];
     while (Date.now() - start < timeoutSec * 1000) {
       const text = await this.read(selector, true);
-      if (text.match(regExpNeedle)) {
-        return;
+      if (typeof needle === 'string') { // str
+        if (text.includes(needle)) {
+          return;
+        }
+      } else { // regex
+        if (text.match(needle)) {
+          return;
+        }
       }
       texts.push(text);
       await Util.sleep(testLoopLengthMs / 1000);
     }
-    throw new Error(`Selector ${selector} was found but did not match "${regExpNeedle}" within ${timeoutSec}s. Last content: "${JSON.stringify(texts, undefined, 2)}"`);
+    throw new Error(`Selector ${selector} was found but did not match "${needle}" within ${timeoutSec}s. Last content: "${JSON.stringify(texts, undefined, 2)}"`);
   }
 
   public verifyContentIsPresentContinuously = async (selector: string, expectedText: string, expectPresentForMs: number = 3000, timeoutSec = 20) => {
