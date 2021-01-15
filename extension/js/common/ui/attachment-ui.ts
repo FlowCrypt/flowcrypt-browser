@@ -11,27 +11,27 @@ import { PubkeyResult, KeyUtil } from '../core/crypto/key.js';
 
 declare const qq: any;
 
-export type AttLimits = { count?: number, size?: number, sizeMb?: number, oversize?: (newFileSize: number) => Promise<void> };
+export type AttachmentLimits = { count?: number, size?: number, sizeMb?: number, oversize?: (newFileSize: number) => Promise<void> };
 type AttUICallbacks = {
   attAdded?: (r: Attachment) => Promise<void>,
   uiChanged?: () => void,
 };
 
-class CancelAttSubmit extends Error { }
+class CancelAttachmentSubmit extends Error { }
 
 export class AttachmentUI {
 
   private templatePath = '/chrome/elements/shared/attach.template.htm';
-  private getLimits: () => Promise<AttLimits>;
+  private getLimits: () => Promise<AttachmentLimits>;
   private attachedFiles: Dict<File> = {};
   private uploader: any = undefined;
   private callbacks: AttUICallbacks = {};
 
-  constructor(getLimits: () => Promise<AttLimits>) {
+  constructor(getLimits: () => Promise<AttachmentLimits>) {
     this.getLimits = getLimits;
   }
 
-  public initAttDialog = (elId: string, btnId: string, callbacks: AttUICallbacks = {}) => {
+  public initAttachmentDialog = (elId: string, btnId: string, callbacks: AttUICallbacks = {}) => {
     this.callbacks = callbacks;
     $('#qq-template').load(this.templatePath, () => {
       const config = {
@@ -118,7 +118,7 @@ export class AttachmentUI {
     if (limits.count && Object.keys(this.attachedFiles).length >= limits.count) {
       const msg = `Amount of attached files is limited to ${limits.count}`;
       await Ui.modal.warning(msg);
-      throw new CancelAttSubmit(msg);
+      throw new CancelAttachmentSubmit(msg);
     }
     const newFile: File = this.uploader.getFile(uploadFileId); // tslint:disable-line:no-unsafe-any
     if (limits.size && this.getFileSizeSum() + newFile.size > limits.size) {
@@ -128,7 +128,7 @@ export class AttachmentUI {
       } else {
         await Ui.modal.warning(msg);
       }
-      throw new CancelAttSubmit(msg);
+      throw new CancelAttachmentSubmit(msg);
     }
     this.attachedFiles[uploadFileId] = newFile;
     if (typeof this.callbacks.attAdded === 'function') {

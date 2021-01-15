@@ -103,7 +103,7 @@ export class KeyImportUi {
       }
     }));
     const attach = new AttachmentUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
-    attach.initAttDialog('fineuploader', 'fineuploader_button', {
+    attach.initAttachmentDialog('fineuploader', 'fineuploader_button', {
       attAdded: async file => {
         let prv: OpenPGP.key.Key | undefined;
         const utf = file.getData().toUtfStr();

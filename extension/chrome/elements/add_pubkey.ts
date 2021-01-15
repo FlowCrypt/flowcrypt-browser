@@ -45,7 +45,7 @@ View.run(class AddPubkeyView extends View {
   }
 
   public setHandlers = () => {
-    this.attUI.initAttDialog('fineuploader', 'fineuploader_button', {
+    this.attUI.initAttachmentDialog('fineuploader', 'fineuploader_button', {
       attAdded: async (file) => {
         this.attUI.clearAllAtts();
         const { keys, errs } = await KeyUtil.readMany(file.getData());
