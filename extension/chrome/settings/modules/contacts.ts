@@ -46,7 +46,7 @@ View.run(class ContactsView extends View {
     this.factory = new XssSafeFactory(this.acctEmail, tabId, undefined, undefined, { compact: true });
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
-    this.attUI.initAttDialog('fineuploader', 'fineuploader_button', { attAdded: this.fileAddedHandler });
+    this.attUI.initAttachmentDialog('fineuploader', 'fineuploader_button', { attAdded: this.fileAddedHandler });
     const fetchKeyUI = new FetchKeyUI();
     fetchKeyUI.handleOnPaste($('.input_pubkey'));
     await this.loadAndRenderContactList();

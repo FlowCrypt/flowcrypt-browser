@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { AttLimits, AttachmentUI } from '../../../js/common/ui/attachment-ui.js';
+import { AttachmentLimits, AttachmentUI } from '../../../js/common/ui/attachment-ui.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -21,7 +21,7 @@ export class ComposeAttsModule extends ViewModule<ComposeView> {
 
   public setHandlers = () => {
     this.view.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to interfere
-    this.attach.initAttDialog('fineuploader', 'fineuploader_button', {
+    this.attach.initAttachmentDialog('fineuploader', 'fineuploader_button', {
       uiChanged: () => {
         this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
         this.view.sizeModule.resizeComposeBox();
@@ -29,7 +29,7 @@ export class ComposeAttsModule extends ViewModule<ComposeView> {
     });
   }
 
-  private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
+  private getMaxAttSizeAndOversizeNotice = async (): Promise<AttachmentLimits> => {
     const subscription = await AcctStore.getSubscription(this.view.acctEmail);
     if (!subscription.active && !OrgRules.isPublicEmailProviderDomain(this.view.senderModule.getSender())) {
       return {

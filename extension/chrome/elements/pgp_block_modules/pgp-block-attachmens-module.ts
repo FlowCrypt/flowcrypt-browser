@@ -63,7 +63,7 @@ export class PgpBlockViewAttachmentsModule {
 
   private previewAttachmentClickedHandler = async (attachment: Attachment) => {
     const factory = new XssSafeFactory(this.view.acctEmail, this.view.parentTabId);
-    const iframeUrl = factory.srcPgpAttIframe(attachment, false, undefined, 'chrome/elements/attachment_preview.htm');
+    const iframeUrl = factory.srcPgpAttachmentIframe(attachment, false, undefined, 'chrome/elements/attachment_preview.htm');
     BrowserMsg.send.showAttachmentPreview(this.view.parentTabId, { iframeUrl });
   }
 

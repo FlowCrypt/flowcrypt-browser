@@ -124,7 +124,7 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/add_pubkey.htm'), { emails, placement });
   }
 
-  public srcPgpAttIframe = (a: Attachment, isEncrypted: boolean, parentTabId?: string, iframeUrl = 'chrome/elements/attachment.htm') => {
+  public srcPgpAttachmentIframe = (a: Attachment, isEncrypted: boolean, parentTabId?: string, iframeUrl = 'chrome/elements/attachment.htm') => {
     if (!a.id && !a.url && a.hasData()) { // data provided directly, pass as object url
       a.url = Browser.objUrlCreate(a.getData());
     }
@@ -191,7 +191,7 @@ export class XssSafeFactory {
   }
 
   public embeddedAtta = (meta: Attachment, isEncrypted: boolean, parentTabId?: string) => {
-    return Ui.e('span', { class: 'pgp_attachment', html: this.iframe(this.srcPgpAttIframe(meta, isEncrypted, parentTabId)) });
+    return Ui.e('span', { class: 'pgp_attachment', html: this.iframe(this.srcPgpAttachmentIframe(meta, isEncrypted, parentTabId)) });
   }
 
   public embeddedMsg = (type: MsgBlockType, armored: string, msgId?: string, isOutgoing?: boolean, sender?: string, signature?: string | boolean) => {

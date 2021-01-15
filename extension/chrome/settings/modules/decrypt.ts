@@ -27,7 +27,7 @@ View.run(class ManualDecryptView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.attUi.initAttDialog('fineuploader', 'fineuploader_button');
+    this.attUi.initAttachmentDialog('fineuploader', 'fineuploader_button');
   }
 
   public render = async () => {
