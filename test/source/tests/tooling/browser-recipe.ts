@@ -54,6 +54,7 @@ export class BrowserRecipe {
     } else if (acct === 'ci.tests.gmail') {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
       await SetupPageRecipe.recover(settingsPage, 'ci.tests.gmail');
+      const items = await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcryptdev_google_token_access']);
       await settingsPage.close();
     } else {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');

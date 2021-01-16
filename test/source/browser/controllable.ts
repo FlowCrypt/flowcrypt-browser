@@ -624,6 +624,18 @@ export class ControllablePage extends ControllableBase {
       }
     }
   }
+
+  public getFromLocalStorage = async (keys: string[]): Promise<any> => {
+    const result = await new Promise((resolve, reject) => {
+      (this.target as Page).exposeFunction('saveRawStorageResult', (x: any) => {
+        resolve(x);
+      }).catch(reject).then(() =>
+        (this.target as Page).evaluate(keys =>
+          chrome.storage.local.get(keys, items => (window as any).saveRawStorageResult(items)), keys
+        ).catch(reject));
+    });
+    return result;
+  }
 }
 
 export class ControllableFrame extends ControllableBase {
