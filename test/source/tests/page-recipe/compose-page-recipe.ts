@@ -4,7 +4,6 @@ import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
 
 import { AvaContext } from '../tooling/';
 import { CommonAcct } from '../../test';
-import { EvaluateFn } from 'puppeteer';
 import { PageRecipe } from './abstract-page-recipe';
 import { Util } from '../../util';
 
@@ -19,7 +18,7 @@ export class ComposePageRecipe extends PageRecipe {
 
   public static async openStandalone(
     t: AvaContext, browser: BrowserHandle, group: CommonAcct | string, options:
-      { appendUrl?: string, hasReplyPrompt?: boolean, skipClickPropt?: boolean, skipValidation?: boolean, initialScript?: EvaluateFn } = {}
+      { appendUrl?: string, hasReplyPrompt?: boolean, skipClickPropt?: boolean, skipValidation?: boolean } = {}
   ): Promise<ControllablePage> {
     if (group === 'compatibility') { // More common accounts
       group = 'flowcrypt.compatibility@gmail.com';
@@ -27,8 +26,7 @@ export class ComposePageRecipe extends PageRecipe {
       group = 'ci.tests.gmail@flowcrypt.dev';
     }
     const email = encodeURIComponent(group);
-    const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${options.appendUrl || ''}`,
-      options.initialScript);
+    const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${options.appendUrl || ''}`);
     // await composePage.page.on('console', msg => console.log(`compose-dbg:${msg.text()}`));
     if (!options.skipValidation) {
       if (!options.hasReplyPrompt) {
