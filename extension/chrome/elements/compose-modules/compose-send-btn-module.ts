@@ -74,7 +74,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   }
 
   public renderUploadProgress = (progress: number | undefined, progressRepresents: 'FIRST-HALF' | 'SECOND-HALF' | 'EVERYTHING') => {
-    if (progress && this.view.attsModule.attach.hasAtt()) {
+    if (progress && this.view.attachmentsModule.attachment.hasAttachment()) {
       if (progressRepresents === 'FIRST-HALF') {
         progress = Math.floor(progress / 2); // show 0-50% instead of 0-100%
       } else if (progressRepresents === 'SECOND-HALF') {
@@ -149,7 +149,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       msg.attachments.push(...imgAttachments);
     }
     if (this.view.myPubkeyModule.shouldAttach()) {
-      msg.attachments.push(Attachment.keyinfoAsPubkeyAtt(senderKi));
+      msg.attachments.push(Attachment.keyinfoAsPubkeyAttachment(senderKi));
     }
     await this.addNamesToMsg(msg);
   }

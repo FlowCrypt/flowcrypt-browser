@@ -12,8 +12,8 @@ import { PubkeyResult, KeyUtil } from '../core/crypto/key.js';
 declare const qq: any;
 
 export type AttachmentLimits = { count?: number, size?: number, sizeMb?: number, oversize?: (newFileSize: number) => Promise<void> };
-type AttUICallbacks = {
-  attAdded?: (r: Attachment) => Promise<void>,
+type AttachmentUICallbacks = {
+  attachmentAdded?: (r: Attachment) => Promise<void>,
   uiChanged?: () => void,
 };
 
@@ -25,13 +25,13 @@ export class AttachmentUI {
   private getLimits: () => Promise<AttachmentLimits>;
   private attachedFiles: Dict<File> = {};
   private uploader: any = undefined;
-  private callbacks: AttUICallbacks = {};
+  private callbacks: AttachmentUICallbacks = {};
 
   constructor(getLimits: () => Promise<AttachmentLimits>) {
     this.getLimits = getLimits;
   }
 
-  public initAttachmentDialog = (elId: string, btnId: string, callbacks: AttUICallbacks = {}) => {
+  public initAttachmentDialog = (elId: string, btnId: string, callbacks: AttachmentUICallbacks = {}) => {
     this.callbacks = callbacks;
     $('#qq-template').load(this.templatePath, () => {
       const config = {
@@ -43,8 +43,8 @@ export class AttachmentUI {
           extraDropzones: $('#input_text'),
         },
         callbacks: {
-          onSubmit: (uploadFileId: string) => this.processNewAtt(uploadFileId),
-          onCancel: (uploadFileId: string) => this.cancelAtt(uploadFileId),
+          onSubmit: (uploadFileId: string) => this.processNewAttachment(uploadFileId),
+          onCancel: (uploadFileId: string) => this.cancelAttachment(uploadFileId),
         },
       };
       this.uploader = new qq.FineUploader(config); // tslint:disable-line:no-unsafe-any
@@ -60,32 +60,32 @@ export class AttachmentUI {
     return input;
   }
 
-  public hasAtt = () => {
+  public hasAttachment = () => {
     return Object.keys(this.attachedFiles).length > 0;
   }
 
-  public getAttIds = () => {
+  public getAttachmentIds = () => {
     return Object.keys(this.attachedFiles);
   }
 
-  public collectAtt = async (uploadFileId: string) => {
-    const fileData = await this.readAttDataAsUint8(uploadFileId);
+  public collectAttachment = async (uploadFileId: string) => {
+    const fileData = await this.readAttachmentDataAsUint8(uploadFileId);
     return new Attachment({ name: this.attachedFiles[uploadFileId].name, type: this.attachedFiles[uploadFileId].type, data: fileData });
   }
 
-  public collectAtts = async () => {
+  public collectAttachments = async () => {
     const attachments: Attachment[] = [];
     for (const uploadFileId of Object.keys(this.attachedFiles)) {
-      attachments.push(await this.collectAtt(uploadFileId));
+      attachments.push(await this.collectAttachment(uploadFileId));
     }
     return attachments;
   }
 
-  public collectEncryptAtts = async (pubs: PubkeyResult[]): Promise<Attachment[]> => {
+  public collectEncryptAttachments = async (pubs: PubkeyResult[]): Promise<Attachment[]> => {
     const attachments: Attachment[] = [];
     for (const uploadFileId of Object.keys(this.attachedFiles)) {
       const file = this.attachedFiles[uploadFileId];
-      const data = await this.readAttDataAsUint8(uploadFileId);
+      const data = await this.readAttachmentDataAsUint8(uploadFileId);
       const pubsForEncryption = KeyUtil.choosePubsBasedOnKeyTypeCombinationForPartialSmimeSupport(pubs);
       if (pubs.find(pub => pub.pubkey.type === 'x509')) {
         throw new UnreportableError('Attachments are not yet supported when sending to recipients using S/MIME x509 certificates.');
@@ -96,7 +96,7 @@ export class AttachmentUI {
     return attachments;
   }
 
-  public clearAllAtts = () => {
+  public clearAllAttachments = () => {
     this.attachedFiles = {};
   }
 
@@ -104,7 +104,7 @@ export class AttachmentUI {
     this.uploader.addFiles([file]); // tslint:disable-line: no-unsafe-any
   }
 
-  private cancelAtt = (uploadFileId: string) => {
+  private cancelAttachment = (uploadFileId: string) => {
     delete this.attachedFiles[uploadFileId];
     if (this.callbacks.uiChanged) {
       // run at next event loop cycle - let DOM changes render first
@@ -113,7 +113,7 @@ export class AttachmentUI {
     }
   }
 
-  private processNewAtt = async (uploadFileId: string) => {
+  private processNewAttachment = async (uploadFileId: string) => {
     const limits = await this.getLimits();
     if (limits.count && Object.keys(this.attachedFiles).length >= limits.count) {
       const msg = `Amount of attached files is limited to ${limits.count}`;
@@ -131,9 +131,9 @@ export class AttachmentUI {
       throw new CancelAttachmentSubmit(msg);
     }
     this.attachedFiles[uploadFileId] = newFile;
-    if (typeof this.callbacks.attAdded === 'function') {
-      const a = await this.collectAtt(uploadFileId);
-      await this.callbacks.attAdded(a);
+    if (typeof this.callbacks.attachmentAdded === 'function') {
+      const a = await this.collectAttachment(uploadFileId);
+      await this.callbacks.attachmentAdded(a);
       const input = this.setInputAttributes();
       input.focus();
     }
@@ -153,7 +153,7 @@ export class AttachmentUI {
     return sum;
   }
 
-  private readAttDataAsUint8 = async (uploadFileId: string): Promise<Uint8Array> => {
+  private readAttachmentDataAsUint8 = async (uploadFileId: string): Promise<Uint8Array> => {
     return await new Promise(resolve => {
       const reader = new FileReader();
       reader.onload = () => {

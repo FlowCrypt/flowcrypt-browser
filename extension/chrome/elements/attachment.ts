@@ -38,13 +38,13 @@ export class AttachmentDownloadView extends View {
   private downloadButton = $('#download');
   private header = $('#header');
   private originalButtonHTML: string | undefined;
-  private canClickOnAtt: boolean = false;
+  private canClickOnAttachment: boolean = false;
   private downloadInProgress = false;
   private tabId!: string;
 
   constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'msgId', 'attId', 'name', 'type', 'size', 'url', 'parentTabId', 'content', 'decrypted', 'frameId', 'isEncrypted']);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'msgId', 'attachmentId', 'name', 'type', 'size', 'url', 'parentTabId', 'content', 'decrypted', 'frameId', 'isEncrypted']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
@@ -53,7 +53,7 @@ export class AttachmentDownloadView extends View {
     this.size = uncheckedUrlParams.size ? parseInt(String(uncheckedUrlParams.size)) : undefined;
     this.type = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'type');
     this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
-    this.id = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'attId');
+    this.id = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'attachmentId');
     this.name = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'name');
     // url contains either actual url of remote content or objectUrl for direct content, either way needs to be downloaded
     this.url = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'url');
@@ -82,7 +82,7 @@ export class AttachmentDownloadView extends View {
       }).catch(ApiErr.reportIfSignificant);
     }
     try {
-      this.canClickOnAtt = ! await this.processAsPublicKeyAndHideAttachmentIfAppropriate();
+      this.canClickOnAttachment = ! await this.processAsPublicKeyAndHideAttachmentIfAppropriate();
     } catch (e) {
       this.renderErr(e);
     }
@@ -91,7 +91,7 @@ export class AttachmentDownloadView extends View {
 
   public setHandlers = () => {
     Ui.event.protect();
-    if (this.canClickOnAtt) {
+    if (this.canClickOnAttachment) {
       this.downloadButton.click(this.setHandlerPrevent('double', () => this.downloadButtonClickedHandler()));
       this.downloadButton.click((e) => e.stopPropagation());
       $('body').click(this.setHandlerPrevent('double', async () => {
@@ -119,7 +119,7 @@ export class AttachmentDownloadView extends View {
     if (this.attachment.url) { // when content was downloaded and decrypted
       this.attachment.setData(await Api.download(this.attachment.url, this.renderProgress));
     } else if (this.attachment.id && this.attachment.msgId) { // gmail attId
-      const { data } = await this.gmail.attGet(this.attachment.msgId, this.attachment.id, this.renderProgress);
+      const { data } = await this.gmail.attachmentGet(this.attachment.msgId, this.attachment.id, this.renderProgress);
       this.attachment.setData(data);
     } else {
       throw new Error('File is missing both id and url - this should be fixed');
@@ -191,7 +191,7 @@ export class AttachmentDownloadView extends View {
 
   private processAsPublicKeyAndHideAttachmentIfAppropriate = async () => {
     if (this.attachment.msgId && this.attachment.id && this.attachment.treatAs() === 'publicKey') { // this is encrypted public key - download && decrypt & parse & render
-      const { data } = await this.gmail.attGet(this.attachment.msgId, this.attachment.id);
+      const { data } = await this.gmail.attachmentGet(this.attachment.msgId, this.attachment.id);
       const decrRes = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail), encryptedData: data });
       if (decrRes.success && decrRes.content) {
         const openpgpType = await MsgUtil.type({ data: decrRes.content });

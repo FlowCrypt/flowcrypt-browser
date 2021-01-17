@@ -28,7 +28,7 @@ View.run(class ContactsView extends View {
 
   private contacts: ContactPreview[] = [];
   private factory: XssSafeFactory | undefined; // set in render()
-  private attUI = new AttachmentUI(() => Promise.resolve({ sizeMb: 5, size: 5 * 1024 * 1024, count: 1 }));
+  private attachmentUI = new AttachmentUI(() => Promise.resolve({ sizeMb: 5, size: 5 * 1024 * 1024, count: 1 }));
   private orgRules!: OrgRules;
   private pubLookup!: PubLookup;
   private backBtn = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">back</a>';
@@ -46,7 +46,7 @@ View.run(class ContactsView extends View {
     this.factory = new XssSafeFactory(this.acctEmail, tabId, undefined, undefined, { compact: true });
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
-    this.attUI.initAttachmentDialog('fineuploader', 'fineuploader_button', { attAdded: this.fileAddedHandler });
+    this.attachmentUI.initAttachmentDialog('fineuploader', 'fineuploader_button', { attachmentAdded: this.fileAddedHandler });
     const fetchKeyUI = new FetchKeyUI();
     fetchKeyUI.handleOnPaste($('.input_pubkey'));
     await this.loadAndRenderContactList();
@@ -94,7 +94,7 @@ View.run(class ContactsView extends View {
   }
 
   private fileAddedHandler = async (file: Attachment) => {
-    this.attUI.clearAllAtts();
+    this.attachmentUI.clearAllAttachments();
     const { keys, errs } = await KeyUtil.readMany(file.getData());
     if (keys.length) {
       if (errs.length) {

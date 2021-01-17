@@ -36,7 +36,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
         const blob = new Blob([result], { type: this.type });
         const url = window.URL.createObjectURL(blob);
         const attachmentType = this.getAttachmentType(this.origNameBasedOnFilename);
-        const attForSave = new Attachment({ name: this.origNameBasedOnFilename, type: this.type, data: result });
+        const attachmentForSave = new Attachment({ name: this.origNameBasedOnFilename, type: this.type, data: result });
         if (attachmentType) {
           if (attachmentType === 'img') { // image
             this.attachmentPreviewContainer.html(`<img src="${url}" class="attachment-preview-img" alt="${Xss.escape(this.origNameBasedOnFilename)}">`); // xss-escaped
@@ -60,7 +60,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
         });
         $('#attachment-preview-download').css('display', 'flex').click((e) => {
           e.stopPropagation();
-          Browser.saveToDownloads(attForSave);
+          Browser.saveToDownloads(attachmentForSave);
         });
       }
     } catch (e) {

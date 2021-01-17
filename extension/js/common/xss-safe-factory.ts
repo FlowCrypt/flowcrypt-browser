@@ -65,8 +65,8 @@ export class XssSafeFactory {
       return factory.embeddedBackup(PgpArmor.normalize(block.content.toString(), 'privateKey'));
     } else if (block.type === 'certificate') {
       return factory.embeddedPubkey(block.content.toString());
-    } else if (['encryptedAtt', 'plainAtt'].includes(block.type)) {
-      return block.attMeta ? factory.embeddedAtta(new Attachment(block.attMeta), block.type === 'encryptedAtt') : '[missing encrypted attachment details]';
+    } else if (['encryptedAttachment', 'plainAttachment'].includes(block.type)) {
+      return block.attachmentMeta ? factory.embeddedAttachment(new Attachment(block.attachmentMeta), block.type === 'encryptedAttachment') : '[missing encrypted attachment details]';
     } else if (block.type === 'signedHtml') {
       return factory.embeddedMsg('signedHtml', '', msgId, isOutgoing, senderEmail, true); // empty msg so it re-fetches from api. True at the and for "signature"
     } else if (block.type === 'signedText') {
@@ -129,7 +129,7 @@ export class XssSafeFactory {
       a.url = Browser.objUrlCreate(a.getData());
     }
     return this.frameSrc(this.extUrl(iframeUrl), {
-      frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attId: a.id, url: a.url, isEncrypted
+      frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attachmentId: a.id, url: a.url, isEncrypted
     }, parentTabId);
   }
 
@@ -190,7 +190,7 @@ export class XssSafeFactory {
     return this.iframe(this.srcSubscribeDialog('embedded', isAuthErr), ['short', 'embedded'], { scrolling: 'no' });
   }
 
-  public embeddedAtta = (meta: Attachment, isEncrypted: boolean, parentTabId?: string) => {
+  public embeddedAttachment = (meta: Attachment, isEncrypted: boolean, parentTabId?: string) => {
     return Ui.e('span', { class: 'pgp_attachment', html: this.iframe(this.srcPgpAttachmentIframe(meta, isEncrypted, parentTabId)) });
   }
 
@@ -214,7 +214,7 @@ export class XssSafeFactory {
     return this.divDialog_DANGEROUS(this.iframe(this.srcPassphraseDialog(longids, 'embedded'), ['medium'], { scrolling: 'no' }), 'embedded-passphrase'); // xss-safe-factory
   }
 
-  public embeddedAttaStatus = (content: string) => {
+  public embeddedAttachmentStatus = (content: string) => {
     return Ui.e('div', { class: 'attachment_loader', html: Xss.htmlSanitize(content) });
   }
 

@@ -82,9 +82,9 @@ export class Mime {
       } else if (treatAs === 'privateKey') {
         blocks.push(...MsgBlockParser.detectBlocks(file.getData().toUtfStr()).blocks);
       } else if (treatAs === 'encryptedFile') {
-        blocks.push(MsgBlock.fromAtt('encryptedAtt', '', { name: file.name, type: file.type, length: file.getData().length, data: file.getData() }));
+        blocks.push(MsgBlock.fromAttachment('encryptedAttachment', '', { name: file.name, type: file.type, length: file.getData().length, data: file.getData() }));
       } else if (treatAs === 'plainFile') {
-        blocks.push(MsgBlock.fromAtt('plainAtt', '', {
+        blocks.push(MsgBlock.fromAttachment('plainAttachment', '', {
           name: file.name, type: file.type, length: file.getData().length, data: file.getData(), inline: file.inline, cid: file.cid
         }));
       }
@@ -111,8 +111,8 @@ export class Mime {
     return Mime.processDecoded(decoded);
   }
 
-  public static isPlainImgAtt = (b: MsgBlock) => {
-    return b.type === 'plainAtt' && b.attMeta && b.attMeta.type && ['image/jpeg', 'image/jpg', 'image/bmp', 'image/png', 'image/svg+xml'].includes(b.attMeta.type);
+  public static isPlainImgAttachment = (b: MsgBlock) => {
+    return b.type === 'plainAttachment' && b.attachmentMeta && b.attachmentMeta.type && ['image/jpeg', 'image/jpg', 'image/bmp', 'image/png', 'image/svg+xml'].includes(b.attachmentMeta.type);
   }
 
   public static replyHeaders = (parsedMimeMsg: MimeContent) => {
@@ -175,7 +175,7 @@ export class Mime {
                   mimeContent.subject = node._parentNode.headers.subject[0].value;
                 }
               } else {
-                mimeContent.attachments.push(Mime.getNodeAsAtt(node));
+                mimeContent.attachments.push(Mime.getNodeAsAttachment(node));
               }
             }
             const headers = Mime.headerGetAddress(mimeContent, ['from', 'to', 'cc', 'bcc']);
@@ -214,7 +214,7 @@ export class Mime {
       rootNode.appendChild(contentNode); // tslint:disable-line:no-unsafe-any
     }
     for (const attachment of attachments) {
-      rootNode.appendChild(Mime.createAttNode(attachment)); // tslint:disable-line:no-unsafe-any
+      rootNode.appendChild(Mime.createAttachmentNode(attachment)); // tslint:disable-line:no-unsafe-any
     }
     return rootNode.build(); // tslint:disable-line:no-unsafe-any
   }
@@ -249,13 +249,13 @@ export class Mime {
     const signedContentNode = new MimeBuilder('multipart/mixed'); // tslint:disable-line:no-unsafe-any
     signedContentNode.appendChild(bodyNodes); // tslint:disable-line:no-unsafe-any
     for (const attachment of attachments) {
-      signedContentNode.appendChild(Mime.createAttNode(attachment)); // tslint:disable-line:no-unsafe-any
+      signedContentNode.appendChild(Mime.createAttachmentNode(attachment)); // tslint:disable-line:no-unsafe-any
     }
-    const sigAttPlaceholder = new Attachment({ data: Buf.fromUtfStr(sigPlaceholder), type: 'application/pgp-signature', name: 'signature.asc' });
-    const sigAttPlaceholderNode = Mime.createAttNode(sigAttPlaceholder); // tslint:disable-line:no-unsafe-any
+    const sigAttachmentPlaceholder = new Attachment({ data: Buf.fromUtfStr(sigPlaceholder), type: 'application/pgp-signature', name: 'signature.asc' });
+    const sigAttachmentPlaceholderNode = Mime.createAttachmentNode(sigAttachmentPlaceholder); // tslint:disable-line:no-unsafe-any
     // https://tools.ietf.org/html/rfc3156#section-5 - signed content first, signature after
     rootNode.appendChild(signedContentNode); // tslint:disable-line:no-unsafe-any
-    rootNode.appendChild(sigAttPlaceholderNode); // tslint:disable-line:no-unsafe-any
+    rootNode.appendChild(sigAttachmentPlaceholderNode); // tslint:disable-line:no-unsafe-any
     const mimeStrWithPlaceholderSig = rootNode.build() as string; // tslint:disable-line:no-unsafe-any
     const { rawSignedContent } = await Mime.decode(Buf.fromUtfStr(mimeStrWithPlaceholderSig));
     if (!rawSignedContent) {
@@ -310,7 +310,7 @@ export class Mime {
     return undefined;
   }
 
-  private static createAttNode = (attachment: Attachment): any => { // todo: MimeBuilder types
+  private static createAttachmentNode = (attachment: Attachment): any => { // todo: MimeBuilder types
     const type = `${attachment.type}; name="${attachment.name}"`;
     const id = attachment.cid || Attachment.attachmentId();
     const header: Dict<string> = {};
@@ -366,7 +366,7 @@ export class Mime {
     }));
   }
 
-  private static getNodeAsAtt = (node: MimeParserNode): Attachment => {
+  private static getNodeAsAttachment = (node: MimeParserNode): Attachment => {
     return new Attachment({
       name: Mime.getNodeFilename(node),
       type: Mime.getNodeType(node),

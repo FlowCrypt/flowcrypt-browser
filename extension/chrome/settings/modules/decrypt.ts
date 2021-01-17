@@ -19,7 +19,7 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 View.run(class ManualDecryptView extends View {
 
   private readonly acctEmail: string;
-  private readonly attUi = new AttachmentUI(() => Promise.resolve({ count: 1, size: 100 * 1024 * 1024, size_mb: 100 }));
+  private readonly attachmentUi = new AttachmentUI(() => Promise.resolve({ count: 1, size: 100 * 1024 * 1024, size_mb: 100 }));
 
   private factory: XssSafeFactory | undefined;
 
@@ -27,7 +27,7 @@ View.run(class ManualDecryptView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.attUi.initAttachmentDialog('fineuploader', 'fineuploader_button');
+    this.attachmentUi.initAttachmentDialog('fineuploader', 'fineuploader_button');
   }
 
   public render = async () => {
@@ -42,11 +42,11 @@ View.run(class ManualDecryptView extends View {
   }
 
   private actionDecryptAndDownloadHandler = async (button: HTMLElement) => {
-    const ids = this.attUi.getAttIds();
+    const ids = this.attachmentUi.getAttachmentIds();
     if (ids.length === 1) {
       const origContent = $(button).html();
       Xss.sanitizeRender(button, 'Decrypting.. ' + Ui.spinner('white'));
-      const collected = await this.attUi.collectAtt(ids[0]);
+      const collected = await this.attachmentUi.collectAttachment(ids[0]);
       await this.decryptAndDownload(collected);
       Xss.sanitizeRender('.action_decrypt_and_download', origContent);
     } else {
