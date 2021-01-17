@@ -9,6 +9,7 @@ import { expect } from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as mkdirp from 'mkdirp';
+import { Dict } from '../core/common';
 
 declare const jQuery: any;
 
@@ -609,6 +610,16 @@ export class ControllablePage extends ControllableBase {
       }
     }
     return html;
+  }
+
+  public getFromLocalStorage = async (keys: string[]): Promise<Dict<unknown>> => {
+    const result = await new Promise((resolve, reject) => {
+      (this.target as Page).exposeFunction('saveRawStorageResult', resolve).then(() =>
+        (this.target as Page).evaluate(keys =>
+          chrome.storage.local.get(keys, items => (window as any).saveRawStorageResult(items)), keys
+        ).then(undefined, reject), reject);
+    });
+    return result as Dict<unknown>;
   }
 
   private dismissActiveAlerts = async (): Promise<void> => {
