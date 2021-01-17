@@ -31,7 +31,7 @@ BROWSER_UNIT_TEST_NAME(`collectEncryptAtts preserves utf attachment names`);
   const encryptedUtfName = `${utfName}.pgp`;
   const content = Buf.fromUtfStr('hello');
   const attUi = new AttachmentUI(() => Promise.resolve({ sizeMb: 5, size: 5 * 1024 * 1024, count: 1 }));
-  attUi.initAttDialog('fineuploader', 'fineuploader_button');
+  attachmentUi.initAttachmentDialog('fineuploader', 'fineuploader_button');
   await new Promise((resolve) => setTimeout(resolve, 1000)); // the above method is actually async and needs some time
   attUi.addFile(new File([content], utfName));
   await new Promise((resolve) => setTimeout(resolve, 1000)); // again it seems to need some time to crunch the new file

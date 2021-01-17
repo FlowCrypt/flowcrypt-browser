@@ -112,7 +112,8 @@ export class Mime {
   }
 
   public static isPlainImgAttachment = (b: MsgBlock) => {
-    return b.type === 'plainAttachment' && b.attachmentMeta && b.attachmentMeta.type && ['image/jpeg', 'image/jpg', 'image/bmp', 'image/png', 'image/svg+xml'].includes(b.attachmentMeta.type);
+    return b.type === 'plainAttachment' && b.attachmentMeta && b.attachmentMeta.type && ['image/jpeg', 'image/jpg',
+      'image/bmp', 'image/png', 'image/svg+xml'].includes(b.attachmentMeta.type);
   }
 
   public static replyHeaders = (parsedMimeMsg: MimeContent) => {
