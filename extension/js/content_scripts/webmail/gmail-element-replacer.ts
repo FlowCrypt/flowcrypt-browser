@@ -20,7 +20,7 @@ import { Ui } from '../../common/browser/ui.js';
 import { WebmailCommon } from "../../common/webmail.js";
 import { Xss } from '../../common/platform/xss.js';
 import { OrgRules } from '../../common/org-rules.js';
-import { SendAsAlias, AcctStore } from '../../common/platform/store/acct-store.js';
+import { SendAsAlias } from '../../common/platform/store/acct-store.js';
 import { ContactStore } from '../../common/platform/store/contact-store.js';
 import { Buf } from '../../common/core/buf.js';
 
@@ -530,14 +530,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
       // cache for subseqent loop runs
-      const { drafts_reply } = await AcctStore.get(this.acctEmail, ['drafts_reply']);
       const convoRootEl = this.getGonvoRootEl(newReplyBoxes[0]);
       const replyParams = this.getLastMsgReplyParams(convoRootEl!);
-      const threadId = this.determineThreadId(convoRootEl!);
+      // const threadId = this.determineThreadId(convoRootEl!);
       if (msgId) {
         replyParams.replyMsgId = msgId;
       }
-      const hasDraft = drafts_reply && threadId && !!drafts_reply[threadId];
+      const hasDraft = false; // TODO drafts_reply && threadId && !!drafts_reply[threadId];
       const doReplace = Boolean(convoRootEl.find('iframe.pgp_block').filter(':visible').closest('.h7').is(':last-child')
         || (convoRootEl.is(':visible') && force)
         || hasDraft);

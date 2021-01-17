@@ -143,7 +143,7 @@ export class ComposeView extends View {
   }
 
   public render = async () => {
-    const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password', 'drafts_reply']);
+    const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password']);
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
     this.tabId = await BrowserMsg.requiredTabId();
@@ -171,8 +171,8 @@ export class ComposeView extends View {
       await this.renderModule.fetchReplyMeta(Object.keys(storage.sendAs!));
     }
     if (this.isReplyBox) { // reply
-      if (this.threadId && !this.ignoreDraft && storage.drafts_reply && storage.drafts_reply[this.threadId]) {
-        this.draftId = storage.drafts_reply[this.threadId]; // there may be a draft we want to load
+      if (this.threadId && !this.ignoreDraft) {
+        // this.draftId = TODO; // there may be a draft we want to load
       }
     } else { // compose
       if (!this.draftId) {
