@@ -62,7 +62,7 @@ const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, brows
   return async (t: AvaContext) => {
     await browserPool.withNewBrowserTimeoutAndRetry(async (t, browser) => {
       if (acct) {
-        await BrowserRecipe.setUpCommonAcct(t, browser, acct);
+        await BrowserRecipe.setUpCommonAcct(t, browser, acct, !isMock);
       }
       await cb(t, browser);
     }, t, consts, flag);
