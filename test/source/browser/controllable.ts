@@ -34,6 +34,10 @@ abstract class ControllableBase {
     await this.waitAll(`[data-test-state="${state}"]`, { timeout, visible: false });
   }
 
+  public waitUntilViewLoaded = async (timeout = TIMEOUT_TEST_STATE_SATISFY) => {
+    await this.waitAll(`[data-test-view-state="loaded"]`, { timeout, visible: false });
+  }
+
   public waitAll = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number, visible?: boolean } = {}) => {
     const selectors = this.selsAsProcessedArr(selector);
     this.log(`wait_all:1:${selectors.join(',')}`);
