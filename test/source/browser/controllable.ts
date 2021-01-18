@@ -34,11 +34,11 @@ abstract class ControllableBase {
     await this.waitAll(`[data-test-state="${state}"]`, { timeout, visible: false });
   }
 
-  public waitUntilViewLoaded = async (timeout = TIMEOUT_TEST_STATE_SATISFY) => {
+  public waitUntilViewLoaded = async (timeout = TIMEOUT_PAGE_LOAD) => {
     try {
       await this.waitAll(`[data-test-view-state="loaded"]`, { timeout, visible: false });
     } catch (e) {
-      throw new Error(`View never loaded on page ${this.target.url()}`);
+      throw new Error(`View didn't load within ${timeout}s at ${this.target.url()}`);
     }
   }
 
