@@ -250,6 +250,10 @@ iframe.reply_message {
   overflow: hidden;
 }
 
+.l2 {
+  padding-bottom: 0 !important;
+}
+
 .remove_borders {
   border: none !important;
   padding: 0 !important;
