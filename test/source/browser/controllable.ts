@@ -306,13 +306,14 @@ abstract class ControllableBase {
     throw new Error(`Selector ${selector} was found but did not match "${needle}" within ${timeoutSec}s. Last content: "${JSON.stringify(texts, undefined, 2)}"`);
   }
 
-  public verifyContentIsPresentContinuously = async (selector: string, expectedText: string, expectPresentForMs: number = 3000, timeoutSec = 20) => {
+  public verifyContentIsPresentContinuously = async (selector: string, expectedText: string, expectPresentForMs: number = 3000, timeoutSec = 30) => {
     await this.waitAll(selector);
     const start = Date.now();
-    const sleepMs = 100;
+    const sleepMs = 250;
     let presentForMs: number = 0;
     let actualText = '';
     const history: string[] = [];
+    let round = 1;
     while (Date.now() - start < timeoutSec * 1000) {
       await Util.sleep(sleepMs / 1000);
       actualText = await this.read(selector, true);
@@ -321,7 +322,7 @@ abstract class ControllableBase {
       } else {
         presentForMs += sleepMs;
       }
-      history.push(`${actualText} for ${presentForMs}`);
+      history.push(`${actualText} for ${presentForMs}ms at ${Date.now()} (round ${round++})`);
       if (presentForMs >= expectPresentForMs) {
         return;
       }
