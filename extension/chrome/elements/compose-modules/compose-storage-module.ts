@@ -47,6 +47,13 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     return result!;
   }
 
+  public draftMetaDelete = async (threadId: string) => {
+    const draftStorage = await AcctStore.get(this.view.acctEmail, ['drafts_reply']);
+    const drafts = draftStorage.drafts_reply || {};
+    delete drafts[threadId];
+    await AcctStore.set(this.view.acctEmail, { drafts_reply: drafts });
+  }
+
   public addAdminCodes = async (shortId: string, codes: string[]) => {
     const adminCodeStorage = await GlobalStore.get(['admin_codes']);
     adminCodeStorage.admin_codes = adminCodeStorage.admin_codes || {};
