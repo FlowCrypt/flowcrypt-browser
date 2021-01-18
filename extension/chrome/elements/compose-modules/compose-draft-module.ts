@@ -169,7 +169,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   private draftSetPrefixIntoBody = (sendable: SendableMsg) => {
     let prefix: string;
     if (this.view.threadId) { // reply draft
-      prefix = `[flowcrypt:link:draft_reply:${this.view.threadId}]\n\n`;
+      prefix = `[flowcrypt:link:draft_reply:${this.view.draftId}]\n\n`;
     } else if (this.view.draftId) { // new message compose draft with known draftId
       prefix = `[flowcrypt:link:draft_compose:${this.view.draftId}]\n\n`;
     } else {

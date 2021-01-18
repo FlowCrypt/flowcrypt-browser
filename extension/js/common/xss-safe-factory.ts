@@ -21,6 +21,7 @@ export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
 export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'draft' | 'sign' | `quote` | `backup`;
 export type FactoryReplyParams = {
   replyMsgId?: string,
+  draftId?: string,
   sendAs?: Dict<SendAsAlias>,
   subject?: string,
   removeAfterClose?: boolean,
@@ -152,6 +153,7 @@ export class XssSafeFactory {
       skipClickPrompt: Boolean(skipClickPrompt),
       ignoreDraft: Boolean(ignoreDraft),
       replyMsgId: convoParams.replyMsgId,
+      draftId: convoParams.draftId,
       removeAfterClose: convoParams.removeAfterClose
     };
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), params);

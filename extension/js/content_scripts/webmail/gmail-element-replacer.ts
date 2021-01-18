@@ -114,7 +114,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private everything = () => {
     this.replaceArmoredBlocks();
     this.replaceAttachments().catch(Catch.reportErr);
-    this.replaceFcTags();
+    this.replaceComposeDraftLinks();
     this.replaceConvoBtns();
     this.replaceStandardReplyBox().catch(Catch.reportErr);
     this.evaluateStandardComposeRecipients().catch(Catch.reportErr);
@@ -210,30 +210,23 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private replaceFcTags = () => {
+  private replaceComposeDraftLinks = () => {
     const allContenteditableEls = $("div[contenteditable='true']").not('.evaluated').addClass('evaluated');
     for (const contenteditableEl of allContenteditableEls) {
       const contenteditable = $(contenteditableEl);
-      const fcLinkMatch = contenteditable.html().substr(0, 1000).match(/\[(flowcrypt|cryptup):link:([a-z_]+):([0-9a-fr\-]+)]/);
-      if (fcLinkMatch) {
-        let button: string | undefined;
-        const [, , name, buttonHrefId] = fcLinkMatch;
-        if (name === 'draft_compose') {
-          button = `<a href="#" class="open_draft_${Xss.escape(buttonHrefId)}">Open draft</a>`;
-        } else if (name === 'draft_reply') {
-          button = `<a href="#inbox/${Xss.escape(buttonHrefId)}">Open draft</a>`;
-        }
-        if (button) {
-          Xss.sanitizeReplace(contenteditable, button);
-          $(`a.open_draft_${buttonHrefId}`).click(Ui.event.handle((target) => {
-            $('div.new_message').remove();
-            $('body').append(this.factory.embeddedCompose(buttonHrefId)); // xss-safe-factory
-            // close original draft window
-            const mouseUpEvent = document.createEvent('Event');
-            mouseUpEvent.initEvent('mouseup', true, true); // Gmail listens for the mouseup event, not click
-            $(target).closest('.dw').find('.Ha')[0].dispatchEvent(mouseUpEvent); // jquery's trigger('mouseup') doesn't work for some reason
-          }));
-        }
+      const draftComposeLinkMatch = contenteditable.html().substr(0, 1000).match(/\[(flowcrypt|cryptup):link:draft_compose:([0-9a-fr\-]+)]/);
+      if (draftComposeLinkMatch) {
+        const draftId = draftComposeLinkMatch[2];
+        const openDraftLink = $(`<a href="#" class="open_draft_${Xss.escape(draftId)}">Open draft</a>`);
+        contenteditable.replaceWith(openDraftLink);
+        openDraftLink.click(Ui.event.handle((target) => {
+          $('div.new_message').remove();
+          $('body').append(this.factory.embeddedCompose(draftId)); // xss-safe-factory
+          // close original draft window
+          const mouseUpEvent = document.createEvent('Event');
+          mouseUpEvent.initEvent('mouseup', true, true); // Gmail listens for the mouseup event, not click
+          $(target).closest('.dw').find('.Ha')[0].dispatchEvent(mouseUpEvent); // jquery's trigger('mouseup') doesn't work for some reason
+        }));
       }
     }
   }
@@ -448,10 +441,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return parents.attr('data-legacy-message-id') || parents.attr('data-message-id') || '';
   }
 
-  private determineThreadId = (convoRootEl: HTMLElement | JQueryEl) => { // todo - test and use data-thread-id with Gmail API once available
-    return $(convoRootEl).find(this.sel.subject).attr('data-legacy-thread-id') || '';
-  }
-
   private getMsgBodyEl = (msgId: string) => {
     return $(this.sel.msgOuter).filter(`[data-legacy-message-id="${msgId}"]`).find(this.sel.msgInner);
   }
@@ -532,14 +521,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       // cache for subseqent loop runs
       const convoRootEl = this.getGonvoRootEl(newReplyBoxes[0]);
       const replyParams = this.getLastMsgReplyParams(convoRootEl!);
-      // const threadId = this.determineThreadId(convoRootEl!);
       if (msgId) {
         replyParams.replyMsgId = msgId;
       }
-      const hasDraft = false; // TODO drafts_reply && threadId && !!drafts_reply[threadId];
       const doReplace = Boolean(convoRootEl.find('iframe.pgp_block').filter(':visible').closest('.h7').is(':last-child')
-        || (convoRootEl.is(':visible') && force)
-        || hasDraft);
+        || (convoRootEl.is(':visible') && force));
       const alreadyHasEncryptedReplyBox = Boolean(convoRootEl.find('div.reply_message_iframe_container').filter(':visible').length);
       let midConvoDraft = false;
       if (doReplace) {
@@ -565,8 +551,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         for (const replyBoxEl of newReplyBoxes.reverse()) { // looping in reverse
           const replyBox = $(replyBoxEl);
           const replyBoxInnerText = replyBox.find(this.sel.msgInnerText).text().trim();
-          // plain reply
-          if (replyBoxInnerText) {
+          const draftReplyLinkMatch = replyBoxInnerText.substr(0, 1000).match(/\[(flowcrypt|cryptup):link:draft_reply:([0-9a-fr\-]+)]/);
+          if (draftReplyLinkMatch) { // reply draft
+            replyParams.draftId = draftReplyLinkMatch[2];
+          } else if (replyBoxInnerText) { // plain reply
             replyBox.addClass('reply_message_evaluated');
             continue;
           }

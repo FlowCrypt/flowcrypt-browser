@@ -170,9 +170,9 @@ export class ComposeView extends View {
     if (this.replyMsgId) {
       await this.renderModule.fetchReplyMeta(Object.keys(storage.sendAs!));
     }
-    if (this.isReplyBox) { // reply
+    if (this.isReplyBox && !this.draftId) { // reply, there may be a legacy draft we want to load
       if (this.threadId && !this.ignoreDraft) {
-        // this.draftId = TODO; // there may be a draft we want to load
+        // TODO
       }
     } else { // compose
       if (!this.draftId) {
