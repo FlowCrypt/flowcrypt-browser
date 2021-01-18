@@ -550,6 +550,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         }
         for (const replyBoxEl of newReplyBoxes.reverse()) { // looping in reverse
           const replyBox = $(replyBoxEl);
+          const msgInnerText = replyBox.find(this.sel.msgInnerText);
+          if (msgInnerText.length && !msgInnerText.find('[contenteditable]').length) { // div[contenteditable] is not loaded yet (e.g. when refreshing a thread), do nothing
+            continue;
+          }
           const replyBoxInnerText = replyBox.find(this.sel.msgInnerText).text().trim();
           const draftReplyLinkMatch = replyBoxInnerText.substr(0, 1000).match(/\[(flowcrypt|cryptup):link:draft_reply:([0-9a-fr\-]+)]/);
           if (draftReplyLinkMatch) { // reply draft
