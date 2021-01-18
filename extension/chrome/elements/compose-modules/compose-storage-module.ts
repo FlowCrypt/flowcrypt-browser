@@ -47,6 +47,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     return result!;
   }
 
+  // TODO: remove in #3329
   public draftMetaDelete = async (threadId: string) => {
     const draftStorage = await AcctStore.get(this.view.acctEmail, ['drafts_reply']);
     const drafts = draftStorage.drafts_reply || {};

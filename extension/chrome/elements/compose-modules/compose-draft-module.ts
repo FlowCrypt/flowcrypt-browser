@@ -77,7 +77,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         await Ui.time.sleep(500);
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
         this.view.draftId = '';
-        await this.view.storageModule.draftMetaDelete(this.view.threadId); // delete the legacy draft from storage if there is one
+        await this.view.storageModule.draftMetaDelete(this.view.threadId); // delete the legacy draft from storage if there is one, TODO: remove in #3329
         window.location.href = Url.create(Env.getUrlNoParams(), this.urlParams());
       } else {
         Catch.reportErr(e);
