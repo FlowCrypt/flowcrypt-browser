@@ -54,7 +54,7 @@ export type AcctStoreDict = {
   hide_message_password?: boolean; // is global?
   sendAs?: Dict<SendAsAlias>;
   addresses?: string[],
-  drafts_reply?: Dict<StoredReplyDraftMeta>;
+  drafts_reply?: Dict<StoredReplyDraftMeta>; // legacy
   pubkey_sent_to?: string[];
   full_name?: string;
   cryptup_enabled?: boolean;

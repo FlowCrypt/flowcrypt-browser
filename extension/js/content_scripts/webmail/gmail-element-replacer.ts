@@ -566,7 +566,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embeddedReply(replyParams, editable)}</div>`;
             if (replyBox.hasClass('I5')) { // activated standard reply box: cannot remove because would cause issues / gmail freezing
               const origChildren = replyBox.children();
-              replyBox.addClass('reply_message_evaluated').append(secureReplyBoxXssSafe); // xss-safe-factory
+              replyBox.addClass('reply_message_evaluated remove_borders').append(secureReplyBoxXssSafe); // xss-safe-factory
               if (this.gmailVariant === 'new') { // even hiding causes issues in new gmail (encrypted -> see original -> reply -> archive)
                 origChildren.attr('style', this.cssHidden);
               } else { // in old gmail, we can safely hide it without causing freezes navigating away
