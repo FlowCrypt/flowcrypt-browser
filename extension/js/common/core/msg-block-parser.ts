@@ -10,7 +10,7 @@ import { Catch } from '../platform/catch.js';
 import { Mime } from './mime.js';
 import { PgpArmor } from './crypto/pgp/pgp-armor.js';
 import { Str } from './common.js';
-import { FcAttLinkData } from './attachment.js';
+import { FcAttachmentLinkData } from './attachment.js';
 import { KeyUtil } from './crypto/key.js';
 
 type SanitizedBlocks = { blocks: MsgBlock[], subject: string | undefined, isRichText: boolean, webReplyToken: any | undefined };
@@ -46,7 +46,7 @@ export class MsgBlockParser {
     let webReplyToken: any | undefined;
     if (!Mime.resemblesMsg(decryptedContent)) {
       let plain = Buf.fromUint8(decryptedContent).toUtfStr();
-      plain = MsgBlockParser.extractFcAtts(plain, blocks);
+      plain = MsgBlockParser.extractFcAttachments(plain, blocks);
       webReplyToken = MsgBlockParser.extractFcReplyToken(plain);
       if (webReplyToken) {
         plain = MsgBlockParser.stripFcTeplyToken(plain);
@@ -78,21 +78,21 @@ export class MsgBlockParser {
       if (attachment.treatAs() === 'publicKey') {
         await MsgBlockParser.pushArmoredPubkeysToBlocks([attachment.getData().toUtfStr()], blocks);
       } else {
-        blocks.push(MsgBlock.fromAtt('decryptedAtt', '', { name: attachment.name, data: attachment.getData(), length: attachment.length, type: attachment.type }));
+        blocks.push(MsgBlock.fromAttachment('decryptedAttachment', '', { name: attachment.name, data: attachment.getData(), length: attachment.length, type: attachment.type }));
       }
     }
     return { blocks, subject: decoded.subject, isRichText, webReplyToken };
   }
 
-  public static extractFcAtts = (decryptedContent: string, blocks: MsgBlock[]) => {
+  public static extractFcAttachments = (decryptedContent: string, blocks: MsgBlock[]) => {
     // these tags were created by FlowCrypt exclusively, so the structure is rigid (not arbitrary html)
     // `<a href="${attachment.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`
     // thus we use RegEx so that it works on both browser and node
     if (decryptedContent.includes('class="cryptup_file"')) {
       decryptedContent = decryptedContent.replace(/<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm, (_, url, fcData) => {
         const a = Str.htmlAttrDecode(String(fcData));
-        if (MsgBlockParser.isFcAttLinkData(a)) {
-          blocks.push(MsgBlock.fromAtt('encryptedAttLink', '', { type: a.type, name: a.name, length: a.size, url: String(url) }));
+        if (MsgBlockParser.isFcAttachmentLinkData(a)) {
+          blocks.push(MsgBlock.fromAttachment('encryptedAttachmentLink', '', { type: a.type, name: a.name, length: a.size, url: String(url) }));
         }
         return '';
       });
@@ -126,9 +126,9 @@ export class MsgBlockParser {
     return decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
   }
 
-  private static isFcAttLinkData = (o: any): o is FcAttLinkData => {
-    return o && typeof o === 'object' && typeof (o as FcAttLinkData).name !== 'undefined'
-      && typeof (o as FcAttLinkData).size !== 'undefined' && typeof (o as FcAttLinkData).type !== 'undefined';
+  private static isFcAttachmentLinkData = (o: any): o is FcAttachmentLinkData => {
+    return o && typeof o === 'object' && typeof (o as FcAttachmentLinkData).name !== 'undefined'
+      && typeof (o as FcAttachmentLinkData).size !== 'undefined' && typeof (o as FcAttachmentLinkData).type !== 'undefined';
   }
 
   private static detectBlockNext = (origText: string, startAt: number) => {

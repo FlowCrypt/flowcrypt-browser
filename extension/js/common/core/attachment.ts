@@ -12,7 +12,7 @@ export type AttachmentMeta = {
   contentDescription?: string,
 };
 
-export type FcAttLinkData = { name: string, type: string, size: number };
+export type FcAttachmentLinkData = { name: string, type: string, size: number };
 
 export class Attachment {
 
@@ -32,7 +32,7 @@ export class Attachment {
   private bytes: Uint8Array | undefined;
   private treatAsValue: Attachment$treatAs | undefined;
 
-  public static keyinfoAsPubkeyAtt = (ki: { public: string, longid: string }) => {
+  public static keyinfoAsPubkeyAttachment = (ki: { public: string, longid: string }) => {
     return new Attachment({ data: Buf.fromUtfStr(ki.public), type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
   }
 

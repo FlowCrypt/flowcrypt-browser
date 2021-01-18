@@ -16,7 +16,7 @@ export class SignedMsgMailFormatter extends BaseMailFormatter {
 
   public sendableMsg = async (newMsg: NewMsgData, signingPrv: Key): Promise<SendableMsg> => {
     this.view.errModule.debug(`SignedMsgMailFormatter.sendableMsg signing with key: ${signingPrv.id}`);
-    const attachments = this.isDraft ? [] : await this.view.attsModule.attach.collectAtts();
+    const attachments = this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments();
     if (!this.richtext) {
       // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
       // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
