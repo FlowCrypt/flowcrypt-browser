@@ -31,8 +31,8 @@ export class BgHandlers {
     return await Api.ajax(r.req, r.stack); // tslint:disable-line:no-direct-ajax
   }
 
-  public static ajaxGmailAttGetChunkHandler = async (r: Bm.AjaxGmailAttGetChunk): Promise<Bm.Res.AjaxGmailAttGetChunk> => {
-    return { chunk: await new Gmail(r.acctEmail).attGetChunk(r.msgId, r.attId) };
+  public static ajaxGmailAttachmentGetChunkHandler = async (r: Bm.AjaxGmailAttachmentGetChunk): Promise<Bm.Res.AjaxGmailAttachmentGetChunk> => {
+    return { chunk: await new Gmail(r.acctEmail).attachmentGetChunk(r.msgId, r.attachmentId) };
   }
 
   public static updateUninstallUrl: Bm.AsyncResponselessHandler = async () => {

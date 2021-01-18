@@ -38,13 +38,13 @@ export class AttachmentDownloadView extends View {
   private downloadButton = $('#download');
   private header = $('#header');
   private originalButtonHTML: string | undefined;
-  private canClickOnAtt: boolean = false;
+  private canClickOnAttachment: boolean = false;
   private downloadInProgress = false;
   private tabId!: string;
 
   constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'msgId', 'attId', 'name', 'type', 'size', 'url', 'parentTabId', 'content', 'decrypted', 'frameId', 'isEncrypted']);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'msgId', 'attachmentId', 'name', 'type', 'size', 'url', 'parentTabId', 'content', 'decrypted', 'frameId', 'isEncrypted']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
@@ -53,7 +53,7 @@ export class AttachmentDownloadView extends View {
     this.size = uncheckedUrlParams.size ? parseInt(String(uncheckedUrlParams.size)) : undefined;
     this.type = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'type');
     this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
-    this.id = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'attId');
+    this.id = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'attachmentId');
     this.name = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'name');
     // url contains either actual url of remote content or objectUrl for direct content, either way needs to be downloaded
     this.url = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'url');
@@ -82,7 +82,7 @@ export class AttachmentDownloadView extends View {
       }).catch(ApiErr.reportIfSignificant);
     }
     try {
-      this.canClickOnAtt = ! await this.processAsPublicKeyAndHideAttIfAppropriate();
+      this.canClickOnAttachment = ! await this.processAsPublicKeyAndHideAttachmentIfAppropriate();
     } catch (e) {
       this.renderErr(e);
     }
@@ -91,7 +91,7 @@ export class AttachmentDownloadView extends View {
 
   public setHandlers = () => {
     Ui.event.protect();
-    if (this.canClickOnAtt) {
+    if (this.canClickOnAttachment) {
       this.downloadButton.click(this.setHandlerPrevent('double', () => this.downloadButtonClickedHandler()));
       this.downloadButton.click((e) => e.stopPropagation());
       $('body').click(this.setHandlerPrevent('double', async () => {
@@ -119,7 +119,7 @@ export class AttachmentDownloadView extends View {
     if (this.attachment.url) { // when content was downloaded and decrypted
       this.attachment.setData(await Api.download(this.attachment.url, this.renderProgress));
     } else if (this.attachment.id && this.attachment.msgId) { // gmail attId
-      const { data } = await this.gmail.attGet(this.attachment.msgId, this.attachment.id, this.renderProgress);
+      const { data } = await this.gmail.attachmentGet(this.attachment.msgId, this.attachment.id, this.renderProgress);
       this.attachment.setData(data);
     } else {
       throw new Error('File is missing both id and url - this should be fixed');
@@ -189,9 +189,9 @@ export class AttachmentDownloadView extends View {
     });
   }
 
-  private processAsPublicKeyAndHideAttIfAppropriate = async () => {
+  private processAsPublicKeyAndHideAttachmentIfAppropriate = async () => {
     if (this.attachment.msgId && this.attachment.id && this.attachment.treatAs() === 'publicKey') { // this is encrypted public key - download && decrypt & parse & render
-      const { data } = await this.gmail.attGet(this.attachment.msgId, this.attachment.id);
+      const { data } = await this.gmail.attachmentGet(this.attachment.msgId, this.attachment.id);
       const decrRes = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail), encryptedData: data });
       if (decrRes.success && decrRes.content) {
         const openpgpType = await MsgUtil.type({ data: decrRes.content });
@@ -215,12 +215,12 @@ export class AttachmentDownloadView extends View {
     try {
       this.originalButtonHTML = this.downloadButton.html();
       Xss.sanitizeRender(this.header, `${Ui.spinner('green', 'large_spinner')}<span class="download_progress"></span>`);
-      await this.recoverMissingAttIdIfNeeded();
+      await this.recoverMissingAttachmentIdIfNeeded();
       await this.downloadDataIfNeeded();
       if (!this.isEncrypted) {
         Browser.saveToDownloads(this.attachment);
       } else {
-        await this.decryptAndSaveAttToDownloads();
+        await this.decryptAndSaveAttachmentToDownloads();
       }
       this.renderHeader();
     } catch (e) {
@@ -236,11 +236,11 @@ export class AttachmentDownloadView extends View {
       this.attachment.length = this.size!;
     }
     const factory = new XssSafeFactory(this.acctEmail, this.parentTabId);
-    const iframeUrl = factory.srcPgpAttIframe(this.attachment, this.isEncrypted, undefined, 'chrome/elements/attachment_preview.htm');
+    const iframeUrl = factory.srcPgpAttachmentIframe(this.attachment, this.isEncrypted, undefined, 'chrome/elements/attachment_preview.htm');
     BrowserMsg.send.showAttachmentPreview(this.parentTabId, { iframeUrl });
   }
 
-  private decryptAndSaveAttToDownloads = async () => {
+  private decryptAndSaveAttachmentToDownloads = async () => {
     const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail), encryptedData: this.attachment.getData() });
     Xss.sanitizeRender(this.downloadButton, this.originalButtonHTML || '');
     if (result.success) {
@@ -253,7 +253,7 @@ export class AttachmentDownloadView extends View {
       if (! await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.longids.needPassphrase, 1000, this.ppChangedPromiseCancellation)) {
         return;
       }
-      await this.decryptAndSaveAttToDownloads();
+      await this.decryptAndSaveAttachmentToDownloads();
     } else {
       delete result.message;
       console.info(result);
@@ -273,7 +273,7 @@ export class AttachmentDownloadView extends View {
     }
   }
 
-  private recoverMissingAttIdIfNeeded = async () => {
+  private recoverMissingAttachmentIdIfNeeded = async () => {
     if (!this.attachment.url && !this.attachment.id && this.attachment.msgId) {
       const result = await this.gmail.msgGet(this.attachment.msgId, 'full');
       if (result && result.payload && result.payload.parts) {
