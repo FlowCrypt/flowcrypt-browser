@@ -218,7 +218,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (draftComposeLinkMatch) {
         const draftId = draftComposeLinkMatch[2];
         const openDraftLink = $(`<a href="#" class="open_draft_${Xss.escape(draftId)}">Open draft</a>`);
-        contenteditable.replaceWith(openDraftLink);
+        contenteditable.replaceWith(openDraftLink); // xss-escaped
         openDraftLink.click(Ui.event.handle((target) => {
           $('div.new_message').remove();
           $('body').append(this.factory.embeddedCompose(draftId)); // xss-safe-factory

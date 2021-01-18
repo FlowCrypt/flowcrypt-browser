@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { Browser, Page, Target } from 'puppeteer';
+import { Browser, EvaluateFn, Page, Target } from 'puppeteer';
 import { Util } from '../util';
 
 import { ControllablePage } from './controllable';
@@ -21,11 +21,14 @@ export class BrowserHandle {
     this.viewport = { height, width };
   }
 
-  public newPage = async (t: AvaContext, url?: string): Promise<ControllablePage> => {
+  public newPage = async (t: AvaContext, url?: string, initialScript?: EvaluateFn): Promise<ControllablePage> => {
     const page = await this.browser.newPage();
     await page.setViewport(this.viewport);
     const controllablePage = new ControllablePage(t, page);
     if (url) {
+      if (initialScript) {
+        await page.evaluateOnNewDocument(initialScript);
+      }
       await controllablePage.goto(url);
     }
     this.pages.push(controllablePage);
