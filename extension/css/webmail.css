@@ -246,6 +246,10 @@ iframe.reply_message {
   padding-left: 7px !important;
 }
 
+.Bk {
+  overflow: hidden;
+}
+
 .remove_borders {
   border: none !important;
   padding: 0 !important;
