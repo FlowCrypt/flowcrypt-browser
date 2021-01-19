@@ -220,7 +220,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         const [, , name, buttonHrefId] = draftLinkMatch;
         if (name === 'draft_compose') {
           button = `<a href="#" class="open_draft_${Xss.escape(buttonHrefId)} close_gmail_compose_window">Open draft</a>`;
-        } else if (name === 'draft_reply' && contenteditable.closest('.AD').length === 1) { // reply draft opened in compose window, TODO: remove in #3329
+        } else if (name === 'draft_reply' && contenteditable.closest(this.sel.standardComposeWin).length === 1) { // reply draft opened in compose window, TODO: remove in #3329
           button = `<a href="#inbox/${Xss.escape(buttonHrefId)}" class="close_gmail_compose_window">Open draft</a>`;
         }
         if (button) {
@@ -234,7 +234,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             const mouseUpEvent = document.createEvent('Event');
             mouseUpEvent.initEvent('mouseup', true, true); // Gmail listens for the mouseup event, not click
             $(target).closest('.dw').find('.Ha')[0].dispatchEvent(mouseUpEvent); // jquery's trigger('mouseup') doesn't work for some reason
-            console.log($(target).closest('.dw').find('.Ha'));
           }));
         }
       }
@@ -602,7 +601,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       for (const standardComposeWinEl of $(this.sel.standardComposeWin)) {
         const standardComposeWin = $(standardComposeWinEl);
         const recipients = standardComposeWin.find(this.sel.standardComposeRecipient).get().map(e => $(e).attr('email')!).filter(e => !!e);
-        if (!recipients.length) {
+        if (!recipients.length || $(this.sel.standardComposeWin).find('.close_gmail_compose_window').length === 1) { // draft, but not the secure one
           standardComposeWin.find('.recipients_use_encryption').remove();
         } else {
           let everyoneUsesEncryption = true;
