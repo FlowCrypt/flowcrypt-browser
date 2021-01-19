@@ -84,7 +84,7 @@ View.run(class SettingsView extends View {
     await this.initialize();
     await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail, this.tabId);
     if (this.page) {
-      await Settings.renderSubPage(this.acctEmail, this.tabId, this.page, this.pageUrlParams);
+      Settings.renderSubPage(this.acctEmail, this.tabId, this.page, this.pageUrlParams).catch(Catch.reportErr);
     }
     await Settings.populateAccountsMenu('index.htm');
     Ui.setTestState('ready');
