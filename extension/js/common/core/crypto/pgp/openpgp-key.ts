@@ -200,7 +200,8 @@ export class OpenPGPKey {
     const algoInfo = opgpKey.primaryKey.getAlgorithmInfo();
     const key = keyToUpdate || {} as Key; // if no key to update, use empty object, will get props assigned below
     // tslint:disable-next-line:no-unnecessary-initializer
-    const { encryptionKey = undefined, encryptionKeyIgnoringExpiration = undefined, signingKey = undefined, signingKeyIgnoringExpiration = undefined } = primaryKeySecure ? await OpenPGPKey.getSigningAndEncryptionKeys(opgpKey, exp, expired) : {};
+    const { encryptionKey = undefined, encryptionKeyIgnoringExpiration = undefined, signingKey = undefined, signingKeyIgnoringExpiration = undefined }
+      = primaryKeySecure ? await OpenPGPKey.getSigningAndEncryptionKeys(opgpKey, exp, expired) : {};
     const missingPrivateKeyForSigning = signingKeyIgnoringExpiration?.keyPacket ? OpenPGPKey.arePrivateParamsMissing(signingKeyIgnoringExpiration.keyPacket) : false;
     const missingPrivateKeyForDecryption = encryptionKeyIgnoringExpiration?.keyPacket ? OpenPGPKey.arePrivateParamsMissing(encryptionKeyIgnoringExpiration.keyPacket) : false;
     Object.assign(key, {
@@ -480,7 +481,7 @@ export class OpenPGPKey {
       key.getSigningKey(keyid, date, userId);
     const signingKey = await Catch.undefinedOnException(getSigningKey());
     const signingKeyIgnoringExpiration = signingKey ? signingKey : await OpenPGPKey.getKeyIgnoringExpiration(getSigningKey, exp, expired);
-    return { encryptionKey, encryptionKeyIgnoringExpiration, signingKey, signingKeyIgnoringExpiration }
+    return { encryptionKey, encryptionKeyIgnoringExpiration, signingKey, signingKeyIgnoringExpiration };
   }
 
   private static removeInsecureKeyPackets = (opgpKey: OpenPGP.key.Key): { primaryKeySecure: boolean } => {
