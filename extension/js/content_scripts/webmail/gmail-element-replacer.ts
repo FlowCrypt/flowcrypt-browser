@@ -513,6 +513,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private replaceStandardReplyBox = async (msgId?: string, editable: boolean = false, force: boolean = false) => {
+    const draftReplyRegex = new RegExp(/\[(flowcrypt|cryptup):link:draft_reply:([0-9a-fr\-]+)]/);
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
       // cache for subseqent loop runs
@@ -521,8 +522,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (msgId) {
         replyParams.replyMsgId = msgId;
       }
+      const hasDraft = newReplyBoxes.filter(replyBox => $(replyBox).find(this.sel.msgInnerText).text().substr(0, 1000).match(draftReplyRegex)).length;
       const doReplace = Boolean(convoRootEl.find('iframe.pgp_block').filter(':visible').closest('.h7').is(':last-child')
-        || (convoRootEl.is(':visible') && force));
+        || (convoRootEl.is(':visible') && force)
+        || hasDraft);
       const alreadyHasEncryptedReplyBox = Boolean(convoRootEl.find('div.reply_message_iframe_container').filter(':visible').length);
       let midConvoDraft = false;
       if (doReplace) {
@@ -552,7 +555,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             continue;
           }
           const replyBoxInnerText = replyBox.find(this.sel.msgInnerText).text().trim();
-          const draftReplyLinkMatch = replyBoxInnerText.substr(0, 1000).match(/\[(flowcrypt|cryptup):link:draft_reply:([0-9a-fr\-]+)]/);
+          const draftReplyLinkMatch = replyBoxInnerText.substr(0, 1000).match(draftReplyRegex);
           if (draftReplyLinkMatch) { // reply draft
             replyParams.draftId = draftReplyLinkMatch[2];
           } else if (replyBoxInnerText) { // plain reply
