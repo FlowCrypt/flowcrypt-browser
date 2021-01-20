@@ -2024,6 +2024,7 @@ table#compose #fineuploader .qq-upload-list li .qq-upload-file {
   line-height: 1em;
   height: 1.1em;
   color: black;
+  overflow-y: hidden;
 }
 
 table#compose #fineuploader .qq-upload-list [class^="qq-file-id"] {
