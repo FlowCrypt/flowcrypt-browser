@@ -50,6 +50,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       } else {
         await replyBox.waitAll('@input-body');
       }
+      return replyBox;
     };
 
     const pageDoesNotHaveSecureReplyContainer = async (gmailPage: ControllablePage) => {
@@ -217,7 +218,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: DCB2 74D2 4683 145E B053 BC0B 48E4 74A0 926B AE86');
     }));
 
-    ava.default('mail.google.com - secure reply btn accepts reply prompt', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/FMfcgxwJXVGtMJwQTZmBDlspVWDvsnnL'); // encrypted convo
       await Util.sleep(5);
       await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
@@ -226,10 +227,14 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
       await gmailPage.page.keyboard.type('hey there');
       await Util.sleep(5);
-      await gmailPage.type('[aria-label="Search mail"]', 'encrypted email for reply render');
-      await gmailPage.press('Enter'); // submit search
-      await gmailPage.waitAndClick('.boq'); // the red 'Draft' label in the thread
-      await pageHasSecureDraft(t, browser, gmailPage, 'hey there');
+      await gmailPage.page.reload();
+      const replyBox = await pageHasSecureDraft(t, browser, gmailPage, 'hey there');
+      await replyBox.waitAndClick('@action-send');
+      await Util.sleep(5);
+      await replyBox.close();
+      await gmailPage.page.reload();
+      await gmailPage.waitAndClick('.h7:last-child .ajz', { delay: 1 });
+      await gmailPage.waitForContent('.h7:last-child .ajA', 'Re: [ci.test] encrypted email for reply render'); // make sure that the subject of the sent draft is corrent
     }));
 
     ava.default('mail.google.com - plain reply to encrypted and signed messages', testWithBrowser('ci.tests.gmail', async (t, browser) => {

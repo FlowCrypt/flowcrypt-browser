@@ -116,6 +116,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   }
 
   public initComposeBox = async () => {
+    this.responseMethod = 'reply';
     this.initComposeBoxStyles();
     if (this.view.draftId) {
       const draftLoaded = await this.view.draftModule.initialDraftLoad(this.view.draftId);
@@ -186,7 +187,6 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   }
 
   private actionActivateReplyBoxHandler = async (target: HTMLElement) => {
-    this.responseMethod = 'reply';
     const typesToDelete: RecipientType[] = [];
     switch ($(target).attr('id')) {
       case 'a_forward':
