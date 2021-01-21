@@ -20,6 +20,7 @@ export type ReplyParams = {
   bcc: string[];
   from: string;
   subject: string;
+  inReplyTo?: string;
 };
 
 export type Backups = {
@@ -39,6 +40,7 @@ export interface EmailProviderInterface {
   guessContactsFromSentEmails(userQuery: string, knownEmails: string[], chunkedCb: ChunkedCb): Promise<void>;
   msgGet(msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<GmailRes.GmailMsg>;
   msgList(q: string, includeDeleted?: boolean, pageToken?: string): Promise<GmailRes.GmailMsgList>;
+  threadGet(threadId: string, format?: GmailResponseFormat, progressCb?: ProgressCb): Promise<GmailRes.GmailThread>;
 }
 
 export class EmailProviderApi extends Api {

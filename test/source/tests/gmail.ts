@@ -233,7 +233,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await Util.sleep(5);
       await replyBox.close();
       await gmailPage.page.reload();
-      await gmailPage.waitAndClick('.h7:last-child .ajz', { delay: 1 });
+      await gmailPage.waitAndClick('.h7:last-child .ajz', { delay: 1 }); // the small triangle which toggles the message details
       await gmailPage.waitForContent('.h7:last-child .ajA', 'Re: [ci.test] encrypted email for reply render'); // make sure that the subject of the sent draft is corrent
     }));
 
