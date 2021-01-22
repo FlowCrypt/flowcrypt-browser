@@ -116,7 +116,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         msgData.pwd = undefined; // not needed for drafts
         const sendable = await new EncryptedMsgMailFormatter(this.view, true).sendableMsg(msgData, pubkeys);
         if (this.view.replyParams?.inReplyTo) {
-          sendable.headers['References'] = this.view.replyParams.inReplyTo;
+          sendable.headers.References = this.view.replyParams.inReplyTo;
           sendable.headers['In-Reply-To'] = this.view.replyParams.inReplyTo;
         }
         this.view.S.cached('send_btn_note').text('Saving');
