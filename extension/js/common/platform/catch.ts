@@ -61,7 +61,7 @@ export class Catch {
   }
 
   public static hasStack = (e: any): e is ObjWithStack => {
-    return e && typeof e === 'object' && typeof (e as ObjWithStack).stack === 'string' && Boolean((e as ObjWithStack).stack);
+    return e && typeof e === 'object' && typeof (e as ObjWithStack).stack === 'string' && Boolean((e as ObjWithStack).stack); // tslint:disable-line:no-unsafe-any
   }
 
   public static onErrorInternalHandler = (errMsg: string | undefined, url: string, line: number, col: number, originalErr: any, isManuallyCalled: boolean) => {
@@ -101,7 +101,7 @@ export class Catch {
   }
 
   public static isPromise = (v: any): v is Promise<any> => {
-    return v && typeof v === 'object'
+    return v && typeof v === 'object' // tslint:disable-line:no-unsafe-any
       && typeof (v as Promise<any>).then === 'function' // tslint:disable-line:no-unbound-method - only testing if exists
       && typeof (v as Promise<any>).catch === 'function'; // tslint:disable-line:no-unbound-method - only testing if exists
   }

@@ -200,7 +200,7 @@ export class Api {
   }
 
   private static isRawAjaxErr = (e: any): e is RawAjaxErr => {
-    return e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number';
+    return e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number'; // tslint:disable-line:no-unsafe-any
   }
 
   /**
