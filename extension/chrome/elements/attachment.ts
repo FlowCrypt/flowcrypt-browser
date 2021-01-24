@@ -258,6 +258,7 @@ export class AttachmentDownloadView extends View {
       delete result.message;
       console.info(result);
       $('body.attachment').text(`Error decrypting file (${result.error.type}: ${result.error.message}). Downloading original..`);
+      const name = this.attachment.name;
       Browser.saveToDownloads(new Attachment({ name, type: this.type, data: this.attachment.getData() })); // won't work in ff, possibly neither on some chrome versions (on webmail)
     }
   }

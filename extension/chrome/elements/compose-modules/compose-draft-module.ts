@@ -231,7 +231,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   }
 
   private isValidLocalDraft = (localDraft: unknown): localDraft is GmailRes.GmailDraftGet => {
-    return localDraft && typeof (localDraft as GmailRes.GmailDraftGet).message === 'object';
+    return !!localDraft && typeof (localDraft as GmailRes.GmailDraftGet).message === 'object';
   }
 
   private deleteDraftClickHandler = async () => {

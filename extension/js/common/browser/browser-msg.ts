@@ -374,7 +374,7 @@ export class BrowserMsg {
       const msg: Bm.Raw = { name, data: { bm: bm!, objUrls }, to: destString || null, uid: Str.sloppyRandom(10), stack: Catch.stackTrace() }; // tslint:disable-line:no-null-keyword
       const processRawMsgResponse = (r: Bm.RawResponse) => {
         if (!awaitRes) {
-          resolve();
+          resolve(r);
         } else if (!r || typeof r !== 'object') { // r can be null if we sent a message to a non-existent window id
           const lastError = chrome.runtime.lastError ? chrome.runtime.lastError.message || '(empty lastError)' : '(no lastError)';
           let e: Error;

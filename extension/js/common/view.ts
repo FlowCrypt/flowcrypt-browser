@@ -34,7 +34,7 @@ export abstract class View {
     Ui.setTestState('ready');
   }
 
-  public abstract async render(): Promise<void>;
+  public abstract render(): Promise<void>;
 
   public abstract setHandlers(): void;
 
