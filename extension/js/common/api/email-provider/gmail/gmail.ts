@@ -113,17 +113,17 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return await Google.gmailCall<GmailRes.GmailLabels>(this.acctEmail, 'GET', `labels`, {});
   }
 
-  public attGet = async (msgId: string, attId: string, progressCb?: ProgressCb): Promise<GmailRes.GmailAtt> => {
+  public attachmentGet = async (msgId: string, attId: string, progressCb?: ProgressCb): Promise<GmailRes.GmailAttachment> => {
     type RawGmailAttRes = { attachmentId: string, size: number, data: string };
     const { attachmentId, size, data } = await Google.gmailCall<RawGmailAttRes>(this.acctEmail, 'GET', `messages/${msgId}/attachments/${attId}`, {}, { download: progressCb });
     return { attachmentId, size, data: Buf.fromBase64UrlStr(data) }; // data should be a Buf for ease of passing to/from bg page
   }
 
-  public attGetChunk = async (msgId: string, attId: string): Promise<Buf> => {
+  public attachmentGetChunk = async (msgId: string, attachmentId: string): Promise<Buf> => {
     if (Env.isContentScript()) {
       // content script CORS not allowed anymore, have to drag it through background page
       // https://www.chromestatus.com/feature/5629709824032768
-      const { chunk } = await BrowserMsg.send.bg.await.ajaxGmailAttGetChunk({ acctEmail: this.acctEmail, msgId, attId });
+      const { chunk } = await BrowserMsg.send.bg.await.ajaxGmailAttachmentGetChunk({ acctEmail: this.acctEmail, msgId, attachmentId });
       return chunk;
     }
     const stack = Catch.stackTrace();
@@ -168,7 +168,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       GoogleAuth.googleApiAuthHeader(this.acctEmail).then(authToken => {
         const r = new XMLHttpRequest();
         const method = 'GET';
-        const url = `${GOOGLE_API_HOST}/gmail/v1/users/me/messages/${msgId}/attachments/${attId}`;
+        const url = `${GOOGLE_API_HOST}/gmail/v1/users/me/messages/${msgId}/attachments/${attachmentId}`;
         r.open(method, url, true);
         r.setRequestHeader('Authorization', authToken);
         r.send();
@@ -214,7 +214,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     const loadedAr: Array<number> = [];
     // 1.33 is approximate ratio of downloaded data to what we expected, likely due to encoding
     const total = attachments.map(x => x.length).reduce((a, b) => a + b) * 1.33;
-    const responses = await Promise.all(attachments.map((a, index) => this.attGet(a.msgId!, a.id!, (_, loaded) => {
+    const responses = await Promise.all(attachments.map((a, index) => this.attachmentGet(a.msgId!, a.id!, (_, loaded) => {
       if (progressCb) {
         loadedAr[index] = loaded || 0;
         const totalLoaded = loadedAr.reduce((a, b) => a + b);

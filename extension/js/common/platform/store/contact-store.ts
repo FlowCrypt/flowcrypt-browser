@@ -158,7 +158,7 @@ export class ContactStore extends AbstractStore {
       const tx = db.transaction('contacts', 'readwrite');
       const contactsTable = tx.objectStore('contacts');
       contactsTable.put(prepared);
-      tx.oncomplete = Catch.try(resolve);
+      tx.oncomplete = () => resolve();
       tx.onabort = () => reject(ContactStore.errCategorize(tx.error));
     });
   }
@@ -210,7 +210,7 @@ export class ContactStore extends AbstractStore {
       const tx = db.transaction('contacts', 'readwrite');
       const contactsTable = tx.objectStore('contacts');
       contactsTable.put(updated);
-      tx.oncomplete = Catch.try(resolve);
+      tx.oncomplete = () => resolve();
       tx.onabort = () => reject(ContactStore.errCategorize(tx.error));
     });
   }
@@ -285,19 +285,24 @@ export class ContactStore extends AbstractStore {
         }
       }
       const found: unknown[] = [];
-      search.onsuccess = Catch.try(() => {
-        const cursor = search.result as IDBCursorWithValue | undefined;
-        if (!cursor) {
-          resolve(found);
-        } else {
-          found.push(cursor.value);
-          if (query.limit && found.length >= query.limit) {
+      search.onsuccess = () => {
+        try {
+          const cursor = search.result as IDBCursorWithValue | undefined;
+          if (!cursor) {
             resolve(found);
           } else {
-            cursor.continue();
+            found.push(cursor.value);
+            if (query.limit && found.length >= query.limit) {
+              resolve(found);
+            } else {
+              cursor.continue();
+            }
           }
+        } catch (codeErr) {
+          reject(codeErr);
+          Catch.reportErr(codeErr);
         }
-      });
+      };
       search.onerror = () => reject(ContactStore.errCategorize(search!.error!)); // todo - added ! after ts3 upgrade - investigate
     });
     return raw;
@@ -318,18 +323,17 @@ export class ContactStore extends AbstractStore {
     email = email.toLowerCase();
     name = name ? name.toLowerCase() : '';
     const parts = [email, name];
-    parts.push(...email.split(/[^a-z0-9]/));
+    const domain: string = email.split('@').pop() || '';
+    parts.push(domain, ...email.split(/[^a-z0-9]/));
     parts.push(...name.split(/[^a-z0-9]/));
     const index: string[] = [];
-    for (const part of parts) {
-      if (part) {
-        let substring = '';
-        for (const letter of part.split('')) {
-          substring += letter;
-          const normalized = ContactStore.normalizeString(substring);
-          if (!index.includes(normalized)) {
-            index.push(ContactStore.dbIndex(hasPgp, normalized));
-          }
+    for (const part of parts.filter(p => !!p)) {
+      let substring = '';
+      for (const letter of part.split('')) {
+        substring += letter;
+        const normalized = ContactStore.normalizeString(substring);
+        if (!index.includes(normalized)) {
+          index.push(ContactStore.dbIndex(hasPgp, normalized));
         }
       }
     }
@@ -356,7 +360,14 @@ export class ContactStore extends AbstractStore {
       } else { // search primary longid
         tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(emailOrLongid);
       }
-      tx.onsuccess = Catch.try(() => resolve(ContactStore.toContact(tx.result)));
+      tx.onsuccess = () => {
+        try {
+          resolve(ContactStore.toContact(tx.result));
+        } catch (codeErr) {
+          reject(codeErr);
+          Catch.reportErr(codeErr);
+        }
+      };
       tx.onerror = () => reject(ContactStore.errCategorize(tx.error || new Error('Unknown db error')));
     });
   }

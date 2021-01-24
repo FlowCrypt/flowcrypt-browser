@@ -397,6 +397,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await attesterFrame.waitAndRespondToModal('error', 'confirm', 'Disallowed by your organisation rules');
     }));
 
+    ava.default('user@no-submit-org-rule.flowcrypt.com - do not submit to attester on key generation', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-org-rule.flowcrypt.com');
+      await Util.sleep(5);
+      await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase: 'long enough to suit requirements' }, usedPgpBefore: false });
+      await settingsPage.notPresent('.swal2-container');
+      await settingsPage.close();
+    }));
+
     ava.default('user@no-search-domains-org-rule.flowcrypt.com - do not search attester for recipients on particular domains', testWithBrowser(undefined, async (t, browser) => {
       // disallowed searching attester for pubkeys on "flowcrypt.com" domain
       // below we search for human@flowcrypt.com which normally has pubkey on attester, but none should be found due to the rule
@@ -429,6 +437,21 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
       await Util.sleep(1);
       await securityFrame.notPresent(['@action-change-passphrase-begin', '@action-test-passphrase-begin', '@action-forget-pp']);
+    }));
+
+    ava.default('get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.com - automatic setup with key found on key manager and no submit rule', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoKeygen(settingsPage);
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      // check no "add key"
+      await settingsPage.notPresent('@action-open-add-key-page');
+      // check imported key
+      const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
+      await Util.sleep(1);
+      await myKeyFrame.waitAll('@content-fingerprint');
+      expect(await myKeyFrame.read('@content-fingerprint')).to.contain('9C64 3D82 783E 291A 2AD2 611B 499E 84DB 185F 0359');
+      await SettingsPageRecipe.closeDialog(settingsPage);
     }));
 
     ava.default('put.key@key-manager-autogen.flowcrypt.com - automatic setup with key not found on key manager, then generated', testWithBrowser(undefined, async (t, browser) => {

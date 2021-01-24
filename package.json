@@ -6,23 +6,24 @@
     "graceful-fs": "4.1.13"
   },
   "devDependencies": {
-    "@types/chrome": "0.0.127",
+    "@types/chrome": "0.0.128",
     "@types/chai": "4.2.14",
-    "@types/dompurify": "2.2.0",
+    "@types/dompurify": "2.2.1",
     "@types/jquery": "3.5.5",
     "@types/mailparser": "3.0.0",
     "@types/puppeteer": "5.4.2",
     "@types/mkdirp": "^1.0.1",
-    "@typescript-eslint/eslint-plugin": "^4.12.0",
+    "@typescript-eslint/eslint-plugin": "^4.14.0",
     "@types/request": "2.48.5",
     "ava": "3.15.0",
-    "@typescript-eslint/parser": "^4.12.0",
+    "@typescript-eslint/parser": "^4.14.0",
     "chai": "4.2.0",
     "del": "6.0.0",
-    "eslint": "^7.17.0",
+    "eslint": "^7.18.0",
     "eslint-plugin-header": "^3.0.0",
     "eslint-plugin-no-only-tests": "^2.4.0",
     "fc-node-requests": "git+https://git@github.com/FlowCrypt/node-requests.git",
+    "googleapis": "^67.0.0",
     "mailparser": "3.0.1",
     "mkdirp": "^1.0.3",
     "openpgp": "4.10.9",
@@ -32,7 +33,7 @@
     "stylelint-config-standard": "^20.0.0",
     "tslint": "6.1.3",
     "typescript": "4.1.3",
-    "web-ext": "5.4.1"
+    "web-ext": "5.5.0"
   },
   "dependencies": {
     "@flowcrypt/fine-uploader": "5.16.4",
@@ -45,7 +46,7 @@
     "zxcvbn": "4.4.2",
     "squire-rte": "1.10.2",
     "clipboard": "2.0.6",
-    "bootstrap": "4.5.3",
+    "bootstrap": "4.6.0",
     "filesize": "6.1.0"
   },
   "scripts": {

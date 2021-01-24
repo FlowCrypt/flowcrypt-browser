@@ -102,9 +102,9 @@ export class KeyImportUi {
         $('.line.unprotected_key_create_pass_phrase').hide();
       }
     }));
-    const attach = new AttachmentUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
-    attach.initAttDialog('fineuploader', 'fineuploader_button', {
-      attAdded: async file => {
+    const attachment = new AttachmentUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
+    attachment.initAttachmentDialog('fineuploader', 'fineuploader_button', {
+      attachmentAdded: async file => {
         let prv: OpenPGP.key.Key | undefined;
         const utf = file.getData().toUtfStr();
         if (utf.includes(PgpArmor.headers('privateKey').begin)) {
