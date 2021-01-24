@@ -16,7 +16,7 @@ import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
 import { Attachment } from '../core/attachment.js';
 import { ContactStore } from '../platform/store/contact-store.js';
 import { GoogleData, GmailParser, GmailMsg } from '../mock/google/google-data';
-import { pubkey2864E326A5BE488A } from './tooling/consts';
+import { pubkey2864E326A5BE488A, rsa1024subkeyOnly } from './tooling/consts';
 
 // tslint:disable:no-blank-lines-func
 /* eslint-disable max-len */
@@ -1304,6 +1304,41 @@ jA==
       t.pass();
     });
 
+    ava.default('[KeyUtil.diagnose] decrypts and tests secure PK and insecure SK', async t => {
+      const result = await KeyUtil.diagnose(await KeyUtil.parse(rsa1024subkeyOnly), '');
+      expect(result.get('Is Private?')).to.equal('[-] true');
+      expect(result.get('User id 0')).to.equal('rsa1024subkey@test');
+      expect(result.get('Primary User')).to.equal('rsa1024subkey@test');
+      expect(result.get('Fingerprint')).to.equal('B804 AF5A 259A 6673 F853 BEB2 B655 50F5 77CF 5CC5');
+      expect(result.get('Subkeys')).to.equal('[-] 1');
+      expect(result.get('Primary key algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('Primary key verify')).to.equal('[-] valid');
+      expect(result.get('Primary key creation?')).to.equal('[-] 1611500681 or 2021-01-24T15:04:41.000Z');
+      expect(result.get('Primary key expiration?')).to.equal('[-] -');
+      expect(result.has('Encrypt/Decrypt test: Got error performing encryption/decryption test: Error: Error encrypting message: Could not find valid encryption key packet in key b65550f577cf5cc5')).to.be.true;
+      expect(result.get('Sign/Verify test')).to.equal('[-] sign msg ok|verify ok');
+      expect(result.get('SK 0 > LongId')).to.equal('[-] 1453C9506DBF5B6A');
+      expect(result.get('SK 0 > Created')).to.equal('[-] 1611500698 or 2021-01-24T15:04:58.000Z');
+      expect(result.get('SK 0 > Algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('SK 0 > Verify')).to.equal('[-] OK');
+      expect(result.get('SK 0 > Subkey tag')).to.equal('[-] 7');
+      expect(result.get('SK 0 > Subkey getBitSize')).to.equal('[-] 1024');
+      expect(result.get('SK 0 > Subkey decrypted')).to.equal('[-] true');
+      expect(result.get('SK 0 > Binding signature length')).to.equal('[-] 1');
+      expect(result.get('SK 0 > SIG 0 > Key flags')).to.equal('[-] 12');
+      expect(result.get('SK 0 > SIG 0 > Tag')).to.equal('[-] 2');
+      expect(result.get('SK 0 > SIG 0 > Version')).to.equal('[-] 4');
+      expect(result.get('SK 0 > SIG 0 > Public key algorithm')).to.equal('[-] 1');
+      expect(result.get('SK 0 > SIG 0 > Sig creation time')).to.equal('[-] 1611500699 or 2021-01-24T15:04:59.000Z');
+      expect(result.get('SK 0 > SIG 0 > Sig expiration time')).to.equal('[-] -');
+      expect(result.get('SK 0 > SIG 0 > Verified')).to.equal('[-] true');
+      expect(result.get('expiration')).to.equal('[-] undefined');
+      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
+      expect(result.get('internal usableForEncryptionButExpired')).to.equal('[-] false');
+      expect(result.get('internal usableForSigningButExpired')).to.equal('[-] false');
+      t.pass();
+    });
+
     ava.default('[unit][KeyUtil.parse] correctly handles signing/encryption detection for PKSK with private keys', async t => {
       // testing encrypted key
       const encryptedKey = await KeyUtil.parse(rsaPrimaryKeyAndSubkeyBothHavePrivateKey);
@@ -1466,6 +1501,11 @@ kBXo
       expect(key2.usableForSigning).to.equal(false);
       expect(key2.usableForEncryptionButExpired).to.equal(false);
       expect(key2.usableForSigningButExpired).to.equal(false);
+      const key3 = await KeyUtil.parse(rsa1024subkeyOnly);
+      expect(key3.usableForEncryption).to.equal(false);
+      expect(key3.usableForSigning).to.equal(true);
+      expect(key3.usableForEncryptionButExpired).to.equal(false);
+      expect(key3.usableForSigningButExpired).to.equal(false);
       t.pass();
     });
   }
