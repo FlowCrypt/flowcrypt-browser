@@ -164,15 +164,19 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         const img: Element = node;
         const src = img.getAttribute('src') as string;
         const { mimeType, data } = this.parseInlineImageSrc(src);
-        const imgAttachment = new Attachment({
-          cid: Attachment.attachmentId(),
-          name: img.getAttribute('name') || '',
-          type: mimeType,
-          data: Buf.fromBase64Str(data),
-          inline: true
-        });
-        img.setAttribute('src', `cid:${imgAttachment.cid}`);
-        imgAttachments.push(imgAttachment);
+        if (mimeType && data) {
+          const imgAttachment = new Attachment({
+            cid: Attachment.attachmentId(),
+            name: img.getAttribute('name') || '',
+            type: mimeType,
+            data: Buf.fromBase64Str(data),
+            inline: true
+          });
+          img.setAttribute('src', `cid:${imgAttachment.cid}`);
+          imgAttachments.push(imgAttachment);
+        } else {
+          Catch.report(`Unable to parse an inline image with src="${src}"`);
+        }
       }
     });
     const htmlWithCidImages = DOMPurify.sanitize(html);
