@@ -11,7 +11,8 @@ export class OauthPageRecipe extends PageRecipe {
 
   public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve" | 'login'): Promise<void> => {
     const isMock = oauthPage.target.url().includes('localhost');
-    const auth = Config.secrets().auth.google.find(a => a.email === acctEmail)!;
+    const auth = Config.secrets().auth.google.find(a => a.email === acctEmail);
+    const acctPassword = auth?.password;
     const selectors = {
       approve_button: '#submit_approve_access',
       email_input: '#identifierId',
@@ -24,11 +25,11 @@ export class OauthPageRecipe extends PageRecipe {
       await oauthPage.waitAny('#Email, #submit_approve_access, #identifierId, .w6VTHd, #profileIdentifier', { timeout: 45 });
       if (await oauthPage.target.$(selectors.email_input) !== null) { // 2017-style login
         await oauthPage.waitAll(selectors.email_input, { timeout: OauthPageRecipe.longTimeout });
-        await oauthPage.waitAndType(selectors.email_input, auth.email, { delay: isMock ? 0 : 2 });
+        await oauthPage.waitAndType(selectors.email_input, acctEmail, { delay: isMock ? 0 : 2 });
         await oauthPage.waitAndClick(selectors.email_confirm_btn, { delay: isMock ? 0 : 2 });  // confirm email
         await oauthPage.waitForNavigationIfAny();
-      } else if (await oauthPage.target.$(`#profileIdentifier[data-email="${auth.email}"]`) !== null) { // already logged in - just choose an account
-        await oauthPage.waitAndClick(`#profileIdentifier[data-email="${auth.email}"]`, { delay: isMock ? 0.1 : 1 });
+      } else if (await oauthPage.target.$(`#profileIdentifier[data-email="${acctEmail}"]`) !== null) { // already logged in - just choose an account
+        await oauthPage.waitAndClick(`#profileIdentifier[data-email="${acctEmail}"]`, { delay: isMock ? 0.1 : 1 });
         if (isMock) {
           try { await oauthPage.page.waitForNavigation({ timeout: 3000 }); } catch (e) { /* continue, should not cause trouble */ }
         }
@@ -36,6 +37,10 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitAndClick('.bLzI3e', { delay: isMock ? 0 : 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
         await Util.sleep(isMock ? 0 : 2);
         return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // start from beginning after clicking "other email acct"
+      } else if (isMock && await oauthPage.target.$('#profileIdentifier') !== null) {
+        // let any e-mail pass
+        const href = await oauthPage.attr('#profileIdentifier', 'href') + acctEmail;
+        await oauthPage.goto(href);
       }
       await Util.sleep(isMock ? 0 : 2);
       if (action === 'login') {
@@ -47,8 +52,10 @@ export class OauthPageRecipe extends PageRecipe {
       }
       await oauthPage.waitAny([selectors.approve_button, selectors.auth0_username]);
       if (await oauthPage.isElementPresent(selectors.auth0_username)) {
-        await oauthPage.waitAndType(selectors.auth0_username, auth.email);
-        await oauthPage.waitAndType(selectors.auth0_password, auth.password!);
+        await oauthPage.waitAndType(selectors.auth0_username, acctEmail);
+        if (acctPassword) {
+          await oauthPage.waitAndType(selectors.auth0_password, acctPassword);
+        }
         await oauthPage.waitAndClick(selectors.auth0_login_btn);
         await oauthPage.waitForNavigationIfAny();
       }

@@ -59,6 +59,8 @@ export class Config {
     if (!Config._secrets) {
       try {
         Config._secrets = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8'));
+        const data = JSON.parse(fs.readFileSync('test/testdata.json', 'utf8'));
+        Config._secrets.keys = data.keys;
       } catch (e) {
         console.error(`skipping loading test secrets because ${e}`);
         Config._secrets = { auth: { google: [] }, keys: [], keyInfo: [] } as any as TestSecretsInterface;
@@ -71,22 +73,11 @@ export class Config {
     return Config.secrets().keys.filter(k => k.title === title)[0];
   }
 
-  public static setupSecrets = async (): Promise<void> => {
-    await Config.fixKeyInfo(Config._secrets);
-  }
-
-  public static fixKeyInfo = async (secrets: TestSecretsInterface): Promise<void> => {
-    // The keys in test secrets file used to have different structure,
-    // this does a migration so that we can continue using the file as is
-    // without distributing an updated secrets file to everyone
-    secrets.keyInfo = await Promise.all(secrets.keyInfo.map(async original => {
-      const kisWithPp: KeyInfoWithOptionalPp[] = [];
-      for (const ki of original.key) {
-        const reParsed = await KeyUtil.keyInfoObj(await KeyUtil.parse(ki.private));
-        kisWithPp.push({ ...reParsed, passphrase: ki.passphrase });
-      }
-      return { email: original.email, key: kisWithPp };
-    }));
+  public static getKeyInfo = async (titles: string[]): Promise<KeyInfoWithOptionalPp[]> => {
+    return await Promise.all(Config._secrets.keys
+      .filter(key => key.armored && titles.includes(key.title)).map(async key => {
+        return { ...await KeyUtil.keyInfoObj(await KeyUtil.parse(key.armored!)), passphrase: key.passphrase };
+      }));
   }
 
 }
