@@ -6,7 +6,7 @@
     "graceful-fs": "4.1.13"
   },
   "devDependencies": {
-    "@types/chrome": "0.0.128",
+    "@types/chrome": "0.0.129",
     "@types/chai": "4.2.14",
     "@types/dompurify": "2.2.1",
     "@types/jquery": "3.5.5",
