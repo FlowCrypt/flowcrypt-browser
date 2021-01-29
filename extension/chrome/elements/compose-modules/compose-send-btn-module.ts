@@ -179,7 +179,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
           throw new ComposerUserError(`
             Unable to parse an inline image <details>
               <summary>See error details</summary>
-              src="${src}"
+              src="${Xss.escape(src)}"
             </details>
           `);
         }
