@@ -184,7 +184,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('compose - keyboard - Ctrl+Enter sends message', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.dev'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await composeFrame.target.evaluateHandle(() => (document.querySelector('#section_compose') as HTMLElement).dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', ctrlKey: true })));
+      await composeFrame.target.evaluateHandle(() => (document.querySelector('#section_compose') as HTMLElement).dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true })));
       await composeFrame.waitAndRespondToModal('error', 'confirm', 'Please add a recipient first');
     }));
 
