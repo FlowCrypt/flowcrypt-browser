@@ -9,6 +9,7 @@ import { Attachment } from '../../../js/common/core/attachment.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
+import { ComposerUserError } from './compose-err-module.js';
 import { ComposeSendBtnPopoverModule } from './compose-send-btn-popover-module.js';
 import { GeneralMailFormatter } from './formatters/general-mail-formatter.js';
 import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
@@ -164,15 +165,24 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         const img: Element = node;
         const src = img.getAttribute('src') as string;
         const { mimeType, data } = this.parseInlineImageSrc(src);
-        const imgAttachment = new Attachment({
-          cid: Attachment.attachmentId(),
-          name: img.getAttribute('name') || '',
-          type: mimeType,
-          data: Buf.fromBase64Str(data),
-          inline: true
-        });
-        img.setAttribute('src', `cid:${imgAttachment.cid}`);
-        imgAttachments.push(imgAttachment);
+        if (mimeType && data) {
+          const imgAttachment = new Attachment({
+            cid: Attachment.attachmentId(),
+            name: img.getAttribute('name') || '',
+            type: mimeType,
+            data: Buf.fromBase64Str(data),
+            inline: true
+          });
+          img.setAttribute('src', `cid:${imgAttachment.cid}`);
+          imgAttachments.push(imgAttachment);
+        } else {
+          throw new ComposerUserError(`
+            Unable to parse an inline image <details>
+              <summary>See error details</summary>
+              src="${Xss.escape(src)}"
+            </details>
+          `);
+        }
       }
     });
     const htmlWithCidImages = DOMPurify.sanitize(html);

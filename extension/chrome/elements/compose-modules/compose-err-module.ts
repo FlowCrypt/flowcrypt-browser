@@ -17,7 +17,7 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AjaxErrMsgs } from '../../../js/common/api/shared/api-error.js';
 
-class ComposerUserError extends Error { }
+export class ComposerUserError extends Error { }
 class ComposerNotReadyError extends ComposerUserError { }
 export class ComposerResetBtnTrigger extends Error { }
 
@@ -83,7 +83,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
         }
       }
     } else if (e instanceof ComposerUserError) {
-      await Ui.modal.error(e.message);
+      await Ui.modal.error(e.message, true);
     } else {
       if (!(e instanceof ComposerResetBtnTrigger || e instanceof ComposerNotReadyError)) {
         Catch.reportErr(e);
