@@ -37,7 +37,7 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitAndClick('.bLzI3e', { delay: isMock ? 0 : 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
         await Util.sleep(isMock ? 0 : 2);
         return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // start from beginning after clicking "other email acct"
-      } else if (isMock && await oauthPage.target.$('#profileIdentifier') !== null) {
+      } else if (await oauthPage.target.$('#profileIdentifier[data-email="dummy"]') !== null) {
         // let any e-mail pass
         const href = await oauthPage.attr('#profileIdentifier', 'href') + acctEmail;
         await oauthPage.goto(href);
