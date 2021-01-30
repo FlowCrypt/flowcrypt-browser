@@ -185,10 +185,10 @@ export class ContactStore extends AbstractStore {
       await Promise.all(email.map(oneEmail => ContactStore.update(db, oneEmail, update)));
       return;
     }
-    let [existing] = await ContactStore.get(db, [email]);
+    let [existing] = await ContactStore.getRaw(db, [email]);
     if (!existing) { // updating a non-existing contact, insert it first
       await ContactStore.save(db, await ContactStore.obj({ email }));
-      [existing] = await ContactStore.get(db, [email]);
+      [existing] = await ContactStore.getRaw(db, [email]);
       if (!existing) {
         throw new Error('contact not found right after inserting it');
       }
@@ -247,7 +247,7 @@ export class ContactStore extends AbstractStore {
     } else {
       const results: (Contact | undefined)[] = [];
       for (const singleEmailOrLongid of emailOrLongid) {
-        const [contact] = await ContactStore.get(db, [singleEmailOrLongid]);
+        const [contact] = await ContactStore.getRaw(db, [singleEmailOrLongid]);
         results.push(contact);
       }
       return results;
