@@ -44,3 +44,24 @@ BROWSER_UNIT_TEST_NAME(`Mime attachment file names`);
   }
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`Mime attachment file name issue 3352`);
+(async () => {
+  const originalName = 'XX J 1 IT E (P 4) p_c.pdf';
+  const attachments = [new Attachment({ name: originalName, type: 'text/plain', data: new Uint8Array([80, 81]) })];
+  const encoded = await Mime.encode({ 'text/plain': 'text' }, { Subject: 'subject' }, attachments);
+  const decoded = await Mime.decode(encoded);
+  if (decoded.attachments.length !== 1) {
+    throw Error(`Decoded MIME message has unexpectedly ${decoded.attachments.length} attachments, expecting 1`);
+  }
+  const index = 0;
+  const extractedAttachment = decoded.attachments[index];
+  if (typeof extractedAttachment === 'undefined') {
+    throw Error(`could not extract attachment at index ${index}`);
+  }
+  const extractedName = extractedAttachment.name;
+  if (extractedName !== originalName) {
+    throw Error(`extractedName unexpectedly ${extractedName}, expecting ${originalName}`);
+  }
+  return 'pass';
+})();
