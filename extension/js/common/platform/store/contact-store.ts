@@ -144,29 +144,39 @@ export class ContactStore extends AbstractStore {
    * Used to save a contact that does not yet exist
    */
   public static save = async (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => {
-    if (!db) { // relay op through background process
-      await BrowserMsg.send.bg.await.db({ f: 'save', args: [contact] });
-      return;
-    }
-    if (Array.isArray(contact)) {
-      await Promise.all(contact.map(oneContact => ContactStore.save(db, oneContact)));
-      return;
-    }
+    const array = Array.isArray(contact) ? contact : [contact];
     // serializing for storage
-    const prepared = contact.pubkey ? { ...contact, pubkey: KeyUtil.armor(contact.pubkey) as unknown as Key } : contact;
-    return await new Promise((resolve, reject) => {
+    const prepared = array.map(contact => (!contact.pubkey || typeof contact.pubkey === 'string') ? contact : { ...contact, pubkey: KeyUtil.armor(contact.pubkey) as unknown as Key });
+    if (!db) { // relay op through background process
+      await BrowserMsg.send.bg.await.db({ f: 'save', args: [prepared] });
+      return;
+    }
+    await Promise.all(prepared.map(x => new Promise<void>((resolve, reject) => {
       const tx = db.transaction('contacts', 'readwrite');
       const contactsTable = tx.objectStore('contacts');
-      contactsTable.put(prepared);
+      contactsTable.put(x);
       tx.oncomplete = () => resolve();
       tx.onabort = () => reject(ContactStore.errCategorize(tx.error));
-    });
+    })));
   }
 
   /**
    * used to update existing contact
    */
   public static update = async (db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> => {
+    if (update.pubkey && typeof update.pubkey !== 'string') {
+      let key = update.pubkey;
+      if (key.isPrivate) {
+        Catch.report('Wrongly updating prv as contact - converting to pubkey');
+        key = await KeyUtil.asPublicKey(key);
+      }
+      update.pubkey = KeyUtil.armor(key) as unknown as Key; // serializing for storage;
+      update.fingerprint = key.id;
+      update.longid = OpenPGPKey.fingerprintToLongid(key.id);
+      update.pubkey_last_sig = key.lastModified ? Number(key.lastModified) : null;
+      update.expiresOn = key.expiration ? Number(key.expiration) : null;
+      update.has_pgp = 1;
+    }
     if (!db) { // relay op through background process
       await BrowserMsg.send.bg.await.db({ f: 'update', args: [email, update] });
       return;
@@ -183,28 +193,18 @@ export class ContactStore extends AbstractStore {
         throw new Error('contact not found right after inserting it');
       }
     }
-    if (update.pubkey?.isPrivate) {
-      Catch.report('Wrongly updating prv as contact - converting to pubkey');
-      update.pubkey = await KeyUtil.asPublicKey(update.pubkey);
-    }
     if (!update.searchable && (update.name !== existing.name || update.has_pgp !== existing.has_pgp)) { // update searchable index based on new name or new has_pgp
       const newHasPgp = Boolean(typeof update.has_pgp !== 'undefined' && update.has_pgp !== null ? update.has_pgp : existing.has_pgp);
       const newName = typeof update.name !== 'undefined' && update.name !== null ? update.name : existing.name;
       update.searchable = ContactStore.dbCreateSearchIndexList(existing.email, newName, newHasPgp);
     }
     const updated = existing;
-    if (update.pubkey) {
-      const key = typeof update.pubkey === 'string' ? await KeyUtil.parse(update.pubkey) : update.pubkey;
-      update.fingerprint = key.id;
-      update.longid = OpenPGPKey.fingerprintToLongid(key.id);
-      update.pubkey_last_sig = key.lastModified ? Number(key.lastModified) : null;
-      update.expiresOn = key.expiration ? Number(key.expiration) : null;
-      update.pubkey = KeyUtil.armor(key) as unknown as Key; // serialising for storage
-      update.has_pgp = 1;
-    }
     for (const k of Object.keys(update)) {
       // @ts-ignore
       updated[k] = update[k];
+    }
+    if (updated.pubkey) {
+      updated.pubkey = ContactStore.getArmoredPubkey(updated.pubkey) as unknown as Key;
     }
     return await new Promise((resolve, reject) => {
       const tx = db.transaction('contacts', 'readwrite');

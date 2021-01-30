@@ -41,7 +41,7 @@ export class OpenPGPKey {
       throw new UnexpectedKeyTypeError(`Key type is ${pubkey.type}, expecting OpenPGP`);
     }
     if (pubkey.isPrivate) {
-      return await OpenPGPKey.convertExternalLibraryObjToKey(OpenPGPKey.extractExternalLibraryObjFromKey(pubkey).toPublic());
+      return await OpenPGPKey.convertExternalLibraryObjToKey(OpenPGPKey.extractInsecureExternalLibraryObjFromKey(pubkey).toPublic());
     }
     return pubkey;
   }
