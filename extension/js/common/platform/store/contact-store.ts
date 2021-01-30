@@ -170,7 +170,7 @@ export class ContactStore extends AbstractStore {
         Catch.report('Wrongly updating prv as contact - converting to pubkey');
         key = await KeyUtil.asPublicKey(key);
       }
-      update.pubkey = KeyUtil.armor(key) as unknown as Key; // serializing for storage;
+      update.pubkey = KeyUtil.armor(key) as unknown as Key; // serialising for storage;
       update.fingerprint = key.id;
       update.longid = OpenPGPKey.fingerprintToLongid(key.id);
       update.pubkey_last_sig = key.lastModified ? Number(key.lastModified) : null;
@@ -216,9 +216,19 @@ export class ContactStore extends AbstractStore {
   }
 
   public static get = async (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
-    if (!db) { // relay op through background process
-      return ContactStore.recreateDates(await BrowserMsg.send.bg.await.db({ f: 'get', args: [emailOrLongid] }) as (Contact | undefined)[]);
-    }
+    const results = db ? await ContactStore.getRaw(db, emailOrLongid) : await BrowserMsg.send.bg.await.db({ f: 'getRaw', args: [emailOrLongid] }) as (Contact | undefined)[];
+    return await Promise.all(results.filter(Boolean).map(ContactStore.toContact));
+  }
+
+  public static search = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<ContactPreview[]> => {
+    return (await ContactStore.rawSearch(db, query)).filter(Boolean).map(ContactStore.toContactPreview);
+  }
+
+  public static searchPubkeys = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<string[]> => {
+    return (await ContactStore.rawSearch(db, query)).filter(Boolean).map(ContactStore.toArmoredPubkey).filter(Boolean);
+  }
+
+  private static getRaw = async (db: IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
     if (emailOrLongid.length === 1) {
       // contacts imported before August 2019 may have only primary longid recorded, in index_longid (string)
       // contacts imported after August 2019 have both index_longid (string) and index_longids (string[] containing all subkeys)
@@ -228,11 +238,11 @@ export class ContactStore extends AbstractStore {
       if (contact || !/^[A-F0-9]{16}$/.test(emailOrLongid[0])) {
         // if we found something, return it
         // or if we were searching by email, return found contact or nothing
-        return ContactStore.recreateDates([contact]);
+        return [contact];
       } else {
         // not found any key by primary longid, and searching by longid -> search by any subkey longid
         // it may not find pubkeys imported before August 2019, re-importing such pubkeys will make them findable
-        return ContactStore.recreateDates([await ContactStore.dbContactInternalGetOne(db, emailOrLongid[0], true)]);
+        return [await ContactStore.dbContactInternalGetOne(db, emailOrLongid[0], true)];
       }
     } else {
       const results: (Contact | undefined)[] = [];
@@ -240,16 +250,8 @@ export class ContactStore extends AbstractStore {
         const [contact] = await ContactStore.get(db, [singleEmailOrLongid]);
         results.push(contact);
       }
-      return ContactStore.recreateDates(results);
+      return results;
     }
-  }
-
-  public static search = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<ContactPreview[]> => {
-    return (await ContactStore.rawSearch(db, query)).filter(Boolean).map(ContactStore.toContactPreview);
-  }
-
-  public static searchPubkeys = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<string[]> => {
-    return (await ContactStore.rawSearch(db, query)).filter(Boolean).map(ContactStore.toArmoredPubkey).filter(Boolean);
   }
 
   private static rawSearch = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<unknown[]> => {
@@ -362,7 +364,7 @@ export class ContactStore extends AbstractStore {
       }
       tx.onsuccess = () => {
         try {
-          resolve(ContactStore.toContact(tx.result));
+          resolve(tx.result as Contact | undefined);
         } catch (codeErr) {
           reject(codeErr);
           Catch.reportErr(codeErr);
@@ -397,25 +399,6 @@ export class ContactStore extends AbstractStore {
   private static toArmoredPubkey = (result: any): string => {
     // tslint:disable-next-line:no-unsafe-any
     return ContactStore.getArmoredPubkey(result.pubkey);
-  }
-
-  private static recreateDates = (contacts: (Contact | undefined)[]) => {
-    for (const contact of contacts) {
-      if (contact) {
-        // string dates were created by JSON serializing Date objects
-        // convert any previously saved string-dates into numbers
-        if (typeof contact?.pubkey?.created === 'string') {
-          contact.pubkey.created = new Date(contact.pubkey.created).getTime();
-        }
-        if (typeof contact?.pubkey?.expiration === 'string') {
-          contact.pubkey.expiration = new Date(contact.pubkey.expiration).getTime();
-        }
-        if (typeof contact?.pubkey?.lastModified === 'string') {
-          contact.pubkey.lastModified = new Date(contact.pubkey.lastModified).getTime();
-        }
-      }
-    }
-    return contacts;
   }
 
 }
