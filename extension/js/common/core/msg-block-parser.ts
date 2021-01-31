@@ -127,7 +127,7 @@ export class MsgBlockParser {
   }
 
   private static isFcAttachmentLinkData = (o: any): o is FcAttachmentLinkData => {
-    return o && typeof o === 'object' && typeof (o as FcAttachmentLinkData).name !== 'undefined'
+    return o && typeof o === 'object' && typeof (o as FcAttachmentLinkData).name !== 'undefined' // tslint:disable-line:no-unsafe-any
       && typeof (o as FcAttachmentLinkData).size !== 'undefined' && typeof (o as FcAttachmentLinkData).type !== 'undefined';
   }
 

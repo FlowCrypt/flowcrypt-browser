@@ -40,7 +40,7 @@ export abstract class View {
     View.setTestViewStateLoaded();
   }
 
-  public abstract async render(): Promise<void>;
+  public abstract render(): Promise<void>;
 
   public abstract setHandlers(): void;
 

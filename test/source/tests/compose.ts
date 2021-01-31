@@ -5,7 +5,7 @@ import { Page } from 'puppeteer';
 
 import { BrowserHandle, Controllable, ControllablePage, ControllableFrame } from './../browser';
 import { Config, Util } from './../util';
-import { writeFile } from 'fs';
+import { writeFileSync } from 'fs';
 import { AvaContext } from './tooling';
 import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { Dict } from './../core/common';
@@ -729,7 +729,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       // big file will get canceled
       const fileInput = await composePage.target.$('input[type=file]');
       const localpath = 'test/samples/oversize.txt';
-      await new Promise((resolve, reject) => writeFile(localpath, 'x'.repeat(30 * 1024 * 1024), err => err ? reject(err) : resolve()));
+      await writeFileSync(localpath, 'x'.repeat(30 * 1024 * 1024));
       await fileInput!.uploadFile(localpath); // 30mb
       await composePage.waitAndRespondToModal('confirm', 'cancel', 'Combined attachment size is limited to 25 MB. The last file brings it to 30 MB.');
       await Util.sleep(1);
