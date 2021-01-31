@@ -141,7 +141,7 @@ export class AttachmentDownloadView extends View {
         Failed to decrypt.
         <details ${this.errorDetailsOpened ? 'open' : ''}>
           <summary>see error details</summary>
-          <pre>${e.stack}\n\nDecryptError:\n${JSON.stringify(e.decryptError, null, 2)}</pre>
+          <pre>${e.stack}\n\nDecryptError:\n${JSON.stringify(e.decryptError, undefined, 2)}</pre>
         </details>
       `);
     } else {
