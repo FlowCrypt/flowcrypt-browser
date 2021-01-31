@@ -13,6 +13,15 @@ import { ContactStore } from '../../../platform/store/contact-store.js';
 import { SmimeKey } from '../smime/smime-key.js';
 import { OpenPGPKey } from './openpgp-key.js';
 
+export class DecryptionError extends Error {
+  public decryptError: DecryptError;
+
+  constructor(decryptError: DecryptError) {
+    super(decryptError.error.message);
+    this.decryptError = decryptError;
+  }
+}
+
 export namespace PgpMsgMethod {
   export namespace Arg {
     export type Encrypt = { pubkeys: Key[], signingPrv?: Key, pwd?: string, data: Uint8Array, filename?: string, armor: boolean, date?: Date };
