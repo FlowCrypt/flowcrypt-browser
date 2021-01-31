@@ -40,6 +40,17 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       }
     };
 
+    const pageHasSecureDraft = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, expectedContent?: string) => {
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
+      expect(urls.length).to.equal(1);
+      const replyBox = await browser.newPage(t, urls[0]);
+      if (expectedContent) {
+        await replyBox.waitForContent('@input-body', expectedContent);
+      } else {
+        await replyBox.waitAll('@input-body');
+      }
+    };
+
     const pageDoesNotHaveSecureReplyContainer = async (gmailPage: ControllablePage) => {
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });
       expect(urls.length).to.equal(0);
@@ -136,7 +147,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const gmailPage = await BrowserRecipe.openGmailPage(t, browser);
       await gmailPage.type('[aria-label="Search mail"]', 'encrypted email for offline decrypt');
       await gmailPage.press('Enter'); // submit search
-      await gmailPage.page.waitFor(2000); // wait for search results
+      await Util.sleep(2); // wait for search results
       await gmailPage.page.setOfflineMode(true); // go offline mode
       await gmailPage.press('Enter'); // open the message
       // TODO(@limonte): use the commented line below instead of opening pgp block in a new tab
@@ -212,6 +223,10 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitAndClick('@secure-reply-button');
       await Util.sleep(10);
       await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
+      await gmailPage.page.keyboard.type('hey there');
+      await Util.sleep(5);
+      await gmailPage.page.reload();
+      await pageHasSecureDraft(t, browser, gmailPage, 'hey there');
     }));
 
     ava.default('mail.google.com - plain reply to encrypted and signed messages', testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -254,6 +269,24 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       expect(urls.length).to.equal(1);
       await pageHasSecureReplyContainer(t, browser, gmailPage);
     }));
+
+    // ava.default('mail.google.com - reauth after uuid change', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    //   const acct = 'ci.tests.gmail@flowcrypt.dev';
+    //   const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
+    //   await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+    //   const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
+    //   await experimentalFrame.waitAndClick('@action-regenerate-uuid');
+    //   await Util.sleep(2);
+    //   const oauthPopup = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(settingsPage, 'confirm',
+    //     { contentToCheck: 'Please log in with FlowCrypt to continue', clickOn: 'confirm' }));
+    //   await OauthPageRecipe.google(t, oauthPopup, acct, 'login');
+    //   await settingsPage.close();
+    //   // load gmail and test that it has no notifications
+    //   const gmailPage = await BrowserRecipe.openGmailPage(t, browser);
+    //   await gmailPage.waitAndClick('@action-secure-compose');
+    //   await Util.sleep(10);
+    //   await gmailPage.notPresent(['@webmail-notification']);
+    // }));
 
     // todo - missing equivalent sample at ci.tests.gmail
     // ava.default('mail.google.com - pubkey gets rendered when using quoted-printable mime', testWithBrowser('compatibility', async (t, browser) => {

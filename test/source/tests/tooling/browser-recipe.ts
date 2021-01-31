@@ -7,6 +7,7 @@ import { BrowserHandle } from '../../browser';
 import { OauthPageRecipe } from './../page-recipe/oauth-page-recipe';
 import { SetupPageRecipe } from './../page-recipe/setup-page-recipe';
 import { TestUrls } from '../../browser/test-urls';
+import { google } from 'googleapis';
 
 export class BrowserRecipe {
 
@@ -45,7 +46,7 @@ export class BrowserRecipe {
     return gmailPage;
   }
 
-  public static setUpCommonAcct = async (t: AvaContext, browser: BrowserHandle, acct: 'compatibility' | 'compose' | 'ci.tests.gmail') => {
+  public static setUpCommonAcct = async (t: AvaContext, browser: BrowserHandle, acct: 'compatibility' | 'compose' | 'ci.tests.gmail', cleanup: boolean) => {
     if (acct === 'compatibility') {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', { hasRecoverMore: true, clickRecoverMore: true });
@@ -54,13 +55,26 @@ export class BrowserRecipe {
     } else if (acct === 'ci.tests.gmail') {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
       await SetupPageRecipe.recover(settingsPage, 'ci.tests.gmail');
-      await settingsPage.close();
+      if (cleanup) {
+        const { cryptup_citestsgmailflowcryptdev_google_token_access: accessToken } = await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcryptdev_google_token_access']);
+        await Promise.all([BrowserRecipe.cleanGmailAccount(accessToken as string), settingsPage.close()]);
+      }
     } else {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
       await SetupPageRecipe.recover(settingsPage, 'test.ci.compose');
       await settingsPage.close();
     }
   }
+
+  public static deleteAllDraftsInGmailAccount = async (accessToken: string): Promise<void> => {
+    const gmail = google.gmail({ version: 'v1' });
+    const list = await gmail.users.drafts.list({ userId: 'me', access_token: accessToken });
+    if (list.data.drafts) {
+      await Promise.all(list.data.drafts!.filter(draft => draft.id).map(draft => gmail.users.drafts.delete({ id: draft.id!, userId: 'me', access_token: accessToken })));
+    }
+  }
+
+  public static cleanGmailAccount = (accessToken: string) => BrowserRecipe.deleteAllDraftsInGmailAccount(accessToken);
 
   // todo - ideally we could just add a 3rd common account: 'compatibility' | 'compose' | 'pp-change' in setUpCommonAcct
   public static setUpFcPpChangeAcct = async (t: AvaContext, browser: BrowserHandle) => {

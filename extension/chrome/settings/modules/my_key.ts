@@ -111,18 +111,18 @@ View.run(class MyKeyView extends View {
       return;
     }
     const name = `${this.acctEmail.replace(/[^a-z0-9]+/g, '')}-0x${this.keyInfo.longid}.revocation-cert.asc`;
-    const prvKeyAtt = new Attachment({ data: Buf.fromUtfStr(revokedArmored), type: 'application/pgp-keys', name });
-    Browser.saveToDownloads(prvKeyAtt);
+    const prvKeyAttachment = new Attachment({ data: Buf.fromUtfStr(revokedArmored), type: 'application/pgp-keys', name });
+    Browser.saveToDownloads(prvKeyAttachment);
   }
 
   private downloadPubKeyHandler = () => {
-    Browser.saveToDownloads(Attachment.keyinfoAsPubkeyAtt(this.keyInfo));
+    Browser.saveToDownloads(Attachment.keyinfoAsPubkeyAttachment(this.keyInfo));
   }
 
   private downloadPrvKeyHandler = () => {
     const name = `flowcrypt-backup-${this.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}-0x${this.keyInfo.longid}.asc`;
-    const prvKeyAtt = new Attachment({ data: Buf.fromUtfStr(this.keyInfo.private), type: 'application/pgp-keys', name });
-    Browser.saveToDownloads(prvKeyAtt);
+    const prvKeyAttachment = new Attachment({ data: Buf.fromUtfStr(this.keyInfo.private), type: 'application/pgp-keys', name });
+    Browser.saveToDownloads(prvKeyAttachment);
   }
 
 });

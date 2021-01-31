@@ -77,7 +77,7 @@ export class Api<REQ, RES> {
     });
   }
 
-  public listen = (port: number, host = '127.0.0.1', maxMb = 100) => {
+  public listen = (port: number, host = '127.0.0.1', maxMb = 100): Promise<void> => {
     return new Promise((resolve) => {
       this.maxRequestSizeMb = maxMb;
       this.maxRequestSizeBytes = maxMb * 1024 * 1024;

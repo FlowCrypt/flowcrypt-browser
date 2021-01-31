@@ -48,7 +48,6 @@ export class OauthPageRecipe extends PageRecipe {
       await oauthPage.waitAny([selectors.approve_button, selectors.auth0_username]);
       if (await oauthPage.isElementPresent(selectors.auth0_username)) {
         await oauthPage.waitAndType(selectors.auth0_username, auth.email);
-        console.log(oauthPage.target.url());
         await oauthPage.waitAndType(selectors.auth0_password, auth.password!);
         await oauthPage.waitAndClick(selectors.auth0_login_btn);
         await oauthPage.waitForNavigationIfAny();

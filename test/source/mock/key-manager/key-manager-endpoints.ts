@@ -136,6 +136,57 @@ rplQXs015ts=
 =lGnP
 -----END PGP PRIVATE KEY BLOCK-----`;
 
+const prvNoSubmit = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+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
+=DUFa
+-----END PGP PRIVATE KEY BLOCK-----
+`;
+
 export const MOCK_KM_LAST_INSERTED_KEY: { [acct: string]: { decryptedPrivateKey: string, publicKey: string, fingerprint: string } } = {}; // accessed from test runners
 
 export const mockKeyManagerEndpoints: HandlersDefinition = {
@@ -144,6 +195,9 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
     if (isGet(req)) {
       if (acctEmail === 'get.key@key-manager-autogen.flowcrypt.com') {
         return { privateKeys: [{ decryptedPrivateKey: existingPrv }] };
+      }
+      if (acctEmail === 'get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.com') {
+        return { privateKeys: [{ decryptedPrivateKey: prvNoSubmit }] };
       }
       if (acctEmail === 'two.keys@key-manager-autogen.flowcrypt.com') {
         return { privateKeys: [{ decryptedPrivateKey: twoKeys1 }, { decryptedPrivateKey: twoKeys2 }] };
@@ -195,7 +249,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         throw new Error('Intentional error for put.error user to test client behavior');
       }
       if (acctEmail === 'reject.client.keypair@key-manager-autogen.flowcrypt.com') {
-        throw new HttpClientErr(`No key has been generated for ${acctEmail} yet. Please ask your administrator.`);
+        throw new HttpClientErr(`No key has been generated for ${acctEmail} yet. Please ask your administrator.`, 405);
       }
       if (acctEmail === 'expire@key-manager-keygen-expiration.flowcrypt.com') {
         const prv = await KeyUtil.parseMany(decryptedPrivateKey);

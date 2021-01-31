@@ -22,7 +22,7 @@ View.run(class AddPubkeyView extends View {
   private readonly parentTabId: string;
   private readonly missingPubkeyEmails: string[];
   private readonly fetchKeyUi = new FetchKeyUI();
-  private readonly attUI = new AttachmentUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
+  private readonly attachmentUI = new AttachmentUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
 
   constructor() {
     super();
@@ -45,9 +45,9 @@ View.run(class AddPubkeyView extends View {
   }
 
   public setHandlers = () => {
-    this.attUI.initAttDialog('fineuploader', 'fineuploader_button', {
-      attAdded: async (file) => {
-        this.attUI.clearAllAtts();
+    this.attachmentUI.initAttachmentDialog('fineuploader', 'fineuploader_button', {
+      attachmentAdded: async (file) => {
+        this.attachmentUI.clearAllAttachments();
         const { keys, errs } = await KeyUtil.readMany(file.getData());
         if (keys.length) {
           if (errs.length) {

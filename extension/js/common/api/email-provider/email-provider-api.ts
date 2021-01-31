@@ -6,7 +6,7 @@
 
 import { Api, ChunkedCb, ProgressCb } from '../shared/api.js';
 
-import { Contact, KeyInfo } from '../../core/crypto/key.js';
+import { KeyInfo } from '../../core/crypto/key.js';
 import { GmailRes } from './gmail/gmail-parser.js';
 import { GmailResponseFormat } from './gmail/gmail.js';
 import { SendableMsg } from './sendable-msg.js';
@@ -36,7 +36,7 @@ export interface EmailProviderInterface {
   draftUpdate(id: string, mimeMsg: string): Promise<GmailRes.GmailDraftUpdate>;
   draftDelete(id: string): Promise<GmailRes.GmailDraftDelete>;
   msgSend(message: SendableMsg, progressCb?: ProgressCb): Promise<GmailRes.GmailMsgSend>;
-  guessContactsFromSentEmails(userQuery: string, knownContacts: Contact[], chunkedCb: ChunkedCb): Promise<void>;
+  guessContactsFromSentEmails(userQuery: string, knownEmails: string[], chunkedCb: ChunkedCb): Promise<void>;
   msgGet(msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<GmailRes.GmailMsg>;
   msgList(q: string, includeDeleted?: boolean, pageToken?: string): Promise<GmailRes.GmailMsgList>;
 }

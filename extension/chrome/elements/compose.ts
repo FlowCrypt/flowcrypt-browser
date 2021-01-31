@@ -12,7 +12,7 @@ import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 import { opgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
-import { ComposeAttsModule } from './compose-modules/compose-attachments-module.js';
+import { ComposeAttachmentsModule } from './compose-modules/compose-attachments-module.js';
 import { ComposeDraftModule } from './compose-modules/compose-draft-module.js';
 import { ComposeErrModule } from './compose-modules/compose-err-module.js';
 import { ComposeFooterModule } from './compose-modules/compose-footer-module.js';
@@ -65,7 +65,7 @@ export class ComposeView extends View {
   public sizeModule!: ComposeSizeModule;
   public senderModule!: ComposeSenderModule;
   public footerModule!: ComposeFooterModule;
-  public attsModule!: ComposeAttsModule;
+  public attachmentsModule!: ComposeAttachmentsModule;
   public errModule!: ComposeErrModule;
   public inputModule!: ComposeInputModule;
   public renderModule!: ComposeRenderModule;
@@ -157,7 +157,7 @@ export class ComposeView extends View {
     this.sizeModule = new ComposeSizeModule(this);
     this.senderModule = new ComposeSenderModule(this);
     this.footerModule = new ComposeFooterModule(this);
-    this.attsModule = new ComposeAttsModule(this);
+    this.attachmentsModule = new ComposeAttachmentsModule(this);
     this.errModule = new ComposeErrModule(this);
     this.inputModule = new ComposeInputModule(this);
     this.renderModule = new ComposeRenderModule(this);
@@ -186,7 +186,7 @@ export class ComposeView extends View {
 
   public setHandlers = () => {
     this.S.cached('icon_help').click(this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`)));
-    this.attsModule.setHandlers();
+    this.attachmentsModule.setHandlers();
     this.inputModule.setHandlers();
     this.myPubkeyModule.setHandlers();
     this.pwdOrPubkeyContainerModule.setHandlers();
