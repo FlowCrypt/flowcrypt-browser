@@ -11,6 +11,7 @@ import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { Str } from './../core/common';
 import { MOCK_KM_LAST_INSERTED_KEY } from './../mock/key-manager/key-manager-endpoints';
 import { BrowserRecipe } from './tooling/browser-recipe';
+import { KeyUtil } from '../core/crypto/key';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -467,7 +468,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await myKeyFrame.waitAll('@content-fingerprint');
       const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
       expect(fromKm).to.exist;
-      expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(fromKm.fingerprint));
+      const k = await KeyUtil.parse(fromKm.publicKey);
+      expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(k.id));
       expect(await myKeyFrame.read('@content-key-expiration')).to.equal('Key does not expire');
       await SettingsPageRecipe.closeDialog(settingsPage);
       await Util.sleep(2);
@@ -537,7 +539,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await myKeyFrame.waitAll('@content-fingerprint');
       const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
       expect(fromKm).to.exist;
-      expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(fromKm.fingerprint));
+      const k = await KeyUtil.parse(fromKm.publicKey);
+      expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(k.id));
       const approxMonth = [29, 30, 31].map(days => Str.datetimeToDate(Str.fromDate(new Date(Date.now() + 1000 * 60 * 60 * 24 * days))));
       expect(await myKeyFrame.read('@content-key-expiration')).to.be.oneOf(approxMonth);
       await SettingsPageRecipe.closeDialog(settingsPage);
