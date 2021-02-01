@@ -20,7 +20,7 @@ import { Ui } from '../../common/browser/ui.js';
 import { WebmailCommon } from "../../common/webmail.js";
 import { Xss } from '../../common/platform/xss.js';
 import { OrgRules } from '../../common/org-rules.js';
-import { SendAsAlias, AcctStore } from '../../common/platform/store/acct-store.js';
+import { SendAsAlias } from '../../common/platform/store/acct-store.js';
 import { ContactStore } from '../../common/platform/store/contact-store.js';
 import { Buf } from '../../common/core/buf.js';
 
@@ -99,22 +99,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     $('.reply_message_iframe_container:visible').last().append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
   }
 
-  public scrollToElement = (selector: string) => {
-    const scrollableEl = $(this.sel.convoRootScrollable).get(0);
-    if (scrollableEl) {
-      const element = $(selector).get(0);
-      if (element) {
-        scrollableEl.scrollTop = element.offsetTop + element.clientHeight; // scroll to the element (reply box) is
-      }
-    } else if (window.location.hash.match(/^#inbox\/[a-zA-Z]+$/)) { // is a conversation view, but no scrollable conversation element
-      Catch.report(`Cannot find Gmail scrollable element: ${this.sel.convoRootScrollable}`);
-    }
-  }
-
   private everything = () => {
     this.replaceArmoredBlocks();
     this.replaceAttachments().catch(Catch.reportErr);
-    this.replaceFcTags();
+    this.replaceComposeDraftLinks();
     this.replaceConvoBtns();
     this.replaceStandardReplyBox().catch(Catch.reportErr);
     this.evaluateStandardComposeRecipients().catch(Catch.reportErr);
@@ -210,25 +198,27 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private replaceFcTags = () => {
+  private replaceComposeDraftLinks = () => {
     const allContenteditableEls = $("div[contenteditable='true']").not('.evaluated').addClass('evaluated');
     for (const contenteditableEl of allContenteditableEls) {
       const contenteditable = $(contenteditableEl);
-      const fcLinkMatch = contenteditable.html().substr(0, 1000).match(/\[(flowcrypt|cryptup):link:([a-z_]+):([0-9a-fr\-]+)]/);
-      if (fcLinkMatch) {
+      const draftLinkMatch = contenteditable.html().substr(0, 1000).match(/\[(flowcrypt|cryptup):link:(draft_compose|draft_reply):([0-9a-fr\-]+)]/);
+      if (draftLinkMatch) {
         let button: string | undefined;
-        const [, , name, buttonHrefId] = fcLinkMatch;
+        const [, , name, buttonHrefId] = draftLinkMatch;
         if (name === 'draft_compose') {
-          button = `<a href="#" class="open_draft_${Xss.escape(buttonHrefId)}">Open draft</a>`;
-        } else if (name === 'draft_reply') {
-          button = `<a href="#inbox/${Xss.escape(buttonHrefId)}">Open draft</a>`;
+          button = `<a href="#" class="open_draft_${Xss.escape(buttonHrefId)} close_gmail_compose_window">Open draft</a>`;
+        } else if (name === 'draft_reply' && contenteditable.closest(this.sel.standardComposeWin).length === 1) { // reply draft opened in compose window, TODO: remove in #3329
+          button = `<a href="#inbox/${Xss.escape(buttonHrefId)}" class="close_gmail_compose_window">Open draft</a>`;
         }
         if (button) {
           Xss.sanitizeReplace(contenteditable, button);
-          $(`a.open_draft_${buttonHrefId}`).click(Ui.event.handle((target) => {
+          $(`a.open_draft_${buttonHrefId}`).click(Ui.event.handle(() => {
             $('div.new_message').remove();
             $('body').append(this.factory.embeddedCompose(buttonHrefId)); // xss-safe-factory
-            // close original draft window
+          }));
+          // close original draft window
+          $('.close_gmail_compose_window').click(Ui.event.handle((target) => {
             const mouseUpEvent = document.createEvent('Event');
             mouseUpEvent.initEvent('mouseup', true, true); // Gmail listens for the mouseup event, not click
             $(target).closest('.dw').find('.Ha')[0].dispatchEvent(mouseUpEvent); // jquery's trigger('mouseup') doesn't work for some reason
@@ -448,10 +438,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return parents.attr('data-legacy-message-id') || parents.attr('data-message-id') || '';
   }
 
-  private determineThreadId = (convoRootEl: HTMLElement | JQueryEl) => { // todo - test and use data-thread-id with Gmail API once available
-    return $(convoRootEl).find(this.sel.subject).attr('data-legacy-thread-id') || '';
-  }
-
   private getMsgBodyEl = (msgId: string) => {
     return $(this.sel.msgOuter).filter(`[data-legacy-message-id="${msgId}"]`).find(this.sel.msgInner);
   }
@@ -527,17 +513,16 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private replaceStandardReplyBox = async (msgId?: string, editable: boolean = false, force: boolean = false) => {
+    const draftReplyRegex = new RegExp(/\[(flowcrypt|cryptup):link:draft_reply:([0-9a-fr\-]+)]/);
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
       // cache for subseqent loop runs
-      const { drafts_reply } = await AcctStore.get(this.acctEmail, ['drafts_reply']);
       const convoRootEl = this.getGonvoRootEl(newReplyBoxes[0]);
       const replyParams = this.getLastMsgReplyParams(convoRootEl!);
-      const threadId = this.determineThreadId(convoRootEl!);
       if (msgId) {
         replyParams.replyMsgId = msgId;
       }
-      const hasDraft = drafts_reply && threadId && !!drafts_reply[threadId];
+      const hasDraft = newReplyBoxes.filter(replyBox => $(replyBox).find(this.sel.msgInnerText).text().substr(0, 1000).match(draftReplyRegex)).length;
       const doReplace = Boolean(convoRootEl.find('iframe.pgp_block').filter(':visible').closest('.h7').is(':last-child')
         || (convoRootEl.is(':visible') && force)
         || hasDraft);
@@ -565,9 +550,15 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         }
         for (const replyBoxEl of newReplyBoxes.reverse()) { // looping in reverse
           const replyBox = $(replyBoxEl);
+          const msgInnerText = replyBox.find(this.sel.msgInnerText);
+          if (msgInnerText.length && !msgInnerText.find('[contenteditable]').length) { // div[contenteditable] is not loaded yet (e.g. when refreshing a thread), do nothing
+            continue;
+          }
           const replyBoxInnerText = replyBox.find(this.sel.msgInnerText).text().trim();
-          // plain reply
-          if (replyBoxInnerText) {
+          const draftReplyLinkMatch = replyBoxInnerText.substr(0, 1000).match(draftReplyRegex);
+          if (draftReplyLinkMatch) { // reply draft
+            replyParams.draftId = draftReplyLinkMatch[2];
+          } else if (replyBoxInnerText) { // plain reply
             replyBox.addClass('reply_message_evaluated');
             continue;
           }
@@ -579,7 +570,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embeddedReply(replyParams, editable)}</div>`;
             if (replyBox.hasClass('I5')) { // activated standard reply box: cannot remove because would cause issues / gmail freezing
               const origChildren = replyBox.children();
-              replyBox.addClass('reply_message_evaluated').append(secureReplyBoxXssSafe); // xss-safe-factory
+              replyBox.addClass('reply_message_evaluated remove_borders').append(secureReplyBoxXssSafe); // xss-safe-factory
               if (this.gmailVariant === 'new') { // even hiding causes issues in new gmail (encrypted -> see original -> reply -> archive)
                 origChildren.attr('style', this.cssHidden);
               } else { // in old gmail, we can safely hide it without causing freezes navigating away
@@ -601,7 +592,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       for (const standardComposeWinEl of $(this.sel.standardComposeWin)) {
         const standardComposeWin = $(standardComposeWinEl);
         const recipients = standardComposeWin.find(this.sel.standardComposeRecipient).get().map(e => $(e).attr('email')!).filter(e => !!e);
-        if (!recipients.length) {
+        if (!recipients.length || $(this.sel.standardComposeWin).find('.close_gmail_compose_window').length === 1) { // draft, but not the secure one
           standardComposeWin.find('.recipients_use_encryption').remove();
         } else {
           let everyoneUsesEncryption = true;

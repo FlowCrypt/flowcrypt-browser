@@ -3,7 +3,6 @@
 'use strict';
 
 import { Mime, MimeContent, MimeProccesedMsg } from '../../../js/common/core/mime.js';
-import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { AjaxErr } from '../../../js/common/api/shared/api-error.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
@@ -76,7 +75,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       } else if (this.view.isReplyBox && ApiErr.isNotFound(e)) {
         console.info('about to reload reply_message automatically: get draft 404', this.view.acctEmail);
         await Ui.time.sleep(500);
-        await this.view.storageModule.draftMetaDelete(this.view.draftId, this.view.threadId);
+        await this.view.storageModule.draftMetaDelete(this.view.threadId); // delete the legacy draft from storage if there is one, TODO: remove in #3329
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
         this.view.draftId = '';
         window.location.href = Url.create(Env.getUrlNoParams(), this.urlParams());
@@ -92,7 +91,6 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     clearInterval(this.saveDraftInterval);
     await Ui.time.wait(() => !this.currentlySavingDraft ? true : undefined);
     if (this.view.draftId) {
-      await this.view.storageModule.draftMetaDelete(this.view.draftId, this.view.threadId);
       try {
         this.isLocalDraftId(this.view.draftId) ? await storageLocalRemove([this.view.draftId]) : await this.view.emailProvider.draftDelete(this.view.draftId);
         this.view.draftId = '';
@@ -117,6 +115,10 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         const pubkeys = [{ isMine: true, email: msgData.from, pubkey: await KeyUtil.parse(primaryKi.public) }];
         msgData.pwd = undefined; // not needed for drafts
         const sendable = await new EncryptedMsgMailFormatter(this.view, true).sendableMsg(msgData, pubkeys);
+        if (this.view.replyParams?.inReplyTo) {
+          sendable.headers.References = this.view.replyParams.inReplyTo;
+          sendable.headers['In-Reply-To'] = this.view.replyParams.inReplyTo;
+        }
         this.view.S.cached('send_btn_note').text('Saving');
         this.draftSetPrefixIntoBody(sendable);
         const mimeMsg = await sendable.toMime();
@@ -131,7 +133,6 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
             return id;
           });
           this.view.draftId = draftId;
-          await this.view.storageModule.draftMetaSet(draftId, this.view.threadId, msgData.recipients.to || [], msgData.subject);
           // recursing one more time, because we need the draftId we get from this reply in the message itself
           // essentially everytime we save draft for the first time, we have to save it twice
           // currentlySavingDraft will remain true for now
@@ -140,7 +141,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
           }
         } else {
           await this.doUploadDraftWithLocalStorageFallback(mimeMsg, msgData, async () => {
-            await this.view.emailProvider.draftUpdate(this.view.draftId, mimeMsg);
+            await this.view.emailProvider.draftUpdate(this.view.draftId, mimeMsg, this.view.threadId);
             this.view.S.cached('send_btn_note').text('Saved');
             return this.view.draftId;
           });
@@ -173,7 +174,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   private draftSetPrefixIntoBody = (sendable: SendableMsg) => {
     let prefix: string;
     if (this.view.threadId) { // reply draft
-      prefix = `[flowcrypt:link:draft_reply:${this.view.threadId}]\n\n`;
+      prefix = `[flowcrypt:link:draft_reply:${this.view.draftId}]\n\n`;
     } else if (this.view.draftId) { // new message compose draft with known draftId
       prefix = `[flowcrypt:link:draft_compose:${this.view.draftId}]\n\n`;
     } else {
@@ -193,7 +194,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       draftId = await callback();
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
-        draftId = await this.localDraftCreate(mimeMsg, this.view.threadId, msgData.recipients.to || [], msgData.subject);
+        draftId = await this.localDraftCreate(mimeMsg, this.view.threadId);
         this.view.S.cached('send_btn_note').text('Draft saved locally (offline)');
       } else {
         throw e;
@@ -206,18 +207,8 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     return !!draftId.match(this.localDraftPrefix);
   }
 
-  private localDraftCreate = async (mimeMsg: string, threadId: string, recipients: string[], subject: string) => {
+  private localDraftCreate = async (mimeMsg: string, threadId: string) => {
     const draftId = `${this.localDraftPrefix}${threadId}`;
-    const draftStorage = await AcctStore.get(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
-    if (threadId) { // it's a reply
-      const drafts = draftStorage.drafts_reply || {};
-      drafts[threadId] = draftId;
-      await AcctStore.set(this.view.acctEmail, { drafts_reply: drafts });
-    } else { // it's a new message
-      const drafts = draftStorage.drafts_compose || {};
-      drafts[draftId] = { recipients, subject, date: new Date().getTime() };
-      await AcctStore.set(this.view.acctEmail, { drafts_compose: drafts });
-    }
     await storageLocalSet({ [draftId]: { message: { raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId } } });
     return draftId;
   }

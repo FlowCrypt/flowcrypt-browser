@@ -32,6 +32,11 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
     await this.renderComposeTable();
     if (this.view.replyParams) {
+      const thread = await this.view.emailProvider.threadGet(this.view.threadId, 'metadata');
+      const inReplyToMessage = thread.messages.find((message) => message.id === this.view.replyMsgId);
+      if (inReplyToMessage) {
+        this.view.replyParams.inReplyTo = inReplyToMessage.payload?.headers?.find((header) => header.name === 'Message-Id')?.value;
+      }
       this.view.replyParams.subject = `${(this.responseMethod === 'reply' ? 'Re' : 'Fwd')}: ${this.view.replyParams.subject}`;
     }
     if (!this.view.draftModule.wasMsgLoadedFromDraft) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
@@ -54,7 +59,6 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     if (this.responseMethod === 'forward') {
       this.view.S.cached('recipients_placeholder').click();
     }
-    Catch.setHandledTimeout(() => BrowserMsg.send.scrollToElement(this.view.parentTabId, { selector: `#${this.view.frameId}` }), 300);
   }
 
   public renderPrompt = () => {
@@ -117,6 +121,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   }
 
   public initComposeBox = async () => {
+    this.responseMethod = 'reply';
     this.initComposeBoxStyles();
     if (this.view.draftId) {
       const draftLoaded = await this.view.draftModule.initialDraftLoad(this.view.draftId);
@@ -187,7 +192,6 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   }
 
   private actionActivateReplyBoxHandler = async (target: HTMLElement) => {
-    this.responseMethod = 'reply';
     const typesToDelete: RecipientType[] = [];
     switch ($(target).attr('id')) {
       case 'a_forward':

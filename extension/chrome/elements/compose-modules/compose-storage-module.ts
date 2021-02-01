@@ -47,30 +47,12 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     return result!;
   }
 
-  public draftMetaSet = async (draftId: string, threadId: string, recipients: string[], subject: string) => {
-    const draftStorage = await AcctStore.get(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
-    if (threadId) { // it's a reply
-      const drafts = draftStorage.drafts_reply || {};
-      drafts[threadId] = draftId;
-      await AcctStore.set(this.view.acctEmail, { drafts_reply: drafts });
-    } else { // it's a new message
-      const drafts = draftStorage.drafts_compose || {};
-      drafts[draftId] = { recipients, subject, date: new Date().getTime() };
-      await AcctStore.set(this.view.acctEmail, { drafts_compose: drafts });
-    }
-  }
-
-  public draftMetaDelete = async (draftId: string, threadId: string) => {
-    const draftStorage = await AcctStore.get(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
-    if (threadId) { // it's a reply
-      const drafts = draftStorage.drafts_reply || {};
-      delete drafts[threadId];
-      await AcctStore.set(this.view.acctEmail, { drafts_reply: drafts });
-    } else { // it's a new message
-      const drafts = draftStorage.drafts_compose || {};
-      delete drafts[draftId];
-      await AcctStore.set(this.view.acctEmail, { drafts_compose: drafts });
-    }
+  // TODO: remove in #3329
+  public draftMetaDelete = async (threadId: string) => {
+    const draftStorage = await AcctStore.get(this.view.acctEmail, ['drafts_reply']);
+    const drafts = draftStorage.drafts_reply || {};
+    delete drafts[threadId];
+    await AcctStore.set(this.view.acctEmail, { drafts_reply: drafts });
   }
 
   public addAdminCodes = async (shortId: string, codes: string[]) => {

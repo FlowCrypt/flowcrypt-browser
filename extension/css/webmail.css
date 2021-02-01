@@ -242,6 +242,18 @@ iframe.reply_message {
   border: none;
 }
 
+.I5.reply_message_evaluated.remove_borders {
+  padding-left: 7px !important;
+}
+
+.Bk {
+  overflow: hidden;
+}
+
+.l2 {
+  padding-bottom: 0 !important;
+}
+
 .remove_borders {
   border: none !important;
   padding: 0 !important;
