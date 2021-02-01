@@ -223,7 +223,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/keys/private GET with acct ${acctEmail}`);
     }
     if (isPut(req)) {
-      const { decryptedPrivateKey, publicKey, fingerprint } = body as Dict<string>;
+      const { decryptedPrivateKey, publicKey } = body as Dict<string>;
       if (acctEmail === 'put.key@key-manager-autogen.flowcrypt.com') {
         const prv = await KeyUtil.parseMany(decryptedPrivateKey);
         expect(prv).to.have.length(1);
@@ -254,7 +254,6 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         const prv = await KeyUtil.parseMany(decryptedPrivateKey);
         expect(prv).to.have.length(1);
         expect(prv[0].algo.bits).to.equal(2048);
-        expect(prv[0].id).to.equal(fingerprint);
         expect(prv[0].identities).to.have.length(1);
         expect(prv[0].identities[0]).to.equal('First Last <expire@key-manager-keygen-expiration.flowcrypt.com>');
         expect(prv[0].isPrivate).to.be.true;
@@ -263,7 +262,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
         const pub = await KeyUtil.parseMany(publicKey);
         expect(pub).to.have.length(1);
         expect(pub[0].algo.bits).to.equal(2048);
-        expect(pub[0].id).to.equal(fingerprint);
+        expect(pub[0].id).to.equal(prv[0].id);
         expect(pub[0].identities).to.have.length(1);
         expect(pub[0].identities[0]).to.equal('First Last <expire@key-manager-keygen-expiration.flowcrypt.com>');
         expect(pub[0].isPrivate).to.be.false;
