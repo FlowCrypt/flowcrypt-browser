@@ -652,6 +652,24 @@
             var startPos = 0;
             var isEncoded = false;
 
+            var continuationEncodeChr = function(chr) {
+                if (chr === '(') {
+                    return '%28';
+                } else if (chr === ')') {
+                    return '%29';
+                } else {
+                    return encodeURIComponent(chr);
+                }
+            };
+
+            var continuationEncodeLine = function(line) {
+                var result = '';
+                for (var i = 0, len = line.length; i < len; i++) {
+                    result += continuationEncodeChr(line[i]);
+                }
+                return result;
+            };
+
             maxLength = maxLength || 50;
 
             // process ascii only text
@@ -691,10 +709,10 @@
                     chr = encodedStr[i];
 
                     if (isEncoded) {
-                        chr = encodeURIComponent(chr);
+                        chr = continuationEncodeChr(chr);
                     } else {
                         // try to urlencode current char
-                        chr = chr === ' ' ? chr : encodeURIComponent(chr);
+                        chr = chr === ' ' ? chr : continuationEncodeChr(chr);
                         // By default it is not required to encode a line, the need
                         // only appears when the string contains unicode or special chars
                         // in this case we start processing the line over and encode all chars
@@ -702,7 +720,7 @@
                             // Check if it is even possible to add the encoded char to the line
                             // If not, there is no reason to use this line, just push it to the list
                             // and start a new line with the char that needs encoding
-                            if ((encodeURIComponent(line) + chr).length >= maxLength) {
+                            if ((continuationEncodeLine(line) + chr).length >= maxLength) {
                                 list.push({
                                     line: line,
                                     encoded: isEncoded
@@ -724,7 +742,7 @@
                             line: line,
                             encoded: isEncoded
                         });
-                        line = chr = encodedStr[i] === ' ' ? ' ' : encodeURIComponent(encodedStr[i]);
+                        line = chr = encodedStr[i] === ' ' ? ' ' : continuationEncodeChr(encodedStr[i]);
                         if (chr === encodedStr[i]) {
                             isEncoded = false;
                             startPos = i - 1;
