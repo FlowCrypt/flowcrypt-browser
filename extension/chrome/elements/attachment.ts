@@ -141,7 +141,7 @@ export class AttachmentDownloadView extends View {
         Failed to decrypt.
         <details ${this.errorDetailsOpened ? 'open' : ''}>
           <summary>see error details</summary>
-          <pre>${e.stack}\n\nDecryptError:\n${JSON.stringify(e.decryptError, undefined, 2)}</pre>
+          <pre data-test="error-details">${e.stack}\n\nDecryptError:\n${JSON.stringify(e.decryptError, undefined, 2)}</pre>
         </details>
       `);
     } else {
@@ -269,7 +269,7 @@ export class AttachmentDownloadView extends View {
     } else {
       delete result.message;
       $('body.attachment')
-        .html(`<div>Failed to decrypt:</div><a href="#" class="see-error-details">see error details</a><br><div>Downloading original…`)
+        .html(`<div>Failed to decrypt:</div><a href="#" data-test="decrypt-error-details" class="see-error-details">see error details</a><br><div>Downloading original…`) // xss-escaped
         .addClass('error-occured')
         .attr('title', '');
       $('.see-error-details').click(async () => {
