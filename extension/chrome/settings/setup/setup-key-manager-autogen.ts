@@ -58,12 +58,11 @@ export class SetupKeyManagerAutogenModule {
         const pgpUids = [{ name: full_name || '', email: this.view.acctEmail }];
         const generated = await OpenPGPKey.create(pgpUids, keygenAlgo, passphrase, expireInMonths);
         const decryptablePrv = await KeyUtil.parse(generated.private);
-        const generatedKeyFingerprint = decryptablePrv.id;
         if (! await KeyUtil.decrypt(decryptablePrv, passphrase)) {
           throw new Error('Unexpectedly cannot decrypt newly generated key');
         }
         const pubArmor = KeyUtil.armor(await KeyUtil.asPublicKey(decryptablePrv));
-        const storePrvOnKm = async () => this.view.keyManager!.storePrivateKey(this.view.idToken!, KeyUtil.armor(decryptablePrv), pubArmor, generatedKeyFingerprint!);
+        const storePrvOnKm = async () => this.view.keyManager!.storePrivateKey(this.view.idToken!, KeyUtil.armor(decryptablePrv), pubArmor);
         await Settings.retryUntilSuccessful(storePrvOnKm, 'Failed to store newly generated key on FlowCrypt Email Key Manager');
         await this.view.saveKeysAndPassPhrase([await KeyUtil.parse(generated.private)], opts); // store encrypted key + pass phrase locally
       }
