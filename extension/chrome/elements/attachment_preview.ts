@@ -9,7 +9,7 @@ import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PDFDocumentProxy } from '../../types/pdf.js';
-import { MsgUtil, DecryptError, DecryptErrTypes, DecryptSuccess } from '../../js/common/core/crypto/pgp/msg-util.js';
+import { MsgUtil, DecryptError, DecryptErrTypes, DecryptSuccess, DecryptionError } from '../../js/common/core/crypto/pgp/msg-util.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
@@ -92,6 +92,6 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
       }
       return await this.render();
     }
-    throw new Error((result as DecryptError).error.message);
+    throw new DecryptionError(result as DecryptError);
   }
 });

@@ -124,12 +124,12 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/add_pubkey.htm'), { emails, placement });
   }
 
-  public srcPgpAttachmentIframe = (a: Attachment, isEncrypted: boolean, parentTabId?: string, iframeUrl = 'chrome/elements/attachment.htm') => {
+  public srcPgpAttachmentIframe = (a: Attachment, isEncrypted: boolean, parentTabId?: string, iframeUrl = 'chrome/elements/attachment.htm', errorDetailsOpened?: boolean) => {
     if (!a.id && !a.url && a.hasData()) { // data provided directly, pass as object url
       a.url = Browser.objUrlCreate(a.getData());
     }
     return this.frameSrc(this.extUrl(iframeUrl), {
-      frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attachmentId: a.id, url: a.url, isEncrypted
+      frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attachmentId: a.id, url: a.url, isEncrypted, errorDetailsOpened
     }, parentTabId);
   }
 
