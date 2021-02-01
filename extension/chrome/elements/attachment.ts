@@ -25,6 +25,7 @@ export class AttachmentDownloadView extends View {
   protected readonly frameId: string;
   protected readonly origNameBasedOnFilename: string;
   protected readonly isEncrypted: boolean;
+  protected readonly errorDetailsOpened: boolean;
   protected readonly type: string | undefined;
   protected readonly msgId: string | undefined;
   protected readonly id: string | undefined;
@@ -44,12 +45,15 @@ export class AttachmentDownloadView extends View {
 
   constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'msgId', 'attachmentId', 'name', 'type', 'size', 'url', 'parentTabId', 'content', 'decrypted', 'frameId', 'isEncrypted']);
+    const uncheckedUrlParams = Url.parse([
+      'acctEmail', 'msgId', 'attachmentId', 'name', 'type', 'size', 'url', 'parentTabId', 'content', 'decrypted', 'frameId', 'isEncrypted', 'errorDetailsOpened'
+    ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
     this.origNameBasedOnFilename = uncheckedUrlParams.name ? String(uncheckedUrlParams.name).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
     this.isEncrypted = uncheckedUrlParams.isEncrypted === true;
+    this.errorDetailsOpened = uncheckedUrlParams.errorDetailsOpened === true;
     this.size = uncheckedUrlParams.size ? parseInt(String(uncheckedUrlParams.size)) : undefined;
     this.type = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'type');
     this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
@@ -94,11 +98,11 @@ export class AttachmentDownloadView extends View {
     if (this.canClickOnAttachment) {
       this.downloadButton.click(this.setHandlerPrevent('double', () => this.downloadButtonClickedHandler()));
       this.downloadButton.click((e) => e.stopPropagation());
-      $('body').click(this.setHandlerPrevent('double', async () => {
-        if ($('body').attr('id') !== 'attachment-preview' && !$('body').hasClass('download-error')) {
+      $('body').click(async () => {
+        if ($('body').attr('id') !== 'attachment-preview' && !$('body').hasClass('error-occured')) {
           await this.previewAttachmentClickedHandler();
         }
-      }));
+      });
     }
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
       if (!entered) {
@@ -132,11 +136,19 @@ export class AttachmentDownloadView extends View {
       Xss.sanitizeRender('body', `Error downloading file - google auth needed. ${Ui.retryLink()}`);
     } else if (ApiErr.isNetErr(e)) {
       Xss.sanitizeRender('body', `Error downloading file - no internet. ${Ui.retryLink()}`);
+    } else if (ApiErr.isDecryptErr(e)) {
+      Xss.sanitizeRender('body', `
+        Failed to decrypt.
+        <details ${this.errorDetailsOpened ? 'open' : ''}>
+          <summary>see error details</summary>
+          <pre data-test="error-details">${e.stack}\n\nDecryptError:\n${JSON.stringify(e.decryptError, undefined, 2)}</pre>
+        </details>
+      `);
     } else {
       Catch.reportErr(e);
       Xss.sanitizeRender('body', `Error downloading file - ${String(e)}. ${Ui.retryLink()}`);
     }
-    $('body').addClass('download-error').attr('title', '');
+    $('body').addClass('error-occured').attr('title', '');
   }
 
   private renderHeader = () => {
@@ -231,12 +243,12 @@ export class AttachmentDownloadView extends View {
     }
   }
 
-  private previewAttachmentClickedHandler = async () => {
+  private previewAttachmentClickedHandler = async (errorDetailsOpened = false) => {
     if (!this.attachment.length) {
       this.attachment.length = this.size!;
     }
     const factory = new XssSafeFactory(this.acctEmail, this.parentTabId);
-    const iframeUrl = factory.srcPgpAttachmentIframe(this.attachment, this.isEncrypted, undefined, 'chrome/elements/attachment_preview.htm');
+    const iframeUrl = factory.srcPgpAttachmentIframe(this.attachment, this.isEncrypted, undefined, 'chrome/elements/attachment_preview.htm', errorDetailsOpened);
     BrowserMsg.send.showAttachmentPreview(this.parentTabId, { iframeUrl });
   }
 
@@ -256,8 +268,14 @@ export class AttachmentDownloadView extends View {
       await this.decryptAndSaveAttachmentToDownloads();
     } else {
       delete result.message;
-      console.info(result);
-      $('body.attachment').text(`Error decrypting file (${result.error.type}: ${result.error.message}). Downloading original..`);
+      $('body.attachment')
+        .html(`<div>Failed to decrypt:</div><a href="#" data-test="decrypt-error-details" class="see-error-details">see error details</a><br><div>Downloading original…`) // xss-escaped
+        .addClass('error-occured')
+        .attr('title', '');
+      $('.see-error-details').click(async () => {
+        await this.previewAttachmentClickedHandler(true);
+      });
+      const name = this.attachment.name;
       Browser.saveToDownloads(new Attachment({ name, type: this.type, data: this.attachment.getData() })); // won't work in ff, possibly neither on some chrome versions (on webmail)
     }
   }

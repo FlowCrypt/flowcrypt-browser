@@ -65,7 +65,7 @@ export class Settings {
     return result.aliasesChanged || result.defaultEmailChanged || result.footerChanged ? result : undefined;
   }
 
-  public static acctStorageReset = async (acctEmail: string) => {
+  public static acctStorageReset = async (acctEmail: string): Promise<void> => {
     if (!acctEmail) {
       throw new Error('Missing account_email to reset');
     }

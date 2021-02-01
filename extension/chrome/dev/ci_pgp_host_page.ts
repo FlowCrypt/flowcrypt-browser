@@ -19,4 +19,5 @@ Catch.try(async () => {
   src += `/chrome/elements/pgp_block.htm${location.search}`;
   src += `&parentTabId=${encodeURIComponent(tabId)}`;
   $('body').append(`<iframe width="100%" src="${Xss.escape(src)}" frameborder="0"></iframe>`); // xss-escaped
+  $('body').attr('data-test-view-state', 'loaded');
 })();

@@ -5,7 +5,7 @@ import { Page } from 'puppeteer';
 
 import { BrowserHandle, Controllable, ControllablePage, ControllableFrame } from './../browser';
 import { Config, Util } from './../util';
-import { writeFile } from 'fs';
+import { writeFileSync } from 'fs';
 import { AvaContext } from './tooling';
 import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { Dict } from './../core/common';
@@ -184,7 +184,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('compose - keyboard - Ctrl+Enter sends message', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.dev'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await composeFrame.target.evaluateHandle(() => (document.querySelector('#section_compose') as HTMLElement).dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', ctrlKey: true })));
+      await composeFrame.target.evaluateHandle(() => (document.querySelector('#section_compose') as HTMLElement).dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true })));
       await composeFrame.waitAndRespondToModal('error', 'confirm', 'Please add a recipient first');
     }));
 
@@ -729,7 +729,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       // big file will get canceled
       const fileInput = await composePage.target.$('input[type=file]');
       const localpath = 'test/samples/oversize.txt';
-      await new Promise((resolve, reject) => writeFile(localpath, 'x'.repeat(30 * 1024 * 1024), err => err ? reject(err) : resolve()));
+      await writeFileSync(localpath, 'x'.repeat(30 * 1024 * 1024));
       await fileInput!.uploadFile(localpath); // 30mb
       await composePage.waitAndRespondToModal('confirm', 'cancel', 'Combined attachment size is limited to 25 MB. The last file brings it to 30 MB.');
       await Util.sleep(1);
@@ -754,6 +754,16 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await attachment.click('body');
       const attachmentPreviewImage = await inboxPage.getFrame(['attachment_preview.htm']);
       await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
+    }));
+
+    ava.default('attachments - failed to decrypt', testWithBrowser('compatibility', async (t, browser) => {
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=162ec58d70fe04ef`));
+      const attachment = await inboxPage.getFrame(['attachment.htm']);
+      await attachment.waitAndClick('@download-attachment');
+      await attachment.waitAndClick('@decrypt-error-details');
+      const decryptErrorDetails = await inboxPage.getFrame(['attachment_preview.htm']);
+      await decryptErrorDetails.waitForContent('@error-details', 'Error: Session key decryption failed'); // stack
+      await decryptErrorDetails.waitForContent('@error-details', '"type": "key_mismatch"'); // DecryptError
     }));
 
     ava.default('can lookup public key from FlowCrypt Email Key Manager', testWithBrowser(undefined, async (t, browser) => {

@@ -15,10 +15,15 @@ export abstract class View {
       (async () => {
         await view.render();
         view.setHandlers();
+        View.setTestViewStateLoaded();
       })().catch(View.reportAndRenderErr);
     } catch (e) {
       View.reportAndRenderErr(e);
     }
+  }
+
+  private static setTestViewStateLoaded = () => {
+    $('body').attr('data-test-view-state', 'loaded');
   }
 
   private static reportAndRenderErr = (e: any) => {
@@ -32,9 +37,10 @@ export abstract class View {
       ${Ui.retryLink()}
     `);
     Ui.setTestState('ready');
+    View.setTestViewStateLoaded();
   }
 
-  public abstract async render(): Promise<void>;
+  public abstract render(): Promise<void>;
 
   public abstract setHandlers(): void;
 
