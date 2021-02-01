@@ -759,8 +759,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('attachments - failed to decrypt', testWithBrowser('compatibility', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=162ec58d70fe04ef`));
       const attachment = await inboxPage.getFrame(['attachment.htm']);
-      attachment.waitAndClick('@download-attachment');
-      attachment.waitAndClick('@decrypt-error-details');
+      await attachment.waitAndClick('@download-attachment');
+      await attachment.waitAndClick('@decrypt-error-details');
       const decryptErrorDetails = await inboxPage.getFrame(['attachment_preview.htm']);
       await decryptErrorDetails.waitForContent('@error-details', 'Error: Session key decryption failed'); // stack
       await decryptErrorDetails.waitForContent('@error-details', '"type": "key_mismatch"'); // DecryptError
