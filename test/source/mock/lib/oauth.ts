@@ -23,7 +23,7 @@ export class OauthMock {
 
   public consentChooseAccountPage = (url: string) => {
     return this.htmlPage('oauth mock choose acct', '<h1>Choose mock oauth email</h1>'
-      + `<a href="${authURL}${url + '&login_hint='}" id="profileIdentifier" data-email="dummy">dummy</a><br>`);
+      + `<a href="${url}&login_hint=" id="profileIdentifier" data-email="dummy">dummy</a><br>`);
   }
 
   public consentPage = (url: string, acct: string) => {
