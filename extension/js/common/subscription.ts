@@ -12,7 +12,11 @@ export class Subscription implements SubscriptionInfo {
 
   constructor(storedSubscriptionInfo: SubscriptionInfo | undefined | null) {
     if (storedSubscriptionInfo) {
-      this.active = storedSubscriptionInfo.active || undefined;
+      if (storedSubscriptionInfo.level && !storedSubscriptionInfo.expire) {
+        this.active = true; // never expires
+      } else {
+        this.active = storedSubscriptionInfo.active || undefined;
+      }
       this.method = storedSubscriptionInfo.method || undefined;
       this.level = storedSubscriptionInfo.level;
       this.expire = storedSubscriptionInfo.expire || undefined;
