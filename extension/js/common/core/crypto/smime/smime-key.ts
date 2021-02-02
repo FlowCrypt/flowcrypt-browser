@@ -31,7 +31,7 @@ export class SmimeKey {
       isPublic: true,
       isPrivate: true,
     } as Key;
-    (key as unknown as { raw: string }).raw = text;
+    (key as unknown as { rawArmored: string }).rawArmored = text;
     return key;
   }
 

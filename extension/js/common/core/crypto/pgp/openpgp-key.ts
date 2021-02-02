@@ -234,7 +234,8 @@ export class OpenPGPKey {
       },
     } as Key);
     (key as any)[internal] = secure;
-    (key as any).raw = opgpKey;
+    (key as any).rawKey = opgpKey;
+    (key as any).rawArmored = opgpKey.armor();
     return key;
   }
 
@@ -274,11 +275,12 @@ export class OpenPGPKey {
     if (pubkey.type !== 'openpgp') {
       throw new UnexpectedKeyTypeError(`Key type is ${pubkey.type}, expecting OpenPGP`);
     }
-    const extensions = pubkey as unknown as { raw: OpenPGP.key.Key };
-    if (!extensions.raw) {
+    // some keys saved by older version may have `raw` as string, so fall back on it
+    const extensions = pubkey as unknown as { rawArmored: string, raw: string };
+    if (!extensions.rawArmored && !extensions.raw) {
       throw new Error('Object has type == "openpgp" but no raw key.');
     }
-    return extensions.raw.armor();
+    return extensions.rawArmored ?? extensions.raw;
   }
 
   public static diagnose = async (pubkey: Key, passphrase: string): Promise<Map<string, string>> => {
@@ -447,19 +449,19 @@ export class OpenPGPKey {
     if (pubkey.type !== 'openpgp') {
       throw new UnexpectedKeyTypeError(`Key type is ${pubkey.type}, expecting OpenPGP`);
     }
-    const raw = (pubkey as unknown as { [internal]: OpenPGP.key.Key })[internal];
-    if (!raw) {
+    const opgpKey = (pubkey as unknown as { [internal]: OpenPGP.key.Key })[internal];
+    if (!opgpKey) {
       throw new Error('Object has type == "openpgp" but no internal key.');
     }
-    return raw;
+    return opgpKey;
   }
 
   private static extractInsecureExternalLibraryObjFromKey = (pubkey: Key) => {
     if (pubkey.type !== 'openpgp') {
       throw new UnexpectedKeyTypeError(`Key type is ${pubkey.type}, expecting OpenPGP`);
     }
-    const raw = (pubkey as unknown as { raw: OpenPGP.key.Key });
-    return raw?.raw;
+    const raw = (pubkey as unknown as { rawKey: OpenPGP.key.Key });
+    return raw?.rawKey;
   }
 
   private static getKeyIgnoringExpiration = async (
