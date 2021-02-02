@@ -59,6 +59,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     if (this.responseMethod === 'forward') {
       this.view.S.cached('recipients_placeholder').click();
     }
+    BrowserMsg.send.scrollToReplyBox(this.view.parentTabId, { replyMsgId: `#${this.view.frameId}` });
   }
 
   public renderPrompt = () => {

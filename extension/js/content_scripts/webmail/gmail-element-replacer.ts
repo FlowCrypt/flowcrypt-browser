@@ -99,6 +99,25 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     $('.reply_message_iframe_container:visible').last().append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
   }
 
+  public scrollToReplyBox = (selector: string) => {
+    const convoRootScrollable = $(this.sel.convoRootScrollable).get(0);
+    if (convoRootScrollable) {
+      const element = $(selector);
+      if (element) {
+        $(this.sel.convoRootScrollable).css('scroll-behavior', 'smooth');
+        const gmailHeaderHeight = 120;
+        const topGap = 80; // so the bottom of the prev message will be visible
+        // scroll to the bottom of the element,
+        // or to the top of the element if the element's height is bigger than the convoRoot
+        convoRootScrollable.scrollTop =
+          element.position()!.top + $(element).height()! -
+          Math.max(0, $(element).height()! - $(this.sel.convoRootScrollable).height()! + gmailHeaderHeight + topGap);
+      }
+    } else if (window.location.hash.match(/^#inbox\/[a-zA-Z]+$/)) { // is a conversation view, but no scrollable conversation element
+      Catch.report(`Cannot find Gmail scrollable element: ${this.sel.convoRootScrollable}`);
+    }
+  }
+
   private everything = () => {
     this.replaceArmoredBlocks();
     this.replaceAttachments().catch(Catch.reportErr);
