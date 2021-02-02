@@ -59,7 +59,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     if (this.responseMethod === 'forward') {
       this.view.S.cached('recipients_placeholder').click();
     }
-    Catch.setHandledTimeout(() => BrowserMsg.send.scrollToElement(this.view.parentTabId, { selector: `#${this.view.frameId}` }), 300);
+    BrowserMsg.send.scrollToReplyBox(this.view.parentTabId, { replyMsgId: `#${this.view.frameId}` });
   }
 
   public renderPrompt = () => {
