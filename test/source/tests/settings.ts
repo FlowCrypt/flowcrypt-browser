@@ -244,6 +244,12 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
     ava.default('settings - add unprotected key', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       await SettingsPageRecipe.addKeyTest(t, browser, 'ci.tests.gmail@flowcrypt.dev', unprotectedPrvKey, 'this is a new passphrase to protect previously unprotected key');
     }));
+    
+    ava.default('settings - error modal when page parameter invalid', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const addPrvPage = await browser.newPage(t, `/chrome/settings/index.htm?page=invalid`);
+      await addPrvPage.waitForContent('.ui-modal-error', 'An unexpected value was found for the page parameter');
+      await addPrvPage.close();
+    }));
 
     ava.default('settings - my key page - update non-first private key', testWithBrowser(undefined, async (t, browser) => {
       const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
@@ -261,12 +267,6 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await settingsPage1.close();
 
       await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testKeyMultiple98acfa1eadab5b92, '1234');
-
-      ava.default('settings - error modal when page parameter invalid', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-        const addPrvPage = await browser.newPage(t, `/chrome/settings/index.htm?page=invalid`);
-        await addPrvPage.waitForContent('.ui-modal-error', 'An unexpected value was found for the page parameter');
-        await addPrvPage.close();
-      }));
 
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
