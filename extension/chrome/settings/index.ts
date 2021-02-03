@@ -51,7 +51,8 @@ View.run(class SettingsView extends View {
     this.acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
     this.page = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'page');
     if (this.page && !/^(\/chrome|modules)/.test!(this.page as string)) {
-      void Ui.modal.error('<div data-test="page-param-modal">An unexpected value was found for the page parameter</div>');
+      Ui.modal.error('An unexpected value was found for the page parameter')
+        .catch(err => console.log(err));
       this.page = undefined;
     }
     this.page = (this.page === 'undefined') ? undefined : this.page; // in case an "undefined" string slipped in
