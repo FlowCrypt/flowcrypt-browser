@@ -496,6 +496,13 @@ export class OpenPGPKey {
     return { encryptionKey, encryptionKeyIgnoringExpiration, signingKey, signingKeyIgnoringExpiration };
   }
 
+  /**
+  * In order to prioritize strong subkeys over weak ones to solve #2715, we delete the weak ones
+  * and let OpenPGP.js decide based on remaining packets
+  * @param opgpKey - original OpenPGP.js key
+  * @return isPrimaryKeyStrong - true, if primary key is safe to use
+  *         keyWithoutWeakPackets - key with weak subkets removed
+  */
   private static removeWeakKeyPackets = (opgpKey: OpenPGP.key.Key): { isPrimaryKeyStrong: boolean, keyWithoutWeakPackets: OpenPGP.key.Key } => {
     let isPrimaryKeyStrong = true;
     const packets = opgpKey.toPacketlist();
