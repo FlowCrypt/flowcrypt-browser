@@ -50,7 +50,8 @@ View.run(class SettingsView extends View {
     const uncheckedUrlParams = Url.parse(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
     this.acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
     this.page = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'page');
-    if (!/^(\/chrome|modules)/.test!(this.page as string)) {
+    if (this.page && !/^(\/chrome|modules)/.test!(this.page as string)) {
+      Ui.modal.error('An unexpected value was found for the page parameter');
       this.page = undefined;
     }
     this.page = (this.page === 'undefined') ? undefined : this.page; // in case an "undefined" string slipped in
