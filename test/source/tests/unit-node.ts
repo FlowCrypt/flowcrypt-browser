@@ -16,7 +16,7 @@ import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
 import { Attachment } from '../core/attachment.js';
 import { ContactStore } from '../platform/store/contact-store.js';
 import { GoogleData, GmailParser, GmailMsg } from '../mock/google/google-data';
-import { pubkey2864E326A5BE488A, rsa1024subkeyOnly } from './tooling/consts';
+import { pubkey2864E326A5BE488A, rsa1024subkeyOnly, rsa1024subkeyOnlyEncrypted } from './tooling/consts';
 
 // tslint:disable:no-blank-lines-func
 /* eslint-disable max-len */
@@ -1501,11 +1501,29 @@ kBXo
       expect(key2.usableForSigning).to.equal(false);
       expect(key2.usableForEncryptionButExpired).to.equal(false);
       expect(key2.usableForSigningButExpired).to.equal(false);
-      const key3 = await KeyUtil.parse(rsa1024subkeyOnly);
-      expect(key3.usableForEncryption).to.equal(false);
-      expect(key3.usableForSigning).to.equal(true);
-      expect(key3.usableForEncryptionButExpired).to.equal(false);
-      expect(key3.usableForSigningButExpired).to.equal(false);
+      t.pass();
+    });
+
+    ava.default(`[unit][OpenPGPKey.parse] sets usableForEncryption to false and usableForSigning to true for 2048/RSA PK and 1024/RSA SK`, async t => {
+      const key = await KeyUtil.parse(rsa1024subkeyOnly);
+      expect(key.usableForEncryption).to.equal(false);
+      expect(key.usableForSigning).to.equal(true);
+      expect(key.usableForEncryptionButExpired).to.equal(false);
+      expect(key.usableForSigningButExpired).to.equal(false);
+      t.pass();
+    });
+
+    ava.default(`[unit][OpenPGPKey.decrypt] sets usableForEncryption to false and usableForSigning to true for 2048/RSA PK and 1024/RSA SK`, async t => {
+      const key = await KeyUtil.parse(rsa1024subkeyOnlyEncrypted);
+      expect(key.usableForEncryption).to.equal(false);
+      expect(key.usableForSigning).to.equal(true);
+      expect(key.usableForEncryptionButExpired).to.equal(false);
+      expect(key.usableForSigningButExpired).to.equal(false);
+      expect(await KeyUtil.decrypt(key, '1234')).to.be.true;
+      expect(key.usableForEncryption).to.equal(false);
+      expect(key.usableForSigning).to.equal(true);
+      expect(key.usableForEncryptionButExpired).to.equal(false);
+      expect(key.usableForSigningButExpired).to.equal(false);
       t.pass();
     });
   }
