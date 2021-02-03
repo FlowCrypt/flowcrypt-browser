@@ -144,39 +144,29 @@ export class ContactStore extends AbstractStore {
    * Used to save a contact that does not yet exist
    */
   public static save = async (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => {
-    const array = Array.isArray(contact) ? contact : [contact];
-    // serializing for storage
-    const prepared = array.map(contact => (!contact.pubkey || typeof contact.pubkey === 'string') ? contact : { ...contact, pubkey: KeyUtil.armor(contact.pubkey) as unknown as Key });
     if (!db) { // relay op through background process
-      await BrowserMsg.send.bg.await.db({ f: 'save', args: [prepared] });
+      await BrowserMsg.send.bg.await.db({ f: 'save', args: [contact] });
       return;
     }
-    await Promise.all(prepared.map(x => new Promise<void>((resolve, reject) => {
+    if (Array.isArray(contact)) {
+      await Promise.all(contact.map(oneContact => ContactStore.save(db, oneContact)));
+      return;
+    }
+    // serializing for storage
+    const prepared = contact.pubkey ? { ...contact, pubkey: KeyUtil.armor(contact.pubkey) as unknown as Key } : contact;
+    return await new Promise((resolve, reject) => {
       const tx = db.transaction('contacts', 'readwrite');
       const contactsTable = tx.objectStore('contacts');
-      contactsTable.put(x);
+      contactsTable.put(prepared);
       tx.oncomplete = () => resolve();
       tx.onabort = () => reject(ContactStore.errCategorize(tx.error));
-    })));
+    });
   }
 
   /**
    * used to update existing contact
    */
   public static update = async (db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> => {
-    if (update.pubkey && typeof update.pubkey !== 'string') {
-      let key = update.pubkey;
-      if (key.isPrivate) {
-        Catch.report('Wrongly updating prv as contact - converting to pubkey');
-        key = await KeyUtil.asPublicKey(key);
-      }
-      update.pubkey = KeyUtil.armor(key) as unknown as Key; // serialising for storage;
-      update.fingerprint = key.id;
-      update.longid = OpenPGPKey.fingerprintToLongid(key.id);
-      update.pubkey_last_sig = key.lastModified ? Number(key.lastModified) : null;
-      update.expiresOn = key.expiration ? Number(key.expiration) : null;
-      update.has_pgp = 1;
-    }
     if (!db) { // relay op through background process
       await BrowserMsg.send.bg.await.db({ f: 'update', args: [email, update] });
       return;
@@ -185,13 +175,17 @@ export class ContactStore extends AbstractStore {
       await Promise.all(email.map(oneEmail => ContactStore.update(db, oneEmail, update)));
       return;
     }
-    let [existing] = await ContactStore.getRaw(db, [email]);
+    let [existing] = await ContactStore.get(db, [email]);
     if (!existing) { // updating a non-existing contact, insert it first
       await ContactStore.save(db, await ContactStore.obj({ email }));
-      [existing] = await ContactStore.getRaw(db, [email]);
+      [existing] = await ContactStore.get(db, [email]);
       if (!existing) {
         throw new Error('contact not found right after inserting it');
       }
+    }
+    if (update.pubkey?.isPrivate) {
+      Catch.report('Wrongly updating prv as contact - converting to pubkey');
+      update.pubkey = await KeyUtil.asPublicKey(update.pubkey);
     }
     if (!update.searchable && (update.name !== existing.name || update.has_pgp !== existing.has_pgp)) { // update searchable index based on new name or new has_pgp
       const newHasPgp = Boolean(typeof update.has_pgp !== 'undefined' && update.has_pgp !== null ? update.has_pgp : existing.has_pgp);
@@ -199,12 +193,18 @@ export class ContactStore extends AbstractStore {
       update.searchable = ContactStore.dbCreateSearchIndexList(existing.email, newName, newHasPgp);
     }
     const updated = existing;
+    if (update.pubkey) {
+      const key = typeof update.pubkey === 'string' ? await KeyUtil.parse(update.pubkey) : update.pubkey;
+      update.fingerprint = key.id;
+      update.longid = OpenPGPKey.fingerprintToLongid(key.id);
+      update.pubkey_last_sig = key.lastModified ? Number(key.lastModified) : null;
+      update.expiresOn = key.expiration ? Number(key.expiration) : null;
+      update.pubkey = KeyUtil.armor(key) as unknown as Key; // serialising for storage
+      update.has_pgp = 1;
+    }
     for (const k of Object.keys(update)) {
       // @ts-ignore
       updated[k] = update[k];
-    }
-    if (updated.pubkey) {
-      updated.pubkey = ContactStore.getArmoredPubkey(updated.pubkey) as unknown as Key;
     }
     return await new Promise((resolve, reject) => {
       const tx = db.transaction('contacts', 'readwrite');
@@ -216,19 +216,9 @@ export class ContactStore extends AbstractStore {
   }
 
   public static get = async (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
-    const results = db ? await ContactStore.getRaw(db, emailOrLongid) : await BrowserMsg.send.bg.await.db({ f: 'getRaw', args: [emailOrLongid] }) as (Contact | undefined)[];
-    return await Promise.all(results.filter(Boolean).map(ContactStore.toContact));
-  }
-
-  public static search = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<ContactPreview[]> => {
-    return (await ContactStore.rawSearch(db, query)).filter(Boolean).map(ContactStore.toContactPreview);
-  }
-
-  public static searchPubkeys = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<string[]> => {
-    return (await ContactStore.rawSearch(db, query)).filter(Boolean).map(ContactStore.toArmoredPubkey).filter(Boolean);
-  }
-
-  private static getRaw = async (db: IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
+    if (!db) { // relay op through background process
+      return ContactStore.recreateDates(await BrowserMsg.send.bg.await.db({ f: 'get', args: [emailOrLongid] }) as (Contact | undefined)[]);
+    }
     if (emailOrLongid.length === 1) {
       // contacts imported before August 2019 may have only primary longid recorded, in index_longid (string)
       // contacts imported after August 2019 have both index_longid (string) and index_longids (string[] containing all subkeys)
@@ -238,20 +228,28 @@ export class ContactStore extends AbstractStore {
       if (contact || !/^[A-F0-9]{16}$/.test(emailOrLongid[0])) {
         // if we found something, return it
         // or if we were searching by email, return found contact or nothing
-        return [contact];
+        return ContactStore.recreateDates([contact]);
       } else {
         // not found any key by primary longid, and searching by longid -> search by any subkey longid
         // it may not find pubkeys imported before August 2019, re-importing such pubkeys will make them findable
-        return [await ContactStore.dbContactInternalGetOne(db, emailOrLongid[0], true)];
+        return ContactStore.recreateDates([await ContactStore.dbContactInternalGetOne(db, emailOrLongid[0], true)]);
       }
     } else {
       const results: (Contact | undefined)[] = [];
       for (const singleEmailOrLongid of emailOrLongid) {
-        const [contact] = await ContactStore.getRaw(db, [singleEmailOrLongid]);
+        const [contact] = await ContactStore.get(db, [singleEmailOrLongid]);
         results.push(contact);
       }
-      return results;
+      return ContactStore.recreateDates(results);
     }
+  }
+
+  public static search = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<ContactPreview[]> => {
+    return (await ContactStore.rawSearch(db, query)).filter(Boolean).map(ContactStore.toContactPreview);
+  }
+
+  public static searchPubkeys = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<string[]> => {
+    return (await ContactStore.rawSearch(db, query)).filter(Boolean).map(ContactStore.toArmoredPubkey).filter(Boolean);
   }
 
   private static rawSearch = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<unknown[]> => {
@@ -364,7 +362,7 @@ export class ContactStore extends AbstractStore {
       }
       tx.onsuccess = () => {
         try {
-          resolve(tx.result as Contact | undefined);
+          resolve(ContactStore.toContact(tx.result));
         } catch (codeErr) {
           reject(codeErr);
           Catch.reportErr(codeErr);
@@ -399,6 +397,25 @@ export class ContactStore extends AbstractStore {
   private static toArmoredPubkey = (result: any): string => {
     // tslint:disable-next-line:no-unsafe-any
     return ContactStore.getArmoredPubkey(result.pubkey);
+  }
+
+  private static recreateDates = (contacts: (Contact | undefined)[]) => {
+    for (const contact of contacts) {
+      if (contact) {
+        // string dates were created by JSON serializing Date objects
+        // convert any previously saved string-dates into numbers
+        if (typeof contact?.pubkey?.created === 'string') {
+          contact.pubkey.created = new Date(contact.pubkey.created).getTime();
+        }
+        if (typeof contact?.pubkey?.expiration === 'string') {
+          contact.pubkey.expiration = new Date(contact.pubkey.expiration).getTime();
+        }
+        if (typeof contact?.pubkey?.lastModified === 'string') {
+          contact.pubkey.lastModified = new Date(contact.pubkey.lastModified).getTime();
+        }
+      }
+    }
+    return contacts;
   }
 
 }
