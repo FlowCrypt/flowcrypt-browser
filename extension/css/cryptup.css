@@ -2842,6 +2842,38 @@ body#settings div.webmail_notifications div.webmail_notification a {
 }
 body#settings div.webmail_notifications div.webmail_notification a:hover { text-decoration: none; }
 
+/* short frames */
+@media (max-height: 200px) {
+  .swal2-container {
+    padding: 1px !important;
+  }
+
+  .swal2-popup {
+    width: auto !important;
+    flex-direction: row !important;
+    justify-content: space-around !important;
+    font-size: 0.75em !important;
+    padding: 2px 20px !important;
+  }
+
+  .swal2-header,
+  .swal2-content,
+  .swal2-actions {
+    padding: 0 !important;
+  }
+
+  .swal2-content {
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .swal2-actions {
+    flex-wrap: nowrap !important;
+    width: auto !important;
+    margin: 0 0 0 20px !important;
+  }
+}
+
 /* small frames */
 @media (max-width: 400px) {
   .swal2-container {
