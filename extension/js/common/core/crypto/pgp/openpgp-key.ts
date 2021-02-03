@@ -41,7 +41,7 @@ export class OpenPGPKey {
       throw new UnexpectedKeyTypeError(`Key type is ${pubkey.type}, expecting OpenPGP`);
     }
     if (pubkey.isPrivate) {
-      return await OpenPGPKey.convertExternalLibraryObjToKey(OpenPGPKey.extractInsecureExternalLibraryObjFromKey(pubkey).toPublic());
+      return await OpenPGPKey.convertExternalLibraryObjToKey(OpenPGPKey.extractStrengthUncheckedExternalLibraryObjFromKey(pubkey).toPublic());
     }
     return pubkey;
   }
@@ -153,10 +153,10 @@ export class OpenPGPKey {
    *    is done on the original supplied object.
    */
   public static convertExternalLibraryObjToKey = async (opgpKey: OpenPGP.key.Key, keyToUpdate?: Key): Promise<Key> => {
-    const { primaryKeySecure, secure } = OpenPGPKey.removeInsecureKeyPackets(opgpKey);
+    const { isPrimaryKeyStrong, keyWithoutWeakPackets } = OpenPGPKey.removeWeakKeyPackets(opgpKey);
     let exp: null | Date | number;
     try {
-      exp = await secure.getExpirationTime('encrypt');
+      exp = await keyWithoutWeakPackets.getExpirationTime('encrypt');
     } catch (e) {
       // tslint:disable-next-line: no-null-keyword
       exp = null;
@@ -173,7 +173,7 @@ export class OpenPGPKey {
       }
       return Date.now() > exp.getTime();
     };
-    const emails = secure.users
+    const emails = keyWithoutWeakPackets.users
       .map(user => user.userId)
       .filter(userId => userId !== null)
       .map((userId: OpenPGP.packet.Userid) => {
@@ -189,25 +189,25 @@ export class OpenPGPKey {
       .map(email => email.toLowerCase());
     let lastModified: undefined | number;
     try {
-      lastModified = await OpenPGPKey.getLastSigTime(secure);
+      lastModified = await OpenPGPKey.getLastSigTime(keyWithoutWeakPackets);
     } catch (e) {
       // never had any valid signature
     }
-    const fingerprint = secure.getFingerprint();
+    const fingerprint = keyWithoutWeakPackets.getFingerprint();
     if (!fingerprint) {
       throw new Error('Key does not have a fingerprint and cannot be parsed.');
     }
-    const algoInfo = secure.primaryKey.getAlgorithmInfo();
+    const algoInfo = keyWithoutWeakPackets.primaryKey.getAlgorithmInfo();
     const key = keyToUpdate || {} as Key; // if no key to update, use empty object, will get props assigned below
     // tslint:disable-next-line:no-unnecessary-initializer
     const { encryptionKey = undefined, encryptionKeyIgnoringExpiration = undefined, signingKey = undefined, signingKeyIgnoringExpiration = undefined }
-      = primaryKeySecure ? await OpenPGPKey.getSigningAndEncryptionKeys(secure, exp, expired) : {};
+      = isPrimaryKeyStrong ? await OpenPGPKey.getSigningAndEncryptionKeys(keyWithoutWeakPackets, exp, expired) : {};
     const missingPrivateKeyForSigning = signingKeyIgnoringExpiration?.keyPacket ? OpenPGPKey.arePrivateParamsMissing(signingKeyIgnoringExpiration.keyPacket) : false;
     const missingPrivateKeyForDecryption = encryptionKeyIgnoringExpiration?.keyPacket ? OpenPGPKey.arePrivateParamsMissing(encryptionKeyIgnoringExpiration.keyPacket) : false;
     Object.assign(key, {
       type: 'openpgp',
       id: fingerprint.toUpperCase(),
-      allIds: secure.getKeys().map(k => k.getFingerprint().toUpperCase()),
+      allIds: keyWithoutWeakPackets.getKeys().map(k => k.getFingerprint().toUpperCase()),
       usableForEncryption: encryptionKey ? true : false,
       usableForEncryptionButExpired: !encryptionKey && !!encryptionKeyIgnoringExpiration,
       usableForSigning: signingKey ? true : false,
@@ -218,14 +218,14 @@ export class OpenPGPKey {
       emails,
       // full uids that have valid emails in them
       // tslint:disable-next-line: no-unsafe-any
-      identities: secure.users.map(u => u.userId).filter(u => !!u && u.userid && Str.parseEmail(u.userid).email).map(u => u!.userid).filter(Boolean) as string[],
+      identities: keyWithoutWeakPackets.users.map(u => u.userId).filter(u => !!u && u.userid && Str.parseEmail(u.userid).email).map(u => u!.userid).filter(Boolean) as string[],
       lastModified,
       expiration: exp instanceof Date ? exp.getTime() : undefined,
-      created: secure.getCreationTime().getTime(),
-      fullyDecrypted: secure.isPublic() ? true /* public keys are always decrypted */ : secure.isFullyDecrypted(),
-      fullyEncrypted: secure.isPublic() ? false /* public keys are never encrypted */ : secure.isFullyEncrypted(),
-      isPublic: secure.isPublic(),
-      isPrivate: secure.isPrivate(),
+      created: keyWithoutWeakPackets.getCreationTime().getTime(),
+      fullyDecrypted: keyWithoutWeakPackets.isPublic() ? true /* public keys are always decrypted */ : keyWithoutWeakPackets.isFullyDecrypted(),
+      fullyEncrypted: keyWithoutWeakPackets.isPublic() ? false /* public keys are never encrypted */ : keyWithoutWeakPackets.isFullyEncrypted(),
+      isPublic: keyWithoutWeakPackets.isPublic(),
+      isPrivate: keyWithoutWeakPackets.isPrivate(),
       algo: {
         algorithm: algoInfo.algorithm,
         bits: algoInfo.bits,
@@ -233,7 +233,7 @@ export class OpenPGPKey {
         algorithmId: opgp.enums.publicKey[algoInfo.algorithm]
       },
     } as Key);
-    (key as any)[internal] = secure;
+    (key as any)[internal] = keyWithoutWeakPackets;
     (key as any).rawKey = opgpKey;
     (key as any).rawArmored = opgpKey.armor();
     return key;
@@ -297,8 +297,8 @@ export class OpenPGPKey {
     const user = await key.getPrimaryUser();
     result.set(`Primary User`, user?.user?.userId?.userid || 'No primary user');
     result.set(`Fingerprint`, Str.spaced(key.getFingerprint().toUpperCase() || 'err'));
-    // take subkeys from insecure key so we show disabled ones too
-    const subKeys = OpenPGPKey.extractInsecureExternalLibraryObjFromKey(pubkey)?.subKeys ?? key.subKeys;
+    // take subkeys from original key so we show subkeys disabled by #2715 too
+    const subKeys = OpenPGPKey.extractStrengthUncheckedExternalLibraryObjFromKey(pubkey)?.subKeys ?? key.subKeys;
     result.set(`Subkeys`, KeyUtil.formatResult(subKeys ? subKeys.length : subKeys));
     result.set(`Primary key algo`, KeyUtil.formatResult(key.primaryKey.algorithm));
     if (key.isPrivate() && !key.isFullyDecrypted()) {
@@ -456,7 +456,7 @@ export class OpenPGPKey {
     return opgpKey;
   }
 
-  private static extractInsecureExternalLibraryObjFromKey = (pubkey: Key) => {
+  private static extractStrengthUncheckedExternalLibraryObjFromKey = (pubkey: Key) => {
     if (pubkey.type !== 'openpgp') {
       throw new UnexpectedKeyTypeError(`Key type is ${pubkey.type}, expecting OpenPGP`);
     }
@@ -496,8 +496,8 @@ export class OpenPGPKey {
     return { encryptionKey, encryptionKeyIgnoringExpiration, signingKey, signingKeyIgnoringExpiration };
   }
 
-  private static removeInsecureKeyPackets = (opgpKey: OpenPGP.key.Key): { primaryKeySecure: boolean, secure: OpenPGP.key.Key } => {
-    let primaryKeySecure = true;
+  private static removeWeakKeyPackets = (opgpKey: OpenPGP.key.Key): { isPrimaryKeyStrong: boolean, keyWithoutWeakPackets: OpenPGP.key.Key } => {
+    let isPrimaryKeyStrong = true;
     const packets = opgpKey.toPacketlist();
     const newPacketList = new opgp.packet.List<OpenPGP.packet.BasePacket>();
     for (const packet of packets) {
@@ -514,18 +514,18 @@ export class OpenPGPKey {
         if (minimumBits && bits < minimumBits) {
           if (packet === opgpKey.primaryKey) {
             // the primary key packet should remain, otherwise the key can't be parsed
-            primaryKeySecure = false;
+            isPrimaryKeyStrong = false;
           } else {
-            continue; // discard this packet as insecure
+            continue; // discard this packet as weak
           }
         }
       }
       newPacketList.push(packet);
     }
     if (packets.length !== newPacketList.length) {
-      return { primaryKeySecure, secure: new opgp.key.Key(newPacketList) };
+      return { isPrimaryKeyStrong, keyWithoutWeakPackets: new opgp.key.Key(newPacketList) };
     }
-    return { primaryKeySecure, secure: opgpKey };
+    return { isPrimaryKeyStrong, keyWithoutWeakPackets: opgpKey };
   }
 
   private static arePrivateParamsMissing = (packet: OpenPGP.packet.BaseKeyPacket): boolean => {
