@@ -8,6 +8,7 @@ export class SmimeKey {
 
   public static parse = async (text: string): Promise<Key> => {
     const certificate = forge.pki.certificateFromPem(text);
+    SmimeKey.removeWeakKeys(certificate);
     const email = (certificate.subject.getField('CN') as { value: string }).value;
     const normalizedEmail = Str.parseEmail(email).email;
     if (!normalizedEmail) {
@@ -17,8 +18,8 @@ export class SmimeKey {
       type: 'x509',
       id: certificate.serialNumber.toUpperCase(),
       allIds: [certificate.serialNumber.toUpperCase()],
-      usableForEncryption: SmimeKey.isEmailCertificate(certificate),
-      usableForSigning: SmimeKey.isEmailCertificate(certificate),
+      usableForEncryption: certificate.publicKey && SmimeKey.isEmailCertificate(certificate),
+      usableForSigning: certificate.publicKey && SmimeKey.isEmailCertificate(certificate),
       usableForEncryptionButExpired: false,
       usableForSigningButExpired: false,
       emails: [normalizedEmail],
@@ -41,7 +42,9 @@ export class SmimeKey {
   public static encryptMessage = async ({ pubkeys, data }: { pubkeys: Key[], data: Uint8Array }): Promise<{ data: Uint8Array, type: 'smime' }> => {
     const p7 = forge.pkcs7.createEnvelopedData();
     for (const pubkey of pubkeys) {
-      p7.addRecipient(forge.pki.certificateFromPem(KeyUtil.armor(pubkey)));
+      const certificate = forge.pki.certificateFromPem(KeyUtil.armor(pubkey));
+      SmimeKey.removeWeakKeys(certificate);
+      p7.addRecipient(certificate);
     }
     p7.content = forge.util.createBuffer(data);
     p7.encrypt();
@@ -51,6 +54,17 @@ export class SmimeKey {
       arr.push(derBuffer.charCodeAt(i));
     }
     return { data: new Uint8Array(arr), type: 'smime' };
+  }
+
+  private static removeWeakKeys = (certificate: forge.pki.Certificate) => {
+    const publicKeyN = (certificate.publicKey as forge.pki.rsa.PublicKey)?.n;
+    if (publicKeyN && publicKeyN.bitLength() < 2048) {
+      certificate.publicKey = undefined;
+    }
+    const privateKeyN = (certificate.privateKey as forge.pki.rsa.PrivateKey)?.n;
+    if (privateKeyN && privateKeyN.bitLength() < 2048) {
+      certificate.privateKey = undefined;
+    }
   }
 
   private static isEmailCertificate = (certificate: forge.pki.Certificate) => {
