@@ -337,7 +337,7 @@ export class Settings {
         if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
           then();
         } else {
-          await Ui.modal.warning(`Could not log in:\n\n${authRes.error || authRes.result}`);
+          await Ui.modal.warning(`Could not log in:\n${authRes.error || authRes.result}`);
         }
       }
     })().catch(Catch.reportErr);
