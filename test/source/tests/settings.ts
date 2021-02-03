@@ -245,7 +245,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await SettingsPageRecipe.addKeyTest(t, browser, 'ci.tests.gmail@flowcrypt.dev', unprotectedPrvKey, 'this is a new passphrase to protect previously unprotected key');
     }));
 
-    ava.only('settings - error modal when page parameter invalid', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('settings - error modal when page parameter invalid', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const invalidParamModalPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/index.htm?page=invalid`));
       await Util.sleep(3);
       await invalidParamModalPage.waitForContent('@page-param-modal', 'An unexpected value was found for the page parameter');
