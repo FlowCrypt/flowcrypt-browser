@@ -245,6 +245,12 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await SettingsPageRecipe.addKeyTest(t, browser, 'ci.tests.gmail@flowcrypt.dev', unprotectedPrvKey, 'this is a new passphrase to protect previously unprotected key');
     }));
 
+    ava.default('settings - error modal when page parameter invalid', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const invalidParamModalPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/index.htm?acctEmail=ci.tests.gmail@gmail.com&page=invalid`));
+      await Util.sleep(3);
+      await invalidParamModalPage.waitForContent('.swal2-content', 'An unexpected value was found for the page parameter');
+    }));
+
     ava.default('settings - my key page - update non-first private key', testWithBrowser(undefined, async (t, browser) => {
       const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
       const settingsPage1 = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
