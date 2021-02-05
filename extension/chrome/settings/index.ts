@@ -327,7 +327,7 @@ View.run(class SettingsView extends View {
           authNeededLink.click(this.setHandler(async () => {
             await Settings.loginWithPopupShowModalOnErr(this.acctEmail!, () => window.location.reload());
           }));
-          statusContainer.empty().append(authNeededLink);
+          statusContainer.empty().append(authNeededLink); // xss-direct
           $('#status-row #status_flowcrypt').text(`fc:auth`).addClass('bad');
           Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail!, () => window.location.reload());
         } else if (ApiErr.isNetErr(e)) {
