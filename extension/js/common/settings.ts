@@ -333,14 +333,18 @@ export class Settings {
   public static offerToLoginWithPopupShowModalOnErr = (acctEmail: string, then: (() => void) = () => undefined, prepend = '') => {
     (async () => {
       if (await Ui.modal.confirm(`${prepend}Please log in with FlowCrypt to continue.`)) {
-        const authRes = await GoogleAuth.newOpenidAuthPopup({ acctEmail });
-        if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
-          then();
-        } else {
-          await Ui.modal.warning(`Could not log in:\n${authRes.error || authRes.result}`);
-        }
+        await Settings.loginWithPopupShowModalOnErr(acctEmail, then);
       }
     })().catch(Catch.reportErr);
+  }
+
+  public static loginWithPopupShowModalOnErr = async (acctEmail: string, then: (() => void) = () => undefined) => {
+    const authRes = await GoogleAuth.newOpenidAuthPopup({ acctEmail });
+    if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
+      then();
+    } else {
+      await Ui.modal.warning(`Could not log in:\n${authRes.error || authRes.result}`);
+    }
   }
 
   private static prepareNewSettingsLocationUrl = (acctEmail: string | undefined, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams): string => {
