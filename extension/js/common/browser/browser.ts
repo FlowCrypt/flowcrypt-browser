@@ -65,16 +65,16 @@ export class Browser {
     const basePath = chrome.runtime.getURL(`chrome/settings/${path}`);
     const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : undefined;
     if (acctEmail || path === 'fatal.htm') {
-      await Browser.openExtensionTab(Url.create(basePath, { acctEmail, page, pageUrlParams }));
+      Browser.openExtensionTab(Url.create(basePath, { acctEmail, page, pageUrlParams }));
     } else if (addNewAcct) {
-      await Browser.openExtensionTab(Url.create(basePath, { addNewAcct }));
+      Browser.openExtensionTab(Url.create(basePath, { addNewAcct }));
     } else {
       const acctEmails = await GlobalStore.acctEmailsGet();
-      await Browser.openExtensionTab(Url.create(basePath, { acctEmail: acctEmails[0], page, pageUrlParams }));
+      Browser.openExtensionTab(Url.create(basePath, { acctEmail: acctEmails[0], page, pageUrlParams }));
     }
   }
 
-  private static openExtensionTab = async (url: string) => {
+  public static openExtensionTab = (url: string) => {
     const tab = window.open(url, 'flowcrypt');
     if (tab) {
       tab.focus();

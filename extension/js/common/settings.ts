@@ -6,6 +6,7 @@ import { Dict, Str, Url, UrlParams } from './core/common.js';
 import { Ui } from './browser/ui.js';
 import { Api } from './api/shared/api.js';
 import { ApiErr, AjaxErr } from './api/shared/api-error.js';
+import { Browser } from './browser/browser.js';
 import { Catch } from './platform/catch.js';
 import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
@@ -339,6 +340,11 @@ export class Settings {
   }
 
   public static loginWithPopupShowModalOnErr = async (acctEmail: string, then: (() => void) = () => undefined) => {
+    if (window !== window.top && !chrome.windows) { // Firefox, chrome.windows isn't available in iframes
+      Browser.openExtensionTab(Url.create(chrome.runtime.getURL(`chrome/settings/index.htm`), { acctEmail }));
+      await Ui.modal.info(`Reload after logging in.`);
+      return window.location.reload();
+    }
     const authRes = await GoogleAuth.newOpenidAuthPopup({ acctEmail });
     if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
       then();
