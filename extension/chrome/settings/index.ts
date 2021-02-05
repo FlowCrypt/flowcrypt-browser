@@ -323,7 +323,11 @@ View.run(class SettingsView extends View {
         }
       } catch (e) {
         if (ApiErr.isAuthErr(e)) {
-          Xss.sanitizeRender(statusContainer, '<a class="bad" href="#">Auth Needed</a>');
+          const authNeededLink = $('<a class="bad" href="#">Auth Needed</a>');
+          authNeededLink.click(this.setHandler(async () => {
+            await Settings.loginWithPopupShowModalOnErr(this.acctEmail!, () => window.location.reload());
+          }));
+          statusContainer.empty().append(authNeededLink);
           $('#status-row #status_flowcrypt').text(`fc:auth`).addClass('bad');
           Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail!, () => window.location.reload());
         } else if (ApiErr.isNetErr(e)) {
