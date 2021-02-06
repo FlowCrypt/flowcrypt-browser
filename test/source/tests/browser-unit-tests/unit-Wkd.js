@@ -52,6 +52,23 @@ BROWSER_UNIT_TEST_NAME(`Wkd advanced method`);
   return 'pass';
 })();
 
+BROWSER_UNIT_TEST_NAME(`Wkd client picks valid key among revoked keys`);
+(async () => {
+  const wkd = new Wkd('flowcrypt.com');
+  wkd.port = 8001;
+  const email = 'some.revoked@localhost';
+  const pubkey = (await wkd.lookupEmail(email)).pubkey;
+  if (!pubkey) {
+    throw Error(`Wkd for ${email} didn't return a pubkey`);
+  }
+  const key = await KeyUtil.parse(pubkey);
+  if (key && key.id.toUpperCase() === 'D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2' && key.usableForEncryption) {
+    return 'pass';
+  } else {
+    return `Expected key with id=D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2 wasn't received`;
+  }
+})();
+
 BROWSER_UNIT_TEST_NAME(`Wkd advanced shouldn't fall back on direct if advanced policy file is present`);
 (async () => {
   const wkd = new Wkd('flowcrypt.com');
