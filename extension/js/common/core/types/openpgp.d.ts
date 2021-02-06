@@ -809,6 +809,9 @@ declare namespace OpenPGP {
 
   export namespace key {
 
+    // callable constructor
+    export function Key(this: Key, packetlist: packet.List<packet.BasePacket>): Key;
+
     export type EllipticCurveName = 'curve25519' | 'p256' | 'p384' | 'p521' | 'secp256k1' | 'brainpoolP256r1' | 'brainpoolP384r1' | 'brainpoolP512r1';
 
     /** Class that represents an OpenPGP key. Must contain a primary key. Can contain additional subkeys, signatures, user ids, user attributes.
@@ -819,7 +822,7 @@ declare namespace OpenPGP {
       public users: User[];
       public revocationSignatures: packet.Signature[];
       public keyPacket: packet.PublicKey | packet.SecretKey;
-      constructor(packetlist: packet.List<packet.AnyPacket>);
+      constructor(packetlist: packet.List<packet.BasePacket>);
       public armor(): string;
       public decrypt(passphrase: string | string[], keyId?: Keyid): Promise<boolean>;
       public encrypt(passphrase: string | string[]): Promise<void>;
@@ -829,6 +832,7 @@ declare namespace OpenPGP {
       public getUserIds(): string[];
       public isPrivate(): boolean;
       public isPublic(): boolean;
+      public toPacketlist(): packet.BasePacket[];
       public toPublic(): Key;
       public update(key: Key): void;
       public verifyPrimaryKey(): Promise<void>; // throws on err
