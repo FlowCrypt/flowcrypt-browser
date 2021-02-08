@@ -506,13 +506,13 @@ declare namespace OpenPGP {
      * @param partindex
      * @param parttotal
      */
-    function armor(messagetype: enums.armor, body: object, partindex: number, parttotal: number): string;
+    function encode(messagetype: enums.armor, body: object, partindex: number, parttotal: number): string;
 
     /** DeArmor an OpenPGP armored message; verify the checksum and return the encoded bytes
      *
      *  @param text OpenPGP armored message
      */
-    function dearmor(text: string): object;
+    function decode(text: string): Promise<{ type: number, data: ReadableStream<Uint8Array> }>;
   }
 
   export namespace cleartext {

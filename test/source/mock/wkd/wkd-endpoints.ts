@@ -1,5 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+import { KeyUtil } from '../../core/crypto/key.js';
 import { HandlersDefinition } from '../all-apis-mock';
 
 const alice = `-----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -95,7 +96,7 @@ nmusEeYtrrMytL4oUohBVZk=
 -----END PGP PUBLIC KEY BLOCK-----
 `;
 
-const validAmongRevoked = `
+const validAmongRevokedRevoked1 = `
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 
 xsBNBGAeWswBCADHMQfmD4m5gO9DBsmDBOF2a/Bd0pGtJvjQwRYugvLZrupaqGnifxCmn1MlB4vy
@@ -126,8 +127,9 @@ u8pi5UA4ZwjiMRtIw1sppvW48oUCyXuRA25/4RjyiwYpMzM/KfT7wjYGoGQijZSgvDcvZjAlwsNX
 HpB6etO8CPq9VDcnNWATN/3XSv06LXpShQVZkxWYOG0betwzVCc4Jq3mARjsFXOZvtqB+mSkbP4T
 +LugD7yQtGt711i3rvwrTVtBQefALyg/mOPZjCWe5rSAYPdDNLj+6El4p80=
 =vqJ0
------END PGP PUBLIC KEY BLOCK-----
------BEGIN PGP PUBLIC KEY BLOCK-----
+-----END PGP PUBLIC KEY BLOCK-----`;
+
+const validAmongRevokedValid = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 
 xsBNBGAeYQ0BCADHMOjbN/X/TH4JpTz7Sj1VTGIeXzWUVZIbsjLgp8U0dFo2zWXMsgLsnNAZuL43
 pUAnIqw+wvUcSpndEO79upVvUzc1qgvp2DTJuDrVGAPx1cqKOi3A/XPO0uIxTyCChcQBQ+YUvwc6
@@ -152,8 +154,8 @@ wPK57RZ8W/IQ7x76k7S44m634e6usKnD+reitX1QWi3vel8HC4qxviu/xLbIJyjMR1IgPsUWaMAe
 DC024L0txF5zDnbODx9X1LM+/8D1pVizUjOwt1liPq0hh2JKU8iLqzdSkv0dte0UbEUPMyCVp8h6
 scbnq9KEwLGCMJ0IkCSUNA==
 =iXGJ
------END PGP PUBLIC KEY BLOCK-----
------BEGIN PGP PUBLIC KEY BLOCK-----
+-----END PGP PUBLIC KEY BLOCK-----`;
+const validAmongRevokedRevoked2 = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 
 xsBNBGAeYGoBCADtGkPOvJG+Q1Sf3QcAbF6SpEyhkkjItMbpItg1kjrI4krD75aoPy0NemYkjWKk
 4u5jpiWQjnsluvaayc98j2rphbM2Uh5n/pdFBhqJtZPspQI7JWaZ1ylDiwb42Yv5ofoZaGcurRBA
@@ -189,25 +191,29 @@ ctnWuBzRDeI0n6XDaPv5TpKpS7uqy/fTlJLGE9vZTFUKzeGkQFomBoXNVWs=
 
 export const mockWkdEndpoints: HandlersDefinition = {
   '/.well-known/openpgpkey/hu/ihyath4noz8dsckzjbuyqnh4kbup6h4i?l=john.doe': async () => {
-    return johnDoe1; // direct for john.doe@localhost
+    return Buffer.from((await KeyUtil.dearmor(johnDoe1)).data); // direct for john.doe@localhost
   },
   '/.well-known/openpgpkey/hu/ihyath4noz8dsckzjbuyqnh4kbup6h4i?l=John.Doe': async () => {
-    return johnDoe1; // direct for John.Doe@localhost
+    return Buffer.from((await KeyUtil.dearmor(johnDoe1)).data); // direct for John.Doe@localhost
   },
   '/.well-known/openpgpkey/hu/cb53pfqmbzc8mm3ecbjxyen65fdxos56?l=jack.advanced': async () => {
-    return jackAdvanced; // direct for jack.advanced@localhost
+    return Buffer.from((await KeyUtil.dearmor(jackAdvanced)).data); // direct for jack.advanced@localhost
   },
   '/.well-known/openpgpkey/localhost/hu/ihyath4noz8dsckzjbuyqnh4kbup6h4i?l=john.doe': async () => {
-    return johnDoe; // advanced for john.doe@localhost
+    return Buffer.from((await KeyUtil.dearmor(johnDoe)).data); // advanced for john.doe@localhost
   },
   '/.well-known/openpgpkey/localhost/hu/ihyath4noz8dsckzjbuyqnh4kbup6h4i?l=John.Doe': async () => {
-    return johnDoe; // advanced for John.Doe@localhost
+    return Buffer.from((await KeyUtil.dearmor(johnDoe)).data); // advanced for John.Doe@localhost
   },
   '/.well-known/openpgpkey/localhost/hu/pob4adi8roqdsmtmxikx68pi6ij35oca?l=incorrect': async () => {
-    return alice; // advanced for incorrect@localhost
+    return Buffer.from((await KeyUtil.dearmor(alice)).data); // advanced for incorrect@localhost
   },
   '/.well-known/openpgpkey/localhost/hu/66iu18j7mk6hod4wqzf6qd37u6wejx4y?l=some.revoked': async () => {
-    return validAmongRevoked;
+    return Buffer.from([
+      ...(await KeyUtil.dearmor(validAmongRevokedRevoked1)).data,
+      ...(await KeyUtil.dearmor(validAmongRevokedValid)).data,
+      ...(await KeyUtil.dearmor(validAmongRevokedRevoked2)).data,
+    ]);
   },
   '/.well-known/openpgpkey/localhost/policy': async () => {
     return ''; // allow advanced for localhost
