@@ -130,6 +130,14 @@ export class KeyUtil {
     return (await KeyUtil.parseMany(text))[0];
   }
 
+  public static dearmor = async (text: string): Promise<{ type: number, data: Uint8Array }> => {
+    const decoded = await opgp.armor.decode(text);
+    let buffer = new Uint8Array();
+    const ws = new WritableStream<Uint8Array>({ write: chunk => { buffer = new Uint8Array([...buffer, ...chunk]); } });
+    await decoded.data.pipeTo(ws);
+    return { type: decoded.type, data: buffer };
+  }
+
   public static parseMany = async (text: string): Promise<Key[]> => {
     const keyType = KeyUtil.getKeyType(text);
     if (keyType === 'openpgp') {
