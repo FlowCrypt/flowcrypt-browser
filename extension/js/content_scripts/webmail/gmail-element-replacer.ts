@@ -99,22 +99,29 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     $('.reply_message_iframe_container:visible').last().append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
   }
 
-  public scrollToReplyBox = (selector: string) => {
+  public scrollToReplyBox = (selector: string, cursor?: DOMRect) => {
     const convoRootScrollable = $(this.sel.convoRootScrollable).get(0);
     if (convoRootScrollable) {
-      const element = $(selector);
-      if (element) {
+      const replyBox = $(selector);
+      if (replyBox) {
         $(this.sel.convoRootScrollable).css('scroll-behavior', 'smooth');
         const gmailHeaderHeight = 120;
         const topGap = 80; // so the bottom of the prev message will be visible
-        // scroll to the bottom of the element,
-        // or to the top of the element if the element's height is bigger than the convoRoot
+        if (cursor) { // `cursor` is only provided for reply box, perform scrolling only if the cursor went outside of viewport (e.g. by pressing arrows)
+          // TODO
+          // console.log(`replyBox.position()!.top`, replyBox.position()!.top);
+          // console.log(`cursor.top`, cursor.top);
+          // console.log(`replyBox.position()!.top + cursor.top`, replyBox.position()!.top + cursor.top);
+          // console.log(`$(window).height()`, $(window).height());
+        }
+        // scroll to the bottom of the replyBox,
+        // or to the top of the replyBox if the element's height is bigger than the convoRoot
         convoRootScrollable.scrollTop =
-          element.position()!.top + $(element).height()! -
-          Math.max(0, $(element).height()! - $(this.sel.convoRootScrollable).height()! + gmailHeaderHeight + topGap);
+          replyBox.position()!.top + $(replyBox).height()! -
+          Math.max(0, $(replyBox).height()! - $(this.sel.convoRootScrollable).height()! + gmailHeaderHeight + topGap);
       }
     } else if (window.location.hash.match(/^#inbox\/[a-zA-Z]+$/)) { // is a conversation view, but no scrollable conversation element
-      Catch.report(`Cannot find Gmail scrollable element: ${this.sel.convoRootScrollable}`);
+      Catch.report(`Cannot find replyBox: ${this.sel.convoRootScrollable}`);
     }
   }
 

@@ -32,7 +32,8 @@ export namespace Bm {
   export type AddOrRemoveClass = { class: string, selector: string; };
   export type Settings = { path?: string, page?: string, acctEmail?: string, pageUrlParams?: UrlParams, addNewAcct?: boolean };
   export type PassphraseDialog = { type: PassphraseDialogType, longids: string[] };
-  export type ScrollToReplyBox = { replyMsgId: string };
+  export type SetReplyBoxHeight = { replyMsgId: string, height: number };
+  export type ScrollToReplyBox = { replyMsgId: string, cursor?: DOMRect };
   export type NotificationShow = { notification: string, callbacks?: Dict<() => void> };
   export type NotificationShowAuthPopupNeeded = { acctEmail: string };
   export type RenderPublicKeys = { afterFrameId: string, publicKeys: string[], traverseUp?: number };
@@ -162,6 +163,7 @@ export class BrowserMsg {
     focusFrame: (dest: Bm.Dest, bm: Bm.FocusFrame) => BrowserMsg.sendCatch(dest, 'focus_frame', bm),
     closeReplyMessage: (dest: Bm.Dest, bm: Bm.CloseReplyMessage) => BrowserMsg.sendCatch(dest, 'close_reply_message', bm),
     openNewMessage: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'open_new_message', {}),
+    setReplyBoxHeight: (dest: Bm.Dest, bm: Bm.SetReplyBoxHeight) => BrowserMsg.sendCatch(dest, 'set_reply_box_height', bm),
     scrollToReplyBox: (dest: Bm.Dest, bm: Bm.ScrollToReplyBox) => BrowserMsg.sendCatch(dest, 'scroll_to_reply_box', bm),
     reinsertReplyBox: (dest: Bm.Dest, bm: Bm.ReinsertReplyBox) => BrowserMsg.sendCatch(dest, 'reinsert_reply_box', bm),
     passphraseDialog: (dest: Bm.Dest, bm: Bm.PassphraseDialog) => BrowserMsg.sendCatch(dest, 'passphrase_dialog', bm),

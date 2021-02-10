@@ -49,16 +49,22 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       let minHeight = 0;
       let currentHeight = 0;
       if (this.view.S.cached('compose_table').is(':visible')) {
-        currentHeight = this.view.S.cached('compose_table').outerHeight() || 0;
+        currentHeight =
+          this.view.S.cached('recipients_placeholder').outerHeight()! +
+          this.view.S.cached('intro_container').get(0).clientHeight +
+          this.view.S.cached('add_intro').get(0).clientHeight +
+          this.view.S.cached('input_text').get(0).scrollHeight +
+          this.view.S.cached('password_or_pubkey').get(0).clientHeight +
+          this.view.S.cached('footer').outerHeight()!;
         minHeight = 260;
       } else if (this.view.S.cached('reply_msg_successful').is(':visible')) {
         currentHeight = this.view.S.cached('reply_msg_successful').outerHeight() || 0;
       } else {
         currentHeight = this.view.S.cached('prompt').outerHeight() || 0;
       }
-      if (currentHeight !== this.lastReplyBoxTableHeight && Math.abs(currentHeight - this.lastReplyBoxTableHeight) > 2) { // more then two pixel difference compared to last time
+      if (currentHeight !== this.lastReplyBoxTableHeight && Math.abs(currentHeight - this.lastReplyBoxTableHeight) > 2) { // more than two pixels difference compared to last time
         this.lastReplyBoxTableHeight = currentHeight;
-        BrowserMsg.send.setCss(this.view.parentTabId, { selector: `iframe#${this.view.frameId}`, css: { height: `${(Math.max(minHeight, currentHeight) + addExtra)}px` } });
+        BrowserMsg.send.setReplyBoxHeight(this.view.parentTabId, { replyMsgId: `#${this.view.frameId}`, height: Math.max(minHeight, currentHeight) + addExtra });
       }
     } else {
       this.view.S.cached('input_text').css('max-width', '');

@@ -5,6 +5,7 @@
 import { NewMsgData, RecipientElement } from './compose-types.js';
 import { SquireEditor, WillPasteEvent } from '../../../types/squire.js';
 
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { Str } from '../../../js/common/core/common.js';
@@ -191,6 +192,14 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   private scrollIntoView = () => {
     this.squire.addEventListener('cursor', () => {
       try {
+        // keep the cursor of the reply box in the vieport, #3403
+        if (this.view.isReplyBox) {
+          BrowserMsg.send.scrollToReplyBox(this.view.parentTabId, {
+            replyMsgId: `#${this.view.frameId}`,
+            cursor: this.squire.getCursorPosition()
+          });
+        }
+        // keep the cursor of the compose/reply box visible in #input_text, #3403
         const inputText = this.view.S.cached('input_text').get(0);
         const offsetBottom = this.squire.getCursorPosition().bottom - inputText.getBoundingClientRect().top;
         const editorRootHeight = this.view.S.cached('input_text').height() || 0;

@@ -1695,6 +1695,10 @@ table#compose td.input.show_send_from select#input_from:focus {
 
 .reply_box table#compose td.input.show_send_from select#input_from { margin-right: 4px; }
 
+.reply_box table#compose .text_container {
+  max-height: calc(100vh - 92px);
+}
+
 table#compose td.input.show_send_from #input_from_settings {
   position: absolute;
   right: 10px;
