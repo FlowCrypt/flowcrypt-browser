@@ -1,7 +1,8 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { AvaContext, newTimeoutPromise } from '../tests/tooling';
-import { ConsoleMessage, Dialog, ElementHandle, Frame, Page } from 'puppeteer';
+import { ConsoleMessage, Dialog, ElementHandle, Frame, KeyInput, Page } from 'puppeteer';
+import { PageRecipe } from '../tests/page-recipe/abstract-page-recipe';
 import { TIMEOUT_DESTROY_UNEXPECTED_ALERT, TIMEOUT_ELEMENT_APPEAR, TIMEOUT_ELEMENT_GONE, TIMEOUT_PAGE_LOAD, TIMEOUT_TEST_STATE_SATISFY } from '.';
 import { TestUrls } from './test-urls';
 import { Util } from '../util';
@@ -442,8 +443,7 @@ abstract class ControllableBase {
   private getFramesUrlsInThisMoment = async (urlMatchables: string[]) => {
     const matchingLinks: string[] = [];
     for (const iframe of await this.target.$$('iframe')) {
-      const srcHandle = await iframe.getProperty('src');
-      const src = await srcHandle.jsonValue() as string;
+      const src = await PageRecipe.getElementPropertyJson(iframe, 'src');
       if (urlMatchables.filter(m => src.indexOf(m) !== -1).length === urlMatchables.length) {
         matchingLinks.push(src);
       }
@@ -522,7 +522,7 @@ export class ControllablePage extends ControllableBase {
           this.preventclose = true;
           t.log(`${t.attemptText} Dismissing unexpected alert ${alert.message()}`);
           try {
-            alert.dismiss().catch(e => t.log(`${t.attemptText} Err1 dismissing alert ${String(e)}`));
+            alert.dismiss().catch((e: any) => t.log(`${t.attemptText} Err1 dismissing alert ${String(e)}`));
           } catch (e) {
             t.log(`${t.attemptText} Err2 dismissing alert ${String(e)}`);
           }
@@ -571,7 +571,7 @@ export class ControllablePage extends ControllableBase {
     }
   }
 
-  public press = async (...keys: string[]) => {
+  public press = async (...keys: KeyInput[]) => {
     for (const key of keys) {
       await this.page.keyboard.press(key);
     }

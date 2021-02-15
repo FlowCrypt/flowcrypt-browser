@@ -3,7 +3,7 @@
 import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
 
 import { AvaContext } from '../tooling/';
-import { ElementHandle } from 'puppeteer';
+import { ElementHandle, JSHandle } from 'puppeteer';
 import { expect } from 'chai';
 
 type ModalOpts = { contentToCheck?: string, clickOn?: 'confirm' | 'cancel', getTriggeredPage?: boolean, timeout?: number };
@@ -11,7 +11,7 @@ type ModalType = 'confirm' | 'error' | 'info' | 'warning';
 
 export abstract class PageRecipe {
   public static getElementPropertyJson = async (elem: ElementHandle<Element>, property: string) => {
-    return await (await elem.getProperty(property)).jsonValue() as string;
+    return await (await elem.getProperty(property) as JSHandle).jsonValue() as string;
   }
 
   public static waitForModalAndRespond = async (controllable: Controllable, type: ModalType, { contentToCheck, clickOn, timeout }: ModalOpts) => {

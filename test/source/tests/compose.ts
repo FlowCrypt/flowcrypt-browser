@@ -410,7 +410,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
         await expectRecipientElements(composePage, { to: ['flowcryptcompatibility@gmail.com'], cc: ['flowcrypt.compatibility@gmail.com'], bcc: ['human@flowcrypt.com'] });
         const subjectElem = await composePage.waitAny('@input-subject');
-        expect(await (await subjectElem.getProperty('value')).jsonValue()).to.equal('Test Draft - New Message');
+        expect(await PageRecipe.getElementPropertyJson(subjectElem, 'value')).to.equal('Test Draft - New Message');
         expect((await composePage.read('@input-body')).trim()).to.equal('Testing Drafts (Do not delete)');
         for (const elem of await composePage.target.$$('.container-cc-bcc-buttons > span')) {
           expect(await PageRecipe.getElementPropertyJson(elem, 'offsetHeight')).to.equal(0); // CC/BCC btn isn't visible
@@ -1129,7 +1129,7 @@ const expectRecipientElements = async (controllable: ControllablePage, expected:
       const recipientElements = await container.$$('.recipients > span');
       expect(recipientElements.length).to.equal(expectedEmails.length);
       for (const recipientElement of recipientElements) {
-        const textContent = await (await recipientElement.getProperty('textContent')).jsonValue() as string;
+        const textContent = await PageRecipe.getElementPropertyJson(recipientElement, 'textContent');
         expect(expectedEmails).to.include(textContent.trim());
       }
     }
