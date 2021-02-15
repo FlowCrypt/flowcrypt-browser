@@ -6,6 +6,7 @@ import { Buf } from '../../buf.js';
 import { ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Str } from '../../common.js';
 import { opgp } from './openpgpjs-custom.js';
+import { Stream } from '../../stream.js';
 
 export type PreparedForDecrypt = { isArmored: boolean, isCleartext: true, message: OpenPGP.cleartext.CleartextMessage | OpenPGP.message.Message }
   | { isArmored: boolean, isCleartext: false, message: OpenPGP.message.Message };
@@ -94,4 +95,13 @@ export class PgpArmor {
     throw new Error('Message does not have armor headers');
   }
 
+  public static dearmor = async (text: string): Promise<{ type: number, data: Uint8Array }> => {
+    const decoded = await opgp.armor.decode(text);
+    const data = await Stream.readToEnd(decoded.data);
+    return { type: decoded.type, data };
+  }
+
+  public static armor = (messagetype: OpenPGP.enums.armor, body: object, partindex?: number, parttotal?: number, customComment?: string): string => {
+    return opgp.armor.encode(messagetype, body, partindex, parttotal, customComment);
+  }
 }
