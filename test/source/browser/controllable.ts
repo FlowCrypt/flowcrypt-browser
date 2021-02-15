@@ -567,8 +567,8 @@ export class ControllablePage extends ControllableBase {
     }
   }
 
-  public press = async (...keys: KeyInput[]) => {
-    for (const key of keys) {
+  public press = async (key: KeyInput, repeat = 1) => {
+    for (let i = 0; i < repeat; i += 1) {
       await this.page.keyboard.press(key);
     }
   }

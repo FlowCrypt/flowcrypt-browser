@@ -70,11 +70,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     const deleteMessage = async (gmailPage: ControllablePage) => {
       await gmailPage.waitAndClick('[aria-label="More"]');
-      await gmailPage.press('ArrowDown');
-      await gmailPage.press('ArrowDown');
-      await gmailPage.press('ArrowDown');
-      await gmailPage.press('ArrowDown');
-      await gmailPage.press('ArrowDown');
+      await gmailPage.press('ArrowDown', 5);
       await gmailPage.press('Enter');
       await Util.sleep(3);
     };
