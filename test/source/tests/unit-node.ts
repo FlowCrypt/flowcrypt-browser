@@ -1557,14 +1557,14 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....
     ava.default(`[unit][Stream.readToEnd] efficiently handles multiple chunks`, async t => {
       const stream = new ReadableStream<Uint8Array>({
         start(controller) {
-          for (let i = 0; i < 100; i++) {
+          for (let i = 0; i < 10; i++) {
             controller.enqueue(Buffer.from('test'.repeat(1000000)));
           }
           controller.close();
         }
       });
       const result = await Stream.readToEnd(stream);
-      expect(result.length).to.equal(400000000);
+      expect(result.length).to.equal(40000000);
       t.pass();
     });
 
