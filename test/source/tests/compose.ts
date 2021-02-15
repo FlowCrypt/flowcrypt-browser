@@ -192,7 +192,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.dev'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await composeFrame.waitAndFocus('@action-show-options-popover');
-      await inboxPage.press('Enter', 'ArrowDown', 'ArrowDown', 'ArrowDown', 'Enter'); // more arrow downs to ensure that active element selection loops
+      await inboxPage.press('Enter');
+      await inboxPage.press('ArrowDown', 3); // more arrow downs to ensure that active element selection loops
+      await inboxPage.press('Enter');
       expect(await composeFrame.read('@action-send')).to.eq('Sign and Send');
     }));
 
