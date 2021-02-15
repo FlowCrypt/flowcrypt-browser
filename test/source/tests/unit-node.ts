@@ -20,7 +20,6 @@ import { GoogleData, GmailParser, GmailMsg } from '../mock/google/google-data';
 import { pubkey2864E326A5BE488A, rsa1024subkeyOnly, rsa1024subkeyOnlyEncrypted } from './tooling/consts';
 import { PgpArmor } from '../core/crypto/pgp/pgp-armor';
 import { equals } from '../buf.js';
-import { Stream } from '../core/stream';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -1534,10 +1533,9 @@ kBXo
     });
 
     ava.default(`[unit][PgpArmor.dearmor] throws on incorrect sequence`, async t => {
-      expect(PgpArmor.dearmor(`-----BEGIN PGP MESSAGE-----
+      await expect(PgpArmor.dearmor(`-----BEGIN PGP MESSAGE-----
 
-AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....
------END PGP MESSAGE-----`)).to.eventually.be.rejectedWith('Misformed armored text');
+AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)).to.eventually.be.rejectedWith('Misformed armored text');
       t.pass();
     });
 
@@ -1551,20 +1549,6 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....
         dearmored.data,
         source
       );
-      t.pass();
-    });
-
-    ava.default(`[unit][Stream.readToEnd] efficiently handles multiple chunks`, async t => {
-      const stream = new ReadableStream<Uint8Array>({
-        start(controller) {
-          for (let i = 0; i < 10; i++) {
-            controller.enqueue(Buffer.from('test'.repeat(1000000)));
-          }
-          controller.close();
-        }
-      });
-      const result = await Stream.readToEnd(stream);
-      expect(result.length).to.equal(40000000);
       t.pass();
     });
 
