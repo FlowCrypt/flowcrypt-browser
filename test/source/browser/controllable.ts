@@ -107,13 +107,9 @@ abstract class ControllableBase {
   public ensureFocused = async (selector: string) => {
     const e = await this.element(selector) as ElementHandle;
     const activeElement = await this.target.evaluateHandle(() => document.activeElement) as ElementHandle;
-    expect(await this.getProperty(activeElement, 'outerHTML')).to.eq(await this.getProperty(e, 'outerHTML'));
+    expect(await PageRecipe.getElementPropertyJson(activeElement, 'outerHTML')).to.eq(await PageRecipe.getElementPropertyJson(e, 'outerHTML'));
   }
 
-
-  public getProperty = async (element: ElementHandle, property: string) => {
-    return await (await element.getProperty(property)).jsonValue();
-  }
 
   public click = async (selector: string) => {
     this.log(`click:1:${selector}`);

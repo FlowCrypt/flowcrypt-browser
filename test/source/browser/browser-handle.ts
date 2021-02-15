@@ -94,7 +94,7 @@ export class BrowserHandle {
     return html;
   }
 
-  private doAwaitTriggeredPage = (triggeringAction: () => Promise<void>): Promise<Page> => {
+  private doAwaitTriggeredPage = (triggeringAction: () => Promise<void>): Promise<Page | null> => {
     return new Promise((resolve, reject) => {
       setTimeout(() => reject(new Error('Action did not trigger a new page within timeout period')), TIMEOUT_ELEMENT_APPEAR * 1000);
       let resolved = 0;
