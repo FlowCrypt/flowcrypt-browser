@@ -575,7 +575,10 @@ export class ControllablePage extends ControllableBase {
 
   public screenshot = async (): Promise<string> => {
     await this.dismissActiveAlerts();
-    return await Promise.race([this.page.screenshot({ encoding: 'base64' }), newTimeoutPromise('screenshot', 20)]);
+    return await Promise.race([
+      this.page.screenshot({ encoding: 'base64' }) as Promise<string>,
+      newTimeoutPromise('screenshot', 20)
+    ]);
   }
 
   public html = async (): Promise<string> => {

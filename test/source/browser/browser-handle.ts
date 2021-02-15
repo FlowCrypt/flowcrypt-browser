@@ -38,7 +38,7 @@ export class BrowserHandle {
   }
 
   public newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>): Promise<ControllablePage> => {
-    const page = await this.doAwaitTriggeredPage(triggeringAction);
+    const page = await this.doAwaitTriggeredPage(triggeringAction) as Page;
     await page.setViewport(this.viewport);
     const controllablePage = new ControllablePage(t, page);
     this.pages.push(controllablePage);
