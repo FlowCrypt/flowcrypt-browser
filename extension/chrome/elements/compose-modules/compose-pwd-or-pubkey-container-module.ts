@@ -50,7 +50,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     this.showHideContainerAndColorSendBtn();
   }
 
-  public showHideContainerAndColorSendBtn = () => {
+  public showHideContainerAndColorSendBtn = async () => {
     this.view.sendBtnModule.resetSendBtn();
     this.view.S.cached('send_btn_note').text('');
     this.view.S.cached('send_btn').removeAttr('title');
@@ -59,7 +59,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
       this.hideMsgPwdUi(); // Hide 'Add Pasword' prompt if there are no recipients or message is not encrypted
       this.view.sendBtnModule.enableBtn();
     } else if (this.view.recipientsModule.getRecipients().find(r => r.status === RecipientStatus.NO_PGP)) {
-      this.showMsgPwdUiAndColorBtn().catch(Catch.reportErr);
+      await this.showMsgPwdUiAndColorBtn().catch(Catch.reportErr);
     } else if (this.view.recipientsModule.getRecipients().find(r => [RecipientStatus.FAILED, RecipientStatus.WRONG].includes(r.status))) {
       this.view.S.now('send_btn_text').text(SendBtnTexts.BTN_WRONG_ENTRY);
       this.view.S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
@@ -116,7 +116,6 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
       const { removeValidationElements } = this.keyImportUI.renderPassPhraseStrengthValidationInput($("#input_password"), undefined, 'pwd');
       this.rmPwdStrengthValidationElements = removeValidationElements;
     }
-    this.view.sizeModule.resizeComposeBox();
   }
 
   private hideMsgPwdUi = () => {
