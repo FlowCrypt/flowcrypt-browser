@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { KeyUtil } from '../../core/crypto/key.js';
+import { PgpArmor } from '../../core/crypto/pgp/pgp-armor.js';
 import { HandlersDefinition } from '../all-apis-mock';
 
 const alice = `-----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -191,28 +191,28 @@ ctnWuBzRDeI0n6XDaPv5TpKpS7uqy/fTlJLGE9vZTFUKzeGkQFomBoXNVWs=
 
 export const mockWkdEndpoints: HandlersDefinition = {
   '/.well-known/openpgpkey/hu/ihyath4noz8dsckzjbuyqnh4kbup6h4i?l=john.doe': async () => {
-    return Buffer.from((await KeyUtil.dearmor(johnDoe1)).data); // direct for john.doe@localhost
+    return Buffer.from((await PgpArmor.dearmor(johnDoe1)).data); // direct for john.doe@localhost
   },
   '/.well-known/openpgpkey/hu/ihyath4noz8dsckzjbuyqnh4kbup6h4i?l=John.Doe': async () => {
-    return Buffer.from((await KeyUtil.dearmor(johnDoe1)).data); // direct for John.Doe@localhost
+    return Buffer.from((await PgpArmor.dearmor(johnDoe1)).data); // direct for John.Doe@localhost
   },
   '/.well-known/openpgpkey/hu/cb53pfqmbzc8mm3ecbjxyen65fdxos56?l=jack.advanced': async () => {
-    return Buffer.from((await KeyUtil.dearmor(jackAdvanced)).data); // direct for jack.advanced@localhost
+    return Buffer.from((await PgpArmor.dearmor(jackAdvanced)).data); // direct for jack.advanced@localhost
   },
   '/.well-known/openpgpkey/localhost/hu/ihyath4noz8dsckzjbuyqnh4kbup6h4i?l=john.doe': async () => {
-    return Buffer.from((await KeyUtil.dearmor(johnDoe)).data); // advanced for john.doe@localhost
+    return Buffer.from((await PgpArmor.dearmor(johnDoe)).data); // advanced for john.doe@localhost
   },
   '/.well-known/openpgpkey/localhost/hu/ihyath4noz8dsckzjbuyqnh4kbup6h4i?l=John.Doe': async () => {
-    return Buffer.from((await KeyUtil.dearmor(johnDoe)).data); // advanced for John.Doe@localhost
+    return Buffer.from((await PgpArmor.dearmor(johnDoe)).data); // advanced for John.Doe@localhost
   },
   '/.well-known/openpgpkey/localhost/hu/pob4adi8roqdsmtmxikx68pi6ij35oca?l=incorrect': async () => {
-    return Buffer.from((await KeyUtil.dearmor(alice)).data); // advanced for incorrect@localhost
+    return Buffer.from((await PgpArmor.dearmor(alice)).data); // advanced for incorrect@localhost
   },
   '/.well-known/openpgpkey/localhost/hu/66iu18j7mk6hod4wqzf6qd37u6wejx4y?l=some.revoked': async () => {
     return Buffer.from([
-      ...(await KeyUtil.dearmor(validAmongRevokedRevoked1)).data,
-      ...(await KeyUtil.dearmor(validAmongRevokedValid)).data,
-      ...(await KeyUtil.dearmor(validAmongRevokedRevoked2)).data,
+      ...(await PgpArmor.dearmor(validAmongRevokedRevoked1)).data,
+      ...(await PgpArmor.dearmor(validAmongRevokedValid)).data,
+      ...(await PgpArmor.dearmor(validAmongRevokedRevoked2)).data,
     ]);
   },
   '/.well-known/openpgpkey/localhost/policy': async () => {

@@ -6,7 +6,8 @@ import { MsgBlock } from '../core/msg-block';
 import { MsgBlockParser } from '../core/msg-block-parser';
 import { PgpHash } from '../core/crypto/pgp/pgp-hash';
 import { TestVariant } from '../util';
-import { expect } from 'chai';
+import chai = require('chai');
+import chaiAsPromised = require('chai-as-promised');
 import { KeyUtil, KeyInfoWithOptionalPp } from '../core/crypto/key';
 import { UnreportableError } from '../platform/catch.js';
 import { Buf } from '../core/buf';
@@ -17,7 +18,11 @@ import { Attachment } from '../core/attachment.js';
 import { ContactStore } from '../platform/store/contact-store.js';
 import { GoogleData, GmailParser, GmailMsg } from '../mock/google/google-data';
 import { pubkey2864E326A5BE488A, rsa1024subkeyOnly, rsa1024subkeyOnlyEncrypted } from './tooling/consts';
+import { PgpArmor } from '../core/crypto/pgp/pgp-armor';
+import { equals } from '../buf.js';
 
+chai.use(chaiAsPromised);
+const expect = chai.expect;
 // tslint:disable:no-blank-lines-func
 /* eslint-disable max-len */
 // tslint:disable:no-unused-expression
@@ -1526,5 +1531,26 @@ kBXo
       expect(key.usableForSigningButExpired).to.equal(false);
       t.pass();
     });
+
+    ava.default(`[unit][PgpArmor.dearmor] throws on incorrect sequence`, async t => {
+      await expect(PgpArmor.dearmor(`-----BEGIN PGP MESSAGE-----
+
+AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)).to.eventually.be.rejectedWith('Misformed armored text');
+      t.pass();
+    });
+
+    ava.default(`[unit][PgpArmor.dearmor] correctly handles long string`, async t => {
+      const source = Buffer.from('The test string concatenated many times to produce large output'.repeat(100000));
+      const type = 3;
+      const armored = PgpArmor.armor(type, source);
+      const dearmored = await PgpArmor.dearmor(armored);
+      expect(dearmored.type).to.equal(type);
+      equals(
+        dearmored.data,
+        source
+      );
+      t.pass();
+    });
+
   }
 };

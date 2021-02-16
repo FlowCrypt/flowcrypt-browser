@@ -12,6 +12,7 @@ import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { TestWithBrowser } from './../test';
 import { GoogleData } from './../mock/google/google-data';
+import { Stream } from '../core/stream';
 
 // tslint:disable:no-blank-lines-func
 
@@ -118,6 +119,20 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       const fileText = await webDecryptPage.awaitDownloadTriggeredByClicking('@container-att-name(small.txt)');
       expect(fileText.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
     }));
+
+    ava.default(`[unit][Stream.readToEnd] efficiently handles multiple chunks`, async t => {
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          for (let i = 0; i < 10; i++) {
+            controller.enqueue(Buffer.from('test'.repeat(1000000)));
+          }
+          controller.close();
+        }
+      });
+      const result = await Stream.readToEnd(stream);
+      expect(result.length).to.equal(40000000);
+      t.pass();
+    });
 
   }
 
