@@ -8,7 +8,7 @@ import { KeyAlgo } from './core/crypto/key.js';
 
 type DomainRules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'PRV_AUTOIMPORT_OR_AUTOGEN' | 'PASS_PHRASE_QUIET_AUTOGEN' |
   'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' | 'NO_KEY_MANAGER_PUB_LOOKUP' | 'USE_LEGACY_ATTESTER_SUBMIT' |
-  'DEFAULT_REMEMBER_PASS_PHRASE';
+  'DEFAULT_REMEMBER_PASS_PHRASE' | 'HIDE_ARMOR_META';
 
 export type DomainRulesJson = {
   flags?: DomainRules$flag[],
@@ -183,6 +183,13 @@ export class OrgRules {
    */
   public useLegacyAttesterSubmit = (): boolean => {
     return (this.domainRules.flags || []).includes('USE_LEGACY_ATTESTER_SUBMIT');
+  }
+
+  /**
+   * With this option, sent messages won't have any comment/version in armor, imported keys get imported without armor
+   */
+  public shouldHideArmorMeta = (): boolean => {
+    return (this.domainRules.flags || []).includes('HIDE_ARMOR_META');
   }
 
 }

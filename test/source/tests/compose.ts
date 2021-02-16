@@ -726,6 +726,24 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await sendTextAndVerifyPresentInSentMsg(t, browser, rainbow, { sign: true, encrypt: true });
     }));
 
+    ava.default('compose - sent message should\'t have version and comment based on OrgRules', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'has.pub@org-rules-test.flowcrypt.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.manualEnter(settingsPage, 'has.pub.orgrulestest', { noPrvCreateOrgRule: true, enforceAttesterSubmitOrgRule: true });
+      const subject = `Test Sending Message With Test Text and HIDE_ARMOR_META OrgRule ${Util.lousyRandom()}`;
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, { sign: true });
+      await composePage.waitAndType('@input-body', 'any text', { delay: 1 });
+      await ComposePageRecipe.sendAndClose(composePage);
+      // get sent msg from mock
+      const sentMsg = new GoogleData(acct).getMessageBySubject(subject)!;
+      const message = sentMsg.payload!.body!.data!;
+      expect(message).to.include('-----BEGIN PGP MESSAGE-----');
+      expect(message).to.include('-----END PGP MESSAGE-----');
+      expect(message).to.not.include('Version');
+      expect(message).to.not.include('Comment');
+    }));
+
     ava.default.skip('oversize attachment does not get erroneously added', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       // big file will get canceled
