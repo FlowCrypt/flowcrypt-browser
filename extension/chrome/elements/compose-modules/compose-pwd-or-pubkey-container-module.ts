@@ -116,6 +116,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
       const { removeValidationElements } = this.keyImportUI.renderPassPhraseStrengthValidationInput($("#input_password"), undefined, 'pwd');
       this.rmPwdStrengthValidationElements = removeValidationElements;
     }
+    this.view.sizeModule.resizeComposeBox();
   }
 
   private hideMsgPwdUi = () => {
