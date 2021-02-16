@@ -47,6 +47,7 @@ fi
 mkdir -p $OUTDIR/lib/
 mkdir -p $OUTDIR/css/
 cp node_modules/dompurify/dist/purify.js $OUTDIR/lib/purify.js
+cp node_modules/dompurify/dist/purify.js.map $OUTDIR/lib/purify.js.map
 cp node_modules/jquery/dist/jquery.min.js $OUTDIR/lib/jquery.min.js
 cp node_modules/openpgp/dist/openpgp.js $OUTDIR/lib/openpgp.js
 cp node_modules/openpgp/dist/openpgp.worker.js $OUTDIR/lib/openpgp.worker.js
