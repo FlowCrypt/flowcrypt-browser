@@ -848,7 +848,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
       $(el).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
-    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn();
+    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
   }
 
@@ -862,7 +862,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
     this.view.S.cached('input_addresses_container_outer').find(`#input-container-${this.addedRecipients[index].sendingType} input`).focus();
     this.addedRecipients.splice(index, 1);
-    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn();
+    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
   }
 

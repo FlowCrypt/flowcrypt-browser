@@ -40,14 +40,14 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     const footerHeight = this.view.S.cached('footer').outerHeight() || 0;
     this.view.S.cached('expiration_note').css({ bottom: (passwordContainerHeight + footerHeight) + 'px' });
     this.view.S.cached('expiration_note').fadeIn();
-    this.showHideContainerAndColorSendBtn();
+    this.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
   }
 
   public inputPwdBlurHandler = () => {
     Catch.setHandledTimeout(() => { // timeout here is needed so <a> will be visible once clicked
       this.view.S.cached('expiration_note').fadeOut();
     }, 100);
-    this.showHideContainerAndColorSendBtn();
+    this.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
   }
 
   public showHideContainerAndColorSendBtn = async () => {
