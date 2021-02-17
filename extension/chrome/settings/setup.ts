@@ -12,6 +12,7 @@ import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/email-provider/gmail/google.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
 import { Lang } from '../../js/common/lang.js';
+import { opgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
 import { OrgRules } from '../../js/common/org-rules.js';
 import { Settings } from '../../js/common/settings.js';
 import { SetupCreateKeyModule } from './setup/setup-create-key.js';
@@ -103,6 +104,10 @@ export class SetupView extends View {
     this.scopes = await AcctStore.getScopes(this.acctEmail);
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
+    if (this.orgRules.shouldHideArmorMeta()) {
+      opgp.config.show_comment = false;
+      opgp.config.show_version = false;
+    }
     this.pubLookup = new PubLookup(this.orgRules);
     if (this.orgRules.usesKeyManager() && this.idToken) {
       this.keyManager = new KeyManager(this.orgRules.getKeyManagerUrlForPrivateKeys()!);
