@@ -104,7 +104,7 @@ export class SetupView extends View {
     this.scopes = await AcctStore.getScopes(this.acctEmail);
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
-    if (this.orgRules.shouldHideArmorMeta()) {
+    if (this.orgRules.shouldHideArmorMeta() && typeof opgp !== 'undefined') {
       opgp.config.show_comment = false;
       opgp.config.show_version = false;
     }
