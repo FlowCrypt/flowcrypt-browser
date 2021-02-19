@@ -11,7 +11,7 @@ import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { Str } from './../core/common';
 import { MOCK_KM_LAST_INSERTED_KEY } from './../mock/key-manager/key-manager-endpoints';
 import { BrowserRecipe } from './tooling/browser-recipe';
-import { KeyUtil } from '../core/crypto/key';
+import { KeyInfo, KeyUtil } from '../core/crypto/key';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -377,6 +377,15 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await settingsPage.waitAll(['@action-show-encrypted-inbox', '@action-open-security-page']);
       await Util.sleep(1);
       await settingsPage.notPresent(['@action-open-backup-page']);
+      const { cryptup_haspuborgrulestestflowcryptcom_keys: keys } = await settingsPage.getFromLocalStorage(['cryptup_haspuborgrulestestflowcryptcom_keys']);
+      const ki = keys as KeyInfo[];
+      expect(ki.length).to.equal(1);
+      expect(ki[0].private).to.include('PGP PRIVATE KEY');
+      expect(ki[0].private).to.not.include('Version');
+      expect(ki[0].private).to.not.include('Comment');
+      expect(ki[0].public).to.include('PGP PUBLIC KEY');
+      expect(ki[0].public).to.not.include('Version');
+      expect(ki[0].public).to.not.include('Comment');
     }));
 
     ava.default('no.pub@org-rules-test - no backup, no keygen, enforce attester submit with submit err', testWithBrowser(undefined, async (t, browser) => {

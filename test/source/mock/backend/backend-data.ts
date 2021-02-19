@@ -56,6 +56,7 @@ export class BackendData {
         "flags": [
           "NO_PRV_CREATE",
           "NO_PRV_BACKUP",
+          "HIDE_ARMOR_META",
           "ENFORCE_ATTESTER_SUBMIT",
           "USE_LEGACY_ATTESTER_SUBMIT",
         ]
