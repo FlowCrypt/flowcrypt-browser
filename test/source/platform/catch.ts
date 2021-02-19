@@ -36,6 +36,14 @@ export class Catch {
     }
   }
 
+  public static undefinedOnException = async <T>(p: Promise<T>): Promise<T | undefined> => {
+    try {
+      return await p;
+    } catch (e) {
+      return undefined;
+    }
+  }
+
   public static version = () => {
     return Catch.RUNTIME_VERSION;
   }

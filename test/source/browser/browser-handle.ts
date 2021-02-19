@@ -1,8 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { Browser, EvaluateFn, Page, Target } from 'puppeteer';
-import { Util } from '../util';
-
+import { Util, Config } from '../util';
 import { ControllablePage } from './controllable';
 import { Semaphore } from './browser-pool';
 import { TIMEOUT_ELEMENT_APPEAR } from '.';
@@ -32,14 +31,20 @@ export class BrowserHandle {
       await controllablePage.goto(url);
     }
     this.pages.push(controllablePage);
+    if (url && url.includes(Config.extensionId)) {
+      await controllablePage.waitUntilViewLoaded();
+    }
     return controllablePage;
   }
 
   public newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>): Promise<ControllablePage> => {
-    const page = await this.doAwaitTriggeredPage(triggeringAction);
+    const page = await this.doAwaitTriggeredPage(triggeringAction) as Page;
     await page.setViewport(this.viewport);
     const controllablePage = new ControllablePage(t, page);
     this.pages.push(controllablePage);
+    if (page.url().includes(Config.extensionId)) {
+      await controllablePage.waitUntilViewLoaded();
+    }
     return controllablePage;
   }
 
@@ -89,7 +94,7 @@ export class BrowserHandle {
     return html;
   }
 
-  private doAwaitTriggeredPage = (triggeringAction: () => Promise<void>): Promise<Page> => {
+  private doAwaitTriggeredPage = (triggeringAction: () => Promise<void>): Promise<Page | null> => {
     return new Promise((resolve, reject) => {
       setTimeout(() => reject(new Error('Action did not trigger a new page within timeout period')), TIMEOUT_ELEMENT_APPEAR * 1000);
       let resolved = 0;

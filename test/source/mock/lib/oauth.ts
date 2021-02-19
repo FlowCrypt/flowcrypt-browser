@@ -3,9 +3,9 @@
 import { HttpClientErr, Status } from './api';
 
 import { Buf } from '../../core/buf';
-import { Config } from '../../util';
 import { Str } from '../../core/common';
 
+const authURL = 'https://localhost:8001';
 // tslint:disable:variable-name
 
 export class OauthMock {
@@ -22,18 +22,15 @@ export class OauthMock {
   private issuedIdTokensByAcct: { [acct: string]: string[] } = {};
 
   public consentChooseAccountPage = (url: string) => {
-    return this.htmlPage('oauth mock choose acct', '<h1>Choose mock oauth email</h1>' + Config.secrets().auth.google.map(({ email }) => {
-      return `<a href="${url + '&login_hint=' + email}" id="profileIdentifier" data-email="${email}">${email}</a><br>`;
-    }).join('<br>'));
+    return this.htmlPage('oauth mock choose acct', '<h1>Choose mock oauth email</h1>'
+      + `<a href="${url}&login_hint=" id="profileIdentifier" data-email="dummy">dummy</a><br>`);
   }
 
   public consentPage = (url: string, acct: string) => {
-    this.checkKnownAcct(acct);
     return this.htmlPage('oauth mock', `Mock oauth: ${acct}<br><br><a href="${url}&result=Success" id="submit_approve_access">Approve</a>`);
   }
 
   public consentResultPage = (acct: string, state: string, result: string) => {
-    this.checkKnownAcct(acct);
     if (result === 'Success') {
       const authCode = `mock-auth-code-${acct.replace(/[^a-z0-9]+/g, '')}`;
       const refreshToken = `mock-refresh-token-${acct.replace(/[^a-z0-9]+/g, '')}`;
@@ -52,7 +49,6 @@ export class OauthMock {
     const refresh_token = this.refreshTokenByAuthCode[code];
     const access_token = this.getAccessToken(refresh_token);
     const acct = this.acctByAccessToken[access_token];
-    this.checkKnownAcct(acct);
     const id_token = this.generateIdToken(acct);
     return { access_token, refresh_token, expires_in: this.expiresIn, id_token, token_type: 'refresh_token' }; // guessed the token_type
   }
@@ -61,7 +57,6 @@ export class OauthMock {
     try {
       const access_token = this.getAccessToken(refreshToken);
       const acct = this.acctByAccessToken[access_token];
-      this.checkKnownAcct(acct);
       const id_token = this.generateIdToken(acct);
       return { access_token, expires_in: this.expiresIn, id_token, token_type: 'Bearer' };
     } catch (e) {
@@ -78,7 +73,6 @@ export class OauthMock {
     if (!acct) {
       throw new HttpClientErr('Invalid mock auth token', Status.UNAUTHORIZED);
     }
-    this.checkKnownAcct(acct);
     return acct;
   }
 
@@ -94,7 +88,6 @@ export class OauthMock {
     if (!acct) {
       throw new HttpClientErr('Invalid idToken token', Status.UNAUTHORIZED);
     }
-    this.checkKnownAcct(acct);
     return acct;
   }
 
@@ -126,13 +119,6 @@ export class OauthMock {
   private htmlPage = (title: string, content: string) => {
     return `<!DOCTYPE HTML><html><head><title>${title}</title></head><body>${content}</body></html>`;
   }
-
-  private checkKnownAcct = (acct: string) => {
-    if (!Config.secrets().auth.google.map(a => a.email).includes(acct)) {
-      throw new HttpClientErr(`Unknown test account: ${acct}`);
-    }
-  }
-
 }
 
 export class MockJwt {
@@ -145,7 +131,7 @@ export class MockJwt {
       sub: 'sub',
       aud: 'aud',
       azp: 'azp',
-      iss: "https://localhost:8001",
+      iss: authURL,
       name: 'First Last',
       picture: 'picture',
       locale: 'en',

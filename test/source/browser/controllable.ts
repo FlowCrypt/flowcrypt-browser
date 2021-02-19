@@ -1,7 +1,8 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { AvaContext, newTimeoutPromise } from '../tests/tooling';
-import { ConsoleMessage, Dialog, ElementHandle, Frame, Page } from 'puppeteer';
+import { ConsoleMessage, Dialog, ElementHandle, Frame, KeyInput, Page } from 'puppeteer';
+import { PageRecipe } from '../tests/page-recipe/abstract-page-recipe';
 import { TIMEOUT_DESTROY_UNEXPECTED_ALERT, TIMEOUT_ELEMENT_APPEAR, TIMEOUT_ELEMENT_GONE, TIMEOUT_PAGE_LOAD, TIMEOUT_TEST_STATE_SATISFY } from '.';
 import { TestUrls } from './test-urls';
 import { Util } from '../util';
@@ -9,6 +10,7 @@ import { expect } from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as mkdirp from 'mkdirp';
+import { Dict } from '../core/common';
 
 declare const jQuery: any;
 
@@ -31,6 +33,14 @@ abstract class ControllableBase {
 
   public waitForSelTestState = async (state: 'ready' | 'working' | 'waiting' | 'closed', timeout = TIMEOUT_TEST_STATE_SATISFY) => {
     await this.waitAll(`[data-test-state="${state}"]`, { timeout, visible: false });
+  }
+
+  public waitUntilViewLoaded = async (timeout = TIMEOUT_PAGE_LOAD) => {
+    try {
+      await this.waitAll(`[data-test-view-state="loaded"]`, { timeout, visible: false });
+    } catch (e) {
+      throw new Error(`View didn't load within ${timeout}s at ${this.target.url()}`);
+    }
   }
 
   public waitAll = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number, visible?: boolean } = {}) => {
@@ -97,13 +107,9 @@ abstract class ControllableBase {
   public ensureFocused = async (selector: string) => {
     const e = await this.element(selector) as ElementHandle;
     const activeElement = await this.target.evaluateHandle(() => document.activeElement) as ElementHandle;
-    expect(await this.getProperty(activeElement, 'outerHTML')).to.eq(await this.getProperty(e, 'outerHTML'));
+    expect(await PageRecipe.getElementPropertyJson(activeElement, 'outerHTML')).to.eq(await PageRecipe.getElementPropertyJson(e, 'outerHTML'));
   }
 
-
-  public getProperty = async (element: ElementHandle, property: string) => {
-    return await (await element.getProperty(property)).jsonValue();
-  }
 
   public click = async (selector: string) => {
     this.log(`click:1:${selector}`);
@@ -276,28 +282,35 @@ abstract class ControllableBase {
     this.log(`wait_and_click:10:${selector}`);
   }
 
-  public waitForContent = async (selector: string, regExpNeedle: string | RegExp, timeoutSec = 20, testLoopLengthMs = 100) => {
+  public waitForContent = async (selector: string, needle: string | RegExp, timeoutSec = 20, testLoopLengthMs = 100) => {
     await this.waitAny(selector);
     const start = Date.now();
     const texts: string[] = [];
     while (Date.now() - start < timeoutSec * 1000) {
       const text = await this.read(selector, true);
-      if (text.match(regExpNeedle)) {
-        return;
+      if (typeof needle === 'string') { // str
+        if (text.includes(needle)) {
+          return;
+        }
+      } else { // regex
+        if (text.match(needle)) {
+          return;
+        }
       }
       texts.push(text);
       await Util.sleep(testLoopLengthMs / 1000);
     }
-    throw new Error(`Selector ${selector} was found but did not match "${regExpNeedle}" within ${timeoutSec}s. Last content: "${JSON.stringify(texts, undefined, 2)}"`);
+    throw new Error(`Selector ${selector} was found but did not match "${needle}" within ${timeoutSec}s. Last content: "${JSON.stringify(texts, undefined, 2)}"`);
   }
 
-  public verifyContentIsPresentContinuously = async (selector: string, expectedText: string, expectPresentForMs: number = 3000, timeoutSec = 20) => {
+  public verifyContentIsPresentContinuously = async (selector: string, expectedText: string, expectPresentForMs: number = 3000, timeoutSec = 30) => {
     await this.waitAll(selector);
     const start = Date.now();
-    const sleepMs = 100;
+    const sleepMs = 250;
     let presentForMs: number = 0;
     let actualText = '';
     const history: string[] = [];
+    let round = 1;
     while (Date.now() - start < timeoutSec * 1000) {
       await Util.sleep(sleepMs / 1000);
       actualText = await this.read(selector, true);
@@ -306,7 +319,7 @@ abstract class ControllableBase {
       } else {
         presentForMs += sleepMs;
       }
-      history.push(`${actualText} for ${presentForMs}`);
+      history.push(`${actualText} for ${presentForMs}ms at ${Date.now()} (round ${round++})`);
       if (presentForMs >= expectPresentForMs) {
         return;
       }
@@ -400,10 +413,10 @@ abstract class ControllableBase {
     } else if (m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)/)) { // tslint:disable-line:no-conditional-assignment
       return `.${m[1]}`; // represented as a class
       // eslint-disable-next-line no-cond-assign
-    } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-]+)$/)) { // tslint:disable-line:no-conditional-assignment
+    } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-_]+)$/)) { // tslint:disable-line:no-conditional-assignment
       return `[data-test="${m[1]}"]`;
       // eslint-disable-next-line no-cond-assign
-    } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-]+)\(([^()]*)\)$/)) { // tslint:disable-line:no-conditional-assignment
+    } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-_]+)\(([^()]*)\)$/)) { // tslint:disable-line:no-conditional-assignment
       return `//*[@data-test='${m[1]}' and contains(text(),'${m[2]}')]`;
     } else {
       return customSelLanguageQuery;
@@ -426,8 +439,7 @@ abstract class ControllableBase {
   private getFramesUrlsInThisMoment = async (urlMatchables: string[]) => {
     const matchingLinks: string[] = [];
     for (const iframe of await this.target.$$('iframe')) {
-      const srcHandle = await iframe.getProperty('src');
-      const src = await srcHandle.jsonValue() as string;
+      const src = await PageRecipe.getElementPropertyJson(iframe, 'src');
       if (urlMatchables.filter(m => src.indexOf(m) !== -1).length === urlMatchables.length) {
         matchingLinks.push(src);
       }
@@ -506,7 +518,7 @@ export class ControllablePage extends ControllableBase {
           this.preventclose = true;
           t.log(`${t.attemptText} Dismissing unexpected alert ${alert.message()}`);
           try {
-            alert.dismiss().catch(e => t.log(`${t.attemptText} Err1 dismissing alert ${String(e)}`));
+            alert.dismiss().catch((e: any) => t.log(`${t.attemptText} Err1 dismissing alert ${String(e)}`));
           } catch (e) {
             t.log(`${t.attemptText} Err2 dismissing alert ${String(e)}`);
           }
@@ -555,15 +567,18 @@ export class ControllablePage extends ControllableBase {
     }
   }
 
-  public press = async (...keys: string[]) => {
-    for (const key of keys) {
+  public press = async (key: KeyInput, repeat = 1) => {
+    for (let i = 0; i < repeat; i += 1) {
       await this.page.keyboard.press(key);
     }
   }
 
   public screenshot = async (): Promise<string> => {
     await this.dismissActiveAlerts();
-    return await Promise.race([this.page.screenshot({ encoding: 'base64' }), newTimeoutPromise('screenshot', 20)]);
+    return await Promise.race([
+      this.page.screenshot({ encoding: 'base64' }) as Promise<string>,
+      newTimeoutPromise('screenshot', 20)
+    ]);
   }
 
   public html = async (): Promise<string> => {
@@ -576,12 +591,12 @@ export class ControllablePage extends ControllableBase {
     let html = '';
     for (const msg of this.consoleMsgs) {
       if (msg instanceof ConsoleEvent) {
-        html += `<font class="c-${Util.htmlEscape(msg.type)}">${Util.htmlEscape(msg.type)}: ${Util.htmlEscape(msg.text)}</font>\n`;
+        html += `<span class="c-${Util.htmlEscape(msg.type)}">${Util.htmlEscape(msg.type)}: ${Util.htmlEscape(msg.text)}</span>\n`;
         if (alsoLogDirectly) {
           console.log(`[${t.title}] console-${msg.type}: ${msg.text}`);
         }
       } else {
-        html += `<font class="c-${Util.htmlEscape(msg.type())}">${Util.htmlEscape(msg.type())}: ${Util.htmlEscape(msg.text())}`;
+        html += `<div class="c-${Util.htmlEscape(msg.type())}">${Util.htmlEscape(msg.type())}: ${Util.htmlEscape(msg.text())}`;
         if (alsoLogDirectly) {
           console.log(`[${t.title}] console-${msg.type()}: ${msg.text()}`);
         }
@@ -599,10 +614,20 @@ export class ControllablePage extends ControllableBase {
         if (args.length) {
           html += `<ul>${args.map(arg => `<li>${Util.htmlEscape(arg)}</li>`)}</ul>`;
         }
-        html += `</font>\n`;
+        html += `</div>\n`;
       }
     }
     return html;
+  }
+
+  public getFromLocalStorage = async (keys: string[]): Promise<Dict<unknown>> => {
+    const result = await new Promise((resolve, reject) => {
+      (this.target as Page).exposeFunction('saveRawStorageResult', resolve).then(() =>
+        (this.target as Page).evaluate(keys =>
+          chrome.storage.local.get(keys, items => (window as any).saveRawStorageResult(items)), keys
+        ).then(undefined, reject), reject);
+    });
+    return result as Dict<unknown>;
   }
 
   private dismissActiveAlerts = async (): Promise<void> => {

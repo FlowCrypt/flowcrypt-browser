@@ -6,17 +6,23 @@ import { MsgBlock } from '../core/msg-block';
 import { MsgBlockParser } from '../core/msg-block-parser';
 import { PgpHash } from '../core/crypto/pgp/pgp-hash';
 import { TestVariant } from '../util';
-import { expect } from 'chai';
-import { KeyUtil, PrvKeyInfo } from '../core/crypto/key';
+import chai = require('chai');
+import chaiAsPromised = require('chai-as-promised');
+import { KeyUtil, KeyInfoWithOptionalPp } from '../core/crypto/key';
 import { UnreportableError } from '../platform/catch.js';
 import { Buf } from '../core/buf';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
-import { DecryptError, MsgUtil, PgpMsgMethod } from '../core/crypto/pgp/msg-util';
+import { DecryptError, DecryptSuccess, MsgUtil, PgpMsgMethod } from '../core/crypto/pgp/msg-util';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
-import { Att } from '../core/att.js';
+import { Attachment } from '../core/attachment.js';
 import { ContactStore } from '../platform/store/contact-store.js';
 import { GoogleData, GmailParser, GmailMsg } from '../mock/google/google-data';
+import { pubkey2864E326A5BE488A, rsa1024subkeyOnly, rsa1024subkeyOnlyEncrypted } from './tooling/consts';
+import { PgpArmor } from '../core/crypto/pgp/pgp-armor';
+import { equals } from '../buf.js';
 
+chai.use(chaiAsPromised);
+const expect = chai.expect;
 // tslint:disable:no-blank-lines-func
 /* eslint-disable max-len */
 // tslint:disable:no-unused-expression
@@ -91,10 +97,10 @@ export let defineUnitNodeTests = (testVariant: TestVariant) => {
       t.pass();
     });
 
-    ava.default(`[unit][PgpKey.usableButExpired] recognizes usable expired key`, async t => {
+    ava.default(`[unit][PgpKey.usableForEncryptionButExpired] recognizes usable expired key`, async t => {
       const armored = "-----BEGIN PGP PRIVATE KEY BLOCK-----\nVersion: FlowCrypt 7.0.1 Gmail Encryption\nComment: Seamlessly send and receive encrypted email\n\n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\n+gib+vSxHvLhC6oDBA==\n=RIPF\n-----END PGP PRIVATE KEY BLOCK-----"; // eslint-disable-line max-len
       const expiredKey = await KeyUtil.parse(armored);
-      expect(expiredKey.usableButExpired).to.equal(true);
+      expect(expiredKey.usableForEncryptionButExpired).to.equal(true);
       t.pass();
     });
 
@@ -134,7 +140,8 @@ yPLCqVTFJQWaCR5ZTekRQPTDZkjxjxbs
       expect(key.type).to.equal('x509');
       expect(key.usableForEncryption).to.equal(true);
       expect(key.usableForSigning).to.equal(true);
-      expect(key.usableButExpired).to.equal(false);
+      expect(key.usableForEncryptionButExpired).to.equal(false);
+      expect(key.usableForSigningButExpired).to.equal(false);
       expect(key.emails.length).to.equal(1);
       expect(key.emails[0]).to.equal('actalis@meta.33mail.com');
       expect(key.identities.length).to.equal(1);
@@ -263,7 +270,7 @@ sOLAw7KgpiL2+0v777saxSO5vtufJCKk4OOEaVDufeijlejKTM+H7twVer4iGqiW
       expect(key.type).to.equal('openpgp');
       expect(key.usableForEncryption).equal(false);
       expect(key.usableForSigning).equal(false);
-      expect(key.usableButExpired).equal(true);
+      expect(key.usableForEncryptionButExpired).equal(true);
       expect(key.emails.length).to.equal(1);
       expect(key.emails[0]).to.equal('flowcrypt@metacode.biz');
       expect(key.identities.length).to.equal(1);
@@ -343,7 +350,8 @@ KwoTyPGP6prXobe5lmo+4Ji3bE+OFqD20SgDyM6ER7KsrjsKi/Gmh7Q0
       expect(key.type).to.equal('openpgp');
       expect(key.usableForEncryption).equal(true);
       expect(key.usableForSigning).equal(true);
-      expect(key.usableButExpired).equal(false);
+      expect(key.usableForEncryptionButExpired).equal(false);
+      expect(key.usableForSigningButExpired).equal(false);
       expect(key.emails.length).to.equal(1);
       expect(key.emails[0]).to.equal('flowcrypt@metacode.biz');
       expect(key.identities.length).to.equal(1);
@@ -540,7 +548,23 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       const parsed = await KeyUtil.parse(expiredPubKey);
       expect(parsed?.usableForEncryption).to.equal(false);
       expect(parsed?.expiration).to.equal(1594890073000);
-      expect(parsed?.usableButExpired).to.equal(false); // because last signature was created as already expired, no intersection
+      expect(parsed?.usableForEncryptionButExpired).to.equal(false); // because last signature was created as already expired, no intersection
+      t.pass();
+    });
+
+    ava.default('[unit][MsgUtil.decryptMessage] extracts Primary User ID from key', async t => {
+      const data = new GoogleData('ci.tests.gmail@flowcrypt.dev');
+      const msg: GmailMsg = data.getMessage('1766644f13510f58')!;
+      const enc = Buf.fromBase64Str(msg!.raw!).toUtfStr()
+        .match(/\-\-\-\-\-BEGIN PGP SIGNED MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0];
+      const encryptedData = Buf.fromUtfStr(enc);
+      const pubkey = await KeyUtil.parse(pubkey2864E326A5BE488A);
+      await ContactStore.update(undefined, 'president@forged.com', { name: 'President', pubkey, client: 'pgp' });
+      const decrypted = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData });
+      expect(decrypted.success).to.equal(true);
+      const verifyRes = (decrypted as DecryptSuccess).signature!;
+      expect(verifyRes.match).to.be.true;
+      expect(verifyRes.signer?.primaryUserId).to.equal('A50 Sam <sams50sams50sept@gmail.com>');
       t.pass();
     });
 
@@ -586,18 +610,97 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       t.pass();
     });
 
+    ava.default('[unit][MsgUtil.verifyDetached] verifies Firefox rich text signed message', async t => {
+      const data = new GoogleData('flowcrypt.compatibility@gmail.com');
+      const msg: GmailMsg = data.getMessage('175ccd8755eab85f')!;
+      const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
+      const sigBase64 = msgText
+        .match(/Content\-Type: application\/pgp\-signature;.*\r\n\r\n(.*)\r\n\-\-/s)![1];
+      const sigText = Buf.fromBase64Str(sigBase64);
+      const plaintext = msgText
+        .match(/Content\-Type: multipart\/mixed;\r?\n? boundary="\-\-\-\-sinikael\-\?=_2\-16054595384320\.6487848448108896".*\-\-\-\-\-\-sinikael\-\?=_2\-16054595384320\.6487848448108896\-\-\r?\n/s)![0]
+        .replace(/\r?\n/g, '\r\n')!;
+      if ((await ContactStore.get(undefined, ['7FDE685548AEA788'])).length === 0) {
+        const contact = await ContactStore.obj({
+          email: 'flowcrypt.compatibility@gmail.com',
+          pubkey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: FlowCrypt Email Encryption 7.9.9
+Comment: Seamlessly send and receive encrypted email
+
+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
+eg==
+=CvEL
+-----END PGP PUBLIC KEY BLOCK-----`,
+          client: 'pgp'
+        });
+        await ContactStore.save(undefined, contact);
+      }
+      const result = await MsgUtil.verifyDetached({ plaintext: Buf.fromUtfStr(plaintext), sigText });
+      expect(result.match).to.be.true;
+      t.pass();
+    });
+
     ava.default('[unit][MsgUtil.getSortedKeys,matchingKeyids] must be able to find matching keys', async t => {
-      const pp = 'some pass for testing';
-      const key1 = await OpenPGPKey.create([{ name: 'Key1', email: 'key1@test.com' }], 'curve25519', pp, 0);
-      const key2 = await OpenPGPKey.create([{ name: 'Key2', email: 'key2@test.com' }], 'curve25519', pp, 0);
+      const passphrase = 'some pass for testing';
+      const key1 = await OpenPGPKey.create([{ name: 'Key1', email: 'key1@test.com' }], 'curve25519', passphrase, 0);
+      const key2 = await OpenPGPKey.create([{ name: 'Key2', email: 'key2@test.com' }], 'curve25519', passphrase, 0);
       const pub1 = await KeyUtil.parse(key1.public);
       const pub2 = await KeyUtil.parse(key2.public);
       // only encrypt with pub1
       const { data } = await MsgUtil.encryptMessage({ pubkeys: [pub1], data: Buf.fromUtfStr('anything'), armor: true }) as PgpMsgMethod.EncryptPgpArmorResult;
       const m = await opgp.message.readArmored(Buf.fromUint8(data).toUtfStr());
-      const kisWithPp: PrvKeyInfo[] = [ // supply both pub1 and pub2 for decrypt
-        { private: key1.private, longid: OpenPGPKey.fingerprintToLongid(pub1.id), passphrase: pp },
-        { private: key2.private, longid: OpenPGPKey.fingerprintToLongid(pub2.id), passphrase: pp }
+      const kisWithPp: KeyInfoWithOptionalPp[] = [ // supply both key1 and key2 for decrypt
+        { ... await KeyUtil.keyInfoObj(await KeyUtil.parse(key1.private)), passphrase },
+        { ... await KeyUtil.keyInfoObj(await KeyUtil.parse(key2.private)), passphrase },
       ];
       // we are testing a private method here because the outcome of this method is not directly testable from the
       //   public method that uses it. It only makes the public method faster, which is hard to test.
@@ -610,13 +713,13 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       expect(sortedKeys.prvForDecrypt.length).to.equal(1);
       expect(sortedKeys.prvForDecryptDecrypted.length).to.equal(1);
       // specifically the pub1
-      expect(sortedKeys.prvForDecryptDecrypted[0].longid).to.equal(OpenPGPKey.fingerprintToLongid(pub1.id));
+      expect(sortedKeys.prvForDecryptDecrypted[0].ki.longid).to.equal(OpenPGPKey.fingerprintToLongid(pub1.id));
       // also test MsgUtil.matchingKeyids
       // @ts-ignore
-      const matching1 = await MsgUtil.matchingKeyids(pub1, m.getEncryptionKeyIds());
+      const matching1 = await MsgUtil.matchingKeyids(pub1.allIds, m.getEncryptionKeyIds());
       expect(matching1.length).to.equal(1);
       // @ts-ignore
-      const matching2 = await MsgUtil.matchingKeyids(pub2, m.getEncryptionKeyIds());
+      const matching2 = await MsgUtil.matchingKeyids(pub2.allIds, m.getEncryptionKeyIds());
       expect(matching2.length).to.equal(0);
       t.pass();
     });
@@ -631,22 +734,22 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       t.pass();
     });
 
-    ava.default('[Att.sanitizeName] for special and unicode characters', async t => {
+    ava.default('[Attachment.sanitizeName] for special and unicode characters', async t => {
       // slash
-      expect(Att.sanitizeName('abc/def')).to.equal('abc_def');
+      expect(Attachment.sanitizeName('abc/def')).to.equal('abc_def');
       // backslash
-      expect(Att.sanitizeName('abc\\def')).to.equal('abc_def');
+      expect(Attachment.sanitizeName('abc\\def')).to.equal('abc_def');
       // combinations of slashes and backslashes
-      expect(Att.sanitizeName('abc\\/def')).to.equal('abc_def');
-      expect(Att.sanitizeName('abc/\\def')).to.equal('abc_def');
+      expect(Attachment.sanitizeName('abc\\/def')).to.equal('abc_def');
+      expect(Attachment.sanitizeName('abc/\\def')).to.equal('abc_def');
       // trimming
-      expect(Att.sanitizeName('  1  ')).to.equal('1');
-      expect(Att.sanitizeName('    ')).to.equal('_');
+      expect(Attachment.sanitizeName('  1  ')).to.equal('1');
+      expect(Attachment.sanitizeName('    ')).to.equal('_');
       // empty
-      expect(Att.sanitizeName('')).to.equal('_');
+      expect(Attachment.sanitizeName('')).to.equal('_');
       // cyrillic
       const cyrillicName = '\u0410\u0411\u0412';
-      expect(Att.sanitizeName(cyrillicName)).to.equal(cyrillicName);
+      expect(Attachment.sanitizeName(cyrillicName)).to.equal(cyrillicName);
       t.pass();
     });
 
@@ -681,7 +784,7 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       const justPrimaryPub = tmpPub.armor();
       const pubkeys = [await KeyUtil.parse(justPrimaryPub)];
       const encrypted = await MsgUtil.encryptMessage({ pubkeys, data, armor: true }) as PgpMsgMethod.EncryptPgpArmorResult;
-      const kisWithPp: PrvKeyInfo[] = [{ private: prvEncryptForSubkeyOnlyProtected, longid: 'F90C76AE611AFDEE', passphrase }];
+      const kisWithPp: KeyInfoWithOptionalPp[] = [{ ... await KeyUtil.keyInfoObj(await KeyUtil.parse(prvEncryptForSubkeyOnlyProtected)), passphrase }];
       const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData: encrypted.data });
       // todo - later we'll have an org rule for ignoring this, and then it will be expected to pass as follows:
       // expect(decrypted.success).to.equal(true);
@@ -692,21 +795,10 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
     });
 
     ava.default('[KeyUtil.diagnose] displays PK and SK usage', async t => {
-      const kn = `PK 0 >`;
       let str = '';
-      const test = async (f: () => Promise<unknown>) => {
-        try {
-          return `[-] ${String(await f())}`;
-        } catch (e) {
-          return `[${String(e)}]`;
-        }
-      };
-      const dump2str = async (text: string, f?: () => Promise<unknown>) => {
-        str += `${kn} ${text}: ${f ? await test(f) : ''}\n`;
-      };
       const pk0Regex = /PK 0 > Usage flags: \[\-\] \[(.*)\]/m;
       const sk0Regex = /PK 0 > SK 0 > Usage flags: \[\-\] \[(.*)\]/m;
-      await KeyUtil.diagnose(await KeyUtil.parse(pubEncryptForPrimaryIsFine), dump2str);
+      await KeyUtil.diagnose(await KeyUtil.parse(pubEncryptForPrimaryIsFine), '');
       {
         const pk0Usage = str.match(pk0Regex)![1].split(', ');
         expect(pk0Usage).to.include('certify_keys');
@@ -720,7 +812,7 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
         expect(sk0Usage).to.include('encrypt_communication');
       }
       str = '';
-      await KeyUtil.diagnose(await KeyUtil.parse(prvEncryptForSubkeyOnly), dump2str);
+      await KeyUtil.diagnose(await KeyUtil.parse(prvEncryptForSubkeyOnly), '');
       {
         const pk0Usage = str.match(pk0Regex)![1].split(', ');
         expect(pk0Usage).to.include('certify_keys');
@@ -733,6 +825,763 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
         expect(sk0Usage).to.include('encrypt_storage');
         expect(sk0Usage).to.include('encrypt_communication');
       }
+      t.pass();
+    });
+
+    const dsaPrimaryKeyAndSubkeyBothHavePrivateKey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+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
+JW/1mKoBRBfyKzP8ibuUyur7X6rryVL/dctxoA==
+=Pmsz
+-----END PGP PRIVATE KEY BLOCK-----`;
+
+    const rsaPrimaryKeyAndSubkeyBothHavePrivateKey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+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
+=/3Ew
+-----END PGP PRIVATE KEY BLOCK-----`;
+
+    ava.default('[KeyUtil.diagnose] handles incorrect passphrase', async t => {
+      const result = await KeyUtil.diagnose(await KeyUtil.parse(rsaPrimaryKeyAndSubkeyBothHavePrivateKey), '4321');
+      expect(result.get('Is Private?')).to.equal('[-] true');
+      expect(result.get('User id 0')).to.equal('Test1 (rsa) <flowcrypt.test.key.imported@gmail.com>');
+      expect(result.get('Primary User')).to.equal('Test1 (rsa) <flowcrypt.test.key.imported@gmail.com>');
+      expect(result.get('Fingerprint')).to.equal('6628 5F84 B985 71BD 01C0 18EE 8B3B B9CF C476 EE16');
+      expect(result.get('Subkeys')).to.equal('[-] 1');
+      expect(result.get('Primary key algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('key decrypt')).to.equal('[-] false');
+      expect(result.get('isFullyDecrypted')).to.equal('[-] false');
+      expect(result.get('isFullyEncrypted')).to.equal('[-] true');
+      expect(result.get('Primary key verify')).to.equal('[-] valid');
+      expect(result.get('Primary key creation?')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
+      expect(result.get('Primary key expiration?')).to.equal('[-] -');
+      expect(result.has('Encrypt/Decrypt test: Encryption with key was successful')).to.be.true;
+      expect(result.has('Encrypt/Decrypt test: Skipping decryption because isPrivate:true isFullyDecrypted:false')).to.be.true;
+      expect(result.get('Sign/Verify test')).to.equal('[-] skipped, not fully decrypted');
+      expect(result.get('SK 0 > LongId')).to.equal('[-] 0485D618EAA64B05');
+      expect(result.get('SK 0 > Created')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
+      expect(result.get('SK 0 > Algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('SK 0 > Verify')).to.equal('[-] OK');
+      expect(result.get('SK 0 > Subkey tag')).to.equal('[-] 7');
+      expect(result.get('SK 0 > Subkey getBitSize')).to.equal('[-] 3072');
+      expect(result.get('SK 0 > Subkey decrypted')).to.equal('[-] false');
+      expect(result.get('SK 0 > Binding signature length')).to.equal('[-] 1');
+      expect(result.get('SK 0 > SIG 0 > Key flags')).to.equal('[-] 12');
+      expect(result.get('SK 0 > SIG 0 > Tag')).to.equal('[-] 2');
+      expect(result.get('SK 0 > SIG 0 > Version')).to.equal('[-] 4');
+      expect(result.get('SK 0 > SIG 0 > Public key algorithm')).to.equal('[-] 1');
+      expect(result.get('SK 0 > SIG 0 > Sig creation time')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
+      expect(result.get('SK 0 > SIG 0 > Sig expiration time')).to.equal('[-] -');
+      expect(result.get('SK 0 > SIG 0 > Verified')).to.equal('[-] true');
+      expect(result.get('expiration')).to.equal('[-] undefined');
+      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
+      expect(result.get('internal usableForEncryptionButExpired')).to.equal('[-] false');
+      expect(result.get('internal usableForSigningButExpired')).to.equal('[-] false');
+      t.pass();
+    });
+
+    ava.default('[KeyUtil.diagnose] decrypts and successfully tests PK sign and SK encrypt', async t => {
+      const result = await KeyUtil.diagnose(await KeyUtil.parse(rsaPrimaryKeyAndSubkeyBothHavePrivateKey), '1234');
+      expect(result.get('Is Private?')).to.equal('[-] true');
+      expect(result.get('User id 0')).to.equal('Test1 (rsa) <flowcrypt.test.key.imported@gmail.com>');
+      expect(result.get('Primary User')).to.equal('Test1 (rsa) <flowcrypt.test.key.imported@gmail.com>');
+      expect(result.get('Fingerprint')).to.equal('6628 5F84 B985 71BD 01C0 18EE 8B3B B9CF C476 EE16');
+      expect(result.get('Subkeys')).to.equal('[-] 1');
+      expect(result.get('Primary key algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('key decrypt')).to.equal('[-] true');
+      expect(result.get('isFullyDecrypted')).to.equal('[-] true');
+      expect(result.get('isFullyEncrypted')).to.equal('[-] false');
+      expect(result.get('Primary key verify')).to.equal('[-] valid');
+      expect(result.get('Primary key creation?')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
+      expect(result.get('Primary key expiration?')).to.equal('[-] -');
+      expect(result.has('Encrypt/Decrypt test: Encryption with key was successful')).to.be.true;
+      expect(result.has('Encrypt/Decrypt test: Decryption with key succeeded')).to.be.true;
+      expect(result.get('Sign/Verify test')).to.equal('[-] sign msg ok|verify ok');
+      expect(result.get('SK 0 > LongId')).to.equal('[-] 0485D618EAA64B05');
+      expect(result.get('SK 0 > Created')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
+      expect(result.get('SK 0 > Algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('SK 0 > Verify')).to.equal('[-] OK');
+      expect(result.get('SK 0 > Subkey tag')).to.equal('[-] 7');
+      expect(result.get('SK 0 > Subkey getBitSize')).to.equal('[-] 3072');
+      expect(result.get('SK 0 > Subkey decrypted')).to.equal('[-] true');
+      expect(result.get('SK 0 > Binding signature length')).to.equal('[-] 1');
+      expect(result.get('SK 0 > SIG 0 > Key flags')).to.equal('[-] 12');
+      expect(result.get('SK 0 > SIG 0 > Tag')).to.equal('[-] 2');
+      expect(result.get('SK 0 > SIG 0 > Version')).to.equal('[-] 4');
+      expect(result.get('SK 0 > SIG 0 > Public key algorithm')).to.equal('[-] 1');
+      expect(result.get('SK 0 > SIG 0 > Sig creation time')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
+      expect(result.get('SK 0 > SIG 0 > Sig expiration time')).to.equal('[-] -');
+      expect(result.get('SK 0 > SIG 0 > Verified')).to.equal('[-] true');
+      expect(result.get('expiration')).to.equal('[-] undefined');
+      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
+      expect(result.get('internal usableForEncryptionButExpired')).to.equal('[-] false');
+      expect(result.get('internal usableForSigningButExpired')).to.equal('[-] false');
+      t.pass();
+    });
+
+    const dsaPrimaryKeyIsMissingPrivateKey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+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
+oA==
+=e6+m
+-----END PGP PRIVATE KEY BLOCK-----`;
+
+    const rsaPrimaryKeyIsMissingPrivateKey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+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
+=OeNi
+-----END PGP PRIVATE KEY BLOCK-----`;
+
+    const dsaExpiredPubkeysOnly = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+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
+h4nt
+=lETP
+-----END PGP PUBLIC KEY BLOCK-----`;
+
+    const rsaExpiredPubkeysOnly = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mQENBF+323wBCADulm2pzzTL0gY/fMbYNHgq72j6XvNic4WncU8WDxytfnPNKqFI
+fJcWXPq8QBQIK8pwBRm4vHu5q7fDpId+c8pdZ3kVG2JQvWEFO83q4YJGEWPnLYYY
+6le9vSXTWQ7la24aTAEHfH17BdMIGET/so+owRzkBpUl72JuSuarQJJl3ePmu2Iv
+KaD2xSc0G2wm++ywZa255PHC4VmZ0lQ2xlZdGZPEWfSDVTchpHvPLQe0vSI/Eg4Q
+tRQYlYfLCQuOmkrCV+jqAsbDMHTNF2yE//CnlPA8unjLNdmw6DVhO85F3TIWR5NI
+1LOvxEc9MDsWqMuMizzHnnSAnPdLo/sm/fHtABEBAAG0OFJTQSBleHBpcmVkIFRl
+c3QgPGZsb3djcnlwdC50ZXN0LmtleS5pbXBvcnRlZEBnbWFpbC5jb20+iQFUBBMB
+CAA+FiEEQUF/y80YjGYEme19zhZF0KSimP0FAl+323wCGwMFCQABUYAFCwkIBwIG
+FQoJCAsCBBYCAwECHgECF4AACgkQzhZF0KSimP1rGAgAw/GI6PbRstEBiZs9udv0
+GttgIU4KnZh9jkr77JWRIH/MGrg2mTXazNt6LdlzOYPUdqB9bYo6tZnLox4x6tQK
+8y9TOOXgGcqdiridnEmb2W4eDGN9bfbbDf2c702u+EpITEiSwOi/ResDSsnqFpHJ
+sPf4wRrcPpwuecruDaEzPMAyziamWboCgpOzczjod935rhGXsCTcR6BausslmkOW
+pUGWtpHw0QZWaHCxt3uUL9gMNNpn5Xmb2Qas2sJQPpSm441fgY7UUig7IoEp5tsp
+QZYG85PeUSV8387h3HUjwRsePxcyAZlkAlexC6Hj9w8LrTLMEQsyoFY2D/dSRSCx
+e7kBDQRft9t8AQgAwZUUmA8/e18vMWWiaNDhDro7g5XaETe/bCJfxBwmOtig8oin
+ghJuDxejzK4B63VoQ3c4VDdl0rQb3utjS1bBZz0piJadtDAefbGIJL5yp6QT2bq7
+DCDWuNssrmbBe3SksgqGSehY5SPQD6juKtbPdeD17QsfuBolsh1yQgqW0S5tbB5i
+YUCrIJupbdKITR6dtgSOcDntIrktPk26iAq/9PdVQ218dM79SPgxzUugEsyTlUJe
+7CFrkNLrIVuHRAycHGZniIAnw0MWZBtTPY3XYkVyt2TXrE97A854HLP1lvhL0/py
+q/bfBXvrFONdlep03ZKNraY6BdrCnaSxHPI53QARAQABiQE8BBgBCAAmFiEEQUF/
+y80YjGYEme19zhZF0KSimP0FAl+323wCGwwFCQABUYAACgkQzhZF0KSimP0btQgA
+qH4mtWTOtanrs3zS+ORrZzlZacydNfX7BFqbrWBNx3Qn4ZUMYzroyXXrBKU2a0Ek
+Wtn6JZO+3KF7NLjDKbPTP9oKA0RnBCxcEqd+Zt28+3g413RVOg/3GZ6cwctpmZId
+PzBbLiMWVh9yhWNXKhwCNcjRNRiEp5eMsMo7xrvIMwT1dZWo3B1SU8ojcadRAQpB
+jzIGNwXIlC7ENE5V8LyvJmFlI3Y54EiylEkXbycrAtaCtcOc8VI97dcej0A5vx+B
+sGZik43btY7ooSmvfw154LBqk6j9bps8KS++T3ng2m62kWFelbR8ybjJmFkeDIdM
+31rxxiAYCGthro8UvpKojA==
+=AZcU
+-----END PGP PUBLIC KEY BLOCK-----`;
+
+    const dsaExpiredPrimaryKeyIsMissingPrivateKey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+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
+qWT+qXqeh4nt
+=/Vbx
+-----END PGP PRIVATE KEY BLOCK-----`;
+
+    const rsaExpiredPrimaryKeyIsMissingPrivateKey = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+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
+jA==
+=lAqt
+-----END PGP PRIVATE KEY BLOCK-----`;
+
+    ava.default('[KeyUtil.diagnose] decrypts and tests PK missing private key and SK with private key', async t => {
+      const result = await KeyUtil.diagnose(await KeyUtil.parse(rsaPrimaryKeyIsMissingPrivateKey), '1234');
+      expect(result.get('Is Private?')).to.equal('[-] true');
+      expect(result.get('User id 0')).to.equal('Test1 (rsa) <flowcrypt.test.key.imported@gmail.com>');
+      expect(result.get('Primary User')).to.equal('Test1 (rsa) <flowcrypt.test.key.imported@gmail.com>');
+      expect(result.get('Fingerprint')).to.equal('6628 5F84 B985 71BD 01C0 18EE 8B3B B9CF C476 EE16');
+      expect(result.get('Subkeys')).to.equal('[-] 1');
+      expect(result.get('Primary key algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('key decrypt')).to.equal('[-] true');
+      expect(result.get('isFullyDecrypted')).to.equal('[-] true');
+      expect(result.get('isFullyEncrypted')).to.equal('[-] false');
+      expect(result.get('Primary key verify')).to.equal('[-] valid');
+      expect(result.get('Primary key creation?')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
+      expect(result.get('Primary key expiration?')).to.equal('[-] -');
+      expect(result.has('Encrypt/Decrypt test: Encryption with key was successful')).to.be.true;
+      expect(result.has('Encrypt/Decrypt test: Decryption with key succeeded')).to.be.true;
+      expect(result.get('Sign/Verify test')).to.equal('[-] Exception: Error: Missing private key parameters');
+      expect(result.get('SK 0 > LongId')).to.equal('[-] 0485D618EAA64B05');
+      expect(result.get('SK 0 > Created')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
+      expect(result.get('SK 0 > Algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('SK 0 > Verify')).to.equal('[-] OK');
+      expect(result.get('SK 0 > Subkey tag')).to.equal('[-] 7');
+      expect(result.get('SK 0 > Subkey getBitSize')).to.equal('[-] 3072');
+      expect(result.get('SK 0 > Subkey decrypted')).to.equal('[-] true');
+      expect(result.get('SK 0 > Binding signature length')).to.equal('[-] 1');
+      expect(result.get('SK 0 > SIG 0 > Key flags')).to.equal('[-] 12');
+      expect(result.get('SK 0 > SIG 0 > Tag')).to.equal('[-] 2');
+      expect(result.get('SK 0 > SIG 0 > Version')).to.equal('[-] 4');
+      expect(result.get('SK 0 > SIG 0 > Public key algorithm')).to.equal('[-] 1');
+      expect(result.get('SK 0 > SIG 0 > Sig creation time')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
+      expect(result.get('SK 0 > SIG 0 > Sig expiration time')).to.equal('[-] -');
+      expect(result.get('SK 0 > SIG 0 > Verified')).to.equal('[-] true');
+      expect(result.get('expiration')).to.equal('[-] undefined');
+      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
+      expect(result.get('internal usableForEncryptionButExpired')).to.equal('[-] false');
+      expect(result.get('internal usableForSigningButExpired')).to.equal('[-] false');
+      t.pass();
+    });
+
+    ava.default('[KeyUtil.diagnose] decrypts and tests secure PK and insecure SK', async t => {
+      const result = await KeyUtil.diagnose(await KeyUtil.parse(rsa1024subkeyOnly), '');
+      expect(result.get('Is Private?')).to.equal('[-] true');
+      expect(result.get('User id 0')).to.equal('rsa1024subkey@test');
+      expect(result.get('Primary User')).to.equal('rsa1024subkey@test');
+      expect(result.get('Fingerprint')).to.equal('B804 AF5A 259A 6673 F853 BEB2 B655 50F5 77CF 5CC5');
+      expect(result.get('Subkeys')).to.equal('[-] 1');
+      expect(result.get('Primary key algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('Primary key verify')).to.equal('[-] valid');
+      expect(result.get('Primary key creation?')).to.equal('[-] 1611500681 or 2021-01-24T15:04:41.000Z');
+      expect(result.get('Primary key expiration?')).to.equal('[-] -');
+      expect(result.has('Encrypt/Decrypt test: Got error performing encryption/decryption test: Error: Error encrypting message: Could not find valid encryption key packet in key b65550f577cf5cc5')).to.be.true;
+      expect(result.get('Sign/Verify test')).to.equal('[-] sign msg ok|verify ok');
+      expect(result.get('SK 0 > LongId')).to.equal('[-] 1453C9506DBF5B6A');
+      expect(result.get('SK 0 > Created')).to.equal('[-] 1611500698 or 2021-01-24T15:04:58.000Z');
+      expect(result.get('SK 0 > Algo')).to.equal('[-] rsa_encrypt_sign');
+      expect(result.get('SK 0 > Verify')).to.equal('[-] OK');
+      expect(result.get('SK 0 > Subkey tag')).to.equal('[-] 7');
+      expect(result.get('SK 0 > Subkey getBitSize')).to.equal('[-] 1024');
+      expect(result.get('SK 0 > Subkey decrypted')).to.equal('[-] true');
+      expect(result.get('SK 0 > Binding signature length')).to.equal('[-] 1');
+      expect(result.get('SK 0 > SIG 0 > Key flags')).to.equal('[-] 12');
+      expect(result.get('SK 0 > SIG 0 > Tag')).to.equal('[-] 2');
+      expect(result.get('SK 0 > SIG 0 > Version')).to.equal('[-] 4');
+      expect(result.get('SK 0 > SIG 0 > Public key algorithm')).to.equal('[-] 1');
+      expect(result.get('SK 0 > SIG 0 > Sig creation time')).to.equal('[-] 1611500699 or 2021-01-24T15:04:59.000Z');
+      expect(result.get('SK 0 > SIG 0 > Sig expiration time')).to.equal('[-] -');
+      expect(result.get('SK 0 > SIG 0 > Verified')).to.equal('[-] true');
+      expect(result.get('expiration')).to.equal('[-] undefined');
+      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
+      expect(result.get('internal usableForEncryptionButExpired')).to.equal('[-] false');
+      expect(result.get('internal usableForSigningButExpired')).to.equal('[-] false');
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.parse] correctly handles signing/encryption detection for PKSK with private keys', async t => {
+      // testing encrypted key
+      const encryptedKey = await KeyUtil.parse(rsaPrimaryKeyAndSubkeyBothHavePrivateKey);
+      expect(encryptedKey.usableForSigning).to.be.true;
+      expect(encryptedKey.missingPrivateKeyForSigning).to.be.false;
+      expect(encryptedKey.usableForEncryption).to.be.true;
+      expect(encryptedKey.missingPrivateKeyForDecryption).to.be.false;
+      expect(await KeyUtil.decrypt(encryptedKey, '1234')).to.be.true;
+      const armoredKey = KeyUtil.armor(encryptedKey);
+      // testing decrypted key
+      const key = await KeyUtil.parse(armoredKey);
+      expect(key.usableForSigning).to.be.true;
+      expect(key.missingPrivateKeyForSigning).to.be.false;
+      expect(key.usableForEncryption).to.be.true;
+      expect(key.missingPrivateKeyForDecryption).to.be.false;
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.decrypt] correctly handles signing/encryption detection for PKSK with private keys', async t => {
+      const dsakey = await KeyUtil.parse(dsaPrimaryKeyAndSubkeyBothHavePrivateKey);
+      expect(await KeyUtil.decrypt(dsakey, '1234')).to.be.true;
+      expect(dsakey.usableForSigning).to.be.true;
+      expect(dsakey.missingPrivateKeyForSigning).to.be.false;
+      expect(dsakey.usableForEncryption).to.be.true;
+      expect(dsakey.missingPrivateKeyForDecryption).to.be.false;
+      const rsakey = await KeyUtil.parse(rsaPrimaryKeyAndSubkeyBothHavePrivateKey);
+      expect(await KeyUtil.decrypt(rsakey, '1234')).to.be.true;
+      expect(rsakey.usableForSigning).to.be.true;
+      expect(rsakey.missingPrivateKeyForSigning).to.be.false;
+      expect(rsakey.usableForEncryption).to.be.true;
+      expect(rsakey.missingPrivateKeyForDecryption).to.be.false;
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.parse] determines PK missing private key for signing', async t => {
+      // testing encrypted key
+      const encryptedKey = await KeyUtil.parse(rsaPrimaryKeyIsMissingPrivateKey);
+      expect(encryptedKey.usableForSigning).to.be.true;
+      expect(encryptedKey.missingPrivateKeyForSigning).to.be.true;
+      expect(encryptedKey.usableForEncryption).to.be.true;
+      expect(encryptedKey.missingPrivateKeyForDecryption).to.be.false;
+      expect(await KeyUtil.decrypt(encryptedKey, '1234')).to.be.true;
+      const armoredKey = KeyUtil.armor(encryptedKey);
+      // testing decrypted key
+      const key = await KeyUtil.parse(armoredKey);
+      expect(key.usableForSigning).to.be.true;
+      expect(key.missingPrivateKeyForSigning).to.be.true;
+      expect(key.usableForEncryption).to.be.true;
+      expect(key.missingPrivateKeyForDecryption).to.be.false;
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.decrypt] determines PK missing private key for signing', async t => {
+      const dsakey = await KeyUtil.parse(dsaPrimaryKeyIsMissingPrivateKey);
+      expect(await KeyUtil.decrypt(dsakey, '1234')).to.be.true;
+      expect(dsakey.usableForSigning).to.be.true;
+      expect(dsakey.missingPrivateKeyForSigning).to.be.true;
+      expect(dsakey.usableForEncryption).to.be.true;
+      expect(dsakey.missingPrivateKeyForDecryption).to.be.false;
+      const rsakey = await KeyUtil.parse(rsaPrimaryKeyIsMissingPrivateKey);
+      expect(await KeyUtil.decrypt(rsakey, '1234')).to.be.true;
+      expect(rsakey.usableForSigning).to.be.true;
+      expect(rsakey.missingPrivateKeyForSigning).to.be.true;
+      expect(rsakey.usableForEncryption).to.be.true;
+      expect(rsakey.missingPrivateKeyForDecryption).to.be.false;
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.parse] determines missing private key for encryption in expired key', async t => {
+      const dsakey = await KeyUtil.parse(dsaExpiredPubkeysOnly);
+      expect(dsakey.usableForEncryptionButExpired).to.be.true;
+      expect(dsakey.usableForSigningButExpired).to.be.true;
+      expect(dsakey.usableForSigning).to.be.false;
+      expect(dsakey.usableForEncryption).to.be.false;
+      expect(dsakey.missingPrivateKeyForSigning).to.be.true;
+      expect(dsakey.missingPrivateKeyForDecryption).to.be.true;
+      const rsakey = await KeyUtil.parse(rsaExpiredPubkeysOnly);
+      expect(rsakey.usableForEncryptionButExpired).to.be.true;
+      expect(rsakey.usableForSigningButExpired).to.be.true;
+      expect(rsakey.usableForSigning).to.be.false;
+      expect(rsakey.usableForEncryption).to.be.false;
+      expect(rsakey.missingPrivateKeyForSigning).to.be.true;
+      expect(rsakey.missingPrivateKeyForDecryption).to.be.true;
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.decrypt] handles PK missing private key for signing in expired key', async t => {
+      const dsakey = await KeyUtil.parse(dsaExpiredPrimaryKeyIsMissingPrivateKey);
+      expect(await KeyUtil.decrypt(dsakey, '1234')).to.be.true;
+      expect(dsakey.usableForEncryptionButExpired).to.be.true;
+      expect(dsakey.usableForSigningButExpired).to.be.true;
+      expect(dsakey.usableForSigning).to.be.false;
+      expect(dsakey.usableForEncryption).to.be.false;
+      expect(dsakey.missingPrivateKeyForSigning).to.be.true;
+      expect(dsakey.missingPrivateKeyForDecryption).to.be.false;
+      const rsakey = await KeyUtil.parse(rsaExpiredPrimaryKeyIsMissingPrivateKey);
+      expect(await KeyUtil.decrypt(rsakey, '1234')).to.be.true;
+      expect(rsakey.usableForEncryptionButExpired).to.be.true;
+      expect(rsakey.usableForSigningButExpired).to.be.true;
+      expect(rsakey.usableForSigning).to.be.false;
+      expect(rsakey.usableForEncryption).to.be.false;
+      expect(rsakey.missingPrivateKeyForSigning).to.be.true;
+      expect(rsakey.missingPrivateKeyForDecryption).to.be.false;
+      t.pass();
+    });
+
+    ava.default(`[unit][OpenPGPKey.parse] sets usableForEncryption and usableForSigning to false for RSA key less than 2048`, async t => {
+      const rsa1024secret = `-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+xcEYBGAID1EBBACypl5K0IoqFjfpSrIhbhT5H5MjQg4MKRlgMfqXjo8pEeB6Yf88wvBni36iRdSn
+ovc7mbuOSPc+Z8ABqGPdW5AWs6K/gchWyIzuDQ32pRfUKc9SAAs0Ddyv/+S4XKUCLdX88yUsjnnK
+8beHnju57bIsiamo19HqsfZKJUQb4ZS33wARAQABAAP+M5ZH/ymV5A5Tadnocy/S/ZcpCVLfNJK/
+oZ/9ATuoyk6/uAdJSVXvTq8gy6IHhLrR0pOTbcRTJOGXt8LUx4xToEcHw1uTIVmtw7EtDQdMPyKC
+HjFbIAhWGXbefQItohKBEDfucXgwI0YpNdIjk6mFc0IO6/XUIQg1bMg/UK0HA80CANEI9OQDNgAR
+caikGHAl672KWBwTBM8XgytF7D+Bzt41eElKswMFYyMlRzZlSmkx3sJ+XdCHuC0skQIluV181EsC
+ANrJwSfyOsPhqQ+GjNdg8uPEdLvIK6CLdMwEelvGPkXuyq58ACCgiFKlir2taNqfQfD+V1XGWqLy
+rzSplwgZJj0B/3EIZSiM8oC9eBsq9Eo29d/wEkspz14qsQsvl6IEAQzk6utsmWRViLrkijVPOTgb
+ZbQm646+Japkh+lC1uz4F7WXK80McnNhMTAyNEB0ZXN0wsAIBBMBCAAzFiEE6aCtchH+fjctzmKs
+Zywk4TigN/QFAmAID1ICGwMFCwkIBwIGFQgJCgsCBRYCAwEAAAoJEGcsJOE4oDf0LCwD+My9gLrB
+B3bjq694Yx5H6aLayc79fm6aL3bEBJGD6EQMqGTbN+Gfz6JcpCzOBW7Jn9Jc5PC+4d0JxK7TzBXE
+SxM2ViraS5ScW3GuqVoAw00/0NRYrXr7iTkzT8gAdEBNXdn/ozlCrNkR8JxOmcyqJtTwPkzMRy9D
+MtbTz6xoGaPHwRgEYAgPUgEEAN5qHMlEB1uwxr/bEL4ZWcSvEFRP7hSC2isB9JlomACDPHRQAi5q
+dOXaP3BD81mVm3FRKtc6UuLao641+RNmiTrDSKpmB7MIPRS4tO4DIBDj4g7xz0AXHs+OYqBi2+iU
+Hy0dclP6TP2dWE1fT7bgfD3GaaKri6Zgfb5ZLQ+bGL03ABEBAAEAA/9uU5q1563yuKzOLJ+QfMi/
+vMtP11pVCFeqb8zicDS+RFsvoySB28Li5bEEQmCrNoAl5MpoewD0kNoSp6lHC1zUQQymouefK/W3
+pD8bNcFRzpQ1m4iVkEG1o6Joq1wxQe+OHbxDxil8VluAGMWdXSzPUFH/JYu7z819E8C3NO0ZcQIA
+3nnloE/O6k382CLYEkEu2aXownXlhtuCNslif4vUMRePZvPTD93lUHnFZ0ZZcJTMq4YdFcuXlyZI
+2XlnHfe3nwIA/+3WRADntAcFFp/3HMSl1Jua9ic89rABgXXZqvxhy2cu+9wZR+GpHjZy9Pm/kOHS
+wjl+nI4Q6pQcdxCYn75zaQIAi8KOAoDDeNC8wjUS2FN84/2Asc78D0MQc442CqCQ70It8csDTanH
+xamPFeub/1JW7H0hkma1C5CEi2coHjeAbambwrYEGAEIACAWIQTpoK1yEf5+Ny3OYqxnLCThOKA3
+9AUCYAgPUwIbDAAKCRBnLCThOKA39O3dA/0RALQ6Sp35YWvHN4iYvInO9DZIEvaSBjpzNNDThRvp
+XfiBZBgRV34sZ8IjBXWnHmnJOioXG0LnZ7V37Zpa1PnPcqKd5kXg649NS+jXqyd7yjgIhyhB54VC
+r7V4UalYBHeiwKQhzrU8KfaVfVaYu7ctfitV5Ba/8SqxrblMAZAV6A==
+=pcI4
+-----END PGP PRIVATE KEY BLOCK-----`;
+      const key1 = await KeyUtil.parse(rsa1024secret);
+      expect(key1.usableForEncryption).to.equal(false);
+      expect(key1.usableForSigning).to.equal(false);
+      expect(key1.usableForEncryptionButExpired).to.equal(false);
+      expect(key1.usableForSigningButExpired).to.equal(false);
+      const rsa1024public = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+xo0EYAgPUQEEALKmXkrQiioWN+lKsiFuFPkfkyNCDgwpGWAx+peOjykR4Hph/zzC8GeLfqJF1Kei
+9zuZu45I9z5nwAGoY91bkBazor+ByFbIjO4NDfalF9Qpz1IACzQN3K//5LhcpQIt1fzzJSyOecrx
+t4eeO7ntsiyJqajX0eqx9kolRBvhlLffABEBAAHNDHJzYTEwMjRAdGVzdMLACAQTAQgAMxYhBOmg
+rXIR/n43Lc5irGcsJOE4oDf0BQJgCA9SAhsDBQsJCAcCBhUICQoLAgUWAgMBAAAKCRBnLCThOKA3
+9CwsA/jMvYC6wQd246uveGMeR+mi2snO/X5umi92xASRg+hEDKhk2zfhn8+iXKQszgVuyZ/SXOTw
+vuHdCcSu08wVxEsTNlYq2kuUnFtxrqlaAMNNP9DUWK16+4k5M0/IAHRATV3Z/6M5QqzZEfCcTpnM
+qibU8D5MzEcvQzLW08+saBmjzo0EYAgPUgEEAN5qHMlEB1uwxr/bEL4ZWcSvEFRP7hSC2isB9Jlo
+mACDPHRQAi5qdOXaP3BD81mVm3FRKtc6UuLao641+RNmiTrDSKpmB7MIPRS4tO4DIBDj4g7xz0AX
+Hs+OYqBi2+iUHy0dclP6TP2dWE1fT7bgfD3GaaKri6Zgfb5ZLQ+bGL03ABEBAAHCtgQYAQgAIBYh
+BOmgrXIR/n43Lc5irGcsJOE4oDf0BQJgCA9TAhsMAAoJEGcsJOE4oDf07d0D/REAtDpKnflha8c3
+iJi8ic70NkgS9pIGOnM00NOFG+ld+IFkGBFXfixnwiMFdaceack6KhcbQudntXftmlrU+c9yop3m
+ReDrj01L6NerJ3vKOAiHKEHnhUKvtXhRqVgEd6LApCHOtTwp9pV9Vpi7ty1+K1XkFr/xKrGtuUwB
+kBXo
+=PeOs
+-----END PGP PUBLIC KEY BLOCK-----`;
+      const key2 = await KeyUtil.parse(rsa1024public);
+      expect(key2.usableForEncryption).to.equal(false);
+      expect(key2.usableForSigning).to.equal(false);
+      expect(key2.usableForEncryptionButExpired).to.equal(false);
+      expect(key2.usableForSigningButExpired).to.equal(false);
+      t.pass();
+    });
+
+    ava.default(`[unit][OpenPGPKey.parse] sets usableForEncryption to false and usableForSigning to true for 2048/RSA PK and 1024/RSA SK`, async t => {
+      const key = await KeyUtil.parse(rsa1024subkeyOnly);
+      expect(key.usableForEncryption).to.equal(false);
+      expect(key.usableForSigning).to.equal(true);
+      expect(key.usableForEncryptionButExpired).to.equal(false);
+      expect(key.usableForSigningButExpired).to.equal(false);
+      t.pass();
+    });
+
+    ava.default(`[unit][OpenPGPKey.decrypt] sets usableForEncryption to false and usableForSigning to true for 2048/RSA PK and 1024/RSA SK`, async t => {
+      const key = await KeyUtil.parse(rsa1024subkeyOnlyEncrypted);
+      expect(key.usableForEncryption).to.equal(false);
+      expect(key.usableForSigning).to.equal(true);
+      expect(key.usableForEncryptionButExpired).to.equal(false);
+      expect(key.usableForSigningButExpired).to.equal(false);
+      expect(await KeyUtil.decrypt(key, '1234')).to.be.true;
+      expect(key.usableForEncryption).to.equal(false);
+      expect(key.usableForSigning).to.equal(true);
+      expect(key.usableForEncryptionButExpired).to.equal(false);
+      expect(key.usableForSigningButExpired).to.equal(false);
+      t.pass();
+    });
+
+    ava.default(`[unit][PgpArmor.dearmor] throws on incorrect sequence`, async t => {
+      await expect(PgpArmor.dearmor(`-----BEGIN PGP MESSAGE-----
+
+AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)).to.eventually.be.rejectedWith('Misformed armored text');
+      t.pass();
+    });
+
+    ava.default(`[unit][PgpArmor.dearmor] correctly handles long string`, async t => {
+      const source = Buffer.from('The test string concatenated many times to produce large output'.repeat(100000));
+      const type = 3;
+      const armored = PgpArmor.armor(type, source);
+      const dearmored = await PgpArmor.dearmor(armored);
+      expect(dearmored.type).to.equal(type);
+      equals(
+        dearmored.data,
+        source
+      );
       t.pass();
     });
 

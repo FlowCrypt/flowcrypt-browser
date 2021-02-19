@@ -7,7 +7,7 @@
 
 import { Api, ProgressCb, ProgressCbs, ReqFmt } from '../shared/api.js';
 import { Dict } from '../../core/common.js';
-import { Att } from '../../core/att.js';
+import { Attachment } from '../../core/attachment.js';
 import { BackendAuthErr } from '../shared/api-error.js';
 import { DomainRulesJson } from '../../org-rules.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
@@ -78,7 +78,7 @@ export class FlowCryptComApi extends Api {
   }
 
   public static messageUpload = async (fcAuth: FcUuidAuth | undefined, encryptedDataBinary: Uint8Array, progressCb: ProgressCb): Promise<BackendRes.FcMsgUpload> => {
-    const content = new Att({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encryptedDataBinary });
+    const content = new Attachment({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encryptedDataBinary });
     return await FlowCryptComApi.request<BackendRes.FcMsgUpload>('message/upload', { content, ...(fcAuth || {}) }, 'FORM', undefined, { upload: progressCb });
   }
 

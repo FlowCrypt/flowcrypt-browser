@@ -80,8 +80,7 @@ View.run(class KeyserverView extends View {
       return await Ui.modal.error('Disallowed by your organisation rules');
     }
     Xss.sanitizeRender(target, Ui.spinner('white'));
-    const primaryKi = await KeyStore.getFirst(this.acctEmail);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    const primaryKi = await KeyStore.getFirstRequired(this.acctEmail);
     try {
       await this.pubLookup.attester.initialLegacySubmit(String($(target).attr('email')), primaryKi.public);
     } catch (e) {
@@ -97,8 +96,7 @@ View.run(class KeyserverView extends View {
       return await Ui.modal.error('Disallowed by your organisation rules');
     }
     Xss.sanitizeRender(target, Ui.spinner('white'));
-    const primaryKi = await KeyStore.getFirst(this.acctEmail);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    const primaryKi = await KeyStore.getFirstRequired(this.acctEmail);
     try {
       const responseText = await this.pubLookup.attester.replacePubkey(String($(target).attr('email')), primaryKi.public);
       await Ui.modal.info(responseText);
@@ -114,7 +112,7 @@ View.run(class KeyserverView extends View {
     const diagnosis: AttesterKeyserverDiagnosis = { hasPubkeyMissing: false, hasPubkeyMismatch: false, results: {} };
     const { sendAs } = await AcctStore.get(this.acctEmail, ['sendAs']);
     const storedKeys = await KeyStore.get(this.acctEmail);
-    const storedKeysIds = storedKeys.map(ki => ki.fingerprint);
+    const storedKeysIds = storedKeys.map(ki => ki.fingerprints[0]);
     const results = await this.pubLookup.attester.lookupEmails(sendAs ? Object.keys(sendAs) : [this.acctEmail]);
     for (const email of Object.keys(results)) {
       const pubkeySearchResult = results[email];

@@ -15,13 +15,13 @@ type DraftSaveModel = { message: { raw: string, threadId: string } };
 const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', 'human+manualcopypgp@flowcrypt.com',
   'censored@email.com', 'test@email.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com', 'expired.on.attester@domain.com',
   'ci.tests.gmail@flowcrypt.dev', 'smime1@recipient.com', 'smime2@recipient.com', 'smime@recipient.com',
-  'smime.att@recipient.com', 'auto.refresh.expired.key@recipient.com'];
+  'smime.attachment@recipient.com', 'auto.refresh.expired.key@recipient.com'];
 
 export const mockGoogleEndpoints: HandlersDefinition = {
   '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, redirect_uri, scope, login_hint, result } }, req) => {
     if (isGet(req) && client_id === oauth.clientId && response_type === 'code' && access_type === 'offline' && state && redirect_uri === oauth.redirectUri && scope) { // auth screen
       if (!login_hint) {
-        return oauth.consentChooseAccountPage(req.url!);
+        return oauth.consentChooseAccountPage(`https://${req.headers.host!}${req.url!}`);
       } else if (!result) {
         return oauth.consentPage(req.url!, login_hint);
       } else {
@@ -129,9 +129,9 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       const id = parseResourceId(req.url!);
       const data = new GoogleData(acct);
       if (req.url!.includes('/attachments/')) {
-        const att = data.getAttachment(id);
-        if (att) {
-          return att;
+        const attachment = data.getAttachment(id);
+        if (attachment) {
+          return attachment;
         }
         throw new HttpClientErr(`MOCK attachment not found for ${acct}: ${id}`, Status.NOT_FOUND);
       }

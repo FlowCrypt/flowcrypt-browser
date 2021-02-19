@@ -5,7 +5,7 @@
 import { Mime, SendableMsgBody } from '../../../core/mime.js';
 import { Str, Value } from '../../../core/common.js';
 
-import { Att } from '../../../core/att.js';
+import { Attachment } from '../../../core/attachment.js';
 import { Buf } from '../../../core/buf.js';
 import { RecipientType } from '../../shared/api.js';
 import { ReplyParams } from '../email-provider-api.js';
@@ -28,7 +28,7 @@ export namespace GmailRes { // responses
     messagesTotal?: number, messagesUnread?: number, threadsTotal?: number, threadsUnread?: number, color?: { textColor: string, backgroundColor: string }
   };
   export type GmailLabels = { labels: GmailLabels$label[] };
-  export type GmailAtt = { attachmentId: string, size: number, data: Buf };
+  export type GmailAttachment = { attachmentId: string, size: number, data: Buf };
   export type GmailMsgSend = { id: string };
   export type GmailThread = { id: string, historyId: string, messages: GmailMsg[] };
   export type GmailThreadList = { threads: { historyId: string, id: string, snippet: string }[], nextPageToken: string, resultSizeEstimate: number };
@@ -83,18 +83,22 @@ export class GmailParser {
     return undefined;
   }
 
-  public static findAtts = (msgOrPayloadOrPart: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part, internalResults: Att[] = [], internalMsgId?: string) => {
+  public static findAttachments = (
+    msgOrPayloadOrPart: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part,
+    internalResults: Attachment[] = [],
+    internalMsgId?: string
+  ) => {
     if (msgOrPayloadOrPart.hasOwnProperty('payload')) {
       internalMsgId = (msgOrPayloadOrPart as GmailRes.GmailMsg).id;
-      GmailParser.findAtts((msgOrPayloadOrPart as GmailRes.GmailMsg).payload!, internalResults, internalMsgId);
+      GmailParser.findAttachments((msgOrPayloadOrPart as GmailRes.GmailMsg).payload!, internalResults, internalMsgId);
     }
     if (msgOrPayloadOrPart.hasOwnProperty('parts')) {
       for (const part of (msgOrPayloadOrPart as GmailRes.GmailMsg$payload).parts!) {
-        GmailParser.findAtts(part, internalResults, internalMsgId);
+        GmailParser.findAttachments(part, internalResults, internalMsgId);
       }
     }
     if (msgOrPayloadOrPart.hasOwnProperty('body') && (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).body!.hasOwnProperty('attachmentId')) {
-      internalResults.push(new Att({
+      internalResults.push(new Attachment({
         msgId: internalMsgId,
         id: (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).body!.attachmentId,
         length: (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).body!.size,
@@ -107,8 +111,9 @@ export class GmailParser {
   }
 
   public static findBodies = (gmailMsg: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part, internalResults: SendableMsgBody = {}): SendableMsgBody => {
-    const isGmailMsgWithPayload = (v: any): v is GmailRes.GmailMsg => v && typeof (v as GmailRes.GmailMsg).payload !== 'undefined';
-    const isGmailMsgPayload = (v: any): v is GmailRes.GmailMsg$payload => v && typeof (v as GmailRes.GmailMsg$payload).parts !== 'undefined';
+    const isGmailMsgWithPayload = (v: any): v is GmailRes.GmailMsg => v && typeof (v as GmailRes.GmailMsg).payload !== 'undefined'; // tslint:disable-line:no-unsafe-any
+    const isGmailMsgPayload = (v: any): v is GmailRes.GmailMsg$payload => v && typeof (v as GmailRes.GmailMsg$payload).parts !== 'undefined'; // tslint:disable-line:no-unsafe-any
+    // tslint:disable-next-line:no-unsafe-any
     const isGmailMsgPayloadPart = (v: any): v is GmailRes.GmailMsg$payload$part => v && typeof (v as GmailRes.GmailMsg$payload$part).body !== 'undefined';
     if (isGmailMsgWithPayload(gmailMsg)) {
       GmailParser.findBodies(gmailMsg.payload!, internalResults);

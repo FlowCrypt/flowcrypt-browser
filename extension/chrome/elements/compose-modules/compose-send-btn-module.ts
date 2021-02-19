@@ -2,10 +2,14 @@
 
 'use strict';
 
+import * as DOMPurify from 'dompurify';
+
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
-import { Att } from '../../../js/common/core/att.js';
+import { Attachment } from '../../../js/common/core/attachment.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
+import { ComposerUserError } from './compose-err-module.js';
 import { ComposeSendBtnPopoverModule } from './compose-send-btn-popover-module.js';
 import { GeneralMailFormatter } from './formatters/general-mail-formatter.js';
 import { GmailRes } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
@@ -35,7 +39,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
 
   public setHandlers = (): void => {
     const ctrlEnterHandler = Ui.ctrlEnter(() => !this.view.sizeModule.composeWindowIsMinimized && this.extractProcessSendMsg());
-    this.view.S.cached('subject').add(this.view.S.cached('compose')).keypress(ctrlEnterHandler);
+    this.view.S.cached('subject').add(this.view.S.cached('compose')).keydown(ctrlEnterHandler);
     this.view.S.cached('send_btn').click(this.view.setHandlerPrevent('double', () => this.extractProcessSendMsg()));
     this.popover.setHandlers();
   }
@@ -71,7 +75,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
   }
 
   public renderUploadProgress = (progress: number | undefined, progressRepresents: 'FIRST-HALF' | 'SECOND-HALF' | 'EVERYTHING') => {
-    if (progress && this.view.attsModule.attach.hasAtt()) {
+    if (progress && this.view.attachmentsModule.attachment.hasAttachment()) {
       if (progressRepresents === 'FIRST-HALF') {
         progress = Math.floor(progress / 2); // show 0-50% instead of 0-100%
       } else if (progressRepresents === 'SECOND-HALF') {
@@ -134,15 +138,69 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       msg.headers[k] = this.additionalMsgHeaders[k];
     }
     if (choices.encrypt && !choices.richtext) {
-      for (const a of msg.atts) {
+      for (const a of msg.attachments) {
         a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
       }
     }
+    if (choices.richtext && !choices.encrypt && !choices.sign && msg.body['text/html']) {
+      // extract inline images of plain rich-text messages (#3256)
+      // todo - also apply to rich text signed-only messages
+      const { htmlWithCidImages, imgAttachments } = this.extractInlineImagesToAttachments(msg.body['text/html']);
+      msg.body['text/html'] = htmlWithCidImages;
+      msg.attachments.push(...imgAttachments);
+    }
     if (this.view.myPubkeyModule.shouldAttach()) {
-      msg.atts.push(Att.keyinfoAsPubkeyAtt(senderKi));
+      msg.attachments.push(Attachment.keyinfoAsPubkeyAttachment(senderKi));
     }
     await this.addNamesToMsg(msg);
   }
+
+  private extractInlineImagesToAttachments = (html: string) => {
+    const imgAttachments: Attachment[] = [];
+    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+      if (!node) {
+        return;
+      }
+      if ('src' in node) {
+        const img: Element = node;
+        const src = img.getAttribute('src') as string;
+        const { mimeType, data } = this.parseInlineImageSrc(src);
+        if (mimeType && data) {
+          const imgAttachment = new Attachment({
+            cid: Attachment.attachmentId(),
+            name: img.getAttribute('name') || '',
+            type: mimeType,
+            data: Buf.fromBase64Str(data),
+            inline: true
+          });
+          img.setAttribute('src', `cid:${imgAttachment.cid}`);
+          imgAttachments.push(imgAttachment);
+        } else {
+          throw new ComposerUserError(`
+            Unable to parse an inline image <details>
+              <summary>See error details</summary>
+              src="${Xss.escape(src)}"
+            </details>
+          `);
+        }
+      }
+    });
+    const htmlWithCidImages = DOMPurify.sanitize(html);
+    DOMPurify.removeAllHooks();
+    return { htmlWithCidImages, imgAttachments };
+  }
+
+  private parseInlineImageSrc = (src: string) => {
+    let mimeType;
+    let data = '';
+    const parts = src.split(/[:;,]/);
+    if (parts.length === 4 && parts[0] === 'data' && parts[1].match(/^image\/\w+/) && parts[2] === 'base64') {
+      mimeType = parts[1];
+      data = parts[3];
+    }
+    return { mimeType, data };
+  }
+
 
   private doSendMsg = async (msg: SendableMsg) => {
     // if this is a password-encrypted message, then we've already shown progress for uploading to backend

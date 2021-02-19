@@ -125,6 +125,9 @@ declare namespace OpenPGP {
       public getFingerprintBytes(): Uint8Array | null;
       public getCreationTime(): Date;
       public getKeyId(): Keyid;
+      public params: object[];
+      public isDecrypted(): boolean;
+      public isEncrypted: boolean; // may be null, false or true
     }
 
     class BasePrimaryKeyPacket extends BaseKeyPacket {
@@ -156,7 +159,6 @@ declare namespace OpenPGP {
 
     export class PublicKey extends BasePrimaryKeyPacket {
       public tag: enums.packet.publicKey;
-      public isDecrypted(): null;
     }
 
     export class SymmetricallyEncrypted extends BasePacket {
@@ -169,7 +171,6 @@ declare namespace OpenPGP {
 
     export class PublicSubkey extends BaseKeyPacket {
       public tag: enums.packet.publicSubkey;
-      public isDecrypted(): null;
     }
 
     export class UserAttribute extends BasePacket {
@@ -185,7 +186,6 @@ declare namespace OpenPGP {
       public tag: enums.packet.secretKey;
       // encrypted: null | unknown[]; // Encrypted secret-key data, not meant for public use
       public s2k: { type: string } | null;
-      public isDecrypted(): boolean;
       public encrypt(passphrase: string): Promise<boolean>;
       public decrypt(passphrase: string): Promise<true>;
     }
@@ -199,7 +199,6 @@ declare namespace OpenPGP {
       public tag: enums.packet.secretSubkey;
       // encrypted: null | unknown[]; // Encrypted secret-key data, not meant for public use
       public s2k: { type: string } | null;
-      public isDecrypted(): boolean;
       public encrypt(passphrase: string): Promise<boolean>;
       public decrypt(passphrase: string): Promise<true>;
     }
@@ -508,13 +507,13 @@ declare namespace OpenPGP {
      * @param partindex
      * @param parttotal
      */
-    function armor(messagetype: enums.armor, body: object, partindex: number, parttotal: number): string;
+    function encode(messagetype: enums.armor, body: object, partindex?: number, parttotal?: number, customComment?: string): string;
 
     /** DeArmor an OpenPGP armored message; verify the checksum and return the encoded bytes
      *
      *  @param text OpenPGP armored message
      */
-    function dearmor(text: string): object;
+    function decode(text: string): Promise<{ type: enums.armor, data: ReadableStream<Uint8Array> }>;
   }
 
   export namespace cleartext {
@@ -831,6 +830,9 @@ declare namespace OpenPGP {
 
   export namespace key {
 
+    // callable constructor
+    export function Key(this: Key, packetlist: packet.List<packet.BasePacket>): Key;
+
     export type EllipticCurveName = 'curve25519' | 'p256' | 'p384' | 'p521' | 'secp256k1' | 'brainpoolP256r1' | 'brainpoolP384r1' | 'brainpoolP512r1';
 
     /** Class that represents an OpenPGP key. Must contain a primary key. Can contain additional subkeys, signatures, user ids, user attributes.
@@ -841,7 +843,7 @@ declare namespace OpenPGP {
       public users: User[];
       public revocationSignatures: packet.Signature[];
       public keyPacket: packet.PublicKey | packet.SecretKey;
-      constructor(packetlist: packet.List<packet.AnyPacket>);
+      constructor(packetlist: packet.List<packet.BasePacket>);
       public armor(): string;
       public decrypt(passphrase: string | string[], keyId?: Keyid): Promise<boolean>;
       public encrypt(passphrase: string | string[]): Promise<void>;
@@ -851,16 +853,17 @@ declare namespace OpenPGP {
       public getUserIds(): string[];
       public isPrivate(): boolean;
       public isPublic(): boolean;
+      public toPacketlist(): packet.BasePacket[];
       public toPublic(): Key;
       public update(key: Key): void;
       public verifyPrimaryKey(): Promise<void>; // throws on err
       public isRevoked(): Promise<boolean>;
       public revoke(reason: { flag?: enums.reasonForRevocation; string?: string; }, date?: Date): Promise<Key>;
       public getRevocationCertificate(): Promise<Stream<string> | string | undefined>;
-      public getEncryptionKey(keyid?: Keyid | null, date?: Date, userId?: UserId | null): Promise<packet.PublicSubkey | packet.SecretSubkey | packet.SecretKey | packet.PublicKey | null>;
-      public getSigningKey(): Promise<packet.PublicSubkey | packet.SecretSubkey | packet.SecretKey | packet.PublicKey | null>;
+      public getEncryptionKey(keyid?: Keyid | null, date?: Date, userId?: UserId | null): Promise<key.Key | key.SubKey | null>;
+      public getSigningKey(keyid?: Keyid | null, date?: Date, userId?: UserId | null): Promise<key.Key | key.SubKey | null>;
       public getKeys(keyId?: Keyid): (Key | SubKey)[];
-      // isDecrypted(): boolean;
+      public isDecrypted(): boolean;
       public isFullyEncrypted(): boolean;
       public isFullyDecrypted(): boolean;
       public isPacketDecrypted(keyId: Keyid): boolean;

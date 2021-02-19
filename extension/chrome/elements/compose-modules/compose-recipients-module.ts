@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { ChunkedCb, RecipientType } from '../../../js/common/api/shared/api.js';
+import { ChunkedCb, EmailProviderContact, RecipientType } from '../../../js/common/api/shared/api.js';
 import { Contact } from '../../../js/common/core/crypto/key.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './compose-err-module.js';
 import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
@@ -20,7 +20,7 @@ import { moveElementInArray } from '../../../js/common/platform/util.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { ContactStore, ContactUpdate } from '../../../js/common/platform/store/contact-store.js';
+import { ContactPreview, ContactStore, ContactUpdate } from '../../../js/common/platform/store/contact-store.js';
 
 /**
  * todo - this class is getting too big
@@ -345,6 +345,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (this.dragged) { // blur while drag&drop
       return;
     }
+    if (e.relatedTarget === this.view.S.cached('contacts').get(0)) { // user selected contact in #contacts list, do nothing here
+      return;
+    }
     this.view.errModule.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
     await this.parseRenderRecipients($(target));
     // If thereis no related target or related target isn't in recipients functionality
@@ -510,7 +513,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         this.hideContacts(); // todo - show suggestions of most contacted ppl etc
         return;
       }
-      const contacts: Contact[] = await ContactStore.search(undefined, { substring });
+      const contacts: ContactPreview[] = await ContactStore.search(undefined, { substring });
       this.view.errModule.debug(`searchContacts substring: ${substring}`);
       this.view.errModule.debug(`searchContacts db count: ${contacts.length}`);
       this.renderSearchRes(input, contacts, { substring });
@@ -521,7 +524,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.errModule.debug(`searchContacts 3`);
       const foundOnGoogle = await this.searchContactsOnGoogle(substring, contacts);
       await this.addApiLoadedContactsToDb(foundOnGoogle);
-      contacts.push(...foundOnGoogle);
+      contacts.push(...foundOnGoogle.map(c => ContactStore.previewObj({ email: c.email, name: c.name })));
       this.renderSearchRes(input, contacts, { substring });
       if (contacts.length >= this.MAX_CONTACTS_LENGTH) {
         this.view.errModule.debug(`searchContacts 3.b, count: ${contacts.length}`);
@@ -532,12 +535,12 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         this.view.errModule.debug(`searchContacts (Gmail Sent Messages) 6.b`);
         await this.guessContactsFromSentEmails(substring, contacts, async guessed => {
           await this.addApiLoadedContactsToDb(guessed.new);
-          contacts.push(...guessed.new);
+          contacts.push(...guessed.new.map(c => ContactStore.previewObj({ email: c.email, name: c.name })));
           this.renderSearchRes(input, contacts, { substring });
         });
       }
     } catch (e) {
-      Ui.toast(`Error searching contacts: ${ApiErr.eli5(e)}`, 5).catch(Catch.reportErr);
+      Ui.toast(`Error searching contacts: ${ApiErr.eli5(e)}`, 5);
       throw e;
     } finally {
       this.view.errModule.debug('searchContacts 7 - finishing');
@@ -546,39 +549,41 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
   }
 
-  private guessContactsFromSentEmails = async (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => {
+  private guessContactsFromSentEmails = async (query: string, knownContacts: ContactPreview[], multiCb: ChunkedCb) => {
     this.view.errModule.debug('guessContactsFromSentEmails start');
-    await this.view.emailProvider.guessContactsFromSentEmails(query, knownContacts, multiCb).catch(e => {
+    await this.view.emailProvider.guessContactsFromSentEmails(query, knownContacts.map(c => c.email).filter(e => Str.isEmailValid(e)), multiCb).catch(e => {
       if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       } else if (ApiErr.isNetErr(e)) {
-        Ui.toast(`Network error - cannot search contacts`).catch(Catch.reportErr);
+        Ui.toast(`Network error - cannot search contacts`);
       } else if (ApiErr.isMailOrAcctDisabledOrPolicy(e)) {
-        Ui.toast(`Cannot search contacts - account disabled or forbidden by admin policy`).catch(Catch.reportErr);
+        Ui.toast(`Cannot search contacts - account disabled or forbidden by admin policy`);
       } else {
         Catch.reportErr(e);
-        Ui.toast(`Error searching contacts: ${ApiErr.eli5(e)}`).catch(Catch.reportErr);
+        Ui.toast(`Error searching contacts: ${ApiErr.eli5(e)}`);
       }
     });
     this.view.errModule.debug('guessContactsFromSentEmails end');
   }
 
-  private searchContactsOnGoogle = async (query: string, knownContacts: Contact[]): Promise<Contact[]> => {
+  private searchContactsOnGoogle = async (query: string, knownContacts: ContactPreview[]): Promise<EmailProviderContact[]> => {
     if (this.canSearchContacts) {
       this.view.errModule.debug(`searchContacts (Google API) 5`);
       const contactsGoogle = await Google.contactsGet(this.view.acctEmail, query, undefined, this.MAX_CONTACTS_LENGTH);
       if (contactsGoogle && contactsGoogle.length) {
-        const newContacts = contactsGoogle.filter(cGmail => !knownContacts.find(c => c.email === cGmail.email));
-        return await Promise.all(newContacts.map(({ email, name }) => ContactStore.obj({ email, name })));
+        return contactsGoogle.filter(cGmail => !knownContacts.find(c => c.email === cGmail.email));
       }
     }
     return [];
   }
 
-  private renderSearchRes = (input: JQuery<HTMLElement>, contacts: Contact[], query: ProviderContactsQuery) => {
+  private renderSearchRes = (input: JQuery<HTMLElement>, contacts: ContactPreview[], query: ProviderContactsQuery) => {
+    if ((input.val() as string).toLowerCase() !== query.substring.toLowerCase()) { // the input value has changed meanwhile
+      return;
+    }
     this.view.errModule.debug(`renderSearchRes len: ${contacts.length}`);
     // have pgp on top, no pgp bottom. Sort each groups by last use
-    const sortedContacts = contacts.sort((a: Contact, b: Contact) => {
+    const sortedContacts = contacts.sort((a: ContactPreview, b: ContactPreview) => {
       if (a.has_pgp && !b.has_pgp) {
         return -1;
       }
@@ -687,10 +692,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (possiblyBogusAddr && q && (possiblyBogusAddr === q || possiblyBogusAddr.includes(q))) {
       possiblyBogusRecipient.remove();
     }
-    if (!this.addedRecipients.find(r => r.email === email)) {
-      this.view.errModule.debug(`selectContact -> parseRenderRecipients start`);
-      this.parseRenderRecipients(input, false, [email]).catch(Catch.reportErr);
-    }
+    this.view.errModule.debug(`selectContact -> parseRenderRecipients start`);
+    this.parseRenderRecipients(input, false, [email]).catch(Catch.reportErr);
     input.focus();
     this.hideContacts();
   }
@@ -700,7 +703,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     for (const rawEmail of emails) {
       const { email } = Str.parseEmail(rawEmail);
       const recipientId = this.generateRecipientId();
-      const recipientsHtml = `<span tabindex="0" id="${recipientId}"><span>${Xss.escape(email || rawEmail)}</span> ${Ui.spinner('green')}</span>`;
+      const recipientsHtml = `<span tabindex="0" id="${recipientId}" data-test="${recipientId}"><span>${Xss.escape(email || rawEmail)}</span> ${Ui.spinner('green')}</span>`;
       Xss.sanitizeAppend(container.find('.recipients'), recipientsHtml);
       const element = document.getElementById(recipientId);
       if (element) { // if element wasn't created this means that Composer is used by another component
@@ -709,6 +712,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
             await this.collapseInputsIfNeeded(event.relatedTarget);
           }
         }));
+        $(element).on('keydown', this.view.setHandler((el, ev) => {
+          if (ev.key === 'Delete' || ev.key === 'Backspace') {
+            this.removeRecipient(element);
+          }
+        }, this.view.errModule.handle('remove recipient with keyboard')));
         this.addDraggableEvents(element);
         const recipient = { email: email || rawEmail, element, id: recipientId, sendingType, status: email ? status : RecipientStatus.WRONG };
         this.addedRecipients.push(recipient);
@@ -718,13 +726,14 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     return result;
   }
 
-  private addApiLoadedContactsToDb = async (newContacts: Contact[]) => {
+  private addApiLoadedContactsToDb = async (newContacts: EmailProviderContact[]) => {
     this.view.errModule.debug('addApiLoadedContactsToDb 1');
     if (!newContacts.length) {
       return;
     }
     const toLookup: Contact[] = [];
-    for (const contact of newContacts) {
+    for (const input of newContacts) {
+      const contact = await ContactStore.obj({ email: input.email, name: input.name });
       const [storedContact] = await ContactStore.get(undefined, [contact.email]);
       if (storedContact) {
         const toUpdate: ContactUpdate = {};
@@ -822,7 +831,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.errModule.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${recipient.email}`);
       $(el).attr('title', 'This email address looks misspelled. Please try again.');
       $(el).addClass("wrong");
-    } else if (contact.pubkey && ((contact.expiresOn || Infinity) <= Date.now() || contact.pubkey.usableButExpired)) {
+    } else if (contact.pubkey && ((contact.expiresOn || Infinity) <= Date.now() || contact.pubkey.usableForEncryptionButExpired)) {
       recipient.status = RecipientStatus.EXPIRED;
       $(el).addClass("expired");
       Xss.sanitizePrepend(el, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
@@ -839,7 +848,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
       $(el).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
-    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn();
+    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
   }
 
@@ -853,7 +862,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
     this.view.S.cached('input_addresses_container_outer').find(`#input-container-${this.addedRecipients[index].sendingType} input`).focus();
     this.addedRecipients.splice(index, 1);
-    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn();
+    this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
   }
 

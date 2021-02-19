@@ -20,7 +20,7 @@
         },
         {
           "name": "Sender",
-          "value": "sender@domain.com"
+          "value": "censored@email.com"
         },
         {
           "name": "Content-Type",
@@ -28,7 +28,7 @@
         },
         {
           "name": "From",
-          "value": "sender@domain.com"
+          "value": "censored@email.com"
         },
         {
           "name": "Mime-Version",

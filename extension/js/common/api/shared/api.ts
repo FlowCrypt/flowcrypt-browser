@@ -4,11 +4,10 @@
 
 // tslint:disable:no-direct-ajax
 
-import { Att } from '../../core/att.js';
+import { Attachment } from '../../core/attachment.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { Buf } from '../../core/buf.js';
 import { Catch } from '../../platform/catch.js';
-import { Contact } from '../../core/crypto/key.js';
 import { Dict } from '../../core/common.js';
 import { Env } from '../../browser/env.js';
 import { secureRandomBytes } from '../../platform/util.js';
@@ -18,7 +17,11 @@ export type ReqFmt = 'JSON' | 'FORM' | 'TEXT';
 export type RecipientType = 'to' | 'cc' | 'bcc';
 type ResFmt = 'json' | 'xhr';
 export type ReqMethod = 'POST' | 'GET' | 'DELETE' | 'PUT';
-type ProviderContactsResults = { new: Contact[], all: Contact[] };
+export type EmailProviderContact = {
+  email: string;
+  name?: string | null;
+}
+type ProviderContactsResults = { new: EmailProviderContact[], all: EmailProviderContact[] };
 type RawAjaxErr = {
   // getAllResponseHeaders?: () => any,
   // getResponseHeader?: (e: string) => any,
@@ -165,8 +168,8 @@ export class Api {
     } else if (fmt === 'FORM' && fields && typeof fields !== 'string') {
       formattedData = new FormData();
       for (const formFieldName of Object.keys(fields)) {
-        const a: Att | string = fields[formFieldName]; // tslint:disable-line:no-unsafe-any
-        if (a instanceof Att) {
+        const a: Attachment | string = fields[formFieldName]; // tslint:disable-line:no-unsafe-any
+        if (a instanceof Attachment) {
           formattedData.append(formFieldName, new Blob([a.getData()], { type: a.type }), a.name); // xss-none
         } else {
           formattedData.append(formFieldName, a); // xss-none
@@ -197,7 +200,7 @@ export class Api {
   }
 
   private static isRawAjaxErr = (e: any): e is RawAjaxErr => {
-    return e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number';
+    return e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number'; // tslint:disable-line:no-unsafe-any
   }
 
   /**

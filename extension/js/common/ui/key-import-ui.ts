@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { AttUI } from './att-ui.js';
+import { AttachmentUI } from './attachment-ui.js';
 import { Catch } from '../platform/catch.js';
 import { KeyBlockType } from '../core/msg-block.js';
 import { Lang } from '../lang.js';
@@ -102,9 +102,9 @@ export class KeyImportUi {
         $('.line.unprotected_key_create_pass_phrase').hide();
       }
     }));
-    const attach = new AttUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
-    attach.initAttDialog('fineuploader', 'fineuploader_button', {
-      attAdded: async file => {
+    const attachment = new AttachmentUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
+    attachment.initAttachmentDialog('fineuploader', 'fineuploader_button', {
+      attachmentAdded: async file => {
         let prv: OpenPGP.key.Key | undefined;
         const utf = file.getData().toUtfStr();
         if (utf.includes(PgpArmor.headers('privateKey').begin)) {
@@ -138,6 +138,19 @@ export class KeyImportUi {
     await this.checkSigningIfSelected(decrypted);
     if (encrypted.identities.length === 0) {
       throw new KeyCanBeFixed(encrypted);
+    }
+    // mandatory checks have passed, now display warnings
+    if (decrypted.missingPrivateKeyForDecryption || decrypted.missingPrivateKeyForSigning) {
+      const missing: string[] = [];
+      if (decrypted.missingPrivateKeyForSigning) {
+        missing.push('signing');
+      }
+      if (decrypted.missingPrivateKeyForDecryption) {
+        missing.push('decryption');
+      }
+      await Ui.modal.warning('Looks like this key was exported with --export-secret-subkeys option and missing private key parameters.\n\n' +
+        'Please export the key with --export-secret-key option if you plan to use it for ' +
+        missing.join(' and ') + '.');
     }
     return { normalized, passphrase, fingerprint: decrypted.id, decrypted, encrypted }; // will have fp if had longid
   }
@@ -229,7 +242,7 @@ export class KeyImportUi {
   private rejectKnownIfSelected = async (acctEmail: string, k: Key) => {
     if (this.rejectKnown) {
       const keyinfos = await KeyStore.get(acctEmail);
-      const privateKeysIds = keyinfos.map(ki => ki.fingerprint);
+      const privateKeysIds = keyinfos.map(ki => ki.fingerprints[0]);
       if (privateKeysIds.includes(k.id)) {
         throw new UserAlert('This is one of your current keys, try another one.');
       }
@@ -268,10 +281,13 @@ export class KeyImportUi {
   }
 
   private checkEncryptionPrvIfSelected = async (k: Key, encrypted: Key) => {
-    if (this.checkEncryption && !k.usableForEncryption) {
-      if (await KeyUtil.isWithoutSelfCertifications(k)) {
+    if (this.checkEncryption && (!k.usableForEncryption || k.missingPrivateKeyForDecryption)) {
+      if (k.missingPrivateKeyForDecryption) {
+        throw new UserAlert('Looks like this key was exported with --export-secret-subkeys option and missing private key parameters.\n\n' +
+          'Please export the key with --export-secret-key option.');
+      } else if (await KeyUtil.isWithoutSelfCertifications(k)) {
         throw new KeyCanBeFixed(encrypted);
-      } else if (k.usableButExpired) {
+      } else if (k.usableForEncryptionButExpired) {
         // Currently have 2 options: import or skip. Would be better to give user 3 choices:
         // 1) Confirm importing expired key
         // 2) Extend validity of expired key + import
@@ -302,8 +318,13 @@ export class KeyImportUi {
   }
 
   private checkSigningIfSelected = async (k: Key) => {
-    if (this.checkSigning && !k.usableForSigning) {
-      throw new UserAlert('This looks like a valid key but it cannot be used for signing. Please write at human@flowcrypt.com to see why is that.');
+    if (this.checkSigning && (!k.usableForSigning || k.missingPrivateKeyForSigning)) {
+      if (k.missingPrivateKeyForSigning && !k.usableForSigningButExpired) {
+        throw new UserAlert('Looks like this key was exported with --export-secret-subkeys option and missing private key parameters.\n\n' +
+          'Please export the key with --export-secret-key option.');
+      } else {
+        throw new UserAlert('This looks like a valid key but it cannot be used for signing. Please write at human@flowcrypt.com to see why is that.');
+      }
     }
   }
 

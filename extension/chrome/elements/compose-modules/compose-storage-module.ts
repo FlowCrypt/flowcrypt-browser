@@ -16,8 +16,8 @@ import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
-
 import { Settings } from '../../../js/common/settings.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 
 export class ComposeStorageModule extends ViewModule<ComposeView> {
 
@@ -47,30 +47,12 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     return result!;
   }
 
-  public draftMetaSet = async (draftId: string, threadId: string, recipients: string[], subject: string) => {
-    const draftStorage = await AcctStore.get(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
-    if (threadId) { // it's a reply
-      const drafts = draftStorage.drafts_reply || {};
-      drafts[threadId] = draftId;
-      await AcctStore.set(this.view.acctEmail, { drafts_reply: drafts });
-    } else { // it's a new message
-      const drafts = draftStorage.drafts_compose || {};
-      drafts[draftId] = { recipients, subject, date: new Date().getTime() };
-      await AcctStore.set(this.view.acctEmail, { drafts_compose: drafts });
-    }
-  }
-
-  public draftMetaDelete = async (draftId: string, threadId: string) => {
-    const draftStorage = await AcctStore.get(this.view.acctEmail, ['drafts_reply', 'drafts_compose']);
-    if (threadId) { // it's a reply
-      const drafts = draftStorage.drafts_reply || {};
-      delete drafts[threadId];
-      await AcctStore.set(this.view.acctEmail, { drafts_reply: drafts });
-    } else { // it's a new message
-      const drafts = draftStorage.drafts_compose || {};
-      delete drafts[draftId];
-      await AcctStore.set(this.view.acctEmail, { drafts_compose: drafts });
-    }
+  // TODO: remove in #3329
+  public draftMetaDelete = async (threadId: string) => {
+    const draftStorage = await AcctStore.get(this.view.acctEmail, ['drafts_reply']);
+    const drafts = draftStorage.drafts_reply || {};
+    delete drafts[threadId];
+    await AcctStore.set(this.view.acctEmail, { drafts_reply: drafts });
   }
 
   public addAdminCodes = async (shortId: string, codes: string[]) => {
@@ -99,10 +81,9 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   public passphraseGet = async (senderKi?: KeyInfo) => {
     if (!senderKi) {
-      senderKi = await KeyStore.getFirst(this.view.acctEmail);
-      Assert.abortAndRenderErrorIfKeyinfoEmpty(senderKi);
+      senderKi = await KeyStore.getFirstRequired(this.view.acctEmail);
     }
-    return await PassphraseStore.get(this.view.acctEmail, senderKi.fingerprint);
+    return await PassphraseStore.get(this.view.acctEmail, senderKi.fingerprints[0]);
   }
 
   public lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string, name: string | undefined): Promise<Contact | "fail"> => {
@@ -125,6 +106,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           const key = await KeyUtil.parse(lookupResult.pubkey);
           if (!key.usableForEncryption && !KeyUtil.expired(key)) { // Not to skip expired keys
             console.info('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: key.id });
+            Ui.toast(`Public Key retrieved for email ${email} with id ${key.id} was ignored because it's not usable for encryption.`, 5);
             lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
           }
         }

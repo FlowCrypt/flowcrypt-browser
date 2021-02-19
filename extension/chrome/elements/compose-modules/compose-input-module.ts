@@ -160,9 +160,13 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       const noop = (self: SquireEditor, event: Event) => {
         event.preventDefault();
       };
+      const removeFormatting = (self: SquireEditor) => {
+        self.removeAllFormatting();
+      };
       this.squire.setKeyHandler(ctrlKey + 'b', mapKeyToFormat('B'));
       this.squire.setKeyHandler(ctrlKey + 'u', mapKeyToFormat('U'));
       this.squire.setKeyHandler(ctrlKey + 'i', mapKeyToFormat('I'));
+      this.squire.setKeyHandler(ctrlKey + '\\', removeFormatting);
       this.squire.setKeyHandler(ctrlKey + 'shift-7', noop); // default is 'S'
       this.squire.setKeyHandler(ctrlKey + 'shift-5', noop); // default is 'SUB', { tag: 'SUP' }
       this.squire.setKeyHandler(ctrlKey + 'shift-6', noop); // default is 'SUP', { tag: 'SUB' }

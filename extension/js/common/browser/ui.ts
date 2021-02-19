@@ -116,7 +116,7 @@ export class Ui {
   };
 
   public static time = {
-    wait: (untilThisFunctionEvalsTrue: () => boolean | undefined) => new Promise((success, error) => {
+    wait: (untilThisFunctionEvalsTrue: () => boolean | undefined): Promise<void> => new Promise((success, error) => {
       const interval = Catch.setHandledInterval(() => {
         const result = untilThisFunctionEvalsTrue();
         if (result === true) {
@@ -132,7 +132,7 @@ export class Ui {
         }
       }, 50);
     }),
-    sleep: (ms: number, setCustomTimeout: (code: () => void, t: number) => void = Catch.setHandledTimeout) => new Promise(resolve => setCustomTimeout(resolve, ms)),
+    sleep: (ms: number, setCustomTimeout: (code: () => void, t: number) => void = Catch.setHandledTimeout): Promise<void> => new Promise(resolve => setCustomTimeout(resolve, ms)),
   };
 
   public static modal = {
@@ -246,7 +246,7 @@ export class Ui {
           $(Swal.getContent()!).attr('data-test', 'dialog');
           $(Swal.getCloseButton()!).attr('data-test', 'dialog-close').blur();
         },
-        onClose: () => {
+        willClose: () => {
           const urlWithoutPageParam = Url.removeParamsFromUrl(window.location.href, ['page']);
           window.history.pushState('', '', urlWithoutPageParam);
         },
@@ -305,7 +305,7 @@ export class Ui {
     return `<a href="${Xss.escape(window.location.href)}" data-test="action-retry-by-reloading">${Xss.escape(caption)}</a>`;
   }
 
-  public static delay = async (ms: number) => {
+  public static delay = async (ms: number): Promise<void> => {
     return await new Promise(resolve => Catch.setHandledTimeout(resolve, ms));
   }
 
@@ -439,16 +439,23 @@ export class Ui {
     return $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
   }
 
-  public static toast = async (msg: string, seconds = 2): Promise<void> => {
-    await Ui.swal().fire({
+  public static toast = (msg: string, seconds = 2) => {
+    // tslint:disable-next-line:no-floating-promises
+    Ui.swal().fire({
       toast: true,
       title: msg,
       showConfirmButton: false,
       position: 'bottom',
       timer: seconds * 1000,
+      timerProgressBar: true,
       customClass: {
+        container: 'ui-toast-container',
         popup: 'ui-toast',
         title: 'ui-toast-title'
+      },
+      didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
       }
     });
   }

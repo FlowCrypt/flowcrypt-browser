@@ -1,5 +1,11 @@
 <div class="lightboxed">
 
+version 8.0.2 on Jan 25, 2021: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/430?closed=1" target="_blank">Contacts performance</a>
+
+version 8.0.1 on Jan 3, 2021: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/429?closed=1" target="_blank">Store migration</a>
+
+version 8.0.0 on Nov 21, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/396?closed=1" target="_blank">FES integration</a>
+
 version 7.9.9 on Nov 15, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/428?closed=1" target="_blank">S/MIME attachments, Contact fixes</a>
 
 version 7.9.8 on Oct 29, 2020: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/427?closed=1" target="_blank">Auth refactors</a>

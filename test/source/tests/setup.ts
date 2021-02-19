@@ -11,6 +11,7 @@ import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { Str } from './../core/common';
 import { MOCK_KM_LAST_INSERTED_KEY } from './../mock/key-manager/key-manager-endpoints';
 import { BrowserRecipe } from './tooling/browser-recipe';
+import { KeyUtil } from '../core/crypto/key';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -139,6 +140,85 @@ CciXuhqnLwoVF5/uXMYffVtfl/OU+w==
         }
       });
     }, 'FAILING'));
+
+    ava.default('setup - import key - warning on primary has no secret', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
+      await SetupPageRecipe.manualEnter(settingsPage, 'unused', {
+        submitPubkey: false,
+        genPp: false,
+        fillOnly: true,
+        key: {
+          title: 'Primary no secret',
+          armored: `-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+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
+=OeNi
+-----END PGP PRIVATE KEY BLOCK-----`,
+          passphrase: '1234',
+          longid: '8B3BB9CFC476EE16',
+        }
+      });
+      await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
+      await Util.sleep(1);
+      await settingsPage.waitAndRespondToModal('warning', 'confirm', 'Please export the key with --export-secret-key option if you plan to use it for signing.');
+    }));
 
     ava.default('setup - import key - two e-mails on the screen', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
@@ -318,6 +398,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await attesterFrame.waitAndRespondToModal('error', 'confirm', 'Disallowed by your organisation rules');
     }));
 
+    ava.default('user@no-submit-org-rule.flowcrypt.com - do not submit to attester on key generation', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-org-rule.flowcrypt.com');
+      await Util.sleep(5);
+      await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase: 'long enough to suit requirements' }, usedPgpBefore: false });
+      await settingsPage.notPresent('.swal2-container');
+      await settingsPage.close();
+    }));
+
     ava.default('user@no-search-domains-org-rule.flowcrypt.com - do not search attester for recipients on particular domains', testWithBrowser(undefined, async (t, browser) => {
       // disallowed searching attester for pubkeys on "flowcrypt.com" domain
       // below we search for human@flowcrypt.com which normally has pubkey on attester, but none should be found due to the rule
@@ -352,6 +440,21 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await securityFrame.notPresent(['@action-change-passphrase-begin', '@action-test-passphrase-begin', '@action-forget-pp']);
     }));
 
+    ava.default('get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.com - automatic setup with key found on key manager and no submit rule', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoKeygen(settingsPage);
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      // check no "add key"
+      await settingsPage.notPresent('@action-open-add-key-page');
+      // check imported key
+      const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
+      await Util.sleep(1);
+      await myKeyFrame.waitAll('@content-fingerprint');
+      expect(await myKeyFrame.read('@content-fingerprint')).to.contain('9C64 3D82 783E 291A 2AD2 611B 499E 84DB 185F 0359');
+      await SettingsPageRecipe.closeDialog(settingsPage);
+    }));
+
     ava.default('put.key@key-manager-autogen.flowcrypt.com - automatic setup with key not found on key manager, then generated', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'put.key@key-manager-autogen.flowcrypt.com';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -365,7 +468,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await myKeyFrame.waitAll('@content-fingerprint');
       const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
       expect(fromKm).to.exist;
-      expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(fromKm.fingerprint));
+      const k = await KeyUtil.parse(fromKm.publicKey);
+      expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(k.id));
       expect(await myKeyFrame.read('@content-key-expiration')).to.equal('Key does not expire');
       await SettingsPageRecipe.closeDialog(settingsPage);
       await Util.sleep(2);
@@ -397,7 +501,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await settingsPage.waitAll('@container-overlay-details');
       await Util.sleep(0.5);
       const details = await settingsPage.read('@container-overlay-details');
-      expect(details).to.contain('500 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedPrivateKey,publicKey,fingerprint -> Intentional error for put.error user to test client behavior');
+      expect(details).to.contain('500 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedPrivateKey,publicKey -> Intentional error for put.error user to test client behavior');
       expect(details).to.not.contain('PRIVATE KEY');
       expect(details).to.not.contain('<REDACTED:');
     }));
@@ -435,7 +539,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await myKeyFrame.waitAll('@content-fingerprint');
       const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
       expect(fromKm).to.exist;
-      expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(fromKm.fingerprint));
+      const k = await KeyUtil.parse(fromKm.publicKey);
+      expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(k.id));
       const approxMonth = [29, 30, 31].map(days => Str.datetimeToDate(Str.fromDate(new Date(Date.now() + 1000 * 60 * 60 * 24 * days))));
       expect(await myKeyFrame.read('@content-key-expiration')).to.be.oneOf(approxMonth);
       await SettingsPageRecipe.closeDialog(settingsPage);
@@ -452,9 +557,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await settingsPage.waitAll('@container-overlay-details');
       await Util.sleep(0.5);
       const details = await settingsPage.read('@container-overlay-details');
-      expect(details).to.contain('400 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedPrivateKey,publicKey,fingerprint -> No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.com yet');
+      expect(details).to.contain('405 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedPrivateKey,publicKey -> No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.com yet');
       expect(details).to.not.contain('PRIVATE KEY');
-      expect(details).to.contain('<REDACTED:PRV>');
     }));
 
     /**

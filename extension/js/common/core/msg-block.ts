@@ -4,13 +4,13 @@
 
 import { DecryptError, VerifyRes } from './crypto/pgp/msg-util.js';
 
-import { AttMeta } from './att.js';
+import { AttachmentMeta } from './attachment.js';
 import { Buf } from './buf.js';
 
 export type KeyBlockType = 'publicKey' | 'privateKey' | 'certificate';
 export type ReplaceableMsgBlockType = KeyBlockType | 'signedMsg' | 'encryptedMsg';
-export type MsgBlockType = ReplaceableMsgBlockType | 'plainText' | 'signedText' | 'plainHtml' | 'decryptedHtml' | 'plainAtt' | 'encryptedAtt'
-  | 'decryptedAtt' | 'encryptedAttLink' | 'decryptErr' | 'verifiedMsg' | 'signedHtml';
+export type MsgBlockType = ReplaceableMsgBlockType | 'plainText' | 'signedText' | 'plainHtml' | 'decryptedHtml' | 'plainAttachment' | 'encryptedAttachment'
+  | 'decryptedAttachment' | 'encryptedAttachmentLink' | 'decryptErr' | 'verifiedMsg' | 'signedHtml';
 
 export class MsgBlock {
 
@@ -18,8 +18,8 @@ export class MsgBlock {
     return new MsgBlock(type, content, !missingEnd);
   }
 
-  public static fromAtt = (type: MsgBlockType, content: string, attMeta: AttMeta): MsgBlock => {
-    return new MsgBlock(type, content, true, undefined, attMeta);
+  public static fromAttachment = (type: MsgBlockType, content: string, attachmentMeta: AttachmentMeta): MsgBlock => {
+    return new MsgBlock(type, content, true, undefined, attachmentMeta);
   }
 
   constructor(
@@ -27,7 +27,7 @@ export class MsgBlock {
     public content: string | Buf,
     public complete: boolean,
     public signature?: string,
-    public attMeta?: AttMeta, // only in plainAtt, encryptedAtt, decryptedAtt, encryptedAttLink (not sure if always)
+    public attachmentMeta?: AttachmentMeta, // only in plainAttachment, encryptedAttachment, decryptedAttachment, encryptedAttachmentLink (not sure if always)
     public decryptErr?: DecryptError, // only in decryptErr block, always
     public verifyRes?: VerifyRes,
   ) {

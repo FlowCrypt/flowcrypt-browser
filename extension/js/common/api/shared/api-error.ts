@@ -2,6 +2,7 @@
 
 import { BgNotReadyErr } from '../../browser/browser-msg.js';
 import { Catch } from '../../platform/catch.js';
+import { DecryptionError } from '../../core/crypto/pgp/msg-util.js';
 import { Xss } from '../../platform/xss.js';
 import { StoreFailedError } from '../../platform/store/abstract-store.js';
 import { Str } from '../../core/common.js';
@@ -252,6 +253,13 @@ export class ApiErr {
     }
     if (e instanceof AjaxErr && e.status === 400 && typeof e.responseText === 'string' && e.responseText.indexOf('RequestTimeout') !== -1) {
       return true; // AWS: Your socket connection to the server was not read from or written to within the timeout period. Idle connections will be closed.
+    }
+    return false;
+  }
+
+  public static isDecryptErr = (e: any): e is DecryptionError => {
+    if (e instanceof DecryptionError) {
+      return true;
     }
     return false;
   }

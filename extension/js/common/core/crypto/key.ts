@@ -27,7 +27,10 @@ export interface Key {
   expiration: number | undefined; // number of millis of expiration or undefined if never expires
   usableForEncryption: boolean;
   usableForSigning: boolean;
-  usableButExpired: boolean;
+  usableForEncryptionButExpired: boolean;
+  usableForSigningButExpired: boolean;
+  missingPrivateKeyForSigning: boolean;
+  missingPrivateKeyForDecryption: boolean;
   emails: string[];
   identities: string[];
   fullyDecrypted: boolean;
@@ -62,21 +65,19 @@ export type Contact = {
   expiresOn: number | null;
 };
 
-export interface PrvKeyInfo {
+export interface KeyInfo {
   private: string;
+  public: string; // this cannot be Pubkey has it's being passed to localstorage
   longid: string;
+  fingerprints: string[];
+  emails: string[];
+}
+
+export interface KeyInfoWithOptionalPp extends KeyInfo {
   passphrase?: string;
-  decrypted?: Key;  // only for internal use in this file
-  parsed?: Key;     // only for internal use in this file
 }
 
 export type KeyAlgo = 'curve25519' | 'rsa2048' | 'rsa4096';
-
-export interface KeyInfo extends PrvKeyInfo {
-  // this cannot be Pubkey has it's being passed to localstorage
-  public: string;
-  fingerprint: string;
-}
 
 export type PrvPacket = (OpenPGP.packet.SecretKey | OpenPGP.packet.SecretSubkey);
 
@@ -144,20 +145,38 @@ export class KeyUtil {
     if (pubkey.type === 'openpgp') {
       return OpenPGPKey.armor(pubkey);
     } else if (pubkey.type === 'x509') {
-      return (pubkey as unknown as { raw: string }).raw;
+      // some keys saved by older version may have `raw` as string, so fall back on it
+      const rawFields = pubkey as unknown as { rawArmored: string, raw: string };
+      return rawFields.rawArmored ?? rawFields.raw;
     } else {
       throw new Error('Unknown pubkey type: ' + pubkey.type);
     }
   }
 
-  public static diagnose = async (pubkey: Key, appendResult: (text: string, f?: () => Promise<unknown>) => Promise<void>) => {
-    await appendResult(`Key type`, async () => pubkey.type);
-    if (pubkey.type === 'openpgp') {
-      await OpenPGPKey.diagnose(pubkey, appendResult);
+  public static diagnose = async (key: Key, passphrase: string): Promise<Map<string, string>> => {
+    let result = new Map<string, string>();
+    result.set(`Key type`, key.type);
+    if (key.type === 'openpgp') {
+      const opgpresult = await OpenPGPKey.diagnose(key, passphrase);
+      result = new Map<string, string>([...result, ...opgpresult]);
     }
-    await appendResult(`expiration`, async () => pubkey.expiration);
-    await appendResult(`internal dateBeforeExpiration`, async () => KeyUtil.dateBeforeExpirationIfAlreadyExpired(pubkey));
-    await appendResult(`internal usableButExpired`, async () => pubkey.usableButExpired);
+    result.set(`expiration`, KeyUtil.formatResult(key.expiration));
+    result.set(`internal dateBeforeExpiration`, await KeyUtil.formatResultAsync(async () => KeyUtil.dateBeforeExpirationIfAlreadyExpired(key)));
+    result.set(`internal usableForEncryptionButExpired`, KeyUtil.formatResult(key.usableForEncryptionButExpired));
+    result.set(`internal usableForSigningButExpired`, KeyUtil.formatResult(key.usableForSigningButExpired));
+    return result;
+  }
+
+  public static formatResultAsync = async (f: () => Promise<unknown>): Promise<string> => {
+    try {
+      return KeyUtil.formatResult(await f());
+    } catch (e) {
+      return `[${String(e)}]`;
+    }
+  }
+
+  public static formatResult = (value: unknown): string => {
+    return `[-] ${String(value)}`;
   }
 
   public static asPublicKey = async (pubkey: Key): Promise<Key> => {
@@ -276,6 +295,19 @@ export class KeyUtil {
     } else {
       throw new Error(`KeyUtil.revoke does not support key type ${key.type}`);
     }
+  }
+
+  public static keyInfoObj = async (prv: Key): Promise<KeyInfo> => {
+    if (!prv.isPrivate) {
+      throw new Error('Key passed into KeyUtil.keyInfoObj must be a Private Key');
+    }
+    return {
+      private: KeyUtil.armor(prv),
+      public: KeyUtil.armor(await KeyUtil.asPublicKey(prv)),
+      longid: OpenPGPKey.fingerprintToLongid(prv.id),
+      emails: prv.emails,
+      fingerprints: prv.allIds,
+    };
   }
 
 }

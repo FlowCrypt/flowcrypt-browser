@@ -16,7 +16,7 @@ div.webmail_notifications div.webmail_notification {
   border-radius: 2px;
   box-shadow: rgba(0, 0, 0, 0.2) 0 2px 4px 0;
   color: rgb(34, 34, 34);
-  font-family: arial, sans-serif;
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 12.8px;
   font-weight: bold;
   line-height: 16px;
@@ -242,6 +242,18 @@ iframe.reply_message {
   border: none;
 }
 
+.I5.reply_message_evaluated.remove_borders {
+  padding-left: 7px !important;
+}
+
+.Bk {
+  overflow: hidden;
+}
+
+.l2 {
+  padding-bottom: 0 !important;
+}
+
 .remove_borders {
   border: none !important;
   padding: 0 !important;
@@ -282,14 +294,13 @@ div.reply_message_iframe_container.inserted {
 body.cryptup_gmail div.recipients_use_encryption {
   min-height: 0;
   background-color: #f5f5f5;
-  padding-left: 10px;
-  padding-top: 4px;
-  padding-bottom: 4px;
+  margin: 0 -20px;
+  padding: 4px 20px;
 }
 
 body.cryptup_gmail div.recipients_use_encryption a {
   position: absolute;
-  right: 8px;
+  right: 20px;
 }
 
 /* cryptup dialog */

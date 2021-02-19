@@ -5,8 +5,8 @@
 import { DecryptErrTypes, MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
 
 import { Assert } from '../../../js/common/assert.js';
-import { Att } from '../../../js/common/core/att.js';
-import { AttUI } from '../../../js/common/ui/att-ui.js';
+import { Attachment } from '../../../js/common/core/attachment.js';
+import { AttachmentUI } from '../../../js/common/ui/attachment-ui.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -19,7 +19,7 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 View.run(class ManualDecryptView extends View {
 
   private readonly acctEmail: string;
-  private readonly attUi = new AttUI(() => Promise.resolve({ count: 1, size: 100 * 1024 * 1024, size_mb: 100 }));
+  private readonly attachmentUi = new AttachmentUI(() => Promise.resolve({ count: 1, size: 100 * 1024 * 1024, size_mb: 100 }));
 
   private factory: XssSafeFactory | undefined;
 
@@ -27,7 +27,7 @@ View.run(class ManualDecryptView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.attUi.initAttDialog('fineuploader', 'fineuploader_button');
+    this.attachmentUi.initAttachmentDialog('fineuploader', 'fineuploader_button');
   }
 
   public render = async () => {
@@ -42,11 +42,11 @@ View.run(class ManualDecryptView extends View {
   }
 
   private actionDecryptAndDownloadHandler = async (button: HTMLElement) => {
-    const ids = this.attUi.getAttIds();
+    const ids = this.attachmentUi.getAttachmentIds();
     if (ids.length === 1) {
       const origContent = $(button).html();
       Xss.sanitizeRender(button, 'Decrypting.. ' + Ui.spinner('white'));
-      const collected = await this.attUi.collectAtt(ids[0]);
+      const collected = await this.attachmentUi.collectAttachment(ids[0]);
       await this.decryptAndDownload(collected);
       Xss.sanitizeRender('.action_decrypt_and_download', origContent);
     } else {
@@ -54,10 +54,10 @@ View.run(class ManualDecryptView extends View {
     }
   }
 
-  private decryptAndDownload = async (encrypted: Att) => { // todo - this is more or less copy-pasted from att.js, should use common function
-    const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: encrypted.getData() });
+  private decryptAndDownload = async (encrypted: Attachment) => { // todo - this is more or less copy-pasted from attachment.js, should use common function
+    const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail), encryptedData: encrypted.getData() });
     if (result.success) {
-      const attachment = new Att({ name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content });
+      const attachment = new Attachment({ name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content });
       Browser.saveToDownloads(attachment);
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       $('.passphrase_dialog').html(this.factory!.embeddedPassphrase(result.longids.needPassphrase)); // xss-safe-factory

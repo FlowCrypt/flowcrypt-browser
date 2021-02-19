@@ -16,7 +16,7 @@ export class SignedMsgMailFormatter extends BaseMailFormatter {
 
   public sendableMsg = async (newMsg: NewMsgData, signingPrv: Key): Promise<SendableMsg> => {
     this.view.errModule.debug(`SignedMsgMailFormatter.sendableMsg signing with key: ${signingPrv.id}`);
-    const atts = this.isDraft ? [] : await this.view.attsModule.attach.collectAtts();
+    const attachments = this.isDraft ? [] : await this.view.attachmentsModule.attachment.collectAttachments();
     if (!this.richtext) {
       // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
       // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
@@ -33,13 +33,13 @@ export class SignedMsgMailFormatter extends BaseMailFormatter {
       const signedData = await MsgUtil.sign(signingPrv, newMsg.plaintext);
       const allContacts = [...newMsg.recipients.to || [], ...newMsg.recipients.cc || [], ...newMsg.recipients.bcc || []];
       ContactStore.update(undefined, allContacts, { last_use: Date.now() }).catch(Catch.reportErr);
-      return await SendableMsg.createPgpInline(this.acctEmail, this.headers(newMsg), signedData, atts);
+      return await SendableMsg.createPgpInline(this.acctEmail, this.headers(newMsg), signedData, attachments);
     }
     // pgp/mime detached signature - it must be signed later, while being mime-encoded
     // prepare a sign function first, which will be used by Mime.encodePgpMimeSigned later
     const body: SendableMsgBody = { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml };
     const signMethod = (signable: string) => MsgUtil.sign(signingPrv, signable, true);
-    return await SendableMsg.createPgpMimeSigned(this.acctEmail, this.headers(newMsg), body, atts, signMethod);
+    return await SendableMsg.createPgpMimeSigned(this.acctEmail, this.headers(newMsg), body, attachments, signMethod);
   }
 
 }

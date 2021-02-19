@@ -23,7 +23,7 @@ export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: 
       // eslint-disable-next-line no-only-tests/no-only-tests
       (flag !== 'only' ? ava.default : ava.default.only)(title, testWithBrowser(undefined, async (t, browser) => {
         const hostPage = await browser.newPage(t, TestUrls.extension(`chrome/dev/ci_unit_test.htm`));
-        // update host page title
+        // update host page h1
         await hostPage.target.evaluate((title) => { window.document.getElementsByTagName('h1')[0].textContent = title; }, title);
         // prepare code to run
         const runThisCodeInBrowser = `

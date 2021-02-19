@@ -5,8 +5,7 @@
 import { ViewModule } from '../../../js/common/view-module.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { BackupView } from './backup.js';
-import { Assert } from '../../../js/common/assert.js';
-import { Att } from '../../../js/common/core/att.js';
+import { Attachment } from '../../../js/common/core/attachment.js';
 import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
 import { KeyInfo, KeyUtil } from '../../../js/common/core/crypto/key.js';
@@ -44,9 +43,9 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
 
   public doBackupOnEmailProvider = async (armoredKey: string) => {
     const emailMsg = String(await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' }));
-    const emailAtts = [this.asBackupFile(armoredKey)];
+    const emailAttachments = [this.asBackupFile(armoredKey)];
     const headers = { from: this.view.acctEmail, recipients: { to: [this.view.acctEmail] }, subject: GMAIL_RECOVERY_EMAIL_SUBJECTS[0] };
-    const msg = await SendableMsg.createPlain(this.view.acctEmail, headers, { 'text/html': emailMsg }, emailAtts);
+    const msg = await SendableMsg.createPlain(this.view.acctEmail, headers, { 'text/html': emailMsg }, emailAttachments);
     if (this.view.emailProvider === 'gmail') {
       return await this.view.gmail.msgSend(msg);
     } else {
@@ -56,8 +55,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
 
   private actionManualBackupHandler = async () => {
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
-    const primaryKi = await KeyStore.getFirst(this.view.acctEmail);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    const primaryKi = await KeyStore.getFirstRequired(this.view.acctEmail);
     if (! await this.isPrivateKeyEncrypted(primaryKi)) {
       await Ui.modal.error('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
       return;
@@ -74,11 +72,11 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private asBackupFile = (armoredKey: string) => {
-    return new Att({ name: `flowcrypt-backup-${this.view.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'application/pgp-keys', data: Buf.fromUtfStr(armoredKey) });
+    return new Attachment({ name: `flowcrypt-backup-${this.view.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'application/pgp-keys', data: Buf.fromUtfStr(armoredKey) });
   }
 
   private backupOnEmailProviderAndUpdateUi = async (primaryKi: KeyInfo) => {
-    const pp = await PassphraseStore.get(this.view.acctEmail, primaryKi.fingerprint);
+    const pp = await PassphraseStore.get(this.view.acctEmail, primaryKi.fingerprints[0]);
     if (!this.view.parentTabId) {
       await Ui.modal.error(`Missing parentTabId. Please restart your browser and try again.`);
       return;

@@ -3,8 +3,7 @@
 'use strict';
 
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
-import { Catch } from '../../../js/common/platform/catch.js';
-import { KeyInfo, KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo } from '../../../js/common/core/crypto/key.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../js/common/view-module.js';
@@ -17,13 +16,13 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
 
   public setHandlers = () => {
     this.view.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
-    this.view.S.cached('icon_pubkey').click(this.view.setHandler((el) => this.iconPubkeyClickHandler(el), this.view.errModule.handle(`set/unset pub att`)));
+    this.view.S.cached('icon_pubkey').click(this.view.setHandler((el) => this.iconPubkeyClickHandler(el), this.view.errModule.handle(`set/unset pub attachment`)));
   }
 
   public iconPubkeyClickHandler = (target: HTMLElement) => {
     this.toggledManually = true;
     const includePub = !$(target).is('.active'); // evaluating what the state of the icon was BEFORE clicking
-    Ui.toast(`${includePub ? 'Attaching' : 'Removing'} your Public Key`).catch(Catch.reportErr);
+    Ui.toast(`${includePub ? 'Attaching' : 'Removing'} your Public Key`);
     this.setAttachPreference(includePub);
   }
 
@@ -33,8 +32,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
 
   public chooseMyPublicKeyBySenderEmail = async (keys: KeyInfo[], email: string) => {
     for (const key of keys) {
-      const parsedkey = await KeyUtil.parse(key.public);
-      if (parsedkey.emails.includes(email.toLowerCase())) {
+      if (key.emails.includes(email.toLowerCase())) {
         return key;
       }
     }

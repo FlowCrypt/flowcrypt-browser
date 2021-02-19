@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Att } from '../../../js/common/core/att.js';
+import { Attachment } from '../../../js/common/core/attachment.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -32,6 +32,11 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
     await this.renderComposeTable();
     if (this.view.replyParams) {
+      const thread = await this.view.emailProvider.threadGet(this.view.threadId, 'metadata');
+      const inReplyToMessage = thread.messages.find((message) => message.id === this.view.replyMsgId);
+      if (inReplyToMessage) {
+        this.view.replyParams.inReplyTo = inReplyToMessage.payload?.headers?.find((header) => header.name === 'Message-Id')?.value;
+      }
       this.view.replyParams.subject = `${(this.responseMethod === 'reply' ? 'Re' : 'Fwd')}: ${this.view.replyParams.subject}`;
     }
     if (!this.view.draftModule.wasMsgLoadedFromDraft) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
@@ -54,7 +59,17 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     if (this.responseMethod === 'forward') {
       this.view.S.cached('recipients_placeholder').click();
     }
-    Catch.setHandledTimeout(() => BrowserMsg.send.scrollToElement(this.view.parentTabId, { selector: `#${this.view.frameId}` }), 300);
+    BrowserMsg.send.scrollToReplyBox(this.view.parentTabId, { replyMsgId: `#${this.view.frameId}` });
+  }
+
+  public renderPrompt = () => {
+    this.view.S.cached('prompt').css('display', 'block');
+    if (this.view.replyParams) {
+      const recipientsNumber = this.view.replyParams.to.length + this.view.replyParams.cc.length + this.view.replyParams.bcc.length;
+      if (recipientsNumber > 1) {
+        $('#a_reply_all').css('display', 'inline-flex');
+      }
+    }
   }
 
   public renderReplySuccess = (msg: SendableMsg, msgId: string) => {
@@ -73,10 +88,10 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     if (this.view.inputModule.isRichText()) {
       const sanitized = Xss.htmlSanitizeKeepBasicTags(this.view.inputModule.extract('html', 'input_text', 'SKIP-ADDONS'), 'IMG-KEEP');
       Xss.setElementContentDANGEROUSLY(repliedBodyEl.get(0), sanitized); // xss-sanitized
-      this.renderReplySuccessMimeAtts(this.view.inputModule.extractAttachments());
+      this.renderReplySuccessMimeAttachments(this.view.inputModule.extractAttachments());
     } else {
       Xss.sanitizeRender(repliedBodyEl, Str.escapeTextAsRenderableHtml(this.view.inputModule.extract('text', 'input_text', 'SKIP-ADDONS')));
-      this.renderReplySuccessAtts(msg.atts, msgId, this.view.sendBtnModule.popover.choices.encrypt);
+      this.renderReplySuccessAttachments(msg.attachments, msgId, this.view.sendBtnModule.popover.choices.encrypt);
     }
     const t = new Date();
     const time = ((t.getHours() !== 12) ? (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
@@ -107,6 +122,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   }
 
   public initComposeBox = async () => {
+    this.responseMethod = 'reply';
     this.initComposeBoxStyles();
     if (this.view.draftId) {
       const draftLoaded = await this.view.draftModule.initialDraftLoad(this.view.draftId);
@@ -124,7 +140,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         if (this.view.skipClickPrompt) { // TODO: fix issue when loading recipients
           await this.renderReplyMsgComposeTable();
         } else {
-          $('#reply_click_area,#a_reply,#a_reply_all,#a_forward')
+          $('#a_reply,#a_reply_all,#a_forward')
             .click(this.view.setHandler((el) => this.actionActivateReplyBoxHandler(el), this.view.errModule.handle(`activate repply box`)));
         }
       }
@@ -169,7 +185,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       this.view.S.cached('compose_table').css({ 'border-bottom': '1px solid #cfcfcf', 'border-top': '1px solid #cfcfcf' });
       this.view.S.cached('input_text').css('overflow-y', 'hidden');
       if (!this.view.skipClickPrompt && !this.view.draftId) {
-        this.view.S.cached('prompt').css('display', 'block');
+        this.renderPrompt();
       }
     } else {
       this.view.S.cached('compose_table').css({ 'height': '100%' });
@@ -177,13 +193,11 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   }
 
   private actionActivateReplyBoxHandler = async (target: HTMLElement) => {
-    this.responseMethod = 'reply';
     const typesToDelete: RecipientType[] = [];
     switch ($(target).attr('id')) {
       case 'a_forward':
         this.responseMethod = 'forward';
         typesToDelete.push('to');
-      case 'reply_click_area':
       case 'a_reply':
         typesToDelete.push('cc');
         typesToDelete.push('bcc');
@@ -198,9 +212,9 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       <br><br>I was not able to read your encrypted message because it was encrypted for a wrong key.
       <br><br>My current public key is attached below. Please update your records and send me a new encrypted message.
       <br><br>Thank you</div>`);
-    const primaryKi = await KeyStore.getFirst(this.view.acctEmail);
-    const att = Att.keyinfoAsPubkeyAtt(primaryKi);
-    this.view.attsModule.attach.addFile(new File([att.getData()], att.name));
+    const primaryKi = await KeyStore.getFirstRequired(this.view.acctEmail);
+    const attachment = Attachment.keyinfoAsPubkeyAttachment(primaryKi);
+    this.view.attachmentsModule.attachment.addFile(new File([attachment.getData()], attachment.name));
     this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
     this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-sign-sending-option'), 'sign', false); // don't sign
   }
@@ -237,7 +251,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     // Firefox needs an iframe to be focused before focusing its content
     BrowserMsg.send.focusFrame(this.view.parentTabId, { frameId: this.view.frameId });
     Catch.setHandledTimeout(() => { // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
-      this.view.S.cached(this.view.isReplyBox && this.responseMethod === 'reply' && this.view.replyParams?.to.length ? 'input_text' : 'input_to').focus();
+      this.view.S.cached(this.view.isReplyBox && this.responseMethod !== 'forward' && this.view.replyParams?.to.length ? 'input_text' : 'input_to').focus();
       // document.getElementById('input_text')!.focus(); // #input_text is in the template
     }, 100);
     this.view.sizeModule.onComposeTableRender();
@@ -327,18 +341,18 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
 
-  private renderReplySuccessAtts = (atts: Att[], msgId: string, isEncrypted: boolean) => {
-    const hideAttTypes = this.view.sendBtnModule.popover.choices.richtext ? ['hidden', 'encryptedMsg', 'signature', 'publicKey'] : ['publicKey'];
-    const renderableAtts = atts.filter(att => !hideAttTypes.includes(att.treatAs()));
-    if (renderableAtts.length) {
-      this.view.S.cached('replied_attachments').html(renderableAtts.map(att => { // xss-safe-factory
-        att.msgId = msgId;
-        return this.view.factory!.embeddedAtta(att, isEncrypted, this.view.parentTabId);
+  private renderReplySuccessAttachments = (attachments: Attachment[], msgId: string, isEncrypted: boolean) => {
+    const hideAttachmentTypes = this.view.sendBtnModule.popover.choices.richtext ? ['hidden', 'encryptedMsg', 'signature', 'publicKey'] : ['publicKey'];
+    const renderableAttachments = attachments.filter(attachment => !hideAttachmentTypes.includes(attachment.treatAs()));
+    if (renderableAttachments.length) {
+      this.view.S.cached('replied_attachments').html(renderableAttachments.map(attachment => { // xss-safe-factory
+        attachment.msgId = msgId;
+        return this.view.factory!.embeddedAttachment(attachment, isEncrypted, this.view.parentTabId);
       }).join('')).css('display', 'block');
     }
   }
 
-  private renderReplySuccessMimeAtts = (attachmentsFilenames: string[]) => {
+  private renderReplySuccessMimeAttachments = (attachmentsFilenames: string[]) => {
     const attachments = $('<div id="attachments"></div>');
     for (const index in attachmentsFilenames) {
       if (attachmentsFilenames.hasOwnProperty(index)) {

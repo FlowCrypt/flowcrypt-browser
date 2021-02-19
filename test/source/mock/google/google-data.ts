@@ -2,10 +2,8 @@
 
 import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
 
-import UserMessages from '../../../samples/mock-data';
 import { Util } from '../../util/index';
 import { readFileSync, readdirSync } from 'fs';
-import { acctsWithoutMockData } from '../../mock';
 import { Buf } from '../../core/buf';
 
 type GmailMsg$header = { name: string, value: string };
@@ -112,23 +110,6 @@ export class GoogleData {
    */
   private exportedMsgsPath = './test/source/mock/google/exported-messages/';
 
-  /**
-   * The original way was to export whole account at once, encrypt it and download it later.
-   * There are several problems with this approach:
-   *  - need to re-export whole inbox each time we want to add a message
-   *  - many messages are included that are not needed for testing
-   *  - lack of visibility or ability to easily edit messages
-   *  - messages may contain sensitive information, so we cannot freely include them
-   *      in the repo - they are encrypted and new developers cannot run tests without
-   *      a test-secrets.json file, which is inconvenient
-   *  This list of message ids will be skipped when importing the bulk import, instead
-   *    they will be imported from the newer mechanism - exported-messages folder.
-   *  We will be transferring used messages to this mechanism one by one, until there
-   *    are no more messages in the bulk import, at which point we can remove this prop
-   *    as well as all functionality that relates to it.
-   */
-  private skipBulkImportMessages = ['171d138c8750863b'];
-
   public static fmtMsg = (m: GmailMsg, format: 'raw' | 'full' | 'metadata' | string) => {
     format = format || 'full';
     if (!['raw', 'full', 'metadata'].includes(format)) {
@@ -160,23 +141,17 @@ export class GoogleData {
 
   constructor(private acct: string) {
     if (!DATA[acct]) {
-      if (acctsWithoutMockData.includes(acct)) {
-        DATA[acct] = { drafts: [], messages: [], attachments: {}, labels: [] };
-      } else {
-        const bulkExport = JSON.parse(readFileSync(`./test/samples/${acct.replace(/[^a-z0-9]+/g, '')}.json`, { encoding: 'utf-8' })) as AcctDataFile;
-        bulkExport.messages = bulkExport.messages.filter(m => !this.skipBulkImportMessages.includes(m.id));
-        DATA[acct] = bulkExport;
-      }
-      if (UserMessages[acct]) { // todo - remove this part, and move messages to use the "exported" messages functionality below
-        DATA[acct].drafts = UserMessages[acct].drafts;
-        DATA[acct].messages.push(...UserMessages[acct].messages);
-      }
+      DATA[acct] = { drafts: [], messages: [], attachments: {}, labels: [] };
       for (const filename of readdirSync(this.exportedMsgsPath)) {
         const json = JSON.parse(Buf.fromUint8(readFileSync(this.exportedMsgsPath + filename)).toUtfStr()) as ExportedMsg;
         if (json.acctEmail === acct) {
           Object.assign(DATA[json.acctEmail].attachments, json.attachments);
           json.full.raw = json.raw.raw;
-          DATA[json.acctEmail].messages.push(json.full);
+          if (json.full.labelIds && json.full.labelIds.includes('DRAFT')) {
+            DATA[json.acctEmail].drafts.push(json.full);
+          } else {
+            DATA[json.acctEmail].messages.push(json.full);
+          }
         }
       }
     }
@@ -184,17 +159,18 @@ export class GoogleData {
 
   public storeSentMessage = (parsedMail: ParsedMail, base64Msg: string): string => {
     let bodyContentAtt: { data: string; size: number; filename?: string; id: string } | undefined;
-    for (const att of parsedMail.attachments || []) {
+    for (const attachment of parsedMail.attachments || []) {
       const attId = Util.lousyRandom();
-      const gmailAtt = { data: att.content.toString('base64'), size: att.size, filename: att.filename, id: attId };
+      const gmailAtt = { data: attachment.content.toString('base64'), size: attachment.size, filename: attachment.filename, id: attId };
       DATA[this.acct].attachments[attId] = gmailAtt;
-      if (att.filename === 'encrypted.asc') {
+      if (attachment.filename === 'encrypted.asc') {
         bodyContentAtt = gmailAtt;
       }
     }
     let body: GmailMsg$payload$body;
-    if (parsedMail.text) {
-      body = { data: parsedMail.text, size: parsedMail.text.length };
+    const htmlOrText = parsedMail.html || parsedMail.text;
+    if (htmlOrText) {
+      body = { data: htmlOrText, size: htmlOrText.length };
     } else if (bodyContentAtt) {
       body = { attachmentId: bodyContentAtt.id, size: bodyContentAtt.size };
     } else {

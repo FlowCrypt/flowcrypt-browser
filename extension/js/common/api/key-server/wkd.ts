@@ -58,8 +58,12 @@ export class Wkd extends Api {
     if (!response.buf) {
       return { pubkey: null, pgpClient: null }; // do not retry direct if advanced had a policy file
     }
-    const { keys: [key], errs } = await KeyUtil.readMany(response.buf);
-    if (errs.length || !key || !key.emails.some(x => x.toLowerCase() === email.toLowerCase())) {
+    const { keys, errs } = await KeyUtil.readMany(response.buf);
+    if (errs.length) {
+      return { pubkey: null, pgpClient: null };
+    }
+    const key = keys.find(key => key.usableForEncryption && key.emails.some(x => x.toLowerCase() === email.toLowerCase()));
+    if (!key) {
       return { pubkey: null, pgpClient: null };
     }
     // if recipient uses same domain, we assume they use flowcrypt

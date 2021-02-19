@@ -8,7 +8,7 @@ import { PromiseCancellation, Url } from '../../js/common/core/common.js';
 import { Api } from '../../js/common/api/shared/api.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
-import { Att } from '../../js/common/core/att.js';
+import { Attachment } from '../../js/common/core/attachment.js';
 import { Browser } from '../../js/common/browser/browser.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
@@ -25,35 +25,39 @@ export class AttachmentDownloadView extends View {
   protected readonly frameId: string;
   protected readonly origNameBasedOnFilename: string;
   protected readonly isEncrypted: boolean;
+  protected readonly errorDetailsOpened: boolean;
   protected readonly type: string | undefined;
   protected readonly msgId: string | undefined;
   protected readonly id: string | undefined;
   protected readonly name: string | undefined;
   protected readonly url: string | undefined;
   protected readonly gmail: Gmail;
-  protected att!: Att;
+  protected attachment!: Attachment;
   protected ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
 
   private size: number | undefined;
   private downloadButton = $('#download');
   private header = $('#header');
   private originalButtonHTML: string | undefined;
-  private canClickOnAtt: boolean = false;
+  private canClickOnAttachment: boolean = false;
   private downloadInProgress = false;
   private tabId!: string;
 
   constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'msgId', 'attId', 'name', 'type', 'size', 'url', 'parentTabId', 'content', 'decrypted', 'frameId', 'isEncrypted']);
+    const uncheckedUrlParams = Url.parse([
+      'acctEmail', 'msgId', 'attachmentId', 'name', 'type', 'size', 'url', 'parentTabId', 'content', 'decrypted', 'frameId', 'isEncrypted', 'errorDetailsOpened'
+    ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
     this.origNameBasedOnFilename = uncheckedUrlParams.name ? String(uncheckedUrlParams.name).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
     this.isEncrypted = uncheckedUrlParams.isEncrypted === true;
+    this.errorDetailsOpened = uncheckedUrlParams.errorDetailsOpened === true;
     this.size = uncheckedUrlParams.size ? parseInt(String(uncheckedUrlParams.size)) : undefined;
     this.type = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'type');
     this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
-    this.id = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'attId');
+    this.id = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'attachmentId');
     this.name = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'name');
     // url contains either actual url of remote content or objectUrl for direct content, either way needs to be downloaded
     this.url = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'url');
@@ -63,7 +67,7 @@ export class AttachmentDownloadView extends View {
   public render = async () => {
     this.tabId = await BrowserMsg.requiredTabId();
     try {
-      this.att = new Att({ name: this.origNameBasedOnFilename, type: this.type, msgId: this.msgId, id: this.id, url: this.url });
+      this.attachment = new Attachment({ name: this.origNameBasedOnFilename, type: this.type, msgId: this.msgId, id: this.id, url: this.url });
     } catch (e) {
       Catch.reportErr(e);
       $('body.attachment').text(`Error processing params: ${String(e)}. Contact human@flowcrypt.com`);
@@ -82,7 +86,7 @@ export class AttachmentDownloadView extends View {
       }).catch(ApiErr.reportIfSignificant);
     }
     try {
-      this.canClickOnAtt = ! await this.processAsPublicKeyAndHideAttIfAppropriate();
+      this.canClickOnAttachment = ! await this.processAsPublicKeyAndHideAttachmentIfAppropriate();
     } catch (e) {
       this.renderErr(e);
     }
@@ -91,14 +95,14 @@ export class AttachmentDownloadView extends View {
 
   public setHandlers = () => {
     Ui.event.protect();
-    if (this.canClickOnAtt) {
+    if (this.canClickOnAttachment) {
       this.downloadButton.click(this.setHandlerPrevent('double', () => this.downloadButtonClickedHandler()));
       this.downloadButton.click((e) => e.stopPropagation());
-      $('body').click(this.setHandlerPrevent('double', async () => {
-        if ($('body').attr('id') !== 'attachment-preview' && !$('body').hasClass('download-error')) {
+      $('body').click(async () => {
+        if ($('body').attr('id') !== 'attachment-preview' && !$('body').hasClass('error-occured')) {
           await this.previewAttachmentClickedHandler();
         }
-      }));
+      });
     }
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
       if (!entered) {
@@ -113,14 +117,14 @@ export class AttachmentDownloadView extends View {
   }
 
   protected downloadDataIfNeeded = async () => {
-    if (this.att.hasData()) {
+    if (this.attachment.hasData()) {
       return;
     }
-    if (this.att.url) { // when content was downloaded and decrypted
-      this.att.setData(await Api.download(this.att.url, this.renderProgress));
-    } else if (this.att.id && this.att.msgId) { // gmail attId
-      const { data } = await this.gmail.attGet(this.att.msgId, this.att.id, this.renderProgress);
-      this.att.setData(data);
+    if (this.attachment.url) { // when content was downloaded and decrypted
+      this.attachment.setData(await Api.download(this.attachment.url, this.renderProgress));
+    } else if (this.attachment.id && this.attachment.msgId) { // gmail attId
+      const { data } = await this.gmail.attachmentGet(this.attachment.msgId, this.attachment.id, this.renderProgress);
+      this.attachment.setData(data);
     } else {
       throw new Error('File is missing both id and url - this should be fixed');
     }
@@ -132,11 +136,19 @@ export class AttachmentDownloadView extends View {
       Xss.sanitizeRender('body', `Error downloading file - google auth needed. ${Ui.retryLink()}`);
     } else if (ApiErr.isNetErr(e)) {
       Xss.sanitizeRender('body', `Error downloading file - no internet. ${Ui.retryLink()}`);
+    } else if (ApiErr.isDecryptErr(e)) {
+      Xss.sanitizeRender('body', `
+        Failed to decrypt.
+        <details ${this.errorDetailsOpened ? 'open' : ''}>
+          <summary>see error details</summary>
+          <pre data-test="error-details">${e.stack}\n\nDecryptError:\n${JSON.stringify(e.decryptError, undefined, 2)}</pre>
+        </details>
+      `);
     } else {
       Catch.reportErr(e);
       Xss.sanitizeRender('body', `Error downloading file - ${String(e)}. ${Ui.retryLink()}`);
     }
-    $('body').addClass('download-error').attr('title', '');
+    $('body').addClass('error-occured').attr('title', '');
   }
 
   private renderHeader = () => {
@@ -189,10 +201,10 @@ export class AttachmentDownloadView extends View {
     });
   }
 
-  private processAsPublicKeyAndHideAttIfAppropriate = async () => {
-    if (this.att.msgId && this.att.id && this.att.treatAs() === 'publicKey') { // this is encrypted public key - download && decrypt & parse & render
-      const { data } = await this.gmail.attGet(this.att.msgId, this.att.id);
-      const decrRes = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: data });
+  private processAsPublicKeyAndHideAttachmentIfAppropriate = async () => {
+    if (this.attachment.msgId && this.attachment.id && this.attachment.treatAs() === 'publicKey') { // this is encrypted public key - download && decrypt & parse & render
+      const { data } = await this.gmail.attachmentGet(this.attachment.msgId, this.attachment.id);
+      const decrRes = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail), encryptedData: data });
       if (decrRes.success && decrRes.content) {
         const openpgpType = await MsgUtil.type({ data: decrRes.content });
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // 'openpgpType.armored': could potentially process unarmored pubkey files, maybe later
@@ -215,12 +227,12 @@ export class AttachmentDownloadView extends View {
     try {
       this.originalButtonHTML = this.downloadButton.html();
       Xss.sanitizeRender(this.header, `${Ui.spinner('green', 'large_spinner')}<span class="download_progress"></span>`);
-      await this.recoverMissingAttIdIfNeeded();
+      await this.recoverMissingAttachmentIdIfNeeded();
       await this.downloadDataIfNeeded();
       if (!this.isEncrypted) {
-        Browser.saveToDownloads(this.att);
+        Browser.saveToDownloads(this.attachment);
       } else {
-        await this.decryptAndSaveAttToDownloads();
+        await this.decryptAndSaveAttachmentToDownloads();
       }
       this.renderHeader();
     } catch (e) {
@@ -231,34 +243,40 @@ export class AttachmentDownloadView extends View {
     }
   }
 
-  private previewAttachmentClickedHandler = async () => {
-    if (!this.att.length) {
-      this.att.length = this.size!;
+  private previewAttachmentClickedHandler = async (errorDetailsOpened = false) => {
+    if (!this.attachment.length) {
+      this.attachment.length = this.size!;
     }
     const factory = new XssSafeFactory(this.acctEmail, this.parentTabId);
-    const iframeUrl = factory.srcPgpAttIframe(this.att, this.isEncrypted, undefined, 'chrome/elements/attachment_preview.htm');
+    const iframeUrl = factory.srcPgpAttachmentIframe(this.attachment, this.isEncrypted, undefined, 'chrome/elements/attachment_preview.htm', errorDetailsOpened);
     BrowserMsg.send.showAttachmentPreview(this.parentTabId, { iframeUrl });
   }
 
-  private decryptAndSaveAttToDownloads = async () => {
-    const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.acctEmail), encryptedData: this.att.getData() });
+  private decryptAndSaveAttachmentToDownloads = async () => {
+    const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail), encryptedData: this.attachment.getData() });
     Xss.sanitizeRender(this.downloadButton, this.originalButtonHTML || '');
     if (result.success) {
       if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {
-        result.filename = this.att.name;
+        result.filename = this.attachment.name;
       }
-      Browser.saveToDownloads(new Att({ name: result.filename, type: this.att.type, data: result.content }));
+      Browser.saveToDownloads(new Attachment({ name: result.filename, type: this.attachment.type, data: result.content }));
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'attachment', longids: result.longids.needPassphrase });
       if (! await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.longids.needPassphrase, 1000, this.ppChangedPromiseCancellation)) {
         return;
       }
-      await this.decryptAndSaveAttToDownloads();
+      await this.decryptAndSaveAttachmentToDownloads();
     } else {
       delete result.message;
-      console.info(result);
-      $('body.attachment').text(`Error decrypting file (${result.error.type}: ${result.error.message}). Downloading original..`);
-      Browser.saveToDownloads(new Att({ name, type: this.type, data: this.att.getData() })); // won't work in ff, possibly neither on some chrome versions (on webmail)
+      $('body.attachment')
+        .html(`<div>Failed to decrypt:</div><a href="#" data-test="decrypt-error-details" class="see-error-details">see error details</a><br><div>Downloading original…`) // xss-escaped
+        .addClass('error-occured')
+        .attr('title', '');
+      $('.see-error-details').click(async () => {
+        await this.previewAttachmentClickedHandler(true);
+      });
+      const name = this.attachment.name;
+      Browser.saveToDownloads(new Attachment({ name, type: this.type, data: this.attachment.getData() })); // won't work in ff, possibly neither on some chrome versions (on webmail)
     }
   }
 
@@ -273,13 +291,13 @@ export class AttachmentDownloadView extends View {
     }
   }
 
-  private recoverMissingAttIdIfNeeded = async () => {
-    if (!this.att.url && !this.att.id && this.att.msgId) {
-      const result = await this.gmail.msgGet(this.att.msgId, 'full');
+  private recoverMissingAttachmentIdIfNeeded = async () => {
+    if (!this.attachment.url && !this.attachment.id && this.attachment.msgId) {
+      const result = await this.gmail.msgGet(this.attachment.msgId, 'full');
       if (result && result.payload && result.payload.parts) {
         for (const attMeta of result.payload.parts) {
           if (attMeta.filename === name && attMeta.body && attMeta.body.size === this.size && attMeta.body.attachmentId) {
-            this.att.id = attMeta.body.attachmentId;
+            this.attachment.id = attMeta.body.attachmentId;
             return;
           }
         }

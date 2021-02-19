@@ -183,8 +183,7 @@ export class SetupView extends View {
   }
 
   public submitPublicKeysAndFinalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
-    const primaryKi = await KeyStore.getFirst(this.acctEmail);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    const primaryKi = await KeyStore.getFirstRequired(this.acctEmail);
     try {
       await this.submitPublicKeyIfNeeded(primaryKi.public, { submit_main, submit_all });
     } catch (e) {
@@ -201,7 +200,7 @@ export class SetupView extends View {
         await Ui.modal.error('Cannot save keys to storage because at least one of them is not valid.');
         return;
       }
-      await KeyStore.add(this.acctEmail, KeyUtil.armor(prv));
+      await KeyStore.add(this.acctEmail, prv);
       await PassphraseStore.set(options.passphrase_save ? 'local' : 'session', this.acctEmail, fingerprint, options.passphrase);
     }
     const myOwnEmailAddrsAsContacts: Contact[] = [];

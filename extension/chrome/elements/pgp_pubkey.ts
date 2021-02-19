@@ -65,8 +65,8 @@ View.run(class PgpPubkeyView extends View {
       $('.line.fingerprints').css({ display: 'none' });
     }
     if (this.primaryPubKey) {
-      const isUsableButExpired = this.primaryPubKey.usableButExpired;
-      if (!isUsableButExpired && await !this.primaryPubKey.usableForEncryption && !this.primaryPubKey.usableForSigning) {
+      if (!this.primaryPubKey.usableForEncryptionButExpired && !this.primaryPubKey.usableForSigningButExpired
+        && !this.primaryPubKey.usableForEncryption && !this.primaryPubKey.usableForSigning) {
         this.showKeyNotUsableError();
       } else {
         if (this.compact) {

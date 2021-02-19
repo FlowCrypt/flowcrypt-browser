@@ -50,6 +50,11 @@ View.run(class SettingsView extends View {
     const uncheckedUrlParams = Url.parse(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
     this.acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
     this.page = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'page');
+    if (this.page && !/^(\/chrome|modules)/.test!(this.page as string)) {
+      Ui.modal.error('An unexpected value was found for the page parameter')
+        .catch(err => console.log(err));
+      this.page = undefined;
+    }
     this.page = (this.page === 'undefined') ? undefined : this.page; // in case an "undefined" string slipped in
     this.pageUrlParams = (typeof uncheckedUrlParams.pageUrlParams === 'string') ? JSON.parse(uncheckedUrlParams.pageUrlParams) as UrlParams : undefined;
     this.addNewAcct = uncheckedUrlParams.addNewAcct === true;
@@ -84,7 +89,7 @@ View.run(class SettingsView extends View {
     await this.initialize();
     await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail, this.tabId);
     if (this.page) {
-      await Settings.renderSubPage(this.acctEmail, this.tabId, this.page, this.pageUrlParams);
+      Settings.renderSubPage(this.acctEmail, this.tabId, this.page, this.pageUrlParams).catch(Catch.reportErr);
     }
     await Settings.populateAccountsMenu('index.htm');
     Ui.setTestState('ready');
@@ -152,8 +157,8 @@ View.run(class SettingsView extends View {
       }
     }));
     $('.action_open_public_key_page').click(this.setHandler(async () => {
-      const ki = await KeyStore.getFirst(this.acctEmail!);
-      const escapedFp = Xss.escape(ki.fingerprint);
+      const ki = await KeyStore.getFirstRequired(this.acctEmail!);
+      const escapedFp = Xss.escape(ki.fingerprints[0]);
       await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/my_key.htm', `&fingerprint=${escapedFp}`);
     }));
     $('.action_show_encrypted_inbox').click(this.setHandler(() => {
@@ -289,10 +294,6 @@ View.run(class SettingsView extends View {
     if (!this.acctEmail) {
       return;
     }
-    const scopes = await AcctStore.getScopes(this.acctEmail);
-    if (!(scopes.read || scopes.modify) && emailProvider === 'gmail') {
-      $('.auth_denied_warning').removeClass('hidden');
-    }
     const globalStorage = await GlobalStore.get(['install_mobile_app_notification_dismissed']);
     if (!globalStorage.install_mobile_app_notification_dismissed && rules.canBackupKeys() && rules.canCreateKeys() && !rules.usesKeyManager()) {
       // only show this notification if user is allowed to:
@@ -322,7 +323,11 @@ View.run(class SettingsView extends View {
         }
       } catch (e) {
         if (ApiErr.isAuthErr(e)) {
-          Xss.sanitizeRender(statusContainer, '<a class="bad" href="#">Auth Needed</a>');
+          const authNeededLink = $('<a class="bad" href="#">Auth Needed</a>');
+          authNeededLink.click(this.setHandler(async () => {
+            await Settings.loginWithPopupShowModalOnErr(this.acctEmail!, () => window.location.reload());
+          }));
+          statusContainer.empty().append(authNeededLink); // xss-direct
           $('#status-row #status_flowcrypt').text(`fc:auth`).addClass('bad');
           Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail!, () => window.location.reload());
         } else if (ApiErr.isNetErr(e)) {
@@ -432,7 +437,7 @@ View.run(class SettingsView extends View {
       const prv = await KeyUtil.parse(ki.private);
       const created = new Date(prv.created);
       const date = Str.monthName(created.getMonth()) + ' ' + created.getDate() + ', ' + created.getFullYear();
-      const escapedFp = Xss.escape(ki.fingerprint);
+      const escapedFp = Xss.escape(ki.fingerprints[0]);
       let removeKeyBtn = '';
       if (canRemoveKey && privateKeys.length > 1) {
         removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key" fingerprint="${escapedFp}">remove</a>)`;
