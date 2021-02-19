@@ -278,11 +278,15 @@ export class ContactStore extends AbstractStore {
       if (typeof query.has_pgp === 'undefined') { // any query.has_pgp value
         search = contacts.openCursor(); // no substring, already covered in `typeof query.has_pgp === 'undefined' && query.substring` above
       } else { // specific query.has_pgp value
+        let range: IDBKeyRange;
         if (query.substring) {
-          search = contacts.index('search').openCursor(IDBKeyRange.only(ContactStore.dbIndex(query.has_pgp, query.substring)));
+          range = IDBKeyRange.only(ContactStore.dbIndex(query.has_pgp, query.substring));
+        } else if (query.has_pgp) {
+          range = IDBKeyRange.lowerBound('t:', false); // starting with 't:' inclusive
         } else {
-          search = contacts.index('index_has_pgp').openCursor(IDBKeyRange.only(Number(query.has_pgp)));
+          range = IDBKeyRange.upperBound('t:', true); // up to 't:', excluding it gives false range
         }
+        search = contacts.index('search').openCursor(range);
       }
       const found: unknown[] = [];
       search.onsuccess = () => {
