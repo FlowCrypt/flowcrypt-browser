@@ -795,31 +795,32 @@ eg==
     });
 
     ava.default('[KeyUtil.diagnose] displays PK and SK usage', async t => {
-      let str = '';
-      const pk0Regex = /PK 0 > Usage flags: \[\-\] \[(.*)\]/m;
-      const sk0Regex = /PK 0 > SK 0 > Usage flags: \[\-\] \[(.*)\]/m;
-      await KeyUtil.diagnose(await KeyUtil.parse(pubEncryptForPrimaryIsFine), '');
+      const usageRegex = /\[\-\] \[(.*)\]/;
+      const result1 = await KeyUtil.diagnose(await KeyUtil.parse(pubEncryptForPrimaryIsFine), '');
       {
-        const pk0Usage = str.match(pk0Regex)![1].split(', ');
+        const pk0UsageStr = result1.get('Usage flags')!;
+        const sk0UsageStr = result1.get('SK 0 > Usage flags')!;
+        const pk0Usage = pk0UsageStr.match(usageRegex)![1].split(', ');
         expect(pk0Usage).to.include('certify_keys');
         expect(pk0Usage).to.include('sign_data');
         expect(pk0Usage).to.include('encrypt_storage');
         expect(pk0Usage).to.include('encrypt_communication');
-        const sk0Usage = str.match(sk0Regex)![1].split(', ');
+        const sk0Usage = sk0UsageStr.match(usageRegex)![1].split(', ');
         expect(sk0Usage).to.not.include('certify_keys');
         expect(sk0Usage).to.not.include('sign_data');
         expect(sk0Usage).to.include('encrypt_storage');
         expect(sk0Usage).to.include('encrypt_communication');
       }
-      str = '';
-      await KeyUtil.diagnose(await KeyUtil.parse(prvEncryptForSubkeyOnly), '');
+      const result2 = await KeyUtil.diagnose(await KeyUtil.parse(prvEncryptForSubkeyOnly), '');
       {
-        const pk0Usage = str.match(pk0Regex)![1].split(', ');
+        const pk0UsageStr = result2.get('Usage flags')!;
+        const sk0UsageStr = result2.get('SK 0 > Usage flags')!;
+        const pk0Usage = pk0UsageStr.match(usageRegex)![1].split(', ');
         expect(pk0Usage).to.include('certify_keys');
         expect(pk0Usage).to.include('sign_data');
         expect(pk0Usage).to.not.include('encrypt_storage');
         expect(pk0Usage).to.not.include('encrypt_communication');
-        const sk0Usage = str.match(sk0Regex)![1].split(', ');
+        const sk0Usage = sk0UsageStr.match(usageRegex)![1].split(', ');
         expect(sk0Usage).to.not.include('certify_keys');
         expect(sk0Usage).to.not.include('sign_data');
         expect(sk0Usage).to.include('encrypt_storage');
