@@ -180,9 +180,9 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   }
 
   private resizeReplyBox = () => {
-    this.squire.addEventListener('cursor', () => {
+    this.squire.addEventListener('cursor', (e: any) => {
       if (this.view.isReplyBox) {
-        this.view.sizeModule.resizeComposeBox();
+        this.view.sizeModule.resizeComposeBox(0, e?.range?.commonAncestorContainer?.offsetTop);
       }
     });
   }
