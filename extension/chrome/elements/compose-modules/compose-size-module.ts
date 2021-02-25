@@ -64,10 +64,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
         });
       }
       if (cursorOffsetTop) {
-        BrowserMsg.send.scrollToCursorInReplyBox(this.view.parentTabId, {
-          replyMsgId: `#${this.view.frameId}`,
-          cursorOffsetTop
-        });
+        BrowserMsg.send.scrollToCursorInReplyBox(this.view.parentTabId, { replyMsgId: `#${this.view.frameId}`, cursorOffsetTop });
       }
     } else {
       this.view.S.cached('input_text').css('max-width', '');
