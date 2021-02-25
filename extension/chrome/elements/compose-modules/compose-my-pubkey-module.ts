@@ -46,7 +46,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
     (async () => {
       const contacts = await ContactStore.get(undefined, this.view.recipientsModule.getRecipients().map(r => r.email));
       for (const contact of contacts) {
-        if (contact?.has_pgp && contact.client !== 'cryptup') {
+        if (contact?.has_pgp) {
           // new message, and my key is not uploaded where the recipient would look for it
           if (! await this.view.recipientsModule.doesRecipientHaveMyPubkey(contact.email)) {
             // either don't know if they need pubkey (can_read_emails false), or they do need pubkey

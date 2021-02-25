@@ -307,7 +307,6 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         await ContactStore.save(undefined, await ContactStore.obj({
           email: key.emails[0],
           name: Str.parseEmail(key.identities[0]).name,
-          client: 'pgp',
           pubkey: normalizedPub,
           lastCheck: Date.now(),
         }));

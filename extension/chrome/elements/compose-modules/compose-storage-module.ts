@@ -110,12 +110,11 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
             lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
           }
         }
-        const client = lookupResult.pgpClient === 'flowcrypt' ? 'cryptup' : 'pgp'; // todo - clean up as "flowcrypt|pgp-other'. Already in storage, fixing involves migration
         const ksContact = await ContactStore.obj({
           email,
           name,
           pubkey: lookupResult.pubkey,
-          client: lookupResult.pubkey ? client : undefined,
+          // client: // todo: decide whether we need this field
           lastCheck: Date.now(),
         });
         if (ksContact.pubkey) {
@@ -142,7 +141,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       if (!contact.pubkey_last_sig) {
         const lastSig = Number(contact.pubkey.lastModified);
         contact.pubkey_last_sig = lastSig;
-        await ContactStore.update(undefined, contact.email, { pubkey_last_sig: lastSig });
+        await ContactStore.update(undefined, contact.email, { pubkey: contact.pubkey });
       }
       const lastCheckOverWeekAgoOrNever = !contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7);
       const isExpired = contact.expiresOn && contact.expiresOn < Date.now();
