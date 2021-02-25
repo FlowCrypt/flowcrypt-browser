@@ -404,7 +404,7 @@ export class ContactStore extends AbstractStore {
               resolve(undefined);
               return;
             }
-            const req2 = tx.objectStore('emails').index('fingerprints').get(pubkey.fingerprint!);
+            const req2 = tx.objectStore('emails').index('index_fingerprints').get(pubkey.fingerprint!);
             ContactStore.setReqPipe(req2,
               (email: Email) => {
                 if (!email) {
