@@ -99,22 +99,41 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     $('.reply_message_iframe_container:visible').last().append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
   }
 
-  public scrollToReplyBox = (selector: string) => {
-    const convoRootScrollable = $(this.sel.convoRootScrollable).get(0);
+  public scrollToReplyBox = (replyMsgId: string) => {
+    const convoRootScrollable = $(this.sel.convoRootScrollable);
     if (convoRootScrollable) {
-      const element = $(selector);
-      if (element) {
-        $(this.sel.convoRootScrollable).css('scroll-behavior', 'smooth');
+      const replyMsg = $(replyMsgId);
+      if (replyMsg) {
+        convoRootScrollable.css('scroll-behavior', 'smooth');
         const gmailHeaderHeight = 120;
         const topGap = 80; // so the bottom of the prev message will be visible
         // scroll to the bottom of the element,
         // or to the top of the element if the element's height is bigger than the convoRoot
-        convoRootScrollable.scrollTop =
-          element.position()!.top + $(element).height()! -
-          Math.max(0, $(element).height()! - $(this.sel.convoRootScrollable).height()! + gmailHeaderHeight + topGap);
+        convoRootScrollable.get(0).scrollTop =
+          replyMsg.position()!.top + $(replyMsg).height()! -
+          Math.max(0, $(replyMsg).height()! - convoRootScrollable.height()! + gmailHeaderHeight + topGap);
       }
     } else if (window.location.hash.match(/^#inbox\/[a-zA-Z]+$/)) { // is a conversation view, but no scrollable conversation element
       Catch.report(`Cannot find Gmail scrollable element: ${this.sel.convoRootScrollable}`);
+    }
+  }
+
+  public scrollToCursorInReplyBox = (replyMsgId: string, cursorOffsetTop: number) => {
+    const convoRootScrollable = $(this.sel.convoRootScrollable);
+    if (convoRootScrollable) {
+      const replyMsg = $(replyMsgId);
+      const replyMsgOffsetTop = replyMsg.offset()!.top - convoRootScrollable.offset()!.top;
+      const bottomGap = 150;
+      // check if cursor went above the visible part of convoRootScrollable
+      if (replyMsgOffsetTop + cursorOffsetTop < 0) {
+        convoRootScrollable.css('scroll-behavior', '');
+        convoRootScrollable.get(0).scrollTop += replyMsgOffsetTop + cursorOffsetTop;
+      }
+      // check if cursor went below the visible part of convoRootScrollable
+      if (replyMsgOffsetTop + cursorOffsetTop > convoRootScrollable.get(0).clientHeight - bottomGap) {
+        convoRootScrollable.css('scroll-behavior', '');
+        convoRootScrollable.get(0).scrollTop += replyMsgOffsetTop + cursorOffsetTop - convoRootScrollable.get(0).clientHeight + bottomGap;
+      }
     }
   }
 

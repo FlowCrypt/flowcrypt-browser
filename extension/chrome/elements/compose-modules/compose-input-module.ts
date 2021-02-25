@@ -3,7 +3,7 @@
 'use strict';
 
 import { NewMsgData, RecipientElement } from './compose-types.js';
-import { SquireEditor, WillPasteEvent } from '../../../types/squire.js';
+import { CursorEvent, SquireEditor, WillPasteEvent } from '../../../types/squire.js';
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
@@ -180,9 +180,10 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   }
 
   private resizeReplyBox = () => {
-    this.squire.addEventListener('cursor', () => {
+    this.squire.addEventListener('cursor', (e: CursorEvent) => {
       if (this.view.isReplyBox) {
-        this.view.sizeModule.resizeComposeBox();
+        const cursorContainer = e.range.commonAncestorContainer as HTMLElement;
+        this.view.sizeModule.resizeComposeBox(0, cursorContainer?.offsetTop);
       }
     });
   }
