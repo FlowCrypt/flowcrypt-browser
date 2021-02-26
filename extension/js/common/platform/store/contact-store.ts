@@ -82,11 +82,11 @@ export class ContactStore extends AbstractStore {
         }
         if (event.oldVersion < 5) { // delete when migrating from 4 to 5?
           // openDbReq.result.deleteObjectStore('contacts'); // tslint:disable-line:no-unsafe-any
-        };
+        }
         openDbReq.onsuccess = () => resolve(openDbReq.result as IDBDatabase);
         openDbReq.onblocked = () => reject(ContactStore.errCategorize(openDbReq.error));
         openDbReq.onerror = () => reject(ContactStore.errCategorize(openDbReq.error));
-      }
+      };
     });
   }
 

@@ -55,7 +55,8 @@ export class PgpBlockViewSignatureModule {
       if (senderEmail) { // we know who sent it
         const [senderContactByEmail] = await ContactStore.get(undefined, [senderEmail]);
         if (senderContactByEmail && senderContactByEmail.pubkey) {
-          render(`Fetched the right pubkey ${signerLongid} from keyserver, but will not use it because you have conflicting pubkey ${senderContactByEmail.pubkey.id} loaded.`, () => undefined);
+          const foundId = senderContactByEmail.pubkey.id;
+          render(`Fetched the right pubkey ${signerLongid} from keyserver, but will not use it because you have conflicting pubkey ${foundId} loaded.`, () => undefined);
           return;
         }
         // ---> and user doesn't have pubkey for that email addr
