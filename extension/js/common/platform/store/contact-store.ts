@@ -356,7 +356,7 @@ export class ContactStore extends AbstractStore {
     emailEntity.searchable = index;
   }
 
-  private static setReqOnError(req: IDBRequest, reject: (reason?: any) => void) {
+  private static setReqOnError = (req: IDBRequest, reject: (reason?: any) => void) => {
     req.onerror = () => reject(ContactStore.errCategorize(req.error || new Error('Unknown db error')));
   }
 
