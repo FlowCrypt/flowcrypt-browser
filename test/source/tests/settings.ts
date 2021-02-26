@@ -84,6 +84,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       const contacts = await contactsFrame.read('@page-contacts');
       expect(contacts).to.contain('flowcrypt.compatibility@gmail.com');
       // todo: will specify which one of them should appear after finished with #3332
+      // tslint:disable-next-line:no-unused-expression
       expect(contacts.includes('7FDE 6855 48AE A788') || contacts.includes('ADAC 279C 9509 3207')).to.be.true;
       expect(contacts).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
       await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
