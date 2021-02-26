@@ -147,7 +147,7 @@ yPLCqVTFJQWaCR5ZTekRQPTDZkjxjxbs
       expect(key.identities.length).to.equal(1);
       expect(key.identities[0]).to.equal('actalis@meta.33mail.com');
       expect(key.isPublic).to.equal(true);
-      expect(key.isPrivate).to.equal(true);
+      expect(key.isPrivate).to.equal(false);
       expect(key.expiration).to.not.equal(undefined);
       t.pass();
     });
