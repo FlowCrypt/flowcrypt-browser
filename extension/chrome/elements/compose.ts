@@ -139,12 +139,16 @@ export class ComposeView extends View {
     this.isReplyBox = !!this.replyMsgId;
     this.emailProvider = new Gmail(this.acctEmail);
     this.acctServer = new AccountServer(this.acctEmail);
-    opgp.initWorker({ path: '/lib/openpgp.worker.js' });
   }
 
   public render = async () => {
     const storage = await AcctStore.get(this.acctEmail, ['sendAs', 'hide_message_password', 'drafts_reply']);
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
+    if (this.orgRules.shouldHideArmorMeta()) {
+      opgp.config.show_comment = false;
+      opgp.config.show_version = false;
+    }
+    opgp.initWorker({ path: '/lib/openpgp.worker.js' });
     this.pubLookup = new PubLookup(this.orgRules);
     this.tabId = await BrowserMsg.requiredTabId();
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);

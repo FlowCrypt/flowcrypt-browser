@@ -283,6 +283,23 @@ export class OpenPGPKey {
     return extensions.rawArmored ?? extensions.raw;
   }
 
+  public static keyFlagsToString = (flags: OpenPGP.enums.keyFlags): string => {
+    const strs: string[] = [];
+    if (flags & opgp.enums.keyFlags.encrypt_communication) {
+      strs.push('encrypt_communication');
+    }
+    if (flags & opgp.enums.keyFlags.encrypt_storage) {
+      strs.push('encrypt_storage');
+    }
+    if (flags & opgp.enums.keyFlags.sign_data) {
+      strs.push('sign_data');
+    }
+    if (flags & opgp.enums.keyFlags.certify_keys) {
+      strs.push('certify_keys');
+    }
+    return '[' + strs.join(', ') + ']';
+  }
+
   public static diagnose = async (pubkey: Key, passphrase: string): Promise<Map<string, string>> => {
     const key = OpenPGPKey.extractExternalLibraryObjFromKey(pubkey);
     const result = new Map<string, string>();
@@ -301,6 +318,8 @@ export class OpenPGPKey {
     const subKeys = OpenPGPKey.extractStrengthUncheckedExternalLibraryObjFromKey(pubkey)?.subKeys ?? key.subKeys;
     result.set(`Subkeys`, KeyUtil.formatResult(subKeys ? subKeys.length : subKeys));
     result.set(`Primary key algo`, KeyUtil.formatResult(key.primaryKey.algorithm));
+    const flags = await OpenPGPKey.getPrimaryKeyFlags(key);
+    result.set(`Usage flags`, KeyUtil.formatResult(OpenPGPKey.keyFlagsToString(flags)));
     if (key.isPrivate() && !key.isFullyDecrypted()) {
       result.set(`key decrypt`, await KeyUtil.formatResultAsync(async () => {
         try {
@@ -334,6 +353,8 @@ export class OpenPGPKey {
       result.set(`${skn} LongId`, await KeyUtil.formatResultAsync(async () => OpenPGPKey.bytesToLongid(subKey.getKeyId().bytes)));
       result.set(`${skn} Created`, await KeyUtil.formatResultAsync(async () => OpenPGPKey.formatDate(subKey.keyPacket.created)));
       result.set(`${skn} Algo`, await KeyUtil.formatResultAsync(async () => `${subKey.getAlgorithmInfo().algorithm}`));
+      const flags = await OpenPGPKey.getSubKeySigningFlags(key, subKey) | await OpenPGPKey.getSubKeyEncryptionFlags(key, subKey);
+      result.set(`${skn} Usage flags`, KeyUtil.formatResult(OpenPGPKey.keyFlagsToString(flags)));
       result.set(`${skn} Verify`, await KeyUtil.formatResultAsync(async () => {
         await subKey.verify(key.primaryKey);
         return 'OK';
@@ -422,6 +443,98 @@ export class OpenPGPKey {
       }
     }
     return undefined;
+  }
+
+  // mimicks OpenPGP.helper.getLatestValidSignature
+  private static getLatestValidSignature = async (signatures: OpenPGP.packet.Signature[],
+    primaryKey: OpenPGP.packet.PublicKey | OpenPGP.packet.SecretKey,
+    signatureType: OpenPGP.enums.signature,
+    dataToVerify: any,
+    date = new Date()):
+    Promise<OpenPGP.packet.Signature | undefined> => {
+    let signature: OpenPGP.packet.Signature | undefined;
+    for (let i = signatures.length - 1; i >= 0; i--) {
+      try {
+        if (
+          (!signature || signatures[i].created >= signature.created) &&
+          // check binding signature is not expired (ie, check for V4 expiration time)
+          !signatures[i].isExpired(date) &&
+          // check binding signature is verified
+          (signatures[i].verified || await signatures[i].verify(primaryKey, signatureType, dataToVerify))
+        ) {
+          signature = signatures[i];
+        }
+      } catch (e) {
+        // skip signature with failed verification
+      }
+    }
+    return signature;
+  }
+
+  private static getValidEncryptionKeyPacketFlags = (keyPacket: OpenPGP.packet.PublicKey | OpenPGP.packet.SecretKey, signature: OpenPGP.packet.Signature): OpenPGP.enums.keyFlags => {
+    if (!signature.keyFlags || !signature.verified || signature.revoked !== false) { // Sanity check
+      return 0;
+    }
+    if ([
+      opgp.enums.publicKey.dsa,
+      opgp.enums.publicKey.rsa_sign,
+      opgp.enums.publicKey.ecdsa,
+      opgp.enums.publicKey.eddsa].includes(keyPacket.algorithm)) {
+      return 0; // disallow encryption for these algorithms
+    }
+    return signature.keyFlags[0] & (opgp.enums.keyFlags.encrypt_communication | opgp.enums.keyFlags.encrypt_storage);
+  }
+
+  private static getValidSigningKeyPacketFlags = (keyPacket: OpenPGP.packet.PublicKey | OpenPGP.packet.SecretKey,
+    signature: OpenPGP.packet.Signature): OpenPGP.enums.keyFlags => {
+    if (!signature.keyFlags || !signature.verified || signature.revoked !== false) { // Sanity check
+      return 0;
+    }
+    if ([
+      opgp.enums.publicKey.rsa_encrypt,
+      opgp.enums.publicKey.elgamal,
+      opgp.enums.publicKey.ecdh].includes(keyPacket.algorithm)) {
+      return 0; // disallow signing for these algorithms
+    }
+    return signature.keyFlags[0] & (opgp.enums.keyFlags.sign_data | opgp.enums.keyFlags.certify_keys);
+  }
+
+  private static getSubKeySigningFlags = async (key: OpenPGP.key.Key, subKey: OpenPGP.key.SubKey): Promise<OpenPGP.enums.keyFlags> => {
+    const primaryKey = key.keyPacket;
+    // await subKey.verify(primaryKey);
+    const dataToVerify = { key: primaryKey, bind: subKey.keyPacket };
+    const date = new Date();
+    const bindingSignature = await OpenPGPKey.getLatestValidSignature(subKey.bindingSignatures, primaryKey,
+      opgp.enums.signature.subkey_binding,
+      dataToVerify, date);
+    if (
+      bindingSignature &&
+      bindingSignature.embeddedSignature &&
+      await OpenPGPKey.getLatestValidSignature([bindingSignature.embeddedSignature], subKey.keyPacket, opgp.enums.signature.key_binding, dataToVerify, date)
+    ) {
+      return OpenPGPKey.getValidSigningKeyPacketFlags(subKey.keyPacket, bindingSignature);
+    }
+    return 0;
+  }
+
+  private static getSubKeyEncryptionFlags = async (key: OpenPGP.key.Key, subKey: OpenPGP.key.SubKey): Promise<OpenPGP.enums.keyFlags> => {
+    const primaryKey = key.keyPacket;
+    // await subKey.verify(primaryKey);
+    const dataToVerify = { key: primaryKey, bind: subKey.keyPacket };
+    const date = new Date();
+    const bindingSignature = await OpenPGPKey.getLatestValidSignature(subKey.bindingSignatures, primaryKey,
+      opgp.enums.signature.subkey_binding,
+      dataToVerify, date);
+    if (bindingSignature) {
+      return OpenPGPKey.getValidEncryptionKeyPacketFlags(subKey.keyPacket, bindingSignature);
+    }
+    return 0;
+  }
+
+  private static getPrimaryKeyFlags = async (key: OpenPGP.key.Key): Promise<OpenPGP.enums.keyFlags> => {
+    const primaryUser = await key.getPrimaryUser();
+    return OpenPGPKey.getValidEncryptionKeyPacketFlags(key.keyPacket, primaryUser.selfCertification)
+      | OpenPGPKey.getValidSigningKeyPacketFlags(key.keyPacket, primaryUser.selfCertification);
   }
 
   /**

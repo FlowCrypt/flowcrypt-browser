@@ -44,5 +44,5 @@ if (reason === 'db_corrupted') {
 }
 
 if (stack) {
-  Xss.sanitizeAppend(details, `<br><pre>${stack}</pre>`);
+  Xss.sanitizeAppend(details, `<br><pre>${Xss.escape(stack)}</pre>`);
 }
