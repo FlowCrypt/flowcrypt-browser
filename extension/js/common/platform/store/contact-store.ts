@@ -162,7 +162,7 @@ export class ContactStore extends AbstractStore {
       return;
     }
     if (update.pubkey?.isPrivate) {
-      Catch.report(`Wrongly updating prv ${update.pubkey.id} as contact - converting to pubkey (email=${update.pubkey.emails[0]})`);
+      Catch.report(`Wrongly updating prv ${update.pubkey.id} as contact - converting to pubkey`);
       update.pubkey = await KeyUtil.asPublicKey(update.pubkey);
     }
     await new Promise((resolve, reject) => {
