@@ -81,9 +81,11 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await Util.sleep(1);
       await contactsFrame.waitAndClick('@action-show-pubkey-flowcryptcompatibilitygmailcom', { confirmGone: true });
       await Util.sleep(1);
-      expect(await contactsFrame.read('@page-contacts')).to.contain('flowcrypt.compatibility@gmail.com');
-      expect(await contactsFrame.read('@page-contacts')).to.contain('7FDE 6855 48AE A788');
-      expect(await contactsFrame.read('@page-contacts')).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
+      const contacts = await contactsFrame.read('@page-contacts');
+      expect(contacts).to.contain('flowcrypt.compatibility@gmail.com');
+      // todo: will specify which one of them should appear after finished with #3332
+      expect(contacts.includes('7FDE 6855 48AE A788') || contacts.includes('ADAC 279C 9509 3207')).to.be.true;
+      expect(contacts).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
       await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
       await Util.sleep(1);
       expect(await contactsFrame.read('@page-contacts')).to.contain('flowcrypt.compatibility@gmail.com');
