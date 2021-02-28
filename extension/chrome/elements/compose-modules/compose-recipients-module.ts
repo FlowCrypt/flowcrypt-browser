@@ -657,10 +657,13 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       } else {
         leftOffset = offset.left + inputToPadding;
       }
+      const offsetTop = $('#recipients_row').height()! + offset.top; // both are in the template
+      const bottomGap = 10;
       this.view.S.cached('contacts').css({
         display: 'block',
         left: leftOffset,
-        top: `${$('#compose > tbody > tr:first').height()! + offset.top}px`, // both are in the template
+        top: offsetTop,
+        maxHeight: `calc(100% - ${offsetTop + bottomGap}px)`,
       });
     }
   }
