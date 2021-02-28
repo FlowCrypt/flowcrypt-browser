@@ -349,6 +349,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       return;
     }
     this.view.errModule.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
+    this.hideContacts();
     await this.parseRenderRecipients($(target));
     // If thereis no related target or related target isn't in recipients functionality
     // then we need to collapse inputs
