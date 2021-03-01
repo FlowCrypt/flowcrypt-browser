@@ -349,6 +349,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       return;
     }
     this.view.errModule.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
+    this.hideContacts();
     await this.parseRenderRecipients($(target));
     // If thereis no related target or related target isn't in recipients functionality
     // then we need to collapse inputs
@@ -656,10 +657,13 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       } else {
         leftOffset = offset.left + inputToPadding;
       }
+      const offsetTop = $('#recipients_row').height()! + offset.top; // both are in the template
+      const bottomGap = 10;
       this.view.S.cached('contacts').css({
         display: 'block',
         left: leftOffset,
-        top: `${$('#compose > tbody > tr:first').height()! + offset.top}px`, // both are in the template
+        top: offsetTop,
+        maxHeight: `calc(100% - ${offsetTop + bottomGap}px)`,
       });
     }
   }

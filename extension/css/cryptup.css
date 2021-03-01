@@ -2060,6 +2060,7 @@ div#contacts {
   display: none;
   position: absolute;
   background: white;
+  overflow-y: auto;
   top: 74px;
   border: 1px solid rgba(0, 0, 0, 0.2);
   left: 10px;
