@@ -294,14 +294,8 @@ export class ContactStore extends AbstractStore {
       if (typeof query.has_pgp === 'undefined') { // any query.has_pgp value
         search = emails.openCursor(); // no substring, already covered in `typeof query.has_pgp === 'undefined' && query.substring` above
       } else { // specific query.has_pgp value
-        let range: IDBKeyRange;
-        if (query.substring) {
-          range = IDBKeyRange.only(ContactStore.dbIndex(query.has_pgp, query.substring));
-        } else if (query.has_pgp) {
-          range = IDBKeyRange.lowerBound('t:', false); // starting with 't:' inclusive
-        } else {
-          range = IDBKeyRange.upperBound('t:', true); // up to 't:', excluding it gives false range
-        }
+        const indexRange = ContactStore.dbIndexRange(query.has_pgp, query.substring ?? '');
+        const range = IDBKeyRange.bound(indexRange.lowerBound, indexRange.upperBound, false, true);
         search = emails.index('search').openCursor(range);
       }
       const found: Email[] = [];
@@ -328,29 +322,29 @@ export class ContactStore extends AbstractStore {
     return str.normalize('NFKD').replace(/[\u0300-\u036F]/g, '').toLowerCase();
   }
 
-  private static dbIndex = (hasPgp: boolean, substring: string) => {
-    if (!substring) {
-      throw new Error('db_index has to include substring');
-    }
+  private static dbIndex = (hasPgp: boolean, substring: string): string => {
     return (hasPgp ? 't:' : 'f:') + substring;
+  }
+
+  private static dbIndexRange = (hasPgp: boolean, substring: string): { lowerBound: string, upperBound: string } => {
+    const lowerBound = ContactStore.dbIndex(hasPgp, substring);
+    let copyLength = lowerBound.length - 1;
+    let lastChar = lowerBound.charCodeAt(copyLength);
+    while (lastChar >= 65535) {
+      lastChar = lowerBound.charCodeAt(--copyLength);
+    }
+    const upperBound = lowerBound.substring(0, copyLength) + String.fromCharCode(lastChar + 1);
+    return { lowerBound, upperBound };
   }
 
   private static updateSearchable = (emailEntity: Email) => {
     const email = emailEntity.email.toLowerCase();
     const name = emailEntity.name ? emailEntity.name.toLowerCase() : '';
-    const parts = [email, name];
-    const domain: string = email.split('@').pop() || '';
-    parts.push(domain, ...email.split(/[^a-z0-9]/));
-    parts.push(...name.split(/[^a-z0-9]/));
     const index: string[] = [];
-    for (const part of parts.filter(p => !!p)) {
-      let substring = '';
-      for (const letter of part.split('')) {
-        substring += letter;
-        const normalized = ContactStore.normalizeString(substring);
-        if (!index.includes(normalized)) {
-          index.push(ContactStore.dbIndex(emailEntity.fingerprints.length > 0, normalized));
-        }
+    for (const part of [...email.split(/[^a-z0-9]/), ...name.split(/[^a-z0-9]/)].filter(p => !!p)) {
+      const normalized = ContactStore.normalizeString(part);
+      if (!index.includes(normalized)) {
+        index.push(ContactStore.dbIndex(emailEntity.fingerprints.length > 0, normalized));
       }
     }
     emailEntity.searchable = index;
@@ -445,6 +439,7 @@ export class ContactStore extends AbstractStore {
     return { email: result.email, name: result.name, has_pgp: result.fingerprints.length > 0 ? 1 : 0, last_use: result.lastUse };
   }
 
+  // todo: migration only
   private static recreateDates = (contacts: (Contact | undefined)[]) => {
     for (const contact of contacts) {
       if (contact) {
