@@ -64,8 +64,8 @@ View.run(class MyKeyView extends View {
     $('.action_continue_download').click(this.setHandlerPrevent('double', () => this.downloadRevocationCert(String($('#input_passphrase').val()))));
     $('#input_passphrase').on('keydown', this.setEnterHandlerThatClicks('.action_continue_download'));
     $('.action_cancel_download_cert').click(this.setHandler(() => { $('.enter_pp').hide(); }));
-    const clipboardOpts = { text: (trigger: HTMLElement) => trigger.className.includes('action_copy_pubkey') ? this.keyInfo.public : this.keyInfo.private };
-    new ClipboardJS('.action_copy_pubkey, .action_copy_prv', clipboardOpts); // tslint:disable-line:no-unused-expression no-unsafe-any
+    const clipboardOpts = { text: (trigger: HTMLElement) =>  this.keyInfo.public };
+    new ClipboardJS('.action_copy_pubkey', clipboardOpts); // tslint:disable-line:no-unused-expression no-unsafe-any
   }
 
   private renderPubkeyShareableLink = async () => {
