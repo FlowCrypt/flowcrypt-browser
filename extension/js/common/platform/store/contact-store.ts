@@ -69,24 +69,30 @@ export class ContactStore extends AbstractStore {
 
   public static dbOpen = async (): Promise<IDBDatabase> => {
     return await new Promise((resolve, reject) => {
-      let openDbReq: IDBOpenDBRequest;
-      openDbReq = indexedDB.open('cryptup', 4);
+      const openDbReq = indexedDB.open('cryptup', 4);
       openDbReq.onupgradeneeded = (event) => {
+        const db = openDbReq.result;
         if (event.oldVersion < 4) {
-          const emails = openDbReq.result.createObjectStore('emails', { keyPath: 'email' });
-          const pubkeys = openDbReq.result.createObjectStore('pubkeys', { keyPath: 'fingerprint' });
+          const emails = db.createObjectStore('emails', { keyPath: 'email' });
+          const pubkeys = db.createObjectStore('pubkeys', { keyPath: 'fingerprint' });
           emails.createIndex('search', 'searchable', { multiEntry: true });
           emails.createIndex('index_pending_lookup', 'pendingLookup');
           emails.createIndex('index_fingerprints', 'fingerprints', { multiEntry: true }); // fingerprints of all connected pubkeys
           pubkeys.createIndex('index_longids', 'longids', { multiEntry: true }); // longids of all public key packets in armored pubkey
         }
-        if (event.oldVersion < 5) { // delete when migrating from 4 to 5?
-          // openDbReq.result.deleteObjectStore('contacts'); // tslint:disable-line:no-unsafe-any
+        if (db.objectStoreNames.contains('contacts')) {
+          const countRequest = openDbReq.transaction!.objectStore('contacts').count();
+          countRequest.onsuccess = () => {
+            if (countRequest.result === 0) {
+              console.log('contacts store is now empty, deleting it...');
+              db.deleteObjectStore('contacts');
+            }
+          }
         }
-        openDbReq.onsuccess = () => resolve(openDbReq.result as IDBDatabase);
-        openDbReq.onblocked = () => reject(ContactStore.errCategorize(openDbReq.error));
-        openDbReq.onerror = () => reject(ContactStore.errCategorize(openDbReq.error));
       };
+      openDbReq.onsuccess = () => resolve(openDbReq.result as IDBDatabase);
+      openDbReq.onblocked = () => reject(ContactStore.errCategorize(openDbReq.error));
+      openDbReq.onerror = () => reject(ContactStore.errCategorize(openDbReq.error));
     });
   }
 
@@ -348,10 +354,6 @@ export class ContactStore extends AbstractStore {
       }
     }
     emailEntity.searchable = index;
-  }
-
-  private static setReqOnError = (req: IDBRequest, reject: (reason?: any) => void) => {
-    req.onerror = () => reject(ContactStore.errCategorize(req.error || new Error('Unknown db error')));
   }
 
   private static setReqPipe<T>(req: IDBRequest, pipe: (value?: T) => void, reject: (reason?: any) => void) {
