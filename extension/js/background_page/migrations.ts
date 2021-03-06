@@ -56,7 +56,7 @@ export const moveContactsToEmailsAndPubkeys = async (db: IDBDatabase) => {
             pending_lookup: entry.pending_lookup,
             last_use: entry.last_use,
             pubkey_last_check: entry.pubkey_last_check
-          })
+          });
           cursor.continue();
         }
       };

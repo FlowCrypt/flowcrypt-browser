@@ -87,7 +87,7 @@ export class ContactStore extends AbstractStore {
               console.log('contacts store is now empty, deleting it...');
               db.deleteObjectStore('contacts');
             }
-          }
+          };
         }
       };
       openDbReq.onsuccess = () => resolve(openDbReq.result as IDBDatabase);
