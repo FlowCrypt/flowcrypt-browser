@@ -163,7 +163,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           }
         }
       }
-      await ContactStore.update(undefined, contact.email, { pubkey_last_check: Date.now() });
+      await ContactStore.update(undefined, contact.email, { pubkey: contact.pubkey, pubkey_last_check: Date.now() });
       // we checked for newer key and it did not result in updating the key, don't check again for another week
     } catch (e) {
       ApiErr.reportIfSignificant(e);

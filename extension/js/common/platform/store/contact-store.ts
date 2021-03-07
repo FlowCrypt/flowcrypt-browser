@@ -62,10 +62,10 @@ export type ContactPreview = {
 export type ContactUpdate = {
   email?: string;
   name?: string | null;
-  pubkey?: Key;
   pending_lookup?: number;
   last_use?: number | null;
-  pubkey_last_check?: number | null;
+  pubkey?: Key;
+  pubkey_last_check?: number | null; // when non-null, `pubkey` must be supplied
 };
 
 type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number };
@@ -282,8 +282,36 @@ export class ContactStore extends AbstractStore {
     return raw;
   }
 
+  private static getPubkeyTx = async (tx: IDBTransaction, id: string) => {
+    const existingPubkey: Pubkey = await new Promise((resolve, reject) => {
+      const req = tx.objectStore('pubkeys').get(id);
+      ContactStore.setReqPipe(req,
+        (pubkey: Pubkey) => {
+          resolve(pubkey);
+        },
+        reject);
+    });
+    return existingPubkey;
+  }
+
   private static updateTx = async (tx: IDBTransaction, email: string, update: ContactUpdate): Promise<void> => {
+    let pubkeyEntity: Pubkey | undefined;
+    if (update.pubkey) {
+      const keyAttrs = ContactStore.getKeyAttributes(update.pubkey);
+      // todo: will we benefit anything when not saving pubkey if it isn't modified?
+      pubkeyEntity = {
+        fingerprint: update.pubkey.id,
+        lastCheck: update.pubkey_last_check ?? (await ContactStore.getPubkeyTx(tx, update.pubkey.id))?.lastCheck,
+        lastSig: keyAttrs.pubkey_last_sig,
+        expiresOn: keyAttrs.expiresOn,
+        longids: update.pubkey.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)),
+        armoredKey: KeyUtil.armor(update.pubkey)
+      } as Pubkey;
+    } else if (update.pubkey_last_check) {
+      Catch.report(`Wrongly updating pubkey_last_check without specifying pubkey for ${email} - ignoring`);
+    }
     await new Promise((resolve, reject) => {
+      tx.addEventListener('error', () => reject(ContactStore.errCategorize(tx.error)));
       const req = tx.objectStore('emails').get(email);
       ContactStore.setReqPipe(req,
         (emailEntity: Email) => {
@@ -295,25 +323,9 @@ export class ContactStore extends AbstractStore {
             }
             emailEntity = { email, name: null, searchable: [], fingerprints: [], pendingLookup: 0, lastUse: null };
           }
-          let pubkeyEntity: Pubkey | undefined;
-          if (update.pubkey) {
-            // todo: get the pubkey record if it exists to retrieve lastCheck
-            /* const req1 = tx.objectStore('pubkeys').get(update.pubkey.id);
-            ContactStore.setReqPipe(req1, ... */
-            const keyAttrs = ContactStore.getKeyAttributes(update.pubkey);
-            pubkeyEntity = {
-              fingerprint: update.pubkey.id,
-              lastCheck: null,
-              lastSig: keyAttrs.pubkey_last_sig,
-              expiresOn: keyAttrs.expiresOn,
-              longids: update.pubkey.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)),
-              armoredKey: KeyUtil.armor(update.pubkey)
-            } as Pubkey;
+          if (pubkeyEntity) {
             if (!emailEntity.fingerprints.includes(pubkeyEntity.fingerprint)) {
               emailEntity.fingerprints.push(pubkeyEntity.fingerprint);
-            }
-            if (Object.keys(update).includes('pubkey_last_check') && update.pubkey_last_check) {
-              pubkeyEntity.lastCheck = update.pubkey_last_check;
             }
           }
           if (Object.keys(update).includes('name')) {
@@ -337,7 +349,6 @@ export class ContactStore extends AbstractStore {
               resolve(undefined);
             }
           }, reject);
-          tx.onerror = () => reject(ContactStore.errCategorize(tx.error));
         }, reject);
     });
   }
