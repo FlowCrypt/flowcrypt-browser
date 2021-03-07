@@ -38,6 +38,20 @@ type Pubkey = {
   expiresOn: number;
 };
 
+// contact entity prior to version 4
+type ContactV3 = {
+  email: string;
+  name: string | null;
+  pubkey: Key | string | null;
+  has_pgp: 0 | 1;
+  fingerprint: string | null;
+  pending_lookup: number;
+  last_use: number | null;
+  pubkey_last_sig: number | null;
+  pubkey_last_check: number | null;
+  expiresOn: number | null;
+};
+
 export type ContactPreview = {
   email: string;
   name: string | null;
@@ -80,15 +94,7 @@ export class ContactStore extends AbstractStore {
           emails.createIndex('index_fingerprints', 'fingerprints', { multiEntry: true }); // fingerprints of all connected pubkeys
           pubkeys.createIndex('index_longids', 'longids', { multiEntry: true }); // longids of all public key packets in armored pubkey
         }
-        if (db.objectStoreNames.contains('contacts')) {
-          const countRequest = openDbReq.transaction!.objectStore('contacts').count();
-          countRequest.onsuccess = () => {
-            if (countRequest.result === 0) {
-              console.log('contacts store is now empty, deleting it...');
-              db.deleteObjectStore('contacts');
-            }
-          };
-        }
+        ContactStore.moveContactsToEmailsAndPubkeys(openDbReq);
       };
       openDbReq.onsuccess = () => resolve(openDbReq.result as IDBDatabase);
       openDbReq.onblocked = () => reject(ContactStore.errCategorize(openDbReq.error));
@@ -171,55 +177,7 @@ export class ContactStore extends AbstractStore {
       Catch.report(`Wrongly updating prv ${update.pubkey.id} as contact - converting to pubkey`);
       update.pubkey = await KeyUtil.asPublicKey(update.pubkey);
     }
-    await new Promise((resolve, reject) => {
-      const tx = db.transaction(['emails', 'pubkeys'], 'readwrite');
-      const req = tx.objectStore('emails').get(email);
-      ContactStore.setReqPipe(req,
-        (emailEntity: Email) => {
-          if (!emailEntity) {
-            const validEmail = Str.parseEmail(email).email;
-            if (!validEmail) {
-              reject(`Cannot save contact because email is not valid: ${email}`);
-              return;
-            }
-            emailEntity = { email, name: null, searchable: [], fingerprints: [], pendingLookup: 0, lastUse: null };
-          }
-          if (update.pubkey) {
-            // todo: get the pubkey record if it exists to retrieve lastCheck
-            /* const req1 = tx.objectStore('pubkeys').get(update.pubkey.id);
-            ContactStore.setReqPipe(req1, ... */
-            const keyAttrs = ContactStore.getKeyAttributes(update.pubkey);
-            const pubkeyEntity = {
-              fingerprint: update.pubkey.id,
-              lastCheck: null,
-              lastSig: keyAttrs.pubkey_last_sig,
-              expiresOn: keyAttrs.expiresOn,
-              longids: update.pubkey.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)),
-              armoredKey: KeyUtil.armor(update.pubkey)
-            } as Pubkey;
-            if (!emailEntity.fingerprints.includes(pubkeyEntity.fingerprint)) {
-              emailEntity.fingerprints.push(pubkeyEntity.fingerprint);
-            }
-            if (Object.keys(update).includes('pubkey_last_check') && update.pubkey_last_check) {
-              pubkeyEntity.lastCheck = update.pubkey_last_check;
-            }
-            tx.objectStore('pubkeys').put(pubkeyEntity);
-          }
-          if (Object.keys(update).includes('name')) {
-            emailEntity.name = update.name ?? null;
-          }
-          if (Object.keys(update).includes('pending_lookup')) {
-            emailEntity.pendingLookup = update.pending_lookup ?? 0;
-          }
-          if (Object.keys(update).includes('last_use')) {
-            emailEntity.lastUse = update.last_use ?? null;
-          }
-          ContactStore.updateSearchable(emailEntity);
-          tx.objectStore('emails').put(emailEntity);
-          tx.oncomplete = () => resolve(undefined);
-          tx.onabort = () => reject(ContactStore.errCategorize(tx.error));
-        }, reject);
-    });
+    await ContactStore.updateTx(db.transaction(['emails', 'pubkeys'], 'readwrite'), email, update);
   }
 
   public static get = async (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
@@ -322,6 +280,66 @@ export class ContactStore extends AbstractStore {
         reject);
     });
     return raw;
+  }
+
+  private static updateTx = async (tx: IDBTransaction, email: string, update: ContactUpdate): Promise<void> => {
+    await new Promise((resolve, reject) => {
+      const req = tx.objectStore('emails').get(email);
+      ContactStore.setReqPipe(req,
+        (emailEntity: Email) => {
+          if (!emailEntity) {
+            const validEmail = Str.parseEmail(email).email;
+            if (!validEmail) {
+              reject(`Cannot save contact because email is not valid: ${email}`);
+              return;
+            }
+            emailEntity = { email, name: null, searchable: [], fingerprints: [], pendingLookup: 0, lastUse: null };
+          }
+          let pubkeyEntity: Pubkey | undefined;
+          if (update.pubkey) {
+            // todo: get the pubkey record if it exists to retrieve lastCheck
+            /* const req1 = tx.objectStore('pubkeys').get(update.pubkey.id);
+            ContactStore.setReqPipe(req1, ... */
+            const keyAttrs = ContactStore.getKeyAttributes(update.pubkey);
+            pubkeyEntity = {
+              fingerprint: update.pubkey.id,
+              lastCheck: null,
+              lastSig: keyAttrs.pubkey_last_sig,
+              expiresOn: keyAttrs.expiresOn,
+              longids: update.pubkey.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)),
+              armoredKey: KeyUtil.armor(update.pubkey)
+            } as Pubkey;
+            if (!emailEntity.fingerprints.includes(pubkeyEntity.fingerprint)) {
+              emailEntity.fingerprints.push(pubkeyEntity.fingerprint);
+            }
+            if (Object.keys(update).includes('pubkey_last_check') && update.pubkey_last_check) {
+              pubkeyEntity.lastCheck = update.pubkey_last_check;
+            }
+          }
+          if (Object.keys(update).includes('name')) {
+            emailEntity.name = update.name ?? null;
+          }
+          if (Object.keys(update).includes('pending_lookup')) {
+            emailEntity.pendingLookup = update.pending_lookup ?? 0;
+          }
+          if (Object.keys(update).includes('last_use')) {
+            emailEntity.lastUse = update.last_use ?? null;
+          }
+          ContactStore.updateSearchable(emailEntity);
+          const updReq1 = tx.objectStore('emails').put(emailEntity);
+          ContactStore.setReqPipe(updReq1, () => {
+            if (pubkeyEntity) {
+              const updReq2 = tx.objectStore('pubkeys').put(pubkeyEntity);
+              ContactStore.setReqPipe(updReq2, () => {
+                resolve(undefined);
+              }, reject);
+            } else {
+              resolve(undefined);
+            }
+          }, reject);
+          tx.onerror = () => reject(ContactStore.errCategorize(tx.error));
+        }, reject);
+    });
   }
 
   private static normalizeString = (str: string) => {
@@ -461,4 +479,37 @@ export class ContactStore extends AbstractStore {
     return contacts;
   }
 
+  private static moveContactsToEmailsAndPubkeys = (openDbReq: IDBOpenDBRequest) => {
+    const db = openDbReq.result;
+    if (db.objectStoreNames.contains('contacts')) {
+      console.info('migrating contacts of ContactStore to emails and pubkeys...');
+      const tx = openDbReq.transaction!;
+      const contacts = tx.objectStore('contacts');
+      const search = contacts.openCursor();
+      search.onsuccess = async () => {
+        const cursor = search.result as IDBCursorWithValue | undefined;
+        if (!cursor) {
+          console.log('contacts store is now empty, deleting it...');
+          db.deleteObjectStore('contacts');
+        } else {
+          const entry = cursor.value as ContactV3; // tslint:disable-line:no-unsafe-any
+          const armoredPubkey = (entry.pubkey && typeof entry.pubkey === 'object')
+            ? KeyUtil.armor(entry.pubkey as Key) : entry.pubkey as string;
+          // parse again to re-calculate expiration-related fields etc.
+          const pubkey = armoredPubkey ? await KeyUtil.parse(armoredPubkey) : undefined;
+          console.log(`Migrating ${entry.email} ...`);
+          await ContactStore.updateTx(tx, entry.email, {
+            email: entry.email,
+            name: entry.name,
+            pubkey,
+            pending_lookup: entry.pending_lookup,
+            last_use: entry.last_use,
+            pubkey_last_check: entry.pubkey_last_check
+          });
+          cursor.continue();
+        }
+      };
+      console.info('done migrating');
+    }
+  }
 }
