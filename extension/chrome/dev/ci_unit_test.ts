@@ -13,6 +13,7 @@ import { Wkd } from '../../js/common/api/key-server/wkd.js';
 import { MsgUtil } from '../../js/common/core/crypto/pgp/msg-util.js';
 import { Sks } from '../../js/common/api/key-server/sks.js';
 import { Ui } from '../../js/common/browser/ui.js';
+import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 
 /**
  * importing all libs that are tested in ci tests
@@ -29,7 +30,8 @@ const libs: any[] = [
   Wkd,
   Sks,
   MsgUtil,
-  Ui
+  Ui,
+  ContactStore
 ];
 
 // add them to global scope so ci can use them
