@@ -222,11 +222,6 @@ export class ContactStore extends AbstractStore {
     }
   }
 
-  public static setTxHandlers(tx: IDBTransaction, resolve: (value: unknown) => void, reject: (reason?: any) => void) {
-    tx.oncomplete = () => resolve(undefined);
-    this.setReqOnError(tx, reject);
-  }
-
   private static updateTxPhase2 = (tx: IDBTransaction, email: string, update: ContactUpdate, existingPubkey: Pubkey | undefined) => {
     let pubkeyEntity: Pubkey | undefined;
     if (update.pubkey) {

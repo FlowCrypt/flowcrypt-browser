@@ -65,6 +65,11 @@ export abstract class AbstractStore {
     req.onerror = () => reject(AbstractStore.errCategorize(req.error || new Error('Unknown db error')));
   }
 
+  public static setTxHandlers = (tx: IDBTransaction, resolve: (value: unknown) => void, reject: (reason?: any) => void) => {
+    tx.oncomplete = () => resolve(undefined);
+    AbstractStore.setReqOnError(tx, reject);
+  }
+
   protected static buildSingleAccountStoreFromRawResults = (scope: string, storageObj: RawStore): AcctStoreDict => {
     const accountStore: AcctStoreDict = {};
     for (const k of Object.keys(storageObj)) {
