@@ -365,14 +365,9 @@ export class ContactStore extends AbstractStore {
   private static updateSearchable = (emailEntity: Email) => {
     const email = emailEntity.email.toLowerCase();
     const name = emailEntity.name ? emailEntity.name.toLowerCase() : '';
-    const index: string[] = [];
-    for (const part of [...email.split(/[^a-z0-9]/), ...name.split(/[^a-z0-9]/)].filter(p => !!p)) {
-      const normalized = ContactStore.normalizeString(part);
-      if (!index.includes(normalized)) {
-        index.push(ContactStore.dbIndex(emailEntity.fingerprints.length > 0, normalized));
-      }
-    }
-    emailEntity.searchable = index;
+    emailEntity.searchable = [...email.split(/[^a-z0-9]/), ...name.split(/[^a-z0-9]/)].filter(p => !!p)
+      .map(ContactStore.normalizeString).filter((value, index, self) => self.indexOf(value) === index)
+      .map(normalized => ContactStore.dbIndex(emailEntity.fingerprints.length > 0, normalized));
   }
 
   private static setReqPipe<T>(req: IDBRequest, pipe: (value?: T) => void, reject: (reason?: any) => void) {

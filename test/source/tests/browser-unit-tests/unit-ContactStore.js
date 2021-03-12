@@ -24,7 +24,6 @@
 
 BROWSER_UNIT_TEST_NAME(`ContactStore is able to search by partial email address`);
 (async () => {
-
   const contactABBDEF = await ContactStore.obj({
     email: 'abbdef@test.com', pubkey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
 
@@ -154,6 +153,24 @@ WmiyOmaRmLP+
   }
   if (contactsABCDE[0].email !== 'abcdef@test.com') {
     throw Error(`Expected "abcdef@test.com" but got "${contactsABCDE[0].email}"`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store duplicates in searchable`);
+(async () => {
+  const db = await ContactStore.dbOpen();
+  const contact = await ContactStore.obj({
+    email: 'this.word.this.word@this.word.this.word', name: 'This Word THIS WORD this word'
+  });
+  await ContactStore.save(db, contact);
+  // extract the entity from the database to see the actual field
+  const entity = await new Promise((resolve, reject) => {
+    const req = db.transaction(['emails'], 'readonly').objectStore('emails').get(contact.email);
+    ContactStore.setReqPipe(req, () => resolve(req.result), reject);
+  });
+  if (entity?.searchable.length !== 2) {
+    throw Error(`Expected 2 entries in 'searchable' but got "${entity?.searchable}"`);
   }
   return 'pass';
 })();
