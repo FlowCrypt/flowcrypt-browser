@@ -93,7 +93,7 @@ export class ContactStore extends AbstractStore {
               console.info('contacts store is now empty, deleting it...');
               db.deleteObjectStore('contacts');
             }
-          }
+          };
         }
       };
       openDbReq.onsuccess = () => resolve(openDbReq.result as IDBDatabase);
@@ -272,7 +272,7 @@ export class ContactStore extends AbstractStore {
       if (pubkeyEntity) {
         tx.objectStore('pubkeys').put(pubkeyEntity);
       }
-    }
+    };
   }
 
   private static extractPubkeys = async (db: IDBDatabase | undefined, fingerprints: string[]): Promise<Pubkey[]> => {

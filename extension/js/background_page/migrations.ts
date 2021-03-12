@@ -92,4 +92,4 @@ export const moveContactsToEmailsAndPubkeys = async (db: IDBDatabase): Promise<n
   });
   console.info(`contacts migration finished`);
   return updates.length;
-}
+};
