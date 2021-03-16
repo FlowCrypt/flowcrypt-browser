@@ -3,12 +3,9 @@
 'use strict';
 
 import { AttachmentLimits, AttachmentUI } from '../../../js/common/ui/attachment-ui.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { OrgRules } from '../../../js/common/org-rules.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
-import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 export class ComposeAttachmentsModule extends ViewModule<ComposeView> {
 
