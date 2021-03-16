@@ -7,7 +7,8 @@ import { ApiErr } from '../shared/api-error.js';
 import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { Buf } from '../../core/buf.js';
 import { PubkeySearchResult } from './../pub-lookup.js';
-import { KeyUtil } from '../../core/crypto/key.js';
+import { Key, KeyUtil } from '../../core/crypto/key.js';
+import { Str } from '../../core/common.js';
 
 // tslint:disable:no-null-keyword
 // tslint:disable:no-direct-ajax
@@ -22,23 +23,28 @@ export class Wkd extends Api {
 
   constructor(private myOwnDomain: string) {
     super();
+    if (myOwnDomain === 'wkd.mock.flowcryptlocal.com') {
+      this.port = 8001;
+    }
   }
 
-  public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
+  // returns all the received keys
+  public rawLookupEmail = async (email: string): Promise<{ keys: Key[], errs: Error[] }> => {
+    // todo: should we return errs on network failures etc.?
     const parts = email.split('@');
     if (parts.length !== 2) {
-      return { pubkey: null, pgpClient: null };
+      return { keys: [], errs: [] };
     }
     const [user, recipientDomain] = parts;
     if (!user || !recipientDomain) {
-      return { pubkey: null, pgpClient: null };
+      return { keys: [], errs: [] };
     }
     if (!opgp) {
       // pgp_block.htm does not have openpgp loaded
       // the particular usecase (auto-loading pubkeys to verify signatures) is not that important,
       //    the user typically gets the key loaded from composing anyway
       // the proper fix would be to run encodeZBase32 through background scripts
-      return { pubkey: null, pgpClient: null };
+      return { keys: [], errs: [] };
     }
     const directDomain = recipientDomain.toLowerCase();
     const advancedDomainPrefix = (directDomain === 'localhost') ? '' : 'openpgpkey.';
@@ -50,15 +56,19 @@ export class Wkd extends Api {
     const directUrl = `https://${directHost}/.well-known/openpgpkey`;
     let response = await this.urlLookup(advancedUrl, userPart);
     if (!response.buf && response.hasPolicy) {
-      return { pubkey: null, pgpClient: null }; // do not retry direct if advanced had a policy file
+      return { keys: [], errs: [] }; // do not retry direct if advanced had a policy file
     }
     if (!response.buf) {
       response = await this.urlLookup(directUrl, userPart);
     }
     if (!response.buf) {
-      return { pubkey: null, pgpClient: null }; // do not retry direct if advanced had a policy file
+      return { keys: [], errs: [] }; // do not retry direct if advanced had a policy file
     }
-    const { keys, errs } = await KeyUtil.readMany(response.buf);
+    return await KeyUtil.readMany(response.buf);
+  }
+
+  public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
+    const { keys, errs } = await this.rawLookupEmail(email);
     if (errs.length) {
       return { pubkey: null, pgpClient: null };
     }
@@ -67,7 +77,7 @@ export class Wkd extends Api {
       return { pubkey: null, pgpClient: null };
     }
     // if recipient uses same domain, we assume they use flowcrypt
-    const pgpClient = this.myOwnDomain === recipientDomain ? 'flowcrypt' : 'pgp-other';
+    const pgpClient = this.myOwnDomain === Str.getDomainFromEmailAddress(email) ? 'flowcrypt' : 'pgp-other';
     try {
       const pubkey = KeyUtil.armor(key);
       return { pubkey, pgpClient };

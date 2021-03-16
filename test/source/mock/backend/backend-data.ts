@@ -87,6 +87,9 @@ export class BackendData {
       "enforce_keygen_algo": "rsa2048",
       "disallow_attester_search_for_domains": []
     };
+    if (domain === 'wkd.mock.flowcryptlocal.com') {
+      return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_ATTESTER_SUBMIT'] };
+    }
     if (domain === 'key-manager-autogen.flowcrypt.com') {
       return keyManagerAutogenRules;
     }
