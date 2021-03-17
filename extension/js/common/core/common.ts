@@ -33,6 +33,11 @@ export class Str {
     return { email, name, full };
   }
 
+  public static getDomainFromEmailAddress = (emailAddr: string) => {
+    // todo: parseEmail()?
+    return emailAddr.toLowerCase().split('@')[1];
+  }
+
   public static rmSpecialCharsKeepUtf = (str: string, mode: 'ALLOW-SOME' | 'ALLOW-NONE'): string => {
     // not a whitelist because we still want utf chars
     str = str.replace(/[@&#`();:'",<>\{\}\[\]\\\/\n\t\r]/gi, '');
