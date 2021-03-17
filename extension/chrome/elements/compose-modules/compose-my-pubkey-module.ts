@@ -72,7 +72,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
         for (const recipient of foreignRecipients) {
           // new message, and my key is not uploaded where the recipient would look for it
           if (! await this.view.recipientsModule.doesRecipientHaveMyPubkey(recipient)) {
-            // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
+            // they do need pubkey
             this.setAttachPreference(true);
             return;
           }

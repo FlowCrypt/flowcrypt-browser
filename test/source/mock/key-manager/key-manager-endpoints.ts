@@ -7,7 +7,7 @@ import { oauth } from '../lib/oauth';
 import { Dict } from '../../core/common';
 import { expect } from 'chai';
 import { KeyUtil } from '../../core/crypto/key';
-import { wkdAtwkdmockflowcryptlocalcomPrivate as wkdAtwkdmockflowcryptlocalcom8001Private } from '../../tests/tooling/consts';
+import { wkdAtwkdmockflowcryptlocalcom8001Private } from '../../tests/tooling/consts';
 
 // tslint:disable:max-line-length
 /* eslint-disable max-len */
