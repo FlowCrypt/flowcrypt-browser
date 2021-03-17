@@ -3,18 +3,17 @@
 'use strict';
 
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
-import { KeyInfo } from '../../../js/common/core/crypto/key.js';
+import { KeyInfo, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { Str } from '../../../js/common/core/common.js';
-import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
 
   private toggledManually = false;
-  private wkdLongids: { [acctEmail: string]: string[] } = {};
+  private wkdFingerprints: { [acctEmail: string]: string[] } = {};
 
   public setHandlers = () => {
     this.view.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
@@ -48,9 +47,10 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
     (async () => {
       const senderEmail = this.view.senderModule.getSender();
       const senderKi = await this.view.storageModule.getKey(senderEmail);
-      // if we have cashed this longid in this.wkdLongids, setAttachPreference(false) rightaway and return
-      const cached = this.wkdLongids[senderEmail];
-      if (Array.isArray(cached) && cached.some(id => id === senderKi.longid)) {
+      const primaryFingerprint = (await KeyUtil.parse(senderKi.private)).id;
+      // if we have cashed this fingerprint, setAttachPreference(false) rightaway and return
+      const cached = this.wkdFingerprints[senderEmail];
+      if (Array.isArray(cached) && cached.includes(primaryFingerprint)) {
         this.setAttachPreference(false);
         return;
       }
@@ -62,10 +62,9 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
         if (!Array.isArray(cached)) {
           // slow operation -- test WKD for our own key and cache the result
           const { keys } = await this.view.pubLookup.wkd.rawLookupEmail(senderEmail);
-          const longids = keys.map(key => OpenPGPKey.fingerprintToLongid(key.id));
-          this.wkdLongids[senderEmail] = longids;
-          // check fingerprint
-          if (longids.some(id => id === senderKi.longid)) {
+          const fingerprints = keys.map(key => key.id);
+          this.wkdFingerprints[senderEmail] = fingerprints;
+          if (fingerprints.includes(primaryFingerprint)) {
             this.setAttachPreference(false);
             return;
           }

@@ -7,7 +7,7 @@ import { oauth } from '../lib/oauth';
 import { Dict } from '../../core/common';
 import { expect } from 'chai';
 import { KeyUtil } from '../../core/crypto/key';
-import { wkdAtwkdmockflowcryptlocalcomPrivate } from '../../tests/tooling/consts';
+import { wkdAtwkdmockflowcryptlocalcomPrivate as wkdAtwkdmockflowcryptlocalcom8001Private } from '../../tests/tooling/consts';
 
 // tslint:disable:max-line-length
 /* eslint-disable max-len */
@@ -194,8 +194,8 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
   '/flowcrypt-email-key-manager/keys/private': async ({ body }, req) => {
     const acctEmail = oauth.checkAuthorizationHeaderWithIdToken(req.headers.authorization);
     if (isGet(req)) {
-      if (acctEmail === 'wkd@wkd.mock.flowcryptlocal.com') {
-        return { privateKeys: [{ decryptedPrivateKey: wkdAtwkdmockflowcryptlocalcomPrivate }] };
+      if (acctEmail === 'wkd@wkd.mock.flowcryptlocal.com:8001') {
+        return { privateKeys: [{ decryptedPrivateKey: wkdAtwkdmockflowcryptlocalcom8001Private }] };
       }
       if (acctEmail === 'get.key@key-manager-autogen.flowcrypt.com') {
         return { privateKeys: [{ decryptedPrivateKey: existingPrv }] };

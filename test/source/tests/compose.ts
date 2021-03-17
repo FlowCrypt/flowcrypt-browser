@@ -135,7 +135,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default(`compose - auto include pubkey is inactive when our key is available on Wkd`, testWithBrowser(undefined, async (t, browser) => {
-      const acct = 'wkd@wkd.mock.flowcryptlocal.com';
+      const acct = 'wkd@wkd.mock.flowcryptlocal.com:8001';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.autoKeygen(settingsPage);
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);

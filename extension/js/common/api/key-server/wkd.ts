@@ -23,9 +23,6 @@ export class Wkd extends Api {
 
   constructor(private myOwnDomain: string) {
     super();
-    if (myOwnDomain === 'wkd.mock.flowcryptlocal.com') {
-      this.port = 8001;
-    }
   }
 
   // returns all the received keys
