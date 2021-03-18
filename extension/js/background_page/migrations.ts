@@ -42,29 +42,33 @@ export const migrateGlobal = async () => {
   }
 };
 
-export const moveContactsToEmailsAndPubkeys = async (db: IDBDatabase): Promise<number> => {
+export const moveContactsToEmailsAndPubkeys = async (db: IDBDatabase): Promise<void> => {
   if (!db.objectStoreNames.contains('contacts')) {
-    return 0;
+    return;
   }
+  console.info('migrating contacts of ContactStore to emails and pubkeys...');
+  const batchSize = 50;
+  while (await moveContactsBatchToEmailsAndPubkeys(db, batchSize)) {
+    console.info('proceeding to the next batch');
+  }
+  console.info('migrating contacts of ContactStore is complete');
+}
+
+const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: number | undefined): Promise<number> => {
   const entries: ContactV3[] = [];
+  const tx = db.transaction(['contacts'], 'readonly');
   await new Promise((resolve, reject) => {
-    const tx = db.transaction(['contacts'], 'readonly');
     ContactStore.setTxHandlers(tx, resolve, reject);
-    console.info('migrating contacts of ContactStore to emails and pubkeys...');
     const contacts = tx.objectStore('contacts');
-    const search = contacts.openCursor(); // todo: simplify with getAll()
+    const search = contacts.getAll(undefined, count);
     search.onsuccess = () => {
-      const cursor = search.result as IDBCursorWithValue | undefined;
-      if (cursor) {
-        entries.push(cursor.value as ContactV3); // tslint:disable-line:no-unsafe-any
-        cursor.continue();
-      }
+      entries.push(...search.result);
     };
   });
-  console.info(`${entries.length} entries found.`);
   if (!entries.length) {
     return 0;
   }
+  console.info(`Processing a batch of ${entries.length}.`);
   // transform
   const updates = await Promise.all(entries.map(async (entry) => {
     const armoredPubkey = (entry.pubkey && typeof entry.pubkey === 'object')
@@ -80,8 +84,6 @@ export const moveContactsToEmailsAndPubkeys = async (db: IDBDatabase): Promise<n
       pubkey_last_check: pubkey ? entry.pubkey_last_check : undefined
     } as ContactUpdate;
   }));
-  console.info(`transformation complete, saving...`);
-  // todo: split to batches
   await new Promise((resolve, reject) => {
     const tx = db.transaction(['contacts', 'emails', 'pubkeys'], 'readwrite');
     ContactStore.setTxHandlers(tx, resolve, reject);
@@ -90,6 +92,5 @@ export const moveContactsToEmailsAndPubkeys = async (db: IDBDatabase): Promise<n
       tx.objectStore('contacts').delete(update.email!);
     }
   });
-  console.info(`contacts migration finished`);
   return updates.length;
 };
