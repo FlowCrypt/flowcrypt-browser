@@ -52,7 +52,7 @@ export const moveContactsToEmailsAndPubkeys = async (db: IDBDatabase): Promise<v
     console.info('proceeding to the next batch');
   }
   console.info('migrating contacts of ContactStore is complete');
-}
+};
 
 const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: number | undefined): Promise<number> => {
   const entries: ContactV3[] = [];
