@@ -74,4 +74,4 @@ blocks:
           commands:
             - npm run-script test_ci_chrome_enterprise
             - cd ./build && zip -r ~/chrome-enterprise.zip ./chrome-enterprise/* && cd ~
-            - if [ "$SEMAPHORE_GIT_BRANCH" = master ]; artifact push project chrome-enterprise.zip --force; fi
+#            - if [ "$SEMAPHORE_GIT_BRANCH" = master ]; artifact push project chrome-enterprise.zip --force; fi
