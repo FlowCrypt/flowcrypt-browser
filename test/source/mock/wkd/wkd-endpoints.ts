@@ -1,6 +1,8 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+import { KeyUtil } from '../../core/crypto/key.js';
 import { PgpArmor } from '../../core/crypto/pgp/pgp-armor.js';
+import { wkdAtgooglemockflowcryptlocalcom8001Private } from '../../tests/tooling/consts.js';
 import { HandlersDefinition } from '../all-apis-mock';
 
 const alice = `-----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -190,6 +192,11 @@ ctnWuBzRDeI0n6XDaPv5TpKpS7uqy/fTlJLGE9vZTFUKzeGkQFomBoXNVWs=
 // todo - add a not found test with: throw new HttpClientErr('Pubkey not found', 404);
 
 export const mockWkdEndpoints: HandlersDefinition = {
+  '/.well-known/openpgpkey/hu/st5or5guodbnsiqbzp6i34xw59h1sgmw?l=wkd': async () => {
+    // direct for wkd@google.mock.flowcryptlocal.com:8001
+    const pub = await KeyUtil.asPublicKey(await KeyUtil.parse(wkdAtgooglemockflowcryptlocalcom8001Private));
+    return Buffer.from((await PgpArmor.dearmor(KeyUtil.armor(pub))).data);
+  },
   '/.well-known/openpgpkey/hu/ihyath4noz8dsckzjbuyqnh4kbup6h4i?l=john.doe': async () => {
     return Buffer.from((await PgpArmor.dearmor(johnDoe1)).data); // direct for john.doe@localhost
   },
@@ -219,6 +226,6 @@ export const mockWkdEndpoints: HandlersDefinition = {
     return ''; // allow advanced for localhost
   },
   '/.well-known/openpgpkey/policy': async () => {
-    return ''; // allow direct for localhost
+    return ''; // allow direct for all
   },
 };

@@ -33,7 +33,7 @@ export class OrgRules {
       throw new Error(`Not a valid email`);
     }
     const storage = await AcctStore.get(email, ['rules']);
-    return new OrgRules(storage.rules || OrgRules.default, acctEmail.split('@')[1]);
+    return new OrgRules(storage.rules || OrgRules.default, Str.getDomainFromEmailAddress(acctEmail));
   }
 
   public static isPublicEmailProviderDomain = (emailAddrOrDomain: string) => {
@@ -173,7 +173,7 @@ export class OrgRules {
    * This is because they already have other means to obtain public keys for these domains, such as from their own internal keyserver
    */
   public canLookupThisRecipientOnAttester = (emailAddr: string): boolean => {
-    return !(this.domainRules.disallow_attester_search_for_domains || []).includes(emailAddr.split('@')[1] || 'NONE');
+    return !(this.domainRules.disallow_attester_search_for_domains || []).includes(Str.getDomainFromEmailAddress(emailAddr) || 'NONE');
   }
 
   /**

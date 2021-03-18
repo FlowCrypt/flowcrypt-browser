@@ -120,6 +120,37 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(recipients).to.eq(['recip1@corp.co', 'recip2@corp.co', 'сс1@corp.co', 'bсс1@corp.co', '1 more'].join(''));
     }));
 
+    ava.default(`compose - auto include pubkey when our key is not available on Wkd`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await composePage.page.setViewport({ width: 540, height: 606 });
+      await ComposePageRecipe.fillMsg(composePage, { to: 'flowcrypt.compatibility@gmail.com' }, 'testing auto include pubkey');
+      await composePage.waitTillGone('@spinner');
+      await Util.sleep(3); // wait for the Wkd lookup to complete
+      expect(await composePage.hasClass('@action-include-pubkey', 'active')).to.be.false;
+      await composePage.waitAndType(`@input-to`, 'some.unknown@unknown.com');
+      await composePage.waitAndFocus('@input-body');
+      await composePage.waitTillGone('@spinner');
+      await Util.sleep(3); // allow some time to search for messages
+      expect(await composePage.hasClass('@action-include-pubkey', 'active')).to.be.true;
+    }));
+
+    ava.default(`compose - auto include pubkey is inactive when our key is available on Wkd`, testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'wkd@google.mock.flowcryptlocal.com:8001';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoKeygen(settingsPage);
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+      await composePage.page.setViewport({ width: 540, height: 606 });
+      await ComposePageRecipe.fillMsg(composePage, { to: 'ci.tests.gmail@flowcrypt.dev' }, 'testing auto include pubkey');
+      await composePage.waitTillGone('@spinner');
+      await Util.sleep(3); // wait for the Wkd lookup to complete
+      expect(await composePage.hasClass('@action-include-pubkey', 'active')).to.be.false;
+      await composePage.waitAndType('@input-to', 'some.unknown@unknown.com');
+      await composePage.waitAndFocus('@input-body');
+      await composePage.waitTillGone('@spinner');
+      await Util.sleep(3); // allow some time to search for messages
+      expect(await composePage.hasClass('@action-include-pubkey', 'active')).to.be.false;
+    }));
+
     ava.default(`compose - freshly loaded pubkey`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'freshly loaded pubkey');

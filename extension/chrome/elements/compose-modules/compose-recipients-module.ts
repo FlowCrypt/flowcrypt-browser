@@ -7,7 +7,7 @@ import { Contact } from '../../../js/common/core/crypto/key.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './compose-err-module.js';
 import { ProviderContactsQuery, Recipients } from '../../../js/common/api/email-provider/email-provider-api.js';
 import { RecipientElement, RecipientStatus } from './compose-types.js';
-import { Str, Value } from '../../../js/common/core/common.js';
+import { Str } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -37,8 +37,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private contactSearchInProgress = false;
   private addedPubkeyDbLookupInterval?: number;
-
-  private recipientsMissingMyKey: string[] = [];
 
   private onRecipientAddedCallbacks: ((rec: RecipientElement[]) => void)[] = [];
 
@@ -300,6 +298,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.onRecipientAddedCallbacks.push(callback);
   }
 
+  // todo: shouldn't we check longid?
   public doesRecipientHaveMyPubkey = async (theirEmailUnchecked: string): Promise<boolean | undefined> => {
     const theirEmail = Str.parseEmail(theirEmailUnchecked).email;
     if (!theirEmail) {
@@ -316,7 +315,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     const qReceivedMsg = `from:${theirEmail} "BEGIN PGP MESSAGE" "END PGP MESSAGE"`;
     try {
       const response = await this.view.emailProvider.msgList(`(${qSentPubkey}) OR (${qReceivedMsg})`, true);
-      if (response.messages) {
+      if (response.messages && response.messages.length > 0) {
         await AcctStore.set(this.view.acctEmail, { pubkey_sent_to: (storage.pubkey_sent_to || []).concat(theirEmail) });
         return true;
       } else {
@@ -850,7 +849,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   }
 
   private removeRecipient = (element: HTMLElement) => {
-    this.recipientsMissingMyKey = Value.arr.withoutVal(this.recipientsMissingMyKey, $(element).parent().text());
     const index = this.addedRecipients.findIndex(r => r.element.isEqualNode(element));
     this.addedRecipients[index].element.remove();
     const container = element.parentElement?.parentElement; // Get Container, e.g. '.input-container-cc'

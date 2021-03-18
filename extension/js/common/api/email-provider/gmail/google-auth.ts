@@ -6,7 +6,7 @@
 // tslint:disable:oneliner-object-literal
 
 import { GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST, FLAVOR } from '../../../core/const.js';
-import { Url, Value } from '../../../core/common.js';
+import { Str, Url, Value } from '../../../core/common.js';
 import { tabsQuery, windowsCreate } from '../../../browser/chrome.js';
 import { Api } from './../../shared/api.js';
 import { ApiErr } from '../../shared/api-error.js';
@@ -158,7 +158,7 @@ export class GoogleAuth {
    * Happens on enterprise builds
    */
   public static isFesUnreachableErr = (e: any, email: string): boolean => {
-    const domain = email.split('@')[1].toLowerCase();
+    const domain = Str.getDomainFromEmailAddress(email);
     const errString = String(e);
     if (errString.includes(`-1 when GET-ing https://${domain}/.well-known/host-meta.json`)) {
       return true; // err trying to get FES url from .well-known
