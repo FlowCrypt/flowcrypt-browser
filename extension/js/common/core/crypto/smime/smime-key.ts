@@ -29,7 +29,7 @@ export class SmimeKey {
       expiration: SmimeKey.dateToNumber(certificate.validity.notAfter),
       fullyDecrypted: false,
       fullyEncrypted: false,
-      isPublic: !!certificate.publicKey,
+      isPublic: certificate.publicKey && !certificate.privateKey,
       isPrivate: !!certificate.privateKey,
     } as Key;
     (key as unknown as { rawArmored: string }).rawArmored = text;
