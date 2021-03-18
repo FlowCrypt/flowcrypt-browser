@@ -68,13 +68,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       return gmailPage;
     };
 
-    const deleteMessage = async (gmailPage: ControllablePage) => {
-      await gmailPage.waitAndClick('[aria-label="More"]');
-      await gmailPage.press('ArrowDown', 5);
-      await gmailPage.press('Enter');
-      await Util.sleep(3);
-    };
-
     ava.default('mail.google.com - setup prompt notif + hides when close clicked + reappears + setup link opens settings', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'ci.tests.gmail@flowcrypt.dev');
       await settingsPage.close();
@@ -242,7 +235,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.page.reload();
       await gmailPage.waitAndClick('.h7:last-child .ajz', { delay: 1 }); // the small triangle which toggles the message details
       await gmailPage.waitForContent('.h7:last-child .ajA', 'Re: [ci.test] encrypted email for reply render'); // make sure that the subject of the sent draft is corrent
-      await deleteMessage(gmailPage);
+      await GmailPageRecipe.deleteLastReply(gmailPage);
     }));
 
     ava.default('mail.google.com - plain reply to encrypted and signed messages', testWithBrowser('ci.tests.gmail', async (t, browser) => {

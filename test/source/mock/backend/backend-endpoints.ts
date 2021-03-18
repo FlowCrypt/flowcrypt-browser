@@ -10,6 +10,7 @@ import { HandlersDefinition } from '../all-apis-mock';
 import { IncomingMessage } from 'http';
 import { isPost } from '../lib/mock-util';
 import { oauth } from '../lib/oauth';
+import { expect } from 'chai';
 
 export const mockBackendData = new BackendData(oauth);
 
@@ -73,7 +74,10 @@ export const mockBackendEndpoints: HandlersDefinition = {
     mockBackendData.reportedErrors.push(body as any);
     return { saved: true };
   },
-  '/api/help/feedback': fwdToRealBackend,
+  '/api/help/feedback': async ({ body }) => {
+    expect((body as any).email).to.equal('flowcrypt.compatibility@gmail.com');
+    return { sent: true, text: 'Feedback sent' };
+  },
   '/api/message/presign_files': fwdToRealBackend,
   '/api/message/confirm_files': fwdToRealBackend,
   '/api/message/upload': fwdToRealBackend,
