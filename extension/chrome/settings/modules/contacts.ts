@@ -117,8 +117,7 @@ View.run(class ContactsView extends View {
   private actionRenderViewPublicKeyHandler = async (viewPubkeyButton: HTMLElement) => {
     const [contact] = await ContactStore.get(undefined, [$(viewPubkeyButton).closest('tr').attr('email')!]); // defined above
     $('.hide_when_rendering_subpage').css('display', 'none');
-    Xss.sanitizeRender('h1', `${this.backBtn}${this.space}${contact!.email}`); // should exist - from list of contacts
-    Xss.sanitizeAppend('h1', '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'); // todo: do we need this line?
+    Xss.sanitizeRender('h1', `${this.backBtn}${this.space}${contact!.email}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`); // should exist - from list of contacts
     $('#view_contact .key_dump').text(KeyUtil.armor(contact!.pubkey!)); // should exist - from list of contacts && should have pgp - filtered
     $('#view_contact #container-pubkey-details').text([
       `Type: ${contact?.pubkey?.type}`,

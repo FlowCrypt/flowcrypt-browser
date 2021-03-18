@@ -110,13 +110,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
             lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
           }
         }
-        const ksContact = await ContactStore.obj({
-          email,
-          name,
-          pubkey: lookupResult.pubkey,
-          // client: // todo: decide whether we need this field
-          lastCheck: Date.now(),
-        });
+        const ksContact = await ContactStore.obj({ email, name, pubkey: lookupResult.pubkey, lastCheck: Date.now() });
         if (ksContact.pubkey) {
           this.ksLookupsByEmail[email] = ksContact.pubkey;
         }
