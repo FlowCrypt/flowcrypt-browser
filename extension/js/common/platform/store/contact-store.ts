@@ -365,8 +365,11 @@ export class ContactStore extends AbstractStore {
   private static updateSearchable = (emailEntity: Email) => {
     const email = emailEntity.email.toLowerCase();
     const name = emailEntity.name ? emailEntity.name.toLowerCase() : '';
-    emailEntity.searchable = [...email.split(/[^a-z0-9]/), ...name.split(/[^a-z0-9]/)].filter(p => !!p)
-      .map(ContactStore.normalizeString).filter((value, index, self) => self.indexOf(value) === index)
+    // we only need the longest word if it starts with a shorter one,
+    // e.g. we don't need "flowcrypt" if we have "flowcryptcompatibility"
+    const sortedNormalized = [...email.split(/[^a-z0-9]/), ...name.split(/[^a-z0-9]/)].filter(p => !!p)
+      .map(ContactStore.normalizeString).sort((a, b) => b.length - a.length);
+    emailEntity.searchable = sortedNormalized.filter((value, index, self) => !self.slice(0, index).find((el) => el.startsWith(value)))
       .map(normalized => ContactStore.dbIndex(emailEntity.fingerprints.length > 0, normalized));
   }
 
