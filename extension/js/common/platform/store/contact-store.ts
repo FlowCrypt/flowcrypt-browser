@@ -186,21 +186,21 @@ export class ContactStore extends AbstractStore {
 
   public static get = async (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
     if (!db) { // relay op through background process
-      return ContactStore.recreateDates(await BrowserMsg.send.bg.await.db({ f: 'get', args: [emailOrLongid] }) as (Contact | undefined)[]);
+      return await BrowserMsg.send.bg.await.db({ f: 'get', args: [emailOrLongid] }) as (Contact | undefined)[];
     }
     if (emailOrLongid.length === 1) {
       const contact = await ContactStore.dbContactInternalGetOne(db, emailOrLongid[0]);
       if (!contact) {
         return [contact];
       }
-      return ContactStore.recreateDates([contact]);
+      return [contact];
     } else {
       const results: (Contact | undefined)[] = [];
       for (const singleEmailOrLongid of emailOrLongid) {
         const [contact] = await ContactStore.get(db, [singleEmailOrLongid]);
         results.push(contact);
       }
-      return ContactStore.recreateDates(results);
+      return results;
     }
   }
 
@@ -456,25 +456,5 @@ export class ContactStore extends AbstractStore {
 
   private static toContactPreview = (result: Email): ContactPreview => {
     return { email: result.email, name: result.name, has_pgp: result.fingerprints.length > 0 ? 1 : 0, last_use: result.lastUse };
-  }
-
-  // todo: migration only
-  private static recreateDates = (contacts: (Contact | undefined)[]) => {
-    for (const contact of contacts) {
-      if (contact) {
-        // string dates were created by JSON serializing Date objects
-        // convert any previously saved string-dates into numbers
-        if (typeof contact?.pubkey?.created === 'string') {
-          contact.pubkey.created = new Date(contact.pubkey.created).getTime();
-        }
-        if (typeof contact?.pubkey?.expiration === 'string') {
-          contact.pubkey.expiration = new Date(contact.pubkey.expiration).getTime();
-        }
-        if (typeof contact?.pubkey?.lastModified === 'string') {
-          contact.pubkey.lastModified = new Date(contact.pubkey.lastModified).getTime();
-        }
-      }
-    }
-    return contacts;
   }
 }
