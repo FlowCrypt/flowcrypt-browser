@@ -76,7 +76,6 @@ export const mockBackendEndpoints: HandlersDefinition = {
   },
   '/api/help/feedback': async ({ body }) => {
     expect((body as any).email).to.equal('flowcrypt.compatibility@gmail.com');
-    expect((body as any).message).to.not.be.empty;
     return { sent: true, text: 'Feedback sent' };
   },
   '/api/message/presign_files': fwdToRealBackend,
