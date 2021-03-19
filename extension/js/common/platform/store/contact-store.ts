@@ -112,7 +112,7 @@ export class ContactStore extends AbstractStore {
 
   public static obj = async ({ email, name, pubkey, pendingLookup, lastUse, lastCheck, lastSig }: DbContactObjArg): Promise<Contact> => {
     if (typeof opgp === 'undefined') {
-      return await BrowserMsg.send.bg.await.db({ f: 'obj', args: [{ email, name, pubkey, pendingLookup, lastUse, lastSig, lastCheck }] }) as Contact;
+      return await BrowserMsg.send.bg.await.db({ f: 'obj', args: [{ email, name, pubkey, pendingLookup, lastUse, lastCheck, lastSig }] }) as Contact;
     } else {
       const validEmail = Str.parseEmail(email).email;
       if (!validEmail) {
@@ -214,7 +214,7 @@ export class ContactStore extends AbstractStore {
   }
 
   public static updateTx = (tx: IDBTransaction, email: string, update: ContactUpdate) => {
-    if (update.pubkey && !update.pubkey_last_check) { // todo: test
+    if (update.pubkey && !update.pubkey_last_check) {
       const req = tx.objectStore('pubkeys').get(update.pubkey.id);
       req.onsuccess = () => ContactStore.updateTxPhase2(tx, email, update, req.result as Pubkey);
     } else {

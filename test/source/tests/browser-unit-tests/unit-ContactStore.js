@@ -193,3 +193,81 @@ BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store smaller words in searchable w
   }
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`ContactStore.update updates correct 'pubkey_last_check'`);
+(async () => {
+  const db = await ContactStore.dbOpen();
+  const email = 'flowcrypt.compatibility@gmail.com';
+  const date2_0 = Date.now();
+  const contacts = [
+  await ContactStore.obj({
+    email,
+    pubkey: testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788
+  }),
+  await ContactStore.obj({
+    email,
+    pubkey: testConstants.flowcryptcompatibilityPublicKeyADAC279C95093207,
+    lastCheck: date2_0
+  })];
+  await ContactStore.save(db, contacts);
+  // extract the entities from the database
+  const fp1 = '5520CACE2CB61EA713E5B0057FDE685548AEA788';
+  const fp2 = 'E8F0517BA6D7DAB6081C96E4ADAC279C95093207';
+  const getEntity = async(fp) => { return await new Promise((resolve, reject) => {
+    const req = db.transaction(['pubkeys'], 'readonly').objectStore('pubkeys').get(fp);
+    ContactStore.setReqPipe(req, () => resolve(req.result), reject);
+  }); };
+  let entity1 = await getEntity(fp1);
+  let entity2 = await getEntity(fp2);
+  if (entity1.fingerprint !== fp1) {
+    throw Error(`Failed to extract pubkey ${fp1}`);
+  }
+  if (entity2.fingerprint !== fp2) {
+    throw Error(`Failed to extract pubkey ${fp2}`);
+  }
+  if (entity1.lastCheck) {
+    throw Error(`Expected undefined lastCheck for ${fp1} but got ${entity1.lastCheck}`);
+  }
+  if (entity2.lastCheck !== date2_0) {
+    throw Error(`Expected lastCheck=${date2_0} for ${fp2} but got ${entity2.lastCheck}`);
+  }
+  const pubkey1 = await KeyUtil.parse(testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788);
+  const pubkey2 = await KeyUtil.parse(testConstants.flowcryptcompatibilityPublicKeyADAC279C95093207);
+  const date1_1 = date2_0 + 1000;
+  // update entity 1 with pubkey_last_check = date1_1
+  await ContactStore.update(db, email, { pubkey_last_check: date1_1, pubkey: pubkey1 });
+  // extract the entities from the database
+  entity1 = await getEntity(fp1);
+  entity2 = await getEntity(fp2);
+  if (entity1.lastCheck !== date1_1) {
+    throw Error(`Expected lastCheck=${date1_1} for ${fp1} but got ${entity1.lastCheck}`);
+  }
+  if (entity2.lastCheck !== date2_0) {
+    throw Error(`Expected lastCheck=${date2_0} for ${fp2} but got ${entity2.lastCheck}`);
+  }
+  const date2_2 = date1_1 + 10000;
+  // updating with undefined value shouldn't modify pubkey_last_check
+  await ContactStore.update(db, email, { pubkey_last_check: undefined, pubkey: pubkey1 });
+  await ContactStore.update(db, email, { pubkey_last_check: date2_2, pubkey: pubkey2 });
+  // extract the entities from the database
+  entity1 = await getEntity(fp1);
+  entity2 = await getEntity(fp2);
+  if (entity1.lastCheck !== date1_1) {
+    throw Error(`Expected lastCheck=${date1_1} for ${fp1} but got ${entity1.lastCheck}`);
+  }
+  if (entity2.lastCheck !== date2_2) {
+    throw Error(`Expected lastCheck=${date2_2} for ${fp2} but got ${entity2.lastCheck}`);
+  }
+  // updating contact details without specifying a pubkey shouln't update pubkey_last_check
+  await ContactStore.update(db, email, { name: 'Some Name' });
+  // extract the entities from the database
+  entity1 = await getEntity(fp1);
+  entity2 = await getEntity(fp2);
+  if (entity1.lastCheck !== date1_1) {
+    throw Error(`Expected lastCheck=${date1_1} for ${fp1} but got ${entity1.lastCheck}`);
+  }
+  if (entity2.lastCheck !== date2_2) {
+    throw Error(`Expected lastCheck=${date2_2} for ${fp2} but got ${entity2.lastCheck}`);
+  }
+  return 'pass';
+})();
