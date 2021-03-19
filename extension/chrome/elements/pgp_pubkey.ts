@@ -153,8 +153,7 @@ View.run(class PgpPubkeyView extends View {
     } else if (this.publicKeys!.length) {
       if (Str.isEmailValid(String($('.input_email').val()))) {
         const contact = await ContactStore.obj({
-          email: String($('.input_email').val()),
-          pubkey: KeyUtil.armor(this.publicKeys![0]),
+          email: String($('.input_email').val()), pubkey: KeyUtil.armor(this.publicKeys![0]),
         });
         await ContactStore.save(undefined, contact);
         BrowserMsg.send.addToContacts(this.parentTabId);
