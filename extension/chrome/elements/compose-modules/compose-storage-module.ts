@@ -132,11 +132,6 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       if (!contact.pubkey || !contact.fingerprint) {
         return;
       }
-      if (!contact.pubkey_last_sig) {
-        const lastSig = Number(contact.pubkey.lastModified);
-        contact.pubkey_last_sig = lastSig;
-        await ContactStore.update(undefined, contact.email, { pubkey: contact.pubkey });
-      }
       const lastCheckOverWeekAgoOrNever = !contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7);
       const isExpired = contact.expiresOn && contact.expiresOn < Date.now();
       if (lastCheckOverWeekAgoOrNever || isExpired) {

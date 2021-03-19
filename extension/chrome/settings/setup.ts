@@ -214,8 +214,7 @@ export class SetupView extends View {
       myOwnEmailAddrsAsContacts.push(await ContactStore.obj({
         email,
         name,
-        pubkey: KeyUtil.armor(await KeyUtil.asPublicKey(prvs[0])),
-        lastSig: Number(prvs[0].lastModified)
+        pubkey: KeyUtil.armor(await KeyUtil.asPublicKey(prvs[0]))
       }));
     }
     await ContactStore.save(undefined, myOwnEmailAddrsAsContacts);

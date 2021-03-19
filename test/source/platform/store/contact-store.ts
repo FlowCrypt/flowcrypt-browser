@@ -50,7 +50,7 @@ export class ContactStore {
     }
   }
 
-  public static obj = async ({ email, name, pubkey, pendingLookup, lastUse, lastCheck, lastSig }: any): Promise<Contact> => {
+  public static obj = async ({ email, name, pubkey, pendingLookup, lastUse, lastCheck }: any): Promise<Contact> => {
     if (!pubkey) {
       return {
         email,
@@ -75,7 +75,7 @@ export class ContactStore {
       pending_lookup: pendingLookup,
       last_use: lastUse,
       pubkey_last_check: lastCheck,
-      pubkey_last_sig: lastSig
+      pubkey_last_sig: pk.lastModified
     } as Contact;
     return contact;
   }

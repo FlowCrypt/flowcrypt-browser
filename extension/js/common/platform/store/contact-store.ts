@@ -16,7 +16,6 @@ type DbContactObjArg = {
   pubkey?: string | null,
   pendingLookup?: boolean | number | null,
   lastUse?: number | null, // when was this contact last used to send an email
-  lastSig?: number | null, // last pubkey signature (when was pubkey last updated by owner)
   lastCheck?: number | null; // when was the local copy of the pubkey last updated (or checked against Attester)
 };
 
@@ -110,9 +109,9 @@ export class ContactStore extends AbstractStore {
     return { email: validEmail, name: name || null, has_pgp: 0, last_use: null };
   }
 
-  public static obj = async ({ email, name, pubkey, pendingLookup, lastUse, lastCheck, lastSig }: DbContactObjArg): Promise<Contact> => {
+  public static obj = async ({ email, name, pubkey, pendingLookup, lastUse, lastCheck }: DbContactObjArg): Promise<Contact> => {
     if (typeof opgp === 'undefined') {
-      return await BrowserMsg.send.bg.await.db({ f: 'obj', args: [{ email, name, pubkey, pendingLookup, lastUse, lastCheck, lastSig }] }) as Contact;
+      return await BrowserMsg.send.bg.await.db({ f: 'obj', args: [{ email, name, pubkey, pendingLookup, lastUse, lastCheck }] }) as Contact;
     } else {
       const validEmail = Str.parseEmail(email).email;
       if (!validEmail) {
