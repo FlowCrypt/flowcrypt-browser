@@ -14,7 +14,7 @@ import { TestUrls } from './../browser/test-urls';
 import { TestVariant } from './../util';
 import { expect } from 'chai';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
-import { testKeyMultiple1b383d0334e38b28, testKeyMultiple98acfa1eadab5b92, unprotectedPrvKey } from './tooling/consts';
+import { testConstants } from './tooling/consts';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 
@@ -245,7 +245,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
     }));
 
     ava.default('settings - add unprotected key', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      await SettingsPageRecipe.addKeyTest(t, browser, 'ci.tests.gmail@flowcrypt.dev', unprotectedPrvKey, 'this is a new passphrase to protect previously unprotected key');
+      await SettingsPageRecipe.addKeyTest(t, browser, 'ci.tests.gmail@flowcrypt.dev', testConstants.unprotectedPrvKey, 'this is a new passphrase to protect previously unprotected key');
     }));
 
     ava.default('settings - error modal when page parameter invalid', testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -262,14 +262,14 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
         usedPgpBefore: false,
         key: {
           title: '?',
-          armored: testKeyMultiple1b383d0334e38b28,
+          armored: testConstants.testKeyMultiple1b383d0334e38b28,
           passphrase: '1234',
           longid: '1b383d0334e38b28',
         }
       });
       await settingsPage1.close();
 
-      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testKeyMultiple98acfa1eadab5b92, '1234');
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234');
 
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -278,7 +278,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await Util.sleep(1);
       await myKeyFrame.waitAll('@content-fingerprint');
       await myKeyFrame.waitAndClick('@action-update-prv');
-      await myKeyFrame.waitAndType('@input-prv-key', testKeyMultiple98acfa1eadab5b92);
+      await myKeyFrame.waitAndType('@input-prv-key', testConstants.testKeyMultiple98acfa1eadab5b92);
       await myKeyFrame.type('@input-passphrase', '1234');
       await myKeyFrame.waitAndClick('@action-update-key');
       await PageRecipe.waitForModalAndRespond(myKeyFrame, 'confirm', { contentToCheck: 'Public and private key updated locally', clickOn: 'cancel' });

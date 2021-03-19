@@ -2,7 +2,7 @@
 
 import { KeyUtil } from '../../core/crypto/key.js';
 import { PgpArmor } from '../../core/crypto/pgp/pgp-armor.js';
-import { wkdAtgooglemockflowcryptlocalcom8001Private } from '../../tests/tooling/consts.js';
+import { testConstants } from '../../tests/tooling/consts.js';
 import { HandlersDefinition } from '../all-apis-mock';
 
 const alice = `-----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -194,7 +194,7 @@ ctnWuBzRDeI0n6XDaPv5TpKpS7uqy/fTlJLGE9vZTFUKzeGkQFomBoXNVWs=
 export const mockWkdEndpoints: HandlersDefinition = {
   '/.well-known/openpgpkey/hu/st5or5guodbnsiqbzp6i34xw59h1sgmw?l=wkd': async () => {
     // direct for wkd@google.mock.flowcryptlocal.com:8001
-    const pub = await KeyUtil.asPublicKey(await KeyUtil.parse(wkdAtgooglemockflowcryptlocalcom8001Private));
+    const pub = await KeyUtil.asPublicKey(await KeyUtil.parse(testConstants.wkdAtgooglemockflowcryptlocalcom8001Private));
     return Buffer.from((await PgpArmor.dearmor(KeyUtil.armor(pub))).data);
   },
   '/.well-known/openpgpkey/hu/ihyath4noz8dsckzjbuyqnh4kbup6h4i?l=john.doe': async () => {
