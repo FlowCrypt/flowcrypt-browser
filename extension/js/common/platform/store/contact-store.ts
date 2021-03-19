@@ -33,7 +33,6 @@ type Pubkey = {
   armoredKey: string;
   longids: string[];
   lastCheck: number | null,
-  lastSig: number;
   expiresOn: number;
 };
 
@@ -229,7 +228,6 @@ export class ContactStore extends AbstractStore {
       pubkeyEntity = {
         fingerprint: update.pubkey.id,
         lastCheck: update.pubkey_last_check ?? existingPubkey?.lastCheck,
-        lastSig: keyAttrs.pubkey_last_sig,
         expiresOn: keyAttrs.expiresOn,
         longids: update.pubkey.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)),
         armoredKey: KeyUtil.armor(update.pubkey)
