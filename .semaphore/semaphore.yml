@@ -26,6 +26,7 @@ blocks:
           - echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"
           - npm run-script pretest
           - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts"
+          - sudo sh -c "echo '127.0.0.1 fes.google.mock.flowcryptlocal.com' >> /etc/hosts"
           - sudo sh -c "echo '127.0.0.1 google.mock.flowcryptlocal.com' >> /etc/hosts"
           - sudo sh -c "echo '127.0.0.1 fes.standardsubdomainfes.com' >> /etc/hosts"
           - sudo sh -c "echo '127.0.0.1 standardsubdomainfes.com' >> /etc/hosts"
@@ -73,29 +74,4 @@ blocks:
           commands:
             - npm run-script test_ci_chrome_enterprise
             - cd ./build && zip -r ~/chrome-enterprise.zip ./chrome-enterprise/* && cd ~
-            - if [ "$SEMAPHORE_GIT_BRANCH" = master ]; then cache store chrome-enterprise-zip chrome-enterprise.zip; fi
-
-  - name: after tests
-    run:
-      when: "branch = 'master'"
-    task:
-      secrets:
-        - name: flowcrypt-enterprise-tests-git-repo-ssh-key
-      jobs:
-        - name: upload artifact
-          commands:
-            - checkout
-            - VERSION=$(node -e "const {readFileSync} = require('fs'); process.stdout.write(JSON.parse(readFileSync('./package.json').toString()).version)")
-            - COMMENT=$(git log -1 --pretty=%B | sed -n 1p | tr -d '\n')
-            - LINK=https://github.com/FlowCrypt/flowcrypt-key-manager/commit/$SEMAPHORE_GIT_SHA
-            - cd ~
-            - cache restore chrome-enterprise-zip
-            - artifact push project chrome-enterprise.zip --force
-            - chmod 600 /home/semaphore/.ssh/github-flowcrypt-enterprise-tests.key
-            - ssh-agent sh -c 'ssh-add ~/.ssh/github-flowcrypt-enterprise-tests.key; git clone --depth=1 git@github.com:FlowCrypt/enterprise-tests.git'
-            - cd enterprise-tests
-            - git config user.email "robot@flowcrypt.com"
-            - git config user.name "FlowCrypt Robot"
-            - echo "$(date) chrome $VERSION $COMMENT $LINK" >> log.txt
-            - git commit -a -m "chrome $VERSION $COMMENT" -m "see $LINK"
-            - ssh-agent sh -c 'ssh-add ~/.ssh/github-flowcrypt-enterprise-tests.key; git push'
+#            - if [ "$SEMAPHORE_GIT_BRANCH" = master ]; artifact push project chrome-enterprise.zip --force; fi
