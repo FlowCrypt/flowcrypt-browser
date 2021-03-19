@@ -152,9 +152,7 @@ View.run(class PgpPubkeyView extends View {
       $('.input_email').remove();
     } else if (this.publicKeys!.length) {
       if (Str.isEmailValid(String($('.input_email').val()))) {
-        const contact = await ContactStore.obj({
-          email: String($('.input_email').val()), pubkey: KeyUtil.armor(this.publicKeys![0]),
-        });
+        const contact = await ContactStore.obj({ email: String($('.input_email').val()), pubkey: KeyUtil.armor(this.publicKeys![0]) });
         await ContactStore.save(undefined, contact);
         BrowserMsg.send.addToContacts(this.parentTabId);
         Xss.sanitizeReplace(addContactBtn, `<span class="good">${Xss.escape(String($('.input_email').val()))} added</span>`);
