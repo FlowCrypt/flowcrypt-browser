@@ -1018,7 +1018,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await contactsFrame.waitForContent('@container-pubkey-details', 'Expired: yes');
     }));
 
-    ava.default.only('import S/MIME cert', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('import S/MIME cert', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       // the cert since expired, therefore test was updated to reflect that
       const smimeCert = `-----BEGIN CERTIFICATE-----
 MIIE9DCCA9ygAwIBAgIQY/cCXnAPOUUwH7L7pWdPhDANBgkqhkiG9w0BAQsFADCB
