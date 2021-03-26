@@ -30,12 +30,12 @@ export class PgpBlockViewRenderModule {
 
   public resizePgpBlockFrame = () => {
     const origHeight = $('#pgp_block').height();
-    // if (!origHeight) {
-    //   // unsure why this happens. Sometimes height will come in as exactly 0 after the iframe was already properly sized
-    //   // that then causes to default to 20 + 40 = 60px for height, hiding contents of the message if it in fact is taller
-    //   return;
-    // }
-    let height = Math.max(origHeight!, 20) + 40;
+    if (!origHeight) { // https://github.com/FlowCrypt/flowcrypt-browser/issues/3519
+      // unsure why this happens. Sometimes height will come in as exactly 0 after the iframe was already properly sized
+      // that then causes to default to 20 + 40 = 60px for height, hiding contents of the message if it in fact is taller
+      return;
+    }
+    let height = Math.max(origHeight, 20) + 40;
     this.heightHist.push(height);
     const len = this.heightHist.length;
     if (len >= 4 && this.heightHist[len - 1] === this.heightHist[len - 3] && this.heightHist[len - 2] === this.heightHist[len - 4] && this.heightHist[len - 1] !== this.heightHist[len - 2]) {

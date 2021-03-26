@@ -112,7 +112,13 @@ View.run(class PgpPubkeyView extends View {
   }
 
   private sendResizeMsg = () => {
-    const desiredHeight = $('#pgp_block').height()! + (this.compact ? 10 : 30); // #pgp_block is defined in template
+    const origHeight = $('#pgp_block').height();
+    if (!origHeight) { // https://github.com/FlowCrypt/flowcrypt-browser/issues/3519
+      // unsure why this happens. Sometimes height will come in as exactly 0 after the iframe was already properly sized
+      // that then causes to default to 30px for height, hiding contents of the iframe if it in fact is taller
+      return;
+    }
+    const desiredHeight = origHeight + (this.compact ? 10 : 30); // #pgp_block is defined in template
     BrowserMsg.send.setCss(this.parentTabId, { selector: `iframe#${this.frameId}`, css: { height: `${desiredHeight}px` } });
   }
 
