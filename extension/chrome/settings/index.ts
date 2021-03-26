@@ -73,7 +73,7 @@ View.run(class SettingsView extends View {
       $('.signin_button.' + webmailLName).css('display', 'inline-block');
     }
     this.tabId = await BrowserMsg.requiredTabId();
-    this.notifications = new Notifications(this.tabId);
+    this.notifications = new Notifications();
     if (this.acctEmail) {
       this.orgRules = await OrgRules.newInstance(this.acctEmail);
     }
@@ -113,12 +113,6 @@ View.run(class SettingsView extends View {
       // todo: use #cryptup_dialog just like passphrase_dialog does
       const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
       window.open(factory.srcAddPubkeyDialog(emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
-    });
-    BrowserMsg.addListener('subscribe_dialog', async ({ }: Bm.SubscribeDialog) => {
-      // todo: use #cryptup_dialog just like passphrase_dialog does
-      const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
-      const subscribeDialogSrc = factory.srcSubscribeDialog('settings_compose', undefined);
-      window.open(subscribeDialogSrc, '_blank', 'height=650,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
     });
     BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => {
       this.notifications!.show(notification);

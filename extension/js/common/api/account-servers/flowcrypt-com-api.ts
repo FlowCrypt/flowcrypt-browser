@@ -65,18 +65,6 @@ export class FlowCryptComApi extends Api {
     return r;
   }
 
-  public static accountSubscribe = async (fcAuth: FcUuidAuth, product: string, method: string, paymentSourceToken?: string): Promise<BackendRes.FcAccountSubscribe> => {
-    FlowCryptComApi.throwIfMissingUuid(fcAuth);
-    const response = await FlowCryptComApi.request<BackendRes.FcAccountSubscribe>('account/subscribe', {
-      ...fcAuth,
-      method,
-      source: paymentSourceToken || null, // tslint:disable-line:no-null-keyword
-      product,
-    });
-    await AcctStore.set(fcAuth.account, { subscription: response.subscription });
-    return response;
-  }
-
   public static messageUpload = async (fcAuth: FcUuidAuth | undefined, encryptedDataBinary: Uint8Array, progressCb: ProgressCb): Promise<BackendRes.FcMsgUpload> => {
     const content = new Attachment({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encryptedDataBinary });
     return await FlowCryptComApi.request<BackendRes.FcMsgUpload>('message/upload', { content, ...(fcAuth || {}) }, 'FORM', undefined, { upload: progressCb });

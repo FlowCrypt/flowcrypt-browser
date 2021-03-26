@@ -106,8 +106,7 @@ View.run(class SecurityView extends View {
       }
     } else {
       $('.default_message_expire').val('3').css('display', 'inline-block');
-      Xss.sanitizeAppend($('.default_message_expire').parent(), '<a href="#">upgrade</a>')
-        .find('a').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/elements/subscribe.htm')));
+      Xss.sanitizeAppend($('.default_message_expire').parent(), '<a href="https://flowcrypt.com/billing#calculator" target="_blank">upgrade</a>');
     }
   }
 
