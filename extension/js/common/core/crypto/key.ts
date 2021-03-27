@@ -141,7 +141,7 @@ export class KeyUtil {
     throw new UnexpectedKeyTypeError(`Key type is ${keyType}, expecting OpenPGP or x509 S/MIME`);
   }
 
-  public static parseBinary = async (key: Uint8Array, passphrase: string): Promise<Key[]> => {
+  public static parseBinary = async (key: Uint8Array): Promise<Key[]> => {
     const allKeys: Key[] = [], allErr: Error[] = [];
     try {
       const { keys, err } = await opgp.key.read(key);
@@ -155,7 +155,9 @@ export class KeyUtil {
       allErr.push(e as Error);
     }
     try {
-      allKeys.push(await SmimeKey.parseBinary(key, passphrase));
+      // for now we only support plain keys - because our UI expects to be able to parse keys without pass phrase like PGP keys
+      const emptyPassphrase = '';
+      allKeys.push(await SmimeKey.parseBinary(key, emptyPassphrase));
     } catch (e) {
       allErr.push(e as Error);
     }

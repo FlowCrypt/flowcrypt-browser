@@ -29,6 +29,10 @@
     },
     "tslint.exclude": [
       "test/**/*.ts"
+    ],
+    "diffEditor.wordWrap": "on",
+    "editor.rulers": [
+      160
     ]
   },
   "folders": [

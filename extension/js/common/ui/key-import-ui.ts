@@ -113,7 +113,9 @@ export class KeyImportUi {
             prv = (await KeyUtil.parse(firstPrv.content.toString()));
           }
         } else {
-          const parsed = await KeyUtil.parseBinary(file.getData(), String(prompt('Key password')));
+          // openpgp keys may be encrypted or not: for now we don't need to decrypt the key yet
+          // x509 keys for now are only accepted without encryption
+          const parsed = await KeyUtil.parseBinary(file.getData());
           prv = parsed[0];
         }
         if (typeof prv !== 'undefined') {
