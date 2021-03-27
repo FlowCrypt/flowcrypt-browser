@@ -478,7 +478,7 @@ export class ContactStore extends AbstractStore {
       return;
     }
     const parsed = pubkey ? await KeyUtil.parse(pubkey.armoredKey) : undefined;
-    return ContactStore.toContactFromKey(email, parsed, parsed ? pubkey!.lastCheck : null)
+    return ContactStore.toContactFromKey(email, parsed, parsed ? pubkey!.lastCheck : null);
   }
 
   private static toContactFromKey = (email: Email, key: Key | undefined, lastCheck: number | null): Contact | undefined => {
