@@ -30,7 +30,7 @@ export namespace GmailRes { // responses
   export type GmailLabels = { labels: GmailLabels$label[] };
   export type GmailAttachment = { attachmentId: string, size: number, data: Buf };
   export type GmailMsgSend = { id: string };
-  export type GmailThread = { id: string, historyId: string, messages: GmailMsg[] };
+  export type GmailThread = { id: string, historyId: string, messages?: GmailMsg[] };
   export type GmailThreadList = { threads: { historyId: string, id: string, snippet: string }[], nextPageToken: string, resultSizeEstimate: number };
   export type GmailDraftCreate = { id: string };
   export type GmailDraftDelete = {};

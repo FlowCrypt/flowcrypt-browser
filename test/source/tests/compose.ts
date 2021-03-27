@@ -1019,6 +1019,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('import S/MIME cert', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      // the cert since expired, therefore test was updated to reflect that
       const smimeCert = `-----BEGIN CERTIFICATE-----
 MIIE9DCCA9ygAwIBAgIQY/cCXnAPOUUwH7L7pWdPhDANBgkqhkiG9w0BAQsFADCB
 jTELMAkGA1UEBhMCSVQxEDAOBgNVBAgMB0JlcmdhbW8xGTAXBgNVBAcMEFBvbnRl
@@ -1059,7 +1060,7 @@ yPLCqVTFJQWaCR5ZTekRQPTDZkjxjxbs
       await contactsFrame.waitAndClick('@action-show-parsed-public-keys', { confirmGone: true });
       await contactsFrame.waitAll('iframe');
       const pubkeyFrame = await contactsFrame.getFrame(['pgp_pubkey.htm']);
-      await pubkeyFrame.waitForContent('@action-add-contact', 'IMPORT KEY');
+      await pubkeyFrame.waitForContent('@action-add-contact', 'IMPORT EXPIRED KEY');
       await pubkeyFrame.waitAndClick('@action-add-contact');
       await pubkeyFrame.waitForContent('@container-pgp-pubkey', `${recipientEmail} added`);
       await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
@@ -1069,7 +1070,7 @@ yPLCqVTFJQWaCR5ZTekRQPTDZkjxjxbs
       await contactsFrame.waitForContent('@container-pubkey-details', `Users: ${recipientEmail}`);
       await contactsFrame.waitForContent('@container-pubkey-details', 'Created on: Mon Mar 23 2020');
       await contactsFrame.waitForContent('@container-pubkey-details', 'Expiration: Tue Mar 23 2021');
-      await contactsFrame.waitForContent('@container-pubkey-details', 'Expired: no');
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Expired: yes');
       await contactsFrame.waitForContent('@container-pubkey-details', 'Usable for encryption: true');
       await contactsFrame.waitForContent('@container-pubkey-details', 'Usable for signing: true');
     }));
