@@ -8,6 +8,7 @@ import { expect } from 'chai';
 import { GoogleData } from '../google-data';
 import { HttpClientErr } from '../../lib/api';
 import { MsgUtil } from '../../../core/crypto/pgp/msg-util';
+import { parsedMailAddressObjectAsArray } from '../google-endpoints.js';
 
 // TODO: Make a better structure of ITestMsgStrategy. Because this class doesn't test anything, it only saves message in the Mock
 class SaveMessageInStorageStrategy implements ITestMsgStrategy {
@@ -106,14 +107,14 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
 
 class NewMessageCCAndBCCTestStrategy implements ITestMsgStrategy {
   public test = async (mimeMsg: ParsedMail) => {
-    const hasAddr = (ao?: AddressObject) => ao && ao.value && ao.value.length && ao.value[0].address;
-    if (!hasAddr(mimeMsg.to)) {
+    const hasAtLeastOneRecipient = (ao: AddressObject[]) => ao && ao.length && ao[0].value && ao[0].value.length && ao[0].value[0].address;
+    if (!hasAtLeastOneRecipient(parsedMailAddressObjectAsArray(mimeMsg.to))) {
       throw new HttpClientErr(`Error: There is no 'To' header.`, 400);
     }
-    if (!hasAddr(mimeMsg.cc)) {
+    if (!hasAtLeastOneRecipient(parsedMailAddressObjectAsArray(mimeMsg.cc))) {
       throw new HttpClientErr(`Error: There is no 'Cc' header.`, 400);
     }
-    if (!hasAddr(mimeMsg.bcc)) {
+    if (!hasAtLeastOneRecipient(parsedMailAddressObjectAsArray(mimeMsg.bcc))) {
       throw new HttpClientErr(`Error: There is no 'Bcc' header.`, 400);
     }
   }
