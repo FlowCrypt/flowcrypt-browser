@@ -24,7 +24,45 @@ import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 
 export class ComposeRenderModule extends ViewModule<ComposeView> {
 
-  private responseMethod!: 'reply' | 'forward';
+  public responseMethod: 'reply' | 'forward' | undefined;
+
+  public initComposeBox = async () => {
+    if (this.view.isReplyBox) {
+      this.responseMethod = 'reply';
+    }
+    this.initComposeBoxStyles();
+    if (this.view.draftId) {
+      const draftLoaded = await this.view.draftModule.initialDraftLoad(this.view.draftId);
+      if (draftLoaded) {
+        this.view.S.cached('triple_dot').remove(); // if it's draft, footer and quote should already be included in the draft
+      }
+      if (this.view.isReplyBox) {
+        await this.view.renderModule.renderReplyMsgComposeTable();
+      }
+    } else {
+      if (this.view.isReplyBox && this.view.replyParams) {
+        const recipients: Recipients = { to: this.view.replyParams.to, cc: this.view.replyParams.cc, bcc: this.view.replyParams.bcc };
+        this.view.recipientsModule.addRecipients(recipients, false).catch(Catch.reportErr);
+        // await this.view.composerContacts.addRecipientsAndShowPreview(recipients);
+        if (this.view.skipClickPrompt) { // TODO: fix issue when loading recipients
+          await this.renderReplyMsgComposeTable();
+        } else {
+          $('#a_reply,#a_reply_all,#a_forward')
+            .click(this.view.setHandler((el) => this.actionActivateReplyBoxHandler(el), this.view.errModule.handle(`activate repply box`)));
+        }
+      }
+    }
+    if (this.view.isReplyBox) {
+      $(document).ready(() => this.view.sizeModule.resizeComposeBox());
+    } else {
+      this.view.S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
+      await this.renderComposeTable();
+      await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
+    }
+    this.view.sendBtnModule.resetSendBtn();
+    await this.view.sendBtnModule.popover.render();
+    this.loadRecipientsThenSetTestStateReady().catch(Catch.reportErr);
+  }
 
   public renderReplyMsgComposeTable = async (): Promise<void> => {
     this.view.S.cached('prompt').css({ display: 'none' });
@@ -33,7 +71,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     await this.renderComposeTable();
     if (this.view.replyParams) {
       const thread = await this.view.emailProvider.threadGet(this.view.threadId, 'metadata');
-      const inReplyToMessage = thread.messages.find((message) => message.id === this.view.replyMsgId);
+      const inReplyToMessage = thread.messages?.find((message) => message.id === this.view.replyMsgId);
       if (inReplyToMessage) {
         this.view.replyParams.inReplyTo = inReplyToMessage.payload?.headers?.find((header) => header.name === 'Message-Id')?.value;
       }
@@ -41,7 +79,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     }
     if (!this.view.draftModule.wasMsgLoadedFromDraft) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
       (async () => { // not awaited because can take a long time & blocks rendering
-        await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, this.responseMethod);
+        await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, this.responseMethod!);
         if (this.view.quoteModule.messageToReplyOrForward) {
           const msgId = this.view.quoteModule.messageToReplyOrForward.headers['message-id'];
           this.view.sendBtnModule.additionalMsgHeaders['In-Reply-To'] = msgId;
@@ -121,42 +159,6 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     await Browser.openSettingsPage('index.htm', this.view.acctEmail, `/chrome/settings/modules/${settingsModule}.htm`);
   }
 
-  public initComposeBox = async () => {
-    this.responseMethod = 'reply';
-    this.initComposeBoxStyles();
-    if (this.view.draftId) {
-      const draftLoaded = await this.view.draftModule.initialDraftLoad(this.view.draftId);
-      if (draftLoaded) {
-        this.view.S.cached('triple_dot').remove(); // if it's draft, footer and quote should already be included in the draft
-      }
-      if (this.view.isReplyBox) {
-        await this.view.renderModule.renderReplyMsgComposeTable();
-      }
-    } else {
-      if (this.view.isReplyBox && this.view.replyParams) {
-        const recipients: Recipients = { to: this.view.replyParams.to, cc: this.view.replyParams.cc, bcc: this.view.replyParams.bcc };
-        this.view.recipientsModule.addRecipients(recipients, false).catch(Catch.reportErr);
-        // await this.view.composerContacts.addRecipientsAndShowPreview(recipients);
-        if (this.view.skipClickPrompt) { // TODO: fix issue when loading recipients
-          await this.renderReplyMsgComposeTable();
-        } else {
-          $('#a_reply,#a_reply_all,#a_forward')
-            .click(this.view.setHandler((el) => this.actionActivateReplyBoxHandler(el), this.view.errModule.handle(`activate repply box`)));
-        }
-      }
-    }
-    if (this.view.isReplyBox) {
-      $(document).ready(() => this.view.sizeModule.resizeComposeBox());
-    } else {
-      this.view.S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
-      await this.renderComposeTable();
-      await this.view.recipientsModule.setEmailsPreview(this.view.recipientsModule.getRecipients());
-    }
-    this.view.sendBtnModule.resetSendBtn();
-    await this.view.sendBtnModule.popover.render();
-    this.loadRecipientsThenSetTestStateReady().catch(Catch.reportErr);
-  }
-
   public fetchReplyMeta = async (aliases: string[]): Promise<void> => {
     Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: `Loading secure reply box..${Ui.spinner('green')}` }));
     try {
@@ -194,14 +196,15 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
 
   private actionActivateReplyBoxHandler = async (target: HTMLElement) => {
     const typesToDelete: RecipientType[] = [];
-    switch ($(target).attr('id')) {
-      case 'a_forward':
-        this.responseMethod = 'forward';
-        typesToDelete.push('to');
-      case 'a_reply':
-        typesToDelete.push('cc');
-        typesToDelete.push('bcc');
-        break;
+    const method = $(target).attr('id');
+    if (method === 'a_forward') {
+      this.responseMethod = 'forward';
+      typesToDelete.push('to');
+      typesToDelete.push('cc');
+      typesToDelete.push('bcc');
+    } else if (method === 'a_reply') {
+      typesToDelete.push('cc');
+      typesToDelete.push('bcc');
     }
     this.view.recipientsModule.deleteRecipientsBySendingType(typesToDelete);
     await this.renderReplyMsgComposeTable();
@@ -249,10 +252,13 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
     }
     // Firefox needs an iframe to be focused before focusing its content
+    this.view.errModule.debug(`renderComposeTable: focusing this iframe`);
     BrowserMsg.send.focusFrame(this.view.parentTabId, { frameId: this.view.frameId });
     Catch.setHandledTimeout(() => { // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
-      this.view.S.cached(this.view.isReplyBox && this.responseMethod !== 'forward' && this.view.replyParams?.to.length ? 'input_text' : 'input_to').focus();
-      // document.getElementById('input_text')!.focus(); // #input_text is in the template
+      const toCount = this.view.replyParams?.to.length;
+      const focusId = this.view.isReplyBox && this.responseMethod !== 'forward' && toCount ? 'input_text' : 'input_to';
+      this.view.errModule.debug(`renderComposeTable: focusing ${focusId} isReplyBox=${this.view.isReplyBox},responseMethod=${this.responseMethod},toCount=${toCount}`);
+      document.getElementById(focusId)!.focus(); // jQuery no longer worked as of 3.6.0
     }, 100);
     this.view.sizeModule.onComposeTableRender();
   }

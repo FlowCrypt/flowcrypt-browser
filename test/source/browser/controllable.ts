@@ -104,10 +104,19 @@ abstract class ControllableBase {
     return await this.waitTillGone(selector, { timeout: 0 });
   }
 
-  public ensureFocused = async (selector: string) => {
-    const e = await this.element(selector) as ElementHandle;
-    const activeElement = await this.target.evaluateHandle(() => document.activeElement) as ElementHandle;
-    expect(await PageRecipe.getElementPropertyJson(activeElement, 'outerHTML')).to.eq(await PageRecipe.getElementPropertyJson(e, 'outerHTML'));
+  public waitUntilFocused = async (selector: string) => {
+    const start = Date.now();
+    while (Date.now() - start < TIMEOUT_ELEMENT_APPEAR * 1000) {
+      const e = await this.element(selector) as ElementHandle;
+      const activeElement = await this.target.evaluateHandle(() => document.activeElement) as ElementHandle;
+      const activeElementHtml = await PageRecipe.getElementPropertyJson(activeElement, 'outerHTML');
+      const testedElementHtml = await PageRecipe.getElementPropertyJson(e, 'outerHTML');
+      if (activeElementHtml === testedElementHtml) {
+        return;
+      }
+      await Util.sleep(1);
+    }
+    throw new Error(`Element ${selector} did not become focused within ${TIMEOUT_ELEMENT_APPEAR}s`);
   }
 
 

@@ -25,9 +25,9 @@ import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { GlobalStore } from '../../js/common/platform/store/global-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import Swal from 'sweetalert2';
-import { Subscription } from '../../js/common/subscription.js';
 import { FlowCryptWebsite } from '../../js/common/api/flowcrypt-website.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
+import { SubscriptionInfo } from '../../js/common/api/account-servers/flowcrypt-com-api.js';
 
 View.run(class SettingsView extends View {
 
@@ -73,7 +73,7 @@ View.run(class SettingsView extends View {
       $('.signin_button.' + webmailLName).css('display', 'inline-block');
     }
     this.tabId = await BrowserMsg.requiredTabId();
-    this.notifications = new Notifications(this.tabId);
+    this.notifications = new Notifications();
     if (this.acctEmail) {
       this.orgRules = await OrgRules.newInstance(this.acctEmail);
     }
@@ -113,12 +113,6 @@ View.run(class SettingsView extends View {
       // todo: use #cryptup_dialog just like passphrase_dialog does
       const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
       window.open(factory.srcAddPubkeyDialog(emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
-    });
-    BrowserMsg.addListener('subscribe_dialog', async ({ }: Bm.SubscribeDialog) => {
-      // todo: use #cryptup_dialog just like passphrase_dialog does
-      const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
-      const subscribeDialogSrc = factory.srcSubscribeDialog('settings_compose', undefined);
-      window.open(subscribeDialogSrc, '_blank', 'height=650,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
     });
     BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => {
       this.notifications!.show(notification);
@@ -313,14 +307,15 @@ View.run(class SettingsView extends View {
     const authInfo = await AcctStore.authInfo(this.acctEmail!);
     if (authInfo.uuid) { // have auth email set
       try {
-        const response = await this.acctServer!.accountGetAndUpdateLocalStore(authInfo);
+        const acctRes = await this.acctServer!.accountGetAndUpdateLocalStore(authInfo);
         $('#status-row #status_flowcrypt').text(`fc:ok`);
-        if (response?.account?.alias) {
+        if (acctRes?.account?.alias) {
           statusContainer.find('.status-indicator-text').css('display', 'none');
           statusContainer.find('.status-indicator').addClass('active');
         } else {
           statusContainer.find('.status-indicator').addClass('inactive');
         }
+        this.renderSubscriptionStatusHeader(acctRes.subscription);
       } catch (e) {
         if (ApiErr.isAuthErr(e)) {
           const authNeededLink = $('<a class="bad" href="#">Auth Needed</a>');
@@ -344,7 +339,6 @@ View.run(class SettingsView extends View {
       statusContainer.find('.status-indicator').addClass('inactive');
       $('#status-row #status_flowcrypt').text(`fc:none`);
     }
-    this.renderSubscriptionStatusHeader(await AcctStore.getSubscription(this.acctEmail!));
     statusContainer.css('visibility', 'visible');
   }
 
@@ -404,28 +398,17 @@ View.run(class SettingsView extends View {
     }
   }
 
-  private renderSubscriptionStatusHeader = (subscription: Subscription) => {
-    $('#status-row #status_subscription').text(`s:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
-    if (subscription.active) {
+  private renderSubscriptionStatusHeader = (subscription: SubscriptionInfo) => {
+    const isActive = subscription.level && !subscription.expired;
+    const activeOrNotStr = isActive ? 'active' : 'inactive';
+    $('#status-row #status_subscription').text(`s:${activeOrNotStr}`);
+    if (isActive) {
       $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block');
-      if (subscription.method === 'trial') {
-        $('.logo-row .subscription .expire').text(subscription.expire ? ('trial ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
-        $('.logo-row .subscription .upgrade').css('display', 'inline-block');
-      } else if (subscription.method === 'group') {
-        $('#status-row #status_google').text(`s:active:group`);
-        $('.logo-row .subscription .expire').text('group billing').css('display', 'inline-block');
-      }
     } else {
       $('.logo-row .subscription .level').text('free forever').css('display', 'inline-block');
-      if (subscription.level && subscription.expire && subscription.method) {
-        if (subscription.method === 'trial') {
-          $('.logo-row .subscription .expire').text('trial done').css('display', 'inline-block');
-        } else if (subscription.method === 'group') {
-          $('.logo-row .subscription .expire').text('expired').css('display', 'inline-block');
-        }
-        $('.logo-row .subscription .upgrade').text('renew');
+      if (subscription.level && subscription.expired) {
+        $('.logo-row .subscription .expire').text('expired').css('display', 'inline-block');
       }
-      $('.logo-row .subscription .upgrade').css('display', 'inline-block');
     }
   }
 
