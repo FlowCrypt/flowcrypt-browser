@@ -26,7 +26,7 @@
     "fc-node-requests": "git+https://git@github.com/FlowCrypt/node-requests.git",
     "googleapis": "68.0.0",
     "mailparser": "3.1.0",
-    "mkdirp": "1.0.3",
+    "mkdirp": "1.0.4",
     "openpgp": "4.10.10",
     "pdfjs-dist": "2.6.347",
     "puppeteer": "8.0.0",
