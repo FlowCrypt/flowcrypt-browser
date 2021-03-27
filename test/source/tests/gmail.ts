@@ -321,7 +321,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         throw Error(`msgIframeHeight iNaN`);
       }
       expect(elHeight).to.be.above(min, 'Expected iframe height above 80px (in particular not expecting 60 or 30 which are defaults suggesting failure)');
-      console.log(`${selector} real height ${elHeight}`);
     };
 
   }

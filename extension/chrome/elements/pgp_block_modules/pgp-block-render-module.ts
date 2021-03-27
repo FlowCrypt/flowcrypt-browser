@@ -42,7 +42,6 @@ export class PgpBlockViewRenderModule {
       console.info('pgp_block.js: repetitive resize loop prevented'); // got repetitive, eg [70, 80, 200, 250, 200, 250]
       height = Math.max(this.heightHist[len - 1], this.heightHist[len - 2]); // pick the larger number to stop if from oscillating
     }
-    console.log('BrowserMsg.send.setCss height', height);
     BrowserMsg.send.setCss(this.view.parentTabId, { selector: `iframe#${this.view.frameId}`, css: { height: `${height}px` } });
   }
 
