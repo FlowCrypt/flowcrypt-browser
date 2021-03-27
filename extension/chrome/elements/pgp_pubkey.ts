@@ -118,7 +118,7 @@ View.run(class PgpPubkeyView extends View {
       // that then causes to default to 30px for height, hiding contents of the iframe if it in fact is taller
       return;
     }
-    const desiredHeight = origHeight + (this.compact ? 10 : 30); // #pgp_block is defined in template
+    const desiredHeight = origHeight + (this.compact ? 10 : 30);
     BrowserMsg.send.setCss(this.parentTabId, { selector: `iframe#${this.frameId}`, css: { height: `${desiredHeight}px` } });
   }
 
