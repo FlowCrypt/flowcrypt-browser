@@ -1,0 +1,2 @@
+pwd for test smime certs that are encrypted:
+AHbxhwquX5pc
