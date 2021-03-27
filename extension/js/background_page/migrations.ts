@@ -55,17 +55,19 @@ export const moveContactsToEmailsAndPubkeys = async (db: IDBDatabase): Promise<v
 
 const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: number | undefined): Promise<number> => {
   const entries: ContactV3[] = [];
-  const tx = db.transaction(['contacts'], 'readonly');
-  await new Promise((resolve, reject) => {
-    ContactStore.setTxHandlers(tx, resolve, reject);
-    const contacts = tx.objectStore('contacts');
-    const search = contacts.getAll(undefined, count);
-    search.onsuccess = () => {
-      entries.push(...search.result);
-    };
-  });
-  if (!entries.length) {
-    return 0;
+  {
+    const tx = db.transaction(['contacts'], 'readonly');
+    await new Promise((resolve, reject) => {
+      ContactStore.setTxHandlers(tx, resolve, reject);
+      const contacts = tx.objectStore('contacts');
+      const search = contacts.getAll(undefined, count);
+      search.onsuccess = () => {
+        entries.push(...search.result);
+      };
+    });
+    if (!entries.length) {
+      return 0;
+    }
   }
   console.info(`Processing a batch of ${entries.length}.`);
   // transform
@@ -83,13 +85,15 @@ const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: numb
       pubkey_last_check: pubkey ? entry.pubkey_last_check : undefined
     } as ContactUpdate;
   }));
-  await new Promise((resolve, reject) => {
+  {
     const tx = db.transaction(['contacts', 'emails', 'pubkeys'], 'readwrite');
-    ContactStore.setTxHandlers(tx, resolve, reject);
-    for (const update of updates) {
-      ContactStore.updateTx(tx, update.email!, update);
-      tx.objectStore('contacts').delete(update.email!);
-    }
-  });
+    await new Promise((resolve, reject) => {
+      ContactStore.setTxHandlers(tx, resolve, reject);
+      for (const update of updates) {
+        ContactStore.updateTx(tx, update.email!, update);
+        tx.objectStore('contacts').delete(update.email!);
+      }
+    });
+  }
   return updates.length;
 };
