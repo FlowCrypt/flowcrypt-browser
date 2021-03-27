@@ -64,7 +64,7 @@ export class PgpBlockViewDecryptModule {
 
   private decryptAndRender = async (encryptedData: Buf, optionalPwd?: string, plainSubject?: string) => {
     if (typeof this.view.signature !== 'string') {
-      const kisWithPp = await KeyStore.getAllWithPp(this.view.acctEmail);
+      const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
       const result = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData });
       if (typeof result === 'undefined') {
         await this.view.errorModule.renderErr(Lang.general.restartBrowserAndTryAgain, undefined);
@@ -93,7 +93,7 @@ export class PgpBlockViewDecryptModule {
         this.view.renderModule.renderText('Decrypting...');
         await this.decryptAndRender(encryptedData, optionalPwd);
       } else {
-        const primaryKi = await KeyStore.getFirst(this.view.acctEmail);
+        const primaryKi = await KeyStore.getFirstOptional(this.view.acctEmail);
         if (!result.longids.chosen && !primaryKi) {
           await this.view.errorModule.renderErr(Lang.pgpBlock.notProperlySetUp + this.view.errorModule.btnHtml('FlowCrypt settings', 'green settings'), undefined);
         } else if (result.error.type === DecryptErrTypes.keyMismatch) {

@@ -29,7 +29,13 @@ export class PgpBlockViewRenderModule {
   }
 
   public resizePgpBlockFrame = () => {
-    let height = Math.max($('#pgp_block').height()!, 20) + 40;
+    const origHeight = $('#pgp_block').height();
+    if (!origHeight) { // https://github.com/FlowCrypt/flowcrypt-browser/issues/3519
+      // unsure why this happens. Sometimes height will come in as exactly 0 after the iframe was already properly sized
+      // that then causes to default to 20 + 40 = 60px for height, hiding contents of the message if it in fact is taller
+      return;
+    }
+    let height = Math.max(origHeight, 20) + 40;
     this.heightHist.push(height);
     const len = this.heightHist.length;
     if (len >= 4 && this.heightHist[len - 1] === this.heightHist[len - 3] && this.heightHist[len - 2] === this.heightHist[len - 4] && this.heightHist[len - 1] !== this.heightHist[len - 2]) {
@@ -74,17 +80,17 @@ export class PgpBlockViewRenderModule {
     this.setFrameColor(isEncrypted ? 'green' : 'gray');
     this.view.signatureModule.renderPgpSignatureCheckResult(sigResult);
     const publicKeys: string[] = [];
-    let renderableAtts: Attachment[] = [];
+    let renderableAttachments: Attachment[] = [];
     let decryptedContent = decryptedBytes.toUtfStr();
     let isHtml: boolean = false;
     // todo - replace with MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks, then the extract/strip methods could be private?
     if (!Mime.resemblesMsg(decryptedBytes)) {
-      const fcAttBlocks: MsgBlock[] = [];
-      decryptedContent = MsgBlockParser.extractFcAtts(decryptedContent, fcAttBlocks);
+      const fcAttachmentBlocks: MsgBlock[] = [];
+      decryptedContent = MsgBlockParser.extractFcAttachments(decryptedContent, fcAttachmentBlocks);
       decryptedContent = MsgBlockParser.stripFcTeplyToken(decryptedContent);
       decryptedContent = MsgBlockParser.stripPublicKeys(decryptedContent, publicKeys);
-      if (fcAttBlocks.length) {
-        renderableAtts = fcAttBlocks.map(attBlock => new Attachment(attBlock.attMeta!));
+      if (fcAttachmentBlocks.length) {
+        renderableAttachments = fcAttachmentBlocks.map(attachmentBlock => new Attachment(attachmentBlock.attachmentMeta!));
       }
     } else {
       this.renderText('Formatting...');
@@ -103,7 +109,7 @@ export class PgpBlockViewRenderModule {
       }
       for (const attachment of decoded.attachments) {
         if (attachment.treatAs() !== 'publicKey') {
-          renderableAtts.push(attachment);
+          renderableAttachments.push(attachment);
         } else {
           publicKeys.push(attachment.getData().toUtfStr());
         }
@@ -116,8 +122,8 @@ export class PgpBlockViewRenderModule {
     if (isEncrypted && publicKeys.length) {
       BrowserMsg.send.renderPublicKeys(this.view.parentTabId, { afterFrameId: this.view.frameId, publicKeys });
     }
-    if (renderableAtts.length) {
-      this.view.attachmentsModule.renderInnerAtts(renderableAtts, isEncrypted);
+    if (renderableAttachments.length) {
+      this.view.attachmentsModule.renderInnerAttachments(renderableAttachments, isEncrypted);
     }
     this.resizePgpBlockFrame();
     if (!this.doNotSetStateAsReadyYet) { // in case async tasks are still being worked at
@@ -133,7 +139,7 @@ export class PgpBlockViewRenderModule {
     img.addEventListener('load', () => this.resizePgpBlockFrame());
     if (a.href.startsWith('cid:')) { // image included in the email
       const contentId = a.href.replace(/^cid:/g, '');
-      const content = this.view.attachmentsModule.includedAtts.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${contentId}>`)[0];
+      const content = this.view.attachmentsModule.includedAttachments.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${contentId}>`)[0];
       if (content) {
         img.src = `data:${a.type};base64,${content.getData().toBase64Str()}`;
         Xss.replaceElementDANGEROUSLY(a, img.outerHTML); // xss-safe-value - img.outerHTML was built using dom node api

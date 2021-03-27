@@ -21,7 +21,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
   '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, redirect_uri, scope, login_hint, result } }, req) => {
     if (isGet(req) && client_id === oauth.clientId && response_type === 'code' && access_type === 'offline' && state && redirect_uri === oauth.redirectUri && scope) { // auth screen
       if (!login_hint) {
-        return oauth.consentChooseAccountPage(req.url!);
+        return oauth.consentChooseAccountPage(`https://${req.headers.host!}${req.url!}`);
       } else if (!result) {
         return oauth.consentPage(req.url!, login_hint);
       } else {

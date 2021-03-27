@@ -6,7 +6,7 @@
 // tslint:disable:oneliner-object-literal
 
 import { GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST, FLAVOR } from '../../../core/const.js';
-import { Url, Value } from '../../../core/common.js';
+import { Str, Url, Value } from '../../../core/common.js';
 import { tabsQuery, windowsCreate } from '../../../browser/chrome.js';
 import { Api } from './../../shared/api.js';
 import { ApiErr } from '../../shared/api-error.js';
@@ -121,7 +121,7 @@ export class GoogleAuth {
     }
     const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
     const url = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
-    const oauthWin = await windowsCreate({ url, left: 100, top: 50, height: 700, width: 600, type: 'popup' });
+    const oauthWin = await windowsCreate({ url, left: 100, top: 50, height: 800, width: 550, type: 'popup' });
     if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length) {
       return { result: 'Error', error: 'No oauth window renturned after initiating it', acctEmail, id_token: undefined };
     }
@@ -129,14 +129,8 @@ export class GoogleAuth {
       GoogleAuth.waitForAndProcessOauthWindowResult(oauthWin.id, acctEmail, scopes, authRequest.csrfToken, save),
       GoogleAuth.waitForOauthWindowClosed(oauthWin.id, acctEmail),
     ]);
-    try {
-      chrome.windows.remove(oauthWin.id);
-    } catch (e) {
-      if (String(e).indexOf('No window with id') === -1) {
-        Catch.reportErr(e);
-      }
-    }
     if (authRes.result === 'Success') {
+      chrome.windows.remove(oauthWin.id); // The prompt windows is removed when the user is authorized.
       if (!authRes.id_token) {
         return { result: 'Error', error: 'Grant was successful but missing id_token', acctEmail: authRes.acctEmail, id_token: undefined };
       }
@@ -164,7 +158,7 @@ export class GoogleAuth {
    * Happens on enterprise builds
    */
   public static isFesUnreachableErr = (e: any, email: string): boolean => {
-    const domain = email.split('@')[1].toLowerCase();
+    const domain = Str.getDomainFromEmailAddress(email);
     const errString = String(e);
     if (errString.includes(`-1 when GET-ing https://${domain}/.well-known/host-meta.json`)) {
       return true; // err trying to get FES url from .well-known

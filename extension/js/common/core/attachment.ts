@@ -3,6 +3,7 @@
 'use strict';
 
 import { Buf } from './buf.js';
+import { Str } from './common.js';
 
 type Attachment$treatAs = "publicKey" | 'privateKey' | "encryptedMsg" | "hidden" | "signature" | "encryptedFile" | "plainFile";
 export type AttachmentMeta = {
@@ -11,7 +12,7 @@ export type AttachmentMeta = {
   contentDescription?: string,
 };
 
-export type FcAttLinkData = { name: string, type: string, size: number };
+export type FcAttachmentLinkData = { name: string, type: string, size: number };
 
 export class Attachment {
 
@@ -31,7 +32,7 @@ export class Attachment {
   private bytes: Uint8Array | undefined;
   private treatAsValue: Attachment$treatAs | undefined;
 
-  public static keyinfoAsPubkeyAtt = (ki: { public: string, longid: string }) => {
+  public static keyinfoAsPubkeyAttachment = (ki: { public: string, longid: string }) => {
     return new Attachment({ data: Buf.fromUtfStr(ki.public), type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
   }
 
@@ -41,6 +42,10 @@ export class Attachment {
       return '_';
     }
     return trimmed.replace(/[\u0000\u002f\u005c]/g, '_').replace(/__+/g, '_');
+  }
+
+  public static attachmentId = (): string => {
+    return `f_${Str.sloppyRandom(30)}@flowcrypt`;
   }
 
   constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid, contentDescription }: AttachmentMeta) {

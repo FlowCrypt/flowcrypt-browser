@@ -3,9 +3,20 @@
 'use strict';
 
 import { Catch } from '../../js/common/platform/catch.js';
+import { View } from '../../js/common/view.js';
 
-if (Catch.browser().name === 'chrome' && Number(Catch.browser().v) >= 76) {
-  $('#chrome-steps').css('display', 'block');
-} else {
-  $('#firefox-steps').css('display', 'block');
-}
+View.run(class InitialView extends View {
+
+  public render = async () => {
+    if (Catch.browser().name === 'chrome' && Number(Catch.browser().v) >= 76) {
+      $('#chrome-steps').css('display', 'block');
+    } else {
+      $('#firefox-steps').css('display', 'block');
+    }
+  }
+
+  public setHandlers = () => {
+    // none
+  }
+
+});

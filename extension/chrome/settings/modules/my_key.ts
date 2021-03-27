@@ -49,7 +49,7 @@ View.run(class MyKeyView extends View {
     this.pubKey = await KeyUtil.parse(this.keyInfo.public);
     $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
     $('.action_view_update').attr('href', this.myKeyUpdateUrl);
-    $('.fingerprint').text(Str.spaced(this.keyInfo.fingerprint));
+    $('.fingerprint').text(Str.spaced(this.keyInfo.fingerprints[0]));
     Xss.sanitizeRender('.email', this.pubKey.emails.map(email => `<span>${Xss.escape(email)}</span>`).join(', '));
     const expiration = this.pubKey.expiration;
     $('.key_expiration').text(expiration && expiration !== Infinity ? Str.datetimeToDate(Str.fromDate(new Date(expiration))) : 'Key does not expire');
@@ -64,15 +64,15 @@ View.run(class MyKeyView extends View {
     $('.action_continue_download').click(this.setHandlerPrevent('double', () => this.downloadRevocationCert(String($('#input_passphrase').val()))));
     $('#input_passphrase').on('keydown', this.setEnterHandlerThatClicks('.action_continue_download'));
     $('.action_cancel_download_cert').click(this.setHandler(() => { $('.enter_pp').hide(); }));
-    const clipboardOpts = { text: (trigger: HTMLElement) => trigger.className.includes('action_copy_pubkey') ? this.keyInfo.public : this.keyInfo.private };
-    new ClipboardJS('.action_copy_pubkey, .action_copy_prv', clipboardOpts); // tslint:disable-line:no-unused-expression no-unsafe-any
+    const clipboardOpts = { text: () =>  this.keyInfo.public };
+    new ClipboardJS('.action_copy_pubkey', clipboardOpts); // tslint:disable-line:no-unused-expression no-unsafe-any
   }
 
   private renderPubkeyShareableLink = async () => {
     try {
       const result = await this.pubLookup.attester.lookupEmail(this.acctEmail);
       const url = FlowCryptWebsite.url('pubkey', this.acctEmail);
-      if (result.pubkey && (await KeyUtil.parse(result.pubkey)).id === this.keyInfo.fingerprint) {
+      if (result.pubkey && (await KeyUtil.parse(result.pubkey)).id === this.keyInfo.fingerprints[0]) {
         $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('display', '');
       } else {
         $('.pubkey_link_container').remove();
@@ -86,7 +86,7 @@ View.run(class MyKeyView extends View {
   private downloadRevocationCert = async (enteredPP?: string) => {
     const prv = await KeyUtil.parse(this.keyInfo.private);
     if (!prv.fullyDecrypted) {
-      const passphrase = await PassphraseStore.get(this.acctEmail, this.keyInfo.fingerprint) || enteredPP;
+      const passphrase = await PassphraseStore.get(this.acctEmail, this.keyInfo.fingerprints[0]) || enteredPP;
       if (passphrase) {
         if (! await KeyUtil.decrypt(prv, passphrase) && enteredPP) {
           await Ui.modal.error('Pass phrase did not match, please try again.');
@@ -111,18 +111,18 @@ View.run(class MyKeyView extends View {
       return;
     }
     const name = `${this.acctEmail.replace(/[^a-z0-9]+/g, '')}-0x${this.keyInfo.longid}.revocation-cert.asc`;
-    const prvKeyAtt = new Attachment({ data: Buf.fromUtfStr(revokedArmored), type: 'application/pgp-keys', name });
-    Browser.saveToDownloads(prvKeyAtt);
+    const prvKeyAttachment = new Attachment({ data: Buf.fromUtfStr(revokedArmored), type: 'application/pgp-keys', name });
+    Browser.saveToDownloads(prvKeyAttachment);
   }
 
   private downloadPubKeyHandler = () => {
-    Browser.saveToDownloads(Attachment.keyinfoAsPubkeyAtt(this.keyInfo));
+    Browser.saveToDownloads(Attachment.keyinfoAsPubkeyAttachment(this.keyInfo));
   }
 
   private downloadPrvKeyHandler = () => {
     const name = `flowcrypt-backup-${this.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}-0x${this.keyInfo.longid}.asc`;
-    const prvKeyAtt = new Attachment({ data: Buf.fromUtfStr(this.keyInfo.private), type: 'application/pgp-keys', name });
-    Browser.saveToDownloads(prvKeyAtt);
+    const prvKeyAttachment = new Attachment({ data: Buf.fromUtfStr(this.keyInfo.private), type: 'application/pgp-keys', name });
+    Browser.saveToDownloads(prvKeyAttachment);
   }
 
 });

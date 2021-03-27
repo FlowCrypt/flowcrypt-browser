@@ -8,7 +8,7 @@ import { KeyAlgo } from './core/crypto/key.js';
 
 type DomainRules$flag = 'NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'PRV_AUTOIMPORT_OR_AUTOGEN' | 'PASS_PHRASE_QUIET_AUTOGEN' |
   'ENFORCE_ATTESTER_SUBMIT' | 'NO_ATTESTER_SUBMIT' | 'NO_KEY_MANAGER_PUB_LOOKUP' | 'USE_LEGACY_ATTESTER_SUBMIT' |
-  'DEFAULT_REMEMBER_PASS_PHRASE';
+  'DEFAULT_REMEMBER_PASS_PHRASE' | 'HIDE_ARMOR_META';
 
 export type DomainRulesJson = {
   flags?: DomainRules$flag[],
@@ -33,7 +33,7 @@ export class OrgRules {
       throw new Error(`Not a valid email`);
     }
     const storage = await AcctStore.get(email, ['rules']);
-    return new OrgRules(storage.rules || OrgRules.default, acctEmail.split('@')[1]);
+    return new OrgRules(storage.rules || OrgRules.default, Str.getDomainFromEmailAddress(acctEmail));
   }
 
   public static isPublicEmailProviderDomain = (emailAddrOrDomain: string) => {
@@ -173,7 +173,7 @@ export class OrgRules {
    * This is because they already have other means to obtain public keys for these domains, such as from their own internal keyserver
    */
   public canLookupThisRecipientOnAttester = (emailAddr: string): boolean => {
-    return !(this.domainRules.disallow_attester_search_for_domains || []).includes(emailAddr.split('@')[1] || 'NONE');
+    return !(this.domainRules.disallow_attester_search_for_domains || []).includes(Str.getDomainFromEmailAddress(emailAddr) || 'NONE');
   }
 
   /**
@@ -183,6 +183,13 @@ export class OrgRules {
    */
   public useLegacyAttesterSubmit = (): boolean => {
     return (this.domainRules.flags || []).includes('USE_LEGACY_ATTESTER_SUBMIT');
+  }
+
+  /**
+   * With this option, sent messages won't have any comment/version in armor, imported keys get imported without armor
+   */
+  public shouldHideArmorMeta = (): boolean => {
+    return (this.domainRules.flags || []).includes('HIDE_ARMOR_META');
   }
 
 }

@@ -9,7 +9,6 @@ import { Settings } from '../../../js/common/settings.js';
 import { UnreportableError } from '../../../js/common/platform/catch.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
-import { Assert } from '../../../js/common/assert.js';
 import { GoogleAuth } from '../../../js/common/api/email-provider/gmail/google-auth.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
@@ -25,12 +24,11 @@ export class BackupAutomaticModule extends ViewModule<BackupView> {
   }
 
   private setupCreateSimpleAutomaticInboxBackup = async () => {
-    const primaryKi = await KeyStore.getFirst(this.view.acctEmail);
+    const primaryKi = await KeyStore.getFirstRequired(this.view.acctEmail);
     if (!(await KeyUtil.parse(primaryKi.private)).fullyEncrypted) {
       await Ui.modal.warning('Key not protected with a pass phrase, skipping');
       throw new UnreportableError('Key not protected with a pass phrase, skipping');
     }
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
       await this.view.manualModule.doBackupOnEmailProvider(primaryKi.private);
       await this.view.renderBackupDone();

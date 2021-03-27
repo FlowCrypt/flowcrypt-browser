@@ -102,9 +102,9 @@ export class KeyImportUi {
         $('.line.unprotected_key_create_pass_phrase').hide();
       }
     }));
-    const attach = new AttachmentUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
-    attach.initAttDialog('fineuploader', 'fineuploader_button', {
-      attAdded: async file => {
+    const attachmentUi = new AttachmentUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
+    attachmentUi.initAttachmentDialog('fineuploader', 'fineuploader_button', {
+      attachmentAdded: async file => {
         let prv: Key | undefined;
         const utf = file.getData().toUtfStr();
         if (utf.includes(PgpArmor.headers('privateKey').begin)) {
@@ -113,7 +113,8 @@ export class KeyImportUi {
             prv = (await KeyUtil.parse(firstPrv.content.toString()));
           }
         } else {
-          prv = (await KeyUtil.parseBinary(file.getData(), String(prompt('Key password'))))[0];
+          const parsed = await KeyUtil.parseBinary(file.getData(), String(prompt('Key password')));
+          prv = parsed[0];
         }
         if (typeof prv !== 'undefined') {
           $('.input_private_key').val(KeyUtil.armor(prv)).change().prop('disabled', true);
@@ -242,7 +243,7 @@ export class KeyImportUi {
   private rejectKnownIfSelected = async (acctEmail: string, k: Key) => {
     if (this.rejectKnown) {
       const keyinfos = await KeyStore.get(acctEmail);
-      const privateKeysIds = keyinfos.map(ki => ki.fingerprint);
+      const privateKeysIds = keyinfos.map(ki => ki.fingerprints[0]);
       if (privateKeysIds.includes(k.id)) {
         throw new UserAlert('This is one of your current keys, try another one.');
       }

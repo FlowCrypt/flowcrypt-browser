@@ -12,6 +12,7 @@ import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/email-provider/gmail/google.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
 import { Lang } from '../../js/common/lang.js';
+import { opgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
 import { OrgRules } from '../../js/common/org-rules.js';
 import { Settings } from '../../js/common/settings.js';
 import { SetupCreateKeyModule } from './setup/setup-create-key.js';
@@ -103,6 +104,10 @@ export class SetupView extends View {
     this.scopes = await AcctStore.getScopes(this.acctEmail);
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
+    if (this.orgRules.shouldHideArmorMeta() && typeof opgp !== 'undefined') {
+      opgp.config.show_comment = false;
+      opgp.config.show_version = false;
+    }
     this.pubLookup = new PubLookup(this.orgRules);
     if (this.orgRules.usesKeyManager() && this.idToken) {
       this.keyManager = new KeyManager(this.orgRules.getKeyManagerUrlForPrivateKeys()!);
@@ -183,8 +188,7 @@ export class SetupView extends View {
   }
 
   public submitPublicKeysAndFinalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
-    const primaryKi = await KeyStore.getFirst(this.acctEmail);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    const primaryKi = await KeyStore.getFirstRequired(this.acctEmail);
     try {
       await this.submitPublicKeyIfNeeded(primaryKi.public, { submit_main, submit_all });
     } catch (e) {
@@ -201,7 +205,7 @@ export class SetupView extends View {
         await Ui.modal.error('Cannot save keys to storage because at least one of them is not valid.');
         return;
       }
-      await KeyStore.add(this.acctEmail, KeyUtil.armor(prv));
+      await KeyStore.add(this.acctEmail, prv);
       await PassphraseStore.set(options.passphrase_save ? 'local' : 'session', this.acctEmail, fingerprint, options.passphrase);
     }
     const myOwnEmailAddrsAsContacts: Contact[] = [];

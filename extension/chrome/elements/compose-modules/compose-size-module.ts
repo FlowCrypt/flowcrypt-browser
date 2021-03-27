@@ -43,7 +43,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
     }, 1000);
   }
 
-  public resizeComposeBox = (addExtra: number = 0) => {
+  public resizeComposeBox = (addExtra: number = 0, cursorOffsetTop?: number) => {
     if (this.view.isReplyBox) {
       this.view.S.cached('input_text').css('max-width', (this.view.S.cached('body').width()! - 20) + 'px'); // body should always be present
       let minHeight = 0;
@@ -58,7 +58,13 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       }
       if (currentHeight !== this.lastReplyBoxTableHeight && Math.abs(currentHeight - this.lastReplyBoxTableHeight) > 2) { // more then two pixel difference compared to last time
         this.lastReplyBoxTableHeight = currentHeight;
-        BrowserMsg.send.setCss(this.view.parentTabId, { selector: `iframe#${this.view.frameId}`, css: { height: `${(Math.max(minHeight, currentHeight) + addExtra)}px` } });
+        BrowserMsg.send.setCss(this.view.parentTabId, {
+          selector: `iframe#${this.view.frameId}`,
+          css: { height: `${(Math.max(minHeight, currentHeight) + addExtra)}px` }
+        });
+      }
+      if (cursorOffsetTop) {
+        BrowserMsg.send.scrollToCursorInReplyBox(this.view.parentTabId, { replyMsgId: `#${this.view.frameId}`, cursorOffsetTop });
       }
     } else {
       this.view.S.cached('input_text').css('max-width', '');
@@ -84,10 +90,10 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       if (updateRefBodyHeight || !this.refBodyHeight) {
         this.refBodyHeight = this.view.S.cached('body').height() || 605;
       }
-      const attListHeight = this.view.S.cached('fineuploader').height() || 0;
+      const attachmentListHeight = this.view.S.cached('fineuploader').height() || 0;
       const inputTextVerticalPadding = parseInt(this.view.S.cached('input_text').css('padding-top')) + parseInt(this.view.S.cached('input_text').css('padding-bottom'));
       const iconShowPrevMsgHeight = this.view.S.cached('triple_dot').outerHeight(true) || 0;
-      this.view.S.cached('input_text').css('height', this.refBodyHeight - cellHeightExceptText - attListHeight - inputTextVerticalPadding - iconShowPrevMsgHeight);
+      this.view.S.cached('input_text').css('height', this.refBodyHeight - cellHeightExceptText - attachmentListHeight - inputTextVerticalPadding - iconShowPrevMsgHeight);
     }
   }
 

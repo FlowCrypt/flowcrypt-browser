@@ -321,7 +321,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       const threadId = '1754cfc37886899e';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
-      await inboxPage.waitAll('iframe', { timeout: 1000000 });
+      await inboxPage.waitAll('iframe', { timeout: 2 });
       const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
       expect(urls.length).to.equal(1);
       const url = urls[0].split('/chrome/elements/pgp_block.htm')[1];
@@ -329,14 +329,25 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: url, content: ['1234'], signature });
     }));
 
+    ava.default('signature - sender is different from pubkey email', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const threadId = '1766644f13510f58';
+      const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+      await inboxPage.waitAll('iframe', { timeout: 2 });
+      const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
+      expect(urls.length).to.equal(1);
+      const url = urls[0].split('/chrome/elements/pgp_block.htm')[1];
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
+        params: url,
+        content: ['How is my message signed?'],
+        signature: ['Sams50sams50sept@Gmail.Com', 'matching signature']
+      });
+    }));
+
     ava.default('decrypt - protonmail - load pubkey into contact + verify detached msg', testWithBrowser('compatibility', async (t, browser) => {
       const textParams = `?frameId=none&message=&msgId=16a9c109bc51687d&` +
         `senderEmail=mismatch%40mail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com`;
-      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-        params: textParams,
-        content: ["1234"],
-        signature: ["Missing pubkey", "Mismatch@Mail.Com"]
-      });
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: textParams, content: ["1234"], signature: ["Missing pubkey"] });
       const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(protonCompatPub)}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
       const pubFrame = await browser.newPage(t, pubFrameUrl);
       await pubFrame.waitAndClick('@action-add-contact');
@@ -345,7 +356,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params: textParams,
         content: ["1234"],
-        signature: ["matching signature", "Mismatch@Mail.Com"]
+        signature: ["matching signature", "Flowcrypt.Compatibility@Protonmail.Com"]
       });
       const htmlParams = `?frameId=none&message=&msgId=16a9c0fe4e034bc2&` +
         `senderEmail=flowcrypt.compatibility%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com`;
@@ -362,7 +373,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: ["1234"],
-        signature: ["Fetched pubkey, click to verify", "Flowcrypt.Compatibility@Protonmail.Com"]
+        signature: ["Fetched pubkey, click to verify"]
       });
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
@@ -376,7 +387,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: ['4) signed + encrypted email if supported'],
-        signature: ["Fetched pubkey, click to verify", "Martin@Politick.Ca"]
+        signature: ["Fetched pubkey, click to verify"]
       });
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
@@ -437,7 +448,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await pgpBlock.click('a');
       await Util.sleep(5);
       const flowcryptTab = (await browser.browser.pages()).find(p => p.url() === 'https://flowcrypt.com/');
-      await flowcryptTab!.waitFor("body");
+      await flowcryptTab!.waitForSelector("body");
       flowcryptTab!.on('console', msg => expect((msg as any)._text).to.equal('Opener: null'));
       await Util.sleep(5);
       await flowcryptTab!.evaluate(() => console.log(`Opener: ${JSON.stringify(window.opener)}`));
@@ -469,17 +480,27 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default(`verify - sha1 shows error`, testWithBrowser('compatibility', async (t, browser) => {
-      const msg = '-----BEGIN PGP MESSAGE-----\nVersion: GnuPG v1\n\nowGbwMvMyMT4oOW7S46CznTG01El3MUFicmpxbolqcUlUTev14K5Vgq8XGCGQmJe\nikJJYpKVAicvV16+QklRYmZOZl66AliWl0sBqBAkzQmmwKohBnAqdMxhYWRkYmBj\nZQIZy8DFKQCztusM8z+Vt/svG80IS/etn90utv/T16jquk69zPvp6t9F16ryrwpb\nkfVlS5Xl38KnVYxWvIor0nao6WUczA4vvZX9TXPWnnW3tt1vbZoiqWUjYjjjhuKG\n4DtmMTuL3TW6/zNzVfWp/Q11+71O8RGnXMsBvWM6mSqX75uLiPo6HRaUDHnvrfCP\nyYDnCgA=\n=15ki\n-----END PGP MESSAGE-----';
+      const msg = `-----BEGIN PGP MESSAGE-----
+
+yMCxATvCy8zAxHhitbJOfXrcEcbTKkkMIOCRmpOTr6NQkpFZrABEiQolqcUlCrmpxcWJ6alchw5U
+sjAwMjEoiymyhJfeapohyXRUYeazxTBjWJkSeOtDWJnBRnFxCsDEv33mYDjmdsuGPyx68g7tMwe3
+tqlevvUo5EIap+wmZm6mRXcOGBplvJy1mfuq1plrt08qs97Y2ztB+/XbuyG3Ir48u7I3pmD+TWae
+WSd5d26QYXcuusauc0Xy/fS1/FXbPJaYHlCeMCfnhrF9d2jyH33V+er6r3lS5i/mchOKffpglktT
+d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
+3duz+VfzU3HVZ65L4xc5PBYwWLlshdcG94VTt2oK3cuLC5zuy/3ks0sw1+MGzmKtjMeJrqXph+8p
+5W5JmHL28qarbQvv+71V3ni6odk8Z2NDban2y1kA
+=Ruyn
+-----END PGP MESSAGE-----`;
       const params = `?frame_id=frame_TWloVRhvZE&message=${encodeURIComponent(msg)}&message_id=none&senderEmail=sha1%40sign.com&is_outgoing=___cu_false___&account_email=flowcrypt.compatibility%40gmail.com`;
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
-        content: ['no trailing space', 'space:', 'space and tab:'],
-        signature: ["Fetched pubkey, click to verify", "Sha1@Sign.Com"]
+        content: ['test'],
+        signature: ["Fetched pubkey, click to verify"]
       });
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
-        content: ['no trailing space', 'space:', 'space and tab:'],
-        signature: ["Insecure message hash algorithm: SHA1", "Sha1@Sign.Com"]
+        content: ['test'],
+        signature: ["Insecure message hash algorithm: SHA1"]
       });
     }));
 
@@ -489,7 +510,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: [expectedContent],
-        signature: ['Missing pubkey A38042F607D623DA', 'Censored@Email.Com']
+        signature: ['Missing pubkey A38042F607D623DA']
       });
     }));
 

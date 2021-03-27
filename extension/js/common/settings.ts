@@ -6,7 +6,7 @@ import { Dict, Str, Url, UrlParams } from './core/common.js';
 import { Ui } from './browser/ui.js';
 import { Api } from './api/shared/api.js';
 import { ApiErr, AjaxErr } from './api/shared/api-error.js';
-
+import { Browser } from './browser/browser.js';
 import { Catch } from './platform/catch.js';
 import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
@@ -66,7 +66,7 @@ export class Settings {
     return result.aliasesChanged || result.defaultEmailChanged || result.footerChanged ? result : undefined;
   }
 
-  public static acctStorageReset = async (acctEmail: string) => {
+  public static acctStorageReset = async (acctEmail: string): Promise<void> => {
     if (!acctEmail) {
       throw new Error('Missing account_email to reset');
     }
@@ -116,9 +116,9 @@ export class Settings {
     const destAccountPrivateKeys = await KeyStore.get(newAcctEmail);
     const destAcctPassPhrases: Dict<string> = {};
     for (const ki of destAccountPrivateKeys) {
-      const pp = await PassphraseStore.get(newAcctEmail, ki.fingerprint, true);
+      const pp = await PassphraseStore.get(newAcctEmail, ki.fingerprints[0], true);
       if (pp) {
-        destAcctPassPhrases[ki.fingerprint] = pp;
+        destAcctPassPhrases[ki.fingerprints[0]] = pp;
       }
     }
     if (!oldAcctEmailIndexPrefix) {
@@ -232,8 +232,9 @@ export class Settings {
    */
   public static promptToRetry = async (lastErr: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
     let userErrMsg = `${userMsg} ${ApiErr.eli5(lastErr)}`;
-    if (lastErr instanceof AjaxErr && lastErr.status === 400) {
-      userErrMsg = `${userMsg}, ${lastErr.resMsg}`; // this will make reason for err 400 obvious to user, very important for enterprise customers
+    if (lastErr instanceof AjaxErr && (lastErr.status === 400 || lastErr.status === 405)) {
+      // this will make reason for err 400 obvious to user - eg on EKM 405 error
+      userErrMsg = `${userMsg}, ${lastErr.resMsg}`;
     }
     while (await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, userErrMsg, ApiErr.detailsAsHtmlWithNewlines(lastErr)) === 'retry') {
       try {
@@ -279,7 +280,7 @@ export class Settings {
       } else if (response.result === 'Denied' || response.result === 'Closed') {
         const authDeniedHtml = await Api.ajax({ url: '/chrome/settings/modules/auth_denied.htm' }, Catch.stackTrace()) as string; // tslint:disable-line:no-direct-ajax
         if (await Ui.modal.confirm(authDeniedHtml, true)) {
-          await GoogleAuth.newAuthPopup({ acctEmail, scopes });
+          await Settings.newGoogleAcctAuthPromptThenAlertOrForward(settingsTabId, acctEmail, scopes);
         }
       } else {
         Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
@@ -333,14 +334,23 @@ export class Settings {
   public static offerToLoginWithPopupShowModalOnErr = (acctEmail: string, then: (() => void) = () => undefined, prepend = '') => {
     (async () => {
       if (await Ui.modal.confirm(`${prepend}Please log in with FlowCrypt to continue.`)) {
-        const authRes = await GoogleAuth.newOpenidAuthPopup({ acctEmail });
-        if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
-          then();
-        } else {
-          await Ui.modal.warning(`Could not log in:\n\n${authRes.error || authRes.result}`);
-        }
+        await Settings.loginWithPopupShowModalOnErr(acctEmail, then);
       }
     })().catch(Catch.reportErr);
+  }
+
+  public static loginWithPopupShowModalOnErr = async (acctEmail: string, then: (() => void) = () => undefined) => {
+    if (window !== window.top && !chrome.windows) { // Firefox, chrome.windows isn't available in iframes
+      Browser.openExtensionTab(Url.create(chrome.runtime.getURL(`chrome/settings/index.htm`), { acctEmail }));
+      await Ui.modal.info(`Reload after logging in.`);
+      return window.location.reload();
+    }
+    const authRes = await GoogleAuth.newOpenidAuthPopup({ acctEmail });
+    if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
+      then();
+    } else {
+      await Ui.modal.warning(`Could not log in:\n${authRes.error || authRes.result}`);
+    }
   }
 
   private static prepareNewSettingsLocationUrl = (acctEmail: string | undefined, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams): string => {

@@ -56,6 +56,7 @@ export class BackendData {
         "flags": [
           "NO_PRV_CREATE",
           "NO_PRV_BACKUP",
+          "HIDE_ARMOR_META",
           "ENFORCE_ATTESTER_SUBMIT",
           "USE_LEGACY_ATTESTER_SUBMIT",
         ]
@@ -86,6 +87,9 @@ export class BackendData {
       "enforce_keygen_algo": "rsa2048",
       "disallow_attester_search_for_domains": []
     };
+    if (domain === 'google.mock.flowcryptlocal.com:8001') {
+      return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_ATTESTER_SUBMIT'] };
+    }
     if (domain === 'key-manager-autogen.flowcrypt.com') {
       return keyManagerAutogenRules;
     }
@@ -97,6 +101,9 @@ export class BackendData {
     }
     if (domain === 'key-manager-keygen-expiration.flowcrypt.com') {
       return { ...keyManagerAutogenRules, "enforce_keygen_expire_months": 1 };
+    }
+    if (domain === 'no-submit-org-rule.key-manager-autogen.flowcrypt.com') {
+      return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_ATTESTER_SUBMIT'] };
     }
     if (domain === 'prv-create-no-prv-backup.flowcrypt.com') {
       // org is allowed to create new keys in the plugin, without EKM, but no backups are allowed

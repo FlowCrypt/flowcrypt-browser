@@ -2,7 +2,7 @@
 
 import * as fs from 'fs';
 
-import { KeyInfo } from '../core/crypto/key.js';
+import { KeyInfoWithOptionalPp, KeyUtil } from '../core/crypto/key.js';
 
 export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL' | 'UNIT-TESTS';
 
@@ -42,11 +42,8 @@ export type TestMessage = {
 
 interface TestSecretsInterface {
   ci_admin_token: string;
-  ci_dev_account: string;
-  data_encryption_password: string;
   auth: { google: { email: string, password?: string, secret_2fa?: string }[], };
   keys: { title: string, passphrase: string, armored: string | null, longid: string | null }[];
-  keyInfo: Array<{ email: string, key: KeyInfo[] }>;
 }
 
 export class Config {
@@ -59,6 +56,8 @@ export class Config {
     if (!Config._secrets) {
       try {
         Config._secrets = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8'));
+        const data = JSON.parse(fs.readFileSync('test/testdata.json', 'utf8'));
+        Config._secrets.keys = data.keys;
       } catch (e) {
         console.error(`skipping loading test secrets because ${e}`);
         Config._secrets = { auth: { google: [] }, keys: [], keyInfo: [] } as any as TestSecretsInterface;
@@ -71,33 +70,14 @@ export class Config {
     return Config.secrets().keys.filter(k => k.title === title)[0];
   }
 
-}
+  public static getKeyInfo = async (titles: string[]): Promise<KeyInfoWithOptionalPp[]> => {
+    return await Promise.all(Config._secrets.keys
+      .filter(key => key.armored && titles.includes(key.title)).map(async key => {
+        return { ...await KeyUtil.keyInfoObj(await KeyUtil.parse(key.armored!)), passphrase: key.passphrase };
+      }));
+  }
 
-Config.secrets().auth.google.push( // these don't contain any secrets, so not worth syncing through secrets file
-  { "email": "flowcrypt.test.key.used.pgp@gmail.com" },
-  { "email": "flowcrypt.test.key.imported@gmail.com" },
-  { "email": "flowcrypt.test.key.import.naked@gmail.com" },
-  { "email": "flowcrypt.test.key.recovered@gmail.com" },
-  { "email": "flowcrypt.test.key.new.manual@gmail.com" },
-  { "email": "flowcrypt.test.key.multibackup@gmail.com" },
-  { "email": "has.pub@org-rules-test.flowcrypt.com" },
-  { "email": "no.pub@org-rules-test.flowcrypt.com" },
-  { "email": "user@no-submit-org-rule.flowcrypt.com" },
-  { "email": "user@no-search-domains-org-rule.flowcrypt.com" },
-  { "email": "get.key@key-manager-autogen.flowcrypt.com" },
-  { "email": "put.key@key-manager-autogen.flowcrypt.com" },
-  { "email": "get.error@key-manager-autogen.flowcrypt.com" },
-  { "email": "put.error@key-manager-autogen.flowcrypt.com" },
-  { "email": "two.keys@key-manager-autogen.flowcrypt.com" },
-  { "email": "reject.client.keypair@key-manager-autogen.flowcrypt.com" },
-  { "email": "fail@key-manager-server-offline.flowcrypt.com" },
-  { "email": "user@key-manager-no-pub-lookup.flowcrypt.com" },
-  { "email": "expire@key-manager-keygen-expiration.flowcrypt.com" },
-  { "email": "setup@prv-create-no-prv-backup.flowcrypt.com" },
-  { "email": "user@standardsubdomainfes.com:8001" },
-  { "email": 'user@wellknownfes.com:8001' },
-  { 'email': 'no.fes@example.com' }
-);
+}
 
 export class Util {
 

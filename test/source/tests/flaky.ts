@@ -11,8 +11,8 @@ import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { TestWithBrowser } from './../test';
-import { TestUrls } from './../browser/test-urls';
 import { GoogleData } from './../mock/google/google-data';
+import { Stream } from '../core/stream';
 
 // tslint:disable:no-blank-lines-func
 
@@ -73,21 +73,8 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     }));
 
     ava.default('standalone - different send from, new signed message, verification in mock', testWithBrowser('compatibility', async (t, browser) => {
-      const addPrvPage = await browser.newPage(t, '/chrome/settings/modules/add_key.htm?acctEmail=flowcrypt.compatibility%40gmail.com&parent_tab_id=0');
       const key = Config.key('flowcryptcompatibility.from.address');
-      await addPrvPage.waitAndClick('#source_paste');
-      await addPrvPage.waitAndType('.input_private_key', key.armored!);
-      await addPrvPage.waitAndClick('#toggle_input_passphrase');
-      await addPrvPage.waitAndType('#input_passphrase', key.passphrase!);
-      await addPrvPage.waitAndClick('.action_add_private_key', { delay: 1 });
-      await addPrvPage.waitTillGone('.swal2-container'); // dialog closed
-      await Util.sleep(1);
-      await addPrvPage.close();
-      await Util.sleep(1);
-      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
-      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-      await settingsPage.waitForContent('@container-settings-keys-list', 'B6BE 3C42 93DD CF66'); // confirm key successfully loaded
-      await settingsPage.close();
+      await SettingsPageRecipe.addKeyTest(t, browser, 'flowcrypt.compatibility@gmail.com', key.armored!, key.passphrase!);
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await composePage.selectOption('@input-from', 'flowcryptcompatibility@gmail.com');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Signed Message (Mock Test)', { encrypt: false });
@@ -120,7 +107,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await fileInput!.uploadFile('test/samples/small.txt');
       await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
       const msg = new GoogleData('flowcrypt.compatibility@gmail.com').getMessageBySubject(subject)!;
-      const webDecryptUrl = msg.payload!.body!.data!.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]+/g)![0];
+      const webDecryptUrl = msg.payload!.body!.data!.replace(/&#x2F;/g, '/').match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]+/g)![0];
       // while this test runs on a mock, it forwards the message/upload call to real backend - see `fwdToRealBackend`
       // that's why we are able to test the message on real flowcrypt.com/api and web.
       const webDecryptPage = await browser.newPage(t, webDecryptUrl);
@@ -132,6 +119,20 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       const fileText = await webDecryptPage.awaitDownloadTriggeredByClicking('@container-att-name(small.txt)');
       expect(fileText.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
     }));
+
+    ava.default(`[unit][Stream.readToEnd] efficiently handles multiple chunks`, async t => {
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          for (let i = 0; i < 10; i++) {
+            controller.enqueue(Buffer.from('test'.repeat(1000000)));
+          }
+          controller.close();
+        }
+      });
+      const result = await Stream.readToEnd(stream);
+      expect(result.length).to.equal(40000000);
+      t.pass();
+    });
 
   }
 

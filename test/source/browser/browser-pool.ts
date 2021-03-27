@@ -42,7 +42,7 @@ export class BrowserPool {
       args.push('--ignore-certificate-errors');
       args.push('--allow-insecure-localhost');
     }
-    const slowMo = this.isMock ? 60 : 60; // todo - mock tests should be able to run without slowMo
+    const slowMo = this.isMock ? 60 : 60;
     const browser = await launch({ args, ignoreHTTPSErrors: this.isMock, headless: false, devtools: false, slowMo });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {

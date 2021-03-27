@@ -3,7 +3,7 @@
 'use strict';
 
 import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window.js';
-import { ChunkedCb, ProgressCb } from '../../shared/api.js';
+import { ChunkedCb, ProgressCb, EmailProviderContact } from '../../shared/api.js';
 import { Dict, Str, Value } from '../../../core/common.js';
 import { EmailProviderApi, EmailProviderInterface, Backups } from '../email-provider-api.js';
 import { GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
@@ -13,7 +13,7 @@ import { Attachment } from '../../../core/attachment.js';
 import { BrowserMsg } from '../../../browser/browser-msg.js';
 import { Buf } from '../../../core/buf.js';
 import { Catch } from '../../../platform/catch.js';
-import { Contact, KeyUtil } from '../../../core/crypto/key.js';
+import { KeyUtil } from '../../../core/crypto/key.js';
 import { Env } from '../../../browser/env.js';
 import { FormatError } from '../../../core/crypto/pgp/msg-util.js';
 import { Google } from './google.js';
@@ -23,7 +23,6 @@ import { PgpArmor } from '../../../core/crypto/pgp/pgp-armor.js';
 import { SendableMsg } from '../sendable-msg.js';
 import { Xss } from '../../../platform/xss.js';
 import { KeyStore } from '../../../platform/store/key-store.js';
-import { ContactStore } from '../../../platform/store/contact-store.js';
 
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 
@@ -69,8 +68,8 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return await Google.gmailCall<GmailRes.GmailDraftDelete>(this.acctEmail, 'DELETE', 'drafts/' + id, undefined);
   }
 
-  public draftUpdate = async (id: string, mimeMsg: string): Promise<GmailRes.GmailDraftUpdate> => {
-    return await Google.gmailCall<GmailRes.GmailDraftUpdate>(this.acctEmail, 'PUT', `drafts/${id}`, { message: { raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr() } });
+  public draftUpdate = async (id: string, mimeMsg: string, threadId: string): Promise<GmailRes.GmailDraftUpdate> => {
+    return await Google.gmailCall<GmailRes.GmailDraftUpdate>(this.acctEmail, 'PUT', `drafts/${id}`, { message: { raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId } });
   }
 
   public draftGet = async (id: string, format: GmailResponseFormat = 'full'): Promise<GmailRes.GmailDraftGet> => {
@@ -114,17 +113,17 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return await Google.gmailCall<GmailRes.GmailLabels>(this.acctEmail, 'GET', `labels`, {});
   }
 
-  public attGet = async (msgId: string, attId: string, progressCb?: ProgressCb): Promise<GmailRes.GmailAtt> => {
+  public attachmentGet = async (msgId: string, attId: string, progressCb?: ProgressCb): Promise<GmailRes.GmailAttachment> => {
     type RawGmailAttRes = { attachmentId: string, size: number, data: string };
     const { attachmentId, size, data } = await Google.gmailCall<RawGmailAttRes>(this.acctEmail, 'GET', `messages/${msgId}/attachments/${attId}`, {}, { download: progressCb });
     return { attachmentId, size, data: Buf.fromBase64UrlStr(data) }; // data should be a Buf for ease of passing to/from bg page
   }
 
-  public attGetChunk = async (msgId: string, attId: string): Promise<Buf> => {
+  public attachmentGetChunk = async (msgId: string, attachmentId: string): Promise<Buf> => {
     if (Env.isContentScript()) {
       // content script CORS not allowed anymore, have to drag it through background page
       // https://www.chromestatus.com/feature/5629709824032768
-      const { chunk } = await BrowserMsg.send.bg.await.ajaxGmailAttGetChunk({ acctEmail: this.acctEmail, msgId, attId });
+      const { chunk } = await BrowserMsg.send.bg.await.ajaxGmailAttachmentGetChunk({ acctEmail: this.acctEmail, msgId, attachmentId });
       return chunk;
     }
     const stack = Catch.stackTrace();
@@ -169,7 +168,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       GoogleAuth.googleApiAuthHeader(this.acctEmail).then(authToken => {
         const r = new XMLHttpRequest();
         const method = 'GET';
-        const url = `${GOOGLE_API_HOST}/gmail/v1/users/me/messages/${msgId}/attachments/${attId}`;
+        const url = `${GOOGLE_API_HOST}/gmail/v1/users/me/messages/${msgId}/attachments/${attachmentId}`;
         r.open(method, url, true);
         r.setRequestHeader('Authorization', authToken);
         r.send();
@@ -215,7 +214,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     const loadedAr: Array<number> = [];
     // 1.33 is approximate ratio of downloaded data to what we expected, likely due to encoding
     const total = attachments.map(x => x.length).reduce((a, b) => a + b) * 1.33;
-    const responses = await Promise.all(attachments.map((a, index) => this.attGet(a.msgId!, a.id!, (_, loaded) => {
+    const responses = await Promise.all(attachments.map((a, index) => this.attachmentGet(a.msgId!, a.id!, (_, loaded) => {
       if (progressCb) {
         loadedAr[index] = loaded || 0;
         const totalLoaded = loadedAr.reduce((a, b) => a + b);
@@ -234,7 +233,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   /**
    * This will keep triggering callback with new emails as they are being discovered
    */
-  public guessContactsFromSentEmails = async (userQuery: string, knownContacts: Contact[], chunkedCb: ChunkedCb): Promise<void> => {
+  public guessContactsFromSentEmails = async (userQuery: string, knownEmails: string[], chunkedCb: ChunkedCb): Promise<void> => {
     userQuery = userQuery.toLowerCase();
     let gmailQuery = `is:sent ${this.GMAIL_USELESS_CONTACTS_FILTER} `;
     const needles: string[] = [];
@@ -256,11 +255,11 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       }
       gmailQuery += ')';
     }
-    for (const contact of knownContacts.filter(c => Str.isEmailValid(c.email))) {
+    for (const email of knownEmails) {
       if (gmailQuery.length > this.GMAIL_SEARCH_QUERY_LENGTH_LIMIT) {
         break;
       }
-      gmailQuery += ` -to:${contact.email}`;
+      gmailQuery += ` -to:${email}`;
     }
     await this.apiGmailLoopThroughEmailsToCompileContacts(needles, gmailQuery, chunkedCb);
   }
@@ -340,7 +339,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     }
     await this.fetchAttachments(attachments);
     const { keys: foundBackupKeys } = await KeyUtil.readMany(Buf.fromUtfStr(attachments.map(a => a.getData().toUtfStr()).join('\n')));
-    const backups = await Promise.all(foundBackupKeys.map(k => KeyStore.keyInfoObj(k)));
+    const backups = await Promise.all(foundBackupKeys.map(k => KeyUtil.keyInfoObj(k)));
     const imported = await KeyStore.get(this.acctEmail);
     const importedLongids = imported.map(ki => ki.longid);
     const backedUpLongids = backups.map(ki => ki.longid);
@@ -370,7 +369,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return filteredQuery;
   }
 
-  private apiGmailGetNewUniqueRecipientsFromHeaders = async (toHeaders: string[], allResults: Contact[], allRawEmails: string[]): Promise<Contact[]> => {
+  private apiGmailGetNewUniqueRecipientsFromHeaders = async (toHeaders: string[], allResults: EmailProviderContact[], allRawEmails: string[]): Promise<EmailProviderContact[]> => {
     if (!toHeaders.length) {
       return [];
     }
@@ -385,8 +384,8 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       }
     }
     const rawValidEmails = rawParsedResults.filter(r => r.address && Str.isEmailValid(r.address));
-    const newValidResults = await Promise.all(rawValidEmails.map(({ address, name }) => ContactStore.obj({ email: address!, name })));
-    const uniqueNewValidResults: Contact[] = [];
+    const newValidResults: EmailProviderContact[] = await Promise.all(rawValidEmails.map((a) => { return { email: a.address!, name: a.name } as EmailProviderContact; }));
+    const uniqueNewValidResults: EmailProviderContact[] = [];
     for (const newValidRes of newValidResults) {
       if (allResults.map(c => c.email).indexOf(newValidRes.email) === -1) {
         const foundIndex = uniqueNewValidResults.map(c => c.email).indexOf(newValidRes.email);
@@ -401,9 +400,9 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   }
 
   private apiGmailLoopThroughEmailsToCompileContacts = async (needles: string[], gmailQuery: string, chunkedCb: ChunkedCb) => {
-    const allResults: Contact[] = [];
+    const allResults: EmailProviderContact[] = [];
     const allRawEmails: string[] = [];
-    const allMatchingResults: Contact[] = [];
+    const allMatchingResults: EmailProviderContact[] = [];
     let lastFilteredQuery = '';
     let continueSearching = true;
     while (continueSearching) {
@@ -430,7 +429,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     await chunkedCb({ new: [], all: allResults });
   }
 
-  private doesGmailsContactGuessResultMatchNeedles = (needles: string[], contact: Contact): boolean => {
+  private doesGmailsContactGuessResultMatchNeedles = (needles: string[], contact: EmailProviderContact): boolean => {
     if (!needles.length) {
       return true; // no search query provided, so anything matches
     }

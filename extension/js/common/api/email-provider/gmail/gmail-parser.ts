@@ -28,7 +28,7 @@ export namespace GmailRes { // responses
     messagesTotal?: number, messagesUnread?: number, threadsTotal?: number, threadsUnread?: number, color?: { textColor: string, backgroundColor: string }
   };
   export type GmailLabels = { labels: GmailLabels$label[] };
-  export type GmailAtt = { attachmentId: string, size: number, data: Buf };
+  export type GmailAttachment = { attachmentId: string, size: number, data: Buf };
   export type GmailMsgSend = { id: string };
   export type GmailThread = { id: string, historyId: string, messages: GmailMsg[] };
   export type GmailThreadList = { threads: { historyId: string, id: string, snippet: string }[], nextPageToken: string, resultSizeEstimate: number };
@@ -111,8 +111,9 @@ export class GmailParser {
   }
 
   public static findBodies = (gmailMsg: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part, internalResults: SendableMsgBody = {}): SendableMsgBody => {
-    const isGmailMsgWithPayload = (v: any): v is GmailRes.GmailMsg => v && typeof (v as GmailRes.GmailMsg).payload !== 'undefined';
-    const isGmailMsgPayload = (v: any): v is GmailRes.GmailMsg$payload => v && typeof (v as GmailRes.GmailMsg$payload).parts !== 'undefined';
+    const isGmailMsgWithPayload = (v: any): v is GmailRes.GmailMsg => v && typeof (v as GmailRes.GmailMsg).payload !== 'undefined'; // tslint:disable-line:no-unsafe-any
+    const isGmailMsgPayload = (v: any): v is GmailRes.GmailMsg$payload => v && typeof (v as GmailRes.GmailMsg$payload).parts !== 'undefined'; // tslint:disable-line:no-unsafe-any
+    // tslint:disable-next-line:no-unsafe-any
     const isGmailMsgPayloadPart = (v: any): v is GmailRes.GmailMsg$payload$part => v && typeof (v as GmailRes.GmailMsg$payload$part).body !== 'undefined';
     if (isGmailMsgWithPayload(gmailMsg)) {
       GmailParser.findBodies(gmailMsg.payload!, internalResults);

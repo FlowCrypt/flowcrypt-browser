@@ -16,14 +16,14 @@ declare const filesize: Function; // tslint:disable-line:ban-types
 
 export class PgpBlockViewAttachmentsModule {
 
-  public includedAtts: Attachment[] = [];
+  public includedAttachments: Attachment[] = [];
 
   constructor(private view: PgpBlockView) {
   }
 
-  public renderInnerAtts = (attachments: Attachment[], isEncrypted: boolean) => {
+  public renderInnerAttachments = (attachments: Attachment[], isEncrypted: boolean) => {
     Xss.sanitizeAppend('#pgp_block', '<div id="attachments"></div>');
-    this.includedAtts = attachments;
+    this.includedAttachments = attachments;
     for (const i of attachments.keys()) {
       const name = (attachments[i].name ? attachments[i].name : 'noname').replace(/\.(pgp|gpg)$/, '');
       const nameVisible = name.length > 100 ? name.slice(0, 100) + '…' : name;
@@ -42,12 +42,12 @@ export class PgpBlockViewAttachmentsModule {
     }
     this.view.renderModule.resizePgpBlockFrame();
     $('#attachments .preview-attachment').click(this.view.setHandlerPrevent('double', async (target) => {
-      const attachment = this.includedAtts[Number($(target).attr('index'))];
+      const attachment = this.includedAttachments[Number($(target).attr('index'))];
       await this.previewAttachmentClickedHandler(attachment);
     }));
     $('#attachments .download-attachment').click(this.view.setHandlerPrevent('double', async (target, event) => {
       event.stopPropagation();
-      const attachment = this.includedAtts[Number($(target).attr('index'))];
+      const attachment = this.includedAttachments[Number($(target).attr('index'))];
       if (attachment.hasData()) {
         Browser.saveToDownloads(attachment);
         this.view.renderModule.resizePgpBlockFrame();
@@ -56,19 +56,19 @@ export class PgpBlockViewAttachmentsModule {
         attachment.setData(await Api.download(attachment.url!, (perc, load, total) => this.renderProgress($(target).find('.progress .percent'), perc, load, total || attachment.length)));
         await Ui.delay(100); // give browser time to render
         $(target).find('.progress').text('');
-        await this.decryptAndSaveAttToDownloads(attachment);
+        await this.decryptAndSaveAttachmentToDownloads(attachment);
       }
     }));
   }
 
   private previewAttachmentClickedHandler = async (attachment: Attachment) => {
     const factory = new XssSafeFactory(this.view.acctEmail, this.view.parentTabId);
-    const iframeUrl = factory.srcPgpAttIframe(attachment, false, undefined, 'chrome/elements/attachment_preview.htm');
+    const iframeUrl = factory.srcPgpAttachmentIframe(attachment, false, undefined, 'chrome/elements/attachment_preview.htm');
     BrowserMsg.send.showAttachmentPreview(this.view.parentTabId, { iframeUrl });
   }
 
-  private decryptAndSaveAttToDownloads = async (encrypted: Attachment) => {
-    const kisWithPp = await KeyStore.getAllWithPp(this.view.acctEmail);
+  private decryptAndSaveAttachmentToDownloads = async (encrypted: Attachment) => {
+    const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
     const decrypted = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData: encrypted.getData() });
     if (decrypted.success) {
       const attachment = new Attachment({ name: encrypted.name.replace(/\.(pgp|gpg)$/, ''), type: encrypted.type, data: decrypted.content });

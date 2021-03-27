@@ -77,17 +77,26 @@ export class Api<REQ, RES> {
     });
   }
 
-  public listen = (port: number, host = '127.0.0.1', maxMb = 100) => {
-    return new Promise((resolve) => {
-      this.maxRequestSizeMb = maxMb;
-      this.maxRequestSizeBytes = maxMb * 1024 * 1024;
-      this.server.listen(port, host);
-      this.server.on('listening', () => {
-        const address = this.server.address();
-        const msg = `${this.apiName} listening on ${typeof address === 'object' && address ? address.port : address}`;
-        console.log(msg);
-        resolve();
-      });
+  public listen = (port: number, host = '127.0.0.1', maxMb = 100): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      try {
+        this.maxRequestSizeMb = maxMb;
+        this.maxRequestSizeBytes = maxMb * 1024 * 1024;
+        this.server.listen(port, host);
+        this.server.on('listening', () => {
+          const address = this.server.address();
+          const msg = `${this.apiName} listening on ${typeof address === 'object' && address ? address.port : address}`;
+          console.log(msg);
+          resolve();
+        });
+        this.server.on('error', (e) => {
+          console.error('failed to start mock server', e);
+          reject(e);
+        });
+      } catch (e) {
+        console.error('exception when starting mock server', e);
+        reject(e);
+      }
     });
   }
 

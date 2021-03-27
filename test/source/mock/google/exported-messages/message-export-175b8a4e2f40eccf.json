@@ -4,7 +4,7 @@
     "id": "175b8a4e2f40eccf",
     "threadId": "175b8a48ad8809c0",
     "labelIds": [
-      "DRAFT"
+      "SENT"
     ],
     "snippet": "1234",
     "payload": {
@@ -82,7 +82,7 @@
     "id": "175b8a4e2f40eccf",
     "threadId": "175b8a48ad8809c0",
     "labelIds": [
-      "DRAFT"
+      "SENT"
     ],
     "snippet": "1234",
     "sizeEstimate": 583,

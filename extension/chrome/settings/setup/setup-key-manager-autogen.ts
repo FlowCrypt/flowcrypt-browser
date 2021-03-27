@@ -34,7 +34,7 @@ export class SetupKeyManagerAutogenModule {
       return;
     }
     const passphrase = PgpPwd.random(); // mustAutogenPassPhraseQuietly
-    const opts: SetupOptions = { passphrase_save: true, submit_main: true, submit_all: false, passphrase };
+    const opts: SetupOptions = { passphrase_save: true, submit_main: this.view.orgRules.canSubmitPubToAttester(), submit_all: false, passphrase };
     try {
       const { privateKeys } = await this.view.keyManager!.getPrivateKeys(this.view.idToken!);
       if (privateKeys.length) { // keys already exist on keyserver, auto-import
@@ -58,12 +58,11 @@ export class SetupKeyManagerAutogenModule {
         const pgpUids = [{ name: full_name || '', email: this.view.acctEmail }];
         const generated = await OpenPGPKey.create(pgpUids, keygenAlgo, passphrase, expireInMonths);
         const decryptablePrv = await KeyUtil.parse(generated.private);
-        const generatedKeyFingerprint = decryptablePrv.id;
         if (! await KeyUtil.decrypt(decryptablePrv, passphrase)) {
           throw new Error('Unexpectedly cannot decrypt newly generated key');
         }
         const pubArmor = KeyUtil.armor(await KeyUtil.asPublicKey(decryptablePrv));
-        const storePrvOnKm = async () => this.view.keyManager!.storePrivateKey(this.view.idToken!, KeyUtil.armor(decryptablePrv), pubArmor, generatedKeyFingerprint!);
+        const storePrvOnKm = async () => this.view.keyManager!.storePrivateKey(this.view.idToken!, KeyUtil.armor(decryptablePrv), pubArmor);
         await Settings.retryUntilSuccessful(storePrvOnKm, 'Failed to store newly generated key on FlowCrypt Email Key Manager');
         await this.view.saveKeysAndPassPhrase([await KeyUtil.parse(generated.private)], opts); // store encrypted key + pass phrase locally
       }

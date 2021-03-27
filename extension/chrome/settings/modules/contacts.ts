@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Contact, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Str, Url } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
@@ -20,15 +20,15 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
-import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
+import { ContactStore, ContactPreview } from '../../../js/common/platform/store/contact-store.js';
 
 View.run(class ContactsView extends View {
 
   private acctEmail: string;
 
-  private contacts: Contact[] = [];
+  private contacts: ContactPreview[] = [];
   private factory: XssSafeFactory | undefined; // set in render()
-  private attUI = new AttachmentUI(() => Promise.resolve({ sizeMb: 5, size: 5 * 1024 * 1024, count: 1 }));
+  private attachmentUI = new AttachmentUI(() => Promise.resolve({ sizeMb: 5, size: 5 * 1024 * 1024, count: 1 }));
   private orgRules!: OrgRules;
   private pubLookup!: PubLookup;
   private backBtn = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">back</a>';
@@ -46,7 +46,7 @@ View.run(class ContactsView extends View {
     this.factory = new XssSafeFactory(this.acctEmail, tabId, undefined, undefined, { compact: true });
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     this.pubLookup = new PubLookup(this.orgRules);
-    this.attUI.initAttDialog('fineuploader', 'fineuploader_button', { attAdded: this.fileAddedHandler });
+    this.attachmentUI.initAttachmentDialog('fineuploader', 'fineuploader_button', { attachmentAdded: this.fileAddedHandler });
     const fetchKeyUI = new FetchKeyUI();
     fetchKeyUI.handleOnPaste($('.input_pubkey'));
     await this.loadAndRenderContactList();
@@ -66,7 +66,7 @@ View.run(class ContactsView extends View {
   // --- PRIVATE
 
   private loadAndRenderContactList = async () => {
-    this.contacts = await ContactStore.search(undefined, { has_pgp: true, limit: 500, substring: String($('.input-search-contacts').val()) }, false);
+    this.contacts = await ContactStore.search(undefined, { has_pgp: true, limit: 500, substring: String($('.input-search-contacts').val()) });
     let lineActionsHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
       '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import" data-test="action-show-import-public-keys-form">import public keys</a>&nbsp;&nbsp;';
     if (this.orgRules.getCustomSksPubkeyServer()) {
@@ -94,7 +94,7 @@ View.run(class ContactsView extends View {
   }
 
   private fileAddedHandler = async (file: Attachment) => {
-    this.attUI.clearAllAtts();
+    this.attachmentUI.clearAllAttachments();
     const { keys, errs } = await KeyUtil.readMany(file.getData());
     if (keys.length) {
       if (errs.length) {
@@ -108,8 +108,8 @@ View.run(class ContactsView extends View {
     }
   }
 
-  private actionExportAllKeysHandler = () => {
-    const allArmoredPublicKeys = this.contacts.map(c => c.pubkey).filter(Boolean).map((c: Key) => (KeyUtil.armor(c)).trim()).join('\n');
+  private actionExportAllKeysHandler = async () => {
+    const allArmoredPublicKeys = (await ContactStore.searchPubkeys(undefined, { has_pgp: true })).map(a => a!.trim()).join('\n');
     const exportFile = new Attachment({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: Buf.fromUtfStr(allArmoredPublicKeys) });
     Browser.saveToDownloads(exportFile);
   }

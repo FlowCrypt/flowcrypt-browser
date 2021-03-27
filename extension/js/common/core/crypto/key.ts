@@ -65,21 +65,19 @@ export type Contact = {
   expiresOn: number | null;
 };
 
-export interface PrvKeyInfo {
+export interface KeyInfo {
   private: string;
+  public: string; // this cannot be Pubkey has it's being passed to localstorage
   longid: string;
+  fingerprints: string[];
+  emails: string[];
+}
+
+export interface KeyInfoWithOptionalPp extends KeyInfo {
   passphrase?: string;
-  decrypted?: Key;  // only for internal use in this file
-  parsed?: Key;     // only for internal use in this file
 }
 
 export type KeyAlgo = 'curve25519' | 'rsa2048' | 'rsa4096';
-
-export interface KeyInfo extends PrvKeyInfo {
-  // this cannot be Pubkey has it's being passed to localstorage
-  public: string;
-  fingerprint: string;
-}
 
 export type PrvPacket = (OpenPGP.packet.SecretKey | OpenPGP.packet.SecretSubkey);
 
@@ -171,7 +169,9 @@ export class KeyUtil {
     if (pubkey.type === 'openpgp') {
       return OpenPGPKey.armor(pubkey);
     } else if (pubkey.type === 'x509') {
-      return (pubkey as unknown as { raw: string }).raw;
+      // some keys saved by older version may have `raw` as string, so fall back on it
+      const rawFields = pubkey as unknown as { rawArmored: string, raw: string };
+      return rawFields.rawArmored ?? rawFields.raw;
     } else {
       throw new Error('Unknown pubkey type: ' + pubkey.type);
     }
@@ -319,6 +319,19 @@ export class KeyUtil {
     } else {
       throw new Error(`KeyUtil.revoke does not support key type ${key.type}`);
     }
+  }
+
+  public static keyInfoObj = async (prv: Key): Promise<KeyInfo> => {
+    if (!prv.isPrivate) {
+      throw new Error('Key passed into KeyUtil.keyInfoObj must be a Private Key');
+    }
+    return {
+      private: KeyUtil.armor(prv),
+      public: KeyUtil.armor(await KeyUtil.asPublicKey(prv)),
+      longid: OpenPGPKey.fingerprintToLongid(prv.id),
+      emails: prv.emails,
+      fingerprints: prv.allIds,
+    };
   }
 
 }

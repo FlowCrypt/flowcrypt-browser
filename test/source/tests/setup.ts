@@ -11,6 +11,7 @@ import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { Str } from './../core/common';
 import { MOCK_KM_LAST_INSERTED_KEY } from './../mock/key-manager/key-manager-endpoints';
 import { BrowserRecipe } from './tooling/browser-recipe';
+import { KeyInfo, KeyUtil } from '../core/crypto/key';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -376,6 +377,15 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await settingsPage.waitAll(['@action-show-encrypted-inbox', '@action-open-security-page']);
       await Util.sleep(1);
       await settingsPage.notPresent(['@action-open-backup-page']);
+      const { cryptup_haspuborgrulestestflowcryptcom_keys: keys } = await settingsPage.getFromLocalStorage(['cryptup_haspuborgrulestestflowcryptcom_keys']);
+      const ki = keys as KeyInfo[];
+      expect(ki.length).to.equal(1);
+      expect(ki[0].private).to.include('PGP PRIVATE KEY');
+      expect(ki[0].private).to.not.include('Version');
+      expect(ki[0].private).to.not.include('Comment');
+      expect(ki[0].public).to.include('PGP PUBLIC KEY');
+      expect(ki[0].public).to.not.include('Version');
+      expect(ki[0].public).to.not.include('Comment');
     }));
 
     ava.default('no.pub@org-rules-test - no backup, no keygen, enforce attester submit with submit err', testWithBrowser(undefined, async (t, browser) => {
@@ -395,6 +405,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const attesterFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-attester-page', ['keyserver.htm']);
       await attesterFrame.waitAndClick('@action-submit-pub');
       await attesterFrame.waitAndRespondToModal('error', 'confirm', 'Disallowed by your organisation rules');
+    }));
+
+    ava.default('user@no-submit-org-rule.flowcrypt.com - do not submit to attester on key generation', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-org-rule.flowcrypt.com');
+      await Util.sleep(5);
+      await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase: 'long enough to suit requirements' }, usedPgpBefore: false });
+      await settingsPage.notPresent('.swal2-container');
+      await settingsPage.close();
     }));
 
     ava.default('user@no-search-domains-org-rule.flowcrypt.com - do not search attester for recipients on particular domains', testWithBrowser(undefined, async (t, browser) => {
@@ -431,6 +449,21 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await securityFrame.notPresent(['@action-change-passphrase-begin', '@action-test-passphrase-begin', '@action-forget-pp']);
     }));
 
+    ava.default('get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.com - automatic setup with key found on key manager and no submit rule', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoKeygen(settingsPage);
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      // check no "add key"
+      await settingsPage.notPresent('@action-open-add-key-page');
+      // check imported key
+      const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
+      await Util.sleep(1);
+      await myKeyFrame.waitAll('@content-fingerprint');
+      expect(await myKeyFrame.read('@content-fingerprint')).to.contain('9C64 3D82 783E 291A 2AD2 611B 499E 84DB 185F 0359');
+      await SettingsPageRecipe.closeDialog(settingsPage);
+    }));
+
     ava.default('put.key@key-manager-autogen.flowcrypt.com - automatic setup with key not found on key manager, then generated', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'put.key@key-manager-autogen.flowcrypt.com';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -444,7 +477,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await myKeyFrame.waitAll('@content-fingerprint');
       const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
       expect(fromKm).to.exist;
-      expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(fromKm.fingerprint));
+      const k = await KeyUtil.parse(fromKm.publicKey);
+      expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(k.id));
       expect(await myKeyFrame.read('@content-key-expiration')).to.equal('Key does not expire');
       await SettingsPageRecipe.closeDialog(settingsPage);
       await Util.sleep(2);
@@ -476,7 +510,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await settingsPage.waitAll('@container-overlay-details');
       await Util.sleep(0.5);
       const details = await settingsPage.read('@container-overlay-details');
-      expect(details).to.contain('500 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedPrivateKey,publicKey,fingerprint -> Intentional error for put.error user to test client behavior');
+      expect(details).to.contain('500 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedPrivateKey,publicKey -> Intentional error for put.error user to test client behavior');
       expect(details).to.not.contain('PRIVATE KEY');
       expect(details).to.not.contain('<REDACTED:');
     }));
@@ -514,7 +548,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await myKeyFrame.waitAll('@content-fingerprint');
       const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
       expect(fromKm).to.exist;
-      expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(fromKm.fingerprint));
+      const k = await KeyUtil.parse(fromKm.publicKey);
+      expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(k.id));
       const approxMonth = [29, 30, 31].map(days => Str.datetimeToDate(Str.fromDate(new Date(Date.now() + 1000 * 60 * 60 * 24 * days))));
       expect(await myKeyFrame.read('@content-key-expiration')).to.be.oneOf(approxMonth);
       await SettingsPageRecipe.closeDialog(settingsPage);
@@ -531,9 +566,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await settingsPage.waitAll('@container-overlay-details');
       await Util.sleep(0.5);
       const details = await settingsPage.read('@container-overlay-details');
-      expect(details).to.contain('400 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedPrivateKey,publicKey,fingerprint -> No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.com yet');
+      expect(details).to.contain('405 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedPrivateKey,publicKey -> No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.com yet');
       expect(details).to.not.contain('PRIVATE KEY');
-      expect(details).to.contain('<REDACTED:PRV>');
     }));
 
     /**

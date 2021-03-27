@@ -63,7 +63,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       }
       if (method === 'forward' && this.messageToReplyOrForward.decryptedFiles.length) {
         for (const file of this.messageToReplyOrForward.decryptedFiles) {
-          this.view.attsModule.attach.addFile(file);
+          this.view.attachmentsModule.attachment.addFile(file);
         }
       }
     }
@@ -95,8 +95,8 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       const readableBlockTypes = ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg'];
       const decryptedBlockTypes = ['decryptedHtml'];
       if (method === 'forward') {
-        readableBlockTypes.push(...['encryptedAtt', 'plainAtt']);
-        decryptedBlockTypes.push('decryptedAtt');
+        readableBlockTypes.push(...['encryptedAttachment', 'plainAttachment']);
+        decryptedBlockTypes.push('decryptedAttachment');
       }
       const readableBlocks: MsgBlock[] = [];
       for (const block of message.blocks.filter(b => readableBlockTypes.includes(b.type))) {
@@ -118,20 +118,20 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
           decryptedAndFormatedContent.push(Xss.htmlUnescape(htmlParsed));
         } else if (block.type === 'plainHtml') {
           decryptedAndFormatedContent.push(Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n')));
-        } else if (['encryptedAtt', 'decryptedAtt', 'plainAtt'].includes(block.type)) {
-          if (block.attMeta?.data) {
-            let attMeta: { content: Buf, filename?: string } | undefined;
-            if (block.type === 'encryptedAtt') {
+        } else if (['encryptedAttachment', 'decryptedAttachment', 'plainAttachment'].includes(block.type)) {
+          if (block.attachmentMeta?.data) {
+            let attachmentMeta: { content: Buf, filename?: string } | undefined;
+            if (block.type === 'encryptedAttachment') {
               this.setQuoteLoaderProgress('decrypting...');
-              const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.view.acctEmail), encryptedData: block.attMeta.data });
+              const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail), encryptedData: block.attachmentMeta.data });
               if (result.success) {
-                attMeta = { content: result.content, filename: result.filename };
+                attachmentMeta = { content: result.content, filename: result.filename };
               }
             } else {
-              attMeta = { content: Buf.fromUint8(block.attMeta.data), filename: block.attMeta.name };
+              attachmentMeta = { content: Buf.fromUint8(block.attachmentMeta.data), filename: block.attachmentMeta.name };
             }
-            if (attMeta) {
-              const file = new File([attMeta.content], attMeta.filename || '');
+            if (attachmentMeta) {
+              const file = new File([attachmentMeta.content], attachmentMeta.filename || '');
               decryptedFiles.push(file);
             }
           }
@@ -160,7 +160,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
   }
 
   private decryptMessage = async (encryptedData: Buf): Promise<string> => {
-    const decryptRes = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithPp(this.view.acctEmail), encryptedData });
+    const decryptRes = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail), encryptedData });
     if (decryptRes.success) {
       return decryptRes.content.toUtfStr();
     } else if (decryptRes.error && decryptRes.error.type === DecryptErrTypes.needPassphrase) {

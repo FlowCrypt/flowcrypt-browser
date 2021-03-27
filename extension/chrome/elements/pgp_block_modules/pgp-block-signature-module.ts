@@ -10,6 +10,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { VerifyRes } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
+import { Str } from '../../../js/common/core/common.js';
 
 export class PgpBlockViewSignatureModule {
 
@@ -18,11 +19,12 @@ export class PgpBlockViewSignatureModule {
 
   public renderPgpSignatureCheckResult = (signature: VerifyRes | undefined) => {
     if (signature) {
-      const signerEmail = signature.contact ? signature.contact.name || this.view.senderEmail : this.view.senderEmail;
+      const signerEmail = signature.signer?.primaryUserId ? Str.parseEmail(signature.signer.primaryUserId).email : undefined;
       $('#pgp_signature > .cursive > span').text(signerEmail || 'Unknown Signer');
       if (signature.signer && !signature.contact) {
         this.view.renderModule.doNotSetStateAsReadyYet = true; // so that body state is not marked as ready too soon - automated tests need to know when to check results
-        this.renderPgpSignatureCheckMissingPubkeyOptions(signature.signer, this.view.senderEmail).then(() => { // async so that it doesn't block rendering
+        // todo signerEmail?
+        this.renderPgpSignatureCheckMissingPubkeyOptions(signature.signer.longid, this.view.senderEmail).then(() => { // async so that it doesn't block rendering
           this.view.renderModule.doNotSetStateAsReadyYet = false;
           Ui.setTestState('ready');
           $('#pgp_block').css('min-height', '100px'); // signature fail can have a lot of text in it to render

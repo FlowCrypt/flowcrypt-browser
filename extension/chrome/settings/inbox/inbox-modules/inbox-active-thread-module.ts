@@ -33,7 +33,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       thread = thread || await this.view.gmail.threadGet(threadId, 'metadata');
       const subject = GmailParser.findHeader(thread.messages[0], 'subject') || '(no subject)';
       this.updateUrlWithoutRedirecting(`${subject} - FlowCrypt Inbox`, { acctEmail: this.view.acctEmail, threadId });
-      this.view.displayBlock('thread', subject);
+      this.view.displayBlock('thread', Xss.escape(subject));
       for (const m of thread.messages) {
         await this.renderMsg(m);
       }
@@ -101,7 +101,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       const mimeMsg = Buf.fromBase64UrlStr(raw!);
       const { blocks, headers } = await Mime.process(mimeMsg);
       let r = '';
-      let renderedAtts = '';
+      let renderedAttachments = '';
       for (const block of blocks) {
         if (block.type === 'encryptedMsg' || block.type === 'publicKey' || block.type === 'privateKey' || block.type === 'signedMsg') {
           this.threadHasPgpBlock = true;
@@ -109,16 +109,16 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
         if (r) {
           r += '<br><br>';
         }
-        if (['encryptedAtt', 'plainAtt'].includes(block.type)) {
-          renderedAtts += XssSafeFactory.renderableMsgBlock(this.view.factory, block, message.id, from, this.view.storage.sendAs && !!this.view.storage.sendAs[from]);
+        if (['encryptedAttachment', 'plainAttachment'].includes(block.type)) {
+          renderedAttachments += XssSafeFactory.renderableMsgBlock(this.view.factory, block, message.id, from, this.view.storage.sendAs && !!this.view.storage.sendAs[from]);
         } else if (this.view.showOriginal) {
           r += Xss.escape(block.content.toString()).replace(/\n/g, '<br>');
         } else {
           r += XssSafeFactory.renderableMsgBlock(this.view.factory, block, message.id, from, this.view.storage.sendAs && !!this.view.storage.sendAs[from]);
         }
       }
-      if (renderedAtts) {
-        r += `<div class="attachments">${renderedAtts}</div>`;
+      if (renderedAttachments) {
+        r += `<div class="attachments">${renderedAttachments}</div>`;
       }
       const exportBtn = this.debugEmails.includes(this.view.acctEmail) ? '<a href="#" class="action-export">download api export</a>' : '';
       r = `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(from)} <span style="float:right;">${headers.date} ${exportBtn}</p>` + r;

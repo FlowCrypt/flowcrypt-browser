@@ -1,10 +1,10 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { KeyInfo, Key, KeyUtil } from '../../core/crypto/key.js';
+import { KeyInfo, KeyInfoWithOptionalPp, KeyUtil, Key } from '../../core/crypto/key.js';
 import { AcctStore } from './acct-store.js';
 import { PassphraseStore } from './passphrase-store.js';
 import { AbstractStore } from './abstract-store.js';
-import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key.js';
+import { Assert } from '../../assert.js';
 
 /**
  * Local store of account private keys
@@ -17,46 +17,59 @@ export class KeyStore extends AbstractStore {
     if (!fingerprints) {
       return keys;
     }
-    return keys.filter(ki => fingerprints.includes(ki.fingerprint));
+    // filters by primary fingerprint - subkey fingerprints are ignored
+    // todo - could consider also filtering by subkey fingerprints, but need to think about impact
+    return keys.filter(ki => fingerprints.includes(ki.fingerprints[0]));
   }
 
-  public static getFirst = async (acctEmail: string): Promise<KeyInfo> => {
+  public static getFirstOptional = async (acctEmail: string): Promise<KeyInfo | undefined> => {
     const stored = await AcctStore.get(acctEmail, ['keys']);
     const keys: KeyInfo[] = stored.keys || [];
     return keys[0];
   }
 
-  public static getAllWithPp = async (acctEmail: string): Promise<KeyInfo[]> => {
-    const keys = await KeyStore.get(acctEmail);
-    for (const ki of keys) {
-      ki.passphrase = await PassphraseStore.get(acctEmail, ki.fingerprint);
-    }
-    return keys;
+  public static getFirstRequired = async (acctEmail: string): Promise<KeyInfo> => {
+    const key = await KeyStore.getFirstOptional(acctEmail);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(key);
+    return key as KeyInfo;
   }
 
-  public static add = async (acctEmail: string, newKeyArmored: string) => {
+  public static getAllWithOptionalPassPhrase = async (acctEmail: string): Promise<KeyInfoWithOptionalPp[]> => {
+    const keys = await KeyStore.get(acctEmail);
+    const withPp: KeyInfoWithOptionalPp[] = [];
+    for (const ki of keys) {
+      withPp.push({ ...ki, passphrase: await PassphraseStore.get(acctEmail, ki.fingerprints[0]) });
+    }
+    return withPp;
+  }
+
+  public static add = async (acctEmail: string, newKey: string | Key) => {
     const keyinfos = await KeyStore.get(acctEmail);
     let updated = false;
-    const prv = await KeyUtil.parse(newKeyArmored);
+    const prv: Key = (typeof newKey === 'string') ? await KeyUtil.parse(newKey) : newKey;
     if (!prv.fullyEncrypted) {
       throw new Error('Cannot import plain, unprotected key.');
     }
     for (const i in keyinfos) {
-      if (prv.id === keyinfos[i].fingerprint) { // replacing a key
-        keyinfos[i] = await KeyStore.keyInfoObj(prv);
+      if (prv.id === keyinfos[i].fingerprints[0]) { // replacing a key
+        keyinfos[i] = await KeyUtil.keyInfoObj(prv);
         updated = true;
       }
     }
     if (!updated) {
-      keyinfos.push(await KeyStore.keyInfoObj(prv));
+      keyinfos.push(await KeyUtil.keyInfoObj(prv));
     }
+    await KeyStore.set(acctEmail, keyinfos);
+  }
+
+  public static set = async (acctEmail: string, keyinfos: KeyInfo[]) => {
     await AcctStore.set(acctEmail, { keys: keyinfos });
   }
 
   public static remove = async (acctEmail: string, removeFingerprint: string): Promise<void> => {
     const privateKeys = await KeyStore.get(acctEmail);
-    const filteredPrivateKeys = privateKeys.filter(ki => ki.fingerprint !== removeFingerprint);
-    await AcctStore.set(acctEmail, { keys: filteredPrivateKeys });
+    const filteredPrivateKeys = privateKeys.filter(ki => ki.fingerprints[0] !== removeFingerprint);
+    await KeyStore.set(acctEmail, filteredPrivateKeys);
   }
 
   /**
@@ -66,17 +79,10 @@ export class KeyStore extends AbstractStore {
     const keys = await KeyStore.get(acctEmail);
     const result: string[] = [];
     for (const key of keys) {
-      if (! await PassphraseStore.get(acctEmail, key.fingerprint, true) && await PassphraseStore.get(acctEmail, key.fingerprint, false)) {
+      if (! await PassphraseStore.get(acctEmail, key.fingerprints[0], true) && await PassphraseStore.get(acctEmail, key.fingerprints[0], false)) {
         result.push(key.longid);
       }
     }
     return result;
   }
-
-  public static keyInfoObj = async (prv: Key): Promise<KeyInfo> => {
-    const pubArmor = KeyUtil.armor(await KeyUtil.asPublicKey(prv));
-    const longid = OpenPGPKey.fingerprintToLongid(prv.id);
-    return { private: KeyUtil.armor(prv), public: pubArmor, longid, fingerprint: prv.id };
-  }
-
 }

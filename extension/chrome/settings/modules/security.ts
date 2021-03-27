@@ -39,8 +39,7 @@ View.run(class SecurityView extends View {
 
   public render = async () => {
     await initPassphraseToggle(['passphrase_entry']);
-    this.primaryKi = await KeyStore.getFirst(this.acctEmail);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
+    this.primaryKi = await KeyStore.getFirstRequired(this.acctEmail);
     this.authInfo = await AcctStore.authInfo(this.acctEmail);
     const storage = await AcctStore.get(this.acctEmail, ['hide_message_password', 'outgoing_language']);
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
@@ -69,11 +68,11 @@ View.run(class SecurityView extends View {
         $('.passphrase_entry_container').css('display', '');
       }));
       $('.confirm_passphrase_requirement_change').click(this.setHandler(async () => {
-        const primaryKiPP = await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprint);
+        const primaryKiPP = await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprints[0]);
         if ($('input#passphrase_entry').val() === primaryKiPP) {
           for (const key of keys) {
-            await PassphraseStore.set('local', this.acctEmail, key.fingerprint, undefined);
-            await PassphraseStore.set('session', this.acctEmail, key.fingerprint, undefined);
+            await PassphraseStore.set('local', this.acctEmail, key.fingerprints[0], undefined);
+            await PassphraseStore.set('session', this.acctEmail, key.fingerprints[0], undefined);
           }
           window.location.reload();
         } else {
@@ -134,7 +133,7 @@ View.run(class SecurityView extends View {
 
   private isAnyPassPhraseStoredPermanently = async (keys: KeyInfo[]) => {
     for (const key of keys) {
-      if (await PassphraseStore.get(this.acctEmail, key.fingerprint, true)) {
+      if (await PassphraseStore.get(this.acctEmail, key.fingerprints[0], true)) {
         return true;
       }
     }

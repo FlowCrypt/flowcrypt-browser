@@ -250,6 +250,7 @@ declare namespace OpenPGP {
       public revoked: null | boolean;
       public sign(key: SecretKey | SecretSubkey, data: Uint8Array): true;
       public isExpired(date?: Date): boolean;
+      public verify(key: PublicKey | SecretKey, signatureType: OpenPGP.enums.signature, data: any, detached?: boolean, streaming?: boolean): Promise<boolean>;
       public getExpirationTime(): Date | typeof Infinity;
     }
 
@@ -506,13 +507,13 @@ declare namespace OpenPGP {
      * @param partindex
      * @param parttotal
      */
-    function armor(messagetype: enums.armor, body: object, partindex: number, parttotal: number): string;
+    function encode(messagetype: enums.armor, body: object, partindex?: number, parttotal?: number, customComment?: string): string;
 
     /** DeArmor an OpenPGP armored message; verify the checksum and return the encoded bytes
      *
      *  @param text OpenPGP armored message
      */
-    function dearmor(text: string): object;
+    function decode(text: string): Promise<{ type: enums.armor, data: ReadableStream<Uint8Array> }>;
   }
 
   export namespace cleartext {
@@ -694,6 +695,7 @@ declare namespace OpenPGP {
     function read(type: typeof symmetric, e: symmetric): symmetricNames | string | any;
     function read(type: typeof keyStatus, e: keyStatus): keyStatusNames | string | any;
     function read(type: typeof keyFlags, e: keyFlags): keyFlagsNames | string | any;
+    function read(type: typeof signature, e: signature): signatureNames | string | any;
 
     export type armorNames = 'multipart_section' | 'multipart_last' | 'signed' | 'message' | 'public_key' | 'private_key';
     enum armor {
@@ -757,6 +759,25 @@ declare namespace OpenPGP {
       symEncryptedAEADProtected = 20,
     }
 
+    export type signatureNames = 'binary' | 'text' | 'standalone' | 'cert_generic' | 'cert_persona' | 'cert_casual' | 'cert_positive' | 'cert_revocation' | 'subkey_binding' | 'key_binding' | 'key' | 'key_revocation' | 'subkey_revocation' | 'timestamp' | 'third_party';
+    enum signature {
+      binary = 0,
+      text = 1,
+      standalone = 2,
+      cert_generic = 16,
+      cert_persona = 17,
+      cert_casual = 18,
+      cert_positive = 19,
+      cert_revocation = 48,
+      subkey_binding = 24,
+      key_binding = 25,
+      key = 31,
+      key_revocation = 32,
+      subkey_revocation = 40,
+      timestamp = 64,
+      third_party = 80
+    }
+
     export type publicKeyNames = 'rsa_encrypt_sign' | 'rsa_encrypt' | 'rsa_sign' | 'elgamal' | 'dsa' | 'ecdh' | 'ecdsa' | 'eddsa' | 'aedh' | 'aedsa';
     enum publicKey {
       rsa_encrypt_sign = 1,
@@ -809,6 +830,9 @@ declare namespace OpenPGP {
 
   export namespace key {
 
+    // callable constructor
+    export function Key(this: Key, packetlist: packet.List<packet.BasePacket>): Key;
+
     export type EllipticCurveName = 'curve25519' | 'p256' | 'p384' | 'p521' | 'secp256k1' | 'brainpoolP256r1' | 'brainpoolP384r1' | 'brainpoolP512r1';
 
     /** Class that represents an OpenPGP key. Must contain a primary key. Can contain additional subkeys, signatures, user ids, user attributes.
@@ -819,7 +843,7 @@ declare namespace OpenPGP {
       public users: User[];
       public revocationSignatures: packet.Signature[];
       public keyPacket: packet.PublicKey | packet.SecretKey;
-      constructor(packetlist: packet.List<packet.AnyPacket>);
+      constructor(packetlist: packet.List<packet.BasePacket>);
       public armor(): string;
       public decrypt(passphrase: string | string[], keyId?: Keyid): Promise<boolean>;
       public encrypt(passphrase: string | string[]): Promise<void>;
@@ -829,6 +853,7 @@ declare namespace OpenPGP {
       public getUserIds(): string[];
       public isPrivate(): boolean;
       public isPublic(): boolean;
+      public toPacketlist(): packet.BasePacket[];
       public toPublic(): Key;
       public update(key: Key): void;
       public verifyPrimaryKey(): Promise<void>; // throws on err
@@ -873,6 +898,7 @@ declare namespace OpenPGP {
     export interface PrimaryUser {
       index: number;
       user: User;
+      selfCertification: packet.Signature;
     }
 
     interface KeyResult {
