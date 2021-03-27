@@ -399,16 +399,14 @@ View.run(class SettingsView extends View {
   }
 
   private renderSubscriptionStatusHeader = (subscription: SubscriptionInfo) => {
-    $('#status-row #status_subscription').text(`s:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
-    if (subscription.active) {
+    const isActive = subscription.level && !subscription.expired;
+    const activeOrNotStr = isActive ? 'active' : 'inactive';
+    $('#status-row #status_subscription').text(`s:${activeOrNotStr}`);
+    if (isActive) {
       $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block');
-      if (subscription.method === 'group') {
-        $('#status-row #status_google').text(`s:active:group`);
-        $('.logo-row .subscription .expire').text('group billing').css('display', 'inline-block');
-      }
     } else {
       $('.logo-row .subscription .level').text('free forever').css('display', 'inline-block');
-      if (subscription.level && subscription.expire && subscription.method) {
+      if (subscription.level && subscription.expired) {
         $('.logo-row .subscription .expire').text('expired').css('display', 'inline-block');
       }
     }

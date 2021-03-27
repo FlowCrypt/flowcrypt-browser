@@ -16,8 +16,7 @@ import { FlowCryptWebsite } from '../flowcrypt-website.js';
 export type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
 export type SubscriptionLevel = 'pro' | null;
 export type FcUuidAuth = { account: string, uuid: string | undefined };
-export type PaymentMethod = 'stripe' | 'group';
-export type SubscriptionInfo = { active?: boolean | null; method?: PaymentMethod | null; level?: SubscriptionLevel; expire?: string | null; expired?: boolean };
+export type SubscriptionInfo = { level?: SubscriptionLevel; expired?: boolean };
 
 export namespace BackendRes {
   export type FcAccountLogin = { registered: boolean, verified: boolean };
