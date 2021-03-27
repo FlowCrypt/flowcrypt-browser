@@ -25,9 +25,9 @@ import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { GlobalStore } from '../../js/common/platform/store/global-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import Swal from 'sweetalert2';
-import { Subscription } from '../../js/common/subscription.js';
 import { FlowCryptWebsite } from '../../js/common/api/flowcrypt-website.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
+import { SubscriptionInfo } from '../../js/common/api/account-servers/flowcrypt-com-api.js';
 
 View.run(class SettingsView extends View {
 
@@ -307,14 +307,15 @@ View.run(class SettingsView extends View {
     const authInfo = await AcctStore.authInfo(this.acctEmail!);
     if (authInfo.uuid) { // have auth email set
       try {
-        const response = await this.acctServer!.accountGetAndUpdateLocalStore(authInfo);
+        const acctRes = await this.acctServer!.accountGetAndUpdateLocalStore(authInfo);
         $('#status-row #status_flowcrypt').text(`fc:ok`);
-        if (response?.account?.alias) {
+        if (acctRes?.account?.alias) {
           statusContainer.find('.status-indicator-text').css('display', 'none');
           statusContainer.find('.status-indicator').addClass('active');
         } else {
           statusContainer.find('.status-indicator').addClass('inactive');
         }
+        this.renderSubscriptionStatusHeader(acctRes.subscription);
       } catch (e) {
         if (ApiErr.isAuthErr(e)) {
           const authNeededLink = $('<a class="bad" href="#">Auth Needed</a>');
@@ -338,7 +339,6 @@ View.run(class SettingsView extends View {
       statusContainer.find('.status-indicator').addClass('inactive');
       $('#status-row #status_flowcrypt').text(`fc:none`);
     }
-    this.renderSubscriptionStatusHeader(await AcctStore.getSubscription(this.acctEmail!));
     statusContainer.css('visibility', 'visible');
   }
 
@@ -398,7 +398,7 @@ View.run(class SettingsView extends View {
     }
   }
 
-  private renderSubscriptionStatusHeader = (subscription: Subscription) => {
+  private renderSubscriptionStatusHeader = (subscription: SubscriptionInfo) => {
     $('#status-row #status_subscription').text(`s:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
     if (subscription.active) {
       $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block');
@@ -409,12 +409,8 @@ View.run(class SettingsView extends View {
     } else {
       $('.logo-row .subscription .level').text('free forever').css('display', 'inline-block');
       if (subscription.level && subscription.expire && subscription.method) {
-        if (subscription.method === 'group') {
-          $('.logo-row .subscription .expire').text('expired').css('display', 'inline-block');
-        }
-        $('.logo-row .subscription .upgrade').text('renew');
+        $('.logo-row .subscription .expire').text('expired').css('display', 'inline-block');
       }
-      $('.logo-row .subscription .upgrade').css('display', 'inline-block');
     }
   }
 

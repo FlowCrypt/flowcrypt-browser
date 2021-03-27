@@ -61,7 +61,7 @@ export class FlowCryptComApi extends Api {
   public static accountGetAndUpdateLocalStore = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcAccountGet> => {
     FlowCryptComApi.throwIfMissingUuid(fcAuth);
     const r = await FlowCryptComApi.request<BackendRes.FcAccountGet>('account/get', fcAuth);
-    await AcctStore.set(fcAuth.account, { rules: r.domain_org_rules, subscription: r.subscription });
+    await AcctStore.set(fcAuth.account, { rules: r.domain_org_rules });
     return r;
   }
 
