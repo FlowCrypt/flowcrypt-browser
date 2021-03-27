@@ -6,7 +6,6 @@ Licensor: FlowCrypt a. s.
 Software: FlowCrypt PGP browser extension. The Software is © 2016-present FlowCrypt a. s.
 
 Use Limitation: This software is free to use with the following limitations:
- - Size of any sent email message including attachments cannot exceed 5MB.
  - Password encrypted messages and attachments have to expire in 7 days.
  - Messages, attachments or files can only be transferred through used email provider or through services provided by Licensor. Never through 3rd party or custom services.
  - Plain-text portion of password encrypted messages must only include a link to a page on flowcrypt.com domain. Recipient cannot be directed to any other place or means of decrypting password encrypted messages.

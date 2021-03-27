@@ -9,13 +9,12 @@ import { GmailRes } from '../../api/email-provider/gmail/gmail-parser.js';
 import { AcctStoreDict, AccountIndex, StoredReplyDraftMeta } from './acct-store.js';
 import { UnreportableError, Catch } from '../catch.js';
 import { StoredAdminCode } from './global-store.js';
-import { SubscriptionInfo } from '../../api/account-servers/flowcrypt-com-api.js';
 
-type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo | DomainRulesJson;
+type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | DomainRulesJson;
 export type StorageType = 'session' | 'local';
 export type FlatTypes = null | undefined | number | string | boolean;
 type Storable = FlatTypes | string[] | KeyInfo[] | Dict<StoredReplyDraftMeta> | Dict<StoredAdminCode>
-  | SubscriptionInfo | GmailRes.OpenId | DomainRulesJson;
+  | GmailRes.OpenId | DomainRulesJson;
 export type Serializable = SerializableTypes | SerializableTypes[] | Dict<SerializableTypes> | Dict<SerializableTypes>[];
 
 export interface RawStore {
