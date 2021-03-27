@@ -267,7 +267,6 @@ export class AttachmentDownloadView extends View {
       }
       await this.decryptAndSaveAttachmentToDownloads();
     } else {
-      delete result.message;
       $('body.attachment')
         .html(`<div>Failed to decrypt:</div><a href="#" data-test="decrypt-error-details" class="see-error-details">see error details</a><br><div>Downloading original…`) // xss-escaped
         .addClass('error-occured')

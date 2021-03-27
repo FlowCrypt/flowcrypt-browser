@@ -62,7 +62,6 @@ View.run(class ManualDecryptView extends View {
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       $('.passphrase_dialog').html(this.factory!.embeddedPassphrase(result.longids.needPassphrase)); // xss-safe-factory
     } else {
-      delete result.message;
       console.info(result);
       await Ui.modal.error('These was a problem decrypting this file, details are in the console.');
     }

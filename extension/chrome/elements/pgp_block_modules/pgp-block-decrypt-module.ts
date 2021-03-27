@@ -105,7 +105,6 @@ export class PgpBlockViewDecryptModule {
         } else if (result.error) {
           await this.view.errorModule.renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.message}</em>`, encryptedData.toUtfStr());
         } else { // should generally not happen
-          delete result.message;
           await this.view.errorModule.renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.writeMe + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"', encryptedData.toUtfStr());
         }
       }
