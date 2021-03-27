@@ -402,19 +402,14 @@ View.run(class SettingsView extends View {
     $('#status-row #status_subscription').text(`s:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
     if (subscription.active) {
       $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block');
-      if (subscription.method === 'trial') {
-        $('.logo-row .subscription .expire').text(subscription.expire ? ('trial ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
-        $('.logo-row .subscription .upgrade').css('display', 'inline-block');
-      } else if (subscription.method === 'group') {
+      if (subscription.method === 'group') {
         $('#status-row #status_google').text(`s:active:group`);
         $('.logo-row .subscription .expire').text('group billing').css('display', 'inline-block');
       }
     } else {
       $('.logo-row .subscription .level').text('free forever').css('display', 'inline-block');
       if (subscription.level && subscription.expire && subscription.method) {
-        if (subscription.method === 'trial') {
-          $('.logo-row .subscription .expire').text('trial done').css('display', 'inline-block');
-        } else if (subscription.method === 'group') {
+        if (subscription.method === 'group') {
           $('.logo-row .subscription .expire').text('expired').css('display', 'inline-block');
         }
         $('.logo-row .subscription .upgrade').text('renew');
