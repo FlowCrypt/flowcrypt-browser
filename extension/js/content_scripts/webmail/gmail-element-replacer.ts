@@ -55,7 +55,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     subject: 'h2.hP',
     autoReplies: 'div.brb',
     msgOuter: 'div.adn',
-    msgInner: 'div.a3s:not(.undefined), .message_inner_body',
+    msgInner: 'div.a3s:visible:not(.undefined), .message_inner_body:visible',
     msgInnerText: 'table.cf.An',
     msgInnerContainingPgp: "div.a3s:not(.undefined):contains('" + PgpArmor.headers('null').begin + "')",
     attachmentsContainerOuter: 'div.hq.gt',
