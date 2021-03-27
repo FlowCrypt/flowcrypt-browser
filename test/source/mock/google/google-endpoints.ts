@@ -5,7 +5,7 @@ import Parse, { ParseMsgResult } from '../../util/parse';
 import { isDelete, isGet, isPost, isPut, parseResourceId } from '../lib/mock-util';
 import { GoogleData } from './google-data';
 import { HandlersDefinition } from '../all-apis-mock';
-import { ParsedMail } from 'mailparser';
+import { AddressObject, ParsedMail } from 'mailparser';
 import { TestBySubjectStrategyContext } from './strategies/send-message-strategy';
 import { UnsuportableStrategyError } from './strategies/strategy-base';
 import { oauth } from '../lib/oauth';
@@ -300,7 +300,10 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
   if (!mimeMsg.text && !mimeMsg.attachments?.length) {
     throw new HttpClientErr('Error: Message body cannot be empty', 400);
   }
-  if (!mimeMsg.to?.value.length || mimeMsg.to?.value.find(em => !allowedRecipients.includes(em.address!))) {
+  if (
+    !parsedMailAddressObjectAsArray(mimeMsg.to).length && parsedMailAddressObjectAsArray(mimeMsg.to)[0].value.length
+    || parsedMailAddressObjectAsArray(mimeMsg.to)[0].value.find(em => !allowedRecipients.includes(em.address!))
+  ) {
     throw new HttpClientErr('Error: You can\'t send a message to unexisting email address(es)');
   }
   const aliases = [acct];
@@ -310,4 +313,14 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
   if (!mimeMsg.from?.value.length || mimeMsg.from?.value.find(em => !aliases.includes(em.address!))) {
     throw new HttpClientErr('You can\'t send a message from unexisting email address(es)');
   }
+};
+
+export const parsedMailAddressObjectAsArray = (header: AddressObject | AddressObject[] | undefined): AddressObject[] => {
+  if (!header) {
+    return [];
+  }
+  if (Array.isArray(header)) {
+    return header;
+  }
+  return [header];
 };
