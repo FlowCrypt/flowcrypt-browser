@@ -119,15 +119,15 @@ declare namespace OpenPGP {
       public version: number;
       public expirationTimeV3: number | null;
       public keyExpirationTime: number | null;
+      public params: object[];
+      public isEncrypted: boolean; // may be null, false or true
       public getBitSize(): number;
       public getAlgorithmInfo(): key.AlgorithmInfo;
       public getFingerprint(): string;
       public getFingerprintBytes(): Uint8Array | null;
       public getCreationTime(): Date;
       public getKeyId(): Keyid;
-      public params: object[];
       public isDecrypted(): boolean;
-      public isEncrypted: boolean; // may be null, false or true
     }
 
     class BasePrimaryKeyPacket extends BaseKeyPacket {

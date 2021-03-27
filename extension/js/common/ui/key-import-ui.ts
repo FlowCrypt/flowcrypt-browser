@@ -102,21 +102,22 @@ export class KeyImportUi {
         $('.line.unprotected_key_create_pass_phrase').hide();
       }
     }));
-    const attachment = new AttachmentUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
-    attachment.initAttachmentDialog('fineuploader', 'fineuploader_button', {
+    const attachmentUi = new AttachmentUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
+    attachmentUi.initAttachmentDialog('fineuploader', 'fineuploader_button', {
       attachmentAdded: async file => {
-        let prv: OpenPGP.key.Key | undefined;
-        const utf = file.getData().toUtfStr();
+        let prv: Key | undefined;
+        const utf = file.getData().toUtfStr('ignore'); // ignore utf8 errors because this may be a binary key (in which case we use the bytes directly below)
         if (utf.includes(PgpArmor.headers('privateKey').begin)) {
           const firstPrv = MsgBlockParser.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
           if (firstPrv) { // filter out all content except for the first encountered private key (GPGKeychain compatibility)
-            prv = (await opgp.key.readArmored(firstPrv.content.toString())).keys[0];
+            prv = (await KeyUtil.parse(firstPrv.content.toString()));
           }
         } else {
-          prv = (await opgp.key.read(file.getData())).keys[0];
+          const parsed = await KeyUtil.parseBinary(file.getData(), '');
+          prv = parsed[0];
         }
         if (typeof prv !== 'undefined') {
-          $('.input_private_key').val(prv.armor()).change().prop('disabled', true);
+          $('.input_private_key').val(KeyUtil.armor(prv)).change().prop('disabled', true);
           $('.source_paste_container').css('display', 'block');
         } else {
           $('.input_private_key').val('').change().prop('disabled', false);
@@ -129,8 +130,8 @@ export class KeyImportUi {
 
   public checkPrv = async (acctEmail: string, armored: string, passphrase: string): Promise<KeyImportUiCheckResult> => {
     const { normalized } = await this.normalize('privateKey', armored);
-    const decrypted = await this.read('privateKey', normalized);
-    const encrypted = await this.read('privateKey', normalized);
+    const decrypted = await this.read('privateKey', normalized); // for decrypting - not decrypted yet
+    const encrypted = await this.read('privateKey', normalized); // original (typically encrypted)
     this.rejectIfNot('privateKey', decrypted);
     await this.rejectKnownIfSelected(acctEmail, decrypted);
     await this.decryptAndEncryptAsNeeded(decrypted, encrypted, passphrase);

@@ -526,49 +526,60 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       });
     }));
 
-    ava.default('user@key-manager-no-pub-lookup.flowcrypt.com - do not search pubkeys on EKM: NO_KEY_MANAGER_PUB_LOOKUP', testWithBrowser(undefined, async (t, browser) => {
-      // disallowed searching EKM pubkeys (EKM is behind firewall, but user may be using public interned, with EKM not reachable)
-      const acct = 'user@key-manager-no-pub-lookup.flowcrypt.com';
-      const dontLookupEmail = 'not.suppposed.to.lookup@key-manager-no-pub-lookup.flowcrypt.com';
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.autoKeygen(settingsPage);
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
-      await ComposePageRecipe.fillMsg(composePage, { to: dontLookupEmail }, 'must skip EKM lookup');
-      await composePage.waitForContent('.email_address.no_pgp', dontLookupEmail); // if it tried EKM, this would be err
-      await composePage.waitAll('@input-password');
-    }));
+    ava.default(
+      'user@key-manager-no-pub-lookup.flowcrypt.com - do not search pubkeys on EKM: NO_KEY_MANAGER_PUB_LOOKUP',
+      testWithBrowser(undefined, async (t, browser) => {
+        // disallowed searching EKM pubkeys (EKM is behind firewall, but user may be using public interned, with EKM not reachable)
+        const acct = 'user@key-manager-no-pub-lookup.flowcrypt.com';
+        const dontLookupEmail = 'not.suppposed.to.lookup@key-manager-no-pub-lookup.flowcrypt.com';
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        await SetupPageRecipe.autoKeygen(settingsPage);
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+        await ComposePageRecipe.fillMsg(composePage, { to: dontLookupEmail }, 'must skip EKM lookup');
+        await composePage.waitForContent('.email_address.no_pgp', dontLookupEmail); // if it tried EKM, this would be err
+        await composePage.waitAll('@input-password');
+      })
+    );
 
-    ava.default('expire@key-manager-keygen-expiration.flowcrypt.com - OrgRule enforce_keygen_expire_months: 1', testWithBrowser(undefined, async (t, browser) => {
-      const acct = 'expire@key-manager-keygen-expiration.flowcrypt.com';
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.autoKeygen(settingsPage);
-      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-      const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
-      await Util.sleep(1);
-      await myKeyFrame.waitAll('@content-fingerprint');
-      const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
-      expect(fromKm).to.exist;
-      const k = await KeyUtil.parse(fromKm.publicKey);
-      expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(k.id));
-      const approxMonth = [29, 30, 31].map(days => Str.datetimeToDate(Str.fromDate(new Date(Date.now() + 1000 * 60 * 60 * 24 * days))));
-      expect(await myKeyFrame.read('@content-key-expiration')).to.be.oneOf(approxMonth);
-      await SettingsPageRecipe.closeDialog(settingsPage);
-    }));
+    ava.default(
+      'expire@key-manager-keygen-expiration.flowcrypt.com - OrgRule enforce_keygen_expire_months: 1',
+      testWithBrowser(undefined, async (t, browser) => {
+        const acct = 'expire@key-manager-keygen-expiration.flowcrypt.com';
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        await SetupPageRecipe.autoKeygen(settingsPage);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
+        await Util.sleep(1);
+        await myKeyFrame.waitAll('@content-fingerprint');
+        const fromKm = MOCK_KM_LAST_INSERTED_KEY[acct];
+        expect(fromKm).to.exist;
+        const k = await KeyUtil.parse(fromKm.publicKey);
+        expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(k.id));
+        const approxMonth = [29, 30, 31].map(days => Str.datetimeToDate(Str.fromDate(new Date(Date.now() + 1000 * 60 * 60 * 24 * days))));
+        expect(await myKeyFrame.read('@content-key-expiration')).to.be.oneOf(approxMonth);
+        await SettingsPageRecipe.closeDialog(settingsPage);
+      })
+    );
 
-    ava.default('reject.client.keypair@key-manager-autogen.flowcrypt.com - does not leak sensitive info on err 400, shows informative err', testWithBrowser(undefined, async (t, browser) => {
-      const acct = 'reject.client.keypair@key-manager-autogen.flowcrypt.com';
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await settingsPage.waitAll(['@action-overlay-retry', '@container-overlay-prompt-text', '@action-show-overlay-details']);
-      await Util.sleep(0.5);
-      const title = await settingsPage.read('@container-overlay-prompt-text');
-      expect(title).to.contain('Failed to store newly generated key on FlowCrypt Email Key Manager, No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.com yet. Please ask your administrator.');
-      await settingsPage.click('@action-show-overlay-details');
-      await settingsPage.waitAll('@container-overlay-details');
-      await Util.sleep(0.5);
-      const details = await settingsPage.read('@container-overlay-details');
-      expect(details).to.contain('405 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private string: decryptedPrivateKey,publicKey -> No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.com yet');
-      expect(details).to.not.contain('PRIVATE KEY');
-    }));
+    ava.default(
+      'reject.client.keypair@key-manager-autogen.flowcrypt.com - does not leak sensitive info on err 400, shows informative err',
+      testWithBrowser(undefined, async (t, browser) => {
+        const acct = 'reject.client.keypair@key-manager-autogen.flowcrypt.com';
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        await settingsPage.waitAll(['@action-overlay-retry', '@container-overlay-prompt-text', '@action-show-overlay-details']);
+        await Util.sleep(0.5);
+        const title = await settingsPage.read('@container-overlay-prompt-text');
+        expect(title).to.contain('Failed to store newly generated key on FlowCrypt Email Key Manager, ' +
+          'No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.com yet. Please ask your administrator.');
+        await settingsPage.click('@action-show-overlay-details');
+        await settingsPage.waitAll('@container-overlay-details');
+        await Util.sleep(0.5);
+        const details = await settingsPage.read('@container-overlay-details');
+        expect(details).to.contain('405 when PUT-ing https://localhost:8001/flowcrypt-email-key-manager/keys/private string: ' +
+          'decryptedPrivateKey,publicKey -> No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.com yet');
+        expect(details).to.not.contain('PRIVATE KEY');
+      })
+    );
 
     /**
      * You need the following lines in /etc/hosts:
@@ -605,7 +616,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const acct = 'no.fes@example.com';
       if (testVariant === 'ENTERPRISE-MOCK') { // shows err on enterprise
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-        await settingsPage.waitAndRespondToModal('error', 'confirm', "Cannot reach your company's FlowCrypt Enterprise Server (FES). Contact human@flowcrypt.com when unsure.");
+        await settingsPage.waitAndRespondToModal('error', 'confirm',
+          "Cannot reach your company's FlowCrypt Enterprise Server (FES). Contact human@flowcrypt.com when unsure.");
       } else if (testVariant === 'CONSUMER-MOCK') { // allows to set up on consumer
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false });
@@ -613,6 +625,24 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         throw new Error(`Unexpected test variant ${testVariant}`);
       }
     }));
+
+    // todo - change to an "add key" instead of initial import test
+    // todo - disable initial import of s/mime key
+    // todo - disable import of encrypted s/mime key, require decrypted?
+    // ava.default.only(
+    //   'setup - s/mime private key',
+    //   testWithBrowser(undefined, async (t, browser) => {
+    //     const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
+    //     const key = {
+    //       title: 's/mime pkcs12 encrypted key',
+    //       filePath: 'test/samples/smime/human-unprotected-PKCS12.p12',
+    //       armored: null,
+    //       passphrase: 'test pp to encrypt unprotected key',
+    //       longid: null
+    //     };
+    //     await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: false, usedPgpBefore: false, key });
+    //   })
+    // );
 
   }
 

@@ -19,7 +19,7 @@ type ManualEnterOpts = {
   enforceAttesterSubmitOrgRule?: boolean,
   noPubSubmitRule?: boolean,
   fillOnly?: boolean,
-  key?: { title: string, passphrase: string, armored: string | null, longid: string | null }
+  key?: { title: string, passphrase: string, armored: string | null, longid: string | null, filePath?: string }
 };
 
 type CreateKeyOpts = {
@@ -92,7 +92,6 @@ export class SetupPageRecipe extends PageRecipe {
       key,
     }: ManualEnterOpts = {}
   ) {
-    const k = key || Config.key(keyTitle);
     if (!noPrvCreateOrgRule) {
       if (usedPgpBefore) {
         await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-enter', { retryErrs: true });
@@ -100,8 +99,21 @@ export class SetupPageRecipe extends PageRecipe {
         await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-enter', { retryErrs: true });
       }
     }
-    await settingsPage.waitAndClick('@input-step2bmanualenter-source-paste', { retryErrs: true });
-    await settingsPage.waitAndType('@input-step2bmanualenter-ascii-key', k.armored || '');
+    key = key || Config.key(keyTitle);
+    if (!key) {
+      throw new Error(`missing key to import with title ${keyTitle}`);
+    } else if (key.armored) { // pasted directly into the input
+      await settingsPage.waitAndClick('@input-step2bmanualenter-source-paste', { retryErrs: true });
+      await settingsPage.waitAndType('@input-step2bmanualenter-ascii-key', key.armored);
+    } else if (key.filePath) { // inputted as a file
+      await settingsPage.waitAndClick('@input-step2bmanualenter-file', { retryErrs: true });
+      await Util.sleep(0.5);
+      const fileInput = await settingsPage.target.$('input[type=file]');
+      await fileInput!.uploadFile(key.filePath);
+      await Util.sleep(1);
+    } else {
+      throw new Error('dont know how to import test key because missing both "armored" and "filePath"');
+    }
     await settingsPage.waitAndClick('@input-step2bmanualenter-passphrase'); // blur ascii key input
     if (noPrvCreateOrgRule) { // NO_PRV_CREATE cannot use the back button, so that they cannot select another setup method
       await settingsPage.notPresent('@action-setup-go-back');
@@ -112,7 +124,7 @@ export class SetupPageRecipe extends PageRecipe {
     if (!naked) {
       await Util.sleep(1);
       await settingsPage.notPresent('@action-step2bmanualenter-new-random-passphrase');
-      await settingsPage.waitAndType('@input-step2bmanualenter-passphrase', k.passphrase);
+      await settingsPage.waitAndType('@input-step2bmanualenter-passphrase', key.passphrase);
       await Util.sleep(1);
     } else {
       await settingsPage.waitAndClick('@input-step2bmanualenter-passphrase');
@@ -130,7 +142,7 @@ export class SetupPageRecipe extends PageRecipe {
           throw new Error(`Incorrect Passphrase validation result, expected '${ppValidationExpect}' but got ${ppValidationResult}`);
         }
       } else {
-        await settingsPage.waitAndType('@input-step2bmanualenter-passphrase', k.passphrase);
+        await settingsPage.waitAndType('@input-step2bmanualenter-passphrase', key.passphrase);
       }
     }
     if (enforceAttesterSubmitOrgRule || noPubSubmitRule) {
