@@ -48,7 +48,7 @@ export class EnterpriseServer extends Api {
 
   public getAccountAndUpdateLocalStore = async (): Promise<BackendRes.FcAccountGet> => {
     const r = await this.request<BackendRes.FcAccountGet>('GET', `/api/${this.apiVersion}/account/`, await this.authHdr());
-    await AcctStore.set(this.acctEmail, { rules: r.domain_org_rules, subscription: r.subscription });
+    await AcctStore.set(this.acctEmail, { rules: r.domain_org_rules });
     return r;
   }
 

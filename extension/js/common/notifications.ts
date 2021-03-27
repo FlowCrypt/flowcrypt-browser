@@ -12,12 +12,6 @@ import { AcctStore } from './platform/store/acct-store.js';
 
 export class Notifications {
 
-  private tabId: string;
-
-  constructor(tabId: string) {
-    this.tabId = tabId;
-  }
-
   public showInitial = async (acctEmail: string) => {
     const acctStorage = await AcctStore.get(acctEmail, ['notification_setup_done_seen']);
     if (!acctStorage.notification_setup_done_seen) {
@@ -56,9 +50,6 @@ export class Notifications {
     }
     if (typeof callbacks.reload === 'undefined') {
       callbacks.reload = Catch.try(() => window.location.reload());
-    }
-    if (typeof callbacks.subscribe === 'undefined') {
-      callbacks.subscribe = Catch.try(() => BrowserMsg.send.subscribeDialog(this.tabId, {}));
     }
     for (const name of Object.keys(callbacks)) {
       $(`.webmail_notifications a.${name}`).click(Ui.event.prevent('double', callbacks[name]));

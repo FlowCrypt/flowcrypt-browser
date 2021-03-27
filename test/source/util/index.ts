@@ -60,7 +60,7 @@ export class Config {
         Config._secrets.keys = data.keys;
       } catch (e) {
         console.error(`skipping loading test secrets because ${e}`);
-        Config._secrets = { auth: { google: [] }, keys: [], keyInfo: [] } as any as TestSecretsInterface;
+        Config._secrets = { auth: { google: [] }, keys: [] } as any as TestSecretsInterface;
       }
     }
     return Config._secrets;

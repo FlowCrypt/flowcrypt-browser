@@ -131,11 +131,6 @@ export class InboxView extends View {
           }));
       }
     });
-    BrowserMsg.addListener('subscribe_dialog', async ({ isAuthErr }: Bm.SubscribeDialog) => {
-      if (!$('#cryptup_dialog').length) {
-        $('body').append(this.factory.dialogSubscribe(isAuthErr)); // xss-safe-factory
-      }
-    });
     BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
       if (!$('#cryptup_dialog').length) {
         $('body').append(this.factory.dialogAddPubkey(emails)); // xss-safe-factory

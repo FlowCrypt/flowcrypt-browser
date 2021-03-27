@@ -117,10 +117,6 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/passphrase.htm'), { type, longids });
   }
 
-  public srcSubscribeDialog = (placement?: Placement, isAuthErr?: boolean) => {
-    return this.frameSrc(this.extUrl('chrome/elements/subscribe.htm'), { placement, isAuthErr });
-  }
-
   public srcAddPubkeyDialog = (emails: string[], placement: Placement) => {
     return this.frameSrc(this.extUrl('chrome/elements/add_pubkey.htm'), { emails, placement });
   }
@@ -175,21 +171,12 @@ export class XssSafeFactory {
     return this.divDialog_DANGEROUS(this.iframe(this.srcPassphraseDialog(longids, type), ['medium'], { scrolling: 'no' }), 'dialog-passphrase'); // xss-safe-factory
   }
 
-  public dialogSubscribe = (isAuthErr?: boolean) => {
-    const src = this.srcSubscribeDialog('dialog', isAuthErr);
-    return this.divDialog_DANGEROUS(this.iframe(src, ['mediumtall'], { scrolling: 'no' }), 'dialog-subscribe'); // xss-safe-factory
-  }
-
   public dialogAddPubkey = (emails: string[]) => {
     return this.divDialog_DANGEROUS(this.iframe(this.srcAddPubkeyDialog(emails, 'gmail'), ['tall'], { scrolling: 'no' }), 'dialog-add-pubkey'); // xss-safe-factory
   }
 
   public embeddedCompose = (draftId?: string) => {
     return Ui.e('div', { id: 'new_message', class: 'new_message', 'data-test': 'container-new-message', html: this.iframe(this.srcComposeMsg(draftId), [], { scrolling: 'no' }) });
-  }
-
-  public embeddedSubscribe = (isAuthErr: boolean) => {
-    return this.iframe(this.srcSubscribeDialog('embedded', isAuthErr), ['short', 'embedded'], { scrolling: 'no' });
   }
 
   public embeddedAttachment = (meta: Attachment, isEncrypted: boolean, parentTabId?: string) => {
@@ -201,7 +188,7 @@ export class XssSafeFactory {
   }
 
   public embeddedPubkey = (armoredPubkey: string, isOutgoing?: boolean) => {
-    return this.iframe(this.srcPgpPubkeyIframe(armoredPubkey, isOutgoing), ['pgp_block']);
+    return this.iframe(this.srcPgpPubkeyIframe(armoredPubkey, isOutgoing), ['pgp_block', 'publicKey']);
   }
 
   public embeddedBackup = (armoredPrvBackup: string) => {
