@@ -65,7 +65,7 @@ export interface KeyInfo {
   public: string; // this cannot be Pubkey has it's being passed to localstorage
   longid: string;
   fingerprints: string[];
-  emails: string[];
+  emails?: string[]; // todo - used to be missing - but migration was supposed to add it? setting back to optional for now
 }
 
 export interface KeyInfoWithOptionalPp extends KeyInfo {

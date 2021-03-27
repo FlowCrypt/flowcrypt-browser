@@ -201,7 +201,7 @@ export class XssSafeFactory {
   }
 
   public embeddedPubkey = (armoredPubkey: string, isOutgoing?: boolean) => {
-    return this.iframe(this.srcPgpPubkeyIframe(armoredPubkey, isOutgoing), ['pgp_block']);
+    return this.iframe(this.srcPgpPubkeyIframe(armoredPubkey, isOutgoing), ['pgp_block', 'publicKey']);
   }
 
   public embeddedBackup = (armoredPrvBackup: string) => {

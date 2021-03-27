@@ -33,7 +33,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
 
   public chooseMyPublicKeyBySenderEmail = async (keys: KeyInfo[], email: string) => {
     for (const key of keys) {
-      if (key.emails.includes(email.toLowerCase())) {
+      if (key.emails?.includes(email.toLowerCase())) {
         return key;
       }
     }
