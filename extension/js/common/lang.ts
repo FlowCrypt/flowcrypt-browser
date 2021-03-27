@@ -29,9 +29,6 @@ export const Lang = { // tslint:disable-line:variable-name
     ppMatchAllSet: 'Your pass phrase matches. Good job! You\'re all set.',
   },
   account: {
-    creditOrDebit: 'Enter credit or debit card to use. You can cancel anytime.',
-    alreadyUpgraded: 'You have already upgraded to FlowCrypt Advanced',
-    loginToSetUpContactPage: `Please log into FlowCrypt to set up a contact page.`,
     googleAcctDisabledOrPolicy: `Your Google Account or Google Email seems to be disabled, or access to this app is disabled by your organisation admin policy. Contact your email administrator.`,
   },
   pgpBlock: {

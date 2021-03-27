@@ -75,7 +75,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
 
   const initInternalVars = async (acctEmail: string) => {
     const tabId = await BrowserMsg.requiredTabId(30, 1000); // keep trying for 30 seconds
-    const notifications = new Notifications(tabId);
+    const notifications = new Notifications();
     const factory = new XssSafeFactory(acctEmail, tabId, win.reloadable_class, win.destroyable_class);
     const inject = new Injector(webmailSpecific.name, webmailSpecific.variant, factory);
     inject.meta();
@@ -156,11 +156,6 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
             BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
             $('#cryptup_dialog').remove();
           }));
-      }
-    });
-    BrowserMsg.addListener('subscribe_dialog', async ({ isAuthErr }: Bm.SubscribeDialog) => {
-      if (!$('#cryptup_dialog').length) {
-        $('body').append(factory.dialogSubscribe(isAuthErr)); // xss-safe-factory
       }
     });
     BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {

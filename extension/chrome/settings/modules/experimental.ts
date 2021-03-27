@@ -101,7 +101,7 @@ View.run(class ExperimentalView extends View {
   }
 
   private resetFlowCryptAuthHandler = async () => {
-    await AcctStore.set(this.acctEmail, { subscription: undefined, uuid: undefined });
+    await AcctStore.set(this.acctEmail, { uuid: undefined });
     BrowserMsg.send.reload(this.parentTabId, {});
   }
 
