@@ -635,9 +635,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     //     const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
     //     const key = {
     //       title: 's/mime pkcs12 encrypted key',
-    //       filePath: 'test/samples/smime/human-pwd-original-PKCS12.pfx',
+    //       filePath: 'test/samples/smime/human-unprotected-PKCS12.p12',
     //       armored: null,
-    //       passphrase: 'AHbxhwquX5pc',
+    //       passphrase: 'test pp to encrypt unprotected key',
     //       longid: null
     //     };
     //     await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: false, usedPgpBefore: false, key });

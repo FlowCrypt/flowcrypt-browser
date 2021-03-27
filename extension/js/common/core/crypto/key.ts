@@ -35,9 +35,8 @@ export interface Key {
   identities: string[];
   fullyDecrypted: boolean;
   fullyEncrypted: boolean;
-  // TODO: Aren't isPublic and isPrivate mutually exclusive?
-  isPublic: boolean;
-  isPrivate: boolean;
+  isPublic: boolean; // isPublic and isPrivate are mutually exclusive
+  isPrivate: boolean; // only one should be set to true
   algo: {
     algorithm: string,
     curve?: string,
@@ -141,12 +140,22 @@ export class KeyUtil {
     throw new UnexpectedKeyTypeError(`Key type is ${keyType}, expecting OpenPGP or x509 S/MIME`);
   }
 
-  public static parseBinary = async (key: Uint8Array): Promise<Key[]> => {
+  public static parseBinary = async (key: Uint8Array, passPhrase: string): Promise<Key[]> => {
     const allKeys: Key[] = [], allErr: Error[] = [];
     try {
       const { keys, err } = await opgp.key.read(key);
       if (keys.length > 0) {
-        allKeys.push(...await Promise.all(keys.map(key => OpenPGPKey.convertExternalLibraryObjToKey(key))));
+        for (const key of keys) {
+          // we should decrypt them all here to have consistent behavior between pkcs12 files and PGP
+          // pkcs12 files must be decrypted during parsing
+          // then rename this method to parseDecryptBinary
+          const parsed = await OpenPGPKey.convertExternalLibraryObjToKey(key);
+          // if (await KeyUtil.decrypt(parsed, passPhrase, undefined, 'OK-IF-ALREADY-DECRYPTED')) {
+          allKeys.push(parsed);
+          // } else {
+          //   allErr.push(new Error(`Wrong pass phrase for OpenPGP key ${parsed.id} (${parsed.emails[0]})`));
+          // }
+        }
       }
       if (err) {
         allErr.push(...err);
@@ -155,9 +164,7 @@ export class KeyUtil {
       allErr.push(e as Error);
     }
     try {
-      // for now we only support plain keys - because our UI expects to be able to parse keys without pass phrase like PGP keys
-      const emptyPassphrase = '';
-      allKeys.push(await SmimeKey.parseBinary(key, emptyPassphrase));
+      allKeys.push(await SmimeKey.parseDecryptBinary(key, passPhrase));
     } catch (e) {
       allErr.push(e as Error);
     }
@@ -262,7 +269,9 @@ export class KeyUtil {
   }
 
   public static getKeyType = (pubkey: string): 'openpgp' | 'x509' | 'unknown' => {
-    if (pubkey.startsWith('-----BEGIN CERTIFICATE-----')) {
+    if (pubkey.startsWith(PgpArmor.headers('certificate').begin)) {
+      return 'x509';
+    } else if (pubkey.startsWith(PgpArmor.headers('pkcs12').begin)) {
       return 'x509';
     } else if (pubkey.startsWith(PgpArmor.headers('publicKey').begin)) {
       return 'openpgp';

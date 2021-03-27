@@ -3,40 +3,24 @@ import * as forge from 'node-forge';
 import { Key, KeyUtil } from '../key.js';
 import { Str } from '../../common.js';
 import { UnreportableError } from '../../../platform/catch.js';
+import { PgpArmor } from '../pgp/pgp-armor.js';
+import { Buf } from '../../buf.js';
 
 export class SmimeKey {
 
   public static parse = async (text: string): Promise<Key> => {
-    const certificate = forge.pki.certificateFromPem(text);
-    SmimeKey.removeWeakKeys(certificate);
-    const email = (certificate.subject.getField('CN') as { value: string }).value;
-    const normalizedEmail = Str.parseEmail(email).email;
-    if (!normalizedEmail) {
-      throw new UnreportableError(`This S/MIME x.509 certificate has an invalid recipient email: ${email}`);
+    if (text.includes(PgpArmor.headers('certificate').begin)) {
+      return SmimeKey.parsePemCertificate(text);
+    } else if (text.includes(PgpArmor.headers('pkcs12').begin)) {
+      const armoredBytes = text.replace(PgpArmor.headers('pkcs12').begin, '').replace(PgpArmor.headers('pkcs12').end, '').trim();
+      const emptyPassPhrase = '';
+      return await SmimeKey.parseDecryptBinary(Buf.fromBase64Str(armoredBytes), emptyPassPhrase);
+    } else {
+      throw new Error('Could not parse S/MIME key without known headers');
     }
-    const key = {
-      type: 'x509',
-      id: certificate.serialNumber.toUpperCase(),
-      allIds: [certificate.serialNumber.toUpperCase()],
-      usableForEncryption: certificate.publicKey && SmimeKey.isEmailCertificate(certificate),
-      usableForSigning: certificate.publicKey && SmimeKey.isEmailCertificate(certificate),
-      usableForEncryptionButExpired: false,
-      usableForSigningButExpired: false,
-      emails: [normalizedEmail],
-      identities: [normalizedEmail],
-      created: SmimeKey.dateToNumber(certificate.validity.notBefore),
-      lastModified: SmimeKey.dateToNumber(certificate.validity.notBefore),
-      expiration: SmimeKey.dateToNumber(certificate.validity.notAfter),
-      fullyDecrypted: false,
-      fullyEncrypted: false,
-      isPublic: true,
-      isPrivate: true,
-    } as Key;
-    (key as unknown as { rawArmored: string }).rawArmored = text;
-    return key;
   }
 
-  public static parseBinary = async (buffer: Uint8Array, password: string): Promise<Key> => {
+  public static parseDecryptBinary = async (buffer: Uint8Array, password: string): Promise<Key> => {
     const bytes = String.fromCharCode.apply(undefined, new Uint8Array(buffer) as unknown as number[]) as string;
     const p12Asn1 = forge.asn1.fromDer(bytes);
     const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, password);
@@ -70,14 +54,13 @@ export class SmimeKey {
       created: SmimeKey.dateToNumber(certificate.validity.notBefore),
       lastModified: SmimeKey.dateToNumber(certificate.validity.notBefore),
       expiration: SmimeKey.dateToNumber(certificate.validity.notAfter),
-      fullyDecrypted: false,
+      fullyDecrypted: true,
       fullyEncrypted: false,
-      isPublic: true,
+      isPublic: false, // the way isPublic is currently used is as opposite of isPrivate, even if the Key contains both
       isPrivate: true,
     } as Key;
-    (key as unknown as { raw: string }).raw = `------- BEGIN PRIVATE ENCRYPTED PKCS#12 FILE -------
-${forge.util.encode64(bytes)}
-------- END PRIVATE ENCRYPTED PKCS#12 FILE -------` as string;
+    const headers = PgpArmor.headers('pkcs12');
+    (key as unknown as { raw: string }).raw = `${headers.begin}\n${forge.util.encode64(bytes)}\n${headers.end}`;
     return key;
   }
 
@@ -99,6 +82,36 @@ ${forge.util.encode64(bytes)}
       arr.push(derBuffer.charCodeAt(i));
     }
     return { data: new Uint8Array(arr), type: 'smime' };
+  }
+
+  private static parsePemCertificate = (text: string): Key => {
+    const certificate = forge.pki.certificateFromPem(text);
+    SmimeKey.removeWeakKeys(certificate);
+    const email = (certificate.subject.getField('CN') as { value: string }).value;
+    const normalizedEmail = Str.parseEmail(email).email;
+    if (!normalizedEmail) {
+      throw new UnreportableError(`This S/MIME x.509 certificate has an invalid recipient email: ${email}`);
+    }
+    const key = {
+      type: 'x509',
+      id: certificate.serialNumber.toUpperCase(),
+      allIds: [certificate.serialNumber.toUpperCase()],
+      usableForEncryption: certificate.publicKey && SmimeKey.isEmailCertificate(certificate),
+      usableForSigning: certificate.publicKey && SmimeKey.isEmailCertificate(certificate),
+      usableForEncryptionButExpired: false,
+      usableForSigningButExpired: false,
+      emails: [normalizedEmail],
+      identities: [normalizedEmail],
+      created: SmimeKey.dateToNumber(certificate.validity.notBefore),
+      lastModified: SmimeKey.dateToNumber(certificate.validity.notBefore),
+      expiration: SmimeKey.dateToNumber(certificate.validity.notAfter),
+      fullyDecrypted: false,
+      fullyEncrypted: false,
+      isPublic: true,
+      isPrivate: true,
+    } as Key;
+    (key as unknown as { rawArmored: string }).rawArmored = text;
+    return key;
   }
 
   private static removeWeakKeys = (certificate: forge.pki.Certificate) => {

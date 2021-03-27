@@ -106,16 +106,14 @@ export class KeyImportUi {
     attachmentUi.initAttachmentDialog('fineuploader', 'fineuploader_button', {
       attachmentAdded: async file => {
         let prv: Key | undefined;
-        const utf = file.getData().toUtfStr();
+        const utf = file.getData().toUtfStr('ignore'); // ignore utf8 errors because this may be a binary key (in which case we use the bytes directly below)
         if (utf.includes(PgpArmor.headers('privateKey').begin)) {
           const firstPrv = MsgBlockParser.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
           if (firstPrv) { // filter out all content except for the first encountered private key (GPGKeychain compatibility)
             prv = (await KeyUtil.parse(firstPrv.content.toString()));
           }
         } else {
-          // openpgp keys may be encrypted or not: for now we don't need to decrypt the key yet
-          // x509 keys for now are only accepted without encryption
-          const parsed = await KeyUtil.parseBinary(file.getData());
+          const parsed = await KeyUtil.parseBinary(file.getData(), '');
           prv = parsed[0];
         }
         if (typeof prv !== 'undefined') {
@@ -132,8 +130,8 @@ export class KeyImportUi {
 
   public checkPrv = async (acctEmail: string, armored: string, passphrase: string): Promise<KeyImportUiCheckResult> => {
     const { normalized } = await this.normalize('privateKey', armored);
-    const decrypted = await this.read('privateKey', normalized);
-    const encrypted = await this.read('privateKey', normalized);
+    const decrypted = await this.read('privateKey', normalized); // for decrypting - not decrypted yet
+    const encrypted = await this.read('privateKey', normalized); // original (typically encrypted)
     this.rejectIfNot('privateKey', decrypted);
     await this.rejectKnownIfSelected(acctEmail, decrypted);
     await this.decryptAndEncryptAsNeeded(decrypted, encrypted, passphrase);
