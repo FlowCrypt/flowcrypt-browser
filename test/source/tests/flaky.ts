@@ -140,7 +140,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-forward', { delay: 2 });
       await composePage.waitAny('@input-to');
-      await composePage.ensureFocused('@input-to');
+      await composePage.waitUntilFocused('@input-to');
       await expectRecipientElements(composePage, { to: [], cc: [], bcc: [] });
     }));
 
