@@ -31,6 +31,10 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
     this.view.displayBlock('thread', 'Loading..');
     try {
       thread = thread || await this.view.gmail.threadGet(threadId, 'metadata');
+      if (!thread.messages) {
+        Xss.sanitizeRender('.thread', `<br>No messages in this thread. ${Ui.retryLink()}`);
+        return;
+      }
       const subject = GmailParser.findHeader(thread.messages[0], 'subject') || '(no subject)';
       this.updateUrlWithoutRedirecting(`${subject} - FlowCrypt Inbox`, { acctEmail: this.view.acctEmail, threadId });
       this.view.displayBlock('thread', Xss.escape(subject));

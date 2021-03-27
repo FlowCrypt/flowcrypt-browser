@@ -33,7 +33,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     await this.renderComposeTable();
     if (this.view.replyParams) {
       const thread = await this.view.emailProvider.threadGet(this.view.threadId, 'metadata');
-      const inReplyToMessage = thread.messages.find((message) => message.id === this.view.replyMsgId);
+      const inReplyToMessage = thread.messages?.find((message) => message.id === this.view.replyMsgId);
       if (inReplyToMessage) {
         this.view.replyParams.inReplyTo = inReplyToMessage.payload?.headers?.find((header) => header.name === 'Message-Id')?.value;
       }

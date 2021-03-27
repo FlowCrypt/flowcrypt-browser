@@ -45,6 +45,10 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
     const threadItem = $('.threads #' + this.threadListItemId(threadId));
     try {
       const thread = await this.view.gmail.threadGet(threadId, 'metadata');
+      if (!thread.messages?.length) {
+        threadItem.find('.loading').text('Could not find item');
+        return;
+      }
       const firstMsg = thread.messages[0];
       const lastMsg = thread.messages[thread.messages.length - 1];
       threadItem.find('.subject').text(GmailParser.findHeader(firstMsg, 'subject') || '(no subject)');
