@@ -271,3 +271,87 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update updates correct 'pubkey_last_check'`
   }
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`ContactStore.update tests`);
+(async () => {
+  const db = await ContactStore.dbOpen();
+  const email1 = 'email1@test.com';
+  const email2 = 'email2@test.com';
+  const contacts = [
+    await ContactStore.obj({ email: email1 }),
+    await ContactStore.obj({ email: email2 })];
+  await ContactStore.save(db, contacts);
+  const expectedObj1 = {
+    email: email1,
+    name: undefined,
+    pendingLookup: 0,
+    lastUse: undefined
+  }
+  const expectedObj2 = {
+    email: email2,
+    name: undefined,
+    pendingLookup: 0,
+    lastUse: undefined
+  }
+  const getEntity = async(email) => { return await new Promise((resolve, reject) => {
+    const req = db.transaction(['emails'], 'readonly').objectStore('emails').get(email);
+    ContactStore.setReqPipe(req, () => resolve(req.result), reject);
+  }); };
+  const compareEntity = async(expectedObj) => { 
+    const loaded = await getEntity(expectedObj.email);
+    if (loaded.name != expectedObj.name) {
+      throw Error(`name field mismatch, expected ${expectedObj.name} but got ${loaded.name}`);
+    }
+    if (loaded.pendingLookup != expectedObj.pendingLookup) {
+      throw Error(`pendingLookup field mismatch, expected ${expectedObj.pendingLookup} but got ${loaded.pendingLookup}`);
+    }
+    if (loaded.lastUse != expectedObj.lastUse) {
+      throw Error(`lastUse field mismatch, expected ${expectedObj.lastUse} but got ${loaded.lastUse}`);
+    }
+  };
+  const compareEntities = async() => {
+    await compareEntity(expectedObj1);
+    await compareEntity(expectedObj2);
+  }
+  await compareEntities();
+  expectedObj1.name = 'New Name for contact 1';
+  await ContactStore.update(db, email1, { name: expectedObj1.name });
+  await compareEntities();
+  expectedObj2.pendingLookup = 1;
+  // provide any non-zero value
+  await ContactStore.update(db, email2, { pending_lookup: 4 });
+  await compareEntities();
+  expectedObj2.pendingLookup = 0;
+  // provide a "zero" value
+  await ContactStore.update(db, email2, { pending_lookup: undefined });
+  await compareEntities();
+  const date = new Date();
+  expectedObj1.lastUse = date.getTime();
+  await ContactStore.update(db, email1, {last_use: date });
+  await compareEntities();
+  expectedObj1.lastUse = undefined;
+  await ContactStore.update(db, email1, {last_use: undefined });
+  await compareEntities();
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
+(async () => {
+  // we'll use background operation to make sure the date isn't transformed on its way
+  const email = 'test@expired.com';
+  const lastCheck = Date.now();
+  const lastUse = lastCheck + 1000;
+  const contact = await ContactStore.obj({ email, pubkey:testConstants.expiredPub, lastCheck, lastUse });
+  await ContactStore.save(undefined, [contact]);
+  const [loaded] = await ContactStore.get(undefined, [email]);
+  if (typeof loaded.last_use !== 'number') {
+    throw Error(`last_use was expected to be a number, but got ${typeof loaded.last_use}`);
+  }
+  if (typeof loaded.pubkey_last_check !== 'number') {
+    throw Error(`pubkey_last_check was expected to be a number, but got ${typeof loaded.pubkey_last_check}`);
+  }
+  if (typeof loaded.last_use !== 'number') {
+    throw Error(`expiresOn was expected to be a number, but got ${typeof loaded.expiresOn}`);
+  }
+  return 'pass';
+})();

@@ -56,7 +56,6 @@ export type Contact = {
   fingerprint: string | null;
   pending_lookup: number;
   last_use: number | null;
-  pubkey_last_sig: number | null;
   pubkey_last_check: number | null;
   expiresOn: number | null;
 };

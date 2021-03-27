@@ -44,7 +44,6 @@ export class ContactStore {
       const key = typeof update.pubkey === 'string' ? await KeyUtil.parse(update.pubkey) : update.pubkey;
       updated.pubkey = key;
       updated.fingerprint = key.id;
-      updated.pubkey_last_sig = key.lastModified ? Number(key.lastModified) : null;
       updated.expiresOn = key.expiration ? Number(key.expiration) : null;
       updated.has_pgp = 1;
     }
@@ -60,7 +59,6 @@ export class ContactStore {
         has_pgp: 0, // number because we use it for sorting
         fingerprint: null,
         last_use: lastUse || null,
-        pubkey_last_sig: null,
         pubkey_last_check: null,
         expiresOn: null
       };
@@ -75,7 +73,6 @@ export class ContactStore {
       pending_lookup: pendingLookup,
       last_use: lastUse,
       pubkey_last_check: lastCheck,
-      pubkey_last_sig: pk.lastModified
     } as Contact;
     return contact;
   }

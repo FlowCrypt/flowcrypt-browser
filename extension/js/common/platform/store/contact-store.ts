@@ -4,7 +4,7 @@ import { AbstractStore } from './abstract-store.js';
 import { Catch } from '../catch.js';
 import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
-import { Str } from '../../core/common.js';
+import { DateUtility, Str } from '../../core/common.js';
 import { Key, Contact, KeyUtil } from '../../core/crypto/key.js';
 import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key.js';
 
@@ -33,13 +33,12 @@ type Pubkey = {
   armoredKey: string;
   longids: string[];
   lastCheck: number | null,
-  expiresOn: number;
+  expiresOn: number | null;
 };
 
 type PubkeyAttributes = {
   fingerprint: string | null;
   expiresOn: number | null;
-  pubkey_last_sig: number | null
 };
 
 export type ContactPreview = {
@@ -125,7 +124,6 @@ export class ContactStore extends AbstractStore {
           has_pgp: 0, // number because we use it for sorting
           fingerprint: null,
           last_use: lastUse || null,
-          pubkey_last_sig: null,
           pubkey_last_check: null,
           expiresOn: null
         };
@@ -216,7 +214,7 @@ export class ContactStore extends AbstractStore {
       const req = tx.objectStore('pubkeys').get(update.pubkey.id);
       req.onsuccess = () => ContactStore.updateTxPhase2(tx, email, update, req.result as Pubkey);
     } else {
-      ContactStore.updateTxPhase2(tx, email, update, undefined); // todo: test
+      ContactStore.updateTxPhase2(tx, email, update, undefined);
     }
   }
 
@@ -227,7 +225,7 @@ export class ContactStore extends AbstractStore {
       // todo: will we benefit anything when not saving pubkey if it isn't modified?
       pubkeyEntity = {
         fingerprint: update.pubkey.id,
-        lastCheck: update.pubkey_last_check ?? existingPubkey?.lastCheck,
+        lastCheck: DateUtility.asNumber(update.pubkey_last_check ?? existingPubkey?.lastCheck),
         expiresOn: keyAttrs.expiresOn,
         longids: update.pubkey.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)),
         armoredKey: KeyUtil.armor(update.pubkey)
@@ -254,10 +252,10 @@ export class ContactStore extends AbstractStore {
         emailEntity.name = update.name ?? null;
       }
       if (Object.keys(update).includes('pending_lookup')) {
-        emailEntity.pendingLookup = update.pending_lookup ?? 0;
+        emailEntity.pendingLookup = update.pending_lookup ? 1 : 0;
       }
       if (Object.keys(update).includes('last_use')) {
-        emailEntity.lastUse = update.last_use ?? null;
+        emailEntity.lastUse = DateUtility.asNumber(update.last_use);
       }
       ContactStore.updateSearchable(emailEntity);
       tx.objectStore('emails').put(emailEntity);
@@ -431,7 +429,7 @@ export class ContactStore extends AbstractStore {
   }
 
   private static getKeyAttributes = (key: Key | undefined): PubkeyAttributes => {
-    return { fingerprint: key?.id ?? null, expiresOn: Number(key?.expiration) || null, pubkey_last_sig: Number(key?.lastModified) || null };
+    return { fingerprint: key?.id ?? null, expiresOn: DateUtility.asNumber(key?.expiration) };
   }
 
   private static toContact = async (email: Email, pubkey: Pubkey): Promise<Contact | undefined> => {
