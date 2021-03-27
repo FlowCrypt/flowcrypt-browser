@@ -13,7 +13,6 @@ import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { TestWithBrowser } from './../test';
 import { GoogleData } from './../mock/google/google-data';
 import { Stream } from '../core/stream';
-import { expectRecipientElements } from './compose';
 
 // tslint:disable:no-blank-lines-func
 
@@ -134,15 +133,6 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       expect(result.length).to.equal(40000000);
       t.pass();
     });
-
-    ava.default('compose - reply - CC&BCC test forward', testWithBrowser('compatibility', async (t, browser) => {
-      const appendUrl = 'threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16ce2c965c75e5a6';
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
-      await composePage.waitAndClick('@action-forward', { delay: 2 });
-      await composePage.waitAny('@input-to');
-      await composePage.ensureFocused('@input-to');
-      await expectRecipientElements(composePage, { to: [], cc: [], bcc: [] });
-    }));
 
   }
 
