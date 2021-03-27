@@ -6,6 +6,7 @@ import { Dict, Str, Url, UrlParams } from './core/common.js';
 import { Ui } from './browser/ui.js';
 import { Api } from './api/shared/api.js';
 import { ApiErr, AjaxErr } from './api/shared/api-error.js';
+import { Browser } from './browser/browser.js';
 import { Catch } from './platform/catch.js';
 import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
@@ -333,14 +334,23 @@ export class Settings {
   public static offerToLoginWithPopupShowModalOnErr = (acctEmail: string, then: (() => void) = () => undefined, prepend = '') => {
     (async () => {
       if (await Ui.modal.confirm(`${prepend}Please log in with FlowCrypt to continue.`)) {
-        const authRes = await GoogleAuth.newOpenidAuthPopup({ acctEmail });
-        if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
-          then();
-        } else {
-          await Ui.modal.warning(`Could not log in:\n\n${authRes.error || authRes.result}`);
-        }
+        await Settings.loginWithPopupShowModalOnErr(acctEmail, then);
       }
     })().catch(Catch.reportErr);
+  }
+
+  public static loginWithPopupShowModalOnErr = async (acctEmail: string, then: (() => void) = () => undefined) => {
+    if (window !== window.top && !chrome.windows) { // Firefox, chrome.windows isn't available in iframes
+      Browser.openExtensionTab(Url.create(chrome.runtime.getURL(`chrome/settings/index.htm`), { acctEmail }));
+      await Ui.modal.info(`Reload after logging in.`);
+      return window.location.reload();
+    }
+    const authRes = await GoogleAuth.newOpenidAuthPopup({ acctEmail });
+    if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
+      then();
+    } else {
+      await Ui.modal.warning(`Could not log in:\n${authRes.error || authRes.result}`);
+    }
   }
 
   private static prepareNewSettingsLocationUrl = (acctEmail: string | undefined, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams): string => {

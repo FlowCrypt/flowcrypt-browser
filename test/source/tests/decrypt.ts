@@ -480,16 +480,26 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default(`verify - sha1 shows error`, testWithBrowser('compatibility', async (t, browser) => {
-      const msg = '-----BEGIN PGP MESSAGE-----\nVersion: GnuPG v1\n\nowGbwMvMyMT4oOW7S46CznTG01El3MUFicmpxbolqcUlUTev14K5Vgq8XGCGQmJe\nikJJYpKVAicvV16+QklRYmZOZl66AliWl0sBqBAkzQmmwKohBnAqdMxhYWRkYmBj\nZQIZy8DFKQCztusM8z+Vt/svG80IS/etn90utv/T16jquk69zPvp6t9F16ryrwpb\nkfVlS5Xl38KnVYxWvIor0nao6WUczA4vvZX9TXPWnnW3tt1vbZoiqWUjYjjjhuKG\n4DtmMTuL3TW6/zNzVfWp/Q11+71O8RGnXMsBvWM6mSqX75uLiPo6HRaUDHnvrfCP\nyYDnCgA=\n=15ki\n-----END PGP MESSAGE-----';
+      const msg = `-----BEGIN PGP MESSAGE-----
+
+yMCxATvCy8zAxHhitbJOfXrcEcbTKkkMIOCRmpOTr6NQkpFZrABEiQolqcUlCrmpxcWJ6alchw5U
+sjAwMjEoiymyhJfeapohyXRUYeazxTBjWJkSeOtDWJnBRnFxCsDEv33mYDjmdsuGPyx68g7tMwe3
+tqlevvUo5EIap+wmZm6mRXcOGBplvJy1mfuq1plrt08qs97Y2ztB+/XbuyG3Ir48u7I3pmD+TWae
+WSd5d26QYXcuusauc0Xy/fS1/FXbPJaYHlCeMCfnhrF9d2jyH33V+er6r3lS5i/mchOKffpglktT
+d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
+3duz+VfzU3HVZ65L4xc5PBYwWLlshdcG94VTt2oK3cuLC5zuy/3ks0sw1+MGzmKtjMeJrqXph+8p
+5W5JmHL28qarbQvv+71V3ni6odk8Z2NDban2y1kA
+=Ruyn
+-----END PGP MESSAGE-----`;
       const params = `?frame_id=frame_TWloVRhvZE&message=${encodeURIComponent(msg)}&message_id=none&senderEmail=sha1%40sign.com&is_outgoing=___cu_false___&account_email=flowcrypt.compatibility%40gmail.com`;
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
-        content: ['no trailing space', 'space:', 'space and tab:'],
+        content: ['test'],
         signature: ["Fetched pubkey, click to verify"]
       });
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
-        content: ['no trailing space', 'space:', 'space and tab:'],
+        content: ['test'],
         signature: ["Insecure message hash algorithm: SHA1"]
       });
     }));

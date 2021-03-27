@@ -145,7 +145,9 @@ export class KeyUtil {
     if (pubkey.type === 'openpgp') {
       return OpenPGPKey.armor(pubkey);
     } else if (pubkey.type === 'x509') {
-      return (pubkey as unknown as { raw: string }).raw;
+      // some keys saved by older version may have `raw` as string, so fall back on it
+      const rawFields = pubkey as unknown as { rawArmored: string, raw: string };
+      return rawFields.rawArmored ?? rawFields.raw;
     } else {
       throw new Error('Unknown pubkey type: ' + pubkey.type);
     }

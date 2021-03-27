@@ -246,7 +246,7 @@ export class Ui {
           $(Swal.getContent()!).attr('data-test', 'dialog');
           $(Swal.getCloseButton()!).attr('data-test', 'dialog-close').blur();
         },
-        onClose: () => {
+        willClose: () => {
           const urlWithoutPageParam = Url.removeParamsFromUrl(window.location.href, ['page']);
           window.history.pushState('', '', urlWithoutPageParam);
         },

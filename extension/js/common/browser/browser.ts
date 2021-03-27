@@ -25,31 +25,27 @@ export class Browser {
 
   public static saveToDownloads = (attachment: Attachment) => {
     const blob = new Blob([attachment.getData()], { type: attachment.type });
-    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-      window.navigator.msSaveBlob(blob, attachment.name);
-    } else {
-      const a = window.document.createElement('a');
-      a.href = window.URL.createObjectURL(blob);
-      a.download = Xss.escape(attachment.name);
-      if (typeof a.click === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
-        a.click();
-      } else { // safari
-        const ev = document.createEvent('MouseEvents');
-        // @ts-ignore - safari only. expected 15 arguments, but works well with 4
-        ev.initMouseEvent('click', true, true, window);
-        a.dispatchEvent(ev);
-      }
-      if (Catch.browser().name === 'firefox') {
-        try {
-          a.remove();
-        } catch (err) {
-          if (!(err instanceof Error && err.message === 'Node was not found')) {
-            throw err;
-          }
+    const a = window.document.createElement('a');
+    a.href = window.URL.createObjectURL(blob);
+    a.download = Xss.escape(attachment.name);
+    if (typeof a.click === 'function') { // tslint:disable-line:no-unbound-method - only testing if exists
+      a.click();
+    } else { // safari
+      const ev = document.createEvent('MouseEvents');
+      // @ts-ignore - safari only. expected 15 arguments, but works well with 4
+      ev.initMouseEvent('click', true, true, window);
+      a.dispatchEvent(ev);
+    }
+    if (Catch.browser().name === 'firefox') {
+      try {
+        a.remove();
+      } catch (err) {
+        if (!(err instanceof Error && err.message === 'Node was not found')) {
+          throw err;
         }
       }
-      Catch.setHandledTimeout(() => window.URL.revokeObjectURL(a.href), 0);
     }
+    Catch.setHandledTimeout(() => window.URL.revokeObjectURL(a.href), 0);
   }
 
   public static arrFromDomNodeList = (obj: NodeList | JQuery<HTMLElement>): Node[] => {
@@ -65,16 +61,16 @@ export class Browser {
     const basePath = chrome.runtime.getURL(`chrome/settings/${path}`);
     const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : undefined;
     if (acctEmail || path === 'fatal.htm') {
-      await Browser.openExtensionTab(Url.create(basePath, { acctEmail, page, pageUrlParams }));
+      Browser.openExtensionTab(Url.create(basePath, { acctEmail, page, pageUrlParams }));
     } else if (addNewAcct) {
-      await Browser.openExtensionTab(Url.create(basePath, { addNewAcct }));
+      Browser.openExtensionTab(Url.create(basePath, { addNewAcct }));
     } else {
       const acctEmails = await GlobalStore.acctEmailsGet();
-      await Browser.openExtensionTab(Url.create(basePath, { acctEmail: acctEmails[0], page, pageUrlParams }));
+      Browser.openExtensionTab(Url.create(basePath, { acctEmail: acctEmails[0], page, pageUrlParams }));
     }
   }
 
-  private static openExtensionTab = async (url: string) => {
+  public static openExtensionTab = (url: string) => {
     const tab = window.open(url, 'flowcrypt');
     if (tab) {
       tab.focus();

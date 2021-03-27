@@ -21,7 +21,7 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
       if (threads?.length) {
         await Promise.all(threads.map(t => this.renderInboxItem(t.id)));
       } else {
-        Xss.sanitizeRender('.threads', `<p>No encrypted messages in ${labelId} yet. ${Ui.retryLink()}</p>`);
+        Xss.sanitizeRender('.threads', `<p>No encrypted messages in ${Xss.escape(labelId)} yet. ${Ui.retryLink()}</p>`);
       }
     } catch (e) {
       if (ApiErr.isNetErr(e)) {

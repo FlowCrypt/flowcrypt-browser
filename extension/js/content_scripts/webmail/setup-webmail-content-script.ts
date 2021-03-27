@@ -31,6 +31,7 @@ export interface WebmailElementReplacer {
   setReplyBoxEditable: () => Promise<void>;
   reinsertReplyBox: (replyMsgId: string) => void;
   scrollToReplyBox: (replyMsgId: string) => void;
+  scrollToCursorInReplyBox: (replyMsgId: string, cursorOffsetTop: number) => void;
 }
 
 const win = window as unknown as ContentScriptWindow;
@@ -144,6 +145,9 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     });
     BrowserMsg.addListener('scroll_to_reply_box', async ({ replyMsgId }: Bm.ScrollToReplyBox) => {
       webmailSpecific.getReplacer().scrollToReplyBox(replyMsgId);
+    });
+    BrowserMsg.addListener('scroll_to_cursor_in_reply_box', async ({ replyMsgId, cursorOffsetTop }: Bm.ScrollToCursorInReplyBox) => {
+      webmailSpecific.getReplacer().scrollToCursorInReplyBox(replyMsgId, cursorOffsetTop);
     });
     BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
       if (!$('#cryptup_dialog').length) {

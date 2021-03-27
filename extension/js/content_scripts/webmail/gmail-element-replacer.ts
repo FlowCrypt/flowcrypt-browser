@@ -28,6 +28,8 @@ type JQueryEl = JQuery<HTMLElement>;
 
 export class GmailElementReplacer implements WebmailElementReplacer {
 
+  private debug = false;
+
   private gmail: Gmail;
   private recipientHasPgpCache: Dict<boolean> = {};
   private sendAs: Dict<SendAsAlias>;
@@ -53,7 +55,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     subject: 'h2.hP',
     autoReplies: 'div.brb',
     msgOuter: 'div.adn',
-    msgInner: 'div.a3s:not(.undefined), .message_inner_body',
+    msgInner: 'div.a3s:visible:not(.undefined), .message_inner_body:visible',
     msgInnerText: 'table.cf.An',
     msgInnerContainingPgp: "div.a3s:not(.undefined):contains('" + PgpArmor.headers('null').begin + "')",
     attachmentsContainerOuter: 'div.hq.gt',
@@ -99,22 +101,41 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     $('.reply_message_iframe_container:visible').last().append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
   }
 
-  public scrollToReplyBox = (selector: string) => {
-    const convoRootScrollable = $(this.sel.convoRootScrollable).get(0);
+  public scrollToReplyBox = (replyMsgId: string) => {
+    const convoRootScrollable = $(this.sel.convoRootScrollable);
     if (convoRootScrollable) {
-      const element = $(selector);
-      if (element) {
-        $(this.sel.convoRootScrollable).css('scroll-behavior', 'smooth');
+      const replyMsg = $(replyMsgId);
+      if (replyMsg) {
+        convoRootScrollable.css('scroll-behavior', 'smooth');
         const gmailHeaderHeight = 120;
         const topGap = 80; // so the bottom of the prev message will be visible
         // scroll to the bottom of the element,
         // or to the top of the element if the element's height is bigger than the convoRoot
-        convoRootScrollable.scrollTop =
-          element.position()!.top + $(element).height()! -
-          Math.max(0, $(element).height()! - $(this.sel.convoRootScrollable).height()! + gmailHeaderHeight + topGap);
+        convoRootScrollable.get(0).scrollTop =
+          replyMsg.position()!.top + $(replyMsg).height()! -
+          Math.max(0, $(replyMsg).height()! - convoRootScrollable.height()! + gmailHeaderHeight + topGap);
       }
     } else if (window.location.hash.match(/^#inbox\/[a-zA-Z]+$/)) { // is a conversation view, but no scrollable conversation element
       Catch.report(`Cannot find Gmail scrollable element: ${this.sel.convoRootScrollable}`);
+    }
+  }
+
+  public scrollToCursorInReplyBox = (replyMsgId: string, cursorOffsetTop: number) => {
+    const convoRootScrollable = $(this.sel.convoRootScrollable);
+    if (convoRootScrollable) {
+      const replyMsg = $(replyMsgId);
+      const replyMsgOffsetTop = replyMsg.offset()!.top - convoRootScrollable.offset()!.top;
+      const bottomGap = 150;
+      // check if cursor went above the visible part of convoRootScrollable
+      if (replyMsgOffsetTop + cursorOffsetTop < 0) {
+        convoRootScrollable.css('scroll-behavior', '');
+        convoRootScrollable.get(0).scrollTop += replyMsgOffsetTop + cursorOffsetTop;
+      }
+      // check if cursor went below the visible part of convoRootScrollable
+      if (replyMsgOffsetTop + cursorOffsetTop > convoRootScrollable.get(0).clientHeight - bottomGap) {
+        convoRootScrollable.css('scroll-behavior', '');
+        convoRootScrollable.get(0).scrollTop += replyMsgOffsetTop + cursorOffsetTop - convoRootScrollable.get(0).clientHeight + bottomGap;
+      }
     }
   }
 
@@ -131,13 +152,25 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private replaceArmoredBlocks = () => {
     const emailsContainingPgpBlock = $(this.sel.msgOuter).find(this.sel.msgInnerContainingPgp).not('.evaluated');
     for (const emailContainer of emailsContainingPgpBlock) {
+      if (this.debug) {
+        console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer', emailContainer);
+      }
       $(emailContainer).addClass('evaluated');
+      if (this.debug) {
+        console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer added evaluated');
+      }
       const senderEmail = this.getSenderEmail(emailContainer);
       const isOutgoing = !!this.sendAs[senderEmail];
       const replacementXssSafe = XssSafeFactory.replaceRenderableMsgBlocks(this.factory, emailContainer.innerText, this.determineMsgId(emailContainer), senderEmail, isOutgoing);
       if (typeof replacementXssSafe !== 'undefined') {
         $(this.sel.translatePrompt).hide();
+        if (this.debug) {
+          console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replacing');
+        }
         this.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', replacementXssSafe); // xss-safe-factory: replace_blocks is XSS safe
+        if (this.debug) {
+          console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replaced');
+        }
       }
     }
   }
@@ -261,6 +294,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       this.currentlyReplacingAttachments = true;
       for (const attachmentsContainerEl of $(this.sel.attachmentsContainerInner).not('.evaluated')) {
         const attachmentsContainer = $(attachmentsContainerEl);
+        if (this.debug) {
+          console.debug('replaceAttachments() for of -> attachmentsContainer, setting evaluated', attachmentsContainer);
+        }
         attachmentsContainer.addClass('evaluated');
         // In the exact moment we check, only some of the attachments of a message may be loaded into the DOM, while others won't
         // Because of that we need to listen to new attachments being inserted into the DOM
@@ -268,12 +304,21 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           for (const mutation of mutationsList) {
             if (mutation.type === 'childList') {
               for (const addedNode of mutation.addedNodes) {
+                if (this.debug) {
+                  console.debug('replaceAttachments() for of -> attachmentsContainer MutationObserver -> processNewPgpAttachments(addedNode)', $(addedNode as HTMLElement));
+                }
                 await this.processNewPgpAttachments($(addedNode as HTMLElement), attachmentsContainer);
               }
             }
           }
         });
+        if (this.debug) {
+          console.debug('replaceAttachments() for of -> attachmentsContainer enabling MutationObserver');
+        }
         attachmentsContainerObserver.observe(attachmentsContainerEl, { subtree: true, childList: true });
+        if (this.debug) {
+          console.debug('replaceAttachments() for of -> processNewPgpAttachments(attachmentsContainerEl)');
+        }
         await this.processNewPgpAttachments(attachmentsContainer.children().not('.evaluated'), attachmentsContainer);
       }
     } finally {
@@ -282,6 +327,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private processNewPgpAttachments = async (pgpAttachments: JQuery<HTMLElement>, attachmentsContainer: JQuery<HTMLElement>) => {
+    if (this.debug) {
+      console.debug('processNewPgpAttachments()');
+    }
     const newPgpAttachments = this.filterAttachments(pgpAttachments, Attachment.webmailNamePattern);
     newPgpAttachments.addClass('evaluated');
     if (newPgpAttachments.length) {
@@ -289,7 +337,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (msgId) {
         Xss.sanitizePrepend(newPgpAttachments, this.factory.embeddedAttachmentStatus('Getting file info..' + Ui.spinner('green')));
         try {
+          if (this.debug) {
+            console.debug('processNewPgpAttachments() -> msgGet may take some time');
+          }
           const msg = await this.gmail.msgGet(msgId, 'full');
+          if (this.debug) {
+            console.debug('processNewPgpAttachments() -> msgGet done -> processAttachments', msg);
+          }
           await this.processAttachments(msgId, GmailParser.findAttachments(msg), attachmentsContainer, false);
         } catch (e) {
           if (ApiErr.isAuthErr(e)) {
@@ -311,6 +365,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private processAttachments = async (msgId: string, attachmentMetas: Attachment[], attachmentsContainerInner: JQueryEl | HTMLElement, skipGoogleDrive: boolean) => {
+    if (this.debug) {
+      console.debug('processAttachments()', attachmentMetas);
+    }
     let msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
     const senderEmail = this.getSenderEmail(msgEl);
     const isOutgoing = !!this.sendAs[senderEmail];
@@ -321,6 +378,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const treatAs = a.treatAs();
       // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
       const attachmentSel = this.filterAttachments(attachmentsContainerInner.children().not('.attachment_processed'), new RegExp(`^${Str.regexEscape(a.name || 'noname')}$`)).first();
+      if (this.debug) {
+        console.debug('processAttachments() treatAs');
+      }
       try {
         if (treatAs !== 'plainFile') {
           this.hideAttachment(attachmentSel, attachmentsContainerInner);
@@ -332,6 +392,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             const isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !Attachment.encryptedMsgNames.includes(a.name); // ambiguous .asc name
             const isAmbiguousNonameFile = !a.name || a.name === 'noname'; // may not even be OpenPGP related
             if (isAmbiguousAscFile || isAmbiguousNonameFile) { // Inspect a chunk
+              if (this.debug) {
+                console.debug('processAttachments() try -> awaiting chunk + awaiting type');
+              }
               const data = await this.gmail.attachmentGetChunk(msgId, a.id!); // .id is present when fetched from api
               const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ data: data.toBase64Str() }); // base64 for FF, see #2587
               if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
@@ -341,6 +404,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               } else {
                 attachmentSel.show().children('.attachment_loader').text('Unknown OpenPGP format');
                 nRenderedAttachments++;
+              }
+              if (this.debug) {
+                console.debug('processAttachments() try -> awaiting done and processed');
               }
             } else {
               msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', this.factory.embeddedMsg('encryptedMsg', '', msgId, false, senderEmail)); // xss-safe-factory

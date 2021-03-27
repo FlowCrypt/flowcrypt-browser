@@ -50,6 +50,11 @@ View.run(class SettingsView extends View {
     const uncheckedUrlParams = Url.parse(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
     this.acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
     this.page = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'page');
+    if (this.page && !/^(\/chrome|modules)/.test!(this.page as string)) {
+      Ui.modal.error('An unexpected value was found for the page parameter')
+        .catch(err => console.log(err));
+      this.page = undefined;
+    }
     this.page = (this.page === 'undefined') ? undefined : this.page; // in case an "undefined" string slipped in
     this.pageUrlParams = (typeof uncheckedUrlParams.pageUrlParams === 'string') ? JSON.parse(uncheckedUrlParams.pageUrlParams) as UrlParams : undefined;
     this.addNewAcct = uncheckedUrlParams.addNewAcct === true;
@@ -318,7 +323,11 @@ View.run(class SettingsView extends View {
         }
       } catch (e) {
         if (ApiErr.isAuthErr(e)) {
-          Xss.sanitizeRender(statusContainer, '<a class="bad" href="#">Auth Needed</a>');
+          const authNeededLink = $('<a class="bad" href="#">Auth Needed</a>');
+          authNeededLink.click(this.setHandler(async () => {
+            await Settings.loginWithPopupShowModalOnErr(this.acctEmail!, () => window.location.reload());
+          }));
+          statusContainer.empty().append(authNeededLink); // xss-direct
           $('#status-row #status_flowcrypt').text(`fc:auth`).addClass('bad');
           Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail!, () => window.location.reload());
         } else if (ApiErr.isNetErr(e)) {

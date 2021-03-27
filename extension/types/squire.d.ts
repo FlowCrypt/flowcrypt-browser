@@ -77,3 +77,6 @@ export declare class WillPasteEvent extends ClipboardEvent {
   fragment: DocumentFragment;
   text: string;
 }
+export declare class CursorEvent {
+  range: Range;
+}

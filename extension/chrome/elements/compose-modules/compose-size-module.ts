@@ -43,7 +43,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
     }, 1000);
   }
 
-  public resizeComposeBox = (addExtra: number = 0) => {
+  public resizeComposeBox = (addExtra: number = 0, cursorOffsetTop?: number) => {
     if (this.view.isReplyBox) {
       this.view.S.cached('input_text').css('max-width', (this.view.S.cached('body').width()! - 20) + 'px'); // body should always be present
       let minHeight = 0;
@@ -58,7 +58,13 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       }
       if (currentHeight !== this.lastReplyBoxTableHeight && Math.abs(currentHeight - this.lastReplyBoxTableHeight) > 2) { // more then two pixel difference compared to last time
         this.lastReplyBoxTableHeight = currentHeight;
-        BrowserMsg.send.setCss(this.view.parentTabId, { selector: `iframe#${this.view.frameId}`, css: { height: `${(Math.max(minHeight, currentHeight) + addExtra)}px` } });
+        BrowserMsg.send.setCss(this.view.parentTabId, {
+          selector: `iframe#${this.view.frameId}`,
+          css: { height: `${(Math.max(minHeight, currentHeight) + addExtra)}px` }
+        });
+      }
+      if (cursorOffsetTop) {
+        BrowserMsg.send.scrollToCursorInReplyBox(this.view.parentTabId, { replyMsgId: `#${this.view.frameId}`, cursorOffsetTop });
       }
     } else {
       this.view.S.cached('input_text').css('max-width', '');

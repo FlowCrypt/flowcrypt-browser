@@ -120,6 +120,37 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(recipients).to.eq(['recip1@corp.co', 'recip2@corp.co', 'сс1@corp.co', 'bсс1@corp.co', '1 more'].join(''));
     }));
 
+    ava.default(`compose - auto include pubkey when our key is not available on Wkd`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await composePage.page.setViewport({ width: 540, height: 606 });
+      await ComposePageRecipe.fillMsg(composePage, { to: 'flowcrypt.compatibility@gmail.com' }, 'testing auto include pubkey');
+      await composePage.waitTillGone('@spinner');
+      await Util.sleep(3); // wait for the Wkd lookup to complete
+      expect(await composePage.hasClass('@action-include-pubkey', 'active')).to.be.false;
+      await composePage.waitAndType(`@input-to`, 'some.unknown@unknown.com');
+      await composePage.waitAndFocus('@input-body');
+      await composePage.waitTillGone('@spinner');
+      await Util.sleep(3); // allow some time to search for messages
+      expect(await composePage.hasClass('@action-include-pubkey', 'active')).to.be.true;
+    }));
+
+    ava.default(`compose - auto include pubkey is inactive when our key is available on Wkd`, testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'wkd@google.mock.flowcryptlocal.com:8001';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoKeygen(settingsPage);
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+      await composePage.page.setViewport({ width: 540, height: 606 });
+      await ComposePageRecipe.fillMsg(composePage, { to: 'ci.tests.gmail@flowcrypt.dev' }, 'testing auto include pubkey');
+      await composePage.waitTillGone('@spinner');
+      await Util.sleep(3); // wait for the Wkd lookup to complete
+      expect(await composePage.hasClass('@action-include-pubkey', 'active')).to.be.false;
+      await composePage.waitAndType('@input-to', 'some.unknown@unknown.com');
+      await composePage.waitAndFocus('@input-body');
+      await composePage.waitTillGone('@spinner');
+      await Util.sleep(3); // allow some time to search for messages
+      expect(await composePage.hasClass('@action-include-pubkey', 'active')).to.be.false;
+    }));
+
     ava.default(`compose - freshly loaded pubkey`, testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'freshly loaded pubkey');
@@ -192,7 +223,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.dev'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await composeFrame.waitAndFocus('@action-show-options-popover');
-      await inboxPage.press('Enter', 'ArrowDown', 'ArrowDown', 'ArrowDown', 'Enter'); // more arrow downs to ensure that active element selection loops
+      await inboxPage.press('Enter');
+      await inboxPage.press('ArrowDown', 3); // more arrow downs to ensure that active element selection loops
+      await inboxPage.press('Enter');
       expect(await composeFrame.read('@action-send')).to.eq('Sign and Send');
     }));
 
@@ -410,7 +443,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
         await expectRecipientElements(composePage, { to: ['flowcryptcompatibility@gmail.com'], cc: ['flowcrypt.compatibility@gmail.com'], bcc: ['human@flowcrypt.com'] });
         const subjectElem = await composePage.waitAny('@input-subject');
-        expect(await (await subjectElem.getProperty('value')).jsonValue()).to.equal('Test Draft - New Message');
+        expect(await PageRecipe.getElementPropertyJson(subjectElem, 'value')).to.equal('Test Draft - New Message');
         expect((await composePage.read('@input-body')).trim()).to.equal('Testing Drafts (Do not delete)');
         for (const elem of await composePage.target.$$('.container-cc-bcc-buttons > span')) {
           expect(await PageRecipe.getElementPropertyJson(elem, 'offsetHeight')).to.equal(0); // CC/BCC btn isn't visible
@@ -724,7 +757,25 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await sendTextAndVerifyPresentInSentMsg(t, browser, rainbow, { sign: true, encrypt: true });
     }));
 
-    ava.default.skip('oversize attachment does not get errorneously added', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('compose - sent message should\'t have version and comment based on OrgRules', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'has.pub@org-rules-test.flowcrypt.com';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.manualEnter(settingsPage, 'has.pub.orgrulestest', { noPrvCreateOrgRule: true, enforceAttesterSubmitOrgRule: true });
+      const subject = `Test Sending Message With Test Text and HIDE_ARMOR_META OrgRule ${Util.lousyRandom()}`;
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, { sign: true });
+      await composePage.waitAndType('@input-body', 'any text', { delay: 1 });
+      await ComposePageRecipe.sendAndClose(composePage);
+      // get sent msg from mock
+      const sentMsg = new GoogleData(acct).getMessageBySubject(subject)!;
+      const message = sentMsg.payload!.body!.data!;
+      expect(message).to.include('-----BEGIN PGP MESSAGE-----');
+      expect(message).to.include('-----END PGP MESSAGE-----');
+      expect(message).to.not.include('Version');
+      expect(message).to.not.include('Comment');
+    }));
+
+    ava.default.skip('oversize attachment does not get erroneously added', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       // big file will get canceled
       const fileInput = await composePage.target.$('input[type=file]');
@@ -968,6 +1019,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('import S/MIME cert', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      // the cert since expired, therefore test was updated to reflect that
       const smimeCert = `-----BEGIN CERTIFICATE-----
 MIIE9DCCA9ygAwIBAgIQY/cCXnAPOUUwH7L7pWdPhDANBgkqhkiG9w0BAQsFADCB
 jTELMAkGA1UEBhMCSVQxEDAOBgNVBAgMB0JlcmdhbW8xGTAXBgNVBAcMEFBvbnRl
@@ -1008,7 +1060,7 @@ yPLCqVTFJQWaCR5ZTekRQPTDZkjxjxbs
       await contactsFrame.waitAndClick('@action-show-parsed-public-keys', { confirmGone: true });
       await contactsFrame.waitAll('iframe');
       const pubkeyFrame = await contactsFrame.getFrame(['pgp_pubkey.htm']);
-      await pubkeyFrame.waitForContent('@action-add-contact', 'IMPORT KEY');
+      await pubkeyFrame.waitForContent('@action-add-contact', 'IMPORT EXPIRED KEY');
       await pubkeyFrame.waitAndClick('@action-add-contact');
       await pubkeyFrame.waitForContent('@container-pgp-pubkey', `${recipientEmail} added`);
       await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
@@ -1018,7 +1070,7 @@ yPLCqVTFJQWaCR5ZTekRQPTDZkjxjxbs
       await contactsFrame.waitForContent('@container-pubkey-details', `Users: ${recipientEmail}`);
       await contactsFrame.waitForContent('@container-pubkey-details', 'Created on: Mon Mar 23 2020');
       await contactsFrame.waitForContent('@container-pubkey-details', 'Expiration: Tue Mar 23 2021');
-      await contactsFrame.waitForContent('@container-pubkey-details', 'Expired: no');
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Expired: yes');
       await contactsFrame.waitForContent('@container-pubkey-details', 'Usable for encryption: true');
       await contactsFrame.waitForContent('@container-pubkey-details', 'Usable for signing: true');
     }));
@@ -1129,7 +1181,7 @@ const expectRecipientElements = async (controllable: ControllablePage, expected:
       const recipientElements = await container.$$('.recipients > span');
       expect(recipientElements.length).to.equal(expectedEmails.length);
       for (const recipientElement of recipientElements) {
-        const textContent = await (await recipientElement.getProperty('textContent')).jsonValue() as string;
+        const textContent = await PageRecipe.getElementPropertyJson(recipientElement, 'textContent');
         expect(expectedEmails).to.include(textContent.trim());
       }
     }

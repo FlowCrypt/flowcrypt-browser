@@ -7,11 +7,10 @@ name: Auto merge
 
 # Trigger the workflow on pull request
 on:
-  pull_request:
+  pull_request_target:
     types:
       - synchronize
       - opened
-      - edited
 
 jobs:
 

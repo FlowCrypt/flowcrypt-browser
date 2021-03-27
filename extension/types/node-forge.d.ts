@@ -33,6 +33,7 @@ declare module "node-forge" {
             t: number;
             s: number;
             toString(): string;
+            bitLength(): number;
         }
     }
 
@@ -227,8 +228,8 @@ declare module "node-forge" {
                 hash: any;
             };
             extensions: any[];
-            privateKey: PrivateKey;
-            publicKey: PublicKey;
+            privateKey: PrivateKey | undefined;
+            publicKey: PublicKey | undefined;
             md: any;
             /**
              * Sets the subject of this certificate.
@@ -259,7 +260,7 @@ declare module "node-forge" {
              *
              * @return the extension or null if not found.
              */
-            getExtension(options: string | {name: string;} | {id: number;}): {} | undefined;
+            getExtension(options: string | { name: string; } | { id: number; }): {} | undefined;
 
             /**
              * Signs this certificate using the given private key.
@@ -671,7 +672,7 @@ declare module "node-forge" {
                 digestAlgorithm: string;
                 authenticatedAttributes: { type: string; value?: string }[];
             }): void;
-            sign(options?:{
+            sign(options?: {
                 detached?: boolean
             }): void;
             toAsn1(): asn1.Asn1;
@@ -729,16 +730,16 @@ declare module "node-forge" {
 
     namespace hmac {
 
-      type Algorithm = "sha1" | "md5" | "sha256";
+        type Algorithm = "sha1" | "md5" | "sha256";
 
-      interface HMAC {
-          digest(): util.ByteBuffer;
-          getMact(): util.ByteBuffer;
-          start(md: Algorithm, key: string | util.ByteBuffer | null): void;
-          update(bytes: string | util.ByteBuffer | Buffer): void;
-      }
+        interface HMAC {
+            digest(): util.ByteBuffer;
+            getMact(): util.ByteBuffer;
+            start(md: Algorithm, key: string | util.ByteBuffer | null): void;
+            update(bytes: string | util.ByteBuffer | Buffer): void;
+        }
 
-      function create(): HMAC;
+        function create(): HMAC;
     }
 
     namespace cipher {
@@ -916,29 +917,29 @@ declare module "node-forge" {
                 certs: pki.Certificate[]
             ): Verified;
             getCertificate:
-                | ((
-                      conn: Connection,
-                      hint: CertificateRequest | string[]
-                  ) => pki.PEM | ReadonlyArray<pki.PEM>)
-                | null;
+            | ((
+                conn: Connection,
+                hint: CertificateRequest | string[]
+            ) => pki.PEM | ReadonlyArray<pki.PEM>)
+            | null;
             getPrivateKey:
-                | ((conn: Connection, certificate: pki.Certificate) => pki.PEM)
-                | null;
+            | ((conn: Connection, certificate: pki.Certificate) => pki.PEM)
+            | null;
             getSignature:
-                | ((
-                      conn: Connection,
-                      bytes: Bytes,
-                      callback: (conn: Connection, bytes: Bytes) => void
-                  ) => void)
-                | null;
+            | ((
+                conn: Connection,
+                bytes: Bytes,
+                callback: (conn: Connection, bytes: Bytes) => void
+            ) => void)
+            | null;
             input: util.ByteBuffer;
             tlsData: util.ByteBuffer;
             data: util.ByteBuffer;
             tlsDataReady(conn: Connection): void;
             dataReady(conn: Connection): void;
             heartbeatReceived:
-                | ((conn: Connection, payload: util.ByteBuffer) => void)
-                | undefined;
+            | ((conn: Connection, payload: util.ByteBuffer) => void)
+            | undefined;
             closed(conn: Connection): void;
             error(conn: Connection, error: TLSError): void;
             deflate: ((inBytes: Bytes) => Bytes) | null;
