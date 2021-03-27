@@ -16,7 +16,7 @@ export class InboxNotificationModule extends ViewModule<InboxView> {
 
   constructor(view: InboxView) {
     super(view);
-    this.notifications = new Notifications(view.tabId);
+    this.notifications = new Notifications();
   }
 
   public render = () => {

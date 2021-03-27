@@ -16,8 +16,7 @@ import { FlowCryptWebsite } from '../flowcrypt-website.js';
 export type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
 export type SubscriptionLevel = 'pro' | null;
 export type FcUuidAuth = { account: string, uuid: string | undefined };
-export type PaymentMethod = 'stripe' | 'group' | 'trial';
-export type SubscriptionInfo = { active?: boolean | null; method?: PaymentMethod | null; level?: SubscriptionLevel; expire?: string | null; expired?: boolean };
+export type SubscriptionInfo = { level?: SubscriptionLevel; expired?: boolean };
 
 export namespace BackendRes {
   export type FcAccountLogin = { registered: boolean, verified: boolean };
@@ -61,20 +60,8 @@ export class FlowCryptComApi extends Api {
   public static accountGetAndUpdateLocalStore = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcAccountGet> => {
     FlowCryptComApi.throwIfMissingUuid(fcAuth);
     const r = await FlowCryptComApi.request<BackendRes.FcAccountGet>('account/get', fcAuth);
-    await AcctStore.set(fcAuth.account, { rules: r.domain_org_rules, subscription: r.subscription });
+    await AcctStore.set(fcAuth.account, { rules: r.domain_org_rules });
     return r;
-  }
-
-  public static accountSubscribe = async (fcAuth: FcUuidAuth, product: string, method: string, paymentSourceToken?: string): Promise<BackendRes.FcAccountSubscribe> => {
-    FlowCryptComApi.throwIfMissingUuid(fcAuth);
-    const response = await FlowCryptComApi.request<BackendRes.FcAccountSubscribe>('account/subscribe', {
-      ...fcAuth,
-      method,
-      source: paymentSourceToken || null, // tslint:disable-line:no-null-keyword
-      product,
-    });
-    await AcctStore.set(fcAuth.account, { subscription: response.subscription });
-    return response;
   }
 
   public static messageUpload = async (fcAuth: FcUuidAuth | undefined, encryptedDataBinary: Uint8Array, progressCb: ProgressCb): Promise<BackendRes.FcMsgUpload> => {
