@@ -62,14 +62,18 @@ type SortedKeysForDecrypt = {
 export type DecryptSuccess = { success: true; signature?: VerifyRes; isEncrypted?: boolean, filename?: string, content: Buf };
 type DecryptError$error = { type: DecryptErrTypes; message: string; };
 type DecryptError$longids = { message: string[]; matching: string[]; chosen: string[]; needPassphrase: string[]; };
-export type DecryptError = {
-  success: false; error: DecryptError$error; longids: DecryptError$longids; content?: Buf;
-  isEncrypted?: boolean; message?: OpenPGP.message.Message | OpenPGP.cleartext.CleartextMessage;
-};
+export type DecryptError = { success: false; error: DecryptError$error; longids: DecryptError$longids; content?: Buf; isEncrypted?: boolean; };
 
 type OpenpgpMsgOrCleartext = OpenPGP.message.Message | OpenPGP.cleartext.CleartextMessage;
 
-export type VerifyRes = { signer?: { primaryUserId: string | undefined, longid: string }; contact?: Contact; match: boolean | null; error?: string; isErrFatal?: boolean, content?: Buf };
+export type VerifyRes = {
+  signer?: { primaryUserId: string | undefined, longid: string };
+  contact?: Contact;
+  match: boolean | null;
+  error?: string;
+  isErrFatal?: boolean,
+  content?: Buf
+};
 export type PgpMsgTypeResult = { armored: boolean, type: MsgBlockType } | undefined;
 export type DecryptResult = DecryptSuccess | DecryptError;
 export type DiagnoseMsgPubkeysResult = { found_match: boolean, receivers: number, };
@@ -118,7 +122,10 @@ export class MsgUtil {
         // This does not 100% mean it's OpenPGP message
         // But it's a good indication that it may be
         const t = opgp.enums.packet;
-        const msgTpes = [t.symEncryptedIntegrityProtected, t.modificationDetectionCode, t.symEncryptedAEADProtected, t.symmetricallyEncrypted, t.compressed];
+        const msgTpes = [
+          t.symEncryptedIntegrityProtected, t.modificationDetectionCode,
+          t.symEncryptedAEADProtected, t.symmetricallyEncrypted, t.compressed
+        ];
         return { armored: false, type: msgTpes.includes(tagNumber) ? 'encryptedMsg' : 'publicKey' };
       }
     }
@@ -216,7 +223,7 @@ export class MsgUtil {
       return { success: true, content, isEncrypted, signature };
     }
     if (!keys.prvForDecryptDecrypted.length && !msgPwd) {
-      return { success: false, error: { type: DecryptErrTypes.needPassphrase, message: 'Missing pass phrase' }, message: prepared.message, longids, isEncrypted };
+      return { success: false, error: { type: DecryptErrTypes.needPassphrase, message: 'Missing pass phrase' }, longids, isEncrypted };
     }
     try {
       const packets = (prepared.message as OpenPGP.message.Message).packets;
@@ -235,12 +242,13 @@ export class MsgUtil {
         signature.content = undefined; // already passed as "content" on the response object, don't need it duplicated
       }
       if (!prepared.isCleartext && (prepared.message as OpenPGP.message.Message).packets.filterByTag(opgp.enums.packet.symmetricallyEncrypted).length) {
-        const noMdc = 'Security threat!\n\nMessage is missing integrity checks (MDC). The sender should update their outdated software.\n\nDisplay the message at your own risk.';
-        return { success: false, content, error: { type: DecryptErrTypes.noMdc, message: noMdc }, message: prepared.message, longids, isEncrypted };
+        const noMdc = 'Security threat!\n\nMessage is missing integrity checks (MDC). ' +
+          ' The sender should update their outdated software.\n\nDisplay the message at your own risk.';
+        return { success: false, content, error: { type: DecryptErrTypes.noMdc, message: noMdc }, longids, isEncrypted };
       }
       return { success: true, content, isEncrypted, filename: decrypted.getFilename() || undefined, signature };
     } catch (e) {
-      return { success: false, error: MsgUtil.cryptoMsgDecryptCategorizeErr(e, msgPwd), message: prepared.message, longids, isEncrypted };
+      return { success: false, error: MsgUtil.cryptoMsgDecryptCategorizeErr(e, msgPwd), longids, isEncrypted };
     }
   }
 
