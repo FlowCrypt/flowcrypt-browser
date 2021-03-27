@@ -440,7 +440,8 @@ abstract class ControllableBase {
     const matchingLinks: string[] = [];
     for (const iframe of await this.target.$$('iframe')) {
       const src = await PageRecipe.getElementPropertyJson(iframe, 'src');
-      if (urlMatchables.filter(m => src.indexOf(m) !== -1).length === urlMatchables.length) {
+      const visible = !! await iframe.boundingBox(); // elements without bounding box are not visible
+      if (urlMatchables.filter(m => src.indexOf(m) !== -1).length === urlMatchables.length && visible) {
         matchingLinks.push(src);
       }
     }
