@@ -11,8 +11,7 @@ import { Ui } from '../../browser/ui.js';
 import { storageLocalGet, storageLocalSet, storageLocalRemove } from '../../browser/chrome.js';
 import { AbstractStore } from './abstract-store.js';
 import { RawStore } from './abstract-store.js';
-import { Subscription } from '../../subscription.js';
-import { FcUuidAuth, SubscriptionInfo } from '../../api/account-servers/flowcrypt-com-api.js';
+import { FcUuidAuth } from '../../api/account-servers/flowcrypt-com-api.js';
 
 export type StoredReplyDraftMeta = string; // draftId, TODO: remove in #3329
 export type EmailProvider = 'gmail';
@@ -33,7 +32,7 @@ export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'ema
   'google_token_refresh' | 'hide_message_password' | 'sendAs' | 'drafts_reply' |
   'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' |
   'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
-  'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all' | 'subscription' | 'uuid' | 'use_rich_text' | 'rules' |
+  'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all' | 'uuid' | 'use_rich_text' | 'rules' |
   'fesUrl' | 'fesAccessToken';
 
 export type SendAsAlias = {
@@ -66,7 +65,6 @@ export type AcctStoreDict = {
   setup_date?: number;
   use_rich_text?: boolean;
   openid?: GmailRes.OpenId;
-  subscription?: SubscriptionInfo;
   uuid?: string;
   rules?: DomainRulesJson;
   fesUrl?: string; // url where FlowCrypt Enterprise Server is deployed
@@ -138,11 +136,6 @@ export class AcctStore extends AbstractStore {
   public static authInfo = async (acctEmail: string): Promise<FcUuidAuth> => {
     const { uuid } = await AcctStore.get(acctEmail, ['uuid']);
     return { account: acctEmail, uuid };
-  }
-
-  public static getSubscription = async (acctEmail: string): Promise<Subscription> => {
-    const { subscription } = await AcctStore.get(acctEmail, ['subscription']);
-    return new Subscription(subscription);
   }
 
   public static remove = async (acctEmail: string, keys: AccountIndex[]) => {

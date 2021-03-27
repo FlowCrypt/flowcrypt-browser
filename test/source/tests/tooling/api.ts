@@ -3,37 +3,10 @@
 import * as request from 'fc-node-requests';
 
 import { Config } from '../../util';
-import { Response } from 'request';
 
 const ci_admin_token = Config.secrets().ci_admin_token;
 
-class ApiErrResponse extends Error {
-  public response: Response;
-  constructor(message: string, response: Response) {
-    super(message);
-    this.response = response;
-  }
-}
-
 export class FlowCryptApi {
-
-  public static hookCiAcctDelete = async (email: string) => {
-    try {
-      await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_account_delete', { ci_admin_token, email });
-    } catch (e) {
-      if (e.message instanceof ApiErrResponse && e.response.body.error.message === 'Unknown account email') {
-        throw e;
-      }
-    }
-  }
-
-  public static hookCiSubscriptionExpire = async (email: string) => {
-    await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_subscription_expire', { ci_admin_token, email });
-  }
-
-  public static hookCiSubscriptionReset = async (email: string) => {
-    await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_subscription_reset', { ci_admin_token, email });
-  }
 
   public static hookCiDebugEmail = async (debug_title: string, debug_html_content: string) => { // tslint:disable-line:variable-name
     if (!ci_admin_token) {

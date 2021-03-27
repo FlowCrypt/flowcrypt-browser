@@ -75,7 +75,6 @@ export class PgpBlockViewAttachmentsModule {
       Browser.saveToDownloads(attachment);
       this.view.renderModule.resizePgpBlockFrame();
     } else {
-      delete decrypted.message;
       console.info(decrypted);
       await Ui.modal.error(`There was a problem decrypting this file (${decrypted.error.type}: ${decrypted.error.message}). Downloading encrypted original.`);
       Browser.saveToDownloads(encrypted);

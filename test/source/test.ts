@@ -8,7 +8,6 @@ import { Config, Util, getParsedCliParams } from './util';
 
 import { BrowserRecipe } from './tests/tooling/browser-recipe';
 import { FlowCryptApi } from './tests/tooling/api';
-import { defineConsumerAcctTests as defineAcctTests } from './tests/account';
 import { defineComposeTests } from './tests/compose';
 import { defineDecryptTests } from './tests/decrypt';
 import { defineElementTests } from './tests/elements';
@@ -146,5 +145,4 @@ if (testGroup === 'UNIT-TESTS') {
   defineGmailTests(testVariant, testWithBrowser);
   defineSettingsTests(testVariant, testWithBrowser);
   defineElementTests(testVariant, testWithBrowser);
-  defineAcctTests(testVariant);
 }
