@@ -416,15 +416,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.sendAndClose(composePage, { password: 'test-pass' });
     }));
 
-    ava.default('compose - reply - CC&BCC test forward', testWithBrowser('compatibility', async (t, browser) => {
-      const appendUrl = 'threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16ce2c965c75e5a6';
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
-      await composePage.waitAndClick('@action-forward', { delay: 2 });
-      await composePage.waitAny('@input-to');
-      await composePage.ensureFocused('@input-to');
-      await expectRecipientElements(composePage, { to: [], cc: [], bcc: [] });
-    }));
-
     ava.default('compose - expired can still send', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'expired.on.attester@domain.com' }, 'Test Expired Email');
@@ -1173,7 +1164,7 @@ const clickTripleDotAndExpectQuoteToLoad = async (composePage: Controllable, tex
   expect(await composePage.read('@input-body')).to.include(textToInclude);
 };
 
-const expectRecipientElements = async (controllable: ControllablePage, expected: { to?: string[], cc?: string[], bcc?: string[] }) => {
+export const expectRecipientElements = async (controllable: ControllablePage, expected: { to?: string[], cc?: string[], bcc?: string[] }) => {
   for (const type of ['to', 'cc', 'bcc']) {
     const expectedEmails: string[] | undefined = (expected as Dict<string[]>)[type] || undefined; // tslint:disable-line:no-unsafe-any
     if (expectedEmails) {
