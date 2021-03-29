@@ -1446,7 +1446,8 @@ jA==
       expect(parsed[0].type).to.be.equal('x509');
       expect(parsed[0].emails.length).to.be.equal(1);
       expect(parsed[0].emails[0]).to.be.equal('test@example.com');
-      expect(parsed[0].isPrivate).to.be.equal(true);
+      expect(parsed[0].isPrivate).to.be.equal(false);
+      expect(parsed[0].isPublic).to.be.equal(true);
       t.pass();
     });
 
