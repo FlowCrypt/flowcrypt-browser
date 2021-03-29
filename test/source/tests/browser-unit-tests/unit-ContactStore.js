@@ -337,7 +337,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
   if (typeof loaded.pubkey_last_check !== 'number') {
     throw Error(`pubkey_last_check was expected to be a number, but got ${typeof loaded.pubkey_last_check}`);
   }
-  if (typeof loaded.last_use !== 'number') {
+  if (typeof loaded.expiresOn !== 'number') {
     throw Error(`expiresOn was expected to be a number, but got ${typeof loaded.expiresOn}`);
   }
   return 'pass';
