@@ -11,7 +11,6 @@ export type ContactUpdate = {
   email?: string;
   name?: string | null;
   pubkey?: Key;
-  pending_lookup?: number;
   last_use?: number | null;
 };
 
@@ -49,12 +48,11 @@ export class ContactStore {
     }
   }
 
-  public static obj = async ({ email, name, pubkey, pendingLookup, lastUse, lastCheck }: any): Promise<Contact> => {
+  public static obj = async ({ email, name, pubkey, lastUse, lastCheck }: any): Promise<Contact> => {
     if (!pubkey) {
       return {
         email,
         name: name || null,
-        pending_lookup: (pendingLookup ? 1 : 0),
         pubkey: undefined,
         has_pgp: 0, // number because we use it for sorting
         fingerprint: null,
@@ -70,7 +68,6 @@ export class ContactStore {
       pubkey: pk,
       has_pgp: 1, // number because we use it for sorting
       fingerprint: pk.id,
-      pending_lookup: pendingLookup,
       last_use: lastUse,
       pubkey_last_check: lastCheck,
     } as Contact;

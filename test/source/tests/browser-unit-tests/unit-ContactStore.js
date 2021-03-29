@@ -284,13 +284,11 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update tests`);
   const expectedObj1 = {
     email: email1,
     name: undefined,
-    pendingLookup: 0,
     lastUse: undefined
   }
   const expectedObj2 = {
     email: email2,
     name: undefined,
-    pendingLookup: 0,
     lastUse: undefined
   }
   const getEntity = async(email) => { return await new Promise((resolve, reject) => {
@@ -301,9 +299,6 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update tests`);
     const loaded = await getEntity(expectedObj.email);
     if (loaded.name != expectedObj.name) {
       throw Error(`name field mismatch, expected ${expectedObj.name} but got ${loaded.name}`);
-    }
-    if (loaded.pendingLookup != expectedObj.pendingLookup) {
-      throw Error(`pendingLookup field mismatch, expected ${expectedObj.pendingLookup} but got ${loaded.pendingLookup}`);
     }
     if (loaded.lastUse != expectedObj.lastUse) {
       throw Error(`lastUse field mismatch, expected ${expectedObj.lastUse} but got ${loaded.lastUse}`);
@@ -317,20 +312,12 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update tests`);
   expectedObj1.name = 'New Name for contact 1';
   await ContactStore.update(db, email1, { name: expectedObj1.name });
   await compareEntities();
-  expectedObj2.pendingLookup = 1;
-  // provide any non-zero value
-  await ContactStore.update(db, email2, { pending_lookup: 4 });
-  await compareEntities();
-  expectedObj2.pendingLookup = 0;
-  // provide a "zero" value
-  await ContactStore.update(db, email2, { pending_lookup: undefined });
-  await compareEntities();
   const date = new Date();
-  expectedObj1.lastUse = date.getTime();
-  await ContactStore.update(db, email1, {last_use: date });
+  expectedObj2.lastUse = date.getTime();
+  await ContactStore.update(db, email2, {last_use: date });
   await compareEntities();
-  expectedObj1.lastUse = undefined;
-  await ContactStore.update(db, email1, {last_use: undefined });
+  expectedObj2.lastUse = undefined;
+  await ContactStore.update(db, email2, {last_use: undefined });
   await compareEntities();
   return 'pass';
 })();

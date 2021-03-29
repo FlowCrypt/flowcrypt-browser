@@ -14,7 +14,6 @@ type DbContactObjArg = {
   email: string,
   name?: string | null,
   pubkey?: string | null,
-  pendingLookup?: boolean | number | null,
   lastUse?: number | null, // when was this contact last used to send an email
   lastCheck?: number | null; // when was the local copy of the pubkey last updated (or checked against Attester)
 };
@@ -24,7 +23,6 @@ type Email = {
   name: string | null;
   searchable: string[];
   fingerprints: string[];
-  pendingLookup: number;
   lastUse: number | null;
 };
 
@@ -56,7 +54,6 @@ export type ContactPreview = {
 export type ContactUpdate = {
   email?: string;
   name?: string | null;
-  pending_lookup?: number;
   last_use?: number | null;
   pubkey?: Key;
   pubkey_last_check?: number | null; // when non-null, `pubkey` must be supplied
@@ -84,7 +81,6 @@ export class ContactStore extends AbstractStore {
           const emails = db.createObjectStore('emails', { keyPath: 'email' });
           const pubkeys = db.createObjectStore('pubkeys', { keyPath: 'fingerprint' });
           emails.createIndex('search', 'searchable', { multiEntry: true });
-          emails.createIndex('index_pending_lookup', 'pendingLookup');
           emails.createIndex('index_fingerprints', 'fingerprints', { multiEntry: true }); // fingerprints of all connected pubkeys
           pubkeys.createIndex('index_longids', 'longids', { multiEntry: true }); // longids of all public key packets in armored pubkey
         }
@@ -112,9 +108,9 @@ export class ContactStore extends AbstractStore {
     return { email: validEmail, name: name || null, has_pgp: 0, last_use: null };
   }
 
-  public static obj = async ({ email, name, pubkey, pendingLookup, lastUse, lastCheck }: DbContactObjArg): Promise<Contact> => {
+  public static obj = async ({ email, name, pubkey, lastUse, lastCheck }: DbContactObjArg): Promise<Contact> => {
     if (typeof opgp === 'undefined') {
-      return await BrowserMsg.send.bg.await.db({ f: 'obj', args: [{ email, name, pubkey, pendingLookup, lastUse, lastCheck }] }) as Contact;
+      return await BrowserMsg.send.bg.await.db({ f: 'obj', args: [{ email, name, pubkey, lastUse, lastCheck }] }) as Contact;
     } else {
       const validEmail = Str.parseEmail(email).email;
       if (!validEmail) {
@@ -124,7 +120,6 @@ export class ContactStore extends AbstractStore {
         return {
           email: validEmail,
           name: name || null,
-          pending_lookup: (pendingLookup ? 1 : 0),
           pubkey: undefined,
           has_pgp: 0, // number because we use it for sorting
           fingerprint: null,
@@ -139,7 +134,6 @@ export class ContactStore extends AbstractStore {
         name: name || null,
         pubkey: pk,
         has_pgp: 1, // number because we use it for sorting
-        pending_lookup: 0,
         last_use: lastUse || null,
         pubkey_last_check: lastCheck || null,
         ...ContactStore.getKeyAttributes(pk)
@@ -282,7 +276,7 @@ export class ContactStore extends AbstractStore {
         if (!validEmail) {
           throw Error(`Cannot save contact because email is not valid: ${email}`);
         }
-        emailEntity = { email, name: null, searchable: [], fingerprints: [], pendingLookup: 0, lastUse: null };
+        emailEntity = { email, name: null, searchable: [], fingerprints: [], lastUse: null };
       }
       if (pubkeyEntity) {
         if (!emailEntity.fingerprints.includes(pubkeyEntity.fingerprint)) {
@@ -291,9 +285,6 @@ export class ContactStore extends AbstractStore {
       }
       if (Object.keys(update).includes('name')) {
         emailEntity.name = update.name ?? null;
-      }
-      if (Object.keys(update).includes('pending_lookup')) {
-        emailEntity.pendingLookup = update.pending_lookup ? 1 : 0;
       }
       if (Object.keys(update).includes('last_use')) {
         emailEntity.lastUse = DateUtility.asNumber(update.last_use);
@@ -490,7 +481,6 @@ export class ContactStore extends AbstractStore {
       name: email.name,
       pubkey: key,
       has_pgp: key ? 1 : 0,
-      pending_lookup: email.pendingLookup,
       last_use: email.lastUse,
       pubkey_last_check: lastCheck,
       ...ContactStore.getKeyAttributes(key)

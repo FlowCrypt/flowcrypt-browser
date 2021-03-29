@@ -53,7 +53,6 @@ export type Contact = {
   pubkey: Key | undefined;
   has_pgp: 0 | 1;
   fingerprint: string | null;
-  pending_lookup: number;
   last_use: number | null;
   pubkey_last_check: number | null;
   expiresOn: number | null;

@@ -14,7 +14,6 @@ type ContactV3 = {
   pubkey: Key | string | null;
   has_pgp: 0 | 1;
   fingerprint: string | null;
-  pending_lookup: number;
   last_use: number | null;
   pubkey_last_check: number | null;
   expiresOn: number | null;
@@ -80,7 +79,6 @@ const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: numb
       email: entry.email,
       name: entry.name,
       pubkey,
-      pending_lookup: entry.pending_lookup,
       last_use: entry.last_use,
       pubkey_last_check: pubkey ? entry.pubkey_last_check : undefined
     } as ContactUpdate;
