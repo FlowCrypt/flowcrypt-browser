@@ -451,7 +451,7 @@ export class ContactStore extends AbstractStore {
               if (!email) {
                 resolve(undefined);
               } else {
-                resolve(ContactStore.toContact(email, pubkey)); // todo: test
+                resolve(ContactStore.toContact(email, pubkey));
               }
             },
             reject);
