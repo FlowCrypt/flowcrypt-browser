@@ -25,13 +25,17 @@
 BROWSER_UNIT_TEST_NAME(`ContactStore is able to search by partial email address`);
 (async () => {
   const contactABBDEF = await ContactStore.obj({
-    email: 'abbdef@test.com', pubkey: testConstants.abbdefTestComPubkey });
+    email: 'abbdef@test.com', pubkey: testConstants.abbdefTestComPubkey
+  });
   const contactABCDEF = await ContactStore.obj({
-    email: 'abcdef@test.com', pubkey: testConstants.abcdefTestComPubkey });
+    email: 'abcdef@test.com', pubkey: testConstants.abcdefTestComPubkey
+  });
   const contactABCDDF = await ContactStore.obj({
-    email: 'abcddf@test.com', pubkey: testConstants.abcddfTestComPubkey });
+    email: 'abcddf@test.com', pubkey: testConstants.abcddfTestComPubkey
+  });
   const contactABDDEF = await ContactStore.obj({
-    email: 'abddef@test.com', pubkey: testConstants.abddefTestComPubkey });
+    email: 'abddef@test.com', pubkey: testConstants.abddefTestComPubkey
+  });
   await ContactStore.save(undefined, contactABBDEF);
   await ContactStore.save(undefined, contactABCDEF);
   await ContactStore.save(undefined, contactABCDDF);
@@ -64,7 +68,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store duplicates in searchable`);
   // extract the entity from the database to see the actual field
   const entity = await new Promise((resolve, reject) => {
     const req = db.transaction(['emails'], 'readonly').objectStore('emails').get(contact.email);
-    ContactStore.setReqPipe(req, () => resolve(req.result), reject);
+    ContactStore.setReqPipe(req, resolve, reject);
   });
   if (entity?.searchable.length !== 2) {
     throw Error(`Expected 2 entries in 'searchable' but got "${entity?.searchable}"`);
@@ -82,7 +86,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store smaller words in searchable w
   // extract the entity from the database to see the actual field
   const entity = await new Promise((resolve, reject) => {
     const req = db.transaction(['emails'], 'readonly').objectStore('emails').get(contact.email);
-    ContactStore.setReqPipe(req, () => resolve(req.result), reject);
+    ContactStore.setReqPipe(req, resolve, reject);
   });
   if (entity?.searchable.length !== 3 || !entity.searchable.includes('f:a')
     || !entity.searchable.includes('f:bigger') || !entity.searchable.includes('f:one')) {
@@ -97,23 +101,25 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update updates correct 'pubkey_last_check'`
   const email = 'flowcrypt.compatibility@gmail.com';
   const date2_0 = Date.now();
   const contacts = [
-  await ContactStore.obj({
-    email,
-    pubkey: testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788
-  }),
-  await ContactStore.obj({
-    email,
-    pubkey: testConstants.flowcryptcompatibilityPublicKeyADAC279C95093207,
-    lastCheck: date2_0
-  })];
+    await ContactStore.obj({
+      email,
+      pubkey: testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788
+    }),
+    await ContactStore.obj({
+      email,
+      pubkey: testConstants.flowcryptcompatibilityPublicKeyADAC279C95093207,
+      lastCheck: date2_0
+    })];
   await ContactStore.save(db, contacts);
   // extract the entities from the database
   const fp1 = '5520CACE2CB61EA713E5B0057FDE685548AEA788';
   const fp2 = 'E8F0517BA6D7DAB6081C96E4ADAC279C95093207';
-  const getEntity = async(fp) => { return await new Promise((resolve, reject) => {
-    const req = db.transaction(['pubkeys'], 'readonly').objectStore('pubkeys').get(fp);
-    ContactStore.setReqPipe(req, () => resolve(req.result), reject);
-  }); };
+  const getEntity = async (fp) => {
+    return await new Promise((resolve, reject) => {
+      const req = db.transaction(['pubkeys'], 'readonly').objectStore('pubkeys').get(fp);
+      ContactStore.setReqPipe(req, resolve, reject);
+    });
+  };
   let entity1 = await getEntity(fp1);
   let entity2 = await getEntity(fp2);
   if (entity1.fingerprint !== fp1) {
@@ -188,11 +194,13 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update tests`);
     name: undefined,
     lastUse: undefined
   }
-  const getEntity = async(email) => { return await new Promise((resolve, reject) => {
-    const req = db.transaction(['emails'], 'readonly').objectStore('emails').get(email);
-    ContactStore.setReqPipe(req, () => resolve(req.result), reject);
-  }); };
-  const compareEntity = async(expectedObj) => { 
+  const getEntity = async (email) => {
+    return await new Promise((resolve, reject) => {
+      const req = db.transaction(['emails'], 'readonly').objectStore('emails').get(email);
+      ContactStore.setReqPipe(req, () => resolve, reject);
+    });
+  };
+  const compareEntity = async (expectedObj) => {
     const loaded = await getEntity(expectedObj.email);
     if (loaded.name != expectedObj.name) {
       throw Error(`name field mismatch, expected ${expectedObj.name} but got ${loaded.name}`);
@@ -201,7 +209,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update tests`);
       throw Error(`lastUse field mismatch, expected ${expectedObj.lastUse} but got ${loaded.lastUse}`);
     }
   };
-  const compareEntities = async() => {
+  const compareEntities = async () => {
     await compareEntity(expectedObj1);
     await compareEntity(expectedObj2);
   }
@@ -211,10 +219,10 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update tests`);
   await compareEntities();
   const date = new Date();
   expectedObj2.lastUse = date.getTime();
-  await ContactStore.update(db, email2, {last_use: date });
+  await ContactStore.update(db, email2, { last_use: date });
   await compareEntities();
   expectedObj2.lastUse = undefined;
-  await ContactStore.update(db, email2, {last_use: undefined });
+  await ContactStore.update(db, email2, { last_use: undefined });
   await compareEntities();
   return 'pass';
 })();
@@ -225,7 +233,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
   const email = 'test@expired.com';
   const lastCheck = Date.now();
   const lastUse = lastCheck + 1000;
-  const contact = await ContactStore.obj({ email, pubkey:testConstants.expiredPub, lastCheck, lastUse });
+  const contact = await ContactStore.obj({ email, pubkey: testConstants.expiredPub, lastCheck, lastUse });
   await ContactStore.save(undefined, [contact]);
   const [loaded] = await ContactStore.get(undefined, [email]);
   if (typeof loaded.last_use !== 'number') {
@@ -243,13 +251,17 @@ BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
 BROWSER_UNIT_TEST_NAME(`ContactStore gets a contact by any longid`);
 (async () => {
   const contactABBDEF = await ContactStore.obj({
-    email: 'abbdef@test.com', pubkey: testConstants.abbdefTestComPubkey });
+    email: 'abbdef@test.com', pubkey: testConstants.abbdefTestComPubkey
+  });
   const contactABCDEF = await ContactStore.obj({
-    email: 'abcdef@test.com', pubkey: testConstants.abcdefTestComPubkey });
+    email: 'abcdef@test.com', pubkey: testConstants.abcdefTestComPubkey
+  });
   const contactABCDDF = await ContactStore.obj({
-    email: 'abcddf@test.com', pubkey: testConstants.abcddfTestComPubkey });
+    email: 'abcddf@test.com', pubkey: testConstants.abcddfTestComPubkey
+  });
   const contactABDDEF = await ContactStore.obj({
-    email: 'abddef@test.com', pubkey: testConstants.abddefTestComPubkey });
+    email: 'abddef@test.com', pubkey: testConstants.abddefTestComPubkey
+  });
   await ContactStore.save(undefined, [contactABBDEF, contactABCDEF, contactABCDDF, contactABDDEF]);
   const [abbdefByPrimaryLongid] = await ContactStore.get(undefined, ['DF63659C3B4A81FB']);
   if (abbdefByPrimaryLongid.email !== 'abbdef@test.com') {
@@ -272,7 +284,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore gets a contact by any longid`);
   }
   if (abcdefByPrimaryLongid.pubkey.id !== '3155F118B6E732B3638A1CE1608BCD797A23FB91') {
     throw Error(`Expected to get the key fingerprint 3155F118B6E732B3638A1CE1608BCD797A23FB91 but got ${abcdefByPrimaryLongid.pubkey.id}`)
-  }  
+  }
   const [abcdefBySubkeyLongid] = await ContactStore.get(undefined, ['2D47A41943DFAFCE']);
   if (abcdefBySubkeyLongid.email !== 'abcdef@test.com') {
     throw Error(`Expected to get the key for abcdef@test.com by subkey longid but got ${abcdefBySubkeyLongid.email}`)
@@ -315,11 +327,13 @@ BROWSER_UNIT_TEST_NAME(`ContactStore gets a contact by any longid`);
 
 BROWSER_UNIT_TEST_NAME(`ContactStore gets a valid pubkey by e-mail, or exact pubkey by longid`);
 (async () => {
-  await ContactStore.update(undefined, 'some.revoked@localhost', { email: 'some.revoked@localhost', pubkey: await KeyUtil.parse(testConstants.somerevokedRevoked1) });
-  await ContactStore.update(undefined, 'some.revoked@localhost', { email: 'some.revoked@localhost', pubkey: await KeyUtil.parse(testConstants.somerevokedValid) });
-  await ContactStore.update(undefined, 'some.revoked@localhost', { email: 'some.revoked@localhost', pubkey: await KeyUtil.parse(testConstants.somerevokedRevoked2) });
+  // Note 1: email differs from pubkey id
+  // Note 2: not necessary to call ContactStore.save, it's possible to always use ContactStore.update
+  await ContactStore.update(undefined, 'some.revoked@otherhost.com', { pubkey: await KeyUtil.parse(testConstants.somerevokedRevoked1) });
+  await ContactStore.update(undefined, 'some.revoked@otherhost.com', { pubkey: await KeyUtil.parse(testConstants.somerevokedValid) });
+  await ContactStore.update(undefined, 'some.revoked@otherhost.com', { pubkey: await KeyUtil.parse(testConstants.somerevokedRevoked2) });
 
-  const [expectedValid] = await ContactStore.get(undefined, ['some.revoked@localhost']);
+  const [expectedValid] = await ContactStore.get(undefined, ['some.revoked@otherhost.com']);
   if (expectedValid.pubkey.id !== 'D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2') {
     throw Error(`Expected to get the key fingerprint D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2 but got ${expectedValid.pubkey.id}`)
   }
@@ -331,4 +345,5 @@ BROWSER_UNIT_TEST_NAME(`ContactStore gets a valid pubkey by e-mail, or exact pub
   if (expectedRevoked2.pubkey.id !== '3930752556D57C46A1C56B63DE8538DDA1648C76') {
     throw Error(`Expected to get the key fingerprint 3930752556D57C46A1C56B63DE8538DDA1648C76 but got ${expectedRevoked2.pubkey.id}`)
   }
+  return 'pass';
 })();

@@ -60,9 +60,9 @@ const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: numb
       ContactStore.setTxHandlers(tx, resolve, reject);
       const contacts = tx.objectStore('contacts');
       const search = contacts.getAll(undefined, count);
-      search.onsuccess = () => {
-        entries.push(...search.result);
-      };
+      ContactStore.setReqPipe(search, (result: ContactV3[]) => {
+        entries.push(...result);
+      });
     });
     if (!entries.length) {
       return 0;
@@ -70,28 +70,30 @@ const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: numb
   }
   console.info(`Processing a batch of ${entries.length}.`);
   // transform
-  const updates = await Promise.all(entries.map(async (entry) => {
+  const converted = await Promise.all(entries.map(async (entry) => {
     const armoredPubkey = (entry.pubkey && typeof entry.pubkey === 'object')
       ? KeyUtil.armor(entry.pubkey as Key) : entry.pubkey as string;
     // parse again to re-calculate expiration-related fields etc.
     const pubkey = armoredPubkey ? await KeyUtil.parse(armoredPubkey) : undefined;
     return {
       email: entry.email,
-      name: entry.name,
-      pubkey,
-      last_use: entry.last_use,
-      pubkey_last_check: pubkey ? entry.pubkey_last_check : undefined
-    } as ContactUpdate;
+      update: {
+        name: entry.name,
+        pubkey,
+        last_use: entry.last_use,
+        pubkey_last_check: pubkey ? entry.pubkey_last_check : undefined
+      } as ContactUpdate
+    };
   }));
   {
     const tx = db.transaction(['contacts', 'emails', 'pubkeys'], 'readwrite');
     await new Promise((resolve, reject) => {
       ContactStore.setTxHandlers(tx, resolve, reject);
-      for (const update of updates) {
-        ContactStore.updateTx(tx, update.email!, update);
-        tx.objectStore('contacts').delete(update.email!);
+      for (const item of converted) {
+        ContactStore.updateTx(tx, item.email, item.update);
+        tx.objectStore('contacts').delete(item.email);
       }
     });
   }
-  return updates.length;
+  return converted.length;
 };

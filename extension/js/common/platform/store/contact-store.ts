@@ -52,7 +52,6 @@ export type ContactPreview = {
 };
 
 export type ContactUpdate = {
-  email?: string;
   name?: string | null;
   last_use?: number | null;
   pubkey?: Key;
@@ -86,12 +85,12 @@ export class ContactStore extends AbstractStore {
         }
         if (db.objectStoreNames.contains('contacts')) {
           const countRequest = openDbReq.transaction!.objectStore('contacts').count();
-          countRequest.onsuccess = () => {
-            if (countRequest.result === 0) {
+          ContactStore.setReqPipe(countRequest, (count: number) => {
+            if (count === 0) {
               console.info('contacts store is now empty, deleting it...');
               db.deleteObjectStore('contacts');
             }
-          };
+          });
         }
       };
       openDbReq.onsuccess = () => resolve(openDbReq.result as IDBDatabase);
@@ -168,6 +167,10 @@ export class ContactStore extends AbstractStore {
       await Promise.all(email.map(oneEmail => ContactStore.update(db, oneEmail, update)));
       return;
     }
+    const validEmail = Str.parseEmail(email).email;
+    if (!validEmail) {
+      throw Error(`Cannot update contact because email is not valid: ${email}`);
+    }
     if (update.pubkey?.isPrivate) {
       Catch.report(`Wrongly updating prv ${update.pubkey.id} as contact - converting to pubkey`);
       update.pubkey = await KeyUtil.asPublicKey(update.pubkey);
@@ -175,7 +178,7 @@ export class ContactStore extends AbstractStore {
     const tx = db.transaction(['emails', 'pubkeys'], 'readwrite');
     await new Promise((resolve, reject) => {
       ContactStore.setTxHandlers(tx, resolve, reject);
-      ContactStore.updateTx(tx, email, update);
+      ContactStore.updateTx(tx, validEmail, update);
     });
   }
 
@@ -247,7 +250,7 @@ export class ContactStore extends AbstractStore {
   public static updateTx = (tx: IDBTransaction, email: string, update: ContactUpdate) => {
     if (update.pubkey && !update.pubkey_last_check) {
       const req = tx.objectStore('pubkeys').get(update.pubkey.id);
-      req.onsuccess = () => ContactStore.updateTxPhase2(tx, email, update, req.result as Pubkey);
+      ContactStore.setReqPipe(req, (pubkey: Pubkey) => ContactStore.updateTxPhase2(tx, email, update, pubkey));
     } else {
       ContactStore.updateTxPhase2(tx, email, update, undefined);
     }
@@ -269,13 +272,8 @@ export class ContactStore extends AbstractStore {
       Catch.report(`Wrongly updating pubkey_last_check without specifying pubkey for ${email} - ignoring`);
     }
     const req = tx.objectStore('emails').get(email);
-    req.onsuccess = () => {
-      let emailEntity = req.result as Email;
+    ContactStore.setReqPipe(req, (emailEntity: Email) => {
       if (!emailEntity) {
-        const validEmail = Str.parseEmail(email).email;
-        if (!validEmail) {
-          throw Error(`Cannot save contact because email is not valid: ${email}`);
-        }
         emailEntity = { email, name: null, searchable: [], fingerprints: [], lastUse: null };
       }
       if (pubkeyEntity) {
@@ -294,7 +292,7 @@ export class ContactStore extends AbstractStore {
       if (pubkeyEntity) {
         tx.objectStore('pubkeys').put(pubkeyEntity);
       }
-    };
+    });
   }
 
   private static extractPubkeys = async (db: IDBDatabase | undefined, fingerprints: string[]): Promise<Pubkey[]> => {
@@ -306,8 +304,7 @@ export class ContactStore extends AbstractStore {
       const search = tx.objectStore('pubkeys').openCursor(fingerprints);
       const found: Pubkey[] = [];
       ContactStore.setReqPipe(search,
-        () => {
-          const cursor = search.result as IDBCursorWithValue | undefined;
+        (cursor: IDBCursorWithValue) => {
           if (!cursor) {
             resolve(found);
           } else {
@@ -352,8 +349,7 @@ export class ContactStore extends AbstractStore {
       }
       const found: Email[] = [];
       ContactStore.setReqPipe(search,
-        () => {
-          const cursor = search.result as IDBCursorWithValue | undefined;
+        (cursor: IDBCursorWithValue) => {
           if (!cursor) {
             resolve(found);
           } else {
@@ -400,16 +396,21 @@ export class ContactStore extends AbstractStore {
       .map(normalized => ContactStore.dbIndex(emailEntity.fingerprints.length > 0, normalized));
   }
 
-  private static setReqPipe<T>(req: IDBRequest, pipe: (value?: T) => void, reject: (reason?: any) => void) {
+  public static setReqPipe<T>(req: IDBRequest, pipe: (value?: T) => void, reject?: ((reason?: any) => void) | undefined) {
     req.onsuccess = () => {
       try {
         pipe(req.result as T);
       } catch (codeErr) {
-        reject(codeErr);
+        req.transaction!.dispatchEvent(new ErrorEvent('error'));
+        if (reject) {
+          reject(codeErr);
+        }
         Catch.reportErr(codeErr);
       }
     };
-    this.setReqOnError(req, reject);
+    if (reject) {
+      this.setReqOnError(req, reject);
+    }
   }
 
   private static dbContactInternalGetOne = async (db: IDBDatabase, emailOrLongid: string): Promise<Contact | undefined> => {
