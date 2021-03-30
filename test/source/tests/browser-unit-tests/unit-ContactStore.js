@@ -25,116 +25,13 @@
 BROWSER_UNIT_TEST_NAME(`ContactStore is able to search by partial email address`);
 (async () => {
   const contactABBDEF = await ContactStore.obj({
-    email: 'abbdef@test.com', pubkey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
-
-xsBNBGBKJpABCAC/EABGGXizvq4j96YsI0olYqS+9wSydO2Wn1AkoCCsyY9d7xrqG8UONylrTv0/
-FpF951TnpQiWK3Z0RZcUhtVvLvmgF9+RwW1G2/KMc5SrjcAEhlIqPlXwd3hJfJgD03XtKT4mr8Y/
-MVKLcIZyfn/45I/kWY88qVIKKkeG6NbCoV0zBczqTUsx+Tfij6eAo9iYb+ml2vyuEgZiNTdfkCxI
-CzBo7udOcamziz9x8KINJidjwCv0vGO8vhmTQav1sJP71vd5T/t1jghK3DA6uz5GNFoaGG5F3Pl9
-JrgNWkmufuJVMFyC19GUPxm8EPys9yvo8n4Lf1FugeRuIBZPU8K7ABEBAAHND2FiYmRlZkB0ZXN0
-LmNvbcLAiQQTAQgAMxYhBLeQro9CXcRGM6jAht9jZZw7SoH7BQJgSiaUAhsDBQsJCAcCBhUICQoL
-AgUWAgMBAAAKCRDfY2WcO0qB+2ADB/94z3/Y0OQAJqvJSIaPtw7NJdyrsh7guahyGKdMFxVLeGmp
-dCbW9wHwBJ4vDd4sSt6ufX3iQfrwZn5RHtX97AAJ0kZOPJBTlhDPClU1sDudbStde4UpJ6EtYWV6
-o2CLiFQA8OT0endU1b6uiGDOGkUz98lzyqvKlP6lT3EwW68xSL3NrewNoYJDQox7N9ATznGSbGaG
-Jl2STYYA082bpXbgi2cKKwKo3WkSn4iEBEVdrO5yj8PyoOUwE5RK3mCbNLW5KEhY7hHWLz6IO+NC
-7xHj4UZdVxtLjZVtui0Ha9qGO5iTs/S3KwhQ/9uA22RUc438vPBdVJ7kDAD+m2SPobWkzsBNBGBK
-JpQBCAC+zvtIhjKvb8tYaDXHJPivBNhWYq2xOuUt/yXZs2DPYLEGbiELz/URPW1ew8aYmrtqHg7z
-Q47kXz/P5HxZsrMq3bal4mRW02cC9jZT7FrCNI/IE3og3PbHd43spTR8IAz0PDM1huZ/IU0OOBU5
-xjgTRFTGv7eaA39xY0KU8GKtTCXuzPa/3gYby3em2E6tgrCKoicnMtf4uaWIsd6fJ5i5scSBFD93
-0c44U7QgAKuoB90n6887PtNH0voRfrRpLPGQg55WWCHUsx4WdZvPQOw8UPgNVdu+O4+k2xdJ6mEA
-Nz0et1bXDy1b91ywpBTqXzdnwBZ2dFxqsiSTTn11i4XlABEBAAHCwHYEGAEIACAWIQS3kK6PQl3E
-RjOowIbfY2WcO0qB+wUCYEommAIbDAAKCRDfY2WcO0qB+6OQB/wInDNjHfjnqiorwbAg7mOg5qUl
-a9Lrqz9o6ysw9UUV2aof366sy1B3SaYO6gd5vvLF9TTxpgk4ciAjJ8A0m5Xwywmz0chQ766aye/J
-IKcMsL1I47EpMbuxMfZWYEamNxEtpuPVuKpJOwVW//obiqTYBBpsPovi9s1j66aSBO6Ij9h9V8FQ
-TIxPYXu77fCgpVkxh4RffsGQ8l7H/aRQp8a9sKdCe5X7uOF/6Amw25Rfzm1RN9Yg04bVPxtjD2L1
-SqxF5hZCC16HX1SL4GLY9MjLv2JUw6vlMqjASXKI5MyAlpKAicSe1P5yd/ysM9YiLQHriF3+hYxX
-PsqHPr70z6If
-=ack7
------END PGP PUBLIC KEY BLOCK-----
-` });
+    email: 'abbdef@test.com', pubkey: testConstants.abbdefTestComPubkey });
   const contactABCDEF = await ContactStore.obj({
-    email: 'abcdef@test.com', pubkey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
-
-xsBNBGBKJS4BCADxtPTToUQsjy8G88QBeU3a+B0l2CHy6OhsHJkuUOEzM0S++rZqLJJCGdgVAdAF
-o+vk1SyaQRQRMMl3mmFc0Qf3kDWARAT7TCvnYGfiR6PyAn7jcyFsY6y88jF6YrjEs30Tz0I8pItC
-rmsYGWtoDyBBfaXhZUAAHlRELaG/KzhIt66zowJkP4UwrBnOYzkw7yu4KUcmsOrG7t8XXqJ3LHuQ
-Hi6eyWceuFz7Ybsy9qw7GYWxU60NfSnUssQTzRZL9ZeNDzxIjKlpC02SeAyexF9bHuoRbR5GB4QW
-byLLcH15U9FTxlf8oHVgP8pD4AEwBrhc+rqLXX6wwT/3G0nFX+LhABEBAAHND2FiY2RlZkB0ZXN0
-LmNvbcLAiQQTAQgAMxYhBDFV8Ri25zKzY4oc4WCLzXl6I/uRBQJgSiUyAhsDBQsJCAcCBhUICQoL
-AgUWAgMBAAAKCRBgi815eiP7kdFlCACf7Qf9NZAHfE/CfiZHTTvw+RoLLYKu/Xg4s1uKfGVIe6+w
-1wtdy/NHTtf2wWRU/oPC5PK8+P2GjpvwaJIIGCS7sdkeRrRfICxvhYSEGDfvZ2ojLBAz4IGggVcu
-YkUc8ZLq1wOgh02wbjbkvIbDPLtPFoK/3hWswPPs+UoheCg1QfEKEpzvvg0NDxO8YhmFqedLYBBu
-TSH/b1tIXAdujO2o8U7yUtOe+HZ5f9DHrXf8jiySJ1rZehb2srOt+H9+g7zUXBojqsqzJupuaj8f
-5i7g0Hb0c4Kq2NdvoEU7dzFu/Tqy6Pv+ZpgktlOqiFyAwXH8sDBLqeWe8gGAk68lPe/tzsBNBGBK
-JTIBCADI7CylGW0udtxCk2FM4lgcjEp1IAbcsarLd8TrxRRus/OTCm9e4FEmB5+nYX3uWhh5WSm7
-zxX3ufjGyIx3fEPOrvjvdiZEUjTansMz+smuMk9+4sWVZcGT1BC0f7zGNfu3Hd2VbXOA763HdQnd
-4S4oycj/aOBCjth1pgVMaEJEJAozC8uzzYBp4guMolreC2Xu1UixpPn2N/+ZjJzHDdIwC4yXjYT4
-xz3IoPwl/XVsXZOofQR+v88AhmsHtXbJy0pGpY9jtd8gncq3DMFcOhACoU0o1wu7FwRDLtjR5W8R
-yBAShf78spBzuBCunSfxw2Bv3ak+b43jtN77TrTZrF2xABEBAAHCwHYEGAEIACAWIQQxVfEYtucy
-s2OKHOFgi815eiP7kQUCYEolOQIbDAAKCRBgi815eiP7kUMoB/0SvYvjthGGhzrHXHC2WusC6rEN
-Szp7FrUbc5upp2dktVmH62jC649K9lsoJUhitcE8E2C+lLToIJMhsNIXgPP7Ai+a6dJn6LKwT95b
-RZGNIk/dQehU53g0BNdsWDCBUa92vFmtngQ34nwM40iiYLraioCah9/yZGdANFAEFr4iA2mmfBlt
-j3kOljjta/iqbEO0hWSVwUT7D7ljitU4/BOmyT0n10ra7FtUMfMzVHrvJZGjEkrk8DjVLunPkkqj
-kM3d32EJ1lZdub6GcDURdWNaOd9FmNGizKYYu1Wgeik0SnrhCy6DGLT+JDfv1/arwK2s1Usi2SOq
-X7O4C+D4oKVA
-=a/tS
------END PGP PUBLIC KEY BLOCK-----
-` });
+    email: 'abcdef@test.com', pubkey: testConstants.abcdefTestComPubkey });
   const contactABCDDF = await ContactStore.obj({
-    email: 'abcddf@test.com', pubkey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
-
-xsBNBGBKJS4BCADxtPTToUQsjy8G88QBeU3a+B0l2CHy6OhsHJkuUOEzM0S++rZqLJJCGdgVAdAF
-o+vk1SyaQRQRMMl3mmFc0Qf3kDWARAT7TCvnYGfiR6PyAn7jcyFsY6y88jF6YrjEs30Tz0I8pItC
-rmsYGWtoDyBBfaXhZUAAHlRELaG/KzhIt66zowJkP4UwrBnOYzkw7yu4KUcmsOrG7t8XXqJ3LHuQ
-Hi6eyWceuFz7Ybsy9qw7GYWxU60NfSnUssQTzRZL9ZeNDzxIjKlpC02SeAyexF9bHuoRbR5GB4QW
-byLLcH15U9FTxlf8oHVgP8pD4AEwBrhc+rqLXX6wwT/3G0nFX+LhABEBAAHND2FiY2RlZkB0ZXN0
-LmNvbcLAiQQTAQgAMxYhBDFV8Ri25zKzY4oc4WCLzXl6I/uRBQJgSiUyAhsDBQsJCAcCBhUICQoL
-AgUWAgMBAAAKCRBgi815eiP7kdFlCACf7Qf9NZAHfE/CfiZHTTvw+RoLLYKu/Xg4s1uKfGVIe6+w
-1wtdy/NHTtf2wWRU/oPC5PK8+P2GjpvwaJIIGCS7sdkeRrRfICxvhYSEGDfvZ2ojLBAz4IGggVcu
-YkUc8ZLq1wOgh02wbjbkvIbDPLtPFoK/3hWswPPs+UoheCg1QfEKEpzvvg0NDxO8YhmFqedLYBBu
-TSH/b1tIXAdujO2o8U7yUtOe+HZ5f9DHrXf8jiySJ1rZehb2srOt+H9+g7zUXBojqsqzJupuaj8f
-5i7g0Hb0c4Kq2NdvoEU7dzFu/Tqy6Pv+ZpgktlOqiFyAwXH8sDBLqeWe8gGAk68lPe/tzsBNBGBK
-JTIBCADI7CylGW0udtxCk2FM4lgcjEp1IAbcsarLd8TrxRRus/OTCm9e4FEmB5+nYX3uWhh5WSm7
-zxX3ufjGyIx3fEPOrvjvdiZEUjTansMz+smuMk9+4sWVZcGT1BC0f7zGNfu3Hd2VbXOA763HdQnd
-4S4oycj/aOBCjth1pgVMaEJEJAozC8uzzYBp4guMolreC2Xu1UixpPn2N/+ZjJzHDdIwC4yXjYT4
-xz3IoPwl/XVsXZOofQR+v88AhmsHtXbJy0pGpY9jtd8gncq3DMFcOhACoU0o1wu7FwRDLtjR5W8R
-yBAShf78spBzuBCunSfxw2Bv3ak+b43jtN77TrTZrF2xABEBAAHCwHYEGAEIACAWIQQxVfEYtucy
-s2OKHOFgi815eiP7kQUCYEolOQIbDAAKCRBgi815eiP7kUMoB/0SvYvjthGGhzrHXHC2WusC6rEN
-Szp7FrUbc5upp2dktVmH62jC649K9lsoJUhitcE8E2C+lLToIJMhsNIXgPP7Ai+a6dJn6LKwT95b
-RZGNIk/dQehU53g0BNdsWDCBUa92vFmtngQ34nwM40iiYLraioCah9/yZGdANFAEFr4iA2mmfBlt
-j3kOljjta/iqbEO0hWSVwUT7D7ljitU4/BOmyT0n10ra7FtUMfMzVHrvJZGjEkrk8DjVLunPkkqj
-kM3d32EJ1lZdub6GcDURdWNaOd9FmNGizKYYu1Wgeik0SnrhCy6DGLT+JDfv1/arwK2s1Usi2SOq
-X7O4C+D4oKVA
-=a/tS
------END PGP PUBLIC KEY BLOCK-----
-` });
+    email: 'abcddf@test.com', pubkey: testConstants.abcddfTestComPubkey });
   const contactABDDEF = await ContactStore.obj({
-    email: 'abddef@test.com', pubkey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
-
-xsBNBGBKJqQBCACzNxbtfJMZdrhzTpV34rEy4t50Q/8jwo4+z7GLPX6vSmHGy/Y4fOBsae5rXMr9
-v02IAdoLgGTbPqSa5fDPWAbiyNL/M/5ojBwAzHBChWyD2543M1XOOOAgUm2dKospBww4RyavkE4t
-Ng3HIY/eWtm0sDGuYYkwvrgu5Puc+1kMegdBkE1CkkNd/jC/EJnnYs3WDaVd1h1is/IxKJ8xjTQD
-Rc2+YJYxCT5+KxRFlApqXogJDhPQEK+S8Rl/nMunxMVq9ls2ixdsnWdvA3+4xbRN6WLDKy/mx8XD
-OqvOpXQ8f9rXiwwjW8EsoCFrTvCdh2JaY0uPqRtfcrQodhidAUMXABEBAAHND2FiZGRlZkB0ZXN0
-LmNvbcLAiQQTAQgAMxYhBJ4CDZt1L9P/8X7Ztl/MFUHPKClRBQJgSiaoAhsDBQsJCAcCBhUICQoL
-AgUWAgMBAAAKCRBfzBVBzygpUYZ7CACxwRjeDlaHQCNsV+yG3gwXorKBHmMVZ++pO2fjCWRIwQA6
-DfkQ//tjudLwLIZRNFgdn9T04XEX3p65wkhK8vbyhTk18VS57NPLFpSjOrkhXd0JNgMNI0LVcOp9
-gPkgQZ7qBlRh1rpZiZyO/sccJAb0RfLzbaMl7BOKOKsAvUOGT4eiIjp+37/HsrYvOaJkzt8vI4dx
-RPuJ5rWJPrlnJuPO1im0hsi7dj9XrVdWth58AyMvQ5JjbAid9b42VZ4HuB1P+PSiDeUQq4O9ISWA
-ZtKsfTusZSQP/Bq9jZf+ucdRIM7eo6NCY3X4jFefjsWdi7mofcFZCowMTc+PkCMCBsmlzsBNBGBK
-JqgBCADSGmHgTuMTfCvoRbzJ14i2WtFFODl7BwY4U8NZG6YcNv7QsCWIqJkwBIzX1OquO8PiZd4D
-AKuYpuG2KCF/vLNFkkq5BWkiMrGIZ7QYvtQFD+BwbAfREcs6ZUMm22eTrdqgs1o5vsDYGGsN36Qh
-ClIDFcUwlpb/35ryrp50GjLFaKjdgBFhksKOY6ZJRJNZcq+i+ii4FizEiJ23vfrPWPByVip1jx4L
-+MlYCG102pNPrnaBnU02tj+tXwfHDXVT5QygO7nX2YM96wTIVxH8seatyjDUK668PQYmT5vGQKl2
-Ikr+orTzqJhMWN0gjA/EHRcpuQn2EJrTVi4+4oU6dZBzABEBAAHCwHYEGAEIACAWIQSeAg2bdS/T
-//F+2bZfzBVBzygpUQUCYEomrQIbDAAKCRBfzBVBzygpUQFYB/9WfGAfJb3lIWEBIUE8viIH74B1
-/E1lpWbGbyzSjJAUsFiEAwM0gRaYr9pY2iVsRJwr0dmmhSsESwSy0/dD97jCqjD4d/AkiSxmEMlA
-F9PCnKC7HizaM33lA1S0pADBBEVtwfLd4t0bAo4TnJWnjb/fd9osyPEZGU1zF/fFsfLAIb9GC9VB
-5nRZgXIUeTZDCypk0fCc25kGVO3i8H37eRXonV3TcmNEgYUBvi/3Pk3s/7GUkpp1cKtn4s7MnHzO
-wBff8jybIDc7uGSzTW5qc/3qcgbfH0FGCoIy20H7zgnEJ6PnkENlb/WfynSHAXvfMc8r9YLTCrkv
-WmiyOmaRmLP+
-=Iusd
------END PGP PUBLIC KEY BLOCK-----` });
+    email: 'abddef@test.com', pubkey: testConstants.abddefTestComPubkey });
   await ContactStore.save(undefined, contactABBDEF);
   await ContactStore.save(undefined, contactABCDEF);
   await ContactStore.save(undefined, contactABCDDF);
@@ -339,6 +236,79 @@ BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
   }
   if (typeof loaded.expiresOn !== 'number') {
     throw Error(`expiresOn was expected to be a number, but got ${typeof loaded.expiresOn}`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`ContactStore gets a contact by any longid`);
+(async () => {
+  const contactABBDEF = await ContactStore.obj({
+    email: 'abbdef@test.com', pubkey: testConstants.abbdefTestComPubkey });
+  const contactABCDEF = await ContactStore.obj({
+    email: 'abcdef@test.com', pubkey: testConstants.abcdefTestComPubkey });
+  const contactABCDDF = await ContactStore.obj({
+    email: 'abcddf@test.com', pubkey: testConstants.abcddfTestComPubkey });
+  const contactABDDEF = await ContactStore.obj({
+    email: 'abddef@test.com', pubkey: testConstants.abddefTestComPubkey });
+  await ContactStore.save(undefined, [contactABBDEF, contactABCDEF, contactABCDDF, contactABDDEF]);
+  const [abbdefByPrimaryLongid] = await ContactStore.get(undefined, ['DF63659C3B4A81FB']);
+  if (abbdefByPrimaryLongid.email !== 'abbdef@test.com') {
+    throw Error(`Expected to get the key for abbdef@test.com by primary longid but got ${abbdefByPrimaryLongid.email}`)
+  }
+  if (abbdefByPrimaryLongid.pubkey.id !== 'B790AE8F425DC44633A8C086DF63659C3B4A81FB') {
+    throw Error(`Expected to get the key fingerprint B790AE8F425DC44633A8C086DF63659C3B4A81FB but got ${abbdefByPrimaryLongid.pubkey.id}`)
+  }
+  const [abbdefBySubkeyLongid] = await ContactStore.get(undefined, ['621DE1814AD675E0']);
+  if (abbdefBySubkeyLongid.email !== 'abbdef@test.com') {
+    throw Error(`Expected to get the key for abbdef@test.com by subkey longid but got ${abbdefBySubkeyLongid.email}`)
+  }
+  if (abbdefBySubkeyLongid.pubkey.id !== 'B790AE8F425DC44633A8C086DF63659C3B4A81FB') {
+    throw Error(`Expected to get the key fingerprint B790AE8F425DC44633A8C086DF63659C3B4A81FB but got ${abbdefBySubkeyLongid.pubkey.id}`)
+  }
+
+  const [abcdefByPrimaryLongid] = await ContactStore.get(undefined, ['608BCD797A23FB91']);
+  if (abcdefByPrimaryLongid.email !== 'abcdef@test.com') {
+    throw Error(`Expected to get the key for abcdef@test.com by primary longid but got ${abcdefByPrimaryLongid.email}`)
+  }
+  if (abcdefByPrimaryLongid.pubkey.id !== '3155F118B6E732B3638A1CE1608BCD797A23FB91') {
+    throw Error(`Expected to get the key fingerprint 3155F118B6E732B3638A1CE1608BCD797A23FB91 but got ${abcdefByPrimaryLongid.pubkey.id}`)
+  }  
+  const [abcdefBySubkeyLongid] = await ContactStore.get(undefined, ['2D47A41943DFAFCE']);
+  if (abcdefBySubkeyLongid.email !== 'abcdef@test.com') {
+    throw Error(`Expected to get the key for abcdef@test.com by subkey longid but got ${abcdefBySubkeyLongid.email}`)
+  }
+  if (abcdefBySubkeyLongid.pubkey.id !== '3155F118B6E732B3638A1CE1608BCD797A23FB91') {
+    throw Error(`Expected to get the key fingerprint 3155F118B6E732B3638A1CE1608BCD797A23FB91 but got ${abcdefBySubkeyLongid.pubkey.id}`)
+  }
+
+  const [abcddfByPrimaryLongid] = await ContactStore.get(undefined, ['75AA44AB8930F7E9']);
+  if (abcddfByPrimaryLongid.email !== 'abcddf@test.com') {
+    throw Error(`Expected to get the key for abcddf@test.com by primary longid but got ${abcddfByPrimaryLongid.email}`)
+  }
+  if (abcddfByPrimaryLongid.pubkey.id !== '6CF53D2329C2A80828F499D375AA44AB8930F7E9') {
+    throw Error(`Expected to get the key fingerprint 6CF53D2329C2A80828F499D375AA44AB8930F7E9 but got ${abcddfByPrimaryLongid.pubkey.id}`)
+  }
+  const [abcddfBySubkeyLongid] = await ContactStore.get(undefined, ['92CFDAC7AA3A4253']);
+  if (abcddfBySubkeyLongid.email !== 'abcddf@test.com') {
+    throw Error(`Expected to get the key for abcddf@test.com by subkey longid but got ${abcddfBySubkeyLongid.email}`)
+  }
+  if (abcddfBySubkeyLongid.pubkey.id !== '6CF53D2329C2A80828F499D375AA44AB8930F7E9') {
+    throw Error(`Expected to get the key fingerprint 6CF53D2329C2A80828F499D375AA44AB8930F7E9 but got ${abcddfBySubkeyLongid.pubkey.id}`)
+  }
+
+  const [abddefByPrimaryLongid] = await ContactStore.get(undefined, ['5FCC1541CF282951']);
+  if (abddefByPrimaryLongid.email !== 'abddef@test.com') {
+    throw Error(`Expected to get the key for abddef@test.com by primary longid but got ${abddefByPrimaryLongid.email}`)
+  }
+  if (abddefByPrimaryLongid.pubkey.id !== '9E020D9B752FD3FFF17ED9B65FCC1541CF282951') {
+    throw Error(`Expected to get the key fingerprint 9E020D9B752FD3FFF17ED9B65FCC1541CF282951 but got ${abddefByPrimaryLongid.pubkey.id}`)
+  }
+  const [abddefBySubkeyLongid] = await ContactStore.get(undefined, ['EAA7A05FE34F3A1A']);
+  if (abddefBySubkeyLongid.email !== 'abddef@test.com') {
+    throw Error(`Expected to get the key for abddef@test.com by subkey longid but got ${abddefBySubkeyLongid.email}`)
+  }
+  if (abddefBySubkeyLongid.pubkey.id !== '9E020D9B752FD3FFF17ED9B65FCC1541CF282951') {
+    throw Error(`Expected to get the key fingerprint 9E020D9B752FD3FFF17ED9B65FCC1541CF282951 but got ${abddefBySubkeyLongid.pubkey.id}`)
   }
   return 'pass';
 })();
