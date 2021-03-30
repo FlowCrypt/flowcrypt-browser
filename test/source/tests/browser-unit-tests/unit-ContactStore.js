@@ -312,3 +312,23 @@ BROWSER_UNIT_TEST_NAME(`ContactStore gets a contact by any longid`);
   }
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`ContactStore gets a valid pubkey by e-mail, or exact pubkey by longid`);
+(async () => {
+  await ContactStore.update(undefined, 'some.revoked@localhost', { email: 'some.revoked@localhost', pubkey: await KeyUtil.parse(testConstants.somerevokedRevoked1) });
+  await ContactStore.update(undefined, 'some.revoked@localhost', { email: 'some.revoked@localhost', pubkey: await KeyUtil.parse(testConstants.somerevokedValid) });
+  await ContactStore.update(undefined, 'some.revoked@localhost', { email: 'some.revoked@localhost', pubkey: await KeyUtil.parse(testConstants.somerevokedRevoked2) });
+
+  const [expectedValid] = await ContactStore.get(undefined, ['some.revoked@localhost']);
+  if (expectedValid.pubkey.id !== 'D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2') {
+    throw Error(`Expected to get the key fingerprint D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2 but got ${expectedValid.pubkey.id}`)
+  }
+  const [expectedRevoked1] = await ContactStore.get(undefined, ['097EEBF354259A5E']);
+  if (expectedRevoked1.pubkey.id !== 'A5CFC8E8EA4AE69989FE2631097EEBF354259A5E') {
+    throw Error(`Expected to get the key fingerprint A5CFC8E8EA4AE69989FE2631097EEBF354259A5E but got ${expectedRevoked1.pubkey.id}`)
+  }
+  const [expectedRevoked2] = await ContactStore.get(undefined, ['DE8538DDA1648C76']);
+  if (expectedRevoked2.pubkey.id !== '3930752556D57C46A1C56B63DE8538DDA1648C76') {
+    throw Error(`Expected to get the key fingerprint 3930752556D57C46A1C56B63DE8538DDA1648C76 but got ${expectedRevoked2.pubkey.id}`)
+  }
+})();
