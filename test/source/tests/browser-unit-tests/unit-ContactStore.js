@@ -197,7 +197,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update tests`);
   const getEntity = async (email) => {
     return await new Promise((resolve, reject) => {
       const req = db.transaction(['emails'], 'readonly').objectStore('emails').get(email);
-      ContactStore.setReqPipe(req, () => resolve, reject);
+      ContactStore.setReqPipe(req, resolve, reject);
     });
   };
   const compareEntity = async (expectedObj) => {
