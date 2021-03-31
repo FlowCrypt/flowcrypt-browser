@@ -256,6 +256,23 @@ export class ContactStore extends AbstractStore {
     }
   }
 
+  public static setReqPipe<T>(req: IDBRequest, pipe: (value?: T) => void, reject?: ((reason?: any) => void) | undefined) {
+    req.onsuccess = () => {
+      try {
+        pipe(req.result as T);
+      } catch (codeErr) {
+        req.transaction!.dispatchEvent(new ErrorEvent('error'));
+        if (reject) {
+          reject(codeErr);
+        }
+        Catch.reportErr(codeErr);
+      }
+    };
+    if (reject) {
+      this.setReqOnError(req, reject);
+    }
+  }
+
   private static updateTxPhase2 = (tx: IDBTransaction, email: string, update: ContactUpdate, existingPubkey: Pubkey | undefined) => {
     let pubkeyEntity: Pubkey | undefined;
     if (update.pubkey) {
@@ -394,23 +411,6 @@ export class ContactStore extends AbstractStore {
       .map(ContactStore.normalizeString).sort((a, b) => b.length - a.length);
     emailEntity.searchable = sortedNormalized.filter((value, index, self) => !self.slice(0, index).find((el) => el.startsWith(value)))
       .map(normalized => ContactStore.dbIndex(emailEntity.fingerprints.length > 0, normalized));
-  }
-
-  public static setReqPipe<T>(req: IDBRequest, pipe: (value?: T) => void, reject?: ((reason?: any) => void) | undefined) {
-    req.onsuccess = () => {
-      try {
-        pipe(req.result as T);
-      } catch (codeErr) {
-        req.transaction!.dispatchEvent(new ErrorEvent('error'));
-        if (reject) {
-          reject(codeErr);
-        }
-        Catch.reportErr(codeErr);
-      }
-    };
-    if (reject) {
-      this.setReqOnError(req, reject);
-    }
   }
 
   private static dbContactInternalGetOne = async (db: IDBDatabase, emailOrLongid: string): Promise<Contact | undefined> => {
