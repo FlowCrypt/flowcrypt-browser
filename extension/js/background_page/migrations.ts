@@ -46,10 +46,14 @@ export const moveContactsToEmailsAndPubkeys = async (db: IDBDatabase): Promise<v
   }
   console.info('migrating contacts of ContactStore to emails and pubkeys...');
   const batchSize = 50;
-  while (await moveContactsBatchToEmailsAndPubkeys(db, batchSize)) {
-    console.info('proceeding to the next batch');
+  try {
+    while (await moveContactsBatchToEmailsAndPubkeys(db, batchSize)) {
+      console.info('proceeding to the next batch');
+    }
+    console.info('migrating contacts of ContactStore is complete');
+  } catch (e) {
+    console.error(`Error happened when converting contacts: ${e instanceof Error ? e.message : String(e)}`);
   }
-  console.info('migrating contacts of ContactStore is complete');
 };
 
 const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: number | undefined): Promise<number> => {
