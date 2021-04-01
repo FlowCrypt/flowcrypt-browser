@@ -36,17 +36,18 @@ BROWSER_UNIT_TEST_NAME(`ContactStore is able to search by partial email address`
   const contactABDDEF = await ContactStore.obj({
     email: 'abddef@test.com', pubkey: testConstants.abddefTestComPubkey
   });
-  await ContactStore.save(undefined, contactABBDEF);
-  await ContactStore.save(undefined, contactABCDEF);
-  await ContactStore.save(undefined, contactABCDDF);
-  await ContactStore.save(undefined, contactABDDEF);
+  const contactABCDVWXYZHELLOCOM = await ContactStore.obj({
+    email: 'abcd.vwxyz@hello.com', pubkey: testConstants.abcdVwxyzHelloComPubkey
+  });
+  await ContactStore.save(undefined, [contactABBDEF, contactABCDEF, contactABCDDF, contactABDDEF,
+    contactABCDVWXYZHELLOCOM]);
   const contactsABC = await ContactStore.search(undefined, { has_pgp: true, substring: 'abc' });
-  if (contactsABC.length !== 2) {
-    throw Error(`Expected 2 contacts to match "abc" but got "${contactsABC.length}"`);
+  if (contactsABC.length !== 3) {
+    throw Error(`Expected 3 contacts to match "abc" but got "${contactsABC.length}"`);
   }
   const contactsABCD = await ContactStore.search(undefined, { has_pgp: true, substring: 'abcd' });
-  if (contactsABCD.length !== 2) {
-    throw Error(`Expected 2 contacts to match "abcd" but got "${contactsABCD.length}"`);
+  if (contactsABCD.length !== 3) {
+    throw Error(`Expected 3 contacts to match "abcd" but got "${contactsABCD.length}"`);
   }
   const contactsABCDE = await ContactStore.search(undefined, { has_pgp: true, substring: 'abcde' });
   if (contactsABCDE.length !== 1) {
@@ -54,6 +55,14 @@ BROWSER_UNIT_TEST_NAME(`ContactStore is able to search by partial email address`
   }
   if (contactsABCDE[0].email !== 'abcdef@test.com') {
     throw Error(`Expected "abcdef@test.com" but got "${contactsABCDE[0].email}"`);
+  }
+  const contactsVWX = await ContactStore.search(undefined, { has_pgp: true, substring: 'vwx' });
+  if (contactsVWX.length !== 1) {
+    throw Error(`Expected 1 contact to match "vwx" but got "${contactsVWX.length}"`);
+  }
+  const contactsHEL = await ContactStore.search(undefined, { has_pgp: true, substring: 'hel' });
+  if (contactsHEL.length !== 1) {
+    throw Error(`Expected 1 contact to match "hel" but got "${contactsHEL.length}"`);
   }
   return 'pass';
 })();
