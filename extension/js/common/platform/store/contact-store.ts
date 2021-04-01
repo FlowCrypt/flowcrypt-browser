@@ -188,9 +188,6 @@ export class ContactStore extends AbstractStore {
     }
     if (emailOrLongid.length === 1) {
       const contact = await ContactStore.dbContactInternalGetOne(db, emailOrLongid[0]);
-      if (!contact) {
-        return [contact];
-      }
       return [contact];
     } else {
       const results: (Contact | undefined)[] = [];
