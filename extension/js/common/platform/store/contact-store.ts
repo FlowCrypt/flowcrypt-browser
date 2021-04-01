@@ -358,6 +358,11 @@ export class ContactStore extends AbstractStore {
         search = emails.openCursor(); // no substring, already covered in `typeof query.has_pgp === 'undefined' && query.substring` above
       } else { // specific query.has_pgp value
         const indexRange = ContactStore.dbIndexRange(query.has_pgp, query.substring ?? '');
+        // To find all the index keys starting with a certain sequence of characters (e.g. 'abc')
+        // we use a range with inclusive lower boundary and exclusive upper boundary 
+        // ['t:abc', 't:abd) or ['f:abc', 'f:abd'), so that any key having an arbitrary tail of
+        // characters beyond 'abc' falls into this range, and none of the non-matching keys do.
+        // Thus we only have to keep complete keywords in the 'search' index.
         const range = IDBKeyRange.bound(indexRange.lowerBound, indexRange.upperBound, false, true);
         search = emails.index('search').openCursor(range);
       }
@@ -389,6 +394,13 @@ export class ContactStore extends AbstractStore {
   }
 
   private static dbIndexRange = (hasPgp: boolean, substring: string): { lowerBound: string, upperBound: string } => {
+    // to find all the keys starting with 'abc', we need to use a range search with exlcusive upper boundary
+    // ['t:abc', 't:abd'), that is, we "replace" the last char ('c') with the char having subsequent code ('d')
+    // The edge case is when the search string terminates with a certain char X having the max allowed code (65535)
+    // or with a sequence of these, e.g. 'abcXXXXX'. In this case, we have to remove the tail of X characters
+    // and increase the preceding non-X char, hence, the range would be ['t:abcXXXXX', 't:abd')
+    // If the search sequence consists entirely of such symbols, the search range will have
+    // the upper boundary of 'f;' or 't;', so this algorithm always works
     const lowerBound = ContactStore.dbIndex(hasPgp, substring);
     let copyLength = lowerBound.length - 1;
     let lastChar = lowerBound.charCodeAt(copyLength);
