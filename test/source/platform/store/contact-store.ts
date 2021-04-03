@@ -11,23 +11,14 @@ export type ContactUpdate = {
   email?: string;
   name?: string | null;
   pubkey?: Key;
-  has_pgp?: 0 | 1;
-  searchable?: string[];
-  client?: string | null;
-  fingerprint?: string | null;
-  longid?: string | null;
-  pending_lookup?: number;
   last_use?: number | null;
-  pubkey_last_sig?: number | null;
-  pubkey_last_check?: number | null;
-  expiresOn?: number | null;
 };
 
 export class ContactStore {
 
   public static get = async (db: void, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
     const result = DATA.filter(x => emailOrLongid.includes(x.email) ||
-      (x.longid && emailOrLongid.includes(x.longid!)));
+      (x.pubkey && emailOrLongid.includes(OpenPGPKey.fingerprintToLongid(x.pubkey.id))));
     return result;
   }
 
@@ -44,36 +35,28 @@ export class ContactStore {
     if (update.pubkey?.isPrivate) {
       update.pubkey = await KeyUtil.asPublicKey(update.pubkey);
     }
-    if (update.pubkey) {
-      const key = typeof update.pubkey === 'string' ? await KeyUtil.parse(update.pubkey) : update.pubkey;
-      update.fingerprint = key.id;
-      update.longid = OpenPGPKey.fingerprintToLongid(key.id);
-      update.pubkey_last_sig = key.lastModified ? Number(key.lastModified) : null;
-      update.expiresOn = key.expiration ? Number(key.expiration) : null;
-      update.pubkey = key;
-      update.has_pgp = 1;
-    }
     for (const k of Object.keys(update)) {
       // @ts-ignore
       updated[k] = update[k];
     }
+    if (update.pubkey) {
+      const key = typeof update.pubkey === 'string' ? await KeyUtil.parse(update.pubkey) : update.pubkey;
+      updated.pubkey = key;
+      updated.fingerprint = key.id;
+      updated.expiresOn = key.expiration ? Number(key.expiration) : null;
+      updated.has_pgp = 1;
+    }
   }
 
-  public static obj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig }: any): Promise<Contact> => {
+  public static obj = async ({ email, name, pubkey, lastUse, lastCheck }: any): Promise<Contact> => {
     if (!pubkey) {
       return {
         email,
         name: name || null,
-        pending_lookup: (pendingLookup ? 1 : 0),
-        pubkey: null,
-        searchable: [],
+        pubkey: undefined,
         has_pgp: 0, // number because we use it for sorting
-        client: null,
         fingerprint: null,
-        longid: null,
-        longids: [],
         last_use: lastUse || null,
-        pubkey_last_sig: null,
         pubkey_last_check: null,
         expiresOn: null
       };
@@ -82,15 +65,11 @@ export class ContactStore {
     const contact = {
       email,
       name,
-      client,
       pubkey: pk,
+      has_pgp: 1, // number because we use it for sorting
       fingerprint: pk.id,
-      longid: OpenPGPKey.fingerprintToLongid(pk.id),
-      longids: pk.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)),
-      pending_lookup: pendingLookup,
       last_use: lastUse,
       pubkey_last_check: lastCheck,
-      pubkey_last_sig: lastSig
     } as Contact;
     return contact;
   }

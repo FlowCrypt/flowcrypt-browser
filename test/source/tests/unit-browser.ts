@@ -7,6 +7,7 @@ import { TestWithBrowser } from '../test';
 import { TestUrls } from '../browser/test-urls';
 import { readdirSync, readFileSync } from 'fs';
 import { Buf } from '../core/buf';
+import { testConstants } from './tooling/consts';
 
 // tslint:disable:no-blank-lines-func
 /* eslint-disable max-len */
@@ -25,6 +26,8 @@ export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: 
         const hostPage = await browser.newPage(t, TestUrls.extension(`chrome/dev/ci_unit_test.htm`));
         // update host page h1
         await hostPage.target.evaluate((title) => { window.document.getElementsByTagName('h1')[0].textContent = title; }, title);
+        // inject testConstants
+        await hostPage.target.evaluate((object) => { (window as any).testConstants = object; }, testConstants);
         // prepare code to run
         const runThisCodeInBrowser = `
             (async () => {

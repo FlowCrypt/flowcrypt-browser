@@ -50,16 +50,10 @@ export type PubkeyResult = { pubkey: Key, email: string, isMine: boolean };
 export type Contact = {
   email: string;
   name: string | null;
-  pubkey: Key | null;
+  pubkey: Key | undefined;
   has_pgp: 0 | 1;
-  searchable: string[];
-  client: string | null;
   fingerprint: string | null;
-  longid: string | null;
-  longids: string[];
-  pending_lookup: number;
   last_use: number | null;
-  pubkey_last_sig: number | null;
   pubkey_last_check: number | null;
   expiresOn: number | null;
 };

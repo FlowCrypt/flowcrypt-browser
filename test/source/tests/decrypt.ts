@@ -3,7 +3,7 @@
 import * as ava from 'ava';
 
 import { Config, TestVariant, Util } from './../util';
-import { protonCompatPub, expiredPub, unusableKey } from './tooling/consts';
+import { testConstants } from './tooling/consts';
 import { BrowserRecipe } from './tooling/browser-recipe';
 import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
@@ -348,7 +348,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       const textParams = `?frameId=none&message=&msgId=16a9c109bc51687d&` +
         `senderEmail=mismatch%40mail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com`;
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: textParams, content: ["1234"], signature: ["Missing pubkey"] });
-      const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(protonCompatPub)}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
+      const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(testConstants.protonCompatPub)}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
       const pubFrame = await browser.newPage(t, pubFrameUrl);
       await pubFrame.waitAndClick('@action-add-contact');
       await Util.sleep(1);
@@ -397,7 +397,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('decrypt - load key - expired key', testWithBrowser('compatibility', async (t, browser) => {
-      const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(expiredPub)}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
+      const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(testConstants.expiredPub)}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
       const pubFrame = await browser.newPage(t, pubFrameUrl);
       await pubFrame.waitAll('@action-add-contact');
       expect((await pubFrame.read('@action-add-contact')).toLowerCase()).to.include('expired');
@@ -407,7 +407,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('decrypt - load key - unusable key', testWithBrowser('compatibility', async (t, browser) => {
-      const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(unusableKey)}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
+      const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(testConstants.unusableKey)}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
       const pubFrame = await browser.newPage(t, pubFrameUrl);
       await Util.sleep(1);
       await pubFrame.notPresent('@action-add-contact');

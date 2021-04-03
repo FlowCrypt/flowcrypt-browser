@@ -56,8 +56,8 @@ export class SmimeKey {
       expiration: SmimeKey.dateToNumber(certificate.validity.notAfter),
       fullyDecrypted: true,
       fullyEncrypted: false,
-      isPublic: false, // the way isPublic is currently used is as opposite of isPrivate, even if the Key contains both
-      isPrivate: true,
+      isPublic: certificate.publicKey && !certificate.privateKey,
+      isPrivate: !!certificate.privateKey,
     } as Key;
     const headers = PgpArmor.headers('pkcs12');
     (key as unknown as { raw: string }).raw = `${headers.begin}\n${forge.util.encode64(bytes)}\n${headers.end}`;
@@ -107,8 +107,8 @@ export class SmimeKey {
       expiration: SmimeKey.dateToNumber(certificate.validity.notAfter),
       fullyDecrypted: false,
       fullyEncrypted: false,
-      isPublic: true,
-      isPrivate: true,
+      isPublic: certificate.publicKey && !certificate.privateKey,
+      isPrivate: !!certificate.privateKey,
     } as Key;
     (key as unknown as { rawArmored: string }).rawArmored = text;
     return key;

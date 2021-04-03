@@ -110,14 +110,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
             lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
           }
         }
-        const client = lookupResult.pgpClient === 'flowcrypt' ? 'cryptup' : 'pgp'; // todo - clean up as "flowcrypt|pgp-other'. Already in storage, fixing involves migration
-        const ksContact = await ContactStore.obj({
-          email,
-          name,
-          pubkey: lookupResult.pubkey,
-          client: lookupResult.pubkey ? client : undefined,
-          lastCheck: Date.now(),
-        });
+        const ksContact = await ContactStore.obj({ email, name, pubkey: lookupResult.pubkey, lastCheck: Date.now() });
         if (ksContact.pubkey) {
           this.ksLookupsByEmail[email] = ksContact.pubkey;
         }
@@ -139,11 +132,6 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       if (!contact.pubkey || !contact.fingerprint) {
         return;
       }
-      if (!contact.pubkey_last_sig) {
-        const lastSig = Number(contact.pubkey.lastModified);
-        contact.pubkey_last_sig = lastSig;
-        await ContactStore.update(undefined, contact.email, { pubkey_last_sig: lastSig });
-      }
       const lastCheckOverWeekAgoOrNever = !contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7);
       const isExpired = contact.expiresOn && contact.expiresOn < Date.now();
       if (lastCheckOverWeekAgoOrNever || isExpired) {
@@ -164,7 +152,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           }
         }
       }
-      await ContactStore.update(undefined, contact.email, { pubkey_last_check: Date.now() });
+      await ContactStore.update(undefined, contact.email, { pubkey: contact.pubkey, pubkey_last_check: Date.now() });
       // we checked for newer key and it did not result in updating the key, don't check again for another week
     } catch (e) {
       ApiErr.reportIfSignificant(e);

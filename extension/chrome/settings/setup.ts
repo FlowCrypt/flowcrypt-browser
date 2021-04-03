@@ -211,13 +211,7 @@ export class SetupView extends View {
     const myOwnEmailAddrsAsContacts: Contact[] = [];
     const { full_name: name } = await AcctStore.get(this.acctEmail, ['full_name']);
     for (const email of this.submitKeyForAddrs) {
-      myOwnEmailAddrsAsContacts.push(await ContactStore.obj({
-        email,
-        name,
-        client: 'cryptup',
-        pubkey: KeyUtil.armor(await KeyUtil.asPublicKey(prvs[0])),
-        lastSig: Number(prvs[0].lastModified)
-      }));
+      myOwnEmailAddrsAsContacts.push(await ContactStore.obj({ email, name, pubkey: KeyUtil.armor(await KeyUtil.asPublicKey(prvs[0])) }));
     }
     await ContactStore.save(undefined, myOwnEmailAddrsAsContacts);
   }

@@ -168,6 +168,19 @@ export class Str {
 
 }
 
+export class DateUtility {
+  // tslint:disable-next-line:no-null-keyword
+  public static asNumber = (date: number | null | undefined): number | null => {
+    if (typeof date === 'number') {
+      return date;
+    } else if (!date) {
+      return null; // tslint:disable-line:no-null-keyword
+    } else {
+      return new Date(date).getTime();
+    }
+  }
+}
+
 export class Value {
 
   public static arr = {

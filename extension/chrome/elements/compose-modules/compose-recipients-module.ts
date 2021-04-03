@@ -739,15 +739,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       const contact = await ContactStore.obj({ email: input.email, name: input.name });
       const [storedContact] = await ContactStore.get(undefined, [contact.email]);
       if (storedContact) {
-        const toUpdate: ContactUpdate = {};
         if (!storedContact.name && contact.name) {
-          toUpdate.name = contact.name;
-        }
-        if (storedContact.searchable.length !== contact.searchable.length && storedContact.searchable.join(',') !== contact.searchable.join(',')) {
-          toUpdate.searchable = contact.searchable;
-        }
-        if (Object.keys(toUpdate).length) {
-          await ContactStore.update(undefined, contact.email, toUpdate);
+          await ContactStore.update(undefined, contact.email, { name: contact.name } as ContactUpdate);
         }
       } else if (!this.failedLookupEmails.includes(contact.email)) {
         toLookup.push(contact);
