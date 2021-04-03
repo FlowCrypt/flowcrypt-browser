@@ -359,7 +359,7 @@ export class ContactStore extends AbstractStore {
       } else { // specific query.has_pgp value
         const indexRange = ContactStore.dbIndexRange(query.has_pgp, query.substring ?? '');
         // To find all the index keys starting with a certain sequence of characters (e.g. 'abc')
-        // we use a range with inclusive lower boundary and exclusive upper boundary 
+        // we use a range with inclusive lower boundary and exclusive upper boundary
         // ['t:abc', 't:abd) or ['f:abc', 'f:abd'), so that any key having an arbitrary tail of
         // characters beyond 'abc' falls into this range, and none of the non-matching keys do.
         // Thus we only have to keep complete keywords in the 'search' index.
