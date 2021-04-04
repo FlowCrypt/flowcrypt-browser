@@ -17,7 +17,7 @@ export class Debug {
       search.onsuccess = () => {
         records.push(...search.result);
         messages.clear();
-      }
+      };
     });
     return records;
   }
