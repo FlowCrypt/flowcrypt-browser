@@ -19,6 +19,7 @@ import { defineUnitNodeTests } from './tests/unit-node';
 import { defineUnitBrowserTests } from './tests/unit-browser';
 import { mock } from './mock';
 import { mockBackendData } from './mock/backend/backend-endpoints';
+import { TestUrls } from './browser/test-urls';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectiIntentionalErrReport: false }; // updated when a particular test that causes an error is run
@@ -59,10 +60,19 @@ ava.before('set config and mock api', async t => {
 const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>, flag?: 'FAILING'): ava.Implementation<{}> => {
   return async (t: AvaContext) => {
     await browserPool.withNewBrowserTimeoutAndRetry(async (t, browser) => {
+      const page = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
       if (acct) {
         await BrowserRecipe.setUpCommonAcct(t, browser, acct, !isMock);
       }
       await cb(t, browser);
+      try {
+        const items = await page.target.evaluate(() => (window as any).Debug.readDatabase());
+        if (items.length > 0) {
+          console.info('debug messages: ', JSON.stringify(items), '\n');
+        }
+      } catch (e) {
+        console.error(`Error reading debug messages: ${e}`);
+      }
     }, t, consts, flag);
     t.pass();
   };
