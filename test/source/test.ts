@@ -60,12 +60,12 @@ ava.before('set config and mock api', async t => {
 const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>, flag?: 'FAILING'): ava.Implementation<{}> => {
   return async (t: AvaContext) => {
     await browserPool.withNewBrowserTimeoutAndRetry(async (t, browser) => {
-      const page = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
       if (acct) {
         await BrowserRecipe.setUpCommonAcct(t, browser, acct, !isMock);
       }
       await cb(t, browser);
       try {
+        const page = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
         const items = await page.target.evaluate(() => (window as any).Debug.readDatabase());
         if (items.length > 0) {
           console.info('debug messages: ', JSON.stringify(items), '\n');
