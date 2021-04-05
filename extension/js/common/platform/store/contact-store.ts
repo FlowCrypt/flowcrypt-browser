@@ -47,18 +47,18 @@ export type ContactV4 = {
 export type ContactPreview = {
   email: string;
   name: string | null;
-  has_pgp: 0 | 1;
-  last_use: number | null;
+  hasPgp: 0 | 1;
+  lastUse: number | null;
 };
 
 export type ContactUpdate = {
   name?: string | null;
-  last_use?: number | null;
+  lastUse?: number | null;
   pubkey?: Key;
-  pubkey_last_check?: number | null; // when non-null, `pubkey` must be supplied
+  pubkeyLastCheck?: number | null; // when non-null, `pubkey` must be supplied
 };
 
-type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number };
+type DbContactFilter = { hasPgp?: boolean, substring?: string, limit?: number };
 
 /**
  * Store of contacts and their public keys
@@ -69,7 +69,7 @@ export class ContactStore extends AbstractStore {
 
   // static [f: string]: Function; // https://github.com/Microsoft/TypeScript/issues/6480
 
-  private static dbQueryKeys = ['limit', 'substring', 'has_pgp'];
+  private static dbQueryKeys = ['limit', 'substring', 'hasPgp'];
 
   public static dbOpen = async (): Promise<IDBDatabase> => {
     return await new Promise((resolve, reject) => {
@@ -104,7 +104,7 @@ export class ContactStore extends AbstractStore {
     if (!validEmail) {
       throw new Error(`Cannot handle the contact because email is not valid: ${email}`);
     }
-    return { email: validEmail, name: name || null, has_pgp: 0, last_use: null };
+    return { email: validEmail, name: name || null, hasPgp: 0, lastUse: null };
   }
 
   public static obj = async ({ email, name, pubkey, lastUse, lastCheck }: DbContactObjArg): Promise<Contact> => {
@@ -120,10 +120,10 @@ export class ContactStore extends AbstractStore {
           email: validEmail,
           name: name || null,
           pubkey: undefined,
-          has_pgp: 0, // number because we use it for sorting
+          hasPgp: 0, // number because we use it for sorting
           fingerprint: null,
-          last_use: lastUse || null,
-          pubkey_last_check: null,
+          lastUse: lastUse || null,
+          pubkeyLastCheck: null,
           expiresOn: null
         };
       }
@@ -132,9 +132,9 @@ export class ContactStore extends AbstractStore {
         email: validEmail,
         name: name || null,
         pubkey: pk,
-        has_pgp: 1, // number because we use it for sorting
-        last_use: lastUse || null,
-        pubkey_last_check: lastCheck || null,
+        hasPgp: 1, // number because we use it for sorting
+        lastUse: lastUse || null,
+        pubkeyLastCheck: lastCheck || null,
         ...ContactStore.getKeyAttributes(pk)
       };
     }
@@ -245,7 +245,7 @@ export class ContactStore extends AbstractStore {
   }
 
   public static updateTx = (tx: IDBTransaction, email: string, update: ContactUpdate) => {
-    if (update.pubkey && !update.pubkey_last_check) {
+    if (update.pubkey && !update.pubkeyLastCheck) {
       const req = tx.objectStore('pubkeys').get(update.pubkey.id);
       ContactStore.setReqPipe(req, (pubkey: Pubkey) => ContactStore.updateTxPhase2(tx, email, update, pubkey));
     } else {
@@ -277,13 +277,13 @@ export class ContactStore extends AbstractStore {
       // todo: will we benefit anything when not saving pubkey if it isn't modified?
       pubkeyEntity = {
         fingerprint: update.pubkey.id,
-        lastCheck: DateUtility.asNumber(update.pubkey_last_check ?? existingPubkey?.lastCheck),
+        lastCheck: DateUtility.asNumber(update.pubkeyLastCheck ?? existingPubkey?.lastCheck),
         expiresOn: keyAttrs.expiresOn,
         longids: update.pubkey.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)),
         armoredKey: KeyUtil.armor(update.pubkey)
       } as Pubkey;
-    } else if (update.pubkey_last_check) {
-      Catch.report(`Wrongly updating pubkey_last_check without specifying pubkey for ${email} - ignoring`);
+    } else if (update.pubkeyLastCheck) {
+      Catch.report(`Wrongly updating pubkeyLastCheck without specifying pubkey for ${email} - ignoring`);
     }
     const req = tx.objectStore('emails').get(email);
     ContactStore.setReqPipe(req, (emailEntity: Email) => {
@@ -298,8 +298,8 @@ export class ContactStore extends AbstractStore {
       if (Object.keys(update).includes('name')) {
         emailEntity.name = update.name ?? null;
       }
-      if (Object.keys(update).includes('last_use')) {
-        emailEntity.lastUse = DateUtility.asNumber(update.last_use);
+      if (Object.keys(update).includes('lastUse')) {
+        emailEntity.lastUse = DateUtility.asNumber(update.lastUse);
       }
       ContactStore.updateSearchable(emailEntity);
       tx.objectStore('emails').put(emailEntity);
@@ -341,23 +341,23 @@ export class ContactStore extends AbstractStore {
       }
     }
     query.substring = ContactStore.normalizeString(query.substring || '');
-    if (typeof query.has_pgp === 'undefined' && query.substring) {
-      const resultsWithPgp = await ContactStore.rawSearch(db, { substring: query.substring, limit: query.limit, has_pgp: true });
+    if (typeof query.hasPgp === 'undefined' && query.substring) {
+      const resultsWithPgp = await ContactStore.rawSearch(db, { substring: query.substring, limit: query.limit, hasPgp: true });
       if (query.limit && resultsWithPgp.length === query.limit) {
         return resultsWithPgp;
       } else {
         const limit = query.limit ? query.limit - resultsWithPgp.length : undefined;
-        const resultsWithoutPgp = await ContactStore.rawSearch(db, { substring: query.substring, limit, has_pgp: false });
+        const resultsWithoutPgp = await ContactStore.rawSearch(db, { substring: query.substring, limit, hasPgp: false });
         return resultsWithPgp.concat(resultsWithoutPgp);
       }
     }
     const emails = db.transaction(['emails'], 'readonly').objectStore('emails');
     const raw: Email[] = await new Promise((resolve, reject) => {
       let search: IDBRequest;
-      if (typeof query.has_pgp === 'undefined') { // any query.has_pgp value
-        search = emails.openCursor(); // no substring, already covered in `typeof query.has_pgp === 'undefined' && query.substring` above
-      } else { // specific query.has_pgp value
-        const indexRange = ContactStore.dbIndexRange(query.has_pgp, query.substring ?? '');
+      if (typeof query.hasPgp === 'undefined') { // any query.hasPgp value
+        search = emails.openCursor(); // no substring, already covered in `typeof query.hasPgp === 'undefined' && query.substring` above
+      } else { // specific query.hasPgp value
+        const indexRange = ContactStore.dbIndexRange(query.hasPgp, query.substring ?? '');
         // To find all the index keys starting with a certain sequence of characters (e.g. 'abc')
         // we use a range with inclusive lower boundary and exclusive upper boundary
         // ['t:abc', 't:abd) or ['f:abc', 'f:abd'), so that any key having an arbitrary tail of
@@ -490,14 +490,14 @@ export class ContactStore extends AbstractStore {
       email: email.email,
       name: email.name,
       pubkey: key,
-      has_pgp: key ? 1 : 0,
-      last_use: email.lastUse,
-      pubkey_last_check: lastCheck,
+      hasPgp: key ? 1 : 0,
+      lastUse: email.lastUse,
+      pubkeyLastCheck: lastCheck,
       ...ContactStore.getKeyAttributes(key)
     };
   }
 
   private static toContactPreview = (result: Email): ContactPreview => {
-    return { email: result.email, name: result.name, has_pgp: result.fingerprints.length > 0 ? 1 : 0, last_use: result.lastUse };
+    return { email: result.email, name: result.name, hasPgp: result.fingerprints.length > 0 ? 1 : 0, lastUse: result.lastUse };
   }
 }

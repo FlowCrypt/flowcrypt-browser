@@ -11,7 +11,7 @@ export type ContactUpdate = {
   email?: string;
   name?: string | null;
   pubkey?: Key;
-  last_use?: number | null;
+  lastUse?: number | null;
 };
 
 export class ContactStore {
@@ -44,7 +44,7 @@ export class ContactStore {
       updated.pubkey = key;
       updated.fingerprint = key.id;
       updated.expiresOn = key.expiration ? Number(key.expiration) : null;
-      updated.has_pgp = 1;
+      updated.hasPgp = 1;
     }
   }
 
@@ -54,10 +54,10 @@ export class ContactStore {
         email,
         name: name || null,
         pubkey: undefined,
-        has_pgp: 0, // number because we use it for sorting
+        hasPgp: 0, // number because we use it for sorting
         fingerprint: null,
-        last_use: lastUse || null,
-        pubkey_last_check: null,
+        lastUse: lastUse || null,
+        pubkeyLastCheck: null,
         expiresOn: null
       };
     }
@@ -66,10 +66,10 @@ export class ContactStore {
       email,
       name,
       pubkey: pk,
-      has_pgp: 1, // number because we use it for sorting
+      hasPgp: 1, // number because we use it for sorting
       fingerprint: pk.id,
-      last_use: lastUse,
-      pubkey_last_check: lastCheck,
+      lastUse,
+      pubkeyLastCheck: lastCheck,
     } as Contact;
     return contact;
   }

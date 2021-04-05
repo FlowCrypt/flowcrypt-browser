@@ -120,7 +120,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
           return; // user has canceled the pass phrase dialog, or didn't respond to it in time
         }
       }
-      await ContactStore.update(undefined, Array.prototype.concat.apply([], Object.values(newMsgData.recipients)), { last_use: Date.now() });
+      await ContactStore.update(undefined, Array.prototype.concat.apply([], Object.values(newMsgData.recipients)), { lastUse: Date.now() });
       const msgObj = await GeneralMailFormatter.processNewMsg(this.view, newMsgData, senderKi, signingPrv);
       await this.finalizeSendableMsg(msgObj, senderKi);
       await this.doSendMsg(msgObj);

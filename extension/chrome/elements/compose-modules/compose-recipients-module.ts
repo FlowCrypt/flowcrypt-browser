@@ -411,7 +411,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       const recipientsHasPgp: RecipientElement[] = [];
       for (const recipient of noPgpRecipients) {
         const [contact] = await ContactStore.get(undefined, [recipient.email]);
-        if (contact && contact.has_pgp) {
+        if (contact && contact.hasPgp) {
           $(recipient.element).removeClass('no_pgp').find('i').remove();
           clearInterval(this.addedPubkeyDbLookupInterval);
           recipientsHasPgp.push(recipient);
@@ -584,16 +584,16 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.errModule.debug(`renderSearchRes len: ${contacts.length}`);
     // have pgp on top, no pgp bottom. Sort each groups by last use
     const sortedContacts = contacts.sort((a: ContactPreview, b: ContactPreview) => {
-      if (a.has_pgp && !b.has_pgp) {
+      if (a.hasPgp && !b.hasPgp) {
         return -1;
       }
-      if (!a.has_pgp && b.has_pgp) {
+      if (!a.hasPgp && b.hasPgp) {
         return 1;
       }
-      if ((a.last_use || 0) > (b.last_use || 0)) {
+      if ((a.lastUse || 0) > (b.lastUse || 0)) {
         return -1;
       }
-      if ((a.last_use || 0) < (b.last_use || 0)) {
+      if ((a.lastUse || 0) < (b.lastUse || 0)) {
         return 1;
       }
       return 0;
@@ -603,7 +603,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       let ulHtml = '';
       for (const contact of renderableContacts) {
         ulHtml += `<li class="select_contact" email="${Xss.escape(contact.email.replace(/<\/?b>/g, ''))}">`;
-        if (contact.has_pgp) {
+        if (contact.hasPgp) {
           ulHtml += '<img class="lock-icon" src="/img/svgs/locked-icon-green.svg" />';
         } else {
           ulHtml += '<img class="lock-icon" src="/img/svgs/locked-icon-gray.svg" />';
@@ -835,7 +835,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         'you an updated public key.' + this.recipientKeyIdText(contact));
     } else if (contact.pubkey) {
       recipient.status = RecipientStatus.HAS_PGP;
-      $(el).addClass("has_pgp");
+      $(el).addClass('has_pgp');
       Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
       $(el).attr('title', 'Does use encryption' + this.recipientKeyIdText(contact));
     } else {

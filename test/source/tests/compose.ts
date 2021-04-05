@@ -582,13 +582,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composeFrame.waitAndClick('.swal2-cancel');
       await composeFrame.waitAndClick('@action-close-new-message');
       await inboxPage.waitTillGone('@container-new-message');
-      // check that contacts are ordered according to has_pgp and last_use
+      // check that contacts are ordered according to hasPgp and lastUse
       composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       await composeFrame.type('@input-to', 'testsearchorder');
       await expectContactsResultEqual(composeFrame, [
-        'testsearchorder3@flowcrypt.com', // has_pgp + last_use
-        'testsearchorder9@flowcrypt.com', // has_pgp
-        'testsearchorder5@flowcrypt.com', // last_use
+        'testsearchorder3@flowcrypt.com', // hasPgp + lastUse
+        'testsearchorder9@flowcrypt.com', // hasPgp
+        'testsearchorder5@flowcrypt.com', // lastUse
         'testsearchorder1@flowcrypt.com',
         'testsearchorder2@flowcrypt.com',
         'testsearchorder4@flowcrypt.com',
