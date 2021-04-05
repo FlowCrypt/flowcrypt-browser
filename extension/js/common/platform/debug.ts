@@ -9,7 +9,7 @@ import { AbstractStore } from './store/abstract-store.js';
  * Db is initialized on demand in `addMessage` or `readDatabase` calls
  * Suggested usage is to log inputs and output of a method called from the browser by
  * substitution of the original method in a draft pull request with a replacement method:
- * 
+ *
  * fun someMethod(input1, input2) {
  *  const output = someMethodORIGINAL(input1, input2);
  *  Debug.addMessage({ input: {input1, input2}, output }).catch(Catch.reportErr);
@@ -18,8 +18,9 @@ import { AbstractStore } from './store/abstract-store.js';
  *
  * In async methods, the call can be arranged like this:
  * await Debug.addMessage({input, output});
- * 
- * Upon test completion, the data can be extracted by the test framework with  
+ *
+ * Upon test completion, the data can be extracted by the test framework with
+ * await page.target.evaluate(() => (window as any).Debug.readDatabase());
  */
 export class Debug {
   /**
