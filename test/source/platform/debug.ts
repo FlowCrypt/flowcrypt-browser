@@ -5,7 +5,7 @@
 export class Debug {
   private static DATA: any[] = [];
 
-  public static readDatabase = async (): Promise<any[] | undefined> => {
+  public static readDatabase = async (): Promise<any[]> => {
     const old = Debug.DATA;
     Debug.DATA = [];
     return old;

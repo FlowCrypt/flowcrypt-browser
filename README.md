@@ -54,6 +54,9 @@ $ npm run-script build
 
 Now you can find your built project in `build/chrome-consumer` and `build/firefox-consumer`
 
+Printing debug data to test logs can be done using special `Debug` class:
+https://github.com/FlowCrypt/flowcrypt-browser/tree/master/extension/js/common/platform/debug.ts#L7
+
 ### Note for Mac OS users
 
 In order for `npm run-script build` to work you have to:
