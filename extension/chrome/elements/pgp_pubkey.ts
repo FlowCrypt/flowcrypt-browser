@@ -128,7 +128,7 @@ View.run(class PgpPubkeyView extends View {
     } else {
       const [contact] = await ContactStore.get(undefined, [String($('.input_email').val())]);
       $('.action_add_contact')
-        .text(contact?.has_pgp ? 'update key' : `import ${this.isExpired ? 'expired ' : ''}key`)
+        .text(contact?.hasPgp ? 'update key' : `import ${this.isExpired ? 'expired ' : ''}key`)
         .css('background-color', this.isExpired ? '#989898' : '');
     }
   }

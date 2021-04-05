@@ -51,10 +51,10 @@ export type Contact = {
   email: string;
   name: string | null;
   pubkey: Key | undefined;
-  has_pgp: 0 | 1;
+  hasPgp: 0 | 1;
   fingerprint: string | null;
-  last_use: number | null;
-  pubkey_last_check: number | null;
+  lastUse: number | null;
+  pubkeyLastCheck: number | null;
   expiresOn: number | null;
 };
 

@@ -37,7 +37,7 @@ View.run(class AddPubkeyView extends View {
     for (const missingPubkeyEmail of this.missingPubkeyEmails) {
       Xss.sanitizeAppend('select.email', `<option value="${Xss.escape(missingPubkeyEmail)}">${Xss.escape(missingPubkeyEmail)}</option>`);
     }
-    for (const contact of await ContactStore.search(undefined, { has_pgp: true })) {
+    for (const contact of await ContactStore.search(undefined, { hasPgp: true })) {
       Xss.sanitizeAppend('select.copy_from_email', `<option value="${Xss.escape(contact.email)}">${Xss.escape(contact.email)}</option>`);
     }
     this.fetchKeyUi.handleOnPaste($('.pubkey'));
