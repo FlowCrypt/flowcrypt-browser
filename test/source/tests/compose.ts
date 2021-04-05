@@ -1075,6 +1075,17 @@ yPLCqVTFJQWaCR5ZTekRQPTDZkjxjxbs
       await expectRecipientElements(composePage, { to: [], cc: [], bcc: [] });
     }));
 
+    ava.default('compose[global:compose] - standalone - test drag and drop', testWithBrowser('compose', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Testing Drag And Drop');
+      await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
+      await composePage.waitAndClick('@action-show-cc');
+      await composePage.waitAndClick('@action-show-bcc');
+      const recipient = await composePage.waitAny('.recipients-to span:first-child');
+      const inputCC = await composePage.waitAny('@input-cc');
+      await ComposePageRecipe.dragAndDropRecipient(composePage, recipient, inputCC);
+    }));
+
   }
 
 };
