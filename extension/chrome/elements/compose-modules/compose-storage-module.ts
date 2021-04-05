@@ -68,7 +68,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     const emailsWithoutPubkeys = [];
     for (const i of contacts.keys()) {
       const contact = contacts[i];
-      if (contact && contact.has_pgp && contact.pubkey) {
+      if (contact && contact.hasPgp && contact.pubkey) {
         armoredPubkeys.push({ pubkey: contact.pubkey, email: contact.email, isMine: false });
       } else if (contact && this.ksLookupsByEmail[contact.email]) {
         armoredPubkeys.push({ pubkey: this.ksLookupsByEmail[contact.email], email: contact.email, isMine: false });
@@ -88,7 +88,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   public lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string, name: string | undefined): Promise<Contact | "fail"> => {
     const [storedContact] = await ContactStore.get(undefined, [email]);
-    if (storedContact && storedContact.has_pgp && storedContact.pubkey) {
+    if (storedContact && storedContact.hasPgp && storedContact.pubkey) {
       // Potentially check if pubkey was updated - async. By the time user finishes composing, newer version would have been updated in db.
       // If sender didn't pull a particular pubkey for a long time and it has since expired, but there actually is a newer version on attester, this may unnecessarily show "bad pubkey",
       //      -> until next time user tries to pull it. This could be fixed by attempting to fix up the rendered recipient inside the async function below.
@@ -132,7 +132,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       if (!contact.pubkey || !contact.fingerprint) {
         return;
       }
-      const lastCheckOverWeekAgoOrNever = !contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7);
+      const lastCheckOverWeekAgoOrNever = !contact.pubkeyLastCheck || new Date(contact.pubkeyLastCheck).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7);
       const isExpired = contact.expiresOn && contact.expiresOn < Date.now();
       if (lastCheckOverWeekAgoOrNever || isExpired) {
         const { pubkey: fetchedPubkeyArmored } = await this.view.pubLookup.lookupFingerprint(contact.fingerprint);
@@ -142,7 +142,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
             // the fetched pubkey has at least the same or newer signature
             // the "same or newer" was due to a bug we encountered earlier where keys were badly recorded in db
             // sometime in Oct 2020 we could turn the ">=" back to ">" above
-            await ContactStore.update(undefined, contact.email, { pubkey: fetchedPubkey, last_use: Date.now(), pubkey_last_check: Date.now() });
+            await ContactStore.update(undefined, contact.email, { pubkey: fetchedPubkey, lastUse: Date.now(), pubkeyLastCheck: Date.now() });
             const [updatedPubkey] = await ContactStore.get(undefined, [contact.email]);
             if (!updatedPubkey) {
               throw new Error("Cannot retrieve Contact right after updating it");
@@ -152,7 +152,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
           }
         }
       }
-      await ContactStore.update(undefined, contact.email, { pubkey: contact.pubkey, pubkey_last_check: Date.now() });
+      await ContactStore.update(undefined, contact.email, { pubkey: contact.pubkey, pubkeyLastCheck: Date.now() });
       // we checked for newer key and it did not result in updating the key, don't check again for another week
     } catch (e) {
       ApiErr.reportIfSignificant(e);

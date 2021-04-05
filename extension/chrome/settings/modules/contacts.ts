@@ -66,7 +66,7 @@ View.run(class ContactsView extends View {
   // --- PRIVATE
 
   private loadAndRenderContactList = async () => {
-    this.contacts = await ContactStore.search(undefined, { has_pgp: true, limit: 500, substring: String($('.input-search-contacts').val()) });
+    this.contacts = await ContactStore.search(undefined, { hasPgp: true, limit: 500, substring: String($('.input-search-contacts').val()) });
     let lineActionsHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
       '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import" data-test="action-show-import-public-keys-form">import public keys</a>&nbsp;&nbsp;';
     if (this.orgRules.getCustomSksPubkeyServer()) {
@@ -109,7 +109,7 @@ View.run(class ContactsView extends View {
   }
 
   private actionExportAllKeysHandler = async () => {
-    const allArmoredPublicKeys = (await ContactStore.searchPubkeys(undefined, { has_pgp: true })).map(a => a!.trim()).join('\n');
+    const allArmoredPublicKeys = (await ContactStore.searchPubkeys(undefined, { hasPgp: true })).map(a => a!.trim()).join('\n');
     const exportFile = new Attachment({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: Buf.fromUtfStr(allArmoredPublicKeys) });
     Browser.saveToDownloads(exportFile);
   }
@@ -152,7 +152,7 @@ View.run(class ContactsView extends View {
       try {
         // parse will throw if the key is not recognized
         const pubkey = await KeyUtil.parse(armoredPubkey);
-        await ContactStore.update(undefined, email, { pubkey, last_use: Date.now() });
+        await ContactStore.update(undefined, email, { pubkey, lastUse: Date.now() });
         await this.loadAndRenderContactList();
       } catch (e) {
         await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let us know at human@flowcrypt.com if you need help.');

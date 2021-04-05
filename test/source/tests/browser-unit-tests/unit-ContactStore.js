@@ -41,26 +41,26 @@ BROWSER_UNIT_TEST_NAME(`ContactStore is able to search by partial email address`
   });
   await ContactStore.save(undefined, [contactABBDEF, contactABCDEF, contactABCDDF, contactABDDEF,
     contactABCDVWXYZHELLOCOM]);
-  const contactsABC = await ContactStore.search(undefined, { has_pgp: true, substring: 'abc' });
+  const contactsABC = await ContactStore.search(undefined, { hasPgp: true, substring: 'abc' });
   if (contactsABC.length !== 3) {
     throw Error(`Expected 3 contacts to match "abc" but got "${contactsABC.length}"`);
   }
-  const contactsABCD = await ContactStore.search(undefined, { has_pgp: true, substring: 'abcd' });
+  const contactsABCD = await ContactStore.search(undefined, { hasPgp: true, substring: 'abcd' });
   if (contactsABCD.length !== 3) {
     throw Error(`Expected 3 contacts to match "abcd" but got "${contactsABCD.length}"`);
   }
-  const contactsABCDE = await ContactStore.search(undefined, { has_pgp: true, substring: 'abcde' });
+  const contactsABCDE = await ContactStore.search(undefined, { hasPgp: true, substring: 'abcde' });
   if (contactsABCDE.length !== 1) {
     throw Error(`Expected 1 contact to match "abcde" but got "${contactsABCDE.length}"`);
   }
   if (contactsABCDE[0].email !== 'abcdef@test.com') {
     throw Error(`Expected "abcdef@test.com" but got "${contactsABCDE[0].email}"`);
   }
-  const contactsVWX = await ContactStore.search(undefined, { has_pgp: true, substring: 'vwx' });
+  const contactsVWX = await ContactStore.search(undefined, { hasPgp: true, substring: 'vwx' });
   if (contactsVWX.length !== 1) {
     throw Error(`Expected 1 contact to match "vwx" but got "${contactsVWX.length}"`);
   }
-  const contactsHEL = await ContactStore.search(undefined, { has_pgp: true, substring: 'hel' });
+  const contactsHEL = await ContactStore.search(undefined, { hasPgp: true, substring: 'hel' });
   if (contactsHEL.length !== 1) {
     throw Error(`Expected 1 contact to match "hel" but got "${contactsHEL.length}"`);
   }
@@ -104,7 +104,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore doesn't store smaller words in searchable w
   return 'pass';
 })();
 
-BROWSER_UNIT_TEST_NAME(`ContactStore.update updates correct 'pubkey_last_check'`);
+BROWSER_UNIT_TEST_NAME(`ContactStore.update updates correct 'pubkeyLastCheck'`);
 (async () => {
   const db = await ContactStore.dbOpen();
   const email = 'flowcrypt.compatibility@gmail.com';
@@ -146,8 +146,8 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update updates correct 'pubkey_last_check'`
   const pubkey1 = await KeyUtil.parse(testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788);
   const pubkey2 = await KeyUtil.parse(testConstants.flowcryptcompatibilityPublicKeyADAC279C95093207);
   const date1_1 = date2_0 + 1000;
-  // update entity 1 with pubkey_last_check = date1_1
-  await ContactStore.update(db, email, { pubkey_last_check: date1_1, pubkey: pubkey1 });
+  // update entity 1 with pubkeyLastCheck = date1_1
+  await ContactStore.update(db, email, { pubkeyLastCheck: date1_1, pubkey: pubkey1 });
   // extract the entities from the database
   entity1 = await getEntity(fp1);
   entity2 = await getEntity(fp2);
@@ -158,9 +158,9 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update updates correct 'pubkey_last_check'`
     throw Error(`Expected lastCheck=${date2_0} for ${fp2} but got ${entity2.lastCheck}`);
   }
   const date2_2 = date1_1 + 10000;
-  // updating with undefined value shouldn't modify pubkey_last_check
-  await ContactStore.update(db, email, { pubkey_last_check: undefined, pubkey: pubkey1 });
-  await ContactStore.update(db, email, { pubkey_last_check: date2_2, pubkey: pubkey2 });
+  // updating with undefined value shouldn't modify pubkeyLastCheck
+  await ContactStore.update(db, email, { pubkeyLastCheck: undefined, pubkey: pubkey1 });
+  await ContactStore.update(db, email, { pubkeyLastCheck: date2_2, pubkey: pubkey2 });
   // extract the entities from the database
   entity1 = await getEntity(fp1);
   entity2 = await getEntity(fp2);
@@ -170,7 +170,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update updates correct 'pubkey_last_check'`
   if (entity2.lastCheck !== date2_2) {
     throw Error(`Expected lastCheck=${date2_2} for ${fp2} but got ${entity2.lastCheck}`);
   }
-  // updating contact details without specifying a pubkey shouln't update pubkey_last_check
+  // updating contact details without specifying a pubkey shouln't update pubkeyLastCheck
   await ContactStore.update(db, email, { name: 'Some Name' });
   // extract the entities from the database
   entity1 = await getEntity(fp1);
@@ -228,10 +228,10 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update tests`);
   await compareEntities();
   const date = new Date();
   expectedObj2.lastUse = date.getTime();
-  await ContactStore.update(db, email2, { last_use: date });
+  await ContactStore.update(db, email2, { lastUse: date });
   await compareEntities();
   expectedObj2.lastUse = undefined;
-  await ContactStore.update(db, email2, { last_use: undefined });
+  await ContactStore.update(db, email2, { lastUse: undefined });
   await compareEntities();
   return 'pass';
 })();
@@ -245,11 +245,11 @@ BROWSER_UNIT_TEST_NAME(`ContactStore saves and returns dates as numbers`);
   const contact = await ContactStore.obj({ email, pubkey: testConstants.expiredPub, lastCheck, lastUse });
   await ContactStore.save(undefined, [contact]);
   const [loaded] = await ContactStore.get(undefined, [email]);
-  if (typeof loaded.last_use !== 'number') {
-    throw Error(`last_use was expected to be a number, but got ${typeof loaded.last_use}`);
+  if (typeof loaded.lastUse !== 'number') {
+    throw Error(`lastUse was expected to be a number, but got ${typeof loaded.lastUse}`);
   }
-  if (typeof loaded.pubkey_last_check !== 'number') {
-    throw Error(`pubkey_last_check was expected to be a number, but got ${typeof loaded.pubkey_last_check}`);
+  if (typeof loaded.pubkeyLastCheck !== 'number') {
+    throw Error(`pubkeyLastCheck was expected to be a number, but got ${typeof loaded.pubkeyLastCheck}`);
   }
   if (typeof loaded.expiresOn !== 'number') {
     throw Error(`expiresOn was expected to be a number, but got ${typeof loaded.expiresOn}`);
