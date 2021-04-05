@@ -1,39 +1,27 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
+import { BrowserMsg } from './browser/browser-msg.js';
 import { Catch } from './platform/catch.js';
-import { Store } from './platform/store.js';
 import { Dict } from './core/common.js';
-import { BrowserMsg } from './extension.js';
-import { Ui } from './browser.js';
 import { Lang } from './lang.js';
+import { Ui } from './browser/ui.js';
 import { Xss } from './platform/xss.js';
-
-export type NotificationWithHandlers = { notification: string, callbacks: Dict<() => void> };
+import { AcctStore } from './platform/store/acct-store.js';
 
 export class Notifications {
 
-  private tabId: string;
-
-  constructor(tabId: string) {
-    this.tabId = tabId;
-  }
-
-  showInitial = async (acctEmail: string) => {
-    const acctStorage = await Store.getAcct(acctEmail, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple']);
+  public showInitial = async (acctEmail: string) => {
+    const acctStorage = await AcctStore.get(acctEmail, ['notification_setup_done_seen']);
     if (!acctStorage.notification_setup_done_seen) {
-      await Store.setAcct(acctEmail, { notification_setup_done_seen: true });
+      await AcctStore.set(acctEmail, { notification_setup_done_seen: true });
       this.show('FlowCrypt was successfully set up for this account. <a href="#" class="close" data-test="notification-successfully-setup-action-close">close</a>');
-    } else if (acctStorage.key_backup_prompt !== false && acctStorage.setup_simple === true) {
-      this.show('<a href="#" class="action_backup">Back up your FlowCrypt key</a> to keep access to your encrypted email at all times. <a href="#" class="close">not now</a>', {
-        action_backup: () => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/backup.htm' }),
-      });
     }
   }
 
-  showAuthPopupNeeded = (acctEmail: string) => {
-    this.show(`${Lang.compose.pleaseReconnectAccount} <a href="#" class="auth_popup">Re-connect Account</a>`, {
+  public showAuthPopupNeeded = (acctEmail: string) => {
+    this.show(`${Lang.compose.pleaseReconnectAccount} <a href="#" class="auth_popup" data-test="action-reconnect-account">Re-connect Account</a>`, {
       auth_popup: async () => {
         const authRes = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail });
         if (authRes.result === 'Success') {
@@ -45,11 +33,11 @@ export class Notifications {
     });
   }
 
-  clear = () => {
+  public clear = () => {
     $('.webmail_notifications').text('');
   }
 
-  show = (text: string, callbacks: Dict<() => void> = {}) => {
+  public show = (text: string, callbacks: Dict<() => void> = {}) => {
     Xss.sanitizeRender('.webmail_notifications', `<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
     if (typeof callbacks.close !== 'undefined') {
       const origCloseCb = callbacks.close;
@@ -62,9 +50,6 @@ export class Notifications {
     }
     if (typeof callbacks.reload === 'undefined') {
       callbacks.reload = Catch.try(() => window.location.reload());
-    }
-    if (typeof callbacks.subscribe === 'undefined') {
-      callbacks.subscribe = Catch.try(() => BrowserMsg.send.subscribeDialog(this.tabId, {}));
     }
     for (const name of Object.keys(callbacks)) {
       $(`.webmail_notifications a.${name}`).click(Ui.event.prevent('double', callbacks[name]));

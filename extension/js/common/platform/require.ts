@@ -1,4 +1,4 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 /// <reference path="../core/types/openpgp.d.ts" />
 
@@ -25,22 +25,17 @@
 
 import { MimeParser } from '../core/types/emailjs.js';
 
-const loadedTags: string[] = [];
-
-declare const openpgp: typeof OpenPGP;
-
 type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode: (text: string) => string, labels: string[], version: string };
 
 export const requireOpenpgp = (): typeof OpenPGP => {
-  try {
-    openpgp.config.versionstring = `FlowCrypt Gmail Encryption`;
-    openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
-    // openpgp.config.require_uid_self_cert = false;
-    return openpgp;
-  } catch (e) {
-    // a hack for content scripts, which do not currently need openpgp, until we come up with something better
-    return undefined as any as typeof OpenPGP;
+  const openpgpLocal = (window as any).openpgp as typeof OpenPGP;
+  if (!openpgpLocal) {
+    return openpgpLocal; // in some environments, openpgp is indeed undefined, eg pgp_block.htm or content script (for now)
   }
+  openpgpLocal.config.versionstring = `FlowCrypt Gmail Encryption`;
+  openpgpLocal.config.commentstring = 'Seamlessly send and receive encrypted email';
+  // openpgpLocal.config.require_uid_self_cert = false;
+  return openpgpLocal;
 };
 
 export const requireMimeParser = (): typeof MimeParser => {
@@ -53,28 +48,4 @@ export const requireMimeBuilder = (): any => {
 
 export const requireIso88592 = (): Codec => {
   return (window as any).iso88592 as Codec;
-};
-
-export const requireTag = (...add: string[]) => {
-  // this would not work for content scripts, where tags added to main body live in a different world than content script code
-  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id && window.location.href.indexOf(chrome.runtime.getURL('')) === -1) {
-    return; // skip in content scripts
-  }
-  for (const dep of add) {
-    if (loadedTags.indexOf(dep) === -1) {
-      if (/\.js/.test(dep)) {
-        const swalScript = window.document.createElement('script');
-        swalScript.src = `/lib/${dep}`;
-        window.document.body.appendChild(swalScript);
-      } else if (/.css/.test(dep)) {
-        const swalStyle = window.document.createElement('link');
-        swalStyle.rel = 'stylesheet';
-        swalStyle.href = `/css/${dep}`;
-        window.document.head.appendChild(swalStyle);
-      } else {
-        throw new Error(`Unknown dep type: ${dep}`);
-      }
-      loadedTags.push(dep);
-    }
-  }
 };

@@ -1,175 +1,302 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
-import { Catch } from '../../js/common/platform/catch.js';
-import { Store } from '../../js/common/platform/store.js';
-import { Ui, Env, Browser } from '../../js/common/browser.js';
-import { Api } from '../../js/common/api/api.js';
-import { DecryptErrTypes, PgpMsg } from '../../js/common/core/pgp.js';
-import { BrowserMsg } from '../../js/common/extension.js';
-import { Att } from '../../js/common/core/att.js';
-import { Google } from '../../js/common/api/google.js';
+import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
+import { DecryptErrTypes, MsgUtil } from '../../js/common/core/crypto/pgp/msg-util.js';
+import { PromiseCancellation, Url } from '../../js/common/core/common.js';
+import { Api } from '../../js/common/api/shared/api.js';
+import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
+import { Attachment } from '../../js/common/core/attachment.js';
+import { Browser } from '../../js/common/browser/browser.js';
+import { Catch } from '../../js/common/platform/catch.js';
+import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
+import { Ui } from '../../js/common/browser/ui.js';
+import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
+import { KeyStore } from '../../js/common/platform/store/key-store.js';
+import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
+import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 
-Catch.try(async () => {
+export class AttachmentDownloadView extends View {
+  protected readonly acctEmail: string;
+  protected readonly parentTabId: string;
+  protected readonly frameId: string;
+  protected readonly origNameBasedOnFilename: string;
+  protected readonly isEncrypted: boolean;
+  protected readonly errorDetailsOpened: boolean;
+  protected readonly type: string | undefined;
+  protected readonly msgId: string | undefined;
+  protected readonly id: string | undefined;
+  protected readonly name: string | undefined;
+  protected readonly url: string | undefined;
+  protected readonly gmail: Gmail;
+  protected attachment!: Attachment;
+  protected ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
 
-  Ui.event.protect();
+  private size: number | undefined;
+  private downloadButton = $('#download');
+  private header = $('#header');
+  private originalButtonHTML: string | undefined;
+  private canClickOnAttachment: boolean = false;
+  private downloadInProgress = false;
+  private tabId!: string;
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'msgId', 'attId', 'name', 'type', 'size', 'url', 'parentTabId', 'content', 'decrypted', 'frameId', 'isEncrypted']);
-  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
-  let size = uncheckedUrlParams.size ? parseInt(String(uncheckedUrlParams.size)) : undefined;
-  const origNameBasedOnFilename = uncheckedUrlParams.name ? String(uncheckedUrlParams.name).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
-  const type = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'type');
-  const isEncrypted = uncheckedUrlParams.isEncrypted === true;
-  const msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
-  const id = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'attId');
-  const name = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'name');
-  // url contains either actual url of remote content or objectUrl for direct content, either way needs to be downloaded
-  const url = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'url');
-
-  const button = $('#download');
-  let origHtmlContent: string;
-  let progressEl: JQuery<HTMLElement>;
-
-  let att: Att;
-  try {
-    att = new Att({ name: origNameBasedOnFilename, type, msgId, id, url });
-  } catch (e) {
-    Catch.reportErr(e);
-    $('body.attachment').text(`Error processing params: ${String(e)}. Contact human@flowcrypt.com`);
-    return;
+  constructor() {
+    super();
+    const uncheckedUrlParams = Url.parse([
+      'acctEmail', 'msgId', 'attachmentId', 'name', 'type', 'size', 'url', 'parentTabId', 'content', 'decrypted', 'frameId', 'isEncrypted', 'errorDetailsOpened'
+    ]);
+    this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+    this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+    this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
+    this.origNameBasedOnFilename = uncheckedUrlParams.name ? String(uncheckedUrlParams.name).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
+    this.isEncrypted = uncheckedUrlParams.isEncrypted === true;
+    this.errorDetailsOpened = uncheckedUrlParams.errorDetailsOpened === true;
+    this.size = uncheckedUrlParams.size ? parseInt(String(uncheckedUrlParams.size)) : undefined;
+    this.type = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'type');
+    this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
+    this.id = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'attachmentId');
+    this.name = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'name');
+    // url contains either actual url of remote content or objectUrl for direct content, either way needs to be downloaded
+    this.url = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'url');
+    this.gmail = new Gmail(this.acctEmail);
   }
 
-  const getFileIconSrc = () => {
+  public render = async () => {
+    this.tabId = await BrowserMsg.requiredTabId();
+    try {
+      this.attachment = new Attachment({ name: this.origNameBasedOnFilename, type: this.type, msgId: this.msgId, id: this.id, url: this.url });
+    } catch (e) {
+      Catch.reportErr(e);
+      $('body.attachment').text(`Error processing params: ${String(e)}. Contact human@flowcrypt.com`);
+      return;
+    }
+    $('#type').text(this.type || 'unknown type');
+    $('#name').text(this.name || 'noname');
+    this.renderHeader();
+    $('#name').attr('title', this.name || '');
+    $('img#file-format').attr('src', this.getFileIconSrc());
+    if (!this.size && this.url) { // download url of a file that has an unknown size
+      this.getUrlFileSize(this.url!).then(fileSize => {
+        if (typeof fileSize !== 'undefined') {
+          this.size = fileSize;
+        }
+      }).catch(ApiErr.reportIfSignificant);
+    }
+    try {
+      this.canClickOnAttachment = ! await this.processAsPublicKeyAndHideAttachmentIfAppropriate();
+    } catch (e) {
+      this.renderErr(e);
+    }
+    Ui.setTestState('ready');
+  }
+
+  public setHandlers = () => {
+    Ui.event.protect();
+    if (this.canClickOnAttachment) {
+      this.downloadButton.click(this.setHandlerPrevent('double', () => this.downloadButtonClickedHandler()));
+      this.downloadButton.click((e) => e.stopPropagation());
+      $('body').click(async () => {
+        if ($('body').attr('id') !== 'attachment-preview' && !$('body').hasClass('error-occured')) {
+          await this.previewAttachmentClickedHandler();
+        }
+      });
+    }
+    BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
+      if (!entered) {
+        this.downloadInProgress = false;
+        this.downloadButton.show();
+        this.ppChangedPromiseCancellation.cancel = true; // update original object which is monitored by a promise
+        this.ppChangedPromiseCancellation = { cancel: false }; // set to a new, not yet used object
+        BrowserMsg.send.closeSwal(this.parentTabId); // attachment preview
+      }
+    });
+    BrowserMsg.listen(this.tabId);
+  }
+
+  protected downloadDataIfNeeded = async () => {
+    if (this.attachment.hasData()) {
+      return;
+    }
+    if (this.attachment.url) { // when content was downloaded and decrypted
+      this.attachment.setData(await Api.download(this.attachment.url, this.renderProgress));
+    } else if (this.attachment.id && this.attachment.msgId) { // gmail attId
+      const { data } = await this.gmail.attachmentGet(this.attachment.msgId, this.attachment.id, this.renderProgress);
+      this.attachment.setData(data);
+    } else {
+      throw new Error('File is missing both id and url - this should be fixed');
+    }
+  }
+
+  protected renderErr = (e: any) => {
+    if (ApiErr.isAuthErr(e)) {
+      BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
+      Xss.sanitizeRender('body', `Error downloading file - google auth needed. ${Ui.retryLink()}`);
+    } else if (ApiErr.isNetErr(e)) {
+      Xss.sanitizeRender('body', `Error downloading file - no internet. ${Ui.retryLink()}`);
+    } else if (ApiErr.isDecryptErr(e)) {
+      Xss.sanitizeRender('body', `
+        Failed to decrypt.
+        <details ${this.errorDetailsOpened ? 'open' : ''}>
+          <summary>see error details</summary>
+          <pre data-test="error-details">${e.stack}\n\nDecryptError:\n${JSON.stringify(e.decryptError, undefined, 2)}</pre>
+        </details>
+      `);
+    } else {
+      Catch.reportErr(e);
+      Xss.sanitizeRender('body', `Error downloading file - ${String(e)}. ${Ui.retryLink()}`);
+    }
+    $('body').addClass('error-occured').attr('title', '');
+  }
+
+  private renderHeader = () => {
+    const span = $(`<span>${this.isEncrypted ? 'ENCRYPTED\n' : 'PLAIN\n'} FILE</span>`);
+    this.header.empty().append(span); // xss-escaped
+  }
+
+  private getFileIconSrc = () => {
     const icon = (name: string) => `/img/fileformat/${name}.png`;
-    const nameSplit = origNameBasedOnFilename.split('.');
+    const nameSplit = this.origNameBasedOnFilename.split('.');
     const extension = nameSplit[nameSplit.length - 1].toLowerCase();
-    if (extension === 'jpg' || extension === 'jpeg') {
+    if (['jpg', 'jpeg'].includes(extension)) {
       return icon('jpg');
-    } else if (extension === 'xls' || extension === 'xlsx') {
+    } else if (['xls', 'xlsx'].includes(extension)) {
       return icon('excel');
-    } else if (extension === 'doc' || extension === 'docx') {
+    } else if (['doc', 'docx'].includes(extension)) {
       return icon('word');
     } else if (extension === 'png') {
       return icon('png');
     } else {
       return icon('generic');
     }
-  };
+  }
 
-  const renderErr = (e: any) => {
-    if (Api.err.isAuthPopupNeeded(e)) {
-      BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
-      Xss.sanitizeRender('body.attachment', `Error downloading file - google auth needed. ${Ui.retryLink()}`);
-    } else if (Api.err.isNetErr(e)) {
-      Xss.sanitizeRender('body.attachment', `Error downloading file - no internet. ${Ui.retryLink()}`);
-    } else {
-      Catch.reportErr(e);
-      Xss.sanitizeRender('body.attachment', `Error downloading file - ${String(e)}. ${Ui.retryLink()}`);
-    }
-  };
-
-  const getUrlFileSize = (origUrl: string): Promise<number | undefined> => new Promise(resolve => {
+  private getUrlFileSize = async (url: string): Promise<number | undefined> => {
     console.info('trying to figure out figetUrlFileSizee size');
-    let realUrl;
-    if (origUrl.indexOf('docs.googleusercontent.getUrlFileSizeom/docs/securesc') !== -1) {
+    if (url.indexOf('docs.googleusercontent.getUrlFileSizeom/docs/securesc') !== -1) {
       try {
-        const googleDriveFileId = origUrl.split('/').pop()!.split('?').shift(); // try and catch any errors below if structure is not as expected
-        realUrl = googleDriveFileId ? `https://drive.google.com/uc?export=download&id=${googleDriveFileId}` : origUrl; // attempt to get length headers from Google Drive file if available
+        const googleDriveFileId = url.split('/').pop()!.split('?').shift(); // try and catch any errors below if structure is not as expected
+        url = googleDriveFileId ? `https://drive.google.com/uc?export=download&id=${googleDriveFileId}` : url; // attempt to get length headers from Google Drive file if available
       } catch (e) {
-        realUrl = origUrl;
+        // leave url as is
       }
-    } else {
-      realUrl = origUrl;
     }
-    const xhr = new XMLHttpRequest();
-    xhr.open('HEAD', realUrl, true);
-    xhr.onreadystatechange = function () {
-      if (this.readyState === this.DONE) {
-        const contentLength = xhr.getResponseHeader('Content-Length');
-        if (contentLength !== null) {
-          resolve(parseInt(contentLength));
-        } else {
-          console.info('was not able to find out file size');
-          resolve(undefined);
+    return await new Promise(resolve => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('HEAD', url, true);
+      xhr.onreadystatechange = function () {
+        if (this.readyState === this.DONE) {
+          const contentLength = xhr.getResponseHeader('Content-Length');
+          if (contentLength !== null) {
+            resolve(parseInt(contentLength));
+          } else {
+            console.info('was not able to find out file size');
+            resolve(undefined);
+          }
+        }
+      };
+      xhr.send();
+    });
+  }
+
+  private processAsPublicKeyAndHideAttachmentIfAppropriate = async () => {
+    if (this.attachment.msgId && this.attachment.id && this.attachment.treatAs() === 'publicKey') { // this is encrypted public key - download && decrypt & parse & render
+      const { data } = await this.gmail.attachmentGet(this.attachment.msgId, this.attachment.id);
+      const decrRes = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail), encryptedData: data });
+      if (decrRes.success && decrRes.content) {
+        const openpgpType = await MsgUtil.type({ data: decrRes.content });
+        if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // 'openpgpType.armored': could potentially process unarmored pubkey files, maybe later
+          BrowserMsg.send.renderPublicKeys(this.parentTabId, { afterFrameId: this.frameId, traverseUp: 2, publicKeys: [decrRes.content.toUtfStr()] }); // render pubkey
+          BrowserMsg.send.setCss(this.parentTabId, { selector: `#${this.frameId}`, traverseUp: 1, css: { display: 'none' } }); // hide attachment
+          $('body').text('');
+          return true;
         }
       }
-    };
-    xhr.send();
-  });
-
-  const decryptAndSaveAttToDownloads = async (encryptedAtt: Att) => {
-    const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(acctEmail), encryptedData: encryptedAtt.getData() });
-    Xss.sanitizeRender('#download', origHtmlContent).removeClass('visible');
-    if (result.success) {
-      if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {
-        result.filename = encryptedAtt.name;
-      }
-      Browser.saveToDownloads(new Att({ name: result.filename, type: encryptedAtt.type, data: result.content }), $('body'));
-    } else if (result.error.type === DecryptErrTypes.needPassphrase) {
-      BrowserMsg.send.passphraseDialog(parentTabId, { type: 'attachment', longids: result.longids.needPassphrase });
-      await Store.waitUntilPassphraseChanged(acctEmail, result.longids.needPassphrase);
-      await decryptAndSaveAttToDownloads(encryptedAtt);
-    } else {
-      delete result.message;
-      console.info(result);
-      $('body.attachment').text(`Error decrypting file (${result.error.type}: ${result.error.message}). Downloading original..`);
-      Browser.saveToDownloads(new Att({ name, type, data: encryptedAtt.getData() }));
     }
-  };
+    return false;
+  }
 
-  const renderProgress = (percent: number, received: number, fileSize: number) => {
-    size = fileSize || size;
-    if (percent) {
-      progressEl.text(`${percent}%`);
-    } else if (size) {
-      progressEl.text(`${Math.floor(((received * 0.75) / size) * 100)}%`);
-    }
-  };
-
-  const downloadDataIfNeeded = async (a: Att) => {
-    if (a.hasData()) {
+  private downloadButtonClickedHandler = async () => {
+    if (this.downloadInProgress) {
       return;
     }
-    if (a.url) { // when content was downloaded and decrypted
-      a.setData(await Api.download(a.url, renderProgress));
-    } else if (a.id && a.msgId) { // gmail attId
-      const { data } = await Google.gmail.attGet(acctEmail, a.msgId, a.id, renderProgress);
-      a.setData(data);
-    } else {
-      throw new Error('File is missing both id and url - this should be fixed');
-    }
-  };
-
-  const handleDownloadButtonClicked = async () => {
+    this.downloadInProgress = true;
+    this.downloadButton.hide();
     try {
-      origHtmlContent = button.html();
-      button.addClass('visible');
-      Xss.sanitizeRender(button, `${Ui.spinner('green', 'large_spinner')}<span class="download_progress"></span>`);
-      progressEl = $('.download_progress');
-      await recoverMissingAttIdIfNeeded(att);
-      await downloadDataIfNeeded(att);
-      if (!isEncrypted) {
-        Browser.saveToDownloads(att, Catch.browser().name === 'firefox' ? $('body') : undefined);
+      this.originalButtonHTML = this.downloadButton.html();
+      Xss.sanitizeRender(this.header, `${Ui.spinner('green', 'large_spinner')}<span class="download_progress"></span>`);
+      await this.recoverMissingAttachmentIdIfNeeded();
+      await this.downloadDataIfNeeded();
+      if (!this.isEncrypted) {
+        Browser.saveToDownloads(this.attachment);
       } else {
-        await decryptAndSaveAttToDownloads(att);
+        await this.decryptAndSaveAttachmentToDownloads();
       }
+      this.renderHeader();
     } catch (e) {
-      renderErr(e);
+      this.renderErr(e);
+    } finally {
+      this.downloadInProgress = false;
+      this.downloadButton.show();
     }
-  };
+  }
 
-  const recoverMissingAttIdIfNeeded = async (a: Att) => {
-    if (!a.url && !a.id && a.msgId) {
-      const result = await Google.gmail.msgGet(acctEmail, a.msgId, 'full');
+  private previewAttachmentClickedHandler = async (errorDetailsOpened = false) => {
+    if (!this.attachment.length) {
+      this.attachment.length = this.size!;
+    }
+    const factory = new XssSafeFactory(this.acctEmail, this.parentTabId);
+    const iframeUrl = factory.srcPgpAttachmentIframe(this.attachment, this.isEncrypted, undefined, 'chrome/elements/attachment_preview.htm', errorDetailsOpened);
+    BrowserMsg.send.showAttachmentPreview(this.parentTabId, { iframeUrl });
+  }
+
+  private decryptAndSaveAttachmentToDownloads = async () => {
+    const result = await MsgUtil.decryptMessage({ kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail), encryptedData: this.attachment.getData() });
+    Xss.sanitizeRender(this.downloadButton, this.originalButtonHTML || '');
+    if (result.success) {
+      if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {
+        result.filename = this.attachment.name;
+      }
+      Browser.saveToDownloads(new Attachment({ name: result.filename, type: this.attachment.type, data: result.content }));
+    } else if (result.error.type === DecryptErrTypes.needPassphrase) {
+      BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'attachment', longids: result.longids.needPassphrase });
+      if (! await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.longids.needPassphrase, 1000, this.ppChangedPromiseCancellation)) {
+        return;
+      }
+      await this.decryptAndSaveAttachmentToDownloads();
+    } else {
+      $('body.attachment')
+        .html(`<div>Failed to decrypt:</div><a href="#" data-test="decrypt-error-details" class="see-error-details">see error details</a><br><div>Downloading original…`) // xss-escaped
+        .addClass('error-occured')
+        .attr('title', '');
+      $('.see-error-details').click(async () => {
+        await this.previewAttachmentClickedHandler(true);
+      });
+      const name = this.attachment.name;
+      Browser.saveToDownloads(new Attachment({ name, type: this.type, data: this.attachment.getData() })); // won't work in ff, possibly neither on some chrome versions (on webmail)
+    }
+  }
+
+  private renderProgress = (percent: number, received: number, fileSize: number) => {
+    this.size = fileSize || this.size;
+    const progressEl = $('.download_progress');
+    if (!percent && this.size) {
+      percent = Math.floor(((received * 0.75) / this.size) * 100);
+    }
+    if (percent) {
+      progressEl.text(`${Math.min(100, percent)}%`);
+    }
+  }
+
+  private recoverMissingAttachmentIdIfNeeded = async () => {
+    if (!this.attachment.url && !this.attachment.id && this.attachment.msgId) {
+      const result = await this.gmail.msgGet(this.attachment.msgId, 'full');
       if (result && result.payload && result.payload.parts) {
         for (const attMeta of result.payload.parts) {
-          if (attMeta.filename === name && attMeta.body && attMeta.body.size === size && attMeta.body.attachmentId) {
-            a.id = attMeta.body.attachmentId;
+          if (attMeta.filename === name && attMeta.body && attMeta.body.size === this.size && attMeta.body.attachmentId) {
+            this.attachment.id = attMeta.body.attachmentId;
             return;
           }
         }
@@ -177,46 +304,8 @@ Catch.try(async () => {
         throw new Error('Could not recover missing attachmentId');
       }
     }
-  };
-
-  const processAsPublicKeyAndHideAttIfAppropriate = async (a: Att) => {
-    if (a.msgId && a.id && a.treatAs() === 'publicKey') { // this is encrypted public key - download && decrypt & parse & render
-      const { data } = await Google.gmail.attGet(acctEmail, a.msgId, a.id);
-      const decrRes = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(acctEmail), encryptedData: data });
-      if (decrRes.success && decrRes.content) {
-        const openpgpType = await PgpMsg.type({ data: decrRes.content });
-        if (openpgpType && openpgpType.type === 'publicKey') {
-          if (openpgpType.armored) { // could potentially process unarmored pubkey files, maybe later
-            BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, traverseUp: 2, publicKeys: [decrRes.content.toUtfStr()] }); // render pubkey
-            BrowserMsg.send.setCss(parentTabId, { selector: `#${frameId}`, traverseUp: 1, css: { display: 'none' } }); // hide attachment
-            $('body').text('');
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  };
-
-  $('#type').text(type || 'unknown type');
-  $('#name').text(name || 'noname');
-  $('img#file-format').attr('src', getFileIconSrc());
-
-  if (!size && url) { // download url of an unknown size
-    getUrlFileSize(url).then(fileSize => {
-      if (typeof fileSize !== 'undefined') {
-        size = fileSize;
-      }
-    }).catch(Catch.reportErr);
   }
 
-  try {
-    if (! await processAsPublicKeyAndHideAttIfAppropriate(att)) {
-      // normal attachment, let user download it by clickings
-      $('#download').click(Ui.event.prevent('double', handleDownloadButtonClicked));
-    }
-  } catch (e) {
-    renderErr(e);
-  }
+}
 
-})();
+View.run(AttachmentDownloadView);

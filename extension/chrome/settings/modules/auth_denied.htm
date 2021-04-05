@@ -1,71 +1,17 @@
-<!-- © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com -->
-
-<html>
-
-<head>
-  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-  <title>FlowCrypt</title>
-  <link rel="stylesheet" href="/css/cryptup.css" />
-  <link rel="stylesheet" href="/css/open-sans.css" />
-  <link rel="stylesheet" href="/css/animate.css" />
-  <link rel="stylesheet" href="/lib/featherlight/featherlight.css" />
-  <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
-  <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
-</head>
-
-<body id="settings">
-
-  <div id="content" class="auth">
-    <div class="line">
-      <h1>Explaining FlowCrypt webmail permissions</h1>
-    </div>
-    <div class="line">
-      <em class="permission_send"></em> helps you compose and send encrypted emails.
-    </div>
-    <div class="line">
-      <em class="permission_read"></em> allows you to reply to a conversation and open attachments. It also makes setup
-      and use of this plugin a smoother experience.
-    </div>
-    <div class="line">
-      Nobody, FlowCrypt developers included, is able to access these permissions, they are stored privately in your
-      browser. Learn more about <a href="#" data-featherlight="/chrome/texts/email_provider_auth_security.htm">email
-        provider access and security</a>.
-    </div>
-
-    <div class="show_if_setup_not_done" style="display: none;">
-      <div class="line hidable gmail">
-        <b>You can proceed with limited permissions. This allows you to get familiar with email encryption and
-          FlowCrypt.</b> You can always change your permission settings later.
-      </div>
-      <div class="line">
-        &nbsp;
-      </div>
-      <div class="line hidable gmail">
-        <div class="button green auth_action_limited">PROCEED WITH SEND ONLY</div>&nbsp;&nbsp;<div class="button hidable gmail green action_auth_proceed">PROCEED
-          WITH ALL PERMISSIONS</div>&nbsp;&nbsp;<div class="button hidable gmail gray close_page">LATER</div>
-      </div>
-      <div class="line hidable outlook">
-        <div class="button green close_page">close</div>
-      </div>
-
-    </div>
-    <div class="show_if_setup_done" style="display: none;">
-      <div class="line">
-        &nbsp;
-      </div>
-      <div class="line">
-        <div class="button long green action_auth_proceed">UPDATE PERMISSIONS</div>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        <div class="button long gray close_page">LATER</div>
-      </div>
-    </div>
-  </div>
-
-  <script src="/lib/purify.min.js"></script>
-  <script src="/lib/jquery.min.js"></script>
-  <script src="/lib/featherlight/featherlight.js"></script>
-  <script src="auth_denied.js" type="module"></script>
-
-</body>
-
-</html>
+<div class="line">
+  <h1>Explaining FlowCrypt webmail permissions</h1>
+</div>
+<div class="line">
+  <em>Manage drafts and send emails</em> helps you compose and send encrypted emails.
+</div>
+<div class="line">
+  <em>Read messages</em> allows you to reply to a conversation and open attachments. It also makes setup
+  and use of this plugin a smoother experience.
+</div>
+<div class="line">
+  Nobody, FlowCrypt developers included, is able to access these permissions, they are stored privately in your
+  browser. Learn more about <a href="#" data-swal-page="/chrome/texts/email_provider_auth_security.htm">email
+    provider access and security</a>.
+</div>
+<div class="line">Please write human@flowcrypt.com if you have any questions or concerns.</div>
+<div class="line">Would you like to proceed to the permissions screen again?</div>

@@ -1,12 +1,12 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
-import { Env } from '../../js/common/browser.js';
 import { Lang } from '../../js/common/lang.js';
+import { Url } from '../../js/common/core/common.js';
 import { Xss } from '../../js/common/platform/xss.js';
 
-const uncheckedUrlParams = Env.urlParams(['reason', 'stack']);
+const uncheckedUrlParams = Url.parse(['reason', 'stack']);
 const reason = String(uncheckedUrlParams.reason);
 const stack = uncheckedUrlParams.stack ? String(uncheckedUrlParams.stack) : '';
 
@@ -44,5 +44,5 @@ if (reason === 'db_corrupted') {
 }
 
 if (stack) {
-  Xss.sanitizeAppend(details, `<br><pre>${stack}</pre>`);
+  Xss.sanitizeAppend(details, `<br><pre>${Xss.escape(stack)}</pre>`);
 }

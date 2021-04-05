@@ -1,126 +1,137 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
-import { Catch } from '../../js/common/platform/catch.js';
-import { Store, StorageType } from '../../js/common/platform/store.js';
-import { Ui, Env } from '../../js/common/browser.js';
-import { mnemonic } from '../../js/common/core/mnemonic.js';
-import { Pgp } from '../../js/common/core/pgp.js';
-import { BrowserMsg } from '../../js/common/extension.js';
+import { KeyInfo, KeyUtil } from '../../js/common/core/crypto/key.js';
+import { StorageType } from '../../js/common/platform/store/abstract-store.js';
 import { Assert } from '../../js/common/assert.js';
-import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
+import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
+import { Catch } from '../../js/common/platform/catch.js';
+import { Ui } from '../../js/common/browser/ui.js';
+import { Url, Str } from '../../js/common/core/common.js';
+import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
+import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
+import { KeyStore } from '../../js/common/platform/store/key-store.js';
+import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 
-declare const openpgp: typeof OpenPGP;
+View.run(class PassphraseView extends View {
+  private readonly acctEmail: string;
+  private readonly parentTabId: string;
+  private readonly longids: string[];
+  private readonly type: string;
+  private keysWeNeedPassPhraseFor: KeyInfo[] | undefined;
 
-Catch.try(async () => {
+  constructor() {
+    super();
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'longids', 'type']);
+    this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+    this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+    this.longids = Assert.urlParamRequire.string(uncheckedUrlParams, 'longids').split(',');
+    this.type = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'type', ['embedded', 'sign', 'message', 'draft', 'attachment', 'quote', 'backup']);
+  }
 
-  Ui.event.protect();
-
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'longids', 'type']);
-  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const longids = Assert.urlParamRequire.string(uncheckedUrlParams, 'longids').split(',');
-  const type = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'type', ['embedded', 'sign', 'message', 'draft', 'attachment', 'quote']);
-
-  const allPrivateKeys = await Store.keysGet(acctEmail);
-  const selectedPrivateKeys = allPrivateKeys.filter(ki => longids.includes(ki.longid) || (ki.primary && longids.includes('primary')));
-
-  await initPassphraseToggle(['passphrase']);
-
-  const renderInitial = () => {
-    $('#passphrase').keyup(renderNormalPpPrompt);
-    if (type === 'embedded') {
+  public render = async () => {
+    Ui.event.protect();
+    await initPassphraseToggle(['passphrase']);
+    const allPrivateKeys = await KeyStore.get(this.acctEmail);
+    this.keysWeNeedPassPhraseFor = allPrivateKeys.filter(ki => this.longids.includes(ki.longid));
+    if (this.type === 'embedded') {
       $('h1').parent().css('display', 'none');
       $('div.separator').css('display', 'none');
       $('body#settings > div#content.dialog').css({ width: 'inherit', background: '#fafafa', });
       $('.line.which_key').css({ display: 'none', position: 'absolute', visibility: 'hidden', left: '5000px', });
-    } else if (type === 'sign') {
+    } else if (this.type === 'sign') {
       $('h1').text('Enter your pass phrase to sign email');
-    } else if (type === 'draft') {
+    } else if (this.type === 'draft') {
       $('h1').text('Enter your pass phrase to load a draft');
-    } else if (type === 'attachment') {
+    } else if (this.type === 'attachment') {
       $('h1').text('Enter your pass phrase to decrypt a file');
-    } else if (type === 'quote') {
+    } else if (this.type === 'quote') {
       $('h1').text('Enter your pass phrase to load quoted content');
+    } else if (this.type === 'backup') {
+      $('h1').text('Enter your pass phrase to back up');
     }
     $('#passphrase').focus();
-    $('#passphrase').keydown(event => {
-      if (event.which === 13) {
-        $('.action_ok').click();
-      }
-    });
     if (allPrivateKeys.length > 1) {
       let html: string;
-      if (selectedPrivateKeys.length === 1) {
-        html = `For key: <span class="good">${Xss.escape(mnemonic(selectedPrivateKeys[0].longid) || '')}</span> (KeyWords)`;
+      if (this.keysWeNeedPassPhraseFor.length === 1) {
+        html = `For key Fingerprint: <span class="good">${Xss.escape(Str.spaced(this.keysWeNeedPassPhraseFor[0].fingerprints[0] || ''))}</span>`;
       } else {
         html = 'Pass phrase needed for any of the following keys:';
-        for (const i of selectedPrivateKeys.keys()) {
-          html += `KeyWords ${String(i + 1)}: <div class="good">${Xss.escape(mnemonic(selectedPrivateKeys[i].longid) || '')}</div>`;
+        for (const i of this.keysWeNeedPassPhraseFor.keys()) {
+          html += `<div>Fingerprint ${String(i + 1)}: <span class="good">${Xss.escape(Str.spaced(this.keysWeNeedPassPhraseFor[i].fingerprints[0]) || '')}</span></div>`;
         }
       }
       Xss.sanitizeRender('.which_key', html);
       $('.which_key').css('display', 'block');
     }
-  };
+  }
 
-  const renderFailedEntryPpPrompt = () => {
+  public setHandlers = () => {
+    $('#passphrase').keyup(this.setHandler(() => this.renderNormalPpPrompt()));
+    $('.action_close').click(this.setHandler(() => this.closeDialog()));
+    $('.action_ok').click(this.setHandler(() => this.submitHandler()));
+    $('#passphrase').keydown(this.setHandler((el, ev) => {
+      if (ev.which === 13) {
+        $('.action_ok').click();
+      }
+    }));
+    $('body').on('keydown', this.setHandler((el, ev) => {
+      if (ev.which === 27) { // If 'ESC' key
+        this.closeDialog();
+      }
+    }));
+  }
+
+  private renderNormalPpPrompt = () => {
+    $('#passphrase').css('border-color', '');
+    $('#passphrase').css('color', 'black');
+    $('#passphrase').focus();
+  }
+
+  private renderFailedEntryPpPrompt = () => {
     $('#passphrase').val('');
     $('#passphrase').css('border-color', 'red');
     $('#passphrase').css('color', 'red');
     $('#passphrase').attr('placeholder', 'Please try again');
-  };
+  }
 
-  const renderNormalPpPrompt = () => {
-    $('#passphrase').css('border-color', '');
-    $('#passphrase').css('color', 'black');
-    $('#passphrase').focus();
-  };
-
-  const closeDialog = (entered: boolean = false) => {
+  private closeDialog = (entered: boolean = false) => {
     BrowserMsg.send.passphraseEntry('broadcast', { entered });
-    BrowserMsg.send.closeDialog(parentTabId);
-  };
-  $('.action_close').click(() => closeDialog());
-  $('body').on('keydown', ev => {
-    if (ev.which === 27) {
-      closeDialog();
-    }
-  });
+    BrowserMsg.send.closeDialog(this.parentTabId);
+  }
 
-  $('.action_ok').click(Ui.event.handle(async () => {
+  private submitHandler = async () => {
     const pass = String($('#passphrase').val());
     const storageType: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
     let atLeastOneMatched = false;
-    for (const keyinfo of selectedPrivateKeys) { // if passphrase matches more keys, it will save the pass phrase for all keys
-      const { keys: [prv] } = await openpgp.key.readArmored(keyinfo.private);
+    for (const keyinfo of this.keysWeNeedPassPhraseFor!) { // if passphrase matches more keys, it will save the pass phrase for all keys
+      const prv = await KeyUtil.parse(keyinfo.private);
       try {
-        if (await Pgp.key.decrypt(prv, pass) === true) {
-          await Store.passphraseSave(storageType, acctEmail, keyinfo.longid, pass);
+        if (await KeyUtil.decrypt(prv, pass) === true) {
+          await PassphraseStore.set(storageType, this.acctEmail, keyinfo.fingerprints[0], pass);
           atLeastOneMatched = true;
           if (storageType === 'session') {
             // TODO: change to 'broadcast' when issue with 'broadcast' is fixed
-            BrowserMsg.send.addEndSessionBtn(parentTabId);
+            BrowserMsg.send.addEndSessionBtn(this.parentTabId);
           }
         }
       } catch (e) {
         if (e instanceof Error && e.message === 'Unknown s2k type.') {
-          await Ui.modal.error(`One of your keys ${keyinfo.longid} is not supported yet (${String(e)}).\n\nPlease write human@flowcrypt.com with details about how was this key created.`);
+          let msg = `Your key with fingerprint ${keyinfo.fingerprints[0]} is not supported yet (${String(e)}).`;
+          msg += '\n\nPlease write human@flowcrypt.com with details about how was this key created.';
+          await Ui.modal.error(msg);
         } else {
           throw e;
         }
       }
     }
     if (atLeastOneMatched) {
-      closeDialog(true);
+      this.closeDialog(true);
     } else {
-      renderFailedEntryPpPrompt();
-      Catch.setHandledTimeout(renderNormalPpPrompt, 1500);
+      this.renderFailedEntryPpPrompt();
+      Catch.setHandledTimeout(() => this.renderNormalPpPrompt(), 1500);
     }
-  }));
-
-  renderInitial();
-
-})();
+  }
+});

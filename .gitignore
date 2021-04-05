@@ -12,9 +12,9 @@
 /test/puppeteer.json
 /test/node_modules/
 /test/build/*
+/test/samples/oversize.txt
 /node_modules/
 /build/*
 release/log.txt
 release/*
-package-lock.json
 npm-debug.log

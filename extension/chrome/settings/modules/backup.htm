@@ -7,9 +7,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>FlowCrypt</title>
   <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/sweetalert2.css" />
   <link rel="stylesheet" href="/css/open-sans.css" />
   <link rel="stylesheet" href="/css/animate.css" />
-  <link rel="stylesheet" href="/lib/featherlight/featherlight.css" />
   <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
   <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
 </head>
@@ -37,71 +37,39 @@
       <div class="loading_copy">Loading...</div>
     </div>
 
-    <div id="step_0_status">
+    <div id="module_status">
       <div class="line status_summary"></div>
+      <div class="line"><pre class="status_details"></pre></div>
       <div class="line container"></div>
     </div>
 
-    <div id="step_1_password">
-      <div class="wide line">Create a pass phrase to protect your encrypted emails. See <a href="#"
-          data-featherlight="/chrome/texts/passphrase_help.htm">choosing
-          secure pass phrases</a>.</div>
-      <div class="line">
-        <input id="password" type="text" placeholder="Pass phrase" />
-        <br />
-        <div class="password_bar">
-          <div></div>
-        </div>
-      </div>
-      <div class="line password_feedback"><span class="password_result"></span> (time to crack: <span
-          class="password_time"></span>)
-        <ul></ul>
-      </div>
-      <div class="line ">Loss of this pass phrase cannot be recovered. Note it down on a paper.</div>
-      <div class="line">
-        <div class="button long gray action_password">SET PASS PHRASE</div>
-      </div>
-    </div>
-
-    <div id="step_2_confirm">
-      <div class="line">Please repeat it one more time. Make sure to note the pass phrase down.</div>
-      <div class="line">
-        <input id="password2" type="text" placeholder="Repeat pass phrase" />
-      </div>
-      <div class="line">
-        <div class="button long green action_backup">CONFIRM PASS PHRASE</div>
-      </div>
-      <div class="line">
-        <div class="button long gray action_reset_password">USE ANOTHER PASS PHRASE</div>
-      </div>
-    </div>
-
-    <div id="step_3_manual">
+    <div id="module_manual">
       <div class="line">Your key is stored in the browser. Backups are useful if you ever lose your device.</div>
       <div class="line">
-        <div class="details text-left mt-40">
-          <div class="row">
-            <div class="col-xs-3 backup_options_details_option">
+        <div class="details mt-40">
+          <div>
+            <div class="backup_options_details_option">
               <input type="radio" name="input_backup_choice" value="inbox" id="input_backup_inbox" checked="checked" />
               <label for="input_backup_inbox">Email Inbox</label>
               <span class="green_label colored_label short">easy recovery</span>
               <span class="orange_label colored_label short">reasonable security</span>
             </div>
-            <div class="text-left">
+            <div>
               <p>Back up private key in your Gmail Inbox. The security depends on the strength of your pass phrase,
                 which should be very long and hard to guess. Best option for most users.</p>
             </div>
           </div>
         </div>
-        <div class="details text-left mt-40">
-          <div class="row">
-            <div class="col-sm-3 backup_options_details_option">
-              <input type="radio" name="input_backup_choice" value="file" id="input_backup_download" />
+        <div class="details mt-40">
+          <div>
+            <div class="backup_options_details_option">
+              <input type="radio" name="input_backup_choice" value="file" id="input_backup_download"
+                data-test="input-backup-step3manual-file" />
               <label for="input_backup_download">Save protected Private Key</label>
               <span class="orange_label colored_label short">medium recovery</span>
               <span class="green_label colored_label short">great security</span>
             </div>
-            <div class="text-left">
+            <div>
               <p>Manage the backup file yourself. To prevent data loss, you will need this file and your pass phrase if
                 you ever lose your device or it stops
                 working.
@@ -109,14 +77,14 @@
             </div>
           </div>
         </div>
-        <div class="details text-left mt-40 hide_if_backup_done">
-          <div class="row">
-            <div class="col-sm-3 backup_options_details_option">
+        <div class="details mt-40 hide_if_backup_done">
+          <div>
+            <div class="backup_options_details_option">
               <input type="radio" name="input_backup_choice" value="none" id="input_backup_none" />
               <label for="input_backup_none" data-test="input-backup-step3manual-no-backup">No backup</label>
               <span class="red_label colored_label short">no recovery</span>
             </div>
-            <div class="text-left">
+            <div>
               <p>Encrypted email you send or receive will become unreadable if you lose your device. Regular emails will
                 not be affected.</p>
             </div>
@@ -126,17 +94,17 @@
       <div class="line">
       </div>
       <div class="line backup_action_buttons_container">
-        <div class="button long green action_manual_backup" data-test="action-backup-step3manual-continue">BACK UP AS
-          EMAIL</div>
-        <span>&nbsp;&nbsp;&nbsp;&nbsp;or&nbsp;&nbsp;&nbsp;&nbsp;<div class="button long gray action_skip_backup">LATER
-          </div></span>
+        <button class="button long green action_manual_backup" data-test="action-backup-step3manual-continue">
+          BACK UP AS EMAIL
+        </button>
       </div>
     </div>
+
   </div>
 
-  <script src="/lib/purify.min.js"></script>
+  <script src="/lib/purify.js"></script>
   <script src="/lib/jquery.min.js"></script>
-  <script src="/lib/featherlight/featherlight.js"></script>
+  <script src="/lib/sweetalert2.js"></script>
   <script src="/lib/zxcvbn.js"></script>
   <script src="/lib/openpgp.js"></script>
   <script src="/lib/emailjs/punycode.js"></script>

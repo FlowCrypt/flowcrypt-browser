@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>FlowCrypt</title>
   <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/sweetalert2.css" />
   <link rel="stylesheet" href="/css/open-sans.css" />
   <link rel="stylesheet" href="/css/animate.css" />
   <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
@@ -16,36 +17,45 @@
 <body id="settings">
   <div id="content" class="my_key page" style="text-align: left;">
     <div class="line">
-      <b class="key_type">Public Key Info</b> for <span class="email"></span>
+      <b class="key_type">Public Key Info</b> for <span class="email" data-test="content-emails"></span>&nbsp;&nbsp;<a href="#"
+        class="action_view_user_ids">show user ids</a>
     </div>
-    <div class="line pad_links">
-      <a href="#" class="action_view_user_ids">show user ids</a><a href="#" class="action_view_update">update</a><a
-        href="#" class="action_show_other_type bad" data-test="action-toggle-key-type">show private key</a>
-    </div>
-    <div class="line show_when_showing_public">Public KeyWords: <span class="key_words good"
-        data-test="content-key-words"></span>.
-      These keywords are unique to your public key. Share these keywords so that your contacts can verify that they
-      have the right key to encrypt for. <span class="gray">If they don't have FlowCrypt, share this fingerprint
-        instead: <span class="key_fingerprint"></span></span></div>
-    <div class="line show_when_showing_public"><span class="green_label">Public Key Below is safe to share with
+    <div class="line">Public Fingerprint: <span class="fingerprint good" data-test="content-fingerprint"></span>.
+      This Fingerprint is is unique to your public key. Share this so that your contacts can verify that they
+      have the right key to encrypt for.</div>
+    <div class="line"><span class="green_label">Public Key Below is safe to share with
         others</span></div>
-    <div class="line show_when_showing_private"><span class="red_label">Never send this to anyone!</span></div>
-    <div class="line show_when_showing_public">
+    <div class="line">
       <a href="#" class="action_copy_pubkey">Copy public key to clipboard</a>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       <a href="#" class="action_download_pubkey">Save public key to a file</a>
     </div>
-    <div class="line show_when_showing_private">
-      <a href="#" class="action_copy_prv">Copy private key to clipboard</a>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <a href="#" class="action_download_prv">Save private key to a file</a>
-    </div>
-    <div class="line show_when_showing_public pubkey_link_container" style="visibility: hidden;">Share your Public Key:
+    <div class="line show_when_showing_public pubkey_link_container" style="display: none;">Share your Public Key:
       <a href="" target="_blank"></a></div>
+    <div class="line">Key expiration: <span class="key_expiration" data-test="content-key-expiration"></span></div>
+    <div class="line-separator"></div>
+    <div class="line">
+      <b class="key_type">Private Key</b> for <span class="email"></span>&nbsp;&nbsp;<a href="#"
+        class="action_view_update" data-test="action-update-prv">update</a>&nbsp;&nbsp;<a href="#"
+        class="action_download_revocation_cert">revocation certificate</a>
+    </div>
+    <div class="line enter_pp" style="display: none;">
+      <input id="input_passphrase" type="text" placeholder="Enter your pass phrase" />
+    </div>
+    <div class="line enter_pp" style="display: none;">
+      <button class="button green action_continue_download">download</button>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <button class="button gray action_cancel_download_cert">cancel</button>
+    </div>
+    <div class="line"><span class="red_label">Never send this to anyone!</span></div>
+    <div class="line">
+      <a href="#" class="action_download_prv bad">Save private key to a file</a>
+    </div>
   </div>
 
-  <script src="/lib/purify.min.js"></script>
+  <script src="/lib/purify.js"></script>
   <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/sweetalert2.js"></script>
   <script src="/lib/openpgp.js"></script>
   <script src="/lib/clipboard.js"></script>
   <script src="my_key.js" type="module"></script>

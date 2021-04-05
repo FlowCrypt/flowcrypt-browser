@@ -1,5 +1,4 @@
-
-// tslint:disable:only-arrow-functions
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 (() => {
 
@@ -7,7 +6,7 @@
 
   const wait = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 100));
 
-  const acceptCb = (cb: () => Promise<number | void>) => {
+  const acceptCb = (cb: () => Promise<number | void>) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     // nothing
   };
 
@@ -36,10 +35,10 @@
   }
 
   class Class {
-    static staticConstAttr = (type: Type) => {
+    public static staticConstAttr = (type: Type) => {
       func(type);
     }
-    static staticFunc(type: Type) {
+    public static staticFunc(type: Type) {
       Class.staticConstAttr(type);
     }
   }
@@ -63,12 +62,12 @@
   };
 
   class ClassAsync {
-    static staticConstAttrAsync = async (type: Type) => {
+    public static staticConstAttrAsync = async (type: Type) => {
       await wait();
       await obj.paramFunc(type);
       await wait();
     }
-    static async staticAsyncFunc(type: Type) {
+    public static async staticAsyncFunc(type: Type) {
       await wait();
       await ClassAsync.staticConstAttrAsync(type);
       await wait();
@@ -129,6 +128,9 @@
       return process.exit(1);
     }
 
-  })();
+  })().catch(e => {
+    console.error(e);
+    process.exit(1);
+  });
 
 })();

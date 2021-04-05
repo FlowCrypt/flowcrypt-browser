@@ -1,15 +1,15 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
-import { BrowserMsg } from '../../common/extension.js';
-import { Catch } from '../../common/platform/catch.js';
-import { Env } from '../../common/browser.js';
 import { Assert } from '../../common/assert.js';
+import { BrowserMsg } from '../../common/browser/browser-msg.js';
+import { Catch } from '../../common/platform/catch.js';
+import { Url } from '../../common/core/common.js';
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['parentTabId']);
+  const uncheckedUrlParams = Url.parse(['parentTabId']);
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
   document.addEventListener('cryptup_stripe_result', Catch.try(() => {

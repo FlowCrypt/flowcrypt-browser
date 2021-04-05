@@ -8,6 +8,7 @@
 
   <title>FlowCrypt</title>
   <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/sweetalert2.css" />
   <link rel="stylesheet" href="/css/open-sans.css" />
   <link rel="stylesheet" href="/css/animate.css" />
   <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
@@ -15,31 +16,38 @@
 </head>
 
 <body id="settings">
-  <div id="content" style="margin: 0px; text-align: left;">
+  <div id="content" style="margin: 0; text-align: left;">
     <div class="line title_container">
       <h1>Security</h1>
     </div>
-    <div class="line title_container">
+    <div class="line title_container hide_if_pass_phrase_not_user_configurable">
       <h3>Private key pass phrase</h3>
     </div>
-    <div class="settings-form-group">
+    <div class="settings-form-group hide_if_pass_phrase_not_user_configurable">
       <div class="line change_passhrase_container">
         <a href="#" class="action_change_passphrase" data-test="action-change-passphrase-begin">Change pass phrase</a>
       </div>
       <div class="line">
         <a href="#" class="action_test_passphrase" data-test="action-test-passphrase-begin">Test my pass phrase</a>
       </div>
-      <div class="line passhprase_checkbox_container">
-        <label for="passphrase_to_open_email"><input type="checkbox" id="passphrase_to_open_email" data-test="input-toggle-require-pass-phrase">
-          Require pass phrase to open encrypted email</label>
+      <div class="line forget_passphrase" style="display: none;">
+        <div class="line">
+          Some of your pass phrases are stored in browser permanently.
+          <br />
+          It's better to be required to enter pass phrase with each session
+          <br />
+          <a href="#" class="action_forget_pp" data-test="action-forget-pp">Forget stored pass phrases</a>
+        </div>
       </div>
       <div class="line passphrase_entry_container" style="display: none;">
-        <input type="text" id="passphrase_entry" placeholder="Enter pass phrase to confirm" data-test="input-confirm-pass-phrase" />
+        <input type="text" id="passphrase_entry" placeholder="Enter pass phrase to confirm"
+          data-test="input-confirm-pass-phrase" />
       </div>
       <div class="line passphrase_entry_container" style="display: none;">
-        <div class="button green confirm_passphrase_requirement_change" data-test="action-confirm-pass-phrase-requirement-change">continue</div>
+        <button class="button green confirm_passphrase_requirement_change"
+          data-test="action-confirm-pass-phrase-requirement-change">continue</button>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        <div class="button gray cancel_passphrase_requirement_change">cancel</div>
+        <button class="button gray cancel_passphrase_requirement_change">cancel</button>
       </div>
     </div>
     <div class="line title_container">
@@ -50,7 +58,7 @@
         Password encrypted messages expire in
         <span class="expiration_container">
           <span class="select_loader_container"></span>
-          <select class="default_message_expire" style="display: none" , disabled="disabled">
+          <select class="default_message_expire" style="display: none;" disabled="disabled">
             <option value="1">1</option>
             <option value="3">3</option>
             <option value="7">7</option>
@@ -58,11 +66,11 @@
             <option value="90">90</option>
             <option value="365">365</option>
           </select>
-          days,
+          days
         </span>
       </div>
       <div class="line">
-        Titled in
+        Recipient will receive message description in
         <select class="password_message_language">
           <option value="EN">English</option>
           <option value="DE">Deutsch</option>
@@ -82,8 +90,9 @@
     </p> -->
   </div>
 
-  <script src="/lib/purify.min.js"></script>
+  <script src="/lib/purify.js"></script>
   <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/sweetalert2.js"></script>
   <script src="/lib/openpgp.js"></script>
   <script src="security.js" type="module"></script>
 </body>

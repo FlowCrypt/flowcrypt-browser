@@ -7,9 +7,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>FlowCrypt</title>
   <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/sweetalert2.css" />
   <link rel="stylesheet" href="/css/open-sans.css" />
   <link rel="stylesheet" href="/css/animate.css" />
-  <link rel="stylesheet" href="/lib/featherlight/featherlight.css" />
   <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
   <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
   <link rel="stylesheet" href="/css/fine-uploader-new.css" />
@@ -38,6 +38,7 @@
     <div class="line hide_when_rendering_subpage actions"></div>
 
     <div class="line text-center hide_when_rendering_subpage" style="margin: 0 auto;">
+      <div class="line left" style="padding: 0 24px; margin-top: 30px;">Search: <input class="input-search-contacts" placeholder="person@corp.com"><span class="container-table-note" style="color: gray; float: right;"></span></div>
       <table id="emails"></table>
     </div>
 
@@ -49,19 +50,17 @@
       <div id="processed"></div>
       <div class="line">
         <textarea class="input_pubkey"
+          data-test="input-bulk-public-keys"
           placeholder="Enter one or more ASCII Armored Public Keys&#10;(including -----BEGIN PGP PUBLIC KEY BLOCK-----)&#10;&#10;You can alternatively enter the Public Key fingerprint or longid,&#10;e.g. 7FDE685548AEA788 or 0x7fde685548aea788"></textarea>
       </div>
       <div class="line">
-        <div class="button green action_process long">show contents</div>
+        <button class="button green action_process long" data-test="action-show-parsed-public-keys">show contents</button>
       </div>
     </div>
 
 
     <div id="view_contact" style="display: none;">
-      <div class="line">
-        Public KeyWords: <span class="key_words good"></span>
-        <br /> Pubkey Fingerprint: <span class="key_fingerprint gray"></span>
-      </div>
+      <div class="line"><pre id="container-pubkey-details" data-test="container-pubkey-details"></pre></div>
       <div class="line">
         <pre class="key_dump good"></pre>
       </div>
@@ -72,17 +71,18 @@
         <textarea class="input_pubkey" placeholder="Enter a new Public Key for this contact"></textarea>
       </div>
       <div class="line">
-        <div class="button green action_save_edited_pubkey long">SAVE</div>
+        <button class="button green action_save_edited_pubkey long">SAVE</button>
       </div>
     </div>
 
   </div>
 
-  <script src="/lib/purify.min.js"></script>
+  <script src="/lib/purify.js"></script>
   <script src="/lib/jquery.min.js"></script>
-  <script src="/lib/featherlight/featherlight.js"></script>
+  <script src="/lib/sweetalert2.js"></script>
   <script src="/lib/fine-uploader.js"></script>
   <script src="/lib/openpgp.js"></script>
+  <script src="/lib/forge.js"></script>
   <script src="contacts.js" type="module"></script>
 </body>
 

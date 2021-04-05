@@ -30,7 +30,7 @@
       ],
       "dompurify": [
         "types/purify.d.ts",
-        "lib/purify.min.js",
+        "lib/purify.js",
         "COMMENT"
       ],
       "fine-uploader": [
@@ -39,6 +39,10 @@
       ],
       "clipboard": [
         "lib/clipboard.js",
+        "COMMENT"
+      ],
+      "filesize": [
+        "lib/filesize.js",
         "COMMENT"
       ],
       "iso-8859-2": [
@@ -57,8 +61,8 @@
         "lib/emailjs/emailjs-mime-builder.js",
         "COMMENT"
       ],
-      "featherlight": [
-        "lib/featherlight/featherlight.js",
+      "node-forge": [
+        "lib/forge.js",
         "COMMENT"
       ]
     },
@@ -68,11 +72,11 @@
     ]
   },
   "include": [
-    "./extension/**/*.ts"
+    "./extension/**/*.ts",
+    "./node_modules/sweetalert2/sweetalert2.d.ts"
   ],
   "exclude": [
     "./extension/js/content_scripts/**/*",
-    "**/build/**",
-    "**/node_modules/**"
+    "**/build/**"
   ]
 }

@@ -1,4 +1,4 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -31,7 +31,7 @@ export const injectFcIntoWebmail = () => {
   }
 };
 
-export const injectContentScriptIntoTabIfNeeded = (tabId: number, files: string[]) => {
+const injectContentScriptIntoTabIfNeeded = (tabId: number, files: string[]) => {
   isContentScriptInjectionNeeded(tabId, (alreadyInjected) => {
     if (!alreadyInjected) {
       console.info("Injecting FlowCrypt into tab " + tabId);
@@ -54,7 +54,7 @@ const isContentScriptInjectionNeeded = (tabId: number, callback: (injected: bool
 
 const injectContentScripts = (tabId: number, files: string[], callback?: () => void) => {
   const filesCopy = files.slice();
-  chrome.tabs.executeScript(tabId, { file: filesCopy.shift() }, results => {
+  chrome.tabs.executeScript(tabId, { file: filesCopy.shift() }, () => {
     if (filesCopy.length) {
       injectContentScripts(tabId, filesCopy, callback);
     } else if (callback) {

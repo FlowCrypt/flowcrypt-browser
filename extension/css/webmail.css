@@ -1,75 +1,371 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
 /* notifications */
-div.webmail_notifications { position: absolute; top: 0; left: 0; width: 100%; z-index: 999; height: 0px; }
-div.webmail_notifications div.webmail_notification { background-color: rgb(249, 237, 190); border: 1px solid rgb(240, 195, 109); border-radius: 2px;
-  box-shadow: rgba(0, 0, 0, 0.2) 0 2px 4px 0; color: rgb(34, 34, 34); font-family: arial, sans-serif; font-size: 12.8px; font-weight: bold;
-  line-height: 16px; padding: 6px 10px; z-index: 999; margin-top: 50px; display:inline-block; margin-right: 50px; margin-left: 50px; }
-div.webmail_notifications div.webmail_notification a { color: black; padding-left: 6px; padding-right: 2px; }
+div.webmail_notifications {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 999;
+  height: 0;
+}
+
+div.webmail_notifications div.webmail_notification {
+  background-color: rgb(249, 237, 190);
+  border: 1px solid rgb(240, 195, 109);
+  border-radius: 2px;
+  box-shadow: rgba(0, 0, 0, 0.2) 0 2px 4px 0;
+  color: rgb(34, 34, 34);
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 12.8px;
+  font-weight: bold;
+  line-height: 16px;
+  padding: 6px 10px;
+  z-index: 999;
+  margin-top: 50px;
+  display: inline-block;
+  margin-right: 50px;
+  margin-left: 50px;
+}
+
+div.webmail_notifications div.webmail_notification a {
+  color: black;
+  padding-left: 6px;
+  padding-right: 2px;
+}
 div.webmail_notifications div.webmail_notification a:hover { text-decoration: none; }
 body.cryptup_inbox div.webmail_notifications { position: fixed; }
 body.cryptup_outlook div.webmail_notifications div.webmail_notification { margin-top: 10px; }
 
+.error_notification {
+  background: #c53929;
+  color: #fff;
+  margin-top: -1px;
+  padding: 12px;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+.error_notification a {
+  color: #fff !important;
+}
+
 /* buttons body.cryptup_inbox */
-body.cryptup_gmail_new .new_message_button:before { background-image: url("/img/logo/logo.svg");}
-body.cryptup_inbox div.new_message_button { position: relative; width: 40px; box-sizing: content-box; cursor: pointer; outline: none;
-  border: none; -webkit-user-drag: none; margin-right: 8px; background: white; }
-body.cryptup_inbox div.new_message_button > img { width: 28px; padding: 6px; padding-top: 10px; }
+body.cryptup_gmail_new .new_message_button::before { background-image: url("/img/logo/logo.svg") !important; }
+
+body.cryptup_inbox div.new_message_button {
+  position: relative;
+  width: 40px;
+  box-sizing: content-box;
+  cursor: pointer;
+  border: none;
+  -webkit-user-drag: none;
+  margin-right: 8px;
+  background: white;
+}
+
+body.cryptup_inbox div.new_message_button > img {
+  width: 28px;
+  padding: 6px;
+  padding-top: 10px;
+}
 body.cryptup_inbox .pgp_message_container .nk .tq:first-child { display: none !important; } /* reply, reply all, forward in menu next to encrypted messages */
 
 /* buttons body.cryptup_gmail */
-body.cryptup_gmail .inserted div.reply_message_button { position: relative; display: inline-flex; padding: 20px 12px 4px 10px; opacity: 0.75;
-  margin-left: 18px; margin-right: 8px }
+body.cryptup_gmail .inserted div.reply_message_button {
+  position: relative;
+  display: inline-flex;
+  padding: 20px 12px 0 10px;
+  opacity: 0.75;
+  margin-left: 18px;
+  margin-right: 8px;
+  height: auto;
+}
+
+@-moz-document url-prefix() { /* Firefox specific */
+  body.cryptup_gmail .inserted div.reply_message_button {
+    padding-bottom: 4px;
+  }
+}
+
 body.cryptup_gmail.firefox .inserted div.reply_message_button { padding-top: 16px; } /* else buttons misaligned vertically on FF */
-body.cryptup_gmail .inserted div.reply_message_button:hover { opacity: 0.9; cursor: pointer; }
-body.cryptup_gmail div.reply_message_button > img { width: 28px; position: absolute; left: 0; right: 0; top: 3px; margin: 0 auto;}
-body.cryptup_gmail_standard div.new_message_button { background: #31A217; }
+body.cryptup_gmail .inserted div.reply_message_button:hover {
+  opacity: 0.9;
+  cursor: pointer;
+}
+
+body.cryptup_gmail div.reply_message_button > img {
+  width: 28px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 3px;
+  margin: 0 auto;
+}
+body.cryptup_gmail_standard div.new_message_button { background: #31a217; }
 body.cryptup_gmail_standard .z0 .T-I { min-width: 105px; }
 body.cryptup_gmail_new div.new_message_button:hover { background-color: #fafafb; }
-body.cryptup_gmail div.ade.appended span.cryptup_convo_button > img { border: 2px solid #31A217; width: 10px; margin: 4px; position: relative; bottom: 1px; opacity: 0.8; }
-body.cryptup_gmail div.ade.appended span.cryptup_convo_button > span { text-transform: uppercase; font-size: 9.5px; color: white; background: #31A217; padding: 2px 3px 2px 3px;
-  display: inline-block; border-radius: 2px; cursor: default; }
-body.cryptup_gmail div.ade.appended span.cryptup_convo_button:hover > img, div.ade.appended span.cryptup_convo_button:hover > span { opacity: 1; }
-body.cryptup_gmail div.ade.appended span.cryptup_convo_button:not(:first-child) { margin-left: 5px; }
-body.cryptup_gmail.cryptup_gmail_new div.ade.appended span.cryptup_convo_button { margin-left: 18px; zoom: 1.2; }
 
-/* buttons top navbar Gmail */
-body.cryptup_gmail div.finish_session img { padding: 0px; }
+body.cryptup_gmail div.ade.appended span.cryptup_convo_button > img {
+  border: 2px solid #31a217;
+  width: 10px;
+  margin: 4px;
+  position: relative;
+  bottom: 1px;
+  opacity: 0.8;
+}
+
+body.cryptup_gmail div.ade.appended span.cryptup_convo_button > span {
+  text-transform: uppercase;
+  font-size: 9.5px;
+  color: white;
+  background: #31a217;
+  padding: 2px 3px 2px 3px;
+  display: inline-block;
+  border-radius: 2px;
+  cursor: default;
+}
+
+body.cryptup_gmail div.ade.appended span.cryptup_convo_button:hover > img,
+div.ade.appended span.cryptup_convo_button:hover > span { opacity: 1; }
+body.cryptup_gmail div.ade.appended span.cryptup_convo_button:not(:first-child) { margin-left: 5px; }
+
+body.cryptup_gmail.cryptup_gmail_new div.ade.appended span.cryptup_convo_button {
+  margin-left: 18px;
+  zoom: 1.2;
+}
+
+/* The 'End Pass Phrase Session' button */
+body.cryptup_gmail .action_finish_session {
+  position: fixed;
+  bottom: 3px;
+  left: 50%;
+  width: 300px;
+  margin-left: -30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  text-decoration: none;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 6px 0;
+  cursor: pointer;
+  z-index: 1;
+  border-radius: 3px;
+  opacity: 0.9;
+}
+
+body.cryptup_gmail .action_finish_session:hover {
+  opacity: 1;
+}
+
+body.cryptup_gmail .action_finish_session img {
+  height: 24px;
+  margin: 0 15px 0 -15px;
+}
 
 /* buttons body.cryptup_outlook */
-body.cryptup_outlook .cryptup_compose_button_container { display: inline-block; width: 30px; }
-body.cryptup_outlook .cryptup_compose_button_container .new_message_button { display: inline-block; position: absolute; left: 12px; margin-top: 9px; background-color: #31A217;
-  padding: 2px; height: 19px; cursor: pointer; }
+body.cryptup_outlook .cryptup_compose_button_container {
+  display: inline-block;
+  width: 30px;
+}
+
+body.cryptup_outlook .cryptup_compose_button_container .new_message_button {
+  display: inline-block;
+  position: absolute;
+  left: 12px;
+  margin-top: 9px;
+  background-color: #31a217;
+  padding: 2px;
+  height: 19px;
+  cursor: pointer;
+}
 body.cryptup_outlook ._fce_i { padding: 0 6px 0 6px; } /* slightly less horizontal padding on other outlook buttons in the same menu so that it doesn't misbehave */
 
 /* elements */
-div.new_message { position: absolute; bottom: 0; width: 540px; right: 30px; padding: 0; z-index: 6; height: 605px; transition: .1s height ease-in-out; box-shadow: rgba(0,0,0,0.3) 0 2px 8px; }
-div.new_message.full_window { width: 100%; height: 100%; right: unset; }
-div.new_message iframe { width: 100%; height: 605px; border:none; padding: 0; margin: 0; overflow: hidden;}
-div.new_message.full_window iframe { height: 100%;}
+div.new_message {
+  position: absolute;
+  bottom: 0;
+  width: 540px;
+  right: 30px;
+  padding: 0;
+  z-index: 6;
+  height: 605px;
+  transition: 0.1s height ease-in-out;
+  box-shadow: rgba(0, 0, 0, 0.3) 0 2px 8px;
+}
+
+div.new_message.full_window {
+  width: 100%;
+  height: 100%;
+  right: unset;
+}
+
+div.new_message iframe {
+  width: 100%;
+  height: 605px;
+  border: none;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+div.new_message.full_window iframe { height: 100%; }
 
 body.cryptup_inbox div.new_message { right: 100px; }
+
 @media screen and (max-height: 600px) {
-  div.new_message, div.new_message iframe { height: 450px; }
+  div.new_message,
+  div.new_message iframe { height: 450px; }
 }
-div.evaluated iframe.embedded { width: 500px; height: 160px; border: 1px solid #cacaca; }  /* verification results */
-iframe.pgp_block { width: 100%; border:none; overflow: hidden; }
-iframe.backup_block { width: 100%; height: 400px; border:none; overflow: hidden; }
-iframe.reply_message { height: 80px; width: 100%; border: none; }
-div.remove_borders { border: none !important; padding:0 !important; margin:0 !important; }
-span.pgp_attachment { display: block; float: left; margin: 0 0 16px 16px; height: 120px; width: 180px; position: relative; }
-span.pgp_attachment > iframe { height: 120px; width: 180px; padding: 0; margin: 0; border: none; overflow: hidden; }
-div.reply_message_iframe_container { margin-bottom: 0; padding-bottom: 0; line-height: 8px; }
+
+div.evaluated iframe.embedded {
+  width: 500px;
+  height: 160px;
+  border: 1px solid #cacaca;
+}  /* verification results */
+iframe.pgp_block {
+  width: 100%;
+  border: none;
+  overflow: hidden;
+}
+
+iframe.backup_block {
+  width: 100%;
+  height: 400px;
+  border: none;
+  overflow: hidden;
+}
+
+iframe.reply_message {
+  height: 80px;
+  width: 100%;
+  border: none;
+}
+
+.I5.reply_message_evaluated.remove_borders {
+  padding-left: 7px !important;
+}
+
+.Bk {
+  overflow: hidden;
+}
+
+.l2 {
+  padding-bottom: 0 !important;
+}
+
+.remove_borders {
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+
+span.pgp_attachment {
+  display: block;
+  float: left;
+  margin: 0 0 16px 16px;
+  height: 120px;
+  width: 180px;
+  position: relative;
+}
+
+span.pgp_attachment > iframe {
+  height: 120px;
+  width: 180px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  overflow: hidden;
+}
+
+div.reply_message_iframe_container {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  line-height: 8px;
+}
+
+div.reply_message_iframe_container.inserted {
+  width: calc(100% - 72px);
+  margin-left: 72px !important;
+}
 
 /* augmented */
-body.cryptup_gmail div.recipients_use_encryption { min-height: 0; background-color: #f5f5f5; padding-left: 10px; padding-top: 4px; padding-bottom: 4px; }
-body.cryptup_gmail div.recipients_use_encryption a { position: absolute; right: 8px; }
+body.cryptup_gmail div.recipients_use_encryption {
+  min-height: 0;
+  background-color: #f5f5f5;
+  margin: 0 -20px;
+  padding: 4px 20px;
+}
+
+body.cryptup_gmail div.recipients_use_encryption a {
+  position: absolute;
+  right: 20px;
+}
 
 /* cryptup dialog */
-div#cryptup_dialog { position: fixed; top:0; width: 100%; height: 100%; margin: 0 auto; z-index: 10; background-color:rgba(255, 255, 255, 0.85); }
-div#cryptup_dialog iframe { position: absolute; width: 640px; height: 370px; top: 50%; left: 50%; margin-left: -300px; margin-top: -200px; border: none;
-  box-shadow: 10px 10px 5px #888888; box-shadow: 0 0 25px #AAA; }
-div#cryptup_dialog iframe.short { height: 300px; margin-top: -300px; }
-div#cryptup_dialog iframe.medium { height: 500px; margin-top: -300px; }
-div#cryptup_dialog iframe.mediumtall { height: 630px; margin-top: -315px; }
-div#cryptup_dialog iframe.tall { height: 780px; margin-top: -390px; }
+div#cryptup_dialog {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
+  z-index: 1100;
+  background-color: rgba(255, 255, 255, 0.85);
+}
+
+div#cryptup_dialog iframe {
+  position: absolute;
+  width: 640px;
+  height: 370px;
+  top: 50%;
+  left: 50%;
+  margin-left: -300px;
+  margin-top: -200px;
+  border: none;
+  box-shadow: 10px 10px 5px #888;
+  box-shadow: 0 0 25px #aaa;
+}
+
+div#cryptup_dialog iframe.short {
+  height: 300px;
+  margin-top: -300px;
+}
+
+div#cryptup_dialog iframe.medium {
+  height: 500px;
+  margin-top: -300px;
+}
+
+div#cryptup_dialog iframe.mediumtall {
+  height: 630px;
+  margin-top: -315px;
+}
+
+div#cryptup_dialog iframe.tall {
+  height: 780px;
+  margin-top: -390px;
+}
+
+.swal2-container.ui-modal-attachment {
+  padding: 0;
+  background: rgba(0, 0, 0, 0.85) !important;
+  overflow-y: hidden !important;
+}
+
+.swal2-container.ui-modal-attachment .swal2-popup {
+  padding: 0;
+  background: transparent;
+}
+
+.swal2-container.ui-modal-attachment .swal2-content {
+  height: 100%;
+  padding: 0;
+}
+
+.swal2-container.ui-modal-attachment #swal2-content { height: 100%; }
+
+.swal2-container.ui-modal-attachment iframe {
+  width: 100%;
+  height: 100%;
+}

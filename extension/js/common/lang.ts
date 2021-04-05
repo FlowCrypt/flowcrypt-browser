@@ -1,8 +1,8 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
-/* tslint:disable:max-line-length */
+/* eslint-disable max-len */
 
 export const Lang = { // tslint:disable-line:variable-name
   error: {
@@ -12,11 +12,12 @@ export const Lang = { // tslint:disable-line:variable-name
     partiallyEncryptedKeyUnsupported: 'This Private Key seems to be only partially encrypted (some secret packets are encrypted, some not).\n\nSuch keys are not supported - please either fully encrypt or fully decrypt the key before importing it.',
     confirmResetAcct: (acctEmail: string) => `This will remove all your FlowCrypt settings for ${acctEmail} including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY AND PASS PHRASE IN A SAFE PLACE FIRST OR YOU MAY LOSE IT`,
     confirmManualAcctEmailChange: (currentAcctEmail: string) => `Your current account email is ${currentAcctEmail}.\n\nUse this when your Google Account email address has changed and the account above is outdated.\n\nIn the following step, please sign in with your updated Google Account.\n\nContinue?`,
-    keyFormattedWell: (begin: string, end: string) => `Private key is not correctly formated. Please insert complete key, including "${begin}" and "${end}"\n\nEnter the private key you previously used. The corresponding public key is registered with your email, and the private key is needed to confirm this change.\n\nIf you chose to download your backup as a file, you should find it inside that file. If you backed up your key on Gmail, you will find there it by searching your inbox.`,
+    keyFormattedWell: (begin: string, end: string) => `Private key is not correctly formatted. Please insert complete key, including "${begin}" and "${end}"\n\nEnter the private key you previously used. The corresponding public key is registered with your email, and the private key is needed to confirm this change.\n\nIf you chose to download your backup as a file, you should find it inside that file. If you backed up your key on Gmail, you will find there it by searching your inbox.`,
     failedToCheckIfAcctUsesEncryption: 'Failed to check if encryption is already set up on your account. ',
     failedToCheckAccountBackups: 'Failed to check for account backups. ',
     failedToSubmitToAttester: 'Failed to submit to Attester. ',
     failedToBackUpKey: 'Failed to back up your key. ',
+    failedToLoadEmailAliases: 'Failed to load your email aliases. ',
     cannotLocateBackupPasteManually: 'FlowCrypt can\'t locate your backup automatically.</div><div class="line">Find "Your FlowCrypt Backup" email, open the attachment, copy all text and paste it below.',
     confirmSkipRecovery: 'Your account will be set up for encryption again, but your previous encrypted emails will be unreadable. You will need to inform your encrypted contacts that you have a new key. Regular email will not be affected. Are you sure?',
     nBackupsAlreadyRecoveredOrLeft: (nGot: number, nBups: number, txtTeft: string) => `You successfully recovered ${nGot} of ${nBups} backups. There ${txtTeft} left.<br><br>Try a different pass phrase to unlock all backups.`,
@@ -28,14 +29,11 @@ export const Lang = { // tslint:disable-line:variable-name
     ppMatchAllSet: 'Your pass phrase matches. Good job! You\'re all set.',
   },
   account: {
-    creditOrDebit: 'Enter credit or debit card to use. You can cancel anytime.',
-    alreadyUpgraded: 'You have already upgraded to FlowCrypt Advanced',
-    verifyToSetUpContactPage: `Your email needs to be verified to set up a contact page. You can verify it by enabling a free trial. You do NOT need to pay or maintain the trial later. Your Contact Page will stay active even on Forever Free account.`,
-    fcSubscriptionEndedNoFooter: `Your FlowCrypt subscription has ended. Custom email signature (email footer) will no longer be used.`,
-    googleAcctDisabled: `Your Google Account or Google Email seems to be disabled.`,
+    googleAcctDisabledOrPolicy: `Your Google Account or Google Email seems to be disabled, or access to this app is disabled by your organisation admin policy. Contact your email administrator.`,
   },
   pgpBlock: {
     cantOpen: 'Could not open this message with FlowCrypt.\n\n',
+    pwdMsgOnlyReadableOnWeb: 'This password-encrypted message (received before installing FlowCrypt?) is only readable on the web.\n\nPlease click "Open Message" above and enter sender-provided message password to open it.\n\nAlternatively, ask sender to re-send it - newly received messages will be readable in inbox.\n\n',
     yourKeyCantOpenImportIfHave: 'Your current key cannot open this message. If you have any other keys available, you should import them now.\n',
     encryptedCorrectlyFileBug: 'It\'s correctly encrypted for you. Please file a bug report if you see this on multiple messages. ',
     singleSender: 'Normally, messages are encrypted for at least two people (sender and the receiver). It seems the sender encrypted this message manually for themselves, and forgot to add you as a receiver. This sometimes happens when the sender is using OpenPGP software other than FlowCrypt, because they have to configure encryption manually, and mistakes can happen.',
@@ -62,8 +60,10 @@ export const Lang = { // tslint:disable-line:variable-name
     askSenderRenew: 'Please ask the sender to renew the message if you still need the contents',
     cannotLocate: 'Could not locate this message.',
     brokenLink: 'It seems it contains a broken link.',
+    pwdMsgAskSenderUsePubkey: 'This appears to be a password-protected message. Please ask the sender to encrypt messages for your Public Key instead.',
   },
   compose: {
+    abortSending: 'A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?',
     pleaseReconnectAccount: 'Please reconnect FlowCrypt to your Gmail Account. This is typically needed after a long time of no use, a password change, or similar account changes. ',
     msgEncryptedHtml: { EN: 'This&nbsp;message&nbsp;is&nbsp;encrypted: ', DE: 'Diese&nbsp;Nachricht&nbsp;ist&nbsp;verschlüsselt: ' },
     msgEncryptedText: { EN: 'This message is encrypted. Follow this link to open it: ', DE: 'Diese Nachricht ist verschlüsselt. Nachricht öffnen: ' },

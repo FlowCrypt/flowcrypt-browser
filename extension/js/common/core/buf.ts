@@ -1,8 +1,8 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
-import { base64encode, base64decode } from '../platform/util.js';
+import { base64decode, base64encode } from '../platform/util.js';
 
 export class Buf extends Uint8Array {
 
@@ -93,6 +93,10 @@ export class Buf extends Uint8Array {
     return Buf.fromBase64Str(b64UrlStr.replace(/-/g, '+').replace(/_/g, '/'));
   }
 
+  public toString = (mode: 'strict' | 'inform' | 'ignore' = 'inform'): string => { // mimic Node api
+    return this.toUtfStr(mode);
+  }
+
   public toUtfStr = (mode: 'strict' | 'inform' | 'ignore' = 'inform'): string => { // tom
     const length = this.length;
     let bytesLeftInChar = 0;
@@ -139,7 +143,16 @@ export class Buf extends Uint8Array {
           bytesLeftInChar--;
         }
         if (binaryChar && !bytesLeftInChar) {
-          utf8string += String.fromCharCode(parseInt(binaryChar, 2));
+          try {
+            const codePoint = parseInt(binaryChar, 2);
+            utf8string += codePoint >= 0x10000 ? String.fromCodePoint(codePoint) : String.fromCharCode(codePoint);
+          } catch (e) {
+            if (mode === 'inform') {
+              console.log(e);
+            } else if (mode === 'strict') {
+              throw e;
+            }
+          }
           binaryChar = '';
         }
       }
@@ -164,7 +177,4 @@ export class Buf extends Uint8Array {
   public toBase64UrlStr = (): string => {
     return this.toBase64Str().replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
-
-  public toString = this.toUtfStr; // mimic Node api
-
 }

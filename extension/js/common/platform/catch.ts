@@ -1,12 +1,21 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
 import { VERSION } from '../core/const.js';
-import { Store } from './store.js';
 
 export class UnreportableError extends Error { }
-export type ObjWithStack = { stack: string };
+type ObjWithStack = { stack: string };
+export type ErrorReport = {
+  name: string;
+  message: string;
+  url: string;
+  line: number;
+  col: number;
+  trace: string;
+  version: string;
+  environment: string;
+}
 
 export class Catch {
 
@@ -31,13 +40,13 @@ export class Catch {
     'ResizeObserver loop limit exceeded',
   ];
 
-  public static rewrapErr = (e: any, message: string) => {
+  public static rewrapErr = (e: any, message: string): Error => {
     const newErr = new Error(`${message}::${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`);
     newErr.stack += `\n\n${Catch.stringify(e)}`;
     return newErr;
   }
 
-  public static stringify = (e: any) => {
+  public static stringify = (e: any): string => {
     if (e instanceof Error) {
       return `[typeof:Error:${e.name}] ${e.message}\n\n${e.stack}`;
     }
@@ -52,31 +61,12 @@ export class Catch {
   }
 
   public static hasStack = (e: any): e is ObjWithStack => {
-    return e && typeof e === 'object' && typeof (e as ObjWithStack).stack === 'string' && Boolean((e as ObjWithStack).stack);
+    return e && typeof e === 'object' && typeof (e as ObjWithStack).stack === 'string' && Boolean((e as ObjWithStack).stack); // tslint:disable-line:no-unsafe-any
   }
 
   public static onErrorInternalHandler = (errMsg: string | undefined, url: string, line: number, col: number, originalErr: any, isManuallyCalled: boolean) => {
-    if (errMsg && Catch.IGNORE_ERR_MSG.indexOf(errMsg) !== -1) {
-      return;
-    }
-    let exception: Error;
-    if (typeof originalErr !== 'object') {
-      exception = new Error(`THROWN_NON_OBJECT[${typeof originalErr}]: ${String(originalErr)}`);
-    } else if (errMsg && url && typeof line !== 'undefined' && !col && !originalErr && !isManuallyCalled) {
-      exception = new Error(`LIMITED_ERROR: ${errMsg}`);
-    } else if (originalErr instanceof Error) {
-      exception = originalErr;
-      if (originalErr.hasOwnProperty('thrown')) { // this is created by custom async stack reporting in tooling/tsc-compiler.ts
-        exception.stack += `\n\ne.thrown:\n${Catch.stringify((originalErr as any).thrown)}`;
-      }
-    } else {
-      exception = new Error(`THROWN_OBJECT: ${errMsg}`);
-      if (Catch.hasStack(originalErr)) {
-        exception.stack += `\n\nORIGINAL_THROWN_OBJECT_STACK:\n${originalErr.stack}\n\n`;
-      }
-      exception.stack += `\n\nORIGINAL_ERR:\n${Catch.stringify(originalErr)}`;
-    }
-    if (Catch.IGNORE_ERR_MSG.indexOf(exception.message) !== -1) {
+    const exception = Catch.formExceptionFromThrown(originalErr, errMsg, url, line, col, isManuallyCalled);
+    if ((Catch.IGNORE_ERR_MSG.indexOf(exception.message) !== -1) || (errMsg && Catch.IGNORE_ERR_MSG.indexOf(errMsg) !== -1)) {
       return;
     }
     console.error(originalErr);
@@ -89,60 +79,16 @@ export class Catch {
       Catch.ORIG_ONERROR.apply(undefined, arguments); // Call any previously assigned handler
     }
     if (exception instanceof UnreportableError) {
+      console.error('Not reporting UnreportableError above');
       return;
     }
     if ((exception.stack || '').indexOf('PRIVATE') !== -1) {
       exception.stack = '~censored:PRIVATE';
     }
-    try {
-      $.ajax({ // tslint:disable-line:no-direct-ajax
-        url: 'https://flowcrypt.com/api/help/error',
-        method: 'POST',
-        data: JSON.stringify({
-          name: exception.name.substring(0, 50),
-          message: exception.message.substring(0, 200),
-          url: (url || '').substring(0, 100),
-          line: line || 0,
-          col: col || 0,
-          trace: exception.stack || '',
-          version: VERSION,
-          environment: Catch.RUNTIME_ENVIRONMENT,
-        }),
-        dataType: 'json',
-        crossDomain: true,
-        contentType: 'application/json; charset=UTF-8',
-        async: true,
-        success: (response: { saved: boolean }) => {
-          if (response && typeof response === 'object' && response.saved === true) {
-            console.log('%cFlowCrypt ERROR:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
-          } else {
-            console.error('%cFlowCrypt EXCEPTION:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
-          }
-        },
-        error: (req, status, error) => {
-          console.error('%cFlowCrypt FAILED:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
-        },
-      });
-    } catch (ajaxErr) {
-      console.error(ajaxErr);
-      console.error('%cFlowCrypt ISSUE:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
-    }
-    try {
-      Store.saveError(exception);
-    } catch (storageErr) {
-      console.error(`failed to locally log error ${String(exception)} because: ${String(storageErr)}`);
-    }
+    const formatted = Catch.formatExceptionForReport(exception, line, col);
+    // todo - here would have to make a decision if we are sending it to flowcrypt.com or enterprise FES
+    Catch.doSendErrorToFlowCryptComBackend(formatted);
     return true;
-  }
-
-  private static getErrorLineAndCol = (e: any) => {
-    try {
-      const callerLine = e.stack!.split('\n')[1]; // tslint:disable-line:no-unsafe-any
-      const matched = callerLine.match(/\.js:([0-9]+):([0-9]+)\)?/); // tslint:disable-line:no-unsafe-any
-      return { line: Number(matched![1]), col: Number(matched![2]) }; // tslint:disable-line:no-unsafe-any
-    } catch (lineErr) {
-      return { line: 0, col: 0 };
-    }
   }
 
   public static reportErr = (e: any) => {
@@ -150,44 +96,31 @@ export class Catch {
     Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
   }
 
-  private static nameAndDetailsAsException = (name: string, details: any): Error => {
-    try {
-      throw new Error(name);
-    } catch (e) {
-      (e as Error).stack += `\n\n\ndetails:\n${Catch.stringify(details)}`;
-      return e as Error;
-    }
-  }
-
   public static report = (name: string, details?: any) => {
     Catch.reportErr(Catch.nameAndDetailsAsException(name, details));
   }
 
-  public static log = (name: string, details?: any) => {
-    const e = Catch.nameAndDetailsAsException(`Catch.log: ${name}`, details);
-    try {
-      Store.saveError(e, name);
-    } catch (storageErr) {
-      console.error(`failed to locally log "${String(name)}" because "${String(storageErr)}"`);
-    }
-  }
-
   public static isPromise = (v: any): v is Promise<any> => {
-    return v && typeof v === 'object' && typeof (v as Promise<any>).then === 'function' && typeof (v as Promise<any>).catch === 'function';
+    return v && typeof v === 'object' // tslint:disable-line:no-unsafe-any
+      && typeof (v as Promise<any>).then === 'function' // tslint:disable-line:no-unbound-method - only testing if exists
+      && typeof (v as Promise<any>).catch === 'function'; // tslint:disable-line:no-unbound-method - only testing if exists
   }
 
-  public static try = (code: Function) => () => { // tslint:disable-line:ban-types // returns a function
-    try {
-      const r = code();
-      if (Catch.isPromise(r)) {
-        r.catch(Catch.reportErr);
+  public static try = (code: () => void | Promise<void>) => {
+    return () => { // returns a function
+      try {
+        const r = code();
+        if (Catch.isPromise(r)) {
+          r.catch(Catch.reportErr);
+        }
+      } catch (codeErr) {
+        Catch.reportErr(codeErr);
       }
-    } catch (codeErr) {
-      Catch.reportErr(codeErr);
-    }
+    };
   }
 
-  public static browser = () => {  // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
+  public static browser = (): { name: 'firefox' | 'ie' | 'chrome' | 'opera' | 'safari' | 'unknown', v: number | undefined } => {
+    // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
     if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
       return { name: 'firefox', v: Number(RegExp.$1) };
     } else if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)) {
@@ -211,8 +144,6 @@ export class Catch {
       env = 'ex:prod';
     } else if (url.indexOf('gjdhkacdgd') !== -1 || url.indexOf('gggocmadhd') !== -1) {
       env = 'ex:dev';
-    } else if (url.indexOf('gjdhkacdgd') !== -1) { // in case it differs in the future
-      env = 'ex:test';
     } else if (url.indexOf('mefaeofbcc') !== -1) {
       env = 'ex:stable';
     } else if (/chrome-extension:\/\/[a-z]{32}\/.+/.test(url)) {
@@ -242,18 +173,28 @@ export class Catch {
       Catch.test();
     } catch (e) {
       // return stack after removing first 3 lines plus url
-      return `${((e as Error).stack || '').split('\n').splice(3).join('\n')}\n\nurl: ${window.location.href}\n`;
+      return `${((e as Error).stack || '').split('\n').splice(3).join('\n')}\n\nurl: ${Catch.censoredUrl(window.location.href)}\n`;
     }
     return ''; // make ts happy - this will never happen
   }
 
-  private static isPromiseRejectionEvent = (ev: any): ev is PromiseRejectionEvent => {
-    if (ev && typeof ev === 'object') {
-      const eHasReason = (ev as {}).hasOwnProperty('reason') && typeof (ev as PromiseRejectionEvent).reason === 'object';
-      const eHasPromise = (ev as {}).hasOwnProperty('promise') && Catch.isPromise((ev as PromiseRejectionEvent).promise);
-      return eHasReason && eHasPromise;
+  public static censoredUrl = (url: string | undefined): string => {
+    if (!url) {
+      return '(unknown url)';
     }
-    return false;
+    if (url.indexOf('refreshToken=') !== -1) {
+      return `${url.split('?')[0]}~censored:refreshToken`;
+    }
+    if (url.indexOf('token=') !== -1) {
+      return `${url.split('?')[0]}~censored:token`;
+    }
+    if (url.indexOf('code=') !== -1) {
+      return `${url.split('?')[0]}~censored:code`;
+    }
+    if (url.indexOf('idToken=') !== -1) {
+      return `${url.split('?')[0]}~censored:idToken`;
+    }
+    return url;
   }
 
   public static onUnhandledRejectionInternalHandler = (e: any) => {
@@ -270,12 +211,137 @@ export class Catch {
     }
   }
 
-  public static setHandledInterval = (cb: () => void, ms: number): number => {
+  public static setHandledInterval = (cb: () => void | Promise<void>, ms: number): number => {
     return window.setInterval(Catch.try(cb), ms); // error-handled: else setInterval will silently swallow errors
   }
 
-  public static setHandledTimeout = (cb: () => void, ms: number): number => {
+  public static setHandledTimeout = (cb: () => void | Promise<void>, ms: number): number => {
     return window.setTimeout(Catch.try(cb), ms); // error-handled: else setTimeout will silently swallow errors
+  }
+
+  public static doesReject = async (p: Promise<unknown>, errNeedle?: string[]) => {
+    try {
+      await p;
+      return false;
+    } catch (e) {
+      if (!errNeedle) { // no needles to check against
+        return true;
+      }
+      return !!errNeedle.find(needle => String(e).includes(needle));
+    }
+  }
+
+  public static undefinedOnException = async <T>(p: Promise<T>): Promise<T | undefined> => {
+    try {
+      return await p;
+    } catch (e) {
+      return undefined;
+    }
+  }
+
+  private static formatExceptionForReport = (thrown: any, line?: number, col?: number): ErrorReport => {
+    if (!line || !col) {
+      const { line: parsedLine, col: parsedCol } = Catch.getErrorLineAndCol(thrown);
+      line = parsedLine;
+      col = parsedCol;
+    }
+    if (thrown instanceof Error) { // reporting stack may differ from the stack of the actual error, both may be interesting
+      thrown.stack += Catch.formattedStackBlock('Catch.reportErr calling stack', Catch.stackTrace());
+      if (thrown.hasOwnProperty('workerStack')) { // https://github.com/openpgpjs/openpgpjs/issues/656#event-1498323188
+        thrown.stack += Catch.formattedStackBlock('openpgp.js worker stack', String((thrown as any).workerStack));
+      }
+    }
+    const exception = Catch.formExceptionFromThrown(thrown);
+    return {
+      name: exception.name.substring(0, 50),
+      message: exception.message.substring(0, 200),
+      url: window.location.href.substring(0, 100),
+      line: line || 0,
+      col: col || 0,
+      trace: exception.stack || '',
+      version: VERSION,
+      environment: Catch.RUNTIME_ENVIRONMENT,
+    };
+  }
+
+  private static doSendErrorToFlowCryptComBackend = (errorReport: ErrorReport) => {
+    try {
+      $.ajax({ // tslint:disable-line:no-direct-ajax
+        url: 'https://flowcrypt.com/api/help/error',
+        method: 'POST',
+        data: JSON.stringify(errorReport),
+        dataType: 'json',
+        crossDomain: true,
+        contentType: 'application/json; charset=UTF-8',
+        async: true,
+        success: (response: { saved: boolean }) => {
+          if (response && typeof response === 'object' && response.saved === true) {
+            console.log('%cFlowCrypt ERROR:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
+          } else {
+            console.error('%cFlowCrypt EXCEPTION:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
+          }
+        },
+        error: () => {
+          console.error('%cFlowCrypt FAILED:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
+        },
+      });
+    } catch (ajaxErr) {
+      console.error(ajaxErr);
+      console.error('%cFlowCrypt ISSUE:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
+    }
+  }
+
+  private static formExceptionFromThrown = (thrown: any, errMsg?: string, url?: string, line?: number, col?: number, isManuallyCalled?: boolean): Error => {
+    let exception: Error;
+    if (typeof thrown !== 'object') {
+      exception = new Error(`THROWN_NON_OBJECT[${typeof thrown}]: ${String(thrown)}`);
+    } else if (errMsg && url && typeof line !== 'undefined' && !col && !thrown && !isManuallyCalled) {
+      exception = new Error(`LIMITED_ERROR: ${errMsg}`);
+    } else if (thrown instanceof Error) {
+      exception = thrown;
+      if (thrown.hasOwnProperty('thrown')) { // this is created by custom async stack reporting in tooling/tsc-compiler.ts
+        exception.stack += `\n\ne.thrown:\n${Catch.stringify((thrown as any).thrown)}`;
+      }
+    } else {
+      exception = new Error(`THROWN_OBJECT: ${errMsg}`);
+      if (Catch.hasStack(thrown)) {
+        exception.stack += `\n\nORIGINAL_THROWN_OBJECT_STACK:\n${thrown.stack}\n\n`;
+      }
+      exception.stack += `\n\nORIGINAL_ERR:\n${Catch.stringify(thrown)}`;
+    }
+    return exception;
+  }
+
+  private static getErrorLineAndCol = (e: any) => {
+    try {
+      const callerLine = e.stack!.split('\n')[1]; // tslint:disable-line:no-unsafe-any
+      const matched = callerLine.match(/\.js:([0-9]+):([0-9]+)\)?/); // tslint:disable-line:no-unsafe-any
+      return { line: Number(matched![1]), col: Number(matched![2]) }; // tslint:disable-line:no-unsafe-any
+    } catch (lineErr) {
+      return { line: 0, col: 0 };
+    }
+  }
+
+  private static formattedStackBlock = (name: string, text: string) => {
+    return `\n\n### ${name} ###\n# ${text.split('\n').join('\n# ')}\n######################\n`;
+  }
+
+  private static nameAndDetailsAsException = (name: string, details: any): Error => {
+    try {
+      throw new Error(name);
+    } catch (e) {
+      (e as Error).stack += `\n\n\ndetails:\n${Catch.stringify(details)}`;
+      return e as Error;
+    }
+  }
+
+  private static isPromiseRejectionEvent = (ev: any): ev is PromiseRejectionEvent => {
+    if (ev && typeof ev === 'object') {
+      const eHasReason = (ev as {}).hasOwnProperty('reason') && typeof (ev as PromiseRejectionEvent).reason === 'object';
+      const eHasPromise = (ev as {}).hasOwnProperty('promise') && Catch.isPromise((ev as PromiseRejectionEvent).promise);
+      return eHasReason && eHasPromise;
+    }
+    return false;
   }
 
 }

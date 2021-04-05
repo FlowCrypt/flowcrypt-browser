@@ -23,11 +23,13 @@ declare namespace OpenPGP {
 
   interface BaseStream<T extends Uint8Array | string> { }
   interface WebStream<T extends Uint8Array | string> extends BaseStream<T> { // copied+simplified version of ReadableStream from lib.dom.d.ts
-    readonly locked: boolean; cancel(reason?: any): Promise<void>; getReader: Function; pipeThrough: Function; pipeTo: Function; tee: Function;
+    readonly locked: boolean; getReader: Function; pipeThrough: Function; pipeTo: Function; tee: Function;
+    cancel(reason?: any): Promise<void>;
   }
   interface NodeStream<T extends Uint8Array | string> extends BaseStream<T> { // copied+simplified version of ReadableStream from @types/node/index.d.ts
-    readable: boolean; read(size?: number): string | Uint8Array; setEncoding(encoding: string): this; pause(): this; resume(): this;
-    isPaused(): boolean; pipe: Function; unpipe: Function; unshift(chunk: string | Uint8Array): void; wrap: Function;
+    readable: boolean; pipe: Function; unpipe: Function; wrap: Function;
+    read(size?: number): string | Uint8Array; setEncoding(encoding: string): this; pause(): this; resume(): this;
+    isPaused(): boolean; unshift(chunk: string | Uint8Array): void;
   }
   type Stream<T extends Uint8Array | string> = WebStream<T> | NodeStream<T>;
 
@@ -81,15 +83,15 @@ declare namespace OpenPGP {
 
     export class List<PACKET_TYPE> extends Array<PACKET_TYPE> {
       [index: number]: PACKET_TYPE;
-      length: number;
-      read(bytes: Uint8Array): void;
-      write(): Uint8Array;
-      push(...packet: PACKET_TYPE[]): number;
-      pop(): PACKET_TYPE;
-      filter(callback: (packet: PACKET_TYPE, i: number, self: List<PACKET_TYPE>) => void): List<PACKET_TYPE>;
-      filterByTag(...args: enums.packet[]): List<PACKET_TYPE>;
-      forEach(callback: (packet: PACKET_TYPE, i: number, self: List<PACKET_TYPE>) => void): void;
-      map<RETURN_TYPE>(callback: (packet: PACKET_TYPE, i: number, self: List<PACKET_TYPE>) => RETURN_TYPE): List<RETURN_TYPE>;
+      public length: number;
+      public read(bytes: Uint8Array): void;
+      public write(): Uint8Array;
+      public push(...packet: PACKET_TYPE[]): number;
+      public pop(): PACKET_TYPE;
+      public filter(callback: (packet: PACKET_TYPE, i: number, self: List<PACKET_TYPE>) => void): List<PACKET_TYPE>;
+      public filterByTag(...args: enums.packet[]): List<PACKET_TYPE>;
+      public forEach(callback: (packet: PACKET_TYPE, i: number, self: List<PACKET_TYPE>) => void): void;
+      public map<RETURN_TYPE>(callback: (packet: PACKET_TYPE, i: number, self: List<PACKET_TYPE>) => RETURN_TYPE): List<RETURN_TYPE>;
       // some()
       // every()
       // findPacket()
@@ -104,156 +106,156 @@ declare namespace OpenPGP {
     function newPacketFromTag(tag: enums.packetNames): AnyPacket;
 
     class BasePacket {
-      tag: enums.packet;
-      read(bytes: Uint8Array): void;
-      write(): Uint8Array;
+      public tag: enums.packet;
+      public read(bytes: Uint8Array): void;
+      public write(): Uint8Array;
     }
 
     class BaseKeyPacket extends BasePacket {
       // fingerprint: Uint8Array|null; - not included because not recommended to use. Use getFingerprint() or getFingerprintBytes()
-      algorithm: enums.publicKey;
-      created: Date;
-      getBitSize(): number;
-      getAlgorithmInfo(): key.AlgorithmInfo;
-      getFingerprint(): string;
-      getFingerprintBytes(): Uint8Array | null;
-      getCreationTime(): Date;
-      getKeyId(): Keyid;
+      public algorithm: enums.publicKey;
+      public created: Date;
 
-      version: number;
-      expirationTimeV3: number | null;
-      keyExpirationTime: number | null;
+      public version: number;
+      public expirationTimeV3: number | null;
+      public keyExpirationTime: number | null;
+      public params: object[];
+      public isEncrypted: boolean; // may be null, false or true
+      public getBitSize(): number;
+      public getAlgorithmInfo(): key.AlgorithmInfo;
+      public getFingerprint(): string;
+      public getFingerprintBytes(): Uint8Array | null;
+      public getCreationTime(): Date;
+      public getKeyId(): Keyid;
+      public isDecrypted(): boolean;
     }
 
     class BasePrimaryKeyPacket extends BaseKeyPacket {
     }
 
     export class Compressed extends BasePacket {
-      tag: enums.packet.compressed;
+      public tag: enums.packet.compressed;
     }
 
     export class SymEncryptedIntegrityProtected extends BasePacket {
-      tag: enums.packet.symEncryptedIntegrityProtected;
+      public tag: enums.packet.symEncryptedIntegrityProtected;
     }
 
     export class SymEncryptedAEADProtected extends BasePacket {
-      tag: enums.packet.symEncryptedAEADProtected;
+      public tag: enums.packet.symEncryptedAEADProtected;
     }
 
     export class PublicKeyEncryptedSessionKey extends BasePacket {
-      tag: enums.packet.publicKeyEncryptedSessionKey;
+      public tag: enums.packet.publicKeyEncryptedSessionKey;
     }
 
     export class SymEncryptedSessionKey extends BasePacket {
-      tag: enums.packet.symEncryptedSessionKey;
+      public tag: enums.packet.symEncryptedSessionKey;
     }
 
     export class Literal extends BasePacket {
-      tag: enums.packet.literal;
+      public tag: enums.packet.literal;
     }
 
     export class PublicKey extends BasePrimaryKeyPacket {
-      tag: enums.packet.publicKey;
-      isDecrypted(): null;
+      public tag: enums.packet.publicKey;
     }
 
     export class SymmetricallyEncrypted extends BasePacket {
-      tag: enums.packet.symmetricallyEncrypted;
+      public tag: enums.packet.symmetricallyEncrypted;
     }
 
     export class Marker extends BasePacket {
-      tag: enums.packet.marker;
+      public tag: enums.packet.marker;
     }
 
     export class PublicSubkey extends BaseKeyPacket {
-      tag: enums.packet.publicSubkey;
-      isDecrypted(): null;
+      public tag: enums.packet.publicSubkey;
     }
 
     export class UserAttribute extends BasePacket {
-      tag: enums.packet.userAttribute;
+      public tag: enums.packet.userAttribute;
     }
 
     export class OnePassSignature extends BasePacket {
-      tag: enums.packet.onePassSignature;
-      correspondingSig?: Promise<Signature>;
+      public tag: enums.packet.onePassSignature;
+      public correspondingSig?: Promise<Signature>;
     }
 
     export class SecretKey extends BasePrimaryKeyPacket {
-      tag: enums.packet.secretKey;
-      isDecrypted(): boolean;
-      encrypt(passphrase: string): Promise<boolean>;
-      decrypt(passphrase: string): Promise<true>;
+      public tag: enums.packet.secretKey;
       // encrypted: null | unknown[]; // Encrypted secret-key data, not meant for public use
-      s2k: { type: string } | null;
+      public s2k: { type: string } | null;
+      public encrypt(passphrase: string): Promise<boolean>;
+      public decrypt(passphrase: string): Promise<true>;
     }
 
     export class Userid extends BasePacket {
-      tag: enums.packet.userid;
-      userid: string;
+      public tag: enums.packet.userid;
+      public userid: string;
     }
 
     export class SecretSubkey extends BaseKeyPacket {
-      tag: enums.packet.secretSubkey;
-      isDecrypted(): boolean;
-      encrypt(passphrase: string): Promise<boolean>;
-      decrypt(passphrase: string): Promise<true>;
+      public tag: enums.packet.secretSubkey;
       // encrypted: null | unknown[]; // Encrypted secret-key data, not meant for public use
-      s2k: { type: string } | null;
+      public s2k: { type: string } | null;
+      public encrypt(passphrase: string): Promise<boolean>;
+      public decrypt(passphrase: string): Promise<true>;
     }
 
     export class Signature extends BasePacket {
-      tag: enums.packet.signature;
-      version: number;
-      signatureType: null | number;
-      hashAlgorithm: null | number;
-      publicKeyAlgorithm: null | number;
-      signatureData: null | Uint8Array;
-      unhashedSubpackets: null | Uint8Array;
-      signedHashValue: null | Uint8Array;
-      created: Date;
-      signatureExpirationTime: null | number;
-      signatureNeverExpires: boolean;
-      exportable: null | boolean;
-      trustLevel: null | number;
-      trustAmount: null | number;
-      regularExpression: null | number;
-      revocable: null | boolean;
-      keyExpirationTime: null | number;
-      keyNeverExpires: null | boolean;
-      preferredSymmetricAlgorithms: null | number[];
-      revocationKeyClass: null | number;
-      revocationKeyAlgorithm: null | number;
-      revocationKeyFingerprint: null | Uint8Array;
-      issuerKeyId: Keyid;
-      notation: null | { [name: string]: string };
-      preferredHashAlgorithms: null | number[];
-      preferredCompressionAlgorithms: null | number[];
-      keyServerPreferences: null | number[];
-      preferredKeyServer: null | string;
-      isPrimaryUserID: null | boolean;
-      policyURI: null | string;
-      keyFlags: null | number[];
-      signersUserId: null | string;
-      reasonForRevocationFlag: null | number;
-      reasonForRevocationString: null | string;
-      features: null | number[];
-      signatureTargetPublicKeyAlgorithm: null | number;
-      signatureTargetHashAlgorithm: null | number;
-      signatureTargetHash: null | string;
-      embeddedSignature: null | Signature;
-      issuerKeyVersion: null | number;
-      issuerFingerprint: null | Uint8Array;
-      preferredAeadAlgorithms: null | Uint8Array;
-      verified: null | boolean;
-      revoked: null | boolean;
-      sign(key: SecretKey | SecretSubkey, data: Uint8Array): true;
-      isExpired(date?: Date): boolean;
-      getExpirationTime(): Date | typeof Infinity;
+      public tag: enums.packet.signature;
+      public version: number;
+      public signatureType: null | number;
+      public hashAlgorithm: null | number;
+      public publicKeyAlgorithm: null | number;
+      public signatureData: null | Uint8Array;
+      public unhashedSubpackets: null | Uint8Array;
+      public signedHashValue: null | Uint8Array;
+      public created: Date;
+      public signatureExpirationTime: null | number;
+      public signatureNeverExpires: boolean;
+      public exportable: null | boolean;
+      public trustLevel: null | number;
+      public trustAmount: null | number;
+      public regularExpression: null | number;
+      public revocable: null | boolean;
+      public keyExpirationTime: null | number;
+      public keyNeverExpires: null | boolean;
+      public preferredSymmetricAlgorithms: null | number[];
+      public revocationKeyClass: null | number;
+      public revocationKeyAlgorithm: null | number;
+      public revocationKeyFingerprint: null | Uint8Array;
+      public issuerKeyId: Keyid;
+      public notation: null | { [name: string]: string };
+      public preferredHashAlgorithms: null | number[];
+      public preferredCompressionAlgorithms: null | number[];
+      public keyServerPreferences: null | number[];
+      public preferredKeyServer: null | string;
+      public isPrimaryUserID: null | boolean;
+      public policyURI: null | string;
+      public keyFlags: null | number[];
+      public signersUserId: null | string;
+      public reasonForRevocationFlag: null | number;
+      public reasonForRevocationString: null | string;
+      public features: null | number[];
+      public signatureTargetPublicKeyAlgorithm: null | number;
+      public signatureTargetHashAlgorithm: null | number;
+      public signatureTargetHash: null | string;
+      public embeddedSignature: null | Signature;
+      public issuerKeyVersion: null | number;
+      public issuerFingerprint: null | Uint8Array;
+      public preferredAeadAlgorithms: null | Uint8Array;
+      public verified: null | boolean;
+      public revoked: null | boolean;
+      public sign(key: SecretKey | SecretSubkey, data: Uint8Array): true;
+      public isExpired(date?: Date): boolean;
+      public verify(key: PublicKey | SecretKey, signatureType: OpenPGP.enums.signature, data: any, detached?: boolean, streaming?: boolean): Promise<boolean>;
+      public getExpirationTime(): Date | typeof Infinity;
     }
 
     export class Trust extends BasePacket {
-      tag: enums.packet.trust;
+      public tag: enums.packet.trust;
     }
 
     export type AnyPacket = Compressed | SymEncryptedIntegrityProtected | SymEncryptedAEADProtected | PublicKeyEncryptedSessionKey | SymEncryptedSessionKey | Literal
@@ -375,13 +377,13 @@ declare namespace OpenPGP {
   }
 
   export class AsyncProxy {
-    constructor(options: WorkerOptions);
-    getId(): number;
-    seedRandom(workerId: number, size: number): Promise<void>;
-    terminate(): void;
-    delegate(method: string, options: any): void;
 
-    workers: OpenPGPWorker[];
+    public workers: OpenPGPWorker[];
+    constructor(options: WorkerOptions);
+    public getId(): number;
+    public seedRandom(workerId: number, size: number): Promise<void>;
+    public terminate(): void;
+    public delegate(method: string, options: any): void;
   }
 
   /**
@@ -505,13 +507,13 @@ declare namespace OpenPGP {
      * @param partindex
      * @param parttotal
      */
-    function armor(messagetype: enums.armor, body: object, partindex: number, parttotal: number): string;
+    function encode(messagetype: enums.armor, body: object, partindex?: number, parttotal?: number, customComment?: string): string;
 
     /** DeArmor an OpenPGP armored message; verify the checksum and return the encoded bytes
      *
      *  @param text OpenPGP armored message
      */
-    function dearmor(text: string): object;
+    function decode(text: string): Promise<{ type: enums.armor, data: ReadableStream<Uint8Array> }>;
   }
 
   export namespace cleartext {
@@ -576,6 +578,7 @@ declare namespace OpenPGP {
     let commentstring: string;
     let keyserver: string;
     let node_store: string;
+    let allow_insecure_decryption_with_signing_keys: boolean;
   }
 
   export namespace crypto {
@@ -692,6 +695,7 @@ declare namespace OpenPGP {
     function read(type: typeof symmetric, e: symmetric): symmetricNames | string | any;
     function read(type: typeof keyStatus, e: keyStatus): keyStatusNames | string | any;
     function read(type: typeof keyFlags, e: keyFlags): keyFlagsNames | string | any;
+    function read(type: typeof signature, e: signature): signatureNames | string | any;
 
     export type armorNames = 'multipart_section' | 'multipart_last' | 'signed' | 'message' | 'public_key' | 'private_key';
     enum armor {
@@ -702,6 +706,14 @@ declare namespace OpenPGP {
       public_key = 4,
       private_key = 5,
       signature = 6,
+    }
+
+    enum reasonForRevocation {
+      no_reason = 0, // No reason specified (key revocations or cert revocations)
+      key_superseded = 1, // Key is superseded (key revocations)
+      key_compromised = 2, // Key material has been compromised (key revocations)
+      key_retired = 3, // Key is retired and no longer used (key revocations)
+      userid_invalid = 32, // User ID information is no longer valid (cert revocations)
     }
 
     export type compressionNames = 'uncompressed' | 'zip' | 'zlib' | 'bzip2';
@@ -745,6 +757,25 @@ declare namespace OpenPGP {
       symEncryptedIntegrityProtected = 18,
       modificationDetectionCode = 19,
       symEncryptedAEADProtected = 20,
+    }
+
+    export type signatureNames = 'binary' | 'text' | 'standalone' | 'cert_generic' | 'cert_persona' | 'cert_casual' | 'cert_positive' | 'cert_revocation' | 'subkey_binding' | 'key_binding' | 'key' | 'key_revocation' | 'subkey_revocation' | 'timestamp' | 'third_party';
+    enum signature {
+      binary = 0,
+      text = 1,
+      standalone = 2,
+      cert_generic = 16,
+      cert_persona = 17,
+      cert_casual = 18,
+      cert_positive = 19,
+      cert_revocation = 48,
+      subkey_binding = 24,
+      key_binding = 25,
+      key = 31,
+      key_revocation = 32,
+      subkey_revocation = 40,
+      timestamp = 64,
+      third_party = 80
     }
 
     export type publicKeyNames = 'rsa_encrypt_sign' | 'rsa_encrypt' | 'rsa_sign' | 'elgamal' | 'dsa' | 'ecdh' | 'ecdsa' | 'eddsa' | 'aedh' | 'aedsa';
@@ -799,55 +830,61 @@ declare namespace OpenPGP {
 
   export namespace key {
 
+    // callable constructor
+    export function Key(this: Key, packetlist: packet.List<packet.BasePacket>): Key;
+
     export type EllipticCurveName = 'curve25519' | 'p256' | 'p384' | 'p521' | 'secp256k1' | 'brainpoolP256r1' | 'brainpoolP384r1' | 'brainpoolP512r1';
 
     /** Class that represents an OpenPGP key. Must contain a primary key. Can contain additional subkeys, signatures, user ids, user attributes.
      */
     class Key {
-      constructor(packetlist: packet.List<packet.AnyPacket>);
-      armor(): string;
-      decrypt(passphrase: string | string[], keyId?: Keyid): Promise<boolean>;
-      encrypt(passphrase: string | string[]): Promise<void>;
-      getExpirationTime(capability?: 'encrypt' | 'encrypt_sign' | 'sign' | null, keyId?: Keyid | null, userId?: UserId | null): Promise<Date | typeof Infinity | null>; // Returns null if `capabilities` is passed and the key does not have the specified capabilities or is revoked or invalid.
-      getKeyIds(): Keyid[];
-      getPrimaryUser(): Promise<PrimaryUser | null>;
-      getUserIds(): string[];
-      isPrivate(): boolean;
-      isPublic(): boolean;
-      toPublic(): Key;
-      update(key: Key): void;
-      verifyPrimaryKey(): Promise<enums.keyStatus>;
-      isRevoked(): Promise<boolean>;
-      getEncryptionKey(keyid?: Keyid | null, date?: Date, userId?: UserId | null): Promise<packet.PublicSubkey | packet.SecretSubkey | packet.SecretKey | packet.PublicKey | null>;
-      getSigningKey(): Promise<packet.PublicSubkey | packet.SecretSubkey | packet.SecretKey | packet.PublicKey | null>;
-      getKeys(keyId?: Keyid): (Key | SubKey)[];
-      // isDecrypted(): boolean;
-      isFullyEncrypted(): boolean;
-      isFullyDecrypted(): boolean;
-      isPacketDecrypted(keyId: Keyid): boolean;
-      getFingerprint(): string;
-      getCreationTime(): Date;
-      getAlgorithmInfo(): AlgorithmInfo;
-      getKeyId(): Keyid;
-      primaryKey: packet.PublicKey | packet.SecretKey;
-      subKeys: SubKey[];
-      users: User[];
-      revocationSignatures: packet.Signature[];
-      keyPacket: packet.PublicKey | packet.SecretKey;
+      public primaryKey: packet.PublicKey | packet.SecretKey;
+      public subKeys: SubKey[];
+      public users: User[];
+      public revocationSignatures: packet.Signature[];
+      public keyPacket: packet.PublicKey | packet.SecretKey;
+      constructor(packetlist: packet.List<packet.BasePacket>);
+      public armor(): string;
+      public decrypt(passphrase: string | string[], keyId?: Keyid): Promise<boolean>;
+      public encrypt(passphrase: string | string[]): Promise<void>;
+      public getExpirationTime(capability?: 'encrypt' | 'encrypt_sign' | 'sign' | null, keyId?: Keyid | null, userId?: UserId | null): Promise<Date | typeof Infinity | null>; // Returns null if `capabilities` is passed and the key does not have the specified capabilities or is revoked or invalid.
+      public getKeyIds(): Keyid[];
+      public getPrimaryUser(): Promise<PrimaryUser>; // throws on err
+      public getUserIds(): string[];
+      public isPrivate(): boolean;
+      public isPublic(): boolean;
+      public toPacketlist(): packet.BasePacket[];
+      public toPublic(): Key;
+      public update(key: Key): void;
+      public verifyPrimaryKey(): Promise<void>; // throws on err
+      public isRevoked(): Promise<boolean>;
+      public revoke(reason: { flag?: enums.reasonForRevocation; string?: string; }, date?: Date): Promise<Key>;
+      public getRevocationCertificate(): Promise<Stream<string> | string | undefined>;
+      public getEncryptionKey(keyid?: Keyid | null, date?: Date, userId?: UserId | null): Promise<key.Key | key.SubKey | null>;
+      public getSigningKey(keyid?: Keyid | null, date?: Date, userId?: UserId | null): Promise<key.Key | key.SubKey | null>;
+      public getKeys(keyId?: Keyid): (Key | SubKey)[];
+      public isDecrypted(): boolean;
+      public isFullyEncrypted(): boolean;
+      public isFullyDecrypted(): boolean;
+      public isPacketDecrypted(keyId: Keyid): boolean;
+      public getFingerprint(): string;
+      public getCreationTime(): Date;
+      public getAlgorithmInfo(): AlgorithmInfo;
+      public getKeyId(): Keyid;
     }
 
     class SubKey {
+      public subKey: packet.SecretSubkey | packet.PublicSubkey;
+      public keyPacket: packet.SecretKey;
+      public bindingSignatures: packet.Signature[];
+      public revocationSignatures: packet.Signature[];
       constructor(subKeyPacket: packet.SecretSubkey | packet.PublicSubkey);
-      subKey: packet.SecretSubkey | packet.PublicSubkey;
-      keyPacket: packet.SecretKey;
-      bindingSignatures: packet.Signature[];
-      revocationSignatures: packet.Signature[];
-      verify(primaryKey: packet.PublicKey | packet.SecretKey): Promise<enums.keyStatus>;
-      isDecrypted(): boolean;
-      getFingerprint(): string;
-      getCreationTime(): Date;
-      getAlgorithmInfo(): AlgorithmInfo;
-      getKeyId(): Keyid;
+      public verify(primaryKey: packet.PublicKey | packet.SecretKey): Promise<enums.keyStatus>;
+      public isDecrypted(): boolean;
+      public getFingerprint(): string;
+      public getCreationTime(): Date;
+      public getAlgorithmInfo(): AlgorithmInfo;
+      public getKeyId(): Keyid;
     }
 
     export interface User {
@@ -861,6 +898,7 @@ declare namespace OpenPGP {
     export interface PrimaryUser {
       index: number;
       user: User;
+      selfCertification: packet.Signature;
     }
 
     interface KeyResult {
@@ -893,9 +931,9 @@ declare namespace OpenPGP {
 
   export namespace signature {
     class Signature {
+      public packets: packet.List<packet.Signature>;
       constructor(packetlist: packet.List<packet.Signature>);
-      armor(): string;
-      packets: packet.List<packet.Signature>;
+      public armor(): string;
     }
 
     /** reads an OpenPGP armored signature and returns a signature object
@@ -915,61 +953,61 @@ declare namespace OpenPGP {
     /** Class that represents an OpenPGP message. Can be an encrypted message, signed message, compressed message or literal message
      */
     class Message {
+
+      public packets: packet.List<packet.AnyPacket>;
       constructor(packetlist: packet.List<packet.AnyPacket>);
 
       /** Returns ASCII armored text of message
        */
-      armor(): string;
+      public armor(): string;
 
       /** Decrypt the message
           @param privateKey private key with decrypted secret data
       */
-      decrypt(privateKeys?: key.Key[] | null, passwords?: string[] | null, sessionKeys?: SessionKey[] | null, streaming?: boolean): Promise<Message>;
+      public decrypt(privateKeys?: key.Key[] | null, passwords?: string[] | null, sessionKeys?: SessionKey[] | null, streaming?: boolean): Promise<Message>;
 
       /** Encrypt the message
           @param keys array of keys, used to encrypt the message
       */
-      encrypt(keys: key.Key[]): Promise<Message>;
+      public encrypt(keys: key.Key[]): Promise<Message>;
 
       /** Returns the key IDs of the keys to which the session key is encrypted
        */
-      getEncryptionKeyIds(): Keyid[];
+      public getEncryptionKeyIds(): Keyid[];
 
       /** Get literal data that is the body of the message
        */
-      getLiteralData(): Uint8Array | null | Stream<Uint8Array>;
+      public getLiteralData(): Uint8Array | null | Stream<Uint8Array>;
 
       /** Returns the key IDs of the keys that signed the message
        */
-      getSigningKeyIds(): Keyid[];
+      public getSigningKeyIds(): Keyid[];
 
       /** Get literal data as text
        */
-      getText(): string | null | Stream<string>;
+      public getText(): string | null | Stream<string>;
 
-      getFilename(): string | null;
+      public getFilename(): string | null;
 
       /** Sign the message (the literal data packet of the message)
           @param privateKey private keys with decrypted secret key data for signing
       */
-      sign(privateKey: key.Key[]): Message;
+      public sign(privateKey: key.Key[]): Promise<Message>;
 
       /** Unwrap compressed message
        */
-      unwrapCompressed(): Message;
+      public unwrapCompressed(): Message;
 
       /** Verify message signatures
           @param keys array of keys to verify signatures
       */
-      verify(keys: key.Key[], date?: Date, streaming?: boolean): Promise<Verification[]>;
+      public verify(keys: key.Key[], date?: Date, streaming?: boolean): Promise<Verification[]>;
 
       /**
        * Append signature to unencrypted message object
        * @param {String|Uint8Array} detachedSignature The detached ASCII-armored or Uint8Array PGP signature
        */
-      appendSignature(detachedSignature: string | Uint8Array): Promise<void>;
-
-      packets: packet.List<packet.AnyPacket>;
+      public appendSignature(detachedSignature: string | Uint8Array): Promise<void>;
     }
 
     class SessionKey { // todo
@@ -1009,7 +1047,7 @@ declare namespace OpenPGP {
 
   export class HKP {
     constructor(keyServerBaseUrl?: string);
-    lookup(options: { keyid?: string, query?: string }): Promise<string | undefined>;
+    public lookup(options: { keyid?: string, query?: string }): Promise<string | undefined>;
   }
 
   /**
@@ -1107,6 +1145,15 @@ declare namespace OpenPGP {
     function formatUserId(userid: UserId): string;
 
     function normalizeDate(date: Date | null): Date | null;
+
+    /**
+     * Encode input buffer using Z-Base32 encoding.
+     * See: https://tools.ietf.org/html/rfc6189#section-5.1.6
+     *
+     * @param {Uint8Array} data The binary data to encode
+     * @returns {String} Binary data encoded using Z-Base32
+     */
+    function encodeZBase32(data: Uint8Array): string;
   }
 
   export namespace stream {

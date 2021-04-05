@@ -1,12 +1,14 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-html, body {
+html,
+body {
   height: 64px;
-  font-family: 'Open Sans';
+  font-family: 'Open Sans', sans-serif;
   overflow: hidden;
-  margin: 0px;
-  padding: 0px;
+  margin: 0;
+  padding: 0;
 }
+
 .action_open_settings {
   display: block;
   position: absolute;
@@ -14,29 +16,31 @@ html, body {
   top: 7px;
   cursor: pointer;
 }
+
 .action_open_settings:hover svg {
   transform: scale(1.06);
 }
+
 .menu-row {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 300px;
-  background: #31A217;
+  background: #31a217;
   position: relative;
-  cursor: pointer!important;
+  cursor: pointer !important;
   text-align: left;
   font-weight: 500;
   font-size: 16px;
   margin-right: 64px;
   height: 64px;
 }
+
 .menu-row span:first-child {
   width: 250px;
   color: white;
   padding-left: 20px;
 }
-.menu-row span:first-child {
-  width: 250px;
-}
+
 .menu-row span:nth-child(2) {
   position: absolute;
   width: 60px;
@@ -48,59 +52,70 @@ html, body {
   height: 40px;
   background: white;
 }
+
 .menu-row span:nth-child(2):hover {
   background: #f3f3f3;
 }
-.menu-row span:nth-child(2) svg, .menu-row span:nth-child(2) {
-  transition: .3s;
+
+.menu-row span:nth-child(2) svg,
+.menu-row span:nth-child(2) {
+  transition: 0.3s;
 }
+
 .profile-row {
   cursor: pointer;
   height: 50px;
   position: relative;
   right: 50px;
-  transition: .5s;
-  animation: fadeInUp .4s;
+  transition: 0.5s;
+  animation: fadeInUp 0.4s;
 }
+
 #email_or_settings {
-  background-image: radial-gradient(50% 60%, #FFF 40%, #FFFFFF 77%, #F3EFEF 100%);
+  background-image: radial-gradient(50% 60%, #fff 40%, #fff 77%, #f3efef 100%);
 }
+
 #email_or_settings img {
-  opacity: .85;
-  transition: .3s;
+  opacity: 0.85;
+  transition: 0.3s;
   width: 48px;
   margin: 1px;
 }
+
 #email_or_settings img:hover {
   opacity: 1;
   transform: scale(1.05);
 }
 
-.profile-row:hover:before {
+.profile-row:hover::before {
   position: absolute;
   width: 250px;
   height: 120px;
   background: #f3f3f3;
   content: "";
 }
+
 .profile-row .action_open_settings {
   position: absolute;
   bottom: 0;
   right: 0;
   top: 5px;
   margin-right: 5px;
-  transition: .3s;
+  transition: 0.3s;
 }
+
 .profile-row .action_open_settings:hover {
-  background: rgba(0, 0, 0, .034);
+  background: rgba(0, 0, 0, 0.034);
   transform: scale(1.1);
   opacity: 1;
 }
-.profile-row .action_open_settings:hover:before {
+
+.profile-row .action_open_settings:hover::before {
   background: transparent;
 }
-.profile-row .action_open_settings:before {
-  background: rgba(0, 0, 0, .052);
+
+.profile-row .action_open_settings::before {
+  background: rgba(0, 0, 0, 0.052);
   position: absolute;
   content: "";
   margin-left: -6px;
@@ -109,6 +124,7 @@ html, body {
   width: 2px;
   height: 60px;
 }
+
 .profile-row .profile-img {
   width: 27px;
   height: 27px;
@@ -121,19 +137,22 @@ html, body {
   top: 10px;
   bottom: 0;
 }
+
 .action_open_encrypted_inbox {
   text-align: center;
   display: block;
-  margin: 0 auto!important;
+  margin: 0 auto !important;
   padding: 17px 25px;
-  padding-left: 0!important;
-  padding-right: 0!important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
   font-size: 22px;
-  animation: fadeInRight .3s;
+  animation: fadeInRight 0.3s;
 }
+
 .profile-row span {
   position: relative;
 }
+
 .active-profile {
   font-size: 13px;
   font-weight: 500;
@@ -143,18 +162,18 @@ html, body {
   left: 49px;
   color: #337ab7;
 }
-a:focus {
-  outline: none;
-}
+
 ul {
-  padding-left: 0px;
+  padding-left: 0;
 }
+
 li {
   list-style: none;
   font-size: 14px;
   height: 44px;
   padding-top: 6px;
 }
+
 li a {
   margin-top: 0 !important;
 }

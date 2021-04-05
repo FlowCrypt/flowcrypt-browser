@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>FlowCrypt</title>
   <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/sweetalert2.css" />
   <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
 </head>
 
@@ -16,19 +17,17 @@
       to note your pass phrase down or you may lose access to your encrypted emails!</div>
     <div class="line">
       <input class="input_pass_phrase" type="password" id="pass_phrase" placeholder="Enter your pass phrase..." />
-      <div class="button green action_test_pass">Test your Passphrase</div>
+      <button class="button green action_test_pass">Test your Passphrase</button>
     </div>
-    <div class="line fingerprints hide_if_compact">
-      KeyWords: <span class="keywords good"></span>
-      <br /> (Fingerprint: <span class="fingerprint gray"></span>)
-    </div>
+    <div class="line fingerprints hide_if_compact">Key Fingerprint: <span class="fingerprint good"></span></div>
     <div class="line">
       <span class="private_key_status"></span>
     </div>
   </div>
 
-  <script src="/lib/purify.min.js"></script>
+  <script src="/lib/purify.js"></script>
   <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/sweetalert2.js"></script>
   <script src="/lib/openpgp.js"></script>
   <script src="backup.js" type="module"></script>
 

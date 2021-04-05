@@ -1,33 +1,42 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
-import { Catch } from '../../../js/common/platform/catch.js';
-import { Store } from '../../../js/common/platform/store.js';
-import { Env } from '../../../js/common/browser.js';
+import { KeyInfo, KeyUtil } from '../../../js/common/core/crypto/key.js';
+
 import { Assert } from '../../../js/common/assert.js';
+import { Url, Str } from '../../../js/common/core/common.js';
+import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
-declare const openpgp: typeof OpenPGP;
+View.run(class MyKeyUserIdsView extends View {
 
-Catch.try(async () => {
+  private readonly acctEmail: string;
+  private readonly fingerprint: string;
+  private readonly myKeyUrl: string;
+  private primaryKi: KeyInfo | undefined;
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
-  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const longid = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
-  const myKeyUrl = Env.urlCreate('my_key.htm', uncheckedUrlParams);
+  constructor() {
+    super();
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'fingerprint', 'parentTabId']);
+    this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+    this.fingerprint = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'fingerprint') || 'primary';
+    this.myKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
+  }
 
-  $('.action_show_public_key').attr('href', myKeyUrl);
+  public render = async () => {
+    [this.primaryKi] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
+    $('.action_show_public_key').attr('href', this.myKeyUrl);
+    const prv = await KeyUtil.parse(this.primaryKi.private);
+    Xss.sanitizeRender('.user_ids', prv.identities.map((uid: string) => `<div>${Xss.escape(uid)}</div>`).join(''));
+    $('.email').text(this.acctEmail);
+    $('.fingerprint').text(Str.spaced(this.primaryKi.fingerprints[0]));
+  }
 
-  const [primaryKi] = await Store.keysGet(acctEmail, [longid]);
-  Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+  public setHandlers = () => {
+    // No need
+  }
 
-  const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
-
-  const userIds = prv.users.map(u => u.userId).filter(Boolean).map(uid => uid!.userid); // todo - create a common function in settings.js for here and setup.js user_ids
-  Xss.sanitizeRender('.user_ids', userIds.map((uid: string) => `<div>${Xss.escape(uid)}</div>`).join(''));
-
-  $('.email').text(acctEmail);
-  $('.key_words').text(primaryKi.keywords);
-
-})();
+});

@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>FlowCrypt</title>
   <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/sweetalert2.css" />
   <link rel="stylesheet" href="/css/open-sans.css" />
   <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
   <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
@@ -16,15 +17,13 @@
 
   <div id="content" class="experimental page">
     <div class="line">
-      <h1>Experimental stuff</h1>
+      <h1>Experimental functionality</h1>
     </div>
 
     <div class="line">These things were not properly tested. They may not work at all and are not user friendly.</div>
     <div class="line"><a href="#" class="action_open_compatibility">Test OpenPGP Key Compatibility</a></div>
     <div class="line"><a href="#" class="action_open_decrypt">Manually decrypt encrypted files</a></div>
     <div class="line"><a href="#" class="action_backup">Back up account information into a file</a></div>
-    <div class="line"><a href="#" class="action_openid_login">Login using OpenId Connect</a></div>
-    <a href="/chrome/dev/errors.htm">Error Log</a>
   </div>
   <div class="line">&nbsp;</div>
   <!--<div class="line"><input type="checkbox" class="action_allow_outlook" id="aao"> <label for="aao">Allow Outlook (no attachments yet)</label></div>-->
@@ -33,22 +32,24 @@
   <div class="line bad">Following can break your account or do irreversible changes. Use at your own risk.</div>
   <div class="line">
     <a href="#" class="action_throw_unchecked bad">Throw Unchecked</a> -
-    <a href="#" class="action_throw_err bad">Throw Err</a> -
+    <a href="#" class="action_throw_err bad" data-test="action-throw-err">Throw Err</a> -
     <a href="#" class="action_throw_obj bad">Throw Obj</a>
   </div>
-  <div class="line"><a href="#" class="action_reset_managing_auth bad">Reset FlowCrypt Account Auth (if any)</a></div>
+  <div class="line"><a href="#" class="action_reset_fc_auth bad">Reset FlowCrypt Account Auth (if any)</a></div>
+  <div class="line"><a href="#" class="action_regenerate_uuid bad" data-test="action-regenerate-uuid">Set a new randomly generated FlowCrypt Account UUID</a></div>
   <div class="line">
-    <a href="#" class="action_make_google_auth_token_unusable bad">Wipe Google access token</a>
+    <a href="#" class="action_make_google_auth_token_unusable bad" data-test="action-wipe-google-access-token">Wipe Google access token</a>
     -
-    <a href="#" class="action_make_google_refresh_token_unusable bad">Wipe Google refresh token</a>
+    <a href="#" class="action_make_google_refresh_token_unusable bad" data-test="action-wipe-google-refresh-token">Wipe Google refresh token</a>
   </div>
   <div class="line"><a href="#" class="action_account_email_changed bad">Force Google Account email change</a></div>
   <div class="line"><a href="#" class="action_reset_account bad">Reset <span class="email"></span> and set it up
       again</a></div>
   </div>
 
-  <script src="/lib/purify.min.js"></script>
+  <script src="/lib/purify.js"></script>
   <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/sweetalert2.js"></script>
   <script src="/lib/openpgp.js"></script>
   <script src="experimental.js" type="module"></script>
 

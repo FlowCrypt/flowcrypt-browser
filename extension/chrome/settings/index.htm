@@ -8,8 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
   <link rel="stylesheet" href="/css/cryptup.css">
+  <link rel="stylesheet" href="/css/sweetalert2.css" />
   <link rel="stylesheet" href="/css/settings.css">
-  <link rel="stylesheet" href="/lib/featherlight/featherlight.css" />
   <link rel="stylesheet" href="/lib/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="/css/animate.css">
   <link rel="stylesheet" href="/css/open-sans.css">
@@ -19,24 +19,22 @@
 
 <body id="settings" data-test="page-settings">
   <div class="webmail_notifications" style="text-align: center;"></div>
-  <br>
   <section id="header-row">
     <div class="container">
       <div class="row ">
-        <div class="col-sm-6 text-left logo-row">
+        <div class="col-12 col-lg-6 text-left logo-row">
           <img class="cryptup-logo" src="/img/logo/full-logo.svg" alt="FlowCrypt Logo">
           <span class="subscription">
-            <span class="level green_label short">free forever</span>
+            <a class="level green_label short" href="https://flowcrypt.com/account">free forever</a>
             <span class="expire"></span>
-            <span class="upgrade green_label short show_settings_page" page="/chrome/elements/subscribe.htm" addurltext="&placement=settings">upgrade</span>
           </span>
         </div>
 
-        <div class="col-sm-6 text-right">
+        <div class="col-12 col-lg-6 text-right">
           <div class="profile-row">
             <div class="public-profile-container hide_if_setup_not_done public_profile_indicator_container" style="visibility: hidden;">
               <div id="public-profile-indicator">
-                <a href="#" class="show_settings_page" page="modules/contact_page.htm">
+                <a href="https://flowcrypt.com/account" target="_blank">
                   <i class="status-indicator">
                     <div class="status-indicator-text">Complete setup of your Encrypted Contact Page to receive
                       encrypted emails from the web.</div>
@@ -44,7 +42,7 @@
                 </a>
               </div>
             </div>
-            <span class="email-address action-toggle-accounts-menu" data-test="action-toggle-accounts-menu"></span>
+            <a href="#" class="email-address action-toggle-accounts-menu" data-test="action-toggle-accounts-menu"></a>
             <span id="toggle-accounts-profile-img" class="action-toggle-accounts-menu">
               <img src="/img/svgs/profile-icon.svg" class="profile-img main-profile-img" alt="Profile Image">
             </span>
@@ -52,9 +50,7 @@
               Add account</a>
           </div>
           <div id="alt-accounts" class="accounts-row">
-            <div class="row alt-accounts accounts-options-row text-center">
-              <a href="#" class="action_add_account action_add_account--settings">Add Account</a>
-            </div>
+            <a href="#" class="row alt-accounts accounts-options-row text-center action_add_account action_add_account--settings">Add Account</a>
           </div>
         </div>
       </div>
@@ -63,12 +59,25 @@
 
   <section id="settings-row">
     <div class="container basic">
-      <div class="row hide_if_setup_not_done">
+      <div class="settings-banners-container">
+        <div class="settings-banner install_app_notification hidden">
+          <div class="settings-banner-text">
+            <img width="32" src="/img/material-design-icons/monitor-cellphone.svg" class="settings-banner-icon">
+            Install FlowCrypt on your phone. Until you have at least 2 devices, you risk losing data.
+          </div>
+          <a href="https://flowcrypt.com/download" target="_blank" class="button green">
+            Get mobile app
+          </a>
+          <a href="#" class="dismiss_install_app_notification">Dismiss</a>
+        </div>
+      </div>
+
+      <div class="hide_if_setup_not_done">
         <h1 class="text-center">FlowCrypt Settings</h1>
         <div class="separator" style="background: none;"></div>
       </div>
 
-      <div class="row show_if_setup_not_done">
+      <div class="show_if_setup_not_done">
         <h1 class="text-center">Set up FlowCrypt</h1>
         <div class="separator"></div>
       </div>
@@ -76,20 +85,21 @@
       <div class="show_if_setup_not_done">
         <div class="line">Your browser needs access to Gmail to help you send your first encrypted message.</div>
         <div class="line">
-          <div data-test="action-connect-to-gmail" class="signin_button gmail action_google_auth display_none">Continue
-            with Gmail</div>
+          <button data-test="action-connect-to-gmail" class="signin_button gmail action_google_auth display_none">
+            Continue with Gmail
+          </button>
         </div>
         <div class="line">
           <div class="signin_button outlook action_microsoft_auth display_none">Continue with Outlook</div>
         </div>
-        <div class="line">Learn more about <a href="#" data-featherlight="/chrome/texts/email_provider_auth_security.htm">webmail
+        <div class="line">Learn more about <a href="#" data-swal-page="/chrome/texts/email_provider_auth_security.htm">webmail
             access security</a> and <a href="https://flowcrypt.com/privacy" target="_blank">privacy policy</a>.</div>
         <div class="line">Using other email provider? <a href="#" class="show_settings_page" page="modules/help.htm">Let us know.</a></div>
       </div>
 
       <div class="row settings-icons-rows hide_if_setup_not_done">
 
-        <div class="col-sm-2 col-sm-offset-2 col-xs-6">
+        <div class="col-6 col-md-2">
           <a href="#" class="action_show_encrypted_inbox" data-test="action-show-encrypted-inbox">
             <span class="box">
               <img src="/img/svgs/new-email-icon.svg" class="new-email-icon" alt="Open FlowCrypt Encrypted Inbox">
@@ -98,7 +108,7 @@
           </a>
         </div>
 
-        <div class="col-sm-2 col-xs-6">
+        <div class="col-6 col-md-2">
           <a href="#" class="show_settings_page" page="modules/security.htm" data-test="action-open-security-page">
             <span class="box">
               <img src="/img/svgs/security-icon.svg" class="security-icon" alt="FlowCrypt Security and Settings">
@@ -109,8 +119,8 @@
           </a>
         </div>
 
-        <div class="col-sm-2 col-xs-6">
-          <a href="#" class="show_settings_page" page="modules/backup.htm">
+        <div class="col-6 col-md-2">
+          <a href="#" class="show_settings_page" page="modules/backup.htm" data-test="action-open-backup-page">
             <span class="box">
               <img src="/img/svgs/keys-icon.svg" class="keys-icon" alt="FlowCrypt, set up and backup your Keys">
             </span>
@@ -120,8 +130,8 @@
           </a>
         </div>
 
-        <div class="col-sm-2 col-xs-6">
-          <a href="#" class="show_settings_page" page="modules/help.htm">
+        <div class="col-6 col-md-2">
+          <a href="#" class="show_settings_page" page="modules/help.htm" data-test="action-open-help-page">
             <span class="box">
               <img src="/img/svgs/feedback-icon.svg" class="feedback-icon" alt="Leave Feedback on FlowCrypt">
             </span>
@@ -131,27 +141,18 @@
           </a>
         </div>
       </div>
-      <div class="line auth_denied_warning" style="display: none;">
-        <br />
-        <br />
-        <br /><b class="red">Following features are disabled for <span class="email-address"></span>:</b> encrypted
-        attachments, encrypted replies, alternative "From" email addresses and more.
-        <br />
-        <br />
-        <div class="button long green action_go_auth_denied">revise permissions</div>
-      </div>
       <div class="blog_post_list hide_if_setup_not_done mt-40"></div>
     </div>
 
     <div class="container-fluid advanced">
-      <div class="row">
+      <div>
         <h1 class="text-center">FlowCrypt Settings</h1>
         <div class="separator" style="background: none;"></div>
       </div>
 
       <div class="row settings-icons-rows">
-        <div class="col-sm-2 col-xs-6">
-          <a href="#" class="show_settings_page" page="modules/my_key.htm" data-test="action-open-pubkey-page">
+        <div class="col-6 col-md-2">
+          <a href="#" class="action_open_public_key_page" data-test="action-open-pubkey-page">
             <span class="box">
               <img src="/img/svgs/pub-key-icon.svg" class="pub-key-icon" alt="Your Public Keys">
             </span>
@@ -159,7 +160,7 @@
           </a>
         </div>
 
-        <div class="col-sm-2 col-xs-6">
+        <div class="col-6 col-md-2">
           <a href="#" class="show_settings_page" page="modules/contacts.htm" data-test="action-open-contacts-page">
             <span class="box">
               <img src="/img/svgs/contacts-icon.svg" class="contacts-icon" alt="Your Contacts and their public keys">
@@ -170,7 +171,7 @@
           </a>
         </div>
 
-        <div class="col-sm-2 col-xs-6">
+        <div class="col-6 col-md-2">
           <a href="#" class="show_settings_page" page="modules/keyserver.htm" data-test="action-open-attester-page">
             <span class="box">
               <img src="/img/svgs/servers-icon.svg" class="servers-icon" alt="Let others encrypt for you easier">
@@ -181,7 +182,7 @@
           </a>
         </div>
 
-        <div class="col-sm-2 col-xs-6">
+        <div class="col-6 col-md-2">
           <a href="#" class="show_settings_page" page="modules/security.htm" data-test="action-open-security-page">
             <span class="box">
               <img src="/img/svgs/security-icon.svg" class="security-icon" alt="FlowCrypt Security and Settings">
@@ -192,7 +193,7 @@
           </a>
         </div>
 
-        <div class="col-sm-2 col-xs-6">
+        <div class="col-6 col-md-2">
           <a href="#" class="show_settings_page" page="modules/backup.htm">
             <span class="box">
               <img src="/img/svgs/keys-icon.svg" class="keys-icon" alt="FlowCrypt, set up and backup your Keys">
@@ -203,7 +204,7 @@
           </a>
         </div>
 
-        <div class="col-sm-2 col-xs-6">
+        <div class="col-6 col-md-2">
           <a href="#" class="show_settings_page" page="modules/help.htm">
             <span class="box">
               <img src="/img/svgs/feedback-icon.svg" class="feedback-icon" alt="Leave Feedback on FlowCrypt">
@@ -217,14 +218,14 @@
       <!--<div class="line">-->
       <!--<br/><b>Coming soon:</b> ..-->
       <!--</div>-->
-      <div class="row my-keys-row">
+      <div class="row my-keys-row" data-test="container-settings-keys-list">
         <div class="settings-border">
           <div class="row abs-row">
-            <div class="col-sm-12" style="padding-left:0;">
+            <div class="col-12" style="padding-left: 0;">
               <img src="/img/svgs/key-icon.svg" class="key-icon" alt="key icon">
               <span class="my-keys-copy">My Keys</span>
-              <span class="text-right change-passphrase">
-                <a href="#" class="show_settings_page add_key" page="/chrome/settings/modules/add_key.htm">Add Key</a>
+              <span class="text-right keys-link-top-right-container">
+                <a href="#" class="show_settings_page add_key" data-test="action-open-add-key-page" page="/chrome/settings/modules/add_key.htm">Add Key</a>
               </span>
             </div>
           </div>
@@ -237,39 +238,38 @@
   <section id="footer-row">
     <div class="container">
       <div class="row">
-        <div class="col-md-2 col-sm-2 col-xs-12 text-left">
+        <div class="col-12 col-lg-2">
           <a href="#" class="show_settings_page" page="modules/help.htm" data-test="action-open-modules-help">Need
             Help?</a>
         </div>
-        <div class="col-md-8 col-sm-8 col-xs-12">
+        <div class="col-12 col-lg-8 row">
           <a href="https://flowcrypt.com/terms" target="_blank" class="gray_link">Terms</a>
           <a href="https://flowcrypt.com/privacy" target="_blank" class="gray_link">Privacy</a>
           <a href="https://github.com/FlowCrypt/flowcrypt-browser" target="_blank" class="gray_link advanced">Source</a>
           <span class="hide_if_setup_not_done">
-            <a href="#" class="show_settings_page gray_link" page="/chrome/elements/compose.htm" data-test="action-show-compose-page">New Email</a>
-            <a href="#" class="show_settings_page gray_link advanced" page="modules/experimental.htm">Experimental</a>
+            <a href="#" class="show_settings_page gray_link advanced" page="modules/experimental.htm" data-test="action-open-module-experimental">Experimental</a>
           </span>
         </div>
-        <div class="col-md-2 col-sm-2 col-xs-12 text-right hide_if_setup_not_done">
+        <div class="col-12 col-lg-2 text-right hide_if_setup_not_done">
           <a class="toggle-settings advanced" href="#" data-test="action-toggle-screen-basic">Basic Settings</a><a class="toggle-settings basic" href="#"
             data-test="action-toggle-screen-additional">Additional Settings</a>
         </div>
       </div>
     </div>
     <div id="status-row">
-      <span id="status_v" class="link" title="FlowCrypt Version: click for changelog">v:?</span>
+      <span id="status_version" class="link" title="FlowCrypt Version: click for changelog">v:?</span>
       <span id="status_google" class="link" title="Your Google Account">g:?</span>
       <span id="status_flowcrypt" title="Your FlowCrypt Account">fc:?</span>
       <span id="status_subscription" title="Your FlowCrypt Subscription">s:?</span>
-      <span id="status_local_store" class="link" title="Local Extension Storage">local_store</span>
+      <span id="status_local_store" class="link" title="Local Extension Storage" data-test="action-show-local-store-contents">local_store</span>
     </div>
   </section>
 
-  <script src="/lib/purify.min.js"></script>
+  <script src="/lib/purify.js"></script>
   <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/sweetalert2.js"></script>
   <script src="/lib/openpgp.js"></script>
   <script src="/lib/bootstrap/bootstrap.min.js"></script>
-  <script src="/lib/featherlight/featherlight.js"></script>
   <script src="index.js" type="module"></script>
 
 </body>

@@ -1,9 +1,10 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
-import { readdirSync, statSync } from 'fs';
 import * as path from 'path';
+
+import { readdirSync, statSync } from 'fs';
 
 export const getFilesInDir = (dir: string, filePattern: RegExp, recursive = true): string[] => {
   const all: string[] = [];

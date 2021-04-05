@@ -10,7 +10,7 @@ There are possible exceptions:
 In such cases you can mute supress this rule with:
 // tslint:disable-line:oneliner-object-literal
 .`;
-const MAX_LINE_LEN_WITH_OBJ_LITERAL = 160;
+const MAX_LINE_LEN_WITH_OBJ_LITERAL = 140;
 
 export class Rule extends tslint.Rules.AbstractRule {
 

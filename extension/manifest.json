@@ -28,7 +28,14 @@
   "permissions": [
     "storage",
     "tabs",
-    "*://*/*",
+    "https://flowcrypt.com/*",
+    "https://*.google.com/*",
+    "https://outlook.live.com/*",
+    "https://outlook.office365.com/*",
+    "https://outlook.office.com/*",
+    "https://graph.microsoft.com/*",
+    "https://login.microsoftonline.com/*",
+    "https://www.googleapis.com/*",
     "unlimitedStorage"
   ],
   "content_scripts": [
@@ -37,12 +44,13 @@
         "https://mail.google.com/*"
       ],
       "css": [
-        "/css/webmail.css"
+        "/css/webmail.css",
+        "/css/sweetalert2.css"
       ],
       "js": [
-        "/lib/purify.min.js",
+        "/lib/purify.js",
         "/lib/jquery.min.js",
-        "/lib/openpgp.js",
+        "/lib/sweetalert2.js",
         "/js/content_scripts/webmail_bundle.js"
       ]
     },
@@ -51,7 +59,7 @@
         "https://flowcrypt.com/stripe*"
       ],
       "js": [
-        "/lib/purify.min.js",
+        "/lib/purify.js",
         "/lib/jquery.min.js",
         "/js/content_scripts/stripe_bundle.js"
       ],
@@ -71,17 +79,17 @@
     "/img/svgs/unlock.svg",
     "/img/logo/flowcrypt-logo-19-19.png",
     "/chrome/elements/compose.htm",
-    "/chrome/elements/reply_pubkey_mismatch.htm",
     "/chrome/elements/pgp_block.htm",
     "/chrome/elements/setup_dialog.htm",
     "/chrome/elements/attachment.htm",
+    "/chrome/elements/attachment_preview.htm",
     "/chrome/elements/passphrase.htm",
     "/chrome/elements/add_pubkey.htm",
     "/chrome/elements/pgp_pubkey.htm",
     "/chrome/elements/backup.htm",
-    "/chrome/elements/subscribe.htm",
     "/chrome/elements/verification.htm",
     "/chrome/elements/shared/footer.htm"
   ],
-  "minimum_chrome_version": "61"
+  "minimum_chrome_version": "61",
+  "content_security_policy": "upgrade-insecure-requests; script-src 'self'; frame-ancestors https://mail.google.com 'self'; img-src 'self' https://*.googleusercontent.com data:; frame-src 'self'; worker-src 'self'; form-action 'none'; media-src 'none'; font-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self'"
 }

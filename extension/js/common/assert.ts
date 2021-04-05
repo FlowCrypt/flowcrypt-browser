@@ -1,15 +1,16 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
-import { Ui, UrlParams, UrlParam } from './browser.js';
-import { Dict } from './core/common.js';
 import { Catch, UnreportableError } from './platform/catch.js';
-import { KeyInfo, Pgp } from './core/pgp.js';
-import { BrowserMsg } from './extension.js';
-import { Store } from './platform/store.js';
+import { Dict, UrlParam, UrlParams } from './core/common.js';
+import { Browser } from './browser/browser.js';
+import { KeyInfo, KeyUtil } from './core/crypto/key.js';
 import { Settings } from './settings.js';
+import { Ui } from './browser/ui.js';
 import { Xss } from './platform/xss.js';
+import { KeyStore } from './platform/store/key-store.js';
+import { AcctStore } from './platform/store/acct-store.js';
 
 /**
  * Methods in this class will render a fatal message in the browser when assertion fails.
@@ -34,23 +35,23 @@ export class Assert {
 
   public static abortAndRenderErrOnUnprotectedKey = async (acctEmail?: string, tabId?: string) => {
     if (acctEmail) {
-      const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      const { setup_done, setup_simple } = await Store.getAcct(acctEmail, ['setup_simple', 'setup_done']);
-      if (setup_done && setup_simple && primaryKi && !(await Pgp.key.read(primaryKi.private)).isFullyEncrypted()) {
+      const primaryKi = await KeyStore.getFirstOptional(acctEmail);
+      const { setup_done } = await AcctStore.get(acctEmail, ['setup_done']);
+      if (setup_done && primaryKi && !(await KeyUtil.parse(primaryKi.private)).fullyEncrypted) {
         if (window.location.pathname === '/chrome/settings/index.htm') {
-          Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
+          await Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
         } else {
           const msg = `Protect your key with a pass phrase to finish setup.`;
           const r = await Ui.renderOverlayPromptAwaitUserChoice({ finishSetup: {}, later: { color: 'gray' } }, msg);
           if (r === 'finish_setup') {
-            BrowserMsg.send.bg.settings({ acctEmail });
+            await Browser.openSettingsPage('index.htm', acctEmail);
           }
         }
       }
     }
   }
 
-  static abortAndRenderErrorIfKeyinfoEmpty = (ki: KeyInfo | undefined, doThrow: boolean = true) => {
+  public static abortAndRenderErrorIfKeyinfoEmpty = (ki: KeyInfo | undefined, doThrow: boolean = true) => {
     if (!ki) {
       const msg = `Cannot find primary key. Is FlowCrypt not set up yet? ${Ui.retryLink()}`;
       Xss.sanitizeRender($('#content').length ? '#content' : 'body', msg);
@@ -69,11 +70,10 @@ export class Assert {
       return values[name];
     }
     console.info(values[name]);  // for local debugging
-    // tslint:disable-next-line:max-line-length
     const msg = `Cannot render page (expected ${Xss.escape(name)} to be of type ${Xss.escape(expectedType)} but got ${Xss.escape(actualType)})`;
-    const renderMsg = `${msg}<br><br><div class="button green long action_report_issue">report issue</div>`;
+    const renderMsg = `${msg}<br><br><button class="button green long action_report_issue">report issue</button>`;
     Xss.sanitizeRender('body', renderMsg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
-    $('.action_report_issue').click(Ui.event.handle(async target => {
+    $('.action_report_issue').click(Ui.event.handle(async () => {
       Catch.report(msg, { currentUrl: window.location.href, params: values });
       $('body').text('Thank you. Feel free to reach out to human@flowcrypt.com in you need assistance.');
     }));
@@ -82,8 +82,8 @@ export class Assert {
 
   public static abortAndRenderErrOnUrlParamValMismatch = <T>(values: Dict<T>, name: string, expectedVals: T[]): T => {
     if (expectedVals.indexOf(values[name]) === -1) {
-      // tslint:disable-next-line:max-line-length
-      const msg = `Cannot render page (expected ${Xss.escape(name)} to be one of ${Xss.escape(expectedVals.map(String).join(','))} but got ${Xss.escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+      const msg = `Cannot render page (expected ${Xss.escape(name)} to be one of ${Xss.escape(expectedVals.map(String).join(','))}
+        but got ${Xss.escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
       Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
       throw new UnreportableError(msg);
     }

@@ -1,83 +1,103 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
-import { Catch } from '../../../js/common/platform/catch.js';
-import { Store } from '../../../js/common/platform/store.js';
-import { Ui, Env } from '../../../js/common/browser.js';
-import { Settings } from '../../../js/common/settings.js';
-import { Pgp } from '../../../js/common/core/pgp.js';
-import { Lang } from '../../../js/common/lang.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { Attester } from '../../../js/common/api/attester.js';
-import { Api } from '../../../js/common/api/api.js';
+import { KeyInfo, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { Lang } from '../../../js/common/lang.js';
+import { PgpArmor } from '../../../js/common/core/crypto/pgp/pgp-armor.js';
+import { Settings } from '../../../js/common/settings.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { Url, Str } from '../../../js/common/core/common.js';
+import { View } from '../../../js/common/view.js';
+import { OrgRules } from '../../../js/common/org-rules.js';
+import { PubLookup } from '../../../js/common/api/pub-lookup.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 
-declare const openpgp: typeof OpenPGP;
+View.run(class MyKeyUpdateView extends View {
 
-Catch.try(async () => {
+  private readonly acctEmail: string;
+  private readonly fingerprint: string;
+  private readonly showKeyUrl: string;
+  private readonly inputPrivateKey = $('.input_private_key');
+  private readonly prvHeaders = PgpArmor.headers('privateKey');
+  private primaryKi: KeyInfo | undefined;
+  private orgRules!: OrgRules;
+  private pubLookup!: PubLookup;
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
-  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const longid = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
-  const showKeyUrl = Env.urlCreate('my_key.htm', uncheckedUrlParams);
+  constructor() {
+    super();
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'fingerprint', 'parentTabId']);
+    this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+    this.fingerprint = Assert.urlParamRequire.string(uncheckedUrlParams, 'fingerprint');
+    this.showKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
+  }
 
-  $('.action_show_public_key').attr('href', showKeyUrl);
-  const inputPrivateKey = $('.input_private_key');
-  const prvHeaders = Pgp.armor.headers('privateKey');
+  public render = async () => {
+    this.orgRules = await OrgRules.newInstance(this.acctEmail);
+    this.pubLookup = new PubLookup(this.orgRules);
+    [this.primaryKi] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
+    $('.action_show_public_key').attr('href', this.showKeyUrl);
+    $('.email').text(this.acctEmail);
+    $('.fingerprint').text(Str.spaced(this.primaryKi.fingerprints[0]));
+    this.inputPrivateKey.attr('placeholder', this.inputPrivateKey.attr('placeholder') + ' (' + this.primaryKi.fingerprints[0] + ')');
+  }
 
-  const [primaryKi] = await Store.keysGet(acctEmail, [longid]);
+  public setHandlers = () => {
+    $('.action_update_private_key').click(this.setHandlerPrevent('double', () => this.updatePrivateKeyHandler()));
+    $('.input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_update_private_key'));
+  }
 
-  Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+  private storeUpdatedKeyAndPassphrase = async (updatedPrv: Key, updatedPrvPassphrase: string) => {
+    const storedPassphrase = await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprints[0], true);
+    await KeyStore.add(this.acctEmail, updatedPrv);
+    await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.fingerprints[0], typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
+    await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.fingerprints[0], typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
+    if (this.orgRules.canSubmitPubToAttester() && await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
+      try {
+        await Ui.modal.info(await this.pubLookup.attester.updatePubkey(this.primaryKi!.longid, KeyUtil.armor(await KeyUtil.asPublicKey(updatedPrv))));
+      } catch (e) {
+        ApiErr.reportIfSignificant(e);
+        await Ui.modal.error(`Error updating public records:\n\n${ApiErr.eli5(e)}\n\n(but local update was successful)`);
+      }
+    }
+    window.location.href = this.showKeyUrl;
+  }
 
-  $('.email').text(acctEmail);
-  $('.key_words').text(primaryKi.keywords).attr('title', primaryKi.longid);
-  inputPrivateKey.attr('placeholder', inputPrivateKey.attr('placeholder') + ' (' + primaryKi.longid + ')');
-
-  $('.action_update_private_key').click(Ui.event.prevent('double', async () => {
-    const { keys: [uddatedKey] } = await openpgp.key.readArmored(String(inputPrivateKey.val()));
-    const { keys: [uddatedKeyEncrypted] } = await openpgp.key.readArmored(String(inputPrivateKey.val()));
+  private updatePrivateKeyHandler = async () => {
+    const updatedKey = await KeyUtil.parse(String(this.inputPrivateKey.val()));
+    const updatedKeyEncrypted = await KeyUtil.parse(String(this.inputPrivateKey.val()));
     const uddatedKeyPassphrase = String($('.input_passphrase').val());
-    if (typeof uddatedKey === 'undefined') {
-      await Ui.modal.warning(Lang.setup.keyFormattedWell(prvHeaders.begin, String(prvHeaders.end)));
-    } else if (uddatedKey.isPublic()) {
-      await Ui.modal.warning('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + prvHeaders.begin + '"');
-    } else if (await Pgp.key.fingerprint(uddatedKey) !== await Pgp.key.fingerprint(primaryKi.public)) {
-      await Ui.modal.warning(`This key ${await Pgp.key.longid(uddatedKey)} does not match your current key ${primaryKi.longid}`);
-    } else if (await Pgp.key.decrypt(uddatedKey, uddatedKeyPassphrase) !== true) {
+    if (typeof updatedKey === 'undefined') {
+      await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
+    } else if (updatedKey.isPublic) {
+      await Ui.modal.warning('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"');
+    } else if (updatedKey.id !== (await KeyUtil.parse(this.primaryKi!.public)).id) {
+      await Ui.modal.warning(`This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(this.primaryKi!.fingerprints[0])}`);
+    } else if (await KeyUtil.decrypt(updatedKey, uddatedKeyPassphrase) !== true) {
       await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
     } else {
-      if (await uddatedKey.getEncryptionKey()) {
-        await storeUpdatedKeyAndPassphrase(uddatedKeyEncrypted, uddatedKeyPassphrase);
-      } else { // cannot get a valid encryption key packet
-        if ((await uddatedKey.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert) || await Pgp.key.usableButExpired(uddatedKey)) { // known issues - key can be fixed
-          const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
-            acctEmail, '.compatibility_fix_container', uddatedKeyEncrypted, uddatedKeyPassphrase, showKeyUrl
-          );
-          await storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, uddatedKeyPassphrase);
-        } else {
-          await Ui.modal.warning('Key update: This looks like a valid key but it cannot be used for encryption. Email human@flowcrypt.com to see why is that. We\'re prompt to respond.');
-          window.location.href = showKeyUrl;
-        }
+      if (updatedKey.usableForEncryption) {
+        await this.storeUpdatedKeyAndPassphrase(updatedKeyEncrypted, uddatedKeyPassphrase);
+        return;
+      }
+      // cannot get a valid encryption key packet
+      if (await KeyUtil.isWithoutSelfCertifications(updatedKey) || updatedKey.usableForEncryptionButExpired) { // known issues - key can be fixed
+        const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
+          this.acctEmail, '.compatibility_fix_container', updatedKeyEncrypted, uddatedKeyPassphrase, this.showKeyUrl
+        );
+        await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, uddatedKeyPassphrase);
+      } else {
+        await Ui.modal.warning(
+          'Key update: This looks like a valid key but it cannot be used for encryption. Email human@flowcrypt.com to see why is that. We\'re prompt to respond.',
+          Ui.testCompatibilityLink
+        );
+        window.location.href = this.showKeyUrl;
       }
     }
-  }));
+  }
 
-  const storeUpdatedKeyAndPassphrase = async (updatedPrv: OpenPGP.key.Key, updatedPrvPassphrase: string) => {
-    const storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid, true);
-    await Store.keysAdd(acctEmail, updatedPrv.armor());
-    await Store.passphraseSave('local', acctEmail, primaryKi.longid, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
-    await Store.passphraseSave('session', acctEmail, primaryKi.longid, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
-    if (await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
-      try {
-        await Ui.modal.info(await Attester.updatePubkey(primaryKi.longid, updatedPrv.toPublic().armor()));
-      } catch (e) {
-        if (Api.err.isSignificant(e)) {
-          Catch.reportErr(e);
-        }
-        await Ui.modal.error(`Error updating public records:\n\n${Api.err.eli5(e)}\n\n(but local update was successful)`);
-      }
-    }
-    window.location.href = showKeyUrl;
-  };
-
-})();
+});

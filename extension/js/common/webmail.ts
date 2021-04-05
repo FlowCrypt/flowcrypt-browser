@@ -1,29 +1,30 @@
-/* © 2016-2019 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
-import { Store } from './platform/store.js';
 import { Injector } from './inject.js';
+import { KeyStore } from './platform/store/key-store.js';
 
 export class WebmailCommon {
-    private acctEmail: string;
-    private injector: Injector;
+  private acctEmail: string;
+  private injector: Injector;
 
-    constructor(acctEmail: string, injector: Injector) {
-        this.acctEmail = acctEmail;
-        this.injector = injector;
-    }
+  constructor(acctEmail: string, injector: Injector) {
+    this.acctEmail = acctEmail;
+    this.injector = injector;
+  }
 
-    addOrRemoveEndSessionBtnIfNeeded = async () => {
-        const finishSessionBtn = $('.finish_session');
-        if ((await Store.getKeysCurrentlyInSession(this.acctEmail)).length) {
-            if (!finishSessionBtn.length) {
-                await this.injector.insertEndSessionBtn(this.acctEmail);
-            }
-        } else {
-            if (finishSessionBtn.length) {
-                finishSessionBtn.remove();
-            }
-        }
+  public addOrRemoveEndSessionBtnIfNeeded = async () => {
+    const finishSessionBtn = $('.action_finish_session');
+    const longids = await KeyStore.getLongidsThatCurrentlyHavePassPhraseInSession(this.acctEmail);
+    if (longids.length) {
+      if (!finishSessionBtn.length) {
+        await this.injector.insertEndSessionBtn(this.acctEmail);
+      }
+    } else {
+      if (finishSessionBtn.length) {
+        finishSessionBtn.remove();
+      }
     }
+  }
 }

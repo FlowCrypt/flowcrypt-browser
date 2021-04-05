@@ -7,29 +7,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>FlowCrypt</title>
   <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/sweetalert2.css" />
   <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
 </head>
 
 <body class="pgp_neutral">
 
-  <div id="pgp_block" class="pgp_pubkey">
+  <div id="pgp_block" class="pgp_pubkey" data-test="container-pgp-pubkey">
     <div class="line hide_if_compact_and_not_error result">
       <a href="#" class="action_show_full hide_if_compact">Details</a>
     </div>
-    <div class="line fingerprints hide_if_compact">
-      KeyWords: <span class="keywords good"></span>
-      <br /> (Fingerprint: <span class="fingerprint gray"></span>)
-    </div>
+    <div class="line fingerprints hide_if_compact">Fingerprint: <span class="fingerprint good"></span></div>
     <div class="line add_contact">
       <input class="input_email" value="..." />
-      <div class="button green action_add_contact" data-test="action-add-contact"></div>
+      <button class="button green action_add_contact" data-test="action-add-contact"></button>
     </div>
     <pre class="pubkey hide_if_compact"></pre>
   </div>
 
-  <script src="/lib/purify.min.js"></script>
+  <script src="/lib/purify.js"></script>
   <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/sweetalert2.js"></script>
   <script src="/lib/openpgp.js"></script>
+  <script src="/lib/forge.js"></script>
   <script src="pgp_pubkey.js" type="module"></script>
 
 </body>

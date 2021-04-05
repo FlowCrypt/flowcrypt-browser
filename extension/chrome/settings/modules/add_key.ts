@@ -1,84 +1,96 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
-import { Catch } from '../../../js/common/platform/catch.js';
-import { Store } from '../../../js/common/platform/store.js';
-import { Value } from '../../../js/common/core/common.js';
-import { Ui, Env } from '../../../js/common/browser.js';
-import { Pgp } from '../../../js/common/core/pgp.js';
-import { Api } from '../../../js/common/api/api.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
-import { Google } from '../../../js/common/api/google.js';
+import { KeyCanBeFixed, KeyImportUi, UserAlert } from '../../../js/common/ui/key-import-ui.js';
+import { Url } from '../../../js/common/core/common.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { KeyImportUi, UserAlert, KeyCanBeFixed } from '../../../js/common/ui/key_import_ui.js';
-import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { Gmail } from '../../../js/common/api/email-provider/gmail/gmail.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
+import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { UnexpectedKeyTypeError } from '../../../js/common/core/crypto/key.js';
 
-Catch.try(async () => {
+View.run(class AddKeyView extends View {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  private readonly acctEmail: string;
+  private readonly parentTabId: string;
+  private readonly keyImportUi = new KeyImportUi({ rejectKnown: true });
+  private readonly gmail: Gmail;
 
-  await initPassphraseToggle(['input_passphrase']);
-  const keyImportUi = new KeyImportUi({ rejectKnown: true });
-  keyImportUi.initPrvImportSrcForm(acctEmail, parentTabId);
-
-  Xss.sanitizeRender('#spinner_container', Ui.spinner('green') + ' loading..');
-
-  const keyinfos = await Store.keysGet(acctEmail);
-  const privateKeysLongIds = keyinfos.map(ki => ki.longid);
-  let keyBackups;
-
-  try {
-    keyBackups = await Google.gmail.fetchKeyBackups(acctEmail);
-    if (keyBackups.length) {
-      const notImportedBackupLongids: string[] = [];
-      for (const longid of Value.arr.unique(await Promise.all(keyBackups.map(Pgp.key.longid)))) {
-        if (longid && !privateKeysLongIds.includes(longid)) {
-          notImportedBackupLongids.push(longid);
-        }
-      }
-      if (notImportedBackupLongids.length) {
-        $('label[for=source_backup]').text('Load from backup (' + notImportedBackupLongids.length + ' new to import)');
-      } else {
-        $('label[for=source_backup]').text('Load from backup (already loaded)').css('color', '#AAA');
-        $('#source_backup').prop('disabled', true);
-      }
-    } else {
-      $('label[for=source_backup]').text('Load from backup (no backups found)').css('color', '#AAA');
-      $('#source_backup').prop('disabled', true);
-    }
-  } catch (e) {
-    if (Api.err.isAuthPopupNeeded(e)) {
-      BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
-    }
-    $('label[for=source_backup]').text('Load from backup (error checking backups)').css('color', '#AAA');
-    $('#source_backup').prop('disabled', true);
+  constructor() {
+    super();
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
+    this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+    this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+    this.gmail = new Gmail(this.acctEmail);
   }
 
-  $('.source_selector').css('display', 'block');
-  $('#spinner_container').text('');
+  public render = async () => {
+    await initPassphraseToggle(['input_passphrase']);
+    this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId);
+    Xss.sanitizeRender('#spinner_container', Ui.spinner('green') + ' loading..');
+    await this.loadAndRenderKeyBackupsOrRenderError();
+    $('.source_selector').css('display', 'block');
+    $('#spinner_container').text('');
+  }
 
-  $('.action_add_private_key').click(Ui.event.prevent('double', async () => {
+  public setHandlers = () => {
+    $('.action_add_private_key').click(this.setHandlerPrevent('double', this.addPrivateKeyHandler));
+    $('#input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_add_private_key'));
+  }
+
+  private loadAndRenderKeyBackupsOrRenderError = async () => {
     try {
-      const checked = await keyImportUi.checkPrv(acctEmail, String($('.input_private_key').val()), String($('.input_passphrase').val()));
+      const backups = await this.gmail.fetchKeyBackups();
+      if (!backups.longids.backups.length) {
+        $('label[for=source_backup]').text('Load from backup (no backups found)').css('color', '#AAA');
+        $('#source_backup').prop('disabled', true);
+      } else if (backups.longids.backupsNotImported.length) {
+        $('label[for=source_backup]').text(`Load from backup (${backups.longids.backupsNotImported.length} new to import)`);
+      } else {
+        $('label[for=source_backup]').text(`Load from backup (${backups.longids.backups.length} already loaded)`).css('color', '#AAA');
+        $('#source_backup').prop('disabled', true);
+      }
+    } catch (e) {
+      if (ApiErr.isAuthErr(e)) {
+        BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
+      }
+      $('label[for=source_backup]').text('Load from backup (error checking backups)').css('color', '#AAA');
+      $('#source_backup').prop('disabled', true);
+    }
+  }
+
+  private addPrivateKeyHandler = async (submitBtn: HTMLElement) => {
+    if (submitBtn.className.includes('gray')) {
+      await Ui.modal.warning('Please double check the pass phrase input field for any issues.');
+      return;
+    }
+    try {
+      const checked = await this.keyImportUi.checkPrv(this.acctEmail, String($('.input_private_key').val()), String($('.input_passphrase').val()));
       if (checked) {
-        await Store.keysAdd(acctEmail, checked.normalized); // resulting new_key checked above
-        await Store.passphraseSave($('.input_passphrase_save').prop('checked') ? 'local' : 'session', acctEmail, checked.longid, checked.passphrase);
-        BrowserMsg.send.reload(parentTabId, { advanced: true });
+        await KeyStore.add(this.acctEmail, checked.encrypted); // resulting new_key checked above
+        await PassphraseStore.set($('.input_passphrase_save').prop('checked') ? 'local' : 'session', this.acctEmail,
+          checked.fingerprint, checked.passphrase);
+        BrowserMsg.send.reload(this.parentTabId, { advanced: true });
       }
     } catch (e) {
       if (e instanceof UserAlert) {
-        return await Ui.modal.warning(e.message);
+        return await Ui.modal.warning(e.message, Ui.testCompatibilityLink);
       } else if (e instanceof KeyCanBeFixed) {
-        return await Ui.modal.error(`This type of key cannot be set as non-primary yet. Please write human@flowcrypt.com`);
+        return await Ui.modal.error(`This type of key cannot be set as non-primary yet. Please write human@flowcrypt.com`, false, Ui.testCompatibilityLink);
+      } else if (e instanceof UnexpectedKeyTypeError) {
+        return await Ui.modal.warning(`This does not appear to be a validly formatted key.\n\n${e.message}`);
       } else {
         Catch.reportErr(e);
-        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
+        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`, false, Ui.testCompatibilityLink);
       }
     }
-  }));
-
-})();
+  }
+});

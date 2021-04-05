@@ -1,81 +1,128 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
-import { Catch } from '../../../js/common/platform/catch.js';
-import { Store } from '../../../js/common/platform/store.js';
-import { Att } from '../../../js/common/core/att.js';
-import { Ui, Env, Browser } from '../../../js/common/browser.js';
-import { Pgp } from '../../../js/common/core/pgp.js';
-import { Api } from '../../../js/common/api/api.js';
-import { Attester } from '../../../js/common/api/attester.js';
-import { Backend } from '../../../js/common/api/backend.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
+import { Attachment } from '../../../js/common/core/attachment.js';
+import { Browser } from '../../../js/common/browser/browser.js';
 import { Buf } from '../../../js/common/core/buf.js';
+import { KeyInfo, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { Url, Str } from '../../../js/common/core/common.js';
+import { View } from '../../../js/common/view.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
+import { PubLookup } from '../../../js/common/api/pub-lookup.js';
+import { OrgRules } from '../../../js/common/org-rules.js';
+import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { FlowCryptWebsite } from '../../../js/common/api/flowcrypt-website.js';
 
-declare const openpgp: typeof OpenPGP;
 declare const ClipboardJS: any;
 
-Catch.try(async () => {
+View.run(class MyKeyView extends View {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
-  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const longid = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
-  const myKeyUserIdsUrl = Env.urlCreate('my_key_user_ids.htm', uncheckedUrlParams);
-  const myKeyUpdateUrl = Env.urlCreate('my_key_update.htm', uncheckedUrlParams);
+  private readonly acctEmail: string;
+  private readonly fingerprint: string;
+  private readonly myKeyUserIdsUrl: string;
+  private readonly myKeyUpdateUrl: string;
+  private keyInfo!: KeyInfo;
+  private pubKey!: Key;
+  private orgRules!: OrgRules;
+  private pubLookup!: PubLookup;
 
-  $('.action_view_user_ids').attr('href', myKeyUserIdsUrl);
-  $('.action_view_update').attr('href', myKeyUpdateUrl);
-
-  const [primaryKi] = await Store.keysGet(acctEmail, [longid]);
-  Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-
-  const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
-
-  try {
-    const result = await Attester.lookupEmail(acctEmail);
-    const url = Backend.url('pubkey', acctEmail);
-    if (result.pubkey && await Pgp.key.longid(result.pubkey) === primaryKi.longid) {
-      $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
-    }
-  } catch (e) {
-    if (Api.err.isSignificant(e)) {
-      Catch.reportErr(e);
-    }
-    $('.pubkey_link_container').remove();
+  constructor() {
+    super();
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'fingerprint', 'parentTabId']);
+    this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+    this.fingerprint = Assert.urlParamRequire.string(uncheckedUrlParams, 'fingerprint');
+    this.myKeyUserIdsUrl = Url.create('my_key_user_ids.htm', uncheckedUrlParams);
+    this.myKeyUpdateUrl = Url.create('my_key_update.htm', uncheckedUrlParams);
   }
 
-  $('.email').text(acctEmail);
-  $('.key_fingerprint').text(await Pgp.key.fingerprint(prv, 'spaced') || '(unknown fingerprint)');
-  $('.key_words').text(primaryKi.keywords);
-  $('.show_when_showing_public').css('display', '');
-  $('.show_when_showing_private').css('display', 'none');
+  public render = async () => {
+    this.orgRules = await OrgRules.newInstance(this.acctEmail);
+    this.pubLookup = new PubLookup(this.orgRules);
+    [this.keyInfo] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(this.keyInfo);
+    this.pubKey = await KeyUtil.parse(this.keyInfo.public);
+    $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
+    $('.action_view_update').attr('href', this.myKeyUpdateUrl);
+    $('.fingerprint').text(Str.spaced(this.keyInfo.fingerprints[0]));
+    Xss.sanitizeRender('.email', this.pubKey.emails.map(email => `<span>${Xss.escape(email)}</span>`).join(', '));
+    const expiration = this.pubKey.expiration;
+    $('.key_expiration').text(expiration && expiration !== Infinity ? Str.datetimeToDate(Str.fromDate(new Date(expiration))) : 'Key does not expire');
+    await this.renderPubkeyShareableLink();
+    await initPassphraseToggle(['input_passphrase']);
+  }
 
-  $('.action_download_pubkey').click(Ui.event.prevent('double', () => {
-    Browser.saveToDownloads(Att.keyinfoAsPubkeyAtt(primaryKi), Catch.browser().name === 'firefox' ? $('body') : undefined);
-  }));
+  public setHandlers = () => {
+    $('.action_download_pubkey').click(this.setHandlerPrevent('double', () => this.downloadPubKeyHandler()));
+    $('.action_download_prv').click(this.setHandlerPrevent('double', () => this.downloadPrvKeyHandler()));
+    $('.action_download_revocation_cert').click(this.setHandlerPrevent('double', () => this.downloadRevocationCert()));
+    $('.action_continue_download').click(this.setHandlerPrevent('double', () => this.downloadRevocationCert(String($('#input_passphrase').val()))));
+    $('#input_passphrase').on('keydown', this.setEnterHandlerThatClicks('.action_continue_download'));
+    $('.action_cancel_download_cert').click(this.setHandler(() => { $('.enter_pp').hide(); }));
+    const clipboardOpts = { text: () =>  this.keyInfo.public };
+    new ClipboardJS('.action_copy_pubkey', clipboardOpts); // tslint:disable-line:no-unused-expression no-unsafe-any
+  }
 
-  $('.action_download_prv').click(Ui.event.prevent('double', () => {
-    const name = `flowcrypt-backup-${acctEmail.replace(/[^A-Za-z0-9]+/g, '')}-0x${primaryKi.longid}.asc`;
-    const prvKeyAtt = new Att({ data: Buf.fromUtfStr(primaryKi.private), type: 'application/pgp-keys', name });
-    Browser.saveToDownloads(prvKeyAtt, Catch.browser().name === 'firefox' ? $('body') : undefined);
-  }));
-
-  $('.action_show_other_type').click(Ui.event.handle(() => {
-    if ($('.action_show_other_type').text().toLowerCase() === 'show private key') {
-      $('.action_show_other_type').text('show public key').removeClass('bad').addClass('good');
-      $('.key_type').text('Private Key');
-      $('.show_when_showing_public').css('display', 'none');
-      $('.show_when_showing_private').css('display', '');
-    } else {
-      $('.action_show_other_type').text('show private key').removeClass('good').addClass('bad');
-      $('.key_type').text('Public Key Info');
-      $('.show_when_showing_public').css('display', '');
-      $('.show_when_showing_private').css('display', 'none');
+  private renderPubkeyShareableLink = async () => {
+    try {
+      const result = await this.pubLookup.attester.lookupEmail(this.acctEmail);
+      const url = FlowCryptWebsite.url('pubkey', this.acctEmail);
+      if (result.pubkey && (await KeyUtil.parse(result.pubkey)).id === this.keyInfo.fingerprints[0]) {
+        $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('display', '');
+      } else {
+        $('.pubkey_link_container').remove();
+      }
+    } catch (e) {
+      ApiErr.reportIfSignificant(e);
+      $('.pubkey_link_container').remove();
     }
-  }));
+  }
 
-  const clipboardOpts = { text: () => $('.action_show_other_type').text().toLowerCase() === 'show private key' ? primaryKi.public : primaryKi.private };
-  new ClipboardJS('.action_copy_pubkey, .action_copy_prv', clipboardOpts); // tslint:disable-line:no-unused-expression no-unsafe-any
+  private downloadRevocationCert = async (enteredPP?: string) => {
+    const prv = await KeyUtil.parse(this.keyInfo.private);
+    if (!prv.fullyDecrypted) {
+      const passphrase = await PassphraseStore.get(this.acctEmail, this.keyInfo.fingerprints[0]) || enteredPP;
+      if (passphrase) {
+        if (! await KeyUtil.decrypt(prv, passphrase) && enteredPP) {
+          await Ui.modal.error('Pass phrase did not match, please try again.');
+          return;
+        }
+      } else {
+        $('.enter_pp').show();
+        return;
+      }
+    }
+    $('.enter_pp').hide();
+    $('#input_passphrase').val('');
+    let revokeConfirmMsg = `Revocation cert is used when you want to revoke your Public Key (meaning you are asking others to stop using it).\n\n`;
+    revokeConfirmMsg += `You can save it do your hard drive, and use it later in case you ever need it.\n\n`;
+    revokeConfirmMsg += `Would you like to generate and save a revocation cert now?`;
+    if (! await Ui.modal.confirm(revokeConfirmMsg)) {
+      return;
+    }
+    const revokedArmored = await KeyUtil.revoke(prv);
+    if (!revokedArmored) {
+      await Ui.modal.error(`Could not produce revocation cert (empty)`);
+      return;
+    }
+    const name = `${this.acctEmail.replace(/[^a-z0-9]+/g, '')}-0x${this.keyInfo.longid}.revocation-cert.asc`;
+    const prvKeyAttachment = new Attachment({ data: Buf.fromUtfStr(revokedArmored), type: 'application/pgp-keys', name });
+    Browser.saveToDownloads(prvKeyAttachment);
+  }
 
-})();
+  private downloadPubKeyHandler = () => {
+    Browser.saveToDownloads(Attachment.keyinfoAsPubkeyAttachment(this.keyInfo));
+  }
+
+  private downloadPrvKeyHandler = () => {
+    const name = `flowcrypt-backup-${this.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}-0x${this.keyInfo.longid}.asc`;
+    const prvKeyAttachment = new Attachment({ data: Buf.fromUtfStr(this.keyInfo.private), type: 'application/pgp-keys', name });
+    Browser.saveToDownloads(prvKeyAttachment);
+  }
+
+});

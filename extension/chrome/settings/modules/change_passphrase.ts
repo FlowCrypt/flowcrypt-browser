@@ -1,117 +1,125 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
-import { Catch } from '../../../js/common/platform/catch.js';
-import { Store } from '../../../js/common/platform/store.js';
-import { Ui, Env } from '../../../js/common/browser.js';
-import { Settings } from '../../../js/common/settings.js';
-import { Pgp } from '../../../js/common/core/pgp.js';
 import { Assert } from '../../../js/common/assert.js';
-import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
+import { KeyInfo, Key, KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { Settings } from '../../../js/common/settings.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { Url } from '../../../js/common/core/common.js';
+import { View } from '../../../js/common/view.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
+import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
-declare const openpgp: typeof OpenPGP;
+View.run(class ChangePassPhraseView extends View {
 
-Catch.try(async () => {
+  private readonly acctEmail: string;
+  private readonly parentTabId: string;
+  private readonly keyImportUi = new KeyImportUi({});
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  private primaryKi: KeyInfo | undefined;
+  private primaryPrv: Key | undefined;
 
-  await initPassphraseToggle(['original_password', 'password', 'password2']);
-
-  const privateKeys = await Store.keysGet(acctEmail);
-  if (privateKeys.length > 1) {
-    $('#step_0_enter_current .sentence').text('Enter the current passphrase for your primary key');
-    $('#step_0_enter_current #original_password').attr('placeholder', 'Current primary key pass phrase');
-    $('#step_1_enter_new #password').attr('placeholder', 'Enter a new primary key pass phrase');
+  constructor() {
+    super();
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
+    this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+    this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   }
 
-  const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-  Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-
-  const storedOrSessionPp = await Store.passphraseGet(acctEmail, primaryKi.longid);
-  let { keys: [primaryPrv] } = await openpgp.key.readArmored(primaryKi.private);
-
-  const displayBlock = (name: string) => {
-    const blocks = ['step_0_enter_current', 'step_1_enter_new', 'step_2_confirm_new', 'step_3_done'];
-    for (const block of blocks) {
-      $(`#${block}`).css('display', 'none');
+  public render = async () => {
+    await initPassphraseToggle(['current_pass_phrase', 'new_pass_phrase', 'new_pass_phrase_confirm']);
+    const privateKeys = await KeyStore.get(this.acctEmail);
+    if (privateKeys.length > 1) {
+      $('#step_0_enter_current .sentence').text('Enter the current passphrase for your primary key');
+      $('#step_0_enter_current #current_pass_phrase').attr('placeholder', 'Current primary key pass phrase');
+      $('#step_1_enter_new #new_pass_phrase').attr('placeholder', 'Enter a new primary key pass phrase');
     }
-    $(`#${name}`).css('display', 'block');
-  };
-
-  if (primaryPrv.isFullyDecrypted() || (storedOrSessionPp && await Pgp.key.decrypt(primaryPrv, storedOrSessionPp))) {
-    displayBlock('step_1_enter_new'); // current pp is already known
-  } else {
-    displayBlock('step_0_enter_current');
+    const primaryKi = await KeyStore.getFirstRequired(this.acctEmail);
+    this.primaryKi = primaryKi;
+    const storedOrSessionPp = await PassphraseStore.get(this.acctEmail, this.primaryKi.fingerprints[0]);
+    const key = await KeyUtil.parse(this.primaryKi.private);
+    this.primaryPrv = key;
+    if (this.primaryPrv.fullyDecrypted || (storedOrSessionPp && await KeyUtil.decrypt(this.primaryPrv, storedOrSessionPp))) {
+      this.displayBlock('step_1_enter_new'); // current pp is already known
+      $('#new_pass_phrase').focus();
+    } else {
+      this.displayBlock('step_0_enter_current');
+      $('#current_pass_phrase').focus();
+    }
+    this.keyImportUi.renderPassPhraseStrengthValidationInput($('#new_pass_phrase'), $('.action_set_pass_phrase'));
   }
 
-  $('#step_0_enter_current .action_test_current_passphrase').click(Ui.event.handle(async () => {
-    const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
-    if (await Pgp.key.decrypt(prv, String($('#original_password').val())) === true) {
-      primaryPrv = prv;
-      displayBlock('step_1_enter_new');
+  public setHandlers = () => {
+    $('#step_0_enter_current .action_test_current_passphrase').click(this.setHandler(() => this.actionTestCurrentPassPhraseHandler()));
+    $('#step_1_enter_new .action_set_pass_phrase').click(this.setHandler(el => this.actionSetPassPhraseHandler(el)));
+    $('#step_2_confirm_new .action_use_another').click(this.setHandler(() => this.actionUseAnotherPassPhraseHandler()));
+    $('#step_2_confirm_new .action_change').click(this.setHandlerPrevent('double', () => this.actionDoChangePassPhraseHandler()));
+    $('#current_pass_phrase').on('keydown', this.setEnterHandlerThatClicks('#step_0_enter_current .action_test_current_passphrase'));
+    $('#new_pass_phrase').on('keydown', this.setEnterHandlerThatClicks('#step_1_enter_new .action_set_pass_phrase'));
+    $("#new_pass_phrase_confirm").on('keydown', this.setEnterHandlerThatClicks('#step_2_confirm_new .action_change'));
+  }
+
+  private actionTestCurrentPassPhraseHandler = async () => {
+    const prv = await KeyUtil.parse(this.primaryKi!.private);
+    if (await KeyUtil.decrypt(prv, String($('#current_pass_phrase').val())) === true) {
+      this.primaryPrv = prv;
+      this.displayBlock('step_1_enter_new');
+      $('#new_pass_phrase').focus();
     } else {
       await Ui.modal.error('Pass phrase did not match, please try again.');
-      $('#original_password').val('').focus();
+      $('#current_pass_phrase').val('').focus();
     }
-  }));
+  }
 
-  $('#password').on('keyup', Ui.event.prevent('spree', () => Settings.renderPwdStrength('#step_1_enter_new', '#password', '.action_set_pass_phrase')));
-  $('#password').on('keydown', event => {
-    if (event.which === 13) {
-      $('#step_1_enter_new .action_set_pass_phrase').click();
-    }
-  });
-
-  $('#step_1_enter_new .action_set_pass_phrase').click(Ui.event.handle(async (target: HTMLElement) => {
+  private actionSetPassPhraseHandler = async (target: HTMLElement) => {
     if ($(target).hasClass('green')) {
-      displayBlock('step_2_confirm_new');
+      this.displayBlock('step_2_confirm_new');
+      $('#new_pass_phrase_confirm').focus();
     } else {
       await Ui.modal.warning('Please select a stronger pass phrase. Combinations of 4 to 5 uncommon words are the best.');
     }
-  }));
+  }
 
-  $('#step_2_confirm_new .action_use_another').click(Ui.event.handle(() => {
-    $('#password').val('');
-    $('#password2').val('');
-    displayBlock('step_1_enter_new');
-    Settings.renderPwdStrength('#step_1_enter_new', '#password', '.action_set_pass_phrase');
-    $('#password').focus();
-  }));
+  private actionUseAnotherPassPhraseHandler = () => {
+    $('#new_pass_phrase').val('').keyup();
+    $('#new_pass_phrase_confirm').val('');
+    this.displayBlock('step_1_enter_new');
+    $('#new_pass_phrase').focus();
+  }
 
-  $("#password2").on('keydown', event => {
-    if (event.which === 13) {
-      $('#step_2_confirm_new .action_change').click();
-    }
-  });
-  $('#step_2_confirm_new .action_change').click(Ui.event.prevent('double', async () => {
-    const newPp = String($('#password').val());
-    if (newPp !== $('#password2').val()) {
+  private actionDoChangePassPhraseHandler = async () => {
+    const newPp = String($('#new_pass_phrase').val());
+    if (newPp !== $('#new_pass_phrase_confirm').val()) {
       await Ui.modal.warning('The two pass phrases do not match, please try again.');
-      $('#password2').val('');
-      $('#password2').focus();
+      $('#new_pass_phrase_confirm').val('');
+      $('#new_pass_phrase_confirm').focus();
       return;
     }
     try {
-      await Pgp.key.encrypt(primaryPrv, newPp);
+      await KeyUtil.encrypt(this.primaryPrv!, newPp);
     } catch (e) {
       Catch.reportErr(e);
       await Ui.modal.error(`There was an unexpected error. Please ask for help at human@flowcrypt.com:\n\n${e instanceof Error ? e.stack : String(e)}`);
       return;
     }
-    await Store.keysAdd(acctEmail, primaryPrv.armor());
-    const persistentlyStoredPp = await Store.passphraseGet(acctEmail, primaryKi.longid, true);
-    await Store.passphraseSave('local', acctEmail, primaryKi.longid, typeof persistentlyStoredPp === 'undefined' ? undefined : newPp);
-    await Store.passphraseSave('session', acctEmail, primaryKi.longid, typeof persistentlyStoredPp === 'undefined' ? newPp : undefined);
-    const { setup_simple } = await Store.getAcct(acctEmail, ['setup_simple']);
-    if (setup_simple) {
-      Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/backup.htm', '&action=passphrase_change_gmail_backup');
-    } else {
-      await Ui.modal.info('Now that you changed your pass phrase, you should back up your key. New backup will be protected with new passphrase.');
-      Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/backup.htm', '&action=options');
-    }
-  }));
+    await KeyStore.add(this.acctEmail, this.primaryPrv!);
+    const persistentlyStoredPp = await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprints[0], true);
+    await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.fingerprints[0], typeof persistentlyStoredPp === 'undefined' ? undefined : newPp);
+    await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.fingerprints[0], typeof persistentlyStoredPp === 'undefined' ? newPp : undefined);
+    await Ui.modal.info('Now that you changed your pass phrase, you should back up your key. New backup will be protected with new passphrase.');
+    Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/backup.htm', '&action=backup_manual');
+  }
 
-})();
+  private displayBlock = (name: string) => {
+    const blocks = ['step_0_enter_current', 'step_1_enter_new', 'step_2_confirm_new', 'step_3_done'];
+    for (const block of blocks) {
+      $(`#${block}`).css('display', 'none');
+    }
+    $(`#${name}`).css('display', 'block');
+  }
+
+});

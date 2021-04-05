@@ -7,10 +7,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>FlowCrypt</title>
   <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/sweetalert2.css" />
   <link rel="stylesheet" href="/css/open-sans.css" />
   <link rel="stylesheet" href="/css/fine-uploader-new.css" />
   <script type="text/template" src="/chrome/elements/hared/attach.template.htm" id="qq-template"></script>
-  <style>iframe { width: 100%; height: 270px; border: 1px dashed #999; }</style>
+  <style>
+    iframe {
+      width: 100%;
+      height: 270px;
+      border: 1px dashed #999;
+    }
+  </style>
   <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
   <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
 </head>
@@ -28,12 +35,13 @@
     <div class="line" id="fineuploader"></div>
     <div class="line"><a href="#" id="fineuploader_button">choose a file</a></div>
     <div class="line">
-      <div class="button green large action_decrypt_and_download">download decrypted</div>
+      <button class="button green large action_decrypt_and_download">download decrypted</button>
     </div>
   </div>
 
-  <script src="/lib/purify.min.js"></script>
+  <script src="/lib/purify.js"></script>
   <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/sweetalert2.js"></script>
   <script src="/lib/openpgp.js"></script>
   <script src="/lib/fine-uploader.js"></script>
   <script src="decrypt.js" type="module"></script>

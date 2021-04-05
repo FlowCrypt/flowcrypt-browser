@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>FlowCrypt</title>
   <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/sweetalert2.css" />
   <link rel="stylesheet" href="/css/open-sans.css" />
   <link rel="stylesheet" href="/css/animate.css" />
   <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
@@ -16,7 +17,7 @@
 <body id="settings">
   <div id="content" class="my_key page compatibility_fix_container" style="text-align: left;">
     <div class="line">
-      <b>Update Private Key</b> with KeyWords: <span class="key_words good"></span>
+      <b>Update Private Key</b> with Fingerprint: <span class="fingerprint good"></span>
     </div>
     <div class="line">You can use other OpenPGP compatible software to update your private key (change expiration,
       change user ids) and load updated key below.</div>
@@ -34,8 +35,9 @@
     <div class="line"><a href="#" class="action_show_public_key">Back to Public Key</a></div>
   </div>
 
-  <script src="/lib/purify.min.js"></script>
+  <script src="/lib/purify.js"></script>
   <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/sweetalert2.js"></script>
   <script src="/lib/openpgp.js"></script>
   <script src="my_key_update.js" type="module"></script>
 </body>

@@ -1,6 +1,8 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
+
+import { Buf } from '../core/buf.js';
 
 /**
  * Functions which must be written differently to run in NodeJS versus in web browsers.
@@ -31,4 +33,12 @@ export const moveElementInArray = <T>(arr: Array<T>, oldIndex: number, newIndex:
   }
   arr.splice(newIndex, 0, arr.splice(oldIndex, 1)[0]);
   return arr;
+};
+
+export const iso2022jpToUtf = (content: Buf) => {
+  if (!TextDecoder) {
+    throw new Error('Your browser is not supported (missing TextDecoder)');
+  }
+  const decoder = new TextDecoder('iso-2022-jp');
+  return decoder.decode(content);
 };

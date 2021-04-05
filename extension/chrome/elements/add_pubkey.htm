@@ -9,6 +9,7 @@
   <title>FlowCrypt</title>
   <link rel="stylesheet" href="/css/animate.css" />
   <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/sweetalert2.css" />
   <link rel="stylesheet" href="/css/open-sans.css" />
   <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
   <link rel="stylesheet" href="/css/fine-uploader-new.css" />
@@ -25,7 +26,7 @@
     <div class="line">
       <select class="email"></select>
     </div>
-    <div class="line copy_from" style="text-align: left;padding-left: 25px;">
+    <div class="line copy_from" style="text-align: left; padding-left: 25px;">
       <select class="copy_from_email" data-test="input-select-copy-from">
         <option value="">Copy from Contact</option>
       </select>
@@ -34,19 +35,21 @@
       or paste below:
     </div>
     <div class="line">
-      <textarea class="pubkey" placeholder="ASCII Armored Public Key"></textarea>
+      <textarea class="pubkey" placeholder="ASCII Armored Public Key" spellcheck="false" data-test="input-pubkey"></textarea>
     </div>
     <div class="line">
-      <div class="button long green action_ok" data-test="action-add-pubkey">OK</div>
-      <div class="button long gray action_settings">SETTINGS</div>
-      <div class="button long gray action_close">CLOSE</div>
+      <button class="button long green action_ok" data-test="action-add-pubkey">OK</button>
+      <button class="button long gray action_settings">SETTINGS</button>
+      <button class="button long gray action_close">CLOSE</button>
     </div>
     <div id="fineuploader" class="display_none"></div>
   </div>
 
-  <script src="/lib/purify.min.js"></script>
+  <script src="/lib/purify.js"></script>
   <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/sweetalert2.js"></script>
   <script src="/lib/openpgp.js"></script>
+  <script src="/lib/forge.js"></script>
   <script src="/lib/fine-uploader.js"></script>
   <script src="add_pubkey.js" type="module"></script>
 </body>

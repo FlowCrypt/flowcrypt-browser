@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>FlowCrypt</title>
   <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/sweetalert2.css" />
   <link rel="stylesheet" href="/css/open-sans.css" />
   <link rel="stylesheet" href="/css/animate.css" />
   <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
@@ -16,7 +17,7 @@
 <body id="settings">
   <div id="content" class="my_key page" style="text-align: left;">
     <div class="line">
-      <b>User IDs</b> listed in Public Key with KeyWords:<br><span class="key_words good"></span>
+      <b>User IDs</b> listed in Public Key with Fingerprint:<br><span class="fingerprint good"></span>
     </div>
     <div class="line">
       <hr />
@@ -28,8 +29,9 @@
     <div class="line"><a href="#" class="action_show_public_key">Back to Public Key</a></div>
   </div>
 
-  <script src="/lib/purify.min.js"></script>
+  <script src="/lib/purify.js"></script>
   <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/sweetalert2.js"></script>
   <script src="/lib/openpgp.js"></script>
   <script src="my_key_user_ids.js" type="module"></script>
 </body>

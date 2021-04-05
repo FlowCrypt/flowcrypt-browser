@@ -1,4 +1,4 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 /// <reference path="../../../extension/js/common/core/types/openpgp.d.ts" />
 
@@ -10,7 +10,8 @@ export const requireOpenpgp = (): typeof OpenPGP => {
 
 export const requireMimeParser = (): any => {
   // const MimeParser = (window as any)['emailjs-mime-parser'](); // tslint:disable-line:no-unsafe-any
-  return undefined; // todo
+  // return require('../../../../../extension/lib/emailjs/emailjs-mime-parser'); // todo
+  return undefined; // the above does not work, would have to import directly from npm, but we have made custom edits to the lib so not feasible now
 };
 
 export const requireMimeBuilder = (): any => {

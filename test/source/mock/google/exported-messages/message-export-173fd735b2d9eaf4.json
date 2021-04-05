@@ -1,0 +1,124 @@
+{
+  "acctEmail": "ci.tests.gmail@flowcrypt.dev",
+  "full": {
+    "id": "173fd735b2d9eaf4",
+    "threadId": "173fd735b2d9eaf4",
+    "labelIds": [
+      "SENT",
+      "INBOX"
+    ],
+    "snippet": "This email contains a key backup. It will help you access your encrypted messages from other computers (along with your pass phrase). You can safely leave it in your inbox or archive it. The key below",
+    "payload": {
+      "partId": "",
+      "mimeType": "multipart/mixed",
+      "filename": "",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "multipart/mixed; boundary=\"----sinikael-?=_1-15976850613810.5596981485994575\""
+        },
+        {
+          "name": "Openpgp",
+          "value": "id=07481C8ACF9D49FE"
+        },
+        {
+          "name": "From",
+          "value": "censored@email.com"
+        },
+        {
+          "name": "To",
+          "value": "flowcrypt.compatibility@gmail.com"
+        },
+        {
+          "name": "Subject",
+          "value": "Your FlowCrypt Backup"
+        },
+        {
+          "name": "Date",
+          "value": "Mon, 17 Aug 2020 10:24:21 -0700"
+        },
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        }
+      ],
+      "body": {
+        "size": 0
+      },
+      "parts": [
+        {
+          "partId": "0",
+          "mimeType": "text/html",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "text/html; charset=utf-8"
+            },
+            {
+              "name": "Content-Transfer-Encoding",
+              "value": "quoted-printable"
+            }
+          ],
+          "body": {
+            "size": 705,
+            "data": "PCEtLSDCqSAyMDE2LTIwMTggRmxvd0NyeXB0IExpbWl0ZWQuIExpbWl0YXRpb25zIGFwcGx5LiBDb250YWN0IGh1bWFuQGZsb3djcnlwdC5jb20gLS0-DQoNCjxkaXYgZGlyPSJsdHIiPg0KICA8ZGl2IHN0eWxlPSJmb250LXNpemU6IDEyLjhweDsiPlRoaXMgZW1haWwgY29udGFpbnMgYSBrZXkgYmFja3VwLiBJdCB3aWxsIGhlbHAgeW91IGFjY2VzcyB5b3VyIGVuY3J5cHRlZCBtZXNzYWdlcyBmcm9tDQogICAgb3RoZXIgY29tcHV0ZXJzIChhbG9uZyB3aXRoIHlvdXIgcGFzcyBwaHJhc2UpLiBZb3UgY2FuIHNhZmVseSBsZWF2ZSBpdCBpbiB5b3VyIGluYm94IG9yIGFyY2hpdmUgaXQuPC9kaXY-DQogIDxicj4NCiAgPGRpdiBzdHlsZT0iZm9udC1zaXplOiAxMi44cHg7Ij5UaGUga2V5IGJlbG93IGlzIHByb3RlY3RlZCB3aXRoIHBhc3MgcGhyYXNlIHRoYXQgb25seSB5b3Uga25vdy4gWW91IHNob3VsZCBtYWtlIHN1cmUgdG8NCiAgICBub3RlIHlvdXIgcGFzcyBwaHJhc2UgZG93bi48L2Rpdj4NCiAgPGJyPg0KICA8ZGl2IHN0eWxlPSJmb250LXNpemU6IDEyLjhweDsiPg0KICAgIDxzcGFuIHN0eWxlPSJjb2xvcjogcmVkOyI-RE8gTk9UIERFTEVURSBUSElTIEVNQUlMLjwvc3Bhbj4gRW1haWwgaHVtYW5AZmxvd2NyeXB0LmNvbSBpZiB5b3UgbmVlZCBoZWxwLiBXZSByZXNwb25kDQogICAgcHJvbXB0bHkuDQogIDwvZGl2Pg0KPC9kaXY-"
+          }
+        },
+        {
+          "partId": "1",
+          "mimeType": "application/pgp-keys",
+          "filename": "flowcrypt-backup-citestsgmailflowcryptdev.key",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/pgp-keys; name=flowcrypt-backup-citestsgmailflowcryptdev.key"
+            },
+            {
+              "name": "Content-Disposition",
+              "value": "attachment; filename=flowcrypt-backup-citestsgmailflowcryptdev.key"
+            },
+            {
+              "name": "X-Attachment-Id",
+              "value": "f_XAapAhxOKHzJMMcfHrfsAIUIiEDKEp@flowcrypt"
+            },
+            {
+              "name": "Content-Id",
+              "value": "<f_XAapAhxOKHzJMMcfHrfsAIUIiEDKEp@flowcrypt>"
+            },
+            {
+              "name": "Content-Transfer-Encoding",
+              "value": "base64"
+            }
+          ],
+          "body": {
+            "attachmentId": "ANGjdJ9etfYa-pWIEWczGmnDe6tJne423t9ITNS90xmf_x6Br7TMLsb57q0TcqXAgusNQf6HwJ3e03gxoxo31CLIbJWx3xebLHzMydm3C9kHLUtFpGHgQTeiTGKVLRzrjJM_NOQksCrybMf7KREoLtx72MdQC3jJZChSWf44JyHYC7l8M2m_g3cLhZFM48ZHVAEXWYTsXmzBW6556IkiAzOPhyPRNow9BKQxBXvRry64si0adXuM8_JvoIy61PvR2a4mKWwhVQdigmnHUkkZoSKuVCom3aQPv5zsmdrcO-BN94CE7hxeBTapygKofVrqcBDK5fEoBH6NrNd047HPTaW57TT_Xfnowpif9BlI1pibLrJalV0BAz3l3N0hz5X3elzRy12oYOEO0s6RGHxU",
+            "size": 998
+          }
+        }
+      ]
+    },
+    "sizeEstimate": 3179,
+    "historyId": "2032",
+    "internalDate": "1597685061000"
+  },
+  "attachments": {
+    "ANGjdJ9etfYa-pWIEWczGmnDe6tJne423t9ITNS90xmf_x6Br7TMLsb57q0TcqXAgusNQf6HwJ3e03gxoxo31CLIbJWx3xebLHzMydm3C9kHLUtFpGHgQTeiTGKVLRzrjJM_NOQksCrybMf7KREoLtx72MdQC3jJZChSWf44JyHYC7l8M2m_g3cLhZFM48ZHVAEXWYTsXmzBW6556IkiAzOPhyPRNow9BKQxBXvRry64si0adXuM8_JvoIy61PvR2a4mKWwhVQdigmnHUkkZoSKuVCom3aQPv5zsmdrcO-BN94CE7hxeBTapygKofVrqcBDK5fEoBH6NrNd047HPTaW57TT_Xfnowpif9BlI1pibLrJalV0BAz3l3N0hz5X3elzRy12oYOEO0s6RGHxU": {
+      "data": "LS0tLS1CRUdJTiBQR1AgUFJJVkFURSBLRVkgQkxPQ0stLS0tLQ0KVmVyc2lvbjogRmxvd0NyeXB0IEVtYWlsIEVuY3J5cHRpb24gNy44LjkNCkNvbW1lbnQ6IFNlYW1sZXNzbHkgc2VuZCBhbmQgcmVjZWl2ZSBlbmNyeXB0ZWQgZW1haWwNCg0KeFlZRVh6cTlSQllKS3dZQkJBSGFSdzhCQVFkQVlCMi9oampKYVZaYkRib1dpc2xWRTg4QTVCaTdDRUhWDQoxUGVOZkdFTTNkaitDUU1JcVpSVHFERUMyWjdnT0JKdVo1c1JIaTZoR1VDQUZMQ0dwVktaTzltQ3YvN2cNCnY4QlRTQzU5ZGpQOWV6U2lWVDdKcmVtVGpmM2ZtTktvUGVFNHkrdG9iU2IwcnFVeWVjdlQ0UEFTWTFpQw0KRE0wc1IyMWhhV3dnUTBrZ1ZHVnpkQ0E4WTJrdWRHVnpkSE11WjIxaGFXeEFabXh2ZDJOeWVYQjBMbVJsDQpkajdDandRUUZnb0FJQVVDWHpxOVJBWUxDUWNJQXdJRUZRZ0tBZ1FXQWdFQUFoa0JBaHNEQWg0QkFDRUoNCkVBZElISXJQblVuK0ZpRUVtNk9jNEhYd2c1c3dOQS9JQjBnY2lzK2RTZjQyVmdEK0x1VVF1L0IwZytsbA0KcXR6ZWdMS1VHWC9DRExpakptM2ZPUEZLVzdsM1QzQUJBTFFHTXFYY2ExanB1TUVSUWRxK2RFNXl4aHFTDQpISXFYNHlZQ2FtbGpPYVVOeDRzRVh6cTlSQklLS3dZQkJBR1hWUUVGQVFFSFFJTENkNjlEd25FcFlNQ2cNCjdycWNadkZiT3pkVkRvL1Y3aFNhcGUrRVZQd1JBd0VJQi80SkF3aU94NWliOVZqVmd1QjFiUi9MRWc5Sw0KTVpWcG9KZWs1eFJ3Z0pZVXJQMFIrRlNDcTNxUWd1MERESk1UZXBtQStLcy9wVlNlOGJqTFhwNk96aExEDQppOXdyUXNJbHRDbEx6Z241SXFvU1ZIR0F3bmdFR0JZSUFBa0ZBbDg2dlVRQ0d3d0FJUWtRQjBnY2lzK2QNClNmNFdJUVNibzV6Z2RmQ0RtekEwRDhnSFNCeUt6NTFKL2pMY0FQMGRtWXpjTzNKR0N2RlJwWERlWDdCcw0KZUIwRHhqZThRMXc1MnVIbTRCWVpnd0QvZkZZaUFTblJRekNId1Rwd3lrMTEwVytqUHQrck5aNk9JUlpIDQowZCsrR1EwPQ0KPXJYL28NCi0tLS0tRU5EIFBHUCBQUklWQVRFIEtFWSBCTE9DSy0tLS0tDQo",
+      "size": 998
+    }
+  },
+  "raw": {
+    "id": "173fd735b2d9eaf4",
+    "threadId": "173fd735b2d9eaf4",
+    "labelIds": [
+      "SENT",
+      "INBOX"
+    ],
+    "snippet": "This email contains a key backup. It will help you access your encrypted messages from other computers (along with your pass phrase). You can safely leave it in your inbox or archive it. The key below",
+    "sizeEstimate": 3179,
+    "raw": "UmVjZWl2ZWQ6IGZyb20gNzE3Mjg0NzMwMjQ0DQoJbmFtZWQgdW5rbm93bg0KCWJ5IGdtYWlsYXBpLmdvb2dsZS5jb20NCgl3aXRoIEhUVFBSRVNUOw0KCU1vbiwgMTcgQXVnIDIwMjAgMTA6MjQ6MjEgLTA3MDANCkNvbnRlbnQtVHlwZTogbXVsdGlwYXJ0L21peGVkOw0KIGJvdW5kYXJ5PSItLS0tc2luaWthZWwtPz1fMS0xNTk3Njg1MDYxMzgxMC41NTk2OTgxNDg1OTk0NTc1Ig0KT3BlbnBncDogaWQ9MDc0ODFDOEFDRjlENDlGRQ0KRnJvbTogY2kudGVzdHMuZ21haWxAZmxvd2NyeXB0LmRldg0KVG86IGNpLnRlc3RzLmdtYWlsQGZsb3djcnlwdC5kZXYNClN1YmplY3Q6IFlvdXIgRmxvd0NyeXB0IEJhY2t1cA0KRGF0ZTogTW9uLCAxNyBBdWcgMjAyMCAxMDoyNDoyMSAtMDcwMA0KTWVzc2FnZS1JZDogPENBTzlGWTl0TlE3ZV9WPTgwK2EyMkoxMDhMbjV0RzZoaVpLLSt0a21HVndvNGZZckQzUUBtYWlsLmdtYWlsLmNvbT4NCk1JTUUtVmVyc2lvbjogMS4wDQoNCi0tLS0tLXNpbmlrYWVsLT89XzEtMTU5NzY4NTA2MTM4MTAuNTU5Njk4MTQ4NTk5NDU3NQ0KQ29udGVudC1UeXBlOiB0ZXh0L2h0bWw7IGNoYXJzZXQ9dXRmLTgNCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KPCEtLSA9QzI9QTkgMjAxNi0yMDE4IEZsb3dDcnlwdCBMaW1pdGVkLiBMaW1pdGF0aW9ucyBhcHBseS4gQ29udGFjdCA9DQpodW1hbkBmbG93Y3J5cHQuY29tIC0tPg0KDQo8ZGl2IGRpcj0zRCJsdHIiPg0KICA8ZGl2IHN0eWxlPTNEImZvbnQtc2l6ZTogMTIuOHB4OyI-VGhpcyBlbWFpbCBjb250YWlucyBhIGtleSBiYWNrdXAuIEl0ID0NCndpbGwgaGVscCB5b3UgYWNjZXNzIHlvdXIgZW5jcnlwdGVkIG1lc3NhZ2VzIGZyb20NCiAgICBvdGhlciBjb21wdXRlcnMgKGFsb25nIHdpdGggeW91ciBwYXNzIHBocmFzZSkuIFlvdSBjYW4gc2FmZWx5IGxlYXZlIGl0ID0NCmluIHlvdXIgaW5ib3ggb3IgYXJjaGl2ZSBpdC48L2Rpdj4NCiAgPGJyPg0KICA8ZGl2IHN0eWxlPTNEImZvbnQtc2l6ZTogMTIuOHB4OyI-VGhlIGtleSBiZWxvdyBpcyBwcm90ZWN0ZWQgd2l0aCBwYXNzID0NCnBocmFzZSB0aGF0IG9ubHkgeW91IGtub3cuIFlvdSBzaG91bGQgbWFrZSBzdXJlIHRvDQogICAgbm90ZSB5b3VyIHBhc3MgcGhyYXNlIGRvd24uPC9kaXY-DQogIDxicj4NCiAgPGRpdiBzdHlsZT0zRCJmb250LXNpemU6IDEyLjhweDsiPg0KICAgIDxzcGFuIHN0eWxlPTNEImNvbG9yOiByZWQ7Ij5ETyBOT1QgREVMRVRFIFRISVMgRU1BSUwuPC9zcGFuPiBFbWFpbCA9DQpodW1hbkBmbG93Y3J5cHQuY29tIGlmIHlvdSBuZWVkIGhlbHAuIFdlIHJlc3BvbmQNCiAgICBwcm9tcHRseS4NCiAgPC9kaXY-DQo8L2Rpdj4NCi0tLS0tLXNpbmlrYWVsLT89XzEtMTU5NzY4NTA2MTM4MTAuNTU5Njk4MTQ4NTk5NDU3NQ0KQ29udGVudC1UeXBlOiBhcHBsaWNhdGlvbi9wZ3Ata2V5czsNCiBuYW1lPWZsb3djcnlwdC1iYWNrdXAtY2l0ZXN0c2dtYWlsZmxvd2NyeXB0ZGV2LmtleQ0KQ29udGVudC1EaXNwb3NpdGlvbjogYXR0YWNobWVudDsNCiBmaWxlbmFtZT1mbG93Y3J5cHQtYmFja3VwLWNpdGVzdHNnbWFpbGZsb3djcnlwdGRldi5rZXkNClgtQXR0YWNobWVudC1JZDogZl9YQWFwQWh4T0tIekpNTWNmSHJmc0FJVUlpRURLRXBAZmxvd2NyeXB0DQpDb250ZW50LUlkOiA8Zl9YQWFwQWh4T0tIekpNTWNmSHJmc0FJVUlpRURLRXBAZmxvd2NyeXB0Pg0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogYmFzZTY0DQoNCkxTMHRMUzFDUlVkSlRpQlFSMUFnVUZKSlZrRlVSU0JMUlZrZ1FreFBRMHN0TFMwdExRMEtWbVZ5YzJsdmJqb2dSbXh2ZDBOeWVYQjANCklFVnRZV2xzSUVWdVkzSjVjSFJwYjI0Z055NDRMamtOQ2tOdmJXMWxiblE2SUZObFlXMXNaWE56YkhrZ2MyVnVaQ0JoYm1RZ2NtVmoNClpXbDJaU0JsYm1OeWVYQjBaV1FnWlcxaGFXd05DZzBLZUZsWlJWaDZjVGxTUWxsS1MzZFpRa0pCU0dGU2R6aENRVkZrUVZsQ01pOW8NCmFtcEtZVlphWWtSaWIxZHBjMnhXUlRnNFFUVkNhVGREUlVoV0RRb3hVR1ZPWmtkRlRUTmthaXREVVUxSmNWcFNWSEZFUlVNeVdqZG4NClQwSktkVm8xYzFKSWFUWm9SMVZEUVVaTVEwZHdWa3RhVHpsdFEzWXZOMmNOQ25ZNFFsUlRRelU1WkdwUU9XVjZVMmxXVkRkS2NtVnQNClZHcG1NMlp0VGt0dlVHVkZOSGtyZEc5aVUySXdjbkZWZVdWamRsUTBVRUZUV1RGcFF3MEtSRTB3YzFJeU1XaGhWM2RuVVRCcloxWkgNClZucGtRMEU0V1RKcmRXUkhWbnBrU0UxMVdqSXhhR0ZYZUVGYWJYaDJaREpPZVdWWVFqQk1iVkpzRFFwa2FqZERhbmRSVVVabmIwRkoNClFWVkRXSHB4T1ZKQldVeERVV05KUVhkSlJVWlJaMHRCWjFGWFFXZEZRVUZvYTBKQmFITkVRV2cwUWtGRFJVb05Da1ZCWkVsSVNYSlENCmJsVnVLMFpwUlVWdE5rOWpORWhZZDJjMWMzZE9RUzlKUWpCblkybHpLMlJUWmpReVZtZEVLMHgxVlZGMUwwSXdaeXRzYkEwS2NYUjYNClpXZE1TMVZIV0M5RFJFeHBha3B0TTJaUFVFWkxWemRzTTFRelFVSkJURkZIVFhGWVkyRXhhbkIxVFVWU1VXUnhLMlJGTlhsNGFIRlQNCkRRcElTWEZZTkhsWlEyRnRiR3BQWVZWT2VEUnpSVmg2Y1RsU1FrbExTM2RaUWtKQlIxaFdVVVZHUVZGRlNGRkpURU5rTmpsRWQyNUYNCmNGbE5RMmNOQ2pkeWNXTmFka1ppVDNwa1ZrUnZMMVkzYUZOaGNHVXJSVlpRZDFKQmQwVkpRaTgwU2tGM2FVOTROV2xpT1ZacVZtZDENClFqRmlVaTlNUldjNVN3MEtUVnBXY0c5S1pXczFlRkozWjBwWlZYSlFNRklyUmxORGNUTnhVV2QxTUVSRVNrMVVaWEJ0UVN0TGN5OXcNClZsTmxPR0pxVEZod05rOTZhRXhFRFFwcE9YZHlVWE5KYkhSRGJFeDZaMjQxU1hGdlUxWklSMEYzYm1kRlIwSlpTVUZCYTBaQmJEZzINCmRsVlJRMGQzZDBGSlVXdFJRakJuWTJseksyUU5DbE5tTkZkSlVWTmlielY2WjJSbVEwUnRla0V3UkRoblNGTkNlVXQ2TlRGS0wycE0NClkwRlFNR1J0V1hwalR6TktSME4yUmxKd1dFUmxXRGRDY3cwS1pVSXdSSGhxWlRoUk1YYzFNblZJYlRSQ1dWcG5kMFF2WmtaWmFVRlQNCmJsSlJla05JZDFSd2QzbHJNVEV3Vnl0cVVIUXJjazVhTms5SlVscElEUW93WkNzclIxRXdQUTBLUFhKWUwyOE5DaTB0TFMwdFJVNUUNCklGQkhVQ0JRVWtsV1FWUkZJRXRGV1NCQ1RFOURTeTB0TFMwdERRbz0NCi0tLS0tLXNpbmlrYWVsLT89XzEtMTU5NzY4NTA2MTM4MTAuNTU5Njk4MTQ4NTk5NDU3NS0tDQo=",
+    "historyId": "2032",
+    "internalDate": "1597685061000"
+  }
+}

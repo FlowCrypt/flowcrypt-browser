@@ -1,4 +1,4 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
@@ -6,17 +6,17 @@
 
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
 
+import { WebmailVariantObject, contentScriptSetupIfVacant } from './setup-webmail-content-script.js';
 import { Catch } from '../../common/platform/catch.js';
-import { Store } from '../../common/platform/store.js';
-import { Str } from '../../common/core/common.js';
+import { ContentScriptWindow } from '../../common/browser/browser-window.js';
+import { Env } from '../../common/browser/env.js';
+import { GmailElementReplacer } from './gmail-element-replacer.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
-import { GmailElementReplacer } from './gmail_element_replacer.js';
-import { contentScriptSetupIfVacant, WebmailVariantObject } from './setup_webmail_content_script.js';
-import { ContentScriptWindow } from '../../common/extension.js';
-import { Env } from '../../common/browser.js';
-import { GoogleAuth } from '../../common/api/google.js';
-import { XssSafeFactory } from '../../common/xss_safe_factory.js';
+import { Str } from '../../common/core/common.js';
+import { XssSafeFactory } from '../../common/xss-safe-factory.js';
+import { OrgRules } from '../../common/org-rules.js';
+import { AcctStore } from '../../common/platform/store/acct-store.js';
 
 Catch.try(async () => {
 
@@ -84,14 +84,14 @@ Catch.try(async () => {
 
     const start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
       hijackGmailHotkeys();
-      const storage = await Store.getAcct(acctEmail, ['sendAs', 'google_token_scopes', 'full_name']);
+      const storage = await AcctStore.get(acctEmail, ['sendAs', 'google_token_scopes', 'full_name']);
+      const orgRules = await OrgRules.newInstance(acctEmail);
       if (!storage.sendAs) {
         storage.sendAs = {};
         storage.sendAs[acctEmail] = { name: storage.full_name, isPrimary: true };
       }
-      const canReadEmails = GoogleAuth.hasReadScope(storage.google_token_scopes || []);
       injector.btns();
-      replacer = new GmailElementReplacer(factory, acctEmail, storage.sendAs, canReadEmails, injector, notifications, hostPageInfo.gmailVariant);
+      replacer = new GmailElementReplacer(factory, orgRules, acctEmail, storage.sendAs, injector, notifications, hostPageInfo.gmailVariant);
       await notifications.showInitial(acctEmail);
       const intervaliFunctions = replacer.getIntervalFunctions();
       for (const intervalFunction of intervaliFunctions) {
@@ -116,7 +116,7 @@ Catch.try(async () => {
           const causesUnsecureReply = unsecureReplyKeyShortcuts.includes(e.which);
           if (causesUnsecureReply && !$(document.activeElement!).is('input, select, textarea, div[contenteditable="true"]') && $('iframe.reply_message').length) {
             e.stopImmediatePropagation();
-            replacer.setReplyBoxEditable();
+            replacer.setReplyBoxEditable().catch(Catch.reportErr);
           }
         })();
       });
@@ -131,6 +131,8 @@ Catch.try(async () => {
       getReplacer: () => replacer,
       start,
     });
+
+    // BrowserMsg.addPgpListeners(); // todo - re-allow when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
   };
 
   // when we support more webmails, there will be if/else here to figure out which one to run

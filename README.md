@@ -1,12 +1,15 @@
 # FlowCrypt: Encrypt Gmail with PGP
 
+
 ## Users
 
 Get [FlowCrypt](https://flowcrypt.com/) browser extension at: https://flowcrypt.com/download
 
 ## Developers
 
-[![Tests](https://semaphoreci.com/api/v1/flowcrypt/flowcrypt-browser/branches/master/badge.svg)](https://semaphoreci.com/flowcrypt/flowcrypt-browser)
+Mock tests: ![Mock tests](https://flowcrypt.semaphoreci.com/badges/flowcrypt-browser.svg?key=d575b4ff-e35d-4217-9152-27cea9e72c19)
+
+Live tests: [![Live Tests](https://semaphoreci.com/api/v1/flowcrypt/flowcrypt-browser/branches/master/badge.svg)](https://semaphoreci.com/flowcrypt/flowcrypt-browser)
 
 ```js
 let you = new TeamMember();
@@ -51,6 +54,15 @@ $ npm run-script build
 
 Now you can find your built project in `build/chrome-consumer` and `build/firefox-consumer`
 
-[FlowCrypt Project Structure and Overview](https://github.com/FlowCrypt/flowcrypt-browser/wiki/FlowCrypt-Project-Structure-and-Overview)
+### Note for Mac OS users
 
-[FlowCrypt TypeScript Style Guide](https://github.com/FlowCrypt/flowcrypt-browser/wiki/FlowCrypt-TypeScript-Style-Guide)
+In order for `npm run-script build` to work you have to:
+
+1) Upgrade `bash` to v4 or higher and make the new version default: https://www.shell-tips.com/mac/upgrade-bash/
+
+2) Install GNU `cp` util and make it default: https://stackoverflow.com/a/40431200/3049064
+
+## Other guides
+
+- [FlowCrypt Project Structure and Overview](https://github.com/FlowCrypt/flowcrypt-browser/wiki/FlowCrypt-Project-Structure-and-Overview)
+- [FlowCrypt TypeScript Style Guide](https://github.com/FlowCrypt/flowcrypt-browser/wiki/FlowCrypt-TypeScript-Style-Guide)

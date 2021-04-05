@@ -1,4 +1,4 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import * as ava from 'ava';
 import { Buf } from '../../extension/js/common/core/buf.js';
@@ -28,7 +28,7 @@ const UTF8 = `გამარჯობა.\nこんにちは。\nЗдравств
 const UTF8_AS_BYTES = Buffer.from(UTF8);
 const UTF8_AS_RAW_STRING = Buffer.from(UTF8).toString('binary');
 
-const equals = (a: string | Uint8Array, b: string | Uint8Array) => {
+export const equals = (a: string | Uint8Array, b: string | Uint8Array) => {
   expect(typeof a).to.equal(typeof b, `types dont match`);
   if (typeof a === 'string' && typeof b === 'string') {
     expect(a).to.equal(b, 'string result mismatch');

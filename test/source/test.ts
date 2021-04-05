@@ -1,108 +1,78 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import * as ava from 'ava';
+
+import { AvaContext, getDebugHtmlAtts, minutes, standaloneTestTimeout } from './tests/tooling';
 import { BrowserHandle, BrowserPool } from './browser';
-import { BrowserRecipe } from './tests/browser_recipe';
-import { defineUnitTests } from './tests/tests/unit';
-import { defineSetupTests } from './tests/tests/setup';
-import { defineComposeTests } from './tests/tests/compose';
-import { defineDecryptTests } from './tests/tests/decrypt';
-import { defineGmailTests } from './tests/tests/gmail';
-import { defineSettingsTests } from './tests/tests/settings';
-import { defineElementTests } from './tests/tests/elements';
-import { defineConsumerAcctTests as defineAcctTests } from './tests/tests/account';
 import { Config, Util, getParsedCliParams } from './util';
-import { FlowCryptApi } from './tests/api';
-import { getDebugHtmlAtts, AvaContext, standaloneTestTimeout, minutes, GlobalBrowser, newWithTimeoutsFunc } from './tests';
+
+import { BrowserRecipe } from './tests/tooling/browser-recipe';
+import { FlowCryptApi } from './tests/tooling/api';
+import { defineComposeTests } from './tests/compose';
+import { defineDecryptTests } from './tests/decrypt';
+import { defineElementTests } from './tests/elements';
+import { defineFlakyTests } from './tests/flaky';
+import { defineGmailTests } from './tests/gmail';
+import { defineSettingsTests } from './tests/settings';
+import { defineSetupTests } from './tests/setup';
+import { defineUnitNodeTests } from './tests/unit-node';
+import { defineUnitBrowserTests } from './tests/unit-browser';
 import { mock } from './mock';
+import { mockBackendData } from './mock/backend/backend-endpoints';
 
-const { testVariant, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
+export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
+export const internalTestState = { expectiIntentionalErrReport: false }; // updated when a particular test that causes an error is run
 
-process.setMaxListeners(30);
+process.setMaxListeners(60);
 
 const consts = { // higher concurrency can cause 429 google errs when composing
   TIMEOUT_SHORT: minutes(1),
   TIMEOUT_EACH_RETRY: minutes(3),
   TIMEOUT_ALL_RETRIES: minutes(13), // this has to suffer waiting for semaphore between retries, thus almost the same as below
   TIMEOUT_OVERALL: minutes(14),
-  ATTEMPTS: oneIfNotPooled(3),
-  POOL_SIZE: oneIfNotPooled(isMock ? 13 : 2),
-  POOL_SIZE_COMPATIBILITY: oneIfNotPooled(isMock ? 5 : 1),
-  POOL_SIZE_COMPOSE: oneIfNotPooled(isMock ? 1 : 0),
+  ATTEMPTS: testGroup === 'STANDARD-GROUP' ? oneIfNotPooled(3) : process.argv.includes('--retry=false') ? 1 : 3,
+  POOL_SIZE: oneIfNotPooled(isMock ? 24 : 2),
   PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>, // will be set right below
+  IS_LOCAL_DEBUG: process.argv.includes('--debug') ? true : false, // run locally by developer, not in ci
 };
 console.info('consts: ', JSON.stringify(consts), '\n');
 consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) => setTimeout(() => reject(new Error(`TIMEOUT_OVERALL`)), consts.TIMEOUT_OVERALL));
 
 export type Consts = typeof consts;
-export type CommonBrowserGroup = 'compatibility' | 'compose';
+export type CommonAcct = 'compatibility' | 'compose' | 'ci.tests.gmail';
 
-const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false, buildDir);
-const browserGlobal: { [group: string]: GlobalBrowser } = {
-  compatibility: {
-    browsers: new BrowserPool(consts.POOL_SIZE_COMPATIBILITY, 'browserPoolGlobal', true, buildDir),
-  },
-  compose: {
-    browsers: new BrowserPool(consts.POOL_SIZE_COMPOSE, 'browserPoolGlobal', true, buildDir),
-  },
-};
+const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false, buildDir, isMock, undefined, undefined, consts.IS_LOCAL_DEBUG);
 let closeMockApi: () => Promise<void>;
 const mockApiLogs: string[] = [];
 
-ava.before('set up global browsers and config', async t => {
+ava.before('set config and mock api', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY, t.title);
   Config.extensionId = await browserPool.getExtensionId(t);
   console.info(`Extension url: chrome-extension://${Config.extensionId}`);
-  await Util.sleep(1);
   if (isMock) {
     const mockApi = await mock(line => mockApiLogs.push(line));
     closeMockApi = mockApi.close;
   }
-  const setupPromises: Promise<void>[] = [];
-  const globalBrowsers: { [group: string]: BrowserHandle[] } = { compatibility: [], compose: [] };
-  for (const group of Object.keys(browserGlobal)) {
-    for (let i = 0; i < browserGlobal[group].browsers.poolSize; i++) {
-      const b = await browserGlobal[group].browsers.newBrowserHandle(t);
-      setupPromises.push(browserPool.withGlobalBrowserTimeoutAndRetry(b, (t, b) => BrowserRecipe.setUpCommonAcct(t, b, group as CommonBrowserGroup), t, consts));
-      globalBrowsers[group].push(b);
-    }
-  }
-  await Promise.all(setupPromises);
-  for (const group of Object.keys(browserGlobal)) {
-    for (const b of globalBrowsers[group]) {
-      await browserGlobal[group].browsers.doneUsingBrowser(b);
-    }
-  }
   t.pass();
 });
 
-const testWithNewBrowser = (cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>): ava.Implementation<{}> => {
+const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>, flag?: 'FAILING'): ava.Implementation<{}> => {
   return async (t: AvaContext) => {
-    await browserPool.withNewBrowserTimeoutAndRetry(cb, t, consts);
+    await browserPool.withNewBrowserTimeoutAndRetry(async (t, browser) => {
+      if (acct) {
+        await BrowserRecipe.setUpCommonAcct(t, browser, acct, !isMock);
+      }
+      await cb(t, browser);
+    }, t, consts, flag);
     t.pass();
   };
 };
 
-const testWithSemaphoredGlobalBrowser = (group: CommonBrowserGroup, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>): ava.Implementation<{}> => {
-  return async (t: AvaContext) => {
-    const withTimeouts = newWithTimeoutsFunc(consts);
-    const browser = await withTimeouts(browserGlobal[group].browsers.openOrReuseBrowser(t));
-    try {
-      await browserPool.withGlobalBrowserTimeoutAndRetry(browser, cb, t, consts);
-      t.pass();
-    } finally {
-      await browserGlobal[group].browsers.doneUsingBrowser(browser);
-    }
-  };
-};
-
-export type TestWithNewBrowser = typeof testWithNewBrowser;
-export type TestWithGlobalBrowser = typeof testWithSemaphoredGlobalBrowser;
+export type TestWithBrowser = typeof testWithBrowser;
 
 ava.after.always('close browsers', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
   await browserPool.close();
-  await browserGlobal.compatibility.browsers.close();
   t.pass();
 });
 
@@ -113,6 +83,35 @@ if (isMock) {
     t.pass();
   });
 }
+
+ava.after.always('evaluate Catch.reportErr errors', async t => {
+  if (!isMock || testGroup !== 'STANDARD-GROUP') { // can only collect reported errs when running with a mocked api
+    t.pass();
+    return;
+  }
+  // todo - here we filter out an error that would otherwise be useful
+  // in one test we are testing an error scenario
+  // our S/MIME implementation is still early so it throws "reportable" errors like this during tests
+  const usefulErrors = mockBackendData.reportedErrors
+    .filter(e => e.message !== 'Too few bytes to read ASN.1 value.')
+    // on enterprise, these report errs
+    .filter(e => !(testVariant === 'ENTERPRISE-MOCK' && e.trace.includes('.well-known/host-meta.json')))
+    // todo - ideally mock tests would never call this. But we do tests with human@flowcrypt.com so it's calling here
+    .filter(e => !e.trace.includes('-1 when GET-ing https://openpgpkey.flowcrypt.com'));
+  // end of todo
+  const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
+  const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
+  if (!foundExpectedErr && internalTestState.expectiIntentionalErrReport) {
+    t.fail(`Catch.reportErr errors: missing intentional error`);
+  } else if (foundUnwantedErrs.length) {
+    for (const e of foundUnwantedErrs) {
+      console.info(`----- mockBackendData Catch.reportErr -----\nname: ${e.name}\nmessage: ${e.message}\nurl: ${e.url}\ntrace: ${e.trace}`);
+    }
+    t.fail(`Catch.reportErr errors: ${foundUnwantedErrs.length}`);
+  } else {
+    t.pass();
+  }
+});
 
 ava.after.always('send debug info if any', async t => {
   console.info('send debug info - deciding');
@@ -132,11 +131,18 @@ ava.after.always('send debug info if any', async t => {
   t.pass();
 });
 
-defineSetupTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineUnitTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineComposeTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineDecryptTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineGmailTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineSettingsTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineElementTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineAcctTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+
+if (testGroup === 'UNIT-TESTS') {
+  defineUnitNodeTests(testVariant);
+  defineUnitBrowserTests(testVariant, testWithBrowser);
+} else if (testGroup === 'FLAKY-GROUP') {
+  defineFlakyTests(testVariant, testWithBrowser);
+} else {
+  defineSetupTests(testVariant, testWithBrowser);
+  defineUnitNodeTests(testVariant);
+  defineComposeTests(testVariant, testWithBrowser);
+  defineDecryptTests(testVariant, testWithBrowser);
+  defineGmailTests(testVariant, testWithBrowser);
+  defineSettingsTests(testVariant, testWithBrowser);
+  defineElementTests(testVariant, testWithBrowser);
+}

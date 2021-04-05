@@ -1,51 +1,47 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
-import { VERSION } from '../common/core/const.js';
-import { Catch } from '../common/platform/catch.js';
-import { Store, GlobalStore } from '../common/platform/store.js';
-import { BrowserMsg, Bm } from '../common/extension.js';
-import { injectFcIntoWebmail } from './inject.js';
-import { migrateGlobal, scheduleFcSubscriptionLevelCheck } from './migrations.js';
-import { GoogleAuth } from '../common/api/google.js';
+import { Bm, BrowserMsg } from '../common/browser/browser-msg.js';
+import { BgHandlers } from './bg-handlers.js';
 import { BgUtils } from './bgutils.js';
-import { BgHandlers } from './bg_handlers.js';
-import { PgpMsg, Pgp } from '../common/core/pgp.js';
-import { Buf } from '../common/core/buf.js';
-
-declare const openpgp: typeof OpenPGP;
+import { Catch } from '../common/platform/catch.js';
+import { GoogleAuth } from '../common/api/email-provider/gmail/google-auth.js';
+import { VERSION } from '../common/core/const.js';
+import { injectFcIntoWebmail } from './inject.js';
+import { migrateGlobal, moveContactsToEmailsAndPubkeys } from './migrations.js';
+import { opgp } from '../common/core/crypto/pgp/openpgpjs-custom.js';
+import { GlobalStoreDict, GlobalStore } from '../common/platform/store/global-store.js';
+import { ContactStore } from '../common/platform/store/contact-store.js';
+import { SessionStore } from '../common/platform/store/session-store.js';
+import { AcctStore } from '../common/platform/store/acct-store.js';
 
 console.info('background_process.js starting');
 
-openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
-
-let backgroundProcessStartReason = 'browser_start';
-chrome.runtime.onInstalled.addListener(event => {
-  backgroundProcessStartReason = event.reason;
-});
+opgp.initWorker({ path: '/lib/openpgp.worker.js' });
 
 (async () => {
 
   let db: IDBDatabase;
-  let storage: GlobalStore;
+  let storage: GlobalStoreDict;
 
   try {
     await migrateGlobal();
-    await Store.setGlobal({ version: Number(VERSION.replace(/\./g, '')) });
-    storage = await Store.getGlobal(['settings_seen', 'errors']);
+    await GlobalStore.set({ version: Number(VERSION.replace(/\./g, '')) });
+    storage = await GlobalStore.get(['settings_seen']);
   } catch (e) {
-    await BgUtils.handleStoreErr(Store.errCategorize(e));
+    await BgUtils.handleStoreErr(GlobalStore.errCategorize(e));
     return;
   }
 
   if (!storage.settings_seen) {
     await BgUtils.openSettingsPage('initial.htm'); // called after the very first installation of the plugin
-    await Store.setGlobal({ settings_seen: true });
+    await GlobalStore.set({ settings_seen: true });
   }
 
   try {
-    db = await Store.dbOpen(); // takes 4-10 ms first time
+    db = await ContactStore.dbOpen(); // takes 4-10 ms first time
+    await moveContactsToEmailsAndPubkeys(db);
   } catch (e) {
     await BgUtils.handleStoreErr(e);
     return;
@@ -53,25 +49,18 @@ chrome.runtime.onInstalled.addListener(event => {
 
   // storage related handlers
   BrowserMsg.bgAddListener('db', (r: Bm.Db) => BgHandlers.dbOperationHandler(db, r));
-  BrowserMsg.bgAddListener('session_set', (r: Bm.StoreSessionSet) => Store.sessionSet(r.acctEmail, r.key, r.value));
-  BrowserMsg.bgAddListener('session_get', (r: Bm.StoreSessionGet) => Store.sessionGet(r.acctEmail, r.key));
-  BrowserMsg.bgAddListener('storeGlobalGet', (r: Bm.StoreGlobalGet) => Store.getGlobal(r.keys));
-  BrowserMsg.bgAddListener('storeGlobalSet', (r: Bm.StoreGlobalSet) => Store.setGlobal(r.values));
-  BrowserMsg.bgAddListener('storeAcctGet', (r: Bm.StoreAcctGet) => Store.getAcct(r.acctEmail, r.keys));
-  BrowserMsg.bgAddListener('storeAcctSet', (r: Bm.StoreAcctSet) => Store.setAcct(r.acctEmail, r.values));
+  BrowserMsg.bgAddListener('session_set', (r: Bm.StoreSessionSet) => SessionStore.set(r.acctEmail, r.key, r.value));
+  BrowserMsg.bgAddListener('session_get', (r: Bm.StoreSessionGet) => SessionStore.get(r.acctEmail, r.key));
+  BrowserMsg.bgAddListener('storeGlobalGet', (r: Bm.StoreGlobalGet) => GlobalStore.get(r.keys));
+  BrowserMsg.bgAddListener('storeGlobalSet', (r: Bm.StoreGlobalSet) => GlobalStore.set(r.values));
+  BrowserMsg.bgAddListener('storeAcctGet', (r: Bm.StoreAcctGet) => AcctStore.get(r.acctEmail, r.keys));
+  BrowserMsg.bgAddListener('storeAcctSet', (r: Bm.StoreAcctSet) => AcctStore.set(r.acctEmail, r.values));
 
-  // openpgp related handlers
-  BrowserMsg.bgAddListener('pgpMsgType', (r: Bm.PgpMsgType) => PgpMsg.type({ data: Buf.fromRawBytesStr(r.rawBytesStr) }));
-  BrowserMsg.bgAddListener('pgpMsgDiagnosePubkeys', PgpMsg.diagnosePubkeys);
-  BrowserMsg.bgAddListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await Pgp.hash.challengeAnswer(r.answer) }));
-  BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decrypt);
-  BrowserMsg.bgAddListener('pgpMsgVerifyDetached', PgpMsg.verifyDetached);
-  BrowserMsg.bgAddListener('pgpKeyDetails', BgHandlers.pgpKeyDetails);
+  BrowserMsg.addPgpListeners(); // todo - remove https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
 
   BrowserMsg.bgAddListener('ajax', BgHandlers.ajaxHandler);
-  BrowserMsg.bgAddListener('ajaxGmailAttGetChunk', BgHandlers.ajaxGmailAttGetChunkHandler);
+  BrowserMsg.bgAddListener('ajaxGmailAttachmentGetChunk', BgHandlers.ajaxGmailAttachmentGetChunkHandler);
   BrowserMsg.bgAddListener('settings', BgHandlers.openSettingsPageHandler);
-  BrowserMsg.bgAddListener('inbox', BgHandlers.openInboxPageHandler);
   BrowserMsg.bgAddListener('update_uninstall_url', BgHandlers.updateUninstallUrl);
   BrowserMsg.bgAddListener('get_active_tab_info', BgHandlers.getActiveTabInfo);
   BrowserMsg.bgAddListener('reconnect_acct_auth_popup', (r: Bm.ReconnectAcctAuthPopup) => GoogleAuth.newAuthPopup(r));
@@ -80,10 +69,5 @@ chrome.runtime.onInstalled.addListener(event => {
 
   await BgHandlers.updateUninstallUrl({}, {});
   injectFcIntoWebmail();
-  scheduleFcSubscriptionLevelCheck(backgroundProcessStartReason);
-
-  if (storage.errors && storage.errors.length && storage.errors.length > 100) { // todo - ideally we should be trimming it to show the last 100
-    await Store.removeGlobal(['errors']);
-  }
 
 })().catch(Catch.reportErr);

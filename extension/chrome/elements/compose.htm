@@ -7,9 +7,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>FlowCrypt</title>
   <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/sweetalert2.css" />
   <link rel="stylesheet" href="/css/animate.css" />
   <link rel="stylesheet" href="/css/fine-uploader-new.css" />
-  <link rel="stylesheet" href="/lib/featherlight/featherlight.css" />
   <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
   <script type="text/template" src="shared/attach.template.htm" id="qq-template"></script>
 </head>
@@ -17,11 +17,18 @@
 <body id="new_message">
   <div class="container">
     <div id="initial_prompt" class="display_none" data-test="action-accept-reply-prompt">
-      <p id="reply_links">
-        Encrypted <a href="#" id="a_reply">Reply</a>, <a href="#" id="a_reply_all"
-          data-test="action-accept-reply-all-prompt">Reply to All</a>, or <a href="#" id="a_forward">Forward</a>
-        <div id="reply_click_area"></div>
-      </p>
+      <a href="#" id="a_reply_all" data-test="action-accept-reply-all-prompt">
+        <img src="/img/reply-all-icon.png" alt="">
+        Secure Reply to All
+      </a>
+      <a href="#" id="a_reply" data-test="encrypted-reply">
+        <img src="/img/reply-icon.png" alt="">
+        Secure Reply
+      </a>
+      <a href="#" id="a_forward" data-test="action-forward">
+        <img src="/img/forward-icon.png" alt="">
+        Secure Forward
+      </a>
     </div>
     <div id="contacts" data-test="container-contacts" tabindex="0">
       <ul></ul>
@@ -32,20 +39,25 @@
         <th>
           <div class="header">
             <!-- header -->
-            <h1>New Secure Message</h1>
+            <h1 id="header_title" data-test="header-title">New Secure Message</h1>
             <div class="actions_container">
-              <span class="action_feedback" title="Feedback or Help"><img src="/img/svgs/question-icon-white.svg"
-                  class="" alt="Help"></span>
-              <span class="minimize_new_message" title="Minimize"></span>
-              <span class="popout maximize_composer" title="Full-screen"><img src="/img/svgs/maximize.svg"
-                  tabindex="-1"></span>
-              <span class="close_new_message" title="Save & close"><img src="/img/svgs/close-icon.svg"
-                  tabindex="-1"></span>
+              <span class="action_feedback" title="Feedback or Help">
+                <img src="/img/svgs/question-icon-white.svg" alt="Help">
+              </span>
+              <span class="minimize_new_message" title="Minimize">
+                <img src="/img/svgs/minimize.svg">
+              </span>
+              <span class="popout maximize_composer" title="Full screen">
+                <img src="/img/svgs/maximize.svg">
+              </span>
+              <span class="close_new_message" title="Save & close" data-test="action-close-new-message">
+                <img src="/img/svgs/close-icon.svg">
+              </span>
             </div>
           </div>
         </th>
       </tr>
-      <tr>
+      <tr id="recipients_row">
         <td class="input recipients-inputs">
           <div id="input_addresses_container" class="invisible">
             <!-- to -->
@@ -53,7 +65,7 @@
               <span class="recipients recipients-to"></span>
               <input id="input_to" spellcheck="false" tabindex="1" placeholder="Add Recipient" data-test="input-to"
                 data-sending-type="to" autocomplete="false" />
-              <span class="email-copy-actions" data-test="container-cc-bcc-buttons">
+              <span class="container-cc-bcc-buttons" data-test="container-cc-bcc-buttons">
                 <button id="cc" class="cc" tabindex="20" data-test="action-show-cc">cc</button>
                 <button id="bcc" class="bcc" tabindex="21" data-test="action-show-bcc">bcc</button>
               </span>
@@ -71,9 +83,10 @@
                 autocomplete="false" />
             </div>
           </div>
-          <div id="recipients_placeholder" class="collapsed" data-test="action-show-container-cc-bcc-buttons" style="display: flex;">
+          <div id="recipients_placeholder" class="collapsed" data-test="action-show-container-cc-bcc-buttons"
+            style="display: flex;">
             <span class="placeholder">Recipients</span>
-            <div class="email_preview"></div>
+            <div class="email_preview" data-test="recipients-preview"></div>
           </div>
         </td>
       </tr>
@@ -89,7 +102,7 @@
           <div contenteditable class="input_intro" tabindex="3"></div>
         </td>
       </tr>
-      <tr>
+      <tr id="section_compose">
         <td class="text">
           <div class="action_add_intro good" data-test="add-intro"
             title="Add a custom message that your recipient will see before they open encrypted content">+
@@ -97,46 +110,51 @@
           <!-- body -->
           <div class="text_container">
             <div contenteditable id="input_text" tabindex="4" data-test="input-body"></div>
-            <div class="action_show_prev_msg" style="display: none;" data-test="action-expand-quoted-text">
+            <button class="action_show_prev_msg" data-test="action-expand-quoted-text"
+              title="Show your email signature and quoted content" tabindex="4">
               <img src="/img/svgs/three-dots.svg" />
-            </div>
+            </button>
             <div id="fineuploader"></div>
           </div>
         </td>
       </tr>
       <tr id="password_or_pubkey_container" data-test="password-or-pubkey-container">
         <td>
-          Emails <span class="grey">in grey</span> don't seem to use encryption. Add a <span class="label_password"
-            style="display: block;">password
-            protection</span><span class="start">"</span><input id="input_password" placeholder="" tabindex="5"
-            data-test="input-password"><span class="end">"</span>
-          <div class="question_copy">If they do use encryption, <a href="#" class="add_pubkey"
-              data-test="action-open-add-pubkey-dialog">add
-              their public key</a> instead. Else ask them to get FlowCrypt!</div>
+          <div id="expiration_note">
+            Recipient will have access to this message <a href="#" id="expiration_note_settings_link">for <span id="expiration_note_message_expire">(loading)</span></a>. You are responsible for sharing this password with them (use other medium to share the password - not email).
+            <br /> <br />
+            (messages sent to FlowCrypt users have no limit, and don't need password exchange)
+          </div>
+          <div>
+            Emails <span class="grey">in grey</span> don't use encryption.
+            <br /><a href="#" class="add_pubkey" data-test="action-open-add-pubkey-dialog">Add their Public Key</a> or
+            ask them to get FlowCrypt.
+            <br />Or send email password protected:
+            <div class="password_input_container"><input id="input_password" placeholder="" tabindex="5"
+                data-test="input-password"></div>
+          </div>
         </td>
       </tr>
-      <tr class="bottom">
+      <tr id="section_footer" class="bottom">
         <td class="bottom">
           <div class="sending-container">
-            <div id="sending-options-container" class="sending-options-container">
+            <div id="sending-options-container" class="sending-options-container" data-test="container-sending-options">
             </div>
-            <button id="send_btn" class="button green" tabindex="6">
-              <span id="send_btn_text" class="btn-text" data-test="action-send"><i></i>Encrypt and Send</span>
+            <button id="send_btn" class="button green" tabindex="6" data-test="action-send">
+              <span id="send_btn_text" class="btn-text"><i></i></span>
             </button>
-            <button id="toggle_send_options" class="action-show-options-popover button green" title="More send options" tabindex="7" data-test="action-show-options-popover">
+            <button id="toggle_send_options" class="action-show-options-popover button green" title="More send options"
+              tabindex="7" data-test="action-show-options-popover">
               <div class="icon-chevron"></div>
             </button>
-            </div>
           </div>
           <div class="icon attach" id="fineuploader_button"><img src="/img/svgs/paperclip-icon.svg" class="attach-file"
               alt="Attach File"></div>
-          <div id="send_btn_note"></div>
-          <button class="icon right delete_draft" tabindex="11" title="Delete draft"><img
-              src="/img/svgs/trash-can-icon.svg" class="delete-draft" alt="Delete Email"></button>
-          <button class="icon right action_include_pubkey" tabindex="10" title="Include your Public Key"><i
+          <div id="send_btn_note" data-test="send-btn-note"></div>
+          <button class="icon right delete_draft" tabindex="11" title="Delete draft"><img src="/img/svgs/trash-can-icon.svg"
+              class="delete-draft" alt="Delete Email"></button>
+          <button class="icon right action_include_pubkey" data-test="action-include-pubkey" tabindex="10" title="Include your Public Key"><i
               alt="pubkey"></i></button>
-          <button class="icon right action_include_footer" tabindex="9" title="Include email footer (not encrypted)"><i
-              alt="footer"></i></button>
         </td>
       </tr>
     </table>
@@ -159,16 +177,15 @@
             <div class="replied_body pgp_secure"></div>
           </td>
         </tr>
-        <tr>
-          <td colspan="2" class="email_footer"></td>
-        </tr>
       </table>
       <div id="attachments"></div>
     </div>
   </div>
-  <script src="/lib/purify.min.js"></script>
+  <script src="/lib/purify.js"></script>
   <script src="/lib/openpgp.js"></script>
   <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/sweetalert2.js"></script>
+  <script src="/lib/squire-raw.js"></script>
   <script src="/lib/emailjs/punycode.js"></script>
   <script src="/lib/emailjs/emailjs-stringencoding.js"></script>
   <script src="/lib/emailjs/emailjs-mime-codec.js"></script>
@@ -177,8 +194,9 @@
   <script src="/lib/emailjs/emailjs-mime-builder.js"></script>
   <script src="/lib/emailjs/emailjs-mime-parser.js"></script>
   <script src="/lib/fine-uploader.js"></script>
-  <script src="/lib/featherlight/featherlight.js"></script>
+  <script src="/lib/zxcvbn.js"></script>
   <script src="/lib/iso-8859-2.js"></script>
+  <script src="/lib/forge.js"></script>
   <script src="compose.js" type="module"></script>
 
 </body>

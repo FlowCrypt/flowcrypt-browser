@@ -8,7 +8,12 @@
     "tslint.configFile": "conf/tslint.yaml",
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
-    "editor.fontFamily": "'Hack', 'Droid Sans Mono', 'monospace', monospace, 'Droid Sans Fallback'",
+    "eslint.validate": [
+      "javascript",
+      "typescript",
+    ],
+    "html.format.enable": false,
+    "stylelint.autoFixOnSave": true,
     "files.exclude": {
       "**/node_modules/**": true
     },
@@ -16,11 +21,34 @@
       "error"
     ],
     "errorLens.errorColor": "#FF00000A",
-    "errorLens.errorTextColor": "#FF000066"
+    "errorLens.errorTextColor": "#FF000066",
+    "editor.tabSize": 2,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": true,
+      "source.fixAll.tslint": true
+    },
+    "tslint.exclude": [
+      "test/**/*.ts"
+    ],
+    "diffEditor.wordWrap": "on",
+    "editor.rulers": [
+      160
+    ]
   },
   "folders": [
     {
       "path": "."
+    },
+    {
+      "path": "../flowcrypt-script"
     }
-  ]
+  ],
+  "extensions": {
+    "recommendations": [
+      "dbaeumer.vscode-eslint",
+      "hex-ci.stylelint-plus",
+      "ms-vscode.vscode-typescript-tslint-plugin",
+      "philhindle.errorlens"
+    ]
+  }
 }

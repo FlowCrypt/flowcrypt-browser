@@ -1,132 +1,135 @@
-/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
 
-import { Catch } from '../../../js/common/platform/catch.js';
-import { Store } from '../../../js/common/platform/store.js';
-import { Ui, Env } from '../../../js/common/browser.js';
-import { Pgp } from '../../../js/common/core/pgp.js';
-import { Settings } from '../../../js/common/settings.js';
-import { Api } from '../../../js/common/api/api.js';
-import { Backend } from '../../../js/common/api/backend.js';
+
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { KeyInfo } from '../../../js/common/core/crypto/key.js';
+import { Settings } from '../../../js/common/settings.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { Url } from '../../../js/common/core/common.js';
+import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
+import { OrgRules } from '../../../js/common/org-rules.js';
+import { AccountServer } from '../../../js/common/api/account-server.js';
+import { FcUuidAuth } from '../../../js/common/api/account-servers/flowcrypt-com-api.js';
 
-declare const openpgp: typeof OpenPGP;
+View.run(class SecurityView extends View {
 
-Catch.try(async () => {
+  private readonly acctEmail: string;
+  private readonly parentTabId: string;
+  private primaryKi: KeyInfo | undefined;
+  private authInfo: FcUuidAuth | undefined;
+  private orgRules!: OrgRules;
+  private acctServer: AccountServer;
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'embedded', 'parentTabId']);
-  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const embedded = uncheckedUrlParams.embedded === true;
-
-  await initPassphraseToggle(['passphrase_entry']);
-
-  const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-  Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi, false);
-  if (!primaryKi) {
-    return; // added do_throw=false above + manually exiting here because security.htm can indeed be commonly rendered on setup page before setting acct up
+  constructor() {
+    super();
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
+    this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+    this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+    this.acctServer = new AccountServer(this.acctEmail);
   }
 
-  const storage = await Store.getAcct(acctEmail, ['hide_message_password', 'outgoing_language']);
-
-  if (embedded) {
-    $('.change_passhrase_container, .title_container').css('display', 'none');
-    $('.line').css('padding', '7px 0');
+  public render = async () => {
+    await initPassphraseToggle(['passphrase_entry']);
+    this.primaryKi = await KeyStore.getFirstRequired(this.acctEmail);
+    this.authInfo = await AcctStore.authInfo(this.acctEmail);
+    const storage = await AcctStore.get(this.acctEmail, ['hide_message_password', 'outgoing_language']);
+    this.orgRules = await OrgRules.newInstance(this.acctEmail);
+    $('#hide_message_password').prop('checked', storage.hide_message_password === true);
+    $('.password_message_language').val(storage.outgoing_language || 'EN');
+    await this.renderPassPhraseOptionsIfStoredPermanently();
+    await this.loadAndRenderPwdEncryptedMsgSettings();
+    if (this.orgRules.mustAutogenPassPhraseQuietly()) {
+      $('.hide_if_pass_phrase_not_user_configurable').hide();
+    }
   }
 
-  const onDefaultExpireUserChange = async () => {
-    Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
-    $('.default_message_expire').css('display', 'none');
-    await Backend.accountUpdate({ default_message_expire: Number($('.default_message_expire').val()) });
-    window.location.reload();
-  };
-
-  const onMsgLanguageUserChange = async () => {
-    const outgoingLanguage = String($('.password_message_language').val());
-    if (['EN', 'DE'].includes(outgoingLanguage)) {
-      await Store.setAcct(acctEmail, { outgoing_language: outgoingLanguage as 'DE' | 'EN' });
-      window.location.reload();
-    }
-  };
-
-  const storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid, true);
-  if (typeof storedPassphrase === 'undefined') {
-    $('#passphrase_to_open_email').prop('checked', true);
+  public setHandlers = () => {
+    $('.action_change_passphrase').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm')));
+    $('.action_test_passphrase').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/test_passphrase.htm')));
+    $('#hide_message_password').change(this.setHandler((el) => this.hideMsgPasswordHandler(el)));
+    $('.password_message_language').change(this.setHandler(() => this.onMsgLanguageUserChange()));
   }
-  $('#passphrase_to_open_email').change(Ui.event.handle(() => {
-    $('.passhprase_checkbox_container').css('display', 'none');
-    $('.passphrase_entry_container').css('display', 'block');
-  }));
-  $('#passphrase_entry').keydown(event => {
-    if (event.which === 13) {
-      $('.confirm_passphrase_requirement_change').click();
+
+  private renderPassPhraseOptionsIfStoredPermanently = async () => {
+    const keys = await KeyStore.get(this.acctEmail);
+    if (await this.isAnyPassPhraseStoredPermanently(keys)) {
+      $('.forget_passphrase').css('display', '');
+      $('.action_forget_pp').click(this.setHandler(() => {
+        $('.forget_passphrase').css('display', 'none');
+        $('.passphrase_entry_container').css('display', '');
+      }));
+      $('.confirm_passphrase_requirement_change').click(this.setHandler(async () => {
+        const primaryKiPP = await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprints[0]);
+        if ($('input#passphrase_entry').val() === primaryKiPP) {
+          for (const key of keys) {
+            await PassphraseStore.set('local', this.acctEmail, key.fingerprints[0], undefined);
+            await PassphraseStore.set('session', this.acctEmail, key.fingerprints[0], undefined);
+          }
+          window.location.reload();
+        } else {
+          await Ui.modal.warning('Pass phrase did not match, please try again.');
+          $('input#passphrase_entry').val('').focus();
+        }
+      }));
+      $('.cancel_passphrase_requirement_change').click(() => window.location.reload());
+      $('#passphrase_entry').keydown(this.setEnterHandlerThatClicks('.confirm_passphrase_requirement_change'));
     }
-  });
+  }
 
-  $('.action_change_passphrase').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/change_passphrase.htm')));
-
-  $('.action_test_passphrase').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/test_passphrase.htm')));
-
-  $('.confirm_passphrase_requirement_change').click(Ui.event.handle(async () => {
-    if ($('#passphrase_to_open_email').is(':checked')) { // todo - forget pass all phrases, not just master
-      const storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
-      if ($('input#passphrase_entry').val() === storedPassphrase) {
-        await Store.passphraseSave('local', acctEmail, primaryKi.longid, undefined);
-        await Store.passphraseSave('session', acctEmail, primaryKi.longid, undefined);
-        window.location.reload();
-      } else {
-        await Ui.modal.warning('Pass phrase did not match, please try again.');
-        $('input#passphrase_entry').val('').focus();
-      }
-    } else { // save pass phrase
-      const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
-      if (await Pgp.key.decrypt(prv, String($('input#passphrase_entry').val())) === true) {
-        await Store.passphraseSave('local', acctEmail, primaryKi.longid, String($('input#passphrase_entry').val()));
-        window.location.reload();
-      } else {
-        await Ui.modal.warning('Pass phrase did not match, please try again.');
-        $('input#passphrase_entry').val('').focus();
-      }
-    }
-  }));
-
-  $('.cancel_passphrase_requirement_change').click(() => window.location.reload());
-
-  $('#hide_message_password').prop('checked', storage.hide_message_password === true);
-  $('.password_message_language').val(storage.outgoing_language || 'EN');
-  $('#hide_message_password').change(Ui.event.handle(async target => {
-    await Store.setAcct(acctEmail, { hide_message_password: $(target).is(':checked') });
-    window.location.reload();
-  }));
-
-  $('.password_message_language').change(Ui.event.handle(onMsgLanguageUserChange));
-
-  const subscription = await Store.subscription();
-  if (subscription.active) {
+  private loadAndRenderPwdEncryptedMsgSettings = async () => {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     try {
-      const response = await Backend.accountUpdate();
+      const response = await this.acctServer.accountGetAndUpdateLocalStore(this.authInfo!);
       $('.select_loader_container').text('');
-      $('.default_message_expire').val(Number(response.result.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
-      $('.default_message_expire').change(Ui.event.handle(onDefaultExpireUserChange));
+      $('.default_message_expire').val(Number(response.account.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
+      $('.default_message_expire').change(this.setHandler(() => this.onDefaultExpireUserChange()));
     } catch (e) {
-      if (Api.err.isAuthErr(e)) {
-        const showAuthErr = () => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/elements/subscribe.htm', { isAuthErr: true });
-        Xss.sanitizeRender('.expiration_container', '(unknown: <a href="#">verify your device</a>)').find('a').click(Ui.event.handle(showAuthErr));
-      } else if (Api.err.isNetErr(e)) {
+      if (ApiErr.isAuthErr(e)) {
+        Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => window.location.reload());
+      } else if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       } else {
         Catch.reportErr(e);
         Xss.sanitizeRender('.expiration_container', '(unknown error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       }
     }
-  } else {
-    $('.default_message_expire').val('3').css('display', 'inline-block');
-    const showSubscribe = () => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/elements/subscribe.htm');
-    Xss.sanitizeAppend($('.default_message_expire').parent(), '<a href="#">upgrade</a>').find('a').click(Ui.event.handle(showSubscribe));
   }
 
-})();
+  private onDefaultExpireUserChange = async () => {
+    Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
+    $('.default_message_expire').css('display', 'none');
+    await this.acctServer.accountUpdate(this.authInfo!, { default_message_expire: Number($('.default_message_expire').val()) });
+    window.location.reload();
+  }
+
+  private onMsgLanguageUserChange = async () => {
+    const outgoingLanguage = String($('.password_message_language').val());
+    if (['EN', 'DE'].includes(outgoingLanguage)) {
+      await AcctStore.set(this.acctEmail, { outgoing_language: outgoingLanguage as 'DE' | 'EN' });
+      window.location.reload();
+    }
+  }
+
+  private hideMsgPasswordHandler = async (checkbox: HTMLElement) => {
+    await AcctStore.set(this.acctEmail, { hide_message_password: $(checkbox).is(':checked') });
+    window.location.reload();
+  }
+
+  private isAnyPassPhraseStoredPermanently = async (keys: KeyInfo[]) => {
+    for (const key of keys) {
+      if (await PassphraseStore.get(this.acctEmail, key.fingerprints[0], true)) {
+        return true;
+      }
+    }
+    return false;
+  }
+});
