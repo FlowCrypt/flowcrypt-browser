@@ -68,7 +68,7 @@ export class ContactStore {
       pubkey: pk,
       hasPgp: 1, // number because we use it for sorting
       fingerprint: pk.id,
-      lastUse: lastUse,
+      lastUse,
       pubkeyLastCheck: lastCheck,
     } as Contact;
     return contact;
