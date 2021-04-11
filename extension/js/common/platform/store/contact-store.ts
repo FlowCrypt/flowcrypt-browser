@@ -141,7 +141,17 @@ export class ContactStore extends AbstractStore {
   }
 
   /**
-   * Used to save a contact that does not yet exist
+   * Used to save a contact or an array of contacts.
+   * An underlying update operation is used for each of the provided contact.
+   * Properties `name` and `lastUse` are overwritten if the contact already exists,
+   * whereas `pubkey` and `pubkeyLastCheck` are added/updated as described in the `update` remarks.
+   *
+   * @param {IDBDatabase} db                     (optional) database to use
+   * @param {Contact | Contact[]} email            a single contact or an array of contacts
+   * @returns {Promise<void>}
+   *
+   * @async
+   * @static
    */
   public static save = async (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => {
     if (!db) { // relay op through background process
@@ -156,7 +166,24 @@ export class ContactStore extends AbstractStore {
   }
 
   /**
-   * used to update existing contact
+   * Used to update certain fields of existing contacts or create new contacts using the provided data.
+   * If an array of emails is provided, the update operation will be performed independently on each of them.
+   * Missing properties from update object will not be overwritten in the database,
+   * e.g. `{name} as ContactUpdate` will retain the `lastUse` value of the existing record,
+   * whereas `{lastUse:null} as ContactUpdate` will reset `lastUse` to null.
+   * The `pubkey` property will be used only to add or update a pubkey record by the pubkey fingerprint.
+   * Null value of `pubkey` won't affect any pubkey records.
+   * The `pubkeyLastCheck` property can be set to a non-null value only when `pubkey` specified
+   * and will be applied only to that specific pubkey record. Missing or null `pubkeyLastCheck` will
+   * leave the `pubkeyLastCheck` value of the existing pubkey unchanged.
+   *
+   * @param {IDBDatabase} db                     (optional) database to use
+   * @param {string | string[]} email            a single email or an array of emails
+   * @param {ContactUpdate} update               object containing fields to be updated
+   * @returns {Promise<void>}
+   *
+   * @async
+   * @static
    */
   public static update = async (db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> => {
     if (!db) { // relay op through background process
