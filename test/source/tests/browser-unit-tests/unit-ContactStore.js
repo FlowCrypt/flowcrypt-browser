@@ -230,8 +230,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update tests`);
   expectedObj2.lastUse = date.getTime();
   await ContactStore.update(db, email2, { lastUse: date });
   await compareEntities();
-  expectedObj2.lastUse = undefined;
-  await ContactStore.update(db, email2, { lastUse: undefined });
+  await ContactStore.update(db, email2, { lastUse: undefined }); // won't affect the entity
   await compareEntities();
   return 'pass';
 })();
