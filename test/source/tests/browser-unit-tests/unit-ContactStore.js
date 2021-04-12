@@ -226,6 +226,8 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update tests`);
   expectedObj1.name = 'New Name for contact 1';
   await ContactStore.update(db, email1, { name: expectedObj1.name });
   await compareEntities();
+  await ContactStore.update(db, email1, { name: undefined }); // won't affect the entity
+  await compareEntities();
   const date = new Date();
   expectedObj2.lastUse = date.getTime();
   await ContactStore.update(db, email2, { lastUse: date });
