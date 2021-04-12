@@ -143,8 +143,8 @@ export class ContactStore extends AbstractStore {
   /**
    * Used to save a contact or an array of contacts.
    * An underlying update operation is used for each of the provided contact.
-   * Properties `name` and `lastUse` are overwritten if the contact already exists,
-   * whereas `pubkey` and `pubkeyLastCheck` are added/updated as described in the `update` remarks.
+   * Null properties will be ignored if a record already exists in the database
+   * as described in the `update` remarks.
    *
    * @param {IDBDatabase} db                     (optional) database to use
    * @param {Contact | Contact[]} email            a single contact or an array of contacts
@@ -168,9 +168,7 @@ export class ContactStore extends AbstractStore {
   /**
    * Used to update certain fields of existing contacts or create new contacts using the provided data.
    * If an array of emails is provided, the update operation will be performed independently on each of them.
-   * Missing properties from update object will not be overwritten in the database,
-   * e.g. `{name} as ContactUpdate` will retain the `lastUse` value of the existing record,
-   * whereas `{lastUse:null} as ContactUpdate` will reset `lastUse` to null.
+   * Null or missing properties from the `update` object will not be overwritten in the database,
    * The `pubkey` property will be used only to add or update a pubkey record by the pubkey fingerprint.
    * Null value of `pubkey` won't affect any pubkey records.
    * The `pubkeyLastCheck` property can be set to a non-null value only when `pubkey` specified
@@ -314,22 +312,29 @@ export class ContactStore extends AbstractStore {
     }
     const req = tx.objectStore('emails').get(email);
     ContactStore.setReqPipe(req, (emailEntity: Email) => {
+      let updatedEmailEntity: Email | undefined;
       if (!emailEntity) {
-        emailEntity = { email, name: null, searchable: [], fingerprints: [], lastUse: null };
+        updatedEmailEntity = { email, name: null, searchable: [], fingerprints: [], lastUse: null };
+      } else if (pubkeyEntity || update.name || update.lastUse) {
+        updatedEmailEntity = emailEntity;
+      } else {
+        updatedEmailEntity = undefined; // not modified
       }
-      if (pubkeyEntity) {
-        if (!emailEntity.fingerprints.includes(pubkeyEntity.fingerprint)) {
-          emailEntity.fingerprints.push(pubkeyEntity.fingerprint);
+      if (updatedEmailEntity) {
+        if (pubkeyEntity) {
+          if (!updatedEmailEntity.fingerprints.includes(pubkeyEntity.fingerprint)) {
+            updatedEmailEntity.fingerprints.push(pubkeyEntity.fingerprint);
+          }
         }
+        if (update.name) {
+          updatedEmailEntity.name = update.name;
+        }
+        if (update.lastUse) {
+          updatedEmailEntity.lastUse = DateUtility.asNumber(update.lastUse);
+        }
+        ContactStore.updateSearchable(updatedEmailEntity);
+        tx.objectStore('emails').put(updatedEmailEntity);
       }
-      if (Object.keys(update).includes('name')) {
-        emailEntity.name = update.name ?? null;
-      }
-      if (Object.keys(update).includes('lastUse')) {
-        emailEntity.lastUse = DateUtility.asNumber(update.lastUse);
-      }
-      ContactStore.updateSearchable(emailEntity);
-      tx.objectStore('emails').put(emailEntity);
       if (pubkeyEntity) {
         tx.objectStore('pubkeys').put(pubkeyEntity);
       }
