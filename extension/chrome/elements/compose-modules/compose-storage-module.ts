@@ -115,9 +115,13 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         // save multiple pubkeys as separate operations
         // todo: add a convenient method to storage?
         const updates: ContactUpdate[] = [];
-        if (!pubkeys.length && name) {
-          // update just name
-          updates.push({ name } as ContactUpdate);
+        if (!pubkeys.length) {
+          if (name) {
+            // update just name
+            updates.push({ name } as ContactUpdate);
+          } else {
+            return ContactStore.obj({ email });
+          }
         }
         for (const pubkey of pubkeys) {
           updates.push({ name, pubkey, pubkeyLastCheck: Date.now() });
