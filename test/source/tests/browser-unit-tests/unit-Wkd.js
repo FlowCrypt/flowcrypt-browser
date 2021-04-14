@@ -26,11 +26,11 @@ BROWSER_UNIT_TEST_NAME(`Wkd direct method`);
   wkd.port = 8001;
   let email;
   email = 'john.doe@localhost';
-  if (!(await wkd.lookupEmail(email)).pubkey) {
+  if (!(await wkd.lookupEmail(email)).pubkeys.length) {
     throw Error(`Wkd for ${email} didn't return a pubkey`);
   }
   email = 'John.Doe@localhost';
-  if (!(await wkd.lookupEmail(email)).pubkey) {
+  if (!(await wkd.lookupEmail(email)).pubkey.length) {
     throw Error(`Wkd for ${email} didn't return a pubkey`);
   }
   return 'pass';
@@ -42,30 +42,32 @@ BROWSER_UNIT_TEST_NAME(`Wkd advanced method`);
   wkd.port = 8001;
   let email;
   email = 'john.doe@localhost';
-  if (!(await wkd.lookupEmail(email)).pubkey) {
+  if (!(await wkd.lookupEmail(email)).pubkeys.length) {
     throw Error(`Wkd for ${email} didn't return a pubkey`);
   }
   email = 'John.Doe@localHOST';
-  if (!(await wkd.lookupEmail(email)).pubkey) {
+  if (!(await wkd.lookupEmail(email)).pubkeys.length) {
     throw Error(`Wkd for ${email} didn't return a pubkey`);
   }
   return 'pass';
 })();
 
-BROWSER_UNIT_TEST_NAME(`Wkd client picks valid key among revoked keys`);
+BROWSER_UNIT_TEST_NAME(`Wkd client returns all keys`);
 (async () => {
   const wkd = new Wkd('flowcrypt.com');
   wkd.port = 8001;
   const email = 'some.revoked@localhost';
-  const pubkey = (await wkd.lookupEmail(email)).pubkey;
-  if (!pubkey) {
+  const pubkeys = (await wkd.lookupEmail(email)).pubkeys;
+  if (!pubkeys.length) {
     throw Error(`Wkd for ${email} didn't return a pubkey`);
   }
-  const key = await KeyUtil.parse(pubkey);
-  if (key && key.id.toUpperCase() === 'D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2' && key.usableForEncryption) {
+  const ids = (await Promise.all(pubkeys.map(async(pubkey) => await KeyUtil.parse(pubkey)))).map(key => key.id.toUpperCase());
+  if (ids.length === 3 && ids.includes('D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2') &&
+    ids.includes('A5CFC8E8EA4AE69989FE2631097EEBF354259A5E') &&
+    ids.includes('3930752556D57C46A1C56B63DE8538DDA1648C76')) {
     return 'pass';
   } else {
-    return `Expected key with id=D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2 wasn't received`;
+    return "Expected keys weren't received";
   }
 })();
 
@@ -74,7 +76,7 @@ BROWSER_UNIT_TEST_NAME(`Wkd advanced shouldn't fall back on direct if advanced p
   const wkd = new Wkd('flowcrypt.com');
   wkd.port = 8001;
   const email = 'jack.advanced@localhost';
-  if ((await wkd.lookupEmail(email)).pubkey) {
+  if ((await wkd.lookupEmail(email)).pubkeys.length) {
     throw Error(`Wkd for ${email} didn't expect a pubkey`);
   }
   return 'pass';
@@ -85,7 +87,7 @@ BROWSER_UNIT_TEST_NAME(`Wkd incorrect UID should fail`);
   const wkd = new Wkd('flowcrypt.com');
   wkd.port = 8001;
   const email = 'incorrect@localhost';
-  if ((await wkd.lookupEmail(email)).pubkey) {
+  if ((await wkd.lookupEmail(email)).pubkeys.length) {
     throw Error(`Wkd for ${email} didn't expect a pubkey`);
   }
   return 'pass';
@@ -95,7 +97,7 @@ BROWSER_UNIT_TEST_NAME(`Wkd should extract key for human@flowcrypt.com`);
 (async () => {
   const wkd = new Wkd('flowcrypt.com');
   const email = 'human@flowcrypt.com';
-  if (!(await wkd.lookupEmail(email)).pubkey) {
+  if (!(await wkd.lookupEmail(email)).pubkeys.length) {
     throw Error(`Wkd for ${email} didn't return a pubkey`);
   }
   return 'pass';
