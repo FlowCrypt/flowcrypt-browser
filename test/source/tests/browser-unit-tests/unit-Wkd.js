@@ -30,7 +30,7 @@ BROWSER_UNIT_TEST_NAME(`Wkd direct method`);
     throw Error(`Wkd for ${email} didn't return a pubkey`);
   }
   email = 'John.Doe@localhost';
-  if (!(await wkd.lookupEmail(email)).pubkey.length) {
+  if (!(await wkd.lookupEmail(email)).pubkeys.length) {
     throw Error(`Wkd for ${email} didn't return a pubkey`);
   }
   return 'pass';
