@@ -58,6 +58,7 @@ export class SmimeKey {
       fullyEncrypted: false,
       isPublic: certificate.publicKey && !certificate.privateKey,
       isPrivate: !!certificate.privateKey,
+      revoked: false // todo:
     } as Key;
     const headers = PgpArmor.headers('pkcs12');
     (key as unknown as { raw: string }).raw = `${headers.begin}\n${forge.util.encode64(bytes)}\n${headers.end}`;
@@ -109,6 +110,7 @@ export class SmimeKey {
       fullyEncrypted: false,
       isPublic: certificate.publicKey && !certificate.privateKey,
       isPrivate: !!certificate.privateKey,
+      revoked: false // todo:
     } as Key;
     (key as unknown as { rawArmored: string }).rawArmored = text;
     return key;
