@@ -120,7 +120,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
             // update just name
             updates.push({ name } as ContactUpdate);
           } else {
-            return ContactStore.obj({ email });
+            return await ContactStore.obj({ email });
           }
         }
         for (const pubkey of pubkeys) {
