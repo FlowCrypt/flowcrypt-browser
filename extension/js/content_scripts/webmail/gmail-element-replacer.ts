@@ -693,7 +693,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
                   const [contact] = await ContactStore.get(undefined, [email]);
                   if (contact && contact.pubkey) {
                     this.recipientHasPgpCache[email] = true;
-                  } else if ((await this.pubLookup.lookupEmail(email)).pubkey) {
+                  } else if ((await this.pubLookup.lookupEmail(email)).pubkeys.length) {
                     this.recipientHasPgpCache[email] = true;
                   } else {
                     this.recipientHasPgpCache[email] = false;

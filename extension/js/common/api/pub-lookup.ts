@@ -10,6 +10,7 @@ import { OrgRules } from '../org-rules.js';
 
 export type PgpClient = 'flowcrypt' | 'pgp-other' | null;
 export type PubkeySearchResult = { pubkey: string | null; pgpClient: PgpClient };
+export type PubkeysSearchResult = { pubkeys: string[]; pgpClient: PgpClient };
 
 /**
  * Look up public keys.
@@ -39,24 +40,28 @@ export class PubLookup {
     }
   }
 
-  public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
+  public lookupEmail = async (email: string): Promise<PubkeysSearchResult> => {
     if (this.keyManager) {
       const res = await this.keyManager.lookupPublicKey(email);
       if (res.publicKeys.length) {
-        return { pubkey: res.publicKeys[0].publicKey, pgpClient: 'flowcrypt' };
+        return { pubkeys: res.publicKeys.map(x => x.publicKey), pgpClient: 'flowcrypt' };
       }
     }
     const wkdRes = await this.wkd.lookupEmail(email);
-    if (wkdRes.pubkey) {
+    if (wkdRes.pubkeys.length) {
       return wkdRes;
     }
     if (this.internalSks) {
       const res = await this.internalSks.lookupEmail(email);
       if (res.pubkey) {
-        return res;
+        return { pubkeys: [res.pubkey], pgpClient: res.pgpClient };
       }
     }
-    return await this.attester.lookupEmail(email);
+    const attRes = await this.attester.lookupEmail(email);
+    if (attRes.pubkey) {
+      return { pubkeys: [attRes.pubkey], pgpClient: attRes.pgpClient };
+    }
+    return { pubkeys: [], pgpClient: null }; // tslint:disable-line:no-null-keyword
   }
 
   public lookupFingerprint = async (fingerprintOrLongid: string): Promise<PubkeySearchResult> => {

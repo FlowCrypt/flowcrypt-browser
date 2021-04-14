@@ -9,7 +9,6 @@ import { PgpBlockView } from '../pgp_block';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { VerifyRes } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
-import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 import { Str } from '../../../js/common/core/common.js';
 
 export class PgpBlockViewSignatureModule {
@@ -60,19 +59,19 @@ export class PgpBlockViewSignatureModule {
           return;
         }
         // ---> and user doesn't have pubkey for that email addr
-        const { pubkey } = await this.view.pubLookup.lookupEmail(senderEmail);
-        if (!pubkey) {
+        const { pubkeys } = await this.view.pubLookup.lookupEmail(senderEmail);
+        if (!pubkeys.length) {
           render(`Missing pubkey ${signerLongid}`, () => undefined);
           return;
         }
         // ---> and pubkey found on keyserver by sender email
-        const { key } = await BrowserMsg.send.bg.await.keyParse({ armored: pubkey });
-        if (!key.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)).includes(signerLongid)) {
-          render(`Fetched sender's pubkey ${OpenPGPKey.fingerprintToLongid(key.id)} but message was signed with a different key: ${signerLongid}, will not verify.`, () => undefined);
+        const { key: pubkey } = await BrowserMsg.send.bg.await.keyMatch({ pubkeys, longid: signerLongid });
+        if (!pubkey) {
+          render(`Fetched ${pubkeys.length} sender's pubkeys but message was signed with a different key: ${signerLongid}, will not verify.`, () => undefined);
           return;
         }
         // ---> and longid it matches signature
-        await ContactStore.save(undefined, await ContactStore.obj({ email: senderEmail, pubkey })); // <= TOFU auto-import
+        await ContactStore.update(undefined, senderEmail, { pubkey }); // <= TOFU auto-import
         render('Fetched pubkey, click to verify', () => window.location.reload());
       } else { // don't know who sent it
         render('Cannot verify: missing pubkey, missing sender info', () => undefined);

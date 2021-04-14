@@ -6,7 +6,7 @@ import { Api } from './../shared/api.js';
 import { ApiErr } from '../shared/api-error.js';
 import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { Buf } from '../../core/buf.js';
-import { PubkeySearchResult } from './../pub-lookup.js';
+import { PubkeysSearchResult } from './../pub-lookup.js';
 import { Key, KeyUtil } from '../../core/crypto/key.js';
 import { Str } from '../../core/common.js';
 
@@ -64,22 +64,21 @@ export class Wkd extends Api {
     return await KeyUtil.readMany(response.buf);
   }
 
-  public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
+  public lookupEmail = async (email: string): Promise<PubkeysSearchResult> => {
     const { keys, errs } = await this.rawLookupEmail(email);
     if (errs.length) {
-      return { pubkey: null, pgpClient: null };
+      return { pubkeys: [], pgpClient: null };
     }
-    const key = keys.find(key => key.usableForEncryption && key.emails.some(x => x.toLowerCase() === email.toLowerCase()));
-    if (!key) {
-      return { pubkey: null, pgpClient: null };
+    const pubkeys = keys.filter(key => key.emails.some(x => x.toLowerCase() === email.toLowerCase()));
+    if (!pubkeys.length) {
+      return { pubkeys: [], pgpClient: null };
     }
     // if recipient uses same domain, we assume they use flowcrypt
     const pgpClient = this.myOwnDomain === Str.getDomainFromEmailAddress(email) ? 'flowcrypt' : 'pgp-other';
     try {
-      const pubkey = KeyUtil.armor(key);
-      return { pubkey, pgpClient };
+      return { pubkeys: pubkeys.map(pubkey => KeyUtil.armor(pubkey)), pgpClient };
     } catch (e) {
-      return { pubkey: null, pgpClient: null };
+      return { pubkeys: [], pgpClient: null };
     }
   }
 

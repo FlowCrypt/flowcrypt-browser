@@ -14,7 +14,7 @@ import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
-import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
+import { ContactStore, ContactUpdate } from '../../../js/common/platform/store/contact-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -102,20 +102,31 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     try {
       const lookupResult = await this.view.pubLookup.lookupEmail(email);
       if (lookupResult && email) {
-        if (lookupResult.pubkey) {
-          const key = await KeyUtil.parse(lookupResult.pubkey);
+        const pubkeys: Key[] = [];
+        for (const pubkey of lookupResult.pubkeys) {
+          const key = await KeyUtil.parse(pubkey);
           if (!key.usableForEncryption && !KeyUtil.expired(key)) { // Not to skip expired keys
             console.info('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: key.id });
             Ui.toast(`Public Key retrieved for email ${email} with id ${key.id} was ignored because it's not usable for encryption.`, 5);
-            lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
+          } else {
+            pubkeys.push(key);
           }
         }
-        const ksContact = await ContactStore.obj({ email, name, pubkey: lookupResult.pubkey, lastCheck: Date.now() });
-        if (ksContact.pubkey) {
-          this.ksLookupsByEmail[email] = ksContact.pubkey;
+        // save multiple pubkeys as separate operations
+        // todo: add a convenient method to storage?
+        const updates: ContactUpdate[] = [];
+        if (!pubkeys.length && name) {
+          // update just name
+          updates.push({ name } as ContactUpdate);
         }
-        await ContactStore.save(undefined, ksContact);
-        return ksContact;
+        for (const pubkey of pubkeys) {
+          updates.push({ name, pubkey, pubkeyLastCheck: Date.now() });
+        }
+        if (updates.length) {
+          await Promise.all(updates.map(async (update) => await ContactStore.update(undefined, email, update)));
+        }
+        const [preferred] = await ContactStore.get(undefined, [email]);
+        return preferred ?? PUBKEY_LOOKUP_RESULT_FAIL;
       } else {
         return PUBKEY_LOOKUP_RESULT_FAIL;
       }
