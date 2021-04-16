@@ -101,9 +101,10 @@ export class KeyUtil {
         if (isArmored) {
           allKeys.push(...await KeyUtil.parseMany(content.toString()));
         } else {
-          const { err, keys } = await opgp.key.read(typeof content === 'string' ? Buf.fromUtfStr(content) : content);
-          allErrs.push(...(err || []));
-          allKeys.push(...await Promise.all(keys.map(key => OpenPGPKey.convertExternalLibraryObjToKey(key))));
+          const buf = typeof content === 'string' ? Buf.fromUtfStr(content) : content;
+          const { keys, err } = await KeyUtil.readBinary(buf);
+          allKeys.push(...keys);
+          allErrs.push(...err);
         }
       } catch (e) {
         allErrs.push(e instanceof Error ? e : new Error(String(e)));
@@ -134,7 +135,7 @@ export class KeyUtil {
     throw new UnexpectedKeyTypeError(`Key type is ${keyType}, expecting OpenPGP or x509 S/MIME`);
   }
 
-  public static parseBinary = async (key: Uint8Array, passPhrase: string): Promise<Key[]> => {
+  public static readBinary = async (key: Uint8Array, passPhrase?: string | undefined): Promise<{ keys: Key[], err: Error[] }> => {
     const allKeys: Key[] = [], allErr: Error[] = [];
     try {
       const { keys, err } = await opgp.key.read(key);
@@ -158,14 +159,20 @@ export class KeyUtil {
       allErr.push(e as Error);
     }
     try {
-      allKeys.push(await SmimeKey.parseDecryptBinary(key, passPhrase));
+      allKeys.push(await SmimeKey.parseDecryptBinary(key, passPhrase ?? ''));
+      return { keys: allKeys, err: [] };
     } catch (e) {
       allErr.push(e as Error);
     }
-    if (allKeys.length > 0) {
-      return allKeys;
+    return { keys: allKeys, err: allErr };
+  }
+
+  public static parseBinary = async (key: Uint8Array, passPhrase?: string | undefined): Promise<Key[]> => {
+    const { keys, err } = await KeyUtil.readBinary(key, passPhrase);
+    if (keys.length > 0) {
+      return keys;
     }
-    throw new Error(allErr ? allErr.map((err, i) => (i + 1) + '. ' + err.message).join('\n') : 'Should not happen: no keys and no errors.');
+    throw new Error(err.length ? err.map((e, i) => (i + 1) + '. ' + e.message).join('\n') : 'Should not happen: no keys and no errors.');
   }
 
   public static armor = (pubkey: Key): string => {

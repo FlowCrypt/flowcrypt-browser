@@ -20,6 +20,7 @@ import { GoogleData, GmailParser, GmailMsg } from '../mock/google/google-data';
 import { testConstants } from './tooling/consts';
 import { PgpArmor } from '../core/crypto/pgp/pgp-armor';
 import { equals } from '../buf.js';
+import * as forge from 'node-forge';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -523,6 +524,16 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
 
     ava.default('[unit][KeyUtil.readMany] Parsing one S/MIME key', async t => {
       const { keys, errs } = await KeyUtil.readMany(Buf.fromUtfStr(smimeCert));
+      expect(keys.length).to.equal(1);
+      expect(errs.length).to.equal(0);
+      expect(keys[0].id).to.equal('63F7025E700F3945301FB2FBA5674F84');
+      expect(keys[0].type).to.equal('x509');
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.readMany] Parsing unarmored S/MIME certificate', async t => {
+      const pem = forge.pem.decode(smimeCert)[0];
+      const { keys, errs } = await KeyUtil.readMany(Buf.fromRawBytesStr(pem.body));
       expect(keys.length).to.equal(1);
       expect(errs.length).to.equal(0);
       expect(keys[0].id).to.equal('63F7025E700F3945301FB2FBA5674F84');
