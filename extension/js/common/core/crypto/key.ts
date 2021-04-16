@@ -158,11 +158,13 @@ export class KeyUtil {
     } catch (e) {
       allErr.push(e as Error);
     }
-    try {
-      allKeys.push(await SmimeKey.parseDecryptBinary(key, passPhrase ?? ''));
-      return { keys: allKeys, err: [] };
-    } catch (e) {
-      allErr.push(e as Error);
+    if (!allKeys.length) {
+      try {
+        allKeys.push(await SmimeKey.parseDecryptBinary(key, passPhrase ?? ''));
+        return { keys: allKeys, err: [] };
+      } catch (e) {
+        allErr.push(e as Error);
+      }
     }
     return { keys: allKeys, err: allErr };
   }
