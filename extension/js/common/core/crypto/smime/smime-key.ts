@@ -47,7 +47,7 @@ export class SmimeKey {
       throw new Error('No user certificate found.');
     }
     SmimeKey.removeWeakKeys(certificate);
-    const normalizedEmail = SmimeKey.getNormalizedEmailFromCertificate(certificate);
+    const emails = SmimeKey.getNormalizedEmailsFromCertificate(certificate);
     const key = {
       type: 'x509',
       id: certificate.serialNumber.toUpperCase(),
@@ -56,8 +56,8 @@ export class SmimeKey {
       usableForSigning: SmimeKey.isEmailCertificate(certificate),
       usableForEncryptionButExpired: false,
       usableForSigningButExpired: false,
-      emails: [normalizedEmail],
-      identities: [normalizedEmail],
+      emails,
+      identities: emails,
       created: SmimeKey.dateToNumber(certificate.validity.notBefore),
       lastModified: SmimeKey.dateToNumber(certificate.validity.notBefore),
       expiration: SmimeKey.dateToNumber(certificate.validity.notAfter),
@@ -91,18 +91,26 @@ export class SmimeKey {
     return { data: new Uint8Array(arr), type: 'smime' };
   }
 
-  private static getNormalizedEmailFromCertificate = (certificate: forge.pki.Certificate): string => {
-    const email = (certificate.subject.getField('CN') as { value: string }).value;
-    const normalizedEmail = Str.parseEmail(email).email;
-    if (!normalizedEmail) {
-      throw new UnreportableError(`This S/MIME x.509 certificate has an invalid recipient email: ${email}`);
+  private static getNormalizedEmailsFromCertificate = (certificate: forge.pki.Certificate): string[] => {
+    const emailFromSubject = (certificate.subject.getField('CN') as { value: string }).value;
+    const normalizedEmail = Str.parseEmail(emailFromSubject).email;
+    const emails = normalizedEmail ? [normalizedEmail] : [];
+    // search for e-mails in subjectAltName extension
+    const subjectAltName = certificate.getExtension('subjectAltName') as { altNames: { type: number, value: string }[] };
+    if (subjectAltName && subjectAltName.altNames) {
+      const emailsFromAltNames = subjectAltName.altNames.filter(entry => entry.type === 1).
+        map(entry => Str.parseEmail(entry.value).email).filter(Boolean);
+      emails.push(...emailsFromAltNames as string[]);
     }
-    return normalizedEmail;
+    if (emails.length) {
+      return emails;
+    }
+    throw new UnreportableError(`This S/MIME x.509 certificate has an invalid recipient email: ${emailFromSubject}`);
   }
 
   private static getKeyFromCertificate = (certificate: forge.pki.Certificate, pem: string): Key => {
     SmimeKey.removeWeakKeys(certificate);
-    const normalizedEmail = SmimeKey.getNormalizedEmailFromCertificate(certificate);
+    const emails = SmimeKey.getNormalizedEmailsFromCertificate(certificate);
     const key = {
       type: 'x509',
       id: certificate.serialNumber.toUpperCase(),
@@ -111,8 +119,8 @@ export class SmimeKey {
       usableForSigning: certificate.publicKey && SmimeKey.isEmailCertificate(certificate),
       usableForEncryptionButExpired: false,
       usableForSigningButExpired: false,
-      emails: [normalizedEmail],
-      identities: [normalizedEmail],
+      emails,
+      identities: emails,
       created: SmimeKey.dateToNumber(certificate.validity.notBefore),
       lastModified: SmimeKey.dateToNumber(certificate.validity.notBefore),
       expiration: SmimeKey.dateToNumber(certificate.validity.notAfter),
