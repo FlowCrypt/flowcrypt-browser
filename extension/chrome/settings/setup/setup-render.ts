@@ -117,7 +117,7 @@ export class SetupRenderModule {
           this.displayBlock('step_0_found_key');
         }
       } else { // cannot read gmail to find a backup, or this is outlook
-        throw new Error('Not able to load backups from inbox due to missing permissions')
+        throw new Error('Not able to load backups from inbox due to missing permissions');
       }
     } else { // no indication that the person used pgp before
       if (this.view.orgRules.canCreateKeys()) {
