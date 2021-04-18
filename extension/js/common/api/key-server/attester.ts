@@ -4,7 +4,7 @@
 
 import { Api, ReqMethod } from './../shared/api.js';
 import { Dict, Str } from '../../core/common.js';
-import { PgpClient, PubkeySearchResult } from './../pub-lookup.js';
+import { PubkeySearchResult } from './../pub-lookup.js';
 import { ApiErr } from '../shared/api-error.js';
 import { OrgRules } from '../../org-rules.js';
 import { ATTESTER_API_HOST } from '../../core/const.js';
