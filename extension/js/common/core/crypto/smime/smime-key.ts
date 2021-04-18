@@ -103,7 +103,7 @@ export class SmimeKey {
       emails.push(...emailsFromAltNames as string[]);
     }
     if (emails.length) {
-      return emails;
+      return emails.filter((value, index, self) => self.indexOf(value) === index);
     }
     throw new UnreportableError(`This S/MIME x.509 certificate has an invalid recipient email: ${emailFromSubject}`);
   }
