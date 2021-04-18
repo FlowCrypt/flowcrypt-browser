@@ -20,6 +20,7 @@ import { GoogleData, GmailParser, GmailMsg } from '../mock/google/google-data';
 import { testConstants } from './tooling/consts';
 import { PgpArmor } from '../core/crypto/pgp/pgp-armor';
 import { equals } from '../buf.js';
+import * as forge from 'node-forge';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -527,6 +528,102 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       expect(errs.length).to.equal(0);
       expect(keys[0].id).to.equal('63F7025E700F3945301FB2FBA5674F84');
       expect(keys[0].type).to.equal('x509');
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.readMany] Parsing unarmored S/MIME certificate', async t => {
+      const pem = forge.pem.decode(smimeCert)[0];
+      const { keys, errs } = await KeyUtil.readMany(Buf.fromRawBytesStr(pem.body));
+      expect(keys.length).to.equal(1);
+      expect(errs.length).to.equal(0);
+      expect(keys[0].id).to.equal('63F7025E700F3945301FB2FBA5674F84');
+      expect(keys[0].type).to.equal('x509');
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.parse] Correctly extracting email from SubjectAltName of S/MIME certificate', async t => {
+      /*
+            // generate a key pair
+            const keys = forge.pki.rsa.generateKeyPair(2048);
+            // create a certification request (CSR)
+            const csr = forge.pki.createCertificationRequest();
+            csr.publicKey = keys.publicKey;
+            csr.setSubject([{
+              name: 'commonName',
+              value: 'Jack Doe'
+            }]);
+            // set (optional) attributes
+            const subjectAltName = {
+              name: 'subjectAltName',
+              altNames: [{
+                // 1 is RFC822Name type
+                type: 1,
+                value: 'email@embedded.in.subj.alt.name'
+              }]
+            }
+            const extensions = [subjectAltName];
+            (csr as any).setAttributes([{
+              name: 'extensionRequest',
+              extensions
+            }]);
+            csr.sign(keys.privateKey);
+            // issue a certificate based on the csr
+            const cert = forge.pki.createCertificate();
+            cert.serialNumber = '1';
+            cert.validity.notBefore = new Date();
+            cert.validity.notAfter = new Date();
+            cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 30);
+            cert.setSubject(csr.subject.attributes);
+            const caCertPem = fs.readFileSync("./ca.crt", 'utf8');
+            const caKeyPem = fs.readFileSync("./ca.key", 'utf8');
+            const caCert = forge.pki.certificateFromPem(caCertPem);
+            const caKey = forge.pki.decryptRsaPrivateKey(caKeyPem, '1234');
+            cert.setIssuer(caCert.subject.attributes);
+            cert.setExtensions([{
+              name: 'basicConstraints',
+              cA: true
+            }, {
+              name: 'keyUsage',
+              keyCertSign: true,
+              digitalSignature: true,
+              nonRepudiation: true,
+              keyEncipherment: true,
+              dataEncipherment: true
+            }, subjectAltName
+            ]);
+            cert.publicKey = csr.publicKey;
+            cert.sign(caKey);
+            const pem = forge.pki.certificateToPem(cert);
+      */
+      const pem = `-----BEGIN CERTIFICATE-----
+MIIETTCCAjWgAwIBAgIBATANBgkqhkiG9w0BAQUFADB0MRMwEQYDVQQIDApTb21l
+LVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQxFzAVBgNV
+BAMMDlNvbWUgQXV0aG9yaXR5MSEwHwYJKoZIhvcNAQkBFhJhdXRob3JpdHlAdGVz
+dC5jb20wIBcNMjEwNDE3MTIyMTMxWhgPMjA1MTA0MTcxMjIxMzFaMBMxETAPBgNV
+BAMTCEphY2sgRG9lMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyKOw
+VX51bduPdwSLR4u1O4HuOrELZjlOx8SWlOdU2yDZmp9iTZ/jP318xUs7XL1gIMDF
+mXuDZB+KU9rwvECOecazWp8vpfLV/Tn/lp5lDLz+QqwlSWruzz0Z49F6zCWfBMQQ
+Y475a03pd0oo6Soxt89A5PXuQhIBgdniyxUeQe0Okd7MC5/w0R+95aqZB47ui7ur
+R7HcyGzkvfADXvdeZQsKSjja0lVFUJAJ6Uj2o0R9Z1YHtZKH9/D75IiYY3gqYJtt
+BZoZPOMpl7Jam5Hz7PVWV3aeeMsAAHALWK7qvfaNx3IOCVh5KYQZ544P7cGGgpuw
+UamKkF+wR7H4d7OYPwIDAQABo0kwRzAMBgNVHRMEBTADAQH/MAsGA1UdDwQEAwIC
+9DAqBgNVHREEIzAhgR9lbWFpbEBlbWJlZGRlZC5pbi5zdWJqLmFsdC5uYW1lMA0G
+CSqGSIb3DQEBBQUAA4ICAQCeGSsJNYsyQXnRal3L0HDF8PTj5zBa2jCSVAuwMe9Z
+LWSJEXetF6uwH3yJzCxe/ZGNheEUAMGnMC1lYwsZ8x/hO8WcnzGxC1kqS71jV0us
+rYZGsSb6dOoSigUfrzEcImx33n5yKYS8cHN/tUMvPiULX9RlSWnKlAfQClQeIxEA
+6Y1Jeu0AVP3ugMajxqHoA10JOOrqjKuvkkM3gha9iS+q0w0mqhJ8GzZfOTdFJj/G
+/erHQ/HWL7mqJoGh+i6I9N5qBNmdNEZazXJ/ACfR46Zav7nOXBF9CZ4k4g3mr/Po
+1L3FXotxDQaTITY4xrse/GNCd92Q2Pc3ASS1SWRozpefyY414qfDP4x7IYwFOnK/
+swVjxFEyniiliYOiUV7tEm5FYRkAaQIAMiAXsZQB5LwatJN7WCQMh3xfPiuW91wL
+Qmq47Rku8zPVsmQ5oBF9Ip4RraLOapoL09abmhyS9CFiT+bqZYSa9erT81eZnEfY
+p07CH3yZBVSw7nRTIS8ScDHRvTt+FzrcchVcPfXMfYeydosmgQdDFFy/fm2alb8B
+JKEHXc4KK04f6Fa90Uo+1hVInMziuLRWN6vubkHUDSXY4jhGm84OksTyW3AFKigC
+jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
+9Q==
+-----END CERTIFICATE-----`;
+      const key = await KeyUtil.parse(pem);
+      expect(key.emails.length).to.equal(1);
+      expect(key.emails[0]).to.equal('email@embedded.in.subj.alt.name');
       t.pass();
     });
 
