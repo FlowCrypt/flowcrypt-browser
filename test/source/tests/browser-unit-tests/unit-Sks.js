@@ -24,10 +24,7 @@ BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - trailing slash`);
 (async () => {
   const email = 'john.doe@example.com';
   const sks = new Sks('https://localhost:8001/');
-  const { pubkey, pgpClient } = await sks.lookupEmail(email);
-  if (pgpClient !== 'pgp-other') {
-    throw Error(`expected pgpClient=pgp-other but got ${pgpClient}`);
-  }
+  const { pubkey } = await sks.lookupEmail(email);
   const key = await KeyUtil.parse(pubkey);
   if (key.id !== '094C3CBA696FA009F6015C473B635D858A1DB5E0') {
     throw Error(`Expecting key.id=094C3CBA696FA009F6015C473B635D858A1DB5E0 but got ${key.id}`);
@@ -39,10 +36,7 @@ BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - no trailing slash`);
 (async () => {
   const email = 'john.doe@example.com';
   const sks = new Sks('https://localhost:8001');
-  const { pubkey, pgpClient } = await sks.lookupEmail(email);
-  if (pgpClient !== 'pgp-other') {
-    throw Error(`expected pgpClient=pgp-other but got ${pgpClient}`);
-  }
+  const { pubkey } = await sks.lookupEmail(email);
   const key = await KeyUtil.parse(pubkey);
   if (key.id !== '094C3CBA696FA009F6015C473B635D858A1DB5E0') {
     throw Error(`Expecting key.id=094C3CBA696FA009F6015C473B635D858A1DB5E0 but got ${key.id}`);
@@ -69,10 +63,7 @@ BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - not found`);
 (async () => {
   const email = 'nobody@example.com';
   const sks = new Sks('https://localhost:8001/');
-  const { pubkey, pgpClient } = await sks.lookupEmail(email);
-  if (pgpClient !== null) {
-    throw Error(`expected pgpClient=null but got ${pgpClient}`);
-  }
+  const { pubkey } = await sks.lookupEmail(email);
   if (pubkey !== null) {
     throw Error(`expected pubkey=null but got ${pubkey}`);
   }
@@ -84,10 +75,7 @@ BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - from live host`);
   // this may be flaky - if so, can disable it
   const email = 'human@flowcrypt.com';
   const sks = new Sks('https://attester.flowcrypt.com');
-  const { pubkey, pgpClient } = await sks.lookupEmail(email);
-  if (pgpClient !== 'pgp-other') {
-    throw Error(`expected pgpClient=pgp-other but got ${pgpClient}`);
-  }
+  const { pubkey } = await sks.lookupEmail(email);
   const key = await KeyUtil.parse(pubkey);
   if (key.id !== '6BF16EE1ECE7A66C4B6636DF0C9C2E6A4D273C6F') {
     throw Error(`Expecting key.id=6BF16EE1ECE7A66C4B6636DF0C9C2E6A4D273C6F but got ${key.id}`);

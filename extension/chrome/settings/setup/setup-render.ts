@@ -118,17 +118,7 @@ export class SetupRenderModule {
           this.displayBlock('step_0_found_key');
         }
       } else { // cannot read gmail to find a backup, or this is outlook
-        if (keyserverRes.pgpClient === 'flowcrypt') {
-          // a key has been created, and the user has used cryptup in the past - this suggest they likely have a backup available, but we cannot fetch it. Enter it manually
-          this.displayBlock('step_2b_manual_enter');
-          Xss.sanitizePrepend('#step_2b_manual_enter', `<div class="line red">${Lang.setup.cannotLocateBackupPasteManually}<br/><br/></div>`);
-        } else if (this.view.orgRules.canCreateKeys()) {
-          // has a key registered, key creating allowed on the domain. This may be old key from PKS, let them choose
-          this.displayBlock('step_1_easy_or_manual');
-        } else {
-          // has a key registered, no key creating allowed on the domain
-          this.displayBlock('step_2b_manual_enter');
-        }
+        throw new Error('Not able to load backups from inbox due to missing permissions')
       }
     } else { // no indication that the person used pgp before
       if (this.view.orgRules.canCreateKeys()) {

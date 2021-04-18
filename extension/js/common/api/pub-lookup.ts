@@ -8,8 +8,7 @@ import { Sks } from './key-server/sks.js';
 import { Wkd } from './key-server/wkd.js';
 import { OrgRules } from '../org-rules.js';
 
-export type PgpClient = 'flowcrypt' | 'pgp-other' | null;
-export type PubkeySearchResult = { pubkey: string | null; pgpClient: PgpClient };
+export type PubkeySearchResult = { pubkey: string | null };
 
 /**
  * Look up public keys.
@@ -43,7 +42,7 @@ export class PubLookup {
     if (this.keyManager) {
       const res = await this.keyManager.lookupPublicKey(email);
       if (res.publicKeys.length) {
-        return { pubkey: res.publicKeys[0].publicKey, pgpClient: 'flowcrypt' };
+        return { pubkey: res.publicKeys[0].publicKey };
       }
     }
     const wkdRes = await this.wkd.lookupEmail(email);
@@ -63,7 +62,7 @@ export class PubLookup {
     if (this.keyManager) {
       const res = await this.keyManager.lookupPublicKey(fingerprintOrLongid);
       if (res.publicKeys.length) {
-        return { pubkey: res.publicKeys[0].publicKey, pgpClient: 'flowcrypt' };
+        return { pubkey: res.publicKeys[0].publicKey };
       }
     }
     if (this.internalSks) {

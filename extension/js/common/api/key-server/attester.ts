@@ -22,7 +22,7 @@ export class Attester extends Api {
   public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
     if (!this.orgRules.canLookupThisRecipientOnAttester(email)) {
       console.info(`Skipping attester lookup of ${email} because attester search on this domain is disabled.`);
-      return { pubkey: null, pgpClient: null }; // tslint:disable-line:no-null-keyword
+      return { pubkey: null }; // tslint:disable-line:no-null-keyword
     }
     try {
       const r = await this.pubCall(`pub/${email}`);
@@ -30,12 +30,12 @@ export class Attester extends Api {
       // because it had to go through background scripts, and objects are serialized when this happens
       // the proper fix would be to send back headers from bg along with response text, and parse it here
       if (!r.getResponseHeader) {
-        return { pubkey: r.responseText, pgpClient: null }; // tslint:disable-line:no-null-keyword
+        return { pubkey: r.responseText };
       }
-      return { pubkey: r.responseText, pgpClient: r.getResponseHeader('pgp-client') as PgpClient };
+      return { pubkey: r.responseText };
     } catch (e) {
       if (ApiErr.isNotFound(e)) {
-        return { pubkey: null, pgpClient: null }; // tslint:disable-line:no-null-keyword
+        return { pubkey: null }; // tslint:disable-line:no-null-keyword
       }
       throw e;
     }

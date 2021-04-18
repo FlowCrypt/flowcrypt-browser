@@ -67,19 +67,17 @@ export class Wkd extends Api {
   public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
     const { keys, errs } = await this.rawLookupEmail(email);
     if (errs.length) {
-      return { pubkey: null, pgpClient: null };
+      return { pubkey: null };
     }
     const key = keys.find(key => key.usableForEncryption && key.emails.some(x => x.toLowerCase() === email.toLowerCase()));
     if (!key) {
-      return { pubkey: null, pgpClient: null };
+      return { pubkey: null };
     }
-    // if recipient uses same domain, we assume they use flowcrypt
-    const pgpClient = this.myOwnDomain === Str.getDomainFromEmailAddress(email) ? 'flowcrypt' : 'pgp-other';
     try {
       const pubkey = KeyUtil.armor(key);
-      return { pubkey, pgpClient };
+      return { pubkey };
     } catch (e) {
-      return { pubkey: null, pgpClient: null };
+      return { pubkey: null };
     }
   }
 
