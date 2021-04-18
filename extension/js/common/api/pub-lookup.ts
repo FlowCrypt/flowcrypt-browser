@@ -29,7 +29,7 @@ export class PubLookup {
     const privateKeyManagerUrl = orgRules.getKeyManagerUrlForPublicKeys();
     const internalSksUrl = this.orgRules.getCustomSksPubkeyServer();
     this.attester = new Attester(orgRules);
-    this.wkd = new Wkd(orgRules.domainName);
+    this.wkd = new Wkd();
     if (privateKeyManagerUrl) {
       this.keyManager = new KeyManager(privateKeyManagerUrl);
     }

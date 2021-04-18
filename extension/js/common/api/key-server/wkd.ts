@@ -8,7 +8,6 @@ import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { Buf } from '../../core/buf.js';
 import { PubkeySearchResult } from './../pub-lookup.js';
 import { Key, KeyUtil } from '../../core/crypto/key.js';
-import { Str } from '../../core/common.js';
 
 // tslint:disable:no-null-keyword
 // tslint:disable:no-direct-ajax
@@ -20,10 +19,6 @@ export class Wkd extends Api {
   // https://metacode.biz/openpgp/web-key-directory
 
   public port: number | undefined;
-
-  constructor(private myOwnDomain: string) {
-    super();
-  }
 
   // returns all the received keys
   public rawLookupEmail = async (email: string): Promise<{ keys: Key[], errs: Error[] }> => {
