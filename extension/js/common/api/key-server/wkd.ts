@@ -8,7 +8,6 @@ import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { Buf } from '../../core/buf.js';
 import { PubkeysSearchResult } from './../pub-lookup.js';
 import { Key, KeyUtil } from '../../core/crypto/key.js';
-import { Str } from '../../core/common.js';
 
 // tslint:disable:no-null-keyword
 // tslint:disable:no-direct-ajax
@@ -20,10 +19,6 @@ export class Wkd extends Api {
   // https://metacode.biz/openpgp/web-key-directory
 
   public port: number | undefined;
-
-  constructor(private myOwnDomain: string) {
-    super();
-  }
 
   // returns all the received keys
   public rawLookupEmail = async (email: string): Promise<{ keys: Key[], errs: Error[] }> => {
@@ -67,18 +62,16 @@ export class Wkd extends Api {
   public lookupEmail = async (email: string): Promise<PubkeysSearchResult> => {
     const { keys, errs } = await this.rawLookupEmail(email);
     if (errs.length) {
-      return { pubkeys: [], pgpClient: null };
+      return { pubkeys: [] };
     }
     const pubkeys = keys.filter(key => key.emails.some(x => x.toLowerCase() === email.toLowerCase()));
     if (!pubkeys.length) {
-      return { pubkeys: [], pgpClient: null };
+      return { pubkeys: [] };
     }
-    // if recipient uses same domain, we assume they use flowcrypt
-    const pgpClient = this.myOwnDomain === Str.getDomainFromEmailAddress(email) ? 'flowcrypt' : 'pgp-other';
     try {
-      return { pubkeys: pubkeys.map(pubkey => KeyUtil.armor(pubkey)), pgpClient };
+      return { pubkeys: pubkeys.map(pubkey => KeyUtil.armor(pubkey)) };
     } catch (e) {
-      return { pubkeys: [], pgpClient: null };
+      return { pubkeys: [] };
     }
   }
 

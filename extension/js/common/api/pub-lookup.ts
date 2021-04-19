@@ -8,9 +8,8 @@ import { Sks } from './key-server/sks.js';
 import { Wkd } from './key-server/wkd.js';
 import { OrgRules } from '../org-rules.js';
 
-export type PgpClient = 'flowcrypt' | 'pgp-other' | null;
-export type PubkeySearchResult = { pubkey: string | null; pgpClient: PgpClient };
-export type PubkeysSearchResult = { pubkeys: string[]; pgpClient: PgpClient };
+export type PubkeySearchResult = { pubkey: string | null };
+export type PubkeysSearchResult = { pubkeys: string[] };
 
 /**
  * Look up public keys.
@@ -31,7 +30,7 @@ export class PubLookup {
     const privateKeyManagerUrl = orgRules.getKeyManagerUrlForPublicKeys();
     const internalSksUrl = this.orgRules.getCustomSksPubkeyServer();
     this.attester = new Attester(orgRules);
-    this.wkd = new Wkd(orgRules.domainName);
+    this.wkd = new Wkd();
     if (privateKeyManagerUrl) {
       this.keyManager = new KeyManager(privateKeyManagerUrl);
     }
@@ -44,7 +43,7 @@ export class PubLookup {
     if (this.keyManager) {
       const res = await this.keyManager.lookupPublicKey(email);
       if (res.publicKeys.length) {
-        return { pubkeys: res.publicKeys.map(x => x.publicKey), pgpClient: 'flowcrypt' };
+        return { pubkeys: res.publicKeys.map(x => x.publicKey) };
       }
     }
     const wkdRes = await this.wkd.lookupEmail(email);
@@ -54,21 +53,21 @@ export class PubLookup {
     if (this.internalSks) {
       const res = await this.internalSks.lookupEmail(email);
       if (res.pubkey) {
-        return { pubkeys: [res.pubkey], pgpClient: res.pgpClient };
+        return { pubkeys: [res.pubkey] };
       }
     }
     const attRes = await this.attester.lookupEmail(email);
     if (attRes.pubkey) {
-      return { pubkeys: [attRes.pubkey], pgpClient: attRes.pgpClient };
+      return { pubkeys: [attRes.pubkey] };
     }
-    return { pubkeys: [], pgpClient: null }; // tslint:disable-line:no-null-keyword
+    return { pubkeys: [] }; // tslint:disable-line:no-null-keyword
   }
 
   public lookupFingerprint = async (fingerprintOrLongid: string): Promise<PubkeySearchResult> => {
     if (this.keyManager) {
       const res = await this.keyManager.lookupPublicKey(fingerprintOrLongid);
       if (res.publicKeys.length) {
-        return { pubkey: res.publicKeys[0].publicKey, pgpClient: 'flowcrypt' };
+        return { pubkey: res.publicKeys[0].publicKey };
       }
     }
     if (this.internalSks) {

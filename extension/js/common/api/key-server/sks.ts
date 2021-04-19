@@ -27,7 +27,7 @@ export class Sks extends Api {
   public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
     const index = await this.get(`/pks/lookup?search=${encodeURIComponent(email)}&fingerprint=on&exact=on&options=mr&op=index`);
     if (!index || !index.startsWith(Sks.MR_VERSION_1)) {
-      return { pubkey: null, pgpClient: null }; // tslint:disable-line:no-null-keyword
+      return { pubkey: null }; // tslint:disable-line:no-null-keyword
     }
     const foundUidsByLongid: { [longid: string]: string[] } = {};
     let currentLongid = '';
@@ -45,7 +45,7 @@ export class Sks extends Api {
       }
     }
     if (!Object.keys(foundUidsByLongid).length) {
-      return { pubkey: null, pgpClient: null }; // tslint:disable-line:no-null-keyword
+      return { pubkey: null }; // tslint:disable-line:no-null-keyword
     }
     for (const longid of Object.keys(foundUidsByLongid)) {
       for (const uid of foundUidsByLongid[longid]) {
@@ -61,9 +61,9 @@ export class Sks extends Api {
   public lookupFingerprint = async (fingerprintOrLongid: string): Promise<PubkeySearchResult> => {
     const pubkey = await this.get(`/pks/lookup?op=get&search=0x${fingerprintOrLongid}&options=mr`);
     if (!pubkey || !pubkey.includes(String(PgpArmor.headers('publicKey').end))) {
-      return { pubkey: null, pgpClient: null }; // tslint:disable-line:no-null-keyword
+      return { pubkey: null }; // tslint:disable-line:no-null-keyword
     }
-    return { pubkey, pgpClient: 'pgp-other' };
+    return { pubkey };
   }
 
   private get = async (path: string): Promise<string | undefined> => {

@@ -22,8 +22,18 @@ export class SmimeKey {
 
   public static parseDecryptBinary = async (buffer: Uint8Array, password: string): Promise<Key> => {
     const bytes = String.fromCharCode.apply(undefined, new Uint8Array(buffer) as unknown as number[]) as string;
-    const p12Asn1 = forge.asn1.fromDer(bytes);
-    const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, password);
+    const asn1 = forge.asn1.fromDer(bytes);
+    let certificate: forge.pki.Certificate | undefined;
+    try {
+      // try to recognize a certificate
+      certificate = forge.pki.certificateFromAsn1(asn1);
+    } catch (e) {
+      // fall back to p12
+    }
+    if (certificate) {
+      return SmimeKey.getKeyFromCertificate(certificate, forge.pki.certificateToPem(certificate));
+    }
+    const p12 = forge.pkcs12.pkcs12FromAsn1(asn1, password);
     const bags = p12.getBags({ bagType: forge.pki.oids.certBag });
     if (!bags) {
       throw new Error('No user certificate found.');
@@ -32,15 +42,12 @@ export class SmimeKey {
     if (!bag) {
       throw new Error('No user certificate found.');
     }
-    const certificate = bag[0]?.cert;
+    certificate = bag[0]?.cert;
     if (!certificate) {
       throw new Error('No user certificate found.');
     }
-    const email = (certificate.subject.getField('CN') as { value: string }).value;
-    const normalizedEmail = Str.parseEmail(email).email;
-    if (!normalizedEmail) {
-      throw new UnreportableError(`This S/MIME x.509 certificate has an invalid recipient email: ${email}`);
-    }
+    SmimeKey.removeWeakKeys(certificate);
+    const emails = SmimeKey.getNormalizedEmailsFromCertificate(certificate);
     const key = {
       type: 'x509',
       id: certificate.serialNumber.toUpperCase(),
@@ -49,8 +56,8 @@ export class SmimeKey {
       usableForSigning: SmimeKey.isEmailCertificate(certificate),
       usableForEncryptionButExpired: false,
       usableForSigningButExpired: false,
-      emails: [normalizedEmail],
-      identities: [normalizedEmail],
+      emails,
+      identities: emails,
       created: SmimeKey.dateToNumber(certificate.validity.notBefore),
       lastModified: SmimeKey.dateToNumber(certificate.validity.notBefore),
       expiration: SmimeKey.dateToNumber(certificate.validity.notAfter),
@@ -85,14 +92,26 @@ export class SmimeKey {
     return { data: new Uint8Array(arr), type: 'smime' };
   }
 
-  private static parsePemCertificate = (text: string): Key => {
-    const certificate = forge.pki.certificateFromPem(text);
-    SmimeKey.removeWeakKeys(certificate);
-    const email = (certificate.subject.getField('CN') as { value: string }).value;
-    const normalizedEmail = Str.parseEmail(email).email;
-    if (!normalizedEmail) {
-      throw new UnreportableError(`This S/MIME x.509 certificate has an invalid recipient email: ${email}`);
+  private static getNormalizedEmailsFromCertificate = (certificate: forge.pki.Certificate): string[] => {
+    const emailFromSubject = (certificate.subject.getField('CN') as { value: string }).value;
+    const normalizedEmail = Str.parseEmail(emailFromSubject).email;
+    const emails = normalizedEmail ? [normalizedEmail] : [];
+    // search for e-mails in subjectAltName extension
+    const subjectAltName = certificate.getExtension('subjectAltName') as { altNames: { type: number, value: string }[] };
+    if (subjectAltName && subjectAltName.altNames) {
+      const emailsFromAltNames = subjectAltName.altNames.filter(entry => entry.type === 1).
+        map(entry => Str.parseEmail(entry.value).email).filter(Boolean);
+      emails.push(...emailsFromAltNames as string[]);
     }
+    if (emails.length) {
+      return emails.filter((value, index, self) => self.indexOf(value) === index);
+    }
+    throw new UnreportableError(`This S/MIME x.509 certificate has an invalid recipient email: ${emailFromSubject}`);
+  }
+
+  private static getKeyFromCertificate = (certificate: forge.pki.Certificate, pem: string): Key => {
+    SmimeKey.removeWeakKeys(certificate);
+    const emails = SmimeKey.getNormalizedEmailsFromCertificate(certificate);
     const key = {
       type: 'x509',
       id: certificate.serialNumber.toUpperCase(),
@@ -101,8 +120,8 @@ export class SmimeKey {
       usableForSigning: certificate.publicKey && SmimeKey.isEmailCertificate(certificate),
       usableForEncryptionButExpired: false,
       usableForSigningButExpired: false,
-      emails: [normalizedEmail],
-      identities: [normalizedEmail],
+      emails,
+      identities: emails,
       created: SmimeKey.dateToNumber(certificate.validity.notBefore),
       lastModified: SmimeKey.dateToNumber(certificate.validity.notBefore),
       expiration: SmimeKey.dateToNumber(certificate.validity.notAfter),
@@ -112,8 +131,13 @@ export class SmimeKey {
       isPrivate: !!certificate.privateKey,
       revoked: false // todo:
     } as Key;
-    (key as unknown as { rawArmored: string }).rawArmored = text;
+    (key as unknown as { rawArmored: string }).rawArmored = pem;
     return key;
+  }
+
+  private static parsePemCertificate = (text: string): Key => {
+    const certificate = forge.pki.certificateFromPem(text);
+    return SmimeKey.getKeyFromCertificate(certificate, text);
   }
 
   private static removeWeakKeys = (certificate: forge.pki.Certificate) => {

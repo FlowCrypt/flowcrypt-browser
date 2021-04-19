@@ -22,7 +22,7 @@
 
 BROWSER_UNIT_TEST_NAME(`Wkd direct method`);
 (async () => {
-  const wkd = new Wkd('flowcrypt.com');
+  const wkd = new Wkd();
   wkd.port = 8001;
   let email;
   email = 'john.doe@localhost';
@@ -38,7 +38,7 @@ BROWSER_UNIT_TEST_NAME(`Wkd direct method`);
 
 BROWSER_UNIT_TEST_NAME(`Wkd advanced method`);
 (async () => {
-  const wkd = new Wkd('flowcrypt.com');
+  const wkd = new Wkd();
   wkd.port = 8001;
   let email;
   email = 'john.doe@localhost';
@@ -54,7 +54,7 @@ BROWSER_UNIT_TEST_NAME(`Wkd advanced method`);
 
 BROWSER_UNIT_TEST_NAME(`Wkd client returns all keys`);
 (async () => {
-  const wkd = new Wkd('flowcrypt.com');
+  const wkd = new Wkd();
   wkd.port = 8001;
   const email = 'some.revoked@localhost';
   const pubkeys = (await wkd.lookupEmail(email)).pubkeys;
@@ -73,7 +73,7 @@ BROWSER_UNIT_TEST_NAME(`Wkd client returns all keys`);
 
 BROWSER_UNIT_TEST_NAME(`Wkd advanced shouldn't fall back on direct if advanced policy file is present`);
 (async () => {
-  const wkd = new Wkd('flowcrypt.com');
+  const wkd = new Wkd();
   wkd.port = 8001;
   const email = 'jack.advanced@localhost';
   if ((await wkd.lookupEmail(email)).pubkeys.length) {
@@ -84,7 +84,7 @@ BROWSER_UNIT_TEST_NAME(`Wkd advanced shouldn't fall back on direct if advanced p
 
 BROWSER_UNIT_TEST_NAME(`Wkd incorrect UID should fail`);
 (async () => {
-  const wkd = new Wkd('flowcrypt.com');
+  const wkd = new Wkd();
   wkd.port = 8001;
   const email = 'incorrect@localhost';
   if ((await wkd.lookupEmail(email)).pubkeys.length) {
@@ -95,7 +95,7 @@ BROWSER_UNIT_TEST_NAME(`Wkd incorrect UID should fail`);
 
 BROWSER_UNIT_TEST_NAME(`Wkd should extract key for human@flowcrypt.com`);
 (async () => {
-  const wkd = new Wkd('flowcrypt.com');
+  const wkd = new Wkd();
   const email = 'human@flowcrypt.com';
   if (!(await wkd.lookupEmail(email)).pubkeys.length) {
     throw Error(`Wkd for ${email} didn't return a pubkey`);
