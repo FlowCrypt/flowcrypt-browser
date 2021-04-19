@@ -60,7 +60,7 @@ export class PubLookup {
     if (attRes.pubkey) {
       return { pubkeys: [attRes.pubkey] };
     }
-    return { pubkeys: [] }; // tslint:disable-line:no-null-keyword
+    return { pubkeys: [] };
   }
 
   public lookupFingerprint = async (fingerprintOrLongid: string): Promise<PubkeySearchResult> => {

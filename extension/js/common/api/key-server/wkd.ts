@@ -9,7 +9,6 @@ import { Buf } from '../../core/buf.js';
 import { PubkeysSearchResult } from './../pub-lookup.js';
 import { Key, KeyUtil } from '../../core/crypto/key.js';
 
-// tslint:disable:no-null-keyword
 // tslint:disable:no-direct-ajax
 
 export class Wkd extends Api {
