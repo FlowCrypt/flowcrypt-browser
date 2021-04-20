@@ -20,8 +20,8 @@ import { MsgBlock } from '../msg-block.js';
  */
 export interface Key {
   type: 'openpgp' | 'x509';
-  id: string; // This is a fingerprint for OpenPGP keys and Serial Number for X.509 keys.
-  allIds: string[]; // a list of fingerprints for OpenPGP key or a Serial Number for X.509 keys.
+  id: string; // a fingerprint
+  allIds: string[]; // a list of fingerprints, including those for subkeys
   created: number;
   lastModified: number | undefined; // date of last signature, or undefined if never had valid signature
   expiration: number | undefined; // number of millis of expiration or undefined if never expires

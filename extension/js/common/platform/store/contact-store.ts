@@ -271,7 +271,7 @@ export class ContactStore extends AbstractStore {
 
   public static updateTx = (tx: IDBTransaction, email: string, update: ContactUpdate) => {
     if (update.pubkey && !update.pubkeyLastCheck) {
-      const req = tx.objectStore('pubkeys').get(update.pubkey.id);
+      const req = tx.objectStore('pubkeys').get(ContactStore.getPubkeyId(update.pubkey));
       ContactStore.setReqPipe(req, (pubkey: Pubkey) => ContactStore.updateTxPhase2(tx, email, update, pubkey));
     } else {
       ContactStore.updateTxPhase2(tx, email, update, undefined);
@@ -295,13 +295,17 @@ export class ContactStore extends AbstractStore {
     }
   }
 
+  private static getPubkeyId = (pubkey: Key): string => {
+    return (pubkey.type === 'x509') ? (pubkey.id + '-X509') : pubkey.id;
+  }
+
   private static updateTxPhase2 = (tx: IDBTransaction, email: string, update: ContactUpdate, existingPubkey: Pubkey | undefined) => {
     let pubkeyEntity: Pubkey | undefined;
     if (update.pubkey) {
       const keyAttrs = ContactStore.getKeyAttributes(update.pubkey);
       // todo: will we benefit anything when not saving pubkey if it isn't modified?
       pubkeyEntity = {
-        fingerprint: update.pubkey.id,
+        fingerprint: ContactStore.getPubkeyId(update.pubkey),
         lastCheck: DateUtility.asNumber(update.pubkeyLastCheck ?? existingPubkey?.lastCheck),
         expiresOn: keyAttrs.expiresOn,
         longids: update.pubkey.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)),

@@ -46,29 +46,8 @@ export class SmimeKey {
     if (!certificate) {
       throw new Error('No user certificate found.');
     }
-    SmimeKey.removeWeakKeys(certificate);
-    const emails = SmimeKey.getNormalizedEmailsFromCertificate(certificate);
-    const key = {
-      type: 'x509',
-      id: certificate.serialNumber.toUpperCase(),
-      allIds: [certificate.serialNumber.toUpperCase()],
-      usableForEncryption: SmimeKey.isEmailCertificate(certificate),
-      usableForSigning: SmimeKey.isEmailCertificate(certificate),
-      usableForEncryptionButExpired: false,
-      usableForSigningButExpired: false,
-      emails,
-      identities: emails,
-      created: SmimeKey.dateToNumber(certificate.validity.notBefore),
-      lastModified: SmimeKey.dateToNumber(certificate.validity.notBefore),
-      expiration: SmimeKey.dateToNumber(certificate.validity.notAfter),
-      fullyDecrypted: true,
-      fullyEncrypted: false,
-      isPublic: certificate.publicKey && !certificate.privateKey,
-      isPrivate: !!certificate.privateKey,
-    } as Key;
     const headers = PgpArmor.headers('pkcs12');
-    (key as unknown as { raw: string }).raw = `${headers.begin}\n${forge.util.encode64(bytes)}\n${headers.end}`;
-    return key;
+    return SmimeKey.getKeyFromCertificate(certificate, `${headers.begin}\n${forge.util.encode64(bytes)}\n${headers.end}`);
   }
 
   /**
@@ -109,14 +88,18 @@ export class SmimeKey {
   }
 
   private static getKeyFromCertificate = (certificate: forge.pki.Certificate, pem: string): Key => {
+    if (!certificate.publicKey) {
+      throw new UnreportableError(`This S/MIME x.509 certificate doesn't have a public key`);
+    }
+    const fingerprint = forge.pki.getPublicKeyFingerprint(certificate.publicKey, { encoding: 'hex' }).toUpperCase();
     SmimeKey.removeWeakKeys(certificate);
     const emails = SmimeKey.getNormalizedEmailsFromCertificate(certificate);
     const key = {
       type: 'x509',
-      id: certificate.serialNumber.toUpperCase(),
-      allIds: [certificate.serialNumber.toUpperCase()],
-      usableForEncryption: certificate.publicKey && SmimeKey.isEmailCertificate(certificate),
-      usableForSigning: certificate.publicKey && SmimeKey.isEmailCertificate(certificate),
+      id: fingerprint,
+      allIds: [fingerprint],
+      usableForEncryption: SmimeKey.isEmailCertificate(certificate),
+      usableForSigning: SmimeKey.isEmailCertificate(certificate),
       usableForEncryptionButExpired: false,
       usableForSigningButExpired: false,
       emails,
@@ -124,9 +107,9 @@ export class SmimeKey {
       created: SmimeKey.dateToNumber(certificate.validity.notBefore),
       lastModified: SmimeKey.dateToNumber(certificate.validity.notBefore),
       expiration: SmimeKey.dateToNumber(certificate.validity.notAfter),
-      fullyDecrypted: false,
+      fullyDecrypted: !!certificate.privateKey,
       fullyEncrypted: false,
-      isPublic: certificate.publicKey && !certificate.privateKey,
+      isPublic: !certificate.privateKey,
       isPrivate: !!certificate.privateKey,
     } as Key;
     (key as unknown as { rawArmored: string }).rawArmored = pem;

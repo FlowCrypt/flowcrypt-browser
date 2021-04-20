@@ -357,3 +357,35 @@ BROWSER_UNIT_TEST_NAME(`ContactStore gets a valid pubkey by e-mail, or exact pub
   }
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`ContactStore stores postfixed fingerprint internally for X.509 certificate`);
+(async () => {
+  const db = await ContactStore.dbOpen();
+  const email = 'actalis@meta.33mail.com';
+  const contacts = [
+    await ContactStore.obj({
+      email,
+      pubkey: testConstants.smimeCert
+    })];
+  await ContactStore.save(db, contacts);
+  // extract the entity directly from the database
+  const entityFp = '16BB407403A3ADC55E1E0E4AF93EEC8FB187C923-X509';
+  const fingerprint = '16BB407403A3ADC55E1E0E4AF93EEC8FB187C923';
+  const longid = 'F93EEC8FB187C923';
+  const entity = await new Promise((resolve, reject) => {
+      const req = db.transaction(['pubkeys'], 'readonly').objectStore('pubkeys').get(entityFp);
+      ContactStore.setReqPipe(req, resolve, reject);
+    });
+  if (entity.fingerprint !== entityFp) {
+    throw Error(`Failed to extract pubkey ${fingerprint}`);
+  }
+  const [contactByLongid] = await ContactStore.get(db, [longid]);
+  if (contactByLongid.pubkey.id !== fingerprint) {
+    throw Error(`Failed to extract pubkey ${fingerprint}`);
+  }
+  const [contactByEmail] = await ContactStore.get(db, [email]);
+  if (contactByEmail.pubkey.id !== fingerprint) {
+    throw Error(`Failed to extract pubkey ${fingerprint}`);
+  }
+  return 'pass';
+})();
