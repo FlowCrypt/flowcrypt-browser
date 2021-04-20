@@ -763,6 +763,7 @@ wHlKRDVNpiNVKyevQ8PI9iQGMEkKOv23GdDuC0F0rCCnqp6gEVvezjMMk5bMCEiY4sn2+wwVDpC3
 5adfA360UnwZSMt5qrk=
 =EDBf
 -----END PGP PUBLIC KEY BLOCK-----`,
+  // get s/mime cert for testing: https://extrassl.actalis.it/portal/uapub/freemail?lang=en
   smimeCert: `-----BEGIN CERTIFICATE-----
 MIIE9DCCA9ygAwIBAgIQY/cCXnAPOUUwH7L7pWdPhDANBgkqhkiG9w0BAQsFADCB
 jTELMAkGA1UEBhMCSVQxEDAOBgNVBAgMB0JlcmdhbW8xGTAXBgNVBAcMEFBvbnRl
