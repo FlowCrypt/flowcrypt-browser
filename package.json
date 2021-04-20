@@ -49,7 +49,7 @@
     "squire-rte": "1.11.1",
     "clipboard": "2.0.8",
     "bootstrap": "4.6.0",
-    "filesize": "6.2.5"
+    "filesize": "6.2.6"
   },
   "scripts": {
     "build": "./build.sh",
