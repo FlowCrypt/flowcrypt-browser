@@ -62,7 +62,6 @@ export class SetupView extends View {
   public pubLookup!: PubLookup;
   public keyManager: KeyManager | undefined; // not set if no url in org rules
 
-  public acctEmailAttesterPubId: string | undefined;
   public fetchedKeyBackups: KeyInfo[] = [];
   public fetchedKeyBackupsUniqueLongids: string[] = [];
   public importedKeysUniqueLongids: string[] = [];

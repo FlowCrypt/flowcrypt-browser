@@ -98,8 +98,6 @@ export class SetupRenderModule {
       return await Settings.promptToRetry(e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => this.renderSetupDialog());
     }
     if (keyserverRes.pubkeys.length) {
-      const pub = await KeyUtil.parse(keyserverRes.pubkeys[0]); // todo: ?
-      this.view.acctEmailAttesterPubId = pub.id;
       if (!this.view.orgRules.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         this.displayBlock('step_2b_manual_enter');
