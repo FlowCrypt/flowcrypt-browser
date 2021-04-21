@@ -20,7 +20,7 @@ import { MsgBlock } from '../msg-block.js';
  */
 export interface Key {
   type: 'openpgp' | 'x509';
-  id: string; // a fingerprint
+  id: string; // a fingerprint of the primary key in OpenPGP, and similarly a fingerprint of the actual cryptographic key (eg RSA fingerprint) in S/MIME
   allIds: string[]; // a list of fingerprints, including those for subkeys
   created: number;
   lastModified: number | undefined; // date of last signature, or undefined if never had valid signature
