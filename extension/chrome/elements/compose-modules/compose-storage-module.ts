@@ -120,6 +120,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
             // update just name
             updates.push({ name } as ContactUpdate);
           } else {
+            // No public key found. Returning early, nothing to update in local store below.
             return await ContactStore.obj({ email });
           }
         }
