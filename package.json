@@ -41,7 +41,7 @@
     "dompurify": "2.2.7",
     "jquery": "3.6.0",
     "openpgp": "4.10.10",
-    "sweetalert2": "10.16.4",
+    "sweetalert2": "10.16.6",
     "node-forge": "0.10.0",
     "iso-8859-2": "1.0.0",
     "zxcvbn": "4.4.2",
