@@ -43,6 +43,7 @@ export interface Key {
     bits?: number,
     algorithmId: number
   };
+  issuerAndSerialNumber?: string | undefined; // DER-encoded IssuerAndSerialNumber of X.509 Certificate as raw string
 }
 
 export type PubkeyResult = { pubkey: Key, email: string, isMine: boolean };

@@ -94,6 +94,14 @@ export class SmimeKey {
     const fingerprint = forge.pki.getPublicKeyFingerprint(certificate.publicKey, { encoding: 'hex' }).toUpperCase();
     SmimeKey.removeWeakKeys(certificate);
     const emails = SmimeKey.getNormalizedEmailsFromCertificate(certificate);
+    const issuerAndSerialNumberAsn1 =
+      forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SEQUENCE, true, [
+        // Name
+        forge.pki.distinguishedNameToAsn1(certificate.issuer),
+        // Serial
+        forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.INTEGER, false,
+          forge.util.hexToBytes(certificate.serialNumber))
+      ]);
     const key = {
       type: 'x509',
       id: fingerprint,
@@ -111,6 +119,7 @@ export class SmimeKey {
       fullyEncrypted: false,
       isPublic: !certificate.privateKey,
       isPrivate: !!certificate.privateKey,
+      issuerAndSerialNumber: forge.asn1.toDer(issuerAndSerialNumberAsn1).getBytes()
     } as Key;
     (key as unknown as { rawArmored: string }).rawArmored = pem;
     return key;

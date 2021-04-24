@@ -511,6 +511,15 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       t.pass();
     });
 
+    ava.default('[unit][KeyUtil.parse] issuerAndSerialNumber of S/MIME certificate is constructed according to PKCS#7', async t => {
+      const key = await KeyUtil.parse(testConstants.smimeCert);
+      const buf = Buf.with((await MsgUtil.encryptMessage(
+        { pubkeys: [key], data: Buf.fromUtfStr('anything'), armor: true }) as PgpMsgMethod.EncryptX509Result).data);
+      const raw = buf.toRawBytesStr();
+      expect(raw).to.include(key.issuerAndSerialNumber);
+      t.pass();
+    });
+
     ava.default('[unit][KeyUtil.parse] Correctly extracting email from SubjectAltName of S/MIME certificate', async t => {
       /*
             // generate a key pair
