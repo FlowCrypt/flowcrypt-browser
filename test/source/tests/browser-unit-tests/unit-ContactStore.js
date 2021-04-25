@@ -389,3 +389,34 @@ BROWSER_UNIT_TEST_NAME(`ContactStore stores postfixed fingerprint internally for
   }
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`ContactStore searches S/MIME Certificate by PKCS#7 message recipient`);
+(async () => {
+  const db = await ContactStore.dbOpen();
+  const email = 'actalis@meta.33mail.com';
+  const pubkey = testConstants.smimeCert;
+  const contacts = [await ContactStore.obj({ email, pubkey })];
+  await ContactStore.save(db, contacts);
+  const p7 = forge.pkcs7.createEnvelopedData();
+  const certificate = forge.pki.certificateFromPem(pubkey);
+  p7.addRecipient(certificate);
+  const recipient = p7.recipients[0];
+  const issuerAndSerialNumberAsn1 =
+      forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SEQUENCE, true, [
+        // Name
+        forge.pki.distinguishedNameToAsn1({ attributes: recipient.issuer }),
+        // Serial
+        forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.INTEGER, false,
+          forge.util.hexToBytes(recipient.serialNumber))
+      ]);
+  const der = forge.asn1.toDer(issuerAndSerialNumberAsn1).getBytes();
+  const buf = Buf.fromRawBytesStr(der);
+  const [contact] = await ContactStore.get(db, ['X509-' + buf.toBase64Str()]);
+  const foundCert = KeyUtil.armor(contact.pubkey);
+  console.log('foundCert');
+  console.log(foundCert);
+  if (foundCert !== pubkey) {
+    throw new Error(`The certificate wasn't found by S/MIME IssuerAndSerialNumber`);
+  }
+  return 'pass';
+})();

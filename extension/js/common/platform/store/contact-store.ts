@@ -7,6 +7,7 @@ import { BrowserMsg } from '../../browser/browser-msg.js';
 import { DateUtility, Str } from '../../core/common.js';
 import { Key, Contact, KeyUtil } from '../../core/crypto/key.js';
 import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key.js';
+import { Buf } from '../../core/buf.js';
 
 // tslint:disable:no-null-keyword
 
@@ -295,6 +296,17 @@ export class ContactStore extends AbstractStore {
     }
   }
 
+  public static getPubkeyLongids = (pubkey: Key): string[] => {
+    if (pubkey.type !== 'x509') {
+      return pubkey.allIds.map(id => OpenPGPKey.fingerprintToLongid(id));
+    }
+    const encodedIssuerAndSerialNumber = 'X509-' + Buf.fromRawBytesStr(pubkey.issuerAndSerialNumber!).toBase64Str();
+    if (!encodedIssuerAndSerialNumber) {
+      throw new Error(`Cannot extract IssuerAndSerialNumber from the certificate for: ${pubkey.id}`);
+    }
+    return [encodedIssuerAndSerialNumber];
+  }
+
   private static getPubkeyId = (pubkey: Key): string => {
     return (pubkey.type === 'x509') ? (pubkey.id + '-X509') : pubkey.id;
   }
@@ -308,7 +320,7 @@ export class ContactStore extends AbstractStore {
         fingerprint: ContactStore.getPubkeyId(update.pubkey),
         lastCheck: DateUtility.asNumber(update.pubkeyLastCheck ?? existingPubkey?.lastCheck),
         expiresOn: keyAttrs.expiresOn,
-        longids: update.pubkey.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)),
+        longids: ContactStore.getPubkeyLongids(update.pubkey),
         armoredKey: KeyUtil.armor(update.pubkey)
       } as Pubkey;
     } else if (update.pubkeyLastCheck) {
@@ -459,7 +471,7 @@ export class ContactStore extends AbstractStore {
   }
 
   private static dbContactInternalGetOne = async (db: IDBDatabase, emailOrLongid: string): Promise<Contact | undefined> => {
-    if (!/^[A-F0-9]{16}$/.test(emailOrLongid)) { // email
+    if (emailOrLongid.includes('@')) { // email
       const contactWithAllPubkeys = await ContactStore.getOneWithAllPubkeys(db, emailOrLongid);
       if (!contactWithAllPubkeys) {
         return contactWithAllPubkeys;

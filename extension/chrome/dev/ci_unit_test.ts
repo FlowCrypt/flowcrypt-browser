@@ -15,6 +15,8 @@ import { Sks } from '../../js/common/api/key-server/sks.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 import { Debug } from '../../js/common/platform/debug.js';
+import * as forge from 'node-forge';
+
 
 /**
  * importing all libs that are tested in ci tests
@@ -33,7 +35,8 @@ const libs: any[] = [
   MsgUtil,
   Ui,
   ContactStore,
-  Debug
+  Debug,
+  forge
 ];
 
 // add them to global scope so ci can use them
