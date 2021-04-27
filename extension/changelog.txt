@@ -1,5 +1,7 @@
 <div class="lightboxed">
 
+version 8.0.6 on Apr 27, 2021: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/434?closed=1" target="_blank">Gmail UI fix, rm hosts-meta</a>
+
 version 8.0.5 on Apr 20, 2021: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/433?closed=1" target="_blank">Pubkey storage migration</a>
 
 version 8.0.4 on Mar 27, 2021: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/432?closed=1" target="_blank">Security improvements</a>
