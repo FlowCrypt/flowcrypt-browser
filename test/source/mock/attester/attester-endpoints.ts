@@ -13,7 +13,7 @@ import { testConstants } from '../../tests/tooling/consts';
 // tslint:disable:no-blank-lines-func
 
 const knownMockEmails = [
-  'ci.tests.gmail@flowcrypt.dev',
+  'ci.tests.gmail@flowcrypt.test',
   'flowcrypt.compatibility@gmail.com',
   'human@flowcrypt.com',
   'flowcrypt.test.key.new.manual@gmail.com',

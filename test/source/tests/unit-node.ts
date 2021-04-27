@@ -650,7 +650,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     });
 
     ava.default('[unit][MsgUtil.decryptMessage] extracts Primary User ID from key', async t => {
-      const data = new GoogleData('ci.tests.gmail@flowcrypt.dev');
+      const data = new GoogleData('ci.tests.gmail@flowcrypt.test');
       const msg: GmailMsg = data.getMessage('1766644f13510f58')!;
       const enc = Buf.fromBase64Str(msg!.raw!).toUtfStr()
         .match(/\-\-\-\-\-BEGIN PGP SIGNED MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0];
