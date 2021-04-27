@@ -69,3 +69,5 @@ In order for `npm run-script build` to work you have to:
 
 - [FlowCrypt Project Structure and Overview](https://github.com/FlowCrypt/flowcrypt-browser/wiki/FlowCrypt-Project-Structure-and-Overview)
 - [FlowCrypt TypeScript Style Guide](https://github.com/FlowCrypt/flowcrypt-browser/wiki/FlowCrypt-TypeScript-Style-Guide)
+- [Running tests locally](https://github.com/FlowCrypt/flowcrypt-browser/wiki/Running-tests-locally)
+
