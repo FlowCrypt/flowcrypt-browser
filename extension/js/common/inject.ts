@@ -26,7 +26,7 @@ export class Injector {
   private S: SelCache;
   private container: { [key: string]: Host } = {
     composeBtnSel: {
-      'gmail': 'div.aic',
+      'gmail': 'div.aeN',
       'outlook': 'div._fce_b',
       'settings': '#does_not_have',
     },
@@ -46,8 +46,7 @@ export class Injector {
     this.S = Ui.buildJquerySels({ // these are selectors that are not specific to any webmail variant
       body: 'body',
       compose_button_container: this.container.composeBtnSel[this.webmailName],
-      compose_button: 'div.new_message_button',
-      compose_button_label: '#cryptup_compose_button_label',
+      compose_button: '#flowcrypt_new_message_button',
       compose_window: 'div.new_message',
     });
   }

@@ -1,5 +1,70 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
+/* Secure Compose button */
+#flowcrypt_new_message_button {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  height: 48px;
+  margin: 0;
+  padding: 0 24px 0 0;
+  transition: box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Google Sans', Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
+  font-size: 0.875rem;
+  letter-spacing: 0.25px;
+  line-height: 32px;
+  background-color: #fff;
+  border: none;
+  border-radius: 24px;
+  box-shadow: 0 1px 2px 0 rgb(60 64 67 / 30%), 0 1px 3px 1px rgb(60 64 67 / 15%);
+  color: #3c4043;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-transform: none;
+  cursor: pointer;
+  user-select: none;
+  outline: 0;
+}
+
+#flowcrypt_new_message_button::before {
+  display: block;
+  content: '';
+  background-size: 24px;
+  min-width: 56px;
+  height: 48px;
+  background-image: url("/img/logo/logo.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+#flowcrypt_new_message_button:hover,
+#flowcrypt_new_message_button:focus {
+  box-shadow: 0 5px 10px 2px rgb(60 64 67 / 20%);
+}
+
+.bhZ:not(.bym) #flowcrypt_new_message_button {
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  font-size: 0;
+  padding: 0;
+}
+
+.anZ.bhZ:not(.bym) #flowcrypt_new_message_button {
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+}
+
+.anZ.bhZ:not(.bym) #flowcrypt_new_message_button::before {
+  min-width: 42px;
+}
+
+.aeN:not(.anZ) [class*=_destroyable].z0 {
+  margin-bottom: 0 !important;
+}
+
 /* notifications */
 div.webmail_notifications {
   position: absolute;
@@ -51,8 +116,6 @@ body.cryptup_outlook div.webmail_notifications div.webmail_notification { margin
 }
 
 /* buttons body.cryptup_inbox */
-body.cryptup_gmail_new .new_message_button::before { background-image: url("/img/logo/logo.svg") !important; }
-
 body.cryptup_inbox div.new_message_button {
   position: relative;
   width: 40px;
