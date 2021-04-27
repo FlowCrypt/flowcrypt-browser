@@ -5,7 +5,7 @@ import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr } from '../lib/api';
 import { MockJwt } from '../lib/oauth';
 
-const standardFesUrl = 'fes.standardsubdomainfes.com:8001';
+const standardFesUrl = 'fes.standardsubdomainfes.test:8001';
 const issuedAccessTokens: string[] = [];
 
 export const mockFesEndpoints: HandlersDefinition = {
@@ -15,7 +15,7 @@ export const mockFesEndpoints: HandlersDefinition = {
       return {
         "vendor": "Mock",
         "service": "enterprise-server",
-        "orgId": "standardsubdomainfes.com",
+        "orgId": "standardsubdomainfes.test",
         "version": "MOCK",
         "apiVersion": 'v1',
       };
@@ -25,7 +25,7 @@ export const mockFesEndpoints: HandlersDefinition = {
       // this makes enterprise version tolerate missing FES - explicit 404
       throw new HttpClientErr(`Not found`, 404);
     }
-    if (req.headers.host === 'fes.google.mock.flowcryptlocal.com:8001') {
+    if (req.headers.host === 'fes.google.mock.flowcryptlocal.test:8001') {
       // test `compose - auto include pubkey is inactive when our key is available on Wkd` uses this
       // this makes enterprise version tolerate missing FES - explicit 404
       throw new HttpClientErr(`Not found`, 404);

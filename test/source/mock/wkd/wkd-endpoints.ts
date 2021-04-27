@@ -102,7 +102,7 @@ nmusEeYtrrMytL4oUohBVZk=
 
 export const mockWkdEndpoints: HandlersDefinition = {
   '/.well-known/openpgpkey/hu/st5or5guodbnsiqbzp6i34xw59h1sgmw?l=wkd': async () => {
-    // direct for wkd@google.mock.flowcryptlocal.com:8001
+    // direct for wkd@google.mock.flowcryptlocal.test:8001
     const pub = await KeyUtil.asPublicKey(await KeyUtil.parse(testConstants.wkdAtgooglemockflowcryptlocalcom8001Private));
     return Buffer.from((await PgpArmor.dearmor(KeyUtil.armor(pub))).data);
   },

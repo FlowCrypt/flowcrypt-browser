@@ -114,7 +114,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
     }));
 
     ava.default('settings - my key page - remove button should be hidden when using key manager', testWithBrowser(undefined, async (t, browser) => {
-      const acct = 'two.keys@key-manager-autogen.flowcrypt.com';
+      const acct = 'two.keys@key-manager-autogen.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.autoKeygen(settingsPage);
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');

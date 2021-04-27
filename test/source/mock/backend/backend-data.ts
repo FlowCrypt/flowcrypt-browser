@@ -51,7 +51,7 @@ export class BackendData {
 
   public getOrgRules = (acct: string) => {
     const domain = acct.split('@')[1];
-    if (domain === 'org-rules-test.flowcrypt.com') {
+    if (domain === 'org-rules-test.flowcrypt.test') {
       return {
         "flags": [
           "NO_PRV_CREATE",
@@ -62,14 +62,14 @@ export class BackendData {
         ]
       };
     }
-    if (domain === 'no-submit-org-rule.flowcrypt.com') {
+    if (domain === 'no-submit-org-rule.flowcrypt.test') {
       return {
         "flags": [
           "NO_ATTESTER_SUBMIT"
         ]
       };
     }
-    if (domain === 'no-search-domains-org-rule.flowcrypt.com') {
+    if (domain === 'no-search-domains-org-rule.flowcrypt.test') {
       return {
         "flags": [],
         "disallow_attester_search_for_domains": ["flowcrypt.com"]
@@ -87,25 +87,25 @@ export class BackendData {
       "enforce_keygen_algo": "rsa2048",
       "disallow_attester_search_for_domains": []
     };
-    if (domain === 'google.mock.flowcryptlocal.com:8001') {
+    if (domain === 'google.mock.flowcryptlocal.test:8001') {
       return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_ATTESTER_SUBMIT'] };
     }
-    if (domain === 'key-manager-autogen.flowcrypt.com') {
+    if (domain === 'key-manager-autogen.flowcrypt.test') {
       return keyManagerAutogenRules;
     }
-    if (domain === 'key-manager-server-offline.flowcrypt.com') {
+    if (domain === 'key-manager-server-offline.flowcrypt.test') {
       return { ...keyManagerAutogenRules, "key_manager_url": "https://localhost:1230/intentionally-wrong", };
     }
-    if (domain === 'key-manager-no-pub-lookup.flowcrypt.com') {
+    if (domain === 'key-manager-no-pub-lookup.flowcrypt.test') {
       return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_KEY_MANAGER_PUB_LOOKUP'] };
     }
-    if (domain === 'key-manager-keygen-expiration.flowcrypt.com') {
+    if (domain === 'key-manager-keygen-expiration.flowcrypt.test') {
       return { ...keyManagerAutogenRules, "enforce_keygen_expire_months": 1 };
     }
-    if (domain === 'no-submit-org-rule.key-manager-autogen.flowcrypt.com') {
+    if (domain === 'no-submit-org-rule.key-manager-autogen.flowcrypt.test') {
       return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_ATTESTER_SUBMIT'] };
     }
-    if (domain === 'prv-create-no-prv-backup.flowcrypt.com') {
+    if (domain === 'prv-create-no-prv-backup.flowcrypt.test') {
       // org is allowed to create new keys in the plugin, without EKM, but no backups are allowed
       // not a sensible choice for production deployments (no backups and no key management), but useful for demos
       return { "flags": ["NO_PRV_BACKUP"], "enforce_keygen_algo": "rsa2048" };

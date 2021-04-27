@@ -26,11 +26,10 @@ blocks:
           - echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"
           - npm run-script pretest
           - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts"
-          - sudo sh -c "echo '127.0.0.1 fes.google.mock.flowcryptlocal.com' >> /etc/hosts"
-          - sudo sh -c "echo '127.0.0.1 google.mock.flowcryptlocal.com' >> /etc/hosts"
-          - sudo sh -c "echo '127.0.0.1 fes.standardsubdomainfes.com' >> /etc/hosts"
-          - sudo sh -c "echo '127.0.0.1 standardsubdomainfes.com' >> /etc/hosts"
-          - sudo sh -c "echo '127.0.0.1 wellknownfes.com' >> /etc/hosts"
+          - sudo sh -c "echo '127.0.0.1 fes.google.mock.flowcryptlocal.test' >> /etc/hosts"
+          - sudo sh -c "echo '127.0.0.1 google.mock.flowcryptlocal.test' >> /etc/hosts"
+          - sudo sh -c "echo '127.0.0.1 fes.standardsubdomainfes.test' >> /etc/hosts"
+          - sudo sh -c "echo '127.0.0.1 standardsubdomainfes.test' >> /etc/hosts"
 
       jobs:
 
