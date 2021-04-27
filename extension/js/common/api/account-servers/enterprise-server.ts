@@ -48,7 +48,7 @@ export class EnterpriseServer extends Api {
    * This is run during user/extension setup to figure out if this extension should be using FES or not.
    */
   public isFesInstalledAndAvailable = async (): Promise<boolean> => {
-    if (OrgRules.isPublicEmailProviderDomain(this.domain)) {
+    if (['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(this.domain)) {
       // no FES expected on fes.gmail.com and similar
       return false;
     }

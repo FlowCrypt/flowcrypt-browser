@@ -36,11 +36,6 @@ export class OrgRules {
     return new OrgRules(storage.rules || OrgRules.default, Str.getDomainFromEmailAddress(acctEmail));
   }
 
-  public static isPublicEmailProviderDomain = (emailAddrOrDomain: string) => {
-    const domain = emailAddrOrDomain.split('@').pop() || 'NONE';
-    return ['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(domain);
-  }
-
   protected constructor(
     private domainRules: DomainRulesJson,
     public domainName: string
