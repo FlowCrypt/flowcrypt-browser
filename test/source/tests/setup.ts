@@ -596,19 +596,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     }));
 
     /**
-     * You need the following line in /etc/hosts:
-     * 127.0.0.1    wellknownfes.com
-     */
-    ava.default('user@wellknownfes.com:8001 - uses FES based on .well-known', testWithBrowser(undefined, async (t, browser) => {
-      const acct = 'user@wellknownfes.com:8001'; // added port to trick extension into calling the mock
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false });
-      const debugFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-show-local-store-contents', ['debug_api.htm']);
-      await debugFrame.waitForContent('@container-pre', 'https://localhost:8001/custom-fes-based-on-well-known/'); // FES url grabbed from .well-known
-      await debugFrame.waitForContent('@container-pre', 'got.this@fromwellknownfes.com'); // org rules from FES
-    }));
-
-    /**
      * enterprise - expects FES to be set up. when it's not, show nice error
      * consumer - tolerates the missing FES and and sets up without it
      */

@@ -163,9 +163,6 @@ export class GoogleAuth {
   public static isFesUnreachableErr = (e: any, email: string): boolean => {
     const domain = Str.getDomainFromEmailAddress(email);
     const errString = String(e);
-    if (errString.includes(`-1 when GET-ing https://${domain}/.well-known/host-meta.json`)) {
-      return true; // err trying to get FES url from .well-known
-    }
     if (errString.includes(`-1 when GET-ing https://fes.${domain}/api/ `)) { // the space is important to match the full url
       return true; // err trying to reach FES itself at a predictable URL
     }
