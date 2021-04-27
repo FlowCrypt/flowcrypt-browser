@@ -12,7 +12,6 @@ import { Dict } from '../../core/common.js';
 import { ErrorReport, UnreportableError } from '../../platform/catch.js';
 import { ApiErr } from '../shared/api-error.js';
 import { FLAVOR } from '../../core/const.js';
-import { OrgRules } from '../../org-rules.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
