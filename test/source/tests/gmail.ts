@@ -69,7 +69,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     };
 
     ava.default('mail.google.com - setup prompt notif + hides when close clicked + reappears + setup link opens settings', testWithBrowser(undefined, async (t, browser) => {
-      const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'ci.tests.gmail@flowcrypt.test');
+      const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'ci.tests.gmail@flowcrypt.dev');
       await settingsPage.close();
       let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
       await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
@@ -82,7 +82,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     }));
 
     ava.default('mail.google.com - success notif after setup, click hides it, does not re-appear + offers to reauth', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const acct = 'ci.tests.gmail@flowcrypt.test';
+      const acct = 'ci.tests.gmail@flowcrypt.dev';
       let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
       await gmailPage.waitAll(['@webmail-notification', '@notification-successfully-setup-action-close']);
       await gmailPage.waitAndClick('@notification-successfully-setup-action-close', { confirmGone: true });
@@ -122,7 +122,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     }));
 
     ava.default('mail.google.com - setup prompt notification shows up + dismiss hides it + does not reappear if dismissed', testWithBrowser(undefined, async (t, browser) => {
-      await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'ci.tests.gmail@flowcrypt.test');
+      await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'ci.tests.gmail@flowcrypt.dev');
       let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
       await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
       await gmailPage.waitAndClick('@notification-setup-action-dismiss', { confirmGone: true });
@@ -135,7 +135,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
       const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
       const subject = `New Rich Text Message ${Util.lousyRandom()}`;
-      await ComposePageRecipe.fillMsg(composePage, { to: 'ci.tests.gmail@flowcrypt.test' }, subject, { richtext: true });
+      await ComposePageRecipe.fillMsg(composePage, { to: 'ci.tests.gmail@flowcrypt.dev' }, subject, { richtext: true });
       await ComposePageRecipe.sendAndClose(composePage);
       await gmailPage.waitAndClick('[aria-label^="Inbox"]');
       await gmailPage.waitAndClick('[role="row"]'); // click the first message
@@ -285,7 +285,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     }));
 
     // ava.default('mail.google.com - reauth after uuid change', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-    //   const acct = 'ci.tests.gmail@flowcrypt.test';
+    //   const acct = 'ci.tests.gmail@flowcrypt.dev';
     //   const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
     //   await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
     //   const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);

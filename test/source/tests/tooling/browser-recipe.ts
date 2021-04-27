@@ -53,14 +53,14 @@ export class BrowserRecipe {
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1');
       await settingsPage.close();
     } else if (acct === 'ci.tests.gmail') {
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.test');
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
       await SetupPageRecipe.recover(settingsPage, 'ci.tests.gmail');
       if (cleanup) {
         const { cryptup_citestsgmailflowcryptdev_google_token_access: accessToken } = await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcryptdev_google_token_access']);
         await Promise.all([BrowserRecipe.cleanGmailAccount(accessToken as string), settingsPage.close()]);
       }
     } else {
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.test');
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
       await SetupPageRecipe.recover(settingsPage, 'test.ci.compose');
       await settingsPage.close();
     }
