@@ -377,7 +377,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await settingsPage.waitAll(['@action-show-encrypted-inbox', '@action-open-security-page']);
       await Util.sleep(1);
       await settingsPage.notPresent(['@action-open-backup-page']);
-      const { cryptup_haspuborgrulestestflowcryptcom_keys: keys } = await settingsPage.getFromLocalStorage(['cryptup_haspuborgrulestestflowcryptcom_keys']);
+      const { cryptup_haspuborgrulestestflowcrypttest_keys: keys } = await settingsPage.getFromLocalStorage(['cryptup_haspuborgrulestestflowcrypttest_keys']);
       const ki = keys as KeyInfo[];
       expect(ki.length).to.equal(1);
       expect(ki[0].private).to.include('PGP PRIVATE KEY');
