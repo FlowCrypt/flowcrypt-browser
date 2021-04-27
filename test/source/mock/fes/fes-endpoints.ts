@@ -55,41 +55,6 @@ export const mockFesEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr('Not Found', 404);
   },
-  // fes url defined using .well-known, see mockWellKnownHostMetaEndpoints
-  '/custom-fes-based-on-well-known/api/': async ({ }, req) => {
-    if (req.method === 'GET') {
-      return {
-        "vendor": "Mock",
-        "service": "enterprise-server",
-        "orgId": "wellknownfes.com",
-        "version": "MOCK",
-        "apiVersion": 'v1',
-      };
-    }
-    throw new HttpClientErr('Not Found', 404);
-  },
-  '/custom-fes-based-on-well-known/api/v1/account/access-token': async ({ }, req) => {
-    if (req.method === 'GET') {
-      const email = authenticate(req, 'oidc'); // 3rd party token
-      const fesToken = MockJwt.new(email); // fes-issued token
-      issuedAccessTokens.push(fesToken);
-      return { 'accessToken': fesToken };
-    }
-    throw new HttpClientErr('Not Found', 404);
-  },
-  '/custom-fes-based-on-well-known/api/v1/account/': async ({ }, req) => {
-    if (req.method === 'GET') {
-      authenticate(req, 'fes');
-      return {
-        account: {
-          default_message_expire: 30
-        },
-        subscription: { level: 'pro', expire: null, method: 'group', expired: 'false' }, // tslint:disable-line:no-null-keyword
-        domain_org_rules: { disallow_attester_search_for_domains: ['got.this@fromwellknownfes.com'] },
-      };
-    }
-    throw new HttpClientErr('Not Found', 404);
-  },
 };
 
 const authenticate = (req: IncomingMessage, type: 'oidc' | 'fes'): string => {

@@ -19,7 +19,7 @@ import { GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
 import { Ui } from '../../../browser/ui.js';
 import { AcctStore, AcctStoreDict } from '../../../platform/store/acct-store.js';
 import { AccountServer } from '../../account-server.js';
-import { WellKnownHostMeta } from '../../account-servers/well-known-host-meta.js';
+import { EnterpriseServer } from '../../account-servers/enterprise-server.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
@@ -139,7 +139,10 @@ export class GoogleAuth {
       }
       try {
         const uuid = Api.randomFortyHexChars(); // for flowcrypt.com, if used. When FES is used, the access token is given to client.
-        await new WellKnownHostMeta(authRes.acctEmail).fetchAndCacheFesUrl(); // stores fesUrl if any
+        const potentialFes = new EnterpriseServer(authRes.acctEmail);
+        if (await potentialFes.isFesInstalledAndAvailable()) {
+          await AcctStore.set(authRes.acctEmail, { fesUrl: potentialFes.url });
+        }
         const acctServer = new AccountServer(authRes.acctEmail);
         await acctServer.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token); // may be calling flowcrypt.com or FES
         await acctServer.accountGetAndUpdateLocalStore({ account: authRes.acctEmail, uuid }); // stores OrgRules and subscription
