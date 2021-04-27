@@ -51,6 +51,16 @@
   padding: 0;
 }
 
+.anZ.bhZ:not(.bym) #flowcrypt_new_message_button {
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+}
+
+.anZ.bhZ:not(.bym) #flowcrypt_new_message_button::before {
+  min-width: 42px;
+}
+
 .aeN:not(.anZ) [class*=_destroyable].z0 {
   margin-bottom: 0 !important;
 }
