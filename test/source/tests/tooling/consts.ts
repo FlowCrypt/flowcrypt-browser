@@ -128,7 +128,7 @@ LrkuXH7qUgRKmfe58pDQ7aSzWcGD+8Fuft8zWiJ1JL3gict05SO5VzCs3eXP
 4HNbNdMwsJ9st4j4/5bwTg==
 =1JiT
 -----END PGP PUBLIC KEY BLOCK-----`,
-  // ci.tests.gmail@flowcrypt.test, 95E7 83DC 0289 E2E2
+  // ci.tests.gmail@flowcrypt.dev, 95E7 83DC 0289 E2E2
   unprotectedPrvKey: `-----BEGIN PGP PRIVATE KEY BLOCK-----
 
 xcLYBF/vGhABCACoP5aISHFQ0fiaWurcVkpNMF/LNCIp0SW1tp5TipKXljwiJY9kK12rYgJRAjJ1

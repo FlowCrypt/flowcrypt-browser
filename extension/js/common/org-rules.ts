@@ -37,12 +37,8 @@ export class OrgRules {
   }
 
   public static isPublicEmailProviderDomain = (emailAddrOrDomain: string) => {
-    if (emailAddrOrDomain.endsWith('.flowcrypt.com') || emailAddrOrDomain.endsWith('flowcrypt.test')) {
-      // this is here for easier testing. helps our mock tests which run on flowcrypt.com subdomains
-      // marking it this way prevents calling FES which is not there, on enterprise builds where FES is required
-      return true;
-    }
-    return ['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(emailAddrOrDomain.split('@').pop() || 'NONE');
+    const domain = emailAddrOrDomain.split('@').pop() || 'NONE';
+    return ['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(domain);
   }
 
   protected constructor(

@@ -12,6 +12,7 @@ import { Dict } from '../../core/common.js';
 import { ErrorReport, UnreportableError } from '../../platform/catch.js';
 import { ApiErr } from '../shared/api-error.js';
 import { FLAVOR } from '../../core/const.js';
+import { OrgRules } from '../../org-rules.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
@@ -47,6 +48,10 @@ export class EnterpriseServer extends Api {
    * This is run during user/extension setup to figure out if this extension should be using FES or not.
    */
   public isFesInstalledAndAvailable = async (): Promise<boolean> => {
+    if (OrgRules.isPublicEmailProviderDomain(this.domain)) {
+      // no FES expected on fes.gmail.com and similar
+      return false;
+    }
     try {
       // regardless if this is enterprise or consumer flavor, if FES is available, return yes
       return (await this.getServiceInfo()).service === 'enterprise-server';
@@ -62,9 +67,10 @@ export class EnterpriseServer extends Api {
         // on some domains we don't expect FES running. This allows even enterprise flavor
         //   extension to skip FES integration on these domains.
         return false;
+      } else if (this.domain.endsWith('.test')) {
+        // enterprise flavor on a test domain should not require FES running (to satisfy tests)
+        return false;
       } else {
-        // enterprise flavor - the only way that FES integration can be skipped is by returning
-        //   a 404. This was already checked above. No other errors are tolerated.
         throw e;
       }
     }
