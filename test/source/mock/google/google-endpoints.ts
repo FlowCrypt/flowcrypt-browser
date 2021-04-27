@@ -14,7 +14,7 @@ type DraftSaveModel = { message: { raw: string, threadId: string } };
 
 const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', 'human+manualcopypgp@flowcrypt.com',
   'censored@email.com', 'test@email.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com', 'expired.on.attester@domain.com',
-  'ci.tests.gmail@flowcrypt.dev', 'smime1@recipient.com', 'smime2@recipient.com', 'smime@recipient.com',
+  'ci.tests.gmail@flowcrypt.test', 'smime1@recipient.com', 'smime2@recipient.com', 'smime@recipient.com',
   'smime.attachment@recipient.com', 'auto.refresh.expired.key@recipient.com'];
 
 export const mockGoogleEndpoints: HandlersDefinition = {
@@ -51,7 +51,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     }
     const empty = { feed: { entry: [] } };
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
-    if (acct === 'ci.tests.gmail@flowcrypt.dev') {
+    if (acct === 'ci.tests.gmail@flowcrypt.test') {
       if (q === 'contact') {
         return {
           feed: {

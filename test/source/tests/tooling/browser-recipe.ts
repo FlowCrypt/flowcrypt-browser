@@ -8,6 +8,7 @@ import { OauthPageRecipe } from './../page-recipe/oauth-page-recipe';
 import { SetupPageRecipe } from './../page-recipe/setup-page-recipe';
 import { TestUrls } from '../../browser/test-urls';
 import { google } from 'googleapis';
+import { testVariant } from '../../test';
 
 export class BrowserRecipe {
 
@@ -52,8 +53,15 @@ export class BrowserRecipe {
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', { hasRecoverMore: true, clickRecoverMore: true });
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1');
       await settingsPage.close();
-    } else if (acct === 'ci.tests.gmail') {
+    } else if (acct === 'ci.tests.gmail' && testVariant === 'CONSUMER-LIVE-GMAIL') {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
+      await SetupPageRecipe.recover(settingsPage, 'ci.tests.gmail');
+      if (cleanup) {
+        const { cryptup_citestsgmailflowcryptdev_google_token_access: accessToken } = await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcryptdev_google_token_access']);
+        await Promise.all([BrowserRecipe.cleanGmailAccount(accessToken as string), settingsPage.close()]);
+      }
+    } else if (acct === 'ci.tests.gmail' && testVariant !== 'CONSUMER-LIVE-GMAIL') {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.test');
       await SetupPageRecipe.recover(settingsPage, 'ci.tests.gmail');
       if (cleanup) {
         const { cryptup_citestsgmailflowcryptdev_google_token_access: accessToken } = await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcryptdev_google_token_access']);

@@ -308,7 +308,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default('decrypt - thunderbird - signing key is rendered in signed and encrypted message', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const threadId = '175adb163ac0d69b';
-      const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
+      const acctEmail = 'ci.tests.gmail@flowcrypt.test';
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
       await inboxPage.waitAll('iframe');
       const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
@@ -331,7 +331,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default('signature - sender is different from pubkey email', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const threadId = '1766644f13510f58';
-      const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
+      const acctEmail = 'ci.tests.gmail@flowcrypt.test';
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
       await inboxPage.waitAll('iframe', { timeout: 2 });
       const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });

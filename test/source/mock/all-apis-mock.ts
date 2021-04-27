@@ -8,7 +8,6 @@ import { mockAttesterEndpoints } from './attester/attester-endpoints';
 import { mockBackendEndpoints } from './backend/backend-endpoints';
 import { mockGoogleEndpoints } from './google/google-endpoints';
 import { mockKeyManagerEndpoints } from './key-manager/key-manager-endpoints';
-import { mockWellKnownHostMetaEndpoints } from './host-meta/host-meta-endpoints';
 import { mockWkdEndpoints } from './wkd/wkd-endpoints';
 import { mockSksEndpoints } from './sks/sks-endpoints';
 import { mockFesEndpoints } from './fes/fes-endpoints';
@@ -30,7 +29,6 @@ export const startAllApisMock = async (logger: (line: string) => void) => {
     ...mockBackendEndpoints,
     ...mockAttesterEndpoints,
     ...mockKeyManagerEndpoints,
-    ...mockWellKnownHostMetaEndpoints,
     ...mockWkdEndpoints,
     ...mockSksEndpoints,
     ...mockFesEndpoints,

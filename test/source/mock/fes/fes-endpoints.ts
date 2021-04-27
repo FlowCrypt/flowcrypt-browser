@@ -5,7 +5,7 @@ import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr } from '../lib/api';
 import { MockJwt } from '../lib/oauth';
 
-const standardFesUrl = 'fes.standardsubdomainfes.com:8001';
+const standardFesUrl = 'fes.standardsubdomainfes.test:8001';
 const issuedAccessTokens: string[] = [];
 
 export const mockFesEndpoints: HandlersDefinition = {
@@ -15,7 +15,7 @@ export const mockFesEndpoints: HandlersDefinition = {
       return {
         "vendor": "Mock",
         "service": "enterprise-server",
-        "orgId": "standardsubdomainfes.com",
+        "orgId": "standardsubdomainfes.test",
         "version": "MOCK",
         "apiVersion": 'v1',
       };
@@ -25,7 +25,7 @@ export const mockFesEndpoints: HandlersDefinition = {
       // this makes enterprise version tolerate missing FES - explicit 404
       throw new HttpClientErr(`Not found`, 404);
     }
-    if (req.headers.host === 'fes.google.mock.flowcryptlocal.com:8001') {
+    if (req.headers.host === 'fes.google.mock.flowcryptlocal.test:8001') {
       // test `compose - auto include pubkey is inactive when our key is available on Wkd` uses this
       // this makes enterprise version tolerate missing FES - explicit 404
       throw new HttpClientErr(`Not found`, 404);
@@ -51,41 +51,6 @@ export const mockFesEndpoints: HandlersDefinition = {
         },
         subscription: { level: 'pro', expire: null, method: 'group', expired: 'false' }, // tslint:disable-line:no-null-keyword
         domain_org_rules: { disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] },
-      };
-    }
-    throw new HttpClientErr('Not Found', 404);
-  },
-  // fes url defined using .well-known, see mockWellKnownHostMetaEndpoints
-  '/custom-fes-based-on-well-known/api/': async ({ }, req) => {
-    if (req.method === 'GET') {
-      return {
-        "vendor": "Mock",
-        "service": "enterprise-server",
-        "orgId": "wellknownfes.com",
-        "version": "MOCK",
-        "apiVersion": 'v1',
-      };
-    }
-    throw new HttpClientErr('Not Found', 404);
-  },
-  '/custom-fes-based-on-well-known/api/v1/account/access-token': async ({ }, req) => {
-    if (req.method === 'GET') {
-      const email = authenticate(req, 'oidc'); // 3rd party token
-      const fesToken = MockJwt.new(email); // fes-issued token
-      issuedAccessTokens.push(fesToken);
-      return { 'accessToken': fesToken };
-    }
-    throw new HttpClientErr('Not Found', 404);
-  },
-  '/custom-fes-based-on-well-known/api/v1/account/': async ({ }, req) => {
-    if (req.method === 'GET') {
-      authenticate(req, 'fes');
-      return {
-        account: {
-          default_message_expire: 30
-        },
-        subscription: { level: 'pro', expire: null, method: 'group', expired: 'false' }, // tslint:disable-line:no-null-keyword
-        domain_org_rules: { disallow_attester_search_for_domains: ['got.this@fromwellknownfes.com'] },
       };
     }
     throw new HttpClientErr('Not Found', 404);
