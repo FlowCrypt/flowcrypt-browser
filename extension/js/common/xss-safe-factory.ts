@@ -213,10 +213,10 @@ export class XssSafeFactory {
 
   public btnCompose = (webmailName: WebMailName) => {
     if (webmailName === 'outlook') {
-      const btn = `<div class="new_message_button" title="New Secure Email"><img src="${this.srcImg('logo-19-19.png')}"></div>`;
+      const btn = `<div class="new_message_button" id="flowcrypt_new_message_button" title="New Secure Email"><img src="${this.srcImg('logo-19-19.png')}"></div>`;
       return `<div class="_fce_c ${this.destroyableCls} cryptup_compose_button_container" role="presentation">${btn}</div>`;
     } else {
-      const btn = `<div class="new_message_button T-I J-J5-Ji T-I-KE L3" id="flowcrypt_new_message_button" role="button" tabindex="0" data-test="action-secure-compose">Secure Compose</div>`;
+      const btn = `<div class="new_message_button" id="flowcrypt_new_message_button" role="button" tabindex="0" data-test="action-secure-compose">Secure Compose</div>`;
       return `<div class="${this.destroyableCls} z0">${btn}</div>`;
     }
   }
