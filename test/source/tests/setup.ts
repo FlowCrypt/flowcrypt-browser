@@ -395,7 +395,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await settingsPage.waitAll(['@container-overlay-prompt-text', '@action-overlay-retry']);
       const renderedErr = await settingsPage.read('@container-overlay-prompt-text');
       expect(renderedErr).to.contain(`Failed to submit to Attester`);
-      expect(renderedErr).to.contain(`Could not find LDAP pubkey on a LDAP-only domain for email no.pub@org-rules-test.flowcrypt.test on server keys.flowcrypt.com`);
+      expect(renderedErr).to.contain(`Could not find LDAP pubkey on a LDAP-only domain for email no.pub@org-rules-test.flowcrypt.test on server keys.flowcrypt.test`);
     }));
 
     ava.default('user@no-submit-org-rule.flowcrypt.test - do not submit to attester', testWithBrowser(undefined, async (t, browser) => {

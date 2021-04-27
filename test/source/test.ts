@@ -104,11 +104,8 @@ ava.after.always('evaluate Catch.reportErr errors', async t => {
   // our S/MIME implementation is still early so it throws "reportable" errors like this during tests
   const usefulErrors = mockBackendData.reportedErrors
     .filter(e => e.message !== 'Too few bytes to read ASN.1 value.')
-    // on enterprise, these report errs
-    .filter(e => !(testVariant === 'ENTERPRISE-MOCK' && e.trace.includes('.well-known/host-meta.json')))
     // todo - ideally mock tests would never call this. But we do tests with human@flowcrypt.com so it's calling here
     .filter(e => !e.trace.includes('-1 when GET-ing https://openpgpkey.flowcrypt.com'));
-  // end of todo
   const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
   const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
   if (!foundExpectedErr && internalTestState.expectiIntentionalErrReport) {
