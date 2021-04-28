@@ -40,4 +40,4 @@ const libs: any[] = [
 for (const lib of libs) {
   (window as any)[(lib as any).name] = lib;
 }
-(window as any)['forge'] = forge;
+(window as any).forge = forge;
