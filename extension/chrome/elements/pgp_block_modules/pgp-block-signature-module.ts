@@ -43,7 +43,7 @@ export class PgpBlockViewSignatureModule {
         this.view.renderModule.setFrameColor('red');
       }
     } else {
-      $('#pgp_signature').addClass('neutral');
+      $('#pgp_signature').addClass('bad');
       $('#pgp_signature > .cursive').remove();
       $('#pgp_signature > .result').text('Message Not Signed');
     }

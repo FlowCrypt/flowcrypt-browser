@@ -329,7 +329,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: url, content: ['1234'], signature });
     }));
 
-    ava.default.only('decrypt - unsigned encrypted message', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('decrypt - unsigned encrypted message', testWithBrowser('compatibility', async (t, browser) => {
       const threadId = '17918a9d7ca2fbac';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
