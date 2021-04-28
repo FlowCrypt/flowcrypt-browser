@@ -371,7 +371,9 @@ BROWSER_UNIT_TEST_NAME(`ContactStore stores postfixed fingerprint internally for
   // extract the entity directly from the database
   const entityFp = '16BB407403A3ADC55E1E0E4AF93EEC8FB187C923-X509';
   const fingerprint = '16BB407403A3ADC55E1E0E4AF93EEC8FB187C923';
-  const longid = 'F93EEC8FB187C923';
+  const longid = 'X509-MIGiMIGNMQswCQYDVQQGEwJJVDEQMA4GA1UECAwHQmVyZ2FtbzEZMBcGA1UEBwwQUG9udGUgU2Fu' +
+    'IFBpZXRybzEjMCEGA1UECgwaQWN0YWxpcyBTLnAuQS4vMDMzNTg1MjA5NjcxLDAqBgNVBAMMI0FjdGFsaXMgQ2xpZW50IE' +
+    'F1dGhlbnRpY2F0aW9uIENBIEcyAhBj9wJecA85RTAfsvulZ0+E';
   const entity = await new Promise((resolve, reject) => {
       const req = db.transaction(['pubkeys'], 'readonly').objectStore('pubkeys').get(entityFp);
       ContactStore.setReqPipe(req, resolve, reject);

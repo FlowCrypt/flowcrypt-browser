@@ -340,13 +340,32 @@ export class KeyUtil {
     if (!prv.isPrivate) {
       throw new Error('Key passed into KeyUtil.keyInfoObj must be a Private Key');
     }
+    const pubkey = await KeyUtil.asPublicKey(prv);
     return {
       private: KeyUtil.armor(prv),
-      public: KeyUtil.armor(await KeyUtil.asPublicKey(prv)),
-      longid: OpenPGPKey.fingerprintToLongid(prv.id),
+      public: KeyUtil.armor(pubkey),
+      longid: KeyUtil.getPrimaryLongid(pubkey),
       emails: prv.emails,
       fingerprints: prv.allIds,
     };
+  }
+
+  public static getPubkeyLongids = (pubkey: Key): string[] => {
+    if (pubkey.type !== 'x509') {
+      return pubkey.allIds.map(id => OpenPGPKey.fingerprintToLongid(id));
+    }
+    return [KeyUtil.getPrimaryLongid(pubkey)];
+  }
+
+  public static getPrimaryLongid = (pubkey: Key): string => {
+    if (pubkey.type !== 'x509') {
+      return OpenPGPKey.fingerprintToLongid(pubkey.id);
+    }
+    const encodedIssuerAndSerialNumber = 'X509-' + Buf.fromRawBytesStr(pubkey.issuerAndSerialNumber!).toBase64Str();
+    if (!encodedIssuerAndSerialNumber) {
+      throw new Error(`Cannot extract IssuerAndSerialNumber from the certificate for: ${pubkey.id}`);
+    }
+    return encodedIssuerAndSerialNumber;
   }
 
 }

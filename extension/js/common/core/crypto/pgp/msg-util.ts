@@ -269,7 +269,7 @@ export class MsgUtil {
     const msgKeyIds = m.getEncryptionKeyIds ? m.getEncryptionKeyIds() : [];
     const localKeyIds: string[] = [];
     for (const k of await Promise.all(armoredPubs.map(pub => KeyUtil.parse(pub)))) {
-      localKeyIds.push(...k.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)));
+      localKeyIds.push(...KeyUtil.getPubkeyLongids(k));
     }
     const diagnosis = { found_match: false, receivers: msgKeyIds.length };
     for (const msgKeyId of msgKeyIds) {

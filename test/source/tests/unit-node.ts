@@ -743,11 +743,12 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       t.pass();
     });
 
-    ava.default('[OpenPGPKey.fingerprintToLongid] for both pgp and s/mime', async t => {
+    ava.default('[OpenPGPKey.fingerprintToLongid] only works for pgp', async t => {
       // shorten pgp fingerprint to become longid
       expect(OpenPGPKey.fingerprintToLongid('3449178FCAAF758E24CB68BE62CB4E6F9ECA6FA1')).to.equal('62CB4E6F9ECA6FA1');
-      // leave s/mime id as is
-      expect(OpenPGPKey.fingerprintToLongid('63F7025E700F3945301FB2FBA5674F84')).to.equal('63F7025E700F3945301FB2FBA5674F84');
+      // throw on s/mime id
+      expect(() => OpenPGPKey.fingerprintToLongid('63F7025E700F3945301FB2FBA5674F84')).
+        to.throw('Unexpected fingerprint format (len: 32): "63F7025E700F3945301FB2FBA5674F84"');
       // throw on broken format
       expect(() => OpenPGPKey.fingerprintToLongid('aaxx')).to.throw('Unexpected fingerprint format (len: 4): "aaxx"');
       t.pass();
