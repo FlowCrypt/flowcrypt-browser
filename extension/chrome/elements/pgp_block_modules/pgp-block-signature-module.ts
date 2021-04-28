@@ -42,8 +42,12 @@ export class PgpBlockViewSignatureModule {
         $('#pgp_signature > .result').text('signature does not match');
         this.view.renderModule.setFrameColor('red');
       }
-      $('#pgp_signature').css('block');
+    } else {
+      $('#pgp_signature').addClass('neutral');
+      $('#pgp_signature > .cursive').remove();
+      $('#pgp_signature > .result').text('Message Not Signed');
     }
+    $('#pgp_signature').css('block');
   }
 
   /**
