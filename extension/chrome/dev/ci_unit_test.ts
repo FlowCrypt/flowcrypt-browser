@@ -33,11 +33,11 @@ const libs: any[] = [
   MsgUtil,
   Ui,
   ContactStore,
-  Debug,
-  forge
+  Debug
 ];
 
 // add them to global scope so ci can use them
 for (const lib of libs) {
   (window as any)[(lib as any).name] = lib;
 }
+(window as any)['forge'] = forge;
