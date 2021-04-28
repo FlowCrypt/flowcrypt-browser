@@ -2,28 +2,24 @@
 
 'use strict';
 
+import { AcctStore } from '../platform/store/acct-store.js';
 import { EnterpriseServer } from './account-servers/enterprise-server.js';
 import { BackendRes, FcUuidAuth, FlowCryptComApi, ProfileUpdate } from './account-servers/flowcrypt-com-api.js';
-import { WellKnownHostMeta } from './account-servers/well-known-host-meta.js';
 import { Api, ProgressCb } from './shared/api.js';
 
 /**
  * This may be calling to FlowCryptComApi or Enterprise Server (FES, customer on-prem) depending on
- *   domain configuration fetched using WellKnownHostMeta.
+ *   whether FES is deployed on the customer domain or not.
  */
 export class AccountServer extends Api {
 
-  private wellKnownHostMeta: WellKnownHostMeta;
-
   constructor(private acctEmail: string) {
     super();
-    this.wellKnownHostMeta = new WellKnownHostMeta(acctEmail);
   }
 
   public loginWithOpenid = async (acctEmail: string, uuid: string, idToken: string): Promise<void> => {
-    const fesUrl = await this.wellKnownHostMeta.getFesUrlFromCache();
-    if (fesUrl) {
-      const fes = new EnterpriseServer(fesUrl, this.acctEmail);
+    if (await this.isFesUsed()) {
+      const fes = new EnterpriseServer(this.acctEmail);
       await fes.getAccessTokenAndUpdateLocalStore(idToken);
     } else {
       await FlowCryptComApi.loginWithOpenid(acctEmail, uuid, idToken);
@@ -31,9 +27,8 @@ export class AccountServer extends Api {
   }
 
   public accountGetAndUpdateLocalStore = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcAccountGet> => {
-    const fesUrl = await this.wellKnownHostMeta.getFesUrlFromCache();
-    if (fesUrl) {
-      const fes = new EnterpriseServer(fesUrl, this.acctEmail);
+    if (await this.isFesUsed()) {
+      const fes = new EnterpriseServer(this.acctEmail);
       return await fes.getAccountAndUpdateLocalStore();
     } else {
       return await FlowCryptComApi.accountGetAndUpdateLocalStore(fcAuth);
@@ -41,9 +36,8 @@ export class AccountServer extends Api {
   }
 
   public accountUpdate = async (fcAuth: FcUuidAuth, profileUpdate: ProfileUpdate): Promise<void> => {
-    const fesUrl = await this.wellKnownHostMeta.getFesUrlFromCache();
-    if (fesUrl) {
-      const fes = new EnterpriseServer(fesUrl, this.acctEmail);
+    if (await this.isFesUsed()) {
+      const fes = new EnterpriseServer(this.acctEmail);
       await fes.accountUpdate(profileUpdate);
     } else {
       await FlowCryptComApi.accountUpdate(fcAuth, profileUpdate);
@@ -66,4 +60,8 @@ export class AccountServer extends Api {
     return await FlowCryptComApi.linkMessage(short);
   }
 
+  private isFesUsed = async (): Promise<boolean> => {
+    const { fesUrl } = await AcctStore.get(this.acctEmail, ['fesUrl']);
+    return Boolean(fesUrl);
+  }
 }

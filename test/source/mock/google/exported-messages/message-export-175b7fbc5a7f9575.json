@@ -1,5 +1,5 @@
 {
-  "acctEmail": "ci.tests.gmail@flowcrypt.dev",
+  "acctEmail": "ci.tests.gmail@flowcrypt.test",
   "full": {
     "id": "175b7fbc5a7f9575",
     "threadId": "175b7fbc5a7f9575",
@@ -23,7 +23,7 @@
         },
         {
           "name": "From",
-          "value": "ci.tests.gmail@flowcrypt.dev"
+          "value": "ci.tests.gmail@flowcrypt.test"
         },
         {
           "name": "To",

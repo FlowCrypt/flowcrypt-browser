@@ -114,7 +114,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
     }));
 
     ava.default('settings - my key page - remove button should be hidden when using key manager', testWithBrowser(undefined, async (t, browser) => {
-      const acct = 'two.keys@key-manager-autogen.flowcrypt.com';
+      const acct = 'two.keys@key-manager-autogen.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.autoKeygen(settingsPage);
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -245,7 +245,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
     }));
 
     ava.default('settings - add unprotected key', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      await SettingsPageRecipe.addKeyTest(t, browser, 'ci.tests.gmail@flowcrypt.dev', testConstants.unprotectedPrvKey, 'this is a new passphrase to protect previously unprotected key');
+      await SettingsPageRecipe.addKeyTest(t, browser, 'ci.tests.gmail@flowcrypt.test', testConstants.unprotectedPrvKey, 'this is a new passphrase to protect previously unprotected key');
     }));
 
     ava.default('settings - error modal when page parameter invalid', testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -286,7 +286,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
     }));
 
     ava.default('settings - reauth after uuid change', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const acct = 'ci.tests.gmail@flowcrypt.dev';
+      const acct = 'ci.tests.gmail@flowcrypt.test';
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct));
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);

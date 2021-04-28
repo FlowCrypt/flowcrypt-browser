@@ -32,7 +32,7 @@ const consts = { // higher concurrency can cause 429 google errs when composing
   TIMEOUT_ALL_RETRIES: minutes(13), // this has to suffer waiting for semaphore between retries, thus almost the same as below
   TIMEOUT_OVERALL: minutes(14),
   ATTEMPTS: testGroup === 'STANDARD-GROUP' ? oneIfNotPooled(3) : process.argv.includes('--retry=false') ? 1 : 3,
-  POOL_SIZE: oneIfNotPooled(isMock ? 24 : 2),
+  POOL_SIZE: oneIfNotPooled(isMock ? 20 : 2),
   PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>, // will be set right below
   IS_LOCAL_DEBUG: process.argv.includes('--debug') ? true : false, // run locally by developer, not in ci
 };
@@ -104,11 +104,10 @@ ava.after.always('evaluate Catch.reportErr errors', async t => {
   // our S/MIME implementation is still early so it throws "reportable" errors like this during tests
   const usefulErrors = mockBackendData.reportedErrors
     .filter(e => e.message !== 'Too few bytes to read ASN.1 value.')
-    // on enterprise, these report errs
-    .filter(e => !(testVariant === 'ENTERPRISE-MOCK' && e.trace.includes('.well-known/host-meta.json')))
+    // below for test "no.fes@example.com - skip FES on consumer, show friendly message on enterprise"
+    .filter(e => !e.trace.includes('-1 when GET-ing https://fes.example.com'))
     // todo - ideally mock tests would never call this. But we do tests with human@flowcrypt.com so it's calling here
     .filter(e => !e.trace.includes('-1 when GET-ing https://openpgpkey.flowcrypt.com'));
-  // end of todo
   const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
   const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
   if (!foundExpectedErr && internalTestState.expectiIntentionalErrReport) {

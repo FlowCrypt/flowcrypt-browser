@@ -13,7 +13,7 @@ import { testConstants } from '../../tests/tooling/consts';
 // tslint:disable:no-blank-lines-func
 
 const knownMockEmails = [
-  'ci.tests.gmail@flowcrypt.dev',
+  'ci.tests.gmail@flowcrypt.test',
   'flowcrypt.compatibility@gmail.com',
   'human@flowcrypt.com',
   'flowcrypt.test.key.new.manual@gmail.com',
@@ -92,8 +92,8 @@ export const mockAttesterEndpoints: HandlersDefinition = {
     const { email, pubkey } = body as Dict<string>;
     expect(email).to.contain('@');
     expect(pubkey).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
-    if (email === 'no.pub@org-rules-test.flowcrypt.com') {
-      throw new HttpClientErr(`Could not find LDAP pubkey on a LDAP-only domain for email ${email} on server keys.flowcrypt.com`);
+    if (email === 'no.pub@org-rules-test.flowcrypt.test') {
+      throw new HttpClientErr(`Could not find LDAP pubkey on a LDAP-only domain for email ${email} on server keys.flowcrypt.test`);
     }
     return { saved: true };
   },
