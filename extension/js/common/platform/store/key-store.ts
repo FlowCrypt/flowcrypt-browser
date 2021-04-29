@@ -39,7 +39,9 @@ export class KeyStore extends AbstractStore {
     const withPp: KeyInfoWithOptionalPp[] = [];
     for (const ki of keys) {
       const type = KeyUtil.getKeyType(ki.private);
-      withPp.push({ ...ki, type, passphrase: await PassphraseStore.get(acctEmail, ki.fingerprints[0]) });
+      if (type === 'openpgp' || type === 'x509') {
+        withPp.push({ ...ki, type, passphrase: await PassphraseStore.get(acctEmail, ki.fingerprints[0]) });
+      }
     }
     return withPp;
   }

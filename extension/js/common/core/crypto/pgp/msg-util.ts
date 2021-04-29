@@ -318,7 +318,7 @@ export class MsgUtil {
       keys.prvForDecrypt = [];
     }
     for (const ki of keys.prvForDecrypt) {
-      const matchingKeyids = MsgUtil.matchingKeyids(ki.fingerprints, encryptionKeyids);
+      const matchingKeyids = MsgUtil.matchingKeyids(KeyUtil.getKeyInfoLongids(ki), encryptionKeyids);
       const cachedKey = KeyCache.getDecrypted(ki.longid);
       if (cachedKey && MsgUtil.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
         keys.prvForDecryptDecrypted.push({ ki, decrypted: cachedKey });
@@ -338,9 +338,8 @@ export class MsgUtil {
     return keys;
   }
 
-  private static matchingKeyids = (fingerprints: string[], encryptedForKeyids: OpenPGP.Keyid[]): OpenPGP.Keyid[] => {
-    const allKeyLongids = fingerprints.map(fp => OpenPGPKey.fingerprintToLongid(fp));
-    return encryptedForKeyids.filter(kid => allKeyLongids.includes(OpenPGPKey.bytesToLongid(kid.bytes)));
+  private static matchingKeyids = (longids: string[], encryptedForKeyids: OpenPGP.Keyid[]): OpenPGP.Keyid[] => {
+    return encryptedForKeyids.filter(kid => longids.includes(OpenPGPKey.bytesToLongid(kid.bytes)));
   }
 
   private static decryptKeyFor = async (prv: Key, passphrase: string, matchingKeyIds: OpenPGP.Keyid[]): Promise<boolean> => {
