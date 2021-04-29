@@ -3,7 +3,6 @@
 // tslint:disable:no-null-keyword
 
 import { Contact, Key, KeyUtil } from '../../core/crypto/key';
-import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key.js';
 
 const DATA: Contact[] = [];
 
