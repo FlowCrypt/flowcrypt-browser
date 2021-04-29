@@ -73,7 +73,8 @@ export class Config {
   public static getKeyInfo = async (titles: string[]): Promise<KeyInfoWithOptionalPp[]> => {
     return await Promise.all(Config._secrets.keys
       .filter(key => key.armored && titles.includes(key.title)).map(async key => {
-        return { ...await KeyUtil.keyInfoObj(await KeyUtil.parse(key.armored!)), passphrase: key.passphrase };
+        const parsed = await KeyUtil.parse(key.armored!);
+        return { ...await KeyUtil.keyInfoObj(parsed), type: parsed.type, passphrase: key.passphrase };
       }));
   }
 

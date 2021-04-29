@@ -69,6 +69,7 @@ export interface KeyInfo {
 
 export interface KeyInfoWithOptionalPp extends KeyInfo {
   passphrase?: string;
+  type: 'openpgp' | 'x509'
 }
 
 export type KeyAlgo = 'curve25519' | 'rsa2048' | 'rsa4096';
@@ -368,4 +369,10 @@ export class KeyUtil {
     return encodedIssuerAndSerialNumber;
   }
 
+  public static getKeyInfoLongids = (ki: KeyInfoWithOptionalPp): string[] => {
+    if (ki.type !== 'x509') {
+      return ki.fingerprints.map(fp => OpenPGPKey.fingerprintToLongid(fp));
+    }
+    return [ki.longid];
+  }
 }

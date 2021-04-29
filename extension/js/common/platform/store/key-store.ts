@@ -38,7 +38,8 @@ export class KeyStore extends AbstractStore {
     const keys = await KeyStore.get(acctEmail);
     const withPp: KeyInfoWithOptionalPp[] = [];
     for (const ki of keys) {
-      withPp.push({ ...ki, passphrase: await PassphraseStore.get(acctEmail, ki.fingerprints[0]) });
+      const parsed = await KeyUtil.parse(ki.private);
+      withPp.push({ ...ki, type: parsed.type, passphrase: await PassphraseStore.get(acctEmail, ki.fingerprints[0]) });
     }
     return withPp;
   }

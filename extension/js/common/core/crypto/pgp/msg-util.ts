@@ -311,8 +311,8 @@ export class MsgUtil {
     keys.encryptedFor = encryptionKeyids.map(kid => OpenPGPKey.bytesToLongid(kid.bytes));
     await MsgUtil.cryptoMsgGetSignedBy(msg, keys);
     if (keys.encryptedFor.length) {
-      keys.prvMatching = kiWithPp.filter(ki => ki.fingerprints.some(
-        fp => keys.encryptedFor.includes(OpenPGPKey.fingerprintToLongid(fp))));
+      keys.prvMatching = kiWithPp.filter(ki => KeyUtil.getKeyInfoLongids(ki).some(
+        longid => keys.encryptedFor.includes(longid)));
       keys.prvForDecrypt = keys.prvMatching.length ? keys.prvMatching : kiWithPp;
     } else { // prvs not needed for signed msgs
       keys.prvForDecrypt = [];
