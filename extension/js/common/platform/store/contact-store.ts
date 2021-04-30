@@ -17,7 +17,7 @@ type DbContactObjArg = {
   lastCheck?: number | null; // when was the local copy of the pubkey last updated (or checked against Attester)
 };
 
-type Email = {
+export type Email = {
   email: string;
   name: string | null;
   searchable: string[];
@@ -25,7 +25,7 @@ type Email = {
   lastUse: number | null;
 };
 
-type Pubkey = {
+export type Pubkey = {
   fingerprint: string;
   armoredKey: string;
   longids: string[];
@@ -294,6 +294,17 @@ export class ContactStore extends AbstractStore {
     }
   }
 
+  public static pubkeyObj = (pubkey: Key, lastCheck: number | null | undefined): Pubkey => {
+    const keyAttrs = ContactStore.getKeyAttributes(pubkey);
+    return {
+      fingerprint: ContactStore.getPubkeyId(pubkey),
+      lastCheck: DateUtility.asNumber(lastCheck),
+      expiresOn: keyAttrs.expiresOn,
+      longids: KeyUtil.getPubkeyLongids(pubkey),
+      armoredKey: KeyUtil.armor(pubkey)
+    };
+  }
+
   private static getPubkeyId = (pubkey: Key): string => {
     return (pubkey.type === 'x509') ? (pubkey.id + '-X509') : pubkey.id;
   }
@@ -301,15 +312,8 @@ export class ContactStore extends AbstractStore {
   private static updateTxPhase2 = (tx: IDBTransaction, email: string, update: ContactUpdate, existingPubkey: Pubkey | undefined) => {
     let pubkeyEntity: Pubkey | undefined;
     if (update.pubkey) {
-      const keyAttrs = ContactStore.getKeyAttributes(update.pubkey);
+      pubkeyEntity = ContactStore.pubkeyObj(update.pubkey, update.pubkeyLastCheck ?? existingPubkey?.lastCheck);
       // todo: will we benefit anything when not saving pubkey if it isn't modified?
-      pubkeyEntity = {
-        fingerprint: ContactStore.getPubkeyId(update.pubkey),
-        lastCheck: DateUtility.asNumber(update.pubkeyLastCheck ?? existingPubkey?.lastCheck),
-        expiresOn: keyAttrs.expiresOn,
-        longids: KeyUtil.getPubkeyLongids(update.pubkey),
-        armoredKey: KeyUtil.armor(update.pubkey)
-      } as Pubkey;
     } else if (update.pubkeyLastCheck) {
       Catch.report(`Wrongly updating pubkeyLastCheck without specifying pubkey for ${email} - ignoring`);
     }

@@ -18,10 +18,12 @@ export type GlobalStoreDict = {
   admin_codes?: Dict<StoredAdminCode>;
   install_mobile_app_notification_dismissed?: boolean;
   key_info_store_fingerprints_added?: boolean;
+  contact_store_x509_fingerprints_and_longids_updated?: boolean;
 };
 
 export type GlobalIndex = 'version' | 'account_emails' | 'settings_seen' | 'hide_pass_phrases' |
-  'dev_outlook_allow' | 'admin_codes' | 'install_mobile_app_notification_dismissed' | 'key_info_store_fingerprints_added';
+  'dev_outlook_allow' | 'admin_codes' | 'install_mobile_app_notification_dismissed' | 'key_info_store_fingerprints_added' |
+  'contact_store_x509_fingerprints_and_longids_updated';
 
 /**
  * Locally stored data that is not associated with any email account

@@ -132,7 +132,7 @@ export class KeyUtil {
       return await OpenPGPKey.parseMany(text);
     } else if (keyType === 'x509') {
       // TODO: No support for parsing multiple S/MIME keys for now
-      return [await SmimeKey.parse(text)];
+      return [SmimeKey.parse(text)];
     }
     throw new UnexpectedKeyTypeError(`Key type is ${keyType}, expecting OpenPGP or x509 S/MIME`);
   }
@@ -162,7 +162,7 @@ export class KeyUtil {
     }
     if (!allKeys.length) {
       try {
-        allKeys.push(await SmimeKey.parseDecryptBinary(key, passPhrase ?? ''));
+        allKeys.push(SmimeKey.parseDecryptBinary(key, passPhrase ?? ''));
         return { keys: allKeys, err: [] };
       } catch (e) {
         allErr.push(e as Error);

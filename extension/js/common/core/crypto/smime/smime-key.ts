@@ -8,19 +8,19 @@ import { Buf } from '../../buf.js';
 
 export class SmimeKey {
 
-  public static parse = async (text: string): Promise<Key> => {
+  public static parse = (text: string): Key => {
     if (text.includes(PgpArmor.headers('certificate').begin)) {
       return SmimeKey.parsePemCertificate(text);
     } else if (text.includes(PgpArmor.headers('pkcs12').begin)) {
       const armoredBytes = text.replace(PgpArmor.headers('pkcs12').begin, '').replace(PgpArmor.headers('pkcs12').end, '').trim();
       const emptyPassPhrase = '';
-      return await SmimeKey.parseDecryptBinary(Buf.fromBase64Str(armoredBytes), emptyPassPhrase);
+      return SmimeKey.parseDecryptBinary(Buf.fromBase64Str(armoredBytes), emptyPassPhrase);
     } else {
       throw new Error('Could not parse S/MIME key without known headers');
     }
   }
 
-  public static parseDecryptBinary = async (buffer: Uint8Array, password: string): Promise<Key> => {
+  public static parseDecryptBinary = (buffer: Uint8Array, password: string): Key => {
     const bytes = String.fromCharCode.apply(undefined, new Uint8Array(buffer) as unknown as number[]) as string;
     const asn1 = forge.asn1.fromDer(bytes);
     let certificate: forge.pki.Certificate | undefined;
