@@ -4,6 +4,9 @@ import * as ava from 'ava';
 import { Buf } from '../../extension/js/common/core/buf.js';
 import { equals } from './tests/unit-node.js';
 
+// tslint:disable:no-blank-lines-func
+/* eslint-disable max-len */
+
 export const defineBufTests = () => {
 
   // @ts-ignore
