@@ -39,13 +39,21 @@ export class BrowserHandle {
 
   public newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>): Promise<ControllablePage> => {
     const page = await this.doAwaitTriggeredPage(triggeringAction) as Page;
-    await page.setViewport(this.viewport);
+    const url = page.url();
     const controllablePage = new ControllablePage(t, page);
-    this.pages.push(controllablePage);
-    if (page.url().includes(Config.extensionId)) {
-      await controllablePage.waitUntilViewLoaded();
+    try {
+      await page.setViewport(this.viewport);
+      this.pages.push(controllablePage);
+      if (url.includes(Config.extensionId)) {
+        await controllablePage.waitUntilViewLoaded();
+      }
+      return controllablePage;
+    } catch (e) {
+      if (String(e).includes('page has been closed') && url.includes('localhost') && url.includes('/o/oauth2/auth')) {
+        // the extension may close the auth page after success before we had a chance to evaluate it
+        return controllablePage; // returning already closed auth page
+      }
     }
-    return controllablePage;
   }
 
   public closeAllPages = async () => {

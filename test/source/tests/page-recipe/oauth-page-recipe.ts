@@ -11,18 +11,25 @@ export class OauthPageRecipe extends PageRecipe {
   private static longTimeout = 40;
 
   public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve" | 'login'): Promise<void> => {
-    const isMock = oauthPage.target.url().includes('localhost');
-    if (isMock) {
-      const mockOauthUrl = oauthPage.target.url();
-      const { login_hint } = Url.parse(['login_hint'], mockOauthUrl);
-      if (action === 'close') {
-        await oauthPage.close();
-      } else if (!login_hint) {
-        await oauthPage.target.goto(mockOauthUrl + '&login_hint=' + encodeURIComponent(acctEmail) + '&proceed=true');
-      } else {
-        await oauthPage.target.goto(mockOauthUrl + '&proceed=true');
+    try {
+      const isMock = oauthPage.target.url().includes('localhost');
+      if (isMock) {
+        const mockOauthUrl = oauthPage.target.url();
+        const { login_hint } = Url.parse(['login_hint'], mockOauthUrl);
+        if (action === 'close') {
+          await oauthPage.close();
+        } else if (!login_hint) {
+          await oauthPage.target.goto(mockOauthUrl + '&login_hint=' + encodeURIComponent(acctEmail) + '&proceed=true');
+        } else {
+          await oauthPage.target.goto(mockOauthUrl + '&proceed=true');
+        }
+        return;
       }
-      return;
+    } catch (e) {
+      if (String(e).includes('page has been closed')) {
+        // the extension may close the auth page after success before we had a chance to evaluate it
+        return; // in this case the login was already successful
+      }
     }
     const auth = Config.secrets().auth.google.find(a => a.email === acctEmail);
     const acctPassword = auth?.password;
@@ -42,7 +49,7 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitAndClick(selectors.email_confirm_btn, { delay: 2 });  // confirm email
         await oauthPage.waitForNavigationIfAny();
       } else if (await oauthPage.target.$(`#profileIdentifier[data-email="${acctEmail}"]`) !== null) { // already logged in - just choose an account
-        await oauthPage.waitAndClick(`#profileIdentifier[data-email="${acctEmail}"]`, { delay: isMock ? 0.1 : 1 });
+        await oauthPage.waitAndClick(`#profileIdentifier[data-email="${acctEmail}"]`, { delay: 1 });
       } else if (await oauthPage.target.$('.w6VTHd') !== null) { // select from accounts where already logged in
         await oauthPage.waitAndClick('.bLzI3e', { delay: 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
         await Util.sleep(2);
