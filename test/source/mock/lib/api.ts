@@ -41,9 +41,10 @@ export class Api<REQ, RES> {
     this.apiName = apiName;
     const opt = { key: readFileSync(`./test/mock_cert/key.pem.mock`), cert: readFileSync(`./test/mock_cert/cert.pem.mock`) };
     this.server = https.createServer(opt, (request, response) => {
+      const start = Date.now();
       this.handleReq(request, response).then(data => this.throttledResponse(response, data)).then(() => {
         try {
-          this.log(request, response);
+          this.log(Date.now() - start, request, response);
         } catch (e) {
           console.error(e);
           process.exit(1);
@@ -69,7 +70,7 @@ export class Api<REQ, RES> {
         const formattedErr = this.fmtErr(e);
         response.end(formattedErr);
         try {
-          this.log(request, response, formattedErr);
+          this.log(Date.now() - start, request, response, formattedErr);
         } catch (e) {
           console.error('error logging req', e);
         }
@@ -104,7 +105,7 @@ export class Api<REQ, RES> {
     return new Promise((resolve, reject) => this.server.close((err: any) => err ? reject(err) : resolve()));
   }
 
-  protected log = (req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+  protected log = (ms: Number, req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     return undefined as void;
   }
 
@@ -223,7 +224,9 @@ export class Api<REQ, RES> {
     for (let i = 0; i < data.length; i += chunkSize) {
       const chunk = data.slice(i, i + chunkSize);
       response.write(chunk);
-      await Util.sleep(this.throttleChunkMsDownload / 1000);
+      if (i > 0) {
+        await Util.sleep(this.throttleChunkMsDownload / 1000);
+      }
     }
     response.end();
   }

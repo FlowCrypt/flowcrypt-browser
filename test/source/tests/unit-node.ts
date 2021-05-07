@@ -642,7 +642,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     });
 
     ava.default('[unit][MsgUtil.decryptMessage] extracts Primary User ID from key', async t => {
-      const data = new GoogleData('ci.tests.gmail@flowcrypt.test');
+      const data = await GoogleData.withInitializedData('ci.tests.gmail@flowcrypt.test');
       const msg: GmailMsg = data.getMessage('1766644f13510f58')!;
       const enc = Buf.fromBase64Str(msg!.raw!).toUtfStr()
         .match(/\-\-\-\-\-BEGIN PGP SIGNED MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0];
@@ -658,7 +658,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     });
 
     ava.default('[unit][MsgUtil.verifyDetached] verifies Thunderbird html signed message', async t => {
-      const data = new GoogleData('flowcrypt.compatibility@gmail.com');
+      const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
       const msg: GmailMsg = data.getMessage('1754cfd1b2f1d6e5')!;
       const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
       const sigText = msgText
@@ -679,7 +679,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     });
 
     ava.default('[unit][MsgUtil.verifyDetached] verifies Thunderbird text signed message', async t => {
-      const data = new GoogleData('flowcrypt.compatibility@gmail.com');
+      const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
       const msg: GmailMsg = data.getMessage('1754cfc37886899e')!;
       const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
       const sigText = msgText
@@ -700,7 +700,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     });
 
     ava.default('[unit][MsgUtil.verifyDetached] verifies Firefox rich text signed message', async t => {
-      const data = new GoogleData('flowcrypt.compatibility@gmail.com');
+      const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
       const msg: GmailMsg = data.getMessage('175ccd8755eab85f')!;
       const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
       const sigBase64 = msgText

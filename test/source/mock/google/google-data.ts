@@ -3,8 +3,7 @@
 import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
 
 import { Util } from '../../util/index';
-import { readFileSync, readdirSync } from 'fs';
-import { Buf } from '../../core/buf';
+import { readFile, readdir } from 'fs';
 
 type GmailMsg$header = { name: string, value: string };
 type GmailMsg$payload$body = { attachmentId?: string, size: number, data?: string };
@@ -108,7 +107,7 @@ export class GoogleData {
    *   3) click "download api export"
    *   4) save the json file to exported-messages folder
    */
-  private exportedMsgsPath = './test/source/mock/google/exported-messages/';
+  private static exportedMsgsPath = './test/source/mock/google/exported-messages/';
 
   public static fmtMsg = (m: GmailMsg, format: 'raw' | 'full' | 'metadata' | string) => {
     format = format || 'full';
@@ -141,9 +140,20 @@ export class GoogleData {
 
   constructor(private acct: string) {
     if (!DATA[acct]) {
+      throw new Error('Missing DATA: use withInitializedData instead of direct constructor');
+    }
+  }
+
+  public static withInitializedData = async (acct: string): Promise<GoogleData> => {
+    if (typeof DATA[acct] === 'undefined') {
       DATA[acct] = { drafts: [], messages: [], attachments: {}, labels: [] };
-      for (const filename of readdirSync(this.exportedMsgsPath)) {
-        const json = JSON.parse(Buf.fromUint8(readFileSync(this.exportedMsgsPath + filename)).toUtfStr()) as ExportedMsg;
+      const dir = GoogleData.exportedMsgsPath;
+      const filenames: string[] = await new Promise((res, rej) => readdir(dir, (e, f) => e ? rej(e) : res(f)));
+      const filePromises = filenames.map(f => new Promise((res, rej) => readFile(dir + f, (e, d) => e ? rej(e) : res(d))));
+      const files = await Promise.all(filePromises) as Uint8Array[];
+      for (const file of files) {
+        const utfStr = new TextDecoder().decode(file);
+        const json = JSON.parse(utfStr) as ExportedMsg;
         if (json.acctEmail === acct) {
           Object.assign(DATA[json.acctEmail].attachments, json.attachments);
           json.full.raw = json.raw.raw;
@@ -155,6 +165,7 @@ export class GoogleData {
         }
       }
     }
+    return new GoogleData(acct);
   }
 
   public storeSentMessage = (parsedMail: ParsedMail, base64Msg: string): string => {
@@ -214,10 +225,12 @@ export class GoogleData {
   public searchMessages = (q: string) => {
     const subject = (q.match(/subject:"([^"]+)"/) || [])[1];
     if (subject) {
+      console.log('searching by subject');
       // if any subject query found, all else is ignored
       // messages just filtered by subject
       return this.searchMessagesBySubject(subject);
     }
+    console.log('searching by other method');
     const excludePeople = (q.match(this.exludePplSearchQuery) || []).map(e => e.replace(/^(-from|-to):/, '').replace(/"/g, ''));
     q = q.replace(this.exludePplSearchQuery, ' ');
     const includePeople = (q.match(this.includePplSearchQuery) || []).map(e => e.replace(/^(from|to):/, '').replace(/"/g, ''));
@@ -266,7 +279,10 @@ export class GoogleData {
 
   private searchMessagesBySubject = (subject: string) => {
     subject = subject.trim().toLowerCase();
-    return DATA[this.acct].messages.filter(m => GoogleData.msgSubject(m).toLowerCase().includes(subject));
+    const start = Date.now();
+    const messages = DATA[this.acct].messages.filter(m => GoogleData.msgSubject(m).toLowerCase().includes(subject));
+    console.log(`searchMessagesBySubject took ${Date.now() - start}ms`);
+    return messages;
   }
 
   private searchMessagesByPeople = (includePeople: string[], excludePeople: string[]) => {
