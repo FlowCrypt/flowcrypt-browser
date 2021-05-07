@@ -105,7 +105,7 @@ export class Api<REQ, RES> {
     return new Promise((resolve, reject) => this.server.close((err: any) => err ? reject(err) : resolve()));
   }
 
-  protected log = (ms: Number, req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+  protected log = (ms: number, req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     return undefined as void;
   }
 
