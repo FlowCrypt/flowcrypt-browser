@@ -23,6 +23,7 @@ import { TestUrls } from './browser/test-urls';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectiIntentionalErrReport: false }; // updated when a particular test that causes an error is run
+const DEBUG_BROWSER_LOG = false; // set to true to print / export information from browser
 
 process.setMaxListeners(60);
 
@@ -60,19 +61,23 @@ ava.before('set config and mock api', async t => {
 const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>, flag?: 'FAILING'): ava.Implementation<{}> => {
   return async (t: AvaContext) => {
     await browserPool.withNewBrowserTimeoutAndRetry(async (t, browser) => {
+      const start = Date.now();
       if (acct) {
         await BrowserRecipe.setUpCommonAcct(t, browser, acct, !isMock);
       }
       await cb(t, browser);
-      try {
-        const page = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
-        const items = await page.target.evaluate(() => (window as any).Debug.readDatabase());
-        if (items.length > 0) {
-          console.info('debug messages: ', JSON.stringify(items), '\n');
+      if (DEBUG_BROWSER_LOG) {
+        try {
+          const page = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+          const items = await page.target.evaluate(() => (window as any).Debug.readDatabase());
+          if (items.length > 0) {
+            console.info('debug messages: ', JSON.stringify(items), '\n');
+          }
+        } catch (e) {
+          console.error(`Error reading debug messages: ${e}`);
         }
-      } catch (e) {
-        console.error(`Error reading debug messages: ${e}`);
       }
+      t.log(`run time: ${Math.ceil((Date.now() - start) / 1000)}s`);
     }, t, consts, flag);
     t.pass();
   };
