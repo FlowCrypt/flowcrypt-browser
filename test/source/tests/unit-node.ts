@@ -19,7 +19,6 @@ import { ContactStore } from '../platform/store/contact-store.js';
 import { GoogleData, GmailParser, GmailMsg } from '../mock/google/google-data';
 import { testConstants } from './tooling/consts';
 import { PgpArmor } from '../core/crypto/pgp/pgp-armor';
-import { equals } from '../buf.js';
 import * as forge from 'node-forge';
 
 chai.use(chaiAsPromised);
@@ -28,6 +27,20 @@ const expect = chai.expect;
 /* eslint-disable max-len */
 // tslint:disable:no-unused-expression
 /* eslint-disable no-unused-expressions */
+
+export const equals = (a: string | Uint8Array, b: string | Uint8Array) => {
+  expect(typeof a).to.equal(typeof b, `types dont match`);
+  if (typeof a === 'string' && typeof b === 'string') {
+    expect(a).to.equal(b, 'string result mismatch');
+    return;
+  }
+  if (a instanceof Uint8Array && b instanceof Uint8Array) {
+    expect(Array.from(a).join('|')).to.equal(Array.from(b).join('|'), 'buffers dont match');
+    return;
+  }
+  throw new Error(`unknown test state [${typeof a},${typeof b}] [${a instanceof Uint8Array},${b instanceof Uint8Array}]`);
+};
+
 
 export let defineUnitNodeTests = (testVariant: TestVariant) => {
 

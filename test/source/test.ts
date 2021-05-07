@@ -20,6 +20,7 @@ import { defineUnitBrowserTests } from './tests/unit-browser';
 import { mock } from './mock';
 import { mockBackendData } from './mock/backend/backend-endpoints';
 import { TestUrls } from './browser/test-urls';
+import { defineBufTests } from './buf';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectiIntentionalErrReport: false }; // updated when a particular test that causes an error is run
@@ -147,6 +148,7 @@ ava.after.always('send debug info if any', async t => {
 
 
 if (testGroup === 'UNIT-TESTS') {
+  defineBufTests();
   defineUnitNodeTests(testVariant);
   defineUnitBrowserTests(testVariant, testWithBrowser);
 } else if (testGroup === 'FLAKY-GROUP') {

@@ -12,7 +12,7 @@ export class OauthPageRecipe extends PageRecipe {
 
   public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve" | 'login'): Promise<void> => {
     try {
-      const isMock = oauthPage.target.url().includes('localhost');
+      const isMock = oauthPage.target.url().includes('localhost') || oauthPage.target.url().includes('google.mock.flowcryptlocal.test');
       if (isMock) {
         const mockOauthUrl = oauthPage.target.url();
         const { login_hint } = Url.parse(['login_hint'], mockOauthUrl);
