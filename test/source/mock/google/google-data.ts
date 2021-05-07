@@ -111,7 +111,7 @@ export class GoogleData {
 
   public static withInitializedData = async (acct: string): Promise<GoogleData> => {
     if (typeof DATA[acct] === 'undefined') {
-      DATA[acct] = { drafts: [], messages: [], attachments: {}, labels: [] };
+      const acctData: AcctDataFile = { drafts: [], messages: [], attachments: {}, labels: [] };
       const dir = GoogleData.exportedMsgsPath;
       const filenames: string[] = await new Promise((res, rej) => readdir(dir, (e, f) => e ? rej(e) : res(f)));
       const filePromises = filenames.map(f => new Promise((res, rej) => readFile(dir + f, (e, d) => e ? rej(e) : res(d))));
@@ -120,15 +120,16 @@ export class GoogleData {
         const utfStr = new TextDecoder().decode(file);
         const json = JSON.parse(utfStr) as ExportedMsg;
         if (json.acctEmail === acct) {
-          Object.assign(DATA[json.acctEmail].attachments, json.attachments);
+          Object.assign(acctData.attachments, json.attachments);
           json.full.raw = json.raw.raw;
           if (json.full.labelIds && json.full.labelIds.includes('DRAFT')) {
-            DATA[json.acctEmail].drafts.push(json.full);
+            acctData.drafts.push(json.full);
           } else {
-            DATA[json.acctEmail].messages.push(json.full);
+            acctData.messages.push(json.full);
           }
         }
       }
+      DATA[acct] = acctData;
     }
     return new GoogleData(acct);
   }
