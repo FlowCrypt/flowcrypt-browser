@@ -20,10 +20,10 @@ const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', '
 export const mockGoogleEndpoints: HandlersDefinition = {
   '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, redirect_uri, scope, login_hint } }, req) => {
     if (isGet(req) && client_id === oauth.clientId && response_type === 'code' && access_type === 'offline' && state && redirect_uri === oauth.redirectUri && scope) { // auth screen
-      if(login_hint) {
+      if (login_hint) {
         return oauth.successPage(login_hint, state);
       }
-      
+
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
