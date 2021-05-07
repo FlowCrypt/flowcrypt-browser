@@ -97,9 +97,6 @@ const DATA: { [acct: string]: AcctDataFile } = {};
  */
 export class GoogleData {
 
-  private exludePplSearchQuery = /(?:-from|-to):"?([a-zA-Z0-9@.\-_]+)"?/g;
-  private includePplSearchQuery = /(?:from|to):"?([a-zA-Z0-9@.\-_]+)"?/g;
-
   /**
    * This is the proper way to add messages to mock api for testing:
    *   1) log into flowcrypt.compatibility@gmail.com
@@ -108,6 +105,9 @@ export class GoogleData {
    *   4) save the json file to exported-messages folder
    */
   private static exportedMsgsPath = './test/source/mock/google/exported-messages/';
+
+  private exludePplSearchQuery = /(?:-from|-to):"?([a-zA-Z0-9@.\-_]+)"?/g;
+  private includePplSearchQuery = /(?:from|to):"?([a-zA-Z0-9@.\-_]+)"?/g;
 
   public static withInitializedData = async (acct: string): Promise<GoogleData> => {
     if (typeof DATA[acct] === 'undefined') {
