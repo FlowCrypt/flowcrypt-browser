@@ -22,8 +22,9 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     if (isGet(req) && client_id === oauth.clientId && response_type === 'code' && access_type === 'offline' && state && redirect_uri === oauth.redirectUri && scope) { // auth screen
       if (login_hint) {
         return oauth.successPage(login_hint, state);
+      } else {
+        return oauth.chooseAcctPage();
       }
-
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
