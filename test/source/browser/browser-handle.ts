@@ -53,6 +53,7 @@ export class BrowserHandle {
         // the extension may close the auth page after success before we had a chance to evaluate it
         return controllablePage; // returning already closed auth page
       }
+      throw e;
     }
   }
 
