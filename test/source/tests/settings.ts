@@ -216,7 +216,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await attachmentImage.waitForSelTestState('ready');
       await attachmentImage.click('body');
       await (inboxPage.target as Page).mouse.click(1, 1); // test closing the passphrase dialog by clicking its backdrop
-      await Util.sleep(1);
+      await Util.sleep(3);
       await inboxPage.notPresent('@dialog-passphrase');
       await attachmentImage.click('body');
       const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
