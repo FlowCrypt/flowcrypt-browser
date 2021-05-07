@@ -34,26 +34,23 @@ export class OauthPageRecipe extends PageRecipe {
       await oauthPage.waitAny('#Email, #submit_approve_access, #identifierId, .w6VTHd, #profileIdentifier', { timeout: 45 });
       if (await oauthPage.target.$(selectors.email_input) !== null) { // 2017-style login
         await oauthPage.waitAll(selectors.email_input, { timeout: OauthPageRecipe.longTimeout });
-        await oauthPage.waitAndType(selectors.email_input, acctEmail, { delay: isMock ? 0 : 2 });
-        await oauthPage.waitAndClick(selectors.email_confirm_btn, { delay: isMock ? 0 : 2 });  // confirm email
+        await oauthPage.waitAndType(selectors.email_input, acctEmail, { delay: 2 });
+        await oauthPage.waitAndClick(selectors.email_confirm_btn, { delay: 2 });  // confirm email
         await oauthPage.waitForNavigationIfAny();
       } else if (await oauthPage.target.$(`#profileIdentifier[data-email="${acctEmail}"]`) !== null) { // already logged in - just choose an account
         await oauthPage.waitAndClick(`#profileIdentifier[data-email="${acctEmail}"]`, { delay: isMock ? 0.1 : 1 });
-        if (isMock) {
-          try { await oauthPage.page.waitForNavigation({ timeout: 3000 }); } catch (e) { /* continue, should not cause trouble */ }
-        }
       } else if (await oauthPage.target.$('.w6VTHd') !== null) { // select from accounts where already logged in
-        await oauthPage.waitAndClick('.bLzI3e', { delay: isMock ? 0 : 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
-        await Util.sleep(isMock ? 0 : 2);
+        await oauthPage.waitAndClick('.bLzI3e', { delay: 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
+        await Util.sleep(2);
         return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // start from beginning after clicking "other email acct"
       } else if (await oauthPage.target.$('#profileIdentifier[data-email="dummy"]') !== null) {
         // let any e-mail pass
         const href = await oauthPage.attr('#profileIdentifier', 'href') + acctEmail;
         await oauthPage.goto(href);
       }
-      await Util.sleep(isMock ? 0 : 2);
+      await Util.sleep(2);
       if (action === 'login') {
-        await Util.sleep(isMock ? 0 : 3);
+        await Util.sleep(3);
         if (oauthPage.page.isClosed()) {
           return;
         }
@@ -68,7 +65,7 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitAndClick(selectors.auth0_login_btn);
         await oauthPage.waitForNavigationIfAny();
       }
-      await Util.sleep(isMock ? 0 : 1);
+      await Util.sleep(1);
       await oauthPage.waitAll(selectors.approve_button); // if succeeds, we are logged in and presented with approve/deny choice
       // since we are successfully logged in, we may save cookies to keep them fresh
       // no need to await the API call because it's not crucial to always save it, can mostly skip errors
@@ -77,7 +74,7 @@ export class OauthPageRecipe extends PageRecipe {
       } else if (action === 'deny') {
         throw new Error('tests.handle_gmail_oauth options.deny.true not implemented');
       } else {
-        await oauthPage.waitAndClick('#submit_approve_access', { delay: isMock ? 0 : 1 });
+        await oauthPage.waitAndClick('#submit_approve_access', { delay: 1 });
       }
     } catch (e) {
       const eStr = String(e);
