@@ -118,11 +118,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
   '/gmail/v1/users/me/messages': async ({ query: { q } }, req) => { // search messages
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req) && q) {
-      console.log(`received request to search, q=${q}`);
       const msgs = (await GoogleData.withInitializedData(acct)).searchMessages(q);
-      console.log(`returning msgs: ${msgs.length}`);
-      // @ts-ignore
-      console.log(`returning msgs: ${msgs.map(m => (m.payload?.headers || {})['Subject']).join('|')}`);
       return { messages: msgs.map(({ id, threadId }) => ({ id, threadId })), resultSizeEstimate: msgs.length };
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);

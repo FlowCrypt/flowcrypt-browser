@@ -109,6 +109,30 @@ export class GoogleData {
    */
   private static exportedMsgsPath = './test/source/mock/google/exported-messages/';
 
+  public static withInitializedData = async (acct: string): Promise<GoogleData> => {
+    if (typeof DATA[acct] === 'undefined') {
+      DATA[acct] = { drafts: [], messages: [], attachments: {}, labels: [] };
+      const dir = GoogleData.exportedMsgsPath;
+      const filenames: string[] = await new Promise((res, rej) => readdir(dir, (e, f) => e ? rej(e) : res(f)));
+      const filePromises = filenames.map(f => new Promise((res, rej) => readFile(dir + f, (e, d) => e ? rej(e) : res(d))));
+      const files = await Promise.all(filePromises) as Uint8Array[];
+      for (const file of files) {
+        const utfStr = new TextDecoder().decode(file);
+        const json = JSON.parse(utfStr) as ExportedMsg;
+        if (json.acctEmail === acct) {
+          Object.assign(DATA[json.acctEmail].attachments, json.attachments);
+          json.full.raw = json.raw.raw;
+          if (json.full.labelIds && json.full.labelIds.includes('DRAFT')) {
+            DATA[json.acctEmail].drafts.push(json.full);
+          } else {
+            DATA[json.acctEmail].messages.push(json.full);
+          }
+        }
+      }
+    }
+    return new GoogleData(acct);
+  }
+
   public static fmtMsg = (m: GmailMsg, format: 'raw' | 'full' | 'metadata' | string) => {
     format = format || 'full';
     if (!['raw', 'full', 'metadata'].includes(format)) {
@@ -142,30 +166,6 @@ export class GoogleData {
     if (!DATA[acct]) {
       throw new Error('Missing DATA: use withInitializedData instead of direct constructor');
     }
-  }
-
-  public static withInitializedData = async (acct: string): Promise<GoogleData> => {
-    if (typeof DATA[acct] === 'undefined') {
-      DATA[acct] = { drafts: [], messages: [], attachments: {}, labels: [] };
-      const dir = GoogleData.exportedMsgsPath;
-      const filenames: string[] = await new Promise((res, rej) => readdir(dir, (e, f) => e ? rej(e) : res(f)));
-      const filePromises = filenames.map(f => new Promise((res, rej) => readFile(dir + f, (e, d) => e ? rej(e) : res(d))));
-      const files = await Promise.all(filePromises) as Uint8Array[];
-      for (const file of files) {
-        const utfStr = new TextDecoder().decode(file);
-        const json = JSON.parse(utfStr) as ExportedMsg;
-        if (json.acctEmail === acct) {
-          Object.assign(DATA[json.acctEmail].attachments, json.attachments);
-          json.full.raw = json.raw.raw;
-          if (json.full.labelIds && json.full.labelIds.includes('DRAFT')) {
-            DATA[json.acctEmail].drafts.push(json.full);
-          } else {
-            DATA[json.acctEmail].messages.push(json.full);
-          }
-        }
-      }
-    }
-    return new GoogleData(acct);
   }
 
   public storeSentMessage = (parsedMail: ParsedMail, base64Msg: string): string => {

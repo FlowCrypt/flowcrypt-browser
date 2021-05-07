@@ -153,7 +153,6 @@ if (testGroup === 'UNIT-TESTS') {
   defineFlakyTests(testVariant, testWithBrowser);
 } else {
   defineSetupTests(testVariant, testWithBrowser);
-  defineUnitNodeTests(testVariant);
   defineComposeTests(testVariant, testWithBrowser);
   defineDecryptTests(testVariant, testWithBrowser);
   defineGmailTests(testVariant, testWithBrowser);
