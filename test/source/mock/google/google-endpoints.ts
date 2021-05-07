@@ -18,15 +18,12 @@ const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', '
   'smime.attachment@recipient.com', 'auto.refresh.expired.key@recipient.com'];
 
 export const mockGoogleEndpoints: HandlersDefinition = {
-  '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, redirect_uri, scope, login_hint, result } }, req) => {
+  '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, redirect_uri, scope, login_hint } }, req) => {
     if (isGet(req) && client_id === oauth.clientId && response_type === 'code' && access_type === 'offline' && state && redirect_uri === oauth.redirectUri && scope) { // auth screen
-      if (!login_hint) {
-        return oauth.consentChooseAccountPage(`https://${req.headers.host!}${req.url!}`);
-      } else if (!result) {
-        return oauth.consentPage(req.url!, login_hint);
-      } else {
-        return oauth.consentResultPage(login_hint, state, result);
+      if(login_hint) {
+        return oauth.successPage(login_hint, state);
       }
+      
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },

@@ -4,6 +4,7 @@ import { Config, Util } from '../../util';
 import { AvaContext } from '../tooling/';
 import { ControllablePage } from '../../browser';
 import { PageRecipe } from './abstract-page-recipe';
+import { Url } from '../../core/common';
 
 export class OauthPageRecipe extends PageRecipe {
 
@@ -11,6 +12,14 @@ export class OauthPageRecipe extends PageRecipe {
 
   public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve" | 'login'): Promise<void> => {
     const isMock = oauthPage.target.url().includes('localhost');
+    if (isMock) {
+      const mockOauthUrl = oauthPage.target.url();
+      const { login_hint } = Url.parse(['login_hint'], mockOauthUrl);
+      if (!login_hint) {
+        await oauthPage.target.goto(mockOauthUrl + '&login_hint=' + encodeURIComponent(acctEmail));
+      }
+      return;
+    }
     const auth = Config.secrets().auth.google.find(a => a.email === acctEmail);
     const acctPassword = auth?.password;
     const selectors = {
