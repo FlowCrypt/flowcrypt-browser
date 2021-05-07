@@ -15,8 +15,12 @@ export class OauthPageRecipe extends PageRecipe {
     if (isMock) {
       const mockOauthUrl = oauthPage.target.url();
       const { login_hint } = Url.parse(['login_hint'], mockOauthUrl);
-      if (!login_hint) {
-        await oauthPage.target.goto(mockOauthUrl + '&login_hint=' + encodeURIComponent(acctEmail));
+      if (action === 'close') {
+        await oauthPage.close();
+      } else if (!login_hint) {
+        await oauthPage.target.goto(mockOauthUrl + '&login_hint=' + encodeURIComponent(acctEmail) + '&proceed=true');
+      } else {
+        await oauthPage.target.goto(mockOauthUrl + '&proceed=true');
       }
       return;
     }

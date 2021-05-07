@@ -21,8 +21,8 @@ export class OauthMock {
   private acctByIdToken: { [acct: string]: string } = {};
   private issuedIdTokensByAcct: { [acct: string]: string[] } = {};
 
-  public chooseAcctPage = () => {
-    return this.htmlPage(`choose account`, `choose account`);
+  public renderText = (text: string) => {
+    return this.htmlPage(text, text);
   }
 
   public successPage = (acct: string, state: string) => {
