@@ -148,7 +148,6 @@ ava.after.always('send debug info if any', async t => {
 
 
 if (testGroup === 'UNIT-TESTS') {
-  defineBufTests();
   defineUnitNodeTests(testVariant);
   defineUnitBrowserTests(testVariant, testWithBrowser);
 } else if (testGroup === 'FLAKY-GROUP') {
