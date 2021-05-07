@@ -13,6 +13,8 @@ import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { TestWithBrowser } from './../test';
 import { GoogleData } from './../mock/google/google-data';
 import { Stream } from '../core/stream';
+import { TestUrls } from '../browser/test-urls';
+import { Page } from 'puppeteer';
 
 // tslint:disable:no-blank-lines-func
 
@@ -118,6 +120,25 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await webDecryptPage.waitAll('@container-att-name(small.txt)');
       const fileText = await webDecryptPage.awaitDownloadTriggeredByClicking('@container-att-name(small.txt)');
       expect(fileText.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
+    }));
+
+    ava.default('settings - attachment previews with entering pass phrase', testWithBrowser('compatibility', async (t, browser) => {
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+      const k = Config.key('flowcrypt.compatibility.1pp1');
+      await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
+      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=174ab0ba9643b4fa`));
+      const attachmentImage = await inboxPage.getFrame(['attachment.htm', 'name=tiny-face.png']);
+      await attachmentImage.waitForSelTestState('ready');
+      await attachmentImage.click('body');
+      await (inboxPage.target as Page).mouse.click(1, 1); // test closing the passphrase dialog by clicking its backdrop
+      await Util.sleep(3);
+      await inboxPage.notPresent('@dialog-passphrase');
+      await attachmentImage.click('body');
+      const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
+      await passphraseDialog.waitAndType('@input-pass-phrase', k.passphrase);
+      await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
+      const attachmentPreviewImage = await inboxPage.getFrame(['attachment_preview.htm']);
+      await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
     }));
 
     ava.default(`[unit][Stream.readToEnd] efficiently handles multiple chunks`, async t => {
