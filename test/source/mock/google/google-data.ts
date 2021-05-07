@@ -226,12 +226,10 @@ export class GoogleData {
   public searchMessages = (q: string) => {
     const subject = (q.match(/subject:"([^"]+)"/) || [])[1];
     if (subject) {
-      console.log('searching by subject');
       // if any subject query found, all else is ignored
       // messages just filtered by subject
       return this.searchMessagesBySubject(subject);
     }
-    console.log('searching by other method');
     const excludePeople = (q.match(this.exludePplSearchQuery) || []).map(e => e.replace(/^(-from|-to):/, '').replace(/"/g, ''));
     q = q.replace(this.exludePplSearchQuery, ' ');
     const includePeople = (q.match(this.includePplSearchQuery) || []).map(e => e.replace(/^(from|to):/, '').replace(/"/g, ''));
@@ -280,9 +278,7 @@ export class GoogleData {
 
   private searchMessagesBySubject = (subject: string) => {
     subject = subject.trim().toLowerCase();
-    const start = Date.now();
     const messages = DATA[this.acct].messages.filter(m => GoogleData.msgSubject(m).toLowerCase().includes(subject));
-    console.log(`searchMessagesBySubject took ${Date.now() - start}ms`);
     return messages;
   }
 
