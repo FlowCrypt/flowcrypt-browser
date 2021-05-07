@@ -122,26 +122,6 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       expect(fileText.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
     }));
 
-    ava.default('settings - attachment previews with entering pass phrase', testWithBrowser('compatibility', async (t, browser) => {
-      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
-      const k = Config.key('flowcrypt.compatibility.1pp1');
-      await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
-      const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=174ab0ba9643b4fa`));
-      const attachmentImage = await inboxPage.getFrame(['attachment.htm', 'name=tiny-face.png']);
-      await attachmentImage.waitForSelTestState('ready');
-      await attachmentImage.click('body');
-      await Util.sleep(3);
-      await (inboxPage.target as Page).mouse.click(1, 1); // test closing the passphrase dialog by clicking its backdrop
-      await Util.sleep(3);
-      await inboxPage.notPresent('@dialog-passphrase');
-      await attachmentImage.click('body');
-      const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
-      await passphraseDialog.waitAndType('@input-pass-phrase', k.passphrase);
-      await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
-      const attachmentPreviewImage = await inboxPage.getFrame(['attachment_preview.htm']);
-      await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
-    }));
-
     ava.default(`[unit][Stream.readToEnd] efficiently handles multiple chunks`, async t => {
       const stream = new ReadableStream<Uint8Array>({
         start(controller) {
