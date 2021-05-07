@@ -13,8 +13,6 @@ import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { TestWithBrowser } from './../test';
 import { GoogleData } from './../mock/google/google-data';
 import { Stream } from '../core/stream';
-import { TestUrls } from '../browser/test-urls';
-import { Page } from 'puppeteer';
 
 // tslint:disable:no-blank-lines-func
 
