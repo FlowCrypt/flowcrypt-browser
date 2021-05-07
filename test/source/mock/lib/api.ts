@@ -192,7 +192,7 @@ export class Api<REQ, RES> {
         } else {
           body.push(chunk);
         }
-        if (this.throttleChunkMsUpload) {
+        if (this.throttleChunkMsUpload && body.length > 2) {
           req.pause(); // slow down accepting data by a certain amount of ms per chunk
           setTimeout(() => req.resume(), this.throttleChunkMsUpload);
         }
