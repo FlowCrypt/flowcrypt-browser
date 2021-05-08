@@ -13,7 +13,6 @@
       "typescript",
     ],
     "html.format.enable": false,
-    "stylelint.autoFixOnSave": true,
     "files.exclude": {
       "**/node_modules/**": true
     },
@@ -25,7 +24,8 @@
     "editor.tabSize": 2,
     "editor.codeActionsOnSave": {
       "source.fixAll.eslint": true,
-      "source.fixAll.tslint": true
+      "source.fixAll.tslint": true,
+      "source.fixAll.stylelint": true
     },
     "tslint.exclude": [
       "test/**/*.ts"
@@ -46,7 +46,7 @@
   "extensions": {
     "recommendations": [
       "dbaeumer.vscode-eslint",
-      "hex-ci.stylelint-plus",
+      "stylelint.vscode-stylelint",
       "ms-vscode.vscode-typescript-tslint-plugin",
       "philhindle.errorlens"
     ]
