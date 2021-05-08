@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { VERSION } from '../core/const.js';
+import { FLAVOR, VERSION } from '../core/const.js';
 
 export class UnreportableError extends Error { }
 type ObjWithStack = { stack: string };
@@ -64,10 +64,13 @@ export class Catch {
     return e && typeof e === 'object' && typeof (e as ObjWithStack).stack === 'string' && Boolean((e as ObjWithStack).stack); // tslint:disable-line:no-unsafe-any
   }
 
-  public static onErrorInternalHandler = (errMsg: string | undefined, url: string, line: number, col: number, originalErr: any, isManuallyCalled: boolean) => {
+  /**
+   * @returns boolean - whether error was reported remotely or not
+   */
+  public static onErrorInternalHandler = (errMsg: string | undefined, url: string, line: number, col: number, originalErr: any, isManuallyCalled: boolean): boolean => {
     const exception = Catch.formExceptionFromThrown(originalErr, errMsg, url, line, col, isManuallyCalled);
     if ((Catch.IGNORE_ERR_MSG.indexOf(exception.message) !== -1) || (errMsg && Catch.IGNORE_ERR_MSG.indexOf(errMsg) !== -1)) {
-      return;
+      return false;
     }
     console.error(originalErr);
     if (exception !== originalErr) {
@@ -80,24 +83,36 @@ export class Catch {
     }
     if (exception instanceof UnreportableError) {
       console.error('Not reporting UnreportableError above');
-      return;
+      return false;
     }
     if ((exception.stack || '').indexOf('PRIVATE') !== -1) {
       exception.stack = '~censored:PRIVATE';
     }
     const formatted = Catch.formatExceptionForReport(exception, line, col);
     // todo - here would have to make a decision if we are sending it to flowcrypt.com or enterprise FES
+    if (FLAVOR === 'enterprise') {
+      console.log('enterprise flavor - not reporting this remotely');
+      // if FES is set up, then on enterprise flavor, we could still send report there
+      return false; // do not send to flowcrypt.com backend on enterprise flavor
+    }
+    // consumer flavor
     Catch.doSendErrorToFlowCryptComBackend(formatted);
     return true;
   }
 
-  public static reportErr = (e: any) => {
+  /**
+   * @returns boolean - whether error was reported remotely or not
+   */
+  public static reportErr = (e: any): boolean => {
     const { line, col } = Catch.getErrorLineAndCol(e);
-    Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
+    return Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
   }
 
-  public static report = (name: string, details?: any) => {
-    Catch.reportErr(Catch.nameAndDetailsAsException(name, details));
+  /**
+   * @returns boolean - whether error was reported remotely or not
+   */
+  public static report = (name: string, details?: any): boolean => {
+    return Catch.reportErr(Catch.nameAndDetailsAsException(name, details));
   }
 
   public static isPromise = (v: any): v is Promise<any> => {

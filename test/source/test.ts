@@ -22,7 +22,7 @@ import { mockBackendData } from './mock/backend/backend-endpoints';
 import { TestUrls } from './browser/test-urls';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
-export const internalTestState = { expectiIntentionalErrReport: false }; // updated when a particular test that causes an error is run
+export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
 const DEBUG_BROWSER_LOG = false; // set to true to print / export information from browser
 
 process.setMaxListeners(60);
@@ -115,9 +115,17 @@ ava.after.always('evaluate Catch.reportErr errors', async t => {
     .filter(e => !e.trace.includes('-1 when GET-ing https://openpgpkey.flowcrypt.com'));
   const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
   const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
-  if (!foundExpectedErr && internalTestState.expectiIntentionalErrReport) {
-    t.fail(`Catch.reportErr errors: missing intentional error`);
-  } else if (foundUnwantedErrs.length) {
+  if (testVariant === 'CONSUMER-MOCK' && internalTestState.expectIntentionalErrReport && !foundExpectedErr) {
+    // on consumer flavor app, we submit errors to flowcrypt.com backend
+    t.fail(`Catch.reportErr errors: missing intentional error report on consumer flavor`);
+    return;
+  }
+  if (testVariant === 'ENTERPRISE-MOCK' && mockBackendData.reportedErrors.length) {
+    // on enterprise flavor app, we don't submit any errors anywhere yet
+    t.fail(`Catch.reportErr errors: should not report any error on enterprise app`);
+    return;
+  }
+  if (foundUnwantedErrs.length) {
     for (const e of foundUnwantedErrs) {
       console.info(`----- mockBackendData Catch.reportErr -----\nname: ${e.name}\nmessage: ${e.message}\nurl: ${e.url}\ntrace: ${e.trace}`);
     }
