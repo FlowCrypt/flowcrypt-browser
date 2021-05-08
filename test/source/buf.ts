@@ -2,7 +2,7 @@
 
 import * as ava from 'ava';
 import { Buf } from '../../extension/js/common/core/buf.js';
-import { expect } from 'chai';
+import { equals } from './tests/unit-node.js';
 
 // @ts-ignore
 global['btoa'] = (binary: string): string => Buffer.from(binary, 'binary').toString('base64'); // tslint:disable-line:no-string-literal
@@ -27,19 +27,6 @@ const withThousandRandomInputs = (cb: (data: Uint8Array) => void) => {
 const UTF8 = `გამარჯობა.\nこんにちは。\nЗдравствуй.\nChào bạn.\nDobrý deň!\n여보세요?\n你好。\r\n\t。 `;
 const UTF8_AS_BYTES = Buffer.from(UTF8);
 const UTF8_AS_RAW_STRING = Buffer.from(UTF8).toString('binary');
-
-export const equals = (a: string | Uint8Array, b: string | Uint8Array) => {
-  expect(typeof a).to.equal(typeof b, `types dont match`);
-  if (typeof a === 'string' && typeof b === 'string') {
-    expect(a).to.equal(b, 'string result mismatch');
-    return;
-  }
-  if (a instanceof Uint8Array && b instanceof Uint8Array) {
-    expect(Array.from(a).join('|')).to.equal(Array.from(b).join('|'), 'buffers dont match');
-    return;
-  }
-  throw new Error(`unknown test state [${typeof a},${typeof b}] [${a instanceof Uint8Array},${b instanceof Uint8Array}]`);
-};
 
 ava.default(`1000x Buf.fromUint8(data).toBase64Str() = Buffer.from(data).toString('base64')`, async t => {
   withThousandRandomInputs(data => {
@@ -138,3 +125,4 @@ ava.default('Buf.fromUint8(UTF8_AS_BYTES) = UTF8_AS_RAW_STRING', async t => {
   );
   t.pass();
 });
+
