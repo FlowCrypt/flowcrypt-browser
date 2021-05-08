@@ -205,6 +205,12 @@ declare module "node-forge" {
             extensions?: any[];
         }
 
+        interface DistinguishedName {
+            getField(sn: string | CertificateFieldOptions): any;
+            addField(attr: CertificateField): void;
+            attributes: any[];
+            hash: string;
+        }
 
         interface Certificate {
             version: number;
@@ -215,18 +221,8 @@ declare module "node-forge" {
                 notBefore: Date;
                 notAfter: Date;
             };
-            issuer: {
-                getField(sn: string | CertificateFieldOptions): any;
-                addField(attr: CertificateField): void;
-                attributes: any[];
-                hash: any;
-            };
-            subject: {
-                getField(sn: string | CertificateFieldOptions): any;
-                addField(attr: CertificateField): void;
-                attributes: any[];
-                hash: any;
-            };
+            issuer: DistinguishedName;
+            subject: DistinguishedName;
             extensions: any[];
             privateKey: PrivateKey | undefined;
             publicKey: PublicKey | undefined;
@@ -349,6 +345,8 @@ declare module "node-forge" {
         function certificateFromAsn1(obj: asn1.Asn1, computeHash?: boolean): Certificate;
 
         function certificateToAsn1(cert: Certificate): asn1.Asn1;
+
+        function distinguishedNameToAsn1(dn: DistinguishedName): asn1.Asn1;
 
         function decryptRsaPrivateKey(pem: PEM, passphrase?: string): PrivateKey;
 
@@ -662,6 +660,7 @@ declare module "node-forge" {
 
     namespace pkcs7 {
         interface PkcsSignedData {
+            type: '1.2.840.113549.1.7.2';
             content?: string | util.ByteBuffer;
             contentInfo?: { value: any[] };
 
@@ -681,13 +680,22 @@ declare module "node-forge" {
         function createSignedData(): PkcsSignedData;
 
         interface PkcsEnvelopedData {
+            type: '1.2.840.113549.1.7.3';
             content?: string | util.ByteBuffer;
             addRecipient(certificate: pki.Certificate): void;
             encrypt(): void;
             toAsn1(): asn1.Asn1;
         }
 
+        interface PkcsEncryptedData {
+            type: '1.2.840.113549.1.7.6';
+            // todo: encryptedContent;
+            // todo: decrypt(key);
+            // todo: fromAsn1(obj);
+        }
+
         function createEnvelopedData(): PkcsEnvelopedData;
+        function messageFromPem(pem: pki.PEM): PkcsEnvelopedData | PkcsSignedData | PkcsEncryptedData;
     }
 
     namespace pkcs5 {

@@ -392,9 +392,6 @@ export class OpenPGPKey {
   }
 
   public static fingerprintToLongid = (fingerprint: string) => {
-    if (fingerprint.length === 32) { // s/mime keys
-      return fingerprint; // leave as is - s/mime has no concept of longids
-    }
     if (fingerprint.length === 40) { // pgp keys
       return fingerprint.substr(-16).toUpperCase();
     }

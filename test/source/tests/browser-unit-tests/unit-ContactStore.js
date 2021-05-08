@@ -197,12 +197,12 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update tests`);
     email: email1,
     name: undefined,
     lastUse: undefined
-  }
+  };
   const expectedObj2 = {
     email: email2,
     name: undefined,
     lastUse: undefined
-  }
+  };
   const getEntity = async (email) => {
     return await new Promise((resolve, reject) => {
       const req = db.transaction(['emails'], 'readonly').objectStore('emails').get(email);
@@ -221,7 +221,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore.update tests`);
   const compareEntities = async () => {
     await compareEntity(expectedObj1);
     await compareEntity(expectedObj2);
-  }
+  };
   await compareEntities();
   expectedObj1.name = 'New Name for contact 1';
   await ContactStore.update(db, email1, { name: expectedObj1.name });
@@ -275,62 +275,62 @@ BROWSER_UNIT_TEST_NAME(`ContactStore gets a contact by any longid`);
   await ContactStore.save(undefined, [contactABBDEF, contactABCDEF, contactABCDDF, contactABDDEF]);
   const [abbdefByPrimaryLongid] = await ContactStore.get(undefined, ['DF63659C3B4A81FB']);
   if (abbdefByPrimaryLongid.email !== 'abbdef@test.com') {
-    throw Error(`Expected to get the key for abbdef@test.com by primary longid but got ${abbdefByPrimaryLongid.email}`)
+    throw Error(`Expected to get the key for abbdef@test.com by primary longid but got ${abbdefByPrimaryLongid.email}`);
   }
   if (abbdefByPrimaryLongid.pubkey.id !== 'B790AE8F425DC44633A8C086DF63659C3B4A81FB') {
-    throw Error(`Expected to get the key fingerprint B790AE8F425DC44633A8C086DF63659C3B4A81FB but got ${abbdefByPrimaryLongid.pubkey.id}`)
+    throw Error(`Expected to get the key fingerprint B790AE8F425DC44633A8C086DF63659C3B4A81FB but got ${abbdefByPrimaryLongid.pubkey.id}`);
   }
   const [abbdefBySubkeyLongid] = await ContactStore.get(undefined, ['621DE1814AD675E0']);
   if (abbdefBySubkeyLongid.email !== 'abbdef@test.com') {
-    throw Error(`Expected to get the key for abbdef@test.com by subkey longid but got ${abbdefBySubkeyLongid.email}`)
+    throw Error(`Expected to get the key for abbdef@test.com by subkey longid but got ${abbdefBySubkeyLongid.email}`);
   }
   if (abbdefBySubkeyLongid.pubkey.id !== 'B790AE8F425DC44633A8C086DF63659C3B4A81FB') {
-    throw Error(`Expected to get the key fingerprint B790AE8F425DC44633A8C086DF63659C3B4A81FB but got ${abbdefBySubkeyLongid.pubkey.id}`)
+    throw Error(`Expected to get the key fingerprint B790AE8F425DC44633A8C086DF63659C3B4A81FB but got ${abbdefBySubkeyLongid.pubkey.id}`);
   }
 
   const [abcdefByPrimaryLongid] = await ContactStore.get(undefined, ['608BCD797A23FB91']);
   if (abcdefByPrimaryLongid.email !== 'abcdef@test.com') {
-    throw Error(`Expected to get the key for abcdef@test.com by primary longid but got ${abcdefByPrimaryLongid.email}`)
+    throw Error(`Expected to get the key for abcdef@test.com by primary longid but got ${abcdefByPrimaryLongid.email}`);
   }
   if (abcdefByPrimaryLongid.pubkey.id !== '3155F118B6E732B3638A1CE1608BCD797A23FB91') {
-    throw Error(`Expected to get the key fingerprint 3155F118B6E732B3638A1CE1608BCD797A23FB91 but got ${abcdefByPrimaryLongid.pubkey.id}`)
+    throw Error(`Expected to get the key fingerprint 3155F118B6E732B3638A1CE1608BCD797A23FB91 but got ${abcdefByPrimaryLongid.pubkey.id}`);
   }
   const [abcdefBySubkeyLongid] = await ContactStore.get(undefined, ['2D47A41943DFAFCE']);
   if (abcdefBySubkeyLongid.email !== 'abcdef@test.com') {
-    throw Error(`Expected to get the key for abcdef@test.com by subkey longid but got ${abcdefBySubkeyLongid.email}`)
+    throw Error(`Expected to get the key for abcdef@test.com by subkey longid but got ${abcdefBySubkeyLongid.email}`);
   }
   if (abcdefBySubkeyLongid.pubkey.id !== '3155F118B6E732B3638A1CE1608BCD797A23FB91') {
-    throw Error(`Expected to get the key fingerprint 3155F118B6E732B3638A1CE1608BCD797A23FB91 but got ${abcdefBySubkeyLongid.pubkey.id}`)
+    throw Error(`Expected to get the key fingerprint 3155F118B6E732B3638A1CE1608BCD797A23FB91 but got ${abcdefBySubkeyLongid.pubkey.id}`);
   }
 
   const [abcddfByPrimaryLongid] = await ContactStore.get(undefined, ['75AA44AB8930F7E9']);
   if (abcddfByPrimaryLongid.email !== 'abcddf@test.com') {
-    throw Error(`Expected to get the key for abcddf@test.com by primary longid but got ${abcddfByPrimaryLongid.email}`)
+    throw Error(`Expected to get the key for abcddf@test.com by primary longid but got ${abcddfByPrimaryLongid.email}`);
   }
   if (abcddfByPrimaryLongid.pubkey.id !== '6CF53D2329C2A80828F499D375AA44AB8930F7E9') {
-    throw Error(`Expected to get the key fingerprint 6CF53D2329C2A80828F499D375AA44AB8930F7E9 but got ${abcddfByPrimaryLongid.pubkey.id}`)
+    throw Error(`Expected to get the key fingerprint 6CF53D2329C2A80828F499D375AA44AB8930F7E9 but got ${abcddfByPrimaryLongid.pubkey.id}`);
   }
   const [abcddfBySubkeyLongid] = await ContactStore.get(undefined, ['92CFDAC7AA3A4253']);
   if (abcddfBySubkeyLongid.email !== 'abcddf@test.com') {
-    throw Error(`Expected to get the key for abcddf@test.com by subkey longid but got ${abcddfBySubkeyLongid.email}`)
+    throw Error(`Expected to get the key for abcddf@test.com by subkey longid but got ${abcddfBySubkeyLongid.email}`);
   }
   if (abcddfBySubkeyLongid.pubkey.id !== '6CF53D2329C2A80828F499D375AA44AB8930F7E9') {
-    throw Error(`Expected to get the key fingerprint 6CF53D2329C2A80828F499D375AA44AB8930F7E9 but got ${abcddfBySubkeyLongid.pubkey.id}`)
+    throw Error(`Expected to get the key fingerprint 6CF53D2329C2A80828F499D375AA44AB8930F7E9 but got ${abcddfBySubkeyLongid.pubkey.id}`);
   }
 
   const [abddefByPrimaryLongid] = await ContactStore.get(undefined, ['5FCC1541CF282951']);
   if (abddefByPrimaryLongid.email !== 'abddef@test.com') {
-    throw Error(`Expected to get the key for abddef@test.com by primary longid but got ${abddefByPrimaryLongid.email}`)
+    throw Error(`Expected to get the key for abddef@test.com by primary longid but got ${abddefByPrimaryLongid.email}`);
   }
   if (abddefByPrimaryLongid.pubkey.id !== '9E020D9B752FD3FFF17ED9B65FCC1541CF282951') {
-    throw Error(`Expected to get the key fingerprint 9E020D9B752FD3FFF17ED9B65FCC1541CF282951 but got ${abddefByPrimaryLongid.pubkey.id}`)
+    throw Error(`Expected to get the key fingerprint 9E020D9B752FD3FFF17ED9B65FCC1541CF282951 but got ${abddefByPrimaryLongid.pubkey.id}`);
   }
   const [abddefBySubkeyLongid] = await ContactStore.get(undefined, ['EAA7A05FE34F3A1A']);
   if (abddefBySubkeyLongid.email !== 'abddef@test.com') {
-    throw Error(`Expected to get the key for abddef@test.com by subkey longid but got ${abddefBySubkeyLongid.email}`)
+    throw Error(`Expected to get the key for abddef@test.com by subkey longid but got ${abddefBySubkeyLongid.email}`);
   }
   if (abddefBySubkeyLongid.pubkey.id !== '9E020D9B752FD3FFF17ED9B65FCC1541CF282951') {
-    throw Error(`Expected to get the key fingerprint 9E020D9B752FD3FFF17ED9B65FCC1541CF282951 but got ${abddefBySubkeyLongid.pubkey.id}`)
+    throw Error(`Expected to get the key fingerprint 9E020D9B752FD3FFF17ED9B65FCC1541CF282951 but got ${abddefBySubkeyLongid.pubkey.id}`);
   }
   return 'pass';
 })();
@@ -345,15 +345,80 @@ BROWSER_UNIT_TEST_NAME(`ContactStore gets a valid pubkey by e-mail, or exact pub
 
   const [expectedValid] = await ContactStore.get(undefined, ['some.revoked@otherhost.com']);
   if (expectedValid.pubkey.id !== 'D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2') {
-    throw Error(`Expected to get the key fingerprint D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2 but got ${expectedValid.pubkey.id}`)
+    throw Error(`Expected to get the key fingerprint D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2 but got ${expectedValid.pubkey.id}`);
   }
   const [expectedRevoked1] = await ContactStore.get(undefined, ['097EEBF354259A5E']);
   if (expectedRevoked1.pubkey.id !== 'A5CFC8E8EA4AE69989FE2631097EEBF354259A5E') {
-    throw Error(`Expected to get the key fingerprint A5CFC8E8EA4AE69989FE2631097EEBF354259A5E but got ${expectedRevoked1.pubkey.id}`)
+    throw Error(`Expected to get the key fingerprint A5CFC8E8EA4AE69989FE2631097EEBF354259A5E but got ${expectedRevoked1.pubkey.id}`);
   }
   const [expectedRevoked2] = await ContactStore.get(undefined, ['DE8538DDA1648C76']);
   if (expectedRevoked2.pubkey.id !== '3930752556D57C46A1C56B63DE8538DDA1648C76') {
-    throw Error(`Expected to get the key fingerprint 3930752556D57C46A1C56B63DE8538DDA1648C76 but got ${expectedRevoked2.pubkey.id}`)
+    throw Error(`Expected to get the key fingerprint 3930752556D57C46A1C56B63DE8538DDA1648C76 but got ${expectedRevoked2.pubkey.id}`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`ContactStore stores postfixed fingerprint internally for X.509 certificate`);
+(async () => {
+  const db = await ContactStore.dbOpen();
+  const email = 'actalis@meta.33mail.com';
+  const contacts = [
+    await ContactStore.obj({
+      email,
+      pubkey: testConstants.smimeCert
+    })];
+  await ContactStore.save(db, contacts);
+  // extract the entity directly from the database
+  const entityFp = '16BB407403A3ADC55E1E0E4AF93EEC8FB187C923-X509';
+  const fingerprint = '16BB407403A3ADC55E1E0E4AF93EEC8FB187C923';
+  const longid = 'X509-MIGiMIGNMQswCQYDVQQGEwJJVDEQMA4GA1UECAwHQmVyZ2FtbzEZMBcGA1UEBwwQUG9udGUgU2Fu' +
+    'IFBpZXRybzEjMCEGA1UECgwaQWN0YWxpcyBTLnAuQS4vMDMzNTg1MjA5NjcxLDAqBgNVBAMMI0FjdGFsaXMgQ2xpZW50IE' +
+    'F1dGhlbnRpY2F0aW9uIENBIEcyAhBj9wJecA85RTAfsvulZ0+E';
+  const entity = await new Promise((resolve, reject) => {
+      const req = db.transaction(['pubkeys'], 'readonly').objectStore('pubkeys').get(entityFp);
+      ContactStore.setReqPipe(req, resolve, reject);
+    });
+  if (entity.fingerprint !== entityFp) {
+    throw Error(`Failed to extract pubkey ${fingerprint}`);
+  }
+  const [contactByLongid] = await ContactStore.get(db, [longid]);
+  if (contactByLongid.pubkey.id !== fingerprint) {
+    throw Error(`Failed to extract pubkey ${fingerprint}`);
+  }
+  const [contactByEmail] = await ContactStore.get(db, [email]);
+  if (contactByEmail.pubkey.id !== fingerprint) {
+    throw Error(`Failed to extract pubkey ${fingerprint}`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`ContactStore searches S/MIME Certificate by PKCS#7 message recipient`);
+(async () => {
+  const db = await ContactStore.dbOpen();
+  const email = 'actalis@meta.33mail.com';
+  const pubkey = testConstants.smimeCert;
+  const contacts = [await ContactStore.obj({ email, pubkey })];
+  await ContactStore.save(db, contacts);
+  const p7 = forge.pkcs7.createEnvelopedData();
+  const certificate = forge.pki.certificateFromPem(pubkey);
+  p7.addRecipient(certificate);
+  const recipient = p7.recipients[0];
+  const issuerAndSerialNumberAsn1 =
+      forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SEQUENCE, true, [
+        // Name
+        forge.pki.distinguishedNameToAsn1({ attributes: recipient.issuer }),
+        // Serial
+        forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.INTEGER, false,
+          forge.util.hexToBytes(recipient.serialNumber))
+      ]);
+  const der = forge.asn1.toDer(issuerAndSerialNumberAsn1).getBytes();
+  const buf = Buf.fromRawBytesStr(der);
+  const [contact] = await ContactStore.get(db, ['X509-' + buf.toBase64Str()]);
+  const foundCert = KeyUtil.armor(contact.pubkey);
+  console.log('foundCert');
+  console.log(foundCert);
+  if (foundCert !== pubkey) {
+    throw new Error(`The certificate wasn't found by S/MIME IssuerAndSerialNumber`);
   }
   return 'pass';
 })();

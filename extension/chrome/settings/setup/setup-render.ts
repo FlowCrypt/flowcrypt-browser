@@ -8,7 +8,6 @@ import { Settings } from '../../../js/common/settings.js';
 import { SetupView } from '../setup.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
-import { KeyUtil } from '../../../js/common/core/crypto/key.js';
 
 export class SetupRenderModule {
 

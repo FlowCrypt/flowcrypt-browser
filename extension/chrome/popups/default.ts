@@ -79,7 +79,7 @@ View.run(class DefaultPopupView extends View {
   private renderSetupAcctPromptPopup = (activeAcctEmail: string) => {
     $('#set_up_account').css('display', 'block');
     $('.email').text(activeAcctEmail);
-    $('.action_set_up_account').click(this.setHandlerPrevent('double', () => this.redirectToInitSetup(activeAcctEmail).catch(Catch.reportErr)));
+    $('.action_set_up_account').click(this.setHandlerPrevent('double', () => { this.redirectToInitSetup(activeAcctEmail).catch(Catch.reportErr); }));
   }
 
 });
