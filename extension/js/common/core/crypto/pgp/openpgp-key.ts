@@ -232,6 +232,7 @@ export class OpenPGPKey {
         curve: (algoInfo as any).curve as string | undefined,
         algorithmId: opgp.enums.publicKey[algoInfo.algorithm]
       },
+      revoked: keyWithoutWeakPackets.revocationSignatures.length > 0
     } as Key);
     (key as any)[internal] = keyWithoutWeakPackets;
     (key as any).rawKey = opgpKey;

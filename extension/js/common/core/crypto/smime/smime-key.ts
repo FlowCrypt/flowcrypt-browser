@@ -119,6 +119,7 @@ export class SmimeKey {
       fullyEncrypted: false,
       isPublic: !certificate.privateKey,
       isPrivate: !!certificate.privateKey,
+      revoked: false, // todo:
       issuerAndSerialNumber: forge.asn1.toDer(issuerAndSerialNumberAsn1).getBytes()
     } as Key;
     (key as unknown as { rawArmored: string }).rawArmored = pem;

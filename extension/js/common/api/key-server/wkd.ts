@@ -6,10 +6,9 @@ import { Api } from './../shared/api.js';
 import { ApiErr } from '../shared/api-error.js';
 import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { Buf } from '../../core/buf.js';
-import { PubkeySearchResult } from './../pub-lookup.js';
+import { PubkeysSearchResult } from './../pub-lookup.js';
 import { Key, KeyUtil } from '../../core/crypto/key.js';
 
-// tslint:disable:no-null-keyword
 // tslint:disable:no-direct-ajax
 
 export class Wkd extends Api {
@@ -59,20 +58,19 @@ export class Wkd extends Api {
     return await KeyUtil.readMany(response.buf);
   }
 
-  public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
+  public lookupEmail = async (email: string): Promise<PubkeysSearchResult> => {
     const { keys, errs } = await this.rawLookupEmail(email);
     if (errs.length) {
-      return { pubkey: null };
+      return { pubkeys: [] };
     }
-    const key = keys.find(key => key.usableForEncryption && key.emails.some(x => x.toLowerCase() === email.toLowerCase()));
-    if (!key) {
-      return { pubkey: null };
+    const pubkeys = keys.filter(key => key.emails.some(x => x.toLowerCase() === email.toLowerCase()));
+    if (!pubkeys.length) {
+      return { pubkeys: [] };
     }
     try {
-      const pubkey = KeyUtil.armor(key);
-      return { pubkey };
+      return { pubkeys: pubkeys.map(pubkey => KeyUtil.armor(pubkey)) };
     } catch (e) {
-      return { pubkey: null };
+      return { pubkeys: [] };
     }
   }
 

@@ -23,6 +23,7 @@ export interface Key {
   id: string; // a fingerprint of the primary key in OpenPGP, and similarly a fingerprint of the actual cryptographic key (eg RSA fingerprint) in S/MIME
   allIds: string[]; // a list of fingerprints, including those for subkeys
   created: number;
+  revoked: boolean;
   lastModified: number | undefined; // date of last signature, or undefined if never had valid signature
   expiration: number | undefined; // number of millis of expiration or undefined if never expires
   usableForEncryption: boolean;

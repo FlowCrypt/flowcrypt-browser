@@ -9,6 +9,7 @@ import { Wkd } from './key-server/wkd.js';
 import { OrgRules } from '../org-rules.js';
 
 export type PubkeySearchResult = { pubkey: string | null };
+export type PubkeysSearchResult = { pubkeys: string[] };
 
 /**
  * Look up public keys.
@@ -38,24 +39,28 @@ export class PubLookup {
     }
   }
 
-  public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
+  public lookupEmail = async (email: string): Promise<PubkeysSearchResult> => {
     if (this.keyManager) {
       const res = await this.keyManager.lookupPublicKey(email);
       if (res.publicKeys.length) {
-        return { pubkey: res.publicKeys[0].publicKey };
+        return { pubkeys: res.publicKeys.map(x => x.publicKey) };
       }
     }
     const wkdRes = await this.wkd.lookupEmail(email);
-    if (wkdRes.pubkey) {
+    if (wkdRes.pubkeys.length) {
       return wkdRes;
     }
     if (this.internalSks) {
       const res = await this.internalSks.lookupEmail(email);
       if (res.pubkey) {
-        return res;
+        return { pubkeys: [res.pubkey] };
       }
     }
-    return await this.attester.lookupEmail(email);
+    const attRes = await this.attester.lookupEmail(email);
+    if (attRes.pubkey) {
+      return { pubkeys: [attRes.pubkey] };
+    }
+    return { pubkeys: [] };
   }
 
   public lookupFingerprint = async (fingerprintOrLongid: string): Promise<PubkeySearchResult> => {
