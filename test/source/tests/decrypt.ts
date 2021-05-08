@@ -491,6 +491,14 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await pgpBlockPage.waitForContent('@container-err-text', 'API path traversal forbidden');
     }));
 
+    ava.default(`decrypt - try path traversal forward slash workaround`, testWithBrowser('compatibility', async (t, browser) => {
+      const params = "?frame_id=frame_TWloVRhvZE&message=&message_id=..\\test&senderEmail=sender%40email.com&is_outgoing=___cu_false___&account_email=flowcrypt.compatibility%40gmail.com";
+      const pgpHostPage = await browser.newPage(t, `chrome/dev/ci_pgp_host_page.htm${params}`);
+      const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
+      await pgpBlockPage.waitForSelTestState('ready', 5);
+      await pgpBlockPage.waitForContent('@container-err-text', 'API path traversal forbidden');
+    }));
+
     ava.default(`verify - sha1 shows error`, testWithBrowser('compatibility', async (t, browser) => {
       const msg = `-----BEGIN PGP MESSAGE-----
 
