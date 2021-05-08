@@ -21,28 +21,19 @@ export class OauthMock {
   private acctByIdToken: { [acct: string]: string } = {};
   private issuedIdTokensByAcct: { [acct: string]: string[] } = {};
 
-  public consentChooseAccountPage = (url: string) => {
-    return this.htmlPage('oauth mock choose acct', '<h1>Choose mock oauth email</h1>'
-      + `<a href="${url}&login_hint=" id="profileIdentifier" data-email="dummy">dummy</a><br>`);
+  public renderText = (text: string) => {
+    return this.htmlPage(text, text);
   }
 
-  public consentPage = (url: string, acct: string) => {
-    return this.htmlPage('oauth mock', `Mock oauth: ${acct}<br><br><a href="${url}&result=Success" id="submit_approve_access">Approve</a>`);
-  }
-
-  public consentResultPage = (acct: string, state: string, result: string) => {
-    if (result === 'Success') {
-      const authCode = `mock-auth-code-${acct.replace(/[^a-z0-9]+/g, '')}`;
-      const refreshToken = `mock-refresh-token-${acct.replace(/[^a-z0-9]+/g, '')}`;
-      const accessToken = `mock-access-token-${acct.replace(/[^a-z0-9]+/g, '')}`;
-      this.authCodesByAcct[acct] = authCode;
-      this.refreshTokenByAuthCode[authCode] = refreshToken;
-      this.accessTokenByRefreshToken[refreshToken] = accessToken;
-      this.acctByAccessToken[accessToken] = acct;
-      return this.htmlPage(`${result} code=${encodeURIComponent(authCode)}&state=${encodeURIComponent(state)}&error=`, `Authorized successfully, please return to app`);
-    } else {
-      return this.htmlPage(`${result} code=&state=${encodeURIComponent(state)}&error=Result+is+${result}`, `Got a non-success result: ${result}`);
-    }
+  public successPage = (acct: string, state: string) => {
+    const authCode = `mock-auth-code-${acct.replace(/[^a-z0-9]+/g, '')}`;
+    const refreshToken = `mock-refresh-token-${acct.replace(/[^a-z0-9]+/g, '')}`;
+    const accessToken = `mock-access-token-${acct.replace(/[^a-z0-9]+/g, '')}`;
+    this.authCodesByAcct[acct] = authCode;
+    this.refreshTokenByAuthCode[authCode] = refreshToken;
+    this.accessTokenByRefreshToken[refreshToken] = accessToken;
+    this.acctByAccessToken[accessToken] = acct;
+    return this.htmlPage(`Success code=${encodeURIComponent(authCode)}&state=${encodeURIComponent(state)}&error=`, `Authorized successfully, please return to app`);
   }
 
   public getRefreshTokenResponse = (code: string) => {

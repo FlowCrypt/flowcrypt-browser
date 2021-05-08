@@ -14,18 +14,18 @@ type DraftSaveModel = { message: { raw: string, threadId: string } };
 
 const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', 'human+manualcopypgp@flowcrypt.com',
   'censored@email.com', 'test@email.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com', 'expired.on.attester@domain.com',
-  'ci.tests.gmail@flowcrypt.dev', 'smime1@recipient.com', 'smime2@recipient.com', 'smime@recipient.com',
+  'ci.tests.gmail@flowcrypt.test', 'smime1@recipient.com', 'smime2@recipient.com', 'smime@recipient.com',
   'smime.attachment@recipient.com', 'auto.refresh.expired.key@recipient.com'];
 
 export const mockGoogleEndpoints: HandlersDefinition = {
-  '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, redirect_uri, scope, login_hint, result } }, req) => {
+  '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, redirect_uri, scope, login_hint, proceed } }, req) => {
     if (isGet(req) && client_id === oauth.clientId && response_type === 'code' && access_type === 'offline' && state && redirect_uri === oauth.redirectUri && scope) { // auth screen
       if (!login_hint) {
-        return oauth.consentChooseAccountPage(`https://${req.headers.host!}${req.url!}`);
-      } else if (!result) {
-        return oauth.consentPage(req.url!, login_hint);
+        return oauth.renderText('choose account with login_hint');
+      } else if (!proceed) {
+        return oauth.renderText('redirect with proceed=true to continue');
       } else {
-        return oauth.consentResultPage(login_hint, state, result);
+        return oauth.successPage(login_hint, state);
       }
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
@@ -51,7 +51,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     }
     const empty = { feed: { entry: [] } };
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
-    if (acct === 'ci.tests.gmail@flowcrypt.dev') {
+    if (acct === 'ci.tests.gmail@flowcrypt.test') {
       if (q === 'contact') {
         return {
           feed: {
@@ -118,7 +118,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
   '/gmail/v1/users/me/messages': async ({ query: { q } }, req) => { // search messages
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req) && q) {
-      const msgs = new GoogleData(acct).searchMessages(q);
+      const msgs = (await GoogleData.withInitializedData(acct)).searchMessages(q);
       return { messages: msgs.map(({ id, threadId }) => ({ id, threadId })), resultSizeEstimate: msgs.length };
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
@@ -127,7 +127,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
       const id = parseResourceId(req.url!);
-      const data = new GoogleData(acct);
+      const data = await GoogleData.withInitializedData(acct);
       if (req.url!.includes('/attachments/')) {
         const attachment = data.getAttachment(id);
         if (attachment) {
@@ -146,14 +146,14 @@ export const mockGoogleEndpoints: HandlersDefinition = {
   '/gmail/v1/users/me/labels': async (parsedReq, req) => {
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
-      return { labels: new GoogleData(acct).getLabels() };
+      return { labels: (await GoogleData.withInitializedData(acct)).getLabels() };
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
   },
   '/gmail/v1/users/me/threads': async ({ }, req) => {
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
-      const threads = new GoogleData(acct).getThreads();
+      const threads = (await GoogleData.withInitializedData(acct)).getThreads();
       return { threads, resultSizeEstimate: threads.length };
     }
     throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
@@ -162,7 +162,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req) && (format === 'metadata' || format === 'full')) {
       const id = parseResourceId(req.url!);
-      const msgs = new GoogleData(acct).getMessagesByThread(id);
+      const msgs = (await GoogleData.withInitializedData(acct)).getMessagesByThread(id);
       if (!msgs.length) {
         const statusCode = id === '16841ce0ce5cb74d' ? 404 : 400; // intentionally testing missing thread
         throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`, statusCode);
@@ -195,7 +195,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
       const body = parsedReq.body as DraftSaveModel;
       if (body && body.message && body.message.raw && typeof body.message.raw === 'string') {
-        if (body.message.threadId && !new GoogleData(acct).getThreads().find(t => t.id === body.message.threadId)) {
+        if (body.message.threadId && !(await GoogleData.withInitializedData(acct)).getThreads().find(t => t.id === body.message.threadId)) {
           throw new HttpClientErr('The thread you are replying to not found', 404);
         }
         const decoded = await Parse.convertBase64ToMimeMsg(body.message.raw);
@@ -217,7 +217,7 @@ export const mockGoogleEndpoints: HandlersDefinition = {
     const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
     if (isGet(req)) {
       const id = parseResourceId(req.url!);
-      const data = new GoogleData(acct);
+      const data = (await GoogleData.withInitializedData(acct));
       const draft = data.getDraft(id);
       if (draft) {
         return { id: draft.id, message: draft };
@@ -230,11 +230,11 @@ export const mockGoogleEndpoints: HandlersDefinition = {
       }
       const mimeMsg = await Parse.convertBase64ToMimeMsg(raw);
       if ((mimeMsg.subject || '').includes('saving and rendering a draft with image')) {
-        const data = new GoogleData(acct);
+        const data = (await GoogleData.withInitializedData(acct));
         data.addDraft('draft_with_image', raw, mimeMsg);
       }
       if ((mimeMsg.subject || '').includes('RTL')) {
-        const data = new GoogleData(acct);
+        const data = (await GoogleData.withInitializedData(acct));
         data.addDraft(`draft_with_rtl_text_${mimeMsg.subject?.includes('rich text') ? 'rich' : 'plain'}`, raw, mimeMsg);
       }
       return {};
@@ -261,7 +261,7 @@ const parseMultipartDataAsMimeMsg = async (multipartData: string): Promise<Parse
 const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: string) => {
   const inReplyToMessageId = mimeMsg.headers.get('in-reply-to') ? mimeMsg.headers.get('in-reply-to')!.toString() : '';
   if (threadId) {
-    const messages = new GoogleData(acct).getMessagesByThread(threadId);
+    const messages = (await GoogleData.withInitializedData(acct)).getMessagesByThread(threadId);
     if (!messages || !messages.length) {
       throw new HttpClientErr(`Error: The thread you are replying (${threadId}) to not found`, 404);
     }

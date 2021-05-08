@@ -10,6 +10,8 @@ import { AcctStore } from '../../platform/store/acct-store.js';
 import { BackendRes, FlowCryptComApi, ProfileUpdate } from './flowcrypt-com-api.js';
 import { Dict } from '../../core/common.js';
 import { ErrorReport, UnreportableError } from '../../platform/catch.js';
+import { ApiErr } from '../shared/api-error.js';
+import { FLAVOR } from '../../core/const.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
@@ -29,12 +31,48 @@ export namespace FesRes {
 // ts-prune-ignore-next
 export class EnterpriseServer extends Api {
 
-  private fesUrl: string
-  private apiVersion = 'v1';
+  public url: string
 
-  constructor(fesUrl: string, private acctEmail: string) {
+  private domain: string
+  private apiVersion = 'v1';
+  private domainsThatUseLaxFesCheckEvenOnEnterprise = ['dmFsZW8uY29t'];
+
+  constructor(private acctEmail: string) {
     super();
-    this.fesUrl = fesUrl.replace(/\/$/, '');
+    this.domain = acctEmail.toLowerCase().split('@').pop()!;
+    this.url = `https://fes.${this.domain}`;
+  }
+
+  /**
+   * This is run during user/extension setup to figure out if this extension should be using FES or not.
+   */
+  public isFesInstalledAndAvailable = async (): Promise<boolean> => {
+    if (['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(this.domain)) {
+      // no FES expected on fes.gmail.com and similar
+      return false;
+    }
+    try {
+      // regardless if this is enterprise or consumer flavor, if FES is available, return yes
+      return (await this.getServiceInfo()).service === 'enterprise-server';
+    } catch (e) { // FES not available
+      if (ApiErr.isNotFound(e)) {
+        return false; // a 404 returned where FES should be is an affirmative no - FES will not be used
+      }
+      if (FLAVOR === 'consumer') {
+        // this is a consumer flavor. Consumers are not expected to run FES, therefore
+        //   a server not responding (or returning an error) is considered as no FES
+        return false;
+      } else if (this.domainsThatUseLaxFesCheckEvenOnEnterprise.includes(btoa(this.domain)) && ApiErr.isNetErr(e)) {
+        // on some domains we don't expect FES running. This allows even enterprise flavor
+        //   extension to skip FES integration on these domains.
+        return false;
+      } else if (this.domain.endsWith('.test')) {
+        // enterprise flavor on a test domain should not require FES running (to satisfy tests)
+        return false;
+      } else {
+        throw e;
+      }
+    }
   }
 
   public getServiceInfo = async (): Promise<FesRes.ServiceInfo> => {
@@ -71,7 +109,7 @@ export class EnterpriseServer extends Api {
   }
 
   private request = async <RT>(method: ReqMethod, path: string, headers: Dict<string> = {}, vals?: Dict<any>): Promise<RT> => {
-    return await FlowCryptComApi.apiCall(this.fesUrl, path, vals, method === 'GET' ? undefined : 'JSON', undefined, headers, 'json', method);
+    return await FlowCryptComApi.apiCall(this.url, path, vals, method === 'GET' ? undefined : 'JSON', undefined, headers, 'json', method);
   }
 
 }

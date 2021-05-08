@@ -3,8 +3,7 @@
 import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
 
 import { Util } from '../../util/index';
-import { readFileSync, readdirSync } from 'fs';
-import { Buf } from '../../core/buf';
+import { readFile, readdir } from 'fs';
 
 type GmailMsg$header = { name: string, value: string };
 type GmailMsg$payload$body = { attachmentId?: string, size: number, data?: string };
@@ -98,9 +97,6 @@ const DATA: { [acct: string]: AcctDataFile } = {};
  */
 export class GoogleData {
 
-  private exludePplSearchQuery = /(?:-from|-to):"?([a-zA-Z0-9@.\-_]+)"?/g;
-  private includePplSearchQuery = /(?:from|to):"?([a-zA-Z0-9@.\-_]+)"?/g;
-
   /**
    * This is the proper way to add messages to mock api for testing:
    *   1) log into flowcrypt.compatibility@gmail.com
@@ -108,7 +104,35 @@ export class GoogleData {
    *   3) click "download api export"
    *   4) save the json file to exported-messages folder
    */
-  private exportedMsgsPath = './test/source/mock/google/exported-messages/';
+  private static exportedMsgsPath = './test/source/mock/google/exported-messages/';
+
+  private exludePplSearchQuery = /(?:-from|-to):"?([a-zA-Z0-9@.\-_]+)"?/g;
+  private includePplSearchQuery = /(?:from|to):"?([a-zA-Z0-9@.\-_]+)"?/g;
+
+  public static withInitializedData = async (acct: string): Promise<GoogleData> => {
+    if (typeof DATA[acct] === 'undefined') {
+      const acctData: AcctDataFile = { drafts: [], messages: [], attachments: {}, labels: [] };
+      const dir = GoogleData.exportedMsgsPath;
+      const filenames: string[] = await new Promise((res, rej) => readdir(dir, (e, f) => e ? rej(e) : res(f)));
+      const filePromises = filenames.map(f => new Promise((res, rej) => readFile(dir + f, (e, d) => e ? rej(e) : res(d))));
+      const files = await Promise.all(filePromises) as Uint8Array[];
+      for (const file of files) {
+        const utfStr = new TextDecoder().decode(file);
+        const json = JSON.parse(utfStr) as ExportedMsg;
+        if (json.acctEmail === acct) {
+          Object.assign(acctData.attachments, json.attachments);
+          json.full.raw = json.raw.raw;
+          if (json.full.labelIds && json.full.labelIds.includes('DRAFT')) {
+            acctData.drafts.push(json.full);
+          } else {
+            acctData.messages.push(json.full);
+          }
+        }
+      }
+      DATA[acct] = acctData;
+    }
+    return new GoogleData(acct);
+  }
 
   public static fmtMsg = (m: GmailMsg, format: 'raw' | 'full' | 'metadata' | string) => {
     format = format || 'full';
@@ -141,19 +165,7 @@ export class GoogleData {
 
   constructor(private acct: string) {
     if (!DATA[acct]) {
-      DATA[acct] = { drafts: [], messages: [], attachments: {}, labels: [] };
-      for (const filename of readdirSync(this.exportedMsgsPath)) {
-        const json = JSON.parse(Buf.fromUint8(readFileSync(this.exportedMsgsPath + filename)).toUtfStr()) as ExportedMsg;
-        if (json.acctEmail === acct) {
-          Object.assign(DATA[json.acctEmail].attachments, json.attachments);
-          json.full.raw = json.raw.raw;
-          if (json.full.labelIds && json.full.labelIds.includes('DRAFT')) {
-            DATA[json.acctEmail].drafts.push(json.full);
-          } else {
-            DATA[json.acctEmail].messages.push(json.full);
-          }
-        }
-      }
+      throw new Error('Missing DATA: use withInitializedData instead of direct constructor');
     }
   }
 
@@ -266,7 +278,8 @@ export class GoogleData {
 
   private searchMessagesBySubject = (subject: string) => {
     subject = subject.trim().toLowerCase();
-    return DATA[this.acct].messages.filter(m => GoogleData.msgSubject(m).toLowerCase().includes(subject));
+    const messages = DATA[this.acct].messages.filter(m => GoogleData.msgSubject(m).toLowerCase().includes(subject));
+    return messages;
   }
 
   private searchMessagesByPeople = (includePeople: string[], excludePeople: string[]) => {
