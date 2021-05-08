@@ -756,7 +756,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitAndType('@input-body', 'any text', { delay: 1 });
       await ComposePageRecipe.sendAndClose(composePage);
       // get sent msg from mock
-      const sentMsg = new GoogleData(acct).getMessageBySubject(subject)!;
+      const sentMsg = (await GoogleData.withInitializedData(acct)).getMessageBySubject(subject)!;
       const message = sentMsg.payload!.body!.data!;
       expect(message).to.include('-----BEGIN PGP MESSAGE-----');
       expect(message).to.include('-----END PGP MESSAGE-----');
@@ -1077,7 +1077,7 @@ const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserH
   await composePage.page.evaluate((src: string) => { $('[data-test=action-insert-image]').val(src).click(); }, imgBase64);
   await ComposePageRecipe.sendAndClose(composePage);
   // get sent msg id from mock
-  const sentMsg = new GoogleData('flowcrypt.compatibility@gmail.com').getMessageBySubject(subject)!;
+  const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).getMessageBySubject(subject)!;
   if (sendingType === 'plain') {
     expect(sentMsg.payload?.body?.data).to.match(/<img src="cid:(.+)@flowcrypt">This is an automated puppeteer test: Test Sending Plain Message With Image/);
     return;
@@ -1111,7 +1111,7 @@ const sendTextAndVerifyPresentInSentMsg = async (t: AvaContext,
   expect(await composePage.read('@input-body')).to.include(text);
   await ComposePageRecipe.sendAndClose(composePage);
   // get sent msg from mock
-  const sentMsg = new GoogleData('flowcrypt.compatibility@gmail.com').getMessageBySubject(subject)!;
+  const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).getMessageBySubject(subject)!;
   const message = encodeURIComponent(sentMsg.payload!.body!.data!);
   await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
     content: [text],

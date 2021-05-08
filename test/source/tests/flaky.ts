@@ -106,7 +106,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt');
       await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
-      const msg = new GoogleData('flowcrypt.compatibility@gmail.com').getMessageBySubject(subject)!;
+      const msg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).getMessageBySubject(subject)!;
       const webDecryptUrl = msg.payload!.body!.data!.replace(/&#x2F;/g, '/').match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]+/g)![0];
       // while this test runs on a mock, it forwards the message/upload call to real backend - see `fwdToRealBackend`
       // that's why we are able to test the message on real flowcrypt.com/api and web.
