@@ -52,7 +52,7 @@ export class PgpBlockView extends View {
     const senderEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'senderEmail');
     this.senderEmail = Str.parseEmail(senderEmail).email || '';
     this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
-    if (this.msgId?.includes('/')) {
+    if (/\.\.|\\|\//.test(decodeURI(this.msgId || ""))) {
       throw new Error('API path traversal forbidden');
     }
     this.encryptedMsgUrlParam = uncheckedUrlParams.message ? Buf.fromUtfStr(Assert.urlParamRequire.string(uncheckedUrlParams, 'message')) : undefined;
