@@ -272,18 +272,6 @@ export class OpenPGPKey {
     }
   }
 
-  public static armor = (pubkey: Key): string => {
-    if (pubkey.type !== 'openpgp') {
-      throw new UnexpectedKeyTypeError(`Key type is ${pubkey.type}, expecting OpenPGP`);
-    }
-    // some keys saved by older version may have `raw` as string, so fall back on it
-    const extensions = pubkey as unknown as { rawArmored: string, raw: string };
-    if (!extensions.rawArmored && !extensions.raw) {
-      throw new Error('Object has type == "openpgp" but no raw key.');
-    }
-    return extensions.rawArmored ?? extensions.raw;
-  }
-
   public static keyFlagsToString = (flags: OpenPGP.enums.keyFlags): string => {
     const strs: string[] = [];
     if (flags & opgp.enums.keyFlags.encrypt_communication) {
