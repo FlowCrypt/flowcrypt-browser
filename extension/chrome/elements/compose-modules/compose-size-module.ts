@@ -38,8 +38,8 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
     Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
       // we use veryslowspree for reply box because hand-resizing the main window will cause too many events
       // we use spree (faster) for new messages because rendering of window buttons on top right depend on it, else visible lag shows
-      $(window).resize(this.view.setHandlerPrevent(this.view.isReplyBox ? 'veryslowspree' : 'spree', () => this.windowResized().catch(Catch.reportErr)));
-      this.view.inputModule.squire.addEventListener('keyup', () => this.view.setHandlerPrevent('slowspree', () => this.windowResized().catch(Catch.reportErr)));
+      $(window).resize(this.view.setHandlerPrevent(this.view.isReplyBox ? 'veryslowspree' : 'spree', () => { this.windowResized().catch(Catch.reportErr); }));
+      this.view.inputModule.squire.addEventListener('keyup', () => this.view.setHandlerPrevent('slowspree', () => { this.windowResized().catch(Catch.reportErr); }));
     }, 1000);
   }
 
