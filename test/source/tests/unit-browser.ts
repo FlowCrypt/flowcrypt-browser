@@ -41,7 +41,7 @@ export let defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser: 
         // load and run the unit test
         const r = await hostPage.target.evaluate(runThisCodeInBrowser);
         if (r !== 'pass') {
-          t.log(r);
+          t.log(`Expected unit test to return "pass" but got: "${r}"`);
           throw Error(String(r).split('\n')[0]);
         }
       }));
