@@ -171,7 +171,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
       await experimentalFrame.waitAndClick('@action-throw-err'); // mock tests will verify that err was reported to mock backend in `test.ts`
-      internalTestState.expectiIntentionalErrReport = true;
+      internalTestState.expectIntentionalErrReport = true;
     }));
 
     ava.default('settings - attachment previews are rendered according to their types', testWithBrowser('compatibility', async (t, browser) => {
