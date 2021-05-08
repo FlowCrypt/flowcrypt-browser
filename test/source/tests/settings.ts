@@ -167,7 +167,6 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
     }));
 
     ava.default('settings - Catch.reportErr reports an error', testWithBrowser('compatibility', async (t, browser) => {
-
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);

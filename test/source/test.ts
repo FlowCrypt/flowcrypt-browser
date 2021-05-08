@@ -115,9 +115,17 @@ ava.after.always('evaluate Catch.reportErr errors', async t => {
     .filter(e => !e.trace.includes('-1 when GET-ing https://openpgpkey.flowcrypt.com'));
   const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
   const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
-  if (!foundExpectedErr && internalTestState.expectiIntentionalErrReport) {
-    t.fail(`Catch.reportErr errors: missing intentional error`);
-  } else if (foundUnwantedErrs.length) {
+  if (!foundExpectedErr && internalTestState.expectiIntentionalErrReport && testVariant === 'CONSUMER-MOCK') {
+    // on consumer flavor app, we submit errors to flowcrypt.com backend
+    t.fail(`Catch.reportErr errors: missing intentional error report on consumer flavor`);
+    return;
+  }
+  if (foundExpectedErr && internalTestState.expectiIntentionalErrReport && testVariant === 'ENTERPRISE-MOCK') {
+    // on enterprise flavor app, we don't submit errors anywhere yet
+    t.fail(`Catch.reportErr errors: should not report intentional error on enterprise app`);
+    return;
+  }
+  if (foundUnwantedErrs.length) {
     for (const e of foundUnwantedErrs) {
       console.info(`----- mockBackendData Catch.reportErr -----\nname: ${e.name}\nmessage: ${e.message}\nurl: ${e.url}\ntrace: ${e.trace}`);
     }
