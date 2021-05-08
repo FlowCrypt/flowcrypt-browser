@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
-import { Contact, Key, KeyInfo, KeyInfoWithOptionalPp, KeyUtil } from '../key.js';
+import { Contact, Key, KeyInfo, ExtendedKeyInfo, KeyUtil } from '../key.js';
 import { MsgBlockType, ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Value } from '../../common.js';
 import { Buf } from '../../buf.js';
@@ -26,7 +26,7 @@ export namespace PgpMsgMethod {
   export namespace Arg {
     export type Encrypt = { pubkeys: Key[], signingPrv?: Key, pwd?: string, data: Uint8Array, filename?: string, armor: boolean, date?: Date };
     export type Type = { data: Uint8Array | string };
-    export type Decrypt = { kisWithPp: KeyInfoWithOptionalPp[], encryptedData: Uint8Array, msgPwd?: string };
+    export type Decrypt = { kisWithPp: ExtendedKeyInfo[], encryptedData: Uint8Array, msgPwd?: string };
     export type DiagnosePubkeys = { armoredPubs: string[], message: Uint8Array };
     export type VerifyDetached = { plaintext: Uint8Array, sigText: Uint8Array };
   }
@@ -53,9 +53,9 @@ type SortedKeysForDecrypt = {
   forVerification: OpenPGP.key.Key[];
   encryptedFor: string[];
   signedBy: string[];
-  prvMatching: KeyInfoWithOptionalPp[];
-  prvForDecrypt: KeyInfoWithOptionalPp[];
-  prvForDecryptDecrypted: { ki: KeyInfoWithOptionalPp, decrypted: Key }[];
+  prvMatching: ExtendedKeyInfo[];
+  prvForDecrypt: ExtendedKeyInfo[];
+  prvForDecryptDecrypted: { ki: ExtendedKeyInfo, decrypted: Key }[];
   prvForDecryptWithoutPassphrases: KeyInfo[];
 };
 
@@ -269,7 +269,7 @@ export class MsgUtil {
     const msgKeyIds = m.getEncryptionKeyIds ? m.getEncryptionKeyIds() : [];
     const localKeyIds: string[] = [];
     for (const k of await Promise.all(armoredPubs.map(pub => KeyUtil.parse(pub)))) {
-      localKeyIds.push(...k.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)));
+      localKeyIds.push(...KeyUtil.getPubkeyLongids(k));
     }
     const diagnosis = { found_match: false, receivers: msgKeyIds.length };
     for (const msgKeyId of msgKeyIds) {
@@ -296,7 +296,7 @@ export class MsgUtil {
     }
   }
 
-  private static getSortedKeys = async (kiWithPp: KeyInfoWithOptionalPp[], msg: OpenpgpMsgOrCleartext): Promise<SortedKeysForDecrypt> => {
+  private static getSortedKeys = async (kiWithPp: ExtendedKeyInfo[], msg: OpenpgpMsgOrCleartext): Promise<SortedKeysForDecrypt> => {
     const keys: SortedKeysForDecrypt = {
       verificationContacts: [],
       forVerification: [],
@@ -311,14 +311,14 @@ export class MsgUtil {
     keys.encryptedFor = encryptionKeyids.map(kid => OpenPGPKey.bytesToLongid(kid.bytes));
     await MsgUtil.cryptoMsgGetSignedBy(msg, keys);
     if (keys.encryptedFor.length) {
-      keys.prvMatching = kiWithPp.filter(ki => ki.fingerprints.some(
-        fp => keys.encryptedFor.includes(OpenPGPKey.fingerprintToLongid(fp))));
+      keys.prvMatching = kiWithPp.filter(ki => KeyUtil.getKeyInfoLongids(ki).some(
+        longid => keys.encryptedFor.includes(longid)));
       keys.prvForDecrypt = keys.prvMatching.length ? keys.prvMatching : kiWithPp;
     } else { // prvs not needed for signed msgs
       keys.prvForDecrypt = [];
     }
     for (const ki of keys.prvForDecrypt) {
-      const matchingKeyids = MsgUtil.matchingKeyids(ki.fingerprints, encryptionKeyids);
+      const matchingKeyids = MsgUtil.matchingKeyids(KeyUtil.getKeyInfoLongids(ki), encryptionKeyids);
       const cachedKey = KeyCache.getDecrypted(ki.longid);
       if (cachedKey && MsgUtil.isKeyDecryptedFor(cachedKey, matchingKeyids)) {
         keys.prvForDecryptDecrypted.push({ ki, decrypted: cachedKey });
@@ -338,9 +338,8 @@ export class MsgUtil {
     return keys;
   }
 
-  private static matchingKeyids = (fingerprints: string[], encryptedForKeyids: OpenPGP.Keyid[]): OpenPGP.Keyid[] => {
-    const allKeyLongids = fingerprints.map(fp => OpenPGPKey.fingerprintToLongid(fp));
-    return encryptedForKeyids.filter(kid => allKeyLongids.includes(OpenPGPKey.bytesToLongid(kid.bytes)));
+  private static matchingKeyids = (longids: string[], encryptedForKeyids: OpenPGP.Keyid[]): OpenPGP.Keyid[] => {
+    return encryptedForKeyids.filter(kid => longids.includes(OpenPGPKey.bytesToLongid(kid.bytes)));
   }
 
   private static decryptKeyFor = async (prv: Key, passphrase: string, matchingKeyIds: OpenPGP.Keyid[]): Promise<boolean> => {

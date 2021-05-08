@@ -6,7 +6,6 @@ import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { DateUtility, Str } from '../../core/common.js';
 import { Key, Contact, KeyUtil } from '../../core/crypto/key.js';
-import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key.js';
 
 // tslint:disable:no-null-keyword
 
@@ -18,7 +17,7 @@ type DbContactObjArg = {
   lastCheck?: number | null; // when was the local copy of the pubkey last updated (or checked against Attester)
 };
 
-type Email = {
+export type Email = {
   email: string;
   name: string | null;
   searchable: string[];
@@ -26,7 +25,7 @@ type Email = {
   lastUse: number | null;
 };
 
-type Pubkey = {
+export type Pubkey = {
   fingerprint: string;
   armoredKey: string;
   longids: string[];
@@ -271,7 +270,7 @@ export class ContactStore extends AbstractStore {
 
   public static updateTx = (tx: IDBTransaction, email: string, update: ContactUpdate) => {
     if (update.pubkey && !update.pubkeyLastCheck) {
-      const req = tx.objectStore('pubkeys').get(update.pubkey.id);
+      const req = tx.objectStore('pubkeys').get(ContactStore.getPubkeyId(update.pubkey));
       ContactStore.setReqPipe(req, (pubkey: Pubkey) => ContactStore.updateTxPhase2(tx, email, update, pubkey));
     } else {
       ContactStore.updateTxPhase2(tx, email, update, undefined);
@@ -295,18 +294,26 @@ export class ContactStore extends AbstractStore {
     }
   }
 
+  public static pubkeyObj = (pubkey: Key, lastCheck: number | null | undefined): Pubkey => {
+    const keyAttrs = ContactStore.getKeyAttributes(pubkey);
+    return {
+      fingerprint: ContactStore.getPubkeyId(pubkey),
+      lastCheck: DateUtility.asNumber(lastCheck),
+      expiresOn: keyAttrs.expiresOn,
+      longids: KeyUtil.getPubkeyLongids(pubkey),
+      armoredKey: KeyUtil.armor(pubkey)
+    };
+  }
+
+  private static getPubkeyId = (pubkey: Key): string => {
+    return (pubkey.type === 'x509') ? (pubkey.id + '-X509') : pubkey.id;
+  }
+
   private static updateTxPhase2 = (tx: IDBTransaction, email: string, update: ContactUpdate, existingPubkey: Pubkey | undefined) => {
     let pubkeyEntity: Pubkey | undefined;
     if (update.pubkey) {
-      const keyAttrs = ContactStore.getKeyAttributes(update.pubkey);
+      pubkeyEntity = ContactStore.pubkeyObj(update.pubkey, update.pubkeyLastCheck ?? existingPubkey?.lastCheck);
       // todo: will we benefit anything when not saving pubkey if it isn't modified?
-      pubkeyEntity = {
-        fingerprint: update.pubkey.id,
-        lastCheck: DateUtility.asNumber(update.pubkeyLastCheck ?? existingPubkey?.lastCheck),
-        expiresOn: keyAttrs.expiresOn,
-        longids: update.pubkey.allIds.map(id => OpenPGPKey.fingerprintToLongid(id)),
-        armoredKey: KeyUtil.armor(update.pubkey)
-      } as Pubkey;
     } else if (update.pubkeyLastCheck) {
       Catch.report(`Wrongly updating pubkeyLastCheck without specifying pubkey for ${email} - ignoring`);
     }
@@ -455,7 +462,7 @@ export class ContactStore extends AbstractStore {
   }
 
   private static dbContactInternalGetOne = async (db: IDBDatabase, emailOrLongid: string): Promise<Contact | undefined> => {
-    if (!/^[A-F0-9]{16}$/.test(emailOrLongid)) { // email
+    if (emailOrLongid.includes('@')) { // email
       const contactWithAllPubkeys = await ContactStore.getOneWithAllPubkeys(db, emailOrLongid);
       if (!contactWithAllPubkeys) {
         return contactWithAllPubkeys;

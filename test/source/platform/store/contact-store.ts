@@ -3,7 +3,6 @@
 // tslint:disable:no-null-keyword
 
 import { Contact, Key, KeyUtil } from '../../core/crypto/key';
-import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key.js';
 
 const DATA: Contact[] = [];
 
@@ -18,7 +17,8 @@ export class ContactStore {
 
   public static get = async (db: void, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
     const result = DATA.filter(x => emailOrLongid.includes(x.email) ||
-      (x.pubkey && emailOrLongid.includes(OpenPGPKey.fingerprintToLongid(x.pubkey.id))));
+      // is there any intersection
+      (x.pubkey && KeyUtil.getPubkeyLongids(x.pubkey).some(y => emailOrLongid.includes(y))));
     return result;
   }
 

@@ -357,3 +357,68 @@ BROWSER_UNIT_TEST_NAME(`ContactStore gets a valid pubkey by e-mail, or exact pub
   }
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`ContactStore stores postfixed fingerprint internally for X.509 certificate`);
+(async () => {
+  const db = await ContactStore.dbOpen();
+  const email = 'actalis@meta.33mail.com';
+  const contacts = [
+    await ContactStore.obj({
+      email,
+      pubkey: testConstants.smimeCert
+    })];
+  await ContactStore.save(db, contacts);
+  // extract the entity directly from the database
+  const entityFp = '16BB407403A3ADC55E1E0E4AF93EEC8FB187C923-X509';
+  const fingerprint = '16BB407403A3ADC55E1E0E4AF93EEC8FB187C923';
+  const longid = 'X509-MIGiMIGNMQswCQYDVQQGEwJJVDEQMA4GA1UECAwHQmVyZ2FtbzEZMBcGA1UEBwwQUG9udGUgU2Fu' +
+    'IFBpZXRybzEjMCEGA1UECgwaQWN0YWxpcyBTLnAuQS4vMDMzNTg1MjA5NjcxLDAqBgNVBAMMI0FjdGFsaXMgQ2xpZW50IE' +
+    'F1dGhlbnRpY2F0aW9uIENBIEcyAhBj9wJecA85RTAfsvulZ0+E';
+  const entity = await new Promise((resolve, reject) => {
+      const req = db.transaction(['pubkeys'], 'readonly').objectStore('pubkeys').get(entityFp);
+      ContactStore.setReqPipe(req, resolve, reject);
+    });
+  if (entity.fingerprint !== entityFp) {
+    throw Error(`Failed to extract pubkey ${fingerprint}`);
+  }
+  const [contactByLongid] = await ContactStore.get(db, [longid]);
+  if (contactByLongid.pubkey.id !== fingerprint) {
+    throw Error(`Failed to extract pubkey ${fingerprint}`);
+  }
+  const [contactByEmail] = await ContactStore.get(db, [email]);
+  if (contactByEmail.pubkey.id !== fingerprint) {
+    throw Error(`Failed to extract pubkey ${fingerprint}`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`ContactStore searches S/MIME Certificate by PKCS#7 message recipient`);
+(async () => {
+  const db = await ContactStore.dbOpen();
+  const email = 'actalis@meta.33mail.com';
+  const pubkey = testConstants.smimeCert;
+  const contacts = [await ContactStore.obj({ email, pubkey })];
+  await ContactStore.save(db, contacts);
+  const p7 = forge.pkcs7.createEnvelopedData();
+  const certificate = forge.pki.certificateFromPem(pubkey);
+  p7.addRecipient(certificate);
+  const recipient = p7.recipients[0];
+  const issuerAndSerialNumberAsn1 =
+      forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SEQUENCE, true, [
+        // Name
+        forge.pki.distinguishedNameToAsn1({ attributes: recipient.issuer }),
+        // Serial
+        forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.INTEGER, false,
+          forge.util.hexToBytes(recipient.serialNumber))
+      ]);
+  const der = forge.asn1.toDer(issuerAndSerialNumberAsn1).getBytes();
+  const buf = Buf.fromRawBytesStr(der);
+  const [contact] = await ContactStore.get(db, ['X509-' + buf.toBase64Str()]);
+  const foundCert = KeyUtil.armor(contact.pubkey);
+  console.log('foundCert');
+  console.log(foundCert);
+  if (foundCert !== pubkey) {
+    throw new Error(`The certificate wasn't found by S/MIME IssuerAndSerialNumber`);
+  }
+  return 'pass';
+})();
