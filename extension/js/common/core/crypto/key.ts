@@ -180,15 +180,11 @@ export class KeyUtil {
   }
 
   public static armor = (pubkey: Key): string => {
-    if (pubkey.type === 'openpgp') {
-      return OpenPGPKey.armor(pubkey);
-    } else if (pubkey.type === 'x509') {
-      // some keys saved by older version may have `raw` as string, so fall back on it
-      const rawFields = pubkey as unknown as { rawArmored: string, raw: string };
-      return rawFields.rawArmored ?? rawFields.raw;
-    } else {
-      throw new Error('Unknown pubkey type: ' + pubkey.type);
+    const armored = (pubkey as unknown as { rawArmored: string }).rawArmored;
+    if (!armored) {
+      throw new Error('The Key object has no rawArmored field.');
     }
+    return armored;
   }
 
   public static diagnose = async (key: Key, passphrase: string): Promise<Map<string, string>> => {
