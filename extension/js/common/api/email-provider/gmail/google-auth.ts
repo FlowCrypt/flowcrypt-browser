@@ -122,7 +122,7 @@ export class GoogleAuth {
     const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
     const url = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
     const oauthWin = await windowsCreate({ url, left: 100, top: 50, height: 800, width: 550, type: 'popup' });
-    if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length) {
+    if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length || !oauthWin.id) {
       return { result: 'Error', error: 'No oauth window renturned after initiating it', acctEmail, id_token: undefined };
     }
     const authRes = await Promise.race([
