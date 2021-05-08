@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
-import { Contact, Key, KeyInfo, KeyInfoWithOptionalPp, KeyUtil } from '../key.js';
+import { Contact, Key, KeyInfo, ExtendedKeyInfo, KeyUtil } from '../key.js';
 import { MsgBlockType, ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Value } from '../../common.js';
 import { Buf } from '../../buf.js';
@@ -26,7 +26,7 @@ export namespace PgpMsgMethod {
   export namespace Arg {
     export type Encrypt = { pubkeys: Key[], signingPrv?: Key, pwd?: string, data: Uint8Array, filename?: string, armor: boolean, date?: Date };
     export type Type = { data: Uint8Array | string };
-    export type Decrypt = { kisWithPp: KeyInfoWithOptionalPp[], encryptedData: Uint8Array, msgPwd?: string };
+    export type Decrypt = { kisWithPp: ExtendedKeyInfo[], encryptedData: Uint8Array, msgPwd?: string };
     export type DiagnosePubkeys = { armoredPubs: string[], message: Uint8Array };
     export type VerifyDetached = { plaintext: Uint8Array, sigText: Uint8Array };
   }
@@ -53,9 +53,9 @@ type SortedKeysForDecrypt = {
   forVerification: OpenPGP.key.Key[];
   encryptedFor: string[];
   signedBy: string[];
-  prvMatching: KeyInfoWithOptionalPp[];
-  prvForDecrypt: KeyInfoWithOptionalPp[];
-  prvForDecryptDecrypted: { ki: KeyInfoWithOptionalPp, decrypted: Key }[];
+  prvMatching: ExtendedKeyInfo[];
+  prvForDecrypt: ExtendedKeyInfo[];
+  prvForDecryptDecrypted: { ki: ExtendedKeyInfo, decrypted: Key }[];
   prvForDecryptWithoutPassphrases: KeyInfo[];
 };
 
@@ -296,7 +296,7 @@ export class MsgUtil {
     }
   }
 
-  private static getSortedKeys = async (kiWithPp: KeyInfoWithOptionalPp[], msg: OpenpgpMsgOrCleartext): Promise<SortedKeysForDecrypt> => {
+  private static getSortedKeys = async (kiWithPp: ExtendedKeyInfo[], msg: OpenpgpMsgOrCleartext): Promise<SortedKeysForDecrypt> => {
     const keys: SortedKeysForDecrypt = {
       verificationContacts: [],
       forVerification: [],
