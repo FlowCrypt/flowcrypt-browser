@@ -5,6 +5,10 @@ agent:
     type: e1-standard-8
     os_image: ubuntu1804
 
+auto_cancel: # cancel running CI for older commits on same branch if new commits are added
+  running:
+    when: "branch != 'master'"
+
 blocks:
 
   - name: Tests
