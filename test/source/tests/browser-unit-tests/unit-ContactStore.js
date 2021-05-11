@@ -422,3 +422,112 @@ BROWSER_UNIT_TEST_NAME(`ContactStore searches S/MIME Certificate by PKCS#7 messa
   }
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`ContactStore: X-509 revocation affects OpenPGP key`);
+(async () => {
+  const db = await ContactStore.dbOpen();
+  const opgpKeyOldAndValid = await KeyUtil.parse(testConstants.somerevokedValid);
+  const fingerprint = 'D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2';
+  if (opgpKeyOldAndValid.id !== fingerprint) {
+    throw new Error(`Valid OpenPGP Key is expected to have fingerprint ${fingerprint} but actually is ${opgpKeyOldAndValid.id}`);
+  }
+  await ContactStore.update(db, 'some.revoked@localhost.com', { pubkey: opgpKeyOldAndValid });
+  const [loadedOpgpKey1] = await ContactStore.get(db, [`some.revoked@localhost.com`]);
+  if (loadedOpgpKey1.pubkey.revoked) {
+    throw new Error(`The loaded OpenPGP Key (1) was expected to be valid but it is revoked.`);
+  }
+  const [loadedOpgpKey2] = await ContactStore.get(db, [`AA1EF832D8CCA4F2`]);
+  if (loadedOpgpKey2.pubkey.revoked) {
+    throw new Error(`The loaded OpenPGP Key (2) was expected to be valid but it is revoked.`);
+  }
+  // emulate X-509 revocation
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction(['revocations'], 'readwrite');
+    ContactStore.setTxHandlers(tx, resolve, reject);
+    tx.objectStore('revocations').put({ fingerprint: fingerprint + "-X509"});
+  });
+  // original key should be either revoked or missing
+  const [loadedOpgpKey3] = await ContactStore.get(db, [`some.revoked@localhost.com`]);
+  if (loadedOpgpKey3.pubkey && !loadedOpgpKey3.pubkey.revoked) {
+    throw new Error(`The loaded OpenPGP Key (3) was expected to be revoked but it is not.`);
+  }
+  const [loadedOpgpKey4] = await ContactStore.get(db, [`AA1EF832D8CCA4F2`]);
+  if (loadedOpgpKey4.pubkey && !loadedOpgpKey4.pubkey.revoked) {
+    throw new Error(`The loaded OpenPGP Key (4) was expected to be revoked but it is not.`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`ContactStore: OpenPGP revocation affects X.509 certificate`);
+(async () => {
+  const db = await ContactStore.dbOpen();
+  const smimeKey = await KeyUtil.parse(testConstants.smimeCert);
+  await ContactStore.update(db, 'actalis@meta.33mail.com', { pubkey: smimeKey });
+  const [loadedCert1] = await ContactStore.get(db, [`actalis@meta.33mail.com`]);
+  const longid = KeyUtil.getPrimaryLongid(smimeKey);
+  if (loadedCert1.pubkey.revoked) {
+    throw new Error(`The loaded X.509 certificate (1) was expected to be valid but it is revoked.`);
+  }
+  const [loadedCert2] = await ContactStore.get(db, [longid]);
+  if (loadedCert2.pubkey.revoked) {
+    throw new Error(`The loaded X.509 certificate (2) was expected to be valid but it is revoked.`);
+  }
+  // emulate openPGP revocation
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction(['revocations'], 'readwrite');
+    ContactStore.setTxHandlers(tx, resolve, reject);
+    tx.objectStore('revocations').put({ fingerprint: ContactStore.stripFingerprint(smimeKey.id)});
+  });
+  // original key should be either revoked or missing
+  const [loadedCert3] = await ContactStore.get(db, [`actalis@meta.33mail.com`]);
+  if (loadedCert3.pubkey && !loadedCert3.pubkey.revoked) {
+    throw new Error(`The loaded X.509 certificate (3) was expected to be revoked but it is not.`);
+  }
+  const [loadedCert4] = await ContactStore.get(db, [longid]);
+  if (loadedCert4.pubkey && !loadedCert4.pubkey.revoked) {
+    throw new Error(`The loaded X.509 certificate (4) was expected to be revoked but it is not.`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`ContactStore doesn't replace revoked key with older version`);
+(async () => {
+  const db = await ContactStore.dbOpen();
+  const opgpKeyOldAndValid = await KeyUtil.parse(testConstants.somerevokedValid);
+  const fingerprint = 'D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2';
+  if (opgpKeyOldAndValid.id !== fingerprint) {
+    throw new Error(`Valid OpenPGP Key is expected to have fingerprint ${fingerprint} but actually is ${opgpKeyOldAndValid.id}`);
+  }
+  const opgpKeyRevoked = await KeyUtil.parse(testConstants.somerevokedValidNowRevoked);
+  if (opgpKeyRevoked.id !== fingerprint) {
+    throw new Error(`RevokedOpenPGP Key is expected to have fingerprint ${fingerprint} but actually is ${opgpKeyRevoked.id}`);
+  }
+  await ContactStore.update(db, 'some.revoked@localhost.com', { pubkey: opgpKeyOldAndValid });
+  const [loadedOpgpKey1] = await ContactStore.get(db, [`some.revoked@localhost.com`]);
+  if (loadedOpgpKey1.pubkey.revoked) {
+    throw new Error(`The loaded OpenPGP Key (1) was expected to be valid but it is revoked.`);
+  }
+  const [loadedOpgpKey2] = await ContactStore.get(db, [`AA1EF832D8CCA4F2`]);
+  if (loadedOpgpKey2.pubkey.revoked) {
+    throw new Error(`The loaded OpenPGP Key (2) was expected to be valid but it is revoked.`);
+  }
+  await ContactStore.update(db, 'some.revoked@localhost.com', { pubkey: opgpKeyRevoked });
+  const [loadedOpgpKey3] = await ContactStore.get(db, [`some.revoked@localhost.com`]);
+  if (loadedOpgpKey3.pubkey && !loadedOpgpKey3.pubkey.revoked) {
+    throw new Error(`The loaded OpenPGP Key (3) was expected to be revoked but it is not.`);
+  }
+  const [loadedOpgpKey4] = await ContactStore.get(db, [`AA1EF832D8CCA4F2`]);
+  if (loadedOpgpKey4.pubkey && !loadedOpgpKey4.pubkey.revoked) {
+    throw new Error(`The loaded OpenPGP Key (4) was expected to be revoked but it is not.`);
+  }
+  await ContactStore.update(db, 'some.revoked@localhost.com', { pubkey: opgpKeyOldAndValid });
+  const [loadedOpgpKey5] = await ContactStore.get(db, [`some.revoked@localhost.com`]);
+  if (loadedOpgpKey5.pubkey && !loadedOpgpKey5.pubkey.revoked) {
+    throw new Error(`The loaded OpenPGP Key (5) was expected to be revoked but it is not.`);
+  }
+  const [loadedOpgpKey6] = await ContactStore.get(db, [`AA1EF832D8CCA4F2`]);
+  if (loadedOpgpKey6.pubkey && !loadedOpgpKey6.pubkey.revoked) {
+    throw new Error(`The loaded OpenPGP Key (6) was expected to be revoked but it is not.`);
+  }
+  return 'pass';
+})();

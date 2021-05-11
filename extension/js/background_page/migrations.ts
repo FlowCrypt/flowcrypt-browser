@@ -160,7 +160,7 @@ const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: numb
     };
   }));
   {
-    const tx = db.transaction(['contacts', 'emails', 'pubkeys'], 'readwrite');
+    const tx = db.transaction(['contacts', 'emails', 'pubkeys', 'revocations'], 'readwrite');
     await new Promise((resolve, reject) => {
       ContactStore.setTxHandlers(tx, resolve, reject);
       for (const item of converted) {
