@@ -536,7 +536,7 @@ export class ContactStore extends AbstractStore {
           revoked,
           // sort non-revoked first, then non-expired
           sortValue: revoked ? -Infinity : expirationSortValue
-        }
+        };
       }));
       const sorted = parsed.sort((a, b) => b.sortValue - a.sortValue);
       // pick first usableForEncryption
