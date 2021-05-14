@@ -547,7 +547,7 @@ export class ContactStore extends AbstractStore {
       if (!selected) {
         selected = sorted[0];
       }
-      const safeKey = (selected.revoked && !selected.pubkey.revoked) ? undefined : selected;
+      const safeKey = (selected?.revoked && !selected.pubkey.revoked) ? undefined : selected;
       return ContactStore.toContactFromKey(contactWithAllPubkeys.info, safeKey?.pubkey, safeKey?.lastCheck);
     }
     // search all longids
