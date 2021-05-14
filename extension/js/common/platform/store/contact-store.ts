@@ -337,6 +337,11 @@ export class ContactStore extends AbstractStore {
     };
   }
 
+  public static revocationObj = (pubkey: Key): { fingerprint: string, armoredKey: string } => {
+    return { fingerprint: ContactStore.getPubkeyId(pubkey), armoredKey: KeyUtil.armor(pubkey) };
+    // todo: we can add a timestamp here and/or some other info
+  }
+
   private static getPubkeyId = (pubkey: Key): string => {
     return (pubkey.type === 'x509') ? (pubkey.id + x509postfix) : pubkey.id;
   }
@@ -368,8 +373,7 @@ export class ContactStore extends AbstractStore {
         pubkeyEntity = ContactStore.pubkeyObj(update.pubkey, update.pubkeyLastCheck ?? existingPubkey?.lastCheck);
       }
       if (update.pubkey.revoked && !revocations.some(r => r.fingerprint === internalFingerprint)) {
-        tx.objectStore('revocations').put({ fingerprint: internalFingerprint, armoredKey: KeyUtil.armor(update.pubkey) });
-        // todo: we can add a timestamp here and/or some other info
+        tx.objectStore('revocations').put(ContactStore.revocationObj(update.pubkey));
       }
       // todo: will we benefit anything when not saving pubkey if it isn't modified?
     } else if (update.pubkeyLastCheck) {

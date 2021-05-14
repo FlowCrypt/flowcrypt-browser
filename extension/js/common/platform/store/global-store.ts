@@ -19,11 +19,12 @@ export type GlobalStoreDict = {
   install_mobile_app_notification_dismissed?: boolean;
   key_info_store_fingerprints_added?: boolean;
   contact_store_x509_fingerprints_and_longids_updated?: boolean;
+  contact_store_opgp_revoked_flags_updated?: boolean;
 };
 
 export type GlobalIndex = 'version' | 'account_emails' | 'settings_seen' | 'hide_pass_phrases' |
   'dev_outlook_allow' | 'admin_codes' | 'install_mobile_app_notification_dismissed' | 'key_info_store_fingerprints_added' |
-  'contact_store_x509_fingerprints_and_longids_updated';
+  'contact_store_x509_fingerprints_and_longids_updated' | 'contact_store_opgp_revoked_flags_updated';
 
 /**
  * Locally stored data that is not associated with any email account
