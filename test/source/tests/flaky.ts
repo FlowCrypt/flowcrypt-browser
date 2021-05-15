@@ -11,7 +11,6 @@ import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { TestWithBrowser } from './../test';
-import { GoogleData } from './../mock/google/google-data';
 import { Stream } from '../core/stream';
 
 // tslint:disable:no-blank-lines-func
