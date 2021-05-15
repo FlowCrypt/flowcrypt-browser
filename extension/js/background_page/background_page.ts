@@ -9,7 +9,7 @@ import { Catch } from '../common/platform/catch.js';
 import { GoogleAuth } from '../common/api/email-provider/gmail/google-auth.js';
 import { VERSION } from '../common/core/const.js';
 import { injectFcIntoWebmail } from './inject.js';
-import { migrateGlobal, moveContactsToEmailsAndPubkeys, updateX509FingerprintsAndLongids } from './migrations.js';
+import { migrateGlobal, moveContactsToEmailsAndPubkeys, updateOpgpRevocations, updateX509FingerprintsAndLongids } from './migrations.js';
 import { opgp } from '../common/core/crypto/pgp/openpgpjs-custom.js';
 import { GlobalStoreDict, GlobalStore } from '../common/platform/store/global-store.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
@@ -41,6 +41,7 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
 
   try {
     db = await ContactStore.dbOpen(); // takes 4-10 ms first time
+    await updateOpgpRevocations(db);
     await updateX509FingerprintsAndLongids(db);
     await moveContactsToEmailsAndPubkeys(db);
   } catch (e) {
