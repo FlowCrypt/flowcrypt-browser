@@ -16,7 +16,7 @@ jobs:
 
   autoapprove:
     name: Approve
-    runs-on: ubuntu-latest # Environment on which the job runs
+    runs-on: ubuntu-latest
     steps:
       - name: Auto approve
         uses: hmarr/auto-approve-action@v2.0.0 # Custom action for auto approval already available on marketplace
@@ -28,21 +28,20 @@ jobs:
           github-token: ${{ secrets.FLOWCRYPT_ROBOT_ACCESS_TOKEN }}
 
   automerge:
-    name: Merge
-    needs: autoapprove
+    name: Enable automerge on dependabot PRs
     runs-on: ubuntu-latest
     steps:
-      - name: Auto Merge
-        # Custom action for auto merging already available on marketplace
-        uses: pascalgn/automerge-action@v0.13.0
-        # Perform the auto merge action only when the PR is raised by dependabot
-        if: github.actor == 'dependabot[bot]' || github.actor == 'dependabot-preview[bot]'
-        env:
-          GITHUB_TOKEN: ${{ secrets.FLOWCRYPT_ROBOT_ACCESS_TOKEN }}
-          # By default, whenever dependabot raises a PR, it automatically assigns a label named "dependencies"
-          # So, this action merges those PRs labelled "dependencies" only
-          MERGE_LABELS: dependencies
-          MERGE_METHOD: rebase
-          MERGE_FILTER_AUTHOR: 'dependabot[bot]'
-          MERGE_RETRIES: 50
-          MERGE_RETRY_SLEEP: 30000
+      - name: Enable automerge on dependabot PRs
+        uses: daneden/enable-automerge-action@v1
+        with:
+          # A personal access token that you have generated and saved in the
+          # repo or org’s encrypted secrets
+          github-token: ${{ secrets.FLOWCRYPT_ROBOT_ACCESS_TOKEN }}
+
+          # The name of the PR author to enable automerge for
+          # Defaults to dependabot[bot]
+          allowed-author: "dependabot[bot]"
+
+          # Allowed values: MERGE | SQUASH | REBASE
+          # Defaults to MERGE
+          merge-method: SQUASH
