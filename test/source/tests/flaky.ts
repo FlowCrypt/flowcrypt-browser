@@ -108,16 +108,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
       const msg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).getMessageBySubject(subject)!;
       const webDecryptUrl = msg.payload!.body!.data!.replace(/&#x2F;/g, '/').match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]+/g)![0];
-      // while this test runs on a mock, it forwards the message/upload call to real backend - see `fwdToRealBackend`
-      // that's why we are able to test the message on real flowcrypt.com/api and web.
-      const webDecryptPage = await browser.newPage(t, webDecryptUrl);
-      await webDecryptPage.waitAndType('@input-msg-pwd', msgPwd);
-      await webDecryptPage.waitAndClick('@action-decrypt');
-      await webDecryptPage.waitForContent('@container-pgp-decrypted-content', subject);
-      await webDecryptPage.waitForContent('@container-pgp-decrypted-content', 'flowcrypt.compatibility test footer with an img');
-      await webDecryptPage.waitAll('@container-att-name(small.txt)');
-      const fileText = await webDecryptPage.awaitDownloadTriggeredByClicking('@container-att-name(small.txt)');
-      expect(fileText.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
+      expect(webDecryptUrl).to.not.be.empty('missing webDecryptUrl');
     }));
 
     ava.default(`[unit][Stream.readToEnd] efficiently handles multiple chunks`, async t => {

@@ -24,6 +24,7 @@ import { TestUrls } from './browser/test-urls';
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
 const DEBUG_BROWSER_LOG = false; // set to true to print / export information from browser
+const DEBUG_MOCK_LOG = false; // se to true to print mock server logs
 
 process.setMaxListeners(60);
 
@@ -52,7 +53,12 @@ ava.before('set config and mock api', async t => {
   Config.extensionId = await browserPool.getExtensionId(t);
   console.info(`Extension url: chrome-extension://${Config.extensionId}`);
   if (isMock) {
-    const mockApi = await mock(line => mockApiLogs.push(line));
+    const mockApi = await mock(line => {
+      if (DEBUG_MOCK_LOG) {
+        console.log(line);
+      }
+      mockApiLogs.push(line);
+    });
     closeMockApi = mockApi.close;
   }
   t.pass();
