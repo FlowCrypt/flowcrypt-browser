@@ -106,9 +106,6 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt');
       await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
-      const msg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).getMessageBySubject(subject)!;
-      const webDecryptUrl = msg.payload!.body!.data!.replace(/&#x2F;/g, '/').match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]+/g)![0];
-      expect(webDecryptUrl).to.not.be.empty('missing webDecryptUrl');
     }));
 
     ava.default(`[unit][Stream.readToEnd] efficiently handles multiple chunks`, async t => {
