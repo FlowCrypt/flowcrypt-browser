@@ -46,7 +46,6 @@ export class SetupRecoverKeyModule {
         }
       }
       if (!newlyMatchingKeys.length) {
-        $('.line_skip_recovery').css('display', 'block');
         if (matchedPreviouslyRecoveredKey) {
           $('#recovery_pasword').val('');
           await Ui.modal.warning('This is a correct pass phrase, but it matches a key that was already recovered. Please try another pass phrase.');
