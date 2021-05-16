@@ -110,6 +110,32 @@ export const updateX509FingerprintsAndLongids = async (db: IDBDatabase): Promise
   console.info('done updating');
 };
 
+export const updateOpgpRevocations = async (db: IDBDatabase): Promise<void> => {
+  const globalStore = await GlobalStore.get(['contact_store_opgp_revoked_flags_updated']);
+  if (globalStore.contact_store_opgp_revoked_flags_updated) {
+    return;
+  }
+  console.info('updating ContactStorage to revoked flags of OpenPGP keys...');
+  const tx = db.transaction(['pubkeys'], 'readonly');
+  const pubkeys: Pubkey[] = await new Promise((resolve, reject) => {
+    const search = tx.objectStore('pubkeys').getAll();
+    ContactStore.setReqPipe(search, resolve, reject);
+  });
+  const revokedKeys = (await Promise.all(pubkeys.filter(entity => KeyUtil.getKeyType(entity.armoredKey) === 'openpgp').
+    map(async (entity) => await KeyUtil.parse(entity.armoredKey)))).
+    filter(k => k.revoked);
+  const txUpdate = db.transaction(['revocations'], 'readwrite');
+  await new Promise((resolve, reject) => {
+    ContactStore.setTxHandlers(txUpdate, resolve, reject);
+    const revocationsStore = txUpdate.objectStore('revocations');
+    for (const revokedKey of revokedKeys) {
+      revocationsStore.put(ContactStore.revocationObj(revokedKey));
+    }
+  });
+  await GlobalStore.set({ contact_store_opgp_revoked_flags_updated: true });
+  console.info('done updating');
+};
+
 export const moveContactsToEmailsAndPubkeys = async (db: IDBDatabase): Promise<void> => {
   if (!db.objectStoreNames.contains('contacts')) {
     return;
@@ -160,7 +186,7 @@ const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: numb
     };
   }));
   {
-    const tx = db.transaction(['contacts', 'emails', 'pubkeys'], 'readwrite');
+    const tx = db.transaction(['contacts', 'emails', 'pubkeys', 'revocations'], 'readwrite');
     await new Promise((resolve, reject) => {
       ContactStore.setTxHandlers(tx, resolve, reject);
       for (const item of converted) {
