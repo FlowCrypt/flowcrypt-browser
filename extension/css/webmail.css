@@ -422,7 +422,7 @@ div#cryptup_dialog iframe.tall {
 }
 
 .swal2-container.ui-modal-attachment .swal2-html-container {
-  height: 100%;
+  height: 100vh;
   padding: 0;
 }
 
