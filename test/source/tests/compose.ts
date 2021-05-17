@@ -624,13 +624,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitAndClick('.swal2-cancel');
       await composePage.waitAndType('@input-subject', 'Testing new message with footer', { delay: 1 });
       await composePage.waitAndClick(`@action-send`);
-      expect(await composePage.read('#swal2-html-container')).to.include('Send empty message?');
+      expect(await composePage.read('.swal2-html-container')).to.include('Send empty message?');
       await composePage.waitAndClick('.swal2-cancel');
       await composePage.waitAndClick('@action-expand-quoted-text', { delay: 1 });
       const footer = await composePage.read('@input-body');
       expect(footer).to.eq('\n\n\n--\nflowcrypt.compatibility test footer with an img');
       await composePage.waitAndClick(`@action-send`);
-      expect(await composePage.read('#swal2-html-container')).to.include('Send empty message?');
+      expect(await composePage.read('.swal2-html-container')).to.include('Send empty message?');
       await composePage.waitAndClick('.swal2-cancel');
       await composePage.waitAndType('@input-body', 'New message\n' + footer, { delay: 1 });
       await ComposePageRecipe.sendAndClose(composePage);
