@@ -2028,8 +2028,8 @@ table#compose #fineuploader .qq-upload-list li {
 }
 
 table#compose #fineuploader .qq-upload-list li .qq-upload-file {
-  line-height: 1em;
-  height: 1.1em;
+  line-height: 18px;
+  height: 18px;
   color: black;
   overflow-y: hidden;
 }
