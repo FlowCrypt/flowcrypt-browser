@@ -25,6 +25,8 @@ html {
   display: inline-block;
   margin-left: 4px;
   border: 1px solid #31a217;
+  border-radius: 3px;
+  padding: 0 5px;
 }
 
 #header-row .logo-row .subscription > button:focus {
