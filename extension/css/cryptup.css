@@ -35,6 +35,7 @@
 .button.long { width: 200px; }
 .button.longer { width: 250px; }
 
+button.swal2-styled:focus,
 .button:focus {
   border: rgba(0, 0, 0, 0) solid 1px !important;
   outline: rgba(0, 0, 0, 0) 0 !important;
@@ -110,6 +111,13 @@ span.gray { color: #b7b7b7; }
   background-color: #b7b7b7;
 }
 
+.swal2-popup .swal2-styled.swal2-confirm,
+.swal2-popup .swal2-styled.swal2-cancel {
+  padding: 7px 15px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+
 .swal2-popup .swal2-styled.swal2-confirm.ui-modal-error-confirm,
 .button.red {
   background: initial;
@@ -157,7 +165,6 @@ span.gray { color: #b7b7b7; }
 }
 
 .swal2-popup.ui-modal-iframe .swal2-close { color: #666; }
-.swal2-popup.ui-modal-iframe .swal2-content { padding: 0; }
 .swal2-popup.ui-modal-iframe iframe { max-width: 100%; }
 .swal2-container.ui-modal-page { background: rgba(0, 0, 0, 0.6) !important; }
 
@@ -2851,21 +2858,16 @@ body#settings div.webmail_notifications div.webmail_notification a:hover { text-
 
   .swal2-popup {
     width: auto !important;
-    flex-direction: row !important;
-    justify-content: space-around !important;
+    grid-template-columns: auto auto;
+    align-items: center;
     font-size: 0.75em !important;
     padding: 2px 20px !important;
   }
 
-  .swal2-header,
-  .swal2-content,
+  .swal2-title,
+  .swal2-html-container,
   .swal2-actions {
     padding: 0 !important;
-  }
-
-  .swal2-content {
-    display: flex !important;
-    align-items: center !important;
   }
 
   .swal2-actions {
@@ -2881,7 +2883,7 @@ body#settings div.webmail_notifications div.webmail_notification a:hover { text-
     padding: 6px !important;
     font-size: 12px !important;
   }
-  .swal2-container .swal2-content { font-size: 12px !important; }
+  .swal2-container .swal2-html-container { font-size: 12px !important; }
   .swal2-container .swal2-popup { padding: 4px !important; }
   .swal2-container .swal2-popup .swal2-actions { margin: initial !important; }
 

@@ -243,7 +243,7 @@ export class Ui {
     iframe: async (iframeUrl: string, iframeWidth: number, iframeHeight: number): Promise<void> => {
       await Ui.swal().fire({
         didOpen: () => {
-          $(Swal.getContent()!).attr('data-test', 'dialog');
+          $(Swal.getPopup()!).attr('data-test', 'dialog');
           $(Swal.getCloseButton()!).attr('data-test', 'dialog-close').blur();
         },
         willClose: () => {
@@ -265,7 +265,7 @@ export class Ui {
     fullscreen: async (html: string): Promise<void> => {
       await Ui.swal().fire({
         didOpen: () => {
-          $(Swal.getContent()!).attr('data-test', 'dialog');
+          $(Swal.getPopup()!).attr('data-test', 'dialog');
         },
         html: Xss.htmlSanitize(html),
         grow: 'fullscreen',
@@ -278,7 +278,7 @@ export class Ui {
     attachmentPreview: async (iframeUrl: string): Promise<void> => {
       await Ui.swal().fire({
         didOpen: () => {
-          $(Swal.getContent()!).attr('data-test', 'attachment-dialog');
+          $(Swal.getPopup()!).attr('data-test', 'attachment-dialog');
           $(Swal.getCloseButton()!).attr('data-test', 'dialog-close');
         },
         html: `<iframe src="${Xss.escape(iframeUrl)}" style="border: 0" sandbox="allow-scripts allow-same-origin allow-downloads"></iframe>`,
@@ -338,7 +338,7 @@ export class Ui {
         <div class="line">&nbsp;</div>
         <div class="line">Email human@flowcrypt.com if you need assistance.</div>
       `);
-      const overlay = $(Swal.getContent()!);
+      const overlay = $(Swal.getHtmlContainer()!);
       overlay.find('.action-show-overlay-details').one('click', Ui.event.handle(target => {
         $(target).hide().siblings('pre').show();
       }));

@@ -417,7 +417,7 @@ abstract class ControllableBase {
       return customSelLanguageQuery;
       // eslint-disable-next-line no-cond-assign
     } else if (m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)\:message/)) { // tslint:disable-line:no-conditional-assignment
-      return `.${m[1]} #swal2-content`; // message inside the modal
+      return `.${m[1]} .swal2-html-container`; // message inside the modal
       // eslint-disable-next-line no-cond-assign
     } else if (m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)/)) { // tslint:disable-line:no-conditional-assignment
       return `.${m[1]}`; // represented as a class
