@@ -504,7 +504,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private filterAttachments = (potentialMatches: JQueryEl | HTMLElement, regExp: RegExp) => {
     return $(potentialMatches).filter('span.aZo:visible, span.a5r:visible').find('span.aV3').filter(function () {
-      const name = this.innerText.trim();
+      const name = this.innerHTML.trim();
       return regExp.test(name);
     }).closest('span.aZo, span.a5r');
   }
