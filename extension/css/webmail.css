@@ -421,12 +421,10 @@ div#cryptup_dialog iframe.tall {
   background: transparent;
 }
 
-.swal2-container.ui-modal-attachment .swal2-content {
+.swal2-container.ui-modal-attachment .swal2-html-container {
   height: 100%;
   padding: 0;
 }
-
-.swal2-container.ui-modal-attachment #swal2-content { height: 100%; }
 
 .swal2-container.ui-modal-attachment iframe {
   width: 100%;

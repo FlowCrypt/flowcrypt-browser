@@ -17,7 +17,7 @@ export abstract class PageRecipe {
   public static waitForModalAndRespond = async (controllable: Controllable, type: ModalType, { contentToCheck, clickOn, timeout }: ModalOpts) => {
     const modalContainer = await controllable.waitAny(`.ui-modal-${type}`, { timeout });
     if (typeof contentToCheck !== 'undefined') {
-      const contentElement = await modalContainer.$('#swal2-content');
+      const contentElement = await modalContainer.$('.swal2-html-container');
       expect(await PageRecipe.getElementPropertyJson(contentElement!, 'textContent')).to.include(contentToCheck);
     }
     if (clickOn) {
