@@ -164,6 +164,10 @@ span.gray { color: #b7b7b7; }
   border-radius: 0;
 }
 
+.swal2-popup.ui-modal-iframe .swal2-html-container {
+  padding: 0;
+}
+
 .swal2-popup.ui-modal-iframe .swal2-close { color: #666; }
 .swal2-popup.ui-modal-iframe iframe { max-width: 100%; }
 .swal2-container.ui-modal-page { background: rgba(0, 0, 0, 0.6) !important; }
@@ -514,7 +518,7 @@ body#settings > div#content.contacts #emails tr[email] a {
   font-weight: 500;
   margin: 0 5px;
   margin-right: 5%;
-  padding: 10px 5px;
+  padding: 15px 5px;
   position: relative;
   text-align: center;
   transition: 0.25s;

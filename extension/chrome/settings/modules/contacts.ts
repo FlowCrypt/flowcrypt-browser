@@ -83,9 +83,9 @@ View.run(class ContactsView extends View {
     let tableContents = '';
     for (const contact of this.contacts) {
       const e = Xss.escape(contact.email);
-      const show = `<a href="#" class="action_show" data-test="action-show-pubkey-${e.replace(/[^a-z0-9]+/g, '')}"></a>`;
-      const change = `<a href="#" class="action_change" data-test="action-change-pubkey-${e.replace(/[^a-z0-9]+/g, '')}"></a>`;
-      const remove = `<a href="#" class="action_remove" data-test="action-remove-pubkey-${e.replace(/[^a-z0-9]+/g, '')}"></a>`;
+      const show = `<a href="#" title="Show" class="action_show" data-test="action-show-pubkey-${e.replace(/[^a-z0-9]+/g, '')}"></a>`;
+      const change = `<a href="#" title="Change" class="action_change" data-test="action-change-pubkey-${e.replace(/[^a-z0-9]+/g, '')}"></a>`;
+      const remove = `<a href="#" title="Remove" class="action_remove" data-test="action-remove-pubkey-${e.replace(/[^a-z0-9]+/g, '')}"></a>`;
       tableContents += `<tr email="${e}"><td>${e}</td><td>${show}</td><td>${change}</td><td>${remove}</td></tr>`;
     }
     Xss.sanitizeReplace('table#emails', `<table id="emails" class="hide_when_rendering_subpage">${tableContents}</table>`);
