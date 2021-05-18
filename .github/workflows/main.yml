@@ -1,0 +1,17 @@
+on:
+  issue_comment:
+    types: [created, edited]
+  issues:
+    types: [opened, edited]
+jobs:
+  find_emails:
+    runs-on: ubuntu-latest
+    name: Check for emails in issue comments
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Scan comment
+      id: scan
+      uses: seisvelas/comment-email-address-alerts@v8
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
