@@ -13,6 +13,11 @@ import { Str } from '../../../js/common/core/common.js';
 
 export class PgpBlockViewSignatureModule {
 
+  private static setSigner = (signature: VerifyRes): void => {
+    const signerEmail = signature.signer?.primaryUserId ? Str.parseEmail(signature.signer.primaryUserId).email : undefined;
+    $('#pgp_signature > .cursive > span').text(signerEmail || 'Unknown Signer');
+  }
+
   constructor(private view: PgpBlockView) {
   }
 
@@ -53,11 +58,6 @@ export class PgpBlockViewSignatureModule {
       Ui.setTestState('ready');
     }
     // $('#pgp_signature').css('block');
-  }
-
-  private static setSigner = (signature: VerifyRes): void => {
-    const signerEmail = signature.signer?.primaryUserId ? Str.parseEmail(signature.signer.primaryUserId).email : undefined;
-    $('#pgp_signature > .cursive > span').text(signerEmail || 'Unknown Signer');
   }
 
   /**
