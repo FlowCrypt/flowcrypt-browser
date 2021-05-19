@@ -75,7 +75,6 @@ View.run(class PassphraseView extends View {
     $('.action_ok').click(this.setHandler(() => this.submitHandler()));
     $('#lost-pass-phrase').click(this.setHandler((el, ev) => {
       ev.preventDefault();
-      // tslint:disable-next-line:no-floating-promises
       Ui.modal.info(`
         <div style="text-align: initial">
           <strong>Do you have at least one other working device where
@@ -93,7 +92,7 @@ View.run(class PassphraseView extends View {
           and then click <code>Skip recovery and set up encryption again</code>
           during recovery step.
         </div>
-      `, true);
+      `, true).catch(Catch.reportErr);
       $('.reset-flowcrypt').click(this.setHandler(async (el, ev) => {
         ev.preventDefault();
         if (await Settings.resetAccount(this.acctEmail)) {
