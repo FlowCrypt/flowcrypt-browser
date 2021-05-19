@@ -75,11 +75,11 @@ View.run(class PassphraseView extends View {
     $('.action_ok').click(this.setHandler(() => this.submitHandler()));
     $('#lost-pass-phrase').click(this.setHandler((el, ev) => {
       ev.preventDefault();
+      // tslint:disable-next-line:no-floating-promises
       Ui.modal.info(`
         <div style="text-align: initial">
           <strong>Do you have at least one other working device where
           you can still read your encrypted email?</strong>
-
           <p><strong>If yes:</strong> open the working device and go to
           <code>FlowCrypt Settings</code> > <code>Security</code> >
           <code>Change Pass Phrase</code>.<br>
@@ -87,7 +87,6 @@ View.run(class PassphraseView extends View {
           <a href class="reset-flowcrypt">reset FlowCrypt on this device</a>
           and use the new pass phrase during the recovery step when
           you set up FlowCrypt on this device again.
-
           <p><strong>If no:</strong> unfortunately, you will not be able to read
           previously encrypted emails regardless of what you do.
           You can <a href class="reset-flowcrypt">reset FlowCrypt on this device</a>
