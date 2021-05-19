@@ -136,9 +136,10 @@ export class Ui {
   };
 
   public static modal = {
-    info: async (text: string): Promise<void> => {
+    info: async (text: string, isHTML: boolean = false): Promise<void> => {
+      text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
       await Ui.swal().fire({
-        html: Xss.escape(text).replace(/\n/g, '<br>'),
+        html: text,
         allowOutsideClick: false,
         customClass: {
           popup: 'ui-modal-info',
