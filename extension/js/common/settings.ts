@@ -6,7 +6,9 @@ import { Dict, Str, Url, UrlParams } from './core/common.js';
 import { Ui } from './browser/ui.js';
 import { Api } from './api/shared/api.js';
 import { ApiErr, AjaxErr } from './api/shared/api-error.js';
+import { Attachment } from './core/attachment.js';
 import { Browser } from './browser/browser.js';
+import { Buf } from './core/buf.js';
 import { Catch } from './platform/catch.js';
 import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
@@ -351,6 +353,52 @@ export class Settings {
     } else {
       await Ui.modal.warning(`Could not log in:\n${authRes.error || authRes.result}`);
     }
+  }
+
+  public static resetAccount = async (acctEmail: string): Promise<boolean> => {
+    if (await Ui.modal.confirm(Lang.setup.confirmResetAcct(acctEmail))) {
+      await Settings.collectInfoAndDownloadBackupFile(acctEmail);
+      if (await Ui.modal.confirm('Proceed to reset? Don\'t come back telling me I didn\'t warn you.')) {
+        await Settings.acctStorageReset(acctEmail);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static collectInfoAndDownloadBackupFile = async (acctEmail: string) => {
+    const name = `FlowCrypt_BACKUP_FILE_${acctEmail.replace(/[^a-z0-9]+/, '')}.txt`;
+    const backupText = await Settings.collectInfoForAccountBackup(acctEmail);
+    Browser.saveToDownloads(new Attachment({ name, type: 'text/plain', data: Buf.fromUtfStr(backupText) }));
+    await Ui.delay(1000);
+  }
+
+  private static collectInfoForAccountBackup = async (acctEmail: string) => {
+    const text = [
+      'This file contains sensitive information, please put it in a safe place.',
+      '',
+      'DO NOT DISPOSE OF THIS FILE UNLESS YOU KNOW WHAT YOU ARE DOING',
+      '',
+      'NOTE DOWN YOUR PASS PHRASE IN A SAFE PLACE THAT YOU CAN FIND LATER',
+      '',
+      'If this key was registered on a keyserver (typically they are), you will need this same key (and pass phrase!) to replace it.',
+      'In other words, losing this key or pass phrase may cause people to have trouble writing you encrypted emails, even if you use another key (on FlowCrypt or elsewhere) later on!',
+      '',
+      'acctEmail: ' + acctEmail,
+    ];
+    const globalStorage = await GlobalStore.get(['version']);
+    const acctStorage = await AcctStore.get(acctEmail, ['setup_date', 'full_name']);
+    text.push('global_storage: ' + JSON.stringify(globalStorage));
+    text.push('account_storage: ' + JSON.stringify(acctStorage));
+    text.push('');
+    const keyinfos = await KeyStore.get(acctEmail);
+    for (const keyinfo of keyinfos) {
+      text.push('');
+      text.push('key_longid: ' + keyinfo.longid);
+      text.push(keyinfo.private);
+    }
+    text.push('');
+    return text.join('\n');
   }
 
   private static prepareNewSettingsLocationUrl = (acctEmail: string | undefined, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams): string => {

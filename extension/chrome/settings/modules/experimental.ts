@@ -3,10 +3,8 @@
 'use strict';
 
 import { Assert } from '../../../js/common/assert.js';
-import { Attachment } from '../../../js/common/core/attachment.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { GoogleAuth } from '../../../js/common/api/email-provider/gmail/google-auth.js';
 import { Lang } from '../../../js/common/lang.js';
@@ -14,9 +12,7 @@ import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
-import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
 import { Api } from '../../../js/common/api/shared/api.js';
 
 View.run(class ExperimentalView extends View {
@@ -41,7 +37,7 @@ View.run(class ExperimentalView extends View {
   public setHandlers = () => {
     $('.action_open_compatibility').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/compatibility.htm')));
     $('.action_open_decrypt').click(this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/decrypt.htm')));
-    $('.action_backup').click(this.setHandler((el, e) => { e.preventDefault(); this.collectInfoAndDownloadBackupFile().catch(Catch.reportErr); }));
+    $('.action_backup').click(this.setHandler((el, e) => { e.preventDefault(); Settings.collectInfoAndDownloadBackupFile(this.acctEmail).catch(Catch.reportErr); }));
     $('.action_throw_unchecked').click((e) => { e.preventDefault(); Catch.test('error'); });
     $('.action_throw_err').click(this.setHandler((el, e) => { e.preventDefault(); Catch.test('error'); }));
     $('.action_throw_obj').click(this.setHandler((el, e) => { e.preventDefault(); Catch.test('object'); }));
@@ -106,48 +102,9 @@ View.run(class ExperimentalView extends View {
   }
 
   private acctResetHandler = async () => {
-    if (await Ui.modal.confirm(Lang.setup.confirmResetAcct(this.acctEmail))) {
-      await this.collectInfoAndDownloadBackupFile();
-      if (await Ui.modal.confirm('Proceed to reset? Don\'t come back telling me I didn\'t warn you.')) {
-        await Settings.acctStorageReset(this.acctEmail);
-        window.parent.location.reload();
-      }
+    if (await Settings.resetAccount(this.acctEmail)) {
+      window.parent.location.reload();
     }
-  }
-
-  private collectInfoAndDownloadBackupFile = async () => {
-    const name = `FlowCrypt_BACKUP_FILE_${this.acctEmail.replace(/[^a-z0-9]+/, '')}.txt`;
-    const backupText = await this.collectInfoForAccountBackup();
-    Browser.saveToDownloads(new Attachment({ name, type: 'text/plain', data: Buf.fromUtfStr(backupText) }));
-    await Ui.delay(1000);
-  }
-
-  private collectInfoForAccountBackup = async () => {
-    const text = [
-      'This file contains sensitive information, please put it in a safe place.',
-      '',
-      'DO NOT DISPOSE OF THIS FILE UNLESS YOU KNOW WHAT YOU ARE DOING',
-      '',
-      'NOTE DOWN YOUR PASS PHRASE IN A SAFE PLACE THAT YOU CAN FIND LATER',
-      '',
-      'If this key was registered on a keyserver (typically they are), you will need this same key (and pass phrase!) to replace it.',
-      'In other words, losing this key or pass phrase may cause people to have trouble writing you encrypted emails, even if you use another key (on FlowCrypt or elsewhere) later on!',
-      '',
-      'acctEmail: ' + this.acctEmail,
-    ];
-    const globalStorage = await GlobalStore.get(['version']);
-    const acctStorage = await AcctStore.get(this.acctEmail, ['setup_date', 'full_name']);
-    text.push('global_storage: ' + JSON.stringify(globalStorage));
-    text.push('account_storage: ' + JSON.stringify(acctStorage));
-    text.push('');
-    const keyinfos = await KeyStore.get(this.acctEmail);
-    for (const keyinfo of keyinfos) {
-      text.push('');
-      text.push('key_longid: ' + keyinfo.longid);
-      text.push(keyinfo.private);
-    }
-    text.push('');
-    return text.join('\n');
   }
 
 });

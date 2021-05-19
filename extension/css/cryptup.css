@@ -2807,6 +2807,14 @@ div#cryptup_dialog iframe.tall {
 
 .display_none { display: none; }
 
+code {
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 85%;
+  background-color: #f3f4f4;
+  border-radius: 6px;
+}
+
 .scrollbar-measure {
   position: absolute;
   top: -9999px;
