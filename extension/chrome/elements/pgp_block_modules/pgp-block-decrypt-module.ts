@@ -79,7 +79,7 @@ export class PgpBlockViewDecryptModule {
               if (!decryptResult.success) {
                 return undefined;
               } else {
-                return decryptResult.signature
+                return decryptResult.signature;
               }
             }, plainSubject);
         }

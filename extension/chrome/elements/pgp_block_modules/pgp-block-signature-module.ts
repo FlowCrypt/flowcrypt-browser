@@ -63,7 +63,8 @@ export class PgpBlockViewSignatureModule {
   /**
    * don't have appropriate pubkey by longid in contacts
    */
-  private renderPgpSignatureCheckMissingPubkeyOptions = async (signerLongid: string, senderEmail: string, retryVerification?: () => Promise<VerifyRes | undefined>): Promise<VerifyRes | undefined> => {
+  private renderPgpSignatureCheckMissingPubkeyOptions = async (signerLongid: string, senderEmail: string,
+    retryVerification?: () => Promise<VerifyRes | undefined>): Promise<VerifyRes | undefined> => {
     const render = (note: string, action: () => void) => $('#pgp_signature').addClass('neutral').find('.result').text(note).click(this.view.setHandler(action));
     try {
       if (senderEmail) { // we know who sent it
