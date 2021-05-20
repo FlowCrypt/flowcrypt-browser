@@ -58,6 +58,7 @@ export type Contact = {
   lastUse: number | null;
   pubkeyLastCheck: number | null;
   expiresOn: number | null;
+  revoked: boolean;
 };
 
 export interface KeyInfo {

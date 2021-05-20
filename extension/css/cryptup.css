@@ -1464,6 +1464,7 @@ table#compose td.input .collapsed .email_preview .rest.expired {
 table#compose td.input .collapsed .email_preview .email_address.expired { background-color: #d18826; }
 table#compose td.input .collapsed .email_preview .rest.no_pgp { border-color: #989898; }
 table#compose td.input .collapsed .email_preview .email_address.no_pgp { background-color: #989898; }
+table#compose td.input .collapsed .email_preview .email_address.revoked { background-color: #d18826; }
 
 table#compose.not-encrypted td.input .collapsed .email_preview .email_address {
   border: none !important;

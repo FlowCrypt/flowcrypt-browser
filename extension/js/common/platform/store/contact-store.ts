@@ -133,7 +133,8 @@ export class ContactStore extends AbstractStore {
           fingerprint: null,
           lastUse: lastUse || null,
           pubkeyLastCheck: null,
-          expiresOn: null
+          expiresOn: null,
+          revoked: false
         };
       }
       const pk = await KeyUtil.parse(pubkey);
@@ -144,6 +145,7 @@ export class ContactStore extends AbstractStore {
         hasPgp: 1, // number because we use it for sorting
         lastUse: lastUse || null,
         pubkeyLastCheck: lastCheck || null,
+        revoked: pk.revoked,
         ...ContactStore.getKeyAttributes(pk)
       };
     }
@@ -551,8 +553,7 @@ export class ContactStore extends AbstractStore {
       if (!selected) {
         selected = sorted[0];
       }
-      const safeKey = (selected?.revoked && !selected.pubkey.revoked) ? undefined : selected;
-      return ContactStore.toContactFromKey(contactWithAllPubkeys.info, safeKey?.pubkey, safeKey?.lastCheck);
+      return ContactStore.toContactFromKey(contactWithAllPubkeys.info, selected?.pubkey, selected?.lastCheck, Boolean(selected?.revoked));
     }
     // search all longids
     const tx = db.transaction(['emails', 'pubkeys'], 'readonly');
@@ -587,7 +588,8 @@ export class ContactStore extends AbstractStore {
     if (!email) {
       return;
     }
-    let parsed = pubkey ? await KeyUtil.parse(pubkey.armoredKey) : undefined;
+    const parsed = pubkey ? await KeyUtil.parse(pubkey.armoredKey) : undefined;
+    let revokedExternally = false;
     if (parsed && !parsed.revoked) {
       const revocations: Revocation[] = await new Promise((resolve, reject) => {
         const tx = db.transaction(['revocations'], 'readonly');
@@ -596,24 +598,26 @@ export class ContactStore extends AbstractStore {
         ContactStore.setReqPipe(req, resolve, reject);
       });
       if (revocations.length) {
-        parsed = undefined;
+        revokedExternally = true;
       }
     }
-    return ContactStore.toContactFromKey(email, parsed, parsed ? pubkey!.lastCheck : null);
+    return ContactStore.toContactFromKey(email, parsed, parsed ? pubkey!.lastCheck : null, revokedExternally);
   }
 
-  private static toContactFromKey = (email: Email, key: Key | undefined, lastCheck: number | undefined | null): Contact | undefined => {
+  private static toContactFromKey = (email: Email, key: Key | undefined, lastCheck: number | undefined | null, revokedExternally: boolean): Contact | undefined => {
     if (!email) {
       return;
     }
+    const safeKey = revokedExternally ? undefined : key;
     return {
       email: email.email,
       name: email.name,
-      pubkey: key,
-      hasPgp: key ? 1 : 0,
+      pubkey: safeKey,
+      hasPgp: safeKey ? 1 : 0,
       lastUse: email.lastUse,
       pubkeyLastCheck: lastCheck ?? null,
-      ...ContactStore.getKeyAttributes(key)
+      ...ContactStore.getKeyAttributes(key),
+      revoked: revokedExternally || Boolean(key?.revoked)
     };
   }
 

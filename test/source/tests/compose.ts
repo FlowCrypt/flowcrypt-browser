@@ -426,6 +426,27 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.close();
     }));
 
+    ava.default('compose - externally revoked key', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+      await dbPage.page.evaluate(async (pubkey: string) => {
+        const db = await (window as any).ContactStore.dbOpen();
+        const opgpKeyOldAndValid = await (window as any).KeyUtil.parse(pubkey);
+        await (window as any).ContactStore.update(db, 'revoked.pubkey@flowcrypt.com', { pubkey: opgpKeyOldAndValid });
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(['revocations'], 'readwrite');
+          (window as any).ContactStore.setTxHandlers(tx, resolve, reject);
+          tx.objectStore('revocations').put({ fingerprint: opgpKeyOldAndValid.id + '-X509' });
+        });
+      }, testConstants.somerevokedValid);
+      await dbPage.close();
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'revoked.pubkey@flowcrypt.com' }, 'Test Revoked');
+      const expandContainer = await composePage.waitAny('@action-show-container-cc-bcc-buttons');
+      const recipient = await expandContainer.$('.email_preview span');
+      expect(await PageRecipe.getElementPropertyJson(recipient!, 'className')).to.include('revoked');
+      await composePage.close();
+    }));
+
     ava.default('compose - loading drafts - new message, rendering cc/bcc and check if cc/bcc btns are hidden',
       testWithBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'draftId=draft-1';

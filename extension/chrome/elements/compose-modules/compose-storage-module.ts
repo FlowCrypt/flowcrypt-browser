@@ -88,17 +88,17 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   public lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string, name: string | undefined): Promise<Contact | "fail"> => {
     const [storedContact] = await ContactStore.get(undefined, [email]);
-    if (storedContact && storedContact.hasPgp && storedContact.pubkey) {
+    if (storedContact && storedContact.hasPgp && storedContact.pubkey && !storedContact.revoked) {
       // Potentially check if pubkey was updated - async. By the time user finishes composing, newer version would have been updated in db.
       // If sender didn't pull a particular pubkey for a long time and it has since expired, but there actually is a newer version on attester, this may unnecessarily show "bad pubkey",
       //      -> until next time user tries to pull it. This could be fixed by attempting to fix up the rendered recipient inside the async function below.
       this.checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(storedContact).catch(Catch.reportErr);
       return storedContact;
     }
-    return await this.ksLookupUnknownContactPubAndSaveToDb(email, name);
+    return await this.ksLookupUnknownContactPubAndSaveToDb(email, name, storedContact);
   }
 
-  public ksLookupUnknownContactPubAndSaveToDb = async (email: string, name: string | undefined): Promise<Contact | "fail"> => {
+  public ksLookupUnknownContactPubAndSaveToDb = async (email: string, name: string | undefined, existingContact: Contact | undefined): Promise<Contact | "fail"> => {
     try {
       const lookupResult = await this.view.pubLookup.lookupEmail(email);
       if (lookupResult && email) {
@@ -121,7 +121,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
             updates.push({ name } as ContactUpdate);
           } else {
             // No public key found. Returning early, nothing to update in local store below.
-            return await ContactStore.obj({ email });
+            return existingContact ?? await ContactStore.obj({ email });
           }
         }
         for (const pubkey of pubkeys) {
