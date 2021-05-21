@@ -58,7 +58,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     if (!this.view.recipientsModule.getRecipients().length || !this.view.sendBtnModule.popover.choices.encrypt) {
       this.hideMsgPwdUi(); // Hide 'Add Pasword' prompt if there are no recipients or message is not encrypted
       this.view.sendBtnModule.enableBtn();
-    } else if (this.view.recipientsModule.getRecipients().find(r => r.status === RecipientStatus.NO_PGP)) {
+    } else if (this.view.recipientsModule.getRecipients().find(r => [RecipientStatus.NO_PGP, RecipientStatus.REVOKED].includes(r.status))) {
       await this.showMsgPwdUiAndColorBtn().catch(Catch.reportErr);
     } else if (this.view.recipientsModule.getRecipients().find(r => [RecipientStatus.FAILED, RecipientStatus.WRONG].includes(r.status))) {
       this.view.S.now('send_btn_text').text(SendBtnTexts.BTN_WRONG_ENTRY);
