@@ -73,7 +73,15 @@ export class PgpBlockViewDecryptModule {
           console.info(`re-fetching message ${this.view.msgId} from api because failed signature check: ${!this.msgFetchedFromApi ? 'full' : 'raw'}`);
           await this.initialize(true);
         } else {
-          await this.view.renderModule.decideDecryptedContentFormattingAndRender(result.content, Boolean(result.isEncrypted), result.signature, plainSubject);
+          await this.view.renderModule.decideDecryptedContentFormattingAndRender(result.content, Boolean(result.isEncrypted), result.signature,
+            async () => {
+              const decryptResult = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData });
+              if (!decryptResult.success) {
+                return undefined;
+              } else {
+                return decryptResult.signature;
+              }
+            }, plainSubject);
         }
       } else if (result.error.type === DecryptErrTypes.format) {
         if (this.canReadEmails && this.msgFetchedFromApi !== 'raw') {
@@ -112,7 +120,8 @@ export class PgpBlockViewDecryptModule {
       // sometimes signatures come wrongly percent-encoded. Here we check for typical "=3Dabcd" at the end
       const sigText = Buf.fromUtfStr(this.view.signature.replace('\n=3D', '\n='));
       const signatureResult = await BrowserMsg.send.bg.await.pgpMsgVerifyDetached({ plaintext: encryptedData, sigText });
-      await this.view.renderModule.decideDecryptedContentFormattingAndRender(encryptedData, false, signatureResult);
+      await this.view.renderModule.decideDecryptedContentFormattingAndRender(encryptedData, false, signatureResult,
+        async () => { return await BrowserMsg.send.bg.await.pgpMsgVerifyDetached({ plaintext: encryptedData, sigText }); });
     }
   }
 

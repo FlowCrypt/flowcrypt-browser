@@ -385,22 +385,12 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: ["1234"],
-        signature: ["Fetched pubkey, click to verify"]
-      });
-      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-        params,
-        content: ["1234"],
         signature: ["matching signature", "Flowcrypt.Compatibility@Protonmail.Com"]
       });
     }));
 
     ava.default('decrypt - verify encrypted+signed message', testWithBrowser('compatibility', async (t, browser) => {
       const params = `?frameId=none&message=&msgId=1617429dc55600db&senderEmail=martin%40politick.ca&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com`; // eslint-disable-line max-len
-      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-        params,
-        content: ['4) signed + encrypted email if supported'],
-        signature: ["Fetched pubkey, click to verify"]
-      });
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: ['4) signed + encrypted email if supported'],
@@ -512,11 +502,6 @@ d6Z36//MsmczN00Wd60t9T+qyLz0T4/UG2Y9lgf367f3d+kYPE0LS7mXuFmjlPXfw0nKyVsSeFiu
 =Ruyn
 -----END PGP MESSAGE-----`;
       const params = `?frame_id=frame_TWloVRhvZE&message=${encodeURIComponent(msg)}&message_id=none&senderEmail=sha1%40sign.com&is_outgoing=___cu_false___&account_email=flowcrypt.compatibility%40gmail.com`;
-      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-        params,
-        content: ['test'],
-        signature: ["Fetched pubkey, click to verify"]
-      });
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         params,
         content: ['test'],

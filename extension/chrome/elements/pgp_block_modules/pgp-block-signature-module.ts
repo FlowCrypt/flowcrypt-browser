@@ -13,22 +13,32 @@ import { Str } from '../../../js/common/core/common.js';
 
 export class PgpBlockViewSignatureModule {
 
+  private static setSigner = (signature: VerifyRes): void => {
+    const signerEmail = signature.signer?.primaryUserId ? Str.parseEmail(signature.signer.primaryUserId).email : undefined;
+    $('#pgp_signature > .cursive > span').text(signerEmail || 'Unknown Signer');
+  }
+
   constructor(private view: PgpBlockView) {
   }
 
-  public renderPgpSignatureCheckResult = (signature: VerifyRes | undefined) => {
-    if (signature) {
-      const signerEmail = signature.signer?.primaryUserId ? Str.parseEmail(signature.signer.primaryUserId).email : undefined;
-      $('#pgp_signature > .cursive > span').text(signerEmail || 'Unknown Signer');
-      if (signature.signer && !signature.contact) {
-        this.view.renderModule.doNotSetStateAsReadyYet = true; // so that body state is not marked as ready too soon - automated tests need to know when to check results
-        // todo signerEmail?
-        this.renderPgpSignatureCheckMissingPubkeyOptions(signature.signer.longid, this.view.senderEmail).then(() => { // async so that it doesn't block rendering
-          this.view.renderModule.doNotSetStateAsReadyYet = false;
-          Ui.setTestState('ready');
-          $('#pgp_block').css('min-height', '100px'); // signature fail can have a lot of text in it to render
-          this.view.renderModule.resizePgpBlockFrame();
-        }).catch(Catch.reportErr);
+  public renderPgpSignatureCheckResult = (signature: VerifyRes | undefined, retryVerification?: () => Promise<VerifyRes | undefined>) => {
+    this.view.renderModule.doNotSetStateAsReadyYet = true; // so that body state is not marked as ready too soon - automated tests need to know when to check results
+    if (signature?.signer && !signature.contact) {
+      this.renderPgpSignatureCheckMissingPubkeyOptions(signature.signer.longid, this.view.senderEmail, retryVerification).then((newSignature) => { // async so that it doesn't block rendering
+        if (newSignature) {
+          return this.renderPgpSignatureCheckResult(newSignature, undefined);
+        }
+        PgpBlockViewSignatureModule.setSigner(signature);
+        this.view.renderModule.doNotSetStateAsReadyYet = false;
+        Ui.setTestState('ready');
+        $('#pgp_block').css('min-height', '100px'); // signature fail can have a lot of text in it to render
+        this.view.renderModule.resizePgpBlockFrame();
+      }).catch(Catch.reportErr);
+    } else {
+      if (!signature) {
+        $('#pgp_signature').addClass('bad');
+        $('#pgp_signature > .cursive').remove();
+        $('#pgp_signature > .result').text('Message Not Signed');
       } else if (signature.error) {
         $('#pgp_signature').addClass('bad');
         $('#pgp_signature > .result').text(signature.error);
@@ -41,18 +51,20 @@ export class PgpBlockViewSignatureModule {
         $('#pgp_signature > .result').text('signature does not match');
         this.view.renderModule.setFrameColor('red');
       }
-    } else {
-      $('#pgp_signature').addClass('bad');
-      $('#pgp_signature > .cursive').remove();
-      $('#pgp_signature > .result').text('Message Not Signed');
+      if (signature) {
+        PgpBlockViewSignatureModule.setSigner(signature);
+      }
+      this.view.renderModule.doNotSetStateAsReadyYet = false;
+      Ui.setTestState('ready');
     }
-    $('#pgp_signature').css('block');
+    // $('#pgp_signature').css('block');
   }
 
   /**
    * don't have appropriate pubkey by longid in contacts
    */
-  private renderPgpSignatureCheckMissingPubkeyOptions = async (signerLongid: string, senderEmail: string): Promise<void> => {
+  private renderPgpSignatureCheckMissingPubkeyOptions = async (signerLongid: string, senderEmail: string,
+    retryVerification?: () => Promise<VerifyRes | undefined>): Promise<VerifyRes | undefined> => {
     const render = (note: string, action: () => void) => $('#pgp_signature').addClass('neutral').find('.result').text(note).click(this.view.setHandler(action));
     try {
       if (senderEmail) { // we know who sent it
@@ -60,22 +72,28 @@ export class PgpBlockViewSignatureModule {
         if (senderContactByEmail && senderContactByEmail.pubkey) {
           const foundId = senderContactByEmail.pubkey.id;
           render(`Fetched the right pubkey ${signerLongid} from keyserver, but will not use it because you have conflicting pubkey ${foundId} loaded.`, () => undefined);
-          return;
+          return undefined;
         }
         // ---> and user doesn't have pubkey for that email addr
         const { pubkeys } = await this.view.pubLookup.lookupEmail(senderEmail);
         if (!pubkeys.length) {
           render(`Missing pubkey ${signerLongid}`, () => undefined);
-          return;
+          return undefined;
         }
         // ---> and pubkey found on keyserver by sender email
         const { key: pubkey } = await BrowserMsg.send.bg.await.keyMatch({ pubkeys, longid: signerLongid });
         if (!pubkey) {
           render(`Fetched ${pubkeys.length} sender's pubkeys but message was signed with a different key: ${signerLongid}, will not verify.`, () => undefined);
-          return;
+          return undefined;
         }
         // ---> and longid it matches signature
         await ContactStore.update(undefined, senderEmail, { pubkey }); // <= TOFU auto-import
+        if (retryVerification) {
+          const newResult = await retryVerification();
+          if (newResult) {
+            return newResult;
+          }
+        }
         render('Fetched pubkey, click to verify', () => window.location.reload());
       } else { // don't know who sent it
         render('Cannot verify: missing pubkey, missing sender info', () => undefined);
@@ -89,6 +107,7 @@ export class PgpBlockViewSignatureModule {
         render(`Could not look up sender's pubkey due to network error, click to retry.`, () => window.location.reload());
       }
     }
+    return undefined;
   }
 
 }
