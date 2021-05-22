@@ -410,26 +410,45 @@ export class ContactStore extends AbstractStore {
     });
   }
 
+  private static chainExtraction<T>(
+    store: IDBObjectStore,
+    setup: { keys: IDBValidKey[], values: T[] },
+    req?: IDBRequest | undefined): void {
+    if (req) {
+      ContactStore.setReqPipe(req,
+        (value: T) => {
+          if (value) {
+            setup.values.push(value);
+          }
+        });
+    }
+    const key = setup.keys.pop();
+    if (key) {
+      const reqNext = store.get(key);
+      ContactStore.chainExtraction(store, setup, reqNext);
+    }
+  }
+
+  private static async extractKeyset<T>(db: IDBDatabase, storeName: string, keys: IDBValidKey[], poolSize: number): Promise<T[]> {
+    const tx = db.transaction([storeName], 'readonly');
+    const setup = { keys, values: [] as T[] };
+    await new Promise((resolve, reject) => {
+      ContactStore.setTxHandlers(tx, resolve, reject);
+      for (let poolCount = 0; poolCount < poolSize; poolCount++) {
+        ContactStore.chainExtraction(tx.objectStore('pubkeys'), setup);
+      }
+    });
+    return setup.values;
+  }
+
   private static extractPubkeys = async (db: IDBDatabase | undefined, fingerprints: string[]): Promise<Pubkey[]> => {
+    if (!fingerprints.length) {
+      return [];
+    }
     if (!db) { // relay op through background process
       return await BrowserMsg.send.bg.await.db({ f: 'extractPubkeys', args: [fingerprints] }) as Pubkey[];
     }
-    const tx = db.transaction(['pubkeys'], 'readonly');
-    const raw: Pubkey[] = await new Promise((resolve, reject) => {
-      const search = tx.objectStore('pubkeys').openCursor(fingerprints);
-      const found: Pubkey[] = [];
-      ContactStore.setReqPipe(search,
-        (cursor: IDBCursorWithValue) => {
-          if (!cursor) {
-            resolve(found);
-          } else {
-            found.push(cursor.value); // tslint:disable-line:no-unsafe-any
-            cursor.continue();
-          }
-        },
-        reject);
-    });
-    return raw;
+    return await ContactStore.extractKeyset(db, 'pubkeys', fingerprints, 10);
   }
 
   private static rawSearch = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<Email[]> => {
