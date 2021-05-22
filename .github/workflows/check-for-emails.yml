@@ -12,6 +12,7 @@ jobs:
       uses: actions/checkout@v2
     - name: Scan comment
       id: scan
-      uses: seisvelas/comment-email-address-alerts@v8
+      uses: seisvelas/comment-email-address-alerts@v3.1
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
+        exemptions: test,example.com,flowcrypt.com

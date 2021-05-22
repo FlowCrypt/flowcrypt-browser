@@ -375,9 +375,9 @@ BROWSER_UNIT_TEST_NAME(`ContactStore stores postfixed fingerprint internally for
     'IFBpZXRybzEjMCEGA1UECgwaQWN0YWxpcyBTLnAuQS4vMDMzNTg1MjA5NjcxLDAqBgNVBAMMI0FjdGFsaXMgQ2xpZW50IE' +
     'F1dGhlbnRpY2F0aW9uIENBIEcyAhBj9wJecA85RTAfsvulZ0+E';
   const entity = await new Promise((resolve, reject) => {
-      const req = db.transaction(['pubkeys'], 'readonly').objectStore('pubkeys').get(entityFp);
-      ContactStore.setReqPipe(req, resolve, reject);
-    });
+    const req = db.transaction(['pubkeys'], 'readonly').objectStore('pubkeys').get(entityFp);
+    ContactStore.setReqPipe(req, resolve, reject);
+  });
   if (entity.fingerprint !== entityFp) {
     throw Error(`Failed to extract pubkey ${fingerprint}`);
   }
@@ -404,13 +404,13 @@ BROWSER_UNIT_TEST_NAME(`ContactStore searches S/MIME Certificate by PKCS#7 messa
   p7.addRecipient(certificate);
   const recipient = p7.recipients[0];
   const issuerAndSerialNumberAsn1 =
-      forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SEQUENCE, true, [
-        // Name
-        forge.pki.distinguishedNameToAsn1({ attributes: recipient.issuer }),
-        // Serial
-        forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.INTEGER, false,
-          forge.util.hexToBytes(recipient.serialNumber))
-      ]);
+    forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SEQUENCE, true, [
+      // Name
+      forge.pki.distinguishedNameToAsn1({ attributes: recipient.issuer }),
+      // Serial
+      forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.INTEGER, false,
+        forge.util.hexToBytes(recipient.serialNumber))
+    ]);
   const der = forge.asn1.toDer(issuerAndSerialNumberAsn1).getBytes();
   const buf = Buf.fromRawBytesStr(der);
   const [contact] = await ContactStore.get(db, ['X509-' + buf.toBase64Str()]);
@@ -444,7 +444,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore: X-509 revocation affects OpenPGP key`);
   await new Promise((resolve, reject) => {
     const tx = db.transaction(['revocations'], 'readwrite');
     ContactStore.setTxHandlers(tx, resolve, reject);
-    tx.objectStore('revocations').put({ fingerprint: fingerprint + "-X509"});
+    tx.objectStore('revocations').put({ fingerprint: fingerprint + "-X509" });
   });
   // original key should be either revoked or missing
   const [loadedOpgpKey3] = await ContactStore.get(db, [`some.revoked@localhost.com`]);
@@ -476,7 +476,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore: OpenPGP revocation affects X.509 certifica
   await new Promise((resolve, reject) => {
     const tx = db.transaction(['revocations'], 'readwrite');
     ContactStore.setTxHandlers(tx, resolve, reject);
-    tx.objectStore('revocations').put({ fingerprint: ContactStore.stripFingerprint(smimeKey.id)});
+    tx.objectStore('revocations').put({ fingerprint: ContactStore.stripFingerprint(smimeKey.id) });
   });
   // original key should be either revoked or missing
   const [loadedCert3] = await ContactStore.get(db, [`actalis@meta.33mail.com`]);
@@ -528,6 +528,34 @@ BROWSER_UNIT_TEST_NAME(`ContactStore doesn't replace revoked key with older vers
   const [loadedOpgpKey6] = await ContactStore.get(db, [`AA1EF832D8CCA4F2`]);
   if (loadedOpgpKey6.pubkey && !loadedOpgpKey6.pubkey.revoked) {
     throw new Error(`The loaded OpenPGP Key (6) was expected to be revoked but it is not.`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`ContactStore searchPubkeys { hasPgp: true } returns all keys`);
+(async () => {
+  const db = await ContactStore.dbOpen();
+  const contactABBDEF = await ContactStore.obj({
+    email: 'abbdef@test.com', pubkey: testConstants.abbdefTestComPubkey
+  });
+  const contactABCDEF = await ContactStore.obj({
+    email: 'abcdef@test.com', pubkey: testConstants.abcdefTestComPubkey
+  });
+  const contactABCDDF = await ContactStore.obj({
+    email: 'abcddf@test.com', pubkey: testConstants.abcddfTestComPubkey
+  });
+  const contactABDDEF = await ContactStore.obj({
+    email: 'abddef@test.com', pubkey: testConstants.abddefTestComPubkey
+  });
+  await ContactStore.save(db, [contactABBDEF, contactABCDEF, contactABCDDF, contactABDDEF]);
+  const foundKeys = await ContactStore.searchPubkeys(db, { hasPgp: true });
+  const fingerprints = (await Promise.all(foundKeys.map(async (key) => await KeyUtil.parse(key)))).
+    map(pk => pk.id);
+  if (!fingerprints.includes('B790AE8F425DC44633A8C086DF63659C3B4A81FB')
+    || !fingerprints.includes('3155F118B6E732B3638A1CE1608BCD797A23FB91')
+    || !fingerprints.includes('6CF53D2329C2A80828F499D375AA44AB8930F7E9')
+    || !fingerprints.includes('9E020D9B752FD3FFF17ED9B65FCC1541CF282951')) {
+    throw new Error('Some keys were not loaded!');
   }
   return 'pass';
 })();
