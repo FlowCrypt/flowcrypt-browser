@@ -59,7 +59,10 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
       this.hideMsgPwdUi(); // Hide 'Add Pasword' prompt if there are no recipients or message is not encrypted
       this.view.sendBtnModule.enableBtn();
     } else if (this.view.recipientsModule.getRecipients().find(r => [RecipientStatus.NO_PGP, RecipientStatus.REVOKED].includes(r.status))) {
-      await this.showMsgPwdUiAndColorBtn().catch(Catch.reportErr);
+      await this.showMsgPwdUiAndColorBtn(
+        this.view.recipientsModule.getRecipients().some(r => r.status === RecipientStatus.NO_PGP),
+        this.view.recipientsModule.getRecipients().some(r => r.status === RecipientStatus.REVOKED),
+      ).catch(Catch.reportErr);
     } else if (this.view.recipientsModule.getRecipients().find(r => [RecipientStatus.FAILED, RecipientStatus.WRONG].includes(r.status))) {
       this.view.S.now('send_btn_text').text(SendBtnTexts.BTN_WRONG_ENTRY);
       this.view.S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
@@ -82,7 +85,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     return !this.view.S.cached('password_or_pubkey').is(':hidden');
   }
 
-  private showMsgPwdUiAndColorBtn = async () => {
+  private showMsgPwdUiAndColorBtn = async (anyNopgp: boolean, anyRevoked: boolean) => {
     if (!this.isVisible()) {
       const authInfo = await AcctStore.authInfo(this.view.acctEmail);
       const expirationTextEl = this.view.S.cached('expiration_note').find('#expiration_note_message_expire');
@@ -111,6 +114,8 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     } else {
       this.view.S.cached('add_intro').css('display', 'block');
     }
+    this.view.S.cached('warning_nopgp').css('display', anyNopgp ? 'inline-block' : 'none');
+    this.view.S.cached('warning_revoked').css('display', anyRevoked ? 'inline-block' : 'none');
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
     if (!this.rmPwdStrengthValidationElements) {
       const { removeValidationElements } = this.keyImportUI.renderPassPhraseStrengthValidationInput($("#input_password"), undefined, 'pwd');
