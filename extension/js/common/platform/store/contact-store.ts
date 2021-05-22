@@ -435,7 +435,7 @@ export class ContactStore extends AbstractStore {
     await new Promise((resolve, reject) => {
       ContactStore.setTxHandlers(tx, resolve, reject);
       for (let poolCount = 0; poolCount < poolSize; poolCount++) {
-        ContactStore.chainExtraction(tx.objectStore('pubkeys'), setup);
+        ContactStore.chainExtraction(tx.objectStore(storeName), setup);
       }
     });
     return setup.values;
