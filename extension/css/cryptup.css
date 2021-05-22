@@ -111,6 +111,10 @@ span.gray { color: #b7b7b7; }
   background-color: #b7b7b7;
 }
 
+.icon_white {
+  filter: brightness(255);
+}
+
 .swal2-popup .swal2-styled.swal2-confirm,
 .swal2-popup .swal2-styled.swal2-cancel {
   padding: 7px 15px;
