@@ -97,7 +97,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await ComposePageRecipe.sendAndClose(composePage, { timeout: 60, expectProgress: true });
     }));
 
-    ava.default.only('compose - send pwd encrypted msg & check on flowcrypt site', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('compose - send pwd encrypted msg & check on flowcrypt site', testWithBrowser('compatibility', async (t, browser) => {
       const msgPwd = 'super hard password for the message';
       const subject = 'PWD encrypted message with attachment';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
