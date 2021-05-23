@@ -19,7 +19,7 @@ export class SetupWithEmailKeyManagerModule {
   constructor(private view: SetupView) {
   }
 
-  public getKeyFromKeyManagerOrAutogenAndStoreItThenRenderSetupDone = async () => {
+  public setupWithEkmThenRenderSetupDone = async () => {
     if (!this.view.orgRules.mustAutogenPassPhraseQuietly()) {
       const notSupportedErr = 'Combination of org rules not yet supported: PRV_AUTOIMPORT_OR_AUTOGEN cannot yet be used without PASS_PHRASE_QUIET_AUTOGEN.';
       await Ui.modal.error(`${notSupportedErr}\n\nPlease write human@flowcrypt.com to add support.`);
