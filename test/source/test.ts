@@ -86,7 +86,7 @@ const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, brows
             t.log(`browser debug written to file: ${file}`);
           }
         } catch (e) {
-          console.error(`Error reading debug messages: ${e}`);
+          t.log(`Error reading debug messages: ${e}`);
         }
       }
       t.log(`run time: ${Math.ceil((Date.now() - start) / 1000)}s`);
