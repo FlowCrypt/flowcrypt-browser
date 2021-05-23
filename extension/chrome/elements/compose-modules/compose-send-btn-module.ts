@@ -66,12 +66,12 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
 
   public disableBtn = () => {
     this.view.S.cached('send_btn').removeClass('green').addClass('gray').prop('disabled', true);
-    this.view.S.cached('toggle_send_options').removeClass('green').addClass('gray');
+    this.view.S.cached('toggle_send_options').removeClass('green').addClass('gray').prop('disabled', true);
   }
 
   public enableBtn = () => {
     this.view.S.cached('send_btn').removeClass('gray').addClass('green').prop('disabled', false);
-    this.view.S.cached('toggle_send_options').removeClass('gray').addClass('green');
+    this.view.S.cached('toggle_send_options').removeClass('gray').addClass('green').prop('disabled', false);
   }
 
   public renderUploadProgress = (progress: number | undefined, progressRepresents: 'FIRST-HALF' | 'SECOND-HALF' | 'EVERYTHING') => {

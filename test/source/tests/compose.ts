@@ -607,8 +607,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, '');
       await composePage.waitAndClick('@action-send', { delay: 1 });
       expect(await composePage.isDisabled('#send_btn')).to.be.true;
+      expect(await composePage.isDisabled('#toggle_send_options')).to.be.true;
       await composePage.waitAndRespondToModal('confirm', 'cancel', 'Send without a subject?');
       expect(await composePage.isDisabled('#send_btn')).to.be.false;
+      expect(await composePage.isDisabled('#toggle_send_options')).to.be.false;
     }));
 
     ava.default('compose - load contacts through API', testWithBrowser('ci.tests.gmail', async (t, browser) => {
