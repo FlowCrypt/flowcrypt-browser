@@ -74,8 +74,7 @@ span.gray { color: #b7b7b7; }
 
 .green_label,
 .orange_label,
-.red_label,
-.gray_label {
+.red_label {
   display: inline-block;
   min-width: 150px;
   text-transform: uppercase;
@@ -88,8 +87,7 @@ span.gray { color: #b7b7b7; }
 
 .green_label.short,
 .orange_label.short,
-.red_label.short,
-.gray_label.short { min-width: 0; }
+.red_label.short { min-width: 0; }
 
 .green_label {
   color: white !important;
@@ -104,11 +102,6 @@ span.gray { color: #b7b7b7; }
 .red_label {
   color: white;
   background-color: #d14836;
-}
-
-.gray_label {
-  color: white;
-  background-color: #b7b7b7;
 }
 
 .icon_white {
@@ -2192,7 +2185,7 @@ table#compose tr#password_or_pubkey_container td .label_password {
 
 table#compose tr#password_or_pubkey_container td .grey {
   padding: 1px 5px;
-  background: #b7b7b7;
+  background: #989898;
   color: white;
   display: inline-block;
   border-radius: 5px;
