@@ -58,7 +58,8 @@ export class ContactStore {
         fingerprint: null,
         lastUse: lastUse || null,
         pubkeyLastCheck: null,
-        expiresOn: null
+        expiresOn: null,
+        revoked: false
       };
     }
     const pk = await KeyUtil.parse(pubkey);
@@ -70,6 +71,7 @@ export class ContactStore {
       fingerprint: pk.id,
       lastUse,
       pubkeyLastCheck: lastCheck,
+      revoked: pk.revoked
     } as Contact;
     return contact;
   }

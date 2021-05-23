@@ -11,6 +11,7 @@ export enum RecipientStatus {
   HAS_PGP,
   NO_PGP,
   EXPIRED,
+  REVOKED,
   WRONG,
   FAILED
 }
