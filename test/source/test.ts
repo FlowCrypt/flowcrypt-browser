@@ -81,7 +81,7 @@ const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, brows
             const item = items[i];
             const input = JSON.stringify(item.input);
             const output = JSON.stringify(item.output, undefined, 2);
-            const file = `./tmp/${t.title}-${i}.txt`;
+            const file = `./test/tmp/${t.title}-${i}.txt`;
             writeFileSync(file, `in: ${input}\n\nout: ${output}`);
             t.log(`browser debug written to file: ${file}`);
           }

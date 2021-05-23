@@ -21,6 +21,7 @@ import { AbstractStore } from './store/abstract-store.js';
  *
  * Upon test completion, the data can be extracted by the test framework with
  * await page.target.evaluate(() => (window as any).Debug.readDatabase());
+ * You will find the extracted data as files in REPO/test/tmp/ folder
  */
 export class Debug {
   /**
