@@ -19,9 +19,8 @@ import { AbstractStore } from './store/abstract-store.js';
  * In async methods, the call can be arranged like this:
  * await Debug.addMessage({input, output});
  *
- * Upon test completion, the data can be extracted by the test framework with
- * await page.target.evaluate(() => (window as any).Debug.readDatabase());
- * You will find the extracted data as files in REPO/test/tmp/ folder
+ * Data can be extracted by running tests with DEBUG_BROWSER_LOG = true,
+ * and will be saved as files to REPO/test/tmp/ folder
  */
 export class Debug {
   /**
