@@ -20,10 +20,11 @@ import { defineUnitBrowserTests } from './tests/unit-browser';
 import { mock } from './mock';
 import { mockBackendData } from './mock/backend/backend-endpoints';
 import { TestUrls } from './browser/test-urls';
+import { writeFileSync } from 'fs';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
-const DEBUG_BROWSER_LOG = true; // set to true to print / export information from browser
+const DEBUG_BROWSER_LOG = false; // set to true to print / export information from browser
 const DEBUG_MOCK_LOG = false; // se to true to print mock server logs
 
 process.setMaxListeners(60);
@@ -71,17 +72,18 @@ const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, brows
       if (acct) {
         await BrowserRecipe.setUpCommonAcct(t, browser, acct, !isMock);
       }
-      console.log('running test');
       await cb(t, browser);
-      console.log('running test done - about to debug');
       if (DEBUG_BROWSER_LOG) {
         try {
-          console.log('debugging browser log');
           const page = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
-          const items = await page.target.evaluate(() => (window as any).Debug.readDatabase());
-          console.log(`debugging browser log items: ${items.length}`);
-          if (items.length > 0) {
-            console.info('debug messages: ', JSON.stringify(items), '\n');
+          const items = await page.target.evaluate(() => (window as any).Debug.readDatabase()) as { input: unknown, output: unknown }[];
+          for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            const input = JSON.stringify(item.input);
+            const output = JSON.stringify(item.output, undefined, 2);
+            const file = `./tmp/${t.title}-${i}.txt`;
+            writeFileSync(file, `in: ${input}\n\nout: ${output}`);
+            t.log(`browser debug written to file: ${file}`);
           }
         } catch (e) {
           console.error(`Error reading debug messages: ${e}`);
