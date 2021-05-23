@@ -19,7 +19,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
-    ava.default.only(`decrypt - without a subject`, testWithBrowser('compatibility', async (t, browser) => {
+    ava.default(`decrypt - without a subject`, testWithBrowser('compatibility', async (t, browser) => {
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
         content: ["This is a compatibility test email"],
         unexpectedContent: ["Encrypted Subject:", "(no subject)"],
