@@ -23,7 +23,7 @@ import { TestUrls } from './browser/test-urls';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
-const DEBUG_BROWSER_LOG = false; // set to true to print / export information from browser
+const DEBUG_BROWSER_LOG = true; // set to true to print / export information from browser
 const DEBUG_MOCK_LOG = false; // se to true to print mock server logs
 
 process.setMaxListeners(60);
@@ -71,11 +71,15 @@ const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, brows
       if (acct) {
         await BrowserRecipe.setUpCommonAcct(t, browser, acct, !isMock);
       }
+      console.log('running test');
       await cb(t, browser);
+      console.log('running test done - about to debug');
       if (DEBUG_BROWSER_LOG) {
         try {
+          console.log('debugging browser log');
           const page = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
           const items = await page.target.evaluate(() => (window as any).Debug.readDatabase());
+          console.log(`debugging browser log items: ${items.length}`);
           if (items.length > 0) {
             console.info('debug messages: ', JSON.stringify(items), '\n');
           }

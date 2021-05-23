@@ -13,6 +13,7 @@ import { MsgBlock } from './msg-block.js';
 import { MsgBlockParser } from './msg-block-parser.js';
 import { PgpArmor } from './crypto/pgp/pgp-armor.js';
 import { iso2022jpToUtf } from '../platform/util.js';
+import { Debug } from '../platform/debug.js';
 
 const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
 const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name
@@ -107,6 +108,12 @@ export class Mime {
   }
 
   public static process = async (mimeMsg: Uint8Array): Promise<MimeProccesedMsg> => {
+    const output = await Mime.processOriginal(mimeMsg);
+    await Debug.addMessage({ input: { mimeMsg: Buf.fromUint8(mimeMsg).toBase64Str() }, output });
+    return output;
+  }
+
+  public static processOriginal = async (mimeMsg: Uint8Array): Promise<MimeProccesedMsg> => {
     const decoded = await Mime.decode(mimeMsg);
     return Mime.processDecoded(decoded);
   }
