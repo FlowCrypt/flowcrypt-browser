@@ -66,7 +66,13 @@ export class FlowCryptComApi extends Api {
 
   public static messageUpload = async (fcAuth: FcUuidAuth | undefined, encryptedDataBinary: Uint8Array, progressCb: ProgressCb): Promise<BackendRes.FcMsgUpload> => {
     const content = new Attachment({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encryptedDataBinary });
-    return await FlowCryptComApi.request<BackendRes.FcMsgUpload>('message/upload', { content, ...(fcAuth || {}) }, 'FORM', undefined, { upload: progressCb });
+    const rawResponse = await FlowCryptComApi.request<{ short: string }>('message/upload', { content, ...(fcAuth || {}) }, 'FORM', undefined, { upload: progressCb });
+    if (!rawResponse.short) {
+      throw new Error('Unexpectedly missing message upload short id');
+    }
+    // careful - this API request returns `url` as well, but that is URL of the S3 object, not of web portal page
+    // therefore we are constructing URL ourselves to point to web portal
+    return { url: `https://flowcrypt.com/${rawResponse.short}` };
   }
 
   public static messageToken = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcMsgToken> => {
