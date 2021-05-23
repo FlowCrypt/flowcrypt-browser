@@ -53,10 +53,7 @@ export const mockBackendEndpoints: HandlersDefinition = {
     return { sent: true, text: 'Feedback sent' };
   },
   '/api/message/upload': async ({ }) => {
-    return { url: 'https://example.com/msg-123' };
-  },
-  '/api/link/message': async ({ }) => {
-    return { "url": "https://example.com/msg-123", "repliable": "False", "expire": "2100-05-18 16:31:28", "expired": "False", "deleted": "False" };
+    return { url: 'https://flowcrypt.com/mockmsg000' };
   },
   '/api/link/me': async ({ }, req) => {
     throw new Error(`${req.url} mock not implemented`);
