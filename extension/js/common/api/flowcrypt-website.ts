@@ -23,7 +23,6 @@ export class FlowCryptWebsite extends Api {
       api: BACKEND_API_HOST,
       me: `https://flowcrypt.com/me/${resource}`,
       pubkey: `https://flowcrypt.com/pub/${resource}`,
-      decrypt: `https://flowcrypt.com/${resource}`,
       web: 'https://flowcrypt.com/',
     } as Dict<string>)[type];
   }

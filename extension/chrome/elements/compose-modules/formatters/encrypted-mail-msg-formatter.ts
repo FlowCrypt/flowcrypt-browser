@@ -2,7 +2,6 @@
 
 'use strict';
 
-
 import { BaseMailFormatter } from './base-mail-formatter.js';
 import { ComposerResetBtnTrigger } from '../compose-err-module.js';
 import { Mime, SendableMsgBody } from '../../../../js/common/core/mime.js';
@@ -20,7 +19,6 @@ import { Settings } from '../../../../js/common/settings.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
-import { FlowCryptWebsite } from '../../../../js/common/api/flowcrypt-website.js';
 import { FcUuidAuth } from '../../../../js/common/api/account-servers/flowcrypt-com-api.js';
 import { SmimeKey } from '../../../../js/common/core/crypto/smime/smime-key.js';
 
@@ -28,9 +26,9 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
   public sendableMsg = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {
     if (newMsg.pwd && !this.isDraft) { // password-protected message, temporarily uploaded (encrypted) to FlowCrypt servers, to be served to recipient through web
-      const short = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
+      const msgUrl = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
       newMsg.pwd = undefined;
-      return await this.sendablePwdMsg(newMsg, pubkeys, short, signingPrv); // encrypted for pubkeys only, pwd ignored
+      return await this.sendablePwdMsg(newMsg, pubkeys, msgUrl, signingPrv); // encrypted for pubkeys only, pwd ignored
     } else if (this.richtext) { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
       return await this.sendableRichTextMsg(newMsg, pubkeys, signingPrv);
     } else { // simple text: PGP/Inline with attachments in separate files
@@ -44,23 +42,22 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     const msgBodyWithReplyToken = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(authInfo, newMsg);
     const pgpMimeWithAttachments = await Mime.encode(msgBodyWithReplyToken, { Subject: newMsg.subject }, await this.view.attachmentsModule.attachment.collectAttachments());
     const { data: pwdEncryptedWithAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAttachments), newMsg.pwd, []); // encrypted only for pwd, not signed
-    const { short, admin_code } = await this.view.acctServer.messageUpload(
+    const { url } = await this.view.acctServer.messageUpload(
       authInfo.uuid ? authInfo : undefined,
       pwdEncryptedWithAttachments,
       (p) => this.view.sendBtnModule.renderUploadProgress(p, 'FIRST-HALF'), // still need to upload to Gmail later, this request represents first half of progress
     );
-    await this.view.storageModule.addAdminCodes(short, [admin_code]); // admin_code stays locally and helps the sender extend life of the message or delete it
-    return short;
+    return url;
   }
 
-  private sendablePwdMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], short: string, signingPrv?: Key) => {
+  private sendablePwdMsg = async (newMsg: NewMsgData, pubs: PubkeyResult[], msgUrl: string, signingPrv?: Key) => {
     // encoded as: PGP/MIME-like structure but with attachments as external files due to email size limit (encrypted for pubkeys only)
     const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
     const pgpMimeNoAttachments = await Mime.encode(msgBody, { Subject: newMsg.subject }, []); // no attachments, attached to email separately
     const { data: pubEncryptedNoAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeNoAttachments), undefined, pubs, signingPrv); // encrypted only for pubs
     const attachments = this.createPgpMimeAttachments(pubEncryptedNoAttachments).
       concat(await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubs)); // encrypted only for pubs
-    const emailIntroAndLinkBody = await this.formatPwdEncryptedMsgBodyLink(short);
+    const emailIntroAndLinkBody = await this.formatPwdEncryptedMsgBodyLink(msgUrl);
     return await SendableMsg.createPwdMsg(this.acctEmail, this.headers(newMsg), emailIntroAndLinkBody, attachments, { isDraft: this.isDraft });
   }
 
@@ -186,10 +183,9 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     return new Date(usableTimeUntil); // latest date none of the keys were expired
   }
 
-  private formatPwdEncryptedMsgBodyLink = async (short: string): Promise<SendableMsgBody> => {
+  private formatPwdEncryptedMsgBodyLink = async (msgUrl: string): Promise<SendableMsgBody> => {
     const storage = await AcctStore.get(this.acctEmail, ['outgoing_language']);
     const lang = storage.outgoing_language || 'EN';
-    const msgUrl = FlowCryptWebsite.url('decrypt', short);
     const aStyle = `padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;`;
     const a = `<a href="${Xss.escape(msgUrl)}" style="${aStyle}">${Lang.compose.openMsg[lang]}</a>`;
     const intro = this.view.S.cached('input_intro').length ? this.view.inputModule.extract('text', 'input_intro') : undefined;

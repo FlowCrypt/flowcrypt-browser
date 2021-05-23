@@ -13,7 +13,6 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
 import { ContactStore, ContactUpdate } from '../../../js/common/platform/store/contact-store.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { Settings } from '../../../js/common/settings.js';
@@ -53,13 +52,6 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     const drafts = draftStorage.drafts_reply || {};
     delete drafts[threadId];
     await AcctStore.set(this.view.acctEmail, { drafts_reply: drafts });
-  }
-
-  public addAdminCodes = async (shortId: string, codes: string[]) => {
-    const adminCodeStorage = await GlobalStore.get(['admin_codes']);
-    adminCodeStorage.admin_codes = adminCodeStorage.admin_codes || {};
-    adminCodeStorage.admin_codes[shortId] = { date: Date.now(), codes };
-    await GlobalStore.set(adminCodeStorage);
   }
 
   public collectAllAvailablePublicKeys = async (senderEmail: string, senderKi: KeyInfo, recipients: string[]): Promise<CollectPubkeysResult> => {
