@@ -46,7 +46,7 @@ export class SetupRenderModule {
       await this.view.submitPublicKeysAndFinalizeSetup({ submit_all: tmp_submit_all, submit_main: tmp_submit_main });
       await this.renderSetupDone();
     } else if (this.view.orgRules.mustAutoImportOrAutogenPrvWithKeyManager()) {
-      await this.view.setupKeyManagerAutogen.getKeyFromKeyManagerOrAutogenAndStoreItThenRenderSetupDone();
+      await this.view.setupWithEmailKeyManager.getKeyFromKeyManagerOrAutogenAndStoreItThenRenderSetupDone();
     } else {
       await this.renderSetupDialog();
     }
