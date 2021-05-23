@@ -3,7 +3,7 @@
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { Env } from '../../browser/env.js';
 import { RawStore, AbstractStore } from './abstract-store.js';
-import { Dict, Value } from '../../core/common.js';
+import { Value } from '../../core/common.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../../browser/chrome.js';
 import { Catch } from '../catch.js';
 
@@ -15,7 +15,6 @@ export type GlobalStoreDict = {
   settings_seen?: boolean;
   hide_pass_phrases?: boolean;
   dev_outlook_allow?: boolean;
-  admin_codes?: Dict<StoredAdminCode>;
   install_mobile_app_notification_dismissed?: boolean;
   key_info_store_fingerprints_added?: boolean;
   contact_store_x509_fingerprints_and_longids_updated?: boolean;
@@ -23,7 +22,7 @@ export type GlobalStoreDict = {
 };
 
 export type GlobalIndex = 'version' | 'account_emails' | 'settings_seen' | 'hide_pass_phrases' |
-  'dev_outlook_allow' | 'admin_codes' | 'install_mobile_app_notification_dismissed' | 'key_info_store_fingerprints_added' |
+  'dev_outlook_allow' | 'install_mobile_app_notification_dismissed' | 'key_info_store_fingerprints_added' |
   'contact_store_x509_fingerprints_and_longids_updated' | 'contact_store_opgp_revoked_flags_updated';
 
 /**

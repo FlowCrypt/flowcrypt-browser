@@ -26,7 +26,7 @@ export namespace BackendRes {
   export type FcAccountSubscribe = { subscription: SubscriptionInfo };
   export type FcAccountCheck = { email: string | null, subscription: SubscriptionInfo | null };
   export type FcMsgToken = { token: string };
-  export type FcMsgUpload = { short: string, admin_code: string };
+  export type FcMsgUpload = { url: string };
   export type FcLinkMsg = { expire: string, deleted: boolean, url: string, expired: boolean };
   export type FcLinkMe$profile = {
     alias: string | null, name: string | null, photo: string | null, intro: string | null, web: string | null,
@@ -66,27 +66,18 @@ export class FlowCryptComApi extends Api {
 
   public static messageUpload = async (fcAuth: FcUuidAuth | undefined, encryptedDataBinary: Uint8Array, progressCb: ProgressCb): Promise<BackendRes.FcMsgUpload> => {
     const content = new Attachment({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encryptedDataBinary });
-    return await FlowCryptComApi.request<BackendRes.FcMsgUpload>('message/upload', { content, ...(fcAuth || {}) }, 'FORM', undefined, { upload: progressCb });
+    const rawResponse = await FlowCryptComApi.request<{ short: string }>('message/upload', { content, ...(fcAuth || {}) }, 'FORM', undefined, { upload: progressCb });
+    if (!rawResponse.short) {
+      throw new Error('Unexpectedly missing message upload short id');
+    }
+    // careful - this API request returns `url` as well, but that is URL of the S3 object, not of web portal page
+    // therefore we are constructing URL ourselves to point to web portal
+    return { url: `https://flowcrypt.com/${rawResponse.short}` };
   }
 
   public static messageToken = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcMsgToken> => {
     FlowCryptComApi.throwIfMissingUuid(fcAuth);
     return await FlowCryptComApi.request<BackendRes.FcMsgToken>('message/token', { ...fcAuth });
-  }
-
-  public static messageExpiration = async (fcAuth: FcUuidAuth, adminCodes: string[], addDays?: number): Promise<BackendRes.ApirFcMsgExpiration> => {
-    FlowCryptComApi.throwIfMissingUuid(fcAuth);
-    return await FlowCryptComApi.request<BackendRes.ApirFcMsgExpiration>('message/expiration', {
-      ...fcAuth,
-      admin_codes: adminCodes,
-      add_days: addDays || null, // tslint:disable-line:no-null-keyword
-    });
-  }
-
-  public static linkMessage = async (short: string): Promise<BackendRes.FcLinkMsg> => {
-    return await FlowCryptComApi.request<BackendRes.FcLinkMsg>('link/message', {
-      short,
-    });
   }
 
   private static request = async <RT>(path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}, progressCbs?: ProgressCbs): Promise<RT> => {

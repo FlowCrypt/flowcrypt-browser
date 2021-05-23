@@ -53,10 +53,7 @@ export const mockBackendEndpoints: HandlersDefinition = {
     return { sent: true, text: 'Feedback sent' };
   },
   '/api/message/upload': async ({ }) => {
-    return { short: '0000000000', url: 'https://example.com/msg-123', admin_code: 'mocked-admin-code' };
-  },
-  '/api/link/message': async ({ }) => {
-    return { "url": "https://example.com/msg-123", "repliable": "False", "expire": "2100-05-18 16:31:28", "expired": "False", "deleted": "False" };
+    return { short: 'mockmsg000' };
   },
   '/api/link/me': async ({ }, req) => {
     throw new Error(`${req.url} mock not implemented`);

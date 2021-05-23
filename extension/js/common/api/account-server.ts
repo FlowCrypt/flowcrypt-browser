@@ -52,14 +52,6 @@ export class AccountServer extends Api {
     return await FlowCryptComApi.messageToken(fcAuth);
   }
 
-  public messageExpiration = async (fcAuth: FcUuidAuth, adminCodes: string[], addDays?: number): Promise<BackendRes.ApirFcMsgExpiration> => {
-    return await FlowCryptComApi.messageExpiration(fcAuth, adminCodes, addDays);
-  }
-
-  public linkMessage = async (short: string): Promise<BackendRes.FcLinkMsg> => {
-    return await FlowCryptComApi.linkMessage(short);
-  }
-
   private isFesUsed = async (): Promise<boolean> => {
     const { fesUrl } = await AcctStore.get(this.acctEmail, ['fesUrl']);
     return Boolean(fesUrl);
