@@ -110,7 +110,7 @@ export class AttachmentDownloadView extends View {
         this.downloadButton.show();
         this.ppChangedPromiseCancellation.cancel = true; // update original object which is monitored by a promise
         this.ppChangedPromiseCancellation = { cancel: false }; // set to a new, not yet used object
-        BrowserMsg.send.closeSwal(this.parentTabId); // attachment preview
+        BrowserMsg.send.closeDialog(this.parentTabId); // attachment preview
       }
     });
     BrowserMsg.listen(this.tabId);

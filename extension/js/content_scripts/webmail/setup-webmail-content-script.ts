@@ -140,9 +140,6 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('close_dialog', async () => {
       Swal.close();
     });
-    BrowserMsg.addListener('close_swal', async () => {
-      Swal.close();
-    });
     BrowserMsg.addListener('scroll_to_reply_box', async ({ replyMsgId }: Bm.ScrollToReplyBox) => {
       webmailSpecific.getReplacer().scrollToReplyBox(replyMsgId);
     });

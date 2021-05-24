@@ -55,7 +55,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
         }
         $('body').click((e) => {
           if (e.target === document.body || $('body').children().toArray().indexOf(e.target) !== -1) {
-            BrowserMsg.send.closeSwal(this.parentTabId);
+            BrowserMsg.send.closeDialog(this.parentTabId);
           }
         });
         $('#attachment-preview-download').css('display', 'flex').click((e) => {

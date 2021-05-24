@@ -110,7 +110,7 @@ View.run(class SettingsView extends View {
       this.reload(advanced);
     });
     BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
-      // todo: use Ui.modal.iframe_DANGEROUS just like passphrase_dialog does
+      // todo: use iframe_DANGEROUS just like passphrase_dialog does
       const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
       window.open(factory.srcAddPubkeyDialog(emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
     });
