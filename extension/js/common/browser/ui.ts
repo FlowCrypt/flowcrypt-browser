@@ -241,13 +241,12 @@ export class Ui {
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
     },
-    iframe_DANGEROUS: async (iframeUrl_MUST_BE_XSS_SAFE: string): Promise<SweetAlertResult> => { // xss-dangerous-function
+    iframe_DANGEROUS: async (iframeUrl_MUST_BE_XSS_SAFE: string, dataTest?: string): Promise<SweetAlertResult> => { // xss-dangerous-function
       const iframeWidth = Math.min(800, $('body').width()! - 200);
       const iframeHeight = $('body').height()! - ($('body').height()! > 800 ? 150 : 75);
       return await Ui.swal().fire({
         didOpen: () => {
-          debugger
-          $(Swal.getPopup()!).attr('data-test', 'dialog');
+          $(Swal.getPopup()!).attr('data-test', dataTest || 'dialog');
           $(Swal.getCloseButton()!).attr('data-test', 'dialog-close').blur();
         },
         willClose: () => {
