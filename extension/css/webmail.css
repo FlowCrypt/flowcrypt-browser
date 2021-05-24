@@ -375,6 +375,13 @@ body.cryptup_gmail div.recipients_use_encryption a {
   padding: 0;
 }
 
+.swal2-popup.ui-modal-iframe .swal2-close { color: #999; }
+
+.swal2-popup.ui-modal-iframe iframe {
+  display: flex;
+  max-width: 100%;
+}
+
 .swal2-container.ui-modal-attachment {
   padding: 0;
   background: rgba(0, 0, 0, 0.85) !important;
