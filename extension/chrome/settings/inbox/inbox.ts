@@ -122,22 +122,14 @@ export class InboxView extends View {
     BrowserMsg.addListener('close_new_message', async () => {
       $('div.new_message').remove();
     });
-    BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
-      if (!$('#cryptup_dialog').length) {
-        $('body').append(this.factory.dialogPassphrase(longids, type))  // xss-safe-factory;
-          .click(this.setHandler(() => { // click on the area outside the iframe
-            BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
-            $('#cryptup_dialog').remove();
-          }));
-      }
+    BrowserMsg.addListener('passphrase_dialog', async ({ longids }: Bm.PassphraseDialog) => {
+      await this.factory.showAddPubkeyDialog(longids);
     });
     BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
-      if (!$('#cryptup_dialog').length) {
-        $('body').append(this.factory.dialogAddPubkey(emails)); // xss-safe-factory
-      }
+      await this.factory.showAddPubkeyDialog(emails);
     });
     BrowserMsg.addListener('close_dialog', async () => {
-      $('#cryptup_dialog').remove();
+      Swal.close();
     });
     BrowserMsg.addListener('close_swal', async () => {
       Swal.close();

@@ -5,7 +5,7 @@
 import { ApiErr } from '../api/shared/api-error.js';
 import { Catch } from '../platform/catch.js';
 import { Dict, Url } from '../core/common.js';
-import Swal from 'sweetalert2';
+import Swal, { SweetAlertResult } from 'sweetalert2';
 import { Xss } from '../platform/xss.js';
 
 type NamedSels = Dict<JQuery<HTMLElement>>;
@@ -241,9 +241,12 @@ export class Ui {
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
     },
-    iframe: async (iframeUrl: string, iframeWidth: number, iframeHeight: number): Promise<void> => {
-      await Ui.swal().fire({
+    iframe_DANGEROUS: async (iframeUrl_MUST_BE_XSS_SAFE: string): Promise<SweetAlertResult> => { // xss-dangerous-function
+      const iframeWidth = Math.min(800, $('body').width()! - 200);
+      const iframeHeight = $('body').height()! - ($('body').height()! > 800 ? 150 : 75);
+      return await Ui.swal().fire({
         didOpen: () => {
+          debugger
           $(Swal.getPopup()!).attr('data-test', 'dialog');
           $(Swal.getCloseButton()!).attr('data-test', 'dialog-close').blur();
         },
@@ -252,7 +255,7 @@ export class Ui {
           window.history.pushState('', '', urlWithoutPageParam);
         },
         keydownListenerCapture: true,
-        html: `<iframe src="${Xss.escape(iframeUrl)}" width="${iframeWidth}" height="${iframeHeight}" style="border: 0"></iframe>`,
+        html: `<iframe src="${iframeUrl_MUST_BE_XSS_SAFE}" width="${iframeWidth}" height="${iframeHeight}" style="border: 0"></iframe>`,
         width: 'auto',
         backdrop: 'rgba(0, 0, 0, 0.6)',
         showCloseButton: true,

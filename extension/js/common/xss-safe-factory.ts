@@ -7,6 +7,7 @@
 import { Dict, Str, Url, UrlParams } from './core/common.js';
 import { Attachment } from './core/attachment.js';
 import { Browser } from './browser/browser.js';
+import { BrowserMsg } from './browser/browser-msg.js';
 import { Catch } from './platform/catch.js';
 import { MsgBlock, MsgBlockType } from './core/msg-block.js';
 import { MsgBlockParser } from './core/msg-block-parser.js';
@@ -167,12 +168,15 @@ export class XssSafeFactory {
     return `<link class="${this.destroyableCls}" rel="stylesheet" href="${this.extUrl(`css/${file}.css`)}" />`;
   }
 
-  public dialogPassphrase = (longids: string[], type: PassphraseDialogType) => {
-    return this.divDialog_DANGEROUS(this.iframe(this.srcPassphraseDialog(longids, type), ['medium'], { scrolling: 'no' }), 'dialog-passphrase'); // xss-safe-factory
+  public showPassphraseDialog = async (longids: string[], type: PassphraseDialogType) => {
+    const result = await Ui.modal.iframe_DANGEROUS(this.srcPassphraseDialog(longids, type)); // xss-safe-value
+    if (result.isDismissed) {
+      BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
+    }
   }
 
-  public dialogAddPubkey = (emails: string[]) => {
-    return this.divDialog_DANGEROUS(this.iframe(this.srcAddPubkeyDialog(emails, 'gmail'), ['tall'], { scrolling: 'no' }), 'dialog-add-pubkey'); // xss-safe-factory
+  public showAddPubkeyDialog = async (emails: string[]) => {
+    await Ui.modal.iframe_DANGEROUS(this.srcAddPubkeyDialog(emails, 'gmail')); // xss-safe-value
   }
 
   public embeddedCompose = (draftId?: string) => {
@@ -199,8 +203,8 @@ export class XssSafeFactory {
     return this.iframe(this.srcReplyMsgIframe(convoParams, skipClickPrompt, ignoreDraft), ['reply_message']);
   }
 
-  public embeddedPassphrase = (longids: string[]) => {
-    return this.divDialog_DANGEROUS(this.iframe(this.srcPassphraseDialog(longids, 'embedded'), ['medium'], { scrolling: 'no' }), 'embedded-passphrase'); // xss-safe-factory
+  public showEmbeddedPassphraseDialog = async (longids: string[]) => {
+    await Ui.modal.iframe_DANGEROUS(this.srcPassphraseDialog(longids, 'embedded')); // xss-safe-value
   }
 
   public embeddedAttachmentStatus = (content: string) => {
@@ -288,10 +292,4 @@ export class XssSafeFactory {
     }
     return Ui.e('iframe', attrs);
   }
-
-  // tslint:disable-next-line:variable-name
-  private divDialog_DANGEROUS(content_MUST_BE_XSS_SAFE: string, dataTest: string) { // xss-dangerous-function
-    return Ui.e('div', { id: 'cryptup_dialog', html: content_MUST_BE_XSS_SAFE, 'data-test': dataTest });
-  }
-
 }
