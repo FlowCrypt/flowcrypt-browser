@@ -143,7 +143,7 @@ export class SetupView extends View {
     $('#button-go-back').off().click(this.setHandler(() => this.actionBackHandler()));
     $('#step_2_recovery .action_recover_account').click(this.setHandlerPrevent('double', () => this.setupRecoverKey.actionRecoverAccountHandler()));
     $('#step_4_more_to_recover .action_recover_remaining').click(this.setHandler(() => this.setupRecoverKey.actionRecoverRemainingKeysHandler()));
-    $('.action_skip_recovery').click(this.setHandler(() => this.setupRecoverKey.actionSkipRecoveryHandler()));
+    $('#lost_pass_phrase').click(this.setHandler(() => this.showLostPassPhraseModal()));
     $('.action_account_settings').click(this.setHandler(() => { window.location.href = Url.create('index.htm', { acctEmail: this.acctEmail }); }));
     $('.input_submit_key').click(this.setHandler(el => this.actionSubmitPublicKeyToggleHandler(el)));
     $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(this.setHandler(() => this.setupRender.displayBlock('step_2a_manual_create')));
@@ -160,6 +160,28 @@ export class SetupView extends View {
   public actionBackHandler = () => {
     $('h1').text('Set Up');
     this.setupRender.displayBlock('step_1_easy_or_manual');
+  }
+
+  public showLostPassPhraseModal = () => {
+    Ui.modal.info(`
+        <div style="text-align: initial">
+          <p><strong>Do you have at least one working device where you can
+          still read your encrypted email?</strong></p>
+          <p><strong>If yes:</strong> open the working device and go to
+          <code>FlowCrypt Settings</code> > <code>Security</code> >
+          <code>Change Pass Phrase</code>.<br>
+          It will let you change it without knowing the previous one.
+          When done, <a href="#" class="reload_page">reload this page</a>
+          and use the new pass phrase.
+          <p><strong>If no:</strong> unfortunately, you will not be able to
+          read previously encrypted emails regardless of what you do.
+          You can <a href="#" class="action_skip_recovery">skip recovery
+          and create a new key instead</a>.
+          Your previous encrypted emails will remain unreadable.
+        </div>
+      `, true).catch(Catch.reportErr);
+    $('.action_skip_recovery').click(this.setHandler(() => this.setupRecoverKey.actionSkipRecoveryHandler()));
+    $('.reload_page').click(this.setHandler(() => window.location.reload()));
   }
 
   public actionSubmitPublicKeyToggleHandler = (target: HTMLElement) => {

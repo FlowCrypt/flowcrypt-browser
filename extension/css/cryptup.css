@@ -264,6 +264,7 @@ div.line {
 }
 div.wide.line { max-width: 850px; }
 div.line.left { text-align: left; }
+div.line.center { text-align: center; }
 
 div.line input[type=text],
 div.line input[type=email],
@@ -2817,6 +2818,7 @@ code {
   padding: 0.2em 0.4em;
   margin: 0;
   font-size: 85%;
+  color: #e83e8c;
   background-color: #f3f4f4;
   border-radius: 6px;
 }

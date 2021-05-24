@@ -89,8 +89,7 @@ View.run(class PassphraseView extends View {
           <p><strong>If no:</strong> unfortunately, you will not be able to read
           previously encrypted emails regardless of what you do.
           You can <a href class="reset-flowcrypt">reset FlowCrypt on this device</a>
-          and then click <code>Skip recovery and set up encryption again</code>
-          during recovery step.
+          and then click <code>Lost your pass phrase?</code> during recovery step.
         </div>
       `, true).catch(Catch.reportErr);
       $('.reset-flowcrypt').click(this.setHandler(async (el, ev) => {
