@@ -20,6 +20,7 @@ import { defineUnitBrowserTests } from './tests/unit-browser';
 import { mock } from './mock';
 import { mockBackendData } from './mock/backend/backend-endpoints';
 import { TestUrls } from './browser/test-urls';
+import { writeFileSync } from 'fs';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
@@ -75,12 +76,17 @@ const testWithBrowser = (acct: CommonAcct | undefined, cb: (t: AvaContext, brows
       if (DEBUG_BROWSER_LOG) {
         try {
           const page = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
-          const items = await page.target.evaluate(() => (window as any).Debug.readDatabase());
-          if (items.length > 0) {
-            console.info('debug messages: ', JSON.stringify(items), '\n');
+          const items = await page.target.evaluate(() => (window as any).Debug.readDatabase()) as { input: unknown, output: unknown }[];
+          for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            const input = JSON.stringify(item.input);
+            const output = JSON.stringify(item.output, undefined, 2);
+            const file = `./test/tmp/${t.title}-${i}.txt`;
+            writeFileSync(file, `in: ${input}\n\nout: ${output}`);
+            t.log(`browser debug written to file: ${file}`);
           }
         } catch (e) {
-          console.error(`Error reading debug messages: ${e}`);
+          t.log(`Error reading debug messages: ${e}`);
         }
       }
       t.log(`run time: ${Math.ceil((Date.now() - start) / 1000)}s`);
