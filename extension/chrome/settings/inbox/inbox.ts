@@ -122,8 +122,8 @@ export class InboxView extends View {
     BrowserMsg.addListener('close_new_message', async () => {
       $('div.new_message').remove();
     });
-    BrowserMsg.addListener('passphrase_dialog', async ({ longids }: Bm.PassphraseDialog) => {
-      await this.factory.showAddPubkeyDialog(longids);
+    BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
+      await this.factory.showPassphraseDialog(longids, type);
     });
     BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
       await this.factory.showAddPubkeyDialog(emails);
