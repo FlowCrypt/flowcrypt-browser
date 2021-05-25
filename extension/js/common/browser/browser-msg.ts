@@ -32,7 +32,7 @@ export namespace Bm {
   export type SetCss = { css: Dict<string>, traverseUp?: number, selector: string; };
   export type AddOrRemoveClass = { class: string, selector: string; };
   export type Settings = { path?: string, page?: string, acctEmail?: string, pageUrlParams?: UrlParams, addNewAcct?: boolean };
-  export type PassphraseDialog = { type: PassphraseDialogType, longids: string[] };
+  export type PassphraseDialog = { type: PassphraseDialogType, longids: string[], attachmentId?: string };
   export type ScrollToReplyBox = { replyMsgId: string };
   export type ScrollToCursorInReplyBox = { replyMsgId: string, cursorOffsetTop: number };
   export type NotificationShow = { notification: string, callbacks?: Dict<() => void> };
@@ -48,7 +48,7 @@ export namespace Bm {
   export type OpenGoogleAuthDialog = { acctEmail?: string, scopes?: string[] };
   export type OpenPage = { page: string, addUrlText?: string | UrlParams };
   export type StripeResult = { token: string };
-  export type PassphraseEntry = { entered: boolean; };
+  export type PassphraseEntry = { entered: boolean, attachmentId?: string };
   export type Db = { f: string, args: any[] };
   export type StoreSessionSet = { acctEmail: string, key: string, value: string | undefined };
   export type StoreSessionGet = { acctEmail: string, key: string };

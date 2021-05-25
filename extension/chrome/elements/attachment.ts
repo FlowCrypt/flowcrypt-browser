@@ -104,13 +104,14 @@ export class AttachmentDownloadView extends View {
         }
       });
     }
-    BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
-      if (!entered) {
+    BrowserMsg.addListener('passphrase_entry', async ({ entered, attachmentId }: Bm.PassphraseEntry) => {
+      if (entered && attachmentId === this.attachment.id) {
+        await this.previewAttachmentClickedHandler();
+      } else {
         this.downloadInProgress = false;
         this.downloadButton.show();
         this.ppChangedPromiseCancellation.cancel = true; // update original object which is monitored by a promise
         this.ppChangedPromiseCancellation = { cancel: false }; // set to a new, not yet used object
-        BrowserMsg.send.closeDialog(this.parentTabId); // attachment preview
       }
     });
     BrowserMsg.listen(this.tabId);

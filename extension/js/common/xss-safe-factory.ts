@@ -114,8 +114,8 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), { frameId: this.newId(), draftId });
   }
 
-  public srcPassphraseDialog = (longids: string[] = [], type: PassphraseDialogType) => {
-    return this.frameSrc(this.extUrl('chrome/elements/passphrase.htm'), { type, longids });
+  public srcPassphraseDialog = (longids: string[] = [], type: PassphraseDialogType, attachmentId?: string) => {
+    return this.frameSrc(this.extUrl('chrome/elements/passphrase.htm'), { type, longids, attachmentId });
   }
 
   public srcAddPubkeyDialog = (emails: string[], placement: Placement) => {
@@ -168,8 +168,8 @@ export class XssSafeFactory {
     return `<link class="${this.destroyableCls}" rel="stylesheet" href="${this.extUrl(`css/${file}.css`)}" />`;
   }
 
-  public showPassphraseDialog = async (longids: string[], type: PassphraseDialogType) => {
-    const result = await Ui.modal.iframe_DANGEROUS(this.srcPassphraseDialog(longids, type), 'dialog-passphrase'); // xss-safe-factory
+  public showPassphraseDialog = async (longids: string[], type: PassphraseDialogType, attachmentId?: string) => {
+    const result = await Ui.modal.iframe_DANGEROUS(this.srcPassphraseDialog(longids, type, attachmentId), 'dialog-passphrase'); // xss-safe-factory
     if (result.isDismissed) {
       BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
     }

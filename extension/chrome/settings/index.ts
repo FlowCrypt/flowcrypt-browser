@@ -129,9 +129,9 @@ View.run(class SettingsView extends View {
     BrowserMsg.addListener('open_google_auth_dialog', async ({ acctEmail, scopes }: Bm.OpenGoogleAuthDialog) => {
       await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, acctEmail, scopes);
     });
-    BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
+    BrowserMsg.addListener('passphrase_dialog', async ({ longids, type, attachmentId }: Bm.PassphraseDialog) => {
       const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
-      await factory.showPassphraseDialog(longids, type);
+      await factory.showPassphraseDialog(longids, type, attachmentId);
     });
     BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
       this.notifications!.showAuthPopupNeeded(acctEmail);

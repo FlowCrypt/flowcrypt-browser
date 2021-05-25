@@ -146,8 +146,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('scroll_to_cursor_in_reply_box', async ({ replyMsgId, cursorOffsetTop }: Bm.ScrollToCursorInReplyBox) => {
       webmailSpecific.getReplacer().scrollToCursorInReplyBox(replyMsgId, cursorOffsetTop);
     });
-    BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
-      await factory.showPassphraseDialog(longids, type);
+    BrowserMsg.addListener('passphrase_dialog', async ({ longids, type, attachmentId }: Bm.PassphraseDialog) => {
+      await factory.showPassphraseDialog(longids, type, attachmentId);
     });
     BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
       await factory.showAddPubkeyDialog(emails);

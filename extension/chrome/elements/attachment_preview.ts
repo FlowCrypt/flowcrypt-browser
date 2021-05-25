@@ -10,7 +10,6 @@ import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PDFDocumentProxy } from '../../types/pdf.js';
 import { MsgUtil, DecryptError, DecryptErrTypes, DecryptSuccess, DecryptionError } from '../../js/common/core/crypto/pgp/msg-util.js';
-import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Ui } from '../../js/common/browser/ui.js';
@@ -86,11 +85,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
     if ((result as DecryptSuccess).content) {
       return result.content;
     } else if ((result as DecryptError).error.type === DecryptErrTypes.needPassphrase) {
-      BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'attachment', longids: (result as DecryptError).longids.needPassphrase });
-      if (! await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, (result as DecryptError).longids.needPassphrase, 1000, this.ppChangedPromiseCancellation)) {
-        return;
-      }
-      return await this.render();
+      return BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'attachment', longids: (result as DecryptError).longids.needPassphrase, attachmentId: this.attachment.id });
     }
     throw new DecryptionError(result as DecryptError);
   }
