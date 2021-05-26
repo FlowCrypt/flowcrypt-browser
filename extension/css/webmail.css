@@ -201,19 +201,18 @@ body.cryptup_gmail.cryptup_gmail_new div.ade.appended span.cryptup_convo_button 
 /* The 'End Pass Phrase Session' button */
 body.cryptup_gmail .action_finish_session {
   position: fixed;
-  bottom: 3px;
-  left: 50%;
-  width: 300px;
-  margin-left: -30px;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #000;
   text-decoration: none;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(200, 200, 200, 0.95);
   padding: 6px 0;
   cursor: pointer;
-  z-index: 1;
+  z-index: 3;
   border-radius: 3px;
   opacity: 0.9;
 }
