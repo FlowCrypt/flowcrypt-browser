@@ -114,20 +114,27 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), { frameId: this.newId(), draftId });
   }
 
-  public srcPassphraseDialog = (longids: string[] = [], type: PassphraseDialogType, attachmentId?: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/passphrase.htm'), { type, longids, attachmentId });
+  public srcPassphraseDialog = (longids: string[] = [], type: PassphraseDialogType, initiatorFrameId?: string) => {
+    return this.frameSrc(this.extUrl('chrome/elements/passphrase.htm'), { type, longids, initiatorFrameId });
   }
 
   public srcAddPubkeyDialog = (emails: string[], placement: Placement) => {
     return this.frameSrc(this.extUrl('chrome/elements/add_pubkey.htm'), { emails, placement });
   }
 
-  public srcPgpAttachmentIframe = (a: Attachment, isEncrypted: boolean, parentTabId?: string, iframeUrl = 'chrome/elements/attachment.htm', errorDetailsOpened?: boolean) => {
+  public srcPgpAttachmentIframe = (
+    a: Attachment,
+    isEncrypted: boolean,
+    parentTabId?: string,
+    iframeUrl = 'chrome/elements/attachment.htm',
+    errorDetailsOpened?: boolean,
+    initiatorFrameId?: string
+  ) => {
     if (!a.id && !a.url && a.hasData()) { // data provided directly, pass as object url
       a.url = Browser.objUrlCreate(a.getData());
     }
     return this.frameSrc(this.extUrl(iframeUrl), {
-      frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attachmentId: a.id, url: a.url, isEncrypted, errorDetailsOpened
+      frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attachmentId: a.id, url: a.url, isEncrypted, errorDetailsOpened, initiatorFrameId
     }, parentTabId);
   }
 
@@ -168,8 +175,8 @@ export class XssSafeFactory {
     return `<link class="${this.destroyableCls}" rel="stylesheet" href="${this.extUrl(`css/${file}.css`)}" />`;
   }
 
-  public showPassphraseDialog = async (longids: string[], type: PassphraseDialogType, attachmentId?: string) => {
-    const result = await Ui.modal.iframe_DANGEROUS(this.srcPassphraseDialog(longids, type, attachmentId), 'dialog-passphrase'); // xss-safe-factory
+  public showPassphraseDialog = async (longids: string[], type: PassphraseDialogType, initiatorFrameId?: string) => {
+    const result = await Ui.modal.iframe_DANGEROUS(this.srcPassphraseDialog(longids, type, initiatorFrameId), 'dialog-passphrase'); // xss-safe-factory
     if (result.isDismissed) {
       BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
     }

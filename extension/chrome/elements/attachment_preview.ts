@@ -2,6 +2,7 @@
 
 'use strict';
 
+import { Assert } from '../../js/common/assert.js';
 import { Attachment } from '../../js/common/core/attachment.js';
 import { AttachmentDownloadView } from './attachment.js';
 import { AttachmentPreviewPdf } from '../../js/common/ui/attachment_preview_pdf.js';
@@ -13,16 +14,20 @@ import { MsgUtil, DecryptError, DecryptErrTypes, DecryptSuccess, DecryptionError
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Ui } from '../../js/common/browser/ui.js';
+import { Url } from '../../js/common/core/common.js';
 
 type AttachmentType = 'img' | 'txt' | 'pdf';
 
 declare const pdfjsLib: any; // tslint:disable-line:ban-types
 
 View.run(class AttachmentPreviewView extends AttachmentDownloadView {
+  protected readonly initiatorFrameId: string;
   private attachmentPreviewContainer = $('#attachment-preview-container');
 
   constructor() {
     super();
+    const uncheckedUrlParams = Url.parse(['initiatorFrameId']);
+    this.initiatorFrameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'initiatorFrameId');
   }
 
   public render = async () => {
@@ -85,7 +90,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
     if ((result as DecryptSuccess).content) {
       return result.content;
     } else if ((result as DecryptError).error.type === DecryptErrTypes.needPassphrase) {
-      return BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'attachment', longids: (result as DecryptError).longids.needPassphrase, attachmentId: this.attachment.id });
+      return BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'attachment', longids: (result as DecryptError).longids.needPassphrase, initiatorFrameId: this.initiatorFrameId });
     }
     throw new DecryptionError(result as DecryptError);
   }

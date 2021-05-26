@@ -104,8 +104,8 @@ export class AttachmentDownloadView extends View {
         }
       });
     }
-    BrowserMsg.addListener('passphrase_entry', async ({ entered, attachmentId }: Bm.PassphraseEntry) => {
-      if (entered && attachmentId === this.attachment.id) {
+    BrowserMsg.addListener('passphrase_entry', async ({ entered, initiatorFrameId }: Bm.PassphraseEntry) => {
+      if (entered && initiatorFrameId === this.frameId) {
         await this.previewAttachmentClickedHandler();
       } else {
         this.downloadInProgress = false;
@@ -249,7 +249,7 @@ export class AttachmentDownloadView extends View {
       this.attachment.length = this.size!;
     }
     const factory = new XssSafeFactory(this.acctEmail, this.parentTabId);
-    const iframeUrl = factory.srcPgpAttachmentIframe(this.attachment, this.isEncrypted, undefined, 'chrome/elements/attachment_preview.htm', errorDetailsOpened);
+    const iframeUrl = factory.srcPgpAttachmentIframe(this.attachment, this.isEncrypted, undefined, 'chrome/elements/attachment_preview.htm', errorDetailsOpened, this.frameId);
     BrowserMsg.send.showAttachmentPreview(this.parentTabId, { iframeUrl });
   }
 

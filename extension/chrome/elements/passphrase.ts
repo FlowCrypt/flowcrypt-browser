@@ -21,17 +21,17 @@ View.run(class PassphraseView extends View {
   private readonly parentTabId: string;
   private readonly longids: string[];
   private readonly type: string;
-  private readonly attachmentId?: string;
+  private readonly initiatorFrameId?: string;
   private keysWeNeedPassPhraseFor: KeyInfo[] | undefined;
 
   constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'longids', 'type', 'attachmentId']);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'longids', 'type', 'initiatorFrameId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.longids = Assert.urlParamRequire.string(uncheckedUrlParams, 'longids').split(',');
     this.type = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'type', ['embedded', 'sign', 'message', 'draft', 'attachment', 'quote', 'backup']);
-    this.attachmentId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'attachmentId');
+    this.initiatorFrameId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'initiatorFrameId');
   }
 
   public render = async () => {
@@ -126,9 +126,9 @@ View.run(class PassphraseView extends View {
     $('#passphrase').attr('placeholder', 'Please try again');
   }
 
-  private closeDialog = (entered: boolean = false, attachmentId?: string) => {
+  private closeDialog = (entered: boolean = false, initiatorFrameId?: string) => {
     BrowserMsg.send.closeDialog(this.parentTabId);
-    BrowserMsg.send.passphraseEntry('broadcast', { entered, attachmentId });
+    BrowserMsg.send.passphraseEntry('broadcast', { entered, initiatorFrameId });
   }
 
   private submitHandler = async () => {
@@ -157,7 +157,7 @@ View.run(class PassphraseView extends View {
       }
     }
     if (atLeastOneMatched) {
-      this.closeDialog(true, this.attachmentId);
+      this.closeDialog(true, this.initiatorFrameId);
     } else {
       this.renderFailedEntryPpPrompt();
       Catch.setHandledTimeout(() => this.renderNormalPpPrompt(), 1500);
