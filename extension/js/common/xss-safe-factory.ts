@@ -176,14 +176,14 @@ export class XssSafeFactory {
   }
 
   public showPassphraseDialog = async (longids: string[], type: PassphraseDialogType, initiatorFrameId?: string) => {
-    const result = await Ui.modal.iframe_DANGEROUS(this.srcPassphraseDialog(longids, type, initiatorFrameId), 'dialog-passphrase'); // xss-safe-factory
+    const result = await Ui.modal.iframe_DANGEROUS(this.srcPassphraseDialog(longids, type, initiatorFrameId), 500, 'dialog-passphrase'); // xss-safe-factory
     if (result.isDismissed) {
       BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
     }
   }
 
   public showAddPubkeyDialog = async (emails: string[]) => {
-    await Ui.modal.iframe_DANGEROUS(this.srcAddPubkeyDialog(emails, 'gmail'), 'dialog-add-pubkey'); // xss-safe-factory
+    await Ui.modal.iframe_DANGEROUS(this.srcAddPubkeyDialog(emails, 'gmail'), undefined, 'dialog-add-pubkey'); // xss-safe-factory
   }
 
   public embeddedCompose = (draftId?: string) => {
@@ -240,7 +240,7 @@ export class XssSafeFactory {
 
   public btnEndPPSession = (webmailName: string) => {
     return `<a href="#" class="action_finish_session" title="End Pass Phrase Session" data-test="action-finish-session">
-              <img src="${this.srcImg('svgs/unlock.svg')}" height="32">
+              <img src="${this.srcImg('svgs/unlock.svg')}">
               ${webmailName === 'gmail' ? 'End Pass Phrase Session' : ''}
             </a>`;
   }

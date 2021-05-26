@@ -207,6 +207,7 @@ body.cryptup_gmail .action_finish_session {
   display: flex;
   align-items: center;
   justify-content: center;
+  height: 28px;
   color: #000;
   text-decoration: none;
   background: rgba(200, 200, 200, 0.95);
@@ -222,7 +223,7 @@ body.cryptup_gmail .action_finish_session:hover {
 }
 
 body.cryptup_gmail .action_finish_session img {
-  height: 24px;
+  height: 18px;
   margin: 0 15px 0 -15px;
 }
 
