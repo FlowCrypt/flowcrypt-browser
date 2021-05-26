@@ -34,7 +34,7 @@ export class Settings {
   }
 
   public static renderSubPage = async (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
-    await Ui.modal.iframe_DANGEROUS(Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams)); // xss-safe-value
+    await Ui.modal.iframe(Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams));
   }
 
   public static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {

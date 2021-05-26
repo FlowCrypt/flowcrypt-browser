@@ -177,14 +177,14 @@ export class XssSafeFactory {
   }
 
   public showPassphraseDialog = async (longids: string[], type: PassphraseDialogType, initiatorFrameId?: string) => {
-    const result = await Ui.modal.iframe_DANGEROUS(this.srcPassphraseDialog(longids, type, initiatorFrameId), 500, 'dialog-passphrase'); // xss-safe-factory
+    const result = await Ui.modal.iframe(this.srcPassphraseDialog(longids, type, initiatorFrameId), 500, 'dialog-passphrase');
     if (result.dismiss === Swal.DismissReason.backdrop || result.dismiss === Swal.DismissReason.esc) {
       BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
     }
   }
 
   public showAddPubkeyDialog = async (emails: string[]) => {
-    await Ui.modal.iframe_DANGEROUS(this.srcAddPubkeyDialog(emails, 'gmail'), undefined, 'dialog-add-pubkey'); // xss-safe-factory
+    await Ui.modal.iframe(this.srcAddPubkeyDialog(emails, 'gmail'), undefined, 'dialog-add-pubkey');
   }
 
   public embeddedCompose = (draftId?: string) => {

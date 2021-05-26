@@ -241,8 +241,7 @@ export class Ui {
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
     },
-    // tslint:disable-next-line:variable-name
-    iframe_DANGEROUS: async (iframeUrl_MUST_BE_XSS_SAFE: string, iframeHeight?: number, dataTest?: string): Promise<SweetAlertResult> => { // xss-dangerous-function
+    iframe: async (iframeUrl: string, iframeHeight?: number, dataTest?: string): Promise<SweetAlertResult> => {
       const iframeWidth = Math.min(800, $('body').width()! - 200);
       iframeHeight = iframeHeight || $('body').height()! - ($('body').height()! > 800 ? 150 : 75);
       return await Ui.swal().fire({
@@ -255,7 +254,7 @@ export class Ui {
           window.history.pushState('', '', urlWithoutPageParam);
         },
         keydownListenerCapture: true,
-        html: `<iframe src="${iframeUrl_MUST_BE_XSS_SAFE}" width="${iframeWidth}" height="${iframeHeight}" style="border: 0"></iframe>`,
+        html: `<iframe src="${Xss.escape(iframeUrl)}" width="${iframeWidth}" height="${iframeHeight}" style="border: 0"></iframe>`,
         width: 'auto',
         backdrop: 'rgba(0, 0, 0, 0.6)',
         showCloseButton: true,
