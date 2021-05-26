@@ -21,13 +21,13 @@ type AttachmentType = 'img' | 'txt' | 'pdf';
 declare const pdfjsLib: any; // tslint:disable-line:ban-types
 
 View.run(class AttachmentPreviewView extends AttachmentDownloadView {
-  protected readonly initiatorFrameId: string;
+  protected readonly initiatorFrameId?: string;
   private attachmentPreviewContainer = $('#attachment-preview-container');
 
   constructor() {
     super();
     const uncheckedUrlParams = Url.parse(['initiatorFrameId']);
-    this.initiatorFrameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'initiatorFrameId');
+    this.initiatorFrameId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'initiatorFrameId');
   }
 
   public render = async () => {
