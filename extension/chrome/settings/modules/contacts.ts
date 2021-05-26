@@ -20,13 +20,12 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
-import { ContactStore, ContactPreview } from '../../../js/common/platform/store/contact-store.js';
+import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 
 View.run(class ContactsView extends View {
 
   private acctEmail: string;
 
-  private contacts: ContactPreview[] = [];
   private factory: XssSafeFactory | undefined; // set in render()
   private attachmentUI = new AttachmentUI(() => Promise.resolve({ sizeMb: 5, size: 5 * 1024 * 1024, count: 1 }));
   private orgRules!: OrgRules;
@@ -53,7 +52,7 @@ View.run(class ContactsView extends View {
   }
 
   public setHandlers = () => {
-    $('a.action_show').off().click(this.setHandlerPrevent('double', this.actionRenderViewPublicKeyHandler));
+    $('a.action_show_list').off().click(this.setHandlerPrevent('double', this.actionRenderListPublicKeyHandler));
     $('a.action_change').off().click(this.setHandlerPrevent('double', this.actionRenderChangePublicKeyHandler));
     $('#edit_contact .action_save_edited_pubkey').off().click(this.setHandlerPrevent('double', this.actionSaveEditedPublicKeyHandler));
     $('#bulk_import .action_process').off().click(this.setHandlerPrevent('double', this.actionProcessBulkImportTextInput));
@@ -66,7 +65,7 @@ View.run(class ContactsView extends View {
   // --- PRIVATE
 
   private loadAndRenderContactList = async () => {
-    this.contacts = await ContactStore.search(undefined, { hasPgp: true, limit: 500, substring: String($('.input-search-contacts').val()) });
+    const contacts = await ContactStore.search(undefined, { hasPgp: true, limit: 500, substring: String($('.input-search-contacts').val()) });
     let lineActionsHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
       '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import" data-test="action-show-import-public-keys-form">import public keys</a>&nbsp;&nbsp;';
     if (this.orgRules.getCustomSksPubkeyServer()) {
@@ -81,15 +80,14 @@ View.run(class ContactsView extends View {
     $('h1').text('Contacts and their Public Keys');
     $('#view_contact, #edit_contact, #bulk_import').css('display', 'none');
     let tableContents = '';
-    for (const contact of this.contacts) {
-      const e = Xss.escape(contact.email);
-      const show = `<a href="#" title="Show" class="action_show" data-test="action-show-pubkey-${e.replace(/[^a-z0-9]+/g, '')}"></a>`;
+    for (const email of contacts.map(preview => preview.email).filter((value, index, self) => !self.slice(0, index).find((el) => el === value))) {
+      const e = Xss.escape(email);
+      const show = `<a href="#" title="Show" class="action_show_list" data-test="action-show-email-${e.replace(/[^a-z0-9]+/g, '')}"></a>`;
       const change = `<a href="#" title="Change" class="action_change" data-test="action-change-pubkey-${e.replace(/[^a-z0-9]+/g, '')}"></a>`;
-      const remove = `<a href="#" title="Remove" class="action_remove" data-test="action-remove-pubkey-${e.replace(/[^a-z0-9]+/g, '')}"></a>`;
-      tableContents += `<tr email="${e}"><td>${e}</td><td>${show}</td><td>${change}</td><td>${remove}</td></tr>`;
+      tableContents += `<tr email="${e}"><td>${e}</td><td>${show}</td><td>${change}</td></tr>`;
     }
     Xss.sanitizeReplace('table#emails', `<table id="emails" class="hide_when_rendering_subpage">${tableContents}</table>`);
-    $('.container-table-note').text(this.contacts.length >= 500 ? '(showing first 500 results)' : '');
+    $('.container-table-note').text(contacts.length >= 500 ? '(showing first 500 results)' : '');
     this.setHandlers();
   }
 
@@ -114,21 +112,62 @@ View.run(class ContactsView extends View {
     Browser.saveToDownloads(exportFile);
   }
 
+  private actionRenderListPublicKeyHandler = async (viewPubkeyButton: HTMLElement) => {
+    const parentTr = $(viewPubkeyButton).closest('tr');
+    const email = parentTr.attr('email')!;
+    const contact = await ContactStore.getOneWithAllPubkeys(undefined, email);
+    const e = Xss.escape(email);
+    if (contact && contact.sortedPubkeys.length) {
+      let tableContents = '';
+      for (const pubkey of contact.sortedPubkeys) {
+        const keyid = Xss.escape(pubkey.pubkey.id);
+        const type = Xss.escape(pubkey.pubkey.type);
+        const show = `<a href="#" title="Show" class="action_show" data-test="action-show-pubkey-${keyid}-${type}"></a>`;
+        const remove = `<a href="#" title="Remove" class="action_remove" data-test="action-remove-pubkey-${keyid}"></a>`;
+        let status: string;
+        if (pubkey.revoked) {
+          status = 'revoked';
+        } else if (pubkey.pubkey?.usableForEncryption) {
+          status = 'active';
+        } else if (pubkey.pubkey?.usableForEncryptionButExpired) {
+          status = 'expired';
+        } else if (pubkey.pubkey?.usableForSigning) {
+          status = 'sign only';
+        } else {
+          status = 'unusable';
+        }
+        tableContents += `<tr email="${e}" keyid="${keyid}" type="${type}"><td>${type} - ${status} - ${Str.spaced(keyid)}</td><td>${show}</td><td>${remove}</td></tr>`;
+      }
+      parentTr.after(tableContents);
+      viewPubkeyButton.style.display = 'none';
+      $('a.action_show').off().click(this.setHandlerPrevent('double', this.actionRenderViewPublicKeyHandler));
+    }
+  }
+
   private actionRenderViewPublicKeyHandler = async (viewPubkeyButton: HTMLElement) => {
-    const [contact] = await ContactStore.get(undefined, [$(viewPubkeyButton).closest('tr').attr('email')!]); // defined above
+    const parentTr = $(viewPubkeyButton).closest('tr');
+    const id = parentTr.attr('keyid')!;
+    const type = parentTr.attr('type')!;
+    const email = parentTr.attr('email')!;
+    const armoredPubkey = await ContactStore.getPubkey(undefined, { id, type });
+    if (!armoredPubkey) {
+      // todo: show error message like 'key disappeared'?
+      return;
+    }
+    const key = await KeyUtil.parse(armoredPubkey);
     $('.hide_when_rendering_subpage').css('display', 'none');
-    Xss.sanitizeRender('h1', `${this.backBtn}${this.space}${contact!.email}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`); // should exist - from list of contacts
-    $('#view_contact .key_dump').text(KeyUtil.armor(contact!.pubkey!)); // should exist - from list of contacts && should have pgp - filtered
+    Xss.sanitizeRender('h1', `${this.backBtn}${this.space}${email}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`);
+    $('#view_contact .key_dump').text(armoredPubkey);
     $('#view_contact #container-pubkey-details').text([
-      `Type: ${contact?.pubkey?.type}`,
-      `Fingerprint: ${Str.spaced(contact?.fingerprint || 'none')}`,
-      `Users: ${contact?.pubkey?.emails?.join(', ')}`,
-      `Created on: ${contact?.pubkey?.created ? new Date(contact?.pubkey?.created) : ''}`,
-      `Expiration: ${contact?.pubkey?.expiration ? new Date(contact?.pubkey?.expiration) : 'Does not expire'}`,
-      `Last signature: ${contact?.pubkey?.lastModified ? new Date(contact?.pubkey?.lastModified) : ''}`,
-      `Expired: ${contact?.pubkey?.expiration && contact?.pubkey?.expiration < Date.now() ? 'yes' : 'no'}`,
-      `Usable for encryption: ${contact?.pubkey?.usableForEncryption}`,
-      `Usable for signing: ${contact?.pubkey?.usableForSigning}`,
+      `Type: ${key.type}`,
+      `Fingerprint: ${Str.spaced(key.id || 'none')}`,
+      `Users: ${key.emails?.join(', ')}`,
+      `Created on: ${key.created ? new Date(key.created) : ''}`,
+      `Expiration: ${key.expiration ? new Date(key.expiration) : 'Does not expire'}`,
+      `Last signature: ${key.lastModified ? new Date(key.lastModified) : ''}`,
+      `Expired: ${key.expiration && key.expiration < Date.now() ? 'yes' : 'no'}`,
+      `Usable for encryption: ${key.usableForEncryption}`,
+      `Usable for signing: ${key.usableForSigning}`,
     ].join('\n'));
     $('#view_contact').css('display', 'block');
     $('#page_back_button').click(this.setHandler(() => this.loadAndRenderContactList()));

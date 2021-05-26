@@ -476,6 +476,7 @@ body#settings .action_show_help {
 body#settings .action_show_help img { width: 28px; }
 body#settings > .action_show_help:hover { text-decoration: underline; }
 
+body#settings a.action_show_list::before,
 body#settings a.action_show::before,
 body#settings a.action_change::before,
 body#settings a.action_remove::before {
@@ -488,6 +489,7 @@ body#settings a.action_remove::before {
   top: 2.5px;
 }
 
+body#settings .action_show_list::before,
 body#settings .action_show::before {
   background-image: url("/img/svgs/contact__show-icon.svg");
   left: 5px;
@@ -504,11 +506,13 @@ body#settings > div#content.contacts #emails td:nth-child(4) {
 }
 body#settings > div#content.contacts #emails tr { margin: 10px; }
 
+body#settings > div#content.contacts #emails tr[keyid],
 body#settings > div#content.contacts #emails tr[email] {
   display: block;
   position: relative;
 }
 
+body#settings > div#content.contacts #emails tr[keyid] a,
 body#settings > div#content.contacts #emails tr[email] a {
   border-radius: 15px;
   display: block;
@@ -530,6 +534,14 @@ body#settings > div#content.contacts #emails tr[email] td:first-child {
   width: 65% !important;
 }
 
+body#settings > div#content.contacts #emails tr[keyid] td:first-child {
+  font-size: 16px;
+  text-align: left;
+  text-indent: 15px;
+  width: 65% !important;
+}
+
+body#settings > div#content.contacts #emails tr[keyid]::before,
 body#settings > div#content.contacts #emails tr[email]::before {
   border-radius: 4px;
   content: "";

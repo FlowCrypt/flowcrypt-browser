@@ -79,14 +79,16 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
       await contactsFrame.waitAll('@page-contacts');
       await Util.sleep(1);
-      await contactsFrame.waitAndClick('@action-show-pubkey-flowcryptcompatibilitygmailcom', { confirmGone: true });
+      await contactsFrame.waitAndClick('@action-show-email-flowcryptcompatibilitygmailcom');
       await Util.sleep(1);
       const contacts = await contactsFrame.read('@page-contacts');
-      expect(contacts).to.contain('flowcrypt.compatibility@gmail.com');
-      // todo: will specify which one of them should appear after finished with #3332
-      // tslint:disable-next-line:no-unused-expression
-      expect(contacts.includes('7FDE 6855 48AE A788') || contacts.includes('ADAC 279C 9509 3207')).to.be.true;
-      expect(contacts).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
+      expect(contacts).to.contain('openpgp - active - 5520 CACE 2CB6 1EA7 13E5 B005 7FDE 6855 48AE A788');
+      expect(contacts).to.contain('openpgp - active - E8F0 517B A6D7 DAB6 081C 96E4 ADAC 279C 9509 3207');
+      await contactsFrame.waitAndClick('@action-show-pubkey-5520CACE2CB61EA713E5B0057FDE685548AEA788-openpgp', { confirmGone: true });
+      const contacts1 = await contactsFrame.read('@page-contacts');
+      expect(contacts1).to.contain('7FDE 6855 48AE A788');
+      expect(contacts1).to.contain('flowcrypt.compatibility@gmail.com');
+      expect(contacts1).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
       await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
       await Util.sleep(1);
       expect(await contactsFrame.read('@page-contacts')).to.contain('flowcrypt.compatibility@gmail.com');
