@@ -34,6 +34,7 @@
 }
 .button.long { width: 200px; }
 .button.longer { width: 250px; }
+.button > * { vertical-align: middle; }
 
 button.swal2-styled:focus,
 .button:focus {

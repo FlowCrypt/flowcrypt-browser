@@ -45,7 +45,7 @@ View.run(class ManualDecryptView extends View {
     const ids = this.attachmentUi.getAttachmentIds();
     if (ids.length === 1) {
       const origContent = $(button).html();
-      Xss.sanitizeRender(button, 'Decrypting.. ' + Ui.spinner('white'));
+      Xss.sanitizeRender(button, '<span>Decrypting..</span>' + Ui.spinner('white'));
       const collected = await this.attachmentUi.collectAttachment(ids[0]);
       await this.decryptAndDownload(collected);
       Xss.sanitizeRender('.action_decrypt_and_download', origContent);
