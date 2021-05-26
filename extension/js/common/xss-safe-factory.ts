@@ -210,8 +210,8 @@ export class XssSafeFactory {
     return this.iframe(this.srcReplyMsgIframe(convoParams, skipClickPrompt, ignoreDraft), ['reply_message']);
   }
 
-  public showEmbeddedPassphraseDialog = async (longids: string[]) => {
-    await Ui.modal.iframe_DANGEROUS(this.srcPassphraseDialog(longids, 'embedded'), 'embedded-passphrase'); // xss-safe-factory
+  public embeddedPassphrase = (longids: string[]) => {
+    return this.iframe(this.srcPassphraseDialog(longids, 'embedded'), [], { 'data-test': 'embedded-passphrase' }); // xss-safe-factory
   }
 
   public embeddedAttachmentStatus = (content: string) => {

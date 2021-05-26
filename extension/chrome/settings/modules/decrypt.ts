@@ -60,7 +60,7 @@ View.run(class ManualDecryptView extends View {
       const attachment = new Attachment({ name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content });
       Browser.saveToDownloads(attachment);
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
-      await this.factory!.showEmbeddedPassphraseDialog(result.longids.needPassphrase);
+      $('.passphrase_dialog').html(this.factory!.embeddedPassphrase(result.longids.needPassphrase)); // xss-safe-factory
     } else {
       console.info(result);
       await Ui.modal.error('These was a problem decrypting this file, details are in the console.');
