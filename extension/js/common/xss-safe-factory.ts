@@ -16,6 +16,7 @@ import { Ui } from './browser/ui.js';
 import { WebMailName } from './browser/env.js';
 import { Xss } from './platform/xss.js';
 import { SendAsAlias } from './platform/store/acct-store.js';
+import Swal from 'sweetalert2';
 
 type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
@@ -177,7 +178,7 @@ export class XssSafeFactory {
 
   public showPassphraseDialog = async (longids: string[], type: PassphraseDialogType, initiatorFrameId?: string) => {
     const result = await Ui.modal.iframe_DANGEROUS(this.srcPassphraseDialog(longids, type, initiatorFrameId), 500, 'dialog-passphrase'); // xss-safe-factory
-    if (result.isDismissed) {
+    if (result.dismiss === Swal.DismissReason.backdrop || result.dismiss === Swal.DismissReason.esc) {
       BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
     }
   }
