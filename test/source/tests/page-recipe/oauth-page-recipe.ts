@@ -42,7 +42,9 @@ export class OauthPageRecipe extends PageRecipe {
       auth0_login_btn: 'button', // old: ._button-login
     };
     try {
-      await oauthPage.waitAny('#Email, #submit_approve_access, #identifierId, .w6VTHd, #profileIdentifier', { timeout: 45 });
+      const alreadyLoggedSelector = '.w6VTHd, .wLBAL';
+      const alreadyLoggedChooseOtherAccountSelector = '.bLzI3e, .BHzsHc';
+      await oauthPage.waitAny(`#Email, #submit_approve_access, #identifierId, ${alreadyLoggedSelector}, #profileIdentifier`, { timeout: 45 });
       if (await oauthPage.target.$(selectors.email_input) !== null) { // 2017-style login
         await oauthPage.waitAll(selectors.email_input, { timeout: OauthPageRecipe.longTimeout });
         await oauthPage.waitAndType(selectors.email_input, acctEmail, { delay: 2 });
@@ -50,8 +52,8 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitForNavigationIfAny();
       } else if (await oauthPage.target.$(`#profileIdentifier[data-email="${acctEmail}"]`) !== null) { // already logged in - just choose an account
         await oauthPage.waitAndClick(`#profileIdentifier[data-email="${acctEmail}"]`, { delay: 1 });
-      } else if (await oauthPage.target.$('.w6VTHd') !== null) { // select from accounts where already logged in
-        await oauthPage.waitAndClick('.bLzI3e', { delay: 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
+      } else if (await oauthPage.target.$(alreadyLoggedSelector) !== null) { // select from accounts where already logged in
+        await oauthPage.waitAndClick(alreadyLoggedChooseOtherAccountSelector, { delay: 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
         await Util.sleep(2);
         return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // start from beginning after clicking "other email acct"
       } else if (await oauthPage.target.$('#profileIdentifier[data-email="dummy"]') !== null) {
