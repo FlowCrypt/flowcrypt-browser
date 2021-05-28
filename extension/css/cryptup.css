@@ -476,8 +476,6 @@ body#settings .action_show_help {
 body#settings .action_show_help img { width: 28px; }
 body#settings > .action_show_help:hover { text-decoration: underline; }
 
-body#settings a.action_show_list::before,
-body#settings a.action_show::before,
 body#settings a.action_change::before,
 body#settings a.action_remove::before {
   background-size: 100%;
@@ -489,11 +487,6 @@ body#settings a.action_remove::before {
   top: 2.5px;
 }
 
-body#settings .action_show_list::before,
-body#settings .action_show::before {
-  background-image: url("/img/svgs/contact__show-icon.svg");
-  left: 5px;
-}
 body#settings .action_change::before { background-image: url("/img/svgs/contact__edit-icon.svg"); }
 body#settings .action_remove::before { background-image: url("/img/svgs/contact__remove-icon.svg"); }
 
@@ -524,7 +517,6 @@ body#settings > div#content.contacts #emails tr[email] a {
   position: relative;
   text-align: center;
   transition: 0.25s;
-  width: 20px;
 }
 
 body#settings > div#content.contacts #emails tr[email] td:first-child {
