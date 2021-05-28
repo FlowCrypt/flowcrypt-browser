@@ -415,10 +415,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           $(recipient.element).removeClass('no_pgp').find('i').remove();
           clearInterval(this.addedPubkeyDbLookupInterval);
           recipientsHasPgp.push(recipient);
+          await this.evaluateRecipients(recipientsHasPgp);
+          await this.setEmailsPreview(this.getRecipients());
         }
       }
-      await this.evaluateRecipients(recipientsHasPgp);
-      await this.setEmailsPreview(this.getRecipients());
     }, 1000);
   }
 
