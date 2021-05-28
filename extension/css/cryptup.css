@@ -34,6 +34,7 @@
 }
 .button.long { width: 200px; }
 .button.longer { width: 250px; }
+.button > * { vertical-align: middle; }
 
 button.swal2-styled:focus,
 .button:focus {
@@ -165,8 +166,13 @@ span.gray { color: #b7b7b7; }
   padding: 0;
 }
 
-.swal2-popup.ui-modal-iframe .swal2-close { color: #666; }
-.swal2-popup.ui-modal-iframe iframe { max-width: 100%; }
+.swal2-popup.ui-modal-iframe .swal2-close { color: #999; }
+
+.swal2-popup.ui-modal-iframe iframe {
+  display: flex;
+  max-width: 100%;
+}
+
 .swal2-container.ui-modal-page { background: rgba(0, 0, 0, 0.6) !important; }
 
 .swal2-container.ui-modal-fullscreen { padding: 0; }
@@ -288,7 +294,6 @@ body#settings.whitebg {
 
 body#settings > div#content {
   margin-top: 70px;
-  margin-bottom: 150px;
   position: relative;
 }
 
@@ -1027,6 +1032,8 @@ body#settings > div#content.dialog {
   background: white;
   z-index: 2;
   margin-top: 0;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 body#settings > div#content.dialog h1 {
@@ -2756,45 +2763,6 @@ body#select_account .action_add_account::before {
   content: '';
   left: 19px;
   top: 13px;
-}
-
-/* cryptup dialog */
-div#cryptup_dialog {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0 auto;
-  z-index: 1100;
-  background-color: rgba(255, 255, 255, 0.85);
-}
-
-div#cryptup_dialog iframe {
-  position: absolute;
-  width: 640px;
-  height: 370px;
-  top: 50%;
-  left: 50%;
-  margin-left: -300px;
-  margin-top: -200px;
-  border: none;
-  box-shadow: 10px 10px 5px #888;
-  box-shadow: 0 0 25px #aaa;
-}
-
-div#cryptup_dialog iframe.short {
-  height: 300px;
-  margin-top: -300px;
-}
-
-div#cryptup_dialog iframe.medium {
-  height: 500px;
-  margin-top: -300px;
-}
-
-div#cryptup_dialog iframe.tall {
-  height: 780px;
-  margin-top: -390px;
 }
 
 .lightboxed {

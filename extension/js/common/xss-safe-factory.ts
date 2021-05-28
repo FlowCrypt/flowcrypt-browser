@@ -7,6 +7,7 @@
 import { Dict, Str, Url, UrlParams } from './core/common.js';
 import { Attachment } from './core/attachment.js';
 import { Browser } from './browser/browser.js';
+import { BrowserMsg } from './browser/browser-msg.js';
 import { Catch } from './platform/catch.js';
 import { MsgBlock, MsgBlockType } from './core/msg-block.js';
 import { MsgBlockParser } from './core/msg-block-parser.js';
@@ -113,20 +114,27 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), { frameId: this.newId(), draftId });
   }
 
-  public srcPassphraseDialog = (longids: string[] = [], type: PassphraseDialogType) => {
-    return this.frameSrc(this.extUrl('chrome/elements/passphrase.htm'), { type, longids });
+  public srcPassphraseDialog = (longids: string[] = [], type: PassphraseDialogType, initiatorFrameId?: string) => {
+    return this.frameSrc(this.extUrl('chrome/elements/passphrase.htm'), { type, longids, initiatorFrameId });
   }
 
   public srcAddPubkeyDialog = (emails: string[], placement: Placement) => {
     return this.frameSrc(this.extUrl('chrome/elements/add_pubkey.htm'), { emails, placement });
   }
 
-  public srcPgpAttachmentIframe = (a: Attachment, isEncrypted: boolean, parentTabId?: string, iframeUrl = 'chrome/elements/attachment.htm', errorDetailsOpened?: boolean) => {
+  public srcPgpAttachmentIframe = (
+    a: Attachment,
+    isEncrypted: boolean,
+    parentTabId?: string,
+    iframeUrl = 'chrome/elements/attachment.htm',
+    errorDetailsOpened?: boolean,
+    initiatorFrameId?: string
+  ) => {
     if (!a.id && !a.url && a.hasData()) { // data provided directly, pass as object url
       a.url = Browser.objUrlCreate(a.getData());
     }
     return this.frameSrc(this.extUrl(iframeUrl), {
-      frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attachmentId: a.id, url: a.url, isEncrypted, errorDetailsOpened
+      frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attachmentId: a.id, url: a.url, isEncrypted, errorDetailsOpened, initiatorFrameId
     }, parentTabId);
   }
 
@@ -167,12 +175,15 @@ export class XssSafeFactory {
     return `<link class="${this.destroyableCls}" rel="stylesheet" href="${this.extUrl(`css/${file}.css`)}" />`;
   }
 
-  public dialogPassphrase = (longids: string[], type: PassphraseDialogType) => {
-    return this.divDialog_DANGEROUS(this.iframe(this.srcPassphraseDialog(longids, type), ['medium'], { scrolling: 'no' }), 'dialog-passphrase'); // xss-safe-factory
+  public showPassphraseDialog = async (longids: string[], type: PassphraseDialogType, initiatorFrameId?: string) => {
+    const result = await Ui.modal.iframe(this.srcPassphraseDialog(longids, type, initiatorFrameId), 500, 'dialog-passphrase');
+    if (result.dismiss) { // dialog is dismissed by user interaction, not by closeDialog()
+      BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
+    }
   }
 
-  public dialogAddPubkey = (emails: string[]) => {
-    return this.divDialog_DANGEROUS(this.iframe(this.srcAddPubkeyDialog(emails, 'gmail'), ['tall'], { scrolling: 'no' }), 'dialog-add-pubkey'); // xss-safe-factory
+  public showAddPubkeyDialog = async (emails: string[]) => {
+    await Ui.modal.iframe(this.srcAddPubkeyDialog(emails, 'gmail'), undefined, 'dialog-add-pubkey');
   }
 
   public embeddedCompose = (draftId?: string) => {
@@ -200,7 +211,7 @@ export class XssSafeFactory {
   }
 
   public embeddedPassphrase = (longids: string[]) => {
-    return this.divDialog_DANGEROUS(this.iframe(this.srcPassphraseDialog(longids, 'embedded'), ['medium'], { scrolling: 'no' }), 'embedded-passphrase'); // xss-safe-factory
+    return this.iframe(this.srcPassphraseDialog(longids, 'embedded'), [], { 'data-test': 'embedded-passphrase' }); // xss-safe-factory
   }
 
   public embeddedAttachmentStatus = (content: string) => {
@@ -229,7 +240,7 @@ export class XssSafeFactory {
 
   public btnEndPPSession = (webmailName: string) => {
     return `<a href="#" class="action_finish_session" title="End Pass Phrase Session" data-test="action-finish-session">
-              <img src="${this.srcImg('svgs/unlock.svg')}" height="32">
+              <img src="${this.srcImg('svgs/unlock.svg')}">
               ${webmailName === 'gmail' ? 'End Pass Phrase Session' : ''}
             </a>`;
   }
@@ -288,10 +299,4 @@ export class XssSafeFactory {
     }
     return Ui.e('iframe', attrs);
   }
-
-  // tslint:disable-next-line:variable-name
-  private divDialog_DANGEROUS(content_MUST_BE_XSS_SAFE: string, dataTest: string) { // xss-dangerous-function
-    return Ui.e('div', { id: 'cryptup_dialog', html: content_MUST_BE_XSS_SAFE, 'data-test': dataTest });
-  }
-
 }
