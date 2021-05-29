@@ -6,6 +6,7 @@ import { Assert } from '../../js/common/assert.js';
 import { Attachment } from '../../js/common/core/attachment.js';
 import { AttachmentDownloadView } from './attachment.js';
 import { AttachmentPreviewPdf } from '../../js/common/ui/attachment_preview_pdf.js';
+import { blobToBase64 } from '../../js/common/platform/util.js';
 import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
@@ -38,12 +39,12 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
       const result = this.isEncrypted ? await this.decrypt() : this.attachment.getData();
       if (result) {
         const blob = new Blob([result], { type: this.type });
-        const url = window.URL.createObjectURL(blob);
+        const imgBase64 = await blobToBase64(blob);
         const attachmentType = this.getAttachmentType(this.origNameBasedOnFilename);
         const attachmentForSave = new Attachment({ name: this.origNameBasedOnFilename, type: this.type, data: result });
         if (attachmentType) {
           if (attachmentType === 'img') { // image
-            this.attachmentPreviewContainer.html(`<img src="${url}" class="attachment-preview-img" alt="${Xss.escape(this.origNameBasedOnFilename)}">`); // xss-escaped
+            this.attachmentPreviewContainer.html(`<img src="${imgBase64}" class="attachment-preview-img" alt="${Xss.escape(this.origNameBasedOnFilename)}">`); // xss-escaped
           } else if (attachmentType === 'txt') { // text
             this.attachmentPreviewContainer.html(`<div class="attachment-preview-txt">${Xss.escape(result.toString()).replace(/\n/g, '<br>')}</div>`); // xss-escaped
           } else if (attachmentType === 'pdf') { // PDF
