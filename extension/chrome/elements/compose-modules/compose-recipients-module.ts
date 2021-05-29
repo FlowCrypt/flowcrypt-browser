@@ -458,6 +458,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         currentActive.removeClass('active');
       } else { // We need to force add recipient even it's invalid
         this.parseRenderRecipients($(e.target), true).catch(Catch.reportErr);
+        this.hideContacts();
       }
       e.target.focus();
       return true;
