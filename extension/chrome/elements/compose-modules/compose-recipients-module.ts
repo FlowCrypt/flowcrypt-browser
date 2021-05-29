@@ -579,6 +579,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   }
 
   private renderSearchRes = (input: JQuery<HTMLElement>, contacts: ContactPreview[], query: ProviderContactsQuery) => {
+    if (!input.is(':focus')) { // focus was moved away from input
+      return;
+    }
     if ((input.val() as string).toLowerCase() !== query.substring.toLowerCase()) { // the input value has changed meanwhile
       return;
     }
