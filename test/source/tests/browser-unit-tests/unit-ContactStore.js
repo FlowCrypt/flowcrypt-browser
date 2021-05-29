@@ -365,7 +365,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore stores postfixed fingerprint internally for
   const contacts = [
     await ContactStore.obj({
       email,
-      pubkey: testConstants.smimeCert
+      pubkey: testConstants.expiredSmimeCert
     })];
   await ContactStore.save(db, contacts);
   // extract the entity directly from the database
@@ -396,7 +396,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore searches S/MIME Certificate by PKCS#7 messa
 (async () => {
   const db = await ContactStore.dbOpen();
   const email = 'actalis@meta.33mail.com';
-  const pubkey = testConstants.smimeCert;
+  const pubkey = testConstants.expiredSmimeCert;
   const contacts = [await ContactStore.obj({ email, pubkey })];
   await ContactStore.save(db, contacts);
   const p7 = forge.pkcs7.createEnvelopedData();
@@ -461,7 +461,7 @@ BROWSER_UNIT_TEST_NAME(`ContactStore: X-509 revocation affects OpenPGP key`);
 BROWSER_UNIT_TEST_NAME(`ContactStore: OpenPGP revocation affects X.509 certificate`);
 (async () => {
   const db = await ContactStore.dbOpen();
-  const smimeKey = await KeyUtil.parse(testConstants.smimeCert);
+  const smimeKey = await KeyUtil.parse(testConstants.expiredSmimeCert);
   await ContactStore.update(db, 'actalis@meta.33mail.com', { pubkey: smimeKey });
   const [loadedCert1] = await ContactStore.get(db, [`actalis@meta.33mail.com`]);
   const longid = KeyUtil.getPrimaryLongid(smimeKey);
