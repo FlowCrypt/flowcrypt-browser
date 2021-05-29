@@ -12,10 +12,15 @@
 </head>
 
 <body id="attachment-preview">
-  <button id="attachment-preview-download" class="display_none" data-test="attachment-preview-download">
-    <img src="/img/svgs/download-link-white.svg" alt="download attachment" width="28">
-    DOWNLOAD
-  </button>
+  <div class="attachment-preview-toolbar">
+    <div id="attachment-preview-filename" data-test="attachment-preview-filename"></div>
+    <button id="attachment-preview-download" class="display_none" data-test="attachment-preview-download">
+      <img src="/img/svgs/download-link-white.svg" alt="download attachment" width="28">
+      DOWNLOAD
+    </button>
+    <div></div>
+  </div>
+
   <div id="attachment-preview-container"></div>
 
   <script src="/lib/purify.js"></script>
