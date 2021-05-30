@@ -24,8 +24,8 @@ export const base64decode = (b64tr: string): string => {
   return atob(b64tr);
 };
 
-export const blobToBase64 = (blob: Blob) => {
-  return new Promise((resolve, reject) => {
+export const blobToBase64 = async (blob: Blob) => {
+  return await new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onloadend = () => {
       resolve(reader.result);
