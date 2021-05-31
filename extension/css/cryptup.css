@@ -496,27 +496,23 @@ body#settings .action_change::before { background-image: url("/img/svgs/contact_
 body#settings .action_remove::before { background-image: url("/img/svgs/contact__remove-icon.svg"); }
 
 body#settings > div#content.contacts #emails td:nth-child(2),
-body#settings > div#content.contacts #emails td:nth-child(3),
-body#settings > div#content.contacts #emails td:nth-child(4) {
+body#settings > div#content.contacts #emails td:nth-child(3) {
   display: inline-block;
   height: 25px;
   width: 25px;
 }
-body#settings > div#content.contacts #emails tr { margin: 10px; }
 
-body#settings > div#content.contacts #emails tr[keyid],
-body#settings > div#content.contacts #emails tr[email] {
-  display: block;
-  position: relative;
+body#settings > div#content.contacts #emails tr {
+  margin: 10px;
+  height: 32px;
 }
 
-body#settings > div#content.contacts #emails tr[keyid] a,
-body#settings > div#content.contacts #emails tr[email] a {
+body#settings > div#content.contacts #emails tr a {
   border-radius: 15px;
   display: block;
   font-size: 11px;
   font-weight: 500;
-  margin: 0 5px;
+  margin: 10px 5px;
   margin-right: 5%;
   padding: 15px 5px;
   position: relative;
@@ -524,27 +520,11 @@ body#settings > div#content.contacts #emails tr[email] a {
   transition: 0.25s;
 }
 
-body#settings > div#content.contacts #emails tr[email] td:first-child {
+body#settings > div#content.contacts #emails tr td:first-child {
   font-size: 16px;
   text-align: left;
   text-indent: 0;
   width: 65% !important;
-}
-
-body#settings > div#content.contacts #emails tr[keyid] td:first-child {
-  font-size: 16px;
-  text-align: left;
-  text-indent: 15px;
-  width: 65% !important;
-}
-
-body#settings > div#content.contacts #emails tr[keyid]::before,
-body#settings > div#content.contacts #emails tr[email]::before {
-  border-radius: 4px;
-  content: "";
-  height: 90px;
-  position: absolute;
-  width: 100%;
 }
 
 body#settings > div#content.contacts table#emails td {
@@ -562,7 +542,7 @@ body#settings > div#content.contacts table#emails {
   color: #666;
   min-width: 100%;
 }
-body#settings > div#content.contacts table#emails tr { height: 32px; }
+
 body#settings > div#content textarea { width: 100%; }
 
 body#settings .subscribe--header-row th:nth-child(2),

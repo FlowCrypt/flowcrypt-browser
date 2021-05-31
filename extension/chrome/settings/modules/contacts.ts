@@ -53,7 +53,6 @@ View.run(class ContactsView extends View {
 
   public setHandlers = () => {
     $('a.action_show_list').off().click(this.setHandlerPrevent('double', this.actionRenderListPublicKeyHandler));
-    $('a.action_change').off().click(this.setHandlerPrevent('double', this.actionRenderChangePublicKeyHandler));
     $('#edit_contact .action_save_edited_pubkey').off().click(this.setHandlerPrevent('double', this.actionSaveEditedPublicKeyHandler));
     $('#bulk_import .action_process').off().click(this.setHandlerPrevent('double', this.actionProcessBulkImportTextInput));
     $('a.action_remove').off().click(this.setHandlerPrevent('double', this.actionRemovePublicKey));
@@ -82,9 +81,8 @@ View.run(class ContactsView extends View {
     let tableContents = '';
     for (const email of contacts.map(preview => preview.email).filter((value, index, self) => !self.slice(0, index).find((el) => el === value))) {
       const e = Xss.escape(email);
-      const show = `<a href="#" title="Show" class="action_show_list" data-test="action-show-email-${e.replace(/[^a-z0-9]+/g, '')}"></a>`;
-      const change = `<a href="#" title="Change" class="action_change" data-test="action-change-pubkey-${e.replace(/[^a-z0-9]+/g, '')}"></a>`;
-      tableContents += `<tr email="${e}"><td>${e}</td><td>${show}</td><td>${change}</td></tr>`;
+      const show = `<a href="#" title="Show" class="action_show_list" data-test="action-show-email-${e.replace(/[^a-z0-9]+/g, '')}">${e}</a>`;
+      tableContents += `<tr email="${e}"><td colspan="3">${show}</td></tr>`;
     }
     Xss.sanitizeReplace('table#emails', `<table id="emails" class="hide_when_rendering_subpage">${tableContents}</table>`);
     $('.container-table-note').text(contacts.length >= 500 ? '(showing first 500 results)' : '');
@@ -122,8 +120,6 @@ View.run(class ContactsView extends View {
       for (const pubkey of contact.sortedPubkeys) {
         const keyid = Xss.escape(pubkey.pubkey.id);
         const type = Xss.escape(pubkey.pubkey.type);
-        const show = `<a href="#" title="Show" class="action_show" data-test="action-show-pubkey-${keyid}-${type}"></a>`;
-        const remove = `<a href="#" title="Remove" class="action_remove" data-test="action-remove-pubkey-${keyid}"></a>`;
         let status: string;
         if (pubkey.revoked) {
           status = 'revoked';
@@ -136,11 +132,17 @@ View.run(class ContactsView extends View {
         } else {
           status = 'unusable';
         }
-        tableContents += `<tr email="${e}" keyid="${keyid}" type="${type}"><td>${type} - ${status} - ${Str.spaced(keyid)}</td><td>${show}</td><td>${remove}</td></tr>`;
+        const change = `<a href="#" title="Change" class="action_change" data-test="action-change-pubkey-${keyid}-${type}"></a>`;
+        const remove = `<a href="#" title="Remove" class="action_remove" data-test="action-remove-pubkey-${keyid}-${type}"></a>`;
+        const show = `<a href="#" title="Show" class="action_show" data-test="action-show-pubkey-${keyid}-${type}">${type} - ${status} - ${Str.spaced(keyid)}</a>`;
+        tableContents += `<tr email="${e}" keyid="${keyid}" type="${type}"><td>${show}</td><td>${change}</td><td>${remove}</td></tr>`;
       }
       parentTr.after(tableContents);
-      viewPubkeyButton.style.display = 'none';
-      $('a.action_show').off().click(this.setHandlerPrevent('double', this.actionRenderViewPublicKeyHandler));
+      // remove all listeners from the old link by creating a new element
+      const newElement = viewPubkeyButton.cloneNode(true);
+      viewPubkeyButton!.parentNode!.replaceChild(newElement, viewPubkeyButton);
+      $('.action_show').off().click(this.setHandlerPrevent('double', this.actionRenderViewPublicKeyHandler));
+      $('.action_change').off().click(this.setHandlerPrevent('double', this.actionRenderChangePublicKeyHandler));
     }
   }
 
