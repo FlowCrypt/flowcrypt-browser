@@ -102,24 +102,27 @@ export class SmimeKey {
         forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.INTEGER, false,
           forge.util.hexToBytes(certificate.serialNumber))
       ]);
+    const expiration = SmimeKey.dateToNumber(certificate.validity.notAfter)!;
+    const expired = expiration < Date.now();
+    const usableIgnoringExpiration = SmimeKey.isEmailCertificate(certificate);
     const key = {
       type: 'x509',
       id: fingerprint,
       allIds: [fingerprint],
-      usableForEncryption: SmimeKey.isEmailCertificate(certificate),
-      usableForSigning: SmimeKey.isEmailCertificate(certificate),
-      usableForEncryptionButExpired: false,
-      usableForSigningButExpired: false,
+      usableForEncryption: usableIgnoringExpiration && !expired,
+      usableForSigning: usableIgnoringExpiration && !expired,
+      usableForEncryptionButExpired: usableIgnoringExpiration && expired,
+      usableForSigningButExpired: usableIgnoringExpiration && expired,
       emails,
       identities: emails,
       created: SmimeKey.dateToNumber(certificate.validity.notBefore),
       lastModified: SmimeKey.dateToNumber(certificate.validity.notBefore),
-      expiration: SmimeKey.dateToNumber(certificate.validity.notAfter),
+      expiration,
       fullyDecrypted: !!certificate.privateKey,
       fullyEncrypted: false,
       isPublic: !certificate.privateKey,
       isPrivate: !!certificate.privateKey,
-      revoked: false, // todo:
+      revoked: false,
       issuerAndSerialNumber: forge.asn1.toDer(issuerAndSerialNumberAsn1).getBytes()
     } as Key;
     (key as unknown as { rawArmored: string }).rawArmored = pem;

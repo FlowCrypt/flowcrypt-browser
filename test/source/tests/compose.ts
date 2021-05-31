@@ -1113,7 +1113,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
       await contactsFrame.waitAll('@page-contacts');
       await contactsFrame.waitAndClick('@action-show-import-public-keys-form', { confirmGone: true });
-      await contactsFrame.waitAndType('@input-bulk-public-keys', testConstants.smimeCert);
+      await contactsFrame.waitAndType('@input-bulk-public-keys', testConstants.expiredSmimeCert);
       await contactsFrame.waitAndClick('@action-show-parsed-public-keys', { confirmGone: true });
       await contactsFrame.waitAll('iframe');
       const pubkeyFrame = await contactsFrame.getFrame(['pgp_pubkey.htm']);
@@ -1128,8 +1128,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await contactsFrame.waitForContent('@container-pubkey-details', 'Created on: Mon Mar 23 2020');
       await contactsFrame.waitForContent('@container-pubkey-details', 'Expiration: Tue Mar 23 2021');
       await contactsFrame.waitForContent('@container-pubkey-details', 'Expired: yes');
-      await contactsFrame.waitForContent('@container-pubkey-details', 'Usable for encryption: true');
-      await contactsFrame.waitForContent('@container-pubkey-details', 'Usable for signing: true');
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Usable for encryption: false');
+      await contactsFrame.waitForContent('@container-pubkey-details', 'Usable for signing: false');
     }));
 
     ava.default('compose - reply - CC&BCC test forward', testWithBrowser('compatibility', async (t, browser) => {
