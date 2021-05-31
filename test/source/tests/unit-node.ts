@@ -119,17 +119,59 @@ export let defineUnitNodeTests = (testVariant: TestVariant) => {
     });
 
     ava.default('[unit][KeyUtil.parse] S/MIME key parsing works', async t => {
+      /*
+      // generate a key pair
+      const keys = forge.pki.rsa.generateKeyPair(2048);
+      // create a certification request (CSR)
+      const csr = forge.pki.createCertificationRequest();
+      csr.publicKey = keys.publicKey;
+      csr.setSubject([{
+        name: 'commonName',
+        value: 'certificate@test.com'
+      }]);
+      csr.sign(keys.privateKey);
+      // issue a certificate based on the csr
+      const cert = forge.pki.createCertificate();
+      cert.serialNumber = '2';
+      cert.validity.notBefore = new Date();
+      cert.validity.notAfter = new Date();
+      cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 100);
+      cert.setSubject(csr.subject.attributes);
+      const caCertPem = readFileSync("./ca.crt", 'utf8');
+      const caKeyPem = readFileSync("./ca.key", 'utf8');
+      const caCert = forge.pki.certificateFromPem(caCertPem);
+      const caKey = forge.pki.decryptRsaPrivateKey(caKeyPem, '1234');
+      cert.setIssuer(caCert.subject.attributes);
+      cert.setExtensions([{
+        name: 'basicConstraints',
+        cA: true
+      }, {
+        name: 'keyUsage',
+        keyCertSign: true,
+        digitalSignature: true,
+        nonRepudiation: true,
+        keyEncipherment: true,
+        dataEncipherment: true
+      }, {
+        name: 'extKeyUsage',
+        emailProtection: true
+      }
+      ]);
+      cert.publicKey = csr.publicKey;
+      cert.sign(caKey);
+      const pem = forge.pki.certificateToPem(cert);
+      */
       const key = await KeyUtil.parse(testConstants.smimeCert);
-      expect(key.id).to.equal('16BB407403A3ADC55E1E0E4AF93EEC8FB187C923');
+      expect(key.id).to.equal('6FE116D2759F0FFAC5623E7E10D6E37941EAA0BB');
       expect(key.type).to.equal('x509');
       expect(key.usableForEncryption).to.equal(true);
       expect(key.usableForSigning).to.equal(true);
       expect(key.usableForEncryptionButExpired).to.equal(false);
       expect(key.usableForSigningButExpired).to.equal(false);
       expect(key.emails.length).to.equal(1);
-      expect(key.emails[0]).to.equal('actalis@meta.33mail.com');
+      expect(key.emails[0]).to.equal('certificate@test.com');
       expect(key.identities.length).to.equal(1);
-      expect(key.identities[0]).to.equal('actalis@meta.33mail.com');
+      expect(key.identities[0]).to.equal('certificate@test.com');
       expect(key.isPublic).to.equal(true);
       expect(key.isPrivate).to.equal(false);
       expect(key.expiration).to.not.equal(undefined);
@@ -501,7 +543,7 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       const { keys, errs } = await KeyUtil.readMany(Buf.fromUtfStr(testConstants.smimeCert));
       expect(keys.length).to.equal(1);
       expect(errs.length).to.equal(0);
-      expect(keys[0].id).to.equal('16BB407403A3ADC55E1E0E4AF93EEC8FB187C923');
+      expect(keys[0].id).to.equal('6FE116D2759F0FFAC5623E7E10D6E37941EAA0BB');
       expect(keys[0].type).to.equal('x509');
       t.pass();
     });
@@ -511,7 +553,7 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       const { keys, errs } = await KeyUtil.readMany(Buf.fromRawBytesStr(pem.body));
       expect(keys.length).to.equal(1);
       expect(errs.length).to.equal(0);
-      expect(keys[0].id).to.equal('16BB407403A3ADC55E1E0E4AF93EEC8FB187C923');
+      expect(keys[0].id).to.equal('6FE116D2759F0FFAC5623E7E10D6E37941EAA0BB');
       expect(keys[0].type).to.equal('x509');
       t.pass();
     });
@@ -617,7 +659,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       const { keys, errs } = await KeyUtil.readMany(Buf.fromUtfStr(smimeAndPgp));
       expect(keys.length).to.equal(2);
       expect(errs.length).to.equal(0);
-      expect(keys.some(key => key.id === '16BB407403A3ADC55E1E0E4AF93EEC8FB187C923')).to.equal(true);
+      expect(keys.some(key => key.id === '6FE116D2759F0FFAC5623E7E10D6E37941EAA0BB')).to.equal(true);
       expect(keys.some(key => key.id === '3449178FCAAF758E24CB68BE62CB4E6F9ECA6FA1')).to.equal(true);
       expect(keys.some(key => key.type === 'openpgp')).to.equal(true);
       expect(keys.some(key => key.type === 'x509')).to.equal(true);

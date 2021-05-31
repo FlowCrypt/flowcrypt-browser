@@ -33,7 +33,7 @@
     "stylelint": "13.13.1",
     "stylelint-config-standard": "22.0.0",
     "tslint": "6.1.3",
-    "typescript": "4.2.4",
+    "typescript": "4.3.2",
     "web-ext": "6.1.0"
   },
   "dependencies": {
@@ -41,7 +41,7 @@
     "dompurify": "2.2.8",
     "jquery": "3.6.0",
     "openpgp": "4.10.10",
-    "sweetalert2": "11.0.7",
+    "sweetalert2": "11.0.12",
     "node-forge": "0.10.0",
     "iso-8859-2": "1.0.0",
     "zxcvbn": "4.4.2",
