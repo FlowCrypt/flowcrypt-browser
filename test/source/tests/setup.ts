@@ -12,6 +12,8 @@ import { Str } from './../core/common';
 import { MOCK_KM_LAST_INSERTED_KEY } from './../mock/key-manager/key-manager-endpoints';
 import { BrowserRecipe } from './tooling/browser-recipe';
 import { KeyInfo, KeyUtil } from '../core/crypto/key';
+import { TestUrls } from '../browser/test-urls';
+import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -412,6 +414,25 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await Util.sleep(5);
       await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase: 'long enough to suit requirements' }, usedPgpBefore: false });
       await settingsPage.notPresent('.swal2-container');
+      await settingsPage.close();
+    }));
+
+    ava.default('user@forbid-storing-passphrase-org-rule.flowcrypt.test - do not store passphrase', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'user@forbid-storing-passphrase-org-rule.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await Util.sleep(5);
+      const passphrase = 'long enough to suit requirements';
+      await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase }, usedPgpBefore: false });
+      await settingsPage.notPresent('.swal2-container');
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
+      await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'should not send as pass phrase is not known', { encrypt: false });
+      await composeFrame.waitAndClick('@action-send');
+      await inboxPage.waitAll('@dialog-passphrase');
+      const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
+      expect(await InboxPageRecipe.isElementDisabled(await passphraseDialog.waitAny('@forget-pass-phrase'))).to.be.equal(true);
+      await inboxPage.close();
       await settingsPage.close();
     }));
 

@@ -119,7 +119,12 @@ export class SetupView extends View {
     if (this.orgRules.mustSubmitToAttester() || !this.orgRules.canSubmitPubToAttester()) {
       $('.remove_if_pubkey_submitting_not_user_configurable').remove();
     }
-    if (this.orgRules.rememberPassPhraseByDefault()) {
+    if (this.orgRules.forbidStoringPassPhrase()) {
+      $('#step_2a_manual_create .input_passphrase_save').prop('disabled', true);
+      $('#step_2b_manual_enter .input_passphrase_save').prop('disabled', true);
+      $('#step_2a_manual_create .input_passphrase_save').prop('checked', false);
+      $('#step_2b_manual_enter .input_passphrase_save').prop('checked', false);
+    } else if (this.orgRules.rememberPassPhraseByDefault()) {
       $('#step_2a_manual_create .input_passphrase_save').prop('checked', true);
       $('#step_2b_manual_enter .input_passphrase_save').prop('checked', true);
     }

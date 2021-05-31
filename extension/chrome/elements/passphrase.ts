@@ -15,6 +15,7 @@ import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import { Settings } from '../../js/common/settings.js';
+import { OrgRules } from '../../js/common/org-rules.js';
 
 View.run(class PassphraseView extends View {
   private readonly acctEmail: string;
@@ -23,6 +24,7 @@ View.run(class PassphraseView extends View {
   private readonly type: string;
   private readonly initiatorFrameId?: string;
   private keysWeNeedPassPhraseFor: KeyInfo[] | undefined;
+  private orgRules!: OrgRules;
 
   constructor() {
     super();
@@ -36,6 +38,10 @@ View.run(class PassphraseView extends View {
 
   public render = async () => {
     Ui.event.protect();
+    this.orgRules = await OrgRules.newInstance(this.acctEmail);
+    if (!this.orgRules.forbidStoringPassPhrase()) {
+      $('.forget').prop('disabled', false);
+    }
     await initPassphraseToggle(['passphrase']);
     const allPrivateKeys = await KeyStore.get(this.acctEmail);
     this.keysWeNeedPassPhraseFor = allPrivateKeys.filter(ki => this.longids.includes(ki.longid));
