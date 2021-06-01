@@ -110,7 +110,7 @@ View.run(class SettingsView extends View {
       this.reload(advanced);
     });
     BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
-      // todo: use #cryptup_dialog just like passphrase_dialog does
+      // todo: use Ui.modal.iframe just like passphrase_dialog does
       const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
       window.open(factory.srcAddPubkeyDialog(emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
     });
@@ -129,17 +129,15 @@ View.run(class SettingsView extends View {
     BrowserMsg.addListener('open_google_auth_dialog', async ({ acctEmail, scopes }: Bm.OpenGoogleAuthDialog) => {
       await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, acctEmail, scopes);
     });
-    BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
-      if (!$('#cryptup_dialog').length) {
-        const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
-        $('body').append(factory.dialogPassphrase(longids, type)); // xss-safe-factory
-      }
+    BrowserMsg.addListener('passphrase_dialog', async ({ longids, type, initiatorFrameId }: Bm.PassphraseDialog) => {
+      const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
+      await factory.showPassphraseDialog(longids, type, initiatorFrameId);
     });
     BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
       this.notifications!.showAuthPopupNeeded(acctEmail);
     });
     BrowserMsg.addListener('close_dialog', async () => {
-      $('#cryptup_dialog').remove();
+      Swal.close();
     });
     BrowserMsg.listen(this.tabId);
     $('.show_settings_page').click(this.setHandler(async target => {

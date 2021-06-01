@@ -5,17 +5,21 @@
 <head>
   <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <meta http-equiv="Content-Security-Policy" content="script-src 'self'">
   <title>FlowCrypt</title>
   <link rel="stylesheet" href="/css/cryptup.css" />
   <link rel="stylesheet" href="/css/sweetalert2.css" />
 </head>
 
 <body id="attachment-preview">
-  <button id="attachment-preview-download" class="display_none" data-test="attachment-preview-download">
-    <img src="/img/svgs/download-link-white.svg" alt="download attachment" width="28">
-    DOWNLOAD
-  </button>
+  <div class="attachment-preview-toolbar">
+    <div id="attachment-preview-filename" data-test="attachment-preview-filename"></div>
+    <button id="attachment-preview-download" class="display_none" data-test="attachment-preview-download">
+      <img src="/img/svgs/download-link-white.svg" alt="download attachment" width="28">
+      DOWNLOAD
+    </button>
+    <div></div>
+  </div>
+
   <div id="attachment-preview-container"></div>
 
   <script src="/lib/purify.js"></script>

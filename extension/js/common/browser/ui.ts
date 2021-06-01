@@ -5,7 +5,7 @@
 import { ApiErr } from '../api/shared/api-error.js';
 import { Catch } from '../platform/catch.js';
 import { Dict, Url } from '../core/common.js';
-import Swal from 'sweetalert2';
+import Swal, { SweetAlertResult } from 'sweetalert2';
 import { Xss } from '../platform/xss.js';
 
 type NamedSels = Dict<JQuery<HTMLElement>>;
@@ -241,10 +241,12 @@ export class Ui {
       });
       Ui.activateModalPageLinkTags(); // in case the page itself has data-swal-page links
     },
-    iframe: async (iframeUrl: string, iframeWidth: number, iframeHeight: number): Promise<void> => {
-      await Ui.swal().fire({
+    iframe: async (iframeUrl: string, iframeHeight?: number, dataTest?: string): Promise<SweetAlertResult> => {
+      const iframeWidth = Math.min(800, $('body').width()! - 200);
+      iframeHeight = iframeHeight || $('body').height()! - ($('body').height()! > 800 ? 150 : 75);
+      return await Ui.swal().fire({
         didOpen: () => {
-          $(Swal.getPopup()!).attr('data-test', 'dialog');
+          $(Swal.getPopup()!).attr('data-test', dataTest || 'dialog');
           $(Swal.getCloseButton()!).attr('data-test', 'dialog-close').blur();
         },
         willClose: () => {

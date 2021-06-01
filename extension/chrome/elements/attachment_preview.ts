@@ -2,6 +2,7 @@
 
 'use strict';
 
+import { Assert } from '../../js/common/assert.js';
 import { Attachment } from '../../js/common/core/attachment.js';
 import { AttachmentDownloadView } from './attachment.js';
 import { AttachmentPreviewPdf } from '../../js/common/ui/attachment_preview_pdf.js';
@@ -10,20 +11,23 @@ import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { PDFDocumentProxy } from '../../types/pdf.js';
 import { MsgUtil, DecryptError, DecryptErrTypes, DecryptSuccess, DecryptionError } from '../../js/common/core/crypto/pgp/msg-util.js';
-import { PassphraseStore } from '../../js/common/platform/store/passphrase-store.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Ui } from '../../js/common/browser/ui.js';
+import { Url } from '../../js/common/core/common.js';
 
 type AttachmentType = 'img' | 'txt' | 'pdf';
 
 declare const pdfjsLib: any; // tslint:disable-line:ban-types
 
 View.run(class AttachmentPreviewView extends AttachmentDownloadView {
+  protected readonly initiatorFrameId?: string;
   private attachmentPreviewContainer = $('#attachment-preview-container');
 
   constructor() {
     super();
+    const uncheckedUrlParams = Url.parse(['initiatorFrameId']);
+    this.initiatorFrameId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'initiatorFrameId');
   }
 
   public render = async () => {
@@ -55,13 +59,14 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
         }
         $('body').click((e) => {
           if (e.target === document.body || $('body').children().toArray().indexOf(e.target) !== -1) {
-            BrowserMsg.send.closeSwal(this.parentTabId);
+            BrowserMsg.send.closeDialog(this.parentTabId);
           }
         });
         $('#attachment-preview-download').css('display', 'flex').click((e) => {
           e.stopPropagation();
           Browser.saveToDownloads(attachmentForSave);
         });
+        $('#attachment-preview-filename').text(this.origNameBasedOnFilename);
       }
     } catch (e) {
       this.renderErr(e);
@@ -86,11 +91,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
     if ((result as DecryptSuccess).content) {
       return result.content;
     } else if ((result as DecryptError).error.type === DecryptErrTypes.needPassphrase) {
-      BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'attachment', longids: (result as DecryptError).longids.needPassphrase });
-      if (! await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, (result as DecryptError).longids.needPassphrase, 1000, this.ppChangedPromiseCancellation)) {
-        return;
-      }
-      return await this.render();
+      return BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'attachment', longids: (result as DecryptError).longids.needPassphrase, initiatorFrameId: this.initiatorFrameId });
     }
     throw new DecryptionError(result as DecryptError);
   }

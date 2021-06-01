@@ -104,13 +104,14 @@ export class AttachmentDownloadView extends View {
         }
       });
     }
-    BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
-      if (!entered) {
+    BrowserMsg.addListener('passphrase_entry', async ({ entered, initiatorFrameId }: Bm.PassphraseEntry) => {
+      if (entered && initiatorFrameId === this.frameId) {
+        await this.previewAttachmentClickedHandler();
+      } else {
         this.downloadInProgress = false;
         this.downloadButton.show();
         this.ppChangedPromiseCancellation.cancel = true; // update original object which is monitored by a promise
         this.ppChangedPromiseCancellation = { cancel: false }; // set to a new, not yet used object
-        BrowserMsg.send.closeSwal(this.parentTabId); // attachment preview
       }
     });
     BrowserMsg.listen(this.tabId);
@@ -248,7 +249,7 @@ export class AttachmentDownloadView extends View {
       this.attachment.length = this.size!;
     }
     const factory = new XssSafeFactory(this.acctEmail, this.parentTabId);
-    const iframeUrl = factory.srcPgpAttachmentIframe(this.attachment, this.isEncrypted, undefined, 'chrome/elements/attachment_preview.htm', errorDetailsOpened);
+    const iframeUrl = factory.srcPgpAttachmentIframe(this.attachment, this.isEncrypted, undefined, 'chrome/elements/attachment_preview.htm', errorDetailsOpened, this.frameId);
     BrowserMsg.send.showAttachmentPreview(this.parentTabId, { iframeUrl });
   }
 

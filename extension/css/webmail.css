@@ -204,16 +204,17 @@ body.cryptup_gmail .action_finish_session {
   bottom: 3px;
   left: 50%;
   width: 300px;
-  margin-left: -30px;
+  margin-left: -150px;
   display: flex;
   align-items: center;
   justify-content: center;
+  height: 28px;
   color: #000;
   text-decoration: none;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(200, 200, 200, 0.95);
   padding: 6px 0;
   cursor: pointer;
-  z-index: 1;
+  z-index: 3;
   border-radius: 3px;
   opacity: 0.9;
 }
@@ -223,7 +224,7 @@ body.cryptup_gmail .action_finish_session:hover {
 }
 
 body.cryptup_gmail .action_finish_session img {
-  height: 24px;
+  height: 18px;
   margin: 0 15px 0 -15px;
 }
 
@@ -366,54 +367,31 @@ body.cryptup_gmail div.recipients_use_encryption a {
   right: 20px;
 }
 
-/* cryptup dialog */
-div#cryptup_dialog {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0 auto;
-  z-index: 1100;
-  background-color: rgba(255, 255, 255, 0.85);
+.swal2-popup.ui-modal-iframe {
+  padding: 0;
+  border-radius: 0;
 }
 
-div#cryptup_dialog iframe {
-  position: absolute;
-  width: 640px;
-  height: 370px;
-  top: 50%;
-  left: 50%;
-  margin-left: -300px;
-  margin-top: -200px;
-  border: none;
-  box-shadow: 10px 10px 5px #888;
-  box-shadow: 0 0 25px #aaa;
+.swal2-popup.ui-modal-iframe .swal2-html-container {
+  padding: 0;
 }
 
-div#cryptup_dialog iframe.short {
-  height: 300px;
-  margin-top: -300px;
-}
+.swal2-popup.ui-modal-iframe .swal2-close { color: #999; }
 
-div#cryptup_dialog iframe.medium {
-  height: 500px;
-  margin-top: -300px;
-}
-
-div#cryptup_dialog iframe.mediumtall {
-  height: 630px;
-  margin-top: -315px;
-}
-
-div#cryptup_dialog iframe.tall {
-  height: 780px;
-  margin-top: -390px;
+.swal2-popup.ui-modal-iframe iframe {
+  display: flex;
+  max-width: 100%;
 }
 
 .swal2-container.ui-modal-attachment {
   padding: 0;
   background: rgba(0, 0, 0, 0.85) !important;
   overflow-y: hidden !important;
+}
+
+.swal2-container.ui-modal-attachment .swal2-close {
+  margin-top: 6px;
+  margin-bottom: -54px;
 }
 
 .swal2-container.ui-modal-attachment .swal2-popup {
