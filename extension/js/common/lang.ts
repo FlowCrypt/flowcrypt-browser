@@ -47,7 +47,7 @@ export const Lang = { // tslint:disable-line:variable-name
     wrongPassword: 'Wrong password. ',
     decryptPasswordPrompt: 'Please enter password to decrypt the message',
     connError: 'Could not connect to email provider to open the message, please refresh the page to try again. ',
-    dontKnowHowOpen: 'Please email us at human@flowcrypt.com to submit a bug report, and mention what software was used to send this message to you. We usually fix similar incompatibilities within one week. ',
+    dontKnowHowOpen: 'Please email us at human@flowcrypt.com to submit a bug report, and mention what software was used to send this message to you. ',
     enterPassphrase: 'Enter passphrase',
     toOpenMsg: 'to open this message.',
     writeMe: 'Email human@flowcrypt.com to get this resolved. We respond promptly. ',

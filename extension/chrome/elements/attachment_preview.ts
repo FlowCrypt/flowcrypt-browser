@@ -66,6 +66,7 @@ View.run(class AttachmentPreviewView extends AttachmentDownloadView {
           e.stopPropagation();
           Browser.saveToDownloads(attachmentForSave);
         });
+        $('#attachment-preview-filename').text(this.origNameBasedOnFilename);
       }
     } catch (e) {
       this.renderErr(e);
