@@ -891,6 +891,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await attachment.click('body');
       const attachmentPreviewImage = await inboxPage.getFrame(['attachment_preview.htm']);
       await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
+      await attachmentPreviewImage.waitForContent('@attachment-preview-filename', 'small.png');
     }));
 
     ava.default('attachments - failed to decrypt', testWithBrowser('compatibility', async (t, browser) => {
