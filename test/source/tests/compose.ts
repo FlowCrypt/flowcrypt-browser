@@ -1067,7 +1067,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     ava.default('do not auto-refresh key if older version of the same key available on attester', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const newerExpiredKey = '-----BEGIN PGP PUBLIC KEY BLOCK-----\r\nVersion: FlowCrypt Email Encryption 7.8.4\r\nComment: Seamlessly send and receive encrypted email\r\n\r\nxsBNBF8QJFgBCACdPi2i6uflsgNVvSw20eVaqOwEgwRAu1wrwB+s3UxFxsnE\r\nXBiJ6tvQU+NzNFLWjT5FwyTz8PM2lDnXz/j6nQGft+l/01l349u0L4WhTEES\r\nByPTOA1Wbs4YRbef1+T6tKklN8CKH93tBKRFTZXsMv0nLuEMmyxNgYHvNsnB\r\nGXlGQrrsJ5qVr10YZh+dXo8Ir4mXXE5tCrVH/AzDBK/cBZcUbBD7gmvnt+HF\r\nvuJYMRQ46/NR84S57Dwm5ZzER0PMQfnLYyjdKE4DEVtL84WVhGVqNhBqy1Z6\r\nl/wvSHnBvrXe1Vdm2YXT0pIahe9wJmrA2dixA8c+SczICn+QZAkBsAZRABEB\r\nAAHNKTxoYXMub2xkZXIua2V5Lm9uLmF0dGVzdGVyQHJlY2lwaWVudC5jb20+\r\nwsCTBBABCAAmBQJfECR2BQkAAAA8BgsJBwgDAgQVCAoCBBYCAQACGQECGwMC\r\nHgEAIQkQHmLtbRWiWSEWIQSOx48EPOsCJJiv1HceYu1tFaJZIZ4CB/4hCFJw\r\nustsTLQNCBJMAoBtjGPDohnsaMImmDPw8P1TyIidDlgnKqpzBhF29X0LiJIf\r\n5EUDiWMb3O5j+jXOR7kF1UJkj64eW5/GOuN+O15CIRLRWCEJ3mv3H9b/Bzgt\r\njzWg1qf4c8GIaU+R4nJKbrvoX8GT2mnntLnTCDxZvSb9vfgBNXLleeI33xvX\r\nEHtOnb1zYb9SH6YKWRKAYD7zihPdIDnbbgUMTAahHGjZqPm0R/MoBK0ra1QY\r\njJA9SZIWInTjDQimfbsMbFXwyufVwBYoEn6qZuRFBts/8/gd83l51fu+JfO8\r\nG90LSQQUGJXwsAa/CaDUI6WlN1Xyv3+D+avUzsBNBF8QJFgBCACnVXFdNoKA\r\nTHN6W7ewu8CDaDEOxrUGckrTFSOLN0hkLrlrHRZg4/N0gZf/TdUynGJ6fkXq\r\n5ZDZWiPujAyjeTHhoUb3Oc0O9voX3TLRROduDxW6UAeurzXAiL/25qOp1TRr\r\nFhvllleg+fcZDNjPct4zyUxUW6NzWkHJ+XvNxq2fTH82n0RfPTyRoee/ymuR\r\nexRU4vfYF8XNo+aEDx00rwQFpl8ot20Qus6vKejo0SIyr0bS4oHBB3sYHrxt\r\nkfHLwiSfE27eW2pogta6JcH7w+OLGadoGxqGs1cYpbVhteDRUQ4nTov3JWt5\r\nVoNlXiaBdV3vRF52Q+UuUwylsbcplDeDABEBAAHCwHwEGAEIAA8FAl8QJHYF\r\nCQAAADwCGwwAIQkQHmLtbRWiWSEWIQSOx48EPOsCJJiv1HceYu1tFaJZIQ2b\r\nCACYF7lF3mnvgduu0l5USNRsu7ZkkgK0qKvUaoyPvD80bg/kze7XP+Eg3Bad\r\n6kakLW/jZhQO5S4qDPLhjLLhsbdXWBcoKctfLAYLfBE5mQfC7sU5ufQ615JM\r\njcomkXMxStmcTzulV49H9U0AfKOuO9TYKYudm+iMXz3b5aVY4Db4SBChr+t8\r\nFhsuaDOcy4mCstA4HJjhVDWuGoUSwxbxUOyYb8YioxHi+CgRWnuf/chGEPHv\r\nmp+d37nWzm561RPm8+YfLI+Ps/OcsYogXm/RZNirn08XSaCuRBwwIiDasHTi\r\nlTjK+SO789oXkNajtP6A8FbrkF6HlNBgpaYB10Y4qfW5\r\n=aZpf\r\n-----END PGP PUBLIC KEY BLOCK-----\r\n';
       const recipientEmail = 'has.older.key.on.attester@recipient.com';
       // add a newer expired key manually
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
@@ -1075,7 +1074,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
       await contactsFrame.waitAll('@page-contacts');
       await contactsFrame.waitAndClick('@action-show-import-public-keys-form', { confirmGone: true });
-      await contactsFrame.waitAndType('@input-bulk-public-keys', newerExpiredKey);
+      await contactsFrame.waitAndType('@input-bulk-public-keys', testConstants.newHasOlderKeyOnAttester);
       await contactsFrame.waitAndClick('@action-show-parsed-public-keys', { confirmGone: true });
       await contactsFrame.waitAll('iframe');
       const pubkeyFrame = await contactsFrame.getFrame(['pgp_pubkey.htm']);
