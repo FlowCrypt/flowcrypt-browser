@@ -52,10 +52,10 @@ View.run(class ContactsView extends View {
   }
 
   public setHandlers = () => {
-    $('a.action_show_list').off().click(this.setHandlerPrevent('double', this.actionRenderListPublicKeyHandler));
+    $('.action_show_pubkey_list').off().click(this.setHandlerPrevent('double', this.actionRenderListPublicKeyHandler));
     $('#edit_contact .action_save_edited_pubkey').off().click(this.setHandlerPrevent('double', this.actionSaveEditedPublicKeyHandler));
     $('#bulk_import .action_process').off().click(this.setHandlerPrevent('double', this.actionProcessBulkImportTextInput));
-    $('a.action_remove').off().click(this.setHandlerPrevent('double', this.actionRemovePublicKey));
+    $('.action_remove').off().click(this.setHandlerPrevent('double', this.actionRemovePublicKey));
     $('.action_export_all').off().click(this.setHandlerPrevent('double', this.actionExportAllKeysHandler));
     $('.action_view_bulk_import').off().click(this.setHandlerPrevent('double', this.actionRenderBulkImportPageHandler));
     $('.input-search-contacts').off().keyup(this.setHandlerPrevent('double', this.loadAndRenderContactList));
@@ -73,18 +73,21 @@ View.run(class ContactsView extends View {
       lineActionsHtml += '&nbsp;&nbsp;<a href="https://flowcrypt.com/docs/technical/keyserver-integration.html" target="_blank">use custom keyserver</a>&nbsp;&nbsp;';
     }
     Xss.sanitizeRender('.line.actions', lineActionsHtml);
-    $('table#emails').text('');
-    $('div.hide_when_rendering_subpage').css('display', 'block');
-    $('table.hide_when_rendering_subpage').css('display', 'table');
+    $('#emails').text('');
+    $('.hide_when_rendering_subpage').css('display', 'block');
     $('h1').text('Contacts and their Public Keys');
     $('#view_contact, #edit_contact, #bulk_import').css('display', 'none');
     let tableContents = '';
     for (const email of contacts.map(preview => preview.email).filter((value, index, self) => !self.slice(0, index).find((el) => el === value))) {
       const e = Xss.escape(email);
-      const show = `<a href="#" title="Show" class="action_show_list" data-test="action-show-email-${e.replace(/[^a-z0-9]+/g, '')}">${e}</a>`;
-      tableContents += `<tr email="${e}"><td colspan="3">${show}</td></tr>`;
+      tableContents += `
+        <div email="${e}" class="action_show_pubkey_list" data-test="action-show-email-${e.replace(/[^a-z0-9]+/g, '')}">
+          <img src="/img/svgs/chevron-left.svg" class="icon-chevron">
+          ${e}
+        </div>
+      `;
     }
-    Xss.sanitizeReplace('table#emails', `<table id="emails" class="hide_when_rendering_subpage">${tableContents}</table>`);
+    Xss.sanitizeReplace('#emails', `<div id="emails" class="hide_when_rendering_subpage">${tableContents}</div>`);
     $('.container-table-note').text(contacts.length >= 500 ? '(showing first 500 results)' : '');
     this.setHandlers();
   }
@@ -110,9 +113,9 @@ View.run(class ContactsView extends View {
     Browser.saveToDownloads(exportFile);
   }
 
-  private actionRenderListPublicKeyHandler = async (viewPubkeyButton: HTMLElement) => {
-    const parentTr = $(viewPubkeyButton).closest('tr');
-    const email = parentTr.attr('email')!;
+  private actionRenderListPublicKeyHandler = async (emailRow: HTMLElement) => {
+    $(emailRow).addClass('opened');
+    const email = $(emailRow).attr('email')!;
     const contact = await ContactStore.getOneWithAllPubkeys(undefined, email);
     const e = Xss.escape(email);
     if (contact && contact.sortedPubkeys.length) {
@@ -135,22 +138,22 @@ View.run(class ContactsView extends View {
         const change = `<a href="#" title="Change" class="action_change" data-test="action-change-pubkey-${keyid}-${type}"></a>`;
         const remove = `<a href="#" title="Remove" class="action_remove" data-test="action-remove-pubkey-${keyid}-${type}"></a>`;
         const show = `<a href="#" title="Show" class="action_show" data-test="action-show-pubkey-${keyid}-${type}">${type} - ${status} - ${Str.spaced(keyid)}</a>`;
-        tableContents += `<tr email="${e}" keyid="${keyid}" type="${type}"><td>${show}</td><td>${change}</td><td>${remove}</td></tr>`;
+        tableContents += `<div class="contacts-pubkey" email="${e}" keyid="${keyid}" type="${type}">${show}${change}${remove}</div>`;
       }
-      parentTr.after(tableContents);
+      $(emailRow).after(tableContents);
       // remove all listeners from the old link by creating a new element
-      const newElement = viewPubkeyButton.cloneNode(true);
-      viewPubkeyButton!.parentNode!.replaceChild(newElement, viewPubkeyButton);
+      const newElement = emailRow.cloneNode(true);
+      emailRow!.parentNode!.replaceChild(newElement, emailRow);
       $('.action_show').off().click(this.setHandlerPrevent('double', this.actionRenderViewPublicKeyHandler));
       $('.action_change').off().click(this.setHandlerPrevent('double', this.actionRenderChangePublicKeyHandler));
     }
   }
 
   private actionRenderViewPublicKeyHandler = async (viewPubkeyButton: HTMLElement) => {
-    const parentTr = $(viewPubkeyButton).closest('tr');
-    const id = parentTr.attr('keyid')!;
-    const type = parentTr.attr('type')!;
-    const email = parentTr.attr('email')!;
+    const parentRow = $(viewPubkeyButton).closest('[email]');
+    const id = parentRow.attr('keyid')!;
+    const type = parentRow.attr('type')!;
+    const email = parentRow.attr('email')!;
     const armoredPubkey = await ContactStore.getPubkey(undefined, { id, type });
     if (!armoredPubkey) {
       // todo: show error message like 'key disappeared'?
@@ -177,7 +180,7 @@ View.run(class ContactsView extends View {
 
   private actionRenderChangePublicKeyHandler = (changePubkeyButton: HTMLElement) => {
     $('.hide_when_rendering_subpage').css('display', 'none');
-    const email = $(changePubkeyButton).closest('tr').attr('email')!;
+    const email = $(changePubkeyButton).closest('[email]').attr('email')!;
     Xss.sanitizeRender('h1', `${this.backBtn}${this.space}${Xss.escape(email)}${this.space}(edit)`);
     $('#edit_contact').css('display', 'block');
     $('#edit_contact .input_pubkey').val('').attr('email', email);
@@ -203,7 +206,7 @@ View.run(class ContactsView extends View {
   }
 
   private actionRemovePublicKey = async (rmPubkeyButton: HTMLElement) => {
-    await ContactStore.save(undefined, await ContactStore.obj({ email: $(rmPubkeyButton).closest('tr').attr('email')! }));
+    await ContactStore.save(undefined, await ContactStore.obj({ email: $(rmPubkeyButton).closest('[email]').attr('email')! }));
     await this.loadAndRenderContactList();
   }
 

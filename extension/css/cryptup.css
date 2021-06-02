@@ -483,64 +483,59 @@ body#settings > .action_show_help:hover { text-decoration: underline; }
 
 body#settings a.action_change::before,
 body#settings a.action_remove::before {
+  display: inline-block;
   background-size: 100%;
   content: "";
   height: 25px;
-  left: 2px;
-  position: absolute;
   width: 25px;
-  top: 2.5px;
+  margin: 10px;
 }
 
 body#settings .action_change::before { background-image: url("/img/svgs/contact__edit-icon.svg"); }
 body#settings .action_remove::before { background-image: url("/img/svgs/contact__remove-icon.svg"); }
 
-body#settings > div#content.contacts #emails td:nth-child(2),
-body#settings > div#content.contacts #emails td:nth-child(3) {
-  display: inline-block;
-  height: 25px;
-  width: 25px;
+body#settings > div#content.contacts #emails {
+  text-align: initial;
+  padding: 20px;
 }
 
-body#settings > div#content.contacts #emails tr {
+body#settings > div#content.contacts #emails .action_show_pubkey_list {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  border-bottom: 1px solid #f6f6f6;
+  cursor: pointer;
+}
+
+body#settings > div#content.contacts #emails .action_show_pubkey_list .icon-chevron {
+  height: 15px;
   margin: 10px;
-  height: 32px;
+  transform: rotate(180deg);
+  transition: transform 0.15s;
+  opacity: 0.5;
 }
 
-body#settings > div#content.contacts #emails tr a {
-  border-radius: 15px;
-  display: block;
-  font-size: 11px;
-  font-weight: 500;
-  margin: 10px 5px;
-  margin-right: 5%;
-  padding: 15px 5px;
-  position: relative;
-  text-align: center;
-  transition: 0.25s;
+body#settings > div#content.contacts #emails .action_show_pubkey_list.opened .icon-chevron {
+  transform: rotate(270deg);
 }
 
-body#settings > div#content.contacts #emails tr td:first-child {
-  font-size: 16px;
-  text-align: left;
-  text-indent: 0;
-  width: 65% !important;
+body#settings > div#content.contacts #emails .contacts-pubkey {
+  display: flex;
+  align-items: center;
+  background: #f5f5f5;
+  margin: -7px 0 7px;
+  padding-left: 30px;
+  font-size: 14px;
+  border-bottom: 1px solid #eaeaea;
 }
 
-body#settings > div#content.contacts table#emails td {
-  font-size: 13px;
-  height: auto;
-  display: block;
-  width: 15px;
-  text-align: left;
-  float: left;
-  padding: 4px 15px;
+body#settings > div#content.contacts #emails .contacts-pubkey .action_show {
+  flex: 1;
+  text-decoration: none;
 }
 
-body#settings > div#content.contacts table#emails {
-  margin: 0 auto;
-  color: #666;
-  min-width: 100%;
+body#settings > div#content.contacts #emails .contacts-pubkey:last-child {
+  margin-bottom: 10px;
 }
 
 body#settings > div#content textarea { width: 100%; }
