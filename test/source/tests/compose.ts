@@ -713,6 +713,17 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await expectRecipientElements(composePage, { to: [] });
     }));
 
+    ava.default('compose - enter recipient which is not in the contact list', testWithBrowser('compatibility', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+      await composePage.waitAndType(`@input-to`, 'unknown@flowcrypt.test');
+      // for enterprise the 'No Contacts Found' popup won't be shown because Google is connected
+      if (testVariant === 'CONSUMER-MOCK') {
+        await composePage.waitForContent('@container-contacts', 'No Contacts Found');
+      }
+      await composePage.press('Enter');
+      await composePage.waitTillGone('@container-contacts');
+    }));
+
     ava.default('compose - new message, open footer', testWithBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await ComposePageRecipe.fillRecipients(composePage, { to: 'human@flowcrypt.com' }, 'new');

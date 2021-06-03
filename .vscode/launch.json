@@ -111,5 +111,27 @@
         "<node_internals>/**/*.js"
       ]
     },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug chrome_enterprise_mock",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava",
+      "preLaunchTask": "npm: pretest-incremental",
+      "runtimeArgs": [
+        "build/test/test/source/test.js",
+        "--verbose",
+        "--concurrency=1",
+        "--",
+        "ENTERPRISE-MOCK",
+        "STANDARD-GROUP",
+        "--retry=false",
+        "--debug",
+        "--pool-size=1",
+      ],
+      "outputCapture": "std",
+      "skipFiles": [
+        "<node_internals>/**/*.js"
+      ]
+    },
   ]
 }
