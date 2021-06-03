@@ -130,7 +130,7 @@ export class GoogleAuth {
       GoogleAuth.waitForOauthWindowClosed(oauthWin.id, acctEmail),
     ]);
     if (authRes.result === 'Success') {
-      chrome.windows.remove(oauthWin.id); // The prompt windows is removed when the user is authorized.
+      await chrome.windows.remove(oauthWin.id); // The prompt windows is removed when the user is authorized.
       if (!authRes.id_token) {
         return { result: 'Error', error: 'Grant was successful but missing id_token', acctEmail: authRes.acctEmail, id_token: undefined };
       }
