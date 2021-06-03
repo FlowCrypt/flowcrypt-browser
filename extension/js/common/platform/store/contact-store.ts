@@ -318,7 +318,8 @@ export class ContactStore extends AbstractStore {
   public static unlinkPubkey = async (db: IDBDatabase | undefined, email: string, { id, type }: { id: string, type: string }):
     Promise<void> => {
     if (!db) { // relay op through background process
-      return await BrowserMsg.send.bg.await.db({ f: 'unlinkPubkey', args: [email, { id, type }] });
+      await BrowserMsg.send.bg.await.db({ f: 'unlinkPubkey', args: [email, { id, type }] });
+      return;
     }
     const internalFingerprint = ContactStore.getPubkeyId({ id, type });
     const tx = db.transaction(['emails', 'pubkeys'], 'readwrite');
