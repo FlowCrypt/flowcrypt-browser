@@ -13,6 +13,14 @@ export type ContactUpdate = {
   lastUse?: number | null;
 };
 
+export type Pubkey = {
+  fingerprint: string;
+  armoredKey: string;
+  longids: string[];
+  lastCheck: number | null,
+  expiresOn: number | null;
+};
+
 export class ContactStore {
 
   public static get = async (db: void, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {

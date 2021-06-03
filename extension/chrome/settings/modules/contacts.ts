@@ -55,7 +55,6 @@ View.run(class ContactsView extends View {
     $('.action_show_pubkey_list').off().click(this.setHandlerPrevent('double', this.actionRenderListPublicKeyHandler));
     $('#edit_contact .action_save_edited_pubkey').off().click(this.setHandlerPrevent('double', this.actionSaveEditedPublicKeyHandler));
     $('#bulk_import .action_process').off().click(this.setHandlerPrevent('double', this.actionProcessBulkImportTextInput));
-    $('.action_remove').off().click(this.setHandlerPrevent('double', this.actionRemovePublicKey));
     $('.action_export_all').off().click(this.setHandlerPrevent('double', this.actionExportAllKeysHandler));
     $('.action_view_bulk_import').off().click(this.setHandlerPrevent('double', this.actionRenderBulkImportPageHandler));
     $('.input-search-contacts').off().keyup(this.setHandlerPrevent('double', this.loadAndRenderContactList));
@@ -144,6 +143,7 @@ View.run(class ContactsView extends View {
       // remove all listeners from the old link by creating a new element
       const newElement = emailRow.cloneNode(true);
       emailRow!.parentNode!.replaceChild(newElement, emailRow);
+      $('.action_remove').off().click(this.setHandlerPrevent('double', this.actionRemovePublicKey));
       $('.action_show').off().click(this.setHandlerPrevent('double', this.actionRenderViewPublicKeyHandler));
       $('.action_change').off().click(this.setHandlerPrevent('double', this.actionRenderChangePublicKeyHandler));
     }
@@ -206,7 +206,11 @@ View.run(class ContactsView extends View {
   }
 
   private actionRemovePublicKey = async (rmPubkeyButton: HTMLElement) => {
-    await ContactStore.save(undefined, await ContactStore.obj({ email: $(rmPubkeyButton).closest('[email]').attr('email')! }));
+    const parentRow = $(rmPubkeyButton).closest('[email]');
+    const id = parentRow.attr('keyid')!;
+    const type = parentRow.attr('type')!;
+    const email = parentRow.attr('email')!;
+    await ContactStore.unlinkPubkey(undefined, email, { id, type });
     await this.loadAndRenderContactList();
   }
 
