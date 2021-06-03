@@ -39,7 +39,7 @@
 
     <div class="line text-center hide_when_rendering_subpage" style="margin: 0 auto;">
       <div class="line left" style="padding: 0 24px; margin-top: 30px;">Search: <input class="input-search-contacts" placeholder="person@corp.com"><span class="container-table-note" style="color: gray; float: right;"></span></div>
-      <table id="emails"></table>
+      <div id="emails"></div>
     </div>
 
     <div id="bulk_import" style="display: none;">
@@ -68,10 +68,10 @@
 
     <div id="edit_contact" style="display: none;">
       <div class="line">
-        <textarea class="input_pubkey" placeholder="Enter a new Public Key for this contact"></textarea>
+        <textarea class="input_pubkey" data-test="input-public-key" placeholder="Enter a new Public Key for this contact"></textarea>
       </div>
       <div class="line">
-        <button class="button green action_save_edited_pubkey long">SAVE</button>
+        <button class="button green action_save_edited_pubkey long" data-test="action-save-public-key">SAVE</button>
       </div>
     </div>
 

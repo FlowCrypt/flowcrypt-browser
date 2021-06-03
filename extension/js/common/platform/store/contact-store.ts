@@ -244,7 +244,12 @@ export class ContactStore extends AbstractStore {
     return (await ContactStore.extractPubkeys(db, fingerprints)).map(pubkey => pubkey?.armoredKey).filter(Boolean);
   }
 
-  public static getOneWithAllPubkeys = async (db: IDBDatabase, email: string): Promise<ContactV4 | undefined> => {
+  public static getOneWithAllPubkeys = async (db: IDBDatabase | undefined, email: string):
+    Promise<{ info: Email, sortedPubkeys: { pubkey: Key, revoked: boolean, lastCheck: number | null }[] } | undefined> => {
+    if (!db) { // relay op through background process
+      // tslint:disable-next-line:no-unsafe-any
+      return await BrowserMsg.send.bg.await.db({ f: 'getOneWithAllPubkeys', args: [email] });
+    }
     const tx = db.transaction(['emails', 'pubkeys', 'revocations'], 'readonly');
     const pubkeys: Pubkey[] = [];
     const revocations: Revocation[] = [];
@@ -293,7 +298,21 @@ export class ContactStore extends AbstractStore {
         },
         reject);
     });
-    return emailEntity ? { info: emailEntity, pubkeys, revocations } : undefined;
+    return emailEntity ? { info: emailEntity, sortedPubkeys: await ContactStore.sortKeys(pubkeys, revocations) } : undefined;
+  }
+
+  public static getPubkey = async (db: IDBDatabase | undefined, { id, type }: { id: string, type: string }):
+    Promise<string | undefined> => {
+    if (!db) { // relay op through background process
+      return (await BrowserMsg.send.bg.await.db({ f: 'getPubkey', args: [{ id, type }] })) as string | undefined;
+    }
+    const internalFingerprint = ContactStore.getPubkeyId({ id, type });
+    const tx = db.transaction(['pubkeys'], 'readonly');
+    const emailEntity: Pubkey = await new Promise((resolve, reject) => {
+      const req = tx.objectStore('pubkeys').get(internalFingerprint);
+      ContactStore.setReqPipe(req, resolve, reject);
+    });
+    return emailEntity?.armoredKey;
   }
 
   public static updateTx = (tx: IDBTransaction, email: string, update: ContactUpdate) => {
@@ -344,8 +363,25 @@ export class ContactStore extends AbstractStore {
     // todo: we can add a timestamp here and/or some other info
   }
 
-  private static getPubkeyId = (pubkey: Key): string => {
-    return (pubkey.type === 'x509') ? (pubkey.id + x509postfix) : pubkey.id;
+  private static sortKeys = async (pubkeys: Pubkey[], revocations: Revocation[]) => {
+    // parse the keys
+    const parsed = await Promise.all(pubkeys.map(async (pubkey) => {
+      const pk = await KeyUtil.parse(pubkey.armoredKey);
+      const revoked = pk.revoked || revocations.some(r => ContactStore.equalFingerprints(pk.id, r.fingerprint));
+      const expirationSortValue = (typeof pk.expiration === 'undefined') ? Infinity : pk.expiration!;
+      return {
+        lastCheck: pubkey.lastCheck,
+        pubkey: pk,
+        revoked,
+        // sort non-revoked first, then non-expired
+        sortValue: revoked ? -Infinity : expirationSortValue
+      };
+    }));
+    return parsed.sort((a, b) => b.sortValue - a.sortValue);
+  }
+
+  private static getPubkeyId = ({ id, type }: { id: string, type: string }): string => {
+    return (type === 'x509') ? (id + x509postfix) : id;
   }
 
   private static stripFingerprint = (fp: string): string => {
@@ -550,27 +586,13 @@ export class ContactStore extends AbstractStore {
       if (!contactWithAllPubkeys) {
         return contactWithAllPubkeys;
       }
-      // parse the keys
-      const parsed = await Promise.all(contactWithAllPubkeys.pubkeys.map(async (pubkey) => {
-        const pk = await KeyUtil.parse(pubkey.armoredKey);
-        const revoked = pk.revoked || contactWithAllPubkeys.revocations.some(r => ContactStore.equalFingerprints(pk.id, r.fingerprint));
-        const expirationSortValue = (typeof pk.expiration === 'undefined') ? Infinity : pk.expiration!;
-        return {
-          lastCheck: pubkey.lastCheck,
-          pubkey: pk,
-          revoked,
-          // sort non-revoked first, then non-expired
-          sortValue: revoked ? -Infinity : expirationSortValue
-        };
-      }));
-      const sorted = parsed.sort((a, b) => b.sortValue - a.sortValue);
       // pick first usableForEncryption
-      let selected = sorted.find(entry => !entry.revoked && entry.pubkey.usableForEncryption);
+      let selected = contactWithAllPubkeys.sortedPubkeys.find(entry => !entry.revoked && entry.pubkey.usableForEncryption);
       if (!selected) {
-        selected = sorted.find(entry => !entry.revoked && entry.pubkey.usableForEncryptionButExpired);
+        selected = contactWithAllPubkeys.sortedPubkeys.find(entry => !entry.revoked && entry.pubkey.usableForEncryptionButExpired);
       }
       if (!selected) {
-        selected = sorted[0];
+        selected = contactWithAllPubkeys.sortedPubkeys[0];
       }
       return ContactStore.toContactFromKey(contactWithAllPubkeys.info, selected?.pubkey, selected?.lastCheck, Boolean(selected?.revoked));
     }
