@@ -17,6 +17,7 @@ import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { testConstants } from './tooling/consts';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
+import { Pubkey } from '../platform/store/contact-store';
 
 // tslint:disable:no-blank-lines-func
 
@@ -132,6 +133,91 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await contactsFrame.waitForContent('@container-pubkey-details', 'Created on: Thu Jul 16 2020 09:56:40');
       await contactsFrame.waitForContent('@container-pubkey-details', 'Expiration: Thu Jul 16 2020 09:57:40');
       await contactsFrame.waitForContent('@container-pubkey-details', 'Expired: yes');
+    }));
+
+    ava.default('settings - remove public keys from contact', testWithBrowser('compatibility', async (t, browser) => {
+      const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+      const foundKeys = await dbPage.page.evaluate(async () => {
+        const db = await (window as any).ContactStore.dbOpen();
+        // first, unlink pubkeys from `flowcrypt.compatibility@gmail.com',
+        // so they remain linked only to `flowcryptcompatibility@gmail.com'
+        await (window as any).ContactStore.unlinkPubkey(db, 'flowcrypt.compatibility@gmail.com', { id: '5520CACE2CB61EA713E5B0057FDE685548AEA788', type: 'openpgp ' });
+        await (window as any).ContactStore.unlinkPubkey(db, 'flowcrypt.compatibility@gmail.com', { id: 'E8F0517BA6D7DAB6081C96E4ADAC279C95093207', type: 'openpgp ' });
+        const pubkey7FDE685548AEA788: Pubkey = await new Promise((resolve, reject) => {
+          const tx = db.transaction(['pubkeys'], 'readonly');
+          const req = tx.objectStore('pubkeys').get('5520CACE2CB61EA713E5B0057FDE685548AEA788');
+          (window as any).ContactStore.setReqPipe(req, resolve, reject);
+        });
+        const pubkeyADAC279C95093207: Pubkey = await new Promise((resolve, reject) => {
+          const tx = db.transaction(['pubkeys'], 'readonly');
+          const req = tx.objectStore('pubkeys').get('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
+          (window as any).ContactStore.setReqPipe(req, resolve, reject);
+        });
+        return { pubkey7FDE685548AEA788, pubkeyADAC279C95093207 };
+      });
+      expect(foundKeys.pubkey7FDE685548AEA788.fingerprint).to.equal('5520CACE2CB61EA713E5B0057FDE685548AEA788');
+      expect(foundKeys.pubkeyADAC279C95093207.fingerprint).to.equal('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+      await contactsFrame.waitAll('@page-contacts');
+      await Util.sleep(1);
+      await contactsFrame.waitAndClick('@action-show-email-flowcryptcompatibilitygmailcom');
+      await Util.sleep(1);
+      const contacts = await contactsFrame.read('@page-contacts');
+      expect(contacts).to.contain('openpgp - active - 5520 CACE 2CB6 1EA7 13E5 B005 7FDE 6855 48AE A788');
+      expect(contacts).to.contain('openpgp - active - E8F0 517B A6D7 DAB6 081C 96E4 ADAC 279C 9509 3207');
+      await contactsFrame.waitAndClick('@action-remove-pubkey-5520CACE2CB61EA713E5B0057FDE685548AEA788-openpgp', { confirmGone: true });
+      await contactsFrame.waitAll('@page-contacts');
+      await Util.sleep(1);
+      const foundKeys1 = await dbPage.page.evaluate(async () => {
+        const db = await (window as any).ContactStore.dbOpen();
+        const pubkey7FDE685548AEA788: Pubkey = await new Promise((resolve, reject) => {
+          const tx = db.transaction(['pubkeys'], 'readonly');
+          const req = tx.objectStore('pubkeys').get('5520CACE2CB61EA713E5B0057FDE685548AEA788');
+          (window as any).ContactStore.setReqPipe(req, resolve, reject);
+        });
+        const pubkeyADAC279C95093207: Pubkey = await new Promise((resolve, reject) => {
+          const tx = db.transaction(['pubkeys'], 'readonly');
+          const req = tx.objectStore('pubkeys').get('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
+          (window as any).ContactStore.setReqPipe(req, resolve, reject);
+        });
+        return { pubkey7FDE685548AEA788, pubkeyADAC279C95093207 };
+      });
+      expect(foundKeys1.pubkey7FDE685548AEA788).to.be.an('undefined');
+      expect(foundKeys1.pubkeyADAC279C95093207.fingerprint).to.equal('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
+      await contactsFrame.waitAndClick('@action-show-email-flowcryptcompatibilitygmailcom');
+      await Util.sleep(1);
+      const contacts1 = await contactsFrame.read('@page-contacts');
+      expect(contacts1).to.not.contain('openpgp - active - 5520 CACE 2CB6 1EA7 13E5 B005 7FDE 6855 48AE A788');
+      expect(contacts1).to.contain('openpgp - active - E8F0 517B A6D7 DAB6 081C 96E4 ADAC 279C 9509 3207');
+      await contactsFrame.waitAndClick('@action-remove-pubkey-E8F0517BA6D7DAB6081C96E4ADAC279C95093207-openpgp', { confirmGone: true });
+      await contactsFrame.waitAll('@page-contacts');
+      await Util.sleep(1);
+      const foundKeys2 = await dbPage.page.evaluate(async () => {
+        const db = await (window as any).ContactStore.dbOpen();
+        const pubkey7FDE685548AEA788: Pubkey = await new Promise((resolve, reject) => {
+          const tx = db.transaction(['pubkeys'], 'readonly');
+          const req = tx.objectStore('pubkeys').get('5520CACE2CB61EA713E5B0057FDE685548AEA788');
+          (window as any).ContactStore.setReqPipe(req, resolve, reject);
+        });
+        const pubkeyADAC279C95093207: Pubkey = await new Promise((resolve, reject) => {
+          const tx = db.transaction(['pubkeys'], 'readonly');
+          const req = tx.objectStore('pubkeys').get('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
+          (window as any).ContactStore.setReqPipe(req, resolve, reject);
+        });
+        return { pubkey7FDE685548AEA788, pubkeyADAC279C95093207 };
+      });
+      expect(foundKeys2.pubkey7FDE685548AEA788).to.be.an('undefined');
+      expect(foundKeys2.pubkeyADAC279C95093207).to.be.an('undefined');
+      await contactsFrame.waitAndClick('@action-show-email-flowcryptcompatibilitygmailcom');
+      await Util.sleep(1);
+      const contacts2 = await contactsFrame.read('@page-contacts');
+      expect(contacts2).to.not.contain('openpgp - active - 5520 CACE 2CB6 1EA7 13E5 B005 7FDE 6855 48AE A788');
+      expect(contacts2).to.not.contain('openpgp - active - E8F0 517B A6D7 DAB6 081C 96E4 ADAC 279C 9509 3207');
+      await SettingsPageRecipe.closeDialog(settingsPage);
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
+      await dbPage.close();
     }));
 
     ava.default('settings - my key page - primary + secondary', testWithBrowser('compatibility', async (t, browser) => {

@@ -308,11 +308,35 @@ export class ContactStore extends AbstractStore {
     }
     const internalFingerprint = ContactStore.getPubkeyId({ id, type });
     const tx = db.transaction(['pubkeys'], 'readonly');
-    const emailEntity: Pubkey = await new Promise((resolve, reject) => {
+    const pubkeyEntity: Pubkey = await new Promise((resolve, reject) => {
       const req = tx.objectStore('pubkeys').get(internalFingerprint);
       ContactStore.setReqPipe(req, resolve, reject);
     });
-    return emailEntity?.armoredKey;
+    return pubkeyEntity?.armoredKey;
+  }
+
+  public static unlinkPubkey = async (db: IDBDatabase | undefined, email: string, { id, type }: { id: string, type: string }):
+    Promise<void> => {
+    if (!db) { // relay op through background process
+      await BrowserMsg.send.bg.await.db({ f: 'unlinkPubkey', args: [email, { id, type }] });
+      return;
+    }
+    const internalFingerprint = ContactStore.getPubkeyId({ id, type });
+    const tx = db.transaction(['emails', 'pubkeys'], 'readwrite');
+    await new Promise((resolve, reject) => {
+      ContactStore.setTxHandlers(tx, resolve, reject);
+      const req = tx.objectStore('emails').index('index_fingerprints').getAll(internalFingerprint);
+      ContactStore.setReqPipe(req,
+        (referencingEmails: Email[]) => {
+          for (const entity of referencingEmails.filter(e => e.email === email)) {
+            entity.fingerprints = entity.fingerprints.filter(fp => fp !== internalFingerprint);
+            tx.objectStore('emails').put(entity);
+          }
+          if (!referencingEmails.some(e => e.email !== email)) {
+            tx.objectStore('pubkeys').delete(internalFingerprint);
+          }
+        });
+    });
   }
 
   public static updateTx = (tx: IDBTransaction, email: string, update: ContactUpdate) => {
