@@ -458,6 +458,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         currentActive.removeClass('active');
       } else { // We need to force add recipient even it's invalid
         this.parseRenderRecipients($(e.target), true).catch(Catch.reportErr);
+        this.hideContacts();
       }
       e.target.focus();
       return true;
@@ -578,6 +579,9 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   }
 
   private renderSearchRes = (input: JQuery<HTMLElement>, contacts: ContactPreview[], query: ProviderContactsQuery) => {
+    if (!input.is(':focus')) { // focus was moved away from input
+      return;
+    }
     if ((input.val() as string).toLowerCase() !== query.substring.toLowerCase()) { // the input value has changed meanwhile
       return;
     }
@@ -679,6 +683,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         if (authResult.result === 'Success') {
           this.canSearchContacts = true;
           this.hideContacts();
+          input.focus();
           await this.searchContacts(input);
         } else if (authResult.result !== 'Closed') {
           await Ui.modal.error(`Could not enable Google Contact search. Please write us at human@flowcrypt.com\n\n[${authResult.result}] ${authResult.error}`);

@@ -422,10 +422,10 @@ abstract class ControllableBase {
     } else if (m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)/)) { // tslint:disable-line:no-conditional-assignment
       return `.${m[1]}`; // represented as a class
       // eslint-disable-next-line no-cond-assign
-    } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-_]+)$/)) { // tslint:disable-line:no-conditional-assignment
+    } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-_]+)$/i)) { // tslint:disable-line:no-conditional-assignment
       return `[data-test="${m[1]}"]`;
       // eslint-disable-next-line no-cond-assign
-    } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-_]+)\(([^()]*)\)$/)) { // tslint:disable-line:no-conditional-assignment
+    } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-_]+)\(([^()]*)\)$/i)) { // tslint:disable-line:no-conditional-assignment
       return `//*[@data-test='${m[1]}' and contains(text(),'${m[2]}')]`;
     } else {
       return customSelLanguageQuery;
