@@ -2140,6 +2140,7 @@ table#compose tr#password_or_pubkey_container td {
   animation: fadeInUp 1s;
   border-top: 1px solid #cfcfcf;
   line-height: 1.5;
+  position: relative;
 }
 table#compose tr#password_or_pubkey_container td input#input_password::-webkit-input-placeholder { color: #d14836; }
 

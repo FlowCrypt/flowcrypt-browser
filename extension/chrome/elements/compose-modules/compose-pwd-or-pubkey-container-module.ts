@@ -37,8 +37,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
 
   public inputPwdFocusHandler = () => {
     const passwordContainerHeight = this.view.S.cached('password_or_pubkey').outerHeight() || 0;
-    const footerHeight = this.view.S.cached('footer').outerHeight() || 0;
-    this.view.S.cached('expiration_note').css({ bottom: (passwordContainerHeight + footerHeight) + 'px' });
+    this.view.S.cached('expiration_note').css({ bottom: passwordContainerHeight });
     this.view.S.cached('expiration_note').fadeIn();
     this.showHideContainerAndColorSendBtn(); // tslint:disable-line:no-floating-promises
   }
