@@ -29,13 +29,19 @@ type CreateKeyOpts = {
   enforcedAlgo?: string | boolean,
 };
 
+type CreateKeyChecks = {
+  isSavePassphraseDisabled?: boolean | undefined,
+  isSavePassphraseChecked?: boolean | undefined
+};
+
 export class SetupPageRecipe extends PageRecipe {
 
   public static createKey = async (
     settingsPage: ControllablePage,
     keyTitle: string,
     backup: 'none' | 'email' | 'file' | 'disabled',
-    { usedPgpBefore = false, submitPubkey = false, enforcedAlgo = false, key }: CreateKeyOpts = {}
+    { usedPgpBefore = false, submitPubkey = false, enforcedAlgo = false, key }: CreateKeyOpts = {},
+    checks: CreateKeyChecks = {}
   ) => {
     await SetupPageRecipe.createBegin(settingsPage, keyTitle, { key, usedPgpBefore });
     if (enforcedAlgo) {
@@ -49,6 +55,12 @@ export class SetupPageRecipe extends PageRecipe {
     }
     if (!submitPubkey && await settingsPage.isElementPresent('@input-step2bmanualcreate-submit-pubkey')) {
       await settingsPage.waitAndClick('@input-step2bmanualcreate-submit-pubkey'); // uncheck
+    }
+    if (checks.isSavePassphraseDisabled !== undefined) {
+      expect(await PageRecipe.isElementDisabled(await settingsPage.waitAny('@input-step2bmanualcreate-save-passphrase'))).to.equal(checks.isSavePassphraseDisabled);
+    }
+    if (checks.isSavePassphraseChecked !== undefined) {
+      expect(await PageRecipe.isElementDisabled(await settingsPage.waitAny('@input-step2bmanualcreate-save-passphrase'))).to.equal(checks.isSavePassphraseChecked);
     }
     await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
     await settingsPage.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your pass phrase');

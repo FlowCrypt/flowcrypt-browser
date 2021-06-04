@@ -412,7 +412,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default('user@no-submit-org-rule.flowcrypt.test - do not submit to attester on key generation', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-org-rule.flowcrypt.test');
       await Util.sleep(5);
-      await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase: 'long enough to suit requirements' }, usedPgpBefore: false });
+      await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase: 'long enough to suit requirements' }, usedPgpBefore: false },
+        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
       await settingsPage.notPresent('.swal2-container');
       await settingsPage.close();
     }));
@@ -422,7 +423,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       await Util.sleep(5);
       const passphrase = 'long enough to suit requirements';
-      await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase }, usedPgpBefore: false });
+      await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase }, usedPgpBefore: false },
+        { isSavePassphraseDisabled: true, isSavePassphraseChecked: true });
       await settingsPage.notPresent('.swal2-container');
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
       await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
@@ -431,7 +433,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await composeFrame.waitAndClick('@action-send');
       await inboxPage.waitAll('@dialog-passphrase');
       const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
-      expect(await InboxPageRecipe.isElementDisabled(await passphraseDialog.waitAny('@forget-pass-phrase'))).to.be.equal(true);
+      const forgetPassPhraseElement = await passphraseDialog.waitAny('@forget-pass-phrase');
+      expect(await InboxPageRecipe.isElementDisabled(forgetPassPhraseElement)).to.equal(true);
+      expect(await InboxPageRecipe.isElementChecked(forgetPassPhraseElement)).to.equal(true);
       await inboxPage.close();
       await settingsPage.close();
     }));

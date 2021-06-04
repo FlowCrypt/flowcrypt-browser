@@ -58,17 +58,20 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.default('setup - create key - choose no backup', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.new.manual@gmail.com');
-      await SetupPageRecipe.createKey(settingsPage, 'flowcrypt.test.key.used.pgp', 'none', { submitPubkey: false, usedPgpBefore: true });
+      await SetupPageRecipe.createKey(settingsPage, 'flowcrypt.test.key.used.pgp', 'none', { submitPubkey: false, usedPgpBefore: true },
+        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
     }));
 
     ava.default('setup - create key - backup as file - submit pubkey', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.new.manual@gmail.com');
-      await SetupPageRecipe.createKey(settingsPage, 'flowcrypt.test.key.used.pgp', 'file', { submitPubkey: true, usedPgpBefore: true });
+      await SetupPageRecipe.createKey(settingsPage, 'flowcrypt.test.key.used.pgp', 'file', { submitPubkey: true, usedPgpBefore: true },
+        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
     }));
 
     ava.default('create@prv-create-no-prv-backup.flowcrypt.test - create key allowed but backups not', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'setup@prv-create-no-prv-backup.flowcrypt.test');
-      await SetupPageRecipe.createKey(settingsPage, 'flowcrypt.test.key.used.pgp', 'disabled', { submitPubkey: false, usedPgpBefore: false, enforcedAlgo: 'rsa2048' });
+      await SetupPageRecipe.createKey(settingsPage, 'flowcrypt.test.key.used.pgp', 'disabled', { submitPubkey: false, usedPgpBefore: false, enforcedAlgo: 'rsa2048' },
+        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
     }));
 
     ava.default('standalone - different send from, new signed message, verification in mock', testWithBrowser('compatibility', async (t, browser) => {

@@ -120,13 +120,13 @@ export class SetupView extends View {
       $('.remove_if_pubkey_submitting_not_user_configurable').remove();
     }
     if (this.orgRules.forbidStoringPassPhrase()) {
-      $('#step_2a_manual_create .input_passphrase_save').prop('disabled', true);
-      $('#step_2b_manual_enter .input_passphrase_save').prop('disabled', true);
-      $('#step_2a_manual_create .input_passphrase_save').prop('checked', false);
-      $('#step_2b_manual_enter .input_passphrase_save').prop('checked', false);
-    } else if (this.orgRules.rememberPassPhraseByDefault()) {
-      $('#step_2a_manual_create .input_passphrase_save').prop('checked', true);
-      $('#step_2b_manual_enter .input_passphrase_save').prop('checked', true);
+      $('.input_passphrase_save').prop('disabled', true);
+      $('.input_passphrase_save').prop('checked', false);
+    } else {
+      $('.input_passphrase_save').prop('disabled', false);
+      if (this.orgRules.rememberPassPhraseByDefault()) {
+        $('.input_passphrase_save').prop('checked', true);
+      }
     }
     if (this.orgRules.getEnforcedKeygenAlgo()) {
       $('.key_type').val(this.orgRules.getEnforcedKeygenAlgo()!).prop('disabled', true);
