@@ -128,7 +128,7 @@ export class OrgRules {
   }
 
   public forbidStoringPassPhrase = (): boolean => {
-    return (this.domainRules.flags || []).includes('FORBID_STORING_PASS_PHRASE'); // todo: mustAutogenPassPhraseQuietly() conflict?
+    return (this.domainRules.flags || []).includes('FORBID_STORING_PASS_PHRASE');
   }
 
   /**
