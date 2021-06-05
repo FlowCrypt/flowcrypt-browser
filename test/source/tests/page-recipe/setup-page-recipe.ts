@@ -22,6 +22,11 @@ type ManualEnterOpts = {
   key?: { title: string, passphrase: string, armored: string | null, longid: string | null, filePath?: string }
 };
 
+type ManualEnterChecks = {
+  isSavePassphraseDisabled?: boolean | undefined,
+  isSavePassphraseChecked?: boolean | undefined
+};
+
 type CreateKeyOpts = {
   key?: { passphrase: string },
   usedPgpBefore?: boolean,
@@ -60,7 +65,7 @@ export class SetupPageRecipe extends PageRecipe {
       expect(await PageRecipe.isElementDisabled(await settingsPage.waitAny('@input-step2bmanualcreate-save-passphrase'))).to.equal(checks.isSavePassphraseDisabled);
     }
     if (checks.isSavePassphraseChecked !== undefined) {
-      expect(await PageRecipe.isElementDisabled(await settingsPage.waitAny('@input-step2bmanualcreate-save-passphrase'))).to.equal(checks.isSavePassphraseChecked);
+      expect(await PageRecipe.isElementChecked(await settingsPage.waitAny('@input-step2bmanualcreate-save-passphrase'))).to.equal(checks.isSavePassphraseChecked);
     }
     await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
     await settingsPage.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your pass phrase');
@@ -102,7 +107,8 @@ export class SetupPageRecipe extends PageRecipe {
       fillOnly = false,
       noPubSubmitRule = false,
       key,
-    }: ManualEnterOpts = {}
+    }: ManualEnterOpts = {},
+    checks: ManualEnterChecks = {}
   ) {
     if (!noPrvCreateOrgRule) {
       if (usedPgpBefore) {
@@ -130,8 +136,13 @@ export class SetupPageRecipe extends PageRecipe {
     if (noPrvCreateOrgRule) { // NO_PRV_CREATE cannot use the back button, so that they cannot select another setup method
       await settingsPage.notPresent('@action-setup-go-back');
     }
+    if (checks.isSavePassphraseDisabled !== undefined) {
+      expect(await PageRecipe.isElementDisabled(await settingsPage.waitAny('@input-step2bmanualenter-save-passphrase'))).to.equal(checks.isSavePassphraseDisabled);
+    }
     if (savePassphrase) {
       await settingsPage.waitAndClick('@input-step2bmanualenter-save-passphrase');
+    } else if (checks.isSavePassphraseChecked !== undefined) {
+      expect(await PageRecipe.isElementChecked(await settingsPage.waitAny('@input-step2bmanualenter-save-passphrase'))).to.equal(checks.isSavePassphraseChecked);
     }
     if (!naked) {
       await Util.sleep(1);

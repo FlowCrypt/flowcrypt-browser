@@ -42,34 +42,40 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.default('setup - import key - do not submit - did not use before', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
-      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false });
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
+        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
     }));
 
     ava.default('setup - import key - submit - used before', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.used.pgp@gmail.com');
-      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: true, usedPgpBefore: true });
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: true, usedPgpBefore: true },
+        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
     }));
 
     ava.default('setup - import key - naked - choose my own pass phrase', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.import.naked@gmail.com');
-      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.naked', { submitPubkey: false, usedPgpBefore: false, naked: true });
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.naked', { submitPubkey: false, usedPgpBefore: false, naked: true },
+        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
     }));
 
     ava.default('setup - import key - naked - auto-generate a pass phrase', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.import.naked@gmail.com');
-      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.naked', { submitPubkey: false, usedPgpBefore: false, naked: true, genPp: true });
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.naked', { submitPubkey: false, usedPgpBefore: false, naked: true, genPp: true },
+        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
     }));
 
     ava.todo('setup - import key - naked - do not supply pass phrase gets error');
 
     ava.default('setup - import key - fix key self signatures', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
-      await SetupPageRecipe.manualEnter(settingsPage, 'missing.self.signatures', { submitPubkey: false, fixKey: true });
+      await SetupPageRecipe.manualEnter(settingsPage, 'missing.self.signatures', { submitPubkey: false, fixKey: true },
+        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
     }));
 
     ava.default('setup - import key - fix key self signatures - skip invalid uid', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
-      await SetupPageRecipe.manualEnter(settingsPage, 'missing.self.signatures.invalid.uid', { submitPubkey: false, fixKey: true });
+      await SetupPageRecipe.manualEnter(settingsPage, 'missing.self.signatures.invalid.uid', { submitPubkey: false, fixKey: true },
+        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
     }));
 
     // This test will succeed after OpenPGP adds support for parsing keys without
@@ -216,7 +222,7 @@ ZAvn6PBX7vsaReOVa2zsnuY5g70xCxvzHIwR94POu5cENwRtCkrppFnISALpQ1kA
           passphrase: '1234',
           longid: '8B3BB9CFC476EE16',
         }
-      });
+      }, { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
       await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
       await Util.sleep(1);
       await settingsPage.waitAndRespondToModal('warning', 'confirm', 'Please export the key with --export-secret-key option if you plan to use it for signing.');
@@ -298,7 +304,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           passphrase: 'correct horse battery staple',
           longid: '123',
         }
-      });
+      }, { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
       await Util.sleep(1);
@@ -370,12 +376,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
 
     ava.default('setup - import key - submit - offline - retry', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.used.pgp@gmail.com');
-      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: true, usedPgpBefore: true, simulateRetryOffline: true });
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: true, usedPgpBefore: true, simulateRetryOffline: true },
+        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
     }));
 
     ava.default('has.pub@org-rules-test - no backup, no keygen', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'has.pub@org-rules-test.flowcrypt.test');
-      await SetupPageRecipe.manualEnter(settingsPage, 'has.pub.orgrulestest', { noPrvCreateOrgRule: true, enforceAttesterSubmitOrgRule: true });
+      await SetupPageRecipe.manualEnter(settingsPage, 'has.pub.orgrulestest', { noPrvCreateOrgRule: true, enforceAttesterSubmitOrgRule: true },
+        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
       await settingsPage.waitAll(['@action-show-encrypted-inbox', '@action-open-security-page']);
       await Util.sleep(1);
       await settingsPage.notPresent(['@action-open-backup-page']);
@@ -392,7 +400,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
 
     ava.default('no.pub@org-rules-test - no backup, no keygen, enforce attester submit with submit err', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'no.pub@org-rules-test.flowcrypt.test');
-      await SetupPageRecipe.manualEnter(settingsPage, 'no.pub.orgrulestest', { noPrvCreateOrgRule: true, enforceAttesterSubmitOrgRule: true, fillOnly: true });
+      await SetupPageRecipe.manualEnter(settingsPage, 'no.pub.orgrulestest', { noPrvCreateOrgRule: true, enforceAttesterSubmitOrgRule: true, fillOnly: true },
+        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
       await settingsPage.waitAndClick('@input-step2bmanualenter-save');
       await settingsPage.waitAll(['@container-overlay-prompt-text', '@action-overlay-retry']);
       const renderedErr = await settingsPage.read('@container-overlay-prompt-text');
@@ -402,7 +411,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
 
     ava.default('user@no-submit-org-rule.flowcrypt.test - do not submit to attester', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'user@no-submit-org-rule.flowcrypt.test');
-      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { noPubSubmitRule: true });
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { noPubSubmitRule: true },
+        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const attesterFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-attester-page', ['keyserver.htm']);
       await attesterFrame.waitAndClick('@action-submit-pub');
@@ -614,7 +624,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     ava.default('user@standardsubdomainfes.test:8001 - uses FES on standard domain', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'user@standardsubdomainfes.test:8001'; // added port to trick extension into calling the mock
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false });
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
+        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
       const debugFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-show-local-store-contents', ['debug_api.htm']);
       await debugFrame.waitForContent('@container-pre', 'fes.standardsubdomainfes.test:8001'); // FES url on standard subdomain
       await debugFrame.waitForContent('@container-pre', 'got.this@fromstandardfes.com'); // org rules from FES
@@ -632,7 +643,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           "Cannot reach your company's FlowCrypt Enterprise Server (FES). Contact human@flowcrypt.com when unsure.");
       } else if (testVariant === 'CONSUMER-MOCK') { // allows to set up on consumer
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-        await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false });
+        await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
+          { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
       } else {
         throw new Error(`Unexpected test variant ${testVariant}`);
       }

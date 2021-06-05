@@ -89,7 +89,7 @@ export class BrowserRecipe {
     const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
     const k = Config.key('flowcrypt.test.key.used.pgp');
     const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
-    await SetupPageRecipe.manualEnter(settingsPage, k.title, { usedPgpBefore: false, submitPubkey: false, savePassphrase: true });
+    await SetupPageRecipe.manualEnter(settingsPage, k.title, { usedPgpBefore: false, submitPubkey: false, savePassphrase: true }, { isSavePassphraseDisabled: false });
     return { acctEmail, k, settingsPage };
   }
 

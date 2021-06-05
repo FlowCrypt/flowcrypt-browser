@@ -387,7 +387,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
           passphrase: '1234',
           longid: '1b383d0334e38b28',
         }
-      });
+      }, { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
       await settingsPage1.close();
 
       await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234');
