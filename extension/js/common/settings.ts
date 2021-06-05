@@ -141,6 +141,7 @@ export class Settings {
     for (const ki of destAccountPrivateKeys) {
       await KeyStore.add(newAcctEmail, ki.private);
     }
+    // todo:
     for (const fingerprint of Object.keys(destAcctPassPhrases)) {
       await PassphraseStore.set('local', newAcctEmail, fingerprint, destAcctPassPhrases[fingerprint]);
     }

@@ -108,6 +108,7 @@ View.run(class ChangePassPhraseView extends View {
     }
     await KeyStore.add(this.acctEmail, this.primaryPrv!);
     const persistentlyStoredPp = await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprints[0], true);
+    // todo:
     await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.fingerprints[0], typeof persistentlyStoredPp === 'undefined' ? undefined : newPp);
     await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.fingerprints[0], typeof persistentlyStoredPp === 'undefined' ? newPp : undefined);
     await Ui.modal.info('Now that you changed your pass phrase, you should back up your key. New backup will be protected with new passphrase.');
