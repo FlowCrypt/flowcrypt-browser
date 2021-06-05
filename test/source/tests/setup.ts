@@ -434,7 +434,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await Util.sleep(5);
       const passphrase = 'long enough to suit requirements';
       await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase }, usedPgpBefore: false },
-        { isSavePassphraseDisabled: true, isSavePassphraseChecked: true });
+        { isSavePassphraseDisabled: true, isSavePassphraseChecked: false });
       await settingsPage.notPresent('.swal2-container');
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
       await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
