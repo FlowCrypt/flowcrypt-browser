@@ -139,7 +139,7 @@ View.run(class PassphraseView extends View {
 
   private submitHandler = async () => {
     const pass = String($('#passphrase').val());
-    const storageType: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
+    const storageType: StorageType = ($('.forget').prop('checked') || this.orgRules.forbidStoringPassPhrase()) ? 'session' : 'local';
     let atLeastOneMatched = false;
     for (const keyinfo of this.keysWeNeedPassPhraseFor!) { // if passphrase matches more keys, it will save the pass phrase for all keys
       const prv = await KeyUtil.parse(keyinfo.private);
