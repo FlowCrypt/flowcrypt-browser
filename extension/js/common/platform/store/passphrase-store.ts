@@ -42,8 +42,10 @@ export class PassphraseStore extends AbstractStore {
     if (typeof found === 'string') {
       return found;
     }
-    const fromSession = await SessionStore.get(acctEmail, storageIndex);
-    return fromSession && !ignoreSession ? fromSession : undefined;
+    if (ignoreSession) {
+      return undefined;
+    }
+    return await SessionStore.get(acctEmail, storageIndex) ?? undefined;
   }
 
   /**
