@@ -10,19 +10,27 @@ export class OauthPageRecipe extends PageRecipe {
 
   private static longTimeout = 40;
 
+  public static mock = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: 'close' | 'deny' | 'approve' | 'login' | 'override_acct'): Promise<void> => {
+    let mockOauthUrl = oauthPage.target.url();
+    const { login_hint } = Url.parse(['login_hint'], mockOauthUrl);
+    if (action === 'close') {
+      await oauthPage.close();
+    } else if (!login_hint) {
+      await oauthPage.target.goto(mockOauthUrl + '&login_hint=' + encodeURIComponent(acctEmail) + '&proceed=true');
+    } else {
+      if (action === 'override_acct') {
+        mockOauthUrl = Url.removeParamsFromUrl(mockOauthUrl, ['login_hint']);
+        mockOauthUrl += '&login_hint=' + encodeURIComponent(acctEmail);
+      }
+      await oauthPage.target.goto(mockOauthUrl + '&proceed=true');
+    }
+  }
+
   public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve" | 'login'): Promise<void> => {
     try {
       const isMock = oauthPage.target.url().includes('localhost') || oauthPage.target.url().includes('google.mock.flowcryptlocal.test');
       if (isMock) {
-        const mockOauthUrl = oauthPage.target.url();
-        const { login_hint } = Url.parse(['login_hint'], mockOauthUrl);
-        if (action === 'close') {
-          await oauthPage.close();
-        } else if (!login_hint) {
-          await oauthPage.target.goto(mockOauthUrl + '&login_hint=' + encodeURIComponent(acctEmail) + '&proceed=true');
-        } else {
-          await oauthPage.target.goto(mockOauthUrl + '&proceed=true');
-        }
+        await OauthPageRecipe.mock(t, oauthPage, acctEmail, action);
         return;
       }
     } catch (e) {
