@@ -76,6 +76,13 @@ export class BackendData {
         ]
       };
     }
+    if (domain === 'default-remember-passphrase-org-rule.flowcrypt.test') {
+      return {
+        "flags": [
+          "DEFAULT_REMEMBER_PASS_PHRASE"
+        ]
+      };
+    }
     if (domain === 'no-search-domains-org-rule.flowcrypt.test') {
       return {
         "flags": [],

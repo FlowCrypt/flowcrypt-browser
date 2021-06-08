@@ -14,6 +14,7 @@ import { BrowserRecipe } from './tooling/browser-recipe';
 import { KeyInfo, KeyUtil } from '../core/crypto/key';
 import { TestUrls } from '../browser/test-urls';
 import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
+import { testConstants } from './tooling/consts';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -447,6 +448,25 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       expect(await InboxPageRecipe.isElementDisabled(forgetPassPhraseElement)).to.equal(true);
       expect(await InboxPageRecipe.isElementChecked(forgetPassPhraseElement)).to.equal(true);
       await inboxPage.close();
+      await settingsPage.close();
+    }));
+
+    ava.default('setup - manualEnter honors DEFAULT_REMEMBER_PASS_PHRASE OrgRule', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'user@default-remember-passphrase-org-rule.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await SetupPageRecipe.manualEnter(settingsPage, 'unused', {
+        submitPubkey: false,
+        usedPgpBefore: false,
+        key: {
+          title: '?',
+          armored: testConstants.testkey715EDCDC7939A8F7,
+          passphrase: '1234',
+          longid: '715EDCDC7939A8F7',
+        }
+      }, { isSavePassphraseChecked: true, isSavePassphraseDisabled: false });
+      const { cryptup_userdefaultrememberpassphraseorgruleflowcrypttest_passphrase_715EDCDC7939A8F7: savedPassphrase }
+        = await settingsPage.getFromLocalStorage(['cryptup_userdefaultrememberpassphraseorgruleflowcrypttest_passphrase_715EDCDC7939A8F7']);
+      expect(savedPassphrase).to.equal('1234');
       await settingsPage.close();
     }));
 

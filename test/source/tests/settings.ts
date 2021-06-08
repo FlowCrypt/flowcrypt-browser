@@ -403,6 +403,40 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await myKeyFrame.type('@input-passphrase', '1234');
       await myKeyFrame.waitAndClick('@action-update-key');
       await PageRecipe.waitForModalAndRespond(myKeyFrame, 'confirm', { contentToCheck: 'Public and private key updated locally', clickOn: 'cancel' });
+      const { cryptup_flowcrypttestkeymultiplegmailcom_passphrase_98ACFA1EADAB5B92: savedPassphrase } = await settingsPage.getFromLocalStorage(['cryptup_flowcrypttestkeymultiplegmailcom_passphrase_98ACFA1EADAB5B92']);
+      expect(savedPassphrase).to.equal('1234');
+      await settingsPage.close();
+    }));
+
+    ava.default('settings - manual enter and key update honor FORBID_STORING_PASS_PHRASE OrgRule', testWithBrowser(undefined, async (t, browser) => {
+      const acctEmail = 'user@forbid-storing-passphrase-org-rule.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      await SetupPageRecipe.manualEnter(settingsPage, 'unused', {
+        submitPubkey: false,
+        usedPgpBefore: false,
+        key: {
+          title: '?',
+          armored: testConstants.testKeyB8F687BCDE14435A,
+          passphrase: 'donotstore',
+          longid: 'B8F687BCDE14435A',
+        }
+      }, { isSavePassphraseChecked: false, isSavePassphraseDisabled: true });
+      const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1 }
+        = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A']);
+      expect(savedPassphrase1).to.be.an('undefined');
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      // open key at index 0
+      const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
+      await Util.sleep(1);
+      await myKeyFrame.waitAll('@content-fingerprint');
+      await myKeyFrame.waitAndClick('@action-update-prv');
+      await myKeyFrame.waitAndType('@input-prv-key', testConstants.testKeyB8F687BCDE14435A);
+      await myKeyFrame.type('@input-passphrase', 'donotstore');
+      await myKeyFrame.waitAndClick('@action-update-key');
+      await PageRecipe.waitForModalAndRespond(myKeyFrame, 'confirm', { contentToCheck: 'Public and private key updated locally', clickOn: 'cancel' });
+      const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase2 }
+        = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A']);
+      expect(savedPassphrase2).to.be.an('undefined');
       await settingsPage.close();
     }));
 
