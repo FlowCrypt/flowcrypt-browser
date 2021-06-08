@@ -631,10 +631,9 @@ export class ControllablePage extends ControllableBase {
   }
 
   public getFromLocalStorage = async (keys: string[]): Promise<Dict<unknown>> => {
-    const result = await
-      (this.target as Page).evaluate(async (keys) => await new Promise((resolve) => {
-        chrome.storage.local.get(keys, resolve);
-      }), keys);
+    const result = await (this.target as Page).evaluate(async (keys) => await new Promise((resolve) => {
+      chrome.storage.local.get(keys, resolve);
+    }), keys);
     return result as Dict<unknown>;
   }
 
