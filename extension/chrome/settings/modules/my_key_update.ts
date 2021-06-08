@@ -53,7 +53,7 @@ View.run(class MyKeyUpdateView extends View {
 
   private storeUpdatedKeyAndPassphrase = async (updatedPrv: Key, updatedPrvPassphrase: string) => {
     const shouldSavePassphraseInStorage = !this.orgRules.forbidStoringPassPhrase() &&
-      typeof (await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprints[0], true)) !== undefined;
+      !!(await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprints[0], true));
     await KeyStore.add(this.acctEmail, updatedPrv);
     await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.fingerprints[0], shouldSavePassphraseInStorage ? updatedPrvPassphrase : undefined);
     await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.fingerprints[0], shouldSavePassphraseInStorage ? undefined : updatedPrvPassphrase);

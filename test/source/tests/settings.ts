@@ -403,7 +403,8 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await myKeyFrame.type('@input-passphrase', '1234');
       await myKeyFrame.waitAndClick('@action-update-key');
       await PageRecipe.waitForModalAndRespond(myKeyFrame, 'confirm', { contentToCheck: 'Public and private key updated locally', clickOn: 'cancel' });
-      const { cryptup_flowcrypttestkeymultiplegmailcom_passphrase_98ACFA1EADAB5B92: savedPassphrase } = await settingsPage.getFromLocalStorage(['cryptup_flowcrypttestkeymultiplegmailcom_passphrase_98ACFA1EADAB5B92']);
+      const { cryptup_flowcrypttestkeymultiplegmailcom_passphrase_98ACFA1EADAB5B92: savedPassphrase } =
+        await settingsPage.getFromLocalStorage(['cryptup_flowcrypttestkeymultiplegmailcom_passphrase_98ACFA1EADAB5B92']);
       expect(savedPassphrase).to.equal('1234');
       await settingsPage.close();
     }));
