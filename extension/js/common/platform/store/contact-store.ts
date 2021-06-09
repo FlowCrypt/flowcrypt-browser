@@ -330,6 +330,7 @@ export class ContactStore extends AbstractStore {
         (referencingEmails: Email[]) => {
           for (const entity of referencingEmails.filter(e => e.email === email)) {
             entity.fingerprints = entity.fingerprints.filter(fp => fp !== internalFingerprint);
+            ContactStore.updateSearchable(entity);
             tx.objectStore('emails').put(entity);
           }
           if (!referencingEmails.some(e => e.email !== email)) {
