@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@flowcrypt/fine-uploader": "5.16.4",
-    "bootstrap": "5.0.1",
+    "bootstrap": "4.6.0",
     "clipboard": "2.0.8",
     "dompurify": "2.2.9",
     "filesize": "6.3.0",
