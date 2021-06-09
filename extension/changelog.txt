@@ -1,5 +1,8 @@
 <div class="lightboxed">
 
+
+version 8.1.0 on June 9, 2021: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/438?closed=1" target="_blank">Fix settings layout</a>
+
 version 8.0.9 on June 9, 2021: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/437?closed=1" target="_blank">Fix removing contacts</a>
 
 version 8.0.8 on May 24, 2021: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/436?closed=1" target="_blank">WKD key lifecycle</a>
