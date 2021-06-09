@@ -5,3 +5,7 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    ignore:
+      # ignore all bootstrap major updates
+      - dependency-name: "bootstrap"
+        update-types: ["version-update:semver-major"]
