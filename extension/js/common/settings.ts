@@ -130,7 +130,7 @@ export class Settings {
       }
     }
     const oldAcctStorage = await AcctStore.get(oldAcctEmail, storageIndexesToChange as any);
-    await AcctStore.set(newAcctEmail, oldAcctStorage);
+    await AcctStore.set(newAcctEmail, oldAcctStorage); // also copies stored pass phrases
     for (const sessionStorageIndex of Object.keys(sessionStorage)) {
       if (sessionStorageIndex.indexOf(oldAcctEmailIndexPrefix) === 0) {
         const v = sessionStorage.getItem(sessionStorageIndex);
@@ -141,10 +141,10 @@ export class Settings {
     for (const ki of destAccountPrivateKeys) {
       await KeyStore.add(newAcctEmail, ki.private);
     }
-    // todo:
     for (const fingerprint of Object.keys(destAcctPassPhrases)) {
       await PassphraseStore.set('local', newAcctEmail, fingerprint, destAcctPassPhrases[fingerprint]);
     }
+    // todo: remove passphrases that don't conform to new OrgRules? #3734
     await Settings.acctStorageReset(oldAcctEmail);
     await GlobalStore.acctEmailsRemove(oldAcctEmail);
   }
