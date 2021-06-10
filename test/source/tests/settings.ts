@@ -466,22 +466,33 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       const acct1 = 'ci.tests.gmail@flowcrypt.test';
       const acct2 = 'user@forbid-storing-passphrase-org-rule.flowcrypt.test';
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acct1));
+      const { cryptup_citestsgmailflowcrypttest_rules: oldRules, cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase1 } =
+        await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcrypttest_rules', 'cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE']);
+      expect(savedPassphrase1).not.to.be.an('undefined');
+      expect((oldRules as { flags: string[] }).flags).not.to.include('FORBID_STORING_PASS_PHRASE');
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
-      const { cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase1 } =
-        await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE']);
-      expect(savedPassphrase1).not.to.be.an('undefined');
       await experimentalFrame.waitAndClick('@action-change-email');
-      const oauthPopup = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(experimentalFrame, 'confirm',
+      const oauthPopup1 = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(experimentalFrame, 'confirm',
         { contentToCheck: 'email address has changed', clickOn: 'confirm' }));
-      await OauthPageRecipe.mock(t, oauthPopup, acct2, 'override_acct');
+      await OauthPageRecipe.mock(t, oauthPopup1, acct2, 'override_acct');
       await PageRecipe.waitForModalAndRespond(experimentalFrame, 'confirm',
         { contentToCheck: 'email from ci.tests.gmail@flowcrypt.test to user@forbid-storing-passphrase-org-rule.flowcrypt.test', clickOn: 'confirm' });
-      await PageRecipe.waitForModalAndRespond(experimentalFrame, 'info',
-        { contentToCheck: 'Email address changed to user@forbid-storing-passphrase-org-rule.flowcrypt.test', clickOn: 'confirm' });
-      const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase2 } =
-        await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_07481C8ACF9D49FE']);
-      expect(savedPassphrase2).to.be.an('undefined');
+      const newSettingsPage = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(experimentalFrame, 'info',
+        { contentToCheck: 'Email address changed to user@forbid-storing-passphrase-org-rule.flowcrypt.test', clickOn: 'confirm' }));
+      const oauthPopup2 = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(newSettingsPage, 'confirm',
+        { contentToCheck: 'Please log in with FlowCrypt to continue', clickOn: 'confirm' }));
+      await OauthPageRecipe.mock(t, oauthPopup2, acct2, 'override_acct');
+      await Util.sleep(2);
+      // await PageRecipe.waitForModalAndRespond(?, 'confirm',
+      //   { contentToCheck: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt', clickOn: 'confirm' });
+      const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_rules: newRules } =
+        await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_rules']);
+      expect((newRules as { flags: string[] }).flags).to.include('FORBID_STORING_PASS_PHRASE');
+      // todo: should this passphrase be forgotten?
+      // const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase2 } =
+      //   await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_07481C8ACF9D49FE']);
+      // expect(savedPassphrase2).to.be.an('undefined');
       await settingsPage.close();
     }));
 

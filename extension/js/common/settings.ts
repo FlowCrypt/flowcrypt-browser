@@ -124,9 +124,12 @@ export class Settings {
     }
     await GlobalStore.acctEmailsAdd(newAcctEmail);
     const storage = await storageLocalGetAll();
-    for (const key of Object.keys(storage)) {
-      if (key.indexOf(oldAcctEmailIndexPrefix) === 0) {
-        storageIndexesToChange.push(key.replace(oldAcctEmailIndexPrefix, ''));
+    for (const acctKey of Object.keys(storage)) {
+      if (acctKey.startsWith(oldAcctEmailIndexPrefix)) {
+        const key = acctKey.substr(oldAcctEmailIndexPrefix.length);
+        if (!key.startsWith('google_token_')) {
+          storageIndexesToChange.push(key, '');
+        }
       }
     }
     const oldAcctStorage = await AcctStore.get(oldAcctEmail, storageIndexesToChange as any);
