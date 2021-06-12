@@ -8,7 +8,7 @@ import { WebmailVariantString, XssSafeFactory } from './xss-safe-factory.js';
 import { Catch } from './platform/catch.js';
 import { ContentScriptWindow } from './browser/browser-window.js';
 import { Dict } from './core/common.js';
-import { WebMailName } from './browser/env.js';
+import { Env, WebMailName } from './browser/env.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
 
@@ -103,7 +103,7 @@ export class Injector {
 
   private shouldInject = () => {
     if (this.webmailName === 'gmail') {
-      if (this.S.now('gmail_logo').attr('title') === 'Chat') { // #3746
+      if (Env.getUrlNoParams().startsWith('https://mail.google.com/chat/')) { // #3746
         return false;
       }
     }
