@@ -48,7 +48,6 @@ export class Injector {
       compose_button_container: this.container.composeBtnSel[this.webmailName],
       compose_button: '#flowcrypt_new_message_button',
       compose_window: 'div.new_message',
-      gmail_logo: '.gb_ie'
     });
   }
 
