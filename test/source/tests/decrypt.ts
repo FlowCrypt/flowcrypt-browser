@@ -281,7 +281,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         acctEmail, threadId, expectedContent,
         enterPp: {
           passphrase: Config.key('flowcrypt.compatibility.1pp1').passphrase,
-          isForgetPpChecked: false,
+          isForgetPpChecked: true,
           isForgetPpDisabled: false
         }
       });

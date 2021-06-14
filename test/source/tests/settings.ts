@@ -271,7 +271,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
         acctEmail, threadId: '16819bec18d4e011',
         enterPp: {
           passphrase,
-          isForgetPpChecked: false,
+          isForgetPpChecked: true,
           isForgetPpDisabled: false
         },
         expectedContent: 'changed correctly if this can be decrypted',
@@ -286,7 +286,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
         finishCurrentSession: true,
         enterPp: {
           passphrase: newPp,
-          isForgetPpChecked: false,
+          isForgetPpChecked: true,
           isForgetPpDisabled: false
         },
         expectedContent: 'changed correctly if this can be decrypted'
@@ -345,7 +345,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await InboxPageRecipe.checkDecryptMsg(t, browser, {
         acctEmail, threadId: '16819bec18d4e011',
         expectedContent: 'changed correctly if this can be decrypted', finishCurrentSession: true,
-        enterPp: { passphrase: newPp, isForgetPpChecked: false, isForgetPpDisabled: false }
+        enterPp: { passphrase: newPp, isForgetPpChecked: true, isForgetPpDisabled: false }
       });
     }));
 
