@@ -277,7 +277,14 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
       await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, pp);
       // requires pp entry
-      await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, expectedContent, enterPp: Config.key('flowcrypt.compatibility.1pp1').passphrase });
+      await InboxPageRecipe.checkDecryptMsg(t, browser, {
+        acctEmail, threadId, expectedContent,
+        enterPp: {
+          passphrase: Config.key('flowcrypt.compatibility.1pp1').passphrase,
+          isForgetPpChecked: false,
+          isForgetPpDisabled: false
+        }
+      });
       // now remembers pp in session
       await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, expectedContent });
       // Finish session and check if it's finished

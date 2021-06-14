@@ -1239,9 +1239,9 @@ const sendTextAndVerifyPresentInSentMsg = async (t: AvaContext,
   });
 };
 
-const setRequirePassPhraseAndOpenRepliedMessage = async (t: AvaContext, browser: BrowserHandle, passpharase: string) => {
+const setRequirePassPhraseAndOpenRepliedMessage = async (t: AvaContext, browser: BrowserHandle, passphrase: string) => {
   const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
-  await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, passpharase);
+  await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, passphrase);
   // Open Message Page
   const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16b584ed95837510`));
   await inboxPage.waitAll('iframe');
