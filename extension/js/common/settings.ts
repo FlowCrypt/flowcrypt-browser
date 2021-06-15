@@ -160,7 +160,7 @@ export class Settings {
       }
     }
     for (const ki of newAccountPrivateKeys) {
-      await KeyStore.add(newAcctEmail, ki.private); // merge kept keys with newAccountPrivateKeys 
+      await KeyStore.add(newAcctEmail, ki.private); // merge kept keys with newAccountPrivateKeys
     }
     const newRules = await OrgRules.newInstance(newAcctEmail);
     if (!newRules.forbidStoringPassPhrase()) {
