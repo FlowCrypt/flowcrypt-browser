@@ -536,7 +536,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
         cryptup_userdefaultrememberpassphraseorgruleflowcrypttest_keys: keys } =
         await settingsPage.getFromLocalStorage([
           'cryptup_userdefaultrememberpassphraseorgruleflowcrypttest_rules',
-          'cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE',
+          'cryptup_userdefaultrememberpassphraseorgruleflowcrypttest_passphrase_07481C8ACF9D49FE',
           'cryptup_userdefaultrememberpassphraseorgruleflowcrypttest_keys']);
       expect((newRules as { flags: string[] }).flags).to.include('DEFAULT_REMEMBER_PASS_PHRASE');
       expect((keys as KeyInfo[])[0].longid).to.equal('07481C8ACF9D49FE');
