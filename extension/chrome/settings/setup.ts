@@ -119,9 +119,14 @@ export class SetupView extends View {
     if (this.orgRules.mustSubmitToAttester() || !this.orgRules.canSubmitPubToAttester()) {
       $('.remove_if_pubkey_submitting_not_user_configurable').remove();
     }
-    if (this.orgRules.rememberPassPhraseByDefault()) {
-      $('#step_2a_manual_create .input_passphrase_save').prop('checked', true);
-      $('#step_2b_manual_enter .input_passphrase_save').prop('checked', true);
+    if (this.orgRules.forbidStoringPassPhrase()) {
+      $('.input_passphrase_save').prop('disabled', true);
+      $('.input_passphrase_save').prop('checked', false);
+    } else {
+      $('.input_passphrase_save').prop('disabled', false);
+      if (this.orgRules.rememberPassPhraseByDefault()) {
+        $('.input_passphrase_save').prop('checked', true);
+      }
     }
     if (this.orgRules.getEnforcedKeygenAlgo()) {
       $('.key_type').val(this.orgRules.getEnforcedKeygenAlgo()!).prop('disabled', true);
@@ -227,7 +232,8 @@ export class SetupView extends View {
         return;
       }
       await KeyStore.add(this.acctEmail, prv);
-      await PassphraseStore.set(options.passphrase_save ? 'local' : 'session', this.acctEmail, fingerprint, options.passphrase);
+      await PassphraseStore.set((options.passphrase_save && !this.orgRules.forbidStoringPassPhrase()) ? 'local' : 'session',
+        this.acctEmail, fingerprint, options.passphrase);
     }
     const myOwnEmailAddrsAsContacts: Contact[] = [];
     const { full_name: name } = await AcctStore.get(this.acctEmail, ['full_name']);

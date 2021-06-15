@@ -857,7 +857,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     ava.default('compose - sent message should\'t have version and comment based on OrgRules', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'has.pub@org-rules-test.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-      await SetupPageRecipe.manualEnter(settingsPage, 'has.pub.orgrulestest', { noPrvCreateOrgRule: true, enforceAttesterSubmitOrgRule: true });
+      await SetupPageRecipe.manualEnter(settingsPage, 'has.pub.orgrulestest', { noPrvCreateOrgRule: true, enforceAttesterSubmitOrgRule: true },
+        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
       const subject = `Test Sending Message With Test Text and HIDE_ARMOR_META OrgRule ${Util.lousyRandom()}`;
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, { sign: true });
@@ -1238,9 +1239,9 @@ const sendTextAndVerifyPresentInSentMsg = async (t: AvaContext,
   });
 };
 
-const setRequirePassPhraseAndOpenRepliedMessage = async (t: AvaContext, browser: BrowserHandle, passpharase: string) => {
+const setRequirePassPhraseAndOpenRepliedMessage = async (t: AvaContext, browser: BrowserHandle, passphrase: string) => {
   const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
-  await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, passpharase);
+  await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, passphrase);
   // Open Message Page
   const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16b584ed95837510`));
   await inboxPage.waitAll('iframe');

@@ -630,13 +630,11 @@ export class ControllablePage extends ControllableBase {
     return html;
   }
 
-  public getFromLocalStorage = async (keys: string[]): Promise<Dict<unknown>> => {
-    const result = await new Promise((resolve, reject) => {
-      (this.target as Page).exposeFunction('saveRawStorageResult', resolve).then(() =>
-        (this.target as Page).evaluate(keys =>
-          chrome.storage.local.get(keys, items => (window as any).saveRawStorageResult(items)), keys
-        ).then(undefined, reject), reject);
-    });
+  // passing (keys = null) will return all entries
+  public getFromLocalStorage = async (keys: string[] | null): Promise<Dict<unknown>> => {
+    const result = await (this.target as Page).evaluate(async (keys) => await new Promise((resolve) => {
+      chrome.storage.local.get(keys, resolve);
+    }), keys);
     return result as Dict<unknown>;
   }
 

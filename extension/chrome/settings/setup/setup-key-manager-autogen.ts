@@ -25,6 +25,11 @@ export class SetupWithEmailKeyManagerModule {
       await Ui.modal.error(`${notSupportedErr}\n\nPlease write human@flowcrypt.com to add support.`);
       window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
       return;
+    } else if (this.view.orgRules.forbidStoringPassPhrase()) {
+      const notSupportedErr = 'Combination of org rules not valid: PASS_PHRASE_QUIET_AUTOGEN cannot be used together with FORBID_STORING_PASS_PHRASE.';
+      await Ui.modal.error(notSupportedErr);
+      window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
+      return;
     }
     const passphrase = PgpPwd.random(); // mustAutogenPassPhraseQuietly
     const setupOptions: SetupOptions = { passphrase_save: true, submit_main: this.view.orgRules.canSubmitPubToAttester(), submit_all: false, passphrase };

@@ -6,18 +6,22 @@ import { AvaContext } from '../tooling/';
 import { PageRecipe } from './abstract-page-recipe';
 import { TestUrls } from '../../browser/test-urls';
 import { Util } from '../../util';
+import { expect } from 'chai';
 
-type CheckDecryptMsg$opt = { acctEmail: string, threadId: string, expectedContent: string, enterPp?: string, finishCurrentSession?: boolean };
+type CheckDecryptMsg$opt = {
+  acctEmail: string, threadId: string, expectedContent: string, finishCurrentSession?: boolean,
+  enterPp?: { passphrase: string, isForgetPpDisabled?: boolean, isForgetPpChecked?: boolean }
+};
 type CheckSentMsg$opt = { acctEmail: string, subject: string, expectedContent?: string, isEncrypted?: boolean, isSigned?: boolean, sender?: string };
 
 export class InboxPageRecipe extends PageRecipe {
 
-  public static checkDecryptMsg = async (t: AvaContext, browser: BrowserHandle, { acctEmail, threadId, enterPp, expectedContent, finishCurrentSession }: CheckDecryptMsg$opt) => {
+  public static checkDecryptMsg = async (t: AvaContext, browser: BrowserHandle,
+    { acctEmail, threadId, enterPp, expectedContent, finishCurrentSession }: CheckDecryptMsg$opt) => {
     const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
     await inboxPage.waitAll('iframe');
     if (finishCurrentSession) {
-      await inboxPage.waitAndClick('@action-finish-session');
-      await Util.sleep(5); // give frames time to reload, else we will be manipulating them while reloading -> Error: waitForFunction failed: frame got detached.
+      await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
       await inboxPage.waitAll('iframe');
     }
     const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
@@ -28,7 +32,13 @@ export class InboxPageRecipe extends PageRecipe {
       await pgpBlockFrame.waitAndClick('@action-show-passphrase-dialog', { delay: 1 });
       await inboxPage.waitAll('@dialog-passphrase');
       const ppFrame = await inboxPage.getFrame(['passphrase.htm']);
-      await ppFrame.waitAndType('@input-pass-phrase', enterPp);
+      await ppFrame.waitAndType('@input-pass-phrase', enterPp.passphrase);
+      if (enterPp.isForgetPpDisabled !== undefined) {
+        expect(await PageRecipe.isElementDisabled(await ppFrame.waitAny('@forget-pass-phrase'))).to.equal(enterPp.isForgetPpDisabled);
+      }
+      if (enterPp.isForgetPpChecked !== undefined) {
+        expect(await PageRecipe.isElementChecked(await ppFrame.waitAny('@forget-pass-phrase'))).to.equal(enterPp.isForgetPpChecked);
+      }
       await ppFrame.waitAndClick('@action-confirm-pass-phrase-entry', { delay: 1 });
       await pgpBlockFrame.waitForSelTestState('ready');
       await inboxPage.waitAll('@action-finish-session');
@@ -41,12 +51,16 @@ export class InboxPageRecipe extends PageRecipe {
     await inboxPage.close();
   }
 
-  public static checkFinishingSession = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, threadId: string) => {
-    const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
-    await inboxPage.waitAll('iframe');
+  public static finishSessionOnInboxPage = async (inboxPage: ControllablePage) => {
     await inboxPage.waitAndClick('@action-finish-session');
     await inboxPage.waitTillGone('@action-finish-session');
     await Util.sleep(3); // give frames time to reload, else we will be manipulating them while reloading -> Error: waitForFunction failed: frame got detached.
+  }
+
+  public static checkFinishingSession = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, threadId: string) => {
+    const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+    await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+    await inboxPage.waitAll('iframe');
     const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
     await pgpBlockFrame.waitAll('@pgp-block-content');
     await pgpBlockFrame.waitForSelTestState('ready');

@@ -9,6 +9,7 @@ import { SetupPageRecipe } from './../page-recipe/setup-page-recipe';
 import { TestUrls } from '../../browser/test-urls';
 import { google } from 'googleapis';
 import { testVariant } from '../../test';
+import { testConstants } from './consts';
 
 export class BrowserRecipe {
 
@@ -95,8 +96,16 @@ export class BrowserRecipe {
     const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
     const k = Config.key('flowcrypt.test.key.used.pgp');
     const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
-    await SetupPageRecipe.manualEnter(settingsPage, k.title, { usedPgpBefore: false, submitPubkey: false, savePassphrase: true });
-    return { acctEmail, k, settingsPage };
+    await SetupPageRecipe.manualEnter(settingsPage, k.title, { usedPgpBefore: false, submitPubkey: false, savePassphrase: true }, { isSavePassphraseDisabled: false });
+    return { acctEmail, passphrase: k.passphrase, settingsPage };
+  }
+
+  public static setUpFcForbidPpStoringAcct = async (t: AvaContext, browser: BrowserHandle) => {
+    const acctEmail = 'user@forbid-storing-passphrase-org-rule.flowcrypt.test';
+    const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+    const key = { title: '', armored: testConstants.testKeyB8F687BCDE14435A, passphrase: 'donotstore', longid: 'B8F687BCDE14435A' };
+    await SetupPageRecipe.manualEnter(settingsPage, 'unused', { submitPubkey: false, usedPgpBefore: false, key }, { isSavePassphraseChecked: false, isSavePassphraseDisabled: true });
+    return { acctEmail, passphrase: key.passphrase, settingsPage };
   }
 
   public static async pgpBlockVerifyDecryptedContent(t: AvaContext, browser: BrowserHandle, m: TestMessage) {

@@ -52,10 +52,11 @@ View.run(class MyKeyUpdateView extends View {
   }
 
   private storeUpdatedKeyAndPassphrase = async (updatedPrv: Key, updatedPrvPassphrase: string) => {
-    const storedPassphrase = await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprints[0], true);
+    const shouldSavePassphraseInStorage = !this.orgRules.forbidStoringPassPhrase() &&
+      !!(await PassphraseStore.get(this.acctEmail, this.primaryKi!.fingerprints[0], true));
     await KeyStore.add(this.acctEmail, updatedPrv);
-    await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.fingerprints[0], typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
-    await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.fingerprints[0], typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
+    await PassphraseStore.set('local', this.acctEmail, this.primaryKi!.fingerprints[0], shouldSavePassphraseInStorage ? updatedPrvPassphrase : undefined);
+    await PassphraseStore.set('session', this.acctEmail, this.primaryKi!.fingerprints[0], shouldSavePassphraseInStorage ? undefined : updatedPrvPassphrase);
     if (this.orgRules.canSubmitPubToAttester() && await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
       try {
         await Ui.modal.info(await this.pubLookup.attester.updatePubkey(this.primaryKi!.longid, KeyUtil.armor(await KeyUtil.asPublicKey(updatedPrv))));
@@ -70,26 +71,26 @@ View.run(class MyKeyUpdateView extends View {
   private updatePrivateKeyHandler = async () => {
     const updatedKey = await KeyUtil.parse(String(this.inputPrivateKey.val()));
     const updatedKeyEncrypted = await KeyUtil.parse(String(this.inputPrivateKey.val()));
-    const uddatedKeyPassphrase = String($('.input_passphrase').val());
+    const updatedKeyPassphrase = String($('.input_passphrase').val());
     if (typeof updatedKey === 'undefined') {
       await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
     } else if (updatedKey.isPublic) {
       await Ui.modal.warning('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"');
     } else if (updatedKey.id !== (await KeyUtil.parse(this.primaryKi!.public)).id) {
       await Ui.modal.warning(`This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(this.primaryKi!.fingerprints[0])}`);
-    } else if (await KeyUtil.decrypt(updatedKey, uddatedKeyPassphrase) !== true) {
+    } else if (await KeyUtil.decrypt(updatedKey, updatedKeyPassphrase) !== true) {
       await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
     } else {
       if (updatedKey.usableForEncryption) {
-        await this.storeUpdatedKeyAndPassphrase(updatedKeyEncrypted, uddatedKeyPassphrase);
+        await this.storeUpdatedKeyAndPassphrase(updatedKeyEncrypted, updatedKeyPassphrase);
         return;
       }
       // cannot get a valid encryption key packet
       if (await KeyUtil.isWithoutSelfCertifications(updatedKey) || updatedKey.usableForEncryptionButExpired) { // known issues - key can be fixed
         const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
-          this.acctEmail, '.compatibility_fix_container', updatedKeyEncrypted, uddatedKeyPassphrase, this.showKeyUrl
+          this.acctEmail, '.compatibility_fix_container', updatedKeyEncrypted, updatedKeyPassphrase, this.showKeyUrl
         );
-        await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, uddatedKeyPassphrase);
+        await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, updatedKeyPassphrase);
       } else {
         await Ui.modal.warning(
           'Key update: This looks like a valid key but it cannot be used for encryption. Email human@flowcrypt.com to see why is that. We\'re prompt to respond.',

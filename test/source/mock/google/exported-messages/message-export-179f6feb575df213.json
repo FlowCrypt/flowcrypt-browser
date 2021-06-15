@@ -1,0 +1,90 @@
+{
+  "acctEmail": "user@forbid-storing-passphrase-org-rule.flowcrypt.test",
+  "full": {
+    "id": "179f6feb575df213",
+    "threadId": "179f6feb575df213",
+    "labelIds": [
+      "UNREAD",
+      "SENT",
+      "INBOX"
+    ],
+    "snippet": "-----BEGIN PGP MESSAGE----- Version: FlowCrypt Email Encryption 8.1.0 Comment: Seamlessly send and receive encrypted email wcBMA7AsATzR1pO8AQf8DX5nOemSIUv9CvhlWOxj042hAUX2mPCwAoYTakk6",
+    "payload": {
+      "partId": "",
+      "mimeType": "multipart/mixed",
+      "filename": "",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "multipart/mixed; boundary=\"----sinikael-?=_1-16233465586240.6612918313134901\""
+        },
+        {
+          "name": "Openpgp",
+          "value": "id=B8F687BCDE14435A"
+        },
+        {
+          "name": "From",
+          "value": "sender@domain.com"
+        },
+        {
+          "name": "To",
+          "value": "user@forbid-storing-passphrase-org-rule.flowcrypt.test"
+        },
+        {
+          "name": "Subject",
+          "value": "Encrypted message"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 10 Jun 2021 10:35:58 -0700"
+        },
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        }
+      ],
+      "body": {
+        "size": 0
+      },
+      "parts": [
+        {
+          "partId": "0",
+          "mimeType": "text/plain",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "text/plain"
+            },
+            {
+              "name": "Content-Transfer-Encoding",
+              "value": "quoted-printable"
+            }
+          ],
+          "body": {
+            "size": 1048,
+            "data": "LS0tLS1CRUdJTiBQR1AgTUVTU0FHRS0tLS0tDQpWZXJzaW9uOiBGbG93Q3J5cHQgRW1haWwgRW5jcnlwdGlvbiA4LjEuMA0KQ29tbWVudDogU2VhbWxlc3NseSBzZW5kIGFuZCByZWNlaXZlIGVuY3J5cHRlZCBlbWFpbA0KDQp3Y0JNQTdBc0FUelIxcE84QVFmOERYNW5PZW1TSVV2OUN2aGxXT3hqMDQyaEFVWDJtUEN3QW9ZVGFrazYNCjVRVzNUVGZnSmdiUFFGUGVrMGlvbVIvY3VPR0FmM0kyUk44WjYrZlA4U0duSExadnE2bVdFUGsyZ2JwMg0KVmVxa21nVHU3dktveFBiUzluNytKUGdrSDcrVitVdnZRZDhTTWRpa3A3VGs1aVFsOVk3OXdQcU5YWko3DQpJSTBYMkxWaTJoM1Y4anBSa2M5TERYNWNyMDlPS3RUQ2FXK1V4cEVMWXlTYzZkK296aEdNekJpaXlZYkENCmx6eVE2aEI3Si9DVlVjazVMZEI3RHluemd3djVuWnJjZjJ0RC93K1JLdUY3NXlaTUVsQXpYNG1uZUNVNA0KdFh1M04xRkFKTGx3aWQxelN2cE5YWmdhYThZOVdDcmxld0xSMUVpYmVLTmR5bVNxVDZBZENEVG5oakpvDQpXc0hBVEFPd0xBRTgwZGFUdkFFSC8xakRNY3JzMGpidnF2UDRCdU95cHMyYXNsKy94UUdtOEtvS2VjTGUNCjdadHlCZVVTeWxFeEE4Ri9GUEJnMEwyaGN0cXhqNHlnd0p2Mks0SWlGUExSbTNqNyswL0RzZGdXU1VTdw0KamNZZVoyWVVYZDd6L3NsOXdhblNyRjV6elJacUZyUWZPMzJIYnZzWm5XRGhGdU1zcW1CYk9HRlBtSXRBDQpZM2tjSEhZeVFtUGdlNGg2YTNlTFg5cnNRVS85RSsyVEEvZCtZN2d2VXR6MjFsMTZyVlNKTzNRYXhCRCsNCnVlMGIxTUdYdUgxVHJWQzJzS0p4RTFJNDk4bExNR1RsMFM3OEVuTXo4V3MzdGhKeVBuWjV0c3Q3dCtvbg0KQmg4MTVsZXR2Sjh4UUREcldBL3NkL3VzWjVZKzJOSkkrdnNKNGpmSWdPUElaelZJSjRGRTFsQ2VYbnNXDQpLU1hTWWdGbFJQdnJhQWN3QTNrZ0lwbzJ5bi92ZjVWSGN3Zk9seTd2WjM5ekpNRExHMHkzVkRqMSs0Z00NClY4azRqWm5UMVdNTUJFRTRjbkkvWEV3VW0vNi9OQWVZZk1QREx0L3JkVjNCOUQ2QzNSdEtoUlk2SmlyWg0KbTYzbnpzVFpBSHVvSXR3UA0KPWdkaXMNCi0tLS0tRU5EIFBHUCBNRVNTQUdFLS0tLS0NCg=="
+          }
+        }
+      ]
+    },
+    "sizeEstimate": 1743,
+    "historyId": "209111",
+    "internalDate": "1623346558000"
+  },
+  "attachments": {},
+  "raw": {
+    "id": "179f6feb575df213",
+    "threadId": "179f6feb575df213",
+    "labelIds": [
+      "UNREAD",
+      "SENT",
+      "INBOX"
+    ],
+    "snippet": "-----BEGIN PGP MESSAGE----- Version: FlowCrypt Email Encryption 8.1.0 Comment: Seamlessly send and receive encrypted email wcBMA7AsATzR1pO8AQf8DX5nOemSIUv9CvhlWOxj042hAUX2mPCwAoYTakk6",
+    "sizeEstimate": 1743,
+    "raw": "UmVjZWl2ZWQ6IGZyb20gNzE3Mjg0NzMwMjQ0DQoJbmFtZWQgdW5rbm93bg0KCWJ5IGdtYWlsYXBpLmdvb2dsZS5jb20NCgl3aXRoIEhUVFBSRVNUOw0KCVRodSwgMTAgSnVuIDIwMjEgMTA6MzU6NTggLTA3MDANCkNvbnRlbnQtVHlwZTogbXVsdGlwYXJ0L21peGVkOw0KIGJvdW5kYXJ5PSItLS0tc2luaWthZWwtPz1fMS0xNjIzMzQ2NTU4NjI0MC42NjEyOTE4MzEzMTM0OTAxIg0KT3BlbnBncDogaWQ9QjhGNjg3QkNERTE0NDM1QQ0KRnJvbTogcGluYyBkZXZlbG9wZXIgPHBpbmNkZXZlbG9wZXJAZ21haWwuY29tPg0KVG86IHBpbmMgZGV2ZWxvcGVyIDxwaW5jZGV2ZWxvcGVyQGdtYWlsLmNvbT4NClN1YmplY3Q6IEVuY3J5cHRlZCBtZXNzYWdlDQpEYXRlOiBUaHUsIDEwIEp1biAyMDIxIDEwOjM1OjU4IC0wNzAwDQpNZXNzYWdlLUlkOiA8Q0FHa2pNcVlWbVl5dUtUNVlVNzl6YnArNVBEK3c4RE9uYk01THRrPWV4dDBnLUtWQnR3QG1haWwuZ21haWwuY29tPg0KTUlNRS1WZXJzaW9uOiAxLjANCg0KLS0tLS0tc2luaWthZWwtPz1fMS0xNjIzMzQ2NTU4NjI0MC42NjEyOTE4MzEzMTM0OTAxDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KLS0tLS1CRUdJTiBQR1AgTUVTU0FHRS0tLS0tDQpWZXJzaW9uOiBGbG93Q3J5cHQgRW1haWwgRW5jcnlwdGlvbiA4LjEuMA0KQ29tbWVudDogU2VhbWxlc3NseSBzZW5kIGFuZCByZWNlaXZlIGVuY3J5cHRlZCBlbWFpbA0KDQp3Y0JNQTdBc0FUelIxcE84QVFmOERYNW5PZW1TSVV2OUN2aGxXT3hqMDQyaEFVWDJtUEN3QW9ZVGFrazYNCjVRVzNUVGZnSmdiUFFGUGVrMGlvbVIvY3VPR0FmM0kyUk44WjYrZlA4U0duSExadnE2bVdFUGsyZ2JwMg0KVmVxa21nVHU3dktveFBiUzluNytKUGdrSDcrVitVdnZRZDhTTWRpa3A3VGs1aVFsOVk3OXdQcU5YWko3DQpJSTBYMkxWaTJoM1Y4anBSa2M5TERYNWNyMDlPS3RUQ2FXK1V4cEVMWXlTYzZkK296aEdNekJpaXlZYkENCmx6eVE2aEI3Si9DVlVjazVMZEI3RHluemd3djVuWnJjZjJ0RC93K1JLdUY3NXlaTUVsQXpYNG1uZUNVNA0KdFh1M04xRkFKTGx3aWQxelN2cE5YWmdhYThZOVdDcmxld0xSMUVpYmVLTmR5bVNxVDZBZENEVG5oakpvDQpXc0hBVEFPd0xBRTgwZGFUdkFFSC8xakRNY3JzMGpidnF2UDRCdU95cHMyYXNsKy94UUdtOEtvS2VjTGUNCjdadHlCZVVTeWxFeEE4Ri9GUEJnMEwyaGN0cXhqNHlnd0p2Mks0SWlGUExSbTNqNyswL0RzZGdXU1VTdw0KamNZZVoyWVVYZDd6L3NsOXdhblNyRjV6elJacUZyUWZPMzJIYnZzWm5XRGhGdU1zcW1CYk9HRlBtSXRBDQpZM2tjSEhZeVFtUGdlNGg2YTNlTFg5cnNRVS85RSsyVEEvZCtZN2d2VXR6MjFsMTZyVlNKTzNRYXhCRCsNCnVlMGIxTUdYdUgxVHJWQzJzS0p4RTFJNDk4bExNR1RsMFM3OEVuTXo4V3MzdGhKeVBuWjV0c3Q3dCtvbg0KQmg4MTVsZXR2Sjh4UUREcldBL3NkL3VzWjVZKzJOSkkrdnNKNGpmSWdPUElaelZJSjRGRTFsQ2VYbnNXDQpLU1hTWWdGbFJQdnJhQWN3QTNrZ0lwbzJ5bi92ZjVWSGN3Zk9seTd2WjM5ekpNRExHMHkzVkRqMSs0Z00NClY4azRqWm5UMVdNTUJFRTRjbkkvWEV3VW0vNi9OQWVZZk1QREx0L3JkVjNCOUQ2QzNSdEtoUlk2SmlyWg0KbTYzbnpzVFpBSHVvSXR3UA0KPTNEZ2Rpcw0KLS0tLS1FTkQgUEdQIE1FU1NBR0UtLS0tLQ0KDQotLS0tLS1zaW5pa2FlbC0_PV8xLTE2MjMzNDY1NTg2MjQwLjY2MTI5MTgzMTMxMzQ5MDEtLQ0K",
+    "historyId": "209111",
+    "internalDate": "1623346558000"
+  }
+}
