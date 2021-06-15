@@ -107,7 +107,6 @@ export class Settings {
     if (!acctEmails.includes(oldAcctEmail)) {
       throw new Error(`"${oldAcctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
     }
-    const storageIndexesToChange: string[] = [];
     const oldAcctEmailIndexPrefix = AbstractStore.singleScopeRawIndex(oldAcctEmail, '');
     const newAcctEmailIndexPrefix = AbstractStore.singleScopeRawIndex(newAcctEmail, '');
     // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
@@ -123,17 +122,28 @@ export class Settings {
       throw new Error(`Filter is empty for account_email "${oldAcctEmail}"`);
     }
     await GlobalStore.acctEmailsAdd(newAcctEmail);
+    const storageIndexesToKeepOld: string[] = [];
+    const storageIndexesToKeepNew: string[] = [];
     const storage = await storageLocalGetAll();
     for (const acctKey of Object.keys(storage)) {
       if (acctKey.startsWith(oldAcctEmailIndexPrefix)) {
         const key = acctKey.substr(oldAcctEmailIndexPrefix.length);
-        if (!key.startsWith('google_token_')) {
-          storageIndexesToChange.push(key, '');
+        const mode = Settings.getOverwriteMode(key);
+        if (mode !== 'forget') {
+          storageIndexesToKeepOld.push(key);
+        }
+      } else if (acctKey.startsWith(newAcctEmailIndexPrefix)) {
+        const key = acctKey.substr(newAcctEmailIndexPrefix.length);
+        const mode = Settings.getOverwriteMode(key);
+        if (mode !== 'keep') {
+          storageIndexesToKeepNew.push(key);
         }
       }
     }
-    const oldAcctStorage = await AcctStore.get(oldAcctEmail, storageIndexesToChange as any);
-    await AcctStore.set(newAcctEmail, oldAcctStorage); // also copies stored pass phrases
+    const oldAcctStorage = await AcctStore.get(oldAcctEmail, storageIndexesToKeepOld as any);
+    const newAcctStorage = await AcctStore.get(newAcctEmail, storageIndexesToKeepNew as any);
+    await AcctStore.set(newAcctEmail, oldAcctStorage); // save 'fallback' and 'keep' values
+    await AcctStore.set(newAcctEmail, newAcctStorage); // save 'forget' and overwrite 'fallback'
     for (const sessionStorageIndex of Object.keys(sessionStorage)) {
       if (sessionStorageIndex.indexOf(oldAcctEmailIndexPrefix) === 0) {
         const v = sessionStorage.getItem(sessionStorageIndex);
@@ -371,6 +381,19 @@ export class Settings {
     const backupText = await Settings.collectInfoForAccountBackup(acctEmail);
     Browser.saveToDownloads(new Attachment({ name, type: 'text/plain', data: Buf.fromUtfStr(backupText) }));
     await Ui.delay(1000);
+  }
+
+  /**
+    * determines how to treat old values when changing account
+    */
+  private static getOverwriteMode = (key: string): 'fallback' | 'forget' | 'keep' => {
+    if (key.startsWith('google_token_') || ['uuid', 'rules', 'openid', 'full_name', 'picture', 'sendAs'].includes(key)) { // old value should be used if only a new value is missing
+      return 'fallback';
+    } else if (key.startsWith('passphrase_')) { // force forgetting older values
+      return 'forget';
+    } else { // keep old values if any
+      return 'keep'; // todo: should 'keys' be kept?
+    }
   }
 
   private static collectInfoForAccountBackup = async (acctEmail: string) => {

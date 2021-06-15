@@ -528,22 +528,18 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
         { contentToCheck: 'email from ci.tests.gmail@flowcrypt.test to user@forbid-storing-passphrase-org-rule.flowcrypt.test', clickOn: 'confirm' });
       const newSettingsPage = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(experimentalFrame, 'info',
         { contentToCheck: 'Email address changed to user@forbid-storing-passphrase-org-rule.flowcrypt.test', clickOn: 'confirm' }));
-      const oauthPopup2 = await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(newSettingsPage, 'confirm',
-        { contentToCheck: 'Please log in with FlowCrypt to continue', clickOn: 'confirm' }));
-      await OauthPageRecipe.mock(t, oauthPopup2, acct2, 'override_acct');
       await Util.sleep(2);
       // await PageRecipe.waitForModalAndRespond(?, 'confirm',
       //   { contentToCheck: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt', clickOn: 'confirm' });
       const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_rules: newRules,
-        cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys: keys } =
+        cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys: keys,
+        cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase2 } =
         await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_rules',
-          'cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys']);
+          'cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys',
+          'cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_07481C8ACF9D49FE']);
       expect((newRules as { flags: string[] }).flags).to.include('FORBID_STORING_PASS_PHRASE');
       expect((keys as KeyInfo[])[0].longid).to.equal('07481C8ACF9D49FE');
-      // todo: should this passphrase be forgotten?
-      // const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase2 } =
-      //   await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_07481C8ACF9D49FE']);
-      // expect(savedPassphrase2).to.be.an('undefined');
+      expect(savedPassphrase2).to.be.an('undefined');
       await newSettingsPage.close();
       await settingsPage.close();
     }));
