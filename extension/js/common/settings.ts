@@ -389,10 +389,10 @@ export class Settings {
   private static getOverwriteMode = (key: string): 'fallback' | 'forget' | 'keep' => {
     if (key.startsWith('google_token_') || ['uuid', 'rules', 'openid', 'full_name', 'picture', 'sendAs'].includes(key)) { // old value should be used if only a new value is missing
       return 'fallback';
-    } else if (key.startsWith('passphrase_')) { // force forgetting older values
+    } else if (key === 'keys' || key.startsWith('passphrase_')) { // force forgetting older values
       return 'forget';
     } else { // keep old values if any
-      return 'keep'; // todo: should 'keys' be kept?
+      return 'keep';
     }
   }
 
