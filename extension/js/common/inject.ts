@@ -8,7 +8,7 @@ import { WebmailVariantString, XssSafeFactory } from './xss-safe-factory.js';
 import { Catch } from './platform/catch.js';
 import { ContentScriptWindow } from './browser/browser-window.js';
 import { Dict } from './core/common.js';
-import { WebMailName } from './browser/env.js';
+import { Env, WebMailName } from './browser/env.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
 
@@ -65,7 +65,7 @@ export class Injector {
   public btns = () => {
     if (this.S.now('compose_button_container').length === 0) { // don't inject too early
       (window as unknown as ContentScriptWindow).TrySetDestroyableTimeout(() => this.btns(), 300);
-    } else {
+    } else if (this.shouldInject()) {
       if (this.S.now('compose_button').length === 0) {
         const container = this.S.now('compose_button_container').first().prepend(this.factory.btnCompose(this.webmailName)); // xss-safe-factory
         container.find(this.S.sel('compose_button')).click(Ui.event.handle(() => this.openComposeWin()));
@@ -98,6 +98,15 @@ export class Injector {
         }
         el.remove();
       }));
+  }
+
+  private shouldInject = () => {
+    if (this.webmailName === 'gmail') {
+      if (Env.getUrlNoParams().startsWith('https://mail.google.com/chat/')) { // #3746
+        return false;
+      }
+    }
+    return true;
   }
 
 }

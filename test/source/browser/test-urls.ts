@@ -20,4 +20,8 @@ export class TestUrls {
     return `https://mail.google.com/mail/u/${acctLoginIndex}/#inbox${urlEnd}`;
   }
 
+  public static googleChat = (acctLoginIndex = 0) => {
+    return `https://mail.google.com/chat/u/${acctLoginIndex}`;
+  }
+
 }

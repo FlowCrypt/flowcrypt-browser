@@ -35,6 +35,12 @@ export class BrowserRecipe {
     return gmailPage;
   }
 
+  public static openGoogleChatPage = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
+    const googleChatPage = await browser.newPage(t, TestUrls.googleChat(googleLoginIndex));
+    await googleChatPage.waitAll('h3.acY'); // "No conversation selected" placeholder
+    return googleChatPage;
+  }
+
   public static openGmailPageAndVerifyComposeBtnPresent = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
     const gmailPage = await BrowserRecipe.openGmailPage(t, browser, googleLoginIndex);
     await gmailPage.waitAll('@action-secure-compose');
