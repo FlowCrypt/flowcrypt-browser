@@ -109,17 +109,25 @@ export class Settings {
     }
     const oldAcctEmailIndexPrefix = AbstractStore.singleScopeRawIndex(oldAcctEmail, '');
     const newAcctEmailIndexPrefix = AbstractStore.singleScopeRawIndex(newAcctEmail, '');
-    // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
-    const destAccountPrivateKeys = await KeyStore.get(newAcctEmail);
-    const destAcctPassPhrases: Dict<string> = {};
-    for (const ki of destAccountPrivateKeys) {
-      const pp = await PassphraseStore.get(newAcctEmail, ki.fingerprints[0], true);
-      if (pp) {
-        destAcctPassPhrases[ki.fingerprints[0]] = pp;
-      }
-    }
     if (!oldAcctEmailIndexPrefix) {
       throw new Error(`Filter is empty for account_email "${oldAcctEmail}"`);
+    }
+    // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
+    const oldAccountPrivateKeys = await KeyStore.get(oldAcctEmail);
+    const newAccountPrivateKeys = await KeyStore.get(newAcctEmail);
+    const oldAcctPassPhrases: Dict<string> = {};
+    const newAcctPassPhrases: Dict<string> = {};
+    for (const ki of oldAccountPrivateKeys) {
+      const pp = await PassphraseStore.get(oldAcctEmail, ki.fingerprints[0], true);
+      if (pp) {
+        oldAcctPassPhrases[ki.fingerprints[0]] = pp;
+      }
+    }
+    for (const ki of newAccountPrivateKeys) {
+      const pp = await PassphraseStore.get(newAcctEmail, ki.fingerprints[0], true);
+      if (pp) {
+        newAcctPassPhrases[ki.fingerprints[0]] = pp;
+      }
     }
     await GlobalStore.acctEmailsAdd(newAcctEmail);
     const storageIndexesToKeepOld: string[] = [];
@@ -151,13 +159,18 @@ export class Settings {
         sessionStorage.removeItem(sessionStorageIndex);
       }
     }
-    for (const ki of destAccountPrivateKeys) {
-      await KeyStore.add(newAcctEmail, ki.private);
+    for (const ki of newAccountPrivateKeys) {
+      await KeyStore.add(newAcctEmail, ki.private); // merge kept keys with newAccountPrivateKeys 
     }
-    for (const fingerprint of Object.keys(destAcctPassPhrases)) {
-      await PassphraseStore.set('local', newAcctEmail, fingerprint, destAcctPassPhrases[fingerprint]);
+    const newRules = await OrgRules.newInstance(newAcctEmail);
+    if (!newRules.forbidStoringPassPhrase()) {
+      for (const fingerprint of Object.keys(oldAcctPassPhrases)) {
+        await PassphraseStore.set('local', newAcctEmail, fingerprint, oldAcctPassPhrases[fingerprint]);
+      }
+      for (const fingerprint of Object.keys(newAcctPassPhrases)) {
+        await PassphraseStore.set('local', newAcctEmail, fingerprint, newAcctPassPhrases[fingerprint]);
+      }
     }
-    // todo: remove passphrases that don't conform to new OrgRules? #3734
     await Settings.acctStorageReset(oldAcctEmail);
     await GlobalStore.acctEmailsRemove(oldAcctEmail);
   }
@@ -389,9 +402,9 @@ export class Settings {
   private static getOverwriteMode = (key: string): 'fallback' | 'forget' | 'keep' => {
     if (key.startsWith('google_token_') || ['uuid', 'rules', 'openid', 'full_name', 'picture', 'sendAs'].includes(key)) { // old value should be used if only a new value is missing
       return 'fallback';
-    } else if (key === 'keys' || key.startsWith('passphrase_')) { // force forgetting older values
+    } else if (key.startsWith('passphrase_')) { // force forgetting older values
       return 'forget';
-    } else { // keep old values if any
+    } else { // keep old values if any, 'keys' will later be merged with whatever is in the new account
       return 'keep';
     }
   }
