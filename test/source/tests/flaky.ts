@@ -76,7 +76,8 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.default('standalone - different send from, new signed message, verification in mock', testWithBrowser('compatibility', async (t, browser) => {
       const key = Config.key('flowcryptcompatibility.from.address');
-      await SettingsPageRecipe.addKeyTest(t, browser, 'flowcrypt.compatibility@gmail.com', key.armored!, key.passphrase!);
+      await SettingsPageRecipe.addKeyTest(t, browser, 'flowcrypt.compatibility@gmail.com', key.armored!, key.passphrase!,
+        { isSavePassphraseChecked: true, isSavePassphraseDisabled: false });
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await composePage.selectOption('@input-from', 'flowcryptcompatibility@gmail.com');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Signed Message (Mock Test)', { encrypt: false });

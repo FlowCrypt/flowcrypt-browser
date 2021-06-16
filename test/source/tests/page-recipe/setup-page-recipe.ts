@@ -4,7 +4,7 @@ import { Config, Util } from '../../util';
 
 import { ControllablePage } from '../../browser';
 import { PageRecipe } from './abstract-page-recipe';
-import { SettingsPageRecipe } from './settings-page-recipe';
+import { SavePassphraseChecks, SettingsPageRecipe } from './settings-page-recipe';
 import { expect } from 'chai';
 
 type ManualEnterOpts = {
@@ -22,21 +22,11 @@ type ManualEnterOpts = {
   key?: { title: string, passphrase: string, armored: string | null, longid: string | null, filePath?: string }
 };
 
-type ManualEnterChecks = {
-  isSavePassphraseDisabled?: boolean | undefined,
-  isSavePassphraseChecked?: boolean | undefined
-};
-
 type CreateKeyOpts = {
   key?: { passphrase: string },
   usedPgpBefore?: boolean,
   submitPubkey?: boolean,
   enforcedAlgo?: string | boolean,
-};
-
-type CreateKeyChecks = {
-  isSavePassphraseDisabled?: boolean | undefined,
-  isSavePassphraseChecked?: boolean | undefined
 };
 
 export class SetupPageRecipe extends PageRecipe {
@@ -46,7 +36,7 @@ export class SetupPageRecipe extends PageRecipe {
     keyTitle: string,
     backup: 'none' | 'email' | 'file' | 'disabled',
     { usedPgpBefore = false, submitPubkey = false, enforcedAlgo = false, key }: CreateKeyOpts = {},
-    checks: CreateKeyChecks = {}
+    checks: SavePassphraseChecks = {}
   ) => {
     await SetupPageRecipe.createBegin(settingsPage, keyTitle, { key, usedPgpBefore });
     if (enforcedAlgo) {
@@ -108,7 +98,7 @@ export class SetupPageRecipe extends PageRecipe {
       noPubSubmitRule = false,
       key,
     }: ManualEnterOpts = {},
-    checks: ManualEnterChecks = {}
+    checks: SavePassphraseChecks = {}
   ) {
     if (!noPrvCreateOrgRule) {
       if (usedPgpBefore) {

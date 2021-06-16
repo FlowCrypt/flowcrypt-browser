@@ -11,6 +11,11 @@ import { TestUrls } from '../../browser/test-urls';
 import { Xss } from '../../platform/xss';
 import { KeyUtil } from '../../core/crypto/key';
 
+export type SavePassphraseChecks = {
+  isSavePassphraseDisabled?: boolean | undefined,
+  isSavePassphraseChecked?: boolean | undefined
+};
+
 export class SettingsPageRecipe extends PageRecipe {
 
   public static ready = async (settingsPage: ControllablePage) => {
@@ -105,12 +110,18 @@ export class SettingsPageRecipe extends PageRecipe {
     await settingsPage.waitTillGone('@dialog');
   }
 
-  public static addKeyTest = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, armoredPrvKey: string, passphrase: string) => {
+  public static addKeyTest = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, armoredPrvKey: string, passphrase: string, checks: SavePassphraseChecks = {}) => {
     const addPrvPage = await browser.newPage(t, `/chrome/settings/modules/add_key.htm?acctEmail=${Xss.escape(acctEmail)}&parent_tab_id=0`);
     await addPrvPage.waitAndClick('#source_paste');
     await addPrvPage.waitAndType('.input_private_key', armoredPrvKey);
     await addPrvPage.waitAndClick('#toggle_input_passphrase');
     await addPrvPage.waitAndType('#input_passphrase', passphrase);
+    if (checks.isSavePassphraseDisabled !== undefined) {
+      expect(await PageRecipe.isElementDisabled(await addPrvPage.waitAny('@input-save-passphrase'))).to.equal(checks.isSavePassphraseDisabled);
+    }
+    if (checks.isSavePassphraseChecked !== undefined) {
+      expect(await PageRecipe.isElementChecked(await addPrvPage.waitAny('@input-save-passphrase'))).to.equal(checks.isSavePassphraseChecked);
+    }
     await addPrvPage.waitAndClick('.action_add_private_key', { delay: 1 });
     await addPrvPage.waitTillGone('.swal2-container'); // dialog closed
     await Util.sleep(1);

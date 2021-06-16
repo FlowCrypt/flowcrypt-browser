@@ -16,6 +16,8 @@ import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
 import { PassphraseStore } from '../../../js/common/platform/store/passphrase-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { UnexpectedKeyTypeError } from '../../../js/common/core/crypto/key.js';
+import { OrgRules } from '../../../js/common/org-rules.js';
+import { StorageType } from '../../../js/common/platform/store/abstract-store.js';
 
 View.run(class AddKeyView extends View {
 
@@ -23,6 +25,7 @@ View.run(class AddKeyView extends View {
   private readonly parentTabId: string;
   private readonly keyImportUi = new KeyImportUi({ rejectKnown: true });
   private readonly gmail: Gmail;
+  private orgRules!: OrgRules;
 
   constructor() {
     super();
@@ -33,6 +36,10 @@ View.run(class AddKeyView extends View {
   }
 
   public render = async () => {
+    this.orgRules = await OrgRules.newInstance(this.acctEmail);
+    if (!this.orgRules.forbidStoringPassPhrase()) {
+      $('.input_passphrase_save').prop('checked', true).prop('disabled', false);
+    }
     await initPassphraseToggle(['input_passphrase']);
     this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId);
     Xss.sanitizeRender('#spinner_container', Ui.spinner('green') + ' loading..');
@@ -76,8 +83,8 @@ View.run(class AddKeyView extends View {
       const checked = await this.keyImportUi.checkPrv(this.acctEmail, String($('.input_private_key').val()), String($('.input_passphrase').val()));
       if (checked) {
         await KeyStore.add(this.acctEmail, checked.encrypted); // resulting new_key checked above
-        await PassphraseStore.set($('.input_passphrase_save').prop('checked') ? 'local' : 'session', this.acctEmail,
-          checked.fingerprint, checked.passphrase);
+        const storageType: StorageType = ($('.input_passphrase_save').prop('checked') && !this.orgRules.forbidStoringPassPhrase()) ? 'local' : 'session';
+        await PassphraseStore.set(storageType, this.acctEmail, checked.fingerprint, checked.passphrase);
         BrowserMsg.send.reload(this.parentTabId, { advanced: true });
       }
     } catch (e) {

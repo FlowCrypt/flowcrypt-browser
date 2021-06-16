@@ -424,7 +424,8 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
     }));
 
     ava.default('settings - add unprotected key', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      await SettingsPageRecipe.addKeyTest(t, browser, 'ci.tests.gmail@flowcrypt.test', testConstants.unprotectedPrvKey, 'this is a new passphrase to protect previously unprotected key');
+      await SettingsPageRecipe.addKeyTest(t, browser, 'ci.tests.gmail@flowcrypt.test', testConstants.unprotectedPrvKey, 'this is a new passphrase to protect previously unprotected key',
+        { isSavePassphraseChecked: true, isSavePassphraseDisabled: false });
     }));
 
     ava.default('settings - error modal when page parameter invalid', testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -448,7 +449,8 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       }, { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
       await settingsPage1.close();
 
-      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234');
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234',
+        { isSavePassphraseChecked: true, isSavePassphraseDisabled: false });
 
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -577,6 +579,24 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       expect(savedPassphrase2).to.be.an('undefined');
       await newSettingsPage.close();
       await settingsPage.close();
+    }));
+
+    ava.default('settings - adding a key honors FORBID_STORING_PASS_PHRASE OrgRule', testWithBrowser(undefined, async (t, browser) => {
+      const { acctEmail, settingsPage } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
+      const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,
+        cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys: keys1 }
+        = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A',
+          'cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys']);
+      expect((keys1 as KeyInfo[])[0].longid).to.equal('B8F687BCDE14435A');
+      expect(savedPassphrase1).to.be.an('undefined');
+      await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234',
+        { isSavePassphraseChecked: false, isSavePassphraseDisabled: true });
+      const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_98ACFA1EADAB5B92: savedPassphrase2,
+        cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys: keys2 }
+        = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_98ACFA1EADAB5B92',
+          'cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys']);
+      expect((keys2 as KeyInfo[]).map(ki => ki.longid)).to.include.members(['B8F687BCDE14435A', '98ACFA1EADAB5B92']);
+      expect(savedPassphrase2).to.be.an('undefined');
     }));
 
     ava.todo('settings - change passphrase - mismatch curent pp');
