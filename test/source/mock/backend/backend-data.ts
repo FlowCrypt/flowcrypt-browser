@@ -107,6 +107,24 @@ export class BackendData {
     if (domain === 'key-manager-autogen.flowcrypt.test') {
       return keyManagerAutogenRules;
     }
+    if (domain === 'key-manager-choose-passphrase.flowcrypt.test') {
+      return {
+        ...keyManagerAutogenRules, flags: [
+          'NO_PRV_BACKUP',
+          'PRV_AUTOIMPORT_OR_AUTOGEN',
+          'NO_ATTESTER_SUBMIT',
+          'DEFAULT_REMEMBER_PASS_PHRASE']
+      };
+    }
+    if (domain === 'key-manager-choose-passphrase-forbid-storing.flowcrypt.test') {
+      return {
+        ...keyManagerAutogenRules, flags: [
+          'NO_PRV_BACKUP',
+          'PRV_AUTOIMPORT_OR_AUTOGEN',
+          'NO_ATTESTER_SUBMIT',
+          'FORBID_STORING_PASS_PHRASE']
+      };
+    }
     if (domain === 'key-manager-server-offline.flowcrypt.test') {
       return { ...keyManagerAutogenRules, "key_manager_url": "https://localhost:1230/intentionally-wrong", };
     }

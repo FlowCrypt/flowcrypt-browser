@@ -702,7 +702,7 @@ body#settings > div#content.setup div.action_add_private_key {
   font-size: 15px;
 }
 
-body#settings > div#content.setup div.action_create_private {
+body#settings > div#content.setup div.action_proceed_private {
   margin-top: 20px;
   font-size: 15px;
 }

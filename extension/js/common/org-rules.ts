@@ -156,6 +156,10 @@ export class OrgRules {
     return (this.domainRules.flags || []).includes('PASS_PHRASE_QUIET_AUTOGEN');
   }
 
+  public userMustChoosePassPhraseDuringPrvAutoimport = (): boolean => {
+    return !(this.domainRules.flags || []).includes('PASS_PHRASE_QUIET_AUTOGEN');
+  }
+
   /**
    * Some orgs prefer to forbid publishing public keys publicly
    */

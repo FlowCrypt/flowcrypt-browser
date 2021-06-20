@@ -209,6 +209,12 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'user@key-manager-no-pub-lookup.flowcrypt.test') {
         return { privateKeys: [{ decryptedPrivateKey: existingPrv }] };
       }
+      if (acctEmail === 'get.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test') {
+        return { privateKeys: [{ decryptedPrivateKey: existingPrv }] };
+      }
+      if (acctEmail === 'get.key@key-manager-choose-passphrase.flowcrypt.test') {
+        return { privateKeys: [{ decryptedPrivateKey: existingPrv }] };
+      }
       if (acctEmail === 'put.key@key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [] };
       }

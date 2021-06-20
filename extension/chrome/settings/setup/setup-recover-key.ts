@@ -20,7 +20,7 @@ export class SetupRecoverKeyModule {
 
   public actionRecoverAccountHandler = async () => {
     try {
-      const passphrase = String($('#recovery_pasword').val());
+      const passphrase = String($('#recovery_password').val());
       const newlyMatchingKeys: Key[] = [];
       if (passphrase && this.view.mathingPassphrases.includes(passphrase)) {
         await Ui.modal.warning(Lang.setup.tryDifferentPassPhraseForRemainingBackups);
@@ -47,7 +47,7 @@ export class SetupRecoverKeyModule {
       }
       if (!newlyMatchingKeys.length) {
         if (matchedPreviouslyRecoveredKey) {
-          $('#recovery_pasword').val('');
+          $('#recovery_password').val('');
           await Ui.modal.warning('This is a correct pass phrase, but it matches a key that was already recovered. Please try another pass phrase.');
         } else if (this.view.fetchedKeyBackupsUniqueLongids.length > 1) {
           await Ui.modal.warning(`This pass phrase did not match any of your ${this.view.fetchedKeyBackupsUniqueLongids.length} backed up keys. Please try again.`);
@@ -80,7 +80,7 @@ export class SetupRecoverKeyModule {
 
   public actionRecoverRemainingKeysHandler = async () => {
     this.view.setupRender.displayBlock('step_2_recovery');
-    $('#recovery_pasword').val('');
+    $('#recovery_password').val('');
     const nImported = (await KeyStore.get(this.view.acctEmail)).length;
     const nFetched = this.view.fetchedKeyBackupsUniqueLongids.length;
     const txtKeysTeft = (nFetched - nImported > 1) ? `are ${nFetched - nImported} backups` : 'is one backup';
