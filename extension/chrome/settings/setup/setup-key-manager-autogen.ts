@@ -28,7 +28,7 @@ export class SetupWithEmailKeyManagerModule {
 
   public setupWithEkmThenRenderSetupDone = async (passphrase: string) => {
     const setupOptions: SetupOptions = {
-      passphrase_save: this.view.orgRules.mustAutogenPassPhraseQuietly() || Boolean($('#step_2a_manual_create .input_passphrase_save').prop('checked')),
+      passphrase_save: this.view.orgRules.mustAutogenPassPhraseQuietly() || Boolean($('#step_2_ekm_choose_pass_phrase .input_passphrase_save').prop('checked')),
       submit_main: this.view.orgRules.canSubmitPubToAttester(),
       submit_all: false,
       passphrase
