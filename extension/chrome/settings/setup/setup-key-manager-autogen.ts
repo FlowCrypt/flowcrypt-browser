@@ -7,7 +7,6 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { PgpPwd } from '../../../js/common/core/crypto/pgp/pgp-password.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Api } from '../../../js/common/api/shared/api.js';
 import { Settings } from '../../../js/common/settings.js';
@@ -19,20 +18,21 @@ export class SetupWithEmailKeyManagerModule {
   constructor(private view: SetupView) {
   }
 
-  public setupWithEkmThenRenderSetupDone = async () => {
-    if (!this.view.orgRules.mustAutogenPassPhraseQuietly()) {
-      const notSupportedErr = 'Combination of org rules not yet supported: PRV_AUTOIMPORT_OR_AUTOGEN cannot yet be used without PASS_PHRASE_QUIET_AUTOGEN.';
-      await Ui.modal.error(`${notSupportedErr}\n\nPlease write human@flowcrypt.com to add support.`);
-      window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
-      return;
-    } else if (this.view.orgRules.forbidStoringPassPhrase()) {
-      const notSupportedErr = 'Combination of org rules not valid: PASS_PHRASE_QUIET_AUTOGEN cannot be used together with FORBID_STORING_PASS_PHRASE.';
-      await Ui.modal.error(notSupportedErr);
-      window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
+  public continueEkmSetupHandler = async () => {
+    if (! await this.view.isCreatePrivateFormInputCorrect('step_2_ekm_choose_pass_phrase')) {
       return;
     }
-    const passphrase = PgpPwd.random(); // mustAutogenPassPhraseQuietly
-    const setupOptions: SetupOptions = { passphrase_save: true, submit_main: this.view.orgRules.canSubmitPubToAttester(), submit_all: false, passphrase };
+    const passphrase = $('#step_2_ekm_choose_pass_phrase .input_password').val();
+    await this.setupWithEkmThenRenderSetupDone(typeof passphrase === 'string' ? passphrase : '');
+  }
+
+  public setupWithEkmThenRenderSetupDone = async (passphrase: string) => {
+    const setupOptions: SetupOptions = {
+      passphrase_save: this.view.orgRules.mustAutogenPassPhraseQuietly() || Boolean($('#step_2_ekm_choose_pass_phrase .input_passphrase_save').prop('checked')),
+      submit_main: this.view.orgRules.canSubmitPubToAttester(),
+      submit_all: false,
+      passphrase
+    };
     try {
       const { privateKeys } = await this.view.keyManager!.getPrivateKeys(this.view.idToken!);
       if (privateKeys.length) {

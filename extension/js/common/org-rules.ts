@@ -153,7 +153,11 @@ export class OrgRules {
    * This creates the smoothest user experience, for organisations that use full-disk-encryption and don't need pass phrase protection
    */
   public mustAutogenPassPhraseQuietly = (): boolean => {
-    return (this.domainRules.flags || []).includes('PASS_PHRASE_QUIET_AUTOGEN');
+    return this.usesKeyManager() && (this.domainRules.flags || []).includes('PASS_PHRASE_QUIET_AUTOGEN');
+  }
+
+  public userMustChoosePassPhraseDuringPrvAutoimport = (): boolean => {
+    return this.usesKeyManager() && !this.mustAutogenPassPhraseQuietly();
   }
 
   /**

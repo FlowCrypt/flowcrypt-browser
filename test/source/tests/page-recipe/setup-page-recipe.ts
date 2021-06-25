@@ -234,7 +234,23 @@ export class SetupPageRecipe extends PageRecipe {
     }
   }
 
-  public static autoKeygen = async (settingsPage: ControllablePage, { expectErr }: { expectErr?: { title: string, text: string } } = {}): Promise<void> => {
+  public static autoKeygen = async (settingsPage: ControllablePage, { expectErr, enterPp }: {
+    expectErr?: { title: string, text: string },
+    enterPp?: { passphrase: string, checks?: SavePassphraseChecks }
+  } = {}): Promise<void> => {
+    if (enterPp) {
+      await Util.sleep(3);
+      await settingsPage.waitAndType('@input-step2ekm-passphrase-1', enterPp.passphrase);
+      await settingsPage.waitAndType('@input-step2ekm-passphrase-2', enterPp.passphrase);
+      if (enterPp.checks?.isSavePassphraseDisabled !== undefined) {
+        expect(await PageRecipe.isElementDisabled(await settingsPage.waitAny('@input-step2ekm-save-passphrase'))).to.equal(enterPp.checks.isSavePassphraseDisabled);
+      }
+      if (enterPp.checks?.isSavePassphraseChecked !== undefined) {
+        expect(await PageRecipe.isElementChecked(await settingsPage.waitAny('@input-step2ekm-save-passphrase'))).to.equal(enterPp.checks.isSavePassphraseChecked);
+      }
+      await settingsPage.waitAndClick('@input-step2ekm-continue');
+      await settingsPage.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your pass phrase');
+    }
     if (expectErr) {
       await settingsPage.waitAll(['@container-err-title', '@container-err-text', '@action-retry-by-reloading']);
       expect(await settingsPage.read('@container-err-title')).to.contain(expectErr.title);

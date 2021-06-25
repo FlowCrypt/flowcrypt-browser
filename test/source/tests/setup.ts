@@ -504,6 +504,43 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await securityFrame.notPresent(['@action-change-passphrase-begin', '@action-test-passphrase-begin', '@action-forget-pp']);
     }));
 
+    ava.default('get.key@key-manager-choose-passphrase.flowcrypt.test - passphrase chosen by user with key found on key manager', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'get.key@key-manager-choose-passphrase.flowcrypt.test';
+      const passphrase = 'Long and complicated pass PHRASE';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoKeygen(settingsPage, { enterPp: { passphrase, checks: { isSavePassphraseChecked: true, isSavePassphraseDisabled: false } } });
+      const { cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_keys: keys,
+        cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_rules: rules,
+        cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_passphrase_00B0115807969D75: savedPassphrase
+      } = await settingsPage.getFromLocalStorage([
+        'cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_keys',
+        'cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_rules',
+        'cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_passphrase_00B0115807969D75'
+      ]);
+      expect((rules as { flags: string[] }).flags).not.to.include('FORBID_STORING_PASS_PHRASE');
+      expect((rules as { flags: string[] }).flags).to.include('DEFAULT_REMEMBER_PASS_PHRASE');
+      expect((keys as KeyInfo[])[0].longid).to.equal('00B0115807969D75');
+      expect(savedPassphrase).to.equal(passphrase);
+    }));
+
+    ava.default('get.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - passphrase chosen by user with key found on key manager and forbid storing', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'get.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.autoKeygen(settingsPage, { enterPp: { passphrase: 'long enough to suit requirements', checks: { isSavePassphraseChecked: false, isSavePassphraseDisabled: true } } });
+      const { cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys: keys,
+        cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_rules: rules,
+        cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_passphrase_00B0115807969D75: savedPassphrase
+      } = await settingsPage.getFromLocalStorage([
+        'cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys',
+        'cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_rules',
+        'cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_passphrase_00B0115807969D75'
+      ]);
+      expect((rules as { flags: string[] }).flags).to.include('FORBID_STORING_PASS_PHRASE');
+      expect((rules as { flags: string[] }).flags).not.to.include('DEFAULT_REMEMBER_PASS_PHRASE');
+      expect((keys as KeyInfo[])[0].longid).to.equal('00B0115807969D75');
+      expect(savedPassphrase).to.be.an('undefined');
+    }));
+
     ava.default('get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.test - automatic setup with key found on key manager and no submit rule', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);

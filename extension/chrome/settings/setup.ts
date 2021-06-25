@@ -30,6 +30,7 @@ import { PassphraseStore } from '../../js/common/platform/store/passphrase-store
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 import { KeyManager } from '../../js/common/api/key-server/key-manager.js';
 import { SetupWithEmailKeyManagerModule } from './setup/setup-key-manager-autogen.js';
+import { shouldPassPhraseBeHidden } from '../../js/common/ui/passphrase-ui.js';
 import Swal from 'sweetalert2';
 
 export interface SetupOptions {
@@ -86,7 +87,8 @@ export class SetupView extends View {
     this.submitKeyForAddrs = [this.acctEmail];
     this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId); // for step_2b_manual_enter, if user chooses so
     this.keyImportUi.onBadPassphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').focus();
-    this.keyImportUi.renderPassPhraseStrengthValidationInput($('.input_password'), $('.action_create_private'));
+    this.keyImportUi.renderPassPhraseStrengthValidationInput($('#step_2a_manual_create .input_password'), $('#step_2a_manual_create .action_proceed_private'));
+    this.keyImportUi.renderPassPhraseStrengthValidationInput($('#step_2_ekm_choose_pass_phrase .input_password'), $('#step_2_ekm_choose_pass_phrase .action_proceed_private'));
     this.gmail = new Gmail(this.acctEmail);
     // modules
     this.setupRecoverKey = new SetupRecoverKeyModule(this);
@@ -98,7 +100,10 @@ export class SetupView extends View {
 
   public render = async () => {
     await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
-    await initPassphraseToggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
+    await initPassphraseToggle([
+      'step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2',
+      'step_2_ekm_input_password', 'step_2_ekm_input_password2',
+      'recovery_password']);
     this.storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider']);
     this.scopes = await AcctStore.getScopes(this.acctEmail);
     this.storage.email_provider = this.storage.email_provider || 'gmail';
@@ -146,6 +151,7 @@ export class SetupView extends View {
     $('.action_send').attr('href', Google.webmailUrl(this.acctEmail));
     $('.action_show_help').click(this.setHandler(async () => await Settings.renderSubPage(this.acctEmail, this.tabId!, '/chrome/settings/modules/help.htm')));
     $('#button-go-back').off().click(this.setHandler(() => this.actionBackHandler()));
+    $('#step_2_ekm_choose_pass_phrase .action_proceed_private').click(this.setHandlerPrevent('double', () => this.setupWithEmailKeyManager.continueEkmSetupHandler()));
     $('#step_2_recovery .action_recover_account').click(this.setHandlerPrevent('double', () => this.setupRecoverKey.actionRecoverAccountHandler()));
     $('#step_4_more_to_recover .action_recover_remaining').click(this.setHandler(() => this.setupRecoverKey.actionRecoverRemainingKeysHandler()));
     $('#lost_pass_phrase').click(this.setHandler(() => this.showLostPassPhraseModal()));
@@ -154,12 +160,14 @@ export class SetupView extends View {
     $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(this.setHandler(() => this.setupRender.displayBlock('step_2a_manual_create')));
     $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(this.setHandler(() => this.setupRender.displayBlock('step_2b_manual_enter')));
     $('#step_2b_manual_enter .action_add_private_key').click(this.setHandler(el => this.setupImportKey.actionImportPrivateKeyHandle(el)));
-    $('#step_2a_manual_create .action_create_private').click(this.setHandlerPrevent('double', () => this.setupCreateKey.actionCreateKeyHandler()));
+    $('#step_2a_manual_create .action_proceed_private').click(this.setHandlerPrevent('double', () => this.setupCreateKey.actionCreateKeyHandler()));
     $('#step_2a_manual_create .action_show_advanced_create_settings').click(this.setHandler(el => this.setupCreateKey.actionShowAdvancedSettingsHandle(el)));
     $('#step_4_close .action_close').click(this.setHandler(() => this.actionCloseHandler())); // only rendered if action=add_key which means parentTabId was used
-    $('.input_password').on('keydown', this.setEnterHandlerThatClicks('#step_2a_manual_create .action_create_private'));
-    $('.input_password2').on('keydown', this.setEnterHandlerThatClicks('#step_2a_manual_create .action_create_private'));
-    $("#recovery_pasword").on('keydown', this.setEnterHandlerThatClicks('#step_2_recovery .action_recover_account'));
+    $('#step_2a_manual_create .input_password').on('keydown', this.setEnterHandlerThatClicks('#step_2a_manual_create .action_proceed_private'));
+    $('#step_2a_manual_create.input_password2').on('keydown', this.setEnterHandlerThatClicks('#step_2a_manual_create .action_proceed_private'));
+    $('#step_2_ekm_choose_pass_phrase .input_password').on('keydown', this.setEnterHandlerThatClicks('#step_2_ekm_choose_pass_phrase .action_proceed_private'));
+    $('#step_2_ekm_choose_pass_phrase .input_password2').on('keydown', this.setEnterHandlerThatClicks('#step_2_ekm_choose_pass_phrase .action_proceed_private'));
+    $("#recovery_password").on('keydown', this.setEnterHandlerThatClicks('#step_2_recovery .action_recover_account'));
   }
 
   public actionBackHandler = () => {
@@ -254,6 +262,38 @@ export class SetupView extends View {
       return true;
     }
     return Boolean($(checkboxSelector).prop('checked'));
+  }
+
+  public isCreatePrivateFormInputCorrect = async (section: string): Promise<boolean> => {
+    const password1 = $(`#${section} .input_password`);
+    const password2 = $(`#${section} .input_password2`);
+    if (!password1.val()) {
+      await Ui.modal.warning('Pass phrase is needed to protect your private email. Please enter a pass phrase.');
+      password1.focus();
+      return false;
+    }
+    if ($(`#${section} .action_proceed_private`).hasClass('gray')) {
+      await Ui.modal.warning('Pass phrase is not strong enough. Please make it stronger, by adding a few words.');
+      password1.focus();
+      return false;
+    }
+    if (password1.val() !== password2.val()) {
+      await Ui.modal.warning('The pass phrases do not match. Please try again.');
+      password2.val('').focus();
+      return false;
+    }
+    let notePp = String(password1.val());
+    if (await shouldPassPhraseBeHidden()) {
+      notePp = notePp.substring(0, 2) + notePp.substring(2, notePp.length - 2).replace(/[^ ]/g, '*') + notePp.substring(notePp.length - 2, notePp.length);
+    }
+    const paperPassPhraseStickyNote = `
+      <div style="font-size: 1.2em">
+        Please write down your pass phrase and store it in safe place or even two.
+        It is needed in order to access your FlowCrypt account.
+      </div>
+      <div class="passphrase-sticky-note">${notePp}</div>
+    `;
+    return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassPhraseStickyNote);
   }
 
   private submitPublicKeyIfNeeded = async (armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) => {

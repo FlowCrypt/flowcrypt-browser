@@ -10,7 +10,6 @@ import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { shouldPassPhraseBeHidden } from '../../../js/common/ui/passphrase-ui.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
@@ -21,12 +20,12 @@ export class SetupCreateKeyModule {
 
   public actionCreateKeyHandler = async () => {
     await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.orgRules);
-    if (! await this.isCreatePrivateFormInputCorrect()) {
+    if (! await this.view.isCreatePrivateFormInputCorrect('step_2a_manual_create')) {
       return;
     }
     try {
       $('#step_2a_manual_create input').prop('disabled', true);
-      Xss.sanitizeRender('#step_2a_manual_create .action_create_private', Ui.spinner('white') + 'just a minute');
+      Xss.sanitizeRender('#step_2a_manual_create .action_proceed_private', Ui.spinner('white') + 'just a minute');
       const opts: SetupOptions = {
         passphrase: String($('#step_2a_manual_create .input_password').val()),
         passphrase_save: Boolean($('#step_2a_manual_create .input_passphrase_save').prop('checked')),
@@ -48,7 +47,7 @@ export class SetupCreateKeyModule {
     } catch (e) {
       Catch.reportErr(e);
       await Ui.modal.error(`There was an error, please try again.\n\n(${String(e)})`);
-      $('#step_2a_manual_create .action_create_private').text('CREATE AND SAVE');
+      $('#step_2a_manual_create .action_proceed_private').text('CREATE AND SAVE');
     }
   }
 
@@ -80,37 +79,4 @@ export class SetupCreateKeyModule {
       Xss.sanitizeRender('#step_2_easy_generating, #step_2a_manual_create', Lang.setup.fcDidntSetUpProperly);
     }
   }
-
-  private isCreatePrivateFormInputCorrect = async () => {
-    const password1 = $('#step_2a_manual_create .input_password');
-    const password2 = $('#step_2a_manual_create .input_password2');
-    if (!password1.val()) {
-      await Ui.modal.warning('Pass phrase is needed to protect your private email. Please enter a pass phrase.');
-      password1.focus();
-      return false;
-    }
-    if ($('#step_2a_manual_create .action_create_private').hasClass('gray')) {
-      await Ui.modal.warning('Pass phrase is not strong enough. Please make it stronger, by adding a few words.');
-      password1.focus();
-      return false;
-    }
-    if (password1.val() !== password2.val()) {
-      await Ui.modal.warning('The pass phrases do not match. Please try again.');
-      password2.val('').focus();
-      return false;
-    }
-    let notePp = String(password1.val());
-    if (await shouldPassPhraseBeHidden()) {
-      notePp = notePp.substring(0, 2) + notePp.substring(2, notePp.length - 2).replace(/[^ ]/g, '*') + notePp.substring(notePp.length - 2, notePp.length);
-    }
-    const paperPassPhraseStickyNote = `
-      <div style="font-size: 1.2em">
-        Please write down your pass phrase and store it in safe place or even two.
-        It is needed in order to access your FlowCrypt account.
-      </div>
-      <div class="passphrase-sticky-note">${notePp}</div>
-    `;
-    return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassPhraseStickyNote);
-  }
-
 }

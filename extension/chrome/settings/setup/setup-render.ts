@@ -2,12 +2,14 @@
 
 'use strict';
 
-import { Value } from '../../../js/common/core/common.js';
+import { Url, Value } from '../../../js/common/core/common.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Settings } from '../../../js/common/settings.js';
 import { SetupView } from '../setup.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { Ui } from '../../../js/common/browser/ui.js';
+import { PgpPwd } from '../../../js/common/core/crypto/pgp/pgp-password.js';
 
 export class SetupRenderModule {
 
@@ -46,7 +48,17 @@ export class SetupRenderModule {
       await this.view.submitPublicKeysAndFinalizeSetup({ submit_all: tmp_submit_all, submit_main: tmp_submit_main });
       await this.renderSetupDone();
     } else if (this.view.orgRules.mustAutoImportOrAutogenPrvWithKeyManager()) {
-      await this.view.setupWithEmailKeyManager.setupWithEkmThenRenderSetupDone();
+      if (this.view.orgRules.mustAutogenPassPhraseQuietly() && this.view.orgRules.forbidStoringPassPhrase()) {
+        const notSupportedErr = 'Combination of org rules not valid: PASS_PHRASE_QUIET_AUTOGEN cannot be used together with FORBID_STORING_PASS_PHRASE.';
+        await Ui.modal.error(notSupportedErr);
+        window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
+        return;
+      }
+      if (this.view.orgRules.userMustChoosePassPhraseDuringPrvAutoimport()) {
+        this.displayBlock('step_2_ekm_choose_pass_phrase');
+      } else {
+        await this.view.setupWithEmailKeyManager.setupWithEkmThenRenderSetupDone(PgpPwd.random());
+      }
     } else {
       await this.renderSetupDialog();
     }
@@ -72,7 +84,7 @@ export class SetupRenderModule {
       'loading',
       'step_0_found_key',
       'step_1_easy_or_manual',
-      'step_2a_manual_create', 'step_2b_manual_enter', 'step_2_easy_generating', 'step_2_recovery',
+      'step_2a_manual_create', 'step_2b_manual_enter', 'step_2_easy_generating', 'step_2_recovery', 'step_2_ekm_choose_pass_phrase',
       'step_3_compatibility_fix',
       'step_4_more_to_recover',
       'step_4_done',
