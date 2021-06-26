@@ -42,7 +42,7 @@ export class SetupWithEmailKeyManagerModule {
         // generate keys on client and store them on key manager
         await this.autoGenerateKeyAndStoreBothLocallyAndToEkm(setupOptions);
       } else {
-        await Ui.modal.error(`'Keys for your account were not set up yet - please ask your systems administrator.'`);
+        await Ui.modal.error(`Keys for your account were not set up yet - please ask your systems administrator.`);
         window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
         return;
       }

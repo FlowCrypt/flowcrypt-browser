@@ -541,6 +541,12 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       expect(savedPassphrase).to.be.an('undefined');
     }));
 
+    ava.default('get.key@key-manager-autoimport-no-prv-create.flowcrypt.test - respect NO_PRV_CREATE when key not found on key manager', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'get.key@key-manager-autoimport-no-prv-create.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await settingsPage.waitAndRespondToModal('error', 'confirm', 'Keys for your account were not set up yet - please ask your systems administrator');
+    }));
+
     ava.default('get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.test - automatic setup with key found on key manager and no submit rule', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'get.key@no-submit-org-rule.key-manager-autogen.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
