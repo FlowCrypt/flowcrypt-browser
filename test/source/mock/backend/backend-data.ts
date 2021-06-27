@@ -107,6 +107,9 @@ export class BackendData {
     if (domain === 'key-manager-autogen.flowcrypt.test') {
       return keyManagerAutogenRules;
     }
+    if (domain === 'key-manager-autoimport-no-prv-create.flowcrypt.test') {
+      return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_PRV_CREATE'] };
+    }
     if (domain === 'key-manager-choose-passphrase.flowcrypt.test') {
       return {
         ...keyManagerAutogenRules, flags: [

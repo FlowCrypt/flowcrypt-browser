@@ -38,9 +38,13 @@ export class SetupWithEmailKeyManagerModule {
       if (privateKeys.length) {
         // keys already exist on keyserver, auto-import
         await this.processAndStoreKeysFromEkmLocally(privateKeys, setupOptions);
-      } else {
+      } else if (this.view.orgRules.canCreateKeys()) {
         // generate keys on client and store them on key manager
         await this.autoGenerateKeyAndStoreBothLocallyAndToEkm(setupOptions);
+      } else {
+        await Ui.modal.error(`Keys for your account were not set up yet - please ask your systems administrator.`);
+        window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
+        return;
       }
       await this.view.submitPublicKeysAndFinalizeSetup(setupOptions);
       await this.view.setupRender.renderSetupDone();
