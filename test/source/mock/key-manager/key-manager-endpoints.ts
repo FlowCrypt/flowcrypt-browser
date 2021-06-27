@@ -219,7 +219,7 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       if (acctEmail === 'get.key@key-manager-autoimport-no-prv-create.flowcrypt.test') {
         return { privateKeys: [] };
       }
-      if (acctEmail === 'get.key@key-manager-autogen.flowcrypt.test') {
+      if (acctEmail === 'put.key@key-manager-autogen.flowcrypt.test') {
         return { privateKeys: [] };
       }
       if (acctEmail === 'put.error@key-manager-autogen.flowcrypt.test') {
