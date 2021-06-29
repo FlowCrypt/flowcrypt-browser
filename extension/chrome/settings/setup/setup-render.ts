@@ -19,7 +19,6 @@ export class SetupRenderModule {
   }
 
   public renderInitial = async (): Promise<void> => {
-    $('h1').text(this.view.orgRules.mustAutoImportOrAutogenPrvWithKeyManager() ? 'Setting up FlowCrypt, please wait...' : 'Set Up FlowCrypt');
     $('.email-address').text(this.view.acctEmail);
     $('#button-go-back').css('visibility', 'hidden');
     if (this.view.storage!.email_provider === 'gmail') { // show alternative account addresses in setup form + save them for later

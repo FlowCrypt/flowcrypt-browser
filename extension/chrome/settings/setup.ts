@@ -171,7 +171,7 @@ export class SetupView extends View {
   }
 
   public actionBackHandler = () => {
-    $('h1').text('Set Up');
+    $('h1').text('Set Up FlowCrypt');
     this.setupRender.displayBlock('step_1_easy_or_manual');
   }
 
