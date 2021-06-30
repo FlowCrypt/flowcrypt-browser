@@ -91,5 +91,5 @@
     "/chrome/elements/shared/footer.htm"
   ],
   "minimum_chrome_version": "61",
-  "content_security_policy": "upgrade-insecure-requests; script-src 'self'; frame-ancestors https://mail.google.com 'self'; img-src 'self' https://*.googleusercontent.com data: blob:; frame-src 'self'; worker-src 'self'; form-action 'none'; media-src 'none'; font-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self'"
+  "content_security_policy": "upgrade-insecure-requests; script-src 'self'; frame-ancestors https://mail.google.com 'self'; img-src 'self' https://*.googleusercontent.com data: blob:; frame-src 'self' blob:; worker-src 'self'; form-action 'none'; media-src 'none'; font-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self'"
 }
