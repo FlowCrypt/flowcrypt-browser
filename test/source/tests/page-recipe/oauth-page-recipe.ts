@@ -81,6 +81,7 @@ export class OauthPageRecipe extends PageRecipe {
       if (await oauthPage.isElementPresent(selectors.auth0_username)) {
         await oauthPage.waitAndType(selectors.auth0_username, acctEmail);
         if (acctPassword) {
+          console.log('acctPassword is set');
           await oauthPage.waitAndType(selectors.auth0_password, acctPassword);
         }
         console.log('username and password are entered:', await oauthPage.page.screenshot({ encoding: "base64" }));
