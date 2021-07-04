@@ -83,10 +83,12 @@ export class OauthPageRecipe extends PageRecipe {
         if (acctPassword) {
           await oauthPage.waitAndType(selectors.auth0_password, acctPassword);
         }
+        console.log('username and password are entered:', await oauthPage.page.screenshot({ encoding: "base64" }));
         await oauthPage.waitAndClick(selectors.auth0_login_btn);
         await oauthPage.waitForNavigationIfAny();
       }
       await Util.sleep(1);
+      console.log('username and password are submitted:', await oauthPage.page.screenshot({ encoding: "base64" }));
       await oauthPage.waitAll(selectors.approve_button); // if succeeds, we are logged in and presented with approve/deny choice
       // since we are successfully logged in, we may save cookies to keep them fresh
       // no need to await the API call because it's not crucial to always save it, can mostly skip errors
