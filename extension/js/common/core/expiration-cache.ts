@@ -29,4 +29,10 @@ export class ExpirationCache {
     }
     return undefined;
   }
+
+  public deleteExpired = (): void => {
+    for (const keyToDelete of Object.keys(this.cache).filter(key => this.cache[key].expiration <= Date.now())) {
+      delete this.cache[keyToDelete];
+    }
+  }
 }
