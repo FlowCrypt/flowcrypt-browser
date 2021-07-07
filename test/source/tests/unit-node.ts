@@ -5,7 +5,7 @@ import * as ava from 'ava';
 import { MsgBlock } from '../core/msg-block';
 import { MsgBlockParser } from '../core/msg-block-parser';
 import { PgpHash } from '../core/crypto/pgp/pgp-hash';
-import { TestVariant } from '../util';
+import { TestVariant, Util } from '../util';
 import chai = require('chai');
 import chaiAsPromised = require('chai-as-promised');
 import { KeyUtil, ExtendedKeyInfo } from '../core/crypto/key';
@@ -19,6 +19,7 @@ import { ContactStore } from '../platform/store/contact-store.js';
 import { GoogleData, GmailParser, GmailMsg } from '../mock/google/google-data';
 import { testConstants } from './tooling/consts';
 import { PgpArmor } from '../core/crypto/pgp/pgp-armor';
+import { ExpirationCache } from '../core/expiration-cache';
 import * as forge from 'node-forge';
 
 chai.use(chaiAsPromised);
@@ -1677,6 +1678,15 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)).to.eventually.be.rejectedWi
         dearmored.data,
         source
       );
+      t.pass();
+    });
+
+    ava.default(`[unit][ExpirationCache] entry expires after configured interval`, async t => {
+      const cache = new ExpirationCache(2000); // 2 seconds
+      cache.set('test-key', 'test-value');
+      expect(cache.get('test-key')).to.equal('test-value');
+      await Util.sleep(2);
+      expect(cache.get('test-key')).to.be.an('undefined');
       t.pass();
     });
 

@@ -2,10 +2,10 @@
 
 import { StorageType, AbstractStore } from './abstract-store.js';
 import { AccountIndex, AcctStore, AcctStoreDict } from './acct-store.js';
-import { SessionStore } from './session-store.js';
 import { PromiseCancellation, Dict } from '../../core/common.js';
 import { Ui } from '../../browser/ui.js';
 import { OpenPGPKey } from '../../core/crypto/pgp/openpgp-key.js';
+import { BrowserMsg } from '../../browser/browser-msg.js';
 
 /**
  * Local or session store of pass phrases
@@ -19,7 +19,7 @@ export class PassphraseStore extends AbstractStore {
     const longid = fingerprintOrLongid.length === 40 ? OpenPGPKey.fingerprintToLongid(fingerprintOrLongid) : fingerprintOrLongid;
     const storageIndex = PassphraseStore.getIndex(longid);
     if (storageType === 'session') {
-      await SessionStore.set(acctEmail, storageIndex, passphrase);
+      return await BrowserMsg.send.bg.await.storeSessionPassphraseSet({ acctEmail, key: longid, value: passphrase });
     } else {
       if (typeof passphrase === 'undefined') {
         await AcctStore.remove(acctEmail, [storageIndex]);
@@ -45,7 +45,7 @@ export class PassphraseStore extends AbstractStore {
     if (ignoreSession) {
       return undefined;
     }
-    return await SessionStore.get(acctEmail, storageIndex) ?? undefined;
+    return await BrowserMsg.send.bg.await.storeSessionPassphraseGet({ acctEmail, key: longid }) ?? undefined;
   }
 
   /**

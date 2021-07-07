@@ -15,6 +15,8 @@ import { GlobalStoreDict, GlobalStore } from '../common/platform/store/global-st
 import { ContactStore } from '../common/platform/store/contact-store.js';
 import { SessionStore } from '../common/platform/store/session-store.js';
 import { AcctStore } from '../common/platform/store/acct-store.js';
+import { ExpirationCache } from '../common/core/expiration-cache.js';
+import { emailKeyIndex } from '../common/core/common.js';
 
 console.info('background_process.js starting');
 
@@ -24,6 +26,8 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
 
   let db: IDBDatabase;
   let storage: GlobalStoreDict;
+  const inMemoryPassPhrases = new ExpirationCache(4 * 60 * 60 * 1000); // 4 hours
+  Catch.setHandledInterval(() => inMemoryPassPhrases.deleteExpired(), 60000); // each minute
 
   try {
     await migrateGlobal();
@@ -51,6 +55,8 @@ opgp.initWorker({ path: '/lib/openpgp.worker.js' });
 
   // storage related handlers
   BrowserMsg.bgAddListener('db', (r: Bm.Db) => BgHandlers.dbOperationHandler(db, r));
+  BrowserMsg.bgAddListener('session_passphrase_set', async (r: Bm.StoreSessionSet) => inMemoryPassPhrases.set(emailKeyIndex(r.acctEmail, r.key), r.value));
+  BrowserMsg.bgAddListener('session_passphrase_get', async (r: Bm.StoreSessionGet) => inMemoryPassPhrases.get(emailKeyIndex(r.acctEmail, r.key)));
   BrowserMsg.bgAddListener('session_set', (r: Bm.StoreSessionSet) => SessionStore.set(r.acctEmail, r.key, r.value));
   BrowserMsg.bgAddListener('session_get', (r: Bm.StoreSessionGet) => SessionStore.get(r.acctEmail, r.key));
   BrowserMsg.bgAddListener('storeGlobalGet', (r: Bm.StoreGlobalGet) => GlobalStore.get(r.keys));
