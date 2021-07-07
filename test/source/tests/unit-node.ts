@@ -1682,11 +1682,11 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)).to.eventually.be.rejectedWi
     });
 
     ava.default(`[unit][ExpirationCache] entry expires after configured interval`, async t => {
-      const cache = new ExpirationCache(10000); // 10 seconds
-      cache.set('key', 'value');
-      expect(cache.get('key')).to.equal('value');
-      await Util.sleep(10);
-      expect(cache.get('key')).to.be.an('undefined');
+      const cache = new ExpirationCache(2000); // 2 seconds
+      cache.set('test-key', 'test-value');
+      expect(cache.get('test-key')).to.equal('test-value');
+      await Util.sleep(2);
+      expect(cache.get('test-key')).to.be.an('undefined');
       t.pass();
     });
 
