@@ -68,7 +68,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       return gmailPage;
     };
 
-    ava.default('mail.google.com - setup prompt notif + hides when close clicked + reappears + setup link opens settings', testWithBrowser(undefined, async (t, browser) => {
+    ava.default('mail.google.com - setup prompt notif ++ hides when close clicked + reappears + setup link opens settings', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'ci.tests.gmail@flowcrypt.dev');
       await settingsPage.close();
       let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
