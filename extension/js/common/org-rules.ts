@@ -172,7 +172,8 @@ export class OrgRules {
    * This is because they already have other means to obtain public keys for these domains, such as from their own internal keyserver
    */
   public canLookupThisRecipientOnAttester = (emailAddr: string): boolean => {
-    return !(this.domainRules.disallow_attester_search_for_domains || []).includes(Str.getDomainFromEmailAddress(emailAddr) || 'NONE');
+    const forbidden = ['*', Str.getDomainFromEmailAddress(emailAddr) || 'NONE'];
+    return !(this.domainRules.disallow_attester_search_for_domains || []).some(domain => forbidden.includes(domain));
   }
 
   /**
