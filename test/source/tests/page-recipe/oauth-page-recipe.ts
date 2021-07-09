@@ -42,21 +42,21 @@ export class OauthPageRecipe extends PageRecipe {
     const auth = Config.secrets().auth.google.find(a => a.email === acctEmail);
     const acctPassword = auth?.password;
     const selectors = {
-      approve_button: '#submit_approve_access',
-      email_input: '#identifierId',
-      email_confirm_btn: '#identifierNext',
-      auth0_username: '#username',
-      auth0_password: '#password',
-      auth0_login_btn: 'button', // old: ._button-login
+      googleEmailInput: '#identifierId',
+      googleEmailConfirmBtn: '#identifierNext',
+      auth0username: '#username',
+      auth0password: '#password',
+      auth0loginBtn: 'button:contains("Continue")',
+      googleApproveBtn: '#submit_approve_access',
     };
     try {
       const alreadyLoggedSelector = '.w6VTHd, .wLBAL';
       const alreadyLoggedChooseOtherAccountSelector = '.bLzI3e, .BHzsHc';
       await oauthPage.waitAny(`#Email, #submit_approve_access, #identifierId, ${alreadyLoggedSelector}, #profileIdentifier`, { timeout: 45 });
-      if (await oauthPage.target.$(selectors.email_input) !== null) { // 2017-style login
-        await oauthPage.waitAll(selectors.email_input, { timeout: OauthPageRecipe.longTimeout });
-        await oauthPage.waitAndType(selectors.email_input, acctEmail, { delay: 2 });
-        await oauthPage.waitAndClick(selectors.email_confirm_btn, { delay: 2 });  // confirm email
+      if (await oauthPage.target.$(selectors.googleEmailInput) !== null) { // 2017-style login
+        await oauthPage.waitAll(selectors.googleEmailInput, { timeout: OauthPageRecipe.longTimeout });
+        await oauthPage.waitAndType(selectors.googleEmailInput, acctEmail, { delay: 2 });
+        await oauthPage.waitAndClick(selectors.googleEmailConfirmBtn, { delay: 2 });  // confirm email
         await oauthPage.waitForNavigationIfAny();
       } else if (await oauthPage.target.$(`#profileIdentifier[data-email="${acctEmail}"]`) !== null) { // already logged in - just choose an account
         await oauthPage.waitAndClick(`#profileIdentifier[data-email="${acctEmail}"]`, { delay: 1 });
@@ -77,20 +77,17 @@ export class OauthPageRecipe extends PageRecipe {
         }
         throw new Error('Oauth page didnt close after login. Should increase timeout or await close event');
       }
-      await oauthPage.waitAny([selectors.approve_button, selectors.auth0_username]);
-      if (await oauthPage.isElementPresent(selectors.auth0_username)) {
-        await oauthPage.waitAndType(selectors.auth0_username, acctEmail);
+      await oauthPage.waitAny([selectors.googleApproveBtn, selectors.auth0username]);
+      if (await oauthPage.isElementPresent(selectors.auth0username)) {
+        await oauthPage.waitAndType(selectors.auth0username, acctEmail);
         if (acctPassword) {
-          console.log('acctPassword is set');
-          await oauthPage.waitAndType(selectors.auth0_password, acctPassword);
+          await oauthPage.waitAndType(selectors.auth0password, acctPassword);
         }
-        console.log('username and password are entered:', await oauthPage.page.screenshot({ encoding: "base64" }));
-        await oauthPage.waitAndClick(selectors.auth0_login_btn);
+        await oauthPage.waitAndClick(selectors.auth0loginBtn);
         await oauthPage.waitForNavigationIfAny();
       }
       await Util.sleep(1);
-      console.log('username and password are submitted:', await oauthPage.page.screenshot({ encoding: "base64" }));
-      await oauthPage.waitAll(selectors.approve_button); // if succeeds, we are logged in and presented with approve/deny choice
+      await oauthPage.waitAll(selectors.googleApproveBtn); // if succeeds, we are logged in and presented with approve/deny choice
       // since we are successfully logged in, we may save cookies to keep them fresh
       // no need to await the API call because it's not crucial to always save it, can mostly skip errors
       if (action === 'close') {
