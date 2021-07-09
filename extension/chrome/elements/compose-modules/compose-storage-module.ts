@@ -55,14 +55,16 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   }
 
   public collectAllAvailablePublicKeys = async (senderEmail: string, senderKi: KeyInfo, recipients: string[]): Promise<CollectPubkeysResult> => {
-    const contacts = await ContactStore.get(undefined, recipients);
+    const contacts = await ContactStore.getEncryptionKeys(undefined, recipients);
     const armoredPubkeys = [{ pubkey: await KeyUtil.parse(senderKi.public), email: senderEmail, isMine: true }];
     const emailsWithoutPubkeys = [];
     for (const i of contacts.keys()) {
       const contact = contacts[i];
-      if (contact && contact.hasPgp && contact.pubkey) {
-        armoredPubkeys.push({ pubkey: contact.pubkey, email: contact.email, isMine: false });
-      } else if (contact && this.ksLookupsByEmail[contact.email]) {
+      if (contact?.keys.length) {
+        for (const pubkey of contact.keys) {
+          armoredPubkeys.push({ pubkey, email: contact.email, isMine: false });
+        }
+      } else if (contact && this.ksLookupsByEmail[contact.email]) { // todo: introduce lookup to key array
         armoredPubkeys.push({ pubkey: this.ksLookupsByEmail[contact.email], email: contact.email, isMine: false });
       } else {
         emailsWithoutPubkeys.push(recipients[i]);

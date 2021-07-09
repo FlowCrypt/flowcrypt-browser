@@ -235,6 +235,27 @@ export class ContactStore extends AbstractStore {
     }
   }
 
+  public static getEncryptionKeys = async (db: undefined | IDBDatabase, emails: string[]): Promise<{ email: string, keys: Key[] }[]> => {
+    if (!db) { // relay op through background process
+      return await BrowserMsg.send.bg.await.db({ f: 'getEncryptionKeys', args: [emails] }) as { email: string, keys: Key[] }[];
+    }
+    if (emails.length === 1) {
+      const email = emails[0];
+      const contact = await ContactStore.getOneWithAllPubkeys(db, email);
+      const encryptionKeys = (contact?.sortedPubkeys || []).filter(k => !k.revoked && (k.pubkey.usableForEncryption || k.pubkey.usableForEncryptionButExpired)).
+        map(k => k.pubkey);
+      // if non-expired present, return non-expired only
+      if (encryptionKeys.some(k => k.usableForEncryption)) {
+        return [{ email, keys: encryptionKeys.filter(k => k.usableForEncryption) }];
+      } else {
+        return [{ email, keys: encryptionKeys }];
+      }
+    } else {
+      return (await Promise.all(emails.map(email => ContactStore.getEncryptionKeys(db, [email]))))
+        .reduce((a, b) => a.concat(b));
+    }
+  }
+
   public static search = async (db: IDBDatabase | undefined, query: DbContactFilter): Promise<ContactPreview[]> => {
     return (await ContactStore.rawSearch(db, query)).filter(Boolean).map(ContactStore.toContactPreview);
   }

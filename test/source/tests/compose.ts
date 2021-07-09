@@ -22,6 +22,8 @@ import { expect } from "chai";
 import { BrowserRecipe } from './tooling/browser-recipe';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { testConstants } from './tooling/consts';
+import { MsgUtil } from '../core/crypto/pgp/msg-util';
+import { Buf } from '../core/buf';
 
 // tslint:disable:no-blank-lines-func
 // tslint:disable:no-unused-expression
@@ -845,6 +847,30 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     ava.default('compose - sending and rendering plain message with image', testWithBrowser('compatibility', async (t, browser) => {
       await sendImgAndVerifyPresentInSentMsg(t, browser, 'plain');
+    }));
+
+    ava.default('compose - sending a message encrypted with all keys of a recipient', testWithBrowser('compatibility', async (t, browser) => {
+      const text = 'This message is encrypted with 2 keys of flowcrypt.compatibility';
+      const subject = `Test Sending Multi-Encrypted Message With Test Text ${Util.lousyRandom()}`;
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'flowcrypt.compatibility@gmail.com' }, subject, { sign: true, encrypt: true });
+      await composePage.waitAndType('@input-body', text, { delay: 1 });
+      expect(await composePage.read('@input-body')).to.include(text);
+      await ComposePageRecipe.sendAndClose(composePage);
+      // get sent msg from mock
+      const sentMsg = (await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com')).getMessageBySubject(subject)!;
+      const message = sentMsg.payload!.body!.data!;
+      const encrypted = message.match(/\-\-\-\-\-BEGIN PGP MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP MESSAGE\-\-\-\-\-/s)![0];
+      const encryptedData = Buf.fromUtfStr(encrypted);
+      const decrypted0 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData });
+      // decryption without a ki should fail
+      expect(decrypted0.success).to.equal(false);
+      // decryption with ki 1 should succeed
+      const decrypted1 = await MsgUtil.decryptMessage({ kisWithPp: await Config.getKeyInfo(["flowcrypt.compatibility.1pp1"]), encryptedData });
+      expect(decrypted1.success).to.equal(true);
+      // decryption with ki 2 should succeed
+      const decrypted2 = await MsgUtil.decryptMessage({ kisWithPp: await Config.getKeyInfo(["flowcrypt.compatibility.2pp1"]), encryptedData });
+      expect(decrypted2.success).to.equal(true);
     }));
 
     ava.default('compose - sending and rendering message with U+10000 code points', testWithBrowser('compatibility', async (t, browser) => {
