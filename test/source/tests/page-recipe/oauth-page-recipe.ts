@@ -46,7 +46,7 @@ export class OauthPageRecipe extends PageRecipe {
       googleEmailConfirmBtn: '#identifierNext',
       auth0username: '#username',
       auth0password: '#password',
-      auth0loginBtn: 'button:contains("Continue")',
+      auth0loginBtn: 'button[type=submit][name=action][value=default]',
       googleApproveBtn: '#submit_approve_access',
     };
     try {
