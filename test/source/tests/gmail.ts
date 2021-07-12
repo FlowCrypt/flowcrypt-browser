@@ -148,7 +148,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitAndClick('[role="row"]'); // click the first message
       await gmailPage.waitForContent('.nH.if h2', `Automated puppeteer test: ${subject}`);
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 1 });
-      await GmailPageRecipe.deleteMessage(gmailPage);
+      await GmailPageRecipe.deleteThread(gmailPage);
       expect(urls.length).to.eq(1);
     }));
 
@@ -229,8 +229,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: DCB2 74D2 4683 145E B053 BC0B 48E4 74A0 926B AE86');
     }));
 
-    // flaky test
-    ava.default.skip('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/FMfcgxwJXVGtMJwQTZmBDlspVWDvsnnL'); // encrypted convo
       await Util.sleep(5);
       await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
@@ -239,7 +238,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.page.keyboard.type('hey there');
       await Util.sleep(5);
       await gmailPage.page.reload();
-      await Util.sleep(3);
+      await Util.sleep(5);
       const replyBox = await pageHasSecureDraft(t, browser, gmailPage, 'hey there');
       await replyBox.waitAndClick('@action-send');
       await Util.sleep(5);
