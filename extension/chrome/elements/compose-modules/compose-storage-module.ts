@@ -21,7 +21,6 @@ import { Ui } from '../../../js/common/browser/ui.js';
 export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   private passphraseInterval: number | undefined;
-  private ksLookupsByEmail: { [key: string]: Key } = {};
 
   public setHandlers = () => {
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
@@ -56,21 +55,23 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   public collectAllAvailablePublicKeys = async (senderEmail: string, senderKi: KeyInfo, recipients: string[]): Promise<CollectPubkeysResult> => {
     const contacts = await ContactStore.getEncryptionKeys(undefined, recipients);
-    const armoredPubkeys = [{ pubkey: await KeyUtil.parse(senderKi.public), email: senderEmail, isMine: true }];
+    const pubkeys = [{ pubkey: await KeyUtil.parse(senderKi.public), email: senderEmail, isMine: true }];
     const emailsWithoutPubkeys = [];
-    for (const i of contacts.keys()) {
-      const contact = contacts[i];
-      if (contact?.keys.length) {
-        for (const pubkey of contact.keys) {
-          armoredPubkeys.push({ pubkey, email: contact.email, isMine: false });
+    for (const contact of contacts) {
+      let keysPerEmail = contact.keys;
+      // if non-expired present, return non-expired only
+      if (keysPerEmail.some(k => k.usableForEncryption)) {
+        keysPerEmail = keysPerEmail.filter(k => k.usableForEncryption);
+      }
+      if (keysPerEmail.length) {
+        for (const pubkey of keysPerEmail) {
+          pubkeys.push({ pubkey, email: contact.email, isMine: false });
         }
-      } else if (contact && this.ksLookupsByEmail[contact.email]) { // todo: introduce lookup to key array
-        armoredPubkeys.push({ pubkey: this.ksLookupsByEmail[contact.email], email: contact.email, isMine: false });
       } else {
-        emailsWithoutPubkeys.push(recipients[i]);
+        emailsWithoutPubkeys.push(contact.email);
       }
     }
-    return { armoredPubkeys, emailsWithoutPubkeys };
+    return { pubkeys, emailsWithoutPubkeys };
   }
 
   public passphraseGet = async (senderKi?: KeyInfo) => {
