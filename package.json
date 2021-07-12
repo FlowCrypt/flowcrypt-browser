@@ -10,7 +10,7 @@
     "@types/chai-as-promised": "7.1.4",
     "@types/chrome": "0.0.145",
     "@types/dompurify": "2.2.2",
-    "@types/jquery": "3.5.5",
+    "@types/jquery": "3.5.6",
     "@types/mailparser": "3.0.2",
     "@types/mkdirp": "1.0.1",
     "@types/request": "2.48.5",
