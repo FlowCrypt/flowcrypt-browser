@@ -43,10 +43,10 @@ View.run(class PassphraseView extends View {
       $('.forget').prop('disabled', false);
     }
     if (this.orgRules.usesKeyManager()) {
-      $('#lost-pass-phrase').removeAttr('id').attr('href','#');
-      $('.pass-phrase-alt').show();
+      $('#lost-pass-phrase').removeAttr('id').removeAttr('href');
+      $('.lost-pass-phrase-with-ekm').show();
     } else {
-      $('.pass-phrase').show()
+      $('.lost-pass-phrase').show();
     }
     await initPassphraseToggle(['passphrase']);
     const allPrivateKeys = await KeyStore.get(this.acctEmail);
