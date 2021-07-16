@@ -42,6 +42,9 @@ View.run(class PassphraseView extends View {
     if (!this.orgRules.forbidStoringPassPhrase()) {
       $('.forget').prop('disabled', false);
     }
+    if (this.orgRules.usesKeyManager()) {
+      $('#lost-pass-phrase').text("Ask your IT staff for help if you lost your pass phrase.")
+    }
     await initPassphraseToggle(['passphrase']);
     const allPrivateKeys = await KeyStore.get(this.acctEmail);
     this.keysWeNeedPassPhraseFor = allPrivateKeys.filter(ki => this.longids.includes(ki.longid));
