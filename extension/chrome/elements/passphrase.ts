@@ -43,7 +43,7 @@ View.run(class PassphraseView extends View {
       $('.forget').prop('disabled', false);
     }
     if (this.orgRules.usesKeyManager()) {
-      $('#lost-pass-phrase').text("Ask your IT staff for help if you lost your pass phrase.")
+      $('#lost-pass-phrase').text("Ask your IT staff for help if you lost your pass phrase.").removeAttr('id').attr('href','#');
     }
     await initPassphraseToggle(['passphrase']);
     const allPrivateKeys = await KeyStore.get(this.acctEmail);
