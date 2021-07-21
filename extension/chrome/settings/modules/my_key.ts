@@ -53,6 +53,7 @@ View.run(class MyKeyView extends View {
     Xss.sanitizeRender('.email', this.pubKey.emails.map(email => `<span>${Xss.escape(email)}</span>`).join(', '));
     const expiration = this.pubKey.expiration;
     $('.key_expiration').text(expiration && expiration !== Infinity ? Str.datetimeToDate(Str.fromDate(new Date(expiration))) : 'Key does not expire');
+    await this.hidePrvKeyActions();
     await this.renderPubkeyShareableLink();
     await initPassphraseToggle(['input_passphrase']);
   }
@@ -123,6 +124,16 @@ View.run(class MyKeyView extends View {
     const name = `flowcrypt-backup-${this.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}-0x${this.keyInfo.longid}.asc`;
     const prvKeyAttachment = new Attachment({ data: Buf.fromUtfStr(this.keyInfo.private), type: 'application/pgp-keys', name });
     Browser.saveToDownloads(prvKeyAttachment);
+  }
+
+  private hidePrvKeyActions = () => {
+    Ui.modal.error('test me')
+    if (!this.orgRules.usesKeyManager()) {
+      $('.action_view_update').show();
+      $('a.action_download_revocation_cert').show();
+    } else {
+      $('.enter_pp').remove();
+    }
   }
 
 });
