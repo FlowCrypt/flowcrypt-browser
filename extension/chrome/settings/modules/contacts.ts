@@ -63,7 +63,7 @@ View.run(class ContactsView extends View {
   // --- PRIVATE
 
   private loadAndRenderContactList = async () => {
-    const contacts = await ContactStore.search(undefined, { hasPgp: true, limit: 500, substring: String($('.input-search-contacts').val()) });
+    const contacts = await ContactStore.search(undefined, { hasPgp: true, limit: 500, substring: '' });
     let lineActionsHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
       '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import" data-test="action-show-import-public-keys-form">import public keys</a>&nbsp;&nbsp;';
     if (this.orgRules.getCustomSksPubkeyServer()) {
@@ -78,13 +78,15 @@ View.run(class ContactsView extends View {
     $('#view_contact, #edit_contact, #bulk_import').css('display', 'none');
     let tableContents = '';
     for (const email of contacts.map(preview => preview.email).filter((value, index, self) => !self.slice(0, index).find((el) => el === value))) {
-      const e = Xss.escape(email);
-      tableContents += `
-        <div email="${e}" class="action_show_pubkey_list" data-test="action-show-email-${e.replace(/[^a-z0-9]+/g, '')}">
-          <img src="/img/svgs/chevron-left.svg" class="icon-chevron">
-          ${e}
-        </div>
-      `;
+      if (email.search(String($('.input-search-contacts').val())) >= 0) {
+        const e = Xss.escape(email);
+        tableContents += `
+            <div email="${e}" class="action_show_pubkey_list" data-test="action-show-email-${e.replace(/[^a-z0-9]+/g, '')}">
+            <img src="/img/svgs/chevron-left.svg" class="icon-chevron">
+            ${e}
+            </div>
+        `;
+      } 
     }
     Xss.sanitizeReplace('#emails', `<div id="emails" class="hide_when_rendering_subpage">${tableContents}</div>`);
     $('.container-table-note').text(contacts.length >= 500 ? '(showing first 500 results)' : '');
