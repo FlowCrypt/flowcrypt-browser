@@ -127,7 +127,6 @@ View.run(class MyKeyView extends View {
   }
 
   private hidePrvKeyActions = () => {
-    Ui.modal.error('test me')
     if (!this.orgRules.usesKeyManager()) {
       $('.action_view_update').show();
       $('a.action_download_revocation_cert').show();
