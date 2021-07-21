@@ -23,12 +23,12 @@ export class GeneralMailFormatter {
       return await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingPrv!);
     }
     // encrypt (optionally sign)
-    const { armoredPubkeys, emailsWithoutPubkeys } = await view.storageModule.collectAllAvailablePublicKeys(newMsgData.from, senderKi, recipientsEmails);
+    const { pubkeys, emailsWithoutPubkeys } = await view.storageModule.collectAllAvailablePublicKeys(newMsgData.from, senderKi, recipientsEmails);
     if (emailsWithoutPubkeys.length) {
       await view.errModule.throwIfEncryptionPasswordInvalid(senderKi, newMsgData);
     }
     view.S.now('send_btn_text').text('Encrypting...');
-    return await new EncryptedMsgMailFormatter(view).sendableMsg(newMsgData, armoredPubkeys, signingPrv);
+    return await new EncryptedMsgMailFormatter(view).sendableMsg(newMsgData, pubkeys, signingPrv);
   }
 
 }

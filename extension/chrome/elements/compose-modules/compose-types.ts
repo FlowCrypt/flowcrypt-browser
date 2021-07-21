@@ -37,7 +37,7 @@ export type MessageToReplyOrForward = {
   decryptedFiles: File[]
 };
 
-export type CollectPubkeysResult = { armoredPubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] };
+export type CollectPubkeysResult = { pubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] };
 
 export type PopoverOpt = 'encrypt' | 'sign' | 'richtext';
 export type PopoverChoices = { [key in PopoverOpt]: boolean };
