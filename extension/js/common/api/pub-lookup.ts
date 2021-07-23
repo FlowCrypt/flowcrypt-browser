@@ -27,25 +27,15 @@ export class PubLookup {
   constructor(
     private orgRules: OrgRules
   ) {
-    const privateKeyManagerUrl = orgRules.getKeyManagerUrlForPublicKeys();
     const internalSksUrl = this.orgRules.getCustomSksPubkeyServer();
     this.attester = new Attester(orgRules);
     this.wkd = new Wkd();
-    if (privateKeyManagerUrl) {
-      this.keyManager = new KeyManager(privateKeyManagerUrl);
-    }
     if (internalSksUrl) {
       this.internalSks = new Sks(internalSksUrl);
     }
   }
 
   public lookupEmail = async (email: string): Promise<PubkeysSearchResult> => {
-    if (this.keyManager) {
-      const res = await this.keyManager.lookupPublicKey(email);
-      if (res.publicKeys.length) {
-        return { pubkeys: res.publicKeys.map(x => x.publicKey) };
-      }
-    }
     const wkdRes = await this.wkd.lookupEmail(email);
     if (wkdRes.pubkeys.length) {
       return wkdRes;

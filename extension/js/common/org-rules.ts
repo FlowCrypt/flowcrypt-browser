@@ -59,17 +59,6 @@ export class OrgRules {
   }
 
   /**
-   * an internal org FlowCrypt Email Key Manager instance, can manage both public and private keys
-   * use this method when using for PUB sync
-   */
-  public getKeyManagerUrlForPublicKeys = (): string | undefined => {
-    if ((this.domainRules.flags || []).includes('NO_KEY_MANAGER_PUB_LOOKUP')) {
-      return undefined;
-    }
-    return this.domainRules.key_manager_url;
-  }
-
-  /**
    * use when finding out if EKM is in use, to change functionality without actually neededing the EKM
    *
    */

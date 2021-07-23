@@ -30,10 +30,6 @@ export class KeyManager extends Api {
     return await this.request('PUT', '/keys/private', { decryptedPrivateKey, publicKey }, idToken);
   }
 
-  public lookupPublicKey = async (emailOrFingerprint: string): Promise<LoadPubRes> => {
-    return await this.request('GET', `/keys/public/${emailOrFingerprint}`);
-  }
-
   private request = async <RT>(method: ReqMethod, path: string, vals?: Dict<any> | undefined, idToken?: string): Promise<RT> => {
     return await Api.apiCall(this.url, path, vals, vals ? 'JSON' : undefined, undefined, idToken ? { Authorization: `Bearer ${idToken}` } : undefined, undefined, method);
   }
