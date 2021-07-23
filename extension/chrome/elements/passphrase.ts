@@ -42,7 +42,7 @@ View.run(class PassphraseView extends View {
     if (!this.orgRules.forbidStoringPassPhrase()) {
       $('.forget').prop('disabled', false);
     }
-    if (this.orgRules.usesKeyManager()) {
+    if (this.orgRules.usesKeyManager() || this.orgRules.forbidStoringPassPhrase()) {
       $('#lost-pass-phrase').removeAttr('id').removeAttr('href');
       $('.lost-pass-phrase-with-ekm').show();
     } else {
