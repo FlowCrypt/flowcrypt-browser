@@ -30,6 +30,7 @@ import { testConstants } from './tooling/consts';
 export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
+
     ava.default('compose - rephrase forgot passphrase and disable the link for ekm users', testWithBrowser(undefined, async (t, browser) => {
       const acctEmail = 'user@forbid-storing-passphrase-org-rule.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
