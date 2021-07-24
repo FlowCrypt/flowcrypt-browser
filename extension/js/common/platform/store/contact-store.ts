@@ -405,6 +405,31 @@ export class ContactStore extends AbstractStore {
     // todo: we can add a timestamp here and/or some other info
   }
 
+  /**
+   * Saves only revocation info (to protect against re-importing an older version of OpenPGP key)
+   *
+   * @param {IDBDatabase} db  (optional) database to use
+   * @param {Key} pubkey      a revoked key
+   * @returns {Promise<void>}
+   *
+   * @async
+   * @static
+   */
+  public static saveRevocation = async (db: IDBDatabase | undefined, pubkey: Key): Promise<void> => {
+    if (!pubkey.revoked) {
+      throw new Error('Non-revoked key is supplied to save revocation info');
+    }
+    if (!db) { // relay op through background process
+      await BrowserMsg.send.bg.await.db({ f: 'saveRevocation', args: [pubkey] });
+      return;
+    }
+    const tx = db.transaction(['revocations'], 'readwrite');
+    await new Promise((resolve, reject) => {
+      ContactStore.setTxHandlers(tx, resolve, reject);
+      tx.objectStore('revocations').put(ContactStore.revocationObj(pubkey));
+    });
+  }
+
   private static sortKeys = async (pubkeys: Pubkey[], revocations: Revocation[]) => {
     // parse the keys
     const parsed = await Promise.all(pubkeys.map(async (pubkey) => {
