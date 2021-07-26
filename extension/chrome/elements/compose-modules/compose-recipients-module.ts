@@ -544,13 +544,13 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           this.renderSearchRes(input, contacts, { substring });
         });
       }
-      this.renderSearchResultsLoadingDone();
     } catch (e) {
       Ui.toast(`Error searching contacts: ${ApiErr.eli5(e)}`, 5);
       throw e;
     } finally {
       this.view.errModule.debug('searchContacts 7 - finishing');
       this.contactSearchInProgress = false;
+      this.renderSearchResultsLoadingDone();
     }
   }
 
@@ -760,7 +760,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   }
 
   private renderSearchResultsLoadingDone = () => {
-    if (this.view.S.cached('contacts').find('ul li').length) {
+    if (this.view.S.cached('contacts').find('.select_contact, .allow-google-contact-search').length) {
       this.showContacts();
     }
   }
