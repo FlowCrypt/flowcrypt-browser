@@ -169,6 +169,13 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pgpBlockPage.waitForContent('@pgp-block-content', 'this should decrypt even offline');
     }));
 
+    ava.default('mail.google.com - rendering attachmnents', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkZZknDVSxBxbNbRqKczcTnZsw');
+      await gmailPage.waitForContent('.aVW', '4 Attachments');
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/attachment.htm']);
+      expect(urls.length).to.equal(4);
+    }));
+
     ava.default('mail.google.com - msg.asc message content renders', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/QgrcJHsTjVVKpcZSxSPxWWhHVCCZWpMQCVQ');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
