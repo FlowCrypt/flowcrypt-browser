@@ -42,12 +42,12 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private dragged: Element | undefined = undefined;
 
-  private canSearchContacts: boolean;
+  private googleContactsSearchEnabled: boolean;
   private canReadEmails: boolean;
 
   constructor(view: ComposeView) {
     super(view);
-    this.canSearchContacts = this.view.scopes.readContacts;
+    this.googleContactsSearchEnabled = this.view.scopes.readContacts;
     this.canReadEmails = this.view.scopes.read || this.view.scopes.modify;
   }
 
@@ -522,7 +522,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.errModule.debug(`searchContacts substring: ${substring}`);
       this.view.errModule.debug(`searchContacts db count: ${contacts.length}`);
       this.renderSearchRes(input, contacts, { substring });
-      if (contacts.length >= this.MAX_CONTACTS_LENGTH || !(this.canReadEmails || this.canSearchContacts)) {
+      if (contacts.length >= this.MAX_CONTACTS_LENGTH || !(this.canReadEmails || this.googleContactsSearchEnabled)) {
         this.view.errModule.debug(`searchContacts 2, count: ${contacts.length}`);
         return;
       }
@@ -544,13 +544,13 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           this.renderSearchRes(input, contacts, { substring });
         });
       }
+      this.renderSearchResultsLoadingDone();
     } catch (e) {
       Ui.toast(`Error searching contacts: ${ApiErr.eli5(e)}`, 5);
       throw e;
     } finally {
       this.view.errModule.debug('searchContacts 7 - finishing');
       this.contactSearchInProgress = false;
-      this.renderSearchResultsLoadingDone();
     }
   }
 
@@ -572,7 +572,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   }
 
   private searchContactsOnGoogle = async (query: string, knownContacts: ContactPreview[]): Promise<EmailProviderContact[]> => {
-    if (this.canSearchContacts) {
+    if (this.googleContactsSearchEnabled) {
       this.view.errModule.debug(`searchContacts (Google API) 5`);
       const contactsGoogle = await Google.contactsGet(this.view.acctEmail, query, undefined, this.MAX_CONTACTS_LENGTH);
       if (contactsGoogle && contactsGoogle.length) {
@@ -607,7 +607,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       return 0;
     });
     const renderableContacts = sortedContacts.slice(0, this.MAX_CONTACTS_LENGTH);
-    if ((renderableContacts.length > 0 || this.contactSearchInProgress) || !this.canSearchContacts) {
+    if ((renderableContacts.length > 0 || this.contactSearchInProgress) || !this.googleContactsSearchEnabled) {
       let ulHtml = '';
       for (const contact of renderableContacts) {
         ulHtml += `<li class="select_contact" email="${Xss.escape(contact.email.replace(/<\/?b>/g, ''))}">`;
@@ -632,7 +632,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         ulHtml += '</li>';
       }
       Xss.sanitizeRender(this.view.S.cached('contacts').find('ul'), ulHtml);
-      if (!this.canSearchContacts) {
+      if (!this.googleContactsSearchEnabled) {
         if (!contacts.length) {
           this.view.S.cached('contacts').find('ul').append('<li>No Contacts Found</li>'); // xss-direct
         }
@@ -682,7 +682,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       .click(this.view.setHandler(async () => {
         const authResult = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail: this.view.acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
         if (authResult.result === 'Success') {
-          this.canSearchContacts = true;
+          this.googleContactsSearchEnabled = true;
           this.hideContacts();
           input.focus();
           await this.searchContacts(input);
@@ -784,7 +784,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.removeRecipient(connectToGoogleRecipientLine.element);
     const authRes = await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
     if (authRes.result === 'Success') {
-      this.canSearchContacts = true;
+      this.googleContactsSearchEnabled = true;
       this.canReadEmails = true;
       this.view.scopes.readContacts = true;
       this.view.scopes.read = true;
