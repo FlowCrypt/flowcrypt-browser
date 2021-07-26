@@ -313,10 +313,10 @@ export class OpenPGPKey {
       result.set(`key decrypt`, await KeyUtil.formatResultAsync(async () => {
         try {
           await key.decrypt(passphrase); // throws on password mismatch
-          return true;
+          return 'success';
         } catch (e) {
           if (e instanceof Error && e.message.toLowerCase().includes('incorrect key passphrase')) {
-            return false;
+            return 'INCORRECT PASSPHRASE';
           } else {
             throw e;
           }
