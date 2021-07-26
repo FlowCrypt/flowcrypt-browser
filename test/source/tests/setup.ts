@@ -637,21 +637,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     }));
 
     ava.default(
-      'user@key-manager-no-pub-lookup.flowcrypt.test - do not search pubkeys on EKM: NO_KEY_MANAGER_PUB_LOOKUP',
-      testWithBrowser(undefined, async (t, browser) => {
-        // disallowed searching EKM pubkeys (EKM is behind firewall, but user may be using public interned, with EKM not reachable)
-        const acct = 'user@key-manager-no-pub-lookup.flowcrypt.test';
-        const dontLookupEmail = 'not.suppposed.to.lookup@key-manager-no-pub-lookup.flowcrypt.test';
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-        await SetupPageRecipe.autoKeygen(settingsPage);
-        const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
-        await ComposePageRecipe.fillMsg(composePage, { to: dontLookupEmail }, 'must skip EKM lookup');
-        await composePage.waitForContent('.email_address.no_pgp', dontLookupEmail); // if it tried EKM, this would be err
-        await composePage.waitAll('@input-password');
-      })
-    );
-
-    ava.default(
       'expire@key-manager-keygen-expiration.flowcrypt.test - OrgRule enforce_keygen_expire_months: 1',
       testWithBrowser(undefined, async (t, browser) => {
         const acct = 'expire@key-manager-keygen-expiration.flowcrypt.test';

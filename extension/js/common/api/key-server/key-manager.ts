@@ -9,7 +9,6 @@ import { Api, ReqMethod } from './../shared/api.js';
 import { Dict } from '../../core/common.js';
 
 type LoadPrvRes = { privateKeys: { decryptedPrivateKey: string }[] };
-type LoadPubRes = { publicKeys: { publicKey: string }[] };
 
 export class KeyManager extends Api {
 

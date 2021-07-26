@@ -54,12 +54,6 @@ export class PubLookup {
   }
 
   public lookupFingerprint = async (fingerprintOrLongid: string): Promise<PubkeySearchResult> => {
-    if (this.keyManager) {
-      const res = await this.keyManager.lookupPublicKey(fingerprintOrLongid);
-      if (res.publicKeys.length) {
-        return { pubkey: res.publicKeys[0].publicKey };
-      }
-    }
     if (this.internalSks) {
       const res = await this.internalSks.lookupFingerprint(fingerprintOrLongid);
       if (res.pubkey) {
