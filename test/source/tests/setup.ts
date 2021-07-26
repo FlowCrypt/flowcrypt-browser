@@ -485,6 +485,18 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await composePage.waitAll('@input-password');
     }));
 
+    ava.default('user@no-search-wildcard-domains-org-rule.flowcrypt.test - do not search attester for recipients on any domain', testWithBrowser(undefined, async (t, browser) => {
+      // disallowed searching attester for pubkeys on * domain
+      // below we search for mock.only.pubkey@other.com which normally has pubkey on attester, but none should be found due to the rule
+      const acct = 'user@no-search-wildcard-domains-org-rule.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@other.com' }, 'other.com domain should not be found');
+      await composePage.waitForContent('.email_address.no_pgp', 'mock.only.pubkey@other.com');
+      await composePage.waitAll('@input-password');
+    }));
+
     ava.default('get.key@key-manager-autogen.flowcrypt.test - automatic setup with key found on key manager', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'get.key@key-manager-autogen.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);

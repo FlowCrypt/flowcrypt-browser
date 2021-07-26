@@ -136,6 +136,41 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await contactsFrame.waitForContent('@container-pubkey-details', 'Expired: yes');
     }));
 
+    ava.default('settings - import revoked key fails but the revocation info is saved', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
+      const revocationBefore = await dbPage.page.evaluate(async () => {
+        const db = await (window as any).ContactStore.dbOpen();
+        const revocation: { fingerprint: string } = await new Promise((resolve, reject) => {
+          const tx = db.transaction(['revocations'], 'readonly');
+          const req = tx.objectStore('revocations').get('A5CFC8E8EA4AE69989FE2631097EEBF354259A5E');
+          (window as any).ContactStore.setReqPipe(req, resolve, reject);
+        });
+        return revocation;
+      });
+      expect(revocationBefore).to.be.an('undefined'); // no revocations yet
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('ci.tests.gmail@flowcrypt.test'));
+      await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+      const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+      await contactsFrame.waitAll('@page-contacts');
+      await contactsFrame.waitAndClick('@action-show-import-public-keys-form', { confirmGone: true });
+      await contactsFrame.waitAndType('@input-bulk-public-keys', testConstants.somerevokedRevoked1);
+      await contactsFrame.waitAndClick('@action-show-parsed-public-keys');
+      await contactsFrame.waitAll('iframe');
+      const pubkeyFrame = await contactsFrame.getFrame(['pgp_pubkey.htm']);
+      await pubkeyFrame.notPresent('@action-add-contact');
+      expect((await pubkeyFrame.read('#pgp_block.pgp_pubkey')).toLowerCase()).to.include('not usable');
+      const revocationAfter = await dbPage.page.evaluate(async () => {
+        const db = await (window as any).ContactStore.dbOpen();
+        const revocation: { fingerprint: string } = await new Promise((resolve, reject) => {
+          const tx = db.transaction(['revocations'], 'readonly');
+          const req = tx.objectStore('revocations').get('A5CFC8E8EA4AE69989FE2631097EEBF354259A5E');
+          (window as any).ContactStore.setReqPipe(req, resolve, reject);
+        });
+        return revocation;
+      });
+      expect(revocationAfter).not.to.be.an('undefined'); // revocation is saved in the database
+    }));
+
     ava.default('settings - remove public keys from contact', testWithBrowser('compatibility', async (t, browser) => {
       const dbPage = await browser.newPage(t, TestUrls.extension('chrome/dev/ci_unit_test.htm'));
       const foundKeys = await dbPage.page.evaluate(async () => {

@@ -172,7 +172,23 @@ export class OrgRules {
    * This is because they already have other means to obtain public keys for these domains, such as from their own internal keyserver
    */
   public canLookupThisRecipientOnAttester = (emailAddr: string): boolean => {
-    return !(this.domainRules.disallow_attester_search_for_domains || []).includes(Str.getDomainFromEmailAddress(emailAddr) || 'NONE');
+    if (this.disallowLookupOnAttester()) {
+      return false;
+    }
+    const disallowedDomains = this.domainRules.disallow_attester_search_for_domains || [];
+    const userDomain = Str.getDomainFromEmailAddress(emailAddr);
+    if (!userDomain) {
+      throw new Error(`Not a valid email ${emailAddr}`);
+    }
+    return !disallowedDomains.includes(userDomain);
+  }
+
+  /**
+   *
+   * Some orgs might want to disallow lookup on attester completely
+   */
+  public disallowLookupOnAttester = (): boolean => {
+    return (this.domainRules.disallow_attester_search_for_domains || []).includes('*');
   }
 
   /**
