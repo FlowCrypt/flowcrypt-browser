@@ -31,27 +31,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
-    ava.default('compose - rephrase forgot passphrase and disable the link for ekm users', testWithBrowser(undefined, async (t, browser) => {
-      const acctEmail = 'user@forbid-storing-passphrase-org-rule.flowcrypt.test';
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
-      await Util.sleep(5);
-      const passphrase = 'long enough to suit requirements';
-      await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', { key: { passphrase }, usedPgpBefore: false },
-      { isSavePassphraseDisabled: true, isSavePassphraseChecked: false });
-      await settingsPage.notPresent('.swal2-container');
-      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox(acctEmail));
-      await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
-      const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'should not send as pass phrase is not known', { encrypt: false });
-      await composeFrame.waitAndClick('@action-send');
-      await inboxPage.waitAll('@dialog-passphrase');
-      const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
-      await Util.sleep(5);
-      expect(await passphraseDialog.readHtml('@lost-pass-phrase-with-ekm')).to.equal('Ask your IT staff for help if you lost your pass phrase.');
-      await inboxPage.close();
-      await settingsPage.close();
-    }));
-
     ava.default('compose - toggle minimized state by clicking compose window header', testWithBrowser('compatibility', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('flowcrypt.compatibility@gmail.com'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
