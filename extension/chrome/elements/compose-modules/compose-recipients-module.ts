@@ -45,6 +45,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private canSearchContacts: boolean;
   private canReadEmails: boolean;
 
+  private preventDisplaying: boolean = false;
+
   constructor(view: ComposeView) {
     super(view);
     this.canSearchContacts = this.view.scopes.readContacts;
@@ -162,6 +164,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     for (const recipient of this.addedRecipients.filter(r => types.includes(r.sendingType))) {
       this.removeRecipient(recipient.element);
     }
+  }
+
+  public showContacts = () => {
+    this.view.S.cached('contacts').css('display', 'block');
   }
 
   public hideContacts = () => {
@@ -627,8 +633,13 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         }
         ulHtml += '</li>';
       }
+      this.preventDisplaying = false;
       if (this.contactSearchInProgress) {
-        ulHtml += '<li class="loading" data-test="container-contacts-loading">loading...</li>';
+        if (this.canSearchContacts) {
+          this.preventDisplaying = true;
+        } else {
+          ulHtml += '<li class="loading" data-test="container-contacts-loading">loading...</li>';
+        }
       }
       Xss.sanitizeRender(this.view.S.cached('contacts').find('ul'), ulHtml);
       if (!this.canSearchContacts) {
@@ -663,7 +674,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       const offsetTop = $('#recipients_row').height()! + offset.top; // both are in the template
       const bottomGap = 10;
       this.view.S.cached('contacts').css({
-        display: 'block',
+        display: this.preventDisplaying ? 'none' : 'block',
         left: leftOffset,
         top: offsetTop,
         maxHeight: `calc(100% - ${offsetTop + bottomGap}px)`,
@@ -760,8 +771,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private renderSearchResultsLoadingDone = () => {
     this.view.S.cached('contacts').find('ul li.loading').remove();
-    if (!this.view.S.cached('contacts').find('ul li').length) {
-      this.hideContacts();
+    if (this.view.S.cached('contacts').find('ul li').length) {
+      this.showContacts();
     }
   }
 
