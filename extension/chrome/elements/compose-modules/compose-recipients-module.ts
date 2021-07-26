@@ -45,7 +45,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private canSearchContacts: boolean;
   private canReadEmails: boolean;
 
-  private preventDisplaying: boolean = false;
+  private preventDisplayingContacts: boolean = false;
 
   constructor(view: ComposeView) {
     super(view);
@@ -633,10 +633,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         }
         ulHtml += '</li>';
       }
-      this.preventDisplaying = false;
+      this.preventDisplayingContacts = false;
       if (this.contactSearchInProgress) {
         if (this.canSearchContacts) {
-          this.preventDisplaying = true;
+          this.preventDisplayingContacts = true;
         } else {
           ulHtml += '<li class="loading" data-test="container-contacts-loading">loading...</li>';
         }
@@ -674,7 +674,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       const offsetTop = $('#recipients_row').height()! + offset.top; // both are in the template
       const bottomGap = 10;
       this.view.S.cached('contacts').css({
-        display: this.preventDisplaying ? 'none' : 'block',
+        display: this.preventDisplayingContacts ? 'none' : 'block',
         left: leftOffset,
         top: offsetTop,
         maxHeight: `calc(100% - ${offsetTop + bottomGap}px)`,
@@ -773,6 +773,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.cached('contacts').find('ul li.loading').remove();
     if (this.view.S.cached('contacts').find('ul li').length) {
       this.showContacts();
+    } else {
+      this.hideContacts();
     }
   }
 
