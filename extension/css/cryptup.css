@@ -2243,6 +2243,17 @@ body#new_message.popup table#compose tr td {
 
 body#new_message { overflow-y: hidden; }
 
+body#new_message.error-occured,
+body#settings > div#content.error-occured {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 80%;
+  padding: 50px;
+  background: white;
+}
+
 body#new_message #loader {
   display: flex;
   align-items: center;
