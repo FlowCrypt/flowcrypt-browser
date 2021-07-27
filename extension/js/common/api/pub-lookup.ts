@@ -27,25 +27,15 @@ export class PubLookup {
   constructor(
     private orgRules: OrgRules
   ) {
-    const privateKeyManagerUrl = orgRules.getKeyManagerUrlForPublicKeys();
     const internalSksUrl = this.orgRules.getCustomSksPubkeyServer();
     this.attester = new Attester(orgRules);
     this.wkd = new Wkd();
-    if (privateKeyManagerUrl) {
-      this.keyManager = new KeyManager(privateKeyManagerUrl);
-    }
     if (internalSksUrl) {
       this.internalSks = new Sks(internalSksUrl);
     }
   }
 
   public lookupEmail = async (email: string): Promise<PubkeysSearchResult> => {
-    if (this.keyManager) {
-      const res = await this.keyManager.lookupPublicKey(email);
-      if (res.publicKeys.length) {
-        return { pubkeys: res.publicKeys.map(x => x.publicKey) };
-      }
-    }
     const wkdRes = await this.wkd.lookupEmail(email);
     if (wkdRes.pubkeys.length) {
       return wkdRes;
@@ -66,12 +56,6 @@ export class PubLookup {
   public lookupFingerprint = async (fingerprintOrLongid: string): Promise<PubkeySearchResult> => {
     if (fingerprintOrLongid.includes('@')) {
       throw new Error('Expected fingerprint or longid, got email');
-    }
-    if (this.keyManager) {
-      const res = await this.keyManager.lookupPublicKey(fingerprintOrLongid);
-      if (res.publicKeys.length) {
-        return { pubkey: res.publicKeys[0].publicKey };
-      }
     }
     if (this.internalSks) {
       const res = await this.internalSks.lookupFingerprint(fingerprintOrLongid);

@@ -137,9 +137,6 @@ export class BackendData {
     if (domain === 'key-manager-server-offline.flowcrypt.test') {
       return { ...keyManagerAutogenRules, "key_manager_url": "https://localhost:1230/intentionally-wrong", };
     }
-    if (domain === 'key-manager-no-pub-lookup.flowcrypt.test') {
-      return { ...keyManagerAutogenRules, flags: [...keyManagerAutogenRules.flags, 'NO_KEY_MANAGER_PUB_LOOKUP'] };
-    }
     if (domain === 'key-manager-keygen-expiration.flowcrypt.test') {
       return { ...keyManagerAutogenRules, "enforce_keygen_expire_months": 1 };
     }
