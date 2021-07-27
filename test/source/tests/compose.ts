@@ -58,6 +58,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composeFrame.waitAndClick('@action-send');
       await inboxPage.waitAll('@dialog-passphrase');
       const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
+      await passphraseDialog.waitForContent('@lost-pass-phrase','Lost pass phrase?');
       await passphraseDialog.waitAndType('@input-pass-phrase', k.passphrase);
       await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
       await inboxPage.waitTillGone('@dialog-passphrase');

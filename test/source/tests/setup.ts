@@ -444,6 +444,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await composeFrame.waitAndClick('@action-send');
       await inboxPage.waitAll('@dialog-passphrase');
       const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
+      await passphraseDialog.waitForContent('@lost-pass-phrase-with-ekm','Ask your IT staff for help if you lost your pass phrase.');
       const forgetPassPhraseElement = await passphraseDialog.waitAny('@forget-pass-phrase');
       expect(await InboxPageRecipe.isElementDisabled(forgetPassPhraseElement)).to.equal(true);
       expect(await InboxPageRecipe.isElementChecked(forgetPassPhraseElement)).to.equal(true);
