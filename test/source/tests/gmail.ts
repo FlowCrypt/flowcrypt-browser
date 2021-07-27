@@ -245,7 +245,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.page.keyboard.type('hey there');
       await Util.sleep(5);
       await gmailPage.page.reload();
-      await Util.sleep(5);
+      await Util.sleep(10);
       const replyBox = await pageHasSecureDraft(t, browser, gmailPage, 'hey there');
       await replyBox.waitAndClick('@action-send');
       await Util.sleep(5);
