@@ -89,6 +89,12 @@ export class BackendData {
         "disallow_attester_search_for_domains": ["flowcrypt.com"]
       };
     }
+    if (domain === 'no-search-wildcard-domains-org-rule.flowcrypt.test') {
+      return {
+        "flags": [],
+        "disallow_attester_search_for_domains": ["*"]
+      };
+    }
     const keyManagerAutogenRules = {
       "flags": [
         "NO_PRV_BACKUP",

@@ -235,7 +235,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       container.find('r_loader').remove();
     }
     Xss.sanitizeRender(container, '<span class="rest"><span id="rest_number"></span> more</span>');
-    const maxWidth = container.parent().width()!;
+    const maxWidth = container.parent().width()! - this.view.S.cached('container_cc_bcc_buttons').width()!;
     const rest = container.find('.rest');
     let processed = 0;
     while (container.width()! <= maxWidth && orderedRecipients.length >= processed + 1) {

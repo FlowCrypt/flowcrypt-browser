@@ -28,17 +28,10 @@ export class GmailPageRecipe extends PageRecipe {
     await gmailPage.waitAndClick('@notification-successfully-setup-action-close');
   }
 
-  public static deleteMessage = async (gmailPage: ControllablePage) => {
-    // the toolbar needs to be focused in order for Delete button to work
-    await gmailPage.page.keyboard.down('Shift');
-    for (let i = 0; i < 5; i++) {
-      await gmailPage.press('Tab');
-    }
-    await gmailPage.page.keyboard.up('Shift');
-    await gmailPage.waitAndClick('[aria-label="Delete"]');
+  public static deleteThread = async (gmailPage: ControllablePage) => {
+    await gmailPage.page.keyboard.press('#');
   }
 
-  // todo - is this the same as the one above?
   public static deleteLastReply = async (gmailPage: ControllablePage) => {
     await gmailPage.waitAndClick('[aria-label="More"]');
     await gmailPage.press('ArrowDown', 5);
