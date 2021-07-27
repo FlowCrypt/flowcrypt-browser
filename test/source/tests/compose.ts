@@ -1283,10 +1283,6 @@ export const expectRecipientElements = async (controllable: ControllablePage, ex
 };
 
 const expectContactsResultEqual = async (composePage: ControllablePage | ControllableFrame, emails: string[]) => {
-  await composePage.waitAny('@container-contacts');
-  await Util.sleep(0.5);
-  await composePage.waitTillGone('@container-contacts-loading');
-  await Util.sleep(0.5);
   const contacts = await composePage.waitAny('@container-contacts');
   const contactsList = await contacts.$$('li');
   for (const index in contactsList) { // tslint:disable-line:forin

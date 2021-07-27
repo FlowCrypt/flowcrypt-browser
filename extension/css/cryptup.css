@@ -163,6 +163,7 @@ span.gray { color: #b7b7b7; }
 }
 
 .swal2-popup.ui-modal-iframe .swal2-html-container {
+  margin: 0;
   padding: 0;
 }
 
