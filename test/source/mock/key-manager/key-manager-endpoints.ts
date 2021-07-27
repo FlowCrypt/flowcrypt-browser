@@ -287,25 +287,5 @@ export const mockKeyManagerEndpoints: HandlersDefinition = {
       throw new HttpClientErr(`Unexpectedly calling mockKeyManagerEndpoints:/keys/private PUT with acct ${acctEmail}`);
     }
     throw new HttpClientErr(`Unknown method: ${req.method}`);
-  },
-  '/flowcrypt-email-key-manager/keys/public/?': async ({ }, req) => {
-    if (!isGet(req)) {
-      throw new Error(`keys/public: expecting GET, got ${req.method}`);
-    }
-    const query = req.url!.split('/').pop()!;
-    const publicKey = KeyUtil.armor(await KeyUtil.asPublicKey(await KeyUtil.parse(existingPrv)));
-    if (query.includes('@')) { // search by email
-      const email = query.toLowerCase().trim();
-      if (email === 'find.public.key@key-manager-autogen.flowcrypt.test') {
-        return { publicKeys: [{ publicKey }] };
-      }
-      if (email === 'not.suppposed.to.lookup@key-manager-no-pub-lookup.flowcrypt.test') {
-        throw Error(`Not supposed to lookup on EKM based on NO_KEY_MANAGER_PUB_LOOKUP rule: ${email}`);
-      }
-      return { publicKeys: [] };
-    } else { // search by fingerprint
-      // const fingerprint = query;
-      return { publicKeys: [] };
-    }
-  },
+  }
 };
