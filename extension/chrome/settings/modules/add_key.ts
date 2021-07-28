@@ -57,7 +57,6 @@ View.run(class AddKeyView extends View {
       $('.source_selector').css('display', 'block');
       $('#spinner_container').text('');
     }
-    
   }
 
   public setHandlers = () => {
