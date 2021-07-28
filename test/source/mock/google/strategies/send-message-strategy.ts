@@ -20,7 +20,19 @@ class SaveMessageInStorageStrategy implements ITestMsgStrategy {
 class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStrategy {
   public test = async (mimeMsg: ParsedMail, base64Msg: string) => {
     if (!mimeMsg.text?.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]{10}/)) {
-      throw new HttpClientErr(`Error: cannot find pwd encrypted link in:\n\n${mimeMsg.text}`);
+      throw new HttpClientErr(`Error: cannot find pwd encrypted flowcrypt.com/api link in:\n\n${mimeMsg.text}`);
+    }
+    if (!mimeMsg.text?.includes('Follow this link to open it')) {
+      throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
+    }
+    (await GoogleData.withInitializedData(mimeMsg.from!.value[0].address!)).storeSentMessage(mimeMsg, base64Msg);
+  }
+}
+
+class PwdEncryptedMessageWithFesTestStrategy implements ITestMsgStrategy {
+  public test = async (mimeMsg: ParsedMail, base64Msg: string) => {
+    if (!mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-ID')) {
+      throw new HttpClientErr(`Error: cannot find pwd encrypted FES link in:\n\n${mimeMsg.text}`);
     }
     if (!mimeMsg.text?.includes('Follow this link to open it')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
@@ -152,6 +164,8 @@ export class TestBySubjectStrategyContext {
       this.strategy = new MessageWithFooterTestStrategy();
     } else if (subject.includes('PWD encrypted message with flowcrypt.com/api')) {
       this.strategy = new PwdEncryptedMessageWithFlowCryptComApiTestStrategy();
+    } else if (subject.includes('PWD encrypted message with FES')) {
+      this.strategy = new PwdEncryptedMessageWithFesTestStrategy();
     } else if (subject.includes('Message With Image')) {
       this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('Message With Test Text')) {

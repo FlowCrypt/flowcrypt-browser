@@ -210,7 +210,12 @@ export class Api<REQ, RES> {
   protected parseReqBody = (body: Buffer, req: http.IncomingMessage): REQ => {
     let parsedBody: string | undefined;
     if (body.length) {
-      if (req.url!.startsWith('/upload/') || req.url!.startsWith('/api/message/upload') || (req.url!.startsWith('/attester/pub/') && req.method === 'POST')) {
+      if (
+        req.url!.startsWith('/upload/') || // gmail message send
+        req.url!.startsWith('/api/message/upload') || // flowcrypt.com/api pwd msg
+        (req.url!.startsWith('/attester/pub/') && req.method === 'POST') || // attester submit
+        req.url! == '/api/v1/message' // FES pwd msg
+      ) {
         parsedBody = body.toString();
       } else {
         parsedBody = JSON.parse(body.toString());

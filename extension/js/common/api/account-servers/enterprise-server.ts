@@ -107,7 +107,7 @@ export class EnterpriseServer extends Api {
 
   public webPortalMessageUpload = async (encrypted: Uint8Array, progressCb: ProgressCb): Promise<FesRes.MessageUpload> => {
     const content = new Attachment({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encrypted });
-    return await EnterpriseServer.apiCall<FesRes.MessageUpload>(this.url, `/api/${this.apiVersion}/message/upload`, { content },
+    return await EnterpriseServer.apiCall<FesRes.MessageUpload>(this.url, `/api/${this.apiVersion}/message`, { content },
       'FORM', { upload: progressCb }, await this.authHdr(), 'json', 'POST');
   }
 

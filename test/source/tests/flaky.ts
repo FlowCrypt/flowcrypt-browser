@@ -101,7 +101,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await ComposePageRecipe.sendAndClose(composePage, { timeout: 60, expectProgress: true });
     }));
 
-    ava.default('compose - send pwd encrypted msg & check on flowcrypt site', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('compose - PWD encrypted message with flowcrypt.com/api', testWithBrowser('compatibility', async (t, browser) => {
       const msgPwd = 'super hard password for the message';
       const subject = 'PWD encrypted message with flowcrypt.com/api';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -110,6 +110,26 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       await fileInput!.uploadFile('test/samples/small.txt');
       await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
       // this test is using PwdEncryptedMessageWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
+    }));
+
+    /**
+     * You need the following lines in /etc/hosts:
+     * 127.0.0.1    standardsubdomainfes.test
+     * 127.0.0.1    fes.standardsubdomainfes.test
+     */
+    ava.default('compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'user@standardsubdomainfes.test:8001'; // added port to trick extension into calling the mock
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
+        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
+      const msgPwd = 'super hard password for the message';
+      const subject = 'PWD encrypted message with FES';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user@standardsubdomainfes.test:8001');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
+      const fileInput = await composePage.target.$('input[type=file]');
+      await fileInput!.uploadFile('test/samples/small.txt');
+      await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
+      // this test is using PwdEncryptedMessageWithFesTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
     }));
 
     ava.default(`[unit][Stream.readToEnd] efficiently handles multiple chunks`, async t => {
