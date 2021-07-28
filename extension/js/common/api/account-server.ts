@@ -44,10 +44,10 @@ export class AccountServer extends Api {
     }
   }
 
-  public messageUpload = async (fcAuth: FcUuidAuth | undefined, encrypted: Uint8Array, progressCb: ProgressCb): Promise<{ url: string }> => {
+  public messageUpload = async (fcAuth: FcUuidAuth | undefined, encrypted: Uint8Array, replyToken: string, progressCb: ProgressCb): Promise<{ url: string }> => {
     if (await this.isFesUsed()) {
       const fes = new EnterpriseServer(this.acctEmail);
-      return await fes.webPortalMessageUpload(encrypted, progressCb);
+      return await fes.webPortalMessageUpload(encrypted, replyToken, progressCb);
     } else {
       return await FlowCryptComApi.messageUpload(fcAuth, encrypted, progressCb);
     }

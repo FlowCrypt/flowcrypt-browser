@@ -58,6 +58,9 @@ export const mockFesEndpoints: HandlersDefinition = {
   '/api/v1/message': async ({ }, req) => {
     if (req.headers.host === standardFesUrl && req.method === 'POST') {
       authenticate(req, 'fes');
+      if (!req.url!.includes('?associate-reply-token=mock-fes-reply-token')) {
+        throw new HttpClientErr('Missing ?associate-reply-token=mock-fes-reply-token in URL', 404);
+      }
       return { 'url': `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID` };
     }
     throw new HttpClientErr('Not Found', 404);

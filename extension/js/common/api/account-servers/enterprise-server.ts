@@ -105,10 +105,12 @@ export class EnterpriseServer extends Api {
     return await this.request<FesRes.ReplyToken>('POST', `/api/${this.apiVersion}/message/new-reply-token`, await this.authHdr(), {});
   }
 
-  public webPortalMessageUpload = async (encrypted: Uint8Array, progressCb: ProgressCb): Promise<FesRes.MessageUpload> => {
+  public webPortalMessageUpload = async (encrypted: Uint8Array, replyToken: string, progressCb: ProgressCb): Promise<FesRes.MessageUpload> => {
     const content = new Attachment({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encrypted });
-    return await EnterpriseServer.apiCall<FesRes.MessageUpload>(this.url, `/api/${this.apiVersion}/message`, { content },
-      'FORM', { upload: progressCb }, await this.authHdr(), 'json', 'POST');
+    return await EnterpriseServer.apiCall<FesRes.MessageUpload>(
+      this.url, `/api/${this.apiVersion}/message?associate-reply-token=${replyToken}`,
+      { content }, 'FORM', { upload: progressCb }, await this.authHdr(), 'json', 'POST'
+    );
   }
 
   public accountUpdate = async (profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {
