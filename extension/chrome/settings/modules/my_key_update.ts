@@ -45,9 +45,9 @@ View.run(class MyKeyUpdateView extends View {
       <br><br>
       <div data-test="container-err-text" style="width: 900px;display:inline-block;">Please contact your IT staff if you wish to update your keys.</div>
       <br><br>
-      `)
+      `);
     } else {
-      $('#content').show()
+      $('#content').show();
       this.pubLookup = new PubLookup(this.orgRules);
       [this.primaryKi] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
