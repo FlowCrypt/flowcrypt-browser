@@ -24,21 +24,7 @@ export class Attester extends Api {
       console.info(`Skipping attester lookup of ${email} because attester search on this domain is disabled.`);
       return { pubkey: null }; // tslint:disable-line:no-null-keyword
     }
-    try {
-      const r = await this.pubCall(`pub/${email}`);
-      // when requested from the content script, `getResponseHeader` will be missing because it's not a real XMLHttpRequest we are getting back
-      // because it had to go through background scripts, and objects are serialized when this happens
-      // the proper fix would be to send back headers from bg along with response text, and parse it here
-      if (!r.getResponseHeader) {
-        return { pubkey: r.responseText };
-      }
-      return { pubkey: r.responseText };
-    } catch (e) {
-      if (ApiErr.isNotFound(e)) {
-        return { pubkey: null }; // tslint:disable-line:no-null-keyword
-      }
-      throw e;
-    }
+    return await this.doLookup(email);
   }
 
   public lookupEmails = async (emails: string[]): Promise<Dict<PubkeySearchResult>> => {
@@ -53,7 +39,15 @@ export class Attester extends Api {
    * the actual api accepts either email, fingerprint or longid
    */
   public lookupFingerprint = async (fingerprintOrLongid: string) => {
-    return await this.lookupEmail(fingerprintOrLongid);
+    if (fingerprintOrLongid.includes('@')) {
+      throw new Error('Expected fingerprint or longid, got email');
+    }
+    if (this.orgRules.disallowLookupOnAttester()) {
+      console.info(`Skipping attester lookup because it is disabled for all domains.`);
+      return { pubkey: null }; // tslint:disable-line:no-null-keyword
+    }
+    return await this.doLookup(fingerprintOrLongid);
+    // todo: check returned email to respect disallow_attester_search domain rule?
   }
 
   /**
@@ -113,6 +107,24 @@ export class Attester extends Api {
 
   private pubCall = async (resource: string, method: ReqMethod = 'GET', data?: string | undefined, hdrs?: Dict<string>): Promise<PubCallRes> => {
     return await Api.apiCall(ATTESTER_API_HOST, resource, data, typeof data === 'string' ? 'TEXT' : undefined, undefined, hdrs, 'xhr', method);
+  }
+
+  private doLookup = async (emailOrFingerprint: string): Promise<PubkeySearchResult> => {
+    try {
+      const r = await this.pubCall(`pub/${emailOrFingerprint}`);
+      // when requested from the content script, `getResponseHeader` will be missing because it's not a real XMLHttpRequest we are getting back
+      // because it had to go through background scripts, and objects are serialized when this happens
+      // the proper fix would be to send back headers from bg along with response text, and parse it here
+      if (!r.getResponseHeader) {
+        return { pubkey: r.responseText };
+      }
+      return { pubkey: r.responseText };
+    } catch (e) {
+      if (ApiErr.isNotFound(e)) {
+        return { pubkey: null }; // tslint:disable-line:no-null-keyword
+      }
+      throw e;
+    }
   }
 
 }

@@ -444,6 +444,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await composeFrame.waitAndClick('@action-send');
       await inboxPage.waitAll('@dialog-passphrase');
       const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
+      await passphraseDialog.waitForContent('@lost-pass-phrase-with-ekm','Ask your IT staff for help if you lost your pass phrase.');
       const forgetPassPhraseElement = await passphraseDialog.waitAny('@forget-pass-phrase');
       expect(await InboxPageRecipe.isElementDisabled(forgetPassPhraseElement)).to.equal(true);
       expect(await InboxPageRecipe.isElementChecked(forgetPassPhraseElement)).to.equal(true);
@@ -480,6 +481,18 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@flowcrypt.com,mock.only.pubkey@other.com' }, 'flowcrypt domain should not be found');
       await composePage.waitForContent('.email_address.no_pgp', 'mock.only.pubkey@flowcrypt.com');
       await composePage.waitForContent('.email_address.has_pgp', 'mock.only.pubkey@other.com');
+      await composePage.waitAll('@input-password');
+    }));
+
+    ava.default('user@no-search-wildcard-domains-org-rule.flowcrypt.test - do not search attester for recipients on any domain', testWithBrowser(undefined, async (t, browser) => {
+      // disallowed searching attester for pubkeys on * domain
+      // below we search for mock.only.pubkey@other.com which normally has pubkey on attester, but none should be found due to the rule
+      const acct = 'user@no-search-wildcard-domains-org-rule.flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@other.com' }, 'other.com domain should not be found');
+      await composePage.waitForContent('.email_address.no_pgp', 'mock.only.pubkey@other.com');
       await composePage.waitAll('@input-password');
     }));
 
@@ -623,21 +636,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         }
       });
     }));
-
-    ava.default(
-      'user@key-manager-no-pub-lookup.flowcrypt.test - do not search pubkeys on EKM: NO_KEY_MANAGER_PUB_LOOKUP',
-      testWithBrowser(undefined, async (t, browser) => {
-        // disallowed searching EKM pubkeys (EKM is behind firewall, but user may be using public interned, with EKM not reachable)
-        const acct = 'user@key-manager-no-pub-lookup.flowcrypt.test';
-        const dontLookupEmail = 'not.suppposed.to.lookup@key-manager-no-pub-lookup.flowcrypt.test';
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-        await SetupPageRecipe.autoKeygen(settingsPage);
-        const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
-        await ComposePageRecipe.fillMsg(composePage, { to: dontLookupEmail }, 'must skip EKM lookup');
-        await composePage.waitForContent('.email_address.no_pgp', dontLookupEmail); // if it tried EKM, this would be err
-        await composePage.waitAll('@input-password');
-      })
-    );
 
     ava.default(
       'expire@key-manager-keygen-expiration.flowcrypt.test - OrgRule enforce_keygen_expire_months: 1',

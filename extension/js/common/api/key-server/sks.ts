@@ -59,6 +59,9 @@ export class Sks extends Api {
   }
 
   public lookupFingerprint = async (fingerprintOrLongid: string): Promise<PubkeySearchResult> => {
+    if (fingerprintOrLongid.includes('@')) {
+      throw new Error('Expected fingerprint or longid, got email');
+    }
     const pubkey = await this.get(`/pks/lookup?op=get&search=0x${fingerprintOrLongid}&options=mr`);
     if (!pubkey || !pubkey.includes(String(PgpArmor.headers('publicKey').end))) {
       return { pubkey: null }; // tslint:disable-line:no-null-keyword

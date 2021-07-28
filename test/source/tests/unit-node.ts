@@ -1036,7 +1036,7 @@ ZAvn6PBX7vsaReOVa2zsnuY5g70xCxvzHIwR94POu5cENwRtCkrppFnISALpQ1kA
       expect(result.get('Fingerprint')).to.equal('6628 5F84 B985 71BD 01C0 18EE 8B3B B9CF C476 EE16');
       expect(result.get('Subkeys')).to.equal('[-] 1');
       expect(result.get('Primary key algo')).to.equal('[-] rsa_encrypt_sign');
-      expect(result.get('key decrypt')).to.equal('[-] false');
+      expect(result.get('key decrypt')).to.equal('[-] INCORRECT PASSPHRASE');
       expect(result.get('isFullyDecrypted')).to.equal('[-] false');
       expect(result.get('isFullyEncrypted')).to.equal('[-] true');
       expect(result.get('Primary key verify')).to.equal('[-] valid');
@@ -1075,7 +1075,7 @@ ZAvn6PBX7vsaReOVa2zsnuY5g70xCxvzHIwR94POu5cENwRtCkrppFnISALpQ1kA
       expect(result.get('Fingerprint')).to.equal('6628 5F84 B985 71BD 01C0 18EE 8B3B B9CF C476 EE16');
       expect(result.get('Subkeys')).to.equal('[-] 1');
       expect(result.get('Primary key algo')).to.equal('[-] rsa_encrypt_sign');
-      expect(result.get('key decrypt')).to.equal('[-] true');
+      expect(result.get('key decrypt')).to.equal('[-] success');
       expect(result.get('isFullyDecrypted')).to.equal('[-] true');
       expect(result.get('isFullyEncrypted')).to.equal('[-] false');
       expect(result.get('Primary key verify')).to.equal('[-] valid');
@@ -1383,7 +1383,7 @@ jA==
       expect(result.get('Fingerprint')).to.equal('6628 5F84 B985 71BD 01C0 18EE 8B3B B9CF C476 EE16');
       expect(result.get('Subkeys')).to.equal('[-] 1');
       expect(result.get('Primary key algo')).to.equal('[-] rsa_encrypt_sign');
-      expect(result.get('key decrypt')).to.equal('[-] true');
+      expect(result.get('key decrypt')).to.equal('[-] success');
       expect(result.get('isFullyDecrypted')).to.equal('[-] true');
       expect(result.get('isFullyEncrypted')).to.equal('[-] false');
       expect(result.get('Primary key verify')).to.equal('[-] valid');

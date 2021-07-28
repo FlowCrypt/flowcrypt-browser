@@ -373,6 +373,7 @@ body.cryptup_gmail div.recipients_use_encryption a {
 }
 
 .swal2-popup.ui-modal-iframe .swal2-html-container {
+  margin: 0;
   padding: 0;
 }
 
@@ -401,6 +402,7 @@ body.cryptup_gmail div.recipients_use_encryption a {
 
 .swal2-container.ui-modal-attachment .swal2-html-container {
   height: 100vh;
+  margin: 0;
   padding: 0;
 }
 

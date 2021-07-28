@@ -64,6 +64,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     standardComposeWin: '.aaZ:visible',
     settingsBtnContainer: 'div.aeH > div > .fY',
     standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
+    numberOfAttachments: '.aVW',
+    numberOfAttachmentsDigit: '.aVW span'
   };
 
   constructor(factory: XssSafeFactory, orgRules: OrgRules, acctEmail: string, sendAs: Dict<SendAsAlias>,
@@ -372,7 +374,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const senderEmail = this.getSenderEmail(msgEl);
     const isOutgoing = !!this.sendAs[senderEmail];
     attachmentsContainerInner = $(attachmentsContainerInner);
-    attachmentsContainerInner.parent().find('span.aVW').hide(); // original gmail header showing amount of attachments
+    attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).hide();
     let nRenderedAttachments = attachmentMetas.length;
     for (const a of attachmentMetas) {
       const treatAs = a.treatAs();
@@ -442,6 +444,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           nRenderedAttachments++;
         }
       }
+    }
+    if (nRenderedAttachments >= 2) { // Aligned with Gmail, the label is shown only if there are 2 or more attachments
+      attachmentsContainerInner.parent().find(this.sel.numberOfAttachmentsDigit).text(nRenderedAttachments);
+      attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).show();
     }
     if (nRenderedAttachments === 0) {
       attachmentsContainerInner.parents(this.sel.attachmentsContainerOuter).first().hide();
