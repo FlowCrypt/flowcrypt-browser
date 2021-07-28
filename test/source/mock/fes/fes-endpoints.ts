@@ -62,13 +62,12 @@ export const mockFesEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr('Not Found', 404);
   },
-  '/api/v1/message/new-reply-token': async ({ }) => { // why is this not getting called?
-    throw new HttpClientErr('why not getting called?', 400);
-    // if (req.headers.host === standardFesUrl && req.method === 'POST') {
-    //   authenticate(req, 'fes');
-    //   return { 'replyToken': 'mock-fes-reply-token' };
-    // }
-    // throw new HttpClientErr('Not Found', 404);
+  '/api/v1/message/new-reply-token': async ({ }, req) => {
+    if (req.headers.host === standardFesUrl && req.method === 'POST') {
+      authenticate(req, 'fes');
+      return { 'replyToken': 'mock-fes-reply-token' };
+    }
+    throw new HttpClientErr('Not Found', 404);
   },
 };
 

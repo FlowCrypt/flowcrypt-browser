@@ -102,7 +102,7 @@ export class EnterpriseServer extends Api {
   }
 
   public webPortalMessageNewReplyToken = async (): Promise<FesRes.ReplyToken> => {
-    return await this.request<FesRes.ReplyToken>('POST', `/api/${this.apiVersion}/message/new-reply-token`, await this.authHdr());
+    return await this.request<FesRes.ReplyToken>('POST', `/api/${this.apiVersion}/message/new-reply-token`, await this.authHdr(), {});
   }
 
   public webPortalMessageUpload = async (encrypted: Uint8Array, progressCb: ProgressCb): Promise<FesRes.MessageUpload> => {

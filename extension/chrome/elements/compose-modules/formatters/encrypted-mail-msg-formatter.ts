@@ -107,9 +107,6 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   }
 
   private getPwdMsgSendableBodyWithOnlineReplyMsgToken = async (authInfo: FcUuidAuth, newMsgData: NewMsgData): Promise<SendableMsgBody> => {
-    if (!authInfo.uuid) {
-      return { 'text/plain': newMsgData.plaintext, 'text/html': newMsgData.plainhtml };
-    }
     const recipients = Array.prototype.concat.apply([], Object.values(newMsgData.recipients));
     try {
       const response = await this.view.acctServer.messageToken(authInfo);
