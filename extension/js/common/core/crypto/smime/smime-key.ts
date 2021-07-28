@@ -34,18 +34,21 @@ export class SmimeKey {
       return SmimeKey.getKeyFromCertificate(certificate, forge.pki.certificateToPem(certificate));
     }
     const p12 = forge.pkcs12.pkcs12FromAsn1(asn1, password);
-    const bags = p12.getBags({ bagType: forge.pki.oids.certBag });
-    if (!bags) {
+    const certBags = p12.getBags({ bagType: forge.pki.oids.certBag });
+    if (!certBags) {
       throw new Error('No user certificate found.');
     }
-    const bag = bags[forge.pki.oids.certBag];
-    if (!bag) {
+    const certBag = certBags[forge.pki.oids.certBag];
+    if (!certBag) {
       throw new Error('No user certificate found.');
     }
-    certificate = bag[0]?.cert;
+    certificate = certBag[0]?.cert;
     if (!certificate) {
       throw new Error('No user certificate found.');
     }
+    const keyBags = (p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag })[forge.pki.oids.pkcs8ShroudedKeyBag] ?? [])
+      .concat(p12.getBags({ bagType: forge.pki.oids.keyBag })[forge.pki.oids.keyBag] ?? []);
+    certificate.privateKey = keyBags[0]?.key;
     const headers = PgpArmor.headers('pkcs12');
     return SmimeKey.getKeyFromCertificate(certificate, `${headers.begin}\n${forge.util.encode64(bytes)}\n${headers.end}`);
   }
