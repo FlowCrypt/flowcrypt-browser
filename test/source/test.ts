@@ -30,10 +30,10 @@ const DEBUG_MOCK_LOG = false; // se to true to print mock server logs
 process.setMaxListeners(60);
 
 const consts = { // higher concurrency can cause 429 google errs when composing
-  TIMEOUT_SHORT: minutes(1000),
-  TIMEOUT_EACH_RETRY: minutes(3000),
-  TIMEOUT_ALL_RETRIES: minutes(13000), // this has to suffer waiting for semaphore between retries, thus almost the same as below
-  TIMEOUT_OVERALL: minutes(14000),
+  TIMEOUT_SHORT: minutes(1),
+  TIMEOUT_EACH_RETRY: minutes(3),
+  TIMEOUT_ALL_RETRIES: minutes(13), // this has to suffer waiting for semaphore between retries, thus almost the same as below
+  TIMEOUT_OVERALL: minutes(14),
   ATTEMPTS: testGroup === 'STANDARD-GROUP' ? oneIfNotPooled(3) : process.argv.includes('--retry=false') ? 1 : 3,
   POOL_SIZE: oneIfNotPooled(isMock ? 20 : 3),
   PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>, // will be set right below

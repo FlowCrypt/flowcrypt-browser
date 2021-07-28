@@ -47,6 +47,18 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
         { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
     }));
 
+    ava.default('setup - import unarmored key from file', testWithBrowser(undefined, async (t, browser) => {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
+      const key = {
+        title: 'unarmored OpenPGP key',
+        filePath: 'test/samples/openpgp/flowcrypttestkeyimportedgmailcom-0x825B8AE8B14CFC0E.key',
+        armored: null,
+        passphrase: 'will recognize i used pgp',
+        longid: null
+      };
+      await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: false, usedPgpBefore: false, key });
+    }));
+
     ava.default('setup - import key - submit - used before', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.used.pgp@gmail.com');
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: true, usedPgpBefore: true },
@@ -444,7 +456,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await composeFrame.waitAndClick('@action-send');
       await inboxPage.waitAll('@dialog-passphrase');
       const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
-      await passphraseDialog.waitForContent('@lost-pass-phrase-with-ekm','Ask your IT staff for help if you lost your pass phrase.');
+      await passphraseDialog.waitForContent('@lost-pass-phrase-with-ekm', 'Ask your IT staff for help if you lost your pass phrase.');
       const forgetPassPhraseElement = await passphraseDialog.waitAny('@forget-pass-phrase');
       expect(await InboxPageRecipe.isElementDisabled(forgetPassPhraseElement)).to.equal(true);
       expect(await InboxPageRecipe.isElementChecked(forgetPassPhraseElement)).to.equal(true);
