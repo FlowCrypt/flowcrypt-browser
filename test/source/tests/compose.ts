@@ -95,10 +95,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage2.waitAll(['@container-contacts', '@action-select-contact-email(therecipient@theirdomain.com)']);
     }));
 
-    ava.default.only('compose - misc contacts tests', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('compose - should not show contacts for empty #input_to', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       // works on the first search
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      debugger;
       await composePage.type('@input-to', 'FirstName'); // test guessing of contacts when the name is not included in email address
       await composePage.waitAll(['@container-contacts', '@action-select-contact-email(therecipient@theirdomain.com)']);
       // submit the first contact by Enter
@@ -106,11 +105,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitForContent('@recipient_0', 'therecipient@theirdomain.com');
       // move focus away from #input_to
       await composePage.page.keyboard.press('Tab');
-      // move focus back #input_to
-      await composePage.page.keyboard.down('Shift');
-      await composePage.page.keyboard.press('Tab');
-      await composePage.page.keyboard.up('Shift');
-      // should not show contacts when
+      // move focus back to #input_to
+      await Util.shiftPress(composePage.page.keyboard, 'Tab');
+      // should not show contacts again
       await composePage.notPresent('@container-contacts');
     }));
 
