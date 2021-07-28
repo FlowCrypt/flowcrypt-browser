@@ -44,12 +44,23 @@ export class AccountServer extends Api {
     }
   }
 
-  public messageUpload = async (fcAuth: FcUuidAuth | undefined, encryptedDataBinary: Uint8Array, progressCb: ProgressCb): Promise<BackendRes.FcMsgUpload> => {
-    return await FlowCryptComApi.messageUpload(fcAuth, encryptedDataBinary, progressCb);
+  public messageUpload = async (fcAuth: FcUuidAuth | undefined, encrypted: Uint8Array, progressCb: ProgressCb): Promise<{ url: string }> => {
+    if (await this.isFesUsed()) {
+      const fes = new EnterpriseServer(this.acctEmail);
+      return await fes.webPortalMessageUpload(encrypted, progressCb);
+    } else {
+      return await FlowCryptComApi.messageUpload(fcAuth, encrypted, progressCb);
+    }
   }
 
-  public messageToken = async (fcAuth: FcUuidAuth): Promise<BackendRes.FcMsgToken> => {
-    return await FlowCryptComApi.messageToken(fcAuth);
+  public messageToken = async (fcAuth: FcUuidAuth): Promise<{ replyToken: string }> => {
+    if (await this.isFesUsed()) {
+      const fes = new EnterpriseServer(this.acctEmail);
+      return await fes.webPortalMessageNewReplyToken();
+    } else {
+      const res = await FlowCryptComApi.messageToken(fcAuth);
+      return { replyToken: res.token };
+    }
   }
 
   private isFesUsed = async (): Promise<boolean> => {

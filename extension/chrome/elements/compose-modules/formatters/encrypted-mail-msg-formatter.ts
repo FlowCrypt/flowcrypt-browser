@@ -120,7 +120,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
           sender: newMsgData.from,
           recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.from), this.acctEmail),
           subject: newMsgData.subject,
-          token: response.token,
+          token: response.replyToken,
         })
       });
       return { 'text/plain': newMsgData.plaintext + '\n\n' + infoDiv, 'text/html': newMsgData.plainhtml + '<br /><br />' + infoDiv };
