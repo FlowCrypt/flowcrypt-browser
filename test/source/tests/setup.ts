@@ -52,9 +52,9 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       const key = {
         title: 'unarmored OpenPGP key',
         filePath: 'test/samples/openpgp/flowcrypttestkeyimportedgmailcom-0x825B8AE8B14CFC0E.key',
-        armored: null,
+        armored: null, // tslint:disable-line:no-null-keyword
         passphrase: 'will recognize i used pgp',
-        longid: null
+        longid: null // tslint:disable-line:no-null-keyword
       };
       await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: false, usedPgpBefore: false, key });
     }));
