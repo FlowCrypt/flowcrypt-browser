@@ -214,7 +214,7 @@ export class Api<REQ, RES> {
         req.url!.startsWith('/upload/') || // gmail message send
         req.url!.startsWith('/api/message/upload') || // flowcrypt.com/api pwd msg
         (req.url!.startsWith('/attester/pub/') && req.method === 'POST') || // attester submit
-        req.url! === '/api/v1/message' // FES pwd msg
+        req.url!.startsWith('/api/v1/message') // FES pwd msg
       ) {
         parsedBody = body.toString();
       } else {
