@@ -40,8 +40,18 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       }
     };
 
+    const createSecureDraft = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, content: string) => {
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
+      expect(urls.length).to.equal(1);
+      const replyBox = await browser.newPage(t, urls[0]);
+      await Util.sleep(3); // the draft isn't being saved if start typing without this delay
+      await replyBox.page.keyboard.type(content);
+      await replyBox.verifyContentIsPresentContinuously('@send-btn-note', 'Saved');
+      await replyBox.close();
+    };
+
     const pageHasSecureDraft = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, expectedContent?: string) => {
-      await gmailPage.waitAll('iframe');
+      await gmailPage.waitAll('.reply_message');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
       expect(urls.length).to.equal(1);
       const replyBox = await browser.newPage(t, urls[0]);
@@ -236,19 +246,14 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: DCB2 74D2 4683 145E B053 BC0B 48E4 74A0 926B AE86');
     }));
 
-    ava.default('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/FMfcgxwJXVGtMJwQTZmBDlspVWDvsnnL'); // encrypted convo
-      await Util.sleep(5);
-      await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
+    ava.default.only('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkZZqZQpLXZnzPRFKVrwKNnqrN'); // encrypted convo
       await gmailPage.waitAndClick('@secure-reply-button');
-      await Util.sleep(3);
-      await gmailPage.page.keyboard.type('hey there');
-      await Util.sleep(5);
+      await createSecureDraft(t, browser, gmailPage, 'hey there');
       await gmailPage.page.reload();
-      await Util.sleep(10);
       const replyBox = await pageHasSecureDraft(t, browser, gmailPage, 'hey there');
       await replyBox.waitAndClick('@action-send');
-      await Util.sleep(5);
+      await replyBox.waitTillGone('@action-send');
       await replyBox.close();
       await gmailPage.page.reload();
       await gmailPage.waitAndClick('.h7:last-child .ajz', { delay: 1 }); // the small triangle which toggles the message details
