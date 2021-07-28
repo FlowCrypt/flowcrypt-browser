@@ -44,9 +44,9 @@ View.run(class AddKeyView extends View {
       <br><br>
       <div data-test="container-err-text" style="width: 900px;display:inline-block;">Please contact your IT staff if you wish to update your keys.</div>
       <br><br>
-      `)
+      `);
     } else {
-      $('#content').show()
+      $('#content').show();
       if (!this.orgRules.forbidStoringPassPhrase()) {
         $('.input_passphrase_save').prop('checked', true).prop('disabled', false);
       }
