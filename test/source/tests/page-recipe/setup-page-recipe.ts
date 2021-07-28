@@ -114,10 +114,10 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.waitAndClick('@input-step2bmanualenter-source-paste', { retryErrs: true });
       await settingsPage.waitAndType('@input-step2bmanualenter-ascii-key', key.armored);
     } else if (key.filePath) { // inputted as a file
-      await settingsPage.waitAndClick('@input-step2bmanualenter-file', { retryErrs: true });
-      await Util.sleep(0.5);
-      const fileInput = await settingsPage.target.$('input[type=file]');
-      await fileInput!.uploadFile(key.filePath);
+      const [fileChooser] = await Promise.all([
+        settingsPage.page.waitForFileChooser(),
+        settingsPage.waitAndClick('@input-step2bmanualenter-file', { retryErrs: true })]);
+      await fileChooser.accept([key.filePath]);
       await Util.sleep(1);
     } else {
       throw new Error('dont know how to import test key because missing both "armored" and "filePath"');
