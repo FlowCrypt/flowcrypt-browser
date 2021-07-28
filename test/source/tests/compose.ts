@@ -58,7 +58,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composeFrame.waitAndClick('@action-send');
       await inboxPage.waitAll('@dialog-passphrase');
       const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
-      await passphraseDialog.waitForContent('@lost-pass-phrase','Lost pass phrase?');
+      await passphraseDialog.waitForContent('@lost-pass-phrase', 'Lost pass phrase?');
       await passphraseDialog.waitAndType('@input-pass-phrase', k.passphrase);
       await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
       await inboxPage.waitTillGone('@dialog-passphrase');
@@ -93,6 +93,22 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const composePage2 = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await composePage2.type('@input-to', 'FirstName'); // test guessing of contacts when the name is not included in email address
       await composePage2.waitAll(['@container-contacts', '@action-select-contact-email(therecipient@theirdomain.com)']);
+    }));
+
+    ava.default('compose - should not show contacts for empty #input_to', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      // works on the first search
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await composePage.type('@input-to', 'FirstName'); // test guessing of contacts when the name is not included in email address
+      await composePage.waitAll(['@container-contacts', '@action-select-contact-email(therecipient@theirdomain.com)']);
+      // submit the first contact by Enter
+      await composePage.page.keyboard.press('Enter');
+      await composePage.waitForContent('@recipient_0', 'therecipient@theirdomain.com');
+      // move focus away from #input_to
+      await composePage.page.keyboard.press('Tab');
+      // move focus back to #input_to
+      await Util.shiftPress(composePage.page.keyboard, 'Tab');
+      // should not show contacts again
+      await composePage.notPresent('@container-contacts');
     }));
 
     ava.default(`compose - can choose found contact`, testWithBrowser('ci.tests.gmail', async (t, browser) => {

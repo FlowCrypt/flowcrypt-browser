@@ -170,6 +170,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   public hideContacts = () => {
     this.view.S.cached('contacts').css('display', 'none');
+    this.view.S.cached('contacts').find('ul').empty();
     this.view.S.cached('contacts').children().not('ul').remove();
   }
 
