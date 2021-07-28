@@ -17,7 +17,7 @@ class SaveMessageInStorageStrategy implements ITestMsgStrategy {
   }
 }
 
-class PwdEncryptedMessageTestStrategy implements ITestMsgStrategy {
+class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStrategy {
   public test = async (mimeMsg: ParsedMail, base64Msg: string) => {
     if (!mimeMsg.text?.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]{10}/)) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted link in:\n\n${mimeMsg.text}`);
@@ -150,8 +150,8 @@ export class TestBySubjectStrategyContext {
       this.strategy = new SignedMessageTestStrategy();
     } else if (subject.includes('Test Footer (Mock Test)')) {
       this.strategy = new MessageWithFooterTestStrategy();
-    } else if (subject.includes('PWD encrypted message')) {
-      this.strategy = new PwdEncryptedMessageTestStrategy();
+    } else if (subject.includes('PWD encrypted message with flowcrypt.com/api')) {
+      this.strategy = new PwdEncryptedMessageWithFlowCryptComApiTestStrategy();
     } else if (subject.includes('Message With Image')) {
       this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('Message With Test Text')) {

@@ -103,12 +103,13 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.default('compose - send pwd encrypted msg & check on flowcrypt site', testWithBrowser('compatibility', async (t, browser) => {
       const msgPwd = 'super hard password for the message';
-      const subject = 'PWD encrypted message with attachment';
+      const subject = 'PWD encrypted message with flowcrypt.com/api';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt');
       await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
+      // this test is using PwdEncryptedMessageWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
     }));
 
     ava.default(`[unit][Stream.readToEnd] efficiently handles multiple chunks`, async t => {
