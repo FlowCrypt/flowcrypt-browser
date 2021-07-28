@@ -250,6 +250,8 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-1`, ['my_key.htm', 'placement=settings']);
       await Util.sleep(1);
       await myKeyFrame.waitAll('@content-fingerprint');
+      await myKeyFrame.notPresent('@action-update-prv');
+      await myKeyFrame.notPresent('@action-revoke-certificate');
       await settingsPage.notPresent('@action-remove-key');
     }));
 
