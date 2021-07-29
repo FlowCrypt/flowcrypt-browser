@@ -65,6 +65,7 @@ export class Settings {
   }
 
   public static acctStorageReset = async (acctEmail: string): Promise<void> => {
+    alert(acctEmail);
     if (!acctEmail) {
       throw new Error('Missing account_email to reset');
     }
@@ -379,14 +380,23 @@ export class Settings {
   }
 
   public static resetAccount = async (acctEmail: string): Promise<boolean> => {
-    if (await Ui.modal.confirm(Lang.setup.confirmResetAcct(acctEmail))) {
-      await Settings.collectInfoAndDownloadBackupFile(acctEmail);
-      if (await Ui.modal.confirm('Proceed to reset? Don\'t come back telling me I didn\'t warn you.')) {
+    const orgRules = await OrgRules.newInstance(acctEmail);
+    if (orgRules.usesKeyManager()) {
+      if (await Ui.modal.confirm(Lang.setup.confirmResetAcctForEkm)) {
         await Settings.acctStorageReset(acctEmail);
         return true;
       }
+       return false;
+    } else {
+      if (await Ui.modal.confirm(Lang.setup.confirmResetAcct(acctEmail))) {
+        await Settings.collectInfoAndDownloadBackupFile(acctEmail);
+        if (await Ui.modal.confirm('Proceed to reset? Don\'t come back telling me I didn\'t warn you.')) {
+          await Settings.acctStorageReset(acctEmail);
+          return true;
+        }
+      }
+      return false;
     }
-    return false;
   }
 
   public static collectInfoAndDownloadBackupFile = async (acctEmail: string) => {
