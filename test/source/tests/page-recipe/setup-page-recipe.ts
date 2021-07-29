@@ -243,7 +243,7 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.waitAndType('@input-step2ekm-passphrase-1', enterPp.passphrase);
       await settingsPage.waitAndType('@input-step2ekm-passphrase-2', enterPp.passphrase);
       if (enterPp.checks?.isSavePassphraseHidden !== undefined) {
-        expect(await settingsPage.hasClass('@input-step2ekm-save-passphrase-label', 'hidden')).to.equal(!enterPp.checks.isSavePassphraseHidden);
+        expect(await settingsPage.hasClass('@input-step2ekm-save-passphrase-label', 'hidden')).to.equal(enterPp.checks.isSavePassphraseHidden);
       }
       if (enterPp.checks?.isSavePassphraseChecked !== undefined) {
         expect(await settingsPage.isChecked('@input-step2ekm-save-passphrase')).to.equal(enterPp.checks.isSavePassphraseChecked);
