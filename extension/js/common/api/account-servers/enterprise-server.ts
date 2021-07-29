@@ -25,8 +25,6 @@ export namespace FesRes {
  * FlowCrypt Enterprise Server (FES) may be deployed on-prem by enterprise customers.
  * This gives them more control. All OrgRules, log collectors, etc (as implemented) would then be handled by the FES.
  * Once fully integrated, this will allow customers to be fully independent of flowcrypt.com/api
- *
- * WIP - currently unused
  */
 // ts-prune-ignore-next
 export class EnterpriseServer extends Api {
