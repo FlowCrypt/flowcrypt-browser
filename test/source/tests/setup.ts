@@ -457,8 +457,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       await inboxPage.waitAll('@dialog-passphrase');
       const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
       await passphraseDialog.waitForContent('@lost-pass-phrase-with-ekm', 'Ask your IT staff for help if you lost your pass phrase.');
-      expect(await inboxPage.hasClass('@forget-pass-phrase-label', 'hidden')).to.equal(true);
-      expect(await inboxPage.isChecked('@forget-pass-phrase-checkbox')).to.equal(true);
+      expect(await passphraseDialog.hasClass('@forget-pass-phrase-label', 'hidden')).to.equal(true);
+      expect(await passphraseDialog.isChecked('@forget-pass-phrase-checkbox')).to.equal(true);
       await inboxPage.close();
       await settingsPage.close();
     }));

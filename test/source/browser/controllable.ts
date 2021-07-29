@@ -193,16 +193,10 @@ abstract class ControllableBase {
   }
 
   public isChecked = async (selector: string): Promise<boolean> => {
-    if (!(await this.isElementPresent(selector))) {
-      return false;
-    }
     return await this.target.evaluate((s) => document.querySelector(s).checked, this.selector(selector));
   }
 
   public hasClass = async (selector: string, className: string): Promise<boolean> => {
-    if (!(await this.isElementPresent(selector))) {
-      return false;
-    }
     const classList = await this.target.evaluate((s) => document.querySelector(s).classList, this.selector(selector));
     return Object.values(classList).includes(className);
   }
