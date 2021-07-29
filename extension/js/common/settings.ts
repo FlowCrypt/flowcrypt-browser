@@ -386,7 +386,7 @@ export class Settings {
         await Settings.acctStorageReset(acctEmail);
         return true;
       }
-       return false;
+      return false;
     } else {
       if (await Ui.modal.confirm(Lang.setup.confirmResetAcct(acctEmail))) {
         await Settings.collectInfoAndDownloadBackupFile(acctEmail);
