@@ -37,7 +37,7 @@ export class InboxPageRecipe extends PageRecipe {
         expect(await ppFrame.hasClass('@forget-pass-phrase-label', 'hidden')).to.equal(enterPp.isForgetPpHidden);
       }
       if (enterPp.isForgetPpChecked !== undefined) {
-        expect(await ppFrame.isChecked('@forget-pass-phrase')).to.equal(enterPp.isForgetPpChecked);
+        expect(await ppFrame.isChecked('@forget-pass-phrase-checkbox')).to.equal(enterPp.isForgetPpChecked);
       }
       await ppFrame.waitAndClick('@action-confirm-pass-phrase-entry', { delay: 1 });
       await pgpBlockFrame.waitForSelTestState('ready');
