@@ -10,7 +10,7 @@ import { expect } from 'chai';
 
 type CheckDecryptMsg$opt = {
   acctEmail: string, threadId: string, expectedContent: string, finishCurrentSession?: boolean,
-  enterPp?: { passphrase: string, isForgetPpDisabled?: boolean, isForgetPpChecked?: boolean }
+  enterPp?: { passphrase: string, isForgetPpHidden?: boolean, isForgetPpChecked?: boolean }
 };
 type CheckSentMsg$opt = { acctEmail: string, subject: string, expectedContent?: string, isEncrypted?: boolean, isSigned?: boolean, sender?: string };
 
@@ -33,8 +33,8 @@ export class InboxPageRecipe extends PageRecipe {
       await inboxPage.waitAll('@dialog-passphrase');
       const ppFrame = await inboxPage.getFrame(['passphrase.htm']);
       await ppFrame.waitAndType('@input-pass-phrase', enterPp.passphrase);
-      if (enterPp.isForgetPpDisabled !== undefined) {
-        expect(await ppFrame.isDisabled('@forget-pass-phrase')).to.equal(enterPp.isForgetPpDisabled);
+      if (enterPp.isForgetPpHidden !== undefined) {
+        expect(await ppFrame.hasClass('@forget-pass-phrase', 'hidden')).to.equal(enterPp.isForgetPpHidden);
       }
       if (enterPp.isForgetPpChecked !== undefined) {
         expect(await ppFrame.isChecked('@forget-pass-phrase')).to.equal(enterPp.isForgetPpChecked);

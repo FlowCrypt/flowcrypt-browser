@@ -307,7 +307,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
         enterPp: {
           passphrase,
           isForgetPpChecked: true,
-          isForgetPpDisabled: false
+          isForgetPpHidden: false
         },
         expectedContent: 'changed correctly if this can be decrypted',
       });
@@ -322,7 +322,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
         enterPp: {
           passphrase: newPp,
           isForgetPpChecked: true,
-          isForgetPpDisabled: false
+          isForgetPpHidden: false
         },
         expectedContent: 'changed correctly if this can be decrypted'
       });
@@ -343,7 +343,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
         acctEmail,
         threadId: '179f6feb575df213',
         finishCurrentSession: true,
-        enterPp: { passphrase, isForgetPpDisabled: true, isForgetPpChecked: true },
+        enterPp: { passphrase, isForgetPpHidden: true, isForgetPpChecked: true },
         expectedContent: 'changed correctly if this can be decrypted'
       });
       const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase2 }
@@ -363,7 +363,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
         acctEmail,
         threadId: '179f6feb575df213',
         finishCurrentSession: true,
-        enterPp: { passphrase: newPp, isForgetPpDisabled: true, isForgetPpChecked: true },
+        enterPp: { passphrase: newPp, isForgetPpHidden: true, isForgetPpChecked: true },
         expectedContent: 'changed correctly if this can be decrypted'
       });
     }));
@@ -380,7 +380,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await InboxPageRecipe.checkDecryptMsg(t, browser, {
         acctEmail, threadId: '16819bec18d4e011',
         expectedContent: 'changed correctly if this can be decrypted', finishCurrentSession: true,
-        enterPp: { passphrase: newPp, isForgetPpChecked: true, isForgetPpDisabled: false }
+        enterPp: { passphrase: newPp, isForgetPpChecked: true, isForgetPpHidden: false }
       });
     }));
 
