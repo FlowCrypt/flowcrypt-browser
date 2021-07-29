@@ -757,7 +757,8 @@ body#settings > div#content.setup div#step_2_recovery div#error_text {
   color: #333;
   background-color: #f7ec48;
   overflow: hidden;
-  width: 250px;
+  width: 400px;
+  max-width: 100%;
   min-height: 200px;
   font-family: monospace;
   font-size: 1.5em;

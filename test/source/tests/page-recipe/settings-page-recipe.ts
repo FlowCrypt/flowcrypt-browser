@@ -12,7 +12,7 @@ import { Xss } from '../../platform/xss';
 import { KeyUtil } from '../../core/crypto/key';
 
 export type SavePassphraseChecks = {
-  isSavePassphraseDisabled?: boolean | undefined,
+  isSavePassphraseHidden?: boolean | undefined,
   isSavePassphraseChecked?: boolean | undefined
 };
 
@@ -116,8 +116,8 @@ export class SettingsPageRecipe extends PageRecipe {
     await addPrvPage.waitAndType('.input_private_key', armoredPrvKey);
     await addPrvPage.waitAndClick('#toggle_input_passphrase');
     await addPrvPage.waitAndType('#input_passphrase', passphrase);
-    if (checks.isSavePassphraseDisabled !== undefined) {
-      expect(await addPrvPage.isDisabled('@input-save-passphrase')).to.equal(checks.isSavePassphraseDisabled);
+    if (checks.isSavePassphraseHidden !== undefined) {
+      expect(await addPrvPage.hasClass('@input-save-passphrase-label', 'hidden')).to.equal(checks.isSavePassphraseHidden);
     }
     if (checks.isSavePassphraseChecked !== undefined) {
       expect(await addPrvPage.isChecked('@input-save-passphrase')).to.equal(checks.isSavePassphraseChecked);

@@ -59,25 +59,25 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default('setup - create key - choose no backup', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.new.manual@gmail.com');
       await SetupPageRecipe.createKey(settingsPage, 'flowcrypt.test.key.used.pgp', 'none', { submitPubkey: false, usedPgpBefore: true },
-        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
     }));
 
     ava.default('setup - create key - backup as file - submit pubkey', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.new.manual@gmail.com');
       await SetupPageRecipe.createKey(settingsPage, 'flowcrypt.test.key.used.pgp', 'file', { submitPubkey: true, usedPgpBefore: true },
-        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
     }));
 
     ava.default('create@prv-create-no-prv-backup.flowcrypt.test - create key allowed but backups not', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'setup@prv-create-no-prv-backup.flowcrypt.test');
       await SetupPageRecipe.createKey(settingsPage, 'flowcrypt.test.key.used.pgp', 'disabled', { submitPubkey: false, usedPgpBefore: false, enforcedAlgo: 'rsa2048' },
-        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
     }));
 
     ava.default('standalone - different send from, new signed message, verification in mock', testWithBrowser('compatibility', async (t, browser) => {
       const key = Config.key('flowcryptcompatibility.from.address');
       await SettingsPageRecipe.addKeyTest(t, browser, 'flowcrypt.compatibility@gmail.com', key.armored!, key.passphrase!,
-        { isSavePassphraseChecked: true, isSavePassphraseDisabled: false });
+        { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await composePage.selectOption('@input-from', 'flowcryptcompatibility@gmail.com');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Signed Message (Mock Test)', { encrypt: false });

@@ -39,8 +39,8 @@ View.run(class PassphraseView extends View {
   public render = async () => {
     Ui.event.protect();
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
-    if (this.orgRules.forbidStoringPassPhrase()) {
-      $('.forget-pass-phrase-label').addClass('hidden');
+    if (!this.orgRules.forbidStoringPassPhrase()) {
+      $('.forget-pass-phrase-label').removeClass('hidden');
     }
     if (this.orgRules.usesKeyManager() || this.orgRules.forbidStoringPassPhrase()) {
       $('#lost-pass-phrase').removeAttr('id').removeAttr('href');

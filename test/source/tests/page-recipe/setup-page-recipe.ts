@@ -51,8 +51,8 @@ export class SetupPageRecipe extends PageRecipe {
     if (!submitPubkey && await settingsPage.isElementPresent('@input-step2bmanualcreate-submit-pubkey')) {
       await settingsPage.waitAndClick('@input-step2bmanualcreate-submit-pubkey'); // uncheck
     }
-    if (checks.isSavePassphraseDisabled !== undefined) {
-      expect(await settingsPage.isDisabled('@input-step2bmanualcreate-save-passphrase')).to.equal(checks.isSavePassphraseDisabled);
+    if (checks.isSavePassphraseHidden !== undefined) {
+      expect(await settingsPage.hasClass('@input-step2bmanualcreate-save-passphrase-label', 'hidden')).to.equal(checks.isSavePassphraseHidden);
     }
     if (checks.isSavePassphraseChecked !== undefined) {
       expect(await settingsPage.isChecked('@input-step2bmanualcreate-save-passphrase')).to.equal(checks.isSavePassphraseChecked);
@@ -126,8 +126,8 @@ export class SetupPageRecipe extends PageRecipe {
     if (noPrvCreateOrgRule) { // NO_PRV_CREATE cannot use the back button, so that they cannot select another setup method
       await settingsPage.notPresent('@action-setup-go-back');
     }
-    if (checks.isSavePassphraseDisabled !== undefined) {
-      expect(await settingsPage.isDisabled('@input-step2bmanualenter-save-passphrase')).to.equal(checks.isSavePassphraseDisabled);
+    if (checks.isSavePassphraseHidden !== undefined) {
+      expect(await settingsPage.hasClass('@input-step2bmanualenter-save-passphrase-label', 'hidden')).to.equal(checks.isSavePassphraseHidden);
     }
     if (savePassphrase) {
       await settingsPage.waitAndClick('@input-step2bmanualenter-save-passphrase');
@@ -242,8 +242,8 @@ export class SetupPageRecipe extends PageRecipe {
       await Util.sleep(3);
       await settingsPage.waitAndType('@input-step2ekm-passphrase-1', enterPp.passphrase);
       await settingsPage.waitAndType('@input-step2ekm-passphrase-2', enterPp.passphrase);
-      if (enterPp.checks?.isSavePassphraseDisabled !== undefined) {
-        expect(await settingsPage.isDisabled('@input-step2ekm-save-passphrase')).to.equal(enterPp.checks.isSavePassphraseDisabled);
+      if (enterPp.checks?.isSavePassphraseHidden !== undefined) {
+        expect(await settingsPage.hasClass('@input-step2ekm-save-passphrase', 'hidden')).to.equal(!enterPp.checks.isSavePassphraseHidden);
       }
       if (enterPp.checks?.isSavePassphraseChecked !== undefined) {
         expect(await settingsPage.isChecked('@input-step2ekm-save-passphrase')).to.equal(enterPp.checks.isSavePassphraseChecked);
