@@ -38,7 +38,7 @@ View.run(class AddKeyView extends View {
   public render = async () => {
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     if (!this.orgRules.forbidStoringPassPhrase()) {
-      $('.forget-pass-phrase-label').removeClass('hidden');
+      $('.input_passphrase_save_label').removeClass('hidden');
       $('.input_passphrase_save').prop('checked', true);
     }
     await initPassphraseToggle(['input_passphrase']);
