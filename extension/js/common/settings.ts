@@ -65,7 +65,6 @@ export class Settings {
   }
 
   public static acctStorageReset = async (acctEmail: string): Promise<void> => {
-    alert(acctEmail);
     if (!acctEmail) {
       throw new Error('Missing account_email to reset');
     }
