@@ -34,7 +34,7 @@ export class InboxPageRecipe extends PageRecipe {
       const ppFrame = await inboxPage.getFrame(['passphrase.htm']);
       await ppFrame.waitAndType('@input-pass-phrase', enterPp.passphrase);
       if (enterPp.isForgetPpHidden !== undefined) {
-        expect(await ppFrame.hasClass('@forget-pass-phrase', 'hidden')).to.equal(enterPp.isForgetPpHidden);
+        expect(await ppFrame.hasClass('@forget-pass-phrase-label', 'hidden')).to.equal(enterPp.isForgetPpHidden);
       }
       if (enterPp.isForgetPpChecked !== undefined) {
         expect(await ppFrame.isChecked('@forget-pass-phrase')).to.equal(enterPp.isForgetPpChecked);
