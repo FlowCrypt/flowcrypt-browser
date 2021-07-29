@@ -117,10 +117,10 @@ export class SettingsPageRecipe extends PageRecipe {
     await addPrvPage.waitAndClick('#toggle_input_passphrase');
     await addPrvPage.waitAndType('#input_passphrase', passphrase);
     if (checks.isSavePassphraseDisabled !== undefined) {
-      expect(await PageRecipe.isElementDisabled(await addPrvPage.waitAny('@input-save-passphrase'))).to.equal(checks.isSavePassphraseDisabled);
+      expect(await addPrvPage.isDisabled('@input-save-passphrase')).to.equal(checks.isSavePassphraseDisabled);
     }
     if (checks.isSavePassphraseChecked !== undefined) {
-      expect(await PageRecipe.isElementChecked(await addPrvPage.waitAny('@input-save-passphrase'))).to.equal(checks.isSavePassphraseChecked);
+      expect(await addPrvPage.isChecked('@input-save-passphrase')).to.equal(checks.isSavePassphraseChecked);
     }
     await addPrvPage.waitAndClick('.action_add_private_key', { delay: 1 });
     await addPrvPage.waitTillGone('.swal2-container'); // dialog closed

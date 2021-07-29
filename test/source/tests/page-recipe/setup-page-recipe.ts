@@ -52,10 +52,10 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.waitAndClick('@input-step2bmanualcreate-submit-pubkey'); // uncheck
     }
     if (checks.isSavePassphraseDisabled !== undefined) {
-      expect(await PageRecipe.isElementDisabled(await settingsPage.waitAny('@input-step2bmanualcreate-save-passphrase'))).to.equal(checks.isSavePassphraseDisabled);
+      expect(await settingsPage.isDisabled('@input-step2bmanualcreate-save-passphrase')).to.equal(checks.isSavePassphraseDisabled);
     }
     if (checks.isSavePassphraseChecked !== undefined) {
-      expect(await PageRecipe.isElementChecked(await settingsPage.waitAny('@input-step2bmanualcreate-save-passphrase'))).to.equal(checks.isSavePassphraseChecked);
+      expect(await settingsPage.isChecked('@input-step2bmanualcreate-save-passphrase')).to.equal(checks.isSavePassphraseChecked);
     }
     await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
     await settingsPage.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your pass phrase');
@@ -127,12 +127,12 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.notPresent('@action-setup-go-back');
     }
     if (checks.isSavePassphraseDisabled !== undefined) {
-      expect(await PageRecipe.isElementDisabled(await settingsPage.waitAny('@input-step2bmanualenter-save-passphrase'))).to.equal(checks.isSavePassphraseDisabled);
+      expect(await settingsPage.isDisabled('@input-step2bmanualenter-save-passphrase')).to.equal(checks.isSavePassphraseDisabled);
     }
     if (savePassphrase) {
       await settingsPage.waitAndClick('@input-step2bmanualenter-save-passphrase');
     } else if (checks.isSavePassphraseChecked !== undefined) {
-      expect(await PageRecipe.isElementChecked(await settingsPage.waitAny('@input-step2bmanualenter-save-passphrase'))).to.equal(checks.isSavePassphraseChecked);
+      expect(await settingsPage.isChecked('@input-step2bmanualenter-save-passphrase')).to.equal(checks.isSavePassphraseChecked);
     }
     if (!naked) {
       await Util.sleep(1);
@@ -243,10 +243,10 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.waitAndType('@input-step2ekm-passphrase-1', enterPp.passphrase);
       await settingsPage.waitAndType('@input-step2ekm-passphrase-2', enterPp.passphrase);
       if (enterPp.checks?.isSavePassphraseDisabled !== undefined) {
-        expect(await PageRecipe.isElementDisabled(await settingsPage.waitAny('@input-step2ekm-save-passphrase'))).to.equal(enterPp.checks.isSavePassphraseDisabled);
+        expect(await settingsPage.isDisabled('@input-step2ekm-save-passphrase')).to.equal(enterPp.checks.isSavePassphraseDisabled);
       }
       if (enterPp.checks?.isSavePassphraseChecked !== undefined) {
-        expect(await PageRecipe.isElementChecked(await settingsPage.waitAny('@input-step2ekm-save-passphrase'))).to.equal(enterPp.checks.isSavePassphraseChecked);
+        expect(await settingsPage.isChecked('@input-step2ekm-save-passphrase')).to.equal(enterPp.checks.isSavePassphraseChecked);
       }
       await settingsPage.waitAndClick('@input-step2ekm-continue');
       await settingsPage.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your pass phrase');
