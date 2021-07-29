@@ -193,6 +193,9 @@ abstract class ControllableBase {
   }
 
   public isChecked = async (selector: string): Promise<boolean> => {
+    if (!(await this.isElementPresent(selector))) {
+      return false;
+    }
     return await this.target.evaluate((s) => document.querySelector(s).checked, this.selector(selector));
   }
 
