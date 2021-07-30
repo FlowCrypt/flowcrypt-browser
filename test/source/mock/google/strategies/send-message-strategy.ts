@@ -18,7 +18,7 @@ class SaveMessageInStorageStrategy implements ITestMsgStrategy {
 }
 
 class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStrategy {
-  public test = async (mimeMsg: ParsedMail, base64Msg: string) => {
+  public test = async (mimeMsg: ParsedMail) => {
     if (!mimeMsg.text?.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]{10}/)) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted flowcrypt.com/api link in:\n\n${mimeMsg.text}`);
     }
@@ -29,7 +29,7 @@ class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStra
 }
 
 class PwdEncryptedMessageWithFesTestStrategy implements ITestMsgStrategy {
-  public test = async (mimeMsg: ParsedMail, base64Msg: string) => {
+  public test = async (mimeMsg: ParsedMail) => {
     if (!mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-ID')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted FES link in:\n\n${mimeMsg.text}`);
     }
