@@ -25,7 +25,6 @@ class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStra
     if (!mimeMsg.text?.includes('Follow this link to open it')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
     }
-    (await GoogleData.withInitializedData(mimeMsg.from!.value[0].address!)).storeSentMessage(mimeMsg, base64Msg);
   }
 }
 
@@ -37,7 +36,6 @@ class PwdEncryptedMessageWithFesTestStrategy implements ITestMsgStrategy {
     if (!mimeMsg.text?.includes('Follow this link to open it')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted open link prompt in ${mimeMsg.text}`);
     }
-    (await GoogleData.withInitializedData(mimeMsg.from!.value[0].address!)).storeSentMessage(mimeMsg, base64Msg);
   }
 }
 
