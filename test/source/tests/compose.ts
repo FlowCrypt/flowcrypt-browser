@@ -1194,7 +1194,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const acct = 'user@standardsubdomainfes.test:8001'; // added port to trick extension into calling the mock
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
-        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       const msgPwd = 'super hard password for the message';
       const subject = 'PWD encrypted message with FES';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user@standardsubdomainfes.test:8001');
