@@ -5,19 +5,22 @@
 
 'use strict';
 
-import { Api, ReqMethod } from '../shared/api.js';
+import { Api, ProgressCb, ReqMethod } from '../shared/api.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
-import { BackendRes, FlowCryptComApi, ProfileUpdate } from './flowcrypt-com-api.js';
+import { BackendRes, ProfileUpdate } from './flowcrypt-com-api.js';
 import { Dict } from '../../core/common.js';
 import { ErrorReport, UnreportableError } from '../../platform/catch.js';
 import { ApiErr } from '../shared/api-error.js';
 import { FLAVOR } from '../../core/const.js';
+import { Attachment } from '../../core/attachment.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
 
 export namespace FesRes {
   export type AccessToken = { accessToken: string };
+  export type ReplyToken = { replyToken: string };
+  export type MessageUpload = { url: string };
   export type ServiceInfo = { vendor: string, service: string, orgId: string, version: string, apiVersion: string }
 }
 
@@ -96,6 +99,18 @@ export class EnterpriseServer extends Api {
     await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, await this.authHdr(), { tags, message, details });
   }
 
+  public webPortalMessageNewReplyToken = async (): Promise<FesRes.ReplyToken> => {
+    return await this.request<FesRes.ReplyToken>('POST', `/api/${this.apiVersion}/message/new-reply-token`, await this.authHdr(), {});
+  }
+
+  public webPortalMessageUpload = async (encrypted: Uint8Array, replyToken: string, progressCb: ProgressCb): Promise<FesRes.MessageUpload> => {
+    const content = new Attachment({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encrypted });
+    return await EnterpriseServer.apiCall<FesRes.MessageUpload>(
+      this.url, `/api/${this.apiVersion}/message?associate-reply-token=${replyToken}`,
+      { content }, 'FORM', { upload: progressCb }, await this.authHdr(), 'json', 'POST'
+    );
+  }
+
   public accountUpdate = async (profileUpdate: ProfileUpdate): Promise<BackendRes.FcAccountUpdate> => {
     console.log('profile update ignored', profileUpdate);
     throw new UnreportableError('Account update not implemented when using FlowCrypt Enterprise Server');
@@ -107,7 +122,7 @@ export class EnterpriseServer extends Api {
   }
 
   private request = async <RT>(method: ReqMethod, path: string, headers: Dict<string> = {}, vals?: Dict<any>): Promise<RT> => {
-    return await FlowCryptComApi.apiCall(this.url, path, vals, method === 'GET' ? undefined : 'JSON', undefined, headers, 'json', method);
+    return await EnterpriseServer.apiCall(this.url, path, vals, method === 'GET' ? undefined : 'JSON', undefined, headers, 'json', method);
   }
 
 }
