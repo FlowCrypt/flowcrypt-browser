@@ -242,6 +242,7 @@ export class SetupPageRecipe extends PageRecipe {
       await Util.sleep(3);
       await settingsPage.waitAndType('@input-step2ekm-passphrase-1', enterPp.passphrase);
       await settingsPage.waitAndType('@input-step2ekm-passphrase-2', enterPp.passphrase);
+      await settingsPage.waitForContent('@ekm-setup-user-notify', 'Your keys are managed with your organization\'s Email Key Manager.');
       if (enterPp.checks?.isSavePassphraseDisabled !== undefined) {
         expect(await PageRecipe.isElementDisabled(await settingsPage.waitAny('@input-step2ekm-save-passphrase'))).to.equal(enterPp.checks.isSavePassphraseDisabled);
       }
