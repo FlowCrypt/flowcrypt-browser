@@ -288,13 +288,9 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await myKeyFrame.notPresent('@action-update-prv');
       await myKeyFrame.notPresent('@action-revoke-certificate');
       await settingsPage.notPresent('@action-remove-key');
-      const fingerprint = await myKeyFrame.readHtml('@content-fingerprint');
-      // test for direct access at my_key_update.htm
-      const myKeyUpdateFrame = await browser.newPage(t, TestUrls.extension(`chrome/settings/modules/my_key_update.htm?placement=settings&acctEmail=${acct}&fingerprint=${fingerprint}`));
-      await myKeyUpdateFrame.waitForContent('@container-err-title','Error: Insufficient Permission');
       // test for direct access at my add_key.htm
       const addKeyFrame = await browser.newPage(t, TestUrls.extension(`chrome/settings/modules/add_key.htm?placement=settings&acctEmail=${acct}&parentTabId=1`));
-      await addKeyFrame.waitForContent('@container-err-title','Error: Insufficient Permission');
+      await addKeyFrame.waitForContent('@container-err-title', 'Error: Insufficient Permission');
     }));
 
     ava.todo('settings - edit contact public key');
