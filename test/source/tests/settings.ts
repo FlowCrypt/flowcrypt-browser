@@ -276,7 +276,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await settingsPage.notPresent('@action-remove-key');
     }));
 
-    ava.default('settings - my key page - privileged frames and action buttons should be hidden when using key manager test', testWithBrowser(undefined, async (t, browser) => {
+    ava.default.only('settings - my key page - privileged frames and action buttons should be hidden when using key manager test', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'two.keys@key-manager-autogen.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.autoKeygen(settingsPage);
@@ -291,10 +291,10 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       const fingerprint = await myKeyFrame.readHtml('@content-fingerprint');
       // test for direct access at my_key_update.htm
       const myKeyUpdateFrame = await browser.newPage(t, TestUrls.extension(`chrome/settings/modules/my_key_update.htm?placement=settings&acctEmail=${acct}&fingerprint=${fingerprint}`));
-      await myKeyUpdateFrame.waitForContent('@container-err-title','Error: Insufficient Permission');
+      await myKeyUpdateFrame.waitForContent('@container-err-title', 'Error: Insufficient Permission');
       // test for direct access at my add_key.htm
       const addKeyFrame = await browser.newPage(t, TestUrls.extension(`chrome/settings/modules/add_key.htm?placement=settings&acctEmail=${acct}&parentTabId=1`));
-      await addKeyFrame.waitForContent('@container-err-title','Error: Insufficient Permission');
+      await addKeyFrame.waitForContent('@container-err-text', 'Please contact your IT staff if you wish to update your keys');
     }));
 
     ava.todo('settings - edit contact public key');
