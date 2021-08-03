@@ -117,8 +117,8 @@
       </div>
 
       <div class="line left">
-        <label>
-          <input type="checkbox" class="input_passphrase_save" data-test="input-step2bmanualcreate-save-passphrase" value="" name="check" disabled="disabled" />
+        <label class="input_passphrase_save_label hidden" data-test="input-step2bmanualcreate-save-passphrase-label">
+          <input type="checkbox" class="input_passphrase_save" data-test="input-step2bmanualcreate-save-passphrase" value="" name="check">
           Remember Pass Phrase after closing browser
         </label>
       </div>
@@ -195,8 +195,8 @@
             <input class="input_passphrase" type="text" placeholder="Private Key Passphrase" id="step_2b_manual_enter_passphrase" data-test="input-step2bmanualenter-passphrase" />
           </div>
           <div class="line left">
-            <label>
-              <input type="checkbox" value="" name="check" data-test="input-step2bmanualenter-save-passphrase" class="input_passphrase_save" disabled="disabled">
+            <label class="input_passphrase_save_label hidden" data-test="input-step2bmanualenter-save-passphrase-label">
+              <input type="checkbox" value="" name="check" data-test="input-step2bmanualenter-save-passphrase" class="input_passphrase_save">
               Remember Pass Phrase after closing browser
             </label>
           </div>
@@ -224,25 +224,25 @@
     </div>
 
     <div id="step_2_ekm_choose_pass_phrase" class="manual">
-      <div class="line left">Choose pass phrase to protect your encrypted emails. <a href="#"
+      <div class="line">Choose pass phrase to protect your encrypted emails. <a href="#"
           data-swal-page="/chrome/texts/passphrase_help.htm">choosing
           secure pass phrases</a></div>
-      <div class="line left">
-        <input class="input_password" type="text" placeholder="Pass phrase" style="margin-bottom: 0;" id="step_2_ekm_input_password" data-test="input-step2ekm-passphrase-1" />
+      <div class="line">
+        <input class="input_password" type="text" placeholder="Pass phrase" id="step_2_ekm_input_password" data-test="input-step2ekm-passphrase-1" />
       </div>
-      <div class="line left">
+      <div class="line">
         <input class="input_password2" type="text" placeholder="Repeat pass phrase" data-test="input-step2ekm-passphrase-2" id="step_2_ekm_input_password2" />
       </div>
 
-      <div class="line left">
+      <div class="line">
         <p class="text-success small m-0" data-test="ekm-setup-user-notify">Your keys are managed with your organization's Email Key Manager.</p>
-        <label>
-          <input type="checkbox" class="input_passphrase_save" value="" name="check" data-test="input-step2ekm-save-passphrase" />
+        <label class="input_passphrase_save_label hidden" data-test="input-step2ekm-save-passphrase-label">
+          <input type="checkbox" class="input_passphrase_save" value="" name="check" data-test="input-step2ekm-save-passphrase">
           Remember Pass Phrase after closing browser
         </label>
       </div>
 
-      <div class="line left">
+      <div class="line">
         <button class="button longer gray action_proceed_private" data-test="input-step2ekm-continue">CONTINUE</button>
       </div>
     </div>

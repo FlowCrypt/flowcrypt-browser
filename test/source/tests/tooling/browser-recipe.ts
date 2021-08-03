@@ -96,7 +96,7 @@ export class BrowserRecipe {
     const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
     const k = Config.key('flowcrypt.test.key.used.pgp');
     const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
-    await SetupPageRecipe.manualEnter(settingsPage, k.title, { usedPgpBefore: false, submitPubkey: false, savePassphrase: true }, { isSavePassphraseDisabled: false });
+    await SetupPageRecipe.manualEnter(settingsPage, k.title, { usedPgpBefore: false, submitPubkey: false, savePassphrase: true }, { isSavePassphraseHidden: false });
     return { acctEmail, passphrase: k.passphrase, settingsPage };
   }
 
@@ -104,7 +104,7 @@ export class BrowserRecipe {
     const acctEmail = 'user@forbid-storing-passphrase-org-rule.flowcrypt.test';
     const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
     const key = { title: '', armored: testConstants.testKeyB8F687BCDE14435A, passphrase: 'donotstore', longid: 'B8F687BCDE14435A' };
-    await SetupPageRecipe.manualEnter(settingsPage, 'unused', { submitPubkey: false, usedPgpBefore: false, key }, { isSavePassphraseChecked: false, isSavePassphraseDisabled: true });
+    await SetupPageRecipe.manualEnter(settingsPage, 'unused', { submitPubkey: false, usedPgpBefore: false, key }, { isSavePassphraseChecked: false, isSavePassphraseHidden: true });
     return { acctEmail, passphrase: key.passphrase, settingsPage };
   }
 

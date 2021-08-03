@@ -55,6 +55,20 @@ export const mockFesEndpoints: HandlersDefinition = {
     }
     throw new HttpClientErr('Not Found', 404);
   },
+  '/api/v1/message/new-reply-token': async ({ }, req) => {
+    if (req.headers.host === standardFesUrl && req.method === 'POST') {
+      authenticate(req, 'fes');
+      return { 'replyToken': 'mock-fes-reply-token' };
+    }
+    throw new HttpClientErr('Not Found', 404);
+  },
+  '/api/v1/message?associate-reply-token=mock-fes-reply-token': async ({ }, req) => {
+    if (req.headers.host === standardFesUrl && req.method === 'POST') {
+      authenticate(req, 'fes');
+      return { 'url': `http://${standardFesUrl}/message/FES-MOCK-MESSAGE-ID` };
+    }
+    throw new HttpClientErr('Not Found', 404);
+  },
 };
 
 const authenticate = (req: IncomingMessage, type: 'oidc' | 'fes'): string => {

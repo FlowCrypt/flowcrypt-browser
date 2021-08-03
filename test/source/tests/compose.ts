@@ -901,7 +901,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const acct = 'has.pub@org-rules-test.flowcrypt.test';
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
       await SetupPageRecipe.manualEnter(settingsPage, 'has.pub.orgrulestest', { noPrvCreateOrgRule: true, enforceAttesterSubmitOrgRule: true },
-        { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       const subject = `Test Sending Message With Test Text and HIDE_ARMOR_META OrgRule ${Util.lousyRandom()}`;
       const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, { sign: true });
@@ -1183,6 +1183,26 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composePage.waitAny('@input-to');
       await composePage.waitUntilFocused('@input-to');
       await expectRecipientElements(composePage, { to: [], cc: [], bcc: [] });
+    }));
+
+    /**
+     * You need the following lines in /etc/hosts:
+     * 127.0.0.1    standardsubdomainfes.test
+     * 127.0.0.1    fes.standardsubdomainfes.test
+     */
+    ava.default('compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal', testWithBrowser(undefined, async (t, browser) => {
+      const acct = 'user@standardsubdomainfes.test:8001'; // added port to trick extension into calling the mock
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+      await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false },
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      const msgPwd = 'super hard password for the message';
+      const subject = 'PWD encrypted message with FES';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'user@standardsubdomainfes.test:8001');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
+      const fileInput = await composePage.target.$('input[type=file]');
+      await fileInput!.uploadFile('test/samples/small.txt');
+      await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
+      // this test is using PwdEncryptedMessageWithFesTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
     }));
 
   }

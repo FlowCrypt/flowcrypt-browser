@@ -17,7 +17,7 @@
 </head>
 
 <body id="settings">
-  <div id="content" class="setup page">
+  <div id="content" class="setup page display_none">
     <div id="step_2b_manual_enter" class="manual" style="display: block; text-align: left;">
       <div class="line">
         <h1>Add Private Key <span id="spinner_container"></span></h1>
@@ -49,8 +49,8 @@
           <input id="input_passphrase" class="input_passphrase" type="text" placeholder="Private Key Passphrase" />
         </div>
         <div class="line">
-          <label>
-            <input type="checkbox" value="" name="check" class="input_passphrase_save" data-test="input-save-passphrase" disabled="disabled">
+          <label class="input_passphrase_save_label hidden" data-test="input-save-passphrase-label">
+            <input type="checkbox" value="" name="check" class="input_passphrase_save" data-test="input-save-passphrase">
             Remember Pass Phrase after closing browser.
           </label>
         </div>

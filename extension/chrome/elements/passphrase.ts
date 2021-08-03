@@ -40,7 +40,7 @@ View.run(class PassphraseView extends View {
     Ui.event.protect();
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     if (!this.orgRules.forbidStoringPassPhrase()) {
-      $('.forget').prop('disabled', false);
+      $('.forget-pass-phrase-label').removeClass('hidden');
     }
     if (this.orgRules.usesKeyManager() || this.orgRules.forbidStoringPassPhrase()) {
       $('#lost-pass-phrase').removeAttr('id').removeAttr('href');
@@ -145,7 +145,7 @@ View.run(class PassphraseView extends View {
 
   private submitHandler = async () => {
     const pass = String($('#passphrase').val());
-    const storageType: StorageType = ($('.forget').prop('checked') || this.orgRules.forbidStoringPassPhrase()) ? 'session' : 'local';
+    const storageType: StorageType = ($('.forget-pass-phrase-checkbox').prop('checked') || this.orgRules.forbidStoringPassPhrase()) ? 'session' : 'local';
     let atLeastOneMatched = false;
     for (const keyinfo of this.keysWeNeedPassPhraseFor!) { // if passphrase matches more keys, it will save the pass phrase for all keys
       const prv = await KeyUtil.parse(keyinfo.private);
