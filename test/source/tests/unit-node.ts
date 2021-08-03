@@ -20,6 +20,7 @@ import { GoogleData, GmailParser, GmailMsg } from '../mock/google/google-data';
 import { testConstants } from './tooling/consts';
 import { PgpArmor } from '../core/crypto/pgp/pgp-armor';
 import { ExpirationCache } from '../core/expiration-cache';
+import { readFileSync } from 'fs';
 import * as forge from 'node-forge';
 
 chai.use(chaiAsPromised);
@@ -1576,6 +1577,67 @@ jA==
       expect(parsed[0].emails[0]).to.be.equal('test@example.com');
       expect(parsed[0].isPrivate).to.be.equal(true);
       expect(parsed[0].isPublic).to.be.equal(false);
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.parse] handles encrypted PKCS#8 key', async t => {
+      const p8 = readFileSync("test/samples/smime/human-pwd-pem.txt", 'utf8');
+      let parsed = await KeyUtil.parse(p8);
+      expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
+      expect(parsed.type).to.equal('x509');
+      expect(parsed.emails.length).to.equal(1);
+      expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
+      expect(parsed.isPrivate).to.equal(true);
+      expect(parsed.isPublic).to.equal(false);
+      expect(parsed.fullyDecrypted).to.equal(false);
+      expect(KeyUtil.armor(parsed)).to.include('-----BEGIN ENCRYPTED PRIVATE KEY-----');
+      expect(KeyUtil.armor(parsed)).to.not.include('-----BEGIN RSA PRIVATE KEY-----');
+      expect(KeyUtil.armor(parsed)).to.not.include('-----BEGIN PRIVATE KEY-----');
+      // incorrect passphrase will make the key remain encrypted
+      expect(await KeyUtil.decrypt(parsed, 'incorrect')).to.equal(false);
+      expect(parsed.fullyDecrypted).to.equal(false);
+      expect(await KeyUtil.decrypt(parsed, 'AHbxhwquX5pc')).to.equal(true);
+      expect(parsed.fullyDecrypted).to.equal(true);
+      const armoredAfterDecryption = KeyUtil.armor(parsed);
+      expect(armoredAfterDecryption).to.not.include('-----BEGIN ENCRYPTED PRIVATE KEY-----');
+      expect(armoredAfterDecryption).to.include('-----BEGIN RSA PRIVATE KEY-----');
+      parsed = await KeyUtil.parse(armoredAfterDecryption);
+      expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
+      expect(parsed.type).to.equal('x509');
+      expect(parsed.emails.length).to.equal(1);
+      expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
+      expect(parsed.isPrivate).to.equal(true);
+      expect(parsed.isPublic).to.equal(false);
+      expect(parsed.fullyDecrypted).to.equal(true);
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.encrypt] encrypts S/MIME key', async t => {
+      const p8 = readFileSync("test/samples/smime/human-unprotected-pem.txt", 'utf8');
+      let parsed = await KeyUtil.parse(p8);
+      expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
+      expect(parsed.type).to.equal('x509');
+      expect(parsed.emails.length).to.equal(1);
+      expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
+      expect(parsed.isPrivate).to.equal(true);
+      expect(parsed.isPublic).to.equal(false);
+      expect(parsed.fullyDecrypted).to.equal(true);
+      expect(KeyUtil.armor(parsed)).to.not.include('-----BEGIN ENCRYPTED PRIVATE KEY-----');
+      expect(KeyUtil.armor(parsed)).to.include('-----BEGIN PRIVATE KEY-----');
+      await KeyUtil.encrypt(parsed, 'new_passphrase');
+      expect(parsed.fullyDecrypted).to.equal(false);
+      const armoredAfterEncryption = KeyUtil.armor(parsed);
+      expect(armoredAfterEncryption).to.include('-----BEGIN ENCRYPTED PRIVATE KEY-----');
+      expect(armoredAfterEncryption).to.not.include('-----BEGIN RSA PRIVATE KEY-----');
+      expect(armoredAfterEncryption).to.not.include('-----BEGIN PRIVATE KEY-----');
+      parsed = await KeyUtil.parse(armoredAfterEncryption);
+      expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
+      expect(parsed.type).to.equal('x509');
+      expect(parsed.emails.length).to.equal(1);
+      expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
+      expect(parsed.isPrivate).to.equal(true);
+      expect(parsed.isPublic).to.equal(false);
+      expect(parsed.fullyDecrypted).to.equal(false);
       t.pass();
     });
 

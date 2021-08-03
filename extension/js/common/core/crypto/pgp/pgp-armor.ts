@@ -21,6 +21,9 @@ export class PgpArmor {
     publicKey: { begin: '-----BEGIN PGP PUBLIC KEY BLOCK-----', end: '-----END PGP PUBLIC KEY BLOCK-----', replace: true },
     privateKey: { begin: '-----BEGIN PGP PRIVATE KEY BLOCK-----', end: '-----END PGP PRIVATE KEY BLOCK-----', replace: true },
     pkcs12: { begin: '-----BEGIN PKCS12 FILE-----', end: '-----BEGIN PKCS12 FILE-----', replace: true }, // custom format - Base64 dump of pkcs12 file bytes
+    pkcs8EncryptedPrivateKey: { begin: '-----BEGIN ENCRYPTED PRIVATE KEY-----', end: '-----END ENCRYPTED PRIVATE KEY-----', replace: true },
+    pkcs8PrivateKey: { begin: '-----BEGIN PRIVATE KEY-----', end: '-----END PRIVATE KEY-----', replace: true },
+    pkcs8RsaPrivateKey: { begin: '-----BEGIN RSA PRIVATE KEY-----', end: '-----END RSA PRIVATE KEY-----', replace: true },
     certificate: { begin: '-----BEGIN CERTIFICATE-----', end: '-----END CERTIFICATE-----', replace: true },
     signedMsg: { begin: '-----BEGIN PGP SIGNED MESSAGE-----', middle: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: true },
     signature: { begin: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: false },
