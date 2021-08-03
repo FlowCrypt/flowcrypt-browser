@@ -37,10 +37,12 @@ View.run(class AddKeyView extends View {
 
   public render = async () => {
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
+    if (!this.orgRules.forbidStoringPassPhrase()) {
+      $('.input_passphrase_save_label').removeClass('hidden');
+      $('.input_passphrase_save').prop('checked', true);
+    }
     if (this.orgRules.usesKeyManager()) {
       Xss.sanitizeRender('body', `
-      <br>
-      <div data-test="container-err-title" style="width: 900px;display:inline-block;">Error: Insufficient Permission</div>
       <br><br>
       <div data-test="container-err-text" style="width: 900px;display:inline-block;">Please contact your IT staff if you wish to update your keys.</div>
       <br><br>

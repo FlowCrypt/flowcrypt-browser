@@ -282,7 +282,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         enterPp: {
           passphrase: Config.key('flowcrypt.compatibility.1pp1').passphrase,
           isForgetPpChecked: true,
-          isForgetPpDisabled: false
+          isForgetPpHidden: false
         }
       });
       // now remembers pp in session

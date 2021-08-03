@@ -291,10 +291,10 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       const fingerprint = await myKeyFrame.readHtml('@content-fingerprint');
       // test for direct access at my_key_update.htm
       const myKeyUpdateFrame = await browser.newPage(t, TestUrls.extension(`chrome/settings/modules/my_key_update.htm?placement=settings&acctEmail=${acct}&fingerprint=${fingerprint}`));
-      await myKeyUpdateFrame.waitForContent('@container-err-title','Error: Insufficient Permission');
+      await myKeyUpdateFrame.waitForContent('@container-err-title', 'Error: Insufficient Permission');
       // test for direct access at my add_key.htm
       const addKeyFrame = await browser.newPage(t, TestUrls.extension(`chrome/settings/modules/add_key.htm?placement=settings&acctEmail=${acct}&parentTabId=1`));
-      await addKeyFrame.waitForContent('@container-err-title','Error: Insufficient Permission');
+      await addKeyFrame.waitForContent('@container-err-text', 'Please contact your IT staff if you wish to update your keys');
     }));
 
     ava.todo('settings - edit contact public key');
@@ -316,7 +316,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
         enterPp: {
           passphrase,
           isForgetPpChecked: true,
-          isForgetPpDisabled: false
+          isForgetPpHidden: false
         },
         expectedContent: 'changed correctly if this can be decrypted',
       });
@@ -331,7 +331,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
         enterPp: {
           passphrase: newPp,
           isForgetPpChecked: true,
-          isForgetPpDisabled: false
+          isForgetPpHidden: false
         },
         expectedContent: 'changed correctly if this can be decrypted'
       });
@@ -352,7 +352,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
         acctEmail,
         threadId: '179f6feb575df213',
         finishCurrentSession: true,
-        enterPp: { passphrase, isForgetPpDisabled: true, isForgetPpChecked: true },
+        enterPp: { passphrase, isForgetPpHidden: true, isForgetPpChecked: true },
         expectedContent: 'changed correctly if this can be decrypted'
       });
       const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase2 }
@@ -372,7 +372,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
         acctEmail,
         threadId: '179f6feb575df213',
         finishCurrentSession: true,
-        enterPp: { passphrase: newPp, isForgetPpDisabled: true, isForgetPpChecked: true },
+        enterPp: { passphrase: newPp, isForgetPpHidden: true, isForgetPpChecked: true },
         expectedContent: 'changed correctly if this can be decrypted'
       });
     }));
@@ -389,7 +389,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       await InboxPageRecipe.checkDecryptMsg(t, browser, {
         acctEmail, threadId: '16819bec18d4e011',
         expectedContent: 'changed correctly if this can be decrypted', finishCurrentSession: true,
-        enterPp: { passphrase: newPp, isForgetPpChecked: true, isForgetPpDisabled: false }
+        enterPp: { passphrase: newPp, isForgetPpChecked: true, isForgetPpHidden: false }
       });
     }));
 
@@ -469,7 +469,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
 
     ava.default('settings - add unprotected key', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       await SettingsPageRecipe.addKeyTest(t, browser, 'ci.tests.gmail@flowcrypt.test', testConstants.unprotectedPrvKey, 'this is a new passphrase to protect previously unprotected key',
-        { isSavePassphraseChecked: true, isSavePassphraseDisabled: false });
+        { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
     }));
 
     ava.default('settings - error modal when page parameter invalid', testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -490,11 +490,11 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
           passphrase: '1234',
           longid: '1b383d0334e38b28',
         }
-      }, { isSavePassphraseChecked: false, isSavePassphraseDisabled: false });
+      }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
       await settingsPage1.close();
 
       await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234',
-        { isSavePassphraseChecked: true, isSavePassphraseDisabled: false });
+        { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
 
       const settingsPage = await browser.newPage(t, TestUrls.extensionSettings(acctEmail));
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -634,7 +634,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
       expect((keys1 as KeyInfo[])[0].longid).to.equal('B8F687BCDE14435A');
       expect(savedPassphrase1).to.be.an('undefined');
       await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234',
-        { isSavePassphraseChecked: false, isSavePassphraseDisabled: true });
+        { isSavePassphraseChecked: false, isSavePassphraseHidden: true });
       const { cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_98ACFA1EADAB5B92: savedPassphrase2,
         cryptup_userforbidstoringpassphraseorgruleflowcrypttest_keys: keys2 }
         = await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseorgruleflowcrypttest_passphrase_98ACFA1EADAB5B92',
