@@ -81,7 +81,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     return await PassphraseStore.get(this.view.acctEmail, senderKi.fingerprints[0]);
   }
 
-  public getPubkeysFromDbThatWereUpsertedFromKeyservers = async (
+  public lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb = async (
     email: string, name: string | undefined
   ): Promise<Contact | "fail"> => {
     // note by Tom 2021-08-10: This line below looks weird in the context of recently allowed

@@ -198,7 +198,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       recipient.evaluating = (async () => {
         let pubkeyLookupRes: Contact | 'fail' | 'wrong';
         if (recipient.status !== RecipientStatus.WRONG) {
-          pubkeyLookupRes = await this.view.storageModule.getPubkeysFromDbThatWereUpsertedFromKeyservers(recipient.email, undefined);
+          pubkeyLookupRes = await this.view.storageModule.lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb(recipient.email, undefined);
         } else {
           pubkeyLookupRes = 'wrong';
         }
