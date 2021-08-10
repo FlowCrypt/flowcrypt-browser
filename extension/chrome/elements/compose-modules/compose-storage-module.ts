@@ -84,9 +84,12 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   public lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb = async (
     email: string, name: string | undefined
   ): Promise<Contact | "fail"> => {
-    // note by Tom 2021-08-10: This line below looks weird in the context of recently allowed
-    //    more than one public key per recipient. We are blindly getting the first public key,
-    //    and making decisions based on that. We should be using the whole array instead.
+    // note by Tom 2021-08-10: We are only getting one public key from storage, but should
+    //    work with arrays instead, like with `ContactStore.getOneWithAllPubkeys`.
+    //    However, this whole fingerprint-base section seems unnecessary, we could likely
+    //    remove it and the keys will be updated below using
+    //    `lookupPubkeyFromKeyserversAndUpsertDb` anyway.
+    //    discussion: https://github.com/FlowCrypt/flowcrypt-browser/pull/3898#discussion_r686229818
     const [storedContact] = await ContactStore.get(undefined, [email]);
     if (storedContact && storedContact.hasPgp && storedContact.pubkey && !storedContact.revoked) {
       // checks if pubkey was updated, asynchronously. By the time user finishes composing,
@@ -98,9 +101,6 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       //    get the updated key from db. This could be fixed by:
       //      - either life fixing the UI after this call finishes, or
       //      - making this call below synchronous and using the result directly
-      //
-      // note by Tom 2021-08-10: I wonder if this functionality could be deprecated, it appears that
-      //    `lookupPubkeyFromKeyserversAndUpsertDb` below could cover this usecase, too.
       this.checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(storedContact).catch(Catch.reportErr);
       return storedContact;
     }
@@ -115,9 +115,11 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
    *    update the public keys we already have.
    * Finally, we return the updated public key back.
    *
-   * Note by Tom 2021-08-10: It looks to me like the return signature should instad
-   *    be `Promise<Contact[]>` since we deal with a list? And the `fail` situations
+   * Note by Tom 2021-08-10: We should consider a signature like
+   *    `Promise<{email: string, contacts: Contact[]}>` instead. And the `fail` situations
    *    should probably be throwing some sort of `PubkeyLookupFailedError` or similar.
+   *    `existingContact` should also change to `Contact[]` instead of `Contact | undefined`
+   *    discussion: https://github.com/FlowCrypt/flowcrypt-browser/pull/3898#discussion_r686244628
    */
   public lookupPubkeyFromKeyserversAndUpsertDb = async (
     email: string, name: string | undefined, existingContact: Contact | undefined
