@@ -81,19 +81,47 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     return await PassphraseStore.get(this.view.acctEmail, senderKi.fingerprints[0]);
   }
 
-  public lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string, name: string | undefined): Promise<Contact | "fail"> => {
+  public lookupPubkeyFromDbAndUpsertPubkeysFromKeyservers = async (
+    email: string, name: string | undefined
+  ): Promise<Contact | "fail"> => {
+    // note by Tom 2021-08-10: This line below looks weird in the context of recently allowed
+    //    more than one public key per recipient. We are blindly getting the first public key,
+    //    and making decisions based on that. We should be using the whole array instead.
     const [storedContact] = await ContactStore.get(undefined, [email]);
     if (storedContact && storedContact.hasPgp && storedContact.pubkey && !storedContact.revoked) {
-      // Potentially check if pubkey was updated - async. By the time user finishes composing, newer version would have been updated in db.
-      // If sender didn't pull a particular pubkey for a long time and it has since expired, but there actually is a newer version on attester, this may unnecessarily show "bad pubkey",
-      //      -> until next time user tries to pull it. This could be fixed by attempting to fix up the rendered recipient inside the async function below.
+      // checks if pubkey was updated, asynchronously. By the time user finishes composing,
+      //    newer version would have been updated in db.
+      // This implementation is imperfect in that, if sender didn't pull a particular pubkey
+      //    for a long time and the local pubkey has since expired, and there actually is a
+      //    newer version available on external key server, this may unnecessarily show "bad pubkey",
+      //    until next time user tries to enter recipient in the field again, which will at that point
+      //    get the updated key from db. This could be fixed by:
+      //      - either life fixing the UI after this call finishes, or
+      //      - making this call below synchronous and using the result directly
+      //
+      // note by Tom 2021-08-10: I wonder if this functionality could be deprecated, it appears that
+      //    `lookupPubkeyFromKeyserversAndUpsertDb` below could cover this usecase, too.
       this.checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(storedContact).catch(Catch.reportErr);
       return storedContact;
     }
-    return await this.ksLookupUnknownContactPubAndSaveToDb(email, name, storedContact);
+    return await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name, storedContact);
   }
 
-  public ksLookupUnknownContactPubAndSaveToDb = async (email: string, name: string | undefined, existingContact: Contact | undefined): Promise<Contact | "fail"> => {
+  /**
+   * We are searching recipient public key by email every time we enter the recipient.
+   * This is regardless if we already have the public key stored locally or not.
+   * We process the response and if there are new public keys, we save them. If there are
+   *    newer versions of public keys we already have (compared by fingerprint), then we
+   *    update the public keys we already have.
+   * Finally, we return the updated public key back.
+   *
+   * Note by Tom 2021-08-10: It looks to me like the return signature should instad
+   *    be `Promise<Contact[]>` since we deal with a list? And the `fail` situations
+   *    should probably be throwing some sort of `PubkeyLookupFailedError` or similar.
+   */
+  public lookupPubkeyFromKeyserversAndUpsertDb = async (
+    email: string, name: string | undefined, existingContact: Contact | undefined
+  ): Promise<Contact | "fail"> => {
     try {
       const lookupResult = await this.view.pubLookup.lookupEmail(email);
       if (lookupResult && email) {
