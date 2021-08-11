@@ -55,7 +55,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
       expect(urls.length).to.equal(1);
       const replyBox = await browser.newPage(t, urls[0]);
-      console.log(await replyBox.page.screenshot({ encoding: "base64" }));
       if (expectedContent) {
         await replyBox.waitForContent('@input-body', expectedContent);
       } else {
@@ -274,7 +273,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const gmailPage = await openGmailPage(t, browser, '/KtbxLvgswQbRmwVxNgDrtvttRPRBtMwKvq'); // plain convo
       await Util.sleep(1);
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
-      await gmailPage.goto(TestUrls.gmail(0, '/FMfcgxwJXVGtMJwQTZmBDlspVWDvsnnL')); // encrypted convo
+      await gotoGmailPage(gmailPage, '/FMfcgxwJXVGtMJwQTZmBDlspVWDvsnnL'); // to go encrypted convo
       await Util.sleep(1);
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
       await Util.sleep(5);
@@ -284,7 +283,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitAndClick('[data-tooltip="Secure Reply"]'); // Switch to encrypted reply
       await Util.sleep(5);
       await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
-      await gmailPage.goto(TestUrls.gmail(0, '/FMfcgxwJXVGtMMLhrwhNcLBMCbFtpMhQ')); // signed convo
+      await gotoGmailPage(gmailPage, '/FMfcgxwJXVGtMMLhrwhNcLBMCbFtpMhQ'); // go to signed convo
       await Util.sleep(1);
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
       await pageDoesNotHaveSecureReplyContainer(gmailPage);
@@ -296,9 +295,9 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
       await Util.sleep(5);
       await gmailPage.type('div[aria-label="Message Body"]', 'plain reply', true);
-      await gmailPage.goto(TestUrls.gmail(0, '')); // go to Inbox
+      await gotoGmailPage(gmailPage, '/'); // go to Inbox
       await Util.sleep(1);
-      await gmailPage.goto(TestUrls.gmail(0, '/FMfcgxwJXVGtMNSCdRMcmZVWkwpxqFdF')); // go back to convo with plain reply
+      await gotoGmailPage(gmailPage, '/FMfcgxwJXVGtMNSCdRMcmZVWkwpxqFdF'); // go back to convo with plain reply
       await pageDoesNotHaveSecureReplyContainer(gmailPage);
       await gmailPage.waitForContent('div[aria-label="Message Body"]', 'plain reply');
       await gmailPage.click('[aria-label^="Discard draft"]');
