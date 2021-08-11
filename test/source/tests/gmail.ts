@@ -273,7 +273,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const gmailPage = await openGmailPage(t, browser, '/KtbxLvgswQbRmwVxNgDrtvttRPRBtMwKvq'); // plain convo
       await Util.sleep(1);
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
-      await gotoGmailPage(gmailPage, '/FMfcgxwJXVGtMJwQTZmBDlspVWDvsnnL'); // to go encrypted convo
+      await gotoGmailPage(gmailPage, '/FMfcgzGkZZqZQpLXZnzPRFKVrwKNnqrN'); // to go encrypted convo
       await Util.sleep(1);
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
       await Util.sleep(5);
