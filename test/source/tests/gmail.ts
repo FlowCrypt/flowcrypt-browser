@@ -47,6 +47,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await Util.sleep(3); // the draft isn't being saved if start typing without this delay
       await replyBox.page.keyboard.type(content);
       await replyBox.verifyContentIsPresentContinuously('@send-btn-note', 'Saved');
+      console.log(await replyBox.page.screenshot({ encoding: "base64" }));
       await replyBox.close();
     };
 
