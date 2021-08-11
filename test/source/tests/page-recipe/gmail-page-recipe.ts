@@ -54,11 +54,10 @@ export class GmailPageRecipe extends PageRecipe {
     await gmailPage.waitAndClick('.ah9'); // "More" button
     await gmailPage.waitAndClick('[aria-label="Trash"]');
     await Util.sleep(1);
-    await gmailPage.page.keyboard.press('*');
-    await gmailPage.page.keyboard.press('a'); // Select all
-    await Util.sleep(0.5);
-    await gmailPage.waitAndClick('.aFi'); // "Delete forever" button
-    await gmailPage.waitTillGone('.aFi');
+    if (await gmailPage.clickIfPresent('//*[text()="Empty Trash now"]')) {
+      await gmailPage.page.keyboard.press('Enter'); // confirm deletion
+    }
+    await gmailPage.waitForContent('.TC', 'No conversations in Trash');
   }
 
 }

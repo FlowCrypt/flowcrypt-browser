@@ -44,6 +44,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
       expect(urls.length).to.equal(1);
       const replyBox = await browser.newPage(t, urls[0]);
+      await replyBox.waitTillFocusIsIn('@input-body');
       await Util.sleep(3); // the draft isn't being saved if start typing without this delay
       await replyBox.page.keyboard.type(content);
       await replyBox.verifyContentIsPresentContinuously('@send-btn-note', 'Saved');
