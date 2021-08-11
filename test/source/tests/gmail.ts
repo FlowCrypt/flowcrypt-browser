@@ -47,7 +47,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await Util.sleep(3); // the draft isn't being saved if start typing without this delay
       await replyBox.page.keyboard.type(content);
       await replyBox.verifyContentIsPresentContinuously('@send-btn-note', 'Saved');
-      console.log(await replyBox.page.screenshot({ encoding: "base64" }));
       await replyBox.close();
     };
 
@@ -78,6 +77,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.goto(url);
       }
       return gmailPage;
+    };
+
+    const gotoGmailPage = async (gmailPage: ControllablePage, path: string) => {
+      const url = TestUrls.gmail(0, path);
+      await gmailPage.goto(url);
     };
 
     ava.default('mail.google.com - setup prompt notif + hides when close clicked + reappears + setup link opens settings', testWithBrowser(undefined, async (t, browser) => {
@@ -249,7 +253,10 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     }));
 
     ava.default.only('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkZZqZQpLXZnzPRFKVrwKNnqrN'); // encrypted convo
+      const gmailPage = await openGmailPage(t, browser, '/');
+      await GmailPageRecipe.emptyDrafts(gmailPage);
+      await GmailPageRecipe.emptyTrash(gmailPage);
+      await gotoGmailPage(gmailPage, '/FMfcgzGkZZqZQpLXZnzPRFKVrwKNnqrN'); // to go encrypted convo
       await gmailPage.waitAndClick('@secure-reply-button');
       await createSecureDraft(t, browser, gmailPage, 'hey there');
       await gmailPage.page.reload();
