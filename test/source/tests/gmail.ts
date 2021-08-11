@@ -55,6 +55,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
       expect(urls.length).to.equal(1);
       const replyBox = await browser.newPage(t, urls[0]);
+      console.log(await replyBox.page.screenshot({ encoding: "base64" }));
       if (expectedContent) {
         await replyBox.waitForContent('@input-body', expectedContent);
       } else {
@@ -246,7 +247,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: DCB2 74D2 4683 145E B053 BC0B 48E4 74A0 926B AE86');
     }));
 
-    ava.default('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default.only('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkZZqZQpLXZnzPRFKVrwKNnqrN'); // encrypted convo
       await gmailPage.waitAndClick('@secure-reply-button');
       await createSecureDraft(t, browser, gmailPage, 'hey there');
