@@ -140,6 +140,14 @@ abstract class ControllableBase {
     this.log(`click:5:${selector}`);
   }
 
+  public clickIfPresent = async (selector: string): Promise<boolean> => {
+    if (await this.isElementPresent(selector)) {
+      await this.click(selector);
+      return true;
+    }
+    return false;
+  }
+
   public type = async (selector: string, text: string, letterByLetter = false) => {
     const e = await this.element(selector);
     if (!e) {
