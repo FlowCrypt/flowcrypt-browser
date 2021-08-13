@@ -198,7 +198,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       recipient.evaluating = (async () => {
         let pubkeyLookupRes: Contact | 'fail' | 'wrong';
         if (recipient.status !== RecipientStatus.WRONG) {
-          pubkeyLookupRes = await this.view.storageModule.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(recipient.email, undefined);
+          pubkeyLookupRes = await this.view.storageModule.lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb(recipient.email, undefined);
         } else {
           pubkeyLookupRes = 'wrong';
         }
@@ -753,7 +753,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         toLookup.push(contact);
       }
     }
-    await Promise.all(toLookup.map(c => this.view.storageModule.ksLookupUnknownContactPubAndSaveToDb(c.email, c.name || undefined, undefined).then(lookupRes => {
+    await Promise.all(toLookup.map(c => this.view.storageModule.lookupPubkeyFromKeyserversAndUpsertDb(c.email, c.name || undefined, undefined).then(lookupRes => {
       if (lookupRes === 'fail') {
         this.failedLookupEmails.push(c.email);
       }
