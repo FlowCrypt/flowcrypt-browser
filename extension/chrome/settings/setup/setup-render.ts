@@ -148,7 +148,7 @@ export class SetupRenderModule {
     $('.input_submit_all').hide();
     const emailAliases = Value.arr.withoutVal(this.view.submitKeyForAddrs, this.view.acctEmail);
     for (const emailAlias of emailAliases) {
-      $('.addresses').html(`<label><input type="checkbox" class="input_email_alias" checked /><span>${Xss.escape(emailAlias)}</span></label>`);
+      $('.addresses').append(`<label><input type="checkbox" class="input_email_alias" checked /><span>${Xss.escape(emailAlias)}</span></label>`);
     }
     $('.input_email_alias').click((event) => {
       const dom = event.target.nextElementSibling as HTMLElement;
