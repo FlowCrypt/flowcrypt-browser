@@ -10,6 +10,7 @@ import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { PgpPwd } from '../../../js/common/core/crypto/pgp/pgp-password.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 export class SetupRenderModule {
 
@@ -142,17 +143,16 @@ export class SetupRenderModule {
       this.renderEmailAddresses();
     }
   }
-  
+
   private renderEmailAddresses = () => {
     $('.input_submit_all').hide();
     const emailAliases = Value.arr.withoutVal(this.view.submitKeyForAddrs, this.view.acctEmail);
-    emailAliases.forEach(alias => {
-      $('.addresses').html(`<label><input type="checkbox" class="input_email_alias" checked /><span>${alias}</span></label>`);
-    });
+    for (const emailAlias of emailAliases) {
+      $('.addresses').html(`<label><input type="checkbox" class="input_email_alias" checked /><span>${Xss.escape(emailAlias)}</span></label>`);
+    }
     $('.input_email_alias').click((event) => {
       const dom = event.target.nextElementSibling as HTMLElement;
       const email = dom.innerText;
-
       if ($(event.target).prop('checked')) {
         this.view.submitKeyForAddrs.push(email);
       } else {
