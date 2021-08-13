@@ -201,10 +201,10 @@ export class SetupView extends View {
     const inputSubmitAll = $(target).closest('.manual').find('.input_submit_all').first();
     if ($(target).prop('checked')) {
       if (inputSubmitAll.closest('div.line').css('visibility') === 'visible') {
-        inputSubmitAll.prop({ checked: true, disabled: false });
+        $('.input_email_alias').prop({ disabled: false });
       }
     } else {
-      inputSubmitAll.prop({ checked: false, disabled: true });
+      $('.input_email_alias').prop({ disabled: true });
     }
   }
 

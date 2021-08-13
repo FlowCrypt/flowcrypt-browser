@@ -139,9 +139,27 @@ export class SetupRenderModule {
   private saveAndFillSubmitPubkeysOption = (addresses: string[]) => {
     this.view.submitKeyForAddrs = this.filterAddressesForSubmittingKeys(addresses);
     if (this.view.submitKeyForAddrs.length > 1) {
-      $('.addresses').text(Value.arr.withoutVal(this.view.submitKeyForAddrs, this.view.acctEmail).join(', '));
-      $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
+      this.renderEmailAddresses();
     }
+  }
+  
+  private renderEmailAddresses = () => {
+    $('.input_submit_all').hide();
+    const emailAliases = Value.arr.withoutVal(this.view.submitKeyForAddrs, this.view.acctEmail);
+    emailAliases.forEach(alias => {
+      $('.addresses').html(`<label><input type="checkbox" class="input_email_alias" checked /><span>${alias}</span></label>`);
+    });
+    $('.input_email_alias').click((event) => {
+      const dom = event.target.nextElementSibling as HTMLElement;
+      const email = dom.innerText;
+
+      if ($(event.target).prop('checked')) {
+        this.view.submitKeyForAddrs.push(email);
+      } else {
+        this.view.submitKeyForAddrs.splice(this.view.submitKeyForAddrs.indexOf(email),1);
+      }
+    });
+    $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
   }
 
   private filterAddressesForSubmittingKeys = (addresses: string[]): string[] => {
