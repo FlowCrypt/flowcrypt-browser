@@ -54,7 +54,9 @@ export class Assert {
   public static abortAndRenderErrorIfKeyinfoEmpty = (ki: KeyInfo | undefined, doThrow: boolean = true) => {
     if (!ki) {
       const msg = `Cannot find primary key. Is FlowCrypt not set up yet? ${Ui.retryLink()}`;
-      Xss.sanitizeRender($('#content').length ? '#content' : 'body', msg);
+      const target = $($('#content').length ? '#content' : 'body');
+      target.addClass('error-occured');
+      Xss.sanitizeRender(target, msg);
       if (doThrow) {
         throw new UnreportableError(msg);
       }

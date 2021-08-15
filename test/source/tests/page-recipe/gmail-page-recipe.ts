@@ -28,22 +28,36 @@ export class GmailPageRecipe extends PageRecipe {
     await gmailPage.waitAndClick('@notification-successfully-setup-action-close');
   }
 
-  public static deleteMessage = async (gmailPage: ControllablePage) => {
-    // the toolbar needs to be focused in order for Delete button to work
-    await gmailPage.page.keyboard.down('Shift');
-    for (let i = 0; i < 5; i++) {
-      await gmailPage.press('Tab');
-    }
-    await gmailPage.page.keyboard.up('Shift');
-    await gmailPage.waitAndClick('[aria-label="Delete"]');
+  public static deleteThread = async (gmailPage: ControllablePage) => {
+    await gmailPage.page.keyboard.press('#');
   }
 
-  // todo - is this the same as the one above?
   public static deleteLastReply = async (gmailPage: ControllablePage) => {
     await gmailPage.waitAndClick('[aria-label="More"]');
     await gmailPage.press('ArrowDown', 5);
     await gmailPage.press('Enter');
     await Util.sleep(3);
-  };
+  }
+
+  public static emptyDrafts = async (gmailPage: ControllablePage) => {
+    await Util.sleep(1);
+    await gmailPage.waitAndClick('[aria-label="Drafts"]');
+    await Util.sleep(1);
+    await gmailPage.page.keyboard.press('*');
+    await gmailPage.page.keyboard.press('a'); // Select all
+    await Util.sleep(.5);
+    await gmailPage.page.keyboard.press('#'); // Delete
+  }
+
+  public static emptyTrash = async (gmailPage: ControllablePage) => {
+    await Util.sleep(1);
+    await gmailPage.waitAndClick('.ah9'); // "More" button
+    await gmailPage.waitAndClick('[aria-label="Trash"]');
+    await Util.sleep(1);
+    if (await gmailPage.clickIfPresent('//*[text()="Empty Trash now"]')) {
+      await gmailPage.page.keyboard.press('Enter'); // confirm deletion
+    }
+    await gmailPage.waitForContent('.TC', 'No conversations in Trash');
+  }
 
 }

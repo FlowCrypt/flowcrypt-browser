@@ -401,7 +401,7 @@ View.run(class SettingsView extends View {
     const activeOrNotStr = isActive ? 'active' : 'inactive';
     $('#status-row #status_subscription').text(`s:${activeOrNotStr}`);
     if (isActive) {
-      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block');
+      $('.logo-row .subscription .level').text('pro').css('display', 'inline-block');
     } else {
       $('.logo-row .subscription .level').text('free forever').css('display', 'inline-block');
       if (subscription.level && subscription.expired) {

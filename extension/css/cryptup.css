@@ -163,6 +163,7 @@ span.gray { color: #b7b7b7; }
 }
 
 .swal2-popup.ui-modal-iframe .swal2-html-container {
+  margin: 0;
   padding: 0;
 }
 
@@ -756,7 +757,8 @@ body#settings > div#content.setup div#step_2_recovery div#error_text {
   color: #333;
   background-color: #f7ec48;
   overflow: hidden;
-  width: 250px;
+  width: 400px;
+  max-width: 100%;
   min-height: 200px;
   font-family: monospace;
   font-size: 1.5em;
@@ -1465,7 +1467,19 @@ table#compose td.recipients-inputs .small_spinner img {
 
 table#compose td.recipients-inputs > div#input_addresses_container.invisible {
   height: 0;
-  overflow: hidden;
+  pointer-events: none;
+}
+
+table#compose td.recipients-inputs > div#input_addresses_container.invisible [id^="input-container"] {
+  margin-bottom: -36px;
+}
+
+table#compose td.recipients-inputs > div#input_addresses_container.invisible input {
+  opacity: 0;
+}
+
+table#compose td.recipients-inputs > div#input_addresses_container.invisible .recipients {
+  display: none;
 }
 table#compose td.recipients-inputs > div#input_addresses_container > div { position: relative; }
 
@@ -1575,6 +1589,7 @@ table#compose td.recipients-inputs > div#input_addresses_container div span.cont
   bottom: 6px;
   white-space: nowrap;
   color: #636c72;
+  pointer-events: auto;
 }
 
 table#compose td.recipients-inputs > div#input_addresses_container div span.container-cc-bcc-buttons button {
@@ -2229,6 +2244,17 @@ body#new_message.popup table#compose tr td {
 }
 
 body#new_message { overflow-y: hidden; }
+
+body#new_message.error-occured,
+body#settings > div#content.error-occured {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 80%;
+  padding: 50px;
+  background: white;
+}
 
 body#new_message #loader {
   display: flex;

@@ -3,7 +3,7 @@
 'use strict';
 
 import { KeyInfo } from '../../core/crypto/key.js';
-import { Dict } from '../../core/common.js';
+import { Dict, emailKeyIndex } from '../../core/common.js';
 import { DomainRulesJson } from '../../org-rules.js';
 import { GmailRes } from '../../api/email-provider/gmail/gmail-parser.js';
 import { AcctStoreDict, AccountIndex, StoredReplyDraftMeta } from './acct-store.js';
@@ -28,7 +28,7 @@ export class StoreFailedError extends Error { }
 export abstract class AbstractStore {
 
   public static singleScopeRawIndex = (scope: string, key: string) => {
-    return `cryptup_${scope.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_${key}`;
+    return `cryptup_${emailKeyIndex(scope, key)}`;
   }
 
   public static errCategorize = (err: any): Error => {

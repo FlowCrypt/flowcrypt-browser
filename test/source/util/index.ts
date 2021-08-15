@@ -1,6 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import * as fs from 'fs';
+import { Keyboard, KeyInput } from 'puppeteer';
 
 import { ExtendedKeyInfo, KeyUtil } from '../core/crypto/key.js';
 
@@ -84,6 +85,12 @@ export class Util {
 
   public static sleep = async (seconds: number) => {
     return await new Promise(resolve => setTimeout(resolve, seconds * 1000));
+  }
+
+  public static shiftPress = async (keyboard: Keyboard, key: KeyInput) => {
+    await keyboard.down('Shift');
+    await keyboard.press(key);
+    await keyboard.up('Shift');
   }
 
   public static lousyRandom = () => {

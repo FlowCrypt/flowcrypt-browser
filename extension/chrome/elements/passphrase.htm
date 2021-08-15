@@ -32,11 +32,13 @@
     </div>
     <br>
     <div>
-      <input type="checkbox" name="forget" id="forget" class="forget" data-test="forget-pass-phrase" checked="checked" disabled="disabled">
-      <label for="forget">Forget passphrase when I close the browser</label>
+      <label class="forget-pass-phrase-label hidden" data-test="forget-pass-phrase-label">
+        <input type="checkbox" name="forget" class="forget-pass-phrase-checkbox" data-test="forget-pass-phrase-checkbox" checked>
+        Forget passphrase when I close the browser
+      </label>
     </div>
     <div class="separator" style="margin-top: 85px;"></div>
-    <a href id="lost-pass-phrase">Lost pass phrase?</a>
+    <a href id="lost-pass-phrase"><div class="lost-pass-phrase display_none" data-test="lost-pass-phrase">Lost pass phrase?</div><div class="lost-pass-phrase-with-ekm display_none" data-test="lost-pass-phrase-with-ekm">Ask your IT staff for help if you lost your pass phrase.</div></a>
   </div>
 
   <script src="/lib/purify.js"></script>

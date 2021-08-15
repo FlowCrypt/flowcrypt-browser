@@ -40,18 +40,17 @@ View.run(class PgpPubkeyView extends View {
   public render = async () => {
     Ui.event.protect();
     try {
-      this.publicKeys = [await KeyUtil.parse(this.armoredPubkey)];
+      const pubKey = await KeyUtil.parse(this.armoredPubkey);
+      this.isExpired = KeyUtil.expired(pubKey);
+      if (pubKey.revoked) {
+        await ContactStore.saveRevocation(undefined, pubKey);
+      }
+      this.publicKeys = [pubKey];
     } catch (e) {
       console.error('Unusable key: ' + e);
       this.publicKeys = [];
     }
     this.primaryPubKey = this.publicKeys ? this.publicKeys[0] : undefined;
-    try {
-      const pubKey = await KeyUtil.parse(this.armoredPubkey);
-      this.isExpired = KeyUtil.expired(pubKey);
-    } catch (e) {
-      console.error('Unusable key: ' + e);
-    }
     $('.pubkey').text(this.armoredPubkey);
     if (this.compact) {
       $('.hide_if_compact').remove();

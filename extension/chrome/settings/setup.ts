@@ -125,10 +125,9 @@ export class SetupView extends View {
       $('.remove_if_pubkey_submitting_not_user_configurable').remove();
     }
     if (this.orgRules.forbidStoringPassPhrase()) {
-      $('.input_passphrase_save').prop('disabled', true);
       $('.input_passphrase_save').prop('checked', false);
     } else {
-      $('.input_passphrase_save').prop('disabled', false);
+      $('.input_passphrase_save_label').removeClass('hidden');
       if (this.orgRules.rememberPassPhraseByDefault()) {
         $('.input_passphrase_save').prop('checked', true);
       }

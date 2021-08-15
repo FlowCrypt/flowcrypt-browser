@@ -39,12 +39,13 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   private prepareAndUploadPwdEncryptedMsg = async (newMsg: NewMsgData): Promise<string> => {
     // PGP/MIME + included attachments (encrypted for password only)
     const authInfo = await AcctStore.authInfo(this.acctEmail);
-    const msgBodyWithReplyToken = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(authInfo, newMsg);
-    const pgpMimeWithAttachments = await Mime.encode(msgBodyWithReplyToken, { Subject: newMsg.subject }, await this.view.attachmentsModule.attachment.collectAttachments());
+    const { bodyWithReplyToken, replyToken } = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(authInfo, newMsg);
+    const pgpMimeWithAttachments = await Mime.encode(bodyWithReplyToken, { Subject: newMsg.subject }, await this.view.attachmentsModule.attachment.collectAttachments());
     const { data: pwdEncryptedWithAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAttachments), newMsg.pwd, []); // encrypted only for pwd, not signed
     const { url } = await this.view.acctServer.messageUpload(
       authInfo.uuid ? authInfo : undefined,
       pwdEncryptedWithAttachments,
+      replyToken,
       (p) => this.view.sendBtnModule.renderUploadProgress(p, 'FIRST-HALF'), // still need to upload to Gmail later, this request represents first half of progress
     );
     return url;
@@ -106,10 +107,9 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     return await MsgUtil.encryptMessage({ pubkeys: pubsForEncryption, signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as PgpMsgMethod.EncryptAnyArmorResult;
   }
 
-  private getPwdMsgSendableBodyWithOnlineReplyMsgToken = async (authInfo: FcUuidAuth, newMsgData: NewMsgData): Promise<SendableMsgBody> => {
-    if (!authInfo.uuid) {
-      return { 'text/plain': newMsgData.plaintext, 'text/html': newMsgData.plainhtml };
-    }
+  private getPwdMsgSendableBodyWithOnlineReplyMsgToken = async (
+    authInfo: FcUuidAuth, newMsgData: NewMsgData
+  ): Promise<{ bodyWithReplyToken: SendableMsgBody, replyToken: string }> => {
     const recipients = Array.prototype.concat.apply([], Object.values(newMsgData.recipients));
     try {
       const response = await this.view.acctServer.messageToken(authInfo);
@@ -120,10 +120,13 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
           sender: newMsgData.from,
           recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.from), this.acctEmail),
           subject: newMsgData.subject,
-          token: response.token,
+          token: response.replyToken,
         })
       });
-      return { 'text/plain': newMsgData.plaintext + '\n\n' + infoDiv, 'text/html': newMsgData.plainhtml + '<br /><br />' + infoDiv };
+      return {
+        bodyWithReplyToken: { 'text/plain': newMsgData.plaintext + '\n\n' + infoDiv, 'text/html': newMsgData.plainhtml + '<br /><br />' + infoDiv },
+        replyToken: response.replyToken
+      };
     } catch (msgTokenErr) {
       if (ApiErr.isAuthErr(msgTokenErr)) {
         Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail);

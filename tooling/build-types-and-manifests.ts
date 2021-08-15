@@ -61,12 +61,12 @@ const edit = (filepath: string, editor: (content: string) => string) => {
   writeFileSync(filepath, editor(readFileSync(filepath, { encoding: 'utf-8' })));
 };
 
-const makeMockBuild = (buildType: string) => {
-  const mockBuildType = `${buildType}-mock`;
-  exec(`cp -r ${buildDir(buildType)} ${buildDir(mockBuildType)}`);
+const makeMockBuild = (sourceBuildType: string) => {
+  const mockBuildType = `${sourceBuildType}-mock`;
+  exec(`cp -r ${buildDir(sourceBuildType)} ${buildDir(mockBuildType)}`);
   const editor = (code: string) => {
     return code
-      .replace(/const (GOOGLE_API_HOST|GOOGLE_OAUTH_SCREEN_HOST) = [^;]+;/g, `const $1 = '${MOCK_HOST[buildType]}';`)
+      .replace(/const (GOOGLE_API_HOST|GOOGLE_OAUTH_SCREEN_HOST) = [^;]+;/g, `const $1 = '${MOCK_HOST[sourceBuildType]}';`)
       .replace(/const (BACKEND_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/api/';`)
       .replace(/const (ATTESTER_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/attester/';`)
       .replace(/https:\/\/flowcrypt.com\/api\/help\/error/g, 'https://localhost:8001/api/help/error');
@@ -74,6 +74,14 @@ const makeMockBuild = (buildType: string) => {
   edit(`${buildDir(mockBuildType)}/js/common/core/const.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/common/platform/catch.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/content_scripts/webmail_bundle.js`, editor);
+};
+
+const makeLocalFesBuild = (sourceBuildType: string) => {
+  const localFesBuildType = `${sourceBuildType}-local-fes`;
+  exec(`cp -r ${buildDir(sourceBuildType)} ${buildDir(localFesBuildType)}`);
+  edit(`${buildDir(localFesBuildType)}/js/common/api/account-servers/enterprise-server.js`,
+    code => code.replace('https://fes.${this.domain}', 'http://localhost:32337')
+  );
 };
 
 const updateEnterpriseBuild = () => {
@@ -90,3 +98,4 @@ const updateEnterpriseBuild = () => {
 updateEnterpriseBuild();
 makeMockBuild(CHROME_CONSUMER);
 makeMockBuild(CHROME_ENTERPRISE);
+makeLocalFesBuild(CHROME_ENTERPRISE);

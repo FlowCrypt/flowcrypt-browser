@@ -21,7 +21,6 @@ import { Ui } from '../../../js/common/browser/ui.js';
 export class ComposeStorageModule extends ViewModule<ComposeView> {
 
   private passphraseInterval: number | undefined;
-  private ksLookupsByEmail: { [key: string]: Key } = {};
 
   public setHandlers = () => {
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
@@ -55,20 +54,24 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   }
 
   public collectAllAvailablePublicKeys = async (senderEmail: string, senderKi: KeyInfo, recipients: string[]): Promise<CollectPubkeysResult> => {
-    const contacts = await ContactStore.get(undefined, recipients);
-    const armoredPubkeys = [{ pubkey: await KeyUtil.parse(senderKi.public), email: senderEmail, isMine: true }];
+    const contacts = await ContactStore.getEncryptionKeys(undefined, recipients);
+    const pubkeys = [{ pubkey: await KeyUtil.parse(senderKi.public), email: senderEmail, isMine: true }];
     const emailsWithoutPubkeys = [];
-    for (const i of contacts.keys()) {
-      const contact = contacts[i];
-      if (contact && contact.hasPgp && contact.pubkey) {
-        armoredPubkeys.push({ pubkey: contact.pubkey, email: contact.email, isMine: false });
-      } else if (contact && this.ksLookupsByEmail[contact.email]) {
-        armoredPubkeys.push({ pubkey: this.ksLookupsByEmail[contact.email], email: contact.email, isMine: false });
+    for (const contact of contacts) {
+      let keysPerEmail = contact.keys;
+      // if non-expired present, return non-expired only
+      if (keysPerEmail.some(k => k.usableForEncryption)) {
+        keysPerEmail = keysPerEmail.filter(k => k.usableForEncryption);
+      }
+      if (keysPerEmail.length) {
+        for (const pubkey of keysPerEmail) {
+          pubkeys.push({ pubkey, email: contact.email, isMine: false });
+        }
       } else {
-        emailsWithoutPubkeys.push(recipients[i]);
+        emailsWithoutPubkeys.push(contact.email);
       }
     }
-    return { armoredPubkeys, emailsWithoutPubkeys };
+    return { pubkeys, emailsWithoutPubkeys };
   }
 
   public passphraseGet = async (senderKi?: KeyInfo) => {
@@ -78,19 +81,49 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     return await PassphraseStore.get(this.view.acctEmail, senderKi.fingerprints[0]);
   }
 
-  public lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string, name: string | undefined): Promise<Contact | "fail"> => {
+  public lookupPubkeyFromKeyserversThenOptionallyFetchExpiredByFingerprintAndUpsertDb = async (
+    email: string, name: string | undefined
+  ): Promise<Contact | "fail"> => {
+    // note by Tom 2021-08-10: We are only getting one public key from storage, but should
+    //    work with arrays instead, like with `ContactStore.getOneWithAllPubkeys`.
+    //    However, this whole fingerprint-base section seems unnecessary, we could likely
+    //    remove it and the keys will be updated below using
+    //    `lookupPubkeyFromKeyserversAndUpsertDb` anyway.
+    //    discussion: https://github.com/FlowCrypt/flowcrypt-browser/pull/3898#discussion_r686229818
     const [storedContact] = await ContactStore.get(undefined, [email]);
     if (storedContact && storedContact.hasPgp && storedContact.pubkey && !storedContact.revoked) {
-      // Potentially check if pubkey was updated - async. By the time user finishes composing, newer version would have been updated in db.
-      // If sender didn't pull a particular pubkey for a long time and it has since expired, but there actually is a newer version on attester, this may unnecessarily show "bad pubkey",
-      //      -> until next time user tries to pull it. This could be fixed by attempting to fix up the rendered recipient inside the async function below.
+      // checks if pubkey was updated, asynchronously. By the time user finishes composing,
+      //    newer version would have been updated in db.
+      // This implementation is imperfect in that, if sender didn't pull a particular pubkey
+      //    for a long time and the local pubkey has since expired, and there actually is a
+      //    newer version available on external key server, this may unnecessarily show "bad pubkey",
+      //    until next time user tries to enter recipient in the field again, which will at that point
+      //    get the updated key from db. This could be fixed by:
+      //      - either life fixing the UI after this call finishes, or
+      //      - making this call below synchronous and using the result directly
       this.checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(storedContact).catch(Catch.reportErr);
       return storedContact;
     }
-    return await this.ksLookupUnknownContactPubAndSaveToDb(email, name, storedContact);
+    return await this.lookupPubkeyFromKeyserversAndUpsertDb(email, name, storedContact);
   }
 
-  public ksLookupUnknownContactPubAndSaveToDb = async (email: string, name: string | undefined, existingContact: Contact | undefined): Promise<Contact | "fail"> => {
+  /**
+   * We are searching recipient public key by email every time we enter the recipient.
+   * This is regardless if we already have the public key stored locally or not.
+   * We process the response and if there are new public keys, we save them. If there are
+   *    newer versions of public keys we already have (compared by fingerprint), then we
+   *    update the public keys we already have.
+   * Finally, we return the updated public key back.
+   *
+   * Note by Tom 2021-08-10: We should consider a signature like
+   *    `Promise<{email: string, contacts: Contact[]}>` instead. And the `fail` situations
+   *    should probably be throwing some sort of `PubkeyLookupFailedError` or similar.
+   *    `existingContact` should also change to `Contact[]` instead of `Contact | undefined`
+   *    discussion: https://github.com/FlowCrypt/flowcrypt-browser/pull/3898#discussion_r686244628
+   */
+  public lookupPubkeyFromKeyserversAndUpsertDb = async (
+    email: string, name: string | undefined, existingContact: Contact | undefined
+  ): Promise<Contact | "fail"> => {
     try {
       const lookupResult = await this.view.pubLookup.lookupEmail(email);
       if (lookupResult && email) {

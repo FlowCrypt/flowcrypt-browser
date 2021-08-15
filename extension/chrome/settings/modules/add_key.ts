@@ -38,14 +38,27 @@ View.run(class AddKeyView extends View {
   public render = async () => {
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
     if (!this.orgRules.forbidStoringPassPhrase()) {
-      $('.input_passphrase_save').prop('checked', true).prop('disabled', false);
+      $('.input_passphrase_save_label').removeClass('hidden');
+      $('.input_passphrase_save').prop('checked', true);
     }
-    await initPassphraseToggle(['input_passphrase']);
-    this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId);
-    Xss.sanitizeRender('#spinner_container', Ui.spinner('green') + ' loading..');
-    await this.loadAndRenderKeyBackupsOrRenderError();
-    $('.source_selector').css('display', 'block');
-    $('#spinner_container').text('');
+    if (this.orgRules.usesKeyManager()) {
+      Xss.sanitizeRender('body', `
+      <br><br>
+      <div data-test="container-err-text" style="width: 900px;display:inline-block;">Please contact your IT staff if you wish to update your keys.</div>
+      <br><br>
+      `);
+    } else {
+      $('#content').show();
+      if (!this.orgRules.forbidStoringPassPhrase()) {
+        $('.input_passphrase_save').prop('checked', true).prop('disabled', false);
+      }
+      await initPassphraseToggle(['input_passphrase']);
+      this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId);
+      Xss.sanitizeRender('#spinner_container', Ui.spinner('green') + ' loading..');
+      await this.loadAndRenderKeyBackupsOrRenderError();
+      $('.source_selector').css('display', 'block');
+      $('#spinner_container').text('');
+    }
   }
 
   public setHandlers = () => {

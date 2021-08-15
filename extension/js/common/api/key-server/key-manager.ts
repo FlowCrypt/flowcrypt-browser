@@ -9,7 +9,6 @@ import { Api, ReqMethod } from './../shared/api.js';
 import { Dict } from '../../core/common.js';
 
 type LoadPrvRes = { privateKeys: { decryptedPrivateKey: string }[] };
-type LoadPubRes = { publicKeys: { publicKey: string }[] };
 
 export class KeyManager extends Api {
 
@@ -28,10 +27,6 @@ export class KeyManager extends Api {
 
   public storePrivateKey = async (idToken: string, decryptedPrivateKey: string, publicKey: string): Promise<void> => {
     return await this.request('PUT', '/keys/private', { decryptedPrivateKey, publicKey }, idToken);
-  }
-
-  public lookupPublicKey = async (emailOrFingerprint: string): Promise<LoadPubRes> => {
-    return await this.request('GET', `/keys/public/${emailOrFingerprint}`);
   }
 
   private request = async <RT>(method: ReqMethod, path: string, vals?: Dict<any> | undefined, idToken?: string): Promise<RT> => {

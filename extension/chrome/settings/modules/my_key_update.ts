@@ -11,6 +11,7 @@ import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url, Str } from '../../../js/common/core/common.js';
 import { View } from '../../../js/common/view.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 import { OrgRules } from '../../../js/common/org-rules.js';
 import { PubLookup } from '../../../js/common/api/pub-lookup.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
@@ -37,13 +38,24 @@ View.run(class MyKeyUpdateView extends View {
 
   public render = async () => {
     this.orgRules = await OrgRules.newInstance(this.acctEmail);
-    this.pubLookup = new PubLookup(this.orgRules);
-    [this.primaryKi] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
-    $('.action_show_public_key').attr('href', this.showKeyUrl);
-    $('.email').text(this.acctEmail);
-    $('.fingerprint').text(Str.spaced(this.primaryKi.fingerprints[0]));
-    this.inputPrivateKey.attr('placeholder', this.inputPrivateKey.attr('placeholder') + ' (' + this.primaryKi.fingerprints[0] + ')');
+    if (this.orgRules.usesKeyManager()) {
+      Xss.sanitizeRender('body', `
+      <br>
+      <div data-test="container-err-title" style="width: 900px;display:inline-block;">Error: Insufficient Permission</div>
+      <br><br>
+      <div data-test="container-err-text" style="width: 900px;display:inline-block;">Please contact your IT staff if you wish to update your keys.</div>
+      <br><br>
+      `);
+    } else {
+      $('#content').show();
+      this.pubLookup = new PubLookup(this.orgRules);
+      [this.primaryKi] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
+      Assert.abortAndRenderErrorIfKeyinfoEmpty(this.primaryKi);
+      $('.action_show_public_key').attr('href', this.showKeyUrl);
+      $('.email').text(this.acctEmail);
+      $('.fingerprint').text(Str.spaced(this.primaryKi.fingerprints[0]));
+      this.inputPrivateKey.attr('placeholder', this.inputPrivateKey.attr('placeholder') + ' (' + this.primaryKi.fingerprints[0] + ')');
+    }
   }
 
   public setHandlers = () => {
