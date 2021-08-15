@@ -1612,6 +1612,38 @@ jA==
       t.pass();
     });
 
+    ava.default('[unit][KeyUtil.parse] correctly handles shuffled certificates in PEM', async t => {
+      const p8 = readFileSync("test/samples/smime/human-pwd-shuffled-pem.txt", 'utf8');
+      let parsed = await KeyUtil.parse(p8);
+      expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
+      expect(parsed.type).to.equal('x509');
+      expect(parsed.emails.length).to.equal(1);
+      expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
+      expect(parsed.isPrivate).to.equal(true);
+      expect(parsed.isPublic).to.equal(false);
+      expect(parsed.fullyDecrypted).to.equal(false);
+      expect(KeyUtil.armor(parsed)).to.include('-----BEGIN ENCRYPTED PRIVATE KEY-----');
+      expect(KeyUtil.armor(parsed)).to.not.include('-----BEGIN RSA PRIVATE KEY-----');
+      expect(KeyUtil.armor(parsed)).to.not.include('-----BEGIN PRIVATE KEY-----');
+      // incorrect passphrase will make the key remain encrypted
+      expect(await KeyUtil.decrypt(parsed, 'incorrect')).to.equal(false);
+      expect(parsed.fullyDecrypted).to.equal(false);
+      expect(await KeyUtil.decrypt(parsed, 'AHbxhwquX5pc')).to.equal(true);
+      expect(parsed.fullyDecrypted).to.equal(true);
+      const armoredAfterDecryption = KeyUtil.armor(parsed);
+      expect(armoredAfterDecryption).to.not.include('-----BEGIN ENCRYPTED PRIVATE KEY-----');
+      expect(armoredAfterDecryption).to.include('-----BEGIN RSA PRIVATE KEY-----');
+      parsed = await KeyUtil.parse(armoredAfterDecryption);
+      expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
+      expect(parsed.type).to.equal('x509');
+      expect(parsed.emails.length).to.equal(1);
+      expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
+      expect(parsed.isPrivate).to.equal(true);
+      expect(parsed.isPublic).to.equal(false);
+      expect(parsed.fullyDecrypted).to.equal(true);
+      t.pass();
+    });
+
     ava.default('[unit][KeyUtil.encrypt] encrypts S/MIME key', async t => {
       const p8 = readFileSync("test/samples/smime/human-unprotected-pem.txt", 'utf8');
       let parsed = await KeyUtil.parse(p8);

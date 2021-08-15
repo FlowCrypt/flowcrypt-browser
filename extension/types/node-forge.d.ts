@@ -224,7 +224,6 @@ declare module "node-forge" {
             issuer: DistinguishedName;
             subject: DistinguishedName;
             extensions: any[];
-            privateKey: PrivateKey | undefined;
             publicKey: PublicKey | undefined;
             md: any;
             /**
@@ -257,6 +256,17 @@ declare module "node-forge" {
              * @return the extension or null if not found.
              */
             getExtension(options: string | { name: string; } | { id: number; }): {} | undefined;
+
+            /**
+             * Returns true if this certificate's issuer matches the passed
+             * certificate's subject. Note that no signature check is performed.
+             *
+             * @param parent the certificate to check.
+             *
+             * @return true if this certificate's issuer matches the passed certificate's
+             *         subject.
+             */
+            isIssuer(parent: Certificate): boolean;
 
             /**
              * Signs this certificate using the given private key.

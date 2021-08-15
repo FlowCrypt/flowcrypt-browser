@@ -6,6 +6,7 @@ import { UnreportableError } from '../../../platform/catch.js';
 import { PgpArmor } from '../pgp/pgp-armor.js';
 import { Buf } from '../../buf.js';
 import { MsgBlockParser } from '../../msg-block-parser.js';
+import { MsgBlock } from '../../msg-block.js';
 
 export class SmimeKey {
 
@@ -13,14 +14,15 @@ export class SmimeKey {
     if (text.includes(PgpArmor.headers('certificate').begin)) {
       const blocks = MsgBlockParser.detectBlocks(text).blocks;
       const certificates = blocks.filter(b => b.type === 'certificate');
-      if (certificates.length < 1) { // todo: should we select the correct certificate if a chain is provided?
+      const leafCertificates = SmimeKey.getLeafCertificates(certificates);
+      if (leafCertificates.length !== 1) {
         throw new Error('Could not parse S/MIME key without a certificate');
       }
       const privateKeys = blocks.filter(b => ['pkcs8EncryptedPrivateKey', 'pkcs8PrivateKey', 'pkcs8RsaPrivateKey'].includes(b.type));
       if (privateKeys.length > 1) {
         throw new Error('Could not parse S/MIME key with more than one private keys');
       }
-      return SmimeKey.getKeyFromCertificate(certificates[0].content as string, privateKeys[0]?.content ?? undefined);
+      return SmimeKey.getKeyFromCertificate(leafCertificates[0].pem, privateKeys[0]?.content ?? undefined);
     } else if (text.includes(PgpArmor.headers('pkcs12').begin)) {
       const armoredBytes = text.replace(PgpArmor.headers('pkcs12').begin, '').replace(PgpArmor.headers('pkcs12').end, '').trim();
       const emptyPassPhrase = '';
@@ -121,6 +123,12 @@ export class SmimeKey {
     SmimeKey.saveArmored(key, SmimeKey.getArmoredCertificate(key), encryptedPrivateKey);
     key.fullyDecrypted = false;
     key.fullyEncrypted = true;
+  }
+
+  private static getLeafCertificates = (msgBlocks: MsgBlock[]): { pem: string, certificate: forge.pki.Certificate }[] => {
+    const parsed = msgBlocks.map(cert => { return { pem: cert.content as string, certificate: forge.pki.certificateFromPem(cert.content as string) }; });
+    // Note: no signature check is performed.
+    return parsed.filter((c, i) => !parsed.some((other, j) => j !== i && other.certificate.isIssuer(c.certificate)));
   }
 
   private static getNormalizedEmailsFromCertificate = (certificate: forge.pki.Certificate): string[] => {
