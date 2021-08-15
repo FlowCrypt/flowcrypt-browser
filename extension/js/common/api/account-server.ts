@@ -63,7 +63,7 @@ export class AccountServer extends Api {
     }
   }
 
-  private isFesUsed = async (): Promise<boolean> => {
+  public isFesUsed = async (): Promise<boolean> => {
     const { fesUrl } = await AcctStore.get(this.acctEmail, ['fesUrl']);
     return Boolean(fesUrl);
   }
