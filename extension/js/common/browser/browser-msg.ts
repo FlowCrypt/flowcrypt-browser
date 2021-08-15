@@ -259,8 +259,8 @@ export class BrowserMsg {
     const existingHandler = BrowserMsg.HANDLERS_REGISTERED_FRAME[name];
     if (existingHandler) {
       console.log(`chaining another handler to ${name}`);
-      BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = (req: Bm.AnyRequest, sender: Bm.Sender) => {
-        return handler(req, sender).then(() => existingHandler(req, sender));
+      BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = async (req: Bm.AnyRequest, sender: Bm.Sender) => {
+        return await handler(req, sender).then(() => existingHandler(req, sender));
       };
     } else {
       console.log(`adding handler to ${name}`);
