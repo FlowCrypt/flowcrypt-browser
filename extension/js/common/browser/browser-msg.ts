@@ -256,7 +256,16 @@ export class BrowserMsg {
   }
 
   public static addListener = (name: string, handler: Handler) => {
-    BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = handler;
+    const existingHandler = BrowserMsg.HANDLERS_REGISTERED_FRAME[name];
+    if (existingHandler) {
+      console.log(`chaining another handler to ${name}`);
+      BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = (req: Bm.AnyRequest, sender: Bm.Sender) => {
+        return handler(req, sender).then(() => existingHandler(req, sender));
+      };
+    } else {
+      console.log(`adding handler to ${name}`);
+      BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = handler;
+    }
   }
 
   public static listen = (listenForTabId: string) => {
