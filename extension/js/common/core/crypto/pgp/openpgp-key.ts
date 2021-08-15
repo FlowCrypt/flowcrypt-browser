@@ -3,7 +3,6 @@ import { Key, PrvPacket, KeyAlgo, KeyUtil, UnexpectedKeyTypeError } from '../key
 import { opgp } from './openpgpjs-custom.js';
 import { Catch } from '../../../platform/catch.js';
 import { Str } from '../../common.js';
-import { PgpHash } from './pgp-hash.js';
 import { Buf } from '../../buf.js';
 import { PgpMsgMethod, MsgUtil } from './msg-util.js';
 
@@ -103,7 +102,6 @@ export class OpenPGPKey {
   public static encryptMessage: PgpMsgMethod.Encrypt = async ({ pubkeys, signingPrv, pwd, data, filename, armor, date }) => {
     const message = opgp.message.fromBinary(data, filename, date);
     const options: OpenPGP.EncryptOptions = { armor, message, date };
-    let usedChallenge = false;
     if (pubkeys) {
       options.publicKeys = [];
       for (const pubkey of pubkeys) {
@@ -115,10 +113,9 @@ export class OpenPGPKey {
       }
     }
     if (pwd) {
-      options.passwords = [await PgpHash.challengeAnswer(pwd)];
-      usedChallenge = true;
+      options.passwords = [pwd];
     }
-    if (!pubkeys && !usedChallenge) {
+    if (!pubkeys && !pwd) {
       throw new Error('no-pubkeys-no-challenge');
     }
     if (signingPrv) {
