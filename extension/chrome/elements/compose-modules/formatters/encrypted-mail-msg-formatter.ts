@@ -56,7 +56,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
      *
      * The advantage is that it's dynamic - the sender can choose the rounds of iterations, and
      *   the recipient will follow transparently. For now, we'll be following the default set
-     *   in OpnePGP.js, and later we can make a deliberate choice on how many iterations to use
+     *   in OpenPGP.js, and later we can make a deliberate choice on how many iterations to use
      *   without having to affect recipient code.
      *
      * Another thing to note is that eventually, flowcrypt.com/api web portal functionality will
