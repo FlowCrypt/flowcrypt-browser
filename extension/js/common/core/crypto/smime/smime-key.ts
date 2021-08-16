@@ -15,8 +15,11 @@ export class SmimeKey {
       const blocks = MsgBlockParser.detectBlocks(text).blocks;
       const certificates = blocks.filter(b => b.type === 'certificate');
       const leafCertificates = SmimeKey.getLeafCertificates(certificates);
+      if (leafCertificates.length > 1) {
+        throw new Error('Parsing S/MIME with more than one user certificate is not supported');
+      }
       if (leafCertificates.length !== 1) {
-        throw new Error('Could not parse S/MIME key without a certificate');
+        throw new Error('Could not parse S/MIME key without a user certificate');
       }
       const privateKeys = blocks.filter(b => ['pkcs8EncryptedPrivateKey', 'pkcs8PrivateKey', 'pkcs8RsaPrivateKey'].includes(b.type));
       if (privateKeys.length > 1) {
