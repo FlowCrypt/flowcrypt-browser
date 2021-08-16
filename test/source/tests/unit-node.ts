@@ -552,9 +552,7 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
 
     ava.default('[unit][KeyUtil.parse] S/MIME key parsing of unprotected PKCS#8 private key and mismatching certificate', async t => {
       await t.throwsAsync(() => KeyUtil.parse(`${testConstants.smimeUnencryptedKey}
-${testConstants.smimeCert}`), {
-        instanceOf: Error, message: `Certificate doesn't match the private key`
-      });
+${testConstants.smimeCert}`), { instanceOf: Error, message: `Certificate doesn't match the private key` });
       t.pass();
     });
 
