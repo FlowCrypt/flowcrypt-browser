@@ -247,7 +247,11 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       }
     } else {
       $('.close_new_message').click(this.view.setHandler(() => this.actionCloseHandler(), this.view.errModule.handle(`close message`)));
-      this.view.S.cached('header').find('#header_title').click(() => $('.minimize_new_message').click());
+      this.view.S.cached('title').click(() => {
+        if (this.view.sizeModule.composeWindowIsMinimized) {
+          $('.minimize_new_message').click();
+        }
+      });
       await this.view.quoteModule.addTripleDotQuoteExpandFooterOnlyBtn();
       this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
     }

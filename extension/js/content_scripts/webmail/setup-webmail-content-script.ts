@@ -121,6 +121,13 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       } else if ($('div.new_message').length) {
         BrowserMsg.send.focusPreviousActiveWindow(tabId, { frameId: $('div.new_message').data('frame-id') });
       }
+      // reposition the rest of the compose windows
+      if (!$(`div.new_message[data-order="1"]`).length) {
+        $(`div.new_message[data-order="2"]`).attr('data-order', 1);
+      }
+      if (!$(`div.new_message[data-order="2"]`).length) {
+        $(`div.new_message[data-order="3"]`).attr('data-order', 2);
+      }
     });
     BrowserMsg.addListener('focus_body', async () => {
       if (document.activeElement instanceof HTMLElement) { // iframe have to be blurred before focusing body
