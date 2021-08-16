@@ -191,12 +191,15 @@ export class ComposeView extends View {
   }
 
   public setHandlers = () => {
-    this.S.cached('body').on('focusin', this.setHandler(async () => {
-      console.log('focusin');
-      BrowserMsg.send.setActiveWindow(this.parentTabId, { frameId: this.frameId });
-    }));
+    BrowserMsg.addListener('focus_previous_active_window', async ({ frameId }: Bm.ComposeWindow) => {
+      if (this.frameId === frameId) {
+        Catch.setHandledTimeout(() => {
+          this.S.cached('input_to').focus();
+        }, 0);
+      }
+    });
+    BrowserMsg.listen(this.parentTabId);
     this.S.cached('body').on('click', this.setHandler(async () => {
-      console.log('click');
       BrowserMsg.send.setActiveWindow(this.parentTabId, { frameId: this.frameId });
     }));
     this.S.cached('icon_help').click(this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`)));
@@ -209,14 +212,6 @@ export class ComposeView extends View {
     this.recipientsModule.setHandlers();
     this.sendBtnModule.setHandlers();
     this.draftModule.setHandlers(); // must be the last one so that 'onRecipientAdded/draftSave' to works properly
-    BrowserMsg.addListener('focus_previous_active_window', async ({ frameId }: Bm.ComposeWindow) => {
-      if (this.frameId === frameId) {
-        Catch.setHandledTimeout(() => {
-          this.S.cached('input_to').focus();
-        }, 0);
-      }
-    });
-    BrowserMsg.listen(this.parentTabId);
   }
 
 }

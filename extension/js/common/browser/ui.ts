@@ -447,9 +447,9 @@ export class Ui {
     Ui.swal().fire({
       toast: true,
       title: msg,
-      icon: icon,
+      icon,
       showConfirmButton: false,
-      position: position,
+      position,
       timer: seconds * 1000,
       timerProgressBar: true,
       customClass: {
