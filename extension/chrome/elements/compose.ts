@@ -5,7 +5,7 @@
 import { EmailProviderInterface, ReplyParams } from '../../js/common/api/email-provider/email-provider-api.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
-import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
+import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
@@ -191,6 +191,9 @@ export class ComposeView extends View {
   }
 
   public setHandlers = () => {
+    this.S.cached('body').on('focusin', this.setHandler(async () => {
+      BrowserMsg.send.setActiveWindow(this.parentTabId, { frameId: this.frameId });
+    }));
     this.S.cached('icon_help').click(this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`)));
     this.attachmentsModule.setHandlers();
     this.inputModule.setHandlers();
@@ -201,6 +204,14 @@ export class ComposeView extends View {
     this.recipientsModule.setHandlers();
     this.sendBtnModule.setHandlers();
     this.draftModule.setHandlers(); // must be the last one so that 'onRecipientAdded/draftSave' to works properly
+    BrowserMsg.addListener('focus_previous_active_window', async ({ frameId }: Bm.ComposeWindow) => {
+      if (this.frameId === frameId) {
+        Catch.setHandledTimeout(() => {
+          this.S.cached('input_to').focus();
+        }, 0);
+      }
+    });
+    BrowserMsg.listen(this.parentTabId);
   }
 
 }

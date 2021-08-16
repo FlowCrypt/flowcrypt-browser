@@ -251,12 +251,43 @@ div.new_message {
   position: absolute;
   bottom: 0;
   width: 540px;
-  right: 30px;
   padding: 0;
   z-index: 6;
   height: 605px;
   transition: 0.1s height ease-in-out;
   box-shadow: rgba(0, 0, 0, 0.3) 0 2px 8px;
+}
+
+div.new_message.previous-active {
+  z-index: 7;
+}
+
+div.new_message.active {
+  z-index: 8;
+}
+
+div.new_message:not(.active)::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+}
+
+div.new_message[data-order="1"] {
+  right: 30px;
+}
+
+div.new_message[data-order="2"] {
+  left: 50%;
+  margin-left: -270px;
+}
+
+div.new_message[data-order="3"] {
+  left: 30px;
 }
 
 div.new_message.full_window {

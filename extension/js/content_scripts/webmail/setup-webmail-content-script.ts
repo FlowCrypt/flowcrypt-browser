@@ -109,8 +109,18 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
 
   const browserMsgListen = (acctEmail: string, tabId: string, inject: Injector, factory: XssSafeFactory, notifications: Notifications) => {
     BrowserMsg.addListener('open_new_message', async () => inject.openComposeWin());
-    BrowserMsg.addListener('close_new_message', async () => {
-      $('div.new_message').remove();
+    BrowserMsg.addListener('set_active_window', async ({ frameId }: Bm.ComposeWindow) => {
+      $(`div.new_message`).removeClass('previous-active');
+      $(`div.new_message.active`).addClass('previous-active').removeClass('active');
+      $(`div.new_message[data-frame-id="${frameId}"]`).addClass('active');
+    });
+    BrowserMsg.addListener('close_new_message', async ({ frameId }: Bm.ComposeWindow) => {
+      $(`div.new_message[data-frame-id="${frameId}"]`).remove();
+      if ($('div.new_message.previous-active').length) {
+        BrowserMsg.send.focusPreviousActiveWindow(tabId, { frameId: $('div.new_message.previous-active').data('frame-id') });
+      } else if ($('div.new_message').length) {
+        BrowserMsg.send.focusPreviousActiveWindow(tabId, { frameId: $('div.new_message').data('frame-id') });
+      }
     });
     BrowserMsg.addListener('focus_body', async () => {
       if (document.activeElement instanceof HTMLElement) { // iframe have to be blurred before focusing body
@@ -118,10 +128,10 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       }
       $('body').focus();
     });
-    BrowserMsg.addListener('focus_frame', async ({ frameId }: Bm.FocusFrame) => {
+    BrowserMsg.addListener('focus_frame', async ({ frameId }: Bm.ComposeWindow) => {
       $(`iframe#${frameId}`).focus();
     });
-    BrowserMsg.addListener('close_reply_message', async ({ frameId }: Bm.CloseReplyMessage) => {
+    BrowserMsg.addListener('close_reply_message', async ({ frameId }: Bm.ComposeWindow) => {
       $(`iframe#${frameId}`).remove();
     });
     BrowserMsg.addListener('reinsert_reply_box', async ({ replyMsgId }: Bm.ReinsertReplyBox) => {

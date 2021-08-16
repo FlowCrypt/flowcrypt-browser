@@ -15,6 +15,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
   private FULL_WINDOW_CLASS = 'full_window';
   private lastReplyBoxTableHeight = 0;
   private refBodyHeight?: number;
+  private currentWindowSelector = `div#new_message[data-frame-id="${this.view.frameId}"]`
 
   public setHandlers = () => {
     $('body').click(event => {
@@ -132,7 +133,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       this.addOrRemoveFullScreenStyles(this.composeWindowIsMinimized);
     }
     BrowserMsg.send.setCss(this.view.parentTabId, {
-      selector: `iframe#${this.view.frameId}, div#new_message`,
+      selector: this.currentWindowSelector,
       css: { height: this.composeWindowIsMinimized ? '' : this.view.S.cached('header').css('height') },
     });
     this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
@@ -157,10 +158,10 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
   private addOrRemoveFullScreenStyles = (add: boolean) => {
     if (add) {
       this.view.S.cached('body').addClass(this.FULL_WINDOW_CLASS);
-      BrowserMsg.send.addClass(this.view.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
+      BrowserMsg.send.addClass(this.view.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: this.currentWindowSelector });
     } else {
       this.view.S.cached('body').removeClass(this.FULL_WINDOW_CLASS);
-      BrowserMsg.send.removeClass(this.view.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
+      BrowserMsg.send.removeClass(this.view.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: this.currentWindowSelector });
     }
   }
 

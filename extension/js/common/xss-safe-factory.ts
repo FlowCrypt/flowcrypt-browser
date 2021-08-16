@@ -187,7 +187,14 @@ export class XssSafeFactory {
   }
 
   public embeddedCompose = (draftId?: string) => {
-    return Ui.e('div', { id: 'new_message', class: 'new_message', 'data-test': 'container-new-message', html: this.iframe(this.srcComposeMsg(draftId), [], { scrolling: 'no' }) });
+    const srcComposeMsg = this.srcComposeMsg(draftId);
+    return Ui.e('div', {
+      id: 'new_message',
+      class: 'new_message',
+      html: this.iframe(srcComposeMsg, [], { scrolling: 'no' }),
+      'data-frame-id': String(Url.parse(['frameId'], srcComposeMsg).frameId),
+      'data-test': 'container-new-message',
+    });
   }
 
   public embeddedAttachment = (meta: Attachment, isEncrypted: boolean, parentTabId?: string) => {

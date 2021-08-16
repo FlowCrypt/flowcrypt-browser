@@ -57,8 +57,13 @@ export class Injector {
   }
 
   public openComposeWin = () => {
-    if (this.S.now('compose_window').length === 0) {
-      this.S.cached('body').append(this.factory.embeddedCompose()); // xss-safe-factory
+    const numberOfAlreadyOpenedComposeWindows = this.S.now('compose_window').length;
+    if (numberOfAlreadyOpenedComposeWindows < 3) {
+      const composeWin = $(this.factory.embeddedCompose());
+      composeWin.attr('data-order', numberOfAlreadyOpenedComposeWindows + 1);
+      this.S.cached('body').append(composeWin); // xss-safe-factory
+    } else {
+      Ui.toast('Only 3 composer windows can be opened at a time', 3, 'top', 'error');
     }
   }
 

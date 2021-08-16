@@ -5,7 +5,7 @@
 import { ApiErr } from '../api/shared/api-error.js';
 import { Catch } from '../platform/catch.js';
 import { Dict, Url } from '../core/common.js';
-import Swal, { SweetAlertResult } from 'sweetalert2';
+import Swal, { SweetAlertIcon, SweetAlertPosition, SweetAlertResult } from 'sweetalert2';
 import { Xss } from '../platform/xss.js';
 
 type NamedSels = Dict<JQuery<HTMLElement>>;
@@ -442,13 +442,14 @@ export class Ui {
     return $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
   }
 
-  public static toast = (msg: string, seconds = 2) => {
+  public static toast = (msg: string, seconds = 2, position: SweetAlertPosition = 'bottom', icon?: SweetAlertIcon) => {
     // tslint:disable-next-line:no-floating-promises
     Ui.swal().fire({
       toast: true,
       title: msg,
+      icon: icon,
       showConfirmButton: false,
-      position: 'bottom',
+      position: position,
       timer: seconds * 1000,
       timerProgressBar: true,
       customClass: {

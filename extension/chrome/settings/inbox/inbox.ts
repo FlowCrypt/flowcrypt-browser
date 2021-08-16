@@ -119,8 +119,8 @@ export class InboxView extends View {
 
   private addBrowserMsgListeners = () => {
     BrowserMsg.addListener('add_end_session_btn', () => this.injector.insertEndSessionBtn(this.acctEmail));
-    BrowserMsg.addListener('close_new_message', async () => {
-      $('div.new_message').remove();
+    BrowserMsg.addListener('close_new_message', async ({ frameId }: Bm.ComposeWindow) => {
+      $(`div.new_message[data-frame-id="${frameId}"]`).remove();
     });
     BrowserMsg.addListener('passphrase_dialog', async ({ longids, type, initiatorFrameId }: Bm.PassphraseDialog) => {
       await this.factory.showPassphraseDialog(longids, type, initiatorFrameId);
