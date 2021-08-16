@@ -98,14 +98,15 @@ export class SmimeKey {
       }
     }
     const encryptedPrivateKey = SmimeKey.getArmoredPrivateKey(key);
-    const privateKey = await forge.pki.decryptRsaPrivateKey(encryptedPrivateKey, passphrase); // throws on password mismatch
-    if (privateKey) {
-      SmimeKey.saveArmored(key, SmimeKey.getArmoredCertificate(key), privateKey);
-      key.fullyDecrypted = true;
-      key.fullyEncrypted = false;
-      return true;
+    const privateKey = await forge.pki.decryptRsaPrivateKey(encryptedPrivateKey, passphrase); // null on password mismatch
+    if (!privateKey) {
+      return false;
     }
-    return false;
+    SmimeKey.checkPrivateKeyCertificateMatchOrThrow(SmimeKey.getCertificate(key), privateKey);
+    SmimeKey.saveArmored(key, SmimeKey.getArmoredCertificate(key), privateKey);
+    key.fullyDecrypted = true;
+    key.fullyEncrypted = false;
+    return true;
   }
 
   public static encryptKey = async (key: Key, passphrase: string) => {
@@ -164,6 +165,7 @@ export class SmimeKey {
         if (!unencryptedKey) {
           privateKey = undefined;
         }
+        SmimeKey.checkPrivateKeyCertificateMatchOrThrow(certificate, unencryptedKey);
       }
     }
     const fingerprint = forge.pki.getPublicKeyFingerprint(certificate.publicKey, { encoding: 'hex' }).toUpperCase();
@@ -234,6 +236,25 @@ export class SmimeKey {
       return true;
     }
     return false;
+  }
+
+  private static checkPrivateKeyCertificateMatchOrThrow = (certificate: forge.pki.Certificate, privateKey: forge.pki.PrivateKey): void => {
+    const publicKeyN = (certificate.publicKey as forge.pki.rsa.PublicKey)?.n;
+    const publicKeyE = (certificate.publicKey as forge.pki.rsa.PublicKey)?.e;
+    const privateKeyN = (privateKey as forge.pki.rsa.PrivateKey).n;
+    const privateKeyE = (privateKey as forge.pki.rsa.PrivateKey).e;
+    if (publicKeyN && publicKeyE && privateKeyN && privateKeyE) {
+      // compare RSA Private and Public Key material
+      if (publicKeyN.compareTo(privateKeyN) === 0 && publicKeyE.compareTo(privateKeyE) === 0) {
+        return;
+      }
+      throw new Error("Certificate doesn't match the private key");
+    }
+    throw new Error("This key type is not supported");
+    /* todo: edwards25519
+    const derivedPublicKey = forge.pki.ed25519.publicKeyFromPrivateKey({ privateKey: privateKey as forge.pki.ed25519.BinaryBuffer });
+    Buffer.from(derivedPublicKey).compare(Buffer.from(certificate.publicKey as forge.pki.ed25519.NativeBuffer)) === 0;
+    */
   }
 
   private static isEmailCertificate = (certificate: forge.pki.Certificate) => {

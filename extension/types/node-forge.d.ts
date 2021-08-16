@@ -34,6 +34,7 @@ declare module "node-forge" {
             s: number;
             toString(): string;
             bitLength(): number;
+            compareTo(a: BigInteger): number;
         }
     }
 
