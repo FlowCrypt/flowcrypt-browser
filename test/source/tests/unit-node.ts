@@ -550,6 +550,23 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       t.pass();
     });
 
+    ava.default('[unit][KeyUtil.parse] S/MIME key parsing of unprotected PKCS#8 private key and mismatching certificate', async t => {
+      await t.throwsAsync(() => KeyUtil.parse(`${testConstants.smimeUnencryptedKey}
+${testConstants.smimeCert}`), {
+        instanceOf: Error, message: `Certificate doesn't match the private key`
+      });
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.decrypt] S/MIME key decryption of mismatching private key', async t => {
+      const encryptedKey = await KeyUtil.parse(`${testConstants.smimeEncryptedKey}
+${testConstants.smimeCert}`);
+      await t.throwsAsync(() => KeyUtil.decrypt(encryptedKey, 'AHbxhwquX5pc'), {
+        instanceOf: Error, message: `Certificate doesn't match the private key`
+      });
+      t.pass();
+    });
+
     ava.default('[unit][KeyUtil.readMany] Parsing unarmored S/MIME certificate', async t => {
       const pem = forge.pem.decode(testConstants.smimeCert)[0];
       const { keys, errs } = await KeyUtil.readMany(Buf.fromRawBytesStr(pem.body));
