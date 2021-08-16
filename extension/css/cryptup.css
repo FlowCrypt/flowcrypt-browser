@@ -2870,7 +2870,7 @@ body#settings div.webmail_notifications div.webmail_notification a:hover { text-
 
   .swal2-popup {
     width: auto !important;
-    grid-template-columns: auto auto;
+    grid-template-columns: auto auto !important;
     align-items: center;
     font-size: 0.75em !important;
     padding: 2px 20px !important;
@@ -2879,6 +2879,7 @@ body#settings div.webmail_notifications div.webmail_notification a:hover { text-
   .swal2-title,
   .swal2-html-container,
   .swal2-actions {
+    margin: 0 !important;
     padding: 0 !important;
   }
 
