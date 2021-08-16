@@ -21,6 +21,7 @@ import { Xss } from '../../../../js/common/platform/xss.js';
 import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
 import { FcUuidAuth } from '../../../../js/common/api/account-servers/flowcrypt-com-api.js';
 import { SmimeKey } from '../../../../js/common/core/crypto/smime/smime-key.js';
+import { PgpHash } from '../../../../js/common/core/crypto/pgp/pgp-hash.js';
 
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
@@ -39,6 +40,34 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   private prepareAndUploadPwdEncryptedMsg = async (newMsg: NewMsgData): Promise<string> => {
     // PGP/MIME + included attachments (encrypted for password only)
     const authInfo = await AcctStore.authInfo(this.acctEmail);
+    if (!newMsg.pwd) {
+      throw new Error('password unexpectedly missing');
+    }
+    /**
+     * There are two mechanisms to send password protected messages: flowcrypt.com/api and FES
+     *  - flowcrypt.com/api is older API, shared instance used by non-enterprise customers
+     *  - FES is a more recent API, a dedicated instance that an enterprise customer may run
+     * The flowcrypt.com mechanism expects the password to be hashed 100k times, then used
+     * The FES mechanism expects the password to be given to OpenPGP.js verbatim
+     *
+     * Reason: OpenPGP spec already has a mechanism for iterated hashing of passwords,
+     *   there is no need to invent our own:
+     *   https://datatracker.ietf.org/doc/html/rfc4880#section-3.7.1.3
+     *
+     * The advantage is that it's dynamic - the sender can choose the rounds of iterations, and
+     *   the recipient will follow transparently. For now, we'll be following the default set
+     *   in OpenPGP.js, and later we can make a deliberate choice on how many iterations to use
+     *   without having to affect recipient code.
+     *
+     * Another thing to note is that eventually, flowcrypt.com/api web portal functionality will
+     *   be deprecated, and we'll instead run a "shared tenant FES instance" to fill that role.
+     *   Nothing will change for users, but our code on the client will be more streamlined.
+     *   Therefore, eventually, this `if` branch with the line below will be removed once both
+     *   consumers and enterprises use API with the same structure.
+     */
+    if (! await this.view.acctServer.isFesUsed()) { // if flowcrypt.com/api is used
+      newMsg.pwd = await PgpHash.challengeAnswer(newMsg.pwd); // then hash the password to preserve compatibility
+    }
     const { bodyWithReplyToken, replyToken } = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(authInfo, newMsg);
     const pgpMimeWithAttachments = await Mime.encode(bodyWithReplyToken, { Subject: newMsg.subject }, await this.view.attachmentsModule.attachment.collectAttachments());
     const { data: pwdEncryptedWithAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAttachments), newMsg.pwd, []); // encrypted only for pwd, not signed

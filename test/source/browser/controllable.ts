@@ -3,7 +3,7 @@
 import { AvaContext, newTimeoutPromise } from '../tests/tooling';
 import { ConsoleMessage, Dialog, ElementHandle, Frame, KeyInput, Page } from 'puppeteer';
 import { PageRecipe } from '../tests/page-recipe/abstract-page-recipe';
-import { TIMEOUT_DESTROY_UNEXPECTED_ALERT, TIMEOUT_ELEMENT_APPEAR, TIMEOUT_ELEMENT_GONE, TIMEOUT_PAGE_LOAD, TIMEOUT_TEST_STATE_SATISFY } from '.';
+import { TIMEOUT_DESTROY_UNEXPECTED_ALERT, TIMEOUT_ELEMENT_APPEAR, TIMEOUT_ELEMENT_GONE, TIMEOUT_PAGE_LOAD, TIMEOUT_TEST_STATE_SATISFY, TIMEOUT_FOCUS } from '.';
 import { TestUrls } from './test-urls';
 import { Util } from '../util';
 import { expect } from 'chai';
@@ -100,6 +100,20 @@ abstract class ControllableBase {
     throw Error(`this.wait_till_gone: some of "${selectors.join(',')}" still present after timeout:${timeout}`);
   }
 
+  public waitTillFocusIsIn = async (selector: string, { timeout = TIMEOUT_FOCUS }: { timeout?: number } = {}) => {
+    const element = await this.waitAny(selector);
+    timeout = Math.max(timeout, 1);
+    while (timeout-- > 0) {
+      const isElementFocused = await this.target.evaluate((element) => element === document.activeElement, element);
+      if (isElementFocused) {
+        return;
+      }
+      await Util.sleep(0.05);
+    }
+    throw Error(`waiting failed: Elements did not receive the focus: ${selector}`);
+  }
+
+
   public notPresent = async (selector: string | string[]) => {
     return await this.waitTillGone(selector, { timeout: 0 });
   }
@@ -138,6 +152,14 @@ abstract class ControllableBase {
       throw e;
     }
     this.log(`click:5:${selector}`);
+  }
+
+  public clickIfPresent = async (selector: string): Promise<boolean> => {
+    if (await this.isElementPresent(selector)) {
+      await this.click(selector);
+      return true;
+    }
+    return false;
   }
 
   public type = async (selector: string, text: string, letterByLetter = false) => {
