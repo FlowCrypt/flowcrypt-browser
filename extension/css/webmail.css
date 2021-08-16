@@ -293,7 +293,9 @@ div.new_message[data-order="3"] {
 div.new_message.full_window {
   width: 100%;
   height: 100%;
+  left: unset;
   right: unset;
+  margin: 0;
 }
 
 div.new_message iframe {
