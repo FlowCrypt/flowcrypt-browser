@@ -72,7 +72,7 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private asBackupFile = (armoredKey: string) => {
-    return new Attachment({ name: `flowcrypt-backup-${this.view.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'application/pgp-keys', data: Buf.fromUtfStr(armoredKey) });
+    return new Attachment({ name: `flowcrypt-backup-${this.view.acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.asc`, type: 'application/pgp-keys', data: Buf.fromUtfStr(armoredKey) });
   }
 
   private backupOnEmailProviderAndUpdateUi = async (primaryKi: KeyInfo) => {
