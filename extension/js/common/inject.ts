@@ -47,7 +47,7 @@ export class Injector {
       body: 'body',
       compose_button_container: this.container.composeBtnSel[this.webmailName],
       compose_button: '#flowcrypt_new_message_button',
-      compose_window: 'div.new_message',
+      secure_compose_window: '.secure_compose_window',
     });
   }
 
@@ -57,10 +57,10 @@ export class Injector {
   }
 
   public openComposeWin = (draftId?: string): boolean => {
-    const numberOfAlreadyOpenedComposeWindows = this.S.now('compose_window').length;
-    if (numberOfAlreadyOpenedComposeWindows < 3) {
+    const alreadyOpenedCount = this.S.now('secure_compose_window').length;
+    if (alreadyOpenedCount < 3) {
       const composeWin = $(this.factory.embeddedCompose(draftId));
-      composeWin.attr('data-order', numberOfAlreadyOpenedComposeWindows + 1);
+      composeWin.attr('data-order', alreadyOpenedCount + 1);
       this.S.cached('body').append(composeWin); // xss-safe-factory
       return true;
     } else {

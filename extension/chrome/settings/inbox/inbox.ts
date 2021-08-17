@@ -120,26 +120,26 @@ export class InboxView extends View {
   private addBrowserMsgListeners = () => {
     BrowserMsg.addListener('add_end_session_btn', () => this.injector.insertEndSessionBtn(this.acctEmail));
     BrowserMsg.addListener('set_active_window', async ({ frameId }: Bm.ComposeWindow) => {
-      if ($(`div.new_message.active[data-frame-id="${frameId}"]`).length) {
+      if ($(`.secure_compose_window.active[data-frame-id="${frameId}"]`).length) {
         return; // already active
       }
-      $(`div.new_message`).removeClass('previous-active');
-      $(`div.new_message.active`).addClass('previous-active').removeClass('active');
-      $(`div.new_message[data-frame-id="${frameId}"]`).addClass('active');
+      $(`.secure_compose_window`).removeClass('previous-active');
+      $(`.secure_compose_window.active`).addClass('previous-active').removeClass('active');
+      $(`.secure_compose_window[data-frame-id="${frameId}"]`).addClass('active');
     });
     BrowserMsg.addListener('close_new_message', async ({ frameId }: Bm.ComposeWindow) => {
-      $(`div.new_message[data-frame-id="${frameId}"]`).remove();
-      if ($('div.new_message.previous-active:not(.minimized)').length) {
-        BrowserMsg.send.focusPreviousActiveWindow(this.tabId, { frameId: $('div.new_message.previous-active:not(.minimized)').data('frame-id') as string });
-      } else if ($('div.new_message:not(.minimized)').length) {
-        BrowserMsg.send.focusPreviousActiveWindow(this.tabId, { frameId: $('div.new_message:not(.minimized)').data('frame-id') as string });
+      $(`.secure_compose_window[data-frame-id="${frameId}"]`).remove();
+      if ($('.secure_compose_window.previous-active:not(.minimized)').length) {
+        BrowserMsg.send.focusPreviousActiveWindow(this.tabId, { frameId: $('.secure_compose_window.previous-active:not(.minimized)').data('frame-id') as string });
+      } else if ($('.secure_compose_window:not(.minimized)').length) {
+        BrowserMsg.send.focusPreviousActiveWindow(this.tabId, { frameId: $('.secure_compose_window:not(.minimized)').data('frame-id') as string });
       }
       // reposition the rest of the compose windows
-      if (!$(`div.new_message[data-order="1"]`).length) {
-        $(`div.new_message[data-order="2"]`).attr('data-order', 1);
+      if (!$(`.secure_compose_window[data-order="1"]`).length) {
+        $(`.secure_compose_window[data-order="2"]`).attr('data-order', 1);
       }
-      if (!$(`div.new_message[data-order="2"]`).length) {
-        $(`div.new_message[data-order="3"]`).attr('data-order', 2);
+      if (!$(`.secure_compose_window[data-order="2"]`).length) {
+        $(`.secure_compose_window[data-order="3"]`).attr('data-order', 2);
       }
     });
     BrowserMsg.addListener('passphrase_dialog', async ({ longids, type, initiatorFrameId }: Bm.PassphraseDialog) => {

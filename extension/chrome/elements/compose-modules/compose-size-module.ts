@@ -16,7 +16,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
   private FULL_WINDOW_CLASS = 'full_window';
   private lastReplyBoxTableHeight = 0;
   private refBodyHeight?: number;
-  private currentWindowSelector = `div#new_message[data-frame-id="${this.view.frameId}"]`
+  private currentWindowSelector = `.secure_compose_window[data-frame-id="${this.view.frameId}"]`
 
   public setHandlers = () => {
     $('body').click(event => {

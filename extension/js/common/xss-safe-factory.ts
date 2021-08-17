@@ -189,7 +189,6 @@ export class XssSafeFactory {
   public embeddedCompose = (draftId?: string) => {
     const srcComposeMsg = this.srcComposeMsg(draftId);
     return Ui.e('div', {
-      id: 'new_message',
       class: 'new_message',
       html: this.iframe(srcComposeMsg, [], { scrolling: 'no' }),
       'data-frame-id': String(Url.parse(['frameId'], srcComposeMsg).frameId),

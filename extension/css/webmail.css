@@ -116,7 +116,7 @@ body.cryptup_outlook div.webmail_notifications div.webmail_notification { margin
 }
 
 /* buttons body.cryptup_inbox */
-body.cryptup_inbox div.new_message_button {
+body.cryptup_inbox div.new_secure_compose_window_button {
   position: relative;
   width: 40px;
   box-sizing: content-box;
@@ -127,7 +127,7 @@ body.cryptup_inbox div.new_message_button {
   background: white;
 }
 
-body.cryptup_inbox div.new_message_button > img {
+body.cryptup_inbox div.new_secure_compose_window_button > img {
   width: 28px;
   padding: 6px;
   padding-top: 10px;
@@ -165,9 +165,9 @@ body.cryptup_gmail div.reply_message_button > img {
   top: 3px;
   margin: 0 auto;
 }
-body.cryptup_gmail_standard div.new_message_button { background: #31a217; }
+body.cryptup_gmail_standard div.new_secure_compose_window_button { background: #31a217; }
 body.cryptup_gmail_standard .z0 .T-I { min-width: 105px; }
-body.cryptup_gmail_new div.new_message_button:hover { background-color: #fafafb; }
+body.cryptup_gmail_new div.new_secure_compose_window_button:hover { background-color: #fafafb; }
 
 body.cryptup_gmail div.ade.appended span.cryptup_convo_button > img {
   border: 2px solid #31a217;
@@ -234,7 +234,7 @@ body.cryptup_outlook .cryptup_compose_button_container {
   width: 30px;
 }
 
-body.cryptup_outlook .cryptup_compose_button_container .new_message_button {
+body.cryptup_outlook .cryptup_compose_button_container .new_secure_compose_window_button {
   display: inline-block;
   position: absolute;
   left: 12px;
@@ -247,7 +247,7 @@ body.cryptup_outlook .cryptup_compose_button_container .new_message_button {
 body.cryptup_outlook ._fce_i { padding: 0 6px 0 6px; } /* slightly less horizontal padding on other outlook buttons in the same menu so that it doesn't misbehave */
 
 /* elements */
-div.new_message {
+.secure_compose_window {
   position: absolute;
   bottom: 0;
   width: 540px;
@@ -258,15 +258,15 @@ div.new_message {
   box-shadow: rgba(0, 0, 0, 0.3) 0 2px 8px;
 }
 
-div.new_message.previous-active {
+.secure_compose_window.previous-active {
   z-index: 7;
 }
 
-div.new_message.active {
+.secure_compose_window.active {
   z-index: 8;
 }
 
-div.new_message:not(.active)::after {
+.secure_compose_window:not(.active)::after {
   content: '';
   position: absolute;
   top: 0;
@@ -277,20 +277,20 @@ div.new_message:not(.active)::after {
   pointer-events: none;
 }
 
-div.new_message[data-order="1"] {
+.secure_compose_window[data-order="1"] {
   right: 30px;
 }
 
-div.new_message[data-order="2"] {
+.secure_compose_window[data-order="2"] {
   left: 50%;
   margin-left: -270px;
 }
 
-div.new_message[data-order="3"] {
+.secure_compose_window[data-order="3"] {
   left: 30px;
 }
 
-div.new_message.full_window {
+.secure_compose_window.full_window {
   width: 100%;
   height: 100%;
   left: unset;
@@ -298,7 +298,7 @@ div.new_message.full_window {
   margin: 0;
 }
 
-div.new_message iframe {
+.secure_compose_window iframe {
   width: 100%;
   height: 605px;
   border: none;
@@ -306,13 +306,11 @@ div.new_message iframe {
   margin: 0;
   overflow: hidden;
 }
-div.new_message.full_window iframe { height: 100%; }
-
-body.cryptup_inbox div.new_message { right: 100px; }
+.secure_compose_window.full_window iframe { height: 100%; }
 
 @media screen and (max-height: 600px) {
-  div.new_message,
-  div.new_message iframe { height: 450px; }
+  .secure_compose_window,
+  .secure_compose_window iframe { height: 450px; }
 }
 
 div.evaluated iframe.embedded {
