@@ -75,7 +75,7 @@ export class Injector {
     } else if (this.shouldInject()) {
       if (this.S.now('compose_button').length === 0) {
         const container = this.S.now('compose_button_container').first().prepend(this.factory.btnCompose(this.webmailName)); // xss-safe-factory
-        container.find(this.S.sel('compose_button')).click(Ui.event.handle(() => { this.openComposeWin(); }));
+        container.find(this.S.sel('compose_button')).click(Ui.event.prevent('double', () => { this.openComposeWin(); }));
       }
     }
   }

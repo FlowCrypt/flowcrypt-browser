@@ -139,15 +139,9 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
     });
     this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
     if (this.composeWindowIsMinimized) {
-      BrowserMsg.send.addClass(this.view.parentTabId, {
-        selector: this.currentWindowSelector,
-        class: this.MINIMIZED_CLASS,
-      });
+      BrowserMsg.send.addClass(this.view.parentTabId, { selector: this.currentWindowSelector, class: this.MINIMIZED_CLASS });
     } else {
-      BrowserMsg.send.removeClass(this.view.parentTabId, {
-        selector: this.currentWindowSelector,
-        class: this.MINIMIZED_CLASS,
-      });
+      BrowserMsg.send.removeClass(this.view.parentTabId, { selector: this.currentWindowSelector, class: this.MINIMIZED_CLASS });
     }
   }
 
