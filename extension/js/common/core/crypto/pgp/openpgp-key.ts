@@ -20,6 +20,10 @@ export class OpenPGPKey {
 
   public static parse = async (text: string): Promise<Key> => {
     // TODO: Should we throw if more keys are in the armor?
+    const keyLength = (await OpenPGPKey.parseMany(text)).length;
+    if (keyLength > 1) {
+      throw new Error(`There are ${keyLength} keys found, expecting 1 OpenPGP key`);
+    }
     return (await OpenPGPKey.parseMany(text))[0];
   }
 

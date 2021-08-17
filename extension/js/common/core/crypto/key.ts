@@ -125,6 +125,10 @@ export class KeyUtil {
   }
 
   public static parse = async (text: string): Promise<Key> => {
+    const keyLength = (await KeyUtil.parseMany(text)).length;
+    if (keyLength > 1) {
+      throw new Error(`There are ${keyLength} keys found, expecting 1 x509 key`);
+    }
     return (await KeyUtil.parseMany(text))[0];
   }
 
