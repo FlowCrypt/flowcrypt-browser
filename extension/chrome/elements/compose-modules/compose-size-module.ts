@@ -133,7 +133,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       this.addOrRemoveFullScreenStyles(this.composeWindowIsMinimized);
     }
     BrowserMsg.send.setCss(this.view.parentTabId, {
-      selector: this.currentWindowSelector,
+      selector: `iframe#${this.view.frameId}, ${this.currentWindowSelector}`,
       css: { height: this.composeWindowIsMinimized ? '' : this.view.S.cached('header').css('height') },
     });
     this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
