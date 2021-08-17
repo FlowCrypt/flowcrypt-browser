@@ -246,7 +246,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         await this.view.recipientsModule.parseRenderRecipients(this.view.S.cached('input_to')); // this will force firefox to render them on load
       }
     } else {
-      $('.close_compose_window').click(this.view.setHandler(() => this.actionCloseHandler(), this.view.errModule.handle(`close message`)));
+      $('.close_compose_window').click(this.view.setHandler(() => this.actionCloseHandler(), this.view.errModule.handle(`close compose window`)));
       this.view.S.cached('title').click(() => {
         if (this.view.sizeModule.composeWindowIsMinimized) {
           $('.minimize_compose_window').click();
