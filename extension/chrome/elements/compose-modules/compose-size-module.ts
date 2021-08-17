@@ -12,6 +12,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
   public composeWindowIsMinimized = false;
 
   private composeWindowIsMaximized = false;
+  private MINIMIZED_CLASS = 'minimized';
   private FULL_WINDOW_CLASS = 'full_window';
   private lastReplyBoxTableHeight = 0;
   private refBodyHeight?: number;
@@ -137,6 +138,17 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       css: { height: this.composeWindowIsMinimized ? '' : this.view.S.cached('header').css('height') },
     });
     this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
+    if (this.composeWindowIsMinimized) {
+      BrowserMsg.send.addClass(this.view.parentTabId, {
+        selector: this.currentWindowSelector,
+        class: this.MINIMIZED_CLASS,
+      });
+    } else {
+      BrowserMsg.send.removeClass(this.view.parentTabId, {
+        selector: this.currentWindowSelector,
+        class: this.MINIMIZED_CLASS,
+      });
+    }
   }
 
   private toggleFullScreen = async () => {
