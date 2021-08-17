@@ -258,7 +258,7 @@ body.cryptup_outlook ._fce_i { padding: 0 6px 0 6px; } /* slightly less horizont
   box-shadow: rgba(0, 0, 0, 0.3) 0 2px 8px;
 }
 
-.secure_compose_window.previous-active {
+.secure_compose_window.previous_active {
   z-index: 7;
 }
 

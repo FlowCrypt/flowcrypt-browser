@@ -109,14 +109,14 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
 
   const browserMsgListen = (acctEmail: string, tabId: string, inject: Injector, factory: XssSafeFactory, notifications: Notifications) => {
     BrowserMsg.addListener('set_active_window', async ({ frameId }: Bm.ComposeWindow) => {
-      $(`.secure_compose_window`).removeClass('previous-active');
-      $(`.secure_compose_window.active`).addClass('previous-active').removeClass('active');
+      $(`.secure_compose_window`).removeClass('previous_active');
+      $(`.secure_compose_window.active`).addClass('previous_active').removeClass('active');
       $(`.secure_compose_window[data-frame-id="${frameId}"]`).addClass('active');
     });
     BrowserMsg.addListener('close_compose_window', async ({ frameId }: Bm.ComposeWindow) => {
       $(`.secure_compose_window[data-frame-id="${frameId}"]`).remove();
-      if ($('.secure_compose_window.previous-active:not(.minimized)').length) {
-        BrowserMsg.send.focusPreviousActiveWindow(tabId, { frameId: $('.secure_compose_window.previous-active:not(.minimized)').data('frame-id') as string });
+      if ($('.secure_compose_window.previous_active:not(.minimized)').length) {
+        BrowserMsg.send.focusPreviousActiveWindow(tabId, { frameId: $('.secure_compose_window.previous_active:not(.minimized)').data('frame-id') as string });
       } else if ($('.secure_compose_window:not(.minimized)').length) {
         BrowserMsg.send.focusPreviousActiveWindow(tabId, { frameId: $('.secure_compose_window:not(.minimized)').data('frame-id') as string });
       }
