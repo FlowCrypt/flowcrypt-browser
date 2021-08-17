@@ -25,7 +25,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       }
     });
     if (!this.view.isReplyBox) {
-      $('.minimize_new_message').click(this.view.setHandler(() => this.minimizeComposerWindow()));
+      $('.minimize_compose_window').click(this.view.setHandler(() => this.minimizeComposerWindow()));
       $('.popout').click(this.view.setHandler(() => this.popoutClickHandler()));
     }
   }

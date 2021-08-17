@@ -39,7 +39,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       const initialComposeFrameHeight = await inboxPage.getOuterHeight('iframe');
       await composeFrame.waitAll('#section_header');
       const composeFrameHeaderHeight = await composeFrame.getOuterHeight('#section_header');
-      await composeFrame.waitAndClick('.minimize_new_message');
+      await composeFrame.waitAndClick('.minimize_compose_window');
       expect(await inboxPage.getOuterHeight('iframe')).to.eq(composeFrameHeaderHeight, 'compose box height failed to collapse');
       // restore compose frame by clicking the header
       await composeFrame.waitAndClick('@header-title');
@@ -788,9 +788,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composeFrame.waitAndClick('.popout', { sleepWhenDone: 1 });
       expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetWidth'))).to.equal(initialWidth, 'width back to initial');
       expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.equal(initialHeight, 'height back to initial');
-      await composeFrame.waitAndClick('.minimize_new_message', { sleepWhenDone: 1 });
+      await composeFrame.waitAndClick('.minimize_compose_window', { sleepWhenDone: 1 });
       expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.be.lessThan(initialHeight, 'minimized lower than initial');
-      await composeFrame.waitAndClick('.minimize_new_message', { sleepWhenDone: 1 });
+      await composeFrame.waitAndClick('.minimize_compose_window', { sleepWhenDone: 1 });
       expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.equal(initialHeight, 'back to initial after un-minimizing');
     }));
 

@@ -46,7 +46,7 @@ export class Injector {
     this.S = Ui.buildJquerySels({ // these are selectors that are not specific to any webmail variant
       body: 'body',
       compose_button_container: this.container.composeBtnSel[this.webmailName],
-      compose_button: '#flowcrypt_new_message_button',
+      compose_button: '#new_secure_compose_window_button',
       secure_compose_window: '.secure_compose_window',
     });
   }

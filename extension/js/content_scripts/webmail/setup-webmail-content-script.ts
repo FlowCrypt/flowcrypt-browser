@@ -108,13 +108,12 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
   };
 
   const browserMsgListen = (acctEmail: string, tabId: string, inject: Injector, factory: XssSafeFactory, notifications: Notifications) => {
-    BrowserMsg.addListener('open_new_message', async () => { inject.openComposeWin(); });
     BrowserMsg.addListener('set_active_window', async ({ frameId }: Bm.ComposeWindow) => {
       $(`.secure_compose_window`).removeClass('previous-active');
       $(`.secure_compose_window.active`).addClass('previous-active').removeClass('active');
       $(`.secure_compose_window[data-frame-id="${frameId}"]`).addClass('active');
     });
-    BrowserMsg.addListener('close_new_message', async ({ frameId }: Bm.ComposeWindow) => {
+    BrowserMsg.addListener('close_compose_window', async ({ frameId }: Bm.ComposeWindow) => {
       $(`.secure_compose_window[data-frame-id="${frameId}"]`).remove();
       if ($('.secure_compose_window.previous-active:not(.minimized)').length) {
         BrowserMsg.send.focusPreviousActiveWindow(tabId, { frameId: $('.secure_compose_window.previous-active:not(.minimized)').data('frame-id') as string });
