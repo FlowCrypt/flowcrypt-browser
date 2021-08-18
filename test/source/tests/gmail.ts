@@ -51,13 +51,13 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     };
 
     const pageHasSecureDraft = async (t: AvaContext, browser: BrowserHandle, url: string, expectedContent?: string) => {
-      const replyBox = await browser.newPage(t, url);
+      const secureDraft = await browser.newPage(t, url);
       if (expectedContent) {
-        await replyBox.waitForContent('@input-body', expectedContent);
+        await secureDraft.waitForContent('@input-body', expectedContent);
       } else {
-        await replyBox.waitAll('@input-body');
+        await secureDraft.waitAll('@input-body');
       }
-      return replyBox;
+      return secureDraft;
     };
 
     const pageDoesNotHaveSecureReplyContainer = async (gmailPage: ControllablePage) => {
@@ -271,8 +271,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.default('mail.google.com - multiple compose windows, saving/opening compose draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/');
-      await GmailPageRecipe.emptyDrafts(gmailPage);
-      await GmailPageRecipe.emptyTrash(gmailPage);
       // create compose draft
       await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
       await createSecureDraft(t, browser, gmailPage, 'compose draft');
@@ -287,7 +285,12 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       // veryfy that there are two compose windows: new compose window and secure draft
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
       expect(urls.length).to.equal(2);
-      await pageHasSecureDraft(t, browser, urls[1], 'compose draft');
+      const composeDraft = await pageHasSecureDraft(t, browser, urls[1], 'compose draft');
+      await composeDraft.close();
+      // try to open 4 compose windows at the same time
+      await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
+      await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
+      await gmailPage.waitForContent('.ui-toast-title', 'Only 3 FlowCrypt windows can be opened at a time');
     }));
 
     ava.default('mail.google.com - plain reply to encrypted and signed messages', testWithBrowser('ci.tests.gmail', async (t, browser) => {
