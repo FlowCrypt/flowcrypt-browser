@@ -1,7 +1,7 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
 /* Secure Compose button */
-#new_secure_compose_window_button {
+#flowcrypt_secure_compose_button {
   display: inline-flex;
   align-items: center;
   width: auto;
@@ -27,7 +27,7 @@
   outline: 0;
 }
 
-#new_secure_compose_window_button::before {
+#flowcrypt_secure_compose_button::before {
   display: block;
   content: '';
   background-size: 24px;
@@ -38,12 +38,12 @@
   background-repeat: no-repeat;
 }
 
-#new_secure_compose_window_button:hover,
-#new_secure_compose_window_button:focus {
+#flowcrypt_secure_compose_button:hover,
+#flowcrypt_secure_compose_button:focus {
   box-shadow: 0 5px 10px 2px rgb(60 64 67 / 20%);
 }
 
-.bhZ:not(.bym) #new_secure_compose_window_button {
+.bhZ:not(.bym) #flowcrypt_secure_compose_button {
   width: 56px;
   height: 56px;
   border-radius: 28px;
@@ -51,13 +51,13 @@
   padding: 0;
 }
 
-.anZ.bhZ:not(.bym) #new_secure_compose_window_button {
+.anZ.bhZ:not(.bym) #flowcrypt_secure_compose_button {
   width: 40px;
   height: 40px;
   border-radius: 20px;
 }
 
-.anZ.bhZ:not(.bym) #new_secure_compose_window_button::before {
+.anZ.bhZ:not(.bym) #flowcrypt_secure_compose_button::before {
   min-width: 42px;
 }
 
