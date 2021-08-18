@@ -43,19 +43,15 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     const createSecureDraft = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, content: string) => {
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
       expect(urls.length).to.equal(1);
-      const replyBox = await browser.newPage(t, urls[0]);
-      await replyBox.waitTillFocusIsIn('@input-body');
+      const composeBox = await browser.newPage(t, urls[0]);
       await Util.sleep(3); // the draft isn't being saved if start typing without this delay
-      await replyBox.page.keyboard.type(content);
-      await replyBox.verifyContentIsPresentContinuously('@send-btn-note', 'Saved');
-      await replyBox.close();
+      await composeBox.type('@input-body', content);
+      await composeBox.verifyContentIsPresentContinuously('@send-btn-note', 'Saved');
+      await composeBox.close();
     };
 
-    const pageHasSecureDraft = async (t: AvaContext, browser: BrowserHandle, gmailPage: ControllablePage, expectedContent?: string) => {
-      await gmailPage.waitAll('.reply_message');
-      const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
-      expect(urls.length).to.equal(1);
-      const replyBox = await browser.newPage(t, urls[0]);
+    const pageHasSecureDraft = async (t: AvaContext, browser: BrowserHandle, url: string, expectedContent?: string) => {
+      const replyBox = await browser.newPage(t, url);
       if (expectedContent) {
         await replyBox.waitForContent('@input-body', expectedContent);
       } else {
@@ -258,9 +254,12 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await GmailPageRecipe.emptyTrash(gmailPage);
       await gotoGmailPage(gmailPage, '/FMfcgzGkZZqZQpLXZnzPRFKVrwKNnqrN'); // to go encrypted convo
       await gmailPage.waitAndClick('@secure-reply-button');
-      await createSecureDraft(t, browser, gmailPage, 'hey there');
+      await createSecureDraft(t, browser, gmailPage, 'reply draft');
       await gmailPage.page.reload();
-      const replyBox = await pageHasSecureDraft(t, browser, gmailPage, 'hey there');
+      await gmailPage.waitAll('.reply_message');
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
+      expect(urls.length).to.equal(1);
+      const replyBox = await pageHasSecureDraft(t, browser, urls[0], 'reply draft');
       await replyBox.waitAndClick('@action-send');
       await replyBox.waitTillGone('@action-send');
       await replyBox.close();
@@ -268,6 +267,27 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitAndClick('.h7:last-child .ajz', { delay: 1 }); // the small triangle which toggles the message details
       await gmailPage.waitForContent('.h7:last-child .ajA', 'Re: [ci.test] encrypted email for reply render'); // make sure that the subject of the sent draft is corrent
       await GmailPageRecipe.deleteLastReply(gmailPage);
+    }));
+
+    ava.default('mail.google.com - multiple compose windows, saving/opening compose draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/');
+      await GmailPageRecipe.emptyDrafts(gmailPage);
+      await GmailPageRecipe.emptyTrash(gmailPage);
+      // create compose draft
+      await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
+      await createSecureDraft(t, browser, gmailPage, 'compose draft');
+      await gmailPage.page.reload();
+      // open new compose window and saved draft
+      await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
+      await gmailPage.waitAndFocus('body');
+      await gmailPage.waitAndClick('[data-tooltip="Drafts"]');
+      await Util.sleep(1);
+      await gmailPage.press('Enter');
+      await gmailPage.waitAndClick('[class^="open_draft_"]');
+      // veryfy that there are two compose windows: new compose window and secure draft
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
+      expect(urls.length).to.equal(2);
+      await pageHasSecureDraft(t, browser, urls[1], 'compose draft');
     }));
 
     ava.default('mail.google.com - plain reply to encrypted and signed messages', testWithBrowser('ci.tests.gmail', async (t, browser) => {
