@@ -182,7 +182,7 @@ export class ComposeView extends View {
       }
     } else { // compose
       if (!this.draftId) {
-        this.draftId = this.draftModule.localNewMessageDraftId;
+        this.draftId = this.draftModule.localDraftId;
       }
     }
     BrowserMsg.listen(this.tabId!);
@@ -193,15 +193,11 @@ export class ComposeView extends View {
   public setHandlers = () => {
     BrowserMsg.addListener('focus_previous_active_window', async ({ frameId }: Bm.ComposeWindow) => {
       if (this.frameId === frameId) {
-        Catch.setHandledTimeout(() => {
-          this.S.cached('input_to').focus();
-        }, 0);
+        this.S.cached('input_to').focus();
       }
     });
     BrowserMsg.listen(this.parentTabId);
-    const setActiveWindow = this.setHandler(async () => {
-      BrowserMsg.send.setActiveWindow(this.parentTabId, { frameId: this.frameId });
-    });
+    const setActiveWindow = this.setHandler(async () => { BrowserMsg.send.setActiveWindow(this.parentTabId, { frameId: this.frameId }); });
     this.S.cached('body').on('focusin', setActiveWindow);
     this.S.cached('body').on('click', setActiveWindow);
     this.S.cached('icon_help').click(this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`)));

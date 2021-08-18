@@ -151,7 +151,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     if (this.view.isReplyBox) {
       BrowserMsg.send.closeReplyMessage(this.view.parentTabId, { frameId: this.view.frameId });
     } else {
-      BrowserMsg.send.closeNewMessage(this.view.parentTabId, { frameId: this.view.frameId });
+      BrowserMsg.send.closeComposeWindow(this.view.parentTabId, { frameId: this.view.frameId });
     }
   }
 

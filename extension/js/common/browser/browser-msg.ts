@@ -165,7 +165,7 @@ export class BrowserMsg {
     closePage: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'close_page', {}),
     setActiveWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'set_active_window', bm),
     focusPreviousActiveWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'focus_previous_active_window', bm),
-    closeNewMessage: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'close_compose_window', bm),
+    closeComposeWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'close_compose_window', bm),
     focusBody: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'focus_body', {}),
     focusFrame: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'focus_frame', bm),
     closeReplyMessage: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'close_reply_message', bm),

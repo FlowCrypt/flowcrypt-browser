@@ -109,6 +109,9 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
 
   const browserMsgListen = (acctEmail: string, tabId: string, inject: Injector, factory: XssSafeFactory, notifications: Notifications) => {
     BrowserMsg.addListener('set_active_window', async ({ frameId }: Bm.ComposeWindow) => {
+      if ($(`.secure_compose_window.active[data-frame-id="${frameId}"]`).length) {
+        return; // already active
+      }
       $(`.secure_compose_window`).removeClass('previous_active');
       $(`.secure_compose_window.active`).addClass('previous_active').removeClass('active');
       $(`.secure_compose_window[data-frame-id="${frameId}"]`).addClass('active');
