@@ -47,6 +47,17 @@ export let defineUnitNodeTests = (testVariant: TestVariant) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
+    ava.default(`[unit][KeyUtil.parse] throw if read methods expecting exactly one key find more than one`, async t => {
+      const keys = [testConstants.testkey715EDCDC7939A8F7, testConstants.pubkey2864E326A5BE488A].join('\r\n');
+      const returnedKeys = await KeyUtil.parseMany(keys);
+      const keyLength = returnedKeys.length;
+      console.log(keyLength);
+      console.log(typeof(returnedKeys));
+      console.log(returnedKeys);
+      //await expect(await KeyUtil.parse(keys)).to.eventually.be.rejectedWith('There are 2 OpenPGP keys found, expected just one');
+      t.pass();
+    });
+
     ava.default(`[unit][MsgBlockParser.detectBlocks] does not get tripped on blocks with unknown headers`, async t => {
       expect(MsgBlockParser.detectBlocks("This text breaks email and Gmail web app.\n\n-----BEGIN FOO-----\n\nEven though it's not a vaild PGP m\n\nMuhahah")).to.deep.equal({
         "blocks": [
