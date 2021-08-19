@@ -221,16 +221,22 @@ export class SmimeKey {
   }
 
   private static saveArmored = (key: Key, certificate: forge.pki.Certificate | string, privateKey: forge.pki.PrivateKey | string | undefined) => {
-    const armored = [];
+    const armored: string[] = [];
     if (privateKey) {
-      const armoredPrivateKey = (typeof privateKey === 'string') ? privateKey : forge.pki.privateKeyToPem(privateKey);
+      let armoredPrivateKey = (typeof privateKey === 'string') ? privateKey : forge.pki.privateKeyToPem(privateKey);
+      if (armoredPrivateKey[armoredPrivateKey.length - 1] != '\n') {
+        armoredPrivateKey += '\r\n';
+      }
       armored.push(armoredPrivateKey);
       (key as unknown as { privateKeyArmored: string }).privateKeyArmored = armoredPrivateKey;
     }
-    const armoredCertificate = (typeof certificate === 'string') ? certificate : forge.pki.certificateToPem(certificate);
+    let armoredCertificate = (typeof certificate === 'string') ? certificate : forge.pki.certificateToPem(certificate);
+    if (armoredCertificate[armoredCertificate.length - 1] != '\n') {
+      armoredCertificate += '\r\n';
+    }
     armored.push(armoredCertificate);
     (key as unknown as { certificateArmored: string }).certificateArmored = armoredCertificate;
-    (key as unknown as { rawArmored: string }).rawArmored = armored.join(''); // todo: crlf?
+    (key as unknown as { rawArmored: string }).rawArmored = armored.join('');
   }
 
   private static isKeyWeak = (certificate: forge.pki.Certificate) => {
@@ -251,9 +257,9 @@ export class SmimeKey {
       if (publicKeyN.compareTo(privateKeyN) === 0 && publicKeyE.compareTo(privateKeyE) === 0) {
         return;
       }
-      throw new Error("Certificate doesn't match the private key");
+      throw new UnreportableError("Certificate doesn't match the private key");
     }
-    throw new Error("This key type is not supported");
+    throw new UnreportableError("This key type is not supported");
     /* todo: edwards25519
     const derivedPublicKey = forge.pki.ed25519.publicKeyFromPrivateKey({ privateKey: privateKey as forge.pki.ed25519.BinaryBuffer });
     Buffer.from(derivedPublicKey).compare(Buffer.from(certificate.publicKey as forge.pki.ed25519.NativeBuffer)) === 0;

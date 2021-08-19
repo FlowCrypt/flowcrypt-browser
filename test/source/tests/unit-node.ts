@@ -22,6 +22,7 @@ import { PgpArmor } from '../core/crypto/pgp/pgp-armor';
 import { ExpirationCache } from '../core/expiration-cache';
 import { readFileSync } from 'fs';
 import * as forge from 'node-forge';
+import { SmimeKey } from '../core/crypto/smime/smime-key';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -552,7 +553,7 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
 
     ava.default('[unit][KeyUtil.parse] S/MIME key parsing of unprotected PKCS#8 private key and mismatching certificate', async t => {
       await t.throwsAsync(() => KeyUtil.parse(`${testConstants.smimeUnencryptedKey}
-${testConstants.smimeCert}`), { instanceOf: Error, message: `Certificate doesn't match the private key` });
+${testConstants.smimeCert}`), { instanceOf: UnreportableError, message: `Certificate doesn't match the private key` });
       t.pass();
     });
 
@@ -560,8 +561,32 @@ ${testConstants.smimeCert}`), { instanceOf: Error, message: `Certificate doesn't
       const encryptedKey = await KeyUtil.parse(`${testConstants.smimeEncryptedKey}
 ${testConstants.smimeCert}`);
       await t.throwsAsync(() => KeyUtil.decrypt(encryptedKey, 'AHbxhwquX5pc'), {
-        instanceOf: Error, message: `Certificate doesn't match the private key`
+        instanceOf: UnreportableError, message: `Certificate doesn't match the private key`
       });
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.armor] S/MIME key from PKCS#12 is armored to PKCS#8', async t => {
+      const p12 = readFileSync("test/samples/smime/human-pwd-original-PKCS12.pfx", 'binary');
+      const key = SmimeKey.parseDecryptBinary(Buf.fromRawBytesStr(p12), 'AHbxhwquX5pc');
+      expect(key.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
+      expect(key.fullyDecrypted).to.equal(true);
+      const armoredDecrypted = KeyUtil.armor(key);
+      expect(armoredDecrypted).to.not.include('-----BEGIN ENCRYPTED PRIVATE KEY-----');
+      expect(armoredDecrypted).to.include('-----END RSA PRIVATE KEY-----\r\n-----BEGIN CERTIFICATE-----');
+      await KeyUtil.encrypt(key, 're-encrypt');
+      expect(key.fullyDecrypted).to.equal(false);
+      const armoredEncrypted = KeyUtil.armor(key);
+      expect(armoredEncrypted).to.not.include('-----BEGIN RSA PRIVATE KEY-----');
+      expect(armoredEncrypted).to.include('-----END ENCRYPTED PRIVATE KEY-----\r\n-----BEGIN CERTIFICATE-----');
+      const parsedDecrypted = await KeyUtil.parse(armoredDecrypted);
+      expect(parsedDecrypted.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
+      expect(parsedDecrypted.fullyDecrypted).to.equal(true);
+      const parsedEncrypted = await KeyUtil.parse(armoredEncrypted);
+      expect(parsedEncrypted.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
+      expect(parsedEncrypted.fullyDecrypted).to.equal(false);
+      await KeyUtil.decrypt(parsedEncrypted, 're-encrypt');
+      expect(parsedEncrypted.fullyDecrypted).to.equal(true);
       t.pass();
     });
 
