@@ -224,14 +224,14 @@ export class SmimeKey {
     const armored: string[] = [];
     if (privateKey) {
       let armoredPrivateKey = (typeof privateKey === 'string') ? privateKey : forge.pki.privateKeyToPem(privateKey);
-      if (armoredPrivateKey[armoredPrivateKey.length - 1] != '\n') {
+      if (armoredPrivateKey[armoredPrivateKey.length - 1] !== '\n') {
         armoredPrivateKey += '\r\n';
       }
       armored.push(armoredPrivateKey);
       (key as unknown as { privateKeyArmored: string }).privateKeyArmored = armoredPrivateKey;
     }
     let armoredCertificate = (typeof certificate === 'string') ? certificate : forge.pki.certificateToPem(certificate);
-    if (armoredCertificate[armoredCertificate.length - 1] != '\n') {
+    if (armoredCertificate[armoredCertificate.length - 1] !== '\n') {
       armoredCertificate += '\r\n';
     }
     armored.push(armoredCertificate);
