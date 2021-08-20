@@ -415,9 +415,8 @@ BROWSER_UNIT_TEST_NAME(`ContactStore searches S/MIME Certificate by PKCS#7 messa
   const buf = Buf.fromRawBytesStr(der);
   const [contact] = await ContactStore.get(db, ['X509-' + buf.toBase64Str()]);
   const foundCert = KeyUtil.armor(contact.pubkey);
-  console.log('foundCert');
-  console.log(foundCert);
-  if (foundCert !== pubkey) {
+  const foundCertStripped = foundCert.match(/(.*\-\-\-\-\-END CERTIFICATE\-\-\-\-\-)\r?\n?/s)[1];
+  if (foundCertStripped !== pubkey) {
     throw new Error(`The certificate wasn't found by S/MIME IssuerAndSerialNumber`);
   }
   return 'pass';
