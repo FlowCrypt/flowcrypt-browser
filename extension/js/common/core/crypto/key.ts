@@ -125,7 +125,12 @@ export class KeyUtil {
   }
 
   public static parse = async (text: string): Promise<Key> => {
-    return (await KeyUtil.parseMany(text))[0];
+    const keys = await KeyUtil.parseMany(text);
+    const keysLength = keys.length;
+    if (keysLength > 1) {
+      throw new Error(`Found ${keysLength} keys, expected one`);
+    }
+    return keys[0];
   }
 
   public static parseMany = async (text: string): Promise<Key[]> => {

@@ -47,14 +47,15 @@ export let defineUnitNodeTests = (testVariant: TestVariant) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
-    ava.default(`[unit][KeyUtil.parse] throw if read methods expecting exactly one key find more than one`, async t => {
-      const keys = [testConstants.testkey715EDCDC7939A8F7, testConstants.pubkey2864E326A5BE488A].join('\r\n');
-      const returnedKeys = await KeyUtil.parseMany(keys);
-      const keyLength = returnedKeys.length;
-      console.log(keyLength);
-      console.log(typeof(returnedKeys));
-      console.log(returnedKeys);
-      //await expect(await KeyUtil.parse(keys)).to.eventually.be.rejectedWith('There are 2 OpenPGP keys found, expected just one');
+    ava.default(`[unit][KeyUtil.parse] throw if parse methods expecting exactly one key find more than one`, async t => {
+      const unarmoredKeys = Buffer.from([
+        ...(await PgpArmor.dearmor(testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788)).data,
+        ...(await PgpArmor.dearmor(testConstants.pubkey2864E326A5BE488A)).data
+      ]);
+      const armoredKeys = PgpArmor.armor(opgp.enums.armor.public_key, unarmoredKeys);
+      expect((await KeyUtil.parseMany(armoredKeys)).length).to.equal(2);
+      await t.throwsAsync(() => OpenPGPKey.parse(armoredKeys), { instanceOf: Error, message: 'Found 2 OpenPGP keys, expected one' });
+      await t.throwsAsync(() => KeyUtil.parse(armoredKeys), { instanceOf: Error, message: 'Found 2 keys, expected one' });
       t.pass();
     });
 
