@@ -71,7 +71,6 @@ export class BrowserRecipe {
         // import from backup since the test runs faster and we can control the state in mock tests
         await SetupPageRecipe.recover(settingsPage, 'ci.tests.gmail');
       }
-
       if (testVariant === 'CONSUMER-LIVE-GMAIL') {
         // clean up drafts so that broken tests from the past don't affect this test run
         const { cryptup_citestsgmailflowcryptdev_google_token_access: accessToken } = await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcryptdev_google_token_access']);
