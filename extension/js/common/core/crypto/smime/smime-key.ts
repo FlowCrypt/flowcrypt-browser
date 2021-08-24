@@ -164,7 +164,6 @@ export class SmimeKey {
       } else {
         // test that we can read the unencrypted key
         const unencryptedKey = forge.pki.privateKeyFromPem(privateKey);
-        // todo: catch exception?
         if (!unencryptedKey) {
           privateKey = undefined;
         }

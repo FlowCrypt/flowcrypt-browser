@@ -584,9 +584,7 @@ ${testConstants.smimeCert}`);
 AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....
 -----END ENCRYPTED PRIVATE KEY-----
 ${testConstants.smimeCert}`);
-      await t.throwsAsync(() => KeyUtil.decrypt(encryptedKey, '123'), {
-        instanceOf: Error, message: `Invalid PEM formatted message.`
-      });
+      await t.throwsAsync(() => KeyUtil.decrypt(encryptedKey, '123'), { instanceOf: Error, message: `Invalid PEM formatted message.` });
       t.pass();
     });
 
@@ -595,9 +593,7 @@ ${testConstants.smimeCert}`);
 
 AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....
 -----END PRIVATE KEY-----
-${testConstants.smimeCert}`), {
-        instanceOf: Error, message: `Invalid PEM formatted message.`
-      });
+${testConstants.smimeCert}`), { instanceOf: Error, message: `Invalid PEM formatted message.` });
       t.pass();
     });
 
@@ -606,9 +602,7 @@ ${testConstants.smimeCert}`), {
 
 AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....
 -----END RSA PRIVATE KEY-----
-${testConstants.smimeCert}`), {
-        instanceOf: Error, message: `Invalid PEM formatted message.`
-      });
+${testConstants.smimeCert}`), { instanceOf: Error, message: `Invalid PEM formatted message.` });
       t.pass();
     });
 
