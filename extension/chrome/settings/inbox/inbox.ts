@@ -119,8 +119,28 @@ export class InboxView extends View {
 
   private addBrowserMsgListeners = () => {
     BrowserMsg.addListener('add_end_session_btn', () => this.injector.insertEndSessionBtn(this.acctEmail));
-    BrowserMsg.addListener('close_new_message', async () => {
-      $('div.new_message').remove();
+    BrowserMsg.addListener('set_active_window', async ({ frameId }: Bm.ComposeWindow) => {
+      if ($(`.secure_compose_window.active[data-frame-id="${frameId}"]`).length) {
+        return; // already active
+      }
+      $(`.secure_compose_window`).removeClass('previous_active');
+      $(`.secure_compose_window.active`).addClass('previous_active').removeClass('active');
+      $(`.secure_compose_window[data-frame-id="${frameId}"]`).addClass('active');
+    });
+    BrowserMsg.addListener('close_compose_window', async ({ frameId }: Bm.ComposeWindow) => {
+      $(`.secure_compose_window[data-frame-id="${frameId}"]`).remove();
+      if ($('.secure_compose_window.previous_active:not(.minimized)').length) {
+        BrowserMsg.send.focusPreviousActiveWindow(this.tabId, { frameId: $('.secure_compose_window.previous_active:not(.minimized)').data('frame-id') as string });
+      } else if ($('.secure_compose_window:not(.minimized)').length) {
+        BrowserMsg.send.focusPreviousActiveWindow(this.tabId, { frameId: $('.secure_compose_window:not(.minimized)').data('frame-id') as string });
+      }
+      // reposition the rest of the compose windows
+      if (!$(`.secure_compose_window[data-order="1"]`).length) {
+        $(`.secure_compose_window[data-order="2"]`).attr('data-order', 1);
+      }
+      if (!$(`.secure_compose_window[data-order="2"]`).length) {
+        $(`.secure_compose_window[data-order="3"]`).attr('data-order', 2);
+      }
     });
     BrowserMsg.addListener('passphrase_dialog', async ({ longids, type, initiatorFrameId }: Bm.PassphraseDialog) => {
       await this.factory.showPassphraseDialog(longids, type, initiatorFrameId);

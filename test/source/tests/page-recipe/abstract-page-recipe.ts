@@ -14,6 +14,10 @@ export abstract class PageRecipe {
     return await (await elem.getProperty(property) as JSHandle).jsonValue() as string;
   }
 
+  public static getElementAttribute = async (elem: ElementHandle<Element>, attribute: string) => {
+    return await elem.evaluate((el, attribute) => el.getAttribute(attribute), attribute);
+  }
+
   public static waitForModalAndRespond = async (controllable: Controllable, type: ModalType, { contentToCheck, clickOn, timeout }: ModalOpts) => {
     const modalContainer = await controllable.waitAny(`.ui-modal-${type}`, { timeout });
     if (typeof contentToCheck !== 'undefined') {

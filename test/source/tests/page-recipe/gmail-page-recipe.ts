@@ -30,6 +30,7 @@ export class GmailPageRecipe extends PageRecipe {
 
   public static deleteThread = async (gmailPage: ControllablePage) => {
     await gmailPage.page.keyboard.press('#');
+    await gmailPage.waitForContent('.bAq', 'Conversation moved to Trash');
   }
 
   public static deleteLastReply = async (gmailPage: ControllablePage) => {
@@ -41,7 +42,7 @@ export class GmailPageRecipe extends PageRecipe {
 
   public static emptyDrafts = async (gmailPage: ControllablePage) => {
     await Util.sleep(1);
-    await gmailPage.waitAndClick('[aria-label="Drafts"]');
+    await gmailPage.waitAndClick('[data-tooltip="Drafts"]');
     await Util.sleep(1);
     await gmailPage.page.keyboard.press('*');
     await gmailPage.page.keyboard.press('a'); // Select all

@@ -74,7 +74,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
         acctEmail: this.view.acctEmail, threadId: this.threadId, showOriginal: !this.view.showOriginal
       })));
     }
-    BrowserMsg.addListener('close_reply_message', async ({ frameId }: Bm.CloseReplyMessage) => {
+    BrowserMsg.addListener('close_reply_message', async ({ frameId }: Bm.ComposeWindow) => {
       $(`iframe#${frameId}`).remove();
     });
     BrowserMsg.addListener('reinsert_reply_box', async ({ replyMsgId }: Bm.ReinsertReplyBox) => {
