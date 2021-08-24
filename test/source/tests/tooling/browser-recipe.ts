@@ -28,10 +28,15 @@ export class BrowserRecipe {
     return settingsPage;
   }
 
-  public static openGmailPage = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
+  public static openGmailPage = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0, expectComposeButton = true) => {
     const gmailPage = await browser.newPage(t, TestUrls.gmail(googleLoginIndex));
-    await gmailPage.waitAll('div.z0'); // compose button container visible
+    if (expectComposeButton) {
+      await gmailPage.waitAll('div.z0'); // compose button container visible
+    }
     await Util.sleep(3); // give it extra time to make sure FlowCrypt is initialized if it was supposed to
+    if (!expectComposeButton) {
+      await gmailPage.notPresent('div.z0'); // compose button container not visible
+    }
     return gmailPage;
   }
 
@@ -54,25 +59,27 @@ export class BrowserRecipe {
     return gmailPage;
   }
 
-  public static setUpCommonAcct = async (t: AvaContext, browser: BrowserHandle, acct: 'compatibility' | 'compose' | 'ci.tests.gmail', cleanup: boolean) => {
+  public static setUpCommonAcct = async (t: AvaContext, browser: BrowserHandle, acct: 'compatibility' | 'compose' | 'ci.tests.gmail') => {
     if (acct === 'compatibility') {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', { hasRecoverMore: true, clickRecoverMore: true });
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1');
       await settingsPage.close();
-    } else if (acct === 'ci.tests.gmail' && testVariant === 'CONSUMER-LIVE-GMAIL') {
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
-      await SetupPageRecipe.recover(settingsPage, 'ci.tests.gmail');
-      if (cleanup) {
-        const { cryptup_citestsgmailflowcryptdev_google_token_access: accessToken } = await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcryptdev_google_token_access']);
-        await Promise.all([BrowserRecipe.cleanGmailAccount(accessToken as string), settingsPage.close()]);
+    } else if (acct === 'ci.tests.gmail') {
+      // live gmail uses ".dev" (real account on real domain). Mock uses "".test".
+      const acctEmail = testVariant === 'CONSUMER-LIVE-GMAIL' ? 'ci.tests.gmail@flowcrypt.dev' : 'ci.tests.gmail@flowcrypt.test';
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+      if (testVariant === 'CONSUMER-LIVE-GMAIL') {
+        // using import manually so that we don't rely on email server state, like relying on backup emails being present
+        await SetupPageRecipe.manualEnter(settingsPage, 'ci.tests.gmail', { usedPgpBefore: true });
+      } else {
+        // import from backup since the test runs faster and we can control the state in mock tests
+        await SetupPageRecipe.recover(settingsPage, 'ci.tests.gmail');
       }
-    } else if (acct === 'ci.tests.gmail' && testVariant !== 'CONSUMER-LIVE-GMAIL') {
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.test');
-      await SetupPageRecipe.recover(settingsPage, 'ci.tests.gmail');
-      if (cleanup) {
+      if (testVariant === 'CONSUMER-LIVE-GMAIL') {
+        // clean up drafts so that broken tests from the past don't affect this test run
         const { cryptup_citestsgmailflowcryptdev_google_token_access: accessToken } = await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcryptdev_google_token_access']);
-        await Promise.all([BrowserRecipe.cleanGmailAccount(accessToken as string), settingsPage.close()]);
+        await Promise.all([BrowserRecipe.deleteAllDraftsInGmailAccount(accessToken as string), settingsPage.close()]);
       }
     } else {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
@@ -88,8 +95,6 @@ export class BrowserRecipe {
       await Promise.all(list.data.drafts!.filter(draft => draft.id).map(draft => gmail.users.drafts.delete({ id: draft.id!, userId: 'me', access_token: accessToken })));
     }
   }
-
-  public static cleanGmailAccount = (accessToken: string) => BrowserRecipe.deleteAllDraftsInGmailAccount(accessToken);
 
   // todo - ideally we could just add a 3rd common account: 'compatibility' | 'compose' | 'pp-change' in setUpCommonAcct
   public static setUpFcPpChangeAcct = async (t: AvaContext, browser: BrowserHandle) => {

@@ -20,7 +20,9 @@ import { GoogleData, GmailParser, GmailMsg } from '../mock/google/google-data';
 import { testConstants } from './tooling/consts';
 import { PgpArmor } from '../core/crypto/pgp/pgp-armor';
 import { ExpirationCache } from '../core/expiration-cache';
+import { readFileSync } from 'fs';
 import * as forge from 'node-forge';
+import { SmimeKey } from '../core/crypto/smime/smime-key';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -558,6 +560,73 @@ vpQiyk4ceuTNkUZ/qmgiMpQLxXZnDDo=
       expect(errs.length).to.equal(0);
       expect(keys[0].id).to.equal('6FE116D2759F0FFAC5623E7E10D6E37941EAA0BB');
       expect(keys[0].type).to.equal('x509');
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.parse] S/MIME key parsing of unprotected PKCS#8 private key and mismatching certificate', async t => {
+      await t.throwsAsync(() => KeyUtil.parse(`${testConstants.smimeUnencryptedKey}
+${testConstants.smimeCert}`), { instanceOf: UnreportableError, message: `Certificate doesn't match the private key` });
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.decrypt] S/MIME key decryption of mismatching private key', async t => {
+      const encryptedKey = await KeyUtil.parse(`${testConstants.smimeEncryptedKey}
+${testConstants.smimeCert}`);
+      await t.throwsAsync(() => KeyUtil.decrypt(encryptedKey, 'AHbxhwquX5pc'), {
+        instanceOf: UnreportableError, message: `Certificate doesn't match the private key`
+      });
+      t.pass();
+    });
+
+    ava.default(`[unit][KeyUtil.decrypt] throws on incorrect PKCS#8 encrypted private key`, async t => {
+      const encryptedKey = await KeyUtil.parse(`-----BEGIN ENCRYPTED PRIVATE KEY-----
+
+AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....
+-----END ENCRYPTED PRIVATE KEY-----
+${testConstants.smimeCert}`);
+      await t.throwsAsync(() => KeyUtil.decrypt(encryptedKey, '123'), { instanceOf: Error, message: `Invalid PEM formatted message.` });
+      t.pass();
+    });
+
+    ava.default(`[unit][KeyUtil.parse] throws on incorrect PKCS#8 private key`, async t => {
+      await t.throwsAsync(() => KeyUtil.parse(`-----BEGIN PRIVATE KEY-----
+
+AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....
+-----END PRIVATE KEY-----
+${testConstants.smimeCert}`), { instanceOf: Error, message: `Invalid PEM formatted message.` });
+      t.pass();
+    });
+
+    ava.default(`[unit][KeyUtil.parse] throws on incorrect RSA PKCS#8 private key`, async t => {
+      await t.throwsAsync(() => KeyUtil.parse(`-----BEGIN RSA PRIVATE KEY-----
+
+AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....
+-----END RSA PRIVATE KEY-----
+${testConstants.smimeCert}`), { instanceOf: Error, message: `Invalid PEM formatted message.` });
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.armor] S/MIME key from PKCS#12 is armored to PKCS#8', async t => {
+      const p12 = readFileSync("test/samples/smime/human-pwd-original-PKCS12.pfx", 'binary');
+      const key = SmimeKey.parseDecryptBinary(Buf.fromRawBytesStr(p12), 'AHbxhwquX5pc');
+      expect(key.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
+      expect(key.fullyDecrypted).to.equal(true);
+      const armoredDecrypted = KeyUtil.armor(key);
+      expect(armoredDecrypted).to.not.include('-----BEGIN ENCRYPTED PRIVATE KEY-----');
+      expect(armoredDecrypted).to.include('-----END RSA PRIVATE KEY-----\r\n-----BEGIN CERTIFICATE-----');
+      await KeyUtil.encrypt(key, 're-encrypt');
+      expect(key.fullyDecrypted).to.equal(false);
+      const armoredEncrypted = KeyUtil.armor(key);
+      expect(armoredEncrypted).to.not.include('-----BEGIN RSA PRIVATE KEY-----');
+      expect(armoredEncrypted).to.include('-----END ENCRYPTED PRIVATE KEY-----\r\n-----BEGIN CERTIFICATE-----');
+      const parsedDecrypted = await KeyUtil.parse(armoredDecrypted);
+      expect(parsedDecrypted.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
+      expect(parsedDecrypted.fullyDecrypted).to.equal(true);
+      const parsedEncrypted = await KeyUtil.parse(armoredEncrypted);
+      expect(parsedEncrypted.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
+      expect(parsedEncrypted.fullyDecrypted).to.equal(false);
+      await KeyUtil.decrypt(parsedEncrypted, 're-encrypt');
+      expect(parsedEncrypted.fullyDecrypted).to.equal(true);
       t.pass();
     });
 
@@ -1586,8 +1655,101 @@ jA==
       expect(parsed[0].type).to.be.equal('x509');
       expect(parsed[0].emails.length).to.be.equal(1);
       expect(parsed[0].emails[0]).to.be.equal('test@example.com');
-      expect(parsed[0].isPrivate).to.be.equal(false);
-      expect(parsed[0].isPublic).to.be.equal(true);
+      expect(parsed[0].isPrivate).to.be.equal(true);
+      expect(parsed[0].isPublic).to.be.equal(false);
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.parse] handles encrypted PKCS#8 key', async t => {
+      const p8 = readFileSync("test/samples/smime/human-pwd-pem.txt", 'utf8');
+      let parsed = await KeyUtil.parse(p8);
+      expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
+      expect(parsed.type).to.equal('x509');
+      expect(parsed.emails.length).to.equal(1);
+      expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
+      expect(parsed.isPrivate).to.equal(true);
+      expect(parsed.isPublic).to.equal(false);
+      expect(parsed.fullyDecrypted).to.equal(false);
+      expect(KeyUtil.armor(parsed)).to.include('-----BEGIN ENCRYPTED PRIVATE KEY-----');
+      expect(KeyUtil.armor(parsed)).to.not.include('-----BEGIN RSA PRIVATE KEY-----');
+      expect(KeyUtil.armor(parsed)).to.not.include('-----BEGIN PRIVATE KEY-----');
+      // incorrect passphrase will make the key remain encrypted
+      expect(await KeyUtil.decrypt(parsed, 'incorrect')).to.equal(false);
+      expect(parsed.fullyDecrypted).to.equal(false);
+      expect(await KeyUtil.decrypt(parsed, 'AHbxhwquX5pc')).to.equal(true);
+      expect(parsed.fullyDecrypted).to.equal(true);
+      const armoredAfterDecryption = KeyUtil.armor(parsed);
+      expect(armoredAfterDecryption).to.not.include('-----BEGIN ENCRYPTED PRIVATE KEY-----');
+      expect(armoredAfterDecryption).to.include('-----BEGIN RSA PRIVATE KEY-----');
+      parsed = await KeyUtil.parse(armoredAfterDecryption);
+      expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
+      expect(parsed.type).to.equal('x509');
+      expect(parsed.emails.length).to.equal(1);
+      expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
+      expect(parsed.isPrivate).to.equal(true);
+      expect(parsed.isPublic).to.equal(false);
+      expect(parsed.fullyDecrypted).to.equal(true);
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.parse] correctly handles shuffled certificates in PEM', async t => {
+      const p8 = readFileSync("test/samples/smime/human-pwd-shuffled-pem.txt", 'utf8');
+      let parsed = await KeyUtil.parse(p8);
+      expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
+      expect(parsed.type).to.equal('x509');
+      expect(parsed.emails.length).to.equal(1);
+      expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
+      expect(parsed.isPrivate).to.equal(true);
+      expect(parsed.isPublic).to.equal(false);
+      expect(parsed.fullyDecrypted).to.equal(false);
+      expect(KeyUtil.armor(parsed)).to.include('-----BEGIN ENCRYPTED PRIVATE KEY-----');
+      expect(KeyUtil.armor(parsed)).to.not.include('-----BEGIN RSA PRIVATE KEY-----');
+      expect(KeyUtil.armor(parsed)).to.not.include('-----BEGIN PRIVATE KEY-----');
+      // incorrect passphrase will make the key remain encrypted
+      expect(await KeyUtil.decrypt(parsed, 'incorrect')).to.equal(false);
+      expect(parsed.fullyDecrypted).to.equal(false);
+      expect(await KeyUtil.decrypt(parsed, 'AHbxhwquX5pc')).to.equal(true);
+      expect(parsed.fullyDecrypted).to.equal(true);
+      const armoredAfterDecryption = KeyUtil.armor(parsed);
+      expect(armoredAfterDecryption).to.not.include('-----BEGIN ENCRYPTED PRIVATE KEY-----');
+      expect(armoredAfterDecryption).to.include('-----BEGIN RSA PRIVATE KEY-----');
+      parsed = await KeyUtil.parse(armoredAfterDecryption);
+      expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
+      expect(parsed.type).to.equal('x509');
+      expect(parsed.emails.length).to.equal(1);
+      expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
+      expect(parsed.isPrivate).to.equal(true);
+      expect(parsed.isPublic).to.equal(false);
+      expect(parsed.fullyDecrypted).to.equal(true);
+      t.pass();
+    });
+
+    ava.default('[unit][KeyUtil.encrypt] encrypts S/MIME key', async t => {
+      const p8 = readFileSync("test/samples/smime/human-unprotected-pem.txt", 'utf8');
+      let parsed = await KeyUtil.parse(p8);
+      expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
+      expect(parsed.type).to.equal('x509');
+      expect(parsed.emails.length).to.equal(1);
+      expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
+      expect(parsed.isPrivate).to.equal(true);
+      expect(parsed.isPublic).to.equal(false);
+      expect(parsed.fullyDecrypted).to.equal(true);
+      expect(KeyUtil.armor(parsed)).to.not.include('-----BEGIN ENCRYPTED PRIVATE KEY-----');
+      expect(KeyUtil.armor(parsed)).to.include('-----BEGIN PRIVATE KEY-----');
+      await KeyUtil.encrypt(parsed, 'new_passphrase');
+      expect(parsed.fullyDecrypted).to.equal(false);
+      const armoredAfterEncryption = KeyUtil.armor(parsed);
+      expect(armoredAfterEncryption).to.include('-----BEGIN ENCRYPTED PRIVATE KEY-----');
+      expect(armoredAfterEncryption).to.not.include('-----BEGIN RSA PRIVATE KEY-----');
+      expect(armoredAfterEncryption).to.not.include('-----BEGIN PRIVATE KEY-----');
+      parsed = await KeyUtil.parse(armoredAfterEncryption);
+      expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
+      expect(parsed.type).to.equal('x509');
+      expect(parsed.emails.length).to.equal(1);
+      expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
+      expect(parsed.isPrivate).to.equal(true);
+      expect(parsed.isPublic).to.equal(false);
+      expect(parsed.fullyDecrypted).to.equal(false);
       t.pass();
     });
 

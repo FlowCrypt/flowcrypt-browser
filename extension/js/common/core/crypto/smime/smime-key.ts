@@ -1,16 +1,31 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 import * as forge from 'node-forge';
-import { Key, KeyUtil } from '../key.js';
+import { Key } from '../key.js';
 import { Str } from '../../common.js';
 import { UnreportableError } from '../../../platform/catch.js';
 import { PgpArmor } from '../pgp/pgp-armor.js';
 import { Buf } from '../../buf.js';
+import { MsgBlockParser } from '../../msg-block-parser.js';
+import { MsgBlock } from '../../msg-block.js';
 
 export class SmimeKey {
 
   public static parse = (text: string): Key => {
     if (text.includes(PgpArmor.headers('certificate').begin)) {
-      return SmimeKey.parsePemCertificate(text);
+      const blocks = MsgBlockParser.detectBlocks(text).blocks;
+      const certificates = blocks.filter(b => b.type === 'certificate');
+      const leafCertificates = SmimeKey.getLeafCertificates(certificates);
+      if (leafCertificates.length > 1) {
+        throw new Error('Parsing S/MIME with more than one user certificate is not supported');
+      }
+      if (leafCertificates.length !== 1) {
+        throw new Error('Could not parse S/MIME key without a user certificate');
+      }
+      const privateKeys = blocks.filter(b => ['pkcs8EncryptedPrivateKey', 'pkcs8PrivateKey', 'pkcs8RsaPrivateKey'].includes(b.type));
+      if (privateKeys.length > 1) {
+        throw new Error('Could not parse S/MIME key with more than one private keys');
+      }
+      return SmimeKey.getKeyFromCertificate(leafCertificates[0].pem, privateKeys[0]?.content ?? undefined);
     } else if (text.includes(PgpArmor.headers('pkcs12').begin)) {
       const armoredBytes = text.replace(PgpArmor.headers('pkcs12').begin, '').replace(PgpArmor.headers('pkcs12').end, '').trim();
       const emptyPassPhrase = '';
@@ -31,23 +46,25 @@ export class SmimeKey {
       // fall back to p12
     }
     if (certificate) {
-      return SmimeKey.getKeyFromCertificate(certificate, forge.pki.certificateToPem(certificate));
+      return SmimeKey.getKeyFromCertificate(certificate, undefined);
     }
     const p12 = forge.pkcs12.pkcs12FromAsn1(asn1, password);
-    const bags = p12.getBags({ bagType: forge.pki.oids.certBag });
-    if (!bags) {
+    const certBags = p12.getBags({ bagType: forge.pki.oids.certBag });
+    if (!certBags) {
       throw new Error('No user certificate found.');
     }
-    const bag = bags[forge.pki.oids.certBag];
-    if (!bag) {
+    const certBag = certBags[forge.pki.oids.certBag];
+    if (!certBag) {
       throw new Error('No user certificate found.');
     }
-    certificate = bag[0]?.cert;
+    certificate = certBag[0]?.cert;
     if (!certificate) {
       throw new Error('No user certificate found.');
     }
-    const headers = PgpArmor.headers('pkcs12');
-    return SmimeKey.getKeyFromCertificate(certificate, `${headers.begin}\n${forge.util.encode64(bytes)}\n${headers.end}`);
+    const keyBags = (p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag })[forge.pki.oids.pkcs8ShroudedKeyBag] ?? [])
+      .concat(p12.getBags({ bagType: forge.pki.oids.keyBag })[forge.pki.oids.keyBag] ?? []);
+    const privateKey = keyBags[0]?.key;
+    return SmimeKey.getKeyFromCertificate(certificate, privateKey);
   }
 
   /**
@@ -56,8 +73,10 @@ export class SmimeKey {
   public static encryptMessage = async ({ pubkeys, data }: { pubkeys: Key[], data: Uint8Array }): Promise<{ data: Uint8Array, type: 'smime' }> => {
     const p7 = forge.pkcs7.createEnvelopedData();
     for (const pubkey of pubkeys) {
-      const certificate = forge.pki.certificateFromPem(KeyUtil.armor(pubkey));
-      SmimeKey.removeWeakKeys(certificate);
+      const certificate = SmimeKey.getCertificate(pubkey);
+      if (SmimeKey.isKeyWeak(certificate)) {
+        throw new Error(`The key can't be used for encryption as it doesn't meet the strength requirements`);
+      }
       p7.addRecipient(certificate);
     }
     p7.content = forge.util.createBuffer(data);
@@ -68,6 +87,52 @@ export class SmimeKey {
       arr.push(derBuffer.charCodeAt(i));
     }
     return { data: new Uint8Array(arr), type: 'smime' };
+  }
+
+  public static decryptKey = async (key: Key, passphrase: string, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
+    if (!key.isPrivate) {
+      throw new Error("Nothing to decrypt in a public key");
+    }
+    if (key.fullyDecrypted) {
+      if (optionalBehaviorFlag === 'OK-IF-ALREADY-DECRYPTED') {
+        return true;
+      } else {
+        throw new Error("Decryption failed - private key was already decrypted");
+      }
+    }
+    const encryptedPrivateKey = SmimeKey.getArmoredPrivateKey(key);
+    const privateKey = await forge.pki.decryptRsaPrivateKey(encryptedPrivateKey, passphrase); // null on password mismatch
+    if (!privateKey) {
+      return false;
+    }
+    SmimeKey.checkPrivateKeyCertificateMatchOrThrow(SmimeKey.getCertificate(key), privateKey);
+    SmimeKey.saveArmored(key, SmimeKey.getArmoredCertificate(key), privateKey);
+    key.fullyDecrypted = true;
+    key.fullyEncrypted = false;
+    return true;
+  }
+
+  public static encryptKey = async (key: Key, passphrase: string) => {
+    const armoredPrivateKey = SmimeKey.getArmoredPrivateKey(key);
+    if (!armoredPrivateKey) {
+      throw new Error(`No private key found to encrypt. Is this a private key?`);
+    }
+    if (!passphrase || passphrase === 'undefined' || passphrase === 'null') {
+      throw new Error(`Encryption passphrase should not be empty:${typeof passphrase}:${passphrase}`);
+    }
+    const encryptedPrivateKey = forge.pki.encryptRsaPrivateKey(forge.pki.privateKeyFromPem(armoredPrivateKey), passphrase);
+    if (!encryptedPrivateKey) {
+      throw new Error('Failed to encrypt the private key.');
+    }
+    SmimeKey.saveArmored(key, SmimeKey.getArmoredCertificate(key), encryptedPrivateKey);
+    key.fullyDecrypted = false;
+    key.fullyEncrypted = true;
+  }
+
+  private static getLeafCertificates = (msgBlocks: MsgBlock[]): { pem: string, certificate: forge.pki.Certificate }[] => {
+    const parsed = msgBlocks.map(cert => { return { pem: cert.content as string, certificate: forge.pki.certificateFromPem(cert.content as string) }; });
+    // Note: no signature check is performed.
+    return parsed.filter((c, i) => !parsed.some((other, j) => j !== i && other.certificate.isIssuer(c.certificate)));
   }
 
   private static getNormalizedEmailsFromCertificate = (certificate: forge.pki.Certificate): string[] => {
@@ -87,12 +152,25 @@ export class SmimeKey {
     throw new UnreportableError(`This S/MIME x.509 certificate has an invalid recipient email: ${emailFromSubject}`);
   }
 
-  private static getKeyFromCertificate = (certificate: forge.pki.Certificate, pem: string): Key => {
+  private static getKeyFromCertificate = (certificateOrText: forge.pki.Certificate | string, privateKey: forge.pki.PrivateKey | string | undefined): Key => {
+    const certificate = (typeof certificateOrText === 'string') ? forge.pki.certificateFromPem(certificateOrText) : certificateOrText;
     if (!certificate.publicKey) {
       throw new UnreportableError(`This S/MIME x.509 certificate doesn't have a public key`);
     }
+    let encrypted = false;
+    if (typeof privateKey === 'string') {
+      if (privateKey.includes((PgpArmor.headers('pkcs8EncryptedPrivateKey').begin))) {
+        encrypted = true;
+      } else {
+        // test that we can read the unencrypted key
+        const unencryptedKey = forge.pki.privateKeyFromPem(privateKey);
+        if (!unencryptedKey) {
+          privateKey = undefined;
+        }
+        SmimeKey.checkPrivateKeyCertificateMatchOrThrow(certificate, unencryptedKey);
+      }
+    }
     const fingerprint = forge.pki.getPublicKeyFingerprint(certificate.publicKey, { encoding: 'hex' }).toUpperCase();
-    SmimeKey.removeWeakKeys(certificate);
     const emails = SmimeKey.getNormalizedEmailsFromCertificate(certificate);
     const issuerAndSerialNumberAsn1 =
       forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SEQUENCE, true, [
@@ -104,7 +182,7 @@ export class SmimeKey {
       ]);
     const expiration = SmimeKey.dateToNumber(certificate.validity.notAfter)!;
     const expired = expiration < Date.now();
-    const usableIgnoringExpiration = SmimeKey.isEmailCertificate(certificate);
+    const usableIgnoringExpiration = SmimeKey.isEmailCertificate(certificate) && !SmimeKey.isKeyWeak(certificate);
     const key = {
       type: 'x509',
       id: fingerprint,
@@ -118,31 +196,73 @@ export class SmimeKey {
       created: SmimeKey.dateToNumber(certificate.validity.notBefore),
       lastModified: SmimeKey.dateToNumber(certificate.validity.notBefore),
       expiration,
-      fullyDecrypted: !!certificate.privateKey,
-      fullyEncrypted: false,
-      isPublic: !certificate.privateKey,
-      isPrivate: !!certificate.privateKey,
+      fullyDecrypted: !encrypted,
+      fullyEncrypted: encrypted,
+      isPublic: !privateKey,
+      isPrivate: !!privateKey,
       revoked: false,
       issuerAndSerialNumber: forge.asn1.toDer(issuerAndSerialNumberAsn1).getBytes()
     } as Key;
-    (key as unknown as { rawArmored: string }).rawArmored = pem;
+    SmimeKey.saveArmored(key, certificateOrText, privateKey);
     return key;
   }
 
-  private static parsePemCertificate = (text: string): Key => {
-    const certificate = forge.pki.certificateFromPem(text);
-    return SmimeKey.getKeyFromCertificate(certificate, text);
+  private static getArmoredPrivateKey = (key: Key) => {
+    return (key as unknown as { privateKeyArmored: string }).privateKeyArmored;
   }
 
-  private static removeWeakKeys = (certificate: forge.pki.Certificate) => {
+  private static getArmoredCertificate = (key: Key) => {
+    return (key as unknown as { certificateArmored: string }).certificateArmored;
+  }
+
+  private static getCertificate = (key: Key) => {
+    return forge.pki.certificateFromPem(SmimeKey.getArmoredCertificate(key));
+  }
+
+  private static saveArmored = (key: Key, certificate: forge.pki.Certificate | string, privateKey: forge.pki.PrivateKey | string | undefined) => {
+    const armored: string[] = [];
+    if (privateKey) {
+      let armoredPrivateKey = (typeof privateKey === 'string') ? privateKey : forge.pki.privateKeyToPem(privateKey);
+      if (armoredPrivateKey[armoredPrivateKey.length - 1] !== '\n') {
+        armoredPrivateKey += '\r\n';
+      }
+      armored.push(armoredPrivateKey);
+      (key as unknown as { privateKeyArmored: string }).privateKeyArmored = armoredPrivateKey;
+    }
+    let armoredCertificate = (typeof certificate === 'string') ? certificate : forge.pki.certificateToPem(certificate);
+    if (armoredCertificate[armoredCertificate.length - 1] !== '\n') {
+      armoredCertificate += '\r\n';
+    }
+    armored.push(armoredCertificate);
+    (key as unknown as { certificateArmored: string }).certificateArmored = armoredCertificate;
+    (key as unknown as { rawArmored: string }).rawArmored = armored.join('');
+  }
+
+  private static isKeyWeak = (certificate: forge.pki.Certificate) => {
     const publicKeyN = (certificate.publicKey as forge.pki.rsa.PublicKey)?.n;
     if (publicKeyN && publicKeyN.bitLength() < 2048) {
-      certificate.publicKey = undefined;
+      return true;
     }
-    const privateKeyN = (certificate.privateKey as forge.pki.rsa.PrivateKey)?.n;
-    if (privateKeyN && privateKeyN.bitLength() < 2048) {
-      certificate.privateKey = undefined;
+    return false;
+  }
+
+  private static checkPrivateKeyCertificateMatchOrThrow = (certificate: forge.pki.Certificate, privateKey: forge.pki.PrivateKey): void => {
+    const publicKeyN = (certificate.publicKey as forge.pki.rsa.PublicKey)?.n;
+    const publicKeyE = (certificate.publicKey as forge.pki.rsa.PublicKey)?.e;
+    const privateKeyN = (privateKey as forge.pki.rsa.PrivateKey).n;
+    const privateKeyE = (privateKey as forge.pki.rsa.PrivateKey).e;
+    if (publicKeyN && publicKeyE && privateKeyN && privateKeyE) {
+      // compare RSA Private and Public Key material
+      if (publicKeyN.compareTo(privateKeyN) === 0 && publicKeyE.compareTo(privateKeyE) === 0) {
+        return;
+      }
+      throw new UnreportableError("Certificate doesn't match the private key");
     }
+    throw new UnreportableError("This key type is not supported");
+    /* todo: edwards25519
+    const derivedPublicKey = forge.pki.ed25519.publicKeyFromPrivateKey({ privateKey: privateKey as forge.pki.ed25519.BinaryBuffer });
+    Buffer.from(derivedPublicKey).compare(Buffer.from(certificate.publicKey as forge.pki.ed25519.NativeBuffer)) === 0;
+    */
   }
 
   private static isEmailCertificate = (certificate: forge.pki.Certificate) => {
