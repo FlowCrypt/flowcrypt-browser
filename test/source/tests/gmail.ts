@@ -259,7 +259,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
     ava.default.skip('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/');
-      await GmailPageRecipe.emptyDrafts(gmailPage);
+      await BrowserRecipe.deleteAllDraftsInGmailAccount(gmailPage);
       await gotoGmailPage(gmailPage, '/FMfcgzGkZZqZQpLXZnzPRFKVrwKNnqrN'); // to go encrypted convo
       await gmailPage.waitAndClick('@secure-reply-button');
       await createSecureDraft(t, browser, gmailPage, 'reply draft');

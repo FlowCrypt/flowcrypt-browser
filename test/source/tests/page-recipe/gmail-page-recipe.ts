@@ -40,14 +40,4 @@ export class GmailPageRecipe extends PageRecipe {
     await Util.sleep(3);
   }
 
-  public static emptyDrafts = async (gmailPage: ControllablePage) => {
-    await Util.sleep(1);
-    await gmailPage.waitAndClick('[data-tooltip="Drafts"]');
-    await Util.sleep(1);
-    await gmailPage.page.keyboard.press('*');
-    await gmailPage.page.keyboard.press('a'); // Select all
-    await Util.sleep(.5);
-    await gmailPage.page.keyboard.press('#'); // Delete
-  }
-
 }
