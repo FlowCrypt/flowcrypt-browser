@@ -88,8 +88,8 @@ export class BrowserRecipe {
     }
   }
 
-  public static deleteAllDraftsInGmailAccount = async (page: ControllablePage): Promise<void> => {
-    const accessToken = (await page.getFromLocalStorage(['cryptup_citestsgmailflowcryptdev_google_token_access'])).cryptup_citestsgmailflowcryptdev_google_token_access as string;
+  public static deleteAllDraftsInGmailAccount = async (settingsPage: ControllablePage): Promise<void> => {
+    const accessToken = (await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcryptdev_google_token_access'])).cryptup_citestsgmailflowcryptdev_google_token_access as string;
     const gmail = google.gmail({ version: 'v1' });
     const list = await gmail.users.drafts.list({ userId: 'me', access_token: accessToken });
     if (list.data.drafts) {
