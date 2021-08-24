@@ -260,7 +260,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default.skip('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/');
       await GmailPageRecipe.emptyDrafts(gmailPage);
-      await GmailPageRecipe.emptyTrash(gmailPage);
       await gotoGmailPage(gmailPage, '/FMfcgzGkZZqZQpLXZnzPRFKVrwKNnqrN'); // to go encrypted convo
       await gmailPage.waitAndClick('@secure-reply-button');
       await createSecureDraft(t, browser, gmailPage, 'reply draft');
