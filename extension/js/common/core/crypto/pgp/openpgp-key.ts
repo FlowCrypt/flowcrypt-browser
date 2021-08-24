@@ -19,8 +19,12 @@ export class OpenPGPKey {
   private static minimumBitsByAlgo: { [key: string]: number };
 
   public static parse = async (text: string): Promise<Key> => {
-    // TODO: Should we throw if more keys are in the armor?
-    return (await OpenPGPKey.parseMany(text))[0];
+    const keys = await OpenPGPKey.parseMany(text);
+    const keysLength = keys.length;
+    if (keysLength > 1) {
+      throw new Error(`Found ${keysLength} OpenPGP keys, expected one`);
+    }
+    return keys[0];
   }
 
   public static parseMany = async (text: string): Promise<Key[]> => {
