@@ -83,11 +83,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default('mail.google.com - setup prompt notif + hides when close clicked + reappears + setup link opens settings', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'ci.tests.gmail@flowcrypt.dev');
       await settingsPage.close();
-      let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
+      let gmailPage = await BrowserRecipe.openGmailPage(t, browser, undefined, false);
       await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
       await gmailPage.waitAndClick('@notification-setup-action-close', { confirmGone: true });
       await gmailPage.close();
-      gmailPage = await BrowserRecipe.openGmailPage(t, browser);
+      gmailPage = await BrowserRecipe.openGmailPage(t, browser, undefined, false);
       await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
       const newSettingsPage = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@notification-setup-action-open-settings'));
       await newSettingsPage.waitAll('@action-connect-to-gmail');
@@ -142,11 +142,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     ava.default('mail.google.com - setup prompt notification shows up + dismiss hides it + does not reappear if dismissed', testWithBrowser(undefined, async (t, browser) => {
       await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'ci.tests.gmail@flowcrypt.dev');
-      let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
+      let gmailPage = await BrowserRecipe.openGmailPage(t, browser, undefined, false);
       await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
       await gmailPage.waitAndClick('@notification-setup-action-dismiss', { confirmGone: true });
       await gmailPage.close();
-      gmailPage = await BrowserRecipe.openGmailPage(t, browser);
+      gmailPage = await BrowserRecipe.openGmailPage(t, browser, undefined, false);
       await gmailPage.notPresent(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
     }));
 

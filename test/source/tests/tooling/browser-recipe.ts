@@ -28,10 +28,15 @@ export class BrowserRecipe {
     return settingsPage;
   }
 
-  public static openGmailPage = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
+  public static openGmailPage = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0, expectComposeButton = true) => {
     const gmailPage = await browser.newPage(t, TestUrls.gmail(googleLoginIndex));
-    await gmailPage.waitAll('div.z0'); // compose button container visible
+    if (expectComposeButton) {
+      await gmailPage.waitAll('div.z0'); // compose button container visible
+    }
     await Util.sleep(3); // give it extra time to make sure FlowCrypt is initialized if it was supposed to
+    if (!expectComposeButton) {
+      await gmailPage.notPresent('div.z0'); // compose button container not visible
+    }
     return gmailPage;
   }
 
