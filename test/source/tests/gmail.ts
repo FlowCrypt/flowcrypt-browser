@@ -303,7 +303,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     }));
 
     ava.default('mail.google.com - plain reply to encrypted and signed messages', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/KtbxLvgswQbRmwVxNgDrtvttRPRBtMwKvq'); // plain convo
+      const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
       await Util.sleep(1);
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
       await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcPktjdSxpJVhZlZqpTr'); // to go encrypted convo
