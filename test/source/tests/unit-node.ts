@@ -578,6 +578,40 @@ ${testConstants.smimeCert}`);
       t.pass();
     });
 
+    ava.default(`[unit][KeyUtil.decrypt] throws on incorrect PKCS#8 encrypted private key`, async t => {
+      const encryptedKey = await KeyUtil.parse(`-----BEGIN ENCRYPTED PRIVATE KEY-----
+
+AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....
+-----END ENCRYPTED PRIVATE KEY-----
+${testConstants.smimeCert}`);
+      await t.throwsAsync(() => KeyUtil.decrypt(encryptedKey, '123'), {
+        instanceOf: Error, message: `Invalid PEM formatted message.`
+      });
+      t.pass();
+    });
+
+    ava.default(`[unit][KeyUtil.parse] throws on incorrect PKCS#8 private key`, async t => {
+      await t.throwsAsync(() => KeyUtil.parse(`-----BEGIN PRIVATE KEY-----
+
+AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....
+-----END PRIVATE KEY-----
+${testConstants.smimeCert}`), {
+        instanceOf: Error, message: `Invalid PEM formatted message.`
+      });
+      t.pass();
+    });
+
+    ava.default(`[unit][KeyUtil.parse] throws on incorrect RSA PKCS#8 private key`, async t => {
+      await t.throwsAsync(() => KeyUtil.parse(`-----BEGIN RSA PRIVATE KEY-----
+
+AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....
+-----END RSA PRIVATE KEY-----
+${testConstants.smimeCert}`), {
+        instanceOf: Error, message: `Invalid PEM formatted message.`
+      });
+      t.pass();
+    });
+
     ava.default('[unit][KeyUtil.armor] S/MIME key from PKCS#12 is armored to PKCS#8', async t => {
       const p12 = readFileSync("test/samples/smime/human-pwd-original-PKCS12.pfx", 'binary');
       const key = SmimeKey.parseDecryptBinary(Buf.fromRawBytesStr(p12), 'AHbxhwquX5pc');
