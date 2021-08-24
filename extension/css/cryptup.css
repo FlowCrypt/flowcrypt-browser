@@ -1380,7 +1380,7 @@ table#compose th div.header h1 {
   font-weight: normal;
   color: #fff;
   text-align: left;
-  cursor: pointer;
+  cursor: default;
   padding: 0 10px;
   flex-grow: 1;
 }

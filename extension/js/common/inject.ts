@@ -46,8 +46,8 @@ export class Injector {
     this.S = Ui.buildJquerySels({ // these are selectors that are not specific to any webmail variant
       body: 'body',
       compose_button_container: this.container.composeBtnSel[this.webmailName],
-      compose_button: '#flowcrypt_new_message_button',
-      compose_window: 'div.new_message',
+      compose_button: '#flowcrypt_secure_compose_button',
+      secure_compose_window: '.secure_compose_window',
     });
   }
 
@@ -56,9 +56,16 @@ export class Injector {
       .append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer());  // xss-safe-factory
   }
 
-  public openComposeWin = () => {
-    if (this.S.now('compose_window').length === 0) {
-      this.S.cached('body').append(this.factory.embeddedCompose()); // xss-safe-factory
+  public openComposeWin = (draftId?: string): boolean => {
+    const alreadyOpenedCount = this.S.now('secure_compose_window').length;
+    if (alreadyOpenedCount < 3) {
+      const composeWin = $(this.factory.embeddedCompose(draftId));
+      composeWin.attr('data-order', alreadyOpenedCount + 1);
+      this.S.cached('body').append(composeWin); // xss-safe-factory
+      return true;
+    } else {
+      Ui.toast('Only 3 FlowCrypt windows can be opened at a time', 3, 'top', 'error');
+      return false;
     }
   }
 
@@ -68,7 +75,7 @@ export class Injector {
     } else if (this.shouldInject()) {
       if (this.S.now('compose_button').length === 0) {
         const container = this.S.now('compose_button_container').first().prepend(this.factory.btnCompose(this.webmailName)); // xss-safe-factory
-        container.find(this.S.sel('compose_button')).click(Ui.event.handle(() => this.openComposeWin()));
+        container.find(this.S.sel('compose_button')).click(Ui.event.prevent('double', () => { this.openComposeWin(); }));
       }
     }
   }
