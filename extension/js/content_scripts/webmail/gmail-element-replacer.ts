@@ -199,6 +199,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       for (const elem of convoReplyBtnsArr) {
         $(elem).addClass('inserted');
         const gmailReplyBtn = $(elem).find('[aria-label="Reply"]');
+        const gmailReplyToAllBtn = $(elem).find('[aria-label="Reply to all"]');
         const secureReplyBtn = $(this.factory.btnSecureReply()).insertAfter(gmailReplyBtn);  // xss-safe-factory
         secureReplyBtn.addClass(gmailReplyBtn.attr('class') || '');
         secureReplyBtn.off();
@@ -213,11 +214,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             $(secureReplyBtn).click();
           }
         });
-        gmailReplyBtn.click(Ui.event.handle(() => {
+        gmailReplyBtn.add(gmailReplyToAllBtn).click(Ui.event.handle((target) => {
           const replyContainerIframe = $('.reply_message_iframe_container > iframe').last();
           if (replyContainerIframe.length && !$('#switch_to_encrypted_reply').length) {
             this.keepNextStandardReplyBox = true;
-            this.showSwithToEncryptedReplyWarning = gmailReplyBtn.closest(this.sel.msgOuter).find('iframe.pgp_block').hasClass('encryptedMsg');
+            this.showSwithToEncryptedReplyWarning = $(target).closest(this.sel.msgOuter).find('iframe.pgp_block').hasClass('encryptedMsg');
           }
         }));
       }
