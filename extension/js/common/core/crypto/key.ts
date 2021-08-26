@@ -125,7 +125,12 @@ export class KeyUtil {
   }
 
   public static parse = async (text: string): Promise<Key> => {
-    return (await KeyUtil.parseMany(text))[0];
+    const keys = await KeyUtil.parseMany(text);
+    const keysLength = keys.length;
+    if (keysLength > 1) {
+      throw new Error(`Found ${keysLength} keys, expected one`);
+    }
+    return keys[0];
   }
 
   public static parseMany = async (text: string): Promise<Key[]> => {
@@ -272,7 +277,7 @@ export class KeyUtil {
   }
 
   public static getKeyType = (pubkey: string): 'openpgp' | 'x509' | 'unknown' => {
-    if (pubkey.startsWith(PgpArmor.headers('certificate').begin)) {
+    if (pubkey.includes(PgpArmor.headers('certificate').begin)) {
       return 'x509';
     } else if (pubkey.startsWith(PgpArmor.headers('pkcs12').begin)) {
       return 'x509';
@@ -306,6 +311,8 @@ export class KeyUtil {
   public static decrypt = async (key: Key, passphrase: string, optionalKeyid?: OpenPGP.Keyid, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
     if (key.type === 'openpgp') {
       return await OpenPGPKey.decryptKey(key, passphrase, optionalKeyid, optionalBehaviorFlag);
+    } else if (key.type === 'x509') {
+      return await SmimeKey.decryptKey(key, passphrase, optionalBehaviorFlag);
     } else {
       throw new Error(`KeyUtil.decrypt does not support key type ${key.type}`);
     }
@@ -314,6 +321,8 @@ export class KeyUtil {
   public static encrypt = async (key: Key, passphrase: string) => {
     if (key.type === 'openpgp') {
       return await OpenPGPKey.encryptKey(key, passphrase);
+    } else if (key.type === 'x509') {
+      return await SmimeKey.encryptKey(key, passphrase);
     } else {
       throw new Error(`KeyUtil.encrypt does not support key type ${key.type}`);
     }

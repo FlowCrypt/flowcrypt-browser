@@ -5,7 +5,7 @@
 import { EmailProviderInterface, ReplyParams } from '../../js/common/api/email-provider/email-provider-api.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
-import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
+import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
@@ -182,7 +182,7 @@ export class ComposeView extends View {
       }
     } else { // compose
       if (!this.draftId) {
-        this.draftId = this.draftModule.localNewMessageDraftId;
+        this.draftId = this.draftModule.localDraftId;
       }
     }
     BrowserMsg.listen(this.tabId!);
@@ -191,6 +191,15 @@ export class ComposeView extends View {
   }
 
   public setHandlers = () => {
+    BrowserMsg.addListener('focus_previous_active_window', async ({ frameId }: Bm.ComposeWindow) => {
+      if (this.frameId === frameId) {
+        this.S.cached('input_to').focus();
+      }
+    });
+    BrowserMsg.listen(this.parentTabId);
+    const setActiveWindow = this.setHandler(async () => { BrowserMsg.send.setActiveWindow(this.parentTabId, { frameId: this.frameId }); });
+    this.S.cached('body').on('focusin', setActiveWindow);
+    this.S.cached('body').on('click', setActiveWindow);
     this.S.cached('icon_help').click(this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`)));
     this.attachmentsModule.setHandlers();
     this.inputModule.setHandlers();

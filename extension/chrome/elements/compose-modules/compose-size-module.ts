@@ -12,9 +12,11 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
   public composeWindowIsMinimized = false;
 
   private composeWindowIsMaximized = false;
+  private MINIMIZED_CLASS = 'minimized';
   private FULL_WINDOW_CLASS = 'full_window';
   private lastReplyBoxTableHeight = 0;
   private refBodyHeight?: number;
+  private currentWindowSelector = `.secure_compose_window[data-frame-id="${this.view.frameId}"]`
 
   public setHandlers = () => {
     $('body').click(event => {
@@ -23,7 +25,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       }
     });
     if (!this.view.isReplyBox) {
-      $('.minimize_new_message').click(this.view.setHandler(() => this.minimizeComposerWindow()));
+      $('.minimize_compose_window').click(this.view.setHandler(() => this.minimizeComposerWindow()));
       $('.popout').click(this.view.setHandler(() => this.popoutClickHandler()));
     }
   }
@@ -132,10 +134,15 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       this.addOrRemoveFullScreenStyles(this.composeWindowIsMinimized);
     }
     BrowserMsg.send.setCss(this.view.parentTabId, {
-      selector: `iframe#${this.view.frameId}, div#new_message`,
+      selector: `iframe#${this.view.frameId}, ${this.currentWindowSelector}`,
       css: { height: this.composeWindowIsMinimized ? '' : this.view.S.cached('header').css('height') },
     });
     this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
+    if (this.composeWindowIsMinimized) {
+      BrowserMsg.send.addClass(this.view.parentTabId, { selector: this.currentWindowSelector, class: this.MINIMIZED_CLASS });
+    } else {
+      BrowserMsg.send.removeClass(this.view.parentTabId, { selector: this.currentWindowSelector, class: this.MINIMIZED_CLASS });
+    }
   }
 
   private toggleFullScreen = async () => {
@@ -157,10 +164,10 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
   private addOrRemoveFullScreenStyles = (add: boolean) => {
     if (add) {
       this.view.S.cached('body').addClass(this.FULL_WINDOW_CLASS);
-      BrowserMsg.send.addClass(this.view.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
+      BrowserMsg.send.addClass(this.view.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: this.currentWindowSelector });
     } else {
       this.view.S.cached('body').removeClass(this.FULL_WINDOW_CLASS);
-      BrowserMsg.send.removeClass(this.view.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
+      BrowserMsg.send.removeClass(this.view.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: this.currentWindowSelector });
     }
   }
 

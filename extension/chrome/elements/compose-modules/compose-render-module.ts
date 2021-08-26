@@ -151,7 +151,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     if (this.view.isReplyBox) {
       BrowserMsg.send.closeReplyMessage(this.view.parentTabId, { frameId: this.view.frameId });
     } else {
-      BrowserMsg.send.closeNewMessage(this.view.parentTabId);
+      BrowserMsg.send.closeComposeWindow(this.view.parentTabId, { frameId: this.view.frameId });
     }
   }
 
@@ -246,8 +246,12 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         await this.view.recipientsModule.parseRenderRecipients(this.view.S.cached('input_to')); // this will force firefox to render them on load
       }
     } else {
-      $('.close_new_message').click(this.view.setHandler(() => this.actionCloseHandler(), this.view.errModule.handle(`close message`)));
-      this.view.S.cached('header').find('#header_title').click(() => $('.minimize_new_message').click());
+      $('.close_compose_window').click(this.view.setHandler(() => this.actionCloseHandler(), this.view.errModule.handle(`close compose window`)));
+      this.view.S.cached('title').click(() => {
+        if (this.view.sizeModule.composeWindowIsMinimized) {
+          $('.minimize_compose_window').click();
+        }
+      });
       await this.view.quoteModule.addTripleDotQuoteExpandFooterOnlyBtn();
       this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
     }
@@ -326,7 +330,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     if (this.view.sizeModule.composeWindowIsMinimized) {
       return e.preventDefault();
     }
-    Ui.escape(() => !this.view.isReplyBox && $('.close_new_message').click())(e);
+    Ui.escape(() => !this.view.isReplyBox && $('.close_compose_window').click())(e);
     const focusableEls = this.getFocusableEls();
     const focusIndex = focusableEls.indexOf(e.target);
     if (focusIndex !== -1) { // Focus trap (Tab, Shift+Tab)

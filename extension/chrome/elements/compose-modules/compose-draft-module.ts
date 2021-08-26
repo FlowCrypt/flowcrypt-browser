@@ -27,7 +27,7 @@ import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.
 export class ComposeDraftModule extends ViewModule<ComposeView> {
 
   public wasMsgLoadedFromDraft = false;
-  public localNewMessageDraftId = 'local-draft-';
+  public localDraftId = 'local-draft-';
 
   private currentlySavingDraft = false;
   private saveDraftInterval?: number;

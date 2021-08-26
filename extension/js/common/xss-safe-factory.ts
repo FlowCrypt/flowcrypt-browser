@@ -187,7 +187,13 @@ export class XssSafeFactory {
   }
 
   public embeddedCompose = (draftId?: string) => {
-    return Ui.e('div', { id: 'new_message', class: 'new_message', 'data-test': 'container-new-message', html: this.iframe(this.srcComposeMsg(draftId), [], { scrolling: 'no' }) });
+    const srcComposeMsg = this.srcComposeMsg(draftId);
+    return Ui.e('div', {
+      class: 'secure_compose_window',
+      html: this.iframe(srcComposeMsg, [], { scrolling: 'no' }),
+      'data-frame-id': String(Url.parse(['frameId'], srcComposeMsg).frameId),
+      'data-test': 'container-new-message',
+    });
   }
 
   public embeddedAttachment = (meta: Attachment, isEncrypted: boolean, parentTabId?: string) => {
@@ -224,10 +230,10 @@ export class XssSafeFactory {
 
   public btnCompose = (webmailName: WebMailName) => {
     if (webmailName === 'outlook') {
-      const btn = `<div class="new_message_button" id="flowcrypt_new_message_button" title="New Secure Email"><img src="${this.srcImg('logo-19-19.png')}"></div>`;
+      const btn = `<div class="new_secure_compose_window_button" id="flowcrypt_secure_compose_button" title="New Secure Email"><img src="${this.srcImg('logo-19-19.png')}"></div>`;
       return `<div class="_fce_c ${this.destroyableCls} cryptup_compose_button_container" role="presentation">${btn}</div>`;
     } else {
-      const btn = `<div class="new_message_button" id="flowcrypt_new_message_button" role="button" tabindex="0" data-test="action-secure-compose">Secure Compose</div>`;
+      const btn = `<div class="new_secure_compose_window_button" id="flowcrypt_secure_compose_button" role="button" tabindex="0" data-test="action-secure-compose">Secure Compose</div>`;
       return `<div class="${this.destroyableCls} z0">${btn}</div>`;
     }
   }

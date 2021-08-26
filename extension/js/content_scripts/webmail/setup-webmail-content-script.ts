@@ -108,9 +108,28 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
   };
 
   const browserMsgListen = (acctEmail: string, tabId: string, inject: Injector, factory: XssSafeFactory, notifications: Notifications) => {
-    BrowserMsg.addListener('open_new_message', async () => inject.openComposeWin());
-    BrowserMsg.addListener('close_new_message', async () => {
-      $('div.new_message').remove();
+    BrowserMsg.addListener('set_active_window', async ({ frameId }: Bm.ComposeWindow) => {
+      if ($(`.secure_compose_window.active[data-frame-id="${frameId}"]`).length) {
+        return; // already active
+      }
+      $(`.secure_compose_window`).removeClass('previous_active');
+      $(`.secure_compose_window.active`).addClass('previous_active').removeClass('active');
+      $(`.secure_compose_window[data-frame-id="${frameId}"]`).addClass('active');
+    });
+    BrowserMsg.addListener('close_compose_window', async ({ frameId }: Bm.ComposeWindow) => {
+      $(`.secure_compose_window[data-frame-id="${frameId}"]`).remove();
+      if ($('.secure_compose_window.previous_active:not(.minimized)').length) {
+        BrowserMsg.send.focusPreviousActiveWindow(tabId, { frameId: $('.secure_compose_window.previous_active:not(.minimized)').data('frame-id') as string });
+      } else if ($('.secure_compose_window:not(.minimized)').length) {
+        BrowserMsg.send.focusPreviousActiveWindow(tabId, { frameId: $('.secure_compose_window:not(.minimized)').data('frame-id') as string });
+      }
+      // reposition the rest of the compose windows
+      if (!$(`.secure_compose_window[data-order="1"]`).length) {
+        $(`.secure_compose_window[data-order="2"]`).attr('data-order', 1);
+      }
+      if (!$(`.secure_compose_window[data-order="2"]`).length) {
+        $(`.secure_compose_window[data-order="3"]`).attr('data-order', 2);
+      }
     });
     BrowserMsg.addListener('focus_body', async () => {
       if (document.activeElement instanceof HTMLElement) { // iframe have to be blurred before focusing body
@@ -118,10 +137,10 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       }
       $('body').focus();
     });
-    BrowserMsg.addListener('focus_frame', async ({ frameId }: Bm.FocusFrame) => {
+    BrowserMsg.addListener('focus_frame', async ({ frameId }: Bm.ComposeWindow) => {
       $(`iframe#${frameId}`).focus();
     });
-    BrowserMsg.addListener('close_reply_message', async ({ frameId }: Bm.CloseReplyMessage) => {
+    BrowserMsg.addListener('close_reply_message', async ({ frameId }: Bm.ComposeWindow) => {
       $(`iframe#${frameId}`).remove();
     });
     BrowserMsg.addListener('reinsert_reply_box', async ({ replyMsgId }: Bm.ReinsertReplyBox) => {

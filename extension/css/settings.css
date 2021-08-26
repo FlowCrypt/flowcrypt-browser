@@ -712,7 +712,7 @@ body#settings .settings-border .key_list {
   width: 100%;
   border: none;
 }
-#settings.client div.new_message { position: fixed; }
+#settings.client .secure_compose_window { position: fixed; }
 
 #settings.client span.label {
   font-weight: normal;

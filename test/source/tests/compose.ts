@@ -33,17 +33,15 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
-    ava.default('compose - toggle minimized state by clicking compose window header', testWithBrowser('compatibility', async (t, browser) => {
+    ava.default('compose - restore compose window size by clicking its header', testWithBrowser('compatibility', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('flowcrypt.compatibility@gmail.com'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
       const initialComposeFrameHeight = await inboxPage.getOuterHeight('iframe');
       await composeFrame.waitAll('#section_header');
       const composeFrameHeaderHeight = await composeFrame.getOuterHeight('#section_header');
-      await Util.sleep(4); // todo - should be fixed, caused by `$('body').attr('data-test-state', 'ready');` baing called in two differing situations
-      // mimimize compose frame
-      await composeFrame.waitAndClick('@header-title');
+      await composeFrame.waitAndClick('.minimize_compose_window');
       expect(await inboxPage.getOuterHeight('iframe')).to.eq(composeFrameHeaderHeight, 'compose box height failed to collapse');
-      // restore compose frame
+      // restore compose frame by clicking the header
       await composeFrame.waitAndClick('@header-title');
       expect(await inboxPage.getOuterHeight('iframe')).to.eq(initialComposeFrameHeight);
     }));
@@ -790,9 +788,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       await composeFrame.waitAndClick('.popout', { sleepWhenDone: 1 });
       expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetWidth'))).to.equal(initialWidth, 'width back to initial');
       expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.equal(initialHeight, 'height back to initial');
-      await composeFrame.waitAndClick('.minimize_new_message', { sleepWhenDone: 1 });
+      await composeFrame.waitAndClick('.minimize_compose_window', { sleepWhenDone: 1 });
       expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.be.lessThan(initialHeight, 'minimized lower than initial');
-      await composeFrame.waitAndClick('.minimize_new_message', { sleepWhenDone: 1 });
+      await composeFrame.waitAndClick('.minimize_compose_window', { sleepWhenDone: 1 });
       expect(Number(await PageRecipe.getElementPropertyJson(composeBody, 'offsetHeight'))).to.equal(initialHeight, 'back to initial after un-minimizing');
     }));
 
@@ -914,6 +912,47 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       expect(message).to.include('-----END PGP MESSAGE-----');
       expect(message).to.not.include('Version');
       expect(message).to.not.include('Comment');
+    }));
+
+    ava.default('compose - multiple compose windows - opening, max 3, order, active', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('ci.tests.gmail@flowcrypt.test'));
+      // open 3 compose windows
+      await inboxPage.waitAndClick('@action-open-secure-compose-window', { sleepWhenDone: 1 });
+      await inboxPage.waitAndClick('@action-open-secure-compose-window', { sleepWhenDone: 1 });
+      await inboxPage.waitAndClick('@action-open-secure-compose-window', { sleepWhenDone: 1 });
+      let secureComposeWindows = await inboxPage.target.$$('.secure_compose_window');
+      expect(secureComposeWindows.length).to.equal(3);
+      // try to open the 4th one
+      await inboxPage.click('@action-open-secure-compose-window');
+      await inboxPage.waitForContent('.ui-toast-title', 'Only 3 FlowCrypt windows can be opened at a time');
+      // make sure the data-order attributes are correct
+      expect(await PageRecipe.getElementAttribute(secureComposeWindows[0], 'data-order')).to.equal('1');
+      expect(await PageRecipe.getElementAttribute(secureComposeWindows[1], 'data-order')).to.equal('2');
+      expect(await PageRecipe.getElementAttribute(secureComposeWindows[2], 'data-order')).to.equal('3');
+      // make sure the 3rd compose window is active, and the 2nd is previous_active
+      expect(await inboxPage.hasClass('.secure_compose_window[data-order="1"]', 'active')).to.be.false;
+      expect(await inboxPage.hasClass('.secure_compose_window[data-order="2"]', 'active')).to.be.false;
+      expect(await inboxPage.hasClass('.secure_compose_window[data-order="3"]', 'active')).to.be.true;
+      expect(await inboxPage.hasClass('.secure_compose_window[data-order="1"]', 'previous_active')).to.be.false;
+      expect(await inboxPage.hasClass('.secure_compose_window[data-order="2"]', 'previous_active')).to.be.true;
+      expect(await inboxPage.hasClass('.secure_compose_window[data-order="3"]', 'previous_active')).to.be.false;
+      // focus the 1st one
+      const firstComposeFrame = await inboxPage.getFrame(['compose.htm']);
+      await inboxPage.waitAndFocus('iframe');
+      await firstComposeFrame.waitAndFocus('@input-body');
+      // make sure the 1st compose window is active, and the 3rd is previous_active
+      expect(await inboxPage.hasClass('.secure_compose_window[data-order="1"]', 'active')).to.be.true;
+      expect(await inboxPage.hasClass('.secure_compose_window[data-order="2"]', 'active')).to.be.false;
+      expect(await inboxPage.hasClass('.secure_compose_window[data-order="3"]', 'active')).to.be.false;
+      expect(await inboxPage.hasClass('.secure_compose_window[data-order="1"]', 'previous_active')).to.be.false;
+      expect(await inboxPage.hasClass('.secure_compose_window[data-order="2"]', 'previous_active')).to.be.false;
+      expect(await inboxPage.hasClass('.secure_compose_window[data-order="3"]', 'previous_active')).to.be.true;
+      // close the 1st one and make sure the order is recalculated
+      await firstComposeFrame.click('@action-close-new-message');
+      secureComposeWindows = await inboxPage.target.$$('.secure_compose_window');
+      expect(secureComposeWindows.length).to.equal(2);
+      expect(await PageRecipe.getElementAttribute(secureComposeWindows[0], 'data-order')).to.equal('1');
+      expect(await PageRecipe.getElementAttribute(secureComposeWindows[1], 'data-order')).to.equal('2');
     }));
 
     ava.default.skip('oversize attachment does not get erroneously added', testWithBrowser('ci.tests.gmail', async (t, browser) => {

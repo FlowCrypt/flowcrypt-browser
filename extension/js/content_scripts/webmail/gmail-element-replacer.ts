@@ -261,22 +261,24 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         let button: string | undefined;
         const [, , name, buttonHrefId] = draftLinkMatch;
         if (name === 'draft_compose') {
-          button = `<a href="#" class="open_draft_${Xss.escape(buttonHrefId)} close_gmail_compose_window">Open draft</a>`;
+          button = `<a href="#" class="open_draft_${Xss.escape(buttonHrefId)}">Open draft</a>`;
         } else if (name === 'draft_reply' && contenteditable.closest(this.sel.standardComposeWin).length === 1) { // reply draft opened in compose window, TODO: remove in #3329
           button = `<a href="#inbox/${Xss.escape(buttonHrefId)}" class="close_gmail_compose_window">Open draft</a>`;
         }
         if (button) {
           Xss.sanitizeReplace(contenteditable, button);
-          $(`a.open_draft_${buttonHrefId}`).click(Ui.event.handle(() => {
-            $('div.new_message').remove();
-            $('body').append(this.factory.embeddedCompose(buttonHrefId)); // xss-safe-factory
+          $(`a.open_draft_${buttonHrefId}`).click(Ui.event.handle((target) => {
+            if (this.injector.openComposeWin(buttonHrefId)) {
+              closeGmailComposeWindow(target);
+            }
           }));
           // close original draft window
-          $('.close_gmail_compose_window').click(Ui.event.handle((target) => {
+          const closeGmailComposeWindow = (target: HTMLElement) => {
             const mouseUpEvent = document.createEvent('Event');
             mouseUpEvent.initEvent('mouseup', true, true); // Gmail listens for the mouseup event, not click
             $(target).closest('.dw').find('.Ha')[0].dispatchEvent(mouseUpEvent); // jquery's trigger('mouseup') doesn't work for some reason
-          }));
+          };
+          $('.close_gmail_compose_window').click(Ui.event.handle(closeGmailComposeWindow));
         }
       }
     }
@@ -729,7 +731,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             if (!standardComposeWin.find('.recipients_use_encryption').length) {
               const prependable = standardComposeWin.find('div.az9 span[email]').first().parents('form').first();
               prependable.prepend(this.factory.btnRecipientsUseEncryption('gmail')); // xss-safe-factory
-              prependable.find('a').click(Ui.event.handle(() => this.injector.openComposeWin()));
+              prependable.find('a').click(Ui.event.handle(() => { this.injector.openComposeWin(); }));
             }
           } else {
             standardComposeWin.find('.recipients_use_encryption').remove();
