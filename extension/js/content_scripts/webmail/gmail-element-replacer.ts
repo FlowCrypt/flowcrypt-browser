@@ -46,7 +46,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private currentlyEvaluatingStandardComposeBoxRecipients = false;
   private currentlyReplacingAttachments = false;
   private keepNextStandardReplyBox = false;
-  private showSwithToEncryptedReplyWarning = false;
+  private showSwitchToEncryptedReplyWarning = false;
   private removeNextReplyBoxBorders = false;
 
   private sel = { // gmail_variant=standard|new
@@ -218,7 +218,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           const replyContainerIframe = $('.reply_message_iframe_container > iframe').last();
           if (replyContainerIframe.length && !$('#switch_to_encrypted_reply').length) {
             this.keepNextStandardReplyBox = true;
-            this.showSwithToEncryptedReplyWarning = $(target).closest(this.sel.msgOuter).find('iframe.pgp_block').hasClass('encryptedMsg');
+            this.showSwitchToEncryptedReplyWarning = $(target).closest(this.sel.msgOuter).find('iframe.pgp_block').hasClass('encryptedMsg');
           }
         }));
       }
@@ -626,7 +626,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         if (this.keepNextStandardReplyBox) {
           for (const replyBoxEl of newReplyBoxes) {
             $(replyBoxEl).addClass('reply_message_evaluated');
-            if (this.showSwithToEncryptedReplyWarning) {
+            if (this.showSwitchToEncryptedReplyWarning) {
               const notification = $('<div class="error_notification">The last message was encrypted, but you are composing a reply without encryption. </div>');
               const swithToEncryptedReply = $('<a href id="switch_to_encrypted_reply">Switch to encrypted reply</a>');
               swithToEncryptedReply.click(Ui.event.handle((el, ev: JQuery.Event) => {
@@ -639,7 +639,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             }
           }
           this.keepNextStandardReplyBox = false;
-          this.showSwithToEncryptedReplyWarning = false;
+          this.showSwitchToEncryptedReplyWarning = false;
           return;
         }
         for (const replyBoxEl of newReplyBoxes.reverse()) { // looping in reverse
