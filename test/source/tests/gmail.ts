@@ -256,12 +256,12 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: DCB2 74D2 4683 145E B053 BC0B 48E4 74A0 926B AE86');
     }));
 
-    // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
-    ava.default.skip('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/');
-      await GmailPageRecipe.emptyDrafts(gmailPage);
-      await GmailPageRecipe.emptyTrash(gmailPage);
-      await gotoGmailPage(gmailPage, '/FMfcgzGkZZqZQpLXZnzPRFKVrwKNnqrN'); // to go encrypted convo
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
+      await BrowserRecipe.deleteAllDraftsInGmailAccount(settingsPage);
+      await settingsPage.close();
+      await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcPktjdSxpJVhZlZqpTr'); // to go encrypted convo
       await gmailPage.waitAndClick('@secure-reply-button');
       await createSecureDraft(t, browser, gmailPage, 'reply draft');
       await gmailPage.page.reload();
@@ -302,12 +302,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitForContent('.ui-toast-title', 'Only 3 FlowCrypt windows can be opened at a time');
     }));
 
-    // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
-    ava.default.skip('mail.google.com - plain reply to encrypted and signed messages', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/KtbxLvgswQbRmwVxNgDrtvttRPRBtMwKvq'); // plain convo
+    ava.default('mail.google.com - plain reply to encrypted and signed messages', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
       await Util.sleep(1);
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
-      await gotoGmailPage(gmailPage, '/FMfcgzGkZZqZQpLXZnzPRFKVrwKNnqrN'); // to go encrypted convo
+      await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcPktjdSxpJVhZlZqpTr'); // to go encrypted convo
       await Util.sleep(1);
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
       await Util.sleep(5);
@@ -317,7 +316,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitAndClick('[data-tooltip="Secure Reply"]'); // Switch to encrypted reply
       await Util.sleep(5);
       await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: false });
-      await gotoGmailPage(gmailPage, '/FMfcgxwJXVGtMMLhrwhNcLBMCbFtpMhQ'); // go to signed convo
+      await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNpjDdNvCrwzqvXspZZxvh'); // go to signed convo
       await Util.sleep(1);
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
       await pageDoesNotHaveSecureReplyContainer(gmailPage);

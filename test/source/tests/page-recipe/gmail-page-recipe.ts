@@ -40,25 +40,4 @@ export class GmailPageRecipe extends PageRecipe {
     await Util.sleep(3);
   }
 
-  public static emptyDrafts = async (gmailPage: ControllablePage) => {
-    await Util.sleep(1);
-    await gmailPage.waitAndClick('[data-tooltip="Drafts"]');
-    await Util.sleep(1);
-    await gmailPage.page.keyboard.press('*');
-    await gmailPage.page.keyboard.press('a'); // Select all
-    await Util.sleep(.5);
-    await gmailPage.page.keyboard.press('#'); // Delete
-  }
-
-  public static emptyTrash = async (gmailPage: ControllablePage) => {
-    await Util.sleep(1);
-    await gmailPage.waitAndClick('.ah9'); // "More" button
-    await gmailPage.waitAndClick('[aria-label="Trash"]');
-    await Util.sleep(1);
-    if (await gmailPage.clickIfPresent('//*[text()="Empty Trash now"]')) {
-      await gmailPage.page.keyboard.press('Enter'); // confirm deletion
-    }
-    await gmailPage.waitForContent('.TC', 'No conversations in Trash');
-  }
-
 }

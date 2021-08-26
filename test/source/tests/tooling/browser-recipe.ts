@@ -3,7 +3,7 @@
 import { Config, Util, TestMessage } from '../../util';
 
 import { AvaContext } from '.';
-import { BrowserHandle } from '../../browser';
+import { BrowserHandle, ControllablePage } from '../../browser';
 import { OauthPageRecipe } from './../page-recipe/oauth-page-recipe';
 import { SetupPageRecipe } from './../page-recipe/setup-page-recipe';
 import { TestUrls } from '../../browser/test-urls';
@@ -78,8 +78,8 @@ export class BrowserRecipe {
       }
       if (testVariant === 'CONSUMER-LIVE-GMAIL') {
         // clean up drafts so that broken tests from the past don't affect this test run
-        const { cryptup_citestsgmailflowcryptdev_google_token_access: accessToken } = await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcryptdev_google_token_access']);
-        await Promise.all([BrowserRecipe.deleteAllDraftsInGmailAccount(accessToken as string), settingsPage.close()]);
+        await BrowserRecipe.deleteAllDraftsInGmailAccount(settingsPage);
+        await settingsPage.close();
       }
     } else {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
@@ -88,7 +88,8 @@ export class BrowserRecipe {
     }
   }
 
-  public static deleteAllDraftsInGmailAccount = async (accessToken: string): Promise<void> => {
+  public static deleteAllDraftsInGmailAccount = async (settingsPage: ControllablePage): Promise<void> => {
+    const accessToken = (await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcryptdev_google_token_access'])).cryptup_citestsgmailflowcryptdev_google_token_access as string;
     const gmail = google.gmail({ version: 'v1' });
     const list = await gmail.users.drafts.list({ userId: 'me', access_token: accessToken });
     if (list.data.drafts) {
