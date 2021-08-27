@@ -4,7 +4,7 @@
 
 import { Mime, MimeContent, MimeProccesedMsg } from '../../../js/common/core/mime.js';
 import { AjaxErr } from '../../../js/common/api/shared/api-error.js';
-import { ApiErr } from '../../../js/common/api/shared/api-error.js';
+import { ApiErr, InvalidRecipientError } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -161,8 +161,11 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
           // not found - creating draft on a thread that does not exist
           this.view.threadId = ''; // forget there was a threadId
           await this.draftSave(true); // forceSave=true to not skip
-        } else {
+        } else if (e instanceof InvalidRecipientError){
           this.view.S.cached('send_btn_note').text('Not saved (error)');
+        } else {
+          Catch.reportErr(e);
+          Ui.toast(`Draft not saved: ${Xss.htmlSanitizeAndStripAllTags(String(e), '\n')}`, 5); // xss-escaped
         }
       }
       this.currentlySavingDraft = false;

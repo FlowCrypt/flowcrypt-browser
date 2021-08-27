@@ -8,6 +8,8 @@ import { Attachment } from '../../core/attachment.js';
 import { Buf } from '../../core/buf.js';
 import { RecipientType } from '../shared/api.js';
 import { KeyStore } from '../../platform/store/key-store.js';
+import { InvalidRecipientError } from '../../api/shared/api-error.js';
+
 
 type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
 
@@ -122,7 +124,7 @@ export class SendableMsg {
     }
     const invalidEmails = allEmails.filter(email => !Str.isEmailValid(email));
     if (invalidEmails.length) {
-      throw new Error(`The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`);
+      throw new InvalidRecipientError(`The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`);
     }
   }
 
