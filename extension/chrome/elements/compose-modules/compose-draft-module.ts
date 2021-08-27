@@ -162,9 +162,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
           this.view.threadId = ''; // forget there was a threadId
           await this.draftSave(true); // forceSave=true to not skip
         } else {
-          Catch.reportErr(e);
           this.view.S.cached('send_btn_note').text('Not saved (error)');
-          Ui.toast(`Draft not saved: ${Xss.htmlSanitizeAndStripAllTags(String(e), '\n')}`, 5); // xss-escaped
         }
       }
       this.currentlySavingDraft = false;
