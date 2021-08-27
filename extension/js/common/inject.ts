@@ -64,7 +64,7 @@ export class Injector {
       this.S.cached('body').append(composeWin); // xss-safe-factory
       return true;
     } else {
-      Ui.toast('Only 3 FlowCrypt windows can be opened at a time', 3, 'top', 'error');
+      Ui.toast('Only 3 FlowCrypt windows can be opened at a time', false, 3, 'top', 'error');
       return false;
     }
   }

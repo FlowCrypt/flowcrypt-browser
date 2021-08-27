@@ -442,11 +442,12 @@ export class Ui {
     return $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
   }
 
-  public static toast = (msg: string, seconds = 2, position: SweetAlertPosition = 'bottom', icon?: SweetAlertIcon) => {
+  public static toast = (text: string, isHTML: boolean = false, seconds = 2, position: SweetAlertPosition = 'bottom', icon?: SweetAlertIcon) => {
+    text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
     // tslint:disable-next-line:no-floating-promises
     Ui.swal().fire({
       toast: true,
-      title: msg,
+      title: text,
       icon,
       showConfirmButton: false,
       position,

@@ -161,11 +161,12 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
           // not found - creating draft on a thread that does not exist
           this.view.threadId = ''; // forget there was a threadId
           await this.draftSave(true); // forceSave=true to not skip
-        } else if (e instanceof InvalidRecipientError){
-          this.view.S.cached('send_btn_note').text('Not saved (error)');
+        } else if (e instanceof InvalidRecipientError) {
+          this.view.S.cached('send_btn_note').text('Not saved (invalid recepients)');
         } else {
           Catch.reportErr(e);
-          Ui.toast(`Draft not saved: ${Xss.htmlSanitizeAndStripAllTags(String(e), '\n')}`, 5); // xss-escaped
+          Ui.toast(`Draft not saved: ${e}`, false, 5);
+          this.view.S.cached('send_btn_note').text('Not saved (error)');
         }
       }
       this.currentlySavingDraft = false;
