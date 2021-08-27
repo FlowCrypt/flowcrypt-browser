@@ -4,7 +4,7 @@
 
 import { Mime, MimeContent, MimeProccesedMsg } from '../../../js/common/core/mime.js';
 import { AjaxErr } from '../../../js/common/api/shared/api-error.js';
-import { ApiErr, InvalidRecipientError } from '../../../js/common/api/shared/api-error.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -22,7 +22,7 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
-import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
+import { SendableMsg, InvalidRecipientError } from '../../../js/common/api/email-provider/sendable-msg.js';
 
 export class ComposeDraftModule extends ViewModule<ComposeView> {
 

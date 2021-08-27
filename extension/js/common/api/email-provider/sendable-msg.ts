@@ -8,7 +8,6 @@ import { Attachment } from '../../core/attachment.js';
 import { Buf } from '../../core/buf.js';
 import { RecipientType } from '../shared/api.js';
 import { KeyStore } from '../../platform/store/key-store.js';
-import { InvalidRecipientError } from '../../api/shared/api-error.js';
 
 
 type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
@@ -34,6 +33,8 @@ type SendableMsgDefinition = SendableMsgHeaders
     body?: SendableMsgBody;
     attachments?: Attachment[];
   };
+
+export class InvalidRecipientError extends Error { }
 
 export class SendableMsg {
 

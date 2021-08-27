@@ -20,7 +20,6 @@ interface RawAjaxErr {
 abstract class AuthErr extends Error { }
 export class GoogleAuthErr extends AuthErr { }
 export class BackendAuthErr extends AuthErr { }
-export class InvalidRecipientError extends Error { }
 
 abstract class ApiCallErr extends Error {
 
