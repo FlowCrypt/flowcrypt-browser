@@ -162,7 +162,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
           this.view.threadId = ''; // forget there was a threadId
           await this.draftSave(true); // forceSave=true to not skip
         } else if (e instanceof InvalidRecipientError) {
-          this.view.S.cached('send_btn_note').text('Not saved (invalid recepients)');
+          this.view.S.cached('send_btn_note').text('Not saved (invalid recipients)');
         } else {
           Catch.reportErr(e);
           this.view.S.cached('send_btn_note').text('Not saved (error)');
