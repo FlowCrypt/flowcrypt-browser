@@ -164,7 +164,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         } else {
           Catch.reportErr(e);
           this.view.S.cached('send_btn_note').text('Not saved (error)');
-          Ui.toast(`Draft not saved: ${Xss.htmlSanitizeAndStripAllTags(e,'\n')}`, 5); // xss-escaped
+          Ui.toast(`Draft not saved: ${Xss.htmlSanitizeAndStripAllTags(String(e), '\n')}`, 5); // xss-escaped
         }
       }
       this.currentlySavingDraft = false;
