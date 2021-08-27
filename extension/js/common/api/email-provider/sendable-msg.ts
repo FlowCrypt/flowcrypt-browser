@@ -9,7 +9,6 @@ import { Buf } from '../../core/buf.js';
 import { RecipientType } from '../shared/api.js';
 import { KeyStore } from '../../platform/store/key-store.js';
 
-
 type Recipients = { to?: string[], cc?: string[], bcc?: string[] };
 
 type SendableMsgHeaders = {

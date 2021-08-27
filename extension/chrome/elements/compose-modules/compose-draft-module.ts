@@ -165,8 +165,8 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
           this.view.S.cached('send_btn_note').text('Not saved (invalid recepients)');
         } else {
           Catch.reportErr(e);
-          Ui.toast(`Draft not saved: ${e}`, false, 5);
           this.view.S.cached('send_btn_note').text('Not saved (error)');
+          Ui.toast(`Draft not saved: ${e}`, false, 5);
         }
       }
       this.currentlySavingDraft = false;
