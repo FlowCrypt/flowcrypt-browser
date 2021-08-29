@@ -26,7 +26,11 @@ import { PgpHash } from '../../../../js/common/core/crypto/pgp/pgp-hash.js';
 export class EncryptedMsgMailFormatter extends BaseMailFormatter {
 
   public sendableMsg = async (newMsg: NewMsgData, pubkeys: PubkeyResult[], signingPrv?: Key): Promise<SendableMsg> => {
-    if (newMsg.pwd && !this.isDraft) { // password-protected message, temporarily uploaded (encrypted) to FlowCrypt servers, to be served to recipient through web
+    if (newMsg.pwd && !this.isDraft) {
+      // password-protected message, temporarily uploaded (already encrypted) to:
+      //    - flowcrypt.com/api (consumers and customers without on-prem setup), or
+      //    - FlowCrypt Enterprise Server (enterprise customers with on-prem setup)
+      //    It will be served to recipient through web
       const msgUrl = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
       newMsg.pwd = undefined;
       return await this.sendablePwdMsg(newMsg, pubkeys, msgUrl, signingPrv); // encrypted for pubkeys only, pwd ignored
