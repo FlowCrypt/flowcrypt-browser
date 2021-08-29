@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 import * as forge from 'node-forge';
-import { Key } from '../key.js';
+import { Key, UnexpectedKeyTypeError } from '../key.js';
 import { Str } from '../../common.js';
 import { UnreportableError } from '../../../platform/catch.js';
 import { PgpArmor } from '../pgp/pgp-armor.js';
@@ -127,6 +127,16 @@ export class SmimeKey {
     SmimeKey.saveArmored(key, SmimeKey.getArmoredCertificate(key), encryptedPrivateKey);
     key.fullyDecrypted = false;
     key.fullyEncrypted = true;
+  }
+
+  public static asPublicKey = async (key: Key): Promise<Key> => {
+    if (key.type !== 'x509') {
+      throw new UnexpectedKeyTypeError(`Key type is ${key.type}, expecting x509 S/MIME`);
+    }
+    if (key.isPrivate) {
+      return SmimeKey.getKeyFromCertificate(SmimeKey.getArmoredCertificate(key), undefined);
+    }
+    return key;
   }
 
   private static getLeafCertificates = (msgBlocks: MsgBlock[]): { pem: string, certificate: forge.pki.Certificate }[] => {

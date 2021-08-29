@@ -725,20 +725,20 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     // todo - change to an "add key" instead of initial import test
     // todo - disable initial import of s/mime key
     // todo - disable import of encrypted s/mime key, require decrypted?
-    // ava.default.only(
-    //   'setup - s/mime private key',
-    //   testWithBrowser(undefined, async (t, browser) => {
-    //     const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
-    //     const key = {
-    //       title: 's/mime pkcs12 encrypted key',
-    //       filePath: 'test/samples/smime/human-unprotected-PKCS12.p12',
-    //       armored: null,
-    //       passphrase: 'test pp to encrypt unprotected key',
-    //       longid: null
-    //     };
-    //     await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: false, usedPgpBefore: false, key });
-    //   })
-    // );
+    ava.default(
+      'setup - s/mime private key',
+      testWithBrowser(undefined, async (t, browser) => {
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
+        const key = {
+          title: 's/mime pkcs12 encrypted key',
+          filePath: 'test/samples/smime/human-unprotected-PKCS12.p12',
+          armored: null,
+          passphrase: 'test pp to encrypt unprotected key',
+          longid: null
+        };
+        await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: false, usedPgpBefore: false, key });
+      })
+    );
 
   }
 
