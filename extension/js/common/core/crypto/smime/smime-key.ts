@@ -129,7 +129,7 @@ export class SmimeKey {
     key.fullyEncrypted = true;
   }
 
-  public static asPublicKey = async (key: Key): Promise<Key> => {
+  public static asPublicKey = (key: Key): Key => {
     if (key.type !== 'x509') {
       throw new UnexpectedKeyTypeError(`Key type is ${key.type}, expecting x509 S/MIME`);
     }
