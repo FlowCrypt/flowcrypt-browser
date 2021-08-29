@@ -22,7 +22,7 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
-import { SendableMsg } from '../../../js/common/api/email-provider/sendable-msg.js';
+import { SendableMsg, InvalidRecipientError } from '../../../js/common/api/email-provider/sendable-msg.js';
 
 export class ComposeDraftModule extends ViewModule<ComposeView> {
 
@@ -161,10 +161,12 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
           // not found - creating draft on a thread that does not exist
           this.view.threadId = ''; // forget there was a threadId
           await this.draftSave(true); // forceSave=true to not skip
+        } else if (e instanceof InvalidRecipientError) {
+          this.view.S.cached('send_btn_note').text('Not saved (invalid recipients)');
         } else {
           Catch.reportErr(e);
           this.view.S.cached('send_btn_note').text('Not saved (error)');
-          Ui.toast(`Draft not saved: ${e}`, 5);
+          Ui.toast(`Draft not saved: ${e}`, false, 5);
         }
       }
       this.currentlySavingDraft = false;

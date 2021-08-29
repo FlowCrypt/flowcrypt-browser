@@ -546,7 +546,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         });
       }
     } catch (e) {
-      Ui.toast(`Error searching contacts: ${ApiErr.eli5(e)}`, 5);
+      Ui.toast(`Error searching contacts: ${ApiErr.eli5(e)}`, false, 5);
       throw e;
     } finally {
       this.view.errModule.debug('searchContacts 7 - finishing');

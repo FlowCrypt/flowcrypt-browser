@@ -33,6 +33,8 @@ type SendableMsgDefinition = SendableMsgHeaders
     attachments?: Attachment[];
   };
 
+export class InvalidRecipientError extends Error { }
+
 export class SendableMsg {
 
   public sign?: (signable: string) => Promise<string>;
@@ -122,7 +124,7 @@ export class SendableMsg {
     }
     const invalidEmails = allEmails.filter(email => !Str.isEmailValid(email));
     if (invalidEmails.length) {
-      throw new Error(`The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`);
+      throw new InvalidRecipientError(`The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`);
     }
   }
 
