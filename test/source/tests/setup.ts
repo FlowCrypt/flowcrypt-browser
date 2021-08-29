@@ -732,9 +732,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const key = {
           title: 's/mime pkcs12 encrypted key',
           filePath: 'test/samples/smime/human-unprotected-PKCS12.p12',
-          armored: null,
+          armored: null, // tslint:disable-line:no-null-keyword
           passphrase: 'test pp to encrypt unprotected key',
-          longid: null
+          longid: null // tslint:disable-line:no-null-keyword
         };
         await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: false, usedPgpBefore: false, key });
       })
