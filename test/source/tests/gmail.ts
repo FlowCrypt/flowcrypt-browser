@@ -164,10 +164,9 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       expect(urls.length).to.eq(1);
     }));
 
-    // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
-    ava.default.skip('mail.google.com - decrypt message in offline mode', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('mail.google.com - decrypt message in offline mode', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await BrowserRecipe.openGmailPage(t, browser);
-      await gmailPage.type('[aria-label="Search mail"]', 'encrypted email for offline decrypt');
+      await gmailPage.type('[aria-label^="Search"]', 'encrypted email for offline decrypt');
       await gmailPage.press('Enter'); // submit search
       await Util.sleep(2); // wait for search results
       await gmailPage.page.setOfflineMode(true); // go offline mode
@@ -182,12 +181,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pgpBlockPage.waitForContent('@pgp-block-content', 'this should decrypt even offline');
     }));
 
-    // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
-    ava.default.skip('mail.google.com - rendering attachmnents', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkZZknDVSxBxbNbRqKczcTnZsw');
-      await gmailPage.waitForContent('.aVW', '4 Attachments');
+    ava.default('mail.google.com - rendering attachmnents', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkbDXBWBWBfVKHssLtMqvDQSWN');
+      await gmailPage.waitForContent('.aVW', '36 Attachments');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/attachment.htm']);
-      expect(urls.length).to.equal(4);
+      expect(urls.length).to.equal(36);
     }));
 
     // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
@@ -323,24 +321,22 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.notPresent('.reply_message_evaluated .error_notification'); // should not show the warning about switching to encrypted reply
     }));
 
-    // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
-    ava.default.skip('mail.google.com - plain reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/FMfcgxwJXVGtMNSCdRMcmZVWkwpxqFdF'); // encrypted convo
+    ava.default('mail.google.com - plain reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkbDRNgcPktjdSxpJVhZlZqpTr'); // encrypted convo
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
       await Util.sleep(5);
       await gmailPage.type('div[aria-label="Message Body"]', 'plain reply', true);
       await gotoGmailPage(gmailPage, '/'); // go to Inbox
       await Util.sleep(1);
-      await gotoGmailPage(gmailPage, '/FMfcgxwJXVGtMNSCdRMcmZVWkwpxqFdF'); // go back to convo with plain reply
+      await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcPktjdSxpJVhZlZqpTr'); // go back to encrypted convo with plain reply
       await pageDoesNotHaveSecureReplyContainer(gmailPage);
       await gmailPage.waitForContent('div[aria-label="Message Body"]', 'plain reply');
       await gmailPage.click('[aria-label^="Discard draft"]');
     }));
 
-    // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
-    ava.default.skip('mail.google.com - pubkey file gets rendered', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/FMfcgxwJXVGtMNSfLJNxtJFfwbcjprpq');
-      const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
+    ava.default('mail.google.com - pubkey file gets rendered', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkbDXBWCgTcMJlmBtfNxrbzTTn');
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm']);
       expect(urls.length).to.equal(1);
       await pageHasSecureReplyContainer(t, browser, gmailPage);
     }));
