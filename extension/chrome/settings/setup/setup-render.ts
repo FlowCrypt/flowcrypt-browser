@@ -10,6 +10,7 @@ import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { PgpPwd } from '../../../js/common/core/crypto/pgp/pgp-password.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 export class SetupRenderModule {
 
@@ -139,9 +140,26 @@ export class SetupRenderModule {
   private saveAndFillSubmitPubkeysOption = (addresses: string[]) => {
     this.view.submitKeyForAddrs = this.filterAddressesForSubmittingKeys(addresses);
     if (this.view.submitKeyForAddrs.length > 1) {
-      $('.addresses').text(Value.arr.withoutVal(this.view.submitKeyForAddrs, this.view.acctEmail).join(', '));
-      $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
+      this.renderEmailAddresses();
     }
+  }
+
+  private renderEmailAddresses = () => {
+    $('.input_submit_all').hide();
+    const emailAliases = Value.arr.withoutVal(this.view.submitKeyForAddrs, this.view.acctEmail);
+    for (const emailAlias of emailAliases) {
+      $('.addresses').append(`<label><input type="checkbox" class="input_email_alias" checked data-test="input_email_alias" /><span>${Xss.escape(emailAlias)}</span></label>`); // xss-escaped
+    }
+    $('.input_email_alias').click((event) => {
+      const dom = event.target.nextElementSibling as HTMLElement;
+      const email = dom.innerText;
+      if ($(event.target).prop('checked')) {
+        this.view.submitKeyForAddrs.push(email);
+      } else {
+        this.view.submitKeyForAddrs.splice(this.view.submitKeyForAddrs.indexOf(email),1);
+      }
+    });
+    $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
   }
 
   private filterAddressesForSubmittingKeys = (addresses: string[]): string[] => {
