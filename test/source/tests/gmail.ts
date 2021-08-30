@@ -188,9 +188,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       expect(urls.length).to.equal(36);
     }));
 
-    // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
-    ava.default.skip('mail.google.com - msg.asc message content renders', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/QgrcJHsTjVVKpcZSxSPxWWhHVCCZWpMQCVQ');
+    ava.default('mail.google.com - msg.asc message content renders', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/QgrcJHrtqfgLGKqwChjKsHKzZQpwRHMBqpG');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
       expect(urls.length).to.equal(1);
       const params = urls[0].split('/chrome/elements/pgp_block.htm')[1];
