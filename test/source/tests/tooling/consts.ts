@@ -1109,13 +1109,13 @@ export const testKeyConstants = {
       =rX/o
       -----END PGP PRIVATE KEY BLOCK-----
       `,
-      "longid": undefined
+      "longid": ''
     },
     {
       "title": "test.ci.compose",
       "passphrase": "this pp is for testing the compose frame",
-      "armored": undefined,
-      "longid": undefined
+      "armored": '',
+      "longid": ''
     },
     {
       "title": "flowcrypt.compatibility.1pp1",
@@ -1241,7 +1241,7 @@ export const testKeyConstants = {
     {
       "title": "flowcrypt.compatibility.1pp2",
       "passphrase": "second backup of first key",
-      "armored": undefined,
+      "armored": '',
       "longid": "ADAC279C95093207"
     },
     {
@@ -1465,20 +1465,20 @@ export const testKeyConstants = {
     {
       "title": "flowcrypt.wrong.passphrase",
       "passphrase": "blah!",
-      "armored": undefined,
-      "longid": undefined
+      "armored": '',
+      "longid": ''
     },
     {
       "title": "flowcrypt.test.key.recovered",
       "passphrase": "flowcrypt test key recovered",
-      "armored": undefined,
-      "longid": undefined
+      "armored": '',
+      "longid": ''
     },
     {
       "title": "flowcrypt.test.key.new.manual",
       "passphrase": "flowcrypt test key new manual",
-      "armored": undefined,
-      "longid": undefined
+      "armored": '',
+      "longid": ''
     },
     {
       "title": "flowcrypt.test.key.used.pgp",
@@ -1597,7 +1597,7 @@ export const testKeyConstants = {
       oxva4IkKUsJtOfQX94a8HPbwY7dlH4jhCfDsaj+yEDUZAKSBGd6C4kXc
       =EjJQ
       -----END PGP PRIVATE KEY BLOCK-----`,
-      "longid": undefined
+      "longid": ''
     },
     {
       "title": "flowcrypt.test.key.naked",
@@ -1662,7 +1662,7 @@ export const testKeyConstants = {
       FlM/9rdIUYhFhxvU5KNdf/5S93ws7C+a0IF78L63IGw=
       =pQ7E
       -----END PGP PRIVATE KEY BLOCK-----`,
-      "longid": undefined
+      "longid": ''
     },
     {
       "title": "missing.self.signatures",
@@ -1752,7 +1752,7 @@ export const testKeyConstants = {
       FM798q5vJ6cBWUvqwQ==
       =b6WJ
       -----END PGP PRIVATE KEY BLOCK-----`,
-      "longid": undefined
+      "longid": ''
     },
     {
       "title": "missing.self.signatures.invalid.uid",
@@ -1815,7 +1815,7 @@ export const testKeyConstants = {
       /4pc9/rGbw+1qw==
       =rVgM
       -----END PGP PRIVATE KEY BLOCK-----`,
-      "longid": undefined
+      "longid": ''
     },
     {
       "title": "has.pub.orgrulestest",
@@ -1934,7 +1934,7 @@ export const testKeyConstants = {
       Cp0MTbVgvGfOVCs9njJPyDbpM1nu4HL0Gm6mnf2YIS0k86Pynw==
       =Njkn
       -----END PGP PRIVATE KEY BLOCK-----`,
-      "longid": undefined
+      "longid": ''
     },
     {
       "title": "no.pub.orgrulestest",
@@ -2053,7 +2053,7 @@ export const testKeyConstants = {
       Cp0MTbVgvGfOVCs9njJPyDbpM1nu4HL0Gm6mnf2YIS0k86Pynw==
       =Njkn
       -----END PGP PRIVATE KEY BLOCK-----`,
-      "longid": undefined
+      "longid": ''
     }
   ]
 };
