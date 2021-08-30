@@ -235,14 +235,13 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
     }));
 
-    // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
-    ava.default.skip('mail.google.com - pubkey gets rendered with new signed and encrypted Thunderbird signature', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/FMfcgxwKjKvbtvZqhhqKGLQFkBmsvVjt');
+    ava.default('mail.google.com - pubkey gets rendered with new signed and encrypted Thunderbird signature', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkbDZKPLBqWFzbgWqCrplTQdNz');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
       expect(urls.length).to.equal(1);
       await pageHasSecureReplyContainer(t, browser, gmailPage);
       const pubkeyPage = await browser.newPage(t, urls[0]);
-      await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: DCB2 74D2 4683 145E B053 BC0B 48E4 74A0 926B AE86');
+      await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
     }));
 
     ava.default('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
