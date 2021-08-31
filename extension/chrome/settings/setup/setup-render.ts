@@ -148,12 +148,8 @@ export class SetupRenderModule {
     $('.input_submit_all').hide();
     const emailAliases = Value.arr.withoutVal(this.view.submitKeyForAddrs, this.view.acctEmail);
     for (const e of emailAliases) {
-      $('.addresses').append(`
-      <label>
-      <input type="checkbox" class="input_email_alias" checked data-test="input-email-alias-${e.replace(/[^a-z0-9]+/g, '')}" />
-      <span>${Xss.escape(e)}</span>
-      </label>
-      <br/>`); // xss-escaped
+      // eslint-disable-next-line max-len
+      $('.addresses').append(`<label><input type="checkbox" class="input_email_alias" checked data-test="input-email-alias-${e.replace(/[^a-z0-9]+/g, '')}" /><span>${Xss.escape(e)}</span></label><br/>`); // xss-escaped
     }
     $('.input_email_alias').click((event) => {
       const dom = event.target.nextElementSibling as HTMLElement;
