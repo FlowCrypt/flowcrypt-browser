@@ -147,8 +147,13 @@ export class SetupRenderModule {
   private renderEmailAddresses = () => {
     $('.input_submit_all').hide();
     const emailAliases = Value.arr.withoutVal(this.view.submitKeyForAddrs, this.view.acctEmail);
-    for (const emailAlias of emailAliases) {
-      $('.addresses').append(`<label><input type="checkbox" class="input_email_alias" checked data-test="input_email_alias" /><span>${Xss.escape(emailAlias)}</span></label>`); // xss-escaped
+    for (const e of emailAliases) {
+      $('.addresses').append(`
+      <label>
+      <input type="checkbox" class="input_email_alias" checked data-test="input-email-alias-${e.replace(/[^a-z0-9]+/g, '')}" />
+      <span>${Xss.escape(e)}</span>
+      </label>
+      <br/>`); // xss-escaped
     }
     $('.input_email_alias').click((event) => {
       const dom = event.target.nextElementSibling as HTMLElement;
@@ -156,7 +161,7 @@ export class SetupRenderModule {
       if ($(event.target).prop('checked')) {
         this.view.submitKeyForAddrs.push(email);
       } else {
-        this.view.submitKeyForAddrs.splice(this.view.submitKeyForAddrs.indexOf(email),1);
+        this.view.submitKeyForAddrs.splice(this.view.submitKeyForAddrs.indexOf(email), 1);
       }
     });
     $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
