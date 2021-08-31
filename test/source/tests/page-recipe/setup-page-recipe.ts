@@ -53,7 +53,7 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.waitAndClick('@input-step2bmanualcreate-submit-pubkey'); // uncheck
     }
     if (skipForPassphrase) {
-      expect(await settingsPage.isElementPresent('@input_email_alias')).to.equal(true);
+      expect(await settingsPage.isElementPresent('@input-email-alias-flowcryptcompatibilitygmailcom')).to.equal(true);
     }
     if (checks.isSavePassphraseHidden !== undefined) {
       expect(await settingsPage.hasClass('@input-step2bmanualcreate-save-passphrase-label', 'hidden')).to.equal(checks.isSavePassphraseHidden);
@@ -269,8 +269,10 @@ export class SetupPageRecipe extends PageRecipe {
   private static createBegin = async (
     settingsPage: ControllablePage,
     keyTitle: string,
-    { key, usedPgpBefore = false, skipForPassphrase = false }: { key?: { passphrase: string },
-    usedPgpBefore?: boolean, skipForPassphrase?: boolean } = {}) => {
+    { key, usedPgpBefore = false, skipForPassphrase = false }: {
+      key?: { passphrase: string },
+      usedPgpBefore?: boolean, skipForPassphrase?: boolean
+    } = {}) => {
     const k = key || Config.key(keyTitle);
     if (usedPgpBefore) {
       await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-create');
@@ -278,7 +280,7 @@ export class SetupPageRecipe extends PageRecipe {
       if (skipForPassphrase) {
         await settingsPage.waitAndClick('#lost_pass_phrase');
         await settingsPage.waitAndClick('.action_skip_recovery');
-        await settingsPage.waitAndRespondToModal('confirm','confirm','Your account will be set up for encryption again, but your previous encrypted emails will be unreadable.');
+        await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'Your account will be set up for encryption again, but your previous encrypted emails will be unreadable.');
         await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-create');
       } else {
         await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-create');
