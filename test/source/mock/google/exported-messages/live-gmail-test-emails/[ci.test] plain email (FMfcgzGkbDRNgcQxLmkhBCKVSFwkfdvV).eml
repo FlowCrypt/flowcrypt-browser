@@ -1,0 +1,21 @@
+Received: from 717284730244
+	named unknown
+	by gmailapi.google.com
+	with HTTPREST;
+	Tue, 24 Aug 2021 13:58:27 -0700
+Content-Type: multipart/mixed;
+ boundary="----sinikael-?=_1-16298387073180.5175705549685858"
+Openpgp: id=07481C8ACF9D49FE
+From: Gmail CI Test <ci.tests.gmail@flowcrypt.dev>
+To: Gmail CI Test <ci.tests.gmail@flowcrypt.dev>
+Subject: [ci.test] plain email
+Date: Tue, 24 Aug 2021 13:58:27 -0700
+Message-Id: <CAO9FY9uzBqtgxf0BEk9DVv-0F31kdxHFbp3CkQC3dZ5aJSYs9w@mail.gmail.com>
+MIME-Version: 1.0
+
+------sinikael-?=_1-16298387073180.5175705549685858
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
+
+plain email
+------sinikael-?=_1-16298387073180.5175705549685858--
