@@ -29,6 +29,10 @@ export class SetupImportKeyModule {
       recovered: false,
     };
     try {
+      if (this.view.submitKeyForAddrs.length > 1) {
+        // $('.remove_if_pubkey_submitting_not_user_configurable')[3].show() 
+        console.log(this.view.submitKeyForAddrs);
+      }
       const checked = await this.view.keyImportUi.checkPrv(this.view.acctEmail, String($('#step_2b_manual_enter .input_private_key').val()), options.passphrase);
       Xss.sanitizeRender('#step_2b_manual_enter .action_add_private_key', Ui.spinner('white'));
       await this.view.saveKeysAndPassPhrase([checked.encrypted], options);

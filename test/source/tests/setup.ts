@@ -24,7 +24,6 @@ import { testConstants } from './tooling/consts';
 export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
-
     // note - `SetupPageRecipe.createKey` tests are in `defineFlakyTests` - running serially
     // because the keygen CPU spike can cause trouble to other concurrent tests
 
@@ -39,6 +38,20 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     ava.default('settings > login > close oauth window > close popup', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'flowcrypt.test.key.imported@gmail.com');
       await settingsPage.notPresent('.settings-banner');
+    }));
+
+    ava.default('setup - imported key with multiple alias should show checkbox per alias', testWithBrowser(undefined, async (t, browser) => {
+      expect((await KeyUtil.parse(testConstants.keyMultiAliasedUser)).emails.length).to.equals(2);
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'multi.aliased.user@example.com');
+      await SetupPageRecipe.manualEnter(settingsPage, '', {
+        usedPgpBefore: false, submitPubkey: true, naked: true, key: {
+          title: 'multi.aliased.user@example.com',
+          passphrase: 'long enough to suit requirements',
+          armored: testConstants.keyMultiAliasedUser,
+          longid: null // tslint:disable-line:no-null-keyword
+        }
+      }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      await settingsPage.close();
     }));
 
     ava.default('setup - optional checkbox for each email aliases', testWithBrowser(undefined, async (t, browser) => {
