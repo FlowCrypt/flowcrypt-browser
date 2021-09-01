@@ -17,7 +17,7 @@ export class SetupRenderModule {
   public readonly emailDomainsToSkip = ['yahoo', 'live', 'outlook'];
 
   public static renderEmailAliasSelectionForImportedKey = () => {
-    $('.import_key_wrapper_for_email_alias').css('visibility', 'visible');
+    $('.container_for_import_key_email_alias').css('visibility', 'visible');
   }
 
   constructor(private view: SetupView) {
