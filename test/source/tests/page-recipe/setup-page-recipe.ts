@@ -19,6 +19,7 @@ type ManualEnterOpts = {
   enforceAttesterSubmitOrgRule?: boolean,
   noPubSubmitRule?: boolean,
   fillOnly?: boolean,
+  checkEmailAliasIfPresent?: boolean,
   key?: { title: string, passphrase: string, armored: string | null, longid: string | null, filePath?: string }
 };
 
@@ -100,6 +101,7 @@ export class SetupPageRecipe extends PageRecipe {
       enforceAttesterSubmitOrgRule = false,
       fillOnly = false,
       noPubSubmitRule = false,
+      checkEmailAliasIfPresent = false,
       key,
     }: ManualEnterOpts = {},
     checks: SavePassphraseChecks = {}
@@ -161,6 +163,11 @@ export class SetupPageRecipe extends PageRecipe {
       } else {
         await settingsPage.waitAndType('@input-step2bmanualenter-passphrase', key.passphrase);
       }
+    }
+    if (checkEmailAliasIfPresent) {
+      expect(await settingsPage.isElementPresent('@import-key-wrapper-for-email-alias')).to.equal(true);
+      expect(await settingsPage.isElementPresent('@input-email-alias-alias1examplecom')).to.equal(true);
+      expect(await settingsPage.isElementPresent('@input-email-alias-alias2examplecom')).to.equal(true);
     }
     if (enforceAttesterSubmitOrgRule || noPubSubmitRule) {
       await settingsPage.notPresent('@input-step2bmanualenter-submit-pubkey');
