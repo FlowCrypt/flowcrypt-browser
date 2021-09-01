@@ -165,7 +165,7 @@ export class SetupPageRecipe extends PageRecipe {
       }
     }
     if (checkEmailAliasIfPresent) {
-      expect(await settingsPage.isElementPresent('@import-key-wrapper-for-email-alias')).to.equal(true);
+      expect(await settingsPage.isElementPresent('@container-for-import-key-email-alias')).to.equal(true);
       expect(await settingsPage.isElementPresent('@input-email-alias-alias1examplecom')).to.equal(true);
       expect(await settingsPage.isElementPresent('@input-email-alias-alias2examplecom')).to.equal(true);
     }
