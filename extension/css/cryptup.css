@@ -2049,6 +2049,7 @@ table#compose #fineuploader .qq-upload-list [class^="qq-file-id"] {
   background-size: 9px;
   background-position-x: 8px;
   background-position-y: center;
+  cursor: pointer;
 }
 
 table#compose #fineuploader .qq-upload-list .not-encrypted {
