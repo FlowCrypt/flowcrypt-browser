@@ -172,10 +172,10 @@ if (testGroup === 'UNIT-TESTS') {
 } else if (testGroup === 'FLAKY-GROUP') {
   defineFlakyTests(testVariant, testWithBrowser);
 } else {
-  // defineSetupTests(testVariant, testWithBrowser);
-  // defineComposeTests(testVariant, testWithBrowser);
+  defineSetupTests(testVariant, testWithBrowser);
+  defineComposeTests(testVariant, testWithBrowser);
   defineDecryptTests(testVariant, testWithBrowser);
-  // defineGmailTests(testVariant, testWithBrowser);
-  // defineSettingsTests(testVariant, testWithBrowser);
-  // defineElementTests(testVariant, testWithBrowser);
+  defineGmailTests(testVariant, testWithBrowser);
+  defineSettingsTests(testVariant, testWithBrowser);
+  defineElementTests(testVariant, testWithBrowser);
 }
