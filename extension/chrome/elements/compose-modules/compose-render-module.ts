@@ -26,15 +26,6 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
 
   public responseMethod: 'reply' | 'forward' | undefined;
 
-  public static getEmailHeaderFromComposeMessageBox = (emailHeaderType: string) => {
-    const emailHeaders = [];
-    const targetClass = emailHeaderType === 'cc' ? 'recipients-cc' : 'recipients-bcc';
-    for (const el of $(`.${targetClass} span > span`)) {
-      emailHeaders.push(`<${el.innerText}>`);
-    }
-    return emailHeaders;
-  }
-
   public initComposeBox = async () => {
     if (this.view.isReplyBox) {
       this.responseMethod = 'reply';
@@ -119,7 +110,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     }
   }
 
-  public renderReplySuccess = (msg: SendableMsg, msgId: string, ccHeaders: Array<string>, bccHeaders: Array<string>) => {
+  public renderReplySuccess = (msg: SendableMsg, msgId: string) => {
     this.view.renderModule.renderReinsertReplyBox(msgId);
     if (!this.view.sendBtnModule.popover.choices.encrypt) {
       this.view.S.cached('replied_body').removeClass('pgp_secure');
@@ -131,12 +122,12 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.S.cached('compose_table').css('display', 'none');
     this.view.S.cached('reply_msg_successful').find('div.replied_from').text(this.view.senderModule.getSender());
     this.view.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
-    if (ccHeaders.length > 0) {
-      this.view.S.cached('reply_msg_successful').find('div.replied_cc span').text(ccHeaders.join(','));
+    if (msg.recipients.cc !== undefined && msg.recipients.cc.length > 0) {
+      this.view.S.cached('reply_msg_successful').find('div.replied_cc span').text(msg.recipients.cc.join(','));
       $('.replied_cc').show();
     }
-    if (bccHeaders.length > 0) {
-      this.view.S.cached('reply_msg_successful').find('div.replied_bcc span').text(bccHeaders.join(','));
+    if (msg.recipients.bcc !== undefined && msg.recipients.bcc.length > 0) {
+      this.view.S.cached('reply_msg_successful').find('div.replied_bcc span').text(msg.recipients.bcc.join(','));
       $('.replied_bcc').show();
     }
     const repliedBodyEl = this.view.S.cached('reply_msg_successful').find('div.replied_body');

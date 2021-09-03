@@ -2327,8 +2327,8 @@ div#reply_message_successful_container > table div.replied_from {
 }
 
 div#reply_message_successful_container > table div.replied_to,
-table div.replied_cc,
-table div.replied_bcc {
+div#reply_message_successful_container > table div.replied_cc,
+div#reply_message_successful_container > table div.replied_bcc {
   color: #777;
   margin-bottom: 4px;
 }
