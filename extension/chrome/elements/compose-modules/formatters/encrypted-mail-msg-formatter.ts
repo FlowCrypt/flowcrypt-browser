@@ -231,8 +231,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       text.push(intro + '\n');
       html.push(Xss.escape(intro).replace(/\n/g, '<br>') + '<br><br>');
     }
-    text.push(Lang.compose.msgEncryptedText[lang] + msgUrl + '\n\n');
-    html.push(`${Lang.compose.msgEncryptedHtml[lang] + a}<br/><br/>${Lang.compose.alternativelyCopyPaste[lang] + Xss.escape(msgUrl)}<br/><br/>`);
+    text.push(Lang.compose.msgEncryptedText(lang, Xss.escape(this.acctEmail)) + msgUrl + '\n\n');
+    html.push(`${Lang.compose.msgEncryptedHtml(lang, Xss.escape(this.acctEmail)) + a}<br/><br/>${Lang.compose.alternativelyCopyPaste[lang] + Xss.escape(msgUrl)}<br/><br/>`);
     return { 'text/plain': text.join('\n'), 'text/html': html.join('\n') };
   }
 
