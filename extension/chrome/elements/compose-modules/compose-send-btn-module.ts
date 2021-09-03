@@ -23,6 +23,7 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
+import { ComposeRenderModule } from './compose-render-module.js';
 
 export class ComposeSendBtnModule extends ViewModule<ComposeView> {
 
@@ -224,7 +225,9 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     await this.view.draftModule.draftDelete();
     this.isSendMessageInProgress = false;
     if (this.view.isReplyBox) {
-      this.view.renderModule.renderReplySuccess(msg, msgSentRes.id);
+      const listOfCc = ComposeRenderModule.getEmailHeaderFromComposeMessageBox('cc');
+      const listOfBcc = ComposeRenderModule.getEmailHeaderFromComposeMessageBox('bcc');
+      this.view.renderModule.renderReplySuccess(msg, msgSentRes.id, listOfCc, listOfBcc);
     } else {
       this.view.renderModule.closeMsg();
     }

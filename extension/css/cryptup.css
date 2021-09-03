@@ -2326,9 +2326,9 @@ div#reply_message_successful_container > table div.replied_from {
   margin-bottom: 4px;
 }
 
-div#reply_message_successful_container > table div.replied_to {
+div#reply_message_successful_container > table div.replied_to, table div.replied_cc, table div.replied_bcc {
   color: #777;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
 }
 div#reply_message_successful_container > table div.replied_body { min-height: 48px; }
 
