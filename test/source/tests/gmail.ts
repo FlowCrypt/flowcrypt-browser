@@ -164,10 +164,9 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       expect(urls.length).to.eq(1);
     }));
 
-    // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
-    ava.default.skip('mail.google.com - decrypt message in offline mode', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+    ava.default('mail.google.com - decrypt message in offline mode', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const gmailPage = await BrowserRecipe.openGmailPage(t, browser);
-      await gmailPage.type('[aria-label="Search mail"]', 'encrypted email for offline decrypt');
+      await gmailPage.type('[aria-label^="Search"]', 'encrypted email for offline decrypt');
       await gmailPage.press('Enter'); // submit search
       await Util.sleep(2); // wait for search results
       await gmailPage.page.setOfflineMode(true); // go offline mode
@@ -182,17 +181,15 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pgpBlockPage.waitForContent('@pgp-block-content', 'this should decrypt even offline');
     }));
 
-    // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
-    ava.default.skip('mail.google.com - rendering attachmnents', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkZZknDVSxBxbNbRqKczcTnZsw');
-      await gmailPage.waitForContent('.aVW', '4 Attachments');
+    ava.default('mail.google.com - rendering attachmnents', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkbDXBWBWBfVKHssLtMqvDQSWN');
+      await gmailPage.waitForContent('.aVW', '36 Attachments');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/attachment.htm']);
-      expect(urls.length).to.equal(4);
+      expect(urls.length).to.equal(36);
     }));
 
-    // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
-    ava.default.skip('mail.google.com - msg.asc message content renders', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/QgrcJHsTjVVKpcZSxSPxWWhHVCCZWpMQCVQ');
+    ava.default('mail.google.com - msg.asc message content renders', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/QgrcJHrtqfgLGKqwChjKsHKzZQpwRHMBqpG');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
       expect(urls.length).to.equal(1);
       const params = urls[0].split('/chrome/elements/pgp_block.htm')[1];
@@ -200,60 +197,51 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await pageHasSecureReplyContainer(t, browser, gmailPage);
     }));
 
-    // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
-    ava.default.skip('mail.google.com - Thunderbird signature [html] is recognized', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/FMfcgxwKjBRGVhcgRwklplhBCCKgSdfk');
-      const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
-      expect(urls.length).to.equal(1);
-      const url = urls[0].split('/chrome/elements/pgp_block.htm')[1];
-      const signature = ['Dhartley@Verdoncollege.School.Nz', 'matching signature'];
+    ava.default('mail.google.com - Thunderbird signature [html] is recognized', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkbDZKPJrNLplXZhKfWwtgjrXt');
+      // validate pgp_block.htm is rendered
+      const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
+      expect(pgpBlockUrls.length).to.equal(1);
+      const url = pgpBlockUrls[0].split('/chrome/elements/pgp_block.htm')[1];
+      const signature = ['Limon.Monte@Gmail.Com', 'matching signature'];
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: url, content: ['1234'], signature });
       await pageHasSecureReplyContainer(t, browser, gmailPage);
-    }));
-
-    // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
-    ava.default.skip('mail.google.com - pubkey gets rendered on new Thunderbird signature [html] + correct height', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/FMfcgxwKjBRGVhcgRwklplhBCCKgSdfk');
-      const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
-      expect(urls.length).to.equal(1);
+      // validate pgp_pubkey.htm is rendered
+      const pgpPubkeyUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
+      expect(pgpPubkeyUrls.length).to.equal(1);
       await pageHasSecureReplyContainer(t, browser, gmailPage);
       await testMinimumElementHeight(gmailPage, '.pgp_block.signedMsg', 80);
       await testMinimumElementHeight(gmailPage, '.pgp_block.publicKey', 120);
-      const pubkeyPage = await browser.newPage(t, urls[0]);
-      await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: DC26 454A FB71 D18E ABBA D73D 1C7E 6D3C 5563 A941');
+      const pubkeyPage = await browser.newPage(t, pgpPubkeyUrls[0]);
+      await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
     }));
 
-    // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
-    ava.default.skip('mail.google.com - Thunderbird signature [plain] is recognized + correct height', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/FMfcgxwKjBTWTbDjXSJVjDjKlWJGbWQd');
-      const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
-      expect(urls.length).to.equal(1);
+    ava.default('mail.google.com - Thunderbird signature [plain] is recognized + correct height', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkbDZKPKzSnGtGKZrPZSbTBNnB');
+      // validate pgp_block.htm is rendered
+      const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
+      expect(pgpBlockUrls.length).to.equal(1);
       await testMinimumElementHeight(gmailPage, '.pgp_block.signedMsg', 80);
       await testMinimumElementHeight(gmailPage, '.pgp_block.publicKey', 120);
-      const url = urls[0].split('/chrome/elements/pgp_block.htm')[1];
-      const signature = ['Dhartley@Verdoncollege.School.Nz', 'matching signature'];
+      const url = pgpBlockUrls[0].split('/chrome/elements/pgp_block.htm')[1];
+      const signature = ['Limon.Monte@Gmail.Com', 'matching signature'];
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, { params: url, content: ['1234'], signature });
       await pageHasSecureReplyContainer(t, browser, gmailPage);
+      // validate pgp_pubkey.htm is rendered
+      const pgpPubkeyUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
+      expect(pgpPubkeyUrls.length).to.equal(1);
+      await pageHasSecureReplyContainer(t, browser, gmailPage);
+      const pubkeyPage = await browser.newPage(t, pgpPubkeyUrls[0]);
+      await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
     }));
 
-    // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
-    ava.default.skip('mail.google.com - pubkey gets rendered on new Thunderbird signature [plain]', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/FMfcgxwKjBTWTbDjXSJVjDjKlWJGbWQd');
+    ava.default('mail.google.com - pubkey gets rendered with new signed and encrypted Thunderbird signature', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkbDZKPLBqWFzbgWqCrplTQdNz');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
       expect(urls.length).to.equal(1);
       await pageHasSecureReplyContainer(t, browser, gmailPage);
       const pubkeyPage = await browser.newPage(t, urls[0]);
-      await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: DC26 454A FB71 D18E ABBA D73D 1C7E 6D3C 5563 A941');
-    }));
-
-    // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
-    ava.default.skip('mail.google.com - pubkey gets rendered with new signed and encrypted Thunderbird signature', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/FMfcgxwKjKvbtvZqhhqKGLQFkBmsvVjt');
-      const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
-      expect(urls.length).to.equal(1);
-      await pageHasSecureReplyContainer(t, browser, gmailPage);
-      const pubkeyPage = await browser.newPage(t, urls[0]);
-      await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: DCB2 74D2 4683 145E B053 BC0B 48E4 74A0 926B AE86');
+      await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
     }));
 
     ava.default('mail.google.com - secure reply btn, reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
@@ -323,24 +311,22 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.notPresent('.reply_message_evaluated .error_notification'); // should not show the warning about switching to encrypted reply
     }));
 
-    // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
-    ava.default.skip('mail.google.com - plain reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/FMfcgxwJXVGtMNSCdRMcmZVWkwpxqFdF'); // encrypted convo
+    ava.default('mail.google.com - plain reply draft', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkbDRNgcPktjdSxpJVhZlZqpTr'); // encrypted convo
       await gmailPage.waitAndClick('[data-tooltip="Reply"]');
       await Util.sleep(5);
       await gmailPage.type('div[aria-label="Message Body"]', 'plain reply', true);
       await gotoGmailPage(gmailPage, '/'); // go to Inbox
       await Util.sleep(1);
-      await gotoGmailPage(gmailPage, '/FMfcgxwJXVGtMNSCdRMcmZVWkwpxqFdF'); // go back to convo with plain reply
+      await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcPktjdSxpJVhZlZqpTr'); // go back to encrypted convo with plain reply
       await pageDoesNotHaveSecureReplyContainer(gmailPage);
       await gmailPage.waitForContent('div[aria-label="Message Body"]', 'plain reply');
       await gmailPage.click('[aria-label^="Discard draft"]');
     }));
 
-    // broken - https://github.com/FlowCrypt/flowcrypt-browser/issues/3929
-    ava.default.skip('mail.google.com - pubkey file gets rendered', testWithBrowser('ci.tests.gmail', async (t, browser) => {
-      const gmailPage = await openGmailPage(t, browser, '/FMfcgxwJXVGtMNSfLJNxtJFfwbcjprpq');
-      const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
+    ava.default('mail.google.com - pubkey file gets rendered', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const gmailPage = await openGmailPage(t, browser, '/FMfcgzGkbDXBWCgTcMJlmBtfNxrbzTTn');
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm']);
       expect(urls.length).to.equal(1);
       await pageHasSecureReplyContainer(t, browser, gmailPage);
     }));

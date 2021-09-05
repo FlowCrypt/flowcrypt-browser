@@ -2,7 +2,7 @@
 
 import * as fs from 'fs';
 import { Keyboard, KeyInput } from 'puppeteer';
-
+import { testKeyConstants } from '../tests/tooling/consts';
 import { ExtendedKeyInfo, KeyUtil } from '../core/crypto/key.js';
 
 export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL' | 'UNIT-TESTS';
@@ -57,8 +57,7 @@ export class Config {
     if (!Config._secrets) {
       try {
         Config._secrets = JSON.parse(fs.readFileSync('test/test-secrets.json', 'utf8'));
-        const data = JSON.parse(fs.readFileSync('test/testdata.json', 'utf8'));
-        Config._secrets.keys = data.keys;
+        Config._secrets.keys = testKeyConstants.keys;
       } catch (e) {
         console.error(`skipping loading test secrets because ${e}`);
         Config._secrets = { auth: { google: [] }, keys: [] } as any as TestSecretsInterface;

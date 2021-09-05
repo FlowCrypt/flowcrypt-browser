@@ -40,7 +40,8 @@ module.exports = {
       "ignoreDeclarationSort": false,
       "ignoreMemberSort": false,
       "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
-    }]
+    }],
+    'space-before-blocks': ['error', 'always'],
   },
   overrides: [
     {
