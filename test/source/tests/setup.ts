@@ -40,20 +40,6 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       await settingsPage.notPresent('.settings-banner');
     }));
 
-    ava.default('setup - imported key with multiple alias should show checkbox per alias', testWithBrowser(undefined, async (t, browser) => {
-      expect((await KeyUtil.parse(testConstants.keyMultiAliasedUser)).emails.length).to.equals(2);
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'multi.aliased.user@example.com');
-      await SetupPageRecipe.manualEnter(settingsPage, '', {
-        usedPgpBefore: false, submitPubkey: true, naked: true, checkEmailAliasIfPresent: true, key: {
-          title: 'multi.aliased.user@example.com',
-          passphrase: 'long enough to suit requirements',
-          armored: testConstants.keyMultiAliasedUser,
-          longid: null // tslint:disable-line:no-null-keyword
-        }
-      }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
-      await settingsPage.close();
-    }));
-
     ava.default('setup - optional checkbox for each email aliases', testWithBrowser(undefined, async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
       await Util.sleep(5);
@@ -755,6 +741,22 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     //   })
     // );
 
+  }
+
+  if (testVariant === 'CONSUMER-MOCK') {
+    ava.default('setup - imported key with multiple alias should show checkbox per alias', testWithBrowser(undefined, async (t, browser) => {
+      expect((await KeyUtil.parse(testConstants.keyMultiAliasedUser)).emails.length).to.equals(2);
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'multi.aliased.user@example.com');
+      await SetupPageRecipe.manualEnter(settingsPage, '', {
+        usedPgpBefore: false, submitPubkey: true, naked: true, checkEmailAliasIfPresent: true, key: {
+          title: 'multi.aliased.user@example.com',
+          passphrase: 'long enough to suit requirements',
+          armored: testConstants.keyMultiAliasedUser,
+          longid: null // tslint:disable-line:no-null-keyword
+        }
+      }, { isSavePassphraseChecked: false, isSavePassphraseHidden: false });
+      await settingsPage.close();
+    }));
   }
 
 };
