@@ -15,6 +15,7 @@ import { Ui } from '../browser/ui.js';
 import { Url, Str } from '../core/common.js';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
 import { KeyStore } from '../platform/store/key-store.js';
+import { SetupView } from '../../../chrome/settings/setup.js';
 
 type KeyImportUiCheckResult = { normalized: string; passphrase: string; fingerprint: string; decrypted: Key; encrypted: Key; };
 
@@ -59,7 +60,7 @@ export class KeyImportUi {
   }
   public onBadPassphrase: VoidCallback = () => undefined;
 
-  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined) => {
+  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, view?: SetupView) => {
     $('input[type=radio][name=source]').off().change(function () {
       if ((this as HTMLInputElement).value === 'file') {
         $('.input_private_key').val('').change().prop('disabled', true);
@@ -72,6 +73,9 @@ export class KeyImportUi {
         $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
       } else if ((this as HTMLInputElement).value === 'backup') {
         window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail, parentTabId, action: 'add_key' });
+      }
+      if (view !== undefined && view.submitKeyForAddrs.length > 0) {
+        $('.container_for_import_key_email_alias').css('visibility', 'visible');
       }
     });
     $('.line.unprotected_key_create_pass_phrase .action_use_random_pass_phrase').click(Ui.event.handle(() => {

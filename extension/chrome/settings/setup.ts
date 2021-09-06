@@ -85,7 +85,7 @@ export class SetupView extends View {
       window.location.href = 'index.htm';
     }
     this.submitKeyForAddrs = [this.acctEmail];
-    this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId); // for step_2b_manual_enter, if user chooses so
+    this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId, this); // for step_2b_manual_enter, if user chooses so
     this.keyImportUi.onBadPassphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').focus();
     this.keyImportUi.renderPassPhraseStrengthValidationInput($('#step_2a_manual_create .input_password'), $('#step_2a_manual_create .action_proceed_private'));
     this.keyImportUi.renderPassPhraseStrengthValidationInput($('#step_2_ekm_choose_pass_phrase .input_password'), $('#step_2_ekm_choose_pass_phrase .action_proceed_private'));
