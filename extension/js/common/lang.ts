@@ -66,8 +66,8 @@ export const Lang = { // tslint:disable-line:variable-name
   compose: {
     abortSending: 'A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?',
     pleaseReconnectAccount: 'Please reconnect FlowCrypt to your Gmail Account. This is typically needed after a long time of no use, a password change, or similar account changes. ',
-    msgEncryptedHtml: (lang: string, acctEmail: string) =>  lang === 'EN' ? `${acctEmail}&nbsp;has&nbsp;sent&nbsp;you&nbsp;a&nbsp;password-encrypted&nbsp;email ` : `${acctEmail}&nbsp;hat&nbsp;Ihnen&nbsp;eine&nbsp;passwortverschlüsselte&nbsp;E-Mail&nbsp;gesendet `,
-    msgEncryptedText: (lang: string, acctEmail: string) => lang === 'EN' ? `${acctEmail} has sent you a password-encrypted email. Follow this link to open it: ` : `${acctEmail} hat Ihnen eine passwortverschlüsselte E-Mail gesendet. Folgen Sie diesem Link, um es zu öffnen `,
+    msgEncryptedHtml: (lang: string, acctEmail: string) =>  lang === 'DE' ? `${acctEmail}&nbsp;hat&nbsp;Ihnen&nbsp;eine&nbsp;passwortverschlüsselte&nbsp;E-Mail&nbsp;gesendet ` : `${acctEmail}&nbsp;has&nbsp;sent&nbsp;you&nbsp;a&nbsp;password-encrypted&nbsp;email `,
+    msgEncryptedText: (lang: string, acctEmail: string) => lang === 'DE' ? `${acctEmail} hat Ihnen eine passwortverschlüsselte E-Mail gesendet. Folgen Sie diesem Link, um es zu öffnen ` : `${acctEmail} has sent you a password-encrypted email. Follow this link to open it: `,
     alternativelyCopyPaste: { EN: 'Alternatively copy and paste the following link: ', DE: 'Alternativ kopieren Sie folgenden Link und fügen ihn in die Adresszeile Ihres Browsers ein: ' },
     openMsg: { EN: 'Click here to Open Message', DE: 'Klicken Sie hier, um die Nachricht zu öffnen' },
     includePubkeyIconTitle: 'Include your Public Key with this message.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
