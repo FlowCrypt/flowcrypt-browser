@@ -8,7 +8,7 @@
   "devDependencies": {
     "@types/chai": "4.2.21",
     "@types/chai-as-promised": "7.1.4",
-    "@types/chrome": "0.0.155",
+    "@types/chrome": "0.0.157",
     "@types/dompurify": "2.2.3",
     "@types/jquery": "3.5.6",
     "@types/mailparser": "3.0.3",
@@ -48,7 +48,7 @@
     "node-forge": "0.10.0",
     "openpgp": "4.10.10",
     "squire-rte": "1.11.1",
-    "sweetalert2": "11.1.4",
+    "sweetalert2": "11.1.5",
     "zxcvbn": "4.4.2"
   },
   "scripts": {
