@@ -276,7 +276,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
       await gmailPage.waitAndFocus('body');
       await gmailPage.waitAndClick('[data-tooltip="Drafts"]');
-      await Util.sleep(1);
+      await gmailPage.waitForInputValue('[aria-label^="Search"]', 'in:draft');
       await gmailPage.press('Enter');
       await gmailPage.waitAndClick('[class^="open_draft_"]');
       // veryfy that there are two compose windows: new compose window and secure draft
