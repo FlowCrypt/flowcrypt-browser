@@ -472,6 +472,12 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithBrowser: Tes
         { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
     }));
 
+    ava.default('settings - add unprotected s/mime key', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const unprotectedPrvKey = fs.readFileSync('test/samples/smime/human-unprotected-pem.txt', 'utf8');
+      await SettingsPageRecipe.addKeyTest(t, browser, 'ci.tests.gmail@flowcrypt.test', unprotectedPrvKey, 'this is a new passphrase to protect previously unprotected key',
+        { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+    }));
+
     ava.default('settings - error modal when page parameter invalid', testWithBrowser('ci.tests.gmail', async (t, browser) => {
       const invalidParamModalPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/index.htm?acctEmail=ci.tests.gmail@gmail.com&page=invalid`));
       await Util.sleep(3);

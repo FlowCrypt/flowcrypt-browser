@@ -722,7 +722,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       }
     }));
 
-    // todo - add an "add key" test
     ava.default(
       'setup - s/mime private key',
       testWithBrowser(undefined, async (t, browser) => {
