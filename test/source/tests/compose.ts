@@ -1262,10 +1262,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     /**
-   * You need the following lines in /etc/hosts:
-   * 127.0.0.1    standardsubdomainfes.test
-   * 127.0.0.1    fes.standardsubdomainfes.test
-   */
+     * You need the following lines in /etc/hosts:
+     * 127.0.0.1    standardsubdomainfes.test
+     * 127.0.0.1    fes.standardsubdomainfes.test
+     */
     ava.default('compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'user@standardsubdomainfes.test:8001'; // added port to trick extension into calling the mock
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
