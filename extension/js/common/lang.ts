@@ -66,10 +66,10 @@ export const Lang = { // tslint:disable-line:variable-name
   compose: {
     abortSending: 'A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?',
     pleaseReconnectAccount: 'Please reconnect FlowCrypt to your Gmail Account. This is typically needed after a long time of no use, a password change, or similar account changes. ',
-    msgEncryptedHtml: { EN: 'This&nbsp;message&nbsp;is&nbsp;encrypted: ', DE: 'Diese&nbsp;Nachricht&nbsp;ist&nbsp;verschlüsselt: ' },
-    msgEncryptedText: { EN: 'This message is encrypted. Follow this link to open it: ', DE: 'Diese Nachricht ist verschlüsselt. Nachricht öffnen: ' },
+    msgEncryptedHtml: (lang: string, senderEmail: string) => (lang === 'DE') ? `${senderEmail}&nbsp;hat&nbsp;Ihnen&nbsp;eine&nbsp;passwortverschlüsselte&nbsp;E-Mail&nbsp;gesendet ` : `${senderEmail}&nbsp;has&nbsp;sent&nbsp;you&nbsp;a&nbsp;password-encrypted&nbsp;email `,
+    msgEncryptedText: (lang: string, senderEmail: string) => (lang === 'DE') ? `${senderEmail} hat Ihnen eine passwortverschlüsselte E-Mail gesendet. Folgen Sie diesem Link, um es zu öffnen: ` : `${senderEmail} has sent you a password-encrypted email. Follow this link to open it: `,
     alternativelyCopyPaste: { EN: 'Alternatively copy and paste the following link: ', DE: 'Alternativ kopieren Sie folgenden Link und fügen ihn in die Adresszeile Ihres Browsers ein: ' },
-    openMsg: { EN: 'Open Message', DE: 'Nachricht öffnen' },
+    openMsg: { EN: 'Click here to Open Message', DE: 'Klicken Sie hier, um die Nachricht zu öffnen' },
     includePubkeyIconTitle: 'Include your Public Key with this message.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
     includePubkeyIconTitleActive: 'Your Public Key will be included with this message.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
     headers: {

@@ -9,6 +9,7 @@ import { GoogleData } from '../google-data';
 import { HttpClientErr } from '../../lib/api';
 import { MsgUtil } from '../../../core/crypto/pgp/msg-util';
 import { parsedMailAddressObjectAsArray } from '../google-endpoints.js';
+import { Str } from '../../../core/common.js';
 
 // TODO: Make a better structure of ITestMsgStrategy. Because this class doesn't test anything, it only saves message in the Mock
 class SaveMessageInStorageStrategy implements ITestMsgStrategy {
@@ -19,6 +20,10 @@ class SaveMessageInStorageStrategy implements ITestMsgStrategy {
 
 class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStrategy {
   public test = async (mimeMsg: ParsedMail) => {
+    const senderEmail = Str.parseEmail(mimeMsg.from!.text).email;
+    if (!mimeMsg.text?.includes(`${senderEmail} has sent you a password-encrypted email`)) {
+      throw new HttpClientErr(`Error checking sent text in:\n\n${mimeMsg.text}`);
+    }
     if (!mimeMsg.text?.match(/https:\/\/flowcrypt.com\/[a-z0-9A-Z]{10}/)) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted flowcrypt.com/api link in:\n\n${mimeMsg.text}`);
     }
@@ -30,6 +35,10 @@ class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStra
 
 class PwdEncryptedMessageWithFesTestStrategy implements ITestMsgStrategy {
   public test = async (mimeMsg: ParsedMail) => {
+    const senderEmail = Str.parseEmail(mimeMsg.from!.text).email;
+    if (!mimeMsg.text?.includes(`${senderEmail} has sent you a password-encrypted email`)) {
+      throw new HttpClientErr(`Error checking sent text in:\n\n${mimeMsg.text}`);
+    }
     if (!mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-ID')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted FES link in:\n\n${mimeMsg.text}`);
     }
