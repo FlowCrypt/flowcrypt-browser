@@ -35,6 +35,10 @@ class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStra
 
 class PwdEncryptedMessageWithFesTestStrategy implements ITestMsgStrategy {
   public test = async (mimeMsg: ParsedMail) => {
+    const senderEmail = Str.parseEmail(mimeMsg.from!.text).email;
+    if (!mimeMsg.text?.includes(`${senderEmail} has sent you a password-encrypted email`)) {
+      throw new HttpClientErr(`Error checking sent text in:\n\n${mimeMsg.text}`);
+    }
     if (!mimeMsg.text?.includes('http://fes.standardsubdomainfes.test:8001/message/FES-MOCK-MESSAGE-ID')) {
       throw new HttpClientErr(`Error: cannot find pwd encrypted FES link in:\n\n${mimeMsg.text}`);
     }
