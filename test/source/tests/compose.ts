@@ -33,6 +33,38 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
+    ava.default('compose - check for sender [flowcrypt.compatibility@gmail.com] from a password-protected email', testWithBrowser('compatibility', async (t, browser) => {
+      const senderEmail = 'flowcrypt.compatibility@gmail.com';
+      const msgPwd = 'super hard password for the message';
+      const subject = 'PWD encrypted message with flowcrypt.com/api';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+      await composePage.selectOption('@input-from', senderEmail);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
+      await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
+      // this test is using PwdEncryptedMessageWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
+    }));
+
+    ava.default('compose - check for sender [flowcryptcompatibility@gmail.com] (alias) from a password-protected email', testWithBrowser('compatibility', async (t, browser) => {
+      const senderEmail = 'flowcryptcompatibility@gmail.com';
+      const msgPwd = 'super hard password for the message';
+      const subject = 'PWD encrypted message with flowcrypt.com/api';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+      await composePage.selectOption('@input-from', senderEmail);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
+      await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
+      // this test is using PwdEncryptedMessageWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
+    }));
+
+    ava.default('compose - check for sender [ci.tests.gmail@flowcrypt.test] from a password-protected email', testWithBrowser('ci.tests.gmail', async (t, browser) => {
+      const senderEmail = 'ci.tests.gmail@flowcrypt.test';
+      const msgPwd = 'super hard password for the message';
+      const subject = 'PWD encrypted message with flowcrypt.com/api';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, senderEmail);
+      await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
+      await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
+      // this test is using PwdEncryptedMessageWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/api"
+    }));
+
     ava.default('compose - restore compose window size by clicking its header', testWithBrowser('compatibility', async (t, browser) => {
       const inboxPage = await browser.newPage(t, TestUrls.extensionInbox('flowcrypt.compatibility@gmail.com'));
       const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
@@ -1230,10 +1262,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     }));
 
     /**
-     * You need the following lines in /etc/hosts:
-     * 127.0.0.1    standardsubdomainfes.test
-     * 127.0.0.1    fes.standardsubdomainfes.test
-     */
+   * You need the following lines in /etc/hosts:
+   * 127.0.0.1    standardsubdomainfes.test
+   * 127.0.0.1    fes.standardsubdomainfes.test
+   */
     ava.default('compose - user@standardsubdomainfes.test:8001 - PWD encrypted message with FES web portal', testWithBrowser(undefined, async (t, browser) => {
       const acct = 'user@standardsubdomainfes.test:8001'; // added port to trick extension into calling the mock
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
