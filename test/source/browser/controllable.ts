@@ -334,6 +334,28 @@ abstract class ControllableBase {
     throw new Error(`Selector ${selector} was found but did not match "${needle}" within ${timeoutSec}s. Last content: "${JSON.stringify(texts, undefined, 2)}"`);
   }
 
+  public waitForInputValue = async (selector: string, needle: string | RegExp, timeoutSec = 20, testLoopLengthMs = 100) => {
+    selector = this.selector(selector);
+    await this.waitAny(selector);
+    const start = Date.now();
+    const values: string[] = [];
+    while (Date.now() - start < timeoutSec * 1000) {
+      const value = await this.target.evaluate((s) => document.querySelector(s).value, selector);
+      if (typeof needle === 'string') { // str
+        if (value.includes(needle)) {
+          return;
+        }
+      } else { // regex
+        if (value.match(needle)) {
+          return;
+        }
+      }
+      values.push(value);
+      await Util.sleep(testLoopLengthMs / 1000);
+    }
+    throw new Error(`Selector ${selector} was found but did not have value "${needle}" within ${timeoutSec}s. Last values: "${JSON.stringify(values, undefined, 2)}"`);
+  }
+
   public verifyContentIsPresentContinuously = async (selector: string, expectedText: string, expectPresentForMs: number = 3000, timeoutSec = 30) => {
     await this.waitAll(selector);
     const start = Date.now();
