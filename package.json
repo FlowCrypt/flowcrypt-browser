@@ -25,7 +25,7 @@
     "eslint-plugin-no-only-tests": "2.6.0",
     "fc-node-requests": "git+https://git@github.com/FlowCrypt/node-requests.git",
     "googleapis": "85.0.0",
-    "mailparser": "3.3.0",
+    "mailparser": "3.3.1",
     "mkdirp": "1.0.4",
     "openpgp": "4.10.10",
     "pdfjs-dist": "2.10.377",
