@@ -122,6 +122,14 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.S.cached('compose_table').css('display', 'none');
     this.view.S.cached('reply_msg_successful').find('div.replied_from').text(this.view.senderModule.getSender());
     this.view.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
+    if (msg.recipients.cc !== undefined && msg.recipients.cc.length > 0) {
+      this.view.S.cached('reply_msg_successful').find('div.replied_cc span').text(msg.recipients.cc.join(', '));
+      $('.replied_cc').show();
+    }
+    if (msg.recipients.bcc !== undefined && msg.recipients.bcc.length > 0) {
+      this.view.S.cached('reply_msg_successful').find('div.replied_bcc span').text(msg.recipients.bcc.join(', '));
+      $('.replied_bcc').show();
+    }
     const repliedBodyEl = this.view.S.cached('reply_msg_successful').find('div.replied_body');
     if (this.view.inputModule.isRichText()) {
       const sanitized = Xss.htmlSanitizeKeepBasicTags(this.view.inputModule.extract('html', 'input_text', 'SKIP-ADDONS'), 'IMG-KEEP');

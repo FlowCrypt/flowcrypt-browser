@@ -220,13 +220,13 @@ export class KeyUtil {
     return `[-] ${String(value)}`;
   }
 
-  public static asPublicKey = async (pubkey: Key): Promise<Key> => {
-    // TODO: Delegate to appropriate key type
-    if (pubkey.type === 'openpgp') {
-      return await OpenPGPKey.asPublicKey(pubkey);
+  public static asPublicKey = async (key: Key): Promise<Key> => {
+    if (key.type === 'openpgp') {
+      return await OpenPGPKey.asPublicKey(key);
+    } else if (key.type === 'x509') {
+      return SmimeKey.asPublicKey(key);
     }
-    // TODO: Assuming S/MIME keys are already public: this should be fixed.
-    return pubkey;
+    throw new UnexpectedKeyTypeError(`Key type is ${key.type}, expecting OpenPGP or x509 S/MIME`);
   }
 
   public static expired = (key: Key): boolean => {

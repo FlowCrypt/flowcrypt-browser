@@ -256,6 +256,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitAll('.reply_message');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm']);
       expect(urls.length).to.equal(1);
+      console.log(await gmailPage.page.screenshot({ encoding: "base64" }));
       const replyBox = await pageHasSecureDraft(t, browser, urls[0], 'reply draft');
       await replyBox.waitAndClick('@action-send');
       await replyBox.waitTillGone('@action-send');
@@ -276,7 +277,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
       await gmailPage.waitAndFocus('body');
       await gmailPage.waitAndClick('[data-tooltip="Drafts"]');
-      await Util.sleep(1);
+      await gmailPage.waitForInputValue('[aria-label^="Search"]', 'in:draft');
       await gmailPage.press('Enter');
       await gmailPage.waitAndClick('[class^="open_draft_"]');
       // veryfy that there are two compose windows: new compose window and secure draft
