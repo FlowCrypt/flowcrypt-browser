@@ -250,6 +250,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await BrowserRecipe.deleteAllDraftsInGmailAccount(settingsPage);
       await settingsPage.close();
       await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcPktjdSxpJVhZlZqpTr'); // to go encrypted convo
+      // Gmail has 100 emails per thread limit, so if there are 98 deleted messages + 1 initial message,
+      // the draft number 100 won't be saved. Therefore, we need to delete forever trashed messages from this thread.
+      if (await gmailPage.isElementPresent('//*[text()="delete forever"]')) {
+        await gmailPage.click('//*[text()="delete forever"]');
+      }
       await gmailPage.waitAndClick('@secure-reply-button');
       await createSecureDraft(t, browser, gmailPage, 'reply draft');
       await gmailPage.page.reload();
