@@ -161,7 +161,6 @@ export class SetupRenderModule {
       } else {
         this.view.submitKeyForAddrs.splice(this.view.submitKeyForAddrs.indexOf(email), 1);
       }
-      console.log(this.view.submitKeyForAddrs);
     });
     $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
   }
