@@ -149,16 +149,19 @@ export class SetupRenderModule {
     const emailAliases = Value.arr.withoutVal(this.view.submitKeyForAddrs, this.view.acctEmail);
     for (const e of emailAliases) {
       // eslint-disable-next-line max-len
-      $('.addresses').append(`<label><input type="checkbox" class="input_email_alias" checked data-test="input-email-alias-${e.replace(/[^a-z0-9]+/g, '')}" /><span>${Xss.escape(e)}</span></label><br/>`); // xss-escaped
+      $('.addresses').append(`<label><input type="checkbox" class="input_email_alias" data-test="input-email-alias-${e.replace(/[^a-z0-9]+/g, '')}" /><span>${Xss.escape(e)}</span></label><br/>`); // xss-escaped
     }
     $('.input_email_alias').click((event) => {
       const dom = event.target.nextElementSibling as HTMLElement;
       const email = dom.innerText;
       if ($(event.target).prop('checked')) {
-        this.view.submitKeyForAddrs.push(email);
+        if (!this.view.submitKeyForAddrs.includes(email)) {
+          this.view.submitKeyForAddrs.push(email);
+        }
       } else {
         this.view.submitKeyForAddrs.splice(this.view.submitKeyForAddrs.indexOf(email), 1);
       }
+      console.log(this.view.submitKeyForAddrs);
     });
     $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
   }
