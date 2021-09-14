@@ -142,11 +142,10 @@ export class SendableMsg {
       return await Mime.encodeSmime(this.body['encrypted/buf'], this.headers);
     } else if (this.type === 'pgpMimeSigned' && this.sign) {
       return await Mime.encodePgpMimeSigned(this.body, this.headers, this.attachments, this.sign);
-    } else { // encrypted/buf is a Buf instance that is converted to single-part plain/text message
-      if (this.body['encrypted/buf']) {
-        this.body = { 'text/plain': this.body['encrypted/buf'].toString() };
-      }
+    } else if (this.body['text/plain']) {
       return await Mime.encode(this.body, this.headers, this.attachments, this.type);
+    } else {
+      throw new Error('Malformed message');
     }
   }
 
