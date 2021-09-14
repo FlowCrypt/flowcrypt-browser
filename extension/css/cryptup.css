@@ -2817,7 +2817,7 @@ body#select_account .action_add_account::before {
 
 .display_none { display: none; }
 
-.display_inline_block { display: inline-block };
+.display_inline_block { display: inline-block; }
 
 code {
   padding: 0.2em 0.4em;
