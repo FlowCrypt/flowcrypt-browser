@@ -54,18 +54,25 @@ export class BackupManualActionModule extends ViewModule<BackupView> {
   }
 
   private actionManualBackupHandler = async () => {
+    if (this.view.prvKeysToManuallyBackup.length <= 0) {
+      await Ui.modal.error('No key found to backup! Please select a key to proceed.');
+      return;
+    }
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
-    const primaryKeys = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
-    for (const primaryKi of primaryKeys) {
-      if (! await this.isPrivateKeyEncrypted(primaryKi)) {
+    const primaryKeyToBackup = Array();
+    for (const key of this.view.prvKeysToManuallyBackup) {
+      primaryKeyToBackup.push((await KeyStore.get(key.email, key.fingerprints))[0]);
+    }
+    for (const primaryKi of primaryKeyToBackup) {
+      if (! await this.isPrivateKeyEncrypted((primaryKi as KeyInfo))) {
         await Ui.modal.error('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
         return;
       }
     }
     if (selected === 'inbox') {
-      await this.backupOnEmailProviderAndUpdateUi(primaryKeys);
+      await this.backupOnEmailProviderAndUpdateUi((primaryKeyToBackup as ExtendedKeyInfo[]));
     } else if (selected === 'file') {
-      await this.backupAsFile(primaryKeys);
+      await this.backupAsFile((primaryKeyToBackup as ExtendedKeyInfo[]));
     } else if (selected === 'print') {
       await this.backupByBrint();
     } else {

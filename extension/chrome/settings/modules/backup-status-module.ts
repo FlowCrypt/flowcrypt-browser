@@ -10,9 +10,9 @@ import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Backups } from '../../../js/common/api/email-provider/email-provider-api.js';
-import { KeyInfo } from '../../../js/common/core/crypto/key.js';
+import { ExtendedKeyInfo, KeyInfo } from '../../../js/common/core/crypto/key.js';
 import { Str } from '../../../js/common/core/common.js';
-
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 export class BackupStatusModule extends ViewModule<BackupView> {
 
   public setHandlers = () => { // is run after checkAndRenderBackupStatus, which renders (some of) these fields first
@@ -80,8 +80,40 @@ export class BackupStatusModule extends ViewModule<BackupView> {
   }
 
   private actionShowManualBackupHandler = async () => {
+    const primaryKeys = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
+    if (primaryKeys.length > 1) {
+      this.renderPrvKeysBackupSelection(primaryKeys);
+    }
     this.view.displayBlock('module_manual');
     $('h1').text('Back up your private key');
+  }
+
+  private renderPrvKeysBackupSelection = (primaryKeys: ExtendedKeyInfo[]) => {
+    for (const primaryKi of primaryKeys) {
+      const dom = `
+      <div class="mb-20">
+        <div class="details">
+          <label>
+            <input class="input_prvkey_backup_checkbox" type="checkbox" />
+            <div class="display_inline_block">
+              <p class="m-0">Email: <span class="prv_email">${primaryKi.emails}</span> with fingerprint <span class="prv_fingerprint green">${primaryKi.fingerprints}</span></p>
+            </div>
+          </label>
+        </div>
+      </div>
+      `.trim();
+      $('.key_backup_selection').append(dom);
+    }
+    $('.input_prvkey_backup_checkbox').click((event) => {
+      const email = String($($($(event.target).siblings()[0]).children()[0]).children()[0].innerText);
+      const fingerprint = String($($($(event.target).siblings()[0]).children()[0]).children()[1].innerText).split(',');
+      if ($(event.target).prop('checked')) {
+        this.view.prvKeysToManuallyBackup.push({ 'email': email, 'fingerprints': fingerprint });
+      } else {
+        this.view.prvKeysToManuallyBackup.splice(this.view.prvKeysToManuallyBackup.findIndex(prvIdentity => prvIdentity.fingerprints === fingerprint), 1);
+      }
+    });
+    $('#key_backup_selection_container').show();
   }
 
   private goTo = async (page: string) => {
