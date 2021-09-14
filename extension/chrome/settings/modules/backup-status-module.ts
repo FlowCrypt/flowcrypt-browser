@@ -47,7 +47,7 @@ export class BackupStatusModule extends ViewModule<BackupView> {
       Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_manual">BACK UP MY KEY</button>');
     } else if (backups.longids.importedNotBackedUp.length) {
       $('.status_summary').text('Some of your keys have not been backed up.');
-      Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_manual">BACKUP   ALL KEYS</button>');
+      Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_manual">BACKUP ALL KEYS</button>');
     } else if (backups.longids.backupsNotImported.length) {
       $('.status_summary').text('Some of your backups have not been loaded. This may cause incoming encrypted email to not be readable.');
       Xss.sanitizeRender('#module_status .container', '<button class="button long green action_go_add_key">IMPORT MISSING BACKUPS</button>');
