@@ -27,7 +27,6 @@ import { SendableMsg, InvalidRecipientError } from '../../../js/common/api/email
 export class ComposeDraftModule extends ViewModule<ComposeView> {
 
   public wasMsgLoadedFromDraft = false;
-  public localDraftId = 'local-draft-';
 
   private currentlySavingDraft = false;
   private saveDraftInterval?: number;
@@ -49,14 +48,17 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   }
 
   /**
-   * Returns true when a draft was loaded
+   * Returns `true` if either a local or a cloud draft was loaded, otherwise returns `false`
    */
-  public initialDraftLoad = async (draftId: string): Promise<boolean> => {
+  public initialDraftLoad = async (): Promise<boolean> => {
     if (this.view.isReplyBox) {
       Xss.sanitizeRender(this.view.S.cached('prompt'), `Loading draft.. ${Ui.spinner('green')}`);
     }
     try {
-      const draftGetRes = this.isLocalDraftId(draftId) ? await this.localDraftGet(draftId) : await this.view.emailProvider.draftGet(draftId, 'raw');
+      let draftGetRes = await this.localDraftGet();
+      if (!draftGetRes) { // local draft not found, try to load from cloud
+        draftGetRes = await this.view.emailProvider.draftGet(this.view.draftId, 'raw');
+      }
       if (!draftGetRes) {
         await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!draftGetRes');
         return false;
@@ -91,7 +93,8 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     await Ui.time.wait(() => !this.currentlySavingDraft ? true : undefined);
     if (this.view.draftId) {
       try {
-        this.isLocalDraftId(this.view.draftId) ? await storageLocalRemove([this.view.draftId]) : await this.view.emailProvider.draftDelete(this.view.draftId);
+        await this.view.emailProvider.draftDelete(this.view.draftId);
+        await this.localDraftRemove();
         this.view.draftId = '';
       } catch (e) {
         if (ApiErr.isAuthErr(e)) {
@@ -125,9 +128,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         if (!this.view.draftId || this.isLocalDraftId(this.view.draftId)) {
           const draftId = await this.doUploadDraftWithLocalStorageFallback(mimeMsg, msgData, async () => {
             const { id } = await this.view.emailProvider.draftCreate(mimeMsg, this.view.threadId);
-            if (this.isLocalDraftId(this.view.draftId)) { // delete local draft if there is one
-              await storageLocalRemove([this.view.draftId]);
-            }
+            this.localDraftRemove(); // delete local draft if there is one
             this.view.S.cached('send_btn_note').text('Saved');
             return id;
           });
@@ -141,6 +142,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         } else {
           await this.doUploadDraftWithLocalStorageFallback(mimeMsg, msgData, async () => {
             await this.view.emailProvider.draftUpdate(this.view.draftId, mimeMsg, this.view.threadId);
+            this.localDraftRemove(); // delete local draft if there is one
             this.view.S.cached('send_btn_note').text('Saved');
             return this.view.draftId;
           });
@@ -208,18 +210,28 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     return !!draftId.match(this.localDraftPrefix);
   }
 
+  private getLocalDraftId = () => {
+    return `${this.localDraftPrefix}${this.view.threadId}`;
+  }
+
   private localDraftCreate = async (mimeMsg: string, threadId: string) => {
-    const draftId = `${this.localDraftPrefix}${threadId}`;
+    const draftId = this.getLocalDraftId();
     await storageLocalSet({ [draftId]: { message: { raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId } } });
     return draftId;
   }
 
-  private localDraftGet = async (draftId: string) => {
+  private localDraftGet = async (): Promise<GmailRes.GmailDraftGet | undefined> => {
+    const draftId = this.getLocalDraftId();
     const { [draftId]: localDraft } = await storageLocalGet([draftId]);
     if (this.isValidLocalDraft(localDraft)) {
       return localDraft;
     }
     return undefined;
+  }
+
+  private localDraftRemove = async () => {
+    const draftId = this.getLocalDraftId();
+    await storageLocalRemove([draftId]);
   }
 
   private isValidLocalDraft = (localDraft: unknown): localDraft is GmailRes.GmailDraftGet => {
