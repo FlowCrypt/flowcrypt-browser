@@ -128,7 +128,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         if (!this.view.draftId || this.isLocalDraftId(this.view.draftId)) {
           const draftId = await this.doUploadDraftWithLocalStorageFallback(mimeMsg, msgData, async () => {
             const { id } = await this.view.emailProvider.draftCreate(mimeMsg, this.view.threadId);
-            this.localDraftRemove(); // delete local draft if there is one
+            await this.localDraftRemove(); // delete local draft if there is one
             this.view.S.cached('send_btn_note').text('Saved');
             return id;
           });
@@ -142,7 +142,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         } else {
           await this.doUploadDraftWithLocalStorageFallback(mimeMsg, msgData, async () => {
             await this.view.emailProvider.draftUpdate(this.view.draftId, mimeMsg, this.view.threadId);
-            this.localDraftRemove(); // delete local draft if there is one
+            await this.localDraftRemove(); // delete local draft if there is one
             this.view.S.cached('send_btn_note').text('Saved');
             return this.view.draftId;
           });
