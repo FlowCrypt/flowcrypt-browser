@@ -104,7 +104,7 @@ export class BackupStatusModule extends ViewModule<BackupView> {
         </div>
       </div>
       `.trim();
-      $('.key_backup_selection').append(dom);
+      $('.key_backup_selection').append(dom); // xss-escaped
     }
     $('.input_prvkey_backup_checkbox').click((event) => {
       const email = String($(event.target).data('emails')).trim();
