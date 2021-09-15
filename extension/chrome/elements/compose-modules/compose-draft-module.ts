@@ -75,7 +75,6 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       } else if (this.view.isReplyBox && ApiErr.isNotFound(e)) {
         console.info('about to reload reply_message automatically: get draft 404', this.view.acctEmail);
         await Ui.time.sleep(500);
-        await this.view.storageModule.draftMetaDelete(this.view.threadId); // delete the legacy draft from storage if there is one, TODO: remove in #3329
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
         this.view.draftId = '';
         window.location.href = Url.create(Env.getUrlNoParams(), this.urlParams());
