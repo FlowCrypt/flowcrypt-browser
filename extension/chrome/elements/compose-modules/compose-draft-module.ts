@@ -174,6 +174,10 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     }
   }
 
+  public getLocalDraftId = () => {
+    return `${this.localDraftPrefix}${this.view.threadId}`;
+  }
+
   private draftSetPrefixIntoBody = (sendable: SendableMsg) => {
     let prefix: string;
     if (this.view.threadId) { // reply draft
@@ -208,10 +212,6 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
 
   private isLocalDraftId = (draftId: string) => {
     return !!draftId.match(this.localDraftPrefix);
-  }
-
-  private getLocalDraftId = () => {
-    return `${this.localDraftPrefix}${this.view.threadId}`;
   }
 
   private localDraftCreate = async (mimeMsg: string, threadId: string) => {
