@@ -90,19 +90,21 @@ export class BackupStatusModule extends ViewModule<BackupView> {
 
   private renderPrvKeysBackupSelection = (primaryKeys: ExtendedKeyInfo[]) => {
     for (const primaryKi of primaryKeys) {
+      const email = Xss.escape(String(primaryKi.emails));
+      const fingerprints = Xss.escape(String(primaryKi.fingerprints));
       const dom = `
       <div class="mb-20">
         <div class="details">
           <label>
-            <input class="input_prvkey_backup_checkbox" type="checkbox" data-emails="${primaryKi.emails}" data-fingerprint="${primaryKi.fingerprints}" />
+            <input class="input_prvkey_backup_checkbox" type="checkbox" data-emails="${email}" data-fingerprint="${fingerprints}" />
             <div class="display_inline_block">
-              <p class="m-0">Email: <span class="prv_email">${primaryKi.emails}</span> with fingerprint <span class="prv_fingerprint green">${primaryKi.fingerprints}</span></p>
+              <p class="m-0">Email: <span class="prv_email">${email}</span> with fingerprint <span class="prv_fingerprint green">${fingerprints}</span></p>
             </div>
           </label>
         </div>
       </div>
       `.trim();
-      $('.key_backup_selection').append(Xss.escape(dom)); // xss-escaped
+      $('.key_backup_selection').append(dom);
     }
     $('.input_prvkey_backup_checkbox').click((event) => {
       const email = String($(event.target).data('emails')).trim();
