@@ -97,9 +97,8 @@ export class BackupStatusModule extends ViewModule<BackupView> {
         <div class="details">
           <label>
             <input class="input_prvkey_backup_checkbox" type="checkbox" data-emails="${email}" data-fingerprint="${fingerprints}" />
-            <div class="display_inline_block">
-              <p class="m-0">Email: <span class="prv_email">${email}</span> with fingerprint <span class="prv_fingerprint green">${fingerprints}</span></p>
-            </div>
+            <p class="m-0 display_inline_block">Email: <span class="prv_email">${email}</span> with fingerprint :</p>
+            <p class="m-0"><span class="prv_fingerprint green">${fingerprints}</span></p>
           </label>
         </div>
       </div>
