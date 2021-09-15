@@ -105,8 +105,8 @@ export class BackupStatusModule extends ViewModule<BackupView> {
       $('.key_backup_selection').append(Xss.escape(dom)); // xss-escaped
     }
     $('.input_prvkey_backup_checkbox').click((event) => {
-      const email = $(event.target).data('emails');
-      const fingerprint = $(event.target).data('fingerprints');
+      const email = String($(event.target).data('emails')).trim();
+      const fingerprint = String($(event.target).data('fingerprints')).split(',');
       if ($(event.target).prop('checked')) {
         this.view.prvKeysToManuallyBackup.push({ 'email': email, 'fingerprints': fingerprint });
       } else {
